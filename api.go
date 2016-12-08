@@ -74,7 +74,7 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 }
 
 type ErrorResponse struct {
-	Exception string
+	Exception string `json:"exception"`
 }
 
 type GetNodeInfoRequest struct {
@@ -82,23 +82,22 @@ type GetNodeInfoRequest struct {
 }
 
 type GetNodeInfoResponse struct {
-	AppName                            string
-	AppVersion                         string
-	Duration                           int64
-	CurrentTime                        int64
-	JREAvailableProcessors             int64
-	JREFreeMemory                      int64
-	JREMaxMemory                       int64
-	JRETotalMemory                     int64
-	LatestMilestone                    string
-	LatestMilestoneIndex               int64
-	LatestSolidSubtangleMilestone      string
-	LatestSolidSubtangleMilestoneIndex int64
-	Neighbours                         int64
-	PacketQueueSize                    int64
-	Time                               int64
-	Tips                               int64
-	TransactionsToRequest              int64
+	AppName                            string `json:"appName"`
+	AppVersion                         string `json:"appVersion"`
+	Duration                           int64  `json:"duration"`
+	JREAvailableProcessors             int64  `json:"jreAvailableProcessors"`
+	JREFreeMemory                      int64  `json:"jreFreeMemory"`
+	JREMaxMemory                       int64  `json:"jreMaxMemory"`
+	JRETotalMemory                     int64  `json:"jreTotalMemory"`
+	LatestMilestone                    string `json:"latestMilestone"`
+	LatestMilestoneIndex               int64  `json:"latestMilestoneIndex"`
+	LatestSolidSubtangleMilestone      string `json:"latestSolidSubtangleMilestone"`
+	LatestSolidSubtangleMilestoneIndex int64  `json:"latestSolidSubtangleMilestoneIndex"`
+	Neighbors                          int64  `json:"neighbors"`
+	PacketQueueSize                    int64  `json:"packetQueueSize"`
+	Time                               int64  `json:"time"`
+	Tips                               int64  `json:"tips"`
+	TransactionsToRequest              int64  `json:"transactionsToRequest"`
 }
 
 func (api *API) GetNodeInfo() (*GetNodeInfoResponse, error) {
@@ -120,10 +119,10 @@ type GetNeighborsRequest struct {
 }
 
 type Neighbor struct {
-	Address                     string
-	NumberOfAllTransactions     int64
-	NumberOfInvalidTransactions int64
-	NumberOfNewTransactions     int64
+	Address                     string `json:"address"`
+	NumberOfAllTransactions     int64  `json:"numberOfAllTransactions"`
+	NumberOfInvalidTransactions int64  `json:"numberOfInvalidTransactions"`
+	NumberOfNewTransactions     int64  `json:"numberOfNewTransactions"`
 }
 
 type GetNeighborsResponse struct {
@@ -154,8 +153,8 @@ type AddNeighborsRequest struct {
 }
 
 type AddNeighborsResponse struct {
-	Duration       int64
-	AddedNeighbors int64
+	Duration       int64 `json"duration"`
+	AddedNeighbors int64 `json"addedNeighbors"`
 }
 
 func (api *API) AddNeighbors(an *AddNeighborsRequest) (*AddNeighborsResponse, error) {
@@ -179,8 +178,8 @@ type RemoveNeighborsRequest struct {
 }
 
 type RemoveNeighborsResponse struct {
-	Duration         int64
-	RemovedNeighbors int64
+	Duration         int64 `json:"duration"`
+	RemovedNeighbors int64 `json:"removedNeighbors"`
 }
 
 func (api *API) RemoveNeighbors(rn *RemoveNeighborsRequest) (*RemoveNeighborsResponse, error) {
@@ -200,8 +199,8 @@ type GetTipsRequest struct {
 }
 
 type GetTipsResponse struct {
-	Duration int64
-	Hashes   []string
+	Duration int64    `json:"duration"`
+	Hashes   []string `json:"hashes"`
 }
 
 func (api *API) GetTips() (*GetTipsResponse, error) {
@@ -227,8 +226,8 @@ type FindTransactionsRequest struct {
 }
 
 type FindTransactionsResponse struct {
-	Duration int64
-	Hashes   []string
+	Duration int64    `json:"duration"`
+	Hashes   []string `json:"hashes"`
 }
 
 func (api *API) FindTransactions(ft *FindTransactionsRequest) (*FindTransactionsResponse, error) {
@@ -249,8 +248,8 @@ type GetTrytesRequest struct {
 }
 
 type GetTrytesResponse struct {
-	Duration int64
-	Trytes   []string
+	Duration int64    `json:"duration"`
+	Trytes   []string `json:"trytes"`
 }
 
 func (api *API) GetTrytes(gt *GetTrytesRequest) (*GetTrytesResponse, error) {
@@ -272,8 +271,8 @@ type GetInclusionStatesRequest struct {
 }
 
 type GetInclusionStatesResponse struct {
-	Duration int64
-	States   []bool
+	Duration int64  `json:"duration"`
+	States   []bool `json:"states"`
 }
 
 func (api *API) GetInclusionStates(gis *GetInclusionStatesRequest) (*GetInclusionStatesResponse, error) {
@@ -295,8 +294,10 @@ type GetBalancesRequest struct {
 }
 
 type GetBalancesResponse struct {
-	Duration int64
-	States   []bool
+	Duration       int64    `json:"duration"`
+	Balances       []string `json:"balances"`
+	Milestone      string   `json:"milestone"`
+	MilestoneIndex int64    `json:"milestoneIndex"`
 }
 
 func (api *API) GetBalances(gb *GetBalancesRequest) (*GetBalancesResponse, error) {
@@ -317,9 +318,9 @@ type GetTransactionsToApproveRequest struct {
 }
 
 type GetTransactionsToApproveResponse struct {
-	Duration           int64
-	TrunkTransactions  string
-	BranchTransactions string
+	Duration           int64  `json:"duration"`
+	TrunkTransactions  string `json:"trunkTransactions"`
+	BranchTransactions string `json:"branchTransactions"`
 }
 
 func (api *API) GetTransactionsToApprove(gtta *GetTransactionsToApproveRequest) (*GetTransactionsToApproveResponse, error) {
@@ -343,8 +344,8 @@ type AttachToTangleRequest struct {
 }
 
 type AttachToTangleResponse struct {
-	Duration int64
-	Trytes   []string
+	Duration int64    `json:"duration"`
+	Trytes   []string `json:"trytes"`
 }
 
 func (api *API) AttachToTangle(att *AttachToTangleRequest) (*AttachToTangleResponse, error) {
