@@ -318,9 +318,9 @@ type GetTransactionsToApproveRequest struct {
 }
 
 type GetTransactionsToApproveResponse struct {
-	Duration           int64  `json:"duration"`
-	TrunkTransactions  string `json:"trunkTransactions"`
-	BranchTransactions string `json:"branchTransactions"`
+	Duration          int64  `json:"duration"`
+	TrunkTransaction  string `json:"trunkTransaction"`
+	BranchTransaction string `json:"branchTransaction"`
 }
 
 func (api *API) GetTransactionsToApprove(gtta *GetTransactionsToApproveRequest) (*GetTransactionsToApproveResponse, error) {
@@ -337,8 +337,8 @@ func (api *API) GetTransactionsToApprove(gtta *GetTransactionsToApproveRequest) 
 
 type AttachToTangleRequest struct {
 	Command            string   `json:"command"`
-	TrunkTransactions  string   `json:"trunkTransactions"`
-	BranchTransactions string   `json:"branchTransactions"`
+	TrunkTransaction   string   `json:"trunkTransaction"`
+	BranchTransaction  string   `json:"branchTransaction"`
 	MinWeightMagnitude int64    `json:"minWeightMagnitude"`
 	Trytes             []string `json:"trytes"`
 }

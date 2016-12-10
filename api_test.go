@@ -136,9 +136,11 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 	anr := &GetTransactionsToApproveRequest{}
 	resp, err := api.GetTransactionsToApprove(anr)
 	if err != nil {
-		t.Errorf("GetTransactionsToApprove([]) expected err to be nil but got %v", err)
+		t.Errorf("GetTransactionsToApprove() expected err to be nil but got %v", err)
 	}
-	t.Logf("GetTransactionsToApprove() = %#v", resp)
+	if resp.BranchTransaction == "" || resp.TrunkTransaction == "" {
+		t.Errorf("GetTransactionsToApprove() return empty branch and/or trunk transactions\n%#v", resp)
+	}
 }
 
 func TestAPIInterruptAttachingToTangle(t *testing.T) {
