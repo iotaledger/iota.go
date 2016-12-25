@@ -46,3 +46,45 @@ func TestValidTrytes(t *testing.T) {
 		}
 	}
 }
+
+func TestValidTrit(t *testing.T) {
+	type validTritTC struct {
+		in    int
+		valid bool
+	}
+
+	var validTritCases = []validTritTC{
+		validTritTC{in: -1, valid: true},
+		validTritTC{in: 0, valid: true},
+		validTritTC{in: 1, valid: true},
+		validTritTC{in: -2, valid: false},
+		validTritTC{in: 2, valid: false},
+	}
+
+	for _, tc := range validTritCases {
+		if ValidTrit(tc.in) != tc.valid {
+			t.Fatalf("ValidTrit(%q) should be %#v but is not", tc.in, tc.valid)
+		}
+	}
+}
+
+func TestValidTrits(t *testing.T) {
+	type validTritsTC struct {
+		in    []int
+		valid bool
+	}
+
+	var validTritsCases = []validTritsTC{
+		validTritsTC{in: []int{0}, valid: true},
+		validTritsTC{in: []int{-1}, valid: true},
+		validTritsTC{in: []int{1}, valid: true},
+		validTritsTC{in: []int{0, -1, 1}, valid: true},
+		validTritsTC{in: []int{2, -1, 1}, valid: false},
+	}
+
+	for _, tc := range validTritsCases {
+		if ValidTrits(tc.in) != tc.valid {
+			t.Fatalf("ValidTrits(%q) should be %#v but is not", tc.in, tc.valid)
+		}
+	}
+}
