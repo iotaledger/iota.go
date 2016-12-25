@@ -137,8 +137,7 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 	resp, err := api.GetTransactionsToApprove(anr)
 	if err != nil {
 		t.Errorf("GetTransactionsToApprove() expected err to be nil but got %v", err)
-	}
-	if resp.BranchTransaction == "" || resp.TrunkTransaction == "" {
+	} else if resp.BranchTransaction == "" || resp.TrunkTransaction == "" {
 		t.Errorf("GetTransactionsToApprove() return empty branch and/or trunk transactions\n%#v", resp)
 	}
 }
