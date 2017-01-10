@@ -127,6 +127,20 @@ func TestAPIGetInclusionStates(t *testing.T) {
 	t.Logf("GetInclusionStates() = %#v", resp)
 }
 
+func TestAPIGetBalances(t *testing.T) {
+	api, err := NewAPI("", nil)
+	if err != nil {
+		t.Errorf("NewAPI(%q, nil) expected err to be nil but got %v", err)
+	}
+
+	gbr := &GetBalancesRequest{Addresses: []string{}, Threshold: 100}
+	resp, err := api.GetBalances(gbr)
+	if err != nil {
+		t.Errorf("GetBalances([]) expected err to be nil but got %v", err)
+	}
+	t.Logf("GetBalances() = %#v", resp)
+}
+
 func TestAPIGetTransactionsToApprove(t *testing.T) {
 	api, err := NewAPI("", nil)
 	if err != nil {

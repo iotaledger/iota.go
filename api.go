@@ -290,7 +290,7 @@ func (api *API) GetInclusionStates(gis *GetInclusionStatesRequest) (*GetInclusio
 type GetBalancesRequest struct {
 	Command   string   `json:"command"`
 	Addresses []string `json:"addresses"`
-	Treshold  int64    `json:"treshold"`
+	Threshold int64    `json:"threshold"`
 }
 
 type GetBalancesResponse struct {
