@@ -14,6 +14,14 @@ func ValidTrytes(ts string) bool {
 	return true
 }
 
+func ValidTransactionTrytes(ts string) bool {
+	return ValidTrytes(ts) && len(ts) == TransactionTryteSize
+}
+
+func ValidTransactionTrits(ts []int) bool {
+	return ValidTrits(ts) && len(ts) == TransactionTritSize
+}
+
 func ValidTrit(t int) bool {
 	return t >= MinTritValue && t <= MaxTritValue
 }

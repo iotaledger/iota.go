@@ -22,11 +22,11 @@ func NewAddressFromTrytes(addr string) (*Address, error) {
 		return &Address{trytes: addr}, nil
 	}
 
-	addrTrits := trytesToTrits(addr)
+	addrTrits := TrytesToTrits(addr)
 	c := &Curl{}
 	c.Init(addrTrits)
 	_ = c.Squeeze()
-	checksum := tritsToTrytes(c.State())[:9]
+	checksum := TritsToTrytes(c.State())[:9]
 
 	return &Address{trytes: addr + checksum}, nil
 }
@@ -36,7 +36,7 @@ func NewAddressFromTrits(addr []int) (*Address, error) {
 		return nil, ErrInvalidAddressTrits
 	}
 
-	addrTrytes := tritsToTrytes(addr)
+	addrTrytes := TritsToTrytes(addr)
 	if len(addr) == 90*3 {
 		return &Address{trytes: addrTrytes}, nil
 	}
@@ -44,7 +44,7 @@ func NewAddressFromTrits(addr []int) (*Address, error) {
 	c := &Curl{}
 	c.Init(addr)
 	_ = c.Squeeze()
-	checksum := tritsToTrytes(c.State())[:9]
+	checksum := TritsToTrytes(c.State())[:9]
 
 	return &Address{trytes: addrTrytes + checksum}, nil
 }
@@ -58,11 +58,11 @@ func (a *Address) MarshalJSON() ([]byte, error) {
 }
 
 func (a *Address) TritsWithChecksum() []int {
-	return trytesToTrits(a.TrytesWithChecksum())
+	return TrytesToTrits(a.TrytesWithChecksum())
 }
 
 func (a *Address) TritsWithoutChecksum() []int {
-	return trytesToTrits(a.TrytesWithoutChecksum())
+	return TrytesToTrits(a.TrytesWithoutChecksum())
 }
 
 func (a *Address) Checksum() string {

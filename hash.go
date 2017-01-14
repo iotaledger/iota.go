@@ -21,7 +21,7 @@ func HashFromTrits(in []int) *Hash {
 }
 
 func (h *Hash) String() string {
-	return tritsToTrytes(h.Trits())
+	return TritsToTrytes(h.Trits())
 }
 
 func (h *Hash) Trits() []int {
