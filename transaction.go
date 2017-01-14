@@ -28,6 +28,32 @@ var (
 	ErrInvalidTransaction     = errors.New("malformed transaction")
 )
 
+const (
+	SignatureMessageFragmentTrinaryOffset = 0
+	SignatureMessageFragmentTrinarySize   = 6561
+	AddressTrinaryOffset                  = SignatureMessageFragmentTrinaryOffset + SignatureMessageFragmentTrinarySize
+	AddressTrinarySize                    = 243
+	ValueTrinaryOffset                    = AddressTrinaryOffset + AddressTrinarySize
+	ValueTrinarySize                      = 81
+	ValueUsableTrinarySize                = 33
+	TagTrinaryOffset                      = ValueTrinaryOffset + ValueTrinarySize
+	TagTrinarySize                        = 81
+	TimestampTrinaryOffset                = TagTrinaryOffset + TagTrinarySize
+	TimestampTrinarySize                  = 27
+	CurrentIndexTrinaryOffset             = TimestampTrinaryOffset + TimestampTrinarySize
+	CurrentIndexTrinarySize               = 27
+	LastIndexTrinaryOffset                = CurrentIndexTrinaryOffset + CurrentIndexTrinarySize
+	LastIndexTrinarySize                  = 27
+	BundleTrinaryOffset                   = LastIndexTrinaryOffset + LastIndexTrinarySize
+	BundleTrinarySize                     = 243
+	TrunkTransactionTrinaryOffset         = BundleTrinaryOffset + BundleTrinarySize
+	TrunkTransactionTrinarySize           = 243
+	BranchTransactionTrinaryOffset        = TrunkTransactionTrinaryOffset + TrunkTransactionTrinarySize
+	BranchTransactionTrinarySize          = 243
+	NonceTrinaryOffset                    = BranchTransactionTrinaryOffset + BranchTransactionTrinarySize
+	NonceTrinarySize                      = 243
+)
+
 func TransactionFromBytes(b []int) (Transaction, error) {
 	bs := make([]int, 2673)
 	copy(bs, b)
@@ -48,18 +74,17 @@ func TransactionFromTrits(trits []int) (Transaction, error) {
 	t.hash = hash
 	t.Hash = t.hash.String()
 
-	t.SignatureMessageFragment = tritsToTrytes(trits[0:6561])
-	t.Value = tritsToInt(trits[6804 : 6804+33])
-	t.Tag = tritsToTrytes(trits[6885 : 6885+81])
-	t.Timestamp = tritsToInt(trits[6966 : 6966+27])
-	t.CurrentIndex = tritsToInt(trits[6993 : 6993+27])
-	t.LastIndex = tritsToInt(trits[7020 : 7020+27])
-	t.Bundle = tritsToTrytes(trits[7047 : 7047+243])
-	t.TrunkTransaction = tritsToTrytes(trits[7290 : 7290+243])
-	t.BranchTransaction = tritsToTrytes(trits[7533 : 7533+243])
-	t.Nonce = tritsToTrytes(trits[7776 : 7776+243])
-
-	t.Address = tritsToTrytes(trits[6561 : 6561+243])
+	t.SignatureMessageFragment = tritsToTrytes(trits[SignatureMessageFragmentTrinaryOffset:SignatureMessageFragmentTrinarySize])
+	t.Address = tritsToTrytes(trits[AddressTrinaryOffset : AddressTrinaryOffset+AddressTrinarySize])
+	t.Value = tritsToInt(trits[ValueTrinaryOffset : ValueTrinaryOffset+ValueTrinarySize])
+	t.Tag = tritsToTrytes(trits[TagTrinaryOffset : TagTrinaryOffset+TagTrinarySize])
+	t.Timestamp = tritsToInt(trits[TimestampTrinaryOffset : TimestampTrinaryOffset+TimestampTrinarySize])
+	t.CurrentIndex = tritsToInt(trits[CurrentIndexTrinaryOffset : CurrentIndexTrinaryOffset+CurrentIndexTrinarySize])
+	t.LastIndex = tritsToInt(trits[LastIndexTrinaryOffset : LastIndexTrinaryOffset+LastIndexTrinarySize])
+	t.Bundle = tritsToTrytes(trits[BundleTrinaryOffset : BundleTrinaryOffset+BundleTrinarySize])
+	t.TrunkTransaction = tritsToTrytes(trits[TrunkTransactionTrinaryOffset : TrunkTransactionTrinaryOffset+TrunkTransactionTrinarySize])
+	t.BranchTransaction = tritsToTrytes(trits[BranchTransactionTrinaryOffset : BranchTransactionTrinaryOffset+BranchTransactionTrinarySize])
+	t.Nonce = tritsToTrytes(trits[NonceTrinaryOffset : NonceTrinaryOffset+NonceTrinarySize])
 
 	return t, nil
 
