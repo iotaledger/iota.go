@@ -86,7 +86,7 @@ func tritsToIntWithOffset(trits []int, offset, size int) int64 {
 	return val
 }
 
-func tritsToInt(trits []int) int64 {
+func TritsToInt(trits []int) int64 {
 	return tritsToIntWithOffset(trits, 0, len(trits))
 }
 
@@ -115,11 +115,11 @@ func tritsToTrytesWithOffset(trits []int, offset, size int) string {
 	return o
 }
 
-func tritsToTrytes(trits []int) string {
+func TritsToTrytes(trits []int) string {
 	return tritsToTrytesWithOffset(trits, 0, len(trits))
 }
 
-func trytesToTrits(trytes string) []int {
+func TrytesToTrits(trytes string) []int {
 	trits := make([]int, len(trytes)*3)
 	for i, _ := range trytes {
 		idx := strings.Index(TryteAlphabet, trytes[i:i+1])
@@ -129,7 +129,7 @@ func trytesToTrits(trytes string) []int {
 	return trits
 }
 
-func bytesToTrits(b []int, size int) []int {
+func BytesToTrits(b []int, size int) []int {
 	trits := make([]int, size)
 	i := 0
 	offset := 0
@@ -168,6 +168,6 @@ func tritsToBytesWithOffset(trits []int, offset int, size int) []int {
 	return bs
 }
 
-func tritsToBytes(trits []int) []int {
+func TritsToBytes(trits []int) []int {
 	return tritsToBytesWithOffset(trits, 0, len(trits))
 }
