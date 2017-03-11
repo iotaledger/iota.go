@@ -234,7 +234,7 @@ func TestAAA(t *testing.T) {
 		t.Errorf("GetTrytes([]) expected err to be nil but got %v", err)
 	}
 	for i := range resp.Trytes {
-		tx, err := TransactionFromTrits(resp.Trytes[i].Trits())
+		tx, err := NewTransaction(resp.Trytes[i].Trits())
 		if err != nil {
 			t.Error(err)
 		}
