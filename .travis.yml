@@ -4,7 +4,6 @@ go:
   - 1.8
 
 before_install:
-- go get -u github.com/axw/gocov/gocov
 - go get -u github.com/alecthomas/gometalinter
 - go get -u github.com/mattn/goveralls
 - if ! go get -u code.google.com/p/go.tools/cmd/cover; then go get -u golang.org/x/tools/cmd/cover;fi

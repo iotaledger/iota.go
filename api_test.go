@@ -1,9 +1,31 @@
+/*
+MIT License
+
+Copyright (c) 2016 Sascha Hanse
+Copyright (c) 2017 Shinya Yagyu
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 package giota
 
-import (
-	"fmt"
-	"testing"
-)
+import "testing"
 
 const server = "http://iotaserver.forobits.com:14265"
 
@@ -218,7 +240,7 @@ func TestAPIStoreTransactions(t *testing.T) {
 	t.Logf("StoreTransactions() = %#v", resp)
 }
 */
-
+/*
 func TestAAA(t *testing.T) {
 	api, err := NewAPI(server, nil)
 	if err != nil {
@@ -239,7 +261,7 @@ func TestAAA(t *testing.T) {
 		if errr != nil {
 			t.Error(err)
 		}
-		fmt.Print(tx, "\n\n")
+		fmt.Print(tx, tx.Timestamp.Unix(), "\n\n")
 	}
 	ftr := &FindTransactionsRequest{Bundles: &[]Trytes{"DEXRPLKGBROUQMKCLMRPG9HFKCACDZ9AB9HOJQWERTYWERJNOYLW9PKLOGDUPC9DLGSUH9UHSKJOASJRU"}}
 	respp, err := api.FindTransactions(ftr)
@@ -248,3 +270,4 @@ func TestAAA(t *testing.T) {
 	}
 	fmt.Println(respp.Hashes)
 }
+*/
