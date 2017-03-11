@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	//PublicNode is a list of known public nodes from http://iotasupport.com/lightwallet.shtml
+	//PublicNode is a list of known public nodes from http://iotasupport.com/lightwallet.shtml.
 	PublicNode = []string{
 		"http://service.iotasupport.com:14265",
 		"http://service.iotasupport.com:14265",
@@ -74,7 +74,7 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 		return err
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
+		if err = resp.Body.Close(); err != nil {
 			fmt.Println(err)
 		}
 	}()

@@ -106,18 +106,3 @@ func (t *Transaction) Trits() Trits {
 	copy(tr[nonceTrinaryOffset:], t.Nonce.Trits())
 	return tr
 }
-
-//Equal returns true if t==s
-func (t *Transaction) Equal(s *Transaction) bool {
-	return t.SignatureMessageFragment == s.SignatureMessageFragment &&
-		t.Address == s.Address &&
-		t.Value == s.Value &&
-		t.Tag == s.Tag &&
-		t.Timestamp == s.Timestamp &&
-		t.CurrentIndex == s.CurrentIndex &&
-		t.LastIndex == s.LastIndex &&
-		t.Bundle == s.Bundle &&
-		t.Nonce == s.Nonce &&
-		t.TrunkTransaction == s.TrunkTransaction &&
-		t.BranchTransaction == s.BranchTransaction
-}

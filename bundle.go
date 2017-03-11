@@ -30,15 +30,18 @@ type Bundle struct {
 type Bundles []Bundle
 
 //Add adds one bundle to bundle slice.
-func (bs Bundles) Add(address Trytes, value int64, timestamp int64, tag Trytes, index int) Bundles {
-	if len(bs) != 0 {
+func (bs Bundles) Add(address Trytes, value int64, timestamp *time.Time, tag Trytes, index int) Bundles {
+	if i != 0 {
 		value = 0
+	}
+	if tag == "" {
+		tag = emptyHash
 	}
 	b := Bundle{
 		Address:   address,
 		Value:     value,
 		Tag:       tag,
-		Timestamp: time.Unix(timestamp, 0),
+		Timestamp: *timestamp,
 	}
 	return append(bs, b)
 }
@@ -46,12 +49,13 @@ func (bs Bundles) Add(address Trytes, value int64, timestamp int64, tag Trytes, 
 //Txs converts bundles to transactions.
 func (bs Bundles) Txs(sig []Trytes) []Transaction {
 	tx := make([]Transaction, len(bs))
+	h := bs.Hash()
 	for i, b := range bs {
 		tx[i].Address = b.Address
 		tx[i].Value = b.Value
 		tx[i].Timestamp = b.Timestamp
 		tx[i].Tag = b.Tag
-		if sig[i] != "" {
+		if len(sig) > i && sig[i] != "" {
 			tx[i].SignatureMessageFragment = sig[i]
 		} else {
 			tx[i].SignatureMessageFragment = emptySig
@@ -61,7 +65,7 @@ func (bs Bundles) Txs(sig []Trytes) []Transaction {
 		tx[i].Nonce = emptyHash
 		tx[i].CurrentIndex = int64(i)
 		tx[i].LastIndex = int64(len(bs) - 1)
-		//Bundle is not assigned.
+		tx[i].Bundle = h
 	}
 	return tx
 }
