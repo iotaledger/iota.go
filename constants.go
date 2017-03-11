@@ -37,6 +37,7 @@ const (
 	MaxTryteValue         = 13
 	SignatureSize         = 6561
 	HashSize              = 243
+	MinWeightMagnitude    = 15
 )
 
 var (

@@ -131,3 +131,14 @@ func (t *Transaction) Trits() Trits {
 	copy(tr[nonceTrinaryOffset:], t.Nonce.Trits())
 	return tr
 }
+
+//HasValidNonce checks t's hash has valid mwm.
+func (t *Transaction) HasValidNonce() bool {
+	h := t.Trits().Hash().Trytes()
+	for i := len(h) - 1; i >= len(h)-1-MinWeightMagnitude/3; i-- {
+		if h[i] != '9' {
+			return false
+		}
+	}
+	return true
+}
