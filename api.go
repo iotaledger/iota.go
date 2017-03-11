@@ -63,7 +63,7 @@ func RandomNode() string {
 //API is for calling APIs.
 type API struct {
 	client   *http.Client
-	endpoint string
+	Endpoint string
 }
 
 // NewAPI takes an (optional) endpoint and optional http.Client and returns
@@ -78,7 +78,7 @@ func NewAPI(endpoint string, c *http.Client) (*API, error) {
 		endpoint = "http://localhost:14265/"
 	}
 
-	return &API{client: c, endpoint: endpoint}, nil
+	return &API{client: c, Endpoint: endpoint}, nil
 }
 
 func (api *API) do(cmd interface{}, out interface{}) error {
@@ -88,7 +88,7 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 	}
 
 	rd := bytes.NewReader(b)
-	req, err := http.NewRequest("POST", api.endpoint, rd)
+	req, err := http.NewRequest("POST", api.Endpoint, rd)
 	if err != nil {
 		return err
 	}
