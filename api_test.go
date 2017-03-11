@@ -234,11 +234,11 @@ func TestAAA(t *testing.T) {
 		t.Errorf("GetTrytes([]) expected err to be nil but got %v", err)
 	}
 	for i := range resp.Trytes {
-		tx, err := NewTransaction(resp.Trytes[i].Trits())
-		if err != nil {
+		tx, errr := NewTransaction(resp.Trytes[i].Trits())
+		if errr != nil {
 			t.Error(err)
 		}
-		fmt.Println(tx, "\n")
+		fmt.Print(tx, "\n\n")
 	}
 	ftr := &FindTransactionsRequest{Bundles: &[]Trytes{"DEXRPLKGBROUQMKCLMRPG9HFKCACDZ9AB9HOJQWERTYWERJNOYLW9PKLOGDUPC9DLGSUH9UHSKJOASJRU"}}
 	respp, err := api.FindTransactions(ftr)

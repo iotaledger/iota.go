@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -72,7 +73,11 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		errResp := &ErrorResponse{}

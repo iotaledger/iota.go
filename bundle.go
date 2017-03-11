@@ -30,7 +30,7 @@ type Bundle struct {
 type Bundles []Bundle
 
 //Add adds one bundle to bundle slice.
-func (bs Bundles) Add(address Trytes, value int64, timestamp int64, tag Trytes, index int) {
+func (bs Bundles) Add(address Trytes, value int64, timestamp int64, tag Trytes, index int) Bundles {
 	if len(bs) != 0 {
 		value = 0
 	}
@@ -40,7 +40,7 @@ func (bs Bundles) Add(address Trytes, value int64, timestamp int64, tag Trytes, 
 		Tag:       tag,
 		Timestamp: time.Unix(timestamp, 0),
 	}
-	bs = append(bs, b)
+	return append(bs, b)
 }
 
 //Txs converts bundles to transactions.

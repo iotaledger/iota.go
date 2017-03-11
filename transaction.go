@@ -29,13 +29,13 @@ var (
 
 //sizes and offsets of tx.
 const (
+	//	valueUsableTrinarySize                = 33
 	signatureMessageFragmentTrinaryOffset = 0
 	signatureMessageFragmentTrinarySize   = 6561
 	addressTrinaryOffset                  = signatureMessageFragmentTrinaryOffset + signatureMessageFragmentTrinarySize
 	addressTrinarySize                    = 243
 	valueTrinaryOffset                    = addressTrinaryOffset + addressTrinarySize
 	valueTrinarySize                      = 81
-	valueUsableTrinarySize                = 33
 	tagTrinaryOffset                      = valueTrinaryOffset + valueTrinarySize
 	tagTrinarySize                        = 81
 	timestampTrinaryOffset                = tagTrinaryOffset + tagTrinarySize
@@ -58,8 +58,6 @@ const (
 		currentIndexTrinarySize + lastIndexTrinarySize + bundleTrinarySize +
 		trunkTransactionTrinarySize + branchTransactionTrinarySize +
 		nonceTrinarySize
-
-	transactionTryteSize = transactionTrinarySize / NumberOfTritsPerTryte
 )
 
 //NewTransaction makes tx from trits.
