@@ -49,12 +49,12 @@ func (c *Curl) Squeeze() Trits {
 // Absorb fills the internal state of the sponge with the given trits.
 func (c *Curl) Absorb(in Trits) {
 	lenn := 0
-	for i := len(in); i > 0; i -= lenn {
+	for i := 0; i < len(in); i += lenn {
 		lenn = 243
-		if len(in) < 243 {
-			lenn = len(in)
+		if len(in)-i < 243 {
+			lenn = len(in) - i
 		}
-		copy(c.State, in[i*243:i*243+lenn])
+		copy(c.State, in[i:i+lenn])
 		c.Transform()
 	}
 }
