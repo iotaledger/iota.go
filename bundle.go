@@ -30,10 +30,7 @@ type Bundle struct {
 type Bundles []Bundle
 
 //Add adds one bundle to bundle slice.
-func (bs Bundles) Add(address Trytes, value int64, timestamp *time.Time, tag Trytes, index int) Bundles {
-	if i != 0 {
-		value = 0
-	}
+func (bs Bundles) Add(address Trytes, value int64, timestamp *time.Time, tag Trytes) Bundles {
 	if tag == "" {
 		tag = emptyHash
 	}
