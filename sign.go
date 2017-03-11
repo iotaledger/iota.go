@@ -1,22 +1,37 @@
 package giota
 
 import (
+	"crypto/rand"
 	"errors"
-	//"log"
 )
 
+//errors used in sign.
 var (
 	ErrSeedTritsLength = errors.New("seed trit slice should be HashSize entries long")
 	ErrKeyTritsLength  = errors.New("key trit slice should be a multiple of HashSize*27 entries long")
 )
 
-// GenerateKey takes a seed encoded as Trits, an index and a security
+//NewSeed generate a random seed.
+func NewSeed() Trytes {
+	var seed Trytes
+	b := make([]byte, 81)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+
+	for _, r := range b {
+		seed += Trytes(TryteAlphabet[int(r)%len(TryteAlphabet)])
+	}
+	return seed
+}
+
+// NewKey takes a seed encoded as Trits, an index and a security
 // level to derive a private key.
-func GenerateKey(seedTrits []int, index, securityLevel int) ([]int, error) {
+func NewKey(seedTrits Trits, index, securityLevel int) Trits {
 	// Utils.increment
 	for i := 0; i < index; i++ {
-		for j, _ := range seedTrits {
-			seedTrits[j] += 1
+		for j := range seedTrits {
+			seedTrits[j]++
 			if seedTrits[j] > 1 {
 				seedTrits[j] = -1
 			} else {
@@ -24,33 +39,24 @@ func GenerateKey(seedTrits []int, index, securityLevel int) ([]int, error) {
 			}
 		}
 	}
+	hash := seedTrits.Hash()
 
-	c := &Curl{}
-	c.Init(nil)
-	c.Absorb(seedTrits)
-	hash := c.Squeeze()
-
-	c.Reset()
+	c := NewCurl()
 	c.Absorb(hash)
 
-	keyTrits := make([]int, HashSize*27*securityLevel)
-	//b := make([]int, HashSize)
-	offset := 0
-
-	for l := securityLevel; l > 0; l-- {
+	keyTrits := make(Trits, HashSize*27*securityLevel)
+	for l := 0; l < securityLevel; l++ {
 		for i := 0; i < 27; i++ {
 			b := c.Squeeze()
-			for j := 0; j < HashSize; j++ {
-				keyTrits[offset] = b[j]
-				offset += 1
-			}
+			copy(keyTrits[(l*27+i)*HashSize:], b)
 		}
 	}
 
-	return keyTrits, nil
+	return keyTrits
 }
 
-func Digests(keyTrits []int) ([]int, error) {
+//Digests calculates hash x 26 for each segments in keyTrits.
+func Digests(keyTrits Trits) (Trits, error) {
 	if len(keyTrits) < HashSize*27 {
 		return nil, ErrKeyTritsLength
 	}
@@ -58,49 +64,125 @@ func Digests(keyTrits []int) ([]int, error) {
 	// Integer division, becaue we don't care about impartial keys.
 	numKeys := len(keyTrits) / (HashSize * 27)
 
-	digests := make([]int, HashSize*numKeys)
-	b := make([]int, HashSize)
+	digests := make(Trits, HashSize*numKeys)
+	b := make(Trits, HashSize)
 	for i := 0; i < numKeys; i++ {
 		keyFragment := keyTrits[i*HashSize*27 : (i+1)*HashSize*27]
 		for j := 0; j < 27; j++ {
-			copy(b, keyFragment[j*HashSize:(j+1)*HashSize])
-			c := &Curl{}
-			c.Init(nil)
+			copy(b, keyFragment[j*HashSize:])
 			for k := 0; k < 26; k++ {
-				c.Absorb(b)
-				b = c.Squeeze()
-				c.Reset()
+				b = b.Hash()
 			}
-
 			copy(keyFragment[j*HashSize:], b)
 		}
-
-		c := &Curl{}
-		c.Init(nil)
-		c.Absorb(keyFragment)
-		s := c.Squeeze()
+		s := keyFragment.Hash()
 		copy(digests[i*HashSize:], s)
 	}
 
 	return digests, nil
 }
 
-func Digest(normalizedBundleFragment, signatureFragment []int) ([]int, error) {
-	c := &Curl{}
-	c.Init(nil)
-
-	b := make([]int, HashSize)
+//Digest calculates hash x normalizedBundleFragment[i] for each segments in keyTrits.
+func Digest(normalizedBundleFragment []int8, signatureFragment Trits) Trits {
+	c := NewCurl()
+	b := make(Trits, HashSize)
 	for i := 0; i < 27; i++ {
-		copy(b, signatureFragment[i*HashSize:(i+1)*HashSize])
-		ic := &Curl{}
-		ic.Init(nil)
+		copy(b, signatureFragment[i*HashSize:])
 		for j := normalizedBundleFragment[i] + 13; j > 0; j-- {
-			ic.Absorb(b)
-			b = ic.Squeeze()
-			ic.Reset()
+			b = b.Hash()
 		}
 		c.Absorb(b)
 	}
+	return c.Squeeze()
+}
 
-	return c.Squeeze(), nil
+//AddressFromDigests makes address from digests.
+func AddressFromDigests(dig Trits) Trits {
+	return dig.Hash()
+}
+
+//Sign calculates signature from bundle hash and key
+//by hashing x 13-normalizedBundleFragment[i] for each segments in keyTrits.
+func Sign(normalizedBundleFragment []int8, keyFragment Trits) Trits {
+	b := make(Trits, HashSize)
+	signatureFragment := make(Trits, len(keyFragment))
+	for i := 0; i < 27; i++ {
+		copy(b, keyFragment[i*HashSize:])
+		for j := 0; j < 13-int(normalizedBundleFragment[i]); j++ {
+			b = b.Hash()
+		}
+		copy(signatureFragment[i*243:], b)
+	}
+	return signatureFragment
+}
+
+//ValidateSig validates signatureFragment.
+func ValidateSig(expectedAddress Trytes, signatureFragments []Trits, bundleHash Trytes) bool {
+	normalizedBundleHash := bundleHash.Normalize()
+
+	// Get digests
+	digests := make(Trits, 243*len(signatureFragments))
+	for i := 0; i < len(signatureFragments); i++ {
+		digestBuffer := Digest(normalizedBundleHash[i*27*(i%3):], signatureFragments[i])
+		copy(digests[i*243:], digestBuffer)
+	}
+	address := AddressFromDigests(digests).Trytes()
+
+	return expectedAddress == address
+}
+
+//Address represents address for iota.
+type Address Trytes
+
+//Error types for address.
+var (
+	ErrInvalidAddressTrytes = errors.New("addresses are either 81 or 90 trytes in length")
+	ErrInvalidAddressTrits  = errors.New("addresses are either 243 or 270 trits in length")
+)
+
+//NewAddress generates new address from seed.
+func NewAddress(seed Trytes, index, security int, checksum bool) (Address, error) {
+	k := NewKey(seed.Trits(), index, security)
+	d, err := Digests(k)
+	if err != nil {
+		return "", err
+	}
+	a := Address(AddressFromDigests(d).Trytes())
+	if !checksum {
+		return a, nil
+	}
+	return a.WithChecksum(), nil
+}
+
+//IsValid return nil if address is valid.
+func (a Address) IsValid() error {
+	if !(len(a) == 81 || len(a) == 90) {
+		return ErrInvalidAddressTrytes
+	}
+	if err := Trytes(a).IsValid(); err != nil {
+		return err
+	}
+	return nil
+}
+
+//Checksum returns checksum trytes.
+func (a Address) Checksum() Trytes {
+	if len(a) == 90 {
+		return Trytes(a[81:])
+	}
+	return Trytes(a).Trits().Hash().Trytes()[:9]
+}
+
+//WithChecksum returns Address+checksum.
+func (a Address) WithChecksum() Address {
+	if len(a) == 90 {
+		return a
+	}
+	cu := a.Checksum()
+	return a + Address(cu)
+}
+
+//WithoutChecksum returns checksum parts of address trytes.
+func (a Address) WithoutChecksum() Address {
+	return a[:81]
 }

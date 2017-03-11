@@ -1,3 +1,8 @@
+[![Build Status](https://travis-ci.org/utamaro/giota.svg?branch=master)](https://travis-ci.org/utamaro/giota)
+[![GoDoc](https://godoc.org/github.com/utamaro/giota?status.svg)](https://godoc.org/github.com/utamaro/giota)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/utamaro/giota/master/LICENSE)
+
+
 gIOTA
 =====
 

@@ -1,34 +1,29 @@
 package giota
 
-import ()
-
+//constants for Sizes.
 const (
-	HashSize         = 243
-	AddressTritsLen  = HashSize
-	AddressTrytesLen = AddressTritsLen / NumberOfTritsPerTryte
-	StateSize        = 729
+	stateSize = 729
 )
 
 var (
-	TruthTable = []int{1, 0, -1, 0, 1, -1, 0, 0, -1, 1, 0}
-	Indices    = make([]int, StateSize+1)
+	truthTable = Trits{1, 0, -1, 0, 1, -1, 0, 0, -1, 1, 0}
+	indices    = make([]int, stateSize+1)
 )
 
 func init() {
-	for i := 0; i < StateSize; i++ {
+	for i := 0; i < stateSize; i++ {
 		p := -365
-		if Indices[i] < 365 {
+		if indices[i] < 365 {
 			p = 364
 		}
-		Indices[i+1] = Indices[i] + p
+		indices[i+1] = indices[i] + p
 	}
 }
 
 // Curl is a sponge function with an internal state of size StateSize.
 // b = r + c, b = StateSize, r = HashSize, c = StateSize - HashSize
 type Curl struct {
-	state     []int
-	stateCopy []int
+	State Trits
 }
 
 // NewCurl initializes a new instance with an empty state, which
@@ -36,71 +31,56 @@ type Curl struct {
 // 		c := &Curl{}
 // 		c.Init([]int{})
 func NewCurl() *Curl {
-	c := &Curl{}
-	c.Init([]int{})
-
+	c := &Curl{
+		State: make(Trits, stateSize),
+	}
 	return c
 }
 
-func (c *Curl) Init(state []int) {
-	c.state = make([]int, StateSize)
-	c.stateCopy = make([]int, StateSize)
-
-	if state != nil {
-		copy(c.state, state)
-	}
-}
-
-func (c *Curl) Squeeze() []int {
-	ret := make([]int, HashSize)
-	copy(ret, c.state[:HashSize])
+//Squeeze do Squeeze in sponge func.
+func (c *Curl) Squeeze() Trits {
+	ret := make(Trits, HashSize)
+	copy(ret, c.State[:HashSize])
 	c.Transform()
 
 	return ret
 }
 
 // Absorb fills the internal state of the sponge with the given trits.
-func (c *Curl) Absorb(in []int) {
-	c.absorbWithOffset(in, 0, len(in))
-}
-
-func (c *Curl) absorbWithOffset(in []int, offset, size int) {
-	for {
-		len := 243
-		if size < 243 {
-			len = size
+func (c *Curl) Absorb(in Trits) {
+	lenn := 0
+	for i := len(in); i > 0; i -= lenn {
+		lenn = 243
+		if len(in) < 243 {
+			lenn = len(in)
 		}
-		copy(c.state[0:len], in[offset:offset+len])
+		copy(c.State, in[i*243:i*243+lenn])
 		c.Transform()
-		offset += 243
-		size -= 243
-		if size <= 0 {
-			break
-		}
 	}
 }
 
-// Transforms
+// Transform does Transform in sponge func.
 func (c *Curl) Transform() {
+	cpy := make(Trits, stateSize)
 	for r := 27; r > 0; r-- {
-		copy(c.stateCopy, c.state)
-		for i := 0; i < StateSize; {
-			c.state[i] = TruthTable[c.stateCopy[Indices[i]]+(c.stateCopy[Indices[i+1]]<<2)+5]
-			i++
+		copy(cpy, c.State)
+		for i := 0; i < stateSize; i++ {
+			c.State[i] = truthTable[cpy[indices[i]]+(cpy[indices[i+1]]<<2)+5]
 		}
 	}
-}
-
-// State returns the internal state slice.
-func (c *Curl) State() []int {
-	return c.state
 }
 
 // Reset the internal state of the Curl sponge by filling it with all
 // 0's.
 func (c *Curl) Reset() {
-	for i := range c.state {
-		c.state[i] = 0
+	for i := range c.State {
+		c.State[i] = 0
 	}
-	copy(c.stateCopy, c.state)
+}
+
+//Hash returns hash of in.
+func (t Trits) Hash() Trits {
+	c := NewCurl()
+	c.Absorb(t)
+	return c.Squeeze()
 }
