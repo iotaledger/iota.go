@@ -28,7 +28,7 @@ func TestNewTransactionFromTrits(t *testing.T) {
 	if err != nil {
 		t.Errorf("TransactionFromTrits() expected err to be %#v but got %#v", nil, err)
 	}
-	if !out.Equal(tt) {
+	if out.Trits().Trytes() != tt.Trits().Trytes() {
 		t.Errorf("TransactionFromTrits()\nwant: %#v\nhave: %#v", out, tt)
 	}
 	//t.Logf("tt: %#v\n", tt)
