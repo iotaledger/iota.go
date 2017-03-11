@@ -107,8 +107,8 @@ func Digests(keyTrits Trits) (Trits, error) {
 	return digests, nil
 }
 
-//Digest calculates hash x normalizedBundleFragment[i] for each segments in keyTrits.
-func Digest(normalizedBundleFragment []int8, signatureFragment Trits) Trits {
+//digest calculates hash x normalizedBundleFragment[i] for each segments in keyTrits.
+func digest(normalizedBundleFragment []int8, signatureFragment Trits) Trits {
 	c := NewCurl()
 	b := make(Trits, HashSize)
 	for i := 0; i < 27; i++ {
@@ -121,8 +121,8 @@ func Digest(normalizedBundleFragment []int8, signatureFragment Trits) Trits {
 	return c.Squeeze()
 }
 
-//AddressFromDigests makes address from digests.
-func AddressFromDigests(dig Trits) Trits {
+//addressFromDigests makes address from digests.
+func addressFromDigests(dig Trits) Trits {
 	return dig.Hash()
 }
 
@@ -142,18 +142,17 @@ func Sign(normalizedBundleFragment []int8, keyFragment Trits) Trits {
 }
 
 //ValidateSig validates signatureFragment.
-func ValidateSig(expectedAddress Trytes, signatureFragments []Trits, bundleHash Trytes) bool {
+func ValidateSig(expectedAddress Address, signatureFragments []Trits, bundleHash Trytes) bool {
 	normalizedBundleHash := bundleHash.Normalize()
 
 	// Get digests
 	digests := make(Trits, 243*len(signatureFragments))
-	for i := 0; i < len(signatureFragments); i++ {
-		digestBuffer := Digest(normalizedBundleHash[i*27*(i%3):], signatureFragments[i])
+	for i := range signatureFragments {
+		digestBuffer := digest(normalizedBundleHash[i*27*(i%3):i*27*(i%3)+27], signatureFragments[i])
 		copy(digests[i*243:], digestBuffer)
 	}
-	address := AddressFromDigests(digests).Trytes()
-
-	return expectedAddress == address
+	address := Address(addressFromDigests(digests).Trytes())
+	return expectedAddress.WithoutChecksum() == address.WithoutChecksum()
 }
 
 //Address represents address for iota.
@@ -172,7 +171,7 @@ func NewAddress(seed Trytes, index, security int, checksum bool) (Address, error
 	if err != nil {
 		return "", err
 	}
-	a := Address(AddressFromDigests(d).Trytes())
+	a := Address(addressFromDigests(d).Trytes())
 	if !checksum {
 		return a, nil
 	}
