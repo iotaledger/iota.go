@@ -39,7 +39,6 @@ var (
 	//PublicNode is a list of known public nodes from http://iotasupport.com/lightwallet.shtml.
 	PublicNode = []string{
 		"http://service.iotasupport.com:14265",
-		"http://service.iotasupport.com:14265",
 		"http://walletservice.iota.community:14265",
 		"http://eugene.iota.community:14265",
 		"http://185.101.92.190:14265",
@@ -69,7 +68,7 @@ type API struct {
 // NewAPI takes an (optional) endpoint and optional http.Client and returns
 // an API struct. If an empty endpoint is supplied, then "http://localhost:14265"
 // is used.
-func NewAPI(endpoint string, c *http.Client) (*API, error) {
+func NewAPI(endpoint string, c *http.Client) *API {
 	if c == nil {
 		c = http.DefaultClient
 	}
@@ -78,7 +77,7 @@ func NewAPI(endpoint string, c *http.Client) (*API, error) {
 		endpoint = "http://localhost:14265/"
 	}
 
-	return &API{client: c, Endpoint: endpoint}, nil
+	return &API{client: c, Endpoint: endpoint}
 }
 
 func (api *API) do(cmd interface{}, out interface{}) error {
@@ -86,7 +85,6 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 	if err != nil {
 		return err
 	}
-
 	rd := bytes.NewReader(b)
 	req, err := http.NewRequest("POST", api.Endpoint, rd)
 	if err != nil {
@@ -110,6 +108,9 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 		if err != nil {
 			return err
 		}
+		if errResp.Exception == "" {
+			return fmt.Errorf("http status %d while calling API", resp.StatusCode)
+		}
 		return errors.New(errResp.Exception)
 	}
 
@@ -124,9 +125,11 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 		if err != nil {
 			return err
 		}
+		if errResp.Exception == "" {
+			return fmt.Errorf("exception occured while calling API")
+		}
 		return errors.New(errResp.Exception)
 	}
-
 	return json.Unmarshal(bs, out)
 }
 
@@ -178,10 +181,10 @@ type GetNeighborsRequest struct {
 
 //Neighbor is a part of response of GetNeighbors API.
 type Neighbor struct {
-	Address                     Trytes `json:"address"`
-	NumberOfAllTransactions     int64  `json:"numberOfAllTransactions"`
-	NumberOfInvalidTransactions int64  `json:"numberOfInvalidTransactions"`
-	NumberOfNewTransactions     int64  `json:"numberOfNewTransactions"`
+	Address                     Address `json:"address"`
+	NumberOfAllTransactions     int64   `json:"numberOfAllTransactions"`
+	NumberOfInvalidTransactions int64   `json:"numberOfInvalidTransactions"`
+	NumberOfNewTransactions     int64   `json:"numberOfNewTransactions"`
 }
 
 //GetNeighborsResponse is for GetNeighbors API resonse.
@@ -274,10 +277,10 @@ func (api *API) GetTips() (*GetTipsResponse, error) {
 //FindTransactionsRequest is for FindTransactions API request.
 type FindTransactionsRequest struct {
 	Command   string    `json:"command"`
-	Bundles   *[]Trytes `json:"bundles,omitempty"`
-	Addresses *[]Trytes `json:"addresses,omitempty"`
-	Tags      *[]Trytes `json:"tags,omitempty"`
-	Approvees *[]Trytes `json:"approvees,omitempty"`
+	Bundles   []Trytes  `json:"bundles,omitempty"`
+	Addresses []Address `json:"addresses,omitempty"`
+	Tags      []Trytes  `json:"tags,omitempty"`
+	Approvees []Trytes  `json:"approvees,omitempty"`
 }
 
 //FindTransactionsResponse is for FindTransaction API resonse.
@@ -303,8 +306,8 @@ type GetTrytesRequest struct {
 
 //GetTrytesResponse is for GetTrytes API resonse.
 type GetTrytesResponse struct {
-	Duration int64    `json:"duration"`
-	Trytes   []Trytes `json:"trytes"`
+	Duration int64         `json:"duration"`
+	Trytes   []Transaction `json:"trytes"`
 }
 
 //GetTrytes calls GetTrytes API.
@@ -340,9 +343,9 @@ func (api *API) GetInclusionStates(gis *GetInclusionStatesRequest) (*GetInclusio
 
 //GetBalancesRequest is for GetBalances API request.
 type GetBalancesRequest struct {
-	Command   string   `json:"command"`
-	Addresses []Trytes `json:"addresses"`
-	Threshold int64    `json:"threshold"`
+	Command   string    `json:"command"`
+	Addresses []Address `json:"addresses"`
+	Threshold int64     `json:"threshold"`
 }
 
 //GetBalancesResponse is for GetBalances API resonse.
@@ -356,6 +359,9 @@ type GetBalancesResponse struct {
 //GetBalances calls GetBalances API.
 func (api *API) GetBalances(gb *GetBalancesRequest) (*GetBalancesResponse, error) {
 	gb.Command = "getBalances"
+	if gb.Threshold <= 0 {
+		gb.Threshold = 100
+	}
 
 	resp := &GetBalancesResponse{}
 	err := api.do(gb, resp)

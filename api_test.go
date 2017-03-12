@@ -27,20 +27,10 @@ package giota
 
 import "testing"
 
-const server = "http://iotaserver.forobits.com:14265"
-
-func TestNewAPI(t *testing.T) {
-	_, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
-}
+const server = "http://service.iotasupport.com:14265"
 
 func TestAPIGetNodeInfo(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
 
 	resp, err := api.GetNodeInfo()
 	if err != nil {
@@ -54,7 +44,7 @@ func TestAPIGetNodeInfo(t *testing.T) {
 
 /*
 func TestAPIGetNeighbors(t *testing.T) {
-	api, err := NewAPI(server, nil)
+	api := NewAPI(server, nil)
 	if err != nil {
 		t.Fatalf("GetNodeInfo() expected err to be nil but got %v", err)
 	}
@@ -66,7 +56,7 @@ func TestAPIGetNeighbors(t *testing.T) {
 }
 
 func TestAPIAddNeighbors(t *testing.T) {
-	api, err := NewAPI(server, nil)
+	api := NewAPI(server, nil)
 	if err != nil {
 		t.Fatalf("GetNodeInfo() expected err to be nil but got %v", err)
 	}
@@ -81,7 +71,7 @@ func TestAPIAddNeighbors(t *testing.T) {
 }
 
 func TestAPIRemoveNeighbors(t *testing.T) {
-	api, err := NewAPI(server, nil)
+	api := NewAPI(server, nil)
 	if err != nil {
 		t.Fatalf("GetNodeInfo() expected err to be nil but got %v", err)
 	}
@@ -94,9 +84,8 @@ func TestAPIRemoveNeighbors(t *testing.T) {
 		t.Errorf("RemoveNeighbors([]) expected to remove %d got %d", 0, resp.RemovedNeighbors)
 	}
 }
-*/
 func TestAPIGetTips(t *testing.T) {
-	api, err := NewAPI(server, nil)
+	api := NewAPI(server, nil)
 	if err != nil {
 		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
 	}
@@ -109,15 +98,14 @@ func TestAPIGetTips(t *testing.T) {
 	if len(resp.Hashes) < 1 {
 		t.Errorf("GetTips() returned less than one tip")
 	}
+	t.Log(len(resp.Hashes))
 }
+*/
 
 func TestAPIFindTransactions(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
 
-	ftr := &FindTransactionsRequest{Bundles: &[]Trytes{}}
+	ftr := &FindTransactionsRequest{Bundles: []Trytes{"DEXRPLKGBROUQMKCLMRPG9HFKCACDZ9AB9HOJQWERTYWERJNOYLW9PKLOGDUPC9DLGSUH9UHSKJOASJRU"}}
 	resp, err := api.FindTransactions(ftr)
 	if err != nil {
 		t.Errorf("FindTransactions([]) expected err to be nil but got %v", err)
@@ -126,10 +114,7 @@ func TestAPIFindTransactions(t *testing.T) {
 }
 
 func TestAPIGetTrytes(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
 
 	anr := &GetTrytesRequest{Hashes: []Trytes{}}
 	resp, err := api.GetTrytes(anr)
@@ -140,10 +125,7 @@ func TestAPIGetTrytes(t *testing.T) {
 }
 
 func TestAPIGetInclusionStates(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
 
 	anr := &GetInclusionStatesRequest{Transactions: []Trytes{}, Tips: []string{}}
 	resp, err := api.GetInclusionStates(anr)
@@ -154,12 +136,9 @@ func TestAPIGetInclusionStates(t *testing.T) {
 }
 
 func TestAPIGetBalances(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
 
-	gbr := &GetBalancesRequest{Addresses: []Trytes{}, Threshold: 100}
+	gbr := &GetBalancesRequest{Addresses: []Address{}, Threshold: 100}
 	resp, err := api.GetBalances(gbr)
 	if err != nil {
 		t.Errorf("GetBalances([]) expected err to be nil but got %v", err)
@@ -168,10 +147,7 @@ func TestAPIGetBalances(t *testing.T) {
 }
 
 func TestAPIGetTransactionsToApprove(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
 
 	anr := &GetTransactionsToApproveRequest{}
 	resp, err := api.GetTransactionsToApprove(anr)
@@ -184,10 +160,7 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 
 /*
 func TestAPIInterruptAttachingToTangle(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
 
 	resp, err := api.InterruptAttachingToTangle()
 	if err != nil {
@@ -199,10 +172,8 @@ func TestAPIInterruptAttachingToTangle(t *testing.T) {
 // XXX: The following tests are failing because I'd rather not just
 //      constantly attach/broadcast/store the same transaction
 func TestAPIAttachToTangle(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
+
 
 	anr := &AttachToTangleRequest{}
 	resp, err := api.AttachToTangle(anr)
@@ -213,10 +184,8 @@ func TestAPIAttachToTangle(t *testing.T) {
 }
 
 func TestAPIBroadcastTransactions(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
+
 
 	anr := &BroadcastTransactionsRequest{}
 	resp, err := api.BroadcastTransactions(anr)
@@ -227,10 +196,8 @@ func TestAPIBroadcastTransactions(t *testing.T) {
 }
 
 func TestAPIStoreTransactions(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
+
 
 	anr := &StoreTransactionsRequest{}
 	resp, err := api.StoreTransactions(anr)
@@ -242,10 +209,8 @@ func TestAPIStoreTransactions(t *testing.T) {
 */
 /*
 func TestAAA(t *testing.T) {
-	api, err := NewAPI(server, nil)
-	if err != nil {
-		t.Fatalf("NewAPI(empty, nil) expected err to be nil but got %v", err)
-	}
+	api := NewAPI(server, nil)
+
 
 	anr := &GetTrytesRequest{Hashes: []Trytes{"9MMRRSLICRITOROFC9FBVWLFEDNN9KJKYHUMRCJEUDGCYCWTBP9HHBEEJRFAU9FALRJWTU99NZK999999",
 		"NCTWMMQWMKOGYDROQNNJKO9ALHELEHVGKCNPNWYMKXFBPPRYOAM9CHBNAHMYREVUFIPNPWWCWYP999999",
@@ -269,5 +234,21 @@ func TestAAA(t *testing.T) {
 		t.Errorf("FindTransactions([]) expected err to be nil but got %v", err)
 	}
 	fmt.Println(respp.Hashes)
+}
+*/
+/*
+func TestBBB(t *testing.T) {
+	api := NewAPI(server, nil)
+
+
+	anr := &GetTransactionsToApproveRequest{Depth: 1000}
+	resp, err := api.GetTransactionsToApprove(anr)
+	if err != nil {
+		t.Fatalf("GetTips() expected err to be nil but got %v", err)
+	}
+
+	anrr := &GetTrytesRequest{Hashes: []Trytes{resp.TrunkTransaction}}
+	respp, err := api.GetTrytes(anrr)
+	t.Log(respp.Trytes[0])
 }
 */

@@ -26,6 +26,7 @@ SOFTWARE.
 package giota
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 )
@@ -88,14 +89,22 @@ const (
 //NewTransaction makes tx from trits.
 func NewTransaction(trits Trits) (*Transaction, error) {
 	t := Transaction{}
-	trytes := trits.Trytes()
+	err := t.parser(trits)
+	return &t, err
+}
 
-	if err := trits.IsValid(); err != nil || len(trits) != transactionTrinarySize {
-		return nil, errors.New("invalid transaction " + err.Error())
+func (t *Transaction) parser(trits Trits) error {
+
+	if err := trits.IsValid(); err != nil {
+		return errors.New("invalid transaction " + err.Error())
+	}
+	if len(trits) != transactionTrinarySize {
+		return errors.New("invalid trits counts in transaction")
 	}
 
+	trytes := trits.Trytes()
 	if trytes[2279:2295] != "9999999999999999" {
-		return nil, errors.New("invalid transaction")
+		return errors.New("invalid value in transaction")
 	}
 
 	t.SignatureMessageFragment = trits[signatureMessageFragmentTrinaryOffset:signatureMessageFragmentTrinarySize].Trytes()
@@ -111,8 +120,7 @@ func NewTransaction(trits Trits) (*Transaction, error) {
 	t.BranchTransaction = trits[branchTransactionTrinaryOffset : branchTransactionTrinaryOffset+branchTransactionTrinarySize].Trytes()
 	t.Nonce = trits[nonceTrinaryOffset : nonceTrinaryOffset+nonceTrinarySize].Trytes()
 
-	return &t, nil
-
+	return nil
 }
 
 //Trits returns trits representation of t.
@@ -141,4 +149,17 @@ func (t *Transaction) HasValidNonce() bool {
 		}
 	}
 	return true
+}
+
+//UnmarshalJSON makes transaction struct from json.
+func (t *Transaction) UnmarshalJSON(b []byte) error {
+	var s Trytes
+	var err error
+	if err = json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	if err = t.parser(s.Trits()); err != nil {
+		return err
+	}
+	return nil
 }
