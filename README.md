@@ -22,7 +22,7 @@ tritsFrom:=[]int8{1,-1,1,0,1,1,0,-1,0}
 trits,err:=giota.ToTrits(tritsFrom)
 
 //Trytes
-trytes,err:=trits.ToTrytes()
+trytes,err:=trits.Trytes()
 
 //Hash
 hash:=trits.Hash()
