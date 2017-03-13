@@ -1,7 +1,7 @@
-[![Build Status](https://travis-ci.org/utamaro/giota.svg?branch=master)](https://travis-ci.org/utamaro/giota)
-[![GoDoc](https://godoc.org/github.com/utamaro/giota?status.svg)](https://godoc.org/github.com/utamaro/giota)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/utamaro/giota/master/LICENSE)
-[![Coverage Status](https://coveralls.io/repos/utamaro/giota/badge.svg?branch=master)](https://coveralls.io/r/utamaro/giota?branch=master)
+[![Build Status](https://travis-ci.org/iotaledger/iota.lib.go.svg?branch=master)](https://travis-ci.org/iotaledger/iota.lib.go)
+[![GoDoc](https://godoc.org/github.com/iotaledger/iota.lib.go?status.svg)](https://godoc.org/github.com/iotaledger/iota.lib.go)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/iota.lib.go/master/LICENSE)
+[![Coverage Status](https://coveralls.io/repos/iotaledger/iota.lib.go/badge.svg?branch=master)](https://coveralls.io/r/iotaledger/iota.lib.go?branch=master)
 
 
 gIOTA
@@ -9,7 +9,7 @@ gIOTA
 
 Client library for the IOTA reference implementation (IRI).
 
-Refer to [godoc](https://godoc.org/github.com/utamaro/giota) for details.
+Refer to [godoc](https://godoc.org/github.com/iotaledger/iota.lib.go) for details.
 
 
 Example
