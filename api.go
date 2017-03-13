@@ -80,6 +80,16 @@ func NewAPI(endpoint string, c *http.Client) *API {
 	return &API{client: c, endpoint: endpoint}
 }
 
+func handleError(resp *ErrorResponse, err1, err2 error) error {
+	if err1 != nil {
+		return err1
+	}
+	if resp.Exception == "" {
+		return err2
+	}
+	return errors.New(resp.Exception)
+}
+
 func (api *API) do(cmd interface{}, out interface{}) error {
 	b, err := json.Marshal(cmd)
 	if err != nil {
@@ -105,13 +115,7 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 	if resp.StatusCode != http.StatusOK {
 		errResp := &ErrorResponse{}
 		err = json.NewDecoder(resp.Body).Decode(errResp)
-		if err != nil {
-			return err
-		}
-		if errResp.Exception == "" {
-			return fmt.Errorf("http status %d while calling API", resp.StatusCode)
-		}
-		return errors.New(errResp.Exception)
+		return handleError(errResp, err, fmt.Errorf("http status %d while calling API", resp.StatusCode))
 	}
 
 	bs, err := ioutil.ReadAll(resp.Body)
@@ -122,13 +126,7 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 	if bytes.Contains(bs, []byte(`"exception"`)) {
 		errResp := &ErrorResponse{}
 		err = json.Unmarshal(bs, errResp)
-		if err != nil {
-			return err
-		}
-		if errResp.Exception == "" {
-			return fmt.Errorf("exception occured while calling API")
-		}
-		return errors.New(errResp.Exception)
+		return handleError(errResp, err, fmt.Errorf("exception occured while calling API"))
 	}
 	return json.Unmarshal(bs, out)
 }
