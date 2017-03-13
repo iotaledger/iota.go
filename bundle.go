@@ -28,7 +28,8 @@ import (
 	"time"
 )
 
-//Bundle is one menber of  a group in a transaction.
+//Bundle is one transaction in a bundle, in which transactions are bundled
+// (or grouped) together during the creation of a transfer.
 type Bundle struct {
 	Address   Address
 	Value     int64
@@ -36,7 +37,7 @@ type Bundle struct {
 	Timestamp time.Time
 }
 
-//Bundles represents one group of bundles.
+//Bundles represents one bundle.
 type Bundles []Bundle
 
 //Add adds one bundle to bundle slice.

@@ -124,7 +124,7 @@ func (t *Transaction) parser(trits Trits) error {
 	return nil
 }
 
-//Trits returns trits representation of t.
+//Trits converts the transaction to trits.
 func (t *Transaction) Trits() Trits {
 	tr := make(Trits, transactionTrinarySize)
 	copy(tr, t.SignatureMessageFragment.Trits())
@@ -141,7 +141,7 @@ func (t *Transaction) Trits() Trits {
 	return tr
 }
 
-//HasValidNonce checks t's hash has valid mwm.
+//HasValidNonce checks t's hash has valid MinWeightMagnitude.
 func (t *Transaction) HasValidNonce() bool {
 	h := t.Trits().Hash().Trytes()
 	for i := len(h) - 1; i >= len(h)-1-MinWeightMagnitude/3; i-- {

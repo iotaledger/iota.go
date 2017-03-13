@@ -51,10 +51,7 @@ type Curl struct {
 	state Trits
 }
 
-// NewCurl initializes a new instance with an empty state, which
-// is equivalent to
-// 		c := &Curl{}
-// 		c.Init([]int{})
+// NewCurl initializes a new instance with an empty state.
 func NewCurl() *Curl {
 	c := &Curl{
 		state: make(Trits, stateSize),
@@ -103,7 +100,7 @@ func (c *Curl) Reset() {
 	}
 }
 
-//Hash returns hash of in.
+//Hash returns hash of t.
 func (t Trits) Hash() Trits {
 	c := NewCurl()
 	c.Absorb(t)

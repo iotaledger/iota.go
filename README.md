@@ -12,7 +12,7 @@ Client library for the IOTA reference implementation (IRI).
 Refer to [godoc](https://godoc.org/github.com/iotaledger/iota.lib.go) for details.
 
 
-Example
+Examples
 ====
 
 ```go
@@ -22,7 +22,7 @@ tritsFrom:=[]int8{1,-1,1,0,1,1,0,-1,0}
 trits,err:=giota.ToTrits(tritsFrom)
 
 //Trytes
-trytes,err:=trits.Trytes()
+trytes:=trits.Trytes()
 
 //Hash
 hash:=trits.Hash()
@@ -44,12 +44,11 @@ if tx.HasValidNonce(){...}
 trits2:=tx.Trits()
 
 //create signature
-key := giota.NewKey(seed.Trits(), 0, 2)
+key := giota.NewKey(seed.Trits(), index, security)
 norm := bundleHash.Normalize()
 sign := giota.Sign(norm[:27], key[:6561])
 
 //validate signature
-adr, err := giota.NewAddress(seed, 0, 2)
 if giota.ValidateSig(adr, []Trits{sign}, bundleHash) {...}
 ```
 

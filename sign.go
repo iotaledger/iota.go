@@ -36,7 +36,7 @@ var (
 	ErrKeyTritsLength  = errors.New("key trit slice should be a multiple of HashSize*27 entries long")
 )
 
-//NewSeed generate a random seed.
+//NewSeed generate a random Trytes.
 func NewSeed() Trytes {
 	var seed Trytes
 	b := make([]byte, 81)
@@ -152,7 +152,7 @@ func ValidateSig(expectedAddress Address, signatureFragments []Trits, bundleHash
 }
 
 //Address represents address without checksum for iota.
-//Don't use type cast, insted use ToAddress
+//Don't use type cast,  use ToAddress instead
 //to check the validity.
 type Address Trytes
 
@@ -162,7 +162,7 @@ var (
 	ErrInvalidAddressTrits  = errors.New("addresses without checksum are 243 trits in length")
 )
 
-//NewAddress generates new address from seed without checksum.
+//NewAddress generates a new address from seed without checksum.
 func NewAddress(seed Trytes, index, security int) (Address, error) {
 	k := NewKey(seed.Trits(), index, security)
 	d, err := Digests(k)

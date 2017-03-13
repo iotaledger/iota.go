@@ -35,8 +35,8 @@ import (
 	"net/http"
 )
 
+//PublicNodes is a list of known public nodes from http://iotasupport.com/lightwallet.shtml.
 var (
-	//PublicNodes is a list of known public nodes from http://iotasupport.com/lightwallet.shtml.
 	PublicNodes = []string{
 		"http://service.iotasupport.com:14265",
 		"http://walletservice.iota.community:14265",
@@ -131,7 +131,7 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 	return json.Unmarshal(bs, out)
 }
 
-//ErrorResponse is for when occuring exception.
+//ErrorResponse is for occuring exception while calling API.
 type ErrorResponse struct {
 	Exception string `json:"exception"`
 }

@@ -43,8 +43,8 @@ var (
 	}
 )
 
-//Trits is slice of int8.
-//You should not use cast, insted use ToTrits
+//Trits is a slice of int8.
+//You should not use cast, use ToTrits instead
 //to ensure the validity.
 type Trits []int8
 
@@ -104,8 +104,8 @@ func Int2Trits(v int64, size int) Trits {
 	return tr
 }
 
-// Int takes a slice of trits and converts them into an integer,
-// Assumes big-endian notation.
+// Int converts a slice of trits into an integer,
+// Assumes little-endian notation.
 func (t Trits) Int() int64 {
 	var val int64
 	for i := len(t) - 1; i >= 0; i-- {
@@ -114,7 +114,7 @@ func (t Trits) Int() int64 {
 	return val
 }
 
-// Trytes takes a slice of trits and converts them into trytes,
+// Trytes converts a slice of trits into trytes,
 //This panics if len(t)%3!=0
 func (t Trits) Trytes() Trytes {
 	if len(t)%3 != 0 {
@@ -131,19 +131,19 @@ func (t Trits) Trytes() Trytes {
 	return Trytes(o)
 }
 
-//Trytes is string of trytes.
-//You should not use cast, insted use ToTrytes
+//Trytes is a string of trytes.
+//You should not use cast, use ToTrytes instead
 //to ensure the validity.
 type Trytes string
 
-//ToTrytes cast Trytes and checks its validity.
+//ToTrytes cast to Trytes and checks its validity.
 func ToTrytes(t string) (Trytes, error) {
 	tr := Trytes(t)
 	err := tr.IsValid()
 	return tr, err
 }
 
-// Trits takes a slice of trytes and converts them into tryits,
+// Trits converts a slice of trytes into tryits,
 func (t Trytes) Trits() Trits {
 	trits := make(Trits, len(t)*3)
 	for i := range t {
@@ -153,7 +153,8 @@ func (t Trytes) Trits() Trits {
 	return trits
 }
 
-//Normalize converts trits sum of whose bits is zero.
+//Normalize changes bits in trits so that
+//sum of trits bits is zero.
 func (t Trytes) Normalize() []int8 {
 	normalized := make([]int8, len(t))
 	sum := 0
@@ -185,7 +186,7 @@ func (t Trytes) Normalize() []int8 {
 	return normalized
 }
 
-//IsValidTryte returns true if t is valid tryte.
+//IsValidTryte returns nil if t is valid trytes.
 func IsValidTryte(t rune) error {
 	if ('A' <= t && t <= 'Z') || t == '9' {
 		return nil

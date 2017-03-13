@@ -25,7 +25,7 @@ SOFTWARE.
 
 package giota
 
-//Various constants for this lib.
+//Various constants for giota.
 const (
 	NumberOfTritsPerTryte = 3
 	TryteAlphabet         = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
