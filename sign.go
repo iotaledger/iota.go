@@ -225,10 +225,10 @@ func (a Address) Trits() Trits {
 
 //WithChecksum returns Address+checksum.
 //This panics if len(address)<81
-func (a Address) WithChecksum() Address {
+func (a Address) WithChecksum() Trytes {
 	if len(a) != 81 {
 		panic("len(address) must be 81")
 	}
 	cu := a.Checksum()
-	return a + Address(cu)
+	return Trytes(a) + cu
 }
