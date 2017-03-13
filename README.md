@@ -46,10 +46,10 @@ trits2:=tx.Trits()
 //create signature
 key := giota.NewKey(seed.Trits(), 0, 2)
 norm := bundleHash.Normalize()
-sign := Sign(norm[:27], key[:6561])
+sign := giota.Sign(norm[:27], key[:6561])
 
 //validate signature
-adr, err := NewAddress(seed, 0, 2)
+adr, err := giota.NewAddress(seed, 0, 2)
 if giota.ValidateSig(adr, []Trits{sign}, bundleHash) {...}
 ```
 
