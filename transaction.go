@@ -26,6 +26,7 @@ SOFTWARE.
 package giota
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 )
@@ -149,4 +150,17 @@ func (t *Transaction) HasValidNonce() bool {
 		}
 	}
 	return true
+}
+
+//UnmarshalJSON makes transaction struct from json.
+func (t *Transaction) UnmarshalJSON(b []byte) error {
+	var s Trytes
+	var err error
+	if err = json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	if err = t.parser(s.Trits()); err != nil {
+		return err
+	}
+	return nil
 }
