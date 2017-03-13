@@ -9,9 +9,7 @@ gIOTA
 
 Client library for the IOTA reference implementation (IRI).
 
-This was added some functions from [original program](https://github.com/iotaledger/iota.lib.go).
-
-Refer [godoc](https://godoc.org/github.com/utamaro/giota).
+Refer to [godoc](https://godoc.org/github.com/utamaro/giota) for details.
 
 Development Status: Alpha+
 =========================

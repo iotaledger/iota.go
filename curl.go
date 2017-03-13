@@ -48,7 +48,7 @@ func init() {
 // Curl is a sponge function with an internal state of size StateSize.
 // b = r + c, b = StateSize, r = HashSize, c = StateSize - HashSize
 type Curl struct {
-	State Trits
+	state Trits
 }
 
 // NewCurl initializes a new instance with an empty state, which
@@ -57,7 +57,7 @@ type Curl struct {
 // 		c.Init([]int{})
 func NewCurl() *Curl {
 	c := &Curl{
-		State: make(Trits, stateSize),
+		state: make(Trits, stateSize),
 	}
 	return c
 }
@@ -65,7 +65,7 @@ func NewCurl() *Curl {
 //Squeeze do Squeeze in sponge func.
 func (c *Curl) Squeeze() Trits {
 	ret := make(Trits, HashSize)
-	copy(ret, c.State[:HashSize])
+	copy(ret, c.state[:HashSize])
 	c.Transform()
 
 	return ret
@@ -79,7 +79,7 @@ func (c *Curl) Absorb(in Trits) {
 		if len(in)-i < 243 {
 			lenn = len(in) - i
 		}
-		copy(c.State, in[i:i+lenn])
+		copy(c.state, in[i:i+lenn])
 		c.Transform()
 	}
 }
@@ -88,9 +88,9 @@ func (c *Curl) Absorb(in Trits) {
 func (c *Curl) Transform() {
 	cpy := make(Trits, stateSize)
 	for r := 27; r > 0; r-- {
-		copy(cpy, c.State)
+		copy(cpy, c.state)
 		for i := 0; i < stateSize; i++ {
-			c.State[i] = truthTable[cpy[indices[i]]+(cpy[indices[i+1]]<<2)+5]
+			c.state[i] = truthTable[cpy[indices[i]]+(cpy[indices[i+1]]<<2)+5]
 		}
 	}
 }
@@ -98,8 +98,8 @@ func (c *Curl) Transform() {
 // Reset the internal state of the Curl sponge by filling it with all
 // 0's.
 func (c *Curl) Reset() {
-	for i := range c.State {
-		c.State[i] = 0
+	for i := range c.state {
+		c.state[i] = 0
 	}
 }
 

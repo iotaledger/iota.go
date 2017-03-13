@@ -26,7 +26,6 @@ SOFTWARE.
 package giota
 
 import (
-	"encoding/json"
 	"errors"
 	"time"
 )
@@ -55,7 +54,6 @@ var (
 
 //sizes and offsets of tx.
 const (
-	//	valueUsableTrinarySize                = 33
 	signatureMessageFragmentTrinaryOffset = 0
 	signatureMessageFragmentTrinarySize   = 6561
 	addressTrinaryOffset                  = signatureMessageFragmentTrinaryOffset + signatureMessageFragmentTrinarySize
@@ -94,7 +92,6 @@ func NewTransaction(trits Trits) (*Transaction, error) {
 }
 
 func (t *Transaction) parser(trits Trits) error {
-
 	if err := trits.IsValid(); err != nil {
 		return errors.New("invalid transaction " + err.Error())
 	}
@@ -106,9 +103,12 @@ func (t *Transaction) parser(trits Trits) error {
 	if trytes[2279:2295] != "9999999999999999" {
 		return errors.New("invalid value in transaction")
 	}
-
+	var err error
 	t.SignatureMessageFragment = trits[signatureMessageFragmentTrinaryOffset:signatureMessageFragmentTrinarySize].Trytes()
-	t.Address = Address(trits[addressTrinaryOffset : addressTrinaryOffset+addressTrinarySize].Trytes())
+	t.Address, err = trits[addressTrinaryOffset : addressTrinaryOffset+addressTrinarySize].Trytes().ToAddress()
+	if err != nil {
+		return err
+	}
 	t.Value = trits[valueTrinaryOffset : valueTrinaryOffset+valueTrinarySize].Int()
 	t.Tag = trits[tagTrinaryOffset : tagTrinaryOffset+tagTrinarySize].Trytes()
 	timestamp := trits[timestampTrinaryOffset : timestampTrinaryOffset+timestampTrinarySize].Int()
@@ -127,7 +127,7 @@ func (t *Transaction) parser(trits Trits) error {
 func (t *Transaction) Trits() Trits {
 	tr := make(Trits, transactionTrinarySize)
 	copy(tr, t.SignatureMessageFragment.Trits())
-	copy(tr[addressTrinaryOffset:], Trytes(t.Address.WithoutChecksum()).Trits())
+	copy(tr[addressTrinaryOffset:], Trytes(t.Address).Trits())
 	copy(tr[valueTrinaryOffset:], Int2Trits(t.Value, valueTrinarySize))
 	copy(tr[tagTrinaryOffset:], t.Tag.Trits())
 	copy(tr[timestampTrinaryOffset:], Int2Trits(t.Timestamp.Unix(), timestampTrinarySize))
@@ -149,17 +149,4 @@ func (t *Transaction) HasValidNonce() bool {
 		}
 	}
 	return true
-}
-
-//UnmarshalJSON makes transaction struct from json.
-func (t *Transaction) UnmarshalJSON(b []byte) error {
-	var s Trytes
-	var err error
-	if err = json.Unmarshal(b, &s); err != nil {
-		return err
-	}
-	if err = t.parser(s.Trits()); err != nil {
-		return err
-	}
-	return nil
 }

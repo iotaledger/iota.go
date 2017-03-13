@@ -31,39 +31,33 @@ import (
 	"strings"
 )
 
-//Trit is trit type for iota.
-type Trit int8
-
-//Tryte is tryte type for iota.
-type Tryte byte
-
-//Trits is slice of Trit
-type Trits []Trit
-
-//Trytes is string of trytes.
-type Trytes string
-
-//IsValidTryte returns true if t is valid tryte.
-func IsValidTryte(t rune) error {
-	if ('A' <= t && t <= 'Z') || t == '9' {
-		return nil
+var (
+	tryteToTritsMappings = [][]int8{
+		[]int8{0, 0, 0}, []int8{1, 0, 0}, []int8{-1, 1, 0}, []int8{0, 1, 0},
+		[]int8{1, 1, 0}, []int8{-1, -1, 1}, []int8{0, -1, 1}, []int8{1, -1, 1},
+		[]int8{-1, 0, 1}, []int8{0, 0, 1}, []int8{1, 0, 1}, []int8{-1, 1, 1},
+		[]int8{0, 1, 1}, []int8{1, 1, 1}, []int8{-1, -1, -1}, []int8{0, -1, -1},
+		[]int8{1, -1, -1}, []int8{-1, 0, -1}, []int8{0, 0, -1}, []int8{1, 0, -1},
+		[]int8{-1, 1, -1}, []int8{0, 1, -1}, []int8{1, 1, -1}, []int8{-1, -1, 0},
+		[]int8{0, -1, 0}, []int8{1, -1, 0}, []int8{-1, 0, 0},
 	}
-	return errors.New("invalid character")
+)
+
+//Trits is slice of int8.
+//You should not use cast, insted use ToTrits
+//to ensure the validity.
+type Trits []int8
+
+//ToTrits cast Trits and checks its validity.
+func ToTrits(t []int8) (Trits, error) {
+	tr := Trits(t)
+	err := tr.IsValid()
+	return tr, err
 }
 
-//IsValid returns true if st is valid trytes.
-func (t Trytes) IsValid() error {
-	for _, t := range t {
-		if err := IsValidTryte(t); err != nil {
-			return fmt.Errorf("%s in trytes", err)
-		}
-	}
-	return nil
-}
-
-//IsValid returns true if t is valid trit.
-func (t Trit) IsValid() error {
-	if t >= MinTritValue && t <= MaxTritValue {
+//IsValidTrit returns true if t is valid trit.
+func IsValidTrit(t int8) error {
+	if t >= -1 && t <= 1 {
 		return nil
 	}
 	return errors.New("invalid number")
@@ -72,7 +66,7 @@ func (t Trit) IsValid() error {
 //IsValid returns true if ts is valid trits.
 func (t Trits) IsValid() error {
 	for _, tt := range t {
-		if err := tt.IsValid(); err != nil {
+		if err := IsValidTrit(tt); err != nil {
 			return fmt.Errorf("%s in trits", err)
 		}
 	}
@@ -92,18 +86,6 @@ func (t Trits) Equal(b Trits) bool {
 	return true
 }
 
-var (
-	tryteToTritsMappings = [][]Trit{
-		[]Trit{0, 0, 0}, []Trit{1, 0, 0}, []Trit{-1, 1, 0}, []Trit{0, 1, 0},
-		[]Trit{1, 1, 0}, []Trit{-1, -1, 1}, []Trit{0, -1, 1}, []Trit{1, -1, 1},
-		[]Trit{-1, 0, 1}, []Trit{0, 0, 1}, []Trit{1, 0, 1}, []Trit{-1, 1, 1},
-		[]Trit{0, 1, 1}, []Trit{1, 1, 1}, []Trit{-1, -1, -1}, []Trit{0, -1, -1},
-		[]Trit{1, -1, -1}, []Trit{-1, 0, -1}, []Trit{0, 0, -1}, []Trit{1, 0, -1},
-		[]Trit{-1, 1, -1}, []Trit{0, 1, -1}, []Trit{1, 1, -1}, []Trit{-1, -1, 0},
-		[]Trit{0, -1, 0}, []Trit{1, -1, 0}, []Trit{-1, 0, 0},
-	}
-)
-
 //Int2Trits converts int64 to trits.
 func Int2Trits(v int64, size int) Trits {
 	tr := make(Trits, size)
@@ -113,7 +95,7 @@ func Int2Trits(v int64, size int) Trits {
 		neg = true
 	}
 	for i := 0; v != 0 && i < size; i++ {
-		tr[i] = Trit((v+1)%3) - 1
+		tr[i] = int8((v+1)%3) - 1
 		if neg {
 			tr[i] = -tr[i]
 		}
@@ -133,6 +115,7 @@ func (t Trits) Int() int64 {
 }
 
 // Trytes takes a slice of trits and converts them into trytes,
+//This panics if len(t)%3!=0
 func (t Trits) Trytes() Trytes {
 	if len(t)%3 != 0 {
 		panic("length of trits must be x3.")
@@ -141,11 +124,23 @@ func (t Trits) Trytes() Trytes {
 	for i := 0; i < len(t)/3; i++ {
 		j := t[i*3] + t[i*3+1]*3 + t[i*3+2]*9
 		if j < 0 {
-			j += Trit(len(TryteAlphabet))
+			j += int8(len(TryteAlphabet))
 		}
 		o += TryteAlphabet[j : j+1]
 	}
 	return Trytes(o)
+}
+
+//Trytes is string of trytes.
+//You should not use cast, insted use ToTrytes
+//to ensure the validity.
+type Trytes string
+
+//ToTrytes cast Trytes and checks its validity.
+func ToTrytes(t string) (Trytes, error) {
+	tr := Trytes(t)
+	err := tr.IsValid()
+	return tr, err
 }
 
 // Trits takes a slice of trytes and converts them into tryits,
@@ -188,4 +183,22 @@ func (t Trytes) Normalize() []int8 {
 		}
 	}
 	return normalized
+}
+
+//IsValidTryte returns true if t is valid tryte.
+func IsValidTryte(t rune) error {
+	if ('A' <= t && t <= 'Z') || t == '9' {
+		return nil
+	}
+	return errors.New("invalid character")
+}
+
+//IsValid returns true if st is valid trytes.
+func (t Trytes) IsValid() error {
+	for _, t := range t {
+		if err := IsValidTryte(t); err != nil {
+			return fmt.Errorf("%s in trytes", err)
+		}
+	}
+	return nil
 }

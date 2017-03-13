@@ -36,8 +36,8 @@ import (
 )
 
 var (
-	//PublicNode is a list of known public nodes from http://iotasupport.com/lightwallet.shtml.
-	PublicNode = []string{
+	//PublicNodes is a list of known public nodes from http://iotasupport.com/lightwallet.shtml.
+	PublicNodes = []string{
 		"http://service.iotasupport.com:14265",
 		"http://walletservice.iota.community:14265",
 		"http://eugene.iota.community:14265",
@@ -56,13 +56,13 @@ func RandomNode() string {
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
-	return PublicNode[int(b[0])%len(PublicNode)]
+	return PublicNodes[int(b[0])%len(PublicNodes)]
 }
 
 //API is for calling APIs.
 type API struct {
 	client   *http.Client
-	Endpoint string
+	endpoint string
 }
 
 // NewAPI takes an (optional) endpoint and optional http.Client and returns
@@ -77,7 +77,7 @@ func NewAPI(endpoint string, c *http.Client) *API {
 		endpoint = "http://localhost:14265/"
 	}
 
-	return &API{client: c, Endpoint: endpoint}
+	return &API{client: c, endpoint: endpoint}
 }
 
 func (api *API) do(cmd interface{}, out interface{}) error {
@@ -86,7 +86,7 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 		return err
 	}
 	rd := bytes.NewReader(b)
-	req, err := http.NewRequest("POST", api.Endpoint, rd)
+	req, err := http.NewRequest("POST", api.endpoint, rd)
 	if err != nil {
 		return err
 	}
@@ -138,11 +138,6 @@ type ErrorResponse struct {
 	Exception string `json:"exception"`
 }
 
-//GetNodeInfoRequest is for GetNodeAPI request.
-type GetNodeInfoRequest struct {
-	Command string `json:"command"`
-}
-
 //GetNodeInfoResponse is for GetNode APi response.
 type GetNodeInfoResponse struct {
 	AppName                            string `json:"appName"`
@@ -165,18 +160,11 @@ type GetNodeInfoResponse struct {
 
 //GetNodeInfo calls GetNodeInfo API.
 func (api *API) GetNodeInfo() (*GetNodeInfoResponse, error) {
-	gni := &GetNodeInfoRequest{
-		Command: "getNodeInfo",
-	}
-
 	resp := &GetNodeInfoResponse{}
-	err := api.do(gni, resp)
+	err := api.do(map[string]string{
+		"command": "getNodeInfo",
+	}, resp)
 	return resp, err
-}
-
-//GetNeighborsRequest is for GetNeighbors API request.
-type GetNeighborsRequest struct {
-	Command string `json:"command"`
 }
 
 //Neighbor is a part of response of GetNeighbors API.
@@ -195,19 +183,15 @@ type GetNeighborsResponse struct {
 
 //GetNeighbors calls GetNeighbors API.
 func (api *API) GetNeighbors() (*GetNeighborsResponse, error) {
-	gn := &GetNeighborsRequest{
-		Command: "getNeighbors",
-	}
-
 	resp := &GetNeighborsResponse{}
-	err := api.do(gn, resp)
+	err := api.do(map[string]string{
+		"command": "getNeighbors",
+	}, resp)
 	return resp, err
 }
 
 //AddNeighborsRequest is for AddNeighbors API request.
 type AddNeighborsRequest struct {
-	Command string `json:"command"`
-
 	// URIS is an array of strings in the form of "udp://identifier:port"
 	// where identifier can be either an IP address or a domain name.
 	URIS []string `json:"uris"`
@@ -221,17 +205,19 @@ type AddNeighborsResponse struct {
 
 //AddNeighbors calls AddNeighbors API.
 func (api *API) AddNeighbors(an *AddNeighborsRequest) (*AddNeighborsResponse, error) {
-	an.Command = "addNeighbors"
-
 	resp := &AddNeighborsResponse{}
-	err := api.do(an, resp)
+	err := api.do(&struct {
+		Command string `json:"command"`
+		*AddNeighborsRequest
+	}{
+		"addNeighbors",
+		an,
+	}, resp)
 	return resp, err
 }
 
 //RemoveNeighborsRequest is for RemoveNeighbors API request.
 type RemoveNeighborsRequest struct {
-	Command string `json:"command"`
-
 	// URIS is an array of strings in the form of "udp://identifier:port"
 	// where identifier can be either an IP address or a domain name.
 	URIS []string `json:"uris"`
@@ -245,16 +231,15 @@ type RemoveNeighborsResponse struct {
 
 //RemoveNeighbors calls RemoveNeighbors API.
 func (api *API) RemoveNeighbors(rn *RemoveNeighborsRequest) (*RemoveNeighborsResponse, error) {
-	rn.Command = "removeNeighbors"
-
 	resp := &RemoveNeighborsResponse{}
-	err := api.do(rn, resp)
+	err := api.do(&struct {
+		Command string `json:"command"`
+		*RemoveNeighborsRequest
+	}{
+		"removeNeighbors",
+		rn,
+	}, resp)
 	return resp, err
-}
-
-//GetTipsRequest is for GetTips API request.
-type GetTipsRequest struct {
-	Command string `json:"command"`
 }
 
 //GetTipsResponse is for GetTips API resonse.
@@ -265,18 +250,15 @@ type GetTipsResponse struct {
 
 //GetTips calls GetTips API.
 func (api *API) GetTips() (*GetTipsResponse, error) {
-	gt := &GetTipsRequest{
-		Command: "getTips",
-	}
-
 	resp := &GetTipsResponse{}
-	err := api.do(gt, resp)
+	err := api.do(map[string]string{
+		"command": "getTips",
+	}, resp)
 	return resp, err
 }
 
 //FindTransactionsRequest is for FindTransactions API request.
 type FindTransactionsRequest struct {
-	Command   string    `json:"command"`
 	Bundles   []Trytes  `json:"bundles,omitempty"`
 	Addresses []Address `json:"addresses,omitempty"`
 	Tags      []Trytes  `json:"tags,omitempty"`
@@ -291,17 +273,20 @@ type FindTransactionsResponse struct {
 
 //FindTransactions calls FindTransactions API.
 func (api *API) FindTransactions(ft *FindTransactionsRequest) (*FindTransactionsResponse, error) {
-	ft.Command = "findTransactions"
-
 	resp := &FindTransactionsResponse{}
-	err := api.do(ft, resp)
+	err := api.do(&struct {
+		Command string `json:"command"`
+		*FindTransactionsRequest
+	}{
+		"findTransactions",
+		ft,
+	}, resp)
 	return resp, err
 }
 
 //GetTrytesRequest is for GetTrytes API request.
 type GetTrytesRequest struct {
-	Command string   `json:"command"`
-	Hashes  []Trytes `json:"hashes"`
+	Hashes []Trytes `json:"hashes"`
 }
 
 //GetTrytesResponse is for GetTrytes API resonse.
@@ -312,16 +297,19 @@ type GetTrytesResponse struct {
 
 //GetTrytes calls GetTrytes API.
 func (api *API) GetTrytes(gt *GetTrytesRequest) (*GetTrytesResponse, error) {
-	gt.Command = "getTrytes"
-
 	resp := &GetTrytesResponse{}
-	err := api.do(gt, resp)
+	err := api.do(&struct {
+		Command string `json:"command"`
+		*GetTrytesRequest
+	}{
+		"getTrytes",
+		gt,
+	}, resp)
 	return resp, err
 }
 
 //GetInclusionStatesRequest is for GetInclusionStates API request.
 type GetInclusionStatesRequest struct {
-	Command      string   `json:"command"`
 	Transactions []Trytes `json:"transactions"`
 	Tips         []string `json:"tips"`
 }
@@ -334,16 +322,19 @@ type GetInclusionStatesResponse struct {
 
 //GetInclusionStates calls GetInclusionStates API.
 func (api *API) GetInclusionStates(gis *GetInclusionStatesRequest) (*GetInclusionStatesResponse, error) {
-	gis.Command = "getInclusionStates"
-
 	resp := &GetInclusionStatesResponse{}
-	err := api.do(gis, resp)
+	err := api.do(&struct {
+		Command string `json:"command"`
+		*GetInclusionStatesRequest
+	}{
+		"getInclusionStates",
+		gis,
+	}, resp)
 	return resp, err
 }
 
 //GetBalancesRequest is for GetBalances API request.
 type GetBalancesRequest struct {
-	Command   string    `json:"command"`
 	Addresses []Address `json:"addresses"`
 	Threshold int64     `json:"threshold"`
 }
@@ -358,20 +349,23 @@ type GetBalancesResponse struct {
 
 //GetBalances calls GetBalances API.
 func (api *API) GetBalances(gb *GetBalancesRequest) (*GetBalancesResponse, error) {
-	gb.Command = "getBalances"
 	if gb.Threshold <= 0 {
 		gb.Threshold = 100
 	}
-
 	resp := &GetBalancesResponse{}
-	err := api.do(gb, resp)
+	err := api.do(&struct {
+		Command string `json:"command"`
+		*GetBalancesRequest
+	}{
+		"getBalances",
+		gb,
+	}, resp)
 	return resp, err
 }
 
 //GetTransactionsToApproveRequest is for GetTransactionsToApprove API request.
 type GetTransactionsToApproveRequest struct {
-	Command string `json:"command"`
-	Depth   int64  `json:"depth"`
+	Depth int64 `json:"depth"`
 }
 
 //GetTransactionsToApproveResponse is for GetTransactionsToApprove API resonse.
@@ -383,16 +377,19 @@ type GetTransactionsToApproveResponse struct {
 
 //GetTransactionsToApprove calls GetTransactionsToApprove API.
 func (api *API) GetTransactionsToApprove(gtta *GetTransactionsToApproveRequest) (*GetTransactionsToApproveResponse, error) {
-	gtta.Command = "getTransactionsToApprove"
-
 	resp := &GetTransactionsToApproveResponse{}
-	err := api.do(gtta, resp)
+	err := api.do(&struct {
+		Command string `json:"command"`
+		*GetTransactionsToApproveRequest
+	}{
+		"getTransactionsToApprove",
+		gtta,
+	}, resp)
 	return resp, err
 }
 
 //AttachToTangleRequest is for AttachToTangle API request.
 type AttachToTangleRequest struct {
-	Command            string   `json:"command"`
 	TrunkTransaction   Trytes   `json:"trunkTransaction"`
 	BranchTransaction  Trytes   `json:"branchTransaction"`
 	MinWeightMagnitude int64    `json:"minWeightMagnitude"`
@@ -407,64 +404,55 @@ type AttachToTangleResponse struct {
 
 //AttachToTangle calls AttachToTangle API.
 func (api *API) AttachToTangle(att *AttachToTangleRequest) (*AttachToTangleResponse, error) {
-	att.Command = "attachToTangle"
-
 	resp := &AttachToTangleResponse{}
-	err := api.do(att, resp)
+	err := api.do(&struct {
+		Command string `json:"command"`
+		*AttachToTangleRequest
+	}{
+		"attachToTangle",
+		att,
+	}, resp)
 	return resp, err
 }
-
-//InterruptAttachingToTangleRequest is for InterruptAttachingToTangle API request.
-type InterruptAttachingToTangleRequest struct {
-	Command string `json:"command"`
-}
-
-//InterruptAttachingToTangleResponse is for InterruptAttachingToTangle API resonse.
-type InterruptAttachingToTangleResponse struct{}
 
 //InterruptAttachingToTangle calls InterruptAttachingToTangle API.
-func (api *API) InterruptAttachingToTangle() (*InterruptAttachingToTangleResponse, error) {
-	iatt := &InterruptAttachingToTangleRequest{
-		Command: "interruptAttachingToTangle",
-	}
-
-	resp := &InterruptAttachingToTangleResponse{}
-	err := api.do(iatt, resp)
-	return resp, err
+func (api *API) InterruptAttachingToTangle() error {
+	err := api.do(map[string]string{
+		"command": "interruptAttachingToTangle",
+	}, struct{}{})
+	return err
 }
 
 //BroadcastTransactionsRequest is for BroadcastTransactions API request.
 type BroadcastTransactionsRequest struct {
-	Command string   `json:"command"`
-	Trytes  []Trytes `json:"trytes"`
+	Trytes []Trytes `json:"trytes"`
 }
 
-//BroadcastTransactionsResponse is for BroadcastTransactions API resonse.
-type BroadcastTransactionsResponse struct{}
-
 //BroadcastTransactions calls BroadcastTransactions API.
-func (api *API) BroadcastTransactions(bt *BroadcastTransactionsRequest) (*BroadcastTransactionsResponse, error) {
-	bt.Command = "broadcastTransactions"
-
-	resp := &BroadcastTransactionsResponse{}
-	err := api.do(bt, resp)
-	return resp, err
+func (api *API) BroadcastTransactions(bt *BroadcastTransactionsRequest) error {
+	err := api.do(&struct {
+		Command string `json:"command"`
+		*BroadcastTransactionsRequest
+	}{
+		"broadcastTransactions",
+		bt,
+	}, struct{}{})
+	return err
 }
 
 //StoreTransactionsRequest is for StoreTransactions API request.
 type StoreTransactionsRequest struct {
-	Command string   `json:"command"`
-	Trytes  []Trytes `json:"trytes"`
+	Trytes []Trytes `json:"trytes"`
 }
 
-//StoreTransactionsResponse is for StoreTransactions API resonse.
-type StoreTransactionsResponse struct{}
-
 //StoreTransactions calls StoreTransactions API.
-func (api *API) StoreTransactions(st *StoreTransactionsRequest) (*StoreTransactionsResponse, error) {
-	st.Command = "storeTransactions"
-
-	resp := &StoreTransactionsResponse{}
-	err := api.do(st, resp)
-	return resp, err
+func (api *API) StoreTransactions(st *StoreTransactionsRequest) error {
+	err := api.do(&struct {
+		Command string `json:"command"`
+		*StoreTransactionsRequest
+	}{
+		"storeTransactions",
+		st,
+	}, struct{}{})
+	return err
 }

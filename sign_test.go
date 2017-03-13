@@ -48,7 +48,7 @@ func TestDigests(t *testing.T) {
 }
 
 type addressTestCase struct {
-	addr          Address
+	addr          Trytes
 	validAddr     bool
 	checksum      Trytes
 	validChecksum bool
@@ -83,32 +83,40 @@ var addressTCs = []addressTestCase{
 
 func TestNewAddressFromTrytes(t *testing.T) {
 	for _, tc := range addressTCs {
-		err := tc.addr.IsValid()
+		adr, err := tc.addr.ToAddress()
 		if (err != nil) == tc.validAddr {
 			t.Fatalf("NewAddressFromTrytes(%q) expected (err != nil) to be %#v\nerr: %#v", tc.addr, tc.validAddr, err)
 		}
-		if (err == nil && tc.addr.Checksum() != tc.checksum) == tc.validChecksum {
-			t.Fatalf("NewAddressFromTrytes(%q) checksum mismatch\nwant: %s\nhave: %s", tc.addr, tc.checksum, tc.addr.Checksum())
+		if (err == nil && adr.Checksum() != tc.checksum) == tc.validChecksum {
+			t.Fatalf("NewAddressFromTrytes(%q) checksum mismatch\nwant: %s\nhave: %s", tc.addr, tc.checksum, adr.Checksum())
 		}
 	}
 }
 
 func TestAddress(t *testing.T) {
 	var seed Trytes = "WQNZOHUT99PWKEBFSKQSYNC9XHT9GEBMOSJAQDQAXPEZPJNDIUB9TSNWVMHKWICW9WVZXSMDFGISOD9FZ"
-	var adr0 Address = "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL9QTIWOWTY"
-	var adr1 Address = "PQTDJXXKSNYZGRJDXEHHMNCLUVOIRZC9VXYLSITYMVCQDQERAHAUZJKRNBQEUHOLEAXRUSQBNYVJWESYRPLAKVDWST"
-	adr, err := NewAddress(seed, 0, 2, true)
+	var adr0 Trytes = "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL9QTIWOWTY"
+	var adr1 Trytes = "PQTDJXXKSNYZGRJDXEHHMNCLUVOIRZC9VXYLSITYMVCQDQERAHAUZJKRNBQEUHOLEAXRUSQBNYVJWESYRPLAKVDWST"
+	adr, err := NewAddress(seed, 0, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if adr0 != adr {
+	adr00, err := adr0.ToAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if adr00 != adr {
 		t.Error("address unmatch", adr)
 	}
-	adr, err = NewAddress(seed, 1, 2, true)
+	adr, err = NewAddress(seed, 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if adr1 != adr {
+	adr11, err := adr1.ToAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if adr11 != adr {
 		t.Error("address unmatch", adr)
 	}
 }
@@ -129,7 +137,7 @@ func TestSign(t *testing.T) {
 		t.Error("sig is incorrect.")
 	}
 
-	adr, err := NewAddress(seed, 0, 2, true)
+	adr, err := NewAddress(seed, 0, 2)
 	if err != nil {
 		t.Fatal(err)
 	}

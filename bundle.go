@@ -92,7 +92,7 @@ func (bs Bundles) Hash() Trytes {
 	c := NewCurl()
 	buf := make(Trits, 243+81*3)
 	for i, b := range bs {
-		copy(buf, b.Address.WithoutChecksum().Trits())
+		copy(buf, b.Address.Trits())
 		copy(buf[243:], Int2Trits(b.Value, 81))
 		copy(buf[243+81:], b.Tag.Trits())
 		copy(buf[243+81+81:], Int2Trits(b.Timestamp.Unix(), 27))

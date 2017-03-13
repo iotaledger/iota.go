@@ -71,7 +71,7 @@ func TestValidTrytes(t *testing.T) {
 
 func TestValidTrit(t *testing.T) {
 	type validTritTC struct {
-		in    Trit
+		in    int8
 		valid bool
 	}
 
@@ -84,7 +84,7 @@ func TestValidTrit(t *testing.T) {
 	}
 
 	for _, tc := range validTritCases {
-		if (tc.in.IsValid() == nil) != tc.valid {
+		if (IsValidTrit(tc.in) == nil) != tc.valid {
 			t.Fatalf("ValidTrit(%q) should be %#v but is not", tc.in, tc.valid)
 		}
 	}

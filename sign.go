@@ -121,11 +121,6 @@ func digest(normalizedBundleFragment []int8, signatureFragment Trits) Trits {
 	return c.Squeeze()
 }
 
-//addressFromDigests makes address from digests.
-func addressFromDigests(dig Trits) Trits {
-	return dig.Hash()
-}
-
 //Sign calculates signature from bundle hash and key
 //by hashing x 13-normalizedBundleFragment[i] for each segments in keyTrits.
 func Sign(normalizedBundleFragment []int8, keyFragment Trits) Trits {
@@ -148,39 +143,64 @@ func ValidateSig(expectedAddress Address, signatureFragments []Trits, bundleHash
 	// Get digests
 	digests := make(Trits, 243*len(signatureFragments))
 	for i := range signatureFragments {
-		digestBuffer := digest(normalizedBundleHash[i*27*(i%3):i*27*(i%3)+27], signatureFragments[i])
+		start := i * 27 * (i % 3)
+		digestBuffer := digest(normalizedBundleHash[start:start+27], signatureFragments[i])
 		copy(digests[i*243:], digestBuffer)
 	}
-	address := Address(addressFromDigests(digests).Trytes())
-	return expectedAddress.WithoutChecksum() == address.WithoutChecksum()
+	address := Address(digests.Hash().Trytes())
+	return expectedAddress == address
 }
 
-//Address represents address for iota.
+//Address represents address without checksum for iota.
+//Don't use type cast, insted use ToAddress
+//to check the validity.
 type Address Trytes
 
 //Error types for address.
 var (
-	ErrInvalidAddressTrytes = errors.New("addresses are either 81 or 90 trytes in length")
-	ErrInvalidAddressTrits  = errors.New("addresses are either 243 or 270 trits in length")
+	ErrInvalidAddressTrytes = errors.New("addresses without checksum are 81 trytes in length")
+	ErrInvalidAddressTrits  = errors.New("addresses without checksum are 243 trits in length")
 )
 
-//NewAddress generates new address from seed.
-func NewAddress(seed Trytes, index, security int, checksum bool) (Address, error) {
+//NewAddress generates new address from seed without checksum.
+func NewAddress(seed Trytes, index, security int) (Address, error) {
 	k := NewKey(seed.Trits(), index, security)
 	d, err := Digests(k)
 	if err != nil {
 		return "", err
 	}
-	a := Address(addressFromDigests(d).Trytes())
-	if !checksum {
-		return a, nil
+	return d.Hash().Trytes().ToAddress()
+}
+
+//ToAddress convert string to address,
+//and checks the validity.
+func ToAddress(t string) (Address, error) {
+	return Trytes(t).ToAddress()
+}
+
+//ToAddress convert trytes(with and without checksum) to address,
+//and checks the validity.
+func (t Trytes) ToAddress() (Address, error) {
+	if len(t) == 90 {
+		t = t[:81]
 	}
-	return a.WithChecksum(), nil
+	a := Address(t)
+	err := a.IsValid()
+	if err != nil {
+		return "", err
+	}
+	if len(t) == 90 {
+		cs := a.Checksum()
+		if t[81:] != cs {
+			return "", errors.New("checksum is illegal")
+		}
+	}
+	return a, nil
 }
 
 //IsValid return nil if address is valid.
 func (a Address) IsValid() error {
-	if !(len(a) == 81 || len(a) == 90) {
+	if !(len(a) == 81) {
 		return ErrInvalidAddressTrytes
 	}
 	if err := Trytes(a).IsValid(); err != nil {
@@ -190,9 +210,10 @@ func (a Address) IsValid() error {
 }
 
 //Checksum returns checksum trytes.
+//This panics if len(address)<81
 func (a Address) Checksum() Trytes {
-	if len(a) == 90 {
-		return Trytes(a[81:])
+	if len(a) != 81 {
+		panic("len(address) must be 81")
 	}
 	return Trytes(a).Trits().Hash().Trytes()[:9]
 }
@@ -203,15 +224,11 @@ func (a Address) Trits() Trits {
 }
 
 //WithChecksum returns Address+checksum.
+//This panics if len(address)<81
 func (a Address) WithChecksum() Address {
-	if len(a) == 90 {
-		return a
+	if len(a) != 81 {
+		panic("len(address) must be 81")
 	}
 	cu := a.Checksum()
 	return a + Address(cu)
-}
-
-//WithoutChecksum returns checksum parts of address trytes.
-func (a Address) WithoutChecksum() Address {
-	return a[:81]
 }
