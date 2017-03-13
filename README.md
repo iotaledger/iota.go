@@ -29,14 +29,14 @@ hash:=trits.Hash()
 
 //API
 api := giota.NewAPI("http://localhost:14265", nil)
-ftr := &giota.FindTransactionsRequest{Bundles: []Trytes{"DEXRPLKGBROUQMKCLMRPG9HFKCACDZ9AB9HOJQWERTYWERJNOYLW9PKLOGDUPC9DLGSUH9UHSKJOASJRU"}}
+ftr := &giota.FindTransactionsRequest{Bundles: []Trytes{"DEXRPL...SJRU"}}
 resp, err := api.FindTransactions(ftr)
 
 ///Address
 index:=0
 security:=2
 adr,err:=giota.NewAddress(trytes,index,seciruty) //without checksum.
-adrWithChecksum := adr.WithChecksum() //return trytes
+adrWithChecksum := adr.WithChecksum() //adrWithChecksum is trytes type.
 
 //transaction
 tx,err:=giota.NewTransaction(trits)
