@@ -25,71 +25,67 @@ SOFTWARE.
 package giota
 
 import (
+	"errors"
+	"fmt"
 	"time"
 )
 
-//Bundle is one transaction in a bundle, in which transactions are bundled
-// (or grouped) together during the creation of a transfer.
-type Bundle struct {
-	Address   Address
-	Value     int64
-	Tag       Trytes
-	Timestamp time.Time
+func pad(orig Trytes, size int) Trytes {
+	out := make([]byte, size)
+	copy(out, []byte(orig))
+	for i := len(orig); i < size; i++ {
+		out[i] = '9'
+	}
+	return Trytes(out)
 }
 
-//Bundles represents one bundle.
-type Bundles []Bundle
+//Bundle is transactions are bundled
+// (or grouped) together during the creation of a transfer.
+type Bundle []Transaction
 
-//Add adds one bundle to bundle slice.
-func (bs *Bundles) Add(num int, address Address, value int64, timestamp *time.Time, tag Trytes) {
+//Add adds one bundle to bundle slice tempolary.
+//For now elements which are not specified are filled with trits 0.
+func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time, tag Trytes) {
 	if tag == "" {
-		tag = EmptyHash
-	}
-	if timestamp == nil {
-		t := time.Now()
-		timestamp = &t
+		tag = emptyHash
 	}
 	for i := 0; i < num; i++ {
 		var v int64
 		if i == 0 {
 			v = value
 		}
-		b := Bundle{
-			Address:   address,
-			Value:     v,
-			Tag:       tag,
-			Timestamp: *timestamp,
+		b := Transaction{
+			SignatureMessageFragment: emptySig,
+			Address:                  address,
+			Value:                    v,
+			Tag:                      pad(tag, tagTrinarySize/3),
+			Timestamp:                timestamp,
+			CurrentIndex:             int64(len(*bs) - 1),
+			LastIndex:                0,
+			Bundle:                   emptyHash,
+			TrunkTransaction:         emptyHash,
+			BranchTransaction:        emptyHash,
+			Nonce:                    emptyHash,
 		}
 		*bs = append(*bs, b)
 	}
 }
 
-//Txs converts bundles to transactions.
-func (bs Bundles) Txs(sig []Trytes) []Transaction {
-	tx := make([]Transaction, len(bs))
+//Finalize filled sigs,bundlehash and indices elements in bundle.
+func (bs Bundle) Finalize(sig []Trytes) {
 	h := bs.Hash()
-	for i, b := range bs {
-		tx[i].Address = b.Address
-		tx[i].Value = b.Value
-		tx[i].Timestamp = b.Timestamp
-		tx[i].Tag = b.Tag
+	for i := range bs {
 		if len(sig) > i && sig[i] != "" {
-			tx[i].SignatureMessageFragment = sig[i]
-		} else {
-			tx[i].SignatureMessageFragment = EmptySig
+			bs[i].SignatureMessageFragment = pad(sig[i], signatureMessageFragmentTrinarySize/3)
 		}
-		tx[i].TrunkTransaction = EmptyHash
-		tx[i].BranchTransaction = EmptyHash
-		tx[i].Nonce = EmptyHash
-		tx[i].CurrentIndex = int64(i)
-		tx[i].LastIndex = int64(len(bs) - 1)
-		tx[i].Bundle = h
+		bs[i].CurrentIndex = int64(i)
+		bs[i].LastIndex = int64(len(bs) - 1)
+		bs[i].Bundle = h
 	}
-	return tx
 }
 
-//Hash calculates hash of bundles.
-func (bs Bundles) Hash() Trytes {
+//Hash calculates hash of Bundle.
+func (bs Bundle) Hash() Trytes {
 	c := NewCurl()
 	buf := make(Trits, 243+81*3)
 	for i, b := range bs {
@@ -102,4 +98,63 @@ func (bs Bundles) Hash() Trytes {
 		c.Absorb(buf)
 	}
 	return c.Squeeze().Trytes()
+}
+
+//Categorize Categorizes a list of transfers into sent and received.
+//It is important to note that zero value transfers (which for example,
+//is being used for storing addresses in the Tangle), are seen as received in this function.
+func (bs Bundle) Categorize(adr Address) (send Bundle, received Bundle) {
+	send = make(Bundle, 0, len(bs))
+	received = make(Bundle, 0, len(bs))
+	for _, b := range bs {
+		if b.Address != adr {
+			continue
+		}
+		if b.Value >= 0 {
+			received = append(received, b)
+		} else {
+			send = append(send, b)
+		}
+	}
+	return
+}
+
+//IsValid checks the validity of Bundle.
+//It checks total balance==0 and its signature.
+//You must call Finalize() beforehand.
+func (bs Bundle) IsValid() error {
+	var total int64
+	sigs := make(map[Address][]Trits)
+	for index, b := range bs {
+		total += b.Value
+		if b.CurrentIndex != int64(index) {
+			return fmt.Errorf("CurrentIndex of index %d is not correct", b.CurrentIndex)
+		}
+		if b.LastIndex != int64(len(bs)-1) {
+			return fmt.Errorf("LastIndex of index %d is not correct", b.CurrentIndex)
+		}
+		if b.Value >= 0 {
+			continue
+		}
+		sigs[b.Address] = append(sigs[b.Address], b.SignatureMessageFragment.Trits())
+		// Find the subsequent txs with the remaining signature fragment
+		for i := index; i < len(bs)-1; i++ {
+			tx := bs[i+1]
+			// Check if new tx is part of the signature fragment
+			if tx.Address == b.Address && tx.Value == 0 {
+				sigs[tx.Address] = append(sigs[tx.Address], tx.SignatureMessageFragment.Trits())
+			}
+		}
+	}
+	// Validate the signatures
+	h := bs.Hash()
+	for adr, sig := range sigs {
+		if !IsValidSig(adr, sig, h) {
+			return errors.New("invalid signature")
+		}
+	}
+	if total != 0 {
+		return errors.New("total balance of Bundle is not 0")
+	}
+	return nil
 }

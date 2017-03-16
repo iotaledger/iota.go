@@ -11,11 +11,18 @@ Client library for the IOTA reference implementation (IRI).
 
 Refer to [godoc](https://godoc.org/github.com/iotaledger/iota.lib.go) for details.
 
+Install
+====
+```
+    $ go get -u github.com/iotaledger/giota
+```
 
 Examples
 ====
 
 ```go
+
+import github.com/iotaledger/giota
 
 //Trits
 tritsFrom:=[]int8{1,-1,1,0,1,1,0,-1,0}
@@ -23,6 +30,8 @@ trits,err:=giota.ToTrits(tritsFrom)
 
 //Trytes
 trytes:=trits.Trytes()
+trytesFrom:="ABCDEAAC9ACB9PO..."
+trytes2,err:=giota.ToTrytes(trytesFrom)
 
 //Hash
 hash:=trits.Hash()
@@ -50,7 +59,21 @@ sign := giota.Sign(norm[:27], key[:6561])
 
 //validate signature
 if giota.ValidateSig(adr, []Trits{sign}, bundleHash) {...}
+
+//send
+	trs := []Transfer{
+		Transfer{
+			Balance: Balance{
+				Address: "KTXF...QTIWOWTY",
+				Value:   20,
+			},
+			Tag: "MOUDAMEPO",
+		},
+	}
+	bdl, err = Send(api, seed, 2, trs, PowGo)
 ```
+
+
 
 Development Status: Alpha+
 =========================
@@ -59,5 +82,11 @@ Tread lightly around here. This library is still very much
 in flux and there are going to be breaking changes.
 
 
+TODO
+=========================
+
+* Multisig
+* More tests :(
+
 <hr>
-Released under the [MIT License](LICENSE).
+Released under the [MIT License](https://raw.githubusercontent.com/iotaledger/iota.lib.go/master/LICENSE).

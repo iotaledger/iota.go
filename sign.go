@@ -38,16 +38,16 @@ var (
 
 //NewSeed generate a random Trytes.
 func NewSeed() Trytes {
-	var seed Trytes
 	b := make([]byte, 81)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
 
-	for _, r := range b {
-		seed += Trytes(TryteAlphabet[int(r)%len(TryteAlphabet)])
+	seed := make([]byte, 81)
+	for i, r := range b {
+		seed[i] = TryteAlphabet[int(r)%len(TryteAlphabet)]
 	}
-	return seed
+	return Trytes(seed)
 }
 
 // NewKey takes a seed encoded as Trits, an index and a security
@@ -136,8 +136,8 @@ func Sign(normalizedBundleFragment []int8, keyFragment Trits) Trits {
 	return signatureFragment
 }
 
-//ValidateSig validates signatureFragment.
-func ValidateSig(expectedAddress Address, signatureFragments []Trits, bundleHash Trytes) bool {
+//IsValidSig validates signatureFragment.
+func IsValidSig(expectedAddress Address, signatureFragments []Trits, bundleHash Trytes) bool {
 	normalizedBundleHash := bundleHash.Normalize()
 
 	// Get digests
@@ -170,6 +170,19 @@ func NewAddress(seed Trytes, index, security int) (Address, error) {
 		return "", err
 	}
 	return d.Hash().Trytes().ToAddress()
+}
+
+//NewAddresses generates new count addresses from seed without checksum.
+func NewAddresses(seed Trytes, start, count, security int) ([]Address, error) {
+	as := make([]Address, count)
+	var err error
+	for i := 0; i < count; i++ {
+		as[i], err = NewAddress(seed, start+i, security)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return as, nil
 }
 
 //ToAddress convert string to address,

@@ -27,27 +27,36 @@ package giota
 
 //Various constants for giota.
 const (
-	NumberOfTritsPerTryte = 3
-	TryteAlphabet         = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	MinTryteValue         = -13
-	MaxTryteValue         = 13
-	SignatureSize         = 6561
-	HashSize              = 243
-	MinWeightMagnitude    = 15
+	TryteAlphabet      = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	MinTryteValue      = -13
+	MaxTryteValue      = 13
+	SignatureSize      = 6561
+	HashSize           = 243
+	MinWeightMagnitude = 18 //must be 18.
+	Depth              = 3
+)
+
+//Units for iota token.
+const (
+	Ki = 1000
+	Mi = 1000000
+	Gi = 1000000000
+	Ti = 1000000000000
+	Pi = 1000000000000000
 )
 
 var (
-	//EmptySig represents empty signature.
-	EmptySig Trytes
-	//EmptyHash represents empty hash.
-	EmptyHash Trytes
+	//emptySig represents empty signature.
+	emptySig Trytes
+	//emptyHash represents empty hash.
+	emptyHash Trytes
 )
 
 func init() {
 	for i := 0; i < SignatureSize/3; i++ {
-		EmptySig += "9"
+		emptySig += "9"
 	}
 	for i := 0; i < HashSize/3; i++ {
-		EmptyHash += "9"
+		emptyHash += "9"
 	}
 }

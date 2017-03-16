@@ -33,6 +33,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"sync"
 )
 
 //PublicNodes is a list of known public nodes from http://iotasupport.com/lightwallet.shtml.
@@ -128,6 +130,9 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 		err = json.Unmarshal(bs, errResp)
 		return handleError(errResp, err, fmt.Errorf("exception occured while calling API"))
 	}
+	if out == nil {
+		return nil
+	}
 	return json.Unmarshal(bs, out)
 }
 
@@ -145,9 +150,9 @@ type GetNodeInfoResponse struct {
 	JREFreeMemory                      int64  `json:"jreFreeMemory"`
 	JREMaxMemory                       int64  `json:"jreMaxMemory"`
 	JRETotalMemory                     int64  `json:"jreTotalMemory"`
-	LatestMilestone                    string `json:"latestMilestone"`
+	LatestMilestone                    Trytes `json:"latestMilestone"`
 	LatestMilestoneIndex               int64  `json:"latestMilestoneIndex"`
-	LatestSolidSubtangleMilestone      string `json:"latestSolidSubtangleMilestone"`
+	LatestSolidSubtangleMilestone      Trytes `json:"latestSolidSubtangleMilestone"`
 	LatestSolidSubtangleMilestoneIndex int64  `json:"latestSolidSubtangleMilestoneIndex"`
 	Neighbors                          int64  `json:"neighbors"`
 	PacketQueueSize                    int64  `json:"packetQueueSize"`
@@ -188,13 +193,6 @@ func (api *API) GetNeighbors() (*GetNeighborsResponse, error) {
 	return resp, err
 }
 
-//AddNeighborsRequest is for AddNeighbors API request.
-type AddNeighborsRequest struct {
-	// URIS is an array of strings in the form of "udp://identifier:port"
-	// where identifier can be either an IP address or a domain name.
-	URIS []string `json:"uris"`
-}
-
 //AddNeighborsResponse is for AddNeighbors API resonse.
 type AddNeighborsResponse struct {
 	Duration       int64 `json:"duration"`
@@ -202,23 +200,16 @@ type AddNeighborsResponse struct {
 }
 
 //AddNeighbors calls AddNeighbors API.
-func (api *API) AddNeighbors(an *AddNeighborsRequest) (*AddNeighborsResponse, error) {
+func (api *API) AddNeighbors(uris []string) (*AddNeighborsResponse, error) {
 	resp := &AddNeighborsResponse{}
 	err := api.do(&struct {
-		Command string `json:"command"`
-		*AddNeighborsRequest
+		Command string   `json:"command"`
+		URIS    []string `json:"uris"`
 	}{
 		"addNeighbors",
-		an,
+		uris,
 	}, resp)
 	return resp, err
-}
-
-//RemoveNeighborsRequest is for RemoveNeighbors API request.
-type RemoveNeighborsRequest struct {
-	// URIS is an array of strings in the form of "udp://identifier:port"
-	// where identifier can be either an IP address or a domain name.
-	URIS []string `json:"uris"`
 }
 
 //RemoveNeighborsResponse is for RemoveNeighbors API resonse.
@@ -228,14 +219,14 @@ type RemoveNeighborsResponse struct {
 }
 
 //RemoveNeighbors calls RemoveNeighbors API.
-func (api *API) RemoveNeighbors(rn *RemoveNeighborsRequest) (*RemoveNeighborsResponse, error) {
+func (api *API) RemoveNeighbors(uris []string) (*RemoveNeighborsResponse, error) {
 	resp := &RemoveNeighborsResponse{}
 	err := api.do(&struct {
-		Command string `json:"command"`
-		*RemoveNeighborsRequest
+		Command string   `json:"command"`
+		URIS    []string `json:"uris"`
 	}{
 		"removeNeighbors",
-		rn,
+		uris,
 	}, resp)
 	return resp, err
 }
@@ -282,11 +273,6 @@ func (api *API) FindTransactions(ft *FindTransactionsRequest) (*FindTransactions
 	return resp, err
 }
 
-//GetTrytesRequest is for GetTrytes API request.
-type GetTrytesRequest struct {
-	Hashes []Trytes `json:"hashes"`
-}
-
 //GetTrytesResponse is for GetTrytes API resonse.
 type GetTrytesResponse struct {
 	Duration int64         `json:"duration"`
@@ -294,22 +280,16 @@ type GetTrytesResponse struct {
 }
 
 //GetTrytes calls GetTrytes API.
-func (api *API) GetTrytes(gt *GetTrytesRequest) (*GetTrytesResponse, error) {
+func (api *API) GetTrytes(hashes []Trytes) (*GetTrytesResponse, error) {
 	resp := &GetTrytesResponse{}
 	err := api.do(&struct {
-		Command string `json:"command"`
-		*GetTrytesRequest
+		Command string   `json:"command"`
+		Hashes  []Trytes `json:"hashes"`
 	}{
 		"getTrytes",
-		gt,
+		hashes,
 	}, resp)
 	return resp, err
-}
-
-//GetInclusionStatesRequest is for GetInclusionStates API request.
-type GetInclusionStatesRequest struct {
-	Transactions []Trytes `json:"transactions"`
-	Tips         []string `json:"tips"`
 }
 
 //GetInclusionStatesResponse is for GetInclusionStates API resonse.
@@ -319,51 +299,101 @@ type GetInclusionStatesResponse struct {
 }
 
 //GetInclusionStates calls GetInclusionStates API.
-func (api *API) GetInclusionStates(gis *GetInclusionStatesRequest) (*GetInclusionStatesResponse, error) {
+func (api *API) GetInclusionStates(tx []Trytes, tips []Trytes) (*GetInclusionStatesResponse, error) {
 	resp := &GetInclusionStatesResponse{}
 	err := api.do(&struct {
-		Command string `json:"command"`
-		*GetInclusionStatesRequest
+		Command      string   `json:"command"`
+		Transactions []Trytes `json:"transactions"`
+		Tips         []Trytes `json:"tips"`
 	}{
 		"getInclusionStates",
-		gis,
+		tx,
+		tips,
 	}, resp)
 	return resp, err
 }
 
-//GetBalancesRequest is for GetBalances API request.
-type GetBalancesRequest struct {
-	Addresses []Address `json:"addresses"`
-	Threshold int64     `json:"threshold"`
+//Balance is total balance of an Address.
+type Balance struct {
+	Address Address
+	Value   int64
+}
+
+//Balances is slice of Balance.
+type Balances []Balance
+
+//Total returns the total balance.
+func (bs Balances) Total() int64 {
+	var total int64
+	for _, b := range bs {
+		total += b.Value
+	}
+	return total
 }
 
 //GetBalancesResponse is for GetBalances API resonse.
 type GetBalancesResponse struct {
-	Duration       int64    `json:"duration"`
-	Balances       []string `json:"balances"`
-	Milestone      Trytes   `json:"milestone"`
-	MilestoneIndex int64    `json:"milestoneIndex"`
+	Duration       int64
+	Balances       []int64
+	Milestone      Trytes
+	MilestoneIndex int64
+}
+
+//Balances call GetBalances API and returns address-balance pair struct.
+func (api *API) Balances(adr []Address) (Balances, error) {
+	r, err := api.GetBalances(adr, 100)
+	if err != nil {
+		return nil, err
+	}
+	bs := make(Balances, 0, len(adr))
+	for i, bal := range r.Balances {
+		if bal <= 0 {
+			continue
+		}
+		b := Balance{
+			Address: adr[i],
+			Value:   bal,
+		}
+		bs = append(bs, b)
+	}
+	return bs, nil
 }
 
 //GetBalances calls GetBalances API.
-func (api *API) GetBalances(gb *GetBalancesRequest) (*GetBalancesResponse, error) {
-	if gb.Threshold <= 0 {
-		gb.Threshold = 100
+func (api *API) GetBalances(adr []Address, threshold int64) (*GetBalancesResponse, error) {
+	if threshold <= 0 {
+		threshold = 100
 	}
-	resp := &GetBalancesResponse{}
+	type getBalancesResponse struct {
+		Duration       int64    `json:"duration"`
+		Balances       []string `json:"balances"`
+		Milestone      Trytes   `json:"milestone"`
+		MilestoneIndex int64    `json:"milestoneIndex"`
+	}
+
+	resp := &getBalancesResponse{}
 	err := api.do(&struct {
-		Command string `json:"command"`
-		*GetBalancesRequest
+		Command   string    `json:"command"`
+		Addresses []Address `json:"addresses"`
+		Threshold int64     `json:"threshold"`
 	}{
 		"getBalances",
-		gb,
+		adr,
+		threshold,
 	}, resp)
-	return resp, err
-}
-
-//GetTransactionsToApproveRequest is for GetTransactionsToApprove API request.
-type GetTransactionsToApproveRequest struct {
-	Depth int64 `json:"depth"`
+	r := &GetBalancesResponse{
+		Duration:       resp.Duration,
+		Balances:       make([]int64, len(resp.Balances)),
+		Milestone:      resp.Milestone,
+		MilestoneIndex: resp.MilestoneIndex,
+	}
+	for i, ba := range resp.Balances {
+		r.Balances[i], err = strconv.ParseInt(ba, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return r, err
 }
 
 //GetTransactionsToApproveResponse is for GetTransactionsToApprove API resonse.
@@ -374,30 +404,30 @@ type GetTransactionsToApproveResponse struct {
 }
 
 //GetTransactionsToApprove calls GetTransactionsToApprove API.
-func (api *API) GetTransactionsToApprove(gtta *GetTransactionsToApproveRequest) (*GetTransactionsToApproveResponse, error) {
+func (api *API) GetTransactionsToApprove(depth int64) (*GetTransactionsToApproveResponse, error) {
 	resp := &GetTransactionsToApproveResponse{}
 	err := api.do(&struct {
 		Command string `json:"command"`
-		*GetTransactionsToApproveRequest
+		Depth   int64  `json:"depth"`
 	}{
 		"getTransactionsToApprove",
-		gtta,
+		depth,
 	}, resp)
 	return resp, err
 }
 
 //AttachToTangleRequest is for AttachToTangle API request.
 type AttachToTangleRequest struct {
-	TrunkTransaction   Trytes   `json:"trunkTransaction"`
-	BranchTransaction  Trytes   `json:"branchTransaction"`
-	MinWeightMagnitude int64    `json:"minWeightMagnitude"`
-	Trytes             []Trytes `json:"trytes"`
+	TrunkTransaction   Trytes        `json:"trunkTransaction"`
+	BranchTransaction  Trytes        `json:"branchTransaction"`
+	MinWeightMagnitude int64         `json:"minWeightMagnitude"`
+	Trytes             []Transaction `json:"trytes"`
 }
 
 //AttachToTangleResponse is for AttachToTangle API resonse.
 type AttachToTangleResponse struct {
-	Duration int64    `json:"duration"`
-	Trytes   []Trytes `json:"trytes"`
+	Duration int64         `json:"duration"`
+	Trytes   []Transaction `json:"trytes"`
 }
 
 //AttachToTangle calls AttachToTangle API.
@@ -417,40 +447,68 @@ func (api *API) AttachToTangle(att *AttachToTangleRequest) (*AttachToTangleRespo
 func (api *API) InterruptAttachingToTangle() error {
 	err := api.do(map[string]string{
 		"command": "interruptAttachingToTangle",
-	}, struct{}{})
+	}, nil)
 	return err
-}
-
-//BroadcastTransactionsRequest is for BroadcastTransactions API request.
-type BroadcastTransactionsRequest struct {
-	Trytes []Trytes `json:"trytes"`
 }
 
 //BroadcastTransactions calls BroadcastTransactions API.
-func (api *API) BroadcastTransactions(bt *BroadcastTransactionsRequest) error {
+func (api *API) BroadcastTransactions(trytes []Transaction) error {
 	err := api.do(&struct {
-		Command string `json:"command"`
-		*BroadcastTransactionsRequest
+		Command string        `json:"command"`
+		Trytes  []Transaction `json:"trytes"`
 	}{
 		"broadcastTransactions",
-		bt,
-	}, struct{}{})
+		trytes,
+	}, nil)
 	return err
-}
-
-//StoreTransactionsRequest is for StoreTransactions API request.
-type StoreTransactionsRequest struct {
-	Trytes []Trytes `json:"trytes"`
 }
 
 //StoreTransactions calls StoreTransactions API.
-func (api *API) StoreTransactions(st *StoreTransactionsRequest) error {
+func (api *API) StoreTransactions(trytes []Trytes) error {
 	err := api.do(&struct {
-		Command string `json:"command"`
-		*StoreTransactionsRequest
+		Command string   `json:"command"`
+		Trytes  []Trytes `json:"trytes"`
 	}{
 		"storeTransactions",
-		st,
-	}, struct{}{})
+		trytes,
+	}, nil)
 	return err
+}
+
+//GetLatestInclusion takes the most recent solid milestone as returned by getNodeInfo
+//and uses it to get the inclusion states of a list of transaction hashes
+func (api *API) GetLatestInclusion(hash []Trytes) ([]bool, error) {
+	var gt *GetTrytesResponse
+	var ni *GetNodeInfoResponse
+	var err1 error
+	var err2 error
+	wd := sync.WaitGroup{}
+	wd.Add(2)
+	go func() {
+		gt, err1 = api.GetTrytes(hash)
+		wd.Done()
+	}()
+	go func() {
+		ni, err2 = api.GetNodeInfo()
+		wd.Done()
+	}()
+	wd.Wait()
+	if err1 != nil {
+		return nil, err1
+	}
+	if err2 != nil {
+		return nil, err2
+	}
+	if len(gt.Trytes) == 0 {
+		return nil, errors.New("transaction is not found while GetTrytes")
+	}
+
+	resp, err := api.GetInclusionStates(hash, []Trytes{ni.LatestMilestone})
+	if err != nil {
+		return nil, err2
+	}
+	if len(resp.States) == 0 {
+		return nil, errors.New("transaction is not found while GetInclusionStates")
+	}
+	return resp.States, nil
 }

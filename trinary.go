@@ -114,10 +114,15 @@ func (t Trits) Int() int64 {
 	return val
 }
 
+//CanTrytes returns true if t can be converted to trytes.
+func (t Trits) CanTrytes() bool {
+	return len(t)%3 == 0
+}
+
 // Trytes converts a slice of trits into trytes,
 //This panics if len(t)%3!=0
 func (t Trits) Trytes() Trytes {
-	if len(t)%3 != 0 {
+	if !t.CanTrytes() {
 		panic("length of trits must be x3.")
 	}
 	o := ""

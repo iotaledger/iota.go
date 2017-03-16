@@ -29,7 +29,7 @@ import (
 )
 
 func TestBundle(t *testing.T) {
-	var bs Bundles
+	var bs Bundle
 	adr := []Address{
 		"PQTDJXXKSNYZGRJDXEHHMNCLUVOIRZC9VXYLSITYMVCQDQERAHAUZJKRNBQEUHOLEAXRUSQBNYVJWESYR",
 		"KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL",
@@ -51,9 +51,14 @@ func TestBundle(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		bs.Add(1, adr[i], value[i], &tss, "")
+		bs.Add(1, adr[i], value[i], tss, "")
 	}
 	if bs.Hash() != hash {
 		t.Error("hash of bundles is illegal.", bs.Hash())
+	}
+	bs.Finalize([]Trytes{})
+	send, receive := bs.Categorize(adr[1])
+	if len(send) != 1 || len(receive) != 1 {
+		t.Error("Categorize is incorrect")
 	}
 }

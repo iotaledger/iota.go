@@ -88,11 +88,14 @@ const (
 //NewTransaction makes tx from trits.
 func NewTransaction(trits Trits) (*Transaction, error) {
 	t := Transaction{}
+	if err := checkTx(trits); err != nil {
+		return nil, err
+	}
 	err := t.parser(trits)
 	return &t, err
 }
 
-func (t *Transaction) parser(trits Trits) error {
+func checkTx(trits Trits) error {
 	if err := trits.IsValid(); err != nil {
 		return errors.New("invalid transaction " + err.Error())
 	}
@@ -104,6 +107,10 @@ func (t *Transaction) parser(trits Trits) error {
 	if trytes[2279:2295] != "9999999999999999" {
 		return errors.New("invalid value in transaction")
 	}
+	return nil
+}
+
+func (t *Transaction) parser(trits Trits) error {
 	var err error
 	t.SignatureMessageFragment = trits[signatureMessageFragmentTrinaryOffset:signatureMessageFragmentTrinarySize].Trytes()
 	t.Address, err = trits[addressTrinaryOffset : addressTrinaryOffset+addressTrinarySize].Trytes().ToAddress()
@@ -144,7 +151,7 @@ func (t *Transaction) Trits() Trits {
 //HasValidNonce checks t's hash has valid MinWeightMagnitude.
 func (t *Transaction) HasValidNonce() bool {
 	h := t.Trits().Hash().Trytes()
-	for i := len(h) - 1; i >= len(h)-1-MinWeightMagnitude/3; i-- {
+	for i := len(h) - 1; i > len(h)-1-MinWeightMagnitude/3; i-- {
 		if h[i] != '9' {
 			return false
 		}
@@ -163,4 +170,9 @@ func (t *Transaction) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	return nil
+}
+
+//MarshalJSON makes trytes ([]byte) from a transaction.
+func (t *Transaction) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + t.Trits().Trytes() + `"`), nil
 }

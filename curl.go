@@ -32,7 +32,7 @@ const (
 
 var (
 	truthTable = Trits{1, 0, -1, 0, 1, -1, 0, 0, -1, 1, 0}
-	indices    = make([]int, stateSize+1)
+	indices    [stateSize + 1]int
 )
 
 func init() {

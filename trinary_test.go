@@ -113,6 +113,15 @@ func TestValidTrits(t *testing.T) {
 
 func TestConvert(t *testing.T) {
 	trits := Trits{0, 1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 1, 0, 1, 1}
+	invalid := []int8{1, -1, 2, 0, 1, -1}
+
+	if _, err := ToTrits(invalid); err == nil {
+		t.Error("ToTrits is incorrect")
+	}
+
+	if _, err := ToTrytes("A_AAA"); err == nil {
+		t.Error("ToTrytes is incorrect")
+	}
 
 	i := trits.Int()
 	if i != 6562317 {

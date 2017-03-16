@@ -90,6 +90,20 @@ func TestNewAddressFromTrytes(t *testing.T) {
 		if (err == nil && adr.Checksum() != tc.checksum) == tc.validChecksum {
 			t.Fatalf("NewAddressFromTrytes(%q) checksum mismatch\nwant: %s\nhave: %s", tc.addr, tc.checksum, adr.Checksum())
 		}
+		if !tc.validAddr || !tc.validChecksum {
+			continue
+		}
+		wcs := adr.WithChecksum()
+		if wcs != Trytes(adr)+adr.Checksum() {
+			t.Error("WithChecksum is incorrect")
+		}
+		adr2, err := ToAddress(string(tc.addr))
+		if err != nil {
+			t.Error(err)
+		}
+		if adr != adr2 {
+			t.Error("ToAddress is incorrect")
+		}
 	}
 }
 
@@ -119,6 +133,21 @@ func TestAddress(t *testing.T) {
 	if adr11 != adr {
 		t.Error("address unmatch", adr)
 	}
+	s1 := NewSeed()
+	if err := s1.IsValid(); err != nil {
+		t.Error("NewSeed is not valid")
+	}
+	s2 := NewSeed()
+	if err := s2.IsValid(); err != nil {
+		t.Error("NewSeed is not valid")
+	}
+	if s1 == s2 {
+		t.Error("NewSeed is incorrect")
+	}
+	if err := adr.IsValid(); err != nil {
+		t.Error("IsValid is incorrect")
+	}
+
 }
 
 func TestSign(t *testing.T) {
@@ -141,7 +170,8 @@ func TestSign(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !ValidateSig(adr, []Trits{sign0, sign1}, bundleHash) {
+	if !IsValidSig(adr, []Trits{sign0, sign1}, bundleHash) {
 		t.Error("cannot validate signature.")
 	}
+
 }
