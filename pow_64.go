@@ -176,7 +176,7 @@ void seri128(__m128i *low, __m128i *high, int n, char *r)
   {
     __m128i ll128 = (low[i] >> n) & one;
     __m128i hh128 = (high[i] >> n) & one;
-    _Alignas(ALIGN) long ll = ll128[index], hh = hh128[index];
+    long ll = ll128[index], hh = hh128[index];
     if (hh == 0 && ll == 1)
     {
       r[i] = -1;
