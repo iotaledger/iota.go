@@ -27,7 +27,6 @@ SOFTWARE.
 package giota
 
 // #cgo LDFLAGS: -msse2
-// #include <png.h>
 /*
 #include <stdio.h>
 #include <stdlib.h>
@@ -372,20 +371,6 @@ int pwork(char tx[], int mwm, char nonce[])
   hmid[4] = _mm_set_epi64x(HIGH40, HIGH41);
 
   return loop_cpu(lmid, hmid, mwm, nonce);
-}
-
-
-char *ccurl_pow(char *trytes, int minWeightMagnitude)
-{
-  //memory leak ,but we follow specification of iota wallet.
-  char *tx_tryte = (char *)calloc(TX_LENGTH + 1, 1);
-  char nonce_tryte[HASH_LENGTH / 3 + 1] = {0}, nonce_trit[HASH_LENGTH] = {0};
-
-  pwork(trytes, minWeightMagnitude, nonce_trit);
-  hash2tryte(nonce_trit, nonce_tryte);
-  memcpy(tx_tryte, trytes, TX_LENGTH);
-  memcpy(tx_tryte + TX_LENGTH - HASH_LENGTH / 3, nonce_tryte, HASH_LENGTH / 3);
-  return tx_tryte;
 }
 */
 import "C"

@@ -22,7 +22,7 @@ Examples
 
 ```go
 
-import github.com/iotaledger/giota
+import "github.com/iotaledger/giota"
 
 //Trits
 tritsFrom:=[]int8{1,-1,1,0,1,1,0,-1,0}
@@ -38,8 +38,7 @@ hash:=trits.Hash()
 
 //API
 api := giota.NewAPI("http://localhost:14265", nil)
-ftr := &giota.FindTransactionsRequest{Bundles: []Trytes{"DEXRPL...SJRU"}}
-resp, err := api.FindTransactions(ftr)
+resp, err := api.FindTransactions([]Trytes{"DEXRPL...SJRU"})
 
 ///Address
 index:=0
@@ -61,16 +60,16 @@ sign := giota.Sign(norm[:27], key[:6561])
 if giota.ValidateSig(adr, []Trits{sign}, bundleHash) {...}
 
 //send
-	trs := []Transfer{
-		Transfer{
-			Balance: Balance{
-				Address: "KTXF...QTIWOWTY",
-				Value:   20,
-			},
-			Tag: "MOUDAMEPO",
+trs := []Transfer{
+	Transfer{
+		Balance: Balance{
+			Address: "KTXF...QTIWOWTY",
+			Value:   20,
 		},
-	}
-	bdl, err = Send(api, seed, 2, trs, PowGo)
+		Tag: "MOUDAMEPO",
+	},
+}
+bdl, err = Send(api, seed, 2, trs, PowGo)
 ```
 
 
@@ -90,4 +89,4 @@ TODO
 
 <hr>
 
-Released under the [MIT License](https://raw.githubusercontent.com/iotaledger/iota.lib.go/master/LICENSE).
+Released under the [MIT License](LICENSE).
