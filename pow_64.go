@@ -161,8 +161,11 @@ int incr128(__m128i *mid_low, __m128i *mid_high)
   return i == HASH_LENGTH;
 }
 
+
+
 void seri128(__m128i *low, __m128i *high, int n, char *r)
 {
+  __m128i one= _mm_set_epi64x(1L, 1L);
   int i = 0, index = 0;
   if (n > 63)
   {
@@ -171,8 +174,8 @@ void seri128(__m128i *low, __m128i *high, int n, char *r)
   }
   for (i = 0; i < HASH_LENGTH; i++)
   {
-    __m128i ll128 = (low[i] >> n) & 1;
-    __m128i hh128 = (high[i] >> n) & 1;
+    __m128i ll128 = (low[i] >> n) & one;
+    __m128i hh128 = (high[i] >> n) & one;
     _Alignas(ALIGN) long ll = ll128[index], hh = hh128[index];
     if (hh == 0 && ll == 1)
     {
