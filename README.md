@@ -89,4 +89,5 @@ TODO
 * More tests :(
 
 <hr>
+
 Released under the [MIT License](https://raw.githubusercontent.com/iotaledger/iota.lib.go/master/LICENSE).
