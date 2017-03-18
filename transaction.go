@@ -159,6 +159,11 @@ func (t *Transaction) HasValidNonce() bool {
 	return true
 }
 
+//Hash returns the hash of the transaction.
+func (t *Transaction) Hash() Trytes {
+	return t.Trits().Hash().Trytes()
+}
+
 //UnmarshalJSON makes transaction struct from json.
 func (t *Transaction) UnmarshalJSON(b []byte) error {
 	var s Trytes

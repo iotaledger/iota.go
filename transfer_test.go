@@ -70,9 +70,9 @@ func TestTransfer2(t *testing.T) {
 	if err := bdl.IsValid(); err != nil {
 		t.Error(err)
 	}
-
-	//	bdl, err = Send(api, seed, 2, trs, PowGo)
-	bdl, err = Send(api, seed, 2, trs, Pow64)
+	name, pow := GetBestPoW()
+	t.Log("using PoW:", name)
+	bdl, err = Send(api, seed, 2, trs, pow)
 	if err != nil {
 		t.Error(err)
 	}

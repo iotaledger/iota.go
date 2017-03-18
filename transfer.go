@@ -302,7 +302,7 @@ func doPow(tra *GetTransactionsToApproveResponse, depth int64, trytes []Transact
 }
 
 //SendTrytes does attachToTangle and finally, it broadcasts the transactions.
-func SendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow func(Trits, int) (Trits, error)) error {
+func SendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow PowFunc) error {
 	tra, err := api.GetTransactionsToApprove(depth)
 	if err != nil {
 		return err
@@ -333,7 +333,7 @@ func SendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow func
 //Send sends token.
 //if you need to pow locally, you must specifiy pow func.
 //otherwirse this calls AttachToTangle API.
-func Send(api *API, seed Trytes, security int, trs []Transfer, pow func(Trits, int) (Trits, error)) (Bundle, error) {
+func Send(api *API, seed Trytes, security int, trs []Transfer, pow PowFunc) (Bundle, error) {
 	bd, err := PrepareTransfers(api, seed, trs, nil, "", security)
 	if err != nil {
 		return nil, err

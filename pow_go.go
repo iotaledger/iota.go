@@ -39,6 +39,26 @@ const (
 	high3 uint64 = 0x003FFFFFFFFFFFFF
 )
 
+//PowFunc is the tyoe of func for PoW
+type PowFunc func(Trits, int) (Trits, error)
+
+var pows = make(map[string]PowFunc)
+
+func init() {
+	pows["PowGo"] = PowGo
+}
+
+//GetBestPoW returns most preferable PoW func.
+func GetBestPoW() (string, PowFunc) {
+	if p, exist := pows["PowSSE"]; exist {
+		return "PowSSE", p
+	}
+	if p, exist := pows["PowC"]; exist {
+		return "PowC", p
+	}
+	return "PowGo", PowGo
+}
+
 func transform64(lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 	var ltmp, htmp [stateSize]uint64
 	lfrom := lmid

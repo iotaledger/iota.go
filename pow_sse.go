@@ -27,11 +27,10 @@ SOFTWARE.
 package giota
 
 // #cgo LDFLAGS: -msse2
+// #cgo CFLAGS: -Wall
 /*
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -39,15 +38,10 @@ package giota
 #include <x86intrin.h>
 #endif
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#include <malloc.h>
-#endif
-
 #define HBITS 0xFFFFFFFFFFFFFFFFL
 #define LBITS 0x0000000000000000L
 #define HASH_LENGTH 243              //trits
 #define STATE_LENGTH 3 * HASH_LENGTH //trits
-#define HALF_LENGTH 364              //trits
 #define TX_LENGTH 2673               //trytes
 
 #define LOW00 0xDB6DB6DB6DB6DB6DL  //0b1101101101101101101101101101101101101101101101101101101101101101L;
@@ -253,8 +247,12 @@ int pwork128(char mid[], int mwm, char nonce[])
 */
 import "C"
 
-//Pow64 is proof of work of iota for amd64 using SSE2(or AMD64).
-func Pow64(trits Trits, mwm int) (Trits, error) {
+func init() {
+	pows["PowSSE"] = PowSSE
+}
+
+//PowSSE is proof of work of iota for amd64 using SSE2(or AMD64).
+func PowSSE(trits Trits, mwm int) (Trits, error) {
 	c := NewCurl()
 	c.Absorb(trits[:transactionTrinarySize-HashSize])
 
