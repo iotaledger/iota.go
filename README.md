@@ -62,10 +62,8 @@ if giota.ValidateSig(adr, []Trits{sign}, bundleHash) {...}
 //send
 trs := []Transfer{
 	Transfer{
-		Balance: Balance{
-			Address: "KTXF...QTIWOWTY",
-			Value:   20,
-		},
+		Address: "KTXF...QTIWOWTY",
+		Value:   20,
 		Tag: "MOUDAMEPO",
 	},
 }

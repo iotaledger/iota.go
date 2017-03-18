@@ -53,11 +53,9 @@ func TestTransfer1(t *testing.T) {
 func TestTransfer2(t *testing.T) {
 	trs := []Transfer{
 		Transfer{
-			Balance: Balance{
-				Address: "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL9QTIWOWTY",
-				Value:   20,
-			},
-			Tag: "MOUDAMEPO",
+			Address: "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL9QTIWOWTY",
+			Value:   20,
+			Tag:     "MOUDAMEPO",
 		},
 	}
 	bdl, err := PrepareTransfers(api, seed, trs, nil, "", 2)
@@ -71,7 +69,7 @@ func TestTransfer2(t *testing.T) {
 		t.Error(err)
 	}
 	name, pow := GetBestPoW()
-	t.Log("using PoW:", name)
+	t.Log("using PoW: ", name)
 	bdl, err = Send(api, seed, 2, trs, pow)
 	if err != nil {
 		t.Error(err)

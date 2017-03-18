@@ -53,7 +53,14 @@ var (
 )
 
 //RandomNode returns a random node from public nodes.
+//if local IRI exists, return localhost address.
 func RandomNode() string {
+	api := NewAPI("", nil)
+	_, err := api.GetNodeInfo()
+	if err == nil {
+		return api.endpoint
+	}
+
 	b := make([]byte, 1)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)

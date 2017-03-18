@@ -141,11 +141,9 @@ func Send(seed, recipient, sender string, amount int64) {
 
 	trs := []giota.Transfer{
 		giota.Transfer{
-			Balance: giota.Balance{
-				Address: recipientT,
-				Value:   amount,
-			},
-			Tag: "GIOTAN",
+			Address: recipientT,
+			Value:   amount,
+			Tag:     "GIOTAN",
 		},
 	}
 

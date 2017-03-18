@@ -74,7 +74,8 @@ func GetInputs(api *API, seed Trytes, start, end int, threshold int64, security 
 
 //Transfer represents data to be transfered by bundles.
 type Transfer struct {
-	Balance
+	Address Address
+	Value   int64
 	Message Trytes
 	Tag     Trytes
 }
@@ -106,7 +107,6 @@ func addOutputs(trs []Transfer) (Bundle, []Trytes, int64) {
 		} else {
 			frags = append(frags, tr.Message)
 		}
-
 		// Add first entries to the bundle
 		// Slice the address in case the user provided a checksummed one
 		bundle.Add(nsigs, tr.Address, tr.Value, time.Now(), tr.Tag)
