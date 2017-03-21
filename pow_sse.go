@@ -246,6 +246,7 @@ int pwork128(char mid[], int mwm, char nonce[])
 }
 */
 import "C"
+import "unsafe"
 
 func init() {
 	pows["PowSSE"] = PowSSE
@@ -257,6 +258,6 @@ func PowSSE(trits Trits, mwm int) (Trits, error) {
 	c.Absorb(trits[:transactionTrinarySize-HashSize])
 
 	nonce := make(Trits, HashSize)
-	C.pwork128((*C.char)(&c.state[0]), C.int(mwm), (*C.char)(&nonce[0]))
+	C.pwork128((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])))
 	return nonce, nil
 }

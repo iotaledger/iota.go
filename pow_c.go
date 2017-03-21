@@ -210,6 +210,7 @@ int pwork(char mid[], int mwm, char nonce[])
 }
 */
 import "C"
+import "unsafe"
 
 func init() {
 	pows["PowC"] = PowC
@@ -221,6 +222,6 @@ func PowC(trits Trits, mwm int) (Trits, error) {
 	c.Absorb(trits[:transactionTrinarySize-HashSize])
 
 	nonce := make(Trits, HashSize)
-	C.pwork((*C.char)(&c.state[0]), C.int(mwm), (*C.char)(&nonce[0]))
+	C.pwork((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])))
 	return nonce, nil
 }
