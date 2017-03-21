@@ -31,7 +31,8 @@ const (
 )
 
 var (
-	truthTable = Trits{1, 0, -1, 0, 1, -1, 0, 0, -1, 1, 0}
+	transformC func(Trits)
+	truthTable = [255]int8{1, 0, -1, 0, 1, -1, 0, 0, -1, 1, 0}
 	indices    [stateSize + 1]int
 )
 
@@ -83,11 +84,18 @@ func (c *Curl) Absorb(in Trits) {
 
 // Transform does Transform in sponge func.
 func (c *Curl) Transform() {
-	cpy := make(Trits, stateSize)
+	if transformC != nil {
+		transformC(c.state)
+		return
+	}
+	var cpy [stateSize]int8
 	for r := 27; r > 0; r-- {
-		copy(cpy, c.state)
+		copy(cpy[:], c.state)
+		c.state = c.state[:stateSize]
 		for i := 0; i < stateSize; i++ {
-			c.state[i] = truthTable[cpy[indices[i]]+(cpy[indices[i+1]]<<2)+5]
+			t1 := indices[i]
+			t2 := indices[i+1]
+			c.state[i] = truthTable[cpy[t1]+(cpy[t2]<<2)+5]
 		}
 	}
 }
