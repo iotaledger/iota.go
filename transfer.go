@@ -283,15 +283,15 @@ func signInputs(inputs []AddressInfo, bundle Bundle) error {
 
 func doPow(tra *GetTransactionsToApproveResponse, depth int64, trytes []Transaction, mwm int64, pow func(Trits, int) (Trits, error)) error {
 	var prev Trytes
-	for i := range trytes {
-		if i == 0 {
+	for i := len(trytes) - 1; i >= 0; i-- {
+		if i == len(trytes)-1 {
 			trytes[i].TrunkTransaction = tra.TrunkTransaction
 			trytes[i].BranchTransaction = tra.BranchTransaction
 		} else {
 			trytes[i].TrunkTransaction = prev
-			trytes[i].BranchTransaction = tra.TrunkTransaction
+			trytes[i].BranchTransaction = tra.BranchTransaction
 		}
-		prev = trytes[i].Trits().Hash().Trytes()
+		prev = trytes[i].Hash()
 		nonce, err := pow(trytes[i].Trits(), MinWeightMagnitude)
 		if err != nil {
 			return err
