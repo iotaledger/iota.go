@@ -207,7 +207,7 @@ func addRemainder(api *API, in Balances, bundle *Bundle, security int, remainder
 		var err error
 		// Add input as bundle entry
 
-		bundle.Add(security, bal.Address, -bal.Value, time.Now(), emptyHash)
+		bundle.Add(security, bal.Address, -bal.Value, time.Now(), EmptyHash)
 		// If there is a remainder value
 		// Add extra output to send remaining funds to
 		if remain := bal.Value - total; remain > 0 {
@@ -222,7 +222,7 @@ func addRemainder(api *API, in Balances, bundle *Bundle, security int, remainder
 				}
 			}
 			// Remainder bundle entry
-			bundle.Add(1, adr, remain, time.Now(), emptyHash)
+			bundle.Add(1, adr, remain, time.Now(), EmptyHash)
 			return nil
 		}
 		// If multiple inputs provided, subtract the totalTransferValue by
@@ -289,14 +289,14 @@ func doPow(tra *GetTransactionsToApproveResponse, depth int64, trytes []Transact
 			trytes[i].BranchTransaction = tra.BranchTransaction
 		} else {
 			trytes[i].TrunkTransaction = prev
-			trytes[i].BranchTransaction = tra.BranchTransaction
+			trytes[i].BranchTransaction = tra.TrunkTransaction
 		}
-		prev = trytes[i].Hash()
-		nonce, err := pow(trytes[i].Trits(), MinWeightMagnitude)
+		nonce, err := pow(trytes[i].Trits(), int(mwm))
 		if err != nil {
 			return err
 		}
 		trytes[i].Nonce = nonce.Trytes()
+		prev = trytes[i].Hash()
 	}
 	return nil
 }

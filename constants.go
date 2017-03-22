@@ -48,15 +48,16 @@ const (
 var (
 	//emptySig represents empty signature.
 	emptySig Trytes
-	//emptyHash represents empty hash.
-	emptyHash Trytes
+	//EmptyHash represents empty hash.
+	EmptyHash Trytes = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+	//EmptyAddress represents empty address.
+	EmptyAddress Address = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
 )
 
 func init() {
+	bytes := make([]byte, SignatureSize/3)
 	for i := 0; i < SignatureSize/3; i++ {
-		emptySig += "9"
+		bytes[i] = '9'
 	}
-	for i := 0; i < HashSize/3; i++ {
-		emptyHash += "9"
-	}
+	emptySig = Trytes(bytes)
 }

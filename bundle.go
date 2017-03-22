@@ -47,7 +47,7 @@ type Bundle []Transaction
 //For now elements which are not specified are filled with trits 0.
 func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time, tag Trytes) {
 	if tag == "" {
-		tag = emptyHash
+		tag = EmptyHash
 	}
 	for i := 0; i < num; i++ {
 		var v int64
@@ -62,10 +62,10 @@ func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time
 			Timestamp:                timestamp,
 			CurrentIndex:             int64(len(*bs) - 1),
 			LastIndex:                0,
-			Bundle:                   emptyHash,
-			TrunkTransaction:         emptyHash,
-			BranchTransaction:        emptyHash,
-			Nonce:                    emptyHash,
+			Bundle:                   EmptyHash,
+			TrunkTransaction:         EmptyHash,
+			BranchTransaction:        EmptyHash,
+			Nonce:                    EmptyHash,
 		}
 		*bs = append(*bs, b)
 	}
