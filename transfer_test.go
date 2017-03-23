@@ -27,11 +27,19 @@ import "testing"
 
 var (
 	seed Trytes = "WQNZOHUT99PWKEBFSKQSYNC9XHT9GEBMOSJAQDQAXPEZPJNDIUB9TSNWVMHKWICW9WVZXSMDFGISOD9FZ"
-	api         = NewAPI(RandomNode(), nil)
 )
 
 func TestTransfer1(t *testing.T) {
-	adr, adrs, err := GetUsedAddress(api, seed, 2)
+	var err error
+	var adr Address
+	var adrs []Address
+	for i := 0; i < 5; i++ {
+		api := NewAPI(RandomNode(), nil)
+		adr, adrs, err = GetUsedAddress(api, seed, 2)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Error(err)
 	}
@@ -40,7 +48,14 @@ func TestTransfer1(t *testing.T) {
 		t.Error("GetUsedAddress is incorrect")
 	}
 
-	bal, err := GetInputs(api, seed, 0, 10, 1000, 2)
+	var bal Balances
+	for i := 0; i < 5; i++ {
+		api := NewAPI(RandomNode(), nil)
+		bal, err = GetInputs(api, seed, 0, 10, 1000, 2)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Error(err)
 	}
@@ -51,6 +66,7 @@ func TestTransfer1(t *testing.T) {
 
 }
 func TestTransfer2(t *testing.T) {
+	var err error
 	trs := []Transfer{
 		Transfer{
 			Address: "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL9QTIWOWTY",
@@ -58,7 +74,14 @@ func TestTransfer2(t *testing.T) {
 			Tag:     "MOUDAMEPO",
 		},
 	}
-	bdl, err := PrepareTransfers(api, seed, trs, nil, "", 2)
+	var bdl Bundle
+	for i := 0; i < 5; i++ {
+		api := NewAPI(RandomNode(), nil)
+		bdl, err = PrepareTransfers(api, seed, trs, nil, "", 2)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Error(err)
 	}
@@ -70,7 +93,14 @@ func TestTransfer2(t *testing.T) {
 	}
 	name, pow := GetBestPoW()
 	t.Log("using PoW: ", name)
-	bdl, err = Send(api, seed, 2, trs, pow)
+
+	for i := 0; i < 5; i++ {
+		api := NewAPI(RandomNode(), nil)
+		bdl, err = Send(api, seed, 2, trs, pow)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Error(err)
 	}

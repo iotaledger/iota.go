@@ -201,25 +201,3 @@ func PowGo(trits Trits, mwm int) (Trits, error) {
 	nonce, _ := loop(lmid, hmid, mwm)
 	return nonce, nil
 }
-
-/*
-func bench(trits Trits, mwm int) {
-	c := NewCurl()
-	c.Absorb(trits[:transactionTrinarySize-HashSize])
-
-	lmid, hmid := para(c.state)
-	lmid[0] = low0
-	hmid[0] = high0
-	lmid[1] = low1
-	hmid[1] = high1
-	lmid[2] = low2
-	hmid[2] = high2
-	lmid[3] = low3
-	hmid[3] = high3
-	start := time.Now()
-	_, cnt := loop(lmid, hmid, mwm)
-	end := time.Now()
-	kh := float64(cnt) / (end.Sub(start).Seconds()) / 1000
-	fmt.Printf("%f kH/s \n", kh)
-}
-*/

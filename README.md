@@ -1,7 +1,6 @@
 [![Build Status](https://travis-ci.org/iotaledger/iota.lib.go.svg?branch=master)](https://travis-ci.org/iotaledger/iota.lib.go)
 [![GoDoc](https://godoc.org/github.com/iotaledger/iota.lib.go?status.svg)](https://godoc.org/github.com/iotaledger/iota.lib.go)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/iota.lib.go/master/LICENSE)
-[![Coverage Status](https://coveralls.io/repos/iotaledger/iota.lib.go/badge.svg?branch=master)](https://coveralls.io/r/iotaledger/iota.lib.go?branch=master)
 
 
 gIOTA
@@ -67,7 +66,8 @@ trs := []Transfer{
 		Tag: "MOUDAMEPO",
 	},
 }
-bdl, err = Send(api, seed, 2, trs, PowGo)
+_, pow := GetBestPow()
+bdl, err = Send(api, seed, 2, trs, pow)
 ```
 
 

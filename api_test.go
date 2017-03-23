@@ -30,16 +30,23 @@ import "testing"
 var server = RandomNode()
 
 func TestAPIGetNodeInfo(t *testing.T) {
-	api := NewAPI(server, nil)
+	var err error
+	var resp *GetNodeInfoResponse
 
-	resp, err := api.GetNodeInfo()
+	for i := 0; i < 5; i++ {
+		api := NewAPI(server, nil)
+		resp, err = api.GetNodeInfo()
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Fatalf("GetNodeInfo() expected err to be nil but got %v", err)
 	}
-
 	if resp.AppName == "" {
 		t.Errorf("GetNodeInfo() returned invalid response: %#v", resp)
 	}
+
 }
 
 /*
@@ -88,10 +95,17 @@ func TestAPIGetTips(t *testing.T) {
 }
 */
 func TestAPIFindTransactions(t *testing.T) {
-	api := NewAPI(server, nil)
+	var err error
+	var resp *FindTransactionsResponse
 
 	ftr := &FindTransactionsRequest{Bundles: []Trytes{"DEXRPLKGBROUQMKCLMRPG9HFKCACDZ9AB9HOJQWERTYWERJNOYLW9PKLOGDUPC9DLGSUH9UHSKJOASJRU"}}
-	resp, err := api.FindTransactions(ftr)
+	for i := 0; i < 5; i++ {
+		api := NewAPI(server, nil)
+		resp, err = api.FindTransactions(ftr)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Errorf("FindTransactions([]) expected err to be nil but got %v", err)
 	}
@@ -99,9 +113,16 @@ func TestAPIFindTransactions(t *testing.T) {
 }
 
 func TestAPIGetTrytes(t *testing.T) {
-	api := NewAPI(server, nil)
+	var err error
+	var resp *GetTrytesResponse
 
-	resp, err := api.GetTrytes([]Trytes{})
+	for i := 0; i < 5; i++ {
+		api := NewAPI(server, nil)
+		resp, err = api.GetTrytes([]Trytes{})
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Errorf("GetTrytes([]) expected err to be nil but got %v", err)
 	}
@@ -109,9 +130,16 @@ func TestAPIGetTrytes(t *testing.T) {
 }
 
 func TestAPIGetInclusionStates(t *testing.T) {
-	api := NewAPI(server, nil)
+	var err error
+	var resp *GetInclusionStatesResponse
 
-	resp, err := api.GetInclusionStates([]Trytes{}, []Trytes{})
+	for i := 0; i < 5; i++ {
+		api := NewAPI(server, nil)
+		resp, err = api.GetInclusionStates([]Trytes{}, []Trytes{})
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Errorf("GetInclusionStates([]) expected err to be nil but got %v", err)
 	}
@@ -119,9 +147,15 @@ func TestAPIGetInclusionStates(t *testing.T) {
 }
 
 func TestAPIGetBalances(t *testing.T) {
-	api := NewAPI(server, nil)
-
-	resp, err := api.GetBalances([]Address{}, 100)
+	var err error
+	var resp *GetBalancesResponse
+	for i := 0; i < 5; i++ {
+		api := NewAPI(server, nil)
+		resp, err = api.GetBalances([]Address{}, 100)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Errorf("GetBalances([]) expected err to be nil but got %v", err)
 	}
@@ -129,9 +163,16 @@ func TestAPIGetBalances(t *testing.T) {
 }
 
 func TestAPIGetTransactionsToApprove(t *testing.T) {
-	api := NewAPI(server, nil)
+	var err error
+	var resp *GetTransactionsToApproveResponse
 
-	resp, err := api.GetTransactionsToApprove(Depth)
+	for i := 0; i < 5; i++ {
+		api := NewAPI(server, nil)
+		resp, err = api.GetTransactionsToApprove(Depth)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Errorf("GetTransactionsToApprove() expected err to be nil but got %v", err)
 	} else if resp.BranchTransaction == "" || resp.TrunkTransaction == "" {
@@ -139,9 +180,16 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 	}
 }
 func TestGetLatestInclusion(t *testing.T) {
-	api := NewAPI(server, nil)
+	var err error
+	var resp []bool
 
-	resp, err := api.GetLatestInclusion([]Trytes{"UEQYKCAXJVITQOIE9ZDAFOFDXFZEOMAFPXPCJTQUWSVYISTSROOMDYXUCUP9CNKVNO9UCNJ9REU999999"})
+	for i := 0; i < 5; i++ {
+		api := NewAPI(server, nil)
+		resp, err = api.GetLatestInclusion([]Trytes{"UEQYKCAXJVITQOIE9ZDAFOFDXFZEOMAFPXPCJTQUWSVYISTSROOMDYXUCUP9CNKVNO9UCNJ9REU999999"})
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		t.Errorf("GetLatestInclustion() expected err to be nil but got %v", err)
 	}
