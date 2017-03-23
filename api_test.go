@@ -186,7 +186,7 @@ func TestGetLatestInclusion(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		api := NewAPI(server, nil)
 		resp, err = api.GetLatestInclusion([]Trytes{"UEQYKCAXJVITQOIE9ZDAFOFDXFZEOMAFPXPCJTQUWSVYISTSROOMDYXUCUP9CNKVNO9UCNJ9REU999999"})
-		if err == nil {
+		if err == nil && len(resp) > 0 {
 			break
 		}
 	}
@@ -194,7 +194,7 @@ func TestGetLatestInclusion(t *testing.T) {
 		t.Errorf("GetLatestInclustion() expected err to be nil but got %v", err)
 	}
 	if len(resp) == 0 || !resp[0] {
-		t.Error("GetLatestInclustion() is invalid")
+		t.Error("GetLatestInclustion() is invalid len(resp):", len(resp))
 	}
 }
 
