@@ -163,14 +163,14 @@ func setupInputs(api *API, seed Trytes, inputs []AddressInfo, security int, tota
 		}
 		//  Case 1: user provided inputs
 		//  Validate the inputs by calling getBalances
-		bals, err := api.Balances(adrs)
+		bals, err = api.Balances(adrs)
 		if err != nil {
 			return nil, nil, err
 		}
-		// Return not enough balance error
-		if total > bals.Total() {
-			return nil, nil, errors.New("Not enough balance")
-		}
+	}
+	// Return not enough balance error
+	if total > bals.Total() {
+		return nil, nil, errors.New("Not enough balance")
 	}
 	return bals, inputs, nil
 }

@@ -42,13 +42,14 @@ func main() {
 		recipient = send.Flag("recipient", "recipient address").Required().String()
 		sender    = send.Flag("sender", "sender addresses, separated with comma").String()
 		amount    = send.Flag("amount", "amount to send").Required().Int64()
+		mwm       = send.Flag("mwm", "MinWeightMagnituce").Default("18").Int64()
 
 		addresses = app.Command("addresses", "List used/unused addresses")
 		seedA     = addresses.Flag("seed", "seed").Required().String()
 	)
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case send.FullCommand():
-		Send(*seed, *recipient, *sender, *amount)
+		Send(*seed, *recipient, *sender, *amount, *mwm)
 	case addresses.FullCommand():
 		handleAddresses(*seedA)
 	}
@@ -77,18 +78,18 @@ func handleAddresses(seed string) {
 
 func check(seed, recipient, sender string, amount int64) (giota.Trytes, giota.Address, []giota.Address) {
 	if amount <= 0 {
-		fmt.Fprint(os.Stderr, "You must specify the amount with positive value.")
+		fmt.Fprintln(os.Stderr, "You must specify the amount with positive value.")
 		os.Exit(-1)
 	}
 
 	seedT, err := giota.ToTrytes(seed)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "You must specify valid seed")
+		fmt.Fprintln(os.Stderr, "You must specify valid seed")
 		os.Exit(-1)
 	}
 	recipientT, err := giota.ToAddress(recipient)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "You must specify valid recipient")
+		fmt.Fprintln(os.Stderr, "You must specify valid recipient")
 		os.Exit(-1)
 	}
 	var senderT []giota.Address
@@ -98,7 +99,7 @@ func check(seed, recipient, sender string, amount int64) (giota.Trytes, giota.Ad
 		for i, s := range senders {
 			senderT[i], err = giota.ToAddress(s)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "You must specify valid sender")
+				fmt.Fprintln(os.Stderr, "You must specify valid sender")
 				os.Exit(-1)
 			}
 		}
@@ -106,7 +107,7 @@ func check(seed, recipient, sender string, amount int64) (giota.Trytes, giota.Ad
 	return seedT, recipientT, senderT
 }
 
-func sendToSender(api *giota.API, trs []giota.Transfer, sender []giota.Address, seedT giota.Trytes) (giota.Bundle, error) {
+func sendToSender(api *giota.API, trs []giota.Transfer, sender []giota.Address, seedT giota.Trytes, mwm int64) (giota.Bundle, error) {
 	_, adrs, err := giota.GetUsedAddress(api, seedT, 2)
 	if err != nil {
 		return nil, err
@@ -131,19 +132,19 @@ func sendToSender(api *giota.API, trs []giota.Transfer, sender []giota.Address, 
 	}
 	name, pow := giota.GetBestPoW()
 	fmt.Fprintf(os.Stderr, "using PoW:%s\n", name)
-	err = giota.SendTrytes(api, giota.Depth, []giota.Transaction(bdl), giota.MinWeightMagnitude, pow)
+	err = giota.SendTrytes(api, giota.Depth, []giota.Transaction(bdl), mwm, pow)
 	return bdl, err
 }
 
 //Send handles send command.
-func Send(seed, recipient, sender string, amount int64) {
+func Send(seed, recipient, sender string, amount int64, mwm int64) {
 	seedT, recipientT, senderT := check(seed, recipient, sender, amount)
 
 	trs := []giota.Transfer{
 		giota.Transfer{
 			Address: recipientT,
 			Value:   amount,
-			Tag:     "GIOTAN",
+			Tag:     "PRETTYGIOTAN",
 		},
 	}
 
@@ -153,12 +154,21 @@ func Send(seed, recipient, sender string, amount int64) {
 	fmt.Printf("using IRI server: %s\n", server)
 
 	api := giota.NewAPI(server, nil)
+	name, pow := giota.GetBestPoW()
+	fmt.Fprintf(os.Stderr, "using PoW:%s\n", name)
 	if senderT == nil {
-		name, pow := giota.GetBestPoW()
-		fmt.Fprintf(os.Stderr, "using PoW:%s\n", name)
-		bdl, err = giota.Send(api, seedT, 2, trs, pow)
+		bdl, err = giota.PrepareTransfers(api, seedT, trs, nil, "", 2)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(-1)
+		}
+		err = giota.SendTrytes(api, giota.Depth, []giota.Transaction(bdl), mwm, pow)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(-1)
+		}
 	} else {
-		bdl, err = sendToSender(api, trs, senderT, seedT)
+		bdl, err = sendToSender(api, trs, senderT, seedT, mwm)
 	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot send: %s\n", err.Error())

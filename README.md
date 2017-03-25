@@ -59,15 +59,15 @@ sign := giota.Sign(norm[:27], key[:6561])
 if giota.ValidateSig(adr, []Trits{sign}, bundleHash) {...}
 
 //send
-trs := []Transfer{
-	Transfer{
+trs := []giota.Transfer{
+	giota.Transfer{
 		Address: "KTXF...QTIWOWTY",
 		Value:   20,
 		Tag: "MOUDAMEPO",
 	},
 }
-_, pow := GetBestPow()
-bdl, err = Send(api, seed, 2, trs, pow)
+_, pow := giota.GetBestPow()
+bdl, err = giota.Send(api, seed, 2, trs, pow)
 ```
 
 
