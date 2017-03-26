@@ -101,7 +101,7 @@ func transform64(lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 
 func incr(lmid *[stateSize]uint64, hmid *[stateSize]uint64) bool {
 	var carry uint64 = 1
-	i := 0
+	var i int
 	//to avoid boundry check, i believe.
 	for i = 4; i < HashSize && carry != 0; i++ {
 		low := lmid[i]
@@ -150,7 +150,7 @@ func check(l *[stateSize]uint64, h *[stateSize]uint64, m int) int {
 
 func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int) (Trits, int) {
 	var lcpy, hcpy [stateSize]uint64
-	i := 0
+	var i int
 	for i = 0; !incr(lmid, hmid); i++ {
 		copy(lcpy[:], lmid[:])
 		copy(hcpy[:], hmid[:])

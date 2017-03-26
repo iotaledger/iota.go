@@ -46,12 +46,18 @@ func main() {
 
 		addresses = app.Command("addresses", "List used/unused addresses")
 		seedA     = addresses.Flag("seed", "seed").Required().String()
+
+		newseed = app.Command("new", "create a new seed")
 	)
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case send.FullCommand():
 		Send(*seed, *recipient, *sender, *amount, *mwm)
 	case addresses.FullCommand():
 		handleAddresses(*seedA)
+	case newseed.FullCommand():
+		seed := giota.NewSeed()
+		fmt.Println("New seed: ", seed)
+		fmt.Printf("To display an address, run\n\t%s addresses --seed=%s\n", os.Args[0], seed)
 	}
 }
 
@@ -120,8 +126,8 @@ func sendToSender(api *giota.API, trs []giota.Transfer, sender []giota.Address, 
 					Index:    j,
 					Security: 2,
 				}
+				break
 			}
-			break
 		}
 		return nil, fmt.Errorf("cannot found address %s from seed", s)
 	}

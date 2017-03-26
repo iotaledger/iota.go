@@ -91,7 +91,7 @@ func TestTransfer2(t *testing.T) {
 		}
 		t.Fatal("PrepareTransfers is incorrect len(bdl)=", len(bdl))
 	}
-	if err := bdl.IsValid(); err != nil {
+	if err = bdl.IsValid(); err != nil {
 		t.Error(err)
 	}
 	name, pow := GetBestPoW()

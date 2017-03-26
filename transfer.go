@@ -321,7 +321,10 @@ func SendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow PowF
 		}
 		trytes = attached.Trytes
 	} else {
-		doPow(tra, depth, trytes, mwm, pow)
+		err := doPow(tra, depth, trytes, mwm, pow)
+		if err != nil {
+			return err
+		}
 	}
 	// Broadcast and store tx
 	if err := api.BroadcastTransactions(trytes); err != nil {

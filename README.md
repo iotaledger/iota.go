@@ -79,7 +79,7 @@ Tread lightly around here. This library is still very much
 in flux and there are going to be breaking changes.
 
 Consider to use a dependency tool to use vendoring,
-e.g. [dep](https://github.com/golang/dep), [glide](https://github.com/Masterminds/glide).
+e.g. [godep](https://github.com/tools/godep), [glide](https://github.com/Masterminds/glide) or [govendor](https://github.com/kardianos/govendor).
 
 
 TODO
