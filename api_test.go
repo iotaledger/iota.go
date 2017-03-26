@@ -27,13 +27,12 @@ package giota
 
 import "testing"
 
-var server = RandomNode()
-
 func TestAPIGetNodeInfo(t *testing.T) {
 	var err error
 	var resp *GetNodeInfoResponse
 
 	for i := 0; i < 5; i++ {
+		var server = RandomNode()
 		api := NewAPI(server, nil)
 		resp, err = api.GetNodeInfo()
 		if err == nil {
@@ -100,6 +99,7 @@ func TestAPIFindTransactions(t *testing.T) {
 
 	ftr := &FindTransactionsRequest{Bundles: []Trytes{"DEXRPLKGBROUQMKCLMRPG9HFKCACDZ9AB9HOJQWERTYWERJNOYLW9PKLOGDUPC9DLGSUH9UHSKJOASJRU"}}
 	for i := 0; i < 5; i++ {
+		var server = RandomNode()
 		api := NewAPI(server, nil)
 		resp, err = api.FindTransactions(ftr)
 		if err == nil {
@@ -117,6 +117,7 @@ func TestAPIGetTrytes(t *testing.T) {
 	var resp *GetTrytesResponse
 
 	for i := 0; i < 5; i++ {
+		var server = RandomNode()
 		api := NewAPI(server, nil)
 		resp, err = api.GetTrytes([]Trytes{})
 		if err == nil {
@@ -134,6 +135,7 @@ func TestAPIGetInclusionStates(t *testing.T) {
 	var resp *GetInclusionStatesResponse
 
 	for i := 0; i < 5; i++ {
+		var server = RandomNode()
 		api := NewAPI(server, nil)
 		resp, err = api.GetInclusionStates([]Trytes{}, []Trytes{})
 		if err == nil {
@@ -150,6 +152,7 @@ func TestAPIGetBalances(t *testing.T) {
 	var err error
 	var resp *GetBalancesResponse
 	for i := 0; i < 5; i++ {
+		var server = RandomNode()
 		api := NewAPI(server, nil)
 		resp, err = api.GetBalances([]Address{}, 100)
 		if err == nil {
@@ -167,6 +170,7 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 	var resp *GetTransactionsToApproveResponse
 
 	for i := 0; i < 5; i++ {
+		var server = RandomNode()
 		api := NewAPI(server, nil)
 		resp, err = api.GetTransactionsToApprove(Depth)
 		if err == nil {
@@ -184,6 +188,7 @@ func TestGetLatestInclusion(t *testing.T) {
 	var resp []bool
 
 	for i := 0; i < 5; i++ {
+		var server = RandomNode()
 		api := NewAPI(server, nil)
 		resp, err = api.GetLatestInclusion([]Trytes{"UEQYKCAXJVITQOIE9ZDAFOFDXFZEOMAFPXPCJTQUWSVYISTSROOMDYXUCUP9CNKVNO9UCNJ9REU999999"})
 		if err == nil && len(resp) > 0 {

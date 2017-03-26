@@ -33,7 +33,7 @@ trytesFrom:="ABCDEAAC9ACB9PO..."
 trytes2,err:=giota.ToTrytes(trytesFrom)
 
 //Hash
-hash:=trits.Hash()
+hash:=trytes.Hash()
 
 //API
 api := giota.NewAPI("http://localhost:14265", nil)
@@ -46,17 +46,17 @@ adr,err:=giota.NewAddress(trytes,index,seciruty) //without checksum.
 adrWithChecksum := adr.WithChecksum() //adrWithChecksum is trytes type.
 
 //transaction
-tx,err:=giota.NewTransaction(trits)
+tx,err:=giota.NewTransaction(trytes)
 if tx.HasValidNonce(){...}
-trits2:=tx.Trits()
+trytes2:=tx.trytes()
 
 //create signature
-key := giota.NewKey(seed.Trits(), index, security)
+key := giota.NewKey(seed, index, security)
 norm := bundleHash.Normalize()
-sign := giota.Sign(norm[:27], key[:6561])
+sign := giota.Sign(norm[:27], key[:6561/3])
 
 //validate signature
-if giota.ValidateSig(adr, []Trits{sign}, bundleHash) {...}
+if giota.ValidateSig(adr, []Trytes{sign}, bundleHash) {...}
 
 //send
 trs := []giota.Transfer{
@@ -67,7 +67,7 @@ trs := []giota.Transfer{
 	},
 }
 _, pow := giota.GetBestPow()
-bdl, err = giota.Send(api, seed, 2, trs, pow)
+bdl, err = giota.Send(api, seed, security, trs, pow)
 ```
 
 
@@ -77,6 +77,9 @@ Development Status: Alpha+
 
 Tread lightly around here. This library is still very much
 in flux and there are going to be breaking changes.
+
+Consider to use a dependency tool to use vendoring,
+e.g. [dep](https://github.com/golang/dep), [glide](https://github.com/Masterminds/glide).
 
 
 TODO

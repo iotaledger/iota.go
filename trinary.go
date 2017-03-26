@@ -125,13 +125,13 @@ func (t Trits) Trytes() Trytes {
 	if !t.CanTrytes() {
 		panic("length of trits must be x3.")
 	}
-	o := ""
+	o := make([]byte, len(t)/3)
 	for i := 0; i < len(t)/3; i++ {
 		j := t[i*3] + t[i*3+1]*3 + t[i*3+2]*9
 		if j < 0 {
 			j += int8(len(TryteAlphabet))
 		}
-		o += TryteAlphabet[j : j+1]
+		o[i] = TryteAlphabet[j]
 	}
 	return Trytes(o)
 }

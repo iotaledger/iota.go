@@ -512,7 +512,7 @@ func (api *API) GetLatestInclusion(hash []Trytes) ([]bool, error) {
 
 	resp, err := api.GetInclusionStates(hash, []Trytes{ni.LatestMilestone})
 	if err != nil {
-		return nil, err2
+		return nil, err
 	}
 	if len(resp.States) == 0 {
 		return nil, errors.New("transaction is not found while GetInclusionStates")

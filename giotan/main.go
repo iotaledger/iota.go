@@ -81,7 +81,6 @@ func check(seed, recipient, sender string, amount int64) (giota.Trytes, giota.Ad
 		fmt.Fprintln(os.Stderr, "You must specify the amount with positive value.")
 		os.Exit(-1)
 	}
-
 	seedT, err := giota.ToTrytes(seed)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "You must specify valid seed")

@@ -86,24 +86,23 @@ const (
 )
 
 //NewTransaction makes tx from trits.
-func NewTransaction(trits Trits) (*Transaction, error) {
+func NewTransaction(trytes Trytes) (*Transaction, error) {
 	t := Transaction{}
-	if err := checkTx(trits); err != nil {
+	if err := checkTx(trytes); err != nil {
 		return nil, err
 	}
-	err := t.parser(trits)
+	err := t.parser(trytes.Trits())
 	return &t, err
 }
 
-func checkTx(trits Trits) error {
-	if err := trits.IsValid(); err != nil {
+func checkTx(trytes Trytes) error {
+	if err := trytes.IsValid(); err != nil {
 		return errors.New("invalid transaction " + err.Error())
 	}
-	if len(trits) != transactionTrinarySize {
+	if len(trytes) != transactionTrinarySize/3 {
 		return errors.New("invalid trits counts in transaction")
 	}
 
-	trytes := trits.Trytes()
 	if trytes[2279:2295] != "9999999999999999" {
 		return errors.New("invalid value in transaction")
 	}
@@ -131,8 +130,8 @@ func (t *Transaction) parser(trits Trits) error {
 	return nil
 }
 
-//Trits converts the transaction to trits.
-func (t *Transaction) Trits() Trits {
+//Trytes converts the transaction to Trytes.
+func (t *Transaction) Trytes() Trytes {
 	tr := make(Trits, transactionTrinarySize)
 	copy(tr, t.SignatureMessageFragment.Trits())
 	copy(tr[addressTrinaryOffset:], Trytes(t.Address).Trits())
@@ -145,12 +144,12 @@ func (t *Transaction) Trits() Trits {
 	copy(tr[trunkTransactionTrinaryOffset:], t.TrunkTransaction.Trits())
 	copy(tr[branchTransactionTrinaryOffset:], t.BranchTransaction.Trits())
 	copy(tr[nonceTrinaryOffset:], t.Nonce.Trits())
-	return tr
+	return tr.Trytes()
 }
 
 //HasValidNonce checks t's hash has valid MinWeightMagnitude.
 func (t *Transaction) HasValidNonce() bool {
-	h := t.Trits().Hash().Trytes()
+	h := t.Hash()
 	for i := len(h) - 1; i > len(h)-1-MinWeightMagnitude/3; i-- {
 		if h[i] != '9' {
 			return false
@@ -161,7 +160,7 @@ func (t *Transaction) HasValidNonce() bool {
 
 //Hash returns the hash of the transaction.
 func (t *Transaction) Hash() Trytes {
-	return t.Trits().Hash().Trytes()
+	return t.Trytes().Hash()
 }
 
 //UnmarshalJSON makes transaction struct from json.
@@ -179,5 +178,5 @@ func (t *Transaction) UnmarshalJSON(b []byte) error {
 
 //MarshalJSON makes trytes ([]byte) from a transaction.
 func (t *Transaction) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + t.Trits().Trytes() + `"`), nil
+	return []byte(`"` + t.Trytes() + `"`), nil
 }

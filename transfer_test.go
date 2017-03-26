@@ -85,8 +85,11 @@ func TestTransfer2(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if len(bdl) < 4 {
-		t.Error("PrepareTransfers is incorrect")
+	if len(bdl) < 3 {
+		for _, tx := range bdl {
+			t.Log(tx.Trytes())
+		}
+		t.Fatal("PrepareTransfers is incorrect len(bdl)=", len(bdl))
 	}
 	if err := bdl.IsValid(); err != nil {
 		t.Error(err)
@@ -105,6 +108,6 @@ func TestTransfer2(t *testing.T) {
 		t.Error(err)
 	}
 	for _, tx := range bdl {
-		t.Log(tx.Trits().Trytes())
+		t.Log(tx.Trytes())
 	}
 }

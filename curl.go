@@ -61,16 +61,16 @@ func NewCurl() *Curl {
 }
 
 //Squeeze do Squeeze in sponge func.
-func (c *Curl) Squeeze() Trits {
-	ret := make(Trits, HashSize)
-	copy(ret, c.state[:HashSize])
+func (c *Curl) Squeeze() Trytes {
+	ret := c.state[:HashSize].Trytes()
 	c.Transform()
 
 	return ret
 }
 
 // Absorb fills the internal state of the sponge with the given trits.
-func (c *Curl) Absorb(in Trits) {
+func (c *Curl) Absorb(inn Trytes) {
+	in := inn.Trits()
 	var lenn int
 	for i := 0; i < len(in); i += lenn {
 		lenn = 243
@@ -109,7 +109,7 @@ func (c *Curl) Reset() {
 }
 
 //Hash returns hash of t.
-func (t Trits) Hash() Trits {
+func (t Trytes) Hash() Trytes {
 	c := NewCurl()
 	c.Absorb(t)
 	return c.Squeeze()

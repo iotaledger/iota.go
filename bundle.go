@@ -89,15 +89,15 @@ func (bs Bundle) Hash() Trytes {
 	c := NewCurl()
 	buf := make(Trits, 243+81*3)
 	for i, b := range bs {
-		copy(buf, b.Address.Trits())
+		copy(buf, Trytes(b.Address).Trits())
 		copy(buf[243:], Int2Trits(b.Value, 81))
 		copy(buf[243+81:], b.Tag.Trits())
 		copy(buf[243+81+81:], Int2Trits(b.Timestamp.Unix(), 27))
 		copy(buf[243+81+81+27:], Int2Trits(int64(i), 27))            //CurrentIndex
 		copy(buf[243+81+81+27+27:], Int2Trits(int64(len(bs)-1), 27)) //LastIndex
-		c.Absorb(buf)
+		c.Absorb(buf.Trytes())
 	}
-	return c.Squeeze().Trytes()
+	return c.Squeeze()
 }
 
 //Categorize Categorizes a list of transfers into sent and received.
@@ -124,7 +124,7 @@ func (bs Bundle) Categorize(adr Address) (send Bundle, received Bundle) {
 //You must call Finalize() beforehand.
 func (bs Bundle) IsValid() error {
 	var total int64
-	sigs := make(map[Address][]Trits)
+	sigs := make(map[Address][]Trytes)
 	for index, b := range bs {
 		total += b.Value
 		if b.CurrentIndex != int64(index) {
@@ -136,13 +136,13 @@ func (bs Bundle) IsValid() error {
 		if b.Value >= 0 {
 			continue
 		}
-		sigs[b.Address] = append(sigs[b.Address], b.SignatureMessageFragment.Trits())
+		sigs[b.Address] = append(sigs[b.Address], b.SignatureMessageFragment)
 		// Find the subsequent txs with the remaining signature fragment
 		for i := index; i < len(bs)-1; i++ {
 			tx := bs[i+1]
 			// Check if new tx is part of the signature fragment
 			if tx.Address == b.Address && tx.Value == 0 {
-				sigs[tx.Address] = append(sigs[tx.Address], tx.SignatureMessageFragment.Trits())
+				sigs[tx.Address] = append(sigs[tx.Address], tx.SignatureMessageFragment)
 			}
 		}
 	}

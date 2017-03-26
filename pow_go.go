@@ -40,7 +40,7 @@ const (
 )
 
 //PowFunc is the tyoe of func for PoW
-type PowFunc func(Trits, int) (Trits, error)
+type PowFunc func(Trytes, int) (Trytes, error)
 
 var pows = make(map[string]PowFunc)
 
@@ -184,9 +184,9 @@ func para(in Trits) (*[stateSize]uint64, *[stateSize]uint64) {
 }
 
 //PowGo is proof of work of iota in pure Go.
-func PowGo(trits Trits, mwm int) (Trits, error) {
+func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 	c := NewCurl()
-	c.Absorb(trits[:transactionTrinarySize-HashSize])
+	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
 	lmid, hmid := para(c.state)
 	lmid[0] = low0
@@ -199,5 +199,5 @@ func PowGo(trits Trits, mwm int) (Trits, error) {
 	hmid[3] = high3
 
 	nonce, _ := loop(lmid, hmid, mwm)
-	return nonce, nil
+	return nonce.Trytes(), nil
 }

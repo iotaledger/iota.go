@@ -253,11 +253,11 @@ func init() {
 }
 
 //PowSSE is proof of work of iota for amd64 using SSE2(or AMD64).
-func PowSSE(trits Trits, mwm int) (Trits, error) {
+func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 	c := NewCurl()
-	c.Absorb(trits[:transactionTrinarySize-HashSize])
+	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
 	nonce := make(Trits, HashSize)
 	C.pwork128((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])))
-	return nonce, nil
+	return nonce.Trytes(), nil
 }

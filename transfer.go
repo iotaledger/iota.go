@@ -130,8 +130,8 @@ func (a *AddressInfo) Address() (Address, error) {
 }
 
 //Key makes Key from address infos.
-func (a *AddressInfo) Key() Trits {
-	return NewKey(a.Seed.Trits(), a.Index, a.Security)
+func (a *AddressInfo) Key() Trytes {
+	return NewKey(a.Seed, a.Index, a.Security)
 }
 
 func setupInputs(api *API, seed Trytes, inputs []AddressInfo, security int, total int64) (Balances, []AddressInfo, error) {
@@ -262,7 +262,7 @@ func signInputs(inputs []AddressInfo, bundle Bundle) error {
 		// Get corresponding private key of address
 		key := ai.Key()
 		//  Calculate the new signatureFragment with the first bundle fragment
-		bundle[i].SignatureMessageFragment = Sign(nHash[:27], key[:6561]).Trytes()
+		bundle[i].SignatureMessageFragment = Sign(nHash[:27], key[:6561/3])
 
 		// if user chooses higher than 27-tryte security
 		// for each security level, add an additional signature
@@ -272,17 +272,18 @@ func signInputs(inputs []AddressInfo, bundle Bundle) error {
 			//  Same address as well as value = 0 (as we already spent the input)
 			if bundle[i+j].Address == bd.Address && bundle[i+j].Value == 0 {
 				//  Calculate the new signature
-				nfrag := Sign(nHash[(j%3)*27:(j%3)*27+27], key[6561*j:(j+1)*6561])
+				nfrag := Sign(nHash[(j%3)*27:(j%3)*27+27], key[6561*j/3:(j+1)*6561/3])
 				//  Convert signature to trytes and assign it again to this bundle entry
-				bundle[i+j].SignatureMessageFragment = nfrag.Trytes()
+				bundle[i+j].SignatureMessageFragment = nfrag
 			}
 		}
 	}
 	return nil
 }
 
-func doPow(tra *GetTransactionsToApproveResponse, depth int64, trytes []Transaction, mwm int64, pow func(Trits, int) (Trits, error)) error {
+func doPow(tra *GetTransactionsToApproveResponse, depth int64, trytes []Transaction, mwm int64, pow PowFunc) error {
 	var prev Trytes
+	var err error
 	for i := len(trytes) - 1; i >= 0; i-- {
 		if i == len(trytes)-1 {
 			trytes[i].TrunkTransaction = tra.TrunkTransaction
@@ -291,11 +292,10 @@ func doPow(tra *GetTransactionsToApproveResponse, depth int64, trytes []Transact
 			trytes[i].TrunkTransaction = prev
 			trytes[i].BranchTransaction = tra.TrunkTransaction
 		}
-		nonce, err := pow(trytes[i].Trits(), int(mwm))
+		trytes[i].Nonce, err = pow(trytes[i].Trytes(), int(mwm))
 		if err != nil {
 			return err
 		}
-		trytes[i].Nonce = nonce.Trytes()
 		prev = trytes[i].Hash()
 	}
 	return nil

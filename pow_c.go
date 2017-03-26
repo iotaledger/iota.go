@@ -217,11 +217,11 @@ func init() {
 }
 
 //PowC is proof of work of iota using pure C.
-func PowC(trits Trits, mwm int) (Trits, error) {
+func PowC(trytes Trytes, mwm int) (Trytes, error) {
 	c := NewCurl()
-	c.Absorb(trits[:transactionTrinarySize-HashSize])
+	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
 	nonce := make(Trits, HashSize)
 	C.pwork((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])))
-	return nonce, nil
+	return nonce.Trytes(), nil
 }
