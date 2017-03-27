@@ -28,6 +28,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
+
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/iotaledger/giota"
@@ -38,26 +41,38 @@ func main() {
 		app = kingpin.New("giotan", "giota CLI Tool")
 
 		send      = app.Command("send", "Send token")
-		seed      = send.Flag("seed", "seed").Required().String()
 		recipient = send.Flag("recipient", "recipient address").Required().String()
 		sender    = send.Flag("sender", "sender addresses, separated with comma").String()
 		amount    = send.Flag("amount", "amount to send").Required().Int64()
+		tag       = send.Flag("tag", "tag to send").Default("PRETTYGIOTAN").String()
 		mwm       = send.Flag("mwm", "MinWeightMagnituce").Default("18").Int64()
 
 		addresses = app.Command("addresses", "List used/unused addresses")
-		seedA     = addresses.Flag("seed", "seed").Required().String()
 
 		newseed = app.Command("new", "create a new seed")
 	)
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case send.FullCommand():
-		Send(*seed, *recipient, *sender, *amount, *mwm)
+		fmt.Print("input your seed:")
+		seed, err := terminal.ReadPassword(int(syscall.Stdin))
+		fmt.Println("")
+		if err != nil {
+			panic(err)
+		}
+		Send(string(seed), *recipient, *sender, *amount, *mwm, *tag)
 	case addresses.FullCommand():
-		handleAddresses(*seedA)
+		fmt.Print("input your seed:")
+		seedA, err := terminal.ReadPassword(int(syscall.Stdin))
+		fmt.Println("")
+		if err != nil {
+			panic(err)
+		}
+		handleAddresses(string(seedA))
 	case newseed.FullCommand():
 		seed := giota.NewSeed()
 		fmt.Println("New seed: ", seed)
-		fmt.Printf("To display an address, run\n\t%s addresses --seed=%s\n", os.Args[0], seed)
+		fmt.Printf("To display addresses, run\n\t%s addresses\n", os.Args[0])
+		fmt.Println("and input the seed above.")
 	}
 }
 
@@ -75,11 +90,21 @@ func handleAddresses(seed string) {
 		fmt.Fprintf(os.Stderr, "cannot get addresses: %s\n", err.Error())
 		os.Exit(-1)
 	}
-	fmt.Println("address info:")
-	for _, a := range adrs {
-		fmt.Printf("\t%s (used)\n", a)
+	var resp *giota.GetBalancesResponse
+	if len(adrs) > 0 {
+		resp, err = api.GetBalances(adrs, 100)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "cannot get balance: %s\n", err.Error())
+			os.Exit(-1)
+		}
 	}
-	fmt.Printf("\n\t%s (unused)\n", adr)
+	fmt.Println("address info:")
+	fmt.Println("used:")
+	for i, a := range adrs {
+		fmt.Printf("\t%s (balance=%d)\n", a, resp.Balances[i])
+	}
+	fmt.Println("\nunused:")
+	fmt.Printf("\t%s\n", adr)
 }
 
 func check(seed, recipient, sender string, amount int64) (giota.Trytes, giota.Address, []giota.Address) {
@@ -142,19 +167,21 @@ func sendToSender(api *giota.API, trs []giota.Transfer, sender []giota.Address, 
 }
 
 //Send handles send command.
-func Send(seed, recipient, sender string, amount int64, mwm int64) {
+func Send(seed, recipient, sender string, amount int64, mwm int64, tag string) {
 	seedT, recipientT, senderT := check(seed, recipient, sender, amount)
-
+	ttag, err := giota.ToTrytes(tag)
+	if err != nil {
+		panic(err)
+	}
 	trs := []giota.Transfer{
 		giota.Transfer{
 			Address: recipientT,
 			Value:   amount,
-			Tag:     "PRETTYGIOTAN",
+			Tag:     ttag,
 		},
 	}
 
 	var bdl giota.Bundle
-	var err error
 	server := giota.RandomNode()
 	fmt.Printf("using IRI server: %s\n", server)
 
@@ -180,7 +207,8 @@ func Send(seed, recipient, sender string, amount int64, mwm int64) {
 		os.Exit(-1)
 	}
 
-	fmt.Println("transactions info:")
+	fmt.Println("bundle info:")
+	fmt.Println("bundle hash: ", bdl.Hash())
 	for i, tx := range bdl {
 		fmt.Printf(`
 		No: %d/%d
