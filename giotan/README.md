@@ -23,12 +23,16 @@ Examples
 ====
 
 ```
-    $ giotan addresses --seed=SOMESEED
-    $ giotan send --seed=SOMESEED --recipient=SOMERECIPIENT --amount=1234
-    $ giotan send --seed=SOMESEED --recipient=SOMERECIPIENT --amount=1234 --sender=SOMEADDRESS1,SOMEADDRESS2,SOMEADDRESS3
+    $ giotan new
+    $ giotan addresses 
+    $ giotan send --recipient=SOMERECIPIENT --amount=1234
+    $ giotan send --recipient=SOMERECIPIENT --amount=1234 --sender=SOMEADDRESS1,SOMEADDRESS2,SOMEADDRESS3
 ```
 
+When you use `addresses` and `send`, you will be prompted to input your seed.
+
 When you use --sender, you must specify the addresses which can be generated from `seed`.
+
 Note that `send` takes a long time to calculate Proof of Work.
 
 Development Status: Alpha+
