@@ -148,6 +148,7 @@ type ErrorResponse struct {
 	Exception string `json:"exception"`
 }
 
+//GetNodeInfoRequest is for GetNodeInfo API request.
 type GetNodeInfoRequest struct {
 	Command string `json:"command"`
 }
@@ -189,6 +190,7 @@ type Neighbor struct {
 	NumberOfNewTransactions     int64   `json:"numberOfNewTransactions"`
 }
 
+//GetNeighborsRequest is for GetNeighbors API request.
 type GetNeighborsRequest struct {
 	Command string `json:"command"`
 }
@@ -208,6 +210,7 @@ func (api *API) GetNeighbors() (*GetNeighborsResponse, error) {
 	return resp, err
 }
 
+//AddNeighborsRequest is for AddNeighbors API request.
 type AddNeighborsRequest struct {
 	Command string `json:"command"`
 
@@ -235,6 +238,7 @@ func (api *API) AddNeighbors(uris []string) (*AddNeighborsResponse, error) {
 	return resp, err
 }
 
+//RemoveNeighborsRequest is for RemoveNeighbors API request.
 type RemoveNeighborsRequest struct {
 	Command string `json:"command"`
 
@@ -262,6 +266,7 @@ func (api *API) RemoveNeighbors(uris []string) (*RemoveNeighborsResponse, error)
 	return resp, err
 }
 
+//GetTipsRequest is for GetTipsRequest API request.
 type GetTipsRequest struct {
 	Command string `json:"command"`
 }
@@ -309,6 +314,7 @@ func (api *API) FindTransactions(ft *FindTransactionsRequest) (*FindTransactions
 	return resp, err
 }
 
+//GetTrytesRequest is for GetTrytes API request.
 type GetTrytesRequest struct {
 	Command string   `json:"command"`
 	Hashes  []Trytes `json:"hashes"`
@@ -333,6 +339,7 @@ func (api *API) GetTrytes(hashes []Trytes) (*GetTrytesResponse, error) {
 	return resp, err
 }
 
+//GetInclusionStatesRequest is for GetInclusionStates API request.
 type GetInclusionStatesRequest struct {
 	Command      string   `json:"command"`
 	Transactions []Trytes `json:"transactions"`
@@ -378,6 +385,7 @@ func (bs Balances) Total() int64 {
 	return total
 }
 
+//GetBalancesRequest is for GetBalances API request.
 type GetBalancesRequest struct {
 	Command   string    `json:"command"`
 	Addresses []Address `json:"addresses"`
@@ -449,6 +457,7 @@ func (api *API) GetBalances(adr []Address, threshold int64) (*GetBalancesRespons
 	return r, err
 }
 
+//GetTransactionsToApproveRequest is for GetTransactionsToApprove API request.
 type GetTransactionsToApproveRequest struct {
 	Command string `json:"command"`
 	Depth   int64  `json:"depth"`
@@ -502,6 +511,7 @@ func (api *API) AttachToTangle(att *AttachToTangleRequest) (*AttachToTangleRespo
 	return resp, err
 }
 
+//InterruptAttachingToTangleRequest is for InterruptAttachingToTangle API request.
 type InterruptAttachingToTangleRequest struct {
 	Command string `json:"command"`
 }
@@ -514,6 +524,7 @@ func (api *API) InterruptAttachingToTangle() error {
 	return err
 }
 
+//BroadcastTransactionsRequest is for BroadcastTransactions API request.
 type BroadcastTransactionsRequest struct {
 	Command string        `json:"command"`
 	Trytes  []Transaction `json:"trytes"`
@@ -531,6 +542,7 @@ func (api *API) BroadcastTransactions(trytes []Transaction) error {
 	return err
 }
 
+//StoreTransactionsRequest is for StoreTransactions API request.
 type StoreTransactionsRequest struct {
 	Command string   `json:"command"`
 	Trytes  []Trytes `json:"trytes"`

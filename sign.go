@@ -90,7 +90,7 @@ func clearState(l *[stateSize]uint64, h *[stateSize]uint64) {
 }
 
 // 01:-1 11:0 10:1
-func parapara(in Trytes) (*[stateSize]uint64, *[stateSize]uint64) {
+func para27(in Trytes) (*[stateSize]uint64, *[stateSize]uint64) {
 	var l, h [stateSize]uint64
 
 	clearState(&l, &h)
@@ -116,7 +116,7 @@ func parapara(in Trytes) (*[stateSize]uint64, *[stateSize]uint64) {
 	return &l, &h
 }
 
-func seriseri(l *[stateSize]uint64, h *[stateSize]uint64) Trytes {
+func seri27(l *[stateSize]uint64, h *[stateSize]uint64) Trytes {
 	keyFragment := make(Trits, HashSize*27)
 	r := make(Trits, HashSize)
 	var n uint
@@ -149,12 +149,12 @@ func Digests(key Trytes) (Trytes, error) {
 	numKeys := len(key) / (HashSize * 9)
 	digests := make([]byte, HashSize*numKeys/3)
 	for i := 0; i < numKeys; i++ {
-		lmid, hmid := parapara(key[i*HashSize*9:])
+		lmid, hmid := para27(key[i*HashSize*9:])
 		for k := 0; k < 26; k++ {
 			transform64(lmid, hmid)
 			clearState(lmid, hmid)
 		}
-		keyFragment := seriseri(lmid, hmid)
+		keyFragment := seri27(lmid, hmid)
 		s := Trytes(keyFragment).Hash()
 		copy(digests[i*HashSize/3:], s)
 	}

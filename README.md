@@ -12,6 +12,9 @@ Refer to [godoc](https://godoc.org/github.com/iotaledger/iota.lib.go) for detail
 
 Install
 ====
+
+You will need `gcc` for linux to compile PoW routine in C.
+
 ```
     $ go get -u github.com/iotaledger/giota
 ```
