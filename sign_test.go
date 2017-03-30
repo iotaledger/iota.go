@@ -42,7 +42,7 @@ func TestDigests(t *testing.T) {
 		t.Fatalf("Digests() expected err to be %#v but got %#v", nil, err)
 	}
 	if !digests.Equal(ds.Trits()) {
-		t.Fatalf("Digests() trits mismatch\n\n%#v\n%#v", digests, ds)
+		t.Fatalf("Digests() trits mismatch\n\n%#v\n%#v", digests, ds.Trits())
 	}
 
 }

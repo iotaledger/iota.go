@@ -82,6 +82,63 @@ func NewKey(seed Trytes, index, securityLevel int) Trytes {
 	return Trytes(key)
 }
 
+func clearState(l *[stateSize]uint64, h *[stateSize]uint64) {
+	for j := HashSize; j < stateSize; j++ {
+		l[j] = 0xffffffffffffffff
+		h[j] = 0xffffffffffffffff
+	}
+}
+
+// 01:-1 11:0 10:1
+func parapara(in Trytes) (*[stateSize]uint64, *[stateSize]uint64) {
+	var l, h [stateSize]uint64
+
+	clearState(&l, &h)
+	var j uint
+	bb := in.Trits()
+	for i := 0; i < HashSize; i++ {
+		for j = 0; j < 27; j++ {
+			l[i] <<= 1
+			h[i] <<= 1
+			switch bb[int(j)*HashSize+i] {
+			case 0:
+				l[i] |= 1
+				h[i] |= 1
+			case 1:
+				l[i] |= 0
+				h[i] |= 1
+			case -1:
+				l[i] |= 1
+				h[i] |= 0
+			}
+		}
+	}
+	return &l, &h
+}
+
+func seriseri(l *[stateSize]uint64, h *[stateSize]uint64) Trytes {
+	keyFragment := make(Trits, HashSize*27)
+	r := make(Trits, HashSize)
+	var n uint
+	for n = 0; n < 27; n++ {
+		for i := 0; i < HashSize; i++ {
+			ll := (l[i] >> n) & 1
+			hh := (h[i] >> n) & 1
+			if hh == 0 && ll == 1 {
+				r[i] = -1
+			}
+			if hh == 1 && ll == 1 {
+				r[i] = 0
+			}
+			if hh == 1 && ll == 0 {
+				r[i] = 1
+			}
+		}
+		copy(keyFragment[(26-n)*HashSize:], r)
+	}
+	return keyFragment.Trytes()
+}
+
 //Digests calculates hash x 26 for each segments in keyTrits.
 func Digests(key Trytes) (Trytes, error) {
 	if len(key) < HashSize*27/3 {
@@ -90,18 +147,14 @@ func Digests(key Trytes) (Trytes, error) {
 
 	// Integer division, becaue we don't care about impartial keys.
 	numKeys := len(key) / (HashSize * 9)
-
 	digests := make([]byte, HashSize*numKeys/3)
-	keyFragment := make([]byte, HashSize*27/3)
 	for i := 0; i < numKeys; i++ {
-		for j := 0; j < 27; j++ {
-			start := i*HashSize*27/3 + j*HashSize/3
-			bb := key[start : start+HashSize/3]
-			for k := 0; k < 26; k++ {
-				bb = bb.Hash()
-			}
-			copy(keyFragment[j*HashSize/3:], bb)
+		lmid, hmid := parapara(key[i*HashSize*9:])
+		for k := 0; k < 26; k++ {
+			transform64(lmid, hmid)
+			clearState(lmid, hmid)
 		}
+		keyFragment := seriseri(lmid, hmid)
 		s := Trytes(keyFragment).Hash()
 		copy(digests[i*HashSize/3:], s)
 	}
