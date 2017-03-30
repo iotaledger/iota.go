@@ -515,8 +515,8 @@ func (api *API) InterruptAttachingToTangle() error {
 }
 
 type BroadcastTransactionsRequest struct {
-	Command string   `json:"command"`
-	Trytes  []Trytes `json:"trytes"`
+	Command string        `json:"command"`
+	Trytes  []Transaction `json:"trytes"`
 }
 
 //BroadcastTransactions calls BroadcastTransactions API.
