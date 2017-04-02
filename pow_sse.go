@@ -115,6 +115,7 @@ int incr128(__m128i *mid_low, __m128i *mid_high)
 {
   int i;
   __m128i carry;
+  carry = _mm_set_epi64x(LOW00, LOW01);
   for (i = 5; i < HASH_LENGTH && (i == 5 || carry[0]); i++)
   {
     __m128i low = mid_low[i], high = mid_high[i];
@@ -180,12 +181,12 @@ int check128(__m128i *l, __m128i *h, int m)
   return -2;
 }
 
-int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce)
+int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce,int *stop)
 {
   int i = 0, n = 0, j = 0;
 
   __m128i lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
-  for (i = 0; !incr128(lmid, hmid); i++)
+  for (i = 0; !incr128(lmid, hmid) && !*stop; i++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -199,7 +200,7 @@ int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce)
       return i * 128;
     }
   }
-  return -i * 128;
+  return -1;
 }
 
 // 01:-1 11:0 10:1
@@ -226,7 +227,23 @@ void para128(char in[], __m128i l[], __m128i h[])
   }
 }
 
-int pwork128(char mid[], int mwm, char nonce[])
+void incrN128(int n,__m128i *mid_low, __m128i *mid_high)
+{
+  int i,j;
+  for (j=0;j<n;j++){
+    __m128i carry;
+    carry = _mm_set_epi64x(LOW00, LOW01);
+    for (i = HASH_LENGTH-7; i < HASH_LENGTH && (i == 5 || carry[0]); i++)
+    {
+      __m128i low = mid_low[i], high = mid_high[i];
+      mid_low[i] = high ^ low;
+      mid_high[i] = low;
+      carry = high & (~low);
+    }
+  }
+}
+
+int pwork128(char mid[], int mwm, char nonce[],int n,int *stop)
 {
   __m128i lmid[STATE_LENGTH], hmid[STATE_LENGTH];
 
@@ -242,11 +259,15 @@ int pwork128(char mid[], int mwm, char nonce[])
   lmid[4] = _mm_set_epi64x(LOW40, LOW41);
   hmid[4] = _mm_set_epi64x(HIGH40, HIGH41);
 
-  return loop128(lmid, hmid, mwm, nonce);
+	incrN128(n, lmid, hmid);
+  return loop128(lmid, hmid, mwm, nonce,stop);
 }
 */
 import "C"
-import "unsafe"
+import (
+	"sync"
+	"unsafe"
+)
 
 func init() {
 	pows["PowSSE"] = PowSSE
@@ -257,7 +278,21 @@ func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
-	nonce := make(Trits, HashSize)
-	C.pwork128((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])))
-	return nonce.Trytes(), nil
+	stop := 0
+	var result Trytes
+	var wg sync.WaitGroup
+	for n := 0; n < PowProcs; n++ {
+		wg.Add(1)
+		go func(n int) {
+			nonce := make(Trits, HashSize)
+			r := C.pwork128((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n), (*C.int)(unsafe.Pointer(&stop)))
+			if r >= 0 {
+				result = nonce.Trytes()
+				stop = 1
+			}
+			wg.Done()
+		}(n)
+	}
+	wg.Wait()
+	return result, nil
 }

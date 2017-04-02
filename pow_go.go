@@ -24,6 +24,11 @@ SOFTWARE.
 
 package giota
 
+import (
+	"runtime"
+	"sync"
+)
+
 //trytes
 const (
 	hBits uint64 = 0xFFFFFFFFFFFFFFFF
@@ -42,10 +47,19 @@ const (
 //PowFunc is the tyoe of func for PoW
 type PowFunc func(Trytes, int) (Trytes, error)
 
-var pows = make(map[string]PowFunc)
+var (
+	pows = make(map[string]PowFunc)
+	//PowProcs is number of concurrencies.
+	//default is NumCPU()-1.
+	PowProcs int
+)
 
 func init() {
 	pows["PowGo"] = PowGo
+	PowProcs = runtime.NumCPU()
+	if PowProcs != 1 {
+		PowProcs--
+	}
 }
 
 //GetBestPoW returns most preferable PoW func.
@@ -148,10 +162,10 @@ func check(l *[stateSize]uint64, h *[stateSize]uint64, m int) int {
 	return -1
 }
 
-func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int) (Trits, int) {
+func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int, stop *int) (Trits, int) {
 	var lcpy, hcpy [stateSize]uint64
 	var i int
-	for i = 0; !incr(lmid, hmid); i++ {
+	for i = 0; !incr(lmid, hmid) && *stop != 1; i++ {
 		copy(lcpy[:], lmid[:])
 		copy(hcpy[:], hmid[:])
 		transform64(&lcpy, &hcpy)
@@ -183,21 +197,50 @@ func para(in Trits) (*[stateSize]uint64, *[stateSize]uint64) {
 	return &l, &h
 }
 
-//PowGo is proof of work of iota in pure Go.
+func incrN(n int, lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
+	for j := 0; j < n; j++ {
+		var carry uint64 = 1
+		//to avoid boundry check, i believe.
+		for i := HashSize - 7; i < HashSize && carry != 0; i++ {
+			low := lmid[i]
+			high := hmid[i]
+			lmid[i] = high ^ low
+			hmid[i] = low
+			carry = high & (^low)
+		}
+	}
+}
+
+//PowGo is proof of work of iota in pure.
 func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
-	lmid, hmid := para(c.state)
-	lmid[0] = low0
-	hmid[0] = high0
-	lmid[1] = low1
-	hmid[1] = high1
-	lmid[2] = low2
-	hmid[2] = high2
-	lmid[3] = low3
-	hmid[3] = high3
+	stop := 0
+	var result Trytes
+	var wg sync.WaitGroup
+	for i := 0; i < PowProcs; i++ {
+		wg.Add(1)
+		go func(i int) {
+			lmid, hmid := para(c.state)
+			lmid[0] = low0
+			hmid[0] = high0
+			lmid[1] = low1
+			hmid[1] = high1
+			lmid[2] = low2
+			hmid[2] = high2
+			lmid[3] = low3
+			hmid[3] = high3
 
-	nonce, _ := loop(lmid, hmid, mwm)
-	return nonce.Trytes(), nil
+			incrN(i, lmid, hmid)
+			nonce, _ := loop(lmid, hmid, mwm, &stop)
+			if nonce != nil {
+				result = nonce.Trytes()
+				stop = 1
+			}
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	return result, nil
 }

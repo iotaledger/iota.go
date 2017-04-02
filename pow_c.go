@@ -149,12 +149,12 @@ int check(unsigned long *l, unsigned long *h, int m)
   return -1;
 }
 
-int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *nonce)
+int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *nonce, int *stop)
 {
   int i = 0, n = 0;
 
   unsigned long lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
-  for (i = 0; !incr(lmid, hmid); i++)
+  for (i = 0; !incr(lmid, hmid) && !*stop; i++)
   {
     memcpy(lcpy, lmid, STATE_LENGTH * sizeof(long));
     memcpy(hcpy, hmid, STATE_LENGTH * sizeof(long));
@@ -165,7 +165,7 @@ int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *nonce)
       return i * 64;
     }
   }
-  return -i * 64;
+  return -1;
 }
 
 // 01:-1 11:0 10:1
@@ -192,7 +192,23 @@ void para(char in[], unsigned long l[], unsigned long h[])
   }
 }
 
-int pwork(char mid[], int mwm, char nonce[])
+void incrN(int n,unsigned long *mid_low, unsigned long *mid_high)
+{
+  int i,j;
+  for (j=0;j<n;j++){
+    unsigned long carry = 1;
+    for (i =HASH_LENGTH-7; i < HASH_LENGTH && carry; i++)
+    {
+      unsigned long low = mid_low[i], high = mid_high[i];
+      mid_low[i] = high ^ low;
+      mid_high[i] = low;
+      carry = high & (~low);
+    }
+  }
+}
+
+
+int pwork(char mid[], int mwm, char nonce[],int n, int *stop)
 {
   unsigned long lmid[STATE_LENGTH] = {0}, hmid[STATE_LENGTH] = {0};
 
@@ -206,11 +222,15 @@ int pwork(char mid[], int mwm, char nonce[])
   lmid[3] = LOW3;
   hmid[3] = HIGH3;
 
-  return loop_cpu(lmid, hmid, mwm, nonce);
+	incrN(n, lmid, hmid);
+  return loop_cpu(lmid, hmid, mwm, nonce,stop);
 }
 */
 import "C"
-import "unsafe"
+import (
+	"sync"
+	"unsafe"
+)
 
 func init() {
 	pows["PowC"] = PowC
@@ -221,7 +241,21 @@ func PowC(trytes Trytes, mwm int) (Trytes, error) {
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
-	nonce := make(Trits, HashSize)
-	C.pwork((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])))
-	return nonce.Trytes(), nil
+	stop := 0
+	var result Trytes
+	var wg sync.WaitGroup
+	for n := 0; n < PowProcs; n++ {
+		wg.Add(1)
+		go func(n int) {
+			nonce := make(Trits, HashSize)
+			r := C.pwork((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n), (*C.int)(unsafe.Pointer(&stop)))
+			if r >= 0 {
+				result = nonce.Trytes()
+				stop = 1
+			}
+			wg.Done()
+		}(n)
+	}
+	wg.Wait()
+	return result, nil
 }
