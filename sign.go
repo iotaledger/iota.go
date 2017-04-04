@@ -28,6 +28,7 @@ package giota
 import (
 	"crypto/rand"
 	"errors"
+	"math/big"
 )
 
 //errors used in sign.
@@ -38,16 +39,24 @@ var (
 
 //NewSeed generate a random Trytes.
 func NewSeed() Trytes {
-	b := make([]byte, 81)
+	b := make([]byte, 48)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
-
-	seed := make([]byte, 81)
-	for i, r := range b {
-		seed[i] = TryteAlphabet[int(r)%len(TryteAlphabet)]
+	txt := new(big.Int).SetBytes(b).Text(27)
+	t := make([]rune, 81)
+	for i, c := range txt {
+		if c == '0' {
+			t[i] = '9'
+		}
+		if c >= '1' && c <= '9' {
+			t[i] = c - '1' + 'A'
+		}
+		if c >= 'a' {
+			t[i] = c - 'a' + ('A' + 9)
+		}
 	}
-	return Trytes(seed)
+	return Trytes(t)
 }
 
 // NewKey takes a seed encoded as Trits, an index and a security
