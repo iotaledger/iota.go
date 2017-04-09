@@ -133,21 +133,25 @@ func TestAddress(t *testing.T) {
 	if adr11 != adr {
 		t.Error("address unmatch", adr)
 	}
-	s1 := NewSeed()
-	if err := s1.IsValid(); err != nil {
-		t.Error("NewSeed is not valid")
-	}
-	s2 := NewSeed()
-	if err := s2.IsValid(); err != nil {
-		t.Error("NewSeed is not valid")
-	}
-	if s1 == s2 {
-		t.Error("NewSeed is incorrect")
-	}
 	if err := adr.IsValid(); err != nil {
 		t.Error("IsValid is incorrect")
 	}
+}
 
+func TestSeed(t *testing.T) {
+	for i := 0; i < 10000; i++ {
+		s1 := NewSeed()
+		if err := s1.IsValid(); err != nil {
+			t.Error("NewSeed is not valid")
+		}
+		s2 := NewSeed()
+		if err := s2.IsValid(); err != nil {
+			t.Error("NewSeed is not valid")
+		}
+		if s1 == s2 {
+			t.Error("NewSeed is incorrect")
+		}
+	}
 }
 
 func TestSign(t *testing.T) {

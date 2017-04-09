@@ -39,13 +39,17 @@ var (
 
 //NewSeed generate a random Trytes.
 func NewSeed() Trytes {
-	b := make([]byte, 48)
+	b := make([]byte, 49)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
 	txt := new(big.Int).SetBytes(b).Text(27)
-	t := make([]rune, 81)
-	for i, c := range txt {
+	t := make([]byte, 81)
+	for i := range t {
+		var c byte = '0'
+		if len(txt) > i {
+			c = txt[i]
+		}
 		if c == '0' {
 			t[i] = '9'
 		}
