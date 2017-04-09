@@ -168,7 +168,7 @@ func Digests(key Trytes) (Trytes, error) {
 			clearState(lmid, hmid)
 		}
 		keyFragment := seri27(lmid, hmid)
-		s := Trytes(keyFragment).Hash()
+		s := keyFragment.Hash()
 		copy(digests[i*HashSize/3:], s)
 	}
 	return Trytes(digests), nil
