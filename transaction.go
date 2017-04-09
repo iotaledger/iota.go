@@ -53,36 +53,36 @@ var (
 	ErrInvalidTransaction     = errors.New("malformed transaction")
 )
 
-//sizes and offsets of tx.
+// Trinary sizes and offsets of a transaction
 const (
-	signatureMessageFragmentTrinaryOffset = 0
-	signatureMessageFragmentTrinarySize   = 6561
-	addressTrinaryOffset                  = signatureMessageFragmentTrinaryOffset + signatureMessageFragmentTrinarySize
-	addressTrinarySize                    = 243
-	valueTrinaryOffset                    = addressTrinaryOffset + addressTrinarySize
-	valueTrinarySize                      = 81
-	tagTrinaryOffset                      = valueTrinaryOffset + valueTrinarySize
-	tagTrinarySize                        = 81
-	timestampTrinaryOffset                = tagTrinaryOffset + tagTrinarySize
-	timestampTrinarySize                  = 27
-	currentIndexTrinaryOffset             = timestampTrinaryOffset + timestampTrinarySize
-	currentIndexTrinarySize               = 27
-	lastIndexTrinaryOffset                = currentIndexTrinaryOffset + currentIndexTrinarySize
-	lastIndexTrinarySize                  = 27
-	bundleTrinaryOffset                   = lastIndexTrinaryOffset + lastIndexTrinarySize
-	bundleTrinarySize                     = 243
-	trunkTransactionTrinaryOffset         = bundleTrinaryOffset + bundleTrinarySize
-	trunkTransactionTrinarySize           = 243
-	branchTransactionTrinaryOffset        = trunkTransactionTrinaryOffset + trunkTransactionTrinarySize
-	branchTransactionTrinarySize          = 243
-	nonceTrinaryOffset                    = branchTransactionTrinaryOffset + branchTransactionTrinarySize
-	nonceTrinarySize                      = 243
+	SignatureMessageFragmentTrinaryOffset = 0
+	SignatureMessageFragmentTrinarySize   = 6561
+	AddressTrinaryOffset                  = SignatureMessageFragmentTrinaryOffset + SignatureMessageFragmentTrinarySize
+	AddressTrinarySize                    = 243
+	ValueTrinaryOffset                    = AddressTrinaryOffset + AddressTrinarySize
+	ValueTrinarySize                      = 81
+	TagTrinaryOffset                      = ValueTrinaryOffset + ValueTrinarySize
+	TagTrinarySize                        = 81
+	TimestampTrinaryOffset                = TagTrinaryOffset + TagTrinarySize
+	TimestampTrinarySize                  = 27
+	CurrentIndexTrinaryOffset             = TimestampTrinaryOffset + TimestampTrinarySize
+	CurrentIndexTrinarySize               = 27
+	LastIndexTrinaryOffset                = CurrentIndexTrinaryOffset + CurrentIndexTrinarySize
+	LastIndexTrinarySize                  = 27
+	BundleTrinaryOffset                   = LastIndexTrinaryOffset + LastIndexTrinarySize
+	BundleTrinarySize                     = 243
+	TrunkTransactionTrinaryOffset         = BundleTrinaryOffset + BundleTrinarySize
+	TrunkTransactionTrinarySize           = 243
+	BranchTransactionTrinaryOffset        = TrunkTransactionTrinaryOffset + TrunkTransactionTrinarySize
+	BranchTransactionTrinarySize          = 243
+	NonceTrinaryOffset                    = BranchTransactionTrinaryOffset + BranchTransactionTrinarySize
+	NonceTrinarySize                      = 243
 
-	transactionTrinarySize = signatureMessageFragmentTrinarySize + addressTrinarySize +
-		valueTrinarySize + tagTrinarySize + timestampTrinarySize +
-		currentIndexTrinarySize + lastIndexTrinarySize + bundleTrinarySize +
-		trunkTransactionTrinarySize + branchTransactionTrinarySize +
-		nonceTrinarySize
+	transactionTrinarySize = SignatureMessageFragmentTrinarySize + AddressTrinarySize +
+		ValueTrinarySize + TagTrinarySize + TimestampTrinarySize +
+		CurrentIndexTrinarySize + LastIndexTrinarySize + BundleTrinarySize +
+		TrunkTransactionTrinarySize + BranchTransactionTrinarySize +
+		NonceTrinarySize
 )
 
 //NewTransaction makes tx from trits.
@@ -111,21 +111,21 @@ func checkTx(trytes Trytes) error {
 
 func (t *Transaction) parser(trits Trits) error {
 	var err error
-	t.SignatureMessageFragment = trits[signatureMessageFragmentTrinaryOffset:signatureMessageFragmentTrinarySize].Trytes()
-	t.Address, err = trits[addressTrinaryOffset : addressTrinaryOffset+addressTrinarySize].Trytes().ToAddress()
+	t.SignatureMessageFragment = trits[SignatureMessageFragmentTrinaryOffset:SignatureMessageFragmentTrinarySize].Trytes()
+	t.Address, err = trits[AddressTrinaryOffset : AddressTrinaryOffset+AddressTrinarySize].Trytes().ToAddress()
 	if err != nil {
 		return err
 	}
-	t.Value = trits[valueTrinaryOffset : valueTrinaryOffset+valueTrinarySize].Int()
-	t.Tag = trits[tagTrinaryOffset : tagTrinaryOffset+tagTrinarySize].Trytes()
-	timestamp := trits[timestampTrinaryOffset : timestampTrinaryOffset+timestampTrinarySize].Int()
+	t.Value = trits[ValueTrinaryOffset : ValueTrinaryOffset+ValueTrinarySize].Int()
+	t.Tag = trits[TagTrinaryOffset : TagTrinaryOffset+TagTrinarySize].Trytes()
+	timestamp := trits[TimestampTrinaryOffset : TimestampTrinaryOffset+TimestampTrinarySize].Int()
 	t.Timestamp = time.Unix(timestamp, 0)
-	t.CurrentIndex = trits[currentIndexTrinaryOffset : currentIndexTrinaryOffset+currentIndexTrinarySize].Int()
-	t.LastIndex = trits[lastIndexTrinaryOffset : lastIndexTrinaryOffset+lastIndexTrinarySize].Int()
-	t.Bundle = trits[bundleTrinaryOffset : bundleTrinaryOffset+bundleTrinarySize].Trytes()
-	t.TrunkTransaction = trits[trunkTransactionTrinaryOffset : trunkTransactionTrinaryOffset+trunkTransactionTrinarySize].Trytes()
-	t.BranchTransaction = trits[branchTransactionTrinaryOffset : branchTransactionTrinaryOffset+branchTransactionTrinarySize].Trytes()
-	t.Nonce = trits[nonceTrinaryOffset : nonceTrinaryOffset+nonceTrinarySize].Trytes()
+	t.CurrentIndex = trits[CurrentIndexTrinaryOffset : CurrentIndexTrinaryOffset+CurrentIndexTrinarySize].Int()
+	t.LastIndex = trits[LastIndexTrinaryOffset : LastIndexTrinaryOffset+LastIndexTrinarySize].Int()
+	t.Bundle = trits[BundleTrinaryOffset : BundleTrinaryOffset+BundleTrinarySize].Trytes()
+	t.TrunkTransaction = trits[TrunkTransactionTrinaryOffset : TrunkTransactionTrinaryOffset+TrunkTransactionTrinarySize].Trytes()
+	t.BranchTransaction = trits[BranchTransactionTrinaryOffset : BranchTransactionTrinaryOffset+BranchTransactionTrinarySize].Trytes()
+	t.Nonce = trits[NonceTrinaryOffset : NonceTrinaryOffset+NonceTrinarySize].Trytes()
 
 	return nil
 }
@@ -134,16 +134,16 @@ func (t *Transaction) parser(trits Trits) error {
 func (t *Transaction) Trytes() Trytes {
 	tr := make(Trits, transactionTrinarySize)
 	copy(tr, t.SignatureMessageFragment.Trits())
-	copy(tr[addressTrinaryOffset:], Trytes(t.Address).Trits())
-	copy(tr[valueTrinaryOffset:], Int2Trits(t.Value, valueTrinarySize))
-	copy(tr[tagTrinaryOffset:], t.Tag.Trits())
-	copy(tr[timestampTrinaryOffset:], Int2Trits(t.Timestamp.Unix(), timestampTrinarySize))
-	copy(tr[currentIndexTrinaryOffset:], Int2Trits(t.CurrentIndex, currentIndexTrinarySize))
-	copy(tr[lastIndexTrinaryOffset:], Int2Trits(t.LastIndex, lastIndexTrinarySize))
-	copy(tr[bundleTrinaryOffset:], t.Bundle.Trits())
-	copy(tr[trunkTransactionTrinaryOffset:], t.TrunkTransaction.Trits())
-	copy(tr[branchTransactionTrinaryOffset:], t.BranchTransaction.Trits())
-	copy(tr[nonceTrinaryOffset:], t.Nonce.Trits())
+	copy(tr[AddressTrinaryOffset:], Trytes(t.Address).Trits())
+	copy(tr[ValueTrinaryOffset:], Int2Trits(t.Value, ValueTrinarySize))
+	copy(tr[TagTrinaryOffset:], t.Tag.Trits())
+	copy(tr[TimestampTrinaryOffset:], Int2Trits(t.Timestamp.Unix(), TimestampTrinarySize))
+	copy(tr[CurrentIndexTrinaryOffset:], Int2Trits(t.CurrentIndex, CurrentIndexTrinarySize))
+	copy(tr[LastIndexTrinaryOffset:], Int2Trits(t.LastIndex, LastIndexTrinarySize))
+	copy(tr[BundleTrinaryOffset:], t.Bundle.Trits())
+	copy(tr[TrunkTransactionTrinaryOffset:], t.TrunkTransaction.Trits())
+	copy(tr[BranchTransactionTrinaryOffset:], t.BranchTransaction.Trits())
+	copy(tr[NonceTrinaryOffset:], t.Nonce.Trits())
 	return tr.Trytes()
 }
 

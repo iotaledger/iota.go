@@ -58,7 +58,7 @@ func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time
 			SignatureMessageFragment: emptySig,
 			Address:                  address,
 			Value:                    v,
-			Tag:                      pad(tag, tagTrinarySize/3),
+			Tag:                      pad(tag, TagTrinarySize/3),
 			Timestamp:                timestamp,
 			CurrentIndex:             int64(len(*bs) - 1),
 			LastIndex:                0,
@@ -76,7 +76,7 @@ func (bs Bundle) Finalize(sig []Trytes) {
 	h := bs.Hash()
 	for i := range bs {
 		if len(sig) > i && sig[i] != "" {
-			bs[i].SignatureMessageFragment = pad(sig[i], signatureMessageFragmentTrinarySize/3)
+			bs[i].SignatureMessageFragment = pad(sig[i], SignatureMessageFragmentTrinarySize/3)
 		}
 		bs[i].CurrentIndex = int64(i)
 		bs[i].LastIndex = int64(len(bs) - 1)

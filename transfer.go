@@ -80,7 +80,7 @@ type Transfer struct {
 	Tag     Trytes
 }
 
-const sigSize = signatureMessageFragmentTrinarySize / 3
+const sigSize = SignatureMessageFragmentTrinarySize / 3
 
 func addOutputs(trs []Transfer) (Bundle, []Trytes, int64) {
 	var bundle Bundle
