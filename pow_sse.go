@@ -232,8 +232,8 @@ void incrN128(int n,__m128i *mid_low, __m128i *mid_high)
   int i,j;
   for (j=0;j<n;j++){
     __m128i carry;
-    carry = _mm_set_epi64x(LOW00, LOW01);
-    for (i = HASH_LENGTH-7; i < HASH_LENGTH && (i == 5 || carry[0]); i++)
+    carry = _mm_set_epi64x(HBITS, HBITS);
+    for (i = HASH_LENGTH-7; i < HASH_LENGTH &&  carry[0]; i++)
     {
       __m128i low = mid_low[i], high = mid_high[i];
       mid_low[i] = high ^ low;
