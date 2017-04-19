@@ -547,15 +547,15 @@ func (api *API) BroadcastTransactions(trytes []Transaction) error {
 
 //StoreTransactionsRequest is for StoreTransactions API request.
 type StoreTransactionsRequest struct {
-	Command string   `json:"command"`
-	Trytes  []Trytes `json:"trytes"`
+	Command string        `json:"command"`
+	Trytes  []Transaction `json:"trytes"`
 }
 
 //StoreTransactions calls StoreTransactions API.
-func (api *API) StoreTransactions(trytes []Trytes) error {
+func (api *API) StoreTransactions(trytes []Transaction) error {
 	err := api.do(&struct {
-		Command string   `json:"command"`
-		Trytes  []Trytes `json:"trytes"`
+		Command string        `json:"command"`
+		Trytes  []Transaction `json:"trytes"`
 	}{
 		"storeTransactions",
 		trytes,
