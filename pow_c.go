@@ -165,7 +165,7 @@ int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *nonce, int *
       return i * 64;
     }
   }
-  return -1;
+  return -i*64;
 }
 
 // 01:-1 11:0 10:1
@@ -229,6 +229,7 @@ int pwork(char mid[], int mwm, char nonce[],int n, int *stop)
 import "C"
 import (
 	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -236,8 +237,11 @@ func init() {
 	pows["PowC"] = PowC
 }
 
+var countC int64
+
 //PowC is proof of work of iota using pure C.
 func PowC(trytes Trytes, mwm int) (Trytes, error) {
+	countC = 0
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
@@ -252,6 +256,9 @@ func PowC(trytes Trytes, mwm int) (Trytes, error) {
 			if r >= 0 {
 				result = nonce.Trytes()
 				stop = 1
+				atomic.AddInt64(&countC, int64(r))
+			} else {
+				atomic.AddInt64(&countC, int64(-r))
 			}
 			wg.Done()
 		}(n)

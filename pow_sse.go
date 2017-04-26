@@ -200,7 +200,7 @@ int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce,int *stop)
       return i * 128;
     }
   }
-  return -1;
+  return -i*128;
 }
 
 // 01:-1 11:0 10:1
@@ -266,6 +266,7 @@ int pwork128(char mid[], int mwm, char nonce[],int n,int *stop)
 import "C"
 import (
 	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -273,8 +274,11 @@ func init() {
 	pows["PowSSE"] = PowSSE
 }
 
+var countSSE int64
+
 //PowSSE is proof of work of iota for amd64 using SSE2(or AMD64).
 func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
+	countSSE = 0
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
@@ -289,6 +293,9 @@ func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 			if r >= 0 {
 				result = nonce.Trytes()
 				stop = 1
+				atomic.AddInt64(&countSSE, int64(r))
+			} else {
+				atomic.AddInt64(&countSSE, int64(-r))
 			}
 			wg.Done()
 		}(n)

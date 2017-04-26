@@ -27,6 +27,7 @@ package giota
 import (
 	"runtime"
 	"sync"
+	"sync/atomic"
 )
 
 //trytes
@@ -64,6 +65,9 @@ func init() {
 
 //GetBestPoW returns most preferable PoW func.
 func GetBestPoW() (string, PowFunc) {
+	if p, exist := pows["PowCL"]; exist {
+		return "PowCL", p
+	}
 	if p, exist := pows["PowSSE"]; exist {
 		return "PowSSE", p
 	}
@@ -162,7 +166,7 @@ func check(l *[stateSize]uint64, h *[stateSize]uint64, m int) int {
 	return -1
 }
 
-func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int, stop *int) (Trits, int) {
+func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int, stop *int64) (Trits, int) {
 	var lcpy, hcpy [stateSize]uint64
 	var i int
 	for i = 0; !incr(lmid, hmid) && *stop != 1; i++ {
@@ -174,7 +178,7 @@ func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int, stop *int) (T
 			return nonce, i * 64
 		}
 	}
-	return nil, -i * 64
+	return nil, i * 64
 }
 
 // 01:-1 11:0 10:1
@@ -211,12 +215,15 @@ func incrN(n int, lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 	}
 }
 
+var countGo int64
+
 //PowGo is proof of work of iota in pure.
 func PowGo(trytes Trytes, mwm int) (Trytes, error) {
+	countGo = 0
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
-	stop := 0
+	var stop int64
 	var result Trytes
 	var wg sync.WaitGroup
 	for i := 0; i < PowProcs; i++ {
@@ -233,11 +240,12 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 			hmid[3] = high3
 
 			incrN(i, lmid, hmid)
-			nonce, _ := loop(lmid, hmid, mwm, &stop)
+			nonce, cnt := loop(lmid, hmid, mwm, &stop)
 			if nonce != nil {
 				result = nonce.Trytes()
-				stop = 1
+				atomic.StoreInt64(&stop, 1)
 			}
+			atomic.AddInt64(&countGo, int64(cnt))
 			wg.Done()
 		}(i)
 	}

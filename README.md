@@ -13,10 +13,17 @@ Refer to [godoc](https://godoc.org/github.com/iotaledger/iota.lib.go) for detail
 Install
 ====
 
-You will need `gcc` for linux to compile PoW routine in C.
+You will need C compiler for linux to compile PoW routine in C.
 
 ```
     $ go get -u github.com/iotaledger/giota
+```
+
+You will need C compiler and OpenCL environemnt(hardware and software)  to compile PoW routine in OpenCL 
+and need to add `opencl` tag when you build.
+
+```
+	$ go build -tags=opencl
 ```
 
 Examples
@@ -73,7 +80,38 @@ _, pow := giota.GetBestPow()
 bdl, err = giota.Send(api, seed, security, trs, pow)
 ```
 
+PoW(Proof of Work) Benchmarking
+====
 
+You can benchmark PoWs(by C,Go,SSE) by
+
+```
+    $ go test -v -run Pow
+```
+
+or if you want to add OpenCL PoW,
+
+```
+    $ go test -tags=opencl -v -run Pow
+```
+
+then it outputs like:
+
+```
+	$ go test -tags=opencl -v -run Pow
+=== RUN   TestPowC
+--- PASS: TestPowC (15.93s)
+	pow_c_test.go:50: 1550 kH/sec on C PoW
+=== RUN   TestPowCL
+--- PASS: TestPowCL (17.45s)
+	pow_cl_test.go:49: 332 kH/sec on OpenCL PoW
+=== RUN   TestPowGo
+--- PASS: TestPowGo (21.21s)
+	pow_go_test.go:50: 1164 kH/sec on Go PoW
+=== RUN   TestPowSSE
+--- PASS: TestPowSSE (13.41s)
+	pow_sse_test.go:52: 2292 kH/sec on SSE PoW
+```
 
 Development Status: Alpha+
 =========================
