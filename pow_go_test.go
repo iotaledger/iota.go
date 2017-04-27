@@ -51,6 +51,7 @@ func TestPowGo(t *testing.T) {
 }
 
 func TestPowGo1(t *testing.T) {
+	t.Logf("PowProcs:%d", PowProcs)
 	proc := PowProcs
 	PowProcs = 1
 	testPowGo(t)

@@ -282,7 +282,7 @@ func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
-	stop := 0
+	var stop int64
 	var result Trytes
 	var wg sync.WaitGroup
 	for n := 0; n < PowProcs; n++ {
@@ -292,6 +292,7 @@ func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 			r := C.pwork128((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n), (*C.int)(unsafe.Pointer(&stop)))
 			if r >= 0 {
 				result = nonce.Trytes()
+				atomic.StoreInt64(&stop, 1)
 				stop = 1
 				atomic.AddInt64(&countSSE, int64(r))
 			} else {
