@@ -165,7 +165,7 @@ int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *nonce, int *
       return i * 64;
     }
   }
-  return -i*64;
+  return -i*64+1;
 }
 
 // 01:-1 11:0 10:1
@@ -258,7 +258,7 @@ func PowC(trytes Trytes, mwm int) (Trytes, error) {
 				stop = 1
 				atomic.AddInt64(&countC, int64(r))
 			} else {
-				atomic.AddInt64(&countC, int64(-r))
+				atomic.AddInt64(&countC, int64(-r+1))
 			}
 			wg.Done()
 		}(n)

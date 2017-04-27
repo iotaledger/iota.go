@@ -273,7 +273,7 @@ func PowCL(trytes Trytes, mwm int) (Trytes, error) {
 			8 * stateSize, cl.MemReadWrite, true, nil,
 		},
 		bufferInfo{
-			4, cl.MemWriteOnly, false, []byte{byte(mwm), 0, 0, 0}, // mwm
+			8, cl.MemWriteOnly, false, []byte{byte(mwm), 0, 0, 0, 0, 0, 0, 0}, // mwm
 		},
 		bufferInfo{
 			1, cl.MemReadWrite, false, nil,
@@ -282,7 +282,7 @@ func PowCL(trytes Trytes, mwm int) (Trytes, error) {
 			8, cl.MemReadWrite, true, nil,
 		},
 		bufferInfo{
-			4, cl.MemWriteOnly, false, []byte{loopcount, 0, 0, 0}, //loop_count
+			8, cl.MemWriteOnly, false, []byte{loopcount, 0, 0, 0, 0, 0, 0, 0}, //loop_count
 		},
 	}
 
