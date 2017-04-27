@@ -266,7 +266,6 @@ int pwork128(char mid[], int mwm, char nonce[],int n,int *stop)
 import "C"
 import (
 	"sync"
-	"sync/atomic"
 	"unsafe"
 )
 
@@ -291,15 +290,15 @@ func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 		go func(n int) {
 			nonce := make(Trits, HashSize)
 			r := C.pwork128((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n), (*C.int)(unsafe.Pointer(&stop)))
+			mutex.Lock()
 			if r >= 0 {
-				mutex.Lock()
 				result = nonce.Trytes()
 				stop = 1
 				countSSE += int64(r)
-				mutex.Unlock()
 			} else {
-				atomic.AddInt64(&countSSE, int64(-r+1))
+				countSSE += int64(-r + 1)
 			}
+			mutex.Unlock()
 			wg.Done()
 		}(n)
 	}
