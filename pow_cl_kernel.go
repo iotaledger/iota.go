@@ -1,4 +1,4 @@
-// +build opencl
+// +build gpu
 /*
 MIT License
 

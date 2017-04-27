@@ -19,11 +19,11 @@ You will need C compiler for linux to compile PoW routine in C.
     $ go get -u github.com/iotaledger/giota
 ```
 
-You will need C compiler and OpenCL environemnt(hardware and software)  to compile PoW routine in OpenCL 
+You will need C compiler and OpenCL environemnt(hardware and software)  to compile PoW routine for GPU 
 and need to add `opencl` tag when you build.
 
 ```
-	$ go build -tags=opencl
+	$ go build -tags=gpu
 ```
 
 Examples
@@ -92,19 +92,19 @@ You can benchmark PoWs(by C,Go,SSE) by
 or if you want to add OpenCL PoW,
 
 ```
-    $ go test -tags=opencl -v -run Pow
+    $ go test -tags=gpu -v -run Pow
 ```
 
 then it outputs like:
 
 ```
-	$ go test -tags=opencl -v -run Pow
+	$ go test -tags=gpu -v -run Pow
 === RUN   TestPowC
 --- PASS: TestPowC (15.93s)
 	pow_c_test.go:50: 1550 kH/sec on C PoW
 === RUN   TestPowCL
 --- PASS: TestPowCL (17.45s)
-	pow_cl_test.go:49: 332 kH/sec on OpenCL PoW
+	pow_cl_test.go:49: 332 kH/sec on GPU PoW
 === RUN   TestPowGo
 --- PASS: TestPowGo (21.21s)
 	pow_go_test.go:50: 1164 kH/sec on Go PoW
