@@ -200,7 +200,7 @@ int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce,int *stop)
       return i * 128;
     }
   }
-  return -i*128;
+  return -i*128-1;
 }
 
 // 01:-1 11:0 10:1
@@ -293,10 +293,9 @@ func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 			if r >= 0 {
 				result = nonce.Trytes()
 				atomic.StoreInt64(&stop, 1)
-				stop = 1
 				atomic.AddInt64(&countSSE, int64(r))
 			} else {
-				atomic.AddInt64(&countSSE, int64(-r))
+				atomic.AddInt64(&countSSE, int64(-r+1))
 			}
 			wg.Done()
 		}(n)

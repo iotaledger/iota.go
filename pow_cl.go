@@ -62,6 +62,7 @@ func exec(que *cl.CommandQueue, ker []*cl.Kernel, cores, nlocal int, mobj []*cl.
 	}
 	found := make([]byte, 1)
 	var cnt int
+	num := int64(cores) * 64 * int64(loopcount)
 	for cnt = 0; found[0] == 0 && *founded == 0; cnt++ {
 		//start searching
 		ev2, err := que.EnqueueNDRangeKernel(ker[1], nil, []int{nglobal}, []int{nlocal}, nil)
@@ -74,7 +75,7 @@ func exec(que *cl.CommandQueue, ker []*cl.Kernel, cores, nlocal int, mobj []*cl.
 			return err
 		}
 		ev3.Release()
-		atomic.AddInt64(&countCL, int64(cores)*64*int64(loopcount))
+		atomic.AddInt64(&countCL, num)
 	}
 	atomic.StoreInt32(founded, 1)
 	//finalize, get the result.
