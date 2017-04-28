@@ -54,6 +54,13 @@ func TestPowSSE(t *testing.T) {
 
 func TestPowSSE1(t *testing.T) {
 	proc := PowProcs
+	PowProcs = 1
+	testPowSSE(t)
+	PowProcs = proc
+}
+
+func TestPowSSE31(t *testing.T) {
+	proc := PowProcs
 	PowProcs = 31
 	testPowSSE(t)
 	PowProcs = proc

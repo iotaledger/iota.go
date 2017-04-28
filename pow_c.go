@@ -229,7 +229,6 @@ int pwork(char mid[], int mwm, char nonce[],int n, int *stop)
 import "C"
 import (
 	"sync"
-	"sync/atomic"
 	"unsafe"
 )
 
@@ -248,18 +247,21 @@ func PowC(trytes Trytes, mwm int) (Trytes, error) {
 	stop := 0
 	var result Trytes
 	var wg sync.WaitGroup
+	var mutex sync.Mutex
 	for n := 0; n < PowProcs; n++ {
 		wg.Add(1)
 		go func(n int) {
 			nonce := make(Trits, HashSize)
 			r := C.pwork((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n), (*C.int)(unsafe.Pointer(&stop)))
+			mutex.Lock()
 			if r >= 0 {
 				result = nonce.Trytes()
 				stop = 1
-				atomic.AddInt64(&countC, int64(r))
+				countC += int64(r)
 			} else {
-				atomic.AddInt64(&countC, int64(-r+1))
+				countC += int64(-r + 1)
 			}
+			mutex.Unlock()
 			wg.Done()
 		}(n)
 	}

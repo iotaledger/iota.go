@@ -27,7 +27,6 @@ package giota
 import (
 	"runtime"
 	"sync"
-	"sync/atomic"
 )
 
 //trytes
@@ -226,6 +225,7 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 	var stop int64
 	var result Trytes
 	var wg sync.WaitGroup
+	var mutex sync.Mutex
 	for i := 0; i < PowProcs; i++ {
 		wg.Add(1)
 		go func(i int) {
@@ -241,11 +241,13 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 
 			incrN(i, lmid, hmid)
 			nonce, cnt := loop(lmid, hmid, mwm, &stop)
+			mutex.Lock()
 			if nonce != nil {
 				result = nonce.Trytes()
-				atomic.StoreInt64(&stop, 1)
+				stop = 1
 			}
-			atomic.AddInt64(&countGo, int64(cnt))
+			countGo += int64(cnt)
+			mutex.Unlock()
 			wg.Done()
 		}(i)
 	}
