@@ -173,14 +173,14 @@ void seri256(__m256d *low, __m256d *high, int n, char *r)
     n -= 64;
     index = 1;
   }
-  if (n >= 128 && n<128+64)
+  if (n >= 128 && n<192)
   {
     n -= 128;
     index = 2;
   }
-  if (n >= 128*64 && n<256)
+  if (n >= 192 && n<256)
   {
-    n -= (128+64);
+    n -=  192;
     index = 3;
   }
   for (i = 0; i < HASH_LENGTH; i++)
