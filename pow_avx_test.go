@@ -49,8 +49,8 @@ func TestPowAVX(t *testing.T) {
 	s := time.Now()
 	testPowAVX(t)
 	ti := time.Now().Sub(s)
-	sp := float64(countSSE) / 1000 / ti.Seconds()
-	t.Logf("%d kH/sec on SSE PoW", int(sp))
+	sp := float64(countAVX) / 1000 / ti.Seconds()
+	t.Logf("%d kH/sec on AVX PoW", int(sp))
 }
 
 func TestPowAVX1(t *testing.T) {

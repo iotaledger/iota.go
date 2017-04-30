@@ -1,4 +1,4 @@
-//// +build avx
+// +build avx
 // +build linux,amd64
 
 /*
