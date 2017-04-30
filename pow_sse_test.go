@@ -59,9 +59,24 @@ func TestPowSSE1(t *testing.T) {
 	PowProcs = proc
 }
 
-func TestPowSSE31(t *testing.T) {
+func TestPowSSE32(t *testing.T) {
 	proc := PowProcs
-	PowProcs = 31
+	PowProcs = 32
+	s := time.Now()
 	testPowSSE(t)
+	ti := time.Now().Sub(s)
+	sp := float64(countSSE) / 1000 / ti.Seconds()
+	t.Logf("%d kH/sec on SSE PoW", int(sp))
+	PowProcs = proc
+}
+
+func TestPowSSE64(t *testing.T) {
+	proc := PowProcs
+	PowProcs = 64
+	s := time.Now()
+	testPowSSE(t)
+	ti := time.Now().Sub(s)
+	sp := float64(countSSE) / 1000 / ti.Seconds()
+	t.Logf("%d kH/sec on SSE PoW", int(sp))
 	PowProcs = proc
 }

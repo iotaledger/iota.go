@@ -60,9 +60,24 @@ func TestPowAVX1(t *testing.T) {
 	PowProcs = proc
 }
 
-func TestPowAVX31(t *testing.T) {
+func TestPowAVX32(t *testing.T) {
 	proc := PowProcs
-	PowProcs = 31
+	PowProcs = 32
+	s := time.Now()
 	testPowAVX(t)
+	ti := time.Now().Sub(s)
+	sp := float64(countAVX) / 1000 / ti.Seconds()
+	t.Logf("%d kH/sec on AVX PoW", int(sp))
+	PowProcs = proc
+}
+
+func TestPowAVX64(t *testing.T) {
+	proc := PowProcs
+	PowProcs = 64
+	s := time.Now()
+	testPowAVX(t)
+	ti := time.Now().Sub(s)
+	sp := float64(countAVX) / 1000 / ti.Seconds()
+	t.Logf("%d kH/sec on AVX PoW", int(sp))
 	PowProcs = proc
 }
