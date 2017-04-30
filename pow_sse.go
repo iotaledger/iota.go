@@ -27,7 +27,7 @@ SOFTWARE.
 package giota
 
 // #cgo LDFLAGS: -msse2
-// #cgo CFLAGS: -Wall
+// #cgo CFLAGS:  -msse2 -Wall
 /*
 #include <stdio.h>
 #include <string.h>
