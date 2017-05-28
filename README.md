@@ -151,8 +151,8 @@ e.g. [godep](https://github.com/tools/godep), [glide](https://github.com/Masterm
 TODO
 =========================
 
-* Multisig
-* More tests :(
+* [ ] Multisig
+* [ ] More tests :(
 
 <hr>
 
