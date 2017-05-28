@@ -113,6 +113,31 @@ then it outputs like:
 	pow_sse_test.go:52: 2292 kH/sec on SSE PoW
 ```
 
+Note that in [travis CI](https://travis-ci.org/iotaledger/iota.lib.go/jobs/227452499)
+the result is:
+
+```
+=== RUN   TestPowSSE
+--- PASS: TestPowSSE (2.73s)
+	pow_sse_test.go:52: 12902 kH/sec on SSE PoW
+=== RUN   TestPowSSE1
+--- PASS: TestPowSSE1 (16.19s)
+	pow_sse_test.go:59: 1900 kH/sec on SSE PoW
+=== RUN   TestPowSSE32
+--- PASS: TestPowSSE32 (1.36s)
+	pow_sse_test.go:67: 16117 kH/sec on SSE PoW
+=== RUN   TestPowSSE64
+--- PASS: TestPowSSE64 (0.73s)
+	pow_sse_test.go:75: 20226 kH/sec on SSE PoW
+```
+
+It gets over `20MH/s` for 64 threads using SSE2.
+
+Now IOTA uses Min Magnitude Weight=18, means 
+3^18≒387M Hashes are needed to finish PoW in average.
+So it takes 387/20 ≒ 16sec for 1 tx to do PoW.
+
+
 Development Status: Alpha+
 =========================
 
