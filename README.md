@@ -8,6 +8,12 @@ gIOTA
 
 Client library for the IOTA reference implementation (IRI).
 
+This library is still in flux and there maybe breaking changes.
+
+Consider to use a dependency tool to use vendoring,
+e.g. [godep](https://github.com/tools/godep), [glide](https://github.com/Masterminds/glide) or [govendor](https://github.com/kardianos/govendor).
+
+
 Refer to [godoc](https://godoc.org/github.com/iotaledger/iota.lib.go) for details.
 
 Install
@@ -133,19 +139,9 @@ the result is:
 
 It gets over `20MH/s` for 64 threads using SSE2.
 
-Now IOTA uses Min Magnitude Weight=18, means 
+Now IOTA uses Min Weight Magnitude = 18, which means 
 3^18≒387M Hashes are needed to finish PoW in average.
-So it takes 387/20 ≒ 19sec for 1 tx to do PoW.
-
-
-Development Status: Alpha+
-=========================
-
-Tread lightly around here. This library is still very much
-in flux and there are going to be breaking changes.
-
-Consider to use a dependency tool to use vendoring,
-e.g. [godep](https://github.com/tools/godep), [glide](https://github.com/Masterminds/glide) or [govendor](https://github.com/kardianos/govendor).
+So it takes just 387/20 < 20sec for 1 tx to do PoW.
 
 
 TODO
