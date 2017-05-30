@@ -148,9 +148,9 @@ func (t *Transaction) Trytes() Trytes {
 }
 
 //HasValidNonce checks t's hash has valid MinWeightMagnitude.
-func (t *Transaction) HasValidNonce() bool {
+func (t *Transaction) HasValidNonce(mwm int64) bool {
 	h := t.Hash()
-	for i := len(h) - 1; i > len(h)-1-MinWeightMagnitude/3; i-- {
+	for i := len(h) - 1; i > len(h)-1-int(mwm)/3; i-- {
 		if h[i] != '9' {
 			return false
 		}
@@ -168,6 +168,9 @@ func (t *Transaction) UnmarshalJSON(b []byte) error {
 	var s Trytes
 	var err error
 	if err = json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	if err := checkTx(s); err != nil {
 		return err
 	}
 	if err = t.parser(s.Trits()); err != nil {

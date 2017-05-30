@@ -25,6 +25,7 @@ SOFTWARE.
 package giota
 
 import (
+	"errors"
 	"runtime"
 	"sync"
 )
@@ -165,10 +166,12 @@ func check(l *[stateSize]uint64, h *[stateSize]uint64, m int) int {
 	return -1
 }
 
-func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int, stop *int64) (Trits, int) {
+var stopGO = true
+
+func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int) (Trits, int) {
 	var lcpy, hcpy [stateSize]uint64
 	var i int
-	for i = 0; !incr(lmid, hmid) && *stop != 1; i++ {
+	for i = 0; !incr(lmid, hmid) && !stopGO; i++ {
 		copy(lcpy[:], lmid[:])
 		copy(hcpy[:], hmid[:])
 		transform64(&lcpy, &hcpy)
@@ -204,7 +207,7 @@ func incrN(n int, lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 	for j := 0; j < n; j++ {
 		var carry uint64 = 1
 		//to avoid boundry check, i believe.
-		for i := HashSize - 7; i < HashSize && carry != 0; i++ {
+		for i := HashSize * 2 / 3; i < HashSize && carry != 0; i++ {
 			low := lmid[i]
 			high := hmid[i]
 			lmid[i] = high ^ low
@@ -214,15 +217,24 @@ func incrN(n int, lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 	}
 }
 
-var countGo int64
+var countGo int64 = 1
 
 //PowGo is proof of work of iota in pure.
 func PowGo(trytes Trytes, mwm int) (Trytes, error) {
+	if !stopGO {
+		stopGO = true
+		return "", errors.New("pow is already running, stopped")
+	}
+	if trytes == "" {
+		return "", errors.New("invalid trytes")
+	}
 	countGo = 0
+	stopGO = false
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
+	tr := trytes.Trits()
+	copy(c.state, tr[transactionTrinarySize-HashSize:])
 
-	var stop int64
 	var result Trytes
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
@@ -240,11 +252,11 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 			hmid[3] = high3
 
 			incrN(i, lmid, hmid)
-			nonce, cnt := loop(lmid, hmid, mwm, &stop)
+			nonce, cnt := loop(lmid, hmid, mwm)
 			mutex.Lock()
 			if nonce != nil {
 				result = nonce.Trytes()
-				stop = 1
+				stopGO = true
 			}
 			countGo += int64(cnt)
 			mutex.Unlock()
@@ -252,5 +264,6 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 		}(i)
 	}
 	wg.Wait()
+	stopGO = true
 	return result, nil
 }

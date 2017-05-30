@@ -49,6 +49,8 @@ func init() {
 	pows["PowCL"] = PowCL
 }
 
+var stopCL = true
+
 func exec(que *cl.CommandQueue, ker []*cl.Kernel, cores, nlocal int, mobj []*cl.MemObject, founded *int32, tryte chan Trytes) error {
 	//initial
 	nglobal := cores * nlocal
@@ -63,7 +65,7 @@ func exec(que *cl.CommandQueue, ker []*cl.Kernel, cores, nlocal int, mobj []*cl.
 	found := make([]byte, 1)
 	var cnt int
 	num := int64(cores) * 64 * int64(loopcount)
-	for cnt = 0; found[0] == 0 && *founded == 0; cnt++ {
+	for cnt = 0; found[0] == 0 && *founded == 0 && !stopCL; cnt++ {
 		//start searching
 		ev2, err := que.EnqueueNDRangeKernel(ker[1], nil, []int{nglobal}, []int{nlocal}, nil)
 		if err != nil {
@@ -234,9 +236,19 @@ func loopCL(binfo []bufferInfo) (Trytes, error) {
 
 //PowCL is proof of work of iota in OpenCL.
 func PowCL(trytes Trytes, mwm int) (Trytes, error) {
+	if !stopCL {
+		stopCL = true
+		return "", errors.New("pow is already running, stopped")
+	}
+	if trytes == "" {
+		return "", errors.New("invalid trytes")
+	}
+	stopCL = false
 	countCL = 0
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
+	tr := trytes.Trits()
+	copy(c.state, tr[transactionTrinarySize-HashSize:])
 
 	lmid, hmid := para(c.state)
 	lmid[0] = low0

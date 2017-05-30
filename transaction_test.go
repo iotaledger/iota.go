@@ -80,7 +80,7 @@ func TestNonce(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !tx.HasValidNonce() {
+	if !tx.HasValidNonce(MinWeightMagnitude) {
 		t.Error("cannot validate nonce")
 	}
 }

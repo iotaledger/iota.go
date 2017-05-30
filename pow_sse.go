@@ -179,12 +179,14 @@ int check128(__m128i *l, __m128i *h, int m)
   return -2;
 }
 
-int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce,int *stop)
+int stopSSE=1;
+
+int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce)
 {
   int i = 0, n = 0, j = 0;
 
   __m128i lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
-  for (i = 0; !incr128(lmid, hmid) && !*stop; i++)
+  for (i = 0; !incr128(lmid, hmid) && !stopSSE; i++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -231,7 +233,7 @@ void incrN128(int n,__m128i *mid_low, __m128i *mid_high)
   for (j=0;j<n;j++){
     __m128i carry;
     carry = _mm_set_epi64x(HBITS, HBITS);
-    for (i = HASH_LENGTH-7; i < HASH_LENGTH &&  carry[0]; i++)
+    for (i = HASH_LENGTH *2 / 3; i < HASH_LENGTH &&  carry[0]; i++)
     {
       __m128i low = mid_low[i], high = mid_high[i];
       mid_low[i] = high ^ low;
@@ -241,7 +243,7 @@ void incrN128(int n,__m128i *mid_low, __m128i *mid_high)
   }
 }
 
-int pwork128(char mid[], int mwm, char nonce[],int n,int *stop)
+int pwork128(char mid[], int mwm, char nonce[],int n)
 {
   __m128i lmid[STATE_LENGTH], hmid[STATE_LENGTH];
 
@@ -258,11 +260,12 @@ int pwork128(char mid[], int mwm, char nonce[],int n,int *stop)
   hmid[4] = _mm_set_epi64x(HIGH40, HIGH41);
 
 	incrN128(n, lmid, hmid);
-  return loop128(lmid, hmid, mwm, nonce,stop);
+  return loop128(lmid, hmid, mwm, nonce);
 }
 */
 import "C"
 import (
+	"errors"
 	"sync"
 	"unsafe"
 )
@@ -275,11 +278,21 @@ var countSSE int64
 
 //PowSSE is proof of work of iota for amd64 using SSE2(or AMD64).
 func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
+	if C.stopSSE == 0 {
+		C.stopSSE = 1
+		return "", errors.New("pow is already running, stopped")
+	}
+	if trytes == "" {
+		return "", errors.New("invalid trytes")
+	}
+
+	C.stopSSE = 0
 	countSSE = 0
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
+	tr := trytes.Trits()
+	copy(c.state, tr[transactionTrinarySize-HashSize:])
 
-	var stop int64
 	var result Trytes
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
@@ -287,11 +300,11 @@ func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 		wg.Add(1)
 		go func(n int) {
 			nonce := make(Trits, HashSize)
-			r := C.pwork128((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n), (*C.int)(unsafe.Pointer(&stop)))
+			r := C.pwork128((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
 			mutex.Lock()
 			if r >= 0 {
 				result = nonce.Trytes()
-				stop = 1
+				C.stopSSE = 1
 				countSSE += int64(r)
 			} else {
 				countSSE += int64(-r + 1)
@@ -301,5 +314,6 @@ func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 		}(n)
 	}
 	wg.Wait()
+	C.stopSSE = 1
 	return result, nil
 }

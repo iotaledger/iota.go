@@ -149,12 +149,14 @@ int check(unsigned long *l, unsigned long *h, int m)
   return -1;
 }
 
-int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *nonce, int *stop)
+int stopC=1;
+
+int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *nonce)
 {
   int i = 0, n = 0;
 
   unsigned long lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
-  for (i = 0; !incr(lmid, hmid) && !*stop; i++)
+  for (i = 0; !incr(lmid, hmid) && !stopC; i++)
   {
     memcpy(lcpy, lmid, STATE_LENGTH * sizeof(long));
     memcpy(hcpy, hmid, STATE_LENGTH * sizeof(long));
@@ -197,7 +199,7 @@ void incrN(int n,unsigned long *mid_low, unsigned long *mid_high)
   int i,j;
   for (j=0;j<n;j++){
     unsigned long carry = 1;
-    for (i =HASH_LENGTH-7; i < HASH_LENGTH && carry; i++)
+    for (i =HASH_LENGTH * 2 / 3; i < HASH_LENGTH && carry; i++)
     {
       unsigned long low = mid_low[i], high = mid_high[i];
       mid_low[i] = high ^ low;
@@ -208,7 +210,7 @@ void incrN(int n,unsigned long *mid_low, unsigned long *mid_high)
 }
 
 
-int pwork(char mid[], int mwm, char nonce[],int n, int *stop)
+int pwork(char mid[], int mwm, char nonce[],int n)
 {
   unsigned long lmid[STATE_LENGTH] = {0}, hmid[STATE_LENGTH] = {0};
 
@@ -223,11 +225,12 @@ int pwork(char mid[], int mwm, char nonce[],int n, int *stop)
   hmid[3] = HIGH3;
 
 	incrN(n, lmid, hmid);
-  return loop_cpu(lmid, hmid, mwm, nonce,stop);
+  return loop_cpu(lmid, hmid, mwm, nonce);
 }
 */
 import "C"
 import (
+	"errors"
 	"sync"
 	"unsafe"
 )
@@ -240,11 +243,20 @@ var countC int64
 
 //PowC is proof of work of iota using pure C.
 func PowC(trytes Trytes, mwm int) (Trytes, error) {
+	if C.stopC == 0 {
+		C.stopC = 1
+		return "", errors.New("pow is already running, stopped")
+	}
+	if trytes == "" {
+		return "", errors.New("invalid trytes")
+	}
+	C.stopC = 0
 	countC = 0
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
+	tr := trytes.Trits()
+	copy(c.state, tr[transactionTrinarySize-HashSize:])
 
-	stop := 0
 	var result Trytes
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
@@ -252,11 +264,11 @@ func PowC(trytes Trytes, mwm int) (Trytes, error) {
 		wg.Add(1)
 		go func(n int) {
 			nonce := make(Trits, HashSize)
-			r := C.pwork((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n), (*C.int)(unsafe.Pointer(&stop)))
+			r := C.pwork((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
 			mutex.Lock()
 			if r >= 0 {
 				result = nonce.Trytes()
-				stop = 1
+				C.stopC = 1
 				countC += int64(r)
 			} else {
 				countC += int64(-r + 1)
@@ -266,5 +278,6 @@ func PowC(trytes Trytes, mwm int) (Trytes, error) {
 		}(n)
 	}
 	wg.Wait()
+	C.stopC = 1
 	return result, nil
 }
