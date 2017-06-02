@@ -99,7 +99,7 @@ func TestTransfer2(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		api := NewAPI(RandomNode(), nil)
-		bdl, err = Send(api, seed, 2, trs, pow)
+		bdl, err = Send(api, seed, 2, trs, 18, pow)
 		if err == nil {
 			break
 		}

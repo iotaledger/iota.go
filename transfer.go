@@ -336,11 +336,11 @@ func SendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow PowF
 //Send sends token.
 //if you need to pow locally, you must specifiy pow func.
 //otherwirse this calls AttachToTangle API.
-func Send(api *API, seed Trytes, security int, trs []Transfer, pow PowFunc) (Bundle, error) {
+func Send(api *API, seed Trytes, security int, trs []Transfer, mwm int64, pow PowFunc) (Bundle, error) {
 	bd, err := PrepareTransfers(api, seed, trs, nil, "", security)
 	if err != nil {
 		return nil, err
 	}
-	err = SendTrytes(api, Depth, []Transaction(bd), MinWeightMagnitude, pow)
+	err = SendTrytes(api, Depth, []Transaction(bd), mwm, pow)
 	return bd, err
 }

@@ -27,13 +27,12 @@ package giota
 
 //Various constants for giota.
 const (
-	TryteAlphabet      = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	MinTryteValue      = -13
-	MaxTryteValue      = 13
-	SignatureSize      = 6561
-	HashSize           = 243
-	MinWeightMagnitude = 18 //must be 18.
-	Depth              = 3
+	TryteAlphabet = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	MinTryteValue = -13
+	MaxTryteValue = 13
+	SignatureSize = 6561
+	HashSize      = 243
+	Depth         = 3
 )
 
 //Units for iota token.

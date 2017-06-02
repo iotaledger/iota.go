@@ -83,7 +83,8 @@ trs := []giota.Transfer{
 	},
 }
 _, pow := giota.GetBestPow()
-bdl, err = giota.Send(api, seed, security, trs, pow)
+mwm := 18
+bdl, err = giota.Send(api, seed, security, trs, mwm, pow)
 ```
 
 PoW(Proof of Work) Benchmarking
