@@ -41,14 +41,18 @@ import (
 var (
 	PublicNodes = []string{
 		"http://service.iotasupport.com:14265",
-		"http://walletservice.iota.community:14265",
+		"http://lightserver1.iota.community:14600",
+		"http://lightserver2.iota.community:14600",
+		"http://lightserver3.iota.community:14600",
+		"http://lightserver4.iota.community:14600",
 		"http://eugene.iota.community:14265",
-		"http://185.101.92.190:14265",
-		"http://185.101.94.8:14265",
 		"http://iota-na.indenodes.net:14265",
 		"http://iotaserver.forobits.com:14265",
 		"http://eugene.iotasupport.com:14999",
 		"http://eugeneoldisoft.iotasupport.com:14265",
+		"http://node.deviceproof.org:14265",
+		"http://mainnet.necropaz.com:14500",
+		"http://5.9.149.169:14265",
 	}
 )
 
