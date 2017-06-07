@@ -181,9 +181,10 @@ int check128(__m128i *l, __m128i *h, int m)
 
 int stopSSE=1;
 
-int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce)
+long long int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce)
 {
-  int i = 0, n = 0, j = 0;
+  int n = 0, j = 0;
+  long long int i = 0;
 
   __m128i lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
   for (i = 0; !incr128(lmid, hmid) && !stopSSE; i++)
@@ -243,7 +244,7 @@ void incrN128(int n,__m128i *mid_low, __m128i *mid_high)
   }
 }
 
-int pwork128(char mid[], int mwm, char nonce[],int n)
+long long int pwork128(char mid[], int mwm, char nonce[],int n)
 {
   __m128i lmid[STATE_LENGTH], hmid[STATE_LENGTH];
 

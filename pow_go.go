@@ -168,9 +168,9 @@ func check(l *[stateSize]uint64, h *[stateSize]uint64, m int) int {
 
 var stopGO = true
 
-func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int) (Trits, int) {
+func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int) (Trits, int64) {
 	var lcpy, hcpy [stateSize]uint64
-	var i int
+	var i int64
 	for i = 0; !incr(lmid, hmid) && !stopGO; i++ {
 		copy(lcpy[:], lmid[:])
 		copy(hcpy[:], hmid[:])
@@ -258,7 +258,7 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 				result = nonce.Trytes()
 				stopGO = true
 			}
-			countGo += int64(cnt)
+			countGo += cnt
 			mutex.Unlock()
 			wg.Done()
 		}(i)

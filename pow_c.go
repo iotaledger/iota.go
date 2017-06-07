@@ -151,11 +151,12 @@ int check(unsigned long *l, unsigned long *h, int m)
 
 int stopC=1;
 
-int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *nonce)
+long long int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *nonce)
 {
-  int i = 0, n = 0;
-
+  int n = 0;
+  long long int i = 0;
   unsigned long lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
+
   for (i = 0; !incr(lmid, hmid) && !stopC; i++)
   {
     memcpy(lcpy, lmid, STATE_LENGTH * sizeof(long));
@@ -210,7 +211,7 @@ void incrN(int n,unsigned long *mid_low, unsigned long *mid_high)
 }
 
 
-int pwork(char mid[], int mwm, char nonce[],int n)
+long long int pwork(char mid[], int mwm, char nonce[],int n)
 {
   unsigned long lmid[STATE_LENGTH] = {0}, hmid[STATE_LENGTH] = {0};
 
