@@ -79,6 +79,9 @@ func exec(que *cl.CommandQueue, ker []*cl.Kernel, cores, nlocal int, mobj []*cl.
 		ev3.Release()
 		atomic.AddInt64(&countCL, num)
 	}
+	if *founded != 0 || stopCL {
+		return nil
+	}
 	atomic.StoreInt32(founded, 1)
 	//finalize, get the result.
 	ev4, err := que.EnqueueNDRangeKernel(ker[2], nil, []int{nglobal}, []int{nlocal}, nil)
