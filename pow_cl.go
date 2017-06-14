@@ -59,7 +59,7 @@ func exec(que *cl.CommandQueue, ker []*cl.Kernel, cores, nlocal int, mobj []*cl.
 		return err
 	}
 	defer ev1.Release()
-	if err := que.Finish(); err != nil {
+	if err = que.Finish(); err != nil {
 		return err
 	}
 	found := make([]byte, 1)
@@ -67,7 +67,8 @@ func exec(que *cl.CommandQueue, ker []*cl.Kernel, cores, nlocal int, mobj []*cl.
 	num := int64(cores) * 64 * int64(loopcount)
 	for cnt = 0; found[0] == 0 && *founded == 0 && !stopCL; cnt++ {
 		//start searching
-		ev2, err := que.EnqueueNDRangeKernel(ker[1], nil, []int{nglobal}, []int{nlocal}, nil)
+		var ev2 *cl.Event
+		ev2, err = que.EnqueueNDRangeKernel(ker[1], nil, []int{nglobal}, []int{nlocal}, nil)
 		if err != nil {
 			return err
 		}
@@ -126,7 +127,8 @@ func loopCL(binfo []bufferInfo) (Trytes, error) {
 	var founded int32
 	result := make(chan Trytes)
 	for _, p := range platforms {
-		devs, err := p.GetDevices(cl.DeviceTypeGPU)
+		var devs []*cl.Device
+		devs, err = p.GetDevices(cl.DeviceTypeGPU)
 		if err != nil {
 			continue
 		}
