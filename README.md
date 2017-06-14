@@ -140,9 +140,9 @@ the result is:
 
 It gets over `20MH/s` for 64 threads using SSE2.
 
-Now IOTA uses Min Weight Magnitude = 18, which means 
-3^18≒387M Hashes are needed to finish PoW in average.
-So it takes just 387/20 < 20sec for 1 tx to do PoW.
+Now IOTA uses Min Weight Magnitude = 15, which means 
+3^15≒14M Hashes are needed to finish PoW in average.
+So it takes just 14/20 < 0.7sec for 1 tx to do PoW.
 
 
 TODO

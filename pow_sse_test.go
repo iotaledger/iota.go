@@ -41,7 +41,6 @@ func testPowSSE(t *testing.T) float64 {
 	}
 	tx = tx[:len(tx)-NonceTrinarySize/3] + nonce
 	h := tx.Hash()
-t.Log(h)
 	if h[len(h)-5:] != "99999" {
 		t.Error("pow is illegal", h)
 	}

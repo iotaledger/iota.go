@@ -190,7 +190,7 @@ func TestGetLatestInclusion(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		var server = RandomNode()
 		api := NewAPI(server, nil)
-		resp, err = api.GetLatestInclusion([]Trytes{"UEQYKCAXJVITQOIE9ZDAFOFDXFZEOMAFPXPCJTQUWSVYISTSROOMDYXUCUP9CNKVNO9UCNJ9REU999999"})
+		resp, err = api.GetLatestInclusion([]Trytes{"DCJHCGYMZVSNSVUWBPESDLFLYIIWORCJWTSPFYBWPNVRTUIWVPQYG9KQUFQWQVZMM9KKKWBVSVOU99999"})
 		if err == nil && len(resp) > 0 {
 			break
 		}
