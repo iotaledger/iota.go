@@ -33,6 +33,7 @@ const (
 	SignatureSize = 6561
 	HashSize      = 243
 	Depth         = 3
+	Radix         = 3
 )
 
 //Units for iota token.

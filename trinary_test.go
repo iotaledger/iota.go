@@ -24,7 +24,10 @@ SOFTWARE.
 */
 package giota
 
-import "testing"
+import (
+	//"math/big"
+	"testing"
+)
 
 func TestValidTryte(t *testing.T) {
 	type validTryteTC struct {
@@ -112,35 +115,60 @@ func TestValidTrits(t *testing.T) {
 }
 
 func TestConvert(t *testing.T) {
-	trits := Trits{0, 1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 1, 0, 1, 1}
+	trits := Trits{0, 1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	invalid := []int8{1, -1, 2, 0, 1, -1}
 
 	if _, err := ToTrits(invalid); err == nil {
-		t.Error("ToTrits is incorrect")
+		t.Error("expected ToTrits() return an error but got none")
 	}
 
 	if _, err := ToTrytes("A_AAA"); err == nil {
-		t.Error("ToTrytes is incorrect")
+		t.Error("expected ToTrytes() return an error but got none")
 	}
 
+	var target int64 = 6562317
 	i := trits.Int()
-	if i != 6562317 {
-		t.Error("Int() is illegal.", i)
+	if i != target {
+		t.Errorf("expected Int() to return %d but got %d", target, i)
 	}
-	trits2 := Int2Trits(6562317, 15)
-	if !trits.Equal(trits2) {
+
+	//tt := Trytes("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN").Trits()
+	//tt := Trytes("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM").Trits()
+	//tt := Trytes("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").Trits()
+	//tt := Trytes("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ").Trits()
+	//tt := Trytes("999999999999999999999999999999999999999999999999999999999999999999999999999999999").Trits()
+	tt := Trytes("SCYLJDWIM9LIXCSLETSHLQOOFDKYOVFZLAHQYCCNMYHRTNIKBZRIRACFYPOWYNSOWDNXFZUG9OEOZPOTD").Trits()
+	t.Logf("Trits: %#v", tt)
+	b, err := tt.Bytes()
+	if err != nil {
+		t.Errorf("Bytes() failed: %s", err)
+	}
+	t.Logf("Trits.Bytes(): %#v", b)
+
+	tb, err := BytesToTrits(b)
+	if err != nil {
+		t.Errorf("BytesToTrits() failed: %s", err)
+	}
+
+	if !tb.Equal(tt) {
+		t.Errorf("Trits->Bytes->Trits roundtrip failed\nwanted:\t%#v\ngot:\t%#v", tt, tb)
+	}
+
+	st := Trits{0, 1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 1, 0, 1, 1}
+	trits2 := Int2Trits(target, 15)
+	if !st.Equal(trits2) {
 		t.Error("Int2Trits() is illegal.", trits2)
 	}
 	trits22 := Int2Trits(-1024, 7)
 	if !trits22.Equal(Trits{-1, 1, 0, 1, -1, -1, -1}) {
 		t.Error("Int2Trits() is illegal.")
 	}
-	try := trits.Trytes()
+	try := st.Trytes()
 	if try != "UVKIL" {
 		t.Error("Int() is illegal.", try)
 	}
 	trits3 := try.Trits()
-	if !trits.Equal(trits3) {
+	if !st.Equal(trits3) {
 		t.Error("Trits() is illegal.", trits3)
 	}
 }

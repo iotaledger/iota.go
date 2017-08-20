@@ -28,7 +28,9 @@ package giota
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
+	"unsafe"
 )
 
 var (
@@ -123,7 +125,7 @@ func (t Trits) CanTrytes() bool {
 //This panics if len(t)%3!=0
 func (t Trits) Trytes() Trytes {
 	if !t.CanTrytes() {
-		panic("length of trits must be x3.")
+		panic("length of trits must be a multiple of three")
 	}
 	o := make([]byte, len(t)/3)
 	for i := 0; i < len(t)/3; i++ {
@@ -134,6 +136,281 @@ func (t Trits) Trytes() Trytes {
 		o[i] = TryteAlphabet[j]
 	}
 	return Trytes(o)
+}
+
+const ByteLength = 48
+const TritHashLength = 243
+const IntLength = ByteLength / 4
+
+// 3^(242/2)
+// 12 * 32 bit
+var HalfThree = []uint32{
+	0xa5ce8964,
+	0x9f007669,
+	0x1484504f,
+	0x3ade00d9,
+	0x0c24486e,
+	0x50979d57,
+	0x79a4c702,
+	0x48bbae36,
+	0xa9f6808b,
+	0xaa06a805,
+	0xa87fabdf,
+	0x5e69ebef,
+}
+
+// Bytes is only defined for hashes, i.e. slices of trits of length 243.
+// It returns 48 bytes.
+func (t Trits) Bytes() ([]byte, error) {
+	if len(t) != TritHashLength {
+		return nil, fmt.Errorf("Bytes() is only defined for trit slices of length 243")
+	}
+
+	allNeg := true
+	for _, e := range t[0 : TritHashLength-1] { // Last position should be always zero.
+		if e != -1 {
+			allNeg = false
+			break
+		}
+	}
+
+	// Trit to BigInt
+	b := make([]byte, 48)                                   // 48 bytes/384 bits
+	base := (*(*[]uint32)(unsafe.Pointer(&b)))[0:IntLength] // 12 * 32 bits = 384 bits
+	if allNeg {
+		// If all trits are -1 then we're half way through all the numbers,
+		// since they're in two's complement notation.
+		copy(base, HalfThree)
+		// Compensate for setting the last position to zero.
+		bigIntNot(base)
+		bigIntAddSmall(base, 1)
+
+		return reverse(b), nil
+	}
+
+	revT := make([]int8, len(t))
+	copy(revT, t)
+	size := 1
+	for _, e := range reverseT(revT[0 : TritHashLength-1]) {
+		sz := size
+		var carry uint32 = 0
+		for j := 0; j < sz; j += 1 {
+			v := uint64(base[j])*uint64(Radix) + uint64(carry)
+			carry = uint32(v >> 32)
+			base[j] = uint32(v)
+		}
+
+		if carry > 0 {
+			base[sz] = carry
+			size = size + 1
+		}
+
+		trit := uint32(e + 1)
+
+		ns := bigIntAddSmall(base, trit)
+		if ns > size {
+			size = ns
+		}
+	}
+
+	if !bigIntIsNull(base) {
+		if bigIntCmp(HalfThree, base) <= 0 {
+			// base >= HALF_3
+			// just do base - HALF_3
+			bigIntSub(base, HalfThree)
+		} else {
+			// we don't have a wrapping sub.
+			// so let's use some bit magic to achieve it
+			tmp := make([]uint32, IntLength)
+			copy(tmp, HalfThree)
+			bigIntSub(tmp, base)
+			bigIntNot(tmp)
+			bigIntAddSmall(tmp, 1)
+			copy(base, tmp)
+		}
+	}
+	return reverse(b), nil
+}
+
+func BytesToTrits(b []byte) (Trits, error) {
+	if len(b) != ByteLength {
+		return nil, fmt.Errorf("BytesToTrits() is only defined for byte slices of length 48")
+	}
+
+	rb := make([]byte, len(b))
+	copy(rb, b)
+	reverse(rb)
+
+	t := Trits(make([]int8, TritHashLength))
+	t[TritHashLength-1] = 0
+
+	base := (*(*[]uint32)(unsafe.Pointer(&rb)))[0:IntLength] // 12 * 32 bits = 384 bits
+
+	if bigIntIsNull(base) {
+		return t, nil
+	}
+
+	flip_trits := false
+
+	// Check if the MSB is 0, i.e. we have a positive number
+	msbM := (unsafe.Sizeof(base[IntLength-1]) * 8) - 1
+	if base[IntLength-1]>>msbM == 0 {
+		bigIntAdd(base, HalfThree)
+	} else {
+		bigIntNot(base)
+		if bigIntCmp(base, HalfThree) == 1 {
+			bigIntSub(base, HalfThree)
+			flip_trits = true
+		} else {
+			bigIntAddSmall(base, 1)
+			tmp := make([]uint32, IntLength)
+			copy(tmp, HalfThree)
+			bigIntSub(tmp, base)
+			copy(base, tmp)
+		}
+	}
+
+	var rem uint64
+	for i := range t[0 : TritHashLength-1] {
+		rem = 0
+		for j := IntLength - 1; j >= 0; j -= 1 {
+			lhs := (rem << 32) | uint64(base[j])
+			rhs := uint64(Radix)
+			q := uint32(lhs / rhs)
+			r := uint32(lhs % rhs)
+			base[j] = q
+			rem = uint64(r)
+		}
+		t[i] = int8(rem) - 1
+	}
+
+	if flip_trits {
+		for i := range t {
+			t[i] = ^t[i]
+		}
+	}
+
+	return t, nil
+}
+
+func bigIntAdd(b []uint32, rh []uint32) {
+	if len(b) != len(rh) {
+		panic("not defined for differently sized slices")
+	}
+	carry := false
+
+	for i := range b {
+		v, c := fullAdd(b[i], rh[i], carry)
+		b[i] = uint32(v)
+		carry = c
+	}
+}
+
+func bigIntSub(b []uint32, rh []uint32) {
+	if len(b) != len(rh) {
+		panic("not defined for differently sized slices")
+	}
+	noborrow := true
+
+	for i := range b {
+		v, c := fullAdd(b[i], ^rh[i], noborrow)
+		b[i] = uint32(v)
+		noborrow = c
+	}
+	if !noborrow {
+		panic("could not subtract without leftovers")
+	}
+}
+
+func bigIntNot(b []uint32) {
+	for i := range b {
+		b[i] = ^b[i]
+	}
+}
+
+func bigIntIsNull(b []uint32) bool {
+	for i := range b {
+		if b[i] != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func bigIntCmp(lh, rh []uint32) int {
+	if len(lh) != len(rh) {
+		panic("not defined for differently sized slices")
+	}
+
+	// put LSB first
+	rlh := make([]uint32, len(lh))
+	copy(rlh, lh)
+	reverseU(rlh)
+	rrh := make([]uint32, len(rh))
+	copy(rrh, rh)
+	reverseU(rrh)
+	for i := range rlh {
+		if rlh[i] < rrh[i] {
+			return -1
+		} else if rlh[i] > rrh[i] {
+			return 1
+		}
+	}
+	return 0
+}
+
+// bigIntAddSmall adds a small number to a big int and returns the index
+// of the last carry over.
+func bigIntAddSmall(b []uint32, a uint32) int {
+	v, carry := fullAdd(b[0], a, false)
+	b[0] = uint32(v) // uint is at least 32 bit
+
+	var i int
+	for i = 1; carry; i += 1 {
+		vi, c := fullAdd(b[i], 0, carry)
+		b[i] = uint32(vi)
+		carry = c
+	}
+
+	return i
+}
+
+func fullAdd(lh, rh uint32, carry bool) (uint, bool) {
+	v, c1 := addWithOverflow(lh, rh)
+	var c2 bool
+	if carry {
+		v, c2 = addWithOverflow(uint32(v), 1)
+	}
+
+	return v, c1 || c2
+}
+
+func addWithOverflow(lh, rh uint32) (uint, bool) {
+	return uint(lh + rh), lh > math.MaxUint32-rh
+}
+
+func reverse(a []byte) []byte {
+	for left, right := 0, len(a)-1; left < right; left, right = left+1, right-1 {
+		a[left], a[right] = a[right], a[left]
+	}
+
+	return a
+}
+
+func reverseU(a []uint32) []uint32 {
+	for left, right := 0, len(a)-1; left < right; left, right = left+1, right-1 {
+		a[left], a[right] = a[right], a[left]
+	}
+
+	return a
+}
+
+func reverseT(a Trits) Trits {
+	for left, right := 0, len(a)-1; left < right; left, right = left+1, right-1 {
+		a[left], a[right] = a[right], a[left]
+	}
+
+	return a
 }
 
 //Trytes is a string of trytes.
@@ -148,7 +425,7 @@ func ToTrytes(t string) (Trytes, error) {
 	return tr, err
 }
 
-// Trits converts a slice of trytes into tryits,
+// Trits converts a slice of trytes into trits,
 func (t Trytes) Trits() Trits {
 	trits := make(Trits, len(t)*3)
 	for i := range t {
