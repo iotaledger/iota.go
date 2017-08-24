@@ -36,7 +36,7 @@ func testPowC(t *testing.T) {
 		t.Fatal(err)
 	}
 	tx = tx[:len(tx)-NonceTrinarySize/3] + nonce
-	h := tx.Hash()
+	h := tx.CurlHash()
 	if h[len(h)-5:] != "99999" {
 		t.Error("pow is illegal", h)
 	}

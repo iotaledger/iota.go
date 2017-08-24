@@ -28,6 +28,7 @@ package giota
 import (
 	"crypto/rand"
 	"errors"
+	"math"
 	"math/big"
 )
 
@@ -81,14 +82,14 @@ func NewKey(seed Trytes, index, securityLevel int) Trytes {
 	seed = seedTrits.Trytes()
 	hash := seed.Hash()
 
-	c := NewCurl()
-	c.Absorb(hash)
+	k := NewKerl()
+	k.Absorb(hash.Trits())
 
 	key := make([]byte, (HashSize*27*securityLevel)/3)
 	for l := 0; l < securityLevel; l++ {
 		for i := 0; i < 27; i++ {
-			b := c.Squeeze()
-			copy(key[(l*27+i)*HashSize/3:], b)
+			b, _ := k.Squeeze(HashSize)
+			copy(key[(l*27+i)*HashSize/3:], []byte(b.Trytes()))
 		}
 	}
 
@@ -152,26 +153,39 @@ func seri27(l *[stateSize]uint64, h *[stateSize]uint64) Trytes {
 	return keyFragment.Trytes()
 }
 
-//Digests calculates hash x 26 for each segments in keyTrits.
 func Digests(key Trytes) (Trytes, error) {
-	if len(key) < HashSize*27/3 {
-		return "", ErrKeyTritsLength
-	}
-
-	// Integer division, becaue we don't care about impartial keys.
-	numKeys := len(key) / (HashSize * 9)
-	digests := make([]byte, HashSize*numKeys/3)
-	for i := 0; i < numKeys; i++ {
-		lmid, hmid := para27(key[i*HashSize*9:])
-		for k := 0; k < 26; k++ {
-			transform64(lmid, hmid)
-			clearState(lmid, hmid)
+	//var digests Trits
+	var buffer Trits
+	k := key.Trits()
+	digests := make(Trits, int(math.Floor(float64(len(k))/float64(SignatureSize)))*HashSize)
+	for i := 0; i < int(math.Floor(float64(len(k))/float64(SignatureSize))); i++ {
+		keyFragment := k[i*SignatureSize : (i+1)*SignatureSize]
+		for j := 0; j < 27; j++ {
+			buffer = keyFragment[j*HashSize : (j+1)*HashSize]
+			for k := 0; k < MaxTryteValue-MinTryteValue; k++ {
+				kKerl := NewKerl()
+				kKerl.Reset()
+				kKerl.Absorb(buffer)
+				buffer, _ = kKerl.Squeeze(HashSize)
+			}
+			for k := 0; k < HashSize; k++ {
+				t := keyFragment
+				t[j*HashSize+k] = buffer[k]
+				keyFragment = t
+			}
 		}
-		keyFragment := seri27(lmid, hmid)
-		s := keyFragment.Hash()
-		copy(digests[i*HashSize/3:], s)
+
+		var kerl = NewKerl()
+		kerl.Reset()
+		kerl.Absorb(keyFragment)
+		buffer, _ = kerl.Squeeze(HashSize)
+		for j := 0; j < HashSize; j++ {
+			t := digests
+			t[i*HashSize+j] = buffer[j]
+			digests = t
+		}
 	}
-	return Trytes(digests), nil
+	return digests.Trytes(), nil
 }
 
 //digest calculates hash x normalizedBundleFragment[i] for each segments in keyTrits.
@@ -293,7 +307,18 @@ func (a Address) Checksum() Trytes {
 	if len(a) != 81 {
 		panic("len(address) must be 81")
 	}
-	return Trytes(a).Hash()[:9]
+
+	addressTrits := Trytes(a).Trits()
+
+	kerl := NewKerl()
+	kerl.Reset()
+	kerl.Absorb(addressTrits)
+	checksumTrits, _ := kerl.Squeeze(HashSize)
+
+	checksumTrytes := checksumTrits.Trytes()
+	checksum := checksumTrytes[len(checksumTrytes)-9:]
+
+	return checksum
 }
 
 //WithChecksum returns Address+checksum.
