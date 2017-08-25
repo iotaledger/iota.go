@@ -26,6 +26,7 @@ package giota
 
 import (
 	//"math/big"
+	"bytes"
 	"testing"
 )
 
@@ -114,6 +115,57 @@ func TestValidTrits(t *testing.T) {
 	}
 }
 
+func TestTritByteTrit(t *testing.T) {
+	ts := []Trits{
+		Trytes("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN").Trits(),
+		Trytes("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM").Trits(),
+		Trytes("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").Trits(),
+		Trytes("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ").Trits(),
+		Trytes("999999999999999999999999999999999999999999999999999999999999999999999999999999999").Trits(),
+		Trytes("SCYLJDWIM9LIXCSLETSHLQOOFDKYOVFZLAHQYCCNMYHRTNIKBZRIRACFYPOWYNSOWDNXFZUG9OEOZPOTD").Trits(),
+	}
+
+	for _, trits := range ts {
+		trits[TritHashLength-1] = 0
+		b, err := trits.Bytes()
+		if err != nil {
+			t.Errorf("Bytes() failed: %s", err)
+		}
+
+		tb, err := BytesToTrits(b)
+		if err != nil {
+			t.Errorf("BytesToTrits() failed: %s", err)
+		}
+
+		if !tb.Equal(trits) {
+			t.Errorf("Trits->Bytes->Trits roundtrip failed\nwanted:\t%#v\ngot:\t%#v", trits, tb)
+		}
+	}
+}
+
+func TestAllBytes(t *testing.T) {
+	for i := 0; i < 256; i++ {
+		bs := bytes.Repeat([]byte{uint8(i)}, ByteLength)
+
+		fst, err := BytesToTrits(bs)
+		if err != nil {
+			t.Errorf("BytesToTrits() failed: %s", err)
+		}
+		bs, err = fst.Bytes()
+		if err != nil {
+			t.Errorf("Bytes() failed: %s", err)
+		}
+		snd, err := BytesToTrits(bs)
+		if err != nil {
+			t.Errorf("BytesToTrits() failed: %s", err)
+		}
+
+		if !fst.Equal(snd) {
+			t.Errorf("Bytes->Trits->Bytes->Trits roundtrip failed\nwanted:\t%#v\ngot:\t%#v", fst, snd)
+		}
+	}
+}
+
 func TestConvert(t *testing.T) {
 	trits := Trits{0, 1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	invalid := []int8{1, -1, 2, 0, 1, -1}
@@ -130,28 +182,6 @@ func TestConvert(t *testing.T) {
 	i := trits.Int()
 	if i != target {
 		t.Errorf("expected Int() to return %d but got %d", target, i)
-	}
-
-	//tt := Trytes("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN").Trits()
-	//tt := Trytes("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM").Trits()
-	//tt := Trytes("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").Trits()
-	//tt := Trytes("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ").Trits()
-	//tt := Trytes("999999999999999999999999999999999999999999999999999999999999999999999999999999999").Trits()
-	tt := Trytes("SCYLJDWIM9LIXCSLETSHLQOOFDKYOVFZLAHQYCCNMYHRTNIKBZRIRACFYPOWYNSOWDNXFZUG9OEOZPOTD").Trits()
-	t.Logf("Trits: %#v", tt)
-	b, err := tt.Bytes()
-	if err != nil {
-		t.Errorf("Bytes() failed: %s", err)
-	}
-	t.Logf("Trits.Bytes(): %#v", b)
-
-	tb, err := BytesToTrits(b)
-	if err != nil {
-		t.Errorf("BytesToTrits() failed: %s", err)
-	}
-
-	if !tb.Equal(tt) {
-		t.Errorf("Trits->Bytes->Trits roundtrip failed\nwanted:\t%#v\ngot:\t%#v", tt, tb)
 	}
 
 	st := Trits{0, 1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 1, 0, 1, 1}
