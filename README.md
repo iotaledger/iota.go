@@ -1,4 +1,4 @@
-***Please note that this repo has not yet been updated to use Kerl***
+# Please note that this repo has not yet been updated to use Kerl and thus should not be used in the mainnet right now
 
 [![Build Status](https://travis-ci.org/iotaledger/iota.lib.go.svg?branch=master)](https://travis-ci.org/iotaledger/iota.lib.go)
 [![GoDoc](https://godoc.org/github.com/iotaledger/iota.lib.go?status.svg)](https://godoc.org/github.com/iotaledger/iota.lib.go)
