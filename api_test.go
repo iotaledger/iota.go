@@ -183,6 +183,7 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 		t.Errorf("GetTransactionsToApprove() return empty branch and/or trunk transactions\n%#v", resp)
 	}
 }
+
 func TestGetLatestInclusion(t *testing.T) {
 	var err error
 	var resp []bool
@@ -198,8 +199,8 @@ func TestGetLatestInclusion(t *testing.T) {
 	if err != nil {
 		t.Errorf("GetLatestInclustion() expected err to be nil but got %v", err)
 	}
-	if len(resp) == 0 || !resp[0] {
-		t.Error("GetLatestInclustion() is invalid len(resp):", len(resp))
+	if len(resp) == 0 {
+		t.Error("GetLatestInclustion() is invalid resp:", resp)
 	}
 }
 

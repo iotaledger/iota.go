@@ -63,9 +63,11 @@ func TestTransfer1(t *testing.T) {
 	if len(bal) < 1 {
 		t.Error("GetInputs is incorrect")
 	}
-
 }
+
 func TestTransfer2(t *testing.T) {
+	t.Skip("transfer with value test is skipped by default")
+
 	var err error
 	trs := []Transfer{
 		Transfer{

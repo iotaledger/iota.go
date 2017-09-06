@@ -402,10 +402,10 @@ type GetBalancesRequest struct {
 
 //GetBalancesResponse is for GetBalances API resonse.
 type GetBalancesResponse struct {
-	Duration       int64
-	Balances       []int64
-	Milestone      Trytes
-	MilestoneIndex int64
+	Duration       int64   `json:"duration"`
+	Balances       []int64 `json:"balances"`
+	Milestone      Trytes  `json:"milestone"`
+	MilestoneIndex int64   `json:"milestoneIndex"`
 }
 
 //Balances call GetBalances API and returns address-balance pair struct.
