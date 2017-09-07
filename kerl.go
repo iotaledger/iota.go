@@ -48,7 +48,7 @@ func (k *Kerl) Squeeze(length int) (Trits, error) {
 		return nil, fmt.Errorf("Squeeze is only defined for output lengths slices that are a multiple of 243")
 	}
 
-	out := Trits(make([]int8, length))
+	out := make(Trits, length)
 	for i := 1; i <= length/HashSize; i += 1 {
 		h := k.s.Sum(nil)
 		ts, err := BytesToTrits(h)

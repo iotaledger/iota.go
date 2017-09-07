@@ -63,9 +63,9 @@ func NewSeed() Trytes {
 	return Trytes(t)
 }
 
-// NewKey takes a seed encoded as Trits, an index and a security
-// level to derive a private key.
-func NewKey(seed Trytes, index, securityLevel int) Trytes {
+// newKeyTrits takes a seed encoded as Trytes, an index and a security
+// level to derive a private key returned as Trits
+func newKeyTrits(seed Trytes, index, securityLevel int) Trits {
 	seedTrits := seed.Trits()
 	// Utils.increment
 	for i := 0; i < index; i++ {
@@ -78,21 +78,28 @@ func NewKey(seed Trytes, index, securityLevel int) Trytes {
 			}
 		}
 	}
-	seed = seedTrits.Trytes()
-	hash := seed.Hash()
+	k := NewKerl()
+	k.Absorb(seedTrits)
+	hashedTrits, _ := k.Squeeze(HashSize)
+	k.Reset()
+	k.Absorb(hashedTrits)
 
-	c := NewCurl()
-	c.Absorb(hash)
+	key := make(Trits, (HashSize * 27 * securityLevel))
 
-	key := make([]byte, (HashSize*27*securityLevel)/3)
 	for l := 0; l < securityLevel; l++ {
 		for i := 0; i < 27; i++ {
-			b := c.Squeeze()
-			copy(key[(l*27+i)*HashSize/3:], b)
+			b, _ := k.Squeeze(HashSize)
+			copy(key[(l*27+i)*HashSize:], b)
 		}
 	}
 
-	return Trytes(key)
+	return key
+}
+
+// NewKey takes a seed encoded as Trytes, an index and a security
+// level to derive a private key returned as Trytes
+func NewKey(seed Trytes, index, securityLevel int) Trytes {
+	return newKeyTrits(seed, index, securityLevel).Trytes()
 }
 
 func clearState(l *[stateSize]uint64, h *[stateSize]uint64) {
@@ -153,52 +160,62 @@ func seri27(l *[stateSize]uint64, h *[stateSize]uint64) Trytes {
 }
 
 //Digests calculates hash x 26 for each segments in keyTrits.
-func Digests(key Trytes) (Trytes, error) {
-	if len(key) < HashSize*27/3 {
-		return "", ErrKeyTritsLength
+func Digests(key Trits) (Trits, error) {
+	if len(key) < HashSize*27 {
+		return nil, ErrKeyTritsLength
 	}
 
 	// Integer division, becaue we don't care about impartial keys.
-	numKeys := len(key) / (HashSize * 9)
-	digests := make([]byte, HashSize*numKeys/3)
+	numKeys := len(key) / (HashSize * 27)
+	digests := make(Trits, HashSize*numKeys)
+	buffer := make(Trits, HashSize)
 	for i := 0; i < numKeys; i++ {
-		lmid, hmid := para27(key[i*HashSize*9:])
-		for k := 0; k < 26; k++ {
-			transform64(lmid, hmid)
-			clearState(lmid, hmid)
+		k2 := NewKerl()
+		for j := 0; j < 27; j++ {
+			copy(buffer, key[i*SignatureSize+j*HashSize:i*SignatureSize+(j+1)*HashSize])
+			for k := 0; k < 26; k++ {
+				k := NewKerl()
+				k.Absorb(buffer)
+				buffer, _ = k.Squeeze(HashSize)
+			}
+			k2.Absorb(buffer)
 		}
-		keyFragment := seri27(lmid, hmid)
-		s := keyFragment.Hash()
-		copy(digests[i*HashSize/3:], s)
+		buffer, _ = k2.Squeeze(HashSize)
+		copy(digests[i*HashSize:], buffer)
 	}
-	return Trytes(digests), nil
+	return digests, nil
 }
 
 //digest calculates hash x normalizedBundleFragment[i] for each segments in keyTrits.
-func digest(normalizedBundleFragment []int8, signatureFragment Trytes) Trytes {
-	c := NewCurl()
+func digest(normalizedBundleFragment []int8, signatureFragment Trytes) Trits {
+	k := NewKerl()
 	for i := 0; i < 27; i++ {
-		bb := signatureFragment[i*HashSize/3 : (i+1)*HashSize/3]
+		bb := signatureFragment[i*HashSize/3 : (i+1)*HashSize/3].Trits()
 		for j := normalizedBundleFragment[i] + 13; j > 0; j-- {
-			bb = bb.Hash()
+			kerl := NewKerl()
+			kerl.Absorb(bb)
+			bb, _ = kerl.Squeeze(HashSize)
 		}
-		c.Absorb(bb)
+		k.Absorb(bb)
 	}
-	return c.Squeeze()
+	tr, _ := k.Squeeze(HashSize)
+	return tr
 }
 
 //Sign calculates signature from bundle hash and key
 //by hashing x 13-normalizedBundleFragment[i] for each segments in keyTrits.
 func Sign(normalizedBundleFragment []int8, keyFragment Trytes) Trytes {
-	signatureFragment := make([]byte, len(keyFragment))
+	signatureFragment := make(Trits, len(keyFragment)*3)
 	for i := 0; i < 27; i++ {
-		bb := keyFragment[i*HashSize/3 : (i+1)*HashSize/3]
+		bb := keyFragment[i*HashSize/3 : (i+1)*HashSize/3].Trits()
 		for j := 0; j < 13-int(normalizedBundleFragment[i]); j++ {
-			bb = bb.Hash()
+			kerl := NewKerl()
+			kerl.Absorb(bb)
+			bb, _ = kerl.Squeeze(HashSize)
 		}
-		copy(signatureFragment[i*81:], bb)
+		copy(signatureFragment[i*HashSize:], bb)
 	}
-	return Trytes(signatureFragment)
+	return signatureFragment.Trytes()
 }
 
 //IsValidSig validates signatureFragment.
@@ -206,13 +223,20 @@ func IsValidSig(expectedAddress Address, signatureFragments []Trytes, bundleHash
 	normalizedBundleHash := bundleHash.Normalize()
 
 	// Get digests
-	digests := make([]byte, 81*len(signatureFragments))
+	digests := make(Trits, HashSize*len(signatureFragments))
 	for i := range signatureFragments {
-		start := i * 27 * (i % 3)
+		start := 27 * (i % 3)
 		digestBuffer := digest(normalizedBundleHash[start:start+27], signatureFragments[i])
-		copy(digests[i*81:], digestBuffer)
+		copy(digests[i*HashSize:], digestBuffer)
 	}
-	address := Address(Trytes(digests).Hash())
+	addrTrites, err := calcAddress(digests)
+	if err != nil {
+		return false
+	}
+	address, err := addrTrites.Trytes().ToAddress()
+	if err != nil {
+		return false
+	}
 	return expectedAddress == address
 }
 
@@ -227,14 +251,26 @@ var (
 	ErrInvalidAddressTrits  = errors.New("addresses without checksum are 243 trits in length")
 )
 
+// calcAddress calculates address from digests
+func calcAddress(digests Trits) (Trits, error) {
+	k := NewKerl()
+	k.Absorb(digests)
+	return k.Squeeze(HashSize)
+}
+
 //NewAddress generates a new address from seed without checksum.
 func NewAddress(seed Trytes, index, security int) (Address, error) {
-	k := NewKey(seed, index, security)
-	d, err := Digests(k)
+	k := newKeyTrits(seed, index, security)
+	dg, err := Digests(k)
 	if err != nil {
 		return "", err
 	}
-	return d.Hash().ToAddress()
+	addr, err := calcAddress(dg)
+	if err != nil {
+		return "", err
+	}
+	tryt := addr.Trytes()
+	return tryt.ToAddress()
 }
 
 //NewAddresses generates new count addresses from seed without checksum.
