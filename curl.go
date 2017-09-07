@@ -107,10 +107,3 @@ func (c *Curl) Reset() {
 		c.state[i] = 0
 	}
 }
-
-//Hash returns hash of t.
-func (t Trytes) Hash() Trytes {
-	c := NewCurl()
-	c.Absorb(t)
-	return c.Squeeze()
-}

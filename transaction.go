@@ -160,7 +160,7 @@ func (t *Transaction) HasValidNonce(mwm int64) bool {
 
 //Hash returns the hash of the transaction.
 func (t *Transaction) Hash() Trytes {
-	return t.Trytes().Hash()
+	return t.Trytes().CurlHash()
 }
 
 //UnmarshalJSON makes transaction struct from json.

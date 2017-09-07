@@ -372,3 +372,18 @@ func (t Trytes) IsValid() error {
 	}
 	return nil
 }
+
+//Hash returns hash of t.
+func (t Trytes) Hash() Trytes {
+	c := NewKerl()
+	c.Absorb(t.Trits())
+	tt, _ := c.Squeeze(HashSize)
+	return tt.Trytes()
+}
+
+//Hash returns hash of t.
+func (t Trytes) CurlHash() Trytes {
+	c := NewCurl()
+	c.Absorb(t)
+	return c.Squeeze()
+}
