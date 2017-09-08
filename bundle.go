@@ -86,7 +86,7 @@ func (bs Bundle) Finalize(sig []Trytes) {
 
 //Hash calculates hash of Bundle.
 func (bs Bundle) Hash() Trytes {
-	c := NewCurl()
+	k := NewKerl()
 	buf := make(Trits, 243+81*3)
 	for i, b := range bs {
 		copy(buf, Trytes(b.Address).Trits())
@@ -95,9 +95,10 @@ func (bs Bundle) Hash() Trytes {
 		copy(buf[243+81+81:], Int2Trits(b.Timestamp.Unix(), 27))
 		copy(buf[243+81+81+27:], Int2Trits(int64(i), 27))            //CurrentIndex
 		copy(buf[243+81+81+27+27:], Int2Trits(int64(len(bs)-1), 27)) //LastIndex
-		c.Absorb(buf.Trytes())
+		k.Absorb(buf)
 	}
-	return c.Squeeze()
+	h, _ := k.Squeeze(HashSize)
+	return h.Trytes()
 }
 
 //Categorize Categorizes a list of transfers into sent and received.
