@@ -60,12 +60,13 @@ resp, err := api.FindTransactions([]Trytes{"DEXRPL...SJRU"})
 ///Address
 index:=0
 security:=2
-adr,err:=giota.NewAddress(trytes,index,seciruty) //without checksum.
+adr,err:=giota.NewAddress(trytes,index,security) //without checksum.
 adrWithChecksum := adr.WithChecksum() //adrWithChecksum is trytes type.
 
 //transaction
 tx,err:=giota.NewTransaction(trytes)
-if tx.HasValidNonce(){...}
+mwm := 15
+if tx.HasValidNonce(mwm){...}
 trytes2:=tx.trytes()
 
 //create signature
@@ -74,7 +75,7 @@ norm := bundleHash.Normalize()
 sign := giota.Sign(norm[:27], key[:6561/3])
 
 //validate signature
-if giota.ValidateSig(adr, []Trytes{sign}, bundleHash) {...}
+if giota.ValidateSig(adr, []giota.Trytes{sign}, bundleHash) {...}
 
 //send
 trs := []giota.Transfer{
@@ -84,8 +85,7 @@ trs := []giota.Transfer{
 		Tag: "MOUDAMEPO",
 	},
 }
-_, pow := giota.GetBestPow()
-mwm := 18
+_, pow := giota.GetBestPoW()
 bdl, err = giota.Send(api, seed, security, trs, mwm, pow)
 ```
 
