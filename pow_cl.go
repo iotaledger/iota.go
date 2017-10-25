@@ -46,7 +46,8 @@ type bufferInfo struct {
 }
 
 func init() {
-	pows["PowCL"] = PowCL
+	// TODO: update to Curl-P-81
+	// pows["PowCL"] = PowCL
 }
 
 var stopCL = true

@@ -33,17 +33,21 @@ import (
 
 //Transaction is transaction  structure for iota.
 type Transaction struct {
-	SignatureMessageFragment Trytes
-	Address                  Address
-	Value                    int64 `json:",string"`
-	Tag                      Trytes
-	Timestamp                time.Time `json:",string"`
-	CurrentIndex             int64     `json:",string"`
-	LastIndex                int64     `json:",string"`
-	Bundle                   Trytes
-	TrunkTransaction         Trytes
-	BranchTransaction        Trytes
-	Nonce                    Trytes
+	SignatureMessageFragment      Trytes
+	Address                       Address
+	Value                         int64 `json:",string"`
+	ObsoleteTag                   Trytes
+	Timestamp                     time.Time `json:",string"`
+	CurrentIndex                  int64     `json:",string"`
+	LastIndex                     int64     `json:",string"`
+	Bundle                        Trytes
+	TrunkTransaction              Trytes
+	BranchTransaction             Trytes
+	Tag                           Trytes
+	AttachmentTimestamp           Trytes
+	AttachmentTimestampLowerBound Trytes
+	AttachmentTimestampUpperBound Trytes
+	Nonce                         Trytes
 }
 
 //errors for tx.
@@ -61,9 +65,9 @@ const (
 	AddressTrinarySize                    = 243
 	ValueTrinaryOffset                    = AddressTrinaryOffset + AddressTrinarySize
 	ValueTrinarySize                      = 81
-	TagTrinaryOffset                      = ValueTrinaryOffset + ValueTrinarySize
-	TagTrinarySize                        = 81
-	TimestampTrinaryOffset                = TagTrinaryOffset + TagTrinarySize
+	ObsoleteTagTrinaryOffset              = ValueTrinaryOffset + ValueTrinarySize
+	ObsoleteTagTrinarySize                = 81
+	TimestampTrinaryOffset                = ObsoleteTagTrinaryOffset + ObsoleteTagTrinarySize
 	TimestampTrinarySize                  = 27
 	CurrentIndexTrinaryOffset             = TimestampTrinaryOffset + TimestampTrinarySize
 	CurrentIndexTrinarySize               = 27
@@ -75,13 +79,24 @@ const (
 	TrunkTransactionTrinarySize           = 243
 	BranchTransactionTrinaryOffset        = TrunkTransactionTrinaryOffset + TrunkTransactionTrinarySize
 	BranchTransactionTrinarySize          = 243
-	NonceTrinaryOffset                    = BranchTransactionTrinaryOffset + BranchTransactionTrinarySize
-	NonceTrinarySize                      = 243
+	TagTrinaryOffset                      = BranchTransactionTrinaryOffset + BranchTransactionTrinarySize
+	TagTrinarySize                        = 81
+	AttachmentTimestampTrinaryOffset      = TagTrinaryOffset + TagTrinarySize
+	AttachmentTimestampTrinarySize        = 27
+
+	AttachmentTimestampLowerBoundTrinaryOffset = AttachmentTimestampTrinaryOffset + AttachmentTimestampTrinarySize
+	AttachmentTimestampLowerBoundTrinarySize   = 27
+	AttachmentTimestampUpperBoundTrinaryOffset = AttachmentTimestampLowerBoundTrinaryOffset + AttachmentTimestampLowerBoundTrinarySize
+	AttachmentTimestampUpperBoundTrinarySize   = 27
+	NonceTrinaryOffset                         = AttachmentTimestampUpperBoundTrinaryOffset + AttachmentTimestampUpperBoundTrinarySize
+	NonceTrinarySize                           = 81
 
 	transactionTrinarySize = SignatureMessageFragmentTrinarySize + AddressTrinarySize +
-		ValueTrinarySize + TagTrinarySize + TimestampTrinarySize +
+		ValueTrinarySize + ObsoleteTagTrinarySize + TimestampTrinarySize +
 		CurrentIndexTrinarySize + LastIndexTrinarySize + BundleTrinarySize +
 		TrunkTransactionTrinarySize + BranchTransactionTrinarySize +
+		TagTrinarySize + AttachmentTimestampTrinarySize +
+		AttachmentTimestampLowerBoundTrinarySize + AttachmentTimestampUpperBoundTrinarySize +
 		NonceTrinarySize
 )
 
@@ -117,7 +132,7 @@ func (t *Transaction) parser(trits Trits) error {
 		return err
 	}
 	t.Value = trits[ValueTrinaryOffset : ValueTrinaryOffset+ValueTrinarySize].Int()
-	t.Tag = trits[TagTrinaryOffset : TagTrinaryOffset+TagTrinarySize].Trytes()
+	t.ObsoleteTag = trits[ObsoleteTagTrinaryOffset : ObsoleteTagTrinaryOffset+ObsoleteTagTrinarySize].Trytes()
 	timestamp := trits[TimestampTrinaryOffset : TimestampTrinaryOffset+TimestampTrinarySize].Int()
 	t.Timestamp = time.Unix(timestamp, 0)
 	t.CurrentIndex = trits[CurrentIndexTrinaryOffset : CurrentIndexTrinaryOffset+CurrentIndexTrinarySize].Int()
@@ -136,13 +151,17 @@ func (t *Transaction) Trytes() Trytes {
 	copy(tr, t.SignatureMessageFragment.Trits())
 	copy(tr[AddressTrinaryOffset:], Trytes(t.Address).Trits())
 	copy(tr[ValueTrinaryOffset:], Int2Trits(t.Value, ValueTrinarySize))
-	copy(tr[TagTrinaryOffset:], t.Tag.Trits())
+	copy(tr[ObsoleteTagTrinaryOffset:], t.ObsoleteTag.Trits())
 	copy(tr[TimestampTrinaryOffset:], Int2Trits(t.Timestamp.Unix(), TimestampTrinarySize))
 	copy(tr[CurrentIndexTrinaryOffset:], Int2Trits(t.CurrentIndex, CurrentIndexTrinarySize))
 	copy(tr[LastIndexTrinaryOffset:], Int2Trits(t.LastIndex, LastIndexTrinarySize))
 	copy(tr[BundleTrinaryOffset:], t.Bundle.Trits())
 	copy(tr[TrunkTransactionTrinaryOffset:], t.TrunkTransaction.Trits())
 	copy(tr[BranchTransactionTrinaryOffset:], t.BranchTransaction.Trits())
+	copy(tr[TagTrinaryOffset:], t.Tag.Trits())
+	copy(tr[AttachmentTimestampTrinaryOffset:], t.AttachmentTimestamp.Trits())
+	copy(tr[AttachmentTimestampLowerBoundTrinaryOffset:], t.AttachmentTimestampLowerBound.Trits())
+	copy(tr[AttachmentTimestampUpperBoundTrinaryOffset:], t.AttachmentTimestampUpperBound.Trits())
 	copy(tr[NonceTrinaryOffset:], t.Nonce.Trits())
 	return tr.Trytes()
 }

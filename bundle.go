@@ -55,17 +55,21 @@ func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time
 			v = value
 		}
 		b := Transaction{
-			SignatureMessageFragment: emptySig,
-			Address:                  address,
-			Value:                    v,
-			Tag:                      pad(tag, TagTrinarySize/3),
-			Timestamp:                timestamp,
-			CurrentIndex:             int64(len(*bs) - 1),
-			LastIndex:                0,
-			Bundle:                   EmptyHash,
-			TrunkTransaction:         EmptyHash,
-			BranchTransaction:        EmptyHash,
-			Nonce:                    EmptyHash,
+			SignatureMessageFragment:      emptySig,
+			Address:                       address,
+			Value:                         v,
+			ObsoleteTag:                   EmptyHash,
+			Timestamp:                     timestamp,
+			CurrentIndex:                  int64(len(*bs) - 1),
+			LastIndex:                     0,
+			Bundle:                        EmptyHash,
+			TrunkTransaction:              EmptyHash,
+			BranchTransaction:             EmptyHash,
+			Tag:                           pad(tag, TagTrinarySize/3),
+			AttachmentTimestamp:           EmptyHash,
+			AttachmentTimestampLowerBound: EmptyHash,
+			AttachmentTimestampUpperBound: EmptyHash,
+			Nonce: EmptyHash,
 		}
 		*bs = append(*bs, b)
 	}
@@ -91,7 +95,7 @@ func (bs Bundle) Hash() Trytes {
 	for i, b := range bs {
 		copy(buf, Trytes(b.Address).Trits())
 		copy(buf[243:], Int2Trits(b.Value, 81))
-		copy(buf[243+81:], b.Tag.Trits())
+		copy(buf[243+81:], b.ObsoleteTag.Trits())
 		copy(buf[243+81+81:], Int2Trits(b.Timestamp.Unix(), 27))
 		copy(buf[243+81+81+27:], Int2Trits(int64(i), 27))            //CurrentIndex
 		copy(buf[243+81+81+27+27:], Int2Trits(int64(len(bs)-1), 27)) //LastIndex
