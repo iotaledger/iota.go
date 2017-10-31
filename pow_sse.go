@@ -41,8 +41,10 @@ package giota
 #define HBITS 0xFFFFFFFFFFFFFFFFuLL
 #define LBITS 0x0000000000000000uLL
 #define HASH_LENGTH 243              //trits
+#define NONCE_LENGTH 81              //trits
 #define STATE_LENGTH 3 * HASH_LENGTH //trits
 #define TX_LENGTH 2673               //trytes
+#define INCR_START HASH_LENGTH - NONCE_LENGTH + 4 + 27
 
 #define LOW00 0xDB6DB6DB6DB6DB6DuLL  //0b1101101101101101101101101101101101101101101101101101101101101101L;
 #define HIGH00 0xB6DB6DB6DB6DB6DBuLL //0b1011011011011011011011011011011011011011011011011011011011011011L;
@@ -75,7 +77,7 @@ void transform128(__m128i *lmid, __m128i *hmid)
   __m128i alpha, beta, gamma, delta;
   __m128i *lto = lmid + STATE_LENGTH, *hto = hmid + STATE_LENGTH;
   __m128i *lfrom = lmid, *hfrom = hmid;
-  for (r = 0; r < 26; r++)
+  for (r = 0; r < 80; r++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -116,7 +118,7 @@ int incr128(__m128i *mid_low, __m128i *mid_high)
   int i;
   __m128i carry;
   carry = _mm_set_epi64x(LOW00, LOW01);
-  for (i = 5; i < HASH_LENGTH && (i == 5 || carry[0]); i++)
+  for (i = INCR_START; i < HASH_LENGTH && (i == INCR_START || carry[0]); i++)
   {
     __m128i low = mid_low[i], high = mid_high[i];
     mid_low[i] = high ^ low;
@@ -134,21 +136,21 @@ void seri128(__m128i *low, __m128i *high, int n, char *r)
     n -= 64;
     index = 1;
   }
-  for (i = 0; i < HASH_LENGTH; i++)
+  for (i = HASH_LENGTH-NONCE_LENGTH; i < HASH_LENGTH; i++)
   {
     unsigned long long ll = (low[i][index] >> n) & 1;
     unsigned long long hh = (high[i][index] >> n) & 1;
     if (hh == 0 && ll == 1)
     {
-      r[i] = -1;
+      r[i+NONCE_LENGTH-HASH_LENGTH] = -1;
     }
     if (hh == 1 && ll == 1)
     {
-      r[i] = 0;
+      r[i+NONCE_LENGTH-HASH_LENGTH] = 0;
     }
     if (hh == 1 && ll == 0)
     {
-      r[i] = 1;
+      r[i+NONCE_LENGTH-HASH_LENGTH] = 1;
     }
   }
 }
@@ -234,7 +236,7 @@ void incrN128(int n,__m128i *mid_low, __m128i *mid_high)
   for (j=0;j<n;j++){
     __m128i carry;
     carry = _mm_set_epi64x(HBITS, HBITS);
-    for (i = HASH_LENGTH *2 / 3; i < HASH_LENGTH &&  carry[0]; i++)
+    for (i = HASH_LENGTH * 2/3 + 4; i < HASH_LENGTH * 2/3 + 4 + 27 &&  carry[0]; i++)
     {
       __m128i low = mid_low[i], high = mid_high[i];
       mid_low[i] = high ^ low;
@@ -249,16 +251,17 @@ long long int pwork128(char mid[], int mwm, char nonce[],int n)
   __m128i lmid[STATE_LENGTH], hmid[STATE_LENGTH];
 
   para128(mid, lmid, hmid);
-  lmid[0] = _mm_set_epi64x(LOW00, LOW01);
-  hmid[0] = _mm_set_epi64x(HIGH00, HIGH01);
-  lmid[1] = _mm_set_epi64x(LOW10, LOW11);
-  hmid[1] = _mm_set_epi64x(HIGH10, HIGH11);
-  lmid[2] = _mm_set_epi64x(LOW20, LOW21);
-  hmid[2] = _mm_set_epi64x(HIGH20, HIGH21);
-  lmid[3] = _mm_set_epi64x(LOW30, LOW31);
-  hmid[3] = _mm_set_epi64x(HIGH30, HIGH31);
-  lmid[4] = _mm_set_epi64x(LOW40, LOW41);
-  hmid[4] = _mm_set_epi64x(HIGH40, HIGH41);
+  int offset = HASH_LENGTH - NONCE_LENGTH;
+  lmid[offset] = _mm_set_epi64x(LOW00, LOW01);
+  hmid[offset] = _mm_set_epi64x(HIGH00, HIGH01);
+  lmid[offset+1] = _mm_set_epi64x(LOW10, LOW11);
+  hmid[offset+1] = _mm_set_epi64x(HIGH10, HIGH11);
+  lmid[offset+2] = _mm_set_epi64x(LOW20, LOW21);
+  hmid[offset+2] = _mm_set_epi64x(HIGH20, HIGH21);
+  lmid[offset+3] = _mm_set_epi64x(LOW30, LOW31);
+  hmid[offset+3] = _mm_set_epi64x(HIGH30, HIGH31);
+  lmid[offset+4] = _mm_set_epi64x(LOW40, LOW41);
+  hmid[offset+4] = _mm_set_epi64x(HIGH40, HIGH41);
 
 	incrN128(n, lmid, hmid);
   return loop128(lmid, hmid, mwm, nonce);
@@ -300,7 +303,7 @@ func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 	for n := 0; n < PowProcs; n++ {
 		wg.Add(1)
 		go func(n int) {
-			nonce := make(Trits, HashSize)
+			nonce := make(Trits, NonceTrinarySize)
 			r := C.pwork128((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
 			mutex.Lock()
 			if r >= 0 {

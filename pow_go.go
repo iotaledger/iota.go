@@ -43,6 +43,10 @@ const (
 	high2 uint64 = 0xFFC01FFFF803FFFF
 	low3  uint64 = 0xFFC0000007FFFFFF
 	high3 uint64 = 0x003FFFFFFFFFFFFF
+
+	nonceOffset         = HashSize - NonceTrinarySize
+	nonceInitStart      = nonceOffset + 4
+	nonceIncrementStart = nonceInitStart + NonceTrinarySize/3
 )
 
 //PowFunc is the tyoe of func for PoW
@@ -84,7 +88,7 @@ func transform64(lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 	lto := &ltmp
 	hto := &htmp
 
-	for r := 0; r < 26; r++ {
+	for r := 0; r < numberOfRounds-1; r++ {
 		for j := 0; j < stateSize; j++ {
 			t1 := indices[j]
 			t2 := indices[j+1]
@@ -100,8 +104,7 @@ func transform64(lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 		lfrom, lto = lto, lfrom
 		hfrom, hto = hto, hfrom
 	}
-
-	for j := 0; j < HashSize; j++ {
+	for j := 0; j < stateSize; j++ {
 		t1 := indices[j]
 		t2 := indices[j+1]
 
@@ -113,6 +116,7 @@ func transform64(lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 		lto[j] = ^delta
 		hto[j] = (alpha ^ gamma) | delta
 	}
+
 	copy(lmid[:], ltmp[:])
 	copy(hmid[:], htmp[:])
 }
@@ -121,7 +125,7 @@ func incr(lmid *[stateSize]uint64, hmid *[stateSize]uint64) bool {
 	var carry uint64 = 1
 	var i int
 	//to avoid boundry check, i believe.
-	for i = 4; i < HashSize && carry != 0; i++ {
+	for i = nonceInitStart; i < HashSize && carry != 0; i++ {
 		low := lmid[i]
 		high := hmid[i]
 		lmid[i] = high ^ low
@@ -132,18 +136,18 @@ func incr(lmid *[stateSize]uint64, hmid *[stateSize]uint64) bool {
 }
 
 func seri(l *[stateSize]uint64, h *[stateSize]uint64, n uint) Trits {
-	r := make(Trits, HashSize)
-	for i := 0; i < HashSize; i++ {
+	r := make(Trits, NonceTrinarySize)
+	for i := nonceOffset; i < HashSize; i++ {
 		ll := (l[i] >> n) & 1
 		hh := (h[i] >> n) & 1
 		if hh == 0 && ll == 1 {
-			r[i] = -1
+			r[i-nonceOffset] = -1
 		}
 		if hh == 1 && ll == 1 {
-			r[i] = 0
+			r[i-nonceOffset] = 0
 		}
 		if hh == 1 && ll == 0 {
-			r[i] = 1
+			r[i-nonceOffset] = 1
 		}
 	}
 	return r
@@ -207,7 +211,7 @@ func incrN(n int, lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 	for j := 0; j < n; j++ {
 		var carry uint64 = 1
 		//to avoid boundry check, i believe.
-		for i := HashSize * 2 / 3; i < HashSize && carry != 0; i++ {
+		for i := nonceInitStart; i < nonceIncrementStart && carry != 0; i++ {
 			low := lmid[i]
 			high := hmid[i]
 			lmid[i] = high ^ low
@@ -242,14 +246,14 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 		wg.Add(1)
 		go func(i int) {
 			lmid, hmid := para(c.state)
-			lmid[0] = low0
-			hmid[0] = high0
-			lmid[1] = low1
-			hmid[1] = high1
-			lmid[2] = low2
-			hmid[2] = high2
-			lmid[3] = low3
-			hmid[3] = high3
+			lmid[nonceOffset] = low0
+			hmid[nonceOffset] = high0
+			lmid[nonceOffset+1] = low1
+			hmid[nonceOffset+1] = high1
+			lmid[nonceOffset+2] = low2
+			hmid[nonceOffset+2] = high2
+			lmid[nonceOffset+3] = low3
+			hmid[nonceOffset+3] = high3
 
 			incrN(i, lmid, hmid)
 			nonce, cnt := loop(lmid, hmid, mwm)

@@ -329,7 +329,15 @@ func (a Address) Checksum() Trytes {
 	if len(a) != 81 {
 		panic("len(address) must be 81")
 	}
-	return Trytes(a).Hash()[:9]
+	return a.Hash()[81-9 : 81]
+}
+
+func (a Address) Hash() Trytes {
+	k := NewKerl()
+	t := Trytes(a).Trits()
+	k.Absorb(t)
+	h, _ := k.Squeeze(HashSize)
+	return h.Trytes()
 }
 
 //WithChecksum returns Address+checksum.

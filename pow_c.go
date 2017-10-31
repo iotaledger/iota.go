@@ -34,8 +34,10 @@ package giota
 #define HBITS 0xFFFFFFFFFFFFFFFFL
 #define LBITS 0x0000000000000000L
 #define HASH_LENGTH 243              //trits
+#define NONCE_LENGTH 81              //trits
 #define STATE_LENGTH 3 * HASH_LENGTH //trits
 #define TX_LENGTH 2673               //trytes
+#define INCR_START HASH_LENGTH - NONCE_LENGTH + 4 + 27
 
 #define LOW0 0xDB6DB6DB6DB6DB6DL
 #define HIGH0 0xB6DB6DB6DB6DB6DBL
@@ -56,7 +58,7 @@ void transform64(unsigned long *lmid, unsigned long *hmid)
   unsigned long *lfrom = lmid, *hfrom = hmid;
   unsigned long *lto = lmid + STATE_LENGTH, *hto = hmid + STATE_LENGTH;
 
-  for (r = 0; r < 26; r++)
+  for (r = 0; r < 80; r++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -97,7 +99,7 @@ int incr(unsigned long *mid_low, unsigned long *mid_high)
 {
   int i;
   unsigned long carry = 1;
-  for (i = 4; i < HASH_LENGTH && carry; i++)
+  for (i = INCR_START; i < HASH_LENGTH && carry; i++)
   {
     unsigned long low = mid_low[i], high = mid_high[i];
     mid_low[i] = high ^ low;
@@ -110,21 +112,21 @@ int incr(unsigned long *mid_low, unsigned long *mid_high)
 void seri(unsigned long *l, unsigned long *h, int n, char *r)
 {
   int i = 0;
-  for (i = 0; i < HASH_LENGTH; i++)
+  for (i = HASH_LENGTH - NONCE_LENGTH; i < HASH_LENGTH; i++)
   {
     int ll = (l[i] >> n) & 1;
     int hh = (h[i] >> n) & 1;
     if (hh == 0 && ll == 1)
     {
-      r[i] = -1;
+      r[i-HASH_LENGTH + NONCE_LENGTH] = -1;
     }
     if (hh == 1 && ll == 1)
     {
-      r[i] = 0;
+      r[i-HASH_LENGTH + NONCE_LENGTH] = 0;
     }
     if (hh == 1 && ll == 0)
     {
-      r[i] = 1;
+      r[i-HASH_LENGTH + NONCE_LENGTH] = 1;
     }
   }
 }
@@ -200,7 +202,7 @@ void incrN(int n,unsigned long *mid_low, unsigned long *mid_high)
   int i,j;
   for (j=0;j<n;j++){
     unsigned long carry = 1;
-    for (i =HASH_LENGTH * 2 / 3; i < HASH_LENGTH && carry; i++)
+    for (i = INCR_START - 27; i < INCR_START && carry; i++)
     {
       unsigned long low = mid_low[i], high = mid_high[i];
       mid_low[i] = high ^ low;
@@ -216,14 +218,15 @@ long long int pwork(char mid[], int mwm, char nonce[],int n)
   unsigned long lmid[STATE_LENGTH] = {0}, hmid[STATE_LENGTH] = {0};
 
   para(mid, lmid, hmid);
-  lmid[0] = LOW0;
-  hmid[0] = HIGH0;
-  lmid[1] = LOW1;
-  hmid[1] = HIGH1;
-  lmid[2] = LOW2;
-  hmid[2] = HIGH2;
-  lmid[3] = LOW3;
-  hmid[3] = HIGH3;
+  int offset = HASH_LENGTH - NONCE_LENGTH;
+  lmid[offset] = LOW0;
+  hmid[offset] = HIGH0;
+  lmid[offset+1] = LOW1;
+  hmid[offset+1] = HIGH1;
+  lmid[offset+2] = LOW2;
+  hmid[offset+2] = HIGH2;
+  lmid[offset+3] = LOW3;
+  hmid[offset+3] = HIGH3;
 
 	incrN(n, lmid, hmid);
   return loop_cpu(lmid, hmid, mwm, nonce);
@@ -264,7 +267,7 @@ func PowC(trytes Trytes, mwm int) (Trytes, error) {
 	for n := 0; n < PowProcs; n++ {
 		wg.Add(1)
 		go func(n int) {
-			nonce := make(Trits, HashSize)
+			nonce := make(Trits, NonceTrinarySize)
 			r := C.pwork((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
 			mutex.Lock()
 			if r >= 0 {

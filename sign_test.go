@@ -58,7 +58,7 @@ var addressTCs = []addressTestCase{
 	addressTestCase{
 		addr:          "RGVOWCDJAGSO9TNLBBPUVYE9KHBOAZNVFRVKVYYCHRKQRKRNKGGWBF9WCRJVROKLVKWZUMBABVJGAALWU",
 		validAddr:     true,
-		checksum:      "QNXFPRSPG",
+		checksum:      "NPJ9QIHFW",
 		validChecksum: true,
 	},
 	addressTestCase{
@@ -70,13 +70,13 @@ var addressTCs = []addressTestCase{
 	addressTestCase{
 		addr:          "999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
 		validAddr:     true,
-		checksum:      "999999999",
+		checksum:      "A9BEONKZW",
 		validChecksum: true,
 	},
 	addressTestCase{
 		addr:          "RGVOWCDJAGSO9TNLBBPUVYE9KHBOAZNVFRVKVYYCHRKQRKRNKGGWBF9WCRJVROKLVKWZUMBABVJGAALWU",
 		validAddr:     true,
-		checksum:      "999999999",
+		checksum:      "A9BEONKZW",
 		validChecksum: false,
 	},
 }

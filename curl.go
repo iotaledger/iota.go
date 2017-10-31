@@ -27,12 +27,13 @@ package giota
 
 //constants for Sizes.
 const (
-	stateSize = 729
+	stateSize      = 729
+	numberOfRounds = 81
 )
 
 var (
 	transformC func(Trits)
-	truthTable = [11]int8{1, 0, -1, 0, 1, -1, 0, 0, -1, 1, 0}
+	truthTable = [11]int8{1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0}
 	indices    [stateSize + 1]int
 )
 
@@ -89,7 +90,7 @@ func (c *Curl) Transform() {
 		return
 	}
 	var cpy [stateSize]int8
-	for r := 27; r > 0; r-- {
+	for r := numberOfRounds; r > 0; r-- {
 		copy(cpy[:], c.state)
 		c.state = c.state[:stateSize]
 		for i := 0; i < stateSize; i++ {
