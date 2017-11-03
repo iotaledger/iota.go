@@ -69,14 +69,7 @@ func newKeyTrits(seed Trytes, index, securityLevel int) Trits {
 	seedTrits := seed.Trits()
 	// Utils.increment
 	for i := 0; i < index; i++ {
-		for j := range seedTrits {
-			seedTrits[j]++
-			if seedTrits[j] > 1 {
-				seedTrits[j] = -1
-			} else {
-				break
-			}
-		}
+		incTrits(seedTrits)
 	}
 	k := NewKerl()
 	k.Absorb(seedTrits)
