@@ -372,3 +372,14 @@ func (t Trytes) IsValid() error {
 	}
 	return nil
 }
+
+func incTrits(t Trits) {
+	for j := range t {
+		t[j]++
+		if t[j] > 1 {
+			t[j] = -1
+		} else {
+			break
+		}
+	}
+}

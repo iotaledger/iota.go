@@ -119,6 +119,7 @@ func (api *API) do(cmd interface{}, out interface{}) error {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-IOTA-API-Version", "1")
 	resp, err := api.client.Do(req)
 	if err != nil {
 		return err
