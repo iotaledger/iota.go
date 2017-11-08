@@ -47,7 +47,7 @@ type Bundle []Transaction
 //For now elements which are not specified are filled with trits 0.
 func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time, tag Trytes) {
 	if tag == "" {
-		tag = EmptyHash
+		tag = EmptyHash[:27]
 	}
 	for i := 0; i < num; i++ {
 		var v int64
@@ -58,7 +58,7 @@ func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time
 			SignatureMessageFragment:      emptySig,
 			Address:                       address,
 			Value:                         v,
-			ObsoleteTag:                   EmptyHash,
+			ObsoleteTag:                   pad(tag, TagTrinarySize/3),
 			Timestamp:                     timestamp,
 			CurrentIndex:                  int64(len(*bs) - 1),
 			LastIndex:                     0,
@@ -104,8 +104,8 @@ func (bs Bundle) Hash() Trytes {
 // until normalized hash doesn't have any 13
 func (bs Bundle) getValidHash() Trytes {
 	k := NewKerl()
-	hashedLen := AddressTrinarySize + ValueTrinarySize + ObsoleteTagTrinarySize +
-		TimestampTrinarySize + CurrentIndexTrinarySize + LastIndexTrinarySize
+	hashedLen := BundleTrinaryOffset - AddressTrinaryOffset
+
 	buf := make(Trits, hashedLen*len(bs))
 	for i, b := range bs {
 		getTritsToHash(buf[i*hashedLen:], &b, i, len(bs))
@@ -122,22 +122,23 @@ func (bs Bundle) getValidHash() Trytes {
 				break
 			}
 		}
+		offset := ObsoleteTagTrinaryOffset - AddressTrinaryOffset
 		if valid {
-			bs[0].ObsoleteTag = buf[81 : 81+81].Trytes()
+			bs[0].ObsoleteTag = buf[offset : offset+ObsoleteTagTrinarySize].Trytes()
 			return h
 		}
 		k.Reset()
-		incTrits(buf[81 : 81+81])
+		incTrits(buf[offset : offset+ObsoleteTagTrinarySize])
 	}
 }
 
 func getTritsToHash(buf Trits, b *Transaction, i, l int) {
 	copy(buf, Trytes(b.Address).Trits())
-	copy(buf[+243:], Int2Trits(b.Value, 81))
-	copy(buf[+243+81:], b.ObsoleteTag.Trits())
-	copy(buf[+243+81+81:], Int2Trits(b.Timestamp.Unix(), 27))
-	copy(buf[+243+81+81+27:], Int2Trits(int64(i), 27))      //CurrentIndex
-	copy(buf[+243+81+81+27+27:], Int2Trits(int64(l-1), 27)) //LastIndex
+	copy(buf[243:], Int2Trits(b.Value, ValueTrinarySize))
+	copy(buf[243+81:], b.ObsoleteTag.Trits())
+	copy(buf[243+81+81:], Int2Trits(b.Timestamp.Unix(), TimestampTrinarySize))
+	copy(buf[243+81+81+27:], Int2Trits(int64(i), CurrentIndexTrinarySize))   //CurrentIndex
+	copy(buf[243+81+81+27+27:], Int2Trits(int64(l-1), LastIndexTrinarySize)) //LastIndex
 }
 
 //Categorize Categorizes a list of transfers into sent and received.
