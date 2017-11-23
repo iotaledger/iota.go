@@ -23,13 +23,36 @@ SOFTWARE.
 */
 package giota
 
-import "testing"
-
-var (
-	seed Trytes = "WQNZOHUT99PWKEBFSKQSYNC9XHT9GEBMOSJAQDQAXPEZPJNDIUB9TSNWVMHKWICW9WVZXSMDFGISOD9FZ"
+import (
+	"os"
+	"testing"
 )
 
+var (
+	seed             Trytes
+	skipTransferTest = false
+)
+
+func init() {
+	ts := os.Getenv("TRANSFER_TEST_SEED")
+	if ts == "" {
+		skipTransferTest = true
+		return
+	}
+
+	s, err := ToTrytes(ts)
+	if err != nil {
+		skipTransferTest = true
+	} else {
+		seed = s
+	}
+}
+
 func TestTransfer1(t *testing.T) {
+	if skipTransferTest {
+		t.Skip("transfer test skipped because a valid $TRANSFER_TEST_SEED was not specified")
+	}
+
 	var err error
 	var adr Address
 	var adrs []Address
@@ -66,7 +89,9 @@ func TestTransfer1(t *testing.T) {
 }
 
 func TestTransfer2(t *testing.T) {
-	t.Skip("transfer with value test is skipped by default")
+	if skipTransferTest {
+		t.Skip("transfer test skipped because a valid $TRANSFER_TEST_SEED was not specified")
+	}
 
 	var err error
 	trs := []Transfer{
