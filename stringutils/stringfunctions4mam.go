@@ -22,6 +22,12 @@ SOFTWARE.
 //Package stringutils is a utility to create Masked Authenticated Messages (MAM's)
 package stringutils
 
+import (
+	"errors"
+
+	"github.com/iotaledger/giota"
+)
+
 //CharCodeAt constructs a rune so we can get the individual characters from a string
 func CharCodeAt(s string, n int) rune {
 	i := 0
@@ -34,12 +40,11 @@ func CharCodeAt(s string, n int) rune {
 	return 0
 }
 
-//IsString checks if the input is a string or not
-func IsString(s interface{}) bool {
-	switch s.(type) {
-	case string:
-		return true
-	default:
-		return false
+//IsValidTrytes checkes wether type and length of Trytes are valid
+func IsValidTrytes(t giota.Trytes) error {
+	if len(t)%2 != 0 {
+		err := errors.New("Wrong number of giota.Trytes; number should be even")
+		return err
 	}
+	return nil
 }

@@ -32,25 +32,24 @@ import (
 //ToMAMTrytes checks its validity and casts to giota.Trytes.
 func ToMAMTrytes(t string) (tr giota.Trytes) {
 
-	// Check if input is a string
-	if !IsString(t) {
-		fmt.Println("Input is not a string. Please provide a valid string.")
-	}
-
 	trytes := ""
-	TryteValues := "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	TryteValues := giota.TryteAlphabet
 
-	for i := 0; i < len(t); i++ {
-		asciiValue := CharCodeAt(string(t[i]), 0)
+	for _, number := range t {
+		asciiValue := CharCodeAt(string(number), 0)
 		if asciiValue > 255 {
+			//make it a space
 			asciiValue = 32
 		}
 		firstValue := asciiValue % 27
 		secondValue := (asciiValue - firstValue) / 27
 		trytesValue := string(TryteValues[firstValue]) + string(TryteValues[secondValue])
 		trytes = trytes + trytesValue
+		// fmt.Println()
+		// for iter, number := range t {
+		// 	fmt.Println(iter, number, string(number))
+		// }
 	}
-	fmt.Println("trytes is: ", trytes)
 
 	newTrytes := giota.Trytes(trytes)
 
@@ -59,16 +58,13 @@ func ToMAMTrytes(t string) (tr giota.Trytes) {
 
 //FromMAMTrytes converts the MAM from giota.Trytes to a readable string
 func FromMAMTrytes(inputTrytes giota.Trytes) string {
-	// character := ""
+
 	outputString := ""
-	TryteValues := "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	// Check if input is a string
-	if IsString(inputTrytes) {
-		fmt.Println("Input is not a giota.Trytes. Please provide a valid argument.")
-	}
-	// Check of we have an even length
-	if len(inputTrytes)%2 != 0 {
-		fmt.Println("Error. Wrong number of trytes")
+	TryteValues := giota.TryteAlphabet
+	// Check if input is giota.Trytes
+	err := IsValidTrytes(inputTrytes)
+	if err != nil {
+		fmt.Println("Error: ", err)
 	}
 
 	for i := 0; i < len(inputTrytes); i += 2 {
@@ -80,6 +76,6 @@ func FromMAMTrytes(inputTrytes giota.Trytes) string {
 		character := string(decimalValue)
 		outputString = outputString + character
 	}
-
+	fmt.Println("Output string is: ", outputString)
 	return outputString
 }
