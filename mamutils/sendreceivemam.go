@@ -73,7 +73,7 @@ func FromMAMTrytes(inputTrytes giota.Trytes) string {
 		character := string(decimalValue)
 		outputString = outputString + character
 	}
-	fmt.Println("Output string is: ", outputString)
+	//fmt.Println("Output string is: ", outputString)
 	return outputString
 }
 
