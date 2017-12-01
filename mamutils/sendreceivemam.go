@@ -19,10 +19,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-//Package stringutils is a utility to create Masked Authenticated Messages (MAM's)
-package stringutils
+//Package mamutils is a utility to create Masked Authenticated Messages (MAM's)
+package mamutils
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -36,19 +37,14 @@ func ToMAMTrytes(t string) (tr giota.Trytes) {
 	TryteValues := giota.TryteAlphabet
 
 	for _, number := range t {
-		asciiValue := CharCodeAt(string(number), 0)
-		if asciiValue > 255 {
+		if number > 255 {
 			//make it a space
-			asciiValue = 32
+			number = 32
 		}
-		firstValue := asciiValue % 27
-		secondValue := (asciiValue - firstValue) / 27
+		firstValue := number % 27
+		secondValue := (number - firstValue) / 27
 		trytesValue := string(TryteValues[firstValue]) + string(TryteValues[secondValue])
 		trytes = trytes + trytesValue
-		// fmt.Println()
-		// for iter, number := range t {
-		// 	fmt.Println(iter, number, string(number))
-		// }
 	}
 
 	newTrytes := giota.Trytes(trytes)
@@ -61,7 +57,8 @@ func FromMAMTrytes(inputTrytes giota.Trytes) string {
 
 	outputString := ""
 	TryteValues := giota.TryteAlphabet
-	// Check if input is giota.Trytes
+
+	// Check if input is an even number of giota.Trytes
 	err := IsValidTrytes(inputTrytes)
 	if err != nil {
 		fmt.Println("Error: ", err)
@@ -78,4 +75,13 @@ func FromMAMTrytes(inputTrytes giota.Trytes) string {
 	}
 	fmt.Println("Output string is: ", outputString)
 	return outputString
+}
+
+//IsValidTrytes checkes wether type and length of Trytes are valid
+func IsValidTrytes(t giota.Trytes) error {
+	if len(t)%2 != 0 {
+		err := errors.New("Wrong number of giota.Trytes; number should be even")
+		return err
+	}
+	return nil
 }
