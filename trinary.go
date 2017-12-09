@@ -162,7 +162,7 @@ var HalfThree = []uint32{
 // It returns 48 bytes.
 func (t Trits) Bytes() ([]byte, error) {
 	if len(t) != TritHashLength {
-		return nil, fmt.Errorf("Bytes() is only defined for trit slices of length 243")
+		return nil, fmt.Errorf("Bytes() is only defined for trit slices of length %d", TritHashLength)
 	}
 
 	allNeg := true
@@ -233,7 +233,7 @@ func (t Trits) Bytes() ([]byte, error) {
 
 func BytesToTrits(b []byte) (Trits, error) {
 	if len(b) != ByteLength {
-		return nil, fmt.Errorf("BytesToTrits() is only defined for byte slices of length 48")
+		return nil, fmt.Errorf("BytesToTrits() is only defined for byte slices of length %d", ByteLength)
 	}
 
 	rb := make([]byte, len(b))

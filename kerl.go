@@ -42,10 +42,10 @@ func NewKerl() *Kerl {
 	return k
 }
 
-// Squeeze out length trits. Length has to be a multiple of 243.
+// Squeeze out length trits. Length has to be a multiple of TritHashLength.
 func (k *Kerl) Squeeze(length int) (Trits, error) {
 	if length%HashSize != 0 {
-		return nil, fmt.Errorf("Squeeze is only defined for output lengths slices that are a multiple of 243")
+		return nil, fmt.Errorf("Squeeze is only defined for output lengths slices that are a multiple of %d", TritHashLength)
 	}
 
 	out := make(Trits, length)
@@ -68,10 +68,10 @@ func (k *Kerl) Squeeze(length int) (Trits, error) {
 }
 
 // Absorb fills the internal state of the sponge with the given trits.
-// This is only defined for Trit slices that are a multiple of 243 long.
+// This is only defined for Trit slices that are a multiple of TritHashLength long.
 func (k *Kerl) Absorb(in Trits) error {
 	if len(in)%HashSize != 0 {
-		return fmt.Errorf("Absorb is only defined for Trit slices that are a multiple of 243 long")
+		return fmt.Errorf("Absorb is only defined for Trit slices that are a multiple of %d long", TritHashLength)
 	}
 
 	for i := 1; i <= len(in)/HashSize; i += 1 {
