@@ -74,8 +74,8 @@ func (c *Curl) Absorb(inn Trytes) {
 	in := inn.Trits()
 	var lenn int
 	for i := 0; i < len(in); i += lenn {
-		lenn = 243
-		if len(in)-i < 243 {
+		lenn = TritHashLength
+		if len(in)-i < TritHashLength {
 			lenn = len(in) - i
 		}
 		copy(c.state, in[i:i+lenn])
