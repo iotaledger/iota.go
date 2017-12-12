@@ -10,10 +10,6 @@ Client library for the IOTA reference implementation (IRI).
 
 This library is still in flux and there maybe breaking changes.
 
-Consider to use a dependency tool to use vendoring,
-e.g. [godep](https://github.com/tools/godep), [glide](https://github.com/Masterminds/glide) or [govendor](https://github.com/kardianos/govendor).
-
-
 Refer to [godoc](https://godoc.org/github.com/iotaledger/iota.lib.go) for details.
 
 Install
@@ -22,14 +18,20 @@ Install
 You will need C compiler for linux to compile PoW routine in C.
 
 ```
-    $ go get -u github.com/iotaledger/giota
+$ go get -u github.com/iotaledger/giota
+```
+
+This library uses [godep](https://github.com/tools/godep) so you will need to install it first and then
+
+```
+$ dep ensure
 ```
 
 You will need C compiler and OpenCL environemnt(hardware and software)  to compile PoW routine for GPU 
 and need to add `opencl` tag when you build.
 
 ```
-	$ go build -tags=gpu
+$ go build -tags=gpu
 ```
 
 Examples
