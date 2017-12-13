@@ -21,7 +21,7 @@ You will need C compiler for linux to compile PoW routine in C.
 $ go get -u github.com/iotaledger/giota
 ```
 
-This library uses [godep](https://github.com/tools/godep) so you will need to install it first and then
+This library uses [golang/dep](https://github.com/golang/dep) so you will need to install it first and then
 
 ```
 $ dep ensure
