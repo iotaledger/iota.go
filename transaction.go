@@ -140,6 +140,10 @@ func (t *Transaction) parser(trits Trits) error {
 	t.Bundle = trits[BundleTrinaryOffset : BundleTrinaryOffset+BundleTrinarySize].Trytes()
 	t.TrunkTransaction = trits[TrunkTransactionTrinaryOffset : TrunkTransactionTrinaryOffset+TrunkTransactionTrinarySize].Trytes()
 	t.BranchTransaction = trits[BranchTransactionTrinaryOffset : BranchTransactionTrinaryOffset+BranchTransactionTrinarySize].Trytes()
+	t.Tag = trits[TagTrinaryOffset:TagTrinaryOffset+TagTrinarySize].Trytes()
+	t.AttachmentTimestamp = trits[AttachmentTimestampTrinaryOffset:AttachmentTimestampTrinaryOffset+AttachmentTimestampTrinarySize].Trytes()
+	t.AttachmentTimestampLowerBound = trits[AttachmentTimestampLowerBoundTrinaryOffset:AttachmentTimestampLowerBoundTrinaryOffset+AttachmentTimestampLowerBoundTrinarySize].Trytes()
+	t.AttachmentTimestampUpperBound = trits[AttachmentTimestampUpperBoundTrinaryOffset:AttachmentTimestampUpperBoundTrinaryOffset+AttachmentTimestampUpperBoundTrinarySize].Trytes()
 	t.Nonce = trits[NonceTrinaryOffset : NonceTrinaryOffset+NonceTrinarySize].Trytes()
 
 	return nil
