@@ -1,3 +1,5 @@
+//+build cgo
+
 /*
 MIT License
 

@@ -1,3 +1,4 @@
+// +build cgo
 // +build linux darwin
 
 /*
