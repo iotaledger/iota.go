@@ -63,7 +63,7 @@ adrWithChecksum := adr.WithChecksum() //adrWithChecksum is trytes type.
 
 //transaction
 tx,err:=giota.NewTransaction(trytes)
-mwm := 15
+mwm := 14
 if tx.HasValidNonce(mwm){...}
 trytes2:=tx.trytes()
 
