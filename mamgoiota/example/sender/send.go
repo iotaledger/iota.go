@@ -25,21 +25,29 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/iotaledger/mamgoiota"
+	"github.com/giota/mamgoiota/connections"
+	"github.com/iotaledger/mamgoiota/connections"
+	//"github.com/iotaledger/mamgoiota"
 )
 
+//This address can be used to see history of test messages
+//It won't work with the provided seed for sending!
 var address = "RQP9IFNFGZGFKRVVKUPMYMPZMAICIGX9SVMBPNASEBWJZZAVDCMNOFLMRMFRSQVOQGUVGEETKYFCUPNDDWEKYHSALY"
-var seed = "SIERTBRUINSISBEZIGOMEENRONDJESAMENMETWIMAMENTTEMAKENOMZODESUBSIDIERONDTEKRIJGENH9"
+
+//Provide your own seed; this one won't work ;-)
+var seed = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA9"
 
 func main() {
 	//"https://testnet140.tangle.works"
-	c, err := mamgoiota.NewConnection("http://node02.iotatoken.nl:14265", seed)
+	//WARNING: The nodes have a nasty habit to go on/off line without warning or notice. If this happens try to find another one.
+	c, err := connections.NewConnection("http://eugene.iota.community:14265", seed)
+	//c, err := connections.NewConnection("http://node02.iotatoken.nl:14265", seed)
 	if err != nil {
 		panic(err)
 	}
 
 	msgTime := time.Now().UTC().String()
-	message := "Testmessage by hopefully you ;-) on: " + msgTime
+	message := "It's the most wonderful message of the year ;-) on: " + msgTime
 
 	id, err := mamgoiota.Send(address, 0, message, c)
 	if err != nil {

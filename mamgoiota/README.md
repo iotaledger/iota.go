@@ -46,6 +46,8 @@ If you don't have a seed yet, follow the description here: https://iota.readme.i
 
 Please keep in mind that you may NEVER loose this seed nor give it to anybody else, because the seed is the connection to your funds!
 
+WARNING: Nodes have a nasty habit to go on/off line without warning or notice. If this happens try to find another one.
+
 
 #### Send a MAM to the IOTA tangle
 ```go
