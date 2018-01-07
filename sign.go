@@ -33,8 +33,9 @@ import (
 
 //errors used in sign.
 var (
-	ErrSeedTritsLength = errors.New("seed trit slice should be HashSize entries long")
-	ErrKeyTritsLength  = errors.New("key trit slice should be a multiple of HashSize*27 entries long")
+	ErrSeedTritsLength  = errors.New("seed trit slice should be HashSize entries long")
+	ErrSeedTrytesLength = errors.New("seed string needs to be HashSize / 3 characters long")
+	ErrKeyTritsLength   = errors.New("key trit slice should be a multiple of HashSize*27 entries long")
 )
 
 //NewSeed generate a random Trytes.
@@ -65,17 +66,31 @@ func NewSeed() Trytes {
 
 // newKeyTrits takes a seed encoded as Trytes, an index and a security
 // level to derive a private key returned as Trits
-func newKeyTrits(seed Trytes, index, securityLevel int) Trits {
+func newKeyTrits(seed Trytes, index, securityLevel int) (Trits, error) {
+	if err := seed.IsValid(); err != nil {
+		return nil, err
+	} else if len(seed) != TritHashLength/Radix {
+		return nil, ErrSeedTrytesLength
+	}
+
 	seedTrits := seed.Trits()
 	// Utils.increment
 	for i := 0; i < index; i++ {
 		incTrits(seedTrits)
 	}
+
 	k := NewKerl()
-	k.Absorb(seedTrits)
+	err := k.Absorb(seedTrits)
+	if err != nil {
+		return nil, err
+	}
+
 	hashedTrits, _ := k.Squeeze(HashSize)
 	k.Reset()
-	k.Absorb(hashedTrits)
+	err = k.Absorb(hashedTrits)
+	if err != nil {
+		return nil, err
+	}
 
 	key := make(Trits, (HashSize * 27 * securityLevel))
 
@@ -86,13 +101,14 @@ func newKeyTrits(seed Trytes, index, securityLevel int) Trits {
 		}
 	}
 
-	return key
+	return key, nil
 }
 
 // NewKey takes a seed encoded as Trytes, an index and a security
 // level to derive a private key returned as Trytes
-func NewKey(seed Trytes, index, securityLevel int) Trytes {
-	return newKeyTrits(seed, index, securityLevel).Trytes()
+func NewKey(seed Trytes, index, securityLevel int) (Trytes, error) {
+	ts, err := newKeyTrits(seed, index, securityLevel)
+	return ts.Trytes(), err
 }
 
 func clearState(l *[stateSize]uint64, h *[stateSize]uint64) {
@@ -253,7 +269,11 @@ func calcAddress(digests Trits) (Trits, error) {
 
 //NewAddress generates a new address from seed without checksum.
 func NewAddress(seed Trytes, index, security int) (Address, error) {
-	k := newKeyTrits(seed, index, security)
+	k, err := newKeyTrits(seed, index, security)
+	if err != nil {
+		return "", err
+	}
+
 	dg, err := Digests(k)
 	if err != nil {
 		return "", err
