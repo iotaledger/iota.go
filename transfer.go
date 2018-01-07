@@ -129,8 +129,8 @@ func (a *AddressInfo) Address() (Address, error) {
 	return NewAddress(a.Seed, a.Index, a.Security)
 }
 
-//Key makes Key from address infos.
-func (a *AddressInfo) Key() Trytes {
+// Key makes Key from address infos.
+func (a *AddressInfo) Key() (Trytes, error) {
 	return NewKey(a.Seed, a.Index, a.Security)
 }
 
@@ -260,7 +260,10 @@ func signInputs(inputs []AddressInfo, bundle Bundle) error {
 			}
 		}
 		// Get corresponding private key of address
-		key := ai.Key()
+		key, err := ai.Key()
+		if err != nil {
+			return err
+		}
 		//  Calculate the new signatureFragment with the first bundle fragment
 		bundle[i].SignatureMessageFragment = Sign(nHash[:27], key[:6561/3])
 
