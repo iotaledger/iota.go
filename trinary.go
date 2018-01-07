@@ -120,6 +120,16 @@ func (t Trits) CanTrytes() bool {
 	return len(t)%3 == 0
 }
 
+// TrailingZeros returns the number of trailing zeros of the
+// given trits.
+func (t Trits) TrailingZeros() int64 {
+	z := int64(0)
+	for i := len(t) - 1; i >= 0 && t[i] == 0; i-- {
+		z++
+	}
+	return z
+}
+
 // Trytes converts a slice of trits into trytes,
 //This panics if len(t)%3!=0
 func (t Trits) Trytes() Trytes {

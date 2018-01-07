@@ -170,15 +170,11 @@ func (t *Transaction) Trytes() Trytes {
 	return tr.Trytes()
 }
 
-//HasValidNonce checks t's hash has valid MinWeightMagnitude.
+// HasValidNonce checks if the transaction has the valid MinWeightMagnitude.
+// In order to check the MWM we count trailing 0's of the curlp hash of a
+// transaction.
 func (t *Transaction) HasValidNonce(mwm int64) bool {
-	h := t.Hash()
-	for i := len(h) - 1; i > len(h)-1-int(mwm)/3; i-- {
-		if h[i] != '9' {
-			return false
-		}
-	}
-	return true
+	return t.Hash().Trits().TrailingZeros() >= mwm
 }
 
 //Hash returns the hash of the transaction.
