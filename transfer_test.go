@@ -53,9 +53,12 @@ func TestTransfer1(t *testing.T) {
 		t.Skip("transfer test skipped because a valid $TRANSFER_TEST_SEED was not specified")
 	}
 
-	var err error
-	var adr Address
-	var adrs []Address
+	var (
+		err  error
+		adr  Address
+		adrs []Address
+	)
+
 	for i := 0; i < 5; i++ {
 		api := NewAPI(RandomNode(), nil)
 		adr, adrs, err = GetUsedAddress(api, seed, 2)
@@ -63,9 +66,11 @@ func TestTransfer1(t *testing.T) {
 			break
 		}
 	}
+
 	if err != nil {
 		t.Error(err)
 	}
+
 	t.Log(adr, adrs)
 	if len(adrs) < 1 {
 		t.Error("GetUsedAddress is incorrect")
@@ -79,15 +84,18 @@ func TestTransfer1(t *testing.T) {
 			break
 		}
 	}
+
 	if err != nil {
 		t.Error(err)
 	}
+
 	t.Log(bal)
 	if len(bal) < 1 {
 		t.Error("GetInputs is incorrect")
 	}
 }
 
+// nolint: gocyclo
 func TestTransfer2(t *testing.T) {
 	if skipTransferTest {
 		t.Skip("transfer test skipped because a valid $TRANSFER_TEST_SEED was not specified")
@@ -101,6 +109,7 @@ func TestTransfer2(t *testing.T) {
 			Tag:     "MOUDAMEPO",
 		},
 	}
+
 	var bdl Bundle
 	for i := 0; i < 5; i++ {
 		api := NewAPI(RandomNode(), nil)
@@ -109,18 +118,22 @@ func TestTransfer2(t *testing.T) {
 			break
 		}
 	}
+
 	if err != nil {
 		t.Error(err)
 	}
+
 	if len(bdl) < 3 {
 		for _, tx := range bdl {
 			t.Log(tx.Trytes())
 		}
 		t.Fatal("PrepareTransfers is incorrect len(bdl)=", len(bdl))
 	}
+
 	if err = bdl.IsValid(); err != nil {
 		t.Error(err)
 	}
+
 	name, pow := GetBestPoW()
 	t.Log("using PoW: ", name)
 
@@ -131,9 +144,11 @@ func TestTransfer2(t *testing.T) {
 			break
 		}
 	}
+
 	if err != nil {
 		t.Error(err)
 	}
+
 	for _, tx := range bdl {
 		t.Log(tx.Trytes())
 	}

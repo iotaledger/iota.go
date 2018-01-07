@@ -275,17 +275,18 @@ import (
 )
 
 func init() {
-	pows["PowSSE"] = PowSSE
+	powFuncs["PowSSE"] = PowSSE
 }
 
 var countSSE int64
 
-//PowSSE is proof of work of iota for amd64 using SSE2(or AMD64).
+// PowSSE is proof of work for iota for amd64 using SSE2(or AMD64).
 func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 	if C.stopSSE == 0 {
 		C.stopSSE = 1
 		return "", errors.New("pow is already running, stopped")
 	}
+
 	if trytes == "" {
 		return "", errors.New("invalid trytes")
 	}
@@ -297,26 +298,37 @@ func PowSSE(trytes Trytes, mwm int) (Trytes, error) {
 	tr := trytes.Trits()
 	copy(c.state, tr[transactionTrinarySize-HashSize:])
 
-	var result Trytes
-	var wg sync.WaitGroup
-	var mutex sync.Mutex
+	var (
+		result Trytes
+		wg     sync.WaitGroup
+		mutex  sync.Mutex
+	)
+
 	for n := 0; n < PowProcs; n++ {
 		wg.Add(1)
 		go func(n int) {
 			nonce := make(Trits, NonceTrinarySize)
-			r := C.pwork128((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
+
+			// nolint: gas
+			r := C.pwork128((*C.char)(
+				unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
+
 			mutex.Lock()
-			if r >= 0 {
+
+			switch {
+			case r >= 0:
 				result = nonce.Trytes()
 				C.stopSSE = 1
 				countSSE += int64(r)
-			} else {
+			default:
 				countSSE += int64(-r + 1)
 			}
+
 			mutex.Unlock()
 			wg.Done()
 		}(n)
 	}
+
 	wg.Wait()
 	C.stopSSE = 1
 	return result, nil

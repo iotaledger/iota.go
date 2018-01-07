@@ -25,7 +25,7 @@ SOFTWARE.
 
 package giota
 
-//constants for Sizes.
+// constants for Sizes.
 const (
 	stateSize      = 729
 	numberOfRounds = 81
@@ -40,9 +40,11 @@ var (
 func init() {
 	for i := 0; i < stateSize; i++ {
 		p := -365
+
 		if indices[i] < 365 {
 			p = 364
 		}
+
 		indices[i+1] = indices[i] + p
 	}
 }
@@ -75,9 +77,11 @@ func (c *Curl) Absorb(inn Trytes) {
 	var lenn int
 	for i := 0; i < len(in); i += lenn {
 		lenn = TritHashLength
+
 		if len(in)-i < TritHashLength {
 			lenn = len(in) - i
 		}
+
 		copy(c.state, in[i:i+lenn])
 		c.Transform()
 	}
@@ -89,7 +93,9 @@ func (c *Curl) Transform() {
 		transformC(c.state)
 		return
 	}
+
 	var cpy [stateSize]int8
+
 	for r := numberOfRounds; r > 0; r-- {
 		copy(cpy[:], c.state)
 		c.state = c.state[:stateSize]
@@ -109,7 +115,7 @@ func (c *Curl) Reset() {
 	}
 }
 
-//Hash returns hash of t.
+// Hash returns hash of t.
 func (t Trytes) Hash() Trytes {
 	c := NewCurl()
 	c.Absorb(t)

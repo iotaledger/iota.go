@@ -327,29 +327,40 @@ func init() {
 
 var countAVX int64
 
-//PowAVX is proof of work of iota for amd64 using AVX.
+// PowAVX is proof of work of iota for amd64 using AVX.
 func PowAVX(trytes Trytes, mwm int) (Trytes, error) {
 	countAVX = 0
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 
-	var stop int64
-	var result Trytes
-	var wg sync.WaitGroup
-	var mutex sync.Mutex
+	var (
+		stop   int64
+		result Trytes
+		wg     sync.WaitGroup
+		mutex  sync.Mutex
+	)
+
 	for n := 0; n < PowProcs; n++ {
 		wg.Add(1)
 		go func(n int) {
 			nonce := make(Trits, HashSize)
-			r := C.pwork256((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n), (*C.int)(unsafe.Pointer(&stop)))
+
+			// nolint: gas
+			r := C.pwork256((*C.char)(
+				unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])),
+				C.int(n), (*C.int)(unsafe.Pointer(&stop)))
+
 			mutex.Lock()
-			if r >= 0 {
+
+			switch {
+			case r >= 0:
 				result = nonce.Trytes()
 				stop = 1
 				countAVX += int64(r)
-			} else {
+			default:
 				countAVX += int64(-r + 1)
 			}
+
 			mutex.Unlock()
 			wg.Done()
 		}(n)

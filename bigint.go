@@ -32,6 +32,7 @@ func bigIntAdd(b []uint32, rh []uint32) {
 	if len(b) != len(rh) {
 		panic("not defined for differently sized slices")
 	}
+
 	carry := false
 
 	for i := range b {
@@ -45,6 +46,7 @@ func bigIntSub(b []uint32, rh []uint32) {
 	if len(b) != len(rh) {
 		panic("not defined for differently sized slices")
 	}
+
 	noborrow := true
 
 	for i := range b {
@@ -52,6 +54,7 @@ func bigIntSub(b []uint32, rh []uint32) {
 		b[i] = uint32(v)
 		noborrow = c
 	}
+
 	if !noborrow {
 		panic("could not subtract without leftovers")
 	}
@@ -81,13 +84,16 @@ func bigIntCmp(lh, rh []uint32) int {
 	rlh := make([]uint32, len(lh))
 	copy(rlh, lh)
 	reverseU(rlh)
+
 	rrh := make([]uint32, len(rh))
 	copy(rrh, rh)
 	reverseU(rrh)
+
 	for i := range rlh {
-		if rlh[i] < rrh[i] {
+		switch {
+		case rlh[i] < rrh[i]:
 			return -1
-		} else if rlh[i] > rrh[i] {
+		case rlh[i] > rrh[i]:
 			return 1
 		}
 	}
@@ -101,7 +107,7 @@ func bigIntAddSmall(b []uint32, a uint32) int {
 	b[0] = uint32(v) // uint is at least 32 bit
 
 	var i int
-	for i = 1; carry; i += 1 {
+	for i = 1; carry; i++ {
 		vi, c := fullAdd(b[i], 0, carry)
 		b[i] = uint32(vi)
 		carry = c

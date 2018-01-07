@@ -31,19 +31,20 @@ import (
 	"math/big"
 )
 
-//errors used in sign.
+// errors used in sign
 var (
 	ErrSeedTritsLength  = errors.New("seed trit slice should be HashSize entries long")
 	ErrSeedTrytesLength = errors.New("seed string needs to be HashSize / 3 characters long")
 	ErrKeyTritsLength   = errors.New("key trit slice should be a multiple of HashSize*27 entries long")
 )
 
-//NewSeed generate a random Trytes.
+// NewSeed generate a random Trytes
 func NewSeed() Trytes {
 	b := make([]byte, 49)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
+
 	txt := new(big.Int).SetBytes(b).Text(27)
 	t := make([]byte, 81)
 	for i := range t {
@@ -153,13 +154,12 @@ func seri27(l *[stateSize]uint64, h *[stateSize]uint64) Trytes {
 		for i := 0; i < HashSize; i++ {
 			ll := (l[i] >> n) & 1
 			hh := (h[i] >> n) & 1
-			if hh == 0 && ll == 1 {
+			switch {
+			case hh == 0 && ll == 1:
 				r[i] = -1
-			}
-			if hh == 1 && ll == 1 {
+			case hh == 1 && ll == 1:
 				r[i] = 0
-			}
-			if hh == 1 && ll == 0 {
+			case hh == 1 && ll == 0:
 				r[i] = 1
 			}
 		}
@@ -168,7 +168,7 @@ func seri27(l *[stateSize]uint64, h *[stateSize]uint64) Trytes {
 	return keyFragment.Trytes()
 }
 
-//Digests calculates hash x 26 for each segments in keyTrits.
+// Digests calculates hash x 26 for each segment in keyTrits
 func Digests(key Trits) (Trits, error) {
 	if len(key) < HashSize*27 {
 		return nil, ErrKeyTritsLength
@@ -178,10 +178,12 @@ func Digests(key Trits) (Trits, error) {
 	numKeys := len(key) / (HashSize * 27)
 	digests := make(Trits, HashSize*numKeys)
 	buffer := make(Trits, HashSize)
+
 	for i := 0; i < numKeys; i++ {
 		k2 := NewKerl()
 		for j := 0; j < 27; j++ {
 			copy(buffer, key[i*SignatureSize+j*HashSize:i*SignatureSize+(j+1)*HashSize])
+
 			for k := 0; k < 26; k++ {
 				k := NewKerl()
 				k.Absorb(buffer)
@@ -195,7 +197,7 @@ func Digests(key Trits) (Trits, error) {
 	return digests, nil
 }
 
-//digest calculates hash x normalizedBundleFragment[i] for each segments in keyTrits.
+// digest calculates hash x normalizedBundleFragment[i] for each segment in keyTrits.
 func digest(normalizedBundleFragment []int8, signatureFragment Trytes) Trits {
 	k := NewKerl()
 	for i := 0; i < 27; i++ {
@@ -211,8 +213,8 @@ func digest(normalizedBundleFragment []int8, signatureFragment Trytes) Trits {
 	return tr
 }
 
-//Sign calculates signature from bundle hash and key
-//by hashing x 13-normalizedBundleFragment[i] for each segments in keyTrits.
+// Sign calculates signature from bundle hash and key
+// by hashing x 13-normalizedBundleFragment[i] for each segments in keyTrits.
 func Sign(normalizedBundleFragment []int8, keyFragment Trytes) Trytes {
 	signatureFragment := make(Trits, len(keyFragment)*3)
 	for i := 0; i < 27; i++ {
@@ -220,6 +222,7 @@ func Sign(normalizedBundleFragment []int8, keyFragment Trytes) Trytes {
 		for j := 0; j < 13-int(normalizedBundleFragment[i]); j++ {
 			kerl := NewKerl()
 			kerl.Absorb(bb)
+			// TODO: why is the error ignored here?
 			bb, _ = kerl.Squeeze(HashSize)
 		}
 		copy(signatureFragment[i*HashSize:], bb)
@@ -227,7 +230,7 @@ func Sign(normalizedBundleFragment []int8, keyFragment Trytes) Trytes {
 	return signatureFragment.Trytes()
 }
 
-//IsValidSig validates signatureFragment.
+// IsValidSig validates signatureFragment.
 func IsValidSig(expectedAddress Address, signatureFragments []Trytes, bundleHash Trytes) bool {
 	normalizedBundleHash := bundleHash.Normalize()
 
@@ -238,23 +241,25 @@ func IsValidSig(expectedAddress Address, signatureFragments []Trytes, bundleHash
 		digestBuffer := digest(normalizedBundleHash[start:start+27], signatureFragments[i])
 		copy(digests[i*HashSize:], digestBuffer)
 	}
+
 	addrTrites, err := calcAddress(digests)
 	if err != nil {
 		return false
 	}
+
 	address, err := addrTrites.Trytes().ToAddress()
 	if err != nil {
 		return false
 	}
+
 	return expectedAddress == address
 }
 
-//Address represents address without checksum for iota.
-//Don't use type cast,  use ToAddress instead
-//to check the validity.
+// Address represents address without a checksum for iota.
+// Don't type cast, use ToAddress instead to check validity.
 type Address Trytes
 
-//Error types for address.
+// Error types for address
 var (
 	ErrInvalidAddressTrytes = errors.New("addresses without checksum are 81 trytes in length")
 	ErrInvalidAddressTrits  = errors.New("addresses without checksum are 243 trits in length")
@@ -267,7 +272,7 @@ func calcAddress(digests Trits) (Trits, error) {
 	return k.Squeeze(HashSize)
 }
 
-//NewAddress generates a new address from seed without checksum.
+// NewAddress generates a new address from seed without checksum
 func NewAddress(seed Trytes, index, security int) (Address, error) {
 	k, err := newKeyTrits(seed, index, security)
 	if err != nil {
@@ -278,17 +283,20 @@ func NewAddress(seed Trytes, index, security int) (Address, error) {
 	if err != nil {
 		return "", err
 	}
+
 	addr, err := calcAddress(dg)
 	if err != nil {
 		return "", err
 	}
+
 	tryt := addr.Trytes()
 	return tryt.ToAddress()
 }
 
-//NewAddresses generates new count addresses from seed without checksum.
+// NewAddresses generates new count addresses from seed without a checksum
 func NewAddresses(seed Trytes, start, count, security int) ([]Address, error) {
 	as := make([]Address, count)
+
 	var err error
 	for i := 0; i < count; i++ {
 		as[i], err = NewAddress(seed, start+i, security)
@@ -299,52 +307,53 @@ func NewAddresses(seed Trytes, start, count, security int) ([]Address, error) {
 	return as, nil
 }
 
-//ToAddress convert string to address,
-//and checks the validity.
+// ToAddress converts string to address, and checks the validity
 func ToAddress(t string) (Address, error) {
 	return Trytes(t).ToAddress()
 }
 
-//ToAddress convert trytes(with and without checksum) to address,
-//and checks the validity.
+// ToAddress convert trytes(with and without checksum) to address and checks the validity
 func (t Trytes) ToAddress() (Address, error) {
 	if len(t) == 90 {
 		t = t[:81]
 	}
+
 	a := Address(t)
 	err := a.IsValid()
 	if err != nil {
 		return "", err
 	}
+
 	if len(t) == 90 {
 		cs := a.Checksum()
 		if t[81:] != cs {
 			return "", errors.New("checksum is illegal")
 		}
 	}
+
 	return a, nil
 }
 
-//IsValid return nil if address is valid.
+// IsValid return nil if address is valid.
 func (a Address) IsValid() error {
 	if !(len(a) == 81) {
 		return ErrInvalidAddressTrytes
 	}
-	if err := Trytes(a).IsValid(); err != nil {
-		return err
-	}
-	return nil
+
+	return Trytes(a).IsValid()
 }
 
-//Checksum returns checksum trytes.
-//This panics if len(address)<81
+// Checksum returns checksum trytes. This panics if len(address)<81
+// TODO: does this really need to panic? can it just return an error?
 func (a Address) Checksum() Trytes {
 	if len(a) != 81 {
 		panic("len(address) must be 81")
 	}
+
 	return a.Hash()[81-9 : 81]
 }
 
+// Hash hashes the address and returns trytes
 func (a Address) Hash() Trytes {
 	k := NewKerl()
 	t := Trytes(a).Trits()
@@ -353,12 +362,13 @@ func (a Address) Hash() Trytes {
 	return h.Trytes()
 }
 
-//WithChecksum returns Address+checksum.
-//This panics if len(address)<81
+// WithChecksum returns Address+checksum. This panics if len(address)<81
+// TODO: does this really need to panic?
 func (a Address) WithChecksum() Trytes {
 	if len(a) != 81 {
 		panic("len(address) must be 81")
 	}
+
 	cu := a.Checksum()
 	return Trytes(a) + cu
 }
