@@ -149,7 +149,7 @@ func setupInputs(api *API, seed Trytes, inputs []AddressInfo, security int, tota
 		}
 		inputs = make([]AddressInfo, len(bals))
 		for i := range bals {
-			inputs[i].Index = i
+			inputs[i].Index = bals[i].Index
 			inputs[i].Security = security
 			inputs[i].Seed = seed
 		}

@@ -380,6 +380,7 @@ func (api *API) GetInclusionStates(tx []Trytes, tips []Trytes) (*GetInclusionSta
 type Balance struct {
 	Address Address
 	Value   int64
+	Index   int
 }
 
 //Balances is slice of Balance.
@@ -423,6 +424,7 @@ func (api *API) Balances(adr []Address) (Balances, error) {
 		b := Balance{
 			Address: adr[i],
 			Value:   bal,
+			Index:   i,
 		}
 		bs = append(bs, b)
 	}
