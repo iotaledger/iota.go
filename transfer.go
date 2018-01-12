@@ -286,7 +286,7 @@ func signInputs(inputs []AddressInfo, bundle Bundle) error {
 				break
 			}
 		}
-
+    
 		// Get corresponding private key of the address
 		key, err := ai.Key()
 		if err != nil {
