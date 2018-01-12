@@ -30,7 +30,7 @@ import (
 	"sync"
 )
 
-//trytes
+// trytes
 const (
 	hBits uint64 = 0xFFFFFFFFFFFFFFFF
 	lBits uint64 = 0x0000000000000000
@@ -49,36 +49,36 @@ const (
 	nonceIncrementStart = nonceInitStart + NonceTrinarySize/3
 )
 
-//PowFunc is the tyoe of func for PoW
+// PowFunc is the func type for PoW
 type PowFunc func(Trytes, int) (Trytes, error)
 
 var (
-	pows = make(map[string]PowFunc)
-	//PowProcs is number of concurrencies.
-	//default is NumCPU()-1.
+	powFuncs = make(map[string]PowFunc)
+	// PowProcs is number of concurrent processes (default is NumCPU()-1)
 	PowProcs int
 )
 
 func init() {
-	pows["PowGo"] = PowGo
+	powFuncs["PowGo"] = PowGo
 	PowProcs = runtime.NumCPU()
 	if PowProcs != 1 {
 		PowProcs--
 	}
 }
 
-//GetBestPoW returns most preferable PoW func.
+// GetBestPoW returns most preferable PoW func.
 func GetBestPoW() (string, PowFunc) {
-	if p, exist := pows["PowCL"]; exist {
-		return "PowCL", p
+
+	// PowGo is the last and default return value
+	powOrderPreference := []string{"PowCL", "PowSSE", "PowC"}
+
+	for _, pow := range powOrderPreference {
+		if p, exist := powFuncs[pow]; exist {
+			return pow, p
+		}
 	}
-	if p, exist := pows["PowSSE"]; exist {
-		return "PowSSE", p
-	}
-	if p, exist := pows["PowC"]; exist {
-		return "PowC", p
-	}
-	return "PowGo", PowGo
+
+	return "PowGo", PowGo // defualt return PowGo if no others
 }
 
 func transform64(lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
@@ -101,12 +101,13 @@ func transform64(lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 			lto[j] = ^delta
 			hto[j] = (alpha ^ gamma) | delta
 		}
+
 		lfrom, lto = lto, lfrom
 		hfrom, hto = hto, hfrom
 	}
+
 	for j := 0; j < stateSize; j++ {
-		t1 := indices[j]
-		t2 := indices[j+1]
+		t1, t2 := indices[j], indices[j+1]
 
 		alpha := lfrom[t1]
 		beta := hfrom[t1]
@@ -124,7 +125,7 @@ func transform64(lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 func incr(lmid *[stateSize]uint64, hmid *[stateSize]uint64) bool {
 	var carry uint64 = 1
 	var i int
-	//to avoid boundry check, i believe.
+	//to avoid boundry check, I believe.
 	for i = nonceInitStart; i < HashSize && carry != 0; i++ {
 		low := lmid[i]
 		high := hmid[i]
@@ -140,13 +141,13 @@ func seri(l *[stateSize]uint64, h *[stateSize]uint64, n uint) Trits {
 	for i := nonceOffset; i < HashSize; i++ {
 		ll := (l[i] >> n) & 1
 		hh := (h[i] >> n) & 1
-		if hh == 0 && ll == 1 {
+
+		switch {
+		case hh == 0 && ll == 1:
 			r[i-nonceOffset] = -1
-		}
-		if hh == 1 && ll == 1 {
+		case hh == 1 && ll == 1:
 			r[i-nonceOffset] = 0
-		}
-		if hh == 1 && ll == 0 {
+		case hh == 1 && ll == 0:
 			r[i-nonceOffset] = 1
 		}
 	}
@@ -161,6 +162,7 @@ func check(l *[stateSize]uint64, h *[stateSize]uint64, m int) int {
 			return -1
 		}
 	}
+
 	var i uint
 	for i = 0; i < 64; i++ {
 		if (nonceProbe>>i)&1 == 1 {
@@ -179,6 +181,7 @@ func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int) (Trits, int64
 		copy(lcpy[:], lmid[:])
 		copy(hcpy[:], hmid[:])
 		transform64(&lcpy, &hcpy)
+
 		if n := check(&lcpy, &hcpy, m); n >= 0 {
 			nonce := seri(lmid, hmid, uint(n))
 			return nonce, i * 64
@@ -210,7 +213,8 @@ func para(in Trits) (*[stateSize]uint64, *[stateSize]uint64) {
 func incrN(n int, lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 	for j := 0; j < n; j++ {
 		var carry uint64 = 1
-		//to avoid boundry check, i believe.
+
+		// to avoid boundry check, i believe.
 		for i := nonceInitStart; i < nonceIncrementStart && carry != 0; i++ {
 			low := lmid[i]
 			high := hmid[i]
@@ -223,25 +227,31 @@ func incrN(n int, lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 
 var countGo int64 = 1
 
-//PowGo is proof of work of iota in pure.
+// PowGo is proof of work for iota in pure Go
 func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 	if !stopGO {
 		stopGO = true
 		return "", errors.New("pow is already running, stopped")
 	}
+
 	if trytes == "" {
 		return "", errors.New("invalid trytes")
 	}
+
 	countGo = 0
 	stopGO = false
+
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 	tr := trytes.Trits()
 	copy(c.state, tr[transactionTrinarySize-HashSize:])
 
-	var result Trytes
-	var wg sync.WaitGroup
-	var mutex sync.Mutex
+	var (
+		result Trytes
+		wg     sync.WaitGroup
+		mutex  sync.Mutex
+	)
+
 	for i := 0; i < PowProcs; i++ {
 		wg.Add(1)
 		go func(i int) {
@@ -257,16 +267,19 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 
 			incrN(i, lmid, hmid)
 			nonce, cnt := loop(lmid, hmid, mwm)
+
 			mutex.Lock()
 			if nonce != nil {
 				result = nonce.Trytes()
 				stopGO = true
 			}
+
 			countGo += cnt
 			mutex.Unlock()
 			wg.Done()
 		}(i)
 	}
+
 	wg.Wait()
 	stopGO = true
 	return result, nil

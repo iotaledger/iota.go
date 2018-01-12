@@ -25,7 +25,7 @@ SOFTWARE.
 
 package giota
 
-//Various constants for giota.
+// Various constants for giota.
 const (
 	TryteAlphabet             = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	MinTryteValue             = -13
@@ -37,7 +37,7 @@ const (
 	DefaultMinWeightMagnitude = 14
 )
 
-//Units for iota token.
+// Units for iota token.
 const (
 	Ki = 1000
 	Mi = 1000000
@@ -47,11 +47,11 @@ const (
 )
 
 var (
-	//emptySig represents empty signature.
+	// emptySig represents an empty signature.
 	emptySig Trytes
-	//EmptyHash represents empty hash.
+	// EmptyHash represents an empty hash.
 	EmptyHash Trytes = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
-	//EmptyAddress represents empty address.
+	// EmptyAddress represents an empty address.
 	EmptyAddress Address = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
 )
 

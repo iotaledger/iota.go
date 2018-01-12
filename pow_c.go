@@ -241,47 +241,60 @@ import (
 )
 
 func init() {
-	pows["PowC"] = PowC
+	powFuncs["PowC"] = PowC
 }
 
 var countC int64
 
-//PowC is proof of work of iota using pure C.
+// PowC is proof of work of iota using pure C.
 func PowC(trytes Trytes, mwm int) (Trytes, error) {
 	if C.stopC == 0 {
 		C.stopC = 1
 		return "", errors.New("pow is already running, stopped")
 	}
+
 	if trytes == "" {
 		return "", errors.New("invalid trytes")
 	}
 	C.stopC = 0
 	countC = 0
+
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
 	tr := trytes.Trits()
 	copy(c.state, tr[transactionTrinarySize-HashSize:])
 
-	var result Trytes
-	var wg sync.WaitGroup
-	var mutex sync.Mutex
+	var (
+		result Trytes
+		wg     sync.WaitGroup
+		mutex  sync.Mutex
+	)
+
 	for n := 0; n < PowProcs; n++ {
 		wg.Add(1)
 		go func(n int) {
 			nonce := make(Trits, NonceTrinarySize)
-			r := C.pwork((*C.char)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
+
+			// nolint: gas
+			r := C.pwork((*C.char)(unsafe.Pointer(
+				&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
+
 			mutex.Lock()
-			if r >= 0 {
+
+			switch {
+			case r >= 0:
 				result = nonce.Trytes()
 				C.stopC = 1
 				countC += int64(r)
-			} else {
+			default:
 				countC += int64(-r + 1)
 			}
+
 			mutex.Unlock()
 			wg.Done()
 		}(n)
 	}
+
 	wg.Wait()
 	C.stopC = 1
 	return result, nil

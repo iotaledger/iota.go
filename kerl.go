@@ -31,10 +31,13 @@ import (
 	keccak "leb.io/hashland/keccakpg"
 )
 
+// Kerl ...
+// TODO: find out the difference between this anc Curl and document
 type Kerl struct {
 	s hash.Hash
 }
 
+// NewKerl returns a new Kerl
 func NewKerl() *Kerl {
 	k := &Kerl{
 		s: keccak.New384(),
@@ -42,14 +45,15 @@ func NewKerl() *Kerl {
 	return k
 }
 
-// Squeeze out length trits. Length has to be a multiple of TritHashLength.
+// Squeeze out `length` trits. Length has to be a multiple of TritHashLength.
 func (k *Kerl) Squeeze(length int) (Trits, error) {
 	if length%HashSize != 0 {
-		return nil, fmt.Errorf("Squeeze is only defined for output lengths slices that are a multiple of %d", TritHashLength)
+		return nil, fmt.Errorf("Squeeze is only defined for output lengths slices that are a multiple of %d",
+			TritHashLength)
 	}
 
 	out := make(Trits, length)
-	for i := 1; i <= length/HashSize; i += 1 {
+	for i := 1; i <= length/HashSize; i++ {
 		h := k.s.Sum(nil)
 		ts, err := BytesToTrits(h)
 		if err != nil {
@@ -74,8 +78,8 @@ func (k *Kerl) Absorb(in Trits) error {
 		return fmt.Errorf("Absorb is only defined for Trit slices that are a multiple of %d long", TritHashLength)
 	}
 
-	for i := 1; i <= len(in)/HashSize; i += 1 {
-		//in[(HashSize*i)-1] = 0
+	for i := 1; i <= len(in)/HashSize; i++ {
+		// in[(HashSize*i)-1] = 0
 		b, err := in[HashSize*(i-1) : HashSize*i].Bytes()
 		if err != nil {
 			return err

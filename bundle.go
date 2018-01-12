@@ -33,27 +33,30 @@ import (
 func pad(orig Trytes, size int) Trytes {
 	out := make([]byte, size)
 	copy(out, []byte(orig))
+
 	for i := len(orig); i < size; i++ {
 		out[i] = '9'
 	}
 	return Trytes(out)
 }
 
-//Bundle is transactions are bundled
-// (or grouped) together during the creation of a transfer.
+// Bundle is transactions that are bundled (grouped) together when creating a transfer.
 type Bundle []Transaction
 
-//Add adds one bundle to bundle slice tempolary.
-//For now elements which are not specified are filled with trits 0.
+// Add adds a bundle to bundle slice. Elements which are not specified are filled with
+// zeroed trits.
 func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time, tag Trytes) {
 	if tag == "" {
 		tag = EmptyHash[:27]
 	}
+
 	for i := 0; i < num; i++ {
 		var v int64
+
 		if i == 0 {
 			v = value
 		}
+
 		b := Transaction{
 			SignatureMessageFragment:      emptySig,
 			Address:                       address,
@@ -75,13 +78,15 @@ func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time
 	}
 }
 
-//Finalize filled sigs,bundlehash and indices elements in bundle.
+// Finalize filled sigs, bundlehash, and indices elements in bundle.
 func (bs Bundle) Finalize(sig []Trytes) {
 	h := bs.getValidHash()
+
 	for i := range bs {
 		if len(sig) > i && sig[i] != "" {
 			bs[i].SignatureMessageFragment = pad(sig[i], SignatureMessageFragmentTrinarySize/3)
 		}
+
 		bs[i].CurrentIndex = int64(i)
 		bs[i].LastIndex = int64(len(bs) - 1)
 		bs[i].Bundle = h
@@ -92,10 +97,12 @@ func (bs Bundle) Finalize(sig []Trytes) {
 func (bs Bundle) Hash() Trytes {
 	k := NewKerl()
 	buf := make(Trits, 243+81*3)
+
 	for i, b := range bs {
 		getTritsToHash(buf, &b, i, len(bs))
 		k.Absorb(buf)
 	}
+
 	h, _ := k.Squeeze(HashSize)
 	return h.Trytes()
 }
@@ -110,23 +117,28 @@ func (bs Bundle) getValidHash() Trytes {
 	for i, b := range bs {
 		getTritsToHash(buf[i*hashedLen:], &b, i, len(bs))
 	}
+
 	for {
 		k.Absorb(buf)
 		hashTrits, _ := k.Squeeze(HashSize)
 		h := hashTrits.Trytes()
 		n := h.Normalize()
 		valid := true
+
 		for _, v := range n {
 			if v == 13 {
 				valid = false
 				break
 			}
 		}
+
 		offset := ObsoleteTagTrinaryOffset - AddressTrinaryOffset
+
 		if valid {
 			bs[0].ObsoleteTag = buf[offset : offset+ObsoleteTagTrinarySize].Trytes()
 			return h
 		}
+
 		k.Reset()
 		incTrits(buf[offset : offset+ObsoleteTagTrinarySize])
 	}
@@ -141,52 +153,58 @@ func getTritsToHash(buf Trits, b *Transaction, i, l int) {
 	copy(buf[243+81+81+27+27:], Int2Trits(int64(l-1), LastIndexTrinarySize)) //LastIndex
 }
 
-//Categorize Categorizes a list of transfers into sent and received.
-//It is important to note that zero value transfers (which for example,
-//is being used for storing addresses in the Tangle), are seen as received in this function.
+// Categorize categorizes a list of transfers into sent and received. It is important to
+// note that zero value transfers (which for example, are being used for storing
+// addresses in the Tangle), are seen as received in this function.
 func (bs Bundle) Categorize(adr Address) (send Bundle, received Bundle) {
 	send = make(Bundle, 0, len(bs))
 	received = make(Bundle, 0, len(bs))
+
 	for _, b := range bs {
-		if b.Address != adr {
+		switch {
+		case b.Address != adr:
 			continue
-		}
-		if b.Value >= 0 {
+		case b.Value >= 0:
 			received = append(received, b)
-		} else {
+		default:
 			send = append(send, b)
 		}
 	}
 	return
 }
 
-//IsValid checks the validity of Bundle.
-//It checks total balance==0 and its signature.
-//You must call Finalize() beforehand.
+// IsValid checks the validity of Bundle.
+// It checks that total balance==0 and that its has a valid signature.
+// The caller must call Finalize() beforehand.
+// nolint: gocyclo
 func (bs Bundle) IsValid() error {
 	var total int64
 	sigs := make(map[Address][]Trytes)
 	for index, b := range bs {
 		total += b.Value
-		if b.CurrentIndex != int64(index) {
+
+		switch {
+		case b.CurrentIndex != int64(index):
 			return fmt.Errorf("CurrentIndex of index %d is not correct", b.CurrentIndex)
-		}
-		if b.LastIndex != int64(len(bs)-1) {
+		case b.LastIndex != int64(len(bs)-1):
 			return fmt.Errorf("LastIndex of index %d is not correct", b.CurrentIndex)
-		}
-		if b.Value >= 0 {
+		case b.Value >= 0:
 			continue
 		}
+
 		sigs[b.Address] = append(sigs[b.Address], b.SignatureMessageFragment)
+
 		// Find the subsequent txs with the remaining signature fragment
 		for i := index; i < len(bs)-1; i++ {
 			tx := bs[i+1]
+
 			// Check if new tx is part of the signature fragment
 			if tx.Address == b.Address && tx.Value == 0 {
 				sigs[tx.Address] = append(sigs[tx.Address], tx.SignatureMessageFragment)
 			}
 		}
 	}
+
 	// Validate the signatures
 	h := bs.Hash()
 	for adr, sig := range sigs {
@@ -194,8 +212,10 @@ func (bs Bundle) IsValid() error {
 			return errors.New("invalid signature")
 		}
 	}
+
 	if total != 0 {
 		return errors.New("total balance of Bundle is not 0")
 	}
+
 	return nil
 }

@@ -39,9 +39,11 @@ func TestAPIGetNodeInfo(t *testing.T) {
 			break
 		}
 	}
+
 	if err != nil {
 		t.Fatalf("GetNodeInfo() expected err to be nil but got %v", err)
 	}
+
 	if resp.AppName == "" {
 		t.Errorf("GetNodeInfo() returned invalid response: %#v", resp)
 	}
@@ -101,14 +103,17 @@ func TestAPIFindTransactions(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		var server = RandomNode()
 		api := NewAPI(server, nil)
+
 		resp, err = api.FindTransactions(ftr)
 		if err == nil {
 			break
 		}
 	}
+
 	if err != nil {
 		t.Errorf("FindTransactions([]) expected err to be nil but got %v", err)
 	}
+
 	t.Logf("FindTransactions() = %#v", resp)
 }
 
@@ -119,14 +124,17 @@ func TestAPIGetTrytes(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		var server = RandomNode()
 		api := NewAPI(server, nil)
+
 		resp, err = api.GetTrytes([]Trytes{})
 		if err == nil {
 			break
 		}
 	}
+
 	if err != nil {
 		t.Errorf("GetTrytes([]) expected err to be nil but got %v", err)
 	}
+
 	t.Logf("GetTrytes() = %#v", resp)
 }
 
@@ -142,26 +150,32 @@ func TestAPIGetInclusionStates(t *testing.T) {
 			break
 		}
 	}
+
 	if err != nil {
 		t.Errorf("GetInclusionStates([]) expected err to be nil but got %v", err)
 	}
+
 	t.Logf("GetInclusionStates() = %#v", resp)
 }
 
 func TestAPIGetBalances(t *testing.T) {
 	var err error
 	var resp *GetBalancesResponse
+
 	for i := 0; i < 5; i++ {
 		var server = RandomNode()
 		api := NewAPI(server, nil)
+
 		resp, err = api.GetBalances([]Address{}, 100)
 		if err == nil {
 			break
 		}
 	}
+
 	if err != nil {
 		t.Errorf("GetBalances([]) expected err to be nil but got %v", err)
 	}
+
 	t.Logf("GetBalances() = %#v", resp)
 }
 
@@ -172,14 +186,17 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		var server = RandomNode()
 		api := NewAPI(server, nil)
+
 		resp, err = api.GetTransactionsToApprove(Depth)
 		if err == nil {
 			break
 		}
 	}
-	if err != nil {
+
+	switch {
+	case err != nil:
 		t.Errorf("GetTransactionsToApprove() expected err to be nil but got %v", err)
-	} else if resp.BranchTransaction == "" || resp.TrunkTransaction == "" {
+	case resp.BranchTransaction == "" || resp.TrunkTransaction == "":
 		t.Errorf("GetTransactionsToApprove() return empty branch and/or trunk transactions\n%#v", resp)
 	}
 }
@@ -191,15 +208,17 @@ func TestGetLatestInclusion(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		var server = RandomNode()
 		api := NewAPI(server, nil)
+
 		resp, err = api.GetLatestInclusion([]Trytes{"B9OETFYOEIUYEVB9WWCMGIHIJLFU9IJOBYYGSTZBLFBZLGZRKBIREYTIPPFGC9SPEOJFIYFRRSPX99999"})
 		if err == nil && len(resp) > 0 {
 			break
 		}
 	}
-	if err != nil {
+
+	switch {
+	case err != nil:
 		t.Errorf("GetLatestInclustion() expected err to be nil but got %v", err)
-	}
-	if len(resp) == 0 {
+	case len(resp) == 0:
 		t.Error("GetLatestInclustion() is invalid resp:", resp)
 	}
 }

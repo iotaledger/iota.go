@@ -52,67 +52,85 @@ func init() {
 
 var stopCL = true
 
-func exec(que *cl.CommandQueue, ker []*cl.Kernel, cores, nlocal int, mobj []*cl.MemObject, founded *int32, tryte chan Trytes) error {
-	//initial
+// nolint: gocyclo
+func exec(
+	que *cl.CommandQueue,
+	ker []*cl.Kernel,
+	cores, nlocal int,
+	mobj []*cl.MemObject,
+	founded *int32,
+	tryte chan Trytes) error {
+
+	// initialize
 	nglobal := cores * nlocal
 	ev1, err := que.EnqueueNDRangeKernel(ker[0], nil, []int{nglobal}, []int{nlocal}, nil)
 	if err != nil {
 		return err
 	}
 	defer ev1.Release()
+
 	if err = que.Finish(); err != nil {
 		return err
 	}
+
 	found := make([]byte, 1)
 	var cnt int
 	num := int64(cores) * 64 * int64(loopcount)
 	for cnt = 0; found[0] == 0 && *founded == 0 && !stopCL; cnt++ {
-		//start searching
+		// start searching
 		var ev2 *cl.Event
 		ev2, err = que.EnqueueNDRangeKernel(ker[1], nil, []int{nglobal}, []int{nlocal}, nil)
 		if err != nil {
 			return err
 		}
 		defer ev2.Release()
+
 		ev3, err := que.EnqueueReadBufferBytes(mobj[6], true, found, []*cl.Event{ev2})
 		if err != nil {
 			return err
 		}
 		ev3.Release()
+
 		atomic.AddInt64(&countCL, num)
 	}
+
 	if *founded != 0 || stopCL {
 		return nil
 	}
+
 	atomic.StoreInt32(founded, 1)
-	//finalize, get the result.
+
+	// finalize, get the result.
 	ev4, err := que.EnqueueNDRangeKernel(ker[2], nil, []int{nglobal}, []int{nlocal}, nil)
 	if err != nil {
 		return err
 	}
 	defer ev4.Release()
+
 	result := make([]byte, HashSize*8)
 	ev5, err := que.EnqueueReadBufferBytes(mobj[0], true, result, []*cl.Event{ev4})
 	if err != nil {
 		return err
 	}
 	ev5.Release()
+
 	rr := make(Trits, HashSize)
 	for i := 0; i < HashSize; i++ {
-		if result[i*8] == 0xff {
+		switch {
+		case result[i*8] == 0xff:
 			rr[i] = -1
-		}
-		if result[i*8] == 0x0 && result[i*8+7] == 0x0 {
+		case result[i*8] == 0x0 && result[i*8+7] == 0x0:
 			rr[i] = 0
-		}
-		if result[i*8] == 0x1 || result[i*8+7] == 0x1 {
+		case result[i*8] == 0x1 || result[i*8+7] == 0x1:
 			rr[i] = 1
 		}
 	}
+
 	tryte <- rr.Trytes()
 	return nil
 }
 
+// nolint: gocyclo
 func loopCL(binfo []bufferInfo) (Trytes, error) {
 	defers := make([]func(), 0, 10)
 	defer func() {
@@ -120,37 +138,43 @@ func loopCL(binfo []bufferInfo) (Trytes, error) {
 			f()
 		}
 	}()
+
 	platforms, err := cl.GetPlatforms()
 	if err != nil {
 		return "", err
 	}
+
 	exist := false
 	var founded int32
 	result := make(chan Trytes)
 	for _, p := range platforms {
 		var devs []*cl.Device
 		devs, err = p.GetDevices(cl.DeviceTypeGPU)
-		if err != nil {
+		if err != nil || len(devs) == 0 {
 			continue
 		}
-		if len(devs) == 0 {
-			continue
-		}
+
 		exist = true
+		// TODO: this case checks the error after appending, but all the other cases below
+		// do it the opposite way. Check to see if this can be reversed to maintain the
+		// pattern
 		cont, err := cl.CreateContext(devs)
 		defers = append(defers, cont.Release)
 		if err != nil {
 			return "", err
 		}
+
 		prog, err := cont.CreateProgramWithSource([]string{kernel})
 		if err != nil {
 			return "", err
 		}
+
 		defers = append(defers, prog.Release)
 		if err := prog.BuildProgram(devs, "-Werror"); err != nil {
 			println(p.Name())
 			return "", err
 		}
+
 		ker := make([]*cl.Kernel, 3)
 		defers = append(defers, func() {
 			for _, k := range ker {
@@ -159,13 +183,14 @@ func loopCL(binfo []bufferInfo) (Trytes, error) {
 				}
 			}
 		})
+
 		for i, n := range []string{"init", "search", "finalize"} {
 			ker[i], err = prog.CreateKernel(n)
 			if err != nil {
 				return "", err
-
 			}
 		}
+
 		for _, d := range devs {
 			mult := d.MaxWorkGroupSize()
 			cores := d.MaxComputeUnits()
@@ -175,6 +200,7 @@ func loopCL(binfo []bufferInfo) (Trytes, error) {
 			for nlocal = stateSize; nlocal > mult; {
 				nlocal /= 3
 			}
+
 			var totalmem int64
 			mobj := make([]*cl.MemObject, len(binfo))
 			defers = append(defers, func() {
@@ -184,45 +210,55 @@ func loopCL(binfo []bufferInfo) (Trytes, error) {
 					}
 				}
 			})
+
 			que, err := cont.CreateCommandQueue(d, 0)
 			if err != nil {
 				return "", err
 			}
+
 			defers = append(defers, que.Release)
+
 			for i, inf := range binfo {
 				msize := inf.size
 				if inf.isArray {
 					msize *= int64(cores * mult)
 				}
+
 				if totalmem += msize; totalmem > mmax {
 					return "", errors.New("max memory passed")
 				}
+
 				mobj[i], err = cont.CreateEmptyBuffer(inf.flag, int(msize))
 				if err != nil {
 					return "", err
 				}
+
 				if inf.data != nil {
 					var ev *cl.Event
-					if isLittle {
+					switch {
+					case isLittle:
 						ev, err = que.EnqueueWriteBufferBytes(mobj[i], true, inf.data, nil)
-					} else {
+					default:
 						data := make([]byte, len(inf.data))
 						for i := range inf.data {
 							data[i] = inf.data[len(inf.data)-i-1]
 						}
 						ev, err = que.EnqueueWriteBufferBytes(mobj[i], true, data, nil)
 					}
+
 					if err != nil {
 						return "", err
 					}
 					ev.Release()
 				}
+
 				for _, k := range ker {
 					if err := k.SetArg(i, mobj[i]); err != nil {
 						return "", err
 					}
 				}
 			}
+
 			go func() {
 				err := exec(que, ker, cores, nlocal, mobj, &founded, result)
 				if err != nil {
@@ -231,24 +267,27 @@ func loopCL(binfo []bufferInfo) (Trytes, error) {
 			}()
 		}
 	}
+
 	if !exist {
 		return "", errors.New("no GPU found")
 	}
+
 	r := <-result
 	close(result)
 
 	return r, nil
 }
 
-//PowCL is proof of work of iota in OpenCL.
+// PowCL is proof of work of iota in OpenCL.
 func PowCL(trytes Trytes, mwm int) (Trytes, error) {
-	if !stopCL {
+	switch {
+	case !stopCL:
 		stopCL = true
 		return "", errors.New("pow is already running, stopped")
-	}
-	if trytes == "" {
+	case trytes == "":
 		return "", errors.New("invalid trytes")
 	}
+
 	stopCL = false
 	countCL = 0
 	c := NewCurl()
@@ -270,10 +309,12 @@ func PowCL(trytes Trytes, mwm int) (Trytes, error) {
 	for i, v := range lmid {
 		binary.LittleEndian.PutUint64(low[8*i:], v)
 	}
+
 	high := make([]byte, 8*stateSize)
 	for i, v := range hmid {
 		binary.LittleEndian.PutUint64(high[8*i:], v)
 	}
+
 	binfo := []bufferInfo{
 		bufferInfo{
 			8 * HashSize, cl.MemWriteOnly, false, nil,
