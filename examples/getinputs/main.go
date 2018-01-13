@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/iotaledger/iota.lib.go"
+	"github.com/iotaledger/giota"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
