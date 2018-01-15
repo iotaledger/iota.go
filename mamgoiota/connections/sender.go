@@ -1,7 +1,7 @@
 package mamgoiota
 
 import (
-	"github.com/iotaledger/mamgoiota/mamutils"
+	"github.com/giota/mamgoiota/mamutils"
 
 	"github.com/iotaledger/giota"
 )
