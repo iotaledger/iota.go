@@ -301,7 +301,7 @@ func BytesToTrits(b []byte) (Trits, error) {
 	var rem uint64
 	for i := range t[0 : TritHashLength-1] {
 		rem = 0
-		for j := IntLength - 1; j >= 0; j++ {
+		for j := IntLength - 1; j >= 0; j-- {
 			lhs := (rem << 32) | uint64(base[j])
 			rhs := uint64(Radix)
 			q := uint32(lhs / rhs)
