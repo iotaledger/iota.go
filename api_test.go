@@ -28,6 +28,10 @@ package giota
 import "testing"
 
 func TestAPIGetNodeInfo(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
 	var err error
 	var resp *GetNodeInfoResponse
 
@@ -96,6 +100,10 @@ func TestAPIGetTips(t *testing.T) {
 }
 */
 func TestAPIFindTransactions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
 	var err error
 	var resp *FindTransactionsResponse
 
@@ -118,6 +126,10 @@ func TestAPIFindTransactions(t *testing.T) {
 }
 
 func TestAPIGetTrytes(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
 	var err error
 	var resp *GetTrytesResponse
 
@@ -139,6 +151,10 @@ func TestAPIGetTrytes(t *testing.T) {
 }
 
 func TestAPIGetInclusionStates(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
 	var err error
 	var resp *GetInclusionStatesResponse
 
@@ -159,6 +175,10 @@ func TestAPIGetInclusionStates(t *testing.T) {
 }
 
 func TestAPIGetBalances(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
 	var err error
 	var resp *GetBalancesResponse
 
@@ -180,6 +200,10 @@ func TestAPIGetBalances(t *testing.T) {
 }
 
 func TestAPIGetTransactionsToApprove(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
 	var err error
 	var resp *GetTransactionsToApproveResponse
 
@@ -201,7 +225,11 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 	}
 }
 
-func TestGetLatestInclusion(t *testing.T) {
+func TestAPIGetLatestInclusion(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
 	var err error
 	var resp []bool
 
