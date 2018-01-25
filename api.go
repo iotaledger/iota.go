@@ -59,18 +59,19 @@ var (
 
 // RandomNode returns a random node from PublicNodes. If local IRI exists, return
 // localhost address.
-func RandomNode() string {
+func RandomNode() (string, error) {
 	api := NewAPI("", nil)
 	_, err := api.GetNodeInfo()
 	if err == nil {
-		return api.endpoint
+		return api.endpoint, nil
 	}
 
 	b := make([]byte, 1)
 	if _, err := rand.Read(b); err != nil {
-		panic(err)
+		return "", err
 	}
-	return PublicNodes[int(b[0])%len(PublicNodes)]
+
+	return PublicNodes[int(b[0])%len(PublicNodes)], nil
 }
 
 // API is for calling APIs.

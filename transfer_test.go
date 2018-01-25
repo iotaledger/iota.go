@@ -48,6 +48,7 @@ func init() {
 	}
 }
 
+// nolint: gocyclo
 func TestTransfer1(t *testing.T) {
 	if skipTransferTest {
 		t.Skip("transfer test skipped because a valid $TRANSFER_TEST_SEED was not specified")
@@ -56,11 +57,17 @@ func TestTransfer1(t *testing.T) {
 	var (
 		err  error
 		adr  Address
+		node string
 		adrs []Address
 	)
 
 	for i := 0; i < 5; i++ {
-		api := NewAPI(RandomNode(), nil)
+		node, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
+
+		api := NewAPI(node, nil)
 		adr, adrs, err = GetUsedAddress(api, seed, 2)
 		if err == nil {
 			break
@@ -78,7 +85,11 @@ func TestTransfer1(t *testing.T) {
 
 	var bal Balances
 	for i := 0; i < 5; i++ {
-		api := NewAPI(RandomNode(), nil)
+		node, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
+		api := NewAPI(node, nil)
 		bal, err = GetInputs(api, seed, 0, 10, 1000, 2)
 		if err == nil {
 			break
@@ -102,6 +113,8 @@ func TestTransfer2(t *testing.T) {
 	}
 
 	var err error
+	var node string
+
 	trs := []Transfer{
 		Transfer{
 			Address: "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL9QTIWOWTY",
@@ -112,7 +125,11 @@ func TestTransfer2(t *testing.T) {
 
 	var bdl Bundle
 	for i := 0; i < 5; i++ {
-		api := NewAPI(RandomNode(), nil)
+		node, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
+		api := NewAPI(node, nil)
 		bdl, err = PrepareTransfers(api, seed, trs, nil, "", 2)
 		if err == nil {
 			break
@@ -138,7 +155,12 @@ func TestTransfer2(t *testing.T) {
 	t.Log("using PoW: ", name)
 
 	for i := 0; i < 5; i++ {
-		api := NewAPI(RandomNode(), nil)
+		node, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
+
+		api := NewAPI(node, nil)
 		bdl, err = Send(api, seed, 2, trs, 18, pow)
 		if err == nil {
 			break

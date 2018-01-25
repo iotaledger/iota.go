@@ -116,12 +116,15 @@ func exec(
 
 	rr := make(Trits, HashSize)
 	for i := 0; i < HashSize; i++ {
-		switch {
-		case result[i*8] == 0xff:
+		if result[i*8] == 0xff {
 			rr[i] = -1
-		case result[i*8] == 0x0 && result[i*8+7] == 0x0:
+		}
+
+		if result[i*8] == 0x0 && result[i*8+7] == 0x0 {
 			rr[i] = 0
-		case result[i*8] == 0x1 || result[i*8+7] == 0x1:
+		}
+
+		if result[i*8] == 0x1 || result[i*8+7] == 0x1 {
 			rr[i] = 1
 		}
 	}

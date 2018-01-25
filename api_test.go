@@ -33,10 +33,14 @@ func TestAPIGetNodeInfo(t *testing.T) {
 	}
 
 	var err error
+	var server string
 	var resp *GetNodeInfoResponse
 
 	for i := 0; i < 5; i++ {
-		var server = RandomNode()
+		server, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
 		api := NewAPI(server, nil)
 		resp, err = api.GetNodeInfo()
 		if err == nil {
@@ -105,11 +109,15 @@ func TestAPIFindTransactions(t *testing.T) {
 	}
 
 	var err error
+	var server string
 	var resp *FindTransactionsResponse
 
 	ftr := &FindTransactionsRequest{Bundles: []Trytes{"DEXRPLKGBROUQMKCLMRPG9HFKCACDZ9AB9HOJQWERTYWERJNOYLW9PKLOGDUPC9DLGSUH9UHSKJOASJRU"}}
 	for i := 0; i < 5; i++ {
-		var server = RandomNode()
+		server, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
 		api := NewAPI(server, nil)
 
 		resp, err = api.FindTransactions(ftr)
@@ -131,10 +139,14 @@ func TestAPIGetTrytes(t *testing.T) {
 	}
 
 	var err error
+	var server string
 	var resp *GetTrytesResponse
 
 	for i := 0; i < 5; i++ {
-		var server = RandomNode()
+		server, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
 		api := NewAPI(server, nil)
 
 		resp, err = api.GetTrytes([]Trytes{})
@@ -156,10 +168,14 @@ func TestAPIGetInclusionStates(t *testing.T) {
 	}
 
 	var err error
+	var server string
 	var resp *GetInclusionStatesResponse
 
 	for i := 0; i < 5; i++ {
-		var server = RandomNode()
+		server, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
 		api := NewAPI(server, nil)
 		resp, err = api.GetInclusionStates([]Trytes{}, []Trytes{})
 		if err == nil {
@@ -180,10 +196,14 @@ func TestAPIGetBalances(t *testing.T) {
 	}
 
 	var err error
+	var server string
 	var resp *GetBalancesResponse
 
 	for i := 0; i < 5; i++ {
-		var server = RandomNode()
+		server, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
 		api := NewAPI(server, nil)
 
 		resp, err = api.GetBalances([]Address{}, 100)
@@ -205,10 +225,14 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 	}
 
 	var err error
+	var server string
 	var resp *GetTransactionsToApproveResponse
 
 	for i := 0; i < 5; i++ {
-		var server = RandomNode()
+		server, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
 		api := NewAPI(server, nil)
 
 		resp, err = api.GetTransactionsToApprove(Depth)
@@ -231,10 +255,14 @@ func TestAPIGetLatestInclusion(t *testing.T) {
 	}
 
 	var err error
+	var server string
 	var resp []bool
 
 	for i := 0; i < 5; i++ {
-		var server = RandomNode()
+		server, err = RandomNode()
+		if err != nil {
+			t.Error(err)
+		}
 		api := NewAPI(server, nil)
 
 		resp, err = api.GetLatestInclusion([]Trytes{"B9OETFYOEIUYEVB9WWCMGIHIJLFU9IJOBYYGSTZBLFBZLGZRKBIREYTIPPFGC9SPEOJFIYFRRSPX99999"})
