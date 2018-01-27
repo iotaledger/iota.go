@@ -14,7 +14,7 @@ before_install:
 - gometalinter --install --update
 
 script:
-- travis_wait 30 go test -tags=avx -v -covermode=count -coverprofile=coverage.out -timeout 100m
+- travis_wait 30 go test -tags=avx -v -covermode=count -coverprofile=coverage.out -timeout 100m -short
 
 after_success:
 - gometalinter -e bindata --deadline=1000s ./...

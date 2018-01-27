@@ -405,11 +405,11 @@ func (t Trytes) IsValid() error {
 func incTrits(t Trits) {
 	for j := range t {
 		t[j]++
-		switch {
-		case t[j] > 1:
-			t[j] = -1
-		default:
+
+		if t[j] <= 1 {
 			break
 		}
+
+		t[j] = -1
 	}
 }

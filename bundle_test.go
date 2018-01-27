@@ -28,45 +28,68 @@ import (
 	"time"
 )
 
+type tx struct {
+	addr      Address
+	value     int64
+	timestamp string
+}
+
 func TestBundle(t *testing.T) {
-	var bs Bundle
-	adr := []Address{
-		"PQTDJXXKSNYZGRJDXEHHMNCLUVOIRZC9VXYLSITYMVCQDQERAHAUZJKRNBQEUHOLEAXRUSQBNYVJWESYR",
-		"KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL",
-		"KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL",
-		"GXZWHBLRGGY9BCWCAVTFGHCOEWDBFLBTVTIBOQICKNLCCZIPYGPESAPUPDNBDQYENNMJTWSWDHZTYEHAJ",
+	tests := []struct {
+		name         string
+		transactions []tx
+		hash         Trytes
+	}{
+		{
+			name: "test transaction bundle validates correctly",
+			transactions: []tx{
+				tx{
+					addr:      "PQTDJXXKSNYZGRJDXEHHMNCLUVOIRZC9VXYLSITYMVCQDQERAHAUZJKRNBQEUHOLEAXRUSQBNYVJWESYR",
+					value:     50,
+					timestamp: "2017-03-11 12:25:05 +0900 JST",
+				},
+				tx{
+					addr:      "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL",
+					value:     -100,
+					timestamp: "2017-03-11 12:25:18 +0900 JST",
+				},
+				tx{
+					addr:      "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL",
+					value:     0,
+					timestamp: "2017-03-11 12:25:18 +0900 JST",
+				},
+				tx{
+					addr:      "GXZWHBLRGGY9BCWCAVTFGHCOEWDBFLBTVTIBOQICKNLCCZIPYGPESAPUPDNBDQYENNMJTWSWDHZTYEHAJ",
+					value:     50,
+					timestamp: "2017-03-11 12:25:28 +0900 JST",
+				},
+			},
+			hash: "ERWNDFZINIYEJQGLNFEZOU9FBHQLZOINIWJVLQ9UONHGRPSSYX9E9KQZMWCULVDNDUSUDSDMVVOICKTSY",
+		},
 	}
 
-	value := []int64{
-		50, -100, 0, 50,
-	}
+	for _, tt := range tests {
+		var bs Bundle
 
-	ts := []string{
-		"2017-03-11 12:25:05 +0900 JST",
-		"2017-03-11 12:25:18 +0900 JST",
-		"2017-03-11 12:25:18 +0900 JST",
-		"2017-03-11 12:25:28 +0900 JST",
-	}
+		for _, tx := range tt.transactions {
+			parsedTime, err := time.Parse("2006-01-02 15:04:05 -0700 MST", tx.timestamp)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	var hash Trytes = "ERWNDFZINIYEJQGLNFEZOU9FBHQLZOINIWJVLQ9UONHGRPSSYX9E9KQZMWCULVDNDUSUDSDMVVOICKTSY"
-	for i := 0; i < 4; i++ {
-		tss, err := time.Parse("2006-01-02 15:04:05 -0700 MST", ts[i])
-
-		if err != nil {
-			t.Fatal(err)
+			bs.Add(1, tx.addr, tx.value, parsedTime, "")
 		}
 
-		bs.Add(1, adr[i], value[i], tss, "")
+		if bs.Hash() != tt.hash {
+			t.Errorf("%s: hash of bundles is illegal: %s", tt.name, bs.Hash())
+		}
+
+		bs.Finalize([]Trytes{})
+
+		send, receive := bs.Categorize(tt.transactions[1].addr)
+		if len(send) != 1 || len(receive) != 1 {
+			t.Errorf("%s: Categorize is incorrect", tt.name)
+		}
 	}
 
-	if bs.Hash() != hash {
-		t.Error("hash of bundles is illegal.", bs.Hash())
-	}
-
-	bs.Finalize([]Trytes{})
-
-	send, receive := bs.Categorize(adr[1])
-	if len(send) != 1 || len(receive) != 1 {
-		t.Error("Categorize is incorrect")
-	}
 }
