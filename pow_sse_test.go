@@ -78,7 +78,7 @@ func TestPowSSE(t *testing.T) {
 	for _, tt := range tests {
 		PowProcs = tt.powProcs
 		sp := testPowSSE(t)
-		t.Logf("%s: %d kH/sec on SEE PoW", int(sp))
+		t.Logf("%s: %d kH/sec on SEE PoW", tt.name, int(sp))
 	}
 
 	PowProcs = _proc
