@@ -79,8 +79,11 @@ func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time
 }
 
 // Finalize filled sigs, bundlehash, and indices elements in bundle.
-func (bs Bundle) Finalize(sig []Trytes) {
-	h := bs.getValidHash()
+func (bs Bundle) Finalize(sig []Trytes) error {
+	h, err := bs.getValidHash()
+	if err != nil {
+		return err
+	}
 
 	for i := range bs {
 		if len(sig) > i && sig[i] != "" {
@@ -91,10 +94,12 @@ func (bs Bundle) Finalize(sig []Trytes) {
 		bs[i].LastIndex = int64(len(bs) - 1)
 		bs[i].Bundle = h
 	}
+
+	return nil
 }
 
 // Hash calculates hash of Bundle.
-func (bs Bundle) Hash() Trytes {
+func (bs Bundle) Hash() (Trytes, error) {
 	k := NewKerl()
 	buf := make(Trits, 243+81*3)
 
@@ -103,13 +108,17 @@ func (bs Bundle) Hash() Trytes {
 		k.Absorb(buf)
 	}
 
-	h, _ := k.Squeeze(HashSize)
-	return h.Trytes()
+	h, err := k.Squeeze(HashSize)
+	if err != nil {
+		return Trytes(""), err
+	}
+
+	return h.Trytes(), nil
 }
 
 // getValidHash calculates hash of Bundle and increases ObsoleteTag value
 // until normalized hash doesn't have any 13
-func (bs Bundle) getValidHash() Trytes {
+func (bs Bundle) getValidHash() (Trytes, error) {
 	k := NewKerl()
 	hashedLen := BundleTrinaryOffset - AddressTrinaryOffset
 
@@ -120,7 +129,12 @@ func (bs Bundle) getValidHash() Trytes {
 
 	for {
 		k.Absorb(buf)
-		hashTrits, _ := k.Squeeze(HashSize)
+
+		hashTrits, err := k.Squeeze(HashSize)
+		if err != nil {
+			return Trytes(""), err
+		}
+
 		h := hashTrits.Trytes()
 		n := h.Normalize()
 		valid := true
@@ -136,7 +150,7 @@ func (bs Bundle) getValidHash() Trytes {
 
 		if valid {
 			bs[0].ObsoleteTag = buf[offset : offset+ObsoleteTagTrinarySize].Trytes()
-			return h
+			return h, nil
 		}
 
 		k.Reset()
@@ -206,7 +220,11 @@ func (bs Bundle) IsValid() error {
 	}
 
 	// Validate the signatures
-	h := bs.Hash()
+	h, err := bs.Hash()
+	if err != nil {
+		return err
+	}
+
 	for adr, sig := range sigs {
 		if !IsValidSig(adr, sig, h) {
 			return errors.New("invalid signature")

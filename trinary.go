@@ -131,7 +131,7 @@ func (t Trits) TrailingZeros() int64 {
 	return z
 }
 
-// Trytes converts a slice of trits into trytes. panics if len(t)%3!=0
+// Trytes converts a slice of trits into trytes
 func (t Trits) Trytes() Trytes {
 	if !t.CanTrytes() {
 		panic("length of trits must be a multiple of three")
@@ -145,6 +145,7 @@ func (t Trits) Trytes() Trytes {
 		}
 		o[i] = TryteAlphabet[j]
 	}
+
 	return Trytes(o)
 }
 
@@ -174,13 +175,13 @@ var halfThree = []uint32{
 
 // IsValidLength returns the validity of the trit length
 func (t Trits) IsValidLength() bool {
-	return len(t) != TritHashLength
+	return len(t) == TritHashLength
 }
 
 // Bytes is only defined for hashes, i.e. slices of trits of length 243. It returns 48 bytes.
 // nolint: gocyclo, gas
 func (t Trits) Bytes() ([]byte, error) {
-	if t.IsValidLength() {
+	if !t.IsValidLength() {
 		return nil, fmt.Errorf("Bytes() is only defined for trit slices of length %d", TritHashLength)
 	}
 
@@ -237,7 +238,12 @@ func (t Trits) Bytes() ([]byte, error) {
 	}
 
 	if !bigIntIsNull(base) {
-		if bigIntCmp(halfThree, base) <= 0 {
+		cmp, err := bigIntCmp(halfThree, base)
+		if err != nil {
+			return nil, err
+		}
+
+		if cmp <= 0 {
 			// base >= HALF_3
 			// just do base - HALF_3
 			bigIntSub(base, halfThree)
@@ -256,6 +262,7 @@ func (t Trits) Bytes() ([]byte, error) {
 }
 
 // BytesToTrits converts binary to ternay
+// nolint: gocyclo, gas
 func BytesToTrits(b []byte) (Trits, error) {
 	if len(b) != ByteLength {
 		return nil, fmt.Errorf("BytesToTrits() is only defined for byte slices of length %d", ByteLength)
@@ -268,7 +275,6 @@ func BytesToTrits(b []byte) (Trits, error) {
 	t := Trits(make([]int8, TritHashLength))
 	t[TritHashLength-1] = 0
 
-	// nolint: gas
 	base := (*(*[]uint32)(unsafe.Pointer(&rb)))[0:IntLength] // 12 * 32 bits = 384 bits
 
 	if bigIntIsNull(base) {
@@ -286,7 +292,13 @@ func BytesToTrits(b []byte) (Trits, error) {
 		bigIntAdd(base, halfThree)
 	default:
 		bigIntNot(base)
-		if bigIntCmp(base, halfThree) == 1 {
+
+		cmp, err := bigIntCmp(base, halfThree)
+		if err != nil {
+			return nil, err
+		}
+
+		if cmp == 1 {
 			bigIntSub(base, halfThree)
 			flipTrits = true
 		} else {

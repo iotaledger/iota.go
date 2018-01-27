@@ -38,7 +38,9 @@ func testPowGo(t *testing.T) {
 	}
 
 	tx = tx[:len(tx)-NonceTrinarySize/3] + nonce
+
 	h := tx.Hash()
+
 	if h[len(h)-4:] != "9999" {
 		t.Error("pow is illegal", h)
 	}

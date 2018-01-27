@@ -261,9 +261,15 @@ func addRemainder(api *API, in Balances, bundle *Bundle, security int, remainder
 	return nil
 }
 
+// nolint: gocyclo
 func signInputs(inputs []AddressInfo, bundle Bundle) error {
 	//  Get the normalized bundle hash
-	nHash := bundle.Hash().Normalize()
+	h, err := bundle.Hash()
+	if err != nil {
+		return err
+	}
+
+	nHash := h.Normalize()
 
 	// SIGNING OF INPUTS
 	// Here we do the actual signing of the inputs. Iterate over all bundle transactions,
@@ -286,7 +292,7 @@ func signInputs(inputs []AddressInfo, bundle Bundle) error {
 				break
 			}
 		}
-    
+
 		// Get corresponding private key of the address
 		key, err := ai.Key()
 		if err != nil {
@@ -294,7 +300,12 @@ func signInputs(inputs []AddressInfo, bundle Bundle) error {
 		}
 
 		// Calculate the new signatureFragment with the first bundle fragment
-		bundle[i].SignatureMessageFragment = Sign(nHash[:27], key[:6561/3])
+		t, err := Sign(nHash[:27], key[:6561/3])
+		if err != nil {
+			return err
+		}
+
+		bundle[i].SignatureMessageFragment = t
 
 		// if user chooses higher than 27-tryte security
 		// for each security level, add an additional signature
@@ -303,9 +314,12 @@ func signInputs(inputs []AddressInfo, bundle Bundle) error {
 			// transaction to add the remainder of the signature same address as well
 			// as value = 0 (as we already spent the input)
 			if bundle[i+j].Address == bd.Address && bundle[i+j].Value == 0 {
-				//  Calculate the new signature
-				nfrag := Sign(nHash[(j%3)*27:(j%3)*27+27], key[6561*j/3:(j+1)*6561/3])
-				//  Convert signature to trytes and assign it again to this bundle entry
+				// Calculate the new signature
+				nfrag, err := Sign(nHash[(j%3)*27:(j%3)*27+27], key[6561*j/3:(j+1)*6561/3])
+				if err != nil {
+					return err
+				}
+				// Convert signature to trytes and assign it again to this bundle entry
 				bundle[i+j].SignatureMessageFragment = nfrag
 			}
 		}
@@ -326,7 +340,8 @@ func doPow(tra *GetTransactionsToApproveResponse, depth int64, trytes []Transact
 			trytes[i].BranchTransaction = tra.TrunkTransaction
 		}
 
-		trytes[i].Nonce, err = pow(trytes[i].Trytes(), int(mwm))
+		txTrytes := trytes[i].Trytes()
+		trytes[i].Nonce, err = pow(txTrytes, int(mwm))
 		if err != nil {
 			return err
 		}

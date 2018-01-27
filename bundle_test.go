@@ -80,8 +80,13 @@ func TestBundle(t *testing.T) {
 			bs.Add(1, tx.addr, tx.value, parsedTime, "")
 		}
 
-		if bs.Hash() != tt.hash {
-			t.Errorf("%s: hash of bundles is illegal: %s", tt.name, bs.Hash())
+		hash, err := bs.Hash()
+		if err != nil {
+			t.Errorf("%s: bundle.Hash() failed with err: %s", tt.name, err)
+		}
+
+		if hash != tt.hash {
+			t.Errorf("%s: hash of bundles is illegal: %s", tt.name, hash)
 		}
 
 		bs.Finalize([]Trytes{})
@@ -91,5 +96,4 @@ func TestBundle(t *testing.T) {
 			t.Errorf("%s: Categorize is incorrect", tt.name)
 		}
 	}
-
 }

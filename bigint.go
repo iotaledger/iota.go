@@ -25,12 +25,19 @@ SOFTWARE.
 package giota
 
 import (
+	"errors"
 	"math"
 )
 
-func bigIntAdd(b []uint32, rh []uint32) {
+// standard errors
+var (
+	ErrSizeSlices   = errors.New("not defined for differently sized slices")
+	ErrSubLeftovers = errors.New("could not subtract without leftovers")
+)
+
+func bigIntAdd(b []uint32, rh []uint32) error {
 	if len(b) != len(rh) {
-		panic("not defined for differently sized slices")
+		return ErrSizeSlices
 	}
 
 	carry := false
@@ -40,11 +47,13 @@ func bigIntAdd(b []uint32, rh []uint32) {
 		b[i] = uint32(v)
 		carry = c
 	}
+
+	return nil
 }
 
-func bigIntSub(b []uint32, rh []uint32) {
+func bigIntSub(b []uint32, rh []uint32) error {
 	if len(b) != len(rh) {
-		panic("not defined for differently sized slices")
+		return ErrSizeSlices
 	}
 
 	noborrow := true
@@ -56,8 +65,10 @@ func bigIntSub(b []uint32, rh []uint32) {
 	}
 
 	if !noborrow {
-		panic("could not subtract without leftovers")
+		return ErrSubLeftovers
 	}
+
+	return nil
 }
 
 func bigIntNot(b []uint32) {
@@ -75,9 +86,9 @@ func bigIntIsNull(b []uint32) bool {
 	return true
 }
 
-func bigIntCmp(lh, rh []uint32) int {
+func bigIntCmp(lh, rh []uint32) (int, error) {
 	if len(lh) != len(rh) {
-		panic("not defined for differently sized slices")
+		return 0, ErrSizeSlices
 	}
 
 	// put LSB first
@@ -92,12 +103,12 @@ func bigIntCmp(lh, rh []uint32) int {
 	for i := range rlh {
 		switch {
 		case rlh[i] < rrh[i]:
-			return -1
+			return -1, nil
 		case rlh[i] > rrh[i]:
-			return 1
+			return 1, nil
 		}
 	}
-	return 0
+	return 0, nil
 }
 
 // bigIntAddSmall adds a small number to a big int and returns the index

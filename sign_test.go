@@ -63,6 +63,7 @@ func TestDigests(t *testing.T) {
 
 }
 
+// nolint: gocyclo
 func TestNewAddressFromTrytes(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -103,20 +104,26 @@ func TestNewAddressFromTrytes(t *testing.T) {
 
 	for _, tt := range tests {
 		adr, err := tt.address.ToAddress()
-		switch {
-		case (err != nil) == tt.validAddr:
+		if (err != nil) == tt.validAddr {
 			t.Fatalf("%s: NewAddressFromTrytes(%q) expected (err != nil) to be %#v\nerr: %#v",
 				tt.name, tt.address, tt.validAddr, err)
-		case (err == nil && adr.Checksum() != tt.checksum) == tt.validChecksum:
+		}
+
+		addrChecksum, err := adr.Checksum()
+		switch {
+		case (err == nil && addrChecksum != tt.checksum) == tt.validChecksum:
 			t.Fatalf("NewAddressFromTrytes(%q) checksum mismatch\nwant: %s\nhave: %s",
-				tt.address, tt.checksum, adr.Checksum())
+				tt.address, tt.checksum, addrChecksum)
 		case !tt.validAddr || !tt.validChecksum:
 			continue
 		}
 
-		wcs := adr.WithChecksum()
-		if wcs != Trytes(adr)+adr.Checksum() {
-			t.Error("WithChecksum is incorrect")
+		wcs, err := adr.WithChecksum()
+		switch {
+		case err != nil:
+			t.Errorf("%s: adr.WithChecksum gave err: %s", tt.name, err)
+		case wcs != Trytes(adr)+addrChecksum:
+			t.Errorf("%s: adr.WithChecksum(): %s != %s", tt.name, wcs, Trytes(adr)+addrChecksum)
 		}
 
 		adr2, err := ToAddress(string(tt.address))
@@ -179,12 +186,19 @@ func TestAddress(t *testing.T) {
 
 func TestSeed(t *testing.T) {
 	for i := 0; i < 10000; i++ {
-		s1 := NewSeed()
-		if err := s1.IsValid(); err != nil {
+		s1, err := NewSeed()
+		if err != nil {
+			t.Error(err)
+		}
+
+		if err = s1.IsValid(); err != nil {
 			t.Error("NewSeed is not valid")
 		}
 
-		s2 := NewSeed()
+		s2, err := NewSeed()
+		if err != nil {
+			t.Error(err)
+		}
 		if err := s2.IsValid(); err != nil {
 			t.Error("NewSeed is not valid")
 		}
@@ -207,13 +221,19 @@ func TestSign(t *testing.T) {
 	}
 
 	norm := bundleHash.Normalize()
-	sign0 := Sign(norm[:27], key[:SignatureSize/3])
-	if sign0 != csign0 {
+	sign0, err := Sign(norm[:27], key[:SignatureSize/3])
+	switch {
+	case err != nil:
+		t.Error(err)
+	case sign0 != csign0:
 		t.Error("sig is incorrect.")
 	}
 
-	sign1 := Sign(norm[27:54], key[SignatureSize/3:SignatureSize*2/3])
-	if sign1 != csign1 {
+	sign1, err := Sign(norm[27:54], key[SignatureSize/3:SignatureSize*2/3])
+	switch {
+	case err != nil:
+		t.Error(err)
+	case sign1 != csign1:
 		t.Error("sig is incorrect.")
 	}
 

@@ -125,7 +125,7 @@ func transform64(lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 func incr(lmid *[stateSize]uint64, hmid *[stateSize]uint64) bool {
 	var carry uint64 = 1
 	var i int
-	//to avoid boundry check, I believe.
+	// to avoid boundry check, I believe.
 	for i = nonceInitStart; i < HashSize && carry != 0; i++ {
 		low := lmid[i]
 		high := hmid[i]
@@ -171,8 +171,6 @@ func check(l *[stateSize]uint64, h *[stateSize]uint64, m int) int {
 	}
 	return -1
 }
-
-var stopGO = true
 
 func loop(lmid *[stateSize]uint64, hmid *[stateSize]uint64, m int) (Trits, int64) {
 	var lcpy, hcpy [stateSize]uint64
@@ -225,7 +223,10 @@ func incrN(n int, lmid *[stateSize]uint64, hmid *[stateSize]uint64) {
 	}
 }
 
-var countGo int64 = 1
+var (
+	stopGO        = true
+	countGo int64 = 1
+)
 
 // PowGo is proof of work for iota in pure Go
 func PowGo(trytes Trytes, mwm int) (Trytes, error) {
@@ -247,13 +248,11 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 	copy(c.state, tr[transactionTrinarySize-HashSize:])
 
 	var (
-		result Trytes
-		wg     sync.WaitGroup
-		mutex  sync.Mutex
+		mutex      sync.Mutex
+		resultChan = make(chan Trytes, 1)
 	)
 
 	for i := 0; i < PowProcs; i++ {
-		wg.Add(1)
 		go func(i int) {
 			lmid, hmid := para(c.state)
 			lmid[nonceOffset] = low0
@@ -270,17 +269,16 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 
 			mutex.Lock()
 			if nonce != nil {
-				result = nonce.Trytes()
+				resultChan <- nonce.Trytes()
 				stopGO = true
 			}
 
 			countGo += cnt
 			mutex.Unlock()
-			wg.Done()
 		}(i)
 	}
 
-	wg.Wait()
+	result := <-resultChan
 	stopGO = true
 	return result, nil
 }
