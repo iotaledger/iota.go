@@ -499,14 +499,18 @@ type GetTransactionsToApproveResponse struct {
 }
 
 // GetTransactionsToApprove calls GetTransactionsToApprove API.
-func (api *API) GetTransactionsToApprove(depth int64) (*GetTransactionsToApproveResponse, error) {
+func (api *API) GetTransactionsToApprove(depth, numWalks int64, reference Trytes) (*GetTransactionsToApproveResponse, error) {
 	resp := &GetTransactionsToApproveResponse{}
 	err := api.do(&struct {
-		Command string `json:"command"`
-		Depth   int64  `json:"depth"`
+		Command   string `json:"command"`
+		Depth     int64  `json:"depth,omitempty"`
+		NumWalks  int64  `json:"numWalks,omitempty"`
+		Reference Trytes `json:"reference,omitempty"`
 	}{
 		"getTransactionsToApprove",
 		depth,
+		numWalks,
+		reference,
 	}, resp)
 
 	return resp, err
