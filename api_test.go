@@ -211,7 +211,7 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 		var server = RandomNode()
 		api := NewAPI(server, nil)
 
-		resp, err = api.GetTransactionsToApprove(Depth)
+		resp, err = api.GetTransactionsToApprove(Depth, NumberOfWalks, "")
 		if err == nil {
 			break
 		}
