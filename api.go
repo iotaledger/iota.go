@@ -197,6 +197,28 @@ func (api *API) GetNodeInfo() (*GetNodeInfoResponse, error) {
 	return resp, err
 }
 
+// CheckConsistency calls CheckConsistency API which returns true if confirming
+// the specified tails would result in a consistent ledger state.
+func (api *API) CheckConsistency(tails []Trytes) (*CheckConsistencyResponse, error) {
+	resp := &CheckConsistencyResponse{}
+	err := api.do(&struct {
+		Command string   `json:"command"`
+		Tails   []Trytes `json:"tails"`
+	}{
+		"checkConsistency",
+		tails,
+	}, resp)
+
+	return resp, err
+}
+
+// GetTrytesResponse is for GetTrytes API resonse.
+type CheckConsistencyResponse struct {
+	Duration int64  `json:"duration"`
+	State    bool   `json:"states"`
+	Info     string `json:"info"`
+}
+
 // Neighbor is a part of response of GetNeighbors API.
 type Neighbor struct {
 	Address                     Address `json:"address"`
