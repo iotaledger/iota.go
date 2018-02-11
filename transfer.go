@@ -30,6 +30,10 @@ import (
 	"time"
 )
 
+const (
+	maxTimestampTrytes = "L99999999"
+)
+
 // GetUsedAddress generates a new address which is not found in the tangle
 // and returns its new address and used addresses.
 func GetUsedAddress(api *API, seed Trytes, security int) (Address, []Address, error) {
@@ -286,7 +290,7 @@ func signInputs(inputs []AddressInfo, bundle Bundle) error {
 				break
 			}
 		}
-    
+
 		// Get corresponding private key of the address
 		key, err := ai.Key()
 		if err != nil {
@@ -325,6 +329,11 @@ func doPow(tra *GetTransactionsToApproveResponse, depth int64, trytes []Transact
 			trytes[i].TrunkTransaction = prev
 			trytes[i].BranchTransaction = tra.TrunkTransaction
 		}
+
+		timestamp := Int2Trits(time.Now().UnixNano()/1000000, TimestampTrinarySize).Trytes()
+		trytes[i].AttachmentTimestamp = timestamp
+		trytes[i].AttachmentTimestampLowerBound = ""
+		trytes[i].AttachmentTimestampUpperBound = maxTimestampTrytes
 
 		trytes[i].Nonce, err = pow(trytes[i].Trytes(), int(mwm))
 		if err != nil {
