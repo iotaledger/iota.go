@@ -197,6 +197,28 @@ func (api *API) GetNodeInfo() (*GetNodeInfoResponse, error) {
 	return resp, err
 }
 
+// CheckConsistency calls CheckConsistency API which returns true if confirming
+// the specified tails would result in a consistent ledger state.
+func (api *API) CheckConsistency(tails []Trytes) (*CheckConsistencyResponse, error) {
+	resp := &CheckConsistencyResponse{}
+	err := api.do(&struct {
+		Command string   `json:"command"`
+		Tails   []Trytes `json:"tails"`
+	}{
+		"checkConsistency",
+		tails,
+	}, resp)
+
+	return resp, err
+}
+
+// CheckConsistencyResponse is for CheckConsistency API response.
+type CheckConsistencyResponse struct {
+	Duration int64  `json:"duration"`
+	State    bool   `json:"states"`
+	Info     string `json:"info"`
+}
+
 // Neighbor is a part of response of GetNeighbors API.
 type Neighbor struct {
 	Address                     Address `json:"address"`
@@ -210,7 +232,7 @@ type GetNeighborsRequest struct {
 	Command string `json:"command"`
 }
 
-// GetNeighborsResponse is for GetNeighbors API resonse.
+// GetNeighborsResponse is for GetNeighbors API response.
 type GetNeighborsResponse struct {
 	Duration  int64
 	Neighbors []Neighbor
@@ -235,7 +257,7 @@ type AddNeighborsRequest struct {
 	URIS []string `json:"uris"`
 }
 
-// AddNeighborsResponse is for AddNeighbors API resonse.
+// AddNeighborsResponse is for AddNeighbors API response.
 type AddNeighborsResponse struct {
 	Duration       int64 `json:"duration"`
 	AddedNeighbors int64 `json:"addedNeighbors"`
@@ -264,7 +286,7 @@ type RemoveNeighborsRequest struct {
 	URIS []string `json:"uris"`
 }
 
-// RemoveNeighborsResponse is for RemoveNeighbors API resonse.
+// RemoveNeighborsResponse is for RemoveNeighbors API response.
 type RemoveNeighborsResponse struct {
 	Duration         int64 `json:"duration"`
 	RemovedNeighbors int64 `json:"removedNeighbors"`
@@ -289,7 +311,7 @@ type GetTipsRequest struct {
 	Command string `json:"command"`
 }
 
-// GetTipsResponse is for GetTips API resonse.
+// GetTipsResponse is for GetTips API response.
 type GetTipsResponse struct {
 	Duration int64    `json:"duration"`
 	Hashes   []Trytes `json:"hashes"`
@@ -314,7 +336,7 @@ type FindTransactionsRequest struct {
 	Approvees []Trytes  `json:"approvees,omitempty"`
 }
 
-// FindTransactionsResponse is for FindTransaction API resonse.
+// FindTransactionsResponse is for FindTransaction API response.
 type FindTransactionsResponse struct {
 	Duration int64    `json:"duration"`
 	Hashes   []Trytes `json:"hashes"`
@@ -340,7 +362,7 @@ type GetTrytesRequest struct {
 	Hashes  []Trytes `json:"hashes"`
 }
 
-// GetTrytesResponse is for GetTrytes API resonse.
+// GetTrytesResponse is for GetTrytes API response.
 type GetTrytesResponse struct {
 	Duration int64         `json:"duration"`
 	Trytes   []Transaction `json:"trytes"`
@@ -367,7 +389,7 @@ type GetInclusionStatesRequest struct {
 	Tips         []Trytes `json:"tips"`
 }
 
-// GetInclusionStatesResponse is for GetInclusionStates API resonse.
+// GetInclusionStatesResponse is for GetInclusionStates API response.
 type GetInclusionStatesResponse struct {
 	Duration int64  `json:"duration"`
 	States   []bool `json:"states"`
@@ -415,7 +437,7 @@ type GetBalancesRequest struct {
 	Threshold int64     `json:"threshold"`
 }
 
-// GetBalancesResponse is for GetBalances API resonse.
+// GetBalancesResponse is for GetBalances API response.
 type GetBalancesResponse struct {
 	Duration       int64   `json:"duration"`
 	Balances       []int64 `json:"balances"`
@@ -491,7 +513,7 @@ type GetTransactionsToApproveRequest struct {
 	Depth   int64  `json:"depth"`
 }
 
-// GetTransactionsToApproveResponse is for GetTransactionsToApprove API resonse.
+// GetTransactionsToApproveResponse is for GetTransactionsToApprove API response.
 type GetTransactionsToApproveResponse struct {
 	Duration          int64  `json:"duration"`
 	TrunkTransaction  Trytes `json:"trunkTransaction"`
@@ -521,7 +543,7 @@ type AttachToTangleRequest struct {
 	Trytes             []Transaction `json:"trytes"`
 }
 
-// AttachToTangleResponse is for AttachToTangle API resonse.
+// AttachToTangleResponse is for AttachToTangle API response.
 type AttachToTangleResponse struct {
 	Duration int64         `json:"duration"`
 	Trytes   []Transaction `json:"trytes"`
