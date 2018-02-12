@@ -11,6 +11,8 @@ before_install:
 - go get -u github.com/alecthomas/gometalinter
 - go get -u github.com/mattn/goveralls
 - export PATH=$PATH:$GOPATH/bin
+- export CGO_LDFLAGS_ALLOW='-msse2'
+- export CGO_CFLAGS_ALLOW='-msse2 -Wall'
 - gometalinter --install --update
 
 script:
