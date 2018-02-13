@@ -85,6 +85,19 @@ trs := []giota.Transfer{
 }
 _, pow := giota.GetBestPoW()
 bdl, err = giota.Send(api, seed, security, trs, mwm, pow)
+
+
+// promote transaction
+trs := []giota.Transfer{
+	giota.Transfer{
+		Address: "999...9999999",
+		Value:   0,
+		Tag: "PROMOTESPAM",
+	},
+}
+tail := []giota.Trytes("NLN...TY99999")
+_, pow := giota.GetBestPoW()
+bdl, err = giota.Promote(api, tail, giota.Depth, trs, mwm, pow)
 ```
 
 PoW(Proof of Work) Benchmarking

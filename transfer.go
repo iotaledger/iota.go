@@ -30,9 +30,11 @@ import (
 	"time"
 )
 
-const (
-	maxTimestampTrytes = "L99999999"
-)
+// (3^27-1)/2
+const maxTimestampTrytes = "MMMMMMMMM"
+
+// Number of random walks to perform. Currently IRI defaults to a range of 5 to 27
+const DefaultNumberOfWalks = 5
 
 // GetUsedAddress generates a new address which is not found in the tangle
 // and returns its new address and used addresses.
@@ -347,7 +349,51 @@ func doPow(tra *GetTransactionsToApproveResponse, depth int64, trytes []Transact
 
 // SendTrytes does attachToTangle and finally, it broadcasts the transactions.
 func SendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow PowFunc) error {
-	tra, err := api.GetTransactionsToApprove(depth)
+	tra, err := api.GetTransactionsToApprove(depth, DefaultNumberOfWalks, "")
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case pow == nil:
+		at := AttachToTangleRequest{
+			TrunkTransaction:   tra.TrunkTransaction,
+			BranchTransaction:  tra.BranchTransaction,
+			MinWeightMagnitude: mwm,
+			Trytes:             trytes,
+		}
+
+		// attach to tangle - do pow
+		attached, err := api.AttachToTangle(&at)
+		if err != nil {
+			return err
+		}
+
+		trytes = attached.Trytes
+	default:
+		err := doPow(tra, depth, trytes, mwm, pow)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Broadcast and store tx
+	return api.BroadcastTransactions(trytes)
+}
+
+// Promote sends transanction using tail as reference (promotes the tail transaction)
+func Promote(api *API, tail Trytes, depth int64, trytes []Transaction, mwm int64, pow PowFunc) error {
+	if len(trytes) == 0 {
+		return errors.New("empty transfer")
+	}
+	resp, err := api.CheckConsistency([]Trytes{tail})
+	if err != nil {
+		return err
+	} else if !resp.State {
+		return errors.New(resp.Info)
+	}
+
+	tra, err := api.GetTransactionsToApprove(depth, DefaultNumberOfWalks, tail)
 	if err != nil {
 		return err
 	}
