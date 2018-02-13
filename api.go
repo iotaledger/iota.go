@@ -221,10 +221,13 @@ type CheckConsistencyResponse struct {
 
 // Neighbor is a part of response of GetNeighbors API.
 type Neighbor struct {
-	Address                     Address `json:"address"`
-	NumberOfAllTransactions     int64   `json:"numberOfAllTransactions"`
-	NumberOfInvalidTransactions int64   `json:"numberOfInvalidTransactions"`
-	NumberOfNewTransactions     int64   `json:"numberOfNewTransactions"`
+	Address                           Address `json:"address"`
+	ConnectionType                    string  `json:"connectionType"`
+	NumberOfAllTransactions           int64   `json:"numberOfAllTransactions"`
+	NumberOfInvalidTransactions       int64   `json:"numberOfInvalidTransactions"`
+	NumberOfNewTransactions           int64   `json:"numberOfNewTransactions"`
+	NumberOfRandomTransactionRequests int64   `json:"numberOfRandomTransactionRequests"`
+	NumberOfSentTransactions          int64   `json:"numberOfSentTransactions"`
 }
 
 // GetNeighborsRequest is for GetNeighbors API request.
