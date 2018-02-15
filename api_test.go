@@ -211,7 +211,7 @@ func TestAPIGetTransactionsToApprove(t *testing.T) {
 		var server = RandomNode()
 		api := NewAPI(server, nil)
 
-		resp, err = api.GetTransactionsToApprove(Depth)
+		resp, err = api.GetTransactionsToApprove(Depth, DefaultNumberOfWalks, "")
 		if err == nil {
 			break
 		}
@@ -248,6 +248,23 @@ func TestAPIGetLatestInclusion(t *testing.T) {
 		t.Errorf("GetLatestInclustion() expected err to be nil but got %v", err)
 	case len(resp) == 0:
 		t.Error("GetLatestInclustion() is invalid resp:", resp)
+	}
+}
+
+func TestAPICheckConsistency(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+	var server = RandomNode()
+	api := NewAPI(server, nil)
+
+	resp, err := api.CheckConsistency([]Trytes{"NLNRYUTSLRQONSQEXBAJI9AIOJOEEJDOFJTETPFMB9AEEPUDIXXOTKXG9BYALEXOMSUYJEJSCZTY99999"})
+
+	switch {
+	case err != nil:
+		t.Errorf("CheckConsistency() expected err to be nil but got '%v'", err)
+	case resp.State != true:
+		t.Error("CheckConsistency() expected true, got false")
 	}
 }
 
