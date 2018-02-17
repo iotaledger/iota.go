@@ -61,13 +61,21 @@ var stringConvCases = []tryteStringConversion{
 	{s: "Z", t: Trytes("IC")},
 	{s: "this is a test", t: Trytes("HDWCXCGDEAXCGDEAPCEAHDTCGDHD")},
 	{s: "Golang is the best lang!", t: Trytes("QBCD9DPCBDVCEAXCGDEAHDWCTCEAQCTCGDHDEA9DPCBDVCFA")},
+
+	{s: "", t: ""},
+	// Returns error
+	{s: "Quizdeltagerne spiste jordbær med fløde, mens cirkusklovnen", t: ""},
 }
 
 func TestValidStringToTrytes(t *testing.T) {
 	for _, tc := range stringConvCases {
-		if FromString(tc.s) != tc.t {
-			t.Fatalf("FromString(%q) should be %#v but returnd %s",
-				tc.s, tc.t, FromString(tc.s))
+		result, err := FromString(tc.s)
+		if err != nil && tc.t != "" {
+			t.Fatalf("FromString(%q) returned error: %s", tc.s, err)
+		}
+		if result != tc.t {
+			t.Fatalf("FromString(%q) should be %#v but returned %s",
+				tc.s, tc.t, result)
 		}
 	}
 }
@@ -75,7 +83,7 @@ func TestValidStringToTrytes(t *testing.T) {
 func TestValidTrytesToString(t *testing.T) {
 	for _, tc := range stringConvCases {
 		if ToString(tc.t) != tc.s {
-			t.Fatalf("ToString(%q) should be %#v but returnd %s",
+			t.Fatalf("ToString(%q) should be %#v but returned %s",
 				tc.t, tc.s, ToString(tc.t))
 		}
 	}
