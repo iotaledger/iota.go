@@ -339,6 +339,32 @@ func ToTrytes(t string) (Trytes, error) {
 	return tr, err
 }
 
+const alphabet = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func ToString(t Trytes) string {
+	var output string
+	for i := 0; i < len(t); i += 2 {
+		v1 := t[i]
+		v2 := t[i+1]
+		decimal := v1 + v2*27
+		c := rune(decimal)
+		output += string(c)
+	}
+	return output
+}
+
+func FromString(s string) Trytes {
+	var output string
+	chars := []rune(s)
+
+	for _, c := range chars {
+		v1 := c % 27
+		v2 := (c - v1) / 27
+		output += string(alphabet[v1]) + string(alphabet[v2])
+	}
+	return Trytes(output)
+}
+
 // Trits converts a slice of trytes into trits,
 func (t Trytes) Trits() Trits {
 	trits := make(Trits, len(t)*3)

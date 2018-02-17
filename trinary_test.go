@@ -52,6 +52,35 @@ func TestValidTryte(t *testing.T) {
 	}
 }
 
+type tryteStringConversion struct {
+	s string
+	t Trytes
+}
+
+var stringConvCases = []tryteStringConversion{
+	{s: "Z", t: Trytes("IC")},
+	{s: "this is a test", t: Trytes("HDWCXCGDEAXCGDEAPCEAHDTCGDHD")},
+	{s: "Golang is the best lang!", t: Trytes("QBCD9DPCBDVCEAXCGDEAHDWCTCEAQCTCGDHDEA9DPCBDVCFA")},
+}
+
+func TestValidStringToTrytes(t *testing.T) {
+	for _, tc := range stringConvCases {
+		if FromString(tc.s) != tc.t {
+			t.Fatalf("FromString(%q) should be %#v but returnd %s",
+				tc.s, tc.t, FromString(tc.s))
+		}
+	}
+}
+
+func TestValidTrytesToString(t *testing.T) {
+	for _, tc := range stringConvCases {
+		if ToString(tc.t) != tc.s {
+			t.Fatalf("ToString(%q) should be %#v but returnd %s",
+				tc.t, tc.s, ToString(tc.t))
+		}
+	}
+}
+
 func TestValidTrytes(t *testing.T) {
 	type validTryteTC struct {
 		in    Trytes
