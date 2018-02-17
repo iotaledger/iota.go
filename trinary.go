@@ -339,8 +339,6 @@ func ToTrytes(t string) (Trytes, error) {
 	return tr, err
 }
 
-const alphabet = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 func ToString(t Trytes) string {
 	var output string
 	for i := 0; i < len(t); i += 2 {
@@ -353,16 +351,19 @@ func ToString(t Trytes) string {
 	return output
 }
 
-func FromString(s string) Trytes {
+func FromString(s string) (Trytes, error) {
 	var output string
 	chars := []rune(s)
 
 	for _, c := range chars {
+		if c > 127 {
+			return "", errors.New("Input string contains non-ASCII characters")
+		}
 		v1 := c % 27
 		v2 := (c - v1) / 27
-		output += string(alphabet[v1]) + string(alphabet[v2])
+		output += string(TryteAlphabet[v1]) + string(TryteAlphabet[v2])
 	}
-	return Trytes(output)
+	return Trytes(output), nil
 }
 
 // Trits converts a slice of trytes into trits,
