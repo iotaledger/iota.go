@@ -342,8 +342,8 @@ func ToTrytes(t string) (Trytes, error) {
 func ToString(t Trytes) string {
 	var output string
 	for i := 0; i < len(t); i += 2 {
-		v1 := t[i]
-		v2 := t[i+1]
+		v1 := strings.IndexRune(TryteAlphabet, rune(t[i]))
+		v2 := strings.IndexRune(TryteAlphabet, rune(t[i+1]))
 		decimal := v1 + v2*27
 		c := rune(decimal)
 		output += string(c)
