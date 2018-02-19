@@ -339,31 +339,26 @@ func ToTrytes(t string) (Trytes, error) {
 	return tr, err
 }
 
-func ToString(t Trytes) string {
-	var output string
+func ToBytes(t Trytes) []byte {
+	var output []byte
 	for i := 0; i < len(t); i += 2 {
 		v1 := strings.IndexRune(TryteAlphabet, rune(t[i]))
 		v2 := strings.IndexRune(TryteAlphabet, rune(t[i+1]))
 		decimal := v1 + v2*27
-		c := rune(decimal)
-		output += string(c)
+		c := byte(decimal)
+		output = append(output, c)
 	}
 	return output
 }
 
-func FromString(s string) (Trytes, error) {
+func FromBytes(b []byte) Trytes {
 	var output string
-	chars := []rune(s)
-
-	for _, c := range chars {
-		if c > 127 {
-			return "", errors.New("Input string contains non-ASCII characters")
-		}
+	for _, c := range b {
 		v1 := c % 27
 		v2 := (c - v1) / 27
 		output += string(TryteAlphabet[v1]) + string(TryteAlphabet[v2])
 	}
-	return Trytes(output), nil
+	return Trytes(output)
 }
 
 // Trits converts a slice of trytes into trits,

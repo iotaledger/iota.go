@@ -52,26 +52,24 @@ func TestValidTryte(t *testing.T) {
 	}
 }
 
-func TestValidStringToTrytes(t *testing.T) {
-	type tryteStringConversion struct {
-		s string
-		t Trytes
-	}
+type tryteByteConversion struct {
+	s []byte
+	t Trytes
+}
 
-	var stringConvCases = []tryteStringConversion{
-		{s: "Z", t: Trytes("IC")},
-		{s: "this is a test", t: Trytes("HDWCXCGDEAXCGDEAPCEAHDTCGDHD")},
-		{s: "Golang is the best lang!", t: Trytes("QBCD9DPCBDVCEAXCGDEAHDWCTCEAQCTCGDHDEA9DPCBDVCFA")},
+var stringConvCases = []tryteByteConversion{
+	{s: []byte("Z"), t: Trytes("IC")},
+	{s: []byte("this is a test"), t: Trytes("HDWCXCGDEAXCGDEAPCEAHDTCGDHD")},
+	{s: []byte("Golang is the best lang!"),
+		t: Trytes("QBCD9DPCBDVCEAXCGDEAHDWCTCEAQCTCGDHDEA9DPCBDVCFA")},
+	{s: []byte("Quizdeltagerne spiste jordbær med fløde, mens cirkusklovnen"),
+		t: "9CIDXCNDSCTC9DHDPCVCTCFDBDTCEAGDDDXCGDHDTCEAYCCDFDSCQCFGDFFDEAADTCSCEAUC9DFGVFSCTCQAEAADTCBDGDEARCXCFDZCIDGDZC9DCDJDBDTCBD"},
+	{s: []byte(""), t: ""},
+}
 
-		{s: "", t: ""},
-		// Returns error
-		{s: "Quizdeltagerne spiste jordbær med fløde, mens cirkusklovnen", t: ""},
-	}
+func TestValidBytesToTrytes(t *testing.T) {
 	for _, tc := range stringConvCases {
-		result, err := FromString(tc.s)
-		if err != nil && tc.t != "" {
-			t.Fatalf("FromString(%q) returned error: %s", tc.s, err)
-		}
+		result := FromBytes([]byte(tc.s))
 		if result != tc.t {
 			t.Fatalf("FromString(%q) should be %#v but returned %s",
 				tc.s, tc.t, result)
@@ -79,23 +77,11 @@ func TestValidStringToTrytes(t *testing.T) {
 	}
 }
 
-func TestValidTrytesToString(t *testing.T) {
-	type tryteStringConversion struct {
-		s string
-		t Trytes
-	}
-
-	var stringConvCases = []tryteStringConversion{
-		{s: "Z", t: Trytes("IC")},
-		{s: "this is a test", t: Trytes("HDWCXCGDEAXCGDEAPCEAHDTCGDHD")},
-		{s: "Golang is the best lang!", t: Trytes("QBCD9DPCBDVCEAXCGDEAHDWCTCEAQCTCGDHDEA9DPCBDVCFA")},
-
-		{s: "", t: ""},
-	}
+func TestValidTrytesToBytes(t *testing.T) {
 	for _, tc := range stringConvCases {
-		if ToString(tc.t) != tc.s {
+		if string(ToBytes(tc.t)) != string(tc.s) {
 			t.Fatalf("ToString(%q) should be %#v but returned %s",
-				tc.t, tc.s, ToString(tc.t))
+				tc.t, tc.s, ToBytes(tc.t))
 		}
 	}
 }
