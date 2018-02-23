@@ -1,4 +1,4 @@
-// +build linux,amd64
+// +build linux,darwin,windows amd64
 
 /*
 MIT License
@@ -26,8 +26,8 @@ SOFTWARE.
 
 package giota
 
-// #cgo LDFLAGS: -msse2
-// #cgo CFLAGS:  -msse2 -Wall
+// #cgo LDFLAGS:
+// #cgo CFLAGS: -Wall
 /*
 #include <stdio.h>
 #include <string.h>
