@@ -28,7 +28,7 @@ import (
 	"fmt"
 	"hash"
 
-	keccak "leb.io/hashland/keccakpg"
+	keccak "github.com/tildeleb/hashland/keccakpg"
 )
 
 // Kerl ...
