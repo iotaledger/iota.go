@@ -172,6 +172,7 @@ type GetNodeInfoResponse struct {
 	AppName                            string `json:"appName"`
 	AppVersion                         string `json:"appVersion"`
 	Duration                           int64  `json:"duration"`
+	JREVersion                         string `json:"jreVersion"`
 	JREAvailableProcessors             int64  `json:"jreAvailableProcessors"`
 	JREFreeMemory                      int64  `json:"jreFreeMemory"`
 	JREMaxMemory                       int64  `json:"jreMaxMemory"`
