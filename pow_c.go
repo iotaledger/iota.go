@@ -190,7 +190,7 @@ void para(char in[], unsigned long l[], unsigned long h[])
       l[i] = LBITS;
       h[i] = HBITS;
       break;
-    case -1:
+    case (char)-1:
       l[i] = HBITS;
       h[i] = LBITS;
       break;
