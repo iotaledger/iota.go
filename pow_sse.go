@@ -1,4 +1,4 @@
-// +build linux,amd64
+// +build linux,windows amd64
 
 /*
 MIT License

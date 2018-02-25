@@ -34,39 +34,46 @@ type tx struct {
 	timestamp string
 }
 
-func TestBundle(t *testing.T) {
-	tests := []struct {
-		name         string
-		transactions []tx
-		hash         Trytes
-	}{
-		{
-			name: "test transaction bundle validates correctly",
-			transactions: []tx{
-				tx{
-					addr:      "PQTDJXXKSNYZGRJDXEHHMNCLUVOIRZC9VXYLSITYMVCQDQERAHAUZJKRNBQEUHOLEAXRUSQBNYVJWESYR",
-					value:     50,
-					timestamp: "2017-03-11 12:25:05 +0900 JST",
-				},
-				tx{
-					addr:      "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL",
-					value:     -100,
-					timestamp: "2017-03-11 12:25:18 +0900 JST",
-				},
-				tx{
-					addr:      "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL",
-					value:     0,
-					timestamp: "2017-03-11 12:25:18 +0900 JST",
-				},
-				tx{
-					addr:      "GXZWHBLRGGY9BCWCAVTFGHCOEWDBFLBTVTIBOQICKNLCCZIPYGPESAPUPDNBDQYENNMJTWSWDHZTYEHAJ",
-					value:     50,
-					timestamp: "2017-03-11 12:25:28 +0900 JST",
-				},
-			},
-			hash: "ERWNDFZINIYEJQGLNFEZOU9FBHQLZOINIWJVLQ9UONHGRPSSYX9E9KQZMWCULVDNDUSUDSDMVVOICKTSY",
-		},
+func BenchmarkBundleHash(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		PowC(txTrytes, 14)
 	}
+}
+
+var tests = []struct {
+	name         string
+	transactions []tx
+	hash         Trytes
+}{
+	{
+		name: "test transaction bundle validates correctly",
+		transactions: []tx{
+			tx{
+				addr:      "PQTDJXXKSNYZGRJDXEHHMNCLUVOIRZC9VXYLSITYMVCQDQERAHAUZJKRNBQEUHOLEAXRUSQBNYVJWESYR",
+				value:     50,
+				timestamp: "2017-03-11 12:25:05 +0900 JST",
+			},
+			tx{
+				addr:      "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL",
+				value:     -100,
+				timestamp: "2017-03-11 12:25:18 +0900 JST",
+			},
+			tx{
+				addr:      "KTXFP9XOVMVWIXEWMOISJHMQEXMYMZCUGEQNKGUNVRPUDPRX9IR9LBASIARWNFXXESPITSLYAQMLCLVTL",
+				value:     0,
+				timestamp: "2017-03-11 12:25:18 +0900 JST",
+			},
+			tx{
+				addr:      "GXZWHBLRGGY9BCWCAVTFGHCOEWDBFLBTVTIBOQICKNLCCZIPYGPESAPUPDNBDQYENNMJTWSWDHZTYEHAJ",
+				value:     50,
+				timestamp: "2017-03-11 12:25:28 +0900 JST",
+			},
+		},
+		hash: "ERWNDFZINIYEJQGLNFEZOU9FBHQLZOINIWJVLQ9UONHGRPSSYX9E9KQZMWCULVDNDUSUDSDMVVOICKTSY",
+	},
+}
+
+func TestBundle(t *testing.T) {
 
 	for _, tt := range tests {
 		var bs Bundle
