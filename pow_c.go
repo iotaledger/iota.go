@@ -110,7 +110,7 @@ int incr(unsigned long *mid_low, unsigned long *mid_high)
   return i == HASH_LENGTH;
 }
 
-void seri(unsigned long *l, unsigned long *h, int n, char *r)
+void seri(unsigned long *l, unsigned long *h, int n, signed char *r)
 {
   int i = 0;
   for (i = HASH_LENGTH - NONCE_LENGTH; i < HASH_LENGTH; i++)
@@ -154,7 +154,7 @@ int check(unsigned long *l, unsigned long *h, int m)
 
 int stopC=1;
 
-long long int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *nonce)
+long long int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, signed char *nonce)
 {
   int n = 0;
   long long int i = 0;
@@ -175,7 +175,7 @@ long long int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, char *no
 }
 
 // 01:-1 11:0 10:1
-void para(char in[], unsigned long l[], unsigned long h[])
+void para(signed char in[], unsigned long l[], unsigned long h[])
 {
   int i = 0;
   for (i = 0; i < STATE_LENGTH; i++)
@@ -190,7 +190,7 @@ void para(char in[], unsigned long l[], unsigned long h[])
       l[i] = LBITS;
       h[i] = HBITS;
       break;
-    case (char)-1:
+    case -1:
       l[i] = HBITS;
       h[i] = LBITS;
       break;
@@ -214,7 +214,7 @@ void incrN(int n,unsigned long *mid_low, unsigned long *mid_high)
 }
 
 
-long long int pwork(char mid[], int mwm, char nonce[],int n)
+long long int pwork(signed char mid[], int mwm, signed char nonce[],int n)
 {
   unsigned long lmid[STATE_LENGTH] = {0}, hmid[STATE_LENGTH] = {0};
 
@@ -276,8 +276,8 @@ func PowC(trytes Trytes, mwm int) (Trytes, error) {
 			nonce := make(Trits, NonceTrinarySize)
 
 			// nolint: gas
-			r := C.pwork((*C.char)(unsafe.Pointer(
-				&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
+			r := C.pwork((*C.schar)(unsafe.Pointer(
+				&c.state[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
 
 			mutex.Lock()
 
