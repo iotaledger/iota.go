@@ -44,8 +44,10 @@ typedef union {double d; unsigned long long l;} dl;
 #define HBITS ( ( (dl) 0xFFFFFFFFFFFFFFFFuLL ).d )
 #define LBITS ( ( (dl) 0x0000000000000000uLL ).d )
 #define HASH_LENGTH 243              //trits
+#define NONCE_LENGTH 81
 #define STATE_LENGTH 3 * HASH_LENGTH //trits
 #define TX_LENGTH 2673               //trytes
+#define INCR_START HASH_LENGTH - NONCE_LENGTH + 4 + 27
 
 #define LOW00  ( ( (dl)0xDB6DB6DB6DB6DB6DuLL ).d ) //0b1101101101101101101101101101101101101101101101101101101101101101
 #define HIGH00 ( ( (dl)0xB6DB6DB6DB6DB6DBuLL ).d ) //0b1011011011011011011011011011011011011011011011011011011011011011
@@ -110,7 +112,7 @@ void transform256(__m256d *lmid, __m256d *hmid)
   __m256d alpha, beta, gamma, delta,ngamma;
   __m256d *lto = lmid + STATE_LENGTH, *hto = hmid + STATE_LENGTH;
   __m256d *lfrom = lmid, *hfrom = hmid;
-  for (r = 0; r < 26; r++)
+  for (r = 0; r < 80; r++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -155,7 +157,7 @@ int incr256(__m256d *mid_low, __m256d *mid_high)
   int i;
   __m256d carry;
   carry = _mm256_set_pd(LBITS, LBITS,LBITS,LBITS);
-  for (i = 6; i < HASH_LENGTH && (i == 6 || carry[0]); i++)
+  for (i = INCR_START; i < HASH_LENGTH && (i == INCR_START || carry[0]); i++)
   {
     __m256d low = mid_low[i], high = mid_high[i];
     mid_low[i] = _mm256_xor_pd(high, low);
@@ -183,7 +185,7 @@ void seri256(__m256d *low, __m256d *high, int n, char *r)
     n -=  192;
     index = 3;
   }
-  for (i = 0; i < HASH_LENGTH; i++)
+  for (i = HASH_LENGTH-NONCE_LENGTH; i < HASH_LENGTH; i++)
   {
     long long l= ((dl)low[i][index]).l;
     long long h= ((dl)high[i][index]).l;
@@ -191,15 +193,15 @@ void seri256(__m256d *low, __m256d *high, int n, char *r)
     long hh = (h >> n) & 1;
     if (hh == 0 && ll == 1)
     {
-      r[i] = -1;
+      r[i+NONCE_LENGTH-HASH_LENGTH] = -1;
     }
     if (hh == 1 && ll == 1)
     {
-      r[i] = 0;
+      r[i+NONCE_LENGTH-HASH_LENGTH] = 0;
     }
     if (hh == 1 && ll == 0)
     {
-      r[i] = 1;
+      r[i+NONCE_LENGTH-HASH_LENGTH] = 1;
     }
   }
 }
@@ -283,7 +285,7 @@ void incrN256(int n,__m256d *mid_low, __m256d *mid_high)
   for (j=0;j<n;j++){
     __m256d carry;
     carry =_mm256_set_pd(HBITS, HBITS,HBITS,HBITS);
-    for (i = HASH_LENGTH * 2 / 3; i < HASH_LENGTH &&  carry[0]; i++)
+    for (i = HASH_LENGTH * 2 / 3 + 4; i < HASH_LENGTH * 2/3 + 4 + 27 &&  carry[0]; i++)
     {
       __m256d low = mid_low[i], high = mid_high[i];
       mid_low[i] = _mm256_xor_pd(high, low);
@@ -298,18 +300,19 @@ int pwork256(char mid[], int mwm, char nonce[],int n,int *stop)
   __m256d lmid[STATE_LENGTH], hmid[STATE_LENGTH];
 
   para256(mid, lmid, hmid);
-  lmid[0] = _mm256_set_pd(LOW00, LOW01,LOW02,LOW03);
-  hmid[0] = _mm256_set_pd(HIGH00, HIGH01,HIGH02,HIGH03);
-  lmid[1] = _mm256_set_pd(LOW10, LOW11,LOW12,LOW13);
-  hmid[1] = _mm256_set_pd(HIGH10,HIGH11,HIGH12,HIGH13);
-  lmid[2] = _mm256_set_pd(LOW20, LOW21,LOW22,LOW23);
-  hmid[2] = _mm256_set_pd(HIGH20,HIGH21,HIGH32,HIGH23);
-  lmid[3] = _mm256_set_pd(LOW30, LOW31,LOW32,LOW33);
-  hmid[3] = _mm256_set_pd(HIGH30,HIGH31,HIGH32,HIGH33);
-  lmid[4] = _mm256_set_pd(LOW40, LOW41,LOW42,LOW43);
-  hmid[4] = _mm256_set_pd(HIGH40,HIGH41,HIGH42,HIGH43);
-  lmid[5] = _mm256_set_pd(LOW50, LOW51,LOW52,LOW53);
-  hmid[5] = _mm256_set_pd(HIGH50,HIGH51,HIGH52,HIGH53);
+  int offset = HASH_LENGTH - NONCE_LENGTH;
+  lmid[offset] = _mm256_set_pd(LOW00, LOW01,LOW02,LOW03);
+  hmid[offset] = _mm256_set_pd(HIGH00, HIGH01,HIGH02,HIGH03);
+  lmid[offset+1] = _mm256_set_pd(LOW10, LOW11,LOW12,LOW13);
+  hmid[offset+1] = _mm256_set_pd(HIGH10,HIGH11,HIGH12,HIGH13);
+  lmid[offset+2] = _mm256_set_pd(LOW20, LOW21,LOW22,LOW23);
+  hmid[offset+2] = _mm256_set_pd(HIGH20,HIGH21,HIGH22,HIGH23);
+  lmid[offset+3] = _mm256_set_pd(LOW30, LOW31,LOW32,LOW33);
+  hmid[offset+3] = _mm256_set_pd(HIGH30,HIGH31,HIGH32,HIGH33);
+  lmid[offset+4] = _mm256_set_pd(LOW40, LOW41,LOW42,LOW43);
+  hmid[offset+4] = _mm256_set_pd(HIGH40,HIGH41,HIGH42,HIGH43);
+  lmid[offset+5] = _mm256_set_pd(LOW50, LOW51,LOW52,LOW53);
+  hmid[offset+5] = _mm256_set_pd(HIGH50,HIGH51,HIGH52,HIGH53);
 
 	incrN256(n, lmid, hmid);
   return loop256(lmid, hmid, mwm, nonce,stop);
@@ -322,7 +325,7 @@ import (
 )
 
 func init() {
-	pows["PowAVX"] = PowAVX
+	powFuncs["PowAVX"] = PowAVX
 }
 
 var countAVX int64
@@ -332,7 +335,8 @@ func PowAVX(trytes Trytes, mwm int) (Trytes, error) {
 	countAVX = 0
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
-
+    tr := trytes.Trits()
+    copy(c.state, tr[transactionTrinarySize-HashSize:])
 	var (
 		stop   int64
 		result Trytes
@@ -343,7 +347,7 @@ func PowAVX(trytes Trytes, mwm int) (Trytes, error) {
 	for n := 0; n < PowProcs; n++ {
 		wg.Add(1)
 		go func(n int) {
-			nonce := make(Trits, HashSize)
+			nonce := make(Trits, NonceTrinarySize)
 
 			// nolint: gas
 			r := C.pwork256((*C.char)(
