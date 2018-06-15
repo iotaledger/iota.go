@@ -80,7 +80,7 @@ func (bs *Bundle) Add(num int, address Address, value int64, timestamp time.Time
 
 // Finalize filled sigs, bundlehash, and indices elements in bundle.
 func (bs Bundle) Finalize(sig []Trytes) {
-	h := bs.getValidHash()
+	h := bs.GetValidHash()
 
 	for i := range bs {
 		if len(sig) > i && sig[i] != "" {
@@ -107,9 +107,9 @@ func (bs Bundle) Hash() Trytes {
 	return h.Trytes()
 }
 
-// getValidHash calculates hash of Bundle and increases ObsoleteTag value
+// GetValidHash calculates hash of Bundle and increases ObsoleteTag value
 // until normalized hash doesn't have any 13
-func (bs Bundle) getValidHash() Trytes {
+func (bs Bundle) GetValidHash() Trytes {
 	k := NewKerl()
 	hashedLen := BundleTrinaryOffset - AddressTrinaryOffset
 
