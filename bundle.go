@@ -144,6 +144,12 @@ func (bs Bundle) getValidHash() Trytes {
 	}
 }
 
+// GetValidHash exposes getValidHash, as needed when using external 
+// signing implementation
+func (bs Bundle) GetValidHash() Trytes {
+    return bs.getValidHash()
+}
+
 func getTritsToHash(buf Trits, b *Transaction, i, l int) {
 	copy(buf, Trytes(b.Address).Trits())
 	copy(buf[243:], Int2Trits(b.Value, ValueTrinarySize))
