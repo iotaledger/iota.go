@@ -1,8 +1,8 @@
 language: go
 
 go:
-  - 1.8.x
   - 1.9.x
+  - 1.10.x
 
 install:
 - go get github.com/iotaledger/giota
@@ -11,8 +11,8 @@ before_install:
 - go get -u github.com/alecthomas/gometalinter
 - go get -u github.com/mattn/goveralls
 - export PATH=$PATH:$GOPATH/bin
-- export CGO_LDFLAGS_ALLOW='-msse2'
-- export CGO_CFLAGS_ALLOW='-msse2'
+- export CGO_LDFLAGS_ALLOW='-msse2,-mavx'
+- export CGO_CFLAGS_ALLOW='-msse2,-mavx'
 - gometalinter --install --update
 
 script:
