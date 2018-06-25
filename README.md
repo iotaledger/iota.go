@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/iotaledger/giota.svg?branch=master)](https://travis-ci.org/iotaledger/giota)
 [![GoDoc](https://godoc.org/github.com/iotaledger/giota?status.svg)](https://godoc.org/github.com/iotaledger/giota)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/giota/master/LICENSE)
-
+[![Go Report Card](https://goreportcard.com/badge/github.com/iotaledger/giota)](https://goreportcard.com/report/github.com/iotaledger/giota)
 
 gIOTA
 =====
