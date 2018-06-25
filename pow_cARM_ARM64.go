@@ -179,7 +179,7 @@ int checkARM64(uint64x2_t *l, uint64x2_t *h, int m)
   return -2;
 }
 
-int stop_ArmNEON=1;
+int stopCARM64=1;
 
 long long int loopARM64(uint64x2_t *lmid, uint64x2_t *hmid, int m, signed char *nonce)
 {
@@ -187,7 +187,7 @@ long long int loopARM64(uint64x2_t *lmid, uint64x2_t *hmid, int m, signed char *
   long long int i = 0;
 
   uint64x2_t lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
-  for (i = 0; !incrARM64(lmid, hmid) && !stop_ArmNEON; i++)
+  for (i = 0; !incrARM64(lmid, hmid) && !stopCARM64; i++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -298,9 +298,9 @@ func init() {
 	powFuncs["PowCARM64"] = PowCARM64
 }
 
-var countC128 int64
+var countCARM64 int64
 
-// PowC128 is a proof of work library for Iota that uses the standard __int128 C type that is available in 64 bit processors (AMD64 and ARM64).
+// PowCARM64 is a proof of work library for Iota that uses the standard __int128 C type that is available in 64 bit processors (AMD64 and ARM64).
 // This PoW calculator follows common C standards and does not rely on SSE which is AMD64 specific.
 func PowCARM64(trytes Trytes, mwm int) (Trytes, error) {
 	if C.stopCARM64 == 0 {
@@ -331,11 +331,11 @@ func PowCARM64(trytes Trytes, mwm int) (Trytes, error) {
 			nonce := make(Trits, NonceTrinarySize)
 
 			// nolint: gas
-			r := C.pworkCARM64((*C.schar)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
+			r := C.pworkARM64((*C.schar)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
 			mutex.Lock()
 
-      fmt.Printf("r: %d\n", r)
-      fmt.Printf("nonce len: %d\n", len(nonce))
+			// fmt.Printf("r: %d\n", r)
+			// fmt.Printf("nonce len: %d\n", len(nonce))
 
 			switch {
 			case r >= 0:
