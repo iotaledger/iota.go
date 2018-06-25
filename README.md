@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/iotaledger/iota.lib.go.svg?branch=master)](https://travis-ci.org/iotaledger/iota.lib.go)
-[![GoDoc](https://godoc.org/github.com/iotaledger/iota.lib.go?status.svg)](https://godoc.org/github.com/iotaledger/iota.lib.go)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/iota.lib.go/master/LICENSE)
+[![Build Status](https://travis-ci.org/iotaledger/giota.svg?branch=master)](https://travis-ci.org/iotaledger/giota)
+[![GoDoc](https://godoc.org/github.com/iotaledger/giota?status.svg)](https://godoc.org/github.com/iotaledger/giota)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/giota/master/LICENSE)
 
 
 gIOTA
@@ -14,7 +14,7 @@ Consider to use a dependency tool to use vendoring,
 e.g. [godep](https://github.com/tools/godep), [glide](https://github.com/Masterminds/glide) or [govendor](https://github.com/kardianos/govendor).
 
 
-Refer to [godoc](https://godoc.org/github.com/iotaledger/iota.lib.go) for details.
+Refer to [godoc](https://godoc.org/github.com/iotaledger/giota) for details.
 
 Install
 ====
@@ -133,7 +133,7 @@ then it outputs like:
 	pow_sse_test.go:52: 2292 kH/sec on SSE PoW
 ```
 
-Note that in [travis CI](https://travis-ci.org/iotaledger/iota.lib.go/jobs/227452499)
+Note that in [travis CI](https://travis-ci.org/iotaledger/giota/jobs/227452499)
 the result is:
 
 ```
