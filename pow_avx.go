@@ -1,5 +1,5 @@
 // +build avx
-// +build linux,amd64
+// +build linux amd64
 
 /*
 MIT License
@@ -27,7 +27,7 @@ SOFTWARE.
 
 package giota
 
-// #cgo LDFLAGS: -mavx
+// #cgo LDFLAGS:
 // #cgo CFLAGS: -mavx -Wall
 /*
 #include <stdio.h>
@@ -335,8 +335,8 @@ func PowAVX(trytes Trytes, mwm int) (Trytes, error) {
 	countAVX = 0
 	c := NewCurl()
 	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
-    tr := trytes.Trits()
-    copy(c.state, tr[transactionTrinarySize-HashSize:])
+	tr := trytes.Trits()
+	copy(c.state, tr[transactionTrinarySize-HashSize:])
 	var (
 		stop   int64
 		result Trytes

@@ -1,5 +1,5 @@
 // +build avx
-// +build linux,amd64
+// +build linux amd64
 
 /*
 MIT License
