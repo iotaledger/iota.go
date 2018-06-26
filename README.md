@@ -1,10 +1,9 @@
-[![Build Status](https://travis-ci.org/iotaledger/iota.lib.go.svg?branch=master)](https://travis-ci.org/iotaledger/iota.lib.go)
-[![GoDoc](https://godoc.org/github.com/iotaledger/iota.lib.go?status.svg)](https://godoc.org/github.com/iotaledger/iota.lib.go)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/iota.lib.go/master/LICENSE)
+[![Build Status](https://travis-ci.org/iotaledger/giota.svg?branch=master)](https://travis-ci.org/iotaledger/giota)
+[![GoDoc](https://godoc.org/github.com/iotaledger/giota?status.svg)](https://godoc.org/github.com/iotaledger/giota)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/giota/master/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/iotaledger/giota)](https://goreportcard.com/report/github.com/iotaledger/giota)
 
-
-gIOTA
-=====
+# gIOTA
 
 Client library for the IOTA reference implementation (IRI).
 
@@ -14,26 +13,24 @@ Consider to use a dependency tool to use vendoring,
 e.g. [godep](https://github.com/tools/godep), [glide](https://github.com/Masterminds/glide) or [govendor](https://github.com/kardianos/govendor).
 
 
-Refer to [godoc](https://godoc.org/github.com/iotaledger/iota.lib.go) for details.
+Refer to [godoc](https://godoc.org/github.com/iotaledger/giota) for details.
 
-Install
-====
+## Install
 
 You will need C compiler for linux to compile PoW routine in C.
 
 ```
-    $ go get -u github.com/iotaledger/giota
+$ go get -u github.com/iotaledger/giota
 ```
 
-You will need C compiler and OpenCL environemnt(hardware and software)  to compile PoW routine for GPU 
+You will need C compiler and OpenCL environment (hardware and software) to compile PoW routine for GPU 
 and need to add `opencl` tag when you build.
 
 ```
-	$ go build -tags=gpu
+$ go build -tags=gpu
 ```
 
-Examples
-====
+## Examples
 
 ```go
 
@@ -100,25 +97,24 @@ _, pow := giota.GetBestPoW()
 bdl, err = giota.Promote(api, tail, giota.Depth, trs, mwm, pow)
 ```
 
-PoW(Proof of Work) Benchmarking
-====
+## PoW (Proof of Work) Benchmarking
 
-You can benchmark PoWs(by C,Go,SSE) by
+You can benchmark PoWs (by C,Go,SSE) by
 
 ```
-    $ go test -v -run Pow
+$ go test -v -run Pow
 ```
 
 or if you want to add OpenCL PoW,
 
 ```
-    $ go test -tags=gpu -v -run Pow
+$ go test -tags=gpu -v -run Pow
 ```
 
 then it outputs like:
 
 ```
-	$ go test -tags=gpu -v -run Pow
+$ go test -tags=gpu -v -run Pow
 === RUN   TestPowC
 --- PASS: TestPowC (15.93s)
 	pow_c_test.go:50: 1550 kH/sec on C PoW
@@ -133,7 +129,7 @@ then it outputs like:
 	pow_sse_test.go:52: 2292 kH/sec on SSE PoW
 ```
 
-Note that in [travis CI](https://travis-ci.org/iotaledger/iota.lib.go/jobs/227452499)
+Note that in [travis CI](https://travis-ci.org/iotaledger/giota/jobs/227452499)
 the result is:
 
 ```
@@ -158,8 +154,8 @@ Now IOTA uses Min Weight Magnitude = 15, which means
 So it takes just 14/20 < 0.7sec for 1 tx to do PoW.
 
 
-TODO
-=========================
+## TODO
+
 
 * [ ] Multisig
 * [ ] More tests :(
