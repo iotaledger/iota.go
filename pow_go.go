@@ -265,9 +265,9 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 	stopGO = false
 
 	c := NewCurl()
-	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
+	c.Absorb(trytes[:(TransactionTrinarySize-HashSize)/3])
 	tr := trytes.Trits()
-	copy(c.state, tr[transactionTrinarySize-HashSize:])
+	copy(c.state, tr[TransactionTrinarySize-HashSize:])
 
 	var (
 		result Trytes

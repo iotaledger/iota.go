@@ -334,9 +334,9 @@ var countAVX int64
 func PowAVX(trytes Trytes, mwm int) (Trytes, error) {
 	countAVX = 0
 	c := NewCurl()
-	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
+	c.Absorb(trytes[:(TransactionTrinarySize-HashSize)/3])
 	tr := trytes.Trits()
-	copy(c.state, tr[transactionTrinarySize-HashSize:])
+	copy(c.state, tr[TransactionTrinarySize-HashSize:])
 	var (
 		stop   int64
 		result Trytes
