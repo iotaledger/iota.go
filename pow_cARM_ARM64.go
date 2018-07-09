@@ -314,9 +314,9 @@ func PowCARM64(trytes Trytes, mwm int) (Trytes, error) {
 	C.stopCARM64 = 0
 	countCARM64 = 0
 	c := NewCurl()
-	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
+	c.Absorb(trytes[:(TransactionTrinarySize-HashSize)/3])
 	tr := trytes.Trits()
-	copy(c.state, tr[transactionTrinarySize-HashSize:])
+	copy(c.state, tr[TransactionTrinarySize-HashSize:])
 
 	var (
 		result Trytes

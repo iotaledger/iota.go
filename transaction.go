@@ -91,7 +91,7 @@ const (
 	NonceTrinaryOffset                         = AttachmentTimestampUpperBoundTrinaryOffset + AttachmentTimestampUpperBoundTrinarySize
 	NonceTrinarySize                           = 81
 
-	transactionTrinarySize = SignatureMessageFragmentTrinarySize + AddressTrinarySize +
+	TransactionTrinarySize = SignatureMessageFragmentTrinarySize + AddressTrinarySize +
 		ValueTrinarySize + ObsoleteTagTrinarySize + TimestampTrinarySize +
 		CurrentIndexTrinarySize + LastIndexTrinarySize + BundleTrinarySize +
 		TrunkTransactionTrinarySize + BranchTransactionTrinarySize +
@@ -121,7 +121,7 @@ func checkTx(trytes Trytes) error {
 	switch {
 	case err != nil:
 		return errors.New("invalid transaction " + err.Error())
-	case len(trytes) != transactionTrinarySize/3:
+	case len(trytes) != TransactionTrinarySize/3:
 		return errors.New("invalid trits counts in transaction")
 	case trytes[2279:2295] != "9999999999999999":
 		return errors.New("invalid value in transaction")
@@ -157,7 +157,7 @@ func (t *Transaction) parser(trits Trits) error {
 
 // Trytes converts the transaction to Trytes.
 func (t *Transaction) Trytes() Trytes {
-	tr := make(Trits, transactionTrinarySize)
+	tr := make(Trits, TransactionTrinarySize)
 	copy(tr, t.SignatureMessageFragment.Trits())
 	copy(tr[AddressTrinaryOffset:], Trytes(t.Address).Trits())
 	copy(tr[ValueTrinaryOffset:], Int2Trits(t.Value, ValueTrinarySize))

@@ -291,9 +291,9 @@ func PowCL(trytes Trytes, mwm int) (Trytes, error) {
 	stopCL = false
 	countCL = 0
 	c := NewCurl()
-	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
+	c.Absorb(trytes[:(TransactionTrinarySize-HashSize)/3])
 	tr := trytes.Trits()
-	copy(c.state, tr[transactionTrinarySize-HashSize:])
+	copy(c.state, tr[TransactionTrinarySize-HashSize:])
 
 	lmid, hmid := para(c.state)
 	lmid[0] = low0

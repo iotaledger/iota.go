@@ -26,6 +26,7 @@ package giota
 
 import (
 	"errors"
+	"fmt"
 	"runtime"
 	"sync"
 )
@@ -64,6 +65,28 @@ func init() {
 	if PowProcs != 1 {
 		PowProcs--
 	}
+}
+
+// GetPowFunc returns a specific PoW func
+func GetPowFunc(pow string) (PowFunc, error) {
+	if p, exist := powFuncs[pow]; exist {
+		return p, nil
+	}
+
+	return nil, fmt.Errorf("PowFunc %v does not exist", pow)
+}
+
+// GetPowFuncNames returns an array with the names of the existing PoW methods
+func GetPowFuncNames() (powFuncNames []string) {
+	powFuncNames = make([]string, len(powFuncs))
+
+	i := 0
+	for k := range powFuncs {
+		powFuncNames[i] = k
+		i++
+	}
+
+	return powFuncNames
 }
 
 // GetBestPoW returns most preferable PoW func.
@@ -242,9 +265,9 @@ func PowGo(trytes Trytes, mwm int) (Trytes, error) {
 	stopGO = false
 
 	c := NewCurl()
-	c.Absorb(trytes[:(transactionTrinarySize-HashSize)/3])
+	c.Absorb(trytes[:(TransactionTrinarySize-HashSize)/3])
 	tr := trytes.Trits()
-	copy(c.state, tr[transactionTrinarySize-HashSize:])
+	copy(c.state, tr[TransactionTrinarySize-HashSize:])
 
 	var (
 		result Trytes
