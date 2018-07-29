@@ -27,7 +27,7 @@ SOFTWARE.
 
 package giota
 
-// #cgo CFLAGS: -Wall
+// #cgo CFLAGS: -Wall -Wno-overflow
 /*
 #include <stdio.h>
 #include <string.h>
