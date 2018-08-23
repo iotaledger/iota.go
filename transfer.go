@@ -347,7 +347,7 @@ func doPow(tra *GetTransactionsToApproveResponse, depth int64, trytes []Transact
 	return nil
 }
 
-// SendTrytes does attachToTangle and finally, it broadcasts the transactions.
+// SendTrytes does attachToTangle and finally, it broadcasts and stores the transactions.
 func SendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow PowFunc) error {
 	tra, err := api.GetTransactionsToApprove(depth, DefaultNumberOfWalks, "")
 	if err != nil {
@@ -378,7 +378,12 @@ func SendTrytes(api *API, depth int64, trytes []Transaction, mwm int64, pow PowF
 	}
 
 	// Broadcast and store tx
-	return api.BroadcastTransactions(trytes)
+	err = api.BroadcastTransactions(trytes)
+	if err != nil {
+		return err
+	}
+
+	return api.StoreTransactions(trytes)
 }
 
 // Promote sends transanction using tail as reference (promotes the tail transaction)
@@ -422,7 +427,12 @@ func Promote(api *API, tail Trytes, depth int64, trytes []Transaction, mwm int64
 	}
 
 	// Broadcast and store tx
-	return api.BroadcastTransactions(trytes)
+	err = api.BroadcastTransactions(trytes)
+	if err != nil {
+		return err
+	}
+
+	return api.StoreTransactions(trytes)
 }
 
 // Send sends tokens. If you need to do pow locally, you must specifiy pow func,
