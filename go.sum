@@ -1,0 +1,10 @@
+github.com/luca-moser/crypto v0.0.0-20180913063011-47f96fb1bd5a h1:742JdEDlnZ726TbTk9RCz127gZ3IVYZ4XaHeWgYABrM=
+github.com/luca-moser/crypto v0.0.0-20180913063011-47f96fb1bd5a/go.mod h1:x+BMtYzmGe9LwqAH1FTt53QWVv96oh4ghwBt/Sl++Hs=
+github.com/luca-moser/crypto v0.0.0-20180913064903-fb2ff8b17554 h1:m7zuTPSAJQ8k2/wWU2weIswUUWI6kp0KjFTmqaO3aks=
+github.com/luca-moser/crypto v0.0.0-20180913064903-fb2ff8b17554/go.mod h1:x+BMtYzmGe9LwqAH1FTt53QWVv96oh4ghwBt/Sl++Hs=
+github.com/pkg/errors v0.8.0 h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=
+github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/tildeleb/hashland v0.0.0-20171003003232-07375b562dea h1:aE7nkhfs87RPvc+8ISeGEaQSQ8Fze4ZYFMDSuk39bOk=
+github.com/tildeleb/hashland v0.0.0-20171003003232-07375b562dea/go.mod h1:/mp2QpFTFwg918l4vdwufYoHrK8LQrpRjsy3wGdk/6c=
+golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b h1:2b9XGzhjiYsYPnKXoEfL7klWZQIt8IfyRCz62gCqqlQ=
+golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
