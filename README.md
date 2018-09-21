@@ -52,7 +52,7 @@ func main() {
 
 ### Creating & broadcasting transactions
 
-Publish transfers by calling `PrepareTransfers()` and piping the prepared bundle to `SendTrytes` command.
+Publish transfers by calling `PrepareTransfers()` and piping the prepared bundle to `SendTrytes()`.
 
 ```go
 package main
@@ -145,7 +145,7 @@ func main() {
 	// 1. select two tips (you can optionally provide a reference)
 	// 2. create an attachToTangleRequest to the remote node or do PoW locally if powFunc is supplied
 	// 3. broadcast the bundle to the network
-	// 4. do a storeTransaction call to the connected node
+	// 4. a storeTransaction call to the connected node
 	_, powFunc := pow.GetBestPoW()
 	bundle, err = api.SendTrytes(3, bundle, 14, powFunc)
 	must(err)
