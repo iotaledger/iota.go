@@ -274,7 +274,7 @@ func PowGo(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 
 			mutex.Lock()
 			if nonce != nil {
-				result = nonce.Trytes()
+				result = nonce.MustTrytes()
 				stopGO = true
 			}
 

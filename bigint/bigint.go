@@ -1,12 +1,16 @@
 package bigint
 
 import (
+	"github.com/pkg/errors"
 	"math"
 )
 
-func Add(b []uint32, rh []uint32) {
+var ErrUnequallySizedSlices = errors.New("operation not defined for differently sized slices")
+var ErrSubtractionWithLeftovers = errors.New("could not subtract without leftovers")
+
+func MustAdd(b []uint32, rh []uint32) {
 	if len(b) != len(rh) {
-		panic("not defined for differently sized slices")
+		panic(ErrUnequallySizedSlices)
 	}
 
 	carry := false
@@ -18,9 +22,9 @@ func Add(b []uint32, rh []uint32) {
 	}
 }
 
-func Sub(b []uint32, rh []uint32) {
+func MustSub(b []uint32, rh []uint32) {
 	if len(b) != len(rh) {
-		panic("not defined for differently sized slices")
+		panic(ErrUnequallySizedSlices)
 	}
 
 	noborrow := true
@@ -32,7 +36,7 @@ func Sub(b []uint32, rh []uint32) {
 	}
 
 	if !noborrow {
-		panic("could not subtract without leftovers")
+		panic(ErrSubtractionWithLeftovers)
 	}
 }
 
@@ -51,9 +55,9 @@ func IsNull(b []uint32) bool {
 	return true
 }
 
-func Cmp(lh, rh []uint32) int {
+func MustCmp(lh, rh []uint32) int {
 	if len(lh) != len(rh) {
-		panic("not defined for differently sized slices")
+		panic(ErrUnequallySizedSlices)
 	}
 
 	// put LSB first

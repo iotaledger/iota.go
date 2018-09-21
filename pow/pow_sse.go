@@ -296,7 +296,7 @@ func PowSSE(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 
 			switch {
 			case r >= 0:
-				result = nonce.Trytes()
+				result = nonce.MustTrytes()
 				C.stopSSE = 1
 				countSSE += int64(r)
 			default:

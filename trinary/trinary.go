@@ -14,6 +14,7 @@ var (
 	ErrInvalidTryteCharacter             = errors.New("trytes value contains invalid tryte character")
 	ErrInvalidLengthForToASCIIConversion = errors.New("trytes length must not be of odd length for ASCII conversion")
 	ErrInvalidByteSliceLength            = fmt.Errorf("BytesToTrits() is only defined for byte slices of length %d", ByteLength)
+	ErrTritsMustBeMultiplyOfThree        = errors.New("trits must be a multiple of 3 to be able to be converted to trytes")
 )
 
 const (
@@ -131,10 +132,19 @@ func (t Trits) TrailingZeros() int64 {
 	return z
 }
 
-// Trytes converts a slice of trits into trytes. panics if len(t)%3!=0
-func (t Trits) Trytes() Trytes {
+// MustTrytes converts a slice of trits into trytes. Panics if len(t)%3!=0
+func (t Trits) MustTrytes() Trytes {
+	trytes, err := t.Trytes()
+	if err != nil {
+		panic(err)
+	}
+	return trytes
+}
+
+// Trytes converts a slice of trits into trytes. Returns an error if len(t)%3!=0
+func (t Trits) Trytes() (Trytes, error) {
 	if !t.CanTrytes() {
-		panic("length of trits must be a multiple of three")
+		return "", ErrTritsMustBeMultiplyOfThree
 	}
 
 	o := make([]byte, len(t)/3)
@@ -145,7 +155,7 @@ func (t Trits) Trytes() Trytes {
 		}
 		o[i] = TryteAlphabet[j]
 	}
-	return Trytes(o)
+	return Trytes(o), nil
 }
 
 // constants regarding byte and trit lengths
@@ -185,25 +195,26 @@ func (t Trits) Bytes() ([]byte, error) {
 	}
 
 	allNeg := true
-	for _, e := range t[0 : TritHashLength-1] { // Last position should be always zero.
+	// last position should be always zero.
+	for _, e := range t[0 : TritHashLength-1] {
 		if e != -1 {
 			allNeg = false
 			break
 		}
 	}
 
-	// Trit to BigInt
+	// trit to BigInt
 	b := make([]byte, 48) // 48 bytes/384 bits
 
 	// 12 * 32 bits = 384 bits
 	base := (*(*[]uint32)(unsafe.Pointer(&b)))[0:IntLength]
 
 	if allNeg {
-		// If all trits are -1 then we're half way through all the numbers,
+		// if all trits are -1 then we're half way through all the numbers,
 		// since they're in two's complement notation.
 		copy(base, halfThree)
 
-		// Compensate for setting the last position to zero.
+		// compensate for setting the last position to zero.
 		bigint.Not(base)
 		bigint.AddSmall(base, 1)
 
@@ -237,16 +248,16 @@ func (t Trits) Bytes() ([]byte, error) {
 	}
 
 	if !bigint.IsNull(base) {
-		if bigint.Cmp(halfThree, base) <= 0 {
+		if bigint.MustCmp(halfThree, base) <= 0 {
 			// base >= HALF_3
 			// just do base - HALF_3
-			bigint.Sub(base, halfThree)
+			bigint.MustSub(base, halfThree)
 		} else {
 			// we don't have a wrapping sub.
 			// so let's use some bit magic to achieve it
 			tmp := make([]uint32, IntLength)
 			copy(tmp, halfThree)
-			bigint.Sub(tmp, base)
+			bigint.MustSub(tmp, base)
 			bigint.Not(tmp)
 			bigint.AddSmall(tmp, 1)
 			copy(base, tmp)
@@ -255,7 +266,7 @@ func (t Trits) Bytes() ([]byte, error) {
 	return bigint.Reverse(b), nil
 }
 
-// BytesToTrits converts binary to ternay
+// BytesToTrits converts binary to trinary
 func BytesToTrits(b []byte) (Trits, error) {
 	if len(b) != ByteLength {
 		return nil, ErrInvalidByteSliceLength
@@ -281,17 +292,17 @@ func BytesToTrits(b []byte) (Trits, error) {
 
 	switch {
 	case base[IntLength-1]>>msbM == 0:
-		bigint.Add(base, halfThree)
+		bigint.MustAdd(base, halfThree)
 	default:
 		bigint.Not(base)
-		if bigint.Cmp(base, halfThree) == 1 {
-			bigint.Sub(base, halfThree)
+		if bigint.MustCmp(base, halfThree) == 1 {
+			bigint.MustSub(base, halfThree)
 			flipTrits = true
 		} else {
 			bigint.AddSmall(base, 1)
 			tmp := make([]uint32, IntLength)
 			copy(tmp, halfThree)
-			bigint.Sub(tmp, base)
+			bigint.MustSub(tmp, base)
 			copy(base, tmp)
 		}
 	}
@@ -327,7 +338,7 @@ func reverseT(a Trits) Trits {
 	return a
 }
 
-// Trytes is a string of trytes. You should not typecast, use ToTrytes instead to be safe
+// Trytes is a string of trytes. Use ToTrytes() instead of typecasting.
 type Trytes string
 
 // ToTrytes casts to Trytes and checks its validity.
@@ -337,7 +348,7 @@ func ToTrytes(t string) (Trytes, error) {
 	return tr, err
 }
 
-// Trits converts a slice of trytes into trits,
+// Trits converts a slice of trytes into trits.
 func (t Trytes) Trits() Trits {
 	trits := make(Trits, len(t)*3)
 	for i := range t {
@@ -347,13 +358,13 @@ func (t Trytes) Trits() Trits {
 	return trits
 }
 
-// Normalize normalized bits into trits so that the sum of trits TODO: (and?) bits is zero.
+// Normalize normalizes the trytes, with resulting digits summing to zero.
 func (t Trytes) Normalize() []int8 {
 	normalized := make([]int8, len(t))
 	sum := 0
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 27; j++ {
-			normalized[i*27+j] = int8(t[i*27+j : i*27+j+1].Trits().Int())
+			normalized[i*27+j] = int8(t[i*27+j:i*27+j+1].Trits().Int())
 			sum += int(normalized[i*27+j])
 		}
 

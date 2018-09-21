@@ -40,7 +40,11 @@ func NewAddress(seed trinary.Trytes, index uint, security SecurityLevel) (Addres
 		return "", err
 	}
 
-	return ToAddress(addr.Trytes())
+	trytes, err := addr.Trytes()
+	if err != nil {
+		return "", err
+	}
+	return ToAddress(trytes)
 }
 
 // NewAddresses generates N new addresses from the given seed without a checksum
@@ -132,7 +136,7 @@ func (a Address) ChecksumHash() (trinary.Trytes, error) {
 	if err != nil {
 		return "", err
 	}
-	return h.Trytes(), nil
+	return h.Trytes()
 }
 
 // WithChecksum returns the address together with the checksum. (90 trytes)

@@ -99,7 +99,7 @@ func TestNewSubseed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	subseedTrytes := string(subseed.Trytes())
+	subseedTrytes := string(subseed.MustTrytes())
 	if subseedTrytes != subseedTestSeedExpect {
 		t.Fatalf("epxected subseed to be %s but was %s", subseedTestSeedExpect, subseedTrytes)
 	}

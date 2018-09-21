@@ -104,7 +104,7 @@ func exec(
 		}
 	}
 
-	tryte <- rr.Trytes()
+	tryte <- rr.MustTrytes()
 	return nil
 }
 

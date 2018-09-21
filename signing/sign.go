@@ -44,10 +44,10 @@ const (
 )
 
 // NewSeed generate a random Trytes
-func NewSeed() trinary.Trytes {
+func NewSeed() (trinary.Trytes, error) {
 	b := make([]byte, 49)
 	if _, err := rand.Read(b); err != nil {
-		panic(err)
+		return "", err
 	}
 
 	txt := new(big.Int).SetBytes(b).Text(27)
@@ -67,7 +67,7 @@ func NewSeed() trinary.Trytes {
 			t[i] = c - 'a' + ('A' + 9)
 		}
 	}
-	return trinary.Trytes(t)
+	return trinary.Trytes(t), nil
 }
 
 // NewSubseed takes a seed and an index and returns the given subseed
@@ -129,7 +129,7 @@ func NewKeyTrits(seed trinary.Trytes, index uint, securityLevel SecurityLevel) (
 // level to derive a private key returned as Trytes
 func NewKey(seed trinary.Trytes, index uint, securityLevel SecurityLevel) (trinary.Trytes, error) {
 	ts, err := NewKeyTrits(seed, index, securityLevel)
-	return ts.Trytes(), err
+	return ts.MustTrytes(), err
 }
 
 func clearState(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64) {
@@ -185,7 +185,7 @@ func seri27(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64) trinary.Trytes
 		}
 		copy(keyFragment[(26-n)*curl.HashSize:], r)
 	}
-	return keyFragment.Trytes()
+	return keyFragment.MustTrytes()
 }
 
 // Digests calculates hash x 26 for each segment in keyTrits
@@ -221,7 +221,7 @@ func Digests(key trinary.Trits) (trinary.Trits, error) {
 func digest(normalizedBundleFragment []int8, signatureFragment trinary.Trytes) (trinary.Trits, error) {
 	k := kerl.NewKerl()
 	for i := 0; i < 27; i++ {
-		bb := signatureFragment[i*curl.HashSize/3 : (i+1)*curl.HashSize/3].Trits()
+		bb := signatureFragment[i*curl.HashSize/3:(i+1)*curl.HashSize/3].Trits()
 		for j := normalizedBundleFragment[i] + 13; j > 0; j-- {
 			kerl := kerl.NewKerl()
 			kerl.Absorb(bb)
@@ -238,7 +238,7 @@ func digest(normalizedBundleFragment []int8, signatureFragment trinary.Trytes) (
 func Sign(normalizedBundleFragment []int8, keyFragment trinary.Trytes) trinary.Trytes {
 	signatureFragment := make(trinary.Trits, len(keyFragment)*3)
 	for i := 0; i < 27; i++ {
-		bb := keyFragment[i*curl.HashSize/3 : (i+1)*curl.HashSize/3].Trits()
+		bb := keyFragment[i*curl.HashSize/3:(i+1)*curl.HashSize/3].Trits()
 		for j := 0; j < 13-int(normalizedBundleFragment[i]); j++ {
 			kerl := kerl.NewKerl()
 			kerl.Absorb(bb)
@@ -247,7 +247,7 @@ func Sign(normalizedBundleFragment []int8, keyFragment trinary.Trytes) trinary.T
 		}
 		copy(signatureFragment[i*curl.HashSize:], bb)
 	}
-	return signatureFragment.Trytes()
+	return signatureFragment.MustTrytes()
 }
 
 // IsValidSig validates signatureFragment.
@@ -270,7 +270,7 @@ func IsValidSig(expectedAddress Address, signatureFragments []trinary.Trytes, bu
 		return false
 	}
 
-	address, err := ToAddress(addrTrites.Trytes())
+	address, err := ToAddress(addrTrites.MustTrytes())
 	if err != nil {
 		return false
 	}

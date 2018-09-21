@@ -339,7 +339,7 @@ func PowAVX(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 
 			switch {
 			case r >= 0:
-				result = nonce.Trytes()
+				result = nonce.MustTrytes()
 				stop = 1
 				countAVX += int64(r)
 			default:

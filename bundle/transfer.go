@@ -103,7 +103,6 @@ func NewAddressInputs(seed trinary.Trytes, start uint, end uint, secLvl signing.
 // the given branch and trunk transactions. This function also initializes the attachment timestamp fields.
 func DoPoW(trunkTx, branchTx trinary.Trytes, trytes []transaction.Transaction, mwm int64, pow pow.PowFunc) error {
 	var prev trinary.Trytes
-	var err error
 	for i := len(trytes) - 1; i >= 0; i-- {
 		switch {
 		case i == len(trytes)-1:
@@ -114,7 +113,10 @@ func DoPoW(trunkTx, branchTx trinary.Trytes, trytes []transaction.Transaction, m
 			trytes[i].BranchTransaction = trunkTx
 		}
 
-		timestamp := trinary.IntToTrits(time.Now().UnixNano()/1000000, transaction.TimestampTrinarySize).Trytes()
+		timestamp, err := trinary.IntToTrits(time.Now().UnixNano()/1000000, transaction.TimestampTrinarySize).Trytes()
+		if err != nil {
+			return err
+		}
 		trytes[i].AttachmentTimestamp = timestamp
 		trytes[i].AttachmentTimestampLowerBound = ""
 		trytes[i].AttachmentTimestampUpperBound = MaxTimestampTrytes

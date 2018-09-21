@@ -172,7 +172,7 @@ func TestConvert(t *testing.T) {
 		t.Error("IntToTrits() is illegal.")
 	}
 
-	try := st.Trytes()
+	try := st.MustTrytes()
 	if try != "UVKIL" {
 		t.Error("Int() is illegal.", try)
 	}

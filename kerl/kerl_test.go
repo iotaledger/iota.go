@@ -57,9 +57,10 @@ func TestKerl(t *testing.T) {
 			t.Errorf("Squeeze() failed: %s", err)
 		}
 
-		if ts.Trytes() != tt.expectedTrytes {
+		trytes := ts.MustTrytes()
+		if  trytes != tt.expectedTrytes {
 			if err != nil {
-				t.Errorf("%s: tryte output: %s != expected output: %s", tt.name, ts.Trytes(), tt.expectedTrytes)
+				t.Errorf("%s: tryte output: %s != expected output: %s", tt.name, trytes, tt.expectedTrytes)
 			}
 		}
 	}

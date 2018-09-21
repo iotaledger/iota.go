@@ -51,7 +51,7 @@ func NewCurl() *Curl {
 
 //Squeeze do Squeeze in sponge func.
 func (c *Curl) Squeeze() trinary.Trytes {
-	ret := c.State[:HashSize].Trytes()
+	ret := c.State[:HashSize].MustTrytes()
 	c.Transform()
 
 	return ret

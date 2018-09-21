@@ -262,7 +262,7 @@ func PowC(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 
 			switch {
 			case r >= 0:
-				result = nonce.Trytes()
+				result = nonce.MustTrytes()
 				C.stopC = 1
 				countC += int64(r)
 			default:

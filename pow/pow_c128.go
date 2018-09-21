@@ -325,7 +325,7 @@ func PowC128(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 
 			switch {
 			case r >= 0:
-				result = nonce.Trytes()
+				result = nonce.MustTrytes()
 				C.stopC128 = 1
 				countC128 += int64(r)
 			default:

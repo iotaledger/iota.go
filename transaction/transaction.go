@@ -129,25 +129,25 @@ func checkTransaction(trytes trinary.Trytes) error {
 
 func (t *Transaction) parser(trits trinary.Trits) error {
 	var err error
-	t.SignatureMessageFragment = trits[SignatureMessageFragmentTrinaryOffset:SignatureMessageFragmentTrinarySize].Trytes()
-	t.Address, err = signing.ToAddress(trits[AddressTrinaryOffset : AddressTrinaryOffset+AddressTrinarySize].Trytes())
+	t.SignatureMessageFragment = trits[SignatureMessageFragmentTrinaryOffset:SignatureMessageFragmentTrinarySize].MustTrytes()
+	t.Address, err = signing.ToAddress(trits[AddressTrinaryOffset : AddressTrinaryOffset+AddressTrinarySize].MustTrytes())
 	if err != nil {
 		return err
 	}
 	t.Value = trits[ValueTrinaryOffset : ValueTrinaryOffset+ValueTrinarySize].Int()
-	t.ObsoleteTag = trits[ObsoleteTagTrinaryOffset : ObsoleteTagTrinaryOffset+ObsoleteTagTrinarySize].Trytes()
+	t.ObsoleteTag = trits[ObsoleteTagTrinaryOffset : ObsoleteTagTrinaryOffset+ObsoleteTagTrinarySize].MustTrytes()
 	timestamp := trits[TimestampTrinaryOffset : TimestampTrinaryOffset+TimestampTrinarySize].Int()
 	t.Timestamp = time.Unix(timestamp, 0)
 	t.CurrentIndex = trits[CurrentIndexTrinaryOffset : CurrentIndexTrinaryOffset+CurrentIndexTrinarySize].Int()
 	t.LastIndex = trits[LastIndexTrinaryOffset : LastIndexTrinaryOffset+LastIndexTrinarySize].Int()
-	t.Bundle = trits[BundleTrinaryOffset : BundleTrinaryOffset+BundleTrinarySize].Trytes()
-	t.TrunkTransaction = trits[TrunkTransactionTrinaryOffset : TrunkTransactionTrinaryOffset+TrunkTransactionTrinarySize].Trytes()
-	t.BranchTransaction = trits[BranchTransactionTrinaryOffset : BranchTransactionTrinaryOffset+BranchTransactionTrinarySize].Trytes()
-	t.Tag = trits[TagTrinaryOffset : TagTrinaryOffset+TagTrinarySize].Trytes()
-	t.AttachmentTimestamp = trits[AttachmentTimestampTrinaryOffset : AttachmentTimestampTrinaryOffset+AttachmentTimestampTrinarySize].Trytes()
-	t.AttachmentTimestampLowerBound = trits[AttachmentTimestampLowerBoundTrinaryOffset : AttachmentTimestampLowerBoundTrinaryOffset+AttachmentTimestampLowerBoundTrinarySize].Trytes()
-	t.AttachmentTimestampUpperBound = trits[AttachmentTimestampUpperBoundTrinaryOffset : AttachmentTimestampUpperBoundTrinaryOffset+AttachmentTimestampUpperBoundTrinarySize].Trytes()
-	t.Nonce = trits[NonceTrinaryOffset : NonceTrinaryOffset+NonceTrinarySize].Trytes()
+	t.Bundle = trits[BundleTrinaryOffset : BundleTrinaryOffset+BundleTrinarySize].MustTrytes()
+	t.TrunkTransaction = trits[TrunkTransactionTrinaryOffset : TrunkTransactionTrinaryOffset+TrunkTransactionTrinarySize].MustTrytes()
+	t.BranchTransaction = trits[BranchTransactionTrinaryOffset : BranchTransactionTrinaryOffset+BranchTransactionTrinarySize].MustTrytes()
+	t.Tag = trits[TagTrinaryOffset : TagTrinaryOffset+TagTrinarySize].MustTrytes()
+	t.AttachmentTimestamp = trits[AttachmentTimestampTrinaryOffset : AttachmentTimestampTrinaryOffset+AttachmentTimestampTrinarySize].MustTrytes()
+	t.AttachmentTimestampLowerBound = trits[AttachmentTimestampLowerBoundTrinaryOffset : AttachmentTimestampLowerBoundTrinaryOffset+AttachmentTimestampLowerBoundTrinarySize].MustTrytes()
+	t.AttachmentTimestampUpperBound = trits[AttachmentTimestampUpperBoundTrinaryOffset : AttachmentTimestampUpperBoundTrinaryOffset+AttachmentTimestampUpperBoundTrinarySize].MustTrytes()
+	t.Nonce = trits[NonceTrinaryOffset : NonceTrinaryOffset+NonceTrinarySize].MustTrytes()
 
 	return nil
 }
@@ -170,7 +170,7 @@ func (t *Transaction) Trytes() trinary.Trytes {
 	copy(tr[AttachmentTimestampLowerBoundTrinaryOffset:], t.AttachmentTimestampLowerBound.Trits())
 	copy(tr[AttachmentTimestampUpperBoundTrinaryOffset:], t.AttachmentTimestampUpperBound.Trits())
 	copy(tr[NonceTrinaryOffset:], t.Nonce.Trits())
-	return tr.Trytes()
+	return tr.MustTrytes()
 }
 
 // HasValidNonce checks if the transaction has the valid MinWeightMagnitude.

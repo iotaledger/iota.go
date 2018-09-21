@@ -316,7 +316,7 @@ func PowCARM64(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 
 			switch {
 			case r >= 0:
-				result = nonce.Trytes()
+				result = nonce.MustTrytes()
 				C.stopCARM64 = 1
 				countCARM64 += int64(r)
 			default:
