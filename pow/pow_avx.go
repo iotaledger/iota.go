@@ -3,6 +3,8 @@
 package pow
 
 import (
+	"github.com/iotaledger/giota/curl"
+	"github.com/iotaledger/giota/transaction"
 	"github.com/iotaledger/giota/trinary"
 )
 
@@ -310,15 +312,15 @@ func init() {
 var countAVX int64
 
 // PowAVX is proof of work of iota for amd64 using AVX.
-func PowAVX(trytes Trytes, mwm int) (Trytes, error) {
+func PowAVX(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 	countAVX = 0
-	c := NewCurl()
-	c.Absorb(trytes[:(TransactionTrinarySize-HashSize)/3])
+	c := curl.NewCurl()
+	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
 	tr := trytes.Trits()
-	copy(c.state, tr[TransactionTrinarySize-HashSize:])
+	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
 	var (
 		stop   int64
-		result Trytes
+		result trinary.Trytes
 		wg     sync.WaitGroup
 		mutex  sync.Mutex
 	)
@@ -326,11 +328,11 @@ func PowAVX(trytes Trytes, mwm int) (Trytes, error) {
 	for n := 0; n < PowProcs; n++ {
 		wg.Add(1)
 		go func(n int) {
-			nonce := make(trinary.Trits, NonceTrinarySize)
+			nonce := make(trinary.Trits, transaction.NonceTrinarySize)
 
 			// nolint: gas
 			r := C.pwork256((*C.char)(
-				unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])),
+				unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])),
 				C.int(n), (*C.int)(unsafe.Pointer(&stop)))
 
 			mutex.Lock()

@@ -4,6 +4,8 @@ package pow
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/iotaledger/giota/curl"
+	"github.com/iotaledger/giota/transaction"
 	"sync/atomic"
 
 	"github.com/iotaledger/giota/pow/cl"
@@ -35,7 +37,7 @@ func exec(
 	cores, nlocal int,
 	mobj []*cl.MemObject,
 	founded *int32,
-	tryte chan Trytes) error {
+	tryte chan trinary.Trytes) error {
 
 	// initialize
 	nglobal := cores * nlocal
@@ -83,15 +85,15 @@ func exec(
 	}
 	defer ev4.Release()
 
-	result := make([]byte, HashSize*8)
+	result := make([]byte, curl.HashSize*8)
 	ev5, err := que.EnqueueReadBufferBytes(mobj[0], true, result, []*cl.Event{ev4})
 	if err != nil {
 		return err
 	}
 	ev5.Release()
 
-	rr := make(trinary.Trits, HashSize)
-	for i := 0; i < HashSize; i++ {
+	rr := make(trinary.Trits, curl.HashSize)
+	for i := 0; i < curl.HashSize; i++ {
 		switch {
 		case result[i*8] == 0xff:
 			rr[i] = -1
@@ -107,7 +109,7 @@ func exec(
 }
 
 // nolint: gocyclo
-func loopCL(binfo []bufferInfo) (Trytes, error) {
+func loopCL(binfo []bufferInfo) (trinary.Trytes, error) {
 	defers := make([]func(), 0, 10)
 	defer func() {
 		for _, f := range defers {
@@ -122,7 +124,7 @@ func loopCL(binfo []bufferInfo) (Trytes, error) {
 
 	exist := false
 	var founded int32
-	result := make(chan Trytes)
+	result := make(chan trinary.Trytes)
 	for _, p := range platforms {
 		var devs []*cl.Device
 		devs, err = p.GetDevices(cl.DeviceTypeGPU)
@@ -173,7 +175,7 @@ func loopCL(binfo []bufferInfo) (Trytes, error) {
 			mmax := d.MaxMemAllocSize()
 			isLittle := d.EndianLittle()
 			nlocal := 0
-			for nlocal = stateSize; nlocal > mult; {
+			for nlocal = curl.StateSize; nlocal > mult; {
 				nlocal /= 3
 			}
 
@@ -255,7 +257,7 @@ func loopCL(binfo []bufferInfo) (Trytes, error) {
 }
 
 // PowCL is proof of work of iota in OpenCL.
-func PowCL(trytes Trytes, mwm int) (Trytes, error) {
+func PowCL(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 	switch {
 	case !stopCL:
 		stopCL = true
@@ -266,12 +268,12 @@ func PowCL(trytes Trytes, mwm int) (Trytes, error) {
 
 	stopCL = false
 	countCL = 0
-	c := NewCurl()
-	c.Absorb(trytes[:(TransactionTrinarySize-HashSize)/3])
+	c := curl.NewCurl()
+	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
 	tr := trytes.Trits()
-	copy(c.state, tr[TransactionTrinarySize-HashSize:])
+	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
 
-	lmid, hmid := para(c.state)
+	lmid, hmid := para(c.State)
 	lmid[0] = low0
 	hmid[0] = high0
 	lmid[1] = low1
@@ -281,31 +283,31 @@ func PowCL(trytes Trytes, mwm int) (Trytes, error) {
 	lmid[3] = low3
 	hmid[3] = high3
 
-	low := make([]byte, 8*stateSize)
+	low := make([]byte, 8*curl.StateSize)
 	for i, v := range lmid {
 		binary.LittleEndian.PutUint64(low[8*i:], v)
 	}
 
-	high := make([]byte, 8*stateSize)
+	high := make([]byte, 8*curl.StateSize)
 	for i, v := range hmid {
 		binary.LittleEndian.PutUint64(high[8*i:], v)
 	}
 
 	binfo := []bufferInfo{
 		bufferInfo{
-			8 * HashSize, cl.MemWriteOnly, false, nil,
+			8 * curl.HashSize, cl.MemWriteOnly, false, nil,
 		},
 		bufferInfo{
-			8 * stateSize, cl.MemReadWrite, true, low, //mid_low
+			8 * curl.StateSize, cl.MemReadWrite, true, low, //mid_low
 		},
 		bufferInfo{
-			8 * stateSize, cl.MemReadWrite, true, high, //mid_high
+			8 * curl.StateSize, cl.MemReadWrite, true, high, //mid_high
 		},
 		bufferInfo{
-			8 * stateSize, cl.MemReadWrite, true, nil,
+			8 * curl.StateSize, cl.MemReadWrite, true, nil,
 		},
 		bufferInfo{
-			8 * stateSize, cl.MemReadWrite, true, nil,
+			8 * curl.StateSize, cl.MemReadWrite, true, nil,
 		},
 		bufferInfo{
 			8, cl.MemWriteOnly, false, []byte{byte(mwm), 0, 0, 0, 0, 0, 0, 0}, // mwm

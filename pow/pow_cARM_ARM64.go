@@ -264,6 +264,8 @@ long long int pworkARM64(signed char mid[], int mwm, signed char nonce[], int n)
 import "C"
 import (
 	"errors"
+	"github.com/iotaledger/giota/curl"
+	"github.com/iotaledger/giota/transaction"
 	"github.com/iotaledger/giota/trinary"
 	"sync"
 	"unsafe"
@@ -277,7 +279,7 @@ var countCARM64 int64
 
 // PowCARM64 is a proof of work library for Iota that uses the standard __int128 C type that is available in 64 bit processors (AMD64 and ARM64).
 // This PoW calculator follows common C standards and does not rely on SSE which is AMD64 specific.
-func PowCARM64(trytes Trytes, mwm int) (Trytes, error) {
+func PowCARM64(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 	if C.stopCARM64 == 0 {
 		C.stopCARM64 = 1
 		return "", errors.New("pow is already running, stopped")
@@ -289,13 +291,13 @@ func PowCARM64(trytes Trytes, mwm int) (Trytes, error) {
 
 	C.stopCARM64 = 0
 	countCARM64 = 0
-	c := NewCurl()
-	c.Absorb(trytes[:(TransactionTrinarySize-HashSize)/3])
+	c := curl.NewCurl()
+	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
 	tr := trytes.Trits()
-	copy(c.state, tr[TransactionTrinarySize-HashSize:])
+	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
 
 	var (
-		result Trytes
+		result trinary.Trytes
 		wg     sync.WaitGroup
 		mutex  sync.Mutex
 	)
@@ -303,10 +305,10 @@ func PowCARM64(trytes Trytes, mwm int) (Trytes, error) {
 	for n := 0; n < PowProcs; n++ {
 		wg.Add(1)
 		go func(n int) {
-			nonce := make(trinary.Trits, NonceTrinarySize)
+			nonce := make(trinary.Trits, transaction.NonceTrinarySize)
 
 			// nolint: gas
-			r := C.pworkARM64((*C.schar)(unsafe.Pointer(&c.state[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
+			r := C.pworkARM64((*C.schar)(unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
 			mutex.Lock()
 
 			// fmt.Printf("r: %d\n", r)
