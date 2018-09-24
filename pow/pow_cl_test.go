@@ -1,4 +1,5 @@
 // +build gpu
+
 package pow
 
 import (

@@ -1,4 +1,5 @@
 //+build cgo
+
 package pow
 
 import (

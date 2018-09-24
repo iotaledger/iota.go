@@ -1,4 +1,5 @@
 // +build linux,amd64
+
 package pow
 
 import (

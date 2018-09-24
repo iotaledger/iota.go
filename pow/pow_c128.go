@@ -1,4 +1,5 @@
 // +build linux,darwin,windows amd64 linux,arm64
+
 package pow
 
 // #cgo LDFLAGS:

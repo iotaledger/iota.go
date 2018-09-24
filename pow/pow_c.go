@@ -1,5 +1,6 @@
 // +build cgo
 // +build linux darwin windows
+
 package pow
 
 // #cgo CFLAGS: -Wall -Wno-overflow

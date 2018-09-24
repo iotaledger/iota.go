@@ -1,4 +1,5 @@
 // +build linux,arm64
+
 package pow
 
 // #cgo LDFLAGS:
