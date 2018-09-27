@@ -313,8 +313,6 @@ func init() {
 	powFuncs["PoWAVX"] = PoWAVX
 }
 
-var countAVX int64
-
 // PoWAVX does proof of work on the given trytes using AVX instructions.
 func PoWAVX(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 	return powAVX(trytes, mwm, nil)

@@ -277,7 +277,6 @@ func init() {
 	powFuncs["PoWCARM64"] = PoWCARM64
 }
 
-
 // PoWCARM64 does proof of work on the given trytes using native C code and __int128 C type (ARM adjusted).
 // This implementation follows common C standards and does not rely on SSE which is AMD64 specific.
 func PoWCARM64(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {

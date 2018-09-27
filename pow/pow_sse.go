@@ -251,7 +251,6 @@ import (
 	"github.com/iotaledger/giota/transaction"
 	"github.com/iotaledger/giota/trinary"
 	"math"
-	"sync"
 	"unsafe"
 )
 
@@ -263,8 +262,6 @@ func init() {
 func PoWSSE(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 	return powSSE(trytes, mwm, nil)
 }
-
-var muPowSSE = sync.Mutex{}
 
 func powSSE(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, error) {
 	if C.stopSSE == 0 {

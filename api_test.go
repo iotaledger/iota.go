@@ -280,7 +280,7 @@ func TestAPICheckConsistency(t *testing.T) {
 	var server = randomNode()
 	api := NewAPI(server, nil)
 
-	resp, err := api.CheckConsistency([]trinary.Trytes{"NLNRYUTSLRQONSQEXBAJI9AIOJOEEJDOFJTETPFMB9AEEPUDIXXOTKXG9BYALEXOMSUYJEJSCZTY99999"})
+	resp, err := api.CheckConsistency("NLNRYUTSLRQONSQEXBAJI9AIOJOEEJDOFJTETPFMB9AEEPUDIXXOTKXG9BYALEXOMSUYJEJSCZTY99999")
 
 	switch {
 	case err != nil:
@@ -326,7 +326,7 @@ func TestTransfer1(t *testing.T) {
 	var bal Balances
 	for i := 0; i < 5; i++ {
 		api := NewAPI(randomNode(), nil)
-		bal, err = api.GetInputs(seed, 0, 10, 1000, 2)
+		bal, err = api.GetInputs(seed, 0, 10, signing.SecurityLevelMedium)
 		if err == nil {
 			break
 		}

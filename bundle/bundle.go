@@ -105,7 +105,7 @@ func (bundle Bundle) Hash() (trinary.Trytes, error) {
 	}
 
 	h, err := k.Squeeze(curl.HashSize)
-	return h.Trytes(), err
+	return h.MustTrytes(), err
 }
 
 // NormalizedHash calculates a normalized hash of the bundle.
@@ -127,7 +127,7 @@ func (bundle Bundle) NormalizedHash() (trinary.Trytes, error) {
 		if err != nil {
 			return "", err
 		}
-		h := hashTrits.Trytes()
+		h := hashTrits.MustTrytes()
 		n := h.Normalize()
 		valid := true
 
@@ -141,7 +141,7 @@ func (bundle Bundle) NormalizedHash() (trinary.Trytes, error) {
 		offset := transaction.ObsoleteTagTrinaryOffset - transaction.AddressTrinaryOffset
 
 		if valid {
-			bundle[0].ObsoleteTag = buf[offset : offset+transaction.ObsoleteTagTrinarySize].Trytes()
+			bundle[0].ObsoleteTag = buf[offset : offset+transaction.ObsoleteTagTrinarySize].MustTrytes()
 			return h, nil
 		}
 
