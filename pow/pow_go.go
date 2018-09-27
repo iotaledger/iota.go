@@ -234,8 +234,6 @@ func incrN(n int, lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) {
 	}
 }
 
-var countGo int64 = 1
-
 // PoWGo does proof of work on the given trytes using only Go code.
 func PoWGo(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 	return powGo(trytes, mwm, nil)
@@ -250,7 +248,6 @@ func powGo(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, 
 		return "", ErrInvalidTrytesForPoW
 	}
 
-	countGo = 0
 	stopGO = false
 
 	c := curl.NewCurl()
