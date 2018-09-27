@@ -1,4 +1,5 @@
 // +build cgo
+// +build pow_c
 // +build linux darwin windows
 
 package pow
@@ -211,71 +212,78 @@ long long int pwork(signed char mid[], int mwm, signed char nonce[],int n)
 */
 import "C"
 import (
-	"errors"
 	"github.com/iotaledger/giota/curl"
 	"github.com/iotaledger/giota/transaction"
 	"github.com/iotaledger/giota/trinary"
-
-	"sync"
+	"math"
 	"unsafe"
 )
 
 func init() {
-	powFuncs["PowC"] = PowC
+	powFuncs["PoWC"] = PoWC
 }
 
-var countC int64
+// PoWC does proof of work on the given trytes via native C code.
+func PoWC(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+	return powC(trytes, mwm, nil)
 
-// PowC is proof of work of iota using pure C.
-func PowC(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+}
+
+func powC(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, error) {
 	if C.stopC == 0 {
-		C.stopC = 1
-		return "", errors.New("pow is already running, stopped")
+		return "", ErrPoWAlreadyRunning
 	}
 
 	if trytes == "" {
-		return "", errors.New("invalid trytes")
+		return "", ErrInvalidTrytesForPoW
 	}
+
 	C.stopC = 0
-	countC = 0
 
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
 	tr := trytes.Trits()
 	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
 
-	var (
-		result trinary.Trytes
-		wg     sync.WaitGroup
-		mutex  sync.Mutex
-	)
+	var result trinary.Trytes
+	var rate chan int64
+	if optRate != nil {
+		rate = make(chan int64, PowProcs)
+	}
+	exit := make(chan struct{})
+	nonceChan := make(chan trinary.Trytes)
 
 	for n := 0; n < PowProcs; n++ {
-		wg.Add(1)
 		go func(n int) {
 			nonce := make(trinary.Trits, transaction.NonceTrinarySize)
 
-			// nolint: gas
 			r := C.pwork((*C.schar)(unsafe.Pointer(
 				&c.State[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
 
-			mutex.Lock()
-
-			switch {
-			case r >= 0:
-				result = nonce.MustTrytes()
-				C.stopC = 1
-				countC += int64(r)
-			default:
-				countC += int64(-r + 1)
+			if rate != nil {
+				rate <- int64(math.Abs(float64(r)))
 			}
 
-			mutex.Unlock()
-			wg.Done()
+			if r >= 0 {
+				select {
+				case <-exit:
+				case nonceChan <- nonce.MustTrytes():
+					C.stopC = 1
+				}
+			}
 		}(n)
 	}
 
-	wg.Wait()
+	if rate != nil {
+		var rateSum int64
+		for i := 0; i < PowProcs; i++ {
+			rateSum += <-rate
+		}
+		optRate <- rateSum
+	}
+
+	result = <-nonceChan
+	close(exit)
 	C.stopC = 1
 	return result, nil
 }

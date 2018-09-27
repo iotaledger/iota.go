@@ -1,5 +1,6 @@
-// +build avx
-// +build linux amd64
+// +build cgo
+// +build pow_avx
+// +build amd64
 
 package pow
 
@@ -7,6 +8,7 @@ import (
 	"github.com/iotaledger/giota/curl"
 	"github.com/iotaledger/giota/transaction"
 	"github.com/iotaledger/giota/trinary"
+	"math"
 )
 
 // #cgo LDFLAGS:
@@ -215,12 +217,14 @@ int check256(__m256d *l, __m256d *h, int m)
   return -2;
 }
 
-int loop256(__m256d *lmid, __m256d *hmid, int m, char *nonce,int *stop)
+int stopAVX=1;
+
+int loop256(__m256d *lmid, __m256d *hmid, int m, char *nonce)
 {
   int i = 0, n = 0, j = 0;
 
   __m256d lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
-  for (i = 0; !incr256(lmid, hmid) && !*stop; i++)
+  for (i = 0; !incr256(lmid, hmid) && !stopAVX; i++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -277,7 +281,7 @@ void incrN256(int n,__m256d *mid_low, __m256d *mid_high)
   }
 }
 
-int pwork256(char mid[], int mwm, char nonce[],int n,int *stop)
+int pwork256(char mid[], int mwm, char nonce[],int n)
 {
   __m256d lmid[STATE_LENGTH], hmid[STATE_LENGTH];
 
@@ -297,60 +301,81 @@ int pwork256(char mid[], int mwm, char nonce[],int n,int *stop)
   hmid[offset+5] = _mm256_set_pd(HIGH50,HIGH51,HIGH52,HIGH53);
 
 	incrN256(n, lmid, hmid);
-  return loop256(lmid, hmid, mwm, nonce,stop);
+  return loop256(lmid, hmid, mwm, nonce);
 }
 */
 import "C"
 import (
-	"sync"
 	"unsafe"
 )
 
 func init() {
-	powFuncs["PowAVX"] = PowAVX
+	powFuncs["PoWAVX"] = PoWAVX
 }
 
 var countAVX int64
 
-// PowAVX is proof of work of iota for amd64 using AVX.
-func PowAVX(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
-	countAVX = 0
+// PoWAVX does proof of work on the given trytes using AVX instructions.
+func PoWAVX(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+	return powAVX(trytes, mwm, nil)
+}
+
+func powAVX(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, error) {
+	if C.stopAVX == 0 {
+		return "", ErrPoWAlreadyRunning
+	}
+
+	if trytes == "" {
+		return "", ErrInvalidTrytesForPoW
+	}
+
+	C.stopAVX = 0
+
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
 	tr := trytes.Trits()
 	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
-	var (
-		stop   int64
-		result trinary.Trytes
-		wg     sync.WaitGroup
-		mutex  sync.Mutex
-	)
+
+	var result trinary.Trytes
+	var rate chan int64
+	if optRate != nil {
+		rate = make(chan int64, PowProcs)
+	}
+	exit := make(chan struct{})
+	nonceChan := make(chan trinary.Trytes)
 
 	for n := 0; n < PowProcs; n++ {
-		wg.Add(1)
 		go func(n int) {
 			nonce := make(trinary.Trits, transaction.NonceTrinarySize)
 
-			// nolint: gas
 			r := C.pwork256((*C.char)(
 				unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])),
-				C.int(n), (*C.int)(unsafe.Pointer(&stop)))
+				C.int(n))
 
-			mutex.Lock()
-
-			switch {
-			case r >= 0:
-				result = nonce.MustTrytes()
-				stop = 1
-				countAVX += int64(r)
-			default:
-				countAVX += int64(-r + 1)
+			if rate != nil {
+				rate <- int64(math.Abs(float64(r)))
 			}
 
-			mutex.Unlock()
-			wg.Done()
+			if r >= 0 {
+				select {
+				case <-exit:
+				case nonceChan <- nonce.MustTrytes():
+					C.stopAVX = 1
+				}
+			}
 		}(n)
 	}
-	wg.Wait()
+
+	if rate != nil {
+		var rateSum int64
+		for i := 0; i < PowProcs; i++ {
+			rateSum += <-rate
+		}
+		optRate <- rateSum
+	}
+
+	result = <-nonceChan
+	close(exit)
+	C.stopAVX = 1
 	return result, nil
 }

@@ -1,4 +1,6 @@
-// +build linux,darwin,windows amd64
+// +build cgo
+// +build pow_sse
+// +build amd64
 
 package pow
 
@@ -245,71 +247,80 @@ long long int pwork128(char mid[], int mwm, char nonce[],int n)
 */
 import "C"
 import (
-	"errors"
 	"github.com/iotaledger/giota/curl"
 	"github.com/iotaledger/giota/transaction"
 	"github.com/iotaledger/giota/trinary"
-
+	"math"
 	"sync"
 	"unsafe"
 )
 
 func init() {
-	powFuncs["PowSSE"] = PowSSE
+	powFuncs["PowSSE"] = PoWSSE
 }
 
-var countSSE int64
+// PoWSSE does proof of work on the given trytes using SSE2 instructions.
+func PoWSSE(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+	return powSSE(trytes, mwm, nil)
+}
 
-// PowSSE is proof of work for iota for amd64 using SSE2(or AMD64).
-func PowSSE(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+var muPowSSE = sync.Mutex{}
+
+func powSSE(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, error) {
 	if C.stopSSE == 0 {
-		C.stopSSE = 1
-		return "", errors.New("pow is already running, stopped")
+		return "", ErrPoWAlreadyRunning
 	}
 
 	if trytes == "" {
-		return "", errors.New("invalid trytes")
+		return "", ErrInvalidTrytesForPoW
 	}
 
 	C.stopSSE = 0
-	countSSE = 0
+
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
 	tr := trytes.Trits()
 	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
 
-	var (
-		result trinary.Trytes
-		wg     sync.WaitGroup
-		mutex  sync.Mutex
-	)
+	var result trinary.Trytes
+	var rate chan int64
+	if optRate != nil {
+		rate = make(chan int64)
+	}
+	exit := make(chan struct{})
+	nonceChan := make(chan trinary.Trytes)
 
 	for n := 0; n < PowProcs; n++ {
-		wg.Add(1)
 		go func(n int) {
 			nonce := make(trinary.Trits, transaction.NonceTrinarySize)
 
-			// nolint: gas
 			r := C.pwork128((*C.char)(
 				unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
 
-			mutex.Lock()
-
-			switch {
-			case r >= 0:
-				result = nonce.MustTrytes()
-				C.stopSSE = 1
-				countSSE += int64(r)
-			default:
-				countSSE += int64(-r + 1)
+			if rate != nil {
+				rate <- int64(math.Abs(float64(r)))
 			}
 
-			mutex.Unlock()
-			wg.Done()
+			if r >= 0 {
+				select {
+				case <-exit:
+				case nonceChan <- nonce.MustTrytes():
+					C.stopSSE = 1
+				}
+			}
 		}(n)
 	}
 
-	wg.Wait()
+	if rate != nil {
+		var rateSum int64
+		for i := 0; i < PowProcs; i++ {
+			rateSum += <-rate
+		}
+		optRate <- rateSum
+	}
+
+	result = <-nonceChan
+	close(exit)
 	C.stopSSE = 1
 	return result, nil
 }

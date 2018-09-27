@@ -1,6 +1,7 @@
+// +build cgo
 // +build gpu
 
-package pow
+package cl
 
 import (
 	"encoding/binary"

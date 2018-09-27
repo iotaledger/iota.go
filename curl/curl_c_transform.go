@@ -1,5 +1,6 @@
 // +build cgo
 // +build linux
+
 package curl
 
 // #cgo CFLAGS: -Wall
@@ -36,12 +37,13 @@ void transform(signed char state[])
 }
 */
 import "C"
+import "github.com/iotaledger/giota/trinary"
 
 // Transform does Transform in sponge func in C lang.
 func init() {
 	transformC = transformInC
 }
 
-func transformInC(state Trits) {
+func transformInC(state trinary.Trits) {
 	C.transform((*C.schar)(&state[0]))
 }

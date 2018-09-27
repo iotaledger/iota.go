@@ -1,6 +1,7 @@
+// +build cgo
 // +build gpu
 
-package pow
+package cl
 
 var kernel = `
 #define HASH_LENGTH 243

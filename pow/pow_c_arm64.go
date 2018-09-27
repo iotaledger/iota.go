@@ -1,4 +1,7 @@
-// +build linux,arm64
+// +build cgo
+// +build pow_arm_c128
+// +build linux
+// +build arm64
 
 package pow
 
@@ -264,72 +267,76 @@ long long int pworkARM64(signed char mid[], int mwm, signed char nonce[], int n)
 */
 import "C"
 import (
-	"errors"
 	"github.com/iotaledger/giota/curl"
 	"github.com/iotaledger/giota/transaction"
 	"github.com/iotaledger/giota/trinary"
-	"sync"
 	"unsafe"
 )
 
 func init() {
-	powFuncs["PowCARM64"] = PowCARM64
+	powFuncs["PoWCARM64"] = PoWCARM64
 }
 
-var countCARM64 int64
 
-// PowCARM64 is a proof of work library for Iota that uses the standard __int128 C type that is available in 64 bit processors (AMD64 and ARM64).
-// This PoW calculator follows common C standards and does not rely on SSE which is AMD64 specific.
-func PowCARM64(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+// PoWCARM64 does proof of work on the given trytes using native C code and __int128 C type (ARM adjusted).
+// This implementation follows common C standards and does not rely on SSE which is AMD64 specific.
+func PoWCARM64(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+	return PoWCARM64(trytes, mwm, nil)
+}
+
+func powCARM64(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, error) {
 	if C.stopCARM64 == 0 {
-		C.stopCARM64 = 1
-		return "", errors.New("pow is already running, stopped")
+		return "", ErrPoWAlreadyRunning
 	}
 
 	if trytes == "" {
-		return "", errors.New("invalid trytes")
+		return "", ErrInvalidTrytesForPoW
 	}
 
 	C.stopCARM64 = 0
-	countCARM64 = 0
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
 	tr := trytes.Trits()
 	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
 
-	var (
-		result trinary.Trytes
-		wg     sync.WaitGroup
-		mutex  sync.Mutex
-	)
+	var result trinary.Trytes
+	var rate chan int64
+	if optRate != nil {
+		rate = make(chan int64, PowProcs)
+	}
+	exit := make(chan struct{})
+	nonceChan := make(chan trinary.Trytes)
 
 	for n := 0; n < PowProcs; n++ {
-		wg.Add(1)
 		go func(n int) {
 			nonce := make(trinary.Trits, transaction.NonceTrinarySize)
 
-			// nolint: gas
 			r := C.pworkARM64((*C.schar)(unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
-			mutex.Lock()
 
-			// fmt.Printf("r: %d\n", r)
-			// fmt.Printf("nonce len: %d\n", len(nonce))
-
-			switch {
-			case r >= 0:
-				result = nonce.MustTrytes()
-				C.stopCARM64 = 1
-				countCARM64 += int64(r)
-			default:
-				countCARM64 += int64(-r + 1)
+			if rate != nil {
+				rate <- int64(math.Abs(float64(r)))
 			}
 
-			mutex.Unlock()
-			wg.Done()
+			if r >= 0 {
+				select {
+				case <-exit:
+				case nonceChan <- nonce.MustTrytes():
+					C.stopCARM64 = 1
+				}
+			}
 		}(n)
 	}
 
-	wg.Wait()
+	if rate != nil {
+		var rateSum int64
+		for i := 0; i < PowProcs; i++ {
+			rateSum += <-rate
+		}
+		optRate <- rateSum
+	}
+
+	result = <-nonceChan
+	close(exit)
 	C.stopCARM64 = 1
 	return result, nil
 }

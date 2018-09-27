@@ -1,14 +1,13 @@
 package pow
 
+import "C"
 import (
-	"errors"
-	"fmt"
 	"github.com/iotaledger/giota/curl"
 	"github.com/iotaledger/giota/transaction"
 	"github.com/iotaledger/giota/trinary"
-
+	"github.com/pkg/errors"
+	"math"
 	"runtime"
-	"sync"
 )
 
 // trytes
@@ -30,6 +29,12 @@ const (
 	nonceIncrementStart = nonceInitStart + transaction.NonceTrinarySize/3
 )
 
+var (
+	ErrPoWAlreadyRunning   = errors.New("proof of work is already running (at most one can run at the same time)")
+	ErrInvalidTrytesForPoW = errors.New("invalid trytes supplied to pow func")
+	ErrUnknownPoWFunc      = errors.New("unknown pow func")
+)
+
 // PowFunc is the func type for PoW
 type PowFunc func(trinary.Trytes, int) (trinary.Trytes, error)
 
@@ -40,7 +45,7 @@ var (
 )
 
 func init() {
-	powFuncs["PowGo"] = PowGo
+	powFuncs["PoWGo"] = PoWGo
 	PowProcs = runtime.NumCPU()
 	if PowProcs != 1 {
 		PowProcs--
@@ -53,7 +58,7 @@ func GetPowFunc(pow string) (PowFunc, error) {
 		return p, nil
 	}
 
-	return nil, fmt.Errorf("PowFunc %v does not exist", pow)
+	return nil, errors.Wrapf(ErrUnknownPoWFunc, "%s", pow)
 }
 
 // GetPowFuncNames returns an array with the names of the existing PoW methods
@@ -72,8 +77,8 @@ func GetPowFuncNames() (powFuncNames []string) {
 // GetBestPoW returns most preferable PoW func.
 func GetBestPoW() (string, PowFunc) {
 
-	// PowGo is the last and default return value
-	powOrderPreference := []string{"PowCL", "PowSSE", "PowCARM64", "PowC128", "PowC"}
+	// PoWGo is the last and default return value
+	powOrderPreference := []string{"PoWCL", "PoWAVX", "PoWSSE", "PoWCARM64", "PoWC128", "PoWC"}
 
 	for _, pow := range powOrderPreference {
 		if p, exist := powFuncs[pow]; exist {
@@ -81,7 +86,7 @@ func GetBestPoW() (string, PowFunc) {
 		}
 	}
 
-	return "PowGo", PowGo // default return PowGo if no others
+	return "PoWGo", PoWGo // default return PoWGo if no others
 }
 
 func transform64(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) {
@@ -129,7 +134,7 @@ func incr(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) bool {
 	var carry uint64 = 1
 	var i int
 
-	// to avoid boundry check, I believe.
+	// to avoid boundary check, I believe.
 	for i = nonceInitStart; i < curl.HashSize && carry != 0; i++ {
 		low := lmid[i]
 		high := hmid[i]
@@ -231,15 +236,18 @@ func incrN(n int, lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) {
 
 var countGo int64 = 1
 
-// PowGo is proof of work for iota in pure Go
-func PowGo(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+// PoWGo does proof of work on the given trytes using only Go code.
+func PoWGo(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+	return powGo(trytes, mwm, nil)
+}
+
+func powGo(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, error) {
 	if !stopGO {
-		stopGO = true
-		return "", errors.New("pow is already running, stopped")
+		return "", ErrPoWAlreadyRunning
 	}
 
 	if trytes == "" {
-		return "", errors.New("invalid trytes")
+		return "", ErrInvalidTrytesForPoW
 	}
 
 	countGo = 0
@@ -250,14 +258,15 @@ func PowGo(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 	tr := trytes.Trits()
 	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
 
-	var (
-		result trinary.Trytes
-		wg     sync.WaitGroup
-		mutex  sync.Mutex
-	)
+	var result trinary.Trytes
+	var rate chan int64
+	if optRate != nil {
+		rate = make(chan int64, PowProcs)
+	}
+	exit := make(chan struct{})
+	nonceChan := make(chan trinary.Trytes)
 
 	for i := 0; i < PowProcs; i++ {
-		wg.Add(1)
 		go func(i int) {
 			lmid, hmid := para(c.State)
 			lmid[nonceOffset] = low0
@@ -270,21 +279,32 @@ func PowGo(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 			hmid[nonceOffset+3] = high3
 
 			incrN(i, lmid, hmid)
-			nonce, cnt := loop(lmid, hmid, mwm)
+			nonce, r := loop(lmid, hmid, mwm)
 
-			mutex.Lock()
-			if nonce != nil {
-				result = nonce.MustTrytes()
-				stopGO = true
+			if rate != nil {
+				rate <- int64(math.Abs(float64(r)))
 			}
 
-			countGo += cnt
-			mutex.Unlock()
-			wg.Done()
+			if r >= 0 {
+				select {
+				case <-exit:
+				case nonceChan <- nonce.MustTrytes():
+					stopGO = true
+				}
+			}
 		}(i)
 	}
 
-	wg.Wait()
+	if rate != nil {
+		var rateSum int64
+		for i := 0; i < PowProcs; i++ {
+			rateSum += <-rate
+		}
+		optRate <- rateSum
+	}
+
+	result = <-nonceChan
+	close(exit)
 	stopGO = true
 	return result, nil
 }
