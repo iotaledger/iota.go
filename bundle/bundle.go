@@ -76,7 +76,7 @@ func (bundle *Bundle) AddEntry(numFragments int, address signing.Address, value 
 // Finalize adds the given signature message fragments to the transactions
 // and initializes the indices and bundle hash properties.
 func (bundle Bundle) Finalize(sig []trinary.Trytes) error {
-	h, err := bundle.NormalizedHash()
+	h, err := bundle.Hash()
 	if err != nil {
 		return err
 	}

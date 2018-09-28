@@ -1042,9 +1042,9 @@ func GenerateEmptySpamTransaction() bundle.Bundle {
 	bndl, _, _ := bundle.Transfers{
 		{
 			Address: signing.EmptyAddress,
-			Tag:     transaction.EmptyTag,
+			Tag:     "PROMOTE",
 			Value:   0,
-			Message: trinary.Trytes(""),
+			Message: "",
 		},
 	}.CreateBundle()
 	return bndl

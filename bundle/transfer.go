@@ -12,6 +12,7 @@ import (
 const (
 	// (3^27-1)/2
 	MaxTimestampTrytes = "MMMMMMMMM"
+	LowerBoundTimestampTrytes = "999999999"
 )
 
 type Transfers []Transfer
@@ -118,7 +119,7 @@ func DoPoW(trunkTx, branchTx trinary.Trytes, trytes []transaction.Transaction, m
 			return err
 		}
 		trytes[i].AttachmentTimestamp = timestamp
-		trytes[i].AttachmentTimestampLowerBound = ""
+		trytes[i].AttachmentTimestampLowerBound = LowerBoundTimestampTrytes
 		trytes[i].AttachmentTimestampUpperBound = MaxTimestampTrytes
 
 		trytes[i].Nonce, err = pow(trytes[i].Trytes(), int(mwm))
