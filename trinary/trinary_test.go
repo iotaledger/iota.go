@@ -22,7 +22,7 @@ func TestValidTryte(t *testing.T) {
 	}
 
 	for _, tc := range validTryteCases {
-		if (IsValidTryte(tc.in) == nil) != tc.valid {
+		if (ValidTryte(tc.in) == nil) != tc.valid {
 			t.Fatalf("ValidTryte(%q) should be %#v but is not", tc.in, tc.valid)
 		}
 	}
@@ -42,7 +42,7 @@ func TestValidTrytes(t *testing.T) {
 	}
 
 	for _, tc := range validTryteCases {
-		if (tc.in.IsValid() == nil) != tc.valid {
+		if (ValidTrytes(tc.in) == nil) != tc.valid {
 			t.Fatalf("ValidTrytes(%q) should be %#v but is not", tc.in, tc.valid)
 		}
 	}
@@ -63,7 +63,7 @@ func TestValidTrit(t *testing.T) {
 	}
 
 	for _, tc := range validTritCases {
-		if (IsValidTrit(tc.in) == nil) != tc.valid {
+		if (ValidTrit(tc.in) == nil) != tc.valid {
 			t.Fatalf("ValidTrit(%q) should be %#v but is not", tc.in, tc.valid)
 		}
 	}
@@ -84,7 +84,7 @@ func TestValidTrits(t *testing.T) {
 	}
 
 	for _, tc := range validTritsCases {
-		if (tc.in.IsValid() == nil) != tc.valid {
+		if (ValidTrits(tc.in) == nil) != tc.valid {
 			t.Fatalf("ValidTrits(%q) should be %#v but is not", tc.in, tc.valid)
 		}
 	}
@@ -92,17 +92,17 @@ func TestValidTrits(t *testing.T) {
 
 func TestTritByteTrit(t *testing.T) {
 	ts := []Trits{
-		Trytes("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN").Trits(),
-		Trytes("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM").Trits(),
-		Trytes("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").Trits(),
-		Trytes("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ").Trits(),
-		Trytes("999999999999999999999999999999999999999999999999999999999999999999999999999999999").Trits(),
-		Trytes("SCYLJDWIM9LIXCSLETSHLQOOFDKYOVFZLAHQYCCNMYHRTNIKBZRIRACFYPOWYNSOWDNXFZUG9OEOZPOTD").Trits(),
+		TrytesToTrits("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN"),
+		TrytesToTrits("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"),
+		TrytesToTrits("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+		TrytesToTrits("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"),
+		TrytesToTrits("999999999999999999999999999999999999999999999999999999999999999999999999999999999"),
+		TrytesToTrits("SCYLJDWIM9LIXCSLETSHLQOOFDKYOVFZLAHQYCCNMYHRTNIKBZRIRACFYPOWYNSOWDNXFZUG9OEOZPOTD"),
 	}
 
 	for _, trits := range ts {
 		trits[TritHashLength-1] = 0
-		b, err := trits.Bytes()
+		b, err := TritsToBytes(trits)
 		if err != nil {
 			t.Errorf("Bytes() failed: %s", err)
 		}
@@ -112,7 +112,7 @@ func TestTritByteTrit(t *testing.T) {
 			t.Errorf("BytesToTrits() failed: %s", err)
 		}
 
-		if !tb.Equal(trits) {
+		if !TritsEqual(tb, trits) {
 			t.Errorf("Trits->Bytes->Trits roundtrip failed\nwanted:\t%#v\ngot:\t%#v", trits, tb)
 		}
 	}
@@ -127,7 +127,7 @@ func TestAllBytes(t *testing.T) {
 			t.Errorf("BytesToTrits() failed: %s", err)
 		}
 
-		bs, err = fst.Bytes()
+		bs, err = TritsToBytes(fst)
 		if err != nil {
 			t.Errorf("Bytes() failed: %s", err)
 		}
@@ -137,7 +137,7 @@ func TestAllBytes(t *testing.T) {
 			t.Errorf("BytesToTrits() failed: %s", err)
 		}
 
-		if !fst.Equal(snd) {
+		if !TritsEqual(fst, snd) {
 			t.Errorf("Bytes->Trits->Bytes->Trits roundtrip failed\nwanted:\t%#v\ngot:\t%#v", fst, snd)
 		}
 	}
@@ -147,38 +147,38 @@ func TestConvert(t *testing.T) {
 	trits := Trits{0, 1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	invalid := []int8{1, -1, 2, 0, 1, -1}
 
-	if _, err := ToTrits(invalid); err == nil {
-		t.Error("expected ToTrits() return an error but got none")
+	if _, err := NewTrits(invalid); err == nil {
+		t.Error("expected NewTrits() return an error but got none")
 	}
 
-	if _, err := ToTrytes("A_AAA"); err == nil {
-		t.Error("expected ToTrytes() return an error but got none")
+	if _, err := NewTrytes("A_AAA"); err == nil {
+		t.Error("expected NewTrytes() return an error but got none")
 	}
 
 	var target int64 = 6562317
-	i := trits.Int()
+	i := TritsToInt(trits)
 	if i != target {
 		t.Errorf("expected Int() to return %d but got %d", target, i)
 	}
 
 	st := Trits{0, 1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 1, 0, 1, 1}
 	trits2 := IntToTrits(target, 15)
-	if !st.Equal(trits2) {
+	if !TritsEqual(st, trits2) {
 		t.Error("IntToTrits() is illegal.", trits2)
 	}
 
 	trits22 := IntToTrits(-1024, 7)
-	if !trits22.Equal(Trits{-1, 1, 0, 1, -1, -1, -1}) {
+	if !TritsEqual(trits22, Trits{-1, 1, 0, 1, -1, -1, -1}) {
 		t.Error("IntToTrits() is illegal.")
 	}
 
-	try := st.MustTrytes()
+	try := MustTritsToTrytes(st)
 	if try != "UVKIL" {
 		t.Error("Int() is illegal.", try)
 	}
 
-	trits3 := try.Trits()
-	if !st.Equal(trits3) {
+	trits3 := TrytesToTrits(try)
+	if !TritsEqual(st, trits3) {
 		t.Error("Trits() is illegal.", trits3)
 	}
 }
@@ -189,7 +189,7 @@ func TestTrytes_Normalize(t *testing.T) {
 		11, 3, 1, 13, 13, 13, 7, 1, 2, 0, 8, -12, 10, -10, -4, 5, -9, -7, -2, -4, 5, -9, 10, -13, -12, -2, 12, -4,
 		0, -11, -5, 12, -12, 7, 4, -6, -11, 3, 0, 4, 12, 7, -8, -6, 8, 0, -6, 8, -8, 11, 10, -12, 1, -8, 10, -9, -6}
 
-	norm := bundleHash.Normalize()
+	norm := Normalize(bundleHash)
 	for i := range no {
 		if no[i] != norm[i] {
 			t.Fatal("normalization is incorrect.")
@@ -200,63 +200,8 @@ func TestTrytes_Normalize(t *testing.T) {
 func TestTrits_Value(t *testing.T) {
 	trits := Trits{1, 1, 1, 0, 0, 0, 1, -1, 1, -1, 1}
 	const expected = 44482
-	if trits.Value() != expected {
-		t.Fatalf("expected value %d but got %d\n", expected, trits.Value())
-	}
-}
-
-func TestASCIIToTrytes(t *testing.T) {
-	const ascii = "IOTA"
-	const utf8 = "Γιώτα"
-	const expected = "SBYBCCKB"
-
-	trytes, err := ASCIIToTrytes(ascii)
-	if err != nil {
-		t.Fatalf("didn't expect an error for valid ascii input but got error: %v\n", err)
-	}
-
-	for i := range trytes {
-		if trytes[i] != expected[i] {
-			t.Fatalf("char at %d is %v but expected %v\n", i, trytes[i], expected[i])
-		}
-	}
-
-	if _, err := ASCIIToTrytes(utf8); err == nil {
-		t.Fatalf("expected an error for the invalid ascii input of %v", utf8)
-	}
-}
-
-func TestTrytes_ToASCII(t *testing.T) {
-	const trytes = Trytes("SBYBCCKB")
-	const expected = "IOTA"
-
-	asciiVal, err := trytes.ToASCII()
-	if err != nil {
-		t.Fatalf("didn't expect an error for valid tryte values for ascii conversion but got error: %v\n", err)
-	}
-
-	if asciiVal != expected {
-		t.Fatalf("got converted ascii value %s but expected %s\n", asciiVal, expected)
-	}
-
-	const invalidTrytes = Trytes("AAAfasds")
-	const trytesWithOddLength = Trytes("AAA")
-
-	_, err = invalidTrytes.ToASCII()
-	if err == nil {
-		t.Fatalf("expected an error for non convertible tryte value %s", invalidTrytes)
-	}
-
-	if err != ErrInvalidTryteCharacter {
-		t.Fatalf("expected invalid tryte char error but got: %v", err)
-	}
-
-	_, err = trytesWithOddLength.ToASCII()
-	if err == nil {
-		t.Fatalf("expected an error for non convertible tryte value %s", trytesWithOddLength)
-	}
-
-	if err != ErrInvalidLengthForToASCIIConversion {
-		t.Fatalf("expected invalid trytes length error but got: %v", err)
+	x := TritsToInt(trits)
+	if x != expected {
+		t.Fatalf("expected value %d but got %d\n", expected, x)
 	}
 }

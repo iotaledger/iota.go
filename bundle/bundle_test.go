@@ -8,7 +8,7 @@ import (
 )
 
 type tx struct {
-	addr      signing.Address
+	addr      signing.AddressHash
 	value     int64
 	timestamp string
 }
@@ -56,10 +56,10 @@ func TestBundle(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			bs.AddEntry(1, tx.addr, tx.value, parsedTime, "")
+			AddEntry(&bs, 1, tx.addr, tx.value, parsedTime.Unix(), "")
 		}
 
-		bundleHash, err := bs.Hash()
+		bundleHash, err := BundleHash(bs)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -67,9 +67,9 @@ func TestBundle(t *testing.T) {
 			t.Errorf("%s: hash of bundles is illegal: %s", tt.name, bundleHash)
 		}
 
-		bs.Finalize([]trinary.Trytes{})
+		Finalize(bs, []trinary.Trytes{})
 
-		send, receive := bs.Categorize(tt.transactions[1].addr)
+		send, receive := Categorize(bs, tt.transactions[1].addr)
 		if len(send) != 1 || len(receive) != 1 {
 			t.Errorf("%s: Categorize is incorrect", tt.name)
 		}

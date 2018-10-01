@@ -1,12 +1,10 @@
 package signing
 
 import (
-	"crypto/rand"
 	"errors"
 	"github.com/iotaledger/giota/curl"
 	"github.com/iotaledger/giota/kerl"
-	"github.com/iotaledger/giota/trinary"
-	"math/big"
+	. "github.com/iotaledger/giota/trinary"
 )
 
 const (
@@ -22,9 +20,9 @@ var (
 
 var (
 	// emptySig represents an empty signature.
-	EmptySig trinary.Trytes
+	EmptySig Trytes
 	// EmptyAddress represents an empty address.
-	EmptyAddress Address = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+	EmptyAddress AddressHash = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
 )
 
 func init() {
@@ -32,7 +30,7 @@ func init() {
 	for i := 0; i < SignatureSize/3; i++ {
 		bytes[i] = '9'
 	}
-	EmptySig = trinary.Trytes(bytes)
+	EmptySig = Trytes(bytes)
 }
 
 type SecurityLevel int
@@ -43,45 +41,18 @@ const (
 	SecurityLevelHigh   SecurityLevel = 3
 )
 
-// NewSeed generate a random Trytes
-func NewSeed() (trinary.Trytes, error) {
-	b := make([]byte, 49)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-
-	txt := new(big.Int).SetBytes(b).Text(27)
-	t := make([]byte, 81)
-	for i := range t {
-		var c byte = '0'
-		if len(txt) > i {
-			c = txt[i]
-		}
-		if c == '0' {
-			t[i] = '9'
-		}
-		if c >= '1' && c <= '9' {
-			t[i] = c - '1' + 'A'
-		}
-		if c >= 'a' {
-			t[i] = c - 'a' + ('A' + 9)
-		}
-	}
-	return trinary.Trytes(t), nil
-}
-
 // NewSubseed takes a seed and an index and returns the given subseed
-func NewSubseed(seed trinary.Trytes, index uint) (trinary.Trits, error) {
-	if err := seed.IsValid(); err != nil {
+func NewSubseed(seed Trytes, index uint) (Trits, error) {
+	if err := ValidTrytes(seed); err != nil {
 		return nil, err
-	} else if len(seed) != trinary.TritHashLength/trinary.Radix {
+	} else if len(seed) != TritHashLength/Radix {
 		return nil, ErrSeedTrytesLength
 	}
 
-	incrementedSeed := seed.Trits()
+	incrementedSeed := TrytesToTrits(seed)
 	var i uint
 	for ; i < index; i++ {
-		trinary.IncTrits(incrementedSeed)
+		IncTrits(incrementedSeed)
 	}
 
 	k := kerl.NewKerl()
@@ -96,9 +67,9 @@ func NewSubseed(seed trinary.Trytes, index uint) (trinary.Trits, error) {
 	return subseed, err
 }
 
-// NewKeyTrits takes a seed encoded as Trytes, an index and a security
+// NewPrivateKeyTrits takes a seed encoded as Trytes, an index and a security
 // level to derive a private key returned as Trits
-func NewKeyTrits(seed trinary.Trytes, index uint, securityLevel SecurityLevel) (trinary.Trits, error) {
+func NewPrivateKeyTrits(seed Trytes, index uint, securityLevel SecurityLevel) (Trits, error) {
 	subseed, err := NewSubseed(seed, index)
 	if err != nil {
 		return nil, err
@@ -110,7 +81,7 @@ func NewKeyTrits(seed trinary.Trytes, index uint, securityLevel SecurityLevel) (
 		return nil, err
 	}
 
-	key := make(trinary.Trits, (curl.HashSize * 27 * int(securityLevel)))
+	key := make(Trits, curl.HashSize*27*int(securityLevel))
 
 	for l := 0; l < int(securityLevel); l++ {
 		for i := 0; i < 27; i++ {
@@ -125,11 +96,11 @@ func NewKeyTrits(seed trinary.Trytes, index uint, securityLevel SecurityLevel) (
 	return key, nil
 }
 
-// NewKey takes a seed encoded as Trytes, an index and a security
+// NewPrivateKey takes a seed encoded as Trytes, an index and a security
 // level to derive a private key returned as Trytes
-func NewKey(seed trinary.Trytes, index uint, securityLevel SecurityLevel) (trinary.Trytes, error) {
-	ts, err := NewKeyTrits(seed, index, securityLevel)
-	return ts.MustTrytes(), err
+func NewPrivateKey(seed Trytes, index uint, securityLevel SecurityLevel) (Trytes, error) {
+	ts, err := NewPrivateKeyTrits(seed, index, securityLevel)
+	return MustTritsToTrytes(ts), err
 }
 
 func clearState(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64) {
@@ -139,65 +110,16 @@ func clearState(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64) {
 	}
 }
 
-// 01:-1 11:0 10:1
-func para27(in trinary.Trytes) (*[curl.StateSize]uint64, *[curl.StateSize]uint64) {
-	var l, h [curl.StateSize]uint64
-
-	clearState(&l, &h)
-	var j uint
-	bb := in.Trits()
-	for i := 0; i < curl.HashSize; i++ {
-		for j = 0; j < 27; j++ {
-			l[i] <<= 1
-			h[i] <<= 1
-			switch bb[int(j)*curl.HashSize+i] {
-			case 0:
-				l[i] |= 1
-				h[i] |= 1
-			case 1:
-				l[i] |= 0
-				h[i] |= 1
-			case -1:
-				l[i] |= 1
-				h[i] |= 0
-			}
-		}
-	}
-	return &l, &h
-}
-
-func seri27(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64) trinary.Trytes {
-	keyFragment := make(trinary.Trits, curl.HashSize*27)
-	r := make(trinary.Trits, curl.HashSize)
-	var n uint
-	for n = 0; n < 27; n++ {
-		for i := 0; i < curl.HashSize; i++ {
-			ll := (l[i] >> n) & 1
-			hh := (h[i] >> n) & 1
-			switch {
-			case hh == 0 && ll == 1:
-				r[i] = -1
-			case hh == 1 && ll == 1:
-				r[i] = 0
-			case hh == 1 && ll == 0:
-				r[i] = 1
-			}
-		}
-		copy(keyFragment[(26-n)*curl.HashSize:], r)
-	}
-	return keyFragment.MustTrytes()
-}
-
 // Digests calculates hash x 26 for each segment in keyTrits
-func Digests(key trinary.Trits) (trinary.Trits, error) {
+func Digests(key Trits) (Trits, error) {
 	if len(key) < curl.HashSize*27 {
 		return nil, ErrKeyTritsLength
 	}
 
-	// Integer division, becaue we don't care about impartial keys.
+	// Integer division, because we don't care about impartial keys.
 	numKeys := len(key) / (curl.HashSize * 27)
-	digests := make(trinary.Trits, curl.HashSize*numKeys)
-	buffer := make(trinary.Trits, curl.HashSize)
+	digests := make(Trits, curl.HashSize*numKeys)
+	buffer := make(Trits, curl.HashSize)
 
 	for i := 0; i < numKeys; i++ {
 		k2 := kerl.NewKerl()
@@ -218,44 +140,50 @@ func Digests(key trinary.Trits) (trinary.Trits, error) {
 }
 
 // digest calculates hash x normalizedBundleFragment[i] for each segment in keyTrits.
-func digest(normalizedBundleFragment []int8, signatureFragment trinary.Trytes) (trinary.Trits, error) {
+func digest(normalizedBundleFragment []int8, signatureFragment Trytes) (Trits, error) {
 	k := kerl.NewKerl()
+	var err error
 	for i := 0; i < 27; i++ {
-		bb := signatureFragment[i*curl.HashSize/3:(i+1)*curl.HashSize/3].Trits()
+		bb := TrytesToTrits(signatureFragment[i*curl.HashSize/3 : (i+1)*curl.HashSize/3])
 		for j := normalizedBundleFragment[i] + 13; j > 0; j-- {
-			kerl := kerl.NewKerl()
-			kerl.Absorb(bb)
-			bb, _ = kerl.Squeeze(curl.HashSize)
+			k := kerl.NewKerl()
+			k.Absorb(bb)
+			bb, err = k.Squeeze(curl.HashSize)
+			if err != nil {
+				return nil, err
+			}
 		}
 		k.Absorb(bb)
 	}
-	tr, err := k.Squeeze(curl.HashSize)
-	return tr, err
+	return k.Squeeze(curl.HashSize)
 }
 
 // Sign calculates signature from bundle hash and key
 // by hashing x 13-normalizedBundleFragment[i] for each segments in keyTrits.
-func Sign(normalizedBundleFragment []int8, keyFragment trinary.Trytes) trinary.Trytes {
-	signatureFragment := make(trinary.Trits, len(keyFragment)*3)
+func Sign(normalizedBundleFragment []int8, keyFragment Trytes) (Trytes, error) {
+	signatureFragment := make(Trits, len(keyFragment)*3)
+	var err error
 	for i := 0; i < 27; i++ {
-		bb := keyFragment[i*curl.HashSize/3:(i+1)*curl.HashSize/3].Trits()
+		bb := TrytesToTrits(keyFragment[i*curl.HashSize/3 : (i+1)*curl.HashSize/3])
 		for j := 0; j < 13-int(normalizedBundleFragment[i]); j++ {
-			kerl := kerl.NewKerl()
-			kerl.Absorb(bb)
-			// TODO: why is the error ignored here?
-			bb, _ = kerl.Squeeze(curl.HashSize)
+			k := kerl.NewKerl()
+			k.Absorb(bb)
+			bb, err = k.Squeeze(curl.HashSize)
+			if err != nil {
+				return "", err
+			}
 		}
 		copy(signatureFragment[i*curl.HashSize:], bb)
 	}
-	return signatureFragment.MustTrytes()
+	return MustTritsToTrytes(signatureFragment), nil
 }
 
-// IsValidSig validates signatureFragment.
-func IsValidSig(expectedAddress Address, signatureFragments []trinary.Trytes, bundleHash trinary.Trytes) bool {
-	normalizedBundleHash := bundleHash.Normalize()
+// IsValidSig validates the given signature message fragments.
+func IsValidSig(expectedAddress AddressHash, signatureFragments []Trytes, bundleHash Trytes) bool {
+	normalizedBundleHash := Normalize(bundleHash)
 
-	// Get digests
-	digests := make(trinary.Trits, curl.HashSize*len(signatureFragments))
+	// get digests
+	digests := make(Trits, curl.HashSize*len(signatureFragments))
 	for i := range signatureFragments {
 		start := 27 * (i % 3)
 		digestBuffer, err := digest(normalizedBundleHash[start:start+27], signatureFragments[i])
@@ -270,7 +198,7 @@ func IsValidSig(expectedAddress Address, signatureFragments []trinary.Trytes, bu
 		return false
 	}
 
-	address, err := ToAddress(addrTrites.MustTrytes())
+	address, err := NewAddressHashFromTrytes(MustTritsToTrytes(addrTrites))
 	if err != nil {
 		return false
 	}

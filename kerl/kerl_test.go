@@ -2,7 +2,7 @@ package kerl
 
 import (
 	"github.com/iotaledger/giota/curl"
-	"github.com/iotaledger/giota/trinary"
+	. "github.com/iotaledger/giota/trinary"
 	"testing"
 )
 
@@ -16,26 +16,26 @@ func TestNewKerl(t *testing.T) {
 func TestKerl(t *testing.T) {
 	tests := []struct {
 		name           string
-		trytes         trinary.Trytes
-		expectedTrytes trinary.Trytes
+		trytes         Trytes
+		expectedTrytes Trytes
 		squeezeSize    int
 	}{
 		{
 			name:           "test squeeze HashSize",
-			trytes:         trinary.Trytes("EMIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBH"),
-			expectedTrytes: trinary.Trytes("EJEAOOZYSAWFPZQESYDHZCGYNSTWXUMVJOVDWUNZJXDGWCLUFGIMZRMGCAZGKNPLBRLGUNYWKLJTYEAQX"),
+			trytes:         "EMIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBH",
+			expectedTrytes: "EJEAOOZYSAWFPZQESYDHZCGYNSTWXUMVJOVDWUNZJXDGWCLUFGIMZRMGCAZGKNPLBRLGUNYWKLJTYEAQX",
 			squeezeSize:    curl.HashSize,
 		},
 		{
 			name:           "test squeeze HashSize * 2",
-			trytes:         trinary.Trytes("9MIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBH"),
-			expectedTrytes: trinary.Trytes("G9JYBOMPUXHYHKSNRNMMSSZCSHOFYOYNZRSZMAAYWDYEIMVVOGKPJBVBM9TDPULSFUNMTVXRKFIDOHUXXVYDLFSZYZTWQYTE9SPYYWYTXJYQ9IFGYOLZXWZBKWZN9QOOTBQMWMUBLEWUEEASRHRTNIQWJQNDWRYLCA"),
+			trytes:         "9MIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBH",
+			expectedTrytes: "G9JYBOMPUXHYHKSNRNMMSSZCSHOFYOYNZRSZMAAYWDYEIMVVOGKPJBVBM9TDPULSFUNMTVXRKFIDOHUXXVYDLFSZYZTWQYTE9SPYYWYTXJYQ9IFGYOLZXWZBKWZN9QOOTBQMWMUBLEWUEEASRHRTNIQWJQNDWRYLCA",
 			squeezeSize:    curl.HashSize * 2,
 		},
 		{
 			name:           "test longer trytes with HashSize * 2",
-			trytes:         trinary.Trytes("G9JYBOMPUXHYHKSNRNMMSSZCSHOFYOYNZRSZMAAYWDYEIMVVOGKPJBVBM9TDPULSFUNMTVXRKFIDOHUXXVYDLFSZYZTWQYTE9SPYYWYTXJYQ9IFGYOLZXWZBKWZN9QOOTBQMWMUBLEWUEEASRHRTNIQWJQNDWRYLCA"),
-			expectedTrytes: trinary.Trytes("LUCKQVACOGBFYSPPVSSOXJEKNSQQRQKPZC9NXFSMQNRQCGGUL9OHVVKBDSKEQEBKXRNUJSRXYVHJTXBPDWQGNSCDCBAIRHAQCOWZEBSNHIJIGPZQITIBJQ9LNTDIBTCQ9EUWKHFLGFUVGGUWJONK9GBCDUIMAYMMQX"),
+			trytes:         "G9JYBOMPUXHYHKSNRNMMSSZCSHOFYOYNZRSZMAAYWDYEIMVVOGKPJBVBM9TDPULSFUNMTVXRKFIDOHUXXVYDLFSZYZTWQYTE9SPYYWYTXJYQ9IFGYOLZXWZBKWZN9QOOTBQMWMUBLEWUEEASRHRTNIQWJQNDWRYLCA",
+			expectedTrytes: "LUCKQVACOGBFYSPPVSSOXJEKNSQQRQKPZC9NXFSMQNRQCGGUL9OHVVKBDSKEQEBKXRNUJSRXYVHJTXBPDWQGNSCDCBAIRHAQCOWZEBSNHIJIGPZQITIBJQ9LNTDIBTCQ9EUWKHFLGFUVGGUWJONK9GBCDUIMAYMMQX",
 			squeezeSize:    curl.HashSize * 2,
 		},
 	}
@@ -47,7 +47,7 @@ func TestKerl(t *testing.T) {
 
 		}
 
-		err := k.Absorb(tt.trytes.Trits())
+		err := k.Absorb( tt.trytes.Trits())
 		if err != nil {
 			t.Errorf("Absorb(%q) failed: %s", tt.trytes, err)
 		}
@@ -57,8 +57,8 @@ func TestKerl(t *testing.T) {
 			t.Errorf("Squeeze() failed: %s", err)
 		}
 
-		trytes := ts.MustTrytes()
-		if  trytes != tt.expectedTrytes {
+		trytes := MustTritsToTrytes(ts)
+		if trytes != tt.expectedTrytes {
 			if err != nil {
 				t.Errorf("%s: tryte output: %s != expected output: %s", tt.name, trytes, tt.expectedTrytes)
 			}

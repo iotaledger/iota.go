@@ -5,13 +5,13 @@ import (
 	"hash"
 
 	"github.com/iotaledger/giota/curl"
-	"github.com/iotaledger/giota/trinary"
+	. "github.com/iotaledger/giota/trinary"
 	keccak "golang.org/x/crypto/sha3"
 )
 
 var (
-	ErrInvalidInputLength      = fmt.Errorf("output lengths must be of %d", trinary.TritHashLength)
-	ErrInvalidInputTritsLength = fmt.Errorf("input trit slice must be a multiple of %d", trinary.TritHashLength)
+	ErrInvalidInputLength      = fmt.Errorf("output lengths must be of %d", TritHashLength)
+	ErrInvalidInputTritsLength = fmt.Errorf("input trit slice must be a multiple of %d", TritHashLength)
 )
 
 // Kerl is a to trinary aligned version of keccak
@@ -27,16 +27,16 @@ func NewKerl() *Kerl {
 	return k
 }
 
-// Squeeze out `length` trits. Length has to be a multiple of trinary.TritHashLength.
-func (k *Kerl) Squeeze(length int) (trinary.Trits, error) {
+// Squeeze out `length` trits. Length has to be a multiple of TritHashLength.
+func (k *Kerl) Squeeze(length int) (Trits, error) {
 	if length%curl.HashSize != 0 {
 		return nil, ErrInvalidInputLength
 	}
 
-	out := make(trinary.Trits, length)
+	out := make(Trits, length)
 	for i := 1; i <= length/curl.HashSize; i++ {
 		h := k.s.Sum(nil)
-		ts, err := trinary.BytesToTrits(h)
+		ts, err := BytesToTrits(h)
 		if err != nil {
 			return nil, err
 		}
@@ -55,15 +55,15 @@ func (k *Kerl) Squeeze(length int) (trinary.Trits, error) {
 }
 
 // Absorb fills the internal state of the sponge with the given trits.
-// This is only defined for Trit slices that are a multiple of trinary.TritHashLength long.
-func (k *Kerl) Absorb(in trinary.Trits) error {
+// This is only defined for Trit slices that are a multiple of TritHashLength long.
+func (k *Kerl) Absorb(in Trits) error {
 	if len(in)%curl.HashSize != 0 {
 		return ErrInvalidInputTritsLength
 	}
 
 	for i := 1; i <= len(in)/curl.HashSize; i++ {
 		// in[(HashSize*i)-1] = 0
-		b, err := in[curl.HashSize*(i-1) : curl.HashSize*i].Bytes()
+		b, err := TritsToBytes(in[curl.HashSize*(i-1) : curl.HashSize*i])
 		if err != nil {
 			return err
 		}

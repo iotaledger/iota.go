@@ -101,7 +101,7 @@ func main() {
 	// convert the recipient address to a signing.Address.
 	// if the input string contains a checksum it is validated and an error
 	// is returned if it is not valid.
-	recipientAddr, err := signing.ToAddress(trinary.Trytes(recipientAddrRaw))
+	recipientAddr, err := signing.NewAddressHashFromTrytes(recipientAddrRaw)
 	must(err)
 	
 	transfers := bundle.Transfers{
@@ -119,7 +119,7 @@ func main() {
 	
 	// in this example we assume that the first address of our seed has
 	// 5000 iotas, thereby enough funds for the transfer
-	inputs := bundle.AddressInputs{
+	inputs := signing.Addresses{
 		{
 		    Seed: seed,
 		    Security: securityLevel,
@@ -130,14 +130,14 @@ func main() {
 	// since in IOTA inputs must be spent completely, we need to send the remainder (4000 iotas)
 	// to our next address. in this example this would simply be the address at the next
 	// index which is 1 (we used address at index 0 for as input).
-	remainderAddr, err := signing.NewAddress(seed, 1, securityLevel)
+	remainderAddr, err := signing.NewAddressHash(signing.Address{seed, 1, securityLevel})
 	must(err)
 	
 	// prepares the transfers by creating a bundle with the given output transaction (made from the transfer objects)
 	// and input transactions from the given address inputs. in case not the entire input is spent to the
 	// defined transfers, the remainder is sent to the given remainder address.
 	// It also automatically checks whether the given input addresses have enough funds for the transfer.
-	bundle, err := api.PrepareTransfers(seed, transfers, inputs, remainderAddr, securityLevel)
+	bndl, err := api.PrepareTransfers(seed, transfers, inputs, remainderAddr, securityLevel)
 	must(err)
 	
 	// at this point it is good practice to check whether the destination address was already spent from
@@ -156,10 +156,10 @@ func main() {
 	// 3. broadcast the bundle to the network
 	// 4. a storeTransaction call to the connected node
 	_, powFunc := pow.GetBestPoW()
-	bundle, err = api.SendTrytes(3, bundle, 14, powFunc)
+	bndl, err = api.SendTrytes(3, bndl, 14, powFunc)
 	must(err)
 	
-	fmt.Println("attached bundle with tail hash", bundle[0].Hash(), "to the tangle")
+	fmt.Println("attached bundle with tail hash",  bundle.TailTransactionHash(bndl), "to the tangle")
 }
 ```
 

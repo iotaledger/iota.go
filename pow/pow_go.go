@@ -3,8 +3,8 @@ package pow
 import "C"
 import (
 	"github.com/iotaledger/giota/curl"
-	"github.com/iotaledger/giota/transaction"
-	"github.com/iotaledger/giota/trinary"
+	. "github.com/iotaledger/giota/transaction"
+	. "github.com/iotaledger/giota/trinary"
 	"github.com/pkg/errors"
 	"math"
 	"runtime"
@@ -24,9 +24,9 @@ const (
 	low3  uint64 = 0xFFC0000007FFFFFF
 	high3 uint64 = 0x003FFFFFFFFFFFFF
 
-	nonceOffset         = curl.HashSize - transaction.NonceTrinarySize
+	nonceOffset         = curl.HashSize - NonceTrinarySize
 	nonceInitStart      = nonceOffset + 4
-	nonceIncrementStart = nonceInitStart + transaction.NonceTrinarySize/3
+	nonceIncrementStart = nonceInitStart + NonceTrinarySize/3
 )
 
 var (
@@ -36,7 +36,7 @@ var (
 )
 
 // PowFunc is the func type for PoW
-type PowFunc func(trinary.Trytes, int) (trinary.Trytes, error)
+type PowFunc func(Trytes, int) (Trytes, error)
 
 var (
 	powFuncs = make(map[string]PowFunc)
@@ -145,8 +145,8 @@ func incr(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) bool {
 	return i == curl.HashSize
 }
 
-func seri(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, n uint) trinary.Trits {
-	r := make(trinary.Trits, transaction.NonceTrinarySize)
+func seri(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, n uint) Trits {
+	r := make(Trits, NonceTrinarySize)
 	for i := nonceOffset; i < curl.HashSize; i++ {
 		ll := (l[i] >> n) & 1
 		hh := (h[i] >> n) & 1
@@ -183,7 +183,7 @@ func check(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, m int) int {
 
 var stopGO = true
 
-func loop(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64, m int) (trinary.Trits, int64) {
+func loop(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64, m int) (Trits, int64) {
 	var lcpy, hcpy [curl.StateSize]uint64
 	var i int64
 	for i = 0; !incr(lmid, hmid) && !stopGO; i++ {
@@ -200,7 +200,7 @@ func loop(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64, m int) (tr
 }
 
 // 01:-1 11:0 10:1
-func para(in trinary.Trits) (*[curl.StateSize]uint64, *[curl.StateSize]uint64) {
+func para(in Trits) (*[curl.StateSize]uint64, *[curl.StateSize]uint64) {
 	var l, h [curl.StateSize]uint64
 
 	for i := 0; i < curl.StateSize; i++ {
@@ -235,11 +235,11 @@ func incrN(n int, lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) {
 }
 
 // PoWGo does proof of work on the given trytes using only Go code.
-func PoWGo(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+func PoWGo(trytes Trytes, mwm int) (Trytes, error) {
 	return powGo(trytes, mwm, nil)
 }
 
-func powGo(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, error) {
+func powGo(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 	if !stopGO {
 		return "", ErrPoWAlreadyRunning
 	}
@@ -251,17 +251,17 @@ func powGo(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, 
 	stopGO = false
 
 	c := curl.NewCurl()
-	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
-	tr := trytes.Trits()
-	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
+	c.Absorb(trytes[:(TransactionTrinarySize-curl.HashSize)/3])
+	tr := TrytesToTrits(trytes)
+	copy(c.State, tr[TransactionTrinarySize-curl.HashSize:])
 
-	var result trinary.Trytes
+	var result Trytes
 	var rate chan int64
 	if optRate != nil {
 		rate = make(chan int64, PowProcs)
 	}
 	exit := make(chan struct{})
-	nonceChan := make(chan trinary.Trytes)
+	nonceChan := make(chan Trytes)
 
 	for i := 0; i < PowProcs; i++ {
 		go func(i int) {
@@ -285,7 +285,7 @@ func powGo(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, 
 			if r >= 0 {
 				select {
 				case <-exit:
-				case nonceChan <- nonce.MustTrytes():
+				case nonceChan <- MustTritsToTrytes(nonce):
 					stopGO = true
 				}
 			}

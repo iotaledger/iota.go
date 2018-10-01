@@ -5,8 +5,10 @@ import (
 	"math"
 )
 
-var ErrUnequallySizedSlices = errors.New("operation not defined for differently sized slices")
-var ErrSubtractionWithLeftovers = errors.New("could not subtract without leftovers")
+var (
+	ErrUnequallySizedSlices     = errors.New("operation not defined for differently sized slices")
+	ErrSubtractionWithLeftovers = errors.New("could not subtract without leftovers")
+)
 
 func MustAdd(b []uint32, rh []uint32) {
 	if len(b) != len(rh) {

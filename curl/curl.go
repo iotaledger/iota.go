@@ -4,7 +4,6 @@ import (
 	"github.com/iotaledger/giota/trinary"
 )
 
-// constants for Sizes.
 const (
 	HashSize       = 243
 	HashSizeTrytes = 81
@@ -14,7 +13,7 @@ const (
 
 var (
 	// EmptyHash represents an empty hash.
-	EmptyHash trinary.Trytes = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+	EmptyHash = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
 )
 
 var (
@@ -51,7 +50,7 @@ func NewCurl() *Curl {
 
 //Squeeze do Squeeze in sponge func.
 func (c *Curl) Squeeze() trinary.Trytes {
-	ret := c.State[:HashSize].MustTrytes()
+	ret := trinary.MustTritsToTrytes(c.State[:HashSize])
 	c.Transform()
 
 	return ret
@@ -59,7 +58,7 @@ func (c *Curl) Squeeze() trinary.Trytes {
 
 // Absorb fills the internal State of the sponge with the given trits.
 func (c *Curl) Absorb(inn trinary.Trytes) {
-	in := inn.Trits()
+	in := trinary.TrytesToTrits(inn)
 	var lenn int
 	for i := 0; i < len(in); i += lenn {
 		lenn = trinary.TritHashLength

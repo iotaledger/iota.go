@@ -6,9 +6,8 @@ import (
 	"github.com/iotaledger/giota/kerl"
 	"github.com/iotaledger/giota/signing"
 	"github.com/iotaledger/giota/transaction"
-	"github.com/iotaledger/giota/trinary"
+	. "github.com/iotaledger/giota/trinary"
 	"github.com/iotaledger/giota/utils"
-	"time"
 )
 
 var (
@@ -24,23 +23,19 @@ type Bundles []Bundle
 // BundlesByTimestamp are sorted bundles by attachment timestamp
 type BundlesByTimestamp Bundles
 
-func (a BundlesByTimestamp) Len() int {
-	return len(a)
-}
-func (a BundlesByTimestamp) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
+func (a BundlesByTimestamp) Len() int      { return len(a) }
+func (a BundlesByTimestamp) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a BundlesByTimestamp) Less(i, j int) bool {
-	return a[i][0].AttachmentTimestamp.Trits().Value() < a[j][0].AttachmentTimestamp.Trits().Value()
+	return a[i][0].AttachmentTimestamp < a[j][0].AttachmentTimestamp
 }
 
 // Bundle represents grouped together transactions for creating a transfer.
-type Bundle []transaction.Transaction
+type Bundle = transaction.Transactions
 
 // AddEntry adds a new transaction entry to the bundle. By the given num. fragments it adds
 // one ore more transaction to accustom the resulting signature message fragments.
 // Transaction properties not specified as parameters to this function are initialized with empty hash values.
-func (bundle *Bundle) AddEntry(numFragments int, address signing.Address, value int64, timestamp time.Time, tag trinary.Trytes) {
+func AddEntry(bundle *Bundle, numFragments int, address signing.AddressHash, value int64, timestamp int64, tag Trytes) {
 	if tag == "" {
 		tag = curl.EmptyHash[:27]
 	}
@@ -56,17 +51,17 @@ func (bundle *Bundle) AddEntry(numFragments int, address signing.Address, value 
 			SignatureMessageFragment:      signing.EmptySig,
 			Address:                       address,
 			Value:                         v,
-			ObsoleteTag:                   trinary.Pad(tag, transaction.TagTrinarySize/3),
+			ObsoleteTag:                   Pad(tag, transaction.TagTrinarySize/3),
 			Timestamp:                     timestamp,
 			CurrentIndex:                  int64(len(*bundle) - 1),
 			LastIndex:                     0,
 			Bundle:                        curl.EmptyHash,
 			TrunkTransaction:              curl.EmptyHash,
 			BranchTransaction:             curl.EmptyHash,
-			Tag:                           trinary.Pad(tag, transaction.TagTrinarySize/3),
-			AttachmentTimestamp:           curl.EmptyHash,
-			AttachmentTimestampLowerBound: curl.EmptyHash,
-			AttachmentTimestampUpperBound: curl.EmptyHash,
+			Tag:                           Pad(tag, transaction.TagTrinarySize/3),
+			AttachmentTimestamp:           0,
+			AttachmentTimestampLowerBound: 0,
+			AttachmentTimestampUpperBound: 0,
 			Nonce:                         curl.EmptyHash,
 		}
 		*bundle = append(*bundle, b)
@@ -75,8 +70,8 @@ func (bundle *Bundle) AddEntry(numFragments int, address signing.Address, value 
 
 // Finalize adds the given signature message fragments to the transactions
 // and initializes the indices and bundle hash properties.
-func (bundle Bundle) Finalize(sig []trinary.Trytes) error {
-	h, err := bundle.Hash()
+func Finalize(bundle Bundle, sig []Trytes) error {
+	h, err := BundleHash(bundle)
 	if err != nil {
 		return err
 	}
@@ -84,7 +79,7 @@ func (bundle Bundle) Finalize(sig []trinary.Trytes) error {
 	lastIndex := int64(len(bundle) - 1)
 	for i := range bundle {
 		if i < len(sig) && sig[i] != "" {
-			bundle[i].SignatureMessageFragment = trinary.Pad(sig[i], transaction.SignatureMessageFragmentTrinarySize/3)
+			bundle[i].SignatureMessageFragment = Pad(sig[i], transaction.SignatureMessageFragmentTrinarySize/3)
 		}
 
 		bundle[i].CurrentIndex = int64(i)
@@ -94,10 +89,10 @@ func (bundle Bundle) Finalize(sig []trinary.Trytes) error {
 	return nil
 }
 
-// Hash calculates the non normalized hash of the bundle.
-func (bundle Bundle) Hash() (trinary.Trytes, error) {
+// BundleHash calculates the non normalized hash of the bundle.
+func BundleHash(bundle Bundle) (Trytes, error) {
 	k := kerl.NewKerl()
-	buf := make(trinary.Trits, 243+81*3)
+	buf := make(Trits, 243+81*3)
 
 	for i, b := range bundle {
 		copyRelevantTritsForBundleHash(buf, &b, i, len(bundle))
@@ -105,18 +100,18 @@ func (bundle Bundle) Hash() (trinary.Trytes, error) {
 	}
 
 	h, err := k.Squeeze(curl.HashSize)
-	return h.MustTrytes(), err
+	return MustTritsToTrytes(h), err
 }
 
-// NormalizedHash calculates a normalized hash of the bundle.
+// NormalizedBundleHash calculates a normalized hash of the bundle.
 // The obsolete tag is incremented as many times as needed
 // in order to prevent M/13 tryte values in the resulting bundle hash.
-func (bundle Bundle) NormalizedHash() (trinary.Trytes, error) {
+func NormalizedBundleHash(bundle Bundle) (Trytes, error) {
 	k := kerl.NewKerl()
 	hashedLen := transaction.BundleTrinaryOffset - transaction.AddressTrinaryOffset
 
 	// copy all relevant trits from the transactions in the bundle into the buffer
-	buf := make(trinary.Trits, hashedLen*len(bundle))
+	buf := make(Trits, hashedLen*len(bundle))
 	for i, b := range bundle {
 		copyRelevantTritsForBundleHash(buf[i*hashedLen:], &b, i, len(bundle))
 	}
@@ -127,8 +122,8 @@ func (bundle Bundle) NormalizedHash() (trinary.Trytes, error) {
 		if err != nil {
 			return "", err
 		}
-		h := hashTrits.MustTrytes()
-		n := h.Normalize()
+		h := MustTritsToTrytes(hashTrits)
+		n := Normalize(h)
 		valid := true
 
 		for _, v := range n {
@@ -141,31 +136,31 @@ func (bundle Bundle) NormalizedHash() (trinary.Trytes, error) {
 		offset := transaction.ObsoleteTagTrinaryOffset - transaction.AddressTrinaryOffset
 
 		if valid {
-			bundle[0].ObsoleteTag = buf[offset : offset+transaction.ObsoleteTagTrinarySize].MustTrytes()
+			bundle[0].ObsoleteTag = MustTritsToTrytes(buf[offset : offset+transaction.ObsoleteTagTrinarySize])
 			return h, nil
 		}
 
 		k.Reset()
-		trinary.IncTrits(buf[offset : offset+transaction.ObsoleteTagTrinarySize])
+		IncTrits(buf[offset : offset+transaction.ObsoleteTagTrinarySize])
 	}
 }
 
 // copies the relevant trits for the bundle hash calculation from the
 // the given transaction into the given buffer. Following properties are used:
 // address, value, obsolete tag, timestamp, current index, last index
-func copyRelevantTritsForBundleHash(buf trinary.Trits, b *transaction.Transaction, i, l int) {
-	copy(buf, trinary.Trytes(b.Address).Trits())
-	copy(buf[243:], trinary.IntToTrits(b.Value, transaction.ValueTrinarySize))
-	copy(buf[243+81:], b.ObsoleteTag.Trits())
-	copy(buf[243+81+81:], trinary.IntToTrits(b.Timestamp.Unix(), transaction.TimestampTrinarySize))
-	copy(buf[243+81+81+27:], trinary.IntToTrits(int64(i), transaction.CurrentIndexTrinarySize))
-	copy(buf[243+81+81+27+27:], trinary.IntToTrits(int64(l-1), transaction.LastIndexTrinarySize))
+func copyRelevantTritsForBundleHash(buf Trits, b *transaction.Transaction, i, l int) {
+	copy(buf, TrytesToTrits(b.Address))
+	copy(buf[243:], IntToTrits(b.Value, transaction.ValueTrinarySize))
+	copy(buf[243+81:], TrytesToTrits(b.ObsoleteTag))
+	copy(buf[243+81+81:], IntToTrits(b.Timestamp, transaction.TimestampTrinarySize))
+	copy(buf[243+81+81+27:], IntToTrits(int64(i), transaction.CurrentIndexTrinarySize))
+	copy(buf[243+81+81+27+27:], IntToTrits(int64(l-1), transaction.LastIndexTrinarySize))
 }
 
 // Categorize categorizes a list of transfers into sent and received. It is important to
 // note that zero value transfers (which for example, are being used for storing
 // addresses in the Tangle), are seen as received in this function.
-func (bundle Bundle) Categorize(adr signing.Address) (send Bundle, received Bundle) {
+func Categorize(bundle Bundle, adr signing.AddressHash) (send Bundle, received Bundle) {
 	send = make(Bundle, 0, len(bundle))
 	received = make(Bundle, 0, len(bundle))
 
@@ -182,14 +177,14 @@ func (bundle Bundle) Categorize(adr signing.Address) (send Bundle, received Bund
 	return
 }
 
-// IsValid checks the validity of bundle. It checks whether the sum
+// ValidBundle checks the validity of bundle. It checks whether the sum
 // of all transactions in the bundle results to 0 (in+out txs must = 0) and whether all
 // signatures are valid. Before calling this function, Finalize() must be called to
 // correctly initialize the signature message fragments, indices and the bundle hash.
-func (bundle Bundle) IsValid() error {
+func ValidBundle(bundle Bundle) error {
 	var total int64
 
-	sigs := make(map[signing.Address][]trinary.Trytes)
+	sigs := make(map[signing.AddressHash][]Trytes)
 
 	for index, b := range bundle {
 		total += b.Value
@@ -231,7 +226,7 @@ func (bundle Bundle) IsValid() error {
 	}
 
 	// validate the signatures
-	hash, err := bundle.Hash()
+	hash, err := BundleHash(bundle)
 	if err != nil {
 		return err
 	}
@@ -247,13 +242,13 @@ func (bundle Bundle) IsValid() error {
 
 // SignInputs signs the input transactions (txs with negative value) and their additional
 // signature fragment holding txs (given the security level)
-func (bundle Bundle) SignInputs(inputs []AddressInput) error {
+func SignInputs(bundle Bundle, inputs signing.Addresses) error {
 	// compute normalized bundle hash
-	hash, err := bundle.Hash()
+	hash, err := BundleHash(bundle)
 	if err != nil {
 		return err
 	}
-	normalizedBundleHash := hash.Normalize()
+	normalizedBundleHash := Normalize(hash)
 
 	// input signing:
 	// find all input transactions (txs with negative value), get the corresponding private key
@@ -264,9 +259,9 @@ func (bundle Bundle) SignInputs(inputs []AddressInput) error {
 		}
 
 		//  get the corresponding key index and security level of the address
-		var ai AddressInput
+		var ai signing.Address
 		for _, in := range inputs {
-			addr, err := in.Address()
+			addr, err := in.Hash()
 			if err != nil {
 				return err
 			}
@@ -278,13 +273,16 @@ func (bundle Bundle) SignInputs(inputs []AddressInput) error {
 		}
 
 		// get the corresponding private key of the address
-		key, err := ai.Key()
+		key, err := ai.PrivateKey()
 		if err != nil {
 			return err
 		}
 
 		// calculate the new signature fragment with the first bundle fragment
-		bundle[i].SignatureMessageFragment = signing.Sign(normalizedBundleHash[:27], key[:6561/3])
+		bundle[i].SignatureMessageFragment, err = signing.Sign(normalizedBundleHash[:27], key[:6561/3])
+		if err != nil {
+			return err
+		}
 
 		// if user chooses higher than 27-trytes security
 		// for each security level, add an additional signature
@@ -295,7 +293,10 @@ func (bundle Bundle) SignInputs(inputs []AddressInput) error {
 				continue
 			}
 			// calculate the signature fragment
-			nfrag := signing.Sign(normalizedBundleHash[(j%3)*27:(j%3)*27+27], key[6561*j/3:(j+1)*6561/3])
+			nfrag, err := signing.Sign(normalizedBundleHash[(j%3)*27:(j%3)*27+27], key[6561*j/3:(j+1)*6561/3])
+			if err != nil {
+				return err
+			}
 			// convert signature to trytes and assign it again to this bundle entry
 			bundle[i+j].SignatureMessageFragment = nfrag
 		}
@@ -324,7 +325,7 @@ func GroupTransactionsIntoBundles(txs transaction.Transactions) Bundles {
 			for j := range txs {
 				if current.Bundle != txs[j].Bundle ||
 					txs[j].CurrentIndex != current.CurrentIndex+1 ||
-					current.TrunkTransaction != txs[j].Hash() {
+					current.TrunkTransaction != txs[j].Hash {
 					continue
 				}
 				found = true
@@ -340,4 +341,9 @@ func GroupTransactionsIntoBundles(txs transaction.Transactions) Bundles {
 	}
 
 	return bundles
+}
+
+// TailTransactionHash returns the tail transaction's hash.
+func TailTransactionHash(bndl Bundle) Hash {
+	return transaction.TransactionHash(&bndl[0])
 }

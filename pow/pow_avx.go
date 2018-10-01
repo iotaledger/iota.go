@@ -6,8 +6,8 @@ package pow
 
 import (
 	"github.com/iotaledger/giota/curl"
-	"github.com/iotaledger/giota/transaction"
-	"github.com/iotaledger/giota/trinary"
+	. "github.com/iotaledger/giota/transaction"
+	. "github.com/iotaledger/giota/trinary"
 	"math"
 )
 
@@ -314,11 +314,11 @@ func init() {
 }
 
 // PoWAVX does proof of work on the given trytes using AVX instructions.
-func PoWAVX(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+func PoWAVX(trytes Trytes, mwm int) (Trytes, error) {
 	return powAVX(trytes, mwm, nil)
 }
 
-func powAVX(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, error) {
+func powAVX(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 	if C.stopAVX == 0 {
 		return "", ErrPoWAlreadyRunning
 	}
@@ -330,21 +330,21 @@ func powAVX(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes,
 	C.stopAVX = 0
 
 	c := curl.NewCurl()
-	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
-	tr := trytes.Trits()
-	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
+	c.Absorb(trytes[:(TransactionTrinarySize-curl.HashSize)/3])
+	tr := TrytesToTrits(trytes)
+	copy(c.State, tr[TransactionTrinarySize-curl.HashSize:])
 
-	var result trinary.Trytes
+	var result Trytes
 	var rate chan int64
 	if optRate != nil {
 		rate = make(chan int64, PowProcs)
 	}
 	exit := make(chan struct{})
-	nonceChan := make(chan trinary.Trytes)
+	nonceChan := make(chan Trytes)
 
 	for n := 0; n < PowProcs; n++ {
 		go func(n int) {
-			nonce := make(trinary.Trits, transaction.NonceTrinarySize)
+			nonce := make(Trits, NonceTrinarySize)
 
 			r := C.pwork256((*C.char)(
 				unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])),
@@ -357,7 +357,7 @@ func powAVX(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes,
 			if r >= 0 {
 				select {
 				case <-exit:
-				case nonceChan <- nonce.MustTrytes():
+				case nonceChan <- MustTritsToTrytes(nonce):
 					C.stopAVX = 1
 				}
 			}

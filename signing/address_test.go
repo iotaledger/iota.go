@@ -1,16 +1,16 @@
 package signing
 
 import (
-	"github.com/iotaledger/giota/trinary"
+	. "github.com/iotaledger/giota/trinary"
 	"testing"
 )
 
 func TestNewAddressFromTrytes(t *testing.T) {
 	tests := []struct {
 		name          string
-		address       trinary.Trytes
+		address       Trytes
 		validAddr     bool
-		checksum      trinary.Trytes
+		checksum      Trytes
 		validChecksum bool
 	}{
 		{
@@ -44,8 +44,8 @@ func TestNewAddressFromTrytes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		adr, err := ToAddress(tt.address)
-		adrChecksum, adrChecksumErr := adr.Checksum()
+		adr, err := NewAddressHashFromTrytes(tt.address)
+		adrChecksum, adrChecksumErr := AddressChecksum(adr)
 		switch {
 		case (err != nil) == tt.validAddr:
 			t.Fatalf("%s: NewAddressFromTrytes(%q) expected (err != nil) to be %#v\nerr: %#v",
@@ -57,33 +57,33 @@ func TestNewAddressFromTrytes(t *testing.T) {
 			continue
 		}
 
-		wcs, err := adr.WithChecksum()
+		wcs, err := AddressWithChecksum(adr)
 		if err != nil {
 			t.Errorf("WithChecksum returned an error: %v", err)
 		}
 
-		if wcs != trinary.Trytes(adr)+adrChecksum {
+		if wcs != Trytes(adr)+adrChecksum {
 			t.Error("WithChecksum is incorrect")
 		}
 
-		adr2, err := ToAddress(tt.address)
+		adr2, err := NewAddressHashFromTrytes(tt.address)
 		if err != nil {
 			t.Error(err)
 		}
 
 		if adr != adr2 {
-			t.Error("ToAddress is incorrect")
+			t.Error("NewAddressHash is incorrect")
 		}
 	}
 }
 
 func TestAddress(t *testing.T) {
 	tests := []struct {
-		name         trinary.Trytes
-		seed         trinary.Trytes
+		name         Trytes
+		seed         Trytes
 		seedIndex    uint
 		seedSecurity SecurityLevel
-		address      trinary.Trytes
+		address      Trytes
 		addressValid bool
 	}{
 		{
@@ -103,22 +103,21 @@ func TestAddress(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		address, err := NewAddress(tt.seed, tt.seedIndex, tt.seedSecurity)
+		address, err := NewAddressHash(Address{tt.seed, tt.seedIndex, tt.seedSecurity})
 		if err != nil {
-			t.Errorf("%s: NewAddress failed with error: %s", tt.name, err)
+			t.Errorf("%s: NewAddressHash failed with error: %s", tt.name, err)
 		}
 
-		addressCheck, err := ToAddress(tt.address)
+		addressCheck, err := NewAddressHashFromTrytes(tt.address)
 		if err != nil {
-			t.Errorf("%s: ToAddress failed with err: %s", tt.name, err)
+			t.Errorf("%s: NewAddressHashFromTrytes failed with err: %s", tt.name, err)
 		}
 
 		if address != addressCheck {
 			t.Errorf("%s: address: %s != address: %s", tt.name, address, addressCheck)
 		}
 
-		err = address.IsValid()
-		if err != nil {
+		if err := ValidAddressHash(address); err != nil {
 			t.Errorf("%s: address failed to validate: %s", tt.name, err)
 		}
 	}

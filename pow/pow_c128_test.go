@@ -9,7 +9,6 @@ import (
 	"testing"
 )
 
-
 func TestPowC128(t *testing.T) {
 	sp := testPoW(t, powC128)
 	t.Logf("%d kH/sec on C 128 PoW", int(sp))

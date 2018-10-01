@@ -268,8 +268,8 @@ long long int pworkARM64(signed char mid[], int mwm, signed char nonce[], int n)
 import "C"
 import (
 	"github.com/iotaledger/giota/curl"
-	"github.com/iotaledger/giota/transaction"
-	"github.com/iotaledger/giota/trinary"
+	. "github.com/iotaledger/giota/transaction"
+	. "github.com/iotaledger/giota/trinary"
 	"unsafe"
 )
 
@@ -279,11 +279,11 @@ func init() {
 
 // PoWCARM64 does proof of work on the given trytes using native C code and __int128 C type (ARM adjusted).
 // This implementation follows common C standards and does not rely on SSE which is AMD64 specific.
-func PoWCARM64(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
+func PoWCARM64(trytes Trytes, mwm int) (Trytes, error) {
 	return PoWCARM64(trytes, mwm, nil)
 }
 
-func powCARM64(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Trytes, error) {
+func powCARM64(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 	if C.stopCARM64 == 0 {
 		return "", ErrPoWAlreadyRunning
 	}
@@ -294,21 +294,21 @@ func powCARM64(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Tryt
 
 	C.stopCARM64 = 0
 	c := curl.NewCurl()
-	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
+	c.Absorb(trytes[:(TransactionTrinarySize-curl.HashSize)/3])
 	tr := trytes.Trits()
-	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
+	copy(c.State, tr[TransactionTrinarySize-curl.HashSize:])
 
-	var result trinary.Trytes
+	var result Trytes
 	var rate chan int64
 	if optRate != nil {
 		rate = make(chan int64, PowProcs)
 	}
 	exit := make(chan struct{})
-	nonceChan := make(chan trinary.Trytes)
+	nonceChan := make(chan Trytes)
 
 	for n := 0; n < PowProcs; n++ {
 		go func(n int) {
-			nonce := make(trinary.Trits, transaction.NonceTrinarySize)
+			nonce := make(Trits, NonceTrinarySize)
 
 			r := C.pworkARM64((*C.schar)(unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
 
@@ -319,7 +319,7 @@ func powCARM64(trytes trinary.Trytes, mwm int, optRate chan int64) (trinary.Tryt
 			if r >= 0 {
 				select {
 				case <-exit:
-				case nonceChan <- nonce.MustTrytes():
+				case nonceChan <- MustTritsToTrytes(nonce):
 					C.stopCARM64 = 1
 				}
 			}
