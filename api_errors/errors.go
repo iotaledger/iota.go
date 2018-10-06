@@ -1,4 +1,4 @@
-package giota
+package api_errors
 
 import "github.com/pkg/errors"
 
@@ -27,6 +27,7 @@ var (
 	ErrInvalidBranchTransaction     = errors.New("invalid branch transaction")
 	ErrInvalidBundle                = errors.New("invalid bundle")
 	ErrInvalidBundleHash            = errors.New("illegal bundle hash")
+	ErrInvalidSignature             = errors.New("invalid signature")
 	ErrInvalidChecksum              = errors.New("illegal checksum")
 	ErrInvalidCommand               = errors.New("illegal command format")
 	ErrInvalidDepth                 = errors.New("illegal depth")

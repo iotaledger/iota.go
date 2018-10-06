@@ -47,7 +47,7 @@ func TestKerl(t *testing.T) {
 
 		}
 
-		err := k.Absorb( tt.trytes.Trits())
+		err := k.Absorb(TrytesToTrits(tt.trytes))
 		if err != nil {
 			t.Errorf("Absorb(%q) failed: %s", tt.trytes, err)
 		}

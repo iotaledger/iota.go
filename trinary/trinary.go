@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/iotaledger/giota/bigint"
+	"math"
 	"regexp"
 	"strings"
 	"unsafe"
@@ -20,6 +21,8 @@ const (
 	TryteAlphabet = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	MinTryteValue = -13
 	MaxTryteValue = 13
+	MinTritValue  = -1
+	MaxTritValue  = 1
 )
 
 var (
@@ -76,24 +79,42 @@ func TritsEqual(a, b Trits) bool {
 }
 
 // IntToTrits converts int64 to trits.
-func IntToTrits(v int64, size int) Trits {
-	tr := make(Trits, size)
-	neg := false
-	if v < 0 {
-		v = -v
-		neg = true
+func IntToTrits(value int64) Trits {
+	var dest Trits
+	if value > 0 {
+		dest = make(Trits, int(1+math.Floor(math.Log(math.Max(1, math.Abs(float64(value))))/math.Log(3))))
+	} else {
+		dest = make(Trits, 0)
 	}
 
-	for i := 0; v != 0 && i < size; i++ {
-		tr[i] = int8((v+1)%Radix) - 1
+	var absoluteValue int64
+	if value < 0 {
+		absoluteValue = -value
+	} else {
+		absoluteValue = value
+	}
+	i := 0
 
-		if neg {
-			tr[i] = -tr[i]
+	for absoluteValue > 0 {
+		remainder := absoluteValue % Radix
+		absoluteValue = int64(math.Floor(float64(absoluteValue / Radix)))
+
+		if remainder > MaxTritValue {
+			remainder = MinTritValue
+			absoluteValue++
 		}
 
-		v = (v + 1) / Radix
+		dest[i] = int8(remainder)
+		i++
 	}
-	return tr
+
+	if value < 0 {
+		for i := 0; i < len(dest); i++ {
+			dest[i] = -dest[i]
+		}
+	}
+
+	return dest
 }
 
 // Int converts a slice of trits into an integer and assumes little-endian notation.
@@ -350,40 +371,6 @@ func TrytesToTrits(trytes Trytes) Trits {
 	return trits
 }
 
-// Normalize normalizes the trytes, with resulting digits summing to zero.
-func Normalize(trytes Trytes) Trits {
-	normalized := make([]int8, len(trytes))
-	sum := 0
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 27; j++ {
-			normalized[i*27+j] = int8(TritsToInt(TrytesToTrits(trytes[i*27+j : i*27+j+1])))
-			sum += int(normalized[i*27+j])
-		}
-
-		switch {
-		case sum >= 0:
-			for ; sum > 0; sum-- {
-				for j := 0; j < 27; j++ {
-					if normalized[i*27+j] > -13 {
-						normalized[i*27+j]--
-						break
-					}
-				}
-			}
-		default:
-			for ; sum < 0; sum++ {
-				for j := 0; j < 27; j++ {
-					if normalized[i*27+j] < 13 {
-						normalized[i*27+j]++
-						break
-					}
-				}
-			}
-		}
-	}
-	return normalized
-}
-
 var trytesRegex = regexp.MustCompile("^[9A-Z]+$")
 
 // ValidTryte returns the validity of a tryte (must be rune A-Z or 9)
@@ -412,7 +399,7 @@ func IncTrits(t Trits) {
 	}
 }
 
-// Pad pads the given trytes with 9s up to the given size
+// Pad pads the given trytes with 9s up to the given size.
 func Pad(trytes Trytes, size int) Trytes {
 	out := make([]byte, size)
 	copy(out, []byte(trytes))
@@ -421,4 +408,88 @@ func Pad(trytes Trytes, size int) Trytes {
 		out[i] = '9'
 	}
 	return Trytes(out)
+}
+
+// PadTrits pads the given trits with 0 up to the given size.
+func PadTrits(trits Trits, size int) Trits {
+	if len(trits) >= size {
+		return trits
+	}
+	sized := make(Trits, size)
+	for i := 0; i < size; i++ {
+		if len(trits) > i {
+			sized[i] = trits[i]
+			continue
+		}
+		sized[i] = 0
+	}
+	return sized
+}
+
+func sum(a int8, b int8) int8 {
+	s := a + b
+
+	switch s {
+	case 2:
+		return -1
+	case -2:
+		return 1
+	default:
+		return s
+	}
+}
+
+func cons(a int8, b int8) int8 {
+	if a == b {
+		return a
+	}
+
+	return 0
+}
+
+func any(a int8, b int8) int8 {
+	s := a + b
+
+	if s > 0 {
+		return 1
+	}
+
+	if s < 0 {
+		return -1
+	}
+
+	return 0
+}
+
+func fullAdd(a int8, b int8, c int8) [2]int8 {
+	sA := sum(a, b)
+	cA := cons(a, b)
+	cB := cons(sA, c)
+	cOut := any(cA, cB)
+	sOut := sum(sA, c)
+	return [2]int8{sOut, cOut}
+}
+
+// AddTrits adds a to b.
+func AddTrits(a Trits, b Trits) Trits {
+	out := make(Trits, int64(math.Max(float64(len(a)), float64(len(b)))))
+	var aI, bI, carry int8
+
+	for i := 0; i < len(out); i++ {
+		if i < len(a) {
+			aI = a[i]
+		} else {
+			aI = 0
+		}
+		if i < len(b) {
+			bI = b[i]
+		} else {
+			bI = 0
+		}
+
+		fA := fullAdd(aI, bI, carry)
+		out[i] = fA[0]
+		carry = fA[1]
+	}
+	return out
 }

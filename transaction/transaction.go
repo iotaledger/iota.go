@@ -4,18 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/iotaledger/giota/curl"
-	"github.com/iotaledger/giota/signing"
 	. "github.com/iotaledger/giota/trinary"
 )
 
 const (
-	EmptyTag                  = Trytes("999999999999999999999999999")
 	DefaultMinWeightMagnitude = 14
 )
 
 type Transactions []Transaction
 
-// TransactionsToTrytes returns a slice of transactions trytes from the given transactions.
+// TransactionsToTrytes returns a slice of transaction trytes from the given transactions.
 func TransactionsToTrytes(txs Transactions) []Trytes {
 	trytes := make([]Trytes, len(txs))
 	for i := range txs {
@@ -24,25 +22,35 @@ func TransactionsToTrytes(txs Transactions) []Trytes {
 	return trytes
 }
 
+// FinalTransactionTrytes returns a slice of transaction trytes from the given transactions.
+// The order of the transactions is reversed in the output slice.
+func FinalTransactionTrytes(txs Transactions) []Trytes {
+	trytes := TransactionsToTrytes(txs)
+	for i, j := 0, len(trytes)-1; i < j; i, j = i+1, j-1 {
+		trytes[i], trytes[j] = trytes[j], trytes[i]
+	}
+	return trytes
+}
+
 // Transaction represents a single transaction.
 type Transaction struct {
-	Hash                          Hash                `json:"hash,string"`
-	SignatureMessageFragment      Trytes              `json:"currentIndex,string"`
-	Address                       signing.AddressHash `json:"address,string"`
-	Value                         int64               `json:"value,string"`
-	ObsoleteTag                   Trytes              `json:"obsoleteTag,string"`
-	Timestamp                     int64               `json:"timestamp,string"`
-	CurrentIndex                  int64               `json:"currentIndex,string"`
-	LastIndex                     int64               `json:"lastIndex,string"`
-	Bundle                        Hash                `json:"bundle"`
-	TrunkTransaction              Hash                `json:"trunkTransaction"`
-	BranchTransaction             Hash                `json:"branchTransaction"`
-	Tag                           Trytes              `json:"tag"`
-	AttachmentTimestamp           int64               `json:"attachmentTimestamp,string"`
-	AttachmentTimestampLowerBound int64               `json:"attachmentTimestampLowerBound,string"`
-	AttachmentTimestampUpperBound int64               `json:"attachmentTimestampUpperBound,string"`
-	Nonce                         Trytes              `json:"nonce"`
-	Confirmed                     *bool               `json:"confirmed,omitempty"`
+	Hash                          Hash   `json:"hash,string"`
+	SignatureMessageFragment      Trytes `json:"currentIndex,string"`
+	Address                       Hash   `json:"address,string"`
+	Value                         int64  `json:"value,string"`
+	ObsoleteTag                   Trytes `json:"obsoleteTag,string"`
+	Timestamp                     uint64 `json:"timestamp,string"`
+	CurrentIndex                  uint64 `json:"currentIndex,string"`
+	LastIndex                     uint64 `json:"lastIndex,string"`
+	Bundle                        Hash   `json:"bundle"`
+	TrunkTransaction              Hash   `json:"trunkTransaction"`
+	BranchTransaction             Hash   `json:"branchTransaction"`
+	Tag                           Trytes `json:"tag"`
+	AttachmentTimestamp           int64  `json:"attachmentTimestamp,string"`
+	AttachmentTimestampLowerBound int64  `json:"attachmentTimestampLowerBound,string"`
+	AttachmentTimestampUpperBound int64  `json:"attachmentTimestampUpperBound,string"`
+	Nonce                         Trytes `json:"nonce"`
+	Confirmed                     *bool  `json:"confirmed,omitempty"`
 }
 
 // Trinary sizes and offsets of a transaction
@@ -104,12 +112,15 @@ func NewTransaction(trytes Trytes) (*Transaction, error) {
 }
 
 // AsTransactionObjects constructs new transactions from the given raw trytes.
-func AsTransactionObjects(rawTrytes ...Trytes) (Transactions, error) {
+func AsTransactionObjects(rawTrytes []Trytes, hashes Hashes) (Transactions, error) {
 	txs := Transactions{}
 	for i := range rawTrytes {
 		tx, err := NewTransaction(rawTrytes[i])
 		if err != nil {
 			return nil, err
+		}
+		if hashes != nil {
+			tx.Hash = hashes[i]
 		}
 		txs = append(txs, *tx)
 	}
@@ -136,16 +147,15 @@ func ParseTransaction(trits Trits) (*Transaction, error) {
 	var err error
 	t := &Transaction{}
 	t.SignatureMessageFragment = MustTritsToTrytes(trits[SignatureMessageFragmentTrinaryOffset:SignatureMessageFragmentTrinarySize])
-	t.Address, err = signing.NewAddressHashFromTrytes(MustTritsToTrytes(trits[AddressTrinaryOffset : AddressTrinaryOffset+AddressTrinarySize]))
+	t.Address, err = TritsToTrytes(trits[AddressTrinaryOffset : AddressTrinaryOffset+AddressTrinarySize])
 	if err != nil {
 		return nil, err
 	}
 	t.Value = TritsToInt(trits[ValueTrinaryOffset : ValueTrinaryOffset+ValueTrinarySize])
 	t.ObsoleteTag = MustTritsToTrytes(trits[ObsoleteTagTrinaryOffset : ObsoleteTagTrinaryOffset+ObsoleteTagTrinarySize])
-	timestamp := TritsToInt(trits[TimestampTrinaryOffset : TimestampTrinaryOffset+TimestampTrinarySize])
-	t.Timestamp = timestamp
-	t.CurrentIndex = TritsToInt(trits[CurrentIndexTrinaryOffset : CurrentIndexTrinaryOffset+CurrentIndexTrinarySize])
-	t.LastIndex = TritsToInt(trits[LastIndexTrinaryOffset : LastIndexTrinaryOffset+LastIndexTrinarySize])
+	t.Timestamp = uint64(TritsToInt(trits[TimestampTrinaryOffset : TimestampTrinaryOffset+TimestampTrinarySize]))
+	t.CurrentIndex = uint64(TritsToInt(trits[CurrentIndexTrinaryOffset : CurrentIndexTrinaryOffset+CurrentIndexTrinarySize]))
+	t.LastIndex = uint64(TritsToInt(trits[LastIndexTrinaryOffset : LastIndexTrinaryOffset+LastIndexTrinarySize]))
 	t.Bundle = MustTritsToTrytes(trits[BundleTrinaryOffset : BundleTrinaryOffset+BundleTrinarySize])
 	t.TrunkTransaction = MustTritsToTrytes(trits[TrunkTransactionTrinaryOffset : TrunkTransactionTrinaryOffset+TrunkTransactionTrinarySize])
 	t.BranchTransaction = MustTritsToTrytes(trits[BranchTransactionTrinaryOffset : BranchTransactionTrinaryOffset+BranchTransactionTrinarySize])
@@ -162,18 +172,18 @@ func TransactionToTrytes(t *Transaction) Trytes {
 	tr := make(Trits, TransactionTrinarySize)
 	copy(tr, TrytesToTrits(t.SignatureMessageFragment))
 	copy(tr[AddressTrinaryOffset:], TrytesToTrits(t.Address))
-	copy(tr[ValueTrinaryOffset:], IntToTrits(t.Value, ValueTrinarySize))
+	copy(tr[ValueTrinaryOffset:], IntToTrits(t.Value))
 	copy(tr[ObsoleteTagTrinaryOffset:], TrytesToTrits(t.ObsoleteTag))
-	copy(tr[TimestampTrinaryOffset:], IntToTrits(t.Timestamp, TimestampTrinarySize))
-	copy(tr[CurrentIndexTrinaryOffset:], IntToTrits(t.CurrentIndex, CurrentIndexTrinarySize))
-	copy(tr[LastIndexTrinaryOffset:], IntToTrits(t.LastIndex, LastIndexTrinarySize))
+	copy(tr[TimestampTrinaryOffset:], IntToTrits(int64(t.Timestamp)))
+	copy(tr[CurrentIndexTrinaryOffset:], IntToTrits(int64(t.CurrentIndex)))
+	copy(tr[LastIndexTrinaryOffset:], IntToTrits(int64(t.LastIndex)))
 	copy(tr[BundleTrinaryOffset:], TrytesToTrits(t.Bundle))
 	copy(tr[TrunkTransactionTrinaryOffset:], TrytesToTrits(t.TrunkTransaction))
 	copy(tr[BranchTransactionTrinaryOffset:], TrytesToTrits(t.BranchTransaction))
 	copy(tr[TagTrinaryOffset:], TrytesToTrits(t.Tag))
-	copy(tr[AttachmentTimestampTrinaryOffset:], IntToTrits(t.AttachmentTimestamp, AttachmentTimestampTrinarySize))
-	copy(tr[AttachmentTimestampLowerBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampLowerBound, AttachmentTimestampLowerBoundTrinarySize))
-	copy(tr[AttachmentTimestampUpperBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampUpperBound, AttachmentTimestampUpperBoundTrinarySize))
+	copy(tr[AttachmentTimestampTrinaryOffset:], IntToTrits(t.AttachmentTimestamp))
+	copy(tr[AttachmentTimestampLowerBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampLowerBound))
+	copy(tr[AttachmentTimestampUpperBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampUpperBound))
 	copy(tr[NonceTrinaryOffset:], TrytesToTrits(t.Nonce))
 	return MustTritsToTrytes(tr)
 }

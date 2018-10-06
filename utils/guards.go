@@ -2,7 +2,6 @@ package utils
 
 import (
 	"github.com/iotaledger/giota/curl"
-	"github.com/iotaledger/giota/signing"
 	. "github.com/iotaledger/giota/transaction"
 	. "github.com/iotaledger/giota/trinary"
 
@@ -39,7 +38,7 @@ var IsNineTrytes = IsEmptyTrytes
 
 // Checks if input is correct hash (81 trytes)
 func IsHash(trytes Trytes) bool {
-	return IsTrytesOfExactLength(trytes, curl.HashSizeTrytes) || IsTrytesOfExactLength(trytes, curl.HashSizeTrytes+signing.AddressChecksumSize)
+	return IsTrytesOfExactLength(trytes, curl.HashSizeTrytes) || IsTrytesOfExactLength(trytes, 90)
 }
 
 // Checks that input is valid tag trytes.

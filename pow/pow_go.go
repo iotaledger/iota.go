@@ -36,7 +36,7 @@ var (
 )
 
 // PowFunc is the func type for PoW
-type PowFunc func(Trytes, int) (Trytes, error)
+type PowFunc = func(Trytes, int) (Trytes, error)
 
 var (
 	powFuncs = make(map[string]PowFunc)
