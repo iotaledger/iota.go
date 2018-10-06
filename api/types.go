@@ -1,0 +1,170 @@
+package api
+
+import (
+	"context"
+	"github.com/iotaledger/iota.go/bundle"
+	"github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/transaction"
+	. "github.com/iotaledger/iota.go/trinary"
+	"time"
+)
+
+type FindTransactionsQuery struct {
+	Addresses Hashes
+	Approvees []Hash
+	Bundles   []Hash
+	Tags      []Trytes
+}
+
+type Balance = uint64
+
+type Address struct {
+	Balance
+	Address  Hash
+	KeyIndex uint64
+	Security signing.SecurityLevel
+}
+
+type Balances struct {
+	Balances       []uint64 `json:"balances"`
+	Milestone      string   `json:"milestone"`
+	MilestoneIndex int64    `json:"milestoneIndex"`
+}
+
+type Neighbors = []Neighbor
+type Neighbor struct {
+	Address                     string
+	NumberOfAllTransactions     int64
+	NumberOfInvalidTransactions int64
+	NumberOfNewTransactions     int64
+}
+
+type TransactionsToApprove struct {
+	TrunkTransaction  Hash
+	BranchTransaction Hash
+}
+
+type AccountData struct {
+	Addresses     Hashes
+	Inputs        []Address
+	Transfers     bundle.Bundles
+	Transactions  Hashes
+	LatestAddress Hash
+	Balance       uint64
+}
+
+type GetNewAddressOptions struct {
+	Index     uint64
+	Security  signing.SecurityLevel
+	Checksum  bool
+	Total     *uint64
+	ReturnAll bool
+}
+
+func getNewAddressDefaultOptions(options GetNewAddressOptions) GetNewAddressOptions {
+	if options.Security == 0 {
+		options.Security = signing.SecurityLevelMedium
+	}
+	return options
+}
+
+type GetInputOptions struct {
+	Start     uint64
+	End       *uint64
+	Threshold *uint64
+	Security  signing.SecurityLevel
+}
+
+func (gio GetInputOptions) ToGetNewAddressOptions() GetNewAddressOptions {
+	if gio.End != nil {
+		total := *gio.End - gio.Start
+		return GetNewAddressOptions{
+			Index: gio.Start, Total: &total, Security: gio.Security, ReturnAll: true,
+		}
+	} else {
+		return GetNewAddressOptions{
+			Index: gio.Start, Security: gio.Security, ReturnAll: true,
+		}
+	}
+}
+
+type Inputs struct {
+	Inputs       []Address
+	TotalBalance uint64
+}
+
+type GetTransfersOptions struct {
+	Start           uint64
+	End             *uint64
+	InclusionStates bool
+	Security        signing.SecurityLevel
+}
+
+func (gto GetTransfersOptions) ToGetNewAddressOptions() GetNewAddressOptions {
+	opts := GetNewAddressOptions{}
+	opts.Index = gto.Start
+	opts.Security = gto.Security
+	opts.ReturnAll = true
+	if gto.End != nil {
+		total := *gto.End - gto.Start
+		opts.Total = &total
+	}
+	return opts
+}
+
+type PrepareTransfersOptions struct {
+	Inputs           []Address
+	RemainderAddress *Hash
+	Security         signing.SecurityLevel
+	HMACKey          *Trytes
+}
+
+type SendTransfersOptions struct {
+	PrepareTransfersOptions
+	Reference *Hash
+}
+
+type PrepareTransferProps struct {
+	Transactions     transaction.Transactions
+	Trytes           []Trytes
+	Transfers        bundle.Transfers
+	Seed             Trytes
+	Security         signing.SecurityLevel
+	Inputs           []Address
+	Timestamp        uint64
+	RemainderAddress *Trytes
+	HMACKey          *Trytes
+}
+
+func getPrepareTransfersDefaultOptions(options PrepareTransfersOptions) PrepareTransfersOptions {
+	if options.Security == 0 {
+		options.Security = signing.SecurityLevelMedium
+	}
+	if options.Inputs == nil {
+		options.Inputs = []Address{}
+	}
+	return options
+}
+
+type PromoteTransactionOptions struct {
+	Delay time.Duration
+	Ctx   context.Context
+}
+
+func getPromoteTransactionsDefaultOptions(options PromoteTransactionOptions) PromoteTransactionOptions {
+	if options.Delay == 0 {
+		options.Delay = 1000
+	}
+	return options
+}
+
+type GetAccountDataOptions struct {
+	Start    uint64
+	End      *uint64
+	Security signing.SecurityLevel
+}
+
+type ErrorResponse struct {
+	Error     string `json:"error"`
+	Exception string `json:"exception"`
+}
