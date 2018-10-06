@@ -649,7 +649,7 @@ func createPrepareTransfers(provider Provider) func(seed Trytes, transfers bundl
 		}
 
 		// compute signatures for all input txs
-		normalizedBundle := bundle.NormalizedBundleHash(finalizedBundle[0].Bundle)
+		normalizedBundle := signing.NormalizedBundleHash(finalizedBundle[0].Bundle)
 
 		signedFrags := []Trytes{}
 		for i := range props.Inputs {
