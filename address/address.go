@@ -2,9 +2,9 @@ package address
 
 import (
 	"errors"
-	"github.com/iotaledger/giota/checksum"
-	. "github.com/iotaledger/giota/signing"
-	. "github.com/iotaledger/giota/trinary"
+	"github.com/iotaledger/iota.go/checksum"
+	. "github.com/iotaledger/iota.go/signing"
+	. "github.com/iotaledger/iota.go/trinary"
 )
 
 // Error types for address

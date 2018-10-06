@@ -2,9 +2,9 @@ package signing
 
 import (
 	"errors"
-	"github.com/iotaledger/giota/curl"
-	"github.com/iotaledger/giota/kerl"
-	. "github.com/iotaledger/giota/trinary"
+	"github.com/iotaledger/iota.go/curl"
+	"github.com/iotaledger/iota.go/kerl"
+	. "github.com/iotaledger/iota.go/trinary"
 	"math"
 	"strings"
 )

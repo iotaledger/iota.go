@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/iotaledger/giota"
-	"github.com/iotaledger/giota/bundle"
-	. "github.com/iotaledger/giota/converter"
-	"github.com/iotaledger/giota/pow"
-	"github.com/iotaledger/giota/signing"
-	"github.com/iotaledger/giota/units"
+	"github.com/iotaledger/iota.go/bundle"
+	. "github.com/iotaledger/iota.go/converter"
+	"github.com/iotaledger/iota.go/pow"
+	"github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/units"
 	"net/http"
 )
 

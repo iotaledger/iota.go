@@ -5,9 +5,9 @@
 package pow
 
 import (
-	"github.com/iotaledger/giota/curl"
-	. "github.com/iotaledger/giota/transaction"
-	. "github.com/iotaledger/giota/trinary"
+	"github.com/iotaledger/iota.go/curl"
+	. "github.com/iotaledger/iota.go/transaction"
+	. "github.com/iotaledger/iota.go/trinary"
 	"math"
 )
 

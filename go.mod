@@ -1,4 +1,4 @@
-module github.com/iotaledger/giota
+module github.com/iotaledger/iota.go
 
 require (
 	github.com/onsi/ginkgo v1.6.0

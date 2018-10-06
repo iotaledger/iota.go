@@ -3,7 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/iotaledger/giota/pow"
+	"github.com/iotaledger/iota.go/pow"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"

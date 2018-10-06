@@ -3,7 +3,7 @@ package trinary
 import (
 	"errors"
 	"fmt"
-	"github.com/iotaledger/giota/bigint"
+	"github.com/iotaledger/iota.go/bigint"
 	"math"
 	"regexp"
 	"strings"

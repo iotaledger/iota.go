@@ -1,10 +1,10 @@
 package transaction_converter
 
 import (
-	"github.com/iotaledger/giota/api_errors"
-	. "github.com/iotaledger/giota/transaction"
-	. "github.com/iotaledger/giota/trinary"
-	"github.com/iotaledger/giota/utils"
+	"github.com/iotaledger/iota.go/api_errors"
+	. "github.com/iotaledger/iota.go/transaction"
+	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/utils"
 )
 
 // AsTransactionObject converts transaction trytes of 2673 trytes into a transaction object.

@@ -37,7 +37,7 @@ void transform(signed char state[])
 }
 */
 import "C"
-import "github.com/iotaledger/giota/trinary"
+import "github.com/iotaledger/iota.go/trinary"
 
 // Transform does Transform in sponge func in C lang.
 func init() {

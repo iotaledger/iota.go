@@ -1,8 +1,8 @@
 package kerl
 
 import (
-	"github.com/iotaledger/giota/curl"
-	. "github.com/iotaledger/giota/trinary"
+	"github.com/iotaledger/iota.go/curl"
+	. "github.com/iotaledger/iota.go/trinary"
 	"testing"
 )
 

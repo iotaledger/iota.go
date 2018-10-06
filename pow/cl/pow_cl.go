@@ -6,12 +6,12 @@ package cl
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/iotaledger/giota/curl"
-	"github.com/iotaledger/giota/transaction"
+	"github.com/iotaledger/iota.go/curl"
+	"github.com/iotaledger/iota.go/transaction"
 	"sync/atomic"
 
-	"github.com/iotaledger/giota/pow/cl"
-	"github.com/iotaledger/giota/trinary"
+	"github.com/iotaledger/iota.go/pow/cl"
+	"github.com/iotaledger/iota.go/trinary"
 )
 
 var loopcount byte = 32

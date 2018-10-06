@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/iotaledger/giota.svg?branch=master)](https://travis-ci.org/iotaledger/giota)
 [![GoDoc](https://godoc.org/github.com/iotaledger/giota?status.svg)](https://godoc.org/github.com/iotaledger/giota)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/giota/master/LICENSE)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/iota.go/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/iotaledger/giota)](https://goreportcard.com/report/github.com/iotaledger/giota)
 
 ## Getting started
@@ -68,10 +68,10 @@ package main
 
 import (
     "github.com/iotaledger/giota"
-    "github.com/iotaledger/giota/signing"
-    "github.com/iotaledger/giota/bundle"
-    "github.com/iotaledger/giota/trinary"
-    "github.com/iotaledger/giota/pow"
+    "github.com/iotaledger/iota.go/signing"
+    "github.com/iotaledger/iota.go/bundle"
+    "github.com/iotaledger/iota.go/trinary"
+    "github.com/iotaledger/iota.go/pow"
     "fmt"
 )
 
@@ -196,7 +196,7 @@ To run tests of specific package just `cd` to the package directory and run `go 
 
 ## Reporting Issues
 
-Please report any problems you encouter during development by [opening an issue](https://github.com/iotaledger/giota/issues/new).
+Please report any problems you encouter during development by [opening an issue](https://github.com/iotaledger/iota.go/issues/new).
 
 ## Join the discussion
 

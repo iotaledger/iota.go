@@ -2,11 +2,11 @@ package api
 
 import (
 	"context"
-	"github.com/iotaledger/giota/bundle"
-	"github.com/iotaledger/giota/pow"
-	"github.com/iotaledger/giota/signing"
-	"github.com/iotaledger/giota/transaction"
-	. "github.com/iotaledger/giota/trinary"
+	"github.com/iotaledger/iota.go/bundle"
+	"github.com/iotaledger/iota.go/pow"
+	"github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/transaction"
+	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
 	"time"
 )

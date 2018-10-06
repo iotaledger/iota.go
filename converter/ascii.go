@@ -1,7 +1,7 @@
 package converter
 
 import (
-	. "github.com/iotaledger/giota/trinary"
+	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
 	"regexp"
 	"strings"

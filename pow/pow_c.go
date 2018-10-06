@@ -212,9 +212,9 @@ long long int pwork(signed char mid[], int mwm, signed char nonce[],int n)
 */
 import "C"
 import (
-	"github.com/iotaledger/giota/curl"
-	. "github.com/iotaledger/giota/transaction"
-	. "github.com/iotaledger/giota/trinary"
+	"github.com/iotaledger/iota.go/curl"
+	. "github.com/iotaledger/iota.go/transaction"
+	. "github.com/iotaledger/iota.go/trinary"
 	"math"
 	"unsafe"
 )

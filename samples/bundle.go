@@ -1,8 +1,8 @@
 package samples
 
 import (
-	"github.com/iotaledger/giota/transaction"
-	. "github.com/iotaledger/giota/trinary"
+	"github.com/iotaledger/iota.go/transaction"
+	. "github.com/iotaledger/iota.go/trinary"
 )
 
 var Bundle = transaction.Transactions{

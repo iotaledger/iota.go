@@ -2,13 +2,13 @@ package bundle
 
 import (
 	"errors"
-	"github.com/iotaledger/giota/api_errors"
-	"github.com/iotaledger/giota/curl"
-	"github.com/iotaledger/giota/kerl"
-	"github.com/iotaledger/giota/signing"
-	"github.com/iotaledger/giota/transaction"
-	. "github.com/iotaledger/giota/trinary"
-	"github.com/iotaledger/giota/utils"
+	"github.com/iotaledger/iota.go/api_errors"
+	"github.com/iotaledger/iota.go/curl"
+	"github.com/iotaledger/iota.go/kerl"
+	"github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/transaction"
+	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/utils"
 	"strings"
 	"time"
 )

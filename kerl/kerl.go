@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"hash"
 
-	"github.com/iotaledger/giota/curl"
-	. "github.com/iotaledger/giota/trinary"
+	"github.com/iotaledger/iota.go/curl"
+	. "github.com/iotaledger/iota.go/trinary"
 	keccak "golang.org/x/crypto/sha3"
 )
 

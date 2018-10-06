@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/iotaledger/giota"
-	. "github.com/iotaledger/giota/samples"
-	"github.com/iotaledger/giota/transaction"
-	. "github.com/iotaledger/giota/trinary"
+	. "github.com/iotaledger/iota.go/samples"
+	"github.com/iotaledger/iota.go/transaction"
+	. "github.com/iotaledger/iota.go/trinary"
 	"net/http"
 	"strings"
 )
