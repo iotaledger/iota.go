@@ -1,45 +1,22 @@
 package signing
 
 import (
-	"errors"
-	"github.com/iotaledger/iota.go/curl"
+	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/kerl"
 	. "github.com/iotaledger/iota.go/trinary"
 	"math"
-	"strings"
 )
 
 const (
 	KeyFragmentLength = 6561
 )
 
-// errors used in sign
-var (
-	ErrSeedTrytesLength = errors.New("seed string needs to be HashSize / 3 characters long")
-	ErrKeyTritsLength   = errors.New("key trit slice should be a multiple of HashSize*27 entries long")
-)
-
-var (
-	// emptySig represents an empty signature.
-	EmptySig = strings.Repeat("9", KeyFragmentLength/3)
-	// EmptyAddress represents an empty address.
-	EmptyAddress = strings.Repeat("9", 81)
-)
-
-type SecurityLevel int
-
-const (
-	SecurityLevelLow    SecurityLevel = 1
-	SecurityLevelMedium SecurityLevel = 2
-	SecurityLevelHigh   SecurityLevel = 3
-)
-
 // Subseed takes a seed and an index and returns the given subseed.
 func Subseed(seed Trytes, index uint64) (Trits, error) {
 	if err := ValidTrytes(seed); err != nil {
 		return nil, err
-	} else if len(seed) != TritHashLength/Radix {
-		return nil, ErrSeedTrytesLength
+	} else if len(seed) != HashTrinarySize/TrinaryRadix {
+		return nil, ErrInvalidSeed
 	}
 
 	incrementedSeed := TrytesToTrits(seed)
@@ -53,7 +30,7 @@ func Subseed(seed Trytes, index uint64) (Trits, error) {
 	if err != nil {
 		return nil, err
 	}
-	subseed, err := k.Squeeze(curl.HashSize)
+	subseed, err := k.Squeeze(HashTrinarySize)
 	if err != nil {
 		return nil, err
 	}
@@ -67,15 +44,15 @@ func Key(subseed Trits, securityLevel SecurityLevel) (Trits, error) {
 		return nil, err
 	}
 
-	key := make(Trits, curl.HashSize*27*int(securityLevel))
+	key := make(Trits, HashTrinarySize*27*int(securityLevel))
 
 	for i := 0; i < int(securityLevel); i++ {
 		for j := 0; j < 27; j++ {
-			b, err := k.Squeeze(curl.HashSize)
+			b, err := k.Squeeze(HashTrinarySize)
 			if err != nil {
 				return nil, err
 			}
-			copy(key[(i*27+j)*curl.HashSize:], b)
+			copy(key[(i*27+j)*HashTrinarySize:], b)
 		}
 	}
 
@@ -87,7 +64,7 @@ func Digests(key Trits) (Trits, error) {
 	var err error
 	fragments := int(math.Floor(float64(len(key)) / 6561))
 	digests := make(Trits, fragments*243)
-	buf := make(Trits, curl.HashSize)
+	buf := make(Trits, HashTrinarySize)
 
 	// iterate through each key fragment
 	for i := 0; i < fragments; i++ {
@@ -101,7 +78,7 @@ func Digests(key Trits) (Trits, error) {
 			for k := 0; k < 26; k++ {
 				k := kerl.NewKerl()
 				k.Absorb(buf)
-				buf, err = k.Squeeze(curl.HashSize)
+				buf, err = k.Squeeze(HashTrinarySize)
 				if err != nil {
 					return nil, err
 				}
@@ -118,7 +95,7 @@ func Digests(key Trits) (Trits, error) {
 			return nil, err
 		}
 
-		buf, err := k.Squeeze(curl.HashSize)
+		buf, err := k.Squeeze(HashTrinarySize)
 		if err != nil {
 			return nil, err
 		}
@@ -136,7 +113,7 @@ func Address(digests Trits) (Trits, error) {
 	if err := k.Absorb(digests); err != nil {
 		return nil, err
 	}
-	return k.Squeeze(curl.HashSize)
+	return k.Squeeze(HashTrinarySize)
 }
 
 // SignatureFragment returns signed fragments using the given key fragment.
@@ -200,7 +177,7 @@ func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Has
 // Digest computes the digest derived from the signature fragment and normalized bundle hash.
 func Digest(normalizedBundleHashFragment Trits, signatureFragment Trits) (Trits, error) {
 	k := kerl.NewKerl()
-	buf := make(Trits, curl.HashSize)
+	buf := make(Trits, HashTrinarySize)
 
 	for i := 0; i < 27; i++ {
 		copy(buf, signatureFragment[i*243:(i+1)*243])
@@ -211,7 +188,7 @@ func Digest(normalizedBundleHashFragment Trits, signatureFragment Trits) (Trits,
 			if err != nil {
 				return nil, err
 			}
-			buf, err = kk.Squeeze(curl.HashSize)
+			buf, err = kk.Squeeze(HashTrinarySize)
 			if err != nil {
 				return nil, err
 			}
@@ -222,12 +199,12 @@ func Digest(normalizedBundleHashFragment Trits, signatureFragment Trits) (Trits,
 		}
 	}
 
-	return k.Squeeze(curl.HashSize)
+	return k.Squeeze(HashTrinarySize)
 }
 
 // NormalizedBundleHash normalizes the given bundle hash, with resulting digits summing to zero.
 func NormalizedBundleHash(bundleHash Hash) Trits {
-	normalizedBundle := make([]int8, curl.HashSize)
+	normalizedBundle := make([]int8, HashTrinarySize)
 	for i := 0; i < 3; i++ {
 		sum := 0
 		for j := 0; j < 27; j++ {

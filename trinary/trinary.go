@@ -1,28 +1,13 @@
 package trinary
 
 import (
-	"errors"
-	"fmt"
 	"github.com/iotaledger/iota.go/bigint"
+	. "github.com/iotaledger/iota.go/consts"
+	"github.com/pkg/errors"
 	"math"
 	"regexp"
 	"strings"
 	"unsafe"
-)
-
-var (
-	ErrInvalidTryteCharacter      = errors.New("trytes value contains invalid tryte character")
-	ErrInvalidByteSliceLength     = fmt.Errorf("BytesToTrits() is only defined for byte slices of length %d", ByteLength)
-	ErrTritsMustBeMultiplyOfThree = errors.New("trits must be a multiple of 3 to be able to be converted to trytes")
-)
-
-const (
-	Radix         = 3
-	TryteAlphabet = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	MinTryteValue = -13
-	MaxTryteValue = 13
-	MinTritValue  = -1
-	MaxTritValue  = 1
 )
 
 var (
@@ -47,18 +32,18 @@ func NewTrits(t []int8) (Trits, error) {
 }
 
 // ValidTrit returns true if t is a valid trit.
-func ValidTrit(t int8) error {
+func ValidTrit(t int8) bool {
 	if t >= -1 && t <= 1 {
-		return nil
+		return true
 	}
-	return errors.New("invalid number")
+	return false
 }
 
 // ValidTrits returns true if t is valid trits.
 func ValidTrits(t Trits) error {
-	for _, tt := range t {
-		if err := ValidTrit(tt); err != nil {
-			return fmt.Errorf("%s in trits", err)
+	for i, tt := range t {
+		if valid := ValidTrit(tt); !valid {
+			return errors.Wrapf(ErrInvalidTrit, "at index %d", i)
 		}
 	}
 	return nil
@@ -96,8 +81,8 @@ func IntToTrits(value int64) Trits {
 	i := 0
 
 	for absoluteValue > 0 {
-		remainder := absoluteValue % Radix
-		absoluteValue = int64(math.Floor(float64(absoluteValue / Radix)))
+		remainder := absoluteValue % TrinaryRadix
+		absoluteValue = int64(math.Floor(float64(absoluteValue / TrinaryRadix)))
 
 		if remainder > MaxTritValue {
 			remainder = MinTritValue
@@ -152,7 +137,7 @@ func MustTritsToTrytes(trits Trits) Trytes {
 // TritsToTrytes converts a slice of trits into trytes. Returns an error if len(t)%3!=0
 func TritsToTrytes(trits Trits) (Trytes, error) {
 	if !CanTritsToTrytes(trits) {
-		return "", ErrTritsMustBeMultiplyOfThree
+		return "", errors.Wrap(ErrInvalidTritsLength, "trits slice size must be a multiple of 3")
 	}
 
 	o := make([]byte, len(trits)/3)
@@ -165,14 +150,6 @@ func TritsToTrytes(trits Trits) (Trytes, error) {
 	}
 	return Trytes(o), nil
 }
-
-// constants regarding byte and trit lengths
-// TODO: move to curl package
-const (
-	ByteLength     = 48
-	TritHashLength = 243
-	IntLength      = ByteLength / 4
-)
 
 // 3^(242/2)
 // 12 * 32 bit
@@ -193,18 +170,18 @@ var halfThree = []uint32{
 
 // CanBeHash returns the validity of the trit length
 func CanBeHash(trits Trits) bool {
-	return len(trits) == TritHashLength
+	return len(trits) == HashTrinarySize
 }
 
 // Bytes is only defined for hashes, i.e. slices of trits of length 243. It returns 48 bytes.
 func TritsToBytes(trits Trits) ([]byte, error) {
 	if !CanBeHash(trits) {
-		return nil, fmt.Errorf("TritsToBytes() is only defined for trit slices of length %d", TritHashLength)
+		return nil, errors.Wrapf(ErrInvalidTritsLength, "must be %d in size", HashTrinarySize)
 	}
 
 	allNeg := true
 	// last position should be always zero.
-	for _, e := range trits[0 : TritHashLength-1] {
+	for _, e := range trits[0 : HashTrinarySize-1] {
 		if e != -1 {
 			allNeg = false
 			break
@@ -233,11 +210,11 @@ func TritsToBytes(trits Trits) ([]byte, error) {
 	copy(revT, trits)
 	size := 1
 
-	for _, e := range ReverseTrits(revT[0 : TritHashLength-1]) {
+	for _, e := range ReverseTrits(revT[0 : HashTrinarySize-1]) {
 		sz := size
 		var carry uint32
 		for j := 0; j < sz; j++ {
-			v := uint64(base[j])*uint64(Radix) + uint64(carry)
+			v := uint64(base[j])*uint64(TrinaryRadix) + uint64(carry)
 			carry = uint32(v >> 32)
 			base[j] = uint32(v)
 		}
@@ -276,16 +253,16 @@ func TritsToBytes(trits Trits) ([]byte, error) {
 
 // BytesToTrits converts binary to trinary
 func BytesToTrits(b []byte) (Trits, error) {
-	if len(b) != ByteLength {
-		return nil, ErrInvalidByteSliceLength
+	if len(b) != HashBytesSize {
+		return nil, errors.Wrapf(ErrInvalidBytesLength, "must be %d in size", HashBytesSize)
 	}
 
 	rb := make([]byte, len(b))
 	copy(rb, b)
 	bigint.Reverse(rb)
 
-	t := Trits(make([]int8, TritHashLength))
-	t[TritHashLength-1] = 0
+	t := Trits(make([]int8, HashTrinarySize))
+	t[HashTrinarySize-1] = 0
 
 	base := (*(*[]uint32)(unsafe.Pointer(&rb)))[0:IntLength] // 12 * 32 bits = 384 bits
 
@@ -316,11 +293,11 @@ func BytesToTrits(b []byte) (Trits, error) {
 	}
 
 	var rem uint64
-	for i := range t[0 : TritHashLength-1] {
+	for i := range t[0 : HashTrinarySize-1] {
 		rem = 0
 		for j := IntLength - 1; j >= 0; j-- {
 			lhs := (rem << 32) | uint64(base[j])
-			rhs := uint64(Radix)
+			rhs := uint64(TrinaryRadix)
 			q := uint32(lhs / rhs)
 			r := uint32(lhs % rhs)
 			base[j] = q
@@ -381,7 +358,7 @@ func ValidTryte(t rune) error {
 // ValidTrytes returns true if t is made of valid trytes.
 func ValidTrytes(trytes Trytes) error {
 	if !trytesRegex.MatchString(string(trytes)) {
-		return ErrInvalidTryteCharacter
+		return ErrInvalidTrytes
 	}
 	return nil
 

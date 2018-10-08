@@ -1,15 +1,10 @@
 package converter
 
 import (
+	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
-	"github.com/pkg/errors"
 	"regexp"
 	"strings"
-)
-
-var (
-	ErrInvalidLengthForToASCIIConversion = errors.New("trytes length must not be of odd length for ASCII conversion")
-	ErrInvalidASCIICharacter             = errors.New("invalid ASCII characters in string")
 )
 
 var asciiRegex = regexp.MustCompile("^[\x00-\x7F]*$")
@@ -17,7 +12,7 @@ var asciiRegex = regexp.MustCompile("^[\x00-\x7F]*$")
 // ASCIIToTrytes converts an ascii encoded string to trytes.
 func ASCIIToTrytes(s string) (Trytes, error) {
 	if !asciiRegex.MatchString(s) {
-		return "", ErrInvalidASCIICharacter
+		return "", ErrInvalidASCIIInput
 	}
 
 	trytesStr := ""
@@ -37,7 +32,7 @@ func TrytesToASCII(trytes Trytes) (string, error) {
 	}
 
 	if len(trytes)%2 != 0 {
-		return "", ErrInvalidLengthForToASCIIConversion
+		return "", ErrInvalidOddLength
 	}
 
 	ascii := ""

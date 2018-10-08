@@ -3,7 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/iotaledger/iota.go/api_errors"
+	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/pow"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -80,13 +80,13 @@ func (hc *httpclient) Send(cmd interface{}, out interface{}) error {
 	if resp.StatusCode != http.StatusOK {
 		errResp := &ErrorResponse{}
 		err = json.Unmarshal(bs, errResp)
-		return handleError(errResp, err, errors.Wrapf(api_errors.ErrNonOKStatusCodeFromAPIRequest, "http code %d", resp.StatusCode))
+		return handleError(errResp, err, errors.Wrapf(ErrNonOKStatusCodeFromAPIRequest, "http code %d", resp.StatusCode))
 	}
 
 	if bytes.Contains(bs, []byte(`"error"`)) || bytes.Contains(bs, []byte(`"exception"`)) {
 		errResp := &ErrorResponse{}
 		err = json.Unmarshal(bs, errResp)
-		return handleError(errResp, err, api_errors.ErrUnknownErrorFromAPIRequest)
+		return handleError(errResp, err, ErrUnknownErrorFromAPIRequest)
 	}
 
 	if out == nil {

@@ -23,7 +23,7 @@ func TestPowCL(t *testing.T) {
 	}
 
 	rawTx = rawTx[:len(rawTx)-transaction.NonceTrinarySize/3] + nonce
-	hash := curl.Hash(txTrinary)
+	hash := curl.HashTrytes(txTrinary)
 	if !hasReferenceMWMTrits(hash.Trits()) {
 		t.Error(ErrInvalidMWM, hash)
 	}

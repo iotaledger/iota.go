@@ -1,12 +1,21 @@
 package utils
 
 import (
-	"github.com/iotaledger/iota.go/curl"
+	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
 
 	"regexp"
 )
+
+// Checks if input is correct trytes consisting of [9A-Z]
+func IsTrytes(trytes Trytes) bool {
+	if len(trytes) < 1 {
+		return false
+	}
+	match, _ := regexp.MatchString("^[9A-Z]+$", string(trytes))
+	return match
+}
 
 // Checks if input is correct trytes consisting of [9A-Z] and given length
 func IsTrytesOfExactLength(trytes Trytes, length int) bool {
@@ -38,7 +47,12 @@ var IsNineTrytes = IsEmptyTrytes
 
 // Checks if input is correct hash (81 trytes)
 func IsHash(trytes Trytes) bool {
-	return IsTrytesOfExactLength(trytes, curl.HashSizeTrytes) || IsTrytesOfExactLength(trytes, 90)
+	return IsTrytesOfExactLength(trytes, HashTrytesSize) || IsTrytesOfExactLength(trytes, AddressWithChecksumTrytesSize)
+}
+
+// IsTransactionHash checks whether the given trytes can be a transaction hash.
+func IsTransactionHash(trytes Trytes) bool {
+	return IsTrytesOfExactLength(trytes, HashTrytesSize)
 }
 
 // Checks that input is valid tag trytes.
@@ -48,12 +62,12 @@ func IsTag(trytes Trytes) bool {
 
 // Checks if input is correct transaction hash (81 trytes)
 func IsTxHash(trytes Trytes) bool {
-	return IsTrytesOfExactLength(trytes, curl.HashSizeTrytes)
+	return IsTrytesOfExactLength(trytes, HashTrytesSize)
 }
 
 // Checks if input is correct transaction hash (81 trytes) with given MWM
 func IsTxHashWithMWM(trytes Trytes, mwm uint) bool {
-	correctLength := IsTrytesOfExactLength(trytes, curl.HashSizeTrytes)
+	correctLength := IsTrytesOfExactLength(trytes, HashTrytesSize)
 	if !correctLength {
 		return false
 	}
@@ -94,5 +108,5 @@ func IsTransactionTrytesWithMWM(trytes Trytes, mwm uint) (bool, error) {
 
 // Checks if input is valid attached transaction trytes. For attached transactions last 241 trytes are non-zero.
 func IsAttachedTrytes(trytes Trytes) bool {
-	return IsTrytesOfExactLength(trytes, TransactionTrinarySize/3) && !IsEmptyTrytes(trytes[len(trytes)-3*curl.HashSizeTrytes:])
+	return IsTrytesOfExactLength(trytes, TransactionTrinarySize/3) && !IsEmptyTrytes(trytes[len(trytes)-3*HashTrytesSize:])
 }

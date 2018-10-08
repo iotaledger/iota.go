@@ -1,23 +1,17 @@
 package curl
 
 import (
-	"github.com/iotaledger/iota.go/trinary"
+	. "github.com/iotaledger/iota.go/consts"
+	. "github.com/iotaledger/iota.go/trinary"
 )
 
 const (
-	HashSize       = 243
-	HashSizeTrytes = 81
-	StateSize      = HashSize * 3
+	StateSize      = HashTrinarySize * 3
 	NumberOfRounds = 81
 )
 
 var (
-	// EmptyHash represents an empty hash.
-	EmptyHash = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
-)
-
-var (
-	transformC func(trinary.Trits)
+	transformC func(Trits)
 	TruthTable = [11]int8{1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0}
 	Indices    [StateSize + 1]int
 )
@@ -37,33 +31,33 @@ func init() {
 // Curl is a sponge function with an internal State of size StateSize.
 // b = r + c, b = StateSize, r = HashSize, c = StateSize - HashSize
 type Curl struct {
-	State trinary.Trits
+	State Trits
 }
 
 // NewCurl initializes a new instance with an empty State.
 func NewCurl() *Curl {
 	c := &Curl{
-		State: make(trinary.Trits, StateSize),
+		State: make(Trits, StateSize),
 	}
 	return c
 }
 
 //Squeeze do Squeeze in sponge func.
-func (c *Curl) Squeeze() trinary.Trytes {
-	ret := trinary.MustTritsToTrytes(c.State[:HashSize])
+func (c *Curl) Squeeze() Trytes {
+	ret := MustTritsToTrytes(c.State[:HashTrinarySize])
 	c.Transform()
 
 	return ret
 }
 
 // Absorb fills the internal State of the sponge with the given trits.
-func (c *Curl) Absorb(inn trinary.Trytes) {
-	in := trinary.TrytesToTrits(inn)
+func (c *Curl) Absorb(inn Trytes) {
+	in := TrytesToTrits(inn)
 	var lenn int
 	for i := 0; i < len(in); i += lenn {
-		lenn = trinary.TritHashLength
+		lenn = HashTrinarySize
 
-		if len(in)-i < trinary.TritHashLength {
+		if len(in)-i < HashTrinarySize {
 			lenn = len(in) - i
 		}
 
@@ -99,8 +93,15 @@ func (c *Curl) Reset() {
 	}
 }
 
-// Hash returns hash of t.
-func Hash(t trinary.Trytes) trinary.Trytes {
+// HashTrytes returns hash of t.
+func HashTrits(trits Trits) Trits {
+	c := NewCurl()
+	c.Absorb(MustTritsToTrytes(trits))
+	return TrytesToTrits(c.Squeeze())
+}
+
+// HashTrytes returns hash of t.
+func HashTrytes(t Trytes) Trytes {
 	c := NewCurl()
 	c.Absorb(t)
 	return c.Squeeze()

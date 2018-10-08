@@ -3,17 +3,17 @@ package api
 import (
 	"context"
 	"github.com/iotaledger/iota.go/bundle"
-	"github.com/iotaledger/iota.go/signing"
+	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
 	"time"
 )
 
 type FindTransactionsQuery struct {
-	Addresses Hashes
-	Approvees []Hash
-	Bundles   []Hash
-	Tags      []Trytes
+	Addresses Hashes   `json:"addresses"`
+	Approvees Hashes   `json:"approvees"`
+	Bundles   Hashes   `json:"bundles"`
+	Tags      []Trytes `json:"tags"`
 }
 
 type Balance = uint64
@@ -22,7 +22,7 @@ type Address struct {
 	Balance
 	Address  Hash
 	KeyIndex uint64
-	Security signing.SecurityLevel
+	Security SecurityLevel
 }
 
 type Balances struct {
@@ -55,7 +55,7 @@ type AccountData struct {
 
 type GetNewAddressOptions struct {
 	Index     uint64
-	Security  signing.SecurityLevel
+	Security  SecurityLevel
 	Checksum  bool
 	Total     *uint64
 	ReturnAll bool
@@ -63,7 +63,7 @@ type GetNewAddressOptions struct {
 
 func getNewAddressDefaultOptions(options GetNewAddressOptions) GetNewAddressOptions {
 	if options.Security == 0 {
-		options.Security = signing.SecurityLevelMedium
+		options.Security = SecurityLevelMedium
 	}
 	return options
 }
@@ -72,7 +72,7 @@ type GetInputOptions struct {
 	Start     uint64
 	End       *uint64
 	Threshold *uint64
-	Security  signing.SecurityLevel
+	Security  SecurityLevel
 }
 
 func (gio GetInputOptions) ToGetNewAddressOptions() GetNewAddressOptions {
@@ -97,7 +97,7 @@ type GetTransfersOptions struct {
 	Start           uint64
 	End             *uint64
 	InclusionStates bool
-	Security        signing.SecurityLevel
+	Security        SecurityLevel
 }
 
 func (gto GetTransfersOptions) ToGetNewAddressOptions() GetNewAddressOptions {
@@ -115,7 +115,7 @@ func (gto GetTransfersOptions) ToGetNewAddressOptions() GetNewAddressOptions {
 type PrepareTransfersOptions struct {
 	Inputs           []Address
 	RemainderAddress *Hash
-	Security         signing.SecurityLevel
+	Security         SecurityLevel
 	HMACKey          *Trytes
 }
 
@@ -129,7 +129,7 @@ type PrepareTransferProps struct {
 	Trytes           []Trytes
 	Transfers        bundle.Transfers
 	Seed             Trytes
-	Security         signing.SecurityLevel
+	Security         SecurityLevel
 	Inputs           []Address
 	Timestamp        uint64
 	RemainderAddress *Trytes
@@ -138,7 +138,7 @@ type PrepareTransferProps struct {
 
 func getPrepareTransfersDefaultOptions(options PrepareTransfersOptions) PrepareTransfersOptions {
 	if options.Security == 0 {
-		options.Security = signing.SecurityLevelMedium
+		options.Security = SecurityLevelMedium
 	}
 	if options.Inputs == nil {
 		options.Inputs = []Address{}
@@ -161,7 +161,7 @@ func getPromoteTransactionsDefaultOptions(options PromoteTransactionOptions) Pro
 type GetAccountDataOptions struct {
 	Start    uint64
 	End      *uint64
-	Security signing.SecurityLevel
+	Security SecurityLevel
 }
 
 type ErrorResponse struct {

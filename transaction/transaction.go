@@ -5,10 +5,7 @@ import (
 	"errors"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
-)
-
-const (
-	DefaultMinWeightMagnitude = 14
+	. "github.com/iotaledger/iota.go/consts"
 )
 
 type Transactions []Transaction
@@ -52,49 +49,6 @@ type Transaction struct {
 	Nonce                         Trytes `json:"nonce"`
 	Confirmed                     *bool  `json:"confirmed,omitempty"`
 }
-
-// Trinary sizes and offsets of a transaction
-const (
-	SignatureMessageFragmentTrinaryOffset = 0
-	SignatureMessageFragmentTrinarySize   = 6561
-	AddressTrinaryOffset                  = SignatureMessageFragmentTrinaryOffset + SignatureMessageFragmentTrinarySize
-	AddressTrinarySize                    = 243
-	ValueTrinaryOffset                    = AddressTrinaryOffset + AddressTrinarySize
-	ValueTrinarySize                      = 81
-	ObsoleteTagTrinaryOffset              = ValueTrinaryOffset + ValueTrinarySize
-	ObsoleteTagTrinarySize                = 81
-	TimestampTrinaryOffset                = ObsoleteTagTrinaryOffset + ObsoleteTagTrinarySize
-	TimestampTrinarySize                  = 27
-	CurrentIndexTrinaryOffset             = TimestampTrinaryOffset + TimestampTrinarySize
-	CurrentIndexTrinarySize               = 27
-	LastIndexTrinaryOffset                = CurrentIndexTrinaryOffset + CurrentIndexTrinarySize
-	LastIndexTrinarySize                  = 27
-	BundleTrinaryOffset                   = LastIndexTrinaryOffset + LastIndexTrinarySize
-	BundleTrinarySize                     = 243
-	TrunkTransactionTrinaryOffset         = BundleTrinaryOffset + BundleTrinarySize
-	TrunkTransactionTrinarySize           = 243
-	BranchTransactionTrinaryOffset        = TrunkTransactionTrinaryOffset + TrunkTransactionTrinarySize
-	BranchTransactionTrinarySize          = 243
-	TagTrinaryOffset                      = BranchTransactionTrinaryOffset + BranchTransactionTrinarySize
-	TagTrinarySize                        = 81
-	AttachmentTimestampTrinaryOffset      = TagTrinaryOffset + TagTrinarySize
-	AttachmentTimestampTrinarySize        = 27
-
-	AttachmentTimestampLowerBoundTrinaryOffset = AttachmentTimestampTrinaryOffset + AttachmentTimestampTrinarySize
-	AttachmentTimestampLowerBoundTrinarySize   = 27
-	AttachmentTimestampUpperBoundTrinaryOffset = AttachmentTimestampLowerBoundTrinaryOffset + AttachmentTimestampLowerBoundTrinarySize
-	AttachmentTimestampUpperBoundTrinarySize   = 27
-	NonceTrinaryOffset                         = AttachmentTimestampUpperBoundTrinaryOffset + AttachmentTimestampUpperBoundTrinarySize
-	NonceTrinarySize                           = 81
-
-	TransactionTrinarySize = SignatureMessageFragmentTrinarySize + AddressTrinarySize +
-		ValueTrinarySize + ObsoleteTagTrinarySize + TimestampTrinarySize +
-		CurrentIndexTrinarySize + LastIndexTrinarySize + BundleTrinarySize +
-		TrunkTransactionTrinarySize + BranchTransactionTrinarySize +
-		TagTrinarySize + AttachmentTimestampTrinarySize +
-		AttachmentTimestampLowerBoundTrinarySize + AttachmentTimestampUpperBoundTrinarySize +
-		NonceTrinarySize
-)
 
 // NewTransaction makes a new transaction from the given trytes.
 func NewTransaction(trytes Trytes) (*Transaction, error) {
@@ -151,7 +105,7 @@ func ParseTransaction(trits Trits) (*Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	t.Value = TritsToInt(trits[ValueTrinaryOffset : ValueTrinaryOffset+ValueTrinarySize])
+	t.Value = TritsToInt(trits[ValueOffsetTrinary : ValueOffsetTrinary+ValueSizeTrinary])
 	t.ObsoleteTag = MustTritsToTrytes(trits[ObsoleteTagTrinaryOffset : ObsoleteTagTrinaryOffset+ObsoleteTagTrinarySize])
 	t.Timestamp = uint64(TritsToInt(trits[TimestampTrinaryOffset : TimestampTrinaryOffset+TimestampTrinarySize]))
 	t.CurrentIndex = uint64(TritsToInt(trits[CurrentIndexTrinaryOffset : CurrentIndexTrinaryOffset+CurrentIndexTrinarySize]))
@@ -172,7 +126,7 @@ func TransactionToTrytes(t *Transaction) Trytes {
 	tr := make(Trits, TransactionTrinarySize)
 	copy(tr, TrytesToTrits(t.SignatureMessageFragment))
 	copy(tr[AddressTrinaryOffset:], TrytesToTrits(t.Address))
-	copy(tr[ValueTrinaryOffset:], IntToTrits(t.Value))
+	copy(tr[ValueOffsetTrinary:], IntToTrits(t.Value))
 	copy(tr[ObsoleteTagTrinaryOffset:], TrytesToTrits(t.ObsoleteTag))
 	copy(tr[TimestampTrinaryOffset:], IntToTrits(int64(t.Timestamp)))
 	copy(tr[CurrentIndexTrinaryOffset:], IntToTrits(int64(t.CurrentIndex)))
@@ -190,7 +144,7 @@ func TransactionToTrytes(t *Transaction) Trytes {
 
 // TransactionHash makes a transaction hash from the given transaction.
 func TransactionHash(t *Transaction) Hash {
-	return curl.Hash(TransactionToTrytes(t))
+	return curl.HashTrytes(TransactionToTrytes(t))
 }
 
 // HasValidNonce checks if the transaction has the valid MinWeightMagnitude.

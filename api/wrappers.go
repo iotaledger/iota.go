@@ -2,14 +2,14 @@ package api
 
 import (
 	"github.com/iotaledger/iota.go/address"
-	"github.com/iotaledger/iota.go/api_errors"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/checksum"
-	"github.com/iotaledger/iota.go/curl"
+	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/transaction"
 	"github.com/iotaledger/iota.go/transaction_converter"
 	. "github.com/iotaledger/iota.go/trinary"
+	. "github.com/iotaledger/iota.go/utils"
 	"math"
 	"sort"
 	"sync"
@@ -17,7 +17,10 @@ import (
 )
 
 func (api *API) BroadcastBundle(tailTxHash Hash) ([]Trytes, error) {
-	// TODO: validate tx hash
+	if err := Validate(ValidateTransactionHashes(tailTxHash)); err != nil {
+		return nil, err
+	}
+
 	bndl, err := api.GetBundle(tailTxHash)
 	if err != nil {
 		return nil, err
@@ -27,7 +30,10 @@ func (api *API) BroadcastBundle(tailTxHash Hash) ([]Trytes, error) {
 }
 
 func (api *API) GetAccountData(seed Trytes, options GetAccountDataOptions) (*AccountData, error) {
-	// TODO: validate start<->end, seed, security lvl
+	if err := Validate(ValidateSeed(seed), ValidateSecurityLevel(options.Security),
+		ValidateStartEndOptions(options.Start, options.End)); err != nil {
+		return nil, err
+	}
 
 	var total *uint64
 	if options.End != nil {
@@ -126,7 +132,9 @@ func firstNonNilErr(errs ...error) error {
 }
 
 func (api *API) GetBundle(tailTxHash Hash) (bundle.Bundle, error) {
-	// TODO: validate tail tx hash
+	if err := Validate(ValidateTransactionHashes(tailTxHash)); err != nil {
+		return nil, err
+	}
 	bndl := bundle.Bundle{}
 	return api.TraverseBundle(tailTxHash, bndl)
 }
@@ -190,7 +198,13 @@ func (api *API) GetLatestInclusion(transactions Hashes) ([]bool, error) {
 }
 
 func (api *API) GetNewAddress(seed Trytes, options GetNewAddressOptions) ([]Trytes, error) {
-	// TODO: validate seed, index, security
+	if err := Validate(
+		ValidateSeed(seed),
+		ValidateSecurityLevel(options.Security),
+	); err != nil {
+		return nil, err
+	}
+
 	options = getNewAddressDefaultOptions(options)
 	index := options.Index
 	securityLvl := options.Security
@@ -198,37 +212,52 @@ func (api *API) GetNewAddress(seed Trytes, options GetNewAddressOptions) ([]Tryt
 	var addresses Hashes
 	var err error
 
-	if options.Total != nil && *options.Total > 0 {
+	if options.Total != nil {
+		if *options.Total > 0 {
+			return nil, ErrInvalidTotalOption
+		}
 		total := *options.Total
 		addresses, err = address.GenerateAddresses(seed, index, total, securityLvl)
 	} else {
 		addresses, err = getUntilFirstUnusedAddress(api.IsAddressUsed, seed, index, securityLvl, options.ReturnAll)
 	}
 
-	// TODO: apply checksum option
+	if options.Checksum {
+		addresses, err = checksum.AddChecksums(addresses, true, AddressChecksumTrytesSize)
+	}
+
 	return addresses, err
 }
 
 func (api *API) IsAddressUsed(address Hash) (bool, error) {
-	// TODO: use goroutines to parallelize
-	states, err := api.WereAddressesSpentFrom(address)
-	if err != nil {
+	var err1, err2 error
+	var states []bool
+	var txs Hashes
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		states, err1 = api.WereAddressesSpentFrom(address)
+	}()
+	go func() {
+		defer wg.Done()
+		txs, err2 = api.FindTransactions(FindTransactionsQuery{Addresses: Hashes{address}})
+	}()
+	wg.Wait()
+
+	if err := firstNonNilErr(err1, err2); err != nil {
 		return false, err
 	}
-	state := states[0]
-	if state {
-		return state, nil
+
+	if states[0] || len(txs) > 0 {
+		return true, nil
 	}
-	txs, err := api.FindTransactions(FindTransactionsQuery{Addresses: Hashes{address}})
-	if err != nil {
-		return false, err
-	}
-	return len(txs) > 0, nil
+	return false, nil
 }
 
 func getUntilFirstUnusedAddress(
 	isAddressUsed func(address Hash) (bool, error),
-	seed Trytes, index uint64, security signing.SecurityLevel,
+	seed Trytes, index uint64, security SecurityLevel,
 	returnAll bool,
 ) (Hashes, error) {
 	addresses := Hashes{}
@@ -261,7 +290,9 @@ func getUntilFirstUnusedAddress(
 }
 
 func (api *API) GetTransactionObjects(hashes ...Hash) (transaction.Transactions, error) {
-	// TODO: validate hashes
+	if err := Validate(ValidateTransactionHashes(hashes...)); err != nil {
+		return nil, err
+	}
 	trytes, err := api.GetTrytes(hashes...)
 	if err != nil {
 		return nil, err
@@ -278,7 +309,13 @@ func (api *API) FindTransactionObjects(query FindTransactionsQuery) (transaction
 }
 
 func (api *API) GetInputs(seed Trytes, options GetInputOptions) (*Inputs, error) {
-	// TODO: validate start, end, security, threshold
+	if err := Validate(
+		ValidateSeed(seed), ValidateSecurityLevel(options.Security),
+		ValidateStartEndOptions(options.Start, options.End),
+	); err != nil {
+		return nil, err
+	}
+
 	opts := options.ToGetNewAddressOptions()
 	addresses, err := api.GetNewAddress(seed, opts)
 	if err != nil {
@@ -296,7 +333,7 @@ func (api *API) GetInputs(seed Trytes, options GetInputOptions) (*Inputs, error)
 		threshold := *options.Threshold
 
 		if threshold > inputs.TotalBalance {
-			return nil, api_errors.ErrInsufficientBalance
+			return nil, ErrInsufficientBalance
 		}
 
 		thresholdInputs := Inputs{}
@@ -315,7 +352,7 @@ func (api *API) GetInputs(seed Trytes, options GetInputOptions) (*Inputs, error)
 
 }
 
-func (api *API) GetInputObjects(addresses Hashes, balances []uint64, start uint64, secLvl signing.SecurityLevel) Inputs {
+func (api *API) GetInputObjects(addresses Hashes, balances []uint64, start uint64, secLvl SecurityLevel) Inputs {
 	addrs := []Address{}
 	var totalBalance uint64
 	for i := range addresses {
@@ -330,7 +367,12 @@ func (api *API) GetInputObjects(addresses Hashes, balances []uint64, start uint6
 }
 
 func (api *API) GetTransfers(seed Trytes, options GetTransfersOptions) (bundle.Bundles, error) {
-	// TODO: validate seed, sec lvl, start, end
+	if err := Validate(
+		ValidateSeed(seed), ValidateSecurityLevel(options.Security),
+		ValidateStartEndOptions(options.Start, options.End),
+	); err != nil {
+		return nil, err
+	}
 	addresses, err := api.GetNewAddress(seed, options.ToGetNewAddressOptions())
 	if err != nil {
 		return nil, err
@@ -339,7 +381,6 @@ func (api *API) GetTransfers(seed Trytes, options GetTransfersOptions) (bundle.B
 }
 
 func (api *API) IsPromotable(tailTxHash Hash) (bool, error) {
-
 	var err1, err2 error
 	var isConsistent bool
 	var trytes []Trytes
@@ -378,8 +419,16 @@ func isAboveMaxDepth(attachmentTimestamp int64) bool {
 	return attachmentTimestamp < nowMilli && nowMilli-attachmentTimestamp < maxDepth*MilestoneInterval*OneWayDelay
 }
 
-func (api *API) IsReattachable(inputAddresses ...Trytes) ([]bool, error) {
-	// TODO: make sure to remove checksums from addresses
+func (api *API) IsReattachable(inputAddresses ...Hash) ([]bool, error) {
+	if err := Validate(ValidateHashes(inputAddresses...)); err != nil {
+		return nil, err
+	}
+	var err error
+	inputAddresses, err = checksum.RemoveChecksums(inputAddresses)
+	if err != nil {
+		return nil, err
+	}
+
 	txs, err := api.FindTransactionObjects(FindTransactionsQuery{Addresses: inputAddresses})
 	if err != nil {
 		return nil, err
@@ -437,6 +486,7 @@ func (api *API) IsReattachable(inputAddresses ...Trytes) ([]bool, error) {
 }
 
 func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, options PrepareTransfersOptions) ([]Trytes, error) {
+	// TODO: document if inputs are provided by the caller, then they are not checked for spent state
 	options = getPrepareTransfersDefaultOptions(options)
 
 	props := PrepareTransferProps{
@@ -529,10 +579,8 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 
 	// verify whether provided inputs fulfill threshold value
 	if inputsTotal < totalTransferValue {
-		return nil, api_errors.ErrInsufficientBalance
+		return nil, ErrInsufficientBalance
 	}
-
-	// TODO: document if inputs are provided by the caller, then they are not checked for spent state
 
 	// compute remainder
 	var remainder int64
@@ -541,7 +589,7 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 	}
 
 	if remainder > 0 {
-		return nil, api_errors.ErrInsufficientBalance
+		return nil, ErrInsufficientBalance
 	}
 
 	// add remainder transaction if there's api remainder
@@ -583,7 +631,7 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 		// check whether any input uses the same address as the output tx
 		for j := range props.Inputs {
 			if props.Inputs[j].Address == tx.Address {
-				return nil, api_errors.ErrSendingBackToInputs
+				return nil, ErrSendingBackToInputs
 			}
 		}
 	}
@@ -595,7 +643,7 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 	}
 
 	// compute signatures for all input txs
-	normalizedBundle := signing.NormalizedBundleHash(finalizedBundle[0].Bundle)
+	normalizedBundleHash := signing.NormalizedBundleHash(finalizedBundle[0].Bundle)
 
 	signedFrags := []Trytes{}
 	for i := range props.Inputs {
@@ -604,9 +652,9 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 		if err != nil {
 			return nil, err
 		}
-		var sec signing.SecurityLevel
+		var sec SecurityLevel
 		if input.Security == 0 {
-			sec = signing.SecurityLevelMedium
+			sec = SecurityLevelMedium
 		} else {
 			sec = input.Security
 		}
@@ -619,7 +667,7 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 		frags := make([]Trytes, input.Security)
 		for i := 0; i < int(input.Security); i++ {
 			signedFragTrits, err := signing.SignatureFragment(
-				normalizedBundle[i*curl.HashSize/3:(i+1)*curl.HashSize/3],
+				normalizedBundleHash[i*HashTrinarySize/3:(i+1)*HashTrinarySize/3],
 				prvKey[i*signing.KeyFragmentLength:(i+1)*signing.KeyFragmentLength],
 			)
 			if err != nil {
@@ -649,7 +697,9 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 }
 
 func (api *API) SendTransfer(seed Trytes, depth uint64, mwm uint64, transfers bundle.Transfers, options *SendTransfersOptions) (bundle.Bundle, error) {
-	// TODO: validate depth, mwm, seed and transfers
+	if err := Validate(ValidateSeed(seed), ValidateTransfers(transfers...)); err != nil {
+		return nil, err
+	}
 	var opts PrepareTransfersOptions
 	refs := Hashes{}
 	if options == nil {
@@ -670,7 +720,9 @@ func (api *API) SendTransfer(seed Trytes, depth uint64, mwm uint64, transfers bu
 }
 
 func (api *API) PromoteTransaction(tailTxHash Hash, depth uint64, mwm uint64, spamTransfers bundle.Transfers, options PromoteTransactionOptions) (transaction.Transactions, error) {
-	// TODO: validate tail tx and spam transfers
+	if err := Validate(ValidateTransactionHashes(tailTxHash), ValidateTransfers(spamTransfers...)); err != nil {
+		return nil, err
+	}
 	options = getPromoteTransactionsDefaultOptions(options)
 
 	consistent, err := api.CheckConsistency(tailTxHash)
@@ -679,7 +731,7 @@ func (api *API) PromoteTransaction(tailTxHash Hash, depth uint64, mwm uint64, sp
 	}
 
 	if !consistent {
-		return nil, api_errors.ErrInconsistentSubtangle
+		return nil, ErrInconsistentSubtangle
 	}
 
 	opts := SendTransfersOptions{Reference: &tailTxHash}
@@ -689,17 +741,21 @@ func (api *API) PromoteTransaction(tailTxHash Hash, depth uint64, mwm uint64, sp
 }
 
 func (api *API) ReplayBundle(tailTxhash Hash, depth uint64, mwm uint64, reference ...Hash) (bundle.Bundle, error) {
-	// TODO: validate tail tx hash, depth and mwm
+	if err := Validate(ValidateTransactionHashes(tailTxhash)); err != nil {
+		return nil, err
+	}
 	bndl, err := api.GetBundle(tailTxhash)
 	if err != nil {
 		return nil, err
 	}
 	trytes := transaction.FinalTransactionTrytes(bndl)
-	return api.SendTrytes(trytes, depth, mwm)
+	return api.SendTrytes(trytes, depth, mwm, reference...)
 }
 
 func (api *API) SendTrytes(trytes []Trytes, depth uint64, mwm uint64, reference ...Hash) (bundle.Bundle, error) {
-	// TODO: validate transaction trytes, depth and mwm
+	if err := Validate(ValidateTransactionTrytes(trytes...)); err != nil {
+		return nil, err
+	}
 	tips, err := api.GetTransactionsToApprove(depth, reference...)
 	if err != nil {
 		return nil, err
@@ -724,7 +780,9 @@ func (api *API) StoreAndBroadcast(trytes []Trytes) ([]Trytes, error) {
 }
 
 func (api *API) TraverseBundle(trunkTxHash Hash, bndl bundle.Bundle) (transaction.Transactions, error) {
-	// TODO: validate trunk tx hash
+	if err := Validate(ValidateTransactionHashes(trunkTxHash)); err != nil {
+		return nil, err
+	}
 	tailTrytes, err := api.GetTrytes(trunkTxHash)
 	if err != nil {
 		return nil, err
@@ -736,7 +794,7 @@ func (api *API) TraverseBundle(trunkTxHash Hash, bndl bundle.Bundle) (transactio
 	// tail tx ?
 	if len(bndl) == 0 {
 		if !transaction.IsTailTransaction(tx) {
-			return nil, api_errors.ErrInvalidTailTransactionHash
+			return nil, ErrInvalidTailTransaction
 		}
 	}
 	bndl = append(bndl, *tx)

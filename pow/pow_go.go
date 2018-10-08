@@ -2,8 +2,8 @@ package pow
 
 import "C"
 import (
+	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
 	"math"
@@ -24,7 +24,7 @@ const (
 	low3  uint64 = 0xFFC0000007FFFFFF
 	high3 uint64 = 0x003FFFFFFFFFFFFF
 
-	nonceOffset         = curl.HashSize - NonceTrinarySize
+	nonceOffset         = HashTrinarySize - NonceTrinarySize
 	nonceInitStart      = nonceOffset + 4
 	nonceIncrementStart = nonceInitStart + NonceTrinarySize/3
 )
@@ -135,19 +135,19 @@ func incr(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) bool {
 	var i int
 
 	// to avoid boundary check, I believe.
-	for i = nonceInitStart; i < curl.HashSize && carry != 0; i++ {
+	for i = nonceInitStart; i < HashTrinarySize && carry != 0; i++ {
 		low := lmid[i]
 		high := hmid[i]
 		lmid[i] = high ^ low
 		hmid[i] = low
 		carry = high & (^low)
 	}
-	return i == curl.HashSize
+	return i == HashTrinarySize
 }
 
 func seri(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, n uint) Trits {
 	r := make(Trits, NonceTrinarySize)
-	for i := nonceOffset; i < curl.HashSize; i++ {
+	for i := nonceOffset; i < HashTrinarySize; i++ {
 		ll := (l[i] >> n) & 1
 		hh := (h[i] >> n) & 1
 
@@ -165,7 +165,7 @@ func seri(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, n uint) Trits {
 
 func check(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, m int) int {
 	nonceProbe := hBits
-	for i := curl.HashSize - m; i < curl.HashSize; i++ {
+	for i := HashTrinarySize - m; i < HashTrinarySize; i++ {
 		nonceProbe &= ^(l[i] ^ h[i])
 		if nonceProbe == 0 {
 			return -1
@@ -251,9 +251,9 @@ func powGo(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 	stopGO = false
 
 	c := curl.NewCurl()
-	c.Absorb(trytes[:(TransactionTrinarySize-curl.HashSize)/3])
+	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := TrytesToTrits(trytes)
-	copy(c.State, tr[TransactionTrinarySize-curl.HashSize:])
+	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
 	var result Trytes
 	var rate chan int64

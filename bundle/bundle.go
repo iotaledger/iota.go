@@ -1,30 +1,14 @@
 package bundle
 
 import (
-	"errors"
-	"github.com/iotaledger/iota.go/api_errors"
+	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/kerl"
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
-	"github.com/iotaledger/iota.go/utils"
-	"strings"
+	"github.com/pkg/errors"
 	"time"
-)
-
-var (
-	ErrInvalidCurrentIndex  = errors.New("invalid current index")
-	ErrInvalidLastIndex     = errors.New("invalid last index")
-	ErrInvalidBundleBalance = errors.New("summed up values of all txs in the bundle must be 0")
-	ErrNonFinalizedBundle   = errors.New("bundle wasn't finalized")
-)
-
-var (
-	NullHashTrytes                     = strings.Repeat("9", 81)
-	NullTagTrytes                      = strings.Repeat("9", 27)
-	NullNonceTrytes                    = strings.Repeat("9", 27)
-	NullSignatureMessageFragmentTrytes = strings.Repeat("9", 2187)
 )
 
 type Bundles []Bundle
@@ -220,15 +204,16 @@ func ValidBundle(bundle Bundle) error {
 	sigs := make(map[Hash][]Trytes)
 	k := kerl.NewKerl()
 
+	lastIndex := uint64(len(bundle) - 1)
 	for i := range bundle {
 		tx := &bundle[i]
 		totalSum += tx.Value
 
 		if tx.CurrentIndex != uint64(i) {
-			return ErrInvalidCurrentIndex
+			return errors.Wrapf(ErrInvalidBundle, "expected tx at index %d to have current index %d but got %d", i, i, tx.CurrentIndex)
 		}
-		if tx.LastIndex != uint64(len(bundle)-1) {
-			return ErrInvalidLastIndex
+		if tx.LastIndex != lastIndex {
+			return errors.Wrapf(ErrInvalidBundle, "expected tx at index %d to have last index %d but got %d", i, lastIndex, tx.LastIndex)
 		}
 
 		txTrits := TrytesToTrits(transaction.TransactionToTrytes(tx)[2187 : 2187+162])
@@ -237,11 +222,6 @@ func ValidBundle(bundle Bundle) error {
 		// continue if output or signature tx
 		if tx.Value >= 0 {
 			continue
-		}
-
-		// check whether the signature message fragment isn't empty
-		if utils.IsEmptyTrytes(tx.SignatureMessageFragment) {
-			return ErrNonFinalizedBundle
 		}
 
 		// here we have an input transaction (negative value)
@@ -262,7 +242,7 @@ func ValidBundle(bundle Bundle) error {
 
 	// sum of all transaction must be 0
 	if totalSum != 0 {
-		return ErrInvalidBundleBalance
+		return errors.Wrapf(ErrInvalidBundle, "bundle total sum should be 0 but got %d", totalSum)
 	}
 
 	bundleHashTrits, err := k.Squeeze(curl.HashSize)
@@ -273,7 +253,7 @@ func ValidBundle(bundle Bundle) error {
 	bundleHash := MustTritsToTrytes(bundleHashTrits)
 
 	if bundleHash != bundle[0].Bundle {
-		return api_errors.ErrInvalidBundleHash
+		return ErrInvalidBundleHash
 	}
 
 	// validate the signatures
@@ -283,7 +263,7 @@ func ValidBundle(bundle Bundle) error {
 	}
 
 	if !valid {
-		return api_errors.ErrInvalidSignature
+		return ErrInvalidSignature
 	}
 
 	return nil

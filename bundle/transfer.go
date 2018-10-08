@@ -4,13 +4,8 @@ import (
 	"github.com/iotaledger/iota.go/pow"
 	. "github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
+	. "github.com/iotaledger/iota.go/consts"
 	"time"
-)
-
-const (
-	// (3^27-1)/2
-	UpperBoundAttachmentTimestamp = (3 ^ 27 - 1) / 2
-	LowerBoundAttachmentTimestamp = 0
 )
 
 type Transfers []Transfer

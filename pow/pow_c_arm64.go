@@ -267,8 +267,8 @@ long long int pworkARM64(signed char mid[], int mwm, signed char nonce[], int n)
 */
 import "C"
 import (
+	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
 	"unsafe"
 )
@@ -294,9 +294,9 @@ func powCARM64(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	C.stopCARM64 = 0
 	c := curl.NewCurl()
-	c.Absorb(trytes[:(TransactionTrinarySize-curl.HashSize)/3])
+	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := trytes.Trits()
-	copy(c.State, tr[TransactionTrinarySize-curl.HashSize:])
+	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
 	var result Trytes
 	var rate chan int64

@@ -8,6 +8,7 @@ import (
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
+	. "github.com/iotaledger/iota.go/consts"
 	"math"
 )
 
@@ -330,9 +331,9 @@ func powAVX(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 	C.stopAVX = 0
 
 	c := curl.NewCurl()
-	c.Absorb(trytes[:(TransactionTrinarySize-curl.HashSize)/3])
+	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := TrytesToTrits(trytes)
-	copy(c.State, tr[TransactionTrinarySize-curl.HashSize:])
+	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
 	var result Trytes
 	var rate chan int64

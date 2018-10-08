@@ -1,16 +1,10 @@
 package address
 
 import (
-	"errors"
 	"github.com/iotaledger/iota.go/checksum"
+	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/signing"
 	. "github.com/iotaledger/iota.go/trinary"
-)
-
-// Error types for address
-var (
-	ErrInvalidAddressLength = errors.New("addresses without checksum must be 81/243 trytes/trits in length")
-	ErrInvalidChecksum      = errors.New("checksum doesn't match address")
 )
 
 // GenerateAddress generates an address deterministically, according to the given seed, index and security level.
@@ -74,7 +68,7 @@ func GenerateAddresses(seed Trytes, start uint64, count uint64, secLvl SecurityL
 // ValidAddressHash checks whether the given address is valid.
 func ValidAddressHash(a Hash) error {
 	if !(len(a) == 81) {
-		return ErrInvalidAddressLength
+		return ErrInvalidAddress
 	}
 	return ValidTrytes(a)
 }
@@ -94,7 +88,7 @@ func ValidChecksum(address Hash, checksum Trytes) error {
 // Checksum returns the checksum of the given address.
 func Checksum(address Hash) (Trytes, error) {
 	if len(address) < 81 {
-		return "", ErrInvalidAddressLength
+		return "", ErrInvalidAddress
 	}
 
 	addressWithChecksum, err := checksum.AddChecksum(address[:81], true, 9)

@@ -2,7 +2,7 @@ package pow
 
 import (
 	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/transaction"
+	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
 
@@ -26,7 +26,7 @@ func testPoW(t *testing.T, f measurablePoWFunc) float64 {
 	ti := time.Now().Sub(s)
 
 	rawTx = rawTx[:len(rawTx)-NonceTrinarySize/3] + nonce
-	hash := curl.Hash(rawTx)
+	hash := curl.HashTrytes(rawTx)
 	if !hasReferenceMWMTrits(TrytesToTrits(hash)) {
 		t.Error(ErrInvalidMWM, hash)
 	}
