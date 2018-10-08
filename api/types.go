@@ -113,6 +113,7 @@ func (gto GetTransfersOptions) ToGetNewAddressOptions() GetNewAddressOptions {
 }
 
 type PrepareTransfersOptions struct {
+	// TODO: document if inputs are provided by the caller, then they are not checked for spent state
 	Inputs           []Address
 	RemainderAddress *Hash
 	Security         SecurityLevel
