@@ -631,8 +631,8 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 		frags := make([]Trytes, input.Security)
 		for i := 0; i < int(input.Security); i++ {
 			signedFragTrits, err := signing.SignatureFragment(
-				normalizedBundleHash[i*HashTrinarySize/3:(i+1)*HashTrinarySize/3],
-				prvKey[i*signing.KeyFragmentLength:(i+1)*signing.KeyFragmentLength],
+				normalizedBundleHash[i*HashTrytesSize/3:(i+1)*HashTrytesSize/3],
+				prvKey[i*KeyFragmentLength:(i+1)*KeyFragmentLength],
 			)
 			if err != nil {
 				return nil, err

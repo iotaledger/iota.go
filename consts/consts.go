@@ -28,6 +28,7 @@ const (
 	HashTrytesSize  = HashTrinarySize / 3
 	HashBytesSize   = 48
 	IntLength       = HashBytesSize / 4
+	KeyFragmentLength = 6561
 )
 
 const (

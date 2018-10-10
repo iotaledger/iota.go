@@ -7,20 +7,12 @@ import (
 	"github.com/iotaledger/iota.go/utils"
 )
 
-func AddChecksums(inputs []Trytes, isAddress bool, checksumLength uint64) ([]Trytes, error) {
-	withChecksums := make([]Trytes, len(inputs))
-	for i, s := range inputs {
-		t, err := AddChecksum(s, isAddress, checksumLength)
-		if err != nil {
-			return nil, err
-		}
-		withChecksums[i] = t
-	}
-	return withChecksums, nil
-}
-
+// AddChecksum computes the checksum and returns the given trytes with the appended checksum.
+// If isAddress is true, then the input trytes must be of length HashTrytesSize.
+// Specified checksum length must be at least MinChecksumTrytesSize long or it must be
+// AddressChecksumTrytesSize if isAddress is true.
 func AddChecksum(input Trytes, isAddress bool, checksumLength uint64) (Trytes, error) {
-	if isAddress && len(input) != HashTrytesSize{
+	if isAddress && len(input) != HashTrytesSize {
 		if len(input) == AddressWithChecksumTrytesSize {
 			return input, nil
 		}
@@ -51,6 +43,30 @@ func AddChecksum(input Trytes, isAddress bool, checksumLength uint64) (Trytes, e
 	return input, nil
 }
 
+// AddChecksums is a wrapper function around AddChecksum for multiple trytes strings.
+func AddChecksums(inputs []Trytes, isAddress bool, checksumLength uint64) ([]Trytes, error) {
+	withChecksums := make([]Trytes, len(inputs))
+	for i, s := range inputs {
+		t, err := AddChecksum(s, isAddress, checksumLength)
+		if err != nil {
+			return nil, err
+		}
+		withChecksums[i] = t
+	}
+	return withChecksums, nil
+}
+
+// RemoveChecksum removes the checksum from the given trytes.
+// The input trytes must be of length HashTrytesSize or AddressWithChecksumTrytesSize.
+func RemoveChecksum(input Trytes) (Trytes, error) {
+	if !utils.IsTrytesOfExactLength(input, HashTrytesSize) &&
+		!utils.IsTrytesOfExactLength(input, AddressWithChecksumTrytesSize) {
+		return "", ErrInvalidAddress
+	}
+	return input[:HashTrytesSize], nil
+}
+
+// RemoveChecksums is a wrapper function around RemoveChecksum for multiple trytes strings.
 func RemoveChecksums(inputs []Trytes) ([]Trytes, error) {
 	withoutChecksums := make([]Trytes, len(inputs))
 	for i, s := range inputs {
@@ -61,12 +77,4 @@ func RemoveChecksums(inputs []Trytes) ([]Trytes, error) {
 		withoutChecksums[i] = t
 	}
 	return withoutChecksums, nil
-}
-
-func RemoveChecksum(input Trytes) (Trytes, error) {
-	if !utils.IsTrytesOfExactLength(input, HashTrytesSize) &&
-		!utils.IsTrytesOfExactLength(input, AddressWithChecksumTrytesSize) {
-		return "", ErrInvalidAddress
-	}
-	return input[:HashTrytesSize], nil
 }

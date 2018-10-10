@@ -1,6 +1,7 @@
 package curl
 
 import (
+	"fmt"
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
 )
@@ -51,8 +52,15 @@ func (c *Curl) Squeeze() Trytes {
 }
 
 // Absorb fills the internal State of the sponge with the given trits.
+// It panics if the given trytes are not valid.
 func (c *Curl) Absorb(inn Trytes) {
-	in := MustTrytesToTrits(inn)
+	var in Trits
+	if len(inn) == 0 {
+		in = Trits{0}
+	}else{
+		in = MustTrytesToTrits(inn)
+	}
+	fmt.Println(in)
 	var lenn int
 	for i := 0; i < len(in); i += lenn {
 		lenn = HashTrinarySize
