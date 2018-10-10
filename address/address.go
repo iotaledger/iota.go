@@ -7,6 +7,40 @@ import (
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
+// Checksum returns the checksum of the given address.
+func Checksum(address Hash) (Trytes, error) {
+	if len(address) < 81 {
+		return "", ErrInvalidAddress
+	}
+
+	addressWithChecksum, err := checksum.AddChecksum(address[:81], true, 9)
+	if err != nil {
+		return "", err
+	}
+	return addressWithChecksum[AddressWithChecksumTrytesSize-AddressChecksumTrytesSize : 90], nil
+}
+
+// ValidAddress checks whether the given address is valid.
+func ValidAddress(a Hash) error {
+	if !(len(a) == 81) {
+		return ErrInvalidAddress
+	}
+	return ValidTrytes(a)
+}
+
+// ValidAddressChecksum checks whether the given checksum corresponds to the given address.
+func ValidChecksum(address Hash, checksum Trytes) error {
+	actualChecksum, err := Checksum(address)
+	if err != nil {
+		return err
+	}
+	if checksum != actualChecksum {
+		return ErrInvalidChecksum
+	}
+	return nil
+}
+
+
 // GenerateAddress generates an address deterministically, according to the given seed, index and security level.
 func GenerateAddress(seed Trytes, index uint64, secLvl SecurityLevel, addChecksum ...bool) (Hash, error) {
 	for len(seed)%81 != 0 {
@@ -63,37 +97,4 @@ func GenerateAddresses(seed Trytes, start uint64, count uint64, secLvl SecurityL
 		}
 	}
 	return addresses, nil
-}
-
-// ValidAddressHash checks whether the given address is valid.
-func ValidAddressHash(a Hash) error {
-	if !(len(a) == 81) {
-		return ErrInvalidAddress
-	}
-	return ValidTrytes(a)
-}
-
-// ValidAddressChecksum checks whether the given checksum corresponds to the given address.
-func ValidChecksum(address Hash, checksum Trytes) error {
-	actualChecksum, err := Checksum(address)
-	if err != nil {
-		return err
-	}
-	if checksum != actualChecksum {
-		return ErrInvalidChecksum
-	}
-	return nil
-}
-
-// Checksum returns the checksum of the given address.
-func Checksum(address Hash) (Trytes, error) {
-	if len(address) < 81 {
-		return "", ErrInvalidAddress
-	}
-
-	addressWithChecksum, err := checksum.AddChecksum(address[:81], true, 9)
-	if err != nil {
-		return "", err
-	}
-	return addressWithChecksum[81-9 : 81], nil
 }
