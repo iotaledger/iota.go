@@ -2,7 +2,6 @@ package bundle
 
 import (
 	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/kerl"
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/transaction"
@@ -113,7 +112,7 @@ func Finalize(bundle Bundle) (Bundle, error) {
 		valueTrits[i] = PadTrits(IntToTrits(bundle[i].Value), 81)
 		timestampTrits[i] = PadTrits(IntToTrits(int64(bundle[i].Timestamp)), 27)
 		currentIndexTrits[i] = PadTrits(IntToTrits(int64(bundle[i].CurrentIndex)), 27)
-		obsoleteTagTrits[i] = PadTrits(TrytesToTrits(bundle[i].ObsoleteTag), 81)
+		obsoleteTagTrits[i] = PadTrits(MustTrytesToTrits(bundle[i].ObsoleteTag), 81)
 	}
 
 	var bundleHash Hash
@@ -121,7 +120,7 @@ func Finalize(bundle Bundle) (Bundle, error) {
 		k := kerl.NewKerl()
 
 		for i := 0; i < len(bundle); i++ {
-			relevantTritsForBundleHash := TrytesToTrits(
+			relevantTritsForBundleHash := MustTrytesToTrits(
 				bundle[i].Address +
 					MustTritsToTrytes(valueTrits[i]) +
 					MustTritsToTrytes(obsoleteTagTrits[i]) +
@@ -132,7 +131,7 @@ func Finalize(bundle Bundle) (Bundle, error) {
 			k.Absorb(relevantTritsForBundleHash)
 		}
 
-		bundleHashTrits, err := k.Squeeze(curl.HashSize)
+		bundleHashTrits, err := k.Squeeze(HashTrinarySize)
 		if err != nil {
 			return nil, err
 		}
@@ -216,7 +215,7 @@ func ValidBundle(bundle Bundle) error {
 			return errors.Wrapf(ErrInvalidBundle, "expected tx at index %d to have last index %d but got %d", i, lastIndex, tx.LastIndex)
 		}
 
-		txTrits := TrytesToTrits(transaction.TransactionToTrytes(tx)[2187 : 2187+162])
+		txTrits := MustTrytesToTrits(transaction.TransactionToTrytes(tx)[2187 : 2187+162])
 		k.Absorb(txTrits)
 
 		// continue if output or signature tx
@@ -245,7 +244,7 @@ func ValidBundle(bundle Bundle) error {
 		return errors.Wrapf(ErrInvalidBundle, "bundle total sum should be 0 but got %d", totalSum)
 	}
 
-	bundleHashTrits, err := k.Squeeze(curl.HashSize)
+	bundleHashTrits, err := k.Squeeze(HashTrinarySize)
 	if err != nil {
 		return err
 	}

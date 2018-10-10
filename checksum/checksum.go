@@ -38,7 +38,7 @@ func AddChecksum(input Trytes, isAddress bool, checksumLength uint64) (Trytes, e
 		inputCopy += "9"
 	}
 
-	inputTrits := TrytesToTrits(inputCopy)
+	inputTrits := MustTrytesToTrits(inputCopy)
 	k := kerl.NewKerl()
 	if err := k.Absorb(inputTrits); err != nil {
 		return "", err

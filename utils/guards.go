@@ -72,7 +72,7 @@ func IsTxHashWithMWM(trytes Trytes, mwm uint) bool {
 		return false
 	}
 
-	trits := TrytesToTrits(trytes)
+	trits := MustTrytesToTrits(trytes)
 	for _, trit := range trits[len(trits)-int(mwm):] {
 		if trit != 0 {
 			return false
@@ -97,7 +97,7 @@ func IsTransactionTrytesWithMWM(trytes Trytes, mwm uint) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	hashTrits := TrytesToTrits(TransactionHash(tx))
+	hashTrits := MustTrytesToTrits(TransactionHash(tx))
 	for _, trit := range hashTrits[len(hashTrits)-int(mwm):] {
 		if trit != 0 {
 			return false, nil

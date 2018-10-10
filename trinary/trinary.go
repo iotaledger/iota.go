@@ -25,12 +25,6 @@ var (
 // Trits is a slice of int8. You should not use cast, use NewTrits instead to ensure the validity.
 type Trits = []int8
 
-// NewTrits casts Trits and checks its validity.
-func NewTrits(t []int8) (Trits, error) {
-	err := ValidTrits(t)
-	return t, err
-}
-
 // ValidTrit returns true if t is a valid trit.
 func ValidTrit(t int8) bool {
 	if t >= -1 && t <= 1 {
@@ -49,25 +43,41 @@ func ValidTrits(t Trits) error {
 	return nil
 }
 
+// NewTrits casts Trits and checks its validity.
+func NewTrits(t []int8) (Trits, error) {
+	err := ValidTrits(t)
+	return t, err
+}
+
 // TritsEqual returns true if t and b are equal Trits
-func TritsEqual(a, b Trits) bool {
+func TritsEqual(a, b Trits) (bool, error) {
+	if err := ValidTrits(a); err != nil {
+		return false, err
+	}
+	if err := ValidTrits(b); err != nil {
+		return false, err
+	}
+
 	if len(a) != len(b) {
-		return false
+		return false, nil
 	}
 
 	for i := range a {
 		if a[i] != b[i] {
-			return false
+			return false, nil
 		}
 	}
-	return true
+	return true, nil
 }
 
 // IntToTrits converts int64 to trits.
 func IntToTrits(value int64) Trits {
+	if value == 0 {
+		return Trits{0}
+	}
 	var dest Trits
-	if value > 0 {
-		dest = make(Trits, int(1+math.Floor(math.Log(math.Max(1, math.Abs(float64(value))))/math.Log(3))))
+	if value != 0 {
+		dest = make(Trits, int(1+math.Floor(math.Log(2*math.Max(1, math.Abs(float64(value))))/math.Log(3))))
 	} else {
 		dest = make(Trits, 0)
 	}
@@ -78,8 +88,8 @@ func IntToTrits(value int64) Trits {
 	} else {
 		absoluteValue = value
 	}
-	i := 0
 
+	i := 0
 	for absoluteValue > 0 {
 		remainder := absoluteValue % TrinaryRadix
 		absoluteValue = int64(math.Floor(float64(absoluteValue / TrinaryRadix)))
@@ -113,6 +123,9 @@ func TritsToInt(t Trits) int64 {
 
 // CanTritsToTrytes returns true if t can be converted to trytes.
 func CanTritsToTrytes(trits Trits) bool {
+	if len(trits) == 0 {
+		return false
+	}
 	return len(trits)%3 == 0
 }
 
@@ -123,15 +136,6 @@ func TrailingZeros(t Trits) int64 {
 		z++
 	}
 	return z
-}
-
-// MustTritsToTrytes converts a slice of trits into trytes. Panics if len(t)%3!=0
-func MustTritsToTrytes(trits Trits) Trytes {
-	trytes, err := TritsToTrytes(trits)
-	if err != nil {
-		panic(err)
-	}
-	return trytes
 }
 
 // TritsToTrytes converts a slice of trits into trytes. Returns an error if len(t)%3!=0
@@ -151,8 +155,17 @@ func TritsToTrytes(trits Trits) (Trytes, error) {
 	return Trytes(o), nil
 }
 
-// 3^(242/2)
+// MustTritsToTrytes converts a slice of trits into trytes. Panics if len(t)%3!=0
+func MustTritsToTrytes(trits Trits) Trytes {
+	trytes, err := TritsToTrytes(trits)
+	if err != nil {
+		panic(err)
+	}
+	return trytes
+}
+
 // 12 * 32 bit
+// hex representation of (3^242)/2
 var halfThree = []uint32{
 	0xa5ce8964,
 	0x9f007669,
@@ -329,31 +342,9 @@ type Trytes = string
 
 // Hash represents a trinary hash
 type Hash = Trytes
-
 type Hashes = []Hash
 
-// NewTrytes casts to Trytes and checks its validity.
-func NewTrytes(s string) (Trytes, error) {
-	err := ValidTrytes(s)
-	return s, err
-}
-
-// TrytesToTrits converts a slice of trytes into trits.
-func TrytesToTrits(trytes Trytes) Trits {
-	trits := make(Trits, len(trytes)*3)
-	for i := range trytes {
-		idx := strings.Index(TryteAlphabet, string(trytes[i:i+1]))
-		copy(trits[i*3:i*3+3], TryteToTritsLUT[idx])
-	}
-	return trits
-}
-
 var trytesRegex = regexp.MustCompile("^[9A-Z]+$")
-
-// ValidTryte returns the validity of a tryte (must be rune A-Z or 9)
-func ValidTryte(t rune) error {
-	return ValidTrytes(string(t))
-}
 
 // ValidTrytes returns true if t is made of valid trytes.
 func ValidTrytes(trytes Trytes) error {
@@ -364,16 +355,37 @@ func ValidTrytes(trytes Trytes) error {
 
 }
 
-func IncTrits(t Trits) {
-	for j := range t {
-		t[j]++
+// ValidTryte returns the validity of a tryte (must be rune A-Z or 9)
+func ValidTryte(t rune) error {
+	return ValidTrytes(string(t))
+}
 
-		if t[j] <= 1 {
-			break
-		}
+// NewTrytes casts to Trytes and checks its validity.
+func NewTrytes(s string) (Trytes, error) {
+	err := ValidTrytes(s)
+	return s, err
+}
 
-		t[j] = -1
+// TrytesToTrits converts a slice of trytes into trits.
+func TrytesToTrits(trytes Trytes) (Trits, error) {
+	if err := ValidTrytes(trytes); err != nil {
+		return nil, err
 	}
+	trits := make(Trits, len(trytes)*3)
+	for i := range trytes {
+		idx := strings.Index(TryteAlphabet, string(trytes[i:i+1]))
+		copy(trits[i*3:i*3+3], TryteToTritsLUT[idx])
+	}
+	return trits, nil
+}
+
+// MustTrytesToTrits converts a slice of trytes into trits.
+func MustTrytesToTrits(trytes Trytes) Trits {
+	trits, err := TrytesToTrits(trytes)
+	if err != nil {
+		panic(err)
+	}
+	return trits
 }
 
 // Pad pads the given trytes with 9s up to the given size.
@@ -449,7 +461,11 @@ func fullAdd(a int8, b int8, c int8) [2]int8 {
 
 // AddTrits adds a to b.
 func AddTrits(a Trits, b Trits) Trits {
-	out := make(Trits, int64(math.Max(float64(len(a)), float64(len(b)))))
+	maxLen := int64(math.Max(float64(len(a)), float64(len(b))))
+	if maxLen == 0 {
+		return Trits{0}
+	}
+	out := make(Trits, maxLen)
 	var aI, bI, carry int8
 
 	for i := 0; i < len(out); i++ {

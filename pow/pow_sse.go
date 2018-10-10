@@ -276,7 +276,7 @@ func powSSE(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
-	tr := TrytesToTrits(trytes)
+	tr := MustTrytesToTrits(trytes)
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
 	var result Trytes

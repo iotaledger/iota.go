@@ -27,7 +27,7 @@ func testPoW(t *testing.T, f measurablePoWFunc) float64 {
 
 	rawTx = rawTx[:len(rawTx)-NonceTrinarySize/3] + nonce
 	hash := curl.HashTrytes(rawTx)
-	if !hasReferenceMWMTrits(TrytesToTrits(hash)) {
+	if !hasReferenceMWMTrits(MustTrytesToTrits(hash)) {
 		t.Error(ErrInvalidMWM, hash)
 	}
 	return float64(sumRate) / 1000 / ti.Seconds()

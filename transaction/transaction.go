@@ -58,7 +58,7 @@ func NewTransaction(trytes Trytes) (*Transaction, error) {
 		return nil, err
 	}
 
-	if t, err = ParseTransaction(TrytesToTrits(trytes)); err != nil {
+	if t, err = ParseTransaction(MustTrytesToTrits(trytes)); err != nil {
 		return nil, err
 	}
 
@@ -124,21 +124,21 @@ func ParseTransaction(trits Trits) (*Transaction, error) {
 // Trytes converts the transaction to Trytes.
 func TransactionToTrytes(t *Transaction) Trytes {
 	tr := make(Trits, TransactionTrinarySize)
-	copy(tr, TrytesToTrits(t.SignatureMessageFragment))
-	copy(tr[AddressTrinaryOffset:], TrytesToTrits(t.Address))
+	copy(tr, MustTrytesToTrits(t.SignatureMessageFragment))
+	copy(tr[AddressTrinaryOffset:], MustTrytesToTrits(t.Address))
 	copy(tr[ValueOffsetTrinary:], IntToTrits(t.Value))
-	copy(tr[ObsoleteTagTrinaryOffset:], TrytesToTrits(t.ObsoleteTag))
+	copy(tr[ObsoleteTagTrinaryOffset:], MustTrytesToTrits(t.ObsoleteTag))
 	copy(tr[TimestampTrinaryOffset:], IntToTrits(int64(t.Timestamp)))
 	copy(tr[CurrentIndexTrinaryOffset:], IntToTrits(int64(t.CurrentIndex)))
 	copy(tr[LastIndexTrinaryOffset:], IntToTrits(int64(t.LastIndex)))
-	copy(tr[BundleTrinaryOffset:], TrytesToTrits(t.Bundle))
-	copy(tr[TrunkTransactionTrinaryOffset:], TrytesToTrits(t.TrunkTransaction))
-	copy(tr[BranchTransactionTrinaryOffset:], TrytesToTrits(t.BranchTransaction))
-	copy(tr[TagTrinaryOffset:], TrytesToTrits(t.Tag))
+	copy(tr[BundleTrinaryOffset:], MustTrytesToTrits(t.Bundle))
+	copy(tr[TrunkTransactionTrinaryOffset:], MustTrytesToTrits(t.TrunkTransaction))
+	copy(tr[BranchTransactionTrinaryOffset:], MustTrytesToTrits(t.BranchTransaction))
+	copy(tr[TagTrinaryOffset:], MustTrytesToTrits(t.Tag))
 	copy(tr[AttachmentTimestampTrinaryOffset:], IntToTrits(t.AttachmentTimestamp))
 	copy(tr[AttachmentTimestampLowerBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampLowerBound))
 	copy(tr[AttachmentTimestampUpperBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampUpperBound))
-	copy(tr[NonceTrinaryOffset:], TrytesToTrits(t.Nonce))
+	copy(tr[NonceTrinaryOffset:], MustTrytesToTrits(t.Nonce))
 	return MustTritsToTrytes(tr)
 }
 
@@ -150,7 +150,7 @@ func TransactionHash(t *Transaction) Hash {
 // HasValidNonce checks if the transaction has the valid MinWeightMagnitude.
 // In order to check the MWM we count trailing 0's of the curlp hash of a transaction.
 func HasValidNonce(t *Transaction, mwm uint64) bool {
-	return TrailingZeros(TrytesToTrits(TransactionHash(t))) >= int64(mwm)
+	return TrailingZeros(MustTrytesToTrits(TransactionHash(t))) >= int64(mwm)
 }
 
 // UnmarshalJSON makes transaction struct from json.
@@ -165,7 +165,7 @@ func UnmarshalJSON(b []byte) (*Transaction, error) {
 		return nil, err
 	}
 
-	return ParseTransaction(TrytesToTrits(s))
+	return ParseTransaction(MustTrytesToTrits(s))
 }
 
 // MarshalJSON makes trytes ([]byte) from a transaction.

@@ -308,7 +308,7 @@ func powC128(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 	C.stopC128 = 0
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
-	tr := TrytesToTrits(trytes)
+	tr := MustTrytesToTrits(trytes)
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
 	var result Trytes

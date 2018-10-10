@@ -19,11 +19,7 @@ func Subseed(seed Trytes, index uint64) (Trits, error) {
 		return nil, ErrInvalidSeed
 	}
 
-	incrementedSeed := TrytesToTrits(seed)
-	var i uint64
-	for ; i < index; i++ {
-		IncTrits(incrementedSeed)
-	}
+	incrementedSeed := AddTrits(MustTrytesToTrits(seed), IntToTrits(int64(index)))
 
 	k := kerl.NewKerl()
 	err := k.Absorb(incrementedSeed)
@@ -158,7 +154,7 @@ func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Has
 
 	digests := make(Trits, len(fragments)*243)
 	for i := 0; i < len(fragments); i++ {
-		digest, err := Digest(normalizedBundleHashFragments[i%3], TrytesToTrits(fragments[i]))
+		digest, err := Digest(normalizedBundleHashFragments[i%3], MustTrytesToTrits(fragments[i]))
 		if err != nil {
 			return false, err
 		}
@@ -208,7 +204,7 @@ func NormalizedBundleHash(bundleHash Hash) Trits {
 	for i := 0; i < 3; i++ {
 		sum := 0
 		for j := 0; j < 27; j++ {
-			normalizedBundle[i*27+j] = int8(TritsToInt(TrytesToTrits(string(bundleHash[i*27*j]))))
+			normalizedBundle[i*27+j] = int8(TritsToInt(MustTrytesToTrits(string(bundleHash[i*27*j]))))
 			sum += int(normalizedBundle[i*27+j])
 		}
 

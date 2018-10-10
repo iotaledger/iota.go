@@ -153,12 +153,12 @@ func (api *API) GetBundlesFromAddresses(addresses Hashes, inclusionState ...bool
 		return nil, err
 	}
 
-	bundleHashesSet := map[Trytes]struct{}{}
+	bundleHashesSet := map[Hash]struct{}{}
 	for i := range txs {
 		bundleHashesSet[txs[i].Bundle] = struct{}{}
 	}
 
-	bundleHashes := make([]Trytes, len(bundleHashesSet))
+	bundleHashes := make(Hashes, len(bundleHashesSet))
 	for hash := range bundleHashesSet {
 		bundleHashes = append(bundleHashes, hash)
 	}

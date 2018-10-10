@@ -19,7 +19,7 @@ func AsTransactionObject(trytes Trytes, hash ...Hash) (*Transaction, error) {
 		}
 	}
 
-	trits := TrytesToTrits(trytes)
+	trits := MustTrytesToTrits(trytes)
 
 	tx, err := ParseTransaction(trits)
 	if err != nil {

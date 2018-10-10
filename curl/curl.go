@@ -52,7 +52,7 @@ func (c *Curl) Squeeze() Trytes {
 
 // Absorb fills the internal State of the sponge with the given trits.
 func (c *Curl) Absorb(inn Trytes) {
-	in := TrytesToTrits(inn)
+	in := MustTrytesToTrits(inn)
 	var lenn int
 	for i := 0; i < len(in); i += lenn {
 		lenn = HashTrinarySize
@@ -97,7 +97,7 @@ func (c *Curl) Reset() {
 func HashTrits(trits Trits) Trits {
 	c := NewCurl()
 	c.Absorb(MustTritsToTrytes(trits))
-	return TrytesToTrits(c.Squeeze())
+	return MustTrytesToTrits(c.Squeeze())
 }
 
 // HashTrytes returns hash of t.
