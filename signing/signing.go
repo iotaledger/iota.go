@@ -7,10 +7,6 @@ import (
 	"math"
 )
 
-const (
-	KeyFragmentLength = 6561
-)
-
 // Subseed takes a seed and an index and returns the given subseed.
 func Subseed(seed Trytes, index uint64) (Trits, error) {
 	if err := ValidTrytes(seed); err != nil {
@@ -112,8 +108,42 @@ func Address(digests Trits) (Trits, error) {
 	return k.Squeeze(HashTrinarySize)
 }
 
-// SignatureFragment returns signed fragments using the given key fragment.
-func SignatureFragment(normalizedBundleFragments Trits, keyFragment Trits) (Trits, error) {
+// NormalizedBundleHash normalizes the given bundle hash, with resulting digits summing to zero.
+// It returns a slice with the tryte decimal representation without any 13/M values.
+func NormalizedBundleHash(bundleHash Hash) []int8 {
+	normalizedBundle := make([]int8, HashTrytesSize)
+	for i := 0; i < 3; i++ {
+		sum := 0
+		for j := 0; j < 27; j++ {
+			normalizedBundle[i*27+j] = int8(TritsToInt(MustTrytesToTrits(string(bundleHash[i*27+j]))))
+			sum += int(normalizedBundle[i*27+j])
+		}
+
+		if sum >= 0 {
+			for ; sum > 0; sum-- {
+				for j := 0; j < 27; j++ {
+					if normalizedBundle[i*27+j] > -13 {
+						normalizedBundle[i*27+j]--
+						break
+					}
+				}
+			}
+		} else {
+			for ; sum < 0; sum++ {
+				for j := 0; j < 27; j++ {
+					if normalizedBundle[i*27+j] < 13 {
+						normalizedBundle[i*27+j]++
+						break
+					}
+				}
+			}
+		}
+	}
+	return normalizedBundle
+}
+
+// SignatureFragment returns signed fragments using the given bundle hash and key fragment.
+func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits) (Trits, error) {
 	sigFrag := make(Trits, len(keyFragment))
 	copy(sigFrag, keyFragment)
 
@@ -122,7 +152,7 @@ func SignatureFragment(normalizedBundleFragments Trits, keyFragment Trits) (Trit
 	for i := 0; i < 27; i++ {
 		hash := sigFrag[i*243 : (i+1)*243]
 
-		to := 13 - normalizedBundleFragments[i]
+		to := 13 - normalizedBundleHashFragment[i]
 		for j := 0; j < int(to); j++ {
 			k.Reset()
 			if err := k.Absorb(hash); err != nil {
@@ -143,35 +173,8 @@ func SignatureFragment(normalizedBundleFragments Trits, keyFragment Trits) (Trit
 	return sigFrag, nil
 }
 
-// ValidateSignatures validates the given fragments.
-func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Hash) (bool, error) {
-	normalizedBundleHashFragments := []Trits{}
-	normalizeBundleHash := NormalizedBundleHash(bundleHash)
-
-	for i := 0; i < 3; i++ {
-		normalizedBundleHashFragments[i] = normalizeBundleHash[i*27 : (i+1)*27]
-	}
-
-	digests := make(Trits, len(fragments)*243)
-	for i := 0; i < len(fragments); i++ {
-		digest, err := Digest(normalizedBundleHashFragments[i%3], MustTrytesToTrits(fragments[i]))
-		if err != nil {
-			return false, err
-		}
-		for j := 0; j < 243; j++ {
-			digests[i*243+j] = digest[j]
-		}
-	}
-
-	addressTrits, err := Address(digests)
-	if err != nil {
-		return false, err
-	}
-	return expectedAddress == MustTritsToTrytes(addressTrits), nil
-}
-
 // Digest computes the digest derived from the signature fragment and normalized bundle hash.
-func Digest(normalizedBundleHashFragment Trits, signatureFragment Trits) (Trits, error) {
+func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits) (Trits, error) {
 	k := kerl.NewKerl()
 	buf := make(Trits, HashTrinarySize)
 
@@ -198,35 +201,30 @@ func Digest(normalizedBundleHashFragment Trits, signatureFragment Trits) (Trits,
 	return k.Squeeze(HashTrinarySize)
 }
 
-// NormalizedBundleHash normalizes the given bundle hash, with resulting digits summing to zero.
-func NormalizedBundleHash(bundleHash Hash) Trits {
-	normalizedBundle := make([]int8, HashTrinarySize)
-	for i := 0; i < 3; i++ {
-		sum := 0
-		for j := 0; j < 27; j++ {
-			normalizedBundle[i*27+j] = int8(TritsToInt(MustTrytesToTrits(string(bundleHash[i*27*j]))))
-			sum += int(normalizedBundle[i*27+j])
-		}
+// ValidateSignatures validates the given signature fragments by checking whether the
+// digests computed from the bundle hash and fragments equal the passed address.
+func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Hash) (bool, error) {
+	normalizedBundleHashFragments := make([][]int8, 3)
+	normalizeBundleHash := NormalizedBundleHash(bundleHash)
 
-		if sum >= 0 {
-			for ; sum > 0; sum-- {
-				for j := 0; j < 27; j++ {
-					if normalizedBundle[i*27+j] > -13 {
-						normalizedBundle[i*27+j]--
-						break
-					}
-				}
-			}
-		} else {
-			for ; sum < 0; sum++ {
-				for j := 0; j < 27; j++ {
-					if normalizedBundle[i*27+j] < 13 {
-						normalizedBundle[i*27+j]++
-						break
-					}
-				}
-			}
+	for i := 0; i < 3; i++ {
+		normalizedBundleHashFragments[i] = normalizeBundleHash[i*27 : (i+1)*27]
+	}
+
+	digests := make(Trits, len(fragments)*243)
+	for i := 0; i < len(fragments); i++ {
+		digest, err := Digest(normalizedBundleHashFragments[i%3], MustTrytesToTrits(fragments[i]))
+		if err != nil {
+			return false, err
+		}
+		for j := 0; j < 243; j++ {
+			digests[i*243+j] = digest[j]
 		}
 	}
-	return normalizedBundle
+
+	addressTrits, err := Address(digests)
+	if err != nil {
+		return false, err
+	}
+	return expectedAddress == MustTritsToTrytes(addressTrits), nil
 }
