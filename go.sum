@@ -2,8 +2,6 @@ github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMo
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/hpcloud/tail v1.0.0 h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
-github.com/iotaledger/giota v0.0.0-20180823172228-e34a40929024 h1:Crn7Dxc2tsTOsUYk5WMLEeY8yWn/6I9J34jrVKGsDr8=
-github.com/iotaledger/giota v0.0.0-20180823172228-e34a40929024/go.mod h1:5Fl+LR3qE62pYpjReY3QqmDAGao5ofNxG4Iia8jO+ks=
 github.com/luca-moser/crypto v0.0.0-20180913063011-47f96fb1bd5a h1:742JdEDlnZ726TbTk9RCz127gZ3IVYZ4XaHeWgYABrM=
 github.com/luca-moser/crypto v0.0.0-20180913063011-47f96fb1bd5a/go.mod h1:x+BMtYzmGe9LwqAH1FTt53QWVv96oh4ghwBt/Sl++Hs=
 github.com/luca-moser/crypto v0.0.0-20180913064903-fb2ff8b17554 h1:m7zuTPSAJQ8k2/wWU2weIswUUWI6kp0KjFTmqaO3aks=
