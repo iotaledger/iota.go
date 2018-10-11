@@ -10,7 +10,6 @@ import (
 	"github.com/iotaledger/iota.go/transaction"
 	"sync/atomic"
 
-	"github.com/iotaledger/iota.go/pow/cl"
 	"github.com/iotaledger/iota.go/trinary"
 )
 

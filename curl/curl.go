@@ -1,7 +1,6 @@
 package curl
 
 import (
-	"fmt"
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
 )
@@ -60,7 +59,6 @@ func (c *Curl) Absorb(inn Trytes) {
 	}else{
 		in = MustTrytesToTrits(inn)
 	}
-	fmt.Println(in)
 	var lenn int
 	for i := 0; i < len(in); i += lenn {
 		lenn = HashTrinarySize

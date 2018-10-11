@@ -122,7 +122,7 @@ func TestHello(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateProgramWithSource failed: %+v", err)
 	}
-	if err := program.BuildProgram(nil, "-cl-kernel-arg-info"); err != nil {
+	if err := program.BuildProgram(nil, "-_cl-kernel-arg-info"); err != nil {
 		t.Fatalf("BuildProgram failed: %+v", err)
 	}
 	kernel, err := program.CreateKernel("square")
