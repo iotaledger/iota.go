@@ -2,6 +2,7 @@ package pow
 
 import "C"
 import (
+	"fmt"
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
@@ -281,10 +282,10 @@ func powGo(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 			if rate != nil {
 				rate <- int64(math.Abs(float64(r)))
 			}
-
-			if r >= 0 {
+			if r >= 0 && len(nonce) > 0 {
 				select {
 				case <-exit:
+				fmt.Println("exit",nonce)
 				case nonceChan <- MustTritsToTrytes(nonce):
 					stopGO = true
 				}

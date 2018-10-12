@@ -5,10 +5,10 @@ import (
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/checksum"
 	. "github.com/iotaledger/iota.go/consts"
+	. "github.com/iotaledger/iota.go/guards/validators"
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
-	. "github.com/iotaledger/iota.go/guards/validators"
 	"math"
 	"sort"
 	"sync"
@@ -140,8 +140,16 @@ func (api *API) GetBundle(tailTxHash Hash) (bundle.Bundle, error) {
 	if err := Validate(ValidateTransactionHashes(tailTxHash)); err != nil {
 		return nil, err
 	}
+	var err error
 	bndl := bundle.Bundle{}
-	return api.TraverseBundle(tailTxHash, bndl)
+	bndl, err = api.TraverseBundle(tailTxHash, bndl)
+	if err != nil {
+		return nil, err
+	}
+	if err := bundle.ValidBundle(bndl); err != nil {
+		return nil, err
+	}
+	return bndl, err
 }
 
 // GetBundlesFromAddresses fetches all bundles from the given addresses and optionally sets
@@ -658,7 +666,6 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 	// finally return built up txs as raw trytes
 	return transaction.MustFinalTransactionTrytes(props.Transactions), nil
 }
-
 
 // SendTransfer calls PrepareTransfers and then sends off the bundle via SendTrytes.
 func (api *API) SendTransfer(seed Trytes, depth uint64, mwm uint64, transfers bundle.Transfers, options *SendTransfersOptions) (bundle.Bundle, error) {

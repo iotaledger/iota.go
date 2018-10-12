@@ -6,7 +6,6 @@ package pow
 
 import (
 	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/iotaledger/iota.go/consts"
 	"math"
