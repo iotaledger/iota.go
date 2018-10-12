@@ -9,7 +9,7 @@ import (
 	"github.com/iotaledger/iota.go/transaction"
 	"github.com/iotaledger/iota.go/transaction_converter"
 	. "github.com/iotaledger/iota.go/trinary"
-	. "github.com/iotaledger/iota.go/utils"
+	. "github.com/iotaledger/iota.go/utils/validators"
 	"math"
 	"sort"
 	"sync"
@@ -27,7 +27,7 @@ func (api *API) BroadcastBundle(tailTxHash Hash) ([]Trytes, error) {
 	if err != nil {
 		return nil, err
 	}
-	trytes := transaction.FinalTransactionTrytes(bndl)
+	trytes := transaction.MustFinalTransactionTrytes(bndl)
 	return api.BroadcastTransactions(trytes...)
 }
 
@@ -657,7 +657,7 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 	// TODO: add HMAC
 
 	// finally return built up txs as raw trytes
-	return transaction.FinalTransactionTrytes(props.Transactions), nil
+	return transaction.MustFinalTransactionTrytes(props.Transactions), nil
 }
 
 
@@ -720,7 +720,7 @@ func (api *API) ReplayBundle(tailTxhash Hash, depth uint64, mwm uint64, referenc
 	if err != nil {
 		return nil, err
 	}
-	trytes := transaction.FinalTransactionTrytes(bndl)
+	trytes := transaction.MustFinalTransactionTrytes(bndl)
 	return api.SendTrytes(trytes, depth, mwm, reference...)
 }
 

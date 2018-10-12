@@ -1,9 +1,10 @@
-package utils
+package validators
 
 import (
 	"github.com/iotaledger/iota.go/bundle"
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
+	. "github.com/iotaledger/iota.go/utils"
 	"github.com/pkg/errors"
 	"net/url"
 )

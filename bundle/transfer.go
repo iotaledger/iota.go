@@ -45,13 +45,13 @@ func DoPoW(trunkTx, branchTx Trytes, trytes []Trytes, mwm uint64, pow pow.PowFun
 		txs[i].AttachmentTimestampUpperBound = UpperBoundAttachmentTimestamp
 
 		var err error
-		txs[i].Nonce, err = pow(TransactionToTrytes(&txs[i]), int(mwm))
+		txs[i].Nonce, err = pow(MustTransactionToTrytes(&txs[i]), int(mwm))
 		if err != nil {
 			return nil, err
 		}
 
 		prev = txs[i].Hash
 	}
-	powedTxTrytes := TransactionsToTrytes(txs)
+	powedTxTrytes := MustTransactionsToTrytes(txs)
 	return powedTxTrytes, nil
 }

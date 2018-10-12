@@ -4,8 +4,8 @@ import (
 	"github.com/iotaledger/iota.go/checksum"
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
-	"github.com/iotaledger/iota.go/utils"
 	. "github.com/iotaledger/iota.go/utils"
+	. "github.com/iotaledger/iota.go/utils/validators"
 	"strconv"
 )
 
@@ -35,11 +35,11 @@ func (api *API) AttachToTangle(trunkTxHash Hash, branchTxHash Hash, mwm uint64, 
 		return nil, err
 	}
 
-	if !utils.IsTransactionHash(trunkTxHash) {
+	if !IsTransactionHash(trunkTxHash) {
 		return nil, ErrInvalidTrunkTransaction
 	}
 
-	if !utils.IsTransactionHash(branchTxHash) {
+	if !IsTransactionHash(branchTxHash) {
 		return nil, ErrInvalidBranchTransaction
 	}
 

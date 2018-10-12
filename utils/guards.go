@@ -2,7 +2,7 @@ package utils
 
 import (
 	. "github.com/iotaledger/iota.go/consts"
-	. "github.com/iotaledger/iota.go/transaction"
+	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
 
 	"regexp"
@@ -93,11 +93,7 @@ func IsTransactionTrytesWithMWM(trytes Trytes, mwm uint) (bool, error) {
 		return false, nil
 	}
 
-	tx, err := NewTransaction(trytes)
-	if err != nil {
-		return false, err
-	}
-	hashTrits := MustTrytesToTrits(TransactionHash(tx))
+	hashTrits := MustTrytesToTrits(curl.HashTrytes(trytes))
 	for _, trit := range hashTrits[len(hashTrits)-int(mwm):] {
 		if trit != 0 {
 			return false, nil

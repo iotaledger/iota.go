@@ -215,7 +215,7 @@ func ValidBundle(bundle Bundle) error {
 			return errors.Wrapf(ErrInvalidBundle, "expected tx at index %d to have last index %d but got %d", i, lastIndex, tx.LastIndex)
 		}
 
-		txTrits := MustTrytesToTrits(transaction.TransactionToTrytes(tx)[2187 : 2187+162])
+		txTrits := MustTrytesToTrits(transaction.MustTransactionToTrytes(tx)[2187 : 2187+162])
 		k.Absorb(txTrits)
 
 		// continue if output or signature tx
