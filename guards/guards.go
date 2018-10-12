@@ -1,4 +1,4 @@
-package utils
+package guards
 
 import (
 	. "github.com/iotaledger/iota.go/consts"
@@ -45,7 +45,7 @@ func IsEmptyTrytes(trytes Trytes) bool {
 // alias
 var IsNineTrytes = IsEmptyTrytes
 
-// Checks if input is correct hash (81 trytes)
+// Checks if input is correct hash (81 trytes or 90)
 func IsHash(trytes Trytes) bool {
 	return IsTrytesOfExactLength(trytes, HashTrytesSize) || IsTrytesOfExactLength(trytes, AddressWithChecksumTrytesSize)
 }
@@ -60,13 +60,8 @@ func IsTag(trytes Trytes) bool {
 	return IsTrytesOfExactLength(trytes, TagTrinarySize/3)
 }
 
-// Checks if input is correct transaction hash (81 trytes)
-func IsTxHash(trytes Trytes) bool {
-	return IsTrytesOfExactLength(trytes, HashTrytesSize)
-}
-
 // Checks if input is correct transaction hash (81 trytes) with given MWM
-func IsTxHashWithMWM(trytes Trytes, mwm uint) bool {
+func IsTransactionHashWithMWM(trytes Trytes, mwm uint) bool {
 	correctLength := IsTrytesOfExactLength(trytes, HashTrytesSize)
 	if !correctLength {
 		return false
@@ -102,7 +97,7 @@ func IsTransactionTrytesWithMWM(trytes Trytes, mwm uint) (bool, error) {
 	return true, nil
 }
 
-// Checks if input is valid attached transaction trytes. For attached transactions last 241 trytes are non-zero.
+// Checks if input is valid attached transaction trytes. For attached transactions last 243 trytes are non-zero.
 func IsAttachedTrytes(trytes Trytes) bool {
-	return IsTrytesOfExactLength(trytes, TransactionTrinarySize/3) && !IsEmptyTrytes(trytes[len(trytes)-3*HashTrytesSize:])
+	return IsTrytesOfExactLength(trytes, TransactionTrinarySize/3) && !IsEmptyTrytes(trytes[(TransactionTrinarySize / 3) - 3*HashTrytesSize:])
 }

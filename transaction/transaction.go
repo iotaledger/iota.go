@@ -4,7 +4,7 @@ import (
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
-	"github.com/iotaledger/iota.go/utils"
+	"github.com/iotaledger/iota.go/guards"
 	"github.com/pkg/errors"
 )
 
@@ -74,7 +74,7 @@ func ParseTransaction(trits Trits) (*Transaction, error) {
 // ValidTransactionTrytes checks whether the given trytes make up a valid transaction schematically.
 func ValidTransactionTrytes(trytes Trytes) error {
 	// verifies length and trytes values
-	if !utils.IsTrytesOfExactLength(trytes, TransactionTrinarySize/3) {
+	if !guards.IsTrytesOfExactLength(trytes, TransactionTrinarySize/3) {
 		return ErrInvalidTrytes
 	}
 
@@ -128,18 +128,18 @@ func AsTransactionObjects(rawTrytes []Trytes, hashes Hashes) (Transactions, erro
 // TransactionToTrytes converts the transaction to trytes.
 func TransactionToTrytes(t *Transaction) (Trytes, error) {
 	tr := make(Trits, TransactionTrinarySize)
-	if !utils.IsTrytesOfExactLength(t.SignatureMessageFragment, SignatureMessageFragmentTrinarySize/3) {
+	if !guards.IsTrytesOfExactLength(t.SignatureMessageFragment, SignatureMessageFragmentTrinarySize/3) {
 		return "", errors.Wrap(ErrInvalidTrytes, "invalid signature message fragment")
 	}
 	copy(tr, MustTrytesToTrits(t.SignatureMessageFragment))
 
-	if !utils.IsTrytesOfExactLength(t.Address, AddressTrinarySize/3) {
+	if !guards.IsTrytesOfExactLength(t.Address, AddressTrinarySize/3) {
 		return "", errors.Wrap(ErrInvalidTrytes, "invalid address")
 	}
 	copy(tr[AddressTrinaryOffset:], MustTrytesToTrits(t.Address))
 
 	copy(tr[ValueOffsetTrinary:], IntToTrits(t.Value))
-	if !utils.IsTrytesOfExactLength(t.ObsoleteTag, ObsoleteTagTrinarySize/3) {
+	if !guards.IsTrytesOfExactLength(t.ObsoleteTag, ObsoleteTagTrinarySize/3) {
 		return "", errors.Wrap(ErrInvalidTrytes, "invalid obsolete tag")
 	}
 	copy(tr[ObsoleteTagTrinaryOffset:], MustTrytesToTrits(t.ObsoleteTag))
@@ -151,29 +151,29 @@ func TransactionToTrytes(t *Transaction) (Trytes, error) {
 
 	copy(tr[CurrentIndexTrinaryOffset:], IntToTrits(int64(t.CurrentIndex)))
 	copy(tr[LastIndexTrinaryOffset:], IntToTrits(int64(t.LastIndex)))
-	if !utils.IsTrytesOfExactLength(t.Bundle, BundleTrinarySize/3) {
+	if !guards.IsTrytesOfExactLength(t.Bundle, BundleTrinarySize/3) {
 		return "", errors.Wrap(ErrInvalidTrytes, "invalid bundle hash")
 	}
 	copy(tr[BundleTrinaryOffset:], MustTrytesToTrits(t.Bundle))
 
-	if !utils.IsTrytesOfExactLength(t.TrunkTransaction, TrunkTransactionTrinarySize/3) {
+	if !guards.IsTrytesOfExactLength(t.TrunkTransaction, TrunkTransactionTrinarySize/3) {
 		return "", errors.Wrap(ErrInvalidTrytes, "invalid trunk tx hash")
 	}
 	copy(tr[TrunkTransactionTrinaryOffset:], MustTrytesToTrits(t.TrunkTransaction))
 
-	if !utils.IsTrytesOfExactLength(t.BranchTransaction, BranchTransactionTrinarySize/3) {
+	if !guards.IsTrytesOfExactLength(t.BranchTransaction, BranchTransactionTrinarySize/3) {
 		return "", errors.Wrap(ErrInvalidTrytes, "invalid branch tx hash")
 	}
 	copy(tr[BranchTransactionTrinaryOffset:], MustTrytesToTrits(t.BranchTransaction))
 
-	if !utils.IsTrytesOfExactLength(t.Tag, TagTrinarySize/3) {
+	if !guards.IsTrytesOfExactLength(t.Tag, TagTrinarySize/3) {
 		return "", errors.Wrap(ErrInvalidTrytes, "invalid tag")
 	}
 	copy(tr[TagTrinaryOffset:], MustTrytesToTrits(t.Tag))
 	copy(tr[AttachmentTimestampTrinaryOffset:], IntToTrits(t.AttachmentTimestamp))
 	copy(tr[AttachmentTimestampLowerBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampLowerBound))
 	copy(tr[AttachmentTimestampUpperBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampUpperBound))
-	if !utils.IsTrytesOfExactLength(t.Nonce, NonceTrinarySize/3) {
+	if !guards.IsTrytesOfExactLength(t.Nonce, NonceTrinarySize/3) {
 		return "", errors.Wrap(ErrInvalidTrytes, "invalid nonce")
 	}
 	copy(tr[NonceTrinaryOffset:], MustTrytesToTrits(t.Nonce))

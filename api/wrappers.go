@@ -7,9 +7,8 @@ import (
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/transaction"
-	"github.com/iotaledger/iota.go/transaction_converter"
 	. "github.com/iotaledger/iota.go/trinary"
-	. "github.com/iotaledger/iota.go/utils/validators"
+	. "github.com/iotaledger/iota.go/guards/validators"
 	"math"
 	"sort"
 	"sync"
@@ -763,7 +762,7 @@ func (api *API) TraverseBundle(trunkTxHash Hash, bndl bundle.Bundle) (transactio
 	if err != nil {
 		return nil, err
 	}
-	tx, err := transaction_converter.AsTransactionObject(tailTrytes[0], trunkTxHash)
+	tx, err := transaction.AsTransactionObject(tailTrytes[0], trunkTxHash)
 	if err != nil {
 		return nil, err
 	}

@@ -4,8 +4,8 @@ import (
 	"github.com/iotaledger/iota.go/checksum"
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
-	. "github.com/iotaledger/iota.go/utils"
-	. "github.com/iotaledger/iota.go/utils/validators"
+	. "github.com/iotaledger/iota.go/guards"
+	. "github.com/iotaledger/iota.go/guards/validators"
 	"strconv"
 )
 

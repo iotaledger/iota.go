@@ -4,7 +4,7 @@ import (
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/kerl"
 	. "github.com/iotaledger/iota.go/trinary"
-	"github.com/iotaledger/iota.go/utils"
+	"github.com/iotaledger/iota.go/guards"
 )
 
 // AddChecksum computes the checksum and returns the given trytes with the appended checksum.
@@ -59,8 +59,8 @@ func AddChecksums(inputs []Trytes, isAddress bool, checksumLength uint64) ([]Try
 // RemoveChecksum removes the checksum from the given trytes.
 // The input trytes must be of length HashTrytesSize or AddressWithChecksumTrytesSize.
 func RemoveChecksum(input Trytes) (Trytes, error) {
-	if !utils.IsTrytesOfExactLength(input, HashTrytesSize) &&
-		!utils.IsTrytesOfExactLength(input, AddressWithChecksumTrytesSize) {
+	if !guards.IsTrytesOfExactLength(input, HashTrytesSize) &&
+		!guards.IsTrytesOfExactLength(input, AddressWithChecksumTrytesSize) {
 		return "", ErrInvalidAddress
 	}
 	return input[:HashTrytesSize], nil
