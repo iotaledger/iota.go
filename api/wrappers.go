@@ -430,7 +430,7 @@ func (api *API) IsPromotable(tailTxHash Hash) (bool, error) {
 		return false, err
 	}
 
-	tx, err := transaction.NewTransaction(trytes[0])
+	tx, err := transaction.AsTransactionObject(trytes[0])
 	if err != nil {
 		return false, err
 	}

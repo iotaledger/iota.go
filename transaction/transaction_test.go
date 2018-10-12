@@ -96,15 +96,15 @@ var _ = Describe("Transaction", func() {
 		})
 	})
 
-	Context("NewTransaction()", func() {
+	Context("AsTransactionObject()", func() {
 		It("should should a transaction", func() {
-			tx, err := NewTransaction(MustTritsToTrytes(txTrits))
+			tx, err := AsTransactionObject(MustTritsToTrytes(txTrits))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*tx).To(Equal(*tx))
 		})
 
 		It("should return an error for invalid trytes", func() {
-			_, err := NewTransaction("abcdef")
+			_, err := AsTransactionObject("abcdef")
 			Expect(err).To(HaveOccurred())
 		})
 	})

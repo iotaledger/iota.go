@@ -85,20 +85,44 @@ func ValidTransactionTrytes(trytes Trytes) error {
 	return nil
 }
 
-// NewTransaction makes a new transaction from the given trytes.
-func NewTransaction(trytes Trytes) (*Transaction, error) {
-	var t *Transaction
+// AsTransactionObject makes a new transaction from the given trytes.
+// Optionally the computed transaction hash can be overwritten by supplying an own hash.
+func AsTransactionObject(trytes Trytes, hash ...Hash) (*Transaction, error) {
+	var tx *Transaction
 	var err error
 
 	if err := ValidTransactionTrytes(trytes); err != nil {
 		return nil, err
 	}
 
-	if t, err = ParseTransaction(MustTrytesToTrits(trytes)); err != nil {
+	if tx, err = ParseTransaction(MustTrytesToTrits(trytes)); err != nil {
 		return nil, err
 	}
 
-	return t, nil
+	if hash != nil && len(hash) > 0 {
+		tx.Hash = hash[0]
+	}
+
+	return tx, nil
+}
+
+// AsTransactionObjects constructs new transactions from the given raw trytes.
+func AsTransactionObjects(rawTrytes []Trytes, hashes Hashes) (Transactions, error) {
+	txs := make(Transactions, len(rawTrytes))
+	var tx *Transaction
+	var err error
+	for i := range rawTrytes {
+		if hashes != nil && len(hashes) > 0 {
+			tx, err = AsTransactionObject(rawTrytes[i], hashes[i])
+		} else {
+			tx, err = AsTransactionObject(rawTrytes[i])
+		}
+		if err != nil {
+			return nil, err
+		}
+		txs[i] = *tx
+	}
+	return txs, nil
 }
 
 // TransactionToTrytes converts the transaction to trytes.
@@ -209,22 +233,6 @@ func MustFinalTransactionTrytes(txs Transactions) []Trytes {
 		trytes[i], trytes[j] = trytes[j], trytes[i]
 	}
 	return trytes
-}
-
-// AsTransactionObjects constructs new transactions from the given raw trytes.
-func AsTransactionObjects(rawTrytes []Trytes, hashes Hashes) (Transactions, error) {
-	txs := Transactions{}
-	for i := range rawTrytes {
-		tx, err := NewTransaction(rawTrytes[i])
-		if err != nil {
-			return nil, err
-		}
-		if hashes != nil && len(hashes) > 0 {
-			tx.Hash = hashes[i]
-		}
-		txs = append(txs, *tx)
-	}
-	return txs, nil
 }
 
 // TransactionHash makes a transaction hash from the given transaction.
