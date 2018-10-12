@@ -3,13 +3,22 @@ package validators
 import (
 	"github.com/iotaledger/iota.go/bundle"
 	. "github.com/iotaledger/iota.go/consts"
-	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/iotaledger/iota.go/guards"
+	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
 	"net/url"
 )
 
 type Validatable = func() error
+
+func Validate(validators ...Validatable) error {
+	for i := range validators {
+		if err := validators[i](); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func ValidateTransactionHashes(hashes ...Hash) Validatable {
 	return func() error {
@@ -65,6 +74,7 @@ func ValidateTags(tags ...Trytes) Validatable {
 		return nil
 	}
 }
+
 func ValidateURIs(uris ...string) Validatable {
 	return func() error {
 		for i := range uris {
@@ -102,7 +112,7 @@ func ValidateStartEndOptions(start uint64, end *uint64) Validatable {
 			return nil
 		}
 		e := *end
-		if start > e || e < start+MaxIndexDiff {
+		if start > e || e > start+MaxIndexDiff {
 			return ErrInvalidStartEndOptions
 		}
 		return nil
@@ -122,13 +132,4 @@ func ValidateTransfers(transfers ...bundle.Transfer) Validatable {
 		}
 		return nil
 	}
-}
-
-func Validate(validators ...Validatable) error {
-	for i := range validators {
-		if err := validators[i](); err != nil {
-			return err
-		}
-	}
-	return nil
 }
