@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/pow"
 	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
@@ -24,11 +23,13 @@ type Settings interface {
 	PowFunc() pow.PowFunc
 }
 
-func ComposeAPI(settings Settings, createProvider *CreateProviderFunc) (*API, error) {
+// ComposeAPI composes a new API from the given settings and provider.
+// If no provider function is supplied, then the default http provider is used.
+func ComposeAPI(settings Settings, createProvider CreateProviderFunc) (*API, error) {
 	var provider Provider
 	var err error
 	if createProvider != nil {
-		provider, err = (*createProvider)(settings)
+		provider, err = createProvider(settings)
 	} else {
 		provider, err = NewHttpClient(settings)
 	}
@@ -39,7 +40,7 @@ func ComposeAPI(settings Settings, createProvider *CreateProviderFunc) (*API, er
 	var attachToTangle AttachToTangleFunc
 	if settings.PowFunc() != nil {
 		attachToTangle = func(trunkTxHash Hash, branchTxHash Hash, mwm uint64, trytes []Trytes) ([]Trytes, error) {
-			return bundle.DoPoW(trunkTxHash, branchTxHash, trytes, mwm, settings.PowFunc())
+			return pow.DoPoW(trunkTxHash, branchTxHash, trytes, mwm, settings.PowFunc())
 		}
 	} else {
 		attachToTangle = nil

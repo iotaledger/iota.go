@@ -390,6 +390,9 @@ func MustTrytesToTrits(trytes Trytes) Trits {
 
 // Pad pads the given trytes with 9s up to the given size.
 func Pad(trytes Trytes, size int) Trytes {
+	if len(trytes) >= size {
+		return trytes
+	}
 	out := make([]byte, size)
 	copy(out, []byte(trytes))
 

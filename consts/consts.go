@@ -29,6 +29,7 @@ const (
 	HashBytesSize   = 48
 	IntLength       = HashBytesSize / 4
 	KeyFragmentLength = 6561
+	SignatureMessageFragmentSizeInTrytes = SignatureMessageFragmentTrinarySize / 3
 )
 
 const (

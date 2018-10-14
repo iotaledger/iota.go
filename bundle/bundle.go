@@ -1,12 +1,14 @@
 package bundle
 
 import (
+	"github.com/iotaledger/iota.go/checksum"
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/kerl"
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
+	"math"
 	"time"
 )
 
@@ -35,6 +37,54 @@ type BundleEntry struct {
 	Tag                       Trytes
 	Timestamp                 uint64
 	SignatureMessageFragments []Trytes
+}
+
+type BundleEntries = []BundleEntry
+
+type Transfers []Transfer
+
+// Transfer represents the data/value to transfer to an address.
+type Transfer struct {
+	Address Hash
+	Value   uint64
+	Message Trytes
+	Tag     Trytes
+}
+
+// TransfersToBundleEntries translates transfers to bundle entries.
+func TransfersToBundleEntries(timestamp uint64, transfers ...Transfer) (BundleEntries, error) {
+	entries := BundleEntries{}
+	for i := range transfers {
+		transfer := &transfers[i]
+		msgLength := len(transfer.Message)
+		length := int(math.Ceil(float64(msgLength) / SignatureMessageFragmentSizeInTrytes))
+		if length == 0 {
+			length = 1
+		}
+		addr, err := checksum.RemoveChecksum(transfer.Address)
+		if err != nil {
+			return nil, err
+		}
+
+		transfer.Message = Pad(transfer.Message, length*SignatureMessageFragmentSizeInTrytes)
+
+		bndlEntry := BundleEntry{
+			Address: addr, Value: int64(transfer.Value),
+			Tag: transfer.Tag, Timestamp: timestamp,
+			Length: uint64(length),
+			SignatureMessageFragments: func() []Trytes {
+				splitFrags := make([]Trytes, int(length))
+				for i := 0; i < int(length); i++ {
+					splitFrags[i] = transfer.Message[i*SignatureMessageFragmentSizeInTrytes : (i+1)*SignatureMessageFragmentSizeInTrytes]
+				}
+				return splitFrags
+			}(),
+		}
+
+		entries = append(entries, bndlEntry)
+	}
+
+	return entries, nil
 }
 
 func getBundleEntryWithDefaults(entry BundleEntry) BundleEntry {
@@ -175,24 +225,39 @@ func AddTrytes(bndl Bundle, fragments []Trytes, offset int) Bundle {
 	return bndl
 }
 
-// Categorize categorizes a list of transfers into sent and received. It is important to
-// note that zero value transfers (which for example, are being used for storing
-// addresses in the Tangle), are seen as received in this function.
-func Categorize(bundle Bundle, address Hash) (send Bundle, received Bundle) {
-	send = make(Bundle, 0, len(bundle))
-	received = make(Bundle, 0, len(bundle))
+// ValidateBundleSignatures validates all signatures of the given bundle.
+func ValidateBundleSignatures(bundle Bundle) (bool, error) {
+	for i := range bundle {
+		tx := &bundle[i]
 
-	for _, b := range bundle {
-		switch {
-		case b.Address != address:
+		// check whether input transaction
+		if tx.Value >= 0 {
 			continue
-		case b.Value >= 0:
-			received = append(received, b)
-		default:
-			send = append(send, b)
+		}
+
+		// it is unknown how many fragments there will be
+		fragments := []Trytes{tx.SignatureMessageFragment}
+
+		// find the subsequent txs containing the remaining signature
+		// message fragments for this input transaction
+		for j := i; j < len(bundle)-1; j++ {
+			otherTx := &bundle[j+1]
+			if otherTx.Value != 0 || otherTx.Address != tx.Address {
+				continue
+			}
+
+			fragments = append(fragments, otherTx.SignatureMessageFragment)
+		}
+
+		valid, err := signing.ValidateSignatures(tx.Address, fragments, tx.Bundle)
+		if err != nil {
+			return false, err
+		}
+		if !valid {
+			return false, nil
 		}
 	}
-	return
+	return true, nil
 }
 
 // ValidBundle checks if a bundle is syntactically valid.
@@ -268,39 +333,6 @@ func ValidBundle(bundle Bundle) error {
 	return nil
 }
 
-// ValidateBundleSignatures validates all signatures of the given bundle.
-func ValidateBundleSignatures(bundle Bundle) (bool, error) {
-	for i := range bundle {
-		tx := &bundle[i]
-		if tx.Value <= 0 {
-			continue
-		}
-
-		fragments := []Trytes{}
-
-		// find the subsequent txs containing the remaining signature
-		// message fragments for this input transaction
-		for j := i; j < len(bundle)-1; j++ {
-			otherTx := &bundle[j+1]
-
-			if otherTx.Value != 0 || otherTx.Address != tx.Address {
-				continue
-			}
-
-			fragments = append(fragments, otherTx.SignatureMessageFragment)
-		}
-
-		valid, err := signing.ValidateSignatures(tx.Address, fragments, tx.Bundle)
-		if err != nil {
-			return false, err
-		}
-		if !valid {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
 // GroupTransactionsIntoBundles groups the given transactions into groups of bundles.
 // Note that the same bundle can exist in the return slice multiple times, though they
 // are reattachments of the same transfer.
@@ -342,5 +374,18 @@ func GroupTransactionsIntoBundles(txs transaction.Transactions) Bundles {
 
 // TailTransactionHash returns the tail transaction's hash.
 func TailTransactionHash(bndl Bundle) Hash {
-	return transaction.TransactionHash(&bndl[0])
+	if bndl == nil || len(bndl) == 0 {
+		return ""
+	}
+	for i := range bndl {
+		tx := &bndl[i]
+		if tx.CurrentIndex != 0 {
+			continue
+		}
+		if len(tx.Hash) > 0 {
+			return tx.Hash
+		}
+		return transaction.TransactionHash(tx)
+	}
+	return ""
 }

@@ -475,32 +475,12 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 	// TODO: add HMAC placeholder txs
 
 	// add transfers
-	for i := range props.Transfers {
-		transfer := &props.Transfers[i]
-		msgLength := len(transfer.Message)
-		length := math.Ceil(float64(msgLength)) / bundle.SignatureMessageFragmentSizeInTrytes
-		if length == 0 {
-			length = 1
-		}
-		addr, err := checksum.RemoveChecksum(transfer.Address)
-		if err != nil {
-			return nil, err
-		}
-
-		bndlEntry := bundle.BundleEntry{
-			Address: addr, Value: int64(transfer.Value),
-			Tag: transfer.Tag, Timestamp: props.Timestamp,
-			Length: uint64(length),
-			SignatureMessageFragments: func() []Trytes {
-				splitFrags := make([]Trytes, int(length))
-				for i := 0; i < int(length); i++ {
-					splitFrags[i] = transfer.Message[i*bundle.SignatureMessageFragmentSizeInTrytes : (i+1)*bundle.SignatureMessageFragmentSizeInTrytes]
-				}
-				return splitFrags
-			}(),
-		}
-
-		props.Transactions = bundle.AddEntry(props.Transactions, bndlEntry)
+	outEntries, err := bundle.TransfersToBundleEntries(props.Timestamp, props.Transfers...)
+	if err != nil {
+		return nil, err
+	}
+	for i := range outEntries {
+		props.Transactions = bundle.AddEntry(props.Transactions, outEntries[i])
 	}
 
 	// gather inputs if we have api value transfer but no inputs were specified.
