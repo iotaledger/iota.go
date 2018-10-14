@@ -56,7 +56,7 @@ func (c *Curl) Absorb(inn Trytes) {
 	var in Trits
 	if len(inn) == 0 {
 		in = Trits{0}
-	}else{
+	} else {
 		in = MustTrytesToTrits(inn)
 	}
 	var lenn int

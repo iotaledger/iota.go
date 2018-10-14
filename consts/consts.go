@@ -24,11 +24,11 @@ const (
 )
 
 const (
-	HashTrinarySize = 243
-	HashTrytesSize  = HashTrinarySize / 3
-	HashBytesSize   = 48
-	IntLength       = HashBytesSize / 4
-	KeyFragmentLength = 6561
+	HashTrinarySize                      = 243
+	HashTrytesSize                       = HashTrinarySize / 3
+	HashBytesSize                        = 48
+	IntLength                            = HashBytesSize / 4
+	KeyFragmentLength                    = 6561
 	SignatureMessageFragmentSizeInTrytes = SignatureMessageFragmentTrinarySize / 3
 )
 

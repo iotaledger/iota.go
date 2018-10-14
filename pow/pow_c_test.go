@@ -5,10 +5,10 @@
 package pow_test
 
 import (
+	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/pow"
-	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

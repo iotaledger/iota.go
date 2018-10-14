@@ -1,8 +1,8 @@
 package guards_test
 
 import (
-	. "github.com/iotaledger/iota.go/guards"
 	. "github.com/iotaledger/iota.go/consts"
+	. "github.com/iotaledger/iota.go/guards"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"strings"
@@ -145,7 +145,7 @@ var _ = Describe("Guards", func() {
 		})
 
 		It("should return false for non attached trytes", func() {
-			trytesCopy := attachedTrytes[(TransactionTrinarySize / 3) - 3*HashTrytesSize:] + strings.Repeat("9", 243)
+			trytesCopy := attachedTrytes[(TransactionTrinarySize/3)-3*HashTrytesSize:] + strings.Repeat("9", 243)
 			Expect(IsAttachedTrytes(trytesCopy)).To(BeFalse())
 		})
 

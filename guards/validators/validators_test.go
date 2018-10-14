@@ -114,7 +114,7 @@ var _ = Describe("Validators", func() {
 
 	Context("ValidateSecurityLevel()", func() {
 		It("shouldn't return an error for valid security level", func() {
-			Expect(ValidateSecurityLevel(SecurityLevelMedium, )()).ToNot(HaveOccurred())
+			Expect(ValidateSecurityLevel(SecurityLevelMedium)()).ToNot(HaveOccurred())
 		})
 
 		It("should return an error for invalid security level", func() {

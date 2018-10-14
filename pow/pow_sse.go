@@ -247,8 +247,8 @@ long long int pwork128(char mid[], int mwm, char nonce[],int n)
 */
 import "C"
 import (
-	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
 	"math"
 	"unsafe"

@@ -99,5 +99,5 @@ func IsTransactionTrytesWithMWM(trytes Trytes, mwm uint) (bool, error) {
 
 // Checks if input is valid attached transaction trytes. For attached transactions last 243 trytes are non-zero.
 func IsAttachedTrytes(trytes Trytes) bool {
-	return IsTrytesOfExactLength(trytes, TransactionTrinarySize/3) && !IsEmptyTrytes(trytes[(TransactionTrinarySize / 3) - 3*HashTrytesSize:])
+	return IsTrytesOfExactLength(trytes, TransactionTrinarySize/3) && !IsEmptyTrytes(trytes[(TransactionTrinarySize/3)-3*HashTrytesSize:])
 }

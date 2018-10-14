@@ -36,12 +36,12 @@ var _ = Describe("Checksum", func() {
 		)
 
 		It("return an error for invalid address trytes", func() {
-			_, err :=AddChecksum("", true, AddressChecksumTrytesSize)
+			_, err := AddChecksum("", true, AddressChecksumTrytesSize)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("return an error for invalid checksum lengths", func() {
-			_, err :=AddChecksum("", false, 2)
+			_, err := AddChecksum("", false, 2)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -56,7 +56,7 @@ var _ = Describe("Checksum", func() {
 
 	Context("RemoveChecksum()", func() {
 		DescribeTable("removes the checksum given an address",
-			func(addrs Hash, ) {
+			func(addrs Hash) {
 				addrWithoutChecksum, err := RemoveChecksum(addrs)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(addrWithoutChecksum).To(Equal(addrs[:HashTrytesSize]))

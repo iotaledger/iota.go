@@ -269,7 +269,7 @@ var _ = Describe("Bundle", func() {
 	Context("GroupTransactionsIntoBundles()", func() {
 		It("returns multiple bundles with the correct transactions", func() {
 			txs := transaction.Transactions{
-				{Bundle: "1", CurrentIndex: 0, LastIndex: 1,},
+				{Bundle: "1", CurrentIndex: 0, LastIndex: 1},
 				{Bundle: "1", CurrentIndex: 1, LastIndex: 1},
 				{Bundle: "2", CurrentIndex: 0, LastIndex: 1},
 				{Bundle: "2", CurrentIndex: 1, LastIndex: 1},

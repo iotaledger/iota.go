@@ -8,8 +8,7 @@ var (
 )
 
 var (
-	ErrInconsistentSubtangle               = errors.New("inconsistent subtangle")
-
+	ErrInconsistentSubtangle = errors.New("inconsistent subtangle")
 )
 
 // invalid inputs

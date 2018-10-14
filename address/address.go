@@ -40,7 +40,6 @@ func ValidChecksum(address Hash, checksum Trytes) error {
 	return nil
 }
 
-
 // GenerateAddress generates an address deterministically, according to the given seed, index and security level.
 func GenerateAddress(seed Trytes, index uint64, secLvl SecurityLevel, addChecksum ...bool) (Hash, error) {
 	for len(seed)%81 != 0 {

@@ -46,7 +46,7 @@ var _ = Describe("Kerl", func() {
 		})
 
 		It("should return an error with invalid trits slice length", func() {
-			Expect(k.Absorb(Trits{1,0,0,0,0,-1})).To(HaveOccurred())
+			Expect(k.Absorb(Trits{1, 0, 0, 0, 0, -1})).To(HaveOccurred())
 		})
 	})
 
