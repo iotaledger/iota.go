@@ -13,16 +13,21 @@ import (
 // Assumes addNeighbors command is available on the node.
 // AddNeighbors has only a temporary effect until the node relaunches.
 func (api *API) AddNeighbors(uris ...string) (int64, error) {
-	cmd := &AddNeighborsCommand{URIs: uris, Command: AddNeighborsCmd}
+	if err := Validate(ValidateURIs(uris...), ValidateNonEmptyStrings(ErrInvalidURI, uris...)); err != nil {
+		return 0, err
+	}
+	cmd := &AddNeighborsCommand{Command: AddNeighborsCmd, URIs: uris}
 	rsp := &AddNeighborsResponse{}
-	err := api.provider.Send(cmd, rsp)
-	return rsp.AddedNeighbors, err
+	if err := api.provider.Send(cmd, rsp); err != nil {
+		return 0, err
+	}
+	return rsp.AddedNeighbors, nil
 }
 
 // AttachToTangle performs the Proof-of-Work required to attach a transaction to the Tangle by
 // calling the attachToTangle IRI API command. Returns a list of transaction trytes and overwrites the following fields:
 //
-// Hash, Nonce, AttachmentTimestamp, AttachmentTimsetampLowerBound, AttachmentTimestampUpperBound
+// Hash, Nonce, AttachmentTimestamp, AttachmentTimestampLowerBound, AttachmentTimestampUpperBound
 //
 // If a Proof-of-Work function is supplied when composing the API, then that function is used
 // instead of using the connected node.
@@ -48,8 +53,7 @@ func (api *API) AttachToTangle(trunkTxHash Hash, branchTxHash Hash, mwm uint64, 
 		Command: AttachToTangleCmd, Trytes: trytes, MinWeightMagnitude: mwm,
 	}
 	rsp := &AttachToTangleResponse{}
-	err := api.provider.Send(cmd, rsp)
-	if err != nil {
+	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
 	}
 	return rsp.Trytes, nil
@@ -68,11 +72,10 @@ func (api *API) BroadcastTransactions(trytes ...Trytes) ([]Trytes, error) {
 		return nil, err
 	}
 	cmd := &BroadcastTransactionsCommand{Trytes: trytes, Command: BroadcastTransactionsCmd}
-	err := api.provider.Send(cmd, nil)
-	if err != nil {
+	if err := api.provider.Send(cmd, nil); err != nil {
 		return nil, err
 	}
-	return trytes, err
+	return trytes, nil
 }
 
 // CheckConsistency checks if a transaction is consistent or a set of transactions are co-consistent by calling
@@ -84,17 +87,19 @@ func (api *API) BroadcastTransactions(trytes ...Trytes) ([]Trytes, error) {
 // As long as a transaction is consistent, it might be accepted by the network.
 // In case a transaction is inconsistent, it will not be accepted and a reattachment
 // is required by calling ReplayBundle.
-func (api *API) CheckConsistency(hashes ...Hash) (bool, error) {
-	if err := Validate(ValidateTransactionHashes(hashes...)); err != nil {
-		return false, err
+func (api *API) CheckConsistency(hashes ...Hash) (bool, string, error) {
+	if err := Validate(
+		ValidateTransactionHashes(hashes...),
+		ValidateNonEmptyStrings(ErrInvalidTransactionHash, hashes...),
+	); err != nil {
+		return false, "", err
 	}
 	cmd := &CheckConsistencyCommand{Tails: hashes, Command: CheckConsistencyCmd}
 	rsp := &CheckConsistencyResponse{}
-	err := api.provider.Send(cmd, rsp)
-	if err != nil {
-		return false, err
+	if err := api.provider.Send(cmd, rsp); err != nil {
+		return false, "", err
 	}
-	return rsp.State, nil
+	return rsp.State, rsp.Info, nil
 }
 
 func validateFindTransactions(query *FindTransactionsQuery) error {
@@ -114,11 +119,13 @@ func (api *API) FindTransactions(query FindTransactionsQuery) (Hashes, error) {
 		return nil, err
 	}
 
-	cleanedAddrs, err := checksum.RemoveChecksums(query.Addresses)
-	if err != nil {
-		return nil, err
+	if len(query.Addresses) > 0 {
+		cleanedAddrs, err := checksum.RemoveChecksums(query.Addresses)
+		if err != nil {
+			return nil, err
+		}
+		query.Addresses = cleanedAddrs
 	}
-	query.Addresses = cleanedAddrs
 
 	cmd := &FindTransactionsCommand{FindTransactionsQuery: query, Command: FindTransactionsCmd}
 	rsp := &FindTransactionsResponse{}
@@ -139,10 +146,14 @@ func (api *API) GetBalances(addresses Hashes, threshold uint64) (*Balances, erro
 		return nil, ErrInvalidThreshold
 	}
 
-	cmd := &GetBalancesCommand{Addresses: addresses, Threshold: threshold, Command: GetBalancesCmd}
-	rsp := &GetBalancesResponse{}
-	err := api.provider.Send(cmd, rsp)
+	cleanedAddrs, err := checksum.RemoveChecksums(addresses)
 	if err != nil {
+		return nil, err
+	}
+
+	cmd := &GetBalancesCommand{Addresses: cleanedAddrs, Threshold: threshold, Command: GetBalancesCmd}
+	rsp := &GetBalancesResponse{}
+	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
 	}
 	balances := &Balances{
@@ -160,17 +171,19 @@ func (api *API) GetBalances(addresses Hashes, threshold uint64) (*Balances, erro
 }
 
 // GetInclusionStates fetches inclusion states of a given list of transactions by calling the getInclusionStates IRI API command.
-func (api *API) GetInclusionStates(txHash Hashes, tips ...Hash) ([]bool, error) {
+func (api *API) GetInclusionStates(txHashes Hashes, tips ...Hash) ([]bool, error) {
 	if err := Validate(
-		ValidateTransactionHashes(txHash...),
-		ValidateTransactionHashes(tips...)); err != nil {
+		ValidateTransactionHashes(txHashes...),
+		ValidateNonEmptyStrings(ErrInvalidTransactionHash, txHashes...),
+		ValidateTransactionHashes(tips...),
+		ValidateNonEmptyStrings(ErrInvalidTransactionHash, tips...),
+	); err != nil {
 		return nil, err
 	}
 
-	cmd := &GetInclusionStateCommand{Transactions: txHash, Tips: tips, Command: GetInclusionStatesCmd}
+	cmd := &GetInclusionStatesCommand{Transactions: txHashes, Tips: tips, Command: GetInclusionStatesCmd}
 	rsp := &GetInclusionStatesResponse{}
-	err := api.provider.Send(cmd, rsp)
-	if err != nil {
+	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
 	}
 	return rsp.States, nil
@@ -191,8 +204,7 @@ func (api *API) GetNeighbors() (Neighbors, error) {
 func (api *API) GetNodeInfo() (*GetNodeInfoResponse, error) {
 	cmd := &GetNodeInfoCommand{Command: GetNodeInfoCmd}
 	rsp := &GetNodeInfoResponse{}
-	err := api.provider.Send(cmd, rsp)
-	if err != nil {
+	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
 	}
 	return rsp, nil
@@ -202,8 +214,7 @@ func (api *API) GetNodeInfo() (*GetNodeInfoResponse, error) {
 func (api *API) GetTips() (Hashes, error) {
 	cmd := &GetTipsCommand{Command: GetTipsCmd}
 	rsp := &GetTipsResponse{}
-	err := api.provider.Send(cmd, rsp)
-	if err != nil {
+	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
 	}
 	return rsp.Hashes, nil
@@ -223,14 +234,13 @@ func (api *API) GetTips() (Hashes, error) {
 func (api *API) GetTransactionsToApprove(depth uint64, reference ...Hash) (*TransactionsToApprove, error) {
 	cmd := &GetTransactionsToApproveCommand{Command: GetTransactionsToApproveCmd, Depth: depth}
 	if len(reference) > 0 {
-		if !IsTransactionHash(reference[0]) {
+		if err := Validate(ValidateTransactionHashes(reference...)); err != nil {
 			return nil, ErrInvalidReferenceHash
 		}
 		cmd.Reference = reference[0]
 	}
 	rsp := &GetTransactionsToApproveResponse{}
-	err := api.provider.Send(cmd, rsp)
-	if err != nil {
+	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
 	}
 	return &rsp.TransactionsToApprove, nil
@@ -239,13 +249,15 @@ func (api *API) GetTransactionsToApprove(depth uint64, reference ...Hash) (*Tran
 // GetTrytes fetches the transaction trytes given a list of transaction hashes by calling
 // the getTrytes IRI API command.
 func (api *API) GetTrytes(hashes ...Hash) ([]Trytes, error) {
-	if err := Validate(ValidateTransactionHashes(hashes...)); err != nil {
+	if err := Validate(
+		ValidateNonEmptyStrings(ErrInvalidTransactionHash, hashes...),
+		ValidateTransactionHashes(hashes...),
+	); err != nil {
 		return nil, err
 	}
 	cmd := &GetTrytesCommand{Hashes: hashes, Command: GetTrytesCmd}
 	rsp := &GetTrytesResponse{}
-	err := api.provider.Send(cmd, rsp)
-	if err != nil {
+	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
 	}
 	return rsp.Trytes, nil
@@ -263,13 +275,15 @@ func (api *API) InterruptAttachToTangle() error {
 //
 // This method has a temporary effect until the IRI node relaunches.
 func (api *API) RemoveNeighbors(uris ...string) (int64, error) {
-	if err := Validate(ValidateURIs(uris...)); err != nil {
+	if err := Validate(
+		ValidateNonEmptyStrings(ErrInvalidURI, uris...),
+		ValidateURIs(uris...),
+	); err != nil {
 		return 0, err
 	}
-	cmd := &RemoveNeighborsCommand{Command: RemoveNeighborsCmd}
+	cmd := &RemoveNeighborsCommand{Command: RemoveNeighborsCmd, URIs: uris}
 	rsp := &RemoveNeighborsResponse{}
-	err := api.provider.Send(cmd, rsp)
-	if err != nil {
+	if err := api.provider.Send(cmd, rsp); err != nil {
 		return 0, err
 	}
 	return rsp.RemovedNeighbors, nil
@@ -284,12 +298,14 @@ func (api *API) RemoveNeighbors(uris ...string) (int64, error) {
 //
 // Any transactions stored with this command will eventually be erased as a result of a snapshot.
 func (api *API) StoreTransactions(trytes ...Trytes) ([]Trytes, error) {
-	if err := Validate(ValidateAttachedTransactionTrytes(trytes...)); err != nil {
+	if err := Validate(
+		ValidateNonEmptyStrings(ErrInvalidTrytes, trytes...),
+		ValidateAttachedTransactionTrytes(trytes...),
+	); err != nil {
 		return nil, err
 	}
 	cmd := &StoreTransactionsCommand{Trytes: trytes, Command: StoreTransactionsCmd}
-	err := api.provider.Send(cmd, nil)
-	if err != nil {
+	if err := api.provider.Send(cmd, nil); err != nil {
 		return nil, err
 	}
 	return trytes, nil
@@ -298,13 +314,21 @@ func (api *API) StoreTransactions(trytes ...Trytes) ([]Trytes, error) {
 // WereAddressesSpentFrom checks whether the given addresses were already spent from by
 // calling the wereAddressesSpentFrom IRI API command.
 func (api *API) WereAddressesSpentFrom(addresses ...Hash) ([]bool, error) {
-	if err := Validate(ValidateHashes(addresses...)); err != nil {
+	if err := Validate(
+		ValidateNonEmptyStrings(ErrInvalidHash, addresses...),
+		ValidateHashes(addresses...),
+	); err != nil {
 		return nil, err
 	}
-	cmd := &WereAddressesSpentFromCommand{Addresses: addresses, Command: WereAddressesSpentFromCmd}
-	rsp := &WereAddressesSpentFromResponse{}
-	err := api.provider.Send(cmd, rsp)
+
+	cleanedAddrs, err := checksum.RemoveChecksums(addresses)
 	if err != nil {
+		return nil, err
+	}
+
+	cmd := &WereAddressesSpentFromCommand{Addresses: cleanedAddrs, Command: WereAddressesSpentFromCmd}
+	rsp := &WereAddressesSpentFromResponse{}
+	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
 	}
 	return rsp.States, nil

@@ -8,15 +8,15 @@ import (
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
+
+const DefaultLocalIRIURI = "http://localhost:14265"
 
 func NewHttpClient(settings interface{}) (*httpclient, error) {
 	httpClient := &httpclient{}
 	if err := httpClient.SetSettings(settings); err != nil {
 		return nil, err
-	}
-	if httpClient.client == nil {
-		httpClient.client = http.DefaultClient
 	}
 	return httpClient, nil
 }
@@ -45,9 +45,18 @@ func (hc *httpclient) SetSettings(settings interface{}) error {
 	if !ok {
 		return errors.Wrapf(ErrInvalidSettingsType, "expected %T", HttpClientSettings{})
 	}
-	hc.endpoint = httpSettings.URI
+	if len(httpSettings.URI) == 0 {
+		hc.endpoint = DefaultLocalIRIURI
+	} else {
+		if _, err := url.Parse(httpSettings.URI); err != nil {
+			return errors.Wrap(ErrInvalidURI, httpSettings.URI)
+		}
+		hc.endpoint = httpSettings.URI
+	}
 	if httpSettings.Client != nil {
 		hc.client = httpSettings.Client
+	}else{
+		hc.client = http.DefaultClient
 	}
 	return nil
 }

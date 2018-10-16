@@ -20,6 +20,15 @@ func Validate(validators ...Validatable) error {
 	return nil
 }
 
+func ValidateNonEmptyStrings(err error, slice ...string) Validatable {
+	return func() error {
+		if slice == nil || len(slice) == 0 {
+			return err
+		}
+		return nil
+	}
+}
+
 func ValidateTransactionHashes(hashes ...Hash) Validatable {
 	return func() error {
 		for i := range hashes {
@@ -78,7 +87,15 @@ func ValidateTags(tags ...Trytes) Validatable {
 func ValidateURIs(uris ...string) Validatable {
 	return func() error {
 		for i := range uris {
-			if _, err := url.Parse(uris[i]); err != nil {
+			uri := uris[i]
+			if len(uri) < 7 {
+				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
+			}
+			schema := uri[:6]
+			if schema != "tcp://" && schema != "udp://" {
+				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
+			}
+			if _, err := url.Parse(uri[6:]); err != nil {
 				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
 			}
 		}

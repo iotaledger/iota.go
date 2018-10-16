@@ -10,6 +10,17 @@ import (
 
 var _ = Describe("Validators", func() {
 
+	Context("ValidateNonEmptyStringSlice()", func() {
+		It("shouldn't return an error for valid strings", func() {
+			Expect(ValidateNonEmptyStrings(ErrInvalidTrytes, []string{"123", "321"}...)()).
+				ToNot(HaveOccurred())
+		})
+		It("should return the specified error for invalid slice", func() {
+			Expect(ValidateNonEmptyStrings(ErrInvalidTrytes, []string{}...)()).
+				To(HaveOccurred())
+		})
+	})
+
 	Context("ValidateTransactionHashes()", func() {
 		It("shouldn't return an error for valid hashes", func() {
 			Expect(ValidateTransactionHashes("I9GLMICBJTETFVYUFIJRXTSANYQC9PZCCYREMLDYNJLYTR9LUEK9CAHKQZGLBGZRMVXBLP99EUHMZ9999")()).

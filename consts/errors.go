@@ -5,6 +5,8 @@ import "github.com/pkg/errors"
 var (
 	ErrNonOKStatusCodeFromAPIRequest = errors.New("received non ok status from backend")
 	ErrUnknownErrorFromAPIRequest    = errors.New("received unknown error from backend")
+	ErrInvalidSettingsType = errors.New("incompatible settings type supplied")
+	ErrSettingsNil = errors.New("settings must not be nil")
 )
 
 var (
@@ -60,6 +62,5 @@ var (
 	ErrSendingBackToInputs          = errors.New("one of the transaction inputs is used as output")
 	ErrInvalidTransactionsToApprove = errors.New("invalid transactions to approve")
 	ErrNoInputs                     = errors.New("could not find any available inputs")
-	ErrinvalidChecksum              = errors.New("invalid Checksum")
 	ErrInconsistentTransaction      = errors.New("transaction is inconsistent")
 )

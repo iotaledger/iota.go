@@ -84,7 +84,7 @@ type GetBalancesResponse struct {
 	MilestoneIndex int64    `json:"milestoneIndex"`
 }
 
-type GetInclusionStateCommand struct {
+type GetInclusionStatesCommand struct {
 	Command      IRICommand `json:"command"`
 	Transactions Hashes     `json:"transactions"`
 	Tips         Hashes     `json:"tips"`

@@ -424,7 +424,7 @@ func (api *API) IsPromotable(tailTxHash Hash) (bool, error) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		isConsistent, err1 = api.CheckConsistency(tailTxHash)
+		isConsistent, _, err1 = api.CheckConsistency(tailTxHash)
 	}()
 
 	go func() {
@@ -680,7 +680,7 @@ func (api *API) PromoteTransaction(tailTxHash Hash, depth uint64, mwm uint64, sp
 	}
 	options = getPromoteTransactionsDefaultOptions(options)
 
-	consistent, err := api.CheckConsistency(tailTxHash)
+	consistent, _, err := api.CheckConsistency(tailTxHash)
 	if err != nil {
 		return nil, err
 	}
