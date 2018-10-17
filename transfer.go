@@ -115,12 +115,12 @@ func addOutputs(trs []Transfer) (Bundle, []Trytes, int64) {
 			nsigs += n
 
 			// While there is still a message, copy it
-			for k := 0; k < n; k++ {
+			for k := 0; k <= n; k++ {
 				var fragment Trytes
 				switch {
-				case k == n-1:
+				case k == n: //Last chunk. Add remainder
 					fragment = tr.Message[k*sigSize:]
-				default:
+				default: //Copy the relative tryte block
 					fragment = tr.Message[k*sigSize : (k+1)*sigSize]
 				}
 
