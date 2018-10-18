@@ -8,31 +8,30 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	"strings"
 )
 
-var _ = Describe("GetTrytes()", func() {
-
-	api, err := ComposeAPI(HttpClientSettings{}, nil)
+var _ = Describe("GetBundlesFromAddresses()", func() {
+	api, err := ComposeAPI(HttpClientSettings{})
 	if err != nil {
 		panic(err)
 	}
 
 	Context("call", func() {
 		It("resolves to correct response", func() {
-			trytes, err := api.GetTrytes(DefaultHashes()...)
+			addresses := make(Hashes, len(SampleAddresses))
+			copy(addresses, SampleAddresses)
+			bndls, err := api.GetBundlesFromAddresses(addresses, true)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(trytes).To(Equal([]Trytes{
-				strings.Repeat("9", TransactionTrinarySize/3),
-				strings.Repeat("9", TransactionTrinarySize/3),
-			}))
+			Expect(len(bndls)).To(Equal(2))
+			Expect(bndls).To(Equal(Transfers))
 		})
+
 	})
 
 	Context("invalid input", func() {
-		It("returns an error for invalid transaction hashes", func() {
-			_, err := api.GetTrytes("")
-			Expect(errors.Cause(err)).To(Equal(ErrInvalidTransactionHash))
+		It("returns an error for invalid trytes", func() {
+			_, err := api.SendTrytes([]Trytes{"asdf"}, 3, 14)
+			Expect(errors.Cause(err)).To(Equal(ErrInvalidTransactionTrytes))
 		})
 	})
 

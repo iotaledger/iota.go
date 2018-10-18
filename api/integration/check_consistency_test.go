@@ -2,12 +2,12 @@ package integration_test
 
 import (
 	. "github.com/iotaledger/iota.go/api"
+	. "github.com/iotaledger/iota.go/api/integration/samples"
 	"github.com/iotaledger/iota.go/consts"
-	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	"gopkg.in/h2non/gock.v1"
+	"strings"
 )
 
 var _ = Describe("CheckConsistency()", func() {
@@ -21,19 +21,16 @@ var _ = Describe("CheckConsistency()", func() {
 
 	Context("call", func() {
 		It("resolves to correct response", func() {
-			defer gock.Flush()
-
-			hash := "UFKDPIQSIGJCKXWJZXAPPOWGSTCENJERGMUKJOWXQDUVNXRKXMEAJCTTZDEC9DUNXKUXEOBLULCBA9999"
-			gock.New(DefaultLocalIRIURI).
-				Post("/").
-				MatchType("json").
-				JSON(CheckConsistencyCommand{Command: CheckConsistencyCmd, Tails: Hashes{hash}}).
-				Reply(200).
-				JSON(CheckConsistencyResponse{State: true})
-
-			state, _, err := api.CheckConsistency(hash)
+			state, _, err := api.CheckConsistency(DefaultHashes()...)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(state).To(BeTrue())
+		})
+
+		It("inconsistent transactions returns an info and false", func() {
+			state, info, err := api.CheckConsistency(append(DefaultHashes(), strings.Repeat("C", 81))...)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(state).To(BeFalse())
+			Expect(info).To(Equal("test response"))
 		})
 	})
 

@@ -27,14 +27,14 @@ type Settings interface {
 // ComposeAPI composes a new API from the given settings and provider.
 // If no provider function is supplied, then the default http provider is used.
 // Settings must not be nil.
-func ComposeAPI(settings Settings, createProvider CreateProviderFunc) (*API, error) {
+func ComposeAPI(settings Settings, createProvider ...CreateProviderFunc) (*API, error) {
 	if settings == nil {
 		return nil, ErrSettingsNil
 	}
 	var provider Provider
 	var err error
-	if createProvider != nil {
-		provider, err = createProvider(settings)
+	if len(createProvider) > 0 && createProvider[0] != nil {
+		provider, err = createProvider[0](settings)
 	} else {
 		provider, err = NewHttpClient(settings)
 	}

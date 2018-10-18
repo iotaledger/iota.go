@@ -44,6 +44,13 @@ type TransactionsToApprove struct {
 	BranchTransaction Hash
 }
 
+func getAccountDAtaDefaultOptions(options GetAccountDataOptions) GetAccountDataOptions {
+	if options.Security == 0 {
+		options.Security = SecurityLevelMedium
+	}
+	return options
+}
+
 type AccountData struct {
 	Addresses     Hashes
 	Inputs        []Address
@@ -62,6 +69,13 @@ type GetNewAddressOptions struct {
 }
 
 func getNewAddressDefaultOptions(options GetNewAddressOptions) GetNewAddressOptions {
+	if options.Security == 0 {
+		options.Security = SecurityLevelMedium
+	}
+	return options
+}
+
+func getInputDefaultOptions(options GetInputOptions) GetInputOptions {
 	if options.Security == 0 {
 		options.Security = SecurityLevelMedium
 	}
@@ -91,6 +105,13 @@ func (gio GetInputOptions) ToGetNewAddressOptions() GetNewAddressOptions {
 type Inputs struct {
 	Inputs       []Address
 	TotalBalance uint64
+}
+
+func getTransfersDefaultOptions(options GetTransfersOptions) GetTransfersOptions {
+	if options.Security == 0 {
+		options.Security = SecurityLevelMedium
+	}
+	return options
 }
 
 type GetTransfersOptions struct {
@@ -154,7 +175,7 @@ type PromoteTransactionOptions struct {
 
 func getPromoteTransactionsDefaultOptions(options PromoteTransactionOptions) PromoteTransactionOptions {
 	if options.Delay == 0 {
-		options.Delay = 1000
+		options.Delay = time.Duration(1000) * time.Millisecond
 	}
 	return options
 }

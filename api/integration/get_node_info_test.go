@@ -2,39 +2,38 @@ package integration_test
 
 import (
 	. "github.com/iotaledger/iota.go/api"
+	_ "github.com/iotaledger/iota.go/api/integration/gocks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gopkg.in/h2non/gock.v1"
+	"strings"
 )
 
 var _ = Describe("GetNodeInfo()", func() {
-
-	var api *API
-	BeforeEach(func() {
-		a, err := ComposeAPI(HttpClientSettings{}, nil)
-		if err != nil {
-			panic(err)
-		}
-		api = a
-	})
+	api, err := ComposeAPI(HttpClientSettings{}, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	It("resolves to correct response", func() {
-		defer gock.Flush()
-		gock.New(DefaultLocalIRIURI).
-			Post("/").
-			MatchType("json").
-			JSON(GetNodeInfoCommand{Command: GetNodeInfoCmd}).
-			Reply(200).
-			JSON(GetNodeInfoResponse{
-				LatestMilestoneIndex:               9001,
-				LatestSolidSubtangleMilestoneIndex: 9001,
-			})
-
 		info, err := api.GetNodeInfo()
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*info).To(Equal(GetNodeInfoResponse{
-			LatestMilestoneIndex:               9001,
-			LatestSolidSubtangleMilestoneIndex: 9001,
+			AppName:                            "IRI",
+			AppVersion:                         "",
+			Duration:                           100,
+			JREAvailableProcessors:             4,
+			JREFreeMemory:                      13020403,
+			JREMaxMemory:                       1241331231,
+			JRETotalMemory:                     4245234332,
+			LatestMilestone:                    strings.Repeat("M", 81),
+			LatestMilestoneIndex:               1,
+			LatestSolidSubtangleMilestone:      strings.Repeat("M", 81),
+			LatestSolidSubtangleMilestoneIndex: 1,
+			Neighbors:                          5,
+			PacketsQueueSize:                   23,
+			Time:                               213213214,
+			Tips:                               123,
+			TransactionsToRequest:              10,
 		}))
 	})
 

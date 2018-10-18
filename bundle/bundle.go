@@ -51,6 +51,13 @@ type Transfer struct {
 	Tag     Trytes
 }
 
+var EmptyTransfer = Transfer{
+	Message: NullSignatureMessageFragmentTrytes,
+	Value:   0,
+	Tag:     NullTagTrytes,
+	Address: NullHashTrytes,
+}
+
 // TransfersToBundleEntries translates transfers to bundle entries.
 func TransfersToBundleEntries(timestamp uint64, transfers ...Transfer) (BundleEntries, error) {
 	entries := BundleEntries{}

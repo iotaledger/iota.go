@@ -4,34 +4,34 @@ import (
 	. "github.com/iotaledger/iota.go/api"
 	. "github.com/iotaledger/iota.go/api/integration/samples"
 	. "github.com/iotaledger/iota.go/consts"
-	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	"strings"
 )
 
-var _ = Describe("GetTrytes()", func() {
-
-	api, err := ComposeAPI(HttpClientSettings{}, nil)
+var _ = Describe("GetBundle()", func() {
+	api, err := ComposeAPI(HttpClientSettings{})
 	if err != nil {
 		panic(err)
 	}
 
 	Context("call", func() {
 		It("resolves to correct response", func() {
-			trytes, err := api.GetTrytes(DefaultHashes()...)
+			bndl, err := api.GetBundle(Bundle[0].Hash)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(trytes).To(Equal([]Trytes{
-				strings.Repeat("9", TransactionTrinarySize/3),
-				strings.Repeat("9", TransactionTrinarySize/3),
-			}))
+			Expect(bndl).To(Equal(Bundle))
+		})
+
+		It("resolves to correct response for single transaction bundle", func() {
+			bndl, err := api.GetBundle(BundleWithZeroValue[0].Hash)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(bndl).To(Equal(BundleWithZeroValue))
 		})
 	})
 
 	Context("invalid input", func() {
-		It("returns an error for invalid transaction hashes", func() {
-			_, err := api.GetTrytes("")
+		It("returns an error for invalid transaction hash", func() {
+			_, err := api.GetBundle("asdf")
 			Expect(errors.Cause(err)).To(Equal(ErrInvalidTransactionHash))
 		})
 	})

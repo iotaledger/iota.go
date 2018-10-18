@@ -29,6 +29,7 @@ type Transaction struct {
 	AttachmentTimestampUpperBound int64  `json:"attachmentTimestampUpperBound"`
 	Nonce                         Trytes `json:"nonce"`
 	Confirmed                     *bool  `json:"confirmed,omitempty"`
+	Persistence                   *bool  `json:"persistence,omitempty"`
 }
 
 // ParseTransaction parses the trits and returns a transaction object.

@@ -2,15 +2,15 @@ package integration_test
 
 import (
 	. "github.com/iotaledger/iota.go/api"
-	. "github.com/iotaledger/iota.go/api/integration/gocks"
+	. "github.com/iotaledger/iota.go/api/integration/samples"
 	. "github.com/iotaledger/iota.go/consts"
+	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 )
 
-var _ = Describe("RemoveNeighbors()", func() {
-
+var _ = Describe("StoreAndBroadcast()", func() {
 	api, err := ComposeAPI(HttpClientSettings{}, nil)
 	if err != nil {
 		panic(err)
@@ -18,16 +18,16 @@ var _ = Describe("RemoveNeighbors()", func() {
 
 	Context("call", func() {
 		It("resolves to correct response", func() {
-			removed, err := api.RemoveNeighbors(NeighborURI)
+			bundleTrytes, err := api.StoreAndBroadcast(BundleTrytes)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(removed).To(Equal(int64(1)))
+			Expect(bundleTrytes).To(Equal(BundleTrytes))
 		})
 	})
 
 	Context("invalid input", func() {
-		It("returns an error for invalid uris", func() {
-			_, err := api.RemoveNeighbors("")
-			Expect(errors.Cause(err)).To(Equal(ErrInvalidURI))
+		It("returns an error for invalid trytes", func() {
+			_, err := api.StoreAndBroadcast([]Trytes{"balalaika"})
+			Expect(errors.Cause(err)).To(Equal(ErrInvalidAttachedTrytes))
 		})
 	})
 

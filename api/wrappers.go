@@ -33,6 +33,7 @@ func (api *API) BroadcastBundle(tailTxHash Hash) ([]Trytes, error) {
 // GetAccountData returns an AccountData object containing account information about addresses, transactions,
 // inputs and total account balance.
 func (api *API) GetAccountData(seed Trytes, options GetAccountDataOptions) (*AccountData, error) {
+	options = getAccountDAtaDefaultOptions(options)
 	if err := Validate(ValidateSeed(seed), ValidateSecurityLevel(options.Security),
 		ValidateStartEndOptions(options.Start, options.End)); err != nil {
 		return nil, err
@@ -61,7 +62,7 @@ func (api *API) GetAccountData(seed Trytes, options GetAccountDataOptions) (*Acc
 	wg.Add(3)
 	go func() {
 		defer wg.Done()
-		bundles, err1 = api.GetBundlesFromAddresses(addresses)
+		bundles, err1 = api.GetBundlesFromAddresses(addresses, true)
 	}()
 
 	go func() {
@@ -160,14 +161,17 @@ func (api *API) GetBundlesFromAddresses(addresses Hashes, inclusionState ...bool
 		return nil, err
 	}
 
+	// misuse as a set
 	bundleHashesSet := map[Hash]struct{}{}
 	for i := range txs {
 		bundleHashesSet[txs[i].Bundle] = struct{}{}
 	}
 
 	bundleHashes := make(Hashes, len(bundleHashesSet))
+	i := 0
 	for hash := range bundleHashesSet {
-		bundleHashes = append(bundleHashes, hash)
+		bundleHashes[i] = hash
+		i++
 	}
 
 	allTxs, err := api.FindTransactionObjects(FindTransactionsQuery{Bundles: bundleHashes})
@@ -179,9 +183,9 @@ func (api *API) GetBundlesFromAddresses(addresses Hashes, inclusionState ...bool
 
 	if len(inclusionState) > 0 && inclusionState[0] {
 		// get tail tx hashes
-		hashes := Hashes{}
+		hashes := make(Hashes, len(bundles))
 		for i := range bundles {
-			hashes = append(hashes, bundles[i][0].Hash)
+			hashes[i] = bundles[i][0].Hash
 		}
 
 		states, err := api.GetLatestInclusion(hashes)
@@ -196,7 +200,7 @@ func (api *API) GetBundlesFromAddresses(addresses Hashes, inclusionState ...bool
 			bndl := &bundles[i]
 			for j := range *bndl {
 				tx := &(*bndl)[j]
-				tx.Confirmed = &states[i]
+				tx.Persistence = &states[i]
 			}
 		}
 	}
@@ -223,6 +227,8 @@ func (api *API) GetLatestInclusion(transactions Hashes) ([]bool, error) {
 // It is suggested that the library user keeps track of used addresses and directly generates addresses from the stored information
 // instead of relying on GetNewAddress.
 func (api *API) GetNewAddress(seed Trytes, options GetNewAddressOptions) (Hashes, error) {
+	options = getNewAddressDefaultOptions(options)
+
 	if err := Validate(
 		ValidateSeed(seed),
 		ValidateSecurityLevel(options.Security),
@@ -230,7 +236,6 @@ func (api *API) GetNewAddress(seed Trytes, options GetNewAddressOptions) (Hashes
 		return nil, err
 	}
 
-	options = getNewAddressDefaultOptions(options)
 	index := options.Index
 	securityLvl := options.Security
 
@@ -238,7 +243,7 @@ func (api *API) GetNewAddress(seed Trytes, options GetNewAddressOptions) (Hashes
 	var err error
 
 	if options.Total != nil {
-		if *options.Total > 0 {
+		if *options.Total == 0 {
 			return nil, ErrInvalidTotalOption
 		}
 		total := *options.Total
@@ -340,6 +345,7 @@ func (api *API) FindTransactionObjects(query FindTransactionsQuery) (transaction
 
 // GetInputs creates and returns an Inputs object by generating addresses and fetching their latest balance.
 func (api *API) GetInputs(seed Trytes, options GetInputOptions) (*Inputs, error) {
+	options = getInputDefaultOptions(options)
 	if err := Validate(
 		ValidateSeed(seed), ValidateSecurityLevel(options.Security),
 		ValidateStartEndOptions(options.Start, options.End),
@@ -380,7 +386,6 @@ func (api *API) GetInputs(seed Trytes, options GetInputOptions) (*Inputs, error)
 	}
 
 	return &inputs, nil
-
 }
 
 // GetInputObjects creates an Input object using the given addresses, balances, start index and security level.
@@ -389,6 +394,9 @@ func (api *API) GetInputObjects(addresses Hashes, balances []uint64, start uint6
 	var totalBalance uint64
 	for i := range addresses {
 		value := balances[i]
+		if value <= 0 {
+			continue
+		}
 		addrs = append(addrs, Address{
 			Address: addresses[i], Security: secLvl,
 			Balance: value, KeyIndex: start + uint64(i)},
@@ -400,6 +408,7 @@ func (api *API) GetInputObjects(addresses Hashes, balances []uint64, start uint6
 
 // GetTransfers returns bundles which operated on the given address range specified by the supplied options.
 func (api *API) GetTransfers(seed Trytes, options GetTransfersOptions) (bundle.Bundles, error) {
+	options = getTransfersDefaultOptions(options)
 	if err := Validate(
 		ValidateSeed(seed), ValidateSecurityLevel(options.Security),
 		ValidateStartEndOptions(options.Start, options.End),
@@ -675,9 +684,18 @@ func (api *API) SendTransfer(seed Trytes, depth uint64, mwm uint64, transfers bu
 // It will promote maximum transfers on top of the current one with the specified delay.
 // Promotion is interruptable through the passed in Context option.
 func (api *API) PromoteTransaction(tailTxHash Hash, depth uint64, mwm uint64, spamTransfers bundle.Transfers, options PromoteTransactionOptions) (transaction.Transactions, error) {
-	if err := Validate(ValidateTransactionHashes(tailTxHash), ValidateTransfers(spamTransfers...)); err != nil {
+	if err := Validate(ValidateTransactionHashes(tailTxHash)); err != nil {
 		return nil, err
 	}
+
+	if spamTransfers != nil && len(spamTransfers) > 0 {
+		if err := Validate(ValidateTransfers(spamTransfers...)); err != nil {
+			return nil, err
+		}
+	} else {
+		spamTransfers = bundle.Transfers{bundle.EmptyTransfer}
+	}
+
 	options = getPromoteTransactionsDefaultOptions(options)
 
 	consistent, _, err := api.CheckConsistency(tailTxHash)
@@ -692,6 +710,10 @@ func (api *API) PromoteTransaction(tailTxHash Hash, depth uint64, mwm uint64, sp
 	opts := SendTransfersOptions{Reference: &tailTxHash}
 	opts.PrepareTransfersOptions = getPrepareTransfersDefaultOptions(opts.PrepareTransfersOptions)
 	getPrepareTransfersDefaultOptions(PrepareTransfersOptions{})
+
+	// delay
+	<-time.After(time.Duration(options.Delay))
+
 	return api.SendTransfer(spamTransfers[0].Address, depth, mwm, spamTransfers, &opts)
 }
 
@@ -732,6 +754,9 @@ func (api *API) SendTrytes(trytes []Trytes, depth uint64, mwm uint64, reference 
 
 // StoreAndBroadcast first stores and the broadcasts the given transactions.
 func (api *API) StoreAndBroadcast(trytes []Trytes) ([]Trytes, error) {
+	if err := Validate(ValidateAttachedTransactionTrytes(trytes...)); err != nil {
+		return nil, err
+	}
 	trytes, err := api.StoreTransactions(trytes...)
 	if err != nil {
 		return nil, err
@@ -741,7 +766,7 @@ func (api *API) StoreAndBroadcast(trytes []Trytes) ([]Trytes, error) {
 
 // TraverseBundle fetches the bundle of a given tail transaction by traversing through the trunk transactions.
 // It does not validate the bundle.
-func (api *API) TraverseBundle(trunkTxHash Hash, bndl bundle.Bundle) (transaction.Transactions, error) {
+func (api *API) TraverseBundle(trunkTxHash Hash, bndl bundle.Bundle) (bundle.Bundle, error) {
 	if err := Validate(ValidateTransactionHashes(trunkTxHash)); err != nil {
 		return nil, err
 	}

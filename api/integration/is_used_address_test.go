@@ -8,10 +8,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	"strings"
 )
 
-var _ = Describe("GetTrytes()", func() {
+var _ = Describe("IsUsedAddress()", func() {
 
 	api, err := ComposeAPI(HttpClientSettings{}, nil)
 	if err != nil {
@@ -20,18 +19,16 @@ var _ = Describe("GetTrytes()", func() {
 
 	Context("call", func() {
 		It("resolves to correct response", func() {
-			trytes, err := api.GetTrytes(DefaultHashes()...)
+			states, err := api.GetLatestInclusion(DefaultHashes())
 			Expect(err).ToNot(HaveOccurred())
-			Expect(trytes).To(Equal([]Trytes{
-				strings.Repeat("9", TransactionTrinarySize/3),
-				strings.Repeat("9", TransactionTrinarySize/3),
-			}))
+			Expect(states[0]).To(BeTrue())
+			Expect(states[1]).To(BeFalse())
 		})
 	})
 
 	Context("invalid input", func() {
 		It("returns an error for invalid transaction hashes", func() {
-			_, err := api.GetTrytes("")
+			_, err := api.GetLatestInclusion(Hashes{"balalaika"})
 			Expect(errors.Cause(err)).To(Equal(ErrInvalidTransactionHash))
 		})
 	})

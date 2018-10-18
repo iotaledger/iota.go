@@ -2,78 +2,38 @@ package integration_test
 
 import (
 	. "github.com/iotaledger/iota.go/api"
+	. "github.com/iotaledger/iota.go/api/integration/gocks"
 	. "github.com/iotaledger/iota.go/consts"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	"gopkg.in/h2non/gock.v1"
 )
 
 var _ = Describe("GetTransactionsToApprove()", func() {
-
-	var api *API
-	BeforeEach(func() {
-		a, err := ComposeAPI(HttpClientSettings{}, nil)
-		if err != nil {
-			panic(err)
-		}
-		api = a
-	})
-
+	api, err := ComposeAPI(HttpClientSettings{}, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	Context("call", func() {
 
-		trunk := "EXWYCOOGTORCOPFDQB9DGQQAMKXPSPLNCETD99TMIVGMCZEJXFHABMXVYGNABUVBWVARSQQSHPGWA9999"
-		branch := "JGBOORVOPMYC9BGOJRKHGICCQWLWYNLXCQTNNHYNMTRDLSSSNAQDFOHZBYFL9R9EVYPYHQQRADFXZ9999"
-
 		It("resolves to correct response", func() {
-			defer gock.Flush()
-			gock.New(DefaultLocalIRIURI).
-				Post("/").
-				MatchType("json").
-				JSON(GetTransactionsToApproveCommand{
-					Command: GetTransactionsToApproveCmd,
-					Depth:   3, Reference: "",
-				}).
-				Reply(200).
-				JSON(GetTransactionsToApproveResponse{
-					Duration: 100,
-					TransactionsToApprove: TransactionsToApprove{
-						TrunkTransaction:  trunk,
-						BranchTransaction: branch,
-					},
-				})
 			gtta, err := api.GetTransactionsToApprove(3)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*gtta).To(Equal(TransactionsToApprove{
-				TrunkTransaction:  trunk,
-				BranchTransaction: branch,
+				TrunkTransaction:  TrunkTx,
+				BranchTransaction: BranchTx,
 			}))
 		})
 
 		It("resolves to correct response with reference option", func() {
-			defer gock.Flush()
-			gock.New(DefaultLocalIRIURI).
-				Post("/").
-				MatchType("json").
-				JSON(GetTransactionsToApproveCommand{
-					Command: GetTransactionsToApproveCmd,
-					Depth:   3, Reference: "RZNYHJLXSLRBJIBWXZKWTFZLZGB9QPGCPHOZYASPQVGAGDWZEKDRNMBXRSUYAYBUTBC9GPOSSKTRA9999",
-				}).
-				Reply(200).
-				JSON(GetTransactionsToApproveResponse{
-					Duration: 100,
-					TransactionsToApprove: TransactionsToApprove{
-						TrunkTransaction:  branch, // don't get confused
-						BranchTransaction: trunk,
-					},
-				})
-			gtta, err := api.GetTransactionsToApprove(3, "RZNYHJLXSLRBJIBWXZKWTFZLZGB9QPGCPHOZYASPQVGAGDWZEKDRNMBXRSUYAYBUTBC9GPOSSKTRA9999")
+			gtta, err := api.GetTransactionsToApprove(3, strings.Repeat("R", 81))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*gtta).To(Equal(TransactionsToApprove{
-				TrunkTransaction:  branch,
-				BranchTransaction: trunk,
+				TrunkTransaction:  BranchTx,
+				BranchTransaction: TrunkTx,
 			}))
 		})
 	})

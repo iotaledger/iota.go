@@ -2,72 +2,47 @@ package integration_test
 
 import (
 	. "github.com/iotaledger/iota.go/api"
-	"github.com/iotaledger/iota.go/checksum"
+	. "github.com/iotaledger/iota.go/api/integration/samples"
 	. "github.com/iotaledger/iota.go/consts"
+	"strings"
 
 	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	"gopkg.in/h2non/gock.v1"
 )
 
 var _ = Describe("GetBalances()", func() {
 
-	var api *API
-	BeforeEach(func() {
-		a, err := ComposeAPI(HttpClientSettings{}, nil)
-		if err != nil {
-			panic(err)
-		}
-		api = a
-	})
-
-	hash := "UFKDPIQSIGJCKXWJZXAPPOWGSTCENJERGMUKJOWXQDUVNXRKXMEAJCTTZDEC9DUNXKUXEOBLULCBA9999"
+	api, err := ComposeAPI(HttpClientSettings{}, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	Context("call", func() {
 
-		BeforeEach(func() {
-			gock.New(DefaultLocalIRIURI).
-				Post("/").
-				MatchType("json").
-				JSON(GetBalancesCommand{
-					Command:   GetBalancesCmd,
-					Addresses: Hashes{hash},
-					Threshold: 100,
-				}).
-				Reply(200).
-				JSON(GetBalancesResponse{
-					Duration: 100, Balances: []string{"100"},
-					Milestone:      "PCCO9LDWVGHCOOQIBJQRZHXQKOFHVJSBSBE9V9TCXXZPEAYCLAHHBQKHY9SFUTH9KIV9KYQUHORIA9999",
-					MilestoneIndex: 123456,
-				})
-		})
-
 		It("resolves to correct response", func() {
-			defer gock.Flush()
-
-			balances, err := api.GetBalances(Hashes{hash}, 100)
+			balances, err := api.GetBalances(SampleAddresses, 100)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*balances).To(Equal(Balances{
-				Balances:       []uint64{100},
-				Milestone:      "PCCO9LDWVGHCOOQIBJQRZHXQKOFHVJSBSBE9V9TCXXZPEAYCLAHHBQKHY9SFUTH9KIV9KYQUHORIA9999",
-				MilestoneIndex: 123456,
+				Balances:       []uint64{99, 0, 1},
+				Milestone:      strings.Repeat("M", 81),
+				MilestoneIndex: 1,
 			}))
 		})
 
 		It("removes the checksum from the addresses", func() {
-			defer gock.Flush()
+			withChecksums := make(Hashes, len(SampleAddresses))
+			for i := range withChecksums {
+				withChecksums[i] = SampleAddresses[i] + strings.Repeat("9", 9)
+			}
 
-			hashWithChecksum, err := checksum.AddChecksum(hash, true, AddressChecksumTrytesSize)
-			Expect(err).ToNot(HaveOccurred())
-
-			balances, err := api.GetBalances(Hashes{hashWithChecksum}, 100)
+			balances, err := api.GetBalances(withChecksums, 100)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*balances).To(Equal(Balances{
-				Balances:       []uint64{100},
-				Milestone:      "PCCO9LDWVGHCOOQIBJQRZHXQKOFHVJSBSBE9V9TCXXZPEAYCLAHHBQKHY9SFUTH9KIV9KYQUHORIA9999",
-				MilestoneIndex: 123456,
+				Balances:       []uint64{99, 0, 1},
+				Milestone:      strings.Repeat("M", 81),
+				MilestoneIndex: 1,
 			}))
 		})
 	})
@@ -79,7 +54,7 @@ var _ = Describe("GetBalances()", func() {
 		})
 
 		It("returns an error for invalid threshold", func() {
-			_, err := api.GetBalances(Hashes{hash}, 101)
+			_, err := api.GetBalances(Hashes{SampleAddresses[0]}, 101)
 			Expect(errors.Cause(err)).To(Equal(ErrInvalidThreshold))
 		})
 	})

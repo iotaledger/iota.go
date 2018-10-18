@@ -2,6 +2,7 @@ package integration_test
 
 import (
 	. "github.com/iotaledger/iota.go/api"
+	. "github.com/iotaledger/iota.go/api/integration/gocks"
 	"github.com/iotaledger/iota.go/checksum"
 	"github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/consts"
@@ -9,62 +10,32 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	"gopkg.in/h2non/gock.v1"
+	"strings"
 )
 
 var _ = Describe("FindTransactions()", func() {
+	api, err := ComposeAPI(HttpClientSettings{}, nil)
+	if err != nil {
+		panic(err)
+	}
 
-	var api *API
-	BeforeEach(func() {
-		a, err := ComposeAPI(HttpClientSettings{}, nil)
-		if err != nil {
-			panic(err)
-		}
-		api = a
-	})
-
-	hash := "UFKDPIQSIGJCKXWJZXAPPOWGSTCENJERGMUKJOWXQDUVNXRKXMEAJCTTZDEC9DUNXKUXEOBLULCBA9999"
-	resp := "IVDAFVTTIKVFUQ9H9CNOUJKUJKXTVXRXLKHEVKAQCVGJNMWLBYQMJPQBAZGGSFTXLDDYGVDVPJOJ99999"
+	expect := Hashes{strings.Repeat("A", 81), strings.Repeat("B", 81)}
 
 	Context("address query", func() {
 
 		It("resolves to correct response", func() {
-			defer gock.Flush()
-
-			gock.New(DefaultLocalIRIURI).
-				Post("/").
-				MatchType("json").
-				JSON(FindTransactionsCommand{
-					Command:               FindTransactionsCmd,
-					FindTransactionsQuery: FindTransactionsQuery{Addresses: Hashes{hash}},
-				}).
-				Reply(200).
-				JSON(FindTransactionsResponse{Hashes: Hashes{resp}})
-
-			hashes, err := api.FindTransactions(FindTransactionsQuery{Addresses: Hashes{hash}})
+			hashes, err := api.FindTransactions(FindTransactionsQuery{Addresses: FindTransactionsByAddresses})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(hashes[0]).To(Equal(resp))
+			Expect(hashes).To(Equal(expect))
 		})
 
 		It("removes the checksum from the query addresses", func() {
-			defer gock.Flush()
-
-			gock.New(DefaultLocalIRIURI).
-				Post("/").
-				MatchType("json").
-				JSON(FindTransactionsCommand{
-					Command:               FindTransactionsCmd,
-					FindTransactionsQuery: FindTransactionsQuery{Addresses: Hashes{hash}},
-				}).
-				Reply(200).
-				JSON(FindTransactionsResponse{Hashes: Hashes{resp}})
-
-			hashWithChecksum, err := checksum.AddChecksum(hash, true, consts.AddressChecksumTrytesSize)
+			hashWithChecksum, err := checksum.AddChecksum(FindTransactionsByAddresses[0], true, consts.AddressChecksumTrytesSize)
 			Expect(err).ToNot(HaveOccurred())
 
 			hashes, err := api.FindTransactions(FindTransactionsQuery{Addresses: Hashes{hashWithChecksum}})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(hashes[0]).To(Equal(resp))
+			Expect(hashes).To(Equal(expect))
 		})
 
 		It("returns an error for invalid addresses", func() {
@@ -79,21 +50,9 @@ var _ = Describe("FindTransactions()", func() {
 	Context("bundle query", func() {
 
 		It("resolves to correct response", func() {
-			defer gock.Flush()
-
-			gock.New(DefaultLocalIRIURI).
-				Post("/").
-				MatchType("json").
-				JSON(FindTransactionsCommand{
-					Command:               FindTransactionsCmd,
-					FindTransactionsQuery: FindTransactionsQuery{Bundles: Hashes{hash}},
-				}).
-				Reply(200).
-				JSON(FindTransactionsResponse{Hashes: Hashes{resp}})
-
-			hashes, err := api.FindTransactions(FindTransactionsQuery{Bundles: Hashes{hash}})
+			hashes, err := api.FindTransactions(FindTransactionsQuery{Bundles: FindTransactionsByBundles})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(hashes[0]).To(Equal(resp))
+			Expect(hashes).To(Equal(expect))
 		})
 
 		It("returns an error for invalid bundles", func() {
@@ -105,22 +64,9 @@ var _ = Describe("FindTransactions()", func() {
 	Context("tag query", func() {
 
 		It("resolves to correct response", func() {
-			defer gock.Flush()
-
-			tag := "BENDER999BENDER99BENDER9999"
-			gock.New(DefaultLocalIRIURI).
-				Post("/").
-				MatchType("json").
-				JSON(FindTransactionsCommand{
-					Command:               FindTransactionsCmd,
-					FindTransactionsQuery: FindTransactionsQuery{Tags: []Trytes{tag}},
-				}).
-				Reply(200).
-				JSON(FindTransactionsResponse{Hashes: Hashes{resp}})
-
-			hashes, err := api.FindTransactions(FindTransactionsQuery{Tags: []Trytes{tag}})
+			hashes, err := api.FindTransactions(FindTransactionsQuery{Tags: FindTransactionsByTags})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(hashes[0]).To(Equal(resp))
+			Expect(hashes).To(Equal(expect))
 		})
 
 		It("returns an error for invalid tags", func() {
@@ -132,21 +78,9 @@ var _ = Describe("FindTransactions()", func() {
 	Context("approvees query", func() {
 
 		It("resolves to correct response", func() {
-			defer gock.Flush()
-
-			gock.New(DefaultLocalIRIURI).
-				Post("/").
-				MatchType("json").
-				JSON(FindTransactionsCommand{
-					Command:               FindTransactionsCmd,
-					FindTransactionsQuery: FindTransactionsQuery{Approvees: Hashes{hash}},
-				}).
-				Reply(200).
-				JSON(FindTransactionsResponse{Hashes: Hashes{resp}})
-
-			hashes, err := api.FindTransactions(FindTransactionsQuery{Approvees: Hashes{hash}})
+			hashes, err := api.FindTransactions(FindTransactionsQuery{Approvees: FindTransactionsByApprovees})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(hashes[0]).To(Equal(resp))
+			Expect(hashes).To(Equal(expect))
 		})
 
 		It("returns an error for invalid approvees", func() {

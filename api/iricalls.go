@@ -103,12 +103,35 @@ func (api *API) CheckConsistency(hashes ...Hash) (bool, string, error) {
 }
 
 func validateFindTransactions(query *FindTransactionsQuery) error {
-	return Validate(
+	if err := Validate(
 		ValidateHashes(query.Addresses...),
 		ValidateHashes(query.Bundles...),
 		ValidateTransactionHashes(query.Approvees...),
 		ValidateTags(query.Tags...),
-	)
+	); err != nil {
+		return err
+	}
+	if query.Addresses != nil {
+		if err := Validate(ValidateNonEmptyStrings(ErrInvalidAddress, query.Addresses...)); err != nil {
+			return err
+		}
+	}
+	if query.Bundles != nil {
+		if err := Validate(ValidateNonEmptyStrings(ErrInvalidBundleHash, query.Bundles...)); err != nil {
+			return err
+		}
+	}
+	if query.Approvees != nil {
+		if err := Validate(ValidateNonEmptyStrings(ErrInvalidTransactionHash, query.Approvees...)); err != nil {
+			return err
+		}
+	}
+	if query.Tags != nil {
+		if err := Validate(ValidateNonEmptyStrings(ErrInvalidTag, query.Tags...)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // FindTransactions searches for transaction hashes by calling the findTransactions IRI API command.

@@ -4,34 +4,28 @@ import (
 	. "github.com/iotaledger/iota.go/api"
 	. "github.com/iotaledger/iota.go/api/integration/samples"
 	. "github.com/iotaledger/iota.go/consts"
-	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	"strings"
 )
 
-var _ = Describe("GetTrytes()", func() {
-
-	api, err := ComposeAPI(HttpClientSettings{}, nil)
+var _ = Describe("ReplayBundle()", func() {
+	api, err := ComposeAPI(HttpClientSettings{})
 	if err != nil {
 		panic(err)
 	}
 
 	Context("call", func() {
 		It("resolves to correct response", func() {
-			trytes, err := api.GetTrytes(DefaultHashes()...)
+			bndl, err := api.ReplayBundle(Bundle[0].Hash, 3, 14)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(trytes).To(Equal([]Trytes{
-				strings.Repeat("9", TransactionTrinarySize/3),
-				strings.Repeat("9", TransactionTrinarySize/3),
-			}))
+			Expect(bndl).To(Equal(Bundle))
 		})
 	})
 
 	Context("invalid input", func() {
-		It("returns an error for invalid transaction hashes", func() {
-			_, err := api.GetTrytes("")
+		It("returns an error for invalid transaction hash", func() {
+			_, err := api.ReplayBundle("asdf", 3, 14)
 			Expect(errors.Cause(err)).To(Equal(ErrInvalidTransactionHash))
 		})
 	})

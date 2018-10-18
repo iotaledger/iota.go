@@ -2,7 +2,6 @@ package pow
 
 import "C"
 import (
-	"fmt"
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/transaction"
@@ -288,7 +287,6 @@ func powGo(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 			if r >= 0 && len(nonce) > 0 {
 				select {
 				case <-exit:
-					fmt.Println("exit", nonce)
 				case nonceChan <- MustTritsToTrytes(nonce):
 					stopGO = true
 				}
