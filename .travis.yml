@@ -10,6 +10,7 @@ before_install:
 - export PATH=$PATH:$GOPATH/bin
 - export CGO_LDFLAGS_ALLOW='-msse2,-mavx'
 - export CGO_CFLAGS_ALLOW='-msse2,-mavx'
+- export GO111MODULE='on'
 - gometalinter --install --update
 - go mod edit -replace golang.org/x/crypto=github.com/luca-moser/crypto@fb2ff8b1755486a8f59b48a2ad494e63f8477ec2
 
