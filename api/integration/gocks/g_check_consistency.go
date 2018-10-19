@@ -3,6 +3,7 @@ package gocks
 import (
 	. "github.com/iotaledger/iota.go/api"
 	. "github.com/iotaledger/iota.go/api/integration/samples"
+	. "github.com/iotaledger/iota.go/trinary"
 	"gopkg.in/h2non/gock.v1"
 	"strings"
 )
@@ -26,4 +27,15 @@ func init() {
 		}).
 		Reply(200).
 		JSON(CheckConsistencyResponse{State: false, Info: "test response",})
+
+	gock.New(DefaultLocalIRIURI).
+		Persist().
+		Post("/").
+		MatchType("json").
+		JSON(CheckConsistencyCommand{
+			Command: CheckConsistencyCmd,
+			Tails:   Hashes{Bundle[0].Hash},
+		}).
+		Reply(200).
+		JSON(CheckConsistencyResponse{State: true, Info: "",})
 }

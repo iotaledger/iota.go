@@ -469,19 +469,32 @@ func isAboveMaxDepth(attachmentTimestamp int64) bool {
 func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, options PrepareTransfersOptions) ([]Trytes, error) {
 	options = getPrepareTransfersDefaultOptions(options)
 
+	if err := Validate(ValidateSeed(seed), ValidateSecurityLevel(options.Security)); err != nil {
+		return nil, err
+	}
+
+	if options.RemainderAddress != nil {
+		if err := Validate(ValidateHashes(*options.RemainderAddress)); err != nil {
+			return nil, ErrInvalidRemainderAddress
+		}
+	}
+
 	props := PrepareTransferProps{
 		Seed: seed, Security: options.Security, Inputs: options.Inputs,
-		Timestamp: uint64(time.Now().UnixNano() / int64(time.Second)),
 		Transfers: transfers, Transactions: transaction.Transactions{},
-		Trytes: []Trytes{}, HMACKey: options.HMACKey, RemainderAddress: options.RemainderAddress,
+		Trytes: []Trytes{}, RemainderAddress: options.RemainderAddress,
+	}
+
+	if options.Timestamp != nil {
+		props.Timestamp = *options.Timestamp
+	} else {
+		props.Timestamp = uint64(time.Now().UnixNano() / int64(time.Second))
 	}
 
 	var totalTransferValue uint64
 	for i := range transfers {
 		totalTransferValue += transfers[i].Value
 	}
-
-	// TODO: add HMAC placeholder txs
 
 	// add transfers
 	outEntries, err := bundle.TransfersToBundleEntries(props.Timestamp, props.Transfers...)
@@ -573,7 +586,7 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 
 		// add remainder transaction
 		if totalTransferValue > 0 {
-			bundle.AddEntry(props.Transactions, bundle.BundleEntry{
+			props.Transactions = bundle.AddEntry(props.Transactions, bundle.BundleEntry{
 				Address: *props.RemainderAddress,
 				Length:  1, Timestamp: props.Timestamp,
 				Value: int64(math.Abs(float64(remainder))),
@@ -650,8 +663,6 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 
 	props.Transactions = bundle.AddTrytes(props.Transactions, signedFrags, indexFirstInputTx)
 
-	// TODO: add HMAC
-
 	// finally return built up txs as raw trytes
 	return transaction.MustFinalTransactionTrytes(props.Transactions), nil
 }
@@ -681,8 +692,8 @@ func (api *API) SendTransfer(seed Trytes, depth uint64, mwm uint64, transfers bu
 }
 
 // PromoteTransaction promotes a transaction by adding other transactions (spam by default) on top of it.
-// It will promote maximum transfers on top of the current one with the specified delay.
-// Promotion is interruptable through the passed in Context option.
+// If an optional Context is supplied, PromoteTransaction() will promote the given transaction until the
+// Context is done/cancelled. If no Context is provided, PromoteTransaction() will create one promote transaction.
 func (api *API) PromoteTransaction(tailTxHash Hash, depth uint64, mwm uint64, spamTransfers bundle.Transfers, options PromoteTransactionOptions) (transaction.Transactions, error) {
 	if err := Validate(ValidateTransactionHashes(tailTxHash)); err != nil {
 		return nil, err
@@ -711,10 +722,29 @@ func (api *API) PromoteTransaction(tailTxHash Hash, depth uint64, mwm uint64, sp
 	opts.PrepareTransfersOptions = getPrepareTransfersDefaultOptions(opts.PrepareTransfersOptions)
 	getPrepareTransfersDefaultOptions(PrepareTransfersOptions{})
 
-	// delay
-	<-time.After(time.Duration(options.Delay))
+	bndl, err := api.SendTransfer(spamTransfers[0].Address, depth, mwm, spamTransfers, &opts)
+	if err != nil {
+		return nil, err
+	}
 
-	return api.SendTransfer(spamTransfers[0].Address, depth, mwm, spamTransfers, &opts)
+	// one-off promotion
+	if options.Ctx == nil {
+		return bndl, nil
+	}
+
+	// check whether context is canceled
+	select {
+	case <-options.Ctx.Done():
+		return bndl, nil
+	default:
+	}
+
+	// wait specified delay before sending of another promotion transaction
+	if options.Delay != nil {
+		<-time.After(time.Duration(*options.Delay))
+	}
+
+	return api.PromoteTransaction(tailTxHash, depth, mwm, nil, options)
 }
 
 // ReplayBundle reattaches a transfer to the Tangle by selecting tips & performing the Proof-of-Work again.

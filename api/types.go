@@ -134,11 +134,17 @@ func (gto GetTransfersOptions) ToGetNewAddressOptions() GetNewAddressOptions {
 }
 
 type PrepareTransfersOptions struct {
-	// TODO: document if inputs are provided by the caller, then they are not checked for spent state
-	Inputs           []Address
+	// Inputs to fulfill the transfer's sum. If no inputs are provided, they are collected after
+	// a best efford method. Provided inputs are not checked for spent state.
+	Inputs []Address
+	// The used security level when no Inputs and/or remainder address are supplied for computing
+	// the corresponding addresses.
+	Security SecurityLevel
+	// The timestamp to use for each transaction in the resulting bundle.
+	Timestamp *uint64
+	// The address to send the remainder balance too. If no remainder address is supplied, then
+	// the next available address is computed after a best efford method.
 	RemainderAddress *Hash
-	Security         SecurityLevel
-	HMACKey          *Trytes
 }
 
 type SendTransfersOptions struct {
@@ -169,13 +175,16 @@ func getPrepareTransfersDefaultOptions(options PrepareTransfersOptions) PrepareT
 }
 
 type PromoteTransactionOptions struct {
-	Delay time.Duration
-	Ctx   context.Context
+	// Context which is used for cancellation signals during promotion.
+	Ctx context.Context
+	// Delay between promotions. (only used if Ctx is supplied)
+	Delay *time.Duration
 }
 
 func getPromoteTransactionsDefaultOptions(options PromoteTransactionOptions) PromoteTransactionOptions {
-	if options.Delay == 0 {
-		options.Delay = time.Duration(1000) * time.Millisecond
+	if options.Delay != nil && *options.Delay == 0 {
+		t := time.Duration(1000) * time.Millisecond
+		options.Delay = &t
 	}
 	return options
 }

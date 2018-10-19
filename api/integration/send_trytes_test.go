@@ -31,7 +31,6 @@ var _ = Describe("SendTrytes()", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(bndl).To(Equal(Bundle))
 		})
-
 	})
 
 	Context("invalid input", func() {
