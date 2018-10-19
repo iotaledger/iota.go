@@ -3,9 +3,6 @@ language: go
 go:
   - 1.11.1
 
-install:
-- go get github.com/iotaledger/iota.go
-
 before_install:
 - go get -u github.com/alecthomas/gometalinter
 - go get -u github.com/mattn/goveralls
