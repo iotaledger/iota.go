@@ -1,4 +1,4 @@
-# giota
+# iota.go
 
 [![Build Status](https://travis-ci.org/iotaledger/giota.svg?branch=master)](https://travis-ci.org/iotaledger/giota)
 [![GoDoc](https://godoc.org/github.com/iotaledger/giota?status.svg)](https://godoc.org/github.com/iotaledger/giota)
@@ -20,7 +20,7 @@ $ go mod init <your-module-path>
 `<your-module-path>` can be paths like github.com/me/awesome-project
 
 ```
-$ go get github.com/iotaledger/giota
+$ go get github.com/iotaledger/iota.go
 ```
 This downloads the latest version of giota and writes the used version into
 the `go.mod` file (vgo is `go get` agnostic).
@@ -40,22 +40,27 @@ We hope to integrate our changes in the fork into the origin `golang.org/x/crypt
 package main
 
 import (
-    "github.com/iotaledger/giota"
+    . "github.com/iotaledger/iota.go/api"
     "fmt"
 )
 
 var endpoint = "<node-url>"
 
 func main() {
-	// create a new API instance, optionally provide your own http.Client
-	api := giota.NewAPI(endpoint, nil)
+	// compose a new API instance
+	api, err := ComposeAPI(HttpClientSettings{URI: endpoint})
+	must(err)
 	
 	nodeInfo, err := api.GetNodeInfo()
-	if err != nil {
-	    panic(err)
-	}
+	must(err)
 	
 	fmt.Println("latest milestone index:", nodeInfo.LatestMilestoneIndex)
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 
@@ -67,106 +72,120 @@ Publish transfers by calling `PrepareTransfers()` and piping the prepared bundle
 package main
 
 import (
-    "github.com/iotaledger/giota"
-    "github.com/iotaledger/iota.go/signing"
-    "github.com/iotaledger/iota.go/bundle"
-    "github.com/iotaledger/iota.go/trinary"
-    "github.com/iotaledger/iota.go/pow"
-    "fmt"
+	"fmt"
+	"github.com/iotaledger/iota.go/address"
+	. "github.com/iotaledger/iota.go/api"
+	"github.com/iotaledger/iota.go/bundle"
+	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/pow"
+	"github.com/iotaledger/iota.go/trinary"
 )
 
-
 var endpoint = "<node-url>"
+
 // must be 81 trytes long and truly random
-var seed = trinary.Trytes("AAAA....") 
-var securityLevel = signing.SecurityLevelMedium
+var seed = trinary.Trytes("AAAA....")
+
 // difficulty of the proof of work required to attach a transaction on the tangle
 const mwm = 14
+
 // how many milestones back to start the random walk from
 const depth = 3
-// can be 90 trytes long (with checksum)
-const recipientAddrRaw = "BBBB....."
 
-// use real error handling in your code instead of must()
+// can be 90 trytes long (with checksum)
+const recipientAddress = "BBBB....."
+
+func main() {
+
+	// get the best available PoW implementation
+	_, powFunc := pow.GetBestPoW()
+
+	// create a new API instance
+	api, err := ComposeAPI(HttpClientSettings{
+		URI: endpoint,
+		// (!) if no PoWFunc is supplied, then the connected node is requested to do PoW for us
+		// via the AttachToTangle() API call.
+		LocalPowFunc: powFunc,
+	})
+	must(err)
+
+	// create a transfer to the given recipient address
+	// optionally define a message and tag
+	transfers := bundle.Transfers{
+		{
+			Address: recipientAddress,
+			Value:   80,
+		},
+	}
+
+	// create inputs for the transfer
+	inputs := []Address{
+		{
+			Address:  "CCCCC....",
+			Security: SecurityLevelMedium,
+			KeyIndex: 0,
+			Balance:  100,
+		},
+	}
+
+	// create an address for the remainder.
+	// in this case we will have 20 iotas as the remainder, since we spend 100 from our input
+	// address and only send 80 to the recipient.
+	remainderAddress, err := address.GenerateAddress(seed, 2, SecurityLevelMedium)
+	must(err)
+
+	// we don't need to set the security level or timestamp in the options because we supply
+	// the input and remainder addresses.
+	prepTransferOpts := PrepareTransfersOptions{Inputs: inputs, RemainderAddress: &remainderAddress}
+
+	// prepare the transfer by creating a bundle with the given transfers and inputs.
+	// the result are trytes ready for PoW.
+	trytes, err := api.PrepareTransfers(seed, transfers, prepTransferOpts)
+	must(err)
+
+	// you can decrease your chance of sending to a spent address by checking the address before
+	// broadcasting your bundle.
+	spent, err := api.WereAddressesSpentFrom(transfers[0].Address)
+	must(err)
+
+	if spent[0] {
+		fmt.Println("recipient address is spent from, aborting transfer")
+		return
+	}
+
+	// at this point the bundle trytes are signed.
+	// now we need to:
+	// 1. select two tips
+	// 2. do proof-of-work
+	// 3. broadcast the bundle
+	// 4. store the bundle
+	// SendTrytes() conveniently does the steps above for us.
+	bndl, err := api.SendTrytes(trytes, depth, mwm)
+	must(err)
+
+	fmt.Println("broadcasted bundle with tail tx hash: ", bundle.TailTransactionHash(bndl))
+}
+
 func must(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
 
-func main() {
-	// create a new API instance
-	api := giota.NewAPI(endpoint, nil)
-	
-	// convert the recipient address to a signing.Address.
-	// if the input string contains a checksum it is validated and an error
-	// is returned if it is not valid.
-	recipientAddr, err := signing.NewAddressHashFromTrytes(recipientAddrRaw)
-	must(err)
-	
-	transfers := bundle.Transfers{
-		{
-		    Address: recipientAddr,
-		    Value: 1000, // deposit 1000 iota, 1 Ki
-		    Tag: "", // optional tag
-		    Message: "", // optional message in trytes
-		},
-	}
-	
-	// it is the library's user job to query and obtain valid inputs for the bundle.
-	// this can be achieved by storing the seed's address states somewhere within the
-	// application which uses the seed.
-	
-	// in this example we assume that the first address of our seed has
-	// 5000 iotas, thereby enough funds for the transfer
-	inputs := signing.Addresses{
-		{
-		    Seed: seed,
-		    Security: securityLevel,
-		    Index: 0, // the index is optional as it isn't needed to construct the bundle
-		},
-	}
-	
-	// since in IOTA inputs must be spent completely, we need to send the remainder (4000 iotas)
-	// to our next address. in this example this would simply be the address at the next
-	// index which is 1 (we used address at index 0 for as input).
-	remainderAddr, err := signing.NewAddressHash(signing.Address{seed, 1, securityLevel})
-	must(err)
-	
-	// prepares the transfers by creating a bundle with the given output transaction (made from the transfer objects)
-	// and input transactions from the given address inputs. in case not the entire input is spent to the
-	// defined transfers, the remainder is sent to the given remainder address.
-	// It also automatically checks whether the given input addresses have enough funds for the transfer.
-	bndl, err := api.PrepareTransfers(seed, transfers, inputs, remainderAddr, securityLevel)
-	must(err)
-	
-	// at this point it is good practice to check whether the destination address was already spent from
-	spentStates, err := api.WereAddressesSpentFrom(recipientAddr)
-	must(err)
-	if spentStates[0] == true {
-		fmt.Println("aborting, recipient address is already spent from")
-		return
-	}	
-	
-	// at this point the bundle contains input and output transactions and is signed.
-	// now we need to first select two tips to approve and then do the proof of work.
-	// we can do this in one call with SendTrytes() which does:
-	// 1. select two tips (you can optionally provide a reference)
-	// 2. create an attachToTangleRequest to the remote node or do PoW locally if powFunc is supplied
-	// 3. broadcast the bundle to the network
-	// 4. a storeTransaction call to the connected node
-	_, powFunc := pow.GetBestPoW()
-	bndl, err = api.SendTrytes(3, bndl, 14, powFunc)
-	must(err)
-	
-	fmt.Println("attached bundle with tail hash",  bundle.TailTransactionHash(bndl), "to the tangle")
-}
 ```
 
-## PoW
+## Native code and PoW
 If the library is compiled with CGO enabled, certain functions such as Curl's transform() will
-run native C code for increased speed. Check the PoW files under the `pow` directory to see which
-build flags must be enabled for which PoW function.
+run native C code for increased speed. 
+
+Certain PoW implementations are enabled if the correct flags are passed while compiling your program:
+* `pow_avx` for AVX based PoW
+* `pow_sse` for SSE based PoW
+* `pow_c128` for C int128 based using PoW
+* `pow_arm_c128` for ARM64 int128 C based PoW
+* `pow_c` for C based PoW
+
+PoW implementation in Go is always available.
 
 ## Contributing
 
