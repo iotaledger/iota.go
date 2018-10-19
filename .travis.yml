@@ -1,8 +1,7 @@
 language: go
 
 go:
-  - 1.9.x
-  - 1.10.x
+  - 1.11.1
 
 install:
 - go get github.com/iotaledger/iota.go
@@ -10,13 +9,14 @@ install:
 before_install:
 - go get -u github.com/alecthomas/gometalinter
 - go get -u github.com/mattn/goveralls
+- go get github.com/onsi/ginkgo/ginkgo
 - export PATH=$PATH:$GOPATH/bin
 - export CGO_LDFLAGS_ALLOW='-msse2,-mavx'
 - export CGO_CFLAGS_ALLOW='-msse2,-mavx'
 - gometalinter --install --update
 
 script:
-- travis_wait 30 go test -tags=avx -v -covermode=count -coverprofile=coverage.out -timeout 100m -short
+- travis_wait 30 ginkgo -tags="pow_avx pow_sse pow_c pow_c128" -r --randomizeAllSpecs --randomizeSuites --failOnPending --cover --trace --race --progress
 
 after_success:
 - gometalinter -e bindata --deadline=1000s ./...
