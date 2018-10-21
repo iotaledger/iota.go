@@ -1,11 +1,9 @@
 module github.com/iotaledger/iota.go
 
 require (
+	github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 // indirect
 	github.com/onsi/ginkgo v1.6.0
 	github.com/onsi/gomega v1.4.2
 	github.com/pkg/errors v0.8.0
-	golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b
 	gopkg.in/h2non/gock.v1 v1.0.10
 )
-
-replace golang.org/x/crypto => github.com/luca-moser/crypto v0.0.0-20180913064903-fb2ff8b17554

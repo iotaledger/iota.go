@@ -25,15 +25,6 @@ $ go get github.com/iotaledger/iota.go
 This downloads the latest version of giota and writes the used version into
 the `go.mod` file (vgo is `go get` agnostic).
 
-**Important**:
-You must now tell Go to use a fork of `golang.org/x/crypto` which has the sha3 domain separation bits aligned (so it becomes Keccak).
-
-```
-$ go mod edit -replace golang.org/x/crypto=github.com/luca-moser/crypto@fb2ff8b1755486a8f59b48a2ad494e63f8477ec2
-```
-
-We hope to integrate our changes in the fork into the origin `golang.org/x/crypto` package.
-
 ### Connecting to the network
 
 ```go

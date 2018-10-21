@@ -5,8 +5,8 @@ import (
 	"hash"
 
 	. "github.com/iotaledger/iota.go/consts"
+	keccak "github.com/iotaledger/iota.go/kerl/sha3"
 	. "github.com/iotaledger/iota.go/trinary"
-	keccak "golang.org/x/crypto/sha3"
 )
 
 // Kerl is a to trinary aligned version of keccak
