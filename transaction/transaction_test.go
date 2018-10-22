@@ -2,10 +2,13 @@ package transaction_test
 
 import (
 	"encoding/json"
+	. "github.com/iotaledger/iota.go/api/integration/samples"
+	"github.com/iotaledger/iota.go/bundle"
 	. "github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"strings"
 )
 
 var _ = Describe("Transaction", func() {
@@ -230,6 +233,103 @@ var _ = Describe("Transaction", func() {
 			txCopy.CurrentIndex = 1
 			isTail := IsTailTransaction(&txCopy)
 			Expect(isTail).To(BeFalse())
+		})
+	})
+
+	Context("ExtractJSON()", func() {
+		var c bundle.Bundle
+		BeforeEach(func() {
+			c = make(Transactions, len(BundleWithEmptyJSON))
+			copy(c, BundleWithEmptyJSON)
+		})
+
+		It("parses json object", func() {
+			str, err := ExtractJSON(BundleWithJSON)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal(ParsedJSON))
+		})
+
+		It("parses json object over multiple signature message fragments", func() {
+			str, err := ExtractJSON(BundleWithMultipleJSONMessageFragments)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal(ParsedJSONOfMultipleMessageFragments))
+		})
+
+		It("parses empty json object", func() {
+			str, err := ExtractJSON(BundleWithEmptyJSON)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal("{}"))
+		})
+
+		It("parses boolean values", func() {
+			// false
+			c[0].SignatureMessageFragment = "UCPC9DGDTC" + strings.Repeat("9", 81*27-10)
+			str, err := ExtractJSON(c)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal("false"))
+
+			// true
+			c[0].SignatureMessageFragment = "HDFDIDTC" + strings.Repeat("9", 81*27-8)
+			str, err = ExtractJSON(c)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal("true"))
+		})
+
+		It("parses json arrays", func() {
+			c[0].SignatureMessageFragment = "JCVAQAWAQAGAHDWCFDTCTCFAGALC" + strings.Repeat("9", 81*27-28)
+			str, err := ExtractJSON(c)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal(`[1,2,"three!"]`))
+		})
+
+		It("parses null", func() {
+			c[0].SignatureMessageFragment = "BDID9D9D" + strings.Repeat("9", 81*27-8)
+			str, err := ExtractJSON(c)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal("null"))
+		})
+
+
+		It("parses integers", func() {
+			c[0].SignatureMessageFragment = "XA" + strings.Repeat("9", 81 * 27 - 2)
+			str, err := ExtractJSON(c)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal("3"))
+		})
+
+		It("parses negative integers", func() {
+			c[0].SignatureMessageFragment = "RAXA" + strings.Repeat("9", 81 * 27 - 2)
+			str, err := ExtractJSON(c)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal("-3"))
+		})
+
+		It("parses floats", func() {
+			c[0].SignatureMessageFragment = "XASAVAYA" + strings.Repeat("9", 81 * 27 - 8)
+			str, err := ExtractJSON(c)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal("3.14"))
+		})
+
+		It("parses floats (with signs)", func() {
+			c[0].SignatureMessageFragment = "PAXASAVAYA" + strings.Repeat("9", 81 * 27 - 10)
+			str, err := ExtractJSON(c)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal("3.14"))
+		})
+
+		It("parses negative floats", func() {
+			c[0].SignatureMessageFragment = "RAXASAVAYA" + strings.Repeat("9", 81 * 27 - 10)
+			str, err := ExtractJSON(c)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal("-3.14"))
+		})
+
+		It("parses exponential", func() {
+			c[0].SignatureMessageFragment = "VASAWAXATCPAZA" + strings.Repeat("9", 81 * 27 - 14)
+			str, err := ExtractJSON(c)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(str).To(Equal("123000"))
 		})
 	})
 

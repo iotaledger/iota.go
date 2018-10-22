@@ -2,10 +2,14 @@ package transaction
 
 import (
 	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/converter"
 	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/guards"
 	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
+	"regexp"
+	"strconv"
+	"strings"
 )
 
 type Transactions []Transaction
@@ -251,4 +255,109 @@ func HasValidNonce(t *Transaction, mwm uint64) bool {
 // A tail transaction is one with currentIndex = 0.
 func IsTailTransaction(t *Transaction) bool {
 	return t.CurrentIndex == 0
+}
+
+var numericTrytesRegex = regexp.MustCompile(`^(RA|PA)?(UA|VA|WA|XA|YA|ZA|9B|AB|BB|CB)+((SA)(UA|VA|WA|XA|YA|ZA|9B|AB|BB|CB)+)?((TC|OB)(RA|PA)?(UA|VA|WA|XA|YA|ZA|9B|AB|BB|CB)+)?99`)
+var numPadRegex = regexp.MustCompile(`^(.*)99`)
+
+func ExtractJSON(txs Transactions) (string, error) {
+	if txs == nil || len(txs) == 0 {
+		return "", ErrInvalidBundle
+	}
+
+	switch {
+	case txs[0].SignatureMessageFragment[:10] == "UCPC9DGDTC":
+		return "false", nil
+	case txs[0].SignatureMessageFragment[:8] == "HDFDIDTC":
+		return "true", nil
+	case txs[0].SignatureMessageFragment[:8] == "BDID9D9D":
+		return "null", nil
+	}
+
+	if numericTrytesRegex.MatchString(txs[0].SignatureMessageFragment) {
+		num := txs[0].SignatureMessageFragment[:SignatureMessageFragmentSizeInTrytes-3]
+		n, err := converter.TrytesToASCII(string(num))
+		if err != nil {
+			return "", err
+		}
+		n = strings.Replace(n, "\x00", "", -1)
+		f, err := strconv.ParseFloat(n, 64);
+		if err != nil {
+			return "", errors.Wrap(err, "can't parse number")
+		}
+		return strconv.FormatFloat(f, 'f', -1, 64), nil
+	}
+
+	firstTrytePair := string(txs[0].SignatureMessageFragment[0]) + string(txs[0].SignatureMessageFragment[1])
+	var lastTrytePair string
+
+	switch {
+	case firstTrytePair == "OD":
+		lastTrytePair = "QD"
+	case firstTrytePair == "GA":
+		lastTrytePair = "GA"
+	case firstTrytePair == "JC":
+		lastTrytePair = "LC"
+	default:
+		return "", ErrInvalidTryteEncodedJSON
+	}
+
+	index := 0
+	notEnded := true
+	trytesChunk := ""
+	trytesChecked := 0
+	preliminaryStop := false
+	finalJson := ""
+
+	for index < len(txs) && notEnded {
+		messageChunk := txs[index].SignatureMessageFragment
+
+		// iterate over message chunk 9 trytes at a time
+		for i := 0; i < len(messageChunk); i += 9 {
+			trytes := messageChunk[i : i+9]
+			trytesChunk += trytes
+
+			// get upper limit of trytes that need to be checked
+			upperLimit := len(trytesChunk) - len(trytesChunk)%2
+			trytesToCheck := trytesChunk[trytesChecked:upperLimit]
+
+			// read 2 trytes at a time and check if it equals the closing bracket character
+			for j := 0; j < len(trytesToCheck); j += 2 {
+				trytePair := string(trytesToCheck[j]) + string(trytesToCheck[j+1])
+
+				// if closing bracket was found and there are only trailing 9's
+				// we quit and remove the 9's from trytesChunk
+				if preliminaryStop && trytePair == "99" {
+					notEnded = false
+					break
+				}
+
+				data, err := converter.TrytesToASCII(trytePair)
+				if err != nil {
+					return "", err
+				}
+				finalJson += data
+
+				// set preliminary stop if close bracket was found
+				if trytePair == lastTrytePair {
+					preliminaryStop = true
+				}
+			}
+
+			if !notEnded {
+				break
+			}
+
+			trytesChecked += len(trytesToCheck)
+		}
+
+		// use the next tx in the bundle
+		index += 1
+	}
+
+	if notEnded {
+		return "", ErrInvalidTryteEncodedJSON
+	}
+
+	return finalJson, nil
 }

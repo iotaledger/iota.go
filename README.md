@@ -22,7 +22,7 @@ $ go mod init <your-module-path>
 ```
 $ go get github.com/iotaledger/iota.go
 ```
-This downloads the latest version of giota and writes the used version into
+This downloads the latest version of iota.go and writes the used version into
 the `go.mod` file (vgo is `go get` agnostic).
 
 ### Connecting to the network
