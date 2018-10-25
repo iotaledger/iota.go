@@ -317,10 +317,11 @@ func DoPoW(trunkTx, branchTx Trytes, trytes []Trytes, mwm uint64, pow PowFunc) (
 	if err != nil {
 		return nil, err
 	}
+
 	var prev Trytes
-	for i := len(txs) - 1; i >= 0; i-- {
+	for i := 0; i < len(txs); i++ {
 		switch {
-		case i == len(txs)-1:
+		case i == 0:
 			txs[i].TrunkTransaction = trunkTx
 			txs[i].BranchTransaction = branchTx
 		default:
@@ -338,6 +339,8 @@ func DoPoW(trunkTx, branchTx Trytes, trytes []Trytes, mwm uint64, pow PowFunc) (
 			return nil, err
 		}
 
+		// set new transaction hash
+		txs[i].Hash = TransactionHash(&txs[i])
 		prev = txs[i].Hash
 	}
 	powedTxTrytes := MustTransactionsToTrytes(txs)
