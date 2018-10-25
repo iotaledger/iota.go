@@ -10,10 +10,10 @@ import (
 )
 
 type FindTransactionsQuery struct {
-	Addresses Hashes   `json:"addresses"`
-	Approvees Hashes   `json:"approvees"`
-	Bundles   Hashes   `json:"bundles"`
-	Tags      []Trytes `json:"tags"`
+	Addresses Hashes   `json:"addresses,omitempty"`
+	Approvees Hashes   `json:"approvees,omitempty"`
+	Bundles   Hashes   `json:"bundles,omitempty"`
+	Tags      []Trytes `json:"tags,omitempty"`
 }
 
 type Balance = uint64
