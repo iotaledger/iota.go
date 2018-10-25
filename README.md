@@ -20,10 +20,10 @@ $ go mod init <your-module-path>
 `<your-module-path>` can be paths like github.com/me/awesome-project
 
 ```
-$ go get github.com/iotaledger/iota.go
+$ go get github.com/iotaledger/iota.go/api
 ```
 This downloads the latest version of iota.go and writes the used version into
-the `go.mod` file (vgo is `go get` agnostic).
+the `go.mod` file (vgo is `go get` agnostic). **Make sure to include /api part in the url.**
 
 ### Connecting to the network
 
