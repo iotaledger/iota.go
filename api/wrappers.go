@@ -582,6 +582,13 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 				return nil, err
 			}
 			props.RemainderAddress = &addrs[0]
+		} else {
+			// make sure to remove checksum from remainder address
+			cleanedAddr, err := checksum.RemoveChecksum(*props.RemainderAddress)
+			if err != nil {
+				return nil, err
+			}
+			props.RemainderAddress = &cleanedAddr
 		}
 
 		// add remainder transaction
