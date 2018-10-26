@@ -1,165 +1,215 @@
-[![Build Status](https://travis-ci.org/iotaledger/giota.svg?branch=master)](https://travis-ci.org/iotaledger/giota)
-[![GoDoc](https://godoc.org/github.com/iotaledger/giota?status.svg)](https://godoc.org/github.com/iotaledger/giota)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/giota/master/LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/iotaledger/giota)](https://goreportcard.com/report/github.com/iotaledger/giota)
+# iota.go
 
-# gIOTA
+[![Build Status](https://travis-ci.org/iotaledger/iota.go.svg?branch=master)](https://travis-ci.org/iotaledger/iota.go)
+[![GoDoc](https://godoc.org/github.com/iotaledger/iota.go?status.svg)](https://godoc.org/github.com/iotaledger/iota.go)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/iota.go/master/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/iotaledger/iota.go)](https://goreportcard.com/report/github.com/iotaledger/iota.go)
 
-Client library for the IOTA reference implementation (IRI).
+## Getting started
 
-This library is still in flux and there maybe breaking changes.
+### Installation
 
-Consider to use a dependency tool to use vendoring,
-e.g. [godep](https://github.com/tools/godep), [glide](https://github.com/Masterminds/glide) or [govendor](https://github.com/kardianos/govendor).
+It is suggested to use [vgo modules](https://github.com/golang/go/wiki/Modules) 
+(since Go 1.11) in your project for dependency management:
 
-
-Refer to [godoc](https://godoc.org/github.com/iotaledger/giota) for details.
-
-## Install
-
-You will need C compiler for linux to compile PoW routine in C.
-
+In any directory outside of GOPATH:
 ```
-$ go get -u github.com/iotaledger/giota
+$ go mod init <your-module-path>
 ```
 
-You will need C compiler and OpenCL environment (hardware and software) to compile PoW routine for GPU 
-and need to add `opencl` tag when you build.
+`<your-module-path>` can be paths like github.com/me/awesome-project
 
 ```
-$ go build -tags=gpu
+$ go get github.com/iotaledger/iota.go/api
 ```
+This downloads the latest version of iota.go and writes the used version into
+the `go.mod` file (vgo is `go get` agnostic). **Make sure to include /api part in the url.**
 
-## Examples
+### Connecting to the network
 
 ```go
+package main
 
-import "github.com/iotaledger/giota"
+import (
+    . "github.com/iotaledger/iota.go/api"
+    "fmt"
+)
 
-//Trits
-tritsFrom:=[]int8{1,-1,1,0,1,1,0,-1,0}
-trits,err:=giota.ToTrits(tritsFrom)
+var endpoint = "<node-url>"
 
-//Trytes
-trytes:=trits.Trytes()
-trytesFrom:="ABCDEAAC9ACB9PO..."
-trytes2,err:=giota.ToTrytes(trytesFrom)
-
-//Hash
-hash:=trytes.Hash()
-
-//API
-api := giota.NewAPI("http://localhost:14265", nil)
-resp, err := api.FindTransactions([]Trytes{"DEXRPL...SJRU"})
-
-///Address
-index:=0
-security:=2
-adr,err:=giota.NewAddress(trytes,index,security) //without checksum.
-adrWithChecksum := adr.WithChecksum() //adrWithChecksum is trytes type.
-
-//transaction
-tx,err:=giota.NewTransaction(trytes)
-mwm := 14
-if tx.HasValidNonce(mwm){...}
-trytes2:=tx.trytes()
-
-//create signature
-key := giota.NewKey(seed, index, security)
-norm := bundleHash.Normalize()
-sign := giota.Sign(norm[:27], key[:6561/3])
-
-//validate signature
-if giota.ValidateSig(adr, []giota.Trytes{sign}, bundleHash) {...}
-
-//send
-trs := []giota.Transfer{
-	giota.Transfer{
-		Address: "KTXF...QTIWOWTY",
-		Value:   20,
-		Tag: "MOUDAMEPO",
-	},
+func main() {
+	// compose a new API instance
+	api, err := ComposeAPI(HttpClientSettings{URI: endpoint})
+	must(err)
+	
+	nodeInfo, err := api.GetNodeInfo()
+	must(err)
+	
+	fmt.Println("latest milestone index:", nodeInfo.LatestMilestoneIndex)
 }
-_, pow := giota.GetBestPoW()
-bdl, err = giota.Send(api, seed, security, trs, mwm, pow)
 
-
-// promote transaction
-trs := []giota.Transfer{
-	giota.Transfer{
-		Address: "999...9999999",
-		Value:   0,
-		Tag: "PROMOTESPAM",
-	},
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
-tail := []giota.Trytes("NLN...TY99999")
-_, pow := giota.GetBestPoW()
-bdl, err = giota.Promote(api, tail, giota.Depth, trs, mwm, pow)
 ```
 
-## PoW (Proof of Work) Benchmarking
+### Creating & broadcasting transactions
 
-You can benchmark PoWs (by C,Go,SSE) by
+Publish transfers by calling `PrepareTransfers()` and piping the prepared bundle to `SendTrytes()`.
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/iotaledger/iota.go/address"
+	. "github.com/iotaledger/iota.go/api"
+	"github.com/iotaledger/iota.go/bundle"
+	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/pow"
+	"github.com/iotaledger/iota.go/trinary"
+)
+
+var endpoint = "<node-url>"
+
+// must be 81 trytes long and truly random
+var seed = trinary.Trytes("AAAA....")
+
+// difficulty of the proof of work required to attach a transaction on the tangle
+const mwm = 14
+
+// how many milestones back to start the random walk from
+const depth = 3
+
+// can be 90 trytes long (with checksum)
+const recipientAddress = "BBBB....."
+
+func main() {
+
+	// get the best available PoW implementation
+	_, powFunc := pow.GetBestPoW()
+
+	// create a new API instance
+	api, err := ComposeAPI(HttpClientSettings{
+		URI: endpoint,
+		// (!) if no PoWFunc is supplied, then the connected node is requested to do PoW for us
+		// via the AttachToTangle() API call.
+		LocalPowFunc: powFunc,
+	})
+	must(err)
+
+	// create a transfer to the given recipient address
+	// optionally define a message and tag
+	transfers := bundle.Transfers{
+		{
+			Address: recipientAddress,
+			Value:   80,
+		},
+	}
+
+	// create inputs for the transfer
+	inputs := []Address{
+		{
+			Address:  "CCCCC....",
+			Security: SecurityLevelMedium,
+			KeyIndex: 0,
+			Balance:  100,
+		},
+	}
+
+	// create an address for the remainder.
+	// in this case we will have 20 iotas as the remainder, since we spend 100 from our input
+	// address and only send 80 to the recipient.
+	remainderAddress, err := address.GenerateAddress(seed, 2, SecurityLevelMedium)
+	must(err)
+
+	// we don't need to set the security level or timestamp in the options because we supply
+	// the input and remainder addresses.
+	prepTransferOpts := PrepareTransfersOptions{Inputs: inputs, RemainderAddress: &remainderAddress}
+
+	// prepare the transfer by creating a bundle with the given transfers and inputs.
+	// the result are trytes ready for PoW.
+	trytes, err := api.PrepareTransfers(seed, transfers, prepTransferOpts)
+	must(err)
+
+	// you can decrease your chance of sending to a spent address by checking the address before
+	// broadcasting your bundle.
+	spent, err := api.WereAddressesSpentFrom(transfers[0].Address)
+	must(err)
+
+	if spent[0] {
+		fmt.Println("recipient address is spent from, aborting transfer")
+		return
+	}
+
+	// at this point the bundle trytes are signed.
+	// now we need to:
+	// 1. select two tips
+	// 2. do proof-of-work
+	// 3. broadcast the bundle
+	// 4. store the bundle
+	// SendTrytes() conveniently does the steps above for us.
+	bndl, err := api.SendTrytes(trytes, depth, mwm)
+	must(err)
+
+	fmt.Println("broadcasted bundle with tail tx hash: ", bundle.TailTransactionHash(bndl))
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 
 ```
-$ go test -v -run Pow
-```
 
-or if you want to add OpenCL PoW,
+## Native code and PoW
+If the library is compiled with CGO enabled, certain functions such as Curl's transform() will
+run native C code for increased speed. 
 
-```
-$ go test -tags=gpu -v -run Pow
-```
+Certain PoW implementations are enabled if the correct flags are passed while compiling your program:
+* `pow_avx` for AVX based PoW
+* `pow_sse` for SSE based PoW
+* `pow_c128` for C int128 based using PoW
+* `pow_arm_c128` for ARM64 int128 C based PoW
+* `pow_c` for C based PoW
 
-then it outputs like:
+PoW implementation in Go is always available.
+Make sure to define `LocalPoWFunc` in your provider settings (i.e. `HttpClientSettings`) if you want to use local PoW. 
 
-```
-$ go test -tags=gpu -v -run Pow
-=== RUN   TestPowC
---- PASS: TestPowC (15.93s)
-	pow_c_test.go:50: 1550 kH/sec on C PoW
-=== RUN   TestPowCL
---- PASS: TestPowCL (17.45s)
-	pow_cl_test.go:49: 332 kH/sec on GPU PoW
-=== RUN   TestPowGo
---- PASS: TestPowGo (21.21s)
-	pow_go_test.go:50: 1164 kH/sec on Go PoW
-=== RUN   TestPowSSE
---- PASS: TestPowSSE (13.41s)
-	pow_sse_test.go:52: 2292 kH/sec on SSE PoW
-```
+## Contributing
 
-Note that in [travis CI](https://travis-ci.org/iotaledger/giota/jobs/227452499)
-the result is:
+We thank everyone for their contributions. Here is quick guide to get started with iota.go:
+
+### Clone and bootstrap
+
+1. Fork the repo with <kbd>Fork</kbd> button at top right corner.
+2. Clone your fork locally and `cd` in it.
+3. Bootstrap your environment with:
 
 ```
-=== RUN   TestPowSSE
---- PASS: TestPowSSE (2.73s)
-	pow_sse_test.go:52: 12902 kH/sec on SSE PoW
-=== RUN   TestPowSSE1
---- PASS: TestPowSSE1 (16.19s)
-	pow_sse_test.go:59: 1900 kH/sec on SSE PoW
-=== RUN   TestPowSSE32
---- PASS: TestPowSSE32 (1.36s)
-	pow_sse_test.go:67: 16117 kH/sec on SSE PoW
-=== RUN   TestPowSSE64
---- PASS: TestPowSSE64 (0.73s)
-	pow_sse_test.go:75: 20226 kH/sec on SSE PoW
+go get ./...
 ```
 
-It gets over `20MH/s` for 64 threads using SSE2.
+This will install all needed dependencies.
 
-Now IOTA uses Min Weight Magnitude = 15, which means 
-3^15≒14M Hashes are needed to finish PoW in average.
-So it takes just 14/20 < 0.7sec for 1 tx to do PoW.
+### Run the tests
 
+Make your changes on a single or across multiple packages and test the system in integration. Run from the _root directory_:
 
-## TODO
+```
+go test ./...
+```
 
+To run tests of specific package just `cd` to the package directory and run `go test` from there.
 
-* [ ] Multisig
-* [ ] More tests :(
+## Reporting Issues
 
-<hr>
+Please report any problems you encouter during development by [opening an issue](https://github.com/iotaledger/iota.go/issues/new).
 
-Released under the [MIT License](LICENSE).
+## Join the discussion
+
+Suggestions and discussion around specs, standardization and enhancements are highly encouraged.
+You are invited to join the discussion on [IOTA Discord](https://discord.gg/DTbJufa).
