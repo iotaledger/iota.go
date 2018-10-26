@@ -28,7 +28,7 @@ func IsTrytesOfExactLength(trytes Trytes, length int) bool {
 
 // Checks if input is correct trytes consisting of [9A-Z] and length <= maxLength
 func IsTrytesOfMaxLength(trytes Trytes, max int) bool {
-	if len(trytes) > max {
+	if len(trytes) > max || len(trytes) < 1 {
 		return false
 	}
 	match, _ := regexp.MatchString("^[9A-Z]+$", string(trytes))
@@ -78,12 +78,12 @@ func IsTransactionHashWithMWM(trytes Trytes, mwm uint) bool {
 
 // Checks if input is correct transaction trytes (2673 trytes)
 func IsTransactionTrytes(trytes Trytes) bool {
-	return IsTrytesOfExactLength(trytes, TransactionTrinarySize/3)
+	return IsTrytesOfExactLength(trytes, TransactionTrytesSize)
 }
 
 // Checks if input is correct transaction trytes (2673 trytes) with given MWM
 func IsTransactionTrytesWithMWM(trytes Trytes, mwm uint) (bool, error) {
-	correctLength := IsTrytesOfExactLength(trytes, TransactionTrinarySize/3)
+	correctLength := IsTrytesOfExactLength(trytes, TransactionTrytesSize)
 	if !correctLength {
 		return false, nil
 	}
@@ -99,5 +99,5 @@ func IsTransactionTrytesWithMWM(trytes Trytes, mwm uint) (bool, error) {
 
 // Checks if input is valid attached transaction trytes. For attached transactions last 243 trytes are non-zero.
 func IsAttachedTrytes(trytes Trytes) bool {
-	return IsTrytesOfExactLength(trytes, TransactionTrinarySize/3) && !IsEmptyTrytes(trytes[(TransactionTrinarySize/3)-3*HashTrytesSize:])
+	return IsTrytesOfExactLength(trytes, TransactionTrytesSize) && !IsEmptyTrytes(trytes[(TransactionTrytesSize)-3*HashTrytesSize:])
 }

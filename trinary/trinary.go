@@ -27,7 +27,7 @@ type Trits = []int8
 
 // ValidTrit returns true if t is a valid trit.
 func ValidTrit(t int8) bool {
-	if t >= -1 && t <= 1 {
+	if t == -1 || t == 0 || t == 1 {
 		return true
 	}
 	return false

@@ -109,7 +109,7 @@ func (m *Multisig) InitiateTransfer(input MultisigInput, transfers bundle.Transf
 			return nil, err
 		}
 		transfer.Address = addr
-		transfer.Tag = Pad(transfer.Tag, TagTrinarySize/3)
+		transfer.Tag = bundle.PadTag(transfer.Tag)
 	}
 
 	if input.Balance > 0 {

@@ -3,7 +3,6 @@ package api
 import (
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/pow"
-	. "github.com/iotaledger/iota.go/trinary"
 )
 
 type Provider interface {
@@ -12,13 +11,11 @@ type Provider interface {
 }
 
 type API struct {
-	provider       Provider
-	attachToTangle AttachToTangleFunc
+	provider     Provider
+	localPoWfunc pow.PowFunc
 }
 
 type CreateProviderFunc func(settings interface{}) (Provider, error)
-
-type AttachToTangleFunc = func(trunkTxHash Hash, branchTxHash Hash, mwm uint64, trytes []Trytes) ([]Trytes, error)
 
 type Settings interface {
 	PowFunc() pow.PowFunc
@@ -42,14 +39,10 @@ func ComposeAPI(settings Settings, createProvider ...CreateProviderFunc) (*API, 
 		return nil, err
 	}
 
-	var attachToTangle AttachToTangleFunc
+	api := &API{provider: provider}
 	if settings.PowFunc() != nil {
-		attachToTangle = func(trunkTxHash Hash, branchTxHash Hash, mwm uint64, trytes []Trytes) ([]Trytes, error) {
-			return pow.DoPoW(trunkTxHash, branchTxHash, trytes, mwm, settings.PowFunc())
-		}
-	} else {
-		attachToTangle = nil
+		api.localPoWfunc = settings.PowFunc()
 	}
 
-	return &API{attachToTangle: attachToTangle, provider: provider}, nil
+	return api, nil
 }

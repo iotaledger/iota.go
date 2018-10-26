@@ -36,15 +36,15 @@ func Key(subseed Trits, securityLevel SecurityLevel) (Trits, error) {
 		return nil, err
 	}
 
-	key := make(Trits, HashTrinarySize*27*int(securityLevel))
+	key := make(Trits, KeyFragmentLength*int(securityLevel))
 
 	for i := 0; i < int(securityLevel); i++ {
-		for j := 0; j < 27; j++ {
+		for j := 0; j < KeySegmentsPerFragment; j++ {
 			b, err := k.Squeeze(HashTrinarySize)
 			if err != nil {
 				return nil, err
 			}
-			copy(key[(i*27+j)*HashTrinarySize:], b)
+			copy(key[(i*KeySegmentsPerFragment+j)*HashTrinarySize:], b)
 		}
 	}
 
@@ -54,20 +54,20 @@ func Key(subseed Trits, securityLevel SecurityLevel) (Trits, error) {
 // Digests hashes each segment of each key fragment 26 times and returns them.
 func Digests(key Trits) (Trits, error) {
 	var err error
-	fragments := int(math.Floor(float64(len(key)) / 6561))
-	digests := make(Trits, fragments*243)
+	fragments := int(math.Floor(float64(len(key)) / KeyFragmentLength))
+	digests := make(Trits, fragments*HashTrinarySize)
 	buf := make(Trits, HashTrinarySize)
 
 	// iterate through each key fragment
 	for i := 0; i < fragments; i++ {
-		keyFragment := key[i*6561 : (i+1)*6561]
+		keyFragment := key[i*KeyFragmentLength : (i+1)*KeyFragmentLength]
 
 		// each fragment consists of 27 segments
-		for j := 0; j < 27; j++ {
-			copy(buf, keyFragment[j*243:(j+1)*243])
+		for j := 0; j < KeySegmentsPerFragment; j++ {
+			copy(buf, keyFragment[j*HashTrinarySize:(j+1)*HashTrinarySize])
 
 			// hash each segment 26 times
-			for k := 0; k < 26; k++ {
+			for k := 0; k < KeySegmentHashRounds; k++ {
 				k := kerl.NewKerl()
 				k.Absorb(buf)
 				buf, err = k.Squeeze(HashTrinarySize)
@@ -76,8 +76,8 @@ func Digests(key Trits) (Trits, error) {
 				}
 			}
 
-			for k := 0; k < 243; k++ {
-				keyFragment[j*243+k] = buf[k]
+			for k := 0; k < HashTrinarySize; k++ {
+				keyFragment[j*HashTrinarySize+k] = buf[k]
 			}
 		}
 
@@ -91,8 +91,8 @@ func Digests(key Trits) (Trits, error) {
 		if err != nil {
 			return nil, err
 		}
-		for j := 0; j < 243; j++ {
-			digests[i*243+j] = buf[j]
+		for j := 0; j < HashTrinarySize; j++ {
+			digests[i*HashTrinarySize+j] = buf[j]
 		}
 	}
 
@@ -112,7 +112,7 @@ func Address(digests Trits) (Trits, error) {
 // It returns a slice with the tryte decimal representation without any 13/M values.
 func NormalizedBundleHash(bundleHash Hash) []int8 {
 	normalizedBundle := make([]int8, HashTrytesSize)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < MaxSecurityLevel; i++ {
 		sum := 0
 		for j := 0; j < 27; j++ {
 			normalizedBundle[i*27+j] = int8(TritsToInt(MustTrytesToTrits(string(bundleHash[i*27+j]))))
@@ -122,7 +122,7 @@ func NormalizedBundleHash(bundleHash Hash) []int8 {
 		if sum >= 0 {
 			for ; sum > 0; sum-- {
 				for j := 0; j < 27; j++ {
-					if normalizedBundle[i*27+j] > -13 {
+					if normalizedBundle[i*27+j] > MinTryteValue {
 						normalizedBundle[i*27+j]--
 						break
 					}
@@ -131,7 +131,7 @@ func NormalizedBundleHash(bundleHash Hash) []int8 {
 		} else {
 			for ; sum < 0; sum++ {
 				for j := 0; j < 27; j++ {
-					if normalizedBundle[i*27+j] < 13 {
+					if normalizedBundle[i*27+j] < MaxTryteValue {
 						normalizedBundle[i*27+j]++
 						break
 					}
@@ -149,24 +149,24 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits) (T
 
 	k := kerl.NewKerl()
 
-	for i := 0; i < 27; i++ {
-		hash := sigFrag[i*243 : (i+1)*243]
+	for i := 0; i < KeySegmentsPerFragment; i++ {
+		hash := sigFrag[i*HashTrinarySize : (i+1)*HashTrinarySize]
 
-		to := 13 - normalizedBundleHashFragment[i]
+		to := MaxTryteValue - normalizedBundleHashFragment[i]
 		for j := 0; j < int(to); j++ {
 			k.Reset()
 			if err := k.Absorb(hash); err != nil {
 				return nil, err
 			}
 			var err error
-			hash, err = k.Squeeze(243)
+			hash, err = k.Squeeze(HashTrinarySize)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		for j := 0; j < 243; j++ {
-			sigFrag[i*243+j] = hash[j]
+		for j := 0; j < HashTrinarySize; j++ {
+			sigFrag[i*HashTrinarySize+j] = hash[j]
 		}
 	}
 
@@ -178,10 +178,10 @@ func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits) (Trits
 	k := kerl.NewKerl()
 	buf := make(Trits, HashTrinarySize)
 
-	for i := 0; i < 27; i++ {
-		copy(buf, signatureFragment[i*243:(i+1)*243])
+	for i := 0; i < KeySegmentsPerFragment; i++ {
+		copy(buf, signatureFragment[i*HashTrinarySize:(i+1)*HashTrinarySize])
 
-		for j := normalizedBundleHashFragment[i] + 13; j > 0; j-- {
+		for j := normalizedBundleHashFragment[i] + MaxTryteValue; j > 0; j-- {
 			kk := kerl.NewKerl()
 			err := kk.Absorb(buf)
 			if err != nil {
@@ -204,21 +204,21 @@ func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits) (Trits
 // ValidateSignatures validates the given signature fragments by checking whether the
 // digests computed from the bundle hash and fragments equal the passed address.
 func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Hash) (bool, error) {
-	normalizedBundleHashFragments := make([][]int8, 3)
+	normalizedBundleHashFragments := make([][]int8, MaxSecurityLevel)
 	normalizeBundleHash := NormalizedBundleHash(bundleHash)
 
-	for i := 0; i < 3; i++ {
-		normalizedBundleHashFragments[i] = normalizeBundleHash[i*27 : (i+1)*27]
+	for i := 0; i < MaxSecurityLevel; i++ {
+		normalizedBundleHashFragments[i] = normalizeBundleHash[i*KeySegmentsPerFragment : (i+1)*KeySegmentsPerFragment]
 	}
 
-	digests := make(Trits, len(fragments)*243)
+	digests := make(Trits, len(fragments)*HashTrinarySize)
 	for i := 0; i < len(fragments); i++ {
-		digest, err := Digest(normalizedBundleHashFragments[i%3], MustTrytesToTrits(fragments[i]))
+		digest, err := Digest(normalizedBundleHashFragments[i%MaxSecurityLevel], MustTrytesToTrits(fragments[i]))
 		if err != nil {
 			return false, err
 		}
-		for j := 0; j < 243; j++ {
-			digests[i*243+j] = digest[j]
+		for j := 0; j < HashTrinarySize; j++ {
+			digests[i*HashTrinarySize+j] = digest[j]
 		}
 	}
 

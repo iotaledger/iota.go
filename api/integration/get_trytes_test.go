@@ -23,8 +23,8 @@ var _ = Describe("GetTrytes()", func() {
 			trytes, err := api.GetTrytes(DefaultHashes()...)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(trytes).To(Equal([]Trytes{
-				strings.Repeat("9", TransactionTrinarySize/3),
-				strings.Repeat("9", TransactionTrinarySize/3),
+				strings.Repeat("9", TransactionTrytesSize),
+				strings.Repeat("9", TransactionTrytesSize),
 			}))
 		})
 	})

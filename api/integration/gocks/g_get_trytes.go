@@ -18,8 +18,8 @@ func init() {
 		JSON(GetTrytesCommand{Command: GetTrytesCmd, Hashes: DefaultHashes()}).
 		Reply(200).
 		JSON(GetTrytesResponse{Trytes: []Trytes{
-			strings.Repeat("9", consts.TransactionTrinarySize/3),
-			strings.Repeat("9", consts.TransactionTrinarySize/3),
+			strings.Repeat("9", consts.TransactionTrytesSize),
+			strings.Repeat("9", consts.TransactionTrytesSize),
 		}})
 
 	gock.New(DefaultLocalIRIURI).

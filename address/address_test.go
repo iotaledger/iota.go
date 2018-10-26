@@ -20,6 +20,7 @@ var _ = Describe("Address", func() {
 		"QELVIIRYZZFJSRKMJSDAEOQJRSAWCGMZOGMTBDNJPIOXQTUGMVPCYLWHGHREKDRRVABPULZI9BOWZQPF9",
 	}
 
+	addrWithChecksum := "9OUUHSXJCDAMBWCRUJNYDP9UONYTZPSWYAEPUWUDNTBHCINBJY9QBLERA9OKCBJSUUIADQSIVVFNKTPRYKOAXNZYRX"
 	checksums := []Trytes{"OHHJEQVCY", "QUGONROEZ", "DEJHGSUFY", "GEBW9UBHZ", "L9ACZQYCA"}
 
 	addressesWithChecksum := make([]Trytes, len(addresses))
@@ -45,6 +46,10 @@ var _ = Describe("Address", func() {
 	Context("ValidateAddress()", func() {
 		It("should return nil for valid address", func() {
 			Expect(ValidAddress(addresses[0])).ToNot(HaveOccurred())
+		})
+
+		It("should return nil for valid address with checksum", func() {
+			Expect(ValidAddress(addrWithChecksum)).ToNot(HaveOccurred())
 		})
 
 		It("should return an error for an invalid address", func() {

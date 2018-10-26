@@ -5,6 +5,7 @@ import (
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/guards"
 	. "github.com/iotaledger/iota.go/guards/validators"
+	"github.com/iotaledger/iota.go/pow"
 	. "github.com/iotaledger/iota.go/trinary"
 	"strconv"
 )
@@ -32,8 +33,8 @@ func (api *API) AddNeighbors(uris ...string) (int64, error) {
 // If a Proof-of-Work function is supplied when composing the API, then that function is used
 // instead of using the connected node.
 func (api *API) AttachToTangle(trunkTxHash Hash, branchTxHash Hash, mwm uint64, trytes []Trytes) ([]Trytes, error) {
-	if api.attachToTangle != nil {
-		return api.attachToTangle(trunkTxHash, branchTxHash, mwm, trytes)
+	if api.localPoWfunc != nil {
+		return pow.DoPoW(trunkTxHash, branchTxHash, trytes, mwm, api.localPoWfunc)
 	}
 
 	if err := Validate(ValidateTransactionTrytes(trytes...)); err != nil {
@@ -59,8 +60,8 @@ func (api *API) AttachToTangle(trunkTxHash Hash, branchTxHash Hash, mwm uint64, 
 	return rsp.Trytes, nil
 }
 
-// BroadcastTransactions broadcasts a list of attached transaction trytes to the network by calling
-// the broadcastTransactions IRI API command. Tip-selection and Proof-of-Work must be done first by calling
+// BroadcastTransactions broadcasts a list of attached transaction trytes to the network.
+// Tip-selection and Proof-of-Work must be done first by calling
 // GetTransactionsToApprove and AttachToTangle or an equivalent attach method.
 //
 // You may use this method to increase odds of effective transaction propagation.
@@ -78,15 +79,14 @@ func (api *API) BroadcastTransactions(trytes ...Trytes) ([]Trytes, error) {
 	return trytes, nil
 }
 
-// CheckConsistency checks if a transaction is consistent or a set of transactions are co-consistent by calling
-// the checkConsistency IRI API command.
+// CheckConsistency checks if a transaction is consistent or a set of transactions are co-consistent.
 //
 // Co-consistent transactions and the transactions that they approve (directly or indirectly),
 // are not conflicting with each other and the rest of the ledger.
 //
 // As long as a transaction is consistent, it might be accepted by the network.
 // In case a transaction is inconsistent, it will not be accepted and a reattachment
-// is required by calling ReplayBundle.
+// is required by calling ReplayBundle().
 func (api *API) CheckConsistency(hashes ...Hash) (bool, string, error) {
 	if err := Validate(
 		ValidateTransactionHashes(hashes...),
@@ -134,8 +134,8 @@ func validateFindTransactions(query *FindTransactionsQuery) error {
 	return nil
 }
 
-// FindTransactions searches for transaction hashes by calling the findTransactions IRI API command.
-// It allows to search for transactions by passing a query object with addresses, tags and approvees fields.
+// FindTransactions searches for transaction hashes.
+// It allows to search for transactions by passing a query object with addresses, bundle hashes, tags and/or approvees fields.
 // Multiple query fields are supported and FindTransactions returns the intersection of the results.
 func (api *API) FindTransactions(query FindTransactionsQuery) (Hashes, error) {
 	if err := validateFindTransactions(&query); err != nil {
@@ -158,8 +158,7 @@ func (api *API) FindTransactions(query FindTransactionsQuery) (Hashes, error) {
 	return rsp.Hashes, nil
 }
 
-// GetBalances fetches confirmed balances of the given addresses at the latest solid milestone
-// by calling the getBalances IRI API command.
+// GetBalances fetches confirmed balances of the given addresses at the latest solid milestone.
 func (api *API) GetBalances(addresses Hashes, threshold uint64) (*Balances, error) {
 	if err := Validate(ValidateHashes(addresses...)); err != nil {
 		return nil, err
@@ -193,7 +192,7 @@ func (api *API) GetBalances(addresses Hashes, threshold uint64) (*Balances, erro
 	return balances, err
 }
 
-// GetInclusionStates fetches inclusion states of a given list of transactions by calling the getInclusionStates IRI API command.
+// GetInclusionStates fetches inclusion states of a given list of transactions.
 func (api *API) GetInclusionStates(txHashes Hashes, tips ...Hash) ([]bool, error) {
 	if err := Validate(
 		ValidateTransactionHashes(txHashes...),
@@ -223,7 +222,7 @@ func (api *API) GetNeighbors() (Neighbors, error) {
 	return rsp.Neighbors, nil
 }
 
-// GetNodeInfo returns information about the connected node by calling the getNodeInfo IRI API command.
+// GetNodeInfo returns information about the connected node.
 func (api *API) GetNodeInfo() (*GetNodeInfoResponse, error) {
 	cmd := &GetNodeInfoCommand{Command: GetNodeInfoCmd}
 	rsp := &GetNodeInfoResponse{}
@@ -243,7 +242,7 @@ func (api *API) GetTips() (Hashes, error) {
 	return rsp.Hashes, nil
 }
 
-// GetTransactionsToApprove does the tip selection by calling the getTransactionsToApprove IRI API command.
+// GetTransactionsToApprove does the tip selection via the connected node.
 //
 // Returns a pair of approved transactions which are chosen randomly after validating the transaction trytes,
 // the signatures and cross-checking for conflicting transactions.
@@ -269,8 +268,7 @@ func (api *API) GetTransactionsToApprove(depth uint64, reference ...Hash) (*Tran
 	return &rsp.TransactionsToApprove, nil
 }
 
-// GetTrytes fetches the transaction trytes given a list of transaction hashes by calling
-// the getTrytes IRI API command.
+// GetTrytes fetches the transaction trytes given a list of transaction hashes.
 func (api *API) GetTrytes(hashes ...Hash) ([]Trytes, error) {
 	if err := Validate(
 		ValidateNonEmptyStrings(ErrInvalidTransactionHash, hashes...),
@@ -292,10 +290,7 @@ func (api *API) InterruptAttachToTangle() error {
 	return api.provider.Send(cmd, nil)
 }
 
-// RemoveNeighbors removes a list of neighbors from the connected IRI node by calling the removeNeighbors IRI API command.
-//
-// Assumes that the removeNeighbors IRI API command is available on the node.
-//
+// RemoveNeighbors removes a list of neighbors from the connected IRI node.
 // This method has a temporary effect until the IRI node relaunches.
 func (api *API) RemoveNeighbors(uris ...string) (int64, error) {
 	if err := Validate(
@@ -312,9 +307,9 @@ func (api *API) RemoveNeighbors(uris ...string) (int64, error) {
 	return rsp.RemovedNeighbors, nil
 }
 
-// StoreTransactions persists a list of attached transaction trytes in the store of the connected node by calling
-// the storeTransactions IRI API command. Tip-selection and Proof-of-Work must be done first by calling
-// GetTransactionsToApprove and AttachToTangle or an equivalent attach method.
+// StoreTransactions persists a list of attached transaction trytes in the store of the connected node.
+// Tip-selection and Proof-of-Work must be done first by calling GetTransactionsToApprove and
+// AttachToTangle or an equivalent attach method.
 //
 // Persist the transaction trytes in local storage before calling this command, to ensure
 // reattachment is possible, until your bundle has been included.

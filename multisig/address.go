@@ -7,9 +7,9 @@ import (
 )
 
 // NewMultisigAddress creates a new multisig address object.
-func NewMultisigAddress(digests []Trytes) (*MultisigAddress, error) {
+func NewMultisigAddress(digests ...Trytes) (*MultisigAddress, error) {
 	m := &MultisigAddress{k: kerl.NewKerl()}
-	if digests != nil {
+	if len(digests) > 0 {
 		if err := m.Absorb(digests...); err != nil {
 			return nil, err
 		}

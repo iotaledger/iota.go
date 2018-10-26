@@ -28,8 +28,11 @@ const (
 	HashTrytesSize                       = HashTrinarySize / 3
 	HashBytesSize                        = 48
 	IntLength                            = HashBytesSize / 4
-	KeyFragmentLength                    = 6561
+	KeySegmentsPerFragment               = 27
+	KeyFragmentLength                    = HashTrinarySize * KeySegmentsPerFragment // 6561
+	KeySegmentHashRounds                 = 26
 	SignatureMessageFragmentSizeInTrytes = SignatureMessageFragmentTrinarySize / 3
+	MaxSecurityLevel                     = 3
 )
 
 const (
@@ -92,4 +95,6 @@ const (
 		TagTrinarySize + AttachmentTimestampTrinarySize +
 		AttachmentTimestampLowerBoundTrinarySize + AttachmentTimestampUpperBoundTrinarySize +
 		NonceTrinarySize
+
+	TransactionTrytesSize = TransactionTrinarySize / 3
 )

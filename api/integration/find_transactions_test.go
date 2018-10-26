@@ -40,9 +40,9 @@ var _ = Describe("FindTransactions()", func() {
 
 		It("returns an error for invalid addresses", func() {
 			_, err := api.FindTransactions(FindTransactionsQuery{Addresses: Hashes{"balalaika"}})
-			Expect(err).To(HaveOccurred())
+			Expect(errors.Cause(err)).To(Equal(ErrInvalidHash))
 			_, err = api.FindTransactions(FindTransactionsQuery{Addresses: Hashes{}})
-			Expect(err).To(HaveOccurred())
+			Expect(errors.Cause(err)).To(Equal(ErrInvalidAddress))
 		})
 
 	})

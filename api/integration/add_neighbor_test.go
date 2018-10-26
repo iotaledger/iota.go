@@ -3,8 +3,10 @@ package integration_test
 import (
 	. "github.com/iotaledger/iota.go/api"
 	_ "github.com/iotaledger/iota.go/api/integration/gocks"
+	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 )
 
 var _ = Describe("AddNeighbors()", func() {
@@ -27,12 +29,12 @@ var _ = Describe("AddNeighbors()", func() {
 
 	It("returns an error for invalid uris", func() {
 		_, err := api.AddNeighbors("example.com")
-		Expect(err).To(HaveOccurred())
+		Expect(errors.Cause(err)).To(Equal(ErrInvalidURI))
 	})
 
 	It("returns an error for empty uris", func() {
 		_, err := api.AddNeighbors()
-		Expect(err).To(HaveOccurred())
+		Expect(errors.Cause(err)).To(Equal(ErrInvalidURI))
 	})
 
 })

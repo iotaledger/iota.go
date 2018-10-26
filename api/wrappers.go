@@ -155,6 +155,7 @@ func (api *API) GetBundle(tailTxHash Hash) (bundle.Bundle, error) {
 
 // GetBundlesFromAddresses fetches all bundles from the given addresses and optionally sets
 // the confirmed property on each transaction using GetLatestInclusion.
+// This function does not validate the bundles.
 func (api *API) GetBundlesFromAddresses(addresses Hashes, inclusionState ...bool) (bundle.Bundles, error) {
 	txs, err := api.FindTransactionObjects(FindTransactionsQuery{Addresses: addresses})
 	if err != nil {

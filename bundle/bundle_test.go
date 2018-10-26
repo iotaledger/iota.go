@@ -118,7 +118,7 @@ var _ = Describe("Bundle", func() {
 			Expect(len(entries)).To(Equal(1))
 			entry := entries[0]
 			Expect(entry.Address).To(Equal(transfers[0].Address[:81]))
-			Expect(len(entry.SignatureMessageFragments)).To(Equal(3))
+			Expect(len(entry.SignatureMessageFragments)).To(Equal(txsToFitMsg))
 			Expect(entry.SignatureMessageFragments[0]).To(Equal(strings.Repeat("A", SignatureMessageFragmentSizeInTrytes)))
 			Expect(entry.Value).To(Equal(int64(transfers[0].Value)))
 		})

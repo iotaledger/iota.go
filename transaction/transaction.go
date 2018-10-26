@@ -79,7 +79,7 @@ func ParseTransaction(trits Trits) (*Transaction, error) {
 // ValidTransactionTrytes checks whether the given trytes make up a valid transaction schematically.
 func ValidTransactionTrytes(trytes Trytes) error {
 	// verifies length and trytes values
-	if !guards.IsTrytesOfExactLength(trytes, TransactionTrinarySize/3) {
+	if !guards.IsTrytesOfExactLength(trytes, TransactionTrytesSize) {
 		return ErrInvalidTrytes
 	}
 
@@ -117,7 +117,7 @@ func AsTransactionObjects(rawTrytes []Trytes, hashes Hashes) (Transactions, erro
 	var tx *Transaction
 	var err error
 	for i := range rawTrytes {
-		if hashes != nil && len(hashes) > 0 {
+		if hashes != nil && len(hashes) > 0 && len(hashes) > i {
 			tx, err = AsTransactionObject(rawTrytes[i], hashes[i])
 		} else {
 			tx, err = AsTransactionObject(rawTrytes[i])
@@ -260,17 +260,21 @@ func IsTailTransaction(t *Transaction) bool {
 var numericTrytesRegex = regexp.MustCompile(`^(RA|PA)?(UA|VA|WA|XA|YA|ZA|9B|AB|BB|CB)+((SA)(UA|VA|WA|XA|YA|ZA|9B|AB|BB|CB)+)?((TC|OB)(RA|PA)?(UA|VA|WA|XA|YA|ZA|9B|AB|BB|CB)+)?99`)
 var numPadRegex = regexp.MustCompile(`^(.*)99`)
 
+const boolFalseJsonTrytes = "UCPC9DGDTC"
+const boolTrueJsonTrytes = "HDFDIDTC"
+const nullJsonTrytes = "BDID9D9D"
+
 func ExtractJSON(txs Transactions) (string, error) {
 	if txs == nil || len(txs) == 0 {
 		return "", ErrInvalidBundle
 	}
 
 	switch {
-	case txs[0].SignatureMessageFragment[:10] == "UCPC9DGDTC":
+	case txs[0].SignatureMessageFragment[:10] == boolFalseJsonTrytes:
 		return "false", nil
-	case txs[0].SignatureMessageFragment[:8] == "HDFDIDTC":
+	case txs[0].SignatureMessageFragment[:8] == boolTrueJsonTrytes:
 		return "true", nil
-	case txs[0].SignatureMessageFragment[:8] == "BDID9D9D":
+	case txs[0].SignatureMessageFragment[:8] == nullJsonTrytes:
 		return "null", nil
 	}
 

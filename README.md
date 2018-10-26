@@ -177,10 +177,11 @@ Certain PoW implementations are enabled if the correct flags are passed while co
 * `pow_c` for C based PoW
 
 PoW implementation in Go is always available.
+Make sure to define `LocalPoWFunc` in your provider settings (i.e. `HttpClientSettings`) if you want to use local PoW. 
 
 ## Contributing
 
-We thank everyone for their contributions. Here is quick guide to get started with giota:
+We thank everyone for their contributions. Here is quick guide to get started with iota.go:
 
 ### Clone and bootstrap
 
