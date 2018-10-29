@@ -32,7 +32,7 @@ var _ = Describe("GetTransfers()", func() {
 
 		It("returns an error for invalid start end option", func() {
 			var end uint64 = 9
-			_, err := api.GetTransfers("asdf", GetTransfersOptions{Start: 0, End: &end,})
+			_, err := api.GetTransfers("asdf", GetTransfersOptions{Start: 0, End: &end})
 			Expect(errors.Cause(err)).To(Equal(ErrInvalidSeed))
 		})
 	})

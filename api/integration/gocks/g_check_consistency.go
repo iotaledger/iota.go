@@ -15,7 +15,7 @@ func init() {
 		MatchType("json").
 		JSON(CheckConsistencyCommand{Command: CheckConsistencyCmd, Tails: DefaultHashes()}).
 		Reply(200).
-		JSON(CheckConsistencyResponse{State: true, Info: "",})
+		JSON(CheckConsistencyResponse{State: true, Info: ""})
 
 	gock.New(DefaultLocalIRIURI).
 		Persist().
@@ -26,7 +26,7 @@ func init() {
 			Tails:   append(DefaultHashes(), strings.Repeat("C", 81)),
 		}).
 		Reply(200).
-		JSON(CheckConsistencyResponse{State: false, Info: "test response",})
+		JSON(CheckConsistencyResponse{State: false, Info: "test response"})
 
 	gock.New(DefaultLocalIRIURI).
 		Persist().
@@ -37,5 +37,5 @@ func init() {
 			Tails:   Hashes{Bundle[0].Hash},
 		}).
 		Reply(200).
-		JSON(CheckConsistencyResponse{State: true, Info: "",})
+		JSON(CheckConsistencyResponse{State: true, Info: ""})
 }
