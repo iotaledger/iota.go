@@ -11,6 +11,7 @@ import (
 )
 
 var (
+	// Look-up-table for Trytes to Trits conversion.
 	TryteToTritsLUT = [][]int8{
 		{0, 0, 0}, {1, 0, 0}, {-1, 1, 0}, {0, 1, 0},
 		{1, 1, 0}, {-1, -1, 1}, {0, -1, 1}, {1, -1, 1},

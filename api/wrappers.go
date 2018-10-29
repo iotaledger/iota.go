@@ -97,7 +97,7 @@ func (api *API) GetAccountData(seed Trytes, options GetAccountDataOptions) (*Acc
 	}
 
 	// compute balances
-	inputs := []Address{}
+	inputs := []Input{}
 	var totalBalance uint64
 	for i := range addresses {
 		value := balances.Balances[i]
@@ -107,7 +107,7 @@ func (api *API) GetAccountData(seed Trytes, options GetAccountDataOptions) (*Acc
 		}
 		totalBalance += value
 
-		addr := Address{
+		addr := Input{
 			Address: addresses[i], Security: options.Security,
 			KeyIndex: options.Start + uint64(i), Balance: value,
 		}
@@ -345,7 +345,7 @@ func (api *API) FindTransactionObjects(query FindTransactionsQuery) (transaction
 }
 
 // GetInputs creates and returns an Inputs object by generating addresses and fetching their latest balance.
-func (api *API) GetInputs(seed Trytes, options GetInputOptions) (*Inputs, error) {
+func (api *API) GetInputs(seed Trytes, options GetInputsOptions) (*Inputs, error) {
 	options = getInputDefaultOptions(options)
 	if err := Validate(
 		ValidateSeed(seed), ValidateSecurityLevel(options.Security),
@@ -391,14 +391,14 @@ func (api *API) GetInputs(seed Trytes, options GetInputOptions) (*Inputs, error)
 
 // GetInputObjects creates an Input object using the given addresses, balances, start index and security level.
 func (api *API) GetInputObjects(addresses Hashes, balances []uint64, start uint64, secLvl SecurityLevel) Inputs {
-	addrs := []Address{}
+	addrs := []Input{}
 	var totalBalance uint64
 	for i := range addresses {
 		value := balances[i]
 		if value <= 0 {
 			continue
 		}
-		addrs = append(addrs, Address{
+		addrs = append(addrs, Input{
 			Address: addresses[i], Security: secLvl,
 			Balance: value, KeyIndex: start + uint64(i)},
 		)
@@ -466,7 +466,7 @@ func isAboveMaxDepth(attachmentTimestamp int64) bool {
 }
 
 // PrepareTransfers prepares the transaction trytes by generating a bundle, filling in transfers and inputs,
-// adding remainder and signing.
+// adding remainder and signing all input transactions.
 func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, options PrepareTransfersOptions) ([]Trytes, error) {
 	options = getPrepareTransfersDefaultOptions(options)
 
@@ -480,7 +480,7 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 		}
 	}
 
-	props := PrepareTransferProps{
+	props := prepareTransferProps{
 		Seed: seed, Security: options.Security, Inputs: options.Inputs,
 		Transfers: transfers, Transactions: transaction.Transactions{},
 		Trytes: []Trytes{}, RemainderAddress: options.RemainderAddress,
@@ -509,7 +509,7 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 	// gather inputs if we have api value transfer but no inputs were specified.
 	// this would error out if the gathered inputs don't fulfill the threshold value
 	if totalTransferValue != 0 && len(props.Inputs) == 0 {
-		inputs, err := api.GetInputs(seed, GetInputOptions{Security: props.Security, Threshold: &totalTransferValue})
+		inputs, err := api.GetInputs(seed, GetInputsOptions{Security: props.Security, Threshold: &totalTransferValue})
 		if err != nil {
 			return nil, err
 		}

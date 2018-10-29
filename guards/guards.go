@@ -8,7 +8,7 @@ import (
 	"regexp"
 )
 
-// Checks if input is correct trytes consisting of [9A-Z]
+// IsTrytes checks if input is correct trytes consisting of [9A-Z]
 func IsTrytes(trytes Trytes) bool {
 	if len(trytes) < 1 {
 		return false
@@ -17,7 +17,7 @@ func IsTrytes(trytes Trytes) bool {
 	return match
 }
 
-// Checks if input is correct trytes consisting of [9A-Z] and given length
+// IsTrytesOfExactLength checks if input is correct trytes consisting of [9A-Z] and given length
 func IsTrytesOfExactLength(trytes Trytes, length int) bool {
 	if len(trytes) != length {
 		return false
@@ -26,7 +26,7 @@ func IsTrytesOfExactLength(trytes Trytes, length int) bool {
 	return match
 }
 
-// Checks if input is correct trytes consisting of [9A-Z] and length <= maxLength
+// IsTrytesOfMaxLength checks if input is correct trytes consisting of [9A-Z] and length <= maxLength
 func IsTrytesOfMaxLength(trytes Trytes, max int) bool {
 	if len(trytes) > max || len(trytes) < 1 {
 		return false
@@ -37,15 +37,15 @@ func IsTrytesOfMaxLength(trytes Trytes, max int) bool {
 
 var onlyNinesRegex = regexp.MustCompile("^[9]+$")
 
-// Checks if input is null (all 9s trytes)
+// IsEmptyTrytes checks if input is null (all 9s trytes)
 func IsEmptyTrytes(trytes Trytes) bool {
 	return onlyNinesRegex.MatchString(string(trytes))
 }
 
-// alias
+// Alias for IsEmptryTrytes
 var IsNineTrytes = IsEmptyTrytes
 
-// Checks if input is correct hash (81 trytes or 90)
+// IsHash checks if input is correct hash (81 trytes or 90)
 func IsHash(trytes Trytes) bool {
 	return IsTrytesOfExactLength(trytes, HashTrytesSize) || IsTrytesOfExactLength(trytes, AddressWithChecksumTrytesSize)
 }
@@ -55,12 +55,12 @@ func IsTransactionHash(trytes Trytes) bool {
 	return IsTrytesOfExactLength(trytes, HashTrytesSize)
 }
 
-// Checks that input is valid tag trytes.
+// IsTag checks that input is valid tag trytes.
 func IsTag(trytes Trytes) bool {
 	return IsTrytesOfExactLength(trytes, TagTrinarySize/3)
 }
 
-// Checks if input is correct transaction hash (81 trytes) with given MWM
+// IsTransactionHashWithMWM checks if input is correct transaction hash (81 trytes) with given MWM
 func IsTransactionHashWithMWM(trytes Trytes, mwm uint) bool {
 	correctLength := IsTrytesOfExactLength(trytes, HashTrytesSize)
 	if !correctLength {
@@ -76,12 +76,12 @@ func IsTransactionHashWithMWM(trytes Trytes, mwm uint) bool {
 	return true
 }
 
-// Checks if input is correct transaction trytes (2673 trytes)
+// IsTransactionTrytes checks if input is correct transaction trytes (2673 trytes)
 func IsTransactionTrytes(trytes Trytes) bool {
 	return IsTrytesOfExactLength(trytes, TransactionTrytesSize)
 }
 
-// Checks if input is correct transaction trytes (2673 trytes) with given MWM
+// IsTransactionTrytesWithMWM checks if input is correct transaction trytes (2673 trytes) with given MWM
 func IsTransactionTrytesWithMWM(trytes Trytes, mwm uint) (bool, error) {
 	correctLength := IsTrytesOfExactLength(trytes, TransactionTrytesSize)
 	if !correctLength {
@@ -97,7 +97,7 @@ func IsTransactionTrytesWithMWM(trytes Trytes, mwm uint) (bool, error) {
 	return true, nil
 }
 
-// Checks if input is valid attached transaction trytes. For attached transactions last 243 trytes are non-zero.
+// IsAttachedTrytes checks if input is valid attached transaction trytes. For attached transactions last 243 trytes are non-zero.
 func IsAttachedTrytes(trytes Trytes) bool {
 	return IsTrytesOfExactLength(trytes, TransactionTrytesSize) && !IsEmptyTrytes(trytes[(TransactionTrytesSize)-3*HashTrytesSize:])
 }

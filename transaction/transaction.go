@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// Defines a slice of Transaction.
 type Transactions []Transaction
 
 // Transaction represents a single transaction.
@@ -264,6 +265,18 @@ const boolFalseJsonTrytes = "UCPC9DGDTC"
 const boolTrueJsonTrytes = "HDFDIDTC"
 const nullJsonTrytes = "BDID9D9D"
 
+// ExtractJSON extracts a JSON string from the given transactions.
+// It supports JSON messages in the following format:
+//
+// - "{ \"message\": \"hello\" }"
+//
+// - "[1, 2, 3]"
+//
+// - "true", "false" and "null"
+//
+// - "hello"
+//
+// - 123
 func ExtractJSON(txs Transactions) (string, error) {
 	if txs == nil || len(txs) == 0 {
 		return "", ErrInvalidBundle
@@ -285,7 +298,7 @@ func ExtractJSON(txs Transactions) (string, error) {
 			return "", err
 		}
 		n = strings.Replace(n, "\x00", "", -1)
-		f, err := strconv.ParseFloat(n, 64);
+		f, err := strconv.ParseFloat(n, 64)
 		if err != nil {
 			return "", errors.Wrap(err, "can't parse number")
 		}

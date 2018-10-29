@@ -3,44 +3,64 @@ package consts
 import "strings"
 
 const (
+	// The current minimum weight magnitude of mainnet.
 	DefaultMinWeightMagnitude = 14
 )
 
+// Defines the security level used for input transactions.
 type SecurityLevel int
 
 const (
-	SecurityLevelLow    SecurityLevel = 1
+	// Low security level. For devices with low performance and only storing a small amount.
+	SecurityLevelLow SecurityLevel = 1
+	// Standard security level. For wallets and other applications.
 	SecurityLevelMedium SecurityLevel = 2
-	SecurityLevelHigh   SecurityLevel = 3
+	// High security level. Recommended for exchanges.
+	SecurityLevelHigh SecurityLevel = 3
+	// The maximum security level.
+	MaxSecurityLevel = 3
 )
 
 const (
-	TrinaryRadix  = 3
+	// Radix basis of the trinary system.
+	TrinaryRadix = 3
+	// Letters and 9 which represent Tryte values.
 	TryteAlphabet = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	// Minimum value of a tryte value.
 	MinTryteValue = -13
+	// Maximum value of a tryte value.
 	MaxTryteValue = 13
-	MinTritValue  = -1
-	MaxTritValue  = 1
+	// Minimum value of a trit value.
+	MinTritValue = -1
+	// Maximum value of a trit value.
+	MaxTritValue = 1
 )
 
 const (
-	HashTrinarySize                      = 243
-	HashTrytesSize                       = HashTrinarySize / 3
-	HashBytesSize                        = 48
-	IntLength                            = HashBytesSize / 4
-	KeySegmentsPerFragment               = 27
-	KeyFragmentLength                    = HashTrinarySize * KeySegmentsPerFragment // 6561
-	KeySegmentHashRounds                 = 26
-	SignatureMessageFragmentSizeInTrytes = SignatureMessageFragmentTrinarySize / 3
-	MaxSecurityLevel                     = 3
+	// Standard Hash size in trits.
+	HashTrinarySize = 243
+	// Standard Hash size in trytes.
+	HashTrytesSize = HashTrinarySize / 3
+	// Standard Hash size in bytes.
+	HashBytesSize = 48
+	// Int length used for bytes-trytes conversion.
+	IntLength = HashBytesSize / 4
+	// Amount of segments per key fragment.
+	KeySegmentsPerFragment = 27
+	// Length of key fragment in trits.
+	KeyFragmentLength = HashTrinarySize * KeySegmentsPerFragment // 6561
+	// Amount of rounds during key segment hashing.
+	KeySegmentHashRounds = 26
 )
 
+// Address and checksum constants.
 const (
 	AddressChecksumTrytesSize     = 9
 	AddressWithChecksumTrytesSize = HashTrytesSize + AddressChecksumTrytesSize
 	MinChecksumTrytesSize         = 3
 )
 
+// Null value constants.
 var (
 	NullHashTrytes                     = strings.Repeat("9", HashTrytesSize)
 	NullTagTrytes                      = strings.Repeat("9", TagTrinarySize/3)
@@ -48,13 +68,13 @@ var (
 	NullSignatureMessageFragmentTrytes = strings.Repeat("9", SignatureMessageFragmentTrinarySize/3)
 )
 
+// Attachment timestamp constants.
 const (
-	// (3^27-1)/2
 	UpperBoundAttachmentTimestamp = (3 ^ 27 - 1) / 2
 	LowerBoundAttachmentTimestamp = 0
 )
 
-// transaction elements size and offsets
+// Transaction elements size and offsets.
 const (
 	SignatureMessageFragmentTrinaryOffset = 0
 	SignatureMessageFragmentTrinarySize   = 6561
@@ -96,5 +116,6 @@ const (
 		AttachmentTimestampLowerBoundTrinarySize + AttachmentTimestampUpperBoundTrinarySize +
 		NonceTrinarySize
 
-	TransactionTrytesSize = TransactionTrinarySize / 3
+	SignatureMessageFragmentSizeInTrytes = SignatureMessageFragmentTrinarySize / 3
+	TransactionTrytesSize                = TransactionTrinarySize / 3
 )

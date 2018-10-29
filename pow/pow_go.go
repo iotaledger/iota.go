@@ -226,7 +226,7 @@ func incrN(n int, lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) {
 	for j := 0; j < n; j++ {
 		var carry uint64 = 1
 
-		// to avoid boundry check, i believe.
+		// to avoid boundary check, I believe.
 		for i := nonceInitStart; i < nonceIncrementStart && carry != 0; i++ {
 			low := lmid[i]
 			high := hmid[i]
