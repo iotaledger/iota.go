@@ -289,44 +289,43 @@ var _ = Describe("Transaction", func() {
 			Expect(str).To(Equal("null"))
 		})
 
-
 		It("parses integers", func() {
-			c[0].SignatureMessageFragment = "XA" + strings.Repeat("9", 81 * 27 - 2)
+			c[0].SignatureMessageFragment = "XA" + strings.Repeat("9", 81*27-2)
 			str, err := ExtractJSON(c)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(str).To(Equal("3"))
 		})
 
 		It("parses negative integers", func() {
-			c[0].SignatureMessageFragment = "RAXA" + strings.Repeat("9", 81 * 27 - 2)
+			c[0].SignatureMessageFragment = "RAXA" + strings.Repeat("9", 81*27-2)
 			str, err := ExtractJSON(c)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(str).To(Equal("-3"))
 		})
 
 		It("parses floats", func() {
-			c[0].SignatureMessageFragment = "XASAVAYA" + strings.Repeat("9", 81 * 27 - 8)
+			c[0].SignatureMessageFragment = "XASAVAYA" + strings.Repeat("9", 81*27-8)
 			str, err := ExtractJSON(c)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(str).To(Equal("3.14"))
 		})
 
 		It("parses floats (with signs)", func() {
-			c[0].SignatureMessageFragment = "PAXASAVAYA" + strings.Repeat("9", 81 * 27 - 10)
+			c[0].SignatureMessageFragment = "PAXASAVAYA" + strings.Repeat("9", 81*27-10)
 			str, err := ExtractJSON(c)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(str).To(Equal("3.14"))
 		})
 
 		It("parses negative floats", func() {
-			c[0].SignatureMessageFragment = "RAXASAVAYA" + strings.Repeat("9", 81 * 27 - 10)
+			c[0].SignatureMessageFragment = "RAXASAVAYA" + strings.Repeat("9", 81*27-10)
 			str, err := ExtractJSON(c)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(str).To(Equal("-3.14"))
 		})
 
 		It("parses exponential", func() {
-			c[0].SignatureMessageFragment = "VASAWAXATCPAZA" + strings.Repeat("9", 81 * 27 - 14)
+			c[0].SignatureMessageFragment = "VASAWAXATCPAZA" + strings.Repeat("9", 81*27-14)
 			str, err := ExtractJSON(c)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(str).To(Equal("123000"))

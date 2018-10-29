@@ -6,7 +6,9 @@ import (
 )
 
 const (
-	StateSize      = HashTrinarySize * 3
+	// The state size of the Curl hash function.
+	StateSize = HashTrinarySize * 3
+	// Default number of rounds in transform.
 	NumberOfRounds = 81
 )
 

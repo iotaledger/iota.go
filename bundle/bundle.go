@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// Bundles are a slice of Bundle.
 type Bundles []Bundle
 
 // BundlesByTimestamp are sorted bundles by attachment timestamp
@@ -23,6 +24,7 @@ func (a BundlesByTimestamp) Less(i, j int) bool {
 	return a[i][0].AttachmentTimestamp < a[j][0].AttachmentTimestamp
 }
 
+// PadTag pads the given trytes up to the length of a tag.
 func PadTag(tag Trytes) Trytes {
 	return Pad(tag, 27)
 }
@@ -30,17 +32,27 @@ func PadTag(tag Trytes) Trytes {
 // Bundle represents grouped together transactions for creating a transfer.
 type Bundle = transaction.Transactions
 
+// Defines an object which gets translated into one or multiple transactions
+// when used in conjunction with AddEntry().
 type BundleEntry struct {
-	Length                    uint64
-	Address                   Hash
-	Value                     int64
-	Tag                       Trytes
-	Timestamp                 uint64
+	// The amount of transactions to fulfill this entry.
+	Length uint64
+	// The address used for this entry.
+	Address Hash
+	// The value for this entry.
+	Value int64
+	// The tag for this entry.
+	Tag Trytes
+	// The timestamp for this entry.
+	Timestamp uint64
+	// One or multiple signature message fragments.
 	SignatureMessageFragments []Trytes
 }
 
+// BundleEntries are a slice of BundleEntry.
 type BundleEntries = []BundleEntry
 
+// Transfers are a slice of Transfer.
 type Transfers []Transfer
 
 // Transfer represents the data/value to transfer to an address.
@@ -51,6 +63,7 @@ type Transfer struct {
 	Tag     Trytes
 }
 
+// An empty transfer with default padded fields.
 var EmptyTransfer = Transfer{
 	Message: NullSignatureMessageFragmentTrytes,
 	Value:   0,

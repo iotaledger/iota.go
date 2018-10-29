@@ -34,7 +34,7 @@ func ValidAddress(a Hash) error {
 	return ValidTrytes(a)
 }
 
-// ValidAddressChecksum checks whether the given checksum corresponds to the given address.
+// ValidChecksum checks whether the given checksum corresponds to the given address.
 func ValidChecksum(address Hash, checksum Trytes) error {
 	actualChecksum, err := Checksum(address)
 	if err != nil {

@@ -9,8 +9,10 @@ import (
 	"net/url"
 )
 
+// A function which can return an error
 type Validatable = func() error
 
+// Validate calls all given validators or returns the first occurred error.
 func Validate(validators ...Validatable) error {
 	for i := range validators {
 		if err := validators[i](); err != nil {
@@ -20,6 +22,7 @@ func Validate(validators ...Validatable) error {
 	return nil
 }
 
+// ValidateNonEmptyStrings checks for non empty string slices.
 func ValidateNonEmptyStrings(err error, slice ...string) Validatable {
 	return func() error {
 		if slice == nil || len(slice) == 0 {
@@ -29,6 +32,7 @@ func ValidateNonEmptyStrings(err error, slice ...string) Validatable {
 	}
 }
 
+// ValidateTransactionHashes validates the given transaction hashes.
 func ValidateTransactionHashes(hashes ...Hash) Validatable {
 	return func() error {
 		for i := range hashes {
@@ -40,6 +44,7 @@ func ValidateTransactionHashes(hashes ...Hash) Validatable {
 	}
 }
 
+// ValidateHashes validates the given hashes.
 func ValidateHashes(hashes ...Hash) Validatable {
 	return func() error {
 		for i := range hashes {
@@ -51,6 +56,7 @@ func ValidateHashes(hashes ...Hash) Validatable {
 	}
 }
 
+// ValidateTransactionTrytes validates the given transaction trytes.
 func ValidateTransactionTrytes(trytes ...Trytes) Validatable {
 	return func() error {
 		for i := range trytes {
@@ -62,6 +68,7 @@ func ValidateTransactionTrytes(trytes ...Trytes) Validatable {
 	}
 }
 
+// ValidateTransactionTrytes validates the given attached transaction trytes.
 func ValidateAttachedTransactionTrytes(trytes ...Trytes) Validatable {
 	return func() error {
 		for i := range trytes {
@@ -73,6 +80,7 @@ func ValidateAttachedTransactionTrytes(trytes ...Trytes) Validatable {
 	}
 }
 
+// ValidateTransactionTrytes validates the given tags.
 func ValidateTags(tags ...Trytes) Validatable {
 	return func() error {
 		for i := range tags {
@@ -84,6 +92,7 @@ func ValidateTags(tags ...Trytes) Validatable {
 	}
 }
 
+// ValidateTransactionTrytes validates the given URIs for neighbor addition/removal.
 func ValidateURIs(uris ...string) Validatable {
 	return func() error {
 		for i := range uris {
@@ -103,6 +112,7 @@ func ValidateURIs(uris ...string) Validatable {
 	}
 }
 
+// ValidateSecurityLevel validates the given security level.
 func ValidateSecurityLevel(secLvl SecurityLevel) Validatable {
 	return func() error {
 		if secLvl > 3 || secLvl < 1 {
@@ -112,6 +122,7 @@ func ValidateSecurityLevel(secLvl SecurityLevel) Validatable {
 	}
 }
 
+// ValidateSeed validates the given seed.
 func ValidateSeed(seed Trytes) Validatable {
 	return func() error {
 		if !IsTrytesOfExactLength(seed, HashTrytesSize) {
@@ -121,8 +132,10 @@ func ValidateSeed(seed Trytes) Validatable {
 	}
 }
 
+// The max delta between start and end options.
 const MaxIndexDiff = 1000
 
+// ValidateStartEndOptions validates the given start and optional end option.
 func ValidateStartEndOptions(start uint64, end *uint64) Validatable {
 	return func() error {
 		if end == nil {
@@ -136,6 +149,7 @@ func ValidateStartEndOptions(start uint64, end *uint64) Validatable {
 	}
 }
 
+// ValidateTransfers validates the given transfers.
 func ValidateTransfers(transfers ...bundle.Transfer) Validatable {
 	return func() error {
 		for i := range transfers {
