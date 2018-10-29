@@ -19,7 +19,7 @@ var _ = Describe("GetAccountData()", func() {
 	accountData := AccountData{
 		Addresses: SampleAddresses,
 		Transfers: Transfers,
-		Inputs: []Address{
+		Inputs: []Input{
 			{
 				Address:  SampleAddresses[2],
 				Balance:  1,

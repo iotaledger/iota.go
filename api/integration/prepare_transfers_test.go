@@ -20,7 +20,7 @@ var _ = Describe("PrepareTransfers()", func() {
 		panic(err)
 	}
 
-	inputs := []Address{
+	inputs := []Input{
 		{
 			Address:  "PERXVBEYBJFPNEVPJNTCLWTDVOTEFWVGKVHTGKEOYRTZWYTPXGJJGZZZ9MQMHUNYDKDNUIBWINWB9JQLD",
 			KeyIndex: 0,

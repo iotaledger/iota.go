@@ -55,7 +55,7 @@ func (hc *httpclient) SetSettings(settings interface{}) error {
 	}
 	if httpSettings.Client != nil {
 		hc.client = httpSettings.Client
-	}else{
+	} else {
 		hc.client = http.DefaultClient
 	}
 	return nil
