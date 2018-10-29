@@ -9,7 +9,7 @@ var (
 	ErrNonOKStatusCodeFromAPIRequest = errors.New("received non ok status from backend")
 	// Returned when an error is returned from the conencted nodes but status code was ok.
 	ErrUnknownErrorFromAPIRequest = errors.New("received unknown error from backend")
-	// Returned if the wrong underyling type of Settings were supplied for creating a Provider.
+	// Returned if the wrong underlying type of Settings were supplied for creating a Provider.
 	ErrInvalidSettingsType = errors.New("incompatible settings type supplied")
 	// Returned when the tail transaction is not consistent during promotion.
 	ErrInconsistentSubtangle = errors.New("inconsistent subtangle")
