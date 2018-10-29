@@ -314,12 +314,12 @@ func ValidBundle(bundle Bundle) error {
 		// find the subsequent txs containing the remaining signature
 		// message fragments for this input transaction
 		for j := i; j < len(bundle)-1; j++ {
-			tx := &bundle[j+1]
+			tx2 := &bundle[j+1]
 
 			// check if the tx is part of the input transaction
-			if tx.Address == tx.Address && tx.Value == 0 {
+			if tx2.Address == tx.Address && tx2.Value == 0 {
 				// append the signature message fragment
-				sigs[tx.Address] = append(sigs[tx.Address], tx.SignatureMessageFragment)
+				sigs[tx.Address] = append(sigs[tx.Address], tx2.SignatureMessageFragment)
 			}
 		}
 	}
