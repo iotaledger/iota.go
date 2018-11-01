@@ -159,15 +159,13 @@ int check128(__m128i *l, __m128i *h, int m)
   return -2;
 }
 
-int stopSSE=1;
-
-long long int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce)
+long long int loop128(__m128i *lmid, __m128i *hmid, int m, char *nonce, int *stop)
 {
   int n = 0, j = 0;
   long long int i = 0;
 
   __m128i lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
-  for (i = 0; !incr128(lmid, hmid) && !stopSSE; i++)
+  for (i = 0; !incr128(lmid, hmid) && !*stop; i++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -224,7 +222,7 @@ void incrN128(int n,__m128i *mid_low, __m128i *mid_high)
   }
 }
 
-long long int pwork128(char mid[], int mwm, char nonce[],int n)
+long long int pwork128(char mid[], int mwm, char nonce[],int n, int *stop)
 {
   __m128i lmid[STATE_LENGTH], hmid[STATE_LENGTH];
 
@@ -242,7 +240,7 @@ long long int pwork128(char mid[], int mwm, char nonce[],int n)
   hmid[offset+4] = _mm_set_epi64x(HIGH40, HIGH41);
 
 	incrN128(n, lmid, hmid);
-  return loop128(lmid, hmid, mwm, nonce);
+  return loop128(lmid, hmid, mwm, nonce, stop);
 }
 */
 import "C"
@@ -251,48 +249,60 @@ import (
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
 	"math"
+	"sync"
 	"unsafe"
 )
 
 func init() {
-	powFuncs["PowSSE"] = PoWSSE
+	proofOfWorkFuncs["SSE"] = SSEProofOfWork
+	proofOfWorkFuncs["SyncSSE"] = SyncSSEProofOfWork
 }
 
-// PoWSSE does proof of work on the given trytes using SSE2 instructions.
-func PoWSSE(trytes Trytes, mwm int) (Trytes, error) {
-	return powSSE(trytes, mwm, nil)
+// SSEProofOfWork does proof of work on the given trytes using SSE2 instructions.
+func SSEProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
+	return sseProofOfwork(trytes, mwm, nil, parallelism...)
 }
 
-func powSSE(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
-	if C.stopSSE == 0 {
-		return "", ErrPoWAlreadyRunning
+var syncSSEProofOfWork = sync.Mutex{}
+
+// SyncSSEProofOfWork is like SSEProofOfWork() but only runs one ongoing Proof-of-Work task at a time.
+func SyncSSEProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
+	syncSSEProofOfWork.Lock()
+	defer syncSSEProofOfWork.Unlock()
+	nonce, err := sseProofOfwork(trytes, mwm, nil, parallelism...)
+	if err != nil {
+		return "", err
 	}
+	return nonce, nil
+}
 
+func sseProofOfwork(trytes Trytes, mwm int, optRate chan int64, parallelism ...int) (Trytes, error) {
 	if trytes == "" {
-		return "", ErrInvalidTrytesForPoW
+		return "", ErrInvalidTrytesForProofOfWork
 	}
-
-	C.stopSSE = 0
 
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := MustTrytesToTrits(trytes)
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
+	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
 	var rate chan int64
 	if optRate != nil {
-		rate = make(chan int64)
+		rate = make(chan int64, numGoroutines)
 	}
 	exit := make(chan struct{})
 	nonceChan := make(chan Trytes)
 
-	for n := 0; n < PowProcs; n++ {
+	var cancelled C.int
+	for n := 0; n < numGoroutines; n++ {
 		go func(n int) {
 			nonce := make(Trits, NonceTrinarySize)
 
 			r := C.pwork128((*C.char)(
-				unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])), C.int(n))
+				unsafe.Pointer(&c.State[0])), C.int(mwm),
+				(*C.char)(unsafe.Pointer(&nonce[0])), C.int(n), &cancelled)
 
 			if rate != nil {
 				rate <- int64(math.Abs(float64(r)))
@@ -302,7 +312,7 @@ func powSSE(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 				select {
 				case <-exit:
 				case nonceChan <- MustTritsToTrytes(nonce):
-					C.stopSSE = 1
+					cancelled = 1
 				}
 			}
 		}(n)
@@ -310,7 +320,7 @@ func powSSE(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	if rate != nil {
 		var rateSum int64
-		for i := 0; i < PowProcs; i++ {
+		for i := 0; i < numGoroutines; i++ {
 			rateSum += <-rate
 		}
 		optRate <- rateSum
@@ -318,6 +328,6 @@ func powSSE(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	result = <-nonceChan
 	close(exit)
-	C.stopSSE = 1
+	cancelled = 1
 	return result, nil
 }

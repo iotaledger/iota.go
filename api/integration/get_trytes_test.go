@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("GetTrytes()", func() {
 
-	api, err := ComposeAPI(HttpClientSettings{}, nil)
+	api, err := ComposeAPI(HTTPClientSettings{}, nil)
 	if err != nil {
 		panic(err)
 	}

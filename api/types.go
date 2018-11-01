@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Defines the query object which is sent to the connected node for the FindTransactions API call.
+// FindTransactionsQuery represents the payload to the FindTransactions API call.
 // Using multiple fields will return the intersection of the found results.
 type FindTransactionsQuery struct {
 	Addresses Hashes   `json:"addresses,omitempty"`
@@ -18,10 +18,10 @@ type FindTransactionsQuery struct {
 	Tags      []Trytes `json:"tags,omitempty"`
 }
 
-// A simple non negative balance.
+// Balance represents a non negative balance.
 type Balance = uint64
 
-// An Input is an address from which to withdraw the total available balance
+// Input is an address from which to withdraw the total available balance
 // to fulfill a transfer's overall output value.
 type Input struct {
 	Balance
@@ -30,16 +30,17 @@ type Input struct {
 	Security SecurityLevel
 }
 
-// Defines balances at a given milestone.
+// Balances represents the payload of the GetBalances API (with parsed balances instead of strings).
 type Balances struct {
 	Balances       []uint64 `json:"balances"`
 	Milestone      string   `json:"milestone"`
 	MilestoneIndex int64    `json:"milestoneIndex"`
 }
 
+// Neighbors is a slice of Neighbor.
 type Neighbors = []Neighbor
 
-// A Neighbor is a node which is connected to the current connected node and gossips transactions with it.
+// Neighbor is a node which is connected to the current connected node and gossips transactions with it.
 type Neighbor struct {
 	Address                     string
 	NumberOfAllTransactions     int64
@@ -47,15 +48,15 @@ type Neighbor struct {
 	NumberOfNewTransactions     int64
 }
 
-// Defines tips which can be approved by a new transaction.
+// TransactionsToApprove represents tips which can be approved by a new transaction.
 type TransactionsToApprove struct {
 	TrunkTransaction  Hash
 	BranchTransaction Hash
 }
 
-// A simple object containing an account's current state derived from the available
+// AccountData is an object containing an account's current state derived from the available
 // data given by nodes during the current snapshot epoch.
-// AccountData should not be used to represent an account's state.
+// Deprecated: Use a solution which uses local persistence to keep the account data.
 type AccountData struct {
 	Addresses     Hashes
 	Inputs        []Input
@@ -65,7 +66,8 @@ type AccountData struct {
 	Balance       uint64
 }
 
-// Options for when creating a new AccountData object via GetAccountData().
+// GetAccountDataOptions are options for when creating a new AccountData object via GetAccountData().
+// Deprecated: Use a solution which uses local persistence to keep the account data.
 type GetAccountDataOptions struct {
 	// The index from which to start creating addresses from.
 	Start uint64
@@ -82,7 +84,7 @@ func getAccountDAtaDefaultOptions(options GetAccountDataOptions) GetAccountDataO
 	return options
 }
 
-// Options for when generating new addresses via GetNewAddress().
+// GetNewAddressOptions are options for when generating new addresses via GetNewAddress().
 type GetNewAddressOptions struct {
 	// The index from which to start creating addresses from.
 	Index uint64
@@ -110,7 +112,7 @@ func getInputDefaultOptions(options GetInputsOptions) GetInputsOptions {
 	return options
 }
 
-// Options for when gathering Inputs via GetInputs().
+// GetInputsOptions are options for when gathering Inputs via GetInputs().
 type GetInputsOptions struct {
 	// The index to start from.
 	Start uint64
@@ -136,7 +138,7 @@ func (gio GetInputsOptions) ToGetNewAddressOptions() GetNewAddressOptions {
 	}
 }
 
-// Defines a set of Inputs and the total balance from them.
+// Inputs is a set of Input(s) and the total balance from them.
 type Inputs struct {
 	Inputs       []Input
 	TotalBalance uint64
@@ -149,7 +151,7 @@ func getTransfersDefaultOptions(options GetTransfersOptions) GetTransfersOptions
 	return options
 }
 
-// Options for when gathering Bundles via GetTransfers().
+// GetTransfersOptions are options for when gathering Bundles via GetTransfers().
 type GetTransfersOptions struct {
 	// The index from which to start creating addresses from.
 	Start uint64
@@ -174,7 +176,7 @@ func (gto GetTransfersOptions) ToGetNewAddressOptions() GetNewAddressOptions {
 	return opts
 }
 
-// Options for when preparing transfers via PrepareTransfers().
+// PrepareTransfersOptions are options for when preparing transfers via PrepareTransfers().
 type PrepareTransfersOptions struct {
 	// Inputs to fulfill the transfer's output sum. If no Inputs are provided, they are collected after
 	// a best effort method (not recommended). Provided inputs are not checked for spent state.
@@ -189,7 +191,7 @@ type PrepareTransfersOptions struct {
 	RemainderAddress *Hash
 }
 
-// Options for when sending bundle transaction trytes via SendTransfer().
+// SendTransfersOptions are options for when sending bundle transaction trytes via SendTransfer().
 type SendTransfersOptions struct {
 	PrepareTransfersOptions
 	// A hash of a transaction to use as reference in GetTransactionsToApprove().
@@ -218,7 +220,7 @@ func getPrepareTransfersDefaultOptions(options PrepareTransfersOptions) PrepareT
 	return options
 }
 
-// Options for when promoting a transaction via PromoteTransaction().
+// PromoteTransactionOptions are options for when promoting a transaction via PromoteTransaction().
 type PromoteTransactionOptions struct {
 	// When given a Context, PromoteTransaction() will create new promotion transactions until
 	// the Context is done.
@@ -235,7 +237,7 @@ func getPromoteTransactionsDefaultOptions(options PromoteTransactionOptions) Pro
 	return options
 }
 
-// Encapsulates errors given by the connected node or parse errors.
+// ErrorResponse encapsulates errors given by the connected node or parse errors.
 type ErrorResponse struct {
 	Error     string `json:"error"`
 	Exception string `json:"exception"`

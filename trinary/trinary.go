@@ -1,3 +1,4 @@
+// Package trinary provides functions for validating and converting Trits and Trytes.
 package trinary
 
 import (
@@ -11,7 +12,7 @@ import (
 )
 
 var (
-	// Look-up-table for Trytes to Trits conversion.
+	// TryteToTritsLUT is a Look-up-table for Trytes to Trits conversion.
 	TryteToTritsLUT = [][]int8{
 		{0, 0, 0}, {1, 0, 0}, {-1, 1, 0}, {0, 1, 0},
 		{1, 1, 0}, {-1, -1, 1}, {0, -1, 1}, {1, -1, 1},
@@ -113,7 +114,7 @@ func IntToTrits(value int64) Trits {
 	return dest
 }
 
-// Int converts a slice of trits into an integer and assumes little-endian notation.
+// TritsToInt converts a slice of trits into an integer and assumes little-endian notation.
 func TritsToInt(t Trits) int64 {
 	var val int64
 	for i := len(t) - 1; i >= 0; i-- {
@@ -187,7 +188,7 @@ func CanBeHash(trits Trits) bool {
 	return len(trits) == HashTrinarySize
 }
 
-// Bytes is only defined for hashes, i.e. slices of trits of length 243. It returns 48 bytes.
+// TritsToBytes is only defined for hashes, i.e. slices of trits of length 243. It returns 48 bytes.
 func TritsToBytes(trits Trits) ([]byte, error) {
 	if !CanBeHash(trits) {
 		return nil, errors.Wrapf(ErrInvalidTritsLength, "must be %d in size", HashTrinarySize)
@@ -343,6 +344,8 @@ type Trytes = string
 
 // Hash represents a trinary hash
 type Hash = Trytes
+
+// Hashes is a slice of Hash.
 type Hashes = []Hash
 
 var trytesRegex = regexp.MustCompile("^[9A-Z]+$")

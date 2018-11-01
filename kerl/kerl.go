@@ -1,3 +1,4 @@
+// Package kerl implements the Kerl hashing function.
 package kerl
 
 import (

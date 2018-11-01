@@ -27,19 +27,19 @@ const (
 	WereAddressesSpentFromCmd   IRICommand = "wereAddressesSpentFrom"
 )
 
-// Command structure of the AddNeighbor API call.
+// AddNeighborsCommand represents the payload to the AddNeighbor API call.
 type AddNeighborsCommand struct {
 	Command IRICommand `json:"command"`
 	URIs    []string   `json:"uris"`
 }
 
-// Response returned by the AddNeighbor API call.
+// AddNeighborsResponse is the response from the AddNeighbor API call.
 type AddNeighborsResponse struct {
 	AddedNeighbors int64
 	Duration       int64
 }
 
-// Command structure of the AttachToTangle API call.
+// AttachToTangleCommand represents the payload to the AttachToTangle API call.
 type AttachToTangleCommand struct {
 	Command            IRICommand `json:"command"`
 	TrunkTransaction   Hash       `json:"trunkTransaction"`
@@ -48,48 +48,48 @@ type AttachToTangleCommand struct {
 	Trytes             []Trytes   `json:"trytes"`
 }
 
-// Response returned by the AttachToTangle API call.
+// AttachToTangleResponse is the response from the AttachToTangle API call.
 type AttachToTangleResponse struct {
 	Trytes []Trytes `json:"trytes"`
 }
 
-// Command structure of the BroadcastTransactions API call.
+// BroadcastTransactionsCommand represents the payload to the BroadcastTransactions API call.
 type BroadcastTransactionsCommand struct {
 	Command IRICommand `json:"command"`
 	Trytes  []Trytes   `json:"trytes"`
 }
 
-// Command structure of the CheckConsistency API call.
+// CheckConsistencyCommand represents the payload to the CheckConsistency API call.
 type CheckConsistencyCommand struct {
 	Command IRICommand `json:"command"`
 	Tails   Hashes     `json:"tails"`
 }
 
-// Response returned by the CheckConsistency API call.
+// CheckConsistencyResponse is the response from the CheckConsistency API call.
 type CheckConsistencyResponse struct {
 	State bool   `json:"state"`
 	Info  string `json:"info"`
 }
 
-// Command structure of the FindTransactions API call.
+// FindTransactionsCommand represents the payload to the FindTransactions API call.
 type FindTransactionsCommand struct {
 	FindTransactionsQuery
 	Command IRICommand `json:"command"`
 }
 
-// Response returned by the FindTransactions API call.
+// FindTransactionsResponse is the response from the FindTransactions API call.
 type FindTransactionsResponse struct {
 	Hashes Hashes `json:"hashes"`
 }
 
-// Command structure of the GetBalances API call.
+// GetBalancesCommand represents the payload to the GetBalances API call.
 type GetBalancesCommand struct {
 	Command   IRICommand `json:"command"`
 	Addresses Hashes     `json:"addresses"`
 	Threshold uint64     `json:"threshold"`
 }
 
-// Response returned by the GetBalances API call.
+// GetBalancesResponse is the response from the GetBalances API call.
 type GetBalancesResponse struct {
 	Balances       []string `json:"balances"`
 	Duration       int64    `json:"duration"`
@@ -97,34 +97,34 @@ type GetBalancesResponse struct {
 	MilestoneIndex int64    `json:"milestoneIndex"`
 }
 
-// Command structure of the GetInclusionStates API call.
+// GetInclusionStatesCommand represents the payload to the GetInclusionStates API call.
 type GetInclusionStatesCommand struct {
 	Command      IRICommand `json:"command"`
 	Transactions Hashes     `json:"transactions"`
 	Tips         Hashes     `json:"tips"`
 }
 
-// Response returned by the GetInclusionStates API call.
+// GetInclusionStatesResponse is the response from the GetInclusionStates API call.
 type GetInclusionStatesResponse struct {
 	States []bool `json:"states"`
 }
 
-// Command structure of the GetNeighbors API call.
+// GetNeighborsCommand represents the payload to the GetNeighbors API call.
 type GetNeighborsCommand struct {
 	Command IRICommand `json:"command"`
 }
 
-// Response returned by the GetNeighbors API call.
+// GetNeighborsResponse is the response from the GetNeighbors API call.
 type GetNeighborsResponse struct {
 	Neighbors Neighbors `json:"neighbors"`
 }
 
-// Command structure of the GetNodeInfo API call.
+// GetNodeInfoCommand represents the payload to the GetNodeInfo API call.
 type GetNodeInfoCommand struct {
 	Command IRICommand `json:"command"`
 }
 
-// Response returned by the GetNodeInfo API call.
+// GetNodeInfoResponse is the response from the GetNodeInfo API call.
 type GetNodeInfoResponse struct {
 	AppName                            string `json:"appName"`
 	AppVersion                         string `json:"appVersion"`
@@ -144,70 +144,70 @@ type GetNodeInfoResponse struct {
 	TransactionsToRequest              int64  `json:"transactionsToRequest"`
 }
 
-// Command structure of the GetTips API call.
+// GetTipsCommand represents the payload to the GetTips API call.
 type GetTipsCommand struct {
 	Command IRICommand `json:"command"`
 }
 
-// Response returned by the GetTips API call.
+// GetTipsResponse is the response from the GetTips API call.
 type GetTipsResponse struct {
 	Hashes Hashes `json:"hashes"`
 }
 
-// Command structure of the GetTransactionsToApprove API call.
+// GetTransactionsToApproveCommand represents the payload to the GetTransactionsToApprove API call.
 type GetTransactionsToApproveCommand struct {
 	Command   IRICommand `json:"command"`
 	Depth     uint64     `json:"depth"`
 	Reference Hash       `json:"reference,omitempty"`
 }
 
-// Response returned by the GetTransactionsToApprove API call.
+// GetTransactionsToApproveResponse is the response from the GetTransactionsToApprove API call.
 type GetTransactionsToApproveResponse struct {
 	TransactionsToApprove
 	Duration int64 `json:"duration"`
 }
 
-// Command structure of the GetTrytes API call.
+// GetTrytesCommand represents the payload to the GetTrytes API call.
 type GetTrytesCommand struct {
 	Command IRICommand `json:"command"`
 	Hashes  Hashes     `json:"hashes"`
 }
 
-// Response returned by the GetTrytes API call.
+// GetTrytesResponse is the response from the GetTrytes API call.
 type GetTrytesResponse struct {
 	Trytes []Trytes `json:"trytes"`
 }
 
-// Command structure of the InterruptAttachToTangle API call.
+// InterruptAttachToTangleCommand represents the payload to the InterruptAttachToTangle API call.
 type InterruptAttachToTangleCommand struct {
 	Command IRICommand `json:"command"`
 }
 
-// Command structure of the RemoveNeighbors API call.
+// RemoveNeighborsCommand represents the payload to the RemoveNeighbors API call.
 type RemoveNeighborsCommand struct {
 	Command IRICommand `json:"command"`
 	URIs    []string   `json:"uris"`
 }
 
-// Response returned by the RemoveNeighbors API call.
+// RemoveNeighborsResponse is the response from the RemoveNeighbors API call.
 type RemoveNeighborsResponse struct {
 	RemovedNeighbors int64 `json:"removedNeighbors"`
 	Duration         int64 `json:"duration"`
 }
 
-// Command structure of the StoreTransactions API call.
+// StoreTransactionsCommand represents the payload to the StoreTransactions API call.
 type StoreTransactionsCommand struct {
 	Command IRICommand `json:"command"`
 	Trytes  []Trytes   `json:"trytes"`
 }
 
-// Command structure of the WereAddressesSpentFrom API call.
+// WereAddressesSpentFromCommand represents the payload to the WereAddressesSpentFrom API call.
 type WereAddressesSpentFromCommand struct {
 	Command   IRICommand `json:"command"`
 	Addresses Hashes     `json:"addresses"`
 }
 
-// Response returned by the WereAddressesSpentFrom API call.
+// WereAddressesSpentFromResponse is the response from the WereAddressesSpentFrom API call.
 type WereAddressesSpentFromResponse struct {
 	States []bool `json:"states"`
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
 	"math"
+	"sync"
 )
 
 // #cgo LDFLAGS:
@@ -217,14 +218,12 @@ int check256(__m256d *l, __m256d *h, int m)
   return -2;
 }
 
-int stopAVX=1;
-
-int loop256(__m256d *lmid, __m256d *hmid, int m, char *nonce)
+int loop256(__m256d *lmid, __m256d *hmid, int m, char *nonce, int *stop)
 {
   int i = 0, n = 0, j = 0;
 
   __m256d lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
-  for (i = 0; !incr256(lmid, hmid) && !stopAVX; i++)
+  for (i = 0; !incr256(lmid, hmid) && !*stop; i++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -281,7 +280,7 @@ void incrN256(int n,__m256d *mid_low, __m256d *mid_high)
   }
 }
 
-int pwork256(char mid[], int mwm, char nonce[],int n)
+int pwork256(char mid[], int mwm, char nonce[],int n, int *stop)
 {
   __m256d lmid[STATE_LENGTH], hmid[STATE_LENGTH];
 
@@ -301,7 +300,7 @@ int pwork256(char mid[], int mwm, char nonce[],int n)
   hmid[offset+5] = _mm256_set_pd(HIGH50,HIGH51,HIGH52,HIGH53);
 
 	incrN256(n, lmid, hmid);
-  return loop256(lmid, hmid, mwm, nonce);
+  return loop256(lmid, hmid, mwm, nonce, stop);
 }
 */
 import "C"
@@ -310,45 +309,55 @@ import (
 )
 
 func init() {
-	powFuncs["PoWAVX"] = PoWAVX
+	proofOfWorkFuncs["AVX"] = AVXProofOfWork
+	proofOfWorkFuncs["SyncAVX"] = SyncAVXProofOfWork
 }
 
-// PoWAVX does proof of work on the given trytes using AVX instructions.
-func PoWAVX(trytes Trytes, mwm int) (Trytes, error) {
-	return powAVX(trytes, mwm, nil)
+// AVXProofOfWork does Proof-of-Work on the given trytes using AVX instructions.
+func AVXProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
+	return avxProofOfWork(trytes, mwm, nil, parallelism...)
 }
 
-func powAVX(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
-	if C.stopAVX == 0 {
-		return "", ErrPoWAlreadyRunning
+var syncAVXProofOfWork = sync.Mutex{}
+
+// SyncAVXProofOfWork is like AVXProofOfWork() but only runs one ongoing Proof-of-Work task at a time.
+func SyncAVXProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
+	syncAVXProofOfWork.Lock()
+	defer syncAVXProofOfWork.Unlock()
+	nonce, err := avxProofOfWork(trytes, mwm, nil, parallelism...)
+	if err != nil {
+		return "", err
 	}
+	return nonce, nil
+}
 
+func avxProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...int) (Trytes, error) {
 	if trytes == "" {
-		return "", ErrInvalidTrytesForPoW
+		return "", ErrInvalidTrytesForProofOfWork
 	}
-
-	C.stopAVX = 0
 
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := MustTrytesToTrits(trytes)
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
+	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
 	var rate chan int64
 	if optRate != nil {
-		rate = make(chan int64, PowProcs)
+		rate = make(chan int64, numGoroutines)
 	}
 	exit := make(chan struct{})
 	nonceChan := make(chan Trytes)
 
-	for n := 0; n < PowProcs; n++ {
+	var cancelled C.int
+	for n := 0; n < numGoroutines; n++ {
 		go func(n int) {
 			nonce := make(Trits, NonceTrinarySize)
 
 			r := C.pwork256((*C.char)(
 				unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.char)(unsafe.Pointer(&nonce[0])),
-				C.int(n))
+				C.int(n), &cancelled)
 
 			if rate != nil {
 				rate <- int64(math.Abs(float64(r)))
@@ -358,7 +367,7 @@ func powAVX(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 				select {
 				case <-exit:
 				case nonceChan <- MustTritsToTrytes(nonce):
-					C.stopAVX = 1
+					cancelled = 1
 				}
 			}
 		}(n)
@@ -366,7 +375,7 @@ func powAVX(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	if rate != nil {
 		var rateSum int64
-		for i := 0; i < PowProcs; i++ {
+		for i := 0; i < numGoroutines; i++ {
 			rateSum += <-rate
 		}
 		optRate <- rateSum
@@ -374,6 +383,6 @@ func powAVX(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	result = <-nonceChan
 	close(exit)
-	C.stopAVX = 1
+	cancelled = 1
 	return result, nil
 }

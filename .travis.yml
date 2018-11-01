@@ -4,20 +4,15 @@ go:
   - 1.11.1
 
 before_install:
-- go get -u github.com/alecthomas/gometalinter
-- go get -u github.com/mattn/goveralls
+- go get -u github.com/mgechev/revive
 - go get github.com/onsi/ginkgo/ginkgo
 - export PATH=$PATH:$GOPATH/bin
 - export CGO_LDFLAGS_ALLOW='-msse2,-mavx'
 - export CGO_CFLAGS_ALLOW='-msse2,-mavx'
 - export GO111MODULE='on'
-- gometalinter --install --update
-- go mod edit -replace golang.org/x/crypto=github.com/luca-moser/crypto@fb2ff8b1755486a8f59b48a2ad494e63f8477ec2
 
 script:
 - travis_wait 30 ginkgo -tags="pow_avx pow_sse pow_c pow_c128" -r --randomizeAllSpecs --randomizeSuites --failOnPending --cover --progress
 
 after_success:
-- gometalinter -e bindata --deadline=1000s ./...
-- goveralls -coverprofile=coverage.out -service=travis-ci
-
+- revive -config revive.toml -formatter stylish -exclude ./api/integration/... ./...

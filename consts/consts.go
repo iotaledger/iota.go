@@ -1,55 +1,58 @@
+// Package consts contains constants used throughout the entire library and errors.
 package consts
 
 import "strings"
 
 const (
-	// The current minimum weight magnitude of mainnet.
+	// DefaultMinWeightMagnitude is the default difficulty on mainnet.
 	DefaultMinWeightMagnitude = 14
 )
 
-// Defines the security level used for input transactions.
+// SecurityLevel defines the security level used for input transactions or respectively, how many
+// signature fragments will be generated for value transfers.
 type SecurityLevel int
 
 const (
-	// Low security level. For devices with low performance and only storing a small amount.
+	// SecurityLevelLow is for devices with low performance and only storing a small amount of value.
 	SecurityLevelLow SecurityLevel = 1
-	// Standard security level. For wallets and other applications.
+	// SecurityLevelMedium is the standard security level for wallets and other applications.
 	SecurityLevelMedium SecurityLevel = 2
-	// High security level. Recommended for exchanges.
+	// SecurityLevelHigh is recommended for exchanges and other high security applications.
 	SecurityLevelHigh SecurityLevel = 3
-	// The maximum security level.
+	// MaxSecurityLevel is the maximum security level.
 	MaxSecurityLevel = 3
 )
 
 const (
-	// Radix basis of the trinary system.
+	// TrinaryRadix defines the base of the trinary system.
 	TrinaryRadix = 3
-	// Letters and 9 which represent Tryte values.
+	// TryteAlphabet are letters of the alphabet and the number 9
+	// which directly map to decimal values of a single Tryte value.
 	TryteAlphabet = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	// Minimum value of a tryte value.
+	// MinTryteValue is the minimum value of a tryte value.
 	MinTryteValue = -13
-	// Maximum value of a tryte value.
+	// MaxTryteValue is the maximum value of a tryte value.
 	MaxTryteValue = 13
-	// Minimum value of a trit value.
+	// MinTritValue is the minimum value of a trit value.
 	MinTritValue = -1
-	// Maximum value of a trit value.
+	// MaxTritValue is the maximum value of a trit value.
 	MaxTritValue = 1
 )
 
 const (
-	// Standard Hash size in trits.
+	// HashTrinarySize is the standard size for hashes from Curl or Kerl.
 	HashTrinarySize = 243
-	// Standard Hash size in trytes.
+	// HashTrytesSize is the trytes size of HashTrinarySize.
 	HashTrytesSize = HashTrinarySize / 3
-	// Standard Hash size in bytes.
+	// HashBytesSize is the bytes size of HashTrytesSize.
 	HashBytesSize = 48
-	// Int length used for bytes-trytes conversion.
+	// IntLength is used for bytes-trytes conversion.
 	IntLength = HashBytesSize / 4
-	// Amount of segments per key fragment.
+	// KeySegmentsPerFragment is the amount of segments per key fragment.
 	KeySegmentsPerFragment = 27
-	// Length of key fragment in trits.
+	// KeyFragmentLength defines the length of a key fragment.
 	KeyFragmentLength = HashTrinarySize * KeySegmentsPerFragment // 6561
-	// Amount of rounds during key segment hashing.
+	// KeySegmentHashRounds is the amount of hashing rounds during key segment hashing.
 	KeySegmentHashRounds = 26
 )
 

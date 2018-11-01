@@ -13,7 +13,7 @@ import (
 var _ = Describe("CheckConsistency()", func() {
 
 	var api *API
-	a, err := ComposeAPI(HttpClientSettings{}, nil)
+	a, err := ComposeAPI(HTTPClientSettings{}, nil)
 	if err != nil {
 		panic(err)
 	}

@@ -1,3 +1,4 @@
+// Package multisig provides functionality for creating multisig bundles.
 package multisig
 
 import (
@@ -15,17 +16,20 @@ import (
 	"time"
 )
 
+// MultisigInput represents a multisig input.
 type MultisigInput struct {
 	Address     Hash
 	Balance     uint64
 	SecuritySum int64
 }
 
+// NewMultisig creates a new Multisig object which uses the given API object.
 func NewMultisig(api *API) *Multisig {
 	m := &Multisig{API: api}
 	return m
 }
 
+// Multisig encapsulates the processes of generating and validating multisig components.
 type Multisig struct {
 	Address MultisigAddress
 	API     *API
@@ -161,7 +165,7 @@ func (m *Multisig) AddSignature(bndl bundle.Bundle, inputAddr Trytes, key Trytes
 			continue
 		}
 
-		if !guards.IsNineTrytes(tx.SignatureMessageFragment) {
+		if !guards.IsEmptyTrytes(tx.SignatureMessageFragment) {
 			numSignedTxs++
 			continue
 		}
@@ -206,7 +210,7 @@ func createBundle(input MultisigInput, transfers bundle.Transfers, remainderAddr
 	bndl := bundle.Bundle{}
 	sigFrags := []Trytes{}
 	totalBalance := input.Balance
-	var totalValue uint64 = 0
+	var totalValue uint64
 	tag := strings.Repeat("9", 27)
 
 	now := time.Now().UnixNano() / int64(time.Second)

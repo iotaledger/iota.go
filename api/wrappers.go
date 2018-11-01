@@ -455,14 +455,14 @@ func (api *API) IsPromotable(tailTxHash Hash) (bool, error) {
 	return isConsistent && isAboveMaxDepth(tx.AttachmentTimestamp), nil
 }
 
-const MilestoneInterval = 2 * 60 * 1000
-const OneWayDelay = 1 * 60 * 1000
+const milestoneInterval = 2 * 60 * 1000
+const oneWayDelay = 1 * 60 * 1000
 const maxDepth = 6
 
 // checks whether by the given timestamp the transaction is to deep to be promoted
 func isAboveMaxDepth(attachmentTimestamp int64) bool {
 	nowMilli := time.Now().UnixNano() / int64(time.Millisecond)
-	return attachmentTimestamp < nowMilli && nowMilli-attachmentTimestamp < maxDepth*MilestoneInterval*OneWayDelay
+	return attachmentTimestamp < nowMilli && nowMilli-attachmentTimestamp < maxDepth*milestoneInterval*oneWayDelay
 }
 
 // PrepareTransfers prepares the transaction trytes by generating a bundle, filling in transfers and inputs,

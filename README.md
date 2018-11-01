@@ -7,6 +7,8 @@
 
 ## Getting started
 
+The client library is in beta and is subject to change. Use of this library in production applications is not supported.
+
 ### Installation
 
 It is suggested to use [vgo modules](https://github.com/golang/go/wiki/Modules) 
@@ -39,7 +41,7 @@ var endpoint = "<node-url>"
 
 func main() {
 	// compose a new API instance
-	api, err := ComposeAPI(HttpClientSettings{URI: endpoint})
+	api, err := ComposeAPI(HTTPClientSettings{URI: endpoint})
 	must(err)
 	
 	nodeInfo, err := api.GetNodeInfo()
@@ -89,14 +91,14 @@ const recipientAddress = "BBBB....."
 func main() {
 
 	// get the best available PoW implementation
-	_, powFunc := pow.GetBestPoW()
+	_, proofOfWorkFunc := pow.GetFastestProofOfWorkImpl()
 
 	// create a new API instance
-	api, err := ComposeAPI(HttpClientSettings{
+	api, err := ComposeAPI(HTTPClientSettings{
 		URI: endpoint,
 		// (!) if no PoWFunc is supplied, then the connected node is requested to do PoW for us
 		// via the AttachToTangle() API call.
-		LocalPowFunc: powFunc,
+		LocalProofOfWorkFunc: proofOfWorkFunc,
 	})
 	must(err)
 
@@ -110,7 +112,7 @@ func main() {
 	}
 
 	// create inputs for the transfer
-	inputs := []Address{
+	inputs := []Input{
 		{
 			Address:  "CCCCC....",
 			Security: SecurityLevelMedium,
@@ -177,7 +179,7 @@ Certain PoW implementations are enabled if the correct flags are passed while co
 * `pow_c` for C based PoW
 
 PoW implementation in Go is always available.
-Make sure to define `LocalPoWFunc` in your provider settings (i.e. `HttpClientSettings`) if you want to use local PoW. 
+Make sure to define `LocalProofOfWorkFunc` in your provider settings (i.e. `HTTPClientSettings`) if you want to use local PoW. 
 
 ## Contributing
 

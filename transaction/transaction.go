@@ -1,3 +1,5 @@
+// Package transaction provides functions for parsing transactions, extracting JSON data from them,
+// conversions and validation.
 package transaction
 
 import (
@@ -12,7 +14,7 @@ import (
 	"strings"
 )
 
-// Defines a slice of Transaction.
+// Transactions is a slice of Transaction.
 type Transactions []Transaction
 
 // Transaction represents a single transaction.
@@ -261,9 +263,9 @@ func IsTailTransaction(t *Transaction) bool {
 var numericTrytesRegex = regexp.MustCompile(`^(RA|PA)?(UA|VA|WA|XA|YA|ZA|9B|AB|BB|CB)+((SA)(UA|VA|WA|XA|YA|ZA|9B|AB|BB|CB)+)?((TC|OB)(RA|PA)?(UA|VA|WA|XA|YA|ZA|9B|AB|BB|CB)+)?99`)
 var numPadRegex = regexp.MustCompile(`^(.*)99`)
 
-const boolFalseJsonTrytes = "UCPC9DGDTC"
-const boolTrueJsonTrytes = "HDFDIDTC"
-const nullJsonTrytes = "BDID9D9D"
+const boolFalseJSONTrytes = "UCPC9DGDTC"
+const boolTrueJSONTrytes = "HDFDIDTC"
+const nullJSONTrytes = "BDID9D9D"
 
 // ExtractJSON extracts a JSON string from the given transactions.
 // It supports JSON messages in the following format:
@@ -283,11 +285,11 @@ func ExtractJSON(txs Transactions) (string, error) {
 	}
 
 	switch {
-	case txs[0].SignatureMessageFragment[:10] == boolFalseJsonTrytes:
+	case txs[0].SignatureMessageFragment[:10] == boolFalseJSONTrytes:
 		return "false", nil
-	case txs[0].SignatureMessageFragment[:8] == boolTrueJsonTrytes:
+	case txs[0].SignatureMessageFragment[:8] == boolTrueJSONTrytes:
 		return "true", nil
-	case txs[0].SignatureMessageFragment[:8] == nullJsonTrytes:
+	case txs[0].SignatureMessageFragment[:8] == nullJSONTrytes:
 		return "null", nil
 	}
 
@@ -324,7 +326,7 @@ func ExtractJSON(txs Transactions) (string, error) {
 	trytesChunk := ""
 	trytesChecked := 0
 	preliminaryStop := false
-	finalJson := ""
+	finalJSON := ""
 
 	for index < len(txs) && notEnded {
 		messageChunk := txs[index].SignatureMessageFragment
@@ -353,7 +355,7 @@ func ExtractJSON(txs Transactions) (string, error) {
 				if err != nil {
 					return "", err
 				}
-				finalJson += data
+				finalJSON += data
 
 				// set preliminary stop if close bracket was found
 				if trytePair == lastTrytePair {
@@ -369,12 +371,12 @@ func ExtractJSON(txs Transactions) (string, error) {
 		}
 
 		// use the next tx in the bundle
-		index += 1
+		index++
 	}
 
 	if notEnded {
 		return "", ErrInvalidTryteEncodedJSON
 	}
 
-	return finalJson, nil
+	return finalJSON, nil
 }

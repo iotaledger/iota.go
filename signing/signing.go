@@ -1,3 +1,5 @@
+// Package signing provides functions for creating and validating essential cryptographic
+// components in IOTA, such as subseeds, keys, digests and signatures.
 package signing
 
 import (

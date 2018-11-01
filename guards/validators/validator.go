@@ -1,3 +1,4 @@
+// Package validators leverages package guards to provide easy to use validation functions.
 package validators
 
 import (
@@ -9,7 +10,7 @@ import (
 	"net/url"
 )
 
-// A function which can return an error
+// Validatable is a function which validates something and returns an error if the validation fails.
 type Validatable = func() error
 
 // Validate calls all given validators or returns the first occurred error.
@@ -68,7 +69,7 @@ func ValidateTransactionTrytes(trytes ...Trytes) Validatable {
 	}
 }
 
-// ValidateTransactionTrytes validates the given attached transaction trytes.
+// ValidateAttachedTransactionTrytes validates the given attached transaction trytes.
 func ValidateAttachedTransactionTrytes(trytes ...Trytes) Validatable {
 	return func() error {
 		for i := range trytes {
@@ -80,7 +81,7 @@ func ValidateAttachedTransactionTrytes(trytes ...Trytes) Validatable {
 	}
 }
 
-// ValidateTransactionTrytes validates the given tags.
+// ValidateTags validates the given tags.
 func ValidateTags(tags ...Trytes) Validatable {
 	return func() error {
 		for i := range tags {
@@ -92,7 +93,7 @@ func ValidateTags(tags ...Trytes) Validatable {
 	}
 }
 
-// ValidateTransactionTrytes validates the given URIs for neighbor addition/removal.
+// ValidateURIs validates the given URIs for neighbor addition/removal.
 func ValidateURIs(uris ...string) Validatable {
 	return func() error {
 		for i := range uris {
@@ -132,7 +133,7 @@ func ValidateSeed(seed Trytes) Validatable {
 	}
 }
 
-// The max delta between start and end options.
+// MaxIndexDiff is the max delta between start and end options.
 const MaxIndexDiff = 1000
 
 // ValidateStartEndOptions validates the given start and optional end option.

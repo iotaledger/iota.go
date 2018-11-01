@@ -10,7 +10,7 @@ import (
 )
 
 var _ = Describe("GetBundle()", func() {
-	api, err := ComposeAPI(HttpClientSettings{})
+	api, err := ComposeAPI(HTTPClientSettings{})
 	if err != nil {
 		panic(err)
 	}

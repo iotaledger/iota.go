@@ -12,7 +12,7 @@ import (
 )
 
 var _ = Describe("GetTransactionsToApprove()", func() {
-	api, err := ComposeAPI(HttpClientSettings{}, nil)
+	api, err := ComposeAPI(HTTPClientSettings{}, nil)
 	if err != nil {
 		panic(err)
 	}

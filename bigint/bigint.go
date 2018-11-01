@@ -1,3 +1,4 @@
+// Package bigint implements a set of functions for big integer arithmetic.
 package bigint
 
 import (
@@ -5,11 +6,13 @@ import (
 	"math"
 )
 
+// Errors for bigint package.
 var (
 	ErrUnequallySizedSlices     = errors.New("operation not defined for differently sized slices")
 	ErrSubtractionWithLeftovers = errors.New("could not subtract without leftovers")
 )
 
+// MustAdd adds the given big ints together.
 func MustAdd(b []uint32, rh []uint32) {
 	if len(b) != len(rh) {
 		panic(ErrUnequallySizedSlices)
@@ -24,6 +27,7 @@ func MustAdd(b []uint32, rh []uint32) {
 	}
 }
 
+// MustSub subtracts rh from b.
 func MustSub(b []uint32, rh []uint32) {
 	if len(b) != len(rh) {
 		panic(ErrUnequallySizedSlices)
@@ -42,12 +46,14 @@ func MustSub(b []uint32, rh []uint32) {
 	}
 }
 
+// Not negates the given big int value.
 func Not(b []uint32) {
 	for i := range b {
 		b[i] = ^b[i]
 	}
 }
 
+// IsNull checks whether the given big int value is null.
 func IsNull(b []uint32) bool {
 	for i := range b {
 		if b[i] != 0 {
@@ -57,6 +63,7 @@ func IsNull(b []uint32) bool {
 	return true
 }
 
+// MustCmp compares the given big ints with each other.
 func MustCmp(lh, rh []uint32) int {
 	if len(lh) != len(rh) {
 		panic(ErrUnequallySizedSlices)
@@ -82,8 +89,7 @@ func MustCmp(lh, rh []uint32) int {
 	return 0
 }
 
-// bigIntAddSmall adds a small number to a big int and returns the index
-// of the last carry over.
+// AddSmall adds a small number to a big int and returns the index of the last carry over.
 func AddSmall(b []uint32, a uint32) int {
 	v, carry := FullAdd(b[0], a, false)
 	b[0] = uint32(v) // uint is at least 32 bit
@@ -98,6 +104,7 @@ func AddSmall(b []uint32, a uint32) int {
 	return i
 }
 
+// FullAdd adds left and right together and whether it overflowed.
 func FullAdd(lh, rh uint32, carry bool) (uint, bool) {
 	v, c1 := AddWithOverflow(lh, rh)
 	var c2 bool
@@ -108,10 +115,12 @@ func FullAdd(lh, rh uint32, carry bool) (uint, bool) {
 	return v, c1 || c2
 }
 
+// AddWithOverflow returns left hand + right hand and whether it overflowed.
 func AddWithOverflow(lh, rh uint32) (uint, bool) {
 	return uint(lh + rh), lh > math.MaxUint32-rh
 }
 
+// Reverse reverses the given byte slice.
 func Reverse(a []byte) []byte {
 	for left, right := 0, len(a)-1; left < right; left, right = left+1, right-1 {
 		a[left], a[right] = a[right], a[left]
@@ -120,6 +129,7 @@ func Reverse(a []byte) []byte {
 	return a
 }
 
+// ReverseU reverses the given uint32 slice.
 func ReverseU(a []uint32) []uint32 {
 	for left, right := 0, len(a)-1; left < right; left, right = left+1, right-1 {
 		a[left], a[right] = a[right], a[left]

@@ -1,3 +1,4 @@
+// Package converter provides functions for ASCII to Trytes conversion (and vice-versa).
 package converter
 
 import (

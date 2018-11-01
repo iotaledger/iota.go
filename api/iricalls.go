@@ -33,8 +33,8 @@ func (api *API) AddNeighbors(uris ...string) (int64, error) {
 // If a Proof-of-Work function is supplied when composing the API, then that function is used
 // instead of using the connected node.
 func (api *API) AttachToTangle(trunkTxHash Hash, branchTxHash Hash, mwm uint64, trytes []Trytes) ([]Trytes, error) {
-	if api.localPoWfunc != nil {
-		return pow.DoPoW(trunkTxHash, branchTxHash, trytes, mwm, api.localPoWfunc)
+	if api.localProofOfWorkFunc != nil {
+		return pow.DoPoW(trunkTxHash, branchTxHash, trytes, mwm, api.localProofOfWorkFunc)
 	}
 
 	if err := Validate(ValidateTransactionTrytes(trytes...)); err != nil {

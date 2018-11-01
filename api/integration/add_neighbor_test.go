@@ -14,7 +14,7 @@ var _ = Describe("AddNeighbors()", func() {
 	var api *API
 
 	BeforeEach(func() {
-		a, err := ComposeAPI(HttpClientSettings{}, nil)
+		a, err := ComposeAPI(HTTPClientSettings{}, nil)
 		if err != nil {
 			panic(err)
 		}

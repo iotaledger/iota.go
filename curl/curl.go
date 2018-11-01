@@ -1,3 +1,4 @@
+// Package curl implements the Curl hashing function.
 package curl
 
 import (
@@ -6,16 +7,19 @@ import (
 )
 
 const (
-	// The state size of the Curl hash function.
+	// StateSize is the size of the Curl hash function.
 	StateSize = HashTrinarySize * 3
-	// Default number of rounds in transform.
+	// NumberOfRounds is the default number of rounds in transform.
 	NumberOfRounds = 81
 )
 
 var (
+	// optional transform function in C.
 	transformC func(Trits)
+	// TruthTable of the Curl hash function.
 	TruthTable = [11]int8{1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0}
-	Indices    [StateSize + 1]int
+	// Indices of the Curl hash function.
+	Indices [StateSize + 1]int
 )
 
 func init() {
@@ -101,7 +105,7 @@ func (c *Curl) Reset() {
 	}
 }
 
-// HashTrytes returns hash of t.
+// HashTrits returns hash of the given trits.
 func HashTrits(trits Trits) Trits {
 	c := NewCurl()
 	c.Absorb(MustTritsToTrytes(trits))

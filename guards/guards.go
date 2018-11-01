@@ -1,3 +1,4 @@
+// Package guards provides validation functions which are used throughout the entire library.
 package guards
 
 import (
@@ -41,9 +42,6 @@ var onlyNinesRegex = regexp.MustCompile("^[9]+$")
 func IsEmptyTrytes(trytes Trytes) bool {
 	return onlyNinesRegex.MatchString(string(trytes))
 }
-
-// Alias for IsEmptryTrytes
-var IsNineTrytes = IsEmptyTrytes
 
 // IsHash checks if input is correct hash (81 trytes or 90)
 func IsHash(trytes Trytes) bool {

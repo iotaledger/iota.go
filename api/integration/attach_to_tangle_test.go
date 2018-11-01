@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("AttachToTangle()", func() {
 
-	api, err := ComposeAPI(HttpClientSettings{})
+	api, err := ComposeAPI(HTTPClientSettings{})
 	if err != nil {
 		panic(err)
 	}

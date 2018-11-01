@@ -1,3 +1,4 @@
+// Package api provides an API object for interacting with IRI nodes.
 package api
 
 import (
@@ -15,16 +16,16 @@ type Provider interface {
 
 // API defines an object encapsulating the communication to connected nodes and API calls.
 type API struct {
-	provider     Provider
-	localPoWfunc pow.PowFunc
+	provider             Provider
+	localProofOfWorkFunc pow.ProofOfWorkFunc
 }
 
-// A function which creates a new Provider.
+// CreateProviderFunc is a function which creates a new Provider given some settings.
 type CreateProviderFunc func(settings interface{}) (Provider, error)
 
 // Settings can supply different options for Provider creation.
 type Settings interface {
-	PowFunc() pow.PowFunc
+	ProofOfWorkFunc() pow.ProofOfWorkFunc
 }
 
 // ComposeAPI composes a new API from the given settings and provider.
@@ -39,15 +40,15 @@ func ComposeAPI(settings Settings, createProvider ...CreateProviderFunc) (*API, 
 	if len(createProvider) > 0 && createProvider[0] != nil {
 		provider, err = createProvider[0](settings)
 	} else {
-		provider, err = NewHttpClient(settings)
+		provider, err = NewHTTPClient(settings)
 	}
 	if err != nil {
 		return nil, err
 	}
 
 	api := &API{provider: provider}
-	if settings.PowFunc() != nil {
-		api.localPoWfunc = settings.PowFunc()
+	if settings.ProofOfWorkFunc() != nil {
+		api.localProofOfWorkFunc = settings.ProofOfWorkFunc()
 	}
 
 	return api, nil

@@ -11,9 +11,11 @@ import (
 	"net/url"
 )
 
+// DefaultLocalIRIURI is the default URI used when none is given in HTTPClientSettings.
 const DefaultLocalIRIURI = "http://localhost:14265"
 
-func NewHttpClient(settings interface{}) (*httpclient, error) {
+// NewHTTPClient creates a new Http Provider.
+func NewHTTPClient(settings interface{}) (Provider, error) {
 	httpClient := &httpclient{}
 	if err := httpClient.SetSettings(settings); err != nil {
 		return nil, err
@@ -21,29 +23,35 @@ func NewHttpClient(settings interface{}) (*httpclient, error) {
 	return httpClient, nil
 }
 
-type HttpClientSettings struct {
-	URI          string
-	Client       HttpClient
-	LocalPowFunc pow.PowFunc
+// HTTPClientSettings defines a set of settings for when constructing a new Http Provider.
+type HTTPClientSettings struct {
+	// The URI endpoint to connect to. Defaults to DefaultLocalIRIURI if empty.
+	URI string
+	// The underlying HTTPClient to use. Defaults to http.DefaultClient.
+	Client HTTPClient
+	// The Proof-of-Work implementation function. Defaults to use the AttachToTangle IRI API call.
+	LocalProofOfWorkFunc pow.ProofOfWorkFunc
 }
 
-func (hcs HttpClientSettings) PowFunc() pow.PowFunc {
-	return hcs.LocalPowFunc
+// ProofOfWorkFunc returns the defined Proof-of-Work function.
+func (hcs HTTPClientSettings) ProofOfWorkFunc() pow.ProofOfWorkFunc {
+	return hcs.LocalProofOfWorkFunc
 }
 
-type HttpClient interface {
+// HTTPClient defines an object being able to do Http calls.
+type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
 type httpclient struct {
-	client   HttpClient
+	client   HTTPClient
 	endpoint string
 }
 
 func (hc *httpclient) SetSettings(settings interface{}) error {
-	httpSettings, ok := settings.(HttpClientSettings)
+	httpSettings, ok := settings.(HTTPClientSettings)
 	if !ok {
-		return errors.Wrapf(ErrInvalidSettingsType, "expected %T", HttpClientSettings{})
+		return errors.Wrapf(ErrInvalidSettingsType, "expected %T", HTTPClientSettings{})
 	}
 	if len(httpSettings.URI) == 0 {
 		hc.endpoint = DefaultLocalIRIURI

@@ -1,3 +1,4 @@
+// Package checksum provides functions for adding/removing checksums from supplied Trytes.
 package checksum
 
 import (

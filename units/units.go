@@ -1,3 +1,4 @@
+// Package units provides functions for converting different units of IOTAs.
 package units
 
 import (
@@ -5,21 +6,21 @@ import (
 	"strconv"
 )
 
-// Defines units of IOTAs.
+// Unit a unit of IOTAs.
 type Unit float64
 
 const (
-	// The smallest Unit.
+	// I is the smallest Unit.
 	I = Unit(1)
-	// Kiloiota. 1000 iotas.
+	// Ki = Kiloiota. 1000 iotas.
 	Ki = Unit(1000)
-	// Megaiota. 1 million iotas.
+	// Mi = Megaiota. 1 million iotas.
 	Mi = Unit(1000000)
-	// Gigaiota. 1 billion iotas.
+	// Gi = Gigaiota. 1 billion iotas.
 	Gi = Unit(1000000000)
-	// Teraiota. 1 trillion iotas.
+	// Ti = Teraiota. 1 trillion iotas.
 	Ti = Unit(1000000000000)
-	// Petaiota. 1 quadrillion iotas.
+	// Pi = Petaiota. 1 quadrillion iotas.
 	Pi = Unit(1000000000000000)
 )
 
@@ -36,7 +37,7 @@ func ConvertUnits(val float64, from Unit, to Unit) float64 {
 	return float64(value)
 }
 
-// ConvertUnits converts the given string value in the base Unit to the given new Unit.
+// ConvertUnitString converts the given string value in the base Unit to the given new Unit.
 func ConvertUnitString(value string, from Unit, to Unit) (float64, error) {
 	floatValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {

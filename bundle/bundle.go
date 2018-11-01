@@ -1,3 +1,4 @@
+// Package bundle provides primitives to create and validate bundles.
 package bundle
 
 import (
@@ -15,7 +16,7 @@ import (
 // Bundles are a slice of Bundle.
 type Bundles []Bundle
 
-// BundlesByTimestamp are sorted bundles by attachment timestamp
+// BundlesByTimestamp are sorted bundles by attachment timestamp.
 type BundlesByTimestamp Bundles
 
 func (a BundlesByTimestamp) Len() int      { return len(a) }
@@ -32,7 +33,7 @@ func PadTag(tag Trytes) Trytes {
 // Bundle represents grouped together transactions for creating a transfer.
 type Bundle = transaction.Transactions
 
-// Defines an object which gets translated into one or multiple transactions
+// BundleEntry is an object which gets translated into one or multiple transactions
 // when used in conjunction with AddEntry().
 type BundleEntry struct {
 	// The amount of transactions to fulfill this entry.
@@ -63,7 +64,7 @@ type Transfer struct {
 	Tag     Trytes
 }
 
-// An empty transfer with default padded fields.
+// EmptyTransfer is a transfer with 9s initialized values.
 var EmptyTransfer = Transfer{
 	Message: NullSignatureMessageFragmentTrytes,
 	Value:   0,

@@ -1,3 +1,4 @@
+// Package address provides primitives for generating and validating addresses (with and without checksum).
 package address
 
 import (

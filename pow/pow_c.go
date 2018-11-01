@@ -129,15 +129,13 @@ int check(unsigned long *l, unsigned long *h, int m)
   return -1;
 }
 
-int stopC=1;
-
-long long int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, signed char *nonce)
+long long int loop_cpu(unsigned long *lmid, unsigned long *hmid, int m, signed char *nonce, int *stop)
 {
   int n = 0;
   long long int i = 0;
   unsigned long lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
 
-  for (i = 0; !incr(lmid, hmid) && !stopC; i++)
+  for (i = 0; !incr(lmid, hmid) && !*stop; i++)
   {
     memcpy(lcpy, lmid, STATE_LENGTH * sizeof(long));
     memcpy(hcpy, hmid, STATE_LENGTH * sizeof(long));
@@ -191,7 +189,7 @@ void incrN(int n,unsigned long *mid_low, unsigned long *mid_high)
 }
 
 
-long long int pwork(signed char mid[], int mwm, signed char nonce[],int n)
+long long int pwork(signed char mid[], int mwm, signed char nonce[],int n, int *stop)
 {
   unsigned long lmid[STATE_LENGTH] = {0}, hmid[STATE_LENGTH] = {0};
 
@@ -207,7 +205,7 @@ long long int pwork(signed char mid[], int mwm, signed char nonce[],int n)
   hmid[offset+3] = HIGH3;
 
 	incrN(n, lmid, hmid);
-  return loop_cpu(lmid, hmid, mwm, nonce);
+  return loop_cpu(lmid, hmid, mwm, nonce, stop);
 }
 */
 import "C"
@@ -216,49 +214,60 @@ import (
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
 	"math"
+	"sync"
 	"unsafe"
 )
 
 func init() {
-	powFuncs["PoWC"] = PoWC
+	proofOfWorkFuncs["C"] = CProofOfWork
+	proofOfWorkFuncs["SyncC"] = SyncCProofOfWork
 }
 
 // PoWC does proof of work on the given trytes via native C code.
-func PoWC(trytes Trytes, mwm int) (Trytes, error) {
-	return powC(trytes, mwm, nil)
-
+func CProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
+	return cProofOfWork(trytes, mwm, nil, parallelism...)
 }
 
-func powC(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
-	if C.stopC == 0 {
-		return "", ErrPoWAlreadyRunning
-	}
+var syncCProofOfWork = sync.Mutex{}
 
+// SyncCProofOfWork is like CProofOfWork() but only runs one ongoing Proof-of-Work task at a time.
+func SyncCProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
+	syncCProofOfWork.Lock()
+	defer syncCProofOfWork.Unlock()
+	nonce, err := cProofOfWork(trytes, mwm, nil, parallelism...)
+	if err != nil {
+		return "", err
+	}
+	return nonce, nil
+}
+
+func cProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...int) (Trytes, error) {
 	if trytes == "" {
-		return "", ErrInvalidTrytesForPoW
+		return "", ErrInvalidTrytesForProofOfWork
 	}
-
-	C.stopC = 0
 
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := MustTrytesToTrits(trytes)
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
+	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
 	var rate chan int64
 	if optRate != nil {
-		rate = make(chan int64, PowProcs)
+		rate = make(chan int64, numGoroutines)
 	}
 	exit := make(chan struct{})
 	nonceChan := make(chan Trytes)
 
-	for n := 0; n < PowProcs; n++ {
+	var cancelled C.int
+	for n := 0; n < numGoroutines; n++ {
 		go func(n int) {
 			nonce := make(Trits, NonceTrinarySize)
 
 			r := C.pwork((*C.schar)(unsafe.Pointer(
-				&c.State[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
+				&c.State[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])),
+				C.int(n), &cancelled)
 
 			if rate != nil {
 				rate <- int64(math.Abs(float64(r)))
@@ -268,7 +277,7 @@ func powC(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 				select {
 				case <-exit:
 				case nonceChan <- MustTritsToTrytes(nonce):
-					C.stopC = 1
+					cancelled = 1
 				}
 			}
 		}(n)
@@ -276,7 +285,7 @@ func powC(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	if rate != nil {
 		var rateSum int64
-		for i := 0; i < PowProcs; i++ {
+		for i := 0; i < numGoroutines; i++ {
 			rateSum += <-rate
 		}
 		optRate <- rateSum
@@ -284,6 +293,6 @@ func powC(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	result = <-nonceChan
 	close(exit)
-	C.stopC = 1
+	cancelled = 1
 	return result, nil
 }

@@ -158,15 +158,13 @@ int checkARM64(uint64x2_t *l, uint64x2_t *h, int m)
   return -2;
 }
 
-int stopCARM64=1;
-
-long long int loopARM64(uint64x2_t *lmid, uint64x2_t *hmid, int m, signed char *nonce)
+long long int loopARM64(uint64x2_t *lmid, uint64x2_t *hmid, int m, signed char *nonce, int *stop)
 {
   int n = 0, j = 0;
   long long int i = 0;
 
   uint64x2_t lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
-  for (i = 0; !incrARM64(lmid, hmid) && !stopCARM64; i++)
+  for (i = 0; !incrARM64(lmid, hmid) && !*stop; i++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -228,7 +226,7 @@ void incrNARM64(int n, uint64x2_t *mid_low, uint64x2_t *mid_high)
   }
 }
 
-long long int pworkARM64(signed char mid[], int mwm, signed char nonce[], int n)
+long long int pworkARM64(signed char mid[], int mwm, signed char nonce[], int n, int *stop)
 {
   uint64x2_t lmid[STATE_LENGTH], hmid[STATE_LENGTH];
 
@@ -262,7 +260,7 @@ long long int pworkARM64(signed char mid[], int mwm, signed char nonce[], int n)
 
   incrNARM64(n, lmid, hmid);
 
-  return loopARM64(lmid, hmid, mwm, nonce);
+  return loopARM64(lmid, hmid, mwm, nonce, stop);
 }
 */
 import "C"
@@ -270,47 +268,61 @@ import (
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
+	"sync"
 	"unsafe"
 )
 
 func init() {
-	powFuncs["PoWCARM64"] = PoWCARM64
+	proofOfWorkFuncs["CARM64"] = CARM64ProofOfWork
+	proofOfWorkFuncs["SyncCARM64"] = SyncCARM64ProofOfWork
 }
 
-// PoWCARM64 does proof of work on the given trytes using native C code and __int128 C type (ARM adjusted).
+// CARM64ProofOfWork does proof of work on the given trytes using native C code and __int128 C type (ARM adjusted).
 // This implementation follows common C standards and does not rely on SSE which is AMD64 specific.
-func PoWCARM64(trytes Trytes, mwm int) (Trytes, error) {
-	return PoWCARM64(trytes, mwm, nil)
+func CARM64ProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
+	return cARM64ProofOfWork(trytes, mwm, nil, parallelism)
 }
 
-func powCARM64(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
-	if C.stopCARM64 == 0 {
-		return "", ErrPoWAlreadyRunning
-	}
+var syncCARM64ProofOfWork = sync.Mutex{}
 
+// SyncCARM64ProofOfWork is like CARM64ProofOfWork() but only runs one ongoing Proof-of-Work task at a time.
+func SyncCARM64ProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
+	syncCARM64ProofOfWork.Lock()
+	defer syncCARM64ProofOfWork.Unlock()
+	nonce, err := cARM64ProofOfWork(trytes, mwm, nil, parallelism...)
+	if err != nil {
+		return "", err
+	}
+	return nonce, nil
+}
+
+func cARM64ProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...int) (Trytes, error) {
 	if trytes == "" {
-		return "", ErrInvalidTrytesForPoW
+		return "", ErrInvalidTrytesForProofOfWork
 	}
 
-	C.stopCARM64 = 0
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := trytes.Trits()
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
+	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
 	var rate chan int64
 	if optRate != nil {
-		rate = make(chan int64, PowProcs)
+		rate = make(chan int64, numGoroutines)
 	}
 	exit := make(chan struct{})
 	nonceChan := make(chan Trytes)
 
-	for n := 0; n < PowProcs; n++ {
+	var cancelled C.int
+	for n := 0; n < numGoroutines; n++ {
 		go func(n int) {
 			nonce := make(Trits, NonceTrinarySize)
 
-			r := C.pworkARM64((*C.schar)(unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
+			r := C.pworkARM64(
+				(*C.schar)(unsafe.Pointer(&c.State[0])), C.int(mwm),
+				(*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n), &cancelled)
 
 			if rate != nil {
 				rate <- int64(math.Abs(float64(r)))
@@ -320,7 +332,7 @@ func powCARM64(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 				select {
 				case <-exit:
 				case nonceChan <- MustTritsToTrytes(nonce):
-					C.stopCARM64 = 1
+					cancelled = 1
 				}
 			}
 		}(n)
@@ -328,7 +340,7 @@ func powCARM64(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	if rate != nil {
 		var rateSum int64
-		for i := 0; i < PowProcs; i++ {
+		for i := 0; i < numGoroutines; i++ {
 			rateSum += <-rate
 		}
 		optRate <- rateSum
@@ -336,6 +348,6 @@ func powCARM64(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	result = <-nonceChan
 	close(exit)
-	C.stopCARM64 = 1
+	cancelled = 1
 	return result, nil
 }

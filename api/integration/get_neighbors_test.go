@@ -9,7 +9,7 @@ import (
 
 var _ = Describe("GetNeighbors()", func() {
 
-	api, err := ComposeAPI(HttpClientSettings{}, nil)
+	api, err := ComposeAPI(HTTPClientSettings{}, nil)
 	if err != nil {
 		panic(err)
 	}

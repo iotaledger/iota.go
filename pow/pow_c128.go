@@ -191,15 +191,13 @@ int checkC128(unsigned __int128 *l, unsigned __int128 *h, int m)
   return -2;
 }
 
-int stopC128 = 1;
-
-long long int loopC128(unsigned __int128 *lmid, unsigned __int128 *hmid, int m, signed char *nonce)
+long long int loopC128(unsigned __int128 *lmid, unsigned __int128 *hmid, int m, signed char *nonce, int *stop)
 {
   int n = 0, j = 0;
   long long int i = 0;
   unsigned __int128 lcpy[STATE_LENGTH * 2], hcpy[STATE_LENGTH * 2];
 
-  for (i = 0; !incrC128(lmid, hmid) && !stopC128; i++)
+  for (i = 0; !incrC128(lmid, hmid) && !*stop; i++)
   {
     for (j = 0; j < STATE_LENGTH; j++)
     {
@@ -256,7 +254,7 @@ void incrNC128(int n,unsigned __int128 *mid_low, unsigned __int128 *mid_high)
   }
 }
 
-long long int pworkC128(signed char mid[], int mwm, signed char nonce[], int n)
+long long int pworkC128(signed char mid[], int mwm, signed char nonce[], int n, int *stop)
 {
   unsigned __int128 lmid[STATE_LENGTH], hmid[STATE_LENGTH];
   paraC128(mid, lmid, hmid);
@@ -274,7 +272,7 @@ long long int pworkC128(signed char mid[], int mwm, signed char nonce[], int n)
   hmid[offset+4] = set_int128_2x64(HIGH40, HIGH41);
 
   incrNC128(n, lmid, hmid);
-  return loopC128(lmid, hmid, mwm, nonce);
+  return loopC128(lmid, hmid, mwm, nonce, stop);
 }
 */
 import "C"
@@ -283,47 +281,61 @@ import (
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
 	"math"
+	"sync"
 	"unsafe"
 )
 
 func init() {
-	powFuncs["PoWC128"] = PoWC128
+	proofOfWorkFuncs["C128"] = C128ProofOfWork
+	proofOfWorkFuncs["SyncC128"] = SyncC128ProofOfWork
 }
 
-// PoWC128 does proof of work on the given trytes using native C code and __int128 C type.
+// PoWC128 does Proof-of-Work on the given trytes using native C code and __int128 C type.
 // This implementation follows common C standards and does not rely on SSE which is AMD64 specific.
-func PoWC128(trytes Trytes, mwm int) (Trytes, error) {
-	return powC128(trytes, mwm, nil)
+func C128ProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
+	return c128ProofOfWork(trytes, mwm, nil, parallelism...)
 }
 
-func powC128(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
-	if C.stopC128 == 0 {
-		return "", ErrPoWAlreadyRunning
-	}
+var syncC128ProofOfwork = sync.Mutex{}
 
+// SyncC128ProofOfWork is like C128ProofOfWork() but only runs one ongoing Proof-of-Work task at a time.
+func SyncC128ProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
+	syncC128ProofOfwork.Lock()
+	defer syncC128ProofOfwork.Unlock()
+	nonce, err := c128ProofOfWork(trytes, mwm, nil, parallelism...)
+	if err != nil {
+		return "", err
+	}
+	return nonce, nil
+}
+
+func c128ProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...int) (Trytes, error) {
 	if trytes == "" {
-		return "", ErrInvalidTrytesForPoW
+		return "", ErrInvalidTrytesForProofOfWork
 	}
 
-	C.stopC128 = 0
 	c := curl.NewCurl()
 	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := MustTrytesToTrits(trytes)
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
+	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
 	var rate chan int64
 	if optRate != nil {
-		rate = make(chan int64, PowProcs)
+		rate = make(chan int64, numGoroutines)
 	}
 	exit := make(chan struct{})
 	nonceChan := make(chan Trytes)
 
-	for n := 0; n < PowProcs; n++ {
+	var cancelled C.int
+	for n := 0; n < numGoroutines; n++ {
 		go func(n int) {
 			nonce := make(Trits, NonceTrinarySize)
 
-			r := C.pworkC128((*C.schar)(unsafe.Pointer(&c.State[0])), C.int(mwm), (*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n))
+			r := C.pworkC128(
+				(*C.schar)(unsafe.Pointer(&c.State[0])), C.int(mwm),
+				(*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n), &cancelled)
 
 			if rate != nil {
 				rate <- int64(math.Abs(float64(r)))
@@ -333,7 +345,7 @@ func powC128(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 				select {
 				case <-exit:
 				case nonceChan <- MustTritsToTrytes(nonce):
-					C.stopC128 = 1
+					cancelled = 1
 				}
 			}
 		}(n)
@@ -341,7 +353,7 @@ func powC128(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	if rate != nil {
 		var rateSum int64
-		for i := 0; i < PowProcs; i++ {
+		for i := 0; i < numGoroutines; i++ {
 			rateSum += <-rate
 		}
 		optRate <- rateSum
@@ -349,6 +361,6 @@ func powC128(trytes Trytes, mwm int, optRate chan int64) (Trytes, error) {
 
 	result = <-nonceChan
 	close(exit)
-	C.stopC128 = 1
+	cancelled = 1
 	return result, nil
 }
