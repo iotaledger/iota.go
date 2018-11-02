@@ -89,7 +89,6 @@ func (c *Curl) Transform() {
 
 	for r := NumberOfRounds; r > 0; r-- {
 		copy(cpy[:], c.State)
-		c.State = c.State[:StateSize]
 		for i := 0; i < StateSize; i++ {
 			t1 := Indices[i]
 			t2 := Indices[i+1]
