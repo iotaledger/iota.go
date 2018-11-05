@@ -41,7 +41,8 @@ type Transaction struct {
 
 // ParseTransaction parses the trits and returns a transaction object.
 // The trits slice must be TransactionTrinarySize in length.
-func ParseTransaction(trits Trits) (*Transaction, error) {
+// If noHash is set to true, no transaction hash is calculated.
+func ParseTransaction(trits Trits, noHash ...bool) (*Transaction, error) {
 	var err error
 
 	if len(trits) != TransactionTrinarySize {
@@ -74,7 +75,9 @@ func ParseTransaction(trits Trits) (*Transaction, error) {
 	t.AttachmentTimestampLowerBound = TritsToInt(trits[AttachmentTimestampLowerBoundTrinaryOffset : AttachmentTimestampLowerBoundTrinaryOffset+AttachmentTimestampLowerBoundTrinarySize])
 	t.AttachmentTimestampUpperBound = TritsToInt(trits[AttachmentTimestampUpperBoundTrinaryOffset : AttachmentTimestampUpperBoundTrinaryOffset+AttachmentTimestampUpperBoundTrinarySize])
 	t.Nonce = MustTritsToTrytes(trits[NonceTrinaryOffset : NonceTrinaryOffset+NonceTrinarySize])
-	t.Hash = TransactionHash(t)
+	if len(noHash) == 0 || noHash[0] == false {
+		t.Hash = TransactionHash(t)
+	}
 
 	return t, nil
 }
@@ -103,11 +106,12 @@ func AsTransactionObject(trytes Trytes, hash ...Hash) (*Transaction, error) {
 		return nil, err
 	}
 
-	if tx, err = ParseTransaction(MustTrytesToTrits(trytes)); err != nil {
+	skipHashCalc := len(hash) > 0
+	if tx, err = ParseTransaction(MustTrytesToTrits(trytes), skipHashCalc); err != nil {
 		return nil, err
 	}
 
-	if hash != nil && len(hash) > 0 {
+	if skipHashCalc {
 		tx.Hash = hash[0]
 	}
 
