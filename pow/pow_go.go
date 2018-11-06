@@ -6,7 +6,6 @@
 // If no parallelism option is supplied, then the number of CPU cores - 1 is used.
 package pow
 
-import "C"
 import (
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
