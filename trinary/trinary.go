@@ -183,9 +183,27 @@ var halfThree = []uint32{
 	0x5e69ebef,
 }
 
-// CanBeHash returns the validity of the trit length
+// CanBeHash returns the validity of the trit length.
 func CanBeHash(trits Trits) bool {
 	return len(trits) == HashTrinarySize
+}
+
+// TrytesToBytes is only defined for hashes (81 Trytes). It returns 48 bytes.
+func TrytesToBytes(trytes Trytes) ([]byte, error) {
+	trits, err := TrytesToTrits(trytes)
+	if err != nil {
+		return nil, err
+	}
+	return TritsToBytes(trits)
+}
+
+// BytesToTrytes converts bytes to Trytes. Returns an error if the bytes slice is not 48 in length.
+func BytesToTrytes(bytes []byte) (Trytes, error) {
+	trits, err := BytesToTrits(bytes)
+	if err != nil {
+		return "", err
+	}
+	return TritsToTrytes(trits)
 }
 
 // TritsToBytes is only defined for hashes, i.e. slices of trits of length 243. It returns 48 bytes.
