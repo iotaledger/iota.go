@@ -34,7 +34,7 @@ var _ = Describe("Kerl", func() {
 		)
 	})
 
-	Context("with invalid tytes", func() {
+	Context("with invalid trytes", func() {
 
 		var k *Kerl
 
