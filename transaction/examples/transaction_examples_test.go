@@ -8,7 +8,7 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// i req: Trits, The Trits representation of the transaction.
+// i req: trits, The Trits representation of the transaction.
 // i: noHash, Whether not to add the hash of the transaction.
 // o: *Transaction, The parsed Transaction.
 // o: error, Returned for schematically wrong transactions.
@@ -80,13 +80,13 @@ func ExampleTransactionToTrytes() {}
 // o: Trytes, The Trytes representation of the transaction.
 func ExampleMustTransactionToTrytes() {}
 
-// i req: t, The transactions to convert to Trytes.
-// o: Trytes, The Trytes representation of the transactions.
+// i req: txs, The transactions to convert to Trytes.
+// o: []Trytes, The Trytes representation of the transactions.
 // o: error, Returned for schematically wrong transactions.
 func ExampleTransactionsToTrytes() {}
 
-// i req: t, The transactions to convert to Trytes.
-// o: Trytes, The Trytes representation of the transactions.
+// i req: txs, The transactions to convert to Trytes.
+// o: []Trytes, The Trytes representation of the transactions.
 func ExampleMustTransactionsToTrytes() {}
 
 // i req: txs, The transactions to convert.

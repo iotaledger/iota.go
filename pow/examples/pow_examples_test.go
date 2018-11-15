@@ -4,7 +4,7 @@ package examples
 // i req: branchTx, the branch transaction hash.
 // i req: trytes, The transactions Trytes slice.
 // i req: mwm, The minimum weight magnitude to fulfill.
-// i req: ProofOfWorkFunc, The Proof-of-Work implementation function.
+// i req: pow, The Proof-of-Work implementation function.
 // o: []Trytes, The transaction Trytes with computed nonce fields, ready for broadcasting.
 // o: error, Returned for invalid transaction Trytes and internal errors.
 func ExampleDoPoW() {}
@@ -18,7 +18,7 @@ func ExampleGetProofOfWorkImpl() {}
 func ExampleGetProofOfWorkImplementations() {}
 
 // o: string, The name of the Proof-of-Work function.
-// o: ProofOfworkFunc, The actual Proof-of-Work implementation.
+// o: ProofOfWorkFunc, The actual Proof-of-Work implementation.
 func ExampleGetFastestProofOfWorkImpl() {}
 
 // i req: trytes, The Trytes of the transaction.

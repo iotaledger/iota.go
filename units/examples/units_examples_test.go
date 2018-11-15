@@ -21,7 +21,7 @@ func ExampleConvertUnits() {
 // o: float64, The float64 representation of the target value.
 // o: error, Returned for invalid string values.
 func ExampleConvertUnitsString() {
-	conv, err := units.ConvertUnitString("10.1", units.Gi, units.I)
+	conv, err := units.ConvertUnitsString("10.1", units.Gi, units.I)
 	if err != nil {
 		// handle error
 		return

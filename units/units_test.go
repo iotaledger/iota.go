@@ -24,7 +24,7 @@ var _ = Describe("Units", func() {
 
 	DescribeTable("string conversion",
 		func(in string, from Unit, to Unit, expected float64) {
-			Expect(ConvertUnitString(in, from, to)).To(Equal(expected))
+			Expect(ConvertUnitsString(in, from, to)).To(Equal(expected))
 		},
 		Entry("Gi to I", "10.1", Gi, I, float64(10100000000)),
 		Entry("Gi to I", "133.999111111", Gi, I, float64(133999111111)),

@@ -15,6 +15,7 @@ import (
 	"os"
 	"strings"
 	"text/template"
+	"unicode"
 )
 
 type function struct {
@@ -24,6 +25,7 @@ type function struct {
 	Inputs      []input
 	Outputs     []output
 	ExampleCode string
+	Package     string
 	hadExample  bool
 }
 
@@ -94,12 +96,34 @@ func main() {
 	}
 }
 
-func writeDocs(functions map[string]*function, tmpl *template.Template) {
-	for _, function := range functions {
-		if err := tmpl.Execute(os.Stdout, function); err != nil {
-			panic(err)
+func refFileName(f *function) string {
+
+	var name string
+	for i, c := range f.Name {
+		if i != 0 && unicode.ToUpper(c) == c {
+			name += "_"
 		}
-		fmt.Println()
+		name += string(unicode.ToLower(c))
+	}
+
+	return fmt.Sprintf("%s_%s.md", strings.ToLower(f.Package), name)
+}
+
+const path = "./iota.go/reference/"
+
+func writeDocs(functions map[string]*function, tmpl *template.Template) {
+	for _, fun := range functions {
+		fileName := path + refFileName(fun)
+		// ignore error
+		os.Remove(fileName)
+		file, err := os.Create(fileName)
+		if err != nil {
+			log.Fatalf("unable to create ref markdown file %s", fileName)
+		}
+		if err := tmpl.Execute(file, fun); err != nil {
+			log.Fatalf("unable to write to ref markdown file %s", fileName)
+		}
+		file.Close()
 	}
 }
 
@@ -125,6 +149,7 @@ func parsePackage(astPack *ast.Package, set *token.FileSet) map[string]*function
 				if fun == nil {
 					continue
 				}
+				fun.Package = astPack.Name
 				log.Printf("%s -> %s", ty.Name, f.Name)
 				functions[fun.Name] = fun
 			}
@@ -140,6 +165,7 @@ func parsePackage(astPack *ast.Package, set *token.FileSet) map[string]*function
 					continue
 				}
 				funcsTotal++
+				fun.Package = astPack.Name
 				log.Printf("package [%s] -> %s", astPack.Name, f.Name)
 				functions[fun.Name] = fun
 			}
@@ -155,6 +181,7 @@ func parsePackage(astPack *ast.Package, set *token.FileSet) map[string]*function
 		if fun == nil {
 			continue
 		}
+		fun.Package = astPack.Name
 		funcsTotal++
 		functions[fun.Name] = fun
 	}
@@ -226,7 +253,14 @@ func parseFunction(fun *doc.Func, astPack *ast.Package, set *token.FileSet, ty *
 				if len(split) != 2 {
 					continue
 				}
-				f.Inputs[i] = input{ArgName: split[0], Type: split[1]}
+				var typeName string
+				tySplit := strings.Split(split[1], ".")
+				if len(tySplit) == 1 {
+					typeName = tySplit[0]
+				} else {
+					typeName = tySplit[1]
+				}
+				f.Inputs[i] = input{ArgName: split[0], Type: typeName}
 			}
 		}
 
@@ -243,7 +277,14 @@ func parseFunction(fun *doc.Func, astPack *ast.Package, set *token.FileSet, ty *
 				results = strings.Split(string(fileBytes[resultStart:resultEnd]), ",")
 			}
 			for i, result := range results {
-				f.Outputs[i] = output{Type: strings.TrimSpace(result)}
+				var typeName string
+				tySplit := strings.Split(result, ".")
+				if len(tySplit) == 1 {
+					typeName = tySplit[0]
+				} else {
+					typeName = tySplit[1]
+				}
+				f.Outputs[i] = output{Type: strings.TrimSpace(typeName)}
 			}
 		}
 	}

@@ -42,7 +42,7 @@ func ExampleRemoveChecksum() {
 	fmt.Println(addrWithoutChecksum) // output: ZGPO9BSVZHJBLWHHRPOCKMRHLIEIOXQPOMGSDETZINIJGCDEP9QVJED9D9IUHNPPVDINQ9GOSLY9KWZGC
 }
 
-// i req: input, The Trytes (which must be 81/90 in length) slice of which to remove the checksums.
-// o: Trytes, The input Trytes slice without the checksums.
+// i req: inputs, The Trytes (which must be 81/90 in length) slice of which to remove the checksums.
+// o: []Trytes, The input Trytes slice without the checksums.
 // o: error, Returned for inputs of invalid length.
 func ExampleRemoveChecksums() {}
