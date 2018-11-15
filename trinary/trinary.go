@@ -190,7 +190,7 @@ func BytesToTrytes(bytes []byte) (Trytes, error) {
 	return TritsToTrytes(trits)
 }
 
-// Packs an array of trits into an array of bytes (5 packed trits in 1 byte)
+// TritsToBytes packs an array of trits into an array of bytes (5 packed trits in 1 byte)
 func TritsToBytes(trits Trits) (bytes []byte) {
 	tritsLength := len(trits)
 	bytesLength := (tritsLength + NumberOfTritsInAByte - 1) / NumberOfTritsInAByte
@@ -213,7 +213,7 @@ func TritsToBytes(trits Trits) (bytes []byte) {
 	return bytes
 }
 
-// Unpacks an array of bytes into an array of trits
+// BytesToTrits unpacks an array of bytes into an array of trits
 func BytesToTrits(bytes []byte, numTrits ...int) (trits Trits, err error) {
 	bytesLength := len(bytes)
 	tritsLength := bytesLength * NumberOfTritsInAByte
