@@ -1,11 +1,12 @@
 package trinary_test
 
 import (
+	"strings"
+
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"strings"
 )
 
 var _ = Describe("Trinary", func() {
@@ -163,27 +164,22 @@ var _ = Describe("Trinary", func() {
 
 	Context("TritsToBytes()", func() {
 		It("should return bytes for valid trits", func() {
-			trits := MustTrytesToTrits("9RFAOVEWQDNGBPEGFZTVJKKITBASFWCQBSTZYWTYIJETVZJYNFFIEQ9JMQWEHQ9ZKARYTE9GGDYZHIPJX")
-			bytes, err := TritsToBytes(trits)
-			Expect(bytes).To(Equal([]byte{200, 133, 129, 2, 47, 13, 241, 221, 98, 137, 183, 55, 217, 17, 54, 58, 35, 144, 226, 211, 121, 162, 148, 10, 119, 202, 21, 32, 48, 36, 98, 155, 2, 253, 57, 40, 89, 220, 88, 211, 119, 78, 246, 21, 121, 44, 224, 15}))
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should return an error for invalid trits slice length", func() {
-			_, err := TritsToBytes(Trits{1, 1})
-			Expect(err).To(HaveOccurred())
+			trits := Trits{-1, 0, 1, 1, 0, 1, 1, 0, -1, -1, 1, 0, 1}
+			bytes := TritsToBytes(trits)
+			Expect(bytes).To(Equal([]byte{0x23, 0x98, 0x0A}))
 		})
 	})
 
 	Context("BytesToTrits()", func() {
 		It("should return trits for valid bytes", func() {
-			trits, err := BytesToTrits([]byte{200, 133, 129, 2, 47, 13, 241, 221, 98, 137, 183, 55, 217, 17, 54, 58, 35, 144, 226, 211, 121, 162, 148, 10, 119, 202, 21, 32, 48, 36, 98, 155, 2, 253, 57, 40, 89, 220, 88, 211, 119, 78, 246, 21, 121, 44, 224, 15})
-			Expect(trits).To(Equal(MustTrytesToTrits("9RFAOVEWQDNGBPEGFZTVJKKITBASFWCQBSTZYWTYIJETVZJYNFFIEQ9JMQWEHQ9ZKARYTE9GGDYZHIPJX")))
+			expTrits := Trits{-1, 0, 1, 1, 0, 1, 1, 0, -1, -1, 1, 0, 1}
+			trits, err := BytesToTrits([]byte{0x23, 0x98, 0x0A}, len(expTrits))
+			Expect(trits).To(Equal(expTrits))
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("should return an error for invalid bytes slice length", func() {
-			_, err := BytesToTrits([]byte{1, 45, 62})
+		It("should return an error for invalid numTrits length", func() {
+			_, err := BytesToTrits([]byte{0x23, 0x98, 0x0A}, 10)
 			Expect(err).To(HaveOccurred())
 		})
 	})

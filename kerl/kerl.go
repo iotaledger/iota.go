@@ -2,8 +2,9 @@
 package kerl
 
 import (
-	"github.com/pkg/errors"
 	"hash"
+
+	"github.com/pkg/errors"
 
 	. "github.com/iotaledger/iota.go/consts"
 	keccak "github.com/iotaledger/iota.go/kerl/sha3"
@@ -32,7 +33,7 @@ func (k *Kerl) Squeeze(length int) (Trits, error) {
 	out := make(Trits, length)
 	for i := 1; i <= length/HashTrinarySize; i++ {
 		h := k.s.Sum(nil)
-		ts, err := BytesToTrits(h)
+		ts, err := KerlBytesToTrits(h)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +60,7 @@ func (k *Kerl) Absorb(in Trits) error {
 
 	for i := 1; i <= len(in)/HashTrinarySize; i++ {
 		// in[(HashSize*i)-1] = 0
-		b, err := TritsToBytes(in[HashTrinarySize*(i-1) : HashTrinarySize*i])
+		b, err := KerlTritsToBytes(in[HashTrinarySize*(i-1) : HashTrinarySize*i])
 		if err != nil {
 			return err
 		}

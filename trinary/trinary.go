@@ -2,13 +2,12 @@
 package trinary
 
 import (
-	"github.com/iotaledger/iota.go/bigint"
-	. "github.com/iotaledger/iota.go/consts"
-	"github.com/pkg/errors"
 	"math"
 	"regexp"
 	"strings"
-	"unsafe"
+
+	. "github.com/iotaledger/iota.go/consts"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -22,6 +21,8 @@ var (
 		{-1, 1, -1}, {0, 1, -1}, {1, 1, -1}, {-1, -1, 0},
 		{0, -1, 0}, {1, -1, 0}, {-1, 0, 0},
 	}
+
+	byteRadix = [5]int8{1, 3, 9, 27, 81}
 )
 
 // Trits is a slice of int8. You should not use cast, use NewTrits instead to ensure the validity.
@@ -166,23 +167,6 @@ func MustTritsToTrytes(trits Trits) Trytes {
 	return trytes
 }
 
-// 12 * 32 bit
-// hex representation of (3^242)/2
-var halfThree = []uint32{
-	0xa5ce8964,
-	0x9f007669,
-	0x1484504f,
-	0x3ade00d9,
-	0x0c24486e,
-	0x50979d57,
-	0x79a4c702,
-	0x48bbae36,
-	0xa9f6808b,
-	0xaa06a805,
-	0xa87fabdf,
-	0x5e69ebef,
-}
-
 // CanBeHash returns the validity of the trit length.
 func CanBeHash(trits Trits) bool {
 	return len(trits) == HashTrinarySize
@@ -194,7 +178,7 @@ func TrytesToBytes(trytes Trytes) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return TritsToBytes(trits)
+	return TritsToBytes(trits), nil
 }
 
 // BytesToTrytes converts bytes to Trytes. Returns an error if the bytes slice is not 48 in length.
@@ -206,146 +190,71 @@ func BytesToTrytes(bytes []byte) (Trytes, error) {
 	return TritsToTrytes(trits)
 }
 
-// TritsToBytes is only defined for hashes, i.e. slices of trits of length 243. It returns 48 bytes.
-func TritsToBytes(trits Trits) ([]byte, error) {
-	if !CanBeHash(trits) {
-		return nil, errors.Wrapf(ErrInvalidTritsLength, "must be %d in size", HashTrinarySize)
-	}
+// TritsToBytes packs an array of trits into an array of bytes (5 packed trits in 1 byte)
+func TritsToBytes(trits Trits) (bytes []byte) {
+	tritsLength := len(trits)
+	bytesLength := (tritsLength + NumberOfTritsInAByte - 1) / NumberOfTritsInAByte
 
-	allNeg := true
-	// last position should be always zero.
-	for _, e := range trits[0 : HashTrinarySize-1] {
-		if e != -1 {
-			allNeg = false
-			break
+	bytes = make([]byte, bytesLength)
+
+	tritIdx := bytesLength * NumberOfTritsInAByte
+	for byteNum := bytesLength - 1; byteNum >= 0; byteNum-- {
+		var value int8 = 0
+
+		for i := 0; i < NumberOfTritsInAByte; i++ {
+			tritIdx--
+
+			if tritIdx < tritsLength {
+				value = value*Radix + trits[tritIdx]
+			}
 		}
+		bytes[byteNum] = byte(value)
 	}
-
-	// trit to BigInt
-	b := make([]byte, 48) // 48 bytes/384 bits
-
-	// 12 * 32 bits = 384 bits
-	base := (*(*[]uint32)(unsafe.Pointer(&b)))[0:IntLength]
-
-	if allNeg {
-		// if all trits are -1 then we're half way through all the numbers,
-		// since they're in two's complement notation.
-		copy(base, halfThree)
-
-		// compensate for setting the last position to zero.
-		bigint.Not(base)
-		bigint.AddSmall(base, 1)
-
-		return bigint.Reverse(b), nil
-	}
-
-	revT := make([]int8, len(trits))
-	copy(revT, trits)
-	size := 1
-
-	for _, e := range ReverseTrits(revT[0 : HashTrinarySize-1]) {
-		sz := size
-		var carry uint32
-		for j := 0; j < sz; j++ {
-			v := uint64(base[j])*uint64(TrinaryRadix) + uint64(carry)
-			carry = uint32(v >> 32)
-			base[j] = uint32(v)
-		}
-
-		if carry > 0 {
-			base[sz] = carry
-			size = size + 1
-		}
-
-		trit := uint32(e + 1)
-
-		ns := bigint.AddSmall(base, trit)
-		if ns > size {
-			size = ns
-		}
-	}
-
-	if !bigint.IsNull(base) {
-		if bigint.MustCmp(halfThree, base) <= 0 {
-			// base >= HALF_3
-			// just do base - HALF_3
-			bigint.MustSub(base, halfThree)
-		} else {
-			// we don'trits have a wrapping sub.
-			// so let's use some bit magic to achieve it
-			tmp := make([]uint32, IntLength)
-			copy(tmp, halfThree)
-			bigint.MustSub(tmp, base)
-			bigint.Not(tmp)
-			bigint.AddSmall(tmp, 1)
-			copy(base, tmp)
-		}
-	}
-	return bigint.Reverse(b), nil
+	return bytes
 }
 
-// BytesToTrits converts binary to trinary
-func BytesToTrits(b []byte) (Trits, error) {
-	if len(b) != HashBytesSize {
-		return nil, errors.Wrapf(ErrInvalidBytesLength, "must be %d in size", HashBytesSize)
-	}
+// BytesToTrits unpacks an array of bytes into an array of trits
+func BytesToTrits(bytes []byte, numTrits ...int) (trits Trits, err error) {
+	bytesLength := len(bytes)
+	tritsLength := bytesLength * NumberOfTritsInAByte
 
-	rb := make([]byte, len(b))
-	copy(rb, b)
-	bigint.Reverse(rb)
+	if len(numTrits) > 0 {
+		tritsLength = numTrits[0]
 
-	t := Trits(make([]int8, HashTrinarySize))
-	t[HashTrinarySize-1] = 0
-
-	base := (*(*[]uint32)(unsafe.Pointer(&rb)))[0:IntLength] // 12 * 32 bits = 384 bits
-
-	if bigint.IsNull(base) {
-		return t, nil
-	}
-
-	var flipTrits bool
-
-	// Check if the MSB is 0, i.e. we have a positive number
-	msbM := (unsafe.Sizeof(base[IntLength-1]) * 8) - 1
-
-	switch {
-	case base[IntLength-1]>>msbM == 0:
-		bigint.MustAdd(base, halfThree)
-	default:
-		bigint.Not(base)
-		if bigint.MustCmp(base, halfThree) == 1 {
-			bigint.MustSub(base, halfThree)
-			flipTrits = true
-		} else {
-			bigint.AddSmall(base, 1)
-			tmp := make([]uint32, IntLength)
-			copy(tmp, halfThree)
-			bigint.MustSub(tmp, base)
-			copy(base, tmp)
+		minTritLength := (bytesLength-1)*NumberOfTritsInAByte + 1
+		maxTritLength := bytesLength * NumberOfTritsInAByte
+		if tritsLength < minTritLength || tritsLength > maxTritLength {
+			return nil, errors.Wrapf(ErrInvalidTritsLength, "must be %d-%d in size", minTritLength, maxTritLength)
 		}
 	}
 
-	var rem uint64
-	for i := range t[0 : HashTrinarySize-1] {
-		rem = 0
-		for j := IntLength - 1; j >= 0; j-- {
-			lhs := (rem << 32) | uint64(base[j])
-			rhs := uint64(TrinaryRadix)
-			q := uint32(lhs / rhs)
-			r := uint32(lhs % rhs)
-			base[j] = q
-			rem = uint64(r)
-		}
-		t[i] = int8(rem) - 1
-	}
+	trits = make(Trits, tritsLength)
 
-	if flipTrits {
-		for i := range t {
-			t[i] = -t[i]
+	for byteNum := 0; byteNum < bytesLength; byteNum++ {
+		value := int8(bytes[byteNum])
+
+		tritOffset := byteNum * NumberOfTritsInAByte
+
+		for tritNum := NumberOfTritsInAByte - 1; tritNum >= 0; tritNum-- {
+			var trit int8 = 0
+
+			tritIdx := tritOffset + tritNum
+
+			if tritIdx < tritsLength {
+				byteRadixHalf := byteRadix[tritNum] >> 1
+				if value > byteRadixHalf {
+					value -= byteRadix[tritNum]
+					trit = 1
+				} else if value < (-byteRadixHalf) {
+					value += byteRadix[tritNum]
+					trit = -1
+				}
+
+				trits[tritIdx] = trit
+			}
 		}
 	}
-
-	return t, nil
+	return trits, nil
 }
 
 // ReverseTrits reverses the given trits.
@@ -374,7 +283,6 @@ func ValidTrytes(trytes Trytes) error {
 		return ErrInvalidTrytes
 	}
 	return nil
-
 }
 
 // ValidTryte returns the validity of a tryte (must be rune A-Z or 9)
