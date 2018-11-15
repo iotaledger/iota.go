@@ -63,7 +63,7 @@ func (c *Curl) Squeeze(length int) (Trits, error) {
 	return out, nil
 }
 
-// Squeeze out length trits. Length has to be a multiple of HashTrinarySize.
+// SqueezeTrytes out length trits. Length has to be a multiple of HashTrinarySize.
 // Returns trytes. It panics if the trytes are not valid.
 func (c *Curl) SqueezeTrytes(length int) Trytes {
 	trits, _ := c.Squeeze(length)
@@ -86,7 +86,7 @@ func (c *Curl) Absorb(in Trits) error {
 	return nil
 }
 
-// Absorb fills the internal State of the sponge with the given trytes.
+// AbsorbTrytes fills the internal State of the sponge with the given trytes.
 // It panics if the given trytes are not valid.
 func (c *Curl) AbsorbTrytes(inn Trytes) {
 	var in Trits
