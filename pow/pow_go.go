@@ -39,7 +39,7 @@ type ProofOfWorkFunc = func(trytes Trytes, mwm int, parallelism ...int) (Trytes,
 // the given branch and trunk transactions. This function also initializes the attachment timestamp fields.
 // This function expects the passed in transaction trytes from highest to lowest index, meaning the transaction
 // with current index 0 at the last position.
-func DoPoW(trunkTx, branchTx Trytes, trytes []Trytes, mwm uint64, pow ProofOfWorkFunc) ([]Trytes, error) {
+func DoPoW(trunkTx Trytes, branchTx Trytes, trytes []Trytes, mwm uint64, pow ProofOfWorkFunc) ([]Trytes, error) {
 	txs, err := AsTransactionObjects(trytes, nil)
 	if err != nil {
 		return nil, err
@@ -100,8 +100,8 @@ func GetProofOfWorkImpl(name string) (ProofOfWorkFunc, error) {
 }
 
 // GetProofOfWorkImplementations returns an array with the names of all available Proof-of-Work implementations.
-func GetProofOfWorkImplementations() (powFuncNames []string) {
-	powFuncNames = make([]string, len(proofOfWorkFuncs))
+func GetProofOfWorkImplementations() []string {
+	powFuncNames := make([]string, len(proofOfWorkFuncs))
 
 	i := 0
 	for k := range proofOfWorkFuncs {
@@ -113,6 +113,8 @@ func GetProofOfWorkImplementations() (powFuncNames []string) {
 }
 
 // GetFastestProofOfWorkImpl returns the fastest Proof-of-Work implementation.
+// All returned Proof-of-Work implementations returned are "sync", meaning that
+// they only run one Proof-of-Work task simultaneously.
 func GetFastestProofOfWorkImpl() (string, ProofOfWorkFunc) {
 	orderPreference := []string{"SyncAVX", "SyncSSE", "SyncCARM64", "SyncC128", "SyncC"}
 

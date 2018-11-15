@@ -329,8 +329,7 @@ func (api *API) StoreTransactions(trytes ...Trytes) ([]Trytes, error) {
 	return trytes, nil
 }
 
-// WereAddressesSpentFrom checks whether the given addresses were already spent from by
-// calling the wereAddressesSpentFrom IRI API command.
+// WereAddressesSpentFrom checks whether the given addresses were already spent.
 func (api *API) WereAddressesSpentFrom(addresses ...Hash) ([]bool, error) {
 	if err := Validate(
 		ValidateNonEmptyStrings(ErrInvalidHash, addresses...),

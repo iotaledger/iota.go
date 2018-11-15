@@ -17,7 +17,7 @@ import (
 type BuildError string
 
 func (e BuildError) Error() string {
-	return fmt.Sprintf("_cl: build error (%s)", string(e))
+	return fmt.Sprintf(".cl: build error (%s)", string(e))
 }
 
 type Program struct {

@@ -32,6 +32,7 @@ func (api *API) BroadcastBundle(tailTxHash Hash) ([]Trytes, error) {
 
 // GetAccountData returns an AccountData object containing account information about addresses, transactions,
 // inputs and total account balance.
+// Deprecated: Use a solution which uses local persistence to keep the account data.
 func (api *API) GetAccountData(seed Trytes, options GetAccountDataOptions) (*AccountData, error) {
 	options = getAccountDAtaDefaultOptions(options)
 	if err := Validate(ValidateSeed(seed), ValidateSecurityLevel(options.Security),
@@ -211,12 +212,12 @@ func (api *API) GetBundlesFromAddresses(addresses Hashes, inclusionState ...bool
 
 // GetLatestInclusion fetches inclusion states of the given transactions
 // by calling GetInclusionStates using the latest solid subtangle milestone from GetNodeInfo.
-func (api *API) GetLatestInclusion(transactions Hashes) ([]bool, error) {
+func (api *API) GetLatestInclusion(txHashes Hashes) ([]bool, error) {
 	nodeInfo, err := api.GetNodeInfo()
 	if err != nil {
 		return nil, err
 	}
-	return api.GetInclusionStates(transactions, nodeInfo.LatestSolidSubtangleMilestone)
+	return api.GetInclusionStates(txHashes, nodeInfo.LatestSolidSubtangleMilestone)
 }
 
 // GetNewAddress generates and returns a new address by calling FindTransactions
@@ -287,9 +288,11 @@ func (api *API) IsAddressUsed(address Hash) (bool, error) {
 	return false, nil
 }
 
+type isAddressUsedFunc = func(address Hash) (bool, error)
+
 // computes after a best effort method the first unused addresses
 func getUntilFirstUnusedAddress(
-	isAddressUsed func(address Hash) (bool, error),
+	isAddressUsed isAddressUsedFunc,
 	seed Trytes, index uint64, security SecurityLevel,
 	returnAll bool,
 ) (Hashes, error) {
@@ -758,11 +761,11 @@ func (api *API) PromoteTransaction(tailTxHash Hash, depth uint64, mwm uint64, sp
 // ReplayBundle reattaches a transfer to the Tangle by selecting tips & performing the Proof-of-Work again.
 // Reattachments are useful in case original transactions are pending and can be done securely
 // as many times as needed.
-func (api *API) ReplayBundle(tailTxhash Hash, depth uint64, mwm uint64, reference ...Hash) (bundle.Bundle, error) {
-	if err := Validate(ValidateTransactionHashes(tailTxhash)); err != nil {
+func (api *API) ReplayBundle(tailTxHash Hash, depth uint64, mwm uint64, reference ...Hash) (bundle.Bundle, error) {
+	if err := Validate(ValidateTransactionHashes(tailTxHash)); err != nil {
 		return nil, err
 	}
-	bndl, err := api.GetBundle(tailTxhash)
+	bndl, err := api.GetBundle(tailTxHash)
 	if err != nil {
 		return nil, err
 	}

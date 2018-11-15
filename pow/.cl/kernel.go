@@ -18,7 +18,7 @@ type ErrUnsupportedArgumentType struct {
 }
 
 func (e ErrUnsupportedArgumentType) Error() string {
-	return fmt.Sprintf("_cl: unsupported argument type for index %d: %+v", e.Index, e.Value)
+	return fmt.Sprintf(".cl: unsupported argument type for index %d: %+v", e.Index, e.Value)
 }
 
 type Kernel struct {

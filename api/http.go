@@ -48,6 +48,7 @@ type httpclient struct {
 	endpoint string
 }
 
+// ignore
 func (hc *httpclient) SetSettings(settings interface{}) error {
 	httpSettings, ok := settings.(HTTPClientSettings)
 	if !ok {
@@ -69,6 +70,7 @@ func (hc *httpclient) SetSettings(settings interface{}) error {
 	return nil
 }
 
+// ignore
 func (hc *httpclient) Send(cmd interface{}, out interface{}) error {
 	b, err := json.Marshal(cmd)
 	if err != nil {
@@ -112,7 +114,7 @@ func (hc *httpclient) Send(cmd interface{}, out interface{}) error {
 	return json.Unmarshal(bs, out)
 }
 
-func handleError(err *ErrorResponse, err1, err2 error) error {
+func handleError(err *ErrorResponse, err1 error, err2 error) error {
 	switch {
 	case err.Error != "":
 		return errors.New(err.Error)

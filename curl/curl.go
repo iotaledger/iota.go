@@ -48,32 +48,31 @@ func NewCurl() *Curl {
 	return c
 }
 
-//Squeeze do Squeeze in sponge func.
+// Squeeze squeezes a 81 trytes long hash.
 func (c *Curl) Squeeze() Trytes {
 	ret := MustTritsToTrytes(c.State[:HashTrinarySize])
 	c.Transform()
-
 	return ret
 }
 
 // Absorb fills the internal State of the sponge with the given trits.
 // It panics if the given trytes are not valid.
-func (c *Curl) Absorb(inn Trytes) {
-	var in Trits
-	if len(inn) == 0 {
-		in = Trits{0}
+func (c *Curl) Absorb(in Trytes) {
+	var inTrits Trits
+	if len(in) == 0 {
+		inTrits = Trits{0}
 	} else {
-		in = MustTrytesToTrits(inn)
+		inTrits = MustTrytesToTrits(in)
 	}
 	var lenn int
-	for i := 0; i < len(in); i += lenn {
+	for i := 0; i < len(inTrits); i += lenn {
 		lenn = HashTrinarySize
 
-		if len(in)-i < HashTrinarySize {
-			lenn = len(in) - i
+		if len(inTrits)-i < HashTrinarySize {
+			lenn = len(inTrits) - i
 		}
 
-		copy(c.State, in[i:i+lenn])
+		copy(c.State, inTrits[i:i+lenn])
 		c.Transform()
 	}
 }
@@ -112,8 +111,8 @@ func HashTrits(trits Trits) Trits {
 }
 
 // HashTrytes returns hash of t.
-func HashTrytes(t Trytes) Trytes {
+func HashTrytes(trytes Trytes) Trytes {
 	c := NewCurl()
-	c.Absorb(t)
+	c.Absorb(trytes)
 	return c.Squeeze()
 }

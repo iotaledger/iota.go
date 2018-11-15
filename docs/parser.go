@@ -1,0 +1,370 @@
+// Parser generates markdown documentation according to the IOTA documentation portal format.
+// The parser will automatically pick up examples for functions from the "example" subfolder
+// in the corresponding packages.
+package main
+
+import (
+	"flag"
+	"fmt"
+	"go/ast"
+	"go/doc"
+	"go/parser"
+	"go/token"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
+	"text/template"
+)
+
+type function struct {
+	Name        string
+	Title       string
+	Desc        string
+	Inputs      []input
+	Outputs     []output
+	ExampleCode string
+	hadExample  bool
+}
+
+type input struct {
+	ArgName  string
+	Type     string
+	Desc     string
+	Required bool
+}
+
+type output struct {
+	Type string
+	Desc string
+}
+
+var packageDirs = []string{
+	"../address",
+	"../bundle",
+	"../checksum",
+	"../converter",
+	"../curl",
+	"../guards",
+	"../kerl",
+	"../pow",
+	"../signing",
+	"../transaction",
+	"../units",
+}
+
+var writeToStdOut = flag.Bool("stdout", false, "")
+
+func main() {
+	flag.Parse()
+
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	tmpl := template.Must(template.ParseFiles("template.md"))
+	_ = tmpl
+
+	// iterate over all defined packages and generate their documentation
+	for _, packageDir := range packageDirs {
+		set := token.NewFileSet()
+		packages, err := parser.ParseDir(set, packageDir, nil, parser.ParseComments)
+		if err != nil {
+			log.Fatalf("failed to parse package: %s", err)
+		}
+
+		for packageName, astPack := range packages {
+			// parse functions of package
+			if strings.Contains(packageName, "test") && !strings.Contains(packageName, "example") {
+				continue
+			}
+
+			// bread and butter
+			functions := parsePackage(astPack, set)
+			parseExamples(packageName, packageDir, functions)
+
+			for _, fun := range functions {
+				if fun.hadExample {
+					continue
+				}
+				log.Printf("missing example for function %s", fun.Name)
+			}
+
+			if *writeToStdOut {
+				writeDocs(functions, tmpl)
+			}
+		}
+	}
+}
+
+func writeDocs(functions map[string]*function, tmpl *template.Template) {
+	for _, function := range functions {
+		if err := tmpl.Execute(os.Stdout, function); err != nil {
+			panic(err)
+		}
+		fmt.Println()
+	}
+}
+
+// parses the given AST package and returns its functions
+func parsePackage(astPack *ast.Package, set *token.FileSet) map[string]*function {
+	pack := doc.New(astPack, "", 1)
+	log.Printf("parsing docs for package %s...\n", astPack.Name)
+	functions := make(map[string]*function, len(pack.Funcs))
+
+	funcsTotal := 0
+
+	for _, ty := range pack.Types {
+		if len(ty.Methods) == 0 && len(ty.Funcs) == 0 {
+			continue
+		}
+
+		if len(ty.Methods) > 0 {
+			for _, f := range ty.Methods {
+				if !isExported(f) {
+					continue
+				}
+				fun := parseFunction(f, astPack, set, ty)
+				if fun == nil {
+					continue
+				}
+				log.Printf("%s -> %s", ty.Name, f.Name)
+				functions[fun.Name] = fun
+			}
+		}
+
+		if len(ty.Funcs) > 0 {
+			for _, f := range ty.Funcs {
+				if !isExported(f) {
+					continue
+				}
+				fun := parseFunction(f, astPack, set, nil)
+				if fun == nil {
+					continue
+				}
+				funcsTotal++
+				log.Printf("package [%s] -> %s", astPack.Name, f.Name)
+				functions[fun.Name] = fun
+			}
+		}
+	}
+
+	for _, f := range pack.Funcs {
+		if !isExported(f) {
+			continue
+		}
+		log.Printf("package [%s] -> %s", astPack.Name, f.Name)
+		fun := parseFunction(f, astPack, set, nil)
+		if fun == nil {
+			continue
+		}
+		funcsTotal++
+		functions[fun.Name] = fun
+	}
+	log.Printf("parsed %d functions in package %s...\n", funcsTotal, astPack.Name)
+
+	return functions
+}
+
+func isExported(fun *doc.Func) bool {
+	return string(fun.Name[0]) == strings.ToUpper(string(fun.Name[0]))
+}
+
+// parses the exported functions from the package
+func parseFunction(fun *doc.Func, astPack *ast.Package, set *token.FileSet, ty *doc.Type) *function {
+	if strings.TrimSpace(fun.Doc) == "ignore" {
+		return nil
+	}
+
+	cleanedDocs := strings.TrimSpace(fun.Doc)
+	cleanedDocs = strings.Replace(cleanedDocs, "\n", " ", -1)
+
+	// extract declaration for input/output types
+	decl := fun.Decl
+	f := &function{
+		Name: fun.Name,
+		Desc: cleanedDocs,
+	}
+	if ty != nil {
+		f.Title = ty.Name + " -> " + fun.Name + "()"
+	} else {
+		f.Title = fun.Name + "()"
+	}
+
+	// search for the file with the content of this function
+	// to extract the function parameter types "as-is"
+	// using decl.Type.Params gives an unusable representation of the types
+	found := false
+	for fileName := range astPack.Files {
+		fileBytes, err := ioutil.ReadFile(fileName)
+		if err != nil {
+			log.Fatalf("unable to read file for parameter inspection: %s", fileName)
+		}
+
+		// convert tokens positions into actual byte offsets
+		start := set.Position(decl.Name.Pos()).Offset
+		end := set.Position(decl.Name.End()).Offset
+
+		// check whether the file is even as large as the end of the function declaration
+		if len(fileBytes) < end {
+			continue
+		}
+
+		maybeName := fileBytes[start:end]
+		// check whether we found the right file
+		if string(maybeName) != fun.Name {
+			continue
+		}
+
+		found = true
+
+		// extract parameters of the function
+		if decl.Type.Params != nil {
+			f.Inputs = make([]input, len(decl.Type.Params.List))
+			paraStart := set.Position(decl.Type.Params.Pos()).Offset
+			paraEnd := set.Position(decl.Type.Params.End()).Offset
+			parameters := strings.Split(string(fileBytes[paraStart+1:paraEnd-1]), ",")
+			for i, para := range parameters {
+				split := strings.Split(strings.TrimSpace(para), " ")
+				if len(split) != 2 {
+					continue
+				}
+				f.Inputs[i] = input{ArgName: split[0], Type: split[1]}
+			}
+		}
+
+		// extract return values of the function
+		if decl.Type.Results != nil {
+			f.Outputs = make([]output, len(decl.Type.Results.List))
+			resultStart := set.Position(decl.Type.Results.Pos()).Offset
+			resultEnd := set.Position(decl.Type.Results.End()).Offset
+			var results []string
+			// if there's more than one return value we need to count in for ( )
+			if len(decl.Type.Results.List) > 1 {
+				results = strings.Split(string(fileBytes[resultStart+1:resultEnd-1]), ",")
+			} else {
+				results = strings.Split(string(fileBytes[resultStart:resultEnd]), ",")
+			}
+			for i, result := range results {
+				f.Outputs[i] = output{Type: strings.TrimSpace(result)}
+			}
+		}
+	}
+
+	if !found {
+		log.Fatalf("unable to find source file containing function %s of package %s", fun.Name, astPack.Name)
+	}
+
+	return f
+}
+
+// parses the corresponding example folder for the given package
+func parseExamples(packageName string, packageDir string, functions map[string]*function) {
+	// parse examples
+	examplePackagePath := fmt.Sprintf("%s/examples", packageDir)
+	if _, err := os.Stat(examplePackagePath); os.IsNotExist(err) {
+		log.Printf("missing examples for package: %s (!)\n", packageName)
+		return
+	}
+
+	// create a new file set for the examples
+	examplesSet := token.NewFileSet()
+	examplesDir := fmt.Sprintf("%s/examples", packageDir)
+	// parse example dir
+	examplePackages, err := parser.ParseDir(examplesSet, examplesDir, nil, parser.ParseComments)
+	if err != nil {
+		log.Fatalf("failed to parse example packages package: %s", err)
+	}
+
+	log.Printf("parsing examples for package %s...\n", packageName)
+	for _, exampleASTPack := range examplePackages {
+		for fileName, file := range exampleASTPack.Files {
+			fileBytes, err := ioutil.ReadFile(fileName)
+			if err != nil {
+				log.Fatalf("unable to read example file: %s\n", fileName)
+			}
+			// extract example code
+			examples := doc.Examples(file)
+			// extract example documentation
+			examplePackage := doc.New(exampleASTPack, ".", 0)
+			for _, example := range examples {
+				for _, fun := range examplePackage.Funcs {
+					if fun.Name != "Example"+example.Name {
+						continue
+					}
+
+					f, ok := functions[example.Name]
+					if !ok {
+						log.Printf("no source function found for example function %s\n", example.Name)
+						continue
+					}
+
+					extendedDoc := example.Doc
+					if len(extendedDoc) == 0 {
+						log.Printf("no extended doc for function %s found\n", example.Name)
+					} else {
+						addExtendedDocs(extendedDoc, f)
+					}
+					f.hadExample = true
+
+					exampleCode := fileBytes[fun.Decl.Pos():fun.Decl.End()]
+					exampleBody := fileBytes[example.Code.Pos():example.Code.End()]
+					if len(strings.TrimSpace(string(exampleBody))) == 1 {
+						log.Printf("skipping example code for function %s (empty body)", fun.Name)
+						continue
+					}
+
+					f.ExampleCode = "f" + string(exampleCode) + string(exampleBody)
+				}
+			}
+		}
+	}
+}
+
+// parses the expended documentation and adds it to the given function
+func addExtendedDocs(extendedDocs string, f *function) {
+	lines := strings.Split(extendedDocs, "\n")
+	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+		descSep := strings.Index(line, ",")
+		paraSep := strings.Index(line, ":")
+		// i = input
+		// o = output
+		switch line[0] {
+		case 'i':
+			required := false
+			if len(line) > 5 && line[2:5] == "req" {
+				required = true
+			}
+			paraName := strings.TrimSpace(line[paraSep+1 : descSep])
+			desc := strings.TrimSpace(line[descSep+1:])
+			found := false
+			for j := range f.Inputs {
+				input := &f.Inputs[j]
+				if input.ArgName == paraName {
+					found = true
+					input.Desc = desc
+					input.Required = required
+					continue
+				}
+			}
+			if !found {
+				log.Printf("no matching parameter '%s' in function %s\n", paraName, f.Name)
+			}
+		case 'o':
+			typeName := strings.TrimSpace(line[paraSep+1 : descSep])
+			desc := strings.TrimSpace(line[descSep+1:])
+			found := false
+			for j := range f.Outputs {
+				output := &f.Outputs[j]
+				if output.Type == typeName {
+					found = true
+					output.Desc = desc
+					continue
+				}
+			}
+			if !found {
+				log.Printf("no matching return value '%s' in function %s\n", typeName, f.Name)
+			}
+		}
+	}
+}
