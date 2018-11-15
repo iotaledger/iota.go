@@ -13,7 +13,7 @@ var _ = Describe("Curl", func() {
 
 	DescribeTable("hash computation",
 		func(in Trytes, expected Trytes) {
-			Expect(HashTrytes(in)).To(Equal(expected))
+			Expect(MustHashTrytes(in)).To(Equal(expected))
 		},
 		Entry("normal trytes", "A", "TJVKPMTAMIZVBVHIVQUPTKEMPROEKV9SB9COEDQYRHYPTYSKQIAN9PQKMZHCPO9TS9BHCORFKW9CQXZEE"),
 		Entry("normal trytes #2", "B", "QFZXTJUJNLAOSZKXXMMGJJLFACVLRQMRBKOJLMTZXPLPVDSWWWXLBX9CDZWHMDMSDMDQKXQGEWPC9BJHN"),

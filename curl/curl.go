@@ -48,7 +48,7 @@ func NewCurl() *Curl {
 	return c
 }
 
-// Squeeze out length trits. Length has to be a multiple of HashTrinarySize.
+// Squeeze squeezes out trits of the given length. Length has to be a multiple of HashTrinarySize.
 func (c *Curl) Squeeze(length int) (Trits, error) {
 	if length%HashTrinarySize != 0 {
 		return nil, ErrInvalidSqueezeLength
@@ -63,11 +63,29 @@ func (c *Curl) Squeeze(length int) (Trits, error) {
 	return out, nil
 }
 
-// SqueezeTrytes out length trits. Length has to be a multiple of HashTrinarySize.
-// Returns trytes. It panics if the trytes are not valid.
-func (c *Curl) SqueezeTrytes(length int) Trytes {
-	trits, _ := c.Squeeze(length)
-	return MustTritsToTrytes(trits)
+// MustSqueeze squeezes out trits of the given length. Length has to be a multiple of HashTrinarySize.
+// It panics if the length is not valid.
+func (c *Curl) MustSqueeze(length int) Trits {
+	out, err := c.Squeeze(length)
+	if err != nil {
+		panic(err)
+	}
+	return out
+}
+
+// SqueezeTrytes squeezes out trytes of the given trit length. Length has to be a multiple of HashTrinarySize.
+func (c *Curl) SqueezeTrytes(length int) (Trytes, error) {
+	trits, err := c.Squeeze(length)
+	if err != nil {
+		return "", err
+	}
+	return TritsToTrytes(trits)
+}
+
+// MustSqueezeTrytes squeezes out trytes of the given trit length. Length has to be a multiple of HashTrinarySize.
+// It panics if the trytes or the length are not valid.
+func (c *Curl) MustSqueezeTrytes(length int) Trytes {
+	return MustTritsToTrytes(c.MustSqueeze(length))
 }
 
 // Absorb fills the internal State of the sponge with the given trits.
@@ -87,15 +105,28 @@ func (c *Curl) Absorb(in Trits) error {
 }
 
 // AbsorbTrytes fills the internal State of the sponge with the given trytes.
-// It panics if the given trytes are not valid.
-func (c *Curl) AbsorbTrytes(inn Trytes) {
+func (c *Curl) AbsorbTrytes(inn Trytes) error {
 	var in Trits
+	var err error
+
 	if len(inn) == 0 {
 		in = Trits{0}
 	} else {
-		in = MustTrytesToTrits(inn)
+		in, err = TrytesToTrits(inn)
+		if err != nil {
+			return err
+		}
 	}
-	c.Absorb(in)
+	return c.Absorb(in)
+}
+
+// AbsorbTrytes fills the internal State of the sponge with the given trytes.
+// It panics if the given trytes are not valid.
+func (c *Curl) MustAbsorbTrytes(inn Trytes) {
+	err := c.AbsorbTrytes(inn)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Transform does Transform in sponge func.
@@ -124,17 +155,29 @@ func (c *Curl) Reset() {
 	}
 }
 
-// HashTrits returns hash trits of the given trits.
+// HashTrits returns the hash of the given trits.
 func HashTrits(trits Trits) (Trits, error) {
 	c := NewCurl()
 	c.Absorb(trits)
 	return c.Squeeze(HashTrinarySize)
 }
 
-// HashTrytes returns hash trytes of the given trytes.
-// It panics if the given trytes are not valid.
-func HashTrytes(t Trytes) Trytes {
+// HashTrytes returns the hash of the given trytes.
+func HashTrytes(t Trytes) (Trytes, error) {
 	c := NewCurl()
-	c.AbsorbTrytes(t)
+	err := c.AbsorbTrytes(t)
+	if err != nil {
+		return "", err
+	}
 	return c.SqueezeTrytes(HashTrinarySize)
+}
+
+// MustHashTrytes returns the hash of the given trytes.
+// It panics if the given trytes are not valid.
+func MustHashTrytes(t Trytes) Trytes {
+	trytes, err := HashTrytes(t)
+	if err != nil {
+		panic(err)
+	}
+	return trytes
 }

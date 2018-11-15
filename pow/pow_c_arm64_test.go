@@ -21,7 +21,7 @@ var _ = Describe("PoWARM64", func() {
 			nonce, err := pow.PowARM64(rawTx, 10)
 			rawTx = rawTx[:len(rawTx)-NonceTrinarySize/3] + nonce
 			Expect(err).ToNot(HaveOccurred())
-			hashedTrytes := curl.HashTrytes(rawTx)
+			hashedTrytes := curl.MustHashTrytes(rawTx)
 			Expect(guards.IsTransactionHashWithMWM(hashedTrytes, 10)).To(BeTrue())
 		})
 	})

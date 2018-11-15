@@ -249,7 +249,7 @@ func MustFinalTransactionTrytes(txs Transactions) []Trytes {
 
 // TransactionHash makes a transaction hash from the given transaction.
 func TransactionHash(t *Transaction) Hash {
-	return curl.HashTrytes(MustTransactionToTrytes(t))
+	return curl.MustHashTrytes(MustTransactionToTrytes(t))
 }
 
 // HasValidNonce checks if the transaction has the valid MinWeightMagnitude.
