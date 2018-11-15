@@ -2,6 +2,7 @@
 TraverseBundle fetches the bundle of a given tail transaction by traversing through the trunk transactions. It does not validate the bundle.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,11 +11,14 @@ TraverseBundle fetches the bundle of a given tail transaction by traversing thro
 | bndl | Bundle | true | An empty Bundle in which transactions are added.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
-| Bundle |  |
+| Bundle | The constructed Bundle by traversing through the trunk transactions. |
 | error | Returned for invalid parameters and internal errors. |
+
 
 

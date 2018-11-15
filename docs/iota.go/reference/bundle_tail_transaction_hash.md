@@ -2,6 +2,7 @@
 TailTransactionHash returns the tail transaction's hash.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -9,11 +10,14 @@ TailTransactionHash returns the tail transaction's hash.
 | bndl | Bundle | false |   |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Hash |  |
+
 
 
 

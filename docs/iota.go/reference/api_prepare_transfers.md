@@ -2,6 +2,7 @@
 PrepareTransfers prepares the transaction trytes by generating a bundle, filling in transfers and inputs, adding remainder and signing all input transactions.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -11,12 +12,15 @@ PrepareTransfers prepares the transaction trytes by generating a bundle, filling
 | options | PrepareTransfersOptions | true | Options used for preparing the transfers.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | []Trytes | The prepared Trytes, ready for Proof-of-Work. |
 | error | Returned for invalid parameters and internal errors. |
+
 
 
 

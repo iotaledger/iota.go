@@ -2,6 +2,7 @@
 Digest computes the digest derived from the signature fragment and normalized bundle hash.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ Digest computes the digest derived from the signature fragment and normalized bu
 | signatureFragment | Trits | true | The signature fragment corresponding to the bundle hash fragment.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Trits | The Trits representation of the digest. |
 | error | Returned for internal errors. |
+
 
 
 

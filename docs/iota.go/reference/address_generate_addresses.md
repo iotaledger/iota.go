@@ -2,6 +2,7 @@
 GenerateAddresses generates N new addresses from the given seed, indices and security level.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -13,12 +14,15 @@ GenerateAddresses generates N new addresses from the given seed, indices and sec
 | addChecksum |  | false | Whether to append the checksum on the returned address.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Hashes | The generated addresses. |
 | error | Returned for any error occurring during address generation. |
+
 
 
 

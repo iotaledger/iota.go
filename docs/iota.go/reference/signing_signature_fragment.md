@@ -2,6 +2,7 @@
 SignatureFragment returns signed fragments using the given bundle hash and key fragment.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ SignatureFragment returns signed fragments using the given bundle hash and key f
 | keyFragment | Trits | true | The fragment of the private key.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Trits | The Trits representation of the signed message signature fragment. |
 | error | Returned for internal errors. |
+
 
 
 

@@ -2,6 +2,7 @@
 AddChecksums is a wrapper function around AddChecksum for multiple trytes strings.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -11,11 +12,14 @@ AddChecksums is a wrapper function around AddChecksum for multiple trytes string
 | checksumLength | uint64 | true | The wanted length of each checksum. Must be 9 when isAddress is true.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | []Trytes |  |
 | error | Returned for invalid addresses and other inputs. |
+
 
 

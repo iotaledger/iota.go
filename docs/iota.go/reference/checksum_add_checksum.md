@@ -2,6 +2,7 @@
 AddChecksum computes the checksum and returns the given trytes with the appended checksum. If isAddress is true, then the input trytes must be of length HashTrytesSize. Specified checksum length must be at least MinChecksumTrytesSize long or it must be AddressChecksumTrytesSize if isAddress is true.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -11,12 +12,15 @@ AddChecksum computes the checksum and returns the given trytes with the appended
 | checksumLength | uint64 | true | The wanted length of the checksum. Must be 9 when isAddress is true.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Trytes | The input Trytes with the appended checksum. |
 | error | Returned for invalid addresses and other inputs. |
+
 
 
 

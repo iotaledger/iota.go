@@ -2,11 +2,14 @@
 Checksum returns the checksum of the given address.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | address | Hash | true | The address from which to compute the checksum of.  |
+
+
 
 
 ## Output
@@ -15,6 +18,7 @@ Checksum returns the checksum of the given address.
 |:---------------|:--------|
 | Trytes | The checksum of the address. |
 | error | Returned for invalid addresses or checksum errors. |
+
 
 
 

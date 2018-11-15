@@ -2,6 +2,7 @@
 AddEntry adds a new entry to the bundle. It automatically adds additional transactions if the signature message fragments don't fit into one transaction.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,11 +11,14 @@ AddEntry adds a new entry to the bundle. It automatically adds additional transa
 | bndlEntry | BundleEntry | true | The BundleEntry to add.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Bundle | Returns a bundle with the newly added BundleEntry. |
+
 
 
 

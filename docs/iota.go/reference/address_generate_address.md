@@ -2,6 +2,7 @@
 GenerateAddress generates an address deterministically, according to the given seed, index and security level.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -12,12 +13,15 @@ GenerateAddress generates an address deterministically, according to the given s
 | addChecksum |  | false | Whether to append the checksum on the returned address.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Hash | The generated address. |
 | error | Returned for any error occurring during address generation. |
+
 
 
 

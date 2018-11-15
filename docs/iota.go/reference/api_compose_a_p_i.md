@@ -2,6 +2,7 @@
 ComposeAPI composes a new API from the given settings and provider. If no provider function is supplied, then the default http provider is used. Settings must not be nil.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ ComposeAPI composes a new API from the given settings and provider. If no provid
 | createProvider |  | false | A function which creates a new Provider given the Settings.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | *API |  |
 | error |  |
+
 
 
 

@@ -304,7 +304,7 @@ func ExampleGetAccountData() {
 }
 
 // i req: tailTxHash, The hash of the tail transaction of the bundle.
-// o: bundle.Bundle, The Bundle of the given tail transaction.
+// o: Bundle, The Bundle of the given tail transaction.
 // o: error, Returned for invalid parameters and internal errors.
 func ExampleGetBundle() {
 	hash := "CLXCQVSDAOHWLGKVLNUKKJOOANL9OVGEHSNGRQFLOZJUSJSSXBGJDROUHALTSNUPMTSAVFF9IQEEA9999"
@@ -318,7 +318,7 @@ func ExampleGetBundle() {
 
 // i req: addresses, The addresses of which to get the bundles of.
 // i: inclusionState, Whether to set the persistence field on the transactions.
-// o: bundle.Bundles, The bundles gathered of the given addresses.
+// o: Bundles, The bundles gathered of the given addresses.
 // o: error, Returned for invalid parameters and internal errors.
 func ExampleGetBundlesFromAddresses() {
 	addresses := trinary.Hashes{
@@ -391,7 +391,7 @@ func ExampleGetInputObjects() {}
 
 // i req: seed, The seed from which to derive the addresses of.
 // i req: options, Options for addresses generation.
-// o: bundle.Bundles, The Bundles gathered from the given addresses.
+// o: Bundles, The Bundles gathered from the given addresses.
 // o: error, Returned for invalid parameters and internal errors.
 func ExampleGetTransfers() {}
 
@@ -456,7 +456,7 @@ func ExamplePrepareTransfers() {
 // i req: mwm, The minimum weight magnitude to fufill.
 // i req: transfers, The Transfers to prepare and send off.
 // i req: options, The options used for preparing and sending of the bundle.
-// o: bundle.Bundle, The sent of Bundle.
+// o: Bundle, The sent of Bundle.
 // o: error, Returned for invalid parameters and internal errors.
 func SendTransfer() {}
 
@@ -504,7 +504,7 @@ func PromoteTransaction() {
 // i req: depth, The depth used in GetTransactionstoApprove().
 // i req: mwm, The minimum weight magnitude to fulfill.
 // i: reference, The optional reference to use in GetTransactionsToApprove().
-// o: bundle.Bundle, The newly attached Bundle.
+// o: Bundle, The newly attached Bundle.
 // o: error, Returned for invalid parameters and internal errors.
 func ExampleReplayBundle() {}
 
@@ -515,7 +515,7 @@ func ExampleStoreAndBroadcast() {}
 
 // i req: trunkTxHash, The hash of the tail transaction of the bundle.
 // i req: bndl, An empty Bundle in which transactions are added.
-// o: bundle.Bundle, The constructed Bundle by traversing through the trunk transactions.
+// o: Bundle, The constructed Bundle by traversing through the trunk transactions.
 // o: error, Returned for invalid parameters and internal errors.
 func ExampleTraverseBundle() {}
 

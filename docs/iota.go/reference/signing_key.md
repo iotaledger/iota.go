@@ -2,6 +2,7 @@
 Key computes a new private key from the given subseed using the given security level.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ Key computes a new private key from the given subseed using the given security l
 | securityLevel | SecurityLevel | true | The used security level.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Trits | The Trits representation of the private key. |
 | error | Returned for internal errors. |
+
 
 
 

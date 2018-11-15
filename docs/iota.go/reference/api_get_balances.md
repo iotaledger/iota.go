@@ -2,6 +2,7 @@
 GetBalances fetches confirmed balances of the given addresses at the latest solid milestone.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ GetBalances fetches confirmed balances of the given addresses at the latest soli
 | threshold | uint64 | true | The threshold of the query, must be less than or equal 100.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | *Balances | The object describing the result of the balance query. |
 | error | Returned for invalid addresses and internal errors. |
+
 
 
 

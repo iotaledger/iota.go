@@ -2,6 +2,7 @@
 ReplayBundle reattaches a transfer to the Tangle by selecting tips & performing the Proof-of-Work again. Reattachments are useful in case original transactions are pending and can be done securely as many times as needed.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -12,11 +13,14 @@ ReplayBundle reattaches a transfer to the Tangle by selecting tips & performing 
 | reference |  | false | The optional reference to use in GetTransactionsToApprove().  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
-| Bundle |  |
+| Bundle | The newly attached Bundle. |
 | error | Returned for invalid parameters and internal errors. |
+
 
 

@@ -2,6 +2,7 @@
 ParseTransaction parses the trits and returns a transaction object. The trits slice must be TransactionTrinarySize in length. If noHash is set to true, no transaction hash is calculated.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ ParseTransaction parses the trits and returns a transaction object. The trits sl
 | noHash |  | false | Whether not to add the hash of the transaction.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | *Transaction | The parsed Transaction. |
 | error | Returned for schematically wrong transactions. |
+
 
 
 

@@ -2,6 +2,7 @@
 ValidateSignatures validates the given signature fragments by checking whether the digests computed from the bundle hash and fragments equal the passed address.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -11,12 +12,15 @@ ValidateSignatures validates the given signature fragments by checking whether t
 | bundleHash | Hash | true | The hash of the bundle.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | bool | Whether the signatures are valid. |
 | error | Returned for internal errors. |
+
 
 
 

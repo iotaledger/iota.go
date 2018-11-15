@@ -2,6 +2,7 @@
 GetTransfers returns bundles which operated on the given address range specified by the supplied options.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,11 +11,14 @@ GetTransfers returns bundles which operated on the given address range specified
 | options | GetTransfersOptions | true | Options for addresses generation.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
-| Bundles |  |
+| Bundles | The Bundles gathered from the given addresses. |
 | error | Returned for invalid parameters and internal errors. |
+
 
 

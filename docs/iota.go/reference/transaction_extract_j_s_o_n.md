@@ -2,11 +2,14 @@
 ExtractJSON extracts a JSON string from the given transactions. It supports JSON messages in the following format:  - "{ \"message\": \"hello\" }"  - "[1, 2, 3]"  - "true", "false" and "null"  - "hello"  - 123
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | txs | Transactions | true | The Transactions from which to derive the JSON message from.  |
+
+
 
 
 ## Output
@@ -15,6 +18,7 @@ ExtractJSON extracts a JSON string from the given transactions. It supports JSON
 |:---------------|:--------|
 | string | The JSON value. |
 | error | Returned for invalid messages. |
+
 
 
 

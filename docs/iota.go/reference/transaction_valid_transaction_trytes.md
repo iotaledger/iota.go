@@ -2,6 +2,7 @@
 ValidTransactionTrytes checks whether the given trytes make up a valid transaction schematically.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -9,11 +10,14 @@ ValidTransactionTrytes checks whether the given trytes make up a valid transacti
 | trytes | Trytes | true | The Trytes to validate.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | error | Returned for invalid transaction Trytes. |
+
 
 
 

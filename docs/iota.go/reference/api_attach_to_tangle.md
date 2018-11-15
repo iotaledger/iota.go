@@ -2,6 +2,7 @@
 AttachToTangle performs the Proof-of-Work required to attach a transaction to the Tangle by calling the attachToTangle IRI API command. Returns a list of transaction trytes and overwrites the following fields:  Hash, Nonce, AttachmentTimestamp, AttachmentTimestampLowerBound, AttachmentTimestampUpperBound  If a Proof-of-Work function is supplied when composing the API, then that function is used instead of using the connected node.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -12,12 +13,15 @@ AttachToTangle performs the Proof-of-Work required to attach a transaction to th
 | trytes | []Trytes | true | The transaction Trytes.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | []Trytes | The Trytes slice ready for broadcasting. |
 | error | Returned for invalid Trytes and internal errors. |
+
 
 
 

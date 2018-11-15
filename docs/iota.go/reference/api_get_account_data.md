@@ -2,6 +2,7 @@
 GetAccountData returns an AccountData object containing account information about addresses, transactions, inputs and total account balance. Deprecated: Use a solution which uses local persistence to keep the account data.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ GetAccountData returns an AccountData object containing account information abou
 | options | GetAccountDataOptions | true | Options used for gathering the account data.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | *AccountData | An object describing the current state of the account. |
 | error | Returned for invalid parameters and internal errors. |
+
 
 
 

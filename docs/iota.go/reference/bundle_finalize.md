@@ -2,11 +2,14 @@
 Finalize finalizes the bundle by calculating the bundle hash and setting it on each transaction bundle hash field.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | bundle | Bundle | true | The Bundle to finalize.  |
+
+
 
 
 ## Output
@@ -15,6 +18,7 @@ Finalize finalizes the bundle by calculating the bundle hash and setting it on e
 |:---------------|:--------|
 | Bundle | The finalized Bundle. |
 | error | Returned for invalid finalization. |
+
 
 
 

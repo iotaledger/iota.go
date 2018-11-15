@@ -2,6 +2,7 @@
 ValidAddress checks whether the given address is valid.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -9,11 +10,14 @@ ValidAddress checks whether the given address is valid.
 | address | Hash | true | The address to check.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | error | Returned if the address is invalid. |
+
 
 
 

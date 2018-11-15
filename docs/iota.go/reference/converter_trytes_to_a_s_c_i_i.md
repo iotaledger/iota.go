@@ -2,11 +2,14 @@
 TrytesToASCII converts trytes of even length to an ascii string.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | trytes | Trytes | true | The input Trytes to convert to an ASCII string.  |
+
+
 
 
 ## Output
@@ -15,6 +18,7 @@ TrytesToASCII converts trytes of even length to an ascii string.
 |:---------------|:--------|
 | string | The computed ASCII string. |
 | error | Returned for invalid Trytes or odd length inputs. |
+
 
 
 

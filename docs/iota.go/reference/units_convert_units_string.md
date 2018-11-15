@@ -2,6 +2,7 @@
 ConvertUnitsString converts the given string value in the base Unit to the given new Unit.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -11,12 +12,15 @@ ConvertUnitsString converts the given string value in the base Unit to the given
 | to | Unit | true | The Unit format of the target value.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | float64 | The float64 representation of the target value. |
 | error | Returned for invalid string values. |
+
 
 
 

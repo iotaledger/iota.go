@@ -2,11 +2,14 @@
 GetTrytes fetches the transaction trytes given a list of transaction hashes.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | hashes |  | true | The hashes of the transactions of which to get the Trytes of.  |
+
+
 
 
 ## Output
@@ -15,6 +18,7 @@ GetTrytes fetches the transaction trytes given a list of transaction hashes.
 |:---------------|:--------|
 | []Trytes | The Trytes of the requested transactions. |
 | error | Returned for internal errors. |
+
 
 
 

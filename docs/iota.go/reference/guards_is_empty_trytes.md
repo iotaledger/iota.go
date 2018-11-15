@@ -2,6 +2,7 @@
 IsEmptyTrytes checks if input is null (all 9s trytes)
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -9,11 +10,14 @@ IsEmptyTrytes checks if input is null (all 9s trytes)
 | trytes | Trytes | true | The Trytes to check.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | bool | Whether it passes the check. |
+
 
 
 

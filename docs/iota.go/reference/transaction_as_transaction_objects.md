@@ -2,6 +2,7 @@
 AsTransactionObjects constructs new transactions from the given raw trytes.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,11 +11,14 @@ AsTransactionObjects constructs new transactions from the given raw trytes.
 | hashes | Hashes | false | The hashes to add to the parsed transactions.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Transactions | The parsed Transactions. |
 | error | Returned for schematically wrong transactions. |
+
 
 

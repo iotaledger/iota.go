@@ -2,11 +2,14 @@
 ASCIIToTrytes converts an ascii encoded string to trytes.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | s | string | true | The ASCII string to convert to Trytes.  |
+
+
 
 
 ## Output
@@ -15,6 +18,7 @@ ASCIIToTrytes converts an ascii encoded string to trytes.
 |:---------------|:--------|
 | Trytes | The Trytes representation of the input ASCII string. |
 | error | Returned for non ASCII string inputs. |
+
 
 
 

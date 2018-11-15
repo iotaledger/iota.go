@@ -2,6 +2,7 @@
 IsTransactionTrytesWithMWM checks if input is correct transaction trytes (2673 trytes) with given MWM
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ IsTransactionTrytesWithMWM checks if input is correct transaction trytes (2673 t
 | mwm | uint | false |   |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | bool | Whether it passes the check. |
 | error |  |
+
 
 
 

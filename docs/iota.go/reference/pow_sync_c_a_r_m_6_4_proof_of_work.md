@@ -2,6 +2,7 @@
 SyncCARM64ProofOfWork is like CARM64ProofOfWork() but only runs one ongoing Proof-of-Work task at a time.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -11,11 +12,14 @@ SyncCARM64ProofOfWork is like CARM64ProofOfWork() but only runs one ongoing Proo
 | parallelism |  | false |   |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Trytes |  |
 | error |  |
+
 
 

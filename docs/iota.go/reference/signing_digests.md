@@ -2,11 +2,14 @@
 Digests hashes each segment of each key fragment 26 times and returns them.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | key | Trits | true | The private key from which to derive the digests from.  |
+
+
 
 
 ## Output
@@ -15,6 +18,7 @@ Digests hashes each segment of each key fragment 26 times and returns them.
 |:---------------|:--------|
 | Trits | The Trits representation of the digests. |
 | error | Returned for internal errors. |
+
 
 
 

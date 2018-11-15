@@ -2,6 +2,7 @@
 Subseed takes a seed and an index and returns the given subseed.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ Subseed takes a seed and an index and returns the given subseed.
 | index | uint64 | true | The index of the subseed.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Trits | The Trits representation of the subseed. |
 | error | Returned for invalid seeds and internal errors. |
+
 
 
 

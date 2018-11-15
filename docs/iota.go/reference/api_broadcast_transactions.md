@@ -2,11 +2,14 @@
 BroadcastTransactions broadcasts a list of attached transaction trytes to the network. Tip-selection and Proof-of-Work must be done first by calling GetTransactionsToApprove and AttachToTangle or an equivalent attach method.  You may use this method to increase odds of effective transaction propagation.  Persist the transaction trytes in local storage before calling this command for first time, to ensure that reattachment is possible, until your bundle has been included.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | trytes |  | true | The Trytes to broadcast.  |
+
+
 
 
 ## Output
@@ -15,6 +18,7 @@ BroadcastTransactions broadcasts a list of attached transaction trytes to the ne
 |:---------------|:--------|
 | []Trytes |  |
 | error | Returned for invalid Trytes and internal errors. |
+
 
 
 

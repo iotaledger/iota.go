@@ -2,6 +2,7 @@
 GetNewAddress generates and returns a new address by calling FindTransactions and WereAddressesSpentFrom until the first unused address is detected. This stops working after a snapshot.  If the "total" parameter is supplied in the options, then this function simply generates the specified address range without doing any I/O.  It is suggested that the library user keeps track of used addresses and directly generates addresses from the stored information instead of relying on GetNewAddress.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ GetNewAddress generates and returns a new address by calling FindTransactions an
 | options | GetNewAddressOptions | true | Options used during address generation.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Hashes | The generated address(es). |
 | error | Returned for invalid parameters and internal errors. |
+
 
 
 

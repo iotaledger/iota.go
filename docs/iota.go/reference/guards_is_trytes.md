@@ -2,6 +2,7 @@
 IsTrytes checks if input is correct trytes consisting of [9A-Z]
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -9,11 +10,14 @@ IsTrytes checks if input is correct trytes consisting of [9A-Z]
 | trytes | Trytes | true | The Trytes to check.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | bool | Whether the Trytes are valid. |
+
 
 
 

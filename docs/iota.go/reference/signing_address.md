@@ -2,11 +2,14 @@
 Address generates the address trits from the given digests.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | digests | Trits | true | The digests from which to derive the address from.  |
+
+
 
 
 ## Output
@@ -15,6 +18,7 @@ Address generates the address trits from the given digests.
 |:---------------|:--------|
 | Trits | The Trits representation of the address. |
 | error | Returned for internal errors. |
+
 
 
 

@@ -2,6 +2,7 @@
 NormalizedBundleHash normalizes the given bundle hash, with resulting digits summing to zero. It returns a slice with the tryte decimal representation without any 13/M values.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -9,11 +10,14 @@ NormalizedBundleHash normalizes the given bundle hash, with resulting digits sum
 | bundleHash | Hash | true | The bundle hash to normalize.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | []int8 | The normalized int8 slice without any 13/M values. |
+
 
 
 

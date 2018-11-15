@@ -2,6 +2,7 @@
 ValidChecksum checks whether the given checksum corresponds to the given address.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,11 +11,14 @@ ValidChecksum checks whether the given checksum corresponds to the given address
 | checksum | Trytes | true | The checksum to compare against.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | error | Returned if checksums don't match. |
+
 
 
 

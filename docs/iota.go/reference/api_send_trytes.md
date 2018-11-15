@@ -2,6 +2,7 @@
 SendTrytes performs Proof-of-Work, stores and then broadcasts the given transactions and returns them.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -12,11 +13,14 @@ SendTrytes performs Proof-of-Work, stores and then broadcasts the given transact
 | reference |  | false |   |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | Bundle |  |
 | error |  |
+
 
 

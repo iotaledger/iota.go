@@ -2,10 +2,7 @@
 GetNeighbors returns the list of connected neighbors of the connected node.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
-## Input
 
-| Parameter       | Type | Required or Optional | Description |
-|:---------------|:--------|:--------| :--------|
 
 
 ## Output
@@ -14,6 +11,7 @@ GetNeighbors returns the list of connected neighbors of the connected node.
 |:---------------|:--------|
 | Neighbors | The Neighbors of the connected node. |
 | error | Returned for internal errors. |
+
 
 
 

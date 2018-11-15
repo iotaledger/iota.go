@@ -2,11 +2,14 @@
 RemoveChecksum removes the checksum from the given trytes. The input trytes must be of length HashTrytesSize or AddressWithChecksumTrytesSize.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | input | Trytes | true | The Trytes (which must be 81/90 in length) of which to remove the checksum.  |
+
+
 
 
 ## Output
@@ -15,6 +18,7 @@ RemoveChecksum removes the checksum from the given trytes. The input trytes must
 |:---------------|:--------|
 | Trytes | The input Trytes without the checksum. |
 | error | Returned for inputs of invalid length. |
+
 
 
 

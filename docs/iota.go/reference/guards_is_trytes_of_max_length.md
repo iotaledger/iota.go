@@ -2,6 +2,7 @@
 IsTrytesOfMaxLength checks if input is correct trytes consisting of [9A-Z] and length <= maxLength
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,11 +11,14 @@ IsTrytesOfMaxLength checks if input is correct trytes consisting of [9A-Z] and l
 | max | int | false |   |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | bool | Whether it passes the check. |
+
 
 
 

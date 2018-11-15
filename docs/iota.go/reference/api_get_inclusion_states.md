@@ -2,6 +2,7 @@
 GetInclusionStates fetches inclusion states of a given list of transactions.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
+
 ## Input
 
 | Parameter       | Type | Required or Optional | Description |
@@ -10,12 +11,15 @@ GetInclusionStates fetches inclusion states of a given list of transactions.
 | tips |  | true | The reference tips of which to check whether the transactions were included in or not.  |
 
 
+
+
 ## Output
 
 | Return type     | Description |
 |:---------------|:--------|
 | []bool | The inclusion states in the same order as the passed in transaction hashes. |
 | error | Returned for invalid transaction/tip hashes and internal errors. |
+
 
 
 
