@@ -83,7 +83,7 @@ func ExampleAddNeighbors() {
 // i req: branchTxHash, The branch transaction hash.
 // i req: mwm, The minimum weight magnitude to fulfill.
 // i req: trytes, The transaction Trytes.
-// o: Trytes, The Trytes slice ready for broadcasting.
+// o: []Trytes, The Trytes slice ready for broadcasting.
 // o: error, Returned for invalid Trytes and internal errors.
 func ExampleAttachToTangle() {
 	bundleTrytes := []trinary.Trytes{
@@ -276,7 +276,7 @@ func ExampleWereAddressesSpentFrom() {
 	fmt.Println("address spent?", spentStates[0])
 }
 
-// i req: The hash of the tail transaction of the bundle.
+// i req: tailTxHash, The hash of the tail transaction of the bundle.
 // o: []Trytes, The Trytes of all transactions of the bundle.
 // o: error, Returned for invalid tail transaction hashes and internal error.
 func ExampleBroadcastBundle() {

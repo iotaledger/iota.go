@@ -43,6 +43,7 @@ type output struct {
 
 var packageDirs = []string{
 	"../address",
+	"../api",
 	"../bundle",
 	"../checksum",
 	"../converter",
