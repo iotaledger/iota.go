@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/iotaledger/iota.go/bigint"
 	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/kerl/bigint"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
