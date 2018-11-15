@@ -277,12 +277,13 @@ long long int pworkC128(signed char mid[], int mwm, signed char nonce[], int n, 
 */
 import "C"
 import (
-	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/trinary"
 	"math"
 	"sync"
 	"unsafe"
+
+	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/curl"
+	. "github.com/iotaledger/iota.go/trinary"
 )
 
 func init() {
@@ -314,9 +315,10 @@ func c128ProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...
 		return "", ErrInvalidTrytesForProofOfWork
 	}
 
-	c := curl.NewCurl()
-	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := MustTrytesToTrits(trytes)
+
+	c := curl.NewCurl()
+	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)

@@ -48,23 +48,30 @@ func NewCurl() *Curl {
 	return c
 }
 
-//Squeeze do Squeeze in sponge func.
-func (c *Curl) Squeeze() Trytes {
-	ret := MustTritsToTrytes(c.State[:HashTrinarySize])
-	c.Transform()
+// Squeeze out length trits. Length has to be a multiple of HashTrinarySize.
+func (c *Curl) Squeeze(length int) (Trits, error) {
+	if length%HashTrinarySize != 0 {
+		return nil, ErrInvalidSqueezeLength
+	}
 
-	return ret
+	out := make(Trits, length)
+	for i := 1; i <= length/HashTrinarySize; i++ {
+		copy(out[HashTrinarySize*(i-1):HashTrinarySize*i], c.State[:HashTrinarySize])
+		c.Transform()
+	}
+
+	return out, nil
+}
+
+// Squeeze out length trits. Length has to be a multiple of HashTrinarySize.
+// Returns trytes. It panics if the trytes are not valid.
+func (c *Curl) SqueezeTrytes(length int) Trytes {
+	trits, _ := c.Squeeze(length)
+	return MustTritsToTrytes(trits)
 }
 
 // Absorb fills the internal State of the sponge with the given trits.
-// It panics if the given trytes are not valid.
-func (c *Curl) Absorb(inn Trytes) {
-	var in Trits
-	if len(inn) == 0 {
-		in = Trits{0}
-	} else {
-		in = MustTrytesToTrits(inn)
-	}
+func (c *Curl) Absorb(in Trits) error {
 	var lenn int
 	for i := 0; i < len(in); i += lenn {
 		lenn = HashTrinarySize
@@ -76,6 +83,19 @@ func (c *Curl) Absorb(inn Trytes) {
 		copy(c.State, in[i:i+lenn])
 		c.Transform()
 	}
+	return nil
+}
+
+// Absorb fills the internal State of the sponge with the given trytes.
+// It panics if the given trytes are not valid.
+func (c *Curl) AbsorbTrytes(inn Trytes) {
+	var in Trits
+	if len(inn) == 0 {
+		in = Trits{0}
+	} else {
+		in = MustTrytesToTrits(inn)
+	}
+	c.Absorb(in)
 }
 
 // Transform does Transform in sponge func.
@@ -104,16 +124,17 @@ func (c *Curl) Reset() {
 	}
 }
 
-// HashTrits returns hash of the given trits.
-func HashTrits(trits Trits) Trits {
+// HashTrits returns hash trits of the given trits.
+func HashTrits(trits Trits) (Trits, error) {
 	c := NewCurl()
-	c.Absorb(MustTritsToTrytes(trits))
-	return MustTrytesToTrits(c.Squeeze())
+	c.Absorb(trits)
+	return c.Squeeze(HashTrinarySize)
 }
 
-// HashTrytes returns hash of t.
+// HashTrytes returns hash trytes of the given trytes.
+// It panics if the given trytes are not valid.
 func HashTrytes(t Trytes) Trytes {
 	c := NewCurl()
-	c.Absorb(t)
-	return c.Squeeze()
+	c.AbsorbTrytes(t)
+	return c.SqueezeTrytes(HashTrinarySize)
 }
