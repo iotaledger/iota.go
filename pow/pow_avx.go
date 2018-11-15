@@ -5,11 +5,12 @@
 package pow
 
 import (
+	"math"
+	"sync"
+
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
-	"math"
-	"sync"
 )
 
 // #cgo LDFLAGS:
@@ -336,9 +337,10 @@ func avxProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...i
 		return "", ErrInvalidTrytesForProofOfWork
 	}
 
-	c := curl.NewCurl()
-	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := MustTrytesToTrits(trytes)
+
+	c := curl.NewCurl()
+	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)

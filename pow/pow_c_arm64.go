@@ -265,11 +265,13 @@ long long int pworkARM64(signed char mid[], int mwm, signed char nonce[], int n,
 */
 import "C"
 import (
+	"math"
+	"sync"
+	"unsafe"
+
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
-	"sync"
-	"unsafe"
 )
 
 func init() {
@@ -301,9 +303,10 @@ func cARM64ProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism .
 		return "", ErrInvalidTrytesForProofOfWork
 	}
 
+	tr := MustTrytesToTrits(trytes)
+
 	c := curl.NewCurl()
-	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
-	tr := trytes.Trits()
+	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)
