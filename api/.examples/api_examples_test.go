@@ -27,6 +27,8 @@ func init() {
 
 // i req: settings, The settings used for creating the Provider.
 // i: createProvider, A function which creates a new Provider given the Settings.
+// o: *API, The composed API object.
+// o: error, Returned for invalid settings and internal errors.
 func ExampleComposeAPI() {
 	endpoint := "https://example-iri-node.io:14265"
 
@@ -512,7 +514,7 @@ func ExampleReplayBundle() {}
 // i req: depth, The depth to use in GetTransactionsToApprove().
 // i req: mwm, The minimum weight magnitude to fulfill.
 // i: reference, The optional reference to use in GetTransactionsToApprove().
-func ExampleSendTrytes(){}
+func ExampleSendTrytes() {}
 
 // i req: trytes, The Trytes to store and broadcast.
 // o: []Trytes, The stored and broadcasted Trytes.
