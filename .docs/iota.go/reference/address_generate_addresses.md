@@ -8,7 +8,7 @@ GenerateAddresses generates N new addresses from the given seed, indices and sec
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | seed | Trytes | Required | The seed used for address generation.  |
-| start | uint64 | Required | The index from which to start to generate addresses from.  |
+| start | uint64 | Required | The index from which to start generating addresses.  |
 | count | uint64 | Required | The amount of addresses to generate.  |
 | secLvl | SecurityLevel | Required | The security level used for address generation.  |
 | addChecksum | ...bool | Optional | Whether to append the checksum on the returned address.  |

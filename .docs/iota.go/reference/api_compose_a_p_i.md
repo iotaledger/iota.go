@@ -17,8 +17,8 @@ ComposeAPI composes a new API from the given settings and provider. If no provid
 
 | Return type     | Description |
 |:---------------|:--------|
-| *API |  |
-| error |  |
+| *API | The composed API object. |
+| error | Returned for invalid settings and internal errors. |
 
 
 
