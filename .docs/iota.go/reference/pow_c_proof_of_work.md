@@ -1,0 +1,25 @@
+# CProofOfWork()
+PoWC does proof of work on the given trytes via native C code.
+> **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
+
+
+## Input
+
+| Parameter       | Type | Required or Optional | Description |
+|:---------------|:--------|:--------| :--------|
+| trytes | Trytes | Optional |   |
+| mwm | int | Optional |   |
+| parallelism | ...int | Optional |   |
+
+
+
+
+## Output
+
+| Return type     | Description |
+|:---------------|:--------|
+| Trytes |  |
+| error |  |
+
+
+

@@ -11,45 +11,36 @@ import (
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
-// IotaHashFunc is an interface for creation of Iota Hash Functions.
-type IotaHashFunc interface {
-	New() IotaHash
-}
+type SpongeFunctionCreator func() SpongeFunction
 
-// IotaHash is an interface for Iota Hash Functions.
-type IotaHash interface {
+// SpongeFunction is a hash function using the sponge construction.
+type SpongeFunction interface {
 	Absorb(in Trits) error
 	Squeeze(length int) (Trits, error)
 	Reset()
 }
 
-// CurlHash can be used to hash with Curl.
-type CurlHash struct{}
-
-// KerlHash can be used to hash with Kerl.
-type KerlHash struct{}
-
 // New returns a new Curl.
-func (c *CurlHash) New() IotaHash {
+func NewCurl() SpongeFunction {
 	return curl.NewCurl()
 }
 
 // New returns a new Kerl.
-func (k *KerlHash) New() IotaHash {
+func NewKerl() SpongeFunction {
 	return kerl.NewKerl()
 }
 
-// getHashFunc checks if a hash function was given, otherwise uses Kerl.
-func getHashFunc(hashFunc []IotaHashFunc) IotaHashFunc {
-	if len(hashFunc) > 0 {
-		return hashFunc[0]
+// getSpongeFunc checks if a hash function was given, otherwise uses Kerl.
+func getSpongeFunc(spongeFuncCreator []SpongeFunctionCreator) SpongeFunction {
+	if len(spongeFuncCreator) > 0 {
+		return spongeFuncCreator[0]()
 	}
-	return &KerlHash{}
+	return NewKerl()
 }
 
 // Subseed takes a seed and an index and returns the given subseed.
-// Optionally takes the hashFunc to use (e.g. &KerlHash{}, &CurlHash{}), Default is KerlHash.
-func Subseed(seed Trytes, index uint64, hashFunc ...IotaHashFunc) (Trits, error) {
+// Optionally takes the SpongeFunction to use. Default is Kerl.
+func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
 	if err := ValidTrytes(seed); err != nil {
 		return nil, err
 	} else if len(seed) != HashTrinarySize/TrinaryRadix {
@@ -63,7 +54,7 @@ func Subseed(seed Trytes, index uint64, hashFunc ...IotaHashFunc) (Trits, error)
 
 	incrementedSeed := AddTrits(trits, IntToTrits(int64(index)))
 
-	h := getHashFunc(hashFunc).New()
+	h := getSpongeFunc(spongeFunc)
 	err = h.Absorb(incrementedSeed)
 	if err != nil {
 		return nil, err
@@ -77,9 +68,9 @@ func Subseed(seed Trytes, index uint64, hashFunc ...IotaHashFunc) (Trits, error)
 }
 
 // Key computes a new private key from the given subseed using the given security level.
-// Optionally takes the hashFunc to use (e.g. &KerlHash{}, &CurlHash{}), Default is KerlHash.
-func Key(subseed Trits, securityLevel SecurityLevel, hashFunc ...IotaHashFunc) (Trits, error) {
-	h := getHashFunc(hashFunc).New()
+// Optionally takes the SpongeFunction to use. Default is Kerl.
+func Key(subseed Trits, securityLevel SecurityLevel, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
+	h := getSpongeFunc(spongeFunc)
 	if err := h.Absorb(subseed); err != nil {
 		return nil, err
 	}
@@ -100,8 +91,8 @@ func Key(subseed Trits, securityLevel SecurityLevel, hashFunc ...IotaHashFunc) (
 }
 
 // Digests hashes each segment of each key fragment 26 times and returns them.
-// Optionally takes the hashFunc to use (e.g. &KerlHash{}, &CurlHash{}), Default is KerlHash.
-func Digests(key Trits, hashFunc ...IotaHashFunc) (Trits, error) {
+// Optionally takes the SpongeFunction to use. Default is Kerl.
+func Digests(key Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
 	var err error
 	fragments := int(math.Floor(float64(len(key)) / KeyFragmentLength))
 	digests := make(Trits, fragments*HashTrinarySize)
@@ -117,7 +108,7 @@ func Digests(key Trits, hashFunc ...IotaHashFunc) (Trits, error) {
 
 			// hash each segment 26 times
 			for k := 0; k < KeySegmentHashRounds; k++ {
-				h := getHashFunc(hashFunc).New()
+				h := getSpongeFunc(spongeFunc)
 				h.Absorb(buf)
 				buf, err = h.Squeeze(HashTrinarySize)
 				if err != nil {
@@ -131,7 +122,7 @@ func Digests(key Trits, hashFunc ...IotaHashFunc) (Trits, error) {
 		}
 
 		// hash the key fragment (which now consists of hashed segments)
-		h := getHashFunc(hashFunc).New()
+		h := getSpongeFunc(spongeFunc)
 		if err := h.Absorb(keyFragment); err != nil {
 			return nil, err
 		}
@@ -149,9 +140,9 @@ func Digests(key Trits, hashFunc ...IotaHashFunc) (Trits, error) {
 }
 
 // Address generates the address trits from the given digests.
-// Optionally takes the hashFunc to use (e.g. &KerlHash{}, &CurlHash{}), Default is KerlHash.
-func Address(digests Trits, hashFunc ...IotaHashFunc) (Trits, error) {
-	h := getHashFunc(hashFunc).New()
+// Optionally takes the SpongeFunction to use. Default is Kerl.
+func Address(digests Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
+	h := getSpongeFunc(spongeFunc)
 	if err := h.Absorb(digests); err != nil {
 		return nil, err
 	}
@@ -193,12 +184,12 @@ func NormalizedBundleHash(bundleHash Hash) []int8 {
 }
 
 // SignatureFragment returns signed fragments using the given bundle hash and key fragment.
-// Optionally takes the hashFunc to use (e.g. &KerlHash{}, &CurlHash{}), Default is KerlHash.
-func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, hashFunc ...IotaHashFunc) (Trits, error) {
+// Optionally takes the SpongeFunction to use. Default is Kerl.
+func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
 	sigFrag := make(Trits, len(keyFragment))
 	copy(sigFrag, keyFragment)
 
-	h := getHashFunc(hashFunc).New()
+	h := getSpongeFunc(spongeFunc)
 
 	for i := 0; i < KeySegmentsPerFragment; i++ {
 		hash := sigFrag[i*HashTrinarySize : (i+1)*HashTrinarySize]
@@ -225,16 +216,16 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, ha
 }
 
 // Digest computes the digest derived from the signature fragment and normalized bundle hash.
-// Optionally takes the hashFunc to use (e.g. &KerlHash{}, &CurlHash{}), Default is KerlHash.
-func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, hashFunc ...IotaHashFunc) (Trits, error) {
-	h := getHashFunc(hashFunc).New()
+// Optionally takes the SpongeFunction to use. Default is Kerl.
+func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
+	h := getSpongeFunc(spongeFunc)
 	buf := make(Trits, HashTrinarySize)
 
 	for i := 0; i < KeySegmentsPerFragment; i++ {
 		copy(buf, signatureFragment[i*HashTrinarySize:(i+1)*HashTrinarySize])
 
 		for j := normalizedBundleHashFragment[i] + MaxTryteValue; j > 0; j-- {
-			hh := getHashFunc(hashFunc).New()
+			hh := getSpongeFunc(spongeFunc)
 			err := hh.Absorb(buf)
 			if err != nil {
 				return nil, err
@@ -255,16 +246,14 @@ func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, hashFu
 
 // ValidateSignatures validates the given signature fragments by checking whether the
 // digests computed from the bundle hash and fragments equal the passed address.
-// Optionally takes the hashFunc to use (e.g. &KerlHash{}, &CurlHash{}), Default is KerlHash.
-func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Hash, hashFunc ...IotaHashFunc) (bool, error) {
+// Optionally takes the SpongeFunction to use. Default is Kerl.
+func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Hash, spongeFunc ...SpongeFunctionCreator) (bool, error) {
 	normalizedBundleHashFragments := make([][]int8, MaxSecurityLevel)
 	normalizeBundleHash := NormalizedBundleHash(bundleHash)
 
 	for i := 0; i < MaxSecurityLevel; i++ {
 		normalizedBundleHashFragments[i] = normalizeBundleHash[i*KeySegmentsPerFragment : (i+1)*KeySegmentsPerFragment]
 	}
-
-	hashCon := getHashFunc(hashFunc)
 
 	digests := make(Trits, len(fragments)*HashTrinarySize)
 	for i := 0; i < len(fragments); i++ {
@@ -273,7 +262,7 @@ func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Has
 			return false, err
 		}
 
-		digest, err := Digest(normalizedBundleHashFragments[i%MaxSecurityLevel], trits, hashCon)
+		digest, err := Digest(normalizedBundleHashFragments[i%MaxSecurityLevel], trits, spongeFunc...)
 		if err != nil {
 			return false, err
 		}
@@ -282,7 +271,7 @@ func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Has
 		}
 	}
 
-	addressTrits, err := Address(digests, hashCon)
+	addressTrits, err := Address(digests, spongeFunc...)
 	if err != nil {
 		return false, err
 	}

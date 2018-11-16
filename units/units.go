@@ -37,9 +37,9 @@ func ConvertUnits(val float64, from Unit, to Unit) float64 {
 	return float64(value)
 }
 
-// ConvertUnitString converts the given string value in the base Unit to the given new Unit.
-func ConvertUnitString(value string, from Unit, to Unit) (float64, error) {
-	floatValue, err := strconv.ParseFloat(value, 64)
+// ConvertUnitsString converts the given string value in the base Unit to the given new Unit.
+func ConvertUnitsString(val string, from Unit, to Unit) (float64, error) {
+	floatValue, err := strconv.ParseFloat(val, 64)
 	if err != nil {
 		return 0, err
 	}

@@ -124,7 +124,7 @@ func main() {
 	// create an address for the remainder.
 	// in this case we will have 20 iotas as the remainder, since we spend 100 from our input
 	// address and only send 80 to the recipient.
-	remainderAddress, err := address.GenerateAddress(seed, 2, SecurityLevelMedium)
+	remainderAddress, err := address.GenerateAddress(seed, 1, SecurityLevelMedium)
 	must(err)
 
 	// we don't need to set the security level or timestamp in the options because we supply

@@ -53,7 +53,7 @@ func NewTrits(t []int8) (Trits, error) {
 }
 
 // TritsEqual returns true if t and b are equal Trits
-func TritsEqual(a, b Trits) (bool, error) {
+func TritsEqual(a Trits, b Trits) (bool, error) {
 	if err := ValidTrits(a); err != nil {
 		return false, err
 	}
@@ -133,9 +133,9 @@ func CanTritsToTrytes(trits Trits) bool {
 }
 
 // TrailingZeros returns the number of trailing zeros of the given trits.
-func TrailingZeros(t Trits) int64 {
+func TrailingZeros(trits Trits) int64 {
 	z := int64(0)
-	for i := len(t) - 1; i >= 0 && t[i] == 0; i-- {
+	for i := len(trits) - 1; i >= 0 && trits[i] == 0; i-- {
 		z++
 	}
 	return z

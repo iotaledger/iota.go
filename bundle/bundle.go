@@ -19,9 +19,14 @@ type Bundles []Bundle
 // BundlesByTimestamp are sorted bundles by attachment timestamp.
 type BundlesByTimestamp Bundles
 
-func (a BundlesByTimestamp) Len() int      { return len(a) }
-func (a BundlesByTimestamp) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a BundlesByTimestamp) Less(i, j int) bool {
+// ignore
+func (a BundlesByTimestamp) Len() int { return len(a) }
+
+// ignore
+func (a BundlesByTimestamp) Swap(i int, j int) { a[i], a[j] = a[j], a[i] }
+
+// ignore
+func (a BundlesByTimestamp) Less(i int, j int) bool {
 	return a[i][0].AttachmentTimestamp < a[j][0].AttachmentTimestamp
 }
 
@@ -108,35 +113,6 @@ func TransfersToBundleEntries(timestamp uint64, transfers ...Transfer) (BundleEn
 	return entries, nil
 }
 
-func getBundleEntryWithDefaults(entry BundleEntry) BundleEntry {
-	if entry.Length == 0 {
-		entry.Length = 1
-	}
-	if len(entry.Address) == 0 {
-		entry.Address = NullHashTrytes
-	}
-	if len(entry.Tag) == 0 {
-		entry.Tag = NullTagTrytes
-	}
-	if entry.Timestamp == 0 {
-		entry.Timestamp = uint64(time.Now().UnixNano() / int64(time.Second))
-	}
-
-	if entry.SignatureMessageFragments == nil || len(entry.SignatureMessageFragments) == 0 {
-		entry.SignatureMessageFragments = make([]Trytes, entry.Length)
-		var i uint64
-		for ; i < entry.Length; i++ {
-			entry.SignatureMessageFragments[i] = NullSignatureMessageFragmentTrytes
-		}
-	} else {
-		for i := range entry.SignatureMessageFragments {
-			entry.SignatureMessageFragments[i] = Pad(entry.SignatureMessageFragments[i], 2187)
-		}
-	}
-
-	return entry
-}
-
 // AddEntry adds a new entry to the bundle. It automatically adds additional transactions if the signature
 // message fragments don't fit into one transaction.
 func AddEntry(txs Bundle, bndlEntry BundleEntry) Bundle {
@@ -168,6 +144,35 @@ func AddEntry(txs Bundle, bndlEntry BundleEntry) Bundle {
 	}
 
 	return txs
+}
+
+func getBundleEntryWithDefaults(entry BundleEntry) BundleEntry {
+	if entry.Length == 0 {
+		entry.Length = 1
+	}
+	if len(entry.Address) == 0 {
+		entry.Address = NullHashTrytes
+	}
+	if len(entry.Tag) == 0 {
+		entry.Tag = NullTagTrytes
+	}
+	if entry.Timestamp == 0 {
+		entry.Timestamp = uint64(time.Now().UnixNano() / int64(time.Second))
+	}
+
+	if entry.SignatureMessageFragments == nil || len(entry.SignatureMessageFragments) == 0 {
+		entry.SignatureMessageFragments = make([]Trytes, entry.Length)
+		var i uint64
+		for ; i < entry.Length; i++ {
+			entry.SignatureMessageFragments[i] = NullSignatureMessageFragmentTrytes
+		}
+	} else {
+		for i := range entry.SignatureMessageFragments {
+			entry.SignatureMessageFragments[i] = Pad(entry.SignatureMessageFragments[i], 2187)
+		}
+	}
+
+	return entry
 }
 
 // Finalize finalizes the bundle by calculating the bundle hash and setting it on each transaction
@@ -247,6 +252,7 @@ func AddTrytes(bndl Bundle, fragments []Trytes, offset int) Bundle {
 }
 
 // ValidateBundleSignatures validates all signatures of the given bundle.
+// Use ValidBundle() if you want to validate the overall structure of the bundle and the signatures.
 func ValidateBundleSignatures(bundle Bundle) (bool, error) {
 	for i := range bundle {
 		tx := &bundle[i]
@@ -304,7 +310,7 @@ func ValidBundle(bundle Bundle) error {
 		txTrits := MustTrytesToTrits(transaction.MustTransactionToTrytes(tx)[2187 : 2187+162])
 		k.Absorb(txTrits)
 
-		// continue if output or signature tx
+		// continue if output or signature txbundle bundle
 		if tx.Value >= 0 {
 			continue
 		}

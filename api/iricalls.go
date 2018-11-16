@@ -26,9 +26,8 @@ func (api *API) AddNeighbors(uris ...string) (int64, error) {
 }
 
 // AttachToTangle performs the Proof-of-Work required to attach a transaction to the Tangle by
-// calling the attachToTangle IRI API command. Returns a list of transaction trytes and overwrites the following fields:
-//
-// Hash, Nonce, AttachmentTimestamp, AttachmentTimestampLowerBound, AttachmentTimestampUpperBound
+// calling the attachToTangle IRI API command. Returns a list of transaction trytes and overwrites the following
+// fields: Hash, Nonce, AttachmentTimestamp, AttachmentTimestampLowerBound, AttachmentTimestampUpperBound.
 //
 // If a Proof-of-Work function is supplied when composing the API, then that function is used
 // instead of using the connected node.
@@ -329,8 +328,7 @@ func (api *API) StoreTransactions(trytes ...Trytes) ([]Trytes, error) {
 	return trytes, nil
 }
 
-// WereAddressesSpentFrom checks whether the given addresses were already spent from by
-// calling the wereAddressesSpentFrom IRI API command.
+// WereAddressesSpentFrom checks whether the given addresses were already spent.
 func (api *API) WereAddressesSpentFrom(addresses ...Hash) ([]bool, error) {
 	if err := Validate(
 		ValidateNonEmptyStrings(ErrInvalidHash, addresses...),

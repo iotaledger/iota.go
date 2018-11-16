@@ -22,17 +22,17 @@ func Checksum(address Hash) (Trytes, error) {
 }
 
 // ValidAddress checks whether the given address is valid.
-func ValidAddress(a Hash) error {
-	switch len(a) {
+func ValidAddress(address Hash) error {
+	switch len(address) {
 	case 90:
-		if err := ValidChecksum(a[:81], a[81:]); err != nil {
+		if err := ValidChecksum(address[:81], address[81:]); err != nil {
 			return err
 		}
 	case 81:
 	default:
 		return ErrInvalidAddress
 	}
-	return ValidTrytes(a)
+	return ValidTrytes(address)
 }
 
 // ValidChecksum checks whether the given checksum corresponds to the given address.
