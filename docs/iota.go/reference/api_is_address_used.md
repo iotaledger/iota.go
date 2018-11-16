@@ -7,7 +7,7 @@ IsAddressUsed checks whether an address is used via FindTransactions and WereAdd
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| address | Hash | true | The address to check for used state.  |
+| address | Hash | Required | The address to check for used state.  |
 
 
 

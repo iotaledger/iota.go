@@ -7,10 +7,10 @@ GenerateAddress generates an address deterministically, according to the given s
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| seed | Trytes | true | The seed used for address generation.  |
-| index | uint64 | true | The index from which to generate the address from.  |
-| secLvl | SecurityLevel | true | The security level used for address generation.  |
-| addChecksum |  | false | Whether to append the checksum on the returned address.  |
+| seed | Trytes | Required | The seed used for address generation.  |
+| index | uint64 | Required | The index from which to generate the address from.  |
+| secLvl | SecurityLevel | Required | The security level used for address generation.  |
+| addChecksum | ...bool | Optional | Whether to append the checksum on the returned address.  |
 
 
 

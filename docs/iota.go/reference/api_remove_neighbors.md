@@ -7,7 +7,7 @@ RemoveNeighbors removes a list of neighbors from the connected IRI node. This me
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| uris |  | true | The neighbors to remove.  |
+| uris | ...string | Required | The neighbors to remove.  |
 
 
 

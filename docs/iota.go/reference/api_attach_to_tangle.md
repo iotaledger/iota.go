@@ -1,5 +1,5 @@
 # API -> AttachToTangle()
-AttachToTangle performs the Proof-of-Work required to attach a transaction to the Tangle by calling the attachToTangle IRI API command. Returns a list of transaction trytes and overwrites the following fields:  Hash, Nonce, AttachmentTimestamp, AttachmentTimestampLowerBound, AttachmentTimestampUpperBound  If a Proof-of-Work function is supplied when composing the API, then that function is used instead of using the connected node.
+AttachToTangle performs the Proof-of-Work required to attach a transaction to the Tangle by calling the attachToTangle IRI API command. Returns a list of transaction trytes and overwrites the following fields: Hash, Nonce, AttachmentTimestamp, AttachmentTimestampLowerBound, AttachmentTimestampUpperBound.  If a Proof-of-Work function is supplied when composing the API, then that function is used instead of using the connected node.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
 
@@ -7,10 +7,10 @@ AttachToTangle performs the Proof-of-Work required to attach a transaction to th
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trunkTxHash | Hash | true | The trunk transaction hash.  |
-| branchTxHash | Hash | true | The branch transaction hash.  |
-| mwm | uint64 | true | The minimum weight magnitude to fulfill.  |
-| trytes | []Trytes | true | The transaction Trytes.  |
+| trunkTxHash | Hash | Required | The trunk transaction hash.  |
+| branchTxHash | Hash | Required | The branch transaction hash.  |
+| mwm | uint64 | Required | The minimum weight magnitude to fulfill.  |
+| trytes | []Trytes | Required | The transaction Trytes.  |
 
 
 

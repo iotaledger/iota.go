@@ -7,7 +7,7 @@ MustTransactionsToTrytes returns a slice of transaction trytes from the given tr
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| txs | Transactions | true | The transactions to convert to Trytes.  |
+| txs | Transactions | Required | The transactions to convert to Trytes.  |
 
 
 

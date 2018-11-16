@@ -7,7 +7,7 @@ FindTransactionObjects searches for transactions given a query object with addre
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| query | FindTransactionsQuery | true | The object defining the transactions to search for.  |
+| query | FindTransactionsQuery | Required | The object defining the transactions to search for.  |
 
 
 
@@ -16,7 +16,7 @@ FindTransactionObjects searches for transactions given a query object with addre
 
 | Return type     | Description |
 |:---------------|:--------|
-| Transactions |  |
+| Transactions | The Transactions of the query result. |
 | error | Returned for invalid parameters and internal errors. |
 
 

@@ -7,7 +7,7 @@ RemoveChecksum removes the checksum from the given trytes. The input trytes must
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| input | Trytes | true | The Trytes (which must be 81/90 in length) of which to remove the checksum.  |
+| input | Trytes | Required | The Trytes (which must be 81/90 in length) of which to remove the checksum.  |
 
 
 

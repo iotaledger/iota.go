@@ -7,7 +7,7 @@ GetBundle fetches and validates the bundle given a tail transaction hash by call
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| tailTxHash | Hash | true | The hash of the tail transaction of the bundle.  |
+| tailTxHash | Hash | Required | The hash of the tail transaction of the bundle.  |
 
 
 

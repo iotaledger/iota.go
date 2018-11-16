@@ -7,11 +7,11 @@ DoPoW computes the nonce field for each transaction so that the last MWM-length 
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trunkTx | Trytes | true | The trunk transaction hash.  |
-| branchTx | Trytes | true | the branch transaction hash.  |
-| trytes | []Trytes | true | The transactions Trytes slice.  |
-| mwm | uint64 | true | The minimum weight magnitude to fulfill.  |
-| pow | ProofOfWorkFunc | true | The Proof-of-Work implementation function.  |
+| trunkTx | Trytes | Required | The trunk transaction hash.  |
+| branchTx | Trytes | Required | the branch transaction hash.  |
+| trytes | []Trytes | Required | The transactions Trytes slice.  |
+| mwm | uint64 | Required | The minimum weight magnitude to fulfill.  |
+| pow | ProofOfWorkFunc | Required | The Proof-of-Work implementation function.  |
 
 
 

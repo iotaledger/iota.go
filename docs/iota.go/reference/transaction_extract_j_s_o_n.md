@@ -7,7 +7,7 @@ ExtractJSON extracts a JSON string from the given transactions. It supports JSON
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| txs | Transactions | true | The Transactions from which to derive the JSON message from.  |
+| txs | Transactions | Required | The Transactions from which to derive the JSON message from.  |
 
 
 

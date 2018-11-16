@@ -7,9 +7,9 @@ GoProofOfWork does Proof-of-Work on the given trytes using only Go code.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | false |   |
-| mwm | int | false |   |
-| parallelism |  | false |   |
+| trytes | Trytes | Optional |   |
+| mwm | int | Optional |   |
+| parallelism | ...int | Optional |   |
 
 
 

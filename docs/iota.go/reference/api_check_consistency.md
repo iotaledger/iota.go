@@ -7,7 +7,7 @@ CheckConsistency checks if a transaction is consistent or a set of transactions 
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| hashes |  | true | The hashes of the transaction to check the consistency of.  |
+| hashes | ...Hash | Required | The hashes of the transaction to check the consistency of.  |
 
 
 

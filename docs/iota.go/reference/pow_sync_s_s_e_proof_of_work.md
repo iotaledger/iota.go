@@ -7,9 +7,9 @@ SyncSSEProofOfWork is like SSEProofOfWork() but only runs one ongoing Proof-of-W
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | false |   |
-| mwm | int | false |   |
-| parallelism |  | false |   |
+| trytes | Trytes | Optional |   |
+| mwm | int | Optional |   |
+| parallelism | ...int | Optional |   |
 
 
 

@@ -122,3 +122,9 @@ const (
 	SignatureMessageFragmentSizeInTrytes = SignatureMessageFragmentTrinarySize / 3
 	TransactionTrytesSize                = TransactionTrinarySize / 3
 )
+
+// Trinary conversion constants.
+const (
+	Radix                int8 = 3
+	NumberOfTritsInAByte      = 5
+)

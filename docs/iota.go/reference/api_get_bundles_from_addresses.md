@@ -7,8 +7,8 @@ GetBundlesFromAddresses fetches all bundles from the given addresses and optiona
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| addresses | Hashes | true | The addresses of which to get the bundles of.  |
-| inclusionState |  | false | Whether to set the persistence field on the transactions.  |
+| addresses | Hashes | Required | The addresses of which to get the bundles of.  |
+| inclusionState | ...bool | Optional | Whether to set the persistence field on the transactions.  |
 
 
 

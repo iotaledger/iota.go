@@ -7,8 +7,8 @@ ParseTransaction parses the trits and returns a transaction object. The trits sl
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trits | Trits | true | The Trits representation of the transaction.  |
-| noHash |  | false | Whether not to add the hash of the transaction.  |
+| trits | Trits | Required | The Trits representation of the transaction.  |
+| noHash | ...bool | Optional | Whether not to add the hash of the transaction.  |
 
 
 

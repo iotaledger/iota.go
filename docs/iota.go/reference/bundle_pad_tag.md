@@ -7,7 +7,7 @@ PadTag pads the given trytes up to the length of a tag.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| tag | Trytes | false |   |
+| tag | Trytes | Required | The tag Trytes to pad.  |
 
 
 
@@ -16,7 +16,7 @@ PadTag pads the given trytes up to the length of a tag.
 
 | Return type     | Description |
 |:---------------|:--------|
-| Trytes |  |
+| Trytes | The padded tag. |
 
 
 

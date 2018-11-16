@@ -7,7 +7,7 @@ Finalize finalizes the bundle by calculating the bundle hash and setting it on e
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| bundle | Bundle | true | The Bundle to finalize.  |
+| bundle | Bundle | Required | The Bundle to finalize.  |
 
 
 

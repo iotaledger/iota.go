@@ -7,7 +7,7 @@ GetTrytes fetches the transaction trytes given a list of transaction hashes.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| hashes |  | true | The hashes of the transactions of which to get the Trytes of.  |
+| hashes | ...Hash | Required | The hashes of the transactions of which to get the Trytes of.  |
 
 
 

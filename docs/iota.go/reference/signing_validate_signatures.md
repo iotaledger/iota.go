@@ -1,5 +1,5 @@
 # ValidateSignatures()
-ValidateSignatures validates the given signature fragments by checking whether the digests computed from the bundle hash and fragments equal the passed address.
+ValidateSignatures validates the given signature fragments by checking whether the digests computed from the bundle hash and fragments equal the passed address. Optionally takes the SpongeFunction to use. Default is Kerl.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
 
@@ -7,9 +7,10 @@ ValidateSignatures validates the given signature fragments by checking whether t
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| expectedAddress | Hash | true | The address to validate against to check whether the signatures are valid.  |
-| fragments | []Trytes | true | The signed signature fragments.  |
-| bundleHash | Hash | true | The hash of the bundle.  |
+| expectedAddress | Hash | Required | The address to validate against to check whether the signatures are valid.  |
+| fragments | []Trytes | Required | The signed signature fragments.  |
+| bundleHash | Hash | Required | The hash of the bundle.  |
+| spongeFunc | ...SpongeFunctionCreator | Optional |   |
 
 
 

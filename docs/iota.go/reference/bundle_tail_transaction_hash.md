@@ -7,7 +7,7 @@ TailTransactionHash returns the tail transaction's hash.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| bndl | Bundle | false |   |
+| bndl | Bundle | Required | The Bundle from which to get the tail transaction of.  |
 
 
 

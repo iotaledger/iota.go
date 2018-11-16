@@ -1,5 +1,5 @@
 # SignatureFragment()
-SignatureFragment returns signed fragments using the given bundle hash and key fragment.
+SignatureFragment returns signed fragments using the given bundle hash and key fragment. Optionally takes the SpongeFunction to use. Default is Kerl.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
 
@@ -7,8 +7,9 @@ SignatureFragment returns signed fragments using the given bundle hash and key f
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| normalizedBundleHashFragment | Trits | true | The normalized bundle hash.  |
-| keyFragment | Trits | true | The fragment of the private key.  |
+| normalizedBundleHashFragment | Trits | Required | The normalized bundle hash.  |
+| keyFragment | Trits | Required | The fragment of the private key.  |
+| spongeFunc | ...SpongeFunctionCreator | Optional |   |
 
 
 

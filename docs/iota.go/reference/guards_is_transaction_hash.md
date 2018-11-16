@@ -7,7 +7,7 @@ IsTransactionHash checks whether the given trytes can be a transaction hash.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The Trytes to check.  |
+| trytes | Trytes | Required | The Trytes to check.  |
 
 
 

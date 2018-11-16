@@ -7,8 +7,8 @@ AsTransactionObjects constructs new transactions from the given raw trytes.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| rawTrytes | []Trytes | true | The transaction Trytes to convert.  |
-| hashes | Hashes | false | The hashes to add to the parsed transactions.  |
+| rawTrytes | []Trytes | Required | The transaction Trytes to convert.  |
+| hashes | Hashes | Optional | The hashes to add to the parsed transactions.  |
 
 
 

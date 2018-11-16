@@ -26,9 +26,8 @@ func (api *API) AddNeighbors(uris ...string) (int64, error) {
 }
 
 // AttachToTangle performs the Proof-of-Work required to attach a transaction to the Tangle by
-// calling the attachToTangle IRI API command. Returns a list of transaction trytes and overwrites the following fields:
-//
-// Hash, Nonce, AttachmentTimestamp, AttachmentTimestampLowerBound, AttachmentTimestampUpperBound
+// calling the attachToTangle IRI API command. Returns a list of transaction trytes and overwrites the following
+// fields: Hash, Nonce, AttachmentTimestamp, AttachmentTimestampLowerBound, AttachmentTimestampUpperBound.
 //
 // If a Proof-of-Work function is supplied when composing the API, then that function is used
 // instead of using the connected node.

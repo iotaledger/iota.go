@@ -7,7 +7,7 @@ RemoveChecksums is a wrapper function around RemoveChecksum for multiple trytes 
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| inputs | []Trytes | true | The Trytes (which must be 81/90 in length) slice of which to remove the checksums.  |
+| inputs | []Trytes | Required | The Trytes (which must be 81/90 in length) slice of which to remove the checksums.  |
 
 
 

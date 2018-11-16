@@ -7,8 +7,8 @@ IsTrytesOfMaxLength checks if input is correct trytes consisting of [9A-Z] and l
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The Trytes to check.  |
-| max | int | false |   |
+| trytes | Trytes | Required | The Trytes to check.  |
+| max | int | Required | The max length the Trytes can have.  |
 
 
 

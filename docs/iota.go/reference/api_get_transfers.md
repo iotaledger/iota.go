@@ -7,8 +7,8 @@ GetTransfers returns bundles which operated on the given address range specified
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| seed | Trytes | true | The seed from which to derive the addresses of.  |
-| options | GetTransfersOptions | true | Options for addresses generation.  |
+| seed | Trytes | Required | The seed from which to derive the addresses of.  |
+| options | GetTransfersOptions | Required | Options for addresses generation.  |
 
 
 

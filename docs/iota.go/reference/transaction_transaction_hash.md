@@ -7,7 +7,7 @@ TransactionHash makes a transaction hash from the given transaction.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| t | *Transaction | true | The Transaction of which to compute the hash of.  |
+| t | *Transaction | Required | The Transaction of which to compute the hash of.  |
 
 
 

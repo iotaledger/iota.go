@@ -7,8 +7,8 @@ IsTrytesOfExactLength checks if input is correct trytes consisting of [9A-Z] and
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The Trytes to check.  |
-| length | int | true | The length the Trytes must have.  |
+| trytes | Trytes | Required | The Trytes to check.  |
+| length | int | Required | The length the Trytes must have.  |
 
 
 

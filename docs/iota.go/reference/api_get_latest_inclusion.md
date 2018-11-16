@@ -7,7 +7,7 @@ GetLatestInclusion fetches inclusion states of the given transactions by calling
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| txHashes | Hashes | true | The hashes of the transactions to check for inclusion state.  |
+| txHashes | Hashes | Required | The hashes of the transactions to check for inclusion state.  |
 
 
 

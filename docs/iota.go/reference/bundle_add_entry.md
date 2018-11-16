@@ -7,8 +7,8 @@ AddEntry adds a new entry to the bundle. It automatically adds additional transa
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| txs | Bundle | true | The Bundle to which to add the entry to.  |
-| bndlEntry | BundleEntry | true | The BundleEntry to add.  |
+| txs | Bundle | Required | The Bundle to which to add the entry to.  |
+| bndlEntry | BundleEntry | Required | The BundleEntry to add.  |
 
 
 

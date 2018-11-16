@@ -7,7 +7,7 @@ IsPromotable checks if a transaction is promotable by calling the checkConsisten
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| tailTxHash | Hash | true | The tail transaction to check.  |
+| tailTxHash | Hash | Required | The tail transaction to check.  |
 
 
 

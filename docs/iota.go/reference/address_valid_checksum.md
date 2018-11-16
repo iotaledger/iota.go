@@ -7,8 +7,8 @@ ValidChecksum checks whether the given checksum corresponds to the given address
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| address | Hash | true | The address to check.  |
-| checksum | Trytes | true | The checksum to compare against.  |
+| address | Hash | Required | The address to check.  |
+| checksum | Trytes | Required | The checksum to compare against.  |
 
 
 

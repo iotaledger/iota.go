@@ -7,7 +7,7 @@ ValidateBundleSignatures validates all signatures of the given bundle. Use Valid
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| bundle | Bundle | true | The Bundle to validate.  |
+| bundle | Bundle | Required | The Bundle to validate.  |
 
 
 

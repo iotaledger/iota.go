@@ -7,7 +7,7 @@ GetProofOfWorkImpl returns the specified Proof-of-Work implementation given a na
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| name | string | true | The name of the Proof-of-Work implementation to get.  |
+| name | string | Required | The name of the Proof-of-Work implementation to get.  |
 
 
 

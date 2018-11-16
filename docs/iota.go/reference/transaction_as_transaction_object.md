@@ -7,8 +7,8 @@ AsTransactionObject makes a new transaction from the given trytes. Optionally th
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The transaction Trytes to convert.  |
-| hash |  | false | The hash to add to the transaction.  |
+| trytes | Trytes | Required | The transaction Trytes to convert.  |
+| hash | ...Hash | Optional | The hash to add to the transaction.  |
 
 
 

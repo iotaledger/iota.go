@@ -7,7 +7,7 @@ WereAddressesSpentFrom checks whether the given addresses were already spent.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| addresses |  | true | The addresses to check for spent state.  |
+| addresses | ...Hash | Required | The addresses to check for spent state.  |
 
 
 

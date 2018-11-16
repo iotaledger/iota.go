@@ -1,5 +1,5 @@
 # HashTrits()
-HashTrits returns hash of the given trits.
+HashTrits returns the hash of the given trits.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
 
@@ -7,7 +7,7 @@ HashTrits returns hash of the given trits.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trits | Trits | true | The Trits of which to compute the hash of.  |
+| trits | Trits | Required | The Trits of which to compute the hash of.  |
 
 
 
@@ -16,7 +16,8 @@ HashTrits returns hash of the given trits.
 
 | Return type     | Description |
 |:---------------|:--------|
-| Trits |  |
+| Trits | The Trits representation of the hash. |
+| error | Returned for internal errors. |
 
 
 
@@ -27,7 +28,11 @@ HashTrits returns hash of the given trits.
 func ExampleHashTrits() 
 	trytes := "PDFIDVWRXONZSPJJQVZVVMLGSVB"
 	trits := trinary.MustTrytesToTrits(trytes)
-	tritsHash := curl.HashTrits(trits)
+	tritsHash, err := curl.HashTrits(trits)
+	if err != nil {
+		// handle error
+		return
+	}
 	fmt.Println(tritsHash) // output: [0 1 -1 0 -1 0 -1 1 ...]
 }
 

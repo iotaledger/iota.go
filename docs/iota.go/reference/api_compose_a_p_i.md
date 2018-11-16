@@ -7,8 +7,8 @@ ComposeAPI composes a new API from the given settings and provider. If no provid
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| settings | Settings | true | The settings used for creating the Provider.  |
-| createProvider |  | false | A function which creates a new Provider given the Settings.  |
+| settings | Settings | Required | The settings used for creating the Provider.  |
+| createProvider | ...CreateProviderFunc | Optional | A function which creates a new Provider given the Settings.  |
 
 
 

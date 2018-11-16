@@ -7,7 +7,7 @@
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-{{range .Inputs}}| {{.ArgName}} | {{.Type}} | {{.Required}} | {{.Desc}}  |
+{{range .Inputs}}| {{.ArgName}} | {{.Type}} | {{if .Required}}Required{{else}}Optional{{end}} | {{.Desc}}  |
 {{end}}
 {{end}}
 

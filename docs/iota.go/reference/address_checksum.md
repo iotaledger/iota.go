@@ -7,7 +7,7 @@ Checksum returns the checksum of the given address.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| address | Hash | true | The address from which to compute the checksum of.  |
+| address | Hash | Required | The address from which to compute the checksum of.  |
 
 
 

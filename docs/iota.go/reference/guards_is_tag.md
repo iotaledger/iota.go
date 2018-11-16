@@ -7,7 +7,7 @@ IsTag checks that input is valid tag trytes.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The Trytes to check.  |
+| trytes | Trytes | Required | The Trytes to check.  |
 
 
 

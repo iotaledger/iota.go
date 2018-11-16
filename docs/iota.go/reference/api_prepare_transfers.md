@@ -7,9 +7,9 @@ PrepareTransfers prepares the transaction trytes by generating a bundle, filling
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| seed | Trytes | true | The seed from which to derive private keys and addresses of.  |
-| transfers | Transfers | true | The Transfers to prepare.  |
-| options | PrepareTransfersOptions | true | Options used for preparing the transfers.  |
+| seed | Trytes | Required | The seed from which to derive private keys and addresses of.  |
+| transfers | Transfers | Required | The Transfers to prepare.  |
+| options | PrepareTransfersOptions | Required | Options used for preparing the transfers.  |
 
 
 

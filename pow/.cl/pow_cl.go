@@ -6,10 +6,10 @@ package cl
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/iotaledger/iota.go/curl"
-	"github.com/iotaledger/iota.go/transaction"
 	"sync/atomic"
 
+	. "github.com/iotaledger/iota.go/const"
+	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/trinary"
 )
 
@@ -269,10 +269,12 @@ func PowCL(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 
 	stopCL = false
 	countCL = 0
+
+	tr := MustTrytesToTrits(trytes)
+
 	c := curl.NewCurl()
-	c.Absorb(trytes[:(transaction.TransactionTrinarySize-curl.HashSize)/3])
-	tr := trytes.Trits()
-	copy(c.State, tr[transaction.TransactionTrinarySize-curl.HashSize:])
+	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
+	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
 	lmid, hmid := para(c.State)
 	lmid[0] = low0

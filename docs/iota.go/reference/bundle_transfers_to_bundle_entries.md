@@ -7,8 +7,8 @@ TransfersToBundleEntries translates transfers to bundle entries.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| timestamp | uint64 | true | The timestamp (Unix epoch/seconds) for each entry/transaction.  |
-| transfers |  | true | Transfer objects to convert to BundleEntries.  |
+| timestamp | uint64 | Required | The timestamp (Unix epoch/seconds) for each entry/transaction.  |
+| transfers | ...Transfer | Required | Transfer objects to convert to BundleEntries.  |
 
 
 

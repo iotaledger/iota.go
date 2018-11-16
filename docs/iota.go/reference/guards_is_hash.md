@@ -7,7 +7,7 @@ IsHash checks if input is correct hash (81 trytes or 90)
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The Trytes to check.  |
+| trytes | Trytes | Required | The Trytes to check.  |
 
 
 

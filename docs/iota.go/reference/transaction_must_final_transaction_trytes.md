@@ -7,7 +7,7 @@ MustFinalTransactionTrytes returns a slice of transaction trytes from the given 
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| txs | Transactions | true | The transactions to convert.  |
+| txs | Transactions | Required | The transactions to convert.  |
 
 
 

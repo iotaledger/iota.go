@@ -86,7 +86,16 @@ func IsTransactionTrytesWithMWM(trytes Trytes, mwm uint) (bool, error) {
 		return false, nil
 	}
 
-	hashTrits := MustTrytesToTrits(curl.HashTrytes(trytes))
+	trits, err := TrytesToTrits(trytes)
+	if err != nil {
+		return false, err
+	}
+
+	hashTrits, err := curl.HashTrits(trits)
+	if err != nil {
+		return false, err
+	}
+
 	for _, trit := range hashTrits[len(hashTrits)-int(mwm):] {
 		if trit != 0 {
 			return false, nil

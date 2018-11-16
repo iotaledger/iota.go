@@ -1,5 +1,5 @@
 # Key()
-Key computes a new private key from the given subseed using the given security level.
+Key computes a new private key from the given subseed using the given security level. Optionally takes the SpongeFunction to use. Default is Kerl.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
 
@@ -7,8 +7,9 @@ Key computes a new private key from the given subseed using the given security l
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| subseed | Trits | true | The subseed from which to derive the private key from.  |
-| securityLevel | SecurityLevel | true | The used security level.  |
+| subseed | Trits | Required | The subseed from which to derive the private key from.  |
+| securityLevel | SecurityLevel | Required | The used security level.  |
+| spongeFunc | ...SpongeFunctionCreator | Optional |   |
 
 
 

@@ -7,9 +7,9 @@ SSEProofOfWork does proof of work on the given trytes using SSE2 instructions.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | false |   |
-| mwm | int | false |   |
-| parallelism |  | false |   |
+| trytes | Trytes | Optional |   |
+| mwm | int | Optional |   |
+| parallelism | ...int | Optional |   |
 
 
 

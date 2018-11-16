@@ -1,5 +1,5 @@
 # HashTrytes()
-HashTrytes returns hash of t.
+HashTrytes returns the hash of the given trytes.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
 
@@ -7,7 +7,7 @@ HashTrytes returns hash of t.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The Trytes of which to compute the hash of.  |
+| t | Trytes | Required | The Trytes of which to compute the hash of.  |
 
 
 
@@ -16,7 +16,8 @@ HashTrytes returns hash of t.
 
 | Return type     | Description |
 |:---------------|:--------|
-| Trytes |  |
+| Trytes | The Trytes representation of the hash. |
+| error | Returned for internal errors. |
 
 
 
@@ -26,7 +27,11 @@ HashTrytes returns hash of t.
 ```go
 func ExampleHashTrytes() 
 	trytes := "PDFIDVWRXONZSPJJQVZVVMLGSVB"
-	hash := curl.HashTrytes(trytes)
+	hash, err := curl.HashTrytes(trytes)
+	if err != nil {
+		// handle error
+		return
+	}
 	fmt.Println(hash) // output: UXBXSI9LHCPYFFZXOWALCBTUIVXYKMCEDDIFXXGXJ9ZLEWKOTXSGYHPEAD9SXSRAWM9TPPXWZMZSIEKGX
 }
 

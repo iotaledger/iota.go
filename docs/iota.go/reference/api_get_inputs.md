@@ -7,8 +7,8 @@ GetInputs creates and returns an Inputs object by generating addresses and fetch
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| seed | Trytes | true | The seed from which to derive the addresses of.  |
-| options | GetInputsOptions | true | The options used for getting the Inputs.  |
+| seed | Trytes | Required | The seed from which to derive the addresses of.  |
+| options | GetInputsOptions | Required | The options used for getting the Inputs.  |
 
 
 

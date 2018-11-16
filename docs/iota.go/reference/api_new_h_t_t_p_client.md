@@ -7,7 +7,7 @@ NewHTTPClient creates a new Http Provider.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| settings | interface{} | true | The Settings used for creating a new HTTP Provider.  |
+| settings | interface{} | Required | The Settings used for creating a new HTTP Provider.  |
 
 
 

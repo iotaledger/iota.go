@@ -7,7 +7,7 @@ ASCIIToTrytes converts an ascii encoded string to trytes.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| s | string | true | The ASCII string to convert to Trytes.  |
+| s | string | Required | The ASCII string to convert to Trytes.  |
 
 
 

@@ -7,7 +7,7 @@ BroadcastTransactions broadcasts a list of attached transaction trytes to the ne
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes |  | true | The Trytes to broadcast.  |
+| trytes | ...Trytes | Required | The Trytes to broadcast.  |
 
 
 
@@ -16,7 +16,7 @@ BroadcastTransactions broadcasts a list of attached transaction trytes to the ne
 
 | Return type     | Description |
 |:---------------|:--------|
-| []Trytes |  |
+| []Trytes | The broadcasted Trytes. |
 | error | Returned for invalid Trytes and internal errors. |
 
 

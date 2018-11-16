@@ -6,12 +6,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/apsdehal/go-logger"
 	"go/ast"
 	"go/doc"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 	"text/template"
@@ -26,6 +26,7 @@ type function struct {
 	Outputs     []output
 	ExampleCode string
 	Package     string
+	ForType     string
 	hadExample  bool
 }
 
@@ -56,12 +57,28 @@ var packageDirs = []string{
 	"../units",
 }
 
-var writeToStdOut = flag.Bool("stdout", false, "")
+var verbose = flag.Bool("v", false, "")
+var writeMarkdown = flag.Bool("w", false, "")
+var emptyBodyWarning = flag.Bool("emptyBody", false, "")
+
+var log *logger.Logger
+var debugLog *logger.Logger
+var logFormat = "%{file}:%{line} > %{lvl} %{message}"
 
 func main() {
 	flag.Parse()
 
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log, _ = logger.New("parser", 1, os.Stdout)
+	debugLog, _ = logger.New("debug", 1, os.Stdout)
+
+	log.SetFormat(logFormat)
+	debugLog.SetFormat(logFormat)
+
+	debugLog.SetLogLevel(logger.CriticalLevel)
+	if *verbose {
+		debugLog.SetLogLevel(logger.DebugLevel)
+	}
+
 	tmpl := template.Must(template.ParseFiles("template.md"))
 	_ = tmpl
 
@@ -87,10 +104,10 @@ func main() {
 				if fun.hadExample {
 					continue
 				}
-				log.Printf("missing example for function %s", fun.Name)
+				log.Warningf("missing example for function %s", fun.Name)
 			}
 
-			if *writeToStdOut {
+			if *writeMarkdown {
 				writeDocs(functions, tmpl)
 			}
 		}
@@ -131,7 +148,7 @@ func writeDocs(functions map[string]*function, tmpl *template.Template) {
 // parses the given AST package and returns its functions
 func parsePackage(astPack *ast.Package, set *token.FileSet) map[string]*function {
 	pack := doc.New(astPack, "", 1)
-	log.Printf("parsing docs for package %s...\n", astPack.Name)
+	log.Infof("parsing docs for package %s...", astPack.Name)
 	functions := make(map[string]*function, len(pack.Funcs))
 
 	funcsTotal := 0
@@ -151,7 +168,7 @@ func parsePackage(astPack *ast.Package, set *token.FileSet) map[string]*function
 					continue
 				}
 				fun.Package = astPack.Name
-				log.Printf("%s -> %s", ty.Name, f.Name)
+				debugLog.Debugf("%s -> %s", ty.Name, f.Name)
 				functions[fun.Name] = fun
 			}
 		}
@@ -167,7 +184,7 @@ func parsePackage(astPack *ast.Package, set *token.FileSet) map[string]*function
 				}
 				funcsTotal++
 				fun.Package = astPack.Name
-				log.Printf("package [%s] -> %s", astPack.Name, f.Name)
+				debugLog.Debugf("package [%s] -> %s", astPack.Name, f.Name)
 				functions[fun.Name] = fun
 			}
 		}
@@ -177,7 +194,7 @@ func parsePackage(astPack *ast.Package, set *token.FileSet) map[string]*function
 		if !isExported(f) {
 			continue
 		}
-		log.Printf("package [%s] -> %s", astPack.Name, f.Name)
+		debugLog.Debugf("package [%s] -> %s", astPack.Name, f.Name)
 		fun := parseFunction(f, astPack, set, nil)
 		if fun == nil {
 			continue
@@ -186,7 +203,7 @@ func parsePackage(astPack *ast.Package, set *token.FileSet) map[string]*function
 		funcsTotal++
 		functions[fun.Name] = fun
 	}
-	log.Printf("parsed %d functions in package %s...\n", funcsTotal, astPack.Name)
+	log.Infof("parsed %d functions in package %s...", funcsTotal, astPack.Name)
 
 	return functions
 }
@@ -210,7 +227,9 @@ func parseFunction(fun *doc.Func, astPack *ast.Package, set *token.FileSet, ty *
 		Name: fun.Name,
 		Desc: cleanedDocs,
 	}
+
 	if ty != nil {
+		f.ForType = ty.Name
 		f.Title = ty.Name + " -> " + fun.Name + "()"
 	} else {
 		f.Title = fun.Name + "()"
@@ -255,11 +274,15 @@ func parseFunction(fun *doc.Func, astPack *ast.Package, set *token.FileSet, ty *
 					continue
 				}
 				var typeName string
-				tySplit := strings.Split(split[1], ".")
-				if len(tySplit) == 1 {
-					typeName = tySplit[0]
+				if !strings.HasPrefix(split[1], "...") {
+					tySplit := strings.Split(split[1], ".")
+					if len(tySplit) == 1 {
+						typeName = tySplit[0]
+					} else {
+						typeName = tySplit[1]
+					}
 				} else {
-					typeName = tySplit[1]
+					typeName = split[1]
 				}
 				f.Inputs[i] = input{ArgName: split[0], Type: typeName}
 			}
@@ -300,27 +323,26 @@ func parseFunction(fun *doc.Func, astPack *ast.Package, set *token.FileSet, ty *
 // parses the corresponding example folder for the given package
 func parseExamples(packageName string, packageDir string, functions map[string]*function) {
 	// parse examples
-	examplePackagePath := fmt.Sprintf("%s/examples", packageDir)
+	examplePackagePath := fmt.Sprintf("%s/.examples", packageDir)
 	if _, err := os.Stat(examplePackagePath); os.IsNotExist(err) {
-		log.Printf("missing examples for package: %s (!)\n", packageName)
+		log.Warningf("missing examples for package: %s (!)", packageName)
 		return
 	}
 
 	// create a new file set for the examples
 	examplesSet := token.NewFileSet()
-	examplesDir := fmt.Sprintf("%s/examples", packageDir)
 	// parse example dir
-	examplePackages, err := parser.ParseDir(examplesSet, examplesDir, nil, parser.ParseComments)
+	examplePackages, err := parser.ParseDir(examplesSet, examplePackagePath, nil, parser.ParseComments)
 	if err != nil {
 		log.Fatalf("failed to parse example packages package: %s", err)
 	}
 
-	log.Printf("parsing examples for package %s...\n", packageName)
+	log.Infof("parsing examples for package %s...", packageName)
 	for _, exampleASTPack := range examplePackages {
 		for fileName, file := range exampleASTPack.Files {
 			fileBytes, err := ioutil.ReadFile(fileName)
 			if err != nil {
-				log.Fatalf("unable to read example file: %s\n", fileName)
+				log.Fatalf("unable to read example file: %s", fileName)
 			}
 			// extract example code
 			examples := doc.Examples(file)
@@ -334,13 +356,13 @@ func parseExamples(packageName string, packageDir string, functions map[string]*
 
 					f, ok := functions[example.Name]
 					if !ok {
-						log.Printf("no source function found for example function %s\n", example.Name)
+						log.Warningf("no source function found for example function %s", example.Name)
 						continue
 					}
 
 					extendedDoc := example.Doc
 					if len(extendedDoc) == 0 {
-						log.Printf("no extended doc for function %s found\n", example.Name)
+						debugLog.Debugf("no extended doc for function %s found", example.Name)
 					} else {
 						addExtendedDocs(extendedDoc, f)
 					}
@@ -349,7 +371,9 @@ func parseExamples(packageName string, packageDir string, functions map[string]*
 					exampleCode := fileBytes[fun.Decl.Pos():fun.Decl.End()]
 					exampleBody := fileBytes[example.Code.Pos():example.Code.End()]
 					if len(strings.TrimSpace(string(exampleBody))) == 1 {
-						log.Printf("skipping example code for function %s (empty body)", fun.Name)
+						if *emptyBodyWarning {
+							log.Debugf("skipping example code for function %s (empty body)", fun.Name)
+						}
 						continue
 					}
 
@@ -390,7 +414,7 @@ func addExtendedDocs(extendedDocs string, f *function) {
 				}
 			}
 			if !found {
-				log.Printf("no matching parameter '%s' in function %s\n", paraName, f.Name)
+				log.Warningf("no matching parameter '%s' in function %s", paraName, f.Name)
 			}
 		case 'o':
 			typeName := strings.TrimSpace(line[paraSep+1 : descSep])
@@ -405,7 +429,7 @@ func addExtendedDocs(extendedDocs string, f *function) {
 				}
 			}
 			if !found {
-				log.Printf("no matching return value '%s' in function %s\n", typeName, f.Name)
+				log.Warningf("no matching return value '%s' in function %s", typeName, f.Name)
 			}
 		}
 	}

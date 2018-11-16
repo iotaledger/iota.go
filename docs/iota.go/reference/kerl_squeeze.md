@@ -7,7 +7,7 @@ Squeeze out length trits. Length has to be a multiple of HashTrinarySize.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| length | int | true | The length of the Trits to squeeze out. Must be a multiple of 243.  |
+| length | int | Required | The length of the Trits to squeeze out. Must be a multiple of 243.  |
 
 
 

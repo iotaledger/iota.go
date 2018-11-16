@@ -7,9 +7,9 @@ SyncGoProofOfWork is like GoProofOfWork() but only runs one ongoing Proof-of-Wor
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | false |   |
-| mwm | int | false |   |
-| parallelism |  | false |   |
+| trytes | Trytes | Optional |   |
+| mwm | int | Optional |   |
+| parallelism | ...int | Optional |   |
 
 
 

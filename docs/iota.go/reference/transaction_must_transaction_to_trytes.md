@@ -7,7 +7,7 @@ MustTransactionToTrytes converts the transaction to trytes.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| t | *Transaction | true | The transaction to convert to Trytes.  |
+| t | *Transaction | Required | The transaction to convert to Trytes.  |
 
 
 

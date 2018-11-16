@@ -7,7 +7,7 @@ ValidTransactionTrytes checks whether the given trytes make up a valid transacti
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The Trytes to validate.  |
+| trytes | Trytes | Required | The Trytes to validate.  |
 
 
 

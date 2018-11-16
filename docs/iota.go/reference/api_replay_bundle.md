@@ -7,10 +7,10 @@ ReplayBundle reattaches a transfer to the Tangle by selecting tips & performing 
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| tailTxHash | Hash | true | The hash of the tail transaction of the bundle to reattach.  |
-| depth | uint64 | true | The depth used in GetTransactionstoApprove().  |
-| mwm | uint64 | true | The minimum weight magnitude to fulfill.  |
-| reference |  | false | The optional reference to use in GetTransactionsToApprove().  |
+| tailTxHash | Hash | Required | The hash of the tail transaction of the bundle to reattach.  |
+| depth | uint64 | Required | The depth used in GetTransactionstoApprove().  |
+| mwm | uint64 | Required | The minimum weight magnitude to fulfill.  |
+| reference | ...Hash | Optional | The optional reference to use in GetTransactionsToApprove().  |
 
 
 

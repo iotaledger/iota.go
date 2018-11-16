@@ -7,9 +7,9 @@ AddTrytes adds the given fragments to the txs in the bundle starting from the sp
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| bndl | Bundle | true | The Bundle to add the Trytes to.  |
-| fragments | []Trytes | true | The Trytes fragments to add to the Bundle,  |
-| offset | int | true | The offset at which to start to add the Trytes into the Bundle.  |
+| bndl | Bundle | Required | The Bundle to add the Trytes to.  |
+| fragments | []Trytes | Required | The Trytes fragments to add to the Bundle,  |
+| offset | int | Required | The offset at which to start to add the Trytes into the Bundle.  |
 
 
 

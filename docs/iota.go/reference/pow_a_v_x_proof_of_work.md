@@ -7,9 +7,9 @@ AVXProofOfWork does Proof-of-Work on the given trytes using AVX instructions.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | false |   |
-| mwm | int | false |   |
-| parallelism |  | false |   |
+| trytes | Trytes | Optional |   |
+| mwm | int | Optional |   |
+| parallelism | ...int | Optional |   |
 
 
 

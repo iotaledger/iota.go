@@ -7,8 +7,8 @@ IsTransactionHashWithMWM checks if input is correct transaction hash (81 trytes)
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The Trytes to check.  |
-| mwm | uint | false |   |
+| trytes | Trytes | Required | The Trytes to check.  |
+| mwm | uint | Optional |   |
 
 
 

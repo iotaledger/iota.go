@@ -7,7 +7,7 @@ BroadcastBundle re-broadcasts all transactions in a bundle given the tail transa
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| tailTxHash | Hash | true | The hash of the tail transaction of the bundle.  |
+| tailTxHash | Hash | Required | The hash of the tail transaction of the bundle.  |
 
 
 

@@ -7,7 +7,7 @@ IsTailTransaction checks if given transaction object is tail transaction. A tail
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| t | *Transaction | true | The Transaction to validate.  |
+| t | *Transaction | Required | The Transaction to validate.  |
 
 
 

@@ -7,7 +7,7 @@ NormalizedBundleHash normalizes the given bundle hash, with resulting digits sum
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| bundleHash | Hash | true | The bundle hash to normalize.  |
+| bundleHash | Hash | Required | The bundle hash to normalize.  |
 
 
 

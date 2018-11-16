@@ -7,8 +7,8 @@ HasValidNonce checks if the transaction has the valid MinWeightMagnitude. MWM co
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| t | *Transaction | true | The Transaction to validate.  |
-| mwm | uint64 | true | The Minimum Weight Magnitude to check against.  |
+| t | *Transaction | Required | The Transaction to validate.  |
+| mwm | uint64 | Required | The Minimum Weight Magnitude to check against.  |
 
 
 

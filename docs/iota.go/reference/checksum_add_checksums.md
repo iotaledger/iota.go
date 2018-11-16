@@ -7,9 +7,9 @@ AddChecksums is a wrapper function around AddChecksum for multiple trytes string
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| inputs | []Trytes | true | The Trytes slice of which to compute the checksum of.  |
-| isAddress | bool | true | Whether to validate the inputs as addresses.  |
-| checksumLength | uint64 | true | The wanted length of each checksum. Must be 9 when isAddress is true.  |
+| inputs | []Trytes | Required | The Trytes slice of which to compute the checksum of.  |
+| isAddress | bool | Required | Whether to validate the inputs as addresses.  |
+| checksumLength | uint64 | Required | The wanted length of each checksum. Must be 9 when isAddress is true.  |
 
 
 

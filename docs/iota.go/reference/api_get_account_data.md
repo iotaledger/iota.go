@@ -7,8 +7,8 @@ GetAccountData returns an AccountData object containing account information abou
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| seed | Trytes | true | The seed of the account.  |
-| options | GetAccountDataOptions | true | Options used for gathering the account data.  |
+| seed | Trytes | Required | The seed of the account.  |
+| options | GetAccountDataOptions | Required | Options used for gathering the account data.  |
 
 
 

@@ -7,8 +7,8 @@ GetBalances fetches confirmed balances of the given addresses at the latest soli
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| addresses | Hashes | true | The addresses of which to get the balances of.  |
-| threshold | uint64 | true | The threshold of the query, must be less than or equal 100.  |
+| addresses | Hashes | Required | The addresses of which to get the balances of.  |
+| threshold | uint64 | Required | The threshold of the query, must be less than or equal 100.  |
 
 
 

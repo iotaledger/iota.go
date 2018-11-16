@@ -7,9 +7,9 @@ ConvertUnitsString converts the given string value in the base Unit to the given
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| val | string | true | The source string value.  |
-| from | Unit | true | The Unit format of the source value.  |
-| to | Unit | true | The Unit format of the target value.  |
+| val | string | Required | The source string value.  |
+| from | Unit | Required | The Unit format of the source value.  |
+| to | Unit | Required | The Unit format of the target value.  |
 
 
 

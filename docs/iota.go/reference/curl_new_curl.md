@@ -9,7 +9,7 @@ NewCurl initializes a new instance with an empty State.
 
 | Return type     | Description |
 |:---------------|:--------|
-| *Curl |  |
+| *Curl | The new Curl instance. |
 
 
 

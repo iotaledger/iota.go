@@ -7,10 +7,10 @@ SendTrytes performs Proof-of-Work, stores and then broadcasts the given transact
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | []Trytes | false |   |
-| depth | uint64 | false |   |
-| mwm | uint64 | false |   |
-| reference |  | false |   |
+| trytes | []Trytes | Required | The transaction Trytes to send.  |
+| depth | uint64 | Required | The depth to use in GetTransactionsToApprove().  |
+| mwm | uint64 | Required | The minimum weight magnitude to fulfill.  |
+| reference | ...Hash | Optional | The optional reference to use in GetTransactionsToApprove().  |
 
 
 

@@ -7,10 +7,10 @@ GetInputObjects creates an Input object using the given addresses, balances, sta
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| addresses | Hashes | true | The addresses to convert.  |
-| balances | []uint64 | true | The balances of the addresses,  |
-| start | uint64 | true | The start index of the addresses.  |
-| secLvl | SecurityLevel | true | The used security level for generating the addresses.  |
+| addresses | Hashes | Required | The addresses to convert.  |
+| balances | []uint64 | Required | The balances of the addresses,  |
+| start | uint64 | Required | The start index of the addresses.  |
+| secLvl | SecurityLevel | Required | The used security level for generating the addresses.  |
 
 
 

@@ -7,8 +7,8 @@ TraverseBundle fetches the bundle of a given tail transaction by traversing thro
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trunkTxHash | Hash | true | The hash of the tail transaction of the bundle.  |
-| bndl | Bundle | true | An empty Bundle in which transactions are added.  |
+| trunkTxHash | Hash | Required | The hash of the tail transaction of the bundle.  |
+| bndl | Bundle | Required | An empty Bundle in which transactions are added.  |
 
 
 

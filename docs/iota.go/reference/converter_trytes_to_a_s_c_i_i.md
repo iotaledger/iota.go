@@ -7,7 +7,7 @@ TrytesToASCII converts trytes of even length to an ascii string.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The input Trytes to convert to an ASCII string.  |
+| trytes | Trytes | Required | The input Trytes to convert to an ASCII string.  |
 
 
 

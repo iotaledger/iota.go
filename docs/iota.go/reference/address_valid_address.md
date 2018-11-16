@@ -7,7 +7,7 @@ ValidAddress checks whether the given address is valid.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| address | Hash | true | The address to check.  |
+| address | Hash | Required | The address to check.  |
 
 
 

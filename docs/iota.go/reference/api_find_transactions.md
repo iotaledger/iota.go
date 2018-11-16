@@ -7,7 +7,7 @@ FindTransactions searches for transaction hashes. It allows to search for transa
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| query | FindTransactionsQuery | true | The object defining the transactions to search for.  |
+| query | FindTransactionsQuery | Required | The object defining the transactions to search for.  |
 
 
 

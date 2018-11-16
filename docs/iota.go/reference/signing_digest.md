@@ -1,5 +1,5 @@
 # Digest()
-Digest computes the digest derived from the signature fragment and normalized bundle hash.
+Digest computes the digest derived from the signature fragment and normalized bundle hash. Optionally takes the SpongeFunction to use. Default is Kerl.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
 
@@ -7,8 +7,9 @@ Digest computes the digest derived from the signature fragment and normalized bu
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| normalizedBundleHashFragment | []int8 | true | The fragment of the normalized bundle hash.  |
-| signatureFragment | Trits | true | The signature fragment corresponding to the bundle hash fragment.  |
+| normalizedBundleHashFragment | []int8 | Required | The fragment of the normalized bundle hash.  |
+| signatureFragment | Trits | Required | The signature fragment corresponding to the bundle hash fragment.  |
+| spongeFunc | ...SpongeFunctionCreator | Optional |   |
 
 
 

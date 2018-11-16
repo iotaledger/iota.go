@@ -7,7 +7,7 @@ GroupTransactionsIntoBundles groups the given transactions into groups of bundle
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| txs | Transactions | true | The transactions to group into different Bundles.  |
+| txs | Transactions | Required | The transactions to group into different Bundles.  |
 
 
 

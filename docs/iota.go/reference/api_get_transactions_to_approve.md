@@ -7,8 +7,8 @@ GetTransactionsToApprove does the tip selection via the connected node.  Returns
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| depth | uint64 | true | How many milestones back to begin the Random Walk from.  |
-| reference |  | false | A hash of a transaction which should be approved by the returned tips.  |
+| depth | uint64 | Required | How many milestones back to begin the Random Walk from.  |
+| reference | ...Hash | Optional | A hash of a transaction which should be approved by the returned tips.  |
 
 
 

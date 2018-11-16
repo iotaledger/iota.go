@@ -7,7 +7,7 @@ Absorb fills the internal state of the sponge with the given trits. This is only
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| in | Trits | true | The Trits slice to absorb. Must be a multiple of 243 in length.  |
+| in | Trits | Required | The Trits slice to absorb. Must be a multiple of 243 in length.  |
 
 
 

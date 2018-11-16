@@ -7,8 +7,8 @@ GetInclusionStates fetches inclusion states of a given list of transactions.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| txHashes | Hashes | true | The transaction hashes to check for inclusion state.  |
-| tips |  | true | The reference tips of which to check whether the transactions were included in or not.  |
+| txHashes | Hashes | Required | The transaction hashes to check for inclusion state.  |
+| tips | ...Hash | Required | The reference tips of which to check whether the transactions were included in or not.  |
 
 
 

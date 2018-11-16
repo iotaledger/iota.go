@@ -7,7 +7,7 @@ AddNeighbors adds a list of neighbors to the connected IRI node. Assumes addNeig
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| uris |  | true | The URIs of the neighbors to add. Must be in udp:// or tcp:// format.  |
+| uris | ...string | Required | The URIs of the neighbors to add. Must be in udp:// or tcp:// format.  |
 
 
 

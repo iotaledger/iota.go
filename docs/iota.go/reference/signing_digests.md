@@ -1,5 +1,5 @@
 # Digests()
-Digests hashes each segment of each key fragment 26 times and returns them.
+Digests hashes each segment of each key fragment 26 times and returns them. Optionally takes the SpongeFunction to use. Default is Kerl.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
 
@@ -7,7 +7,8 @@ Digests hashes each segment of each key fragment 26 times and returns them.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| key | Trits | true | The private key from which to derive the digests from.  |
+| key | Trits | Required | The private key from which to derive the digests from.  |
+| spongeFunc | ...SpongeFunctionCreator | Optional |   |
 
 
 

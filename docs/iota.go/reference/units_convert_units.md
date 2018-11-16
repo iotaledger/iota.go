@@ -7,9 +7,9 @@ ConvertUnits converts the given value in the base Unit to the given new Unit.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| val | float64 | true | The source value.  |
-| from | Unit | true | The Unit format of the source value.  |
-| to | Unit | true | The Unit format of the target value.  |
+| val | float64 | Required | The source value.  |
+| from | Unit | Required | The Unit format of the source value.  |
+| to | Unit | Required | The Unit format of the target value.  |
 
 
 

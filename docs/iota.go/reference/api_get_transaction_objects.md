@@ -7,7 +7,7 @@ GetTransactionObjects fetches transaction objects given an array of transaction 
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| hashes |  | true | The hashes of the transaction to get.  |
+| hashes | ...Hash | Required | The hashes of the transaction to get.  |
 
 
 
@@ -16,7 +16,7 @@ GetTransactionObjects fetches transaction objects given an array of transaction 
 
 | Return type     | Description |
 |:---------------|:--------|
-| Transactions |  |
+| Transactions | The Transactions of the given hashes. |
 | error | Returned for invalid parameters and internal errors. |
 
 

@@ -7,11 +7,11 @@ SendTransfer calls PrepareTransfers and then sends off the bundle via SendTrytes
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| seed | Trytes | false |   |
-| depth | uint64 | false |   |
-| mwm | uint64 | false |   |
-| transfers | Transfers | false |   |
-| options | *SendTransfersOptions | false |   |
+| seed | Trytes | Required | The seed from which to derive private keys and addresses of.  |
+| depth | uint64 | Required | The depth used in GetTransactionsToApprove().  |
+| mwm | uint64 | Required | The minimum weight magnitude to fufill.  |
+| transfers | Transfers | Required | The Transfers to prepare and send off.  |
+| options | *SendTransfersOptions | Required | The options used for preparing and sending of the bundle.  |
 
 
 
@@ -20,8 +20,8 @@ SendTransfer calls PrepareTransfers and then sends off the bundle via SendTrytes
 
 | Return type     | Description |
 |:---------------|:--------|
-| Bundle |  |
-| error |  |
+| Bundle | The sent of Bundle. |
+| error | Returned for invalid parameters and internal errors. |
 
 
 

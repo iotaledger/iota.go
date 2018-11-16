@@ -7,9 +7,9 @@ AddChecksum computes the checksum and returns the given trytes with the appended
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| input | Trytes | true | The Trytes of which to compute the checksum of.  |
-| isAddress | bool | true | Whether to validate the input as an address.  |
-| checksumLength | uint64 | true | The wanted length of the checksum. Must be 9 when isAddress is true.  |
+| input | Trytes | Required | The Trytes of which to compute the checksum of.  |
+| isAddress | bool | Required | Whether to validate the input as an address.  |
+| checksumLength | uint64 | Required | The wanted length of the checksum. Must be 9 when isAddress is true.  |
 
 
 

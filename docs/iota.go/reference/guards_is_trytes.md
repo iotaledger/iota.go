@@ -7,7 +7,7 @@ IsTrytes checks if input is correct trytes consisting of [9A-Z]
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The Trytes to check.  |
+| trytes | Trytes | Required | The Trytes to check.  |
 
 
 

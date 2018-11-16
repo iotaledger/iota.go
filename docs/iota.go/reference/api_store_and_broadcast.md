@@ -7,7 +7,7 @@ StoreAndBroadcast first stores and the broadcasts the given transactions.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | []Trytes | true | The Trytes to store and broadcast.  |
+| trytes | []Trytes | Required | The Trytes to store and broadcast.  |
 
 
 

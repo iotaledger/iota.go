@@ -7,7 +7,7 @@ IsEmptyTrytes checks if input is null (all 9s trytes)
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes | Trytes | true | The Trytes to check.  |
+| trytes | Trytes | Required | The Trytes to check.  |
 
 
 

@@ -7,7 +7,7 @@ StoreTransactions persists a list of attached transaction trytes in the store of
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| trytes |  | true | The transaction Trytes to store.  |
+| trytes | ...Trytes | Required | The transaction Trytes to store.  |
 
 
 
@@ -16,7 +16,7 @@ StoreTransactions persists a list of attached transaction trytes in the store of
 
 | Return type     | Description |
 |:---------------|:--------|
-| []Trytes |  |
+| []Trytes | The stored transaction Trytes. |
 | error | Returned for internal errors. |
 
 

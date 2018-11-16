@@ -1,5 +1,5 @@
 # Subseed()
-Subseed takes a seed and an index and returns the given subseed.
+Subseed takes a seed and an index and returns the given subseed. Optionally takes the SpongeFunction to use. Default is Kerl.
 > **Important note:** This API is currently in Beta and is subject to change. Use of these APIs in production applications is not supported.
 
 
@@ -7,8 +7,9 @@ Subseed takes a seed and an index and returns the given subseed.
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| seed | Trytes | true | The seed from which to derive the subseed from.  |
-| index | uint64 | true | The index of the subseed.  |
+| seed | Trytes | Required | The seed from which to derive the subseed from.  |
+| index | uint64 | Required | The index of the subseed.  |
+| spongeFunc | ...SpongeFunctionCreator | Optional |   |
 
 
 

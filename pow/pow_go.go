@@ -7,16 +7,17 @@
 package pow
 
 import (
+	"math"
+	"runtime"
+	"sync"
+	"time"
+
+	"github.com/pkg/errors"
+
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
-	"sync"
-
-	"github.com/pkg/errors"
-	"math"
-	"runtime"
-	"time"
 )
 
 var (
@@ -324,9 +325,10 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 	// and thereby all other ongoing Proof-of-Work tasks will halt.
 	cancelled := false
 
-	c := curl.NewCurl()
-	c.Absorb(trytes[:(TransactionTrinarySize-HashTrinarySize)/3])
 	tr := MustTrytesToTrits(trytes)
+
+	c := curl.NewCurl()
+	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)

@@ -7,8 +7,8 @@ GetNewAddress generates and returns a new address by calling FindTransactions an
 
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
-| seed | Trytes | true | The seed from which to compute the addresses of.  |
-| options | GetNewAddressOptions | true | Options used during address generation.  |
+| seed | Trytes | Required | The seed from which to compute the addresses of.  |
+| options | GetNewAddressOptions | Required | Options used during address generation.  |
 
 
 
