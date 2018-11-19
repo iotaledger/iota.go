@@ -1,15 +1,16 @@
 language: go
 
 go:
-  - 1.11.1
+  - 1.11.2
 
 before_install:
+- export GO111MODULE='on'
 - go get -u github.com/mgechev/revive
 - go get github.com/onsi/ginkgo/ginkgo
 - export PATH=$PATH:$GOPATH/bin
 - export CGO_LDFLAGS_ALLOW='-msse2,-mavx'
 - export CGO_CFLAGS_ALLOW='-msse2,-mavx'
-- export GO111MODULE='on'
+- go get ./...
 
 script:
 - travis_wait 30 ginkgo -tags="pow_avx pow_sse pow_c pow_c128" -r --randomizeAllSpecs --randomizeSuites --failOnPending --cover --progress
