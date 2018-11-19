@@ -7,7 +7,7 @@
 
 ## Getting started
 
-The client library is in beta and is subject to change. Use of this library in production applications is not supported.
+> The client library is in beta and is subject to change. Use of this library in production applications is not supported.
 
 ### Installation
 
@@ -183,29 +183,92 @@ Make sure to define `LocalProofOfWorkFunc` in your provider settings (i.e. `HTTP
 
 ## Contributing
 
-We thank everyone for their contributions. Here is quick guide to get started with iota.go:
+We thank everyone for their contributions. In order for your pull requests to get accepted, 
+they must fulfill following criterias:
+* You must write tests for your additions with ginkgo.
+* You must write example code describing the parameters and functionality of your additions. 
+* The pull request must pass the CI config.
 
-### Clone and bootstrap
+### Writing tests with ginkgo
 
-1. Fork the repo with <kbd>Fork</kbd> button at top right corner.
-2. Clone your fork locally and `cd` in it.
-3. Bootstrap your environment with:
-
+First install ginkgo:
 ```
-go get ./...
-```
-
-This will install all needed dependencies.
-
-### Run the tests
-
-Make your changes on a single or across multiple packages and test the system in integration. Run from the _root directory_:
-
-```
-go test ./...
+$ go get github.com/onsi/ginkgo/ginkgo
+$ go get github.com/onsi/gomega/...
 ```
 
-To run tests of specific package just `cd` to the package directory and run `go test` from there.
+If you have written a new package, you can generate corresponding test suite files via:
+```
+$ cd <dir-of-your-package>
+$ ginkgo bootstrap
+```
+
+Now generate a new testing file with:
+```
+$ ginkgo generate <package-name>
+```
+
+Executing the two commands above should give you two files:
+```
+<package-name>_suite_test.go
+<package-name>_test.go
+```
+
+> You can use the existing tests as a reference on how to write ginkgo tests or
+[read the documentation](https://onsi.github.io/ginkgo/).
+
+Executing your tests:
+```
+$ go test -v
+=== RUN   TestAddress
+Running Suite: Address Suite
+============================
+Random Seed: 1542616006
+Will run 11 of 11 specs
+
+•••••••••••
+Ran 11 of 11 Specs in 0.261 seconds
+SUCCESS! -- 11 Passed | 0 Failed | 0 Pending | 0 Skipped
+--- PASS: TestAddress (0.26s)
+PASS
+ok  	github.com/iotaledger/iota.go/address	0.264s
+```
+
+**Again, your tests must pass otherwise the pull request won't be accepted.**
+
+### Writing documentation/example code
+While godoc.org gives a good enough documentation of the package already, the IOTA Foundation's
+documentation portal needs additional information, such as parameter description, examples and so on.
+
+1. If non existent, add a `.examples` directory in your newly created package.
+2. Create a new file with the following convention: `<package-name>_examples_test.go` inside
+the `.examples` directory.
+3. Write examples in the following schema:
+```
+// i req: s, The ASCII string to convert to Trytes.
+// o: Trytes, The Trytes representation of the input ASCII string.
+// o: error, Returned for non ASCII string inputs.
+func ExampleASCIIToTrytes() {
+	trytes, err := converter.ASCIIToTrytes("IOTA")
+	if err != nil {
+		// handle error
+		return
+	}
+	fmt.Println(trytes) // output: "SBYBCCKB"
+}
+```
+
+| Symbol     | Description |
+|:---------------|:--------|
+| i req | Describes a parameter to the function. |
+| i | Describes an optional parameter to the function. |
+| o | Describes a return value of the function. |
+
+Syntax:
+
+* For parameters: `<symbol>: <parameter_name>, <description>.`  
+* For return values: `<symbol>: <type>, <description>.`
+* Example function: `Example<OriginFunctionName>`
 
 ## Reporting Issues
 
