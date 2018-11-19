@@ -8,7 +8,7 @@ Address generates the address trits from the given digests. Optionally takes the
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | digests | Trits | Required | The digests from which to derive the address from.  |
-| spongeFunc | ...SpongeFunctionCreator | Optional |   |
+| spongeFunc | ...SpongeFunctionCreator | Optional | The optional sponge function to use.  |
 
 
 

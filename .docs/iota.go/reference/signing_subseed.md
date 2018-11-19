@@ -9,7 +9,7 @@ Subseed takes a seed and an index and returns the given subseed. Optionally take
 |:---------------|:--------|:--------| :--------|
 | seed | Trytes | Required | The seed from which to derive the subseed from.  |
 | index | uint64 | Required | The index of the subseed.  |
-| spongeFunc | ...SpongeFunctionCreator | Optional |   |
+| spongeFunc | ...SpongeFunctionCreator | Optional | The optional sponge function to use.  |
 
 
 

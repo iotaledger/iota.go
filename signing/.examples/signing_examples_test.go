@@ -15,6 +15,7 @@ func ExampleNewKerl() {}
 
 // i req: seed, The seed from which to derive the subseed from.
 // i req: index, The index of the subseed.
+// i: spongeFunc, The optional sponge function to use.
 // o: Trits, The Trits representation of the subseed.
 // o: error, Returned for invalid seeds and internal errors.
 func ExampleSubseed() {
@@ -30,6 +31,7 @@ func ExampleSubseed() {
 
 // i req: subseed, The subseed from which to derive the private key from.
 // i req: securityLevel, The used security level.
+// i: spongeFunc, The optional sponge function to use.
 // o: Trits, The Trits representation of the private key.
 // o: error, Returned for internal errors.
 func ExampleKey() {
@@ -45,6 +47,7 @@ func ExampleKey() {
 }
 
 // i req: key, The private key from which to derive the digests from.
+// i: spongeFunc, The optional sponge function to use.
 // o: Trits, The Trits representation of the digests.
 // o: error, Returned for internal errors.
 func ExampleDigests() {
@@ -60,6 +63,7 @@ func ExampleDigests() {
 }
 
 // i req: digests, The digests from which to derive the address from.
+// i: spongeFunc, The optional sponge function to use.
 // o: Trits, The Trits representation of the address.
 // o: error, Returned for internal errors.
 func ExampleAddress() {
@@ -85,6 +89,7 @@ func ExampleNormalizedBundleHash() {
 
 // i req: normalizedBundleHashFragment, The normalized bundle hash.
 // i req: keyFragment, The fragment of the private key.
+// i: spongeFunc, The optional sponge function to use.
 // o: Trits, The Trits representation of the signed message signature fragment.
 // o: error, Returned for internal errors.
 func ExampleSignatureFragment() {
@@ -121,6 +126,7 @@ func ExampleSignatureFragment() {
 
 // i req: normalizedBundleHashFragment, The fragment of the normalized bundle hash.
 // i req: signatureFragment, The signature fragment corresponding to the bundle hash fragment.
+// i: spongeFunc, The optional sponge function to use.
 // o: Trits, The Trits representation of the digest.
 // o: error, Returned for internal errors.
 func ExampleDigest() {
@@ -159,6 +165,7 @@ func ExampleDigest() {
 // i req: expectedAddress, The address to validate against to check whether the signatures are valid.
 // i req: fragments, The signed signature fragments.
 // i req: bundleHash, The hash of the bundle.
+// i: spongeFunc, The optional sponge function to use.
 // o: bool, Whether the signatures are valid.
 // o: error, Returned for internal errors.
 func ExampleValidateSignatures() {

@@ -10,7 +10,7 @@ ValidateSignatures validates the given signature fragments by checking whether t
 | expectedAddress | Hash | Required | The address to validate against to check whether the signatures are valid.  |
 | fragments | []Trytes | Required | The signed signature fragments.  |
 | bundleHash | Hash | Required | The hash of the bundle.  |
-| spongeFunc | ...SpongeFunctionCreator | Optional |   |
+| spongeFunc | ...SpongeFunctionCreator | Optional | The optional sponge function to use.  |
 
 
 
