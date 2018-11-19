@@ -7,6 +7,7 @@ before_install:
 - export GO111MODULE='on'
 - go get -u github.com/mgechev/revive
 - go get github.com/onsi/ginkgo/ginkgo
+- go get github.com/onsi/gomega/...
 - export PATH=$PATH:$GOPATH/bin
 - export CGO_LDFLAGS_ALLOW='-msse2,-mavx'
 - export CGO_CFLAGS_ALLOW='-msse2,-mavx'
