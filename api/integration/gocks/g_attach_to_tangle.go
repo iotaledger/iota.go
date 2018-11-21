@@ -16,6 +16,7 @@ func init() {
 	for i, j := 0, len(reqTrytes)-1; i < j; i, j = i+1, j-1 {
 		reqTrytes[i], reqTrytes[j] = reqTrytes[j], reqTrytes[i]
 	}
+
 	gock.New(DefaultLocalIRIURI).
 		Persist().
 		Post("/").

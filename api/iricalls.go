@@ -56,6 +56,7 @@ func (api *API) AttachToTangle(trunkTxHash Hash, branchTxHash Hash, mwm uint64, 
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
 	}
+
 	return rsp.Trytes, nil
 }
 
