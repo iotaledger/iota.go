@@ -16,12 +16,13 @@ func init() {
 	for i, j := 0, len(reqTrytes)-1; i < j; i, j = i+1, j-1 {
 		reqTrytes[i], reqTrytes[j] = reqTrytes[j], reqTrytes[i]
 	}
+
 	gock.New(DefaultLocalIRIURI).
 		Persist().
 		Post("/").
 		MatchType("json").
 		JSON(AttachToTangleCommand{
-			Command:            AttachToTangleCmd,
+			Command:            Command{AttachToTangleCmd},
 			TrunkTransaction:   TrunkTx,
 			BranchTransaction:  BranchTx,
 			Trytes:             reqTrytes,
@@ -43,7 +44,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(AttachToTangleCommand{
-			Command:            AttachToTangleCmd,
+			Command:            Command{AttachToTangleCmd},
 			TrunkTransaction:   TrunkTx,
 			BranchTransaction:  BranchTx,
 			Trytes:             []Trytes{emptyTxTrytes},

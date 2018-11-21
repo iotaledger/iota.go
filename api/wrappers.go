@@ -15,6 +15,16 @@ import (
 	"time"
 )
 
+// GetLatestSolidSubtangleMilestone returns the latest subtangle milestone.
+func (api *API) GetLatestSolidSubtangleMilestone() (*GetLatestSolidSubtangleMilestoneResponse, error) {
+	cmd := &GetLatestSolidSubtangleMilestoneCommand{Command: Command{GetNodeInfoCmd}}
+	rsp := &GetLatestSolidSubtangleMilestoneResponse{}
+	if err := api.provider.Send(cmd, rsp); err != nil {
+		return nil, err
+	}
+	return rsp, nil
+}
+
 // BroadcastBundle re-broadcasts all transactions in a bundle given the tail transaction hash.
 // It might be useful when transactions did not properly propagate, particularly in the case of large bundles.
 func (api *API) BroadcastBundle(tailTxHash Hash) ([]Trytes, error) {
@@ -163,6 +173,10 @@ func (api *API) GetBundlesFromAddresses(addresses Hashes, inclusionState ...bool
 		return nil, err
 	}
 
+	if len(txs) == 0 {
+		return bundle.Bundles{}, nil
+	}
+
 	// misuse as a set
 	bundleHashesSet := map[Hash]struct{}{}
 	for i := range txs {
@@ -213,11 +227,11 @@ func (api *API) GetBundlesFromAddresses(addresses Hashes, inclusionState ...bool
 // GetLatestInclusion fetches inclusion states of the given transactions
 // by calling GetInclusionStates using the latest solid subtangle milestone from GetNodeInfo.
 func (api *API) GetLatestInclusion(txHashes Hashes) ([]bool, error) {
-	nodeInfo, err := api.GetNodeInfo()
+	res, err := api.GetLatestSolidSubtangleMilestone()
 	if err != nil {
 		return nil, err
 	}
-	return api.GetInclusionStates(txHashes, nodeInfo.LatestSolidSubtangleMilestone)
+	return api.GetInclusionStates(txHashes, res.LatestSolidSubtangleMilestone)
 }
 
 // GetNewAddress generates and returns a new address by calling FindTransactions
@@ -343,6 +357,9 @@ func (api *API) FindTransactionObjects(query FindTransactionsQuery) (transaction
 	txHashes, err := api.FindTransactions(query)
 	if err != nil {
 		return nil, err
+	}
+	if len(txHashes) == 0 {
+		return transaction.Transactions{}, nil
 	}
 	return api.GetTransactionObjects(txHashes...)
 }

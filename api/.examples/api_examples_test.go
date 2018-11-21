@@ -155,6 +155,7 @@ func ExampleFindTransactions() {
 
 // i req: addresses, The addresses of which to get the balances of.
 // i req: threshold, The threshold of the query, must be less than or equal 100.
+// i: tips, List of hashes, if present calculate the balance of addresses from the PoV of these transactions.
 // o: *Balances, The object describing the result of the balance query.
 // o: error, Returned for invalid addresses and internal errors.
 func ExampleGetBalances() {
@@ -403,7 +404,7 @@ func ExampleGetTransfers() {}
 func ExampleIsPromotable() {}
 
 // i req: seed, The seed from which to derive private keys and addresses of.
-// i req: transfers, The Transfers to prepare.
+// i req: transfers, The transfers to prepare.
 // i req: options, Options used for preparing the transfers.
 // o: []Trytes, The prepared Trytes, ready for Proof-of-Work.
 // o: error, Returned for invalid parameters and internal errors.
@@ -456,7 +457,7 @@ func ExamplePrepareTransfers() {
 // i req: seed, The seed from which to derive private keys and addresses of.
 // i req: depth, The depth used in GetTransactionsToApprove().
 // i req: mwm, The minimum weight magnitude to fufill.
-// i req: transfers, The Transfers to prepare and send off.
+// i req: transfers, The transfers to prepare and send off.
 // i req: options, The options used for preparing and sending of the bundle.
 // o: Bundle, The sent of Bundle.
 // o: error, Returned for invalid parameters and internal errors.

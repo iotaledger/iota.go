@@ -13,7 +13,7 @@ func init() {
 		Persist().
 		Post("/").
 		MatchType("json").
-		JSON(CheckConsistencyCommand{Command: CheckConsistencyCmd, Tails: DefaultHashes()}).
+		JSON(CheckConsistencyCommand{Command: Command{CheckConsistencyCmd}, Tails: DefaultHashes()}).
 		Reply(200).
 		JSON(CheckConsistencyResponse{State: true, Info: ""})
 
@@ -22,7 +22,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(CheckConsistencyCommand{
-			Command: CheckConsistencyCmd,
+			Command: Command{CheckConsistencyCmd},
 			Tails:   append(DefaultHashes(), strings.Repeat("C", 81)),
 		}).
 		Reply(200).
@@ -33,7 +33,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(CheckConsistencyCommand{
-			Command: CheckConsistencyCmd,
+			Command: Command{CheckConsistencyCmd},
 			Tails:   Hashes{Bundle[0].Hash},
 		}).
 		Reply(200).

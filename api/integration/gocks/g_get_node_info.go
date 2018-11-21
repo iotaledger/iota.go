@@ -11,7 +11,7 @@ func init() {
 		Persist().
 		Post("/").
 		MatchType("json").
-		JSON(GetNodeInfoCommand{Command: GetNodeInfoCmd}).
+		JSON(GetNodeInfoCommand{Command: Command{GetNodeInfoCmd}}).
 		Reply(200).
 		JSON(GetNodeInfoResponse{
 			AppName:                            "IRI",

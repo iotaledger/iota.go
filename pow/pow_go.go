@@ -72,6 +72,9 @@ func DoPoW(trunkTx Trytes, branchTx Trytes, trytes []Trytes, mwm uint64, pow Pro
 		prev = txs[i].Hash
 	}
 	powedTxTrytes := MustTransactionsToTrytes(txs)
+	for left, right := 0, len(powedTxTrytes)-1; left < right; left, right = left+1, right-1 {
+		powedTxTrytes[left], powedTxTrytes[right] = powedTxTrytes[right], powedTxTrytes[left]
+	}
 	return powedTxTrytes, nil
 }
 
