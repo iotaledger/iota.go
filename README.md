@@ -307,4 +307,4 @@ You can also ask questions on our dedicated [IOTA Forum][iota-forum].
 
 ## License
 
-The [full license text][license] can be found [here][license].
+The license can be found [here](LICENSE).
