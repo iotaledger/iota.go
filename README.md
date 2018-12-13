@@ -5,61 +5,84 @@
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/iota.go/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/iotaledger/iota.go)](https://goreportcard.com/report/github.com/iotaledger/iota.go)
 
-## Getting started
+This is the **official** Java client library, which allows you to do the following:
+* Create transactions
+* Sign transactions
+* Interact with an IRI node
 
-> The client library is in beta and is subject to change. Use of this library in production applications is not supported.
+This is beta software, so there may be performance and stability issues.
+Please report any issues in our [issue tracker](https://github.com/iotaledger/iota.go/issues/new).
 
-### Installation
+|Table of contents|
+|:----|
+| [Prerequisites](#prerequisites)
+| [Downloading the library](#downloading-the-library)|
+| [Getting started](#getting-started) |
+| [Examples](#examples)|
+|[Supporting the project](#supporting-the-project)|
+|[Joining the discussion](#joining-the-discussion)|
+| [License](#license)
 
-It is suggested to use [vgo modules](https://github.com/golang/go/wiki/Modules) 
-(since Go 1.11) in your project for dependency management:
+## Downloading the library
 
-In any directory outside of GOPATH:
-```
+We recommend that you use [vgo modules](https://github.com/golang/go/wiki/Modules) 
+(since Go 1.11) to manage dependencies in your project.
+
+1. In any directory outside of GOPATH, initiate your project:
+
+```go
 $ go mod init <your-module-path>
 ```
 
-`<your-module-path>` can be paths like github.com/me/awesome-project
+**Note:** Change the <your-module-path> placeholder to your chosen path such as github.com/me/awesome-project.
 
-```
-$ go get github.com/iotaledger/iota.go/api
-```
-This downloads the latest version of iota.go and writes the used version into
-the `go.mod` file (vgo is `go get` agnostic). **Make sure to include /api part in the url.**
-
-### Connecting to the network
+2. Download the library:
 
 ```go
-package main
-
-import (
-    . "github.com/iotaledger/iota.go/api"
-    "fmt"
-)
-
-var endpoint = "<node-url>"
-
-func main() {
-	// compose a new API instance
-	api, err := ComposeAPI(HTTPClientSettings{URI: endpoint})
-	must(err)
-	
-	nodeInfo, err := api.GetNodeInfo()
-	must(err)
-	
-	fmt.Println("latest milestone index:", nodeInfo.LatestMilestoneIndex)
-}
-
-func must(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
+$ go get github.com/iotaledger/iota.go/api
 ```
 
-### Creating & broadcasting transactions
+This command downloads the latest version of the IOTA Go client library and writes the version into
+the `go.mod` file (vgo is `go get` agnostic).
 
-Publish transfers by calling `PrepareTransfers()` and piping the prepared bundle to `SendTrytes()`.
+## Getting started
+
+After you've [downloaded the library](#downloading-the-library), you can connect to an IRI node to send transactions to it and interact with the ledger.
+
+1. To connect to a local IRI node, do the following:
+
+	```go
+	package main
+
+	import (
+	    . "github.com/iotaledger/iota.go/api"
+	    "fmt"
+	)
+
+	var endpoint = "<node-url>"
+
+	func main() {
+		// compose a new API instance
+		api, err := ComposeAPI(HTTPClientSettings{URI: endpoint})
+		must(err)
+
+		nodeInfo, err := api.GetNodeInfo()
+		must(err)
+
+		fmt.Println("latest milestone index:", nodeInfo.LatestMilestoneIndex)
+	}
+
+	func must(err error) {
+		if err != nil {
+			panic(err)
+		}
+	}
+	```
+## Examples
+
+### Creating and broadcasting transactions
+
+This example shows you how to create and send a transaction to an IRI node by calling `PrepareTransfers()` and piping the prepared bundle to `SendTrytes()`.
 
 ```go
 package main
@@ -167,11 +190,13 @@ func must(err error) {
 
 ```
 
-## Native code and PoW
-If the library is compiled with CGO enabled, certain functions such as Curl's transform() will
+### Native code and PoW
+
+If the library is compiled with CGO enabled, certain functions such as Curl's `transform()` method will
 run native C code for increased speed. 
 
 Certain PoW implementations are enabled if the correct flags are passed while compiling your program:
+
 * `pow_avx` for AVX based PoW
 * `pow_sse` for SSE based PoW
 * `pow_c128` for C int128 based using PoW
@@ -181,68 +206,73 @@ Certain PoW implementations are enabled if the correct flags are passed while co
 PoW implementation in Go is always available.
 Make sure to define `LocalProofOfWorkFunc` in your provider settings (i.e. `HTTPClientSettings`) if you want to use local PoW. 
 
-## Contributing
+## Supporting the project
 
-We thank everyone for their contributions. In order for your pull requests to get accepted, 
-they must fulfill following criterias:
-* You must write tests for your additions with ginkgo.
-* You must write example code describing the parameters and functionality of your additions. 
-* The pull request must pass the CI config.
+We thank everyone for their contributions. In order for your pull requests to be accepted, 
+they must fulfill the following criteria:
+* You must write tests for your additions with Ginkgo
+* You must write example code that desribes the parameters and the functionality of your additions 
+* Your pull request must pass the command line configuration
 
-### Writing tests with ginkgo
+### Writing tests with Ginkgo
 
-First install ginkgo:
-```
-$ go get github.com/onsi/ginkgo/ginkgo
-$ go get github.com/onsi/gomega/...
-```
+Before your pull requests can be accepted, you must test your code in Ginkgo.
 
-If you have written a new package, you can generate corresponding test suite files via:
-```
-$ cd <dir-of-your-package>
-$ ginkgo bootstrap
-```
+1. Download ginkgo:
 
-Now generate a new testing file with:
-```
-$ ginkgo generate <package-name>
-```
+	```bash
+	$ go get github.com/onsi/ginkgo/ginkgo
+	$ go get github.com/onsi/gomega/...
+	```
 
-Executing the two commands above should give you two files:
-```
-<package-name>_suite_test.go
-<package-name>_test.go
-```
+2. If you've written a new package, generate a corresponding test-suite file:
 
-> You can use the existing tests as a reference on how to write ginkgo tests or
-[read the documentation](https://onsi.github.io/ginkgo/).
+	```bash
+	$ cd <dir-of-your-package>
+	$ ginkgo bootstrap
+	```
 
-Executing your tests:
-```
-$ go test -v
-=== RUN   TestAddress
-Running Suite: Address Suite
-============================
-Random Seed: 1542616006
-Will run 11 of 11 specs
+3. Generate a new testing file:
 
-•••••••••••
-Ran 11 of 11 Specs in 0.261 seconds
-SUCCESS! -- 11 Passed | 0 Failed | 0 Pending | 0 Skipped
---- PASS: TestAddress (0.26s)
-PASS
-ok  	github.com/iotaledger/iota.go/address	0.264s
-```
+	```bash
+	$ ginkgo generate <package-name>
+	```
 
-**Again, your tests must pass otherwise the pull request won't be accepted.**
+After creating a testing file, you'll have following two files:
 
-### Writing documentation/example code
+* <package-name>_suite_test.go
+* <package-name>_test.go
+
+**Note:** You can use the existing tests as a reference on how to write Ginkgo tests or
+you can [read the documentation](https://onsi.github.io/ginkgo/).
+
+4. Run your tests:
+	```bash
+	$ go test -v
+	=== RUN   TestAddress
+	Running Suite: Address Suite
+	============================
+	Random Seed: 1542616006
+	Will run 11 of 11 specs
+
+	•••••••••••
+	Ran 11 of 11 Specs in 0.261 seconds
+	SUCCESS! -- 11 Passed | 0 Failed | 0 Pending | 0 Skipped
+	--- PASS: TestAddress (0.26s)
+	PASS
+	ok  	github.com/iotaledger/iota.go/address	0.264s
+	```
+
+### Writing documentation and example code
+
 While godoc.org gives a good enough documentation of the package already, the IOTA Foundation's
 documentation portal needs additional information, such as parameter description, examples and so on.
 
-1. If non existent, add a `.examples` directory in your newly created package.
+1. If non existent, add a `.examples` directory in your newly created package
+
 2. Create a new file with the following convention: `<package-name>_examples_test.go` inside
-the `.examples` directory.
+the `.examples` directory
+
 3. Write examples in the following schema:
 ```
 // i req: s, The ASCII string to convert to Trytes.
@@ -270,11 +300,7 @@ Syntax:
 * For return values: `<symbol>: <type>, <description>.`
 * Example function: `Example<OriginFunctionName>`
 
-## Reporting Issues
+## Joining the discussion
 
-Please report any problems you encouter during development by [opening an issue](https://github.com/iotaledger/iota.go/issues/new).
-
-## Join the discussion
-
-Suggestions and discussion around specs, standardization and enhancements are highly encouraged.
-You are invited to join the discussion on [IOTA Discord](https://discord.gg/DTbJufa).
+If you want to get involved in the community, need help with getting setup, have any issues related with the library or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord][iota-discord].  
+You can also ask questions on our dedicated [IOTA Forum][iota-forum].
