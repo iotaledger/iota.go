@@ -302,8 +302,8 @@ Syntax:
 
 ## Joining the discussion
 
-If you want to get involved in the community, need help with getting setup, have any issues related with the library or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord][iota-discord].  
-You can also ask questions on our dedicated [IOTA Forum][iota-forum].
+If you want to get involved in the community, need help with getting setup, have any issues related with the library or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord](iota-discord).  
+You can also ask questions on our dedicated [IOTA Forum](iota-forum).
 
 ## License
 
