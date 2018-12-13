@@ -21,16 +21,16 @@ Please report any issues in our [issue tracker](https://github.com/iotaledger/io
 | [Examples](#examples)|
 |[Supporting the project](#supporting-the-project)|
 |[Joining the discussion](#joining-the-discussion)|
-| [License](#license)
+| [License](#license)|
 
 ## Downloading the library
 
-We recommend that you use [vgo modules](https://github.com/golang/go/wiki/Modules) 
+To download the IOTA Go client library and its dependencies, we recommend that you use [vgo modules](https://github.com/golang/go/wiki/Modules) 
 (since Go 1.11) to manage dependencies in your project.
 
 1. In any directory outside of GOPATH, initiate your project:
 
-	```go
+	```bash
 	$ go mod init <your-module-path>
 	```
 
@@ -38,7 +38,7 @@ We recommend that you use [vgo modules](https://github.com/golang/go/wiki/Module
 
 2. Download the library:
 
-	```go
+	```bash
 	$ go get github.com/iotaledger/iota.go/api
 	```
 
