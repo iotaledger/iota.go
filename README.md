@@ -82,7 +82,7 @@ After you've [downloaded the library](#downloading-the-library), you can connect
 
 ### Creating and broadcasting transactions
 
-This example shows you how to create and send a transaction to an IRI node by calling `PrepareTransfers()` and piping the prepared bundle to `SendTrytes()`.
+This example shows you how to create and send a transaction to an IRI node by calling the `PrepareTransfers()` method and piping the prepared bundle to the `SendTrytes()` method.
 
 ```go
 package main
