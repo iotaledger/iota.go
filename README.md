@@ -5,7 +5,7 @@
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/iota.go/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/iotaledger/iota.go)](https://goreportcard.com/report/github.com/iotaledger/iota.go)
 
-This is the **official** Java client library, which allows you to do the following:
+This is the **official** Go client library, which allows you to do the following:
 * Create transactions
 * Sign transactions
 * Interact with an IRI node
@@ -304,3 +304,7 @@ Syntax:
 
 If you want to get involved in the community, need help with getting setup, have any issues related with the library or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord][iota-discord].  
 You can also ask questions on our dedicated [IOTA Forum][iota-forum].
+
+## License
+
+The [full license text][license] can be found [here][license].
