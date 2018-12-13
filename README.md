@@ -30,17 +30,17 @@ We recommend that you use [vgo modules](https://github.com/golang/go/wiki/Module
 
 1. In any directory outside of GOPATH, initiate your project:
 
-```go
-$ go mod init <your-module-path>
-```
+	```go
+	$ go mod init <your-module-path>
+	```
 
 **Note:** Change the <your-module-path> placeholder to your chosen path such as github.com/me/awesome-project.
 
 2. Download the library:
 
-```go
-$ go get github.com/iotaledger/iota.go/api
-```
+	```go
+	$ go get github.com/iotaledger/iota.go/api
+	```
 
 This command downloads the latest version of the IOTA Go client library and writes the version into
 the `go.mod` file (vgo is `go get` agnostic).
