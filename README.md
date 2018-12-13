@@ -80,6 +80,8 @@ After you've [downloaded the library](#downloading-the-library), you can connect
 	```
 ## Examples
 
+As well as the following examples, you can take a look at our [examples folder](https://github.com/JakeSCahill/iota.go/tree/master/api/.examples) for more.
+
 ### Creating and broadcasting transactions
 
 This example shows you how to create and send a transaction to an IRI node by calling the `PrepareTransfers()` method and piping the prepared bundle to the `SendTrytes()` method.
