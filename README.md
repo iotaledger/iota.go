@@ -223,7 +223,7 @@ We thank everyone for their contributions. In order for your pull requests to be
 they must fulfill the following criteria:
 * You must write tests for your additions with Ginkgo
 * You must write example code that desribes the parameters and the functionality of your additions 
-* Your pull request must pass the command line configuration
+* Your pull request must pass the continuous integration configuration
 
 ### Writing tests with Ginkgo
 
