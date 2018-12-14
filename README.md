@@ -1,4 +1,4 @@
-# IOTA Go client library
+# iota.go
 
 [![Build Status](https://travis-ci.org/iotaledger/iota.go.svg?branch=master)](https://travis-ci.org/iotaledger/iota.go)
 [![GoDoc](https://godoc.org/github.com/iotaledger/iota.go?status.svg)](https://godoc.org/github.com/iotaledger/iota.go)
@@ -18,15 +18,20 @@ Please report any issues in our [issue tracker](https://github.com/iotaledger/io
 | [Prerequisites](#prerequisites)
 | [Downloading the library](#downloading-the-library)|
 | [Getting started](#getting-started) |
+| [API reference](#api-reference)|
 | [Examples](#examples)|
 |[Supporting the project](#supporting-the-project)|
 |[Joining the discussion](#joining-the-discussion)|
 | [License](#license)|
 
-## Downloading the library
+## Prerequisites
 
 To download the IOTA Go client library and its dependencies, we recommend that you use [vgo modules](https://github.com/golang/go/wiki/Modules) 
 (since Go 1.11) to manage dependencies in your project.
+
+## Downloading the library
+
+To download the IOTA Go client library and its dependencies, do the following:
 
 1. In any directory outside of GOPATH, initiate your project:
 
@@ -78,9 +83,13 @@ After you've [downloaded the library](#downloading-the-library), you can connect
 		}
 	}
 	```
+## API reference
+
+For details on all available API methods, see the [API folder](api/).
+	
 ## Examples
 
-As well as the following examples, you can take a look at our [examples folder](https://github.com/JakeSCahill/iota.go/tree/master/api/.examples) for more.
+As well as the following examples, you can take a look at our [examples folder](api/.examples) for more.
 
 ### Creating and broadcasting transactions
 
@@ -206,7 +215,7 @@ Certain PoW implementations are enabled if the correct flags are passed while co
 * `pow_c` for C based PoW
 
 PoW implementation in Go is always available.
-Make sure to define `LocalProofOfWorkFunc` in your provider settings (i.e. `HTTPClientSettings`) if you want to use local PoW. 
+If you want to use local PoW, make sure you define `LocalProofOfWorkFunc` in your provider settings such as `HTTPClientSettings`. 
 
 ## Supporting the project
 
@@ -304,9 +313,8 @@ Syntax:
 
 ## Joining the discussion
 
-If you want to get involved in the community, need help with getting setup, have any issues related with the library or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord](iota-discord).  
-You can also ask questions on our dedicated [IOTA Forum](iota-forum).
+If you want to get involved in the community, need help with getting setup, have any issues related with the library or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord](https://discordapp.com/invite/fNGZXvh).  
 
 ## License
 
-The license can be found [here](LICENSE).
+The MIT license can be found [here](LICENSE).
