@@ -229,7 +229,7 @@ they must fulfill the following criteria:
 
 Before your pull requests can be accepted, you must test your code in Ginkgo.
 
-1. Download ginkgo:
+1. Download Ginkgo:
 
 	```bash
 	$ go get github.com/onsi/ginkgo/ginkgo
