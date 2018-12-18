@@ -16,7 +16,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(GetTransactionsToApproveCommand{
-			Command: GetTransactionsToApproveCmd,
+			Command: Command{GetTransactionsToApproveCmd},
 			Depth:   3,
 		}).
 		Reply(200).
@@ -32,7 +32,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(GetTransactionsToApproveCommand{
-			Command: GetTransactionsToApproveCmd,
+			Command: Command{GetTransactionsToApproveCmd},
 			Depth:   3, Reference: strings.Repeat("R", 81),
 		}).
 		Reply(200).

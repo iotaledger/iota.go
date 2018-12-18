@@ -155,6 +155,7 @@ func ExampleFindTransactions() {
 
 // i req: addresses, The addresses of which to get the balances of.
 // i req: threshold, The threshold of the query, must be less than or equal 100.
+// i: tips, List of hashes, if present calculate the balance of addresses from the PoV of these transactions.
 // o: *Balances, The object describing the result of the balance query.
 // o: error, Returned for invalid addresses and internal errors.
 func ExampleGetBalances() {

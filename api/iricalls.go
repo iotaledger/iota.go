@@ -17,7 +17,7 @@ func (api *API) AddNeighbors(uris ...string) (int64, error) {
 	if err := Validate(ValidateURIs(uris...), ValidateNonEmptyStrings(ErrInvalidURI, uris...)); err != nil {
 		return 0, err
 	}
-	cmd := &AddNeighborsCommand{Command: AddNeighborsCmd, URIs: uris}
+	cmd := &AddNeighborsCommand{Command: Command{AddNeighborsCmd}, URIs: uris}
 	rsp := &AddNeighborsResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return 0, err
@@ -50,7 +50,7 @@ func (api *API) AttachToTangle(trunkTxHash Hash, branchTxHash Hash, mwm uint64, 
 
 	cmd := &AttachToTangleCommand{
 		TrunkTransaction: trunkTxHash, BranchTransaction: branchTxHash,
-		Command: AttachToTangleCmd, Trytes: trytes, MinWeightMagnitude: mwm,
+		Command: Command{AttachToTangleCmd}, Trytes: trytes, MinWeightMagnitude: mwm,
 	}
 	rsp := &AttachToTangleResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
@@ -72,7 +72,7 @@ func (api *API) BroadcastTransactions(trytes ...Trytes) ([]Trytes, error) {
 	if err := Validate(ValidateAttachedTransactionTrytes(trytes...)); err != nil {
 		return nil, err
 	}
-	cmd := &BroadcastTransactionsCommand{Trytes: trytes, Command: BroadcastTransactionsCmd}
+	cmd := &BroadcastTransactionsCommand{Trytes: trytes, Command: Command{BroadcastTransactionsCmd}}
 	if err := api.provider.Send(cmd, nil); err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (api *API) CheckConsistency(hashes ...Hash) (bool, string, error) {
 	); err != nil {
 		return false, "", err
 	}
-	cmd := &CheckConsistencyCommand{Tails: hashes, Command: CheckConsistencyCmd}
+	cmd := &CheckConsistencyCommand{Tails: hashes, Command: Command{CheckConsistencyCmd}}
 	rsp := &CheckConsistencyResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return false, "", err
@@ -150,7 +150,7 @@ func (api *API) FindTransactions(query FindTransactionsQuery) (Hashes, error) {
 		query.Addresses = cleanedAddrs
 	}
 
-	cmd := &FindTransactionsCommand{FindTransactionsQuery: query, Command: FindTransactionsCmd}
+	cmd := &FindTransactionsCommand{FindTransactionsQuery: query, Command: Command{FindTransactionsCmd}}
 	rsp := &FindTransactionsResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
@@ -159,7 +159,7 @@ func (api *API) FindTransactions(query FindTransactionsQuery) (Hashes, error) {
 }
 
 // GetBalances fetches confirmed balances of the given addresses at the latest solid milestone.
-func (api *API) GetBalances(addresses Hashes, threshold uint64) (*Balances, error) {
+func (api *API) GetBalances(addresses Hashes, threshold uint64, tips ...Hash) (*Balances, error) {
 	if err := Validate(ValidateHashes(addresses...)); err != nil {
 		return nil, err
 	}
@@ -173,7 +173,12 @@ func (api *API) GetBalances(addresses Hashes, threshold uint64) (*Balances, erro
 		return nil, err
 	}
 
-	cmd := &GetBalancesCommand{Addresses: cleanedAddrs, Threshold: threshold, Command: GetBalancesCmd}
+	cmd := &GetBalancesCommand{
+		Addresses: cleanedAddrs,
+		Threshold: threshold,
+		Command:   Command{GetBalancesCmd},
+		Tips:      tips,
+	}
 	rsp := &GetBalancesResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
@@ -203,7 +208,7 @@ func (api *API) GetInclusionStates(txHashes Hashes, tips ...Hash) ([]bool, error
 		return nil, err
 	}
 
-	cmd := &GetInclusionStatesCommand{Transactions: txHashes, Tips: tips, Command: GetInclusionStatesCmd}
+	cmd := &GetInclusionStatesCommand{Transactions: txHashes, Tips: tips, Command: Command{GetInclusionStatesCmd}}
 	rsp := &GetInclusionStatesResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
@@ -213,7 +218,7 @@ func (api *API) GetInclusionStates(txHashes Hashes, tips ...Hash) ([]bool, error
 
 // GetNeighbors returns the list of connected neighbors of the connected node.
 func (api *API) GetNeighbors() (Neighbors, error) {
-	cmd := &GetNeighborsCommand{Command: GetNeighborsCmd}
+	cmd := &GetNeighborsCommand{Command: Command{GetNeighborsCmd}}
 	rsp := &GetNeighborsResponse{}
 	err := api.provider.Send(cmd, rsp)
 	if err != nil {
@@ -224,7 +229,7 @@ func (api *API) GetNeighbors() (Neighbors, error) {
 
 // GetNodeInfo returns information about the connected node.
 func (api *API) GetNodeInfo() (*GetNodeInfoResponse, error) {
-	cmd := &GetNodeInfoCommand{Command: GetNodeInfoCmd}
+	cmd := &GetNodeInfoCommand{Command: Command{GetNodeInfoCmd}}
 	rsp := &GetNodeInfoResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
@@ -234,7 +239,7 @@ func (api *API) GetNodeInfo() (*GetNodeInfoResponse, error) {
 
 // GetTips returns a list of tips (transactions not referenced by other transactions) as seen by the connected node.
 func (api *API) GetTips() (Hashes, error) {
-	cmd := &GetTipsCommand{Command: GetTipsCmd}
+	cmd := &GetTipsCommand{Command: Command{GetTipsCmd}}
 	rsp := &GetTipsResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
@@ -254,7 +259,7 @@ func (api *API) GetTips() (Hashes, error) {
 // The reference option allows to select tips in a way that the reference transaction is being approved too.
 // This is useful for promoting transactions, for example with PromoteTransaction().
 func (api *API) GetTransactionsToApprove(depth uint64, reference ...Hash) (*TransactionsToApprove, error) {
-	cmd := &GetTransactionsToApproveCommand{Command: GetTransactionsToApproveCmd, Depth: depth}
+	cmd := &GetTransactionsToApproveCommand{Command: Command{GetTransactionsToApproveCmd}, Depth: depth}
 	if len(reference) > 0 {
 		if err := Validate(ValidateTransactionHashes(reference...)); err != nil {
 			return nil, ErrInvalidReferenceHash
@@ -276,7 +281,7 @@ func (api *API) GetTrytes(hashes ...Hash) ([]Trytes, error) {
 	); err != nil {
 		return nil, err
 	}
-	cmd := &GetTrytesCommand{Hashes: hashes, Command: GetTrytesCmd}
+	cmd := &GetTrytesCommand{Hashes: hashes, Command: Command{GetTrytesCmd}}
 	rsp := &GetTrytesResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
@@ -286,7 +291,7 @@ func (api *API) GetTrytes(hashes ...Hash) ([]Trytes, error) {
 
 // InterruptAttachToTangle interrupts the currently ongoing Proof-of-Work on the connected node.
 func (api *API) InterruptAttachToTangle() error {
-	cmd := &InterruptAttachToTangleCommand{Command: InterruptAttachToTangleCmd}
+	cmd := &InterruptAttachToTangleCommand{Command: Command{InterruptAttachToTangleCmd}}
 	return api.provider.Send(cmd, nil)
 }
 
@@ -299,7 +304,7 @@ func (api *API) RemoveNeighbors(uris ...string) (int64, error) {
 	); err != nil {
 		return 0, err
 	}
-	cmd := &RemoveNeighborsCommand{Command: RemoveNeighborsCmd, URIs: uris}
+	cmd := &RemoveNeighborsCommand{Command: Command{RemoveNeighborsCmd}, URIs: uris}
 	rsp := &RemoveNeighborsResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return 0, err
@@ -322,7 +327,7 @@ func (api *API) StoreTransactions(trytes ...Trytes) ([]Trytes, error) {
 	); err != nil {
 		return nil, err
 	}
-	cmd := &StoreTransactionsCommand{Trytes: trytes, Command: StoreTransactionsCmd}
+	cmd := &StoreTransactionsCommand{Trytes: trytes, Command: Command{StoreTransactionsCmd}}
 	if err := api.provider.Send(cmd, nil); err != nil {
 		return nil, err
 	}
@@ -343,7 +348,7 @@ func (api *API) WereAddressesSpentFrom(addresses ...Hash) ([]bool, error) {
 		return nil, err
 	}
 
-	cmd := &WereAddressesSpentFromCommand{Addresses: cleanedAddrs, Command: WereAddressesSpentFromCmd}
+	cmd := &WereAddressesSpentFromCommand{Addresses: cleanedAddrs, Command: Command{WereAddressesSpentFromCmd}}
 	rsp := &WereAddressesSpentFromResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err

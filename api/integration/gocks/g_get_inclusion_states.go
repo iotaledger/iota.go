@@ -14,7 +14,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(GetInclusionStatesCommand{
-			Command:      GetInclusionStatesCmd,
+			Command:      Command{GetInclusionStatesCmd},
 			Transactions: DefaultHashes(), Tips: Hashes{strings.Repeat("M", 81)},
 		}).
 		Reply(200).
@@ -25,7 +25,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(GetInclusionStatesCommand{
-			Command: GetInclusionStatesCmd,
+			Command: Command{GetInclusionStatesCmd},
 			Transactions: Hashes{
 				strings.Repeat("9", 81), strings.Repeat("9", 81),
 			},

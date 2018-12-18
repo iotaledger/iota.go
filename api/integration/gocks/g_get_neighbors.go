@@ -10,7 +10,7 @@ func init() {
 		Persist().
 		Post("/").
 		MatchType("json").
-		JSON(GetNeighborsCommand{Command: GetNeighborsCmd}).
+		JSON(GetNeighborsCommand{Command: Command{GetNeighborsCmd}}).
 		Reply(200).
 		JSON(GetNeighborsResponse{Neighbors: Neighbors{
 			{

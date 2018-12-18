@@ -15,7 +15,7 @@ func init() {
 			Post("/").
 			MatchType("json").
 			JSON(GetTrytesCommand{
-				Command: GetTrytesCmd,
+				Command: Command{GetTrytesCmd},
 				Hashes:  Hashes{Bundle[i].Hash},
 			}).
 			Reply(200).
@@ -27,7 +27,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(GetTrytesCommand{
-			Command: GetTrytesCmd,
+			Command: Command{GetTrytesCmd},
 			Hashes:  Hashes{BundleWithZeroValue[0].Hash},
 		}).
 		Reply(200).

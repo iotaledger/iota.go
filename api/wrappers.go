@@ -15,6 +15,16 @@ import (
 	"time"
 )
 
+// GetLatestSolidSubtangleMilestone returns the latest subtangle milestone.
+func (api *API) GetLatestSolidSubtangleMilestone() (*GetLatestSolidSubtangleMilestoneResponse, error) {
+	cmd := &GetLatestSolidSubtangleMilestoneCommand{Command: Command{GetNodeInfoCmd}}
+	rsp := &GetLatestSolidSubtangleMilestoneResponse{}
+	if err := api.provider.Send(cmd, rsp); err != nil {
+		return nil, err
+	}
+	return rsp, nil
+}
+
 // BroadcastBundle re-broadcasts all transactions in a bundle given the tail transaction hash.
 // It might be useful when transactions did not properly propagate, particularly in the case of large bundles.
 func (api *API) BroadcastBundle(tailTxHash Hash) ([]Trytes, error) {

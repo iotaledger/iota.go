@@ -10,6 +10,6 @@ func init() {
 		Persist().
 		Post("/").
 		MatchType("json").
-		JSON(InterruptAttachToTangleCommand{Command: InterruptAttachToTangleCmd}).
+		JSON(InterruptAttachToTangleCommand{Command: Command{InterruptAttachToTangleCmd}}).
 		Reply(200)
 }

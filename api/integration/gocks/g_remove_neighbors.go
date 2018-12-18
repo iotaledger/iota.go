@@ -13,7 +13,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(RemoveNeighborsCommand{
-			Command: RemoveNeighborsCmd,
+			Command: Command{RemoveNeighborsCmd},
 			URIs:    []string{NeighborURI},
 		}).
 		Reply(200).
