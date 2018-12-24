@@ -170,6 +170,7 @@ func (c *Curl) Reset() {
 }
 
 // HashTrits returns the hash of the given trits.
+// i: rounds, The optional number of rounds to use.
 func HashTrits(trits Trits, rounds ...int) (Trits, error) {
 	c := NewCurl(rounds...)
 	c.Absorb(trits)
@@ -177,6 +178,7 @@ func HashTrits(trits Trits, rounds ...int) (Trits, error) {
 }
 
 // HashTrytes returns the hash of the given trytes.
+// i: rounds, The optional number of rounds to use.
 func HashTrytes(t Trytes, rounds ...int) (Trytes, error) {
 	c := NewCurl(rounds...)
 	err := c.AbsorbTrytes(t)
@@ -188,6 +190,7 @@ func HashTrytes(t Trytes, rounds ...int) (Trytes, error) {
 
 // MustHashTrytes returns the hash of the given trytes.
 // It panics if the given trytes are not valid.
+// i: rounds, The optional number of rounds to use.
 func MustHashTrytes(t Trytes, rounds ...int) Trytes {
 	trytes, err := HashTrytes(t, rounds...)
 	if err != nil {
