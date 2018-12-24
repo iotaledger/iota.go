@@ -50,6 +50,11 @@ func NewCurl(rounds ...int) *Curl {
 		curlRounds = rounds[0]
 	}
 
+	if (curlRounds != 27) && (curlRounds != 81) {
+		panic("Illegal number of rounds. Only `27` and `81` rounds are supported.")
+
+	}
+
 	c := &Curl{
 		State:  make(Trits, StateSize),
 		Rounds: curlRounds,
