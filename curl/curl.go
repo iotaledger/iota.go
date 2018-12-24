@@ -15,7 +15,7 @@ const (
 
 var (
 	// optional transform function in C.
-	transformC func(Trits)
+	transformC func(Trits, int)
 	// TruthTable of the Curl hash function.
 	TruthTable = [11]int8{1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0}
 	// Indices of the Curl hash function.
@@ -37,13 +37,22 @@ func init() {
 // Curl is a sponge function with an internal State of size StateSize.
 // b = r + c, b = StateSize, r = HashSize, c = StateSize - HashSize
 type Curl struct {
-	State Trits
+	State  Trits
+	Rounds int
 }
 
 // NewCurl initializes a new instance with an empty State.
-func NewCurl() *Curl {
+// i: rounds, The optional number of rounds to use.
+func NewCurl(rounds ...int) *Curl {
+	curlRounds := NumberOfRounds
+
+	if len(rounds) > 0 {
+		curlRounds = rounds[0]
+	}
+
 	c := &Curl{
-		State: make(Trits, StateSize),
+		State:  make(Trits, StateSize),
+		Rounds: curlRounds,
 	}
 	return c
 }
@@ -132,13 +141,13 @@ func (c *Curl) MustAbsorbTrytes(inn Trytes) {
 // Transform does Transform in sponge func.
 func (c *Curl) Transform() {
 	if transformC != nil {
-		transformC(c.State)
+		transformC(c.State, c.Rounds)
 		return
 	}
 
 	var cpy [StateSize]int8
 
-	for r := NumberOfRounds; r > 0; r-- {
+	for r := c.Rounds; r > 0; r-- {
 		copy(cpy[:], c.State)
 		for i := 0; i < StateSize; i++ {
 			t1 := Indices[i]
