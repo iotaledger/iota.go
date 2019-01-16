@@ -97,28 +97,13 @@ func (hc *httpclient) Send(cmd interface{}, out interface{}) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		errResp := &ErrorResponse{}
-		if err := json.Unmarshal(bs, errResp); err != nil {
-			return errors.Wrapf(ErrNonOKStatusCodeFromAPIRequest, "http code %d", resp.StatusCode)
-		}
-		return handleError(errResp, ErrNonErrorResponse)
+		errResp := &ErrRequestError{Code: resp.StatusCode}
+		json.Unmarshal(bs, errResp)
+		return errResp
 	}
 
 	if out == nil {
 		return nil
 	}
 	return json.Unmarshal(bs, out)
-}
-
-func handleError(err *ErrorResponse, err1 error) error {
-	switch {
-	case err.Error != "":
-		return errors.New(err.Error)
-	case err.Exception != "":
-		return errors.New(err.Exception)
-	case err1 != nil:
-		return err1
-	}
-
-	return err2
 }

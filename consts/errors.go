@@ -5,12 +5,6 @@ import "github.com/pkg/errors"
 var (
 	// ErrSettingsNil gets returned when no settings are supplied to ComposeAPI().
 	ErrSettingsNil = errors.New("settings must not be nil")
-	// ErrNonOKStatusCodeFromAPIRequest gets returned when a non-ok (200) status code is returned by connected nodes
-	// and the response is not an IRI error JSON payload.
-	ErrNonOKStatusCodeFromAPIRequest = errors.New("received non ok status from backend")
-	// ErrNonOKStatusCodeFromAPIRequest gets returned when a non-ok (200) status code is returned by connected nodes
-	//	// and the response is empty.
-	ErrNonErrorResponse = errors.New("received non IRI error response with non 200 status code")
 	// ErrInvalidSettingsType gets returned if the wrong underlying type of Settings were supplied for creating a Provider.
 	ErrInvalidSettingsType = errors.New("incompatible settings type supplied")
 	// ErrInconsistentSubtangle gets returned when the tail transaction is not consistent during promotion.

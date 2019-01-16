@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"github.com/iotaledger/iota.go/bundle"
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/transaction"
@@ -237,8 +238,21 @@ func getPromoteTransactionsDefaultOptions(options PromoteTransactionOptions) Pro
 	return options
 }
 
-// ErrorResponse encapsulates errors given by the connected node or parse errors.
-type ErrorResponse struct {
-	Error     string `json:"error"`
-	Exception string `json:"exception"`
+// ErrRequestError encapsulates errors given by the connected node or parse errors.
+type ErrRequestError struct {
+	Code         int    `json:"code"`
+	ErrorMessage string `json:"error"`
+	Exception    string `json:"exception"`
+}
+
+func (er *ErrRequestError) Error() string {
+	var msg string
+	if er.ErrorMessage != "" {
+		msg += fmt.Sprintf("error message: %s;", er.ErrorMessage)
+	}
+	if er.Exception != "" {
+		msg += fmt.Sprintf("exception message: %s;", er.Exception)
+	}
+	msg += fmt.Sprintf("http status code: %d;", er.Code)
+	return msg
 }
