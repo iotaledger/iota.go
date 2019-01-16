@@ -6,3 +6,4 @@
 *.dylib
 *.test
 *.out
+experimental/
