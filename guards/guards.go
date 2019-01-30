@@ -48,6 +48,11 @@ func IsHash(trytes Trytes) bool {
 	return IsTrytesOfExactLength(trytes, HashTrytesSize) || IsTrytesOfExactLength(trytes, AddressWithChecksumTrytesSize)
 }
 
+// IsAddressWithChecksum checks if the given address is exactly 90 trytes long.
+func IsAddressWithChecksum(addr Trytes) bool {
+	return IsTrytesOfExactLength(addr, AddressWithChecksumTrytesSize)
+}
+
 // IsTransactionHash checks whether the given trytes can be a transaction hash.
 func IsTransactionHash(trytes Trytes) bool {
 	return IsTrytesOfExactLength(trytes, HashTrytesSize)

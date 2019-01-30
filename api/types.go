@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/iotaledger/iota.go/bundle"
 	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
 	"time"
 )
@@ -91,8 +90,6 @@ type GetNewAddressOptions struct {
 	Index uint64
 	// The security level used for generating new addresses.
 	Security SecurityLevel
-	// Whether to append the checksum to the generated addresses.
-	Checksum bool
 	// The total amount of addresses to generate.
 	Total *uint64
 	// Whether to return all generated addresses and not just the new address.
@@ -197,18 +194,6 @@ type SendTransfersOptions struct {
 	PrepareTransfersOptions
 	// A hash of a transaction to use as reference in GetTransactionsToApprove().
 	Reference *Hash
-}
-
-type prepareTransferProps struct {
-	Transactions     transaction.Transactions
-	Trytes           []Trytes
-	Transfers        bundle.Transfers
-	Seed             Trytes
-	Security         SecurityLevel
-	Inputs           []Input
-	Timestamp        uint64
-	RemainderAddress *Trytes
-	HMACKey          *Trytes
 }
 
 func getPrepareTransfersDefaultOptions(options PrepareTransfersOptions) PrepareTransfersOptions {

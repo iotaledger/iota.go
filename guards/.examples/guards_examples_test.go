@@ -37,8 +37,15 @@ func ExampleIsEmptyTrytes() {
 // i req: trytes, The Trytes to check.
 // o: bool, Whether it passes the check.
 func ExampleIsHash() {
-	hash := "ZFPPXWSTIYJCPPMVCCBZR9TISFJALXEXVYMADGTERQLTHAZJMHGWWFIXVCVPJRBUYLKMTLLKMTWMA9999 "
+	hash := "ZFPPXWSTIYJCPPMVCCBZR9TISFJALXEXVYMADGTERQLTHAZJMHGWWFIXVCVPJRBUYLKMTLLKMTWMA9999"
 	fmt.Println(guards.IsHash(hash)) // output: true
+}
+
+// i req: addr, The Trytes to check.
+// o: bool, Whether it passes the check.
+func ExampleIsAddressWithChecksum() {
+	addr := "ORQMMP9NVIHMPAOGRLTGIYJEKPNWOKQQKRTBFZ9HVYK9YFCGETUMEAPDSWDVADPYAVZAUIWYMQMUQABIDERPEHEHOZ"
+	fmt.Println(guards.IsAddressWithChecksum(addr)) // output: true
 }
 
 // i req: trytes, The Trytes to check.

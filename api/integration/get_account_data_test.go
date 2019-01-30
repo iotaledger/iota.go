@@ -17,17 +17,17 @@ var _ = Describe("GetAccountData()", func() {
 	}
 
 	accountData := AccountData{
-		Addresses: SampleAddresses,
+		Addresses: SampleAddressesWithChecksum,
 		Transfers: Transfers,
 		Inputs: []Input{
 			{
-				Address:  SampleAddresses[2],
+				Address:  SampleAddressesWithChecksum[2],
 				Balance:  1,
 				KeyIndex: 2,
 				Security: SecurityLevelMedium,
 			},
 		},
-		LatestAddress: SampleAddresses[2],
+		LatestAddress: SampleAddressesWithChecksum[2],
 		Transactions:  nil, // txs addresses (which are 9s) never matched the seed's addresses
 		Balance:       1,
 	}

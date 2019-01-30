@@ -22,22 +22,7 @@ var _ = Describe("GetBalances()", func() {
 	Context("call", func() {
 
 		It("resolves to correct response", func() {
-			balances, err := api.GetBalances(SampleAddresses, 100)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(*balances).To(Equal(Balances{
-				Balances:       []uint64{99, 0, 1},
-				Milestone:      strings.Repeat("M", 81),
-				MilestoneIndex: 1,
-			}))
-		})
-
-		It("removes the checksum from the addresses", func() {
-			withChecksums := make(Hashes, len(SampleAddresses))
-			for i := range withChecksums {
-				withChecksums[i] = SampleAddresses[i] + strings.Repeat("9", 9)
-			}
-
-			balances, err := api.GetBalances(withChecksums, 100)
+			balances, err := api.GetBalances(SampleAddressesWithChecksum, 100)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*balances).To(Equal(Balances{
 				Balances:       []uint64{99, 0, 1},
@@ -54,7 +39,7 @@ var _ = Describe("GetBalances()", func() {
 		})
 
 		It("returns an error for invalid threshold", func() {
-			_, err := api.GetBalances(Hashes{SampleAddresses[0]}, 101)
+			_, err := api.GetBalances(Hashes{SampleAddressesWithChecksum[0]}, 101)
 			Expect(errors.Cause(err)).To(Equal(ErrInvalidThreshold))
 		})
 	})

@@ -15,19 +15,19 @@ var _ = Describe("IsAddressUsed()", func() {
 	}
 
 	It("returns true for spent address", func() {
-		used, err := api.IsAddressUsed(SampleAddresses[0])
+		used, err := api.IsAddressUsed(SampleAddressesWithChecksum[0])
 		Expect(err).ToNot(HaveOccurred())
 		Expect(used).To(BeTrue())
 	})
 
 	It("returns true for address with transactions", func() {
-		used, err := api.IsAddressUsed(SampleAddresses[1])
+		used, err := api.IsAddressUsed(SampleAddressesWithChecksum[1])
 		Expect(err).ToNot(HaveOccurred())
 		Expect(used).To(BeTrue())
 	})
 
 	It("returns false for unused address", func() {
-		used, err := api.IsAddressUsed(SampleAddresses[2])
+		used, err := api.IsAddressUsed(SampleAddressesWithChecksum[2])
 		Expect(err).ToNot(HaveOccurred())
 		Expect(used).To(BeFalse())
 	})

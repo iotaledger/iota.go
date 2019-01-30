@@ -18,8 +18,8 @@ var _ = Describe("GetBundlesFromAddresses()", func() {
 
 	Context("call", func() {
 		It("resolves to correct response", func() {
-			addresses := make(Hashes, len(SampleAddresses))
-			copy(addresses, SampleAddresses)
+			addresses := make(Hashes, len(SampleAddressesWithChecksum))
+			copy(addresses, SampleAddressesWithChecksum)
 			bndls, err := api.GetBundlesFromAddresses(addresses, true)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(bndls)).To(Equal(2))

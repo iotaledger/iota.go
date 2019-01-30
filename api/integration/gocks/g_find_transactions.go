@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+var FindTransactionsByAddressesQuery = Hashes{"VIWGTBNSFOZDBZYRUMSFGHUJYURQHNYQMYVWGQOBNONDZRFJG9VQTAHPBMTWEEMRYIMQFRAC9VYBOLJVDBPTIELAWD"}
 var FindTransactionsByAddresses = Hashes{"VIWGTBNSFOZDBZYRUMSFGHUJYURQHNYQMYVWGQOBNONDZRFJG9VQTAHPBMTWEEMRYIMQFRAC9VYBOLJVD"}
 var FindTransactionsByBundles = DefaultHashes()
 var FindTransactionsByTags = []Trytes{strings.Repeat("A", 27), strings.Repeat("B", 27)}

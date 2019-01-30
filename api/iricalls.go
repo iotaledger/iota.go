@@ -104,7 +104,7 @@ func (api *API) CheckConsistency(hashes ...Hash) (bool, string, error) {
 
 func validateFindTransactions(query *FindTransactionsQuery) error {
 	if err := Validate(
-		ValidateHashes(query.Addresses...),
+		ValidateAddresses(false, query.Addresses...),
 		ValidateHashes(query.Bundles...),
 		ValidateTransactionHashes(query.Approvees...),
 		ValidateTags(query.Tags...),
@@ -160,7 +160,7 @@ func (api *API) FindTransactions(query FindTransactionsQuery) (Hashes, error) {
 
 // GetBalances fetches confirmed balances of the given addresses at the latest solid milestone.
 func (api *API) GetBalances(addresses Hashes, threshold uint64) (*Balances, error) {
-	if err := Validate(ValidateHashes(addresses...)); err != nil {
+	if err := Validate(ValidateAddresses(false, addresses...)); err != nil {
 		return nil, err
 	}
 
@@ -332,8 +332,7 @@ func (api *API) StoreTransactions(trytes ...Trytes) ([]Trytes, error) {
 // WereAddressesSpentFrom checks whether the given addresses were already spent.
 func (api *API) WereAddressesSpentFrom(addresses ...Hash) ([]bool, error) {
 	if err := Validate(
-		ValidateNonEmptyStrings(ErrInvalidHash, addresses...),
-		ValidateHashes(addresses...),
+		ValidateAddresses(false, addresses...),
 	); err != nil {
 		return nil, err
 	}

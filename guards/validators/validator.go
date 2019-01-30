@@ -57,6 +57,24 @@ func ValidateHashes(hashes ...Hash) Validatable {
 	}
 }
 
+// ValidateAddresses validates the given addresses which must include the checksum.
+func ValidateAddresses(checkLastTrit bool, addrs ...Hash) Validatable {
+	return func() error {
+		for i := range addrs {
+			if !IsAddressWithChecksum(addrs[i]) {
+				return errors.Wrapf(ErrInvalidHash, "%s at index %d (not length of 90 trytes)", addrs[i], i)
+			}
+			if checkLastTrit {
+				lastTrits := MustTrytesToTrits(string(addrs[i][80]))
+				if lastTrits[2] != 0 {
+					return errors.Wrapf(ErrInvalidHash, "%s at index %d (last trit non 0)", addrs[i], i)
+				}
+			}
+		}
+		return nil
+	}
+}
+
 // ValidateTransactionTrytes validates the given transaction trytes.
 func ValidateTransactionTrytes(trytes ...Trytes) Validatable {
 	return func() error {

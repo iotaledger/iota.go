@@ -9,7 +9,6 @@ import (
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
-	"math"
 	"sort"
 	"sync"
 	"time"
@@ -249,13 +248,9 @@ func (api *API) GetNewAddress(seed Trytes, options GetNewAddressOptions) (Hashes
 			return nil, ErrInvalidTotalOption
 		}
 		total := *options.Total
-		addresses, err = address.GenerateAddresses(seed, index, total, securityLvl)
+		addresses, err = address.GenerateAddresses(seed, index, total, securityLvl, true)
 	} else {
 		addresses, err = getUntilFirstUnusedAddress(api.IsAddressUsed, seed, index, securityLvl, options.ReturnAll)
-	}
-
-	if options.Checksum {
-		addresses, err = checksum.AddChecksums(addresses, true, AddressChecksumTrytesSize)
 	}
 
 	return addresses, err
@@ -299,7 +294,7 @@ func getUntilFirstUnusedAddress(
 	addresses := Hashes{}
 
 	for ; ; index++ {
-		nextAddress, err := address.GenerateAddress(seed, index, security)
+		nextAddress, err := address.GenerateAddress(seed, index, security, true)
 		if err != nil {
 			return nil, err
 		}
@@ -470,56 +465,53 @@ func isAboveMaxDepth(attachmentTimestamp int64) bool {
 
 // PrepareTransfers prepares the transaction trytes by generating a bundle, filling in transfers and inputs,
 // adding remainder and signing all input transactions.
-func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, options PrepareTransfersOptions) ([]Trytes, error) {
-	options = getPrepareTransfersDefaultOptions(options)
+func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, opts PrepareTransfersOptions) ([]Trytes, error) {
+	opts = getPrepareTransfersDefaultOptions(opts)
 
-	if err := Validate(ValidateSeed(seed), ValidateSecurityLevel(options.Security)); err != nil {
+	if err := Validate(ValidateSeed(seed), ValidateSecurityLevel(opts.Security)); err != nil {
 		return nil, err
 	}
 
-	if options.RemainderAddress != nil {
-		if err := Validate(ValidateHashes(*options.RemainderAddress)); err != nil {
-			return nil, ErrInvalidRemainderAddress
+	for i := range transfers {
+		if err := Validate(ValidateAddresses(transfers[i].Value != 0, transfers[i].Address)); err != nil {
+			return nil, err
 		}
 	}
 
-	props := prepareTransferProps{
-		Seed: seed, Security: options.Security, Inputs: options.Inputs,
-		Transfers: transfers, Transactions: transaction.Transactions{},
-		Trytes: []Trytes{}, RemainderAddress: options.RemainderAddress,
-	}
+	var timestamp uint64
+	txs := transaction.Transactions{}
 
-	if options.Timestamp != nil {
-		props.Timestamp = *options.Timestamp
+	if opts.Timestamp != nil {
+		timestamp = *opts.Timestamp
 	} else {
-		props.Timestamp = uint64(time.Now().UnixNano() / int64(time.Second))
+		timestamp = uint64(time.Now().UnixNano() / int64(time.Second))
 	}
 
-	var totalTransferValue uint64
+	var totalOutput uint64
 	for i := range transfers {
-		totalTransferValue += transfers[i].Value
+		totalOutput += transfers[i].Value
 	}
 
 	// add transfers
-	outEntries, err := bundle.TransfersToBundleEntries(props.Timestamp, props.Transfers...)
+	outEntries, err := bundle.TransfersToBundleEntries(timestamp, transfers...)
 	if err != nil {
 		return nil, err
 	}
 	for i := range outEntries {
-		props.Transactions = bundle.AddEntry(props.Transactions, outEntries[i])
+		txs = bundle.AddEntry(txs, outEntries[i])
 	}
 
-	// gather inputs if we have api value transfer but no inputs were specified.
+	// gather inputs if we have api value transfer but no inputs were given.
 	// this would error out if the gathered inputs don't fulfill the threshold value
-	if totalTransferValue != 0 && len(props.Inputs) == 0 {
-		inputs, err := api.GetInputs(seed, GetInputsOptions{Security: props.Security, Threshold: &totalTransferValue})
+	if totalOutput != 0 && len(opts.Inputs) == 0 {
+		inputs, err := api.GetInputs(seed, GetInputsOptions{Security: opts.Security, Threshold: &totalOutput})
 		if err != nil {
 			return nil, err
 		}
 
 		// filter out inputs which are already spent
-		inputAddresses := make(Hashes, len(props.Inputs))
-		for i := range props.Inputs {
+		inputAddresses := make(Hashes, len(opts.Inputs))
+		for i := range opts.Inputs {
 			inputAddresses[i] = inputs.Inputs[i].Address
 		}
 
@@ -533,95 +525,88 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 			}
 		}
 
-		props.Inputs = inputs.Inputs
+		opts.Inputs = inputs.Inputs
 	}
 
 	// add input transactions
-	var inputsTotal uint64
-	for i := range props.Inputs {
-		inputsTotal += props.Inputs[i].Balance
-		input := &props.Inputs[i]
-		addr, err := checksum.RemoveChecksum(input.Address)
-		if err != nil {
+	var totalInput uint64
+	for i := range opts.Inputs {
+		if err := Validate(ValidateAddresses(opts.Inputs[i].Balance != 0, opts.Inputs[i].Address)); err != nil {
 			return nil, err
 		}
+		totalInput += opts.Inputs[i].Balance
+		input := &opts.Inputs[i]
 		bndlEntry := bundle.BundleEntry{
-			Address:   addr,
+			Address:   input.Address[:HashTrytesSize],
 			Value:     -int64(input.Balance),
 			Length:    uint64(input.Security),
-			Timestamp: props.Timestamp,
+			Timestamp: timestamp,
 		}
-		props.Transactions = bundle.AddEntry(props.Transactions, bndlEntry)
+		txs = bundle.AddEntry(txs, bndlEntry)
 	}
 
 	// verify whether provided inputs fulfill threshold value
-	if inputsTotal < totalTransferValue {
+	if totalInput < totalOutput {
 		return nil, ErrInsufficientBalance
 	}
 
 	// compute remainder
-	var remainder int64
-	for i := range props.Transactions {
-		remainder += props.Transactions[i].Value
-	}
+	remainder := totalInput - totalOutput
 
+	// add remainder transaction if there's a remainder
 	if remainder > 0 {
-		return nil, ErrInsufficientBalance
-	}
-
-	// add remainder transaction if there's api remainder
-	if remainder != 0 {
 		// compute new remainder address if non supplied
-		if totalTransferValue > 0 && props.RemainderAddress == nil {
-			remainderAddressKeyIndex := props.Inputs[0].KeyIndex
-			for i := range props.Inputs {
-				keyIndex := props.Inputs[i].KeyIndex
+		if opts.RemainderAddress == nil {
+			remainderAddressKeyIndex := opts.Inputs[0].KeyIndex
+			for i := range opts.Inputs {
+				keyIndex := opts.Inputs[i].KeyIndex
 				if keyIndex > remainderAddressKeyIndex {
 					remainderAddressKeyIndex = keyIndex
 				}
 			}
 			remainderAddressKeyIndex++
-			addrs, err := api.GetNewAddress(seed, GetNewAddressOptions{Security: props.Security, Index: remainderAddressKeyIndex})
+			addrs, err := api.GetNewAddress(seed, GetNewAddressOptions{Security: opts.Security, Index: remainderAddressKeyIndex})
 			if err != nil {
 				return nil, err
 			}
-			props.RemainderAddress = &addrs[0]
+			opts.RemainderAddress = &addrs[0]
 		} else {
+			if err := Validate(ValidateAddresses(true, *opts.RemainderAddress)); err != nil {
+				return nil, ErrInvalidRemainderAddress
+			}
 			// make sure to remove checksum from remainder address
-			cleanedAddr, err := checksum.RemoveChecksum(*props.RemainderAddress)
+			cleanedAddr, err := checksum.RemoveChecksum(*opts.RemainderAddress)
 			if err != nil {
 				return nil, err
 			}
-			props.RemainderAddress = &cleanedAddr
+			opts.RemainderAddress = &cleanedAddr
 		}
 
 		// add remainder transaction
-		if totalTransferValue > 0 {
-			props.Transactions = bundle.AddEntry(props.Transactions, bundle.BundleEntry{
-				Address: *props.RemainderAddress,
-				Length:  1, Timestamp: props.Timestamp,
-				Value: int64(math.Abs(float64(remainder))),
-			})
-		}
+		txs = bundle.AddEntry(txs, bundle.BundleEntry{
+			Address: (*opts.RemainderAddress)[:HashTrytesSize],
+			Length:  1, Timestamp: timestamp,
+			Value: int64(remainder),
+		})
 	}
 
 	// verify that input txs don't send to the same address
-	for i := range props.Transactions {
-		tx := &props.Transactions[i]
+	for i := range txs {
+		tx := &txs[i]
 		// only check output txs
 		if tx.Value <= 0 {
 			continue
 		}
 		// check whether any input uses the same address as the output tx
-		for j := range props.Inputs {
-			if props.Inputs[j].Address == tx.Address {
+		for j := range opts.Inputs {
+			if opts.Inputs[j].Address == tx.Address {
 				return nil, ErrSendingBackToInputs
 			}
 		}
 	}
 
 	// finalize bundle by adding the bundle hash
-	finalizedBundle, err := bundle.Finalize(props.Transactions)
+	finalizedBundle, err := bundle.Finalize(txs)
 	if err != nil {
 		return nil, err
 	}
@@ -630,8 +615,8 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 	normalizedBundleHash := signing.NormalizedBundleHash(finalizedBundle[0].Bundle)
 
 	signedFrags := []Trytes{}
-	for i := range props.Inputs {
-		input := &props.Inputs[i]
+	for i := range opts.Inputs {
+		input := &opts.Inputs[i]
 		subseed, err := signing.Subseed(seed, input.KeyIndex)
 		if err != nil {
 			return nil, err
@@ -665,17 +650,17 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, option
 
 	// add signed fragments to txs
 	var indexFirstInputTx int
-	for i := range props.Transactions {
-		if props.Transactions[i].Value < 0 {
+	for i := range txs {
+		if txs[i].Value < 0 {
 			indexFirstInputTx = i
 			break
 		}
 	}
 
-	props.Transactions = bundle.AddTrytes(props.Transactions, signedFrags, indexFirstInputTx)
+	txs = bundle.AddTrytes(txs, signedFrags, indexFirstInputTx)
 
 	// finally return built up txs as raw trytes
-	return transaction.MustFinalTransactionTrytes(props.Transactions), nil
+	return transaction.MustFinalTransactionTrytes(txs), nil
 }
 
 // SendTransfer calls PrepareTransfers and then sends off the bundle via SendTrytes.
