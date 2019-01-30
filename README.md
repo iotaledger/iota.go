@@ -119,7 +119,7 @@ const mwm = 14
 // how many milestones back to start the random walk from
 const depth = 3
 
-// can be 90 trytes long (with checksum)
+// must be 90 trytes long (with checksum)
 const recipientAddress = "BBBB....."
 
 func main() {
@@ -140,6 +140,7 @@ func main() {
 	// optionally define a message and tag
 	transfers := bundle.Transfers{
 		{
+			// must be 90 trytes long (include the checksum)
 			Address: recipientAddress,
 			Value:   80,
 		},
@@ -148,6 +149,7 @@ func main() {
 	// create inputs for the transfer
 	inputs := []Input{
 		{
+			// must be 90 trytes long (include the checksum)
 			Address:  "CCCCC....",
 			Security: SecurityLevelMedium,
 			KeyIndex: 0,
@@ -158,7 +160,7 @@ func main() {
 	// create an address for the remainder.
 	// in this case we will have 20 iotas as the remainder, since we spend 100 from our input
 	// address and only send 80 to the recipient.
-	remainderAddress, err := address.GenerateAddress(seed, 1, SecurityLevelMedium)
+	remainderAddress, err := address.GenerateAddress(seed, 1, SecurityLevelMedium, true)
 	must(err)
 
 	// we don't need to set the security level or timestamp in the options because we supply
