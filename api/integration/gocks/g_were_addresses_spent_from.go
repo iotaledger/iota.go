@@ -13,7 +13,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(WereAddressesSpentFromCommand{
-			Command:   WereAddressesSpentFromCmd,
+			Command:   Command{WereAddressesSpentFromCmd},
 			Addresses: SampleAddresses,
 		}).
 		Reply(200).
@@ -26,7 +26,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(WereAddressesSpentFromCommand{
-			Command:   WereAddressesSpentFromCmd,
+			Command:   Command{WereAddressesSpentFromCmd},
 			Addresses: Hashes{SampleAddresses[0]},
 		}).
 		Reply(200).
@@ -39,7 +39,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(WereAddressesSpentFromCommand{
-			Command:   WereAddressesSpentFromCmd,
+			Command:   Command{WereAddressesSpentFromCmd},
 			Addresses: Hashes{SampleAddresses[1]},
 		}).
 		Reply(200).
@@ -52,7 +52,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(WereAddressesSpentFromCommand{
-			Command:   WereAddressesSpentFromCmd,
+			Command:   Command{WereAddressesSpentFromCmd},
 			Addresses: Hashes{SampleAddresses[2]},
 		}).
 		Reply(200).
@@ -65,7 +65,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(WereAddressesSpentFromCommand{
-			Command:   WereAddressesSpentFromCmd,
+			Command:   Command{WereAddressesSpentFromCmd},
 			Addresses: SampleAddresses[1:],
 		}).
 		Reply(200).

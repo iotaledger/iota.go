@@ -12,7 +12,7 @@ func init() {
 		Persist().
 		Post("/").
 		MatchType("json").
-		JSON(GetTipsCommand{Command: GetTipsCmd}).
+		JSON(GetTipsCommand{Command: Command{GetTipsCmd}}).
 		Reply(200).
 		JSON(GetTipsResponse{Hashes: Hashes{strings.Repeat("T", 81), strings.Repeat("U", 81)}})
 }

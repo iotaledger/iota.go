@@ -13,7 +13,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(GetBalancesCommand{
-			Command:   GetBalancesCmd,
+			Command:   Command{GetBalancesCmd},
 			Addresses: SampleAddresses,
 			Threshold: 100,
 		}).
@@ -30,7 +30,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(GetBalancesCommand{
-			Command:   GetBalancesCmd,
+			Command:   Command{GetBalancesCmd},
 			Addresses: SampleAddresses[1:],
 			Threshold: 100,
 		}).

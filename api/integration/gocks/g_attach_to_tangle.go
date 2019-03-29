@@ -22,7 +22,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(AttachToTangleCommand{
-			Command:            AttachToTangleCmd,
+			Command:            Command{AttachToTangleCmd},
 			TrunkTransaction:   TrunkTx,
 			BranchTransaction:  BranchTx,
 			Trytes:             reqTrytes,
@@ -44,7 +44,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(AttachToTangleCommand{
-			Command:            AttachToTangleCmd,
+			Command:            Command{AttachToTangleCmd},
 			TrunkTransaction:   TrunkTx,
 			BranchTransaction:  BranchTx,
 			Trytes:             []Trytes{emptyTxTrytes},

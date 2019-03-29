@@ -15,7 +15,7 @@ func init() {
 		Persist().
 		Post("/").
 		MatchType("json").
-		JSON(GetTrytesCommand{Command: GetTrytesCmd, Hashes: DefaultHashes()}).
+		JSON(GetTrytesCommand{Command: Command{GetTrytesCmd}, Hashes: DefaultHashes()}).
 		Reply(200).
 		JSON(GetTrytesResponse{Trytes: []Trytes{
 			strings.Repeat("9", consts.TransactionTrytesSize),
@@ -27,7 +27,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(GetTrytesCommand{
-			Command: GetTrytesCmd,
+			Command: Command{GetTrytesCmd},
 			Hashes:  Hashes{BundleWithZeroValue[0].Hash},
 		}).
 		Reply(200).
@@ -39,7 +39,7 @@ func init() {
 			Post("/").
 			MatchType("json").
 			JSON(GetTrytesCommand{
-				Command: GetTrytesCmd,
+				Command: Command{GetTrytesCmd},
 				Hashes:  Hashes{Bundle[i].Hash},
 			}).
 			Reply(200).
