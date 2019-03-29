@@ -15,7 +15,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(StoreTransactionsCommand{
-			Command: StoreTransactionsCmd,
+			Command: Command{StoreTransactionsCmd},
 			Trytes:  []Trytes{TrytesToStore},
 		}).
 		Reply(200)
@@ -25,7 +25,7 @@ func init() {
 		Post("/").
 		MatchType("json").
 		JSON(StoreTransactionsCommand{
-			Command: StoreTransactionsCmd,
+			Command: Command{StoreTransactionsCmd},
 			Trytes:  BundleTrytes,
 		}).
 		Reply(200)

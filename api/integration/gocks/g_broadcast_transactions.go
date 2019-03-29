@@ -11,6 +11,6 @@ func init() {
 		Persist().
 		Post("/").
 		MatchType("json").
-		JSON(BroadcastTransactionsCommand{Command: BroadcastTransactionsCmd, Trytes: BundleTrytes}).
+		JSON(BroadcastTransactionsCommand{Command: Command{BroadcastTransactionsCmd}, Trytes: BundleTrytes}).
 		Reply(200)
 }
