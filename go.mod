@@ -3,6 +3,7 @@ module github.com/iotaledger/iota.go
 require (
 	github.com/AndreasBriese/bbloom v0.0.0-20180913140656-343706a395b7 // indirect
 	github.com/beevik/ntp v0.2.0
+	github.com/cespare/xxhash v1.1.0
 	github.com/dgraph-io/badger v1.5.4
 	github.com/dgryski/go-farm v0.0.0-20190104051053-3adb47b1fb0f // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
