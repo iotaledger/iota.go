@@ -18,14 +18,6 @@ var _ = Describe("WereAddressesSpentFrom()", func() {
 
 	Context("call", func() {
 		It("resolves to correct response", func() {
-			spent, err := api.WereAddressesSpentFrom(SampleAddresses...)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(spent[0]).To(BeTrue())
-			Expect(spent[1]).To(BeFalse())
-			Expect(spent[2]).To(BeFalse())
-		})
-
-		It("removes checksum from addresses", func() {
 			spent, err := api.WereAddressesSpentFrom(SampleAddressesWithChecksum...)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(spent[0]).To(BeTrue())

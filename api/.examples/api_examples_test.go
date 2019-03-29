@@ -159,7 +159,7 @@ func ExampleFindTransactions() {
 // o: *Balances, The object describing the result of the balance query.
 // o: error, Returned for invalid addresses and internal errors.
 func ExampleGetBalances() {
-	balances, err := iotaAPI.GetBalances(trinary.Hashes{"DJDMZD9G9VMGR9UKMEYJWYRLUDEVWTPQJXIQAAXFGMXXSCONBGCJKVQQZPXFMVHAAPAGGBMDXESTZ9999"}, 100)
+	balances, err := iotaAPI.GetBalances(trinary.Hashes{"LWVVGCWMYKZGMBE9GOCB9J9QALRKWGAVISAEXEOM9NVCGJCCGSNBXXGYQDNZBXBWCEM9RMFHYBCSFWE9XEHAPSXHRY"}, 100)
 	if err != nil {
 		// handle error
 		return
@@ -271,7 +271,7 @@ func ExampleStoreTransactions() {}
 // o: []bool, The spent states of the addresses.
 // o: error, Returned for internal errors.
 func ExampleWereAddressesSpentFrom() {
-	spentStates, err := iotaAPI.WereAddressesSpentFrom("AETRKPXQNEK9GWM9ILSODEOZEFDDROCNKYQLWBDHWAEQJIGMSOJSETHNAMZOWDIVVMYPOPSFJRZYMDNRDQSGLFVZNY")
+	spentStates, err := iotaAPI.WereAddressesSpentFrom("LWVVGCWMYKZGMBE9GOCB9J9QALRKWGAVISAEXEOM9NVCGJCCGSNBXXGYQDNZBXBWCEM9RMFHYBCSFWE9XEHAPSXHRY")
 	if err != nil {
 		// handle error
 		return
@@ -415,6 +415,7 @@ func ExamplePrepareTransfers() {
 	// optionally define a message and tag
 	transfers := bundle.Transfers{
 		{
+			// must be 90 trytes long (inlcude the checksum)
 			Address: "ASDEF...",
 			Value:   80,
 		},
@@ -423,6 +424,7 @@ func ExamplePrepareTransfers() {
 	// create inputs for the transfer
 	inputs := []api.Input{
 		{
+			// must be 90 trytes long (inlcude the checksum)
 			Address:  "BCEDFA...",
 			Security: consts.SecurityLevelMedium,
 			KeyIndex: 0,
@@ -433,7 +435,7 @@ func ExamplePrepareTransfers() {
 	// create an address for the remainder.
 	// in this case we will have 20 iotas as the remainder, since we spend 100 from our input
 	// address and only send 80 to the recipient.
-	remainderAddress, err := address.GenerateAddress(seed, 1, consts.SecurityLevelMedium)
+	remainderAddress, err := address.GenerateAddress(seed, 1, consts.SecurityLevelMedium, true)
 	if err != nil {
 		// handle error
 		return

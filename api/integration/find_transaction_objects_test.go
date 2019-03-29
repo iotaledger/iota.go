@@ -4,6 +4,7 @@ import (
 	. "github.com/iotaledger/iota.go/api"
 	_ "github.com/iotaledger/iota.go/api/integration/gocks"
 	. "github.com/iotaledger/iota.go/api/integration/samples"
+	"github.com/iotaledger/iota.go/checksum"
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
@@ -19,8 +20,10 @@ var _ = Describe("FindTransactionObjects()", func() {
 
 	Context("call", func() {
 		It("resolves to correct response", func() {
+			addrWithChecksum, err := checksum.AddChecksum(Bundle[0].Address, true, AddressChecksumTrytesSize)
+			Expect(err).ToNot(HaveOccurred())
 			txs, err := api.FindTransactionObjects(FindTransactionsQuery{
-				Addresses: Hashes{Bundle[0].Address},
+				Addresses: Hashes{addrWithChecksum},
 			})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(txs[0]).To(Equal(Bundle[0]))

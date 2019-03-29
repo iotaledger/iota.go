@@ -24,7 +24,7 @@ var _ = Describe("FindTransactions()", func() {
 	Context("address query", func() {
 
 		It("resolves to correct response", func() {
-			hashes, err := api.FindTransactions(FindTransactionsQuery{Addresses: FindTransactionsByAddresses})
+			hashes, err := api.FindTransactions(FindTransactionsQuery{Addresses: FindTransactionsByAddressesQuery})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(hashes).To(Equal(expect))
 		})

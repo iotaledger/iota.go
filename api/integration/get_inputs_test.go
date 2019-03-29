@@ -19,13 +19,13 @@ var _ = Describe("GetInputs()", func() {
 	var inputs = Inputs{
 		Inputs: []Input{
 			{
-				Address:  SampleAddresses[0],
+				Address:  SampleAddressesWithChecksum[0],
 				Balance:  99,
 				KeyIndex: 0,
 				Security: SecurityLevelMedium,
 			},
 			{
-				Address:  SampleAddresses[2],
+				Address:  SampleAddressesWithChecksum[2],
 				Balance:  1,
 				KeyIndex: 2,
 				Security: SecurityLevelMedium,
