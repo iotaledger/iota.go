@@ -98,7 +98,7 @@ func (dc *Conditions) Checksum() (Trytes, error) {
 	if dc.MultiUse {
 		multiUse = 1
 	}
-	input := make(Trits, 243)
+	input := make(Trits, 0)
 	input = append(input, addrChecksumTrits[:134]...)
 	input = append(input, timeoutAtTrits...)
 	input = append(input, multiUse)

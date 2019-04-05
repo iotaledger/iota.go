@@ -4,11 +4,11 @@ import (
 	"context"
 	"github.com/iotaledger/iota.go/account/store"
 	"github.com/iotaledger/iota.go/trinary"
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/options"
-	"github.com/mongodb/mongo-go-driver/mongo/readconcern"
-	"github.com/mongodb/mongo-go-driver/mongo/writeconcern"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"strconv"
 	"time"
 )
@@ -70,7 +70,8 @@ func NewMongoStore(uri string, cnf *Config, opts ...*options.ClientOptions) (*Mo
 	if len(opts) == 0 {
 		opts = defaultMongoDBConf()
 	}
-	client, err := mongo.NewClientWithOptions(uri, opts...)
+	opts = append(opts, options.Client().ApplyURI(uri))
+	client, err := mongo.NewClient(opts...)
 	if err != nil {
 		return nil, err
 	}

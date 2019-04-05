@@ -2,16 +2,16 @@ package mongo_test
 
 import (
 	"context"
-	"fmt"
 	"github.com/iotaledger/iota.go/account/deposit"
 	"github.com/iotaledger/iota.go/account/store"
 	mongo_store "github.com/iotaledger/iota.go/account/store/mongo"
 	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/transaction"
 	"github.com/iotaledger/iota.go/trinary"
-	"github.com/mongodb/mongo-go-driver/mongo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"strings"
 	"time"
 )
@@ -31,7 +31,7 @@ var _ = Describe("Mongo", func() {
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Duration(5)*time.Second)
-	client, err := mongo.NewClient(mongoDBURI)
+	client, err := mongo.NewClient(options.Client().ApplyURI(mongoDBURI))
 	if err != nil {
 		panic(err)
 	}
@@ -154,7 +154,6 @@ var _ = Describe("Mongo", func() {
 		It("exports the account", func() {
 			state, err := st.ExportAccount(stateToImport.ID)
 			Expect(err).ToNot(HaveOccurred())
-			fmt.Println(state.PendingTransfers[exportedPendingTransferKey].Bundle)
 			Expect(state.AccountState).To(Equal(stateToImport.AccountState))
 		})
 	})

@@ -1,7 +1,7 @@
 package account_test
 
 import (
-	"github.com/h2non/gock"
+	"gopkg.in/h2non/gock.v1"
 	"github.com/iotaledger/iota.go/account/builder"
 	"github.com/iotaledger/iota.go/account/deposit"
 	"github.com/iotaledger/iota.go/account/event"
