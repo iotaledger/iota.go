@@ -217,7 +217,7 @@ func transform64(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) {
 	lto := &ltmp
 	hto := &htmp
 
-	for r := 0; r < curl.NumberOfRounds-1; r++ {
+	for r := 0; r < int(curl.NumberOfRounds)-1; r++ {
 		for j := 0; j < curl.StateSize; j++ {
 			t1 := curl.Indices[j]
 			t2 := curl.Indices[j+1]
