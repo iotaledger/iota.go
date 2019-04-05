@@ -6,11 +6,21 @@ import (
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
+// CurlRounds is the default number of rounds used in transform.
+type CurlRounds int
+
 const (
 	// StateSize is the size of the Curl hash function.
 	StateSize = HashTrinarySize * 3
+
+	// CurlP27 is used for hashing with 27 rounds
+	CurlP27 CurlRounds = 27
+
+	// CurlP81 is used for hashing with 81 rounds
+	CurlP81 CurlRounds = 81
+
 	// NumberOfRounds is the default number of rounds in transform.
-	NumberOfRounds = 81
+	NumberOfRounds = CurlP81
 )
 
 var (
@@ -38,21 +48,15 @@ func init() {
 // b = r + c, b = StateSize, r = HashSize, c = StateSize - HashSize
 type Curl struct {
 	State  Trits
-	Rounds int
+	Rounds CurlRounds
 }
 
 // NewCurl initializes a new instance with an empty State.
-// i: rounds, The optional number of rounds to use.
-func NewCurl(rounds ...int) *Curl {
+func NewCurl(rounds ...CurlRounds) *Curl {
 	curlRounds := NumberOfRounds
 
 	if len(rounds) > 0 {
 		curlRounds = rounds[0]
-	}
-
-	if (curlRounds != 27) && (curlRounds != 81) {
-		panic("Illegal number of rounds. Only `27` and `81` rounds are supported.")
-
 	}
 
 	c := &Curl{
@@ -146,7 +150,7 @@ func (c *Curl) MustAbsorbTrytes(inn Trytes) {
 // Transform does Transform in sponge func.
 func (c *Curl) Transform() {
 	if transformC != nil {
-		transformC(c.State, c.Rounds)
+		transformC(c.State, int(c.Rounds))
 		return
 	}
 
@@ -170,16 +174,14 @@ func (c *Curl) Reset() {
 }
 
 // HashTrits returns the hash of the given trits.
-// i: rounds, The optional number of rounds to use.
-func HashTrits(trits Trits, rounds ...int) (Trits, error) {
+func HashTrits(trits Trits, rounds ...CurlRounds) (Trits, error) {
 	c := NewCurl(rounds...)
 	c.Absorb(trits)
 	return c.Squeeze(HashTrinarySize)
 }
 
 // HashTrytes returns the hash of the given trytes.
-// i: rounds, The optional number of rounds to use.
-func HashTrytes(t Trytes, rounds ...int) (Trytes, error) {
+func HashTrytes(t Trytes, rounds ...CurlRounds) (Trytes, error) {
 	c := NewCurl(rounds...)
 	err := c.AbsorbTrytes(t)
 	if err != nil {
@@ -190,8 +192,7 @@ func HashTrytes(t Trytes, rounds ...int) (Trytes, error) {
 
 // MustHashTrytes returns the hash of the given trytes.
 // It panics if the given trytes are not valid.
-// i: rounds, The optional number of rounds to use.
-func MustHashTrytes(t Trytes, rounds ...int) Trytes {
+func MustHashTrytes(t Trytes, rounds ...CurlRounds) Trytes {
 	trytes, err := HashTrytes(t, rounds...)
 	if err != nil {
 		panic(err)
