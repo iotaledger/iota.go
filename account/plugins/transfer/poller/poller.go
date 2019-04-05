@@ -160,7 +160,7 @@ func (tp *TransferPoller) checkIncomingTransfers(depositRequests map[uint64]*sto
 		if req.TimeoutAt == nil {
 			continue
 		}
-		addr, err := tp.setts.AddrGen(keyIndex, req.SecurityLevel, false)
+		addr, err := tp.setts.AddrGen(keyIndex, req.SecurityLevel, true)
 		if err != nil {
 			return errors.Wrap(err, "unable to compute deposit address in incoming transfers op.")
 		}

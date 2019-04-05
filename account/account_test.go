@@ -1,7 +1,6 @@
 package account_test
 
 import (
-	"gopkg.in/h2non/gock.v1"
 	"github.com/iotaledger/iota.go/account/builder"
 	"github.com/iotaledger/iota.go/account/deposit"
 	"github.com/iotaledger/iota.go/account/event"
@@ -15,6 +14,7 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gopkg.in/h2non/gock.v1"
 	"strings"
 	"time"
 
