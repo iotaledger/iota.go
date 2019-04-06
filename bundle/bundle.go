@@ -74,7 +74,7 @@ var EmptyTransfer = Transfer{
 	Message: NullSignatureMessageFragmentTrytes,
 	Value:   0,
 	Tag:     NullTagTrytes,
-	Address: NullHashTrytes,
+	Address: NullAddressWithChecksum,
 }
 
 // TransfersToBundleEntries translates transfers to bundle entries.

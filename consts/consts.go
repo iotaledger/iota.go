@@ -69,6 +69,7 @@ var (
 	NullTagTrytes                      = strings.Repeat("9", TagTrinarySize/3)
 	NullNonceTrytes                    = strings.Repeat("9", NonceTrinarySize/3)
 	NullSignatureMessageFragmentTrytes = strings.Repeat("9", SignatureMessageFragmentTrinarySize/3)
+	NullAddressWithChecksum            = strings.Repeat("9", HashTrytesSize) + "A9BEONKZW"
 )
 
 // Attachment timestamp constants.
