@@ -20,12 +20,17 @@ type SpongeFunction interface {
 	Reset()
 }
 
-// New returns a new Curl.
-func NewCurl() SpongeFunction {
-	return curl.NewCurl()
+// NewCurlP27 returns a new CurlP27.
+func NewCurlP27() SpongeFunction {
+	return curl.NewCurl(curl.CurlP27)
 }
 
-// New returns a new Kerl.
+// NewCurlP81 returns a new CurlP81.
+func NewCurlP81() SpongeFunction {
+	return curl.NewCurl(curl.CurlP81)
+}
+
+// NewKerl returns a new Kerl.
 func NewKerl() SpongeFunction {
 	return kerl.NewKerl()
 }
