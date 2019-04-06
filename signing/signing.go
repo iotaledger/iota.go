@@ -30,8 +30,8 @@ func NewKerl() SpongeFunction {
 	return kerl.NewKerl()
 }
 
-// getSpongeFunc checks if a hash function was given, otherwise uses Kerl.
-func getSpongeFunc(spongeFuncCreator []SpongeFunctionCreator) SpongeFunction {
+// GetSpongeFunc checks if a hash function was given, otherwise uses Kerl.
+func GetSpongeFunc(spongeFuncCreator []SpongeFunctionCreator) SpongeFunction {
 	if len(spongeFuncCreator) > 0 {
 		return spongeFuncCreator[0]()
 	}
@@ -54,7 +54,7 @@ func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunctionCreator) (Tr
 
 	incrementedSeed := AddTrits(trits, IntToTrits(int64(index)))
 
-	h := getSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc)
 	err = h.Absorb(incrementedSeed)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunctionCreator) (Tr
 // Key computes a new private key from the given subseed using the given security level.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func Key(subseed Trits, securityLevel SecurityLevel, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
-	h := getSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc)
 	if err := h.Absorb(subseed); err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func Digests(key Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
 
 			// hash each segment 26 times
 			for k := 0; k < KeySegmentHashRounds; k++ {
-				h := getSpongeFunc(spongeFunc)
+				h := GetSpongeFunc(spongeFunc)
 				h.Absorb(buf)
 				buf, err = h.Squeeze(HashTrinarySize)
 				if err != nil {
@@ -122,7 +122,7 @@ func Digests(key Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
 		}
 
 		// hash the key fragment (which now consists of hashed segments)
-		h := getSpongeFunc(spongeFunc)
+		h := GetSpongeFunc(spongeFunc)
 		if err := h.Absorb(keyFragment); err != nil {
 			return nil, err
 		}
@@ -142,7 +142,7 @@ func Digests(key Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
 // Address generates the address trits from the given digests.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func Address(digests Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
-	h := getSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc)
 	if err := h.Absorb(digests); err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, sp
 	sigFrag := make(Trits, len(keyFragment))
 	copy(sigFrag, keyFragment)
 
-	h := getSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc)
 
 	for i := 0; i < KeySegmentsPerFragment; i++ {
 		hash := sigFrag[i*HashTrinarySize : (i+1)*HashTrinarySize]
@@ -218,14 +218,14 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, sp
 // Digest computes the digest derived from the signature fragment and normalized bundle hash.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
-	h := getSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc)
 	buf := make(Trits, HashTrinarySize)
 
 	for i := 0; i < KeySegmentsPerFragment; i++ {
 		copy(buf, signatureFragment[i*HashTrinarySize:(i+1)*HashTrinarySize])
 
 		for j := normalizedBundleHashFragment[i] + MaxTryteValue; j > 0; j-- {
-			hh := getSpongeFunc(spongeFunc)
+			hh := GetSpongeFunc(spongeFunc)
 			err := hh.Absorb(buf)
 			if err != nil {
 				return nil, err
