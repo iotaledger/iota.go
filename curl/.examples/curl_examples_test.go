@@ -2,6 +2,7 @@ package curl_examples_test
 
 import (
 	"fmt"
+
 	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/trinary"
 )
@@ -43,12 +44,13 @@ func ExampleTransform() {}
 func ExampleReset() {}
 
 // i req: trits, The Trits of which to compute the hash of.
+// i: CurlRounds, The optional number of rounds to use.
 // o: Trits, The Trits representation of the hash.
 // o: error, Returned for internal errors.
 func ExampleHashTrits() {
 	trytes := "PDFIDVWRXONZSPJJQVZVVMLGSVB"
 	trits := trinary.MustTrytesToTrits(trytes)
-	tritsHash, err := curl.HashTrits(trits)
+	tritsHash, err := curl.HashTrits(trits, curl.CurlP81)
 	if err != nil {
 		// handle error
 		return
@@ -57,11 +59,12 @@ func ExampleHashTrits() {
 }
 
 // i req: t, The Trytes of which to compute the hash of.
+// i: CurlRounds, The optional number of rounds to use.
 // o: Trytes, The Trytes representation of the hash.
 // o: error, Returned for internal errors.
 func ExampleHashTrytes() {
 	trytes := "PDFIDVWRXONZSPJJQVZVVMLGSVB"
-	hash, err := curl.HashTrytes(trytes)
+	hash, err := curl.HashTrytes(trytes, curl.CurlP81)
 	if err != nil {
 		// handle error
 		return
