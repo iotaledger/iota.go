@@ -63,7 +63,7 @@ func merkleNodeIndexTraverse(acc, depth, width, treeDepth uint64) uint64 {
 
 	for depthCursor <= depth {
 		if widthCursor >= (widthOfLeaves >> depthCursor) {
-			// add whole bianry tree size of the lest side binary tree
+			// add whole binary tree size of the left side binary tree
 			index += ((1 << (treeDepth - depthCursor + 1)) - 1)
 
 			// counting node index in the subtree which the cursor currently stays
