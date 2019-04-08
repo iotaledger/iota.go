@@ -33,7 +33,7 @@ func MerkleSize(leafCount uint64) uint64 {
 	return acc
 }
 
-// MerkleDepth computes the depth of a merkle tree
+// MerkleDepth computes the depth of a merkle tree.
 // 	nodeCount is the number of nodes of the tree
 func MerkleDepth(nodeCount uint64) (depth uint64) {
 	depth = 0
