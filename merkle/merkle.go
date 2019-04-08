@@ -169,7 +169,7 @@ func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security Security
 	return tree, nil
 }
 
-// MerkleBranch creates the merkle branch to generate back root from index
+// MerkleBranch creates the merkle branch to generate back root from index.
 //	tree is the merkle tree - Must be allocated
 //	siblings is the siblings of the indexed node - Must be allocated
 //	treeLength is the length of the tree
