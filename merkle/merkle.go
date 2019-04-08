@@ -74,7 +74,7 @@ func merkleNodeIndexTraverse(acc, depth, width, treeDepth uint64) uint64 {
 	return index
 }
 
-// MerkleNodeIndex indexes a given node in the tree
+// MerkleNodeIndex indexes a given node in the tree.
 // 	depth is the depth of the node, counting from root
 // 	width is the width of the node, counting from left
 // 	treeDepth is the depth of whole tree
