@@ -17,7 +17,7 @@ func binaryTreeSize(acc uint64, depth uint64) uint64 {
 	return (1 << (depth + 1)) - 1 + acc
 }
 
-// MerkleSize computes the size of a merkle tree, e.g. its node number
+// MerkleSize computes the size of a merkle tree, e.g. its node number.
 // 	leafCount is the number of leaves of the tree
 func MerkleSize(leafCount uint64) uint64 {
 	var acc uint64 = 1
