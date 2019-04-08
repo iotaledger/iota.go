@@ -82,7 +82,7 @@ func MerkleNodeIndex(depth, width, treeDepth uint64) uint64 {
 	return merkleNodeIndexTraverse(0, depth, width, treeDepth)
 }
 
-// MerkleLeafIndex computes the actual site index of a leaf
+// MerkleLeafIndex computes the actual site index of a leaf.
 // 	leafIndex is the leaf index
 // 	leafCount is the number of leaves
 func MerkleLeafIndex(leafIndex, leafCount uint64) uint64 {
