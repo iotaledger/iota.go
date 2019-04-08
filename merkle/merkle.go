@@ -1,4 +1,4 @@
-// Package merkle provides functions for creating and validating merkle trees
+// Package merkle provides functions for creating and validating merkle trees.
 package merkle
 
 import (
