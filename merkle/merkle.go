@@ -89,7 +89,7 @@ func MerkleLeafIndex(leafIndex, leafCount uint64) uint64 {
 	return leafCount - leafIndex - 1
 }
 
-// MerkleCreate creates a merkle tree
+// MerkleCreate creates a merkle tree.
 //	baseSize is the base size of the tree, e.g. the number of leaves
 //	seed is the seed used to generate addresses - Not sent over the network
 //	offset is the offset used to generate addresses
