@@ -80,7 +80,7 @@ var _ = Describe("account", func() {
 			WithTimeSource(&fakeclock{}).
 			WithEvents(em).
 			WithSeed(seed)
-		
+
 		transferPoller = poller.NewTransferPoller(b.Settings(), poller.NewPerTailReceiveEventFilter(), 0)
 		acc, err = b.Build(transferPoller)
 		if err != nil {
@@ -105,7 +105,7 @@ var _ = Describe("account", func() {
 			It("should return the correct address", func() {
 				for _, compareAddr := range addrs {
 					t := time.Now().AddDate(0, 0, 1)
-					depositAddr, err := acc.AllocateDepositRequest(&deposit.Request{TimeoutAt: &t})
+					depositAddr, err := acc.AllocateDepositAddress(&deposit.Conditions{TimeoutAt: &t})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(depositAddr.Address).To(Equal(compareAddr))
 				}
@@ -145,7 +145,7 @@ var _ = Describe("account", func() {
 					})
 
 				// the ordering of the addresses towards getBalance is random, as the stored deposit
-				// requests are in a map and thereby ordering is not preserved.
+				// addresses are in a map and thereby ordering is not preserved.
 				permutations := []trinary.Hashes{{addrsWC[1], addrsWC[0]}, {addrsWC[0], addrsWC[1]}}
 				for _, slice := range permutations {
 					gock.New(DefaultLocalIRIURI).
@@ -168,7 +168,7 @@ var _ = Describe("account", func() {
 				}
 				t := time.Now().AddDate(0, 0, 1)
 				for i := 0; i < 2; i++ {
-					conds, err := acc.AllocateDepositRequest(&deposit.Request{TimeoutAt: &t})
+					conds, err := acc.AllocateDepositAddress(&deposit.Conditions{TimeoutAt: &t})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(conds.Address).To(Equal(addrs[i]))
 				}
@@ -300,10 +300,23 @@ var _ = Describe("account", func() {
 						TransactionsToRequest:              10,
 					})
 
+				gock.New(DefaultLocalIRIURI).
+					Persist().
+					Post("/").
+					MatchType("json").
+					JSON(WereAddressesSpentFromCommand{
+						Command: Command{WereAddressesSpentFromCmd},
+						Addresses: trinary.Hashes{targetAddrWC},
+					}).
+					Reply(200).
+					JSON(WereAddressesSpentFromResponse{
+						States: []bool{false},
+					})
+
 				// hypothetical deposit address given to someone and got some funds
 				t := time.Now().AddDate(0, 0, 1)
 				expectedAmount := uint64(100)
-				_, err = acc.AllocateDepositRequest(&deposit.Request{TimeoutAt: &t, ExpectedAmount: &expectedAmount})
+				_, err = acc.AllocateDepositAddress(&deposit.Conditions{TimeoutAt: &t, ExpectedAmount: &expectedAmount})
 				Expect(err).ToNot(HaveOccurred())
 
 				By("having the correct current usable balance")

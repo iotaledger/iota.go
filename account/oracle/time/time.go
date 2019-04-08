@@ -22,7 +22,7 @@ type timedecider struct {
 	remainingTimeThreshold time.Duration
 }
 
-func (td *timedecider) Ok(conds *deposit.Conditions) (bool, string, error) {
+func (td *timedecider) Ok(conds *deposit.CDA) (bool, string, error) {
 	now, err := td.timesource.Time()
 	if err != nil {
 		return false, "", err

@@ -27,8 +27,8 @@ type Account interface {
 	Shutdown() error
 	// Send sends the specified amounts to the given recipients.
 	Send(recipients ...Recipient) (bundle.Bundle, error)
-	// AllocateDepositRequest generates a new deposit request.
-	AllocateDepositRequest(req *deposit.Request) (*deposit.Conditions, error)
+	// AllocateDepositAddress generates a new deposit address with the given conditions.
+	AllocateDepositAddress(conds *deposit.Conditions) (*deposit.CDA, error)
 	// AvailableBalance gets the current available balance.
 	// The balance is computed from all current deposit addresses which are ready
 	// for input selection. To get the current total balance, use TotalBalance().
@@ -49,18 +49,18 @@ type Recipient = bundle.Transfer
 type Recipients []Recipient
 
 // Sum returns the sum of all amounts.
-func (recps Recipients) Sum() uint64 {
+func (recipients Recipients) Sum() uint64 {
 	var sum uint64
-	for _, target := range recps {
+	for _, target := range recipients {
 		sum += target.Value
 	}
 	return sum
 }
 
 // AsTransfers converts the recipients to transfers.
-func (recps Recipients) AsTransfers() bundle.Transfers {
-	transfers := make(bundle.Transfers, len(recps))
-	for i, recipient := range recps {
+func (recipients Recipients) AsTransfers() bundle.Transfers {
+	transfers := make(bundle.Transfers, len(recipients))
+	for i, recipient := range recipients {
 		transfers[i] = recipient
 	}
 	return transfers
@@ -160,7 +160,7 @@ func (acc *account) Send(recipients ...Recipient) (bundle.Bundle, error) {
 	return acc.send(recipients)
 }
 
-func (acc *account) AllocateDepositRequest(req *deposit.Request) (*deposit.Conditions, error) {
+func (acc *account) AllocateDepositAddress(conds *deposit.Conditions) (*deposit.CDA, error) {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
 
@@ -168,7 +168,7 @@ func (acc *account) AllocateDepositRequest(req *deposit.Request) (*deposit.Condi
 		return nil, ErrAccountNotRunning
 	}
 
-	if req.TimeoutAt == nil {
+	if conds.TimeoutAt == nil {
 		return nil, ErrTimeoutNotSpecified
 	}
 
@@ -177,11 +177,15 @@ func (acc *account) AllocateDepositRequest(req *deposit.Request) (*deposit.Condi
 		return nil, err
 	}
 
-	if req.TimeoutAt.Add(-(time.Duration(5) * time.Minute)).Before(currentTime) {
+	if conds.TimeoutAt.Add(-(time.Duration(2) * time.Minute)).Before(currentTime) {
 		return nil, ErrTimeoutTooLow
 	}
 
-	return acc.allocateDepositRequest(req)
+	if err := deposit.ValidateConditions(conds); err != nil {
+		return nil, err
+	}
+
+	return acc.allocateDepositAddress(conds)
 }
 
 func (acc *account) AvailableBalance() (uint64, error) {
@@ -290,7 +294,7 @@ func (acc *account) shutdownPlugins() error {
 	return nil
 }
 
-func (acc *account) allocateDepositRequest(req *deposit.Request) (*deposit.Conditions, error) {
+func (acc *account) allocateDepositAddress(conds *deposit.Conditions) (*deposit.CDA, error) {
 	acc.lastKeyIndex++
 	addr, err := acc.setts.AddrGen(acc.lastKeyIndex, acc.setts.SecurityLevel, true)
 	if err != nil {
@@ -300,12 +304,12 @@ func (acc *account) allocateDepositRequest(req *deposit.Request) (*deposit.Condi
 		return nil, errors.Wrapf(err, "unable to store next index (%d) in the store", acc.lastKeyIndex)
 	}
 
-	storedReq := &store.StoredDepositRequest{SecurityLevel: acc.setts.SecurityLevel, Request: *req}
-	if err := acc.setts.Store.AddDepositRequest(acc.id, acc.lastKeyIndex, storedReq); err != nil {
+	storedDepositAddress := &store.StoredDepositAddress{SecurityLevel: acc.setts.SecurityLevel, Conditions: *conds}
+	if err := acc.setts.Store.AddDepositAddress(acc.id, acc.lastKeyIndex, storedDepositAddress); err != nil {
 		return nil, err
 	}
 
-	return &deposit.Conditions{Address: addr, Request: *req}, nil
+	return &deposit.CDA{Address: addr, Conditions: *conds}, nil
 }
 
 func (acc *account) send(targets Recipients) (bundle.Bundle, error) {
@@ -328,16 +332,16 @@ func (acc *account) send(targets Recipients) (bundle.Bundle, error) {
 		if remainderAddress == nil || success {
 			return
 		}
-		reqs, err := acc.setts.Store.GetDepositRequests(acc.id)
+		storedDepositAddresses, err := acc.setts.Store.GetDepositAddresses(acc.id)
 		if err != nil {
 			return
 		}
-		// while iterating over all CDRs in order to find the one used for the remainder address is slow,
+		// while iterating over all CDAs in order to find the one used for the remainder address is slow,
 		// this operation only happens rarely, so there's no issue.
 		croppedRemainderAddr := (*remainderAddress)[:81]
 		var remainderAddrKeyIndex *uint64
-		for keyIndex, req := range reqs {
-			addr, err := acc.setts.AddrGen(keyIndex, req.SecurityLevel, false)
+		for keyIndex, storedDepositAddress := range storedDepositAddresses {
+			addr, err := acc.setts.AddrGen(keyIndex, storedDepositAddress.SecurityLevel, false)
 			if err != nil {
 				continue
 			}
@@ -353,13 +357,33 @@ func (acc *account) send(targets Recipients) (bundle.Bundle, error) {
 		}
 
 		// remove allocated remainder address from store
-		if err := acc.setts.Store.RemoveDepositRequest(acc.id, *remainderAddrKeyIndex); err != nil {
+		if err := acc.setts.Store.RemoveDepositAddress(acc.id, *remainderAddrKeyIndex); err != nil {
 			err = errors.Wrap(err, "unable to cleanup allocated remainder addr during failed send op.")
 			acc.setts.EventMachine.Emit(err, event.EventError)
 		}
 	}()
 
 	if transferSum > 0 {
+
+		// gather target addresses which deposit values
+		targetAddresses := Hashes{}
+		for _, transfer := range transfers {
+			if transfer.Value > 0 {
+				targetAddresses = append(targetAddresses, transfer.Address)
+			}
+		}
+
+		// check whether any target address where the transfer deposits value to, is already spent
+		spentStates, err := acc.setts.API.WereAddressesSpentFrom(targetAddresses...)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to check the spent state of target addresses in send op.")
+		}
+		for i, spent := range spentStates {
+			if spent {
+				return nil, errors.Wrapf(ErrTargetAddressIsSpent, "will not send as address %s is spent", targetAddresses[i])
+			}
+		}
+
 		// gather the total sum, inputs, addresses to remove from the store
 		sum, ins, rem, err := acc.setts.InputSelectionStrat(acc, transferSum, false)
 		if err != nil {
@@ -372,7 +396,7 @@ func (acc *account) send(targets Recipients) (bundle.Bundle, error) {
 		// store and add remainder address to transfer
 		if sum > transferSum {
 			remainder := sum - transferSum
-			depCond, err := acc.allocateDepositRequest(&deposit.Request{ExpectedAmount: &remainder})
+			depCond, err := acc.allocateDepositAddress(&deposit.Conditions{ExpectedAmount: &remainder})
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to generate remainder address in send op.")
 			}
@@ -441,8 +465,8 @@ func (acc *account) totalBalance() (uint64, error) {
 		return 0, errors.Wrap(err, "unable to load account state for querying total balance")
 	}
 
-	depositReqsCount := len(state.DepositRequests)
-	if depositReqsCount == 0 {
+	depositAddressesCount := len(state.DepositAddresses)
+	if depositAddressesCount == 0 {
 		return 0, nil
 	}
 
@@ -452,10 +476,10 @@ func (acc *account) totalBalance() (uint64, error) {
 	}
 	subtangleHash := solidSubtangleMilestone.LatestSolidSubtangleMilestone
 
-	addrs := make(Hashes, len(state.DepositRequests))
+	addrs := make(Hashes, len(state.DepositAddresses))
 	var i int
-	for keyIndex, req := range state.DepositRequests {
-		addr, _ := acc.setts.AddrGen(keyIndex, req.SecurityLevel, true)
+	for keyIndex, depositAddress := range state.DepositAddresses {
+		addr, _ := acc.setts.AddrGen(keyIndex, depositAddress.SecurityLevel, true)
 		addrs[i] = addr
 		i++
 	}
@@ -472,20 +496,20 @@ func (acc *account) totalBalance() (uint64, error) {
 	return sum, nil
 }
 
-// selects fulfilled and timed out deposit addresses as inputs.
-func defaultInputSelection(acc *account, transferValue uint64, balanceCheck bool) (uint64, []api.Input, []uint64, error) {
+// DefaultInputSelection selects fulfilled and timed out deposit addresses as inputs.
+func DefaultInputSelection(acc *account, transferValue uint64, balanceCheck bool) (uint64, []api.Input, []uint64, error) {
 	acc.setts.EventMachine.Emit(balanceCheck, event.EventDoingInputSelection)
-	depositRequests, err := acc.setts.Store.GetDepositRequests(acc.id)
+	depositAddresses, err := acc.setts.Store.GetDepositAddresses(acc.id)
 	if err != nil {
 		return 0, nil, nil, errors.Wrap(err, "unable to load account state for input selection")
 	}
 
-	// no deposit requests, therefore 0 balance
-	if len(depositRequests) == 0 {
+	// no deposit addresses, therefore 0 balance
+	if len(depositAddresses) == 0 {
 		if balanceCheck {
 			return 0, nil, nil, nil
 		}
-		// we can't fulfill any transfer value if we have no deposit requests
+		// we can't fulfill any transfer value if we have no deposit addresses
 		return 0, nil, nil, consts.ErrInsufficientBalance
 	}
 
@@ -503,8 +527,8 @@ func defaultInputSelection(acc *account, transferValue uint64, balanceCheck bool
 	}
 
 	type selection struct {
-		keyIndex uint64
-		req      *store.StoredDepositRequest
+		keyIndex       uint64
+		depositAddress *store.StoredDepositAddress
 	}
 
 	// primary addresses to use to try to use to fulfill the transfer value
@@ -529,43 +553,36 @@ func defaultInputSelection(acc *account, transferValue uint64, balanceCheck bool
 	}
 
 	// iterate over all allocated deposit addresses
-	for keyIndex, req := range depositRequests {
+	for keyIndex, depositAddress := range depositAddresses {
 		// remainder address
-		if req.TimeoutAt == nil {
-			if req.ExpectedAmount == nil {
+		if depositAddress.TimeoutAt == nil {
+			if depositAddress.ExpectedAmount == nil {
 				panic("remainder address in system without 'expected amount'")
 			}
-			addr, _ := acc.setts.AddrGen(keyIndex, req.SecurityLevel, true)
+			addr, _ := acc.setts.AddrGen(keyIndex, depositAddress.SecurityLevel, true)
 			primaryAddrs = append(primaryAddrs, addr)
-			primarySelection = append(primarySelection, selection{keyIndex, req})
+			primarySelection = append(primarySelection, selection{keyIndex, depositAddress})
 			continue
 		}
 
 		// timed out
-		if now.After(*req.TimeoutAt) {
-			addr, _ := acc.setts.AddrGen(keyIndex, req.SecurityLevel, true)
+		if now.After(*depositAddress.TimeoutAt) {
+			addr, _ := acc.setts.AddrGen(keyIndex, depositAddress.SecurityLevel, true)
 			secondaryAddrs = append(secondaryAddrs, addr)
-			secondarySelection = append(secondarySelection, selection{keyIndex, req})
+			secondarySelection = append(secondarySelection, selection{keyIndex, depositAddress})
 			continue
 		}
 
 		// multi
-		if req.MultiUse {
-			// multi use deposit addresses are only used
-			// when they are timed out, if they don't define an expected amount
-			if req.ExpectedAmount == nil {
-				continue
-			}
-			addr, _ := acc.setts.AddrGen(keyIndex, req.SecurityLevel, true)
-			primaryAddrs = append(primaryAddrs, addr)
-			primarySelection = append(primarySelection, selection{keyIndex, req})
+		if depositAddress.MultiUse {
+			// multi use deposit addresses are only used when they are timed out
 			continue
 		}
 
 		// single
-		addr, _ := acc.setts.AddrGen(keyIndex, req.SecurityLevel, true)
+		addr, _ := acc.setts.AddrGen(keyIndex, depositAddress.SecurityLevel, true)
 		primaryAddrs = append(primaryAddrs, addr)
-		primarySelection = append(primarySelection, selection{keyIndex, req})
+		primarySelection = append(primarySelection, selection{keyIndex, depositAddress})
 	}
 
 	// get the balance of all addresses (also secondary) in one go
@@ -588,7 +605,7 @@ func defaultInputSelection(acc *account, transferValue uint64, balanceCheck bool
 	for i := range primarySelection {
 		s := &primarySelection[i]
 		// skip addresses which have an expected amount which isn't reached however
-		if s.req.ExpectedAmount != nil && balances.Balances[i] < *s.req.ExpectedAmount {
+		if s.depositAddress.ExpectedAmount != nil && balances.Balances[i] < *s.depositAddress.ExpectedAmount {
 			continue
 		}
 		sum += balances.Balances[i]
@@ -604,7 +621,7 @@ func defaultInputSelection(acc *account, transferValue uint64, balanceCheck bool
 			Address:  primaryAddrs[i],
 			KeyIndex: s.keyIndex,
 			Balance:  balances.Balances[i],
-			Security: s.req.SecurityLevel,
+			Security: s.depositAddress.SecurityLevel,
 		})
 
 		// mark the address for removal as it should be freed from the store
@@ -644,7 +661,7 @@ func defaultInputSelection(acc *account, transferValue uint64, balanceCheck bool
 			addAsInput(&api.Input{
 				KeyIndex: secSelect.keyIndex,
 				Address:  addr,
-				Security: secSelect.req.SecurityLevel,
+				Security: secSelect.depositAddress.SecurityLevel,
 				Balance:  balance,
 			})
 			if sum >= transferValue {

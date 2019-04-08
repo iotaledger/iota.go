@@ -178,26 +178,26 @@ func (b *BadgerStore) WriteIndex(id string, index uint64) (error) {
 	})
 }
 
-func (b *BadgerStore) AddDepositRequest(id string, index uint64, depositRequest *StoredDepositRequest) error {
+func (b *BadgerStore) AddDepositAddress(id string, index uint64, depositAddress *StoredDepositAddress) error {
 	return b.mutate(id, func(state *AccountState) error {
 		if state == nil {
 			return ErrAccountNotFound
 		}
-		state.DepositRequests[index] = depositRequest
+		state.DepositAddresses[index] = depositAddress
 		return nil
 	})
 }
 
-func (b *BadgerStore) RemoveDepositRequest(id string, index uint64) error {
+func (b *BadgerStore) RemoveDepositAddress(id string, index uint64) error {
 	return b.mutate(id, func(state *AccountState) error {
 		if state == nil {
 			return ErrAccountNotFound
 		}
-		_, ok := state.DepositRequests[index]
+		_, ok := state.DepositAddresses[index]
 		if !ok {
-			return ErrDepositRequestNotFound
+			return ErrDepositAddressNotFound
 		}
-		delete(state.DepositRequests, index)
+		delete(state.DepositAddresses, index)
 		return nil
 	})
 }
@@ -209,7 +209,7 @@ func (b *BadgerStore) AddPendingTransfer(id string, tailTx Hash, bundleTrytes []
 			return ErrAccountNotFound
 		}
 		for _, index := range indices {
-			delete(state.DepositRequests, index)
+			delete(state.DepositAddresses, index)
 		}
 		pendingTransfer := TrytesToPendingTransfer(bundleTrytes)
 		pendingTransfer.Tails = append(pendingTransfer.Tails, tailTx)
@@ -231,18 +231,18 @@ func (b *BadgerStore) RemovePendingTransfer(id string, tailTx Hash) error {
 	})
 }
 
-func (b *BadgerStore) GetDepositRequests(id string) (map[uint64]*StoredDepositRequest, error) {
-	var depReqs map[uint64]*StoredDepositRequest
+func (b *BadgerStore) GetDepositAddresses(id string) (map[uint64]*StoredDepositAddress, error) {
+	var depositAddresses map[uint64]*StoredDepositAddress
 	if err := b.read(id, func(state *AccountState) error {
 		if state == nil {
 			return ErrAccountNotFound
 		}
-		depReqs = state.DepositRequests
+		depositAddresses = state.DepositAddresses
 		return nil
 	}); err != nil {
 		return nil, err
 	}
-	return depReqs, nil
+	return depositAddresses, nil
 }
 
 func (b *BadgerStore) AddTailHash(id string, tailTx Hash, newTailTxHash Hash) error {

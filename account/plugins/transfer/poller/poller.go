@@ -15,7 +15,7 @@ import (
 // StringSet is a set of strings.
 type StringSet map[string]struct{}
 
-// ReceiveEventFilter filters and creates events given the incoming bundles, deposit requests and spent addresses.
+// ReceiveEventFilter filters and creates events given the incoming bundles, deposit addresses and spent addresses.
 // It's the job of the ReceiveEventFilter to emit the appropriate events through the given EventMachine.
 type ReceiveEventFilter func(eventMachine event.EventMachine, bndls bundle.Bundles, depAddrs StringSet, spentAddrs StringSet)
 
@@ -88,13 +88,13 @@ func (tp *TransferPoller) pollTransfers() error {
 		return errors.Wrap(err, "unable to load pending transfers for polling transfers")
 	}
 
-	depositRequests, err := tp.setts.Store.GetDepositRequests(tp.acc.ID())
+	depositAddresses, err := tp.setts.Store.GetDepositAddresses(tp.acc.ID())
 	if err != nil {
-		return errors.Wrap(err, "unable to load deposit requests for polling transfers")
+		return errors.Wrap(err, "unable to load deposit addresses for polling transfers")
 	}
 
 	// nothing to do
-	if len(pendingTransfers) == 0 && len(depositRequests) == 0 {
+	if len(pendingTransfers) == 0 && len(depositAddresses) == 0 {
 		return nil
 	}
 
@@ -107,10 +107,10 @@ func (tp *TransferPoller) pollTransfers() error {
 			defer wg.Done()
 			outErr = tp.checkOutgoingTransfers(pendingTransfers)
 		}()
-		inErr = tp.checkIncomingTransfers(depositRequests, pendingTransfers)
+		inErr = tp.checkIncomingTransfers(depositAddresses, pendingTransfers)
 		wg.Wait()
 	} else {
-		inErr = tp.checkIncomingTransfers(depositRequests, pendingTransfers)
+		inErr = tp.checkIncomingTransfers(depositAddresses, pendingTransfers)
 	}
 
 	if outErr != nil {
@@ -148,19 +148,19 @@ func (tp *TransferPoller) checkOutgoingTransfers(pendingTransfers map[string]*st
 	return nil
 }
 
-func (tp *TransferPoller) checkIncomingTransfers(depositRequests map[uint64]*store.StoredDepositRequest, pendingTransfers map[string]*store.PendingTransfer) error {
-	if len(depositRequests) == 0 {
+func (tp *TransferPoller) checkIncomingTransfers(storedDepositAddresses map[uint64]*store.StoredDepositAddress, pendingTransfers map[string]*store.PendingTransfer) error {
+	if len(storedDepositAddresses) == 0 {
 		return nil
 	}
 
 	depositAddresses := make(StringSet)
 	depAddrs := make(Hashes, 0)
-	for keyIndex, req := range depositRequests {
+	for keyIndex, depositAddress := range storedDepositAddresses {
 		// filter remainder address bundles
-		if req.TimeoutAt == nil {
+		if depositAddress.TimeoutAt == nil {
 			continue
 		}
-		addr, err := tp.setts.AddrGen(keyIndex, req.SecurityLevel, true)
+		addr, err := tp.setts.AddrGen(keyIndex, depositAddress.SecurityLevel, true)
 		if err != nil {
 			return errors.Wrap(err, "unable to compute deposit address in incoming transfers op.")
 		}

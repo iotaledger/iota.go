@@ -72,23 +72,23 @@ func (mem *InMemoryStore) ExportAccount(id string) (*ExportedAccountState, error
 		return nil, ErrAccountNotFound
 	}
 	stateCopy := AccountState{KeyIndex: state.KeyIndex}
-	stateCopy.DepositRequests = map[uint64]*StoredDepositRequest{}
+	stateCopy.DepositAddresses = map[uint64]*StoredDepositAddress{}
 	stateCopy.PendingTransfers = map[string]*PendingTransfer{}
 
-	// copy deposit requests
-	for index, depositReq := range state.DepositRequests {
-		depositReqCopy := &StoredDepositRequest{SecurityLevel: depositReq.SecurityLevel}
-		requestCopy := deposit.Request{MultiUse: depositReq.MultiUse}
-		if depositReq.ExpectedAmount != nil {
-			expectedAmountCopy := *depositReq.ExpectedAmount
-			requestCopy.ExpectedAmount = &expectedAmountCopy
+	// copy deposit addresses
+	for index, depositAddr := range state.DepositAddresses {
+		depositAddressesCopy := &StoredDepositAddress{SecurityLevel: depositAddr.SecurityLevel}
+		addrCopy := deposit.Conditions{MultiUse: depositAddr.MultiUse}
+		if depositAddr.ExpectedAmount != nil {
+			expectedAmountCopy := *depositAddr.ExpectedAmount
+			addrCopy.ExpectedAmount = &expectedAmountCopy
 		}
-		if depositReq.TimeoutAt != nil {
-			timeoutAtCopy := *depositReq.TimeoutAt
-			requestCopy.TimeoutAt = &timeoutAtCopy
+		if depositAddr.TimeoutAt != nil {
+			timeoutAtCopy := *depositAddr.TimeoutAt
+			addrCopy.TimeoutAt = &timeoutAtCopy
 		}
-		depositReqCopy.Request = requestCopy
-		stateCopy.DepositRequests[index] = depositReqCopy
+		depositAddressesCopy.Conditions = addrCopy
+		stateCopy.DepositAddresses[index] = depositAddressesCopy
 	}
 	// copy pending transfers
 	for tailTx, pendingTransfer := range state.PendingTransfers {
@@ -127,29 +127,29 @@ func (mem *InMemoryStore) WriteIndex(id string, index uint64) (error) {
 	return nil
 }
 
-func (mem *InMemoryStore) AddDepositRequest(id string, index uint64, depositRequest *StoredDepositRequest) error {
+func (mem *InMemoryStore) AddDepositAddress(id string, index uint64, depositAddress *StoredDepositAddress) error {
 	mem.muAccs.Lock()
 	defer mem.muAccs.Unlock()
 	state, ok := mem.accs[id]
 	if !ok {
 		return ErrAccountNotFound
 	}
-	state.DepositRequests[index] = depositRequest
+	state.DepositAddresses[index] = depositAddress
 	return nil
 }
 
-func (mem *InMemoryStore) RemoveDepositRequest(id string, index uint64) error {
+func (mem *InMemoryStore) RemoveDepositAddress(id string, index uint64) error {
 	mem.muAccs.Lock()
 	defer mem.muAccs.Unlock()
 	state, ok := mem.accs[id]
 	if !ok {
 		return ErrAccountNotFound
 	}
-	_, ok = state.DepositRequests[index]
+	_, ok = state.DepositAddresses[index]
 	if !ok {
-		return ErrDepositRequestNotFound
+		return ErrDepositAddressNotFound
 	}
-	delete(state.DepositRequests, index)
+	delete(state.DepositAddresses, index)
 	return nil
 }
 
@@ -163,7 +163,7 @@ func (mem *InMemoryStore) AddPendingTransfer(id string, tailTx trinary.Hash, bun
 
 	// remove used deposit actions
 	for _, index := range indices {
-		delete(state.DepositRequests, index)
+		delete(state.DepositAddresses, index)
 	}
 
 	pendingTransfer := TrytesToPendingTransfer(bundleTrytes)
@@ -186,21 +186,21 @@ func (mem *InMemoryStore) RemovePendingTransfer(id string, tailTx trinary.Hash) 
 	return nil
 }
 
-func (mem *InMemoryStore) GetDepositRequests(id string) (map[uint64]*StoredDepositRequest, error) {
+func (mem *InMemoryStore) GetDepositAddresses(id string) (map[uint64]*StoredDepositAddress, error) {
 	mem.muAccs.Lock()
 	defer mem.muAccs.Unlock()
 	state, ok := mem.accs[id]
 	if !ok {
 		return nil, ErrAccountNotFound
 	}
-	depReqs := make(map[uint64]*StoredDepositRequest)
+	depositAddresses := make(map[uint64]*StoredDepositAddress)
 	// make a copy
-	for k, v := range state.DepositRequests {
+	for k, v := range state.DepositAddresses {
 		// copy value which is a pointer
-		copyOfReq := *v
-		depReqs[k] = &copyOfReq
+		copyOfDepositAddress := *v
+		depositAddresses[k] = &copyOfDepositAddress
 	}
-	return depReqs, nil
+	return depositAddresses, nil
 }
 
 func (mem *InMemoryStore) AddTailHash(id string, tailTx trinary.Hash, newTailTxHash trinary.Hash) error {

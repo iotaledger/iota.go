@@ -61,7 +61,7 @@ var _ = Describe("Mongo", func() {
 					Tails:  trinary.Hashes{exportedPendingTransfeTailHash},
 				},
 			},
-			DepositRequests: map[uint64]*store.StoredDepositRequest{},
+			DepositAddresses: map[uint64]*store.StoredDepositAddress{},
 		},
 	}
 
@@ -73,13 +73,13 @@ var _ = Describe("Mongo", func() {
 		Expect(state.IsNew()).To(BeTrue())
 	})
 
-	Context("AddDepositRequest()", func() {
-		It("adds the deposit request to the store", func() {
+	Context("AddDepositAddress()", func() {
+		It("adds the deposit address to the store", func() {
 			ts := time.Now().AddDate(0, 0, 1)
 			var expAm uint64 = 1337
-			err := st.AddDepositRequest(id, 0, &store.StoredDepositRequest{
+			err := st.AddDepositAddress(id, 0, &store.StoredDepositAddress{
 				SecurityLevel: consts.SecurityLevelMedium,
-				Request: deposit.Request{
+				Conditions: deposit.Conditions{
 					TimeoutAt:      &ts,
 					MultiUse:       true,
 					ExpectedAmount: &expAm,
@@ -89,11 +89,11 @@ var _ = Describe("Mongo", func() {
 		})
 	})
 
-	Context("GetDepositRequests()", func() {
-		It("returns all deposit requests", func() {
-			reqs, err := st.GetDepositRequests(id)
+	Context("GetDepositAddresses()", func() {
+		It("returns all deposit addresses", func() {
+			depositAddresses, err := st.GetDepositAddresses(id)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(*reqs[0].ExpectedAmount).To(Equal(uint64(1337)))
+			Expect(*depositAddresses[0].ExpectedAmount).To(Equal(uint64(1337)))
 		})
 	})
 

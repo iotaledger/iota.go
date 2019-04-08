@@ -6,6 +6,7 @@ import (
 	"github.com/iotaledger/iota.go/consts"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 	"strings"
 	"time"
 )
@@ -19,12 +20,22 @@ var _ = Describe("Deposit", func() {
 	}
 	timeoutAt := time.Date(2019, time.March, 17, 18, 34, 0, 0, time.UTC)
 
-	actualMagnetLink := "iota://AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYJHYFZJYZ/?timeout_at=1552847640&multi_use=1&expected_amount=1000"
+	actualMagnetLink := "iota://AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWOWRMBLMD/?timeout_at=1552847640&multi_use=0&expected_amount=1000"
 
 	var expAmount uint64 = 1000
-	conds := &deposit.Conditions{
+
+	conds := &deposit.CDA{
 		Address: addrWithChecksum,
-		Request: deposit.Request{
+		Conditions: deposit.Conditions{
+			MultiUse:       false,
+			ExpectedAmount: &expAmount,
+			TimeoutAt:      &timeoutAt,
+		},
+	}
+
+	invalidConds := &deposit.CDA{
+		Address: addrWithChecksum,
+		Conditions: deposit.Conditions{
 			MultiUse:       true,
 			ExpectedAmount: &expAmount,
 			TimeoutAt:      &timeoutAt,
@@ -32,8 +43,12 @@ var _ = Describe("Deposit", func() {
 	}
 
 	Context("Creating a magnet-link from conditions", func() {
+		It("returns an error when both multi use and expected amount are set", func() {
+			_, err := invalidConds.AsMagnetLink()
+			Expect(errors.Cause(err)).To(Equal(deposit.ErrInvalidDepositAddressOptions))
+		})
+
 		It("works", func() {
-			Expect(err).ToNot(HaveOccurred())
 			magnetLink, err := conds.AsMagnetLink()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(magnetLink).To(Equal(actualMagnetLink))

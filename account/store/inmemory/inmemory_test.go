@@ -39,7 +39,7 @@ var _ = Describe("InMemory", func() {
 					Tails:  trinary.Hashes{exportedPendingTransfeTailHash},
 				},
 			},
-			DepositRequests: map[uint64]*store.StoredDepositRequest{},
+			DepositAddresses: map[uint64]*store.StoredDepositAddress{},
 		},
 	}
 

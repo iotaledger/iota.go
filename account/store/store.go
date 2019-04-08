@@ -18,7 +18,7 @@ func init() {
 
 func NewAccountState() *AccountState {
 	return &AccountState{
-		DepositRequests:  make(map[uint64]*StoredDepositRequest, 0),
+		DepositAddresses: make(map[uint64]*StoredDepositAddress, 0),
 		PendingTransfers: make(map[string]*PendingTransfer, 0),
 	}
 }
@@ -26,12 +26,12 @@ func NewAccountState() *AccountState {
 // AccountState is the underlying representation of the account data.
 type AccountState struct {
 	KeyIndex         uint64                           `json:"key_index" bson:"key_index"`
-	DepositRequests  map[uint64]*StoredDepositRequest `json:"deposit_requests" bson:"deposit_requests"`
+	DepositAddresses map[uint64]*StoredDepositAddress `json:"deposit_addresses" bson:"deposit_addresses"`
 	PendingTransfers map[string]*PendingTransfer      `json:"pending_transfers" bson:"pending_transfers"`
 }
 
 func (state *AccountState) IsNew() bool {
-	return len(state.DepositRequests) == 0 && len(state.PendingTransfers) == 0
+	return len(state.DepositAddresses) == 0 && len(state.PendingTransfers) == 0
 }
 
 // ExportedAccountState represents an exported account state.
@@ -48,19 +48,19 @@ type PendingTransfer struct {
 	Tails  Hashes   `json:"tails" bson:"tails"`
 }
 
-// StoredDepositRequest defines a stored deposit request.
-// It differs from the normal request only in having an additional field to hold the security level
+// StoredDepositAddress defines a stored deposit address.
+// It differs from the normal deposit address only in having an additional field to hold the security level
 // used to generate the deposit address.
-type StoredDepositRequest struct {
-	deposit.Request `bson:"inline"`
-	SecurityLevel   consts.SecurityLevel `json:"security_level" bson:"security_level"`
+type StoredDepositAddress struct {
+	deposit.Conditions `bson:"inline"`
+	SecurityLevel      consts.SecurityLevel `json:"security_level" bson:"security_level"`
 }
 
 // errors produced by the store package.
 var (
 	ErrAccountNotFound         = errors.New("account not found")
 	ErrPendingTransferNotFound = errors.New("pending transfer not found")
-	ErrDepositRequestNotFound  = errors.New("deposit request not found")
+	ErrDepositAddressNotFound  = errors.New("deposit address not found")
 )
 
 // Store defines a persistence layer which takes care of storing account data.
@@ -78,14 +78,14 @@ type Store interface {
 	ReadIndex(id string) (uint64, error)
 	// WriteIndex stores the given index as the last used key index for the given account.
 	WriteIndex(id string, index uint64) error
-	// AddDepositRequest stores the deposit request under the given account with the used key index.
-	AddDepositRequest(id string, index uint64, depositRequest *StoredDepositRequest) error
-	// RemoveDepositRequest removes the deposit request with the given key index under the given account.
-	RemoveDepositRequest(id string, index uint64) error
-	// GetDepositRequests loads the stored deposit requests of the given account.
-	GetDepositRequests(id string) (map[uint64]*StoredDepositRequest, error)
+	// AddDepositAddress stores the deposit address under the given account with the used key index.
+	AddDepositAddress(id string, index uint64, depositAddress *StoredDepositAddress) error
+	// RemoveDepositAddress removes the deposit address with the given key index under the given account.
+	RemoveDepositAddress(id string, index uint64) error
+	// GetDepositAddresses loads the stored deposit addresses of the given account.
+	GetDepositAddresses(id string) (map[uint64]*StoredDepositAddress, error)
 	// AddPendingTransfer stores the pending transfer under the given account with the origin tail tx hash as a key and
-	// removes all deposit requests which correspond to the used key indices for the transfer.
+	// removes all deposit addresses which correspond to the used key indices for the transfer.
 	AddPendingTransfer(id string, originTailTxHash Hash, bundleTrytes []Trytes, indices ...uint64) error
 	// RemovePendingTransfer removes the pending transfer with the given origin tail transaction hash
 	// from the given account.

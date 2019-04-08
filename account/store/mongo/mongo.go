@@ -27,8 +27,14 @@ type Config struct {
 	ContextProvider ContextProviderFunc
 }
 
-const DefaultDBName = "iota_account"
-const DefaultCollName = "accounts"
+const (
+	DefaultDBName   = "iota_account"
+	DefaultCollName = "accounts"
+
+	DepositAddressesKey = "deposit_addresses"
+	KeyIndexKey         = "key_index"
+	PendingTransfersKey = "pending_transfers"
+)
 
 func defaultConfig(cnf *Config) *Config {
 	if cnf == nil {
@@ -101,17 +107,17 @@ func (ms *MongoStore) init() error {
 
 func newaccountstate() *accountstate {
 	return &accountstate{
-		DepositRequests:  make(map[string]*store.StoredDepositRequest),
+		DepositAddresses: make(map[string]*store.StoredDepositAddress),
 		PendingTransfers: make(map[string]*store.PendingTransfer),
 	}
 }
 
-// account state with deposit requests map adjusted to use string keys as
+// account state with deposit addresses map adjusted to use string keys as
 // the marshaller of the MongoDB lib can't marshal uint64 map keys.
 type accountstate struct {
 	ID               string                                 `bson:"_id"`
 	KeyIndex         uint64                                 `json:"key_index" bson:"key_index"`
-	DepositRequests  map[string]*store.StoredDepositRequest `json:"deposit_requests" bson:"deposit_requests"`
+	DepositAddresses map[string]*store.StoredDepositAddress `json:"deposit_addresses" bson:"deposit_addresses"`
 	PendingTransfers map[string]*store.PendingTransfer      `json:"pending_transfers" bson:"pending_transfers"`
 }
 
@@ -120,10 +126,10 @@ func (ac *accountstate) AccountState() *store.AccountState {
 	state := &store.AccountState{}
 	state.PendingTransfers = ac.PendingTransfers
 	state.KeyIndex = ac.KeyIndex
-	state.DepositRequests = map[uint64]*store.StoredDepositRequest{}
-	for key, val := range ac.DepositRequests {
+	state.DepositAddresses = map[uint64]*store.StoredDepositAddress{}
+	for key, val := range ac.DepositAddresses {
 		keyNum, _ := strconv.ParseUint(key, 10, 64)
-		state.DepositRequests[keyNum] = val
+		state.DepositAddresses[keyNum] = val
 	}
 	return state
 }
@@ -167,8 +173,8 @@ func (ms *MongoStore) ImportAccount(state store.ExportedAccountState) error {
 	stateToImport.KeyIndex = state.KeyIndex
 	stateToImport.PendingTransfers = state.PendingTransfers
 	stateToImport.ID = state.ID
-	for index, depositRequest := range state.DepositRequests {
-		stateToImport.DepositRequests[strconv.Itoa(int(index))] = depositRequest
+	for index, depositAddress := range state.DepositAddresses {
+		stateToImport.DepositAddresses[strconv.Itoa(int(index))] = depositAddress
 	}
 	t := true
 	opts := &options.ReplaceOptions{Upsert: &t}
@@ -199,7 +205,7 @@ func (ms *MongoStore) ReadIndex(id string) (uint64, error) {
 	opts := &options.FindOneOptions{
 		Projection: bson.D{
 			{"_id", 0},
-			{"key_index", 1},
+			{KeyIndexKey, 1},
 		},
 	}
 	res := ms.coll.FindOne(ms.cnf.ContextProvider(), bson.D{{"_id", id}}, opts)
@@ -214,7 +220,7 @@ func (ms *MongoStore) ReadIndex(id string) (uint64, error) {
 }
 
 func (ms *MongoStore) WriteIndex(id string, index uint64) error {
-	mutation := bson.D{{"$set", bson.D{{"key_index", index}}}}
+	mutation := bson.D{{"$set", bson.D{{KeyIndexKey, index}}}}
 	_, err := ms.coll.UpdateOne(ms.cnf.ContextProvider(), bson.D{{"_id", id}}, mutation)
 	if err != nil {
 		return err
@@ -222,9 +228,9 @@ func (ms *MongoStore) WriteIndex(id string, index uint64) error {
 	return nil
 }
 
-func (ms *MongoStore) AddDepositRequest(id string, index uint64, depositRequest *store.StoredDepositRequest) error {
+func (ms *MongoStore) AddDepositAddress(id string, index uint64, depositAddress *store.StoredDepositAddress) error {
 	indexStr := strconv.FormatUint(index, 10)
-	mutation := bson.D{{"$set", bson.D{{"deposit_requests." + indexStr, depositRequest}}}}
+	mutation := bson.D{{"$set", bson.D{{DepositAddressesKey + "." + indexStr, depositAddress}}}}
 	_, err := ms.coll.UpdateOne(ms.cnf.ContextProvider(), bson.D{{"_id", id}}, mutation)
 	if err != nil {
 		return err
@@ -232,9 +238,9 @@ func (ms *MongoStore) AddDepositRequest(id string, index uint64, depositRequest 
 	return nil
 }
 
-func (ms *MongoStore) RemoveDepositRequest(id string, index uint64) error {
+func (ms *MongoStore) RemoveDepositAddress(id string, index uint64) error {
 	indexStr := strconv.FormatUint(index, 10)
-	mutation := bson.D{{"$unset", bson.D{{"deposit_requests." + indexStr, ""}}}}
+	mutation := bson.D{{"$unset", bson.D{{DepositAddressesKey + "." + indexStr, ""}}}}
 	_, err := ms.coll.UpdateOne(ms.cnf.ContextProvider(), bson.D{{"_id", id}}, mutation)
 	if err != nil {
 		return err
@@ -242,32 +248,32 @@ func (ms *MongoStore) RemoveDepositRequest(id string, index uint64) error {
 	return nil
 }
 
-type depositrequests struct {
-	DepositRequests map[string]*store.StoredDepositRequest `bson:"deposit_requests"`
+type depositaddresses struct {
+	DepositAddresses map[string]*store.StoredDepositAddress `bson:"deposit_addresses"`
 }
 
 // FIXME: remove once MongoDB driver knows how to unmarshal uint64 map keys
-func (dr *depositrequests) convert() map[uint64]*store.StoredDepositRequest {
-	m := make(map[uint64]*store.StoredDepositRequest, len(dr.DepositRequests))
-	for key, val := range dr.DepositRequests {
+func (dr *depositaddresses) convert() map[uint64]*store.StoredDepositAddress {
+	m := make(map[uint64]*store.StoredDepositAddress, len(dr.DepositAddresses))
+	for key, val := range dr.DepositAddresses {
 		keyNum, _ := strconv.ParseUint(key, 10, 64)
 		m[keyNum] = val
 	}
 	return m
 }
 
-func (ms *MongoStore) GetDepositRequests(id string) (map[uint64]*store.StoredDepositRequest, error) {
+func (ms *MongoStore) GetDepositAddresses(id string) (map[uint64]*store.StoredDepositAddress, error) {
 	opts := &options.FindOneOptions{
 		Projection: bson.D{
 			{"_id", 0},
-			{"deposit_requests", 1},
+			{DepositAddressesKey, 1},
 		},
 	}
 	res := ms.coll.FindOne(ms.cnf.ContextProvider(), bson.D{{"_id", id}}, opts)
 	if res.Err() != nil {
 		return nil, res.Err()
 	}
-	result := &depositrequests{}
+	result := &depositaddresses{}
 	if err := res.Decode(result); err != nil {
 		return nil, err
 	}
@@ -278,13 +284,13 @@ func (ms *MongoStore) AddPendingTransfer(id string, originTailTxHash trinary.Has
 	pendingTransfer := store.TrytesToPendingTransfer(bundleTrytes)
 	pendingTransfer.Tails = append(pendingTransfer.Tails, originTailTxHash)
 	mutation := bson.D{
-		{"$set", bson.D{{"pending_transfers." + originTailTxHash, pendingTransfer}}},
+		{"$set", bson.D{{PendingTransfersKey + "." + originTailTxHash, pendingTransfer}}},
 	}
 	if len(indices) > 0 {
 		unsetMap := bson.M{}
 		for _, index := range indices {
 			indexStr := strconv.FormatUint(index, 10)
-			unsetMap["deposit_requests."+indexStr] = ""
+			unsetMap[DepositAddressesKey+"."+indexStr] = ""
 		}
 		mutation = append(mutation, bson.E{"$unset", unsetMap})
 	}
@@ -296,7 +302,7 @@ func (ms *MongoStore) AddPendingTransfer(id string, originTailTxHash trinary.Has
 }
 
 func (ms *MongoStore) RemovePendingTransfer(id string, originTailTxHash trinary.Hash) error {
-	mutation := bson.D{{"$unset", bson.D{{"pending_transfers." + originTailTxHash, ""}}}}
+	mutation := bson.D{{"$unset", bson.D{{PendingTransfersKey + "." + originTailTxHash, ""}}}}
 	_, err := ms.coll.UpdateOne(ms.cnf.ContextProvider(), bson.D{{"_id", id}}, mutation)
 	if err != nil {
 		return err
@@ -306,11 +312,11 @@ func (ms *MongoStore) RemovePendingTransfer(id string, originTailTxHash trinary.
 
 func (ms *MongoStore) AddTailHash(id string, originTailTxHash trinary.Hash, newTailTxHash trinary.Hash) error {
 	mutation := bson.D{
-		{"$addToSet", bson.D{{"pending_transfers." + originTailTxHash + ".tails", newTailTxHash}}},
+		{"$addToSet", bson.D{{PendingTransfersKey + "." + originTailTxHash + ".tails", newTailTxHash}}},
 	}
 	_, err := ms.coll.UpdateOne(ms.cnf.ContextProvider(), bson.D{
 		{"_id", id},
-		{"pending_transfers." + originTailTxHash, bson.D{{"$exists", true}}},
+		{PendingTransfersKey + "." + originTailTxHash, bson.D{{"$exists", true}}},
 	}, mutation)
 	if err != nil {
 		return err
@@ -326,7 +332,7 @@ func (ms *MongoStore) GetPendingTransfers(id string) (map[string]*store.PendingT
 	opts := &options.FindOneOptions{
 		Projection: bson.D{
 			{"_id", 0},
-			{"pending_transfers", 1},
+			{PendingTransfersKey, 1},
 		},
 	}
 	res := ms.coll.FindOne(ms.cnf.ContextProvider(), bson.D{{"_id", id}}, opts)

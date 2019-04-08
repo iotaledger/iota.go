@@ -16,7 +16,7 @@ import (
 
 // InputSelectionFunc defines a function which given the account, transfer value and the flag balance check,
 // computes the inputs for fulfilling the transfer or the usable balance of the account.
-// The InputSelectionFunc must obey to the rules of conditional deposit requests to ensure consistency.
+// The InputSelectionFunc must obey to the rules of conditional deposit addresses to ensure consistency.
 // It returns the computed balance/transfer value, inputs and the key indices to remove from the store.
 type InputSelectionFunc func(acc *account, transferValue uint64, balanceCheck bool) (uint64, []api.Input, []uint64, error)
 
@@ -120,7 +120,7 @@ func DefaultPrepareTransfers(a *api.API, provider SeedProvider) PrepareTransfers
 }
 
 // Settings defines settings used by an account.
-// The settings must not be mutated after an account was started.
+// The settings must not be directly mutated after an account was started.
 type Settings struct {
 	API                 *api.API
 	Store               store.Store
@@ -140,7 +140,7 @@ var emptySeed = strings.Repeat("9", 81)
 
 // DefaultSettings returns Settings initialized with default values:
 // empty seed (81x "9" trytes), mwm: 14, depth: 3, security level: 2, no event machine,
-// system timesrc, default input sel. strat, in-memory store, iota-api pointing to localhost,
+// system clock as the time source, default input sel. strat, in-memory store, iota-api pointing to localhost,
 // no transfer poller plugin, no promoter-reattacher plugin.
 func DefaultSettings(setts ...Settings) *Settings {
 	if len(setts) == 0 {
@@ -154,7 +154,7 @@ func DefaultSettings(setts ...Settings) *Settings {
 			EventMachine:        &event.DiscardEventMachine{},
 			API:                 iotaAPI,
 			Store:               inmemory.NewInMemoryStore(),
-			InputSelectionStrat: defaultInputSelection,
+			InputSelectionStrat: DefaultInputSelection,
 		}
 	}
 	defaultValue := func(val uint64, should uint64) uint64 {
@@ -173,7 +173,7 @@ func DefaultSettings(setts ...Settings) *Settings {
 		sett.TimeSource = &timesrc.SystemClock{}
 	}
 	if sett.InputSelectionStrat == nil {
-		sett.InputSelectionStrat = defaultInputSelection
+		sett.InputSelectionStrat = DefaultInputSelection
 	}
 	if sett.API == nil {
 		iotaAPI, _ := api.ComposeAPI(api.HTTPClientSettings{})
