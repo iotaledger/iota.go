@@ -222,7 +222,7 @@ func MerkleBranch(tree Trits, siblings Trits, treeLength, treeDepth, leafIndex, 
 	return siblings, nil
 }
 
-// MerkleRoot generates a merkle root from a hash and his siblings
+// MerkleRoot generates a merkle root from a hash and his siblings,
 //	hash is the hash
 //	siblings is the hash siblings
 //	siblingsNumber is the number of siblings
