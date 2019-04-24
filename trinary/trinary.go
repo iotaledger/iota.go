@@ -22,7 +22,24 @@ var (
 		{0, -1, 0}, {1, -1, 0}, {-1, 0, 0},
 	}
 
-	byteRadix = [5]int8{1, 3, 9, 27, 81}
+	// Pow27LUT is a Look-up-table for Decoding Trits to int64
+	Pow27LUT = []int64{1,
+		27,
+		729,
+		19683,
+		531441,
+		14348907,
+		387420489,
+		10460353203,
+		282429536481,
+		7625597484987,
+		205891132094649,
+		5559060566555523,
+		150094635296999136,
+		4052555153018976256}
+
+	byteRadix   = [5]int8{1, 3, 9, 27, 81}
+	encodedZero = []int8{1, 0, 0, -1}
 )
 
 // Trits is a slice of int8. You should not use cast, use NewTrits instead to ensure the validity.
@@ -52,7 +69,7 @@ func NewTrits(t []int8) (Trits, error) {
 	return t, err
 }
 
-// TritsEqual returns true if t and b are equal Trits
+// TritsEqual returns true if t and b are equal Trits.
 func TritsEqual(a Trits, b Trits) (bool, error) {
 	if err := ValidTrits(a); err != nil {
 		return false, err
@@ -73,46 +90,114 @@ func TritsEqual(a Trits, b Trits) (bool, error) {
 	return true, nil
 }
 
-// IntToTrits converts int64 to trits.
+// Returns the absolute value of an int64.
+func MustAbsInt64(n int64) int64 {
+	if n == -1<<63 {
+		panic("value out of range")
+	}
+	y := n >> 63       // y ← x ⟫ 63
+	return (n ^ y) - y // (x ⨁ y) - y
+}
+
+func nearestGreaterMultipleOfThree(value uint64) uint64 {
+	rem := value % uint64(Radix)
+	if rem == 0 {
+		return value
+	}
+	return value + uint64(Radix) - rem
+}
+
+// MinTrits returns the length of trits needed to encode the value.
+func MinTrits(value int64) uint64 {
+	var num uint64 = 1
+	var vp uint64 = 1
+
+	valueAbs := uint64(MustAbsInt64(value))
+
+	for uint64(valueAbs) > vp {
+		vp = vp*uint64(Radix) + 1
+		num++
+	}
+	return num
+}
+
+// EncodedLength returns the length of trits needed to encode the value + encoding information.
+func EncodedLength(value int64) uint64 {
+	if value == 0 {
+		return uint64(len(encodedZero))
+	}
+	length := nearestGreaterMultipleOfThree(MinTrits(value))
+
+	// trits length + encoding length
+	return length + MinTrits((1<<(length/uint64(Radix)))-1)
+}
+
+// IntToTrytes converts int64 to a slice of trytes.
+func IntToTrytes(value int64, trytesCnt int) Trytes {
+	remainder := value
+	if value < 0 {
+		remainder = -value
+	}
+
+	var t Trytes
+
+	for tryte := 0; tryte < trytesCnt; tryte++ {
+		idx := remainder % 27
+		remainder /= 27
+
+		if idx > 13 {
+			remainder += 1
+		}
+
+		if value < 0 && idx != 0 {
+			idx = 27 - idx
+		}
+
+		t += string(TryteAlphabet[idx])
+	}
+	return t
+}
+
+// TrytesToInt converts a slice of trytes to int64.
+func TrytesToInt(t Trytes) int64 {
+	var val int64
+
+	for i := len(t) - 1; i >= 0; i-- {
+		idx := strings.Index(TryteAlphabet, string(t[i]))
+		if idx > 13 {
+			idx = idx - 27
+		}
+		val = val*27 + int64(idx)
+	}
+	return val
+}
+
+// IntToTrits converts int64 to a slice of trits.
 func IntToTrits(value int64) Trits {
 	if value == 0 {
 		return Trits{0}
 	}
-	var dest Trits
-	if value != 0 {
-		dest = make(Trits, int(1+math.Floor(math.Log(2*math.Max(1, math.Abs(float64(value))))/math.Log(3))))
-	} else {
-		dest = make(Trits, 0)
-	}
 
-	var absoluteValue int64
-	if value < 0 {
-		absoluteValue = -value
-	} else {
-		absoluteValue = value
-	}
+	negative := value < 0
+	size := MinTrits(value)
+	valueAbs := MustAbsInt64(value)
 
-	i := 0
-	for absoluteValue > 0 {
-		remainder := absoluteValue % TrinaryRadix
-		absoluteValue = int64(math.Floor(float64(absoluteValue / TrinaryRadix)))
+	t := make(Trits, size)
 
-		if remainder > MaxTritValue {
-			remainder = MinTritValue
-			absoluteValue++
+	for i := 0; i < int(size); i++ {
+		if valueAbs == 0 {
+			break
 		}
-
-		dest[i] = int8(remainder)
-		i++
-	}
-
-	if value < 0 {
-		for i := 0; i < len(dest); i++ {
-			dest[i] = -dest[i]
+		trit := int8((valueAbs+1)%(TrinaryRadix) - 1)
+		if negative {
+			trit = -trit
 		}
+		t[i] = trit
+		valueAbs++
+		valueAbs /= TrinaryRadix
 	}
 
-	return dest
+	return t
 }
 
 // TritsToInt converts a slice of trits into an integer and assumes little-endian notation.
@@ -122,6 +207,86 @@ func TritsToInt(t Trits) int64 {
 		val = val*3 + int64(t[i])
 	}
 	return val
+}
+
+// EncodeInt64 encodes an int64 as a slice of trits with encoding information.
+func EncodeInt64(value int64) (t Trits, size uint64, err error) {
+	size = EncodedLength(value)
+
+	if value == 0 {
+		return encodedZero, size, nil
+	}
+
+	var encoding int64 = 0
+	index := 0
+	length := nearestGreaterMultipleOfThree(MinTrits(MustAbsInt64(value)))
+	t = make(Trits, size)
+	copy(t, IntToTrits(value))
+
+	for i := 0; i < int(length)-TrinaryRadix; i += TrinaryRadix {
+		if TritsToInt(t[i:i+TrinaryRadix]) >= 0 {
+			encoding |= 1 << uint(index)
+			for j := 0; j < TrinaryRadix; j++ {
+				t[i+j] = -t[i+j]
+			}
+		}
+		index++
+	}
+
+	if TritsToInt(t[length-TrinaryRadix:length]) <= 0 {
+		encoding |= 1 << uint(index)
+		for i := 1; i < TrinaryRadix+1; i++ {
+			t[int(length)-i] = -t[int(length)-i]
+		}
+	}
+
+	copy(t[length:], IntToTrits(encoding))
+	return t, size, nil
+}
+
+// DecodeInt64 decodes a slice of trits with encoding information as an int64.
+func DecodeInt64(t Trits) (value int64, size uint64, err error) {
+	numTrits := uint64(len(t))
+
+	equal, err := TritsEqual(t[0:4], encodedZero)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	if equal {
+		return 0, EncodedLength(0), nil
+	}
+
+	value = 0
+	var encodingStart uint64 = 0
+
+	for (encodingStart < numTrits) && (TritsToInt(t[encodingStart:encodingStart+TrinaryRadix]) <= 0) {
+		encodingStart += TrinaryRadix
+	}
+
+	if encodingStart >= numTrits {
+		return 0, 0, errors.New("encodingStart > numTrits")
+	}
+
+	encodingStart += TrinaryRadix
+	encodingLength := MinTrits((1 << (encodingStart / TrinaryRadix)) - 1)
+	encoding := TritsToInt(t[encodingStart : encodingStart+encodingLength])
+
+	// Bound checking for the lookup table
+	if encodingStart/TrinaryRadix > 13 {
+		return 0, 0, errors.New("encodingStart/TrinaryRadix > 13")
+	}
+
+	for i := 0; i < int(encodingStart/TrinaryRadix); i++ {
+		tryteValue := TritsToInt(t[i*TrinaryRadix : (i*TrinaryRadix)+TrinaryRadix])
+
+		if ((encoding >> uint(i)) & 1) == 1 {
+			tryteValue = -tryteValue
+		}
+		value += Pow27LUT[i] * tryteValue
+	}
+
+	return value, encodingStart + encodingLength, nil
 }
 
 // CanTritsToTrytes returns true if t can be converted to trytes.
@@ -181,13 +346,38 @@ func TrytesToBytes(trytes Trytes) ([]byte, error) {
 	return TritsToBytes(trits), nil
 }
 
+// MustTrytesToBytes is only defined for hashes (81 Trytes). It returns 48 bytes.
+func MustTrytesToBytes(trytes Trytes) []byte {
+	bytes, err := TrytesToBytes(trytes)
+	if err != nil {
+		panic(err)
+	}
+	return bytes
+}
+
 // BytesToTrytes converts bytes to Trytes. Returns an error if the bytes slice is not 48 in length.
-func BytesToTrytes(bytes []byte) (Trytes, error) {
-	trits, err := BytesToTrits(bytes)
+func BytesToTrytes(bytes []byte, numTrytes ...int) (Trytes, error) {
+	numTrits := []int{}
+	if len(numTrytes) > 0 {
+		numTrits = append(numTrits, numTrytes[0]*3)
+	}
+
+	trits, err := BytesToTrits(bytes, numTrits...)
 	if err != nil {
 		return "", err
 	}
+
+	trits = PadTrits(trits, int(nearestGreaterMultipleOfThree(uint64(len(trits)))))
 	return TritsToTrytes(trits)
+}
+
+// MustBytesToTrytes converts bytes to Trytes.
+func MustBytesToTrytes(bytes []byte, numTrytes ...int) Trytes {
+	trytes, err := BytesToTrytes(bytes, numTrytes...)
+	if err != nil {
+		panic(err)
+	}
+	return trytes
 }
 
 // TritsToBytes packs an array of trits into an array of bytes (5 packed trits in 1 byte)
@@ -348,7 +538,8 @@ func PadTrits(trits Trits, size int) Trits {
 	return sized
 }
 
-func sum(a int8, b int8) int8 {
+// Sum returns the sum of two trits.
+func Sum(a int8, b int8) int8 {
 	s := a + b
 
 	switch s {
@@ -384,11 +575,11 @@ func any(a int8, b int8) int8 {
 }
 
 func fullAdd(a int8, b int8, c int8) [2]int8 {
-	sA := sum(a, b)
+	sA := Sum(a, b)
 	cA := cons(a, b)
 	cB := cons(sA, c)
 	cOut := any(cA, cB)
-	sOut := sum(sA, c)
+	sOut := Sum(sA, c)
 	return [2]int8{sOut, cOut}
 }
 
