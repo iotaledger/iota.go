@@ -2,13 +2,17 @@ package signing_examples_test
 
 import (
 	"fmt"
+
 	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// o: SpongeFunction, The SpongeFunction interface using Curl.
-func ExampleNewCurl() {}
+// o: SpongeFunction, The SpongeFunction interface using CurlP27.
+func ExampleNewCurlP27() {}
+
+// o: SpongeFunction, The SpongeFunction interface using CurlP81.
+func ExampleNewCurlP81() {}
 
 // o: SpongeFunction, The SpongeFunction interface using Kerl.
 func ExampleNewKerl() {}
