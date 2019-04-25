@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/signing/legacy"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
