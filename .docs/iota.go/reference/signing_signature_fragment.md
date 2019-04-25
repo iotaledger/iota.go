@@ -9,7 +9,7 @@ SignatureFragment returns signed fragments using the given bundle hash and key f
 |:---------------|:--------|:--------| :--------|
 | normalizedBundleHashFragment | Trits | Required | The normalized bundle hash.  |
 | keyFragment | Trits | Required | The fragment of the private key.  |
-| spongeFunc | ...SpongeFunctionCreator | Optional | The optional sponge function to use.  |
+| spongeFunc | ...SpongeFunction | Optional | The optional sponge function to use.  |
 
 
 
