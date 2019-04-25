@@ -26,10 +26,12 @@ var _ = Describe("Signing", func() {
 			mxTx1SignatureMessageFragmentTrits := MustTrytesToTrits(mxTx1.SignatureMessageFragment)[:consts.SignatureMessageFragmentTrinarySize]
 			mxTx2Trits := MustTrytesToTrits(trytesMsTx2)[:consts.TransactionTrinarySize]
 
+			c := NewCurlP27()
+
 			normalized := NormalizedBundleHash(mxTx1.TrunkTransaction)[:27]
-			digests, err := Digest(normalized, mxTx1SignatureMessageFragmentTrits, NewCurlP27)
+			digests, err := Digest(normalized, mxTx1SignatureMessageFragmentTrits, c)
 			Expect(err).ToNot(HaveOccurred())
-			address, err := Address(digests, NewCurlP27)
+			address, err := Address(digests, c)
 			Expect(err).ToNot(HaveOccurred())
 
 			merkleRoot, err := merkle.MerkleRoot(
@@ -37,7 +39,7 @@ var _ = Describe("Signing", func() {
 				mxTx2Trits,
 				NUMBER_OF_KEYS_IN_MILESTONE,
 				milestoneIndex,
-				NewCurlP27,
+				c,
 			)
 			Expect(err).ToNot(HaveOccurred())
 

@@ -95,7 +95,7 @@ func MerkleLeafIndex(leafIndex, leafCount uint64) uint64 {
 //	offset is the offset used to generate addresses
 //	security is the security used to generate addresses
 //	spongeFunc is the optional sponge function to use
-func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security SecurityLevel, spongeFunc ...signing.SpongeFunctionCreator) (Trits, error) {
+func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security SecurityLevel, spongeFunc ...signing.SpongeFunction) (Trits, error) {
 
 	// enforcing the tree to be perfect by checking if the base size (number of leaves) is a power of two
 	if (baseSize != 0) && (baseSize&(baseSize-1)) != 0 {
@@ -111,28 +111,28 @@ func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security Security
 
 	// create base addresses
 	for leafIndex := uint64(0); leafIndex < baseSize; leafIndex++ {
-		subSeed, err := signing.Subseed(seed, offset+MerkleLeafIndex(leafIndex, baseSize), spongeFunc...)
+		subSeed, err := signing.Subseed(seed, offset+MerkleLeafIndex(leafIndex, baseSize), h)
 		if err != nil {
 			return nil, err
 		}
 
-		key, err := signing.Key(subSeed, security, spongeFunc...)
+		key, err := signing.Key(subSeed, security, h)
 		if err != nil {
 			return nil, err
 		}
 
-		keyDigests, err := signing.Digests(key, spongeFunc...)
+		keyDigests, err := signing.Digests(key, h)
 		if err != nil {
 			return nil, err
 		}
 
-		address, err := signing.Address(keyDigests, spongeFunc...)
+		address, err := signing.Address(keyDigests, h)
 		if err != nil {
 			return nil, err
 		}
 
-		treeIdx := HashTrinarySize * MerkleNodeIndex(td, leafIndex, td)
-		copy(tree[treeIdx:treeIdx+HashTrinarySize], address)
+		treeIdx := MerkleNodeIndex(td, leafIndex, td)
+		copy(tree[treeIdx*HashTrinarySize:(treeIdx+1)*HashTrinarySize], address)
 	}
 
 	// hash tree
@@ -228,7 +228,7 @@ func MerkleBranch(tree Trits, siblings Trits, treeLength, treeDepth, leafIndex, 
 //	siblingsNumber is the number of siblings
 //	leafIndex is the node index of the hash
 //	spongeFunc is the optional sponge function to use
-func MerkleRoot(hash Trits, siblings Trits, siblingsNumber uint64, leafIndex uint64, spongeFunc ...signing.SpongeFunctionCreator) (Trits, error) {
+func MerkleRoot(hash Trits, siblings Trits, siblingsNumber uint64, leafIndex uint64, spongeFunc ...signing.SpongeFunction) (Trits, error) {
 	h := signing.GetSpongeFunc(spongeFunc)
 
 	var j uint64 = 1
