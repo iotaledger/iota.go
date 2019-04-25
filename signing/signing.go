@@ -131,9 +131,7 @@ func Digests(key Trits, spongeFunc ...SpongeFunction) (Trits, error) {
 				h.Reset()
 			}
 
-			for k := 0; k < HashTrinarySize; k++ {
-				keyFragment[j*HashTrinarySize+k] = buf[k]
-			}
+			copy(keyFragment[j*HashTrinarySize:], buf)
 		}
 
 		// hash the key fragment (which now consists of hashed segments)
@@ -145,9 +143,9 @@ func Digests(key Trits, spongeFunc ...SpongeFunction) (Trits, error) {
 		if err != nil {
 			return nil, err
 		}
-		for j := 0; j < HashTrinarySize; j++ {
-			digests[i*HashTrinarySize+j] = buf[j]
-		}
+
+		copy(digests[i*HashTrinarySize:], buf)
+
 		h.Reset()
 	}
 
@@ -225,9 +223,7 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, sp
 			h.Reset()
 		}
 
-		for j := 0; j < HashTrinarySize; j++ {
-			sigFrag[i*HashTrinarySize+j] = hash[j]
-		}
+		copy(sigFrag[i*HashTrinarySize:], hash)
 	}
 
 	return sigFrag, nil
@@ -289,9 +285,8 @@ func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Has
 		if err != nil {
 			return false, err
 		}
-		for j := 0; j < HashTrinarySize; j++ {
-			digests[i*HashTrinarySize+j] = digest[j]
-		}
+
+		copy(digests[i*HashTrinarySize:], digest)
 	}
 
 	addressTrits, err := Address(digests, spongeFunc...)
