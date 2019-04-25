@@ -32,7 +32,7 @@ var _ = Describe("Merkle", func() {
 			siblings = make(Trits, (depth-1)*HashTrinarySize)
 			hash = make(Trits, HashTrinarySize)
 
-			merkleTree, err = MerkleCreate(leafCount, "ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9", 7, SecurityLevel(2), NewCurlP81)
+			merkleTree, err = MerkleCreate(leafCount, "ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9", 7, SecurityLevel(2), NewCurlP81())
 			Expect(err).ToNot(HaveOccurred())
 
 			for i := uint64(0); i < leafCount; i++ {
@@ -43,7 +43,7 @@ var _ = Describe("Merkle", func() {
 
 				copy(hash, merkleTree[merkleTreeIdx:merkleTreeIdx+HashTrinarySize])
 
-				hash, err = MerkleRoot(hash, siblings, depth-1, i, NewCurlP81)
+				hash, err = MerkleRoot(hash, siblings, depth-1, i, NewCurlP81())
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(merkleTree[:HashTrinarySize]).To(Equal(hash))
