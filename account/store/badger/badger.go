@@ -6,6 +6,7 @@ import (
 	"github.com/dgraph-io/badger"
 	. "github.com/iotaledger/iota.go/account/store"
 	. "github.com/iotaledger/iota.go/trinary"
+	"runtime"
 	"time"
 )
 
@@ -25,6 +26,10 @@ type BadgerStore struct {
 func (b *BadgerStore) init() error {
 	opts := badger.DefaultOptions
 	opts.SyncWrites = true
+	// set Truncate to true according to https://github.com/dgraph-io/badger/issues/476#issuecomment-388122680
+	if runtime.GOOS == "windows" {
+		opts.Truncate = true
+	}
 	opts.Dir = b.dir
 	opts.ValueDir = b.dir
 	var err error
