@@ -230,6 +230,11 @@ func (acc *account) UpdateSettings(setts *Settings) error {
 		return errors.Wrap(err, "unable to shutdown plugin in update settings op.")
 	}
 
+	// make sure all needed funcs are initialized
+	if err := initFuncs(setts); err != nil {
+		return err
+	}
+
 	// make a copy
 	acc.setts = setts
 
