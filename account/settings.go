@@ -145,16 +145,18 @@ var emptySeed = strings.Repeat("9", 81)
 func DefaultSettings(setts ...Settings) *Settings {
 	if len(setts) == 0 {
 		iotaAPI, _ := api.ComposeAPI(api.HTTPClientSettings{})
+		inMemoryEmptySeedProv := NewInMemorySeedProvider(emptySeed)
 		return &Settings{
 			MWM:                 14,
 			Depth:               3,
-			SeedProv:            NewInMemorySeedProvider(emptySeed),
+			SeedProv:            inMemoryEmptySeedProv,
 			SecurityLevel:       consts.SecurityLevelMedium,
 			TimeSource:          &timesrc.SystemClock{},
 			EventMachine:        &event.DiscardEventMachine{},
 			API:                 iotaAPI,
 			Store:               inmemory.NewInMemoryStore(),
 			InputSelectionStrat: DefaultInputSelection,
+			PrepareTransfers:    DefaultPrepareTransfers(iotaAPI, inMemoryEmptySeedProv),
 		}
 	}
 	defaultValue := func(val uint64, should uint64) uint64 {
