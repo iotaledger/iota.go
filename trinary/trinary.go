@@ -90,7 +90,7 @@ func TritsEqual(a Trits, b Trits) (bool, error) {
 	return true, nil
 }
 
-// Returns the absolute value of an int64.
+// MustAbsInt64 returns the absolute value of an int64.
 func MustAbsInt64(n int64) int64 {
 	if n == -1<<63 {
 		panic("value out of range")
