@@ -35,17 +35,20 @@ func NewKerl() SpongeFunction {
 	return kerl.NewKerl()
 }
 
-// GetSpongeFunc checks if a hash function was given, otherwise uses Kerl.
-func GetSpongeFunc(spongeFuncCreator []SpongeFunctionCreator) SpongeFunction {
-	if len(spongeFuncCreator) > 0 {
-		return spongeFuncCreator[0]()
+// GetSpongeFunc checks if a hash function was given, otherwise uses defaultSpongeFuncCreator, or Kerl.
+func GetSpongeFunc(spongeFunc []SpongeFunction, defaultSpongeFuncCreator ...SpongeFunctionCreator) SpongeFunction {
+	if len(spongeFunc) > 0 {
+		return spongeFunc[0]
+	}
+	if len(defaultSpongeFuncCreator) > 0 {
+		return defaultSpongeFuncCreator[0]()
 	}
 	return NewKerl()
 }
 
 // Subseed takes a seed and an index and returns the given subseed.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
-func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
+func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunction) (Trits, error) {
 	if err := ValidTrytes(seed); err != nil {
 		return nil, err
 	} else if len(seed) != HashTrinarySize/TrinaryRadix {
@@ -60,6 +63,8 @@ func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunctionCreator) (Tr
 	incrementedSeed := AddTrits(trits, IntToTrits(int64(index)))
 
 	h := GetSpongeFunc(spongeFunc)
+	defer h.Reset()
+
 	err = h.Absorb(incrementedSeed)
 	if err != nil {
 		return nil, err
@@ -74,8 +79,10 @@ func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunctionCreator) (Tr
 
 // Key computes a new private key from the given subseed using the given security level.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
-func Key(subseed Trits, securityLevel SecurityLevel, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
+func Key(subseed Trits, securityLevel SecurityLevel, spongeFunc ...SpongeFunction) (Trits, error) {
 	h := GetSpongeFunc(spongeFunc)
+	defer h.Reset()
+
 	if err := h.Absorb(subseed); err != nil {
 		return nil, err
 	}
@@ -84,11 +91,11 @@ func Key(subseed Trits, securityLevel SecurityLevel, spongeFunc ...SpongeFunctio
 
 	for i := 0; i < int(securityLevel); i++ {
 		for j := 0; j < KeySegmentsPerFragment; j++ {
-			b, err := h.Squeeze(HashTrinarySize)
+			buf, err := h.Squeeze(HashTrinarySize)
 			if err != nil {
 				return nil, err
 			}
-			copy(key[(i*KeySegmentsPerFragment+j)*HashTrinarySize:], b)
+			copy(key[(i*KeySegmentsPerFragment+j)*HashTrinarySize:], buf)
 		}
 	}
 
@@ -97,11 +104,14 @@ func Key(subseed Trits, securityLevel SecurityLevel, spongeFunc ...SpongeFunctio
 
 // Digests hashes each segment of each key fragment 26 times and returns them.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
-func Digests(key Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
+func Digests(key Trits, spongeFunc ...SpongeFunction) (Trits, error) {
 	var err error
 	fragments := int(math.Floor(float64(len(key)) / KeyFragmentLength))
 	digests := make(Trits, fragments*HashTrinarySize)
 	buf := make(Trits, HashTrinarySize)
+
+	h := GetSpongeFunc(spongeFunc)
+	defer h.Reset()
 
 	// iterate through each key fragment
 	for i := 0; i < fragments; i++ {
@@ -113,21 +123,18 @@ func Digests(key Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
 
 			// hash each segment 26 times
 			for k := 0; k < KeySegmentHashRounds; k++ {
-				h := GetSpongeFunc(spongeFunc)
 				h.Absorb(buf)
 				buf, err = h.Squeeze(HashTrinarySize)
 				if err != nil {
 					return nil, err
 				}
+				h.Reset()
 			}
 
-			for k := 0; k < HashTrinarySize; k++ {
-				keyFragment[j*HashTrinarySize+k] = buf[k]
-			}
+			copy(keyFragment[j*HashTrinarySize:], buf)
 		}
 
 		// hash the key fragment (which now consists of hashed segments)
-		h := GetSpongeFunc(spongeFunc)
 		if err := h.Absorb(keyFragment); err != nil {
 			return nil, err
 		}
@@ -136,9 +143,10 @@ func Digests(key Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
 		if err != nil {
 			return nil, err
 		}
-		for j := 0; j < HashTrinarySize; j++ {
-			digests[i*HashTrinarySize+j] = buf[j]
-		}
+
+		copy(digests[i*HashTrinarySize:], buf)
+
+		h.Reset()
 	}
 
 	return digests, nil
@@ -146,8 +154,10 @@ func Digests(key Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
 
 // Address generates the address trits from the given digests.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
-func Address(digests Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
+func Address(digests Trits, spongeFunc ...SpongeFunction) (Trits, error) {
 	h := GetSpongeFunc(spongeFunc)
+	defer h.Reset()
+
 	if err := h.Absorb(digests); err != nil {
 		return nil, err
 	}
@@ -190,18 +200,18 @@ func NormalizedBundleHash(bundleHash Hash) []int8 {
 
 // SignatureFragment returns signed fragments using the given bundle hash and key fragment.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
-func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
+func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, spongeFunc ...SpongeFunction) (Trits, error) {
 	sigFrag := make(Trits, len(keyFragment))
 	copy(sigFrag, keyFragment)
 
 	h := GetSpongeFunc(spongeFunc)
+	defer h.Reset()
 
 	for i := 0; i < KeySegmentsPerFragment; i++ {
 		hash := sigFrag[i*HashTrinarySize : (i+1)*HashTrinarySize]
 
 		to := MaxTryteValue - normalizedBundleHashFragment[i]
 		for j := 0; j < int(to); j++ {
-			h.Reset()
 			if err := h.Absorb(hash); err != nil {
 				return nil, err
 			}
@@ -210,11 +220,10 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, sp
 			if err != nil {
 				return nil, err
 			}
+			h.Reset()
 		}
 
-		for j := 0; j < HashTrinarySize; j++ {
-			sigFrag[i*HashTrinarySize+j] = hash[j]
-		}
+		copy(sigFrag[i*HashTrinarySize:], hash)
 	}
 
 	return sigFrag, nil
@@ -222,28 +231,33 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, sp
 
 // Digest computes the digest derived from the signature fragment and normalized bundle hash.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
-func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, spongeFunc ...SpongeFunctionCreator) (Trits, error) {
+func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, spongeFunc ...SpongeFunction) (Trits, error) {
 	h := GetSpongeFunc(spongeFunc)
+	defer h.Reset()
+
 	buf := make(Trits, HashTrinarySize)
+	sig := make(Trits, KeySegmentsPerFragment*HashTrinarySize)
 
 	for i := 0; i < KeySegmentsPerFragment; i++ {
 		copy(buf, signatureFragment[i*HashTrinarySize:(i+1)*HashTrinarySize])
 
 		for j := normalizedBundleHashFragment[i] + MaxTryteValue; j > 0; j-- {
-			hh := GetSpongeFunc(spongeFunc)
-			err := hh.Absorb(buf)
+			err := h.Absorb(buf)
 			if err != nil {
 				return nil, err
 			}
-			buf, err = hh.Squeeze(HashTrinarySize)
+			buf, err = h.Squeeze(HashTrinarySize)
 			if err != nil {
 				return nil, err
 			}
+			h.Reset()
 		}
 
-		if err := h.Absorb(buf); err != nil {
+		copy(sig[i*HashTrinarySize:(i+1)*HashTrinarySize], buf)
+	}
+
+	if err := h.Absorb(sig); err != nil {
 			return nil, err
-		}
 	}
 
 	return h.Squeeze(HashTrinarySize)
@@ -252,7 +266,7 @@ func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, sponge
 // ValidateSignatures validates the given signature fragments by checking whether the
 // digests computed from the bundle hash and fragments equal the passed address.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
-func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Hash, spongeFunc ...SpongeFunctionCreator) (bool, error) {
+func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Hash, spongeFunc ...SpongeFunction) (bool, error) {
 	normalizedBundleHashFragments := make([][]int8, MaxSecurityLevel)
 	normalizeBundleHash := NormalizedBundleHash(bundleHash)
 
@@ -271,9 +285,8 @@ func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Has
 		if err != nil {
 			return false, err
 		}
-		for j := 0; j < HashTrinarySize; j++ {
-			digests[i*HashTrinarySize+j] = digest[j]
-		}
+
+		copy(digests[i*HashTrinarySize:], digest)
 	}
 
 	addressTrits, err := Address(digests, spongeFunc...)

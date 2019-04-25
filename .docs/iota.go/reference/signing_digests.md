@@ -8,7 +8,7 @@ Digests hashes each segment of each key fragment 26 times and returns them. Opti
 | Parameter       | Type | Required or Optional | Description |
 |:---------------|:--------|:--------| :--------|
 | key | Trits | Required | The private key from which to derive the digests from.  |
-| spongeFunc | ...SpongeFunctionCreator | Optional | The optional sponge function to use.  |
+| spongeFunc | ...SpongeFunction | Optional | The optional sponge function to use.  |
 
 
 

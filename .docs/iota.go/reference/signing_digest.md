@@ -9,7 +9,7 @@ Digest computes the digest derived from the signature fragment and normalized bu
 |:---------------|:--------|:--------| :--------|
 | normalizedBundleHashFragment | []int8 | Required | The fragment of the normalized bundle hash.  |
 | signatureFragment | Trits | Required | The signature fragment corresponding to the bundle hash fragment.  |
-| spongeFunc | ...SpongeFunctionCreator | Optional | The optional sponge function to use.  |
+| spongeFunc | ...SpongeFunction | Optional | The optional sponge function to use.  |
 
 
 

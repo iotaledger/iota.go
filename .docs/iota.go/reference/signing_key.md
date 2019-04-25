@@ -9,7 +9,7 @@ Key computes a new private key from the given subseed using the given security l
 |:---------------|:--------|:--------| :--------|
 | subseed | Trits | Required | The subseed from which to derive the private key from.  |
 | securityLevel | SecurityLevel | Required | The used security level.  |
-| spongeFunc | ...SpongeFunctionCreator | Optional | The optional sponge function to use.  |
+| spongeFunc | ...SpongeFunction | Optional | The optional sponge function to use.  |
 
 
 
