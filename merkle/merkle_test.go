@@ -3,7 +3,7 @@ package merkle_test
 import (
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/merkle"
-	. "github.com/iotaledger/iota.go/signing"
+	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 
 	. "github.com/onsi/ginkgo"

@@ -7,45 +7,9 @@ import (
 	"math"
 
 	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/curl"
-	"github.com/iotaledger/iota.go/kerl"
+	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
-
-type SpongeFunctionCreator func() SpongeFunction
-
-// SpongeFunction is a hash function using the sponge construction.
-type SpongeFunction interface {
-	Absorb(in Trits) error
-	Squeeze(length int) (Trits, error)
-	Reset()
-}
-
-// NewCurlP27 returns a new CurlP27.
-func NewCurlP27() SpongeFunction {
-	return curl.NewCurl(curl.CurlP27)
-}
-
-// NewCurlP81 returns a new CurlP81.
-func NewCurlP81() SpongeFunction {
-	return curl.NewCurl(curl.CurlP81)
-}
-
-// NewKerl returns a new Kerl.
-func NewKerl() SpongeFunction {
-	return kerl.NewKerl()
-}
-
-// GetSpongeFunc checks if a hash function was given, otherwise uses defaultSpongeFuncCreator, or Kerl.
-func GetSpongeFunc(spongeFunc []SpongeFunction, defaultSpongeFuncCreator ...SpongeFunctionCreator) SpongeFunction {
-	if len(spongeFunc) > 0 {
-		return spongeFunc[0]
-	}
-	if len(defaultSpongeFuncCreator) > 0 {
-		return defaultSpongeFuncCreator[0]()
-	}
-	return NewKerl()
-}
 
 // Subseed takes a seed and an index and returns the given subseed.
 // Optionally takes the SpongeFunction to use. Default is Kerl.

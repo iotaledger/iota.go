@@ -6,6 +6,7 @@ import (
 
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/signing/legacy"
+	"github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
@@ -95,7 +96,7 @@ func MerkleLeafIndex(leafIndex, leafCount uint64) uint64 {
 //	offset is the offset used to generate addresses
 //	security is the security used to generate addresses
 //	spongeFunc is the optional sponge function to use
-func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security SecurityLevel, spongeFunc ...signing.SpongeFunction) (Trits, error) {
+func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security SecurityLevel, spongeFunc ...sponge.SpongeFunction) (Trits, error) {
 
 	// enforcing the tree to be perfect by checking if the base size (number of leaves) is a power of two
 	if (baseSize != 0) && (baseSize&(baseSize-1)) != 0 {
@@ -105,64 +106,64 @@ func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security Security
 	treeMerkleSize := MerkleSize(baseSize)
 	tree := make(Trits, treeMerkleSize*HashTrinarySize)
 
-	h := signing.GetSpongeFunc(spongeFunc)
+	h := sponge.GetSpongeFunc(spongeFunc)
 
 	td := MerkleDepth(treeMerkleSize) - 1
 
-	// create base addresses
+			// create base addresses
 	for leafIndex := uint64(0); leafIndex < baseSize; leafIndex++ {
-		subSeed, err := signing.Subseed(seed, offset+MerkleLeafIndex(leafIndex, baseSize), h)
-		if err != nil {
+				subSeed, err := signing.Subseed(seed, offset+MerkleLeafIndex(leafIndex, baseSize), h)
+				if err != nil {
 			return nil, err
-		}
+				}
 
-		key, err := signing.Key(subSeed, security, h)
-		if err != nil {
+				key, err := signing.Key(subSeed, security, h)
+				if err != nil {
 			return nil, err
-		}
+				}
 
-		keyDigests, err := signing.Digests(key, h)
-		if err != nil {
+				keyDigests, err := signing.Digests(key, h)
+				if err != nil {
 			return nil, err
-		}
+				}
 
-		address, err := signing.Address(keyDigests, h)
-		if err != nil {
+				address, err := signing.Address(keyDigests, h)
+				if err != nil {
 			return nil, err
-		}
+				}
 
-		treeIdx := MerkleNodeIndex(td, leafIndex, td)
-		copy(tree[treeIdx*HashTrinarySize:(treeIdx+1)*HashTrinarySize], address)
-	}
+				treeIdx := MerkleNodeIndex(td, leafIndex, td)
+				copy(tree[treeIdx*HashTrinarySize:(treeIdx+1)*HashTrinarySize], address)
+			}
 
 	// hash tree
 	curSize := baseSize
 	for depth := td; depth > 0; depth-- {
 		for width := uint64(0); width < curSize; width += 2 {
 
-			merkleNodeIdxLeft := MerkleNodeIndex(depth, width, td) * HashTrinarySize
-			merkleNodeIdxRight := MerkleNodeIndex(depth, width+1, td) * HashTrinarySize
+					merkleNodeIdxLeft := MerkleNodeIndex(depth, width, td) * HashTrinarySize
+					merkleNodeIdxRight := MerkleNodeIndex(depth, width+1, td) * HashTrinarySize
 
-			if width < curSize-1 {
-				// if right hash exists, absorb right hash then left hash
-				h.Absorb(tree[merkleNodeIdxRight : merkleNodeIdxRight+HashTrinarySize])
-				h.Absorb(tree[merkleNodeIdxLeft : merkleNodeIdxLeft+HashTrinarySize])
-			} else {
-				// else, absorb the remaining hash then a null hash
-				h.Absorb(tree[merkleNodeIdxLeft : merkleNodeIdxLeft+HashTrinarySize])
-				h.Absorb(merkleNullHash)
-			}
+					if width < curSize-1 {
+						// if right hash exists, absorb right hash then left hash
+						h.Absorb(tree[merkleNodeIdxRight : merkleNodeIdxRight+HashTrinarySize])
+						h.Absorb(tree[merkleNodeIdxLeft : merkleNodeIdxLeft+HashTrinarySize])
+					} else {
+						// else, absorb the remaining hash then a null hash
+						h.Absorb(tree[merkleNodeIdxLeft : merkleNodeIdxLeft+HashTrinarySize])
+						h.Absorb(merkleNullHash)
+					}
 
-			// squeeze the result in the parent node
-			trits, err := h.Squeeze(HashTrinarySize)
-			if err != nil {
+					// squeeze the result in the parent node
+					trits, err := h.Squeeze(HashTrinarySize)
+					if err != nil {
 				return nil, err
-			}
+					}
 
-			parentIdx := MerkleNodeIndex(depth-1, width/2, td) * HashTrinarySize
-			copy(tree[parentIdx:parentIdx+HashTrinarySize], trits)
-			h.Reset()
-		}
+					parentIdx := MerkleNodeIndex(depth-1, width/2, td) * HashTrinarySize
+					copy(tree[parentIdx:parentIdx+HashTrinarySize], trits)
+					h.Reset()
+				}
 		curSize = (curSize + 1) >> 1
 	}
 
@@ -228,8 +229,8 @@ func MerkleBranch(tree Trits, siblings Trits, treeLength, treeDepth, leafIndex, 
 //	siblingsNumber is the number of siblings
 //	leafIndex is the node index of the hash
 //	spongeFunc is the optional sponge function to use
-func MerkleRoot(hash Trits, siblings Trits, siblingsNumber uint64, leafIndex uint64, spongeFunc ...signing.SpongeFunction) (Trits, error) {
-	h := signing.GetSpongeFunc(spongeFunc)
+func MerkleRoot(hash Trits, siblings Trits, siblingsNumber uint64, leafIndex uint64, spongeFunc ...sponge.SpongeFunction) (Trits, error) {
+	h := sponge.GetSpongeFunc(spongeFunc)
 
 	var j uint64 = 1
 	var err error
