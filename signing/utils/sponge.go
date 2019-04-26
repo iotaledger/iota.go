@@ -9,8 +9,13 @@ type SpongeFunctionCreator func() SpongeFunction
 
 // SpongeFunction is a hash function using the sponge construction.
 type SpongeFunction interface {
-	Absorb(in Trits) error
 	Squeeze(length int) (Trits, error)
+	MustSqueeze(length int) Trits
+	SqueezeTrytes(length int) (Trytes, error)
+	MustSqueezeTrytes(length int) Trytes
+	Absorb(in Trits) error
+	AbsorbTrytes(in Trytes) error
+	MustAbsorbTrytes(in Trytes)
 	Reset()
 }
 
