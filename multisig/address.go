@@ -3,14 +3,17 @@ package multisig
 import "github.com/iotaledger/iota.go/kerl"
 import (
 	. "github.com/iotaledger/iota.go/consts"
+	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
 // NewMultisigAddress creates a new multisig address object.
-func NewMultisigAddress(digests ...Trytes) (*MultisigAddress, error) {
-	m := &MultisigAddress{k: kerl.NewKerl()}
+func NewMultisigAddress(digests Trytes, spongeFunc ...SpongeFunction) (*MultisigAddress, error) {
+	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
+
+	m := &MultisigAddress{h: h}
 	if len(digests) != 0 {
-		if err := m.Absorb(digests...); err != nil {
+		if err := m.Absorb(digests); err != nil {
 			return nil, err
 		}
 	}
@@ -19,13 +22,13 @@ func NewMultisigAddress(digests ...Trytes) (*MultisigAddress, error) {
 
 // MultisigAddress represents a multisig address.
 type MultisigAddress struct {
-	k *kerl.Kerl
+	h SpongeFunction
 }
 
 // Absorb absorbs the given key digests.
 func (m *MultisigAddress) Absorb(digests ...Trytes) error {
 	for i := range digests {
-		if err := m.k.Absorb(MustTrytesToTrits(digests[i])); err != nil {
+		if err := m.h.Absorb(MustTrytesToTrits(digests[i])); err != nil {
 			return err
 		}
 	}
@@ -40,7 +43,7 @@ func (m *MultisigAddress) Finalize(digest *string) (Trytes, error) {
 		}
 	}
 
-	addressTrits, err := m.k.Squeeze(HashTrinarySize)
+	addressTrits, err := m.h.Squeeze(HashTrinarySize)
 	if err != nil {
 		return "", err
 	}

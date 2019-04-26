@@ -10,6 +10,7 @@ import (
 	. "github.com/iotaledger/iota.go/guards/validators"
 	"github.com/iotaledger/iota.go/kerl"
 	"github.com/iotaledger/iota.go/signing"
+	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 	"math"
 	"strings"
@@ -36,13 +37,15 @@ type Multisig struct {
 }
 
 // Key gets the key value of a seed.
-func (m *Multisig) Key(seed Trytes, index uint64, security SecurityLevel) (Trytes, error) {
-	subseed, err := signing.Subseed(seed, index)
+func (m *Multisig) Key(seed Trytes, index uint64, security SecurityLevel, spongeFunc ...SpongeFunction) (Trytes, error) {
+	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
+
+	subseed, err := signing.Subseed(seed, index, h)
 	if err != nil {
 		return "", err
 	}
 
-	keyTrits, err := signing.Key(subseed, security)
+	keyTrits, err := signing.Key(subseed, security, h)
 	if err != nil {
 		return "", err
 	}
@@ -51,18 +54,20 @@ func (m *Multisig) Key(seed Trytes, index uint64, security SecurityLevel) (Tryte
 }
 
 // Digest gets the digest of a seed under the given index and security.
-func (m *Multisig) Digest(seed Trytes, index uint64, security SecurityLevel) (Trytes, error) {
-	subseed, err := signing.Subseed(seed, index)
+func (m *Multisig) Digest(seed Trytes, index uint64, security SecurityLevel, spongeFunc ...SpongeFunction) (Trytes, error) {
+	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
+
+	subseed, err := signing.Subseed(seed, index, h)
 	if err != nil {
 		return "", err
 	}
 
-	keyTrits, err := signing.Key(subseed, security)
+	keyTrits, err := signing.Key(subseed, security, h)
 	if err != nil {
 		return "", err
 	}
 
-	digestTrits, err := signing.Digests(keyTrits)
+	digestTrits, err := signing.Digests(keyTrits, h)
 	if err != nil {
 		return "", err
 	}
@@ -71,20 +76,20 @@ func (m *Multisig) Digest(seed Trytes, index uint64, security SecurityLevel) (Tr
 }
 
 // ValidateAddress validates the given multisig address.
-func (m *Multisig) ValidateAddress(addr Trytes, digests []Trytes) (bool, error) {
-	k := kerl.NewKerl()
+func (m *Multisig) ValidateAddress(addr Trytes, digests []Trytes, spongeFunc ...SpongeFunction) (bool, error) {
+	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
 
 	for i := range digests {
 		digestTrits, err := TrytesToTrits(digests[i])
 		if err != nil {
 			return false, err
 		}
-		if err := k.Absorb(digestTrits); err != nil {
+		if err := h.Absorb(digestTrits); err != nil {
 			return false, err
 		}
 	}
 
-	addressTrits, err := k.Squeeze(HashTrinarySize)
+	addressTrits, err := h.Squeeze(HashTrinarySize)
 	if err != nil {
 		return false, err
 	}
