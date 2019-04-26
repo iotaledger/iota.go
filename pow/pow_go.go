@@ -330,7 +330,7 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 
 	tr := MustTrytesToTrits(trytes)
 
-	c := curl.NewCurl(curl.CurlP81).(*curl.Curl)
+	c := curl.NewCurlP81().(*curl.Curl)
 	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
