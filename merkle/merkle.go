@@ -110,60 +110,60 @@ func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security Security
 
 	td := MerkleDepth(treeMerkleSize) - 1
 
-			// create base addresses
+	// create base addresses
 	for leafIndex := uint64(0); leafIndex < baseSize; leafIndex++ {
-				subSeed, err := signing.Subseed(seed, offset+MerkleLeafIndex(leafIndex, baseSize), h)
-				if err != nil {
+		subSeed, err := signing.Subseed(seed, offset+MerkleLeafIndex(leafIndex, baseSize), h)
+		if err != nil {
 			return nil, err
-				}
+		}
 
-				key, err := signing.Key(subSeed, security, h)
-				if err != nil {
+		key, err := signing.Key(subSeed, security, h)
+		if err != nil {
 			return nil, err
-				}
+		}
 
-				keyDigests, err := signing.Digests(key, h)
-				if err != nil {
+		keyDigests, err := signing.Digests(key, h)
+		if err != nil {
 			return nil, err
-				}
+		}
 
-				address, err := signing.Address(keyDigests, h)
-				if err != nil {
+		address, err := signing.Address(keyDigests, h)
+		if err != nil {
 			return nil, err
-				}
+		}
 
-				treeIdx := MerkleNodeIndex(td, leafIndex, td)
-				copy(tree[treeIdx*HashTrinarySize:(treeIdx+1)*HashTrinarySize], address)
-			}
+		treeIdx := MerkleNodeIndex(td, leafIndex, td)
+		copy(tree[treeIdx*HashTrinarySize:(treeIdx+1)*HashTrinarySize], address)
+	}
 
 	// hash tree
 	curSize := baseSize
 	for depth := td; depth > 0; depth-- {
 		for width := uint64(0); width < curSize; width += 2 {
 
-					merkleNodeIdxLeft := MerkleNodeIndex(depth, width, td) * HashTrinarySize
-					merkleNodeIdxRight := MerkleNodeIndex(depth, width+1, td) * HashTrinarySize
+			merkleNodeIdxLeft := MerkleNodeIndex(depth, width, td) * HashTrinarySize
+			merkleNodeIdxRight := MerkleNodeIndex(depth, width+1, td) * HashTrinarySize
 
-					if width < curSize-1 {
-						// if right hash exists, absorb right hash then left hash
-						h.Absorb(tree[merkleNodeIdxRight : merkleNodeIdxRight+HashTrinarySize])
-						h.Absorb(tree[merkleNodeIdxLeft : merkleNodeIdxLeft+HashTrinarySize])
-					} else {
-						// else, absorb the remaining hash then a null hash
-						h.Absorb(tree[merkleNodeIdxLeft : merkleNodeIdxLeft+HashTrinarySize])
-						h.Absorb(merkleNullHash)
-					}
+			if width < curSize-1 {
+				// if right hash exists, absorb right hash then left hash
+				h.Absorb(tree[merkleNodeIdxRight : merkleNodeIdxRight+HashTrinarySize])
+				h.Absorb(tree[merkleNodeIdxLeft : merkleNodeIdxLeft+HashTrinarySize])
+			} else {
+				// else, absorb the remaining hash then a null hash
+				h.Absorb(tree[merkleNodeIdxLeft : merkleNodeIdxLeft+HashTrinarySize])
+				h.Absorb(merkleNullHash)
+			}
 
-					// squeeze the result in the parent node
-					trits, err := h.Squeeze(HashTrinarySize)
-					if err != nil {
+			// squeeze the result in the parent node
+			trits, err := h.Squeeze(HashTrinarySize)
+			if err != nil {
 				return nil, err
-					}
+			}
 
-					parentIdx := MerkleNodeIndex(depth-1, width/2, td) * HashTrinarySize
-					copy(tree[parentIdx:parentIdx+HashTrinarySize], trits)
-					h.Reset()
-				}
+			parentIdx := MerkleNodeIndex(depth-1, width/2, td) * HashTrinarySize
+			copy(tree[parentIdx:parentIdx+HashTrinarySize], trits)
+			h.Reset()
+		}
 		curSize = (curSize + 1) >> 1
 	}
 
