@@ -34,6 +34,10 @@ var (
 // Given a MWM of 14, the hash of the transaction must have 14 zero trits at the end of the hash.
 type ProofOfWorkFunc = func(trytes Trytes, mwm int, parallelism ...int) (Trytes, error)
 
+// CheckFunc is a function which checks if the required amount of work was fulfilled.
+// It needs the low and high trits of the curl state and a parameter (e.g. MWM for hashcash, Security for hamming)
+type CheckFunc = func(low *[curl.StateSize]uint64, high *[curl.StateSize]uint64, param int) int
+
 // DoPoW computes the nonce field for each transaction so that the last MWM-length trits of the
 // transaction hash are all zeroes. Starting from the 0 index transaction, the transactions get chained to
 // each other through the trunk transaction hash field. The last transaction in the bundle approves
@@ -161,22 +165,22 @@ const (
 	hBits uint64 = 0xFFFFFFFFFFFFFFFF
 	lBits uint64 = 0x0000000000000000
 
-	low0  uint64 = 0xDB6DB6DB6DB6DB6D
-	high0 uint64 = 0xB6DB6DB6DB6DB6DB
-	low1  uint64 = 0xF1F8FC7E3F1F8FC7
-	high1 uint64 = 0x8FC7E3F1F8FC7E3F
-	low2  uint64 = 0x7FFFE00FFFFC01FF
-	high2 uint64 = 0xFFC01FFFF803FFFF
-	low3  uint64 = 0xFFC0000007FFFFFF
-	high3 uint64 = 0x003FFFFFFFFFFFFF
+	PearlDiverMidStateLow0  uint64 = 0xDB6DB6DB6DB6DB6D
+	PearlDiverMidStateHigh0 uint64 = 0xB6DB6DB6DB6DB6DB
+	PearlDiverMidStateLow1  uint64 = 0xF1F8FC7E3F1F8FC7
+	PearlDiverMidStateHigh1 uint64 = 0x8FC7E3F1F8FC7E3F
+	PearlDiverMidStateLow2  uint64 = 0x7FFFE00FFFFC01FF
+	PearlDiverMidStateHigh2 uint64 = 0xFFC01FFFF803FFFF
+	PearlDiverMidStateLow3  uint64 = 0xFFC0000007FFFFFF
+	PearlDiverMidStateHigh3 uint64 = 0x003FFFFFFFFFFFFF
 
 	nonceOffset         = HashTrinarySize - NonceTrinarySize
 	nonceInitStart      = nonceOffset + 4
 	nonceIncrementStart = nonceInitStart + NonceTrinarySize/3
 )
 
-// 01:-1 11:0 10:1
-func para(in Trits) (*[curl.StateSize]uint64, *[curl.StateSize]uint64) {
+// Para transforms trits to ptrits (01:-1 11:0 10:1)
+func Para(in Trits) (*[curl.StateSize]uint64, *[curl.StateSize]uint64) {
 	var l, h [curl.StateSize]uint64
 
 	for i := 0; i < curl.StateSize; i++ {
@@ -210,14 +214,14 @@ func incrN(n int, lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) {
 	}
 }
 
-func transform64(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) {
+func transform64(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64, loopCnt int) {
 	var ltmp, htmp [curl.StateSize]uint64
 	lfrom := lmid
 	hfrom := hmid
 	lto := &ltmp
 	hto := &htmp
 
-	for r := 0; r < int(curl.NumberOfRounds)-1; r++ {
+	for r := 0; r < loopCnt; r++ {
 		for j := 0; j < curl.StateSize; j++ {
 			t1 := curl.Indices[j]
 			t2 := curl.Indices[j+1]
@@ -233,18 +237,6 @@ func transform64(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) {
 
 		lfrom, lto = lto, lfrom
 		hfrom, hto = hto, hfrom
-	}
-
-	for j := 0; j < curl.StateSize; j++ {
-		t1, t2 := curl.Indices[j], curl.Indices[j+1]
-
-		alpha := lfrom[t1]
-		beta := hfrom[t1]
-		gamma := hfrom[t2]
-		delta := (alpha | (^gamma)) & (lfrom[t2] ^ beta)
-
-		lto[j] = ^delta
-		hto[j] = (alpha ^ gamma) | delta
 	}
 
 	copy(lmid[:], ltmp[:])
@@ -302,20 +294,23 @@ func check(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, m int) int {
 	return -1
 }
 
-func loop(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64, m int, cancelled *bool) (Trits, int64) {
+// Loop increments and transforms until checkFun is true.
+func Loop(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64, m int, cancelled *bool, checkFun CheckFunc, loopCnt int) (nonce Trits, rate int64, foundIndex int) {
 	var lcpy, hcpy [curl.StateSize]uint64
 	var i int64
-	for i = 0; !incr(lmid, hmid) && !*cancelled; i++ {
+
+	for i = 0; !*cancelled; i++ {
 		copy(lcpy[:], lmid[:])
 		copy(hcpy[:], hmid[:])
-		transform64(&lcpy, &hcpy)
+		transform64(&lcpy, &hcpy, loopCnt)
 
-		if n := check(&lcpy, &hcpy, m); n >= 0 {
+		if n := checkFun(&lcpy, &hcpy, m); n >= 0 {
 			nonce := seri(lmid, hmid, uint(n))
-			return nonce, i * 64
+			return nonce, i * 64, n
 		}
+		incr(lmid, hmid)
 	}
-	return nil, i * 64
+	return nil, i * 64, -1
 }
 
 // implementation of Proof-of-Work in Go
@@ -345,18 +340,18 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 
 	for i := 0; i < numGoroutines; i++ {
 		go func(i int) {
-			lmid, hmid := para(c.State)
-			lmid[nonceOffset] = low0
-			hmid[nonceOffset] = high0
-			lmid[nonceOffset+1] = low1
-			hmid[nonceOffset+1] = high1
-			lmid[nonceOffset+2] = low2
-			hmid[nonceOffset+2] = high2
-			lmid[nonceOffset+3] = low3
-			hmid[nonceOffset+3] = high3
+			lmid, hmid := Para(c.State)
+			lmid[nonceOffset] = PearlDiverMidStateLow0
+			hmid[nonceOffset] = PearlDiverMidStateHigh0
+			lmid[nonceOffset+1] = PearlDiverMidStateLow1
+			hmid[nonceOffset+1] = PearlDiverMidStateHigh1
+			lmid[nonceOffset+2] = PearlDiverMidStateLow2
+			hmid[nonceOffset+2] = PearlDiverMidStateHigh2
+			lmid[nonceOffset+3] = PearlDiverMidStateLow3
+			hmid[nonceOffset+3] = PearlDiverMidStateHigh3
 
 			incrN(i, lmid, hmid)
-			nonce, r := loop(lmid, hmid, mwm, &cancelled)
+			nonce, r, _ := Loop(lmid, hmid, mwm, &cancelled, check, int(c.Rounds))
 
 			if rate != nil {
 				rate <- int64(math.Abs(float64(r)))
