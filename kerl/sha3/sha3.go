@@ -4,6 +4,10 @@
 
 package sha3
 
+import (
+	"hash"
+)
+
 // spongeDirection indicates the direction bytes are flowing through the sponge.
 type spongeDirection int
 
@@ -189,4 +193,9 @@ func (d *state) Sum(in []byte) []byte {
 	hash := make([]byte, dup.outputLen)
 	dup.Read(hash)
 	return append(in, hash...)
+}
+
+// CloneState returns a clone of the state.
+func CloneState(s hash.Hash) *state {
+	return s.(*state).Clone().(*state)
 }

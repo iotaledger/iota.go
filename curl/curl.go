@@ -210,3 +210,10 @@ func MustHashTrytes(t Trytes, rounds ...CurlRounds) Trytes {
 	}
 	return trytes
 }
+
+// Clone returns a deep copy of the current Curl
+func (c *Curl) Clone() SpongeFunction {
+	clone := NewCurl(c.Rounds).(*Curl)
+	copy(clone.State, c.State)
+	return clone
+}

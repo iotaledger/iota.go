@@ -17,6 +17,7 @@ type SpongeFunction interface {
 	AbsorbTrytes(in Trytes) error
 	MustAbsorbTrytes(in Trytes)
 	Reset()
+	Clone() SpongeFunction
 }
 
 // GetSpongeFunc checks if a hash function was given, otherwise uses defaultSpongeFuncCreator. Panics if none given.

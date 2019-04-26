@@ -127,3 +127,11 @@ func (k *Kerl) MustAbsorbTrytes(inn Trytes) {
 func (k *Kerl) Reset() {
 	k.s.Reset()
 }
+
+// Clone returns a deep copy of the current Kerl
+func (k *Kerl) Clone() SpongeFunction {
+	clone := NewKerl().(*Kerl)
+
+	clone.s = keccak.CloneState(k.s)
+	return clone
+}
