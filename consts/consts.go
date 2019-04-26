@@ -129,3 +129,10 @@ const (
 	Radix                int8 = 3
 	NumberOfTritsInAByte      = 5
 )
+
+// Merkle constants.
+const (
+	ISSFragments   uint64 = 27
+	ISSKeyLength   uint64 = HashTrinarySize * ISSFragments
+	ISSChunkLength int    = HashTrinarySize / TrinaryRadix
+)

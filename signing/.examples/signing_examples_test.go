@@ -8,15 +8,6 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// o: SpongeFunction, The SpongeFunction interface using CurlP27.
-func ExampleNewCurlP27() {}
-
-// o: SpongeFunction, The SpongeFunction interface using CurlP81.
-func ExampleNewCurlP81() {}
-
-// o: SpongeFunction, The SpongeFunction interface using Kerl.
-func ExampleNewKerl() {}
-
 // i req: seed, The seed from which to derive the subseed from.
 // i req: index, The index of the subseed.
 // i: spongeFunc, The optional sponge function to use.

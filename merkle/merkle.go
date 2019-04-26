@@ -5,7 +5,8 @@ import (
 	"errors"
 
 	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/signing/legacy"
+	"github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
@@ -95,7 +96,7 @@ func MerkleLeafIndex(leafIndex, leafCount uint64) uint64 {
 //	offset is the offset used to generate addresses
 //	security is the security used to generate addresses
 //	spongeFunc is the optional sponge function to use
-func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security SecurityLevel, spongeFunc ...signing.SpongeFunction) (Trits, error) {
+func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security SecurityLevel, spongeFunc ...sponge.SpongeFunction) (Trits, error) {
 
 	// enforcing the tree to be perfect by checking if the base size (number of leaves) is a power of two
 	if (baseSize != 0) && (baseSize&(baseSize-1)) != 0 {
@@ -105,7 +106,7 @@ func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security Security
 	treeMerkleSize := MerkleSize(baseSize)
 	tree := make(Trits, treeMerkleSize*HashTrinarySize)
 
-	h := signing.GetSpongeFunc(spongeFunc)
+	h := sponge.GetSpongeFunc(spongeFunc)
 
 	td := MerkleDepth(treeMerkleSize) - 1
 
@@ -228,8 +229,8 @@ func MerkleBranch(tree Trits, siblings Trits, treeLength, treeDepth, leafIndex, 
 //	siblingsNumber is the number of siblings
 //	leafIndex is the node index of the hash
 //	spongeFunc is the optional sponge function to use
-func MerkleRoot(hash Trits, siblings Trits, siblingsNumber uint64, leafIndex uint64, spongeFunc ...signing.SpongeFunction) (Trits, error) {
-	h := signing.GetSpongeFunc(spongeFunc)
+func MerkleRoot(hash Trits, siblings Trits, siblingsNumber uint64, leafIndex uint64, spongeFunc ...sponge.SpongeFunction) (Trits, error) {
+	h := sponge.GetSpongeFunc(spongeFunc)
 
 	var j uint64 = 1
 	var err error
