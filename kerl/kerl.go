@@ -8,6 +8,7 @@ import (
 
 	. "github.com/iotaledger/iota.go/consts"
 	keccak "github.com/iotaledger/iota.go/kerl/sha3"
+	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
@@ -17,7 +18,7 @@ type Kerl struct {
 }
 
 // NewKerl returns a new Kerl
-func NewKerl() *Kerl {
+func NewKerl() SpongeFunction {
 	k := &Kerl{
 		s: keccak.New384(),
 	}
