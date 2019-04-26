@@ -169,7 +169,7 @@ func SignatureFragment(bundleHash Trits, keyFragment Trits, startOffset int, spo
 		return nil, err
 	}
 
-	keyLength := int(secLvl) * int(IssKeyLength)
+	keyLength := int(secLvl) * int(ISSKeyLength)
 	sigFrag := make(Trits, keyLength)
 
 	h := GetSpongeFunc(spongeFunc)
@@ -179,7 +179,7 @@ func SignatureFragment(bundleHash Trits, keyFragment Trits, startOffset int, spo
 
 	i := startOffset % int(secLvl)
 	for sigLength := 0; sigLength < keyLength; {
-		for j := i * IssChunkLength; j < (i+1)*IssChunkLength && sigLength < keyLength; j += TrinaryRadix {
+		for j := i * ISSChunkLength; j < (i+1)*ISSChunkLength && sigLength < keyLength; j += TrinaryRadix {
 			copy(sig, keyFragment[sigLength:sigLength+HashTrinarySize])
 
 			to := MaxTryteValue - (bundleHash[j] + bundleHash[j+1]*3 + bundleHash[j+2]*9)
@@ -227,7 +227,7 @@ func Digest(bundleHash []int8, signatureFragment Trits, startOffset int, spongeF
 
 	i := startOffset % int(secLvl)
 	for digLength := 0; digLength < sigLength; {
-		for j := i * IssChunkLength; j < (i+1)*IssChunkLength && digLength < sigLength; j += TrinaryRadix {
+		for j := i * ISSChunkLength; j < (i+1)*ISSChunkLength && digLength < sigLength; j += TrinaryRadix {
 			copy(sig, sigFrag[digLength:digLength+HashTrinarySize])
 
 			to := (bundleHash[j] + bundleHash[j+1]*3 + bundleHash[j+2]*9) - MinTryteValue

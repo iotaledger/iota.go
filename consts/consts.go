@@ -132,7 +132,7 @@ const (
 
 // Merkle constants.
 const (
-	IssFragments   uint64 = 27
-	IssKeyLength   uint64 = HashTrinarySize * IssFragments
-	IssChunkLength int    = HashTrinarySize / TrinaryRadix
+	ISSFragments   uint64 = 27
+	ISSKeyLength   uint64 = HashTrinarySize * ISSFragments
+	ISSChunkLength int    = HashTrinarySize / TrinaryRadix
 )
