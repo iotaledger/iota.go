@@ -339,7 +339,7 @@ func avxProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...i
 
 	tr := MustTrytesToTrits(trytes)
 
-	c := curl.NewCurl()
+	c := curl.NewCurl().(*curl.Curl)
 	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 

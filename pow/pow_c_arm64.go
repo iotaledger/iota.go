@@ -305,7 +305,7 @@ func cARM64ProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism .
 
 	tr := MustTrytesToTrits(trytes)
 
-	c := curl.NewCurl()
+	c := curl.NewCurl().(*curl.Curl)
 	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
 	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
 
