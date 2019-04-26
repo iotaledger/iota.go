@@ -3,6 +3,7 @@ package kerl_test
 import (
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/kerl"
+	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -36,7 +37,7 @@ var _ = Describe("Kerl", func() {
 
 	Context("with invalid trytes", func() {
 
-		var k *Kerl
+		var k SpongeFunction
 
 		BeforeEach(func() {
 			k = NewKerl()

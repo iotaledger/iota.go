@@ -3,6 +3,7 @@ package curl
 
 import (
 	. "github.com/iotaledger/iota.go/consts"
+	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
@@ -52,7 +53,7 @@ type Curl struct {
 }
 
 // NewCurl initializes a new instance with an empty State.
-func NewCurl(rounds ...CurlRounds) *Curl {
+func NewCurl(rounds ...CurlRounds) SpongeFunction {
 	curlRounds := NumberOfRounds
 
 	if len(rounds) > 0 {
@@ -64,6 +65,16 @@ func NewCurl(rounds ...CurlRounds) *Curl {
 		Rounds: curlRounds,
 	}
 	return c
+}
+
+// NewCurlP27 returns a new CurlP27.
+func NewCurlP27() SpongeFunction {
+	return NewCurl(CurlP27)
+}
+
+// NewCurlP81 returns a new CurlP81.
+func NewCurlP81() SpongeFunction {
+	return NewCurl(CurlP81)
 }
 
 // Squeeze squeezes out trits of the given length. Length has to be a multiple of HashTrinarySize.
@@ -198,4 +209,11 @@ func MustHashTrytes(t Trytes, rounds ...CurlRounds) Trytes {
 		panic(err)
 	}
 	return trytes
+}
+
+// Clone returns a deep copy of the current Curl
+func (c *Curl) Clone() SpongeFunction {
+	clone := NewCurl(c.Rounds).(*Curl)
+	copy(clone.State, c.State)
+	return clone
 }

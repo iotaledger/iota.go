@@ -8,6 +8,7 @@ import (
 
 	. "github.com/iotaledger/iota.go/consts"
 	keccak "github.com/iotaledger/iota.go/kerl/sha3"
+	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
@@ -17,7 +18,7 @@ type Kerl struct {
 }
 
 // NewKerl returns a new Kerl
-func NewKerl() *Kerl {
+func NewKerl() SpongeFunction {
 	k := &Kerl{
 		s: keccak.New384(),
 	}
@@ -51,6 +52,31 @@ func (k *Kerl) Squeeze(length int) (Trits, error) {
 	return out, nil
 }
 
+// MustSqueeze squeezes out trits of the given length. Length has to be a multiple of HashTrinarySize.
+// It panics if the length is not valid.
+func (k *Kerl) MustSqueeze(length int) Trits {
+	out, err := k.Squeeze(length)
+	if err != nil {
+		panic(err)
+	}
+	return out
+}
+
+// SqueezeTrytes squeezes out trytes of the given trit length. Length has to be a multiple of HashTrinarySize.
+func (k *Kerl) SqueezeTrytes(length int) (Trytes, error) {
+	trits, err := k.Squeeze(length)
+	if err != nil {
+		return "", err
+	}
+	return TritsToTrytes(trits)
+}
+
+// MustSqueezeTrytes squeezes out trytes of the given trit length. Length has to be a multiple of HashTrinarySize.
+// It panics if the trytes or the length are not valid.
+func (k *Kerl) MustSqueezeTrytes(length int) Trytes {
+	return MustTritsToTrytes(k.MustSqueeze(length))
+}
+
 // Absorb fills the internal state of the sponge with the given trits.
 // This is only defined for Trit slices that are a multiple of HashTrinarySize long.
 func (k *Kerl) Absorb(in Trits) error {
@@ -72,7 +98,40 @@ func (k *Kerl) Absorb(in Trits) error {
 	return nil
 }
 
+// AbsorbTrytes fills the internal State of the sponge with the given trytes.
+func (k *Kerl) AbsorbTrytes(inn Trytes) error {
+	var in Trits
+	var err error
+
+	if len(inn) == 0 {
+		in = Trits{0}
+	} else {
+		in, err = TrytesToTrits(inn)
+		if err != nil {
+			return err
+		}
+	}
+	return k.Absorb(in)
+}
+
+// AbsorbTrytes fills the internal State of the sponge with the given trytes.
+// It panics if the given trytes are not valid.
+func (k *Kerl) MustAbsorbTrytes(inn Trytes) {
+	err := k.AbsorbTrytes(inn)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // Reset the internal state of the Kerl sponge.
 func (k *Kerl) Reset() {
 	k.s.Reset()
+}
+
+// Clone returns a deep copy of the current Kerl
+func (k *Kerl) Clone() SpongeFunction {
+	clone := NewKerl().(*Kerl)
+
+	clone.s = keccak.CloneState(k.s)
+	return clone
 }

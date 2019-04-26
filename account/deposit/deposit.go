@@ -84,7 +84,7 @@ func (dc *CDA) Checksum() (Trytes, error) {
 	if err != nil {
 		return "", err
 	}
-	c := curl.NewCurl()
+	c := curl.NewCurlP81()
 	if err := c.Absorb(addrTrits); err != nil {
 		return "", err
 	}

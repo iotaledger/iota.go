@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/signing/legacy"
 	"github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
@@ -106,7 +107,7 @@ func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security Security
 	treeMerkleSize := MerkleSize(baseSize)
 	tree := make(Trits, treeMerkleSize*HashTrinarySize)
 
-	h := sponge.GetSpongeFunc(spongeFunc)
+	h := sponge.GetSpongeFunc(spongeFunc, curl.NewCurlP27)
 
 	td := MerkleDepth(treeMerkleSize) - 1
 
@@ -230,7 +231,7 @@ func MerkleBranch(tree Trits, siblings Trits, treeLength, treeDepth, leafIndex, 
 //	leafIndex is the node index of the hash
 //	spongeFunc is the optional sponge function to use
 func MerkleRoot(hash Trits, siblings Trits, siblingsNumber uint64, leafIndex uint64, spongeFunc ...sponge.SpongeFunction) (Trits, error) {
-	h := sponge.GetSpongeFunc(spongeFunc)
+	h := sponge.GetSpongeFunc(spongeFunc, curl.NewCurlP27)
 
 	var j uint64 = 1
 	var err error

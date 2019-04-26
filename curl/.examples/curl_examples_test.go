@@ -7,8 +7,15 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// o: *Curl, The new Curl instance.
+// i: rounds: The optional CurlRounds for hashing.
+// o: SpongeFunction, The SpongeFunction interface using Curl.
 func ExampleNewCurl() {}
+
+// o: SpongeFunction, The SpongeFunction interface using CurlP27.
+func ExampleNewCurlP27() {}
+
+// o: SpongeFunction, The SpongeFunction interface using CurlP81.
+func ExampleNewCurlP81() {}
 
 // i req: length, The length of the trits to squeeze out.
 // o: Trits, The Trits representation of the hash.

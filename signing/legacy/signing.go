@@ -7,6 +7,7 @@ import (
 	"math"
 
 	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/kerl"
 	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
@@ -27,7 +28,7 @@ func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunction) (Trits, er
 
 	incrementedSeed := AddTrits(trits, IntToTrits(int64(index)))
 
-	h := GetSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
 	defer h.Reset()
 
 	err = h.Absorb(incrementedSeed)
@@ -45,7 +46,7 @@ func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunction) (Trits, er
 // Key computes a new private key from the given subseed using the given security level.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func Key(subseed Trits, securityLevel SecurityLevel, spongeFunc ...SpongeFunction) (Trits, error) {
-	h := GetSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
 	defer h.Reset()
 
 	keyLength := KeyFragmentLength * int(securityLevel)
@@ -88,7 +89,7 @@ func Digests(key Trits, spongeFunc ...SpongeFunction) (Trits, error) {
 	digests := make(Trits, HashTrinarySize)
 	buf := make(Trits, HashTrinarySize)
 
-	h := GetSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
 	defer h.Reset()
 
 	// iterate through each key fragment
@@ -135,7 +136,7 @@ func Digests(key Trits, spongeFunc ...SpongeFunction) (Trits, error) {
 // Address generates the address trits from the given digests.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func Address(digests Trits, spongeFunc ...SpongeFunction) (Trits, error) {
-	h := GetSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
 	defer h.Reset()
 
 	if err := h.Absorb(digests); err != nil {
@@ -172,7 +173,7 @@ func SignatureFragment(bundleHash Trits, keyFragment Trits, startOffset int, spo
 	keyLength := int(secLvl) * int(ISSKeyLength)
 	sigFrag := make(Trits, keyLength)
 
-	h := GetSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
 	defer h.Reset()
 
 	sig := make(Trits, HashTrinarySize)
@@ -219,7 +220,7 @@ func Digest(bundleHash []int8, signatureFragment Trits, startOffset int, spongeF
 	sigFrag := make(Trits, sigLength)
 	copy(sigFrag, signatureFragment[:sigLength])
 
-	h := GetSpongeFunc(spongeFunc)
+	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
 	defer h.Reset()
 
 	dig := make(Trits, HashTrinarySize)
