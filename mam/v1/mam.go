@@ -2,16 +2,17 @@
 package mam
 
 import (
-	"errors"
 	"reflect"
+
+	"github.com/pkg/errors"
 
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/curl/hamming"
 	. "github.com/iotaledger/iota.go/guards/validators"
 	. "github.com/iotaledger/iota.go/merkle"
-	"github.com/iotaledger/iota.go/signing/legacy"
-	"github.com/iotaledger/iota.go/signing/utils"
+	signing "github.com/iotaledger/iota.go/signing/legacy"
+	sponge "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
