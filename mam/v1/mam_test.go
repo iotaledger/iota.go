@@ -43,10 +43,10 @@ var _ = Describe("Mam", func() {
 					nextRoot, err := MerkleCreate(nextCount, seed, nextStart, security, NewCurlP27())
 					Expect(err).ToNot(HaveOccurred())
 
-					payload, payloadLength, err := MamCreate(payloadLength, messageTrytes, sideKey, merkleTree, treeSize*HashTrinarySize, count, index, nextRoot, start, seed, security)
+					payload, payloadLength, err := MAMCreate(payloadLength, messageTrytes, sideKey, merkleTree, treeSize*HashTrinarySize, count, index, nextRoot, start, seed, security)
 					Expect(err).ToNot(HaveOccurred())
 
-					parsedIndex, parsedNextRoot, parsedMessageTrytes, parsedSecurity, err := MamParse(payload, payloadLength, sideKey, merkleTree)
+					parsedIndex, parsedNextRoot, parsedMessageTrytes, parsedSecurity, err := MAMParse(payload, payloadLength, sideKey, merkleTree)
 					Expect(err).ToNot(HaveOccurred())
 
 					parsedMessage, err := converter.TrytesToASCII(parsedMessageTrytes)

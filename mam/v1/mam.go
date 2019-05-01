@@ -3,29 +3,35 @@ package mam
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/curl/hamming"
+	. "github.com/iotaledger/iota.go/guards/validators"
 	. "github.com/iotaledger/iota.go/merkle"
 	"github.com/iotaledger/iota.go/signing/legacy"
 	"github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
-// MamInitEncryption initializes the encryption/decryption state for a MAM session
+var (
+	ErrPayloadTooShort        = errors.New("payload too short")
+	ErrMerkleRootDoesNotMatch = errors.New("Merkle root does not match")
+	ErrWrongSecurityLevel     = errors.New("wrong security level")
+)
+
+// MAMInitEncryption initializes the encryption/decryption state for a MAM session.
 //
 //	sideKey is the encryption/decryption key
 //	merkleRoot is the merkle root
 //	spongeFunc is the spongeFunction instance used for encryption/decryption
-func MamInitEncryption(sideKey Trits, merkleRoot Trits, spongeFunc sponge.SpongeFunction) {
+func MAMInitEncryption(sideKey Trits, merkleRoot Trits, spongeFunc sponge.SpongeFunction) {
 	spongeFunc.Absorb(sideKey)
 	spongeFunc.Absorb(merkleRoot[:HashTrinarySize])
 }
 
-// PayloadMinLength computes the minimum length of a payload
+// PayloadMinLength computes the minimum length of a payload.
 //
 //	messageLength is the length of the message
 //	merkleTreeLength is the length of the merkle tree
@@ -41,7 +47,7 @@ func PayloadMinLength(messageLength, merkleTreeLength, index uint64, security Se
 		siblingNumber*HashTrinarySize
 }
 
-// MamCreate creates a signed, encrypted payload from a message.
+// MAMCreate creates a signed, encrypted payload from a message.
 //
 //	payloadLength is the length of the payload
 //	message is the message to encrypt
@@ -59,15 +65,16 @@ func PayloadMinLength(messageLength, merkleTreeLength, index uint64, security Se
 //  payload is the payload of the encrypted message
 //  payloadMinLength is the length of the payload needed to encrypt the message
 //	err is the error message
-func MamCreate(payloadLength uint64,
+func MAMCreate(payloadLength uint64,
 	message Trytes, sideKey Trytes,
 	merkleTree Trits, merkleTreeLength uint64,
 	leafCount uint64, index uint64,
 	nextRoot Trits, start uint64,
-	seed Trytes, security SecurityLevel) (payload Trits, payloadMinLength uint64, err error) {
+	seed Trytes, security SecurityLevel) (Trits, uint64, error) {
 
-	if security > 3 {
-		return nil, 0, fmt.Errorf("invalid security %v", security)
+	err := Validate(ValidateSecurityLevel(security))
+	if err != nil {
+		return nil, 0, err
 	}
 
 	messageTrits, err := TrytesToTrits(message)
@@ -100,20 +107,20 @@ func MamCreate(payloadLength uint64,
 	}
 
 	signatureLength := uint64(security) * ISSKeyLength
-	payloadMinLength = encIndexLength + encMessageLengthLenght + HashTrinarySize +
+	payloadMinLength := encIndexLength + encMessageLengthLenght + HashTrinarySize +
 		uint64(messageLength) + HashTrytesSize + signatureLength +
 		encSiblingsNumberLength + (siblingsNumber * HashTrinarySize)
 
 	if payloadLength < payloadMinLength {
-		return nil, 0, fmt.Errorf("payload too short: needed %d, given %d", payloadMinLength, payloadLength)
+		return nil, 0, errors.Wrapf(ErrPayloadTooShort, "needed %d, given %d", payloadMinLength, payloadLength)
 	}
 
-	var offset uint64 = 0
+	var offset uint64
 
-	payload = make(Trits, payloadLength)
+	payload := make(Trits, payloadLength)
 
 	encCurl := curl.NewCurlP27().(*curl.Curl)
-	MamInitEncryption(sideKeyTrits, merkleTree, encCurl)
+	MAMInitEncryption(sideKeyTrits, merkleTree, encCurl)
 
 	// encode index to payload
 	copy(payload[offset:offset+encIndexLength], indexTrits)
@@ -173,7 +180,7 @@ func MamCreate(payloadLength uint64,
 	return payload, payloadMinLength, nil
 }
 
-// MamParse decrypts, parses and validates an encrypted payload.
+// MAMParse decrypts, parses and validates an encrypted payload.
 //
 //	payload is the payload
 //	payloadLength is the length of the payload
@@ -186,7 +193,7 @@ func MamCreate(payloadLength uint64,
 //	parsedMessage is the decrypted message
 //	parsedSecurity is the parsed security level of the message
 //	err is the error message
-func MamParse(payload Trits, payloadLength uint64, sideKey Trytes, root Trits) (parsedIndex uint64, parsedNextRoot Trytes, parsedMessage Trytes, parsedSecurity SecurityLevel, err error) {
+func MAMParse(payload Trits, payloadLength uint64, sideKey Trytes, root Trits) (uint64, Trytes, Trytes, SecurityLevel, error) {
 	var offset uint64 = 0
 
 	sideKey = Pad(sideKey, 81)
@@ -196,23 +203,23 @@ func MamParse(payload Trits, payloadLength uint64, sideKey Trytes, root Trits) (
 	}
 
 	encCurl := curl.NewCurlP27().(*curl.Curl)
-	MamInitEncryption(sideKeyTrits, root, encCurl)
+	MAMInitEncryption(sideKeyTrits, root, encCurl)
 
 	// decode index from payload
 	if offset >= payloadLength {
-		return 0, "", "", SecurityLevel(0), errors.New("payload too small")
+		return 0, "", "", SecurityLevel(0), ErrPayloadTooShort
 	}
 
 	index, encIndexLength, err := DecodeInt64(payload[offset:])
 	if err != nil {
 		return 0, "", "", SecurityLevel(0), err
 	}
-	parsedIndex = uint64(index)
+	parsedIndex := uint64(index)
 	offset += encIndexLength
 
 	// decode message length from payload
 	if offset >= payloadLength {
-		return 0, "", "", SecurityLevel(0), errors.New("payload too small")
+		return 0, "", "", SecurityLevel(0), ErrPayloadTooShort
 	}
 
 	messageLength, encMessageLengthLenght, err := DecodeInt64(payload[offset:])
@@ -222,27 +229,27 @@ func MamParse(payload Trits, payloadLength uint64, sideKey Trytes, root Trits) (
 	offset += encMessageLengthLenght
 
 	if offset >= payloadLength {
-		return 0, "", "", SecurityLevel(0), errors.New("payload too small")
+		return 0, "", "", SecurityLevel(0), ErrPayloadTooShort
 	}
 	encCurl.Absorb(payload[:offset])
 
 	// decrypt next root from payload
 	nextRoot := Unmask(payload[offset:], HashTrinarySize, encCurl)
-	parsedNextRoot = MustTritsToTrytes(nextRoot)
+	parsedNextRoot := MustTritsToTrytes(nextRoot)
 	offset += HashTrinarySize
 
 	// decrypt message from payload
 	if offset >= payloadLength {
-		return 0, "", "", SecurityLevel(0), errors.New("payload too small")
+		return 0, "", "", SecurityLevel(0), ErrPayloadTooShort
 	}
 	message := Unmask(payload[offset:], uint64(messageLength), encCurl)
-	parsedMessage = MustTritsToTrytes(message)
+	parsedMessage := MustTritsToTrytes(message)
 
 	offset += uint64(messageLength)
 
 	// decrypt nonce from payload
 	if offset >= payloadLength {
-		return 0, "", "", SecurityLevel(0), errors.New("payload too small")
+		return 0, "", "", SecurityLevel(0), ErrPayloadTooShort
 	}
 	// Information is returned in encCurl.State
 	Unmask(payload[offset:], uint64(HashTrytesSize), encCurl)
@@ -250,19 +257,19 @@ func MamParse(payload Trits, payloadLength uint64, sideKey Trytes, root Trits) (
 
 	// get security back from state
 	if offset >= payloadLength {
-		return 0, "", "", SecurityLevel(0), errors.New("payload too small")
+		return 0, "", "", SecurityLevel(0), ErrPayloadTooShort
 	}
 	hash := make(Trits, HashTrinarySize)
 	copy(hash, encCurl.State[:HashTrinarySize])
 
-	parsedSecurity, err = signing.GetSecurityLevel(hash)
+	parsedSecurity, err := signing.GetSecurityLevel(hash)
 	if err != nil {
 		return 0, "", "", SecurityLevel(0), err
 	}
 	copy(payload[offset:], Unmask(payload[offset:], payloadLength-offset, encCurl))
 
 	if parsedSecurity == 0 {
-		return 0, "", "", SecurityLevel(0), errors.New("wrong security level")
+		return 0, "", "", SecurityLevel(0), ErrWrongSecurityLevel
 	}
 
 	// decrypt signature from payload
@@ -275,7 +282,7 @@ func MamParse(payload Trits, payloadLength uint64, sideKey Trytes, root Trits) (
 
 	// decrypt siblings number from payload
 	if offset >= payloadLength {
-		return 0, "", "", SecurityLevel(0), errors.New("payload too small")
+		return 0, "", "", SecurityLevel(0), ErrPayloadTooShort
 	}
 
 	siblingsNumber, encSiblingsNumberLength, err := DecodeInt64(payload[offset:])
@@ -284,14 +291,14 @@ func MamParse(payload Trits, payloadLength uint64, sideKey Trytes, root Trits) (
 	// get merkle root from siblings from payload
 	if siblingsNumber != 0 {
 		if offset >= payloadLength {
-			return 0, "", "", SecurityLevel(0), errors.New("payload too small")
+			return 0, "", "", SecurityLevel(0), ErrPayloadTooShort
 		}
 		address, err = MerkleRoot(address, payload[offset:], uint64(siblingsNumber), parsedIndex, encCurl)
 	}
 
 	// check merkle root with the given root
 	if !reflect.DeepEqual(address, root[:HashTrinarySize]) {
-		return 0, "", "", SecurityLevel(0), errors.New("Merkle root does not match")
+		return 0, "", "", SecurityLevel(0), ErrMerkleRootDoesNotMatch
 	}
 
 	return parsedIndex, parsedNextRoot, parsedMessage, parsedSecurity, nil
