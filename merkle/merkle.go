@@ -3,11 +3,13 @@ package merkle
 
 import (
 	"errors"
+	"runtime"
+	"sync"
 
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
-	"github.com/iotaledger/iota.go/signing/legacy"
-	"github.com/iotaledger/iota.go/signing/utils"
+	signing "github.com/iotaledger/iota.go/signing/legacy"
+	sponge "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
@@ -106,35 +108,72 @@ func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security Security
 
 	treeMerkleSize := MerkleSize(baseSize)
 	tree := make(Trits, treeMerkleSize*HashTrinarySize)
+	treeLock := &sync.RWMutex{}
 
 	h := sponge.GetSpongeFunc(spongeFunc, curl.NewCurlP27)
 
 	td := MerkleDepth(treeMerkleSize) - 1
 
-	// create base addresses
-	for leafIndex := uint64(0); leafIndex < baseSize; leafIndex++ {
-		subSeed, err := signing.Subseed(seed, offset+MerkleLeafIndex(leafIndex, baseSize), h)
-		if err != nil {
-			return nil, err
-		}
+	waitGroup := &sync.WaitGroup{}
+	errorChan := make(chan error)
+	waitChan := make(chan struct{})
 
-		key, err := signing.Key(subSeed, security, h)
-		if err != nil {
-			return nil, err
-		}
+	numCPU := uint64(runtime.NumCPU())
+	leafesPerCPU := baseSize / numCPU
 
-		keyDigests, err := signing.Digests(key, h)
-		if err != nil {
-			return nil, err
-		}
+	var i uint64
+	for i = 0; i < numCPU; i++ {
+		waitGroup.Add(1)
 
-		address, err := signing.Address(keyDigests, h)
-		if err != nil {
-			return nil, err
-		}
+		go func(i uint64, spongeFunc sponge.SpongeFunction) {
+			h := spongeFunc.Clone()
 
-		treeIdx := MerkleNodeIndex(td, leafIndex, td)
-		copy(tree[treeIdx*HashTrinarySize:(treeIdx+1)*HashTrinarySize], address)
+			// create base addresses
+			for leafIndex := i * leafesPerCPU; leafIndex < (i+1)*leafesPerCPU; leafIndex++ {
+				subSeed, err := signing.Subseed(seed, offset+MerkleLeafIndex(leafIndex, baseSize), h)
+				if err != nil {
+					errorChan <- err
+					return
+				}
+
+				key, err := signing.Key(subSeed, security, h)
+				if err != nil {
+					errorChan <- err
+					return
+				}
+
+				keyDigests, err := signing.Digests(key, h)
+				if err != nil {
+					errorChan <- err
+					return
+				}
+
+				address, err := signing.Address(keyDigests, h)
+				if err != nil {
+					errorChan <- err
+					return
+				}
+
+				treeIdx := MerkleNodeIndex(td, leafIndex, td)
+				treeLock.Lock()
+				copy(tree[treeIdx*HashTrinarySize:(treeIdx+1)*HashTrinarySize], address)
+				treeLock.Unlock()
+			}
+
+			waitGroup.Done()
+		}(i, h)
+	}
+
+	// Create signal when finished
+	go func() {
+		waitGroup.Wait()
+		waitChan <- struct{}{}
+	}()
+
+	select {
+	case err := <-errorChan:
+		return nil, err
+	case <-waitChan:
 	}
 
 	// hash tree
