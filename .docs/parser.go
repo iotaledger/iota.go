@@ -55,6 +55,7 @@ var packageDirs = []string{
 	"../signing",
 	"../transaction",
 	"../units",
+	"../account",
 }
 
 var verbose = flag.Bool("v", false, "")

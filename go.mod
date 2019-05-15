@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9 // indirect
+	github.com/apsdehal/go-logger v0.0.0-20190506062552-f85330a4b532 // indirect
 	github.com/beevik/ntp v0.2.0
 	github.com/cespare/xxhash v1.1.0
 	github.com/dgraph-io/badger v1.5.4
