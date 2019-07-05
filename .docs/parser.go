@@ -43,19 +43,20 @@ type output struct {
 }
 
 var packageDirs = []string{
-	"../address",
-	"../api",
-	"../bundle",
-	"../checksum",
-	"../converter",
-	"../curl",
-	"../guards",
-	"../kerl",
-	"../pow",
-	"../signing",
-	"../transaction",
-	"../units",
-	"../account",
+	//"../address",
+	//"../api",
+	//"../bundle",
+	//"../checksum",
+	//"../converter",
+	//"../curl",
+	//"../guards",
+	//"../kerl",
+	//"../pow",
+	//"../signing",
+	//"../transaction",
+	//"../units",
+	//"../account",
+	"../account/store",
 }
 
 var verbose = flag.Bool("v", false, "")
