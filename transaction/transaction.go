@@ -255,7 +255,10 @@ func TransactionHash(t *Transaction) Hash {
 // HasValidNonce checks if the transaction has the valid MinWeightMagnitude.
 // MWM corresponds to the amount of zero trits at the end of the transaction hash.
 func HasValidNonce(t *Transaction, mwm uint64) bool {
-	return TrailingZeros(MustTrytesToTrits(TransactionHash(t))) >= int64(mwm)
+	if len(t.Hash) == 0 {
+		t.Hash = TransactionHash(t)
+	}
+	return TrailingZeros(MustTrytesToTrits(t.Hash)) >= int64(mwm)
 }
 
 // IsTailTransaction checks if given transaction object is tail transaction.
