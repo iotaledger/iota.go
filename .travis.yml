@@ -27,7 +27,7 @@ before_install:
 - sha256sum libkeccak_linux_x64.so
 - echo "creating tar containing headers for MAM"
 - tar -czf headers.tar keccak mam uthash
-- ./../../
+- cd ./../../
 - echo "successfully built MAM dependencies"
 - go get -u github.com/mgechev/revive
 - go get github.com/onsi/ginkgo/ginkgo
