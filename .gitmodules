@@ -1,0 +1,9 @@
+[submodule "x/mam/entangled"]
+	path = x/mam/entangled
+	url = https://github.com/iotaledger/entangled.git
+[submodule "x/mam/XKCP"]
+	path = x/mam/XKCP
+	url = https://github.com/XKCP/XKCP.git
+[submodule "x/mam/uthash"]
+	path = x/mam/uthash
+	url = https://github.com/troydhanson/uthash.git
