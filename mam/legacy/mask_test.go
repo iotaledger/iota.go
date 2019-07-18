@@ -2,7 +2,7 @@ package mam_test
 
 import (
 	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/mam/v1"
+	. "github.com/iotaledger/iota.go/mam/legacy"
 	. "github.com/iotaledger/iota.go/trinary"
 
 	. "github.com/onsi/ginkgo"
