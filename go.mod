@@ -14,11 +14,14 @@ require (
 	github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega v1.5.0
 	github.com/pkg/errors v0.8.1
+	github.com/simia-tech/env v0.1.0
 	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
 	github.com/xdg/stringprep v1.0.0 // indirect
+	gitlab.com/powsrv.io/go/api v0.0.0-20180825222338-acd4e4dcc0bf // indirect
+	gitlab.com/powsrv.io/go/client v0.0.0-20190717084126-be3e20edad49
 	go.mongodb.org/mongo-driver v1.0.0
-	golang.org/x/crypto v0.0.0-20190404164418-38d8ce5564a5 // indirect
-	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect
+	golang.org/x/crypto v0.0.0-20190404164418-38d8ce5564a5
+	google.golang.org/grpc v1.22.1 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.14
 )

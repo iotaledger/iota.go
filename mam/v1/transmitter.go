@@ -1,9 +1,11 @@
 package mam
 
 import (
-	"errors"
 	"strings"
 
+	"github.com/pkg/errors"
+
+	"github.com/iotaledger/iota.go/address"
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/consts"
@@ -68,67 +70,77 @@ func (t *Transmitter) SetMode(m ChannelMode, ck trinary.Trytes) error {
 }
 
 // Transmit creates a MAM message using the given string and transmits it.
-func (t *Transmitter) Transmit(message string) (bundle.Bundle, error) {
-	payload, _, address, err := t.createMessage(message)
+func (t *Transmitter) Transmit(message string, mwm uint64) (bundle.Bundle, error) {
+	address, payload, err := t.createMessage(message)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "create message")
 	}
 
-	bundle, err := t.attachMessage(payload, address)
+	bundle, err := t.attachMessage(address, payload, mwm)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "attach message")
 	}
 
 	return bundle, nil
 }
 
-func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Trytes, trinary.Trytes, error) {
-	nextStart := t.channel.Start + t.channel.Count
-
+func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Trytes, error) {
 	treeSize := merkle.MerkleSize(t.channel.Count)
 	messageTrytes, err := converter.ASCIIToTrytes(message)
 	if err != nil {
-		return "", "", "", err
+		return "", "", err
 	}
 
 	payloadLength := PayloadMinLength(uint64(len(messageTrytes)*3), treeSize*uint64(consts.HashTrinarySize), t.channel.Index, t.channel.SecurityLevel)
 
 	root, err := merkle.MerkleCreate(t.channel.Count, t.seed, t.channel.Start, t.channel.SecurityLevel, curl.NewCurlP27())
 	if err != nil {
-		return "", "", "", err
+		return "", "", err
 	}
 	rootTrytes, err := trinary.TritsToTrytes(root)
 	if err != nil {
-		return "", "", "", err
+		return "", "", err
 	}
 
-	nextRoot, err := merkle.MerkleCreate(t.channel.NextCount, t.seed, nextStart, t.channel.SecurityLevel, curl.NewCurlP27())
+	nextRoot, err := merkle.MerkleCreate(t.channel.NextCount, t.seed, t.channel.Start+t.channel.Count, t.channel.SecurityLevel, curl.NewCurlP27())
 	if err != nil {
-		return "", "", "", err
+		return "", "", err
 	}
 
+	sideKey := t.channel.SideKey
+	if sideKey == "" {
+		sideKey = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+	}
 	payload, payloadLength, err := MAMCreate(payloadLength, messageTrytes, t.channel.SideKey, root, treeSize*consts.HashTrinarySize,
 		t.channel.Count, t.channel.Index, nextRoot, t.channel.Start, t.seed, t.channel.SecurityLevel)
 	if err != nil {
-		return "", "", "", err
+		return "", "", err
 	}
 	payload = trinary.PadTrits(payload, len(payload)+(3-len(payload)%3))
 	payloadTrytes, err := trinary.TritsToTrytes(payload)
 	if err != nil {
-		return "", "", "", err
+		return "", "", err
 	}
 
 	t.channel.incIndex()
 	t.channel.NextRoot = nextRoot
 
 	if t.channel.Mode == ChannelModePublic {
-		return payloadTrytes, rootTrytes, rootTrytes, nil
+		chkSum, err := address.Checksum(rootTrytes)
+		if err != nil {
+			return "", "", err
+		}
+		return rootTrytes + chkSum, payloadTrytes, nil
 	}
 
-	return "", "", "", err
+	return "", "", err
 }
 
-func (t *Transmitter) attachMessage(payload, address trinary.Trytes) (bundle.Bundle, error) {
+func (t *Transmitter) attachMessage(address, payload trinary.Trytes, mwm uint64) (bundle.Bundle, error) {
+	if err := trinary.ValidTrytes(address); err != nil {
+		return nil, errors.Wrapf(err, "invalid address")
+	}
+
 	transfers := bundle.Transfers{bundle.Transfer{
 		Address: address,
 		Value:   0,
@@ -138,12 +150,12 @@ func (t *Transmitter) attachMessage(payload, address trinary.Trytes) (bundle.Bun
 
 	trytes, err := t.api.PrepareTransfers(strings.Repeat("9", 81), transfers, api.PrepareTransfersOptions{})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "prepare transfers")
 	}
 
-	bundle, err := t.api.SendTrytes(trytes, 3, 9)
+	bundle, err := t.api.SendTrytes(trytes, 3, mwm)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "send trytes")
 	}
 
 	return bundle, nil
