@@ -1,49 +1,44 @@
 package mam_test
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/bundle"
+	"github.com/iotaledger/iota.go/transaction"
 	"github.com/iotaledger/iota.go/trinary"
 )
 
 type fakeAPI struct {
-	calls chan *call
+	prepareTransfers       func(trinary.Trytes, bundle.Transfers, api.PrepareTransfersOptions) ([]trinary.Trytes, error)
+	sendTrytes             func([]trinary.Trytes, uint64, uint64, ...trinary.Hash) (bundle.Bundle, error)
+	findTransactionObjects func(api.FindTransactionsQuery) (transaction.Transactions, error)
 }
 
 func newFakeAPI() *fakeAPI {
-	return &fakeAPI{calls: make(chan *call)}
-}
-
-func (f *fakeAPI) PrepareTransfers(seed trinary.Trytes, transfers bundle.Transfers, opts api.PrepareTransfersOptions) ([]trinary.Trytes, error) {
-	call := newCall("PrepareTransfers", seed, transfers, opts)
-	f.calls <- call
-	returns := <-call.returnChan
-	return returns[0].([]trinary.Trytes), err(returns)
-}
-
-func (f *fakeAPI) SendTrytes(trytes []trinary.Trytes, depth uint64, mwm uint64, reference ...trinary.Hash) (bundle.Bundle, error) {
-	call := newCall("SendTrytes", trytes, depth, mwm, reference)
-	f.calls <- call
-	returns := <-call.returnChan
-	return returns[0].(bundle.Bundle), err(returns)
-}
-
-type call struct {
-	method     string
-	arguments  []interface{}
-	returnChan chan []interface{}
-}
-
-func newCall(method string, arguments ...interface{}) *call {
-	return &call{
-		method:     method,
-		arguments:  arguments,
-		returnChan: make(chan []interface{}),
+	return &fakeAPI{
+		prepareTransfers: func(_ trinary.Trytes, _ bundle.Transfers, _ api.PrepareTransfersOptions) ([]trinary.Trytes, error) {
+			return nil, errors.New("not implemented")
+		},
+		sendTrytes: func(_ []trinary.Trytes, _ uint64, _ uint64, _ ...trinary.Hash) (bundle.Bundle, error) {
+			return nil, errors.New("not implemented")
+		},
+		findTransactionObjects: func(_ api.FindTransactionsQuery) (transaction.Transactions, error) {
+			return nil, errors.New("not implemented")
+		},
 	}
 }
 
-func (c *call) returns(values ...interface{}) {
-	c.returnChan <- values
+func (f *fakeAPI) PrepareTransfers(seed trinary.Trytes, transfers bundle.Transfers, opts api.PrepareTransfersOptions) ([]trinary.Trytes, error) {
+	return f.prepareTransfers(seed, transfers, opts)
+}
+
+func (f *fakeAPI) SendTrytes(trytes []trinary.Trytes, depth uint64, mwm uint64, reference ...trinary.Hash) (bundle.Bundle, error) {
+	return f.sendTrytes(trytes, depth, mwm, reference...)
+}
+
+func (f *fakeAPI) FindTransactionObjects(query api.FindTransactionsQuery) (transaction.Transactions, error) {
+	return f.findTransactionObjects(query)
 }
 
 func err(returns []interface{}) error {

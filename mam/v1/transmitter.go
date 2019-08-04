@@ -21,37 +21,25 @@ var (
 	ErrNoSideKey          = errors.New("A sideKey must be provided for the restricted mode")
 )
 
-// Transmitter defines the MAM facade state the is used in various functions.
+// Transmitter defines the MAM facade state that is used in various functions to transmit MAM-Messages.
 type Transmitter struct {
-	api           API
-	subscriptions map[trinary.Trytes]*Subscription
-	channel       *Channel
-	seed          trinary.Trytes
+	api     API
+	channel *Channel
+	seed    trinary.Trytes
 }
 
 // NewTransmitter returns a new state.
-func NewTransmitter(api API, seed trinary.Trytes, securityLevel consts.SecurityLevel) Transmitter {
-	return Transmitter{
-		api:           api,
-		subscriptions: make(map[trinary.Trytes]*Subscription),
-		channel:       newChannel(securityLevel),
-		seed:          seed,
+func NewTransmitter(api API, seed trinary.Trytes, securityLevel consts.SecurityLevel) *Transmitter {
+	return &Transmitter{
+		api:     api,
+		channel: newChannel(securityLevel),
+		seed:    seed,
 	}
 }
 
 // Channel returns the channel of the state.
 func (t *Transmitter) Channel() *Channel {
 	return t.channel
-}
-
-// Subscribe subscribs the state the channel defines by the given `channelRoot`.
-func (t *Transmitter) Subscribe(cr trinary.Trytes, cm ChannelMode, ck trinary.Trytes) {
-	t.subscriptions[cr] = newSubscription(cr, cm, ck)
-}
-
-// SubscriptionCount returns the number of subscriptions.
-func (t *Transmitter) SubscriptionCount() int {
-	return len(t.subscriptions)
 }
 
 // SetMode sets the mode of the state.
@@ -70,18 +58,17 @@ func (t *Transmitter) SetMode(m ChannelMode, ck trinary.Trytes) error {
 }
 
 // Transmit creates a MAM message using the given string and transmits it.
-func (t *Transmitter) Transmit(message string, mwm uint64) (bundle.Bundle, error) {
+func (t *Transmitter) Transmit(message string, mwm uint64) (trinary.Trytes, error) {
 	address, payload, err := t.createMessage(message)
 	if err != nil {
-		return nil, errors.Wrapf(err, "create message")
+		return "", errors.Wrapf(err, "create message")
 	}
 
-	bundle, err := t.attachMessage(address, payload, mwm)
-	if err != nil {
-		return nil, errors.Wrapf(err, "attach message")
+	if err := t.attachMessage(address, payload, mwm); err != nil {
+		return "", errors.Wrapf(err, "attach message")
 	}
 
-	return bundle, nil
+	return address, nil
 }
 
 func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Trytes, error) {
@@ -136,9 +123,9 @@ func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Try
 	return "", "", err
 }
 
-func (t *Transmitter) attachMessage(address, payload trinary.Trytes, mwm uint64) (bundle.Bundle, error) {
+func (t *Transmitter) attachMessage(address, payload trinary.Trytes, mwm uint64) error {
 	if err := trinary.ValidTrytes(address); err != nil {
-		return nil, errors.Wrapf(err, "invalid address")
+		return errors.Wrapf(err, "invalid address")
 	}
 
 	transfers := bundle.Transfers{bundle.Transfer{
@@ -150,13 +137,12 @@ func (t *Transmitter) attachMessage(address, payload trinary.Trytes, mwm uint64)
 
 	trytes, err := t.api.PrepareTransfers(strings.Repeat("9", 81), transfers, api.PrepareTransfersOptions{})
 	if err != nil {
-		return nil, errors.Wrapf(err, "prepare transfers")
+		return errors.Wrapf(err, "prepare transfers")
 	}
 
-	bundle, err := t.api.SendTrytes(trytes, 3, mwm)
-	if err != nil {
-		return nil, errors.Wrapf(err, "send trytes")
+	if _, err = t.api.SendTrytes(trytes, 3, mwm); err != nil {
+		return errors.Wrapf(err, "send trytes")
 	}
 
-	return bundle, nil
+	return nil
 }

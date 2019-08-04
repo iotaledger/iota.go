@@ -51,14 +51,10 @@ func main() {
 
 	transmitter := mam.NewTransmitter(api, seed.Get(), consts.SecurityLevelMedium)
 	fmt.Printf("transmit message %q ...\n", message)
-	bundle, err := transmitter.Transmit(message, uint64(mwm.Get()))
+	address, err := transmitter.Transmit(message, uint64(mwm.Get()))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for index, transaction := range bundle {
-		fmt.Printf("transaction %d:\n", index)
-		fmt.Printf("  hash      %s\n", transaction.Hash)
-		fmt.Printf("  confirmed %v\n", transaction.Confirmed)
-	}
+	fmt.Printf("%s: %s\n", address, message)
 }
