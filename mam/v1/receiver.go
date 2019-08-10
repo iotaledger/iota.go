@@ -1,8 +1,6 @@
 package mam
 
 import (
-	"strings"
-
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/converter"
 	"github.com/iotaledger/iota.go/transaction"
@@ -11,23 +9,60 @@ import (
 
 // Receiver implementes a receiver for MAM-Messages.
 type Receiver struct {
-	api  API
-	root trinary.Trytes
+	api     API
+	mode    ChannelMode
+	sideKey trinary.Trytes
 }
 
 // NewReceiver returns a new receiver.
-func NewReceiver(api API, root trinary.Trytes) *Receiver {
+func NewReceiver(api API) *Receiver {
 	return &Receiver{
-		api:  api,
-		root: root,
+		api:     api,
+		mode:    ChannelModePublic,
+		sideKey: eightyoneNines,
 	}
 }
 
-// Receive tries to receive all messages from the specified root and returns them.
-func (r *Receiver) Receive() ([]string, error) {
-	txs, err := r.api.FindTransactionObjects(api.FindTransactionsQuery{Addresses: trinary.Hashes{r.listenAddress()}})
+// SetMode sets the channel mode.
+func (r *Receiver) SetMode(m ChannelMode, sideKey trinary.Trytes) error {
+	if m != ChannelModePublic && m != ChannelModePrivate && m != ChannelModeRestricted {
+		return ErrUnknownChannelMode
+	}
+	if m == ChannelModeRestricted {
+		if sideKey == "" {
+			return ErrNoSideKey
+		}
+		r.sideKey = sideKey
+	}
+	r.mode = m
+	return nil
+}
+
+// Mode returns the channel mode.
+func (r *Receiver) Mode() ChannelMode {
+	return r.mode
+}
+
+// SideKey returns the channel's side key.
+func (r *Receiver) SideKey() trinary.Trytes {
+	return r.sideKey
+}
+
+// Receive tries to receive all messages from the specified root and returns them along with the next root.
+func (r *Receiver) Receive(root trinary.Trytes) (trinary.Trytes, []string, error) {
+	rootTrits, err := trinary.TrytesToTrits(root)
 	if err != nil {
-		return nil, err
+		return "", nil, err
+	}
+
+	address, err := makeAddress(r.mode, rootTrits, r.sideKey)
+	if err != nil {
+		return "", nil, err
+	}
+
+	txs, err := r.api.FindTransactionObjects(api.FindTransactionsQuery{Addresses: trinary.Hashes{address}})
+	if err != nil {
+		return "", nil, err
 	}
 
 	bundles := map[trinary.Trytes][]transaction.Transaction{}
@@ -39,6 +74,7 @@ func (r *Receiver) Receive() ([]string, error) {
 		}
 	}
 
+	nextRoot := trinary.Trytes("")
 	messages := []string{}
 	for _, txs := range bundles {
 		if len(txs) < int(txs[0].LastIndex+1) {
@@ -60,45 +96,37 @@ func (r *Receiver) Receive() ([]string, error) {
 				message += tx.SignatureMessageFragment
 			}
 			if tx.CurrentIndex == tx.LastIndex {
-				message, err := r.decodeMessage(message)
+				nr, message, err := r.decodeMessage(rootTrits, message)
 				if err != nil {
-					return nil, err
+					return "", nil, err
 				}
 				messages = append(messages, message)
+				nextRoot = nr
 			}
 		}
 	}
 
-	return messages, nil
+	return nextRoot, messages, nil
 }
 
-func (r *Receiver) listenAddress() trinary.Hash {
-	return r.root
-}
-
-func (r *Receiver) decodeMessage(encodedMessage trinary.Trytes) (string, error) {
+func (r *Receiver) decodeMessage(root trinary.Trits, encodedMessage trinary.Trytes) (trinary.Trytes, string, error) {
 	messageTrits, err := trinary.TrytesToTrits(encodedMessage)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	messageLength := uint64(len(messageTrits))
 
-	rootTrits, err := trinary.TrytesToTrits(r.root)
+	_, nextRoot, messageTrytes, _, err := MAMParse(messageTrits, messageLength, r.sideKey, root)
 	if err != nil {
-		return "", err
-	}
-
-	_, _, messageTrytes, _, err := MAMParse(messageTrits, messageLength, strings.Repeat("9", 81), rootTrits)
-	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	message, err := converter.TrytesToASCII(messageTrytes)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return message, nil
+	return nextRoot, message, nil
 }
 
 func findTxByHash(txs transaction.Transactions, hash trinary.Trytes) *transaction.Transaction {

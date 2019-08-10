@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/iotaledger/iota.go/address"
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/consts"
@@ -46,10 +45,10 @@ func (t *Transmitter) SetMode(m ChannelMode, sideKey trinary.Trytes) error {
 	if m != ChannelModePublic && m != ChannelModePrivate && m != ChannelModeRestricted {
 		return ErrUnknownChannelMode
 	}
-	if m == ChannelModeRestricted && sideKey == "" {
-		return ErrNoSideKey
-	}
-	if sideKey != "" {
+	if m == ChannelModeRestricted {
+		if sideKey == "" {
+			return ErrNoSideKey
+		}
 		t.channel.sideKey = sideKey
 	}
 	t.channel.mode = m
@@ -66,9 +65,10 @@ func (t *Transmitter) SideKey() trinary.Trytes {
 	return t.channel.sideKey
 }
 
-// Transmit creates a MAM message using the given string and transmits it.
+// Transmit creates a MAM message using the given string and transmits it. On sucess, it returns
+// the addresses root.
 func (t *Transmitter) Transmit(message string) (trinary.Trytes, error) {
-	address, payload, err := t.createMessage(message)
+	root, address, payload, err := t.createMessage(message)
 	if err != nil {
 		return "", errors.Wrapf(err, "create message")
 	}
@@ -77,55 +77,52 @@ func (t *Transmitter) Transmit(message string) (trinary.Trytes, error) {
 		return "", errors.Wrapf(err, "attach message")
 	}
 
-	return address, nil
+	return root, nil
 }
 
-func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Trytes, error) {
+func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Trytes, trinary.Trytes, error) {
 	treeSize := merkle.MerkleSize(t.channel.count)
 	messageTrytes, err := converter.ASCIIToTrytes(message)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	payloadLength := PayloadMinLength(uint64(len(messageTrytes)*3), treeSize*uint64(consts.HashTrinarySize), t.channel.index, t.channel.securityLevel)
 
 	root, err := merkle.MerkleCreate(t.channel.count, t.seed, t.channel.start, t.channel.securityLevel, curl.NewCurlP27())
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	rootTrytes, err := trinary.TritsToTrytes(root)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	nextRoot, err := merkle.MerkleCreate(t.channel.nextCount, t.seed, t.channel.nextStart(), t.channel.securityLevel, curl.NewCurlP27())
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	payload, payloadLength, err := MAMCreate(payloadLength, messageTrytes, t.channel.sideKey, root, treeSize*consts.HashTrinarySize,
 		t.channel.count, t.channel.index, nextRoot, t.channel.start, t.seed, t.channel.securityLevel)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	payload = trinary.PadTrits(payload, len(payload)+(3-len(payload)%3))
 	payloadTrytes, err := trinary.TritsToTrytes(payload)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	t.channel.incIndex()
 	t.channel.nextRoot = nextRoot
 
-	if t.channel.mode == ChannelModePublic {
-		chkSum, err := address.Checksum(rootTrytes)
-		if err != nil {
-			return "", "", err
-		}
-		return rootTrytes + chkSum, payloadTrytes, nil
+	address, err := makeAddress(t.channel.mode, root, t.channel.sideKey)
+	if err != nil {
+		return "", "", "", err
 	}
 
-	return "", "", err
+	return rootTrytes, address, payloadTrytes, nil
 }
 
 func (t *Transmitter) attachMessage(address, payload trinary.Trytes) error {

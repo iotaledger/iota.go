@@ -25,11 +25,18 @@ var (
 	seed         = env.String("SEED", "")
 	seedPassword = env.String("SEED_PASSWORD", "")
 	mwm          = env.Int("MWM", 9)
+	mode         = env.String("MODE", "public", env.AllowedValues("public", "private", "restricted"))
+	sideKey      = env.String("SIDE_KEY", "")
 )
 
 func main() {
 	flag.Parse()
 	messages := flag.Args()
+
+	cm, err := mam.ParseChannelMode(mode.Get())
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	powFunc := pow.ProofOfWorkFunc(nil)
 	if apiKey := powSrvAPIKey.Get(); apiKey == "" {
@@ -46,7 +53,6 @@ func main() {
 		powFunc = powClient.PowFunc
 	}
 
-	// create a new API instance
 	api, err := api.ComposeAPI(api.HTTPClientSettings{
 		URI:                  endpointURL.Get(),
 		LocalProofOfWorkFunc: powFunc,
@@ -55,14 +61,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	transmitter := mam.NewTransmitter(api, seedFromEnv(), consts.SecurityLevelMedium)
+	transmitter := mam.NewTransmitter(api, seedFromEnv(), uint64(mwm.Get()), consts.SecurityLevelMedium)
+	if err := transmitter.SetMode(cm, sideKey.Get()); err != nil {
+		log.Fatal(err)
+	}
+
 	for _, message := range messages {
-		fmt.Printf("transmit message %q ...\n", message)
-		address, err := transmitter.Transmit(message, uint64(mwm.Get()))
+		fmt.Printf("transmit message %q to %s channel...\n", message, cm)
+		root, err := transmitter.Transmit(message)
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("%s: %s\n", address, message)
+		fmt.Printf("transmitted to root %q\n", root)
 	}
 }
 
@@ -73,7 +83,6 @@ func seedFromEnv() trinary.Trytes {
 	if v := seedPassword.Get(); v != "" {
 		password := bytes.TrimSpace([]byte(v))
 		seedBytes := argon2.IDKey(password, []byte(""), 50, 64*1024, 4, 48)
-		log.Printf("b = %d", len(seedBytes))
 		return toTrytes(seedBytes)
 	}
 	seedBytes := make([]byte, 48)
