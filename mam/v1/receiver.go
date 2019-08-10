@@ -11,28 +11,16 @@ import (
 
 // Receiver implementes a receiver for MAM-Messages.
 type Receiver struct {
-	api           API
-	subscriptions map[trinary.Trytes]*Subscription
-	root          trinary.Trytes
+	api  API
+	root trinary.Trytes
 }
 
 // NewReceiver returns a new receiver.
 func NewReceiver(api API, root trinary.Trytes) *Receiver {
 	return &Receiver{
-		api:           api,
-		subscriptions: make(map[trinary.Trytes]*Subscription),
-		root:          root,
+		api:  api,
+		root: root,
 	}
-}
-
-// Subscribe subscribs the state the channel defines by the given `channelRoot`.
-func (r *Receiver) Subscribe(cr trinary.Trytes, cm ChannelMode, ck trinary.Trytes) {
-	r.subscriptions[cr] = newSubscription(cr, cm, ck)
-}
-
-// SubscriptionCount returns the number of subscriptions.
-func (r *Receiver) SubscriptionCount() int {
-	return len(r.subscriptions)
 }
 
 // Receive tries to receive all messages from the specified root and returns them.

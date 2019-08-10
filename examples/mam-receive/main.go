@@ -12,11 +12,8 @@ import (
 )
 
 var (
-	endpointURL  = env.String("ENDPOINT_URL", "https://nodes.thetangle.org:443")
-	powSrvAPIKey = env.String("POWSRV_API_KEY", "")
+	endpointURL = env.String("ENDPOINT_URL", "https://nodes.thetangle.org:443")
 )
-
-// PN9CYZTVHPKVRVBOOIRZDZSHQLURKQYSQTTDOGAKZZ9SCGIWTTOBPRWVPZRHZJHIWOKLZE9SQJWGPGFTX
 
 func main() {
 	flag.Parse()

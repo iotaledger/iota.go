@@ -13,61 +13,45 @@ import (
 
 var _ = Describe("Transmitter", func() {
 
-	Context("NewTransmitter", func() {
-
-		It("Should return a new transmitter", func() {
-			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", consts.SecurityLevelLow)
-
-			Expect(transmitter.Channel().Mode).To(Equal(mam.ChannelModePublic))
-			Expect(transmitter.Channel().SideKey).To(Equal(trinary.Trytes("")))
-			Expect(transmitter.Channel().SecurityLevel).To(Equal(consts.SecurityLevelLow))
-			Expect(transmitter.Channel().Start).To(Equal(uint64(0)))
-			Expect(transmitter.Channel().Count).To(Equal(uint64(1)))
-			Expect(transmitter.Channel().NextCount).To(Equal(uint64(1)))
-			Expect(transmitter.Channel().Index).To(Equal(uint64(0)))
-		})
-
-	})
-
 	Context("SetMode", func() {
 
 		It("Should set the mode to private", func() {
-			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", consts.SecurityLevelLow)
+			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", 9, consts.SecurityLevelLow)
 
 			err := transmitter.SetMode(mam.ChannelModePrivate, "")
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(transmitter.Channel().Mode).To(Equal(mam.ChannelModePrivate))
+			Expect(transmitter.Mode()).To(Equal(mam.ChannelModePrivate))
 		})
 
 		It("Should set the mode to restricted", func() {
-			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", consts.SecurityLevelLow)
+			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", 9, consts.SecurityLevelLow)
 
 			err := transmitter.SetMode(mam.ChannelModeRestricted, "ABC")
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(transmitter.Channel().Mode).To(Equal(mam.ChannelModeRestricted))
-			Expect(transmitter.Channel().SideKey).To(Equal(trinary.Trytes("ABC")))
+			Expect(transmitter.Mode()).To(Equal(mam.ChannelModeRestricted))
+			Expect(transmitter.SideKey()).To(Equal(trinary.Trytes("ABC")))
 		})
 
 		It("Should error on undefined mode", func() {
-			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", consts.SecurityLevelLow)
+			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", 9, consts.SecurityLevelLow)
 
 			err := transmitter.SetMode(555, "")
 
 			Expect(err).To(Equal(mam.ErrUnknownChannelMode))
-			Expect(transmitter.Channel().Mode).To(Equal(mam.ChannelModePublic))
-			Expect(transmitter.Channel().SideKey).To(BeEmpty())
+			Expect(transmitter.Mode()).To(Equal(mam.ChannelModePublic))
+			Expect(transmitter.SideKey()).To(Equal("999999999999999999999999999999999999999999999999999999999999999999999999999999999"))
 		})
 
 		It("Should error on missing side key in restricted mode", func() {
-			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", consts.SecurityLevelLow)
+			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", 9, consts.SecurityLevelLow)
 
 			err := transmitter.SetMode(mam.ChannelModeRestricted, "")
 
 			Expect(err).To(Equal(mam.ErrNoSideKey))
-			Expect(transmitter.Channel().Mode).To(Equal(mam.ChannelModePublic))
-			Expect(transmitter.Channel().SideKey).To(BeEmpty())
+			Expect(transmitter.Mode()).To(Equal(mam.ChannelModePublic))
+			Expect(transmitter.SideKey()).To(Equal("999999999999999999999999999999999999999999999999999999999999999999999999999999999"))
 		})
 
 	})
@@ -95,9 +79,9 @@ var _ = Describe("Transmitter", func() {
 				Expect(references).To(Equal(([]trinary.Hash)(nil)))
 				return bundle.Bundle{}, nil
 			}
-			transmitter := mam.NewTransmitter(fakeAPI, seed, consts.SecurityLevelLow)
+			transmitter := mam.NewTransmitter(fakeAPI, seed, 9, consts.SecurityLevelLow)
 
-			root, err := transmitter.Transmit("Hello!", 9)
+			root, err := transmitter.Transmit("Hello!")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(root).To(Equal("YKOLXUAMTJGGIVPEWHUCSKKJWIY9PWEFABXYHAWDBTMOPKWNXOOQCKNHADSZP9SOSDFEOXPVTWUWFDQNHJXGHIWKOA"))
 

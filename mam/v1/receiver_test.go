@@ -12,18 +12,6 @@ import (
 
 var _ = Describe("Receiver", func() {
 
-	Context("Subcribe", func() {
-
-		It("Should add a subscription to the transmitter", func() {
-			receiver := mam.NewReceiver(newFakeAPI(), "PN9CYZTVHPKVRVBOOIRZDZSHQLURKQYSQTTDOGAKZZ9SCGIWTTOBPRWVPZRHZJHIWOKLZE9SQJWGPGFTXUMUPGBBN9")
-
-			receiver.Subscribe("", mam.ChannelModePublic, "")
-
-			Expect(receiver.SubscriptionCount()).To(Equal(1))
-		})
-
-	})
-
 	Context("Receive", func() {
 
 		It("Should ", func() {

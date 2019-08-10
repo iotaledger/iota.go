@@ -21,50 +21,59 @@ var (
 	ErrNoSideKey          = errors.New("A sideKey must be provided for the restricted mode")
 )
 
-// Transmitter defines the MAM facade state that is used in various functions to transmit MAM-Messages.
+var eightyoneNines = trinary.Trytes(strings.Repeat("9", 81))
+
+// Transmitter defines the MAM facade transmitter.
 type Transmitter struct {
 	api     API
-	channel *Channel
+	channel *channel
 	seed    trinary.Trytes
+	mwm     uint64
 }
 
-// NewTransmitter returns a new state.
-func NewTransmitter(api API, seed trinary.Trytes, securityLevel consts.SecurityLevel) *Transmitter {
+// NewTransmitter returns a new transmitter.
+func NewTransmitter(api API, seed trinary.Trytes, mwm uint64, securityLevel consts.SecurityLevel) *Transmitter {
 	return &Transmitter{
 		api:     api,
 		channel: newChannel(securityLevel),
 		seed:    seed,
+		mwm:     mwm,
 	}
 }
 
-// Channel returns the channel of the state.
-func (t *Transmitter) Channel() *Channel {
-	return t.channel
-}
-
-// SetMode sets the mode of the state.
-func (t *Transmitter) SetMode(m ChannelMode, ck trinary.Trytes) error {
+// SetMode sets the channel mode.
+func (t *Transmitter) SetMode(m ChannelMode, sideKey trinary.Trytes) error {
 	if m != ChannelModePublic && m != ChannelModePrivate && m != ChannelModeRestricted {
 		return ErrUnknownChannelMode
 	}
-	if m == ChannelModeRestricted && ck == "" {
+	if m == ChannelModeRestricted && sideKey == "" {
 		return ErrNoSideKey
 	}
-	if ck != "" {
-		t.channel.SideKey = ck
+	if sideKey != "" {
+		t.channel.sideKey = sideKey
 	}
-	t.channel.Mode = m
+	t.channel.mode = m
 	return nil
 }
 
+// Mode returns the channel mode.
+func (t *Transmitter) Mode() ChannelMode {
+	return t.channel.mode
+}
+
+// SideKey returns the channel's side key.
+func (t *Transmitter) SideKey() trinary.Trytes {
+	return t.channel.sideKey
+}
+
 // Transmit creates a MAM message using the given string and transmits it.
-func (t *Transmitter) Transmit(message string, mwm uint64) (trinary.Trytes, error) {
+func (t *Transmitter) Transmit(message string) (trinary.Trytes, error) {
 	address, payload, err := t.createMessage(message)
 	if err != nil {
 		return "", errors.Wrapf(err, "create message")
 	}
 
-	if err := t.attachMessage(address, payload, mwm); err != nil {
+	if err := t.attachMessage(address, payload); err != nil {
 		return "", errors.Wrapf(err, "attach message")
 	}
 
@@ -72,15 +81,15 @@ func (t *Transmitter) Transmit(message string, mwm uint64) (trinary.Trytes, erro
 }
 
 func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Trytes, error) {
-	treeSize := merkle.MerkleSize(t.channel.Count)
+	treeSize := merkle.MerkleSize(t.channel.count)
 	messageTrytes, err := converter.ASCIIToTrytes(message)
 	if err != nil {
 		return "", "", err
 	}
 
-	payloadLength := PayloadMinLength(uint64(len(messageTrytes)*3), treeSize*uint64(consts.HashTrinarySize), t.channel.Index, t.channel.SecurityLevel)
+	payloadLength := PayloadMinLength(uint64(len(messageTrytes)*3), treeSize*uint64(consts.HashTrinarySize), t.channel.index, t.channel.securityLevel)
 
-	root, err := merkle.MerkleCreate(t.channel.Count, t.seed, t.channel.Start, t.channel.SecurityLevel, curl.NewCurlP27())
+	root, err := merkle.MerkleCreate(t.channel.count, t.seed, t.channel.start, t.channel.securityLevel, curl.NewCurlP27())
 	if err != nil {
 		return "", "", err
 	}
@@ -89,17 +98,13 @@ func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Try
 		return "", "", err
 	}
 
-	nextRoot, err := merkle.MerkleCreate(t.channel.NextCount, t.seed, t.channel.Start+t.channel.Count, t.channel.SecurityLevel, curl.NewCurlP27())
+	nextRoot, err := merkle.MerkleCreate(t.channel.nextCount, t.seed, t.channel.nextStart(), t.channel.securityLevel, curl.NewCurlP27())
 	if err != nil {
 		return "", "", err
 	}
 
-	sideKey := t.channel.SideKey
-	if sideKey == "" {
-		sideKey = "999999999999999999999999999999999999999999999999999999999999999999999999999999999"
-	}
-	payload, payloadLength, err := MAMCreate(payloadLength, messageTrytes, t.channel.SideKey, root, treeSize*consts.HashTrinarySize,
-		t.channel.Count, t.channel.Index, nextRoot, t.channel.Start, t.seed, t.channel.SecurityLevel)
+	payload, payloadLength, err := MAMCreate(payloadLength, messageTrytes, t.channel.sideKey, root, treeSize*consts.HashTrinarySize,
+		t.channel.count, t.channel.index, nextRoot, t.channel.start, t.seed, t.channel.securityLevel)
 	if err != nil {
 		return "", "", err
 	}
@@ -110,9 +115,9 @@ func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Try
 	}
 
 	t.channel.incIndex()
-	t.channel.NextRoot = nextRoot
+	t.channel.nextRoot = nextRoot
 
-	if t.channel.Mode == ChannelModePublic {
+	if t.channel.mode == ChannelModePublic {
 		chkSum, err := address.Checksum(rootTrytes)
 		if err != nil {
 			return "", "", err
@@ -123,7 +128,7 @@ func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Try
 	return "", "", err
 }
 
-func (t *Transmitter) attachMessage(address, payload trinary.Trytes, mwm uint64) error {
+func (t *Transmitter) attachMessage(address, payload trinary.Trytes) error {
 	if err := trinary.ValidTrytes(address); err != nil {
 		return errors.Wrapf(err, "invalid address")
 	}
@@ -135,12 +140,12 @@ func (t *Transmitter) attachMessage(address, payload trinary.Trytes, mwm uint64)
 		Tag:     "",
 	}}
 
-	trytes, err := t.api.PrepareTransfers(strings.Repeat("9", 81), transfers, api.PrepareTransfersOptions{})
+	trytes, err := t.api.PrepareTransfers(eightyoneNines, transfers, api.PrepareTransfersOptions{})
 	if err != nil {
 		return errors.Wrapf(err, "prepare transfers")
 	}
 
-	if _, err = t.api.SendTrytes(trytes, 3, mwm); err != nil {
+	if _, err = t.api.SendTrytes(trytes, 3, t.mwm); err != nil {
 		return errors.Wrapf(err, "send trytes")
 	}
 
