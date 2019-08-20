@@ -8,7 +8,7 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// Receiver implementes a receiver for MAM-Messages.
+// Receiver implements a receiver for MAM-Messages.
 type Receiver struct {
 	api     API
 	mode    ChannelMode
@@ -75,7 +75,7 @@ func (r *Receiver) Receive(root trinary.Trytes) (trinary.Trytes, []string, error
 		}
 	}
 
-	nextRoot := trinary.Trytes("")
+	var nextRoot trinary.Trytes
 	messages := []string{}
 	for _, bundle := range bundles {
 		candidateTxs := []transaction.Transaction{}
