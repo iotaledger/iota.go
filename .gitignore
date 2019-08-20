@@ -7,3 +7,5 @@
 *.test
 *.out
 .experimental/
+examples/mam-transmit/transmit.sh
+examples/mam-receive/receive.sh
