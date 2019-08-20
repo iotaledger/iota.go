@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// Receiver implementes a receiver for MAM-Messages.
+// Receiver implements a receiver for MAM-Messages.
 type Receiver struct {
 	api     API
 	mode    ChannelMode
