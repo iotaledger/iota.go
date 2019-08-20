@@ -65,7 +65,7 @@ func (t *Transmitter) SideKey() trinary.Trytes {
 	return t.channel.sideKey
 }
 
-// Transmit creates a MAM message using the given string and transmits it. On sucess, it returns
+// Transmit creates a MAM message using the given string and transmits it. On success, it returns
 // the addresses root.
 func (t *Transmitter) Transmit(message string) (trinary.Trytes, error) {
 	root, address, payload, err := t.createMessage(message)
