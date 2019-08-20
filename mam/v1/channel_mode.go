@@ -1,18 +1,24 @@
 package mam
 
 import (
-	"fmt"
 	"strings"
+
+	"github.com/pkg/errors"
+)
+
+// Error definitions
+var (
+	ErrCouldNotParseChannelMode = errors.New("could not parse channel mode")
 )
 
 // ChannelMode is an enum of channel modes.
-type ChannelMode int
+type ChannelMode string
 
 // Definition of possible channel modes.
 const (
-	ChannelModePublic ChannelMode = iota
-	ChannelModePrivate
-	ChannelModeRestricted
+	ChannelModePublic     ChannelMode = "public"
+	ChannelModePrivate    ChannelMode = "private"
+	ChannelModeRestricted ChannelMode = "restricted"
 )
 
 // ParseChannelMode parses a channel mode from the given string.
@@ -25,19 +31,6 @@ func ParseChannelMode(input string) (ChannelMode, error) {
 	case "restricted":
 		return ChannelModeRestricted, nil
 	default:
-		return ChannelModePublic, fmt.Errorf("channel mode %q is unknown", cm)
-	}
-}
-
-func (cm ChannelMode) String() string {
-	switch cm {
-	case ChannelModePublic:
-		return "public"
-	case ChannelModePrivate:
-		return "private"
-	case ChannelModeRestricted:
-		return "restricted"
-	default:
-		return "unknown"
+		return "", errors.Wrapf(ErrCouldNotParseChannelMode, "input %q", cm)
 	}
 }

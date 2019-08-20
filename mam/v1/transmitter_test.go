@@ -37,7 +37,7 @@ var _ = Describe("Transmitter", func() {
 		It("Should error on undefined mode", func() {
 			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", 9, consts.SecurityLevelLow)
 
-			err := transmitter.SetMode(555, "")
+			err := transmitter.SetMode("555", "")
 
 			Expect(err).To(Equal(mam.ErrUnknownChannelMode))
 			Expect(transmitter.Mode()).To(Equal(mam.ChannelModePublic))

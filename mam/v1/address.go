@@ -18,8 +18,12 @@ func makeAddress(mode ChannelMode, root trinary.Trits, sideKey trinary.Trytes) (
 	}
 
 	h := curl.NewCurlP81()
-	h.Absorb(sideKeyTrits)
-	h.Absorb(root)
+	if err := h.Absorb(sideKeyTrits); err != nil {
+		return "", err
+	}
+	if err := h.Absorb(root); err != nil {
+		return "", err
+	}
 	hashedRoot, err := h.Squeeze(consts.HashTrinarySize)
 	if err != nil {
 		return "", err

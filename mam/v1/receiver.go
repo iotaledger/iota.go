@@ -2,6 +2,7 @@ package mam
 
 import (
 	"github.com/iotaledger/iota.go/api"
+	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/converter"
 	"github.com/iotaledger/iota.go/transaction"
 	"github.com/iotaledger/iota.go/trinary"
@@ -19,7 +20,7 @@ func NewReceiver(api API) *Receiver {
 	return &Receiver{
 		api:     api,
 		mode:    ChannelModePublic,
-		sideKey: eightyoneNines,
+		sideKey: consts.NullHashTrytes,
 	}
 }
 
@@ -76,24 +77,22 @@ func (r *Receiver) Receive(root trinary.Trytes) (trinary.Trytes, []string, error
 
 	nextRoot := trinary.Trytes("")
 	messages := []string{}
-	for _, txs := range bundles {
-		if len(txs) < int(txs[0].LastIndex+1) {
-			continue
-		}
-
+	for _, bundle := range bundles {
 		candidateTxs := []transaction.Transaction{}
-		for _, tx := range txs {
+		for _, tx := range bundle {
 			if tx.CurrentIndex == 0 {
 				candidateTxs = append(candidateTxs, tx)
 			}
 		}
 
-		for _, candidateTx := range candidateTxs {
-			tx := &candidateTx
+		for index := range candidateTxs {
+			tx := &candidateTxs[index]
 			message := tx.SignatureMessageFragment
 			for tx != nil && tx.CurrentIndex != tx.LastIndex {
-				tx = findTxByHash(txs, tx.TrunkTransaction)
-				message += tx.SignatureMessageFragment
+				tx = findTxByHash(bundle, tx.TrunkTransaction)
+				if tx != nil {
+					message += tx.SignatureMessageFragment
+				}
 			}
 			if tx.CurrentIndex == tx.LastIndex {
 				nr, message, err := r.decodeMessage(rootTrits, message)
@@ -129,7 +128,7 @@ func (r *Receiver) decodeMessage(root trinary.Trits, encodedMessage trinary.Tryt
 	return nextRoot, message, nil
 }
 
-func findTxByHash(txs transaction.Transactions, hash trinary.Trytes) *transaction.Transaction {
+func findTxByHash(txs []transaction.Transaction, hash trinary.Trytes) *transaction.Transaction {
 	for _, tx := range txs {
 		if tx.Hash == hash {
 			return &tx

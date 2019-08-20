@@ -19,7 +19,7 @@ type channel struct {
 func newChannel(securityLevel consts.SecurityLevel) *channel {
 	return &channel{
 		mode:          ChannelModePublic,
-		sideKey:       eightyoneNines,
+		sideKey:       consts.NullHashTrytes,
 		securityLevel: securityLevel,
 		start:         0,
 		count:         1,

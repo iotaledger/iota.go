@@ -1,8 +1,6 @@
 package mam
 
 import (
-	"strings"
-
 	"github.com/pkg/errors"
 
 	"github.com/iotaledger/iota.go/api"
@@ -19,8 +17,6 @@ var (
 	ErrUnknownChannelMode = errors.New("channel mode must be ChannelModePublic, ChannelModePrivate or ChannelModeRestricted")
 	ErrNoSideKey          = errors.New("A sideKey must be provided for the restricted mode")
 )
-
-var eightyoneNines = trinary.Trytes(strings.Repeat("9", 81))
 
 // Transmitter defines the MAM facade transmitter.
 type Transmitter struct {
@@ -137,7 +133,7 @@ func (t *Transmitter) attachMessage(address, payload trinary.Trytes) error {
 		Tag:     "",
 	}}
 
-	trytes, err := t.api.PrepareTransfers(eightyoneNines, transfers, api.PrepareTransfersOptions{})
+	trytes, err := t.api.PrepareTransfers(consts.NullHashTrytes, transfers, api.PrepareTransfersOptions{})
 	if err != nil {
 		return errors.Wrapf(err, "prepare transfers")
 	}
