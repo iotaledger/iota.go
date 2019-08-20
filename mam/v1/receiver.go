@@ -74,7 +74,7 @@ func (r *Receiver) Receive(root trinary.Trytes) (trinary.Trytes, []string, error
 		}
 	}
 
-	nextRoot := trinary.Trytes("")
+	var nextRoot trinary.Trytes
 	messages := []string{}
 	for _, txs := range bundles {
 		if len(txs) < int(txs[0].LastIndex+1) {
