@@ -78,30 +78,30 @@ func (r *Receiver) Receive(root trinary.Trytes) (trinary.Trytes, []string, error
 	var nextRoot trinary.Trytes
 	messages := []string{}
 	for _, bundle := range bundles {
-		candidateTxs := []transaction.Transaction{}
-		for _, tx := range bundle {
-			if tx.CurrentIndex == 0 {
-				candidateTxs = append(candidateTxs, tx)
-			}
+		candidateTx := findHeadTx(bundle)
+		if candidateTx == nil {
+			continue
 		}
 
-		for index := range candidateTxs {
-			tx := &candidateTxs[index]
-			message := tx.SignatureMessageFragment
-			for tx != nil && tx.CurrentIndex != tx.LastIndex {
-				tx = findTxByHash(bundle, tx.TrunkTransaction)
-				if tx != nil {
-					message += tx.SignatureMessageFragment
-				}
+		tx := candidateTx
+		message := tx.SignatureMessageFragment
+		for tx != nil && tx.CurrentIndex != tx.LastIndex {
+			tx = findTxByHash(bundle, tx.TrunkTransaction)
+			if tx != nil {
+				message += tx.SignatureMessageFragment
 			}
-			if tx.CurrentIndex == tx.LastIndex {
-				nr, message, err := r.decodeMessage(rootTrits, message)
-				if err != nil {
-					return "", nil, err
-				}
-				messages = append(messages, message)
-				nextRoot = nr
+		}
+		if tx == nil {
+			continue
+		}
+
+		if tx.CurrentIndex == tx.LastIndex {
+			nr, message, err := r.decodeMessage(rootTrits, message)
+			if err != nil {
+				return "", nil, err
 			}
+			messages = append(messages, message)
+			nextRoot = nr
 		}
 	}
 
@@ -126,6 +126,15 @@ func (r *Receiver) decodeMessage(root trinary.Trits, encodedMessage trinary.Tryt
 	}
 
 	return nextRoot, message, nil
+}
+
+func findHeadTx(txs []transaction.Transaction) *transaction.Transaction {
+	for _, tx := range txs {
+		if tx.CurrentIndex == 0 {
+			return &tx
+		}
+	}
+	return nil
 }
 
 func findTxByHash(txs []transaction.Transaction, hash trinary.Trytes) *transaction.Transaction {
