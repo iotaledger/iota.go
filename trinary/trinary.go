@@ -3,7 +3,6 @@ package trinary
 
 import (
 	"math"
-	"regexp"
 	"strings"
 
 	. "github.com/iotaledger/iota.go/consts"
@@ -465,12 +464,15 @@ type Hash = Trytes
 // Hashes is a slice of Hash.
 type Hashes = []Hash
 
-var trytesRegex = regexp.MustCompile("^[9A-Z]+$")
-
 // ValidTrytes returns true if t is made of valid trytes.
 func ValidTrytes(trytes Trytes) error {
-	if !trytesRegex.MatchString(string(trytes)) {
+	if trytes == "" {
 		return ErrInvalidTrytes
+	}
+	for _, runeVal := range trytes {
+		if (runeVal < 'A' || runeVal > 'Z') && runeVal != '9' {
+			return ErrInvalidTrytes
+		}
 	}
 	return nil
 }
