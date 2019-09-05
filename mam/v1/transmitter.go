@@ -15,7 +15,7 @@ import (
 // Some error definitions.
 var (
 	ErrUnknownChannelMode = errors.New("channel mode must be ChannelModePublic, ChannelModePrivate or ChannelModeRestricted")
-	ErrNoSideKey          = errors.New("A sideKey must be provided for the restricted mode")
+	ErrNoSideKey          = errors.New("A 81-trytes sideKey must be provided for the restricted mode")
 )
 
 // Transmitter defines the MAM facade transmitter.
@@ -38,14 +38,16 @@ func NewTransmitter(api API, seed trinary.Trytes, mwm uint64, securityLevel cons
 
 // SetMode sets the channel mode.
 func (t *Transmitter) SetMode(m ChannelMode, sideKey trinary.Trytes) error {
-	if m != ChannelModePublic && m != ChannelModePrivate && m != ChannelModeRestricted {
-		return ErrUnknownChannelMode
-	}
-	if m == ChannelModeRestricted {
-		if sideKey == "" {
-			return ErrNoSideKey
+	switch m {
+	case ChannelModePublic, ChannelModePrivate:
+		t.channel.sideKey = consts.NullHashTrytes
+	case ChannelModeRestricted:
+		if l := len(sideKey); l != 81 {
+			return errors.Wrapf(ErrNoSideKey, "sidekey of length %d", l)
 		}
 		t.channel.sideKey = sideKey
+	default:
+		return errors.Wrapf(ErrUnknownChannelMode, "channel mode [%s]", m)
 	}
 	t.channel.mode = m
 	return nil

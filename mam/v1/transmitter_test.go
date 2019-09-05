@@ -3,6 +3,7 @@ package mam_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/bundle"
@@ -27,11 +28,11 @@ var _ = Describe("Transmitter", func() {
 		It("Should set the mode to restricted", func() {
 			transmitter := mam.NewTransmitter(newFakeAPI(), "seed", 9, consts.SecurityLevelLow)
 
-			err := transmitter.SetMode(mam.ChannelModeRestricted, "ABC")
+			err := transmitter.SetMode(mam.ChannelModeRestricted, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(transmitter.Mode()).To(Equal(mam.ChannelModeRestricted))
-			Expect(transmitter.SideKey()).To(Equal(trinary.Trytes("ABC")))
+			Expect(transmitter.SideKey()).To(Equal(trinary.Trytes("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")))
 		})
 
 		It("Should error on undefined mode", func() {
@@ -39,7 +40,7 @@ var _ = Describe("Transmitter", func() {
 
 			err := transmitter.SetMode("555", "")
 
-			Expect(err).To(Equal(mam.ErrUnknownChannelMode))
+			Expect(errors.Cause(err)).To(Equal(mam.ErrUnknownChannelMode))
 			Expect(transmitter.Mode()).To(Equal(mam.ChannelModePublic))
 			Expect(transmitter.SideKey()).To(Equal("999999999999999999999999999999999999999999999999999999999999999999999999999999999"))
 		})
@@ -49,7 +50,7 @@ var _ = Describe("Transmitter", func() {
 
 			err := transmitter.SetMode(mam.ChannelModeRestricted, "")
 
-			Expect(err).To(Equal(mam.ErrNoSideKey))
+			Expect(errors.Cause(err)).To(Equal(mam.ErrNoSideKey))
 			Expect(transmitter.Mode()).To(Equal(mam.ChannelModePublic))
 			Expect(transmitter.SideKey()).To(Equal("999999999999999999999999999999999999999999999999999999999999999999999999999999999"))
 		})
