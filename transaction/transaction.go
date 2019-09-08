@@ -137,59 +137,68 @@ func AsTransactionObjects(rawTrytes []Trytes, hashes Hashes) (Transactions, erro
 	return txs, nil
 }
 
-// TransactionToTrytes converts the transaction to trytes.
-func TransactionToTrytes(t *Transaction) (Trytes, error) {
+// TransactionToTrits converts the transaction to trits.
+func TransactionToTrits(t *Transaction) (Trits, error) {
 	tr := make(Trits, TransactionTrinarySize)
 	if !guards.IsTrytesOfExactLength(t.SignatureMessageFragment, SignatureMessageFragmentTrinarySize/3) {
-		return "", errors.Wrap(ErrInvalidTrytes, "invalid signature message fragment")
+		return nil, errors.Wrap(ErrInvalidTrytes, "invalid signature message fragment")
 	}
 	copy(tr, MustTrytesToTrits(t.SignatureMessageFragment))
 
 	if !guards.IsTrytesOfExactLength(t.Address, AddressTrinarySize/3) {
-		return "", errors.Wrap(ErrInvalidTrytes, "invalid address")
+		return nil, errors.Wrap(ErrInvalidTrytes, "invalid address")
 	}
 	copy(tr[AddressTrinaryOffset:], MustTrytesToTrits(t.Address))
 
 	copy(tr[ValueOffsetTrinary:], IntToTrits(t.Value))
 	if !guards.IsTrytesOfExactLength(t.ObsoleteTag, ObsoleteTagTrinarySize/3) {
-		return "", errors.Wrap(ErrInvalidTrytes, "invalid obsolete tag")
+		return nil, errors.Wrap(ErrInvalidTrytes, "invalid obsolete tag")
 	}
 	copy(tr[ObsoleteTagTrinaryOffset:], MustTrytesToTrits(t.ObsoleteTag))
 
 	copy(tr[TimestampTrinaryOffset:], IntToTrits(int64(t.Timestamp)))
 	if t.CurrentIndex > t.LastIndex {
-		return "", errors.Wrap(ErrInvalidIndex, "current index is bigger than last index")
+		return nil, errors.Wrap(ErrInvalidIndex, "current index is bigger than last index")
 	}
 
 	copy(tr[CurrentIndexTrinaryOffset:], IntToTrits(int64(t.CurrentIndex)))
 	copy(tr[LastIndexTrinaryOffset:], IntToTrits(int64(t.LastIndex)))
 	if !guards.IsTrytesOfExactLength(t.Bundle, BundleTrinarySize/3) {
-		return "", errors.Wrap(ErrInvalidTrytes, "invalid bundle hash")
+		return nil, errors.Wrap(ErrInvalidTrytes, "invalid bundle hash")
 	}
 	copy(tr[BundleTrinaryOffset:], MustTrytesToTrits(t.Bundle))
 
 	if !guards.IsTrytesOfExactLength(t.TrunkTransaction, TrunkTransactionTrinarySize/3) {
-		return "", errors.Wrap(ErrInvalidTrytes, "invalid trunk tx hash")
+		return nil, errors.Wrap(ErrInvalidTrytes, "invalid trunk tx hash")
 	}
 	copy(tr[TrunkTransactionTrinaryOffset:], MustTrytesToTrits(t.TrunkTransaction))
 
 	if !guards.IsTrytesOfExactLength(t.BranchTransaction, BranchTransactionTrinarySize/3) {
-		return "", errors.Wrap(ErrInvalidTrytes, "invalid branch tx hash")
+		return nil, errors.Wrap(ErrInvalidTrytes, "invalid branch tx hash")
 	}
 	copy(tr[BranchTransactionTrinaryOffset:], MustTrytesToTrits(t.BranchTransaction))
 
 	if !guards.IsTrytesOfExactLength(t.Tag, TagTrinarySize/3) {
-		return "", errors.Wrap(ErrInvalidTrytes, "invalid tag")
+		return nil, errors.Wrap(ErrInvalidTrytes, "invalid tag")
 	}
 	copy(tr[TagTrinaryOffset:], MustTrytesToTrits(t.Tag))
 	copy(tr[AttachmentTimestampTrinaryOffset:], IntToTrits(t.AttachmentTimestamp))
 	copy(tr[AttachmentTimestampLowerBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampLowerBound))
 	copy(tr[AttachmentTimestampUpperBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampUpperBound))
 	if !guards.IsTrytesOfExactLength(t.Nonce, NonceTrinarySize/3) {
-		return "", errors.Wrap(ErrInvalidTrytes, "invalid nonce")
+		return nil, errors.Wrap(ErrInvalidTrytes, "invalid nonce")
 	}
 	copy(tr[NonceTrinaryOffset:], MustTrytesToTrits(t.Nonce))
 
+	return tr, nil
+}
+
+// TransactionToTrytes converts the transaction to trytes.
+func TransactionToTrytes(t *Transaction) (Trytes, error) {
+	tr, err := TransactionToTrits(t)
+	if err != nil {
+		return "", err
+	}
 	return MustTritsToTrytes(tr), nil
 }
 
