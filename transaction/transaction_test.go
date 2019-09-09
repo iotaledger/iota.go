@@ -112,6 +112,21 @@ var _ = Describe("Transaction", func() {
 		})
 	})
 
+	Context("TransactionToTrits()", func() {
+
+		It("should return trits for a valid transaction", func() {
+			trits, err := TransactionToTrits(tx)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(trits).To(Equal(txTrits))
+		})
+
+		It("should return an error for invalid transaction", func() {
+			_, err := TransactionToTrits(&faultyTx)
+			Expect(err).To(HaveOccurred())
+		})
+
+	})
+
 	Context("TransactionToTrytes()", func() {
 
 		It("should return trytes for a valid transaction", func() {

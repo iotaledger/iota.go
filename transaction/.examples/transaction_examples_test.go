@@ -71,6 +71,11 @@ func ExampleAsTransactionObject() {}
 // o: error, Returned for schematically wrong transactions.
 func ExampleAsTransactionObjects() {}
 
+// i req: t, The transaction to convert to Trits.
+// o: Trits, The Trits representation of the transaction.
+// o: error, Returned for schematically wrong transactions.
+func ExampleTransactionToTrits() {}
+
 // i req: t, The transaction to convert to Trytes.
 // o: Trytes, The Trytes representation of the transaction.
 // o: error, Returned for schematically wrong transactions.
