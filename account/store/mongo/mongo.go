@@ -138,9 +138,6 @@ func (ms *MongoStore) LoadAccount(id string) (*store.AccountState, error) {
 	state := newaccountstate()
 	cursor := ms.coll.FindOne(ms.cnf.ContextProvider(), bson.D{{"_id", id}})
 	if err := cursor.Err(); err != nil {
-		return nil, err
-	}
-	if err := cursor.Decode(state); err != nil {
 		// return an empty account state object if there isn't
 		// a previously stored account
 		if err == mongo.ErrNoDocuments {
@@ -152,6 +149,9 @@ func (ms *MongoStore) LoadAccount(id string) (*store.AccountState, error) {
 			}
 			return store.NewAccountState(), nil
 		}
+		return nil, err
+	}
+	if err := cursor.Decode(state); err != nil {
 		return nil, err
 	}
 	return state.AccountState(), nil
