@@ -1,15 +1,15 @@
 package mam_test
 
 import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/converter"
 	. "github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/mam/v1"
 	. "github.com/iotaledger/iota.go/merkle"
 	"github.com/iotaledger/iota.go/trinary"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 const (
@@ -19,9 +19,10 @@ const (
 	message        = "{\"message\":\"Message from Alice\",\"timestamp\":\"2019-4-8 22:41:01\"}"
 )
 
-var _ = Describe("Mam", func() {
+var _ = Describe("MAMCreate", func() {
 
-	Context("Mam()", func() {
+	Context("MAMCreate and MAMParse", func() {
+
 		It("Mam", func() {
 			var index uint64 = 7
 			var start uint64 = 0
@@ -57,5 +58,6 @@ var _ = Describe("Mam", func() {
 				}
 			}
 		})
+
 	})
 })
