@@ -13,6 +13,8 @@ This is the **official** Go client library, which allows you to do the following
 This is beta software, so there may be performance and stability issues.
 Please report any issues in our [issue tracker](https://github.com/iotaledger/iota.go/issues/new).
 
+Visit the [docs site](https://docs.iota.org/docs/iota-go/0.1/introduction/overview) for an introduction to the library.
+
 |Table of contents|
 |:----|
 | [Prerequisites](#prerequisites)
@@ -53,6 +55,7 @@ the `go.mod` file (vgo is `go get` agnostic).
 ## Getting started
 
 After you've [downloaded the library](#downloading-the-library), you can connect to an IRI node to send transactions to it and interact with the ledger.
+An extended guide can be found on our [docs site](https://docs.iota.org/docs/iota-go/0.1/introduction/overview), we strongly recommend you to go here for starting off. A quick starting tutorial is shown below.
 
 1. To connect to a local IRI node, do the following:
 
