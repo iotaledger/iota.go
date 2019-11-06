@@ -65,13 +65,18 @@ func (t *Transmitter) SideKey() trinary.Trytes {
 
 // Transmit creates a MAM message using the given string and transmits it. On success, it returns
 // the addresses root.
-func (t *Transmitter) Transmit(message string) (trinary.Trytes, error) {
+func (t *Transmitter) Transmit(message string, params ...string) (trinary.Trytes, error) {
 	root, address, payload, err := t.createMessage(message)
 	if err != nil {
 		return "", errors.Wrapf(err, "create message")
 	}
 
-	if err := t.attachMessage(address, payload); err != nil {
+	var tag = ""
+	if len(params) > 0 {
+		tag = params[0]
+	}
+
+	if err := t.attachMessage(address, payload, tag); err != nil {
 		return "", errors.Wrapf(err, "attach message")
 	}
 
@@ -123,7 +128,7 @@ func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Try
 	return rootTrytes, address, payloadTrytes, nil
 }
 
-func (t *Transmitter) attachMessage(address, payload trinary.Trytes) error {
+func (t *Transmitter) attachMessage(address, payload trinary.Trytes, tag string) error {
 	if err := trinary.ValidTrytes(address); err != nil {
 		return errors.Wrapf(err, "invalid address")
 	}
@@ -132,7 +137,7 @@ func (t *Transmitter) attachMessage(address, payload trinary.Trytes) error {
 		Address: address,
 		Value:   0,
 		Message: payload,
-		Tag:     "",
+		Tag:     tag,
 	}}
 
 	trytes, err := t.api.PrepareTransfers(consts.NullHashTrytes, transfers, api.PrepareTransfersOptions{})
