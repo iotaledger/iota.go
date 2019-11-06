@@ -8,20 +8,20 @@ import (
 
 // Error definitions
 var (
-	ErrCouldNotParseChannelMode = errors.New("could not parse channel mode")
+	ErrCouldNotParseChannelMode = errors.New("could not parse Channel mode")
 )
 
-// ChannelMode is an enum of channel modes.
+// ChannelMode is an enum of Channel modes.
 type ChannelMode string
 
-// Definition of possible channel modes.
+// Definition of possible Channel modes.
 const (
 	ChannelModePublic     ChannelMode = "public"
 	ChannelModePrivate    ChannelMode = "private"
 	ChannelModeRestricted ChannelMode = "restricted"
 )
 
-// ParseChannelMode parses a channel mode from the given string.
+// ParseChannelMode parses a Channel mode from the given string.
 func ParseChannelMode(input string) (ChannelMode, error) {
 	switch cm := strings.TrimSpace(strings.ToLower(input)); cm {
 	case "public":
