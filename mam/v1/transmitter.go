@@ -91,7 +91,7 @@ func (t *Transmitter) Transmit(message string, params ...string) (trinary.Trytes
 		tag = params[0]
 	}
 
-	if err := t.attachMessage(address, payload, tag); err != nil
+	if err := t.attachMessage(address, payload, tag); err != nil {
 		return "", errors.Wrapf(err, "attach message")
 	}
 
