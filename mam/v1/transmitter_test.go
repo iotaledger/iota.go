@@ -61,7 +61,7 @@ var _ = Describe("Transmitter", func() {
 
 		const seed = "TX9XRR9SRCOBMTYDTMKNEIJCSZIMEUPWCNLC9DPDZKKAEMEFVSTEVUFTRUZXEHLULEIYJIEOWIC9STAHW"
 
-		It("Should transmit the given message to a public channel", func() {
+		It("Should transmit the given message to a public Channel", func() {
 			fakeAPI := newFakeAPI()
 			fakeAPI.prepareTransfers = func(address trinary.Trytes, transfers bundle.Transfers, opts api.PrepareTransfersOptions) ([]trinary.Trytes, error) {
 				Expect(address).To(Equal("999999999999999999999999999999999999999999999999999999999999999999999999999999999"))
@@ -90,7 +90,7 @@ var _ = Describe("Transmitter", func() {
 			Expect(root).To(Equal("YKOLXUAMTJGGIVPEWHUCSKKJWIY9PWEFABXYHAWDBTMOPKWNXOOQCKNHADSZP9SOSDFEOXPVTWUWFDQNH"))
 		})
 
-		It("Should transmit the given message to a private channel", func() {
+		It("Should transmit the given message to a private Channel", func() {
 			fakeAPI := newFakeAPI()
 			fakeAPI.prepareTransfers = func(address trinary.Trytes, transfers bundle.Transfers, opts api.PrepareTransfersOptions) ([]trinary.Trytes, error) {
 				Expect(address).To(Equal("999999999999999999999999999999999999999999999999999999999999999999999999999999999"))
@@ -119,7 +119,7 @@ var _ = Describe("Transmitter", func() {
 			Expect(root).To(Equal("YKOLXUAMTJGGIVPEWHUCSKKJWIY9PWEFABXYHAWDBTMOPKWNXOOQCKNHADSZP9SOSDFEOXPVTWUWFDQNH"))
 		})
 
-		It("Should transmit the given message to a restricted channel", func() {
+		It("Should transmit the given message to a restricted Channel", func() {
 			fakeAPI := newFakeAPI()
 			fakeAPI.prepareTransfers = func(address trinary.Trytes, transfers bundle.Transfers, opts api.PrepareTransfersOptions) ([]trinary.Trytes, error) {
 				Expect(address).To(Equal("999999999999999999999999999999999999999999999999999999999999999999999999999999999"))

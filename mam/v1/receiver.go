@@ -24,7 +24,7 @@ func NewReceiver(api API) *Receiver {
 	}
 }
 
-// SetMode sets the channel mode.
+// SetMode sets the Channel mode.
 func (r *Receiver) SetMode(m ChannelMode, sideKey trinary.Trytes) error {
 	if m != ChannelModePublic && m != ChannelModePrivate && m != ChannelModeRestricted {
 		return ErrUnknownChannelMode
@@ -39,12 +39,12 @@ func (r *Receiver) SetMode(m ChannelMode, sideKey trinary.Trytes) error {
 	return nil
 }
 
-// Mode returns the channel mode.
+// Mode returns the Channel mode.
 func (r *Receiver) Mode() ChannelMode {
 	return r.mode
 }
 
-// SideKey returns the channel's side key.
+// SideKey returns the Channel's side key.
 func (r *Receiver) SideKey() trinary.Trytes {
 	return r.sideKey
 }

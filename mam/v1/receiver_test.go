@@ -14,7 +14,7 @@ var _ = Describe("Receiver", func() {
 
 	Context("Receive", func() {
 
-		It("Should receive a message from a public channel", func() {
+		It("Should receive a message from a public Channel", func() {
 			fakeAPI := newFakeAPI()
 			fakeAPI.findTransactionObjects = func(query api.FindTransactionsQuery) (transaction.Transactions, error) {
 				Expect(query).To(Equal(api.FindTransactionsQuery{
@@ -67,7 +67,7 @@ var _ = Describe("Receiver", func() {
 			Expect(nextRoot).To(Equal("HTGAUZTBH9SIVJVREIXLGAPPVQOFZZCRWDYSDG9JLXLFREYRWBEOBPSCSFTV9XZNIVZNAZINBAFDEWUZ9"))
 		})
 
-		It("Should receive a message from a private channel", func() {
+		It("Should receive a message from a private Channel", func() {
 			fakeAPI := newFakeAPI()
 			fakeAPI.findTransactionObjects = func(query api.FindTransactionsQuery) (transaction.Transactions, error) {
 				Expect(query).To(Equal(api.FindTransactionsQuery{
@@ -120,7 +120,7 @@ var _ = Describe("Receiver", func() {
 			Expect(nextRoot).To(Equal("HTGAUZTBH9SIVJVREIXLGAPPVQOFZZCRWDYSDG9JLXLFREYRWBEOBPSCSFTV9XZNIVZNAZINBAFDEWUZ9"))
 		})
 
-		It("Should receive a message from a restricted channel", func() {
+		It("Should receive a message from a restricted Channel", func() {
 			fakeAPI := newFakeAPI()
 			fakeAPI.findTransactionObjects = func(query api.FindTransactionsQuery) (transaction.Transactions, error) {
 				Expect(query).To(Equal(api.FindTransactionsQuery{
