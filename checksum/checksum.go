@@ -31,16 +31,15 @@ func AddChecksum(input Trytes, isAddress bool, checksumLength uint64) (Trytes, e
 		inputCopy += "9"
 	}
 
-	inputTrits := MustTrytesToTrits(inputCopy)
 	k := kerl.NewKerl()
-	if err := k.Absorb(inputTrits); err != nil {
+	if err := k.AbsorbTrytes(inputCopy); err != nil {
 		return "", err
 	}
-	checksumTrits, err := k.Squeeze(HashTrinarySize)
+	checksumTrytes, err := k.SqueezeTrytes(HashTrinarySize)
 	if err != nil {
 		return "", err
 	}
-	input += MustTritsToTrytes(checksumTrits[HashTrinarySize-checksumLength*3 : HashTrinarySize])
+	input += checksumTrytes[HashTrytesSize-checksumLength : HashTrytesSize]
 	return input, nil
 }
 

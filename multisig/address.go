@@ -28,7 +28,7 @@ type MultisigAddress struct {
 // Absorb absorbs the given key digests.
 func (m *MultisigAddress) Absorb(digests ...Trytes) error {
 	for i := range digests {
-		if err := m.h.Absorb(MustTrytesToTrits(digests[i])); err != nil {
+		if err := m.h.AbsorbTrytes(digests[i]); err != nil {
 			return err
 		}
 	}
@@ -43,10 +43,10 @@ func (m *MultisigAddress) Finalize(digest *string) (Trytes, error) {
 		}
 	}
 
-	addressTrits, err := m.h.Squeeze(HashTrinarySize)
+	addressTrytes, err := m.h.SqueezeTrytes(HashTrinarySize)
 	if err != nil {
 		return "", err
 	}
 
-	return MustTritsToTrytes(addressTrits), nil
+	return addressTrytes, nil
 }
