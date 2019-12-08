@@ -3,6 +3,7 @@ package kerl
 
 import (
 	"hash"
+	"unsafe"
 
 	"github.com/pkg/errors"
 
@@ -25,21 +26,19 @@ func NewKerl() SpongeFunction {
 	return k
 }
 
-// Squeeze out length trits. Length has to be a multiple of HashTrinarySize.
-func (k *Kerl) Squeeze(length int) (Trits, error) {
-	if length%HashTrinarySize != 0 {
-		return nil, ErrInvalidSqueezeLength
-	}
+func (k *Kerl) squeezeBytes(numChunks int) ([]byte, error) {
+	result := make([]byte, numChunks*HashBytesSize)
+	buffer := make([]byte, HashBytesSize)
 
-	out := make(Trits, length)
-	for i := 1; i <= length/HashTrinarySize; i++ {
-		h := k.s.Sum(nil)
-		ts, err := KerlBytesToTrits(h)
-		if err != nil {
-			return nil, err
-		}
-		//ts[HashSize-1] = 0
-		copy(out[HashTrinarySize*(i-1):HashTrinarySize*i], ts)
+	for i := 1; i <= numChunks; i++ {
+		h := k.s.Sum(buffer[:0])
+
+		// copy into result and fix the last trit
+		chunk := result[HashBytesSize*(i-1) : HashBytesSize*i]
+		copy(chunk, h)
+		KerlBytesZeroLastTrit(chunk)
+
+		// re-initialize keccak for the next squeeze
 		k.s.Reset()
 		for i, e := range h {
 			h[i] = ^e
@@ -47,6 +46,28 @@ func (k *Kerl) Squeeze(length int) (Trits, error) {
 		if _, err := k.s.Write(h); err != nil {
 			return nil, err
 		}
+	}
+	return result, nil
+}
+
+// Squeeze out length trits. Length has to be a multiple of HashTrinarySize.
+func (k *Kerl) Squeeze(length int) (Trits, error) {
+	if length%HashTrinarySize != 0 {
+		return nil, ErrInvalidSqueezeLength
+	}
+
+	bs, err := k.squeezeBytes(length / HashTrinarySize)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(Trits, length)
+	for i := 1; i <= length/HashTrinarySize; i++ {
+		ts, err := KerlBytesToTrits(bs[HashBytesSize*(i-1) : HashBytesSize*i])
+		if err != nil {
+			return nil, err
+		}
+		copy(out[HashTrinarySize*(i-1):HashTrinarySize*i], ts)
 	}
 
 	return out, nil
@@ -64,11 +85,26 @@ func (k *Kerl) MustSqueeze(length int) Trits {
 
 // SqueezeTrytes squeezes out trytes of the given trit length. Length has to be a multiple of HashTrinarySize.
 func (k *Kerl) SqueezeTrytes(length int) (Trytes, error) {
-	trits, err := k.Squeeze(length)
+	if length%HashTrinarySize != 0 {
+		return "", ErrInvalidSqueezeLength
+	}
+
+	bs, err := k.squeezeBytes(length / HashTrinarySize)
 	if err != nil {
 		return "", err
 	}
-	return TritsToTrytes(trits)
+
+	out := make([]byte, length/HashTrinarySize*HashTrytesSize)
+	for i := 1; i <= length/HashTrinarySize; i++ {
+		ts, err := KerlBytesToTrytes(bs[HashBytesSize*(i-1) : HashBytesSize*i])
+		if err != nil {
+			return "", err
+		}
+		copy(out[HashTrytesSize*(i-1):HashTrytesSize*i], ts)
+	}
+
+	// convert into trytes without copying
+	return *(*string)(unsafe.Pointer(&out)), nil
 }
 
 // MustSqueezeTrytes squeezes out trytes of the given trit length. Length has to be a multiple of HashTrinarySize.
@@ -85,7 +121,6 @@ func (k *Kerl) Absorb(in Trits) error {
 	}
 
 	for i := 1; i <= len(in)/HashTrinarySize; i++ {
-		// in[(HashSize*i)-1] = 0
 		b, err := KerlTritsToBytes(in[HashTrinarySize*(i-1) : HashTrinarySize*i])
 		if err != nil {
 			return err
@@ -94,24 +129,25 @@ func (k *Kerl) Absorb(in Trits) error {
 			return err
 		}
 	}
-
 	return nil
 }
 
 // AbsorbTrytes fills the internal State of the sponge with the given trytes.
-func (k *Kerl) AbsorbTrytes(inn Trytes) error {
-	var in Trits
-	var err error
+func (k *Kerl) AbsorbTrytes(in Trytes) error {
+	if len(in) == 0 || len(in)%HashTrytesSize != 0 {
+		return errors.Wrap(ErrInvalidTrytesLength, "trytes length must be a multiple of 81")
+	}
 
-	if len(inn) == 0 {
-		in = Trits{0}
-	} else {
-		in, err = TrytesToTrits(inn)
+	for i := 1; i <= len(in)/HashTrytesSize; i++ {
+		b, err := KerlTrytesToBytes(in[HashTrytesSize*(i-1) : HashTrytesSize*i])
 		if err != nil {
 			return err
 		}
+		if _, err := k.s.Write(b); err != nil {
+			return err
+		}
 	}
-	return k.Absorb(in)
+	return nil
 }
 
 // AbsorbTrytes fills the internal State of the sponge with the given trytes.

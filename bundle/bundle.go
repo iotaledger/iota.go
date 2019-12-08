@@ -196,22 +196,16 @@ func Finalize(bundle Bundle) (Bundle, error) {
 		k := kerl.NewKerl()
 
 		for i := 0; i < len(bundle); i++ {
-			relevantTritsForBundleHash := MustTrytesToTrits(
-				bundle[i].Address +
-					MustTritsToTrytes(valueTrits[i]) +
-					MustTritsToTrytes(obsoleteTagTrits[i]) +
-					MustTritsToTrytes(timestampTrits[i]) +
-					MustTritsToTrytes(currentIndexTrits[i]) +
-					MustTritsToTrytes(lastIndexTrits),
-			)
-			k.Absorb(relevantTritsForBundleHash)
+			relevantTrytesForBundleHash := bundle[i].Address +
+				MustTritsToTrytes(valueTrits[i]) +
+				MustTritsToTrytes(obsoleteTagTrits[i]) +
+				MustTritsToTrytes(timestampTrits[i]) +
+				MustTritsToTrytes(currentIndexTrits[i]) +
+				MustTritsToTrytes(lastIndexTrits)
+			k.MustAbsorbTrytes(relevantTrytesForBundleHash)
 		}
 
-		bundleHashTrits, err := k.Squeeze(HashTrinarySize)
-		if err != nil {
-			return nil, err
-		}
-		bundleHash = MustTritsToTrytes(bundleHashTrits)
+		bundleHash = k.MustSqueezeTrytes(HashTrinarySize)
 
 		// check whether normalized bundle hash can be computed
 		normalizedBundleHash := signing.NormalizedBundleHash(bundleHash)
@@ -307,8 +301,7 @@ func ValidBundle(bundle Bundle) error {
 			return errors.Wrapf(ErrInvalidBundle, "expected tx at index %d to have last index %d but got %d", i, lastIndex, tx.LastIndex)
 		}
 
-		txTrits := MustTrytesToTrits(transaction.MustTransactionToTrytes(tx)[2187 : 2187+162])
-		k.Absorb(txTrits)
+		k.MustAbsorbTrytes(transaction.MustTransactionToTrytes(tx)[2187 : 2187+162])
 
 		// continue if output or signature txbundle bundle
 		if tx.Value >= 0 {
@@ -336,12 +329,10 @@ func ValidBundle(bundle Bundle) error {
 		return errors.Wrapf(ErrInvalidBundle, "bundle total sum should be 0 but got %d", totalSum)
 	}
 
-	bundleHashTrits, err := k.Squeeze(HashTrinarySize)
+	bundleHash, err := k.SqueezeTrytes(HashTrinarySize)
 	if err != nil {
 		return err
 	}
-
-	bundleHash := MustTritsToTrytes(bundleHashTrits)
 
 	if bundleHash != bundle[0].Bundle {
 		return ErrInvalidBundleHash
