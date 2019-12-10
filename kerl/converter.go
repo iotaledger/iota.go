@@ -18,10 +18,10 @@ const (
 	// the middle of the domain described by one tryte
 	halfTryte = (tryteRadix - 1) / 2
 
-	chunkRadix = 19683
+	chunkRadix = 387420489
 	halfChunk  = (chunkRadix - 1) / 2
 
-	hashChunkSize = HashTrinarySize / 9
+	hashChunkSize = HashTrinarySize/18 + 1
 )
 
 // hex representation of the middle of the domain described by 242 trits, i.e. \sum_{k=0}^{241} 3^k

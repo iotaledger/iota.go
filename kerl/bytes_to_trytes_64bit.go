@@ -9,13 +9,13 @@ import (
 )
 
 func chunksToTryteValues(cs []int32) []int8 {
-	vs := make([]int8, HashTrytesSize)
+	vs := make([]int8, HashTrytesSize+3)
 	for i, c := range cs {
 		isNegative := c < 0
 		if isNegative {
 			c = -c
 		}
-		for j := 0; j < 2; j++ {
+		for j := 0; j < 5; j++ {
 			rem := int8(c % tryteRadix)
 			c = c / tryteRadix
 			if rem > halfTryte {
@@ -25,14 +25,14 @@ func chunksToTryteValues(cs []int32) []int8 {
 			if isNegative {
 				rem = -rem
 			}
-			vs[i*3+j] = rem
+			vs[i*6+j] = rem
 		}
 		if isNegative {
 			c = -c
 		}
-		vs[i*3+2] = int8(c)
+		vs[i*6+5] = int8(c)
 	}
-	return vs
+	return vs[0:81]
 }
 
 func bytesToTryteValues(bytes []byte) []int8 {
