@@ -4,18 +4,13 @@
 package kerl
 
 import (
-	"unsafe"
-
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/kerl/bigint"
 )
 
 func bytesToTryteValues(bytes []byte) []int8 {
-	// copy and convert bytes to bigint
-	rb := make([]byte, len(bytes))
-	copy(rb, bytes)
-	bigint.Reverse(rb)
-	b := (*(*[]uint32)(unsafe.Pointer(&rb)))[0:IntLength]
+	b := make([]uint32, IntLength)
+	bigintPutBytes(b, bytes)
 
 	// the two's complement representation is only correct, if the number fits
 	// into 48 bytes, i.e. has the 243th trit set to 0
