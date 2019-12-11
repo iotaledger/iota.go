@@ -8,31 +8,21 @@ import (
 	"github.com/iotaledger/iota.go/kerl/bigint"
 )
 
-func chunksToTryteValues(cs []int32) []int8 {
-	vs := make([]int8, HashTrytesSize+3)
+func chunksToTryteValues(cs []uint32) []int8 {
+	vs := make([]int8, HashTrytesSize)
 	for i, c := range cs {
-		isNegative := c < 0
-		if isNegative {
-			c = -c
-		}
-		for j := 0; j < 5; j++ {
+		for j := 0; j < trytesPerChunk-1; j++ {
 			rem := int8(c % tryteRadix)
+			vs[i*trytesPerChunk+j] = rem - halfTryte
 			c = c / tryteRadix
-			if rem > halfTryte {
-				c += 1
-				rem -= tryteRadix
+
+			if i*trytesPerChunk+j >= HashTrytesSize-1 {
+				return vs
 			}
-			if isNegative {
-				rem = -rem
-			}
-			vs[i*6+j] = rem
 		}
-		if isNegative {
-			c = -c
-		}
-		vs[i*6+5] = int8(c)
+		vs[i*trytesPerChunk+trytesPerChunk-1] = int8(c) - halfTryte
 	}
-	return vs[0:81]
+	return vs
 }
 
 func bytesToTryteValues(bytes []byte) []int8 {
@@ -46,7 +36,7 @@ func bytesToTryteValues(bytes []byte) []int8 {
 	// convert to the unsigned bigint representing non-balanced ternary
 	bigint.MustAdd(b, halfThree)
 
-	cs := make([]int32, hashChunkSize)
+	cs := make([]uint32, hashChunkSize)
 
 	// initially, all words of the bigint are non-zero
 	nzIndex := IntLength - 1
@@ -57,7 +47,7 @@ func bytesToTryteValues(bytes []byte) []int8 {
 			v := (uint64(rem) << 32) | uint64(b[i])
 			b[i], rem = uint32(v/chunkRadix), uint32(v%chunkRadix)
 		}
-		cs[i] = int32(rem) - halfChunk
+		cs[i] = rem
 
 		// decrement index, if the highest considered word of the bigint turned zero
 		if nzIndex > 0 && b[nzIndex] == 0 {
@@ -66,9 +56,9 @@ func bytesToTryteValues(bytes []byte) []int8 {
 	}
 
 	// special case for the last tryte, where no further division is necessary
-	cs[hashChunkSize-1] = int32(b[0]) - halfChunk
+	cs[hashChunkSize-1] = b[0]
 
 	vs := chunksToTryteValues(cs)
-	vs[HashTrytesSize-1] = tryteZeroLastTrit(vs[HashTrytesSize-1])
+	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(vs[HashTrytesSize-1])
 	return vs
 }

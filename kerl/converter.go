@@ -16,12 +16,12 @@ const (
 	// radix used in the conversion
 	tryteRadix = 27
 	// the middle of the domain described by one tryte
-	halfTryte = (tryteRadix - 1) / 2
+	halfTryte = tryteRadix / 2
 
-	chunkRadix = 387420489
-	halfChunk  = (chunkRadix - 1) / 2
-
-	hashChunkSize = HashTrinarySize/18 + 1
+	// radix used in the conversion into chunks, i.e. 27^6
+	chunkRadix     = 387420489
+	trytesPerChunk = 6
+	hashChunkSize  = (HashTrytesSize + trytesPerChunk - 1) / trytesPerChunk
 )
 
 // hex representation of the middle of the domain described by 242 trits, i.e. \sum_{k=0}^{241} 3^k
@@ -112,8 +112,8 @@ func tritsToTryteValues(trits Trits) []int8 {
 	return vs
 }
 
-// tryteZeroLastTrit takes a tryte value of three trits a+3b+9c and returns a+3b (setting the last trit to zero).
-func tryteZeroLastTrit(v int8) int8 {
+// tryteValueZeroLastTrit takes a tryte value of three trits a+3b+9c and returns a+3b (setting the last trit to zero).
+func tryteValueZeroLastTrit(v int8) int8 {
 	if v > 4 {
 		return v - 9
 	}
@@ -143,7 +143,7 @@ func bigintZeroLastTrit(b []uint32) bool {
 func tryteValuesToBytes(vs []int8) []byte {
 	b := make([]uint32, IntLength)
 	// set the last trit of the last tryte to zero
-	v := tryteZeroLastTrit(vs[HashTrytesSize-1])
+	v := tryteValueZeroLastTrit(vs[HashTrytesSize-1])
 	// initialize the first part of the bigint with the non-balanced representation of this 2-trit value
 	b[0] = uint32(v + 4)
 

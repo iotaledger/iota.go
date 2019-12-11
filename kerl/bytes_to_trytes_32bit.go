@@ -49,7 +49,7 @@ func bytesToTryteValues(bytes []byte) []int8 {
 	}
 
 	// special case for the last tryte, where no further division is necessary
-	vs[HashTrytesSize-1] = tryteZeroLastTrit(int8(b[0]) - halfTryte)
+	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(int8(b[0]) - halfTryte)
 
 	return vs
 }
