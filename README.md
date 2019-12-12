@@ -10,7 +10,7 @@
     <img src="https://img.shields.io/badge/Documentation%20portal-blue.svg?style=for-the-badge"
          alt="Developer documentation portal">
       </p>
-	<p>
+	<p align="center">
 	<a href="https://godoc.org/github.com/iotaledger/iota.go">
     <img src="https://godoc.org/github.com/iotaledger/iota.go?status.svg"
          alt="Auto-generated docs">
