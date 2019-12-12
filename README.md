@@ -1,37 +1,65 @@
-# iota.go
+<h1 align="center">
+  <br>
+  <a href="https://docs.iota.org/docs/client-libraries/0.1/getting-started/java-quickstart"><img src="iota-go.png"></a>
+</h1>
 
-[![Build Status](https://travis-ci.org/iotaledger/iota.go.svg?branch=master)](https://travis-ci.org/iotaledger/iota.go)
-[![GoDoc](https://godoc.org/github.com/iotaledger/iota.go?status.svg)](https://godoc.org/github.com/iotaledger/iota.go)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/iotaledger/iota.go/master/LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/iotaledger/iota.go)](https://goreportcard.com/report/github.com/iotaledger/iota.go)
+<h2 align="center">The official Go client library for interacting with the Tangle</h2>
+
+<p align="center">
+    <a href="https://docs.iota.org/docs/client-libraries/0.1/getting-started/go-quickstart">
+    <img src="https://img.shields.io/badge/Developer%20documentation%20portal-blue.svg"
+         alt="Developer documentation portal">
+	<a href="https://godoc.org/github.com/iotaledger/iota.go">
+    <img src="https://godoc.org/github.com/iotaledger/iota.go?status.svg"
+         alt="Auto-generated docs">
+    <a href="https://discord.iota.org/">
+    <img src="https://img.shields.io/badge/Discord-9cf.svg?logo=discord"
+         alt="Discord">
+    <a href="https://iota.stackexchange.com/">
+    <img src="https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange"
+         alt="StackExchange">
+    <a href="https://raw.githubusercontent.com/iotaledger/iota.go/master/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green.svg"
+         alt="MIT license">
+    <a href="https://docs.iota.org/docs/node-software/0.1/iri/references/api-reference">
+    <img src="https://img.shields.io/badge/Node%20API%20coverage-17/18%20commands-green.svg"
+         alt="Supported IRI API endpoints">
+    <a href="https://goreportcard.com/report/github.com/iotaledger/iota.go">
+    <img src="https://goreportcard.com/badge/github.com/iotaledger/iota.go" alt="Code quality">
+    <a href="https://travis-ci.org/iotaledger/iota.go">
+    <img src="https://travis-ci.org/iotaledger/iota.go.svg?branch=master" alt="Build status">
+</p>
+      
+<p align="center">
+  <a href="#about">About</a> ◈
+  <a href="#prerequisites">Prerequisites</a> ◈
+  <a href="#installation">Installation</a> ◈
+  <a href="#getting-started">Getting started</a> ◈
+  <a href="#api-reference">API reference</a> ◈
+  <a href="#examples">Examples</a> ◈
+  <a href="#supporting-the-project">Supporting the project</a> ◈
+  <a href="#joining-the-discussion">Joining the discussion</a> 
+</p>
+
+---
+
+## About
 
 This is the **official** Go client library, which allows you to do the following:
 * Create transactions
+* Read transactions
 * Sign transactions
-* Interact with an IRI node
+* Generate addresses
 
 This is beta software, so there may be performance and stability issues.
 Please report any issues in our [issue tracker](https://github.com/iotaledger/iota.go/issues/new).
 
-Visit the [docs site](https://docs.iota.org/docs/iota-go/0.1/introduction/overview) for an introduction to the library.
-
-|Table of contents|
-|:----|
-| [Prerequisites](#prerequisites)
-| [Downloading the library](#downloading-the-library)|
-| [Getting started](#getting-started) |
-| [API reference](#api-reference)|
-| [Examples](#examples)|
-|[Supporting the project](#supporting-the-project)|
-|[Joining the discussion](#joining-the-discussion)|
-| [License](#license)|
-
 ## Prerequisites
 
-To download the IOTA Go client library and its dependencies, we recommend that you use [vgo modules](https://github.com/golang/go/wiki/Modules) 
+To install the IOTA Go client library and its dependencies, we recommend that you use [vgo modules](https://github.com/golang/go/wiki/Modules) 
 (since Go 1.11) to manage dependencies in your project.
 
-## Downloading the library
+## Installation
 
 To download the IOTA Go client library and its dependencies, do the following:
 
@@ -54,8 +82,8 @@ the `go.mod` file (vgo is `go get` agnostic).
 
 ## Getting started
 
-After you've [downloaded the library](#downloading-the-library), you can connect to an IRI node to send transactions to it and interact with the ledger.
-An extended guide can be found on our [docs site](https://docs.iota.org/docs/iota-go/0.1/introduction/overview), we strongly recommend you to go here for starting off. A quick starting tutorial is shown below.
+After you've [downloaded the library](#installation), you can connect to an IRI node to send transactions to it and interact with the ledger.
+An extended guide can be found on our [documentation portal](https://docs.iota.org/docs/client-libraries/0.1/getting-started/go-quickstart), we strongly recommend you to go here for starting off. A quick starting tutorial is shown below.
 
 1. To connect to a local IRI node, do the following:
 
@@ -93,118 +121,6 @@ For details on all available API methods, see the [API folder](api/).
 ## Examples
 
 As well as the following examples, you can take a look at our [examples folder](api/.examples) for more.
-
-### Creating and broadcasting transactions
-
-This example shows you how to create and send a transaction to an IRI node by calling the `PrepareTransfers()` method and piping the prepared bundle to the `SendTrytes()` method.
-
-```go
-package main
-
-import (
-	"fmt"
-	"github.com/iotaledger/iota.go/address"
-	. "github.com/iotaledger/iota.go/api"
-	"github.com/iotaledger/iota.go/bundle"
-	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/pow"
-	"github.com/iotaledger/iota.go/trinary"
-)
-
-var endpoint = "<node-url>"
-
-// must be 81 trytes long and truly random
-var seed = trinary.Trytes("AAAA....")
-
-// difficulty of the proof of work required to attach a transaction on the tangle
-const mwm = 14
-
-// how many milestones back to start the random walk from
-const depth = 3
-
-// must be 90 trytes long (with checksum)
-const recipientAddress = "BBBB....."
-
-func main() {
-
-	// get the best available PoW implementation
-	_, proofOfWorkFunc := pow.GetFastestProofOfWorkImpl()
-
-	// create a new API instance
-	api, err := ComposeAPI(HTTPClientSettings{
-		URI: endpoint,
-		// (!) if no PoWFunc is supplied, then the connected node is requested to do PoW for us
-		// via the AttachToTangle() API call.
-		LocalProofOfWorkFunc: proofOfWorkFunc,
-	})
-	must(err)
-
-	// create a transfer to the given recipient address
-	// optionally define a message and tag
-	transfers := bundle.Transfers{
-		{
-			// must be 90 trytes long (include the checksum)
-			Address: recipientAddress,
-			Value:   80,
-		},
-	}
-
-	// create inputs for the transfer
-	inputs := []Input{
-		{
-			// must be 90 trytes long (include the checksum)
-			Address:  "CCCCC....",
-			Security: SecurityLevelMedium,
-			KeyIndex: 0,
-			Balance:  100,
-		},
-	}
-
-	// create an address for the remainder.
-	// in this case we will have 20 iotas as the remainder, since we spend 100 from our input
-	// address and only send 80 to the recipient.
-	remainderAddress, err := address.GenerateAddress(seed, 1, SecurityLevelMedium, true)
-	must(err)
-
-	// we don't need to set the security level or timestamp in the options because we supply
-	// the input and remainder addresses.
-	prepTransferOpts := PrepareTransfersOptions{Inputs: inputs, RemainderAddress: &remainderAddress}
-
-	// prepare the transfer by creating a bundle with the given transfers and inputs.
-	// the result are trytes ready for PoW.
-	trytes, err := api.PrepareTransfers(seed, transfers, prepTransferOpts)
-	must(err)
-
-	// you can decrease your chance of sending to a spent address by checking the address before
-	// broadcasting your bundle.
-	spent, err := api.WereAddressesSpentFrom(transfers[0].Address)
-	must(err)
-
-	if spent[0] {
-		fmt.Println("recipient address is spent from, aborting transfer")
-		return
-	}
-
-	// at this point the bundle trytes are signed.
-	// now we need to:
-	// 1. select two tips
-	// 2. do proof-of-work
-	// 3. broadcast the bundle
-	// 4. store the bundle
-	// SendTrytes() conveniently does the steps above for us.
-	bndl, err := api.SendTrytes(trytes, depth, mwm)
-	must(err)
-
-	fmt.Println("broadcasted bundle with tail tx hash: ", bundle.TailTransactionHash(bndl))
-}
-
-func must(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-```
 
 ### Native code and PoW
 
@@ -318,8 +234,4 @@ Syntax:
 
 ## Joining the discussion
 
-If you want to get involved in the community, need help with getting setup, have any issues related with the library or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord](https://discord.iota.org/).  
-
-## License
-
-The MIT license can be found [here](LICENSE).
+If you want to get involved in the community, need help with getting setup, have any issues related with the library or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord](https://discord.iota.org/).
