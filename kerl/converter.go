@@ -18,10 +18,12 @@ const (
 	// the middle of the domain described by one tryte
 	halfTryte = tryteRadix / 2
 
-	// radix used in the conversion into chunks, i.e. 27^6
-	chunkRadix     = 387420489
+	// largest number of trytes that can be represented as a uint32
 	trytesPerChunk = 6
-	hashChunkSize  = (HashTrytesSize + trytesPerChunk - 1) / trytesPerChunk
+	// radix used in the chunk conversion, i.e. 27^trytesPerChunk
+	chunkRadix = 387420489
+	// number of chunks to represent the hash, i.e. ceil(HashTrytesSize / trytesPerChunk)
+	hashChunkSize = (HashTrytesSize + trytesPerChunk - 1) / trytesPerChunk
 )
 
 // hex representation of the middle of the domain described by 242 trits, i.e. \sum_{k=0}^{241} 3^k
@@ -112,6 +114,19 @@ func tritsToTryteValues(trits Trits) []int8 {
 	return vs
 }
 
+func tryteValuesToChunk(vs []int8) []uint32 {
+	cs := make([]uint32, hashChunkSize)
+	for i := 0; i < hashChunkSize; i++ {
+		for j := trytesPerChunk - 1; j >= 0; j-- {
+			if i*trytesPerChunk+j < HashTrytesSize {
+				v := uint32(vs[i*trytesPerChunk+j] + halfTryte)
+				cs[i] = cs[i]*tryteRadix + v
+			}
+		}
+	}
+	return cs
+}
+
 // tryteValueZeroLastTrit takes a tryte value of three trits a+3b+9c and returns a+3b (setting the last trit to zero).
 func tryteValueZeroLastTrit(v int8) int8 {
 	if v > 4 {
@@ -141,19 +156,21 @@ func bigintZeroLastTrit(b []uint32) bool {
 }
 
 func tryteValuesToBytes(vs []int8) []byte {
-	b := make([]uint32, IntLength)
-	// set the last trit of the last tryte to zero
-	v := tryteValueZeroLastTrit(vs[HashTrytesSize-1])
-	// initialize the first part of the bigint with the non-balanced representation of this 2-trit value
-	b[0] = uint32(v + 4)
+	// set the last trit to zero and shift to accommodate for the fact that only 2 trits are used
+	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(vs[HashTrytesSize-1]) + 4 - halfTryte
+	cs := tryteValuesToChunk(vs)
 
-	// initially, all words of the bigint are zero
-	nzIndex := 0
-	for i := HashTrytesSize - 2; i >= 0; i-- {
-		// first, multiply the bigint by the radix
+	b := make([]uint32, IntLength)
+	// no multiplication needed for the first chunk
+	b[0] = cs[hashChunkSize-1]
+
+	// initially, only the word with index 0 of the bigint is non-zero
+	var nzIndex = 0
+	for i := hashChunkSize - 2; i >= 0; i-- {
+		// multiply the entire bigint by the radix
 		var carry uint32
 		for i := 0; i <= nzIndex; i++ {
-			v := tryteRadix*uint64(b[i]) + uint64(carry)
+			v := chunkRadix*uint64(b[i]) + uint64(carry)
 			carry, b[i] = uint32(v>>32), uint32(v)
 		}
 		if carry > 0 && nzIndex < IntLength-1 {
@@ -161,9 +178,8 @@ func tryteValuesToBytes(vs []int8) []byte {
 			b[nzIndex] = carry
 		}
 
-		// then, add the non-balanced tryte value
-		chgIndex := bigint.AddSmall(b, uint32(vs[i]+halfTryte))
-		// adapt the non-zero index, if we had an overflow
+		// add the current chunk to the bigint and adapt the non-zero index, if we had an overflow
+		chgIndex := bigint.AddSmall(b, cs[i])
 		if chgIndex > nzIndex {
 			nzIndex = chgIndex
 		}

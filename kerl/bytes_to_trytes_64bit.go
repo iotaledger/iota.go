@@ -37,7 +37,6 @@ func bytesToTryteValues(bytes []byte) []int8 {
 	bigint.MustAdd(b, halfThree)
 
 	cs := make([]uint32, hashChunkSize)
-
 	// initially, all words of the bigint are non-zero
 	nzIndex := IntLength - 1
 	for i := 0; i < hashChunkSize-1; i++ {
@@ -55,9 +54,10 @@ func bytesToTryteValues(bytes []byte) []int8 {
 		}
 	}
 
-	// special case for the last tryte, where no further division is necessary
+	// special case for the last chunk, where no further division is necessary
 	cs[hashChunkSize-1] = b[0]
 
+	// convert to trytes and set the last trit to zero
 	vs := chunksToTryteValues(cs)
 	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(vs[HashTrytesSize-1])
 	return vs
