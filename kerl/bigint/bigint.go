@@ -17,7 +17,6 @@ func MustAdd(b []uint32, rh []uint32) {
 	}
 
 	carry := false
-
 	for i := range b {
 		b[i], carry = FullAdd(b[i], rh[i], carry)
 	}
@@ -30,16 +29,8 @@ func MustSub(b []uint32, rh []uint32) {
 	}
 
 	noborrow := true
-
 	for i := range b {
 		b[i], noborrow = FullAdd(b[i], ^rh[i], noborrow)
-	}
-}
-
-// Not negates the given big int value.
-func Not(b []uint32) {
-	for i := range b {
-		b[i] = ^b[i]
 	}
 }
 
@@ -47,16 +38,6 @@ func Not(b []uint32) {
 func IsNegative(b []uint32) bool {
 	ms := b[len(b)-1]
 	return (ms >> 31) != 0
-}
-
-// IsNull checks whether the given big int value is null.
-func IsNull(b []uint32) bool {
-	for i := range b {
-		if b[i] != 0 {
-			return false
-		}
-	}
-	return true
 }
 
 // MustCmp compares the given big ints with each other.
@@ -105,22 +86,4 @@ func FullAdd(lh, rh uint32, carry bool) (uint32, bool) {
 func addCarry(lh, rh uint32) (uint32, bool) {
 	sum := lh + rh
 	return sum, sum < lh
-}
-
-// Reverse reverses the given byte slice.
-func Reverse(a []byte) []byte {
-	for left, right := 0, len(a)-1; left < right; left, right = left+1, right-1 {
-		a[left], a[right] = a[right], a[left]
-	}
-
-	return a
-}
-
-// ReverseU reverses the given uint32 slice.
-func ReverseU(a []uint32) []uint32 {
-	for left, right := 0, len(a)-1; left < right; left, right = left+1, right-1 {
-		a[left], a[right] = a[right], a[left]
-	}
-
-	return a
 }
