@@ -110,7 +110,65 @@ For details on all available API methods, see the [API folder](api/).
 	
 ## Examples
 
-As well as the following examples, you can take a look at our [examples folder](api/.examples) for more.
+We have a list of test cases in the [`examples` directory](api/.examples) that you can use as a reference when developing apps with IOTA.
+
+Here's how you could send a zero-value transaction, using the library. For the guide, see the [documentation portal](https://docs.iota.org/docs/client-libraries/0.1/how-to-guides/go/send-your-first-bundle).
+
+```go
+var node = "https://nodes.devnet.thetangle.org"
+
+// Define a seed and an address.
+// These do not need to belong to anyone or have IOTA tokens.
+// They must only contain a maximum of 81 trytes
+// or 90 trytes with a valid checksum
+const seed = trinary.Trytes("JBN9ZRCOH9YRUGSWIQNZWAIFEZUBDUGTFPVRKXWPAUCEQQFS9NHPQLXCKZKRHVCCUZNF9CZZWKXRZVCWQ")
+const address = trinary.Trytes("XBN9ZRCOH9YRUGSWIQNZWAIFEZUBDUGTFPVRKXWPAUCEQQFS9NHPQLXCKZKRHVCCUZNF9CZZWKXRZVCWQMZOCAHYPD")
+
+// Define a message to send.
+// This message must include only ASCII characters.
+var data = "{'message' : 'Hello world'}"
+
+const minimumWeightMagnitude = 9
+const depth = 3
+
+func main() {
+    // compose a new API instance, we provide no PoW function so this uses remote PoW
+    api, err := ComposeAPI(HTTPClientSettings{URI: node})
+    must(err)
+
+    // Convert the message to trytes
+    message, err := converter.ASCIIToTrytes(data)
+    must(err)
+
+    // Define a zero-value transaction object
+    // that sends the message to the address
+    transfers := bundle.Transfers{
+        {
+            Address: address,
+            Value: 0,
+            Message: message,
+        },
+    }
+    // Use the default options
+    prepTransferOpts := PrepareTransfersOptions{}
+
+    trytes, err := api.PrepareTransfers(seed, transfers, prepTransferOpts)
+    must(err)
+    
+    // Create a bundle from the `transfers` object
+    // and send the transaction to the node
+    myBundle, err := api.SendTrytes(trytes, depth, minimumWeightMagnitude)
+    must(err)
+
+    fmt.Println("Bundle hash: " + myBundle[0].Bundle)
+}
+
+func must(err error) {
+    if err != nil {
+        panic(err)
+    }
+}
+```
 
 ### Native code and PoW
 
@@ -125,7 +183,6 @@ Certain PoW implementations are enabled if the correct flags are passed while co
 * `pow_arm_c128` for ARM64 int128 C based PoW
 * `pow_c` for C based PoW
 
-PoW implementation in Go is always available.
 If you want to use local PoW, make sure you define `LocalProofOfWorkFunc` in your provider settings such as `HTTPClientSettings`. 
 
 ## Supporting the project
@@ -169,6 +226,7 @@ After creating a testing file, you'll have following two files:
 you can [read the documentation](https://onsi.github.io/ginkgo/).
 
 4. Run your tests:
+
 	```bash
 	$ go test -v
 	=== RUN   TestAddress
