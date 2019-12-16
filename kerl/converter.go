@@ -46,32 +46,14 @@ var tryteValueToTritsLUT = [][3]int8{
 	{-1, 1, 1}, {0, 1, 1}, {1, 1, 1},
 }
 
+// lookup table to convert trytes into tryte values
+var tryteToTryteValueLUT = []int8{
+	0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+	-13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+}
+
 // lookup table to convert tryte values into trytes
 const tryteValueToTyteLUT = "NOPQRSTUVWXYZ9ABCDEFGHIJKLM"
-
-// bigintPutBytes decodes the bytes as a bigint in big-endian.
-func bigintPutBytes(b []uint32, bytes []byte) {
-	for i := 0; i < IntLength; i++ {
-		b[IntLength-i-1] = binary.BigEndian.Uint32(bytes[i*4:])
-	}
-}
-
-// bytesPutBigint encodes the bigint as 48 bytes in big-endian.
-func bytesPutBigint(bytes []byte, b []uint32) {
-	for i := 0; i < IntLength; i++ {
-		binary.BigEndian.PutUint32(bytes[i*4:], b[IntLength-i-1])
-	}
-}
-
-func tryteValuesToTrytes(vs []int8) Trytes {
-	var trytes strings.Builder
-	trytes.Grow(len(vs))
-	for _, v := range vs {
-		idx := v - MinTryteValue
-		trytes.WriteByte(tryteValueToTyteLUT[idx])
-	}
-	return trytes.String()
-}
 
 func tryteValuesToTrits(vs []int8) Trits {
 	trits := make([]int8, len(vs)*3)
@@ -84,25 +66,29 @@ func tryteValuesToTrits(vs []int8) Trits {
 	return trits
 }
 
-func trytesToTryteValues(trytes Trytes) []int8 {
-	vs := make([]int8, len(trytes))
-	for i, tryte := range trytes {
-		switch {
-		case tryte == '9':
-			vs[i] = 0
-		case tryte >= 'N':
-			vs[i] = int8(tryte) - 'N' + MinTryteValue
-		default:
-			vs[i] = int8(tryte) - 'A' + 1
-		}
+func tryteValuesToTrytes(vs []int8) Trytes {
+	var trytes strings.Builder
+	trytes.Grow(len(vs))
+	for _, v := range vs {
+		idx := v - MinTryteValue
+		trytes.WriteByte(tryteValueToTyteLUT[idx])
 	}
-	return vs
+	return trytes.String()
 }
 
 func tritsToTryteValues(trits Trits) []int8 {
 	vs := make([]int8, len(trits)/3)
 	for i := 0; i < len(trits)/3; i++ {
 		vs[i] = trits[i*3] + trits[i*3+1]*3 + trits[i*3+2]*9
+	}
+	return vs
+}
+
+func trytesToTryteValues(trytes Trytes) []int8 {
+	vs := make([]int8, len(trytes))
+	for i, tryte := range trytes {
+		idx := tryte - '9'
+		vs[i] = tryteToTryteValueLUT[idx]
 	}
 	return vs
 }
@@ -133,6 +119,20 @@ func bigintZeroLastTrit(b []uint32) bool {
 		}
 	}
 	return false
+}
+
+// bigintPutBytes decodes the bytes as a bigint in big-endian.
+func bigintPutBytes(b []uint32, bytes []byte) {
+	for i := 0; i < IntLength; i++ {
+		b[IntLength-i-1] = binary.BigEndian.Uint32(bytes[i*4:])
+	}
+}
+
+// bytesPutBigint encodes the bigint as 48 bytes in big-endian.
+func bytesPutBigint(bytes []byte, b []uint32) {
+	for i := 0; i < IntLength; i++ {
+		binary.BigEndian.PutUint32(bytes[i*4:], b[IntLength-i-1])
+	}
 }
 
 // KerlBytesZeroLastTrit changes a chunk of 48 bytes so that the corresponding ternary number has 242th trit set to 0.
