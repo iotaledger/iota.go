@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <a href="https://docs.iota.org/docs/client-libraries/0.1/getting-started/java-quickstart"><img src="iota-go.png"></a>
+  <a href="https://docs.iota.org/docs/client-libraries/0.1/getting-started/go-quickstart"><img src="iota-go.png"></a>
 </h1>
 
 <h2 align="center">The official Go client library for interacting with the Tangle</h2>
