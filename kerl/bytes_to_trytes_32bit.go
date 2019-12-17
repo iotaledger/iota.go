@@ -1,4 +1,5 @@
-// +build 386 arm mips
+// architectures that do not have 64bit division instructions
+// +build arm 386 mips mipsle
 
 // Package kerl implements the Kerl hashing function.
 package kerl
@@ -49,47 +50,4 @@ func bytesToTryteValues(bytes []byte) []int8 {
 	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(int8(b[0]) - halfTryte)
 
 	return vs
-}
-
-func tryteValuesToBytes(vs []int8) []byte {
-	b := make([]uint32, IntLength)
-	// set the last trit of the last tryte to zero
-	v := tryteValueZeroLastTrit(vs[HashTrytesSize-1])
-	// initialize the first part of the bigint with the non-balanced representation of this 2-trit value
-	b[0] = uint32(v + 4)
-
-	// initially, all words of the bigint are zero
-	nzIndex := 0
-	for i := HashTrytesSize - 2; i >= 0; i-- {
-		// first, multiply the bigint by the radix
-		var carry uint32
-		for i := 0; i <= nzIndex; i++ {
-			upper, lower := b[i]>>16, b[i]&0xFFFF
-
-			v := tryteRadix*lower + carry
-			carry, lower = v>>16, v&0xFFFF
-			v = tryteRadix*upper + carry
-			carry, upper = v>>16, v&0xFFFF
-
-			b[i] = (upper << 16) | lower
-		}
-		if carry > 0 && nzIndex < IntLength-1 {
-			nzIndex++
-			b[nzIndex] = carry
-		}
-
-		// then, add the non-balanced tryte value
-		chgIndex := bigint.AddSmall(b, uint32(vs[i]+halfTryte))
-		// adapt the non-zero index, if we had an overflow
-		if chgIndex > nzIndex {
-			nzIndex = chgIndex
-		}
-	}
-
-	// subtract the middle of the domain to get balanced ternary
-	bigint.MustSub(b, halfThree)
-
-	bytes := make([]byte, HashBytesSize)
-	bytesPutBigint(bytes, b)
-	return bytes
 }

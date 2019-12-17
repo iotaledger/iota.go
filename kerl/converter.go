@@ -5,11 +5,10 @@ import (
 	"encoding/binary"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/kerl/bigint"
 	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -17,6 +16,13 @@ const (
 	tryteRadix = 27
 	// the middle of the domain described by one tryte
 	halfTryte = tryteRadix / 2
+
+	// largest number of trytes that can be represented as a uint32
+	trytesPerChunk = 6
+	// radix used in the chunk conversion, i.e. 27^trytesPerChunk
+	chunkRadix = 387420489
+	// number of chunks to represent the hash, i.e. ceil(HashTrytesSize / trytesPerChunk)
+	hashChunkSize = (HashTrytesSize + trytesPerChunk - 1) / trytesPerChunk
 )
 
 // hex representation of the middle of the domain described by 242 trits, i.e. \sum_{k=0}^{241} 3^k
@@ -133,6 +139,57 @@ func bytesPutBigint(bytes []byte, b []uint32) {
 	for i := 0; i < IntLength; i++ {
 		binary.BigEndian.PutUint32(bytes[i*4:], b[IntLength-i-1])
 	}
+}
+
+func tryteValuesToChunk(vs []int8) []uint32 {
+	cs := make([]uint32, hashChunkSize)
+	for i := 0; i < hashChunkSize; i++ {
+		for j := trytesPerChunk - 1; j >= 0; j-- {
+			if i*trytesPerChunk+j < HashTrytesSize {
+				v := uint32(vs[i*trytesPerChunk+j] + halfTryte)
+				cs[i] = cs[i]*tryteRadix + v
+			}
+		}
+	}
+	return cs
+}
+
+func tryteValuesToBytes(vs []int8) []byte {
+	// set the last trit to zero and shift to accommodate for the fact that only 2 trits are used
+	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(vs[HashTrytesSize-1]) + 4 - halfTryte
+	cs := tryteValuesToChunk(vs)
+
+	b := make([]uint32, IntLength)
+	// no multiplication needed for the first chunk
+	b[0] = cs[hashChunkSize-1]
+
+	// initially, only the word with index 0 of the bigint is non-zero
+	var nzIndex = 0
+	for i := hashChunkSize - 2; i >= 0; i-- {
+		// multiply the entire bigint by the radix
+		var carry uint32
+		for i := 0; i <= nzIndex; i++ {
+			v := chunkRadix*uint64(b[i]) + uint64(carry)
+			carry, b[i] = uint32(v>>32), uint32(v)
+		}
+		if carry > 0 && nzIndex < IntLength-1 {
+			nzIndex++
+			b[nzIndex] = carry
+		}
+
+		// add the current chunk to the bigint and adapt the non-zero index, if we had an overflow
+		chgIndex := bigint.AddSmall(b, cs[i])
+		if chgIndex > nzIndex {
+			nzIndex = chgIndex
+		}
+	}
+
+	// subtract the middle of the domain to get balanced ternary
+	bigint.MustSub(b, halfThree)
+
+	bytes := make([]byte, HashBytesSize)
+	bytesPutBigint(bytes, b)
+	return bytes
 }
 
 // KerlBytesZeroLastTrit changes a chunk of 48 bytes so that the corresponding ternary number has 242th trit set to 0.
