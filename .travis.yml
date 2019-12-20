@@ -3,6 +3,10 @@ language: go
 go:
   - 1.12.1
 
+env:
+- ARCH='amd64'
+- ARCH='386'
+
 before_install:
 - export GO111MODULE='on'
 - go get -u github.com/mgechev/revive
@@ -14,7 +18,7 @@ before_install:
 - go get ./...
 
 script:
-- travis_wait 30 ginkgo -tags="pow_avx pow_sse pow_c pow_c128" -r --skipPackage=mongo --randomizeSuites --failOnPending --cover --progress
+- GOARCH=$ARCH travis_wait 30 ginkgo -tags="pow_avx pow_sse pow_c pow_c128" -r --skipPackage=mongo --randomizeSuites --failOnPending --cover --progress
 
 after_success:
 - revive -config revive.toml -formatter stylish -exclude ./api/integration/... ./...
