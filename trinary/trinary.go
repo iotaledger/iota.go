@@ -10,17 +10,6 @@ import (
 )
 
 var (
-	// TryteToTritsLUT is a Look-up-table for Trytes to Trits conversion.
-	TryteToTritsLUT = [][]int8{
-		{0, 0, 0}, {1, 0, 0}, {-1, 1, 0}, {0, 1, 0},
-		{1, 1, 0}, {-1, -1, 1}, {0, -1, 1}, {1, -1, 1},
-		{-1, 0, 1}, {0, 0, 1}, {1, 0, 1}, {-1, 1, 1},
-		{0, 1, 1}, {1, 1, 1}, {-1, -1, -1}, {0, -1, -1},
-		{1, -1, -1}, {-1, 0, -1}, {0, 0, -1}, {1, 0, -1},
-		{-1, 1, -1}, {0, 1, -1}, {1, 1, -1}, {-1, -1, 0},
-		{0, -1, 0}, {1, -1, 0}, {-1, 0, 0},
-	}
-
 	// Pow27LUT is a Look-up-table for Decoding Trits to int64
 	Pow27LUT = []int64{1,
 		27,
@@ -37,25 +26,85 @@ var (
 		150094635296999136,
 		4052555153018976256}
 
-	byteRadix   = [5]int8{1, 3, 9, 27, 81}
 	encodedZero = []int8{1, 0, 0, -1}
 )
+
+// lookup table to convert tryte values into trits
+var tryteValueToTritsLUT = [][3]int8{
+	{-1, -1, -1}, {0, -1, -1}, {1, -1, -1}, {-1, 0, -1}, {0, 0, -1}, {1, 0, -1},
+	{-1, 1, -1}, {0, 1, -1}, {1, 1, -1}, {-1, -1, 0}, {0, -1, 0}, {1, -1, 0},
+	{-1, 0, 0}, {0, 0, 0}, {1, 0, 0}, {-1, 1, 0}, {0, 1, 0}, {1, 1, 0},
+	{-1, -1, 1}, {0, -1, 1}, {1, -1, 1}, {-1, 0, 1}, {0, 0, 1}, {1, 0, 1},
+	{-1, 1, 1}, {0, 1, 1}, {1, 1, 1},
+}
+
+// lookup table to convert trytes into tryte values
+var tryteToTryteValueLUT = []int8{
+	0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+	-13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+}
+
+var bytesToTritsLUT = [][]int8{
+	{0, 0, 0, 0, 0}, {1, 0, 0, 0, 0}, {-1, 1, 0, 0, 0}, {0, 1, 0, 0, 0}, {1, 1, 0, 0, 0}, {-1, -1, 1, 0, 0},
+	{0, -1, 1, 0, 0}, {1, -1, 1, 0, 0}, {-1, 0, 1, 0, 0}, {0, 0, 1, 0, 0}, {1, 0, 1, 0, 0}, {-1, 1, 1, 0, 0},
+	{0, 1, 1, 0, 0}, {1, 1, 1, 0, 0}, {-1, -1, -1, 1, 0}, {0, -1, -1, 1, 0}, {1, -1, -1, 1, 0}, {-1, 0, -1, 1, 0},
+	{0, 0, -1, 1, 0}, {1, 0, -1, 1, 0}, {-1, 1, -1, 1, 0}, {0, 1, -1, 1, 0}, {1, 1, -1, 1, 0}, {-1, -1, 0, 1, 0},
+	{0, -1, 0, 1, 0}, {1, -1, 0, 1, 0}, {-1, 0, 0, 1, 0}, {0, 0, 0, 1, 0}, {1, 0, 0, 1, 0}, {-1, 1, 0, 1, 0},
+	{0, 1, 0, 1, 0}, {1, 1, 0, 1, 0}, {-1, -1, 1, 1, 0}, {0, -1, 1, 1, 0}, {1, -1, 1, 1, 0}, {-1, 0, 1, 1, 0},
+	{0, 0, 1, 1, 0}, {1, 0, 1, 1, 0}, {-1, 1, 1, 1, 0}, {0, 1, 1, 1, 0}, {1, 1, 1, 1, 0}, {-1, -1, -1, -1, 1},
+	{0, -1, -1, -1, 1}, {1, -1, -1, -1, 1}, {-1, 0, -1, -1, 1}, {0, 0, -1, -1, 1}, {1, 0, -1, -1, 1}, {-1, 1, -1, -1, 1},
+	{0, 1, -1, -1, 1}, {1, 1, -1, -1, 1}, {-1, -1, 0, -1, 1}, {0, -1, 0, -1, 1}, {1, -1, 0, -1, 1}, {-1, 0, 0, -1, 1},
+	{0, 0, 0, -1, 1}, {1, 0, 0, -1, 1}, {-1, 1, 0, -1, 1}, {0, 1, 0, -1, 1}, {1, 1, 0, -1, 1}, {-1, -1, 1, -1, 1},
+	{0, -1, 1, -1, 1}, {1, -1, 1, -1, 1}, {-1, 0, 1, -1, 1}, {0, 0, 1, -1, 1}, {1, 0, 1, -1, 1}, {-1, 1, 1, -1, 1},
+	{0, 1, 1, -1, 1}, {1, 1, 1, -1, 1}, {-1, -1, -1, 0, 1}, {0, -1, -1, 0, 1}, {1, -1, -1, 0, 1}, {-1, 0, -1, 0, 1},
+	{0, 0, -1, 0, 1}, {1, 0, -1, 0, 1}, {-1, 1, -1, 0, 1}, {0, 1, -1, 0, 1}, {1, 1, -1, 0, 1}, {-1, -1, 0, 0, 1},
+	{0, -1, 0, 0, 1}, {1, -1, 0, 0, 1}, {-1, 0, 0, 0, 1}, {0, 0, 0, 0, 1}, {1, 0, 0, 0, 1}, {-1, 1, 0, 0, 1},
+	{0, 1, 0, 0, 1}, {1, 1, 0, 0, 1}, {-1, -1, 1, 0, 1}, {0, -1, 1, 0, 1}, {1, -1, 1, 0, 1}, {-1, 0, 1, 0, 1},
+	{0, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {-1, 1, 1, 0, 1}, {0, 1, 1, 0, 1}, {1, 1, 1, 0, 1}, {-1, -1, -1, 1, 1},
+	{0, -1, -1, 1, 1}, {1, -1, -1, 1, 1}, {-1, 0, -1, 1, 1}, {0, 0, -1, 1, 1}, {1, 0, -1, 1, 1}, {-1, 1, -1, 1, 1},
+	{0, 1, -1, 1, 1}, {1, 1, -1, 1, 1}, {-1, -1, 0, 1, 1}, {0, -1, 0, 1, 1}, {1, -1, 0, 1, 1}, {-1, 0, 0, 1, 1},
+	{0, 0, 0, 1, 1}, {1, 0, 0, 1, 1}, {-1, 1, 0, 1, 1}, {0, 1, 0, 1, 1}, {1, 1, 0, 1, 1}, {-1, -1, 1, 1, 1},
+	{0, -1, 1, 1, 1}, {1, -1, 1, 1, 1}, {-1, 0, 1, 1, 1}, {0, 0, 1, 1, 1}, {1, 0, 1, 1, 1}, {-1, 1, 1, 1, 1},
+	{0, 1, 1, 1, 1}, {1, 1, 1, 1, 1},
+	{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
+	{-1, -1, -1, -1, -1}, {0, -1, -1, -1, -1}, {1, -1, -1, -1, -1}, {-1, 0, -1, -1, -1}, {0, 0, -1, -1, -1}, {1, 0, -1, -1, -1},
+	{-1, 1, -1, -1, -1}, {0, 1, -1, -1, -1}, {1, 1, -1, -1, -1}, {-1, -1, 0, -1, -1}, {0, -1, 0, -1, -1}, {1, -1, 0, -1, -1},
+	{-1, 0, 0, -1, -1}, {0, 0, 0, -1, -1}, {1, 0, 0, -1, -1}, {-1, 1, 0, -1, -1}, {0, 1, 0, -1, -1}, {1, 1, 0, -1, -1},
+	{-1, -1, 1, -1, -1}, {0, -1, 1, -1, -1}, {1, -1, 1, -1, -1}, {-1, 0, 1, -1, -1}, {0, 0, 1, -1, -1}, {1, 0, 1, -1, -1},
+	{-1, 1, 1, -1, -1}, {0, 1, 1, -1, -1}, {1, 1, 1, -1, -1}, {-1, -1, -1, 0, -1}, {0, -1, -1, 0, -1}, {1, -1, -1, 0, -1},
+	{-1, 0, -1, 0, -1}, {0, 0, -1, 0, -1}, {1, 0, -1, 0, -1}, {-1, 1, -1, 0, -1}, {0, 1, -1, 0, -1}, {1, 1, -1, 0, -1},
+	{-1, -1, 0, 0, -1}, {0, -1, 0, 0, -1}, {1, -1, 0, 0, -1}, {-1, 0, 0, 0, -1}, {0, 0, 0, 0, -1}, {1, 0, 0, 0, -1},
+	{-1, 1, 0, 0, -1}, {0, 1, 0, 0, -1}, {1, 1, 0, 0, -1}, {-1, -1, 1, 0, -1}, {0, -1, 1, 0, -1}, {1, -1, 1, 0, -1},
+	{-1, 0, 1, 0, -1}, {0, 0, 1, 0, -1}, {1, 0, 1, 0, -1}, {-1, 1, 1, 0, -1}, {0, 1, 1, 0, -1}, {1, 1, 1, 0, -1},
+	{-1, -1, -1, 1, -1}, {0, -1, -1, 1, -1}, {1, -1, -1, 1, -1}, {-1, 0, -1, 1, -1}, {0, 0, -1, 1, -1}, {1, 0, -1, 1, -1},
+	{-1, 1, -1, 1, -1}, {0, 1, -1, 1, -1}, {1, 1, -1, 1, -1}, {-1, -1, 0, 1, -1}, {0, -1, 0, 1, -1}, {1, -1, 0, 1, -1},
+	{-1, 0, 0, 1, -1}, {0, 0, 0, 1, -1}, {1, 0, 0, 1, -1}, {-1, 1, 0, 1, -1}, {0, 1, 0, 1, -1}, {1, 1, 0, 1, -1},
+	{-1, -1, 1, 1, -1}, {0, -1, 1, 1, -1}, {1, -1, 1, 1, -1}, {-1, 0, 1, 1, -1}, {0, 0, 1, 1, -1}, {1, 0, 1, 1, -1},
+	{-1, 1, 1, 1, -1}, {0, 1, 1, 1, -1}, {1, 1, 1, 1, -1}, {-1, -1, -1, -1, 0}, {0, -1, -1, -1, 0}, {1, -1, -1, -1, 0},
+	{-1, 0, -1, -1, 0}, {0, 0, -1, -1, 0}, {1, 0, -1, -1, 0}, {-1, 1, -1, -1, 0}, {0, 1, -1, -1, 0}, {1, 1, -1, -1, 0},
+	{-1, -1, 0, -1, 0}, {0, -1, 0, -1, 0}, {1, -1, 0, -1, 0}, {-1, 0, 0, -1, 0}, {0, 0, 0, -1, 0}, {1, 0, 0, -1, 0},
+	{-1, 1, 0, -1, 0}, {0, 1, 0, -1, 0}, {1, 1, 0, -1, 0}, {-1, -1, 1, -1, 0}, {0, -1, 1, -1, 0}, {1, -1, 1, -1, 0},
+	{-1, 0, 1, -1, 0}, {0, 0, 1, -1, 0}, {1, 0, 1, -1, 0}, {-1, 1, 1, -1, 0}, {0, 1, 1, -1, 0}, {1, 1, 1, -1, 0},
+	{-1, -1, -1, 0, 0}, {0, -1, -1, 0, 0}, {1, -1, -1, 0, 0}, {-1, 0, -1, 0, 0}, {0, 0, -1, 0, 0}, {1, 0, -1, 0, 0},
+	{-1, 1, -1, 0, 0}, {0, 1, -1, 0, 0}, {1, 1, -1, 0, 0}, {-1, -1, 0, 0, 0}, {0, -1, 0, 0, 0}, {1, -1, 0, 0, 0},
+	{-1, 0, 0, 0, 0},
+}
+
+// lookup table to convert tryte values into trytes
+const tryteValueToTyteLUT = "NOPQRSTUVWXYZ9ABCDEFGHIJKLM"
 
 // Trits is a slice of int8. You should not use cast, use NewTrits instead to ensure the validity.
 type Trits = []int8
 
 // ValidTrit returns true if t is a valid trit.
 func ValidTrit(t int8) bool {
-	if t == -1 || t == 0 || t == 1 {
-		return true
-	}
-	return false
+	return t >= -1 && t <= 1
 }
 
 // ValidTrits returns true if t is valid trits.
-func ValidTrits(t Trits) error {
-	for i, tt := range t {
-		if valid := ValidTrit(tt); !valid {
+func ValidTrits(trits Trits) error {
+	for i, trit := range trits {
+		if !ValidTrit(trit) {
 			return errors.Wrapf(ErrInvalidTrit, "at index %d", i)
 		}
 	}
@@ -98,12 +147,22 @@ func MustAbsInt64(n int64) int64 {
 	return (n ^ y) - y // (x ⨁ y) - y
 }
 
-func nearestGreaterMultipleOfThree(value uint64) uint64 {
-	rem := value % uint64(Radix)
+func absInt64(v int64) uint64 {
+	if v == math.MinInt64 {
+		return math.MaxInt64 + 1
+	}
+	if v < 0 {
+		return uint64(-v)
+	}
+	return uint64(v)
+}
+
+func nearestGreaterMultipleOfThree(value uint) uint {
+	rem := value % TrinaryRadix
 	if rem == 0 {
 		return value
 	}
-	return value + uint64(Radix) - rem
+	return value + TrinaryRadix - rem
 }
 
 // MinTrits returns the length of trits needed to encode the value.
@@ -111,50 +170,37 @@ func MinTrits(value int64) uint64 {
 	var num uint64 = 1
 	var vp uint64 = 1
 
-	valueAbs := uint64(MustAbsInt64(value))
-
-	for uint64(valueAbs) > vp {
-		vp = vp*uint64(Radix) + 1
+	valueAbs := absInt64(value)
+	for valueAbs > vp {
+		vp = vp*TrinaryRadix + 1
 		num++
 	}
 	return num
 }
 
-// EncodedLength returns the length of trits needed to encode the value + encoding information.
-func EncodedLength(value int64) uint64 {
-	if value == 0 {
-		return uint64(len(encodedZero))
-	}
-	length := nearestGreaterMultipleOfThree(MinTrits(value))
-
-	// trits length + encoding length
-	return length + MinTrits((1<<(length/uint64(Radix)))-1)
-}
-
 // IntToTrytes converts int64 to a slice of trytes.
 func IntToTrytes(value int64, trytesCnt int) Trytes {
-	remainder := value
-	if value < 0 {
-		remainder = -value
-	}
+	negative := value < 0
+	v := absInt64(value)
 
-	var t Trytes
+	var trytes strings.Builder
+	trytes.Grow(trytesCnt)
 
-	for tryte := 0; tryte < trytesCnt; tryte++ {
-		idx := remainder % 27
-		remainder /= 27
-
-		if idx > 13 {
-			remainder += 1
+	for i := 0; i < trytesCnt; i++ {
+		if v == 0 {
+			trytes.WriteByte('9')
+			continue
 		}
 
-		if value < 0 && idx != 0 {
-			idx = 27 - idx
+		v += TryteRadix / 2
+		tryte := int8(v%TryteRadix) - TryteRadix/2
+		v /= TryteRadix
+		if negative {
+			tryte = -tryte
 		}
-
-		t += string(TryteAlphabet[idx])
+		trytes.WriteByte(tryteValueToTryte(tryte))
 	}
-	return t
+	return trytes.String()
 }
 
 // TrytesToInt converts a slice of trytes to int64.
@@ -162,50 +208,280 @@ func TrytesToInt(t Trytes) int64 {
 	var val int64
 
 	for i := len(t) - 1; i >= 0; i-- {
-		idx := strings.Index(TryteAlphabet, string(t[i]))
-		if idx > 13 {
-			idx = idx - 27
-		}
-		val = val*27 + int64(idx)
+		val = val*TryteRadix + int64(tryteToTryteValue(t[i]))
 	}
 	return val
 }
 
 // IntToTrits converts int64 to a slice of trits.
 func IntToTrits(value int64) Trits {
-	if value == 0 {
-		return Trits{0}
-	}
-
-	negative := value < 0
-	size := MinTrits(value)
-	valueAbs := MustAbsInt64(value)
-
-	t := make(Trits, size)
-
-	for i := 0; i < int(size); i++ {
-		if valueAbs == 0 {
-			break
-		}
-		trit := int8((valueAbs+1)%(TrinaryRadix) - 1)
-		if negative {
-			trit = -trit
-		}
-		t[i] = trit
-		valueAbs++
-		valueAbs /= TrinaryRadix
-	}
-
-	return t
+	numTrits := int(MinTrits(value))
+	numTrytes := (numTrits + 3 - 1) / 3
+	trits, _ := TrytesToTrits(IntToTrytes(value, numTrytes))
+	return trits[:numTrits]
 }
 
 // TritsToInt converts a slice of trits into an integer and assumes little-endian notation.
 func TritsToInt(t Trits) int64 {
 	var val int64
 	for i := len(t) - 1; i >= 0; i-- {
-		val = val*3 + int64(t[i])
+		val = val*TrinaryRadix + int64(t[i])
 	}
 	return val
+}
+
+// CanTritsToTrytes returns true if t can be converted to trytes.
+func CanTritsToTrytes(trits Trits) bool {
+	if len(trits) == 0 {
+		return false
+	}
+	return len(trits)%3 == 0
+}
+
+// TrailingZeros returns the number of trailing zeros of the given trits.
+func TrailingZeros(trits Trits) int64 {
+	z := int64(0)
+	for i := len(trits) - 1; i >= 0 && trits[i] == 0; i-- {
+		z++
+	}
+	return z
+}
+
+func tryteValueToTryte(v int8) byte {
+	return tryteValueToTyteLUT[v-MinTryteValue]
+}
+
+func tryteToTryteValue(t byte) int8 {
+	return tryteToTryteValueLUT[t-'9']
+}
+
+// TritsToTrytes converts a slice of trits into trytes. Returns an error if len(t)%3!=0
+func TritsToTrytes(trits Trits) (Trytes, error) {
+	if !CanTritsToTrytes(trits) {
+		return "", errors.Wrap(ErrInvalidTritsLength, "trits slice size must be a multiple of 3")
+	}
+
+	var trytes strings.Builder
+	trytes.Grow(len(trits) / 3)
+
+	for i := 0; i < len(trits)/3; i++ {
+		v := trits[i*3] + trits[i*3+1]*3 + trits[i*3+2]*9
+		trytes.WriteByte(tryteValueToTryte(v))
+	}
+	return trytes.String(), nil
+}
+
+// MustTritsToTrytes converts a slice of trits into trytes. Panics if len(t)%3!=0
+func MustTritsToTrytes(trits Trits) Trytes {
+	trytes, err := TritsToTrytes(trits)
+	if err != nil {
+		panic(err)
+	}
+	return trytes
+}
+
+// CanBeHash returns the validity of the trit length.
+func CanBeHash(trits Trits) bool {
+	return len(trits) == HashTrinarySize
+}
+
+// TrytesToBytes packs trytes into a slice of bytes (5 packed trits in 1 byte).
+func TrytesToBytes(trytes Trytes) ([]byte, error) {
+	trits, err := TrytesToTrits(trytes)
+	if err != nil {
+		return nil, err
+	}
+	return TritsToBytes(trits), nil
+}
+
+// MustTrytesToBytes packs trytes into a slice of bytes (5 packed trits in 1 byte).
+func MustTrytesToBytes(trytes Trytes) []byte {
+	bytes, err := TrytesToBytes(trytes)
+	if err != nil {
+		panic(err)
+	}
+	return bytes
+}
+
+// BytesToTrytes unpacks a slice of bytes into trytes.
+func BytesToTrytes(bytes []byte, numTrytes ...int) (Trytes, error) {
+	var numTrits int
+	if len(numTrytes) > 0 {
+		numTrits = numTrytes[0] * 3
+	} else {
+		numTrits = int(nearestGreaterMultipleOfThree(uint(len(bytes)) * NumberOfTritsInAByte))
+	}
+
+	// we can ignore the error, as the correct number of trits is passed
+	trits, _ := BytesToTrits(bytes, numTrits)
+	return TritsToTrytes(trits)
+}
+
+// MustBytesToTrytes unpacks a slice of bytes into trytes.
+func MustBytesToTrytes(bytes []byte, numTrytes ...int) Trytes {
+	trytes, err := BytesToTrytes(bytes, numTrytes...)
+	if err != nil {
+		panic(err)
+	}
+	return trytes
+}
+
+// TritsToBytes packs an array of trits into an array of bytes (5 packed trits in 1 byte).
+func TritsToBytes(trits Trits) (bytes []byte) {
+	tritsLength := len(trits)
+	bytesLength := (tritsLength + NumberOfTritsInAByte - 1) / NumberOfTritsInAByte
+
+	bytes = make([]byte, bytesLength)
+
+	tritIdx := bytesLength * NumberOfTritsInAByte
+	for byteNum := bytesLength - 1; byteNum >= 0; byteNum-- {
+		var value int8 = 0
+
+		for i := 0; i < NumberOfTritsInAByte; i++ {
+			tritIdx--
+
+			if tritIdx < tritsLength {
+				value = value*TrinaryRadix + trits[tritIdx]
+			}
+		}
+		bytes[byteNum] = byte(value)
+	}
+	return bytes
+}
+
+// BytesToTrits unpacks an array of bytes into an array of trits.
+func BytesToTrits(bytes []byte, numTrits ...int) (Trits, error) {
+	bytesLength := len(bytes)
+	tritsLength := bytesLength * NumberOfTritsInAByte
+
+	if len(numTrits) > 0 {
+		tritsLength = numTrits[0]
+
+		minTritLength := (bytesLength-1)*NumberOfTritsInAByte + 1
+		if tritsLength < minTritLength {
+			return nil, errors.Wrapf(ErrInvalidTritsLength, "must be at least %d in size", minTritLength)
+		}
+	}
+
+	trits := make(Trits, tritsLength)
+	for i := 0; i < bytesLength; i++ {
+		copy(trits[i*NumberOfTritsInAByte:], bytesToTritsLUT[bytes[i]])
+	}
+	return trits, nil
+}
+
+// ReverseTrits reverses the given trits.
+func ReverseTrits(trits Trits) Trits {
+	for left, right := 0, len(trits)-1; left < right; left, right = left+1, right-1 {
+		trits[left], trits[right] = trits[right], trits[left]
+	}
+
+	return trits
+}
+
+// Trytes is a string of trytes. Use NewTrytes() instead of typecasting.
+type Trytes = string
+
+// Hash represents a trinary hash
+type Hash = Trytes
+
+// Hashes is a slice of Hash.
+type Hashes = []Hash
+
+func validTryte(t rune) bool {
+	return (t >= 'A' && t <= 'Z') || t == '9'
+}
+
+// ValidTryte returns the validity of a tryte (must be rune A-Z or 9)
+func ValidTryte(t rune) error {
+	if !validTryte(t) {
+		return ErrInvalidTrytes
+	}
+	return nil
+}
+
+// ValidTrytes returns true if t is made of valid trytes.
+func ValidTrytes(trytes Trytes) error {
+	if trytes == "" {
+		return ErrInvalidTrytes
+	}
+	for _, tryte := range trytes {
+		if !validTryte(tryte) {
+			return ErrInvalidTrytes
+		}
+	}
+	return nil
+}
+
+// NewTrytes casts to Trytes and checks its validity.
+func NewTrytes(s string) (Trytes, error) {
+	err := ValidTrytes(s)
+	return s, err
+}
+
+// TrytesToTrits converts a slice of trytes into trits.
+func TrytesToTrits(trytes Trytes) (Trits, error) {
+	if err := ValidTrytes(trytes); err != nil {
+		return nil, err
+	}
+
+	trits := make(Trits, len(trytes)*3)
+	for i := 0; i < len(trytes); i++ {
+		v := tryteToTryteValue(trytes[i])
+
+		idx := v - MinTryteValue
+		trits[i*3+0] = tryteValueToTritsLUT[idx][0]
+		trits[i*3+1] = tryteValueToTritsLUT[idx][1]
+		trits[i*3+2] = tryteValueToTritsLUT[idx][2]
+	}
+	return trits, nil
+}
+
+// MustTrytesToTrits converts a slice of trytes into trits.
+func MustTrytesToTrits(trytes Trytes) Trits {
+	trits, err := TrytesToTrits(trytes)
+	if err != nil {
+		panic(err)
+	}
+	return trits
+}
+
+// Pad pads the given trytes with 9s up to the given size.
+func Pad(trytes Trytes, n int) Trytes {
+	if len(trytes) >= n {
+		return trytes
+	}
+
+	var result strings.Builder
+	result.Grow(n)
+
+	result.WriteString(trytes)
+	for i := len(trytes); i < n; i++ {
+		result.WriteByte('9')
+	}
+	return result.String()
+}
+
+// PadTrits pads the given trits with 0 up to the given size.
+func PadTrits(trits Trits, n int) Trits {
+	if len(trits) >= n {
+		return trits
+	}
+
+	result := make(Trits, n)
+	copy(result, trits)
+	return result
+}
+
+// EncodedLength returns the length of trits needed to encode the value + encoding information.
+func EncodedLength(value int64) uint64 {
+	if value == 0 {
+		return uint64(len(encodedZero))
+	}
+	length := uint64(nearestGreaterMultipleOfThree(uint(MinTrits(value))))
+
+	// trits length + encoding length
+	return length + MinTrits((1<<(length/uint64(TrinaryRadix)))-1)
 }
 
 // EncodeInt64 encodes an int64 as a slice of trits with encoding information.
@@ -218,7 +494,7 @@ func EncodeInt64(value int64) (t Trits, size uint64, err error) {
 
 	var encoding int64 = 0
 	index := 0
-	length := nearestGreaterMultipleOfThree(MinTrits(MustAbsInt64(value)))
+	length := nearestGreaterMultipleOfThree(uint(MinTrits(value)))
 	t = make(Trits, size)
 	copy(t, IntToTrits(value))
 
@@ -286,258 +562,6 @@ func DecodeInt64(t Trits) (value int64, size uint64, err error) {
 	}
 
 	return value, encodingStart + encodingLength, nil
-}
-
-// CanTritsToTrytes returns true if t can be converted to trytes.
-func CanTritsToTrytes(trits Trits) bool {
-	if len(trits) == 0 {
-		return false
-	}
-	return len(trits)%3 == 0
-}
-
-// TrailingZeros returns the number of trailing zeros of the given trits.
-func TrailingZeros(trits Trits) int64 {
-	z := int64(0)
-	for i := len(trits) - 1; i >= 0 && trits[i] == 0; i-- {
-		z++
-	}
-	return z
-}
-
-// TritsToTrytes converts a slice of trits into trytes. Returns an error if len(t)%3!=0
-func TritsToTrytes(trits Trits) (Trytes, error) {
-	if !CanTritsToTrytes(trits) {
-		return "", errors.Wrap(ErrInvalidTritsLength, "trits slice size must be a multiple of 3")
-	}
-
-	o := make([]byte, len(trits)/3)
-	for i := 0; i < len(trits)/3; i++ {
-		j := trits[i*3] + trits[i*3+1]*3 + trits[i*3+2]*9
-		if j < 0 {
-			j += int8(len(TryteAlphabet))
-		}
-		o[i] = TryteAlphabet[j]
-	}
-	return Trytes(o), nil
-}
-
-// MustTritsToTrytes converts a slice of trits into trytes. Panics if len(t)%3!=0
-func MustTritsToTrytes(trits Trits) Trytes {
-	trytes, err := TritsToTrytes(trits)
-	if err != nil {
-		panic(err)
-	}
-	return trytes
-}
-
-// CanBeHash returns the validity of the trit length.
-func CanBeHash(trits Trits) bool {
-	return len(trits) == HashTrinarySize
-}
-
-// TrytesToBytes is only defined for hashes (81 Trytes). It returns 48 bytes.
-func TrytesToBytes(trytes Trytes) ([]byte, error) {
-	trits, err := TrytesToTrits(trytes)
-	if err != nil {
-		return nil, err
-	}
-	return TritsToBytes(trits), nil
-}
-
-// MustTrytesToBytes is only defined for hashes (81 Trytes). It returns 48 bytes.
-func MustTrytesToBytes(trytes Trytes) []byte {
-	bytes, err := TrytesToBytes(trytes)
-	if err != nil {
-		panic(err)
-	}
-	return bytes
-}
-
-// BytesToTrytes converts bytes to Trytes. Returns an error if the bytes slice is not 48 in length.
-func BytesToTrytes(bytes []byte, numTrytes ...int) (Trytes, error) {
-	numTrits := []int{}
-	if len(numTrytes) > 0 {
-		numTrits = append(numTrits, numTrytes[0]*3)
-	}
-
-	trits, err := BytesToTrits(bytes, numTrits...)
-	if err != nil {
-		return "", err
-	}
-
-	trits = PadTrits(trits, int(nearestGreaterMultipleOfThree(uint64(len(trits)))))
-	return TritsToTrytes(trits)
-}
-
-// MustBytesToTrytes converts bytes to Trytes.
-func MustBytesToTrytes(bytes []byte, numTrytes ...int) Trytes {
-	trytes, err := BytesToTrytes(bytes, numTrytes...)
-	if err != nil {
-		panic(err)
-	}
-	return trytes
-}
-
-// TritsToBytes packs an array of trits into an array of bytes (5 packed trits in 1 byte)
-func TritsToBytes(trits Trits) (bytes []byte) {
-	tritsLength := len(trits)
-	bytesLength := (tritsLength + NumberOfTritsInAByte - 1) / NumberOfTritsInAByte
-
-	bytes = make([]byte, bytesLength)
-
-	tritIdx := bytesLength * NumberOfTritsInAByte
-	for byteNum := bytesLength - 1; byteNum >= 0; byteNum-- {
-		var value int8 = 0
-
-		for i := 0; i < NumberOfTritsInAByte; i++ {
-			tritIdx--
-
-			if tritIdx < tritsLength {
-				value = value*Radix + trits[tritIdx]
-			}
-		}
-		bytes[byteNum] = byte(value)
-	}
-	return bytes
-}
-
-// BytesToTrits unpacks an array of bytes into an array of trits
-func BytesToTrits(bytes []byte, numTrits ...int) (trits Trits, err error) {
-	bytesLength := len(bytes)
-	tritsLength := bytesLength * NumberOfTritsInAByte
-
-	if len(numTrits) > 0 {
-		tritsLength = numTrits[0]
-
-		minTritLength := (bytesLength-1)*NumberOfTritsInAByte + 1
-		maxTritLength := bytesLength * NumberOfTritsInAByte
-		if tritsLength < minTritLength || tritsLength > maxTritLength {
-			return nil, errors.Wrapf(ErrInvalidTritsLength, "must be %d-%d in size", minTritLength, maxTritLength)
-		}
-	}
-
-	trits = make(Trits, tritsLength)
-
-	for byteNum := 0; byteNum < bytesLength; byteNum++ {
-		value := int8(bytes[byteNum])
-
-		tritOffset := byteNum * NumberOfTritsInAByte
-
-		for tritNum := NumberOfTritsInAByte - 1; tritNum >= 0; tritNum-- {
-			var trit int8 = 0
-
-			tritIdx := tritOffset + tritNum
-
-			if tritIdx < tritsLength {
-				byteRadixHalf := byteRadix[tritNum] >> 1
-				if value > byteRadixHalf {
-					value -= byteRadix[tritNum]
-					trit = 1
-				} else if value < (-byteRadixHalf) {
-					value += byteRadix[tritNum]
-					trit = -1
-				}
-
-				trits[tritIdx] = trit
-			}
-		}
-	}
-	return trits, nil
-}
-
-// ReverseTrits reverses the given trits.
-func ReverseTrits(trits Trits) Trits {
-	for left, right := 0, len(trits)-1; left < right; left, right = left+1, right-1 {
-		trits[left], trits[right] = trits[right], trits[left]
-	}
-
-	return trits
-}
-
-// Trytes is a string of trytes. Use NewTrytes() instead of typecasting.
-type Trytes = string
-
-// Hash represents a trinary hash
-type Hash = Trytes
-
-// Hashes is a slice of Hash.
-type Hashes = []Hash
-
-// ValidTrytes returns true if t is made of valid trytes.
-func ValidTrytes(trytes Trytes) error {
-	if trytes == "" {
-		return ErrInvalidTrytes
-	}
-	for _, runeVal := range trytes {
-		if (runeVal < 'A' || runeVal > 'Z') && runeVal != '9' {
-			return ErrInvalidTrytes
-		}
-	}
-	return nil
-}
-
-// ValidTryte returns the validity of a tryte (must be rune A-Z or 9)
-func ValidTryte(t rune) error {
-	return ValidTrytes(string(t))
-}
-
-// NewTrytes casts to Trytes and checks its validity.
-func NewTrytes(s string) (Trytes, error) {
-	err := ValidTrytes(s)
-	return s, err
-}
-
-// TrytesToTrits converts a slice of trytes into trits.
-func TrytesToTrits(trytes Trytes) (Trits, error) {
-	if err := ValidTrytes(trytes); err != nil {
-		return nil, err
-	}
-	trits := make(Trits, len(trytes)*3)
-	for i := range trytes {
-		idx := strings.Index(TryteAlphabet, string(trytes[i:i+1]))
-		copy(trits[i*3:i*3+3], TryteToTritsLUT[idx])
-	}
-	return trits, nil
-}
-
-// MustTrytesToTrits converts a slice of trytes into trits.
-func MustTrytesToTrits(trytes Trytes) Trits {
-	trits, err := TrytesToTrits(trytes)
-	if err != nil {
-		panic(err)
-	}
-	return trits
-}
-
-// Pad pads the given trytes with 9s up to the given size.
-func Pad(trytes Trytes, size int) Trytes {
-	if len(trytes) >= size {
-		return trytes
-	}
-	out := make([]byte, size)
-	copy(out, []byte(trytes))
-
-	for i := len(trytes); i < size; i++ {
-		out[i] = '9'
-	}
-	return Trytes(out)
-}
-
-// PadTrits pads the given trits with 0 up to the given size.
-func PadTrits(trits Trits, size int) Trits {
-	if len(trits) >= size {
-		return trits
-	}
-	sized := make(Trits, size)
-	for i := 0; i < size; i++ {
-		if len(trits) > i {
-			sized[i] = trits[i]
-			continue
-		}
-		sized[i] = 0
-	}
-	return sized
 }
 
 // Sum returns the sum of two trits.
