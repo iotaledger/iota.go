@@ -10,6 +10,71 @@ import (
 )
 
 var (
+	// TryteValueToTritsLUT is a lookup table to convert tryte values into trits.
+	TryteValueToTritsLUT = [][TritsPerTryte]int8{
+		{-1, -1, -1}, {0, -1, -1}, {1, -1, -1}, {-1, 0, -1}, {0, 0, -1}, {1, 0, -1},
+		{-1, 1, -1}, {0, 1, -1}, {1, 1, -1}, {-1, -1, 0}, {0, -1, 0}, {1, -1, 0},
+		{-1, 0, 0}, {0, 0, 0}, {1, 0, 0}, {-1, 1, 0}, {0, 1, 0}, {1, 1, 0},
+		{-1, -1, 1}, {0, -1, 1}, {1, -1, 1}, {-1, 0, 1}, {0, 0, 1}, {1, 0, 1},
+		{-1, 1, 1}, {0, 1, 1}, {1, 1, 1},
+	}
+
+	// TryteValueToTyteLUT is a lookup table to convert tryte values into trytes.
+	TryteValueToTyteLUT = []byte("NOPQRSTUVWXYZ9ABCDEFGHIJKLM")
+
+	// TryteToTryteValueLUT is a lookup table to convert trytes into tryte values.
+	TryteToTryteValueLUT = []int8{
+		0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+		-13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+	}
+
+	// lookup table to unpack a byte into 5 trits.
+	bytesToTritsLUT = [][]int8{
+		{0, 0, 0, 0, 0}, {1, 0, 0, 0, 0}, {-1, 1, 0, 0, 0}, {0, 1, 0, 0, 0}, {1, 1, 0, 0, 0}, {-1, -1, 1, 0, 0},
+		{0, -1, 1, 0, 0}, {1, -1, 1, 0, 0}, {-1, 0, 1, 0, 0}, {0, 0, 1, 0, 0}, {1, 0, 1, 0, 0}, {-1, 1, 1, 0, 0},
+		{0, 1, 1, 0, 0}, {1, 1, 1, 0, 0}, {-1, -1, -1, 1, 0}, {0, -1, -1, 1, 0}, {1, -1, -1, 1, 0}, {-1, 0, -1, 1, 0},
+		{0, 0, -1, 1, 0}, {1, 0, -1, 1, 0}, {-1, 1, -1, 1, 0}, {0, 1, -1, 1, 0}, {1, 1, -1, 1, 0}, {-1, -1, 0, 1, 0},
+		{0, -1, 0, 1, 0}, {1, -1, 0, 1, 0}, {-1, 0, 0, 1, 0}, {0, 0, 0, 1, 0}, {1, 0, 0, 1, 0}, {-1, 1, 0, 1, 0},
+		{0, 1, 0, 1, 0}, {1, 1, 0, 1, 0}, {-1, -1, 1, 1, 0}, {0, -1, 1, 1, 0}, {1, -1, 1, 1, 0}, {-1, 0, 1, 1, 0},
+		{0, 0, 1, 1, 0}, {1, 0, 1, 1, 0}, {-1, 1, 1, 1, 0}, {0, 1, 1, 1, 0}, {1, 1, 1, 1, 0}, {-1, -1, -1, -1, 1},
+		{0, -1, -1, -1, 1}, {1, -1, -1, -1, 1}, {-1, 0, -1, -1, 1}, {0, 0, -1, -1, 1}, {1, 0, -1, -1, 1}, {-1, 1, -1, -1, 1},
+		{0, 1, -1, -1, 1}, {1, 1, -1, -1, 1}, {-1, -1, 0, -1, 1}, {0, -1, 0, -1, 1}, {1, -1, 0, -1, 1}, {-1, 0, 0, -1, 1},
+		{0, 0, 0, -1, 1}, {1, 0, 0, -1, 1}, {-1, 1, 0, -1, 1}, {0, 1, 0, -1, 1}, {1, 1, 0, -1, 1}, {-1, -1, 1, -1, 1},
+		{0, -1, 1, -1, 1}, {1, -1, 1, -1, 1}, {-1, 0, 1, -1, 1}, {0, 0, 1, -1, 1}, {1, 0, 1, -1, 1}, {-1, 1, 1, -1, 1},
+		{0, 1, 1, -1, 1}, {1, 1, 1, -1, 1}, {-1, -1, -1, 0, 1}, {0, -1, -1, 0, 1}, {1, -1, -1, 0, 1}, {-1, 0, -1, 0, 1},
+		{0, 0, -1, 0, 1}, {1, 0, -1, 0, 1}, {-1, 1, -1, 0, 1}, {0, 1, -1, 0, 1}, {1, 1, -1, 0, 1}, {-1, -1, 0, 0, 1},
+		{0, -1, 0, 0, 1}, {1, -1, 0, 0, 1}, {-1, 0, 0, 0, 1}, {0, 0, 0, 0, 1}, {1, 0, 0, 0, 1}, {-1, 1, 0, 0, 1},
+		{0, 1, 0, 0, 1}, {1, 1, 0, 0, 1}, {-1, -1, 1, 0, 1}, {0, -1, 1, 0, 1}, {1, -1, 1, 0, 1}, {-1, 0, 1, 0, 1},
+		{0, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {-1, 1, 1, 0, 1}, {0, 1, 1, 0, 1}, {1, 1, 1, 0, 1}, {-1, -1, -1, 1, 1},
+		{0, -1, -1, 1, 1}, {1, -1, -1, 1, 1}, {-1, 0, -1, 1, 1}, {0, 0, -1, 1, 1}, {1, 0, -1, 1, 1}, {-1, 1, -1, 1, 1},
+		{0, 1, -1, 1, 1}, {1, 1, -1, 1, 1}, {-1, -1, 0, 1, 1}, {0, -1, 0, 1, 1}, {1, -1, 0, 1, 1}, {-1, 0, 0, 1, 1},
+		{0, 0, 0, 1, 1}, {1, 0, 0, 1, 1}, {-1, 1, 0, 1, 1}, {0, 1, 0, 1, 1}, {1, 1, 0, 1, 1}, {-1, -1, 1, 1, 1},
+		{0, -1, 1, 1, 1}, {1, -1, 1, 1, 1}, {-1, 0, 1, 1, 1}, {0, 0, 1, 1, 1}, {1, 0, 1, 1, 1}, {-1, 1, 1, 1, 1},
+		{0, 1, 1, 1, 1}, {1, 1, 1, 1, 1},
+		{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
+		{-1, -1, -1, -1, -1}, {0, -1, -1, -1, -1}, {1, -1, -1, -1, -1}, {-1, 0, -1, -1, -1}, {0, 0, -1, -1, -1}, {1, 0, -1, -1, -1},
+		{-1, 1, -1, -1, -1}, {0, 1, -1, -1, -1}, {1, 1, -1, -1, -1}, {-1, -1, 0, -1, -1}, {0, -1, 0, -1, -1}, {1, -1, 0, -1, -1},
+		{-1, 0, 0, -1, -1}, {0, 0, 0, -1, -1}, {1, 0, 0, -1, -1}, {-1, 1, 0, -1, -1}, {0, 1, 0, -1, -1}, {1, 1, 0, -1, -1},
+		{-1, -1, 1, -1, -1}, {0, -1, 1, -1, -1}, {1, -1, 1, -1, -1}, {-1, 0, 1, -1, -1}, {0, 0, 1, -1, -1}, {1, 0, 1, -1, -1},
+		{-1, 1, 1, -1, -1}, {0, 1, 1, -1, -1}, {1, 1, 1, -1, -1}, {-1, -1, -1, 0, -1}, {0, -1, -1, 0, -1}, {1, -1, -1, 0, -1},
+		{-1, 0, -1, 0, -1}, {0, 0, -1, 0, -1}, {1, 0, -1, 0, -1}, {-1, 1, -1, 0, -1}, {0, 1, -1, 0, -1}, {1, 1, -1, 0, -1},
+		{-1, -1, 0, 0, -1}, {0, -1, 0, 0, -1}, {1, -1, 0, 0, -1}, {-1, 0, 0, 0, -1}, {0, 0, 0, 0, -1}, {1, 0, 0, 0, -1},
+		{-1, 1, 0, 0, -1}, {0, 1, 0, 0, -1}, {1, 1, 0, 0, -1}, {-1, -1, 1, 0, -1}, {0, -1, 1, 0, -1}, {1, -1, 1, 0, -1},
+		{-1, 0, 1, 0, -1}, {0, 0, 1, 0, -1}, {1, 0, 1, 0, -1}, {-1, 1, 1, 0, -1}, {0, 1, 1, 0, -1}, {1, 1, 1, 0, -1},
+		{-1, -1, -1, 1, -1}, {0, -1, -1, 1, -1}, {1, -1, -1, 1, -1}, {-1, 0, -1, 1, -1}, {0, 0, -1, 1, -1}, {1, 0, -1, 1, -1},
+		{-1, 1, -1, 1, -1}, {0, 1, -1, 1, -1}, {1, 1, -1, 1, -1}, {-1, -1, 0, 1, -1}, {0, -1, 0, 1, -1}, {1, -1, 0, 1, -1},
+		{-1, 0, 0, 1, -1}, {0, 0, 0, 1, -1}, {1, 0, 0, 1, -1}, {-1, 1, 0, 1, -1}, {0, 1, 0, 1, -1}, {1, 1, 0, 1, -1},
+		{-1, -1, 1, 1, -1}, {0, -1, 1, 1, -1}, {1, -1, 1, 1, -1}, {-1, 0, 1, 1, -1}, {0, 0, 1, 1, -1}, {1, 0, 1, 1, -1},
+		{-1, 1, 1, 1, -1}, {0, 1, 1, 1, -1}, {1, 1, 1, 1, -1}, {-1, -1, -1, -1, 0}, {0, -1, -1, -1, 0}, {1, -1, -1, -1, 0},
+		{-1, 0, -1, -1, 0}, {0, 0, -1, -1, 0}, {1, 0, -1, -1, 0}, {-1, 1, -1, -1, 0}, {0, 1, -1, -1, 0}, {1, 1, -1, -1, 0},
+		{-1, -1, 0, -1, 0}, {0, -1, 0, -1, 0}, {1, -1, 0, -1, 0}, {-1, 0, 0, -1, 0}, {0, 0, 0, -1, 0}, {1, 0, 0, -1, 0},
+		{-1, 1, 0, -1, 0}, {0, 1, 0, -1, 0}, {1, 1, 0, -1, 0}, {-1, -1, 1, -1, 0}, {0, -1, 1, -1, 0}, {1, -1, 1, -1, 0},
+		{-1, 0, 1, -1, 0}, {0, 0, 1, -1, 0}, {1, 0, 1, -1, 0}, {-1, 1, 1, -1, 0}, {0, 1, 1, -1, 0}, {1, 1, 1, -1, 0},
+		{-1, -1, -1, 0, 0}, {0, -1, -1, 0, 0}, {1, -1, -1, 0, 0}, {-1, 0, -1, 0, 0}, {0, 0, -1, 0, 0}, {1, 0, -1, 0, 0},
+		{-1, 1, -1, 0, 0}, {0, 1, -1, 0, 0}, {1, 1, -1, 0, 0}, {-1, -1, 0, 0, 0}, {0, -1, 0, 0, 0}, {1, -1, 0, 0, 0},
+		{-1, 0, 0, 0, 0},
+	}
+
 	// Pow27LUT is a Look-up-table for Decoding Trits to int64
 	Pow27LUT = []int64{1,
 		27,
@@ -29,72 +94,17 @@ var (
 	encodedZero = []int8{1, 0, 0, -1}
 )
 
-// lookup table to convert tryte values into trits
-var tryteValueToTritsLUT = [][3]int8{
-	{-1, -1, -1}, {0, -1, -1}, {1, -1, -1}, {-1, 0, -1}, {0, 0, -1}, {1, 0, -1},
-	{-1, 1, -1}, {0, 1, -1}, {1, 1, -1}, {-1, -1, 0}, {0, -1, 0}, {1, -1, 0},
-	{-1, 0, 0}, {0, 0, 0}, {1, 0, 0}, {-1, 1, 0}, {0, 1, 0}, {1, 1, 0},
-	{-1, -1, 1}, {0, -1, 1}, {1, -1, 1}, {-1, 0, 1}, {0, 0, 1}, {1, 0, 1},
-	{-1, 1, 1}, {0, 1, 1}, {1, 1, 1},
-}
-
-// lookup table to convert trytes into tryte values
-var tryteToTryteValueLUT = []int8{
-	0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-	-13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-}
-
-var bytesToTritsLUT = [][]int8{
-	{0, 0, 0, 0, 0}, {1, 0, 0, 0, 0}, {-1, 1, 0, 0, 0}, {0, 1, 0, 0, 0}, {1, 1, 0, 0, 0}, {-1, -1, 1, 0, 0},
-	{0, -1, 1, 0, 0}, {1, -1, 1, 0, 0}, {-1, 0, 1, 0, 0}, {0, 0, 1, 0, 0}, {1, 0, 1, 0, 0}, {-1, 1, 1, 0, 0},
-	{0, 1, 1, 0, 0}, {1, 1, 1, 0, 0}, {-1, -1, -1, 1, 0}, {0, -1, -1, 1, 0}, {1, -1, -1, 1, 0}, {-1, 0, -1, 1, 0},
-	{0, 0, -1, 1, 0}, {1, 0, -1, 1, 0}, {-1, 1, -1, 1, 0}, {0, 1, -1, 1, 0}, {1, 1, -1, 1, 0}, {-1, -1, 0, 1, 0},
-	{0, -1, 0, 1, 0}, {1, -1, 0, 1, 0}, {-1, 0, 0, 1, 0}, {0, 0, 0, 1, 0}, {1, 0, 0, 1, 0}, {-1, 1, 0, 1, 0},
-	{0, 1, 0, 1, 0}, {1, 1, 0, 1, 0}, {-1, -1, 1, 1, 0}, {0, -1, 1, 1, 0}, {1, -1, 1, 1, 0}, {-1, 0, 1, 1, 0},
-	{0, 0, 1, 1, 0}, {1, 0, 1, 1, 0}, {-1, 1, 1, 1, 0}, {0, 1, 1, 1, 0}, {1, 1, 1, 1, 0}, {-1, -1, -1, -1, 1},
-	{0, -1, -1, -1, 1}, {1, -1, -1, -1, 1}, {-1, 0, -1, -1, 1}, {0, 0, -1, -1, 1}, {1, 0, -1, -1, 1}, {-1, 1, -1, -1, 1},
-	{0, 1, -1, -1, 1}, {1, 1, -1, -1, 1}, {-1, -1, 0, -1, 1}, {0, -1, 0, -1, 1}, {1, -1, 0, -1, 1}, {-1, 0, 0, -1, 1},
-	{0, 0, 0, -1, 1}, {1, 0, 0, -1, 1}, {-1, 1, 0, -1, 1}, {0, 1, 0, -1, 1}, {1, 1, 0, -1, 1}, {-1, -1, 1, -1, 1},
-	{0, -1, 1, -1, 1}, {1, -1, 1, -1, 1}, {-1, 0, 1, -1, 1}, {0, 0, 1, -1, 1}, {1, 0, 1, -1, 1}, {-1, 1, 1, -1, 1},
-	{0, 1, 1, -1, 1}, {1, 1, 1, -1, 1}, {-1, -1, -1, 0, 1}, {0, -1, -1, 0, 1}, {1, -1, -1, 0, 1}, {-1, 0, -1, 0, 1},
-	{0, 0, -1, 0, 1}, {1, 0, -1, 0, 1}, {-1, 1, -1, 0, 1}, {0, 1, -1, 0, 1}, {1, 1, -1, 0, 1}, {-1, -1, 0, 0, 1},
-	{0, -1, 0, 0, 1}, {1, -1, 0, 0, 1}, {-1, 0, 0, 0, 1}, {0, 0, 0, 0, 1}, {1, 0, 0, 0, 1}, {-1, 1, 0, 0, 1},
-	{0, 1, 0, 0, 1}, {1, 1, 0, 0, 1}, {-1, -1, 1, 0, 1}, {0, -1, 1, 0, 1}, {1, -1, 1, 0, 1}, {-1, 0, 1, 0, 1},
-	{0, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {-1, 1, 1, 0, 1}, {0, 1, 1, 0, 1}, {1, 1, 1, 0, 1}, {-1, -1, -1, 1, 1},
-	{0, -1, -1, 1, 1}, {1, -1, -1, 1, 1}, {-1, 0, -1, 1, 1}, {0, 0, -1, 1, 1}, {1, 0, -1, 1, 1}, {-1, 1, -1, 1, 1},
-	{0, 1, -1, 1, 1}, {1, 1, -1, 1, 1}, {-1, -1, 0, 1, 1}, {0, -1, 0, 1, 1}, {1, -1, 0, 1, 1}, {-1, 0, 0, 1, 1},
-	{0, 0, 0, 1, 1}, {1, 0, 0, 1, 1}, {-1, 1, 0, 1, 1}, {0, 1, 0, 1, 1}, {1, 1, 0, 1, 1}, {-1, -1, 1, 1, 1},
-	{0, -1, 1, 1, 1}, {1, -1, 1, 1, 1}, {-1, 0, 1, 1, 1}, {0, 0, 1, 1, 1}, {1, 0, 1, 1, 1}, {-1, 1, 1, 1, 1},
-	{0, 1, 1, 1, 1}, {1, 1, 1, 1, 1},
-	{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-	{-1, -1, -1, -1, -1}, {0, -1, -1, -1, -1}, {1, -1, -1, -1, -1}, {-1, 0, -1, -1, -1}, {0, 0, -1, -1, -1}, {1, 0, -1, -1, -1},
-	{-1, 1, -1, -1, -1}, {0, 1, -1, -1, -1}, {1, 1, -1, -1, -1}, {-1, -1, 0, -1, -1}, {0, -1, 0, -1, -1}, {1, -1, 0, -1, -1},
-	{-1, 0, 0, -1, -1}, {0, 0, 0, -1, -1}, {1, 0, 0, -1, -1}, {-1, 1, 0, -1, -1}, {0, 1, 0, -1, -1}, {1, 1, 0, -1, -1},
-	{-1, -1, 1, -1, -1}, {0, -1, 1, -1, -1}, {1, -1, 1, -1, -1}, {-1, 0, 1, -1, -1}, {0, 0, 1, -1, -1}, {1, 0, 1, -1, -1},
-	{-1, 1, 1, -1, -1}, {0, 1, 1, -1, -1}, {1, 1, 1, -1, -1}, {-1, -1, -1, 0, -1}, {0, -1, -1, 0, -1}, {1, -1, -1, 0, -1},
-	{-1, 0, -1, 0, -1}, {0, 0, -1, 0, -1}, {1, 0, -1, 0, -1}, {-1, 1, -1, 0, -1}, {0, 1, -1, 0, -1}, {1, 1, -1, 0, -1},
-	{-1, -1, 0, 0, -1}, {0, -1, 0, 0, -1}, {1, -1, 0, 0, -1}, {-1, 0, 0, 0, -1}, {0, 0, 0, 0, -1}, {1, 0, 0, 0, -1},
-	{-1, 1, 0, 0, -1}, {0, 1, 0, 0, -1}, {1, 1, 0, 0, -1}, {-1, -1, 1, 0, -1}, {0, -1, 1, 0, -1}, {1, -1, 1, 0, -1},
-	{-1, 0, 1, 0, -1}, {0, 0, 1, 0, -1}, {1, 0, 1, 0, -1}, {-1, 1, 1, 0, -1}, {0, 1, 1, 0, -1}, {1, 1, 1, 0, -1},
-	{-1, -1, -1, 1, -1}, {0, -1, -1, 1, -1}, {1, -1, -1, 1, -1}, {-1, 0, -1, 1, -1}, {0, 0, -1, 1, -1}, {1, 0, -1, 1, -1},
-	{-1, 1, -1, 1, -1}, {0, 1, -1, 1, -1}, {1, 1, -1, 1, -1}, {-1, -1, 0, 1, -1}, {0, -1, 0, 1, -1}, {1, -1, 0, 1, -1},
-	{-1, 0, 0, 1, -1}, {0, 0, 0, 1, -1}, {1, 0, 0, 1, -1}, {-1, 1, 0, 1, -1}, {0, 1, 0, 1, -1}, {1, 1, 0, 1, -1},
-	{-1, -1, 1, 1, -1}, {0, -1, 1, 1, -1}, {1, -1, 1, 1, -1}, {-1, 0, 1, 1, -1}, {0, 0, 1, 1, -1}, {1, 0, 1, 1, -1},
-	{-1, 1, 1, 1, -1}, {0, 1, 1, 1, -1}, {1, 1, 1, 1, -1}, {-1, -1, -1, -1, 0}, {0, -1, -1, -1, 0}, {1, -1, -1, -1, 0},
-	{-1, 0, -1, -1, 0}, {0, 0, -1, -1, 0}, {1, 0, -1, -1, 0}, {-1, 1, -1, -1, 0}, {0, 1, -1, -1, 0}, {1, 1, -1, -1, 0},
-	{-1, -1, 0, -1, 0}, {0, -1, 0, -1, 0}, {1, -1, 0, -1, 0}, {-1, 0, 0, -1, 0}, {0, 0, 0, -1, 0}, {1, 0, 0, -1, 0},
-	{-1, 1, 0, -1, 0}, {0, 1, 0, -1, 0}, {1, 1, 0, -1, 0}, {-1, -1, 1, -1, 0}, {0, -1, 1, -1, 0}, {1, -1, 1, -1, 0},
-	{-1, 0, 1, -1, 0}, {0, 0, 1, -1, 0}, {1, 0, 1, -1, 0}, {-1, 1, 1, -1, 0}, {0, 1, 1, -1, 0}, {1, 1, 1, -1, 0},
-	{-1, -1, -1, 0, 0}, {0, -1, -1, 0, 0}, {1, -1, -1, 0, 0}, {-1, 0, -1, 0, 0}, {0, 0, -1, 0, 0}, {1, 0, -1, 0, 0},
-	{-1, 1, -1, 0, 0}, {0, 1, -1, 0, 0}, {1, 1, -1, 0, 0}, {-1, -1, 0, 0, 0}, {0, -1, 0, 0, 0}, {1, -1, 0, 0, 0},
-	{-1, 0, 0, 0, 0},
-}
-
-// lookup table to convert tryte values into trytes
-const tryteValueToTyteLUT = "NOPQRSTUVWXYZ9ABCDEFGHIJKLM"
-
 // Trits is a slice of int8. You should not use cast, use NewTrits instead to ensure the validity.
 type Trits = []int8
+
+// Trytes is a string of trytes. Use NewTrytes() instead of typecasting.
+type Trytes = string
+
+// Hash represents a trinary hash
+type Hash = Trytes
+
+// Hashes is a slice of Hash.
+type Hashes = []Hash
 
 // ValidTrit returns true if t is a valid trit.
 func ValidTrit(t int8) bool {
@@ -138,6 +148,24 @@ func TritsEqual(a Trits, b Trits) (bool, error) {
 	return true, nil
 }
 
+// ReverseTrits reverses the given trits.
+func ReverseTrits(trits Trits) Trits {
+	for left, right := 0, len(trits)-1; left < right; left, right = left+1, right-1 {
+		trits[left], trits[right] = trits[right], trits[left]
+	}
+
+	return trits
+}
+
+// TrailingZeros returns the number of trailing zeros of the given trits.
+func TrailingZeros(trits Trits) int64 {
+	z := int64(0)
+	for i := len(trits) - 1; i >= 0 && trits[i] == 0; i-- {
+		z++
+	}
+	return z
+}
+
 // MustAbsInt64 returns the absolute value of an int64.
 func MustAbsInt64(n int64) int64 {
 	if n == -1<<63 {
@@ -157,12 +185,13 @@ func absInt64(v int64) uint64 {
 	return uint64(v)
 }
 
-func nearestGreaterMultipleOfThree(value uint) uint {
-	rem := value % TrinaryRadix
+// roundUpToTryteMultiple rounds the given number up the the nearest multiple of 3 to make a valid tryte count.
+func roundUpToTryteMultiple(n uint) uint {
+	rem := n % TritsPerTryte
 	if rem == 0 {
-		return value
+		return n
 	}
-	return value + TrinaryRadix - rem
+	return n + TritsPerTryte - rem
 }
 
 // MinTrits returns the length of trits needed to encode the value.
@@ -176,6 +205,23 @@ func MinTrits(value int64) uint64 {
 		num++
 	}
 	return num
+}
+
+// IntToTrits converts int64 to a slice of trits.
+func IntToTrits(value int64) Trits {
+	numTrits := int(MinTrits(value))
+	numTrytes := (numTrits + TritsPerTryte - 1) / TritsPerTryte
+	trits, _ := TrytesToTrits(IntToTrytes(value, numTrytes))
+	return trits[:numTrits]
+}
+
+// TritsToInt converts a slice of trits into an integer and assumes little-endian notation.
+func TritsToInt(t Trits) int64 {
+	var val int64
+	for i := len(t) - 1; i >= 0; i-- {
+		val = val*TrinaryRadix + int64(t[i])
+	}
+	return val
 }
 
 // IntToTrytes converts int64 to a slice of trytes.
@@ -213,46 +259,20 @@ func TrytesToInt(t Trytes) int64 {
 	return val
 }
 
-// IntToTrits converts int64 to a slice of trits.
-func IntToTrits(value int64) Trits {
-	numTrits := int(MinTrits(value))
-	numTrytes := (numTrits + 3 - 1) / 3
-	trits, _ := TrytesToTrits(IntToTrytes(value, numTrytes))
-	return trits[:numTrits]
-}
-
-// TritsToInt converts a slice of trits into an integer and assumes little-endian notation.
-func TritsToInt(t Trits) int64 {
-	var val int64
-	for i := len(t) - 1; i >= 0; i-- {
-		val = val*TrinaryRadix + int64(t[i])
-	}
-	return val
-}
-
 // CanTritsToTrytes returns true if t can be converted to trytes.
 func CanTritsToTrytes(trits Trits) bool {
 	if len(trits) == 0 {
 		return false
 	}
-	return len(trits)%3 == 0
-}
-
-// TrailingZeros returns the number of trailing zeros of the given trits.
-func TrailingZeros(trits Trits) int64 {
-	z := int64(0)
-	for i := len(trits) - 1; i >= 0 && trits[i] == 0; i-- {
-		z++
-	}
-	return z
+	return len(trits)%TritsPerTryte == 0
 }
 
 func tryteValueToTryte(v int8) byte {
-	return tryteValueToTyteLUT[v-MinTryteValue]
+	return TryteValueToTyteLUT[v-MinTryteValue]
 }
 
 func tryteToTryteValue(t byte) int8 {
-	return tryteToTryteValueLUT[t-'9']
+	return TryteToTryteValueLUT[t-'9']
 }
 
 // TritsToTrytes converts a slice of trits into trytes. Returns an error if len(t)%3!=0
@@ -262,10 +282,10 @@ func TritsToTrytes(trits Trits) (Trytes, error) {
 	}
 
 	var trytes strings.Builder
-	trytes.Grow(len(trits) / 3)
+	trytes.Grow(len(trits) / TritsPerTryte)
 
-	for i := 0; i < len(trits)/3; i++ {
-		v := trits[i*3] + trits[i*3+1]*3 + trits[i*3+2]*9
+	for i := 0; i < len(trits)/TritsPerTryte; i++ {
+		v := trits[i*TritsPerTryte] + trits[i*TritsPerTryte+1]*3 + trits[i*TritsPerTryte+2]*9
 		trytes.WriteByte(tryteValueToTryte(v))
 	}
 	return trytes.String(), nil
@@ -278,6 +298,64 @@ func MustTritsToTrytes(trits Trits) Trytes {
 		panic(err)
 	}
 	return trytes
+}
+
+func validTryte(t rune) bool {
+	return (t >= 'A' && t <= 'Z') || t == '9'
+}
+
+// ValidTryte returns the validity of a tryte (must be rune A-Z or 9)
+func ValidTryte(t rune) error {
+	if !validTryte(t) {
+		return ErrInvalidTrytes
+	}
+	return nil
+}
+
+// ValidTrytes returns true if t is made of valid trytes.
+func ValidTrytes(trytes Trytes) error {
+	if trytes == "" {
+		return ErrInvalidTrytes
+	}
+	for _, tryte := range trytes {
+		if !validTryte(tryte) {
+			return ErrInvalidTrytes
+		}
+	}
+	return nil
+}
+
+// NewTrytes casts to Trytes and checks its validity.
+func NewTrytes(s string) (Trytes, error) {
+	err := ValidTrytes(s)
+	return s, err
+}
+
+// TrytesToTrits converts a slice of trytes into trits.
+func TrytesToTrits(trytes Trytes) (Trits, error) {
+	if err := ValidTrytes(trytes); err != nil {
+		return nil, err
+	}
+
+	trits := make(Trits, len(trytes)*TritsPerTryte)
+	for i := 0; i < len(trytes); i++ {
+		v := tryteToTryteValue(trytes[i])
+
+		idx := v - MinTryteValue
+		trits[i*TritsPerTryte+0] = TryteValueToTritsLUT[idx][0]
+		trits[i*TritsPerTryte+1] = TryteValueToTritsLUT[idx][1]
+		trits[i*TritsPerTryte+2] = TryteValueToTritsLUT[idx][2]
+	}
+	return trits, nil
+}
+
+// MustTrytesToTrits converts a slice of trytes into trits.
+func MustTrytesToTrits(trytes Trytes) Trits {
+	trits, err := TrytesToTrits(trytes)
+	if err != nil {
+		panic(err)
+	}
+	return trits
 }
 
 // CanBeHash returns the validity of the trit length.
@@ -307,9 +385,9 @@ func MustTrytesToBytes(trytes Trytes) []byte {
 func BytesToTrytes(bytes []byte, numTrytes ...int) (Trytes, error) {
 	var numTrits int
 	if len(numTrytes) > 0 {
-		numTrits = numTrytes[0] * 3
+		numTrits = numTrytes[0] * TritsPerTryte
 	} else {
-		numTrits = int(nearestGreaterMultipleOfThree(uint(len(bytes)) * NumberOfTritsInAByte))
+		numTrits = int(roundUpToTryteMultiple(uint(len(bytes)) * NumberOfTritsInAByte))
 	}
 
 	// we can ignore the error, as the correct number of trits is passed
@@ -370,82 +448,6 @@ func BytesToTrits(bytes []byte, numTrits ...int) (Trits, error) {
 	return trits, nil
 }
 
-// ReverseTrits reverses the given trits.
-func ReverseTrits(trits Trits) Trits {
-	for left, right := 0, len(trits)-1; left < right; left, right = left+1, right-1 {
-		trits[left], trits[right] = trits[right], trits[left]
-	}
-
-	return trits
-}
-
-// Trytes is a string of trytes. Use NewTrytes() instead of typecasting.
-type Trytes = string
-
-// Hash represents a trinary hash
-type Hash = Trytes
-
-// Hashes is a slice of Hash.
-type Hashes = []Hash
-
-func validTryte(t rune) bool {
-	return (t >= 'A' && t <= 'Z') || t == '9'
-}
-
-// ValidTryte returns the validity of a tryte (must be rune A-Z or 9)
-func ValidTryte(t rune) error {
-	if !validTryte(t) {
-		return ErrInvalidTrytes
-	}
-	return nil
-}
-
-// ValidTrytes returns true if t is made of valid trytes.
-func ValidTrytes(trytes Trytes) error {
-	if trytes == "" {
-		return ErrInvalidTrytes
-	}
-	for _, tryte := range trytes {
-		if !validTryte(tryte) {
-			return ErrInvalidTrytes
-		}
-	}
-	return nil
-}
-
-// NewTrytes casts to Trytes and checks its validity.
-func NewTrytes(s string) (Trytes, error) {
-	err := ValidTrytes(s)
-	return s, err
-}
-
-// TrytesToTrits converts a slice of trytes into trits.
-func TrytesToTrits(trytes Trytes) (Trits, error) {
-	if err := ValidTrytes(trytes); err != nil {
-		return nil, err
-	}
-
-	trits := make(Trits, len(trytes)*3)
-	for i := 0; i < len(trytes); i++ {
-		v := tryteToTryteValue(trytes[i])
-
-		idx := v - MinTryteValue
-		trits[i*3+0] = tryteValueToTritsLUT[idx][0]
-		trits[i*3+1] = tryteValueToTritsLUT[idx][1]
-		trits[i*3+2] = tryteValueToTritsLUT[idx][2]
-	}
-	return trits, nil
-}
-
-// MustTrytesToTrits converts a slice of trytes into trits.
-func MustTrytesToTrits(trytes Trytes) Trits {
-	trits, err := TrytesToTrits(trytes)
-	if err != nil {
-		panic(err)
-	}
-	return trits
-}
-
 // Pad pads the given trytes with 9s up to the given size.
 func Pad(trytes Trytes, n int) Trytes {
 	if len(trytes) >= n {
@@ -478,7 +480,7 @@ func EncodedLength(value int64) uint64 {
 	if value == 0 {
 		return uint64(len(encodedZero))
 	}
-	length := uint64(nearestGreaterMultipleOfThree(uint(MinTrits(value))))
+	length := uint64(roundUpToTryteMultiple(uint(MinTrits(value))))
 
 	// trits length + encoding length
 	return length + MinTrits((1<<(length/uint64(TrinaryRadix)))-1)
@@ -494,7 +496,7 @@ func EncodeInt64(value int64) (t Trits, size uint64, err error) {
 
 	var encoding int64 = 0
 	index := 0
-	length := nearestGreaterMultipleOfThree(uint(MinTrits(value)))
+	length := roundUpToTryteMultiple(uint(MinTrits(value)))
 	t = make(Trits, size)
 	copy(t, IntToTrits(value))
 

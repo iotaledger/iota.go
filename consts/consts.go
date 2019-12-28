@@ -31,6 +31,8 @@ const (
 	// TryteAlphabet are letters of the alphabet and the number 9
 	// which directly map to decimal values of a single Tryte value.
 	TryteAlphabet = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	// TritsPerTryte is the number of trits in one tryte
+	TritsPerTryte = 3
 	// MinTryteValue is the minimum value of a tryte value.
 	MinTryteValue = -13
 	// MaxTryteValue is the maximum value of a tryte value.
