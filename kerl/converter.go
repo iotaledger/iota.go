@@ -43,31 +43,13 @@ var trit243 = []uint32{
 	0xf3498e04, 0x91775c6c, 0x53ed0116, 0x540d500b, 0x50ff57bf, 0xbcd3d7df,
 }
 
-// lookup table to convert tryte values into trits
-var tryteValueToTritsLUT = [][3]int8{
-	{-1, -1, -1}, {0, -1, -1}, {1, -1, -1}, {-1, 0, -1}, {0, 0, -1}, {1, 0, -1},
-	{-1, 1, -1}, {0, 1, -1}, {1, 1, -1}, {-1, -1, 0}, {0, -1, 0}, {1, -1, 0},
-	{-1, 0, 0}, {0, 0, 0}, {1, 0, 0}, {-1, 1, 0}, {0, 1, 0}, {1, 1, 0},
-	{-1, -1, 1}, {0, -1, 1}, {1, -1, 1}, {-1, 0, 1}, {0, 0, 1}, {1, 0, 1},
-	{-1, 1, 1}, {0, 1, 1}, {1, 1, 1},
-}
-
-// lookup table to convert trytes into tryte values
-var tryteToTryteValueLUT = []int8{
-	0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-	-13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-}
-
-// lookup table to convert tryte values into trytes
-const tryteValueToTyteLUT = "NOPQRSTUVWXYZ9ABCDEFGHIJKLM"
-
 func tryteValuesToTrits(vs []int8) Trits {
-	trits := make([]int8, len(vs)*3)
+	trits := make([]int8, len(vs)*TritsPerTryte)
 	for i, v := range vs {
 		idx := v - MinTryteValue
-		trits[i*3+0] = tryteValueToTritsLUT[idx][0]
-		trits[i*3+1] = tryteValueToTritsLUT[idx][1]
-		trits[i*3+2] = tryteValueToTritsLUT[idx][2]
+		trits[i*TritsPerTryte+0] = TryteValueToTritsLUT[idx][0]
+		trits[i*TritsPerTryte+1] = TryteValueToTritsLUT[idx][1]
+		trits[i*TritsPerTryte+2] = TryteValueToTritsLUT[idx][2]
 	}
 	return trits
 }
@@ -77,24 +59,24 @@ func tryteValuesToTrytes(vs []int8) Trytes {
 	trytes.Grow(len(vs))
 	for _, v := range vs {
 		idx := v - MinTryteValue
-		trytes.WriteByte(tryteValueToTyteLUT[idx])
+		trytes.WriteByte(TryteValueToTyteLUT[idx])
 	}
 	return trytes.String()
 }
 
 func tritsToTryteValues(trits Trits) []int8 {
-	vs := make([]int8, len(trits)/3)
-	for i := 0; i < len(trits)/3; i++ {
-		vs[i] = trits[i*3] + trits[i*3+1]*3 + trits[i*3+2]*9
+	vs := make([]int8, len(trits)/TritsPerTryte)
+	for i := 0; i < len(trits)/TritsPerTryte; i++ {
+		vs[i] = trits[i*TritsPerTryte] + trits[i*TritsPerTryte+1]*3 + trits[i*TritsPerTryte+2]*9
 	}
-	return vs
+	return trytes.String()
 }
 
 func trytesToTryteValues(trytes Trytes) []int8 {
 	vs := make([]int8, len(trytes))
 	for i, tryte := range trytes {
 		idx := tryte - '9'
-		vs[i] = tryteToTryteValueLUT[idx]
+		vs[i] = TryteToTryteValueLUT[idx]
 	}
 	return vs
 }
