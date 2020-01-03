@@ -282,7 +282,7 @@ func init() {
 // CARM64ProofOfWork does proof of work on the given trytes using native C code and __int128 C type (ARM adjusted).
 // This implementation follows common C standards and does not rely on SSE which is AMD64 specific.
 func CARM64ProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
-	return cARM64ProofOfWork(trytes, mwm, nil, parallelism)
+	return cARM64ProofOfWork(trytes, mwm, nil, parallelism...)
 }
 
 var syncCARM64ProofOfWork = sync.Mutex{}

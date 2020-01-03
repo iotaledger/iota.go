@@ -69,7 +69,7 @@ func tritsToTryteValues(trits Trits) []int8 {
 	for i := 0; i < len(trits)/TritsPerTryte; i++ {
 		vs[i] = trits[i*TritsPerTryte] + trits[i*TritsPerTryte+1]*3 + trits[i*TritsPerTryte+2]*9
 	}
-	return vs
+	return trytes.String()
 }
 
 func trytesToTryteValues(trytes Trytes) []int8 {
