@@ -32,7 +32,7 @@ func (a BundlesByTimestamp) Less(i int, j int) bool {
 
 // PadTag pads the given trytes up to the length of a tag.
 func PadTag(tag Trytes) Trytes {
-	return Pad(tag, 27)
+	return MustPad(tag, 27)
 }
 
 // Bundle represents grouped together transactions for creating a transfer.
@@ -92,7 +92,7 @@ func TransfersToBundleEntries(timestamp uint64, transfers ...Transfer) (BundleEn
 			return nil, err
 		}
 
-		transfer.Message = Pad(transfer.Message, length*SignatureMessageFragmentSizeInTrytes)
+		transfer.Message = MustPad(transfer.Message, length*SignatureMessageFragmentSizeInTrytes)
 
 		bndlEntry := BundleEntry{
 			Address: addr, Value: int64(transfer.Value),
@@ -168,7 +168,7 @@ func getBundleEntryWithDefaults(entry BundleEntry) BundleEntry {
 		}
 	} else {
 		for i := range entry.SignatureMessageFragments {
-			entry.SignatureMessageFragments[i] = Pad(entry.SignatureMessageFragments[i], 2187)
+			entry.SignatureMessageFragments[i] = MustPad(entry.SignatureMessageFragments[i], 2187)
 		}
 	}
 
@@ -182,13 +182,13 @@ func Finalize(bundle Bundle) (Bundle, error) {
 	var timestampTrits = make([]Trits, len(bundle))
 	var currentIndexTrits = make([]Trits, len(bundle))
 	var obsoleteTagTrits = make([]Trits, len(bundle))
-	var lastIndexTrits = PadTrits(IntToTrits(int64(bundle[0].LastIndex)), 27)
+	var lastIndexTrits = MustPadTrits(IntToTrits(int64(bundle[0].LastIndex)), 27)
 
 	for i := range bundle {
-		valueTrits[i] = PadTrits(IntToTrits(bundle[i].Value), 81)
-		timestampTrits[i] = PadTrits(IntToTrits(int64(bundle[i].Timestamp)), 27)
-		currentIndexTrits[i] = PadTrits(IntToTrits(int64(bundle[i].CurrentIndex)), 27)
-		obsoleteTagTrits[i] = PadTrits(MustTrytesToTrits(bundle[i].ObsoleteTag), 81)
+		valueTrits[i] = MustPadTrits(IntToTrits(bundle[i].Value), 81)
+		timestampTrits[i] = MustPadTrits(IntToTrits(int64(bundle[i].Timestamp)), 27)
+		currentIndexTrits[i] = MustPadTrits(IntToTrits(int64(bundle[i].CurrentIndex)), 27)
+		obsoleteTagTrits[i] = MustPadTrits(MustTrytesToTrits(bundle[i].ObsoleteTag), 81)
 	}
 
 	var bundleHash Hash
@@ -239,7 +239,7 @@ func Finalize(bundle Bundle) (Bundle, error) {
 func AddTrytes(bndl Bundle, fragments []Trytes, offset int) Bundle {
 	for i := range bndl {
 		if i >= offset && i < offset+len(fragments) {
-			bndl[i].SignatureMessageFragment = Pad(fragments[i-offset], 27*81)
+			bndl[i].SignatureMessageFragment = MustPad(fragments[i-offset], 27*81)
 		}
 	}
 	return bndl

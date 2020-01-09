@@ -111,8 +111,11 @@ func ValidTrit(t int8) bool {
 	return t >= -1 && t <= 1
 }
 
-// ValidTrits returns true if t is valid trits.
+// ValidTrits returns true if t is valid trits (non-empty and -1, 0 or 1).
 func ValidTrits(trits Trits) error {
+	if len(trits) == 0 {
+		return errors.Wrap(ErrInvalidTrit, "trits slice is empty")
+	}
 	for i, trit := range trits {
 		if !ValidTrit(trit) {
 			return errors.Wrapf(ErrInvalidTrit, "at index %d", i)
@@ -277,10 +280,19 @@ func tryteToTryteValue(t byte) int8 {
 
 // TritsToTrytes converts a slice of trits into trytes. Returns an error if len(t)%3!=0
 func TritsToTrytes(trits Trits) (Trytes, error) {
+	if err := ValidTrits(trits); err != nil {
+		return "", err
+	}
 	if !CanTritsToTrytes(trits) {
 		return "", errors.Wrap(ErrInvalidTritsLength, "trits slice size must be a multiple of 3")
 	}
+	return MustTritsToTrytes(trits), nil
+}
 
+// MustTritsToTrytes converts a slice of trits into trytes.
+// Performs no validation on the input trits and might therefore return an invalid trytes representation
+// (without a panic).
+func MustTritsToTrytes(trits Trits) Trytes {
 	var trytes strings.Builder
 	trytes.Grow(len(trits) / TritsPerTryte)
 
@@ -288,16 +300,7 @@ func TritsToTrytes(trits Trits) (Trytes, error) {
 		v := trits[i*TritsPerTryte] + trits[i*TritsPerTryte+1]*3 + trits[i*TritsPerTryte+2]*9
 		trytes.WriteByte(tryteValueToTryte(v))
 	}
-	return trytes.String(), nil
-}
-
-// MustTritsToTrytes converts a slice of trits into trytes. Panics if len(t)%3!=0
-func MustTritsToTrytes(trits Trits) Trytes {
-	trytes, err := TritsToTrytes(trits)
-	if err != nil {
-		panic(err)
-	}
-	return trytes
+	return trytes.String()
 }
 
 func validTryte(t rune) bool {
@@ -336,7 +339,12 @@ func TrytesToTrits(trytes Trytes) (Trits, error) {
 	if err := ValidTrytes(trytes); err != nil {
 		return nil, err
 	}
+	return MustTrytesToTrits(trytes), nil
+}
 
+// MustTrytesToTrits converts a slice of trytes into trits.
+// Performs no validation on the provided inputs (therefore might return an invalid representation) and might panic.
+func MustTrytesToTrits(trytes Trytes) Trits {
 	trits := make(Trits, len(trytes)*TritsPerTryte)
 	for i := 0; i < len(trytes); i++ {
 		v := tryteToTryteValue(trytes[i])
@@ -345,15 +353,6 @@ func TrytesToTrits(trytes Trytes) (Trits, error) {
 		trits[i*TritsPerTryte+0] = TryteValueToTritsLUT[idx][0]
 		trits[i*TritsPerTryte+1] = TryteValueToTritsLUT[idx][1]
 		trits[i*TritsPerTryte+2] = TryteValueToTritsLUT[idx][2]
-	}
-	return trits, nil
-}
-
-// MustTrytesToTrits converts a slice of trytes into trits.
-func MustTrytesToTrits(trytes Trytes) Trits {
-	trits, err := TrytesToTrits(trytes)
-	if err != nil {
-		panic(err)
 	}
 	return trits
 }
@@ -369,19 +368,16 @@ func TrytesToBytes(trytes Trytes) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return TritsToBytes(trits), nil
+	return MustTritsToBytes(trits), nil
 }
 
 // MustTrytesToBytes packs trytes into a slice of bytes (5 packed trits in 1 byte).
+// Performs no validation on the provided inputs (therefore might return an invalid representation) and might panic.
 func MustTrytesToBytes(trytes Trytes) []byte {
-	bytes, err := TrytesToBytes(trytes)
-	if err != nil {
-		panic(err)
-	}
-	return bytes
+	return MustTritsToBytes(MustTrytesToTrits(trytes))
 }
 
-// BytesToTrytes unpacks a slice of bytes into trytes.
+// BytesToTrytes unpacks a slice of bytes (5 packed trits in 1 byte) into trytes.
 func BytesToTrytes(bytes []byte, numTrytes ...int) (Trytes, error) {
 	var numTrits int
 	if len(numTrytes) > 0 {
@@ -390,22 +386,36 @@ func BytesToTrytes(bytes []byte, numTrytes ...int) (Trytes, error) {
 		numTrits = int(roundUpToTryteMultiple(uint(len(bytes)) * NumberOfTritsInAByte))
 	}
 
-	// we can ignore the error, as the correct number of trits is passed
-	trits, _ := BytesToTrits(bytes, numTrits)
-	return TritsToTrytes(trits)
+	trits, err := BytesToTrits(bytes, numTrits)
+	if err != nil {
+		return "", err
+	}
+	return MustTritsToTrytes(trits), nil
 }
 
-// MustBytesToTrytes unpacks a slice of bytes into trytes.
+// MustBytesToTrytes unpacks a slice of bytes (5 packed trits in 1 byte) into trytes.
+// Performs no validation on the provided inputs (therefore might return an invalid representation) and might panic.
 func MustBytesToTrytes(bytes []byte, numTrytes ...int) Trytes {
-	trytes, err := BytesToTrytes(bytes, numTrytes...)
-	if err != nil {
-		panic(err)
+	var numTrits int
+	if len(numTrytes) > 0 {
+		numTrits = numTrytes[0] * TritsPerTryte
+	} else {
+		numTrits = int(roundUpToTryteMultiple(uint(len(bytes)) * NumberOfTritsInAByte))
 	}
-	return trytes
+	return MustTritsToTrytes(MustBytesToTrits(bytes, numTrits))
 }
 
 // TritsToBytes packs an array of trits into an array of bytes (5 packed trits in 1 byte).
-func TritsToBytes(trits Trits) (bytes []byte) {
+func TritsToBytes(trits Trits) ([]byte, error) {
+	if err := ValidTrits(trits); err != nil {
+		return nil, err
+	}
+	return MustTritsToBytes(trits), nil
+}
+
+// MustTritsToBytes packs an array of trits into an array of bytes (5 packed trits in 1 byte).
+// Performs no validation on the provided inputs (therefore might return an invalid representation) and might panic.
+func MustTritsToBytes(trits Trits) (bytes []byte) {
 	tritsLength := len(trits)
 	bytesLength := (tritsLength + NumberOfTritsInAByte - 1) / NumberOfTritsInAByte
 
@@ -427,29 +437,63 @@ func TritsToBytes(trits Trits) (bytes []byte) {
 	return bytes
 }
 
-// BytesToTrits unpacks an array of bytes into an array of trits.
+// ValidBytesForTrits checks whether the given bytes are valid for bytes to trits conversion (5 packed trits in 1 byte).
+func ValidBytesForTrits(bytes []byte) error {
+	for i, b := range bytes {
+		c := int8(b)
+		if c > 121 || c < -121 {
+			return errors.Wrapf(ErrInvalidByte, "at index %d (byte value: %d)", i, c)
+		}
+	}
+	return nil
+}
+
+// BytesToTrits unpacks an array of bytes (5 packed trits in 1 byte) into an array of trits.
 func BytesToTrits(bytes []byte, numTrits ...int) (Trits, error) {
+	if err := ValidBytesForTrits(bytes); err != nil {
+		return nil, err
+	}
+	if len(numTrits) > 0 {
+		tritsLength := numTrits[0]
+
+		minTritLength := (len(bytes)-1)*NumberOfTritsInAByte + 1
+		if tritsLength < minTritLength {
+			return nil, errors.Wrapf(ErrInvalidTritsLength, "must be at least %d in size", minTritLength)
+		}
+	}
+	return MustBytesToTrits(bytes, numTrits...), nil
+}
+
+// MustBytesToTrits unpacks an array of bytes (5 packed trits in 1 byte) into an array of trits.
+// Performs no validation on the provided inputs (therefore might return an invalid representation) and might panic.
+func MustBytesToTrits(bytes []byte, numTrits ...int) Trits {
 	bytesLength := len(bytes)
 	tritsLength := bytesLength * NumberOfTritsInAByte
 
 	if len(numTrits) > 0 {
 		tritsLength = numTrits[0]
-
-		minTritLength := (bytesLength-1)*NumberOfTritsInAByte + 1
-		if tritsLength < minTritLength {
-			return nil, errors.Wrapf(ErrInvalidTritsLength, "must be at least %d in size", minTritLength)
-		}
 	}
 
 	trits := make(Trits, tritsLength)
 	for i := 0; i < bytesLength; i++ {
 		copy(trits[i*NumberOfTritsInAByte:], bytesToTritsLUT[bytes[i]])
 	}
-	return trits, nil
+	return trits
 }
 
 // Pad pads the given trytes with 9s up to the given size.
-func Pad(trytes Trytes, n int) Trytes {
+func Pad(trytes Trytes, n int) (Trytes, error) {
+	if len(trytes) > 0 {
+		if err := ValidTrytes(trytes); err != nil {
+			return "", err
+		}
+	}
+	return MustPad(trytes, n), nil
+}
+
+// MustPad pads the given trytes with 9s up to the given size.
+// Performs no validation on the provided inputs (therefore might return an invalid representation) and might panic.
+func MustPad(trytes Trytes, n int) Trytes {
 	if len(trytes) >= n {
 		return trytes
 	}
@@ -465,7 +509,18 @@ func Pad(trytes Trytes, n int) Trytes {
 }
 
 // PadTrits pads the given trits with 0 up to the given size.
-func PadTrits(trits Trits, n int) Trits {
+func PadTrits(trits Trits, n int) (Trits, error) {
+	if len(trits) > 0 {
+		if err := ValidTrits(trits); err != nil {
+			return nil, err
+		}
+	}
+	return MustPadTrits(trits, n), nil
+}
+
+// MustPadTrits pads the given trits with 0 up to the given size.
+// Performs no validation on the provided inputs (therefore might return an invalid representation) and might panic.
+func MustPadTrits(trits Trits, n int) Trits {
 	if len(trits) >= n {
 		return trits
 	}

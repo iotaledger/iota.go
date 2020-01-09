@@ -84,7 +84,7 @@ func MAMCreate(payloadLength uint64,
 	}
 	messageLength := len(messageTrits)
 
-	sideKey = Pad(sideKey, 81)
+	sideKey = MustPad(sideKey, 81)
 	sideKeyTrits, err := TrytesToTrits(sideKey)
 	if err != nil {
 		return nil, 0, err
@@ -197,7 +197,7 @@ func MAMCreate(payloadLength uint64,
 func MAMParse(payload Trits, payloadLength uint64, sideKey Trytes, root Trits) (uint64, Trytes, Trytes, SecurityLevel, error) {
 	var offset uint64 = 0
 
-	sideKey = Pad(sideKey, 81)
+	sideKey = MustPad(sideKey, 81)
 	sideKeyTrits, err := TrytesToTrits(sideKey)
 	if err != nil {
 		return 0, "", "", SecurityLevel(0), err

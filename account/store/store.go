@@ -119,10 +119,10 @@ func PendingTransferToBundle(pt *PendingTransfer) (bundle.Bundle, error) {
 	for i := 0; i < len(bndl); i++ {
 		essenceTrytes := pt.Bundle[i]
 		// add empty trits for fields after the last index
-		txTrytes := essenceTrytes + Pad("", (consts.TransactionTrinarySize-consts.BundleTrinaryOffset)/3)
+		txTrytes := essenceTrytes + MustPad("", (consts.TransactionTrinarySize-consts.BundleTrinaryOffset)/3)
 		// add an empty signature message fragment if non was stored
 		if len(txTrytes) != consts.TransactionTrinarySize/3 {
-			txTrytes = Pad("", consts.SignatureMessageFragmentTrinarySize/3) + txTrytes
+			txTrytes = MustPad("", consts.SignatureMessageFragmentTrinarySize/3) + txTrytes
 		}
 		tx, err := transaction.ParseTransaction(MustTrytesToTrits(txTrytes), true)
 		if err != nil {
