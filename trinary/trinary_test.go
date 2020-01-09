@@ -147,9 +147,6 @@ var _ = Describe("Trinary", func() {
 			trytes := MustTritsToTrytes(Trits{1, 1, 1})
 			Expect(trytes).To(Equal("M"))
 		})
-		It("should panic with invalid trits", func() {
-			Expect(func() { MustTritsToTrytes(Trits{12, -45}) }).To(Panic())
-		})
 	})
 
 	Context("CanBeHash()", func() {
@@ -165,7 +162,8 @@ var _ = Describe("Trinary", func() {
 	Context("TritsToBytes()", func() {
 		It("should return bytes for valid trits", func() {
 			trits := Trits{-1, 0, 1, 1, 0, 1, 1, 0, -1, -1, 1, 0, 1}
-			bytes := TritsToBytes(trits)
+			bytes, err := TritsToBytes(trits)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(bytes).To(Equal([]byte{0x23, 0x98, 0x0A}))
 		})
 	})
@@ -371,27 +369,23 @@ var _ = Describe("Trinary", func() {
 			Expect(trits).To(Equal(Trits{0, -1, -1}))
 		})
 
-		It("should panic for emptry trytes", func() {
-			Expect(func() { MustTrytesToTrits("") }).To(Panic())
-		})
-
 		It("should panic for invalid trytes", func() {
 			Expect(func() { MustTrytesToTrits("abcd") }).To(Panic())
 		})
 	})
 
-	Context("Pad()", func() {
+	Context("MustPad()", func() {
 		It("should pad up to the given size", func() {
-			Expect(Pad("A", 5)).To(Equal("A9999"))
-			Expect(Pad("", 81)).To(Equal(strings.Repeat("9", 81)))
+			Expect(MustPad("A", 5)).To(Equal("A9999"))
+			Expect(MustPad("", 81)).To(Equal(strings.Repeat("9", 81)))
 		})
 	})
 
-	Context("PadTrits()", func() {
+	Context("MustPadTrits()", func() {
 		It("should pad up to the given size", func() {
-			Expect(PadTrits(Trits{}, 5)).To(Equal(Trits{0, 0, 0, 0, 0}))
-			Expect(PadTrits(Trits{1, 1}, 5)).To(Equal(Trits{1, 1, 0, 0, 0}))
-			Expect(PadTrits(Trits{1, -1, 0, 1}, 5)).To(Equal(Trits{1, -1, 0, 1, 0}))
+			Expect(MustPadTrits(Trits{}, 5)).To(Equal(Trits{0, 0, 0, 0, 0}))
+			Expect(MustPadTrits(Trits{1, 1}, 5)).To(Equal(Trits{1, 1, 0, 0, 0}))
+			Expect(MustPadTrits(Trits{1, -1, 0, 1}, 5)).To(Equal(Trits{1, -1, 0, 1, 0}))
 		})
 	})
 

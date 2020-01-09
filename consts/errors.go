@@ -69,6 +69,8 @@ var (
 	ErrInvalidReferenceHash = errors.New("invalid reference hash")
 	// ErrInvalidTrytes gets returned for invalid trytes.
 	ErrInvalidTrytes = errors.New("invalid trytes")
+	// ErrInvalidByte gets returned for an invalid byte for a to trits conversion (5 packed trits in 1 byte).
+	ErrInvalidByte = errors.New("invalid byte")
 	// ErrInvalidTrit gets returned for invalid trit.
 	ErrInvalidTrit = errors.New("invalid trit")
 	// ErrInvalidURI gets returned for invalid URIs.

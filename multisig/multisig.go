@@ -248,7 +248,7 @@ func createBundle(input MultisigInput, transfers bundle.Transfers, remainderAddr
 			sigFrags = append(sigFrags, frag)
 		}
 
-		tag = Pad(transfer.Tag, TagTrinarySize/3)
+		tag = MustPad(transfer.Tag, TagTrinarySize/3)
 
 		bndl = bundle.AddEntry(bndl, bundle.BundleEntry{
 			Length:  uint64(sigFragLength),

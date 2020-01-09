@@ -92,12 +92,12 @@ func (dc *CDA) Checksum() (Trytes, error) {
 	if err != nil {
 		return "", err
 	}
-	timeoutAtTrits := PadTrits(IntToTrits(dc.TimeoutAt.Unix()), 27)
+	timeoutAtTrits := MustPadTrits(IntToTrits(dc.TimeoutAt.Unix()), 27)
 	var expectedAmountTrits Trits
 	if dc.ExpectedAmount != nil {
-		expectedAmountTrits = PadTrits(IntToTrits(int64(*dc.ExpectedAmount)), 81)
+		expectedAmountTrits = MustPadTrits(IntToTrits(int64(*dc.ExpectedAmount)), 81)
 	} else {
-		expectedAmountTrits = PadTrits(expectedAmountTrits, 81)
+		expectedAmountTrits = MustPadTrits(expectedAmountTrits, 81)
 	}
 	var multiUse int8
 	if dc.MultiUse {

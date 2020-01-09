@@ -126,7 +126,7 @@ func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Try
 	if err != nil {
 		return "", "", "", err
 	}
-	payload = trinary.PadTrits(payload, len(payload)+(3-len(payload)%3))
+	payload = trinary.MustPadTrits(payload, len(payload)+(3-len(payload)%3))
 	payloadTrytes, err := trinary.TritsToTrytes(payload)
 	if err != nil {
 		return "", "", "", err
