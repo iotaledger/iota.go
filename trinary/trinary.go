@@ -486,7 +486,6 @@ func Pad(trytes Trytes, n int) (Trytes, error) {
 	if len(trytes) > 0 {
 		if err := ValidTrytes(trytes); err != nil {
 			return "", err
-
 		}
 	}
 	return MustPad(trytes, n), nil
@@ -514,16 +513,9 @@ func PadTrits(trits Trits, n int) (Trits, error) {
 	if len(trits) > 0 {
 		if err := ValidTrits(trits); err != nil {
 			return nil, err
-
 		}
 	}
-	if len(trits) >= n {
-		return trits, nil
-	}
-
-	result := make(Trits, n)
-	copy(result, trits)
-	return result, nil
+	return MustPadTrits(trits, n), nil
 }
 
 // MustPadTrits pads the given trits with 0 up to the given size.
