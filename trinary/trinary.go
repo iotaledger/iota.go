@@ -161,8 +161,8 @@ func ReverseTrits(trits Trits) Trits {
 }
 
 // TrailingZeros returns the number of trailing zeros of the given trits.
-func TrailingZeros(trits Trits) int64 {
-	z := int64(0)
+func TrailingZeros(trits Trits) int {
+	var z int
 	for i := len(trits) - 1; i >= 0 && trits[i] == 0; i-- {
 		z++
 	}
@@ -198,7 +198,7 @@ func roundUpToTryteMultiple(n uint) uint {
 }
 
 // MinTrits returns the length of trits needed to encode the value.
-func MinTrits(value int64) uint64 {
+func MinTrits(value int64) int {
 	var num uint64 = 1
 	var vp uint64 = 1
 
@@ -207,7 +207,7 @@ func MinTrits(value int64) uint64 {
 		vp = vp*TrinaryRadix + 1
 		num++
 	}
-	return num
+	return int(num)
 }
 
 // IntToTrits converts int64 to a slice of trits.
@@ -538,7 +538,7 @@ func EncodedLength(value int64) uint64 {
 	length := uint64(roundUpToTryteMultiple(uint(MinTrits(value))))
 
 	// trits length + encoding length
-	return length + MinTrits((1<<(length/uint64(TrinaryRadix)))-1)
+	return length + uint64(MinTrits((1<<(length/uint64(TrinaryRadix)))-1))
 }
 
 // EncodeInt64 encodes an int64 as a slice of trits with encoding information.
@@ -602,7 +602,7 @@ func DecodeInt64(t Trits) (value int64, size uint64, err error) {
 
 	encodingStart += TrinaryRadix
 	encodingLength := MinTrits((1 << (encodingStart / TrinaryRadix)) - 1)
-	encoding := TritsToInt(t[encodingStart : encodingStart+encodingLength])
+	encoding := TritsToInt(t[encodingStart : encodingStart+uint64(encodingLength)])
 
 	// Bound checking for the lookup table
 	if encodingStart/TrinaryRadix > 13 {
@@ -618,7 +618,7 @@ func DecodeInt64(t Trits) (value int64, size uint64, err error) {
 		value += Pow27LUT[i] * tryteValue
 	}
 
-	return value, encodingStart + encodingLength, nil
+	return value, encodingStart + uint64(encodingLength), nil
 }
 
 // Sum returns the sum of two trits.

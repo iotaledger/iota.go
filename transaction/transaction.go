@@ -267,7 +267,7 @@ func HasValidNonce(t *Transaction, mwm uint64) bool {
 	if len(t.Hash) == 0 {
 		t.Hash = TransactionHash(t)
 	}
-	return TrailingZeros(MustTrytesToTrits(t.Hash)) >= int64(mwm)
+	return TrailingZeros(MustTrytesToTrits(t.Hash)) >= int(mwm)
 }
 
 // IsTailTransaction checks if given transaction object is tail transaction.

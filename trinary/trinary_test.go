@@ -119,8 +119,8 @@ var _ = Describe("Trinary", func() {
 
 	Context("TrailingZeros()", func() {
 		It("should return count of zeroes", func() {
-			Expect(TrailingZeros(Trits{1, 0, 0, 0})).To(Equal(int64(3)))
-			Expect(TrailingZeros(Trits{0, 0, 0, 0})).To(Equal(int64(4)))
+			Expect(TrailingZeros(Trits{1, 0, 0, 0})).To(Equal(3))
+			Expect(TrailingZeros(Trits{0, 0, 0, 0})).To(Equal(4))
 		})
 	})
 
@@ -277,10 +277,10 @@ var _ = Describe("Trinary", func() {
 	Context("MinTrits()", func() {
 		It("should return correct length", func() {
 			v := MinTrits(1)
-			Expect(v).To(Equal(uint64(1)))
+			Expect(v).To(Equal(1))
 
 			v = MinTrits(4)
-			Expect(v).To(Equal(uint64(2)))
+			Expect(v).To(Equal(2))
 		})
 	})
 
