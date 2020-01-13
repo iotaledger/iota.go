@@ -212,9 +212,9 @@ func MinTrits(value int64) int {
 
 // IntToTrits converts int64 to a slice of trits.
 func IntToTrits(value int64) Trits {
-	numTrits := int(MinTrits(value))
+	numTrits := MinTrits(value)
 	numTrytes := (numTrits + TritsPerTryte - 1) / TritsPerTryte
-	trits, _ := TrytesToTrits(IntToTrytes(value, numTrytes))
+	trits := MustTrytesToTrits(IntToTrytes(value, numTrytes))
 	return trits[:numTrits]
 }
 
