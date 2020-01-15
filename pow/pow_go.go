@@ -10,6 +10,7 @@ import (
 	"math"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -295,11 +296,11 @@ func check(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, m int) int {
 }
 
 // Loop increments and transforms until checkFun is true.
-func Loop(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64, m int, cancelled *bool, checkFun CheckFunc, loopCnt int) (nonce Trits, rate int64, foundIndex int) {
+func Loop(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64, m int, cancelled *int32, checkFun CheckFunc, loopCnt int) (nonce Trits, rate int64, foundIndex int) {
 	var lcpy, hcpy [curl.StateSize]uint64
 	var i int64
 
-	for i = 0; !*cancelled; i++ {
+	for i = 0; atomic.LoadInt32(cancelled) == 0; i++ {
 		copy(lcpy[:], lmid[:])
 		copy(hcpy[:], hmid[:])
 		transform64(&lcpy, &hcpy, loopCnt)
@@ -321,7 +322,7 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 
 	// if any goroutine finds a nonce, then the cancel flag is set to true
 	// and thereby all other ongoing Proof-of-Work tasks will halt.
-	cancelled := false
+	var cancelled int32
 
 	tr := MustTrytesToTrits(trytes)
 
@@ -338,8 +339,12 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 	exit := make(chan struct{})
 	nonceChan := make(chan Trytes)
 
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines)
 	for i := 0; i < numGoroutines; i++ {
 		go func(i int) {
+			defer wg.Done() // assure that done is always called
+
 			lmid, hmid := Para(c.State)
 			lmid[nonceOffset] = PearlDiverMidStateLow0
 			hmid[nonceOffset] = PearlDiverMidStateHigh0
@@ -360,11 +365,17 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 				select {
 				case <-exit:
 				case nonceChan <- MustTritsToTrytes(nonce):
-					cancelled = true
 				}
 			}
 		}(i)
 	}
+
+	// wait for a result
+	result = <-nonceChan
+	// stop all the go routines and wait for them to finish
+	atomic.StoreInt32(&cancelled, 1)
+	close(exit)
+	wg.Wait()
 
 	if rate != nil {
 		var rateSum int64
@@ -373,9 +384,5 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 		}
 		optRate <- rateSum
 	}
-
-	result = <-nonceChan
-	close(exit)
-	cancelled = true
 	return result, nil
 }
