@@ -50,7 +50,7 @@ func Hamming(c *curl.Curl, offset, end, security int) Trits {
 	lmid[offset+3] = pow.PearlDiverMidStateLow3
 	hmid[offset+3] = pow.PearlDiverMidStateHigh3
 
-	cancelled := false
+	var cancelled int32
 	nonce, _, foundIndex := pow.Loop(lmid, hmid, security, &cancelled, check, int(c.Rounds))
 	if foundIndex >= 0 {
 		copy(c.State[offset:], ptritsToTrits(lmid, hmid, uint64(foundIndex), len(c.State)-offset))
