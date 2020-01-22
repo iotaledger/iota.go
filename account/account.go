@@ -97,6 +97,9 @@ func initFuncs(setts *Settings) error {
 		if setts.PrepareTransfers == nil {
 			setts.PrepareTransfers = DefaultPrepareTransfers(setts.API, setts.SeedProv)
 		}
+		if setts.SignBundleHash == nil {
+			setts.SignBundleHash = DefaultSignBundleHash(setts.API, setts.SeedProv)
+		}
 		return nil
 	}
 	if setts.AddrGen == nil {

@@ -480,6 +480,45 @@ func isAboveMaxDepth(attachmentTimestamp int64) bool {
 	return attachmentTimestamp < nowMilli && nowMilli-attachmentTimestamp < maxDepth*milestoneInterval*oneWayDelay
 }
 
+// SignBundleHash signes a given BundleHash
+func (api *API) SignBundleHash(seed Trytes, bundleHash string, opts PrepareTransfersOptions) ([]Trytes, error) {
+	normalizedBundleHash := signing.NormalizedBundleHash(bundleHash)
+	signedFrags := []Trytes{}
+	for i := range opts.Inputs {
+		input := &opts.Inputs[i]
+		subseed, err := signing.Subseed(seed, input.KeyIndex)
+		if err != nil {
+			return nil, err
+		}
+		var sec SecurityLevel
+		if input.Security == 0 {
+			sec = SecurityLevelMedium
+		} else {
+			sec = input.Security
+		}
+
+		prvKey, err := signing.Key(subseed, sec)
+		if err != nil {
+			return nil, err
+		}
+
+		frags := make([]Trytes, input.Security)
+		for i := 0; i < int(input.Security); i++ {
+			signedFragTrits, err := signing.SignatureFragment(
+				normalizedBundleHash[i*HashTrytesSize/3:(i+1)*HashTrytesSize/3],
+				prvKey[i*KeyFragmentLength:(i+1)*KeyFragmentLength],
+			)
+			if err != nil {
+				return nil, err
+			}
+			frags[i] = MustTritsToTrytes(signedFragTrits)
+		}
+
+		signedFrags = append(signedFrags, frags...)
+	}
+	return signedFrags, nil
+}
+
 // PrepareTransfers prepares the transaction trytes by generating a bundle, filling in transfers and inputs,
 // adding remainder and signing all input transactions.
 func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, opts PrepareTransfersOptions) ([]Trytes, error) {
@@ -629,40 +668,9 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, opts P
 	}
 
 	// compute signatures for all input txs
-	normalizedBundleHash := signing.NormalizedBundleHash(finalizedBundle[0].Bundle)
-
-	signedFrags := []Trytes{}
-	for i := range opts.Inputs {
-		input := &opts.Inputs[i]
-		subseed, err := signing.Subseed(seed, input.KeyIndex)
-		if err != nil {
-			return nil, err
-		}
-		var sec SecurityLevel
-		if input.Security == 0 {
-			sec = SecurityLevelMedium
-		} else {
-			sec = input.Security
-		}
-
-		prvKey, err := signing.Key(subseed, sec)
-		if err != nil {
-			return nil, err
-		}
-
-		frags := make([]Trytes, input.Security)
-		for i := 0; i < int(input.Security); i++ {
-			signedFragTrits, err := signing.SignatureFragment(
-				normalizedBundleHash[i*HashTrytesSize/3:(i+1)*HashTrytesSize/3],
-				prvKey[i*KeyFragmentLength:(i+1)*KeyFragmentLength],
-			)
-			if err != nil {
-				return nil, err
-			}
-			frags[i] = MustTritsToTrytes(signedFragTrits)
-		}
-
-		signedFrags = append(signedFrags, frags...)
+	signedFrags, err := api.SignBundleHash(seed, finalizedBundle[0].Bundle, opts)
+	if err != nil {
+		return nil, err
 	}
 
 	// add signed fragments to txs

@@ -34,6 +34,9 @@ func (b *Builder) Build(plugins ...account.Plugin) (account.Account, error) {
 	if b.settings.PrepareTransfers == nil {
 		b.settings.PrepareTransfers = account.DefaultPrepareTransfers(b.settings.API, b.settings.SeedProv)
 	}
+	if b.settings.SignBundleHash == nil {
+		b.settings.SignBundleHash = account.DefaultSignBundleHash(b.settings.API, b.settings.SeedProv)
+	}
 	for _, p := range plugins {
 		b.settings.Plugins[p.Name()] = p
 	}

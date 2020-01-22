@@ -27,6 +27,10 @@ type AddrGenFunc func(index uint64, secLvl consts.SecurityLevel, addChecksum boo
 // filling in transfers and inputs, adding the remainder address and signing all input transactions.
 type PrepareTransfersFunc func(transfers bundle.Transfers, options api.PrepareTransfersOptions) ([]trinary.Trytes, error)
 
+// SignBundleHashFunc defines a function which signs a BundleHash which has to be normalized beforehand of calling this function
+// This function is called by the default PrepareTransfersFunc
+type SignBundleHashFunc func(seed trinary.Trytes, bundleHash string, options api.PrepareTransfersOptions) ([]trinary.Trytes, error)
+
 // DefaultAddrGen is the default address generation function used by the account, if non is specified.
 // withCache creates a function which caches the computed addresses by the index and security level for subsequent calls.
 func DefaultAddrGen(provider SeedProvider, withCache bool) AddrGenFunc {
@@ -119,6 +123,17 @@ func DefaultPrepareTransfers(a *api.API, provider SeedProvider) PrepareTransfers
 	}
 }
 
+// DefaultSignBundleHash is the default signing function used by the account, if non is specified
+func DefaultSignBundleHash(a *api.API, provider SeedProvider) SignBundleHashFunc {
+	return func(seed trinary.Trytes, bundleHash string, options api.PrepareTransfersOptions) ([]trinary.Trytes, error) {
+		seed, err := provider.Seed()
+		if err != nil {
+			return nil, err
+		}
+		return a.SignBundleHash(seed, bundleHash, options)
+	}
+}
+
 // Settings defines settings used by an account.
 // The settings must not be directly mutated after an account was started.
 type Settings struct {
@@ -134,6 +149,7 @@ type Settings struct {
 	Plugins             map[string]Plugin
 	AddrGen             AddrGenFunc
 	PrepareTransfers    PrepareTransfersFunc
+	SignBundleHash      SignBundleHashFunc
 }
 
 var emptySeed = strings.Repeat("9", 81)
