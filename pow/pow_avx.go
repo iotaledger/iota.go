@@ -303,13 +303,13 @@ import (
 
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
-  . "github.com/iotaledger/iota.go/trinary"
-  
+	. "github.com/iotaledger/iota.go/trinary"
+
 	"github.com/klauspost/cpuid"
 )
 
 func init() {
-  // Add proof of work func if the CPU supports AVX
+	// Add proof of work func if the CPU supports AVX
 	if cpuid.CPU.AVX() {
 		proofOfWorkFuncs["AVX"] = AVXProofOfWork
 		proofOfWorkFuncs["SyncAVX"] = SyncAVXProofOfWork
