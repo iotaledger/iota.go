@@ -4,15 +4,6 @@
 
 package pow
 
-import (
-	"math"
-	"sync"
-
-	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/trinary"
-)
-
 // #cgo LDFLAGS:
 // #cgo CFLAGS: -mavx -Wall
 /*
@@ -306,12 +297,22 @@ int pwork256(char mid[], int mwm, char nonce[],int n, int *stop)
 */
 import "C"
 import (
+	"math"
+	"sync"
 	"unsafe"
+
+	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/curl"
+	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/klauspost/cpuid"
 )
 
 func init() {
-	proofOfWorkFuncs["AVX"] = AVXProofOfWork
-	proofOfWorkFuncs["SyncAVX"] = SyncAVXProofOfWork
+  // Add proof of work func if the CPU supports AVX
+	if cpuid.CPU.AVX() {
+		proofOfWorkFuncs["AVX"] = AVXProofOfWork
+		proofOfWorkFuncs["SyncAVX"] = SyncAVXProofOfWork
+	}
 }
 
 // AVXProofOfWork does Proof-of-Work on the given trytes using AVX instructions.
