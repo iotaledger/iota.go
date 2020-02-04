@@ -252,11 +252,15 @@ import (
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
+	"golang.org/x/sys/cpu"
 )
 
 func init() {
-	proofOfWorkFuncs["SSE"] = SSEProofOfWork
-	proofOfWorkFuncs["SyncSSE"] = SyncSSEProofOfWork
+	// Add proof of work func if the CPU supports SSE2
+	if cpu.X86.HasSSE2 {
+		proofOfWorkFuncs["SSE"] = SSEProofOfWork
+		proofOfWorkFuncs["SyncSSE"] = SyncSSEProofOfWork
+	}
 }
 
 // SSEProofOfWork does proof of work on the given trytes using SSE2 instructions.
