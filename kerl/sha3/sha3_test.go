@@ -36,6 +36,7 @@ var testDigests = map[string]func() hash.Hash{
 	"SHA3-384":   New384,
 	"SHA3-512":   New512,
 	"Keccak-256": NewLegacyKeccak256,
+	"Keccak-384": NewLegacyKeccak384,
 	"Keccak-512": NewLegacyKeccak512,
 }
 
@@ -168,6 +169,11 @@ func TestKeccak(t *testing.T) {
 			NewLegacyKeccak256,
 			[]byte("abc"),
 			"4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45",
+		},
+		{
+			NewLegacyKeccak384,
+			[]byte("abc"),
+			"f7df1165f033337be098e7d288ad6a2f74409d7a60b49c36642218de161b1f99f8c681e4afaf31a34db29fb763e3c28e",
 		},
 		{
 			NewLegacyKeccak512,
