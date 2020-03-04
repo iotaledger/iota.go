@@ -58,6 +58,12 @@ func New512() hash.Hash {
 // that uses non-standard padding. All other users should use New256 instead.
 func NewLegacyKeccak256() hash.Hash { return &state{rate: 136, outputLen: 32, dsbyte: 0x01} }
 
+// NewLegacyKeccak384 creates a new Keccak-384 hash.
+//
+// Only use this function if you require compatibility with an existing cryptosystem
+// that uses non-standard padding. All other users should use New384 instead.
+func NewLegacyKeccak384() hash.Hash { return &state{rate: 104, outputLen: 48, dsbyte: 0x01} }
+
 // NewLegacyKeccak512 creates a new Keccak-512 hash.
 //
 // Only use this function if you require compatibility with an existing cryptosystem
