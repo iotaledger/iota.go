@@ -130,37 +130,42 @@ func Address(digests Trits, spongeFunc ...SpongeFunction) (Trits, error) {
 }
 
 // NormalizedBundleHash normalizes the given bundle hash, with resulting digits summing to zero.
-// It returns a slice with the tryte decimal representation without any 13/M values.
 func NormalizedBundleHash(bundleHash Hash) []int8 {
-	normalizedBundle := make([]int8, HashTrytesSize)
+	normalized := trytesToTryteValues(bundleHash)
 	for i := 0; i < MaxSecurityLevel; i++ {
-		sum := 0
-		for j := 0; j < 27; j++ {
-			normalizedBundle[i*27+j] = int8(TritsToInt(MustTrytesToTrits(string(bundleHash[i*27+j]))))
-			sum += int(normalizedBundle[i*27+j])
-		}
+		normalizeHashFragment(normalized[i*27 : i*27+27])
+	}
+	return normalized
+}
 
-		if sum >= 0 {
-			for ; sum > 0; sum-- {
-				for j := 0; j < 27; j++ {
-					if normalizedBundle[i*27+j] > MinTryteValue {
-						normalizedBundle[i*27+j]--
-						break
-					}
-				}
-			}
+func normalizeHashFragment(fragmentTryteValues []int8) {
+	sum := 0
+	for i := range fragmentTryteValues {
+		sum += int(fragmentTryteValues[i])
+	}
+
+	for i := range fragmentTryteValues {
+		v := int(fragmentTryteValues[i]) - sum
+		if v < MinTryteValue {
+			sum = MinTryteValue - v
+			fragmentTryteValues[i] = MinTryteValue
+		} else if v > MaxTryteValue {
+			sum = MaxTryteValue - v
+			fragmentTryteValues[i] = MaxTryteValue
 		} else {
-			for ; sum < 0; sum++ {
-				for j := 0; j < 27; j++ {
-					if normalizedBundle[i*27+j] < MaxTryteValue {
-						normalizedBundle[i*27+j]++
-						break
-					}
-				}
-			}
+			fragmentTryteValues[i] = int8(v)
+			break
 		}
 	}
-	return normalizedBundle
+}
+
+func trytesToTryteValues(trytes Trytes) []int8 {
+	vs := make([]int8, len(trytes))
+	for i, tryte := range trytes {
+		idx := tryte - '9'
+		vs[i] = TryteToTryteValueLUT[idx]
+	}
+	return vs
 }
 
 // SignatureFragment returns signed fragments using the given bundle hash and key fragment.
