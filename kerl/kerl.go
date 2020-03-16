@@ -21,7 +21,7 @@ type Kerl struct {
 // NewKerl returns a new Kerl
 func NewKerl() SpongeFunction {
 	k := &Kerl{
-		s: keccak.New384(),
+		s: keccak.NewLegacyKeccak384(),
 	}
 	return k
 }
