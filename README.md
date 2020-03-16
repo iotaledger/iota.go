@@ -187,11 +187,12 @@ If you want to use local PoW, make sure you define `LocalProofOfWorkFunc` in you
 
 ## Supporting the project
 
-We thank everyone for their contributions. In order for your pull requests to be accepted, 
-they must fulfill the following criteria:
+We thank everyone for their contributions. In order for your pull requests to be accepted, they must fulfill the following criteria:
 * You must write tests for your additions with Ginkgo
 * You must write example code that desribes the parameters and the functionality of your additions 
 * Your pull request must pass the continuous integration configuration
+
+See the [contributing guidelines](.github/CONTRIBUTING.md) for more information.
 
 ### Writing tests with Ginkgo
 
