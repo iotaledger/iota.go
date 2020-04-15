@@ -150,7 +150,7 @@ func (k *Kerl) AbsorbTrytes(in Trytes) error {
 	return nil
 }
 
-// AbsorbTrytes fills the internal State of the sponge with the given trytes.
+// MustAbsorbTrytes fills the internal State of the sponge with the given trytes.
 // It panics if the given trytes are not valid.
 func (k *Kerl) MustAbsorbTrytes(inn Trytes) {
 	err := k.AbsorbTrytes(inn)

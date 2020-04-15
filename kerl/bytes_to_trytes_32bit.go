@@ -5,49 +5,78 @@
 package kerl
 
 import (
+	"math"
+
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/kerl/bigint"
 )
 
-func bytesToTryteValues(bytes []byte) []int8 {
-	b := make([]uint32, IntLength)
-	bigintPutBytes(b, bytes)
+const (
+	// largest number of trytes that can be represented as a uint16
+	trytesPerUint16 = 3
+	// radix used in the uint16 chunk conversion, i.e. 27^trytesPerUint16
+	uint16Radix = 19683
+	// number of uint16 chunks to represent the hash, i.e. ceil(HashTrytesSize / trytesPerUint16)
+	hashUint16Size = (HashTrytesSize + trytesPerUint16 - 1) / trytesPerUint16
+)
 
-	// the two's complement representation is only correct, if the number fits
-	// into 48 bytes, i.e. has the 243th trit set to 0
-	bigintZeroLastTrit(b)
+func uint16ToTryteValues(cs []uint16, vs []int8) {
+	for i, c := range cs {
+		tmp := vs[i*trytesPerUint16:]
+		_ = tmp[2] // bounds check hint to compiler
+		// unroll all the divisions
+		c, tmp[0] = c/TryteRadix, int8(c%TryteRadix)-halfTryte
+		c, tmp[1] = c/TryteRadix, int8(c%TryteRadix)-halfTryte
+		tmp[2] = int8(c) - halfTryte
+	}
+}
 
-	// convert to the unsigned bigint representing non-balanced ternary
-	bigint.MustAdd(b, halfThree)
+func bytesToTryteValues(bytes []byte, vs []int8) {
+	// bytes represents a signed 384-bit integer, which is always greater -⌊3²⁴³ / 2⌋ and less ⌊3²⁴³ / 2⌋
+	b := bigint.U384()
+	b.SetBytes(bytes)
 
-	vs := make([]int8, HashTrytesSize)
+	// whether bytes represents a negative number in two's complement
+	negative := b.MSB() != 0
 
-	// initially, all words of the bigint are non-zero
-	nzIndex := IntLength - 1
-	for i := 0; i < HashTrytesSize-1; i++ {
-		// divide the bigint by the radix
-		var rem uint32
-		for i := nzIndex; i >= 0; i-- {
-			upper, lower := b[i]>>16, b[i]&0xFFFF
-
-			v := (rem << 16) | upper
-			upper, rem = v/tryteRadix, v%tryteRadix
-			v = (rem << 16) | lower
-			lower, rem = v/tryteRadix, v%tryteRadix
-
-			b[i] = (upper << 16) | lower
-		}
-		// the tryte value is the remainder converted back to balanced ternary
-		vs[i] = int8(rem) - halfTryte
-
-		// decrement index, if the highest considered word of the bigint turned zero
-		if nzIndex > 0 && b[nzIndex] == 0 {
-			nzIndex--
-		}
+	// add ⌊3²⁴³ / 2⌋ and treat the result as an unsigned integer
+	// since maxTer243 only contains the lower 384 bits of ⌊3²⁴³ / 2⌋, we need to consider the carry
+	carry := b.Add(maxTer243)
+	if !negative {
+		// maxTer243 misses the leading bit of ⌊3²⁴³ / 2⌋ to fit into 384 bits
+		// for negative numbers this cancels out, but for non-negative it needs to be considered
+		carry += 1
 	}
 
-	// special case for the last tryte, where no further division is necessary
-	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(int8(b[0]) - halfTryte)
+	// convert the 384-bit unsigned integer to base 27³, the largest power of 27 still fitting into an uint16
+	cs := make([]uint16, hashUint16Size)
+	bs := b.Words() // do not modify b directly, but work on a new slice backed by the same array
+	rem := carry    // use carry as the initial remainder
+	for i := range cs {
+		n := len(bs)
+		// divide the entire integer by the radix
+		for i := n - 1; i >= 0; i-- {
+			hi, low := bs[i]>>16, bs[i]&math.MaxUint16
 
-	return vs
+			v := (rem << 16) | hi
+			hi, rem = v/uint16Radix, v%uint16Radix
+			v = (rem << 16) | low
+			low, rem = v/uint16Radix, v%uint16Radix
+
+			bs[i] = (hi << 16) | low
+		}
+		// decrease length of slice to ignore leading zeros
+		if n > 0 && bs[n-1] == 0 {
+			bs = bs[:n-1]
+		}
+
+		cs[i] = uint16(rem)
+		rem = 0 // reset the remainder for the next chunk
+	}
+
+	// convert the base 27³ number to balanced ternary
+	// since we initially added ⌊3²⁴³ / 2⌋ = ⌊27⁸¹ / 2⌋, we now need to sub ⌊27 / 2⌋ from each of the 81 tryte values
+	uint16ToTryteValues(cs, vs)
+	// set the last trit to zero
+	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(vs[HashTrytesSize-1])
 }
