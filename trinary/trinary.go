@@ -264,7 +264,7 @@ func IntToTrytes(value int64, trytesCnt int) Trytes {
 		if negative {
 			tryte = -tryte
 		}
-		trytes.WriteByte(tryteValueToTryte(tryte))
+		trytes.WriteByte(MustTryteValueToTryte(tryte))
 	}
 	return trytes.String()
 }
@@ -281,7 +281,7 @@ func TrytesToInt(t Trytes) int64 {
 
 	var val int64
 	for ; i >= 0; i-- {
-		val = val*TryteRadix + int64(tryteToTryteValue(t[i]))
+		val = val*TryteRadix + int64(MustTryteToTryteValue(t[i]))
 	}
 	return val
 }
@@ -294,12 +294,24 @@ func CanTritsToTrytes(trits Trits) bool {
 	return len(trits)%TritsPerTryte == 0
 }
 
-func tryteValueToTryte(v int8) byte {
-	return TryteValueToTyteLUT[v-MinTryteValue]
+// MustTryteValueToTryte converts the value of a tryte v in [-13,13] to a tryte char in [9A-Z].
+// It panics when v is an invalid value.
+func MustTryteValueToTryte(v int8) byte {
+	idx := uint(v - MinTryteValue)
+	if idx >= uint(len(TryteValueToTyteLUT)) {
+		panic(ErrInvalidTrytes)
+	}
+	return TryteValueToTyteLUT[idx]
 }
 
-func tryteToTryteValue(t byte) int8 {
-	return TryteToTryteValueLUT[t-'9']
+// MustTryteToTryteValue converts a tryte char t in [9A-Z] to a tryte value in [-13,13].
+// It panics when t is an invalid tryte.
+func MustTryteToTryteValue(t byte) int8 {
+	idx := uint(t - '9')
+	if idx >= uint(len(TryteToTryteValueLUT)) {
+		panic(ErrInvalidTrytes)
+	}
+	return TryteToTryteValueLUT[idx]
 }
 
 // TritsToTrytes converts a slice of trits into trytes. Returns an error if len(t)%3!=0
@@ -323,7 +335,7 @@ func MustTritsToTrytes(trits Trits) Trytes {
 		_ = tryteTrits[2] // bounds check hint to compiler
 		v := tryteTrits[0] + tryteTrits[1]*3 + tryteTrits[2]*9
 
-		trytes[i] = tryteValueToTryte(v)
+		trytes[i] = MustTryteValueToTryte(v)
 	}
 	return string(trytes)
 }
@@ -372,7 +384,7 @@ func TrytesToTrits(trytes Trytes) (Trits, error) {
 func MustTrytesToTrits(trytes Trytes) Trits {
 	trits := make(Trits, len(trytes)*TritsPerTryte)
 	for i := 0; i < len(trytes); i++ {
-		MustPutTryteTrits(trits[i*TritsPerTryte:], tryteToTryteValue(trytes[i]))
+		MustPutTryteTrits(trits[i*TritsPerTryte:], MustTryteToTryteValue(trytes[i]))
 	}
 	return trits
 }
@@ -497,25 +509,25 @@ func BytesToTrits(bytes []byte, numTrits ...int) (Trits, error) {
 // MustBytesToTrits unpacks an array of bytes (5 packed trits in 1 byte) into an array of trits.
 // Performs no validation on the provided inputs (therefore might return an invalid representation) and might panic.
 func MustBytesToTrits(bytes []byte, numTrits ...int) Trits {
-	bytesLength := len(bytes)
-	tritsLength := bytesLength * NumberOfTritsInAByte
+	tritsLength := len(bytes) * NumberOfTritsInAByte
 	resultLength := tritsLength
 
 	if len(numTrits) > 0 {
 		// if the number of trits is specified this becomes the target length
 		resultLength = numTrits[0]
 
+		// if the specified number of trits decreases, we need to adapt the number of bytes to be converted
 		if resultLength < tritsLength {
-			// if the specified number of trits decreases, we need to adapt the bytesLength as well
-			bytesLength = (resultLength + NumberOfTritsInAByte - 1) / NumberOfTritsInAByte
+			bytesLength := (resultLength + NumberOfTritsInAByte - 1) / NumberOfTritsInAByte
 			tritsLength = bytesLength * NumberOfTritsInAByte
+			bytes = bytes[:bytesLength]
 		} else {
 			tritsLength = resultLength
 		}
 	}
 
 	trits := make(Trits, tritsLength)
-	for i := 0; i < bytesLength; i++ {
+	for i := range bytes {
 		tmp := trits[i*NumberOfTritsInAByte:]
 		_ = tmp[4] // bounds check hint to compiler
 		tmp[0] = bytesToTritsLUT[bytes[i]][0]
