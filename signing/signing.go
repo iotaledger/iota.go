@@ -161,9 +161,8 @@ func normalizeHashFragment(fragmentTryteValues []int8) {
 
 func trytesToTryteValues(trytes Trytes) []int8 {
 	vs := make([]int8, len(trytes))
-	for i, tryte := range trytes {
-		idx := tryte - '9'
-		vs[i] = TryteToTryteValueLUT[idx]
+	for i := 0; i < len(trytes); i++ {
+		vs[i] = MustTryteToTryteValue(trytes[i])
 	}
 	return vs
 }
