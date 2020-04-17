@@ -11,7 +11,7 @@ import (
 
 var (
 	// TryteValueToTritsLUT is a lookup table to convert tryte values into trits.
-	TryteValueToTritsLUT = [][TritsPerTryte]int8{
+	TryteValueToTritsLUT = [TryteRadix][TritsPerTryte]int8{
 		{-1, -1, -1}, {0, -1, -1}, {1, -1, -1}, {-1, 0, -1}, {0, 0, -1}, {1, 0, -1},
 		{-1, 1, -1}, {0, 1, -1}, {1, 1, -1}, {-1, -1, 0}, {0, -1, 0}, {1, -1, 0},
 		{-1, 0, 0}, {0, 0, 0}, {1, 0, 0}, {-1, 1, 0}, {0, 1, 0}, {1, 1, 0},
@@ -20,10 +20,11 @@ var (
 	}
 
 	// TryteValueToTyteLUT is a lookup table to convert tryte values into trytes.
-	TryteValueToTyteLUT = []byte("NOPQRSTUVWXYZ9ABCDEFGHIJKLM")
+	TryteValueToTyteLUT = [TryteRadix]byte{'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+		'9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'}
 
 	// TryteToTryteValueLUT is a lookup table to convert trytes into tryte values.
-	TryteToTryteValueLUT = []int8{
+	TryteToTryteValueLUT = [...]int8{
 		0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
 		-13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
 	}
@@ -347,14 +348,19 @@ func TrytesToTrits(trytes Trytes) (Trits, error) {
 func MustTrytesToTrits(trytes Trytes) Trits {
 	trits := make(Trits, len(trytes)*TritsPerTryte)
 	for i := 0; i < len(trytes); i++ {
-		v := tryteToTryteValue(trytes[i])
-
-		idx := v - MinTryteValue
-		trits[i*TritsPerTryte+0] = TryteValueToTritsLUT[idx][0]
-		trits[i*TritsPerTryte+1] = TryteValueToTritsLUT[idx][1]
-		trits[i*TritsPerTryte+2] = TryteValueToTritsLUT[idx][2]
+		MustPutTryteTrits(trits[i*TritsPerTryte:], tryteToTryteValue(trytes[i]))
 	}
 	return trits
+}
+
+// MustPutTryteTrits converts v in [-13,13] to its corresponding 3-trit value and writes this to trits.
+// It panics on invalid input.
+func MustPutTryteTrits(trits []int8, v int8) {
+	idx := v - MinTryteValue
+	_ = trits[2] // early bounds check to guarantee safety of writes below
+	trits[0] = TryteValueToTritsLUT[idx][0]
+	trits[1] = TryteValueToTritsLUT[idx][1]
+	trits[2] = TryteValueToTritsLUT[idx][2]
 }
 
 // CanBeHash returns the validity of the trit length.
