@@ -3,15 +3,17 @@
 package transaction
 
 import (
+	"regexp"
+	"strconv"
+	"strings"
+
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/converter"
 	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/guards"
+	"github.com/iotaledger/iota.go/trinary"
 	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
-	"regexp"
-	"strconv"
-	"strings"
 )
 
 // Transactions is a slice of Transaction.
@@ -59,7 +61,10 @@ func ParseTransaction(trits Trits, noHash ...bool) (*Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	t.Value = TritsToInt(trits[ValueOffsetTrinary : ValueOffsetTrinary+ValueSizeTrinary])
+	t.Value = TritsToInt(trits[ValueOffsetTrinary : ValueOffsetTrinary+ValueUsedSizeTrinary])
+	if trinary.TrailingZeros(trits[ValueOffsetTrinary+ValueUsedSizeTrinary:ValueOffsetTrinary+ValueSizeTrinary]) != 48 {
+		return nil, errors.Wrap(ErrInvalidValue, "unused value trits not zero")
+	}
 	t.ObsoleteTag = MustTritsToTrytes(trits[ObsoleteTagTrinaryOffset : ObsoleteTagTrinaryOffset+ObsoleteTagTrinarySize])
 	t.Timestamp = uint64(TritsToInt(trits[TimestampTrinaryOffset : TimestampTrinaryOffset+TimestampTrinarySize]))
 	t.CurrentIndex = uint64(TritsToInt(trits[CurrentIndexTrinaryOffset : CurrentIndexTrinaryOffset+CurrentIndexTrinarySize]))
