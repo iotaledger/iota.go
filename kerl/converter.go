@@ -2,9 +2,6 @@
 package kerl
 
 import (
-	"encoding/binary"
-	"strings"
-
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/kerl/bigint"
 	. "github.com/iotaledger/iota.go/trinary"
@@ -12,76 +9,52 @@ import (
 )
 
 const (
-	// radix used in the conversion
-	tryteRadix = 27
 	// the middle of the domain described by one tryte
-	halfTryte = tryteRadix / 2
+	halfTryte = TryteRadix / 2
 
 	// largest number of trytes that can be represented as a uint32
-	trytesPerChunk = 6
-	// radix used in the chunk conversion, i.e. 27^trytesPerChunk
-	chunkRadix = 387420489
-	// number of chunks to represent the hash, i.e. ceil(HashTrytesSize / trytesPerChunk)
-	hashChunkSize = (HashTrytesSize + trytesPerChunk - 1) / trytesPerChunk
+	trytesPerUint32 = 6
+	// radix used in the uint32 chunk conversion, i.e. 27^trytesPerUint32
+	uint32Radix = 387420489
+	// number of uint32 chunks to represent the hash, i.e. ceil(HashTrytesSize / trytesPerUint32)
+	hashUint32Size = (HashTrytesSize + trytesPerUint32 - 1) / trytesPerUint32
 )
 
-// hex representation of the middle of the domain described by 242 trits, i.e. \sum_{k=0}^{241} 3^k
-var halfThree = []uint32{
-	0xa5ce8964, 0x9f007669, 0x1484504f, 0x3ade00d9, 0x0c24486e, 0x50979d57,
-	0x79a4c702, 0x48bbae36, 0xa9f6808b, 0xaa06a805, 0xa87fabdf, 0x5e69ebef,
-}
+var (
+	// maxTer243 represents the largest value that can be represented in 243-trit balanced ternary, i.e. ⌊3²⁴³ / 2⌋.
+	// since ⌊3²⁴³ / 2⌋ cannot be expressed in 384 bits, it only consists of its lower 384 bits.
+	maxTer243 = bigint.MustParseU384("0x1b3dc3cef97f039efe13f810fde381a1da330aa36cee5506f1c6d805246cd94ab09a028b3d8cf0eedd01633cf16b9c2d")
 
-// hex representation of the two's complement of halfThree, i.e. ~halfThree + 1
-var negHalfThree = []uint32{
-	0x5a31769c, 0x60ff8996, 0xeb7bafb0, 0xc521ff26, 0xf3dbb791, 0xaf6862a8,
-	0x865b38fd, 0xb74451c9, 0x56097f74, 0x55f957fa, 0x57805420, 0xa1961410,
-}
-
-// hex representation of the last trit, i.e. 3^242
-var trit243 = []uint32{
-	0x4b9d12c9, 0x3e00ecd3, 0x2908a09f, 0x75bc01b2, 0x184890dc, 0xa12f3aae,
-	0xf3498e04, 0x91775c6c, 0x53ed0116, 0x540d500b, 0x50ff57bf, 0xbcd3d7df,
-}
+	// maxTer242 represents the largest value that can be represented in 242-trit balanced ternary, i.e. ⌊3²⁴² / 2⌋.
+	maxTer242 = bigint.MustParseU384("0x5e69ebefa87fabdfaa06a805a9f6808b48bbae3679a4c70250979d570c24486e3ade00d91484504f9f007669a5ce8964")
+	// maxTer242 represents the smallest value that can be represented in 242-trit balanced ternary, i.e. -⌊3²⁴² / 2⌋.
+	minTer242 = bigint.MustParseU384("0xa19614105780542055f957fa56097f74b74451c9865b38fdaf6862a8f3dbb791c521ff26eb7bafb060ff89965a31769c")
+	// trit243 represents the value of the 243rd trit, i.e. 3²⁴².
+	trit243 = bigint.MustParseU384("0xbcd3d7df50ff57bf540d500b53ed011691775c6cf3498e04a12f3aae184890dc75bc01b22908a09f3e00ecd34b9d12c9")
+)
 
 func tryteValuesToTrits(vs []int8) Trits {
 	trits := make([]int8, len(vs)*TritsPerTryte)
 	for i, v := range vs {
-		idx := v - MinTryteValue
-		trits[i*TritsPerTryte+0] = TryteValueToTritsLUT[idx][0]
-		trits[i*TritsPerTryte+1] = TryteValueToTritsLUT[idx][1]
-		trits[i*TritsPerTryte+2] = TryteValueToTritsLUT[idx][2]
+		MustPutTryteTrits(trits[i*TritsPerTryte:], v)
 	}
 	return trits
 }
 
 func tryteValuesToTrytes(vs []int8) Trytes {
-	var trytes strings.Builder
-	trytes.Grow(len(vs))
-	for _, v := range vs {
-		idx := v - MinTryteValue
-		trytes.WriteByte(TryteValueToTyteLUT[idx])
+	if len(vs) != HashTrytesSize {
+		panic(ErrInvalidTrytesLength) // bounds check hint to compiler
 	}
-	return trytes.String()
+	trytes := make([]byte, HashTrytesSize)
+	for i := range vs {
+		idx := vs[i] - MinTryteValue
+		trytes[i] = TryteValueToTyteLUT[idx]
+	}
+	return string(trytes)
 }
 
-func tritsToTryteValues(trits Trits) []int8 {
-	vs := make([]int8, len(trits)/TritsPerTryte)
-	for i := 0; i < len(trits)/TritsPerTryte; i++ {
-		vs[i] = trits[i*TritsPerTryte] + trits[i*TritsPerTryte+1]*3 + trits[i*TritsPerTryte+2]*9
-	}
-	return vs
-}
-
-func trytesToTryteValues(trytes Trytes) []int8 {
-	vs := make([]int8, len(trytes))
-	for i, tryte := range trytes {
-		idx := tryte - '9'
-		vs[i] = TryteToTryteValueLUT[idx]
-	}
-	return vs
-}
-
-// tryteValueZeroLastTrit takes a tryte value of three trits a+3b+9c and returns a+3b (setting the last trit to zero).
+// tryteValueZeroLastTrit returns the value of tryte v, with the last trit set to zero.
+// It takes a tryte value of three trits a+3b+9c and returns a+3b.
 func tryteValueZeroLastTrit(v int8) int8 {
 	if v > 4 {
 		return v - 9
@@ -92,95 +65,76 @@ func tryteValueZeroLastTrit(v int8) int8 {
 	return v
 }
 
-// bigintZeroLastTrit changes the bigint so that the corresponding ternary number has 242th trit set to 0.
-// It returns whether the provided bigint was changed.
-func bigintZeroLastTrit(b []uint32) bool {
-	if bigint.IsNegative(b) {
-		if bigint.MustCmp(b, negHalfThree) < 0 {
-			bigint.MustAdd(b, trit243)
-			return true
-		}
-	} else {
-		if bigint.MustCmp(b, halfThree) > 0 {
-			bigint.MustSub(b, trit243)
-			return true
-		}
+func tryteValuesToBytes(vs []int8) []byte {
+	if len(vs) != HashTrytesSize { // hint to the compiler that vs has constant length
+		panic(ErrInvalidTrytesLength)
 	}
-	return false
-}
 
-// bigintPutBytes decodes the bytes as a bigint in big-endian.
-func bigintPutBytes(b []uint32, bytes []byte) {
-	for i := 0; i < IntLength; i++ {
-		b[IntLength-i-1] = binary.BigEndian.Uint32(bytes[i*4:])
-	}
-}
+	// assure that the last trit is zero
+	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(vs[HashTrytesSize-1])
 
-// bytesPutBigint encodes the bigint as 48 bytes in big-endian.
-func bytesPutBigint(bytes []byte, b []uint32) {
-	for i := 0; i < IntLength; i++ {
-		binary.BigEndian.PutUint32(bytes[i*4:], b[IntLength-i-1])
-	}
-}
-
-func tryteValuesToChunk(vs []int8) []uint32 {
-	cs := make([]uint32, hashChunkSize)
-	for i := 0; i < hashChunkSize; i++ {
-		for j := trytesPerChunk - 1; j >= 0; j-- {
-			if i*trytesPerChunk+j < HashTrytesSize {
-				v := uint32(vs[i*trytesPerChunk+j] + halfTryte)
-				cs[i] = cs[i]*tryteRadix + v
+	// convert the balanced ternary input to base 27⁶, the largest power of 27 still fitting into an uint32
+	// add ⌊27 / 2⌋ to each tryte value to get base 27
+	cs := make([]uint32, hashUint32Size)
+	for i := range cs {
+		for j := trytesPerUint32 - 1; j >= 0; j-- {
+			idx := uint(i*trytesPerUint32 + j) // hint to the compiler that idx is always non-negative
+			if idx < HashTrytesSize {
+				cs[i] = TryteRadix*cs[i] + uint32(vs[idx]+halfTryte)
 			}
 		}
 	}
-	return cs
-}
 
-func tryteValuesToBytes(vs []int8) []byte {
-	// set the last trit to zero and shift to accommodate for the fact that only 2 trits are used
-	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(vs[HashTrytesSize-1]) + 4 - halfTryte
-	cs := tryteValuesToChunk(vs)
-
-	b := make([]uint32, IntLength)
-	// no multiplication needed for the first chunk
-	b[0] = cs[hashChunkSize-1]
-
-	// initially, only the word with index 0 of the bigint is non-zero
-	var nzIndex = 0
-	for i := hashChunkSize - 2; i >= 0; i-- {
-		// multiply the entire bigint by the radix
-		var carry uint32
-		for i := 0; i <= nzIndex; i++ {
-			v := chunkRadix*uint64(b[i]) + uint64(carry)
-			carry, b[i] = uint32(v>>32), uint32(v)
+	// convert the base 27⁶ number to a 384-bit unsigned integer
+	b := bigint.U384()
+	bs := b.Words()[:0] // do not modify b directly, but work on a new slice backed by the same array
+	for i := len(cs) - 1; i >= 0; i-- {
+		n := len(bs)
+		// multiply by the radix and add the value of the next chunk
+		carry := cs[i]
+		for i := 0; i < n; i++ {
+			v := uint32Radix*uint64(bs[i]) + uint64(carry)
+			carry, bs[i] = uint32(v>>32), uint32(v)
 		}
-		if carry > 0 && nzIndex < IntLength-1 {
-			nzIndex++
-			b[nzIndex] = carry
-		}
-
-		// add the current chunk to the bigint and adapt the non-zero index, if we had an overflow
-		chgIndex := bigint.AddSmall(b, cs[i])
-		if chgIndex > nzIndex {
-			nzIndex = chgIndex
+		// increase length of slice if necessary
+		if carry > 0 && n < cap(bs) {
+			bs = append(bs, carry)
 		}
 	}
 
-	// subtract the middle of the domain to get balanced ternary
-	bigint.MustSub(b, halfThree)
+	// since we initially added ⌊27 / 2⌋ to each of the 81 tryte values, we now need to subtract ⌊27⁸¹ / 2⌋ = ⌊3²⁴³ / 2⌋
+	// this leads the correct two's complement representation for negative numbers
+	b.Sub(maxTer243)
 
+	// return the corresponding byte slice
 	bytes := make([]byte, HashBytesSize)
-	bytesPutBigint(bytes, b)
+	b.Read(bytes)
 	return bytes
 }
 
 // KerlBytesZeroLastTrit changes a chunk of 48 bytes so that the corresponding ternary number has 242th trit set to 0.
 func KerlBytesZeroLastTrit(bytes []byte) {
-	b := make([]uint32, IntLength)
-	bigintPutBytes(b, bytes)
-	if bigintZeroLastTrit(b) {
-		bytesPutBigint(bytes, b)
+	// bytes represents a signed 384-bit integer
+	b := bigint.U384()
+	b.SetBytes(bytes)
+
+	// assure that the value is in [-⌊3²⁴² / 2⌋, ⌊3²⁴² / 2⌋]
+	if b.MSB() != 0 {
+		if b.Cmp(minTer242) >= 0 {
+			return
+		}
+		// add 3²⁴² if the last trit was -1, i.e. if the value is less than -⌊3²⁴² / 2⌋
+		b.Add(trit243)
+	} else {
+		if b.Cmp(maxTer242) <= 0 {
+			return
+		}
+		// subtract 3²⁴² if the last trit was 1, i.e. if the value is greater than ⌊3²⁴² / 2⌋
+		b.Sub(trit243)
 	}
+
+	// update the bytes if we made changes
+	b.Read(bytes)
 }
 
 // KerlTritsToBytes is only defined for hashes, i.e. chunks of trits of length 243. It returns 48 bytes.
@@ -189,7 +143,14 @@ func KerlTritsToBytes(trits Trits) ([]byte, error) {
 		return nil, errors.Wrapf(ErrInvalidTritsLength, "must be %d in size", HashTrinarySize)
 	}
 
-	vs := tritsToTryteValues(trits)
+	// convert to tryte values
+	vs := make([]int8, HashTrytesSize)
+	for i := range vs {
+		tryteTrits := trits[i*TritsPerTryte:]
+		_ = tryteTrits[2] // bounds check hint to compiler
+		vs[i] = tryteTrits[0] + tryteTrits[1]*3 + tryteTrits[2]*9
+	}
+
 	return tryteValuesToBytes(vs), nil
 }
 
@@ -199,7 +160,13 @@ func KerlTrytesToBytes(trytes Trytes) ([]byte, error) {
 		return nil, errors.Wrapf(ErrInvalidTrytesLength, "must be %d in size", HashBytesSize)
 	}
 
-	vs := trytesToTryteValues(trytes)
+	// convert to tryte values
+	vs := make([]int8, HashTrytesSize)
+	for i := 0; i < HashTrytesSize; i++ {
+		idx := trytes[i] - '9'
+		vs[i] = TryteToTryteValueLUT[idx]
+	}
+
 	return tryteValuesToBytes(vs), nil
 }
 
@@ -209,7 +176,8 @@ func KerlBytesToTrits(b []byte) (Trits, error) {
 		return nil, errors.Wrapf(ErrInvalidBytesLength, "must be %d in size", HashBytesSize)
 	}
 
-	vs := bytesToTryteValues(b)
+	vs := make([]int8, HashTrytesSize)
+	bytesToTryteValues(b, vs)
 	return tryteValuesToTrits(vs), nil
 }
 
@@ -219,6 +187,7 @@ func KerlBytesToTrytes(b []byte) (Trytes, error) {
 		return "", errors.Wrapf(ErrInvalidBytesLength, "must be %d in size", HashBytesSize)
 	}
 
-	vs := bytesToTryteValues(b)
+	vs := make([]int8, HashTrytesSize)
+	bytesToTryteValues(b, vs)
 	return tryteValuesToTrytes(vs), nil
 }

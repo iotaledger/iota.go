@@ -8,57 +8,69 @@ import (
 	"github.com/iotaledger/iota.go/kerl/bigint"
 )
 
-func chunksToTryteValues(cs []uint32) []int8 {
-	vs := make([]int8, HashTrytesSize)
+func uint32ToTryteValues(cs []uint32, vs []int8) {
 	for i, c := range cs {
-		for j := 0; j < trytesPerChunk-1; j++ {
-			rem := int8(c % tryteRadix)
-			vs[i*trytesPerChunk+j] = rem - halfTryte
-			c = c / tryteRadix
-
-			if i*trytesPerChunk+j >= HashTrytesSize-1 {
-				return vs
-			}
+		tmp := vs[i*trytesPerUint32:]
+		// as HashTrytesSize is not a multiple of trytesPerUint32, handle the last uint32 chunk differently
+		if len(tmp) < trytesPerUint32 {
+			_ = tmp[2] // bounds check hint to compiler
+			c, tmp[0] = c/TryteRadix, int8(c%TryteRadix)-halfTryte
+			c, tmp[1] = c/TryteRadix, int8(c%TryteRadix)-halfTryte
+			tmp[2] = int8(c) - halfTryte
+			return
 		}
-		vs[i*trytesPerChunk+trytesPerChunk-1] = int8(c) - halfTryte
+		// unroll all the divisions
+		c, tmp[0] = c/TryteRadix, int8(c%TryteRadix)-halfTryte
+		c, tmp[1] = c/TryteRadix, int8(c%TryteRadix)-halfTryte
+		c, tmp[2] = c/TryteRadix, int8(c%TryteRadix)-halfTryte
+		c, tmp[3] = c/TryteRadix, int8(c%TryteRadix)-halfTryte
+		c, tmp[4] = c/TryteRadix, int8(c%TryteRadix)-halfTryte
+		tmp[5] = int8(c) - halfTryte
 	}
-	return vs
+	panic("unreachable")
 }
 
-func bytesToTryteValues(bytes []byte) []int8 {
-	b := make([]uint32, IntLength)
-	bigintPutBytes(b, bytes)
+// bytesToTryteValues converts bytes into its corresponding 81-tryte representation vs.
+func bytesToTryteValues(bytes []byte, vs []int8) {
+	// bytes represents a signed 384-bit integer, which is always greater -⌊3²⁴³ / 2⌋ and less ⌊3²⁴³ / 2⌋
+	b := bigint.U384()
+	b.SetBytes(bytes)
 
-	// the two's complement representation is only correct, if the number fits
-	// into 48 bytes, i.e. has the 243th trit set to 0
-	bigintZeroLastTrit(b)
+	// whether bytes represents a negative number in two's complement
+	negative := b.MSB() != 0
 
-	// convert to the unsigned bigint representing non-balanced ternary
-	bigint.MustAdd(b, halfThree)
-
-	cs := make([]uint32, hashChunkSize)
-	// initially, all words of the bigint are non-zero
-	nzIndex := IntLength - 1
-	for i := 0; i < hashChunkSize-1; i++ {
-		// divide the bigint by the radix
-		var rem uint32
-		for i := nzIndex; i >= 0; i-- {
-			v := (uint64(rem) << 32) | uint64(b[i])
-			b[i], rem = uint32(v/chunkRadix), uint32(v%chunkRadix)
-		}
-		cs[i] = rem
-
-		// decrement index, if the highest considered word of the bigint turned zero
-		if nzIndex > 0 && b[nzIndex] == 0 {
-			nzIndex--
-		}
+	// add ⌊3²⁴³ / 2⌋ and treat the result as an unsigned integer
+	// since maxTer243 only contains the lower 384 bits of ⌊3²⁴³ / 2⌋, we need to consider the carry
+	carry := b.Add(maxTer243)
+	if !negative {
+		// maxTer243 misses the leading bit of ⌊3²⁴³ / 2⌋ to fit into 384 bits
+		// for negative numbers this cancels out, but for non-negative it needs to be considered
+		carry += 1
 	}
 
-	// special case for the last chunk, where no further division is necessary
-	cs[hashChunkSize-1] = b[0]
+	// convert the 384-bit unsigned integer to base 27⁶, the largest power of 27 still fitting into an uint32
+	cs := make([]uint32, hashUint32Size)
+	bs := b.Words() // do not modify b directly, but work on a new slice backed by the same array
+	rem := carry    // use carry as the initial remainder
+	for i := range cs {
+		n := len(bs)
+		// divide the entire integer by the radix
+		for i := n - 1; i >= 0; i-- {
+			v := (uint64(rem) << 32) | uint64(bs[i])
+			bs[i], rem = uint32(v/uint32Radix), uint32(v%uint32Radix)
+		}
+		// decrease length of slice to ignore leading zeros
+		if n > 0 && bs[n-1] == 0 {
+			bs = bs[:n-1]
+		}
 
-	// convert to trytes and set the last trit to zero
-	vs := chunksToTryteValues(cs)
+		cs[i] = rem
+		rem = 0 // reset the remainder for the next chunk
+	}
+
+	// convert the base 27⁶ number to balanced ternary
+	// since we initially added ⌊3²⁴³ / 2⌋ = ⌊27⁸¹ / 2⌋, we now need to sub ⌊27 / 2⌋ from each of the 81 tryte values
+	uint32ToTryteValues(cs, vs)
+	// set the last trit to zero
 	vs[HashTrytesSize-1] = tryteValueZeroLastTrit(vs[HashTrytesSize-1])
-	return vs
 }

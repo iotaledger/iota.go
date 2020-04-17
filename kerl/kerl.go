@@ -3,14 +3,13 @@ package kerl
 
 import (
 	"hash"
-	"unsafe"
-
-	"github.com/pkg/errors"
+	"strings"
 
 	. "github.com/iotaledger/iota.go/consts"
 	keccak "github.com/iotaledger/iota.go/kerl/sha3"
 	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/pkg/errors"
 )
 
 // Kerl is a to trinary aligned version of keccak
@@ -26,28 +25,74 @@ func NewKerl() SpongeFunction {
 	return k
 }
 
-func (k *Kerl) squeezeBytes(numChunks int) ([]byte, error) {
-	result := make([]byte, numChunks*HashBytesSize)
-	buffer := make([]byte, HashBytesSize)
+func (k *Kerl) absorbBytes(in []byte) (err error) {
+	_, err = k.s.Write(in)
+	return
+}
 
-	for i := 1; i <= numChunks; i++ {
-		h := k.s.Sum(buffer[:0])
+func (k *Kerl) squeezeBytes() ([]byte, error) {
+	out := make([]byte, HashBytesSize)
+	h := k.s.Sum(nil)
 
-		// copy into result and fix the last trit
-		chunk := result[HashBytesSize*(i-1) : HashBytesSize*i]
-		copy(chunk, h)
-		KerlBytesZeroLastTrit(chunk)
+	// copy into out and fix the last trit
+	copy(out, h)
+	KerlBytesZeroLastTrit(out)
 
-		// re-initialize keccak for the next squeeze
-		k.s.Reset()
-		for i, e := range h {
-			h[i] = ^e
+	// re-initialize keccak for the next squeeze
+	k.Reset()
+	for i := range h {
+		h[i] = ^h[i]
+	}
+	if err := k.absorbBytes(h); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Absorb fills the internal state of the sponge with the given trits.
+// This is only defined for Trit slices that are a multiple of HashTrinarySize long.
+func (k *Kerl) Absorb(in Trits) error {
+	if len(in) == 0 || len(in)%HashTrinarySize != 0 {
+		return errors.Wrap(ErrInvalidTritsLength, "trits slice length must be a multiple of 243")
+	}
+
+	for i := 0; i < len(in); i += HashTrinarySize {
+		bs, err := KerlTritsToBytes(in[i : i+HashTrinarySize])
+		if err != nil {
+			return err
 		}
-		if _, err := k.s.Write(h); err != nil {
-			return nil, err
+		if err = k.absorbBytes(bs); err != nil {
+			return err
 		}
 	}
-	return result, nil
+	return nil
+}
+
+// AbsorbTrytes fills the internal State of the sponge with the given trytes.
+func (k *Kerl) AbsorbTrytes(in Trytes) error {
+	if len(in) == 0 || len(in)%HashTrytesSize != 0 {
+		return errors.Wrap(ErrInvalidTrytesLength, "trytes length must be a multiple of 81")
+	}
+
+	for i := 0; i < len(in); i += HashTrytesSize {
+		bs, err := KerlTrytesToBytes(in[i : i+HashTrytesSize])
+		if err != nil {
+			return err
+		}
+		if err = k.absorbBytes(bs); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// MustAbsorbTrytes fills the internal State of the sponge with the given trytes.
+// It panics if the given trytes are not valid.
+func (k *Kerl) MustAbsorbTrytes(inn Trytes) {
+	err := k.AbsorbTrytes(inn)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Squeeze out length trits. Length has to be a multiple of HashTrinarySize.
@@ -56,18 +101,17 @@ func (k *Kerl) Squeeze(length int) (Trits, error) {
 		return nil, ErrInvalidSqueezeLength
 	}
 
-	bs, err := k.squeezeBytes(length / HashTrinarySize)
-	if err != nil {
-		return nil, err
-	}
-
 	out := make(Trits, length)
-	for i := 1; i <= length/HashTrinarySize; i++ {
-		ts, err := KerlBytesToTrits(bs[HashBytesSize*(i-1) : HashBytesSize*i])
+	for i := 0; i < length; i += HashTrinarySize {
+		bs, err := k.squeezeBytes()
 		if err != nil {
 			return nil, err
 		}
-		copy(out[HashTrinarySize*(i-1):HashTrinarySize*i], ts)
+		ts, err := KerlBytesToTrits(bs)
+		if err != nil {
+			return nil, err
+		}
+		copy(out[i:], ts)
 	}
 
 	return out, nil
@@ -89,74 +133,31 @@ func (k *Kerl) SqueezeTrytes(length int) (Trytes, error) {
 		return "", ErrInvalidSqueezeLength
 	}
 
-	bs, err := k.squeezeBytes(length / HashTrinarySize)
-	if err != nil {
-		return "", err
-	}
+	var out strings.Builder
+	out.Grow(length / TritsPerTryte)
 
-	out := make([]byte, length/HashTrinarySize*HashTrytesSize)
-	for i := 1; i <= length/HashTrinarySize; i++ {
-		ts, err := KerlBytesToTrytes(bs[HashBytesSize*(i-1) : HashBytesSize*i])
+	for i := 0; i < length/HashTrinarySize; i++ {
+		bs, err := k.squeezeBytes()
 		if err != nil {
 			return "", err
 		}
-		copy(out[HashTrytesSize*(i-1):HashTrytesSize*i], ts)
+		ts, err := KerlBytesToTrytes(bs)
+		if err != nil {
+			return "", err
+		}
+		out.WriteString(ts)
 	}
-
-	// convert into trytes without copying
-	return *(*string)(unsafe.Pointer(&out)), nil
+	return out.String(), nil
 }
 
 // MustSqueezeTrytes squeezes out trytes of the given trit length. Length has to be a multiple of HashTrinarySize.
 // It panics if the trytes or the length are not valid.
 func (k *Kerl) MustSqueezeTrytes(length int) Trytes {
-	return MustTritsToTrytes(k.MustSqueeze(length))
-}
-
-// Absorb fills the internal state of the sponge with the given trits.
-// This is only defined for Trit slices that are a multiple of HashTrinarySize long.
-func (k *Kerl) Absorb(in Trits) error {
-	if len(in) == 0 || len(in)%HashTrinarySize != 0 {
-		return errors.Wrap(ErrInvalidTritsLength, "trits slice length must be a multiple of 243")
-	}
-
-	for i := 1; i <= len(in)/HashTrinarySize; i++ {
-		b, err := KerlTritsToBytes(in[HashTrinarySize*(i-1) : HashTrinarySize*i])
-		if err != nil {
-			return err
-		}
-		if _, err := k.s.Write(b); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// AbsorbTrytes fills the internal State of the sponge with the given trytes.
-func (k *Kerl) AbsorbTrytes(in Trytes) error {
-	if len(in) == 0 || len(in)%HashTrytesSize != 0 {
-		return errors.Wrap(ErrInvalidTrytesLength, "trytes length must be a multiple of 81")
-	}
-
-	for i := 1; i <= len(in)/HashTrytesSize; i++ {
-		b, err := KerlTrytesToBytes(in[HashTrytesSize*(i-1) : HashTrytesSize*i])
-		if err != nil {
-			return err
-		}
-		if _, err := k.s.Write(b); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// AbsorbTrytes fills the internal State of the sponge with the given trytes.
-// It panics if the given trytes are not valid.
-func (k *Kerl) MustAbsorbTrytes(inn Trytes) {
-	err := k.AbsorbTrytes(inn)
+	out, err := k.SqueezeTrytes(length)
 	if err != nil {
 		panic(err)
 	}
+	return out
 }
 
 // Reset the internal state of the Kerl sponge.
