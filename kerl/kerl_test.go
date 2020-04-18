@@ -262,24 +262,24 @@ var _ = Describe("Kerl", func() {
 			Expect(hash1Clone).To(Equal(hash2))
 			Expect(hash1Clone).ToNot(Equal(hash1))
 		})
-	})
 
-	It("clone during squeeze", func() {
-		k1, k2 := NewKerl(), NewKerl()
-		Expect(k1.Absorb(make(trinary.Trits, HashTrinarySize))).ToNot(HaveOccurred())
-		Expect(k2.Absorb(make(trinary.Trits, HashTrinarySize))).ToNot(HaveOccurred())
+		It("clone during squeeze", func() {
+			k1, k2 := NewKerl(), NewKerl()
+			Expect(k1.Absorb(make(trinary.Trits, HashTrinarySize))).ToNot(HaveOccurred())
+			Expect(k2.Absorb(make(trinary.Trits, HashTrinarySize))).ToNot(HaveOccurred())
 
-		k1.MustSqueeze(HashTrinarySize)
-		k2.MustSqueeze(HashTrinarySize)
+			k1.MustSqueeze(HashTrinarySize)
+			k2.MustSqueeze(HashTrinarySize)
 
-		k1Clone := k1.Clone()
-		k1.MustSqueeze(HashTrinarySize)
+			k1Clone := k1.Clone()
+			k1.MustSqueeze(HashTrinarySize)
 
-		hash1 := k1.MustSqueeze(HashTrinarySize)
-		hash2 := k2.MustSqueeze(HashTrinarySize)
-		hash1Clone := k1Clone.MustSqueeze(HashTrinarySize)
-		Expect(hash1Clone).To(Equal(hash2))
-		Expect(hash1Clone).ToNot(Equal(hash1))
+			hash1 := k1.MustSqueeze(HashTrinarySize)
+			hash2 := k2.MustSqueeze(HashTrinarySize)
+			hash1Clone := k1Clone.MustSqueeze(HashTrinarySize)
+			Expect(hash1Clone).To(Equal(hash2))
+			Expect(hash1Clone).ToNot(Equal(hash1))
+		})
 	})
 
 })
