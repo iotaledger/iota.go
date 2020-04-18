@@ -38,8 +38,8 @@ func NewKerl() *Kerl {
 	return &Kerl{Hash: sha3.NewLegacyKeccak384(), state: kerlAbsorbing}
 }
 
-// xorUnaligned xors each byte of the internal buffer.
-func (k *Kerl) xorUnaligned() {
+// notUnaligned flips each bit of the internal buffer.
+func (k *Kerl) notUnaligned() {
 	bw := (*[HashBytesSize / 8]uint64)(unsafe.Pointer(&k.buf))[: HashBytesSize/8 : HashBytesSize/8]
 	bw[0] = ^bw[0]
 	bw[1] = ^bw[1]
@@ -53,7 +53,7 @@ func (k *Kerl) xorUnaligned() {
 func (k *Kerl) squeezeSum() {
 	// absorb the new state, when squeezing more than once
 	if k.state == kerlSqueezing {
-		k.xorUnaligned()
+		k.notUnaligned()
 		k.Hash.Reset()
 		k.Hash.Write(k.buf[:])
 	}
