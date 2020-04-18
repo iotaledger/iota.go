@@ -2,9 +2,7 @@ package multisig
 
 import (
 	. "github.com/iotaledger/iota.go/consts"
-
 	. "github.com/iotaledger/iota.go/signing/utils"
-
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
