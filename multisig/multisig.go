@@ -2,6 +2,10 @@
 package multisig
 
 import (
+	"math"
+	"strings"
+	"time"
+
 	. "github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/checksum"
@@ -12,10 +16,10 @@ import (
 	"github.com/iotaledger/iota.go/signing"
 	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
-	"math"
-	"strings"
-	"time"
 )
+
+// the default SpongeFunction creator
+var defaultCreator = func() SpongeFunction { return kerl.NewKerl() }
 
 // MultisigInput represents a multisig input.
 type MultisigInput struct {
@@ -38,7 +42,7 @@ type Multisig struct {
 
 // Key gets the key value of a seed.
 func (m *Multisig) Key(seed Trytes, index uint64, security SecurityLevel, spongeFunc ...SpongeFunction) (Trytes, error) {
-	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
+	h := GetSpongeFunc(spongeFunc, defaultCreator)
 
 	subseed, err := signing.Subseed(seed, index, h)
 	if err != nil {
@@ -55,7 +59,7 @@ func (m *Multisig) Key(seed Trytes, index uint64, security SecurityLevel, sponge
 
 // Digest gets the digest of a seed under the given index and security.
 func (m *Multisig) Digest(seed Trytes, index uint64, security SecurityLevel, spongeFunc ...SpongeFunction) (Trytes, error) {
-	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
+	h := GetSpongeFunc(spongeFunc, defaultCreator)
 
 	subseed, err := signing.Subseed(seed, index, h)
 	if err != nil {
@@ -77,7 +81,7 @@ func (m *Multisig) Digest(seed Trytes, index uint64, security SecurityLevel, spo
 
 // ValidateAddress validates the given multisig address.
 func (m *Multisig) ValidateAddress(addr Trytes, digests []Trytes, spongeFunc ...SpongeFunction) (bool, error) {
-	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
+	h := GetSpongeFunc(spongeFunc, defaultCreator)
 
 	for i := range digests {
 		digestTrits, err := TrytesToTrits(digests[i])

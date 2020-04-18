@@ -1,15 +1,16 @@
 package multisig
 
-import "github.com/iotaledger/iota.go/kerl"
 import (
 	. "github.com/iotaledger/iota.go/consts"
+
 	. "github.com/iotaledger/iota.go/signing/utils"
+
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
 // NewMultisigAddress creates a new multisig address object.
 func NewMultisigAddress(digests Trytes, spongeFunc ...SpongeFunction) (*MultisigAddress, error) {
-	h := GetSpongeFunc(spongeFunc, kerl.NewKerl)
+	h := GetSpongeFunc(spongeFunc, defaultCreator)
 
 	m := &MultisigAddress{h: h}
 	if len(digests) != 0 {
