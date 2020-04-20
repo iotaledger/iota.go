@@ -198,6 +198,6 @@ func (d *state) Sum(in []byte) []byte {
 
 // CloneState returns a copy of the given hash s by cloning its internal state.
 // This function will panic when it is called with a hash not from this sha3 package.
-func CloneState(s hash.Hash) hash.Hash {
+func CloneState(s hash.Hash) *state {
 	return s.(*state).clone()
 }
