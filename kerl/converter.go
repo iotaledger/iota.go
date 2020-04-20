@@ -47,8 +47,7 @@ func tryteValuesToTrytes(vs []int8) Trytes {
 	}
 	trytes := make([]byte, HashTrytesSize)
 	for i := range vs {
-		idx := vs[i] - MinTryteValue
-		trytes[i] = TryteValueToTyteLUT[idx]
+		trytes[i] = MustTryteValueToTryte(vs[i])
 	}
 	return string(trytes)
 }
@@ -163,8 +162,7 @@ func KerlTrytesToBytes(trytes Trytes) ([]byte, error) {
 	// convert to tryte values
 	vs := make([]int8, HashTrytesSize)
 	for i := 0; i < HashTrytesSize; i++ {
-		idx := trytes[i] - '9'
-		vs[i] = TryteToTryteValueLUT[idx]
+		MustTryteToTryteValue(trytes[i])
 	}
 
 	return tryteValuesToBytes(vs), nil
