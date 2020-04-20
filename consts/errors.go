@@ -35,6 +35,8 @@ var (
 	ErrInvalidChecksum = errors.New("invalid checksum")
 	// ErrInvalidHash gets returned for invalid hash parameters.
 	ErrInvalidHash = errors.New("invalid hash")
+	// ErrInvalidValue gets returned for invalid values (e.g. upper 48 trits of the value field used).
+	ErrInvalidValue = errors.New("invalid value")
 	// ErrInvalidIndex gets returned for invalid index parameters.
 	ErrInvalidIndex = errors.New("invalid index option")
 	// ErrInvalidTotalOption gets returned for invalid total option parameters.

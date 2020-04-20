@@ -89,6 +89,7 @@ const (
 	AddressTrinaryOffset                  = SignatureMessageFragmentTrinaryOffset + SignatureMessageFragmentTrinarySize
 	AddressTrinarySize                    = 243
 	ValueOffsetTrinary                    = AddressTrinaryOffset + AddressTrinarySize
+	ValueUsedSizeTrinary                  = 33
 	ValueSizeTrinary                      = 81
 	ObsoleteTagTrinaryOffset              = ValueOffsetTrinary + ValueSizeTrinary
 	ObsoleteTagTrinarySize                = 81
