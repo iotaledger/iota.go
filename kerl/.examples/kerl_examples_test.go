@@ -21,16 +21,26 @@ func ExampleSqueezeTrytes() {}
 // o: Trytes, The Trytes representation of the hash.
 func ExampleMustSqueezeTrytes() {}
 
+// i req: []byte, The target buffer for the squeezed bytes.
+// o: n, The number of bytes squeezed. If the buffer is not a multiple of 48, this will be smaller than the buffer size.
+// o: error, Returned for internal errors.
+func ExampleRead() {}
+
 // i req: in, The Trits slice to absorb. Must be a multiple of 243 in length.
 // o: error, Returned for invalid slice lengths and internal errors.
 func ExampleAbsorb() {}
 
-// i req: inn, The Trytes to absorb.
+// i req: in, The Trytes to absorb.
 // o: error, Returned for internal errors.
 func ExampleAbsorbTrytes() {}
 
-// i req: inn, The Trytes to absorb.
+// i req: in, The Trytes to absorb.
 func ExampleMustAbsorbTrytes() {}
+
+// i req: in, The bytes to absorb.
+// o: n, The number of bytes squeezed.
+// o: error, Returned for internal errors.
+func ExampleWrite() {}
 
 // i req: trits, The Trits to convert to []byte.
 // o: []byte, The converted bytes.
