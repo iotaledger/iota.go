@@ -136,6 +136,21 @@ func GetFastestProofOfWorkImpl() (string, ProofOfWorkFunc) {
 	return "SyncGo", SyncGoProofOfWork
 }
 
+// GetFastestProofOfWorkUnsyncImpl returns the fastest Proof-of-Work implementation.
+// All returned Proof-of-Work implementations returned are "unsync", meaning that
+// they can run several Proof-of-Work tasks in parallel.
+func GetFastestProofOfWorkUnsyncImpl() (string, ProofOfWorkFunc) {
+	orderPreference := []string{"AVX", "SSE", "CARM64", "C128", "C"}
+
+	for _, impl := range orderPreference {
+		if p, exist := proofOfWorkFuncs[impl]; exist {
+			return impl, p
+		}
+	}
+
+	return "Go", SyncGoProofOfWork
+}
+
 // GoProofOfWork does Proof-of-Work on the given trytes using only Go code.
 func GoProofOfWork(trytes Trytes, mwm int, parallelism ...int) (Trytes, error) {
 	return goProofOfWork(trytes, mwm, nil, parallelism...)
