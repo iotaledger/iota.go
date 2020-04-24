@@ -162,7 +162,7 @@ func KerlTrytesToBytes(trytes Trytes) ([]byte, error) {
 	// convert to tryte values
 	vs := make([]int8, HashTrytesSize)
 	for i := 0; i < HashTrytesSize; i++ {
-		MustTryteToTryteValue(trytes[i])
+		vs[i] = MustTryteToTryteValue(trytes[i])
 	}
 
 	return tryteValuesToBytes(vs), nil
