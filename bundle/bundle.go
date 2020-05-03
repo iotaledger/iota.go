@@ -299,12 +299,12 @@ func ValidBundle(bundle Bundle) error {
 		tx := &bundle[i]
 
 		totalSum += tx.Value
-		if iotaGoMath.Abs(totalSum) > int64(consts.TotalSupply) {
+		if iotaGoMath.AbsInt64(totalSum) > consts.TotalSupply {
 			return errors.Wrapf(ErrInvalidBundleTotalValue, "total sum of balance mutations (%d) overflows/underflows total supply", totalSum)
 		}
 
 		changes[tx.Address] += tx.Value
-		if iotaGoMath.Abs(changes[tx.Address]) > int64(consts.TotalSupply) {
+		if iotaGoMath.AbsInt64(changes[tx.Address]) > consts.TotalSupply {
 			return errors.Wrapf(ErrInvalidBundleAddressValue, "balance mutation (%d) on address %v overflows/underflows total supply", changes[tx.Address], tx.Address)
 		}
 

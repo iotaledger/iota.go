@@ -262,18 +262,6 @@ var _ = Describe("Trinary", func() {
 		})
 	})
 
-	Context("AbsInt64()", func() {
-		It("should return only positive values", func() {
-			v := MustAbsInt64(-9223372036854775807)
-			Expect(v).To(Equal(int64(9223372036854775807)))
-		})
-
-		It("should panic for Int64_Min", func() {
-			Expect(func() { MustAbsInt64(-9223372036854775808) }).To(Panic())
-		})
-
-	})
-
 	Context("MinTrits()", func() {
 		It("should return correct length", func() {
 			v := MinTrits(1)
