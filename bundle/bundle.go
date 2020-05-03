@@ -2,15 +2,19 @@
 package bundle
 
 import (
-	"github.com/iotaledger/iota.go/checksum"
-	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/kerl"
-	"github.com/iotaledger/iota.go/signing"
-	"github.com/iotaledger/iota.go/transaction"
-	. "github.com/iotaledger/iota.go/trinary"
-	"github.com/pkg/errors"
 	"math"
 	"time"
+
+	"github.com/iotaledger/iota.go/checksum"
+	"github.com/iotaledger/iota.go/consts"
+	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/kerl"
+	iotaGoMath "github.com/iotaledger/iota.go/math"
+	"github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/transaction"
+	"github.com/iotaledger/iota.go/trinary"
+	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/pkg/errors"
 )
 
 // Bundles are a slice of Bundle.
@@ -287,12 +291,22 @@ func ValidBundle(bundle Bundle) error {
 	var totalSum int64
 
 	sigs := make(map[Hash][]Trytes)
+	changes := map[trinary.Trytes]int64{}
 	k := kerl.NewKerl()
 
 	lastIndex := uint64(len(bundle) - 1)
 	for i := range bundle {
 		tx := &bundle[i]
+
 		totalSum += tx.Value
+		if iotaGoMath.Abs(totalSum) > int64(consts.TotalSupply) {
+			return errors.Wrapf(ErrInvalidBundleTotalValue, "total sum of balance mutations (%d) overflows/underflows total supply", totalSum)
+		}
+
+		changes[tx.Address] += tx.Value
+		if iotaGoMath.Abs(changes[tx.Address]) > int64(consts.TotalSupply) {
+			return errors.Wrapf(ErrInvalidBundleAddressValue, "balance mutation (%d) on address %v overflows/underflows total supply", changes[tx.Address], tx.Address)
+		}
 
 		if tx.CurrentIndex != uint64(i) {
 			return errors.Wrapf(ErrInvalidBundle, "expected tx at index %d to have current index %d but got %d", i, i, tx.CurrentIndex)

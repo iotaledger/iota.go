@@ -60,11 +60,15 @@ const (
 	KeySegmentHashRounds = 26
 )
 
-// Address and checksum constants.
+// Address, balance and checksum constants.
 const (
 	AddressChecksumTrytesSize     = 9
 	AddressWithChecksumTrytesSize = HashTrytesSize + AddressChecksumTrytesSize
 	MinChecksumTrytesSize         = 3
+
+	// Total supply of IOTA available in the network. Used for ensuring a balanced ledger state and bundle balances
+	// = (3^33 - 1) / 2
+	TotalSupply uint64 = 2779530283277761
 )
 
 // Null value constants.
