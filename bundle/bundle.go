@@ -298,6 +298,10 @@ func ValidBundle(bundle Bundle) error {
 	for i := range bundle {
 		tx := &bundle[i]
 
+		if iotaGoMath.AbsInt64(tx.Value) > consts.TotalSupply {
+			return errors.Wrapf(ErrInvalidValue, "tx value (%d) overflows/underflows total supply", tx.Value)
+		}
+
 		totalSum += tx.Value
 		if iotaGoMath.AbsInt64(totalSum) > consts.TotalSupply {
 			return errors.Wrapf(ErrInvalidBundleTotalValue, "total sum of balance mutations (%d) overflows/underflows total supply", totalSum)
