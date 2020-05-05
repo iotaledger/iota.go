@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	. "github.com/iotaledger/iota.go/consts"
+	iotaGoMath "github.com/iotaledger/iota.go/math"
 	"github.com/pkg/errors"
 )
 
@@ -171,25 +172,6 @@ func TrailingZeros(trits Trits) int {
 	return z
 }
 
-// MustAbsInt64 returns the absolute value of an int64.
-func MustAbsInt64(n int64) int64 {
-	if n == -1<<63 {
-		panic("value out of range")
-	}
-	y := n >> 63       // y ← x ⟫ 63
-	return (n ^ y) - y // (x ⨁ y) - y
-}
-
-func absInt64(v int64) uint64 {
-	if v == math.MinInt64 {
-		return math.MaxInt64 + 1
-	}
-	if v < 0 {
-		return uint64(-v)
-	}
-	return uint64(v)
-}
-
 // roundUpToTryteMultiple rounds the given number up the the nearest multiple of 3 to make a valid tryte count.
 func roundUpToTryteMultiple(n uint) uint {
 	rem := n % TritsPerTryte
@@ -201,7 +183,7 @@ func roundUpToTryteMultiple(n uint) uint {
 
 // MinTrits returns the length of trits needed to encode the value.
 func MinTrits(value int64) int {
-	valueAbs := absInt64(value)
+	valueAbs := iotaGoMath.AbsInt64(value)
 
 	var vp uint64
 	var num int
@@ -247,7 +229,7 @@ func TritsToInt(t Trits) int64 {
 // IntToTrytes converts int64 to a slice of trytes.
 func IntToTrytes(value int64, trytesCnt int) Trytes {
 	negative := value < 0
-	v := absInt64(value)
+	v := iotaGoMath.AbsInt64(value)
 
 	var trytes strings.Builder
 	trytes.Grow(trytesCnt)

@@ -27,6 +27,10 @@ var (
 	ErrInvalidBranchTransaction = errors.New("invalid branch transaction")
 	// ErrInvalidBundle gets returned for Bundles which are schematically wrong or/and don't pass validation.
 	ErrInvalidBundle = errors.New("invalid bundle")
+	// ErrInvalidBundleTotalValue gets returned for Bundles whose total value would overflow/underflow from the total supply.
+	ErrInvalidBundleTotalValue = errors.New("invalid bundle total value")
+	// ErrInvalidBundleAddressValue gets returned for Bundles with balance mutations in an address that would overflow/underflow from the total supply.
+	ErrInvalidBundleAddressValue = errors.New("invalid bundle address value")
 	// ErrInvalidBundleHash gets returned for invalid bundle hash parameters.
 	ErrInvalidBundleHash = errors.New("invalid bundle hash")
 	// ErrInvalidSignature gets returned for bundles with invalid signatures.
