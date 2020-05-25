@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/signing/legacy"
-	"github.com/iotaledger/iota.go/signing/utils"
+	signing "github.com/iotaledger/iota.go/mam/v1/signing"
+	sponge "github.com/iotaledger/iota.go/signing/utils"
 	"github.com/iotaledger/iota.go/trinary"
 )
 

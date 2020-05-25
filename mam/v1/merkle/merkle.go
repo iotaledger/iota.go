@@ -1,4 +1,4 @@
-// Package merkle provides functions for creating and validating merkle trees.
+// Package merkle provides functions for creating and validating MAM compatible Merkle trees.
 package merkle
 
 import (
@@ -6,8 +6,8 @@ import (
 
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
-	"github.com/iotaledger/iota.go/signing/legacy"
-	"github.com/iotaledger/iota.go/signing/utils"
+	"github.com/iotaledger/iota.go/mam/v1/signing"
+	sponge "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 

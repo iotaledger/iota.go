@@ -10,8 +10,8 @@ import (
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/curl/hamming"
 	. "github.com/iotaledger/iota.go/guards/validators"
-	. "github.com/iotaledger/iota.go/merkle"
-	signing "github.com/iotaledger/iota.go/signing/legacy"
+	. "github.com/iotaledger/iota.go/mam/v1/merkle"
+	"github.com/iotaledger/iota.go/mam/v1/signing"
 	sponge "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
