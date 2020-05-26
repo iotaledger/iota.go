@@ -45,31 +45,6 @@ func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunction) (Trits, er
 	return subseed, err
 }
 
-// Key computes a new private key from the given subseed using the given security level.
-// Optionally takes the SpongeFunction to use. Default is Kerl.
-func Key(subseed Trits, securityLevel SecurityLevel, spongeFunc ...SpongeFunction) (Trits, error) {
-	h := GetSpongeFunc(spongeFunc, defaultCreator)
-	defer h.Reset()
-
-	if err := h.Absorb(subseed); err != nil {
-		return nil, err
-	}
-
-	key := make(Trits, KeyFragmentLength*int(securityLevel))
-
-	for i := 0; i < int(securityLevel); i++ {
-		for j := 0; j < KeySegmentsPerFragment; j++ {
-			buf, err := h.Squeeze(HashTrinarySize)
-			if err != nil {
-				return nil, err
-			}
-			copy(key[(i*KeySegmentsPerFragment+j)*HashTrinarySize:], buf)
-		}
-	}
-
-	return key, nil
-}
-
 // Digests hashes each segment of each key fragment 26 times and returns them.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func Digests(key Trits, spongeFunc ...SpongeFunction) (Trits, error) {

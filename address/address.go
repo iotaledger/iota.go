@@ -4,7 +4,9 @@ package address
 import (
 	"github.com/iotaledger/iota.go/checksum"
 	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/kerl"
 	. "github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/signing/key"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
@@ -57,22 +59,25 @@ func GenerateAddress(seed Trytes, index uint64, secLvl SecurityLevel, addChecksu
 		secLvl = SecurityLevelMedium
 	}
 
-	subseed, err := Subseed(seed, index)
+	// use Kerl for the entire address generation
+	h := kerl.NewKerl()
+
+	subseed, err := Subseed(seed, index, h)
 	if err != nil {
 		return "", err
 	}
 
-	prvKey, err := Key(subseed, secLvl)
+	prvKey, err := key.Sponge(subseed, secLvl, h)
 	if err != nil {
 		return "", err
 	}
 
-	digests, err := Digests(prvKey)
+	digests, err := Digests(prvKey, h)
 	if err != nil {
 		return "", err
 	}
 
-	addressTrits, err := Address(digests)
+	addressTrits, err := Address(digests, h)
 	if err != nil {
 		return "", err
 	}

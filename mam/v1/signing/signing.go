@@ -1,5 +1,4 @@
-// Package signing provides functions for creating and validating essential cryptographic
-// components in IOTA, such as subseeds, keys, digests and signatures.
+// Package signing provides implements the signing scheme used in MAM.
 package signing
 
 import (

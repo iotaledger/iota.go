@@ -64,16 +64,6 @@ var _ = Describe("Signing", func() {
 		})
 	})
 
-	Context("Key()", func() {
-		It("returns the correct key", func() {
-			for i := 0; i < len(keys); i++ {
-				key, err := Key(MustTrytesToTrits(subseeds[i]), SecurityLevelMedium)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(MustTritsToTrytes(key)).To(Equal(keys[i]))
-			}
-		})
-	})
-
 	Context("Digests()", func() {
 		It("returns the correct digests", func() {
 			for i := 0; i < len(digests); i++ {

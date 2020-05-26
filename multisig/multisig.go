@@ -14,6 +14,7 @@ import (
 	. "github.com/iotaledger/iota.go/guards/validators"
 	"github.com/iotaledger/iota.go/kerl"
 	"github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/signing/key"
 	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
@@ -49,7 +50,7 @@ func (m *Multisig) Key(seed Trytes, index uint64, security SecurityLevel, sponge
 		return "", err
 	}
 
-	keyTrits, err := signing.Key(subseed, security, h)
+	keyTrits, err := key.Sponge(subseed, security, h)
 	if err != nil {
 		return "", err
 	}
@@ -66,7 +67,7 @@ func (m *Multisig) Digest(seed Trytes, index uint64, security SecurityLevel, spo
 		return "", err
 	}
 
-	keyTrits, err := signing.Key(subseed, security, h)
+	keyTrits, err := key.Sponge(subseed, security, h)
 	if err != nil {
 		return "", err
 	}
