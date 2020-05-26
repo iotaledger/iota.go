@@ -55,25 +55,25 @@ func Shake(entropy Trits, securityLevel SecurityLevel) (Trits, error) {
 // no chunk of the private key is ever revealed, as this would allow the reconstruction of successive chunks
 // (also known as "M-bug").
 // This function only allows the usage of Kerl to provide compatibility to the currently used key derivation.
-func Sponge(entropy Trits, securityLevel SecurityLevel, h sponge.SpongeFunction) (Trits, error) {
+func Sponge(entropy Trits, securityLevel SecurityLevel, spongeFunc sponge.SpongeFunction) (Trits, error) {
 	if err := validateEntropy(entropy); err != nil {
 		return nil, err
 	}
 	// Kerl ignores the last trit, make sure it is always zero
-	if _, isKerl := h.(*kerl.Kerl); isKerl && entropy[HashTrinarySize-1] != 0 {
+	if _, isKerl := spongeFunc.(*kerl.Kerl); isKerl && entropy[HashTrinarySize-1] != 0 {
 		return nil, errors.Wrapf(ErrInvalidTrit, "%d at index %d (last trit non 0)", entropy[HashTrinarySize-1], HashTrinarySize-1)
 	}
-	defer h.Reset()
+	defer spongeFunc.Reset()
 
 	// absorb the entropy
-	if err := h.Absorb(entropy); err != nil {
+	if err := spongeFunc.Absorb(entropy); err != nil {
 		return nil, err
 	}
 
 	key := make(Trits, KeyFragmentLength*int(securityLevel))
 	for i := 0; i < len(key); i += HashTrinarySize {
 		// squeeze the next 243 trits
-		out, err := h.Squeeze(HashTrinarySize)
+		out, err := spongeFunc.Squeeze(HashTrinarySize)
 		if err != nil {
 			return nil, err
 		}

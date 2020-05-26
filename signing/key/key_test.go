@@ -51,6 +51,24 @@ var _ = Describe("Key", func() {
 			)
 		})
 
+		Context("valid entropy", func() {
+			It("testdata/shake.json", func() {
+				var tests []*struct {
+					Entropy       Trytes        `json:"entropy"`
+					SecurityLevel SecurityLevel `json:"securityLevel"`
+					Key           Trytes        `json:"key"`
+				}
+				ReadTestJSONFile("shake.json", &tests, Fail)
+
+				for _, tt := range tests {
+					By(tt.Entropy)
+					key, err := key.Shake(MustTrytesToTrits(tt.Entropy), tt.SecurityLevel)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(MustTritsToTrytes(key)).To(Equal(tt.Key))
+				}
+			})
+		})
+
 		Context("invalid entropy", func() {
 			It("returns error for empty entropy", func() {
 				_, err := key.Shake(nil, SecurityLevelMedium)
