@@ -1,4 +1,35 @@
-// Package key provides functions to derive private keys from the provided entropy, e.g. subseed.
+/*
+Package key provides functions to derive private keys from the provided entropy, e.g. subseed.
+
+For the IOTA W-OTS, private keys need to be secLvl*6561 trits long. As a 243-trit entropy is used to
+deterministically derive the key, this entropy needs to be securely extended to the desired length.
+
+Given a cryptographic ternary sponge construction sponge, we can use sponge as an extendable-output function to derive
+the key:
+
+	key := make([]Trit, secLvl*6561)
+	sponge.Absorb(entropy)
+	sponge.Squeeze(key)
+
+However, Kerl is not a true cryptographic sponge construction as its used capacity is 0 and every 243-trit block of its
+output deterministically depends only on the previous block. This breaks the security of the W-OTS.
+In oder to use the Keccak sponge construction, we must use the SHAKE extendable-output function producing a digest of
+arbitrary length and convert the result to ternary:
+
+	shake.Absorb(convertToBytes(entropy))
+	for len(key) < secLvl*6561 {
+		bytes := make([]byte, 48)
+		shake.Squeeze(bytes)
+		key = append(key, convertToTrits(bytes))
+	}
+
+convertToBytes converts a 243-trit balanced ternary integer (little-endian) into a signed 384-bit integer (big-endian)
+and vice versa. They are defined in more detail here:
+https://github.com/iotaledger/kerl/blob/master/IOTA-Kerl-spec.md#trits---bytes-encoding
+
+This package implements both options for the key derivation Sponge and Shake, where Sponge should only be used to
+preserve backward compatibility.
+*/
 package key
 
 import (
