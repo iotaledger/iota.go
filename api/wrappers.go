@@ -1,17 +1,20 @@
 package api
 
 import (
+	"sort"
+	"sync"
+	"time"
+
 	"github.com/iotaledger/iota.go/address"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/checksum"
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/guards/validators"
+	"github.com/iotaledger/iota.go/kerl"
 	"github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/signing/key"
 	"github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
-	"sort"
-	"sync"
-	"time"
 )
 
 // GetLatestSolidSubtangleMilestone returns the latest subtangle milestone.
@@ -633,8 +636,11 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, opts P
 
 	signedFrags := []Trytes{}
 	for i := range opts.Inputs {
+		// use Kerl for the signature generation
+		h := kerl.NewKerl()
+
 		input := &opts.Inputs[i]
-		subseed, err := signing.Subseed(seed, input.KeyIndex)
+		subseed, err := signing.Subseed(seed, input.KeyIndex, h)
 		if err != nil {
 			return nil, err
 		}
@@ -645,7 +651,7 @@ func (api *API) PrepareTransfers(seed Trytes, transfers bundle.Transfers, opts P
 			sec = input.Security
 		}
 
-		prvKey, err := signing.Key(subseed, sec)
+		prvKey, err := key.Sponge(subseed, sec, h)
 		if err != nil {
 			return nil, err
 		}

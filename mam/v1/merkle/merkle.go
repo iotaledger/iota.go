@@ -1,4 +1,4 @@
-// Package merkle provides functions for creating and validating merkle trees.
+// Package merkle provides functions for creating and validating MAM compatible Merkle trees.
 package merkle
 
 import (
@@ -6,8 +6,8 @@ import (
 
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
-	"github.com/iotaledger/iota.go/signing/legacy"
-	"github.com/iotaledger/iota.go/signing/utils"
+	"github.com/iotaledger/iota.go/mam/v1/signing"
+	sponge "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
@@ -19,7 +19,7 @@ func binaryTreeSize(acc uint64, depth uint64) uint64 {
 	return (1 << (depth + 1)) - 1 + acc
 }
 
-// MerkleSize computes the size of a merkle tree, e.g. its node number.
+// MerkleSize computes the size of a Merkle tree, e.g. its node number.
 // 	leafCount is the number of leaves of the tree
 func MerkleSize(leafCount uint64) uint64 {
 	var acc uint64 = 1
@@ -35,7 +35,7 @@ func MerkleSize(leafCount uint64) uint64 {
 	return acc
 }
 
-// MerkleDepth computes the depth of a merkle tree.
+// MerkleDepth computes the depth of a Merkle tree.
 // 	nodeCount is the number of nodes of the tree
 func MerkleDepth(nodeCount uint64) (depth uint64) {
 	depth = 0
@@ -91,7 +91,7 @@ func MerkleLeafIndex(leafIndex, leafCount uint64) uint64 {
 	return leafCount - leafIndex - 1
 }
 
-// MerkleCreate creates a merkle tree.
+// MerkleCreate creates a Merkle tree.
 //	baseSize is the base size of the tree, e.g. the number of leaves
 //	seed is the seed used to generate addresses - Not sent over the network
 //	offset is the offset used to generate addresses
@@ -171,8 +171,8 @@ func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security Security
 	return tree, nil
 }
 
-// MerkleBranch creates the merkle branch to generate back root from index.
-//	tree is the merkle tree - Must be allocated
+// MerkleBranch creates the Merkle branch to generate back root from index.
+//	tree is the Merkle tree - Must be allocated
 //	siblings is the siblings of the indexed node - Must be allocated
 //	treeLength is the length of the tree
 //	treeDepth is the depth of the tree
@@ -224,7 +224,7 @@ func MerkleBranch(tree Trits, siblings Trits, treeLength, treeDepth, leafIndex, 
 	return siblings, nil
 }
 
-// MerkleRoot generates a merkle root from a hash and his siblings,
+// MerkleRoot generates a Merkle root from a hash and his siblings,
 //	hash is the hash
 //	siblings is the hash siblings
 //	siblingsNumber is the number of siblings
