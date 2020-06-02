@@ -1,3 +1,18 @@
+/*
+Package merkle provides functions and types to deal with the creation and storage of
+Merkle trees, using the secure SHAKE256 KDF implemented in the signing/key package:
+thus not being affected by the the infamous M-Bug.
+
+The functions exported by the package are:
+
+- CreateMerkleTree(seed trinary.Hash, securityLvl int, depth int) creates a MerkleTree
+  structure of the specified depth, using a SHAKE256 key of the the length specified by
+  the supplied securitylevel, deriving subseeds from the provided seed.
+- StoreMerkleTreeFile(filePath string, merkleTree *MerkleTree) stores the MerkleTree
+  structure in a file; the format used is compatible with Hornet.
+- LoadMerkleTreeFile(filePath string) loads a Hornet-compatible Merkle tree file as a
+  MerkleTree structure.
+*/
 package merkle
 
 import (
