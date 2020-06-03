@@ -1,4 +1,10 @@
 /*
+Ported from Hornet codebase.
+Original authors: muXxer <mux3r@web.de>
+                  Alexander Sporn <github@alexsporn.de>
+                  Thoralf-M <46689931+Thoralf-M@users.noreply.github.com>
+
+
 Package merkle provides functions and types to deal with the creation and storage of
 Merkle trees, using the secure SHAKE256 KDF implemented in the signing/key package:
 thus not being affected by the the infamous M-Bug.
