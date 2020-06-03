@@ -114,7 +114,7 @@ func (mtl *MerkleTreeLayer) Unmarshal(buf *bufio.Reader) error {
 	return nil
 }
 
-// storeMerkleTreeFile stores the merkle tree in a file.
+// StoreMerkleTreeFile stores the merkle tree in a file.
 func StoreMerkleTreeFile(filePath string, merkleTree *MerkleTree) error {
 
 	outputFile, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0660)
@@ -137,7 +137,7 @@ func StoreMerkleTreeFile(filePath string, merkleTree *MerkleTree) error {
 	return nil
 }
 
-// loadMerkleTreeFile load the merkle tree from a file
+// LoadMerkleTreeFile load the merkle tree from a file.
 func LoadMerkleTreeFile(filePath string) (*MerkleTree, error) {
 
 	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)

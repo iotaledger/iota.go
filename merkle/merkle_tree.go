@@ -151,7 +151,7 @@ func calculateNextLayer(lastLayer []trinary.Hash) []trinary.Hash {
 	return result
 }
 
-// Address generates an address deterministically, according to the given seed, milestone index and security level.
+// computeAddress generates an address deterministically, according to the given seed, milestone index and security level.
 // a modified key derivation function is used to avoid the M-bug.
 func computeAddress(seed trinary.Hash, index MilestoneIndex, securityLvl int) (trinary.Hash, error) {
 
@@ -183,7 +183,7 @@ func computeAddress(seed trinary.Hash, index MilestoneIndex, securityLvl int) (t
 	return address, nil
 }
 
-// CreateMerkleTreeFile calculates an entire merkle tree
+// CreateMerkleTree calculates an entire merkle tree.
 func CreateMerkleTree(seed trinary.Hash, securityLvl int, depth int) *MerkleTree {
 
 	addresses := calculateAllAddresses(seed, securityLvl, 1 << uint(depth))
