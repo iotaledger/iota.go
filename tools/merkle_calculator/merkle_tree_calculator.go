@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/merkle"
 	"github.com/iotaledger/iota.go/trinary"
 )
@@ -21,22 +23,22 @@ func main() {
 	flag.Parse()
 
 	if *depth < 1 {
-		log.Println("'depth' cannot be lower than 1")
+		log.Panicf("'depth' cannot be lower than 1")
 		return
 	}
 
 	if *securityLevel < 1 || *securityLevel > 3 {
-		log.Println("'securityLevel' must be 1, 2 or 3")
+		log.Panicf("'securityLevel' must be 1, 2 or 3")
 		return
 	}
 
-	if len(*seed) != 81 {
-		log.Println("'seed' must be a string of 81 trytes")
+	if !guards.IsTrytesOfExactLength(*seed, consts.HashTrytesSize) {
+		log.Panicf("'seed' must be a string of 81 trytes")
 		return
 	}
 
 	if *outputPath == "" {
-		log.Println("'output' is required")
+		log.Panicf("'output' is required")
 		return
 	}
 
