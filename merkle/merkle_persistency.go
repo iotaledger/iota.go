@@ -3,156 +3,137 @@ package merkle
 import (
 	"bufio"
 	"encoding/binary"
-	"os"
 
+	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// Marshal writes the binary representation of the Merkle tree to a buffer.
-func (mt *MerkleTree) Marshal(buf *bufio.Writer) (err error) {
+// WriteTo writes the binary representation of the Merkle tree to a buffer.
+func (mt *MerkleTree) WriteTo(buf *bufio.Writer) (n int64, err error) {
 
 	/*
 	 4 bytes uint32 depth
 	 4 bytes uint32 lengthLayers
 	*/
 
+	var bytesWritten int64 = 0
+
 	if err := binary.Write(buf, binary.LittleEndian, uint32(mt.Depth)); err != nil {
-		return err
+		return bytesWritten, err
 	}
+	bytesWritten += int64(binary.Size(uint32(mt.Depth)))
+
 	if err := binary.Write(buf, binary.LittleEndian, uint32(len(mt.Layers))); err != nil {
-		return err
+		return bytesWritten, err
 	}
+	bytesWritten += int64(binary.Size(uint32(len(mt.Layers))))
 
 	for layer := 0; layer < len(mt.Layers); layer++ {
 		merkleTreeLayer := mt.Layers[layer]
 
-		if err := merkleTreeLayer.Marshal(buf); err != nil {
-			return err
+		bytesWrittenLayer, err := merkleTreeLayer.WriteTo(buf)
+		if err != nil {
+			return bytesWritten, err
 		}
+		bytesWritten += bytesWrittenLayer
 	}
 
-	return nil
+	return bytesWritten, err
 }
 
-// Unmarshal parses the binary encoded representation of the Merkle tree from a buffer.
-func (mt *MerkleTree) Unmarshal(buf *bufio.Reader) error {
+// ReadFrom parses the binary encoded representation of the Merkle tree from a buffer.
+func (mt *MerkleTree) ReadFrom(buf *bufio.Reader) (n int64, err error) {
 
 	/*
 	 4 bytes uint32 depth
 	 4 bytes uint32 lengthLayers
 	*/
 
+	var bytesRead int64 = 0
+
 	var depth uint32
 	if err := binary.Read(buf, binary.LittleEndian, &depth); err != nil {
-		return err
+		return bytesRead, err
 	}
 	mt.Depth = int(depth)
+	bytesRead += int64(binary.Size(&depth))
 
 	var lengthLayers uint32
 	if err := binary.Read(buf, binary.LittleEndian, &lengthLayers); err != nil {
-		return err
+		return bytesRead, err
 	}
+	bytesRead += int64(binary.Size(&lengthLayers))
 
 	mt.Layers = make(map[int]*MerkleTreeLayer)
 
 	for i := 0; i < int(lengthLayers); i++ {
 		mtl := &MerkleTreeLayer{}
 
-		if err := mtl.Unmarshal(buf); err != nil {
-			return err
+		bytesReadLayer, err := mtl.ReadFrom(buf)
+		if err != nil {
+			return bytesRead, err
 		}
+		bytesRead += bytesReadLayer
 
 		mt.Layers[mtl.Level] = mtl
 	}
 
 	mt.Root = mt.Layers[0].Hashes[0]
-	return nil
+	return bytesRead, nil
 }
 
-// Marshal writes the binary representation of the Merkle tree layer to a buffer.
-func (mtl *MerkleTreeLayer) Marshal(buf *bufio.Writer) error {
+// WriteTo writes the binary representation of the Merkle tree layer to a buffer.
+func (mtl *MerkleTreeLayer) WriteTo(buf *bufio.Writer) (int64, error) {
+
+	var bytesWritten int64 = 0
 
 	if err := binary.Write(buf, binary.LittleEndian, uint32(mtl.Level)); err != nil {
-		return err
+		return bytesWritten, err
 	}
+	bytesWritten += int64(binary.Size(uint32(mtl.Level)))
+
 	if err := binary.Write(buf, binary.LittleEndian, uint32(len(mtl.Hashes))); err != nil {
-		return err
+		return bytesWritten, err
 	}
+	bytesWritten += int64(binary.Size(uint32(len(mtl.Hashes))))
 
 	for _, hash := range mtl.Hashes {
-		if err := binary.Write(buf, binary.LittleEndian, trinary.MustTrytesToBytes(hash)[:49]); err != nil {
-			return err
+		nodesData := trinary.MustTrytesToBytes(hash)[:49]
+		if err := binary.Write(buf, binary.LittleEndian, nodesData); err != nil {
+			return bytesWritten, err
 		}
+		bytesWritten += int64(binary.Size(nodesData))
 	}
 
-	return nil
+	return bytesWritten, nil
 }
 
-// Unmarshal parses the binary encoded representation of the merkle tree layer from a buffer.
-func (mtl *MerkleTreeLayer) Unmarshal(buf *bufio.Reader) error {
+// ReadFrom parses the binary encoded representation of the merkle tree layer from a buffer.
+func (mtl *MerkleTreeLayer) ReadFrom(buf *bufio.Reader) (n int64, err error) {
 
+	var read int64 = 0
 	var level uint32
+
 	if err := binary.Read(buf, binary.LittleEndian, &level); err != nil {
-		return err
+		return read, err
 	}
+	read += int64(binary.Size(&level))
 	mtl.Level = int(level)
 
 	var hashesCount uint32
 	if err := binary.Read(buf, binary.LittleEndian, &hashesCount); err != nil {
-		return err
+		return read, err
 	}
+	read += int64(binary.Size(&hashesCount))
 
 	hashBuf := make([]byte, 49)
 	for i := 0; i < int(hashesCount); i++ {
 		if err := binary.Read(buf, binary.LittleEndian, hashBuf); err != nil {
-			return err
+			return read, err
 		}
-
-		mtl.Hashes = append(mtl.Hashes, trinary.MustBytesToTrytes(hashBuf, 81))
+		read += int64(binary.Size(hashBuf))
+		mtl.Hashes = append(mtl.Hashes, trinary.MustBytesToTrytes(hashBuf, consts.HashTrytesSize))
 	}
 
-	return nil
-}
-
-// StoreMerkleTreeFile stores the MerkleTree structure in a binary output file.
-func StoreMerkleTreeFile(filePath string, merkleTree *MerkleTree) error {
-
-	outputFile, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0660)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
-
-	// write into the file with an 8kB buffer.
-	fileBufWriter := bufio.NewWriterSize(outputFile, 8192)
-
-	if err := merkleTree.Marshal(fileBufWriter); err != nil {
-		return err
-	}
-
-	if err := fileBufWriter.Flush(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// LoadMerkleTreeFile loads a binary file persisted with StoreMerkleTreeFile
-// into a MerkleTree structure.
-func LoadMerkleTreeFile(filePath string) (*MerkleTree, error) {
-
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	buf := bufio.NewReader(file)
-
-	merkleTree := &MerkleTree{}
-	if err := merkleTree.Unmarshal(buf); err != nil {
-		return nil, err
-	}
-
-	return merkleTree, nil
+	return read, nil
 }
