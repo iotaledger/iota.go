@@ -8,6 +8,7 @@ import (
 	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/merkle"
+	"github.com/iotaledger/iota.go/tool"
 	"github.com/iotaledger/iota.go/trinary"
 )
 
@@ -48,7 +49,7 @@ func main() {
 
 	mt := merkle.CreateMerkleTree(trinary.Hash(*seed), *securityLevel, *depth)
 
-	if err := merkle.StoreMerkleTreeFile(*outputPath, mt); err != nil {
+	if err := tool.StoreMerkleTreeFile(*outputPath, mt); err != nil {
 		log.Panicf("Error persisting Merkle tree: %v", err)
 		return
 	}
