@@ -23,17 +23,17 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// MerkleTree contains the merkle tree used for the coordinator signatures.
+// MerkleTree contains the Merkle tree used for the coordinator signatures.
 type MerkleTree struct {
-	// The depth of the merkle tree.
+	// The depth of the Merkle tree.
 	Depth int
-	// The root address of the merkle tree.
+	// The root address of the Merkle tree.
 	Root trinary.Hash
 	// Merkle tree layers indexed by their level.
 	Layers map[int]*MerkleTreeLayer
 }
 
-// MerkleTreeLayer contains the nodes of a layer of a merkle tree.
+// MerkleTreeLayer contains the nodes of a layer of a Merkle tree.
 type MerkleTreeLayer struct {
 	// The level of the layer in the tree.
 	Level int
@@ -44,7 +44,7 @@ type MerkleTreeLayer struct {
 // MilestoneIndex represents an index of a milestone.
 type MilestoneIndex uint32
 
-// calculateAllAddresses calculates all addresses that are used for the merkle tree of the coordinator.
+// calculateAllAddresses calculates all addresses that are used for the Merkle tree of the coordinator.
 func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int) []trinary.Hash {
 	resultLock := &sync.Mutex{}
 	result := make([]trinary.Hash, count)
@@ -80,7 +80,7 @@ func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int) []trin
 	return result
 }
 
-// calculateAllLayers calculates all layers of the merkle tree used for coordinator signatures.
+// calculateAllLayers calculates all layers of the Merkle tree used for coordinator signatures.
 func calculateAllLayers(addresses []trinary.Hash) [][]trinary.Hash {
 	depth := int64(math.Floor(math.Log2(float64(len(addresses)))))
 
@@ -102,7 +102,7 @@ func calculateAllLayers(addresses []trinary.Hash) [][]trinary.Hash {
 	return layers
 }
 
-// calculateNextLayer calculates a single layer of the merkle tree used for coordinator signatures.
+// calculateNextLayer calculates a single layer of the Merkle tree used for coordinator signatures.
 func calculateNextLayer(lastLayer []trinary.Hash) []trinary.Hash {
 
 	resultLock := &sync.Mutex{}
@@ -120,7 +120,7 @@ func calculateNextLayer(lastLayer []trinary.Hash) []trinary.Hash {
 			for index := range input {
 				sp := kerl.NewKerl()
 
-				// merkle trees are calculated layer by layer by hashing two corresponding nodes of the last layer.
+				// Merkle trees are calculated layer by layer by hashing two corresponding nodes of the last layer.
 				// https://en.wikipedia.org/wiki/Merkle_tree
 				sp.AbsorbTrytes(lastLayer[index*2])
 				sp.AbsorbTrytes(lastLayer[index*2+1])

@@ -8,7 +8,7 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// Marshal writes the binary representation of the merkle tree to a buffer.
+// Marshal writes the binary representation of the Merkle tree to a buffer.
 func (mt *MerkleTree) Marshal(buf *bufio.Writer) (err error) {
 
 	/*
@@ -34,7 +34,7 @@ func (mt *MerkleTree) Marshal(buf *bufio.Writer) (err error) {
 	return nil
 }
 
-// Unmarshal parses the binary encoded representation of the merkle tree from a buffer.
+// Unmarshal parses the binary encoded representation of the Merkle tree from a buffer.
 func (mt *MerkleTree) Unmarshal(buf *bufio.Reader) error {
 
 	/*
@@ -69,7 +69,7 @@ func (mt *MerkleTree) Unmarshal(buf *bufio.Reader) error {
 	return nil
 }
 
-// Marshal writes the binary representation of the merkle tree layer to a buffer.
+// Marshal writes the binary representation of the Merkle tree layer to a buffer.
 func (mtl *MerkleTreeLayer) Marshal(buf *bufio.Writer) error {
 
 	if err := binary.Write(buf, binary.LittleEndian, uint32(mtl.Level)); err != nil {
@@ -138,7 +138,7 @@ func StoreMerkleTreeFile(filePath string, merkleTree *MerkleTree) error {
 }
 
 // LoadMerkleTreeFile loads a binary file persisted with StoreMerkleTreeFile
-// into a MerkleTree structure MerkleTree structure.
+// into a MerkleTree structure.
 func LoadMerkleTreeFile(filePath string) (*MerkleTree, error) {
 
 	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
