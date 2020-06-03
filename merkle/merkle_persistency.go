@@ -123,7 +123,7 @@ func StoreMerkleTreeFile(filePath string, merkleTree *MerkleTree) error {
 	}
 	defer outputFile.Close()
 
-	// write into the file with an 8kB buffer
+	// write into the file with an 8kB buffer.
 	fileBufWriter := bufio.NewWriterSize(outputFile, 8192)
 
 	if err := merkleTree.Marshal(fileBufWriter); err != nil {

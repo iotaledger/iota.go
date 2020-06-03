@@ -25,19 +25,19 @@ import (
 
 // MerkleTree contains the merkle tree used for the coordinator signatures.
 type MerkleTree struct {
-	// depth of the merkle tree
+	// The depth of the merkle tree.
 	Depth int
-	// root address of the merkle tree
+	// The root address of the merkle tree.
 	Root trinary.Hash
-	// merkle tree layers indexed by their level
+	// Merkle tree layers indexed by their level.
 	Layers map[int]*MerkleTreeLayer
 }
 
 // MerkleTreeLayer contains the nodes of a layer of a merkle tree.
 type MerkleTreeLayer struct {
-	// level of the layer in the tree
+	// The level of the layer in the tree.
 	Level int
-	// nodes of the layer
+	// The nodes of the layer.
 	Hashes []trinary.Hash
 }
 
@@ -51,7 +51,7 @@ func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int) []trin
 	wg := sync.WaitGroup{}
 	wg.Add(runtime.NumCPU())
 
-	// calculate all addresses in parallel
+	// calculate all addresses in parallel.
 	input := make(chan MilestoneIndex)
 	for i := 0; i < runtime.NumCPU(); i++ {
 		go func() {
@@ -93,7 +93,7 @@ func calculateAllLayers(addresses []trinary.Hash) [][]trinary.Hash {
 		layers = append(layers, last)
 	}
 
-	// reverse the result
+	// reverse the result.
 	for left, right := 0, len(layers)-1; left < right; left, right = left+1, right-1 {
 		layers[left], layers[right] = layers[right], layers[left]
 	}
@@ -110,7 +110,7 @@ func calculateNextLayer(lastLayer []trinary.Hash) []trinary.Hash {
 	wg := sync.WaitGroup{}
 	wg.Add(runtime.NumCPU())
 
-	// calculate all nodes in parallel
+	// calculate all nodes in parallel.
 	input := make(chan int)
 	for i := 0; i < runtime.NumCPU(); i++ {
 		go func() {
@@ -119,7 +119,7 @@ func calculateNextLayer(lastLayer []trinary.Hash) []trinary.Hash {
 			for index := range input {
 				sp := kerl.NewKerl()
 
-				// merkle trees are calculated layer by layer by hashing two corresponding nodes of the last layer
+				// merkle trees are calculated layer by layer by hashing two corresponding nodes of the last layer.
 				// https://en.wikipedia.org/wiki/Merkle_tree
 				sp.AbsorbTrytes(lastLayer[index*2])
 				sp.AbsorbTrytes(lastLayer[index*2+1])
@@ -141,7 +141,7 @@ func calculateNextLayer(lastLayer []trinary.Hash) []trinary.Hash {
 	return result
 }
 
-// computeAddress generates an address deterministically, according to the given seed, milestone index and security level.
+// computeAddress generates an address deterministically, according to the given seed, milestone index and security level;
 // a modified key derivation function is used to avoid the M-bug.
 func computeAddress(seed trinary.Hash, index MilestoneIndex, securityLvl int) (trinary.Hash, error) {
 
