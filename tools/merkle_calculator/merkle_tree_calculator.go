@@ -11,45 +11,42 @@ import (
 
 func main() {
 
-	var depth int
-	var securityLevel int
-	var seed string
-	var outputPath string
-
-	flag.IntVar(&depth, "depth", 0, "Depth of the Merkle tree to create")
-	flag.IntVar(&securityLevel, "securityLevel", 0, "Security level of the private key used")
-	flag.StringVar(&seed, "seed", "", "Seed for leaves derivation")
-	flag.StringVar(&outputPath, "output", "", "Output file path")
+	var (
+		depth         = flag.Int("depth", 0, "Depth of the Merkle tree to create")
+		securityLevel = flag.Int("securityLevel", 0, "Security level of the private key used")
+		seed          = flag.String("seed", "", "Seed for leaves derivation")
+		outputPath    = flag.String("output", "", "Output file path")
+	)
 
 	flag.Parse()
 
-	if depth < 1 {
+	if *depth < 1 {
 		log.Println("'depth' cannot be lower than 1")
 		return
 	}
 
-	if securityLevel < 1 || securityLevel > 3 {
+	if *securityLevel < 1 || *securityLevel > 3 {
 		log.Println("'securityLevel' must be 1, 2 or 3")
 		return
 	}
 
-	if len(seed) != 81 {
+	if len(*seed) != 81 {
 		log.Println("'seed' must be a string of 81 trytes")
 		return
 	}
 
-	if outputPath == "" {
+	if *outputPath == "" {
 		log.Println("'output' is required")
 		return
 	}
 
-	log.Printf("calculating %d addresses...\n", 1<<uint(depth))
+	log.Printf("calculating %d addresses...\n", 1<<uint(*depth))
 
 	ts := time.Now()
 
-	mt := merkle.CreateMerkleTree(trinary.Hash(seed), securityLevel, depth)
+	mt := merkle.CreateMerkleTree(trinary.Hash(*seed), *securityLevel, *depth)
 
-	if err := merkle.StoreMerkleTreeFile(outputPath, mt); err != nil {
+	if err := merkle.StoreMerkleTreeFile(*outputPath, mt); err != nil {
 		log.Panicf("Error persisting Merkle tree: %v", err)
 		return
 	}
