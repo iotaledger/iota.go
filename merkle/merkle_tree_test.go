@@ -23,22 +23,20 @@ var _ = Describe("Merkle", func() {
 	Context("CreateMerkleTree()", func() {
 		// Using Depth 7
 		merkleTree := CreateMerkleTree(seed, securityLevel, depth)
-		It("creates a correctly-sized tree", func() {
 
+		It("creates a correctly-sized tree", func() {
 			Expect(merkleTree.Layers[8]).To(Equal((*MerkleTreeLayer)(nil)))
 			Expect(merkleTree.Layers[7]).NotTo(Equal((*MerkleTreeLayer)(nil)))
 			Expect(merkleTree.Layers[7].Level).To(Equal(7))
 			Expect(merkleTree.Layers[3].Level).To(Equal(3))
 			Expect(len(merkleTree.Layers)).To(Equal(8))
-
 		})
+
 		It("does not use Kerl KDF", func() {
-
 			Expect(merkleTree.Root).NotTo(Equal("VERHESGRVSUWWZJNCKMQREASXZOIW9BBYGHV9QCLVCIGJYZOEIODSIHRCBZAFNNAJSTSC9LRHKKBLJPDB"))
-
 		})
-		It("leaves are computed using Shake KDF", func() {
 
+		It("leaves are computed using Shake KDF", func() {
 			leavesCount := 1 << depth
 			leaves := merkleTree.Layers[depth].Hashes
 			for index := 0; index < leavesCount; index++ {
@@ -49,28 +47,23 @@ var _ = Describe("Merkle", func() {
 				address, _ := trinary.TritsToTrytes(addressTrits)
 				Expect(leaves[index]).To(Equal(address))
 			}
-
 		})
 
 		It("each node is the hash of the corresponding two children using Kerl sponge", func() {
-
 			layers := merkleTree.Layers
 			for d := 1; d <= depth; d++ {
-				for pair := 0; pair < 1 << d; pair += 2 {
+				for pair := 0; pair < 1<<d; pair += 2 {
 					sponge := kerl.NewKerl()
 					sponge.AbsorbTrytes(layers[d].Hashes[pair])
 					sponge.AbsorbTrytes(layers[d].Hashes[pair+1])
 					Expect(layers[d-1].Hashes[pair/2]).To(Equal(sponge.MustSqueezeTrytes(consts.HashTrinarySize)))
 				}
 			}
-
 		})
 
 		It("match root", func() {
-
 			Expect(merkleTree.Layers[0].Hashes[0]).To(Equal(merkleTree.Root))
 			Expect(merkleTree.Root).To(Equal(expectedRoot))
-
 		})
 
 	})

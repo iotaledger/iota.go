@@ -41,6 +41,7 @@ type MerkleTreeLayer struct {
 	Hashes []trinary.Hash
 }
 
+// MilestoneIndex represents an index of a milestone.
 type MilestoneIndex uint32
 
 // calculateAllAddresses calculates all addresses that are used for the merkle tree of the coordinator.
@@ -178,7 +179,7 @@ func computeAddress(seed trinary.Hash, index MilestoneIndex, securityLvl int) (t
 // deriving subseeds from the provided seed.
 func CreateMerkleTree(seed trinary.Hash, securityLvl int, depth int) *MerkleTree {
 
-	addresses := calculateAllAddresses(seed, securityLvl, 1 << uint(depth))
+	addresses := calculateAllAddresses(seed, securityLvl, 1<<uint(depth))
 	layers := calculateAllLayers(addresses)
 
 	mt := &MerkleTree{Depth: depth}
