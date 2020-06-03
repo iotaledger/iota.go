@@ -9,20 +9,6 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// createMerkleTreeFile calculates a merkle tree and persists it into a file.
-func createMerkleTreeFile(filePath string, seed trinary.Hash, securityLvl int, depth int) error {
-
-	mt := merkle.CreateMerkleTree(seed, securityLvl, depth)
-
-	if err := merkle.StoreMerkleTreeFile(filePath, mt); err != nil {
-		return err
-	}
-
-	fmt.Printf("Merkle tree root: %v\n", mt.Root)
-
-	return nil
-}
-
 func main() {
 
 	var depth int
@@ -61,7 +47,15 @@ func main() {
 
 	ts := time.Now()
 
-	createMerkleTreeFile(outputPath, trinary.Hash(seed), securityLevel, depth)
+	mt := merkle.CreateMerkleTree(trinary.Hash(seed), securityLevel, depth)
+
+	if err := merkle.StoreMerkleTreeFile(outputPath, mt); err != nil {
+		fmt.Println("Error persisting Merkle tree: %v", err)
+		return
+	}
+
+	fmt.Printf("Merkle tree root: %v\n", mt.Root)
 
 	fmt.Printf("Took %v seconds.\n", time.Since(ts).Truncate(time.Second))
+
 }
