@@ -3,9 +3,16 @@ package merkle
 import (
 	"bufio"
 	"encoding/binary"
+	"errors"
+	"os"
 
 	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
+)
+
+var (
+	errPersInvDepth  = errors.New("error parsing Merkle Tree: invalid depth")
+	errPersInvLayers = errors.New("error parsing Merkle Tree: invalid Layers length")
 )
 
 // WriteTo writes the binary representation of the Merkle tree to a buffer.
@@ -58,13 +65,22 @@ func (mt *MerkleTree) ReadFrom(buf *bufio.Reader) (n int64, err error) {
 	mt.Depth = int(depth)
 	bytesRead += int64(binary.Size(&depth))
 
+	if mt.Depth == 0 {
+		return bytesRead, errPersInvDepth
+	}
+
 	var lengthLayers uint32
 	if err := binary.Read(buf, binary.LittleEndian, &lengthLayers); err != nil {
 		return bytesRead, err
 	}
 	bytesRead += int64(binary.Size(&lengthLayers))
 
-	mt.Layers = make(map[int]*MerkleTreeLayer)
+	if lengthLayers != depth {
+		return bytesRead, errPersInvLayers
+	}
+
+	// depth+1 because it has to include the Root at [0]
+	mt.Layers = make([]*MerkleTreeLayer, depth+1)
 
 	for i := 0; i < int(lengthLayers); i++ {
 		mtl := &MerkleTreeLayer{}
@@ -136,4 +152,47 @@ func (mtl *MerkleTreeLayer) ReadFrom(buf *bufio.Reader) (n int64, err error) {
 	}
 
 	return read, nil
+}
+
+// StoreMerkleTreeFile stores the MerkleTree structure in a binary output file.
+func StoreMerkleTreeFile(filePath string, merkleTree *MerkleTree) error {
+
+	outputFile, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0660)
+	if err != nil {
+		return err
+	}
+	defer outputFile.Close()
+
+	// write into the file with an 8kB buffer.
+	fileBufWriter := bufio.NewWriterSize(outputFile, 8192)
+
+	if _, err := merkleTree.WriteTo(fileBufWriter); err != nil {
+		return err
+	}
+
+	if err := fileBufWriter.Flush(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// LoadMerkleTreeFile loads a binary file persisted with StoreMerkleTreeFile
+// into a MerkleTree structure.
+func LoadMerkleTreeFile(filePath string) (*MerkleTree, error) {
+
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	buf := bufio.NewReader(file)
+
+	merkleTree := &MerkleTree{}
+	if _, err := merkleTree.ReadFrom(buf); err != nil {
+		return nil, err
+	}
+
+	return merkleTree, nil
 }

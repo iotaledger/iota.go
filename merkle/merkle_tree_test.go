@@ -22,11 +22,14 @@ var _ = Describe("Merkle", func() {
 
 	Context("CreateMerkleTree()", func() {
 		// Using Depth 7
-		merkleTree := CreateMerkleTree(seed, securityLevel, depth)
+		merkleTree, err := CreateMerkleTree(seed, securityLevel, depth)
+
+		It("does not throw", func() {
+			Expect(err).To(BeNil())
+
+		})
 
 		It("creates a correctly-sized tree", func() {
-			Expect(merkleTree.Layers[8]).To(Equal((*MerkleTreeLayer)(nil)))
-			Expect(merkleTree.Layers[7]).NotTo(Equal((*MerkleTreeLayer)(nil)))
 			Expect(merkleTree.Layers[7].Level).To(Equal(7))
 			Expect(merkleTree.Layers[3].Level).To(Equal(3))
 			Expect(len(merkleTree.Layers)).To(Equal(8))

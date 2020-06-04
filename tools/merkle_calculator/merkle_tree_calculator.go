@@ -5,11 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/merkle"
-	"github.com/iotaledger/iota.go/tool"
-	"github.com/iotaledger/iota.go/trinary"
 )
 
 func main() {
@@ -33,7 +30,7 @@ func main() {
 		return
 	}
 
-	if !guards.IsTrytesOfExactLength(*seed, consts.HashTrytesSize) {
+	if !guards.IsTransactionHash(*seed) {
 		log.Panicf("'seed' must be a string of 81 trytes")
 		return
 	}
@@ -43,13 +40,28 @@ func main() {
 		return
 	}
 
-	log.Printf("calculating %d addresses...\n", 1<<uint(*depth))
+	count := 1 << uint(*depth)
+
+	log.Printf("calculating %d addresses...\n", count)
 
 	ts := time.Now()
 
-	mt := merkle.CreateMerkleTree(trinary.Hash(*seed), *securityLevel, *depth)
+	mt, err := merkle.CreateMerkleTree(*seed, *securityLevel, *depth,
+		func(index int) {
+			if index%5000 == 0 && index != 0 {
+				ratio := float64(index) / float64(count)
+				total := time.Duration(float64(time.Since(ts)) / ratio)
+				duration := time.Until(ts.Add(total))
+				log.Printf("calculated %d/%d (%0.2f%%) addresses. %v left...\n", index, count, ratio*100.0, duration.Truncate(time.Second))
+			}
+		})
 
-	if err := tool.StoreMerkleTreeFile(*outputPath, mt); err != nil {
+	if err != nil {
+		log.Panicf("Error creating Merkle tree: %v", err)
+		return
+	}
+
+	if err := merkle.StoreMerkleTreeFile(*outputPath, mt); err != nil {
 		log.Panicf("Error persisting Merkle tree: %v", err)
 		return
 	}
