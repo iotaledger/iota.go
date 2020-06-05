@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/iotaledger/iota.go/guards"
@@ -14,6 +15,7 @@ func main() {
 	var (
 		depth         = flag.Int("depth", 0, "Depth of the Merkle tree to create")
 		securityLevel = flag.Int("securityLevel", 0, "Security level of the private key used")
+		parallelism   = flag.Int("parallelism", 0, "Amount of concurrent threads used")
 		seed          = flag.String("seed", "", "Seed for leaves derivation")
 		outputPath    = flag.String("output", "", "Output file path")
 	)
@@ -28,6 +30,10 @@ func main() {
 	if *securityLevel < 1 || *securityLevel > 3 {
 		log.Panicf("'securityLevel' must be 1, 2 or 3")
 		return
+	}
+
+	if *parallelism == 0 {
+		*parallelism = runtime.GOMAXPROCS(0)
 	}
 
 	if !guards.IsTransactionHash(*seed) {
@@ -46,15 +52,16 @@ func main() {
 
 	ts := time.Now()
 
-	mt, err := merkle.CreateMerkleTree(*seed, *securityLevel, *depth,
-		func(index int) {
-			if index%5000 == 0 && index != 0 {
-				ratio := float64(index) / float64(count)
-				total := time.Duration(float64(time.Since(ts)) / ratio)
-				duration := time.Until(ts.Add(total))
-				log.Printf("calculated %d/%d (%0.2f%%) addresses. %v left...\n", index, count, ratio*100.0, duration.Truncate(time.Second))
-			}
-		})
+	progressCallback := func(index uint32) {
+		if index%5000 == 0 && index != 0 {
+			ratio := float64(index) / float64(count)
+			total := time.Duration(float64(time.Since(ts)) / ratio)
+			duration := time.Until(ts.Add(total))
+			log.Printf("calculated %d/%d (%0.2f%%) addresses. %v left...\n", index, count, ratio*100.0, duration.Truncate(time.Second))
+		}
+	}
+
+	mt, err := merkle.CreateMerkleTree(*seed, *securityLevel, *depth, merkle.MerkleCreateOptions{ProgressCallback: progressCallback, Parallelism: *parallelism})
 
 	if err != nil {
 		log.Panicf("Error creating Merkle tree: %v", err)

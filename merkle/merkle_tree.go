@@ -43,19 +43,37 @@ type MerkleTreeLayer struct {
 	Hashes []trinary.Hash
 }
 
-// milestoneIndex represents an index of a milestone.
-type milestoneIndex uint32
+// MerkleCreateOptions is used to pass optional creation options to CreateMerkleTree.
+type MerkleCreateOptions struct {
+	// A callback that will be called after each leaf generation, with the corresponding index.
+	ProgressCallback func(uint32)
+	// The number of parallel threads used by the generation routines.
+	Parallelism int
+}
 
 // calculateAllAddresses calculates all addresses that are used for the Merkle tree of the coordinator.
-func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, progressCallback ...func(int)) []trinary.Hash {
+func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, opts ...MerkleCreateOptions) []trinary.Hash {
+
+	var progressCallback func(uint32) = nil
+	parallelism := runtime.GOMAXPROCS(0)
+
+	if len(opts) > 0 {
+		if opts[0].ProgressCallback != nil {
+			progressCallback = opts[0].ProgressCallback
+		}
+		if opts[0].Parallelism > 0 {
+			parallelism = opts[0].Parallelism
+		}
+	}
+
 	result := make([]trinary.Hash, count)
 
 	wg := sync.WaitGroup{}
-	wg.Add(runtime.NumCPU())
+	wg.Add(parallelism)
 
 	// calculate all addresses in parallel.
-	input := make(chan milestoneIndex)
-	for i := 0; i < runtime.NumCPU(); i++ {
+	input := make(chan uint32)
+	for i := 0; i < parallelism; i++ {
 		go func() {
 			defer wg.Done()
 
@@ -70,10 +88,10 @@ func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, progre
 	}
 
 	for index := 0; index < count; index++ {
-		input <- milestoneIndex(index)
+		input <- uint32(index)
 
-		if len(progressCallback) > 0 {
-			progressCallback[0](index)
+		if progressCallback != nil {
+			progressCallback(uint32(index))
 		}
 	}
 
@@ -84,31 +102,40 @@ func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, progre
 }
 
 // calculateAllLayers calculates all layers of the Merkle tree used for coordinator signatures.
-func calculateAllLayers(addresses []trinary.Hash) [][]trinary.Hash {
+func calculateAllLayers(addresses []trinary.Hash, opts ...MerkleCreateOptions) [][]trinary.Hash {
 	depth := bits.Len(uint(len(addresses))) - 1
 
+	// depth+1 because it has to include the Root at [0]
 	layers := make([][]trinary.Hash, depth+1)
 
 	layers[depth] = addresses
 
 	for i := depth - 1; i >= 0; i-- {
-		layers[i] = calculateNextLayer(layers[i+1])
+		layers[i] = calculateNextLayer(layers[i+1], opts...)
 	}
 
 	return layers
 }
 
 // calculateNextLayer calculates a single layer of the Merkle tree used for coordinator signatures.
-func calculateNextLayer(lastLayer []trinary.Hash) []trinary.Hash {
+func calculateNextLayer(lastLayer []trinary.Hash, opts ...MerkleCreateOptions) []trinary.Hash {
+
+	parallelism := runtime.GOMAXPROCS(0)
+
+	if len(opts) > 0 {
+		if opts[0].Parallelism > 0 {
+			parallelism = opts[0].Parallelism
+		}
+	}
 
 	result := make([]trinary.Hash, len(lastLayer)/2)
 
 	wg := sync.WaitGroup{}
-	wg.Add(runtime.NumCPU())
+	wg.Add(parallelism)
 
 	// calculate all nodes in parallel.
 	input := make(chan int)
-	for i := 0; i < runtime.NumCPU(); i++ {
+	for i := 0; i < parallelism; i++ {
 		go func() {
 			defer wg.Done()
 
@@ -135,9 +162,9 @@ func calculateNextLayer(lastLayer []trinary.Hash) []trinary.Hash {
 	return result
 }
 
-// computeAddress generates an address deterministically, according to the given seed, milestone index and security level;
+// computeAddress generates an address deterministically, according to the given seed, subseed index and security level;
 // a modified key derivation function is used to avoid the M-bug.
-func computeAddress(seed trinary.Hash, index milestoneIndex, securityLvl int) (trinary.Hash, error) {
+func computeAddress(seed trinary.Hash, index uint32, securityLvl int) (trinary.Hash, error) {
 
 	k := kerl.NewKerl()
 
@@ -171,8 +198,9 @@ func computeAddress(seed trinary.Hash, index milestoneIndex, securityLvl int) (t
 
 // CreateMerkleTree creates a MerkleTree structure of the specified depth,
 // using a SHAKE256 key of the the length specified by the supplied securitylevel,
-// deriving subseeds from the provided seed.
-func CreateMerkleTree(seed trinary.Hash, securityLvl int, depth int, progressCallback ...func(int)) (*MerkleTree, error) {
+// deriving subseeds from the provided seed. An optional MerkleCreateOptions struct can be
+// passed to specify function's parallelism and progress callback.
+func CreateMerkleTree(seed trinary.Hash, securityLvl int, depth int, opts ...MerkleCreateOptions) (*MerkleTree, error) {
 
 	if depth < 1 {
 		return nil, errInvDepth
@@ -184,10 +212,11 @@ func CreateMerkleTree(seed trinary.Hash, securityLvl int, depth int, progressCal
 		return nil, consts.ErrInvalidSeed
 	}
 
-	addresses := calculateAllAddresses(seed, securityLvl, 1<<uint(depth), progressCallback...)
-	layers := calculateAllLayers(addresses)
+	addresses := calculateAllAddresses(seed, securityLvl, 1<<uint(depth), opts...)
+	layers := calculateAllLayers(addresses, opts...)
 
 	mt := &MerkleTree{Depth: depth}
+	// depth+1 because it has to include the Root at [0]
 	mt.Layers = make([]*MerkleTreeLayer, depth+1)
 
 	for i, layer := range layers {
