@@ -13,7 +13,7 @@ import (
 func main() {
 
 	var (
-		depth         = flag.Int("depth", 0, "Depth of the merkle tree to create")
+		depth         = flag.Int("depth", 0, "Depth of the Merkle tree to create")
 		securityLevel = flag.Int("securityLevel", 0, "Security level of the private key used")
 		parallelism   = flag.Int("parallelism", 0, "Amount of concurrent threads used")
 		seed          = flag.String("seed", "", "Seed for leaves derivation")
@@ -81,16 +81,16 @@ func main() {
 		})
 
 	if err != nil {
-		log.Panicf("Error creating merkle tree: %v", err)
+		log.Panicf("Error creating Merkle tree: %v", err)
 		return
 	}
 
 	if err := merkle.StoreMerkleTreeFile(*outputPath, mt); err != nil {
-		log.Panicf("Error persisting merkle tree: %v", err)
+		log.Panicf("Error persisting Merkle tree: %v", err)
 		return
 	}
 
-	log.Printf("merkle tree root: %v\n", mt.Root)
+	log.Printf("Merkle tree root: %v\n", mt.Root)
 
-	log.Printf("successfully created merkle tree (took %v).\n", time.Since(ts).Truncate(time.Second))
+	log.Printf("successfully created Merkle tree (took %v).\n", time.Since(ts).Truncate(time.Second))
 }

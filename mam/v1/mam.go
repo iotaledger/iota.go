@@ -25,7 +25,7 @@ var (
 // MAMInitEncryption initializes the encryption/decryption state for a MAM session.
 //
 //	sideKey is the encryption/decryption key
-//	merkleRoot is the merkle root
+//	merkleRoot is the Merkle root
 //	spongeFunc is the spongeFunction instance used for encryption/decryption
 func MAMInitEncryption(sideKey Trits, merkleRoot Trits, spongeFunc sponge.SpongeFunction) {
 	spongeFunc.Absorb(sideKey)
@@ -35,7 +35,7 @@ func MAMInitEncryption(sideKey Trits, merkleRoot Trits, spongeFunc sponge.Sponge
 // PayloadMinLength computes the minimum length of a payload.
 //
 //	messageLength is the length of the message
-//	merkleTreeLength is the length of the merkle tree
+//	merkleTreeLength is the length of the Merkle tree
 //	index is the leaf index
 //	security is the security level used to generate addresses
 //
@@ -53,11 +53,11 @@ func PayloadMinLength(messageLength, merkleTreeLength, index uint64, security Se
 //	payloadLength is the length of the payload
 //	message is the message to encrypt
 //	sideKey is the encryption key
-//	merkleTree is the merkle tree
-//	merkleTreeLength is the length of the merkle tree
-//	leafCount is the number of leaves of the merkle tree
+//	merkleTree is the Merkle tree
+//	merkleTreeLength is the length of the Merkle tree
+//	leafCount is the number of leaves of the Merkle tree
 //	index is the leaf index
-//	nextRoot is the merkle root of the next MAM payload
+//	nextRoot is the Merkle root of the next MAM payload
 //	start is the offset used to generate addresses
 //	seed is the seed used to generate addresses - Not sent over the network
 //	security is the security level used to generate addresses
@@ -186,11 +186,11 @@ func MAMCreate(payloadLength uint64,
 //	payload is the payload
 //	payloadLength is the length of the payload
 //	sideKey is the decryption key
-//	root is the merkle root
+//	root is the Merkle root
 //
 // Returns:
 //  parsedIndex is the parsed index of the message
-//  parsedNextRoot is the merkle root of the next MAM payload
+//  parsedNextRoot is the Merkle root of the next MAM payload
 //	parsedMessage is the decrypted message
 //	parsedSecurity is the parsed security level of the message
 //	err is the error message
@@ -289,7 +289,7 @@ func MAMParse(payload Trits, payloadLength uint64, sideKey Trytes, root Trits) (
 	siblingsNumber, encSiblingsNumberLength, err := DecodeInt64(payload[offset:])
 	offset += encSiblingsNumberLength
 
-	// get merkle root from siblings from payload
+	// get Merkle root from siblings from payload
 	if siblingsNumber != 0 {
 		if offset >= payloadLength {
 			return 0, "", "", SecurityLevel(0), ErrPayloadTooShort
@@ -297,7 +297,7 @@ func MAMParse(payload Trits, payloadLength uint64, sideKey Trytes, root Trits) (
 		address, err = MerkleRoot(address, payload[offset:], uint64(siblingsNumber), parsedIndex, encCurl)
 	}
 
-	// check merkle root with the given root
+	// check Merkle root with the given root
 	if !reflect.DeepEqual(address, root[:HashTrinarySize]) {
 		return 0, "", "", SecurityLevel(0), ErrMerkleRootDoesNotMatch
 	}

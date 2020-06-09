@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	errPersInvDepth  = errors.New("error parsing merkle tree: invalid depth")
-	errPersInvLayers = errors.New("error parsing merkle tree: invalid layers length")
+	errPersInvDepth  = errors.New("error parsing Merkle tree: invalid depth")
+	errPersInvLayers = errors.New("error parsing Merkle tree: invalid layers length")
 )
 
 // WriteTo writes the binary representation of the Merkle tree to a buffer.
@@ -75,6 +75,7 @@ func (mt *MerkleTree) ReadFrom(buf *bufio.Reader) (n int64, err error) {
 	}
 	bytesRead += int64(binary.Size(&lengthLayers))
 
+	// depth+1 because it has to include the Root at [0]
 	if lengthLayers != depth+1 {
 		return bytesRead, errPersInvLayers
 	}
@@ -124,8 +125,7 @@ func (mtl *MerkleTreeLayer) WriteTo(buf *bufio.Writer) (int64, error) {
 	return bytesWritten, nil
 }
 
-// ReadFrom parses the binary encoded representation of the merkle tree layer from a buffer.
-func (mtl *MerkleTreeLayer) ReadFrom(buf *bufio.Reader) (n int64, err error) {
+// ReadFrom parses the binary encoded representation of the Merkle tree layer from a buffer.
 
 	var read int64 = 0
 	var level uint32

@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	// ErrDepthTooSmall is returned when the depth for creating the merkle tree is too low.
+	// ErrDepthTooSmall is returned when the depth for creating the Merkle tree is too low.
 	ErrDepthTooSmall = errors.New("depth is set too low, must be >0")
 )
 
@@ -47,11 +47,11 @@ type MerkleTreeLayer struct {
 
 // MerkleCreateOptions is used to pass optional creation options to CreateMerkleTree.
 type MerkleCreateOptions struct {
-	// CalculateAddressesStartCallback will be called at start of leaf generation, with the total count of the leafes.
+	// CalculateAddressesStartCallback will be called at the start of leaf generation, with the total count of the leaves.
 	CalculateAddressesStartCallback func(count uint32)
 	// CalculateAddressesCallback will be called after each leaf generation, with the corresponding index.
 	CalculateAddressesCallback func(index uint32)
-	// CalculateAddressesFinishedCallback will be called after leaf generation is finished, with the total count of the leafes.
+	// CalculateAddressesFinishedCallback will be called after leaf generation is finished, with the total count of the leaves.
 	CalculateAddressesFinishedCallback func(count uint32)
 	// CalculateLayersCallback will be called before each layer generation, with the corresponding index.
 	CalculateLayersCallback func(index uint32)
