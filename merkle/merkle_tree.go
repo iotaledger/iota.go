@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/kerl"
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/signing/key"
@@ -22,7 +23,8 @@ import (
 )
 
 var (
-	errInvDepth = errors.New("invalid depth")
+	// ErrDepthTooSmall is returned when the depth for creating the Merkle tree is too low.
+	ErrDepthTooSmall = errors.New("depth is set too low, must be >0")
 )
 
 // MerkleTree contains the Merkle tree used for the coordinator signatures.
@@ -45,8 +47,14 @@ type MerkleTreeLayer struct {
 
 // MerkleCreateOptions is used to pass optional creation options to CreateMerkleTree.
 type MerkleCreateOptions struct {
-	// A callback that will be called after each leaf generation, with the corresponding index.
-	ProgressCallback func(uint32)
+	// CalculateAddressesStartCallback will be called at the start of leaf generation, with the total count of the leaves.
+	CalculateAddressesStartCallback func(count uint32)
+	// CalculateAddressesCallback will be called after each leaf generation, with the corresponding index.
+	CalculateAddressesCallback func(index uint32)
+	// CalculateAddressesFinishedCallback will be called after leaf generation is finished, with the total count of the leaves.
+	CalculateAddressesFinishedCallback func(count uint32)
+	// CalculateLayersCallback will be called before each layer generation, with the corresponding index.
+	CalculateLayersCallback func(index uint32)
 	// The number of parallel threads used by the generation routines.
 	Parallelism int
 }
@@ -54,16 +62,28 @@ type MerkleCreateOptions struct {
 // calculateAllAddresses calculates all addresses that are used for the Merkle tree of the coordinator.
 func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, opts ...MerkleCreateOptions) []trinary.Hash {
 
+	var progressStartCallback func(uint32) = nil
 	var progressCallback func(uint32) = nil
+	var progressFinishedCallback func(uint32) = nil
 	parallelism := runtime.GOMAXPROCS(0)
 
 	if len(opts) > 0 {
-		if opts[0].ProgressCallback != nil {
-			progressCallback = opts[0].ProgressCallback
+		if opts[0].CalculateAddressesStartCallback != nil {
+			progressStartCallback = opts[0].CalculateAddressesStartCallback
+		}
+		if opts[0].CalculateAddressesCallback != nil {
+			progressCallback = opts[0].CalculateAddressesCallback
+		}
+		if opts[0].CalculateAddressesFinishedCallback != nil {
+			progressFinishedCallback = opts[0].CalculateAddressesFinishedCallback
 		}
 		if opts[0].Parallelism > 0 {
 			parallelism = opts[0].Parallelism
 		}
+	}
+
+	if progressStartCallback != nil {
+		progressStartCallback(uint32(count))
 	}
 
 	result := make([]trinary.Hash, count)
@@ -98,6 +118,10 @@ func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, opts .
 	close(input)
 	wg.Wait()
 
+	if progressFinishedCallback != nil {
+		progressFinishedCallback(uint32(count))
+	}
+
 	return result
 }
 
@@ -105,12 +129,23 @@ func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, opts .
 func calculateAllLayers(addresses []trinary.Hash, opts ...MerkleCreateOptions) [][]trinary.Hash {
 	depth := bits.Len(uint(len(addresses))) - 1
 
+	var progressCallback func(uint32) = nil
+
+	if len(opts) > 0 {
+		if opts[0].CalculateLayersCallback != nil {
+			progressCallback = opts[0].CalculateLayersCallback
+		}
+	}
+
 	// depth+1 because it has to include the Root at [0]
 	layers := make([][]trinary.Hash, depth+1)
 
 	layers[depth] = addresses
 
 	for i := depth - 1; i >= 0; i-- {
+		if progressCallback != nil {
+			progressCallback(uint32(i))
+		}
 		layers[i] = calculateNextLayer(layers[i+1], opts...)
 	}
 
@@ -203,12 +238,10 @@ func computeAddress(seed trinary.Hash, index uint32, securityLvl int) (trinary.H
 func CreateMerkleTree(seed trinary.Hash, securityLvl int, depth int, opts ...MerkleCreateOptions) (*MerkleTree, error) {
 
 	if depth < 1 {
-		return nil, errInvDepth
+		return nil, ErrDepthTooSmall
 	}
 
-	if err := trinary.ValidTrytes(seed); err != nil {
-		return nil, err
-	} else if len(seed) != consts.HashTrinarySize/consts.TrinaryRadix {
+	if !guards.IsTransactionHash(seed) {
 		return nil, consts.ErrInvalidSeed
 	}
 

@@ -101,7 +101,7 @@ func MerkleCreate(baseSize uint64, seed Trytes, offset uint64, security Security
 
 	// enforcing the tree to be perfect by checking if the base size (number of leaves) is a power of two
 	if (baseSize != 0) && (baseSize&(baseSize-1)) != 0 {
-		return nil, errors.New("Base size of the merkle tree should be a power of 2")
+		return nil, errors.New("Base size of the Merkle tree should be a power of 2")
 	}
 
 	treeMerkleSize := MerkleSize(baseSize)

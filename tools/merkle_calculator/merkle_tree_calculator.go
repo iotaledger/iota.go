@@ -48,11 +48,13 @@ func main() {
 
 	count := 1 << uint(*depth)
 
-	log.Printf("calculating %d addresses...\n", count)
-
 	ts := time.Now()
 
-	progressCallback := func(index uint32) {
+	calculateAddressesStartCallback := func(count uint32) {
+		log.Printf("calculating %d addresses...\n", count)
+	}
+
+	calculateAddressesCallback := func(index uint32) {
 		if index%5000 == 0 && index != 0 {
 			ratio := float64(index) / float64(count)
 			total := time.Duration(float64(time.Since(ts)) / ratio)
@@ -61,7 +63,22 @@ func main() {
 		}
 	}
 
-	mt, err := merkle.CreateMerkleTree(*seed, *securityLevel, *depth, merkle.MerkleCreateOptions{ProgressCallback: progressCallback, Parallelism: *parallelism})
+	calculateAddressesFinishedCallback := func(count uint32) {
+		log.Printf("calculated %d/%d (100.00%%) addresses (took %v).\n", count, count, time.Since(ts).Truncate(time.Second))
+	}
+
+	calculateLayersCallback := func(index uint32) {
+		log.Printf("calculating nodes for layer %d\n", index)
+	}
+
+	mt, err := merkle.CreateMerkleTree(*seed, *securityLevel, *depth,
+		merkle.MerkleCreateOptions{
+			CalculateAddressesStartCallback:    calculateAddressesStartCallback,
+			CalculateAddressesCallback:         calculateAddressesCallback,
+			CalculateAddressesFinishedCallback: calculateAddressesFinishedCallback,
+			CalculateLayersCallback:            calculateLayersCallback,
+			Parallelism:                        *parallelism,
+		})
 
 	if err != nil {
 		log.Panicf("Error creating Merkle tree: %v", err)
@@ -75,6 +92,5 @@ func main() {
 
 	log.Printf("Merkle tree root: %v\n", mt.Root)
 
-	log.Printf("Took %v seconds.\n", time.Since(ts).Truncate(time.Second))
-
+	log.Printf("successfully created Merkle tree (took %v).\n", time.Since(ts).Truncate(time.Second))
 }
