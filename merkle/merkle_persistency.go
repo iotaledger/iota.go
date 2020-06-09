@@ -75,7 +75,7 @@ func (mt *MerkleTree) ReadFrom(buf *bufio.Reader) (n int64, err error) {
 	}
 	bytesRead += int64(binary.Size(&lengthLayers))
 
-	if lengthLayers != depth {
+	if lengthLayers != depth+1 {
 		return bytesRead, errPersInvLayers
 	}
 
