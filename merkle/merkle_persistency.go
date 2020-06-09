@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/binary"
 	"errors"
+	"io"
 	"os"
 
 	"github.com/iotaledger/iota.go/consts"
@@ -16,7 +17,7 @@ var (
 )
 
 // WriteTo writes the binary representation of the Merkle tree to a buffer.
-func (mt *MerkleTree) WriteTo(buf *bufio.Writer) (n int64, err error) {
+func (mt *MerkleTree) WriteTo(writer io.Writer) (n int64, err error) {
 
 	/*
 	 4 bytes uint32 depth
@@ -25,12 +26,12 @@ func (mt *MerkleTree) WriteTo(buf *bufio.Writer) (n int64, err error) {
 
 	var bytesWritten int64 = 0
 
-	if err := binary.Write(buf, binary.LittleEndian, uint32(mt.Depth)); err != nil {
+	if err := binary.Write(writer, binary.LittleEndian, uint32(mt.Depth)); err != nil {
 		return bytesWritten, err
 	}
 	bytesWritten += int64(binary.Size(uint32(mt.Depth)))
 
-	if err := binary.Write(buf, binary.LittleEndian, uint32(len(mt.Layers))); err != nil {
+	if err := binary.Write(writer, binary.LittleEndian, uint32(len(mt.Layers))); err != nil {
 		return bytesWritten, err
 	}
 	bytesWritten += int64(binary.Size(uint32(len(mt.Layers))))
@@ -38,7 +39,7 @@ func (mt *MerkleTree) WriteTo(buf *bufio.Writer) (n int64, err error) {
 	for layer := 0; layer < len(mt.Layers); layer++ {
 		merkleTreeLayer := mt.Layers[layer]
 
-		bytesWrittenLayer, err := merkleTreeLayer.WriteTo(buf)
+		bytesWrittenLayer, err := merkleTreeLayer.WriteTo(writer)
 		if err != nil {
 			return bytesWritten, err
 		}
@@ -49,7 +50,7 @@ func (mt *MerkleTree) WriteTo(buf *bufio.Writer) (n int64, err error) {
 }
 
 // ReadFrom parses the binary encoded representation of the Merkle tree from a buffer.
-func (mt *MerkleTree) ReadFrom(buf *bufio.Reader) (n int64, err error) {
+func (mt *MerkleTree) ReadFrom(reader io.Reader) (n int64, err error) {
 
 	/*
 	 4 bytes uint32 depth
@@ -59,7 +60,7 @@ func (mt *MerkleTree) ReadFrom(buf *bufio.Reader) (n int64, err error) {
 	var bytesRead int64 = 0
 
 	var depth uint32
-	if err := binary.Read(buf, binary.LittleEndian, &depth); err != nil {
+	if err := binary.Read(reader, binary.LittleEndian, &depth); err != nil {
 		return bytesRead, err
 	}
 	mt.Depth = int(depth)
@@ -70,7 +71,7 @@ func (mt *MerkleTree) ReadFrom(buf *bufio.Reader) (n int64, err error) {
 	}
 
 	var lengthLayers uint32
-	if err := binary.Read(buf, binary.LittleEndian, &lengthLayers); err != nil {
+	if err := binary.Read(reader, binary.LittleEndian, &lengthLayers); err != nil {
 		return bytesRead, err
 	}
 	bytesRead += int64(binary.Size(&lengthLayers))
@@ -86,7 +87,7 @@ func (mt *MerkleTree) ReadFrom(buf *bufio.Reader) (n int64, err error) {
 	for i := 0; i < int(lengthLayers); i++ {
 		mtl := &MerkleTreeLayer{}
 
-		bytesReadLayer, err := mtl.ReadFrom(buf)
+		bytesReadLayer, err := mtl.ReadFrom(reader)
 		if err != nil {
 			return bytesRead, err
 		}
@@ -100,23 +101,23 @@ func (mt *MerkleTree) ReadFrom(buf *bufio.Reader) (n int64, err error) {
 }
 
 // WriteTo writes the binary representation of the Merkle tree layer to a buffer.
-func (mtl *MerkleTreeLayer) WriteTo(buf *bufio.Writer) (int64, error) {
+func (mtl *MerkleTreeLayer) WriteTo(writer io.Writer) (int64, error) {
 
 	var bytesWritten int64 = 0
 
-	if err := binary.Write(buf, binary.LittleEndian, uint32(mtl.Level)); err != nil {
+	if err := binary.Write(writer, binary.LittleEndian, uint32(mtl.Level)); err != nil {
 		return bytesWritten, err
 	}
 	bytesWritten += int64(binary.Size(uint32(mtl.Level)))
 
-	if err := binary.Write(buf, binary.LittleEndian, uint32(len(mtl.Hashes))); err != nil {
+	if err := binary.Write(writer, binary.LittleEndian, uint32(len(mtl.Hashes))); err != nil {
 		return bytesWritten, err
 	}
 	bytesWritten += int64(binary.Size(uint32(len(mtl.Hashes))))
 
 	for _, hash := range mtl.Hashes {
 		nodesData := trinary.MustTrytesToBytes(hash)[:49]
-		if err := binary.Write(buf, binary.LittleEndian, nodesData); err != nil {
+		if err := binary.Write(writer, binary.LittleEndian, nodesData); err != nil {
 			return bytesWritten, err
 		}
 		bytesWritten += int64(binary.Size(nodesData))
@@ -126,25 +127,26 @@ func (mtl *MerkleTreeLayer) WriteTo(buf *bufio.Writer) (int64, error) {
 }
 
 // ReadFrom parses the binary encoded representation of the Merkle tree layer from a buffer.
+func (mtl *MerkleTreeLayer) ReadFrom(reader io.Reader) (n int64, err error) {
 
 	var read int64 = 0
 	var level uint32
 
-	if err := binary.Read(buf, binary.LittleEndian, &level); err != nil {
+	if err := binary.Read(reader, binary.LittleEndian, &level); err != nil {
 		return read, err
 	}
 	read += int64(binary.Size(&level))
 	mtl.Level = int(level)
 
 	var hashesCount uint32
-	if err := binary.Read(buf, binary.LittleEndian, &hashesCount); err != nil {
+	if err := binary.Read(reader, binary.LittleEndian, &hashesCount); err != nil {
 		return read, err
 	}
 	read += int64(binary.Size(&hashesCount))
 
 	hashBuf := make([]byte, 49)
 	for i := 0; i < int(hashesCount); i++ {
-		if err := binary.Read(buf, binary.LittleEndian, hashBuf); err != nil {
+		if err := binary.Read(reader, binary.LittleEndian, hashBuf); err != nil {
 			return read, err
 		}
 		read += int64(binary.Size(hashBuf))
