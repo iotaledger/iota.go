@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/kerl"
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/signing/key"
@@ -22,7 +23,8 @@ import (
 )
 
 var (
-	errInvDepth = errors.New("invalid depth")
+	// ErrDepthTooSmall is returned when the depth for creating the merkle tree is too low.
+	ErrDepthTooSmall = errors.New("depth is set too low, must be >0")
 )
 
 // MerkleTree contains the Merkle tree used for the coordinator signatures.
@@ -203,12 +205,10 @@ func computeAddress(seed trinary.Hash, index uint32, securityLvl int) (trinary.H
 func CreateMerkleTree(seed trinary.Hash, securityLvl int, depth int, opts ...MerkleCreateOptions) (*MerkleTree, error) {
 
 	if depth < 1 {
-		return nil, errInvDepth
+		return nil, ErrDepthTooSmall
 	}
 
-	if err := trinary.ValidTrytes(seed); err != nil {
-		return nil, err
-	} else if len(seed) != consts.HashTrinarySize/consts.TrinaryRadix {
+	if !guards.IsTransactionHash(seed) {
 		return nil, consts.ErrInvalidSeed
 	}
 
