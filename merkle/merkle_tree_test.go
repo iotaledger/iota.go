@@ -55,7 +55,7 @@ var _ = Describe("Merkle", func() {
 		It("each node is the hash of the corresponding two children using Kerl sponge", func() {
 			layers := merkleTree.Layers
 			for d := 1; d <= depth; d++ {
-				for pair := 0; pair < 1<<d; pair += 2 {
+				for pair := 0; pair < 1<<uint(d); pair += 2 {
 					sponge := kerl.NewKerl()
 					sponge.MustAbsorbTrytes(layers[d].Hashes[pair])
 					sponge.MustAbsorbTrytes(layers[d].Hashes[pair+1])
