@@ -26,10 +26,11 @@ import (
 var (
 	// ErrDepthTooSmall is returned when the depth for creating the Merkle tree is too low.
 	ErrDepthTooSmall = errors.New("depth must be positive")
+	// ErrDepthTooLarge is returned when the depth for creating the Merkle tree is too high.
 	ErrDepthTooLarge = errors.New("largest depth is 32")
-
+	// ErrInvalidAuditPathLength is returned when the length of the Merkle audit path does not match the leaf index.
 	ErrInvalidAuditPathLength = errors.New("invalid length of the audit path")
-
+	// ErrInvalidLeafIndex is returned for invalid leaf indices.
 	ErrInvalidLeafIndex = errors.New("invalid leaf index")
 )
 

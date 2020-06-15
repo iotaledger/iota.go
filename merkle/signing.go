@@ -58,7 +58,7 @@ func MerkleRoot(leafHash trinary.Hash, leafIndex uint32, auditPath []trinary.Has
 	return hash, nil
 }
 
-// SignatureFragment returns the signed fragments of hashToSign for the given seed and leafIndex.
+// SignatureFragments returns the signed fragments of hashToSign for the given seed and leafIndex.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func SignatureFragments(seed Hash, leafIndex uint32, securityLvl SecurityLevel, hashToSign Hash, spongeFunc ...sponge.SpongeFunction) ([]Trytes, error) {
 	if !guards.IsTransactionHash(seed) {
