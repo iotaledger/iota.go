@@ -19,12 +19,18 @@ import (
 	"github.com/iotaledger/iota.go/kerl"
 	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/signing/key"
+	sponge "github.com/iotaledger/iota.go/signing/utils"
 	"github.com/iotaledger/iota.go/trinary"
 )
 
 var (
 	// ErrDepthTooSmall is returned when the depth for creating the Merkle tree is too low.
-	ErrDepthTooSmall = errors.New("depth is set too low, must be >0")
+	ErrDepthTooSmall = errors.New("depth must be positive")
+	ErrDepthTooLarge = errors.New("largest depth is 32")
+
+	ErrInvalidAuditPathLength = errors.New("invalid length of the audit path")
+
+	ErrInvalidLeafIndex = errors.New("invalid leaf index")
 )
 
 // MerkleTree contains the Merkle tree used for the coordinator signatures.
@@ -60,7 +66,7 @@ type MerkleCreateOptions struct {
 }
 
 // calculateAllAddresses calculates all addresses that are used for the Merkle tree of the coordinator.
-func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, opts ...MerkleCreateOptions) []trinary.Hash {
+func calculateAllAddresses(seed trinary.Hash, securityLvl consts.SecurityLevel, count uint32, opts ...MerkleCreateOptions) []trinary.Hash {
 
 	var progressStartCallback func(uint32) = nil
 	var progressCallback func(uint32) = nil
@@ -83,7 +89,7 @@ func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, opts .
 	}
 
 	if progressStartCallback != nil {
-		progressStartCallback(uint32(count))
+		progressStartCallback(count)
 	}
 
 	result := make([]trinary.Hash, count)
@@ -102,16 +108,16 @@ func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, opts .
 				if err != nil {
 					panic(err)
 				}
-				result[int(index)] = address
+				result[index] = address
 			}
 		}()
 	}
 
-	for index := 0; index < count; index++ {
-		input <- uint32(index)
+	for index := uint32(0); index < count; index++ {
+		input <- index
 
 		if progressCallback != nil {
-			progressCallback(uint32(index))
+			progressCallback(index)
 		}
 	}
 
@@ -119,7 +125,7 @@ func calculateAllAddresses(seed trinary.Hash, securityLvl int, count int, opts .
 	wg.Wait()
 
 	if progressFinishedCallback != nil {
-		progressFinishedCallback(uint32(count))
+		progressFinishedCallback(count)
 	}
 
 	return result
@@ -179,8 +185,8 @@ func calculateNextLayer(lastLayer []trinary.Hash, opts ...MerkleCreateOptions) [
 
 				// Merkle trees are calculated layer by layer by hashing two corresponding nodes of the last layer.
 				// https://en.wikipedia.org/wiki/Merkle_tree
-				sp.AbsorbTrytes(lastLayer[index*2])
-				sp.AbsorbTrytes(lastLayer[index*2+1])
+				sp.MustAbsorbTrytes(lastLayer[index*2])
+				sp.MustAbsorbTrytes(lastLayer[index*2+1])
 
 				result[index] = sp.MustSqueezeTrytes(consts.HashTrinarySize)
 			}
@@ -197,18 +203,21 @@ func calculateNextLayer(lastLayer []trinary.Hash, opts ...MerkleCreateOptions) [
 	return result
 }
 
-// computeAddress generates an address deterministically, according to the given seed, subseed index and security level;
-// a modified key derivation function is used to avoid the M-bug.
-func computeAddress(seed trinary.Hash, index uint32, securityLvl int) (trinary.Hash, error) {
-
-	k := kerl.NewKerl()
-
-	subSeedTrits, err := signing.Subseed(seed, uint64(index), k)
+func computeKey(seed trinary.Hash, index uint32, securityLvl consts.SecurityLevel, spongeFunc sponge.SpongeFunction) (trinary.Trits, error) {
+	subSeedTrits, err := signing.Subseed(seed, uint64(index), spongeFunc)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	keyTrits, err := key.Shake(subSeedTrits, consts.SecurityLevel(securityLvl))
+	return key.Shake(subSeedTrits, securityLvl)
+}
+
+// computeAddress generates an address deterministically, according to the given seed, subseed index and security level;
+// a modified key derivation function is used to avoid the M-bug.
+func computeAddress(seed trinary.Hash, index uint32, securityLvl consts.SecurityLevel) (trinary.Hash, error) {
+	k := kerl.NewKerl()
+
+	keyTrits, err := computeKey(seed, index, securityLvl, k)
 	if err != nil {
 		return "", err
 	}
@@ -235,10 +244,12 @@ func computeAddress(seed trinary.Hash, index uint32, securityLvl int) (trinary.H
 // using a SHAKE256 key of the the length specified by the supplied securitylevel,
 // deriving subseeds from the provided seed. An optional MerkleCreateOptions struct can be
 // passed to specify function's parallelism and progress callback.
-func CreateMerkleTree(seed trinary.Hash, securityLvl int, depth int, opts ...MerkleCreateOptions) (*MerkleTree, error) {
-
+func CreateMerkleTree(seed trinary.Hash, securityLvl consts.SecurityLevel, depth int, opts ...MerkleCreateOptions) (*MerkleTree, error) {
 	if depth < 1 {
 		return nil, ErrDepthTooSmall
+	}
+	if depth > 32 {
+		return nil, ErrDepthTooLarge
 	}
 
 	if !guards.IsTransactionHash(seed) {
@@ -259,4 +270,28 @@ func CreateMerkleTree(seed trinary.Hash, securityLvl int, depth int, opts ...Mer
 	mt.Root = mt.Layers[0].Hashes[0]
 
 	return mt, nil
+}
+
+// AuditPath returns the Merkle audit path for the provided leaf.
+// The audit path is the slice of missing hashes required to compute the nodes from the leaf to the root of the tree.
+func (mt *MerkleTree) AuditPath(leafIndex uint32) ([]trinary.Hash, error) {
+	if uint64(leafIndex|1) > uint64(len(mt.Layers[mt.Depth].Hashes)) {
+		return nil, ErrInvalidLeafIndex
+	}
+
+	path := make([]trinary.Hash, 0, mt.Depth)
+	for currentLayerIndex := mt.Depth; currentLayerIndex > 0; currentLayerIndex-- {
+		layer := mt.Layers[currentLayerIndex]
+
+		if leafIndex%2 == 0 {
+			// even
+			path = append(path, layer.Hashes[leafIndex+1])
+		} else {
+			// odd
+			path = append(path, layer.Hashes[leafIndex-1])
+		}
+
+		leafIndex /= 2
+	}
+	return path, nil
 }

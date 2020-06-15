@@ -210,27 +210,21 @@ func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, sponge
 	return h.Squeeze(HashTrinarySize)
 }
 
-// ValidateSignatures validates the given signature fragments by checking whether the
-// digests computed from the bundle hash and fragments equal the passed address.
+// SignatureAddress computes the address corresponding to the given signature fragments.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
-func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Hash, spongeFunc ...SpongeFunction) (bool, error) {
-	normalizedBundleHashFragments := make([][]int8, MaxSecurityLevel)
-	normalizeBundleHash := NormalizedBundleHash(bundleHash)
-
-	for i := 0; i < MaxSecurityLevel; i++ {
-		normalizedBundleHashFragments[i] = normalizeBundleHash[i*KeySegmentsPerFragment : (i+1)*KeySegmentsPerFragment]
-	}
+func SignatureAddress(fragments []Trytes, hashToSign Hash, spongeFunc ...SpongeFunction) (Hash, error) {
+	normalized := NormalizedBundleHash(hashToSign)
 
 	digests := make(Trits, len(fragments)*HashTrinarySize)
-	for i := 0; i < len(fragments); i++ {
-		trits, err := TrytesToTrits(fragments[i])
+	for i := range fragments {
+		fragmentTrits, err := TrytesToTrits(fragments[i])
 		if err != nil {
-			return false, err
+			return "", err
 		}
 
-		digest, err := Digest(normalizedBundleHashFragments[i%MaxSecurityLevel], trits, spongeFunc...)
+		digest, err := Digest(normalized[i*KeySegmentsPerFragment:(i+1)*KeySegmentsPerFragment], fragmentTrits, spongeFunc...)
 		if err != nil {
-			return false, err
+			return "", err
 		}
 
 		copy(digests[i*HashTrinarySize:], digest)
@@ -238,13 +232,24 @@ func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Has
 
 	addressTrits, err := Address(digests, spongeFunc...)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	trytes, err := TritsToTrytes(addressTrits)
+	address, err := TritsToTrytes(addressTrits)
+	if err != nil {
+		return "", err
+	}
+	return address, nil
+}
+
+// ValidateSignatures validates the given signature fragments by checking whether the
+// digests computed from the bundle hash and fragments equal the passed address.
+// Optionally takes the SpongeFunction to use. Default is Kerl.
+func ValidateSignatures(expectedAddress Hash, fragments []Trytes, bundleHash Hash, spongeFunc ...SpongeFunction) (bool, error) {
+	address, err := SignatureAddress(fragments, bundleHash, spongeFunc...)
 	if err != nil {
 		return false, err
 	}
 
-	return expectedAddress == trytes, nil
+	return expectedAddress == address, nil
 }
