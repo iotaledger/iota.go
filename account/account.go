@@ -489,7 +489,7 @@ func (acc *account) totalBalance() (uint64, error) {
 		i++
 	}
 
-	balances, err := acc.setts.API.GetBalances(addrs, 100, subtangleHash)
+	balances, err := acc.setts.API.GetBalances(addrs, subtangleHash)
 	if err != nil {
 		return 0, errors.Wrap(err, "unable to fetch balances for computing total balance")
 	}
@@ -592,7 +592,7 @@ func DefaultInputSelection(acc *account, transferValue uint64, balanceCheck bool
 
 	// get the balance of all addresses (also secondary) in one go
 	toQuery := append(primaryAddrs, secondaryAddrs...)
-	balances, err := acc.setts.API.GetBalances(toQuery, 100, subtangleHash)
+	balances, err := acc.setts.API.GetBalances(toQuery, subtangleHash)
 	if err != nil {
 		return 0, nil, nil, errors.Wrap(err, "unable to fetch balances of primary/secondary selected addresses for input selection")
 	}

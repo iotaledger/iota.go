@@ -3,14 +3,15 @@ package api_examples_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/iotaledger/iota.go/address"
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/pow"
 	"github.com/iotaledger/iota.go/trinary"
-	"net/http"
-	"time"
 )
 
 const endpoint = "https://example-iri-node.io:14265"
@@ -159,7 +160,7 @@ func ExampleFindTransactions() {
 // o: *Balances, The object describing the result of the balance query.
 // o: error, Returned for invalid addresses and internal errors.
 func ExampleGetBalances() {
-	balances, err := iotaAPI.GetBalances(trinary.Hashes{"LWVVGCWMYKZGMBE9GOCB9J9QALRKWGAVISAEXEOM9NVCGJCCGSNBXXGYQDNZBXBWCEM9RMFHYBCSFWE9XEHAPSXHRY"}, 100)
+	balances, err := iotaAPI.GetBalances(trinary.Hashes{"LWVVGCWMYKZGMBE9GOCB9J9QALRKWGAVISAEXEOM9NVCGJCCGSNBXXGYQDNZBXBWCEM9RMFHYBCSFWE9XEHAPSXHRY"})
 	if err != nil {
 		// handle error
 		return
@@ -168,17 +169,11 @@ func ExampleGetBalances() {
 }
 
 // i req: txHashes, The transaction hashes to check for inclusion state.
-// i req: tips, The reference tips of which to check whether the transactions were included in or not.
 // o: []bool, The inclusion states in the same order as the passed in transaction hashes.
-// o: error, Returned for invalid transaction/tip hashes and internal errors.
+// o: error, Returned for invalid transaction hashes and internal errors.
 func ExampleGetInclusionStates() {
 	txHash := "DJDMZD9G9VMGR9UKMEYJWYRLUDEVWTPQJXIQAAXFGMXXSCONBGCJKVQQZPXFMVHAAPAGGBMDXESTZ9999"
-	info, err := iotaAPI.GetNodeInfo()
-	if err != nil {
-		// handle error
-		return
-	}
-	states, err := iotaAPI.GetInclusionStates(trinary.Hashes{txHash}, info.LatestMilestone)
+	states, err := iotaAPI.GetInclusionStates(trinary.Hashes{txHash})
 	if err != nil {
 		// handle error
 		return
@@ -207,17 +202,6 @@ func ExampleGetNodeInfo() {
 		return
 	}
 	fmt.Println("latest milestone index:", nodeInfo.LatestMilestoneIndex)
-}
-
-// o: Hashes, A set of transaction hashes of tips as seen by the connected node.
-// o: error, Returned for internal errors.
-func ExampleGetTips() {
-	tips, err := iotaAPI.GetTips()
-	if err != nil {
-		// handle error
-		return
-	}
-	fmt.Println(tips)
 }
 
 // i req: depth, How many milestones back to begin the Random Walk from.

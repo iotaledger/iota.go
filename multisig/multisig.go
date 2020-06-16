@@ -129,7 +129,7 @@ func (m *Multisig) InitiateTransfer(input MultisigInput, transfers bundle.Transf
 	if input.Balance > 0 {
 		return createBundle(input, transfers, remainderAddress)
 	}
-	balances, err := m.API.GetBalances(Hashes{input.Address}, 100)
+	balances, err := m.API.GetBalances(Hashes{input.Address})
 	if err != nil {
 		return nil, err
 	}

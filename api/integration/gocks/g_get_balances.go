@@ -15,7 +15,6 @@ func init() {
 		JSON(GetBalancesCommand{
 			Command:   Command{GetBalancesCmd},
 			Addresses: SampleAddresses,
-			Threshold: 100,
 		}).
 		Reply(200).
 		JSON(GetBalancesResponse{
@@ -32,7 +31,6 @@ func init() {
 		JSON(GetBalancesCommand{
 			Command:   Command{GetBalancesCmd},
 			Addresses: SampleAddresses[1:],
-			Threshold: 100,
 		}).
 		Reply(200).
 		JSON(GetBalancesResponse{

@@ -80,7 +80,7 @@ func (api *API) GetAccountData(seed Trytes, options GetAccountDataOptions) (*Acc
 
 	go func() {
 		defer wg.Done()
-		balances, err2 = api.GetBalances(addresses, 100)
+		balances, err2 = api.GetBalances(addresses)
 	}()
 
 	go func() {
@@ -206,7 +206,7 @@ func (api *API) GetBundlesFromAddresses(addresses Hashes, inclusionState ...bool
 			hashes[i] = bundles[i][0].Hash
 		}
 
-		states, err := api.GetLatestInclusion(hashes)
+		states, err := api.GetInclusionStates(hashes)
 		if err != nil {
 			return nil, err
 		}
@@ -228,12 +228,13 @@ func (api *API) GetBundlesFromAddresses(addresses Hashes, inclusionState ...bool
 
 // GetLatestInclusion fetches inclusion states of the given transactions
 // by calling GetInclusionStates using the latest solid subtangle milestone from GetNodeInfo.
+// Deprecated: GetLatestInclusion exists only for historical reason where GetInclusionStates could
+// return inclusion state for the given hashes against a list of tips. As GetInclusionStates
+// now only checks whether transactions are marked as confirmed, this function is no longer
+// needed and is only kept around for backwards compatibility. Calling this function is equivalent
+// to calling GetInclusionStates.
 func (api *API) GetLatestInclusion(txHashes Hashes) ([]bool, error) {
-	res, err := api.GetLatestSolidSubtangleMilestone()
-	if err != nil {
-		return nil, err
-	}
-	return api.GetInclusionStates(txHashes, res.LatestSolidSubtangleMilestone)
+	return api.GetInclusionStates(txHashes)
 }
 
 // GetNewAddress generates and returns a new address by calling FindTransactions
@@ -377,7 +378,7 @@ func (api *API) GetInputs(seed Trytes, options GetInputsOptions) (*Inputs, error
 	if err != nil {
 		return nil, err
 	}
-	balances, err := api.GetBalances(addresses, 100)
+	balances, err := api.GetBalances(addresses)
 	if err != nil {
 		return nil, err
 	}

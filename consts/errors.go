@@ -65,8 +65,6 @@ var (
 	ErrInvalidTransactionHash = errors.New("invalid transaction hash")
 	// ErrInvalidTailTransaction gets returned for invalid tail transaction hashes.
 	ErrInvalidTailTransaction = errors.New("invalid tail transaction")
-	// ErrInvalidThreshold gets returned for invalid thresholds used in GetBalances().
-	ErrInvalidThreshold = errors.New("invalid threshold option")
 	// ErrInvalidTransfer gets returned for invalid transfer parameters.
 	ErrInvalidTransfer = errors.New("invalid transfer object")
 	// ErrInvalidTrunkTransaction gets returned for invalid trunk transaction parameters.
