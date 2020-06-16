@@ -40,7 +40,7 @@ var _ = Describe("Merkle", func() {
 		})
 
 		It("leaves are computed using Shake KDF", func() {
-			leavesCount := 1 << depth
+			leavesCount := 1 << uint(depth)
 			leaves := merkleTree.Layers[depth].Hashes
 			for index := 0; index < leavesCount; index++ {
 				subSeedTrits, _ := signing.Subseed(seed, uint64(index), kerl.NewKerl())
@@ -55,10 +55,10 @@ var _ = Describe("Merkle", func() {
 		It("each node is the hash of the corresponding two children using Kerl sponge", func() {
 			layers := merkleTree.Layers
 			for d := 1; d <= depth; d++ {
-				for pair := 0; pair < 1<<d; pair += 2 {
+				for pair := 0; pair < 1<<uint(d); pair += 2 {
 					sponge := kerl.NewKerl()
-					sponge.AbsorbTrytes(layers[d].Hashes[pair])
-					sponge.AbsorbTrytes(layers[d].Hashes[pair+1])
+					sponge.MustAbsorbTrytes(layers[d].Hashes[pair])
+					sponge.MustAbsorbTrytes(layers[d].Hashes[pair+1])
 					Expect(layers[d-1].Hashes[pair/2]).To(Equal(sponge.MustSqueezeTrytes(consts.HashTrinarySize)))
 				}
 			}
