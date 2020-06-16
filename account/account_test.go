@@ -156,7 +156,6 @@ var _ = Describe("account", func() {
 							Command:   Command{GetBalancesCmd},
 							Addresses: slice,
 							Tips:      trinary.Hashes{milestoneHash},
-							Threshold: 100,
 						}).
 						Reply(200).
 						JSON(GetBalancesResponse{
@@ -216,7 +215,7 @@ var _ = Describe("account", func() {
 					MatchType("json").
 					JSON(GetBalancesCommand{
 						Command:   Command{GetBalancesCmd},
-						Addresses: addrsWC[:1], Threshold: 100,
+						Addresses: addrsWC[:1],
 						Tips: trinary.Hashes{milestoneHash},
 					}).
 					Reply(200).
@@ -349,7 +348,6 @@ var _ = Describe("account", func() {
 					JSON(GetInclusionStatesCommand{
 						Command:      Command{GetInclusionStatesCmd},
 						Transactions: trinary.Hashes{finalTxs[0].Hash},
-						Tips:         trinary.Hashes{milestoneHash},
 					}).
 					Reply(200).
 					JSON(GetInclusionStatesResponse{States: []bool{true}})

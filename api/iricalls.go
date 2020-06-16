@@ -1,13 +1,14 @@
 package api
 
 import (
+	"strconv"
+
 	"github.com/iotaledger/iota.go/checksum"
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/guards"
 	. "github.com/iotaledger/iota.go/guards/validators"
 	"github.com/iotaledger/iota.go/pow"
 	. "github.com/iotaledger/iota.go/trinary"
-	"strconv"
 )
 
 // AddNeighbors adds a list of neighbors to the connected IRI node.
@@ -159,13 +160,9 @@ func (api *API) FindTransactions(query FindTransactionsQuery) (Hashes, error) {
 }
 
 // GetBalances fetches confirmed balances of the given addresses at the latest solid milestone.
-func (api *API) GetBalances(addresses Hashes, threshold uint64, tips ...Hash) (*Balances, error) {
-    if err := Validate(ValidateAddresses(false, addresses...)); err != nil {
+func (api *API) GetBalances(addresses Hashes, tips ...Hash) (*Balances, error) {
+	if err := Validate(ValidateAddresses(false, addresses...)); err != nil {
 		return nil, err
-	}
-
-	if threshold > 100 {
-		return nil, ErrInvalidThreshold
 	}
 
 	cleanedAddrs, err := checksum.RemoveChecksums(addresses)
@@ -175,7 +172,6 @@ func (api *API) GetBalances(addresses Hashes, threshold uint64, tips ...Hash) (*
 
 	cmd := &GetBalancesCommand{
 		Addresses: cleanedAddrs,
-		Threshold: threshold,
 		Command:   Command{GetBalancesCmd},
 		Tips:      tips,
 	}
@@ -197,18 +193,16 @@ func (api *API) GetBalances(addresses Hashes, threshold uint64, tips ...Hash) (*
 	return balances, err
 }
 
-// GetInclusionStates fetches inclusion states of a given list of transactions.
-func (api *API) GetInclusionStates(txHashes Hashes, tips ...Hash) ([]bool, error) {
+// GetInclusionStates fetches inclusion states (confirmation state) of a given list of transactions.
+func (api *API) GetInclusionStates(txHashes Hashes) ([]bool, error) {
 	if err := Validate(
 		ValidateTransactionHashes(txHashes...),
 		ValidateNonEmptyStrings(ErrInvalidTransactionHash, txHashes...),
-		ValidateTransactionHashes(tips...),
-		ValidateNonEmptyStrings(ErrInvalidTransactionHash, tips...),
 	); err != nil {
 		return nil, err
 	}
 
-	cmd := &GetInclusionStatesCommand{Transactions: txHashes, Tips: tips, Command: Command{GetInclusionStatesCmd}}
+	cmd := &GetInclusionStatesCommand{Transactions: txHashes, Command: Command{GetInclusionStatesCmd}}
 	rsp := &GetInclusionStatesResponse{}
 	if err := api.provider.Send(cmd, rsp); err != nil {
 		return nil, err
@@ -235,16 +229,6 @@ func (api *API) GetNodeInfo() (*GetNodeInfoResponse, error) {
 		return nil, err
 	}
 	return rsp, nil
-}
-
-// GetTips returns a list of tips (transactions not referenced by other transactions) as seen by the connected node.
-func (api *API) GetTips() (Hashes, error) {
-	cmd := &GetTipsCommand{Command: Command{GetTipsCmd}}
-	rsp := &GetTipsResponse{}
-	if err := api.provider.Send(cmd, rsp); err != nil {
-		return nil, err
-	}
-	return rsp.Hashes, nil
 }
 
 // GetTransactionsToApprove does the tip selection via the connected node.

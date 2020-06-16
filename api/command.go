@@ -13,7 +13,6 @@ const (
 	GetNeighborsCmd             IRICommand = "getNeighbors"
 	AddNeighborsCmd             IRICommand = "addNeighbors"
 	RemoveNeighborsCmd          IRICommand = "removeNeighbors"
-	GetTipsCmd                  IRICommand = "getTips"
 	FindTransactionsCmd         IRICommand = "findTransactions"
 	GetTrytesCmd                IRICommand = "getTrytes"
 	GetInclusionStatesCmd       IRICommand = "getInclusionStates"
@@ -98,7 +97,6 @@ type FindTransactionsResponse struct {
 type GetBalancesCommand struct {
 	Command
 	Addresses Hashes `json:"addresses"`
-	Threshold uint64 `json:"threshold"`
 	Tips      []Hash `json:"tips,omitempty"`
 }
 
@@ -114,7 +112,6 @@ type GetBalancesResponse struct {
 type GetInclusionStatesCommand struct {
 	Command
 	Transactions Hashes `json:"transactions"`
-	Tips         Hashes `json:"tips"`
 }
 
 // GetInclusionStatesResponse is the response from the GetInclusionStates API call.
@@ -167,16 +164,6 @@ type GetLatestSolidSubtangleMilestoneCommand struct {
 type GetLatestSolidSubtangleMilestoneResponse struct {
 	LatestSolidSubtangleMilestone      Hash  `json:"latestSolidSubtangleMilestone"`
 	LatestSolidSubtangleMilestoneIndex int64 `json:"latestSolidSubtangleMilestoneIndex"`
-}
-
-// GetTipsCommand represents the payload to the GetTips API call.
-type GetTipsCommand struct {
-	Command
-}
-
-// GetTipsResponse is the response from the GetTips API call.
-type GetTipsResponse struct {
-	Hashes Hashes `json:"hashes"`
 }
 
 // GetTransactionsToApproveCommand represents the payload to the GetTransactionsToApprove API call.

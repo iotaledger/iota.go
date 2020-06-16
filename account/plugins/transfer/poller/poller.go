@@ -124,7 +124,7 @@ func (tp *TransferPoller) checkOutgoingTransfers(pendingTransfers map[string]*st
 		if len(pendingTransfer.Tails) == 0 {
 			continue
 		}
-		states, err := tp.setts.API.GetLatestInclusion(pendingTransfer.Tails)
+		states, err := tp.setts.API.GetInclusionStates(pendingTransfer.Tails)
 		if err != nil {
 			return errors.Wrapf(err, "unable to check latest inclusion state in outgoing transfers op. (first tail tx of bundle: %s)", tailTx)
 		}
