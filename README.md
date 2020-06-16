@@ -35,7 +35,7 @@
 
 ## About
 
-This is the **official** Go client library, which allows you to do the following:
+This is the **official** Golang client library, which allows you to do the following:
 * Create transactions
 * Read transactions
 * Sign transactions
