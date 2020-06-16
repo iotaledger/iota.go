@@ -23,19 +23,20 @@ var _ = Describe("Signing", func() {
 	})
 
 	DescribeTable("sign and validate",
-		func(leaftIndex uint32) {
-			path, err := tree.AuditPath(leaftIndex)
+		func(leafIndex uint32) {
+			path, err := tree.AuditPath(leafIndex)
 			Expect(err).ToNot(HaveOccurred())
-			fragments, err := SignatureFragments(seed, leaftIndex, securityLevel, hashToSign)
+			fragments, err := SignatureFragments(seed, leafIndex, securityLevel, hashToSign)
 			Expect(err).ToNot(HaveOccurred())
 
-			valid, err := ValidateSignatureFragments(tree.Root, leaftIndex, path, fragments, hashToSign)
+			valid, err := ValidateSignatureFragments(tree.Root, leafIndex, path, fragments, hashToSign)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(valid).To(BeTrue())
 		},
 		Entry("leafIndex: 0", uint32(0)),
 		Entry("leafIndex: 1", uint32(1)),
-		Entry("max leafIndex", uint32(1<<uint(depth)-1)),
+		Entry("leafIndex: 2", uint32(2)),
+		Entry("max leafIndex", uint32(1<<depth-1)),
 	)
 
 	Context("MerkleRoot()", func() {
@@ -58,7 +59,7 @@ var _ = Describe("Signing", func() {
 
 		It("audit path invalid tryte lengths", func() {
 			path := []trinary.Trytes{""}
-			_, err := MerkleRoot(tree.Root, 1, path)
+			_, err := MerkleRoot(tree.Root, 0, path)
 			Expect(err).To(HaveOccurred())
 		})
 	})
