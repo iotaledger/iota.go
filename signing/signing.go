@@ -180,6 +180,10 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, sp
 // Digest computes the digest derived from the signature fragment and normalized bundle hash.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, spongeFunc ...SpongeFunction) (Trits, error) {
+	if len(signatureFragment) != SignatureMessageFragmentTrinarySize {
+		return nil, ErrInvalidTritsLength
+	}
+
 	h := GetSpongeFunc(spongeFunc, defaultCreator)
 	defer h.Reset()
 
