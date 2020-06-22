@@ -6,6 +6,7 @@ import (
 	"math"
 
 	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/kerl"
 	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
@@ -179,6 +180,10 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, sp
 // Digest computes the digest derived from the signature fragment and normalized bundle hash.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, spongeFunc ...SpongeFunction) (Trits, error) {
+	if len(signatureFragment) != SignatureMessageFragmentTrinarySize {
+		return nil, ErrInvalidTritsLength
+	}
+
 	h := GetSpongeFunc(spongeFunc, defaultCreator)
 	defer h.Reset()
 
@@ -213,7 +218,16 @@ func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, sponge
 // SignatureAddress computes the address corresponding to the given signature fragments.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func SignatureAddress(fragments []Trytes, hashToSign Hash, spongeFunc ...SpongeFunction) (Hash, error) {
+	if len(fragments) == 0 {
+		return "", ErrInvalidSignature
+	}
+	if !guards.IsTrytesOfExactLength(hashToSign, HashTrytesSize) {
+		return "", ErrInvalidTrytes
+	}
+
 	normalized := NormalizedBundleHash(hashToSign)
+	h := GetSpongeFunc(spongeFunc, defaultCreator)
+	defer h.Reset()
 
 	digests := make(Trits, len(fragments)*HashTrinarySize)
 	for i := range fragments {
@@ -222,15 +236,16 @@ func SignatureAddress(fragments []Trytes, hashToSign Hash, spongeFunc ...SpongeF
 			return "", err
 		}
 
-		digest, err := Digest(normalized[i*KeySegmentsPerFragment:(i+1)*KeySegmentsPerFragment], fragmentTrits, spongeFunc...)
+		// for longer signatures (multisig) cycle through the hash fragments to compute the digest
+		frag := i % (HashTrytesSize / KeySegmentsPerFragment)
+		digest, err := Digest(normalized[frag*KeySegmentsPerFragment:(frag+1)*KeySegmentsPerFragment], fragmentTrits, h)
 		if err != nil {
 			return "", err
 		}
-
 		copy(digests[i*HashTrinarySize:], digest)
 	}
 
-	addressTrits, err := Address(digests, spongeFunc...)
+	addressTrits, err := Address(digests, h)
 	if err != nil {
 		return "", err
 	}
