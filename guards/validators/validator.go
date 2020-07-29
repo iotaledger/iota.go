@@ -123,7 +123,7 @@ func ValidateURIs(uris ...string) Validatable {
 			if schema != "tcp://" && schema != "udp://" {
 				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
 			}
-			if _, err := url.Parse(uri[6:]); err != nil {
+			if _, err := url.Parse(uri); err != nil {
 				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
 			}
 		}
