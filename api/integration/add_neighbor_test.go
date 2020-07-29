@@ -22,7 +22,7 @@ var _ = Describe("AddNeighbors()", func() {
 	})
 
 	It("resolves to the correct response", func() {
-		added, err := api.AddNeighbors("tcp://example.com:14600")
+		added, err := api.AddNeighbors("tcp://192.168.1.123:14600")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(added).To(Equal(int64(1)))
 	})
