@@ -8,7 +8,6 @@ import (
 	"errors"
 	"sync/atomic"
 
-	. "github.com/iotaledger/iota.go/const"
 	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/trinary"
 )
@@ -274,7 +273,7 @@ func PowCL(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 
 	c := curl.NewCurlP81().(*curl.Curl)
 	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
-	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
+	copy(c.State[:], tr[TransactionTrinarySize-HashTrinarySize:])
 
 	lmid, hmid := para(c.State)
 	lmid[0] = low0

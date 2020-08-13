@@ -39,7 +39,7 @@ func check(low *[curl.StateSize]uint64, high *[curl.StateSize]uint64, security i
 
 // Hamming calculates the hamming nonce.
 func Hamming(c *curl.Curl, offset, end, security int) Trits {
-	lmid, hmid := pow.Para(c.State)
+	lmid, hmid := pow.Para(c.State[:])
 
 	lmid[offset] = pow.PearlDiverMidStateLow0
 	hmid[offset] = pow.PearlDiverMidStateHigh0

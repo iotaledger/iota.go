@@ -25,8 +25,6 @@ const (
 )
 
 var (
-	// optional transform function in C.
-	transformC func(Trits, int)
 	// TruthTable of the Curl hash function.
 	TruthTable = [11]int8{1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0}
 	// Indices of the Curl hash function.
@@ -48,7 +46,7 @@ func init() {
 // Curl is a sponge function with an internal State of size StateSize.
 // b = r + c, b = StateSize, r = HashSize, c = StateSize - HashSize
 type Curl struct {
-	State  Trits
+	State  [StateSize]int8
 	Rounds CurlRounds
 }
 
@@ -59,12 +57,7 @@ func NewCurl(rounds ...CurlRounds) SpongeFunction {
 	if len(rounds) > 0 {
 		curlRounds = rounds[0]
 	}
-
-	c := &Curl{
-		State:  make(Trits, StateSize),
-		Rounds: curlRounds,
-	}
-	return c
+	return &Curl{Rounds: curlRounds}
 }
 
 // NewCurlP27 returns a new CurlP27.
@@ -84,11 +77,10 @@ func (c *Curl) Squeeze(length int) (Trits, error) {
 	}
 
 	out := make(Trits, length)
-	for i := 1; i <= length/HashTrinarySize; i++ {
-		copy(out[HashTrinarySize*(i-1):HashTrinarySize*i], c.State[:HashTrinarySize])
+	for i := 0; i < length/HashTrinarySize; i++ {
+		copy(out[HashTrinarySize*i:], c.State[:])
 		c.Transform()
 	}
-
 	return out, nil
 }
 
@@ -127,7 +119,7 @@ func (c *Curl) Absorb(in Trits) error {
 			lenn = len(in) - i
 		}
 
-		copy(c.State, in[i:i+lenn])
+		copy(c.State[:], in[i:i+lenn])
 		c.Transform()
 	}
 	return nil
@@ -151,8 +143,8 @@ func (c *Curl) AbsorbTrytes(inn Trytes) error {
 
 // AbsorbTrytes fills the internal State of the sponge with the given trytes.
 // It panics if the given trytes are not valid.
-func (c *Curl) MustAbsorbTrytes(inn Trytes) {
-	err := c.AbsorbTrytes(inn)
+func (c *Curl) MustAbsorbTrytes(in Trytes) {
+	err := c.AbsorbTrytes(in)
 	if err != nil {
 		panic(err)
 	}
@@ -160,21 +152,10 @@ func (c *Curl) MustAbsorbTrytes(inn Trytes) {
 
 // Transform does Transform in sponge func.
 func (c *Curl) Transform() {
-	if transformC != nil {
-		transformC(c.State, int(c.Rounds))
-		return
-	}
-
-	var cpy [StateSize]int8
-
-	for r := c.Rounds; r > 0; r-- {
-		copy(cpy[:], c.State)
-		for i := 0; i < StateSize; i++ {
-			t1 := Indices[i]
-			t2 := Indices[i+1]
-			c.State[i] = TruthTable[cpy[t1]+(cpy[t2]<<2)+5]
-		}
-	}
+	var tmp [StateSize]int8
+	transform(&tmp, &c.State, int(c.Rounds))
+	// since the rounds are always odd, we need to copy
+	copy(c.State[:], tmp[:])
 }
 
 // Reset the internal State of the Curl sponge by filling it with all 0's.
@@ -213,7 +194,8 @@ func MustHashTrytes(t Trytes, rounds ...CurlRounds) Trytes {
 
 // Clone returns a deep copy of the current Curl
 func (c *Curl) Clone() SpongeFunction {
-	clone := NewCurl(c.Rounds).(*Curl)
-	copy(clone.State, c.State)
-	return clone
+	return &Curl{
+		State:  c.State,
+		Rounds: c.Rounds,
+	}
 }

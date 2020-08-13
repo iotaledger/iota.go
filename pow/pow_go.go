@@ -343,7 +343,7 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 
 	c := curl.NewCurlP81().(*curl.Curl)
 	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
-	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
+	copy(c.State[:], tr[TransactionTrinarySize-HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
@@ -360,7 +360,7 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 		go func(i int) {
 			defer wg.Done() // assure that done is always called
 
-			lmid, hmid := Para(c.State)
+			lmid, hmid := Para(c.State[:])
 			lmid[nonceOffset] = PearlDiverMidStateLow0
 			hmid[nonceOffset] = PearlDiverMidStateHigh0
 			lmid[nonceOffset+1] = PearlDiverMidStateLow1

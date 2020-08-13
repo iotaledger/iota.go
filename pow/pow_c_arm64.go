@@ -307,7 +307,7 @@ func cARM64ProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism .
 
 	c := curl.NewCurlP81().(*curl.Curl)
 	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
-	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
+	copy(c.State[:], tr[TransactionTrinarySize-HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes

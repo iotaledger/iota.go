@@ -141,12 +141,11 @@ func MAMCreate(payloadLength uint64,
 	offset += uint64(messageLength)
 
 	// encrypt nonce to payload
-	c := curl.NewCurlP27().(*curl.Curl)
-	copy(c.State, encCurl.State)
+	c := encCurl.Clone().(*curl.Curl)
 
 	Hamming(c, 0, HashTrytesSize, int(security))
 
-	Mask(payload[offset:], c.State, HashTrytesSize, encCurl)
+	Mask(payload[offset:], c.State[:], HashTrytesSize, encCurl)
 	offset += HashTrytesSize
 
 	// encrypt signature to payload
@@ -161,7 +160,7 @@ func MAMCreate(payloadLength uint64,
 		return nil, 0, err
 	}
 
-	signatureFragment, err := signing.SignatureFragment(encCurl.State, key, 0, c)
+	signatureFragment, err := signing.SignatureFragment(encCurl.State[:], key, 0, c)
 	copy(payload[offset:offset+signatureLength], signatureFragment)
 	offset += signatureLength
 
