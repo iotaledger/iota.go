@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/encoding/t5b1"
 )
 
 var (
@@ -116,7 +116,7 @@ func (mtl *MerkleTreeLayer) WriteTo(writer io.Writer) (int64, error) {
 	bytesWritten += int64(binary.Size(uint32(len(mtl.Hashes))))
 
 	for _, hash := range mtl.Hashes {
-		nodesData := trinary.MustTrytesToBytes(hash)[:49]
+		nodesData := t5b1.EncodeTrytes(hash)
 		if err := binary.Write(writer, binary.LittleEndian, nodesData); err != nil {
 			return bytesWritten, err
 		}
@@ -144,13 +144,17 @@ func (mtl *MerkleTreeLayer) ReadFrom(reader io.Reader) (n int64, err error) {
 	}
 	read += int64(binary.Size(&hashesCount))
 
-	hashBuf := make([]byte, 49)
+	hashBuf := make([]byte, t5b1.EncodedLen(consts.HashTrinarySize))
 	for i := 0; i < int(hashesCount); i++ {
 		if err := binary.Read(reader, binary.LittleEndian, hashBuf); err != nil {
 			return read, err
 		}
 		read += int64(binary.Size(hashBuf))
-		mtl.Hashes = append(mtl.Hashes, trinary.MustBytesToTrytes(hashBuf, consts.HashTrytesSize))
+		hash, err := t5b1.DecodeToTrytes(hashBuf)
+		if err != nil {
+			return read, err
+		}
+		mtl.Hashes = append(mtl.Hashes, hash)
 	}
 
 	return read, nil
