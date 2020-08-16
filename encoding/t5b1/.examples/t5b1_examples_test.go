@@ -38,7 +38,7 @@ func ExampleDecode() {
 }
 
 // i req: src, The trytes to encode.
-// o: []byte, The encoded trytes.
+// o: []byte, The encoded bytes.
 func ExampleEncodeTrytes() {
 	dst := t5b1.EncodeTrytes("MM")
 	fmt.Println(dst)
