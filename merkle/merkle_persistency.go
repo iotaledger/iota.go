@@ -154,7 +154,7 @@ func (mtl *MerkleTreeLayer) ReadFrom(reader io.Reader) (n int64, err error) {
 		if err != nil {
 			return read, err
 		}
-		mtl.Hashes = append(mtl.Hashes, hash)
+		mtl.Hashes = append(mtl.Hashes, hash[:consts.HashTrytesSize])
 	}
 
 	return read, nil

@@ -1,6 +1,5 @@
 // Package b1t6 implements the b1t6 encoding encoding which uses a group of 6 trits to encode each byte.
-// See the IOTA protocol RFC-0015:
-// https://github.com/iotaledger/protocol-rfcs/blob/master/text/0015-binary-to-ternary-encoding/0015-binary-to-ternary-encoding.md
+// See the IOTA protocol RFC-0015 for details.
 package b1t6
 
 import (

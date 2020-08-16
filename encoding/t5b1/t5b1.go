@@ -151,5 +151,5 @@ func DecodeToTrytes(src []byte) (trinary.Trytes, error) {
 // counts the number of trailing zeros in the last two trits of t.
 func trailingZerosInLastTwoTrits(t trinary.Trits) int {
 	v := 1<<2 | (uint(t[len(t)-2])&1)<<1 | (uint(t[len(t)-1]) & 1)
-	return bits.TrailingZeros(v) // will be translated to a single instruction
+	return bits.TrailingZeros(v) // will be translated into a single CPU instruction
 }
