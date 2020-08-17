@@ -57,5 +57,5 @@ func ExampleDecodeToTrytes() {
 	// as the corresponding trit length will always be a multiple of 5,
 	// the trytes might also be padded
 	fmt.Println(dst)
-	// output: MM9
+	// output: MM99
 }

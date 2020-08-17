@@ -2,6 +2,7 @@ package t5b1_test
 
 import (
 	"bytes"
+	"math"
 	"strings"
 
 	"github.com/iotaledger/iota.go/consts"
@@ -44,8 +45,9 @@ var _ = Describe("t5b1 encoding", func() {
 				dst, err := DecodeToTrytes(bytes)
 				Expect(err).ToNot(HaveOccurred())
 				// add expected padding
-				paddedLen := DecodedLen(EncodedLen(len(trytes)*consts.TritsPerTryte)) / consts.TritsPerTryte
-				Expect(dst).To(Equal(trinary.MustPad(trytes, paddedLen)))
+				paddedTritLen := DecodedLen(EncodedLen(len(trytes) * consts.TritsPerTryte))
+				paddedTryteLen := int(math.Ceil(float64(paddedTritLen) / consts.TritsPerTryte))
+				Expect(dst).To(Equal(trinary.MustPad(trytes, paddedTryteLen)))
 			})
 		},
 		Entry("empty", "", []byte{}),
@@ -59,14 +61,21 @@ var _ = Describe("t5b1 encoding", func() {
 		Entry("4 trit padding", "MM", []byte{0x79, 0x01}),
 	)
 
-	DescribeTable("invalid trit encodings",
+	DescribeTable("invalid encodings",
 		func(bytes []byte, trits trinary.Trits, err error) {
+
 			By("Decode()", func() {
 				dst := make(trinary.Trits, DecodedLen(len(bytes))+10)
 				n, err := Decode(dst, bytes)
 				Expect(err).To(MatchError(err))
 				Expect(n).To(BeNumerically("<=", DecodedLen(len(bytes))))
 				Expect(dst[:n]).To(Equal(trits))
+			})
+
+			By("DecodeToTrytes()", func() {
+				dst, err := DecodeToTrytes(bytes)
+				Expect(err).To(MatchError(err))
+				Expect(dst).To(BeZero())
 			})
 		},
 		Entry("invalid group value", []byte{0x80}, []int8{}, consts.ErrInvalidByte),
@@ -76,22 +85,4 @@ var _ = Describe("t5b1 encoding", func() {
 		Entry("third group invalid", []byte{0x00, 0x01, 0x7a}, []int8{0, 0, 0, 0, 0, 1, 0, 0, 0, 0}, consts.ErrInvalidByte),
 	)
 
-	DescribeTable("invalid tryte encodings",
-		func(bytes []byte, err error) {
-			By("DecodeToTrytes()", func() {
-				dst, err := DecodeToTrytes(bytes)
-				Expect(err).To(MatchError(err))
-				Expect(dst).To(BeZero())
-			})
-		},
-		Entry("invalid group value", []byte{0x80}, consts.ErrInvalidByte),
-		Entry("above max group value", []byte{0x7a}, consts.ErrInvalidByte),
-		Entry("below min group value", []byte{0x86}, consts.ErrInvalidByte),
-		Entry("second group invalid", []byte{0x79, 0x7a}, consts.ErrInvalidByte),
-		Entry("third group invalid", []byte{0x00, 0x01, 0x7a}, consts.ErrInvalidByte),
-		Entry("invalid padding: [1, 1, 1, 0, 1]", []byte{0x5e}, ErrNonZeroPadding),
-		Entry("invalid padding: [1, 1, 1, 0, -1]", []byte{0xc1}, ErrNonZeroPadding),
-		Entry("invalid padding: [1, 1, 1, 1, 0]", []byte{0x28}, ErrNonZeroPadding),
-		Entry("invalid padding: [1, 1, 1, -1, 0]", []byte{0xf2}, ErrNonZeroPadding),
-	)
 })
