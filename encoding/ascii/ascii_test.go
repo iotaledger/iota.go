@@ -1,36 +1,31 @@
-package converter_test
+package ascii_test
 
 import (
-	. "github.com/iotaledger/iota.go/converter"
+	. "github.com/iotaledger/iota.go/encoding/ascii"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Converter", func() {
 
-	Context("ASCIIToTrytes()", func() {
+	Context("EncodeToTrytes()", func() {
 		It("returns the correct trytes representation", func() {
-			trytes, err := ASCIIToTrytes("IOTA")
+			trytes, err := EncodeToTrytes("IOTA")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(trytes).To(Equal("SBYBCCKB"))
 		})
 
 		It("returns an error for invalid input", func() {
-			_, err := ASCIIToTrytes("Γιώτα")
+			_, err := EncodeToTrytes("Γιώτα")
 			Expect(err).To(HaveOccurred())
 		})
 	})
 
-	Context("TrytesToASCII()", func() {
+	Context("DecodeTrytes()", func() {
 		It("returns the correct ascii representation", func() {
-			ascii, err := TrytesToASCII("SBYBCCKB")
+			ascii, err := DecodeTrytes("SBYBCCKB")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ascii).To(Equal("IOTA"))
-		})
-
-		It("returns an error for invalid trytes", func() {
-			_, err := TrytesToASCII("AAAfasds")
-			Expect(err).To(HaveOccurred())
 		})
 	})
 })

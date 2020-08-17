@@ -6,8 +6,8 @@ import (
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/converter"
 	"github.com/iotaledger/iota.go/curl"
+	"github.com/iotaledger/iota.go/encoding/ascii"
 	"github.com/iotaledger/iota.go/mam/v1/merkle"
 	"github.com/iotaledger/iota.go/trinary"
 )
@@ -100,7 +100,7 @@ func (t *Transmitter) Transmit(message string, params ...string) (trinary.Trytes
 
 func (t *Transmitter) createMessage(message string) (trinary.Trytes, trinary.Trytes, trinary.Trytes, error) {
 	treeSize := merkle.MerkleSize(t.channel.Count)
-	messageTrytes, err := converter.ASCIIToTrytes(message)
+	messageTrytes, err := ascii.EncodeToTrytes(message)
 	if err != nil {
 		return "", "", "", err
 	}

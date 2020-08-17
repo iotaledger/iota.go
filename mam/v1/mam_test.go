@@ -5,8 +5,8 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/converter"
 	. "github.com/iotaledger/iota.go/curl"
+	"github.com/iotaledger/iota.go/encoding/ascii"
 	. "github.com/iotaledger/iota.go/mam/v1"
 	. "github.com/iotaledger/iota.go/mam/v1/merkle"
 	"github.com/iotaledger/iota.go/trinary"
@@ -33,7 +33,7 @@ var _ = Describe("MAMCreate", func() {
 			for _, sideKey := range []string{sideKeyPublic, sideKeyPrivate} {
 				for _, security := range []SecurityLevel{SecurityLevelLow, SecurityLevelMedium, SecurityLevelHigh} {
 					treeSize := MerkleSize(count)
-					messageTrytes, err := converter.ASCIIToTrytes(message)
+					messageTrytes, err := ascii.EncodeToTrytes(message)
 
 					payloadLength := PayloadMinLength(uint64(len(messageTrytes)*3), treeSize*uint64(HashTrinarySize), index, security)
 
@@ -50,7 +50,7 @@ var _ = Describe("MAMCreate", func() {
 					parsedIndex, parsedNextRoot, parsedMessageTrytes, parsedSecurity, err := MAMParse(payload, payloadLength, sideKey, merkleTree)
 					Expect(err).ToNot(HaveOccurred())
 
-					parsedMessage, err := converter.TrytesToASCII(parsedMessageTrytes)
+					parsedMessage, err := ascii.DecodeTrytes(parsedMessageTrytes)
 					Expect(index).To(Equal(parsedIndex))
 					Expect(nextRoot).To(Equal(trinary.MustTrytesToTrits(parsedNextRoot)))
 					Expect(message).To(Equal(parsedMessage))

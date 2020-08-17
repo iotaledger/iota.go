@@ -1,15 +1,16 @@
 package bundle_test
 
 import (
+	"strings"
+	"time"
+
 	. "github.com/iotaledger/iota.go/bundle"
 	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/converter"
+	"github.com/iotaledger/iota.go/encoding/ascii"
 	"github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"strings"
-	"time"
 )
 
 var _ = Describe("Bundle", func() {
@@ -78,7 +79,7 @@ var _ = Describe("Bundle", func() {
 
 	Context("TransfersToBundleEntries()", func() {
 		It("converts single transfer to correct entry", func() {
-			msg, err := converter.ASCIIToTrytes("test")
+			msg, err := ascii.EncodeToTrytes("test")
 			Expect(err).ToNot(HaveOccurred())
 			transfers := Transfers{
 				{
