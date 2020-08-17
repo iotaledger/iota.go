@@ -272,10 +272,15 @@ func PowCL(trytes trinary.Trytes, mwm int) (trinary.Trytes, error) {
 	tr := MustTrytesToTrits(trytes)
 
 	c := curl.NewCurlP81().(*curl.Curl)
-	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
-	copy(c.State[:], tr[TransactionTrinarySize-HashTrinarySize:])
+	if err := c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)]); err != nil {
+		return "", err
+	}
 
-	lmid, hmid := para(c.State)
+	var state [curl.StateSize]int8
+	c.CopyState(state[:])
+	copy(state[:], tr[TransactionTrinarySize-HashTrinarySize:])
+
+	lmid, hmid := para(state[:])
 	lmid[0] = low0
 	hmid[0] = high0
 	lmid[1] = low1
