@@ -78,7 +78,7 @@ func Encode(dst []byte, src trinary.Trits) int {
 		if len(src) < tritsInByte {
 			var v int
 			for j := len(src) - 1; j >= 0; j-- {
-				v = v*3 + int(src[j])
+				v = v*consts.TrinaryRadix + int(src[j])
 			}
 			dst[i] = byte(v)
 			return i + 1

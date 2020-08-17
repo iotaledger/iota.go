@@ -28,7 +28,7 @@ func Encode(dst trinary.Trits, src []byte) int {
 	for i := range src {
 		t1, t2 := encodeGroup(src[i])
 		trinary.MustPutTryteTrits(dst[j:], t1)
-		trinary.MustPutTryteTrits(dst[j+3:], t2)
+		trinary.MustPutTryteTrits(dst[j+consts.TritsPerTryte:], t2)
 		j += 6
 	}
 	return j
@@ -64,7 +64,7 @@ func Decode(dst []byte, src trinary.Trits) (int, error) {
 	i := 0
 	for j := 0; j <= len(src)-tritsPerByte; j += tritsPerByte {
 		t1 := trinary.MustTritsToTryteValue(src[j:])
-		t2 := trinary.MustTritsToTryteValue(src[j+3:])
+		t2 := trinary.MustTritsToTryteValue(src[j+consts.TritsPerTryte:])
 		b, ok := decodeGroup(t1, t2)
 		if !ok {
 			return i, fmt.Errorf("%w: %v", ErrInvalidTrits, src[j:j+6])
@@ -102,7 +102,7 @@ func DecodeTrytes(src trinary.Trytes) ([]byte, error) {
 
 // encodeGroup converts a byte into two tryte values.
 func encodeGroup(b byte) (int8, int8) {
-	// this is equivalent to: IntToTrytes(int8(in[i]), 2)
+	// this is equivalent to: IntToTrytes(int8(b), 2)
 	v := int(int8(b)) + (consts.TryteRadix/2)*consts.TryteRadix + consts.TryteRadix/2 // make un-balanced
 	quo, rem := v/consts.TryteRadix, v%consts.TryteRadix
 	return int8(rem + consts.MinTryteValue), int8(quo + consts.MinTryteValue)
