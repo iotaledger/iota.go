@@ -25,14 +25,14 @@ const (
 	NumberOfRounds = CurlP81
 )
 
-// spongeDirection indicates the direction trits are flowing through the sponge.
-type spongeDirection int
+// SpongeDirection indicates the direction trits are flowing through the sponge.
+type SpongeDirection int
 
 const (
-	// spongeAbsorbing indicates that the sponge is absorbing input.
-	spongeAbsorbing spongeDirection = iota
-	// spongeSqueezing indicates that the sponge is being squeezed.
-	spongeSqueezing
+	// SpongeAbsorbing indicates that the sponge is absorbing input.
+	SpongeAbsorbing SpongeDirection = iota
+	// SpongeSqueezing indicates that the sponge is being squeezed.
+	SpongeSqueezing
 )
 
 var (
@@ -57,9 +57,9 @@ func init() {
 // Curl is a sponge function with an internal state of size StateSize.
 // b = r + c, b = StateSize, r = HashSize, c = StateSize - HashSize
 type Curl struct {
-	state  [StateSize]int8
-	rounds CurlRounds
-	mode   spongeDirection
+	state     [StateSize]int8
+	rounds    CurlRounds
+	direction SpongeDirection
 }
 
 // NewCurl initializes a new instance with an empty state.
@@ -69,8 +69,8 @@ func NewCurl(rounds ...CurlRounds) SpongeFunction {
 		curlRounds = rounds[0]
 	}
 	return &Curl{
-		rounds: curlRounds,
-		mode:   spongeAbsorbing,
+		rounds:    curlRounds,
+		direction: SpongeAbsorbing,
 	}
 }
 
@@ -109,11 +109,11 @@ func (c *Curl) Squeeze(length int) (Trits, error) {
 
 func (c *Curl) squeeze(hash Trits) {
 	// during squeezing, we only transform before each squeeze to avoid unnecessary transforms
-	if c.mode == spongeSqueezing {
+	if c.direction == SpongeSqueezing {
 		c.transform()
 	}
+	c.direction = SpongeSqueezing
 	copy(hash, c.state[:HashTrinarySize])
-	c.mode = spongeSqueezing
 }
 
 // MustSqueeze squeezes out trits of the given length. Length has to be a multiple of HashTrinarySize.
@@ -147,7 +147,7 @@ func (c *Curl) Absorb(in Trits) error {
 		return errors.Wrap(ErrInvalidTritsLength, "trits slice length must be a multiple of 243")
 	}
 
-	if c.mode != spongeAbsorbing {
+	if c.direction != SpongeAbsorbing {
 		panic("absorb after squeeze")
 	}
 	for len(in) >= HashTrinarySize {
@@ -181,7 +181,7 @@ func (c *Curl) MustAbsorbTrytes(in Trytes) {
 	}
 }
 
-// transform the sponge func.
+// transform transforms the sponge.
 func (c *Curl) transform() {
 	var tmp [StateSize]int8
 	transform(&tmp, &c.state, c.NumRounds())
@@ -191,12 +191,12 @@ func (c *Curl) transform() {
 	}
 }
 
-// Reset the internal state of the Curl sponge by filling it with all 0's.
+// Reset the internal state of the Curl sponge.
 func (c *Curl) Reset() {
 	for i := range c.state {
 		c.state[i] = 0
 	}
-	c.mode = spongeAbsorbing
+	c.direction = SpongeAbsorbing
 }
 
 // HashTrits returns the hash of the given trits.
@@ -230,8 +230,8 @@ func MustHashTrytes(t Trytes, rounds ...CurlRounds) Trytes {
 // Clone returns a deep copy of the current Curl
 func (c *Curl) Clone() SpongeFunction {
 	return &Curl{
-		state:  c.state,
-		rounds: c.rounds,
-		mode:   c.mode,
+		state:     c.state,
+		rounds:    c.rounds,
+		direction: c.direction,
 	}
 }
