@@ -2,7 +2,7 @@
 
 #include "textflag.h"
 
-// func transform(dst, src *[729]int8, rounds int)
+// func transform(dst, src *[729]int8, rounds uint)
 TEXT ·transform(SB),NOSPLIT,$0
     MOVQ dst+0(FP), AX
     MOVQ src+8(FP), BX

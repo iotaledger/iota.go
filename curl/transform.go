@@ -1,6 +1,6 @@
 package curl
 
-func transformGeneric(dst, src *[StateSize]int8, rounds int) {
+func transformGeneric(dst, src *[StateSize]int8, rounds uint) {
 	for r := rounds; r > 0; r-- {
 		// nine Curl-P rounds unrolled
 		for i := 0; i < StateSize-8; i += 9 {

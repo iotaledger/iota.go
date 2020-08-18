@@ -4,4 +4,4 @@
 package curl
 
 //go:noescape
-func transform(dst, src *[StateSize]int8, rounds int)
+func transform(dst, src *[StateSize]int8, rounds uint)

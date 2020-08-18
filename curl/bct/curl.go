@@ -144,7 +144,7 @@ func (c *state) out(dst trinary.Trits, idx uint) {
 // transform transforms the sponge.
 func (c *state) transform() {
 	var ltmp, htmp [curl.StateSize]uint
-	transform(&ltmp, &htmp, &c.l, &c.h, int(c.rounds))
+	transform(&ltmp, &htmp, &c.l, &c.h, uint(c.rounds))
 	// for odd number of rounds we need to copy the buffer into the state
 	if c.rounds%2 != 0 {
 		copy(c.l[:], ltmp[:])
@@ -152,14 +152,14 @@ func (c *state) transform() {
 	}
 }
 
-func transform(lto, hto, lfrom, hfrom *[curl.StateSize]uint, rounds int) {
-	for i := 0; i < rounds; i++ {
+func transform(lto, hto, lfrom, hfrom *[curl.StateSize]uint, rounds uint) {
+	for r := rounds; r > 0; r-- {
 		// three Curl-P rounds unrolled
-		for j := 0; j < curl.StateSize-2; j += 3 {
-			t0 := curl.Indices[j+0]
-			t1 := curl.Indices[j+1]
-			t2 := curl.Indices[j+2]
-			t3 := curl.Indices[j+3]
+		for i := 0; i < curl.StateSize-2; i += 3 {
+			t0 := curl.Indices[i+0]
+			t1 := curl.Indices[i+1]
+			t2 := curl.Indices[i+2]
+			t3 := curl.Indices[i+3]
 
 			l0 := lfrom[t0]
 			l1 := lfrom[t1]
@@ -174,12 +174,12 @@ func transform(lto, hto, lfrom, hfrom *[curl.StateSize]uint, rounds int) {
 			v1 := l1 & (l2 ^ h1)
 			v2 := l2 & (l3 ^ h2)
 
-			lto[j+0] = ^v0
-			lto[j+1] = ^v1
-			lto[j+2] = ^v2
-			hto[j+0] = (l0 ^ h1) | v0
-			hto[j+1] = (l1 ^ h2) | v1
-			hto[j+2] = (l2 ^ h3) | v2
+			lto[i+0] = ^v0
+			lto[i+1] = ^v1
+			lto[i+2] = ^v2
+			hto[i+0] = (l0 ^ h1) | v0
+			hto[i+1] = (l1 ^ h2) | v1
+			hto[i+2] = (l2 ^ h3) | v2
 		}
 		// swap buffers
 		lfrom, lto = lto, lfrom

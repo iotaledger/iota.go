@@ -184,7 +184,7 @@ func (c *Curl) MustAbsorbTrytes(in Trytes) {
 // transform transforms the sponge.
 func (c *Curl) transform() {
 	var tmp [StateSize]int8
-	transform(&tmp, &c.state, c.NumRounds())
+	transform(&tmp, &c.state, uint(c.rounds))
 	// for odd number of rounds we need to copy the buffer into the state
 	if c.rounds%2 != 0 {
 		copy(c.state[:], tmp[:])

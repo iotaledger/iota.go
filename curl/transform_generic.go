@@ -2,6 +2,6 @@
 
 package curl
 
-func transform(dst, src *[StateSize]int8, rounds int) {
+func transform(dst, src *[StateSize]int8, rounds uint) {
 	transformGeneric(dst, src, rounds)
 }
