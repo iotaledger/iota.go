@@ -161,25 +161,17 @@ func transform(lto, hto, lfrom, hfrom *[curl.StateSize]uint, rounds uint) {
 			t2 := curl.Indices[i+2]
 			t3 := curl.Indices[i+3]
 
-			l0 := lfrom[t0]
-			l1 := lfrom[t1]
-			l2 := lfrom[t2]
-			l3 := lfrom[t3]
-			h0 := hfrom[t0]
-			h1 := hfrom[t1]
-			h2 := hfrom[t2]
-			h3 := hfrom[t3]
+			l0, h0 := lfrom[t0], hfrom[t0]
+			l1, h1 := lfrom[t1], hfrom[t1]
+			l2, h2 := lfrom[t2], hfrom[t2]
+			l3, h3 := lfrom[t3], hfrom[t3]
 
 			v0 := l0 & (l1 ^ h0)
+			lto[i+0], hto[i+0] = ^v0, (l0^h1)|v0
 			v1 := l1 & (l2 ^ h1)
+			lto[i+1], hto[i+1] = ^v1, (l1^h2)|v1
 			v2 := l2 & (l3 ^ h2)
-
-			lto[i+0] = ^v0
-			lto[i+1] = ^v1
-			lto[i+2] = ^v2
-			hto[i+0] = (l0 ^ h1) | v0
-			hto[i+1] = (l1 ^ h2) | v1
-			hto[i+2] = (l2 ^ h3) | v2
+			lto[i+2], hto[i+2] = ^v2, (l2^h3)|v2
 		}
 		// swap buffers
 		lfrom, lto = lto, lfrom
