@@ -1,3 +1,4 @@
+// Package bct implements the BCT Curl hashing function computing multiple Curl hashes in parallel.
 package bct
 
 import (
@@ -6,31 +7,47 @@ import (
 	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/trinary"
-	"github.com/pkg/errors"
 )
 
-// MaxBatchSize is the maximum number of Curl-P hashes that can be computed in one batch.
+// MaxBatchSize is the maximum number of Curl hashes that can be computed in one batch.
 const MaxBatchSize = bits.UintSize
 
-// ErrInvalidBatchSize is returned when the batch size is invalid.
-var ErrInvalidBatchSize = errors.New("invalid batch size")
-
 type state struct {
-	l, h      [curl.StateSize]uint
-	rounds    curl.CurlRounds
-	direction curl.SpongeDirection
+	l, h      [curl.StateSize]uint // main batched state of the hash
+	rounds    curl.CurlRounds      // number of rounds used
+	direction curl.SpongeDirection // whether the sponge is absorbing or squeezing
 }
 
-func New81() *state {
+// NewCurl initializes a new BCT Curl instance.
+func NewCurl(rounds ...curl.CurlRounds) *state {
+	r := curl.NumberOfRounds
+	if len(rounds) > 0 {
+		r = rounds[0]
+	}
 	c := &state{
-		rounds:    curl.CurlP81,
+		rounds:    r,
 		direction: curl.SpongeAbsorbing,
 	}
 	c.Reset()
 	return c
 }
 
-// Reset the internal state of the Curl sponge.
+// NewCurlP27 returns a new BCT Curl-P-27.
+func NewCurlP27() *state {
+	return NewCurl(curl.CurlP27)
+}
+
+// NewCurlP81 returns a new BCT Curl-P-81.
+func NewCurlP81() *state {
+	return NewCurl(curl.CurlP81)
+}
+
+// NumRounds returns the number of rounds for the BCT Curl instance.
+func (c *state) NumRounds() int {
+	return int(c.rounds)
+}
+
+// Reset the internal state of the BCT Curl instance.
 func (c *state) Reset() {
 	for i := 0; i < curl.StateSize; i++ {
 		c.l[i] = ^uint(0)
@@ -39,7 +56,7 @@ func (c *state) Reset() {
 	c.direction = curl.SpongeAbsorbing
 }
 
-// Clone returns a deep copy of the current Curl instance.
+// Clone returns a deep copy of the current BCT Curl instance.
 func (c *state) Clone() *state {
 	return &state{
 		l:         c.l,
@@ -49,11 +66,11 @@ func (c *state) Clone() *state {
 	}
 }
 
-// Absorb fills the states of the batched sponge with src; each element of src must have the length tritsCount.
+// Absorb fills the states of the sponge with src; each element of src must have the length tritsCount.
 // The value tritsCount has to be a multiple of HashTrinarySize.
 func (c *state) Absorb(src []trinary.Trits, tritsCount int) error {
 	if len(src) < 1 || len(src) > MaxBatchSize {
-		return ErrInvalidBatchSize
+		return consts.ErrInvalidBatchSize
 	}
 	if tritsCount%consts.HashTrinarySize != 0 {
 		return consts.ErrInvalidTritsLength
@@ -71,16 +88,19 @@ func (c *state) Absorb(src []trinary.Trits, tritsCount int) error {
 	return nil
 }
 
-// Squeeze squeezes out trits of the length tritsCount.
+// Squeeze squeezes out trits of the given length.
 // The value tritsCount has to be a multiple of HashTrinarySize.
 func (c *state) Squeeze(dst []trinary.Trits, tritsCount int) error {
 	if len(dst) < 1 || len(dst) > MaxBatchSize {
-		return ErrInvalidBatchSize
+		return consts.ErrInvalidBatchSize
 	}
 	if tritsCount%consts.HashTrinarySize != 0 {
 		return consts.ErrInvalidSqueezeLength
 	}
 
+	for j := range dst {
+		dst[j] = make(trinary.Trits, tritsCount)
+	}
 	for i := 0; i < tritsCount/consts.HashTrinarySize; i++ {
 		// during squeezing, we only transform before each squeeze to avoid unnecessary transforms
 		if c.direction == curl.SpongeSqueezing {
@@ -88,7 +108,6 @@ func (c *state) Squeeze(dst []trinary.Trits, tritsCount int) error {
 		}
 		c.direction = curl.SpongeSqueezing
 		for j := range dst {
-			dst[j] = make(trinary.Trits, tritsCount)
 			c.out(dst[j][i*consts.HashTrinarySize:], uint(j))
 		}
 	}

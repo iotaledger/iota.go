@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("Curl", func() {
 
-	DescribeTable("hash",
+	DescribeTable("Hash",
 		func(in trinary.Trytes, expSqueeze trinary.Trytes, rounds ...CurlRounds) {
 
 			By("tryte", func() {
@@ -60,5 +60,4 @@ var _ = Describe("Curl", func() {
 
 		Expect(c2.MustSqueezeTrytes(consts.HashTrinarySize)).To(Equal(c1.MustSqueezeTrytes(consts.HashTrinarySize)))
 	})
-
 })

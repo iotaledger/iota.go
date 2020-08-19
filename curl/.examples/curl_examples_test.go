@@ -55,14 +55,15 @@ func ExampleReset() {}
 // o: Trits, The Trits representation of the hash.
 // o: error, Returned for internal errors.
 func ExampleHashTrits() {
-	trytes := "PDFIDVWRXONZSPJJQVZVVMLGSVB"
+	trytes := "PDFIDVWRXONZSPJJQVZVVMLGSVB999999999999999999999999999999999999999999999999999999"
 	trits := trinary.MustTrytesToTrits(trytes)
 	tritsHash, err := curl.HashTrits(trits, curl.CurlP81)
 	if err != nil {
 		// handle error
 		return
 	}
-	fmt.Println(tritsHash) // output: [0 1 -1 0 -1 0 -1 1 ...]
+	fmt.Println(tritsHash)
+	// output: [0 1 -1 0 -1 0 -1 1 0 0 -1 0 1 0 -1 0 0 1 0 0 0 0 1 1 -1 0 1 0 1 0 1 -1 -1 1 -1 0 0 -1 1 0 -1 1 -1 0 0 0 -1 0 0 -1 -1 -1 -1 0 1 0 0 0 1 1 0 1 0 -1 1 0 -1 1 -1 0 1 -1 0 0 1 1 1 -1 0 -1 0 1 -1 0 -1 1 1 1 1 1 0 1 0 -1 -1 1 1 1 0 1 1 0 0 0 1 0 -1 1 0 -1 0 0 -1 0 1 -1 1 0 -1 0 1 0 1 0 0 0 -1 0 0 0 1 1 -1 -1 1 -1 -1 0 -1 1 1 0 -1 -1 -1 1 -1 0 -1 0 1 0 -1 1 -1 1 1 -1 0 -1 0 1 1 -1 -1 -1 -1 1 1 0 0 1 1 0 0 0 0 1 0 -1 0 -1 0 1 0 -1 0 0 -1 1 0 0 -1 -1 0 1 1 1 0 0 0 -1 1 -1 1 -1 -1 1 -1 -1 0 -1 0 -1 -1 0 -1 0 0 1 1 1 -1 0 0 1 0 -1 0 0 1 -1 -1 1 -1 1 1 1 -1 1 0 -1 0]
 }
 
 // i req: t, The Trytes of which to compute the hash of.
@@ -70,13 +71,14 @@ func ExampleHashTrits() {
 // o: Trytes, The Trytes representation of the hash.
 // o: error, Returned for internal errors.
 func ExampleHashTrytes() {
-	trytes := "PDFIDVWRXONZSPJJQVZVVMLGSVB"
+	trytes := "PDFIDVWRXONZSPJJQVZVVMLGSVB999999999999999999999999999999999999999999999999999999"
 	hash, err := curl.HashTrytes(trytes, curl.CurlP81)
 	if err != nil {
 		// handle error
 		return
 	}
-	fmt.Println(hash) // output: UXBXSI9LHCPYFFZXOWALCBTUIVXYKMCEDDIFXXGXJ9ZLEWKOTXSGYHPEAD9SXSRAWM9TPPXWZMZSIEKGX
+	fmt.Println(hash)
+	// output: UXBXSI9LHCPYFFZXOWALCBTUIVXYKMCEDDIFXXGXJ9ZLEWKOTXSGYHPEAD9SXSRAWM9TPPXWZMZSIEKGX
 }
 
 // i req: t, The Trytes of which to compute the hash of.
