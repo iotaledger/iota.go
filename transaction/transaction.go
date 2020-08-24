@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/converter"
 	"github.com/iotaledger/iota.go/curl"
+	"github.com/iotaledger/iota.go/encoding/ascii"
 	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/trinary"
 	. "github.com/iotaledger/iota.go/trinary"
@@ -316,7 +316,7 @@ func ExtractJSON(txs Transactions) (string, error) {
 
 	if numericTrytesRegex.MatchString(txs[0].SignatureMessageFragment) {
 		num := txs[0].SignatureMessageFragment[:SignatureMessageFragmentSizeInTrytes-3]
-		n, err := converter.TrytesToASCII(string(num))
+		n, err := ascii.DecodeTrytes(string(num))
 		if err != nil {
 			return "", err
 		}
@@ -372,7 +372,7 @@ func ExtractJSON(txs Transactions) (string, error) {
 					break
 				}
 
-				data, err := converter.TrytesToASCII(trytePair)
+				data, err := ascii.DecodeTrytes(trytePair)
 				if err != nil {
 					return "", err
 				}

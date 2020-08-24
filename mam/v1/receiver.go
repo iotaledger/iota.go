@@ -3,7 +3,7 @@ package mam
 import (
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/converter"
+	"github.com/iotaledger/iota.go/encoding/ascii"
 	"github.com/iotaledger/iota.go/transaction"
 	"github.com/iotaledger/iota.go/trinary"
 )
@@ -120,7 +120,7 @@ func (r *Receiver) decodeMessage(root trinary.Trits, encodedMessage trinary.Tryt
 		return "", "", err
 	}
 
-	message, err := converter.TrytesToASCII(messageTrytes)
+	message, err := ascii.DecodeTrytes(messageTrytes)
 	if err != nil {
 		return "", "", err
 	}

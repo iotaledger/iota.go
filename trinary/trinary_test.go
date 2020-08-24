@@ -159,29 +159,6 @@ var _ = Describe("Trinary", func() {
 		})
 	})
 
-	Context("TritsToBytes()", func() {
-		It("should return bytes for valid trits", func() {
-			trits := Trits{-1, 0, 1, 1, 0, 1, 1, 0, -1, -1, 1, 0, 1}
-			bytes, err := TritsToBytes(trits)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(bytes).To(Equal([]byte{0x23, 0x98, 0x0A}))
-		})
-	})
-
-	Context("BytesToTrits()", func() {
-		It("should return trits for valid bytes", func() {
-			expTrits := Trits{-1, 0, 1, 1, 0, 1, 1, 0, -1, -1, 1, 0, 1}
-			trits, err := BytesToTrits([]byte{0x23, 0x98, 0x0A}, len(expTrits))
-			Expect(trits).To(Equal(expTrits))
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should return an error for invalid numTrits length", func() {
-			_, err := BytesToTrits([]byte{0x23, 0x98, 0x0A}, 10)
-			Expect(err).To(HaveOccurred())
-		})
-	})
-
 	Context("ReverseTrits()", func() {
 		It("should correctly reverse trits", func() {
 			rev := ReverseTrits(Trits{1, 0, -1})
@@ -279,25 +256,6 @@ var _ = Describe("Trinary", func() {
 
 			v = EncodedLength(-4)
 			Expect(v).To(Equal(uint64(4)))
-		})
-	})
-
-	Context("TrytesToBytes()", func() {
-		It("should return correct bytes", func() {
-			v, err := TrytesToBytes("ABCD")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(v).To(Equal([]byte{55, 90, 1}))
-
-			v, err = TrytesToBytes("GKLVNYXFYXUDURQE9HQKEAETVRREBKKTL9TOKZRICQMRNTVODHSKGVSFRLFAGGMPRSSMJ9ROBWUZZ9999")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(v).To(Equal([]byte{61, 118, 137, 173, 99, 228, 102, 238, 163, 5, 199, 96, 32, 190, 209, 247, 189, 100, 65, 35, 193, 42, 254, 78, 232, 38, 136, 101, 44, 73, 46, 103, 182, 6, 35, 11, 209, 121, 171, 19, 119, 3, 166, 180, 201, 228, 0, 0, 0}))
-		})
-	})
-	Context("BytesToTrytes()", func() {
-		It("should return correct trytes", func() {
-			v, err := BytesToTrytes([]byte{61, 118, 137, 173, 99, 228, 102, 238, 163, 5, 199, 96, 32, 190, 209, 247, 189, 100, 65, 35, 193, 42, 254, 78, 232, 38, 136, 101, 44, 73, 46, 103, 182, 6, 35, 11, 209, 121, 171, 19, 119, 3, 166, 180, 201, 228, 0, 0, 0}, 81)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(v).To(Equal("GKLVNYXFYXUDURQE9HQKEAETVRREBKKTL9TOKZRICQMRNTVODHSKGVSFRLFAGGMPRSSMJ9ROBWUZZ9999"))
 		})
 	})
 

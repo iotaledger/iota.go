@@ -133,12 +133,6 @@ const (
 	TransactionTrytesSize                = TransactionTrinarySize / 3
 )
 
-// Trinary conversion constants.
-const (
-	Radix                int8 = 3
-	NumberOfTritsInAByte      = 5
-)
-
 // Merkle constants.
 const (
 	ISSFragments   uint64 = 27

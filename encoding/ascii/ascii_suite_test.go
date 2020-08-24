@@ -1,4 +1,4 @@
-package converter_test
+package ascii_test
 
 import (
 	"testing"
@@ -9,5 +9,5 @@ import (
 
 func TestConverter(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Converter Suite")
+	RunSpecs(t, "ASCII Encoding Suite")
 }

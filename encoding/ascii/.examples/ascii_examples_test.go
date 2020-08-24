@@ -2,26 +2,27 @@ package converter_examples_test
 
 import (
 	"fmt"
-	"github.com/iotaledger/iota.go/converter"
+
+	"github.com/iotaledger/iota.go/encoding/ascii"
 )
 
 // i req: s, The ASCII string to convert to Trytes.
 // o: Trytes, The Trytes representation of the input ASCII string.
 // o: error, Returned for non ASCII string inputs.
 func ExampleASCIIToTrytes() {
-	trytes, err := converter.ASCIIToTrytes("IOTA")
+	trytes, err := ascii.EncodeToTrytes("IOTA")
 	if err != nil {
 		// handle error
 		return
 	}
-	fmt.Println(trytes) // output: "SBYBCCKB"
+	fmt.Println(trytes) // output: SBYBCCKB
 }
 
 // i req: trytes, The input Trytes to convert to an ASCII string.
 // o: string, The computed ASCII string.
 // o: error, Returned for invalid Trytes or odd length inputs.
 func ExampleTrytesToASCII() {
-	ascii, err := converter.TrytesToASCII("SBYBCCKB")
+	ascii, err := ascii.DecodeTrytes("SBYBCCKB")
 	if err != nil {
 		// handle error
 		return
