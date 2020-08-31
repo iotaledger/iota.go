@@ -3,8 +3,6 @@
 package signing
 
 import (
-	"math"
-
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/kerl"
@@ -49,50 +47,49 @@ func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunction) (Trits, er
 // Digests hashes each segment of each key fragment 26 times and returns them.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
 func Digests(key Trits, spongeFunc ...SpongeFunction) (Trits, error) {
-	var err error
-	fragments := int(math.Floor(float64(len(key)) / KeyFragmentLength))
-	digests := make(Trits, fragments*HashTrinarySize)
-	buf := make(Trits, HashTrinarySize)
+	if len(key)%KeyFragmentLength != 0 {
+		return nil, ErrInvalidTritsLength
+	}
+	digests := make(Trits, 0, len(key)/KeyFragmentLength*HashTrinarySize)
 
-	h := GetSpongeFunc(spongeFunc, defaultCreator)
-	defer h.Reset()
+	chainHash := GetSpongeFunc(spongeFunc, defaultCreator)
+	defer chainHash.Reset()
+	// create a second hash instance for the digests
+	digestHash := chainHash.Clone()
 
 	// iterate through each key fragment
-	for i := 0; i < fragments; i++ {
-		keyFragment := key[i*KeyFragmentLength : (i+1)*KeyFragmentLength]
-
+	for len(key) >= KeyFragmentLength {
 		// each fragment consists of 27 segments
 		for j := 0; j < KeySegmentsPerFragment; j++ {
-			copy(buf, keyFragment[j*HashTrinarySize:(j+1)*HashTrinarySize])
-
 			// hash each segment 26 times
+			tmp := key[j*HashTrinarySize : (j+1)*HashTrinarySize]
 			for k := 0; k < KeySegmentHashRounds; k++ {
-				h.Absorb(buf)
-				buf, err = h.Squeeze(HashTrinarySize)
+				err := chainHash.Absorb(tmp)
 				if err != nil {
 					return nil, err
 				}
-				h.Reset()
+				tmp, err = chainHash.Squeeze(HashTrinarySize)
+				if err != nil {
+					return nil, err
+				}
+				chainHash.Reset()
 			}
-
-			copy(keyFragment[j*HashTrinarySize:], buf)
+			// absorb all the hashed segments of one fragment
+			if err := digestHash.Absorb(tmp); err != nil {
+				return nil, err
+			}
 		}
-
-		// hash the key fragment (which now consists of hashed segments)
-		if err := h.Absorb(keyFragment); err != nil {
-			return nil, err
-		}
-
-		buf, err := h.Squeeze(HashTrinarySize)
+		// append the fragment digest
+		buf, err := digestHash.Squeeze(HashTrinarySize)
 		if err != nil {
 			return nil, err
 		}
+		digestHash.Reset()
+		digests = append(digests, buf...)
 
-		copy(digests[i*HashTrinarySize:], buf)
-
-		h.Reset()
+		// advance to the next fragment
+		key = key[KeyFragmentLength:]
 	}
-
 	return digests, nil
 }
 
@@ -160,10 +157,10 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, sp
 
 		to := MaxTryteValue - normalizedBundleHashFragment[i]
 		for j := 0; j < int(to); j++ {
-			if err := h.Absorb(hash); err != nil {
+			err := h.Absorb(hash)
+			if err != nil {
 				return nil, err
 			}
-			var err error
 			hash, err = h.Squeeze(HashTrinarySize)
 			if err != nil {
 				return nil, err
@@ -179,40 +176,39 @@ func SignatureFragment(normalizedBundleHashFragment Trits, keyFragment Trits, sp
 
 // Digest computes the digest derived from the signature fragment and normalized bundle hash.
 // Optionally takes the SpongeFunction to use. Default is Kerl.
-func Digest(normalizedBundleHashFragment []int8, signatureFragment Trits, spongeFunc ...SpongeFunction) (Trits, error) {
+func Digest(normalizedHashFragment []int8, signatureFragment Trits, spongeFunc ...SpongeFunction) (Trits, error) {
+	if len(normalizedHashFragment) != KeySegmentsPerFragment {
+		return nil, ErrInvalidTritsLength
+	}
 	if len(signatureFragment) != SignatureMessageFragmentTrinarySize {
 		return nil, ErrInvalidTritsLength
 	}
 
-	h := GetSpongeFunc(spongeFunc, defaultCreator)
-	defer h.Reset()
-
-	buf := make(Trits, HashTrinarySize)
-	sig := make(Trits, KeySegmentsPerFragment*HashTrinarySize)
+	chainHash := GetSpongeFunc(spongeFunc, defaultCreator)
+	defer chainHash.Reset()
+	// create a second hash instance for the digest
+	digestHash := chainHash.Clone()
 
 	for i := 0; i < KeySegmentsPerFragment; i++ {
-		copy(buf, signatureFragment[i*HashTrinarySize:(i+1)*HashTrinarySize])
-
-		for j := normalizedBundleHashFragment[i] + MaxTryteValue; j > 0; j-- {
-			err := h.Absorb(buf)
+		// hash each segment the remaining number of times to reach 26
+		tmp := signatureFragment[i*HashTrinarySize : (i+1)*HashTrinarySize]
+		for j := normalizedHashFragment[i] + MaxTryteValue; j > 0; j-- {
+			err := chainHash.Absorb(tmp)
 			if err != nil {
 				return nil, err
 			}
-			buf, err = h.Squeeze(HashTrinarySize)
+			tmp, err = chainHash.Squeeze(HashTrinarySize)
 			if err != nil {
 				return nil, err
 			}
-			h.Reset()
+			chainHash.Reset()
 		}
-
-		copy(sig[i*HashTrinarySize:(i+1)*HashTrinarySize], buf)
+		// absorb all the hashed segments of the fragment
+		if err := digestHash.Absorb(tmp); err != nil {
+			return nil, err
+		}
 	}
-
-	if err := h.Absorb(sig); err != nil {
-		return nil, err
-	}
-
-	return h.Squeeze(HashTrinarySize)
+	return digestHash.Squeeze(HashTrinarySize)
 }
 
 // SignatureAddress computes the address corresponding to the given signature fragments.
