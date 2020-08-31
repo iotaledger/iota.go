@@ -108,6 +108,10 @@ var _ = Describe("Kerl", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(hex.EncodeToString(outBuf)).To(Equal(expected))
 			},
+			Entry("input with less than 48 bytes",
+				"ff",
+				"08869cad3dc2429eb295195200ad22eb36188452ba65f0e31b2b21bd49b503a7f1d1d61a6df8bff569d3decc9810721b",
+			),
 			Entry("input with 48 bytes",
 				"3f1b9727c967dda4f0ef98032f97483864e0dc9ed391dd5b8bc8133d9ce77fe182fef749de882dace92b655c6bba22df",
 				"bec15753fa767d98b59de095a962f472f7b4e15da47d6dd987c4608ccd32f8e2231c3201faca0ee2591f11179c816e30",
