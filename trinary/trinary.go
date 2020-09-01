@@ -240,13 +240,9 @@ func MustTryteValueToTryte(v int8) byte {
 }
 
 // MustTryteToTryteValue converts a tryte char t in [9A-Z] to a tryte value in [-13,13].
-// It panics when t is an invalid tryte.
+// Performs no validation on t (therefore might return an invalid representation) and might panic.
 func MustTryteToTryteValue(t byte) int8 {
-	idx := uint(t - '9')
-	if idx >= uint(len(TryteToTryteValueLUT)) {
-		panic(ErrInvalidTrytes)
-	}
-	return TryteToTryteValueLUT[idx]
+	return TryteToTryteValueLUT[t-'9']
 }
 
 // TritsToTrytes converts a slice of trits into trytes. Returns an error if len(t)%3!=0
