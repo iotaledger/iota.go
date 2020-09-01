@@ -1,6 +1,10 @@
 package account_test
 
 import (
+	"strings"
+	"time"
+
+	"github.com/iotaledger/iota.go/account"
 	"github.com/iotaledger/iota.go/account/builder"
 	"github.com/iotaledger/iota.go/account/deposit"
 	"github.com/iotaledger/iota.go/account/event"
@@ -15,13 +19,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gopkg.in/h2non/gock.v1"
-	"strings"
-	"time"
-
-	"github.com/iotaledger/iota.go/account"
 )
 
-const seed = "BXY9DNFAJKY9UPRTP9AQFQKESGLBDXBQHIXSFDDBLIJDXSKLBYFJ9XPZ9YSAGFVXQHBODMNFLNCMAJHYH"
+const seed = "BXY9DNFAJKY9UPRTP9AQFQKESGLBDXBQHIXSFDDBLIJDXSKLBYFJ9XPZ9YSAGFVXQHBODMNFLNCMAJHYZ"
 const id = "d7e75aa9def2ef9c813313f0e0fb72b9"
 const usedSecLvl = consts.SecurityLevelLow
 
@@ -216,7 +216,7 @@ var _ = Describe("account", func() {
 					JSON(GetBalancesCommand{
 						Command:   Command{GetBalancesCmd},
 						Addresses: addrsWC[:1],
-						Tips: trinary.Hashes{milestoneHash},
+						Tips:      trinary.Hashes{milestoneHash},
 					}).
 					Reply(200).
 					JSON(GetBalancesResponse{
@@ -304,7 +304,7 @@ var _ = Describe("account", func() {
 					Post("/").
 					MatchType("json").
 					JSON(WereAddressesSpentFromCommand{
-						Command: Command{WereAddressesSpentFromCmd},
+						Command:   Command{WereAddressesSpentFromCmd},
 						Addresses: trinary.Hashes{targetAddrWC},
 					}).
 					Reply(200).
