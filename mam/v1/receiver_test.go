@@ -18,7 +18,7 @@ var _ = Describe("Receiver", func() {
 			fakeAPI := newFakeAPI()
 			fakeAPI.findTransactionObjects = func(query api.FindTransactionsQuery) (transaction.Transactions, error) {
 				Expect(query).To(Equal(api.FindTransactionsQuery{
-					Addresses: trinary.Hashes{"PN9CYZTVHPKVRVBOOIRZDZSHQLURKQYSQTTDOGAKZZ9SCGIWTTOBPRWVPZRHZJHIWOKLZE9SQJWGPGFTXUMUPGBBN9UMUPGBBN9"},
+					Addresses: trinary.Hashes{"PN9CYZTVHPKVRVBOOIRZDZSHQLURKQYSQTTDOGAKZZ9SCGIWTTOBPRWVPZRHZJHIWOKLZE9SQJWGPGFTXUMUPGBBN9FICJSWRBW"},
 				}))
 				return transaction.Transactions{
 					transaction.Transaction{
@@ -71,7 +71,7 @@ var _ = Describe("Receiver", func() {
 			fakeAPI := newFakeAPI()
 			fakeAPI.findTransactionObjects = func(query api.FindTransactionsQuery) (transaction.Transactions, error) {
 				Expect(query).To(Equal(api.FindTransactionsQuery{
-					Addresses: trinary.Hashes{"GQKALAAKWLAUKANTFPOZIWOGDNODDYZGGVKWISNYWFD9BAZGBMEWZRSIG9QAMRPBASMCLUACFICJSWRBWBPRBFMPZC"},
+					Addresses: trinary.Hashes{"GQKALAAKWLAUKANTFPOZIWOGDNODDYZGGVKWISNYWFD9BAZGBMEWZRSIG9QAMRPBASMCLUACFICJSWRBWAZTUNGBXX"},
 				}))
 				return transaction.Transactions{
 					transaction.Transaction{
@@ -124,7 +124,7 @@ var _ = Describe("Receiver", func() {
 			fakeAPI := newFakeAPI()
 			fakeAPI.findTransactionObjects = func(query api.FindTransactionsQuery) (transaction.Transactions, error) {
 				Expect(query).To(Equal(api.FindTransactionsQuery{
-					Addresses: trinary.Hashes{"UJSUOWHILOEKGAXCPUVTMNNVOLXSGIBFIVWVXTNRZF9AEIBOGTCGBXWGTNZJIXPALAQEFPAVNRYRLMOASZBZBPPVBW"},
+					Addresses: trinary.Hashes{"UJSUOWHILOEKGAXCPUVTMNNVOLXSGIBFIVWVXTNRZF9AEIBOGTCGBXWGTNZJIXPALAQEFPAVNRYRLMOASOVHDJTLJF"},
 				}))
 				return transaction.Transactions{
 					transaction.Transaction{
