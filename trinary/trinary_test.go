@@ -249,16 +249,6 @@ var _ = Describe("Trinary", func() {
 		})
 	})
 
-	Context("EncodedLength()", func() {
-		It("should return correct length", func() {
-			v := EncodedLength(-1)
-			Expect(v).To(Equal(uint64(4)))
-
-			v = EncodedLength(-4)
-			Expect(v).To(Equal(uint64(4)))
-		})
-	})
-
 	Context("IntToTrytes()", func() {
 		It("should return correct trytes", func() {
 			v := IntToTrytes(-1, 1)
@@ -276,34 +266,6 @@ var _ = Describe("Trinary", func() {
 
 			v = TrytesToInt("ABCDEFGH")
 			Expect(v).To(Equal(int64(86483600668)))
-		})
-	})
-
-	Context("EncodeInt64()", func() {
-		It("should return correct trits", func() {
-			v, s, err := EncodeInt64(6)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(s).To(Equal(uint64(4)))
-			Expect(v).To(Equal(Trits{0, -1, 1, 0}))
-
-			v, s, err = EncodeInt64(500)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(s).To(Equal(uint64(12)))
-			Expect(v).To(Equal(Trits{-1, -1, -1, 1, 0, -1, 1, 0, 0, 0, 0, 0}))
-		})
-	})
-
-	Context("DecodeInt64()", func() {
-		It("should return correct int64", func() {
-			v, s, err := DecodeInt64(Trits{0, -1, 1, 0, -1, 1})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(s).To(Equal(uint64(4)))
-			Expect(v).To(Equal(int64(6)))
-
-			v, s, err = DecodeInt64(Trits{-1, -1, -1, 1, 0, -1, 1, 0, 0, 0, 0, 0, -1, 1, 0, 1, 0, 0, 0})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(s).To(Equal(uint64(12)))
-			Expect(v).To(Equal(int64(500)))
 		})
 	})
 
