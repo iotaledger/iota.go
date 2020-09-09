@@ -253,7 +253,7 @@ func CreateMerkleTree(seed trinary.Hash, securityLvl consts.SecurityLevel, depth
 		return nil, ErrDepthTooLarge
 	}
 
-	if !guards.IsTransactionHash(seed) {
+	if !guards.IsHash(seed) {
 		return nil, consts.ErrInvalidSeed
 	}
 

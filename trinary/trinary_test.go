@@ -2,344 +2,339 @@ package trinary_test
 
 import (
 	"strings"
+	"testing"
 
-	. "github.com/iotaledger/iota.go/consts"
-	. "github.com/iotaledger/iota.go/trinary"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/trinary"
+	"github.com/stretchr/testify/assert"
 )
 
-var _ = Describe("Trinary", func() {
-
-	Context("ValidTrit()", func() {
-
-		It("should return true for valid trits", func() {
-			Expect(ValidTrit(-1)).To(BeTrue())
-			Expect(ValidTrit(1)).To(BeTrue())
-			Expect(ValidTrit(1)).To(BeTrue())
-		})
-
-		It("should return false for invalid trits", func() {
-			Expect(ValidTrit(2)).To(BeFalse())
-			Expect(ValidTrit(-2)).To(BeFalse())
-		})
+func TestValidTrit(t *testing.T) {
+	t.Run("should return true for valid trits", func(t *testing.T) {
+		assert.True(t, trinary.ValidTrit(-1))
+		assert.True(t, trinary.ValidTrit(1))
+		assert.True(t, trinary.ValidTrit(0))
 	})
 
-	Context("ValidTrits()", func() {
-		It("should not return an error for valid trits", func() {
-			Expect(ValidTrits(Trits{0, -1, 1, -1, 0, 0, 1, 1})).NotTo(HaveOccurred())
-		})
+	t.Run("should return false for invalid trits", func(t *testing.T) {
+		assert.False(t, trinary.ValidTrit(2))
+		assert.False(t, trinary.ValidTrit(-2))
+	})
+}
 
-		It("should return an error for invalid trits", func() {
-			Expect(ValidTrits(Trits{-1, 0, 3, -1, 0, 0, 1})).To(HaveOccurred())
-		})
+func TestValidTrits(t *testing.T) {
+	t.Run("should not return an error for valid trits", func(t *testing.T) {
+		assert.NoError(t, trinary.ValidTrits(trinary.Trits{0, -1, 1, -1, 0, 0, 1, 1}))
 	})
 
-	Context("NewTrits()", func() {
-		It("should return trits and no error with valid trits", func() {
-			trits, err := NewTrits([]int8{0, 0, 0, 0, -1, 1, 1, 0})
-			Expect(trits).To(Equal([]int8{0, 0, 0, 0, -1, 1, 1, 0}))
-			Expect(err).ToNot(HaveOccurred())
-		})
+	t.Run("should return an error for invalid trits", func(t *testing.T) {
+		assert.Error(t, trinary.ValidTrits(trinary.Trits{-1, 0, 3, -1, 0, 0, 1}))
+	})
+}
 
-		It("should return an error for invalid trits", func() {
-			_, err := NewTrits([]int8{122, 0, -1, 60, -10, -50})
-			Expect(err).To(HaveOccurred())
-		})
+func TestNewTrits(t *testing.T) {
+	t.Run("should return trits and no error with valid trits", func(t *testing.T) {
+		trits, err := trinary.NewTrits([]int8{0, 0, 0, 0, -1, 1, 1, 0})
+		assert.NoError(t, err)
+		assert.Equal(t, []int8{0, 0, 0, 0, -1, 1, 1, 0}, trits)
 	})
 
-	Context("TritsEqual()", func() {
-		It("should return true for equal trits", func() {
-			a := Trits{0, 1, 0}
-			b := Trits{0, 1, 0}
-			equal, err := TritsEqual(a, b)
-			Expect(equal).To(BeTrue())
-			Expect(err).ToNot(HaveOccurred())
-		})
+	t.Run("should return an error for invalid trits", func(t *testing.T) {
+		_, err := trinary.NewTrits([]int8{122, 0, -1, 60, -10, -50})
+		assert.Error(t, err)
+	})
+}
 
-		It("should return false for unequal trits", func() {
-			a := Trits{0, 1, 0}
-			b := Trits{1, 0, 0}
-			equal, err := TritsEqual(a, b)
-			Expect(equal).To(BeFalse())
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should return an error for invalid trits", func() {
-			a := Trits{120, 50, -33}
-			equal, err := TritsEqual(a, a)
-			Expect(equal).To(BeFalse())
-			Expect(err).To(HaveOccurred())
-		})
+func TestTritsEqual(t *testing.T) {
+	t.Run("should return true for equal trits", func(t *testing.T) {
+		a := trinary.Trits{0, 1, 0}
+		b := trinary.Trits{0, 1, 0}
+		equal, err := trinary.TritsEqual(a, b)
+		assert.NoError(t, err)
+		assert.True(t, equal)
 	})
 
-	Context("IntToTrits()", func() {
-		It("should return correct trits representation for positive int64", func() {
-			Expect(IntToTrits(12)).To(Equal(Trits{0, 1, 1}))
-			Expect(IntToTrits(2)).To(Equal(Trits{-1, 1}))
-			Expect(IntToTrits(3332727)).To(Equal(Trits{0, 0, 1, -1, 0, -1, 0, 0, 1, 1, -1, 1, 0, -1, 1}))
-			Expect(IntToTrits(0)).To(Equal(Trits{0}))
-		})
-
-		It("should return correct trits representation for negative int64", func() {
-			Expect(IntToTrits(-7)).To(Equal(Trits{-1, 1, -1}))
-			Expect(IntToTrits(-1094385)).To(Equal(Trits{0, -1, 1, 0, 1, -1, -1, 1, 1, 1, -1, 0, 1, -1}))
-		})
+	t.Run("should return false for unequal trits", func(t *testing.T) {
+		a := trinary.Trits{0, 1, 0}
+		b := trinary.Trits{1, 0, 0}
+		equal, err := trinary.TritsEqual(a, b)
+		assert.NoError(t, err)
+		assert.False(t, equal)
 	})
 
-	Context("TritsToInt", func() {
-		It("should return correct nums for positive trits", func() {
-			Expect(TritsToInt(Trits{0, 1, 1})).To(Equal(int64(12)))
-			Expect(TritsToInt(Trits{-1, 1})).To(Equal(int64(2)))
-			Expect(TritsToInt(Trits{0, 0, 1, -1, 0, -1, 0, 0, 1, 1, -1, 1, 0, -1, 1})).To(Equal(int64(3332727)))
-			Expect(TritsToInt(Trits{0})).To(Equal(int64(0)))
-		})
+	t.Run("should return an error for invalid trits", func(t *testing.T) {
+		a := trinary.Trits{120, 50, -33}
+		equal, err := trinary.TritsEqual(a, a)
+		assert.Error(t, err)
+		assert.False(t, equal)
+	})
+}
 
-		It("should return correct nums for negative trits", func() {
-			Expect(TritsToInt(Trits{-1, 1, -1})).To(Equal(int64(-7)))
-			Expect(TritsToInt(Trits{0, -1, 1, 0, 1, -1, -1, 1, 1, 1, -1, 0, 1, -1})).To(Equal(int64(-1094385)))
-		})
+func TestIntToTrits(t *testing.T) {
+	t.Run("should return correct trits representation for positive int64", func(t *testing.T) {
+		assert.Equal(t, trinary.Trits{0, 1, 1}, trinary.IntToTrits(12))
+		assert.Equal(t, trinary.Trits{-1, 1}, trinary.IntToTrits(2))
+		assert.Equal(t, trinary.Trits{0, 0, 1, -1, 0, -1, 0, 0, 1, 1, -1, 1, 0, -1, 1}, trinary.IntToTrits(3332727))
+		assert.Equal(t, trinary.Trits{0}, trinary.IntToTrits(0))
 	})
 
-	Context("CanTritsToTrytes()", func() {
-		It("returns true for valid lengths", func() {
-			Expect(CanTritsToTrytes(Trits{1, 1, 1})).To(BeTrue())
-			Expect(CanTritsToTrytes(Trits{1, 1, 1, 1, 1, 1})).To(BeTrue())
-		})
+	t.Run("should return correct trits representation for negative int64", func(t *testing.T) {
+		assert.Equal(t, trinary.Trits{-1, 1, -1}, trinary.IntToTrits(-7))
+		assert.Equal(t, trinary.Trits{0, -1, 1, 0, 1, -1, -1, 1, 1, 1, -1, 0, 1, -1}, trinary.IntToTrits(-1094385))
+	})
+}
 
-		It("returns false for invalid lengths", func() {
-			Expect(CanTritsToTrytes(Trits{1, 1})).To(BeFalse())
-			Expect(CanTritsToTrytes(Trits{1, 1, 1, 1})).To(BeFalse())
-		})
-
-		It("returns false for empty trits slices", func() {
-			Expect(CanTritsToTrytes(Trits{})).To(BeFalse())
-		})
+func TestTritsToInt(t *testing.T) {
+	t.Run("should return correct nums for positive trits", func(t *testing.T) {
+		assert.Equal(t, int64(12), trinary.TritsToInt(trinary.Trits{0, 1, 1}))
+		assert.Equal(t, int64(2), trinary.TritsToInt(trinary.Trits{-1, 1}))
+		assert.Equal(t, int64(3332727), trinary.TritsToInt(trinary.Trits{0, 0, 1, -1, 0, -1, 0, 0, 1, 1, -1, 1, 0, -1, 1}))
+		assert.Equal(t, int64(0), trinary.TritsToInt(trinary.Trits{0}))
 	})
 
-	Context("TrailingZeros()", func() {
-		It("should return count of zeroes", func() {
-			Expect(TrailingZeros(Trits{1, 0, 0, 0})).To(Equal(3))
-			Expect(TrailingZeros(Trits{0, 0, 0, 0})).To(Equal(4))
-		})
+	t.Run("should return correct nums for negative trits", func(t *testing.T) {
+		assert.Equal(t, int64(-7), trinary.TritsToInt(trinary.Trits{-1, 1, -1}))
+		assert.Equal(t, int64(-1094385), trinary.TritsToInt(trinary.Trits{0, -1, 1, 0, 1, -1, -1, 1, 1, 1, -1, 0, 1, -1}))
+	})
+}
+
+func TestCanTritsToTrytes(t *testing.T) {
+	t.Run("returns true for valid lengths", func(t *testing.T) {
+		assert.True(t, trinary.CanTritsToTrytes(trinary.Trits{1, 1, 1}))
+		assert.True(t, trinary.CanTritsToTrytes(trinary.Trits{1, 1, 1, 1, 1, 1}))
 	})
 
-	Context("TritsToTrytes()", func() {
-		It("should return trytes and no errors for valid trits", func() {
-			trytes, err := TritsToTrytes(Trits{1, 1, 1})
-			Expect(trytes).To(Equal("M"))
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should return an error for invalid trits slice length", func() {
-			_, err := TritsToTrytes(Trits{1, 1})
-			Expect(err).To(HaveOccurred())
-		})
-
-		It("should return an error for invalid trits", func() {
-			_, err := TritsToTrytes(Trits{12, -45})
-			Expect(err).To(HaveOccurred())
-		})
+	t.Run("returns false for invalid lengths", func(t *testing.T) {
+		assert.False(t, trinary.CanTritsToTrytes(trinary.Trits{1, 1}))
+		assert.False(t, trinary.CanTritsToTrytes(trinary.Trits{1, 1, 1, 1}))
 	})
 
-	Context("MustTritsToTrytes()", func() {
-		It("should return trytes and not panic for valid trits", func() {
-			trytes := MustTritsToTrytes(Trits{1, 1, 1})
-			Expect(trytes).To(Equal("M"))
-		})
+	t.Run("returns false for empty trits slices", func(t *testing.T) {
+		assert.False(t, trinary.CanTritsToTrytes(trinary.Trits{}))
+	})
+}
+
+func TestTrailingZeros(t *testing.T) {
+	t.Run("should return count of zeroes", func(t *testing.T) {
+		assert.Equal(t, 3, trinary.TrailingZeros(trinary.Trits{1, 0, 0, 0}))
+		assert.Equal(t, 4, trinary.TrailingZeros(trinary.Trits{0, 0, 0, 0}))
+	})
+}
+
+func TestTritsToTrytes(t *testing.T) {
+	t.Run("should return trytes and no errors for valid trits", func(t *testing.T) {
+		trytes, err := trinary.TritsToTrytes(trinary.Trits{1, 1, 1})
+		assert.NoError(t, err)
+		assert.Equal(t, "M", trytes)
 	})
 
-	Context("CanBeHash()", func() {
-		It("should return true for a valid trits slice", func() {
-			Expect(CanBeHash(make(Trits, HashTrinarySize))).To(BeTrue())
-		})
-		It("should return false for an invalid trits slice", func() {
-			Expect(CanBeHash(make(Trits, 100))).To(BeFalse())
-			Expect(CanBeHash(make(Trits, 250))).To(BeFalse())
-		})
+	t.Run("should return an error for invalid trits slice length", func(t *testing.T) {
+		_, err := trinary.TritsToTrytes(trinary.Trits{1, 1})
+		assert.Error(t, err)
 	})
 
-	Context("ReverseTrits()", func() {
-		It("should correctly reverse trits", func() {
-			rev := ReverseTrits(Trits{1, 0, -1})
-			Expect(rev).To(Equal(Trits{-1, 0, 1}))
-		})
+	t.Run("should return an error for invalid trits", func(t *testing.T) {
+		_, err := trinary.TritsToTrytes(trinary.Trits{12, -45})
+		assert.Error(t, err)
+	})
+}
 
-		It("should return an empty trits slice for empty trits slice", func() {
-			rev := ReverseTrits(Trits{})
-			Expect(rev).To(Equal(Trits{}))
-		})
+func TestMustTritsToTrytes(t *testing.T) {
+	t.Run("should return trytes and not panic for valid trits", func(t *testing.T) {
+		trytes := trinary.MustTritsToTrytes(trinary.Trits{1, 1, 1})
+		assert.Equal(t, "M", trytes)
+	})
+}
+
+func TestCanBeHash(t *testing.T) {
+	t.Run("should return true for a valid trits slice", func(t *testing.T) {
+		assert.True(t, trinary.CanBeHash(make(trinary.Trits, consts.HashTrinarySize)))
+	})
+	t.Run("should return false for an invalid trits slice", func(t *testing.T) {
+		assert.False(t, trinary.CanBeHash(make(trinary.Trits, 100)))
+		assert.False(t, trinary.CanBeHash(make(trinary.Trits, 250)))
+	})
+}
+
+func TestReverseTrits(t *testing.T) {
+	t.Run("should correctly reverse trits", func(t *testing.T) {
+		assert.Equal(t, trinary.Trits{-1, 0, 1}, trinary.ReverseTrits(trinary.Trits{1, 0, -1}))
 	})
 
-	Context("ValidTryte()", func() {
-		It("should return true for valid tryte", func() {
-			Expect(ValidTryte('A')).ToNot(HaveOccurred())
-			Expect(ValidTryte('X')).ToNot(HaveOccurred())
-			Expect(ValidTryte('F')).ToNot(HaveOccurred())
-		})
+	t.Run("should return an empty trits slice for empty trits slice", func(t *testing.T) {
+		assert.Equal(t, trinary.Trits{}, trinary.ReverseTrits(trinary.Trits{}))
+	})
+}
 
-		It("should return false for invalid tryte", func() {
-			Expect(ValidTryte('a')).To(HaveOccurred())
-			Expect(ValidTryte('x')).To(HaveOccurred())
-			Expect(ValidTryte('f')).To(HaveOccurred())
-		})
+func TestValidTryte(t *testing.T) {
+	t.Run("should return true for valid tryte", func(t *testing.T) {
+		assert.NoError(t, trinary.ValidTryte('A'))
+		assert.NoError(t, trinary.ValidTryte('X'))
+		assert.NoError(t, trinary.ValidTryte('F'))
 	})
 
-	Context("ValidTrytes()", func() {
-		It("should not return any error for valid trytes", func() {
-			Expect(ValidTrytes("AAA")).ToNot(HaveOccurred())
-			Expect(ValidTrytes("XXX")).ToNot(HaveOccurred())
-			Expect(ValidTrytes("FFF")).ToNot(HaveOccurred())
-		})
+	t.Run("should return false for invalid tryte", func(t *testing.T) {
+		assert.Error(t, trinary.ValidTryte('a'))
+		assert.Error(t, trinary.ValidTryte('x'))
+		assert.Error(t, trinary.ValidTryte('f'))
+	})
+}
 
-		It("should return an error for invalid trytes", func() {
-			Expect(ValidTrytes("f")).To(HaveOccurred())
-			Expect(ValidTrytes("xx")).To(HaveOccurred())
-			Expect(ValidTrytes("203984")).To(HaveOccurred())
-			Expect(ValidTrytes("")).To(HaveOccurred())
-		})
+func TestValidTrytes(t *testing.T) {
+	t.Run("should not return any error for valid trytes", func(t *testing.T) {
+		assert.NoError(t, trinary.ValidTrytes("AAA"))
+		assert.NoError(t, trinary.ValidTrytes("XXX"))
+		assert.NoError(t, trinary.ValidTrytes("FFF"))
 	})
 
-	Context("NewTrytes()", func() {
-		It("should return trytes for valid string input", func() {
-			trytes, err := NewTrytes("BLABLABLA")
-			Expect(trytes).To(Equal("BLABLABLA"))
-			Expect(err).ToNot(HaveOccurred())
-		})
+	t.Run("should return an error for invalid trytes", func(t *testing.T) {
+		assert.Error(t, trinary.ValidTrytes("f"))
+		assert.Error(t, trinary.ValidTrytes("xx"))
+		assert.Error(t, trinary.ValidTrytes("203984"))
+		assert.Error(t, trinary.ValidTrytes(""))
+	})
+}
 
-		It("should return an error for invalid string input", func() {
-			_, err := NewTrytes("abcd")
-			Expect(err).To(HaveOccurred())
-		})
-
-		It("should return an error for empty string input", func() {
-			_, err := NewTrytes("")
-			Expect(err).To(HaveOccurred())
-		})
+func TestNewTrytes(t *testing.T) {
+	t.Run("should return trytes for valid string input", func(t *testing.T) {
+		trytes, err := trinary.NewTrytes("BLABLABLA")
+		assert.NoError(t, err)
+		assert.Equal(t, "BLABLABLA", trytes)
 	})
 
-	Context("TrytesToTrits()", func() {
-		It("should return trits for valid trytes", func() {
-			trits, err := TrytesToTrits("M")
-			Expect(trits).To(Equal(Trits{1, 1, 1}))
-			Expect(err).ToNot(HaveOccurred())
-			trits, err = TrytesToTrits("O")
-			Expect(trits).To(Equal(Trits{0, -1, -1}))
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("should return an error for empty trytes", func() {
-			_, err := TrytesToTrits("")
-			Expect(err).To(HaveOccurred())
-		})
-
-		It("should return an error for invalid trytes", func() {
-			_, err := TrytesToTrits("abcd")
-			Expect(err).To(HaveOccurred())
-		})
+	t.Run("should return an error for invalid string input", func(t *testing.T) {
+		_, err := trinary.NewTrytes("abcd")
+		assert.Error(t, err)
 	})
 
-	Context("MinTrits()", func() {
-		It("should return correct length", func() {
-			v := MinTrits(1)
-			Expect(v).To(Equal(1))
+	t.Run("should return an error for empty string input", func(t *testing.T) {
+		_, err := trinary.NewTrytes("")
+		assert.Error(t, err)
+	})
+}
 
-			v = MinTrits(4)
-			Expect(v).To(Equal(2))
-		})
+func TestTrytesToTrits(t *testing.T) {
+	t.Run("should return trits for valid trytes", func(t *testing.T) {
+		trits, err := trinary.TrytesToTrits("M")
+		assert.NoError(t, err)
+		assert.Equal(t, trinary.Trits{1, 1, 1}, trits)
+		trits, err = trinary.TrytesToTrits("O")
+		assert.NoError(t, err)
+		assert.Equal(t, trinary.Trits{0, -1, -1}, trits)
 	})
 
-	Context("EncodedLength()", func() {
-		It("should return correct length", func() {
-			v := EncodedLength(-1)
-			Expect(v).To(Equal(uint64(4)))
-
-			v = EncodedLength(-4)
-			Expect(v).To(Equal(uint64(4)))
-		})
+	t.Run("should return an error for empty trytes", func(t *testing.T) {
+		_, err := trinary.TrytesToTrits("")
+		assert.Error(t, err)
 	})
 
-	Context("IntToTrytes()", func() {
-		It("should return correct trytes", func() {
-			v := IntToTrytes(-1, 1)
-			Expect(v).To(Equal("Z"))
+	t.Run("should return an error for invalid trytes", func(t *testing.T) {
+		_, err := trinary.TrytesToTrits("abcd")
+		assert.Error(t, err)
+	})
+}
 
-			v = IntToTrytes(500, 5)
-			Expect(v).To(Equal("NSA99"))
-		})
+func TestMinTrits(t *testing.T) {
+	t.Run("should return correct length", func(t *testing.T) {
+		v := trinary.MinTrits(1)
+		assert.Equal(t, 1, v)
+		v = trinary.MinTrits(4)
+		assert.Equal(t, 2, v)
+	})
+}
+
+func TestEncodedLength(t *testing.T) {
+	t.Run("should return correct length", func(t *testing.T) {
+		v := trinary.EncodedLength(-1)
+		assert.Equal(t, uint64(4), v)
+
+		v = trinary.EncodedLength(-4)
+		assert.Equal(t, uint64(4), v)
+	})
+}
+
+func TestIntToTrytes(t *testing.T) {
+	t.Run("should return correct trytes", func(t *testing.T) {
+		v := trinary.IntToTrytes(-1, 1)
+		assert.Equal(t, "Z", v)
+
+		v = trinary.IntToTrytes(500, 5)
+		assert.Equal(t, "NSA99", v)
+	})
+}
+
+func TestTrytesToInt(t *testing.T) {
+	t.Run("should return correct int", func(t *testing.T) {
+		v := trinary.TrytesToInt("ABCD")
+		assert.Equal(t, int64(80974), v)
+
+		v = trinary.TrytesToInt("ABCDEFGH")
+		assert.Equal(t, int64(86483600668), v)
+	})
+}
+
+func TestEncodeInt64(t *testing.T) {
+	t.Run("should return correct trits", func(t *testing.T) {
+		v, s, err := trinary.EncodeInt64(6)
+		assert.NoError(t, err)
+		assert.Equal(t, uint64(4), s)
+		assert.Equal(t, trinary.Trits{0, -1, 1, 0}, v)
+
+		v, s, err = trinary.EncodeInt64(500)
+		assert.NoError(t, err)
+		assert.Equal(t, uint64(12), s)
+		assert.Equal(t, trinary.Trits{-1, -1, -1, 1, 0, -1, 1, 0, 0, 0, 0, 0}, v)
+	})
+}
+
+func TestDecodeInt64(t *testing.T) {
+	t.Run("should return correct int64", func(t *testing.T) {
+		v, s, err := trinary.DecodeInt64(trinary.Trits{0, -1, 1, 0, -1, 1})
+		assert.NoError(t, err)
+		assert.Equal(t, uint64(4), s)
+		assert.Equal(t, int64(6), v)
+
+		v, s, err = trinary.DecodeInt64(trinary.Trits{-1, -1, -1, 1, 0, -1, 1, 0, 0, 0, 0, 0, -1, 1, 0, 1, 0, 0, 0})
+		assert.NoError(t, err)
+		assert.Equal(t, uint64(12), s)
+		assert.Equal(t, int64(500), v)
+	})
+}
+
+func TestMustTrytesToTrits(t *testing.T) {
+	t.Run("should return trits for valid trytes", func(t *testing.T) {
+		trits := trinary.MustTrytesToTrits("M")
+		assert.Equal(t, trinary.Trits{1, 1, 1}, trits)
+		trits = trinary.MustTrytesToTrits("O")
+		assert.Equal(t, trinary.Trits{0, -1, -1}, trits)
 	})
 
-	Context("TrytesToInt()", func() {
-		It("should return correct int", func() {
-			v := TrytesToInt("ABCD")
-			Expect(v).To(Equal(int64(80974)))
-
-			v = TrytesToInt("ABCDEFGH")
-			Expect(v).To(Equal(int64(86483600668)))
+	t.Run("should panic for invalid trytes", func(t *testing.T) {
+		assert.Panics(t, func() {
+			trinary.MustTrytesToTrits("abcd")
 		})
 	})
+}
 
-	Context("EncodeInt64()", func() {
-		It("should return correct trits", func() {
-			v, s, err := EncodeInt64(6)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(s).To(Equal(uint64(4)))
-			Expect(v).To(Equal(Trits{0, -1, 1, 0}))
-
-			v, s, err = EncodeInt64(500)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(s).To(Equal(uint64(12)))
-			Expect(v).To(Equal(Trits{-1, -1, -1, 1, 0, -1, 1, 0, 0, 0, 0, 0}))
-		})
+func TestMustPad(t *testing.T) {
+	t.Run("should pad up to the given size", func(t *testing.T) {
+		assert.Equal(t, "A9999", trinary.MustPad("A", 5))
+		assert.Equal(t, strings.Repeat("9", 81), trinary.MustPad("", 81))
 	})
+}
 
-	Context("DecodeInt64()", func() {
-		It("should return correct int64", func() {
-			v, s, err := DecodeInt64(Trits{0, -1, 1, 0, -1, 1})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(s).To(Equal(uint64(4)))
-			Expect(v).To(Equal(int64(6)))
-
-			v, s, err = DecodeInt64(Trits{-1, -1, -1, 1, 0, -1, 1, 0, 0, 0, 0, 0, -1, 1, 0, 1, 0, 0, 0})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(s).To(Equal(uint64(12)))
-			Expect(v).To(Equal(int64(500)))
-		})
+func TestMustPadTrits(t *testing.T) {
+	t.Run("should pad up to the given size", func(t *testing.T) {
+		assert.Equal(t, trinary.Trits{0, 0, 0, 0, 0}, trinary.MustPadTrits(trinary.Trits{}, 5))
+		assert.Equal(t, trinary.Trits{1, 1, 0, 0, 0}, trinary.MustPadTrits(trinary.Trits{1, 1}, 5))
+		assert.Equal(t, trinary.Trits{1, -1, 0, 1, 0}, trinary.MustPadTrits(trinary.Trits{1, -1, 0, 1}, 5))
 	})
+}
 
-	Context("MustTrytesToTrits()", func() {
-		It("should return trits for valid trytes", func() {
-			trits := MustTrytesToTrits("M")
-			Expect(trits).To(Equal(Trits{1, 1, 1}))
-			trits = MustTrytesToTrits("O")
-			Expect(trits).To(Equal(Trits{0, -1, -1}))
-		})
-
-		It("should panic for invalid trytes", func() {
-			Expect(func() { MustTrytesToTrits("abcd") }).To(Panic())
-		})
+func TestAddTrits(t *testing.T) {
+	t.Run("should correctly add trits together (positive)", func(t *testing.T) {
+		assert.Equal(t, int64(10), trinary.TritsToInt(trinary.AddTrits(trinary.IntToTrits(5), trinary.IntToTrits(5))))
+		assert.Equal(t, int64(0), trinary.TritsToInt(trinary.AddTrits(trinary.IntToTrits(0), trinary.IntToTrits(0))))
+		assert.Equal(t, int64(-120), trinary.TritsToInt(trinary.AddTrits(trinary.IntToTrits(-100), trinary.IntToTrits(-20))))
 	})
-
-	Context("MustPad()", func() {
-		It("should pad up to the given size", func() {
-			Expect(MustPad("A", 5)).To(Equal("A9999"))
-			Expect(MustPad("", 81)).To(Equal(strings.Repeat("9", 81)))
-		})
-	})
-
-	Context("MustPadTrits()", func() {
-		It("should pad up to the given size", func() {
-			Expect(MustPadTrits(Trits{}, 5)).To(Equal(Trits{0, 0, 0, 0, 0}))
-			Expect(MustPadTrits(Trits{1, 1}, 5)).To(Equal(Trits{1, 1, 0, 0, 0}))
-			Expect(MustPadTrits(Trits{1, -1, 0, 1}, 5)).To(Equal(Trits{1, -1, 0, 1, 0}))
-		})
-	})
-
-	Context("AddTrits()", func() {
-		It("should correctly add trits together (positive)", func() {
-			Expect(TritsToInt(AddTrits(IntToTrits(5), IntToTrits(5)))).To(Equal(int64(10)))
-			Expect(TritsToInt(AddTrits(IntToTrits(0), IntToTrits(0)))).To(Equal(int64(0)))
-			Expect(TritsToInt(AddTrits(IntToTrits(-100), IntToTrits(-20)))).To(Equal(int64(-120)))
-		})
-	})
-})
+}

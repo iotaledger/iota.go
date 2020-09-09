@@ -11,13 +11,11 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/pkg/errors"
 
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/transaction"
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
@@ -38,50 +36,6 @@ type ProofOfWorkFunc = func(trytes Trytes, mwm int, parallelism ...int) (Trytes,
 // CheckFunc is a function which checks if the required amount of work was fulfilled.
 // It needs the low and high trits of the curl state and a parameter (e.g. MWM for hashcash, Security for hamming)
 type CheckFunc = func(low *[curl.StateSize]uint64, high *[curl.StateSize]uint64, param int) int
-
-// DoPoW computes the nonce field for each transaction so that the last MWM-length trits of the
-// transaction hash are all zeroes. Starting from the 0 index transaction, the transactions get chained to
-// each other through the trunk transaction hash field. The last transaction in the bundle approves
-// the given branch and trunk transactions. This function also initializes the attachment timestamp fields.
-// This function expects the passed in transaction trytes from highest to lowest index, meaning the transaction
-// with current index 0 at the last position.
-func DoPoW(trunkTx Trytes, branchTx Trytes, trytes []Trytes, mwm uint64, pow ProofOfWorkFunc) ([]Trytes, error) {
-	txs, err := AsTransactionObjects(trytes, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var prev Trytes
-	for i := 0; i < len(txs); i++ {
-		switch {
-		case i == 0:
-			txs[i].TrunkTransaction = trunkTx
-			txs[i].BranchTransaction = branchTx
-		default:
-			txs[i].TrunkTransaction = prev
-			txs[i].BranchTransaction = trunkTx
-		}
-
-		txs[i].AttachmentTimestamp = time.Now().UnixNano() / 1000000
-		txs[i].AttachmentTimestampLowerBound = LowerBoundAttachmentTimestamp
-		txs[i].AttachmentTimestampUpperBound = UpperBoundAttachmentTimestamp
-
-		var err error
-		txs[i].Nonce, err = pow(MustTransactionToTrytes(&txs[i]), int(mwm))
-		if err != nil {
-			return nil, err
-		}
-
-		// set new transaction hash
-		txs[i].Hash = TransactionHash(&txs[i])
-		prev = txs[i].Hash
-	}
-	powedTxTrytes := MustTransactionsToTrytes(txs)
-	for left, right := 0, len(powedTxTrytes)-1; left < right; left, right = left+1, right-1 {
-		powedTxTrytes[left], powedTxTrytes[right] = powedTxTrytes[right], powedTxTrytes[left]
-	}
-	return powedTxTrytes, nil
-}
 
 var (
 	// contains the available Proof-of-Work implementation functions.

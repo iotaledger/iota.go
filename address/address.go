@@ -3,28 +3,28 @@ package address
 
 import (
 	"github.com/iotaledger/iota.go/checksum"
-	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/kerl"
-	. "github.com/iotaledger/iota.go/signing"
+	"github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/signing/key"
-	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/trinary"
 )
 
 // Checksum returns the checksum of the given address.
-func Checksum(address Hash) (Trytes, error) {
+func Checksum(address trinary.Hash) (trinary.Trytes, error) {
 	if len(address) < 81 {
-		return "", ErrInvalidAddress
+		return "", consts.ErrInvalidAddress
 	}
 
 	addressWithChecksum, err := checksum.AddChecksum(address[:81], true, 9)
 	if err != nil {
 		return "", err
 	}
-	return addressWithChecksum[AddressWithChecksumTrytesSize-AddressChecksumTrytesSize : 90], nil
+	return addressWithChecksum[consts.AddressWithChecksumTrytesSize-consts.AddressChecksumTrytesSize : 90], nil
 }
 
 // ValidAddress checks whether the given address is valid.
-func ValidAddress(address Hash) error {
+func ValidAddress(address trinary.Hash) error {
 	switch len(address) {
 	case 90:
 		if err := ValidChecksum(address[:81], address[81:]); err != nil {
@@ -32,37 +32,37 @@ func ValidAddress(address Hash) error {
 		}
 	case 81:
 	default:
-		return ErrInvalidAddress
+		return consts.ErrInvalidAddress
 	}
-	return ValidTrytes(address)
+	return trinary.ValidTrytes(address)
 }
 
 // ValidChecksum checks whether the given checksum corresponds to the given address.
-func ValidChecksum(address Hash, checksum Trytes) error {
+func ValidChecksum(address trinary.Hash, checksum trinary.Trytes) error {
 	actualChecksum, err := Checksum(address)
 	if err != nil {
 		return err
 	}
 	if checksum != actualChecksum {
-		return ErrInvalidChecksum
+		return consts.ErrInvalidChecksum
 	}
 	return nil
 }
 
 // GenerateAddress generates an address deterministically, according to the given seed, index and security level.
-func GenerateAddress(seed Trytes, index uint64, secLvl SecurityLevel, addChecksum ...bool) (Hash, error) {
+func GenerateAddress(seed trinary.Trytes, index uint64, secLvl consts.SecurityLevel, addChecksum ...bool) (trinary.Hash, error) {
 	for len(seed)%81 != 0 {
 		seed += "9"
 	}
 
 	if secLvl == 0 {
-		secLvl = SecurityLevelMedium
+		secLvl = consts.SecurityLevelMedium
 	}
 
 	// use Kerl for the entire address generation
 	h := kerl.NewKerl()
 
-	subseed, err := Subseed(seed, index, h)
+	subseed, err := signing.Subseed(seed, index, h)
 	if err != nil {
 		return "", err
 	}
@@ -72,17 +72,17 @@ func GenerateAddress(seed Trytes, index uint64, secLvl SecurityLevel, addChecksu
 		return "", err
 	}
 
-	digests, err := Digests(prvKey, h)
+	digests, err := signing.Digests(prvKey, h)
 	if err != nil {
 		return "", err
 	}
 
-	addressTrits, err := Address(digests, h)
+	addressTrits, err := signing.Address(digests, h)
 	if err != nil {
 		return "", err
 	}
 
-	address := MustTritsToTrytes(addressTrits)
+	address := trinary.MustTritsToTrytes(addressTrits)
 
 	if len(addChecksum) > 0 && addChecksum[0] {
 		return checksum.AddChecksum(address, true, 9)
@@ -92,8 +92,8 @@ func GenerateAddress(seed Trytes, index uint64, secLvl SecurityLevel, addChecksu
 }
 
 // GenerateAddresses generates N new addresses from the given seed, indices and security level.
-func GenerateAddresses(seed Trytes, start uint64, count uint64, secLvl SecurityLevel, addChecksum ...bool) (Hashes, error) {
-	addresses := make(Hashes, count)
+func GenerateAddresses(seed trinary.Trytes, start uint64, count uint64, secLvl consts.SecurityLevel, addChecksum ...bool) (trinary.Hashes, error) {
+	addresses := make(trinary.Hashes, count)
 
 	var withChecksum bool
 	if len(addChecksum) > 0 && addChecksum[0] {

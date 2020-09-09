@@ -1,25 +1,67 @@
 package curl_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
+	"testing"
 
-	. "github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/curl"
+	"github.com/iotaledger/iota.go/trinary"
 )
 
-var _ = Describe("Curl", func() {
-
-	DescribeTable("hash computation",
-		func(in Trytes, expected Trytes, rounds ...CurlRounds) {
-			Expect(MustHashTrytes(in, rounds...)).To(Equal(expected))
+func TestMustHashTrytes(t *testing.T) {
+	type args struct {
+		t      trinary.Trytes
+		rounds  []curl.CurlRounds
+	}
+	tests := []struct {
+		name string
+		args args
+		want trinary.Trytes
+	}{
+		{
+			name: "normal trytes",
+			args: args{
+				t:      "A",
+				rounds: []curl.CurlRounds{curl.CurlP81},
+			},
+			want: "TJVKPMTAMIZVBVHIVQUPTKEMPROEKV9SB9COEDQYRHYPTYSKQIAN9PQKMZHCPO9TS9BHCORFKW9CQXZEE",
 		},
-		Entry("normal trytes", "A", "TJVKPMTAMIZVBVHIVQUPTKEMPROEKV9SB9COEDQYRHYPTYSKQIAN9PQKMZHCPO9TS9BHCORFKW9CQXZEE", CurlP81),
-		Entry("normal trytes #2", "B", "QFZXTJUJNLAOSZKXXMMGJJLFACVLRQMRBKOJLMTZXPLPVDSWWWXLBX9CDZWHMDMSDMDQKXQGEWPC9BJHN"),
-		Entry("normal trytes #3", "ABCDEFGHIJ", "JKSGOZW9WFTALAYESGNJYRGCKIMZSVBMFIIHYBFCUCSLWDI9EEPTZBLGWNPJOMW9HZWNOFGBR9RNHKCYI", CurlP81),
-		Entry("empty trytes", "", "999999999999999999999999999999999999999999999999999999999999999999999999999999999", CurlP81),
-		Entry("empty trytes", "TWENTYSEVEN", "RQPYXJPRXEEPLYLAHWTTFRXXUZTV9SZPEVOQ9FZATCXJOZLZ9A9BFXTUBSHGXN9OOA9GWIPGAAWEDVNPN", CurlP27),
-	)
-
-})
+		{
+			name: "normal trytes #2",
+			args: args{
+				t:      "B",
+				rounds: nil,
+			},
+			want: "QFZXTJUJNLAOSZKXXMMGJJLFACVLRQMRBKOJLMTZXPLPVDSWWWXLBX9CDZWHMDMSDMDQKXQGEWPC9BJHN",
+		},
+		{
+			name: "normal trytes #3",
+			args: args{
+				t:      "ABCDEFGHIJ",
+				rounds: []curl.CurlRounds{curl.CurlP81},
+			},
+			want: "JKSGOZW9WFTALAYESGNJYRGCKIMZSVBMFIIHYBFCUCSLWDI9EEPTZBLGWNPJOMW9HZWNOFGBR9RNHKCYI",
+		},
+		{
+			name: "empty trytes - P81",
+			args: args{
+				t:      "",
+				rounds: []curl.CurlRounds{curl.CurlP81},
+			},
+			want: "999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+		}, {
+			name: "P27",
+			args: args{
+				t:      "TWENTYSEVEN",
+				rounds: []curl.CurlRounds{curl.CurlP27},
+			},
+			want: "RQPYXJPRXEEPLYLAHWTTFRXXUZTV9SZPEVOQ9FZATCXJOZLZ9A9BFXTUBSHGXN9OOA9GWIPGAAWEDVNPN",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := curl.MustHashTrytes(tt.args.t, tt.args.rounds...); got != tt.want {
+				t.Errorf("MustHashTrytes() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -1,4 +1,4 @@
-// Package checksum provides functions for adding/removing checksums from supplied Trytes.
+// Package checksums provides functions for adding/removing checksums from supplied Trytes.
 package checksum
 
 import (
@@ -8,9 +8,9 @@ import (
 	. "github.com/iotaledger/iota.go/trinary"
 )
 
-// AddChecksum computes the checksum and returns the given trytes with the appended checksum.
+// AddChecksum computes the checksums and returns the given trytes with the appended checksums.
 // If isAddress is true, then the input trytes must be of length HashTrytesSize.
-// Specified checksum length must be at least MinChecksumTrytesSize long or it must be
+// Specified checksums length must be at least MinChecksumTrytesSize long or it must be
 // AddressChecksumTrytesSize if isAddress is true.
 func AddChecksum(input Trytes, isAddress bool, checksumLength uint64) (Trytes, error) {
 	if isAddress && len(input) != HashTrytesSize {
@@ -56,7 +56,7 @@ func AddChecksums(inputs []Trytes, isAddress bool, checksumLength uint64) ([]Try
 	return withChecksums, nil
 }
 
-// RemoveChecksum removes the checksum from the given trytes.
+// RemoveChecksum removes the checksums from the given trytes.
 // The input trytes must be of length HashTrytesSize or AddressWithChecksumTrytesSize.
 func RemoveChecksum(input Trytes) (Trytes, error) {
 	if !guards.IsTrytesOfExactLength(input, HashTrytesSize) &&

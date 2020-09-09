@@ -1,67 +1,65 @@
 package merkle_test
 
 import (
+	"testing"
+
 	"github.com/iotaledger/iota.go/consts"
-	. "github.com/iotaledger/iota.go/merkle"
+	"github.com/iotaledger/iota.go/merkle"
 	"github.com/iotaledger/iota.go/trinary"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
 	hashToSign = consts.NullHashTrytes
 )
 
-var _ = Describe("Signing", func() {
-	var tree *MerkleTree
+func TestSigning(t *testing.T) {
+	var err error
+	tree, err := merkle.CreateMerkleTree(seed, securityLevel, depth, merkle.MerkleCreateOptions{Parallelism: 1})
+	assert.NoError(t, err)
 
-	BeforeSuite(func() {
-		var err error
-		tree, err = CreateMerkleTree(seed, securityLevel, depth, MerkleCreateOptions{Parallelism: 1})
-		Expect(err).ToNot(HaveOccurred())
+	tests := []struct {
+		name       string
+		leaveIndex uint32
+	}{
+		{name: "leafIndex: 0", leaveIndex: uint32(0)},
+		{name: "leafIndex: 1", leaveIndex: uint32(1)},
+		{name: "leafIndex: 2", leaveIndex: uint32(2)},
+		{name: "max leafIndex", leaveIndex: uint32(1<<depth - 1)},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			path, err := tree.AuditPath(test.leaveIndex)
+			assert.NoError(t, err)
+			fragments, err := merkle.SignatureFragments(seed, test.leaveIndex, securityLevel, hashToSign)
+			assert.NoError(t, err)
+
+			valid, err := merkle.ValidateSignatureFragments(tree.Root, test.leaveIndex, path, fragments, hashToSign)
+			assert.NoError(t, err)
+			assert.True(t, valid)
+		})
+	}
+
+	t.Run("valid audit path", func(t *testing.T) {
+		path := make([]trinary.Trytes, 32)
+		for i := range path {
+			path[i] = consts.NullHashTrytes
+		}
+		root, err := merkle.MerkleRoot(consts.NullHashTrytes, 1<<32-1, path)
+		assert.NoError(t, err)
+		assert.Equal(t, "MDKGSWENCCKHKNSHEZUX9LCCDKDJJR9BXLXXKRVMUGBLOVESSLRKWOPOE9UUZZOTOIOVMTCKQLTDQITPD", root)
 	})
 
-	DescribeTable("sign and validate",
-		func(leafIndex uint32) {
-			path, err := tree.AuditPath(leafIndex)
-			Expect(err).ToNot(HaveOccurred())
-			fragments, err := SignatureFragments(seed, leafIndex, securityLevel, hashToSign)
-			Expect(err).ToNot(HaveOccurred())
-
-			valid, err := ValidateSignatureFragments(tree.Root, leafIndex, path, fragments, hashToSign)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(valid).To(BeTrue())
-		},
-		Entry("leafIndex: 0", uint32(0)),
-		Entry("leafIndex: 1", uint32(1)),
-		Entry("leafIndex: 2", uint32(2)),
-		Entry("max leafIndex", uint32(1<<depth-1)),
-	)
-
-	Context("MerkleRoot()", func() {
-
-		It("valid audit path", func() {
-			path := make([]trinary.Trytes, 32)
-			for i := range path {
-				path[i] = consts.NullHashTrytes
-			}
-			root, err := MerkleRoot(consts.NullHashTrytes, 1<<32-1, path)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(root).To(Equal("MDKGSWENCCKHKNSHEZUX9LCCDKDJJR9BXLXXKRVMUGBLOVESSLRKWOPOE9UUZZOTOIOVMTCKQLTDQITPD"))
-		})
-
-		It("audit path too short", func() {
-			path := make([]trinary.Trytes, depth)
-			_, err := MerkleRoot(tree.Root, 1<<depth, path)
-			Expect(err).To(Equal(ErrInvalidAuditPathLength))
-		})
-
-		It("audit path invalid tryte lengths", func() {
-			path := []trinary.Trytes{""}
-			_, err := MerkleRoot(tree.Root, 0, path)
-			Expect(err).To(HaveOccurred())
-		})
+	t.Run("audit path too short", func(t *testing.T) {
+		path := make([]trinary.Trytes, depth)
+		_, err := merkle.MerkleRoot(tree.Root, 1<<depth, path)
+		assert.Equal(t, merkle.ErrInvalidAuditPathLength, err)
 	})
 
-})
+	t.Run("audit path invalid tryte lengths", func(t *testing.T) {
+		path := []trinary.Trytes{""}
+		_, err := merkle.MerkleRoot(tree.Root, 0, path)
+		assert.Error(t, err)
+	})
+}

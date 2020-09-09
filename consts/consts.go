@@ -3,11 +3,6 @@ package consts
 
 import "strings"
 
-const (
-	// DefaultMinWeightMagnitude is the default difficulty on mainnet.
-	DefaultMinWeightMagnitude = 14
-)
-
 // SecurityLevel defines the security level used for input transactions or respectively, how many
 // signature fragments will be generated for value transfers.
 type SecurityLevel int
@@ -74,10 +69,6 @@ const (
 // Null value constants.
 var (
 	NullHashTrytes                     = strings.Repeat("9", HashTrytesSize)
-	NullTagTrytes                      = strings.Repeat("9", TagTrinarySize/3)
-	NullNonceTrytes                    = strings.Repeat("9", NonceTrinarySize/3)
-	NullSignatureMessageFragmentTrytes = strings.Repeat("9", SignatureMessageFragmentTrinarySize/3)
-	NullAddressWithChecksum            = strings.Repeat("9", HashTrytesSize) + "A9BEONKZW"
 )
 
 // Attachment timestamp constants.
