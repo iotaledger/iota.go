@@ -58,7 +58,7 @@ var _ = Describe("Signing", func() {
 		})
 
 		It("audit path invalid tryte lengths", func() {
-			path := []trinary.Trytes{""}
+			path := []trinary.Trytes{"A"}
 			_, err := MerkleRoot(tree.Root, 0, path)
 			Expect(err).To(HaveOccurred())
 		})
