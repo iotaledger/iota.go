@@ -109,17 +109,18 @@ func (k *Kerl) Size() int {
 // Absorb fills the internal state of the sponge with the given trits.
 // This is only defined for Trit slices that are a multiple of HashTrinarySize long.
 func (k *Kerl) Absorb(in trinary.Trits) error {
-	if len(in) == 0 || len(in)%HashTrinarySize != 0 {
+	if len(in)%HashTrinarySize != 0 {
 		return errors.Wrap(ErrInvalidTritsLength, "trits slice length must be a multiple of 243")
 	}
 
 	// absorb all the chunks
 	for len(in) >= HashTrinarySize {
-		bs, err := KerlTritsToBytes(in[:HashTrinarySize])
-		if err != nil {
-			return err
+		if in[HashTrinarySize-1] != 0 {
+			return errors.Wrapf(ErrInvalidTrit, "each 243rd trit must be zero")
 		}
-		if _, err = k.Write(bs); err != nil {
+
+		bs, _ := KerlTritsToBytes(in[:HashTrinarySize])
+		if _, err := k.Write(bs); err != nil {
 			return err
 		}
 		in = in[HashTrinarySize:]
@@ -129,22 +130,28 @@ func (k *Kerl) Absorb(in trinary.Trits) error {
 
 // AbsorbTrytes fills the internal State of the sponge with the given trytes.
 func (k *Kerl) AbsorbTrytes(in trinary.Trytes) error {
-	if len(in) == 0 || len(in)%HashTrytesSize != 0 {
+	if len(in)%HashTrytesSize != 0 {
 		return errors.Wrap(ErrInvalidTrytesLength, "trytes length must be a multiple of 81")
 	}
 
 	// absorb all the chunks
 	for len(in) >= HashTrytesSize {
-		bs, err := KerlTrytesToBytes(in[:HashTrytesSize])
-		if err != nil {
-			return err
+		if !tryteHasZeroLastTrit(in[HashTrytesSize-1]) {
+			return errors.Wrapf(ErrInvalidTrit, "each 243rd trit must be zero")
 		}
-		if _, err = k.Write(bs); err != nil {
+
+		bs, _ := KerlTrytesToBytes(in[:HashTrytesSize])
+		if _, err := k.Write(bs); err != nil {
 			return err
 		}
 		in = in[HashTrytesSize:]
 	}
 	return nil
+}
+
+func tryteHasZeroLastTrit(t byte) bool {
+	v := trinary.MustTryteToTryteValue(t)
+	return v >= -4 && v <= 4
 }
 
 // MustAbsorbTrytes fills the internal State of the sponge with the given trytes.
@@ -165,10 +172,7 @@ func (k *Kerl) Squeeze(length int) (trinary.Trits, error) {
 	out := make(trinary.Trits, 0, length)
 	for i := 0; i < length/HashTrinarySize; i++ {
 		k.squeezeSum()
-		ts, err := KerlBytesToTrits(k.buf[:])
-		if err != nil {
-			return nil, err
-		}
+		ts, _ := KerlBytesToTrits(k.buf[:])
 		out = append(out, ts...)
 	}
 	return out, nil
@@ -195,10 +199,7 @@ func (k *Kerl) SqueezeTrytes(length int) (trinary.Trytes, error) {
 
 	for i := 0; i < length/HashTrinarySize; i++ {
 		k.squeezeSum()
-		ts, err := KerlBytesToTrytes(k.buf[:])
-		if err != nil {
-			return "", err
-		}
+		ts, _ := KerlBytesToTrytes(k.buf[:])
 		out.WriteString(ts)
 	}
 	return out.String(), nil

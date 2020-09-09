@@ -1,6 +1,7 @@
 package kerl_test
 
 import (
+	"bytes"
 	"encoding/hex"
 
 	. "github.com/iotaledger/iota.go/consts"
@@ -39,11 +40,11 @@ var _ = Describe("Kerl", func() {
 				"OXJCNFHUNAHWDLKKPELTBFUCVW9KLXKOGWERKTJXQMXTKFKNWNNXYD9DMJJABSEIONOSJTTEVKVDQEWTW",
 			),
 			Entry("input with 243-trits",
-				"EMIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBH",
+				"EMIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBZ",
 				"EJEAOOZYSAWFPZQESYDHZCGYNSTWXUMVJOVDWUNZJXDGWCLUFGIMZRMGCAZGKNPLBRLGUNYWKLJTYEAQX",
 			),
 			Entry("output with more than 243-trits",
-				"9MIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBH",
+				"9MIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBZ",
 				"G9JYBOMPUXHYHKSNRNMMSSZCSHOFYOYNZRSZMAAYWDYEIMVVOGKPJBVBM9TDPULSFUNMTVXRKFIDOHUXXVYDLFSZYZTWQYTE9SPYYWYTXJYQ9IFGYOLZXWZBKWZN9QOOTBQMWMUBLEWUEEASRHRTNIQWJQNDWRYLCA",
 			),
 			Entry("input & output with more than 243-trits",
@@ -78,11 +79,11 @@ var _ = Describe("Kerl", func() {
 				"OXJCNFHUNAHWDLKKPELTBFUCVW9KLXKOGWERKTJXQMXTKFKNWNNXYD9DMJJABSEIONOSJTTEVKVDQEWTW",
 			),
 			Entry("input with 243-trits",
-				"EMIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBH",
+				"EMIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBZ",
 				"EJEAOOZYSAWFPZQESYDHZCGYNSTWXUMVJOVDWUNZJXDGWCLUFGIMZRMGCAZGKNPLBRLGUNYWKLJTYEAQX",
 			),
 			Entry("output with more than 243-trits",
-				"9MIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBH",
+				"9MIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBZ",
 				"G9JYBOMPUXHYHKSNRNMMSSZCSHOFYOYNZRSZMAAYWDYEIMVVOGKPJBVBM9TDPULSFUNMTVXRKFIDOHUXXVYDLFSZYZTWQYTE9SPYYWYTXJYQ9IFGYOLZXWZBKWZN9QOOTBQMWMUBLEWUEEASRHRTNIQWJQNDWRYLCA",
 			),
 			Entry("input & output with more than 243-trits",
@@ -157,12 +158,20 @@ var _ = Describe("Kerl", func() {
 			k = NewKerl()
 		})
 
-		It("should return an error with empty trits slice", func() {
-			Expect(k.Absorb(trinary.Trits{})).To(HaveOccurred())
-		})
-
 		It("should return an error with invalid trits slice length", func() {
 			Expect(k.Absorb(trinary.Trits{1, 0, 0, 0, 0, -1})).To(HaveOccurred())
+		})
+
+		It("should return an error with 243rd trit set to 1", func() {
+			in := make(trinary.Trits, 2*HashTrinarySize)
+			in[HashTrinarySize-1] = 1
+			Expect(k.Absorb(in)).To(HaveOccurred())
+		})
+
+		It("should return an error with 243rd trit set to -1", func() {
+			in := make(trinary.Trits, 2*HashTrinarySize)
+			in[HashTrinarySize-1] = -1
+			Expect(k.Absorb(in)).To(HaveOccurred())
 		})
 
 		It("should return an error for Absorb after Squeeze", func() {
@@ -180,12 +189,20 @@ var _ = Describe("Kerl", func() {
 			k = NewKerl()
 		})
 
-		It("should return an error with empty tryte slice", func() {
-			Expect(k.AbsorbTrytes("")).To(HaveOccurred())
-		})
-
 		It("should return an error with invalid trits slice length", func() {
 			Expect(k.AbsorbTrytes("AR")).To(HaveOccurred())
+		})
+
+		It("should return an error with 243rd trit set to 1", func() {
+			in := bytes.Repeat([]byte{'9'}, 2*HashTrytesSize)
+			in[HashTrytesSize-1] = 'I'
+			Expect(k.AbsorbTrytes(trinary.Trytes(in))).To(HaveOccurred())
+		})
+
+		It("should return an error with 243rd trit set to -1", func() {
+			in := bytes.Repeat([]byte{'9'}, 2*HashTrytesSize)
+			in[HashTrytesSize-1] = 'R'
+			Expect(k.AbsorbTrytes(trinary.Trytes(in))).To(HaveOccurred())
 		})
 
 		It("should return an error for Absorb after Squeeze", func() {

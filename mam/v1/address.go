@@ -1,11 +1,12 @@
 package mam
 
 import (
-	"github.com/iotaledger/iota.go/address"
 	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/trinary"
 )
+
+const checksumTrinarySize = consts.AddressChecksumTrytesSize * consts.TritsPerTryte
 
 func makeAddress(mode ChannelMode, root trinary.Trits, sideKey trinary.Trytes) (trinary.Trytes, error) {
 	if mode == ChannelModePublic {
@@ -32,16 +33,12 @@ func makeAddress(mode ChannelMode, root trinary.Trits, sideKey trinary.Trytes) (
 	return toAddress(hashedRoot)
 }
 
-func toAddress(root trinary.Trits) (trinary.Trytes, error) {
-	rootTrytes, err := trinary.TritsToTrytes(root)
-	if err != nil {
+// create the Curl-P-81 checksum and return the trytes
+func toAddress(trits trinary.Trits) (trinary.Trytes, error) {
+	h := curl.NewCurlP81()
+	if err := h.Absorb(trits); err != nil {
 		return "", err
 	}
-
-	chkSum, err := address.Checksum(rootTrytes)
-	if err != nil {
-		return "", err
-	}
-
-	return rootTrytes + chkSum, nil
+	checksum := h.MustSqueeze(consts.HashTrinarySize)[consts.HashTrinarySize-checksumTrinarySize:]
+	return trinary.TritsToTrytes(append(trits, checksum...))
 }
