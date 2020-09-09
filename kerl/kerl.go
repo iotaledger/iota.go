@@ -90,8 +90,9 @@ func (k *Kerl) Read(b []byte) (n int, err error) {
 func (k *Kerl) Sum(b []byte) []byte {
 	// make a copy of k so that state and buffer are preserved
 	dup := *k
-	dup.squeezeSum()
-	return append(b, dup.buf[:]...)
+	bytes := make([]byte, HashBytesSize)
+	dup.Read(bytes)
+	return append(b, bytes...)
 }
 
 // Reset resets the Hash to its initial state.

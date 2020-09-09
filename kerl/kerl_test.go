@@ -108,6 +108,10 @@ var _ = Describe("Kerl", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(hex.EncodeToString(outBuf)).To(Equal(expected))
 			},
+			Entry("input with less than 48 bytes",
+				"ff",
+				"08869cad3dc2429eb295195200ad22eb36188452ba65f0e31b2b21bd49b503a7f1d1d61a6df8bff569d3decc9810721b",
+			),
 			Entry("input with 48 bytes",
 				"3f1b9727c967dda4f0ef98032f97483864e0dc9ed391dd5b8bc8133d9ce77fe182fef749de882dace92b655c6bba22df",
 				"bec15753fa767d98b59de095a962f472f7b4e15da47d6dd987c4608ccd32f8e2231c3201faca0ee2591f11179c816e30",
@@ -118,7 +122,12 @@ var _ = Describe("Kerl", func() {
 			),
 			Entry("input & output with more than 48 bytes",
 				"be8fc99ed01018cd8e1904d5188ddc62d85edf1aecc61609a820df347cfe7b8bfa928e9c0460854c638fa330cfd0e3f517a7a822b3d0a0fb3d7b05bbe86ae815c8e063b638363351ac87dd62784db4441e1beae32596a224699fd5aeeab61eab",
-				"4b6e005b96685f95c22b94e5248b2fa06b22062124bea182a2e7d8834f9bcf1a3e0debe180a377f19207404916263040b9acbbca8851297604dcdf1ae0cb11f8444d9f387fdd80993e7158e4efea04630bcf931d90190dc98a4243265eb73c3f"),
+				"4b6e005b96685f95c22b94e5248b2fa06b22062124bea182a2e7d8834f9bcf1a3e0debe180a377f19207404916263040b9acbbca8851297604dcdf1ae0cb11f8444d9f387fdd80993e7158e4efea04630bcf931d90190dc98a4243265eb73c3f",
+			),
+			Entry("output with non-zero 243rd trit",
+				"f229bc41fdbfbef56f0380f4a7c5ca34f640492ec097af2abd7eae8b8b19f08e13acbb5244becd4ee477cb3c17b38eeb",
+				"a686e9c70af67a3892e65ea7b0340ee94c9a0a54cafb99aaed9b489500ba260e4f2eeb4161f1ccf0b153b3d9fc8ffd65",
+			),
 		)
 	})
 
@@ -189,15 +198,8 @@ var _ = Describe("Kerl", func() {
 	})
 
 	Context("(*Kerl).Sum", func() {
-		in := "ff"
-		hash := "08869cad3dc2429eb295195200ad22eb36188452ba65f0e31b2b21bd49b503a7f1d1d61a6df8bff569d3decc9810721b"
-
-		var k *Kerl
-		BeforeEach(func() {
-			k = NewKerl()
-		})
-
-		It("valid bytes", func() {
+		DescribeTable("hash computation", func(in string, expected string) {
+			k := NewKerl()
 			// absorb
 			inBuf, err := hex.DecodeString(in)
 			Expect(err).ToNot(HaveOccurred())
@@ -206,24 +208,34 @@ var _ = Describe("Kerl", func() {
 			Expect(err).ToNot(HaveOccurred())
 			// append sum to inBuf
 			outBuf := k.Sum(inBuf)
-			Expect(hex.EncodeToString(outBuf)).To(Equal(in + hash))
-		})
-
-		It("absorb after sum", func() {
-			// absorb
-			inBuf, err := hex.DecodeString(in)
-			Expect(err).ToNot(HaveOccurred())
-			written, err := k.Write(inBuf)
-			Expect(written).To(Equal(len(inBuf)))
-			Expect(err).ToNot(HaveOccurred())
-			// append sum to inBuf
-			outBuf := k.Sum(inBuf)
-			Expect(hex.EncodeToString(outBuf)).To(Equal(in + hash))
+			Expect(hex.EncodeToString(outBuf)).To(Equal(in + expected))
 			// absorb again
 			written, err = k.Write(inBuf)
 			Expect(written).To(Equal(len(inBuf)))
 			Expect(err).ToNot(HaveOccurred())
-		})
+			// compare against new Kerl
+			k2 := NewKerl()
+			k2.Write(inBuf[:hex.DecodedLen(len(in))])
+			k2.Write(inBuf)
+			Expect(k.Sum(nil)).To(Equal(k2.Sum(nil)))
+		},
+			Entry("input with less than 48 bytes",
+				"ff",
+				"08869cad3dc2429eb295195200ad22eb36188452ba65f0e31b2b21bd49b503a7f1d1d61a6df8bff569d3decc9810721b",
+			),
+			Entry("input with 48 bytes",
+				"3f1b9727c967dda4f0ef98032f97483864e0dc9ed391dd5b8bc8133d9ce77fe182fef749de882dace92b655c6bba22df",
+				"bec15753fa767d98b59de095a962f472f7b4e15da47d6dd987c4608ccd32f8e2231c3201faca0ee2591f11179c816e30",
+			),
+			Entry("input with more than 48 bytes",
+				"be8fc99ed01018cd8e1904d5188ddc62d85edf1aecc61609a820df347cfe7b8bfa928e9c0460854c638fa330cfd0e3f517a7a822b3d0a0fb3d7b05bbe86ae815c8e063b638363351ac87dd62784db4441e1beae32596a224699fd5aeeab61eab",
+				"4b6e005b96685f95c22b94e5248b2fa06b22062124bea182a2e7d8834f9bcf1a3e0debe180a377f19207404916263040",
+			),
+			Entry("output with non-zero 243rd trit",
+				"f229bc41fdbfbef56f0380f4a7c5ca34f640492ec097af2abd7eae8b8b19f08e13acbb5244becd4ee477cb3c17b38eeb",
+				"a686e9c70af67a3892e65ea7b0340ee94c9a0a54cafb99aaed9b489500ba260e4f2eeb4161f1ccf0b153b3d9fc8ffd65",
+			),
+		)
 	})
 
 	Context("(*Kerl).Reset", func() {
