@@ -2,7 +2,6 @@ package iota
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -25,7 +24,7 @@ const (
 
 var (
 	// Returned on invalid UTXO indices.
-	ErrRefUTXOIndexInvalid = errors.New(fmt.Sprintf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax))
+	ErrRefUTXOIndexInvalid = fmt.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
 )
 
 // InputSelector implements SerializableSelectorFunc for input types.

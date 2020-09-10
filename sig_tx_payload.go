@@ -26,13 +26,13 @@ const (
 
 var (
 	// Returned if the count of inputs is too small.
-	ErrMinInputsNotReached = errors.New(fmt.Sprintf("min %d input(s) are required within a transaction", MinInputsCount))
+	ErrMinInputsNotReached = fmt.Errorf("min %d input(s) are required within a transaction", MinInputsCount)
 	// Returned if the count of inputs is too big.
-	ErrMaxInputsExceeded = errors.New(fmt.Sprintf("max %d input(s) are allowed within a transaction", MaxInputsCount))
+	ErrMaxInputsExceeded = fmt.Errorf("max %d input(s) are allowed within a transaction", MaxInputsCount)
 	// Returned if the count of outputs is too small.
-	ErrMinOutputsNotReached = errors.New(fmt.Sprintf("min %d output(s) are required within a transaction", MinOutputsCount))
+	ErrMinOutputsNotReached = fmt.Errorf("min %d output(s) are required within a transaction", MinOutputsCount)
 	// Returned if the count of outputs is too big.
-	ErrMaxOutputsExceeded = errors.New(fmt.Sprintf("max %d output(s) are allowed within a transaction", MaxOutputsCount))
+	ErrMaxOutputsExceeded = fmt.Errorf("max %d output(s) are allowed within a transaction", MaxOutputsCount)
 	// Returned if the count of unlock blocks doesn't match the count of inputs.
 	ErrUnlockBlocksMustMatchInputCount = errors.New("the count of unlock blocks must match the inputs of the transaction")
 
