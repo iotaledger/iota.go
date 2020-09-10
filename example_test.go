@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/luca-moser/iota"
+	"github.com/iotaledger/iota.go"
 	"github.com/stretchr/testify/require"
 )
 

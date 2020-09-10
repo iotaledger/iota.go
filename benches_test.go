@@ -4,7 +4,7 @@ import (
 	"crypto/ed25519"
 	"testing"
 
-	"github.com/luca-moser/iota"
+	"github.com/iotaledger/iota.go"
 )
 
 func BenchmarkDeserializeWithValidationOneIOSigTxPayload(b *testing.B) {
