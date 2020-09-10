@@ -3,8 +3,8 @@ package validators_test
 import (
 	"testing"
 
-	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/guards/validators"
+	"github.com/iotaledger/iota.go/legacy"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +12,7 @@ import (
 
 func TestValidateNonEmptyStrings(t *testing.T) {
 	assert.NoError(t, validators.ValidateNonEmptyStrings(nil, "123", "321")())
-	assert.Error(t, validators.ValidateNonEmptyStrings(consts.ErrInvalidTrytes, []string{}...)())
+	assert.Error(t, validators.ValidateNonEmptyStrings(legacy.ErrInvalidTrytes, []string{}...)())
 }
 
 func TestValidateHashes(t *testing.T) {
@@ -35,11 +35,11 @@ func TestValidateURIs(t *testing.T) {
 }
 
 func TestValidateSecurityLevel(t *testing.T) {
-	assert.NoError(t, validators.ValidateSecurityLevel(consts.SecurityLevelMedium)())
-	assert.Error(t, validators.ValidateSecurityLevel(consts.SecurityLevel(-1))())
-	assert.Error(t, validators.ValidateSecurityLevel(consts.SecurityLevel(4))())
-	assert.Error(t, validators.ValidateSecurityLevel(consts.SecurityLevel(0))())
-	assert.Error(t, validators.ValidateSecurityLevel(consts.SecurityLevel(-1))())
+	assert.NoError(t, validators.ValidateSecurityLevel(legacy.SecurityLevelMedium)())
+	assert.Error(t, validators.ValidateSecurityLevel(legacy.SecurityLevel(-1))())
+	assert.Error(t, validators.ValidateSecurityLevel(legacy.SecurityLevel(4))())
+	assert.Error(t, validators.ValidateSecurityLevel(legacy.SecurityLevel(0))())
+	assert.Error(t, validators.ValidateSecurityLevel(legacy.SecurityLevel(-1))())
 }
 
 func TestValidateSeed(t *testing.T) {

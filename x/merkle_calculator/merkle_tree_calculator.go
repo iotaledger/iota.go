@@ -6,9 +6,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/guards"
-	"github.com/iotaledger/iota.go/merkle"
+	"github.com/iotaledger/iota.go/legacy"
+	"github.com/iotaledger/iota.go/legacy/merkle"
 )
 
 func main() {
@@ -72,7 +72,7 @@ func main() {
 		log.Printf("calculating nodes for layer %d\n", index)
 	}
 
-	mt, err := merkle.CreateMerkleTree(*seed, consts.SecurityLevel(*securityLevel), *depth,
+	mt, err := merkle.CreateMerkleTree(*seed, legacy.SecurityLevel(*securityLevel), *depth,
 		merkle.MerkleCreateOptions{
 			CalculateAddressesStartCallback:    calculateAddressesStartCallback,
 			CalculateAddressesCallback:         calculateAddressesCallback,

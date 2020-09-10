@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/encoding/t5b1"
-	"github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/legacy"
+	"github.com/iotaledger/iota.go/legacy/trinary"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,7 +55,7 @@ func TestValidEncodings(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Len(t, dst, n)
 				// add expected padding
-				paddedLen := t5b1.DecodedLen(t5b1.EncodedLen(len(test.args.trytes) * consts.TritsPerTryte))
+				paddedLen := t5b1.DecodedLen(t5b1.EncodedLen(len(test.args.trytes) * legacy.TritsPerTryte))
 				assert.Equal(t, trinary.MustPadTrits(trinary.MustTrytesToTrits(test.args.trytes), paddedLen), dst)
 			})
 
@@ -63,8 +63,8 @@ func TestValidEncodings(t *testing.T) {
 				dst, err := t5b1.DecodeToTrytes(test.args.bytes)
 				assert.NoError(t, err)
 				// add expected padding
-				paddedTritLen := t5b1.DecodedLen(t5b1.EncodedLen(len(test.args.trytes) * consts.TritsPerTryte))
-				paddedTryteLen := int(math.Ceil(float64(paddedTritLen) / consts.TritsPerTryte))
+				paddedTritLen := t5b1.DecodedLen(t5b1.EncodedLen(len(test.args.trytes) * legacy.TritsPerTryte))
+				paddedTryteLen := int(math.Ceil(float64(paddedTritLen) / legacy.TritsPerTryte))
 				assert.Equal(t, trinary.MustPad(test.args.trytes, paddedTryteLen), dst)
 			})
 		})
@@ -87,7 +87,7 @@ func TestInvalidEncodings(t *testing.T) {
 				bytes: []byte{0x80},
 				trits: []int8{},
 			},
-			err: consts.ErrInvalidByte,
+			err: legacy.ErrInvalidByte,
 		},
 		{
 			name: "above max group value",
@@ -95,7 +95,7 @@ func TestInvalidEncodings(t *testing.T) {
 				bytes: []byte{0x7a},
 				trits: []int8{},
 			},
-			err: consts.ErrInvalidByte,
+			err: legacy.ErrInvalidByte,
 		},
 		{
 			name: "below min group value",
@@ -103,7 +103,7 @@ func TestInvalidEncodings(t *testing.T) {
 				bytes: []byte{0x86},
 				trits: []int8{},
 			},
-			err: consts.ErrInvalidByte,
+			err: legacy.ErrInvalidByte,
 		},
 		{
 			name: "2nd group invalid",
@@ -111,7 +111,7 @@ func TestInvalidEncodings(t *testing.T) {
 				bytes: []byte{0x79, 0x7a},
 				trits: []int8{1, 1, 1, 1, 1},
 			},
-			err: consts.ErrInvalidByte,
+			err: legacy.ErrInvalidByte,
 		},
 		{
 			name: "3rd group invalid",
@@ -119,7 +119,7 @@ func TestInvalidEncodings(t *testing.T) {
 				bytes: []byte{0x00, 0x01, 0x7a},
 				trits: []int8{0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
 			},
-			err: consts.ErrInvalidByte,
+			err: legacy.ErrInvalidByte,
 		},
 	}
 	for _, test := range tests {

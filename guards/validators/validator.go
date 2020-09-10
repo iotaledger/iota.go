@@ -4,9 +4,9 @@ package validators
 import (
 	"net/url"
 
-	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/guards"
-	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/legacy"
+	. "github.com/iotaledger/iota.go/legacy/trinary"
 	"github.com/pkg/errors"
 )
 
@@ -38,7 +38,7 @@ func ValidateHashes(hashes ...Hash) Validatable {
 	return func() error {
 		for i := range hashes {
 			if !IsHash(hashes[i]) {
-				return errors.Wrapf(ErrInvalidHash, "%s at index %d", hashes[i], i)
+				return errors.Wrapf(legacy.ErrInvalidHash, "%s at index %d", hashes[i], i)
 			}
 		}
 		return nil
@@ -51,14 +51,14 @@ func ValidateURIs(uris ...string) Validatable {
 		for i := range uris {
 			uri := uris[i]
 			if len(uri) < 7 {
-				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
+				return errors.Wrapf(legacy.ErrInvalidURI, "%s at index %d", uris[i], i)
 			}
 			schema := uri[:6]
 			if schema != "tcp://" && schema != "udp://" {
-				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
+				return errors.Wrapf(legacy.ErrInvalidURI, "%s at index %d", uris[i], i)
 			}
 			if _, err := url.Parse(uri); err != nil {
-				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
+				return errors.Wrapf(legacy.ErrInvalidURI, "%s at index %d", uris[i], i)
 			}
 		}
 		return nil
@@ -66,10 +66,10 @@ func ValidateURIs(uris ...string) Validatable {
 }
 
 // ValidateSecurityLevel validates the given security level.
-func ValidateSecurityLevel(secLvl SecurityLevel) Validatable {
+func ValidateSecurityLevel(secLvl legacy.SecurityLevel) Validatable {
 	return func() error {
 		if secLvl > 3 || secLvl < 1 {
-			return ErrInvalidSecurityLevel
+			return legacy.ErrInvalidSecurityLevel
 		}
 		return nil
 	}
@@ -78,8 +78,8 @@ func ValidateSecurityLevel(secLvl SecurityLevel) Validatable {
 // ValidateSeed validates the given seed.
 func ValidateSeed(seed Trytes) Validatable {
 	return func() error {
-		if !IsTrytesOfExactLength(seed, HashTrytesSize) {
-			return ErrInvalidSeed
+		if !IsTrytesOfExactLength(seed, legacy.HashTrytesSize) {
+			return legacy.ErrInvalidSeed
 		}
 		return nil
 	}
@@ -96,7 +96,7 @@ func ValidateStartEndOptions(start uint64, end *uint64) Validatable {
 		}
 		e := *end
 		if start > e || e > start+MaxIndexDiff {
-			return ErrInvalidStartEndOptions
+			return legacy.ErrInvalidStartEndOptions
 		}
 		return nil
 	}

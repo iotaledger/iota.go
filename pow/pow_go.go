@@ -12,11 +12,11 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/iotaledger/iota.go/legacy"
 	"github.com/pkg/errors"
 
-	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/legacy/curl"
+	. "github.com/iotaledger/iota.go/legacy/trinary"
 )
 
 var (
@@ -144,9 +144,9 @@ const (
 	PearlDiverMidStateLow3  uint64 = 0xFFC0000007FFFFFF
 	PearlDiverMidStateHigh3 uint64 = 0x003FFFFFFFFFFFFF
 
-	nonceOffset         = HashTrinarySize - NonceTrinarySize
+	nonceOffset         = legacy.HashTrinarySize - legacy.NonceTrinarySize
 	nonceInitStart      = nonceOffset + 4
-	nonceIncrementStart = nonceInitStart + NonceTrinarySize/3
+	nonceIncrementStart = nonceInitStart + legacy.NonceTrinarySize/3
 )
 
 // Para transforms trits to ptrits (01:-1 11:0 10:1)
@@ -218,19 +218,19 @@ func incr(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) bool {
 	var i int
 
 	// to avoid boundary check, I believe.
-	for i = nonceInitStart; i < HashTrinarySize && carry != 0; i++ {
+	for i = nonceInitStart; i < legacy.HashTrinarySize && carry != 0; i++ {
 		low := lmid[i]
 		high := hmid[i]
 		lmid[i] = high ^ low
 		hmid[i] = low
 		carry = high & (^low)
 	}
-	return i == HashTrinarySize
+	return i == legacy.HashTrinarySize
 }
 
 func seri(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, n uint) Trits {
-	r := make(Trits, NonceTrinarySize)
-	for i := nonceOffset; i < HashTrinarySize; i++ {
+	r := make(Trits, legacy.NonceTrinarySize)
+	for i := nonceOffset; i < legacy.HashTrinarySize; i++ {
 		ll := (l[i] >> n) & 1
 		hh := (h[i] >> n) & 1
 
@@ -248,7 +248,7 @@ func seri(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, n uint) Trits {
 
 func check(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, m int) int {
 	nonceProbe := hBits
-	for i := HashTrinarySize - m; i < HashTrinarySize; i++ {
+	for i := legacy.HashTrinarySize - m; i < legacy.HashTrinarySize; i++ {
 		nonceProbe &= ^(l[i] ^ h[i])
 		if nonceProbe == 0 {
 			return -1
@@ -296,8 +296,8 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 	tr := MustTrytesToTrits(trytes)
 
 	c := curl.NewCurlP81().(*curl.Curl)
-	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
-	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
+	c.Absorb(tr[:(legacy.TransactionTrinarySize - legacy.HashTrinarySize)])
+	copy(c.State, tr[legacy.TransactionTrinarySize-legacy.HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes

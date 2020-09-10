@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/iotaledger/iota.go/guards"
-	"github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/legacy/trinary"
 	"github.com/stretchr/testify/assert"
 )
 

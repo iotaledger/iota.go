@@ -7,10 +7,10 @@ package pow_test
 import (
 	"testing"
 
-	"github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/curl"
+	"github.com/iotaledger/iota.go/legacy"
+	"github.com/iotaledger/iota.go/legacy/curl"
+	"github.com/iotaledger/iota.go/legacy/trinary"
 	"github.com/iotaledger/iota.go/pow"
-	"github.com/iotaledger/iota.go/trinary"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +19,7 @@ func TestCProofOfWork(t *testing.T) {
 	difficulty := 10
 	nonce, err := pow.CProofOfWork(rawTx, difficulty)
 	assert.NoError(t, err)
-	rawTx = rawTx[:len(rawTx)-consts.NonceTrinarySize/3] + nonce
+	rawTx = rawTx[:len(rawTx)-legacy.NonceTrinarySize/3] + nonce
 	hashedTrytes := curl.MustHashTrytes(rawTx)
 	assert.LessOrEqual(t, difficulty, trinary.TrailingZeros(trinary.MustTrytesToTrits(hashedTrytes)))
 }

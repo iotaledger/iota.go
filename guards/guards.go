@@ -2,8 +2,8 @@
 package guards
 
 import (
-	. "github.com/iotaledger/iota.go/consts"
-	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/legacy"
+	. "github.com/iotaledger/iota.go/legacy/trinary"
 )
 
 // IsTrytes checks if input is correct trytes consisting of [9A-Z]
@@ -58,5 +58,5 @@ func IsEmptyTrytes(trytes Trytes) bool {
 
 // IsHash checks if input is correct hash (81 trytes or 90)
 func IsHash(trytes Trytes) bool {
-	return IsTrytesOfExactLength(trytes, HashTrytesSize) || IsTrytesOfExactLength(trytes, AddressWithChecksumTrytesSize)
+	return IsTrytesOfExactLength(trytes, legacy.HashTrytesSize) || IsTrytesOfExactLength(trytes, legacy.AddressWithChecksumTrytesSize)
 }

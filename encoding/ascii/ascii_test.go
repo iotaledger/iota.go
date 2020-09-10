@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/iotaledger/iota.go/encoding/ascii"
-	"github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/legacy/trinary"
 )
 
 func TestEncodeToTrytes(t *testing.T) {

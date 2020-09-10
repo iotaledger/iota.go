@@ -4,8 +4,8 @@ package t5b1
 import (
 	"fmt"
 
-	"github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/legacy"
+	"github.com/iotaledger/iota.go/legacy/trinary"
 )
 
 const (
@@ -76,7 +76,7 @@ func Encode(dst []byte, src trinary.Trits) int {
 		if len(src) < tritsInByte {
 			var v int
 			for j := len(src) - 1; j >= 0; j-- {
-				v = v*consts.TrinaryRadix + int(src[j])
+				v = v*legacy.TrinaryRadix + int(src[j])
 			}
 			dst[i] = byte(v)
 			return i + 1
@@ -96,7 +96,7 @@ func Encode(dst []byte, src trinary.Trits) int {
 // If the corresponding number of trits of src is not a multiple of 5, it is padded with zeroes.
 // If src does not contain valid trytes, the behavior is undefined.
 func EncodeTrytes(src trinary.Trytes) []byte {
-	dst := make([]byte, EncodedLen(len(src)*consts.TritsPerTryte))
+	dst := make([]byte, EncodedLen(len(src)*legacy.TritsPerTryte))
 	Encode(dst, trinary.MustTrytesToTrits(src))
 	return dst
 }
@@ -110,7 +110,7 @@ func Decode(dst trinary.Trits, src []byte) (int, error) {
 	j := 0
 	for i, b := range src {
 		if int8(b) < minGroupValue || int8(b) > maxGroupValue {
-			return j, fmt.Errorf("%w: at index %d (byte: %x)", consts.ErrInvalidByte, i, b)
+			return j, fmt.Errorf("%w: at index %d (byte: %x)", legacy.ErrInvalidByte, i, b)
 		}
 		_ = dst[4] // bounds check hints to compiler
 		dst[0] = tritsLUT[b][0]
@@ -130,8 +130,8 @@ func Decode(dst trinary.Trits, src []byte) (int, error) {
 // DecodeToTrytes expects that src contains a valid t5b1 encoding of a tryte-string.
 // If the input is malformed or does not contain the correct zero padding, it returns an error.
 func DecodeToTrytes(src []byte) (trinary.Trytes, error) {
-	trytesLen := (DecodedLen(len(src)) + consts.TritsPerTryte - 1) / consts.TritsPerTryte
-	trits := make(trinary.Trits, trytesLen*consts.TritsPerTryte)
+	trytesLen := (DecodedLen(len(src)) + legacy.TritsPerTryte - 1) / legacy.TritsPerTryte
+	trits := make(trinary.Trits, trytesLen*legacy.TritsPerTryte)
 	if _, err := Decode(trits, src); err != nil {
 		return "", err
 	}
