@@ -10,7 +10,7 @@ import (
 type SignatureType = uint32
 
 const (
-	// Denotes a WOTS a signature.
+	// Denotes a WOTS signature.
 	SignatureWOTS SignatureType = iota
 	// Denotes an Ed25519 signature.
 	SignatureEd25519
@@ -33,6 +33,7 @@ func SignatureSelector(sigType uint32) (Serializable, error) {
 	return seri, nil
 }
 
+// WOTSSignature defines a WOTS signature.
 type WOTSSignature struct{}
 
 func (w *WOTSSignature) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
@@ -48,15 +49,18 @@ func (w *WOTSSignature) Serialize(deSeriMode DeSerializationMode) ([]byte, error
 	panic("implement me")
 }
 
+// Ed25519Signature defines an Ed25519 signature.
 type Ed25519Signature struct {
+	// The public key used to verify the given signature.
 	PublicKey [ed25519.PublicKeySize]byte `json:"public_key"`
+	// The signature.
 	Signature [ed25519.SignatureSize]byte `json:"signature"`
 }
 
 func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(Ed25519SignatureSerializedBytesSize, len(data)); err != nil {
-			return 0, err
+			return 0, fmt.Errorf("invalid Ed25519 signature bytes: %w", err)
 		}
 		if err := checkType(data, SignatureEd25519); err != nil {
 			return 0, fmt.Errorf("unable to deserialize Ed25519 signature: %w", err)

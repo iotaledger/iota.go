@@ -26,6 +26,7 @@ const (
 )
 
 var (
+	// Returned if the deposit amount of an output is less or equal zero.
 	ErrDepositAmountMustBeGreaterThanZero = errors.New("deposit amount must be greater than zero")
 )
 
@@ -52,7 +53,7 @@ type SigLockedSingleDeposit struct {
 func (s *SigLockedSingleDeposit) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(SigLockedSingleDepositBytesMinSize, len(data)); err != nil {
-			return 0, err
+			return 0, fmt.Errorf("invalid signature locked single deposit bytes: %w", err)
 		}
 		if err := checkTypeByte(data, OutputSigLockedSingleDeposit); err != nil {
 			return 0, fmt.Errorf("unable to deserialize signature locked single deposit: %w", err)
@@ -73,7 +74,7 @@ func (s *SigLockedSingleDeposit) Deserialize(data []byte, deSeriMode DeSerializa
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := outputAmountValidator(-1, s); err != nil {
-			return 0, err
+			return 0, fmt.Errorf("%w: unable to deserialize signature locked single deposit", err)
 		}
 	}
 
@@ -83,7 +84,7 @@ func (s *SigLockedSingleDeposit) Deserialize(data []byte, deSeriMode DeSerializa
 func (s *SigLockedSingleDeposit) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := outputAmountValidator(-1, s); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: unable to serialize signature locked single deposit", err)
 		}
 	}
 
@@ -94,13 +95,13 @@ func (s *SigLockedSingleDeposit) Serialize(deSeriMode DeSerializationMode) (data
 	case *Ed25519Address:
 		b = make([]byte, SigLockedSingleDepositEd25519AddrBytesSize)
 	default:
-		return nil, ErrUnknownAddrType
+		return nil, fmt.Errorf("%w: signature locked single deposit defines unknown address", ErrUnknownAddrType)
 	}
 
 	b[0] = OutputSigLockedSingleDeposit
 	addrBytes, err := s.Address.Serialize(deSeriMode)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize address within signature locked single deposit", err)
 	}
 	copy(b[SmallTypeDenotationByteSize:], addrBytes)
 	binary.LittleEndian.PutUint64(b[len(b)-UInt64ByteSize:], s.Amount)
@@ -119,11 +120,11 @@ func OutputsAddrUniqueValidator() OutputsValidatorFunc {
 		switch addr := dep.Address.(type) {
 		case *WOTSAddress:
 			if _, err := b.Write(addr[:]); err != nil {
-				return err
+				return fmt.Errorf("%w: unable to serialize WOTS address in addr unique validator", err)
 			}
 		case *Ed25519Address:
 			if _, err := b.Write(addr[:]); err != nil {
-				return err
+				return fmt.Errorf("%w: unable to serialize Ed25519 address in addr unique validator", err)
 			}
 		}
 		k := b.String()

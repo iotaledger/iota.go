@@ -14,14 +14,17 @@ const (
 	// A type of input which references an unspent transaction output.
 	InputUTXO InputType = iota
 
+	// The minimum index of a referenced UTXO.
 	RefUTXOIndexMin = 0
+	// The maximum index of a referenced UTXO.
 	RefUTXOIndexMax = 126
 
-	// input type + tx id + index
+	// The size of a UTXO input: input type + tx id + index
 	UTXOInputSize = SmallTypeDenotationByteSize + TransactionIDLength + UInt16ByteSize
 )
 
 var (
+	// Returned on invalid UTXO indices.
 	ErrRefUTXOIndexInvalid = errors.New(fmt.Sprintf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax))
 )
 
@@ -48,7 +51,7 @@ type UTXOInput struct {
 func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(UTXOInputSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid utxo input bytes: %w", err)
+			return 0, fmt.Errorf("invalid UTXO input bytes: %w", err)
 		}
 		if err := checkTypeByte(data, InputUTXO); err != nil {
 			return 0, fmt.Errorf("unable to deserialize UTXO input: %w", err)
@@ -66,7 +69,7 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := utxoInputRefBoundsValidator(-1, u); err != nil {
-			return 0, err
+			return 0, fmt.Errorf("%w: unable to deserialize UTXO input", err)
 		}
 	}
 
@@ -76,7 +79,7 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 func (u *UTXOInput) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := utxoInputRefBoundsValidator(-1, u); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: unable to serialize UTXO input", err)
 		}
 	}
 
@@ -96,10 +99,10 @@ func InputsUTXORefsUniqueValidator() InputsValidatorFunc {
 	return func(index int, input *UTXOInput) error {
 		var b strings.Builder
 		if _, err := b.Write(input.TransactionID[:]); err != nil {
-			return err
+			return fmt.Errorf("%w: unable to write tx ID in ref validator", err)
 		}
 		if err := binary.Write(&b, binary.LittleEndian, input.TransactionOutputIndex); err != nil {
-			return err
+			return fmt.Errorf("%w: unable to write UTXO index in ref validator", err)
 		}
 		k := b.String()
 		if j, has := set[k]; has {
