@@ -10,6 +10,9 @@ import (
 // Defines the type of transaction.
 type TransactionType = uint32
 
+// TransactionReference is a reference to a transaction.
+type TransactionReference = [TransactionIDLength]byte
+
 const (
 	// Denotes an unsigned transaction.
 	TransactionUnsigned TransactionType = iota
