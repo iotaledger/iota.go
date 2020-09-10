@@ -2,12 +2,12 @@
 package validators
 
 import (
-	"github.com/iotaledger/iota.go/bundle"
-	. "github.com/iotaledger/iota.go/consts"
-	. "github.com/iotaledger/iota.go/guards"
-	. "github.com/iotaledger/iota.go/trinary"
-	"github.com/pkg/errors"
 	"net/url"
+
+	. "github.com/iotaledger/iota.go/guards"
+	"github.com/iotaledger/iota.go/legacy"
+	. "github.com/iotaledger/iota.go/legacy/trinary"
+	"github.com/pkg/errors"
 )
 
 // Validatable is a function which validates something and returns an error if the validation fails.
@@ -33,78 +33,12 @@ func ValidateNonEmptyStrings(err error, slice ...string) Validatable {
 	}
 }
 
-// ValidateTransactionHashes validates the given transaction hashes.
-func ValidateTransactionHashes(hashes ...Hash) Validatable {
-	return func() error {
-		for i := range hashes {
-			if !IsTransactionHash(hashes[i]) {
-				return errors.Wrapf(ErrInvalidTransactionHash, "%s at index %d", hashes[i], i)
-			}
-		}
-		return nil
-	}
-}
-
 // ValidateHashes validates the given hashes.
 func ValidateHashes(hashes ...Hash) Validatable {
 	return func() error {
 		for i := range hashes {
 			if !IsHash(hashes[i]) {
-				return errors.Wrapf(ErrInvalidHash, "%s at index %d", hashes[i], i)
-			}
-		}
-		return nil
-	}
-}
-
-// ValidateAddresses validates the given addresses which must include the checksum.
-func ValidateAddresses(checkLastTrit bool, addrs ...Hash) Validatable {
-	return func() error {
-		for i := range addrs {
-			if !IsAddressWithChecksum(addrs[i]) {
-				return errors.Wrapf(ErrInvalidHash, "%s at index %d (not length of 90 trytes)", addrs[i], i)
-			}
-			if checkLastTrit {
-				lastTrits := MustTrytesToTrits(string(addrs[i][80]))
-				if lastTrits[2] != 0 {
-					return errors.Wrapf(ErrInvalidHash, "%s at index %d (last trit non 0)", addrs[i], i)
-				}
-			}
-		}
-		return nil
-	}
-}
-
-// ValidateTransactionTrytes validates the given transaction trytes.
-func ValidateTransactionTrytes(trytes ...Trytes) Validatable {
-	return func() error {
-		for i := range trytes {
-			if !IsTransactionTrytes(trytes[i]) {
-				return errors.Wrapf(ErrInvalidTransactionTrytes, "at index %d", i)
-			}
-		}
-		return nil
-	}
-}
-
-// ValidateAttachedTransactionTrytes validates the given attached transaction trytes.
-func ValidateAttachedTransactionTrytes(trytes ...Trytes) Validatable {
-	return func() error {
-		for i := range trytes {
-			if !IsAttachedTrytes(trytes[i]) {
-				return errors.Wrapf(ErrInvalidAttachedTrytes, "at index %d", i)
-			}
-		}
-		return nil
-	}
-}
-
-// ValidateTags validates the given tags.
-func ValidateTags(tags ...Trytes) Validatable {
-	return func() error {
-		for i := range tags {
-			if !IsTag(tags[i]) {
-				return errors.Wrapf(ErrInvalidTag, "%s at index %d", tags[i], i)
+				return errors.Wrapf(legacy.ErrInvalidHash, "%s at index %d", hashes[i], i)
 			}
 		}
 		return nil
@@ -117,14 +51,14 @@ func ValidateURIs(uris ...string) Validatable {
 		for i := range uris {
 			uri := uris[i]
 			if len(uri) < 7 {
-				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
+				return errors.Wrapf(legacy.ErrInvalidURI, "%s at index %d", uris[i], i)
 			}
 			schema := uri[:6]
 			if schema != "tcp://" && schema != "udp://" {
-				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
+				return errors.Wrapf(legacy.ErrInvalidURI, "%s at index %d", uris[i], i)
 			}
 			if _, err := url.Parse(uri); err != nil {
-				return errors.Wrapf(ErrInvalidURI, "%s at index %d", uris[i], i)
+				return errors.Wrapf(legacy.ErrInvalidURI, "%s at index %d", uris[i], i)
 			}
 		}
 		return nil
@@ -132,10 +66,10 @@ func ValidateURIs(uris ...string) Validatable {
 }
 
 // ValidateSecurityLevel validates the given security level.
-func ValidateSecurityLevel(secLvl SecurityLevel) Validatable {
+func ValidateSecurityLevel(secLvl legacy.SecurityLevel) Validatable {
 	return func() error {
 		if secLvl > 3 || secLvl < 1 {
-			return ErrInvalidSecurityLevel
+			return legacy.ErrInvalidSecurityLevel
 		}
 		return nil
 	}
@@ -144,8 +78,8 @@ func ValidateSecurityLevel(secLvl SecurityLevel) Validatable {
 // ValidateSeed validates the given seed.
 func ValidateSeed(seed Trytes) Validatable {
 	return func() error {
-		if !IsTrytesOfExactLength(seed, HashTrytesSize) {
-			return ErrInvalidSeed
+		if !IsTrytesOfExactLength(seed, legacy.HashTrytesSize) {
+			return legacy.ErrInvalidSeed
 		}
 		return nil
 	}
@@ -162,23 +96,7 @@ func ValidateStartEndOptions(start uint64, end *uint64) Validatable {
 		}
 		e := *end
 		if start > e || e > start+MaxIndexDiff {
-			return ErrInvalidStartEndOptions
-		}
-		return nil
-	}
-}
-
-// ValidateTransfers validates the given transfers.
-func ValidateTransfers(transfers ...bundle.Transfer) Validatable {
-	return func() error {
-		for i := range transfers {
-			transfer := &transfers[i]
-			if IsHash(transfer.Address) &&
-				(transfer.Message == "" || IsTrytes(transfer.Message)) ||
-				(transfer.Tag == "" || IsTag(transfer.Tag)) {
-				continue
-			}
-			return ErrInvalidTransfer
+			return legacy.ErrInvalidStartEndOptions
 		}
 		return nil
 	}

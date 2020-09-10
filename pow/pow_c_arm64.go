@@ -269,9 +269,9 @@ import (
 	"sync"
 	"unsafe"
 
-	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/legacy"
+	"github.com/iotaledger/iota.go/legacy/curl"
+	. "github.com/iotaledger/iota.go/legacy/trinary"
 )
 
 func init() {
@@ -306,8 +306,8 @@ func cARM64ProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism .
 	tr := MustTrytesToTrits(trytes)
 
 	c := curl.NewCurlP81().(*curl.Curl)
-	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
-	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
+	c.Absorb(tr[:(legacy.TransactionTrinarySize - legacy.HashTrinarySize)])
+	copy(c.State, tr[legacy.TransactionTrinarySize-legacy.HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
@@ -321,7 +321,7 @@ func cARM64ProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism .
 	var cancelled C.int
 	for n := 0; n < numGoroutines; n++ {
 		go func(n int) {
-			nonce := make(Trits, NonceTrinarySize)
+			nonce := make(Trits, legacy.NonceTrinarySize)
 
 			r := C.pworkARM64(
 				(*C.schar)(unsafe.Pointer(&c.State[0])), C.int(mwm),

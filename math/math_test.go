@@ -1,17 +1,12 @@
 package math_test
 
 import (
-	. "github.com/iotaledger/iota.go/math"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"testing"
+
+	"github.com/iotaledger/iota.go/math"
+	"github.com/stretchr/testify/assert"
 )
 
-var _ = Describe("Math", func() {
-
-	Context("AbsInt64()", func() {
-		It("should only return positive values", func() {
-			v := AbsInt64(-9223372036854775807)
-			Expect(v).To(Equal(int64(9223372036854775807)))
-		})
-	})
-})
+func TestAbsInt64(t *testing.T) {
+	assert.EqualValues(t, int64(9223372036854775807), math.AbsInt64(-9223372036854775807))
+}

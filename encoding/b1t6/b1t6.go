@@ -8,13 +8,13 @@ import (
 	"math"
 	"strings"
 
-	"github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/legacy"
+	"github.com/iotaledger/iota.go/legacy/trinary"
 )
 
 const (
 	tritsPerByte  = 6
-	trytesPerByte = tritsPerByte / consts.TritsPerTryte
+	trytesPerByte = tritsPerByte / legacy.TritsPerTryte
 )
 
 // EncodedLen returns the trit-length of an encoding of n source bytes.
@@ -28,7 +28,7 @@ func Encode(dst trinary.Trits, src []byte) int {
 	for i := range src {
 		t1, t2 := encodeGroup(src[i])
 		trinary.MustPutTryteTrits(dst[j:], t1)
-		trinary.MustPutTryteTrits(dst[j+consts.TritsPerTryte:], t2)
+		trinary.MustPutTryteTrits(dst[j+legacy.TritsPerTryte:], t2)
 		j += 6
 	}
 	return j
@@ -37,7 +37,7 @@ func Encode(dst trinary.Trits, src []byte) int {
 // EncodeToTrytes returns the encoding of src converted into trytes.
 func EncodeToTrytes(src []byte) trinary.Trytes {
 	var dst strings.Builder
-	dst.Grow(EncodedLen(len(src)) / consts.TritsPerTryte)
+	dst.Grow(EncodedLen(len(src)) / legacy.TritsPerTryte)
 
 	for i := range src {
 		t1, t2 := encodeGroup(src[i])
@@ -64,7 +64,7 @@ func Decode(dst []byte, src trinary.Trits) (int, error) {
 	i := 0
 	for j := 0; j <= len(src)-tritsPerByte; j += tritsPerByte {
 		t1 := trinary.MustTritsToTryteValue(src[j:])
-		t2 := trinary.MustTritsToTryteValue(src[j+consts.TritsPerTryte:])
+		t2 := trinary.MustTritsToTryteValue(src[j+legacy.TritsPerTryte:])
 		b, ok := decodeGroup(t1, t2)
 		if !ok {
 			return i, fmt.Errorf("%w: %v", ErrInvalidTrits, src[j:j+6])
@@ -82,7 +82,7 @@ func Decode(dst []byte, src trinary.Trits) (int, error) {
 // DecodeTrytes expects that src contains a valid b1t6 encoding and that in has even length,
 // it returns an error otherwise. If src does not contain trytes, the behavior of DecodeTrytes is undefined.
 func DecodeTrytes(src trinary.Trytes) ([]byte, error) {
-	dst := make([]byte, DecodedLen(len(src)*consts.TritsPerTryte))
+	dst := make([]byte, DecodedLen(len(src)*legacy.TritsPerTryte))
 	i := 0
 	for j := 0; j <= len(src)-trytesPerByte; j += trytesPerByte {
 		t1 := trinary.MustTryteToTryteValue(src[j])
@@ -103,14 +103,14 @@ func DecodeTrytes(src trinary.Trytes) ([]byte, error) {
 // encodeGroup converts a byte into two tryte values.
 func encodeGroup(b byte) (int8, int8) {
 	// this is equivalent to: IntToTrytes(int8(b), 2)
-	v := int(int8(b)) + (consts.TryteRadix/2)*consts.TryteRadix + consts.TryteRadix/2 // make un-balanced
-	quo, rem := v/consts.TryteRadix, v%consts.TryteRadix
-	return int8(rem + consts.MinTryteValue), int8(quo + consts.MinTryteValue)
+	v := int(int8(b)) + (legacy.TryteRadix/2)*legacy.TryteRadix + legacy.TryteRadix/2 // make un-balanced
+	quo, rem := v/legacy.TryteRadix, v%legacy.TryteRadix
+	return int8(rem + legacy.MinTryteValue), int8(quo + legacy.MinTryteValue)
 }
 
 // decodeGroup converts two tryte values into a byte and a success flag.
 func decodeGroup(t1, t2 int8) (byte, bool) {
-	v := int(t1) + int(t2)*consts.TryteRadix
+	v := int(t1) + int(t2)*legacy.TryteRadix
 	if v < math.MinInt8 || v > math.MaxInt8 {
 		return 0, false
 	}

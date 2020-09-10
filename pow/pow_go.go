@@ -11,14 +11,12 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
-	"time"
 
+	"github.com/iotaledger/iota.go/legacy"
 	"github.com/pkg/errors"
 
-	. "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/curl"
-	. "github.com/iotaledger/iota.go/transaction"
-	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/legacy/curl"
+	. "github.com/iotaledger/iota.go/legacy/trinary"
 )
 
 var (
@@ -38,50 +36,6 @@ type ProofOfWorkFunc = func(trytes Trytes, mwm int, parallelism ...int) (Trytes,
 // CheckFunc is a function which checks if the required amount of work was fulfilled.
 // It needs the low and high trits of the curl state and a parameter (e.g. MWM for hashcash, Security for hamming)
 type CheckFunc = func(low *[curl.StateSize]uint64, high *[curl.StateSize]uint64, param int) int
-
-// DoPoW computes the nonce field for each transaction so that the last MWM-length trits of the
-// transaction hash are all zeroes. Starting from the 0 index transaction, the transactions get chained to
-// each other through the trunk transaction hash field. The last transaction in the bundle approves
-// the given branch and trunk transactions. This function also initializes the attachment timestamp fields.
-// This function expects the passed in transaction trytes from highest to lowest index, meaning the transaction
-// with current index 0 at the last position.
-func DoPoW(trunkTx Trytes, branchTx Trytes, trytes []Trytes, mwm uint64, pow ProofOfWorkFunc) ([]Trytes, error) {
-	txs, err := AsTransactionObjects(trytes, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var prev Trytes
-	for i := 0; i < len(txs); i++ {
-		switch {
-		case i == 0:
-			txs[i].TrunkTransaction = trunkTx
-			txs[i].BranchTransaction = branchTx
-		default:
-			txs[i].TrunkTransaction = prev
-			txs[i].BranchTransaction = trunkTx
-		}
-
-		txs[i].AttachmentTimestamp = time.Now().UnixNano() / 1000000
-		txs[i].AttachmentTimestampLowerBound = LowerBoundAttachmentTimestamp
-		txs[i].AttachmentTimestampUpperBound = UpperBoundAttachmentTimestamp
-
-		var err error
-		txs[i].Nonce, err = pow(MustTransactionToTrytes(&txs[i]), int(mwm))
-		if err != nil {
-			return nil, err
-		}
-
-		// set new transaction hash
-		txs[i].Hash = TransactionHash(&txs[i])
-		prev = txs[i].Hash
-	}
-	powedTxTrytes := MustTransactionsToTrytes(txs)
-	for left, right := 0, len(powedTxTrytes)-1; left < right; left, right = left+1, right-1 {
-		powedTxTrytes[left], powedTxTrytes[right] = powedTxTrytes[right], powedTxTrytes[left]
-	}
-	return powedTxTrytes, nil
-}
 
 var (
 	// contains the available Proof-of-Work implementation functions.
@@ -190,9 +144,9 @@ const (
 	PearlDiverMidStateLow3  uint64 = 0xFFC0000007FFFFFF
 	PearlDiverMidStateHigh3 uint64 = 0x003FFFFFFFFFFFFF
 
-	nonceOffset         = HashTrinarySize - NonceTrinarySize
+	nonceOffset         = legacy.HashTrinarySize - legacy.NonceTrinarySize
 	nonceInitStart      = nonceOffset + 4
-	nonceIncrementStart = nonceInitStart + NonceTrinarySize/3
+	nonceIncrementStart = nonceInitStart + legacy.NonceTrinarySize/3
 )
 
 // Para transforms trits to ptrits (01:-1 11:0 10:1)
@@ -264,19 +218,19 @@ func incr(lmid *[curl.StateSize]uint64, hmid *[curl.StateSize]uint64) bool {
 	var i int
 
 	// to avoid boundary check, I believe.
-	for i = nonceInitStart; i < HashTrinarySize && carry != 0; i++ {
+	for i = nonceInitStart; i < legacy.HashTrinarySize && carry != 0; i++ {
 		low := lmid[i]
 		high := hmid[i]
 		lmid[i] = high ^ low
 		hmid[i] = low
 		carry = high & (^low)
 	}
-	return i == HashTrinarySize
+	return i == legacy.HashTrinarySize
 }
 
 func seri(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, n uint) Trits {
-	r := make(Trits, NonceTrinarySize)
-	for i := nonceOffset; i < HashTrinarySize; i++ {
+	r := make(Trits, legacy.NonceTrinarySize)
+	for i := nonceOffset; i < legacy.HashTrinarySize; i++ {
 		ll := (l[i] >> n) & 1
 		hh := (h[i] >> n) & 1
 
@@ -294,7 +248,7 @@ func seri(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, n uint) Trits {
 
 func check(l *[curl.StateSize]uint64, h *[curl.StateSize]uint64, m int) int {
 	nonceProbe := hBits
-	for i := HashTrinarySize - m; i < HashTrinarySize; i++ {
+	for i := legacy.HashTrinarySize - m; i < legacy.HashTrinarySize; i++ {
 		nonceProbe &= ^(l[i] ^ h[i])
 		if nonceProbe == 0 {
 			return -1
@@ -342,8 +296,8 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 	tr := MustTrytesToTrits(trytes)
 
 	c := curl.NewCurlP81().(*curl.Curl)
-	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
-	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
+	c.Absorb(tr[:(legacy.TransactionTrinarySize - legacy.HashTrinarySize)])
+	copy(c.State, tr[legacy.TransactionTrinarySize-legacy.HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
