@@ -20,4 +20,4 @@ jobs:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
         command: test
-        args: --org=iota-foundation
+        args: --file=go.mod --org=iota-foundation
