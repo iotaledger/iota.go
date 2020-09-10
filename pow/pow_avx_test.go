@@ -21,5 +21,5 @@ func TestAVXProofOfWork(t *testing.T) {
 	assert.NoError(t, err)
 	rawTx = rawTx[:len(rawTx)-consts.NonceTrinarySize/3] + nonce
 	hashedTrytes := curl.MustHashTrytes(rawTx)
-	assert.Equal(t, difficulty, trinary.TrailingZeros(trinary.MustTrytesToTrits(hashedTrytes)))
+	assert.LessOrEqual(t, difficulty, trinary.TrailingZeros(trinary.MustTrytesToTrits(hashedTrytes)))
 }

@@ -1,0 +1,21 @@
+on: [ push, pull_request ]
+name: test_and_benchmark
+jobs:
+  test_and_benchmark:
+    strategy:
+      matrix:
+        go-version: [ 1.15.x ]
+        platform: [ ubuntu-latest ]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Install Go
+        if: success()
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Run tests
+        run: go test -tags="pow_avx pow_sse pow_c pow_c128" -v -covermode=count ./...
+      - name: Run Benchmarks
+        run: go test -bench=. ./...
