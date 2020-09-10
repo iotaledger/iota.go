@@ -15,13 +15,16 @@ const (
 	// Denotes a reference unlock block.
 	UnlockBlockReference
 
+	// Defines the minimum size of a signature unlock block.
 	SignatureUnlockBlockMinSize = SmallTypeDenotationByteSize + Ed25519SignatureSerializedBytesSize
-	ReferenceUnlockBlockSize    = SmallTypeDenotationByteSize + UInt16ByteSize
+	// Defines the size of a reference unlock block.
+	ReferenceUnlockBlockSize = SmallTypeDenotationByteSize + UInt16ByteSize
 )
 
 var (
+	// Returned if unlock blocks making part of a transaction aren't unique.
 	ErrSigUnlockBlocksNotUnique = errors.New("signature unlock blocks must be unique")
-	// TODO: might also reference something else in the future than just signature unlock blocks
+	// Returned if a reference unlock block does not reference a signature unlock block.
 	ErrRefUnlockBlockInvalidRef = errors.New("reference unlock block must point to a previous signature unlock block")
 )
 
@@ -41,13 +44,14 @@ func UnlockBlockSelector(unlockBlockType uint32) (Serializable, error) {
 
 // SignatureUnlockBlock holds a signature which unlocks inputs.
 type SignatureUnlockBlock struct {
+	// The signature of this unlock block.
 	Signature Serializable `json:"signature"`
 }
 
 func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(SignatureUnlockBlockMinSize, len(data)); err != nil {
-			return 0, err
+			return 0, fmt.Errorf("invalid signature unlock block bytes: %w", err)
 		}
 		if err := checkTypeByte(data, UnlockBlockSignature); err != nil {
 			return 0, fmt.Errorf("unable to deserialize signature unlock block: %w", err)
@@ -60,7 +64,7 @@ func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode DeSerializati
 
 	sig, sigBytesRead, err := DeserializeObject(data, deSeriMode, TypeDenotationByte, SignatureSelector)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("%w: unable to deserialize signature within signature unlock block", err)
 	}
 	bytesReadTotal += sigBytesRead
 	s.Signature = sig
@@ -71,20 +75,21 @@ func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode DeSerializati
 func (s *SignatureUnlockBlock) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	sigBytes, err := s.Signature.Serialize(deSeriMode)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize signature within signature unlock block", err)
 	}
 	return append([]byte{UnlockBlockSignature}, sigBytes...), nil
 }
 
 // ReferenceUnlockBlock is an unlock block which references a previous unlock block.
 type ReferenceUnlockBlock struct {
+	// The other unlock block this reference unlock block references to.
 	Reference uint16 `json:"reference"`
 }
 
 func (r *ReferenceUnlockBlock) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(ReferenceUnlockBlockSize, len(data)); err != nil {
-			return 0, err
+			return 0, fmt.Errorf("invalid reference unlock block bytes: %w", err)
 		}
 		if err := checkTypeByte(data, UnlockBlockReference); err != nil {
 			return 0, fmt.Errorf("unable to deserialize reference unlock block: %w", err)

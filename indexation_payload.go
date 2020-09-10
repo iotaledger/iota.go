@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	// Defines the indexation payload's ID.
 	IndexationPayloadID uint32 = 2
 	// type bytes + index prefix + one char + data length
 	IndexationPayloadMinSize = TypeDenotationByteSize + UInt16ByteSize + OneByte + UInt32ByteSize
@@ -21,7 +22,7 @@ type IndexationPayload struct {
 func (u *IndexationPayload) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(IndexationPayloadMinSize, len(data)); err != nil {
-			return 0, err
+			return 0, fmt.Errorf("invalid indexation payload bytes: %w", err)
 		}
 		if err := checkType(data, IndexationPayloadID); err != nil {
 			return 0, fmt.Errorf("unable to deserialize indexation payload: %w", err)
@@ -31,7 +32,7 @@ func (u *IndexationPayload) Deserialize(data []byte, deSeriMode DeSerializationM
 	data = data[TypeDenotationByteSize:]
 	index, indexBytesRead, err := ReadStringFromBytes(data)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("%w: unable to deserialize indexation payload index", err)
 	}
 	u.Index = index
 	data = data[indexBytesRead:]
@@ -61,24 +62,24 @@ func (u *IndexationPayload) Serialize(deSeriMode DeSerializationMode) ([]byte, e
 
 	var b bytes.Buffer
 	if err := binary.Write(&b, binary.LittleEndian, IndexationPayloadID); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize indexation payload ID", err)
 	}
 
 	strLen := uint16(len(u.Index))
 	if err := binary.Write(&b, binary.LittleEndian, strLen); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize indexation payload index length", err)
 	}
 
 	if _, err := b.Write([]byte(u.Index)); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize indexation payload index", err)
 	}
 
 	if err := binary.Write(&b, binary.LittleEndian, uint32(len(u.Data))); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize indexation payload data length", err)
 	}
 
 	if _, err := b.Write(u.Data); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize indexation payload data", err)
 	}
 
 	return b.Bytes(), nil

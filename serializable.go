@@ -11,11 +11,11 @@ import (
 type Serializable interface {
 	// Deserialize deserializes the given data (by copying) into the object and returns the amount of bytes consumed from data.
 	// If the passed data is not big enough for deserialization, an error must be returned.
-	// During deserialization additional validation may be performed if the given modes are given.
+	// During deserialization additional validation may be performed if the given modes are set.
 	Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error)
 	// Serialize returns a serialized byte representation.
 	// This function does not check the serialized data for validity.
-	// During serialization additional validation may be performed if the given modes are given.
+	// During serialization additional validation may be performed if the given modes are set.
 	Serialize(deSeriMode DeSerializationMode) ([]byte, error)
 }
 

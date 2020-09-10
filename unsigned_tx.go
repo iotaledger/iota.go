@@ -14,17 +14,25 @@ const (
 	// Denotes an unsigned transaction.
 	TransactionUnsigned TransactionType = iota
 
+	// Defines the length of a transaction hash.
 	TransactionIDLength = 32
 
+	// Defines the minimum size of an unsigned transaction.
 	UnsignedTransactionMinByteSize = TypeDenotationByteSize + StructArrayLengthByteSize + StructArrayLengthByteSize + PayloadLengthByteSize
 )
 
 var (
-	ErrInputsOrderViolatesLexicalOrder   = errors.New("inputs must be in their lexical order (byte wise) when serialized")
-	ErrOutputsOrderViolatesLexicalOrder  = errors.New("outputs must be in their lexical order (byte wise) when serialized")
-	ErrInputUTXORefsNotUnique            = errors.New("inputs must each reference a unique UTXO")
-	ErrOutputAddrNotUnique               = errors.New("outputs must each deposit to a unique address")
-	ErrOutputsSumExceedsTotalSupply      = errors.New("accumulated output balance exceeds total supply")
+	// Returned if the inputs are not in lexical order when serialized.
+	ErrInputsOrderViolatesLexicalOrder = errors.New("inputs must be in their lexical order (byte wise) when serialized")
+	// Returned if the outputs are not in lexical order when serialized.
+	ErrOutputsOrderViolatesLexicalOrder = errors.New("outputs must be in their lexical order (byte wise) when serialized")
+	// Returned if multiple inputs reference the same UTXO.
+	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
+	// Returned if multiple outputs deposit to the same address.
+	ErrOutputAddrNotUnique = errors.New("outputs must each deposit to a unique address")
+	// Returned if the sum of the output deposits exceeds the total supply of tokens.
+	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
+	// Returned if an output deposits more than the total supply.
 	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
 )
 
@@ -53,7 +61,7 @@ type UnsignedTransaction struct {
 func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(UnsignedTransactionMinByteSize, len(data)); err != nil {
-			return 0, err
+			return 0, fmt.Errorf("invalid unsigned trnasaction bytes: %w", err)
 		}
 		if err := checkType(data, TransactionUnsigned); err != nil {
 			return 0, fmt.Errorf("unable to deserialize unsigned transaction: %w", err)
@@ -66,13 +74,13 @@ func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 
 	inputs, inputBytesRead, err := DeserializeArrayOfObjects(data, deSeriMode, TypeDenotationByte, InputSelector, &inputsArrayBound)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("%w: unable to deserialize inputs of unsigned transaction", err)
 	}
 	bytesReadTotal += inputBytesRead
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := ValidateInputs(inputs, InputsUTXORefsUniqueValidator()); err != nil {
-			return 0, err
+			return 0, fmt.Errorf("%w: unable to deserialize inputs of unsigned transaction since they are invalid", err)
 		}
 	}
 	u.Inputs = inputs
@@ -81,13 +89,13 @@ func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 	data = data[inputBytesRead:]
 	outputs, outputBytesRead, err := DeserializeArrayOfObjects(data, deSeriMode, TypeDenotationByte, OutputSelector, &outputsArrayBound)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("%w: unable to deserialize outputs of unsigned transaction", err)
 	}
 	bytesReadTotal += outputBytesRead
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := ValidateOutputs(outputs, OutputsAddrUniqueValidator()); err != nil {
-			return 0, err
+			return 0, fmt.Errorf("%w: unable to deserialize outputs of unsigned transaction since they are invalid", err)
 		}
 	}
 	u.Outputs = outputs
@@ -118,16 +126,16 @@ func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := ValidateInputs(u.Inputs, InputsUTXORefsUniqueValidator()); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: unable to serialize unsigned transaction since inputs are invalid", err)
 		}
 		if err := ValidateOutputs(u.Outputs, OutputsAddrUniqueValidator()); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: unable to serialize unsigned transaction since outputs are invalid", err)
 		}
 	}
 
 	var buf bytes.Buffer
 	if err := binary.Write(&buf, binary.LittleEndian, TransactionUnsigned); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction type ID", err)
 	}
 
 	var inputsLexicalOrderValidator LexicalOrderFunc
@@ -137,19 +145,19 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 
 	// write inputs
 	if err := binary.Write(&buf, binary.LittleEndian, uint16(len(u.Inputs))); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's input count", err)
 	}
 	for i := range u.Inputs {
 		inputSer, err := u.Inputs[i].Serialize(deSeriMode)
 		if err != nil {
-			return nil, fmt.Errorf("unable to serialize input at index %d: %w", i, err)
+			return nil, fmt.Errorf("%w: unable to serialize input of unsigned transaction at index %d", err, i)
 		}
 		if _, err := buf.Write(inputSer); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: unable to serialize input of unsigned transaction at index %d to buffer", err, i)
 		}
 		if inputsLexicalOrderValidator != nil {
 			if err := inputsLexicalOrderValidator(i, inputSer); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("%w: unable to serialize inputs of unsigned transaction since inputs are not in lexical order", err)
 			}
 		}
 	}
@@ -166,14 +174,14 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 	for i := range u.Outputs {
 		outputSer, err := u.Outputs[i].Serialize(deSeriMode)
 		if err != nil {
-			return nil, fmt.Errorf("unable to serialize output at index %d: %w", i, err)
+			return nil, fmt.Errorf("%w: unable to serialize output of unsigned transaction at index %d", err, i)
 		}
 		if _, err := buf.Write(outputSer); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: unable to serialize output of unsigned transaction at index %d to buffer", err, i)
 		}
 		if outputsLexicalOrderValidator != nil {
 			if err := outputsLexicalOrderValidator(i, outputSer); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("%w: unable to serialize outputs of unsigned transaction since outputs are not in lexical order", err)
 			}
 		}
 	}
@@ -181,7 +189,7 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 	// no payload
 	if u.Payload == nil {
 		if err := binary.Write(&buf, binary.LittleEndian, uint32(0)); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's inner zero payload length", err)
 		}
 		return buf.Bytes(), nil
 	}
@@ -189,14 +197,15 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 	// write payload
 	payloadSer, err := u.Payload.Serialize(deSeriMode)
 	if _, err := buf.Write(payloadSer); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's payload", err)
 	}
 
 	if err := binary.Write(&buf, binary.LittleEndian, uint32(len(payloadSer))); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's payload length", err)
 	}
+
 	if _, err := buf.Write(payloadSer); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's payload to buffer", err)
 	}
 
 	return buf.Bytes(), nil

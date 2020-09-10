@@ -7,9 +7,11 @@ import (
 )
 
 const (
-	MessageVersion    = 1
+	// Denotes the current message version.
+	MessageVersion = 1
+	// Defines the length of a message hash.
 	MessageHashLength = 32
-	// version + 2 msg hashes + uint16 payload length + nonce
+	// Defines the minimum size of a message: version + 2 msg hashes + uint16 payload length + nonce
 	MessageMinSize = MessageVersionByteSize + 2*MessageHashLength + UInt32ByteSize + UInt64ByteSize
 )
 
@@ -27,12 +29,16 @@ func PayloadSelector(payloadType uint32) (Serializable, error) {
 	return seri, nil
 }
 
-// Message carries a payload and references two other messages.
+// Message can carry a payload and references two other messages.
 type Message struct {
+	// The 1st parent the message references.
 	Parent1 [MessageHashLength]byte `json:"parent_1"`
+	// The 2nd parent the message references.
 	Parent2 [MessageHashLength]byte `json:"parent_2"`
-	Payload Serializable            `json:"payload"`
-	Nonce   uint64                  `json:"nonce"`
+	// The inner payload of the message. Can be nil.
+	Payload Serializable `json:"payload"`
+	// The nonce which lets this message fulfill the PoW requirements.
+	Nonce uint64 `json:"nonce"`
 }
 
 func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
@@ -62,7 +68,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 	// must have consumed entire data slice minus the nonce
 	data = data[payloadBytesRead:]
 	if leftOver := len(data) - UInt64ByteSize; leftOver != 0 {
-		return 0, fmt.Errorf("%w: %d are still available", ErrDeserializationNotAllConsumed, leftOver)
+		return 0, fmt.Errorf("%w: unable to deserialize message: %d are still available", ErrDeserializationNotAllConsumed, leftOver)
 	}
 
 	m.Nonce = binary.LittleEndian.Uint64(data)
@@ -82,20 +88,20 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 
 	var b bytes.Buffer
 	if err := b.WriteByte(MessageVersion); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize message version", err)
 	}
 
 	if _, err := b.Write(m.Parent1[:]); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize parent 1", err)
 	}
 
 	if _, err := b.Write(m.Parent2[:]); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize parent 2", err)
 	}
 
 	payloadData, err := m.Payload.Serialize(deSeriMode)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize message payload", err)
 	}
 
 	payloadLength := uint32(len(payloadData))
@@ -105,15 +111,15 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	}
 
 	if err := binary.Write(&b, binary.LittleEndian, payloadLength); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize payload length within message", err)
 	}
 
 	if _, err := b.Write(payloadData); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize message payload", err)
 	}
 
 	if err := binary.Write(&b, binary.LittleEndian, m.Nonce); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: unable to serialize message nonce", err)
 	}
 
 	return b.Bytes(), nil
