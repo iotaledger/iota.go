@@ -352,6 +352,11 @@ func oneInputOutputSignedTransactionPayload() *iota.SignedTransactionPayload {
 	}
 }
 
+func randEd25519PrivateKey() ed25519.PrivateKey {
+	seed := randEd25519Seed()
+	return ed25519.NewKeyFromSeed(seed[:])
+}
+
 func randEd25519Seed() [ed25519.SeedSize]byte {
 	var b [ed25519.SeedSize]byte
 	read, err := rand.Read(b[:])

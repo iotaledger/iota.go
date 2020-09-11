@@ -107,6 +107,23 @@ func (l LexicalOrderedByteSlices) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
+// SortedSerializables are Serializables sorted by their serialized form.
+type SortedSerializables Serializables
+
+func (ss SortedSerializables) Len() int {
+	return len(ss)
+}
+
+func (ss SortedSerializables) Less(i, j int) bool {
+	iData, _ := ss[i].Serialize(DeSeriModeNoValidation)
+	jData, _ := ss[j].Serialize(DeSeriModeNoValidation)
+	return bytes.Compare(iData, jData) < 0
+}
+
+func (ss SortedSerializables) Swap(i, j int) {
+	ss[i], ss[j] = ss[j], ss[i]
+}
+
 // DeserializeArrayOfObjects deserializes the given data into Serializables.
 // The data is expected to start with the count denoting varint, followed by the actual structs.
 // An optional ArrayRules can be passed in to return an error in case it is violated.

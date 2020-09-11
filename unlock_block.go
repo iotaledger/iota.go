@@ -26,6 +26,8 @@ var (
 	ErrSigUnlockBlocksNotUnique = errors.New("signature unlock blocks must be unique")
 	// Returned if a reference unlock block does not reference a signature unlock block.
 	ErrRefUnlockBlockInvalidRef = errors.New("reference unlock block must point to a previous signature unlock block")
+	// Returned if a signature unlock block contains a nil signature.
+	ErrSigUnlockBlockHasNilSig = errors.New("signature is nil")
 )
 
 // UnlockBlockSelector implements SerializableSelectorFunc for unlock block types.
@@ -119,6 +121,9 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 	return func(index int, unlockBlock Serializable) error {
 		switch x := unlockBlock.(type) {
 		case *SignatureUnlockBlock:
+			if x.Signature == nil {
+				return fmt.Errorf("%w: at index %d is nil", ErrSigUnlockBlockHasNilSig, index)
+			}
 			switch y := x.Signature.(type) {
 			case *WOTSSignature:
 				// TODO: implement

@@ -39,12 +39,24 @@ func InputSelector(inputType uint32) (Serializable, error) {
 	return seri, nil
 }
 
+// UTXOInputID defines the identifier for an UTXO input which consists
+// out of the referenced transaction hash and the given output index.
+type UTXOInputID [TransactionIDLength + UInt16ByteSize]byte
+
 // UTXOInput references an unspent transaction output by the signed transaction payload's hash and the corresponding index of the output.
 type UTXOInput struct {
 	// The transaction ID of the referenced transaction.
 	TransactionID [TransactionIDLength]byte `json:"transaction_id"`
 	// The output index of the output on the referenced transaction.
 	TransactionOutputIndex uint16 `json:"transaction_output_index"`
+}
+
+// ID returns the UTXOInputID.
+func (u *UTXOInput) ID() UTXOInputID {
+	var id UTXOInputID
+	copy(id[:TransactionIDLength], u.TransactionID[:])
+	binary.LittleEndian.PutUint16(id[TransactionIDLength:], u.TransactionOutputIndex)
+	return id
 }
 
 func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {

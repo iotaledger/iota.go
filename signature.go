@@ -1,9 +1,13 @@
 package iota
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"encoding/binary"
+	"errors"
 	"fmt"
+
+	_ "golang.org/x/crypto/blake2b"
 )
 
 // Defines the type of signature.
@@ -17,6 +21,13 @@ const (
 
 	// The size of a serialized Ed25519 signature with its type denoting byte and public key.
 	Ed25519SignatureSerializedBytesSize = TypeDenotationByteSize + ed25519.PublicKeySize + ed25519.SignatureSize
+)
+
+var (
+	// Returned when an Ed25519 address and public key do not correspond to each other.
+	ErrEd25519PubKeyAndAddrMismatch = errors.New("public key and address do not correspond to each other (Ed25519)")
+	// Returned for invalid Ed25519 signatures.
+	ErrEd25519SignatureInvalid = errors.New("signature is invalid (Ed25519")
 )
 
 // SignatureSelector implements SerializableSelectorFunc for signature types.
@@ -55,6 +66,19 @@ type Ed25519Signature struct {
 	PublicKey [ed25519.PublicKeySize]byte `json:"public_key"`
 	// The signature.
 	Signature [ed25519.SignatureSize]byte `json:"signature"`
+}
+
+// Valid verifies whether given the message and Ed25519 address, the signature is valid.
+func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
+	// an address is the Blake2b 256 hash of the public key
+	addrFromPubKey := AddressFromEd25519PubKey(e.PublicKey[:])
+	if !bytes.Equal(addr[:], addrFromPubKey[:]) {
+		return fmt.Errorf("%w: address %s, public key %s", ErrEd25519PubKeyAndAddrMismatch, addr[:], addrFromPubKey)
+	}
+	if valid := ed25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
+		return fmt.Errorf("%w: address %s, public key %s, signature %s ", ErrEd25519SignatureInvalid, addr[:], e.PublicKey, e.Signature)
+	}
+	return nil
 }
 
 func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {

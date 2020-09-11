@@ -35,6 +35,14 @@ var (
 	ErrMaxOutputsExceeded = fmt.Errorf("max %d output(s) are allowed within a transaction", MaxOutputsCount)
 	// Returned if the count of unlock blocks doesn't match the count of inputs.
 	ErrUnlockBlocksMustMatchInputCount = errors.New("the count of unlock blocks must match the inputs of the transaction")
+	// Returned if the transaction within a signed transaction payload is invalid.
+	ErrInvalidTransaction = errors.New("transaction is invalid")
+	// Returned if an UTXO is missing to commence a certain operation.
+	ErrMissingUTXO = errors.New("missing utxo")
+	// Returned if a transaction does not spend the entirety of the inputs to the outputs.
+	ErrInputOutputSumMismatch = errors.New("inputs and outputs do not spend/deposit the same amount")
+	// Returned if an address of an input has a companion signature unlock block with the wrong signature type.
+	ErrSignatureAndAddrIncompatible = errors.New("address and signature type are not compatible")
 
 	// restrictions around input within a transaction.
 	inputsArrayBound = ArrayRules{
@@ -115,7 +123,7 @@ func (s *SignedTransactionPayload) Deserialize(data []byte, deSeriMode DeSeriali
 
 func (s *SignedTransactionPayload) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := ValidateUnlockBlocks(s.UnlockBlocks, UnlockBlocksSigUniqueAndRefValidator()); err != nil {
+		if err := s.SyntacticallyValidate(); err != nil {
 			return nil, err
 		}
 	}
@@ -151,7 +159,162 @@ func (s *SignedTransactionPayload) Serialize(deSeriMode DeSerializationMode) ([]
 	return b.Bytes(), nil
 }
 
-func (s *SignedTransactionPayload) Validate() error {
+// SyntacticallyValidate syntactically validates the SignedTransactionPayload:
+//	1. The UnsignedTransaction isn't nil
+//	2. syntactic validation on the UnsignedTransaction
+//	3. input and unlock blocks count must match
+func (s *SignedTransactionPayload) SyntacticallyValidate() error {
+
+	if s.Transaction == nil {
+		return fmt.Errorf("%w: transaction is nil", ErrInvalidTransaction)
+	}
+
+	if s.UnlockBlocks == nil {
+		return fmt.Errorf("%w: unlock blocks are nil", ErrInvalidTransaction)
+	}
+
+	unsignedPart, ok := s.Transaction.(*UnsignedTransaction)
+	if !ok {
+		return fmt.Errorf("%w: transaction is not *UnsignedTransaction", ErrInvalidTransaction)
+	}
+
+	if err := unsignedPart.SyntacticallyValidate(); err != nil {
+		return fmt.Errorf("%w: unsigned transaction part is invalid", err)
+	}
+
+	inputCount := len(unsignedPart.Inputs)
+	unlockBlockCount := len(s.UnlockBlocks)
+	if inputCount != unlockBlockCount {
+		return fmt.Errorf("%w: num of inputs %d, num of unlock blocks %d", ErrUnlockBlocksMustMatchInputCount, inputCount, unlockBlockCount)
+	}
+
+	if err := ValidateUnlockBlocks(s.UnlockBlocks, UnlockBlocksSigUniqueAndRefValidator()); err != nil {
+		return fmt.Errorf("%w: invalid unlock blocks", err)
+	}
 
 	return nil
+}
+
+// SigValidationFunc is a function which when called tells whether
+// its signature verification compution was successful or not.
+type SigValidationFunc = func() error
+
+// InputToOutputMapping maps inputs to their origin UTXOs.
+type InputToOutputMapping = map[UTXOInputID]SigLockedSingleDeposit
+
+// SemanticallyValidate semantically validates the SignedTransactionPayload
+// by checking that the given input UTXOs are spent entirely and the signatures
+// provided are valid. SyntacticallyValidate() should be called before SemanticallyValidate() to
+// ensure that the unsigned part of the transaction is syntactically valid.
+func (s *SignedTransactionPayload) SemanticallyValidate(utxos InputToOutputMapping) error {
+
+	unsignedPart, ok := s.Transaction.(*UnsignedTransaction)
+	if !ok {
+		return fmt.Errorf("%w: transaction is not *UnsignedTransaction", ErrInvalidTransaction)
+	}
+
+	unsignedPartBytes, err := unsignedPart.Serialize(DeSeriModeNoValidation)
+	if err != nil {
+		return err
+	}
+
+	inputSum, sigValidFuncs, err := s.SemanticallyValidateInputs(utxos, unsignedPart, unsignedPartBytes)
+	if err != nil {
+		return err
+	}
+
+	outputSum, err := s.SemanticallyValidateOutputs(unsignedPart)
+	if err != nil {
+		return err
+	}
+
+	if inputSum != outputSum {
+		return fmt.Errorf("%w: inputs sum %d, outputs sum %d", ErrInputOutputSumMismatch, inputSum, outputSum)
+	}
+
+	// sig verifications run at the end as they are the most computationally expensive operation
+	for _, f := range sigValidFuncs {
+		if err := f(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// SemanticallyValidateInputs checks that every referenced UTXO is available, computes the input sum
+// and returns functions which can be called to verify the signatures.
+// This function should only be called from SemanticallyValidate().
+func (s *SignedTransactionPayload) SemanticallyValidateInputs(utxos InputToOutputMapping, transaction *UnsignedTransaction, unsignedPartBytes []byte) (uint64, []SigValidationFunc, error) {
+	var sigValidFuncs []SigValidationFunc
+	var inputSum uint64
+
+	for i, input := range transaction.Inputs {
+		// TODO: switch out with type switch
+		in, ok := input.(*UTXOInput)
+		if !ok {
+			return 0, nil, fmt.Errorf("%w: unsupported input type at index %d", ErrUnknownInputType, i)
+		}
+
+		// check that we got the needed UTXO
+		utxoID := in.ID()
+		utxo, ok := utxos[utxoID]
+		if !ok {
+			return 0, nil, fmt.Errorf("%w: UTXO for ID %v is not provided (input at index %d)", ErrMissingUTXO, utxoID, i)
+		}
+
+		inputSum += utxo.Amount
+
+		var sigBlock *SignatureUnlockBlock
+		var refSigBlockIndex int
+		switch ub := s.UnlockBlocks[i].(type) {
+		case *SignatureUnlockBlock:
+			sigBlock = ub
+			refSigBlockIndex = i
+		case *ReferenceUnlockBlock:
+			// it is ensured by the syntactical validation that
+			// the corresponding signature unlock block exists
+			refSigBlockIndex = int(ub.Reference)
+			sigBlock = s.UnlockBlocks[refSigBlockIndex].(*SignatureUnlockBlock)
+		}
+
+		switch addr := utxo.Address.(type) {
+		case *WOTSAddress:
+			// TODO: implement
+		case *Ed25519Address:
+			ed25519Sig, isEd25519Sig := sigBlock.Signature.(*Ed25519Signature)
+			if !isEd25519Sig {
+				return 0, nil, fmt.Errorf("%w: UTXO at index %d has an Ed25519 address but its corresponding signature is of type %T (at index %d)", ErrSignatureAndAddrIncompatible, i, sigBlock.Signature, refSigBlockIndex)
+			}
+
+			sigValidFuncs = append(sigValidFuncs, func() error {
+				if err := ed25519Sig.Valid(unsignedPartBytes, addr); err != nil {
+					return fmt.Errorf("%w: input at index %d, signature block at index %d", err, i, refSigBlockIndex)
+				}
+				return nil
+			})
+
+		default:
+			return 0, nil, fmt.Errorf("%w: unsupported address type at index %d", ErrUnknownAddrType, i)
+		}
+
+	}
+
+	return inputSum, sigValidFuncs, nil
+}
+
+// SemanticallyValidateOutputs accumulates the sum of all outputs.
+// This function should only be called from SemanticallyValidate().
+func (s *SignedTransactionPayload) SemanticallyValidateOutputs(transaction *UnsignedTransaction) (uint64, error) {
+	var outputSum uint64
+	for i, output := range transaction.Outputs {
+		// TODO: switch out with type switch
+		out, ok := output.(*SigLockedSingleDeposit)
+		if !ok {
+			return 0, fmt.Errorf("%w: unsupported output type at index %d", ErrUnknownOutputType, i)
+		}
+		outputSum += out.Amount
+	}
+
+	return outputSum, nil
 }

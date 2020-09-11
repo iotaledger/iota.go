@@ -1,6 +1,9 @@
 package iota
 
 import (
+	"crypto"
+	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 )
 
@@ -41,6 +44,10 @@ func AddressSelector(typeByte uint32) (Serializable, error) {
 // Defines a WOTS address.
 type WOTSAddress [WOTSAddressBytesLength]byte
 
+func (wotsAddr *WOTSAddress) String() string {
+	return hex.EncodeToString(wotsAddr[:])
+}
+
 func (wotsAddr *WOTSAddress) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(WOTSAddressSerializedBytesSize, len(data)); err != nil {
@@ -68,6 +75,10 @@ func (wotsAddr *WOTSAddress) Serialize(deSeriMode DeSerializationMode) (data []b
 // Defines an Ed25519 address.
 type Ed25519Address [Ed25519AddressBytesLength]byte
 
+func (edAddr *Ed25519Address) String() string {
+	return hex.EncodeToString(edAddr[:])
+}
+
 func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(Ed25519AddressSerializedBytesSize, len(data)); err != nil {
@@ -86,4 +97,12 @@ func (edAddr *Ed25519Address) Serialize(deSeriMode DeSerializationMode) (data []
 	b[0] = AddressEd25519
 	copy(b[SmallTypeDenotationByteSize:], edAddr[:])
 	return b[:], nil
+}
+
+// AddressFromEd25519PubKey returns the address belonging to the given Ed25519 public key.
+func AddressFromEd25519PubKey(pubKey ed25519.PublicKey) *Ed25519Address {
+	pubKeyHash := crypto.BLAKE2b_256.New().Sum(pubKey[:])
+	var ed25519Address Ed25519Address
+	copy(ed25519Address[:], pubKeyHash)
+	return &ed25519Address
 }

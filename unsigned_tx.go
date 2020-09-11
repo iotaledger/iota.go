@@ -128,11 +128,8 @@ func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 
 func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := ValidateInputs(u.Inputs, InputsUTXORefsUniqueValidator()); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize unsigned transaction since inputs are invalid", err)
-		}
-		if err := ValidateOutputs(u.Outputs, OutputsAddrUniqueValidator()); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize unsigned transaction since outputs are invalid", err)
+		if err := u.SyntacticallyValidate(); err != nil {
+			return nil, err
 		}
 	}
 
@@ -214,12 +211,21 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 	return buf.Bytes(), nil
 }
 
-// SyntacticallyValid checks whether the unsigned transaction is syntactically valid by checking whether:
+// SyntacticallyValidate checks whether the unsigned transaction is syntactically valid by checking whether:
 //	1. every input references a unique UTXO and has valid UTXO index bounds
 //	2. every output deposits to a unique address and deposits more than zero
 //	3. the accumulated deposit output is not over the total supply
 // The function does not syntactically validate the input or outputs themselves.
-func (u *UnsignedTransaction) SyntacticallyValid() error {
+func (u *UnsignedTransaction) SyntacticallyValidate() error {
+
+	if len(u.Inputs) == 0 {
+		return ErrMinInputsNotReached
+	}
+
+	if len(u.Outputs) == 0 {
+		return ErrMinOutputsNotReached
+	}
+
 	if err := ValidateInputs(u.Inputs,
 		InputsUTXORefIndexBoundsValidator(),
 		InputsUTXORefsUniqueValidator(),
