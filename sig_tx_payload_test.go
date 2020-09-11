@@ -77,7 +77,6 @@ func TestSignedTransactionPayload_SemanticallyValidate(t *testing.T) {
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-
 			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
 
 			builder := iota.NewSignedTransactionBuilder().
@@ -91,8 +90,6 @@ func TestSignedTransactionPayload_SemanticallyValidate(t *testing.T) {
 				inputUTXOs: iota.InputToOutputMapping{
 					inputUTXO1.ID(): iota.SigLockedSingleDeposit{Address: inputAddr, Amount: 50},
 				},
-				buildErr: nil,
-				validErr: nil,
 			}
 		}(),
 		func() test {
@@ -119,8 +116,26 @@ func TestSignedTransactionPayload_SemanticallyValidate(t *testing.T) {
 					inputUTXO1.ID(): iota.SigLockedSingleDeposit{Address: inputAddr, Amount: 50},
 					inputUTXO2.ID(): iota.SigLockedSingleDeposit{Address: inputAddr, Amount: 250},
 				},
-				buildErr: nil,
-				validErr: nil,
+			}
+		}(),
+		func() test {
+			builder := iota.NewSignedTransactionBuilder()
+			return test{
+				name:       "err - no inputs",
+				addrSigner: nil,
+				builder:    builder,
+				buildErr:   iota.ErrMinInputsNotReached,
+			}
+		}(),
+		func() test {
+			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
+			builder := iota.NewSignedTransactionBuilder().
+				AddInput(&iota.ToBeSignedUTXOInput{Address: inputAddr, Input: inputUTXO1})
+			return test{
+				name:       "err - no outputs",
+				addrSigner: nil,
+				builder:    builder,
+				buildErr:   iota.ErrMinOutputsNotReached,
 			}
 		}(),
 	}
