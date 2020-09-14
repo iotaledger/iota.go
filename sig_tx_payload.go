@@ -22,6 +22,9 @@ const (
 	// Defines the minimum amount of inputs within a transaction.
 	MinOutputsCount = 1
 
+	// Defines the length of a signed transaction payload hash.
+	SignedTransactionPayloadHashLength = blake2b.Size256
+
 	// Defines the minimum size of a signed transaction payload.
 	SignedTransactionPayloadMinSize = UInt32ByteSize
 )
@@ -68,7 +71,7 @@ var (
 )
 
 // SignedTransactionPayloadHash is the hash of a SignedTransactionPayload.
-type SignedTransactionPayloadHash = [blake2b.Size256]byte
+type SignedTransactionPayloadHash = [SignedTransactionPayloadHashLength]byte
 
 // SignedTransactionPayload is a transaction with its inputs, outputs and unlock blocks.
 type SignedTransactionPayload struct {

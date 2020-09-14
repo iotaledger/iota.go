@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+
+	"golang.org/x/crypto/blake2b"
 )
 
 const (
@@ -29,6 +31,9 @@ func PayloadSelector(payloadType uint32) (Serializable, error) {
 	return seri, nil
 }
 
+// MessageHash is the hash of a Message.
+type MessageHash = [MessageHashLength]byte
+
 // Message can carry a payload and references two other messages.
 type Message struct {
 	// The version of the message.
@@ -41,6 +46,16 @@ type Message struct {
 	Payload Serializable `json:"payload"`
 	// The nonce which lets this message fulfill the PoW requirements.
 	Nonce uint64 `json:"nonce"`
+}
+
+// Hash computes the hash of the Message.
+func (m *Message) Hash() (*MessageHash, error) {
+	data, err := m.Serialize(DeSeriModeNoValidation)
+	if err != nil {
+		return nil, fmt.Errorf("can't compute message hash: %w", err)
+	}
+	h := blake2b.Sum256(data)
+	return &h, nil
 }
 
 func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
