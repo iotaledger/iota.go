@@ -1,10 +1,11 @@
 package iota
 
 import (
-	"crypto"
 	"crypto/ed25519"
 	"encoding/hex"
 	"fmt"
+
+	"golang.org/x/crypto/blake2b"
 )
 
 // Defines the type of addresses.
@@ -22,7 +23,7 @@ const (
 	WOTSAddressSerializedBytesSize = SmallTypeDenotationByteSize + WOTSAddressBytesLength
 
 	// The length of a Ed25519 address
-	Ed25519AddressBytesLength = 32
+	Ed25519AddressBytesLength = blake2b.Size256
 	// The size of a serialized Ed25519 address with its type denoting byte.
 	Ed25519AddressSerializedBytesSize = SmallTypeDenotationByteSize + Ed25519AddressBytesLength
 )
@@ -100,9 +101,6 @@ func (edAddr *Ed25519Address) Serialize(deSeriMode DeSerializationMode) (data []
 }
 
 // AddressFromEd25519PubKey returns the address belonging to the given Ed25519 public key.
-func AddressFromEd25519PubKey(pubKey ed25519.PublicKey) *Ed25519Address {
-	pubKeyHash := crypto.BLAKE2b_256.New().Sum(pubKey[:])
-	var ed25519Address Ed25519Address
-	copy(ed25519Address[:], pubKeyHash)
-	return &ed25519Address
+func AddressFromEd25519PubKey(pubKey ed25519.PublicKey) Ed25519Address {
+	return blake2b.Sum256(pubKey[:])
 }

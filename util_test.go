@@ -217,6 +217,7 @@ func randMessage(withPayloadType uint32) (*iota.Message, []byte) {
 	}
 
 	m := &iota.Message{}
+	m.Version = iota.MessageVersion
 	copy(m.Parent1[:], randBytes(iota.MessageHashLength))
 	copy(m.Parent2[:], randBytes(iota.MessageHashLength))
 	m.Payload = payload

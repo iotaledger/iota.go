@@ -31,6 +31,8 @@ func PayloadSelector(payloadType uint32) (Serializable, error) {
 
 // Message can carry a payload and references two other messages.
 type Message struct {
+	// The version of the message.
+	Version byte `json:"version"`
 	// The 1st parent the message references.
 	Parent1 [MessageHashLength]byte `json:"parent_1"`
 	// The 2nd parent the message references.
@@ -51,6 +53,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 		}
 	}
 	l := len(data)
+	m.Version = data[0]
 
 	// read parents
 	data = data[MessageVersionByteSize:]

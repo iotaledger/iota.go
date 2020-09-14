@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+
+	"golang.org/x/crypto/blake2b"
 )
 
 const (
@@ -65,12 +67,25 @@ var (
 	}
 )
 
+// SignedTransactionPayloadHash is the hash of a SignedTransactionPayload.
+type SignedTransactionPayloadHash = [blake2b.Size256]byte
+
 // SignedTransactionPayload is a transaction with its inputs, outputs and unlock blocks.
 type SignedTransactionPayload struct {
 	// The transaction respectively transfer part of a signed transaction payload.
 	Transaction Serializable `json:"transaction"`
 	// The unlock blocks defining the unlocking data for the inputs within the transaction.
 	UnlockBlocks Serializables `json:"unlock_blocks"`
+}
+
+// Hash computes the hash of the SignedTransactionPayload.
+func (s *SignedTransactionPayload) Hash() (*SignedTransactionPayloadHash, error) {
+	data, err := s.Serialize(DeSeriModeNoValidation)
+	if err != nil {
+		return nil, fmt.Errorf("can't compute signed transaction payload hash: %w", err)
+	}
+	h := blake2b.Sum256(data)
+	return &h, nil
 }
 
 func (s *SignedTransactionPayload) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
