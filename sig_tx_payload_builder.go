@@ -79,19 +79,9 @@ func (b *SignedTransactionPayloadBuilder) Build(signer AddressSigner) (*SignedTr
 
 		// create a new signature for the given address
 		var signature Serializable
-		signatureBytes, optPublicKey, err := signer.Sign(addr, txDataToBeSigned)
+		signature, err = signer.Sign(addr, txDataToBeSigned)
 		if err != nil {
 			return nil, err
-		}
-		switch addr.(type) {
-		case *WOTSAddress:
-			// TODO: implement
-			panic("WOTS signing not implemented")
-		case *Ed25519Address:
-			ed25519Sig := &Ed25519Signature{}
-			copy(ed25519Sig.Signature[:], signatureBytes)
-			copy(ed25519Sig.PublicKey[:], optPublicKey)
-			signature = ed25519Sig
 		}
 
 		unlockBlocks = append(unlockBlocks, &SignatureUnlockBlock{Signature: signature})
