@@ -2,7 +2,6 @@ package iota
 
 import (
 	"fmt"
-	"sort"
 )
 
 // NewSignedTransactionBuilder creates a new SignedTransactionPayloadBuilder.
@@ -54,10 +53,7 @@ func (b *SignedTransactionPayloadBuilder) AddIndexationPayload(payload *Indexati
 func (b *SignedTransactionPayloadBuilder) Build(signer AddressSigner) (*SignedTransactionPayload, error) {
 
 	// sort inputs and outputs by their serialized byte order
-	sort.Sort(SortedSerializables(b.unsigTx.Inputs))
-	sort.Sort(SortedSerializables(b.unsigTx.Outputs))
-
-	txDataToBeSigned, err := b.unsigTx.Serialize(DeSeriModePerformValidation)
+	txDataToBeSigned, err := b.unsigTx.Serialize(DeSeriModePerformValidation | DeSeriModePerformLexicalOrdering)
 	if err != nil {
 		return nil, err
 	}

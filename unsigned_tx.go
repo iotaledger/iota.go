@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"sort"
 )
 
 // Defines the type of transaction.
@@ -59,6 +60,13 @@ type UnsignedTransaction struct {
 	Outputs Serializables `json:"outputs"`
 	// The optional embedded payload.
 	Payload Serializable `json:"payload"`
+}
+
+// SortInputsOuputs sorts the inputs and outputs according to their serialized lexical representation.
+// Usually an implicit call to SortInputsOutputs() should be done by instructing serialization to use DeSeriModePerformLexicalOrdering.
+func (u *UnsignedTransaction) SortInputsOutputs() {
+	sort.Sort(SortedSerializables(u.Inputs))
+	sort.Sort(SortedSerializables(u.Outputs))
 }
 
 func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
@@ -131,6 +139,10 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 		if err := u.SyntacticallyValidate(); err != nil {
 			return nil, err
 		}
+	}
+
+	if deSeriMode.HasMode(DeSeriModePerformLexicalOrdering) {
+		u.SortInputsOutputs()
 	}
 
 	var buf bytes.Buffer

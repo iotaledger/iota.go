@@ -34,11 +34,13 @@ const (
 	DeSeriModeNoValidation DeSerializationMode = 0
 	// Instructs de/serialization to perform validation.
 	DeSeriModePerformValidation DeSerializationMode = 1 << 0
+	// Instructs de/deserialization to perform ordering of certain struct arrays by their lexical serialized form.
+	DeSeriModePerformLexicalOrdering DeSerializationMode = 1 << 1
 )
 
 // HasMode checks whether the de/serialization mode includes the given mode.
 func (sm DeSerializationMode) HasMode(mode DeSerializationMode) bool {
-	return sm&mode == 1
+	return sm&mode > 0
 }
 
 // ArrayRules defines rules around a to be deserialized array.
