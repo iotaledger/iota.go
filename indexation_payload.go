@@ -39,6 +39,10 @@ func (u *IndexationPayload) Deserialize(data []byte, deSeriMode DeSerializationM
 	u.Index = index
 	data = data[indexBytesRead:]
 
+	if len(data) < UInt32ByteSize {
+		return 0, fmt.Errorf("%w: unable to deserialize indexation payload data length", ErrDeserializationNotEnoughData)
+	}
+
 	// read data length
 	dataLength := binary.LittleEndian.Uint32(data)
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
@@ -46,8 +50,7 @@ func (u *IndexationPayload) Deserialize(data []byte, deSeriMode DeSerializationM
 	}
 
 	data = data[ByteArrayLengthByteSize:]
-	bytesAvailable := uint32(len(data)) - dataLength
-	if bytesAvailable < 0 {
+	if uint32(len(data)) < dataLength {
 		return 0, fmt.Errorf("%w: indexation payload length denotes too many bytes (%d bytes)", ErrDeserializationNotEnoughData, dataLength)
 	}
 

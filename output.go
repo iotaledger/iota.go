@@ -69,6 +69,10 @@ func (s *SigLockedSingleDeposit) Deserialize(data []byte, deSeriMode DeSerializa
 
 	data = data[addrBytesRead:]
 
+	if len(data) < UInt64ByteSize {
+		return 0, fmt.Errorf("%w: unable to deserialize signature locked single deposit output", ErrDeserializationNotEnoughData)
+	}
+
 	// read amount of the deposit
 	s.Amount = binary.LittleEndian.Uint64(data)
 

@@ -9,11 +9,11 @@ import (
 
 func Fuzz(data []byte) int {
 	m := &iota.Message{}
-	_, err := m.Deserialize(data, iota.DeSeriModeNoValidation)
+	_, err := m.Deserialize(data, iota.DeSeriModePerformValidation)
 	if err != nil {
 		return 0
 	}
-	seriData, err := m.Serialize(iota.DeSeriModeNoValidation)
+	seriData, err := m.Serialize(iota.DeSeriModePerformValidation)
 	if err != nil {
 		panic(fmt.Sprintf("should be able to serialize: %q", err))
 	}

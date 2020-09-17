@@ -52,7 +52,7 @@ func (s *InMemoryAddressSigner) Sign(addr Serializable, msg []byte) (signature S
 	switch addr.(type) {
 	case *WOTSAddress:
 		// TODO: implement
-		panic("not implemented")
+		return nil, ErrWOTSNotImplemented
 	case *Ed25519Address:
 		prvKey, ok := s.addrKeys[addr].(ed25519.PrivateKey)
 		if !ok {

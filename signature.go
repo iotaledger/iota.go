@@ -53,7 +53,7 @@ func (w *WOTSSignature) Deserialize(data []byte, deSeriMode DeSerializationMode)
 			return 0, fmt.Errorf("unable to deserialize WOTS signature: %w", err)
 		}
 	}
-	panic("implement me")
+	return 0, ErrWOTSNotImplemented
 }
 
 func (w *WOTSSignature) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {

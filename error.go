@@ -30,6 +30,8 @@ var (
 	ErrDeserializationNotEnoughData = errors.New("not enough data for deserialization")
 	// Returned if not all bytes were consumed during deserialization of a given type.
 	ErrDeserializationNotAllConsumed = errors.New("not all data has been consumed but should have been")
+	// Returned when WOTS objects are tried to be de/serialized.
+	ErrWOTSNotImplemented = errors.New("unfortunately WOTS is not yet implemented")
 )
 
 // checkType checks that the denoted type equals the shouldType.

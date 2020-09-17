@@ -208,10 +208,6 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 
 	// write payload
 	payloadSer, err := u.Payload.Serialize(deSeriMode)
-	if _, err := buf.Write(payloadSer); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's payload", err)
-	}
-
 	if err := binary.Write(&buf, binary.LittleEndian, uint32(len(payloadSer))); err != nil {
 		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's payload length", err)
 	}

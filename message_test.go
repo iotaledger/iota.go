@@ -37,6 +37,38 @@ func TestMessage_Deserialize(t *testing.T) {
 	}
 }
 
+func TestMessageFuzzingCrash(t *testing.T) {
+	input := []byte("\x010000000000000000000" +
+		"00000000000000000000" +
+		"00000000000000000000" +
+		"00000\xdf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00" +
+		"00000000000000000000" +
+		"0000000000000\x00\x01\x00\x00\x0000" +
+		"00000000000000000000" +
+		"00000000000000000000" +
+		"0000000000000\x00\x00\n\x00\x00\x00\x02" +
+		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x01\x00\x00\x000000" +
+		"00000000000000000000" +
+		"00000000000000000000" +
+		"00000000000000000000" +
+		"00000000000000000000" +
+		"00000000000000000000")
+
+	msg := &iota.Message{}
+	bytesRead, err := msg.Deserialize(input, iota.DeSeriModePerformValidation)
+	assert.NoError(t, err)
+	assert.Len(t, input, bytesRead)
+
+	seriInput, err := msg.Serialize(iota.DeSeriModePerformValidation)
+	assert.NoError(t, err)
+	assert.Equal(t, input, seriInput)
+
+	msg2 := &iota.Message{}
+	bytesRead, err = msg2.Deserialize(seriInput, iota.DeSeriModePerformValidation)
+	assert.NoError(t, err)
+	assert.Len(t, seriInput, bytesRead)
+}
+
 func TestMessage_Serialize(t *testing.T) {
 	type test struct {
 		name   string
