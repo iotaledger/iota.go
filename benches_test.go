@@ -93,3 +93,17 @@ func BenchmarkVerifyEd25519OneIOUnsignedTx(b *testing.B) {
 		ed25519.Verify(pubKey, unsigTxData, sig)
 	}
 }
+
+func BenchmarkSerializeAndHashMessageWithSignedTransactionPayload(b *testing.B) {
+	sigTxPayload := oneInputOutputSignedTransactionPayload()
+	m := &iota.Message{
+		Version: 1,
+		Parent1: randTxHash(),
+		Parent2: randTxHash(),
+		Payload: sigTxPayload,
+		Nonce:   0,
+	}
+	for i := 0; i < b.N; i++ {
+		_, _ = m.Hash()
+	}
+}

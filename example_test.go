@@ -9,7 +9,16 @@ import (
 )
 
 func TestSignedTransactionPayloadSize(t *testing.T) {
-	data, err := oneInputOutputSignedTransactionPayload().Serialize(iota.DeSeriModeNoValidation)
+	sigTxPayload := oneInputOutputSignedTransactionPayload()
+	m := &iota.Message{
+		Version: 1,
+		Parent1: randTxHash(),
+		Parent2: randTxHash(),
+		Payload: sigTxPayload,
+		Nonce:   0,
+	}
+
+	data, err := m.Serialize(iota.DeSeriModeNoValidation)
 	require.NoError(t, err)
-	fmt.Printf("length of signed transaction payload: %d\n", len(data))
+	fmt.Printf("length of message cotaining a signed transaction payload: %d\n", len(data))
 }

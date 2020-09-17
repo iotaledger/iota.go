@@ -214,7 +214,7 @@ func (s *SignedTransactionPayload) SyntacticallyValidate() error {
 }
 
 // SigValidationFunc is a function which when called tells whether
-// its signature verification compution was successful or not.
+// its signature verification computation was successful or not.
 type SigValidationFunc = func() error
 
 // InputToOutputMapping maps inputs to their origin UTXOs.

@@ -46,7 +46,11 @@ func TestMessage_Serialize(t *testing.T) {
 	tests := []test{
 		func() test {
 			msgPayload, msgPayloadData := randMessage(iota.SignedTransactionPayloadID)
-			return test{"ok", msgPayload, msgPayloadData}
+			return test{"ok - with signed transaction payload", msgPayload, msgPayloadData}
+		}(),
+		func() test {
+			msgPayload, msgPayloadData := randMessage(1337)
+			return test{"ok - without any payload", msgPayload, msgPayloadData}
 		}(),
 	}
 	for _, tt := range tests {

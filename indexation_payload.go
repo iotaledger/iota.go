@@ -15,8 +15,10 @@ const (
 
 // IndexationPayload is a payload which holds an index and associated data.
 type IndexationPayload struct {
+	// The index to use to index the enclosing message and data.
 	Index string `json:"index"`
-	Data  []byte `json:"data"`
+	// The data within the payload.
+	Data []byte `json:"data"`
 }
 
 func (u *IndexationPayload) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
