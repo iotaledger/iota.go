@@ -289,13 +289,13 @@ func sseProofOfwork(trytes Trytes, mwm int, optRate chan int64, parallelism ...i
 	tr := MustTrytesToTrits(trytes)
 
 	c := curl.NewCurlP81().(*curl.Curl)
-	if err := c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)]); err != nil {
+	if err := c.Absorb(tr[:(legacy.TransactionTrinarySize - legacy.HashTrinarySize)]); err != nil {
 		return "", err
 	}
 
 	var state [curl.StateSize]int8
 	c.CopyState(state[:])
-	copy(state[:], tr[TransactionTrinarySize-HashTrinarySize:])
+	copy(state[:], tr[legacy.TransactionTrinarySize-legacy.HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
