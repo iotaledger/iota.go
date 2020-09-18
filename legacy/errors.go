@@ -3,12 +3,14 @@ package legacy
 import "github.com/pkg/errors"
 
 var (
-	// ErrInvalidSqueezeLength gets returned when the squeeze length is not a multiple of 243 (which it must be for Kerl).
+	// ErrInvalidSqueezeLength gets returned when the squeeze length is not a multiple of 243.
 	ErrInvalidSqueezeLength = errors.New("squeeze length must be a multiple of 243")
 	// ErrInvalidTritsLength gets returned when the trits length are invalid for the given operation.
 	ErrInvalidTritsLength = errors.New("invalid trits length")
 	// ErrInvalidTrytesLength gets returned when the trytes length are invalid for the given operation.
 	ErrInvalidTrytesLength = errors.New("invalid trytes length")
+	// ErrInvalidBatchSize is returned when the batch size is invalid.
+	ErrInvalidBatchSize = errors.New("invalid batch size")
 	// ErrInvalidBytesLength gets returned when the bytes length are invalid for the given operation.
 	ErrInvalidBytesLength = errors.New("invalid bytes length")
 	// ErrInvalidAddress gets returned for invalid address parameters.
