@@ -289,8 +289,13 @@ func sseProofOfwork(trytes Trytes, mwm int, optRate chan int64, parallelism ...i
 	tr := MustTrytesToTrits(trytes)
 
 	c := curl.NewCurlP81().(*curl.Curl)
-	c.Absorb(tr[:(legacy.TransactionTrinarySize - legacy.HashTrinarySize)])
-	copy(c.State, tr[legacy.TransactionTrinarySize-legacy.HashTrinarySize:])
+	if err := c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)]); err != nil {
+		return "", err
+	}
+
+	var state [curl.StateSize]int8
+	c.CopyState(state[:])
+	copy(state[:], tr[TransactionTrinarySize-HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
@@ -306,8 +311,8 @@ func sseProofOfwork(trytes Trytes, mwm int, optRate chan int64, parallelism ...i
 		go func(n int) {
 			nonce := make(Trits, legacy.NonceTrinarySize)
 
-			r := C.pwork128((*C.char)(
-				unsafe.Pointer(&c.State[0])), C.int(mwm),
+			r := C.pwork128(
+				(*C.char)(unsafe.Pointer(&state[0])), C.int(mwm),
 				(*C.char)(unsafe.Pointer(&nonce[0])), C.int(n), &cancelled)
 
 			if rate != nil {

@@ -150,7 +150,7 @@ const (
 )
 
 // Para transforms trits to ptrits (01:-1 11:0 10:1)
-func Para(in Trits) (*[curl.StateSize]uint64, *[curl.StateSize]uint64) {
+func Para(in *[curl.StateSize]int8) (*[curl.StateSize]uint64, *[curl.StateSize]uint64) {
 	var l, h [curl.StateSize]uint64
 
 	for i := 0; i < curl.StateSize; i++ {
@@ -295,9 +295,16 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 
 	tr := MustTrytesToTrits(trytes)
 
+	// absorb everything but the last block
 	c := curl.NewCurlP81().(*curl.Curl)
-	c.Absorb(tr[:(legacy.TransactionTrinarySize - legacy.HashTrinarySize)])
-	copy(c.State, tr[legacy.TransactionTrinarySize-legacy.HashTrinarySize:])
+	if err := c.Absorb(tr[:(legacy.TransactionTrinarySize - legacy.HashTrinarySize)]); err != nil {
+		return "", err
+	}
+
+	// absorb the last block into that state, but do not transform yet
+	var state [curl.StateSize]int8
+	c.CopyState(state[:])
+	copy(state[:], tr[legacy.TransactionTrinarySize-legacy.HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
@@ -314,7 +321,7 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 		go func(i int) {
 			defer wg.Done() // assure that done is always called
 
-			lmid, hmid := Para(c.State)
+			lmid, hmid := Para(&state)
 			lmid[nonceOffset] = PearlDiverMidStateLow0
 			hmid[nonceOffset] = PearlDiverMidStateHigh0
 			lmid[nonceOffset+1] = PearlDiverMidStateLow1
@@ -325,7 +332,7 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 			hmid[nonceOffset+3] = PearlDiverMidStateHigh3
 
 			incrN(i, lmid, hmid)
-			nonce, r, _ := Loop(lmid, hmid, mwm, &cancelled, check, int(c.Rounds))
+			nonce, r, _ := Loop(lmid, hmid, mwm, &cancelled, check, c.NumRounds())
 
 			if rate != nil {
 				rate <- int64(math.Abs(float64(r)))
