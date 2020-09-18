@@ -9,8 +9,10 @@ var (
 	ErrInvalidSettingsType = errors.New("incompatible settings type supplied")
 	// ErrInconsistentSubtangle gets returned when the tail transaction is not consistent during promotion.
 	ErrInconsistentSubtangle = errors.New("inconsistent subtangle")
-	// ErrInvalidSqueezeLength gets returned when the squeeze length is not a multiple of 243 (which it must be for Kerl).
+	// ErrInvalidSqueezeLength gets returned when the squeeze length is not a multiple of 243.
 	ErrInvalidSqueezeLength = errors.New("squeeze length must be a multiple of 243")
+	// ErrInvalidBatchSize is returned when the batch size is invalid.
+	ErrInvalidBatchSize = errors.New("invalid batch size")
 	// ErrInvalidTritsLength gets returned when the trits length are invalid for the given operation.
 	ErrInvalidTritsLength = errors.New("invalid trits length")
 	// ErrInvalidTrytesLength gets returned when the trytes length are invalid for the given operation.

@@ -1,13 +1,13 @@
-package merkle_test
+package bct_test
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
-func TestMerkle(t *testing.T) {
+func TestCurl(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Merkle Suite")
+	RunSpecs(t, "BCT Curl Suite")
 }

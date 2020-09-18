@@ -128,7 +128,7 @@ func (k *Kerl) Absorb(in trinary.Trits) error {
 	return nil
 }
 
-// AbsorbTrytes fills the internal State of the sponge with the given trytes.
+// AbsorbTrytes fills the internal state of the sponge with the given trytes.
 func (k *Kerl) AbsorbTrytes(in trinary.Trytes) error {
 	if len(in)%HashTrytesSize != 0 {
 		return errors.Wrap(ErrInvalidTrytesLength, "trytes length must be a multiple of 81")

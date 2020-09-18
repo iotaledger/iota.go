@@ -306,8 +306,13 @@ func cARM64ProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism .
 	tr := MustTrytesToTrits(trytes)
 
 	c := curl.NewCurlP81().(*curl.Curl)
-	c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)])
-	copy(c.State, tr[TransactionTrinarySize-HashTrinarySize:])
+	if err := c.Absorb(tr[:(TransactionTrinarySize - HashTrinarySize)]); err != nil {
+		return "", err
+	}
+
+	var state [curl.StateSize]int8
+	c.CopyState(state[:])
+	copy(state[:], tr[TransactionTrinarySize-HashTrinarySize:])
 
 	numGoroutines := proofOfWorkParallelism(parallelism...)
 	var result Trytes
@@ -324,7 +329,7 @@ func cARM64ProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism .
 			nonce := make(Trits, NonceTrinarySize)
 
 			r := C.pworkARM64(
-				(*C.schar)(unsafe.Pointer(&c.State[0])), C.int(mwm),
+				(*C.schar)(unsafe.Pointer(&state[0])), C.int(mwm),
 				(*C.schar)(unsafe.Pointer(&nonce[0])), C.int(n), &cancelled)
 
 			if rate != nil {
