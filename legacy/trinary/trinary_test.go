@@ -243,16 +243,6 @@ func TestMinTrits(t *testing.T) {
 	})
 }
 
-func TestEncodedLength(t *testing.T) {
-	t.Run("should return correct length", func(t *testing.T) {
-		v := trinary.EncodedLength(-1)
-		assert.Equal(t, uint64(4), v)
-
-		v = trinary.EncodedLength(-4)
-		assert.Equal(t, uint64(4), v)
-	})
-}
-
 func TestIntToTrytes(t *testing.T) {
 	t.Run("should return correct trytes", func(t *testing.T) {
 		v := trinary.IntToTrytes(-1, 1)
@@ -270,34 +260,6 @@ func TestTrytesToInt(t *testing.T) {
 
 		v = trinary.TrytesToInt("ABCDEFGH")
 		assert.Equal(t, int64(86483600668), v)
-	})
-}
-
-func TestEncodeInt64(t *testing.T) {
-	t.Run("should return correct trits", func(t *testing.T) {
-		v, s, err := trinary.EncodeInt64(6)
-		assert.NoError(t, err)
-		assert.Equal(t, uint64(4), s)
-		assert.Equal(t, trinary.Trits{0, -1, 1, 0}, v)
-
-		v, s, err = trinary.EncodeInt64(500)
-		assert.NoError(t, err)
-		assert.Equal(t, uint64(12), s)
-		assert.Equal(t, trinary.Trits{-1, -1, -1, 1, 0, -1, 1, 0, 0, 0, 0, 0}, v)
-	})
-}
-
-func TestDecodeInt64(t *testing.T) {
-	t.Run("should return correct int64", func(t *testing.T) {
-		v, s, err := trinary.DecodeInt64(trinary.Trits{0, -1, 1, 0, -1, 1})
-		assert.NoError(t, err)
-		assert.Equal(t, uint64(4), s)
-		assert.Equal(t, int64(6), v)
-
-		v, s, err = trinary.DecodeInt64(trinary.Trits{-1, -1, -1, 1, 0, -1, 1, 0, 0, 0, 0, 0, -1, 1, 0, 1, 0, 0, 0})
-		assert.NoError(t, err)
-		assert.Equal(t, uint64(12), s)
-		assert.Equal(t, int64(500), v)
 	})
 }
 
