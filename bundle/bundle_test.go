@@ -195,7 +195,10 @@ var _ = Describe("Bundle", func() {
 			copy(bndlCopy, bndl)
 			_, err := Finalize(bndlCopy)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(bndlCopy[0].Bundle).To(Equal("VRGXKZDODWIVGFYFCCXJRNDCQJVYUVBRIWJXKFGBIEWUPHHTJLTKH99JW9OLJ9JCIXCEIRRXJKLWOBDZZ"))
+			Expect(bndlCopy[0].ObsoleteTag).To(Equal("ZUH999999999999999999999999"))
+			for i := range bndlCopy {
+				Expect(bndlCopy[i].Bundle).To(Equal("VRGXKZDODWIVGFYFCCXJRNDCQJVYUVBRIWJXKFGBIEWUPHHTJLTKH99JW9OLJ9JCIXCEIRRXJKLWOBDZZ"))
+			}
 		})
 	})
 
