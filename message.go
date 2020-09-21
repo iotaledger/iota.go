@@ -23,6 +23,8 @@ func PayloadSelector(payloadType uint32) (Serializable, error) {
 	switch payloadType {
 	case SignedTransactionPayloadID:
 		seri = &SignedTransactionPayload{}
+	case MilestonePayloadID:
+		seri = &MilestonePayload{}
 	case IndexationPayloadID:
 		seri = &IndexationPayload{}
 	default:
