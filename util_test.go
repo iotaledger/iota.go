@@ -214,6 +214,8 @@ func randMessage(withPayloadType uint32) (*iota.Message, []byte) {
 		payload, payloadData = randSignedTransactionPayload()
 	case iota.IndexationPayloadID:
 		payload, payloadData = randIndexationPayload()
+	case iota.MilestonePayloadID:
+		payload, payloadData = randMilestonePayload()
 	}
 
 	m := &iota.Message{}

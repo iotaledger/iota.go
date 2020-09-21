@@ -17,8 +17,20 @@ func TestMessage_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
+			msgPayload, msgPayloadData := randMessage(1337)
+			return test{"ok - no payload", msgPayloadData, msgPayload, nil}
+		}(),
+		func() test {
 			msgPayload, msgPayloadData := randMessage(iota.SignedTransactionPayloadID)
-			return test{"ok", msgPayloadData, msgPayload, nil}
+			return test{"ok - signed transaction payload", msgPayloadData, msgPayload, nil}
+		}(),
+		func() test {
+			msgPayload, msgPayloadData := randMessage(iota.MilestonePayloadID)
+			return test{"ok - milestone payload", msgPayloadData, msgPayload, nil}
+		}(),
+		func() test {
+			msgPayload, msgPayloadData := randMessage(iota.IndexationPayloadID)
+			return test{"ok - indexation payload", msgPayloadData, msgPayload, nil}
 		}(),
 	}
 
