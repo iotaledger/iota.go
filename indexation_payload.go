@@ -3,6 +3,8 @@ package iota
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 )
 
@@ -88,4 +90,43 @@ func (u *IndexationPayload) Serialize(deSeriMode DeSerializationMode) ([]byte, e
 	}
 
 	return b.Bytes(), nil
+}
+
+func (u *IndexationPayload) MarshalJSON() ([]byte, error) {
+	jsonIndexPayload := &jsonindexationpayload{}
+	jsonIndexPayload.Type = int(IndexationPayloadID)
+	jsonIndexPayload.Index = u.Index
+	jsonIndexPayload.Data = hex.EncodeToString(u.Data)
+	return json.Marshal(jsonIndexPayload)
+}
+
+func (u *IndexationPayload) UnmarshalJSON(bytes []byte) error {
+	jsonIndexPayload := &jsonindexationpayload{}
+	if err := json.Unmarshal(bytes, jsonIndexPayload); err != nil {
+		return err
+	}
+	seri, err := jsonIndexPayload.ToSerializable()
+	if err != nil {
+		return err
+	}
+	*u = *seri.(*IndexationPayload)
+	return nil
+}
+
+// jsonindexationpayload defines the json representation of an IndexationPayload.
+type jsonindexationpayload struct {
+	Type  int    `json:"type"`
+	Index string `json:"index"`
+	Data  string `json:"data"`
+}
+
+func (j *jsonindexationpayload) ToSerializable() (Serializable, error) {
+	dataBytes, err := hex.DecodeString(j.Data)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode data from JSON for indexation payload: %w", err)
+	}
+
+	payload := &IndexationPayload{Index: j.Index}
+	payload.Data = dataBytes
+	return payload, nil
 }

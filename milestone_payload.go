@@ -3,6 +3,8 @@ package iota
 import (
 	"crypto/ed25519"
 	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -149,4 +151,56 @@ func (m *MilestonePayload) Serialize(deSeriMode DeSerializationMode) ([]byte, er
 	copy(b[offset:], m.InclusionMerkleProof[:])
 	copy(b[offset+MilestoneInclusionMerkleProofLength:], m.Signature[:])
 	return b[:], nil
+}
+
+func (m *MilestonePayload) MarshalJSON() ([]byte, error) {
+	jsonMilestonePayload := &jsonmilestonepayload{}
+	jsonMilestonePayload.Type = int(MilestonePayloadID)
+	jsonMilestonePayload.Index = int(m.Index)
+	jsonMilestonePayload.Signature = hex.EncodeToString(m.Signature[:])
+	jsonMilestonePayload.Timestamp = int(m.Timestamp)
+	jsonMilestonePayload.InclusionMerkleProof = hex.EncodeToString(m.InclusionMerkleProof[:])
+	return json.Marshal(jsonMilestonePayload)
+}
+
+func (m *MilestonePayload) UnmarshalJSON(bytes []byte) error {
+	jsonMilestonePayload := &jsonmilestonepayload{}
+	if err := json.Unmarshal(bytes, jsonMilestonePayload); err != nil {
+		return err
+	}
+	seri, err := jsonMilestonePayload.ToSerializable()
+	if err != nil {
+		return err
+	}
+	*m = *seri.(*MilestonePayload)
+	return nil
+}
+
+// jsonmilestonepayload defines the json representation of a MilestonePayload.
+type jsonmilestonepayload struct {
+	Type                 int    `json:"type"`
+	Index                int    `json:"index"`
+	Timestamp            int    `json:"timestamp"`
+	InclusionMerkleProof string `json:"inclusionMerkleProof"`
+	Signature            string `json:"signature"`
+}
+
+func (j *jsonmilestonepayload) ToSerializable() (Serializable, error) {
+	inclusionMerkleProofBytes, err := hex.DecodeString(j.InclusionMerkleProof)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode inlcusion merkle proof from JSON for milestone payload: %w", err)
+	}
+
+	signatureBytes, err := hex.DecodeString(j.Signature)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode signature from JSON for milestone payload: %w", err)
+	}
+
+	payload := &MilestonePayload{}
+	copy(payload.InclusionMerkleProof[:], inclusionMerkleProofBytes)
+	copy(payload.Signature[:], signatureBytes)
+
+	payload.Index = uint64(j.Index)
+	payload.Timestamp = uint64(j.Timestamp)
+	return payload, nil
 }

@@ -3,6 +3,7 @@ package iota
 import (
 	"crypto/ed25519"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 
 	"golang.org/x/crypto/blake2b"
@@ -73,6 +74,26 @@ func (wotsAddr *WOTSAddress) Serialize(deSeriMode DeSerializationMode) (data []b
 	return b[:], nil
 }
 
+func (wotsAddr *WOTSAddress) MarshalJSON() ([]byte, error) {
+	jsonAddr := &jsonwotsaddress{}
+	jsonAddr.Address = hex.EncodeToString(wotsAddr[:])
+	jsonAddr.Type = int(AddressWOTS)
+	return json.Marshal(jsonAddr)
+}
+
+func (wotsAddr *WOTSAddress) UnmarshalJSON(bytes []byte) error {
+	jsonAddr := &jsonwotsaddress{}
+	if err := json.Unmarshal(bytes, jsonAddr); err != nil {
+		return err
+	}
+	seri, err := jsonAddr.ToSerializable()
+	if err != nil {
+		return err
+	}
+	*wotsAddr = *seri.(*WOTSAddress)
+	return nil
+}
+
 // Defines an Ed25519 address.
 type Ed25519Address [Ed25519AddressBytesLength]byte
 
@@ -100,7 +121,73 @@ func (edAddr *Ed25519Address) Serialize(deSeriMode DeSerializationMode) (data []
 	return b[:], nil
 }
 
+func (edAddr *Ed25519Address) MarshalJSON() ([]byte, error) {
+	jsonAddr := &jsoned25519{}
+	jsonAddr.Address = hex.EncodeToString(edAddr[:])
+	jsonAddr.Type = int(AddressEd25519)
+	return json.Marshal(jsonAddr)
+}
+
+func (edAddr *Ed25519Address) UnmarshalJSON(bytes []byte) error {
+	jsonAddr := &jsoned25519{}
+	if err := json.Unmarshal(bytes, jsonAddr); err != nil {
+		return err
+	}
+	seri, err := jsonAddr.ToSerializable()
+	if err != nil {
+		return err
+	}
+	*edAddr = *seri.(*Ed25519Address)
+	return nil
+}
+
 // AddressFromEd25519PubKey returns the address belonging to the given Ed25519 public key.
 func AddressFromEd25519PubKey(pubKey ed25519.PublicKey) Ed25519Address {
 	return blake2b.Sum256(pubKey[:])
+}
+
+// selects the json object for the given type.
+func jsonaddressselector(ty int) (JSONSerializable, error) {
+	var obj JSONSerializable
+	switch byte(ty) {
+	case AddressEd25519:
+		obj = &jsoned25519{}
+	case AddressWOTS:
+		obj = &jsonwotsaddress{}
+	default:
+		return nil, fmt.Errorf("unable to decode address type from JSON: %w", ErrUnknownAddrType)
+	}
+	return obj, nil
+}
+
+// jsoned25519 defines the json representation of an Ed25519Address.
+type jsoned25519 struct {
+	Type    int    `json:"type"`
+	Address string `json:"address"`
+}
+
+func (j *jsoned25519) ToSerializable() (Serializable, error) {
+	addr := &Ed25519Address{}
+	addrBytes, err := hex.DecodeString(j.Address)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
+	}
+	copy(addr[:], addrBytes)
+	return addr, nil
+}
+
+// jsonwotsaddress defines the json representation of a WOTSAddress.
+type jsonwotsaddress struct {
+	Type    int    `json:"type"`
+	Address string `json:"address"`
+}
+
+func (j *jsonwotsaddress) ToSerializable() (Serializable, error) {
+	addr := &WOTSAddress{}
+	addrBytes, err := hex.DecodeString(j.Address)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode address from JSON for WOTS address: %w", err)
+	}
+	copy(addr[:], addrBytes)
+	return addr, nil
 }

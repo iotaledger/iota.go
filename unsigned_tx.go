@@ -3,6 +3,7 @@ package iota
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -219,6 +220,54 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 	return buf.Bytes(), nil
 }
 
+func (u *UnsignedTransaction) MarshalJSON() ([]byte, error) {
+	jsonTx := &jsonunsignedtransaction{
+		Inputs:  make([]*json.RawMessage, len(u.Inputs)),
+		Outputs: make([]*json.RawMessage, len(u.Outputs)),
+		Payload: nil,
+	}
+	jsonTx.Type = int(TransactionUnsigned)
+
+	for i, input := range u.Inputs {
+		inputJson, err := input.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawMsgInputJson := json.RawMessage(inputJson)
+		jsonTx.Inputs[i] = &rawMsgInputJson
+
+	}
+	for i, output := range u.Outputs {
+		outputJson, err := output.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawMsgOutputJson := json.RawMessage(outputJson)
+		jsonTx.Outputs[i] = &rawMsgOutputJson
+	}
+
+	jsonPayload, err := u.Payload.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	rawMsgJsonPayload := json.RawMessage(jsonPayload)
+	jsonTx.Payload = &rawMsgJsonPayload
+	return json.Marshal(jsonTx)
+}
+
+func (u *UnsignedTransaction) UnmarshalJSON(bytes []byte) error {
+	jsonTx := &jsonunsignedtransaction{}
+	if err := json.Unmarshal(bytes, jsonTx); err != nil {
+		return err
+	}
+	seri, err := jsonTx.ToSerializable()
+	if err != nil {
+		return err
+	}
+	*u = *seri.(*UnsignedTransaction)
+	return nil
+}
+
 // SyntacticallyValidate checks whether the unsigned transaction is syntactically valid by checking whether:
 //	1. every input references a unique UTXO and has valid UTXO index bounds
 //	2. every output deposits to a unique address and deposits more than zero
@@ -249,4 +298,77 @@ func (u *UnsignedTransaction) SyntacticallyValidate() error {
 	}
 
 	return nil
+}
+
+// jsontransactionselector selects the json transaction object for the given type.
+func jsontransactionselector(ty int) (JSONSerializable, error) {
+	var obj JSONSerializable
+	switch uint32(ty) {
+	case TransactionUnsigned:
+		obj = &jsonunsignedtransaction{}
+	default:
+		return nil, fmt.Errorf("unable to decode transaction type from JSON: %w", ErrUnknownTransactionType)
+	}
+
+	return obj, nil
+}
+
+// jsonunsignedtransaction defines the json representation of an UnsignedTransaction.
+type jsonunsignedtransaction struct {
+	Type    int                `json:"type"`
+	Inputs  []*json.RawMessage `json:"inputs"`
+	Outputs []*json.RawMessage `json:"outputs"`
+	Payload *json.RawMessage   `json:"payload"`
+}
+
+func (j *jsonunsignedtransaction) ToSerializable() (Serializable, error) {
+	unsigTx := &UnsignedTransaction{
+		Inputs:  make(Serializables, len(j.Inputs)),
+		Outputs: make(Serializables, len(j.Outputs)),
+		Payload: nil,
+	}
+
+	for i, input := range j.Inputs {
+		jsonInput, err := DeserializeObjectFromJSON(input, jsoninputselector)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode input type from JSON, pos %d: %w", i, err)
+		}
+		input, err := jsonInput.ToSerializable()
+		if err != nil {
+			return nil, fmt.Errorf("pos %d: %w", i, err)
+		}
+		unsigTx.Inputs[i] = input
+	}
+
+	for i, output := range j.Outputs {
+		jsonOutput, err := DeserializeObjectFromJSON(output, jsonoutputselector)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode output type from JSON, pos %d: %w", i, err)
+		}
+		output, err := jsonOutput.ToSerializable()
+		if err != nil {
+			return nil, fmt.Errorf("pos %d: %w", i, err)
+		}
+		unsigTx.Outputs[i] = output
+	}
+
+	if j.Payload == nil {
+		return unsigTx, nil
+	}
+
+	jsonPayload, err := DeserializeObjectFromJSON(j.Payload, jsonPayloadSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, isJSONIndexationPayload := jsonPayload.(*jsonindexationpayload); !isJSONIndexationPayload {
+		return nil, fmt.Errorf("%w: unsigned transactions only allow embedded indexation payloads but got type %T instead", ErrInvalidJSON, jsonPayload)
+	}
+
+	unsigTx.Payload, err = jsonPayload.ToSerializable()
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode inner unsigned transaction payload: %w", err)
+	}
+
+	return unsigTx, nil
 }

@@ -2,6 +2,7 @@ package iota
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -112,6 +113,34 @@ func (s *SigLockedSingleDeposit) Serialize(deSeriMode DeSerializationMode) (data
 	return b, nil
 }
 
+func (s *SigLockedSingleDeposit) MarshalJSON() ([]byte, error) {
+	jsonDep := &jsonsiglockedsingledeposit{}
+
+	addrJsonBytes, err := s.Address.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
+
+	jsonDep.Address = &jsonRawMsgAddr
+	jsonDep.Amount = int(s.Amount)
+	jsonDep.Type = int(OutputSigLockedSingleDeposit)
+	return json.Marshal(jsonDep)
+}
+
+func (s *SigLockedSingleDeposit) UnmarshalJSON(bytes []byte) error {
+	jsonDep := &jsonsiglockedsingledeposit{}
+	if err := json.Unmarshal(bytes, jsonDep); err != nil {
+		return err
+	}
+	seri, err := jsonDep.ToSerializable()
+	if err != nil {
+		return err
+	}
+	*s = *seri.(*SigLockedSingleDeposit)
+	return nil
+}
+
 // OutputsValidatorFunc which given the index of an output and the output itself, runs validations and returns an error if any should fail.
 type OutputsValidatorFunc func(index int, output *SigLockedSingleDeposit) error
 
@@ -181,4 +210,38 @@ func ValidateOutputs(outputs Serializables, funcs ...OutputsValidatorFunc) error
 		}
 	}
 	return nil
+}
+
+// jsonoutputselector selects the json output implementation for the given type.
+func jsonoutputselector(ty int) (JSONSerializable, error) {
+	var obj JSONSerializable
+	switch byte(ty) {
+	case OutputSigLockedSingleDeposit:
+		obj = &jsonsiglockedsingledeposit{}
+	default:
+		return nil, fmt.Errorf("unable to decode output type from JSON: %w", ErrUnknownOutputType)
+	}
+	return obj, nil
+}
+
+// jsonsiglockedsingledeposit defines the json representation of a SignatureLockedSingleDeposit.
+type jsonsiglockedsingledeposit struct {
+	Type    int              `json:"type"`
+	Address *json.RawMessage `json:"address"`
+	Amount  int              `json:"amount"`
+}
+
+func (j *jsonsiglockedsingledeposit) ToSerializable() (Serializable, error) {
+	dep := &SigLockedSingleDeposit{Amount: uint64(j.Amount)}
+
+	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonaddressselector)
+	if err != nil {
+		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
+	}
+
+	dep.Address, err = jsonAddr.ToSerializable()
+	if err != nil {
+		return nil, err
+	}
+	return dep, nil
 }

@@ -3,6 +3,7 @@ package iota
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -72,6 +73,9 @@ var (
 
 // SignedTransactionPayloadHash is the hash of a SignedTransactionPayload.
 type SignedTransactionPayloadHash = [SignedTransactionPayloadHashLength]byte
+
+// SignedTransactionPayloadHash are hashes of transactions.
+type SignedTransactionPayloadHashes []SignedTransactionPayloadHash
 
 // SignedTransactionPayload is a transaction with its inputs, outputs and unlock blocks.
 type SignedTransactionPayload struct {
@@ -175,6 +179,41 @@ func (s *SignedTransactionPayload) Serialize(deSeriMode DeSerializationMode) ([]
 	}
 
 	return b.Bytes(), nil
+}
+
+func (s *SignedTransactionPayload) MarshalJSON() ([]byte, error) {
+	jsonSigTxPayload := &jsonsignedtransactionpayload{
+		UnlockBlocks: make([]*json.RawMessage, len(s.UnlockBlocks)),
+	}
+	jsonSigTxPayload.Type = int(SignedTransactionPayloadID)
+	txJson, err := s.Transaction.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	rawMsgTxJson := json.RawMessage(txJson)
+	jsonSigTxPayload.Transaction = &rawMsgTxJson
+	for i, ub := range s.UnlockBlocks {
+		jsonUB, err := ub.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawMsgJsonUB := json.RawMessage(jsonUB)
+		jsonSigTxPayload.UnlockBlocks[i] = &rawMsgJsonUB
+	}
+	return json.Marshal(jsonSigTxPayload)
+}
+
+func (s *SignedTransactionPayload) UnmarshalJSON(bytes []byte) error {
+	jsonSigTxPayload := &jsonsignedtransactionpayload{}
+	if err := json.Unmarshal(bytes, jsonSigTxPayload); err != nil {
+		return err
+	}
+	seri, err := jsonSigTxPayload.ToSerializable()
+	if err != nil {
+		return err
+	}
+	*s = *seri.(*SignedTransactionPayload)
+	return nil
 }
 
 // SyntacticallyValidate syntactically validates the SignedTransactionPayload:
@@ -335,4 +374,43 @@ func (s *SignedTransactionPayload) SemanticallyValidateOutputs(transaction *Unsi
 	}
 
 	return outputSum, nil
+}
+
+// jsonsignedtransactionpayload defines the json representation of a SignedTransactionPayload.
+type jsonsignedtransactionpayload struct {
+	Type         int                `json:"type"`
+	Transaction  *json.RawMessage   `json:"transaction"`
+	UnlockBlocks []*json.RawMessage `json:"unlockBlocks"`
+}
+
+func (jsontx *jsonsignedtransactionpayload) ToSerializable() (Serializable, error) {
+	jsonTX, err := DeserializeObjectFromJSON(jsontx.Transaction, jsontransactionselector)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode transaction from JSON: %w", err)
+	}
+
+	txSeri, err := jsonTX.ToSerializable()
+	if err != nil {
+		return nil, err
+	}
+
+	unlockBlocks := make(Serializables, len(jsontx.UnlockBlocks))
+	for i, ele := range jsontx.UnlockBlocks {
+		jsonUnlockBlock, err := DeserializeObjectFromJSON(ele, jsonunlockblockselector)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode unlock block type from JSON, pos %d: %w", i, err)
+		}
+		unlockBlock, err := jsonUnlockBlock.ToSerializable()
+		if err != nil {
+			return nil, fmt.Errorf("pos %d: %w", i, err)
+		}
+		unlockBlocks[i] = unlockBlock
+	}
+
+	sigTxPayload := &SignedTransactionPayload{
+		Transaction:  txSeri,
+		UnlockBlocks: unlockBlocks,
+	}
+
+	return sigTxPayload, nil
 }

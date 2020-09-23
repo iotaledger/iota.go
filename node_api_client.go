@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 var (
@@ -192,10 +193,77 @@ func (api *NodeAPI) Tips() (*NodeTipsResponse, error) {
 	return res, nil
 }
 
-// Tips gets the two tips from the node.
-func (api *NodeAPI) MessagesByHash(hashes ...MessageHash) (*NodeTipsResponse, error) {
-	res := &NodeTipsResponse{}
-	if err := api.do(http.MethodGet, "/tips", nil, res); err != nil {
+// MessagesByHash gets messages by their hashes from the node.
+func (api *NodeAPI) MessagesByHash(hashes MessageHashes) ([]*Message, error) {
+	var query strings.Builder
+	query.WriteString("/messages/by-hash?hashes=")
+	query.WriteString(strings.Join(HashesToHex(hashes), ","))
+
+	var res JSONNodeMessages
+	if err := api.do(http.MethodGet, query.String(), nil, res); err != nil {
+		return nil, err
+	}
+
+	return res.ToMessages()
+}
+
+// NodeObjectReferencedResponse defines the response for an object which is potentially
+// referenced by a milestone node HTTP API call.
+type NodeObjectReferencedResponse struct {
+	// Tells whether the given object is referenced by a milestone.
+	IsReferencedByMilestone bool `json:"isReferencedByMilestone"`
+	// The index of the milestone which referenced the object.
+	MilestoneIndex uint64 `json:"milestoneIndex"`
+	// The timestamp of the milestone which referenced the object.
+	MilestoneTimestamp uint64 `json:"milestoneTimestamp"`
+}
+
+// AreMessagesReferencedByMilestone tells whether the given messages are referenced by milestones.
+// The response slice is ordered by the provided input hashes.
+func (api *NodeAPI) AreMessagesReferencedByMilestone(hashes MessageHashes) ([]NodeObjectReferencedResponse, error) {
+	var query strings.Builder
+	query.WriteString("/messages/by-hash/is-referenced-by-milestone?hashes=")
+	query.WriteString(strings.Join(HashesToHex(hashes), ","))
+
+	var res []NodeObjectReferencedResponse
+	if err := api.do(http.MethodGet, query.String(), nil, res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// AreTransactionsReferencedByMilestone tells whether the given transactions are referenced by milestones.
+// The response slice is ordered by the provided input hashes.
+func (api *NodeAPI) AreTransactionsReferencedByMilestone(hashes SignedTransactionPayloadHashes) ([]NodeObjectReferencedResponse, error) {
+	var query strings.Builder
+	query.WriteString("/transaction-messages/is-confirmed?hashes=")
+	query.WriteString(strings.Join(HashesToHex(hashes), ","))
+
+	var res []NodeObjectReferencedResponse
+	if err := api.do(http.MethodGet, query.String(), nil, res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// NodeOutputResponse defines the construct of an output in a a node HTTP API call.
+type NodeOutputResponse struct {
+	// The address to which this output deposits to.
+	Address string `json:"address"`
+	// The amount of the deposit.
+	Amount uint64 `json:"amount"`
+	// Whether this output is spent.
+	Spent bool `json:"spent"`
+}
+
+// OutputsByHash gets outputs by their ID from the node.
+func (api *NodeAPI) OutputsByHash(utxosID UTXOInputIDs) ([]NodeOutputResponse, error) {
+	var query strings.Builder
+	query.WriteString("/outputs/by-hash?hashes=")
+	query.WriteString(strings.Join(utxosID.ToHex(), ","))
+
+	var res []NodeOutputResponse
+	if err := api.do(http.MethodGet, query.String(), nil, res); err != nil {
 		return nil, err
 	}
 	return res, nil

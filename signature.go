@@ -3,7 +3,8 @@ package iota
 import (
 	"bytes"
 	"crypto/ed25519"
-	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // Defines the type of signature.
-type SignatureType = uint32
+type SignatureType = byte
 
 const (
 	// Denotes a WOTS signature.
@@ -20,7 +21,7 @@ const (
 	SignatureEd25519
 
 	// The size of a serialized Ed25519 signature with its type denoting byte and public key.
-	Ed25519SignatureSerializedBytesSize = TypeDenotationByteSize + ed25519.PublicKeySize + ed25519.SignatureSize
+	Ed25519SignatureSerializedBytesSize = SmallTypeDenotationByteSize + ed25519.PublicKeySize + ed25519.SignatureSize
 )
 
 var (
@@ -33,7 +34,7 @@ var (
 // SignatureSelector implements SerializableSelectorFunc for signature types.
 func SignatureSelector(sigType uint32) (Serializable, error) {
 	var seri Serializable
-	switch sigType {
+	switch byte(sigType) {
 	case SignatureWOTS:
 		seri = &WOTSSignature{}
 	case SignatureEd25519:
@@ -49,7 +50,7 @@ type WOTSSignature struct{}
 
 func (w *WOTSSignature) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkType(data, SignatureWOTS); err != nil {
+		if err := checkTypeByte(data, SignatureWOTS); err != nil {
 			return 0, fmt.Errorf("unable to deserialize WOTS signature: %w", err)
 		}
 	}
@@ -57,7 +58,15 @@ func (w *WOTSSignature) Deserialize(data []byte, deSeriMode DeSerializationMode)
 }
 
 func (w *WOTSSignature) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	panic("implement me")
+	return nil, ErrWOTSNotImplemented
+}
+
+func (w *WOTSSignature) MarshalJSON() ([]byte, error) {
+	return nil, ErrWOTSNotImplemented
+}
+
+func (w *WOTSSignature) UnmarshalJSON(i []byte) error {
+	return ErrWOTSNotImplemented
 }
 
 // Ed25519Signature defines an Ed25519 signature.
@@ -86,12 +95,12 @@ func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode DeSerializationMo
 		if err := checkMinByteLength(Ed25519SignatureSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid Ed25519 signature bytes: %w", err)
 		}
-		if err := checkType(data, SignatureEd25519); err != nil {
+		if err := checkTypeByte(data, SignatureEd25519); err != nil {
 			return 0, fmt.Errorf("unable to deserialize Ed25519 signature: %w", err)
 		}
 	}
 	// skip type byte
-	data = data[TypeDenotationByteSize:]
+	data = data[SmallTypeDenotationByteSize:]
 	copy(e.PublicKey[:], data[:ed25519.PublicKeySize])
 	copy(e.Signature[:], data[ed25519.PublicKeySize:])
 	return Ed25519SignatureSerializedBytesSize, nil
@@ -99,8 +108,77 @@ func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode DeSerializationMo
 
 func (e *Ed25519Signature) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	var b [Ed25519SignatureSerializedBytesSize]byte
-	binary.LittleEndian.PutUint32(b[:TypeDenotationByteSize], SignatureEd25519)
-	copy(b[TypeDenotationByteSize:], e.PublicKey[:])
-	copy(b[TypeDenotationByteSize+ed25519.PublicKeySize:], e.Signature[:])
+	b[0] = SignatureEd25519
+	copy(b[SmallTypeDenotationByteSize:], e.PublicKey[:])
+	copy(b[SmallTypeDenotationByteSize+ed25519.PublicKeySize:], e.Signature[:])
 	return b[:], nil
+}
+
+func (e *Ed25519Signature) MarshalJSON() ([]byte, error) {
+	jsonEdSig := &JSONEd25519Signature{}
+	jsonEdSig.Type = int(SignatureEd25519)
+	jsonEdSig.PublicKey = hex.EncodeToString(e.PublicKey[:])
+	jsonEdSig.Signature = hex.EncodeToString(e.Signature[:])
+	return json.Marshal(jsonEdSig)
+}
+
+func (e *Ed25519Signature) UnmarshalJSON(bytes []byte) error {
+	jsonEdSig := &JSONEd25519Signature{}
+	if err := json.Unmarshal(bytes, jsonEdSig); err != nil {
+		return err
+	}
+	seri, err := jsonEdSig.ToSerializable()
+	if err != nil {
+		return err
+	}
+	*e = *seri.(*Ed25519Signature)
+	return nil
+}
+
+// JSONSignatureSelector selects the json signature object for the given type.
+func JSONSignatureSelector(ty int) (JSONSerializable, error) {
+	var obj JSONSerializable
+	switch byte(ty) {
+	case SignatureWOTS:
+		obj = &JSONWOTSSignature{}
+	case SignatureEd25519:
+		obj = &JSONEd25519Signature{}
+	default:
+		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", ErrUnknownUnlockBlockType)
+	}
+	return obj, nil
+}
+
+// JSONEd25519Signature defines the json representation of an Ed25519Signature.
+type JSONEd25519Signature struct {
+	Type      int    `json:"type"`
+	PublicKey string `json:"publicKey"`
+	Signature string `json:"signature"`
+}
+
+func (j *JSONEd25519Signature) ToSerializable() (Serializable, error) {
+	sig := &Ed25519Signature{}
+
+	pubKeyBytes, err := hex.DecodeString(j.PublicKey)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode public key from JSON for Ed25519 signature: %w", err)
+	}
+
+	sigBytes, err := hex.DecodeString(j.Signature)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode signature from JSON for Ed25519 signature: %w", err)
+	}
+
+	copy(sig.PublicKey[:], pubKeyBytes)
+	copy(sig.Signature[:], sigBytes)
+	return sig, nil
+}
+
+// JSONWOTSSignature defines the json representation of a WOTSSignature.
+type JSONWOTSSignature struct {
+	// TODO: implement
+}
+
+func (j *JSONWOTSSignature) ToSerializable() (Serializable, error) {
+	return nil, ErrWOTSNotImplemented
 }

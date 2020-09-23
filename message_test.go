@@ -1,6 +1,7 @@
 package iota_test
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -15,6 +16,7 @@ func TestMessage_Deserialize(t *testing.T) {
 		target iota.Serializable
 		err    error
 	}
+
 	tests := []test{
 		func() test {
 			msgPayload, msgPayloadData := randMessage(1337)
@@ -49,38 +51,6 @@ func TestMessage_Deserialize(t *testing.T) {
 	}
 }
 
-func TestMessageFuzzingCrash(t *testing.T) {
-	input := []byte("\x010000000000000000000" +
-		"00000000000000000000" +
-		"00000000000000000000" +
-		"00000\xdf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00" +
-		"00000000000000000000" +
-		"0000000000000\x00\x01\x00\x00\x0000" +
-		"00000000000000000000" +
-		"00000000000000000000" +
-		"0000000000000\x00\x00\n\x00\x00\x00\x02" +
-		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x01\x00\x00\x000000" +
-		"00000000000000000000" +
-		"00000000000000000000" +
-		"00000000000000000000" +
-		"00000000000000000000" +
-		"00000000000000000000")
-
-	msg := &iota.Message{}
-	bytesRead, err := msg.Deserialize(input, iota.DeSeriModePerformValidation)
-	assert.NoError(t, err)
-	assert.Len(t, input, bytesRead)
-
-	seriInput, err := msg.Serialize(iota.DeSeriModePerformValidation)
-	assert.NoError(t, err)
-	assert.Equal(t, input, seriInput)
-
-	msg2 := &iota.Message{}
-	bytesRead, err = msg2.Deserialize(seriInput, iota.DeSeriModePerformValidation)
-	assert.NoError(t, err)
-	assert.Len(t, seriInput, bytesRead)
-}
-
 func TestMessage_Serialize(t *testing.T) {
 	type test struct {
 		name   string
@@ -104,4 +74,63 @@ func TestMessage_Serialize(t *testing.T) {
 			assert.Equal(t, tt.target, edData)
 		})
 	}
+}
+
+func TestMessage_UnmarshalJSON(t *testing.T) {
+	data := `
+		{
+		  "version": 1,
+		  "parent1": "f532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d",
+		  "parent2": "78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2",
+		  "payload": {
+			"type": 0,
+			"transaction": {
+			  "type": 0,
+			  "inputs": [
+				{
+				  "type": 0,
+				  "transactionId": "162863a2f4b134d352a886bf9cfb08788735499694864753ee686e02b3763d9d",
+				  "transactionOutputIndex": 3
+				}
+			  ],
+			  "outputs": [
+				{
+				  "type": 0,
+				  "address": {
+					"type": 1,
+					"address": "5f24ebcb5d48acbbfe6e7401b502ba7bb93acb3591d55eda7d32c37306cc805f"
+				  },
+				  "amount": 5710
+				}
+			  ],
+			  "payload": {
+				"type": 2,
+				"index": "allyourtritsbelongtous",
+				"data": "a487f431d852b060b49427f513dca1d5288e697e8bd9eb062534d09e7cb337ac"
+			  }
+			},
+			"unlockBlocks": [
+			  {
+				"type": 0,
+				"signature": {
+				  "type": 1,
+				  "publicKey": "ed3c3f1a319ff4e909cf2771d79fece0ac9bd9fd2ee49ea6c0885c9cb3b1248c",
+				  "signature": "651941eddb3e68cb1f6ef4ef5b04625dcf5c70de1fdc4b1c9eadb2c219c074e0ed3c3f1a319ff4e909cf2771d79fece0ac9bd9fd2ee49ea6c0885c9cb3b1248c"
+				}
+			  }
+			]
+		  },
+		  "nonce": 133945865838
+		}`
+
+	msg := &iota.Message{}
+	assert.NoError(t, json.Unmarshal([]byte(data), msg))
+
+	msgJson, err := json.Marshal(msg)
+	assert.NoError(t, err)
+
+	msg2 := &iota.Message{}
+	assert.NoError(t, json.Unmarshal(msgJson, msg2))
+
+	assert.EqualValues(t, msg, msg2)
 }

@@ -3,12 +3,15 @@ package iota
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 )
 
 // Serializable is something which knows how to serialize/deserialize itself from/into bytes.
 // This is almost analogous to BinaryMarshaler/BinaryUnmarshaler.
 type Serializable interface {
+	json.Marshaler
+	json.Unmarshaler
 	// Deserialize deserializes the given data (by copying) into the object and returns the amount of bytes consumed from data.
 	// If the passed data is not big enough for deserialization, an error must be returned.
 	// During deserialization additional validation may be performed if the given modes are set.
@@ -216,4 +219,13 @@ func ReadStringFromBytes(data []byte) (string, int, error) {
 	}
 
 	return string(data[:strLen]), int(strLen) + UInt16ByteSize, nil
+}
+
+// ToHex returns the a slice of byte hashes in their hex representation.
+func HashesToHex(input [][32]byte) []string {
+	hashes := make([]string, len(input))
+	for i := range input {
+		hashes[i] = fmt.Sprintf("%x", input[i])
+	}
+	return hashes
 }

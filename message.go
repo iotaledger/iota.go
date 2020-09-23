@@ -3,6 +3,8 @@ package iota
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 
 	"golang.org/x/crypto/blake2b"
@@ -35,6 +37,9 @@ func PayloadSelector(payloadType uint32) (Serializable, error) {
 
 // MessageHash is the hash of a Message.
 type MessageHash = [MessageHashLength]byte
+
+// MessageHashes are hashes of messages.
+type MessageHashes = []MessageHash
 
 // Message can carry a payload and references two other messages.
 type Message struct {
@@ -143,4 +148,113 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	}
 
 	return b.Bytes(), nil
+}
+
+func (m *Message) MarshalJSON() ([]byte, error) {
+	jsonMsg := &jsonmessage{}
+	msgHash, err := m.Hash()
+	if err != nil {
+		return nil, err
+	}
+	jsonMsg.Version = MessageVersion
+	jsonMsg.Hash = hex.EncodeToString(msgHash[:])
+	jsonMsg.Parent1 = hex.EncodeToString(m.Parent1[:])
+	jsonMsg.Parent2 = hex.EncodeToString(m.Parent2[:])
+	jsonMsg.Nonce = int(m.Nonce)
+	jsonPayload, err := m.Payload.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	rawMsgJsonPayload := json.RawMessage(jsonPayload)
+	jsonMsg.Payload = &rawMsgJsonPayload
+	return json.Marshal(jsonMsg)
+}
+
+func (m *Message) UnmarshalJSON(bytes []byte) error {
+	jsonMsg := &jsonmessage{}
+	if err := json.Unmarshal(bytes, jsonMsg); err != nil {
+		return err
+	}
+	seri, err := jsonMsg.ToSerializable()
+	if err != nil {
+		return err
+	}
+	*m = *seri.(*Message)
+	return nil
+}
+
+// selects the json object for the given type.
+func jsonPayloadSelector(ty int) (JSONSerializable, error) {
+	var obj JSONSerializable
+	switch uint32(ty) {
+	case SignedTransactionPayloadID:
+		obj = &jsonsignedtransactionpayload{}
+	case MilestonePayloadID:
+		obj = &jsonmilestonepayload{}
+	case IndexationPayloadID:
+		obj = &jsonindexationpayload{}
+	default:
+		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
+	}
+	return obj, nil
+}
+
+// JSONNodeMessages is a slice of jsonmessage.
+type JSONNodeMessages []*jsonmessage
+
+// ToMessages converts a slice of jsonmessage to a slice of Message.
+func (nm JSONNodeMessages) ToMessages() ([]*Message, error) {
+	msgs := make([]*Message, len(nm))
+	for i, n := range nm {
+		seri, err := n.ToSerializable()
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode message at pos %d: %w", i, err)
+		}
+		msgs[i] = seri.(*Message)
+	}
+	return msgs, nil
+}
+
+// jsonmessage defines the JSON representation of a Message.
+type jsonmessage struct {
+	// The hex encoded hash of the message.
+	Hash string `json:"hash"`
+	// The version of the message.
+	Version int `json:"version"`
+	// The hex encoded hash of the first referenced parent.
+	Parent1 string `json:"parent1"`
+	// The hex encoded hash of the second referenced parent.
+	Parent2 string `json:"parent2"`
+	// The payload within the message.
+	Payload *json.RawMessage `json:"payload"`
+	// The nonce the message used to fulfill the PoW requirement.
+	Nonce int `json:"nonce"`
+}
+
+func (jm *jsonmessage) ToSerializable() (Serializable, error) {
+	jsonPayload, err := DeserializeObjectFromJSON(jm.Payload, jsonPayloadSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	payload, err := jsonPayload.ToSerializable()
+	if err != nil {
+		return nil, err
+	}
+
+	parent1, err := hex.DecodeString(jm.Parent1)
+	if err != nil {
+		return nil, err
+	}
+
+	parent2, err := hex.DecodeString(jm.Parent2)
+	if err != nil {
+		return nil, err
+	}
+
+	m := &Message{Version: byte(jm.Version), Nonce: uint64(jm.Nonce), Payload: payload}
+	copy(m.Parent1[:], parent1)
+	copy(m.Parent2[:], parent2)
+
+	return m, nil
 }

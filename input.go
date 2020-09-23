@@ -2,6 +2,8 @@ package iota
 
 import (
 	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -41,7 +43,19 @@ func InputSelector(inputType uint32) (Serializable, error) {
 
 // UTXOInputID defines the identifier for an UTXO input which consists
 // out of the referenced transaction hash and the given output index.
-type UTXOInputID [TransactionIDLength + UInt16ByteSize]byte
+type UTXOInputID = [TransactionIDLength + UInt16ByteSize]byte
+
+// UTXOInputIDs is a slice of UTXOInputID.
+type UTXOInputIDs []UTXOInputID
+
+// ToHex converts all UTXOInput to their hex string representation.
+func (utxoInputIDs UTXOInputIDs) ToHex() []string {
+	hashes := make([]string, len(utxoInputIDs))
+	for i := range utxoInputIDs {
+		hashes[i] = fmt.Sprintf("%x", utxoInputIDs[i])
+	}
+	return hashes
+}
 
 // UTXOInput references an unspent transaction output by the signed transaction payload's hash and the corresponding index of the output.
 type UTXOInput struct {
@@ -101,6 +115,27 @@ func (u *UTXOInput) Serialize(deSeriMode DeSerializationMode) (data []byte, err 
 	return b[:], nil
 }
 
+func (u *UTXOInput) MarshalJSON() ([]byte, error) {
+	jsonUTXO := &jsonutxoinput{}
+	jsonUTXO.TransactionID = hex.EncodeToString(u.TransactionID[:])
+	jsonUTXO.TransactionOutputIndex = int(u.TransactionOutputIndex)
+	jsonUTXO.Type = int(InputUTXO)
+	return json.Marshal(jsonUTXO)
+}
+
+func (u *UTXOInput) UnmarshalJSON(bytes []byte) error {
+	jsonUTXO := &jsonutxoinput{}
+	if err := json.Unmarshal(bytes, jsonUTXO); err != nil {
+		return err
+	}
+	seri, err := jsonUTXO.ToSerializable()
+	if err != nil {
+		return err
+	}
+	*u = *seri.(*UTXOInput)
+	return nil
+}
+
 // InputsValidatorFunc which given the index of an input and the input itself, runs validations and returns an error if any should fail.
 type InputsValidatorFunc func(index int, input *UTXOInput) error
 
@@ -150,4 +185,36 @@ func ValidateInputs(inputs Serializables, funcs ...InputsValidatorFunc) error {
 		}
 	}
 	return nil
+}
+
+// jsoninputselector selects the json input implementation for the given type.
+func jsoninputselector(ty int) (JSONSerializable, error) {
+	var obj JSONSerializable
+	switch byte(ty) {
+	case InputUTXO:
+		obj = &jsonutxoinput{}
+	default:
+		return nil, fmt.Errorf("unable to decode input type from JSON: %w", ErrUnknownInputType)
+	}
+	return obj, nil
+}
+
+// jsonutxoinput defines the JSON representation of a UTXOInput.
+type jsonutxoinput struct {
+	Type                   int    `json:"type"`
+	TransactionID          string `json:"transactionId"`
+	TransactionOutputIndex int    `json:"transactionOutputIndex"`
+}
+
+func (j *jsonutxoinput) ToSerializable() (Serializable, error) {
+	utxoInput := &UTXOInput{
+		TransactionID:          [32]byte{},
+		TransactionOutputIndex: uint16(j.TransactionOutputIndex),
+	}
+	transactionIDBytes, err := hex.DecodeString(j.TransactionID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode transaction ID from JSON for UTXO input: %w", err)
+	}
+	copy(utxoInput.TransactionID[:], transactionIDBytes)
+	return utxoInput, nil
 }

@@ -67,9 +67,9 @@ func randEd25519Signature() (*iota.Ed25519Signature, []byte) {
 	copy(edSig.Signature[:], sig)
 	// serialized
 	var b [iota.Ed25519SignatureSerializedBytesSize]byte
-	binary.LittleEndian.PutUint32(b[:iota.TypeDenotationByteSize], iota.SignatureEd25519)
-	copy(b[iota.TypeDenotationByteSize:], pub)
-	copy(b[iota.TypeDenotationByteSize+ed25519.PublicKeySize:], sig)
+	b[0] = iota.SignatureEd25519
+	copy(b[iota.SmallTypeDenotationByteSize:], pub)
+	copy(b[iota.SmallTypeDenotationByteSize+ed25519.PublicKeySize:], sig)
 	return edSig, b[:]
 }
 
