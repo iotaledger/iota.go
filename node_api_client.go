@@ -38,6 +38,23 @@ const (
 	contentTypeJSON = "application/json"
 )
 
+const (
+	// The route for the info HTTP API call.
+	NodeAPIRouteInfo = "/info"
+	// The route for the tips HTTP API call.
+	NodeAPIRouteTips = "/tips"
+	// The route for checking whether messages are referenced by a milestone HTTP API call.
+	NodeAPIRouteMessagesReferencedByMilestone = "/messages/by-hash/is-referenced-by-milestone"
+	// The route for retrieving messages by their hash HTTP API call.
+	NodeAPIRouteMessagesByHash = "/messages/by-hash"
+	// The route for checking whether transactions are referenced by a milestone HTTP API call.
+	NodeAPIRouteTransactionReferencedByMilestone = "/transaction-messages/is-confirmed"
+	// The route for retrieving outputs by their identifier HTTP API call.
+	NodeAPIRouteOutputsByID = "/outputs/by-id"
+	// The route for retrieving outputs by their addresses HTTP API call.
+	NodeAPIRouteOutputsByAddress = "/outputs/by-address"
+)
+
 // NewNodeAPI returns a new NodeAPI with the given BaseURL and HTTPClient.
 func NewNodeAPI(baseURL string, httpClient ...http.Client) *NodeAPI {
 	if len(httpClient) > 0 {
@@ -55,7 +72,7 @@ type NodeAPI struct {
 }
 
 // defines the error response schema for node API responses.
-type httperrresponse struct {
+type HTTPErrorResponseEnvelope struct {
 	Error struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`
@@ -63,7 +80,7 @@ type httperrresponse struct {
 }
 
 // defines the ok response schema for node API responses.
-type httpokresponse struct {
+type HTTPOkResponseEnvelope struct {
 	Data interface{} `json:"data"`
 }
 
@@ -75,11 +92,11 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 	defer res.Body.Close()
 
 	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusCreated {
-		okRes := &httpokresponse{Data: decodeTo}
+		okRes := &HTTPOkResponseEnvelope{Data: decodeTo}
 		return json.Unmarshal(resBody, okRes)
 	}
 
-	errRes := &httperrresponse{}
+	errRes := &HTTPErrorResponseEnvelope{}
 	if err := json.Unmarshal(resBody, errRes); err != nil {
 		return fmt.Errorf("unable to read error from response body: %w", err)
 	}
@@ -170,7 +187,7 @@ type NodeInfoResponse struct {
 // Info gets the info of the node.
 func (api *NodeAPI) Info() (*NodeInfoResponse, error) {
 	res := &NodeInfoResponse{}
-	if err := api.do(http.MethodGet, "/info", nil, res); err != nil {
+	if err := api.do(http.MethodGet, NodeAPIRouteInfo, nil, res); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -187,7 +204,7 @@ type NodeTipsResponse struct {
 // Tips gets the two tips from the node.
 func (api *NodeAPI) Tips() (*NodeTipsResponse, error) {
 	res := &NodeTipsResponse{}
-	if err := api.do(http.MethodGet, "/tips", nil, res); err != nil {
+	if err := api.do(http.MethodGet, NodeAPIRouteTips, nil, res); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -196,15 +213,16 @@ func (api *NodeAPI) Tips() (*NodeTipsResponse, error) {
 // MessagesByHash gets messages by their hashes from the node.
 func (api *NodeAPI) MessagesByHash(hashes MessageHashes) ([]*Message, error) {
 	var query strings.Builder
-	query.WriteString("/messages/by-hash?hashes=")
+	query.WriteString(NodeAPIRouteMessagesByHash)
+	query.WriteString("?hashes=")
 	query.WriteString(strings.Join(HashesToHex(hashes), ","))
 
-	var res JSONNodeMessages
-	if err := api.do(http.MethodGet, query.String(), nil, res); err != nil {
+	var res []*Message
+	if err := api.do(http.MethodGet, query.String(), nil, &res); err != nil {
 		return nil, err
 	}
 
-	return res.ToMessages()
+	return res, nil
 }
 
 // NodeObjectReferencedResponse defines the response for an object which is potentially
@@ -222,11 +240,12 @@ type NodeObjectReferencedResponse struct {
 // The response slice is ordered by the provided input hashes.
 func (api *NodeAPI) AreMessagesReferencedByMilestone(hashes MessageHashes) ([]NodeObjectReferencedResponse, error) {
 	var query strings.Builder
-	query.WriteString("/messages/by-hash/is-referenced-by-milestone?hashes=")
+	query.WriteString(NodeAPIRouteMessagesReferencedByMilestone)
+	query.WriteString("?hashes=")
 	query.WriteString(strings.Join(HashesToHex(hashes), ","))
 
 	var res []NodeObjectReferencedResponse
-	if err := api.do(http.MethodGet, query.String(), nil, res); err != nil {
+	if err := api.do(http.MethodGet, query.String(), nil, &res); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -236,34 +255,61 @@ func (api *NodeAPI) AreMessagesReferencedByMilestone(hashes MessageHashes) ([]No
 // The response slice is ordered by the provided input hashes.
 func (api *NodeAPI) AreTransactionsReferencedByMilestone(hashes SignedTransactionPayloadHashes) ([]NodeObjectReferencedResponse, error) {
 	var query strings.Builder
-	query.WriteString("/transaction-messages/is-confirmed?hashes=")
+	query.WriteString(NodeAPIRouteTransactionReferencedByMilestone)
+	query.WriteString("?hashes=")
 	query.WriteString(strings.Join(HashesToHex(hashes), ","))
 
 	var res []NodeObjectReferencedResponse
-	if err := api.do(http.MethodGet, query.String(), nil, res); err != nil {
+	if err := api.do(http.MethodGet, query.String(), nil, &res); err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-// NodeOutputResponse defines the construct of an output in a a node HTTP API call.
+// NodeOutputResponse defines the construct of an RawOutput in a a node HTTP API call.
 type NodeOutputResponse struct {
-	// The address to which this output deposits to.
-	Address string `json:"address"`
-	// The amount of the deposit.
-	Amount uint64 `json:"amount"`
-	// Whether this output is spent.
+	// The output in its serialized form.
+	RawOutput *json.RawMessage `json:"output"`
+	// Whether this RawOutput is spent.
 	Spent bool `json:"spent"`
 }
 
-// OutputsByHash gets outputs by their ID from the node.
-func (api *NodeAPI) OutputsByHash(utxosID UTXOInputIDs) ([]NodeOutputResponse, error) {
+// Output deserializes the RawOutput to its output form.
+func (nor *NodeOutputResponse) Output() (*SigLockedSingleDeposit, error) {
+	jsonSeri, err := DeserializeObjectFromJSON(nor.RawOutput, jsonoutputselector)
+	if err != nil {
+		return nil, err
+	}
+	seri, err := jsonSeri.ToSerializable()
+	if err != nil {
+		return nil, err
+	}
+	return seri.(*SigLockedSingleDeposit), nil
+}
+
+// OutputsByID gets outputs by their ID from the node.
+func (api *NodeAPI) OutputsByID(utxosID UTXOInputIDs) ([]NodeOutputResponse, error) {
 	var query strings.Builder
-	query.WriteString("/outputs/by-hash?hashes=")
+	query.WriteString(NodeAPIRouteOutputsByID)
+	query.WriteString("?ids=")
 	query.WriteString(strings.Join(utxosID.ToHex(), ","))
 
 	var res []NodeOutputResponse
-	if err := api.do(http.MethodGet, query.String(), nil, res); err != nil {
+	if err := api.do(http.MethodGet, query.String(), nil, &res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// OutputsByAddress gets outputs by their ID from the node.
+func (api *NodeAPI) OutputsByAddress(addrs ...string) (map[string][]NodeOutputResponse, error) {
+	var query strings.Builder
+	query.WriteString(NodeAPIRouteOutputsByAddress)
+	query.WriteString("?addresses=")
+	query.WriteString(strings.Join(addrs, ","))
+
+	res := map[string][]NodeOutputResponse{}
+	if err := api.do(http.MethodGet, query.String(), nil, &res); err != nil {
 		return nil, err
 	}
 	return res, nil

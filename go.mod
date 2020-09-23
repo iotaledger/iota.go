@@ -13,4 +13,5 @@ require (
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/sys v0.0.0-20200909081042-eff7692f9009
 	golang.org/x/tools v0.0.0-20200917161530-60aba8ac75fb // indirect
+	gopkg.in/h2non/gock.v1 v1.0.15
 )

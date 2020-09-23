@@ -27,7 +27,7 @@ func randBytes(length int) []byte {
 	return b
 }
 
-func randTxHash() [iota.TransactionIDLength]byte {
+func rand32ByteHash() [32]byte {
 	var h [iota.TransactionIDLength]byte
 	b := randBytes(32)
 	copy(h[:], b)

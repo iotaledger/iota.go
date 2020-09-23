@@ -35,10 +35,10 @@ var (
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
 	// Returned if multiple outputs deposit to the same address.
 	ErrOutputAddrNotUnique = errors.New("outputs must each deposit to a unique address")
-	// Returned if the sum of the output deposits exceeds the total supply of tokens.
-	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
-	// Returned if an output deposits more than the total supply.
-	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
+	// Returned if the sum of the RawOutput deposits exceeds the total supply of tokens.
+	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated RawOutput balance exceeds total supply")
+	// Returned if an RawOutput deposits more than the total supply.
+	ErrOutputDepositsMoreThanTotalSupply = errors.New("an RawOutput can not deposit more than the total supply")
 )
 
 // TransactionSelector implements SerializableSelectorFunc for transaction types.
@@ -187,10 +187,10 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 	for i := range u.Outputs {
 		outputSer, err := u.Outputs[i].Serialize(deSeriMode)
 		if err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize output of unsigned transaction at index %d", err, i)
+			return nil, fmt.Errorf("%w: unable to serialize RawOutput of unsigned transaction at index %d", err, i)
 		}
 		if _, err := buf.Write(outputSer); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize output of unsigned transaction at index %d to buffer", err, i)
+			return nil, fmt.Errorf("%w: unable to serialize RawOutput of unsigned transaction at index %d to buffer", err, i)
 		}
 		if outputsLexicalOrderValidator != nil {
 			if err := outputsLexicalOrderValidator(i, outputSer); err != nil {
@@ -270,8 +270,8 @@ func (u *UnsignedTransaction) UnmarshalJSON(bytes []byte) error {
 
 // SyntacticallyValidate checks whether the unsigned transaction is syntactically valid by checking whether:
 //	1. every input references a unique UTXO and has valid UTXO index bounds
-//	2. every output deposits to a unique address and deposits more than zero
-//	3. the accumulated deposit output is not over the total supply
+//	2. every RawOutput deposits to a unique address and deposits more than zero
+//	3. the accumulated deposit RawOutput is not over the total supply
 // The function does not syntactically validate the input or outputs themselves.
 func (u *UnsignedTransaction) SyntacticallyValidate() error {
 
@@ -343,7 +343,7 @@ func (j *jsonunsignedtransaction) ToSerializable() (Serializable, error) {
 	for i, output := range j.Outputs {
 		jsonOutput, err := DeserializeObjectFromJSON(output, jsonoutputselector)
 		if err != nil {
-			return nil, fmt.Errorf("unable to decode output type from JSON, pos %d: %w", i, err)
+			return nil, fmt.Errorf("unable to decode RawOutput type from JSON, pos %d: %w", i, err)
 		}
 		output, err := jsonOutput.ToSerializable()
 		if err != nil {
@@ -356,7 +356,7 @@ func (j *jsonunsignedtransaction) ToSerializable() (Serializable, error) {
 		return unsigTx, nil
 	}
 
-	jsonPayload, err := DeserializeObjectFromJSON(j.Payload, jsonPayloadSelector)
+	jsonPayload, err := DeserializeObjectFromJSON(j.Payload, jsonpayloadselector)
 	if err != nil {
 		return nil, err
 	}

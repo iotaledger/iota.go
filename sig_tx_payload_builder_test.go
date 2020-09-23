@@ -24,21 +24,21 @@ func TestSignedTransactionBuilder(t *testing.T) {
 	tests := []test{
 		func() test {
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
 			builder := iota.NewSignedTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
 				AddOutput(&iota.SigLockedSingleDeposit{Address: outputAddr1, Amount: 50})
 
 			return test{
-				name:       "ok - 1 input/output",
+				name:       "ok - 1 input/RawOutput",
 				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
 			}
 		}(),
 		func() test {
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
 			builder := iota.NewSignedTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -61,7 +61,7 @@ func TestSignedTransactionBuilder(t *testing.T) {
 			}
 		}(),
 		func() test {
-			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 			builder := iota.NewSignedTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1})
 			return test{
@@ -73,7 +73,7 @@ func TestSignedTransactionBuilder(t *testing.T) {
 		}(),
 		func() test {
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
 			builder := iota.NewSignedTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -93,7 +93,7 @@ func TestSignedTransactionBuilder(t *testing.T) {
 		}(),
 		func() test {
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
 			builder := iota.NewSignedTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).

@@ -37,7 +37,7 @@ func (b *SignedTransactionPayloadBuilder) AddInput(input *ToBeSignedUTXOInput) *
 	return b
 }
 
-// AddOutput adds the given output to the builder.
+// AddOutput adds the given RawOutput to the builder.
 func (b *SignedTransactionPayloadBuilder) AddOutput(output *SigLockedSingleDeposit) *SignedTransactionPayloadBuilder {
 	b.unsigTx.Outputs = append(b.unsigTx.Outputs, output)
 	return b

@@ -36,9 +36,9 @@ var (
 	// Returned if the count of inputs is too big.
 	ErrMaxInputsExceeded = fmt.Errorf("max %d input(s) are allowed within a transaction", MaxInputsCount)
 	// Returned if the count of outputs is too small.
-	ErrMinOutputsNotReached = fmt.Errorf("min %d output(s) are required within a transaction", MinOutputsCount)
+	ErrMinOutputsNotReached = fmt.Errorf("min %d RawOutput(s) are required within a transaction", MinOutputsCount)
 	// Returned if the count of outputs is too big.
-	ErrMaxOutputsExceeded = fmt.Errorf("max %d output(s) are allowed within a transaction", MaxOutputsCount)
+	ErrMaxOutputsExceeded = fmt.Errorf("max %d RawOutput(s) are allowed within a transaction", MaxOutputsCount)
 	// Returned if the count of unlock blocks doesn't match the count of inputs.
 	ErrUnlockBlocksMustMatchInputCount = errors.New("the count of unlock blocks must match the inputs of the transaction")
 	// Returned if the transaction within a signed transaction payload is invalid.
@@ -368,7 +368,7 @@ func (s *SignedTransactionPayload) SemanticallyValidateOutputs(transaction *Unsi
 		// TODO: switch out with type switch
 		out, ok := output.(*SigLockedSingleDeposit)
 		if !ok {
-			return 0, fmt.Errorf("%w: unsupported output type at index %d", ErrUnknownOutputType, i)
+			return 0, fmt.Errorf("%w: unsupported RawOutput type at index %d", ErrUnknownOutputType, i)
 		}
 		outputSum += out.Amount
 	}

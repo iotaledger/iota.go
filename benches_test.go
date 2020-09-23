@@ -98,8 +98,8 @@ func BenchmarkSerializeAndHashMessageWithSignedTransactionPayload(b *testing.B) 
 	sigTxPayload := oneInputOutputSignedTransactionPayload()
 	m := &iota.Message{
 		Version: 1,
-		Parent1: randTxHash(),
-		Parent2: randTxHash(),
+		Parent1: rand32ByteHash(),
+		Parent2: rand32ByteHash(),
 		Payload: sigTxPayload,
 		Nonce:   0,
 	}

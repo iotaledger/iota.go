@@ -77,14 +77,14 @@ func TestSignedTransactionPayload_SemanticallyValidate(t *testing.T) {
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
 			builder := iota.NewSignedTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
 				AddOutput(&iota.SigLockedSingleDeposit{Address: outputAddr1, Amount: 50})
 
 			return test{
-				name:       "ok - 1 input/output",
+				name:       "ok - 1 input/RawOutput",
 				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
 				inputUTXOs: iota.InputToOutputMapping{
@@ -98,8 +98,8 @@ func TestSignedTransactionPayload_SemanticallyValidate(t *testing.T) {
 			outputAddr2, _ := randEd25519Addr()
 			outputAddr3, _ := randEd25519Addr()
 
-			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
-			inputUTXO2 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO2 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
 			builder := iota.NewSignedTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -128,7 +128,7 @@ func TestSignedTransactionPayload_SemanticallyValidate(t *testing.T) {
 			}
 		}(),
 		func() test {
-			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 			builder := iota.NewSignedTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1})
 			return test{
@@ -141,14 +141,14 @@ func TestSignedTransactionPayload_SemanticallyValidate(t *testing.T) {
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: randTxHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
 			builder := iota.NewSignedTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
 				AddOutput(&iota.SigLockedSingleDeposit{Address: outputAddr1, Amount: 100})
 
 			return test{
-				name:       "err - input output sum mismatch",
+				name:       "err - input RawOutput sum mismatch",
 				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
 				validErr:   iota.ErrInputOutputSumMismatch,

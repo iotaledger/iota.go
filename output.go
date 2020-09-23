@@ -12,7 +12,7 @@ import (
 type OutputType = byte
 
 const (
-	// Denotes a type of output which is locked by a signature and deposits onto a single address.
+	// Denotes a type of RawOutput which is locked by a signature and deposits onto a single address.
 	OutputSigLockedSingleDeposit OutputType = iota
 
 	// The size of a sig locked single deposit containing a WOTS address as its deposit address.
@@ -27,11 +27,11 @@ const (
 )
 
 var (
-	// Returned if the deposit amount of an output is less or equal zero.
+	// Returned if the deposit amount of an RawOutput is less or equal zero.
 	ErrDepositAmountMustBeGreaterThanZero = errors.New("deposit amount must be greater than zero")
 )
 
-// OutputSelector implements SerializableSelectorFunc for output types.
+// OutputSelector implements SerializableSelectorFunc for RawOutput types.
 func OutputSelector(outputType uint32) (Serializable, error) {
 	var seri Serializable
 	switch byte(outputType) {
@@ -43,7 +43,7 @@ func OutputSelector(outputType uint32) (Serializable, error) {
 	return seri, nil
 }
 
-// SigLockedSingleDeposit is an output type which can be unlocked via a signature. It deposits onto one single address.
+// SigLockedSingleDeposit is an RawOutput type which can be unlocked via a signature. It deposits onto one single address.
 type SigLockedSingleDeposit struct {
 	// The actual address.
 	Address Serializable `json:"address"`
@@ -71,7 +71,7 @@ func (s *SigLockedSingleDeposit) Deserialize(data []byte, deSeriMode DeSerializa
 	data = data[addrBytesRead:]
 
 	if len(data) < UInt64ByteSize {
-		return 0, fmt.Errorf("%w: unable to deserialize signature locked single deposit output", ErrDeserializationNotEnoughData)
+		return 0, fmt.Errorf("%w: unable to deserialize signature locked single deposit RawOutput", ErrDeserializationNotEnoughData)
 	}
 
 	// read amount of the deposit
@@ -141,7 +141,7 @@ func (s *SigLockedSingleDeposit) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// OutputsValidatorFunc which given the index of an output and the output itself, runs validations and returns an error if any should fail.
+// OutputsValidatorFunc which given the index of an RawOutput and the RawOutput itself, runs validations and returns an error if any should fail.
 type OutputsValidatorFunc func(index int, output *SigLockedSingleDeposit) error
 
 // OutputsAddrUniqueValidator returns a validator which checks that all addresses are unique.
@@ -162,7 +162,7 @@ func OutputsAddrUniqueValidator() OutputsValidatorFunc {
 		}
 		k := b.String()
 		if j, has := set[k]; has {
-			return fmt.Errorf("%w: output %d and %d share the same address", ErrOutputAddrNotUnique, j, index)
+			return fmt.Errorf("%w: RawOutput %d and %d share the same address", ErrOutputAddrNotUnique, j, index)
 		}
 		set[k] = index
 		return nil
@@ -170,21 +170,21 @@ func OutputsAddrUniqueValidator() OutputsValidatorFunc {
 }
 
 // OutputsDepositAmountValidator returns a validator which checks that:
-//	1. every output deposits more than zero
-//	2. every output deposits less than the total supply
+//	1. every RawOutput deposits more than zero
+//	2. every RawOutput deposits less than the total supply
 //	3. the sum of deposits does not exceed the total supply
 // If -1 is passed to the validator func, then the sum is not aggregated over multiple calls.
 func OutputsDepositAmountValidator() OutputsValidatorFunc {
 	var sum uint64
 	return func(index int, dep *SigLockedSingleDeposit) error {
 		if dep.Amount == 0 {
-			return fmt.Errorf("%w: output %d", ErrDepositAmountMustBeGreaterThanZero, index)
+			return fmt.Errorf("%w: RawOutput %d", ErrDepositAmountMustBeGreaterThanZero, index)
 		}
 		if dep.Amount > TokenSupply {
-			return fmt.Errorf("%w: output %d", ErrOutputDepositsMoreThanTotalSupply, index)
+			return fmt.Errorf("%w: RawOutput %d", ErrOutputDepositsMoreThanTotalSupply, index)
 		}
 		if sum+dep.Amount > TokenSupply {
-			return fmt.Errorf("%w: output %d", ErrOutputsSumExceedsTotalSupply, index)
+			return fmt.Errorf("%w: RawOutput %d", ErrOutputsSumExceedsTotalSupply, index)
 		}
 		if index != -1 {
 			sum += dep.Amount
@@ -212,14 +212,14 @@ func ValidateOutputs(outputs Serializables, funcs ...OutputsValidatorFunc) error
 	return nil
 }
 
-// jsonoutputselector selects the json output implementation for the given type.
+// jsonoutputselector selects the json RawOutput implementation for the given type.
 func jsonoutputselector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch byte(ty) {
 	case OutputSigLockedSingleDeposit:
 		obj = &jsonsiglockedsingledeposit{}
 	default:
-		return nil, fmt.Errorf("unable to decode output type from JSON: %w", ErrUnknownOutputType)
+		return nil, fmt.Errorf("unable to decode RawOutput type from JSON: %w", ErrUnknownOutputType)
 	}
 	return obj, nil
 }

@@ -65,8 +65,8 @@ func TestMilestonePayload_Serialize(t *testing.T) {
 
 func TestMilestonePayload_SignatureInput(t *testing.T) {
 	var msgVersion byte = 1
-	parent1 := randTxHash()
-	parent2 := randTxHash()
+	parent1 := rand32ByteHash()
+	parent2 := rand32ByteHash()
 	var msIndex, msTimestamp uint64 = 1000, 133713771377
 	var msInclMerkleProof [iota.MilestoneInclusionMerkleProofLength]byte
 	rand.Read(msInclMerkleProof[:])
@@ -119,7 +119,7 @@ func TestMilestonePayloadSigning(t *testing.T) {
 		func() test {
 
 			signer := randEd25519PrivateKey()
-			msg := &iota.Message{Version: 1, Parent1: randTxHash(), Parent2: randTxHash()}
+			msg := &iota.Message{Version: 1, Parent1: rand32ByteHash(), Parent2: rand32ByteHash()}
 			msPayload := &iota.MilestonePayload{Index: 1000, Timestamp: uint64(time.Now().Unix())}
 
 			return test{
@@ -135,7 +135,7 @@ func TestMilestonePayloadSigning(t *testing.T) {
 		func() test {
 
 			signer := randEd25519PrivateKey()
-			msg := &iota.Message{Version: 1, Parent1: randTxHash(), Parent2: randTxHash()}
+			msg := &iota.Message{Version: 1, Parent1: rand32ByteHash(), Parent2: rand32ByteHash()}
 			msPayload := &iota.MilestonePayload{Index: 1000, Timestamp: uint64(time.Now().Unix())}
 
 			return test{
