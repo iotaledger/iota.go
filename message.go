@@ -41,6 +41,20 @@ type MessageHash = [MessageHashLength]byte
 // MessageHashes are hashes of messages.
 type MessageHashes = []MessageHash
 
+// MessagesHashFromHexString converts the given message hashes from their hex
+// to MessageHash representation.
+func MessagesHashFromHexString(msgHashesHex ...string) (MessageHashes, error) {
+	mh := make(MessageHashes, len(msgHashesHex))
+	for i, msgHashHex := range msgHashesHex {
+		msgHashBytes, err := hex.DecodeString(msgHashHex)
+		if err != nil {
+			return nil, err
+		}
+		copy(mh[i][:], msgHashBytes)
+	}
+	return mh, nil
+}
+
 // Message can carry a payload and references two other messages.
 type Message struct {
 	// The version of the message.

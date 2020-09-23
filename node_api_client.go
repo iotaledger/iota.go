@@ -36,6 +36,7 @@ var (
 
 const (
 	contentTypeJSON = "application/json"
+	locationHeader  = "Location"
 )
 
 const (
@@ -47,6 +48,8 @@ const (
 	NodeAPIRouteMessagesReferencedByMilestone = "/messages/by-hash/is-referenced-by-milestone"
 	// The route for retrieving messages by their hash HTTP API call.
 	NodeAPIRouteMessagesByHash = "/messages/by-hash"
+	// The route for submitting a new message HTTP API call.
+	NodeAPIRouteMessageSubmit = "/messages"
 	// The route for checking whether transactions are referenced by a milestone HTTP API call.
 	NodeAPIRouteTransactionReferencedByMilestone = "/transaction-messages/is-confirmed"
 	// The route for retrieving outputs by their identifier HTTP API call.
@@ -109,14 +112,14 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 	return fmt.Errorf("%w: url %s, error message: %s", err, res.Request.URL.String(), errRes.Error.Message)
 }
 
-func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj interface{}) error {
+func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
 	// marshal request object
 	var data []byte
 	if reqObj != nil {
 		var err error
 		data, err = json.Marshal(reqObj)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -128,7 +131,7 @@ func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj i
 		return bytes.NewReader(data)
 	}())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if data != nil {
@@ -138,18 +141,18 @@ func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj i
 	// make the request
 	res, err := api.HTTPClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if resObj == nil {
-		return nil
+		return res, nil
 	}
 
 	// write response into response object
 	if err := interpretBody(res, resObj); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return res, nil
 }
 
 // NodeInfoResponse defines the response of a node info HTTP API call.
@@ -187,7 +190,8 @@ type NodeInfoResponse struct {
 // Info gets the info of the node.
 func (api *NodeAPI) Info() (*NodeInfoResponse, error) {
 	res := &NodeInfoResponse{}
-	if err := api.do(http.MethodGet, NodeAPIRouteInfo, nil, res); err != nil {
+	_, err := api.do(http.MethodGet, NodeAPIRouteInfo, nil, res)
+	if err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -204,7 +208,8 @@ type NodeTipsResponse struct {
 // Tips gets the two tips from the node.
 func (api *NodeAPI) Tips() (*NodeTipsResponse, error) {
 	res := &NodeTipsResponse{}
-	if err := api.do(http.MethodGet, NodeAPIRouteTips, nil, res); err != nil {
+	_, err := api.do(http.MethodGet, NodeAPIRouteTips, nil, res)
+	if err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -218,11 +223,33 @@ func (api *NodeAPI) MessagesByHash(hashes MessageHashes) ([]*Message, error) {
 	query.WriteString(strings.Join(HashesToHex(hashes), ","))
 
 	var res []*Message
-	if err := api.do(http.MethodGet, query.String(), nil, &res); err != nil {
+	_, err := api.do(http.MethodGet, query.String(), nil, &res)
+	if err != nil {
 		return nil, err
 	}
 
 	return res, nil
+}
+
+// SubmitMessage submits the given Message to the node.
+// The node will take care of filling missing information.
+// This function returns the finalized message created by the node.
+func (api *NodeAPI) SubmitMessage(m *Message) (*Message, error) {
+	res, err := api.do(http.MethodPost, NodeAPIRouteMessageSubmit, m, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	msgHashes, err := MessagesHashFromHexString(res.Header.Get(locationHeader))
+	if err != nil {
+		return nil, err
+	}
+
+	msgs, err := api.MessagesByHash(msgHashes)
+	if err != nil {
+		return nil, err
+	}
+	return msgs[0], nil
 }
 
 // NodeObjectReferencedResponse defines the response for an object which is potentially
@@ -245,7 +272,8 @@ func (api *NodeAPI) AreMessagesReferencedByMilestone(hashes MessageHashes) ([]No
 	query.WriteString(strings.Join(HashesToHex(hashes), ","))
 
 	var res []NodeObjectReferencedResponse
-	if err := api.do(http.MethodGet, query.String(), nil, &res); err != nil {
+	_, err := api.do(http.MethodGet, query.String(), nil, &res)
+	if err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -260,7 +288,8 @@ func (api *NodeAPI) AreTransactionsReferencedByMilestone(hashes SignedTransactio
 	query.WriteString(strings.Join(HashesToHex(hashes), ","))
 
 	var res []NodeObjectReferencedResponse
-	if err := api.do(http.MethodGet, query.String(), nil, &res); err != nil {
+	_, err := api.do(http.MethodGet, query.String(), nil, &res)
+	if err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -295,7 +324,8 @@ func (api *NodeAPI) OutputsByID(utxosID UTXOInputIDs) ([]NodeOutputResponse, err
 	query.WriteString(strings.Join(utxosID.ToHex(), ","))
 
 	var res []NodeOutputResponse
-	if err := api.do(http.MethodGet, query.String(), nil, &res); err != nil {
+	_, err := api.do(http.MethodGet, query.String(), nil, &res)
+	if err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -309,7 +339,8 @@ func (api *NodeAPI) OutputsByAddress(addrs ...string) (map[string][]NodeOutputRe
 	query.WriteString(strings.Join(addrs, ","))
 
 	res := map[string][]NodeOutputResponse{}
-	if err := api.do(http.MethodGet, query.String(), nil, &res); err != nil {
+	_, err := api.do(http.MethodGet, query.String(), nil, &res)
+	if err != nil {
 		return nil, err
 	}
 	return res, nil

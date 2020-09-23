@@ -81,9 +81,7 @@ func TestNodeAPI_MessagesByHash(t *testing.T) {
 		Get(iota.NodeAPIRouteMessagesByHash).
 		MatchParam("hashes", queryHash).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{
-			Data: []*iota.Message{msg},
-		})
+		JSON(&iota.HTTPOkResponseEnvelope{Data: []*iota.Message{msg}})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
 	msgs, err := nodeAPI.MessagesByHash(iota.MessageHashes{identifier})
@@ -99,6 +97,40 @@ func TestNodeAPI_MessagesByHash(t *testing.T) {
 	assert.EqualValues(t, originMsgJson, msgJson)
 }
 
+func TestNodeAPI_SubmitMessage(t *testing.T) {
+	defer gock.Off()
+
+	msgHash := rand32ByteHash()
+	msgHashStr := hex.EncodeToString(msgHash[:])
+
+	incompleteMsg := &iota.Message{Version: 1}
+	completeMsg := &iota.Message{
+		Version: 1,
+		Parent1: rand32ByteHash(),
+		Parent2: rand32ByteHash(),
+		Payload: nil,
+		Nonce:   3495721389537486,
+	}
+
+	gock.New(nodeAPIUrl).
+		Post(iota.NodeAPIRouteMessageSubmit).
+		MatchType("json").
+		JSON(incompleteMsg).
+		Reply(200).AddHeader("Location", msgHashStr)
+
+	gock.New(nodeAPIUrl).
+		Get(iota.NodeAPIRouteMessagesByHash).
+		MatchParam("hashes", msgHashStr).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: []*iota.Message{completeMsg}})
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	resp, err := nodeAPI.SubmitMessage(incompleteMsg)
+	assert.NoError(t, err)
+
+	assert.EqualValues(t, completeMsg, resp)
+}
+
 func TestNodeAPI_AreMessagesReferencedByMilestone(t *testing.T) {
 	defer gock.Off()
 
@@ -112,6 +144,7 @@ func TestNodeAPI_AreMessagesReferencedByMilestone(t *testing.T) {
 		MilestoneIndex:          666,
 		MilestoneTimestamp:      666666666,
 	}
+
 	originResp2 := iota.NodeObjectReferencedResponse{
 		IsReferencedByMilestone: false,
 		MilestoneIndex:          1337,
