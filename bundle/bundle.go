@@ -180,9 +180,23 @@ func getBundleEntryWithDefaults(entry BundleEntry) BundleEntry {
 	return entry
 }
 
-// Finalize finalizes the bundle by calculating the bundle hash and setting it on each transaction
-// bundle hash field.
+// Finalize finalizes the bundle by calculating and setting the bundle hash.
+// It increments ObsoleteTag until the hash does not contain an M; this serves as a work-around for the so-called M-Bug.
 func Finalize(bundle Bundle) (Bundle, error) {
+	// bundle hash must not contain an M
+	return finalize(bundle, normalizedHashHasNoM)
+}
+
+// FinalizeInsecure finalizes the bundle by calculating and setting the bundle hash.
+// The bundle finalized with this could be susceptible to the so-called M-Bug, but it is much faster than Finalize.
+// It must only be used for non-value transactions or for value transactions where the private key
+// has been derived in an M-Bug resistant way.
+func FinalizeInsecure(bundle Bundle) (Bundle, error) {
+	// any bundle hash is valid
+	return finalize(bundle, func(Hash) bool { return true })
+}
+
+func finalize(bundle Bundle, validator func(Hash) bool) (Bundle, error) {
 	if len(bundle) == 0 {
 		return bundle, nil
 	}
@@ -227,7 +241,7 @@ func Finalize(bundle Bundle) (Bundle, error) {
 		bundleHash = k.MustSqueezeTrytes(HashTrinarySize)
 
 		// check whether normalized bundle hash is valid
-		if validHash(signing.NormalizedBundleHash(bundleHash)) {
+		if validator(bundleHash) {
 			break
 		}
 		obsoleteTagsTrits[0] = AddTrits(obsoleteTagsTrits[0], Trits{1})
@@ -253,7 +267,8 @@ func zeroLastTrit(hash Hash) Hash {
 	return hash[:HashTrytesSize-1] + MustTritsToTrytes(lastTrits)
 }
 
-func validHash(normalizedHash []int8) bool {
+func normalizedHashHasNoM(hash Hash) bool {
+	normalizedHash := signing.NormalizedBundleHash(hash)
 	for i := range normalizedHash {
 		if normalizedHash[i] == MaxTryteValue {
 			return false

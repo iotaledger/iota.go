@@ -189,7 +189,6 @@ var _ = Describe("Bundle", func() {
 	})
 
 	Context("Finalize()", func() {
-
 		It("computes the bundle hash and adds it to all transactions in the bundle", func() {
 			bndlCopy := make(Bundle, len(bndl))
 			copy(bndlCopy, bndl)
@@ -198,6 +197,19 @@ var _ = Describe("Bundle", func() {
 			Expect(bndlCopy[0].ObsoleteTag).To(Equal("ZUH999999999999999999999999"))
 			for i := range bndlCopy {
 				Expect(bndlCopy[i].Bundle).To(Equal("VRGXKZDODWIVGFYFCCXJRNDCQJVYUVBRIWJXKFGBIEWUPHHTJLTKH99JW9OLJ9JCIXCEIRRXJKLWOBDZZ"))
+			}
+		})
+	})
+
+	Context("FinalizeInsecure()", func() {
+		It("computes the bundle hash and adds it to all transactions in the bundle", func() {
+			bndlCopy := make(Bundle, len(bndl))
+			copy(bndlCopy, bndl)
+			_, err := FinalizeInsecure(bndlCopy)
+			Expect(err).ToNot(HaveOccurred())
+			for i := range bndlCopy {
+				Expect(bndlCopy[i].ObsoleteTag).To(Equal(bndlCopy[i].Tag))
+				Expect(bndlCopy[i].Bundle).To(Equal("YIRZIQZEVGPUFQAKTISUPRGNSBBUYBBWFIBFVWO9GEQMPHKKZBM9TF9CFEKIWVYTCYMKDWWQ999ZKW9IB"))
 			}
 		})
 	})

@@ -2,10 +2,11 @@ package bundle_examples_test
 
 import (
 	"fmt"
-	"github.com/iotaledger/iota.go/bundle"
-	"github.com/iotaledger/iota.go/trinary"
 	"strings"
 	"time"
+
+	"github.com/iotaledger/iota.go/bundle"
+	"github.com/iotaledger/iota.go/trinary"
 )
 
 // i req: tag, The tag Trytes to pad.
@@ -69,8 +70,6 @@ func ExampleAddEntry() {
 // o: Bundle, The finalized Bundle.
 // o: error, Returned for invalid finalization.
 func ExampleFinalize() {
-	// Unix epoch in seconds
-	ts := uint64(time.Now().UnixNano() / int64(time.Second))
 	transfers := bundle.Transfers{
 		{
 			Address: strings.Repeat("9", 81),
@@ -79,6 +78,10 @@ func ExampleFinalize() {
 			Message: "",
 		},
 	}
+	// timestamp should be Unix epoch in seconds
+	// ts := uint64(time.Now().UnixNano() / int64(time.Second))
+	// but we set it to 1 for deterministic results
+	ts := uint64(1)
 	bundleEntries, err := bundle.TransfersToBundleEntries(ts, transfers...)
 	if err != nil {
 		// handle error
@@ -87,10 +90,8 @@ func ExampleFinalize() {
 
 	bndl := bundle.Bundle{}
 	for _, entry := range bundleEntries {
-		bundle.AddEntry(bndl, entry)
+		bndl = bundle.AddEntry(bndl, entry)
 	}
-
-	fmt.Println(len(bndl)) // 1
 
 	finalizedBundle, err := bundle.Finalize(bndl)
 	if err != nil {
@@ -99,7 +100,46 @@ func ExampleFinalize() {
 	}
 
 	// finalized bundle, ready for PoW
-	_ = finalizedBundle
+	fmt.Println(finalizedBundle[0].Bundle)
+	// output: MGHYQJYZJ9TAGOUIUGL9B9LSDSBLMCPTDAHNHRDVQCFBVLJAIQDAHHUWWWKLAZCKKIJUNKNIVTWEWZDSY
+}
+
+// i req: bundle, The Bundle to finalize.
+// o: Bundle, The finalized Bundle.
+// o: error, Returned for invalid finalization.
+func ExampleFinalizeInsecure() {
+	transfers := bundle.Transfers{
+		{
+			Address: strings.Repeat("9", 81),
+			Tag:     strings.Repeat("9", 27),
+			Value:   0,
+			Message: "",
+		},
+	}
+	// timestamp should be Unix epoch in seconds
+	// ts := uint64(time.Now().UnixNano() / int64(time.Second))
+	// but we set it to 1 for deterministic results
+	ts := uint64(1)
+	bundleEntries, err := bundle.TransfersToBundleEntries(ts, transfers...)
+	if err != nil {
+		// handle error
+		return
+	}
+
+	bndl := bundle.Bundle{}
+	for _, entry := range bundleEntries {
+		bndl = bundle.AddEntry(bndl, entry)
+	}
+
+	finalizedBundle, err := bundle.FinalizeInsecure(bndl)
+	if err != nil {
+		// handle error
+		return
+	}
+
+	// finalized bundle, ready for PoW
+	fmt.Println(finalizedBundle[0].Bundle)
+	// output: UBF9RSGNCZXZBJ9RUQPSBEXDWSLLVVN9KSIHTMYVFGROQQZO9MRESTW9BWFIZPJHYY9DVMCAJKKTWKSI9
 }
 
 // i req: bndl, The Bundle to add the Trytes to.
