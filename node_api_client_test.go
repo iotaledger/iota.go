@@ -97,6 +97,39 @@ func TestNodeAPI_MessagesByHash(t *testing.T) {
 	assert.EqualValues(t, originMsgJson, msgJson)
 }
 
+func TestNodeAPI_MessagesByTag(t *testing.T) {
+	defer gock.Off()
+
+	tag := "बेकार पाठ"
+
+	msg := &iota.Message{
+		Version: 1,
+		Parent1: rand32ByteHash(),
+		Parent2: rand32ByteHash(),
+		Payload: nil,
+		Nonce:   16345984576234,
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(iota.NodeAPIRouteMessagesByTag).
+		MatchParam("tags", tag).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: []*iota.Message{msg}})
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	msgs, err := nodeAPI.MessagesByTag(tag)
+	assert.NoError(t, err)
+	assert.Len(t, msgs, 1)
+
+	msgJson, err := json.Marshal(msgs[0])
+	assert.NoError(t, err)
+
+	originMsgJson, err := msg.MarshalJSON()
+	assert.NoError(t, err)
+
+	assert.EqualValues(t, originMsgJson, msgJson)
+}
+
 func TestNodeAPI_SubmitMessage(t *testing.T) {
 	defer gock.Off()
 
@@ -131,7 +164,7 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 	assert.EqualValues(t, completeMsg, resp)
 }
 
-func TestNodeAPI_AreMessagesReferencedByMilestone(t *testing.T) {
+func TestNodeAPI_AreMessagesReferencedByMilestones(t *testing.T) {
 	defer gock.Off()
 
 	id1 := rand32ByteHash()
@@ -154,18 +187,18 @@ func TestNodeAPI_AreMessagesReferencedByMilestone(t *testing.T) {
 	originRes := []iota.NodeObjectReferencedResponse{originResp1, originResp2}
 
 	gock.New(nodeAPIUrl).
-		Get(iota.NodeAPIRouteMessagesReferencedByMilestone).
+		Get(iota.NodeAPIRouteMessagesReferencedByMilestones).
 		MatchParam("hashes", strings.Join([]string{queryHash1, queryHash2}, ",")).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-	resp, err := nodeAPI.AreMessagesReferencedByMilestone(iota.MessageHashes{id1, id2})
+	resp, err := nodeAPI.AreMessagesReferencedByMilestones(iota.MessageHashes{id1, id2})
 	assert.NoError(t, err)
 	assert.EqualValues(t, []iota.NodeObjectReferencedResponse{originResp1, originResp2}, resp)
 }
 
-func TestNodeAPI_AreTransactionsReferencedByMilestone(t *testing.T) {
+func TestNodeAPI_AreTransactionsConfirmed(t *testing.T) {
 	defer gock.Off()
 
 	id1 := rand32ByteHash()
@@ -174,28 +207,28 @@ func TestNodeAPI_AreTransactionsReferencedByMilestone(t *testing.T) {
 	id2 := rand32ByteHash()
 	queryHash2 := hex.EncodeToString(id2[:])
 
-	originResp1 := iota.NodeObjectReferencedResponse{
-		IsReferencedByMilestone: false,
-		MilestoneIndex:          666,
-		MilestoneTimestamp:      666666666,
+	originResp1 := iota.NodeTransactionConfirmedResponse{
+		IsConfirmed:        false,
+		MilestoneIndex:     666,
+		MilestoneTimestamp: 666666666,
 	}
 
-	originResp2 := iota.NodeObjectReferencedResponse{
-		IsReferencedByMilestone: false,
-		MilestoneIndex:          1337,
-		MilestoneTimestamp:      133713371337,
+	originResp2 := iota.NodeTransactionConfirmedResponse{
+		IsConfirmed:        true,
+		MilestoneIndex:     1337,
+		MilestoneTimestamp: 133713371337,
 	}
 
-	originRes := []iota.NodeObjectReferencedResponse{originResp1, originResp2}
+	originRes := []iota.NodeTransactionConfirmedResponse{originResp1, originResp2}
 
 	gock.New(nodeAPIUrl).
-		Get(iota.NodeAPIRouteTransactionReferencedByMilestone).
+		Get(iota.NodeAPIRouteTransactionsConfirmed).
 		MatchParam("hashes", strings.Join([]string{queryHash1, queryHash2}, ",")).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-	resp, err := nodeAPI.AreTransactionsReferencedByMilestone(iota.MessageHashes{id1, id2})
+	resp, err := nodeAPI.AreTransactionsConfirmed(iota.SignedTransactionPayloadHashes{id1, id2})
 	assert.NoError(t, err)
 	assert.EqualValues(t, originRes, resp)
 }
@@ -205,12 +238,19 @@ func TestNodeAPI_OutputsByHash(t *testing.T) {
 	sigDepJson, err := originOutput.MarshalJSON()
 	assert.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
-	originRes := []iota.NodeOutputResponse{{RawOutput: &rawMsgSigDepJson, Spent: true}}
 
-	utxoInput := &iota.UTXOInput{
-		TransactionID:          rand32ByteHash(),
-		TransactionOutputIndex: 3,
+	txID := rand32ByteHash()
+	hexTxID := hex.EncodeToString(txID[:])
+	originRes := []iota.NodeOutputResponse{
+		{
+			HexTransactionID: hexTxID,
+			OutputIndex:      3,
+			Spent:            true,
+			RawOutput:        &rawMsgSigDepJson,
+		},
 	}
+
+	utxoInput := &iota.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
 	utxoInputId := utxoInput.ID()
 
 	gock.New(nodeAPIUrl).
@@ -228,6 +268,10 @@ func TestNodeAPI_OutputsByHash(t *testing.T) {
 	respOutput, err := resp[0].Output()
 	assert.NoError(t, err)
 	assert.EqualValues(t, originOutput, respOutput)
+
+	sigTxPayloadHash, err := resp[0].TransactionID()
+	assert.NoError(t, err)
+	assert.EqualValues(t, txID, *sigTxPayloadHash)
 }
 
 func TestNodeAPI_OutputsByAddress(t *testing.T) {

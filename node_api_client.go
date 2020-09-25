@@ -2,6 +2,7 @@ package iota
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -44,14 +45,16 @@ const (
 	NodeAPIRouteInfo = "/info"
 	// The route for the tips HTTP API call.
 	NodeAPIRouteTips = "/tips"
-	// The route for checking whether messages are referenced by a milestone HTTP API call.
-	NodeAPIRouteMessagesReferencedByMilestone = "/messages/by-hash/is-referenced-by-milestone"
 	// The route for retrieving messages by their hash HTTP API call.
 	NodeAPIRouteMessagesByHash = "/messages/by-hash"
+	// The route for retrieving messages by their tag HTTP API call.
+	NodeAPIRouteMessagesByTag = "/messages/by-tag"
+	// The route for checking whether messages are referenced by a milestone HTTP API call.
+	NodeAPIRouteMessagesReferencedByMilestones = "/messages/is-referenced-by-milestone"
 	// The route for submitting a new message HTTP API call.
 	NodeAPIRouteMessageSubmit = "/messages"
-	// The route for checking whether transactions are referenced by a milestone HTTP API call.
-	NodeAPIRouteTransactionReferencedByMilestone = "/transaction-messages/is-confirmed"
+	// The route for checking whether transactions are confirmed HTTP API call.
+	NodeAPIRouteTransactionsConfirmed = "/transactions/is-confirmed"
 	// The route for retrieving outputs by their identifier HTTP API call.
 	NodeAPIRouteOutputsByID = "/outputs/by-id"
 	// The route for retrieving outputs by their addresses HTTP API call.
@@ -231,6 +234,22 @@ func (api *NodeAPI) MessagesByHash(hashes MessageHashes) ([]*Message, error) {
 	return res, nil
 }
 
+// MessagesByTag gets messages by their tags from the node.
+func (api *NodeAPI) MessagesByTag(tags ...string) ([]*Message, error) {
+	var query strings.Builder
+	query.WriteString(NodeAPIRouteMessagesByTag)
+	query.WriteString("?tags=")
+	query.WriteString(strings.Join(tags, ","))
+
+	var res []*Message
+	_, err := api.do(http.MethodGet, query.String(), nil, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // SubmitMessage submits the given Message to the node.
 // The node will take care of filling missing information.
 // This function returns the finalized message created by the node.
@@ -263,11 +282,11 @@ type NodeObjectReferencedResponse struct {
 	MilestoneTimestamp uint64 `json:"milestoneTimestamp"`
 }
 
-// AreMessagesReferencedByMilestone tells whether the given messages are referenced by milestones.
+// AreMessagesReferencedByMilestones tells whether the given messages are referenced by milestones.
 // The response slice is ordered by the provided input hashes.
-func (api *NodeAPI) AreMessagesReferencedByMilestone(hashes MessageHashes) ([]NodeObjectReferencedResponse, error) {
+func (api *NodeAPI) AreMessagesReferencedByMilestones(hashes MessageHashes) ([]NodeObjectReferencedResponse, error) {
 	var query strings.Builder
-	query.WriteString(NodeAPIRouteMessagesReferencedByMilestone)
+	query.WriteString(NodeAPIRouteMessagesReferencedByMilestones)
 	query.WriteString("?hashes=")
 	query.WriteString(strings.Join(HashesToHex(hashes), ","))
 
@@ -279,15 +298,26 @@ func (api *NodeAPI) AreMessagesReferencedByMilestone(hashes MessageHashes) ([]No
 	return res, nil
 }
 
-// AreTransactionsReferencedByMilestone tells whether the given transactions are referenced by milestones.
+// NodeTransactionConfirmedResponse defines the response containing the confirmation state of a transaction HTTP API call.
+// Note that users should use NodeAPI.OutputsByAddress to makeup the state of outputs to spend.
+type NodeTransactionConfirmedResponse struct {
+	// Tells whether the transaction is confirmed.
+	IsConfirmed bool `json:"isConfirmed"`
+	// The index of the milestone which confirmed the transaction.
+	MilestoneIndex uint64 `json:"milestoneIndex"`
+	// The timestamp of the milestone which confirmed the transaction.
+	MilestoneTimestamp uint64 `json:"milestoneTimestamp"`
+}
+
+// AreTransactionsConfirmed tells whether the given transactions are confirmed.
 // The response slice is ordered by the provided input hashes.
-func (api *NodeAPI) AreTransactionsReferencedByMilestone(hashes SignedTransactionPayloadHashes) ([]NodeObjectReferencedResponse, error) {
+func (api *NodeAPI) AreTransactionsConfirmed(hashes SignedTransactionPayloadHashes) ([]NodeTransactionConfirmedResponse, error) {
 	var query strings.Builder
-	query.WriteString(NodeAPIRouteTransactionReferencedByMilestone)
+	query.WriteString(NodeAPIRouteTransactionsConfirmed)
 	query.WriteString("?hashes=")
 	query.WriteString(strings.Join(HashesToHex(hashes), ","))
 
-	var res []NodeObjectReferencedResponse
+	var res []NodeTransactionConfirmedResponse
 	_, err := api.do(http.MethodGet, query.String(), nil, &res)
 	if err != nil {
 		return nil, err
@@ -295,12 +325,27 @@ func (api *NodeAPI) AreTransactionsReferencedByMilestone(hashes SignedTransactio
 	return res, nil
 }
 
-// NodeOutputResponse defines the construct of an RawOutput in a a node HTTP API call.
+// NodeOutputResponse defines the construct of an output in a a node HTTP API call.
 type NodeOutputResponse struct {
+	// The hex encoded transaction id from which this output originated.
+	HexTransactionID string `json:"transaction_id"`
+	// The index of the output.
+	OutputIndex uint16 `json:"output_index"`
+	// Whether this output is spent.
+	Spent bool `json:"spent"`
 	// The output in its serialized form.
 	RawOutput *json.RawMessage `json:"output"`
-	// Whether this RawOutput is spent.
-	Spent bool `json:"spent"`
+}
+
+// TransactionID returns the HexTransactionID as a SignedTransactionPayloadHash.
+func (nor *NodeOutputResponse) TransactionID() (*SignedTransactionPayloadHash, error) {
+	sigTxPayloadHash, err := hex.DecodeString(nor.HexTransactionID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode raw transaction id from JSON to signed transaction payload hash: %w", err)
+	}
+	var hash SignedTransactionPayloadHash
+	copy(hash[:], sigTxPayloadHash)
+	return &hash, nil
 }
 
 // Output deserializes the RawOutput to its output form.
@@ -331,7 +376,7 @@ func (api *NodeAPI) OutputsByID(utxosID UTXOInputIDs) ([]NodeOutputResponse, err
 	return res, nil
 }
 
-// OutputsByAddress gets outputs by their ID from the node.
+// OutputsByAddress gets outputs by addresses (to which the output to) from the node.
 func (api *NodeAPI) OutputsByAddress(addrs ...string) (map[string][]NodeOutputResponse, error) {
 	var query strings.Builder
 	query.WriteString(NodeAPIRouteOutputsByAddress)
