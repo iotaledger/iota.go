@@ -246,12 +246,14 @@ func (u *UnsignedTransaction) MarshalJSON() ([]byte, error) {
 		jsonTx.Outputs[i] = &rawMsgOutputJson
 	}
 
-	jsonPayload, err := u.Payload.MarshalJSON()
-	if err != nil {
-		return nil, err
+	if u.Payload != nil {
+		jsonPayload, err := u.Payload.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawMsgJsonPayload := json.RawMessage(jsonPayload)
+		jsonTx.Payload = &rawMsgJsonPayload
 	}
-	rawMsgJsonPayload := json.RawMessage(jsonPayload)
-	jsonTx.Payload = &rawMsgJsonPayload
 	return json.Marshal(jsonTx)
 }
 
