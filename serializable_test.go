@@ -7,7 +7,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/luca-moser/iota"
+	"github.com/iotaledger/iota.go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,6 +41,14 @@ type A struct {
 	Key [aKeyLength]byte
 }
 
+func (a *A) MarshalJSON() ([]byte, error) {
+	panic("implement me")
+}
+
+func (a *A) UnmarshalJSON(i []byte) error {
+	panic("implement me")
+}
+
 func (a *A) Deserialize(data []byte, deSeriMode iota.DeSerializationMode) (int, error) {
 	data = data[iota.SmallTypeDenotationByteSize:]
 	copy(a.Key[:], data[:aKeyLength])
@@ -70,6 +78,14 @@ func randA() *A {
 
 type B struct {
 	Name [bNameLength]byte
+}
+
+func (b *B) MarshalJSON() ([]byte, error) {
+	panic("implement me")
+}
+
+func (b *B) UnmarshalJSON(i []byte) error {
+	panic("implement me")
 }
 
 func (b *B) Deserialize(data []byte, deSeriMode iota.DeSerializationMode) (int, error) {

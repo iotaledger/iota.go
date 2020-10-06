@@ -328,9 +328,9 @@ func (api *NodeAPI) AreTransactionsConfirmed(hashes SignedTransactionPayloadHash
 // NodeOutputResponse defines the construct of an output in a a node HTTP API call.
 type NodeOutputResponse struct {
 	// The hex encoded transaction id from which this output originated.
-	HexTransactionID string `json:"transaction_id"`
+	HexTransactionID string `json:"transactionId"`
 	// The index of the output.
-	OutputIndex uint16 `json:"output_index"`
+	OutputIndex uint16 `json:"outputIndex"`
 	// Whether this output is spent.
 	Spent bool `json:"spent"`
 	// The output in its serialized form.

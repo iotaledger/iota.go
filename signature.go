@@ -72,9 +72,9 @@ func (w *WOTSSignature) UnmarshalJSON(i []byte) error {
 // Ed25519Signature defines an Ed25519 signature.
 type Ed25519Signature struct {
 	// The public key used to verify the given signature.
-	PublicKey [ed25519.PublicKeySize]byte `json:"public_key"`
+	PublicKey [ed25519.PublicKeySize]byte
 	// The signature.
-	Signature [ed25519.SignatureSize]byte `json:"signature"`
+	Signature [ed25519.SignatureSize]byte
 }
 
 // Valid verifies whether given the message and Ed25519 address, the signature is valid.

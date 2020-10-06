@@ -65,9 +65,9 @@ func (utxoInputIDs UTXOInputIDs) ToHex() []string {
 // UTXOInput references an unspent transaction RawOutput by the signed transaction payload's hash and the corresponding index of the RawOutput.
 type UTXOInput struct {
 	// The transaction ID of the referenced transaction.
-	TransactionID [TransactionIDLength]byte `json:"transaction_id"`
+	TransactionID [TransactionIDLength]byte
 	// The RawOutput index of the RawOutput on the referenced transaction.
-	TransactionOutputIndex uint16 `json:"transaction_output_index"`
+	TransactionOutputIndex uint16
 }
 
 // ID returns the UTXOInputID.

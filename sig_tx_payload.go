@@ -80,9 +80,9 @@ type SignedTransactionPayloadHashes []SignedTransactionPayloadHash
 // SignedTransactionPayload is a transaction with its inputs, outputs and unlock blocks.
 type SignedTransactionPayload struct {
 	// The transaction respectively transfer part of a signed transaction payload.
-	Transaction Serializable `json:"transaction"`
+	Transaction Serializable
 	// The unlock blocks defining the unlocking data for the inputs within the transaction.
-	UnlockBlocks Serializables `json:"unlock_blocks"`
+	UnlockBlocks Serializables
 }
 
 // Hash computes the hash of the SignedTransactionPayload.

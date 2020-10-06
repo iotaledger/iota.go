@@ -40,13 +40,13 @@ type MilestonePayloadHash = [MilestonePayloadHashLength]byte
 // MilestonePayload holds the inclusion merkle proof and milestone signature.
 type MilestonePayload struct {
 	// The index of this milestone.
-	Index uint64 `json:"index"`
+	Index uint64
 	// The time at which this milestone was issued.
-	Timestamp uint64 `json:"timestamp"`
+	Timestamp uint64
 	// The inclusion merkle proof of included/newly confirmed transaction hashes.
-	InclusionMerkleProof [MilestoneInclusionMerkleProofLength]byte `json:"inclusion_merkle_proof"`
+	InclusionMerkleProof [MilestoneInclusionMerkleProofLength]byte
 	// The signature of the milestone.
-	Signature [MilestoneSignatureLength]byte `json:"signature"`
+	Signature [MilestoneSignatureLength]byte
 }
 
 // Hash computes the hash of the MilestonePayload.
