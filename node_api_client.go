@@ -219,7 +219,7 @@ func (api *NodeAPI) Tips() (*NodeTipsResponse, error) {
 }
 
 // MessagesByHash gets messages by their hashes from the node.
-func (api *NodeAPI) MessagesByHash(hashes MessageHashes) ([]*Message, error) {
+func (api *NodeAPI) MessagesByHash(hashes MessageIDs) ([]*Message, error) {
 	var query strings.Builder
 	query.WriteString(NodeAPIRouteMessagesByHash)
 	query.WriteString("?hashes=")
@@ -284,7 +284,7 @@ type NodeObjectReferencedResponse struct {
 
 // AreMessagesReferencedByMilestones tells whether the given messages are referenced by milestones.
 // The response slice is ordered by the provided input hashes.
-func (api *NodeAPI) AreMessagesReferencedByMilestones(hashes MessageHashes) ([]NodeObjectReferencedResponse, error) {
+func (api *NodeAPI) AreMessagesReferencedByMilestones(hashes MessageIDs) ([]NodeObjectReferencedResponse, error) {
 	var query strings.Builder
 	query.WriteString(NodeAPIRouteMessagesReferencedByMilestones)
 	query.WriteString("?hashes=")
@@ -311,7 +311,7 @@ type NodeTransactionConfirmedResponse struct {
 
 // AreTransactionsConfirmed tells whether the given transactions are confirmed.
 // The response slice is ordered by the provided input hashes.
-func (api *NodeAPI) AreTransactionsConfirmed(hashes SignedTransactionPayloadHashes) ([]NodeTransactionConfirmedResponse, error) {
+func (api *NodeAPI) AreTransactionsConfirmed(hashes TransactionIDs) ([]NodeTransactionConfirmedResponse, error) {
 	var query strings.Builder
 	query.WriteString(NodeAPIRouteTransactionsConfirmed)
 	query.WriteString("?hashes=")
@@ -337,19 +337,19 @@ type NodeOutputResponse struct {
 	RawOutput *json.RawMessage `json:"output"`
 }
 
-// TransactionID returns the HexTransactionID as a SignedTransactionPayloadHash.
-func (nor *NodeOutputResponse) TransactionID() (*SignedTransactionPayloadHash, error) {
-	sigTxPayloadHash, err := hex.DecodeString(nor.HexTransactionID)
+// TransactionID returns the HexTransactionID as a TransactionID.
+func (nor *NodeOutputResponse) TransactionID() (*TransactionID, error) {
+	txIDBytes, err := hex.DecodeString(nor.HexTransactionID)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode raw transaction id from JSON to signed transaction payload hash: %w", err)
+		return nil, fmt.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
 	}
-	var hash SignedTransactionPayloadHash
-	copy(hash[:], sigTxPayloadHash)
-	return &hash, nil
+	var txID TransactionID
+	copy(txID[:], txIDBytes)
+	return &txID, nil
 }
 
 // Output deserializes the RawOutput to its output form.
-func (nor *NodeOutputResponse) Output() (*SigLockedSingleDeposit, error) {
+func (nor *NodeOutputResponse) Output() (*SigLockedSingleOutput, error) {
 	jsonSeri, err := DeserializeObjectFromJSON(nor.RawOutput, jsonoutputselector)
 	if err != nil {
 		return nil, err
@@ -358,7 +358,7 @@ func (nor *NodeOutputResponse) Output() (*SigLockedSingleDeposit, error) {
 	if err != nil {
 		return nil, err
 	}
-	return seri.(*SigLockedSingleDeposit), nil
+	return seri.(*SigLockedSingleOutput), nil
 }
 
 // OutputsByID gets outputs by their ID from the node.

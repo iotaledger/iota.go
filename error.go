@@ -18,10 +18,10 @@ var (
 	ErrUnknownAddrType = errors.New("unknown address type")
 	// Returned for unknown input types.
 	ErrUnknownInputType = errors.New("unknown input type")
-	// Returned for unknown RawOutput types.
-	ErrUnknownOutputType = errors.New("unknown RawOutput type")
-	// Returned for unknown transaction types.
-	ErrUnknownTransactionType = errors.New("unknown transaction type")
+	// Returned for unknown output types.
+	ErrUnknownOutputType = errors.New("unknown output type")
+	// Returned for unknown transaction essence types.
+	ErrUnknownTransactionEssenceType = errors.New("unknown transaction essence type")
 	// Returned for unknown unlock blocks.
 	ErrUnknownUnlockBlockType = errors.New("unknown unlock block type")
 	// Returned for unknown signature types.

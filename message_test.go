@@ -23,15 +23,15 @@ func TestMessage_Deserialize(t *testing.T) {
 			return test{"ok - no payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iota.SignedTransactionPayloadID)
-			return test{"ok - signed transaction payload", msgPayloadData, msgPayload, nil}
+			msgPayload, msgPayloadData := randMessage(iota.TransactionPayloadTypeID)
+			return test{"ok - transaction payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iota.MilestonePayloadID)
+			msgPayload, msgPayloadData := randMessage(iota.MilestonePayloadTypeID)
 			return test{"ok - milestone payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iota.IndexationPayloadID)
+			msgPayload, msgPayloadData := randMessage(iota.IndexationPayloadTypeID)
 			return test{"ok - indexation payload", msgPayloadData, msgPayload, nil}
 		}(),
 	}
@@ -59,8 +59,8 @@ func TestMessage_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iota.SignedTransactionPayloadID)
-			return test{"ok - with signed transaction payload", msgPayload, msgPayloadData}
+			msgPayload, msgPayloadData := randMessage(iota.TransactionPayloadTypeID)
+			return test{"ok - with transaction payload", msgPayload, msgPayloadData}
 		}(),
 		func() test {
 			msgPayload, msgPayloadData := randMessage(1337)
@@ -84,7 +84,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 		  "parent2": "78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2",
 		  "payload": {
 			"type": 0,
-			"transaction": {
+			"essence": {
 			  "type": 0,
 			  "inputs": [
 				{

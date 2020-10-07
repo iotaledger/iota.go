@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSignedTransactionPayloadSize(t *testing.T) {
-	sigTxPayload := oneInputOutputSignedTransactionPayload()
+func TestSerializedTransactionSize(t *testing.T) {
+	sigTxPayload := oneInputOutputTransaction()
 	m := &iota.Message{
 		Version: 1,
 		Parent1: rand32ByteHash(),
@@ -20,5 +20,5 @@ func TestSignedTransactionPayloadSize(t *testing.T) {
 
 	data, err := m.Serialize(iota.DeSeriModeNoValidation)
 	require.NoError(t, err)
-	fmt.Printf("length of message cotaining a signed transaction payload: %d\n", len(data))
+	fmt.Printf("length of message cotaining a transaction: %d\n", len(data))
 }

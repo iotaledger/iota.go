@@ -67,7 +67,7 @@ var (
 	NullHashTrytes = strings.Repeat("9", HashTrytesSize)
 )
 
-// Transaction elements size and offsets.
+// Essence elements size and offsets.
 const (
 	SignatureMessageFragmentTrinaryOffset = 0
 	SignatureMessageFragmentTrinarySize   = 6561

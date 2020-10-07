@@ -12,7 +12,7 @@ import (
 type InputType = byte
 
 const (
-	// A type of input which references an unspent transaction RawOutput.
+	// A type of input which references an unspent transaction output.
 	InputUTXO InputType = iota
 
 	// The minimum index of a referenced UTXO.
@@ -42,7 +42,7 @@ func InputSelector(inputType uint32) (Serializable, error) {
 }
 
 // UTXOInputID defines the identifier for an UTXO input which consists
-// out of the referenced transaction hash and the given RawOutput index.
+// out of the referenced transaction hash and the given output index.
 type UTXOInputID [TransactionIDLength + UInt16ByteSize]byte
 
 // ToHex converts the UTXOInputID to its hex representation.
@@ -62,11 +62,11 @@ func (utxoInputIDs UTXOInputIDs) ToHex() []string {
 	return hashes
 }
 
-// UTXOInput references an unspent transaction RawOutput by the signed transaction payload's hash and the corresponding index of the RawOutput.
+// UTXOInput references an unspent transaction output by the Transaction's ID and the corresponding index of the output.
 type UTXOInput struct {
 	// The transaction ID of the referenced transaction.
 	TransactionID [TransactionIDLength]byte
-	// The RawOutput index of the RawOutput on the referenced transaction.
+	// The output index of the output on the referenced transaction.
 	TransactionOutputIndex uint16
 }
 
@@ -94,7 +94,7 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 	copy(u.TransactionID[:], data[:TransactionIDLength])
 	data = data[TransactionIDLength:]
 
-	// RawOutput index
+	// output index
 	u.TransactionOutputIndex = binary.LittleEndian.Uint16(data)
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {

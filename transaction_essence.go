@@ -10,23 +10,35 @@ import (
 )
 
 // Defines the type of transaction.
-type TransactionType = uint32
-
-// TransactionReference is a reference to a transaction.
-type TransactionReference = [TransactionIDLength]byte
+type TransactionEssenceType = uint32
 
 const (
-	// Denotes an unsigned transaction.
-	TransactionUnsigned TransactionType = iota
+	// Denotes a standard transaction essence.
+	// TODO: find a better name for this
+	TransactionEssenceNormal TransactionEssenceType = iota
 
-	// Defines the length of a transaction hash.
-	TransactionIDLength = 32
+	// Defines the minimum size of a TransactionEssence.
+	TransactionEssenceMinByteSize = TypeDenotationByteSize + StructArrayLengthByteSize + StructArrayLengthByteSize + PayloadLengthByteSize
 
-	// Defines the minimum size of an unsigned transaction.
-	UnsignedTransactionMinByteSize = TypeDenotationByteSize + StructArrayLengthByteSize + StructArrayLengthByteSize + PayloadLengthByteSize
+	// Defines the maximum amount of inputs within a TransactionEssence.
+	MaxInputsCount = 126
+	// Defines the minimum amount of inputs within a TransactionEssence.
+	MinInputsCount = 1
+	// Defines the maximum amount of outputs within a TransactionEssence.
+	MaxOutputsCount = 126
+	// Defines the minimum amount of inputs within a TransactionEssence.
+	MinOutputsCount = 1
 )
 
 var (
+	// Returned if the count of inputs is too small.
+	ErrMinInputsNotReached = fmt.Errorf("min %d input(s) are required within a transaction", MinInputsCount)
+	// Returned if the count of inputs is too big.
+	ErrMaxInputsExceeded = fmt.Errorf("max %d input(s) are allowed within a transaction", MaxInputsCount)
+	// Returned if the count of outputs is too small.
+	ErrMinOutputsNotReached = fmt.Errorf("min %d output(s) are required within a transaction", MinOutputsCount)
+	// Returned if the count of outputs is too big.
+	ErrMaxOutputsExceeded = fmt.Errorf("max %d output(s) are allowed within a transaction", MaxOutputsCount)
 	// Returned if the inputs are not in lexical order when serialized.
 	ErrInputsOrderViolatesLexicalOrder = errors.New("inputs must be in their lexical order (byte wise) when serialized")
 	// Returned if the outputs are not in lexical order when serialized.
@@ -35,26 +47,46 @@ var (
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
 	// Returned if multiple outputs deposit to the same address.
 	ErrOutputAddrNotUnique = errors.New("outputs must each deposit to a unique address")
-	// Returned if the sum of the RawOutput deposits exceeds the total supply of tokens.
-	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated RawOutput balance exceeds total supply")
-	// Returned if an RawOutput deposits more than the total supply.
-	ErrOutputDepositsMoreThanTotalSupply = errors.New("an RawOutput can not deposit more than the total supply")
+	// Returned if the sum of the output deposits exceeds the total supply of tokens.
+	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
+	// Returned if an output deposits more than the total supply.
+	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
+
+	// restrictions around input within a transaction.
+	inputsArrayBound = ArrayRules{
+		Min:                         MinInputsCount,
+		Max:                         MaxInputsCount,
+		MinErr:                      ErrMinInputsNotReached,
+		MaxErr:                      ErrMaxInputsExceeded,
+		ElementBytesLexicalOrder:    true,
+		ElementBytesLexicalOrderErr: ErrInputsOrderViolatesLexicalOrder,
+	}
+
+	// restrictions around outputs within a transaction.
+	outputsArrayBound = ArrayRules{
+		Min:                         MinInputsCount,
+		Max:                         MaxInputsCount,
+		MinErr:                      ErrMinOutputsNotReached,
+		MaxErr:                      ErrMaxOutputsExceeded,
+		ElementBytesLexicalOrder:    true,
+		ElementBytesLexicalOrderErr: ErrOutputsOrderViolatesLexicalOrder,
+	}
 )
 
-// TransactionSelector implements SerializableSelectorFunc for transaction types.
-func TransactionSelector(txType uint32) (Serializable, error) {
+// TransactionEssenceSelector implements SerializableSelectorFunc for transaction essence types.
+func TransactionEssenceSelector(txType uint32) (Serializable, error) {
 	var seri Serializable
 	switch txType {
-	case TransactionUnsigned:
-		seri = &UnsignedTransaction{}
+	case TransactionEssenceNormal:
+		seri = &TransactionEssence{}
 	default:
-		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownTransactionType, txType)
+		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownTransactionEssenceType, txType)
 	}
 	return seri, nil
 }
 
-// UnsignedTransaction is the unsigned part of a transaction.
-type UnsignedTransaction struct {
+// TransactionEssence is the essence part of a Transaction.
+type TransactionEssence struct {
 	// The inputs of this transaction.
 	Inputs Serializables `json:"inputs"`
 	// The outputs of this transaction.
@@ -65,18 +97,18 @@ type UnsignedTransaction struct {
 
 // SortInputsOuputs sorts the inputs and outputs according to their serialized lexical representation.
 // Usually an implicit call to SortInputsOutputs() should be done by instructing serialization to use DeSeriModePerformLexicalOrdering.
-func (u *UnsignedTransaction) SortInputsOutputs() {
+func (u *TransactionEssence) SortInputsOutputs() {
 	sort.Sort(SortedSerializables(u.Inputs))
 	sort.Sort(SortedSerializables(u.Outputs))
 }
 
-func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
+func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkMinByteLength(UnsignedTransactionMinByteSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid unsigned trnasaction bytes: %w", err)
+		if err := checkMinByteLength(TransactionEssenceMinByteSize, len(data)); err != nil {
+			return 0, fmt.Errorf("invalid transaction essence bytes: %w", err)
 		}
-		if err := checkType(data, TransactionUnsigned); err != nil {
-			return 0, fmt.Errorf("unable to deserialize unsigned transaction: %w", err)
+		if err := checkType(data, TransactionEssenceNormal); err != nil {
+			return 0, fmt.Errorf("unable to deserialize transaction essence: %w", err)
 		}
 	}
 
@@ -86,13 +118,13 @@ func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 
 	inputs, inputBytesRead, err := DeserializeArrayOfObjects(data, deSeriMode, TypeDenotationByte, InputSelector, &inputsArrayBound)
 	if err != nil {
-		return 0, fmt.Errorf("%w: unable to deserialize inputs of unsigned transaction", err)
+		return 0, fmt.Errorf("%w: unable to deserialize inputs of transaction essence", err)
 	}
 	bytesReadTotal += inputBytesRead
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := ValidateInputs(inputs, InputsUTXORefsUniqueValidator()); err != nil {
-			return 0, fmt.Errorf("%w: unable to deserialize inputs of unsigned transaction since they are invalid", err)
+			return 0, fmt.Errorf("%w: unable to deserialize inputs of transaction essence since they are invalid", err)
 		}
 	}
 	u.Inputs = inputs
@@ -101,13 +133,13 @@ func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 	data = data[inputBytesRead:]
 	outputs, outputBytesRead, err := DeserializeArrayOfObjects(data, deSeriMode, TypeDenotationByte, OutputSelector, &outputsArrayBound)
 	if err != nil {
-		return 0, fmt.Errorf("%w: unable to deserialize outputs of unsigned transaction", err)
+		return 0, fmt.Errorf("%w: unable to deserialize outputs of transaction essence", err)
 	}
 	bytesReadTotal += outputBytesRead
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := ValidateOutputs(outputs, OutputsAddrUniqueValidator()); err != nil {
-			return 0, fmt.Errorf("%w: unable to deserialize outputs of unsigned transaction since they are invalid", err)
+			return 0, fmt.Errorf("%w: unable to deserialize outputs of transaction essence since they are invalid", err)
 		}
 	}
 	u.Outputs = outputs
@@ -117,15 +149,15 @@ func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 
 	payload, payloadBytesRead, err := ParsePayload(data, deSeriMode)
 	if err != nil {
-		return 0, fmt.Errorf("%w: can't parse payload within unsigned transaction", err)
+		return 0, fmt.Errorf("%w: can't parse payload within transaction essence", err)
 	}
 	bytesReadTotal += payloadBytesRead
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if payload != nil {
 			// supports only indexation payloads
-			if _, isIndexationPayload := payload.(*IndexationPayload); !isIndexationPayload {
-				return 0, fmt.Errorf("%w: unsigned transactions only allow embedded indexation payloads but got %T instead", ErrInvalidBytes, payload)
+			if _, isIndexationPayload := payload.(*Indexation); !isIndexationPayload {
+				return 0, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", ErrInvalidBytes, payload)
 			}
 		}
 	}
@@ -135,7 +167,7 @@ func (u *UnsignedTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 	return bytesReadTotal, nil
 }
 
-func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
+func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := u.SyntacticallyValidate(); err != nil {
 			return nil, err
@@ -147,8 +179,8 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 	}
 
 	var buf bytes.Buffer
-	if err := binary.Write(&buf, binary.LittleEndian, TransactionUnsigned); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction type ID", err)
+	if err := binary.Write(&buf, binary.LittleEndian, TransactionEssenceNormal); err != nil {
+		return nil, fmt.Errorf("%w: unable to serialize transaction essence type ID", err)
 	}
 
 	var inputsLexicalOrderValidator LexicalOrderFunc
@@ -158,19 +190,19 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 
 	// write inputs
 	if err := binary.Write(&buf, binary.LittleEndian, uint16(len(u.Inputs))); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's input count", err)
+		return nil, fmt.Errorf("%w: unable to serialize transaction essence's input count", err)
 	}
 	for i := range u.Inputs {
 		inputSer, err := u.Inputs[i].Serialize(deSeriMode)
 		if err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize input of unsigned transaction at index %d", err, i)
+			return nil, fmt.Errorf("%w: unable to serialize input of transaction essence at index %d", err, i)
 		}
 		if _, err := buf.Write(inputSer); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize input of unsigned transaction at index %d to buffer", err, i)
+			return nil, fmt.Errorf("%w: unable to serialize input of transaction essence at index %d to buffer", err, i)
 		}
 		if inputsLexicalOrderValidator != nil {
 			if err := inputsLexicalOrderValidator(i, inputSer); err != nil {
-				return nil, fmt.Errorf("%w: unable to serialize inputs of unsigned transaction since inputs are not in lexical order", err)
+				return nil, fmt.Errorf("%w: unable to serialize inputs of transaction essence since inputs are not in lexical order", err)
 			}
 		}
 	}
@@ -187,14 +219,14 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 	for i := range u.Outputs {
 		outputSer, err := u.Outputs[i].Serialize(deSeriMode)
 		if err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize RawOutput of unsigned transaction at index %d", err, i)
+			return nil, fmt.Errorf("%w: unable to serialize output of transaction essence at index %d", err, i)
 		}
 		if _, err := buf.Write(outputSer); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize RawOutput of unsigned transaction at index %d to buffer", err, i)
+			return nil, fmt.Errorf("%w: unable to serialize output of transaction essence at index %d to buffer", err, i)
 		}
 		if outputsLexicalOrderValidator != nil {
 			if err := outputsLexicalOrderValidator(i, outputSer); err != nil {
-				return nil, fmt.Errorf("%w: unable to serialize outputs of unsigned transaction since outputs are not in lexical order", err)
+				return nil, fmt.Errorf("%w: unable to serialize outputs of transaction essence since outputs are not in lexical order", err)
 			}
 		}
 	}
@@ -202,7 +234,7 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 	// no payload
 	if u.Payload == nil {
 		if err := binary.Write(&buf, binary.LittleEndian, uint32(0)); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's inner zero payload length", err)
+			return nil, fmt.Errorf("%w: unable to serialize transaction essence's inner zero payload length", err)
 		}
 		return buf.Bytes(), nil
 	}
@@ -210,23 +242,23 @@ func (u *UnsignedTransaction) Serialize(deSeriMode DeSerializationMode) (data []
 	// write payload
 	payloadSer, err := u.Payload.Serialize(deSeriMode)
 	if err := binary.Write(&buf, binary.LittleEndian, uint32(len(payloadSer))); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's payload length", err)
+		return nil, fmt.Errorf("%w: unable to serialize transaction essence's payload length", err)
 	}
 
 	if _, err := buf.Write(payloadSer); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize unsigned transaction's payload to buffer", err)
+		return nil, fmt.Errorf("%w: unable to serialize transaction essence's payload to buffer", err)
 	}
 
 	return buf.Bytes(), nil
 }
 
-func (u *UnsignedTransaction) MarshalJSON() ([]byte, error) {
-	jsonTx := &jsonunsignedtransaction{
+func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
+	jsonTx := &jsontransactionessence{
 		Inputs:  make([]*json.RawMessage, len(u.Inputs)),
 		Outputs: make([]*json.RawMessage, len(u.Outputs)),
 		Payload: nil,
 	}
-	jsonTx.Type = int(TransactionUnsigned)
+	jsonTx.Type = int(TransactionEssenceNormal)
 
 	for i, input := range u.Inputs {
 		inputJson, err := input.MarshalJSON()
@@ -257,8 +289,8 @@ func (u *UnsignedTransaction) MarshalJSON() ([]byte, error) {
 	return json.Marshal(jsonTx)
 }
 
-func (u *UnsignedTransaction) UnmarshalJSON(bytes []byte) error {
-	jsonTx := &jsonunsignedtransaction{}
+func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
+	jsonTx := &jsontransactionessence{}
 	if err := json.Unmarshal(bytes, jsonTx); err != nil {
 		return err
 	}
@@ -266,16 +298,16 @@ func (u *UnsignedTransaction) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	*u = *seri.(*UnsignedTransaction)
+	*u = *seri.(*TransactionEssence)
 	return nil
 }
 
-// SyntacticallyValidate checks whether the unsigned transaction is syntactically valid by checking whether:
+// SyntacticallyValidate checks whether the transaction essence is syntactically valid by checking whether:
 //	1. every input references a unique UTXO and has valid UTXO index bounds
-//	2. every RawOutput deposits to a unique address and deposits more than zero
-//	3. the accumulated deposit RawOutput is not over the total supply
+//	2. every output deposits to a unique address and deposits more than zero
+//	3. the accumulated deposit output is not over the total supply
 // The function does not syntactically validate the input or outputs themselves.
-func (u *UnsignedTransaction) SyntacticallyValidate() error {
+func (u *TransactionEssence) SyntacticallyValidate() error {
 
 	if len(u.Inputs) == 0 {
 		return ErrMinInputsNotReached
@@ -302,29 +334,29 @@ func (u *UnsignedTransaction) SyntacticallyValidate() error {
 	return nil
 }
 
-// jsontransactionselector selects the json transaction object for the given type.
-func jsontransactionselector(ty int) (JSONSerializable, error) {
+// jsontransactionessenceselector selects the json transaction essence object for the given type.
+func jsontransactionessenceselector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch uint32(ty) {
-	case TransactionUnsigned:
-		obj = &jsonunsignedtransaction{}
+	case TransactionEssenceNormal:
+		obj = &jsontransactionessence{}
 	default:
-		return nil, fmt.Errorf("unable to decode transaction type from JSON: %w", ErrUnknownTransactionType)
+		return nil, fmt.Errorf("unable to decode transaction essence type from JSON: %w", ErrUnknownTransactionEssenceType)
 	}
 
 	return obj, nil
 }
 
-// jsonunsignedtransaction defines the json representation of an UnsignedTransaction.
-type jsonunsignedtransaction struct {
+// jsontransactionessence defines the json representation of an TransactionEssence.
+type jsontransactionessence struct {
 	Type    int                `json:"type"`
 	Inputs  []*json.RawMessage `json:"inputs"`
 	Outputs []*json.RawMessage `json:"outputs"`
 	Payload *json.RawMessage   `json:"payload"`
 }
 
-func (j *jsonunsignedtransaction) ToSerializable() (Serializable, error) {
-	unsigTx := &UnsignedTransaction{
+func (j *jsontransactionessence) ToSerializable() (Serializable, error) {
+	unsigTx := &TransactionEssence{
 		Inputs:  make(Serializables, len(j.Inputs)),
 		Outputs: make(Serializables, len(j.Outputs)),
 		Payload: nil,
@@ -345,7 +377,7 @@ func (j *jsonunsignedtransaction) ToSerializable() (Serializable, error) {
 	for i, output := range j.Outputs {
 		jsonOutput, err := DeserializeObjectFromJSON(output, jsonoutputselector)
 		if err != nil {
-			return nil, fmt.Errorf("unable to decode RawOutput type from JSON, pos %d: %w", i, err)
+			return nil, fmt.Errorf("unable to decode output type from JSON, pos %d: %w", i, err)
 		}
 		output, err := jsonOutput.ToSerializable()
 		if err != nil {
@@ -363,13 +395,13 @@ func (j *jsonunsignedtransaction) ToSerializable() (Serializable, error) {
 		return nil, err
 	}
 
-	if _, isJSONIndexationPayload := jsonPayload.(*jsonindexationpayload); !isJSONIndexationPayload {
-		return nil, fmt.Errorf("%w: unsigned transactions only allow embedded indexation payloads but got type %T instead", ErrInvalidJSON, jsonPayload)
+	if _, isJSONIndexationPayload := jsonPayload.(*jsonindexation); !isJSONIndexationPayload {
+		return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got type %T instead", ErrInvalidJSON, jsonPayload)
 	}
 
 	unsigTx.Payload, err = jsonPayload.ToSerializable()
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode inner unsigned transaction payload: %w", err)
+		return nil, fmt.Errorf("unable to decode inner transaction essence payload: %w", err)
 	}
 
 	return unsigTx, nil

@@ -84,7 +84,7 @@ func TestNodeAPI_MessagesByHash(t *testing.T) {
 		JSON(&iota.HTTPOkResponseEnvelope{Data: []*iota.Message{msg}})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-	msgs, err := nodeAPI.MessagesByHash(iota.MessageHashes{identifier})
+	msgs, err := nodeAPI.MessagesByHash(iota.MessageIDs{identifier})
 	assert.NoError(t, err)
 	assert.Len(t, msgs, 1)
 
@@ -193,7 +193,7 @@ func TestNodeAPI_AreMessagesReferencedByMilestones(t *testing.T) {
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-	resp, err := nodeAPI.AreMessagesReferencedByMilestones(iota.MessageHashes{id1, id2})
+	resp, err := nodeAPI.AreMessagesReferencedByMilestones(iota.MessageIDs{id1, id2})
 	assert.NoError(t, err)
 	assert.EqualValues(t, []iota.NodeObjectReferencedResponse{originResp1, originResp2}, resp)
 }
@@ -228,13 +228,13 @@ func TestNodeAPI_AreTransactionsConfirmed(t *testing.T) {
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-	resp, err := nodeAPI.AreTransactionsConfirmed(iota.SignedTransactionPayloadHashes{id1, id2})
+	resp, err := nodeAPI.AreTransactionsConfirmed(iota.TransactionIDs{id1, id2})
 	assert.NoError(t, err)
 	assert.EqualValues(t, originRes, resp)
 }
 
 func TestNodeAPI_OutputsByHash(t *testing.T) {
-	originOutput, _ := randSigLockedSingleDeposit(iota.AddressEd25519)
+	originOutput, _ := randSigLockedSingleOutput(iota.AddressEd25519)
 	sigDepJson, err := originOutput.MarshalJSON()
 	assert.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
@@ -275,7 +275,7 @@ func TestNodeAPI_OutputsByHash(t *testing.T) {
 }
 
 func TestNodeAPI_OutputsByAddress(t *testing.T) {
-	originOutput, _ := randSigLockedSingleDeposit(iota.AddressEd25519)
+	originOutput, _ := randSigLockedSingleOutput(iota.AddressEd25519)
 	sigDepJson, err := originOutput.MarshalJSON()
 	assert.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)

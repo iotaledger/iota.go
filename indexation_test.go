@@ -8,12 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTransactionSelector(t *testing.T) {
-	_, err := iota.TransactionSelector(100)
-	assert.True(t, errors.Is(err, iota.ErrUnknownTransactionType))
-}
-
-func TestUnsignedTransaction_Deserialize(t *testing.T) {
+func TestIndexation_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
@@ -22,36 +17,36 @@ func TestUnsignedTransaction_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			unTx, unTxData := randUnsignedTransaction()
-			return test{"ok", unTxData, unTx, nil}
+			indexationPayload, indexationPayloadData := randIndexation()
+			return test{"ok", indexationPayloadData, indexationPayload, nil}
 		}(),
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tx := &iota.UnsignedTransaction{}
-			bytesRead, err := tx.Deserialize(tt.source, iota.DeSeriModePerformValidation)
+			indexationPayload := &iota.Indexation{}
+			bytesRead, err := indexationPayload.Deserialize(tt.source, iota.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, len(tt.source), bytesRead)
-			assert.EqualValues(t, tt.target, tx)
+			assert.EqualValues(t, tt.target, indexationPayload)
 		})
 	}
 }
 
-func TestUnsignedTransaction_Serialize(t *testing.T) {
+func TestIndexation_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.UnsignedTransaction
+		source *iota.Indexation
 		target []byte
 	}
 	tests := []test{
 		func() test {
-			unTx, unTxData := randUnsignedTransaction()
-			return test{"ok", unTx, unTxData}
+			indexationPayload, indexationPayloadData := randIndexation()
+			return test{"ok", indexationPayload, indexationPayloadData}
 		}(),
 	}
 	for _, tt := range tests {

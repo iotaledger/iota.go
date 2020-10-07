@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMilestonePayload_Deserialize(t *testing.T) {
+func TestMilestone_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
@@ -22,14 +22,14 @@ func TestMilestonePayload_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			msPayload, msPayloadData := randMilestonePayload()
+			msPayload, msPayloadData := randMilestone()
 			return test{"ok", msPayloadData, msPayload, nil}
 		}(),
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			msPayload := &iota.MilestonePayload{}
+			msPayload := &iota.Milestone{}
 			bytesRead, err := msPayload.Deserialize(tt.source, iota.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
@@ -42,15 +42,15 @@ func TestMilestonePayload_Deserialize(t *testing.T) {
 	}
 }
 
-func TestMilestonePayload_Serialize(t *testing.T) {
+func TestMilestone_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.MilestonePayload
+		source *iota.Milestone
 		target []byte
 	}
 	tests := []test{
 		func() test {
-			msPayload, msPayloadData := randMilestonePayload()
+			msPayload, msPayloadData := randMilestone()
 			return test{"ok", msPayload, msPayloadData}
 		}(),
 	}
@@ -63,7 +63,7 @@ func TestMilestonePayload_Serialize(t *testing.T) {
 	}
 }
 
-func TestMilestonePayload_SignatureInput(t *testing.T) {
+func TestMilestone_SignatureInput(t *testing.T) {
 	var msgVersion byte = 1
 	parent1 := rand32ByteHash()
 	parent2 := rand32ByteHash()
@@ -74,7 +74,7 @@ func TestMilestonePayload_SignatureInput(t *testing.T) {
 	rand.Read(msSignature[:])
 
 	msg := &iota.Message{Version: msgVersion, Parent1: parent1, Parent2: parent2}
-	msPayload := &iota.MilestonePayload{
+	msPayload := &iota.Milestone{
 		Index: msIndex, Timestamp: msTimestamp,
 		InclusionMerkleProof: msInclMerkleProof, Signature: msSignature,
 	}
@@ -87,13 +87,13 @@ func TestMilestonePayload_SignatureInput(t *testing.T) {
 	var offset int
 	assert.EqualValues(t, msgVersion, sigInput[0])
 	offset += iota.OneByte
-	assert.True(t, bytes.Equal(parent1[:], sigInput[offset:offset+iota.MessageHashLength]))
-	offset += iota.MessageHashLength
-	assert.True(t, bytes.Equal(parent2[:], sigInput[offset:offset+iota.MessageHashLength]))
-	offset += iota.MessageHashLength
-	assert.EqualValues(t, iota.MilestonePayloadSize, binary.LittleEndian.Uint32(sigInput[offset:offset+iota.PayloadLengthByteSize]))
+	assert.True(t, bytes.Equal(parent1[:], sigInput[offset:offset+iota.MessageIDLength]))
+	offset += iota.MessageIDLength
+	assert.True(t, bytes.Equal(parent2[:], sigInput[offset:offset+iota.MessageIDLength]))
+	offset += iota.MessageIDLength
+	assert.EqualValues(t, iota.MilestoneBinSerializedSize, binary.LittleEndian.Uint32(sigInput[offset:offset+iota.PayloadLengthByteSize]))
 	offset += iota.PayloadLengthByteSize
-	assert.EqualValues(t, iota.MilestonePayloadID, binary.LittleEndian.Uint32(sigInput[offset:offset+iota.TypeDenotationByteSize]))
+	assert.EqualValues(t, iota.MilestonePayloadTypeID, binary.LittleEndian.Uint32(sigInput[offset:offset+iota.TypeDenotationByteSize]))
 	offset += iota.TypeDenotationByteSize
 	assert.EqualValues(t, msIndex, binary.LittleEndian.Uint64(sigInput[offset:offset+iota.UInt64ByteSize]))
 	offset += iota.UInt64ByteSize
@@ -104,11 +104,11 @@ func TestMilestonePayload_SignatureInput(t *testing.T) {
 	assert.Len(t, sigInput, offset)
 }
 
-func TestMilestonePayloadSigning(t *testing.T) {
+func TestMilestoneSigning(t *testing.T) {
 	type test struct {
 		name    string
 		msg     *iota.Message
-		ms      *iota.MilestonePayload
+		ms      *iota.Milestone
 		signer  ed25519.PrivateKey
 		pubKey  ed25519.PublicKey
 		signErr error
@@ -120,7 +120,7 @@ func TestMilestonePayloadSigning(t *testing.T) {
 
 			signer := randEd25519PrivateKey()
 			msg := &iota.Message{Version: 1, Parent1: rand32ByteHash(), Parent2: rand32ByteHash()}
-			msPayload := &iota.MilestonePayload{Index: 1000, Timestamp: uint64(time.Now().Unix())}
+			msPayload := &iota.Milestone{Index: 1000, Timestamp: uint64(time.Now().Unix())}
 
 			return test{
 				name:    "ok",
@@ -136,7 +136,7 @@ func TestMilestonePayloadSigning(t *testing.T) {
 
 			signer := randEd25519PrivateKey()
 			msg := &iota.Message{Version: 1, Parent1: rand32ByteHash(), Parent2: rand32ByteHash()}
-			msPayload := &iota.MilestonePayload{Index: 1000, Timestamp: uint64(time.Now().Unix())}
+			msPayload := &iota.Milestone{Index: 1000, Timestamp: uint64(time.Now().Unix())}
 
 			return test{
 				name:    "err - invalid signature",

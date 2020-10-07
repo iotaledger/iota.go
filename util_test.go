@@ -90,11 +90,11 @@ func referenceUnlockBlock(index uint16) (*iota.ReferenceUnlockBlock, []byte) {
 	return &iota.ReferenceUnlockBlock{Reference: index}, b[:]
 }
 
-func randUnsignedTransaction() (*iota.UnsignedTransaction, []byte) {
+func randTransactionEssence() (*iota.TransactionEssence, []byte) {
 	var buf bytes.Buffer
 
-	tx := &iota.UnsignedTransaction{}
-	must(binary.Write(&buf, binary.LittleEndian, iota.TransactionUnsigned))
+	tx := &iota.TransactionEssence{}
+	must(binary.Write(&buf, binary.LittleEndian, iota.TransactionEssenceNormal))
 
 	inputsBytes := iota.LexicalOrderedByteSlices{}
 	inputCount := rand.Intn(10) + 1
@@ -119,7 +119,7 @@ func randUnsignedTransaction() (*iota.UnsignedTransaction, []byte) {
 	outputCount := rand.Intn(10) + 1
 	must(binary.Write(&buf, binary.LittleEndian, uint16(outputCount)))
 	for i := outputCount; i > 0; i-- {
-		_, depData := randSigLockedSingleDeposit(iota.AddressEd25519)
+		_, depData := randSigLockedSingleOutput(iota.AddressEd25519)
 		outputsBytes = append(outputsBytes, depData)
 	}
 
@@ -127,7 +127,7 @@ func randUnsignedTransaction() (*iota.UnsignedTransaction, []byte) {
 	for _, outputData := range outputsBytes {
 		_, err := buf.Write(outputData)
 		must(err)
-		output := &iota.SigLockedSingleDeposit{}
+		output := &iota.SigLockedSingleOutput{}
 		if _, err := output.Deserialize(outputData, iota.DeSeriModePerformValidation); err != nil {
 			panic(err)
 		}
@@ -140,10 +140,10 @@ func randUnsignedTransaction() (*iota.UnsignedTransaction, []byte) {
 	return tx, buf.Bytes()
 }
 
-func randMilestonePayload() (*iota.MilestonePayload, []byte) {
+func randMilestone() (*iota.Milestone, []byte) {
 	inclusionMerkleProof := randBytes(iota.MilestoneInclusionMerkleProofLength)
 	signature := randBytes(iota.MilestoneSignatureLength)
-	msPayload := &iota.MilestonePayload{
+	msPayload := &iota.Milestone{
 		Index:     uint64(rand.Intn(1000)),
 		Timestamp: uint64(time.Now().Unix()),
 		InclusionMerkleProof: func() [iota.MilestoneInclusionMerkleProofLength]byte {
@@ -159,7 +159,7 @@ func randMilestonePayload() (*iota.MilestonePayload, []byte) {
 	}
 
 	var b bytes.Buffer
-	must(binary.Write(&b, binary.LittleEndian, iota.MilestonePayloadID))
+	must(binary.Write(&b, binary.LittleEndian, iota.MilestonePayloadTypeID))
 	must(binary.Write(&b, binary.LittleEndian, msPayload.Index))
 	must(binary.Write(&b, binary.LittleEndian, msPayload.Timestamp))
 
@@ -174,7 +174,7 @@ func randMilestonePayload() (*iota.MilestonePayload, []byte) {
 	return msPayload, b.Bytes()
 }
 
-func randIndexationPayload(dataLength ...int) (*iota.IndexationPayload, []byte) {
+func randIndexation(dataLength ...int) (*iota.Indexation, []byte) {
 	const index = "寿司を作って"
 
 	var data []byte
@@ -185,10 +185,10 @@ func randIndexationPayload(dataLength ...int) (*iota.IndexationPayload, []byte) 
 		data = randBytes(rand.Intn(200) + 1)
 	}
 
-	indexationPayload := &iota.IndexationPayload{Index: index, Data: data}
+	indexationPayload := &iota.Indexation{Index: index, Data: data}
 
 	var b bytes.Buffer
-	must(binary.Write(&b, binary.LittleEndian, iota.IndexationPayloadID))
+	must(binary.Write(&b, binary.LittleEndian, iota.IndexationPayloadTypeID))
 
 	strLen := uint16(len(index))
 	must(binary.Write(&b, binary.LittleEndian, strLen))
@@ -210,18 +210,18 @@ func randMessage(withPayloadType uint32) (*iota.Message, []byte) {
 	var payloadData []byte
 
 	switch withPayloadType {
-	case iota.SignedTransactionPayloadID:
-		payload, payloadData = randSignedTransactionPayload()
-	case iota.IndexationPayloadID:
-		payload, payloadData = randIndexationPayload()
-	case iota.MilestonePayloadID:
-		payload, payloadData = randMilestonePayload()
+	case iota.TransactionPayloadTypeID:
+		payload, payloadData = randTransaction()
+	case iota.IndexationPayloadTypeID:
+		payload, payloadData = randIndexation()
+	case iota.MilestonePayloadTypeID:
+		payload, payloadData = randMilestone()
 	}
 
 	m := &iota.Message{}
 	m.Version = iota.MessageVersion
-	copy(m.Parent1[:], randBytes(iota.MessageHashLength))
-	copy(m.Parent2[:], randBytes(iota.MessageHashLength))
+	copy(m.Parent1[:], randBytes(iota.MessageIDLength))
+	copy(m.Parent2[:], randBytes(iota.MessageIDLength))
 	m.Payload = payload
 	m.Nonce = uint64(rand.Intn(1000))
 
@@ -257,15 +257,15 @@ func randMessage(withPayloadType uint32) (*iota.Message, []byte) {
 	return m, b.Bytes()
 }
 
-func randSignedTransactionPayload() (*iota.SignedTransactionPayload, []byte) {
+func randTransaction() (*iota.Transaction, []byte) {
 	var buf bytes.Buffer
-	must(binary.Write(&buf, binary.LittleEndian, iota.SignedTransactionPayloadID))
+	must(binary.Write(&buf, binary.LittleEndian, iota.TransactionPayloadTypeID))
 
-	sigTxPayload := &iota.SignedTransactionPayload{}
-	unTx, unTxData := randUnsignedTransaction()
+	sigTxPayload := &iota.Transaction{}
+	unTx, unTxData := randTransactionEssence()
 	_, err := buf.Write(unTxData)
 	must(err)
-	sigTxPayload.Transaction = unTx
+	sigTxPayload.Essence = unTx
 
 	unlockBlocksCount := len(unTx.Inputs)
 	must(binary.Write(&buf, binary.LittleEndian, uint16(unlockBlocksCount)))
@@ -294,11 +294,11 @@ func randUTXOInput() (*iota.UTXOInput, []byte) {
 	return utxoInput, b[:]
 }
 
-func randSigLockedSingleDeposit(addrType iota.AddressType) (*iota.SigLockedSingleDeposit, []byte) {
+func randSigLockedSingleOutput(addrType iota.AddressType) (*iota.SigLockedSingleOutput, []byte) {
 	var buf bytes.Buffer
-	must(buf.WriteByte(iota.OutputSigLockedSingleDeposit))
+	must(buf.WriteByte(iota.OutputSigLockedSingleOutput))
 
-	dep := &iota.SigLockedSingleDeposit{}
+	dep := &iota.SigLockedSingleOutput{}
 
 	var addrData []byte
 	switch addrType {
@@ -320,9 +320,9 @@ func randSigLockedSingleDeposit(addrType iota.AddressType) (*iota.SigLockedSingl
 	return dep, buf.Bytes()
 }
 
-func oneInputOutputSignedTransactionPayload() *iota.SignedTransactionPayload {
-	return &iota.SignedTransactionPayload{
-		Transaction: &iota.UnsignedTransaction{
+func oneInputOutputTransaction() *iota.Transaction {
+	return &iota.Transaction{
+		Essence: &iota.TransactionEssence{
 			Inputs: []iota.Serializable{
 				&iota.UTXOInput{
 					TransactionID: func() [iota.TransactionIDLength]byte {
@@ -334,7 +334,7 @@ func oneInputOutputSignedTransactionPayload() *iota.SignedTransactionPayload {
 				},
 			},
 			Outputs: []iota.Serializable{
-				&iota.SigLockedSingleDeposit{
+				&iota.SigLockedSingleOutput{
 					Address: func() iota.Serializable {
 						edAddr, _ := randEd25519Addr()
 						return edAddr

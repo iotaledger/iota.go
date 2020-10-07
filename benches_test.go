@@ -8,12 +8,12 @@ import (
 )
 
 func BenchmarkDeserializeWithValidationOneIOSigTxPayload(b *testing.B) {
-	data, err := oneInputOutputSignedTransactionPayload().Serialize(iota.DeSeriModeNoValidation)
+	data, err := oneInputOutputTransaction().Serialize(iota.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
 
-	target := &iota.SignedTransactionPayload{}
+	target := &iota.Transaction{}
 	_, err = target.Deserialize(data, iota.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
@@ -26,12 +26,12 @@ func BenchmarkDeserializeWithValidationOneIOSigTxPayload(b *testing.B) {
 }
 
 func BenchmarkDeserializeWithoutValidationOneIOSigTxPayload(b *testing.B) {
-	data, err := oneInputOutputSignedTransactionPayload().Serialize(iota.DeSeriModeNoValidation)
+	data, err := oneInputOutputTransaction().Serialize(iota.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
 
-	target := &iota.SignedTransactionPayload{}
+	target := &iota.Transaction{}
 	_, err = target.Deserialize(data, iota.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
@@ -44,7 +44,7 @@ func BenchmarkDeserializeWithoutValidationOneIOSigTxPayload(b *testing.B) {
 }
 
 func BenchmarkSerializeWithValidationOneIOSigTxPayload(b *testing.B) {
-	sigTxPayload := oneInputOutputSignedTransactionPayload()
+	sigTxPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sigTxPayload.Serialize(iota.DeSeriModePerformValidation)
@@ -52,7 +52,7 @@ func BenchmarkSerializeWithValidationOneIOSigTxPayload(b *testing.B) {
 }
 
 func BenchmarkSerializeWithoutValidationOneIOSigTxPayload(b *testing.B) {
-	sigTxPayload := oneInputOutputSignedTransactionPayload()
+	sigTxPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sigTxPayload.Serialize(iota.DeSeriModeNoValidation)
@@ -60,10 +60,10 @@ func BenchmarkSerializeWithoutValidationOneIOSigTxPayload(b *testing.B) {
 }
 
 func BenchmarkSignEd25519OneIOUnsignedTx(b *testing.B) {
-	sigTxPayload := oneInputOutputSignedTransactionPayload()
+	sigTxPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 
-	unsigTxData, err := sigTxPayload.Transaction.Serialize(iota.DeSeriModeNoValidation)
+	unsigTxData, err := sigTxPayload.Essence.Serialize(iota.DeSeriModeNoValidation)
 	must(err)
 
 	seed := randEd25519Seed()
@@ -76,10 +76,10 @@ func BenchmarkSignEd25519OneIOUnsignedTx(b *testing.B) {
 }
 
 func BenchmarkVerifyEd25519OneIOUnsignedTx(b *testing.B) {
-	sigTxPayload := oneInputOutputSignedTransactionPayload()
+	sigTxPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 
-	unsigTxData, err := sigTxPayload.Transaction.Serialize(iota.DeSeriModeNoValidation)
+	unsigTxData, err := sigTxPayload.Essence.Serialize(iota.DeSeriModeNoValidation)
 	must(err)
 
 	seed := randEd25519Seed()
@@ -95,7 +95,7 @@ func BenchmarkVerifyEd25519OneIOUnsignedTx(b *testing.B) {
 }
 
 func BenchmarkSerializeAndHashMessageWithSignedTransactionPayload(b *testing.B) {
-	sigTxPayload := oneInputOutputSignedTransactionPayload()
+	sigTxPayload := oneInputOutputTransaction()
 	m := &iota.Message{
 		Version: 1,
 		Parent1: rand32ByteHash(),
@@ -104,6 +104,6 @@ func BenchmarkSerializeAndHashMessageWithSignedTransactionPayload(b *testing.B) 
 		Nonce:   0,
 	}
 	for i := 0; i < b.N; i++ {
-		_, _ = m.Hash()
+		_, _ = m.ID()
 	}
 }

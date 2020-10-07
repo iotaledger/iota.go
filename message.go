@@ -13,38 +13,38 @@ import (
 const (
 	// Denotes the current message version.
 	MessageVersion = 1
-	// Defines the length of a message hash.
-	MessageHashLength = 32
+	// Defines the length of a message ID.
+	MessageIDLength = blake2b.Size256
 	// Defines the minimum size of a message: version + 2 msg hashes + uint16 payload length + nonce
-	MessageMinSize = MessageVersionByteSize + 2*MessageHashLength + UInt32ByteSize + UInt64ByteSize
+	MessageBinSerializedMinSize = MessageVersionByteSize + 2*MessageIDLength + UInt32ByteSize + UInt64ByteSize
 )
 
 // PayloadSelector implements SerializableSelectorFunc for payload types.
 func PayloadSelector(payloadType uint32) (Serializable, error) {
 	var seri Serializable
 	switch payloadType {
-	case SignedTransactionPayloadID:
-		seri = &SignedTransactionPayload{}
-	case MilestonePayloadID:
-		seri = &MilestonePayload{}
-	case IndexationPayloadID:
-		seri = &IndexationPayload{}
+	case TransactionPayloadTypeID:
+		seri = &Transaction{}
+	case MilestonePayloadTypeID:
+		seri = &Milestone{}
+	case IndexationPayloadTypeID:
+		seri = &Indexation{}
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownPayloadType, payloadType)
 	}
 	return seri, nil
 }
 
-// MessageHash is the hash of a Message.
-type MessageHash = [MessageHashLength]byte
+// MessageID is the ID of a Message.
+type MessageID = [MessageIDLength]byte
 
-// MessageHashes are hashes of messages.
-type MessageHashes = []MessageHash
+// MessageIDs are IDs of messages.
+type MessageIDs = []MessageID
 
 // MessagesHashFromHexString converts the given message hashes from their hex
-// to MessageHash representation.
-func MessagesHashFromHexString(msgHashesHex ...string) (MessageHashes, error) {
-	mh := make(MessageHashes, len(msgHashesHex))
+// to MessageID representation.
+func MessagesHashFromHexString(msgHashesHex ...string) (MessageIDs, error) {
+	mh := make(MessageIDs, len(msgHashesHex))
 	for i, msgHashHex := range msgHashesHex {
 		msgHashBytes, err := hex.DecodeString(msgHashHex)
 		if err != nil {
@@ -60,20 +60,20 @@ type Message struct {
 	// The version of the message.
 	Version byte
 	// The 1st parent the message references.
-	Parent1 [MessageHashLength]byte
+	Parent1 [MessageIDLength]byte
 	// The 2nd parent the message references.
-	Parent2 [MessageHashLength]byte
+	Parent2 [MessageIDLength]byte
 	// The inner payload of the message. Can be nil.
 	Payload Serializable
 	// The nonce which lets this message fulfill the PoW requirements.
 	Nonce uint64
 }
 
-// Hash computes the hash of the Message.
-func (m *Message) Hash() (*MessageHash, error) {
+// ID computes the ID of the Message.
+func (m *Message) ID() (*MessageID, error) {
 	data, err := m.Serialize(DeSeriModeNoValidation)
 	if err != nil {
-		return nil, fmt.Errorf("can't compute message hash: %w", err)
+		return nil, fmt.Errorf("can't compute message ID: %w", err)
 	}
 	h := blake2b.Sum256(data)
 	return &h, nil
@@ -81,7 +81,7 @@ func (m *Message) Hash() (*MessageHash, error) {
 
 func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkMinByteLength(MessageMinSize, len(data)); err != nil {
+		if err := checkMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid message bytes: %w", err)
 		}
 		if err := checkTypeByte(data, MessageVersion); err != nil {
@@ -93,10 +93,10 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 
 	// read parents
 	data = data[MessageVersionByteSize:]
-	copy(m.Parent1[:], data[:MessageHashLength])
-	data = data[MessageHashLength:]
-	copy(m.Parent2[:], data[:MessageHashLength])
-	data = data[MessageHashLength:]
+	copy(m.Parent1[:], data[:MessageIDLength])
+	data = data[MessageIDLength:]
+	copy(m.Parent2[:], data[:MessageIDLength])
+	data = data[MessageIDLength:]
 
 	payload, payloadBytesRead, err := ParsePayload(data, deSeriMode)
 	if err != nil {
@@ -107,7 +107,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 	// must have consumed entire data slice minus the nonce
 	data = data[payloadBytesRead:]
 	if leftOver := len(data) - UInt64ByteSize; leftOver != 0 {
-		return 0, fmt.Errorf("%w: unable to deserialize message: %d are still available", ErrDeserializationNotAllConsumed, leftOver)
+		return 0, fmt.Errorf("%w: unable to deserialize message: %d bytes are still available", ErrDeserializationNotAllConsumed, leftOver)
 	}
 
 	m.Nonce = binary.LittleEndian.Uint64(data)
@@ -116,11 +116,11 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 
 func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	if m.Payload == nil {
-		var b [MessageMinSize]byte
+		var b [MessageBinSerializedMinSize]byte
 		b[0] = MessageVersion
 		copy(b[MessageVersionByteSize:], m.Parent1[:])
-		copy(b[MessageVersionByteSize+MessageHashLength:], m.Parent2[:])
-		binary.LittleEndian.PutUint32(b[MessageVersionByteSize+MessageHashLength*2:], 0)
+		copy(b[MessageVersionByteSize+MessageIDLength:], m.Parent2[:])
+		binary.LittleEndian.PutUint32(b[MessageVersionByteSize+MessageIDLength*2:], 0)
 		binary.LittleEndian.PutUint64(b[len(b)-UInt64ByteSize:], m.Nonce)
 		return b[:], nil
 	}
@@ -166,7 +166,7 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 
 func (m *Message) MarshalJSON() ([]byte, error) {
 	jsonMsg := &jsonmessage{}
-	msgHash, err := m.Hash()
+	msgHash, err := m.ID()
 	if err != nil {
 		return nil, err
 	}
@@ -203,12 +203,12 @@ func (m *Message) UnmarshalJSON(bytes []byte) error {
 func jsonpayloadselector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch uint32(ty) {
-	case SignedTransactionPayloadID:
-		obj = &jsonsignedtransactionpayload{}
-	case MilestonePayloadID:
+	case TransactionPayloadTypeID:
+		obj = &jsontransaction{}
+	case MilestonePayloadTypeID:
 		obj = &jsonmilestonepayload{}
-	case IndexationPayloadID:
-		obj = &jsonindexationpayload{}
+	case IndexationPayloadTypeID:
+		obj = &jsonindexation{}
 	default:
 		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
 	}

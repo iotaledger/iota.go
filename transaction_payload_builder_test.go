@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSignedTransactionBuilder(t *testing.T) {
+func TestTransactionBuilder(t *testing.T) {
 	identityOne := randEd25519PrivateKey()
 	inputAddr := iota.AddressFromEd25519PubKey(identityOne.Public().(ed25519.PublicKey))
 	addrKeys := iota.AddressKeys{Address: &inputAddr, Keys: identityOne}
@@ -17,7 +17,7 @@ func TestSignedTransactionBuilder(t *testing.T) {
 	type test struct {
 		name       string
 		addrSigner iota.AddressSigner
-		builder    *iota.SignedTransactionPayloadBuilder
+		builder    *iota.TransactionBuilder
 		buildErr   error
 	}
 
@@ -26,12 +26,12 @@ func TestSignedTransactionBuilder(t *testing.T) {
 			outputAddr1, _ := randEd25519Addr()
 			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewSignedTransactionBuilder().
+			builder := iota.NewTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleDeposit{Address: outputAddr1, Amount: 50})
+				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
-				name:       "ok - 1 input/RawOutput",
+				name:       "ok - 1 input/output",
 				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
 			}
@@ -40,10 +40,10 @@ func TestSignedTransactionBuilder(t *testing.T) {
 			outputAddr1, _ := randEd25519Addr()
 			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewSignedTransactionBuilder().
+			builder := iota.NewTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleDeposit{Address: outputAddr1, Amount: 50}).
-				AddIndexationPayload(&iota.IndexationPayload{Index: "index", Data: nil})
+				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50}).
+				AddIndexationPayload(&iota.Indexation{Index: "index", Data: nil})
 
 			return test{
 				name:       "ok - with indexation payload",
@@ -52,7 +52,7 @@ func TestSignedTransactionBuilder(t *testing.T) {
 			}
 		}(),
 		func() test {
-			builder := iota.NewSignedTransactionBuilder()
+			builder := iota.NewTransactionBuilder()
 			return test{
 				name:       "err - no inputs",
 				addrSigner: nil,
@@ -62,7 +62,7 @@ func TestSignedTransactionBuilder(t *testing.T) {
 		}(),
 		func() test {
 			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
-			builder := iota.NewSignedTransactionBuilder().
+			builder := iota.NewTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1})
 			return test{
 				name:       "err - no outputs",
@@ -75,9 +75,9 @@ func TestSignedTransactionBuilder(t *testing.T) {
 			outputAddr1, _ := randEd25519Addr()
 			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewSignedTransactionBuilder().
+			builder := iota.NewTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleDeposit{Address: outputAddr1, Amount: 50})
+				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
 
 			// wrong address/keys
 			wrongIdentity := randEd25519PrivateKey()
@@ -95,9 +95,9 @@ func TestSignedTransactionBuilder(t *testing.T) {
 			outputAddr1, _ := randEd25519Addr()
 			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewSignedTransactionBuilder().
+			builder := iota.NewTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleDeposit{Address: outputAddr1, Amount: 50})
+				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
 				name:       "err - missing address keys (no keys given at all)",

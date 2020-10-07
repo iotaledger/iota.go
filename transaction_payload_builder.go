@@ -4,10 +4,10 @@ import (
 	"fmt"
 )
 
-// NewSignedTransactionBuilder creates a new SignedTransactionPayloadBuilder.
-func NewSignedTransactionBuilder() *SignedTransactionPayloadBuilder {
-	return &SignedTransactionPayloadBuilder{
-		unsigTx: &UnsignedTransaction{
+// NewTransactionBuilder creates a new TransactionBuilder.
+func NewTransactionBuilder() *TransactionBuilder {
+	return &TransactionBuilder{
+		essence: &TransactionEssence{
 			Inputs:  Serializables{},
 			Outputs: Serializables{},
 			Payload: nil,
@@ -16,9 +16,9 @@ func NewSignedTransactionBuilder() *SignedTransactionPayloadBuilder {
 	}
 }
 
-// SignedTransactionPayloadBuilder is used to easily build up a transaction.
-type SignedTransactionPayloadBuilder struct {
-	unsigTx     *UnsignedTransaction
+// TransactionBuilder is used to easily build up a transaction.
+type TransactionBuilder struct {
+	essence     *TransactionEssence
 	inputToAddr map[UTXOInputID]Serializable
 }
 
@@ -31,36 +31,36 @@ type ToBeSignedUTXOInput struct {
 }
 
 // AddInput adds the given input to the builder.
-func (b *SignedTransactionPayloadBuilder) AddInput(input *ToBeSignedUTXOInput) *SignedTransactionPayloadBuilder {
+func (b *TransactionBuilder) AddInput(input *ToBeSignedUTXOInput) *TransactionBuilder {
 	b.inputToAddr[input.Input.ID()] = input.Address
-	b.unsigTx.Inputs = append(b.unsigTx.Inputs, input.Input)
+	b.essence.Inputs = append(b.essence.Inputs, input.Input)
 	return b
 }
 
-// AddOutput adds the given RawOutput to the builder.
-func (b *SignedTransactionPayloadBuilder) AddOutput(output *SigLockedSingleDeposit) *SignedTransactionPayloadBuilder {
-	b.unsigTx.Outputs = append(b.unsigTx.Outputs, output)
+// AddOutput adds the given output to the builder.
+func (b *TransactionBuilder) AddOutput(output *SigLockedSingleOutput) *TransactionBuilder {
+	b.essence.Outputs = append(b.essence.Outputs, output)
 	return b
 }
 
-// AddIndexationPayload adds the given IndexationPayload as the inner payload.
-func (b *SignedTransactionPayloadBuilder) AddIndexationPayload(payload *IndexationPayload) *SignedTransactionPayloadBuilder {
-	b.unsigTx.Payload = payload
+// AddIndexationPayload adds the given Indexation as the inner payload.
+func (b *TransactionBuilder) AddIndexationPayload(payload *Indexation) *TransactionBuilder {
+	b.essence.Payload = payload
 	return b
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *SignedTransactionPayloadBuilder) Build(signer AddressSigner) (*SignedTransactionPayload, error) {
+func (b *TransactionBuilder) Build(signer AddressSigner) (*Transaction, error) {
 
 	// sort inputs and outputs by their serialized byte order
-	txDataToBeSigned, err := b.unsigTx.Serialize(DeSeriModePerformValidation | DeSeriModePerformLexicalOrdering)
+	txEssenceData, err := b.essence.Serialize(DeSeriModePerformValidation | DeSeriModePerformLexicalOrdering)
 	if err != nil {
 		return nil, err
 	}
 
 	sigBlockPos := map[string]int{}
 	unlockBlocks := Serializables{}
-	for i, input := range b.unsigTx.Inputs {
+	for i, input := range b.essence.Inputs {
 		addr := b.inputToAddr[input.(*UTXOInput).ID()]
 		addrStr := addr.(fmt.Stringer).String()
 
@@ -75,7 +75,7 @@ func (b *SignedTransactionPayloadBuilder) Build(signer AddressSigner) (*SignedTr
 
 		// create a new signature for the given address
 		var signature Serializable
-		signature, err = signer.Sign(addr, txDataToBeSigned)
+		signature, err = signer.Sign(addr, txEssenceData)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +84,7 @@ func (b *SignedTransactionPayloadBuilder) Build(signer AddressSigner) (*SignedTr
 		sigBlockPos[addrStr] = i
 	}
 
-	sigTxPayload := &SignedTransactionPayload{Transaction: b.unsigTx, UnlockBlocks: unlockBlocks}
+	sigTxPayload := &Transaction{Essence: b.essence, UnlockBlocks: unlockBlocks}
 
 	return sigTxPayload, nil
 }
