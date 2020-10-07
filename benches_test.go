@@ -44,10 +44,10 @@ func BenchmarkDeserializeWithoutValidationOneIOTxPayload(b *testing.B) {
 }
 
 func BenchmarkSerializeWithValidationOneIOTxPayload(b *testing.B) {
-	sigTxPayload := oneInputOutputTransaction()
+	txPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		sigTxPayload.Serialize(iota.DeSeriModePerformValidation)
+		txPayload.Serialize(iota.DeSeriModePerformValidation)
 	}
 }
 
@@ -60,10 +60,10 @@ func BenchmarkSerializeWithoutValidationOneIOTxPayload(b *testing.B) {
 }
 
 func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
-	sigTxPayload := oneInputOutputTransaction()
+	txPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 
-	unsigTxData, err := sigTxPayload.Essence.Serialize(iota.DeSeriModeNoValidation)
+	txEssenceData, err := txPayload.Essence.Serialize(iota.DeSeriModeNoValidation)
 	must(err)
 
 	seed := randEd25519Seed()
@@ -71,36 +71,36 @@ func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ed25519.Sign(prvKey, unsigTxData)
+		ed25519.Sign(prvKey, txEssenceData)
 	}
 }
 
 func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
-	sigTxPayload := oneInputOutputTransaction()
+	txPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 
-	unsigTxData, err := sigTxPayload.Essence.Serialize(iota.DeSeriModeNoValidation)
+	txEssenceData, err := txPayload.Essence.Serialize(iota.DeSeriModeNoValidation)
 	must(err)
 
 	seed := randEd25519Seed()
 	prvKey := ed25519.NewKeyFromSeed(seed[:])
 
-	sig := ed25519.Sign(prvKey, unsigTxData)
+	sig := ed25519.Sign(prvKey, txEssenceData)
 
 	pubKey := prvKey.Public().(ed25519.PublicKey)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ed25519.Verify(pubKey, unsigTxData, sig)
+		ed25519.Verify(pubKey, txEssenceData, sig)
 	}
 }
 
 func BenchmarkSerializeAndHashMessageWithTransactionPayload(b *testing.B) {
-	sigTxPayload := oneInputOutputTransaction()
+	txPayload := oneInputOutputTransaction()
 	m := &iota.Message{
 		Version: 1,
 		Parent1: rand32ByteHash(),
 		Parent2: rand32ByteHash(),
-		Payload: sigTxPayload,
+		Payload: txPayload,
 		Nonce:   0,
 	}
 	for i := 0; i < b.N; i++ {

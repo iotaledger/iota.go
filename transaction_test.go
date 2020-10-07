@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSignedTransactionPayload_Deserialize(t *testing.T) {
+func TestTransaction_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
@@ -18,8 +18,8 @@ func TestSignedTransactionPayload_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			sigTxPay, sigTxPayData := randTransaction()
-			return test{"ok", sigTxPayData, sigTxPay, nil}
+			txPayload, txPayloadData := randTransaction()
+			return test{"ok", txPayloadData, txPayload, nil}
 		}(),
 	}
 
@@ -38,7 +38,7 @@ func TestSignedTransactionPayload_Deserialize(t *testing.T) {
 	}
 }
 
-func TestSignedTransactionPayload_Serialize(t *testing.T) {
+func TestTransaction_Serialize(t *testing.T) {
 	type test struct {
 		name   string
 		source *iota.Transaction
@@ -46,8 +46,8 @@ func TestSignedTransactionPayload_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			sigTxPay, sigTxPayData := randTransaction()
-			return test{"ok", sigTxPay, sigTxPayData}
+			txPayload, txPayloadData := randTransaction()
+			return test{"ok", txPayload, txPayloadData}
 		}(),
 	}
 	for _, tt := range tests {
@@ -59,7 +59,7 @@ func TestSignedTransactionPayload_Serialize(t *testing.T) {
 	}
 }
 
-func TestSignedTransactionPayload_SemanticallyValidate(t *testing.T) {
+func TestTransaction_SemanticallyValidate(t *testing.T) {
 	identityOne := randEd25519PrivateKey()
 	inputAddr := iota.AddressFromEd25519PubKey(identityOne.Public().(ed25519.PublicKey))
 	addrKeys := iota.AddressKeys{Address: &inputAddr, Keys: identityOne}
