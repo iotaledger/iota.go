@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/iota.go"
 )
 
-func BenchmarkDeserializeWithValidationOneIOSigTxPayload(b *testing.B) {
+func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {
 	data, err := oneInputOutputTransaction().Serialize(iota.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
@@ -25,7 +25,7 @@ func BenchmarkDeserializeWithValidationOneIOSigTxPayload(b *testing.B) {
 	}
 }
 
-func BenchmarkDeserializeWithoutValidationOneIOSigTxPayload(b *testing.B) {
+func BenchmarkDeserializeWithoutValidationOneIOTxPayload(b *testing.B) {
 	data, err := oneInputOutputTransaction().Serialize(iota.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
@@ -43,7 +43,7 @@ func BenchmarkDeserializeWithoutValidationOneIOSigTxPayload(b *testing.B) {
 	}
 }
 
-func BenchmarkSerializeWithValidationOneIOSigTxPayload(b *testing.B) {
+func BenchmarkSerializeWithValidationOneIOTxPayload(b *testing.B) {
 	sigTxPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -51,7 +51,7 @@ func BenchmarkSerializeWithValidationOneIOSigTxPayload(b *testing.B) {
 	}
 }
 
-func BenchmarkSerializeWithoutValidationOneIOSigTxPayload(b *testing.B) {
+func BenchmarkSerializeWithoutValidationOneIOTxPayload(b *testing.B) {
 	sigTxPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -59,7 +59,7 @@ func BenchmarkSerializeWithoutValidationOneIOSigTxPayload(b *testing.B) {
 	}
 }
 
-func BenchmarkSignEd25519OneIOUnsignedTx(b *testing.B) {
+func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
 	sigTxPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 
@@ -75,7 +75,7 @@ func BenchmarkSignEd25519OneIOUnsignedTx(b *testing.B) {
 	}
 }
 
-func BenchmarkVerifyEd25519OneIOUnsignedTx(b *testing.B) {
+func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	sigTxPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 
@@ -94,7 +94,7 @@ func BenchmarkVerifyEd25519OneIOUnsignedTx(b *testing.B) {
 	}
 }
 
-func BenchmarkSerializeAndHashMessageWithSignedTransactionPayload(b *testing.B) {
+func BenchmarkSerializeAndHashMessageWithTransactionPayload(b *testing.B) {
 	sigTxPayload := oneInputOutputTransaction()
 	m := &iota.Message{
 		Version: 1,

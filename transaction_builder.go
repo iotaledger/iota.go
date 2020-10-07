@@ -16,7 +16,7 @@ func NewTransactionBuilder() *TransactionBuilder {
 	}
 }
 
-// TransactionBuilder is used to easily build up a transaction.
+// TransactionBuilder is used to easily build up a Transaction.
 type TransactionBuilder struct {
 	essence     *TransactionEssence
 	inputToAddr map[UTXOInputID]Serializable
