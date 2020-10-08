@@ -13,11 +13,11 @@ package curl
 #include <x86intrin.h>
 #endif
 
-#include <stdint.h>
-
 #define PERMUTE(a,b,c,d) (a*1+b*4+c*16+d*64)
 #define NUMBER_OF_ROUNDS 81
 #define STATESIZE 729
+
+typedef unsigned long long uint64_t;
 
 static const __m256i m_0000 = {0llu, 0llu, 0llu, 0llu};
 static const __m256i m_1000 = {~0llu, 0llu, 0llu, 0llu};

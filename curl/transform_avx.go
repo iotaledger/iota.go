@@ -13,10 +13,10 @@ package curl
 #include <x86intrin.h>
 #endif
 
-#include <stdint.h>
-
 #define NUMBER_OF_ROUNDS 81
 #define STATESIZE 729
+
+typedef unsigned long long uint64_t;
 
 static const __m256i m_0000 = {0llu, 0llu, 0llu, 0llu};
 static const __m256i m_243 = {~0llu, ~0llu, ~0llu, 0x0007ffffffffffffllu};
@@ -35,9 +35,10 @@ static inline void lshift256_into_arr(uint64_t dst[4], uint64_t src[4], const in
 		dst[3] |= src[2] << lo | src[1] >> (64 - lo);
 	} else if (hi == 2) {
 		dst[2] |= src[0] << lo;
-		dst[3] |= src[1] << lo | src[0] >> (64 - lo);
+		// why is 'lo == 0 ? ...' needed here?
+		dst[3] |= lo == 0 ? src[1] : src[1] << lo | src[0] >> (64 - lo);
 	} else if (hi == 3) {
-		dst[3] |= (((uint64_t)src[0]) << lo);
+		dst[3] |= src[0] << lo;
 	}
 }
 
@@ -50,8 +51,8 @@ static inline void rshift256_into_arr(uint64_t dst[4], uint64_t src[4], const in
 		dst[2] |= src[2] >> lo | src[3] << (64 - lo);
 		dst[3] |= src[3] >> lo;
 	} else if (hi == 1) {
-		dst[0] |= src[1] >> lo | src[2] << (64 - lo);
-		dst[1] |= src[2] >> lo | src[3] << (64 - lo);
+		dst[0] |= lo == 0 ? src[1] : src[1] >> lo | src[2] << (64 - lo); // why '? :'
+		dst[1] |= lo == 0 ? src[2] : src[2] >> lo | src[3] << (64 - lo); // same
 		dst[2] |= src[3] >> lo;
 	} else if (hi == 2) {
 		dst[0] |= src[2] >> lo | src[3] << (64 - lo);
