@@ -36,6 +36,8 @@ var (
 	TruthTable = [11]int8{1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0}
 	// Indices of the Curl hash function.
 	Indices [StateSize + 1]int
+	// resortOffsets to resort the state at the end of each round.
+	resortOffsets [StateSize / 3]int
 )
 
 func init() {
@@ -48,4 +50,21 @@ func init() {
 
 		Indices[i+1] = Indices[i] + p
 	}
+
+	resortOffset := 1
+	for i := 0; i < StateSize / 3; i++ {
+		resortOffsets[i] = resortOffset - 1
+		resortOffset = (resortOffset * 364) % 729
+	}
 }
+
+const (
+	useGoGP	= 0
+	useGo = 1
+	useAvx = 2
+	useAvx2 = 3
+	useTheVeryImpossible = 4
+
+	resortOffset81 = 243
+)
+
