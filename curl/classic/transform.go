@@ -1,9 +1,11 @@
-package curl
+package classic
 
-func transformGeneric(dst, src *[StateSize]int8, rounds uint) {
+import "github.com/iotaledger/iota.go/curl"
+
+func transformGeneric(dst, src *[curl.StateSize]int8, rounds uint) {
 	for r := rounds; r > 0; r-- {
 		// nine Curl-P rounds unrolled
-		for i := 0; i < StateSize-8; i += 9 {
+		for i := 0; i < curl.StateSize-8; i += 9 {
 			s0 := src[Indices[i+0]]
 			s1 := src[Indices[i+1]]
 			s2 := src[Indices[i+2]]

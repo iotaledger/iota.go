@@ -1,8 +1,9 @@
 // Package curl implements the Curl hashing function.
-package curl
+package classic
 
 import (
 	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/signing/utils"
 	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
@@ -11,31 +12,31 @@ import (
 // Curl is a sponge function with an internal state of size StateSize.
 // b = r + c, b = StateSize, r = HashSize, c = StateSize - HashSize
 type Curl struct {
-	state     [StateSize]int8 // main state of the hash
-	rounds    CurlRounds      // number of rounds used
-	direction SpongeDirection // whether the sponge is absorbing or squeezing
+	state     [curl.StateSize]int8 // main state of the hash
+	rounds    curl.CurlRounds      // number of rounds used
+	direction curl.SpongeDirection // whether the sponge is absorbing or squeezing
 }
 
 // NewCurl initializes a new Curl instance.
-func NewCurl(rounds ...CurlRounds) SpongeFunction {
-	r := NumberOfRounds
+func NewCurl(rounds ...curl.CurlRounds) SpongeFunction {
+	r := curl.NumberOfRounds
 	if len(rounds) > 0 {
 		r = rounds[0]
 	}
 	return &Curl{
 		rounds:    r,
-		direction: SpongeAbsorbing,
+		direction: curl.SpongeAbsorbing,
 	}
 }
 
 // NewCurlP27 returns a new Curl-P-27.
 func NewCurlP27() SpongeFunction {
-	return NewCurl(CurlP27)
+	return NewCurl(curl.CurlP27)
 }
 
 // NewCurlP81 returns a new Curl-P-81.
 func NewCurlP81() SpongeFunction {
-	return NewCurl(CurlP81)
+	return NewCurl(curl.CurlP81)
 }
 
 // NumRounds returns the number of rounds for this Curl instance.
@@ -64,10 +65,10 @@ func (c *Curl) Squeeze(tritsCount int) (Trits, error) {
 
 func (c *Curl) squeeze(hash Trits) {
 	// during squeezing, we only transform before each squeeze to avoid unnecessary transforms
-	if c.direction == SpongeSqueezing {
+	if c.direction == curl.SpongeSqueezing {
 		c.transform()
 	}
-	c.direction = SpongeSqueezing
+	c.direction = curl.SpongeSqueezing
 	copy(hash, c.state[:HashTrinarySize])
 }
 
@@ -103,7 +104,7 @@ func (c *Curl) Absorb(in Trits) error {
 		return errors.Wrap(ErrInvalidTritsLength, "trits slice length must be a multiple of 243")
 	}
 
-	if c.direction != SpongeAbsorbing {
+	if c.direction != curl.SpongeAbsorbing {
 		panic("absorb after squeeze")
 	}
 	for len(in) >= HashTrinarySize {
@@ -139,7 +140,7 @@ func (c *Curl) MustAbsorbTrytes(in Trytes) {
 
 // transform transforms the sponge.
 func (c *Curl) transform() {
-	var tmp [StateSize]int8
+	var tmp [curl.StateSize]int8
 	transform(&tmp, &c.state, uint(c.rounds))
 	// for odd number of rounds we need to copy the buffer into the state
 	if c.rounds%2 != 0 {
@@ -152,11 +153,11 @@ func (c *Curl) Reset() {
 	for i := range c.state {
 		c.state[i] = 0
 	}
-	c.direction = SpongeAbsorbing
+	c.direction = curl.SpongeAbsorbing
 }
 
 // HashTrits returns the hash of the given trits.
-func HashTrits(trits Trits, rounds ...CurlRounds) (Trits, error) {
+func HashTrits(trits Trits, rounds ...curl.CurlRounds) (Trits, error) {
 	c := NewCurl(rounds...)
 	if err := c.Absorb(trits); err != nil {
 		return nil, err
@@ -165,7 +166,7 @@ func HashTrits(trits Trits, rounds ...CurlRounds) (Trits, error) {
 }
 
 // HashTrytes returns the hash of the given trytes.
-func HashTrytes(t Trytes, rounds ...CurlRounds) (Trytes, error) {
+func HashTrytes(t Trytes, rounds ...curl.CurlRounds) (Trytes, error) {
 	c := NewCurl(rounds...)
 	if err := c.AbsorbTrytes(t); err != nil {
 		return "", err
@@ -175,7 +176,7 @@ func HashTrytes(t Trytes, rounds ...CurlRounds) (Trytes, error) {
 
 // MustHashTrytes returns the hash of the given trytes.
 // It panics if the given trytes are not valid.
-func MustHashTrytes(t Trytes, rounds ...CurlRounds) Trytes {
+func MustHashTrytes(t Trytes, rounds ...curl.CurlRounds) Trytes {
 	trytes, err := HashTrytes(t, rounds...)
 	if err != nil {
 		panic(err)

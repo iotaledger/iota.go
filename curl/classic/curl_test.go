@@ -1,10 +1,11 @@
-package curl_test
+package classic_test
 
 import (
 	"strings"
 
 	"github.com/iotaledger/iota.go/consts"
-	. "github.com/iotaledger/iota.go/curl"
+	"github.com/iotaledger/iota.go/curl"
+	. "github.com/iotaledger/iota.go/curl/classic"
 	"github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -14,7 +15,7 @@ import (
 var _ = Describe("Curl", func() {
 
 	DescribeTable("Hash",
-		func(in trinary.Trytes, expSqueeze trinary.Trytes, rounds ...CurlRounds) {
+		func(in trinary.Trytes, expSqueeze trinary.Trytes, rounds ...curl.CurlRounds) {
 
 			By("tryte", func() {
 				c := NewCurl(rounds...)
@@ -34,14 +35,14 @@ var _ = Describe("Curl", func() {
 				Expect(squeeze).To(Equal(trinary.MustTrytesToTrits(expSqueeze)))
 			})
 		},
-		Entry("Curl-P-81: empty trytes", "", consts.NullHashTrytes, CurlP81),
-		Entry("Curl-P-81: normal trytes", "A", "TJVKPMTAMIZVBVHIVQUPTKEMPROEKV9SB9COEDQYRHYPTYSKQIAN9PQKMZHCPO9TS9BHCORFKW9CQXZEE", CurlP81),
+		Entry("Curl-P-81: empty trytes", "", consts.NullHashTrytes, curl.CurlP81),
+		Entry("Curl-P-81: normal trytes", "A", "TJVKPMTAMIZVBVHIVQUPTKEMPROEKV9SB9COEDQYRHYPTYSKQIAN9PQKMZHCPO9TS9BHCORFKW9CQXZEE", curl.CurlP81),
 		Entry("Curl-P-81: normal trytes #2", "Z", "FA9WYZSJJWSD9AEEBOGGDHFTMIZVHFURFLJLFBTNENDDCMSXGAGLXFMYZTAMKVIYDQSZEDKXSWVAOPZMK"),
-		Entry("Curl-P-81: normal trytes #3", "NOPQRSTUVWXYZ9ABSDEFGHIJKLM", "GWFZSXPZPAFSVPEGEIVWOTD9MY9KVP9HYVCIWSJEITEGVOVGQGV99RONTWDXOPUBIQPIWXK9L9OHZYFUB", CurlP81),
-		Entry("Curl-P-81: long absorb", strings.Repeat("ABC", consts.TransactionTrytesSize/3), "UHZVKZCGDIPNGFNPBNFZGIM9GAKYLCPTHTRFRXMNDJLZNXSGRPREFWTBKZWVTKV9BISPXEECVIXFJERAC", CurlP81),
-		Entry("Curl-P-81: long squeeze", "ABC", "LRJMQXFSZSLCIMKZTWFTEIHKWJZMUOHPSOVXZOHOEVHC9D9DROUQGRPTBZWOIJFTMGMXEYKXEJROQLWNUPSFJJRVTLUUJYW9GBQVXNCAUEGEBV9IJQ9TWFDHCFPUUYPCYLACTAIK9UZAJLVXLI9NPGCJN9ICFTEIYY", CurlP81),
-		Entry("Curl-P-27: empty trytes", "", consts.NullHashTrytes, CurlP27),
-		Entry("Curl-P-27: normal trytes", "TWENTYSEVEN", "RQPYXJPRXEEPLYLAHWTTFRXXUZTV9SZPEVOQ9FZATCXJOZLZ9A9BFXTUBSHGXN9OOA9GWIPGAAWEDVNPN", CurlP27),
+		Entry("Curl-P-81: normal trytes #3", "NOPQRSTUVWXYZ9ABSDEFGHIJKLM", "GWFZSXPZPAFSVPEGEIVWOTD9MY9KVP9HYVCIWSJEITEGVOVGQGV99RONTWDXOPUBIQPIWXK9L9OHZYFUB", curl.CurlP81),
+		Entry("Curl-P-81: long absorb", strings.Repeat("ABC", consts.TransactionTrytesSize/3), "UHZVKZCGDIPNGFNPBNFZGIM9GAKYLCPTHTRFRXMNDJLZNXSGRPREFWTBKZWVTKV9BISPXEECVIXFJERAC", curl.CurlP81),
+		Entry("Curl-P-81: long squeeze", "ABC", "LRJMQXFSZSLCIMKZTWFTEIHKWJZMUOHPSOVXZOHOEVHC9D9DROUQGRPTBZWOIJFTMGMXEYKXEJROQLWNUPSFJJRVTLUUJYW9GBQVXNCAUEGEBV9IJQ9TWFDHCFPUUYPCYLACTAIK9UZAJLVXLI9NPGCJN9ICFTEIYY", curl.CurlP81),
+		Entry("Curl-P-27: empty trytes", "", consts.NullHashTrytes, curl.CurlP27),
+		Entry("Curl-P-27: normal trytes", "TWENTYSEVEN", "RQPYXJPRXEEPLYLAHWTTFRXXUZTV9SZPEVOQ9FZATCXJOZLZ9A9BFXTUBSHGXN9OOA9GWIPGAAWEDVNPN", curl.CurlP27),
 	)
 
 	It("Clone", func() {

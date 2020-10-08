@@ -1,7 +1,9 @@
 // +build !amd64 appengine gccgo
 
-package curl
+package classic
 
-func transform(dst, src *[StateSize]int8, rounds uint) {
+import "github.com/iotaledger/iota.go/curl"
+
+func transform(dst, src *[curl.StateSize]int8, rounds uint) {
 	transformGeneric(dst, src, rounds)
 }
