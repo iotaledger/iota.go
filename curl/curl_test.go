@@ -5,6 +5,7 @@ import (
 
 	"github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/curl"
+	"github.com/iotaledger/iota.go/curl/classic"
 	"github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -60,4 +61,43 @@ var _ = Describe("Curl", func() {
 
 		Expect(c2.MustSqueezeTrytes(consts.HashTrinarySize)).To(Equal(c1.MustSqueezeTrytes(consts.HashTrinarySize)))
 	})
+	It("shows, curl/classic and curl(sb) behave the same, with unusual rounds, cloning, varying absorb and squeeze lengths", func() {
+		t1 := trinary.MustPad("GOOGLEABBCDEVILPROOFOFFRONTENDDEVINTEGRATIONCURL", consts.HashTrytesSize)
+		t2 := t1
+		for _, rounds := range [...]CurlRounds{0, 1, 2, 3, 4, 7, 8, 9, 15, 16, 26, 27, 28, 32, 64, 80, 81, 82, 128, 242, 243, 244, 255, 256, 323, 324, 325, 511, 512} {
+			cc := classic.NewCurl(rounds)
+			c := NewCurl(rounds)
+			err := cc.AbsorbTrytes(t1)
+			Expect(err).ToNot(HaveOccurred())
+			err = c.AbsorbTrytes(t2)
+			Expect(err).ToNot(HaveOccurred())
+			err = cc.AbsorbTrytes(t1) // once more
+			Expect(err).ToNot(HaveOccurred())
+			err = c.AbsorbTrytes(t2)
+			Expect(err).ToNot(HaveOccurred())
+			cc = cc.Clone()
+			c = c.Clone()
+			t1, err = cc.SqueezeTrytes((int(rounds) % 5 + 1) * consts.HashTrinarySize)
+			Expect(err).ToNot(HaveOccurred())
+			t2, err = c.SqueezeTrytes((int(rounds) % 5 + 1) * consts.HashTrinarySize)
+			Expect(err).ToNot(HaveOccurred())
+			t1, err = cc.SqueezeTrytes((int(rounds) % 5 + 1) * consts.HashTrinarySize) // and again
+			Expect(err).ToNot(HaveOccurred())
+			t2, err = c.SqueezeTrytes((int(rounds) % 5 + 1) * consts.HashTrinarySize)
+			Expect(err).ToNot(HaveOccurred())
+		}
+		Expect(t1).To(Equal(t2))
+	})
+	It("on wrong trytes, curl/classic and curl(sb) behave the same", func() {
+		t := trinary.MustPad("666", consts.HashTrytesSize)
+		c := NewCurl()
+		cc := classic.NewCurl()
+		err := c.AbsorbTrytes(t)
+		Expect(err).To(HaveOccurred())
+		err = cc.AbsorbTrytes(t)
+		Expect(err).To(HaveOccurred())
+	})
+	// Testing on 'wrong trits' would fail, because even curl/classic/asm (runs undefined)
+	// and curl/glassic/go (panics) show different behaviour,
+	// while curl(cb), like bct, takes false trits as zero.
 })
