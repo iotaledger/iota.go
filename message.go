@@ -196,6 +196,9 @@ func (m *Message) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*m = *seri.(*Message)
+	if m.Version == 0 {
+		m.Version = MessageVersion
+	}
 	return nil
 }
 
@@ -222,9 +225,9 @@ type jsonmessage struct {
 	// The version of the message.
 	Version int `json:"version"`
 	// The hex encoded hash of the first referenced parent.
-	Parent1 string `json:"parent1"`
+	Parent1 string `json:"parent1MessageId"`
 	// The hex encoded hash of the second referenced parent.
-	Parent2 string `json:"parent2"`
+	Parent2 string `json:"parent2MessageId"`
 	// The payload within the message.
 	Payload *json.RawMessage `json:"payload"`
 	// The nonce the message used to fulfill the PoW requirement.

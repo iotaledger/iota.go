@@ -1,6 +1,7 @@
 package iota_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -80,8 +81,8 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 	data := `
 		{
 		  "version": 1,
-		  "parent1": "f532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d",
-		  "parent2": "78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2",
+		  "parent1MessageId": "f532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d",
+		  "parent2MessageId": "78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2",
 		  "payload": {
 			"type": 0,
 			"essence": {
@@ -125,6 +126,9 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 
 	msg := &iota.Message{}
 	assert.NoError(t, json.Unmarshal([]byte(data), msg))
+	var emptyID = [32]byte{}
+	assert.False(t, bytes.Equal(msg.Parent1[:], emptyID[:]))
+	assert.False(t, bytes.Equal(msg.Parent2[:], emptyID[:]))
 
 	msgJson, err := json.Marshal(msg)
 	assert.NoError(t, err)
@@ -133,4 +137,16 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 	assert.NoError(t, json.Unmarshal(msgJson, msg2))
 
 	assert.EqualValues(t, msg, msg2)
+
+	minimal := `
+		{
+		  "payload": null
+		}`
+	msgMinimal := &iota.Message{}
+	assert.NoError(t, json.Unmarshal([]byte(minimal), msgMinimal))
+	assert.True(t, bytes.Equal(msgMinimal.Parent1[:], emptyID[:]))
+	assert.True(t, bytes.Equal(msgMinimal.Parent2[:], emptyID[:]))
+	assert.Nil(t, msgMinimal.Payload)
+	assert.Equal(t, msgMinimal.Version, byte(iota.MessageVersion))
+	assert.Equal(t, msgMinimal.Nonce, uint64(0))
 }
