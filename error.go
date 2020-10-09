@@ -30,6 +30,8 @@ var (
 	ErrDeserializationNotEnoughData = errors.New("not enough data for deserialization")
 	// Returned if not all bytes were consumed during deserialization of a given type.
 	ErrDeserializationNotAllConsumed = errors.New("not all data has been consumed but should have been")
+	// Returned for unknown bech32 network HRP.
+	ErrUnknownNetworkPrefix = errors.New("unknown network prefix")
 	// Returned when WOTS objects are tried to be de/serialized.
 	ErrWOTSNotImplemented = errors.New("unfortunately WOTS is not yet implemented")
 )

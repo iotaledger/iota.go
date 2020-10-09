@@ -7,9 +7,13 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/iotaledger/iota.go"
+	"github.com/iotaledger/iota.go/encoding/t5b1"
+	"github.com/iotaledger/iota.go/legacy"
+	"github.com/iotaledger/iota.go/legacy/trinary"
 )
 
 func must(err error) {
@@ -27,6 +31,14 @@ func randBytes(length int) []byte {
 	return b
 }
 
+func randTrytes(length int) trinary.Trytes {
+	var trytes strings.Builder
+	for i := 0; i < length; i++ {
+		trytes.WriteByte(legacy.TryteAlphabet[rand.Intn(len(legacy.TryteAlphabet))])
+	}
+	return trytes.String()
+}
+
 func rand32ByteHash() [32]byte {
 	var h [iota.TransactionIDLength]byte
 	b := randBytes(32)
@@ -37,13 +49,10 @@ func rand32ByteHash() [32]byte {
 func randWOTSAddr() (*iota.WOTSAddress, []byte) {
 	// type
 	wotsAddr := &iota.WOTSAddress{}
-	addr := randBytes(iota.WOTSAddressBytesLength)
+	addr := t5b1.EncodeTrytes(randTrytes(legacy.HashTrytesSize))
 	copy(wotsAddr[:], addr)
 	// serialized
-	var b [iota.WOTSAddressSerializedBytesSize]byte
-	b[0] = iota.AddressWOTS
-	copy(b[iota.SmallTypeDenotationByteSize:], addr)
-	return wotsAddr, b[:]
+	return wotsAddr, append([]byte{iota.AddressWOTS}, addr...)
 }
 
 func randEd25519Addr() (*iota.Ed25519Address, []byte) {
