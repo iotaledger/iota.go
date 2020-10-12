@@ -42,7 +42,7 @@ func InputSelector(inputType uint32) (Serializable, error) {
 }
 
 // UTXOInputID defines the identifier for an UTXO input which consists
-// out of the referenced transaction hash and the given output index.
+// out of the referenced transaction ID and the given output index.
 type UTXOInputID [TransactionIDLength + UInt16ByteSize]byte
 
 // ToHex converts the UTXOInputID to its hex representation.

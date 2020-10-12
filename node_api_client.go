@@ -57,6 +57,9 @@ const (
 )
 
 const (
+	// NodeAPIRouteHealth is the route for querying a node's health status.
+	NodeAPIRouteHealth = "/health"
+
 	// NodeAPIRouteInfo is the route for getting the node info.
 	// GET returns the node info.
 	NodeAPIRouteInfo = "/info"
@@ -167,7 +170,6 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 }
 
 func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-
 	// marshal request object
 	var data []byte
 	var raw bool
@@ -178,7 +180,7 @@ func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj i
 		if rawData, ok := reqObj.(*rawDataEnvelope); !ok {
 			data, err = json.Marshal(reqObj)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unable to serialize request object to JSON: %w", err)
 			}
 		} else {
 			data = rawData.Data
@@ -194,7 +196,7 @@ func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj i
 		return bytes.NewReader(data)
 	}())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to build http request: %w", err)
 	}
 
 	if data != nil {
@@ -220,6 +222,18 @@ func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj i
 		return nil, err
 	}
 	return res, nil
+}
+
+// Health returns whether the given node is healthy.
+func (api *NodeAPI) Health() (bool, error) {
+	res, err := api.do(http.MethodGet, NodeAPIRouteHealth, nil, nil)
+	if err != nil {
+		return false, err
+	}
+	if res.StatusCode == http.StatusServiceUnavailable {
+		return false, nil
+	}
+	return true, nil
 }
 
 // NodeInfoResponse defines the response of a GET info REST API call.
@@ -274,83 +288,32 @@ func (api *NodeAPI) Tips() (*NodeTipsResponse, error) {
 	return res, nil
 }
 
-// MessageMetadataResponse defines the response of a GET message metadata REST API call.
-type MessageMetadataResponse struct {
-	// The hex encoded message ID of the message.
-	MessageID string `json:"messageId"`
-	// The hex encoded message ID of the 1st parent the message references.
-	Parent1 string `json:"parent1MessageId"`
-	// The hex encoded message ID of the 2nd parent the message references.
-	Parent2 string `json:"parent2MessageId"`
-	// Whether the message is solid.
-	Solid bool `json:"isSolid"`
-	// The milestone index that references this message.
-	ReferencedByMilestoneIndex *uint32 `json:"referencedByMilestoneIndex,omitempty"`
-	// The ledger inclusion state of the transaction payload.
-	LedgerInclusionState *string `json:"ledgerInclusionState,omitempty"`
-	// Whether the message should be promoted.
-	ShouldPromote *bool `json:"shouldPromote,omitempty"`
-	// Whether the message should be reattached.
-	ShouldReattach *bool `json:"shouldReattach,omitempty"`
-}
-
-// MessageByMessageID gets the metadata of a message by it's message ID from the node.
-func (api *NodeAPI) MessageMetadataByMessageID(hash MessageID) (*MessageMetadataResponse, error) {
-
-	query := strings.Replace(NodeAPIRouteMessageMetadata, ParameterMessageID, hex.EncodeToString(hash[:]), 1)
-
-	res := &MessageMetadataResponse{}
-	_, err := api.do(http.MethodGet, query, nil, res)
+// SubmitMessage submits the given Message to the node.
+// The node will take care of filling missing information.
+// This function returns the finalized message created by the node.
+func (api *NodeAPI) SubmitMessage(m *Message) (*Message, error) {
+	data, err := m.Serialize(DeSeriModePerformValidation)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, nil
-}
-
-// MessageByMessageID get a message by it's message ID from the node.
-func (api *NodeAPI) MessageByMessageID(hash MessageID) (*Message, error) {
-
-	query := strings.Replace(NodeAPIRouteMessageBytes, ParameterMessageID, hex.EncodeToString(hash[:]), 1)
-
-	res := &rawDataEnvelope{}
-	_, err := api.do(http.MethodGet, query, nil, res)
+	req := &rawDataEnvelope{Data: data}
+	res, err := api.do(http.MethodPost, NodeAPIRouteMessages, req, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	msg := &Message{}
-	_, err = msg.Deserialize(res.Data, DeSeriModePerformValidation)
+	messageID, err := MessageIDFromHexString(res.Header.Get(locationHeader))
 	if err != nil {
 		return nil, err
 	}
+
+	msg, err := api.MessageByMessageID(messageID)
+	if err != nil {
+		return nil, err
+	}
+
 	return msg, nil
-}
-
-// ChildrenResponse defines the response of a GET children REST API call.
-type ChildrenResponse struct {
-	// The hex encoded message ID of the message.
-	MessageID string `json:"messageId"`
-	// The maximum count of results that are returned by the node.
-	MaxResults uint32 `json:"maxResults"`
-	// The actual count of results that are returned.
-	Count uint32 `json:"count"`
-	// The hex encoded message IDs of the children of this message.
-	Children []string `json:"childrenMessageIds"`
-}
-
-// MessageByMessageID get a message by it's message ID from the node.
-func (api *NodeAPI) ChildrenByMessageID(hash MessageID) (*ChildrenResponse, error) {
-
-	query := strings.Replace(NodeAPIRouteMessageChildren, ParameterMessageID, hex.EncodeToString(hash[:]), 1)
-
-	res := &ChildrenResponse{}
-	_, err := api.do(http.MethodGet, query, nil, res)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 // MessageIDsByIndexResponse defines the response of a GET messages REST API call.
@@ -381,52 +344,74 @@ func (api *NodeAPI) MessageIDsByIndex(index string) (*MessageIDsByIndexResponse,
 	return res, nil
 }
 
-// SubmitMessage submits the given Message to the node.
-// The node will take care of filling missing information.
-// This function returns the finalized message created by the node.
-func (api *NodeAPI) SubmitMessage(m *Message) (*Message, error) {
+// MessageMetadataResponse defines the response of a GET message metadata REST API call.
+type MessageMetadataResponse struct {
+	// The hex encoded message ID of the message.
+	MessageID string `json:"messageId"`
+	// The hex encoded message ID of the 1st parent the message references.
+	Parent1 string `json:"parent1MessageId"`
+	// The hex encoded message ID of the 2nd parent the message references.
+	Parent2 string `json:"parent2MessageId"`
+	// Whether the message is solid.
+	Solid bool `json:"isSolid"`
+	// The milestone index that references this message.
+	ReferencedByMilestoneIndex *uint32 `json:"referencedByMilestoneIndex,omitempty"`
+	// The ledger inclusion state of the transaction payload.
+	LedgerInclusionState *string `json:"ledgerInclusionState,omitempty"`
+	// Whether the message should be promoted.
+	ShouldPromote *bool `json:"shouldPromote,omitempty"`
+	// Whether the message should be reattached.
+	ShouldReattach *bool `json:"shouldReattach,omitempty"`
+}
 
-	data, err := m.Serialize(DeSeriModePerformValidation)
+// MessageByMessageID gets the metadata of a message by it's message ID from the node.
+func (api *NodeAPI) MessageMetadataByMessageID(hash MessageID) (*MessageMetadataResponse, error) {
+	query := strings.Replace(NodeAPIRouteMessageMetadata, ParameterMessageID, hex.EncodeToString(hash[:]), 1)
+
+	res := &MessageMetadataResponse{}
+	_, err := api.do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
 
-	req := &rawDataEnvelope{Data: data}
+	return res, nil
+}
 
-	res, err := api.do(http.MethodPost, NodeAPIRouteMessages, req, nil)
+// MessageByMessageID get a message by it's message ID from the node.
+func (api *NodeAPI) MessageByMessageID(hash MessageID) (*Message, error) {
+	query := strings.Replace(NodeAPIRouteMessageBytes, ParameterMessageID, hex.EncodeToString(hash[:]), 1)
+
+	res := &rawDataEnvelope{}
+	_, err := api.do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
 
-	messageID, err := MessageIDFromHexString(res.Header.Get(locationHeader))
+	msg := &Message{}
+	_, err = msg.Deserialize(res.Data, DeSeriModePerformValidation)
 	if err != nil {
 		return nil, err
 	}
-
-	msg, err := api.MessageByMessageID(messageID)
-	if err != nil {
-		return nil, err
-	}
-
 	return msg, nil
 }
 
-// MilestoneResponse defines the response of a GET milestones REST API call.
-type MilestoneResponse struct {
-	// The index of the milestone.
-	Index uint32 `json:"milestoneIndex"`
+// ChildrenResponse defines the response of a GET children REST API call.
+type ChildrenResponse struct {
 	// The hex encoded message ID of the message.
 	MessageID string `json:"messageId"`
-	// The unix time of the milestone payload.
-	Time int64 `json:"timestamp"`
+	// The maximum count of results that are returned by the node.
+	MaxResults uint32 `json:"maxResults"`
+	// The actual count of results that are returned.
+	Count uint32 `json:"count"`
+	// The hex encoded message IDs of the children of this message.
+	Children []string `json:"childrenMessageIds"`
 }
 
-// MilestoneByIndex gets a milestone by its index.
-func (api *NodeAPI) MilestoneByIndex(index uint32) (*MilestoneResponse, error) {
+// MessageByMessageID get a message by it's message ID from the node.
+func (api *NodeAPI) ChildrenByMessageID(hash MessageID) (*ChildrenResponse, error) {
+	query := strings.Replace(NodeAPIRouteMessageChildren, ParameterMessageID, hex.EncodeToString(hash[:]), 1)
 
-	query := strings.Replace(NodeAPIRouteMilestone, ParameterMilestoneIndex, strconv.FormatUint(uint64(index), 10), 1)
-
-	res := &MilestoneResponse{}
+	res := &ChildrenResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
@@ -475,7 +460,6 @@ func (nor *NodeOutputResponse) Output() (*SigLockedSingleOutput, error) {
 
 // OutputByID gets an outputs by its ID from the node.
 func (api *NodeAPI) OutputByID(utxoID UTXOInputID) (*NodeOutputResponse, error) {
-
 	query := strings.Replace(NodeAPIRouteOutput, ParameterOutputID, utxoID.ToHex(), 1)
 
 	res := &NodeOutputResponse{}
@@ -500,7 +484,6 @@ type AddressBalanceResponse struct {
 
 // BalanceByAddress returns the balance of an address.
 func (api *NodeAPI) BalanceByAddress(address string) (*AddressBalanceResponse, error) {
-
 	query := strings.Replace(NodeAPIRouteAddressBalance, ParameterAddress, address, 1)
 
 	res := &AddressBalanceResponse{}
@@ -526,10 +509,32 @@ type AddressOutputsResponse struct {
 
 // OutputIDsByAddress gets outputs IDs by addresses (unspent outputs) from the node.
 func (api *NodeAPI) OutputIDsByAddress(address string) (*AddressOutputsResponse, error) {
-
 	query := strings.Replace(NodeAPIRouteAddressOutputs, ParameterAddress, address, 1)
 
 	res := &AddressOutputsResponse{}
+	_, err := api.do(http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// MilestoneResponse defines the response of a GET milestones REST API call.
+type MilestoneResponse struct {
+	// The index of the milestone.
+	Index uint32 `json:"milestoneIndex"`
+	// The hex encoded message ID of the message.
+	MessageID string `json:"messageId"`
+	// The unix time of the milestone payload.
+	Time int64 `json:"timestamp"`
+}
+
+// MilestoneByIndex gets a milestone by its index.
+func (api *NodeAPI) MilestoneByIndex(index uint32) (*MilestoneResponse, error) {
+	query := strings.Replace(NodeAPIRouteMilestone, ParameterMilestoneIndex, strconv.FormatUint(uint64(index), 10), 1)
+
+	res := &MilestoneResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err

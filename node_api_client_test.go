@@ -4,15 +4,37 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/iotaledger/iota.go"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 )
 
 const nodeAPIUrl = "http://127.0.0.1:14265"
+
+func TestNodeAPI_Health(t *testing.T) {
+	defer gock.Off()
+	gock.New(nodeAPIUrl).
+		Get(iota.NodeAPIRouteHealth).
+		Reply(200)
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	healthy, err := nodeAPI.Health()
+	require.NoError(t, err)
+	require.True(t, healthy)
+
+	gock.New(nodeAPIUrl).
+		Get(iota.NodeAPIRouteHealth).
+		Reply(503)
+
+	healthy, err = nodeAPI.Health()
+	require.NoError(t, err)
+	require.False(t, healthy)
+}
 
 func TestNodeAPI_Info(t *testing.T) {
 	defer gock.Off()
@@ -37,8 +59,8 @@ func TestNodeAPI_Info(t *testing.T) {
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
 	info, err := nodeAPI.Info()
-	assert.NoError(t, err)
-	assert.EqualValues(t, originInfo, info)
+	require.NoError(t, err)
+	require.EqualValues(t, originInfo, info)
 }
 
 func TestNodeAPI_Tips(t *testing.T) {
@@ -56,8 +78,83 @@ func TestNodeAPI_Tips(t *testing.T) {
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
 	tips, err := nodeAPI.Tips()
-	assert.NoError(t, err)
-	assert.EqualValues(t, originRes, tips)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, tips)
+}
+
+func TestNodeAPI_SubmitMessage(t *testing.T) {
+	defer gock.Off()
+
+	msgHash := rand32ByteHash()
+	msgHashStr := hex.EncodeToString(msgHash[:])
+
+	incompleteMsg := &iota.Message{Version: 1}
+	completeMsg := &iota.Message{
+		Version: 1,
+		Parent1: rand32ByteHash(),
+		Parent2: rand32ByteHash(),
+		Payload: nil,
+		Nonce:   3495721389537486,
+	}
+
+	serializedCompleteMsg, err := completeMsg.Serialize(iota.DeSeriModeNoValidation)
+	require.NoError(t, err)
+
+	// we need to do this, otherwise gock doesn't match the body
+	gock.BodyTypes = append(gock.BodyTypes, "application/octet-stream")
+	gock.BodyTypeAliases["octet"] = "application/octet-stream"
+
+	serializedIncompleteMsg, err := incompleteMsg.Serialize(iota.DeSeriModePerformValidation)
+	require.NoError(t, err)
+
+	gock.New(nodeAPIUrl).
+		Post(iota.NodeAPIRouteMessages).
+		MatchType("octet").
+		Body(bytes.NewReader(serializedIncompleteMsg)).
+		Reply(200).
+		AddHeader("Location", msgHashStr)
+
+	route := strings.Replace(iota.NodeAPIRouteMessageBytes, iota.ParameterMessageID, msgHashStr, 1)
+	gock.New(nodeAPIUrl).
+		Get(route).
+		Reply(200).
+		Body(bytes.NewReader(serializedCompleteMsg))
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	resp, err := nodeAPI.SubmitMessage(incompleteMsg)
+	require.NoError(t, err)
+	require.EqualValues(t, completeMsg, resp)
+}
+
+func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
+	defer gock.Off()
+	index := "बेकार पाठ"
+
+	id1 := rand32ByteHash()
+	id2 := rand32ByteHash()
+	id3 := rand32ByteHash()
+
+	msgIDsByIndex := &iota.MessageIDsByIndexResponse{
+		Index:      index,
+		MaxResults: 1000,
+		Count:      3,
+		MessageIDs: []string{
+			hex.EncodeToString(id1[:]),
+			hex.EncodeToString(id2[:]),
+			hex.EncodeToString(id3[:]),
+		},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(iota.NodeAPIRouteMessages).
+		MatchParam("index", index).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: msgIDsByIndex})
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	resMsgIDsByIndex, err := nodeAPI.MessageIDsByIndex(index)
+	require.NoError(t, err)
+	require.EqualValues(t, msgIDsByIndex, resMsgIDsByIndex)
 }
 
 func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
@@ -89,15 +186,8 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
 	meta, err := nodeAPI.MessageMetadataByMessageID(identifier)
-	assert.NoError(t, err)
-
-	metaJson, err := json.Marshal(meta)
-	assert.NoError(t, err)
-
-	originJson, err := json.Marshal(originRes)
-	assert.NoError(t, err)
-
-	assert.EqualValues(t, originJson, metaJson)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, meta)
 }
 
 func TestNodeAPI_MessageByMessageID(t *testing.T) {
@@ -114,180 +204,165 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 		Nonce:   16345984576234,
 	}
 
-	responseBuf := &bytes.Buffer{}
-
 	data, err := originMsg.Serialize(iota.DeSeriModePerformValidation)
-	assert.NoError(t, err)
-	responseBuf.Write(data)
+	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
 		Get(strings.Replace(iota.NodeAPIRouteMessageBytes, iota.ParameterMessageID, queryHash, 1)).
 		Reply(200).
-		Body(responseBuf)
+		Body(bytes.NewReader(data))
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
 	responseMsg, err := nodeAPI.MessageByMessageID(identifier)
-	assert.NoError(t, err)
-
-	responseMsgJson, err := json.Marshal(responseMsg)
-	assert.NoError(t, err)
-
-	originMsgJson, err := originMsg.MarshalJSON()
-	assert.NoError(t, err)
-
-	assert.EqualValues(t, originMsgJson, responseMsgJson)
+	require.NoError(t, err)
+	require.EqualValues(t, originMsg, responseMsg)
 }
 
 func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
-}
+	defer gock.Off()
 
-func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
-	/*
-		defer gock.Off()
+	msgID := rand32ByteHash()
+	hexMsgID := hex.EncodeToString(msgID[:])
 
-		tag := "बेकार पाठ"
+	child1 := rand32ByteHash()
+	child2 := rand32ByteHash()
+	child3 := rand32ByteHash()
 
-		msg := &iota.Message{
-			Version: 1,
-			Parent1: rand32ByteHash(),
-			Parent2: rand32ByteHash(),
-			Payload: nil,
-			Nonce:   16345984576234,
-		}
+	originRes := &iota.ChildrenResponse{
+		MessageID:  hexMsgID,
+		MaxResults: 1000,
+		Count:      3,
+		Children: []string{
+			hex.EncodeToString(child1[:]),
+			hex.EncodeToString(child2[:]),
+			hex.EncodeToString(child3[:]),
+		},
+	}
 
-		gock.New(nodeAPIUrl).
-			Get(iota.NodeAPIRouteMessagesByTag).
-			MatchParam("tags", tag).
-			Reply(200).
-			JSON(&iota.HTTPOkResponseEnvelope{Data: []*iota.Message{msg}})
+	route := strings.Replace(iota.NodeAPIRouteMessageChildren, iota.ParameterMessageID, hexMsgID, 1)
+	gock.New(nodeAPIUrl).
+		Get(route).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-		nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-		msgs, err := nodeAPI.MessagesByTag(tag)
-		assert.NoError(t, err)
-		assert.Len(t, msgs, 1)
-
-		msgJson, err := json.Marshal(msgs[0])
-		assert.NoError(t, err)
-
-		originMsgJson, err := msg.MarshalJSON()
-		assert.NoError(t, err)
-
-		assert.EqualValues(t, originMsgJson, msgJson)
-	*/
-}
-
-func TestNodeAPI_SubmitMessage(t *testing.T) {
-	/*
-		defer gock.Off()
-
-		msgHash := rand32ByteHash()
-		msgHashStr := hex.EncodeToString(msgHash[:])
-
-		incompleteMsg := &iota.Message{Version: 1}
-		completeMsg := &iota.Message{
-			Version: 1,
-			Parent1: rand32ByteHash(),
-			Parent2: rand32ByteHash(),
-			Payload: nil,
-			Nonce:   3495721389537486,
-		}
-
-		gock.New(nodeAPIUrl).
-			Post(iota.NodeAPIRouteMessageSubmit).
-			MatchType("json").
-			JSON(incompleteMsg).
-			Reply(200).AddHeader("Location", msgHashStr)
-
-		gock.New(nodeAPIUrl).
-			Get(iota.NodeAPIRouteMessagesByID).
-			MatchParam("hashes", msgHashStr).
-			Reply(200).
-			JSON(&iota.HTTPOkResponseEnvelope{Data: []*iota.Message{completeMsg}})
-
-		nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-		resp, err := nodeAPI.SubmitMessage(incompleteMsg)
-		assert.NoError(t, err)
-
-		assert.EqualValues(t, completeMsg, resp)
-	*/
-}
-
-func TestNodeAPI_MilestoneByIndex(t *testing.T) {
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	res, err := nodeAPI.ChildrenByMessageID(msgID)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, res)
 }
 
 func TestNodeAPI_OutputByID(t *testing.T) {
-	/*
-		originOutput, _ := randSigLockedSingleOutput(iota.AddressEd25519)
-		sigDepJson, err := originOutput.MarshalJSON()
-		assert.NoError(t, err)
-		rawMsgSigDepJson := json.RawMessage(sigDepJson)
+	defer gock.Off()
 
-		txID := rand32ByteHash()
-		hexTxID := hex.EncodeToString(txID[:])
-		originRes := []iota.NodeOutputResponse{
-			{
-				HexTransactionID: hexTxID,
-				OutputIndex:      3,
-				Spent:            true,
-				RawOutput:        &rawMsgSigDepJson,
-			},
-		}
+	originOutput, _ := randSigLockedSingleOutput(iota.AddressEd25519)
+	sigDepJson, err := originOutput.MarshalJSON()
+	require.NoError(t, err)
+	rawMsgSigDepJson := json.RawMessage(sigDepJson)
 
-		utxoInput := &iota.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
-		utxoInputId := utxoInput.ID()
+	txID := rand32ByteHash()
+	hexTxID := hex.EncodeToString(txID[:])
+	originRes := &iota.NodeOutputResponse{
+		TransactionID: hexTxID,
+		OutputIndex:   3,
+		Spent:         true,
+		RawOutput:     &rawMsgSigDepJson,
+	}
 
-		gock.New(nodeAPIUrl).
-			Get(iota.NodeAPIRouteOutputsByID).
-			MatchParam("ids", utxoInputId.ToHex()).
-			Reply(200).
-			JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+	utxoInput := &iota.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
+	utxoInputId := utxoInput.ID()
 
-		nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-		resp, err := nodeAPI.OutputsByID(iota.UTXOInputIDs{utxoInputId})
-		assert.NoError(t, err)
-		assert.Len(t, resp, 1)
-		assert.EqualValues(t, originRes, resp)
+	route := strings.Replace(iota.NodeAPIRouteOutput, iota.ParameterOutputID, utxoInputId.ToHex(), 1)
+	gock.New(nodeAPIUrl).
+		Get(route).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-		respOutput, err := resp[0].Output()
-		assert.NoError(t, err)
-		assert.EqualValues(t, originOutput, respOutput)
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	resp, err := nodeAPI.OutputByID(utxoInputId)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
 
-		sigTxPayloadHash, err := resp[0].TransactionID()
-		assert.NoError(t, err)
-		assert.EqualValues(t, txID, *sigTxPayloadHash)
-	*/
+	resTxID, err := resp.TxID()
+	require.NoError(t, err)
+	require.EqualValues(t, txID, *resTxID)
 }
 
 func TestNodeAPI_BalanceByAddress(t *testing.T) {
+	defer gock.Off()
+
+	ed25519Addr, _ := randEd25519Addr()
+	ed25519AddrHex := ed25519Addr.String()
+
+	originRes := &iota.AddressBalanceResponse{
+		Address:    ed25519AddrHex,
+		MaxResults: 1000,
+		Count:      1337,
+		Balance:    13371337,
+	}
+
+	route := strings.Replace(iota.NodeAPIRouteAddressBalance, iota.ParameterAddress, ed25519AddrHex, 1)
+	gock.New(nodeAPIUrl).
+		Get(route).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	resp, err := nodeAPI.BalanceByAddress(ed25519AddrHex)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
 }
 
 func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
-	/*
-		originOutput, _ := randSigLockedSingleOutput(iota.AddressEd25519)
-		sigDepJson, err := originOutput.MarshalJSON()
-		assert.NoError(t, err)
-		rawMsgSigDepJson := json.RawMessage(sigDepJson)
+	defer gock.Off()
 
-		addr, _ := randEd25519Addr()
-		addrHex := addr.String()
-		originRes := map[string][]iota.NodeOutputResponse{
-			addrHex: {{RawOutput: &rawMsgSigDepJson, Spent: true}},
-		}
+	ed25519Addr, _ := randEd25519Addr()
+	ed25519AddrHex := ed25519Addr.String()
 
-		gock.New(nodeAPIUrl).
-			Get(iota.NodeAPIRouteOutputsByAddress).
-			MatchParam("addresses", addrHex).
-			Reply(200).
-			JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+	output1 := rand32ByteHash()
+	output2 := rand32ByteHash()
+	originRes := &iota.AddressOutputsResponse{
+		Address:    ed25519AddrHex,
+		MaxResults: 1000,
+		Count:      2,
+		OutputIDs: []string{
+			hex.EncodeToString(output1[:]),
+			hex.EncodeToString(output2[:]),
+		},
+	}
 
-		nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-		resp, err := nodeAPI.OutputsByAddress(addrHex)
-		assert.NoError(t, err)
-		assert.Len(t, resp, 1)
-		assert.EqualValues(t, originRes, resp)
+	route := strings.Replace(iota.NodeAPIRouteAddressOutputs, iota.ParameterAddress, ed25519AddrHex, 1)
+	gock.New(nodeAPIUrl).
+		Get(route).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-		respOutput, err := resp[addrHex][0].Output()
-		assert.NoError(t, err)
-		assert.EqualValues(t, originOutput, respOutput)
-	*/
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	resp, err := nodeAPI.OutputIDsByAddress(ed25519AddrHex)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
+}
+
+func TestNodeAPI_MilestoneByIndex(t *testing.T) {
+	defer gock.Off()
+
+	var milestoneIndex uint32 = 1337
+	milestoneIndexStr := strconv.Itoa(int(milestoneIndex))
+	msgID := rand32ByteHash()
+
+	originRes := &iota.MilestoneResponse{
+		Index:     milestoneIndex,
+		MessageID: hex.EncodeToString(msgID[:]),
+		Time:      time.Now().Unix(),
+	}
+
+	route := strings.Replace(iota.NodeAPIRouteMilestone, iota.ParameterMilestoneIndex, milestoneIndexStr, 1)
+	gock.New(nodeAPIUrl).
+		Get(route).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	resp, err := nodeAPI.MilestoneByIndex(milestoneIndex)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
 }
