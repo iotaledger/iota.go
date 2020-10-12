@@ -41,18 +41,18 @@ type MessageID = [MessageIDLength]byte
 // MessageIDs are IDs of messages.
 type MessageIDs = []MessageID
 
-// MessagesHashFromHexString converts the given message hashes from their hex
+// MessageIDFromHexString converts the given message hashes from their hex
 // to MessageID representation.
-func MessagesHashFromHexString(msgHashesHex ...string) (MessageIDs, error) {
-	mh := make(MessageIDs, len(msgHashesHex))
-	for i, msgHashHex := range msgHashesHex {
-		msgHashBytes, err := hex.DecodeString(msgHashHex)
-		if err != nil {
-			return nil, err
-		}
-		copy(mh[i][:], msgHashBytes)
+func MessageIDFromHexString(messageIDHex string) (MessageID, error) {
+	messageIDBytes, err := hex.DecodeString(messageIDHex)
+	if err != nil {
+		return MessageID{}, err
 	}
-	return mh, nil
+
+	messageID := MessageID{}
+	copy(messageID[:], messageIDBytes)
+
+	return messageID, nil
 }
 
 // Message can carry a payload and references two other messages.
