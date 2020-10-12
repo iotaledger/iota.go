@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/iotaledger/iota.go/bech32"
+	"github.com/iotaledger/iota.go/encoding/t5b1"
+	"github.com/iotaledger/iota.go/legacy/trinary"
 	"golang.org/x/crypto/blake2b"
 )
 
@@ -17,9 +20,20 @@ const (
 	AddressWOTS AddressType = iota
 	// Denotes a Ed25510 address.
 	AddressEd25519
+)
 
+// NetworkPrefix denotes the different network prefixes.
+type NetworkPrefix int
+
+// Network prefix options
+const (
+	PrefixMainnet NetworkPrefix = iota
+	PrefixTestnet
+)
+
+const (
 	// The length of a WOTS address.
-	WOTSAddressBytesLength = 49
+	WOTSAddressBytesLength = 49 // t5b1.EncodedLen(legacy.HashTrytesSize)
 	// The size of a serialized WOTS address with its type denoting byte.
 	WOTSAddressSerializedBytesSize = SmallTypeDenotationByteSize + WOTSAddressBytesLength
 
@@ -29,22 +43,108 @@ const (
 	Ed25519AddressSerializedBytesSize = SmallTypeDenotationByteSize + Ed25519AddressBytesLength
 )
 
-// AddressSelector implements SerializableSelectorFunc for address types.
-func AddressSelector(typeByte uint32) (Serializable, error) {
-	var seri Serializable
-	switch byte(typeByte) {
-	case AddressWOTS:
-		seri = &WOTSAddress{}
-	case AddressEd25519:
-		seri = &Ed25519Address{}
-	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownAddrType, typeByte)
+func (p NetworkPrefix) String() string {
+	return hrpStrings[p]
+}
+
+// ParsePrefix parses the string and returns the corresponding NetworkPrefix.
+func ParsePrefix(s string) (NetworkPrefix, error) {
+	for i := range hrpStrings {
+		if s == hrpStrings[i] {
+			return NetworkPrefix(i), nil
+		}
 	}
-	return seri, nil
+	return 0, fmt.Errorf("%w: prefix %s", ErrUnknownNetworkPrefix, s)
+}
+
+var (
+	hrpStrings = [...]string{"iot", "tio"}
+)
+
+// Address describes a general address.
+type Address interface {
+	Serializable
+
+	// Type returns the type of the address.
+	Type() AddressType
+	// Bech32 encodes the address as a bech32 string.
+	Bech32(hrp NetworkPrefix) string
+
+	String() string
+}
+
+// AddressSelector implements SerializableSelectorFunc for address types.
+func AddressSelector(addressType uint32) (Serializable, error) {
+	return newAddress(byte(addressType))
+}
+
+func newAddress(addressType byte) (address Address, err error) {
+	switch addressType {
+	case AddressWOTS:
+		return &WOTSAddress{}, nil
+	case AddressEd25519:
+		return &Ed25519Address{}, nil
+	default:
+		return nil, fmt.Errorf("%w: type %d", ErrUnknownAddrType, addressType)
+	}
+}
+
+func bech32String(hrp NetworkPrefix, addr Address) string {
+	bytes, _ := addr.Serialize(DeSeriModeNoValidation)
+	s, err := bech32.Encode(hrp.String(), bytes)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
+// ParseBech32 decodes a bech32 encoded string.
+func ParseBech32(s string) (NetworkPrefix, Address, error) {
+	hrp, addrData, err := bech32.Decode(s)
+	if err != nil {
+		return 0, nil, fmt.Errorf("invalid bech32 encoding: %w", err)
+	}
+	prefix, err := ParsePrefix(hrp)
+	if err != nil {
+		return 0, nil, fmt.Errorf("invalid human-readable prefix: %w", err)
+	}
+	if len(addrData) == 0 {
+		return 0, nil, ErrDeserializationNotEnoughData
+	}
+
+	addr, err := newAddress(addrData[0])
+	if err != nil {
+		return 0, nil, err
+	}
+	n, err := addr.Deserialize(addrData, DeSeriModePerformValidation)
+	if err != nil {
+		return 0, nil, err
+	}
+	if n != len(addrData) {
+		return 0, nil, ErrDeserializationNotAllConsumed
+	}
+	return prefix, addr, nil
 }
 
 // Defines a WOTS address.
+// TODO: it could make more sense to store WOTS addresses as tryte arrays.
 type WOTSAddress [WOTSAddressBytesLength]byte
+
+// WOTSAddressFromTrytes creates a new WOTSAddress from trytes.
+func WOTSAddressFromTrytes(trytes trinary.Trytes) *WOTSAddress {
+	addrBytes := t5b1.EncodeTrytes(trytes)
+	addr := &WOTSAddress{}
+	copy(addr[:], addrBytes)
+	return addr
+}
+
+func (wotsAddr *WOTSAddress) Type() AddressType {
+	return AddressWOTS
+}
+
+func (wotsAddr *WOTSAddress) Bech32(hrp NetworkPrefix) string {
+	return bech32String(hrp, wotsAddr)
+}
 
 func (wotsAddr *WOTSAddress) String() string {
 	return hex.EncodeToString(wotsAddr[:])
@@ -58,20 +158,22 @@ func (wotsAddr *WOTSAddress) Deserialize(data []byte, deSeriMode DeSerialization
 		if err := checkTypeByte(data, AddressWOTS); err != nil {
 			return 0, fmt.Errorf("unable to deserialize WOTS address: %w", err)
 		}
-		// TODO: check T5B1 encoding
+		if _, err := t5b1.DecodeToTrytes(data[SmallTypeDenotationByteSize:]); err != nil {
+			return 0, fmt.Errorf("invalid WOTS address bytes: %w", err)
+		}
 	}
 	copy(wotsAddr[:], data[SmallTypeDenotationByteSize:])
 	return WOTSAddressSerializedBytesSize, nil
 }
 
-func (wotsAddr *WOTSAddress) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
+func (wotsAddr *WOTSAddress) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		// TODO: check T5B1 encoding
+		_, err := t5b1.DecodeToTrytes(wotsAddr[:])
+		if err != nil {
+			return nil, fmt.Errorf("invalid WOTS address bytes: %w", err)
+		}
 	}
-	var b [WOTSAddressSerializedBytesSize]byte
-	b[0] = AddressWOTS
-	copy(b[SmallTypeDenotationByteSize:], wotsAddr[:])
-	return b[:], nil
+	return append([]byte{wotsAddr.Type()}, wotsAddr[:]...), nil
 }
 
 func (wotsAddr *WOTSAddress) MarshalJSON() ([]byte, error) {
@@ -96,6 +198,14 @@ func (wotsAddr *WOTSAddress) UnmarshalJSON(bytes []byte) error {
 
 // Defines an Ed25519 address.
 type Ed25519Address [Ed25519AddressBytesLength]byte
+
+func (edAddr *Ed25519Address) Type() AddressType {
+	return AddressEd25519
+}
+
+func (edAddr *Ed25519Address) Bech32(hrp NetworkPrefix) string {
+	return bech32String(hrp, edAddr)
+}
 
 func (edAddr *Ed25519Address) String() string {
 	return hex.EncodeToString(edAddr[:])
@@ -167,11 +277,14 @@ type jsoned25519 struct {
 }
 
 func (j *jsoned25519) ToSerializable() (Serializable, error) {
-	addr := &Ed25519Address{}
 	addrBytes, err := hex.DecodeString(j.Address)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
 	}
+	if err := checkExactByteLength(len(addrBytes), Ed25519AddressBytesLength); err != nil {
+		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
+	}
+	addr := &Ed25519Address{}
 	copy(addr[:], addrBytes)
 	return addr, nil
 }
@@ -183,11 +296,14 @@ type jsonwotsaddress struct {
 }
 
 func (j *jsonwotsaddress) ToSerializable() (Serializable, error) {
-	addr := &WOTSAddress{}
 	addrBytes, err := hex.DecodeString(j.Address)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for WOTS address: %w", err)
 	}
+	if err := checkExactByteLength(len(addrBytes), WOTSAddressBytesLength); err != nil {
+		return nil, fmt.Errorf("unable to decode address from JSON for WOTS address: %w", err)
+	}
+	addr := &WOTSAddress{}
 	copy(addr[:], addrBytes)
 	return addr, nil
 }
