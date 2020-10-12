@@ -282,7 +282,7 @@ func (j *jsoned25519) ToSerializable() (Serializable, error) {
 		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
 	}
 	if err := checkExactByteLength(len(addrBytes), Ed25519AddressBytesLength); err != nil {
-		return nil, fmt.Errorf("unable to decode address from JSON for WOTS address: %w", err)
+		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
 	}
 	addr := &Ed25519Address{}
 	copy(addr[:], addrBytes)
