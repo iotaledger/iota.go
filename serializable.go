@@ -221,11 +221,11 @@ func ReadStringFromBytes(data []byte) (string, int, error) {
 	return string(data[:strLen]), int(strLen) + UInt16ByteSize, nil
 }
 
-// ToHex returns the a slice of byte hashes in their hex representation.
-func HashesToHex(input [][32]byte) []string {
-	hashes := make([]string, len(input))
+// ToHex returns the a slice of IDs in their hex representation.
+func IDsToHex(input [][32]byte) []string {
+	ids := make([]string, len(input))
 	for i := range input {
-		hashes[i] = fmt.Sprintf("%x", input[i])
+		ids[i] = fmt.Sprintf("%x", input[i])
 	}
-	return hashes
+	return ids
 }

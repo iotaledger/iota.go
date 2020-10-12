@@ -15,7 +15,7 @@ const (
 	MessageVersion = 1
 	// Defines the length of a message ID.
 	MessageIDLength = blake2b.Size256
-	// Defines the minimum size of a message: version + 2 msg hashes + uint16 payload length + nonce
+	// Defines the minimum size of a message: version + 2 msg IDs + uint16 payload length + nonce
 	MessageBinSerializedMinSize = MessageVersionByteSize + 2*MessageIDLength + UInt32ByteSize + UInt64ByteSize
 )
 
@@ -41,7 +41,7 @@ type MessageID = [MessageIDLength]byte
 // MessageIDs are IDs of messages.
 type MessageIDs = []MessageID
 
-// MessageIDFromHexString converts the given message hashes from their hex
+// MessageIDFromHexString converts the given message IDs from their hex
 // to MessageID representation.
 func MessageIDFromHexString(messageIDHex string) (MessageID, error) {
 	messageIDBytes, err := hex.DecodeString(messageIDHex)
@@ -166,12 +166,7 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 
 func (m *Message) MarshalJSON() ([]byte, error) {
 	jsonMsg := &jsonmessage{}
-	msgHash, err := m.ID()
-	if err != nil {
-		return nil, err
-	}
 	jsonMsg.Version = MessageVersion
-	jsonMsg.Hash = hex.EncodeToString(msgHash[:])
 	jsonMsg.Parent1 = hex.EncodeToString(m.Parent1[:])
 	jsonMsg.Parent2 = hex.EncodeToString(m.Parent2[:])
 	jsonMsg.Nonce = int(m.Nonce)
@@ -220,13 +215,11 @@ func jsonpayloadselector(ty int) (JSONSerializable, error) {
 
 // jsonmessage defines the JSON representation of a Message.
 type jsonmessage struct {
-	// The hex encoded hash of the message.
-	Hash string `json:"hash"`
 	// The version of the message.
 	Version int `json:"version"`
-	// The hex encoded hash of the first referenced parent.
+	// The hex encoded message ID of the first referenced parent.
 	Parent1 string `json:"parent1MessageId"`
-	// The hex encoded hash of the second referenced parent.
+	// The hex encoded message ID of the second referenced parent.
 	Parent2 string `json:"parent2MessageId"`
 	// The payload within the message.
 	Payload *json.RawMessage `json:"payload"`

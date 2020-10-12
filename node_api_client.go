@@ -365,8 +365,8 @@ type MessageMetadataResponse struct {
 }
 
 // MessageByMessageID gets the metadata of a message by it's message ID from the node.
-func (api *NodeAPI) MessageMetadataByMessageID(hash MessageID) (*MessageMetadataResponse, error) {
-	query := strings.Replace(NodeAPIRouteMessageMetadata, ParameterMessageID, hex.EncodeToString(hash[:]), 1)
+func (api *NodeAPI) MessageMetadataByMessageID(msgID MessageID) (*MessageMetadataResponse, error) {
+	query := strings.Replace(NodeAPIRouteMessageMetadata, ParameterMessageID, hex.EncodeToString(msgID[:]), 1)
 
 	res := &MessageMetadataResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
@@ -378,8 +378,8 @@ func (api *NodeAPI) MessageMetadataByMessageID(hash MessageID) (*MessageMetadata
 }
 
 // MessageByMessageID get a message by it's message ID from the node.
-func (api *NodeAPI) MessageByMessageID(hash MessageID) (*Message, error) {
-	query := strings.Replace(NodeAPIRouteMessageBytes, ParameterMessageID, hex.EncodeToString(hash[:]), 1)
+func (api *NodeAPI) MessageByMessageID(msgID MessageID) (*Message, error) {
+	query := strings.Replace(NodeAPIRouteMessageBytes, ParameterMessageID, hex.EncodeToString(msgID[:]), 1)
 
 	res := &rawDataEnvelope{}
 	_, err := api.do(http.MethodGet, query, nil, res)
@@ -408,8 +408,8 @@ type ChildrenResponse struct {
 }
 
 // MessageByMessageID get a message by it's message ID from the node.
-func (api *NodeAPI) ChildrenByMessageID(hash MessageID) (*ChildrenResponse, error) {
-	query := strings.Replace(NodeAPIRouteMessageChildren, ParameterMessageID, hex.EncodeToString(hash[:]), 1)
+func (api *NodeAPI) ChildrenByMessageID(msgID MessageID) (*ChildrenResponse, error) {
+	query := strings.Replace(NodeAPIRouteMessageChildren, ParameterMessageID, hex.EncodeToString(msgID[:]), 1)
 
 	res := &ChildrenResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
@@ -503,7 +503,7 @@ type AddressOutputsResponse struct {
 	MaxResults uint32 `json:"maxResults"`
 	// The actual count of results that are returned.
 	Count uint32 `json:"count"`
-	// The output IDs (transaction hash + output index) of the outputs on this address.
+	// The output IDs (transaction ID + output index) of the outputs on this address.
 	OutputIDs []string `json:"outputIDs"`
 }
 

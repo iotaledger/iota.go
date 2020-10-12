@@ -55,11 +55,11 @@ type UTXOInputIDs []UTXOInputID
 
 // ToHex converts all UTXOInput to their hex string representation.
 func (utxoInputIDs UTXOInputIDs) ToHex() []string {
-	hashes := make([]string, len(utxoInputIDs))
+	ids := make([]string, len(utxoInputIDs))
 	for i := range utxoInputIDs {
-		hashes[i] = fmt.Sprintf("%x", utxoInputIDs[i])
+		ids[i] = fmt.Sprintf("%x", utxoInputIDs[i])
 	}
-	return hashes
+	return ids
 }
 
 // UTXOInput references an unspent transaction output by the Transaction's ID and the corresponding index of the output.

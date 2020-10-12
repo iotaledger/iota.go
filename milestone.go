@@ -43,17 +43,17 @@ type Milestone struct {
 	Index uint64
 	// The time at which this milestone was issued.
 	Timestamp uint64
-	// The inclusion merkle proof of included/newly confirmed transaction hashes.
+	// The inclusion merkle proof of included/newly confirmed transaction IDs.
 	InclusionMerkleProof [MilestoneInclusionMerkleProofLength]byte
 	// The signature of the milestone.
 	Signature [MilestoneSignatureLength]byte
 }
 
-// Hash computes the hash of the Milestone.
-func (m *Milestone) Hash() (*MilestoneID, error) {
+// ID computes the ID of the Milestone.
+func (m *Milestone) ID() (*MilestoneID, error) {
 	data, err := m.Serialize(DeSeriModeNoValidation)
 	if err != nil {
-		return nil, fmt.Errorf("can't compute milestone payload hash: %w", err)
+		return nil, fmt.Errorf("can't compute milestone payload ID: %w", err)
 	}
 	h := blake2b.Sum256(data)
 	return &h, nil
