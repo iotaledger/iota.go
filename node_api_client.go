@@ -43,20 +43,6 @@ const (
 )
 
 const (
-	// ParameterMessageID is used to identify a message by it's ID.
-	ParameterMessageID = "messageID"
-
-	// ParameterOutputID is used to identify an output by it's ID.
-	ParameterOutputID = "outputID"
-
-	// ParameterAddress is used to identify an address.
-	ParameterAddress = "address"
-
-	// ParameterMilestoneIndex is used to identify a milestone.
-	ParameterMilestoneIndex = "milestoneIndex"
-)
-
-const (
 	// NodeAPIRouteHealth is the route for querying a node's health status.
 	NodeAPIRouteHealth = "/health"
 
@@ -70,15 +56,15 @@ const (
 
 	// NodeAPIRouteMessageMetadata is the route for getting message metadata by it's messageID.
 	// GET returns message metadata (including info about "promotion/reattachment needed").
-	NodeAPIRouteMessageMetadata = "/messages/:" + ParameterMessageID + "/metadata"
+	NodeAPIRouteMessageMetadata = "/messages/%s/metadata"
 
 	// NodeAPIRouteMessageBytes is the route for getting message raw data by it's messageID.
 	// GET returns raw message data (bytes).
-	NodeAPIRouteMessageBytes = "/messages/:" + ParameterMessageID + "/raw"
+	NodeAPIRouteMessageBytes = "/messages/%s/raw"
 
 	// NodeAPIRouteMessageChildren is the route for getting message IDs of the children of a message, identified by it's messageID.
 	// GET returns the message IDs of all children.
-	NodeAPIRouteMessageChildren = "/messages/:" + ParameterMessageID + "/children"
+	NodeAPIRouteMessageChildren = "/messages/%s/children"
 
 	// NodeAPIRouteMessages is the route for getting message IDs or creating new messages.
 	// GET with query parameter (mandatory) returns all message IDs that fit these filter criteria (query parameters: "index").
@@ -87,19 +73,19 @@ const (
 
 	// NodeAPIRouteMilestone is the route for getting a milestone by it's milestoneIndex.
 	// GET returns the milestone.
-	NodeAPIRouteMilestone = "/milestones/:" + ParameterMilestoneIndex
+	NodeAPIRouteMilestone = "/milestones/%s"
 
 	// NodeAPIRouteOutput is the route for getting outputs by their outputID (transactionHash + outputIndex).
 	// GET returns the output.
-	NodeAPIRouteOutput = "/outputs/:" + ParameterOutputID
+	NodeAPIRouteOutput = "/outputs/%s"
 
 	// NodeAPIRouteAddressBalance is the route for getting the total balance of all unspent outputs of an address.
 	// GET returns the balance of all unspent outputs of this address.
-	NodeAPIRouteAddressBalance = "/addresses/:" + ParameterAddress
+	NodeAPIRouteAddressBalance = "/addresses/%s"
 
 	// NodeAPIRouteAddressOutputs is the route for getting all output IDs for an address.
 	// GET returns the outputIDs for all outputs of this address (optional query parameters: "include-spent").
-	NodeAPIRouteAddressOutputs = "/addresses/:" + ParameterAddress + "/outputs"
+	NodeAPIRouteAddressOutputs = "/addresses/%s/outputs"
 )
 
 // NewNodeAPI returns a new NodeAPI with the given BaseURL and HTTPClient.
@@ -366,7 +352,7 @@ type MessageMetadataResponse struct {
 
 // MessageByMessageID gets the metadata of a message by it's message ID from the node.
 func (api *NodeAPI) MessageMetadataByMessageID(msgID MessageID) (*MessageMetadataResponse, error) {
-	query := strings.Replace(NodeAPIRouteMessageMetadata, ParameterMessageID, hex.EncodeToString(msgID[:]), 1)
+	query := fmt.Sprintf(NodeAPIRouteMessageMetadata, hex.EncodeToString(msgID[:]))
 
 	res := &MessageMetadataResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
@@ -379,7 +365,7 @@ func (api *NodeAPI) MessageMetadataByMessageID(msgID MessageID) (*MessageMetadat
 
 // MessageByMessageID get a message by it's message ID from the node.
 func (api *NodeAPI) MessageByMessageID(msgID MessageID) (*Message, error) {
-	query := strings.Replace(NodeAPIRouteMessageBytes, ParameterMessageID, hex.EncodeToString(msgID[:]), 1)
+	query := fmt.Sprintf(NodeAPIRouteMessageBytes, hex.EncodeToString(msgID[:]))
 
 	res := &rawDataEnvelope{}
 	_, err := api.do(http.MethodGet, query, nil, res)
@@ -409,7 +395,7 @@ type ChildrenResponse struct {
 
 // MessageByMessageID get a message by it's message ID from the node.
 func (api *NodeAPI) ChildrenByMessageID(msgID MessageID) (*ChildrenResponse, error) {
-	query := strings.Replace(NodeAPIRouteMessageChildren, ParameterMessageID, hex.EncodeToString(msgID[:]), 1)
+	query := fmt.Sprintf(NodeAPIRouteMessageChildren, hex.EncodeToString(msgID[:]))
 
 	res := &ChildrenResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
@@ -460,7 +446,7 @@ func (nor *NodeOutputResponse) Output() (*SigLockedSingleOutput, error) {
 
 // OutputByID gets an outputs by its ID from the node.
 func (api *NodeAPI) OutputByID(utxoID UTXOInputID) (*NodeOutputResponse, error) {
-	query := strings.Replace(NodeAPIRouteOutput, ParameterOutputID, utxoID.ToHex(), 1)
+	query := fmt.Sprintf(NodeAPIRouteOutput, utxoID.ToHex())
 
 	res := &NodeOutputResponse{}
 	_, err := api.do(http.MethodGet, query, nil, &res)
@@ -484,7 +470,7 @@ type AddressBalanceResponse struct {
 
 // BalanceByAddress returns the balance of an address.
 func (api *NodeAPI) BalanceByAddress(address string) (*AddressBalanceResponse, error) {
-	query := strings.Replace(NodeAPIRouteAddressBalance, ParameterAddress, address, 1)
+	query := fmt.Sprintf(NodeAPIRouteAddressBalance, address)
 
 	res := &AddressBalanceResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
@@ -507,9 +493,13 @@ type AddressOutputsResponse struct {
 	OutputIDs []string `json:"outputIDs"`
 }
 
-// OutputIDsByAddress gets outputs IDs by addresses (unspent outputs) from the node.
-func (api *NodeAPI) OutputIDsByAddress(address string) (*AddressOutputsResponse, error) {
-	query := strings.Replace(NodeAPIRouteAddressOutputs, ParameterAddress, address, 1)
+// OutputIDsByAddress gets outputs IDs by addresses from the node.
+// Per default only unspent outputs are returned. Set includeSpentOutputs to true to also returned spent outputs.
+func (api *NodeAPI) OutputIDsByAddress(address string, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
+	query := fmt.Sprintf(NodeAPIRouteAddressOutputs, address)
+	if includeSpentOutputs {
+		query += "?include-spent=true"
+	}
 
 	res := &AddressOutputsResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
@@ -532,7 +522,7 @@ type MilestoneResponse struct {
 
 // MilestoneByIndex gets a milestone by its index.
 func (api *NodeAPI) MilestoneByIndex(index uint32) (*MilestoneResponse, error) {
-	query := strings.Replace(NodeAPIRouteMilestone, ParameterMilestoneIndex, strconv.FormatUint(uint64(index), 10), 1)
+	query := fmt.Sprintf(NodeAPIRouteMilestone, strconv.FormatUint(uint64(index), 10))
 
 	res := &MilestoneResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
