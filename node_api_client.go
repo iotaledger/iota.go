@@ -86,6 +86,16 @@ const (
 	// NodeAPIRouteAddressOutputs is the route for getting all output IDs for an address.
 	// GET returns the outputIDs for all outputs of this address (optional query parameters: "include-spent").
 	NodeAPIRouteAddressOutputs = "/addresses/%s/outputs"
+
+	// NodeAPIRoutePeer is the route for getting peers by their peerID.
+	// GET returns the peer
+	// DELETE deletes the peer.
+	NodeAPIRoutePeer = "/peers/%s"
+
+	// NodeAPIRoutePeers is the route for getting all peers of the node.
+	// GET returns a list of all peers.
+	// POST adds a new peer.
+	NodeAPIRoutePeers = "/peers"
 )
 
 // NewNodeAPI returns a new NodeAPI with the given BaseURL and HTTPClient.
@@ -526,6 +536,104 @@ func (api *NodeAPI) MilestoneByIndex(index uint32) (*MilestoneResponse, error) {
 
 	res := &MilestoneResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// AddPeerRequest defines the request for a POST peer REST API call.
+type AddPeerRequest struct {
+	// The libp2p multi address of the peer.
+	MultiAddress string `json:"multiAddress"`
+	// The alias of to iditify the peer.
+	Alias *string `json:"alias,omitempty"`
+}
+
+// PeerResponse defines the response of a GET peer REST API call.
+type PeerResponse struct {
+	// The libp2p multi address of the peer.
+	MultiAddress string `json:"multiAddress"`
+	// The alias of to iditify the peer.
+	Alias *string `json:"alias,omitempty"`
+	// The libp2p identifier of the peer.
+	ID string `json:"id"`
+	// The relation (static, autopeered) of the peer.
+	Relation string `json:"relation"`
+	// Whether the peer is connected.
+	Connected bool `json:"connected"`
+	// The gossip metrics of the peer.
+	GossipMetrics *PeerGossipMetrics `json:"gossipMetrics,omitempty"`
+}
+
+// PeerGossipMetrics defines the peer gossip metrics.
+type PeerGossipMetrics struct {
+	// The total amount of sent packages.
+	SentPackets uint32 `json:"sentPackets"`
+	// The total amount of dropped sent packages.
+	DroppedSentPackets uint32 `json:"droppedSentPackets"`
+	// The total amount of received heartbeats.
+	ReceivedHeartbeats uint32 `json:"receivedHeartbeats"`
+	// The total amount of sent heartbeats.
+	SentHeartbeats uint32 `json:"sentHeartbeats"`
+	// The total amount of received messages.
+	ReceivedMessages uint32 `json:"receivedMessages"`
+	// The total amount of received new messages.
+	NewMessages uint32 `json:"newMessages"`
+	// The total amount of received known messages.
+	KnownMessages uint32 `json:"knownMessages"`
+}
+
+// PeerByID gets a peer by its identifier.
+func (api *NodeAPI) PeerByID(id string) (*PeerResponse, error) {
+	query := fmt.Sprintf(NodeAPIRoutePeer, id)
+
+	res := &PeerResponse{}
+	_, err := api.do(http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// RemovePeerByID removes a peer by its identifier.
+func (api *NodeAPI) RemovePeerByID(id string) error {
+	query := fmt.Sprintf(NodeAPIRoutePeer, id)
+
+	_, err := api.do(http.MethodDelete, query, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Peers returns a list of all peers.
+func (api *NodeAPI) Peers() ([]*PeerResponse, error) {
+
+	res := []*PeerResponse{}
+	_, err := api.do(http.MethodGet, NodeAPIRoutePeers, nil, res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// AddPeer adds a new peer by libp2p multi address with optional alias.
+func (api *NodeAPI) AddPeer(multiAddress string, alias ...string) (*PeerResponse, error) {
+	req := &AddPeerRequest{
+		MultiAddress: multiAddress,
+	}
+
+	if len(alias) > 0 {
+		req.Alias = &alias[0]
+	}
+
+	res := &PeerResponse{}
+	_, err := api.do(http.MethodPost, NodeAPIRoutePeers, req, res)
 	if err != nil {
 		return nil, err
 	}

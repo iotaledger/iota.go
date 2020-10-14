@@ -114,9 +114,8 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 		Reply(200).
 		AddHeader("Location", msgHashStr)
 
-	route := fmt.Sprintf(iota.NodeAPIRouteMessageBytes, msgHashStr)
 	gock.New(nodeAPIUrl).
-		Get(route).
+		Get(fmt.Sprintf(iota.NodeAPIRouteMessageBytes, msgHashStr)).
 		Reply(200).
 		Body(bytes.NewReader(serializedCompleteMsg))
 
@@ -381,6 +380,141 @@ func TestNodeAPI_MilestoneByIndex(t *testing.T) {
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
 	resp, err := nodeAPI.MilestoneByIndex(milestoneIndex)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
+}
+
+func TestNodeAPI_PeerByID(t *testing.T) {
+	defer gock.Off()
+
+	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
+
+	originRes := &iota.PeerResponse{
+		MultiAddress: fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID),
+		ID:           peerID,
+		Connected:    true,
+		Relation:     "autopeered",
+		GossipMetrics: &iota.PeerGossipMetrics{
+			SentPackets:        100,
+			DroppedSentPackets: 10,
+			ReceivedHeartbeats: 5,
+			SentHeartbeats:     3,
+			ReceivedMessages:   100,
+			NewMessages:        40,
+			KnownMessages:      60,
+		},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(fmt.Sprintf(iota.NodeAPIRoutePeer, peerID)).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	resp, err := nodeAPI.PeerByID(peerID)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
+}
+
+func TestNodeAPI_RemovePeerByID(t *testing.T) {
+	defer gock.Off()
+
+	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
+
+	gock.New(nodeAPIUrl).
+		Delete(fmt.Sprintf(iota.NodeAPIRoutePeer, peerID)).
+		Reply(200).
+		Status(200)
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	err := nodeAPI.RemovePeerByID(peerID)
+	require.NoError(t, err)
+}
+
+func TestNodeAPI_Peers(t *testing.T) {
+	defer gock.Off()
+
+	peerID1 := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
+	peerID2 := "12D3KooWFJ8Nq6gHLLvigTpPdddddsadsadscpJof8Y4y8yFAB32"
+
+	originRes := []*iota.PeerResponse{
+		{
+			MultiAddress: fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID1),
+			ID:           peerID1,
+			Connected:    true,
+			Relation:     "autopeered",
+			GossipMetrics: &iota.PeerGossipMetrics{
+				SentPackets:        100,
+				DroppedSentPackets: 10,
+				ReceivedHeartbeats: 5,
+				SentHeartbeats:     3,
+				ReceivedMessages:   100,
+				NewMessages:        40,
+				KnownMessages:      60,
+			},
+		},
+		{
+			MultiAddress: fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID2),
+			ID:           peerID2,
+			Connected:    true,
+			Relation:     "static",
+			GossipMetrics: &iota.PeerGossipMetrics{
+				SentPackets:        100,
+				DroppedSentPackets: 10,
+				ReceivedHeartbeats: 5,
+				SentHeartbeats:     3,
+				ReceivedMessages:   100,
+				NewMessages:        40,
+				KnownMessages:      60,
+			},
+		},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(iota.NodeAPIRoutePeers).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	resp, err := nodeAPI.Peers()
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
+}
+
+func TestNodeAPI_AddPeer(t *testing.T) {
+	defer gock.Off()
+
+	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
+
+	originRes := &iota.PeerResponse{
+		MultiAddress: fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID),
+		ID:           peerID,
+		Connected:    true,
+		Relation:     "autopeered",
+		GossipMetrics: &iota.PeerGossipMetrics{
+			SentPackets:        100,
+			DroppedSentPackets: 10,
+			ReceivedHeartbeats: 5,
+			SentHeartbeats:     3,
+			ReceivedMessages:   100,
+			NewMessages:        40,
+			KnownMessages:      60,
+		},
+	}
+
+	req := &iota.AddPeerRequest{
+		MultiAddress: fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID),
+	}
+
+	gock.New(nodeAPIUrl).
+		Post(iota.NodeAPIRoutePeers).
+		MatchType("json").
+		JSON(req).
+		Reply(201).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+
+	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	resp, err := nodeAPI.AddPeer(peerID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
