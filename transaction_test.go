@@ -88,7 +88,7 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
 				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
+					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
 			}
 		}(),
@@ -113,8 +113,8 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
 				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
-					inputUTXO2.ID(): iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 250},
+					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
+					inputUTXO2.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 250},
 				},
 			}
 		}(),
@@ -153,7 +153,7 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 				builder:    builder,
 				validErr:   iota.ErrInputOutputSumMismatch,
 				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
+					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
 			}
 		}(),

@@ -49,8 +49,8 @@ type Transaction struct {
 }
 
 // ID computes the ID of the Transaction.
-func (s *Transaction) ID() (*TransactionID, error) {
-	data, err := s.Serialize(DeSeriModeNoValidation)
+func (t *Transaction) ID() (*TransactionID, error) {
+	data, err := t.Serialize(DeSeriModeNoValidation)
 	if err != nil {
 		return nil, fmt.Errorf("can't compute transaction ID: %w", err)
 	}
@@ -58,7 +58,7 @@ func (s *Transaction) ID() (*TransactionID, error) {
 	return &h, nil
 }
 
-func (s *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
+func (t *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(TransactionBinSerializedMinSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid transaction bytes: %w", err)
@@ -77,7 +77,7 @@ func (s *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (
 		return 0, fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
 	}
 	bytesReadTotal += txBytesRead
-	s.Essence = tx
+	t.Essence = tx
 
 	// TODO: tx must be a TransactionEssence but might be something else in the future
 	inputCount := uint16(len(tx.(*TransactionEssence).Inputs))
@@ -101,14 +101,14 @@ func (s *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (
 		}
 	}
 
-	s.UnlockBlocks = unlockBlocks
+	t.UnlockBlocks = unlockBlocks
 
 	return bytesReadTotal, nil
 }
 
-func (s *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
+func (t *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := s.SyntacticallyValidate(); err != nil {
+		if err := t.SyntacticallyValidate(); err != nil {
 			return nil, err
 		}
 	}
@@ -119,7 +119,7 @@ func (s *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) 
 	}
 
 	// write transaction
-	txBytes, err := s.Essence.Serialize(deSeriMode)
+	txBytes, err := t.Essence.Serialize(deSeriMode)
 	if err != nil {
 		return nil, fmt.Errorf("%w: unable to serialize transaction's essence", err)
 	}
@@ -128,11 +128,11 @@ func (s *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) 
 	}
 
 	// write unlock blocks and count
-	if err := binary.Write(&b, binary.LittleEndian, uint16(len(s.UnlockBlocks))); err != nil {
+	if err := binary.Write(&b, binary.LittleEndian, uint16(len(t.UnlockBlocks))); err != nil {
 		return nil, fmt.Errorf("%w: unable to serialize transaction's unlock block count", err)
 	}
-	for i := range s.UnlockBlocks {
-		unlockBlockSer, err := s.UnlockBlocks[i].Serialize(deSeriMode)
+	for i := range t.UnlockBlocks {
+		unlockBlockSer, err := t.UnlockBlocks[i].Serialize(deSeriMode)
 		if err != nil {
 			return nil, fmt.Errorf("%w: unable to serialize transaction's unlock block at pos %d", err, i)
 		}
@@ -144,18 +144,18 @@ func (s *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) 
 	return b.Bytes(), nil
 }
 
-func (s *Transaction) MarshalJSON() ([]byte, error) {
+func (t *Transaction) MarshalJSON() ([]byte, error) {
 	jsonSigTxPayload := &jsontransaction{
-		UnlockBlocks: make([]*json.RawMessage, len(s.UnlockBlocks)),
+		UnlockBlocks: make([]*json.RawMessage, len(t.UnlockBlocks)),
 	}
 	jsonSigTxPayload.Type = int(TransactionPayloadTypeID)
-	txJson, err := s.Essence.MarshalJSON()
+	txJson, err := t.Essence.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 	rawMsgTxJson := json.RawMessage(txJson)
 	jsonSigTxPayload.Essence = &rawMsgTxJson
-	for i, ub := range s.UnlockBlocks {
+	for i, ub := range t.UnlockBlocks {
 		jsonUB, err := ub.MarshalJSON()
 		if err != nil {
 			return nil, err
@@ -166,7 +166,7 @@ func (s *Transaction) MarshalJSON() ([]byte, error) {
 	return json.Marshal(jsonSigTxPayload)
 }
 
-func (s *Transaction) UnmarshalJSON(bytes []byte) error {
+func (t *Transaction) UnmarshalJSON(bytes []byte) error {
 	jsonSigTxPayload := &jsontransaction{}
 	if err := json.Unmarshal(bytes, jsonSigTxPayload); err != nil {
 		return err
@@ -175,7 +175,7 @@ func (s *Transaction) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	*s = *seri.(*Transaction)
+	*t = *seri.(*Transaction)
 	return nil
 }
 
@@ -183,17 +183,17 @@ func (s *Transaction) UnmarshalJSON(bytes []byte) error {
 //	1. The TransactionEssence isn't nil
 //	2. syntactic validation on the TransactionEssence
 //	3. input and unlock blocks count must match
-func (s *Transaction) SyntacticallyValidate() error {
+func (t *Transaction) SyntacticallyValidate() error {
 
-	if s.Essence == nil {
+	if t.Essence == nil {
 		return fmt.Errorf("%w: transaction is nil", ErrInvalidTransactionEssence)
 	}
 
-	if s.UnlockBlocks == nil {
+	if t.UnlockBlocks == nil {
 		return fmt.Errorf("%w: unlock blocks are nil", ErrInvalidTransactionEssence)
 	}
 
-	txEssence, ok := s.Essence.(*TransactionEssence)
+	txEssence, ok := t.Essence.(*TransactionEssence)
 	if !ok {
 		return fmt.Errorf("%w: transaction essence is not *TransactionEssence", ErrInvalidTransactionEssence)
 	}
@@ -203,12 +203,12 @@ func (s *Transaction) SyntacticallyValidate() error {
 	}
 
 	inputCount := len(txEssence.Inputs)
-	unlockBlockCount := len(s.UnlockBlocks)
+	unlockBlockCount := len(t.UnlockBlocks)
 	if inputCount != unlockBlockCount {
 		return fmt.Errorf("%w: num of inputs %d, num of unlock blocks %d", ErrUnlockBlocksMustMatchInputCount, inputCount, unlockBlockCount)
 	}
 
-	if err := ValidateUnlockBlocks(s.UnlockBlocks, UnlockBlocksSigUniqueAndRefValidator()); err != nil {
+	if err := ValidateUnlockBlocks(t.UnlockBlocks, UnlockBlocksSigUniqueAndRefValidator()); err != nil {
 		return fmt.Errorf("%w: invalid unlock blocks", err)
 	}
 
@@ -220,15 +220,15 @@ func (s *Transaction) SyntacticallyValidate() error {
 type SigValidationFunc = func() error
 
 // InputToOutputMapping maps inputs to their origin UTXOs.
-type InputToOutputMapping = map[UTXOInputID]SigLockedSingleOutput
+type InputToOutputMapping = map[UTXOInputID]Serializable
 
 // SemanticallyValidate semantically validates the Transaction
 // by checking that the given input UTXOs are spent entirely and the signatures
 // provided are valid. SyntacticallyValidate() should be called before SemanticallyValidate() to
 // ensure that the essence part of the transaction is syntactically valid.
-func (s *Transaction) SemanticallyValidate(utxos InputToOutputMapping) error {
+func (t *Transaction) SemanticallyValidate(utxos InputToOutputMapping) error {
 
-	txEssence, ok := s.Essence.(*TransactionEssence)
+	txEssence, ok := t.Essence.(*TransactionEssence)
 	if !ok {
 		return fmt.Errorf("%w: transaction is not *TransactionEssence", ErrInvalidTransactionEssence)
 	}
@@ -238,12 +238,12 @@ func (s *Transaction) SemanticallyValidate(utxos InputToOutputMapping) error {
 		return err
 	}
 
-	inputSum, sigValidFuncs, err := s.SemanticallyValidateInputs(utxos, txEssence, txEssenceBytes)
+	inputSum, sigValidFuncs, err := t.SemanticallyValidateInputs(utxos, txEssence, txEssenceBytes)
 	if err != nil {
 		return err
 	}
 
-	outputSum, err := s.SemanticallyValidateOutputs(txEssence)
+	outputSum, err := t.SemanticallyValidateOutputs(txEssence)
 	if err != nil {
 		return err
 	}
@@ -265,12 +265,12 @@ func (s *Transaction) SemanticallyValidate(utxos InputToOutputMapping) error {
 // SemanticallyValidateInputs checks that every referenced UTXO is available, computes the input sum
 // and returns functions which can be called to verify the signatures.
 // This function should only be called from SemanticallyValidate().
-func (s *Transaction) SemanticallyValidateInputs(utxos InputToOutputMapping, transaction *TransactionEssence, txEssenceBytes []byte) (uint64, []SigValidationFunc, error) {
+func (t *Transaction) SemanticallyValidateInputs(utxos InputToOutputMapping, transaction *TransactionEssence, txEssenceBytes []byte) (uint64, []SigValidationFunc, error) {
 	var sigValidFuncs []SigValidationFunc
 	var inputSum uint64
 
 	for i, input := range transaction.Inputs {
-		// TODO: switch out with type switch
+		// TODO: switch out with type switch or interface once more types are known
 		in, ok := input.(*UTXOInput)
 		if !ok {
 			return 0, nil, fmt.Errorf("%w: unsupported input type at index %d", ErrUnknownInputType, i)
@@ -283,49 +283,78 @@ func (s *Transaction) SemanticallyValidateInputs(utxos InputToOutputMapping, tra
 			return 0, nil, fmt.Errorf("%w: UTXO for ID %v is not provided (input at index %d)", ErrMissingUTXO, utxoID, i)
 		}
 
-		inputSum += utxo.Amount
-
-		var sigBlock *SignatureUnlockBlock
-		var refSigBlockIndex int
-		switch ub := s.UnlockBlocks[i].(type) {
-		case *SignatureUnlockBlock:
-			sigBlock = ub
-			refSigBlockIndex = i
-		case *ReferenceUnlockBlock:
-			// it is ensured by the syntactical validation that
-			// the corresponding signature unlock block exists
-			refSigBlockIndex = int(ub.Reference)
-			sigBlock = s.UnlockBlocks[refSigBlockIndex].(*SignatureUnlockBlock)
+		// TODO: switch out with type switch or interface once more types are known
+		out, ok := utxo.(*SigLockedSingleOutput)
+		if !ok {
+			return 0, nil, fmt.Errorf("%w: unsupported output type at index %d", ErrUnknownOutputType, i)
 		}
 
-		switch addr := utxo.Address.(type) {
-		case *WOTSAddress:
-			// TODO: implement
-		case *Ed25519Address:
-			ed25519Sig, isEd25519Sig := sigBlock.Signature.(*Ed25519Signature)
-			if !isEd25519Sig {
-				return 0, nil, fmt.Errorf("%w: UTXO at index %d has an Ed25519 address but its corresponding signature is of type %T (at index %d)", ErrSignatureAndAddrIncompatible, i, sigBlock.Signature, refSigBlockIndex)
-			}
+		inputSum += out.Amount
 
-			sigValidFuncs = append(sigValidFuncs, func() error {
-				if err := ed25519Sig.Valid(txEssenceBytes, addr); err != nil {
-					return fmt.Errorf("%w: input at index %d, signature block at index %d", err, i, refSigBlockIndex)
-				}
-				return nil
-			})
-
-		default:
-			return 0, nil, fmt.Errorf("%w: unsupported address type at index %d", ErrUnknownAddrType, i)
+		sigBlock, sigBlockIndex, err := t.signatureUnlockBlock(i)
+		if err != nil {
+			return 0, nil, err
 		}
 
+		sigValidF, err := createSigValidationFunc(i, sigBlock.Signature, sigBlockIndex, txEssenceBytes, out)
+		if err != nil {
+			return 0, nil, err
+		}
+
+		sigValidFuncs = append(sigValidFuncs, sigValidF)
 	}
 
 	return inputSum, sigValidFuncs, nil
 }
 
+// retrieves the SignatureUnlockBlock at the given index or follows
+// the reference of an ReferenceUnlockBlock to retrieve it.
+func (t *Transaction) signatureUnlockBlock(index int) (*SignatureUnlockBlock, int, error) {
+	// indexation valid via SyntacticallyValidate()
+	switch ub := t.UnlockBlocks[index].(type) {
+	case *SignatureUnlockBlock:
+		return ub, index, nil
+	case *ReferenceUnlockBlock:
+		// it is ensured by the syntactical validation that
+		// the corresponding signature unlock block exists
+		sigUBIndex := int(ub.Reference)
+		return t.UnlockBlocks[sigUBIndex].(*SignatureUnlockBlock), sigUBIndex, nil
+	default:
+		return nil, 0, fmt.Errorf("%w: unsupported unlock block type at index %d", ErrUnknownUnlockBlockType, index)
+	}
+}
+
+// creates a SigValidationFunc appropriate for the underlying signature type.
+func createSigValidationFunc(pos int, sig Serializable, sigBlockIndex int, txEssenceBytes []byte, utxo *SigLockedSingleOutput) (SigValidationFunc, error) {
+	switch addr := utxo.Address.(type) {
+	case *WOTSAddress:
+		// TODO: implement
+		return nil, fmt.Errorf("%w: unsupported address type at index %d", ErrWOTSNotImplemented, pos)
+	case *Ed25519Address:
+		return createEd25519SigValidationFunc(pos, sig, sigBlockIndex, addr, txEssenceBytes)
+	default:
+		return nil, fmt.Errorf("%w: unsupported address type at index %d", ErrUnknownAddrType, pos)
+	}
+}
+
+// creates a SigValidationFunc validating the given Ed25519Signature against the Ed25519Address.
+func createEd25519SigValidationFunc(pos int, sig Serializable, sigBlockIndex int, addr *Ed25519Address, essenceBytes []byte) (SigValidationFunc, error) {
+	ed25519Sig, isEd25519Sig := sig.(*Ed25519Signature)
+	if !isEd25519Sig {
+		return nil, fmt.Errorf("%w: UTXO at index %d has an Ed25519 address but its corresponding signature is of type %T (at index %d)", ErrSignatureAndAddrIncompatible, pos, sig, sigBlockIndex)
+	}
+
+	return func() error {
+		if err := ed25519Sig.Valid(essenceBytes, addr); err != nil {
+			return fmt.Errorf("%w: input at index %d, signature block at index %d", err, pos, sigBlockIndex)
+		}
+		return nil
+	}, nil
+}
+
 // SemanticallyValidateOutputs accumulates the sum of all outputs.
 // This function should only be called from SemanticallyValidate().
-func (s *Transaction) SemanticallyValidateOutputs(transaction *TransactionEssence) (uint64, error) {
+func (t *Transaction) SemanticallyValidateOutputs(transaction *TransactionEssence) (uint64, error) {
 	var outputSum uint64
 	for i, output := range transaction.Outputs {
 		// TODO: switch out with type switch

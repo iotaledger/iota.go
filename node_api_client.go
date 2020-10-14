@@ -442,7 +442,7 @@ func (nor *NodeOutputResponse) TxID() (*TransactionID, error) {
 }
 
 // Output deserializes the RawOutput to its output form.
-func (nor *NodeOutputResponse) Output() (*SigLockedSingleOutput, error) {
+func (nor *NodeOutputResponse) Output() (Serializable, error) {
 	jsonSeri, err := DeserializeObjectFromJSON(nor.RawOutput, jsonoutputselector)
 	if err != nil {
 		return nil, err
@@ -451,7 +451,7 @@ func (nor *NodeOutputResponse) Output() (*SigLockedSingleOutput, error) {
 	if err != nil {
 		return nil, err
 	}
-	return seri.(*SigLockedSingleOutput), nil
+	return seri, nil
 }
 
 // OutputByID gets an outputs by its ID from the node.
