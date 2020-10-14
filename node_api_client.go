@@ -612,9 +612,8 @@ func (api *NodeAPI) RemovePeerByID(id string) error {
 
 // Peers returns a list of all peers.
 func (api *NodeAPI) Peers() ([]*PeerResponse, error) {
-
 	res := []*PeerResponse{}
-	_, err := api.do(http.MethodGet, NodeAPIRoutePeers, nil, res)
+	_, err := api.do(http.MethodGet, NodeAPIRoutePeers, nil, &res)
 	if err != nil {
 		return nil, err
 	}

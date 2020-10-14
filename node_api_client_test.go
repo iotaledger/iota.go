@@ -485,9 +485,10 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 	defer gock.Off()
 
 	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
+	multiAddr := fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)
 
 	originRes := &iota.PeerResponse{
-		MultiAddress: fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID),
+		MultiAddress: multiAddr,
 		ID:           peerID,
 		Connected:    true,
 		Relation:     "autopeered",
@@ -503,18 +504,17 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 	}
 
 	req := &iota.AddPeerRequest{
-		MultiAddress: fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID),
+		MultiAddress: multiAddr,
 	}
 
 	gock.New(nodeAPIUrl).
 		Post(iota.NodeAPIRoutePeers).
-		MatchType("json").
 		JSON(req).
 		Reply(201).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-	resp, err := nodeAPI.AddPeer(peerID)
+	resp, err := nodeAPI.AddPeer(multiAddr)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
