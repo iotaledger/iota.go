@@ -503,10 +503,7 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 		},
 	}
 
-	req := &iota.AddPeerRequest{
-		MultiAddress: multiAddr,
-	}
-
+	req := &iota.AddPeerRequest{MultiAddress: multiAddr}
 	gock.New(nodeAPIUrl).
 		Post(iota.NodeAPIRoutePeers).
 		JSON(req).
