@@ -76,17 +76,17 @@ static inline void curl256_avx(const __m256i *an,const __m256i* ap,  const __m25
 	*rn &= m_243;
 }
 
-void transform_avx2(uint64_t inoutN[3][4], uint64_t inoutP[3][4]){
-	int rotationOffset = 364;
+void transform_avx2(uint64_t inout_n[3][4], uint64_t inout_p[3][4]){
+	int rotation_offset = 364;
 	__m256i an[3], ap[3], cn[3], cp[3];
 	for (int i = 0; i < 3; i++){
-		void *ioN = &inoutN[i];
-		void *ioP = &inoutP[i];
+		void *ioN = &inout_n[i];
+		void *ioP = &inout_p[i];
 		an[i] = _mm256_load_si256(ioN);
 		ap[i] = _mm256_load_si256(ioP);
 	}
 	for (int i = 0; i < NUMBER_OF_ROUNDS; i++) {
-		int hi = rotationOffset / 243, lo = rotationOffset % 243;
+		int hi = rotation_offset / 243, lo = rotation_offset % 243;
 		__m256i bn[3] = {m_0000, m_0000, m_0000}, bp[3] = {m_0000, m_0000, m_0000};
 		for (int j = 0; j < 3; j++){
 			rshift256_into_avx2(&bn[(j + 3 - hi) % 3], &an[j], lo);
@@ -101,7 +101,7 @@ void transform_avx2(uint64_t inoutN[3][4], uint64_t inoutP[3][4]){
 			an[j] = cn[j];
 			ap[j] = cp[j];
 		}
-		rotationOffset = (rotationOffset * 364) % STATESIZE;
+		rotation_offset = (rotation_offset * 364) % STATESIZE;
 	}
 	// resort: trits are now sorted like 0, 487, 245, 3, 490, 248, ...
 	const uint64_t m9 = 0x9249249249249249llu, m4 = 0x4924924924924924llu, m2 = 0x2492492492492492llu;
@@ -112,8 +112,8 @@ void transform_avx2(uint64_t inoutN[3][4], uint64_t inoutP[3][4]){
 	}
 	for (int i = 0; i < 3; i++){
 		for (int j = 0; j < 4; j++){
-			inoutN[i][j] = cn[i][j];
-			inoutP[i][j] = cp[i][j];
+			inout_n[i][j] = cn[i][j];
+			inout_p[i][j] = cp[i][j];
 		}
 	}
 }
