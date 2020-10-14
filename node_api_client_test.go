@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -114,7 +114,7 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 		Reply(200).
 		AddHeader("Location", msgHashStr)
 
-	route := strings.Replace(iota.NodeAPIRouteMessageBytes, iota.ParameterMessageID, msgHashStr, 1)
+	route := fmt.Sprintf(iota.NodeAPIRouteMessageBytes, msgHashStr)
 	gock.New(nodeAPIUrl).
 		Get(route).
 		Reply(200).
@@ -180,7 +180,7 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(strings.Replace(iota.NodeAPIRouteMessageMetadata, iota.ParameterMessageID, queryHash, 1)).
+		Get(fmt.Sprintf(iota.NodeAPIRouteMessageMetadata, queryHash)).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
@@ -208,7 +208,7 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Get(strings.Replace(iota.NodeAPIRouteMessageBytes, iota.ParameterMessageID, queryHash, 1)).
+		Get(fmt.Sprintf(iota.NodeAPIRouteMessageBytes, queryHash)).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
@@ -239,9 +239,8 @@ func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 		},
 	}
 
-	route := strings.Replace(iota.NodeAPIRouteMessageChildren, iota.ParameterMessageID, hexMsgID, 1)
 	gock.New(nodeAPIUrl).
-		Get(route).
+		Get(fmt.Sprintf(iota.NodeAPIRouteMessageChildren, hexMsgID)).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
@@ -271,9 +270,8 @@ func TestNodeAPI_OutputByID(t *testing.T) {
 	utxoInput := &iota.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
 	utxoInputId := utxoInput.ID()
 
-	route := strings.Replace(iota.NodeAPIRouteOutput, iota.ParameterOutputID, utxoInputId.ToHex(), 1)
 	gock.New(nodeAPIUrl).
-		Get(route).
+		Get(fmt.Sprintf(iota.NodeAPIRouteOutput, utxoInputId.ToHex())).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
@@ -300,9 +298,8 @@ func TestNodeAPI_BalanceByAddress(t *testing.T) {
 		Balance:    13371337,
 	}
 
-	route := strings.Replace(iota.NodeAPIRouteAddressBalance, iota.ParameterAddress, ed25519AddrHex, 1)
 	gock.New(nodeAPIUrl).
-		Get(route).
+		Get(fmt.Sprintf(iota.NodeAPIRouteAddressBalance, ed25519AddrHex)).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
@@ -320,6 +317,7 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 
 	output1 := rand32ByteHash()
 	output2 := rand32ByteHash()
+	output3 := rand32ByteHash()
 	originRes := &iota.AddressOutputsResponse{
 		Address:    ed25519AddrHex,
 		MaxResults: 1000,
@@ -330,16 +328,37 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		},
 	}
 
-	route := strings.Replace(iota.NodeAPIRouteAddressOutputs, iota.ParameterAddress, ed25519AddrHex, 1)
+	originResWithUnspent := &iota.AddressOutputsResponse{
+		Address:    ed25519AddrHex,
+		MaxResults: 1000,
+		Count:      3,
+		OutputIDs: []string{
+			hex.EncodeToString(output1[:]),
+			hex.EncodeToString(output2[:]),
+			hex.EncodeToString(output3[:]),
+		},
+	}
+
+	route := fmt.Sprintf(iota.NodeAPIRouteAddressOutputs, ed25519AddrHex)
 	gock.New(nodeAPIUrl).
 		Get(route).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-	resp, err := nodeAPI.OutputIDsByAddress(ed25519AddrHex)
+	resp, err := nodeAPI.OutputIDsByAddress(ed25519AddrHex, false)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
+
+	gock.New(nodeAPIUrl).
+		Get(route).
+		MatchParam("include-spent", "true").
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originResWithUnspent})
+
+	resp, err = nodeAPI.OutputIDsByAddress(ed25519AddrHex, true)
+	require.NoError(t, err)
+	require.EqualValues(t, originResWithUnspent, resp)
 }
 
 func TestNodeAPI_MilestoneByIndex(t *testing.T) {
@@ -355,9 +374,8 @@ func TestNodeAPI_MilestoneByIndex(t *testing.T) {
 		Time:      time.Now().Unix(),
 	}
 
-	route := strings.Replace(iota.NodeAPIRouteMilestone, iota.ParameterMilestoneIndex, milestoneIndexStr, 1)
 	gock.New(nodeAPIUrl).
-		Get(route).
+		Get(fmt.Sprintf(iota.NodeAPIRouteMilestone, milestoneIndexStr)).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
