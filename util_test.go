@@ -151,7 +151,7 @@ func randTransactionEssence() (*iota.TransactionEssence, []byte) {
 
 func randMilestone() (*iota.Milestone, []byte) {
 	inclusionMerkleProof := randBytes(iota.MilestoneInclusionMerkleProofLength)
-	signature := randBytes(iota.MilestoneSignatureLength)
+	const sigsCount = 3
 	msPayload := &iota.Milestone{
 		Index:     uint64(rand.Intn(1000)),
 		Timestamp: uint64(time.Now().Unix()),
@@ -160,10 +160,12 @@ func randMilestone() (*iota.Milestone, []byte) {
 			copy(b[:], inclusionMerkleProof)
 			return b
 		}(),
-		Signature: func() [iota.MilestoneSignatureLength]byte {
-			b := [iota.MilestoneSignatureLength]byte{}
-			copy(b[:], signature)
-			return b
+		Signatures: func() [][iota.MilestoneSignatureLength]byte {
+			msSigs := make([][iota.MilestoneSignatureLength]byte, sigsCount)
+			for i := 0; i < sigsCount; i++ {
+				msSigs[i] = randMilestoneSig()
+			}
+			return msSigs
 		}(),
 	}
 
@@ -171,16 +173,23 @@ func randMilestone() (*iota.Milestone, []byte) {
 	must(binary.Write(&b, binary.LittleEndian, iota.MilestonePayloadTypeID))
 	must(binary.Write(&b, binary.LittleEndian, msPayload.Index))
 	must(binary.Write(&b, binary.LittleEndian, msPayload.Timestamp))
-
 	if _, err := b.Write(msPayload.InclusionMerkleProof[:]); err != nil {
 		panic(err)
 	}
-
-	if _, err := b.Write(msPayload.Signature[:]); err != nil {
-		panic(err)
+	must(b.WriteByte(sigsCount))
+	for _, sig := range msPayload.Signatures {
+		if _, err := b.Write(sig[:]); err != nil {
+			panic(err)
+		}
 	}
 
 	return msPayload, b.Bytes()
+}
+
+func randMilestoneSig() [iota.MilestoneSignatureLength]byte {
+	var sig [iota.MilestoneSignatureLength]byte
+	copy(sig[:], randBytes(iota.MilestoneSignatureLength))
+	return sig
 }
 
 func randIndexation(dataLength ...int) (*iota.Indexation, []byte) {

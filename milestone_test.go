@@ -5,12 +5,12 @@ import (
 	"crypto/ed25519"
 	"encoding/binary"
 	"errors"
-	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/iotaledger/iota.go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMilestone_Deserialize(t *testing.T) {
@@ -69,20 +69,21 @@ func TestMilestone_SignatureInput(t *testing.T) {
 	parent2 := rand32ByteHash()
 	var msIndex, msTimestamp uint64 = 1000, 133713771377
 	var msInclMerkleProof [iota.MilestoneInclusionMerkleProofLength]byte
-	rand.Read(msInclMerkleProof[:])
-	var msSignature [iota.MilestoneSignatureLength]byte
-	rand.Read(msSignature[:])
+	copy(msInclMerkleProof[:], randBytes(iota.MilestoneInclusionMerkleProofLength))
+	msSigs := [][iota.MilestoneSignatureLength]byte{
+		randMilestoneSig(), randMilestoneSig(), randMilestoneSig(),
+	}
 
 	msg := &iota.Message{Version: msgVersion, Parent1: parent1, Parent2: parent2}
 	msPayload := &iota.Milestone{
 		Index: msIndex, Timestamp: msTimestamp,
-		InclusionMerkleProof: msInclMerkleProof, Signature: msSignature,
+		InclusionMerkleProof: msInclMerkleProof, Signatures: msSigs,
 	}
+	msPayloadBytes, err := msPayload.Serialize(iota.DeSeriModeNoValidation)
+	require.NoError(t, err)
 
-	sigInput, extSig, err := msPayload.SignatureInput(msg)
+	sigInput, err := msPayload.SignatureInput(msg, 3)
 	assert.NoError(t, err)
-
-	assert.True(t, bytes.Equal(msSignature[:], extSig[:]))
 
 	var offset int
 	assert.EqualValues(t, msgVersion, sigInput[0])
@@ -91,7 +92,7 @@ func TestMilestone_SignatureInput(t *testing.T) {
 	offset += iota.MessageIDLength
 	assert.True(t, bytes.Equal(parent2[:], sigInput[offset:offset+iota.MessageIDLength]))
 	offset += iota.MessageIDLength
-	assert.EqualValues(t, iota.MilestoneBinSerializedSize, binary.LittleEndian.Uint32(sigInput[offset:offset+iota.PayloadLengthByteSize]))
+	assert.EqualValues(t, len(msPayloadBytes), binary.LittleEndian.Uint32(sigInput[offset:offset+iota.PayloadLengthByteSize]))
 	offset += iota.PayloadLengthByteSize
 	assert.EqualValues(t, iota.MilestonePayloadTypeID, binary.LittleEndian.Uint32(sigInput[offset:offset+iota.TypeDenotationByteSize]))
 	offset += iota.TypeDenotationByteSize
@@ -101,18 +102,23 @@ func TestMilestone_SignatureInput(t *testing.T) {
 	offset += iota.UInt64ByteSize
 	assert.True(t, bytes.Equal(msInclMerkleProof[:], sigInput[offset:offset+iota.MilestoneInclusionMerkleProofLength]))
 	offset += iota.MilestoneInclusionMerkleProofLength
+	assert.EqualValues(t, len(msSigs), sigInput[offset : offset+iota.OneByte][0])
+	offset += iota.OneByte
 	assert.Len(t, sigInput, offset)
 }
 
 func TestMilestoneSigning(t *testing.T) {
 	type test struct {
-		name    string
-		msg     *iota.Message
-		ms      *iota.Milestone
-		signer  ed25519.PrivateKey
-		pubKey  ed25519.PublicKey
-		signErr error
-		verfErr error
+		name                 string
+		msg                  *iota.Message
+		ms                   *iota.Milestone
+		signer               iota.MilestoneSigningFunc
+		sigsCount            byte
+		minValid             int
+		pubKeys              []ed25519.PublicKey
+		pubKeysWhichVerified []ed25519.PublicKey
+		signErr              error
+		verfErr              error
 	}
 
 	tests := []test{
@@ -123,11 +129,46 @@ func TestMilestoneSigning(t *testing.T) {
 			msPayload := &iota.Milestone{Index: 1000, Timestamp: uint64(time.Now().Unix())}
 
 			return test{
-				name:    "ok",
-				msg:     msg,
-				ms:      msPayload,
-				signer:  signer,
-				pubKey:  signer.Public().(ed25519.PublicKey),
+				name:      "ok",
+				msg:       msg,
+				ms:        msPayload,
+				signer:    iota.InMemoryEd25519MilestoneSigner(signer),
+				sigsCount: 1,
+				minValid:  1,
+				pubKeys: []ed25519.PublicKey{
+					signer.Public().(ed25519.PublicKey),
+				},
+				pubKeysWhichVerified: []ed25519.PublicKey{
+					signer.Public().(ed25519.PublicKey),
+				},
+				signErr: nil,
+				verfErr: nil,
+			}
+		}(),
+		func() test {
+
+			signer1 := randEd25519PrivateKey()
+			signer2 := randEd25519PrivateKey()
+			signer3 := randEd25519PrivateKey()
+			msg := &iota.Message{Version: 1, Parent1: rand32ByteHash(), Parent2: rand32ByteHash()}
+			msPayload := &iota.Milestone{Index: 1000, Timestamp: uint64(time.Now().Unix())}
+
+			return test{
+				name:      "ok - 2 of 3",
+				msg:       msg,
+				ms:        msPayload,
+				signer:    iota.InMemoryEd25519MilestoneSigner(signer1, signer2, signer3),
+				sigsCount: 3,
+				minValid:  2,
+				pubKeys: []ed25519.PublicKey{
+					signer1.Public().(ed25519.PublicKey),
+					signer2.Public().(ed25519.PublicKey),
+					randEd25519PrivateKey().Public().(ed25519.PublicKey),
+				},
+				pubKeysWhichVerified: []ed25519.PublicKey{
+					signer1.Public().(ed25519.PublicKey),
+					signer2.Public().(ed25519.PublicKey),
+				},
 				signErr: nil,
 				verfErr: nil,
 			}
@@ -139,32 +180,83 @@ func TestMilestoneSigning(t *testing.T) {
 			msPayload := &iota.Milestone{Index: 1000, Timestamp: uint64(time.Now().Unix())}
 
 			return test{
-				name:    "err - invalid signature",
-				msg:     msg,
-				ms:      msPayload,
-				signer:  signer,
-				pubKey:  randEd25519PrivateKey().Public().(ed25519.PublicKey),
+				name:      "err - invalid signature",
+				msg:       msg,
+				ms:        msPayload,
+				signer:    iota.InMemoryEd25519MilestoneSigner(signer),
+				sigsCount: 1,
+				minValid:  1,
+				pubKeys: []ed25519.PublicKey{
+					randEd25519PrivateKey().Public().(ed25519.PublicKey),
+				},
 				signErr: nil,
-				verfErr: iota.ErrInvalidMilestoneSignature,
+				verfErr: iota.ErrMilestoneMinSigsThresholdNotReached,
+			}
+		}(),
+		func() test {
+
+			signer1 := randEd25519PrivateKey()
+			signer2 := randEd25519PrivateKey()
+			signer3 := randEd25519PrivateKey()
+			msg := &iota.Message{Version: 1, Parent1: rand32ByteHash(), Parent2: rand32ByteHash()}
+			msPayload := &iota.Milestone{Index: 1000, Timestamp: uint64(time.Now().Unix())}
+
+			return test{
+				name:      "err - 1 of wanted min. 2",
+				msg:       msg,
+				ms:        msPayload,
+				signer:    iota.InMemoryEd25519MilestoneSigner(signer1, signer2, signer3),
+				sigsCount: 3,
+				minValid:  2,
+				pubKeys: []ed25519.PublicKey{
+					signer1.Public().(ed25519.PublicKey),
+					randEd25519PrivateKey().Public().(ed25519.PublicKey),
+					randEd25519PrivateKey().Public().(ed25519.PublicKey),
+				},
+				signErr: nil,
+				verfErr: iota.ErrMilestoneMinSigsThresholdNotReached,
+			}
+		}(),
+		func() test {
+			signer1 := randEd25519PrivateKey()
+			signer2 := randEd25519PrivateKey()
+			msg := &iota.Message{Version: 1, Parent1: rand32ByteHash(), Parent2: rand32ByteHash()}
+			msPayload := &iota.Milestone{Index: 1000, Timestamp: uint64(time.Now().Unix())}
+
+			return test{
+				name:      "err - same public key",
+				msg:       msg,
+				ms:        msPayload,
+				signer:    iota.InMemoryEd25519MilestoneSigner(signer1, signer2),
+				sigsCount: 2,
+				minValid:  2,
+				pubKeys: []ed25519.PublicKey{
+					signer1.Public().(ed25519.PublicKey),
+					signer1.Public().(ed25519.PublicKey),
+				},
+				signErr: nil,
+				verfErr: iota.ErrMilestoneSigVerificationDupPublicKeys,
 			}
 		}(),
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.ms.Sign(test.msg, test.signer)
+			err := test.ms.Sign(test.msg, test.sigsCount, test.signer)
 			if test.signErr != nil {
 				assert.True(t, errors.Is(err, test.signErr))
 				return
 			}
 			assert.NoError(t, err)
 
-			err = test.ms.VerifySignature(test.msg, test.pubKey)
+			pubKeysWhichVerified, err := test.ms.VerifySignatures(test.msg, test.minValid, test.pubKeys)
 			if test.verfErr != nil {
 				assert.True(t, errors.Is(err, test.verfErr))
 				return
 			}
+
 			assert.NoError(t, err)
+			assert.EqualValues(t, test.pubKeysWhichVerified, pubKeysWhichVerified)
 		})
 	}
 }

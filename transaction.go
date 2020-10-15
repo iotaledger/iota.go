@@ -115,7 +115,7 @@ func (t *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) 
 
 	var b bytes.Buffer
 	if err := binary.Write(&b, binary.LittleEndian, TransactionPayloadTypeID); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize transaction ID", err)
+		return nil, fmt.Errorf("%w: unable to serialize transaction payload ID", err)
 	}
 
 	// write transaction
