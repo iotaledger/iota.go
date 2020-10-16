@@ -10,7 +10,7 @@ import (
 )
 
 // Defines the type of transaction.
-type TransactionEssenceType = uint32
+type TransactionEssenceType = byte
 
 const (
 	// Denotes a standard transaction essence.
@@ -76,7 +76,7 @@ var (
 // TransactionEssenceSelector implements SerializableSelectorFunc for transaction essence types.
 func TransactionEssenceSelector(txType uint32) (Serializable, error) {
 	var seri Serializable
-	switch txType {
+	switch byte(txType) {
 	case TransactionEssenceNormal:
 		seri = &TransactionEssence{}
 	default:
@@ -107,14 +107,14 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 		if err := checkMinByteLength(TransactionEssenceMinByteSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid transaction essence bytes: %w", err)
 		}
-		if err := checkType(data, TransactionEssenceNormal); err != nil {
+		if err := checkTypeByte(data, TransactionEssenceNormal); err != nil {
 			return 0, fmt.Errorf("unable to deserialize transaction essence: %w", err)
 		}
 	}
 
 	// skip type byte
-	bytesReadTotal := TypeDenotationByteSize
-	data = data[TypeDenotationByteSize:]
+	bytesReadTotal := SmallTypeDenotationByteSize
+	data = data[SmallTypeDenotationByteSize:]
 
 	inputs, inputBytesRead, err := DeserializeArrayOfObjects(data, deSeriMode, TypeDenotationByte, InputSelector, &inputsArrayBound)
 	if err != nil {
@@ -179,7 +179,7 @@ func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []b
 	}
 
 	var buf bytes.Buffer
-	if err := binary.Write(&buf, binary.LittleEndian, TransactionEssenceNormal); err != nil {
+	if err := buf.WriteByte(TransactionEssenceNormal); err != nil {
 		return nil, fmt.Errorf("%w: unable to serialize transaction essence type ID", err)
 	}
 
@@ -337,7 +337,7 @@ func (u *TransactionEssence) SyntacticallyValidate() error {
 // jsontransactionessenceselector selects the json transaction essence object for the given type.
 func jsontransactionessenceselector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
-	switch uint32(ty) {
+	switch byte(ty) {
 	case TransactionEssenceNormal:
 		obj = &jsontransactionessence{}
 	default:
@@ -347,7 +347,7 @@ func jsontransactionessenceselector(ty int) (JSONSerializable, error) {
 	return obj, nil
 }
 
-// jsontransactionessence defines the json representation of an TransactionEssence.
+// jsontransactionessence defines the json representation of a TransactionEssence.
 type jsontransactionessence struct {
 	Type    int                `json:"type"`
 	Inputs  []*json.RawMessage `json:"inputs"`

@@ -103,7 +103,7 @@ func randTransactionEssence() (*iota.TransactionEssence, []byte) {
 	var buf bytes.Buffer
 
 	tx := &iota.TransactionEssence{}
-	must(binary.Write(&buf, binary.LittleEndian, iota.TransactionEssenceNormal))
+	must(buf.WriteByte(iota.TransactionEssenceNormal))
 
 	inputsBytes := iota.LexicalOrderedByteSlices{}
 	inputCount := rand.Intn(10) + 1
