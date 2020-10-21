@@ -232,6 +232,11 @@ func SignatureAddress(fragments []Trytes, hashToSign Hash, spongeFunc ...SpongeF
 			return "", err
 		}
 
+		// for backward compatibility with previous validation rules, non-zero 243rd trits in the signature are ignored
+		for j := HashTrinarySize - 1; j < len(fragmentTrits); j += HashTrinarySize {
+			fragmentTrits[j] = 0
+		}
+
 		// for longer signatures (multisig) cycle through the hash fragments to compute the digest
 		frag := i % (HashTrytesSize / KeySegmentsPerFragment)
 		digest, err := Digest(normalized[frag*KeySegmentsPerFragment:(frag+1)*KeySegmentsPerFragment], fragmentTrits, h)
