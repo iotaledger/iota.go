@@ -48,54 +48,54 @@ const (
 
 	// NodeAPIRouteInfo is the route for getting the node info.
 	// GET returns the node info.
-	NodeAPIRouteInfo = "/info"
+	NodeAPIRouteInfo = "/api/v1/info"
 
 	// NodeAPIRouteTips is the route for getting two tips.
 	// GET returns the tips.
-	NodeAPIRouteTips = "/tips"
+	NodeAPIRouteTips = "/api/v1/tips"
 
 	// NodeAPIRouteMessageMetadata is the route for getting message metadata by it's messageID.
 	// GET returns message metadata (including info about "promotion/reattachment needed").
-	NodeAPIRouteMessageMetadata = "/messages/%s/metadata"
+	NodeAPIRouteMessageMetadata = "/api/v1/messages/%s/metadata"
 
 	// NodeAPIRouteMessageBytes is the route for getting message raw data by it's messageID.
 	// GET returns raw message data (bytes).
-	NodeAPIRouteMessageBytes = "/messages/%s/raw"
+	NodeAPIRouteMessageBytes = "/api/v1/messages/%s/raw"
 
 	// NodeAPIRouteMessageChildren is the route for getting message IDs of the children of a message, identified by it's messageID.
 	// GET returns the message IDs of all children.
-	NodeAPIRouteMessageChildren = "/messages/%s/children"
+	NodeAPIRouteMessageChildren = "/api/v1/messages/%s/children"
 
 	// NodeAPIRouteMessages is the route for getting message IDs or creating new messages.
 	// GET with query parameter (mandatory) returns all message IDs that fit these filter criteria (query parameters: "index").
 	// POST creates a single new message and returns the new message ID.
-	NodeAPIRouteMessages = "/messages"
+	NodeAPIRouteMessages = "/api/v1/messages"
 
 	// NodeAPIRouteMilestone is the route for getting a milestone by it's milestoneIndex.
 	// GET returns the milestone.
-	NodeAPIRouteMilestone = "/milestones/%s"
+	NodeAPIRouteMilestone = "/api/v1/milestones/%s"
 
 	// NodeAPIRouteOutput is the route for getting outputs by their outputID (transactionHash + outputIndex).
 	// GET returns the output.
-	NodeAPIRouteOutput = "/outputs/%s"
+	NodeAPIRouteOutput = "/api/v1/outputs/%s"
 
 	// NodeAPIRouteAddressBalance is the route for getting the total balance of all unspent outputs of an address.
 	// GET returns the balance of all unspent outputs of this address.
-	NodeAPIRouteAddressBalance = "/addresses/%s"
+	NodeAPIRouteAddressBalance = "/api/v1/addresses/%s"
 
 	// NodeAPIRouteAddressOutputs is the route for getting all output IDs for an address.
 	// GET returns the outputIDs for all outputs of this address (optional query parameters: "include-spent").
-	NodeAPIRouteAddressOutputs = "/addresses/%s/outputs"
+	NodeAPIRouteAddressOutputs = "/api/v1/addresses/%s/outputs"
 
 	// NodeAPIRoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
-	NodeAPIRoutePeer = "/peers/%s"
+	NodeAPIRoutePeer = "/api/v1/peers/%s"
 
 	// NodeAPIRoutePeers is the route for getting all peers of the node.
 	// GET returns a list of all peers.
 	// POST adds a new peer.
-	NodeAPIRoutePeers = "/peers"
+	NodeAPIRoutePeers = "/api/v1/peers"
 )
 
 // NewNodeAPI returns a new NodeAPI with the given BaseURL and HTTPClient.
