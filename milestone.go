@@ -27,8 +27,6 @@ const (
 	// payload type+index+timestamp+parent1+parent2+inclusion-merkle-proof+pubkeys-length+pubkey+signature
 	MilestoneBinSerializedMinSize = TypeDenotationByteSize + UInt32ByteSize + UInt64ByteSize + MessageIDLength + MessageIDLength +
 		MilestoneInclusionMerkleProofLength + OneByte + ed25519.PublicKeySize + OneByte + MilestoneSignatureLength
-	// Defines the size of a milestone payload without the signatures.
-	MilestoneBinSerializedSizeWithoutSignatures = MilestoneBinSerializedMinSize - MilestoneSignatureLength
 	// MaxSignaturesInAMilestone is the maximum amount of signatures in a milestone.
 	MaxSignaturesInAMilestone = 255
 	// MinSignaturesInAMilestone is the minimum amount of signatures in a milestone.
