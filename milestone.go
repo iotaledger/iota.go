@@ -21,48 +21,87 @@ const (
 	MilestoneSignatureLength = ed25519.SignatureSize
 	// Defines the length of a Milestone ID.
 	MilestoneIDLength = blake2b.Size256
+	// Defines the length of a public key within a milestone.
+	MilestonePublicKeyLength = ed25519.PublicKeySize
 	// Defines the serialized size of a milestone payload.
-	MilestoneBinSerializedMinSize = TypeDenotationByteSize + UInt64ByteSize + UInt64ByteSize + MilestoneInclusionMerkleProofLength + OneByte + MilestoneSignatureLength
-	// Defines the size of a milestone payload without the signatures.
-	MilestoneBinSerializedSizeWithoutSignatures = MilestoneBinSerializedMinSize - MilestoneSignatureLength
-	// Defines the size of the to be signed data of a milestone. Consists of: message version,  message parents, payload length,
-	// payload type, milestone index+timestamp+inclusion merkle proof+signatures count
-	MilestoneSignatureInputSize = OneByte + MessageIDLength*2 + PayloadLengthByteSize + MilestoneBinSerializedSizeWithoutSignatures
+	// payload type+index+timestamp+parent1+parent2+inclusion-merkle-proof+pubkeys-length+pubkey+signature
+	MilestoneBinSerializedMinSize = TypeDenotationByteSize + UInt32ByteSize + UInt64ByteSize + MessageIDLength + MessageIDLength +
+		MilestoneInclusionMerkleProofLength + OneByte + ed25519.PublicKeySize + OneByte + MilestoneSignatureLength
 	// MaxSignaturesInAMilestone is the maximum amount of signatures in a milestone.
 	MaxSignaturesInAMilestone = 255
+	// MinSignaturesInAMilestone is the minimum amount of signatures in a milestone.
+	MinSignaturesInAMilestone = 1
+	// MaxPublicKeysInAMilestone is the maximum amount of public keys in a milestone.
+	MaxPublicKeysInAMilestone = 255
+	// MinPublicKeysInAMilestone is the minimum amount of public keys in a milestone.
+	MinPublicKeysInAMilestone = 1
 )
 
 var (
-	// Returned if the minimum amount of valid signatures on a milestone isn't reached.
-	ErrMilestoneMinSigsThresholdNotReached = errors.New("did not reach minimum amount of valid signatures")
-	// Returned if a to be deserialized milestone does not contain at least one signature.
-	ErrMilestoneInvalidSignatureCount = errors.New("a milestone must hold at least one signature")
+	// Returned if a to be deserialized Milestone does not contain at least one signature.
+	ErrMilestoneTooFewSignatures = errors.New("a milestone must hold at least one signature")
+	// Returned if there are less signatures within a Milestone than the min. threshold.
+	ErrMilestoneTooFewSignaturesForVerificationThreshold = errors.New("too few signatures for verification")
+	// Returned if a to be deserialized Milestone does not contain at least one public key.
+	ErrMilestoneTooFewPublicKeys = errors.New("a milestone must hold at least one public key")
+	// Returned if the Milestone public keys are not in lexical order when serialized.
+	ErrMilestonePublicKeyOrderViolatesLexicalOrder = errors.New("public keys must be in their lexical order (byte wise) when serialized")
 	// Returned when a MilestoneSigningFunc produces less signatures than expected.
-	ErrMilestoneProducedSigsCountMismatch = errors.New("produced and wanted signature count mismatch")
-	// Returned when a milestone holds more than 255 signatures.
+	ErrMilestoneProducedSignaturesCountMismatch = errors.New("produced and wanted signature count mismatch")
+	// Returned when the count of signatures and public keys within a Milestone don't match.
+	ErrMilestoneSignaturesPublicKeyCountMismatch = errors.New("milestone signatures and public keys count must be equal")
+	// Returned when a Milestone holds more than 255 signatures.
 	ErrMilestoneTooManySignatures = fmt.Errorf("a milestone can hold max %d signatures", MaxSignaturesInAMilestone)
+	// Returned when a Milestone holds more than 255 public keys.
+	ErrMilestoneTooManyPublicKeys = fmt.Errorf("a milestone can hold max %d public keys", MaxPublicKeysInAMilestone)
 	// Returned when an invalid min signatures threshold is given the the verification function.
-	ErrMilestoneInvalidMinSigsThreshold = fmt.Errorf("min threshold must be at least 1")
-	// Returned when the same public key has been seen multiple times during milestone signatures verification.
-	ErrMilestoneSigVerificationDupPublicKeys = fmt.Errorf("duplicated public key encountered during milestone signatures verification")
+	ErrMilestoneInvalidMinSignatureThreshold = fmt.Errorf("min threshold must be at least 1")
+	// Returned when the same public key occur within a Milestone.
+	ErrMilestoneDupedPublicKeys = fmt.Errorf("milestone public keys must be unique")
+	// Returned when a Milestone contains a public key which isn't in the applicable public key set.
+	ErrMilestoneNonApplicablePublicKey = fmt.Errorf("non applicable public key found")
+	// Returned when a min. signature threshold is greater than a given applicable public key set.
+	ErrMilestoneSignatureThresholdGreaterThanApplicablePublicKeySet = fmt.Errorf("the min. signature threshold must be less or equal the applicable public key set")
+	// Returned when a Milestone's signature is invalid.
+	ErrMilestoneInvalidSignature = fmt.Errorf("invalid milestone signature")
+	// Returned when a InMemoryEd25519MilestoneSigner is missing a private key.
+	ErrMilestoneInMemorySignerPrivateKeyMissing = fmt.Errorf("private key missing")
+
+	// restrictions around public keys within a Milestone.
+	milestonePublicKeyArrayRules = ArrayRules{
+		ElementBytesLexicalOrderErr: ErrMilestonePublicKeyOrderViolatesLexicalOrder,
+	}
 )
 
-// MilestoneID is the ID of a Milestone.
-type MilestoneID = [MilestoneIDLength]byte
+type (
+	// MilestoneID is the ID of a Milestone.
+	MilestoneID = [MilestoneIDLength]byte
+	// MilestonePublicKey is a public key within a Milestone.
+	MilestonePublicKey = [MilestonePublicKeyLength]byte
+	// MilestonePublicKeySet is a set of unique MilestonePublicKey.
+	MilestonePublicKeySet = map[MilestonePublicKey]struct{}
+	// MilestoneSignature is a signature within a Milestone.
+	MilestoneSignature = [MilestoneSignatureLength]byte
+	// MilestonePublicKeyMapping is a mapping from a public key to a private key.
+	MilestonePublicKeyMapping = map[MilestonePublicKey]ed25519.PrivateKey
+)
 
-// Milestone represents a special payload which defines the inclusion set
-// of other messages in the Tangle. It holds the inclusion merkle proof defining which
-// messages have been applied to the ledger. A Milestone holds multiple signatures
-// of which a minimum amount have to be valid in order to deem the entire Milestone valid.
+// Milestone represents a special payload which defines the inclusion set of other messages in the Tangle.
 type Milestone struct {
 	// The index of this milestone.
-	Index uint64
+	Index uint32
 	// The time at which this milestone was issued.
 	Timestamp uint64
+	// The 1st parent where this milestone attaches to.
+	Parent1 [MessageIDLength]byte
+	// The 2nd parent where this milestone attaches to.
+	Parent2 [MessageIDLength]byte
 	// The inclusion merkle proof of included/newly confirmed transaction IDs.
 	InclusionMerkleProof [MilestoneInclusionMerkleProofLength]byte
+	// The public keys validating the signatures of the milestone.
+	PublicKeys []MilestonePublicKey
 	// The signatures held by the milestone.
-	Signatures [][MilestoneSignatureLength]byte
+	Signatures []MilestoneSignature
 }
 
 // ID computes the ID of the Milestone.
@@ -75,66 +114,88 @@ func (m *Milestone) ID() (*MilestoneID, error) {
 	return &h, nil
 }
 
-// VerifySignatures verifies that at least minValid signatures are valid via the given public keys.
-// Returns the public keys which successfully verified a signature, this can be used to determine
-// whether a public key needs to be updated. pubKeys must not contain duplicated public keys.
-func (m *Milestone) VerifySignatures(msg *Message, minValid int, pubKeys []ed25519.PublicKey) ([]ed25519.PublicKey, error) {
-	if minValid == 0 {
-		return nil, ErrMilestoneInvalidMinSigsThreshold
+// Essence returns the essence bytes (the bytes to be signed) of the Milestone.
+func (m *Milestone) Essence() ([]byte, error) {
+	var buf bytes.Buffer
+	if err := binary.Write(&buf, binary.LittleEndian, m.Index); err != nil {
+		return nil, fmt.Errorf("unable to serialize milestone index for essence: %w", err)
+	}
+	if err := binary.Write(&buf, binary.LittleEndian, m.Timestamp); err != nil {
+		return nil, fmt.Errorf("unable to serialize milestone timestamp for essence: %w", err)
+	}
+	if _, err := buf.Write(m.Parent1[:]); err != nil {
+		return nil, fmt.Errorf("unable to serialize milestone parent 1 for essence: %w", err)
+	}
+	if _, err := buf.Write(m.Parent2[:]); err != nil {
+		return nil, fmt.Errorf("unable to serialize milestone parent 2 for essence: %w", err)
+	}
+	if _, err := buf.Write(m.InclusionMerkleProof[:]); err != nil {
+		return nil, fmt.Errorf("unable to serialize milestone inclusion merkle proof for essence: %w", err)
+	}
+	if len(m.PublicKeys) < MinPublicKeysInAMilestone {
+		return nil, fmt.Errorf("unable to serialize milestone as essence: %w", ErrMilestoneTooFewPublicKeys)
+	}
+	if err := buf.WriteByte(byte(len(m.PublicKeys))); err != nil {
+		return nil, fmt.Errorf("unable to serialize milestone public keys count for essence: %w", err)
+	}
+	for i, pubKey := range m.PublicKeys {
+		if _, err := buf.Write(pubKey[:]); err != nil {
+			return nil, fmt.Errorf("unable to serialize milestone public key #%d for essence: %w", i, err)
+		}
+	}
+	return buf.Bytes(), nil
+}
+
+// VerifySignatures verifies that min. minSigThreshold signatures occur in the Milestone and that all
+// signatures within it are valid with respect to the given applicable public key set.
+// The public key set must only contain keys applicable for the given Milestone index.
+// The caller must only call this function on a Milestone which was deserialized with validation.
+func (m *Milestone) VerifySignatures(minSigThreshold int, applicablePubKeys MilestonePublicKeySet) error {
+	switch {
+	case minSigThreshold == 0:
+		return ErrMilestoneInvalidMinSignatureThreshold
+	case len(m.Signatures) == 0:
+		return ErrMilestoneTooFewSignatures
+	case len(m.Signatures) != len(m.PublicKeys):
+		return ErrMilestoneSignaturesPublicKeyCountMismatch
+	case len(m.Signatures) < minSigThreshold:
+		return fmt.Errorf("%w: wanted min. %d but only had %d", ErrMilestoneTooFewSignaturesForVerificationThreshold, minSigThreshold, len(m.Signatures))
+	case len(applicablePubKeys) < minSigThreshold:
+		return ErrMilestoneSignatureThresholdGreaterThanApplicablePublicKeySet
 	}
 
-	if len(m.Signatures) == 0 {
-		return nil, ErrMilestoneInvalidSignatureCount
-	}
-
-	msSigInput, err := m.SignatureInput(msg, byte(len(m.Signatures)))
+	msEssence, err := m.Essence()
 	if err != nil {
-		return nil, fmt.Errorf("unable to compute milestone signature input for signature verification: %w", err)
+		return fmt.Errorf("unable to compute milestone essence for signature verification: %w", err)
 	}
 
-	// TODO: should len(m.Signatures) == len(pubKeys)?
-	sigs := make([][MilestoneSignatureLength]byte, len(m.Signatures))
-	copy(sigs, m.Signatures)
-
-	valid := make([]ed25519.PublicKey, 0)
-	seenPubKeys := map[string]int{}
-	for pubKeyIndex, pubKey := range pubKeys {
-
-		// sanity check that the caller isn't supplying the same
-		// public key multiple times
-		seenPubKeyMapKey := string(pubKey)
-		seenPubKeyIndex, seen := seenPubKeys[seenPubKeyMapKey]
-		if seen {
-			return nil, fmt.Errorf("%w: index %d and %d", ErrMilestoneSigVerificationDupPublicKeys, seenPubKeyIndex, pubKeyIndex)
+	for msPubKeyIndex, msPubKey := range m.PublicKeys {
+		if _, has := applicablePubKeys[msPubKey]; !has {
+			return fmt.Errorf("%w: public key %s is not applicable", ErrMilestoneNonApplicablePublicKey, hex.EncodeToString(msPubKey[:]))
 		}
-		seenPubKeys[seenPubKeyMapKey] = pubKeyIndex
 
-		for sigIndex, sig := range sigs {
-			if ok := ed25519.Verify(pubKey, msSigInput[:], sig[:]); ok {
-				// remove the verified signature since each signature should only match one public key
-				sigs = append(sigs[:sigIndex], sigs[sigIndex+1:]...)
-				valid = append(valid, pubKey)
-				break
-			}
+		if ok := ed25519.Verify(msPubKey[:], msEssence[:], m.Signatures[msPubKeyIndex][:]); !ok {
+			return fmt.Errorf("%w: at index %d, checked against public key %s", ErrMilestoneInvalidSignature, msPubKeyIndex, hex.EncodeToString(msPubKey[:]))
 		}
 	}
 
-	if len(valid) < minValid {
-		return nil, fmt.Errorf("%w: %d out of %d", ErrMilestoneMinSigsThresholdNotReached, len(valid), minValid)
-	}
-
-	return valid, nil
+	return nil
 }
 
 // MilestoneSigningFunc is a function which produces a set of signatures for the given Milestone essence data.
-type MilestoneSigningFunc func(msSigInput [MilestoneSignatureInputSize]byte) ([][MilestoneSignatureLength]byte, error)
+// The given public keys dictate in which order the returned signatures must occur.
+type MilestoneSigningFunc func(pubKeys []MilestonePublicKey, msEssence []byte) ([]MilestoneSignature, error)
 
-// InMemoryEd25519MilestoneSigner is a function which uses the provided Ed25519 private keys to produce signatures for the Milestone essence data.
-func InMemoryEd25519MilestoneSigner(prvKeys ...ed25519.PrivateKey) MilestoneSigningFunc {
-	return func(msSigInput [MilestoneSignatureInputSize]byte) ([][MilestoneSignatureLength]byte, error) {
-		sigs := make([][MilestoneSignatureLength]byte, len(prvKeys))
-		for i, prvKey := range prvKeys {
-			sig := ed25519.Sign(prvKey, msSigInput[:])
+// InMemoryEd25519MilestoneSigner is a function which uses the provided Ed25519 MilestonePublicKeyMapping to produce signatures for the Milestone essence data.
+func InMemoryEd25519MilestoneSigner(prvKeys MilestonePublicKeyMapping) MilestoneSigningFunc {
+	return func(pubKeys []MilestonePublicKey, msEssence []byte) ([]MilestoneSignature, error) {
+		sigs := make([]MilestoneSignature, len(pubKeys))
+		for i, pubKey := range pubKeys {
+			prvKey, ok := prvKeys[pubKey]
+			if !ok {
+				return nil, fmt.Errorf("%w: needed for public key %s", ErrMilestoneInMemorySignerPrivateKeyMissing, hex.EncodeToString(pubKey[:]))
+			}
+			sig := ed25519.Sign(prvKey, msEssence)
 			copy(sigs[i][:], sig)
 		}
 		return sigs, nil
@@ -143,26 +204,23 @@ func InMemoryEd25519MilestoneSigner(prvKeys ...ed25519.PrivateKey) MilestoneSign
 
 // Sign produces the signatures with the given envelope message and updates the Signatures field of the Milestone
 // with the resulting signatures of the given MilestoneSigningFunc.
-func (m *Milestone) Sign(msg *Message, sigsCount byte, signingFunc MilestoneSigningFunc) error {
-	msSigInput, err := m.SignatureInput(msg, sigsCount)
+func (m *Milestone) Sign(signingFunc MilestoneSigningFunc) error {
+	msEssence, err := m.Essence()
 	if err != nil {
-		return fmt.Errorf("unable to compute milestone signature input for signing: %w", err)
+		return fmt.Errorf("unable to compute milestone essence for signing: %w", err)
 	}
 
-	sigs, err := signingFunc(msSigInput)
+	sigs, err := signingFunc(m.PublicKeys, msEssence)
 	if err != nil {
 		return fmt.Errorf("unable to produce milestone signatures: %w", err)
 	}
 
-	if int(sigsCount) != len(sigs) {
-		return fmt.Errorf("%w: wanted %d signatures but only produced %d", ErrMilestoneProducedSigsCountMismatch, sigsCount, len(sigs))
-	}
-
-	if len(sigs) == 0 {
-		return fmt.Errorf("%w: not enough signatures were produced during signing", ErrMilestoneInvalidSignatureCount)
-	}
-
-	if len(sigs) > MaxSignaturesInAMilestone {
+	switch {
+	case len(m.PublicKeys) != len(sigs):
+		return fmt.Errorf("%w: wanted %d signatures but only produced %d", ErrMilestoneProducedSignaturesCountMismatch, len(m.PublicKeys), len(sigs))
+	case len(sigs) < MinSignaturesInAMilestone:
+		return fmt.Errorf("%w: not enough signatures were produced during signing", ErrMilestoneTooFewSignatures)
+	case len(sigs) > MaxSignaturesInAMilestone:
 		return fmt.Errorf("%w: too many signatures were produced during signing", ErrMilestoneTooManySignatures)
 	}
 
@@ -170,45 +228,13 @@ func (m *Milestone) Sign(msg *Message, sigsCount byte, signingFunc MilestoneSign
 	return nil
 }
 
-// SignatureInput returns the input data to be signed.
-func (m *Milestone) SignatureInput(msg *Message, sigsCount byte) (sigInput [MilestoneSignatureInputSize]byte, err error) {
-	var msData []byte
-	msData, err = m.Serialize(DeSeriModeNoValidation)
-	if err != nil {
-		return
-	}
-
-	msSigRelevantData := msData[:MilestoneBinSerializedSizeWithoutSignatures]
-
-	var offset int
-	sigInput[0] = msg.Version
-	offset += OneByte
-	// parents
-	copy(sigInput[offset:offset+MessageIDLength], msg.Parent1[:])
-	offset += MessageIDLength
-	copy(sigInput[offset:offset+MessageIDLength], msg.Parent2[:])
-	offset += MessageIDLength
-	// payload length
-	// we need to calculate how big the milestone will be in its serialized form
-	msSerializedSize := MilestoneBinSerializedSizeWithoutSignatures + MilestoneSignatureLength*int(sigsCount)
-	binary.LittleEndian.PutUint32(sigInput[offset:offset+UInt32ByteSize], uint32(msSerializedSize))
-	offset += UInt32ByteSize
-	// milestone data without signatures
-	copy(sigInput[offset:], msSigRelevantData)
-
-	// override signature count
-	sigInput[len(sigInput)-1] = sigsCount
-
-	return
-}
-
 func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := checkMinByteLength(MilestoneBinSerializedMinSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid milestone payload bytes: %w", err)
+			return 0, fmt.Errorf("invalid milestone bytes: %w", err)
 		}
 		if err := checkType(data, MilestonePayloadTypeID); err != nil {
-			return 0, fmt.Errorf("unable to deserialize milestone payload: %w", err)
+			return 0, fmt.Errorf("unable to deserialize milestone: %w", err)
 		}
 	}
 
@@ -216,19 +242,60 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 	data = data[TypeDenotationByteSize:]
 
 	// read index
-	m.Index = binary.LittleEndian.Uint64(data)
-	data = data[UInt64ByteSize:]
-	bytesReadTotal += UInt64ByteSize
+	m.Index = binary.LittleEndian.Uint32(data)
+	data = data[UInt32ByteSize:]
+	bytesReadTotal += UInt32ByteSize
 
 	m.Timestamp = binary.LittleEndian.Uint64(data)
 	data = data[UInt64ByteSize:]
 	// read timestamp
 	bytesReadTotal += UInt64ByteSize
 
+	// read parents
+	copy(m.Parent1[:], data[:MessageIDLength])
+	data = data[MessageIDLength:]
+	copy(m.Parent2[:], data[:MessageIDLength])
+	data = data[MessageIDLength:]
+	bytesReadTotal += 2 * MessageIDLength
+
 	// read inclusion set merkle proof
 	copy(m.InclusionMerkleProof[:], data[:MilestoneInclusionMerkleProofLength])
 	data = data[MilestoneInclusionMerkleProofLength:]
 	bytesReadTotal += MilestoneInclusionMerkleProofLength
+
+	// read pub keys count
+	pubKeysCount := data[0]
+	data = data[OneByte:]
+	bytesReadTotal += OneByte
+
+	if pubKeysCount == 0 {
+		return 0, fmt.Errorf("unable to deserialize milestone payload: %w", ErrMilestoneTooFewPublicKeys)
+	}
+
+	// deserialize public keys
+	pubKeys := make([]MilestonePublicKey, pubKeysCount)
+	for i := 0; i < int(pubKeysCount); i++ {
+		if len(data) < MilestonePublicKeyLength {
+			return 0, fmt.Errorf("unable to deserialize public key in milestone payload: %w", ErrDeserializationNotEnoughData)
+		}
+		copy(pubKeys[i][:], data[:MilestonePublicKeyLength])
+		data = data[MilestonePublicKeyLength:]
+	}
+	bytesReadTotal += int(pubKeysCount) * MilestonePublicKeyLength
+	m.PublicKeys = pubKeys
+
+	if deSeriMode.HasMode(DeSeriModePerformValidation) {
+		pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderValidator()
+		for i := range m.PublicKeys {
+			if err := pubKeyLexicalOrderValidator(i, m.PublicKeys[i][:]); err != nil {
+				return 0, err
+			}
+		}
+	}
+
+	if len(data) == 0 {
+		return 0, fmt.Errorf("unable to deserialize signature count in milestone payload: %w", ErrDeserializationNotEnoughData)
+	}
 
 	// read signature count
 	sigCount := data[0]
@@ -236,10 +303,11 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 	bytesReadTotal += OneByte
 
 	if sigCount == 0 {
-		return 0, fmt.Errorf("unable to deserialize milestone payload: %w", ErrMilestoneInvalidSignatureCount)
+		return 0, fmt.Errorf("unable to deserialize milestone payload: %w", ErrMilestoneTooFewSignatures)
 	}
 
-	sigs := make([][MilestoneSignatureLength]byte, sigCount)
+	// deserialize signatures
+	sigs := make([]MilestoneSignature, sigCount)
 	for i := 0; i < int(sigCount); i++ {
 		if len(data) < MilestoneSignatureLength {
 			return 0, fmt.Errorf("unable to deserialize signature in milestone payload: %w", ErrDeserializationNotEnoughData)
@@ -248,43 +316,72 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		data = data[MilestoneSignatureLength:]
 	}
 	bytesReadTotal += int(sigCount) * MilestoneSignatureLength
-
 	m.Signatures = sigs
-
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		// TODO: validation
-	}
 
 	return bytesReadTotal, nil
 }
 
 func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		// TODO: validation
+		pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderValidator()
+		for i := range m.PublicKeys {
+			if err := pubKeyLexicalOrderValidator(i, m.PublicKeys[i][:]); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	var b bytes.Buffer
 	if err := binary.Write(&b, binary.LittleEndian, MilestonePayloadTypeID); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize milestone payload ID", err)
+		return nil, fmt.Errorf("unable to serialize milestone payload ID: %w", err)
 	}
+
 	if err := binary.Write(&b, binary.LittleEndian, m.Index); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize milestone index", err)
+		return nil, fmt.Errorf("unable to serialize milestone index: %w", err)
 	}
+
 	if err := binary.Write(&b, binary.LittleEndian, m.Timestamp); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize milestone timestamp", err)
+		return nil, fmt.Errorf("unable to serialize milestone timestamp: %w", err)
 	}
+
+	if _, err := b.Write(m.Parent1[:]); err != nil {
+		return nil, fmt.Errorf("unable to serialize milestone parent 1: %w", err)
+	}
+
+	if _, err := b.Write(m.Parent2[:]); err != nil {
+		return nil, fmt.Errorf("unable to serialize milestone parent 2: %w", err)
+	}
+
 	if _, err := b.Write(m.InclusionMerkleProof[:]); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize milestone inclusion merkle proof", err)
+		return nil, fmt.Errorf("unable to serialize milestone inclusion merkle proof: %w", err)
 	}
-	if len(m.Signatures) > MaxSignaturesInAMilestone {
-		return nil, fmt.Errorf("%w: unable to serialize milestone", ErrMilestoneTooManySignatures)
+
+	switch {
+	case len(m.PublicKeys) > MaxPublicKeysInAMilestone:
+		return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooManyPublicKeys)
+	case len(m.PublicKeys) < MinPublicKeysInAMilestone:
+		return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooFewPublicKeys)
+	case len(m.Signatures) > MaxSignaturesInAMilestone:
+		return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooManySignatures)
+	case len(m.Signatures) < MinSignaturesInAMilestone:
+		return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooFewSignatures)
 	}
+
+	if err := b.WriteByte(byte(len(m.PublicKeys))); err != nil {
+		return nil, fmt.Errorf("unable to serialize milestone public key count: %w", err)
+	}
+	for i, pubKey := range m.PublicKeys {
+		if _, err := b.Write(pubKey[:]); err != nil {
+			return nil, fmt.Errorf("unable to serialize milestone public key at pos %d: %w", i, err)
+		}
+	}
+
 	if err := b.WriteByte(byte(len(m.Signatures))); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize milestone signatures count", err)
+		return nil, fmt.Errorf("unable to serialize milestone signatures count: %w", err)
 	}
 	for i, sig := range m.Signatures {
 		if _, err := b.Write(sig[:]); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize milestone signature at pos %d", err, i)
+			return nil, fmt.Errorf("unable to serialize milestone signature at pos %d: %w", i, err)
 		}
 	}
 
@@ -333,11 +430,11 @@ func (j *jsonmilestonepayload) ToSerializable() (Serializable, error) {
 	}
 
 	payload := &Milestone{}
-	payload.Index = uint64(j.Index)
+	payload.Index = uint32(j.Index)
 	payload.Timestamp = uint64(j.Timestamp)
 	copy(payload.InclusionMerkleProof[:], inclusionMerkleProofBytes)
 
-	payload.Signatures = make([][MilestoneSignatureLength]byte, len(j.Signatures))
+	payload.Signatures = make([]MilestoneSignature, len(j.Signatures))
 	for i, sigHex := range j.Signatures {
 		sigBytes, err := hex.DecodeString(sigHex)
 		if err != nil {

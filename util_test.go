@@ -40,8 +40,15 @@ func randTrytes(length int) trinary.Trytes {
 }
 
 func rand32ByteHash() [32]byte {
-	var h [iota.TransactionIDLength]byte
+	var h [32]byte
 	b := randBytes(32)
+	copy(h[:], b)
+	return h
+}
+
+func rand64ByteHash() [64]byte {
+	var h [64]byte
+	b := randBytes(64)
 	copy(h[:], b)
 	return h
 }
@@ -153,12 +160,23 @@ func randMilestone() (*iota.Milestone, []byte) {
 	inclusionMerkleProof := randBytes(iota.MilestoneInclusionMerkleProofLength)
 	const sigsCount = 3
 	msPayload := &iota.Milestone{
-		Index:     uint64(rand.Intn(1000)),
+		Index:     uint32(rand.Intn(1000)),
 		Timestamp: uint64(time.Now().Unix()),
+		Parent1:   rand32ByteHash(),
+		Parent2:   rand32ByteHash(),
 		InclusionMerkleProof: func() [iota.MilestoneInclusionMerkleProofLength]byte {
 			b := [iota.MilestoneInclusionMerkleProofLength]byte{}
 			copy(b[:], inclusionMerkleProof)
 			return b
+		}(),
+		PublicKeys: func() [][iota.MilestonePublicKeyLength]byte {
+			msPubKeys := make([][iota.MilestonePublicKeyLength]byte, sigsCount)
+			for i := 0; i < sigsCount; i++ {
+				msPubKeys[i] = rand32ByteHash()
+				// ensure lexical ordering
+				msPubKeys[i][0] = byte(i)
+			}
+			return msPubKeys
 		}(),
 		Signatures: func() [][iota.MilestoneSignatureLength]byte {
 			msSigs := make([][iota.MilestoneSignatureLength]byte, sigsCount)
@@ -173,8 +191,20 @@ func randMilestone() (*iota.Milestone, []byte) {
 	must(binary.Write(&b, binary.LittleEndian, iota.MilestonePayloadTypeID))
 	must(binary.Write(&b, binary.LittleEndian, msPayload.Index))
 	must(binary.Write(&b, binary.LittleEndian, msPayload.Timestamp))
+	if _, err := b.Write(msPayload.Parent1[:]); err != nil {
+		panic(err)
+	}
+	if _, err := b.Write(msPayload.Parent2[:]); err != nil {
+		panic(err)
+	}
 	if _, err := b.Write(msPayload.InclusionMerkleProof[:]); err != nil {
 		panic(err)
+	}
+	must(b.WriteByte(sigsCount))
+	for _, pubKey := range msPayload.PublicKeys {
+		if _, err := b.Write(pubKey[:]); err != nil {
+			panic(err)
+		}
 	}
 	must(b.WriteByte(sigsCount))
 	for _, sig := range msPayload.Signatures {
