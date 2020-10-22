@@ -16,7 +16,7 @@ func TestMilestone_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iota.Serializable
+		target *iota.Milestone
 		err    error
 	}
 	tests := []test{
