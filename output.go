@@ -1,7 +1,6 @@
 package iota
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -61,21 +60,20 @@ func (s *SigLockedSingleOutput) Deserialize(data []byte, deSeriMode DeSerializat
 		}
 	}
 
-	data = data[SmallTypeDenotationByteSize:]
-	addr, addrBytesRead, err := DeserializeObject(data, deSeriMode, TypeDenotationByte, AddressSelector)
+	bytesRead, err := NewDeserializer(data).
+		Skip(SmallTypeDenotationByteSize, func(err error) error {
+			return fmt.Errorf("unable to skip signature locked single output type during deserialization: %w", err)
+		}).
+		ReadObject(func(seri Serializable) { s.Address = seri }, deSeriMode, TypeDenotationByte, AddressSelector, func(err error) error {
+			return fmt.Errorf("unable to deserialize address for signature locked single output: %w", err)
+		}).
+		ReadNum(&s.Amount, func(err error) error {
+			return fmt.Errorf("unable to deserialize amount for signature locked single output: %w", err)
+		}).Done()
+
 	if err != nil {
-		return 0, err
+		return bytesRead, err
 	}
-	s.Address = addr
-
-	data = data[addrBytesRead:]
-
-	if len(data) < UInt64ByteSize {
-		return 0, fmt.Errorf("%w: unable to deserialize signature locked single output", ErrDeserializationNotEnoughData)
-	}
-
-	// read amount of the deposit
-	s.Amount = binary.LittleEndian.Uint64(data)
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := outputAmountValidator(-1, s); err != nil {
@@ -83,7 +81,7 @@ func (s *SigLockedSingleOutput) Deserialize(data []byte, deSeriMode DeSerializat
 		}
 	}
 
-	return SmallTypeDenotationByteSize + addrBytesRead + UInt64ByteSize, nil
+	return bytesRead, nil
 }
 
 func (s *SigLockedSingleOutput) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
@@ -91,26 +89,25 @@ func (s *SigLockedSingleOutput) Serialize(deSeriMode DeSerializationMode) (data 
 		if err := outputAmountValidator(-1, s); err != nil {
 			return nil, fmt.Errorf("%w: unable to serialize signature locked single output", err)
 		}
+
+		switch s.Address.(type) {
+		case *WOTSAddress:
+		case *Ed25519Address:
+		default:
+			return nil, fmt.Errorf("%w: signature locked single output defines unknown address", ErrUnknownAddrType)
+		}
 	}
 
-	var b []byte
-	switch s.Address.(type) {
-	case *WOTSAddress:
-		b = make([]byte, SigLockedSingleOutputWOTSAddrBytesSize)
-	case *Ed25519Address:
-		b = make([]byte, SigLockedSingleOutputEd25519AddrBytesSize)
-	default:
-		return nil, fmt.Errorf("%w: signature locked single output defines unknown address", ErrUnknownAddrType)
-	}
-
-	b[0] = OutputSigLockedSingleOutput
-	addrBytes, err := s.Address.Serialize(deSeriMode)
-	if err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize address within signature locked single output", err)
-	}
-	copy(b[SmallTypeDenotationByteSize:], addrBytes)
-	binary.LittleEndian.PutUint64(b[len(b)-UInt64ByteSize:], s.Amount)
-	return b, nil
+	return NewSerializer().
+		WriteNum(OutputSigLockedSingleOutput, func(err error) error {
+			return fmt.Errorf("unable to serialize signature locked single output type ID: %w", err)
+		}).
+		WriteObject(s.Address, deSeriMode, func(err error) error {
+			return fmt.Errorf("unable to serialize signature locked single output address: %w", err)
+		}).
+		WriteNum(s.Amount, func(err error) error {
+			return fmt.Errorf("unable to serialize signature locked single output amount: %w", err)
+		}).Serialize()
 }
 
 func (s *SigLockedSingleOutput) MarshalJSON() ([]byte, error) {

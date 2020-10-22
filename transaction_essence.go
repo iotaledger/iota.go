@@ -1,8 +1,6 @@
 package iota
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -112,59 +110,51 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 		}
 	}
 
-	// skip type byte
-	bytesReadTotal := SmallTypeDenotationByteSize
-	data = data[SmallTypeDenotationByteSize:]
+	bytesRead, err := NewDeserializer(data).
+		Skip(SmallTypeDenotationByteSize, func(err error) error {
+			return fmt.Errorf("unable to skip transaction essence ID during deserialization: %w", err)
+		}).
+		ReadSliceOfObjects(func(seri Serializables) { u.Inputs = seri }, deSeriMode, TypeDenotationByte, InputSelector, &inputsArrayBound, func(err error) error {
+			return fmt.Errorf("unable to deserialize inputs of transaction essence: %w", err)
+		}).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := ValidateInputs(u.Inputs, InputsUTXORefsUniqueValidator()); err != nil {
+					return fmt.Errorf("%w: unable to deserialize inputs of transaction essence since they are invalid", err)
+				}
+			}
+			return nil
+		}).
+		ReadSliceOfObjects(func(seri Serializables) { u.Outputs = seri }, deSeriMode, TypeDenotationByte, OutputSelector, &inputsArrayBound, func(err error) error {
+			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
+		}).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := ValidateOutputs(u.Outputs, OutputsAddrUniqueValidator()); err != nil {
+					return fmt.Errorf("%w: unable to deserialize outputs of transaction essence since they are invalid", err)
+				}
+			}
+			return nil
+		}).
+		ReadPayload(func(seri Serializable) { u.Payload = seri }, deSeriMode, func(err error) error {
+			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
+		}).
+		Done()
 
-	inputs, inputBytesRead, err := DeserializeArrayOfObjects(data, deSeriMode, TypeDenotationByte, InputSelector, &inputsArrayBound)
 	if err != nil {
-		return 0, fmt.Errorf("%w: unable to deserialize inputs of transaction essence", err)
+		return bytesRead, err
 	}
-	bytesReadTotal += inputBytesRead
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := ValidateInputs(inputs, InputsUTXORefsUniqueValidator()); err != nil {
-			return 0, fmt.Errorf("%w: unable to deserialize inputs of transaction essence since they are invalid", err)
-		}
-	}
-	u.Inputs = inputs
-
-	// advance to outputs
-	data = data[inputBytesRead:]
-	outputs, outputBytesRead, err := DeserializeArrayOfObjects(data, deSeriMode, TypeDenotationByte, OutputSelector, &outputsArrayBound)
-	if err != nil {
-		return 0, fmt.Errorf("%w: unable to deserialize outputs of transaction essence", err)
-	}
-	bytesReadTotal += outputBytesRead
-
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := ValidateOutputs(outputs, OutputsAddrUniqueValidator()); err != nil {
-			return 0, fmt.Errorf("%w: unable to deserialize outputs of transaction essence since they are invalid", err)
-		}
-	}
-	u.Outputs = outputs
-
-	// advance to payload
-	data = data[outputBytesRead:]
-
-	payload, payloadBytesRead, err := ParsePayload(data, deSeriMode)
-	if err != nil {
-		return 0, fmt.Errorf("%w: can't parse payload within transaction essence", err)
-	}
-	bytesReadTotal += payloadBytesRead
-
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if payload != nil {
+		if u.Payload != nil {
 			// supports only indexation payloads
-			if _, isIndexationPayload := payload.(*Indexation); !isIndexationPayload {
-				return 0, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", ErrInvalidBytes, payload)
+			if _, isIndexationPayload := u.Payload.(*Indexation); !isIndexationPayload {
+				return 0, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", ErrInvalidBytes, u.Payload)
 			}
 		}
 	}
 
-	u.Payload = payload
-
-	return bytesReadTotal, nil
+	return bytesRead, nil
 }
 
 func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
@@ -178,78 +168,42 @@ func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []b
 		u.SortInputsOutputs()
 	}
 
-	var buf bytes.Buffer
-	if err := buf.WriteByte(TransactionEssenceNormal); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize transaction essence type ID", err)
-	}
-
-	var inputsLexicalOrderValidator LexicalOrderFunc
+	var inputsWrittenConsumer, outputsWrittenConsumer WrittenObjectConsumer
 	if deSeriMode.HasMode(DeSeriModePerformValidation) && inputsArrayBound.ElementBytesLexicalOrder {
-		inputsLexicalOrderValidator = inputsArrayBound.LexicalOrderValidator()
-	}
-
-	// write inputs
-	if err := binary.Write(&buf, binary.LittleEndian, uint16(len(u.Inputs))); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize transaction essence's input count", err)
-	}
-	for i := range u.Inputs {
-		inputSer, err := u.Inputs[i].Serialize(deSeriMode)
-		if err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize input of transaction essence at index %d", err, i)
+		if inputsArrayBound.ElementBytesLexicalOrder {
+			inputsLexicalOrderValidator := inputsArrayBound.LexicalOrderValidator()
+			inputsWrittenConsumer = func(index int, written []byte) error {
+				if err := inputsLexicalOrderValidator(index, written); err != nil {
+					return fmt.Errorf("%w: unable to serialize inputs of transaction essence since inputs are not in lexical order", err)
+				}
+				return nil
+			}
 		}
-		if _, err := buf.Write(inputSer); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize input of transaction essence at index %d to buffer", err, i)
-		}
-		if inputsLexicalOrderValidator != nil {
-			if err := inputsLexicalOrderValidator(i, inputSer); err != nil {
-				return nil, fmt.Errorf("%w: unable to serialize inputs of transaction essence since inputs are not in lexical order", err)
+		if outputsArrayBound.ElementBytesLexicalOrder {
+			outputsLexicalOrderValidator := outputsArrayBound.LexicalOrderValidator()
+			outputsWrittenConsumer = func(index int, written []byte) error {
+				if err := outputsLexicalOrderValidator(index, written); err != nil {
+					return fmt.Errorf("%w: unable to serialize outputs of transaction essence since outputs are not in lexical order", err)
+				}
+				return nil
 			}
 		}
 	}
 
-	var outputsLexicalOrderValidator LexicalOrderFunc
-	if deSeriMode.HasMode(DeSeriModePerformValidation) && outputsArrayBound.ElementBytesLexicalOrder {
-		outputsLexicalOrderValidator = outputsArrayBound.LexicalOrderValidator()
-	}
-
-	// write outputs
-	if err := binary.Write(&buf, binary.LittleEndian, uint16(len(u.Outputs))); err != nil {
-		return nil, err
-	}
-	for i := range u.Outputs {
-		outputSer, err := u.Outputs[i].Serialize(deSeriMode)
-		if err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize output of transaction essence at index %d", err, i)
-		}
-		if _, err := buf.Write(outputSer); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize output of transaction essence at index %d to buffer", err, i)
-		}
-		if outputsLexicalOrderValidator != nil {
-			if err := outputsLexicalOrderValidator(i, outputSer); err != nil {
-				return nil, fmt.Errorf("%w: unable to serialize outputs of transaction essence since outputs are not in lexical order", err)
-			}
-		}
-	}
-
-	// no payload
-	if u.Payload == nil {
-		if err := binary.Write(&buf, binary.LittleEndian, uint32(0)); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize transaction essence's inner zero payload length", err)
-		}
-		return buf.Bytes(), nil
-	}
-
-	// write payload
-	payloadSer, err := u.Payload.Serialize(deSeriMode)
-	if err := binary.Write(&buf, binary.LittleEndian, uint32(len(payloadSer))); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize transaction essence's payload length", err)
-	}
-
-	if _, err := buf.Write(payloadSer); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize transaction essence's payload to buffer", err)
-	}
-
-	return buf.Bytes(), nil
+	return NewSerializer().
+		WriteNum(TransactionEssenceNormal, func(err error) error {
+			return fmt.Errorf("unable to serialize transaction essence type ID: %w", err)
+		}).
+		WriteSliceOfObjects(u.Inputs, deSeriMode, inputsWrittenConsumer, func(err error) error {
+			return fmt.Errorf("unable to serialize transaction essence inputs: %w", err)
+		}).
+		WriteSliceOfObjects(u.Outputs, deSeriMode, outputsWrittenConsumer, func(err error) error {
+			return fmt.Errorf("unable to serialize transaction essence outputs: %w", err)
+		}).
+		WritePayload(u.Payload, deSeriMode, func(err error) error {
+			return fmt.Errorf("unable to serialize transaction essence's embedded output: %w", err)
+		}).
+		Serialize()
 }
 
 func (u *TransactionEssence) MarshalJSON() ([]byte, error) {

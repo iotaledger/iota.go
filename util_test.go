@@ -121,6 +121,7 @@ func randTransactionEssence() (*iota.TransactionEssence, []byte) {
 	}
 
 	sort.Sort(inputsBytes)
+
 	for _, inputData := range inputsBytes {
 		_, err := buf.Write(inputData)
 		must(err)

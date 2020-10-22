@@ -1,8 +1,6 @@
 package iota_test
 
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"sort"
 	"testing"
@@ -124,37 +122,6 @@ func TestDeserializeA(t *testing.T) {
 	assert.Equal(t, seriA[iota.SmallTypeDenotationByteSize:], objA.Key[:])
 }
 
-func TestDeserializeObject(t *testing.T) {
-	seriA := randSerializedA()
-	objA, bytesRead, err := iota.DeserializeObject(seriA, iota.DeSeriModePerformValidation, iota.TypeDenotationByte, DummyTypeSelector)
-	assert.NoError(t, err)
-	assert.Equal(t, len(seriA), bytesRead)
-	assert.IsType(t, &A{}, objA)
-	assert.Equal(t, seriA[iota.SmallTypeDenotationByteSize:], objA.(*A).Key[:])
-}
-
-func TestDeserializeArrayOfObjects(t *testing.T) {
-	var buf bytes.Buffer
-	originObjs := iota.Serializables{
-		randA(), randA(), randB(), randA(), randB(), randB(),
-	}
-	assert.NoError(t, binary.Write(&buf, binary.LittleEndian, uint16(len(originObjs))))
-
-	for _, seri := range originObjs {
-		seriBytes, err := seri.Serialize(iota.DeSeriModePerformValidation)
-		assert.NoError(t, err)
-		written, err := buf.Write(seriBytes)
-		assert.NoError(t, err)
-		assert.Equal(t, len(seriBytes), written)
-	}
-
-	data := buf.Bytes()
-	seris, serisByteRead, err := iota.DeserializeArrayOfObjects(data, iota.DeSeriModePerformValidation, iota.TypeDenotationByte, DummyTypeSelector, nil)
-	assert.NoError(t, err)
-	assert.Equal(t, len(data), serisByteRead)
-	assert.EqualValues(t, originObjs, seris)
-}
-
 func TestLexicalOrderedByteSlices(t *testing.T) {
 	type test struct {
 		name   string
@@ -230,51 +197,3 @@ func TestSerializationMode_HasMode(t *testing.T) {
 	}
 }
 
-func TestReadStringFromBytes(t *testing.T) {
-	type args struct {
-		data []byte
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "ok",
-			args: args{
-				data: []byte{17, 0, 72, 101, 108, 108, 111, 44, 32, 112, 108, 97, 121, 103, 114, 111, 117, 110, 100},
-			},
-			want:    "Hello, playground",
-			wantErr: false,
-		},
-		{
-			name: "not enough (length denotation)",
-			args: args{
-				data: []byte{0, 1},
-			},
-			want:    "",
-			wantErr: true,
-		},
-		{
-			name: "not enough (actual length)",
-			args: args{
-				data: []byte{17, 0, 72, 101, 108, 108, 111, 44, 32, 112},
-			},
-			want:    "",
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, _, err := iota.ReadStringFromBytes(tt.args.data)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ReadStringFromBytes() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("ReadStringFromBytes() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}

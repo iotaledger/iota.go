@@ -1,9 +1,7 @@
 package iota
 
 import (
-	"bytes"
 	"crypto/ed25519"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -116,34 +114,30 @@ func (m *Milestone) ID() (*MilestoneID, error) {
 
 // Essence returns the essence bytes (the bytes to be signed) of the Milestone.
 func (m *Milestone) Essence() ([]byte, error) {
-	var buf bytes.Buffer
-	if err := binary.Write(&buf, binary.LittleEndian, m.Index); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone index for essence: %w", err)
-	}
-	if err := binary.Write(&buf, binary.LittleEndian, m.Timestamp); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone timestamp for essence: %w", err)
-	}
-	if _, err := buf.Write(m.Parent1[:]); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone parent 1 for essence: %w", err)
-	}
-	if _, err := buf.Write(m.Parent2[:]); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone parent 2 for essence: %w", err)
-	}
-	if _, err := buf.Write(m.InclusionMerkleProof[:]); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone inclusion merkle proof for essence: %w", err)
-	}
 	if len(m.PublicKeys) < MinPublicKeysInAMilestone {
 		return nil, fmt.Errorf("unable to serialize milestone as essence: %w", ErrMilestoneTooFewPublicKeys)
 	}
-	if err := buf.WriteByte(byte(len(m.PublicKeys))); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone public keys count for essence: %w", err)
-	}
-	for i, pubKey := range m.PublicKeys {
-		if _, err := buf.Write(pubKey[:]); err != nil {
-			return nil, fmt.Errorf("unable to serialize milestone public key #%d for essence: %w", i, err)
-		}
-	}
-	return buf.Bytes(), nil
+
+	return NewSerializer().
+		WriteNum(m.Index, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone as essence: %w", err)
+		}).
+		WriteNum(m.Timestamp, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone as essence: %w", err)
+		}).
+		WriteBytes(m.Parent1[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone parent 1 for essence: %w", err)
+		}).
+		WriteBytes(m.Parent2[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone parent 2 for essence: %w", err)
+		}).
+		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone inclusion merkle proof for essence: %w", err)
+		}).
+		Write32BytesArraySlice(m.PublicKeys, SeriSliceLengthAsByte, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone public keys for essence: %w", err)
+		}).
+		Serialize()
 }
 
 // VerifySignatures verifies that min. minSigThreshold signatures occur in the Milestone and that all
@@ -238,51 +232,36 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		}
 	}
 
-	bytesReadTotal := TypeDenotationByteSize
-	data = data[TypeDenotationByteSize:]
+	bytesRead, err := NewDeserializer(data).
+		Skip(TypeDenotationByteSize, func(err error) error {
+			return fmt.Errorf("unable to skip milestone payload ID during deserialization: %w", err)
+		}).
+		ReadNum(&m.Index, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone index: %w", err)
+		}).
+		ReadNum(&m.Timestamp, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone timestamp: %w", err)
+		}).
+		ReadArrayOf32Bytes(&m.Parent1, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone parent 1: %w", err)
+		}).
+		ReadArrayOf32Bytes(&m.Parent2, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone parent 2: %w", err)
+		}).
+		ReadArrayOf64Bytes(&m.InclusionMerkleProof, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone inclusion merkle proof: %w", err)
+		}).
+		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, SeriSliceLengthAsByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
+		}).
+		ReadSliceOfArraysOf64Bytes(&m.Signatures, SeriSliceLengthAsByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
+		}).
+		Done()
 
-	// read index
-	m.Index = binary.LittleEndian.Uint32(data)
-	data = data[UInt32ByteSize:]
-	bytesReadTotal += UInt32ByteSize
-
-	m.Timestamp = binary.LittleEndian.Uint64(data)
-	data = data[UInt64ByteSize:]
-	// read timestamp
-	bytesReadTotal += UInt64ByteSize
-
-	// read parents
-	copy(m.Parent1[:], data[:MessageIDLength])
-	data = data[MessageIDLength:]
-	copy(m.Parent2[:], data[:MessageIDLength])
-	data = data[MessageIDLength:]
-	bytesReadTotal += 2 * MessageIDLength
-
-	// read inclusion set merkle proof
-	copy(m.InclusionMerkleProof[:], data[:MilestoneInclusionMerkleProofLength])
-	data = data[MilestoneInclusionMerkleProofLength:]
-	bytesReadTotal += MilestoneInclusionMerkleProofLength
-
-	// read pub keys count
-	pubKeysCount := data[0]
-	data = data[OneByte:]
-	bytesReadTotal += OneByte
-
-	if pubKeysCount == 0 {
-		return 0, fmt.Errorf("unable to deserialize milestone payload: %w", ErrMilestoneTooFewPublicKeys)
+	if err != nil {
+		return bytesRead, err
 	}
-
-	// deserialize public keys
-	pubKeys := make([]MilestonePublicKey, pubKeysCount)
-	for i := 0; i < int(pubKeysCount); i++ {
-		if len(data) < MilestonePublicKeyLength {
-			return 0, fmt.Errorf("unable to deserialize public key in milestone payload: %w", ErrDeserializationNotEnoughData)
-		}
-		copy(pubKeys[i][:], data[:MilestonePublicKeyLength])
-		data = data[MilestonePublicKeyLength:]
-	}
-	bytesReadTotal += int(pubKeysCount) * MilestonePublicKeyLength
-	m.PublicKeys = pubKeys
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderValidator()
@@ -293,32 +272,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		}
 	}
 
-	if len(data) == 0 {
-		return 0, fmt.Errorf("unable to deserialize signature count in milestone payload: %w", ErrDeserializationNotEnoughData)
-	}
-
-	// read signature count
-	sigCount := data[0]
-	data = data[OneByte:]
-	bytesReadTotal += OneByte
-
-	if sigCount == 0 {
-		return 0, fmt.Errorf("unable to deserialize milestone payload: %w", ErrMilestoneTooFewSignatures)
-	}
-
-	// deserialize signatures
-	sigs := make([]MilestoneSignature, sigCount)
-	for i := 0; i < int(sigCount); i++ {
-		if len(data) < MilestoneSignatureLength {
-			return 0, fmt.Errorf("unable to deserialize signature in milestone payload: %w", ErrDeserializationNotEnoughData)
-		}
-		copy(sigs[i][:], data[:MilestoneSignatureLength])
-		data = data[MilestoneSignatureLength:]
-	}
-	bytesReadTotal += int(sigCount) * MilestoneSignatureLength
-	m.Signatures = sigs
-
-	return bytesReadTotal, nil
+	return bytesRead, nil
 }
 
 func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
@@ -329,63 +283,45 @@ func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 				return nil, err
 			}
 		}
-	}
 
-	var b bytes.Buffer
-	if err := binary.Write(&b, binary.LittleEndian, MilestonePayloadTypeID); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone payload ID: %w", err)
-	}
-
-	if err := binary.Write(&b, binary.LittleEndian, m.Index); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone index: %w", err)
-	}
-
-	if err := binary.Write(&b, binary.LittleEndian, m.Timestamp); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone timestamp: %w", err)
-	}
-
-	if _, err := b.Write(m.Parent1[:]); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone parent 1: %w", err)
-	}
-
-	if _, err := b.Write(m.Parent2[:]); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone parent 2: %w", err)
-	}
-
-	if _, err := b.Write(m.InclusionMerkleProof[:]); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone inclusion merkle proof: %w", err)
-	}
-
-	switch {
-	case len(m.PublicKeys) > MaxPublicKeysInAMilestone:
-		return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooManyPublicKeys)
-	case len(m.PublicKeys) < MinPublicKeysInAMilestone:
-		return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooFewPublicKeys)
-	case len(m.Signatures) > MaxSignaturesInAMilestone:
-		return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooManySignatures)
-	case len(m.Signatures) < MinSignaturesInAMilestone:
-		return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooFewSignatures)
-	}
-
-	if err := b.WriteByte(byte(len(m.PublicKeys))); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone public key count: %w", err)
-	}
-	for i, pubKey := range m.PublicKeys {
-		if _, err := b.Write(pubKey[:]); err != nil {
-			return nil, fmt.Errorf("unable to serialize milestone public key at pos %d: %w", i, err)
+		switch {
+		case len(m.PublicKeys) > MaxPublicKeysInAMilestone:
+			return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooManyPublicKeys)
+		case len(m.PublicKeys) < MinPublicKeysInAMilestone:
+			return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooFewPublicKeys)
+		case len(m.Signatures) > MaxSignaturesInAMilestone:
+			return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooManySignatures)
+		case len(m.Signatures) < MinSignaturesInAMilestone:
+			return nil, fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooFewSignatures)
 		}
 	}
 
-	if err := b.WriteByte(byte(len(m.Signatures))); err != nil {
-		return nil, fmt.Errorf("unable to serialize milestone signatures count: %w", err)
-	}
-	for i, sig := range m.Signatures {
-		if _, err := b.Write(sig[:]); err != nil {
-			return nil, fmt.Errorf("unable to serialize milestone signature at pos %d: %w", i, err)
-		}
-	}
-
-	return b.Bytes(), nil
+	return NewSerializer().
+		WriteNum(MilestonePayloadTypeID, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone payload ID: %w", err)
+		}).
+		WriteNum(m.Index, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone index: %w", err)
+		}).
+		WriteNum(m.Timestamp, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone timestamp: %w", err)
+		}).
+		WriteBytes(m.Parent1[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone parent 1: %w", err)
+		}).
+		WriteBytes(m.Parent2[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone parent 2: %w", err)
+		}).
+		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone inclusion merkle proof: %w", err)
+		}).
+		Write32BytesArraySlice(m.PublicKeys, SeriSliceLengthAsByte, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone public keys: %w", err)
+		}).
+		Write64BytesArraySlice(m.Signatures, SeriSliceLengthAsByte, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone signatures: %w", err)
+		}).
+		Serialize()
 }
 
 func (m *Milestone) MarshalJSON() ([]byte, error) {

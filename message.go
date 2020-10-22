@@ -1,8 +1,6 @@
 package iota
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -88,80 +86,49 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 			return 0, fmt.Errorf("unable to deserialize message: %w", err)
 		}
 	}
-	l := len(data)
-	m.Version = data[0]
 
-	// read parents
-	data = data[MessageVersionByteSize:]
-	copy(m.Parent1[:], data[:MessageIDLength])
-	data = data[MessageIDLength:]
-	copy(m.Parent2[:], data[:MessageIDLength])
-	data = data[MessageIDLength:]
+	m.Version = MessageVersion
 
-	payload, payloadBytesRead, err := ParsePayload(data, deSeriMode)
-	if err != nil {
-		return 0, fmt.Errorf("%w: can't parse payload within message", err)
-	}
-	m.Payload = payload
-
-	// must have consumed entire data slice minus the nonce
-	data = data[payloadBytesRead:]
-	if leftOver := len(data) - UInt64ByteSize; leftOver != 0 {
-		return 0, fmt.Errorf("%w: unable to deserialize message: %d bytes are still available", ErrDeserializationNotAllConsumed, leftOver)
-	}
-
-	m.Nonce = binary.LittleEndian.Uint64(data)
-	return l, nil
+	return NewDeserializer(data).
+		Skip(OneByte, func(err error) error {
+			return fmt.Errorf("unable to skip message version during deserialization: %w", err)
+		}).
+		ReadArrayOf32Bytes(&m.Parent1, func(err error) error {
+			return fmt.Errorf("unable to deserialize message parent 1: %w", err)
+		}).
+		ReadArrayOf32Bytes(&m.Parent2, func(err error) error {
+			return fmt.Errorf("unable to deserialize message parent 2: %w", err)
+		}).
+		ReadPayload(func(seri Serializable) { m.Payload = seri }, deSeriMode, func(err error) error {
+			return fmt.Errorf("unable to deserialize message's inner payload: %w", err)
+		}).
+		ReadNum(&m.Nonce, func(err error) error {
+			return fmt.Errorf("unable to deserialize message nonce: %w", err)
+		}).
+		ConsumedAll(func(leftOver int, err error) error {
+			return fmt.Errorf("%w: unable to deserialize message: %d bytes are still available", err, leftOver)
+		}).
+		Done()
 }
 
 func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	if m.Payload == nil {
-		var b [MessageBinSerializedMinSize]byte
-		b[0] = MessageVersion
-		copy(b[MessageVersionByteSize:], m.Parent1[:])
-		copy(b[MessageVersionByteSize+MessageIDLength:], m.Parent2[:])
-		binary.LittleEndian.PutUint32(b[MessageVersionByteSize+MessageIDLength*2:], 0)
-		binary.LittleEndian.PutUint64(b[len(b)-UInt64ByteSize:], m.Nonce)
-		return b[:], nil
-	}
-
-	var b bytes.Buffer
-	if err := b.WriteByte(MessageVersion); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize message version", err)
-	}
-
-	if _, err := b.Write(m.Parent1[:]); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize parent 1", err)
-	}
-
-	if _, err := b.Write(m.Parent2[:]); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize parent 2", err)
-	}
-
-	payloadData, err := m.Payload.Serialize(deSeriMode)
-	if err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize message payload", err)
-	}
-
-	payloadLength := uint32(len(payloadData))
-
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		// TODO: check payload length
-	}
-
-	if err := binary.Write(&b, binary.LittleEndian, payloadLength); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize payload length within message", err)
-	}
-
-	if _, err := b.Write(payloadData); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize message payload", err)
-	}
-
-	if err := binary.Write(&b, binary.LittleEndian, m.Nonce); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize message nonce", err)
-	}
-
-	return b.Bytes(), nil
+	return NewSerializer().
+		WriteNum(byte(MessageVersion), func(err error) error {
+			return fmt.Errorf("unable to serialize message version: %w", err)
+		}).
+		WriteBytes(m.Parent1[:], func(err error) error {
+			return fmt.Errorf("unable to serialize message parent 1: %w", err)
+		}).
+		WriteBytes(m.Parent2[:], func(err error) error {
+			return fmt.Errorf("unable to serialize message parent 2: %w", err)
+		}).
+		WritePayload(m.Payload, deSeriMode, func(err error) error {
+			return fmt.Errorf("unable to serialize message inner payload: %w", err)
+		}).
+		WriteNum(m.Nonce, func(err error) error {
+			return fmt.Errorf("unable to serialize message nonce: %w", err)
+		}).
+		Serialize()
 }
 
 func (m *Message) MarshalJSON() ([]byte, error) {

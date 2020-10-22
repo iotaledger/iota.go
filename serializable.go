@@ -2,7 +2,6 @@ package iota
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 )
@@ -127,105 +126,4 @@ func (ss SortedSerializables) Less(i, j int) bool {
 
 func (ss SortedSerializables) Swap(i, j int) {
 	ss[i], ss[j] = ss[j], ss[i]
-}
-
-// DeserializeArrayOfObjects deserializes the given data into Serializables.
-// The data is expected to start with the count denoting varint, followed by the actual structs.
-// An optional ArrayRules can be passed in to return an error in case it is violated.
-func DeserializeArrayOfObjects(data []byte, deSeriMode DeSerializationMode, typeDen TypeDenotationType, serSel SerializableSelectorFunc, arrayRules *ArrayRules) (Serializables, int, error) {
-	var bytesReadTotal int
-
-	if len(data) < StructArrayLengthByteSize {
-		return nil, 0, fmt.Errorf("%w: not enough data to deserialize struct array", ErrDeserializationNotEnoughData)
-	}
-
-	seriCount := binary.LittleEndian.Uint16(data)
-	bytesReadTotal += StructArrayLengthByteSize
-
-	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := arrayRules.CheckBounds(seriCount); err != nil {
-			return nil, 0, err
-		}
-	}
-
-	// advance to objects
-	var seris Serializables
-	data = data[StructArrayLengthByteSize:]
-
-	var lexicalOrderValidator LexicalOrderFunc
-	if arrayRules != nil && arrayRules.ElementBytesLexicalOrder {
-		lexicalOrderValidator = arrayRules.LexicalOrderValidator()
-	}
-
-	var offset int
-	for i := 0; i < int(seriCount); i++ {
-		seri, seriBytesConsumed, err := DeserializeObject(data[offset:], deSeriMode, typeDen, serSel)
-		if err != nil {
-			return nil, 0, err
-		}
-		// check lexical order against previous element
-		if lexicalOrderValidator != nil {
-			if err := lexicalOrderValidator(i, data[offset:offset+seriBytesConsumed]); err != nil {
-				return nil, 0, err
-			}
-		}
-		seris = append(seris, seri)
-		offset += seriBytesConsumed
-	}
-	bytesReadTotal += offset
-
-	return seris, bytesReadTotal, nil
-}
-
-// DeserializeObject deserializes the given data into a Serializable.
-// The data is expected to start with the type denotation.
-func DeserializeObject(data []byte, deSeriMode DeSerializationMode, typeDen TypeDenotationType, serSel SerializableSelectorFunc) (Serializable, int, error) {
-	var ty uint32
-	switch typeDen {
-	case TypeDenotationUint32:
-		if len(data) < UInt32ByteSize+1 {
-			return nil, 0, ErrDeserializationNotEnoughData
-		}
-		ty = binary.LittleEndian.Uint32(data)
-	case TypeDenotationByte:
-		if len(data) < OneByte+1 {
-			return nil, 0, ErrDeserializationNotEnoughData
-		}
-		ty = uint32(data[0])
-	}
-	seri, err := serSel(ty)
-	if err != nil {
-		return nil, 0, err
-	}
-	seriBytesConsumed, err := seri.Deserialize(data, deSeriMode)
-	if err != nil {
-		return nil, 0, fmt.Errorf("unable to deserialize %T: %w", seri, err)
-	}
-	return seri, seriBytesConsumed, nil
-}
-
-// ReadStringFromBytes reads a string from data by first reading the string length by reading a uint16
-// and then consuming that length from data.
-func ReadStringFromBytes(data []byte) (string, int, error) {
-	if len(data) < UInt16ByteSize {
-		return "", 0, fmt.Errorf("%w: can't read string length", ErrDeserializationNotEnoughData)
-	}
-
-	strLen := binary.LittleEndian.Uint16(data)
-	data = data[UInt16ByteSize:]
-
-	if len(data) < int(strLen) {
-		return "", 0, fmt.Errorf("%w: data is smaller than (%d) denoted string length of %d", ErrDeserializationNotEnoughData, len(data), strLen)
-	}
-
-	return string(data[:strLen]), int(strLen) + UInt16ByteSize, nil
-}
-
-// ToHex returns the a slice of IDs in their hex representation.
-func IDsToHex(input [][32]byte) []string {
-	ids := make([]string, len(input))
-	for i := range input {
-		ids[i] = fmt.Sprintf("%x", input[i])
-	}
-	return ids
 }

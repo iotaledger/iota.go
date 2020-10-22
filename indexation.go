@@ -1,8 +1,6 @@
 package iota
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -33,33 +31,19 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode DeSerializationMode) (i
 		}
 	}
 
-	data = data[TypeDenotationByteSize:]
-	index, indexBytesRead, err := ReadStringFromBytes(data)
-	if err != nil {
-		return 0, fmt.Errorf("%w: unable to deserialize indexation index", err)
-	}
-	u.Index = index
-	data = data[indexBytesRead:]
+	// TODO: check data length
 
-	if len(data) < UInt32ByteSize {
-		return 0, fmt.Errorf("%w: unable to deserialize indexation data length", ErrDeserializationNotEnoughData)
-	}
-
-	// read data length
-	dataLength := binary.LittleEndian.Uint32(data)
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		// TODO: check data length
-	}
-
-	data = data[ByteArrayLengthByteSize:]
-	if uint32(len(data)) < dataLength {
-		return 0, fmt.Errorf("%w: indexation length denotes too many bytes (%d bytes)", ErrDeserializationNotEnoughData, dataLength)
-	}
-
-	u.Data = make([]byte, dataLength)
-	copy(u.Data, data[:dataLength])
-
-	return TypeDenotationByteSize + indexBytesRead + ByteArrayLengthByteSize + int(dataLength), nil
+	return NewDeserializer(data).
+		Skip(TypeDenotationByteSize, func(err error) error {
+			return fmt.Errorf("unable to skip indexation payload ID during deserialization: %w", err)
+		}).
+		ReadString(&u.Index, func(err error) error {
+			return fmt.Errorf("unable to deserialize indexation index: %w", err)
+		}).
+		ReadVariableByteSlice(&u.Data, SeriSliceLengthAsUint32, func(err error) error {
+			return fmt.Errorf("unable to deserialize indexation data: %w", err)
+		}).
+		Done()
 }
 
 func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
@@ -67,29 +51,17 @@ func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		// TODO: check data length
 	}
 
-	var b bytes.Buffer
-	if err := binary.Write(&b, binary.LittleEndian, IndexationPayloadTypeID); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize indexation payload ID", err)
-	}
-
-	strLen := uint16(len(u.Index))
-	if err := binary.Write(&b, binary.LittleEndian, strLen); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize indexation index length", err)
-	}
-
-	if _, err := b.Write([]byte(u.Index)); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize indexation index", err)
-	}
-
-	if err := binary.Write(&b, binary.LittleEndian, uint32(len(u.Data))); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize indexation data length", err)
-	}
-
-	if _, err := b.Write(u.Data); err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize indexation data", err)
-	}
-
-	return b.Bytes(), nil
+	return NewSerializer().
+		WriteNum(IndexationPayloadTypeID, func(err error) error {
+			return fmt.Errorf("unable to serialize indexation payload ID: %w", err)
+		}).
+		WriteString(u.Index, func(err error) error {
+			return fmt.Errorf("unable to serialize indexation index: %w", err)
+		}).
+		WriteVariableByteSlice(u.Data, SeriSliceLengthAsUint32, func(err error) error {
+			return fmt.Errorf("unable to serialize indexation data: %w", err)
+		}).
+		Serialize()
 }
 
 func (u *Indexation) MarshalJSON() ([]byte, error) {

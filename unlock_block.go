@@ -61,26 +61,24 @@ func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode DeSerializati
 		}
 	}
 
-	// skip type byte
-	bytesReadTotal := SmallTypeDenotationByteSize
-	data = data[SmallTypeDenotationByteSize:]
-
-	sig, sigBytesRead, err := DeserializeObject(data, deSeriMode, TypeDenotationByte, SignatureSelector)
-	if err != nil {
-		return 0, fmt.Errorf("%w: unable to deserialize signature within signature unlock block", err)
-	}
-	bytesReadTotal += sigBytesRead
-	s.Signature = sig
-
-	return bytesReadTotal, nil
+	return NewDeserializer(data).
+		Skip(SmallTypeDenotationByteSize, func(err error) error {
+			return fmt.Errorf("unable to skip milestone payload ID during deserialization: %w", err)
+		}).
+		ReadObject(func(seri Serializable) { s.Signature = seri }, deSeriMode, TypeDenotationByte, SignatureSelector, func(err error) error {
+			return fmt.Errorf("unable to deserialize signature within signature unlock block: %w", err)
+		}).Done()
 }
 
 func (s *SignatureUnlockBlock) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	sigBytes, err := s.Signature.Serialize(deSeriMode)
-	if err != nil {
-		return nil, fmt.Errorf("%w: unable to serialize signature within signature unlock block", err)
-	}
-	return append([]byte{UnlockBlockSignature}, sigBytes...), nil
+	return NewSerializer().
+		WriteNum(UnlockBlockSignature, func(err error) error {
+			return fmt.Errorf("unable to serialize signature unlock block type ID: %w", err)
+		}).
+		WriteObject(s.Signature, deSeriMode, func(err error) error {
+			return fmt.Errorf("unable to serialize signature unlock block signature: %w", err)
+		}).
+		Serialize()
 }
 
 func (s *SignatureUnlockBlock) MarshalJSON() ([]byte, error) {

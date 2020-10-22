@@ -88,14 +88,21 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		}
 	}
 
-	data = data[SmallTypeDenotationByteSize:]
+	bytesRead, err := NewDeserializer(data).
+		Skip(SmallTypeDenotationByteSize, func(err error) error {
+			return fmt.Errorf("unable to skip UTXO input type during deserialization: %w", err)
+		}).
+		ReadArrayOf32Bytes(&u.TransactionID, func(err error) error {
+			return fmt.Errorf("unable to deserialize transaction ID in UTXO input: %w", err)
+		}).
+		ReadNum(&u.TransactionOutputIndex, func(err error) error {
+			return fmt.Errorf("unable to deserialize transaction output index in UTXO input: %w", err)
+		}).
+		Done()
 
-	// read transaction id
-	copy(u.TransactionID[:], data[:TransactionIDLength])
-	data = data[TransactionIDLength:]
-
-	// output index
-	u.TransactionOutputIndex = binary.LittleEndian.Uint16(data)
+	if err != nil {
+		return bytesRead, err
+	}
 
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := utxoInputRefBoundsValidator(-1, u); err != nil {
@@ -103,7 +110,7 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		}
 	}
 
-	return UTXOInputSize, nil
+	return bytesRead, nil
 }
 
 func (u *UTXOInput) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
@@ -113,11 +120,16 @@ func (u *UTXOInput) Serialize(deSeriMode DeSerializationMode) (data []byte, err 
 		}
 	}
 
-	var b [UTXOInputSize]byte
-	b[0] = InputUTXO
-	copy(b[SmallTypeDenotationByteSize:], u.TransactionID[:])
-	binary.LittleEndian.PutUint16(b[UTXOInputSize-UInt16ByteSize:], u.TransactionOutputIndex)
-	return b[:], nil
+	return NewSerializer().
+		WriteNum(InputUTXO, func(err error) error {
+			return fmt.Errorf("unable to serialize UTXO input type ID: %w", err)
+		}).
+		WriteBytes(u.TransactionID[:], func(err error) error {
+			return fmt.Errorf("unable to serialize UTXO input transaction ID: %w", err)
+		}).
+		WriteNum(u.TransactionOutputIndex, func(err error) error {
+			return fmt.Errorf("unable to serialize UTXO input transaction output index: %w", err)
+		}).Serialize()
 }
 
 func (u *UTXOInput) MarshalJSON() ([]byte, error) {
