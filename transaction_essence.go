@@ -101,16 +101,18 @@ func (u *TransactionEssence) SortInputsOutputs() {
 }
 
 func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkMinByteLength(TransactionEssenceMinByteSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid transaction essence bytes: %w", err)
-		}
-		if err := checkTypeByte(data, TransactionEssenceNormal); err != nil {
-			return 0, fmt.Errorf("unable to deserialize transaction essence: %w", err)
-		}
-	}
-
-	bytesRead, err := NewDeserializer(data).
+	return NewDeserializer(data).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := checkMinByteLength(TransactionEssenceMinByteSize, len(data)); err != nil {
+					return fmt.Errorf("invalid transaction essence bytes: %w", err)
+				}
+				if err := checkTypeByte(data, TransactionEssenceNormal); err != nil {
+					return fmt.Errorf("unable to deserialize transaction essence: %w", err)
+				}
+			}
+			return nil
+		}).
 		Skip(SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip transaction essence ID during deserialization: %w", err)
 		}).
@@ -139,35 +141,21 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 		ReadPayload(func(seri Serializable) { u.Payload = seri }, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
 		}).
-		Done()
-
-	if err != nil {
-		return bytesRead, err
-	}
-
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if u.Payload != nil {
-			// supports only indexation payloads
-			if _, isIndexationPayload := u.Payload.(*Indexation); !isIndexationPayload {
-				return 0, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", ErrInvalidBytes, u.Payload)
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if u.Payload != nil {
+					// supports only indexation payloads
+					if _, isIndexationPayload := u.Payload.(*Indexation); !isIndexationPayload {
+						return fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", ErrInvalidBytes, u.Payload)
+					}
+				}
 			}
-		}
-	}
-
-	return bytesRead, nil
+			return nil
+		}).
+		Done()
 }
 
 func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := u.SyntacticallyValidate(); err != nil {
-			return nil, err
-		}
-	}
-
-	if deSeriMode.HasMode(DeSeriModePerformLexicalOrdering) {
-		u.SortInputsOutputs()
-	}
-
 	var inputsWrittenConsumer, outputsWrittenConsumer WrittenObjectConsumer
 	if deSeriMode.HasMode(DeSeriModePerformValidation) && inputsArrayBound.ElementBytesLexicalOrder {
 		if inputsArrayBound.ElementBytesLexicalOrder {
@@ -191,6 +179,19 @@ func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []b
 	}
 
 	return NewSerializer().
+		Do(func() {
+			if deSeriMode.HasMode(DeSeriModePerformLexicalOrdering) {
+				u.SortInputsOutputs()
+			}
+		}).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := u.SyntacticallyValidate(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}).
 		WriteNum(TransactionEssenceNormal, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence type ID: %w", err)
 		}).

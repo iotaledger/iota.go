@@ -51,16 +51,18 @@ type SigLockedSingleOutput struct {
 }
 
 func (s *SigLockedSingleOutput) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkMinByteLength(SigLockedSingleOutputBytesMinSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid signature locked single output bytes: %w", err)
-		}
-		if err := checkTypeByte(data, OutputSigLockedSingleOutput); err != nil {
-			return 0, fmt.Errorf("unable to deserialize signature locked single output: %w", err)
-		}
-	}
-
-	bytesRead, err := NewDeserializer(data).
+	return NewDeserializer(data).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := checkMinByteLength(SigLockedSingleOutputBytesMinSize, len(data)); err != nil {
+					return fmt.Errorf("invalid signature locked single output bytes: %w", err)
+				}
+				if err := checkTypeByte(data, OutputSigLockedSingleOutput); err != nil {
+					return fmt.Errorf("unable to deserialize signature locked single output: %w", err)
+				}
+			}
+			return nil
+		}).
 		Skip(SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip signature locked single output type during deserialization: %w", err)
 		}).
@@ -69,36 +71,35 @@ func (s *SigLockedSingleOutput) Deserialize(data []byte, deSeriMode DeSerializat
 		}).
 		ReadNum(&s.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for signature locked single output: %w", err)
-		}).Done()
-
-	if err != nil {
-		return bytesRead, err
-	}
-
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := outputAmountValidator(-1, s); err != nil {
-			return 0, fmt.Errorf("%w: unable to deserialize signature locked single output", err)
-		}
-	}
-
-	return bytesRead, nil
+		}).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := outputAmountValidator(-1, s); err != nil {
+					return fmt.Errorf("%w: unable to deserialize signature locked single output", err)
+				}
+			}
+			return nil
+		}).
+		Done()
 }
 
 func (s *SigLockedSingleOutput) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := outputAmountValidator(-1, s); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize signature locked single output", err)
-		}
-
-		switch s.Address.(type) {
-		case *WOTSAddress:
-		case *Ed25519Address:
-		default:
-			return nil, fmt.Errorf("%w: signature locked single output defines unknown address", ErrUnknownAddrType)
-		}
-	}
-
 	return NewSerializer().
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := outputAmountValidator(-1, s); err != nil {
+					return fmt.Errorf("%w: unable to serialize signature locked single output", err)
+				}
+
+				switch s.Address.(type) {
+				case *WOTSAddress:
+				case *Ed25519Address:
+				default:
+					return fmt.Errorf("%w: signature locked single output defines unknown address", ErrUnknownAddrType)
+				}
+			}
+			return nil
+		}).
 		WriteNum(OutputSigLockedSingleOutput, func(err error) error {
 			return fmt.Errorf("unable to serialize signature locked single output type ID: %w", err)
 		}).

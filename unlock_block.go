@@ -52,16 +52,18 @@ type SignatureUnlockBlock struct {
 }
 
 func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkMinByteLength(SignatureUnlockBlockMinSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid signature unlock block bytes: %w", err)
-		}
-		if err := checkTypeByte(data, UnlockBlockSignature); err != nil {
-			return 0, fmt.Errorf("unable to deserialize signature unlock block: %w", err)
-		}
-	}
-
 	return NewDeserializer(data).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := checkMinByteLength(SignatureUnlockBlockMinSize, len(data)); err != nil {
+					return fmt.Errorf("invalid signature unlock block bytes: %w", err)
+				}
+				if err := checkTypeByte(data, UnlockBlockSignature); err != nil {
+					return fmt.Errorf("unable to deserialize signature unlock block: %w", err)
+				}
+			}
+			return nil
+		}).
 		Skip(SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip milestone payload ID during deserialization: %w", err)
 		}).

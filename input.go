@@ -79,16 +79,18 @@ func (u *UTXOInput) ID() UTXOInputID {
 }
 
 func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkMinByteLength(UTXOInputSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid UTXO input bytes: %w", err)
-		}
-		if err := checkTypeByte(data, InputUTXO); err != nil {
-			return 0, fmt.Errorf("unable to deserialize UTXO input: %w", err)
-		}
-	}
-
-	bytesRead, err := NewDeserializer(data).
+	return NewDeserializer(data).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := checkMinByteLength(UTXOInputSize, len(data)); err != nil {
+					return fmt.Errorf("invalid UTXO input bytes: %w", err)
+				}
+				if err := checkTypeByte(data, InputUTXO); err != nil {
+					return fmt.Errorf("unable to deserialize UTXO input: %w", err)
+				}
+			}
+			return nil
+		}).
 		Skip(SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip UTXO input type during deserialization: %w", err)
 		}).
@@ -98,29 +100,27 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		ReadNum(&u.TransactionOutputIndex, func(err error) error {
 			return fmt.Errorf("unable to deserialize transaction output index in UTXO input: %w", err)
 		}).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := utxoInputRefBoundsValidator(-1, u); err != nil {
+					return fmt.Errorf("%w: unable to deserialize UTXO input", err)
+				}
+			}
+			return nil
+		}).
 		Done()
-
-	if err != nil {
-		return bytesRead, err
-	}
-
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := utxoInputRefBoundsValidator(-1, u); err != nil {
-			return 0, fmt.Errorf("%w: unable to deserialize UTXO input", err)
-		}
-	}
-
-	return bytesRead, nil
 }
 
 func (u *UTXOInput) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := utxoInputRefBoundsValidator(-1, u); err != nil {
-			return nil, fmt.Errorf("%w: unable to serialize UTXO input", err)
-		}
-	}
-
 	return NewSerializer().
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := utxoInputRefBoundsValidator(-1, u); err != nil {
+					return fmt.Errorf("%w: unable to serialize UTXO input", err)
+				}
+			}
+			return nil
+		}).
 		WriteNum(InputUTXO, func(err error) error {
 			return fmt.Errorf("unable to serialize UTXO input type ID: %w", err)
 		}).

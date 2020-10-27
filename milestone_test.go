@@ -188,3 +188,23 @@ func TestMilestoneSigning(t *testing.T) {
 		})
 	}
 }
+
+func TestNewMilestone(t *testing.T) {
+	parent1, parent2 := rand32ByteHash(), rand32ByteHash()
+	inclusionMerkleProof := rand64ByteHash()
+	const msIndex, timestamp = 1000, 133713371337
+	unsortedPubKeys := []iota.MilestonePublicKey{{3}, {2}, {1}, {5}}
+
+	ms, err := iota.NewMilestone(msIndex, timestamp, parent1, parent2, inclusionMerkleProof, unsortedPubKeys)
+	assert.NoError(t, err)
+
+	assert.EqualValues(t, &iota.Milestone{
+		Index:                msIndex,
+		Timestamp:            timestamp,
+		Parent1:              parent1,
+		Parent2:              parent2,
+		InclusionMerkleProof: inclusionMerkleProof,
+		PublicKeys:           []iota.MilestonePublicKey{{1}, {2}, {3}, {5}},
+		Signatures:           nil,
+	}, ms)
+}

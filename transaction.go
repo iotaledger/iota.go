@@ -57,21 +57,23 @@ func (t *Transaction) ID() (*TransactionID, error) {
 }
 
 func (t *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkMinByteLength(TransactionBinSerializedMinSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid transaction bytes: %w", err)
-		}
-		if err := checkType(data, TransactionPayloadTypeID); err != nil {
-			return 0, fmt.Errorf("unable to deserialize transaction: %w", err)
-		}
-	}
-
 	unlockBlockArrayRules := &ArrayRules{
 		MinErr: ErrUnlockBlocksMustMatchInputCount,
 		MaxErr: ErrUnlockBlocksMustMatchInputCount,
 	}
 
 	return NewDeserializer(data).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := checkMinByteLength(TransactionBinSerializedMinSize, len(data)); err != nil {
+					return fmt.Errorf("invalid transaction bytes: %w", err)
+				}
+				if err := checkType(data, TransactionPayloadTypeID); err != nil {
+					return fmt.Errorf("unable to deserialize transaction: %w", err)
+				}
+			}
+			return nil
+		}).
 		Skip(TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip transaction payload ID during deserialization: %w", err)
 		}).
@@ -91,13 +93,15 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (
 }
 
 func (t *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := t.SyntacticallyValidate(); err != nil {
-			return nil, err
-		}
-	}
-
 	return NewSerializer().
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := t.SyntacticallyValidate(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}).
 		WriteNum(TransactionPayloadTypeID, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction payload ID", err)
 		}).

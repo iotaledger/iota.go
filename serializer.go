@@ -67,6 +67,27 @@ func (s *Serializer) Serialize() ([]byte, error) {
 	return s.buf.Bytes(), nil
 }
 
+// AbortIf calls the given ErrProducer if the Serializer did not encounter an error yet.
+// Return nil from the ErrProducer to indicate continuation of the serialization.
+func (s *Serializer) AbortIf(errProducer ErrProducer) *Serializer {
+	if s.err != nil {
+		return s
+	}
+	if err := errProducer(nil); err != nil {
+		s.err = err
+	}
+	return s
+}
+
+// Do calls f in the Serializer chain.
+func (s *Serializer) Do(f func()) *Serializer {
+	if s.err != nil {
+		return s
+	}
+	f()
+	return s
+}
+
 // WriteNum writes the given num v to the Serializer.
 func (s *Serializer) WriteNum(v interface{}, errProducer ErrProducer) *Serializer {
 	if s.err != nil {

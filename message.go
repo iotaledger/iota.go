@@ -78,18 +78,21 @@ func (m *Message) ID() (*MessageID, error) {
 }
 
 func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid message bytes: %w", err)
-		}
-		if err := checkTypeByte(data, MessageVersion); err != nil {
-			return 0, fmt.Errorf("unable to deserialize message: %w", err)
-		}
-	}
-
-	m.Version = MessageVersion
-
 	return NewDeserializer(data).
+		Do(func() {
+			m.Version = MessageVersion
+		}).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := checkMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
+					return fmt.Errorf("invalid message bytes: %w", err)
+				}
+				if err := checkTypeByte(data, MessageVersion); err != nil {
+					return fmt.Errorf("unable to deserialize message: %w", err)
+				}
+			}
+			return nil
+		}).
 		Skip(OneByte, func(err error) error {
 			return fmt.Errorf("unable to skip message version during deserialization: %w", err)
 		}).

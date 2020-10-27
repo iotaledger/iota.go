@@ -22,18 +22,19 @@ type Indexation struct {
 }
 
 func (u *Indexation) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkMinByteLength(IndexationBinSerializedMinSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid indexation bytes: %w", err)
-		}
-		if err := checkType(data, IndexationPayloadTypeID); err != nil {
-			return 0, fmt.Errorf("unable to deserialize indexation: %w", err)
-		}
-	}
-
-	// TODO: check data length
-
 	return NewDeserializer(data).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				if err := checkMinByteLength(IndexationBinSerializedMinSize, len(data)); err != nil {
+					return fmt.Errorf("invalid indexation bytes: %w", err)
+				}
+				if err := checkType(data, IndexationPayloadTypeID); err != nil {
+					return fmt.Errorf("unable to deserialize indexation: %w", err)
+				}
+				// TODO: check data length
+			}
+			return nil
+		}).
 		Skip(TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip indexation payload ID during deserialization: %w", err)
 		}).
@@ -47,11 +48,13 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode DeSerializationMode) (i
 }
 
 func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		// TODO: check data length
-	}
-
 	return NewSerializer().
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				// TODO: check data length
+			}
+			return nil
+		}).
 		WriteNum(IndexationPayloadTypeID, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation payload ID: %w", err)
 		}).
