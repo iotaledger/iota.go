@@ -25,7 +25,7 @@ type Worker struct {
 }
 
 // New creates a new PoW Worker.
-// The optional numWorkers specifies how many go routines are used to mine.
+// The optional numWorkers specifies how many go routines should be used to perform the PoW.
 func New(numWorkers ...int) *Worker {
 	w := &Worker{
 		numWorkers: 1,
@@ -39,8 +39,8 @@ func New(numWorkers ...int) *Worker {
 const ln3 = 1.098612288668109691395245236922525704647490557822749451734694333 // https://oeis.org/A002391
 
 // Mine performs the PoW for data.
-// It returns a nonce that appended to data has results in a PoW score of at least targetScore.
-// The computation can be be canceled anytime using ctx.
+// It returns a nonce that appended to data results in a PoW score of at least targetScore.
+// The computation can be canceled anytime using ctx.
 func (w *Worker) Mine(ctx context.Context, data []byte, targetScore float64) (uint64, error) {
 	var (
 		done    uint32
