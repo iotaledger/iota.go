@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/iotaledger/iota.go/pow"
 	"golang.org/x/crypto/blake2b"
 )
 
@@ -75,6 +76,15 @@ func (m *Message) ID() (*MessageID, error) {
 	}
 	h := blake2b.Sum256(data)
 	return &h, nil
+}
+
+// POW computes the PoW score of the Message.
+func (m *Message) POW() (float64, error) {
+	data, err := m.Serialize(DeSeriModeNoValidation)
+	if err != nil {
+		return 0, fmt.Errorf("can't compute message PoW score: %w", err)
+	}
+	return pow.Score(data), nil
 }
 
 func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
