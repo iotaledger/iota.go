@@ -2,6 +2,7 @@ package iota
 
 import (
 	"bytes"
+	"context"
 	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
@@ -10,6 +11,9 @@ import (
 	"sort"
 
 	"golang.org/x/crypto/blake2b"
+	"google.golang.org/grpc"
+
+	"github.com/iotaledger/iota.go/remotesigner"
 )
 
 const (
@@ -218,6 +222,40 @@ func InMemoryEd25519MilestoneSigner(prvKeys MilestonePublicKeyMapping) Milestone
 			copy(sigs[i][:], sig)
 		}
 		return sigs, nil
+	}
+}
+
+// RemoteEd25519MilestoneSigner is a function which uses a remote RPC server to produce signatures for the Milestone essence data.
+func RemoteEd25519MilestoneSigner(remoteEndpoint string) MilestoneSigningFunc {
+	return func(pubKeys []MilestonePublicKey, msEssence []byte) ([]MilestoneSignature, error) {
+		pubKeysUnbound := make([][]byte, len(pubKeys))
+		for i := range pubKeys {
+			pubKeysUnbound[i] = make([]byte, 32)
+			copy(pubKeysUnbound[i][:], pubKeys[i][:32])
+		}
+		// Insecure because this RPC remote should be local; in turns, it employs TLS mutual authentication to reach the actual signers.
+		conn, err := grpc.Dial(remoteEndpoint, grpc.WithInsecure())
+		if err != nil {
+			return nil, err
+		}
+		defer conn.Close()
+		client := remotesigner.NewSignatureDispatcherClient(conn)
+		response, err := client.SignMilestone(context.Background(), &remotesigner.SignMilestoneRequest{
+			PubKeys:   pubKeysUnbound,
+			MsEssence: msEssence,
+		})
+		if err != nil {
+			return nil, err
+		}
+		sigs := response.GetSignatures()
+		if len(sigs) != len(pubKeys) {
+			return nil, fmt.Errorf("remote did not provide the correct count of signatures")
+		}
+		sigs64 := make([]MilestoneSignature, len(sigs))
+		for i := range sigs {
+			copy(sigs64[i][:], sigs[i][:64])
+		}
+		return sigs64, nil
 	}
 }
 

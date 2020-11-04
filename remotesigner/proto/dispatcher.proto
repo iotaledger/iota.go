@@ -1,0 +1,23 @@
+syntax = "proto3";
+package dispatcher;
+
+option go_package = "github.com/iota.go;remotesigner";
+
+service SignatureDispatcher {
+
+  rpc SignMilestone (SignMilestoneRequest) returns (SignMilestoneResponse);
+
+}
+
+message SignMilestoneRequest {
+
+  repeated bytes pubKeys = 1;
+  bytes msEssence = 2;
+
+}
+
+message SignMilestoneResponse {
+
+  repeated bytes signatures = 1;
+
+}
