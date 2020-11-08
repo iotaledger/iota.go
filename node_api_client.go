@@ -240,14 +240,14 @@ type NodeInfoResponse struct {
 	Version string `json:"version"`
 	// Whether the node is healthy.
 	IsHealthy bool `json:"isHealthy"`
-	// The hex encoded public key of the coordinator.
-	CoordinatorPublicKey string `json:"coordinatorPublicKey"`
-	// The hex encoded message ID of the latest known milestone.
-	LatestMilestoneMessageID string `json:"latestMilestoneMessageId"`
+	// The id of the network (1=mainnet).
+	NetworkID uint8 `json:"networkId"`
+	// The hex encoded ID of the latest known milestone.
+	LatestMilestoneID string `json:"latestMilestoneId"`
 	// The latest known milestone index.
 	LatestMilestoneIndex uint32 `json:"latestMilestoneIndex"`
-	// The hex encoded message ID of the current solid milestone.
-	SolidMilestoneMessageID string `json:"solidMilestoneMessageId"`
+	// The hex encoded ID of the current solid milestone.
+	SolidMilestoneID string `json:"solidMilestoneId"`
 	// The current solid milestone's index.
 	SolidMilestoneIndex uint32 `json:"solidMilestoneIndex"`
 	// The milestone index at which the last pruning commenced.
@@ -553,12 +553,12 @@ type AddPeerRequest struct {
 
 // PeerResponse defines the response of a GET peer REST API call.
 type PeerResponse struct {
-	// The libp2p multi address of the peer.
-	MultiAddress string `json:"multiAddress"`
-	// The alias of to iditify the peer.
-	Alias *string `json:"alias,omitempty"`
 	// The libp2p identifier of the peer.
 	ID string `json:"id"`
+	// The libp2p multi addresses of the peer.
+	MultiAddresses []string `json:"multiAddresses"`
+	// The alias of to iditify the peer.
+	Alias *string `json:"alias,omitempty"`
 	// The relation (static, autopeered) of the peer.
 	Relation string `json:"relation"`
 	// Whether the peer is connected.
