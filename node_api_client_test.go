@@ -40,16 +40,16 @@ func TestNodeAPI_Info(t *testing.T) {
 	defer gock.Off()
 
 	originInfo := &iota.NodeInfoResponse{
-		Name:                     "HORNET",
-		Version:                  "1.0.0",
-		IsHealthy:                true,
-		CoordinatorPublicKey:     "733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d",
-		LatestMilestoneMessageID: "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe",
-		LatestMilestoneIndex:     1337,
-		SolidMilestoneMessageID:  "598f7a3186bf7291b8199a3147bb2a81d19b89ac545788b4e5d8adbee7db0f13",
-		SolidMilestoneIndex:      666,
-		PruningIndex:             142857,
-		Features:                 []string{"Lazers"},
+		Name:                 "HORNET",
+		Version:              "1.0.0",
+		IsHealthy:            true,
+		NetworkID:            1,
+		LatestMilestoneID:    "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe",
+		LatestMilestoneIndex: 1337,
+		SolidMilestoneID:     "598f7a3186bf7291b8199a3147bb2a81d19b89ac545788b4e5d8adbee7db0f13",
+		SolidMilestoneIndex:  666,
+		PruningIndex:         142857,
+		Features:             []string{"Lazers"},
 	}
 
 	gock.New(nodeAPIUrl).
@@ -390,10 +390,10 @@ func TestNodeAPI_PeerByID(t *testing.T) {
 	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
 
 	originRes := &iota.PeerResponse{
-		MultiAddress: fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID),
-		ID:           peerID,
-		Connected:    true,
-		Relation:     "autopeered",
+		MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
+		ID:             peerID,
+		Connected:      true,
+		Relation:       "autopeered",
 		GossipMetrics: &iota.PeerGossipMetrics{
 			SentPackets:        100,
 			DroppedSentPackets: 10,
@@ -439,10 +439,10 @@ func TestNodeAPI_Peers(t *testing.T) {
 
 	originRes := []*iota.PeerResponse{
 		{
-			MultiAddress: fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID1),
-			ID:           peerID1,
-			Connected:    true,
-			Relation:     "autopeered",
+			MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID1)},
+			ID:             peerID1,
+			Connected:      true,
+			Relation:       "autopeered",
 			GossipMetrics: &iota.PeerGossipMetrics{
 				SentPackets:        100,
 				DroppedSentPackets: 10,
@@ -454,10 +454,10 @@ func TestNodeAPI_Peers(t *testing.T) {
 			},
 		},
 		{
-			MultiAddress: fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID2),
-			ID:           peerID2,
-			Connected:    true,
-			Relation:     "static",
+			MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID2)},
+			ID:             peerID2,
+			Connected:      true,
+			Relation:       "static",
 			GossipMetrics: &iota.PeerGossipMetrics{
 				SentPackets:        100,
 				DroppedSentPackets: 10,
@@ -488,10 +488,10 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 	multiAddr := fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)
 
 	originRes := &iota.PeerResponse{
-		MultiAddress: multiAddr,
-		ID:           peerID,
-		Connected:    true,
-		Relation:     "autopeered",
+		MultiAddresses: []string{multiAddr},
+		ID:             peerID,
+		Connected:      true,
+		Relation:       "autopeered",
 		GossipMetrics: &iota.PeerGossipMetrics{
 			SentPackets:        100,
 			DroppedSentPackets: 10,
