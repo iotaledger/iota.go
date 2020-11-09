@@ -14,10 +14,10 @@ import (
 var _ = Describe("Curl", func() {
 
 	DescribeTable("Hash",
-		func(in trinary.Trytes, expSqueeze trinary.Trytes, rounds ...CurlRounds) {
+		func(in trinary.Trytes, expSqueeze trinary.Trytes) {
 
 			By("tryte", func() {
-				c := NewCurl(rounds...)
+				c := NewCurlP81()
 				err := c.AbsorbTrytes(trinary.MustPad(in, consts.HashTrytesSize))
 				Expect(err).ToNot(HaveOccurred())
 				squeeze, err := c.SqueezeTrytes(len(expSqueeze) * consts.TritsPerTryte)
@@ -26,7 +26,7 @@ var _ = Describe("Curl", func() {
 			})
 
 			By("trits", func() {
-				c := NewCurl(rounds...)
+				c := NewCurlP81()
 				err := c.Absorb(trinary.MustPadTrits(trinary.MustTrytesToTrits(in), consts.HashTrinarySize))
 				Expect(err).ToNot(HaveOccurred())
 				squeeze, err := c.Squeeze(len(expSqueeze) * consts.TritsPerTryte)
@@ -34,14 +34,12 @@ var _ = Describe("Curl", func() {
 				Expect(squeeze).To(Equal(trinary.MustTrytesToTrits(expSqueeze)))
 			})
 		},
-		Entry("Curl-P-81: empty trytes", "", consts.NullHashTrytes, CurlP81),
-		Entry("Curl-P-81: normal trytes", "A", "TJVKPMTAMIZVBVHIVQUPTKEMPROEKV9SB9COEDQYRHYPTYSKQIAN9PQKMZHCPO9TS9BHCORFKW9CQXZEE", CurlP81),
+		Entry("Curl-P-81: empty trytes", "", consts.NullHashTrytes),
+		Entry("Curl-P-81: normal trytes", "A", "TJVKPMTAMIZVBVHIVQUPTKEMPROEKV9SB9COEDQYRHYPTYSKQIAN9PQKMZHCPO9TS9BHCORFKW9CQXZEE"),
 		Entry("Curl-P-81: normal trytes #2", "Z", "FA9WYZSJJWSD9AEEBOGGDHFTMIZVHFURFLJLFBTNENDDCMSXGAGLXFMYZTAMKVIYDQSZEDKXSWVAOPZMK"),
-		Entry("Curl-P-81: normal trytes #3", "NOPQRSTUVWXYZ9ABSDEFGHIJKLM", "GWFZSXPZPAFSVPEGEIVWOTD9MY9KVP9HYVCIWSJEITEGVOVGQGV99RONTWDXOPUBIQPIWXK9L9OHZYFUB", CurlP81),
-		Entry("Curl-P-81: long absorb", strings.Repeat("ABC", consts.TransactionTrytesSize/3), "UHZVKZCGDIPNGFNPBNFZGIM9GAKYLCPTHTRFRXMNDJLZNXSGRPREFWTBKZWVTKV9BISPXEECVIXFJERAC", CurlP81),
-		Entry("Curl-P-81: long squeeze", "ABC", "LRJMQXFSZSLCIMKZTWFTEIHKWJZMUOHPSOVXZOHOEVHC9D9DROUQGRPTBZWOIJFTMGMXEYKXEJROQLWNUPSFJJRVTLUUJYW9GBQVXNCAUEGEBV9IJQ9TWFDHCFPUUYPCYLACTAIK9UZAJLVXLI9NPGCJN9ICFTEIYY", CurlP81),
-		Entry("Curl-P-27: empty trytes", "", consts.NullHashTrytes, CurlP27),
-		Entry("Curl-P-27: normal trytes", "TWENTYSEVEN", "RQPYXJPRXEEPLYLAHWTTFRXXUZTV9SZPEVOQ9FZATCXJOZLZ9A9BFXTUBSHGXN9OOA9GWIPGAAWEDVNPN", CurlP27),
+		Entry("Curl-P-81: normal trytes #3", "NOPQRSTUVWXYZ9ABSDEFGHIJKLM", "GWFZSXPZPAFSVPEGEIVWOTD9MY9KVP9HYVCIWSJEITEGVOVGQGV99RONTWDXOPUBIQPIWXK9L9OHZYFUB"),
+		Entry("Curl-P-81: long absorb", strings.Repeat("ABC", consts.TransactionTrytesSize/3), "UHZVKZCGDIPNGFNPBNFZGIM9GAKYLCPTHTRFRXMNDJLZNXSGRPREFWTBKZWVTKV9BISPXEECVIXFJERAC"),
+		Entry("Curl-P-81: long squeeze", "ABC", "LRJMQXFSZSLCIMKZTWFTEIHKWJZMUOHPSOVXZOHOEVHC9D9DROUQGRPTBZWOIJFTMGMXEYKXEJROQLWNUPSFJJRVTLUUJYW9GBQVXNCAUEGEBV9IJQ9TWFDHCFPUUYPCYLACTAIK9UZAJLVXLI9NPGCJN9ICFTEIYY"),
 	)
 
 	It("Clone", func() {

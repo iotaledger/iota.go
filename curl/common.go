@@ -32,20 +32,12 @@ const (
 )
 
 var (
-	// TruthTable of the Curl hash function.
-	TruthTable = [11]int8{1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0}
-	// Indices of the Curl hash function.
+	// Indices stores the rotation indices for a Curl round.
 	Indices [StateSize + 1]int
 )
 
 func init() {
-	for i := 0; i < StateSize; i++ {
-		p := -365
-
-		if Indices[i] < 365 {
-			p = 364
-		}
-
-		Indices[i+1] = Indices[i] + p
+	for i := 1; i < len(Indices); i++ {
+		Indices[i] = (Indices[i-1] + rotationOffset) % StateSize
 	}
 }
