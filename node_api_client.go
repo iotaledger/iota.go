@@ -134,14 +134,27 @@ type rawDataEnvelope struct {
 	Data []byte
 }
 
-func interpretBody(res *http.Response, decodeTo interface{}) error {
+func readBody(res *http.Response) ([]byte, error) {
 	resBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return fmt.Errorf("unable to read response body: %w", err)
+		return nil, fmt.Errorf("unable to read response body: %w", err)
 	}
+	return resBody, nil
+}
+
+func interpretBody(res *http.Response, decodeTo interface{}) error {
 	defer res.Body.Close()
 
 	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusCreated {
+		if decodeTo == nil {
+			return nil
+		}
+
+		resBody, err := readBody(res)
+		if err != nil {
+			return err
+		}
+
 		if rawData, ok := decodeTo.(*rawDataEnvelope); ok {
 			rawData.Data = make([]byte, len(resBody))
 			copy(rawData.Data, resBody)
@@ -150,6 +163,15 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 
 		okRes := &HTTPOkResponseEnvelope{Data: decodeTo}
 		return json.Unmarshal(resBody, okRes)
+	}
+
+	if res.StatusCode == http.StatusServiceUnavailable {
+		return nil
+	}
+
+	resBody, err := readBody(res)
+	if err != nil {
+		return err
 	}
 
 	errRes := &HTTPErrorResponseEnvelope{}
@@ -207,10 +229,6 @@ func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj i
 	res, err := api.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
-	}
-
-	if resObj == nil {
-		return res, nil
 	}
 
 	// write response into response object
