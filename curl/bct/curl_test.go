@@ -15,8 +15,8 @@ import (
 var _ = Describe("BCT Curl", func() {
 
 	DescribeTable("Hash",
-		func(src []trinary.Trits, hashLen int, rounds curl.CurlRounds) {
-			c := bct.NewCurl(rounds)
+		func(src []trinary.Trits, hashLen int) {
+			c := bct.NewCurlP81()
 			err := c.Absorb(src, len(src[0]))
 			Expect(err).ToNot(HaveOccurred())
 
@@ -26,15 +26,12 @@ var _ = Describe("BCT Curl", func() {
 
 			for i := range dst {
 				// compare against the non batched Curl
-				Expect(dst[i]).To(Equal(CurlSum(src[i], hashLen, rounds)))
+				Expect(dst[i]).To(Equal(CurlSum(src[i], hashLen)))
 			}
 		},
-		Entry("Curl-P-81: trits and hash", Trits(bct.MaxBatchSize, consts.HashTrinarySize), consts.HashTrinarySize, curl.CurlP81),
-		Entry("Curl-P-81: multi trits and hash", Trits(bct.MaxBatchSize, consts.TransactionTrinarySize), consts.HashTrinarySize, curl.CurlP81),
-		Entry("Curl-P-81: trits and multi squeeze", Trits(bct.MaxBatchSize, consts.HashTrinarySize), 3*consts.HashTrinarySize, curl.CurlP81),
-		Entry("Curl-P-27: trits and hash", Trits(bct.MaxBatchSize, consts.HashTrinarySize), consts.HashTrinarySize, curl.CurlP27),
-		Entry("Curl-P-27: multi trits and hash", Trits(bct.MaxBatchSize, consts.TransactionTrinarySize), consts.HashTrinarySize, curl.CurlP27),
-		Entry("Curl-P-27: trits and multi squeeze", Trits(bct.MaxBatchSize, consts.HashTrinarySize), 3*consts.HashTrinarySize, curl.CurlP27),
+		Entry("Curl-P-81: trits and hash", Trits(bct.MaxBatchSize, consts.HashTrinarySize), consts.HashTrinarySize),
+		Entry("Curl-P-81: multi trits and hash", Trits(bct.MaxBatchSize, consts.TransactionTrinarySize), consts.HashTrinarySize),
+		Entry("Curl-P-81: trits and multi squeeze", Trits(bct.MaxBatchSize, consts.HashTrinarySize), 3*consts.HashTrinarySize),
 	)
 
 	It("Clone", func() {
@@ -72,8 +69,8 @@ func Trits(size int, tritsCount int) []trinary.Trits {
 	return src
 }
 
-func CurlSum(data trinary.Trits, tritsCount int, rounds curl.CurlRounds) trinary.Trits {
-	c := curl.NewCurl(rounds)
+func CurlSum(data trinary.Trits, tritsCount int) trinary.Trits {
+	c := curl.NewCurlP81()
 	if err := c.Absorb(data); err != nil {
 		panic(err)
 	}
