@@ -8,6 +8,8 @@ import (
 
 const rotationOffset = 364
 
+// stateRotations stores the chunk offset and the bit shift of the state after each round.
+// Since the modulus operations are rather costly they are pre-computed once.
 var stateRotations [NumberOfRounds]struct {
 	offset, shift uint
 }
@@ -15,26 +17,41 @@ var stateRotations [NumberOfRounds]struct {
 func init() {
 	var rotation uint = rotationOffset
 	for r := 0; r < int(NumberOfRounds); r++ {
+		// the state is organized as chunks of 243 trits each
 		stateRotations[r].offset = rotation / consts.HashTrinarySize
 		stateRotations[r].shift = rotation % consts.HashTrinarySize
-		rotation = (rotation * rotationOffset) % StateSize
+		rotation = (rotation * rotationOffset) % StateSize // the rotation offset is applied every round
 	}
 }
 
+// transform performs the Curl transformation.
+// According to the specification, one Curl round performs the following transformation:
+//   for i ← 1 to 729
+//     x ← S[1]
+//     S ← rot(S)
+//     y ← S[1]
+//     N[i] ← g(x,y)
+//   S ← N
+// Each element of the state S is combined with its rotated counterpart using the S-box g.
+// This is equivalent to rotating just once and applying the S-box on the entire state:
+//   N ← rot(S)
+//   S ← g(S,N)
+// The only difference then is, that the trits are at the wrong position. Successive trits are now an opposite rotation
+// apart. This rotation offset adds up over the rounds and needs to be reverted in the end.
 func transform(p, n *[3]uint256) {
 	for r := 0; r < int(NumberOfRounds); r++ {
 		p2, n2 := rotateState(p, n, stateRotations[r].offset, stateRotations[r].shift)
 		for i := 0; i < 3; i++ {
+			// unrolled S-box computation on each uint64 of the current state chunk
 			p[i][0], n[i][0] = batchBox(p[i][0], n[i][0], p2[i][0], n2[i][0])
 			p[i][1], n[i][1] = batchBox(p[i][1], n[i][1], p2[i][1], n2[i][1])
 			p[i][2], n[i][2] = batchBox(p[i][2], n[i][2], p2[i][2], n2[i][2])
 			p[i][3], n[i][3] = batchBox(p[i][3], n[i][3], p2[i][3], n2[i][3])
-			n[i].norm243()
+			n[i].norm243() // only the first 243 bits of each uint256 are used
 			p[i].norm243()
 		}
 	}
-
-	// after 81 rounds the trits are in the wrong order; successive trits are 364⁸¹ mod 729 = 244 bits apart
+	// successive trits are now 364⁸¹ mod 729 = 244 bits apart and need to be reordered
 	reorder(p, n)
 }
 
@@ -51,7 +68,7 @@ func rotateState(p, n *[3]uint256, offset, s uint) (p2, n2 [3]uint256) {
 	return p2, n2
 }
 
-// batchBox computes the Curl S-box on 64 trits.
+// batchBox applies the Curl S-box on 64 trits encoded as positive and negative bits.
 func batchBox(xP, xN, yP, yN uint64) (uint64, uint64) {
 	tmp := xN ^ yP
 	return tmp &^ xP, ^tmp &^ (xP ^ yN)
