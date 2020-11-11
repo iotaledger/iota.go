@@ -9,7 +9,7 @@ import (
 const rotationOffset = 364
 
 // stateRotations stores the chunk offset and the bit shift of the state after each round.
-// Since the modulus operations are rather costly they are pre-computed once.
+// Since the modulo operations are rather costly, they are pre-computed.
 var stateRotations [NumberOfRounds]struct {
 	offset, shift uint
 }
@@ -51,17 +51,18 @@ func transform(p, n *[3]uint256) {
 			p[i].norm243()
 		}
 	}
-	// successive trits are now 364⁸¹ mod 729 = 244 bits apart and need to be reordered
+	// successive trits are now 364⁸¹ mod 729 = 244 positions apart and need to be reordered
 	reorder(p, n)
 }
 
-// rotateState rotates the Curl state by offset * 243 + s
+// rotateState rotates the Curl state by offset * 243 + s.
+// It performs a left rotation of the state elements towards lower indices.
 func rotateState(p, n *[3]uint256, offset, s uint) (p2, n2 [3]uint256) {
-	// rotate p to the left
+	// rotate the positive part
 	p2[0].shrInto(&p[(0+offset)%3], s).shlInto(&p[(1+offset)%3], 243-s)
 	p2[1].shrInto(&p[(1+offset)%3], s).shlInto(&p[(2+offset)%3], 243-s)
 	p2[2].shrInto(&p[(2+offset)%3], s).shlInto(&p[(3+offset)%3], 243-s)
-	// rotate n to the left
+	// rotate the negative part
 	n2[0].shrInto(&n[(0+offset)%3], s).shlInto(&n[(1+offset)%3], 243-s)
 	n2[1].shrInto(&n[(1+offset)%3], s).shlInto(&n[(2+offset)%3], 243-s)
 	n2[2].shrInto(&n[(2+offset)%3], s).shlInto(&n[(3+offset)%3], 243-s)
@@ -77,8 +78,8 @@ func batchBox(xP, xN, yP, yN uint64) (uint64, uint64) {
 // reorder arranges the state so that the trit at index (244 * k) % 729 becomes the trit at index k.
 // Since the state is organized as 3 chunks of 243 trits each, the 1st output trit lies at index (0,0), 2nd at (1,1),
 // 3rd at (2,2), 4th at (0,3), 5th at (1,4)...
-// Thus, in order to rearrange the 1st chunk, copy every 3rd trit, starting with 0, from the 1st chunk, every 3rd trit,
-// starting with 1, from the 2nd chunk and every 3rd trit, starting with 2, from the 3rd chunk.
+// Thus, in order to rearrange the 1st chunk, copy trits 3*k from the 1st chunk, trits 3*k+1 from the 2nd chunk and
+// trits 3*k+2 from the 3rd chunk.
 func reorder(p, n *[3]uint256) {
 	const (
 		m0 = 0x9249249249249249       // every 3rd bit set, bit at index 0 set
