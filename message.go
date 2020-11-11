@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/iotaledger/iota.go/pow"
 	"golang.org/x/crypto/blake2b"
@@ -149,7 +150,7 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 	jsonMsg.Version = MessageVersion
 	jsonMsg.Parent1 = hex.EncodeToString(m.Parent1[:])
 	jsonMsg.Parent2 = hex.EncodeToString(m.Parent2[:])
-	jsonMsg.Nonce = int(m.Nonce)
+	jsonMsg.Nonce = strconv.FormatUint(m.Nonce, 10)
 	if m.Payload != nil {
 		jsonPayload, err := m.Payload.MarshalJSON()
 		if err != nil {
@@ -204,21 +205,28 @@ type jsonmessage struct {
 	// The payload within the message.
 	Payload *json.RawMessage `json:"payload"`
 	// The nonce the message used to fulfill the PoW requirement.
-	Nonce int `json:"nonce"`
+	Nonce string `json:"nonce"`
 }
 
 func (jm *jsonmessage) ToSerializable() (Serializable, error) {
 	parent1, err := hex.DecodeString(jm.Parent1)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to decode hex parent 1 from JSON: %w", err)
 	}
 
 	parent2, err := hex.DecodeString(jm.Parent2)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to decode hex parent 2 from JSON: %w", err)
 	}
 
-	m := &Message{Version: byte(jm.Version), Nonce: uint64(jm.Nonce)}
+	var parsedNonce uint64
+	if len(jm.Nonce) != 0 {
+		parsedNonce, err = strconv.ParseUint(jm.Nonce, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse message nonce from JSON: %w", err)
+		}
+	}
+	m := &Message{Version: byte(jm.Version), Nonce: parsedNonce}
 
 	if jm.Payload != nil {
 		jsonPayload, err := DeserializeObjectFromJSON(jm.Payload, jsonpayloadselector)

@@ -121,7 +121,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 			  }
 			]
 		  },
-		  "nonce": 133945865838
+		  "nonce": "133945865838"
 		}`
 
 	msg := &iota.Message{}
