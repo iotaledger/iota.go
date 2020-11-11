@@ -14,37 +14,16 @@ const MaxBatchSize = bits.UintSize
 
 type state struct {
 	l, h      [curl.StateSize]uint // main batched state of the hash
-	rounds    curl.CurlRounds      // number of rounds used
 	direction curl.SpongeDirection // whether the sponge is absorbing or squeezing
-}
-
-// NewCurl initializes a new BCT Curl instance.
-func NewCurl(rounds ...curl.CurlRounds) *state {
-	r := curl.NumberOfRounds
-	if len(rounds) > 0 {
-		r = rounds[0]
-	}
-	c := &state{
-		rounds:    r,
-		direction: curl.SpongeAbsorbing,
-	}
-	c.Reset()
-	return c
-}
-
-// NewCurlP27 returns a new BCT Curl-P-27.
-func NewCurlP27() *state {
-	return NewCurl(curl.CurlP27)
 }
 
 // NewCurlP81 returns a new BCT Curl-P-81.
 func NewCurlP81() *state {
-	return NewCurl(curl.CurlP81)
-}
-
-// NumRounds returns the number of rounds for the BCT Curl instance.
-func (c *state) NumRounds() int {
-	return int(c.rounds)
+	c := &state{
+		direction: curl.SpongeAbsorbing,
+	}
+	c.Reset()
+	return c
 }
 
 // Reset the internal state of the BCT Curl instance.
@@ -61,7 +40,6 @@ func (c *state) Clone() *state {
 	return &state{
 		l:         c.l,
 		h:         c.h,
-		rounds:    c.rounds,
 		direction: c.direction,
 	}
 }
@@ -163,10 +141,7 @@ func (c *state) out(dst trinary.Trits, idx uint) {
 // transform transforms the sponge.
 func (c *state) transform() {
 	var ltmp, htmp [curl.StateSize]uint
-	transform(&ltmp, &htmp, &c.l, &c.h, uint(c.rounds))
-	// for odd number of rounds we need to copy the buffer into the state
-	if c.rounds%2 != 0 {
-		copy(c.l[:], ltmp[:])
-		copy(c.h[:], htmp[:])
-	}
+	transform(&ltmp, &htmp, &c.l, &c.h, curl.NumRounds)
+	copy(c.l[:], ltmp[:])
+	copy(c.h[:], htmp[:])
 }

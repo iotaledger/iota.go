@@ -23,11 +23,6 @@ func NewCurlP81() SpongeFunction {
 	}
 }
 
-// NumRounds returns the number of rounds for the Curl instance.
-func (c *Curl) NumRounds() int {
-	return int(NumberOfRounds)
-}
-
 // CopyState copy the content of the Curl state buffer into s.
 func (c *Curl) CopyState(s Trits) {
 	for i := 0; i < 3; i++ {

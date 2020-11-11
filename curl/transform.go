@@ -10,13 +10,13 @@ const rotationOffset = 364
 
 // stateRotations stores the chunk offset and the bit shift of the state after each round.
 // Since the modulo operations are rather costly, they are pre-computed.
-var stateRotations [NumberOfRounds]struct {
+var stateRotations [NumRounds]struct {
 	offset, shift uint
 }
 
 func init() {
 	var rotation uint = rotationOffset
-	for r := 0; r < int(NumberOfRounds); r++ {
+	for r := 0; r < int(NumRounds); r++ {
 		// the state is organized as chunks of 243 trits each
 		stateRotations[r].offset = rotation / consts.HashTrinarySize
 		stateRotations[r].shift = rotation % consts.HashTrinarySize
@@ -39,7 +39,7 @@ func init() {
 // The only difference then is, that the trits are at the wrong position. Successive trits are now an opposite rotation
 // apart. This rotation offset adds up over the rounds and needs to be reverted in the end.
 func transform(p, n *[3]uint256) {
-	for r := 0; r < int(NumberOfRounds); r++ {
+	for r := 0; r < int(NumRounds); r++ {
 		p2, n2 := rotateState(p, n, stateRotations[r].offset, stateRotations[r].shift)
 		for i := 0; i < 3; i++ {
 			// unrolled S-box computation on each uint64 of the current state chunk
