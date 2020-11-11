@@ -225,8 +225,10 @@ func InMemoryEd25519MilestoneSigner(prvKeys MilestonePublicKeyMapping) Milestone
 	}
 }
 
-// RemoteEd25519MilestoneSigner is a function which uses a remote RPC server to produce signatures for the Milestone essence data.
-func RemoteEd25519MilestoneSigner(remoteEndpoint string) MilestoneSigningFunc {
+// InsecureRemoteEd25519MilestoneSigner is a function which uses a remote RPC server via an insecure connection
+// to produce signatures for the Milestone essence data.
+// You must only use this function if the remote lives on the same host as the caller.
+func InsecureRemoteEd25519MilestoneSigner(remoteEndpoint string) MilestoneSigningFunc {
 	return func(pubKeys []MilestonePublicKey, msEssence []byte) ([]MilestoneSignature, error) {
 		pubKeysUnbound := make([][]byte, len(pubKeys))
 		for i := range pubKeys {
@@ -249,7 +251,7 @@ func RemoteEd25519MilestoneSigner(remoteEndpoint string) MilestoneSigningFunc {
 		}
 		sigs := response.GetSignatures()
 		if len(sigs) != len(pubKeys) {
-			return nil, fmt.Errorf("remote did not provide the correct count of signatures")
+			return nil, fmt.Errorf("%w: remote did not provide the correct count of signatures", ErrMilestoneProducedSignaturesCountMismatch)
 		}
 		sigs64 := make([]MilestoneSignature, len(sigs))
 		for i := range sigs {
