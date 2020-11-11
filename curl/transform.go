@@ -47,8 +47,8 @@ func transform(p, n *[3]uint256) {
 			p[i][1], n[i][1] = batchBox(p[i][1], n[i][1], p2[i][1], n2[i][1])
 			p[i][2], n[i][2] = batchBox(p[i][2], n[i][2], p2[i][2], n2[i][2])
 			p[i][3], n[i][3] = batchBox(p[i][3], n[i][3], p2[i][3], n2[i][3])
-			n[i].norm243() // only the first 243 bits of each uint256 are used
-			p[i].norm243()
+			p[i].norm243() // only the first 243 bits of each uint256 are used
+			n[i].norm243()
 		}
 	}
 	// successive trits are now 364⁸¹ mod 729 = 244 positions apart and need to be reordered
@@ -98,5 +98,5 @@ func reorder(p, n *[3]uint256) {
 		n2[i][2] = n[i][2]&m1 | n[(1+i)%3][2]&m2 | n[(2+i)%3][2]&m0
 		n2[i][3] = n[i][3]&m0 | n[(1+i)%3][3]&m1 | n[(2+i)%3][3]&m2
 	}
-	*n, *p = n2, p2
+	*p, *n = p2, n2
 }

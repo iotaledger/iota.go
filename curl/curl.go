@@ -63,10 +63,10 @@ func (c *Curl) squeeze(hash Trits) {
 
 	_ = hash[HashTrinarySize-1]
 	for i := uint(0); i <= HashTrinarySize-1; i++ {
-		if c.n[0].bit(i) != 0 {
-			hash[i] = -1
-		} else if c.p[0].bit(i) != 0 {
+		if c.p[0].bit(i) != 0 {
 			hash[i] = 1
+		} else if c.n[0].bit(i) != 0 {
+			hash[i] = -1
 		}
 	}
 }
@@ -112,17 +112,17 @@ func (c *Curl) Absorb(in Trits) error {
 		panic("absorb after squeeze")
 	}
 	for len(in) >= HashTrinarySize {
-		var n, p uint256
+		var p, n uint256
 		for i := uint(0); i < HashTrinarySize; i++ {
 			switch in[i] {
-			case -1:
-				n.setBit(i)
 			case 1:
 				p.setBit(i)
+			case -1:
+				n.setBit(i)
 			}
 		}
 		// the input only replaces the first 243 trits of the state
-		c.n[0], c.p[0] = n, p
+		c.p[0], c.n[0] = p, n
 		in = in[HashTrinarySize:]
 		c.transform()
 	}
