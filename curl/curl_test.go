@@ -42,6 +42,40 @@ var _ = Describe("Curl", func() {
 		Entry("Curl-P-81: long squeeze", "ABC", "LRJMQXFSZSLCIMKZTWFTEIHKWJZMUOHPSOVXZOHOEVHC9D9DROUQGRPTBZWOIJFTMGMXEYKXEJROQLWNUPSFJJRVTLUUJYW9GBQVXNCAUEGEBV9IJQ9TWFDHCFPUUYPCYLACTAIK9UZAJLVXLI9NPGCJN9ICFTEIYY"),
 	)
 
+	It("CopyState", func() {
+		a := strings.Repeat("A", consts.HashTrytesSize)
+
+		c := NewCurlP81().(*Curl)
+		err := c.AbsorbTrytes(a)
+		Expect(err).ToNot(HaveOccurred())
+
+		state := make(trinary.Trits, StateSize)
+		c.CopyState(state[:])
+
+		Expect(c.MustSqueeze(consts.HashTrinarySize)).To(Equal(state[:consts.HashTrinarySize]))
+	})
+
+	It("Reset", func() {
+		a := strings.Repeat("A", consts.HashTrytesSize)
+		b := strings.Repeat("B", consts.HashTrytesSize)
+
+		c1 := NewCurlP81()
+		err := c1.AbsorbTrytes(a)
+		Expect(err).ToNot(HaveOccurred())
+		_, err = c1.SqueezeTrytes(consts.HashTrinarySize)
+		Expect(err).ToNot(HaveOccurred())
+
+		c1.Reset()
+		c2 := NewCurlP81()
+
+		err = c1.AbsorbTrytes(b)
+		Expect(err).ToNot(HaveOccurred())
+		err = c2.AbsorbTrytes(b)
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(c2.MustSqueezeTrytes(consts.HashTrinarySize)).To(Equal(c1.MustSqueezeTrytes(consts.HashTrinarySize)))
+	})
+
 	It("Clone", func() {
 		a := strings.Repeat("A", consts.HashTrytesSize)
 		b := strings.Repeat("B", consts.HashTrytesSize)
