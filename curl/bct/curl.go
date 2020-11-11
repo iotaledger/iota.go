@@ -12,14 +12,15 @@ import (
 // MaxBatchSize is the maximum number of Curl hashes that can be computed in one batch.
 const MaxBatchSize = bits.UintSize
 
-type state struct {
+// Curl is the BCT version of the Curl hashing function.
+type Curl struct {
 	l, h      [curl.StateSize]uint // main batched state of the hash
 	direction curl.SpongeDirection // whether the sponge is absorbing or squeezing
 }
 
 // NewCurlP81 returns a new BCT Curl-P-81.
-func NewCurlP81() *state {
-	c := &state{
+func NewCurlP81() *Curl {
+	c := &Curl{
 		direction: curl.SpongeAbsorbing,
 	}
 	c.Reset()
@@ -27,7 +28,7 @@ func NewCurlP81() *state {
 }
 
 // Reset the internal state of the BCT Curl instance.
-func (c *state) Reset() {
+func (c *Curl) Reset() {
 	for i := 0; i < curl.StateSize; i++ {
 		c.l[i] = ^uint(0)
 		c.h[i] = ^uint(0)
@@ -36,8 +37,8 @@ func (c *state) Reset() {
 }
 
 // Clone returns a deep copy of the current BCT Curl instance.
-func (c *state) Clone() *state {
-	return &state{
+func (c *Curl) Clone() *Curl {
+	return &Curl{
 		l:         c.l,
 		h:         c.h,
 		direction: c.direction,
@@ -46,7 +47,7 @@ func (c *state) Clone() *state {
 
 // Absorb fills the states of the sponge with src; each element of src must have the length tritsCount.
 // The value tritsCount has to be a multiple of HashTrinarySize.
-func (c *state) Absorb(src []trinary.Trits, tritsCount int) error {
+func (c *Curl) Absorb(src []trinary.Trits, tritsCount int) error {
 	if len(src) < 1 || len(src) > MaxBatchSize {
 		return consts.ErrInvalidBatchSize
 	}
@@ -68,7 +69,7 @@ func (c *state) Absorb(src []trinary.Trits, tritsCount int) error {
 
 // Squeeze squeezes out trits of the given length.
 // The value tritsCount has to be a multiple of HashTrinarySize.
-func (c *state) Squeeze(dst []trinary.Trits, tritsCount int) error {
+func (c *Curl) Squeeze(dst []trinary.Trits, tritsCount int) error {
 	if len(dst) < 1 || len(dst) > MaxBatchSize {
 		return consts.ErrInvalidBatchSize
 	}
@@ -93,7 +94,7 @@ func (c *state) Squeeze(dst []trinary.Trits, tritsCount int) error {
 }
 
 // in sets the idx-th entry of the internal state to src.
-func (c *state) in(src trinary.Trits, idx uint) {
+func (c *Curl) in(src trinary.Trits, idx uint) {
 	// bounds check hint to compiler
 	if len(src) < consts.HashTrinarySize {
 		panic(consts.ErrInvalidTritsLength)
@@ -117,7 +118,7 @@ func (c *state) in(src trinary.Trits, idx uint) {
 }
 
 // out extracts the idx-th entry of the internal state to dst.
-func (c *state) out(dst trinary.Trits, idx uint) {
+func (c *Curl) out(dst trinary.Trits, idx uint) {
 	// bounds check hint to compiler
 	if len(dst) < consts.HashTrinarySize {
 		panic(consts.ErrInvalidTritsLength)
@@ -139,7 +140,7 @@ func (c *state) out(dst trinary.Trits, idx uint) {
 }
 
 // transform transforms the sponge.
-func (c *state) transform() {
+func (c *Curl) transform() {
 	var ltmp, htmp [curl.StateSize]uint
 	transform(&ltmp, &htmp, &c.l, &c.h, curl.NumRounds)
 	copy(c.l[:], ltmp[:])
