@@ -269,6 +269,7 @@ func randMessage(withPayloadType uint32) (*iota.Message, []byte) {
 
 	m := &iota.Message{}
 	m.Version = iota.MessageVersion
+	m.NetworkID = 1
 	copy(m.Parent1[:], randBytes(iota.MessageIDLength))
 	copy(m.Parent2[:], randBytes(iota.MessageIDLength))
 	m.Payload = payload
@@ -276,6 +277,9 @@ func randMessage(withPayloadType uint32) (*iota.Message, []byte) {
 
 	var b bytes.Buffer
 	if err := b.WriteByte(iota.MessageVersion); err != nil {
+		panic(err)
+	}
+	if err := binary.Write(&b, binary.LittleEndian, m.NetworkID); err != nil {
 		panic(err)
 	}
 	if _, err := b.Write(m.Parent1[:]); err != nil {

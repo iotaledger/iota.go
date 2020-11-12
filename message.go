@@ -15,8 +15,10 @@ const (
 	MessageVersion = 1
 	// Defines the length of a message ID.
 	MessageIDLength = blake2b.Size256
+	// Defines the length of the network ID in bytes.
+	MessageNetworkIDLength = UInt64ByteSize
 	// Defines the minimum size of a message: version + 2 msg IDs + uint16 payload length + nonce
-	MessageBinSerializedMinSize = MessageVersionByteSize + 2*MessageIDLength + UInt32ByteSize + UInt64ByteSize
+	MessageBinSerializedMinSize = MessageVersionByteSize + MessageNetworkIDLength + 2*MessageIDLength + UInt32ByteSize + UInt64ByteSize
 )
 
 // PayloadSelector implements SerializableSelectorFunc for payload types.
@@ -59,6 +61,8 @@ func MessageIDFromHexString(messageIDHex string) (MessageID, error) {
 type Message struct {
 	// The version of the message.
 	Version byte
+	// The network ID for which this message is meant for.
+	NetworkID uint64
 	// The 1st parent the message references.
 	Parent1 [MessageIDLength]byte
 	// The 2nd parent the message references.
@@ -107,6 +111,9 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 		Skip(OneByte, func(err error) error {
 			return fmt.Errorf("unable to skip message version during deserialization: %w", err)
 		}).
+		ReadNum(&m.NetworkID, func(err error) error {
+			return fmt.Errorf("unable to deserialize message network ID: %w", err)
+		}).
 		ReadArrayOf32Bytes(&m.Parent1, func(err error) error {
 			return fmt.Errorf("unable to deserialize message parent 1: %w", err)
 		}).
@@ -130,6 +137,9 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		WriteNum(byte(MessageVersion), func(err error) error {
 			return fmt.Errorf("unable to serialize message version: %w", err)
 		}).
+		WriteNum(m.NetworkID, func(err error) error {
+			return fmt.Errorf("unable to serialize message network ID: %w", err)
+		}).
 		WriteBytes(m.Parent1[:], func(err error) error {
 			return fmt.Errorf("unable to serialize message parent 1: %w", err)
 		}).
@@ -148,6 +158,7 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 func (m *Message) MarshalJSON() ([]byte, error) {
 	jsonMsg := &jsonmessage{}
 	jsonMsg.Version = MessageVersion
+	jsonMsg.NetworkID = strconv.FormatUint(m.NetworkID, 10)
 	jsonMsg.Parent1 = hex.EncodeToString(m.Parent1[:])
 	jsonMsg.Parent2 = hex.EncodeToString(m.Parent2[:])
 	jsonMsg.Nonce = strconv.FormatUint(m.Nonce, 10)
@@ -198,6 +209,8 @@ func jsonpayloadselector(ty int) (JSONSerializable, error) {
 type jsonmessage struct {
 	// The version of the message.
 	Version int `json:"version"`
+	// The network ID identifying the network for this message.
+	NetworkID string `json:"networkId"`
 	// The hex encoded message ID of the first referenced parent.
 	Parent1 string `json:"parent1MessageId"`
 	// The hex encoded message ID of the second referenced parent.
@@ -226,7 +239,16 @@ func (jm *jsonmessage) ToSerializable() (Serializable, error) {
 			return nil, fmt.Errorf("unable to parse message nonce from JSON: %w", err)
 		}
 	}
-	m := &Message{Version: byte(jm.Version), Nonce: parsedNonce}
+
+	var parsedNetworkID uint64
+	if len(jm.NetworkID) != 0 {
+		parsedNetworkID, err = strconv.ParseUint(jm.NetworkID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse message network ID from JSON: %w", err)
+		}
+	}
+
+	m := &Message{Version: byte(jm.Version), NetworkID: parsedNetworkID, Nonce: parsedNonce}
 
 	if jm.Payload != nil {
 		jsonPayload, err := DeserializeObjectFromJSON(jm.Payload, jsonpayloadselector)
