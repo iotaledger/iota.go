@@ -29,6 +29,15 @@ func (mb *MessageBuilder) Build() (*Message, error) {
 	return mb.msg, nil
 }
 
+// NetworkID sets the network ID for which this message is meant for.
+func (mb *MessageBuilder) NetworkID(networkID uint64) *MessageBuilder {
+	if mb.err != nil {
+		return mb
+	}
+	mb.msg.NetworkID = networkID
+	return mb
+}
+
 // Payload sets the payload to embed within the message.
 func (mb *MessageBuilder) Payload(seri Serializable) *MessageBuilder {
 	if mb.err != nil {
