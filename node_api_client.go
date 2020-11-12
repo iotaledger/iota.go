@@ -258,8 +258,8 @@ type NodeInfoResponse struct {
 	Version string `json:"version"`
 	// Whether the node is healthy.
 	IsHealthy bool `json:"isHealthy"`
-	// The id of the network (1=mainnet).
-	NetworkID uint8 `json:"networkId"`
+	// The human friendly name of the network ID on which the node operates on.
+	NetworkID string `json:"networkId"`
 	// The hex encoded ID of the latest known milestone.
 	LatestMilestoneID string `json:"latestMilestoneId"`
 	// The latest known milestone index.
