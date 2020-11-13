@@ -20,7 +20,7 @@ var _ = Describe("Bundle", func() {
 	tag := "TAG" + strings.Repeat("9", 24)
 	bndl := Bundle{
 		{
-			Address:                       strings.Repeat("A", 81),
+			Address:                       strings.Repeat("A", 80) + "J", // as the last trit will be zeroed, this should be the same as all As
 			Value:                         -2,
 			Tag:                           tag,
 			ObsoleteTag:                   tag,
@@ -39,7 +39,7 @@ var _ = Describe("Bundle", func() {
 		},
 
 		{
-			Address:                       strings.Repeat("A", 81),
+			Address:                       strings.Repeat("A", 80) + "J",
 			Value:                         0,
 			Tag:                           tag,
 			ObsoleteTag:                   tag,
@@ -58,7 +58,7 @@ var _ = Describe("Bundle", func() {
 		},
 
 		{
-			Address:                       strings.Repeat("B", 81),
+			Address:                       strings.Repeat("B", 80) + "K",
 			Value:                         2,
 			Tag:                           tag,
 			ObsoleteTag:                   tag,
