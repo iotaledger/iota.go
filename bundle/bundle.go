@@ -226,7 +226,7 @@ func finalize(bundle Bundle, validator func(Hash) bool) (Bundle, error) {
 			var essence strings.Builder
 			essence.Grow(2 * HashTrytesSize)
 
-			essence.WriteString(bundle[i].Address)
+			essence.WriteString(addresses[i])
 			essence.WriteString(values[i])
 			essence.WriteString(MustTritsToTrytes(obsoleteTagsTrits[i]))
 			essence.WriteString(timestamps[i])
