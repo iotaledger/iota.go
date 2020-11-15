@@ -126,4 +126,17 @@ var _ = Describe("Curl", func() {
 
 		Expect(c2.MustSqueezeTrytes(consts.HashTrinarySize)).To(Equal(c1.MustSqueezeTrytes(consts.HashTrinarySize)))
 	})
+
+	It("absorb after squeeze should panic", func() {
+		a := strings.Repeat("A", consts.HashTrytesSize)
+
+		c := NewCurlP81()
+		err := c.AbsorbTrytes(a)
+		Expect(err).ToNot(HaveOccurred())
+		_, err = c.SqueezeTrytes(consts.HashTrinarySize)
+		Expect(err).ToNot(HaveOccurred())
+
+		absorb := func() { _ = c.AbsorbTrytes(a) }
+		Expect(absorb).To(Panic())
+	})
 })

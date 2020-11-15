@@ -84,6 +84,19 @@ var _ = Describe("BCT Curl", func() {
 
 		Expect(hash2[0]).To(Equal(hash1[0]))
 	})
+
+	It("absorb after squeeze should panic", func() {
+		a := []trinary.Trits{trinary.MustTrytesToTrits(strings.Repeat("A", consts.HashTrytesSize))}
+
+		c := bct.NewCurlP81()
+		err := c.Absorb(a, len(a[0]))
+		Expect(err).ToNot(HaveOccurred())
+		err = c.Squeeze(make([]trinary.Trits, 1), consts.HashTrinarySize)
+		Expect(err).ToNot(HaveOccurred())
+
+		absorb := func() { _ = c.Absorb(a, len(a[0])) }
+		Expect(absorb).To(Panic())
+	})
 })
 
 func Trits(size int, tritsCount int) []trinary.Trits {
