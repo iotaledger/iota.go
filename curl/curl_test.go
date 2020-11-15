@@ -1,6 +1,10 @@
 package curl_test
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"strings"
 
 	"github.com/iotaledger/iota.go/consts"
@@ -13,33 +17,63 @@ import (
 
 var _ = Describe("Curl", func() {
 
+	Context("golden", func() {
+		var tests []Test
+
+		BeforeSuite(func() {
+			b, err := ioutil.ReadFile(filepath.Join("testdata", goldenName+".json"))
+			Expect(err).ToNot(HaveOccurred())
+			err = json.Unmarshal(b, &tests)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("absorb and squeeze trytes", func() {
+			for i, tt := range tests {
+				By(fmt.Sprintf("test vector: %d", i), func() {
+					c := NewCurlP81()
+					err := c.AbsorbTrytes(tt.In)
+					Expect(err).ToNot(HaveOccurred())
+					squeeze, err := c.SqueezeTrytes(len(tt.Hash) * consts.TritsPerTryte)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(squeeze).To(Equal(tt.Hash))
+				})
+			}
+		})
+
+		It("absorb and squeeze trits", func() {
+			for i, tt := range tests {
+				By(fmt.Sprintf("test vector: %d", i), func() {
+					c := NewCurlP81()
+					err := c.Absorb(trinary.MustTrytesToTrits(tt.In))
+					Expect(err).ToNot(HaveOccurred())
+					squeeze, err := c.Squeeze(len(tt.Hash) * consts.TritsPerTryte)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(squeeze).To(Equal(trinary.MustTrytesToTrits(tt.Hash)))
+				})
+			}
+		})
+	})
+
 	DescribeTable("Hash",
-		func(in trinary.Trytes, expSqueeze trinary.Trytes) {
+		func(in trinary.Trytes, expHash trinary.Trytes) {
 
 			By("tryte", func() {
-				c := NewCurlP81()
-				err := c.AbsorbTrytes(trinary.MustPad(in, consts.HashTrytesSize))
+				hash, err := HashTrytes(trinary.MustPad(in, consts.HashTrytesSize))
 				Expect(err).ToNot(HaveOccurred())
-				squeeze, err := c.SqueezeTrytes(len(expSqueeze) * consts.TritsPerTryte)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(squeeze).To(Equal(expSqueeze))
+				Expect(hash).To(Equal(expHash))
 			})
 
 			By("trits", func() {
-				c := NewCurlP81()
-				err := c.Absorb(trinary.MustPadTrits(trinary.MustTrytesToTrits(in), consts.HashTrinarySize))
+				hash, err := HashTrits(trinary.MustPadTrits(trinary.MustTrytesToTrits(in), consts.HashTrinarySize))
 				Expect(err).ToNot(HaveOccurred())
-				squeeze, err := c.Squeeze(len(expSqueeze) * consts.TritsPerTryte)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(squeeze).To(Equal(trinary.MustTrytesToTrits(expSqueeze)))
+				Expect(hash).To(Equal(trinary.MustTrytesToTrits(expHash)))
 			})
 		},
-		Entry("Curl-P-81: empty trytes", "", consts.NullHashTrytes),
-		Entry("Curl-P-81: normal trytes", "A", "TJVKPMTAMIZVBVHIVQUPTKEMPROEKV9SB9COEDQYRHYPTYSKQIAN9PQKMZHCPO9TS9BHCORFKW9CQXZEE"),
-		Entry("Curl-P-81: normal trytes #2", "Z", "FA9WYZSJJWSD9AEEBOGGDHFTMIZVHFURFLJLFBTNENDDCMSXGAGLXFMYZTAMKVIYDQSZEDKXSWVAOPZMK"),
-		Entry("Curl-P-81: normal trytes #3", "NOPQRSTUVWXYZ9ABSDEFGHIJKLM", "GWFZSXPZPAFSVPEGEIVWOTD9MY9KVP9HYVCIWSJEITEGVOVGQGV99RONTWDXOPUBIQPIWXK9L9OHZYFUB"),
-		Entry("Curl-P-81: long absorb", strings.Repeat("ABC", consts.TransactionTrytesSize/3), "UHZVKZCGDIPNGFNPBNFZGIM9GAKYLCPTHTRFRXMNDJLZNXSGRPREFWTBKZWVTKV9BISPXEECVIXFJERAC"),
-		Entry("Curl-P-81: long squeeze", "ABC", "LRJMQXFSZSLCIMKZTWFTEIHKWJZMUOHPSOVXZOHOEVHC9D9DROUQGRPTBZWOIJFTMGMXEYKXEJROQLWNUPSFJJRVTLUUJYW9GBQVXNCAUEGEBV9IJQ9TWFDHCFPUUYPCYLACTAIK9UZAJLVXLI9NPGCJN9ICFTEIYY"),
+		Entry("empty trytes", "", consts.NullHashTrytes),
+		Entry("normal trytes", "A", "TJVKPMTAMIZVBVHIVQUPTKEMPROEKV9SB9COEDQYRHYPTYSKQIAN9PQKMZHCPO9TS9BHCORFKW9CQXZEE"),
+		Entry("normal trytes #2", "Z", "FA9WYZSJJWSD9AEEBOGGDHFTMIZVHFURFLJLFBTNENDDCMSXGAGLXFMYZTAMKVIYDQSZEDKXSWVAOPZMK"),
+		Entry("normal trytes #3", "NOPQRSTUVWXYZ9ABSDEFGHIJKLM", "GWFZSXPZPAFSVPEGEIVWOTD9MY9KVP9HYVCIWSJEITEGVOVGQGV99RONTWDXOPUBIQPIWXK9L9OHZYFUB"),
+		Entry("long absorb", strings.Repeat("ABC", consts.TransactionTrytesSize/3), "UHZVKZCGDIPNGFNPBNFZGIM9GAKYLCPTHTRFRXMNDJLZNXSGRPREFWTBKZWVTKV9BISPXEECVIXFJERAC"),
 	)
 
 	It("CopyState", func() {
