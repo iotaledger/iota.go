@@ -41,15 +41,26 @@ func init() {
 func transform(p, n *[3]uint256) {
 	for r := 0; r < NumRounds; r++ {
 		p2, n2 := rotateState(p, n, stateRotations[r].offset, stateRotations[r].shift)
-		for i := 0; i < 3; i++ {
-			// unrolled S-box computation on each uint64 of the current state chunk
-			p[i][0], n[i][0] = batchBox(p[i][0], n[i][0], p2[i][0], n2[i][0])
-			p[i][1], n[i][1] = batchBox(p[i][1], n[i][1], p2[i][1], n2[i][1])
-			p[i][2], n[i][2] = batchBox(p[i][2], n[i][2], p2[i][2], n2[i][2])
-			p[i][3], n[i][3] = batchBox(p[i][3], n[i][3], p2[i][3], n2[i][3])
-			p[i].norm243() // only the first 243 bits of each uint256 are used
-			n[i].norm243()
-		}
+		// unrolled S-box computation on each uint64 of the current state
+		p[0][0], n[0][0] = batchBox(p[0][0], n[0][0], p2[0][0], n2[0][0])
+		p[0][1], n[0][1] = batchBox(p[0][1], n[0][1], p2[0][1], n2[0][1])
+		p[0][2], n[0][2] = batchBox(p[0][2], n[0][2], p2[0][2], n2[0][2])
+		p[0][3], n[0][3] = batchBox(p[0][3], n[0][3], p2[0][3], n2[0][3])
+		p[1][0], n[1][0] = batchBox(p[1][0], n[1][0], p2[1][0], n2[1][0])
+		p[1][1], n[1][1] = batchBox(p[1][1], n[1][1], p2[1][1], n2[1][1])
+		p[1][2], n[1][2] = batchBox(p[1][2], n[1][2], p2[1][2], n2[1][2])
+		p[1][3], n[1][3] = batchBox(p[1][3], n[1][3], p2[1][3], n2[1][3])
+		p[2][0], n[2][0] = batchBox(p[2][0], n[2][0], p2[2][0], n2[2][0])
+		p[2][1], n[2][1] = batchBox(p[2][1], n[2][1], p2[2][1], n2[2][1])
+		p[2][2], n[2][2] = batchBox(p[2][2], n[2][2], p2[2][2], n2[2][2])
+		p[2][3], n[2][3] = batchBox(p[2][3], n[2][3], p2[2][3], n2[2][3])
+		// only the first 243 bits of each uint256 are used
+		p[0].norm243()
+		p[1].norm243()
+		p[2].norm243()
+		n[0].norm243()
+		n[1].norm243()
+		n[2].norm243()
 	}
 	// successive trits are now 364⁸¹ mod 729 = 244 positions apart and need to be reordered
 	reorder(p, n)
