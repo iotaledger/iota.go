@@ -11,7 +11,6 @@ import (
 func TestSerializedTransactionSize(t *testing.T) {
 	sigTxPayload := oneInputOutputTransaction()
 	m := &iota.Message{
-		Version: 1,
 		Parent1: rand32ByteHash(),
 		Parent2: rand32ByteHash(),
 		Payload: sigTxPayload,

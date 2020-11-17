@@ -148,6 +148,5 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 	assert.True(t, bytes.Equal(msgMinimal.Parent1[:], emptyID[:]))
 	assert.True(t, bytes.Equal(msgMinimal.Parent2[:], emptyID[:]))
 	assert.Nil(t, msgMinimal.Payload)
-	assert.Equal(t, msgMinimal.Version, byte(iota.MessageVersion))
 	assert.Equal(t, msgMinimal.Nonce, uint64(0))
 }
