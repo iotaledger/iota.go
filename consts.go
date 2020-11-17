@@ -23,8 +23,6 @@ const (
 	TypeDenotationByteSize = UInt32ByteSize
 	// The size of a type denotation for a small range of possible values.
 	SmallTypeDenotationByteSize = OneByte
-	// The size of the version of a message.
-	MessageVersionByteSize = SmallTypeDenotationByteSize
 	// // The byte size of struct array lengths.
 	StructArrayLengthByteSize = UInt16ByteSize
 	// // The byte size of byte array lengths.

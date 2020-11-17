@@ -88,9 +88,8 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 	msgHash := rand32ByteHash()
 	msgHashStr := hex.EncodeToString(msgHash[:])
 
-	incompleteMsg := &iota.Message{Version: 1}
+	incompleteMsg := &iota.Message{}
 	completeMsg := &iota.Message{
-		Version: 1,
 		Parent1: rand32ByteHash(),
 		Parent2: rand32ByteHash(),
 		Payload: nil,
@@ -196,7 +195,6 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 	queryHash := hex.EncodeToString(identifier[:])
 
 	originMsg := &iota.Message{
-		Version: 1,
 		Parent1: rand32ByteHash(),
 		Parent2: rand32ByteHash(),
 		Payload: nil,

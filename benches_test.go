@@ -97,7 +97,6 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 func BenchmarkSerializeAndHashMessageWithTransactionPayload(b *testing.B) {
 	txPayload := oneInputOutputTransaction()
 	m := &iota.Message{
-		Version: 1,
 		Parent1: rand32ByteHash(),
 		Parent2: rand32ByteHash(),
 		Payload: txPayload,

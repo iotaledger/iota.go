@@ -11,7 +11,7 @@ import (
 // NewMessageBuilder creates a new MessageBuilder.
 func NewMessageBuilder() *MessageBuilder {
 	return &MessageBuilder{
-		msg: &Message{Version: MessageVersion},
+		msg: &Message{},
 	}
 }
 
@@ -35,6 +35,15 @@ func (mb *MessageBuilder) NetworkID(networkID uint64) *MessageBuilder {
 		return mb
 	}
 	mb.msg.NetworkID = networkID
+	return mb
+}
+
+// NetworkIDFromString sets the network ID for which this message is meant for.
+func (mb *MessageBuilder) NetworkIDFromString(networkIDStr string) *MessageBuilder {
+	if mb.err != nil {
+		return mb
+	}
+	mb.msg.NetworkID = NetworkIDFromString(networkIDStr)
 	return mb
 }
 
