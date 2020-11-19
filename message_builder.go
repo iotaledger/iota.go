@@ -86,7 +86,7 @@ func (mb *MessageBuilder) Tips(nodeAPI *NodeAPI) *MessageBuilder {
 		return mb
 	}
 	mb.Parent1(parent1)
-	mb.Parent1(parent2)
+	mb.Parent2(parent2)
 	return mb
 }
 
