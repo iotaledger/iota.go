@@ -6,8 +6,8 @@ import (
 
 func transformGeneric(lto, hto, lfrom, hfrom *[curl.StateSize]uint, rounds uint) {
 	for r := rounds; r > 0; r-- {
-		// three Curl-P rounds unrolled
-		for i := 0; i < curl.StateSize-2; i += 3 {
+		// three iterations unrolled
+		for i := 0; i <= curl.StateSize-3; i += 3 {
 			t0 := curl.Indices[i+0]
 			t1 := curl.Indices[i+1]
 			t2 := curl.Indices[i+2]
@@ -18,15 +18,17 @@ func transformGeneric(lto, hto, lfrom, hfrom *[curl.StateSize]uint, rounds uint)
 			l2, h2 := lfrom[t2], hfrom[t2]
 			l3, h3 := lfrom[t3], hfrom[t3]
 
-			v0 := (h0 ^ l1) & l0
-			lto[i+0], hto[i+0] = ^v0, (l0^h1)|v0
-			v1 := (h1 ^ l2) & l1
-			lto[i+1], hto[i+1] = ^v1, (l1^h2)|v1
-			v2 := (h2 ^ l3) & l2
-			lto[i+2], hto[i+2] = ^v2, (l2^h3)|v2
+			lto[i+0], hto[i+0] = sBox(l0, h0, l1, h1)
+			lto[i+1], hto[i+1] = sBox(l1, h1, l2, h2)
+			lto[i+2], hto[i+2] = sBox(l2, h2, l3, h3)
 		}
 		// swap buffers
 		lfrom, lto = lto, lfrom
 		hfrom, hto = hto, hfrom
 	}
+}
+
+func sBox(la, ha, lb, hb uint) (uint, uint) {
+	tmp := (ha ^ lb) & la
+	return ^tmp, (la ^ hb) | tmp
 }

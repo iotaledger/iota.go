@@ -20,9 +20,7 @@ type Curl struct {
 
 // NewCurlP81 returns a new BCT Curl-P-81.
 func NewCurlP81() *Curl {
-	c := &Curl{
-		direction: curl.SpongeAbsorbing,
-	}
+	c := &Curl{}
 	c.Reset()
 	return c
 }
@@ -30,8 +28,7 @@ func NewCurlP81() *Curl {
 // Reset the internal state of the BCT Curl instance.
 func (c *Curl) Reset() {
 	for i := 0; i < curl.StateSize; i++ {
-		c.l[i] = ^uint(0)
-		c.h[i] = ^uint(0)
+		c.l[i], c.h[i] = ^uint(0), ^uint(0)
 	}
 	c.direction = curl.SpongeAbsorbing
 }
@@ -58,9 +55,13 @@ func (c *Curl) Absorb(src []trinary.Trits, tritsCount int) error {
 	if c.direction != curl.SpongeAbsorbing {
 		panic("absorb after squeeze")
 	}
-	for i := 0; i < tritsCount/consts.HashTrinarySize; i++ {
+	for i := 0; i < tritsCount; i += consts.HashTrinarySize {
+		// reset the first 243 trits of the state, since they will be overridden by c.in
+		for j := 0; j < consts.HashTrinarySize; j++ {
+			c.l[j], c.h[j] = ^uint(0), ^uint(0)
+		}
 		for j := range src {
-			c.in(src[j][i*consts.HashTrinarySize:], uint(j))
+			c.in(src[j][i:], uint(j))
 		}
 		c.transform()
 	}
@@ -80,14 +81,14 @@ func (c *Curl) Squeeze(dst []trinary.Trits, tritsCount int) error {
 	for j := range dst {
 		dst[j] = make(trinary.Trits, tritsCount)
 	}
-	for i := 0; i < tritsCount/consts.HashTrinarySize; i++ {
+	for i := 0; i < tritsCount; i += consts.HashTrinarySize {
 		// during squeezing, we only transform before each squeeze to avoid unnecessary transforms
 		if c.direction == curl.SpongeSqueezing {
 			c.transform()
 		}
 		c.direction = curl.SpongeSqueezing
 		for j := range dst {
-			c.out(dst[j][i*consts.HashTrinarySize:], uint(j))
+			c.out(dst[j][i:], uint(j))
 		}
 	}
 	return nil
@@ -100,19 +101,14 @@ func (c *Curl) in(src trinary.Trits, idx uint) {
 		panic(consts.ErrInvalidTritsLength)
 	}
 
-	s := uint(1) << idx
-	u := ^s
+	idx &= bits.UintSize - 1 // hint to the compiler that shifts don't need guard code
+	m := ^(uint(1) << idx)
 	for i := 0; i < consts.HashTrinarySize; i++ {
 		switch src[i] {
 		case 1:
-			c.l[i] &= u
-			c.h[i] |= s
+			c.l[i] &= m
 		case -1:
-			c.l[i] |= s
-			c.h[i] &= u
-		default:
-			c.l[i] |= s
-			c.h[i] |= s
+			c.h[i] &= m
 		}
 	}
 }
@@ -124,17 +120,15 @@ func (c *Curl) out(dst trinary.Trits, idx uint) {
 		panic(consts.ErrInvalidTritsLength)
 	}
 
+	idx &= bits.UintSize - 1 // hint to the compiler that idx is always smaller UintSize
+	m := uint(1) << idx
 	for i := 0; i < consts.HashTrinarySize; i++ {
-		l := (c.l[i] >> idx) & 1
-		h := (c.h[i] >> idx) & 1
-
+		l, h := c.l[i]&m, c.h[i]&m
 		switch {
-		case l == 0 && h == 1:
+		case l == 0:
 			dst[i] = 1
-		case l == 1 && h == 0:
+		case h == 0:
 			dst[i] = -1
-		default:
-			dst[i] = 0
 		}
 	}
 }
@@ -143,6 +137,5 @@ func (c *Curl) out(dst trinary.Trits, idx uint) {
 func (c *Curl) transform() {
 	var ltmp, htmp [curl.StateSize]uint
 	transform(&ltmp, &htmp, &c.l, &c.h, curl.NumRounds)
-	copy(c.l[:], ltmp[:])
-	copy(c.h[:], htmp[:])
+	c.l, c.h = ltmp, htmp
 }
