@@ -320,6 +320,10 @@ func (api *API) StoreTransactions(trytes ...Trytes) ([]Trytes, error) {
 
 // WereAddressesSpentFrom checks whether the given addresses were already spent.
 func (api *API) WereAddressesSpentFrom(addresses ...Hash) ([]bool, error) {
+	if len(addresses) <= 0 {
+		return []bool{false}, nil
+	}
+
 	if err := Validate(
 		ValidateAddresses(false, addresses...),
 	); err != nil {
