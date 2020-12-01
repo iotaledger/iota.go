@@ -282,26 +282,27 @@ func TestNodeAPI_OutputByID(t *testing.T) {
 	require.EqualValues(t, txID, *resTxID)
 }
 
-func TestNodeAPI_BalanceByAddress(t *testing.T) {
+func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 	defer gock.Off()
 
 	ed25519Addr, _ := randEd25519Addr()
 	ed25519AddrHex := ed25519Addr.String()
 
 	originRes := &iota.AddressBalanceResponse{
-		Address:    ed25519AddrHex,
-		MaxResults: 1000,
-		Count:      1337,
-		Balance:    13371337,
+		AddressType: 1,
+		Address:     ed25519AddrHex,
+		MaxResults:  1000,
+		Count:       1337,
+		Balance:     13371337,
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(iota.NodeAPIRouteAddressBalance, ed25519AddrHex)).
+		Get(fmt.Sprintf(iota.NodeAPIRouteAddressEd25519Balance, ed25519AddrHex)).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-	resp, err := nodeAPI.BalanceByAddress(ed25519AddrHex)
+	resp, err := nodeAPI.BalanceByEd25519Address(ed25519AddrHex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
@@ -316,9 +317,10 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 	output2 := rand32ByteHash()
 	output3 := rand32ByteHash()
 	originRes := &iota.AddressOutputsResponse{
-		Address:    ed25519AddrHex,
-		MaxResults: 1000,
-		Count:      2,
+		AddressType: 1,
+		Address:     ed25519AddrHex,
+		MaxResults:  1000,
+		Count:       2,
 		OutputIDs: []string{
 			hex.EncodeToString(output1[:]),
 			hex.EncodeToString(output2[:]),
@@ -326,9 +328,10 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 	}
 
 	originResWithUnspent := &iota.AddressOutputsResponse{
-		Address:    ed25519AddrHex,
-		MaxResults: 1000,
-		Count:      3,
+		AddressType: 1,
+		Address:     ed25519AddrHex,
+		MaxResults:  1000,
+		Count:       3,
 		OutputIDs: []string{
 			hex.EncodeToString(output1[:]),
 			hex.EncodeToString(output2[:]),
@@ -336,14 +339,14 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		},
 	}
 
-	route := fmt.Sprintf(iota.NodeAPIRouteAddressOutputs, ed25519AddrHex)
+	route := fmt.Sprintf(iota.NodeAPIRouteAddressEd25519Outputs, ed25519AddrHex)
 	gock.New(nodeAPIUrl).
 		Get(route).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-	resp, err := nodeAPI.OutputIDsByAddress(ed25519AddrHex, false)
+	resp, err := nodeAPI.OutputIDsByEd25519Address(ed25519AddrHex, false)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 
@@ -353,7 +356,7 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originResWithUnspent})
 
-	resp, err = nodeAPI.OutputIDsByAddress(ed25519AddrHex, true)
+	resp, err = nodeAPI.OutputIDsByEd25519Address(ed25519AddrHex, true)
 	require.NoError(t, err)
 	require.EqualValues(t, originResWithUnspent, resp)
 }

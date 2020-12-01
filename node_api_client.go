@@ -79,13 +79,15 @@ const (
 	// GET returns the output.
 	NodeAPIRouteOutput = "/api/v1/outputs/%s"
 
-	// NodeAPIRouteAddressBalance is the route for getting the total balance of all unspent outputs of an address.
+	// NodeAPIRouteAddressEd25519Balance is the route for getting the total balance of all unspent outputs of an ed25519 address.
+	// The ed25519 address must be encoded in hex.
 	// GET returns the balance of all unspent outputs of this address.
-	NodeAPIRouteAddressBalance = "/api/v1/addresses/%s"
+	NodeAPIRouteAddressEd25519Balance = "/api/v1/addresses/ed25519/%s"
 
-	// NodeAPIRouteAddressOutputs is the route for getting all output IDs for an address.
+	// NodeAPIRouteAddressEd25519Outputs is the route for getting all output IDs for an ed25519 address.
+	// The ed25519 address must be encoded in hex.
 	// GET returns the outputIDs for all outputs of this address (optional query parameters: "include-spent").
-	NodeAPIRouteAddressOutputs = "/api/v1/addresses/%s/outputs"
+	NodeAPIRouteAddressEd25519Outputs = "/api/v1/addresses/ed25519/%s/outputs"
 
 	// NodeAPIRoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
@@ -486,6 +488,8 @@ func (api *NodeAPI) OutputByID(utxoID UTXOInputID) (*NodeOutputResponse, error) 
 
 // AddressBalanceResponse defines the response of a GET addresses REST API call.
 type AddressBalanceResponse struct {
+	// The type of the address (0=WOTS, 1=Ed25519).
+	AddressType byte `json:"addressType"`
 	// The hex encoded address.
 	Address string `json:"address"`
 	// The maximum count of results that are returned by the node.
@@ -496,9 +500,9 @@ type AddressBalanceResponse struct {
 	Balance uint64 `json:"balance"`
 }
 
-// BalanceByAddress returns the balance of an address.
-func (api *NodeAPI) BalanceByAddress(address string) (*AddressBalanceResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteAddressBalance, address)
+// BalanceByEd25519Address returns the balance of an Ed25519 address.
+func (api *NodeAPI) BalanceByEd25519Address(address string) (*AddressBalanceResponse, error) {
+	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Balance, address)
 
 	res := &AddressBalanceResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
@@ -511,6 +515,8 @@ func (api *NodeAPI) BalanceByAddress(address string) (*AddressBalanceResponse, e
 
 // AddressOutputsResponse defines the response of a GET outputs by address REST API call.
 type AddressOutputsResponse struct {
+	// The type of the address (0=WOTS, 1=Ed25519).
+	AddressType byte `json:"addressType"`
 	// The hex encoded address.
 	Address string `json:"address"`
 	// The maximum count of results that are returned by the node.
@@ -521,10 +527,10 @@ type AddressOutputsResponse struct {
 	OutputIDs []string `json:"outputIDs"`
 }
 
-// OutputIDsByAddress gets outputs IDs by addresses from the node.
+// OutputIDsByEd25519Address gets outputs IDs by ed25519 addresses from the node.
 // Per default only unspent outputs are returned. Set includeSpentOutputs to true to also returned spent outputs.
-func (api *NodeAPI) OutputIDsByAddress(address string, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteAddressOutputs, address)
+func (api *NodeAPI) OutputIDsByEd25519Address(address string, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
+	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, address)
 	if includeSpentOutputs {
 		query += "?include-spent=true"
 	}
