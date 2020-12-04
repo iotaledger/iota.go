@@ -77,7 +77,7 @@ func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
 		Timestamp:            13371337,
 		Parent1:              rand32ByteHash(),
 		Parent2:              rand32ByteHash(),
-		InclusionMerkleProof: rand64ByteHash(),
+		InclusionMerkleProof: rand32ByteHash(),
 		PublicKeys: []iota.MilestonePublicKey{
 			rand32ByteHash(),
 			rand32ByteHash(),
@@ -126,7 +126,7 @@ func TestMilestoneSigning(t *testing.T) {
 			msPayload := &iota.Milestone{
 				Index: 1000, Timestamp: uint64(time.Now().Unix()), PublicKeys: pubKeys,
 				Parent1: rand32ByteHash(), Parent2: rand32ByteHash(),
-				InclusionMerkleProof: rand64ByteHash(),
+				InclusionMerkleProof: rand32ByteHash(),
 			}
 
 			return test{
@@ -155,7 +155,7 @@ func TestMilestoneSigning(t *testing.T) {
 			msPayload := &iota.Milestone{
 				Index: 1000, Timestamp: uint64(time.Now().Unix()), PublicKeys: pubKeys,
 				Parent1: rand32ByteHash(), Parent2: rand32ByteHash(),
-				InclusionMerkleProof: rand64ByteHash(),
+				InclusionMerkleProof: rand32ByteHash(),
 			}
 
 			return test{
@@ -181,7 +181,7 @@ func TestMilestoneSigning(t *testing.T) {
 			msPayload := &iota.Milestone{
 				Index: 1000, Timestamp: uint64(time.Now().Unix()), PublicKeys: pubKeys,
 				Parent1: rand32ByteHash(), Parent2: rand32ByteHash(),
-				InclusionMerkleProof: rand64ByteHash(),
+				InclusionMerkleProof: rand32ByteHash(),
 			}
 
 			return test{
@@ -220,7 +220,7 @@ func TestMilestoneSigning(t *testing.T) {
 
 func TestNewMilestone(t *testing.T) {
 	parent1, parent2 := rand32ByteHash(), rand32ByteHash()
-	inclusionMerkleProof := rand64ByteHash()
+	inclusionMerkleProof := rand32ByteHash()
 	const msIndex, timestamp = 1000, 133713371337
 	unsortedPubKeys := []iota.MilestonePublicKey{{3}, {2}, {1}, {5}}
 

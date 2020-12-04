@@ -20,7 +20,7 @@ const (
 	// Defines the milestone payload's ID.
 	MilestonePayloadTypeID uint32 = 1
 	// Defines the length of the inclusion merkle proof within a milestone payload.
-	MilestoneInclusionMerkleProofLength = blake2b.Size
+	MilestoneInclusionMerkleProofLength = blake2b.Size256
 	// Defines the length of the milestone signature.
 	MilestoneSignatureLength = ed25519.SignatureSize
 	// Defines the length of a Milestone ID.
@@ -28,7 +28,7 @@ const (
 	// Defines the length of a public key within a milestone.
 	MilestonePublicKeyLength = ed25519.PublicKeySize
 	// Defines the serialized size of a milestone payload.
-	// payload type+index+timestamp+parent1+parent2+inclusion-merkle-proof+pubkeys-length+pubkey+signature
+	// payload type+index+timestamp+parent1+parent2+inclusion-merkle-proof+pubkeys-length+pubkey+sigs-length+sigs
 	MilestoneBinSerializedMinSize = TypeDenotationByteSize + UInt32ByteSize + UInt64ByteSize + MessageIDLength + MessageIDLength +
 		MilestoneInclusionMerkleProofLength + OneByte + ed25519.PublicKeySize + OneByte + MilestoneSignatureLength
 	// MaxSignaturesInAMilestone is the maximum amount of signatures in a milestone.
@@ -315,7 +315,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		ReadArrayOf32Bytes(&m.Parent2, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone parent 2: %w", err)
 		}).
-		ReadArrayOf64Bytes(&m.InclusionMerkleProof, func(err error) error {
+		ReadArrayOf32Bytes(&m.InclusionMerkleProof, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone inclusion merkle proof: %w", err)
 		}).
 		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, SeriSliceLengthAsByte, func(err error) error {
