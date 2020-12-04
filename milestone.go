@@ -402,12 +402,21 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 	jsonMilestonePayload := &jsonmilestonepayload{}
 	jsonMilestonePayload.Type = int(MilestonePayloadTypeID)
 	jsonMilestonePayload.Index = int(m.Index)
+	jsonMilestonePayload.Timestamp = int(m.Timestamp)
+	jsonMilestonePayload.Parent1 = hex.EncodeToString(m.Parent1[:])
+	jsonMilestonePayload.Parent2 = hex.EncodeToString(m.Parent2[:])
+	jsonMilestonePayload.InclusionMerkleProof = hex.EncodeToString(m.InclusionMerkleProof[:])
+
+	jsonMilestonePayload.PublicKeys = make([]string, len(m.PublicKeys))
+	for i, pubKey := range m.PublicKeys {
+		jsonMilestonePayload.PublicKeys[i] = hex.EncodeToString(pubKey[:])
+	}
+
 	jsonMilestonePayload.Signatures = make([]string, len(m.Signatures))
 	for i, sig := range m.Signatures {
 		jsonMilestonePayload.Signatures[i] = hex.EncodeToString(sig[:])
 	}
-	jsonMilestonePayload.Timestamp = int(m.Timestamp)
-	jsonMilestonePayload.InclusionMerkleProof = hex.EncodeToString(m.InclusionMerkleProof[:])
+
 	return json.Marshal(jsonMilestonePayload)
 }
 
@@ -429,20 +438,44 @@ type jsonmilestonepayload struct {
 	Type                 int      `json:"type"`
 	Index                int      `json:"index"`
 	Timestamp            int      `json:"timestamp"`
+	Parent1              string   `json:"parent1MessageId"`
+	Parent2              string   `json:"parent2MessageId"`
 	InclusionMerkleProof string   `json:"inclusionMerkleProof"`
+	PublicKeys           []string `json:"publicKeys"`
 	Signatures           []string `json:"signatures"`
 }
 
 func (j *jsonmilestonepayload) ToSerializable() (Serializable, error) {
+	payload := &Milestone{}
+	payload.Index = uint32(j.Index)
+	payload.Timestamp = uint64(j.Timestamp)
+
+	parent1Bytes, err := hex.DecodeString(j.Parent1)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode parent 1 from JSON for milestone payload: %w", err)
+	}
+	copy(payload.Parent1[:], parent1Bytes)
+
+	parent2Bytes, err := hex.DecodeString(j.Parent2)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode parent 2 from JSON for milestone payload: %w", err)
+	}
+	copy(payload.Parent2[:], parent2Bytes)
+
 	inclusionMerkleProofBytes, err := hex.DecodeString(j.InclusionMerkleProof)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode inlcusion merkle proof from JSON for milestone payload: %w", err)
 	}
-
-	payload := &Milestone{}
-	payload.Index = uint32(j.Index)
-	payload.Timestamp = uint64(j.Timestamp)
 	copy(payload.InclusionMerkleProof[:], inclusionMerkleProofBytes)
+
+	payload.PublicKeys = make([]MilestonePublicKey, len(j.PublicKeys))
+	for i, pubKeyHex := range j.PublicKeys {
+		pubKeyBytes, err := hex.DecodeString(pubKeyHex)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode public key from JSON for milestone payload at pos %d: %w", i, err)
+		}
+		copy(payload.PublicKeys[i][:], pubKeyBytes)
+	}
 
 	payload.Signatures = make([]MilestoneSignature, len(j.Signatures))
 	for i, sigHex := range j.Signatures {

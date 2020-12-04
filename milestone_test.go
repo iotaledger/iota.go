@@ -3,6 +3,7 @@ package iota_test
 import (
 	"bytes"
 	"crypto/ed25519"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -68,6 +69,34 @@ func TestMilestone_Essence(t *testing.T) {
 	msEssence, err := ms.Essence()
 	require.NoError(t, err)
 	require.True(t, bytes.Equal(msBytes[:len(msEssence)], msEssence))
+}
+
+func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
+	ms := &iota.Milestone{
+		Index:                1337,
+		Timestamp:            13371337,
+		Parent1:              rand32ByteHash(),
+		Parent2:              rand32ByteHash(),
+		InclusionMerkleProof: rand64ByteHash(),
+		PublicKeys: []iota.MilestonePublicKey{
+			rand32ByteHash(),
+			rand32ByteHash(),
+			rand32ByteHash(),
+		},
+		Signatures: []iota.MilestoneSignature{
+			rand64ByteHash(),
+			rand64ByteHash(),
+			rand64ByteHash(),
+		},
+	}
+
+	msJSON, err := json.Marshal(ms)
+	require.NoError(t, err)
+
+	desMs := &iota.Milestone{}
+	require.NoError(t, json.Unmarshal(msJSON, desMs))
+
+	require.EqualValues(t, ms, desMs)
 }
 
 func TestMilestoneSigning(t *testing.T) {
