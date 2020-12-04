@@ -16,7 +16,6 @@ func TestBCTCurl(t *testing.T) {
 		name    string
 		src     []trinary.Trits
 		hashLen int
-		rounds  curl.CurlRounds
 	}
 
 	tests := []test{
@@ -24,43 +23,22 @@ func TestBCTCurl(t *testing.T) {
 			name:    "Curl-P-81: trits and hash",
 			src:     Trits(bct.MaxBatchSize, legacy.HashTrinarySize),
 			hashLen: legacy.HashTrinarySize,
-			rounds:  curl.CurlP81,
 		},
 		{
 			name:    "Curl-P-81: multi trits and hash",
 			src:     Trits(bct.MaxBatchSize, legacy.TransactionTrinarySize),
 			hashLen: legacy.HashTrinarySize,
-			rounds:  curl.CurlP81,
 		},
 		{
 			name:    "Curl-P-81: trits and multi squeeze",
 			src:     Trits(bct.MaxBatchSize, legacy.HashTrinarySize),
 			hashLen: 3 * legacy.HashTrinarySize,
-			rounds:  curl.CurlP81,
-		},
-		{
-			name:    "Curl-P-27: trits and hash",
-			src:     Trits(bct.MaxBatchSize, legacy.HashTrinarySize),
-			hashLen: legacy.HashTrinarySize,
-			rounds:  curl.CurlP27,
-		},
-		{
-			name:    "Curl-P-27: multi trits and hash",
-			src:     Trits(bct.MaxBatchSize, legacy.TransactionTrinarySize),
-			hashLen: legacy.HashTrinarySize,
-			rounds:  curl.CurlP27,
-		},
-		{
-			name:    "Curl-P-27: trits and multi squeeze",
-			src:     Trits(bct.MaxBatchSize, legacy.HashTrinarySize),
-			hashLen: 3 * legacy.HashTrinarySize,
-			rounds:  curl.CurlP27,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := bct.NewCurl(tt.rounds)
+			c := bct.NewCurlP81()
 			err := c.Absorb(tt.src, len(tt.src[0]))
 			assert.NoError(t, err)
 
@@ -70,10 +48,43 @@ func TestBCTCurl(t *testing.T) {
 
 			for i := range dst {
 				// compare against the non batched Curl
-				assert.Equal(t, dst[i], CurlSum(tt.src[i], tt.hashLen, tt.rounds))
+				assert.Equal(t, dst[i], CurlSum(tt.src[i], tt.hashLen))
 			}
 		})
 	}
+}
+
+func TestBCTCurl_Reset(t *testing.T) {
+	a := []trinary.Trits{trinary.MustTrytesToTrits(strings.Repeat("A", legacy.HashTrytesSize))}
+	b := []trinary.Trits{trinary.MustTrytesToTrits(strings.Repeat("B", legacy.HashTrytesSize))}
+
+	c1 := bct.NewCurlP81()
+	assert.NoError(t, c1.Absorb(a, len(a[0])))
+	assert.NoError(t, c1.Squeeze(make([]trinary.Trits, 1), legacy.HashTrinarySize))
+
+	c1.Reset()
+	c2 := bct.NewCurlP81()
+
+	assert.NoError(t, c1.Absorb(b, len(b[0])))
+	assert.NoError(t, c2.Absorb(b, len(b[0])))
+
+	hash1 := make([]trinary.Trits, 1)
+	assert.NoError(t, c1.Squeeze(hash1, legacy.HashTrinarySize))
+	hash2 := make([]trinary.Trits, 1)
+	assert.NoError(t, c2.Squeeze(hash2, legacy.HashTrinarySize))
+
+	assert.EqualValues(t, hash2[0], hash1[0])
+}
+
+func TestBCTCurlAbsorbAfterSqueeze(t *testing.T) {
+	a := []trinary.Trits{trinary.MustTrytesToTrits(strings.Repeat("A", legacy.HashTrytesSize))}
+
+	c := bct.NewCurlP81()
+	assert.NoError(t, c.Absorb(a, len(a[0])))
+	assert.NoError(t, c.Squeeze(make([]trinary.Trits, 1), legacy.HashTrinarySize))
+	assert.Panics(t, func() {
+		_ = c.Absorb(a, len(a[0]))
+	})
 }
 
 func TestBCTCurlCLone(t *testing.T) {
@@ -110,8 +121,8 @@ func Trits(size int, tritsCount int) []trinary.Trits {
 	return src
 }
 
-func CurlSum(data trinary.Trits, tritsCount int, rounds curl.CurlRounds) trinary.Trits {
-	c := curl.NewCurl(rounds)
+func CurlSum(data trinary.Trits, tritsCount int) trinary.Trits {
+	c := curl.NewCurlP81()
 	if err := c.Absorb(data); err != nil {
 		panic(err)
 	}
