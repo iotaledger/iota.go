@@ -156,7 +156,7 @@ func TestCurlHash(t *testing.T) {
 			t.Run("trits", func(t *testing.T) {
 				hash, err := curl.HashTrits(trinary.MustPadTrits(trinary.MustTrytesToTrits(tt.in), legacy.HashTrinarySize))
 				assert.NoError(t, err)
-				assert.EqualValues(t, tt.expHash, hash)
+				assert.EqualValues(t, trinary.MustTrytesToTrits(tt.expHash), hash)
 			})
 		})
 	}
