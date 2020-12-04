@@ -15,8 +15,8 @@ import (
 var _ = Describe("BCT Curl", func() {
 
 	DescribeTable("Hash",
-		func(src []trinary.Trits, hashLen int, rounds curl.CurlRounds) {
-			c := bct.NewCurl(rounds)
+		func(src []trinary.Trits, hashLen int) {
+			c := bct.NewCurlP81()
 			err := c.Absorb(src, len(src[0]))
 			Expect(err).ToNot(HaveOccurred())
 
@@ -26,16 +26,40 @@ var _ = Describe("BCT Curl", func() {
 
 			for i := range dst {
 				// compare against the non batched Curl
-				Expect(dst[i]).To(Equal(CurlSum(src[i], hashLen, rounds)))
+				Expect(dst[i]).To(Equal(CurlSum(src[i], hashLen)))
 			}
 		},
-		Entry("Curl-P-81: trits and hash", Trits(bct.MaxBatchSize, consts.HashTrinarySize), consts.HashTrinarySize, curl.CurlP81),
-		Entry("Curl-P-81: multi trits and hash", Trits(bct.MaxBatchSize, consts.TransactionTrinarySize), consts.HashTrinarySize, curl.CurlP81),
-		Entry("Curl-P-81: trits and multi squeeze", Trits(bct.MaxBatchSize, consts.HashTrinarySize), 3*consts.HashTrinarySize, curl.CurlP81),
-		Entry("Curl-P-27: trits and hash", Trits(bct.MaxBatchSize, consts.HashTrinarySize), consts.HashTrinarySize, curl.CurlP27),
-		Entry("Curl-P-27: multi trits and hash", Trits(bct.MaxBatchSize, consts.TransactionTrinarySize), consts.HashTrinarySize, curl.CurlP27),
-		Entry("Curl-P-27: trits and multi squeeze", Trits(bct.MaxBatchSize, consts.HashTrinarySize), 3*consts.HashTrinarySize, curl.CurlP27),
+		Entry("Curl-P-81: trits and hash", Trits(bct.MaxBatchSize, consts.HashTrinarySize), consts.HashTrinarySize),
+		Entry("Curl-P-81: multi trits and hash", Trits(bct.MaxBatchSize, consts.TransactionTrinarySize), consts.HashTrinarySize),
+		Entry("Curl-P-81: trits and multi squeeze", Trits(bct.MaxBatchSize, consts.HashTrinarySize), 3*consts.HashTrinarySize),
 	)
+
+	It("Reset", func() {
+		a := []trinary.Trits{trinary.MustTrytesToTrits(strings.Repeat("A", consts.HashTrytesSize))}
+		b := []trinary.Trits{trinary.MustTrytesToTrits(strings.Repeat("B", consts.HashTrytesSize))}
+
+		c1 := bct.NewCurlP81()
+		err := c1.Absorb(a, len(a[0]))
+		Expect(err).ToNot(HaveOccurred())
+		err = c1.Squeeze(make([]trinary.Trits, 1), consts.HashTrinarySize)
+
+		c1.Reset()
+		c2 := bct.NewCurlP81()
+
+		err = c1.Absorb(b, len(b[0]))
+		Expect(err).ToNot(HaveOccurred())
+		err = c2.Absorb(b, len(b[0]))
+		Expect(err).ToNot(HaveOccurred())
+
+		hash1 := make([]trinary.Trits, 1)
+		err = c1.Squeeze(hash1, consts.HashTrinarySize)
+		Expect(err).ToNot(HaveOccurred())
+		hash2 := make([]trinary.Trits, 1)
+		err = c2.Squeeze(hash2, consts.HashTrinarySize)
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(hash2[0]).To(Equal(hash1[0]))
+	})
 
 	It("Clone", func() {
 		a := []trinary.Trits{trinary.MustTrytesToTrits(strings.Repeat("A", consts.HashTrytesSize))}
@@ -60,6 +84,19 @@ var _ = Describe("BCT Curl", func() {
 
 		Expect(hash2[0]).To(Equal(hash1[0]))
 	})
+
+	It("absorb after squeeze should panic", func() {
+		a := []trinary.Trits{trinary.MustTrytesToTrits(strings.Repeat("A", consts.HashTrytesSize))}
+
+		c := bct.NewCurlP81()
+		err := c.Absorb(a, len(a[0]))
+		Expect(err).ToNot(HaveOccurred())
+		err = c.Squeeze(make([]trinary.Trits, 1), consts.HashTrinarySize)
+		Expect(err).ToNot(HaveOccurred())
+
+		absorb := func() { _ = c.Absorb(a, len(a[0])) }
+		Expect(absorb).To(Panic())
+	})
 })
 
 func Trits(size int, tritsCount int) []trinary.Trits {
@@ -72,8 +109,8 @@ func Trits(size int, tritsCount int) []trinary.Trits {
 	return src
 }
 
-func CurlSum(data trinary.Trits, tritsCount int, rounds curl.CurlRounds) trinary.Trits {
-	c := curl.NewCurl(rounds)
+func CurlSum(data trinary.Trits, tritsCount int) trinary.Trits {
+	c := curl.NewCurlP81()
 	if err := c.Absorb(data); err != nil {
 		panic(err)
 	}

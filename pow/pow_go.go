@@ -378,7 +378,7 @@ func goProofOfWork(trytes Trytes, mwm int, optRate chan int64, parallelism ...in
 			hmid[nonceOffset+3] = PearlDiverMidStateHigh3
 
 			incrN(i, lmid, hmid)
-			nonce, r, _ := Loop(lmid, hmid, mwm, &cancelled, check, c.NumRounds())
+			nonce, r, _ := Loop(lmid, hmid, mwm, &cancelled, check, curl.NumRounds)
 
 			if rate != nil {
 				rate <- int64(math.Abs(float64(r)))

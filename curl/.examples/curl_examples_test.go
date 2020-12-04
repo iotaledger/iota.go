@@ -7,13 +7,6 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// i: rounds: The optional CurlRounds for hashing.
-// o: SpongeFunction, The SpongeFunction interface using Curl.
-func ExampleNewCurl() {}
-
-// o: SpongeFunction, The SpongeFunction interface using CurlP27.
-func ExampleNewCurlP27() {}
-
 // o: SpongeFunction, The SpongeFunction interface using CurlP81.
 func ExampleNewCurlP81() {}
 
@@ -57,7 +50,7 @@ func ExampleReset() {}
 func ExampleHashTrits() {
 	trytes := "PDFIDVWRXONZSPJJQVZVVMLGSVB999999999999999999999999999999999999999999999999999999"
 	trits := trinary.MustTrytesToTrits(trytes)
-	tritsHash, err := curl.HashTrits(trits, curl.CurlP81)
+	tritsHash, err := curl.HashTrits(trits)
 	if err != nil {
 		// handle error
 		return
@@ -72,7 +65,7 @@ func ExampleHashTrits() {
 // o: error, Returned for internal errors.
 func ExampleHashTrytes() {
 	trytes := "PDFIDVWRXONZSPJJQVZVVMLGSVB999999999999999999999999999999999999999999999999999999"
-	hash, err := curl.HashTrytes(trytes, curl.CurlP81)
+	hash, err := curl.HashTrytes(trytes)
 	if err != nil {
 		// handle error
 		return
