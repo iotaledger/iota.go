@@ -262,6 +262,8 @@ type NodeInfoResponse struct {
 	IsHealthy bool `json:"isHealthy"`
 	// The human friendly name of the network ID on which the node operates on.
 	NetworkID string `json:"networkId"`
+	// The minimum pow score of the network.
+	MinPowScore float64 `json:"minPowScore"`
 	// The hex encoded ID of the latest known milestone.
 	LatestMilestoneID string `json:"latestMilestoneId"`
 	// The latest known milestone index.

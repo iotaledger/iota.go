@@ -44,6 +44,7 @@ func TestNodeAPI_Info(t *testing.T) {
 		Version:              "1.0.0",
 		IsHealthy:            true,
 		NetworkID:            "alphanet@1",
+		MinPowScore:          4000.0,
 		LatestMilestoneID:    "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe",
 		LatestMilestoneIndex: 1337,
 		SolidMilestoneID:     "598f7a3186bf7291b8199a3147bb2a81d19b89ac545788b4e5d8adbee7db0f13",
