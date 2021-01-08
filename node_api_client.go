@@ -380,6 +380,8 @@ type MessageMetadataResponse struct {
 	ShouldPromote *bool `json:"shouldPromote,omitempty"`
 	// Whether the message should be reattached.
 	ShouldReattach *bool `json:"shouldReattach,omitempty"`
+	// The reason why this message is marked as conflicting.
+	ConflictReason uint8 `json:"conflictReason,omitempty"`
 }
 
 // MessageByMessageID gets the metadata of a message by it's message ID from the node.
@@ -549,7 +551,7 @@ func (api *NodeAPI) OutputIDsByEd25519Address(address string, includeSpentOutput
 // MilestoneResponse defines the response of a GET milestones REST API call.
 type MilestoneResponse struct {
 	// The index of the milestone.
-	Index uint32 `json:"milestoneIndex"`
+	Index uint32 `json:"index"`
 	// The hex encoded message ID of the message.
 	MessageID string `json:"messageId"`
 	// The unix time of the milestone payload.
@@ -595,20 +597,28 @@ type PeerResponse struct {
 
 // PeerGossipMetrics defines the peer gossip metrics.
 type PeerGossipMetrics struct {
-	// The total amount of sent packages.
-	SentPackets uint32 `json:"sentPackets"`
-	// The total amount of dropped sent packages.
-	DroppedSentPackets uint32 `json:"droppedSentPackets"`
-	// The total amount of received heartbeats.
-	ReceivedHeartbeats uint32 `json:"receivedHeartbeats"`
-	// The total amount of sent heartbeats.
-	SentHeartbeats uint32 `json:"sentHeartbeats"`
-	// The total amount of received messages.
-	ReceivedMessages uint32 `json:"receivedMessages"`
 	// The total amount of received new messages.
 	NewMessages uint32 `json:"newMessages"`
 	// The total amount of received known messages.
 	KnownMessages uint32 `json:"knownMessages"`
+	// The total amount of received messages.
+	ReceivedMessages uint32 `json:"receivedMessages"`
+	// The total amount of received message requests.
+	ReceivedMessageRequests uint32 `json:"receivedMessageRequests"`
+	// The total amount of received milestone requests.
+	ReceivedMilestoneRequests uint32 `json:"receivedMilestoneRequests"`
+	// The total amount of received heartbeats.
+	ReceivedHeartbeats uint32 `json:"receivedHeartbeats"`
+	// The total amount of sent messages.
+	SentMessages uint32 `json:"sentMessages"`
+	// The total amount of sent message request.
+	SentMessageRequests uint32 `json:"sentMessageRequests"`
+	// The total amount of sent milestone request.
+	SentMilestoneRequests uint32 `json:"sentMilestoneRequests"`
+	// The total amount of sent heartbeats.
+	SentHeartbeats uint32 `json:"sentHeartbeats"`
+	// The total amount of packets which couldn't be sent.
+	DroppedSentPackets uint32 `json:"droppedSentPackets"`
 }
 
 // PeerByID gets a peer by its identifier.
