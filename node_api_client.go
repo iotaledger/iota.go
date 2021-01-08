@@ -597,8 +597,6 @@ type PeerResponse struct {
 
 // PeerGossipMetrics defines the peer gossip metrics.
 type PeerGossipMetrics struct {
-	// The total amount of received/sent messages.
-	AllMessages uint32 `json:"allMessages"`
 	// The total amount of received new messages.
 	NewMessages uint32 `json:"newMessages"`
 	// The total amount of received known messages.
