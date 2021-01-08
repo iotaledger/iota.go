@@ -38,7 +38,7 @@ func (b *TransactionBuilder) AddInput(input *ToBeSignedUTXOInput) *TransactionBu
 }
 
 // AddOutput adds the given output to the builder.
-func (b *TransactionBuilder) AddOutput(output *SigLockedSingleOutput) *TransactionBuilder {
+func (b *TransactionBuilder) AddOutput(output Output) *TransactionBuilder {
 	b.essence.Outputs = append(b.essence.Outputs, output)
 	return b
 }
