@@ -367,7 +367,7 @@ func (d *Deserializer) ReadNum(dest interface{}, errProducer ErrProducer) *Deser
 }
 
 // ReadVariableByteSlice reads a variable byte slice which is denoted by the given SeriSliceLengthType.
-func (d *Deserializer) ReadVariableByteSlice(slice *[]byte, lenType SeriSliceLengthType, errProducer ErrProducer) *Deserializer {
+func (d *Deserializer) ReadVariableByteSlice(slice *[]byte, lenType SeriSliceLengthType, errProducer ErrProducer, maxRead ...int) *Deserializer {
 	if d.err != nil {
 		return d
 	}
@@ -375,6 +375,11 @@ func (d *Deserializer) ReadVariableByteSlice(slice *[]byte, lenType SeriSliceLen
 	sliceLength, err := d.readSliceLength(lenType, errProducer)
 	if err != nil {
 		d.err = err
+		return d
+	}
+
+	if len(maxRead) > 0 && sliceLength > maxRead[0] {
+		d.err = errProducer(fmt.Errorf("%w: denoted %d bytes, max allowed %d ", ErrDeserializationLengthInvalid, sliceLength, maxRead[0]))
 		return d
 	}
 
