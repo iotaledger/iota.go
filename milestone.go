@@ -68,6 +68,8 @@ var (
 	ErrMilestoneInvalidSignature = fmt.Errorf("invalid milestone signature")
 	// Returned when a InMemoryEd25519MilestoneSigner is missing a private key.
 	ErrMilestoneInMemorySignerPrivateKeyMissing = fmt.Errorf("private key missing")
+	// Returned when a Milestone contains duplicated public keys.
+	ErrMilestoneDuplicatedPublicKey = fmt.Errorf("milestone contains duplicated public keys")
 
 	// restrictions around public keys within a Milestone.
 	milestonePublicKeyArrayRules = ArrayRules{
@@ -192,7 +194,12 @@ func (m *Milestone) VerifySignatures(minSigThreshold int, applicablePubKeys Mile
 		return fmt.Errorf("unable to compute milestone essence for signature verification: %w", err)
 	}
 
+	seenPubKeys := make(map[MilestonePublicKey]int)
 	for msPubKeyIndex, msPubKey := range m.PublicKeys {
+		if prevIndex, ok := seenPubKeys[msPubKey]; ok {
+			return fmt.Errorf("%w: public key at pos %d and %d are duplicates", ErrMilestoneDuplicatedPublicKey, prevIndex, msPubKeyIndex)
+		}
+
 		if _, has := applicablePubKeys[msPubKey]; !has {
 			return fmt.Errorf("%w: public key %s is not applicable", ErrMilestoneNonApplicablePublicKey, hex.EncodeToString(msPubKey[:]))
 		}
@@ -200,6 +207,8 @@ func (m *Milestone) VerifySignatures(minSigThreshold int, applicablePubKeys Mile
 		if ok := ed25519.Verify(msPubKey[:], msEssence[:], m.Signatures[msPubKeyIndex][:]); !ok {
 			return fmt.Errorf("%w: at index %d, checked against public key %s", ErrMilestoneInvalidSignature, msPubKeyIndex, hex.EncodeToString(msPubKey[:]))
 		}
+
+		seenPubKeys[msPubKey] = msPubKeyIndex
 	}
 
 	return nil
@@ -326,7 +335,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 				return ErrMilestoneTooFewPublicKeys
 			}
 			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderValidator()
+				pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderWithoutDupsValidator()
 				for i := range m.PublicKeys {
 					if err := pubKeyLexicalOrderValidator(i, m.PublicKeys[i][:]); err != nil {
 						return err
@@ -351,7 +360,7 @@ func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	return NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderValidator()
+				pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderWithoutDupsValidator()
 				for i := range m.PublicKeys {
 					if err := pubKeyLexicalOrderValidator(i, m.PublicKeys[i][:]); err != nil {
 						return err

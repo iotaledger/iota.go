@@ -96,6 +96,30 @@ func (ar *ArrayRules) LexicalOrderValidator() LexicalOrderFunc {
 	}
 }
 
+// LexicalOrderWithoutDupsValidator returns a LexicalOrderFunc which returns an error if the given byte slices
+// are not ordered lexicographically or any elements are duplicated.
+func (ar *ArrayRules) LexicalOrderWithoutDupsValidator() LexicalOrderFunc {
+	var prev []byte
+	var prevIndex int
+	return func(index int, next []byte) error {
+		if prev == nil {
+			prev = next
+			prevIndex = index
+			return nil
+		}
+		switch bytes.Compare(prev, next) {
+		case 1:
+			return fmt.Errorf("%w: element %d should have been before element %d", ar.ElementBytesLexicalOrderErr, index, prevIndex)
+		case 0:
+			// dup
+			return fmt.Errorf("%w: element %d and %d are duplicates", ar.ElementBytesLexicalOrderErr, index, prevIndex)
+		}
+		prev = next
+		prevIndex = index
+		return nil
+	}
+}
+
 // LexicalOrderedByteSlices are byte slices ordered in lexical order.
 type LexicalOrderedByteSlices [][]byte
 
