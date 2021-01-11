@@ -206,11 +206,8 @@ type SigValidationFunc = func() error
 // the transaction is passing a specific semantic validation rule or not.
 type SemanticValidationFunc = func(t *Transaction, utxos InputToOutputMapping) error
 
-// NumDustOutputsFunc returns the num of dust outputs residing on the given address.
-type NumDustOutputsFunc func(addr Serializable) (int64, error)
-
-// DustAllowanceDepositSumFunc returns the deposit sum of dust allowance outputs on the given address.
-type DustAllowanceDepositSumFunc func(addr Serializable) (uint64, error)
+// DustAllowanceFunc returns the deposit sum of dust allowance outputs and amount of dust outputs on the given address.
+type DustAllowanceFunc func(addr Serializable) (dustAllowanceSum uint64, amountDustOutputs int64, err error)
 
 // NewDustSemanticValidation returns a SemanticValidationFunc which verifies whether
 // a transaction fulfils the semantics regarding dust outputs:
@@ -219,7 +216,7 @@ type DustAllowanceDepositSumFunc func(addr Serializable) (uint64, error)
 //		- creating a SigLockedSingleOutput with deposit amount < OutputSigLockedDustAllowanceOutputMinDeposit (dust output)
 //	is only semantically valid, if after the transaction is booked, the number of dust outputs on address A does not exceed the allowed
 //	threshold of the sum of S / div. Where S is the sum of deposits of all dust allowance outputs on address A.
-func NewDustSemanticValidation(div int64, numDustOutputsFunc NumDustOutputsFunc, dustAllowanceDepositSumFunc DustAllowanceDepositSumFunc) SemanticValidationFunc {
+func NewDustSemanticValidation(div int64, dustAllowanceFunc DustAllowanceFunc) SemanticValidationFunc {
 	return func(t *Transaction, utxos InputToOutputMapping) error {
 		essence := t.Essence.(*TransactionEssence)
 
@@ -273,17 +270,12 @@ func NewDustSemanticValidation(div int64, numDustOutputsFunc NumDustOutputsFunc,
 		}
 
 		for addr := range addrToValidate {
-			numDustOutputs, err := numDustOutputsFunc(addr)
+			dustAllowanceDepositSumUint64, numDustOutputs, err := dustAllowanceFunc(addr)
 			if err != nil {
-				return fmt.Errorf("unable to fetch number of dust outputs on address %v: %w", addr, err)
+				return fmt.Errorf("unable to fetch dust allowance information on address %v: %w", addr, err)
 			}
 			numDustOutputsPrev := numDustOutputs
 			numDustOutputs += dustAllowanceAddrToNumOfDustOutputs[addr]
-
-			dustAllowanceDepositSumUint64, err := dustAllowanceDepositSumFunc(addr)
-			if err != nil {
-				return fmt.Errorf("unable to fetch dust allowance deposit on address %v: %w", addr, err)
-			}
 
 			var dustAllowanceDepositSum = int64(dustAllowanceDepositSumUint64)
 			// Go integer division floors the value
