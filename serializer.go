@@ -88,6 +88,11 @@ func (s *Serializer) Do(f func()) *Serializer {
 	return s
 }
 
+// Written returns the amount of bytes written into the Serializer.
+func (s *Serializer) Written() int {
+	return s.buf.Len()
+}
+
 // WriteNum writes the given num v to the Serializer.
 func (s *Serializer) WriteNum(v interface{}, errProducer ErrProducer) *Serializer {
 	if s.err != nil {
@@ -688,7 +693,7 @@ func (d *Deserializer) ReadPayload(f ReadObjectConsumerFunc, deSeriMode DeSerial
 }
 
 // ReadString reads a string.
-func (d *Deserializer) ReadString(s *string, errProducer ErrProducer) *Deserializer {
+func (d *Deserializer) ReadString(s *string, errProducer ErrProducer, maxSize ...uint16) *Deserializer {
 	if d.err != nil {
 		return d
 	}
@@ -699,6 +704,10 @@ func (d *Deserializer) ReadString(s *string, errProducer ErrProducer) *Deseriali
 	}
 
 	strLen := binary.LittleEndian.Uint16(d.src)
+	if len(maxSize) > 0 && strLen > maxSize[0] {
+		d.err = errProducer(fmt.Errorf("%w: string defined to be of %d bytes length but max %d is allowed", ErrDeserializationLengthInvalid, strLen, maxSize[0]))
+	}
+
 	d.offset += UInt16ByteSize
 	d.src = d.src[UInt16ByteSize:]
 

@@ -3,6 +3,7 @@ package iota
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -17,6 +18,13 @@ const (
 	MessageNetworkIDLength = UInt64ByteSize
 	// Defines the minimum size of a message: network ID + 2 msg IDs + uint16 payload length + nonce
 	MessageBinSerializedMinSize = MessageNetworkIDLength + 2*MessageIDLength + UInt32ByteSize + UInt64ByteSize
+	// Defines the maximum size of a message.
+	MessageBinSerializedMaxSize = 32768
+)
+
+var (
+	// Returned when a serialized message exceeds MessageBinSerializedMaxSize.
+	ErrMessageExceedsMaxSize = errors.New("message exceeds max size")
 )
 
 // PayloadSelector implements SerializableSelectorFunc for payload types.
@@ -89,6 +97,9 @@ func (m *Message) POW() (float64, error) {
 }
 
 func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
+	if len(data) > MessageBinSerializedMaxSize {
+		return 0, fmt.Errorf("%w: size %d bytes", ErrMessageExceedsMaxSize, len(data))
+	}
 	return NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(DeSeriModePerformValidation) {
@@ -120,7 +131,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 }
 
 func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	return NewSerializer().
+	data, err := NewSerializer().
 		WriteNum(m.NetworkID, func(err error) error {
 			return fmt.Errorf("unable to serialize message network ID: %w", err)
 		}).
@@ -137,6 +148,13 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 			return fmt.Errorf("unable to serialize message nonce: %w", err)
 		}).
 		Serialize()
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > MessageBinSerializedMaxSize {
+		return nil, fmt.Errorf("%w: size %d bytes", ErrMessageExceedsMaxSize, len(data))
+	}
+	return data, nil
 }
 
 func (m *Message) MarshalJSON() ([]byte, error) {
