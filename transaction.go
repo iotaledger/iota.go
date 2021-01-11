@@ -17,6 +17,12 @@ const (
 
 	// Defines the minimum size of a serialized Transaction.
 	TransactionBinSerializedMinSize = UInt32ByteSize
+
+	// Defines the divisor used to compute the allowed dust outputs on an address.
+	// The amount of dust outputs on an address is calculated by:
+	//	sum(dust_allowance_output_deposit) / DustAllowanceDivisor
+	// Example: 1_000_000 / 10_000 = 100 dust outputs
+	DustAllowanceDivisor int64 = 10_000
 )
 
 var (
@@ -30,6 +36,8 @@ var (
 	ErrInputOutputSumMismatch = errors.New("inputs and outputs do not spend/deposit the same amount")
 	// Returned if an address of an input has a companion signature unlock block with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = errors.New("address and signature type are not compatible")
+	// Returned for errors where the dust allowance is semantically invalid.
+	ErrInvalidDustAllowance = errors.New("invalid dust allowance")
 )
 
 // TransactionID is the ID of a Transaction.
@@ -89,6 +97,12 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (
 		ReadSliceOfObjects(func(seri Serializables) { t.UnlockBlocks = seri }, deSeriMode, TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize unlock blocks", err)
 		}).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				return t.SyntacticallyValidate()
+			}
+			return nil
+		}).
 		Done()
 }
 
@@ -96,9 +110,7 @@ func (t *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) 
 	return NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				if err := t.SyntacticallyValidate(); err != nil {
-					return err
-				}
+				return t.SyntacticallyValidate()
 			}
 			return nil
 		}).
@@ -153,6 +165,7 @@ func (t *Transaction) UnmarshalJSON(bytes []byte) error {
 //	1. The TransactionEssence isn't nil
 //	2. syntactic validation on the TransactionEssence
 //	3. input and unlock blocks count must match
+//	4. signatures are unique and ref. unlock blocks reference a previous unlock block.
 func (t *Transaction) SyntacticallyValidate() error {
 
 	if t.Essence == nil {
@@ -189,14 +202,113 @@ func (t *Transaction) SyntacticallyValidate() error {
 // its signature verification computation was successful or not.
 type SigValidationFunc = func() error
 
+// SemanticValidationFunc is a function which when called tells whether
+// the transaction is passing a specific semantic validation rule or not.
+type SemanticValidationFunc = func(t *Transaction, utxos InputToOutputMapping) error
+
+// NumDustOutputsFunc returns the num of dust outputs residing on the given address.
+type NumDustOutputsFunc func(addr Serializable) (int64, error)
+
+// DustAllowanceDepositSumFunc returns the deposit sum of dust allowance outputs on the given address.
+type DustAllowanceDepositSumFunc func(addr Serializable) (uint64, error)
+
+// NewDustSemanticValidation returns a SemanticValidationFunc which verifies whether
+// a transaction fulfils the semantics regarding dust outputs:
+//	A transaction:
+//		- consuming a SigLockedDustAllowanceOutput on address A or
+//		- creating a SigLockedSingleOutput with deposit amount < OutputSigLockedDustAllowanceOutputMinDeposit (dust output)
+//	is only semantically valid, if after the transaction is booked, the number of dust outputs on address A does not exceed the allowed
+//	threshold of the sum of S / div. Where S is the sum of deposits of all dust allowance outputs on address A.
+func NewDustSemanticValidation(div int64, numDustOutputsFunc NumDustOutputsFunc, dustAllowanceDepositSumFunc DustAllowanceDepositSumFunc) SemanticValidationFunc {
+	return func(t *Transaction, utxos InputToOutputMapping) error {
+		essence := t.Essence.(*TransactionEssence)
+
+		dustAllowanceAddrToBalance := make(map[Serializable]int64)
+		dustAllowanceAddrToNumOfDustOutputs := make(map[Serializable]int64)
+
+		for _, output := range essence.Outputs {
+			switch out := output.(type) {
+			case *SigLockedDustAllowanceOutput:
+				dustAllowanceAddrToBalance[out.Address] += int64(out.Amount)
+			case *SigLockedSingleOutput:
+				if out.Amount < OutputSigLockedDustAllowanceOutputMinDeposit {
+					dustAllowanceAddrToNumOfDustOutputs[out.Address] += 1
+				}
+			}
+		}
+
+		for i, x := range t.Essence.(*TransactionEssence).Inputs {
+			utxoID := x.(*UTXOInput).ID()
+			utxo, ok := utxos[utxoID]
+			if !ok {
+				return fmt.Errorf("%w: UTXO for ID %v is not provided (input at index %d)", ErrMissingUTXO, utxoID, i)
+			}
+
+			deposit, err := utxo.Deposit()
+			if err != nil {
+				return fmt.Errorf("unable to get deposit from UTXO %v (input at index %d): %w", utxoID, i, err)
+			}
+
+			target, err := utxo.Target()
+			if err != nil {
+				return fmt.Errorf("unable to get target of UTXO %v (input at index %d): %w", utxoID, i, err)
+			}
+
+			if deposit < OutputSigLockedDustAllowanceOutputMinDeposit {
+				dustAllowanceAddrToNumOfDustOutputs[target] -= 1
+				continue
+			}
+
+			if utxo.Type() == OutputSigLockedDustAllowanceOutput {
+				dustAllowanceAddrToBalance[target] -= int64(deposit)
+			}
+		}
+
+		addrToValidate := make(map[Serializable]struct{})
+		for addr := range dustAllowanceAddrToBalance {
+			addrToValidate[addr] = struct{}{}
+		}
+		for addr := range dustAllowanceAddrToNumOfDustOutputs {
+			addrToValidate[addr] = struct{}{}
+		}
+
+		for addr := range addrToValidate {
+			numDustOutputs, err := numDustOutputsFunc(addr)
+			if err != nil {
+				return fmt.Errorf("unable to fetch number of dust outputs on address %v: %w", addr, err)
+			}
+			numDustOutputsPrev := numDustOutputs
+			numDustOutputs += dustAllowanceAddrToNumOfDustOutputs[addr]
+
+			dustAllowanceDepositSumUint64, err := dustAllowanceDepositSumFunc(addr)
+			if err != nil {
+				return fmt.Errorf("unable to fetch dust allowance deposit on address %v: %w", addr, err)
+			}
+
+			var dustAllowanceDepositSum = int64(dustAllowanceDepositSumUint64)
+			// Go integer division floors the value
+			prevAllowed := dustAllowanceDepositSum / div
+			allowed := (dustAllowanceDepositSum + dustAllowanceAddrToBalance[addr]) / div
+
+			if numDustOutputs > allowed {
+				addrHex := addr.(Address).String()
+				short := numDustOutputs - allowed
+				return fmt.Errorf("%w: addr %s, new num of dust outputs %d (previous %d), allowance deposit %d (previous %d), short %d", ErrInvalidDustAllowance, addrHex, numDustOutputs, numDustOutputsPrev, allowed, prevAllowed, short)
+			}
+		}
+
+		return nil
+	}
+}
+
 // InputToOutputMapping maps inputs to their origin UTXOs.
-type InputToOutputMapping = map[UTXOInputID]Serializable
+type InputToOutputMapping = map[UTXOInputID]Output
 
 // SemanticallyValidate semantically validates the Transaction
 // by checking that the given input UTXOs are spent entirely and the signatures
 // provided are valid. SyntacticallyValidate() should be called before SemanticallyValidate() to
 // ensure that the essence part of the transaction is syntactically valid.
-func (t *Transaction) SemanticallyValidate(utxos InputToOutputMapping) error {
+func (t *Transaction) SemanticallyValidate(utxos InputToOutputMapping, semValFuncs ...SemanticValidationFunc) error {
 
 	txEssence, ok := t.Essence.(*TransactionEssence)
 	if !ok {
@@ -220,6 +332,12 @@ func (t *Transaction) SemanticallyValidate(utxos InputToOutputMapping) error {
 
 	if inputSum != outputSum {
 		return fmt.Errorf("%w: inputs sum %d, outputs sum %d", ErrInputOutputSumMismatch, inputSum, outputSum)
+	}
+
+	for _, semValFunc := range semValFuncs {
+		if err := semValFunc(t, utxos); err != nil {
+			return err
+		}
 	}
 
 	// sig verifications runs at the end as they are the most computationally expensive operation
@@ -253,20 +371,20 @@ func (t *Transaction) SemanticallyValidateInputs(utxos InputToOutputMapping, tra
 			return 0, nil, fmt.Errorf("%w: UTXO for ID %v is not provided (input at index %d)", ErrMissingUTXO, utxoID, i)
 		}
 
-		// TODO: switch out with type switch or interface once more types are known
-		out, ok := utxo.(*SigLockedSingleOutput)
-		if !ok {
-			return 0, nil, fmt.Errorf("%w: unsupported output type at index %d", ErrUnknownOutputType, i)
+		var err error
+		deposit, err := utxo.Deposit()
+		if err != nil {
+			return 0, nil, fmt.Errorf("unable to get deposit from UTXO %v (input at index %d): %w", utxoID, i, err)
 		}
-
-		inputSum += out.Amount
+		inputSum += deposit
 
 		sigBlock, sigBlockIndex, err := t.signatureUnlockBlock(i)
 		if err != nil {
 			return 0, nil, err
 		}
 
-		sigValidF, err := createSigValidationFunc(i, sigBlock.Signature, sigBlockIndex, txEssenceBytes, out)
+		// TODO: optimization: currently the same signature is validated "inputs-with-same-addr"-times instead of only once
+		sigValidF, err := createSigValidationFunc(i, sigBlock.Signature, sigBlockIndex, txEssenceBytes, utxo)
 		if err != nil {
 			return 0, nil, err
 		}
@@ -295,8 +413,12 @@ func (t *Transaction) signatureUnlockBlock(index int) (*SignatureUnlockBlock, in
 }
 
 // creates a SigValidationFunc appropriate for the underlying signature type.
-func createSigValidationFunc(pos int, sig Serializable, sigBlockIndex int, txEssenceBytes []byte, utxo *SigLockedSingleOutput) (SigValidationFunc, error) {
-	switch addr := utxo.Address.(type) {
+func createSigValidationFunc(pos int, sig Serializable, sigBlockIndex int, txEssenceBytes []byte, utxo Output) (SigValidationFunc, error) {
+	addr, err := utxo.Target()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get target for UTXO: %w", err)
+	}
+	switch addr := addr.(type) {
 	case *WOTSAddress:
 		// TODO: implement
 		return nil, fmt.Errorf("%w: unsupported address type at index %d", ErrWOTSNotImplemented, pos)
@@ -328,11 +450,15 @@ func (t *Transaction) SemanticallyValidateOutputs(transaction *TransactionEssenc
 	var outputSum uint64
 	for i, output := range transaction.Outputs {
 		// TODO: switch out with type switch
-		out, ok := output.(*SigLockedSingleOutput)
+		out, ok := output.(Output)
 		if !ok {
 			return 0, fmt.Errorf("%w: unsupported output type at index %d", ErrUnknownOutputType, i)
 		}
-		outputSum += out.Amount
+		deposit, err := out.Deposit()
+		if err != nil {
+			return 0, fmt.Errorf("unable to get deposit from output at index %d: %w", i, err)
+		}
+		outputSum += deposit
 	}
 
 	return outputSum, nil
