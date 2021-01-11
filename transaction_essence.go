@@ -19,11 +19,11 @@ const (
 	TransactionEssenceMinByteSize = TypeDenotationByteSize + StructArrayLengthByteSize + StructArrayLengthByteSize + PayloadLengthByteSize
 
 	// Defines the maximum amount of inputs within a TransactionEssence.
-	MaxInputsCount = 126
+	MaxInputsCount = 127
 	// Defines the minimum amount of inputs within a TransactionEssence.
 	MinInputsCount = 1
 	// Defines the maximum amount of outputs within a TransactionEssence.
-	MaxOutputsCount = 126
+	MaxOutputsCount = 127
 	// Defines the minimum amount of inputs within a TransactionEssence.
 	MinOutputsCount = 1
 )
