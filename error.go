@@ -28,6 +28,8 @@ var (
 	ErrUnknownSignatureType = errors.New("unknown signature type")
 	// Returned if there is not enough data available to deserialize a given object.
 	ErrDeserializationNotEnoughData = errors.New("not enough data for deserialization")
+	// Returned if a length denotation exceeds a specified limit.
+	ErrDeserializationLengthInvalid = errors.New("length denotation invalid")
 	// Returned if not all bytes were consumed during deserialization of a given type.
 	ErrDeserializationNotAllConsumed = errors.New("not all data has been consumed but should have been")
 	// Returned for unknown bech32 network HRP.

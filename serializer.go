@@ -88,6 +88,11 @@ func (s *Serializer) Do(f func()) *Serializer {
 	return s
 }
 
+// Written returns the amount of bytes written into the Serializer.
+func (s *Serializer) Written() int {
+	return s.buf.Len()
+}
+
 // WriteNum writes the given num v to the Serializer.
 func (s *Serializer) WriteNum(v interface{}, errProducer ErrProducer) *Serializer {
 	if s.err != nil {
@@ -362,7 +367,7 @@ func (d *Deserializer) ReadNum(dest interface{}, errProducer ErrProducer) *Deser
 }
 
 // ReadVariableByteSlice reads a variable byte slice which is denoted by the given SeriSliceLengthType.
-func (d *Deserializer) ReadVariableByteSlice(slice *[]byte, lenType SeriSliceLengthType, errProducer ErrProducer) *Deserializer {
+func (d *Deserializer) ReadVariableByteSlice(slice *[]byte, lenType SeriSliceLengthType, errProducer ErrProducer, maxRead ...int) *Deserializer {
 	if d.err != nil {
 		return d
 	}
@@ -370,6 +375,11 @@ func (d *Deserializer) ReadVariableByteSlice(slice *[]byte, lenType SeriSliceLen
 	sliceLength, err := d.readSliceLength(lenType, errProducer)
 	if err != nil {
 		d.err = err
+		return d
+	}
+
+	if len(maxRead) > 0 && sliceLength > maxRead[0] {
+		d.err = errProducer(fmt.Errorf("%w: denoted %d bytes, max allowed %d ", ErrDeserializationLengthInvalid, sliceLength, maxRead[0]))
 		return d
 	}
 
@@ -688,7 +698,7 @@ func (d *Deserializer) ReadPayload(f ReadObjectConsumerFunc, deSeriMode DeSerial
 }
 
 // ReadString reads a string.
-func (d *Deserializer) ReadString(s *string, errProducer ErrProducer) *Deserializer {
+func (d *Deserializer) ReadString(s *string, errProducer ErrProducer, maxSize ...uint16) *Deserializer {
 	if d.err != nil {
 		return d
 	}
@@ -699,6 +709,10 @@ func (d *Deserializer) ReadString(s *string, errProducer ErrProducer) *Deseriali
 	}
 
 	strLen := binary.LittleEndian.Uint16(d.src)
+	if len(maxSize) > 0 && strLen > maxSize[0] {
+		d.err = errProducer(fmt.Errorf("%w: string defined to be of %d bytes length but max %d is allowed", ErrDeserializationLengthInvalid, strLen, maxSize[0]))
+	}
+
 	d.offset += UInt16ByteSize
 	d.src = d.src[UInt16ByteSize:]
 

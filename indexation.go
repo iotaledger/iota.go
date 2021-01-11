@@ -3,7 +3,9 @@ package iota
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"unicode/utf8"
 )
 
 const (
@@ -11,6 +13,19 @@ const (
 	IndexationPayloadTypeID uint32 = 2
 	// type bytes + index prefix + one char + data length
 	IndexationBinSerializedMinSize = TypeDenotationByteSize + UInt16ByteSize + OneByte + UInt32ByteSize
+	// Defines the max length of the index within an Indexation.
+	IndexationIndexMaxLength = 64
+	// Defines the min length of the index within an Indexation.
+	IndexationIndexMinLength = 1
+)
+
+var (
+	// Returned when an Indexation contains a non UTF-8 index.
+	ErrIndexationNonUTF8Index = errors.New("index is not valid utf-8")
+	// Returned when an Indexation's index exceeds IndexationIndexMaxLength.
+	ErrIndexationIndexExceedsMaxSize = errors.New("index exceeds max size")
+	// Returned when an Indexation's index is under IndexationIndexMinLength.
+	ErrIndexationIndexUnderMinSize = errors.New("index is below min size")
 )
 
 // Indexation is a payload which holds an index and associated data.
@@ -40,10 +55,23 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode DeSerializationMode) (i
 		}).
 		ReadString(&u.Index, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation index: %w", err)
+		}, IndexationIndexMaxLength).
+		AbortIf(func(err error) error {
+			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				switch {
+				case len(u.Index) > IndexationIndexMaxLength:
+					return fmt.Errorf("unable to deserialize indexation index: %w", ErrIndexationIndexExceedsMaxSize)
+				case len(u.Index) < IndexationIndexMinLength:
+					return fmt.Errorf("unable to deserialize indexation index: %w", ErrIndexationIndexUnderMinSize)
+				case !utf8.ValidString(u.Index):
+					return fmt.Errorf("unable to deserialize indexation index: %w", ErrIndexationNonUTF8Index)
+				}
+			}
+			return nil
 		}).
 		ReadVariableByteSlice(&u.Data, SeriSliceLengthAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation data: %w", err)
-		}).
+		}, MessageBinSerializedMaxSize). // obviously can never be that size
 		Done()
 }
 
@@ -51,6 +79,14 @@ func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	return NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+				switch {
+				case len(u.Index) > IndexationIndexMaxLength:
+					return fmt.Errorf("unable to serialize indexation index: %w", ErrIndexationIndexExceedsMaxSize)
+				case len(u.Index) < IndexationIndexMinLength:
+					return fmt.Errorf("unable to serialize indexation index: %w", ErrIndexationIndexUnderMinSize)
+				case !utf8.ValidString(u.Index):
+					return fmt.Errorf("unable to serialize indexation index: %w", ErrIndexationNonUTF8Index)
+				}
 				// TODO: check data length
 			}
 			return nil
