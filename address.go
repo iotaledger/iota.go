@@ -58,7 +58,7 @@ func ParsePrefix(s string) (NetworkPrefix, error) {
 }
 
 var (
-	hrpStrings = [...]string{"iot", "tio"}
+	hrpStrings = [...]string{"iota", "atoi"}
 )
 
 // Address describes a general address.
