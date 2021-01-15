@@ -31,16 +31,8 @@ const (
 var (
 	// Returned if the count of inputs is too small.
 	ErrMinInputsNotReached = fmt.Errorf("min %d input(s) are required within a transaction", MinInputsCount)
-	// Returned if the count of inputs is too big.
-	ErrMaxInputsExceeded = fmt.Errorf("max %d input(s) are allowed within a transaction", MaxInputsCount)
 	// Returned if the count of outputs is too small.
 	ErrMinOutputsNotReached = fmt.Errorf("min %d output(s) are required within a transaction", MinOutputsCount)
-	// Returned if the count of outputs is too big.
-	ErrMaxOutputsExceeded = fmt.Errorf("max %d output(s) are allowed within a transaction", MaxOutputsCount)
-	// Returned if the inputs are not in lexical order when serialized.
-	ErrInputsOrderViolatesLexicalOrder = errors.New("inputs must be in their lexical order (byte wise) when serialized")
-	// Returned if the outputs are not in lexical order when serialized.
-	ErrOutputsOrderViolatesLexicalOrder = errors.New("outputs must be in their lexical order (byte wise) when serialized")
 	// Returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
 	// Returned if multiple outputs deposit to the same address.
@@ -61,8 +53,8 @@ var (
 
 	// restrictions around outputs within a transaction.
 	outputsArrayBound = ArrayRules{
-		Min:            MinInputsCount,
-		Max:            MaxInputsCount,
+		Min:            MinOutputsCount,
+		Max:            MaxOutputsCount,
 		ValidationMode: ArrayValidationModeLexicalOrdering,
 	}
 )
@@ -123,7 +115,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 			}
 			return nil
 		}).
-		ReadSliceOfObjects(func(seri Serializables) { u.Outputs = seri }, deSeriMode, TypeDenotationByte, OutputSelector, &inputsArrayBound, func(err error) error {
+		ReadSliceOfObjects(func(seri Serializables) { u.Outputs = seri }, deSeriMode, TypeDenotationByte, OutputSelector, &outputsArrayBound, func(err error) error {
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
 		}).
 		AbortIf(func(err error) error {
@@ -154,6 +146,12 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
 	var inputsWrittenConsumer, outputsWrittenConsumer WrittenObjectConsumer
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
+
+		if u.Payload != nil {
+			if _, isIndexationPayload := u.Payload.(*Indexation); !isIndexationPayload {
+				return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", ErrInvalidBytes, u.Payload)
+			}
+		}
 		if inputsArrayBound.ValidationMode.HasMode(ArrayValidationModeLexicalOrdering) {
 			inputsLexicalOrderValidator := inputsArrayBound.LexicalOrderValidator()
 			inputsWrittenConsumer = func(index int, written []byte) error {

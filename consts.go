@@ -38,6 +38,10 @@ const (
 type TypeDenotationType byte
 
 const (
+	// Defines a denotation which defines a type ID by a uint32.
 	TypeDenotationUint32 TypeDenotationType = iota
+	// Defines a denotation which defines a type ID by a byte.
 	TypeDenotationByte
+	// Defines that there is no type denotation.
+	TypeDenotationNone
 )

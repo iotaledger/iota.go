@@ -220,6 +220,7 @@ func randMilestone(parents iota.MessageIDs) (*iota.Milestone, []byte) {
 			panic(err)
 		}
 	}
+	must(binary.Write(&b, binary.LittleEndian, uint32(0)))
 	must(b.WriteByte(sigsCount))
 	for _, sig := range msPayload.Signatures {
 		if _, err := b.Write(sig[:]); err != nil {

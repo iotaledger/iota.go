@@ -13,6 +13,9 @@ type (
 	// ArrayOf64Bytes is an array of 64 bytes.
 	ArrayOf64Bytes = [64]byte
 
+	// ArrayOf49Bytes is an array of 49 bytes.
+	ArrayOf49Bytes = [49]byte
+
 	// SliceOfArraysOf32Bytes is a slice of arrays of which each is 32 bytes.
 	SliceOfArraysOf32Bytes = []ArrayOf32Bytes
 
@@ -483,6 +486,26 @@ func (d *Deserializer) ReadArrayOf64Bytes(arr *ArrayOf64Bytes, errProducer ErrPr
 	return d
 }
 
+// ReadArrayOf49Bytes reads an array of 49 bytes.
+func (d *Deserializer) ReadArrayOf49Bytes(arr *ArrayOf49Bytes, errProducer ErrProducer) *Deserializer {
+	if d.err != nil {
+		return d
+	}
+	const length = 49
+
+	l := len(d.src)
+	if l < length {
+		d.err = errProducer(ErrDeserializationNotEnoughData)
+		return d
+	}
+
+	copy(arr[:], d.src[:length])
+	d.offset += length
+	d.src = d.src[length:]
+
+	return d
+}
+
 // reads the length of a slice.
 func (d *Deserializer) readSliceLength(lenType SeriSliceLengthType, errProducer ErrProducer) (int, error) {
 	l := len(d.src)
@@ -636,6 +659,8 @@ func (d *Deserializer) ReadObject(f ReadObjectConsumerFunc, deSeriMode DeSeriali
 			return d
 		}
 		ty = uint32(d.src[0])
+	case TypeDenotationNone:
+		// object has no type denotation
 	}
 
 	seri, err := serSel(ty)
@@ -692,9 +717,7 @@ func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode 
 
 		var seri Serializable
 		// this mutates d.src/d.offset
-		d.ReadObject(func(readSeri Serializable) {
-			seri = readSeri
-		}, deSeriMode, typeDen, serSel, func(err error) error {
+		d.ReadObject(func(readSeri Serializable) { seri = readSeri }, deSeriMode, typeDen, serSel, func(err error) error {
 			return errProducer(err)
 		})
 
