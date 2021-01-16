@@ -218,16 +218,16 @@ func TestDustAllowance(t *testing.T) {
 					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
 				dustAllowanceFunc: func() iota.DustAllowanceFunc {
-					dustOutputsAmount := map[iota.Serializable]int64{
-						&inputAddr: 1,
+					dustOutputsAmount := map[string]int64{
+						(&inputAddr).String(): 1,
 						// zero on output address
 					}
-					dustAllowanceSum := map[iota.Serializable]uint64{
+					dustAllowanceSum := map[string]uint64{
 						// we have one dust allowance output on the target address
-						outputAddr1: iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						outputAddr1.String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
 					}
-					return func(addr iota.Serializable) (uint64, int64, error) {
-						return dustAllowanceSum[addr], dustOutputsAmount[addr], nil
+					return func(addr iota.Address) (uint64, int64, error) {
+						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
 			}
@@ -249,16 +249,16 @@ func TestDustAllowance(t *testing.T) {
 					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
 				dustAllowanceFunc: func() iota.DustAllowanceFunc {
-					dustOutputsAmount := map[iota.Serializable]int64{
-						&inputAddr:  5,
-						outputAddr1: 10,
+					dustOutputsAmount := map[string]int64{
+						(&inputAddr).String(): 5,
+						outputAddr1.String():  10,
 					}
-					dustAllowanceSum := map[iota.Serializable]uint64{
-						&inputAddr:  iota.OutputSigLockedDustAllowanceOutputMinDeposit,
-						outputAddr1: iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+					dustAllowanceSum := map[string]uint64{
+						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						outputAddr1.String():  iota.OutputSigLockedDustAllowanceOutputMinDeposit,
 					}
-					return func(addr iota.Serializable) (uint64, int64, error) {
-						return dustAllowanceSum[addr], dustOutputsAmount[addr], nil
+					return func(addr iota.Address) (uint64, int64, error) {
+						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
 			}
@@ -281,18 +281,18 @@ func TestDustAllowance(t *testing.T) {
 					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit + 50},
 				},
 				dustAllowanceFunc: func() iota.DustAllowanceFunc {
-					dustOutputsAmount := map[iota.Serializable]int64{
-						&inputAddr:  0,
-						outputAddr1: 0,
+					dustOutputsAmount := map[string]int64{
+						(&inputAddr).String(): 0,
+						outputAddr1.String():  0,
 					}
-					dustAllowanceSum := map[iota.Serializable]uint64{
-						&inputAddr: 0,
+					dustAllowanceSum := map[string]uint64{
+						(&inputAddr).String(): 0,
 						// explicit, we have no dust allowance output on the target
 						// but we will have it via the transaction
-						outputAddr1: 0,
+						outputAddr1.String(): 0,
 					}
-					return func(addr iota.Serializable) (uint64, int64, error) {
-						return dustAllowanceSum[addr], dustOutputsAmount[addr], nil
+					return func(addr iota.Address) (uint64, int64, error) {
+						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
 			}
@@ -317,16 +317,16 @@ func TestDustAllowance(t *testing.T) {
 					inputUTXO2.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit / 2},
 				},
 				dustAllowanceFunc: func() iota.DustAllowanceFunc {
-					dustOutputsAmount := map[iota.Serializable]int64{
-						&inputAddr:  2,
-						outputAddr1: 0,
+					dustOutputsAmount := map[string]int64{
+						(&inputAddr).String(): 2,
+						outputAddr1.String():  0,
 					}
-					dustAllowanceSum := map[iota.Serializable]uint64{
-						&inputAddr:  iota.OutputSigLockedDustAllowanceOutputMinDeposit,
-						outputAddr1: 0,
+					dustAllowanceSum := map[string]uint64{
+						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						outputAddr1.String():  0,
 					}
-					return func(addr iota.Serializable) (uint64, int64, error) {
-						return dustAllowanceSum[addr], dustOutputsAmount[addr], nil
+					return func(addr iota.Address) (uint64, int64, error) {
+						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
 			}
@@ -348,18 +348,18 @@ func TestDustAllowance(t *testing.T) {
 					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
 				dustAllowanceFunc: func() iota.DustAllowanceFunc {
-					dustOutputsAmount := map[iota.Serializable]int64{
-						&inputAddr:  1,
-						outputAddr1: 0,
+					dustOutputsAmount := map[string]int64{
+						(&inputAddr).String(): 1,
+						outputAddr1.String():  0,
 					}
-					dustAllowanceSum := map[iota.Serializable]uint64{
+					dustAllowanceSum := map[string]uint64{
 						// we are allowed to have outputs on our input address
-						&inputAddr: iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
 						// this should result in an error, since no dust allowance is present
-						outputAddr1: 0,
+						outputAddr1.String(): 0,
 					}
-					return func(addr iota.Serializable) (uint64, int64, error) {
-						return dustAllowanceSum[addr], dustOutputsAmount[addr], nil
+					return func(addr iota.Address) (uint64, int64, error) {
+						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
 				validErr: iota.ErrInvalidDustAllowance,
@@ -382,18 +382,18 @@ func TestDustAllowance(t *testing.T) {
 					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
 				dustAllowanceFunc: func() iota.DustAllowanceFunc {
-					dustOutputsAmount := map[iota.Serializable]int64{
-						&inputAddr:  1,
-						outputAddr1: 100,
+					dustOutputsAmount := map[string]int64{
+						(&inputAddr).String(): 1,
+						outputAddr1.String():  100,
 					}
-					dustAllowanceSum := map[iota.Serializable]uint64{
-						&inputAddr: iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+					dustAllowanceSum := map[string]uint64{
+						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
 						// this should result in an error, since we're creating one
 						// dust output over the limit
-						outputAddr1: iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						outputAddr1.String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
 					}
-					return func(addr iota.Serializable) (uint64, int64, error) {
-						return dustAllowanceSum[addr], dustOutputsAmount[addr], nil
+					return func(addr iota.Address) (uint64, int64, error) {
+						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
 				validErr: iota.ErrInvalidDustAllowance,
@@ -416,17 +416,17 @@ func TestDustAllowance(t *testing.T) {
 					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit},
 				},
 				dustAllowanceFunc: func() iota.DustAllowanceFunc {
-					dustOutputsAmount := map[iota.Serializable]int64{
-						&inputAddr:  0,
-						outputAddr1: 0,
+					dustOutputsAmount := map[string]int64{
+						(&inputAddr).String(): 0,
+						outputAddr1.String():  0,
 					}
-					dustAllowanceSum := map[iota.Serializable]uint64{
-						&inputAddr: 0,
+					dustAllowanceSum := map[string]uint64{
+						(&inputAddr).String(): 0,
 						// no dust allowance yet on target
-						outputAddr1: 0,
+						outputAddr1.String(): 0,
 					}
-					return func(addr iota.Serializable) (uint64, int64, error) {
-						return dustAllowanceSum[addr], dustOutputsAmount[addr], nil
+					return func(addr iota.Address) (uint64, int64, error) {
+						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
 				buildErr: iota.ErrOutputDustAllowanceLessThanMinDeposit,
@@ -449,18 +449,18 @@ func TestDustAllowance(t *testing.T) {
 					inputUTXO1.ID(): &iota.SigLockedDustAllowanceOutput{Address: &inputAddr, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit},
 				},
 				dustAllowanceFunc: func() iota.DustAllowanceFunc {
-					dustOutputsAmount := map[iota.Serializable]int64{
-						&inputAddr:  50,
-						outputAddr1: 0,
+					dustOutputsAmount := map[string]int64{
+						(&inputAddr).String(): 50,
+						outputAddr1.String():  0,
 					}
-					dustAllowanceSum := map[iota.Serializable]uint64{
+					dustAllowanceSum := map[string]uint64{
 						// we spend the only dust allowance output on the address while still
 						// having 50 dust outputs on it
-						&inputAddr:  iota.OutputSigLockedDustAllowanceOutputMinDeposit,
-						outputAddr1: 0,
+						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						outputAddr1.String():  0,
 					}
-					return func(addr iota.Serializable) (uint64, int64, error) {
-						return dustAllowanceSum[addr], dustOutputsAmount[addr], nil
+					return func(addr iota.Address) (uint64, int64, error) {
+						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
 				validErr: iota.ErrInvalidDustAllowance,
