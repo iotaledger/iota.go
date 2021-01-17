@@ -12,20 +12,20 @@ func NewTransactionBuilder() *TransactionBuilder {
 			Outputs: Serializables{},
 			Payload: nil,
 		},
-		inputToAddr: map[UTXOInputID]Serializable{},
+		inputToAddr: map[UTXOInputID]Address{},
 	}
 }
 
 // TransactionBuilder is used to easily build up a Transaction.
 type TransactionBuilder struct {
 	essence     *TransactionEssence
-	inputToAddr map[UTXOInputID]Serializable
+	inputToAddr map[UTXOInputID]Address
 }
 
 // ToBeSignedUTXOInput defines a UTXO input which needs to be signed.
 type ToBeSignedUTXOInput struct {
 	// The address to which this input belongs to.
-	Address Serializable `json:"address"`
+	Address Address `json:"address"`
 	// The actual UTXO input.
 	Input *UTXOInput `json:"input"`
 }
