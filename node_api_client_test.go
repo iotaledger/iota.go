@@ -292,8 +292,6 @@ func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 	originRes := &iota.AddressBalanceResponse{
 		AddressType: 1,
 		Address:     ed25519AddrHex,
-		MaxResults:  1000,
-		Count:       1337,
 		Balance:     13371337,
 	}
 

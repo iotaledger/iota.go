@@ -500,10 +500,6 @@ type AddressBalanceResponse struct {
 	AddressType byte `json:"addressType"`
 	// The hex encoded address.
 	Address string `json:"address"`
-	// The maximum count of results that are returned by the node.
-	MaxResults uint32 `json:"maxResults"`
-	// The actual count of results that are returned.
-	Count uint32 `json:"count"`
 	// The balance of the address.
 	Balance uint64 `json:"balance"`
 }
