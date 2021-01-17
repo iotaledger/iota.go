@@ -476,7 +476,7 @@ func (nor *NodeOutputResponse) Output() (Output, error) {
 		return nil, err
 	}
 	output, isOutput := seri.(Output)
-	if isOutput {
+	if !isOutput {
 		return nil, ErrUnknownOutputType
 	}
 	return output, nil
