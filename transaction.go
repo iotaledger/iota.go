@@ -207,7 +207,7 @@ type SigValidationFunc = func() error
 type SemanticValidationFunc = func(t *Transaction, utxos InputToOutputMapping) error
 
 // DustAllowanceFunc returns the deposit sum of dust allowance outputs and amount of dust outputs on the given address.
-type DustAllowanceFunc func(addr Serializable) (dustAllowanceSum uint64, amountDustOutputs int64, err error)
+type DustAllowanceFunc func(addr Address) (dustAllowanceSum uint64, amountDustOutputs int64, err error)
 
 // NewDustSemanticValidation returns a SemanticValidationFunc which verifies whether
 // a transaction fulfils the semantics regarding dust outputs:
@@ -220,16 +220,19 @@ func NewDustSemanticValidation(div int64, dustAllowanceFunc DustAllowanceFunc) S
 	return func(t *Transaction, utxos InputToOutputMapping) error {
 		essence := t.Essence.(*TransactionEssence)
 
-		dustAllowanceAddrToBalance := make(map[Serializable]int64)
-		dustAllowanceAddrToNumOfDustOutputs := make(map[Serializable]int64)
+		addrToValidate := make(map[string]Address)
+		dustAllowanceAddrToBalance := make(map[string]int64)
+		dustAllowanceAddrToNumOfDustOutputs := make(map[string]int64)
 
 		for _, output := range essence.Outputs {
 			switch out := output.(type) {
 			case *SigLockedDustAllowanceOutput:
-				dustAllowanceAddrToBalance[out.Address] += int64(out.Amount)
+				addrToValidate[out.Address.(Address).String()] = out.Address.(Address)
+				dustAllowanceAddrToBalance[out.Address.(Address).String()] += int64(out.Amount)
 			case *SigLockedSingleOutput:
 				if out.Amount < OutputSigLockedDustAllowanceOutputMinDeposit {
-					dustAllowanceAddrToNumOfDustOutputs[out.Address] += 1
+					addrToValidate[out.Address.(Address).String()] = out.Address.(Address)
+					dustAllowanceAddrToNumOfDustOutputs[out.Address.(Address).String()] += 1
 				}
 			}
 		}
@@ -252,40 +255,33 @@ func NewDustSemanticValidation(div int64, dustAllowanceFunc DustAllowanceFunc) S
 			}
 
 			if deposit < OutputSigLockedDustAllowanceOutputMinDeposit {
-				dustAllowanceAddrToNumOfDustOutputs[target] -= 1
+				addrToValidate[target.(Address).String()] = target.(Address)
+				dustAllowanceAddrToNumOfDustOutputs[target.(Address).String()] -= 1
 				continue
 			}
 
 			if utxo.Type() == OutputSigLockedDustAllowanceOutput {
-				dustAllowanceAddrToBalance[target] -= int64(deposit)
+				addrToValidate[target.(Address).String()] = target.(Address)
+				dustAllowanceAddrToBalance[target.(Address).String()] -= int64(deposit)
 			}
 		}
 
-		addrToValidate := make(map[Serializable]struct{})
-		for addr := range dustAllowanceAddrToBalance {
-			addrToValidate[addr] = struct{}{}
-		}
-		for addr := range dustAllowanceAddrToNumOfDustOutputs {
-			addrToValidate[addr] = struct{}{}
-		}
-
-		for addr := range addrToValidate {
+		for addrKey, addr := range addrToValidate {
 			dustAllowanceDepositSumUint64, numDustOutputs, err := dustAllowanceFunc(addr)
 			if err != nil {
 				return fmt.Errorf("unable to fetch dust allowance information on address %v: %w", addr, err)
 			}
 			numDustOutputsPrev := numDustOutputs
-			numDustOutputs += dustAllowanceAddrToNumOfDustOutputs[addr]
+			numDustOutputs += dustAllowanceAddrToNumOfDustOutputs[addrKey]
 
 			var dustAllowanceDepositSum = int64(dustAllowanceDepositSumUint64)
 			// Go integer division floors the value
 			prevAllowed := dustAllowanceDepositSum / div
-			allowed := (dustAllowanceDepositSum + dustAllowanceAddrToBalance[addr]) / div
+			allowed := (dustAllowanceDepositSum + dustAllowanceAddrToBalance[addrKey]) / div
 
 			if numDustOutputs > allowed {
-				addrHex := addr.(Address).String()
 				short := numDustOutputs - allowed
-				return fmt.Errorf("%w: addr %s, new num of dust outputs %d (previous %d), allowance deposit %d (previous %d), short %d", ErrInvalidDustAllowance, addrHex, numDustOutputs, numDustOutputsPrev, allowed, prevAllowed, short)
+				return fmt.Errorf("%w: addr %s, new num of dust outputs %d (previous %d), allowance deposit %d (previous %d), short %d", ErrInvalidDustAllowance, addrKey, numDustOutputs, numDustOutputsPrev, allowed, prevAllowed, short)
 			}
 		}
 
