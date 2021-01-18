@@ -262,6 +262,8 @@ type NodeInfoResponse struct {
 	IsHealthy bool `json:"isHealthy"`
 	// The human friendly name of the network ID on which the node operates on.
 	NetworkID string `json:"networkId"`
+	// The HRP prefix used for Bech32 addresses in the node's network.
+	Bech32HRP string `json:"bech32HRP"`
 	// The minimum pow score of the network.
 	MinPowScore float64 `json:"minPowScore"`
 	// The hex encoded ID of the latest known milestone.
