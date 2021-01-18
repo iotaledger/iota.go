@@ -405,7 +405,7 @@ func TestNodeAPI_PeerByID(t *testing.T) {
 			SentMessageRequests:       2396,
 			SentMilestoneRequests:     9837,
 			SentHeartbeats:            3,
-			DroppedSentPackets:        10,
+			DroppedPackets:            10,
 		},
 	}
 
@@ -458,7 +458,7 @@ func TestNodeAPI_Peers(t *testing.T) {
 				SentMessageRequests:       2396,
 				SentMilestoneRequests:     9837,
 				SentHeartbeats:            3,
-				DroppedSentPackets:        10,
+				DroppedPackets:            10,
 			},
 		},
 		{
@@ -477,7 +477,7 @@ func TestNodeAPI_Peers(t *testing.T) {
 				SentMessageRequests:       265396,
 				SentMilestoneRequests:     9837,
 				SentHeartbeats:            343,
-				DroppedSentPackets:        12340,
+				DroppedPackets:            12340,
 			},
 		},
 	}
@@ -515,7 +515,7 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 			SentMessageRequests:       2396,
 			SentMilestoneRequests:     9837,
 			SentHeartbeats:            3,
-			DroppedSentPackets:        10,
+			DroppedPackets:            10,
 		},
 	}
 

@@ -585,7 +585,7 @@ type PeerResponse struct {
 	ID string `json:"id"`
 	// The libp2p multi addresses of the peer.
 	MultiAddresses []string `json:"multiAddresses"`
-	// The alias of to iditify the peer.
+	// The alias to identify the peer.
 	Alias *string `json:"alias,omitempty"`
 	// The relation (static, autopeered) of the peer.
 	Relation string `json:"relation"`
@@ -618,7 +618,7 @@ type PeerGossipMetrics struct {
 	// The total amount of sent heartbeats.
 	SentHeartbeats uint32 `json:"sentHeartbeats"`
 	// The total amount of packets which couldn't be sent.
-	DroppedSentPackets uint32 `json:"droppedSentPackets"`
+	DroppedPackets uint32 `json:"droppedPackets"`
 }
 
 // PeerByID gets a peer by its identifier.
