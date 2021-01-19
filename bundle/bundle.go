@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/iotaledger/iota.go/address"
 	"github.com/iotaledger/iota.go/checksum"
 	"github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/consts"
@@ -324,10 +325,20 @@ func ValidateBundleSignatures(bundle Bundle) (bool, error) {
 	return true, nil
 }
 
+const (
+	// The minimum amount a migration bundle has to deposit.
+	MigrationBundleMinDeposit = 1_000_000
+)
+
 // ValidBundle checks if a bundle is syntactically valid.
 // Validates signatures and overall structure.
-func ValidBundle(bundle Bundle) error {
+func ValidBundle(bundle Bundle, applyMigrationChecks ...bool) error {
 	var totalSum int64
+	var migrationChecks, isTransferringValue bool
+	var prevInputAddr trinary.Hash
+	if len(applyMigrationChecks) > 0 && applyMigrationChecks[0] {
+		migrationChecks = true
+	}
 
 	changes := map[trinary.Trytes]int64{}
 	k := kerl.NewKerl()
@@ -338,6 +349,46 @@ func ValidBundle(bundle Bundle) error {
 
 		if iotaGoMath.AbsInt64(tx.Value) > consts.TotalSupply {
 			return errors.Wrapf(ErrInvalidValue, "tx value (%d) overflows/underflows total supply", tx.Value)
+		}
+
+		if tx.Value != 0 {
+			isTransferringValue = true
+		}
+
+		if migrationChecks {
+			switch {
+			case i == 0 || tx.Value > 0:
+				// migration output transaction must be the tail transaction.
+				// this also enforces that max. 1 output transaction can exist
+				if tx.CurrentIndex != 0 {
+					return errors.Wrapf(ErrInvalidMigrationBundle, "tail transaction must be the output transaction")
+				}
+
+				// migration bundle must deposit at least 1'000'000	tokens
+				if tx.Value < MigrationBundleMinDeposit {
+					return errors.Wrapf(ErrInvalidMigrationBundle, "must deposit at least %d tokens via the output transaction", MigrationBundleMinDeposit)
+				}
+
+				// must deposit to a migration address
+				if err := address.IsMigrationAddress(tx.Address); err != nil {
+					return err
+				}
+			case tx.Value < 0:
+				// the input address can not be a migration address itself (this prevents non-state mutating value bundles)
+				if err := address.IsMigrationAddress(tx.Address); err == nil {
+					return errors.Wrapf(ErrInvalidMigrationBundle, "input transactions must not have migration addresses")
+				}
+				// move to next input address
+				prevInputAddr = tx.Address
+			default:
+				// zero-value transactions, must use the previous input transaction address, this enforces
+				// that the migration bundle does not contain zero-value transactions which do not hold signature fragments.
+				// in case they use the same address but don't actually hold the correct fragments, this bundle will be
+				// deemed invalid up on signature validation
+				if tx.Address != prevInputAddr {
+					return errors.Wrapf(ErrInvalidMigrationBundle, "zero-value transactions must hold signature fragments")
+				}
+			}
 		}
 
 		totalSum += tx.Value
@@ -374,6 +425,10 @@ func ValidBundle(bundle Bundle) error {
 	// sum of all transaction must be 0
 	if totalSum != 0 {
 		return errors.Wrapf(ErrInvalidBundle, "bundle total sum should be 0 but got %d", totalSum)
+	}
+
+	if migrationChecks && !isTransferringValue {
+		return errors.Wrapf(ErrInvalidMigrationBundle, "migration bundles must transfer value")
 	}
 
 	bundleHash, err := k.SqueezeTrytes(HashTrinarySize)

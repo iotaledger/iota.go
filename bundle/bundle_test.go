@@ -1,9 +1,12 @@
 package bundle_test
 
 import (
+	"math/rand"
 	"strings"
 	"time"
 
+	"github.com/iotaledger/iota.go/address"
+	"github.com/iotaledger/iota.go/api"
 	. "github.com/iotaledger/iota.go/bundle"
 	. "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/encoding/ascii"
@@ -11,6 +14,7 @@ import (
 	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 )
 
 var _ = Describe("Bundle", func() {
@@ -266,7 +270,7 @@ var _ = Describe("Bundle", func() {
 			Expect(ValidBundle(bndl)).ToNot(HaveOccurred())
 		})
 
-		It("returns false for a invalid bundle", func() {
+		It("returns an error for an invalid bundle", func() {
 			tx, err := transaction.AsTransactionObject("ADXCBDTCXCCDHDPCSARCCDAD999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999SYW9TZUZIRLR9SKTGTINGHZMJQXIQNVDT9NNEBHMBI9IGEQFUZSULZYZVAMRGCOOMIDFJKTF9TKFMJTPDEZKD99999999999999999999999AUOEIOTADOTCOM9999999999999AHGWHZD99999999999C99999999BXMKIBXAKYPETIHGFOHRBZSQYEVXCCARVZDFQGDYQLHXOJZYB9DASXMTOXFK9JVJLIFAGTHIBXSBTCOWXRTQTHZSSPBKNZUPPZCHBQXZHDXPJHFBVYDYXRJBP9PT9J9CDDILDLFCAVMEOQ9PDVXFASAUVDYB9Z9999LGXB9IGNMJFRRFMNMQYWJVSSYVNTETTKAMTNKGQEBXUQVTSKHEEI99UYNMWUGJOYMNWLFGAHJEQLZ9999MINEIOTADOTCOM9999999999999ZA9METELE999999999MMMMMMMMM9BNPYHCWUMDDVKNDUWX9KN9O9ZP")
 			Expect(err).ToNot(HaveOccurred())
 			tx.Value = 1000000000
@@ -279,6 +283,115 @@ var _ = Describe("Bundle", func() {
 			}, nil)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ValidBundle(bndl)).To(HaveOccurred())
+		})
+	})
+
+	Context("ValidBundle() with migration checks", func() {
+		var seed = "HZVEINVKVIKGFRAWRTRXWD9JLIYLCQNCXZRBLDETPIQGKZJRYKZXLTV9JNUVBIAHAGUZVIQWIAWDZ9ACW"
+		a, _ := api.ComposeAPI(&api.HTTPClientSettings{})
+
+		randMigrationAddress := func() Hash {
+			var ed25519Addr [32]byte
+			rand.Read(ed25519Addr[:])
+			migrAddr, err := address.GenerateMigrationAddress(ed25519Addr)
+			Expect(err).ToNot(HaveOccurred())
+			return migrAddr
+		}
+
+		bundleTrytesToTransactions := func(bndlTrytes []Trytes) Bundle {
+			bndl, _ := transaction.AsTransactionObjects(bndlTrytes, nil)
+			for i, j := 0, len(bndl)-1; i < j; i, j = i+1, j-1 {
+				bndl[i], bndl[j] = bndl[j], bndl[i]
+			}
+			return bndl
+		}
+
+		It("returns nil for a valid migration bundle", func() {
+			inputAddr, _ := address.GenerateAddress(seed, 0, SecurityLevelMedium, true)
+
+			bndlTrytes, err := a.PrepareTransfers(seed, Transfers{
+				{Address: randMigrationAddress(), Value: 1_000_000},
+			}, api.PrepareTransfersOptions{
+				Inputs: []api.Input{
+					{
+						Balance:  1_000_000,
+						Address:  inputAddr,
+						KeyIndex: 0,
+						Security: SecurityLevelMedium,
+					},
+				},
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			bndl := bundleTrytesToTransactions(bndlTrytes)
+			Expect(ValidBundle(bndl, true)).ToNot(HaveOccurred())
+		})
+
+		It("returns an error for a migration bundle depositing less than the minimum migration amount", func() {
+			inputAddr, _ := address.GenerateAddress(seed, 0, SecurityLevelMedium, true)
+
+			bndlTrytes, err := a.PrepareTransfers(seed, Transfers{
+				{Address: randMigrationAddress(), Value: 500_000},
+			}, api.PrepareTransfersOptions{
+				Inputs: []api.Input{
+					{
+						Balance:  500_000,
+						Address:  inputAddr,
+						KeyIndex: 0,
+						Security: SecurityLevelMedium,
+					},
+				},
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			bndl := bundleTrytesToTransactions(bndlTrytes)
+			Expect(errors.Cause(ValidBundle(bndl, true))).To(BeIdenticalTo(ErrInvalidMigrationBundle))
+		})
+
+		It("returns an error for a migration bundle with multiple valid migration addresses as outputs", func() {
+			inputAddr, _ := address.GenerateAddress(seed, 0, SecurityLevelMedium, true)
+
+			bndlTrytes, err := a.PrepareTransfers(seed, Transfers{
+				{Address: randMigrationAddress(), Value: 1_000_000},
+				{Address: randMigrationAddress(), Value: 1_000_000},
+			}, api.PrepareTransfersOptions{
+				Inputs: []api.Input{
+					{
+						Balance:  2_000_000,
+						Address:  inputAddr,
+						KeyIndex: 0,
+						Security: SecurityLevelMedium,
+					},
+				},
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			bndl := bundleTrytesToTransactions(bndlTrytes)
+			Expect(errors.Cause(ValidBundle(bndl, true))).To(BeIdenticalTo(ErrInvalidMigrationBundle))
+		})
+
+		It("returns an error for a migration bundle with an output to a non migration address", func() {
+			inputAddr, _ := address.GenerateAddress(seed, 0, SecurityLevelMedium, true)
+
+			bndlTrytes, err := a.PrepareTransfers(seed, Transfers{
+				{
+					Address: "CXKGVXEIOPZ9GNZSOK9FNAOUJGZJTMLUNOZXQFUORDFPVQANZGYJUYWPHVGMO9JULGFZYHAAXEIJGCBIDFTFKBCWCD",
+					Value:   1_000_000,
+				},
+			}, api.PrepareTransfersOptions{
+				Inputs: []api.Input{
+					{
+						Balance:  1_000_000,
+						Address:  inputAddr,
+						KeyIndex: 0,
+						Security: SecurityLevelMedium,
+					},
+				},
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			bndl := bundleTrytesToTransactions(bndlTrytes)
+			Expect(errors.Cause(ValidBundle(bndl, true))).To(BeIdenticalTo(ErrInvalidMigrationAddress))
 		})
 	})
 

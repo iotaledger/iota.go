@@ -99,4 +99,23 @@ var _ = Describe("Address", func() {
 		})
 	})
 
+	Context("IsMigrationAddress", func() {
+		It("returns nil for a valid migration address", func() {
+			addr := "TRANSFERCDJWLVPAIXRWNAPXV9WYKVUZWWKXVBE9JBABJ9D9C9F9OEGADYO9CWDAGZHBRWIXLXG9MAJV9"
+			Expect(IsMigrationAddress(addr)).NotTo(HaveOccurred())
+		})
+		It("returns an error for a migration address with a wrong prefix", func() {
+			addr := "WILDLIFECDJWLVPAIXRWNAPXV9WYKVUZWWKXVBE9JBABJ9D9C9F9OEGADYO9CWDAGZHBRWIXLXG9MAJV9"
+			Expect(IsMigrationAddress(addr)).To(HaveOccurred())
+		})
+		It("returns an error for a migration address with a non '9' tryte as the suffix", func() {
+			addr := "TRANSFERCDJWLVPAIXRWNAPXV9WYKVUZWWKXVBE9JBABJ9D9C9F9OEGADYO9CWDAGZHBRWIXLXG9MAJVA"
+			Expect(IsMigrationAddress(addr)).To(HaveOccurred())
+		})
+		It("returns an error for a migration address with an invalid Ed25519 checksum", func() {
+			addr := "TRANSFERCDJWLVPAIXRWNAPXV9WYKVUZWWKXVBE9JBABJ9D9C9F9OEGADYO9CWDAGZHBRWIXLXG9MAJZ9"
+			Expect(IsMigrationAddress(addr)).To(HaveOccurred())
+		})
+	})
+
 })
