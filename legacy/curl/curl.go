@@ -33,7 +33,7 @@ func (c *Curl) CopyState(s Trits) {
 			} else if c.n[i].bit(j) != 0 {
 				s[j] = -1
 			} else {
-				s[i] = 0
+				s[j] = 0
 			}
 		}
 		s = s[HashTrinarySize:]
