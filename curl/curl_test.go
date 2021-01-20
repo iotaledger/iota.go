@@ -76,18 +76,23 @@ var _ = Describe("Curl", func() {
 		Entry("long absorb", strings.Repeat("ABC", consts.TransactionTrytesSize/3), "UHZVKZCGDIPNGFNPBNFZGIM9GAKYLCPTHTRFRXMNDJLZNXSGRPREFWTBKZWVTKV9BISPXEECVIXFJERAC"),
 	)
 
-	It("CopyState", func() {
-		a := strings.Repeat("A", consts.HashTrytesSize)
+	DescribeTable("CopyState",
+		func(in trinary.Trytes) {
+			c := NewCurlP81().(*Curl)
+			err := c.AbsorbTrytes(trinary.MustPad(in, consts.HashTrytesSize))
+			Expect(err).ToNot(HaveOccurred())
 
-		c := NewCurlP81().(*Curl)
-		err := c.AbsorbTrytes(a)
-		Expect(err).ToNot(HaveOccurred())
+			state := make(trinary.Trits, StateSize)
+			c.CopyState(state[:])
 
-		state := make(trinary.Trits, StateSize)
-		c.CopyState(state[:])
-
-		Expect(c.MustSqueeze(consts.HashTrinarySize)).To(Equal(state[:consts.HashTrinarySize]))
-	})
+			// the first 243 trits of the state should exactly match the hash
+			Expect(c.MustSqueeze(consts.HashTrinarySize)).To(Equal(state[:consts.HashTrinarySize]))
+		},
+		Entry("empty trytes", ""),
+		Entry("normal trytes", "A"),
+		Entry("normal trytes #2", "Z"),
+		Entry("normal trytes #3", "NOPQRSTUVWXYZ9ABSDEFGHIJKLM"),
+	)
 
 	It("Reset", func() {
 		a := strings.Repeat("A", consts.HashTrytesSize)
