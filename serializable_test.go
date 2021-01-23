@@ -197,3 +197,282 @@ func TestSerializationMode_HasMode(t *testing.T) {
 	}
 }
 
+func TestArrayValidationMode_HasMode(t *testing.T) {
+	type args struct {
+		mode iota.ArrayValidationMode
+	}
+	tests := []struct {
+		name string
+		sm   iota.ArrayValidationMode
+		args args
+		want bool
+	}{
+		{
+			"has no validation",
+			iota.ArrayValidModeNoValidation,
+			args{mode: iota.ArrayValidModeDuplicates},
+			false,
+		},
+		{
+			"has mode duplicates",
+			iota.ArrayValidModeDuplicates,
+			args{mode: iota.ArrayValidModeDuplicates},
+			true,
+		},
+		{
+			"has mode lexical order",
+			iota.ArrayValidModeLexicalOrdering,
+			args{mode: iota.ArrayValidModeLexicalOrdering},
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.sm.HasMode(tt.args.mode); got != tt.want {
+				t.Errorf("HasMode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestArrayRules_ElementUniqueValidator(t *testing.T) {
+	type test struct {
+		name  string
+		args  [][]byte
+		valid bool
+	}
+
+	arrayRules := iota.ArrayRules{}
+
+	tests := []test{
+		{
+			name: "ok - no dups",
+			args: [][]byte{
+				{1, 2, 3},
+				{2, 3, 1},
+				{3, 2, 1},
+			},
+			valid: true,
+		},
+		{
+			name: "not ok - dups",
+			args: [][]byte{
+				{1, 1, 1},
+				{1, 1, 2},
+				{1, 1, 3},
+				{1, 1, 3},
+			},
+			valid: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			arrayElementValidator := arrayRules.ElementUniqueValidator()
+
+			valid := true
+			for i := range tt.args {
+				element := tt.args[i]
+
+				// check array element validation against previous element
+				if err := arrayElementValidator(i, element); err != nil {
+					valid = false
+				}
+			}
+
+			assert.Equal(t, tt.valid, valid)
+		})
+	}
+}
+
+func TestArrayRules_Bounds(t *testing.T) {
+	type test struct {
+		name  string
+		args  [][]byte
+		min   int
+		max   int
+		valid bool
+	}
+
+	arrayRules := iota.ArrayRules{}
+
+	tests := []test{
+		{
+			name: "ok - min",
+			args: [][]byte{
+				{1},
+			},
+			min:   1,
+			max:   3,
+			valid: true,
+		},
+		{
+			name: "ok - max",
+			args: [][]byte{
+				{1},
+				{2},
+				{3},
+			},
+			min:   1,
+			max:   3,
+			valid: true,
+		},
+		{
+			name: "not ok - min",
+			args: [][]byte{
+				{1},
+				{2},
+				{3},
+			},
+			min:   4,
+			max:   5,
+			valid: false,
+		},
+		{
+			name: "not ok - max",
+			args: [][]byte{
+				{1},
+				{2},
+				{3},
+			},
+			min:   1,
+			max:   2,
+			valid: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			arrayRules.Min = uint16(tt.min)
+			arrayRules.Max = uint16(tt.max)
+			err := arrayRules.CheckBounds(uint16(len(tt.args)))
+			assert.Equal(t, tt.valid, err == nil)
+		})
+	}
+}
+
+func TestArrayRules_LexicalOrderValidator(t *testing.T) {
+	type test struct {
+		name  string
+		args  [][]byte
+		valid bool
+	}
+
+	arrayRules := iota.ArrayRules{}
+
+	tests := []test{
+		{
+			name: "ok - order by first ele",
+			args: [][]byte{
+				{1, 2, 3},
+				{2, 3, 1},
+				{3, 2, 1},
+			},
+			valid: true,
+		},
+		{
+			name: "ok - order by last ele",
+			args: [][]byte{
+				{1, 1, 1},
+				{1, 1, 2},
+				{1, 1, 3},
+			},
+			valid: true,
+		},
+		{
+			name: "not ok",
+			args: [][]byte{
+				{2, 1, 1},
+				{1, 1, 2},
+				{3, 1, 3},
+			},
+			valid: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			arrayElementValidator := arrayRules.LexicalOrderValidator()
+
+			valid := true
+			for i := range tt.args {
+				element := tt.args[i]
+
+				// check array element validation against previous element
+				if err := arrayElementValidator(i, element); err != nil {
+					valid = false
+				}
+			}
+
+			assert.Equal(t, tt.valid, valid)
+		})
+	}
+}
+
+func TestArrayRules_LexicalOrderWithoutDupsValidator(t *testing.T) {
+	type test struct {
+		name  string
+		args  [][]byte
+		valid bool
+	}
+
+	arrayRules := iota.ArrayRules{}
+
+	tests := []test{
+		{
+			name: "ok - order by first ele - no dups",
+			args: [][]byte{
+				{1, 2, 3},
+				{2, 3, 1},
+				{3, 2, 1},
+			},
+			valid: true,
+		},
+		{
+			name: "ok - order by last ele - no dups",
+			args: [][]byte{
+				{1, 1, 1},
+				{1, 1, 2},
+				{1, 1, 3},
+			},
+			valid: true,
+		},
+		{
+			name: "not ok - dups",
+			args: [][]byte{
+				{1, 1, 1},
+				{1, 1, 2},
+				{1, 1, 3},
+				{1, 1, 3},
+			},
+			valid: false,
+		},
+		{
+			name: "not ok - order",
+			args: [][]byte{
+				{2, 1, 1},
+				{1, 1, 2},
+				{3, 1, 3},
+			},
+			valid: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			arrayElementValidator := arrayRules.LexicalOrderWithoutDupsValidator()
+
+			valid := true
+			for i := range tt.args {
+				element := tt.args[i]
+
+				// check array element validation against previous element
+				if err := arrayElementValidator(i, element); err != nil {
+					valid = false
+				}
+			}
+
+			assert.Equal(t, tt.valid, valid)
+		})
+	}
+}

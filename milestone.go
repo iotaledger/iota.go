@@ -48,8 +48,6 @@ var (
 	ErrMilestoneTooFewSignaturesForVerificationThreshold = errors.New("too few signatures for verification")
 	// Returned if a to be deserialized Milestone does not contain at least one public key.
 	ErrMilestoneTooFewPublicKeys = errors.New("a milestone must hold at least one public key")
-	// Returned if the Milestone public keys are not in lexical order when serialized.
-	ErrMilestonePublicKeyOrderViolatesLexicalOrder = errors.New("public keys must be in their lexical order (byte wise) when serialized")
 	// Returned when a MilestoneSigningFunc produces less signatures than expected.
 	ErrMilestoneProducedSignaturesCountMismatch = errors.New("produced and wanted signature count mismatch")
 	// Returned when the count of signatures and public keys within a Milestone don't match.
@@ -73,7 +71,15 @@ var (
 
 	// restrictions around public keys within a Milestone.
 	milestonePublicKeyArrayRules = ArrayRules{
-		ElementBytesLexicalOrderErr: ErrMilestonePublicKeyOrderViolatesLexicalOrder,
+		Min:            MinPublicKeysInAMilestone,
+		Max:            MaxPublicKeysInAMilestone,
+		ValidationMode: ArrayValidModeDuplicates | ArrayValidModeLexicalOrdering,
+	}
+
+	// restrictions around signatures within a Milestone.
+	milestoneSignatureArrayRules = ArrayRules{
+		Min: MinSignaturesInAMilestone,
+		Max: MaxSignaturesInAMilestone,
 	}
 )
 
@@ -165,7 +171,7 @@ func (m *Milestone) Essence() ([]byte, error) {
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof for essence: %w", err)
 		}).
-		Write32BytesArraySlice(m.PublicKeys, SeriSliceLengthAsByte, func(err error) error {
+		Write32BytesArraySlice(m.PublicKeys, DeSeriModePerformValidation, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys for essence: %w", err)
 		}).
 		Serialize()
@@ -327,25 +333,11 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		ReadArrayOf32Bytes(&m.InclusionMerkleProof, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone inclusion merkle proof: %w", err)
 		}).
-		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, SeriSliceLengthAsByte, func(err error) error {
+		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, deSeriMode, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
 		}).
-		AbortIf(func(err error) error {
-			if len(m.PublicKeys) == 0 {
-				return ErrMilestoneTooFewPublicKeys
-			}
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderWithoutDupsValidator()
-				for i := range m.PublicKeys {
-					if err := pubKeyLexicalOrderValidator(i, m.PublicKeys[i][:]); err != nil {
-						return err
-					}
-				}
-			}
-			return nil
-		}).
-		ReadSliceOfArraysOf64Bytes(&m.Signatures, SeriSliceLengthAsByte, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
+		ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone signatures: %w", err)
 		}).
 		AbortIf(func(err error) error {
 			if len(m.PublicKeys) != len(m.Signatures) {
@@ -358,28 +350,6 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 
 func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	return NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderWithoutDupsValidator()
-				for i := range m.PublicKeys {
-					if err := pubKeyLexicalOrderValidator(i, m.PublicKeys[i][:]); err != nil {
-						return err
-					}
-				}
-
-				switch {
-				case len(m.PublicKeys) > MaxPublicKeysInAMilestone:
-					return fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooManyPublicKeys)
-				case len(m.PublicKeys) < MinPublicKeysInAMilestone:
-					return fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooFewPublicKeys)
-				case len(m.Signatures) > MaxSignaturesInAMilestone:
-					return fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooManySignatures)
-				case len(m.Signatures) < MinSignaturesInAMilestone:
-					return fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooFewSignatures)
-				}
-			}
-			return nil
-		}).
 		WriteNum(MilestonePayloadTypeID, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone payload ID: %w", err)
 		}).
@@ -398,10 +368,10 @@ func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof: %w", err)
 		}).
-		Write32BytesArraySlice(m.PublicKeys, SeriSliceLengthAsByte, func(err error) error {
+		Write32BytesArraySlice(m.PublicKeys, deSeriMode, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys: %w", err)
 		}).
-		Write64BytesArraySlice(m.Signatures, SeriSliceLengthAsByte, func(err error) error {
+		Write64BytesArraySlice(m.Signatures, deSeriMode, SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone signatures: %w", err)
 		}).
 		Serialize()
