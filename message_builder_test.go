@@ -10,13 +10,15 @@ import (
 
 func TestMessageBuilder(t *testing.T) {
 	const targetPoWScore float64 = 4000
+
 	parent1 := rand32ByteHash()
 	parent2 := rand32ByteHash()
+	parent3 := rand32ByteHash()
+	parent4 := rand32ByteHash()
 
 	msg, err := iota.NewMessageBuilder().
 		Payload(&iota.Indexation{Index: "hello world", Data: []byte{1, 2, 3, 4}}).
-		Parent1(parent1[:]).
-		Parent2(parent2[:]).
+		Parents([][]byte{parent1[:], parent2[:], parent3[:], parent4[:]}).
 		ProofOfWork(context.Background(), targetPoWScore).
 		Build()
 	require.NoError(t, err)

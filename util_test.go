@@ -163,8 +163,7 @@ func randMilestone() (*iota.Milestone, []byte) {
 	msPayload := &iota.Milestone{
 		Index:     uint32(rand.Intn(1000)),
 		Timestamp: uint64(time.Now().Unix()),
-		Parent1:   rand32ByteHash(),
-		Parent2:   rand32ByteHash(),
+		Parents:   iota.MilestoneParentMessageIDs{rand32ByteHash(), rand32ByteHash()},
 		InclusionMerkleProof: func() [iota.MilestoneInclusionMerkleProofLength]byte {
 			b := [iota.MilestoneInclusionMerkleProofLength]byte{}
 			copy(b[:], inclusionMerkleProof)
@@ -192,11 +191,10 @@ func randMilestone() (*iota.Milestone, []byte) {
 	must(binary.Write(&b, binary.LittleEndian, iota.MilestonePayloadTypeID))
 	must(binary.Write(&b, binary.LittleEndian, msPayload.Index))
 	must(binary.Write(&b, binary.LittleEndian, msPayload.Timestamp))
-	if _, err := b.Write(msPayload.Parent1[:]); err != nil {
-		panic(err)
-	}
-	if _, err := b.Write(msPayload.Parent2[:]); err != nil {
-		panic(err)
+	for _, parent := range msPayload.Parents {
+		if _, err := b.Write(parent[:]); err != nil {
+			panic(err)
+		}
 	}
 	if _, err := b.Write(msPayload.InclusionMerkleProof[:]); err != nil {
 		panic(err)
@@ -269,20 +267,25 @@ func randMessage(withPayloadType uint32) (*iota.Message, []byte) {
 
 	m := &iota.Message{}
 	m.NetworkID = 1
-	copy(m.Parent1[:], randBytes(iota.MessageIDLength))
-	copy(m.Parent2[:], randBytes(iota.MessageIDLength))
 	m.Payload = payload
 	m.Nonce = uint64(rand.Intn(1000))
+
+	m.Parents = iota.MessageIDs{}
+	for parentCnt := 0; parentCnt < 2+rand.Intn(6); parentCnt++ {
+		parent := iota.MessageID{}
+		copy(parent[:], randBytes(iota.MessageIDLength))
+		m.Parents = append(m.Parents, parent)
+	}
 
 	var b bytes.Buffer
 	if err := binary.Write(&b, binary.LittleEndian, m.NetworkID); err != nil {
 		panic(err)
 	}
-	if _, err := b.Write(m.Parent1[:]); err != nil {
-		panic(err)
-	}
-	if _, err := b.Write(m.Parent2[:]); err != nil {
-		panic(err)
+
+	for _, parent := range m.Parents {
+		if _, err := b.Write(parent[:]); err != nil {
+			panic(err)
+		}
 	}
 
 	switch {
@@ -303,6 +306,7 @@ func randMessage(withPayloadType uint32) (*iota.Message, []byte) {
 	if err := binary.Write(&b, binary.LittleEndian, m.Nonce); err != nil {
 		panic(err)
 	}
+
 	return m, b.Bytes()
 }
 

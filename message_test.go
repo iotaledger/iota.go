@@ -82,8 +82,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 		{
 		  "version": 1,
           "networkId": "1337133713371337",
-		  "parent1MessageId": "f532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d",
-		  "parent2MessageId": "78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2",
+		  "parentMessageIds": ["f532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d", "78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2"],
 		  "payload": {
 			"type": 0,
 			"essence": {
@@ -127,9 +126,11 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 
 	msg := &iota.Message{}
 	assert.NoError(t, json.Unmarshal([]byte(data), msg))
+
 	var emptyID = [32]byte{}
-	assert.False(t, bytes.Equal(msg.Parent1[:], emptyID[:]))
-	assert.False(t, bytes.Equal(msg.Parent2[:], emptyID[:]))
+	for _, parent := range msg.Parents {
+		assert.False(t, bytes.Equal(parent[:], emptyID[:]))
+	}
 
 	msgJson, err := json.Marshal(msg)
 	assert.NoError(t, err)
@@ -145,8 +146,12 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 		}`
 	msgMinimal := &iota.Message{}
 	assert.NoError(t, json.Unmarshal([]byte(minimal), msgMinimal))
-	assert.True(t, bytes.Equal(msgMinimal.Parent1[:], emptyID[:]))
-	assert.True(t, bytes.Equal(msgMinimal.Parent2[:], emptyID[:]))
+
+	assert.Len(t, msgMinimal.Parents, 2)
+	for _, parent := range msgMinimal.Parents {
+		assert.True(t, bytes.Equal(parent[:], emptyID[:]))
+	}
+
 	assert.Nil(t, msgMinimal.Payload)
 	assert.Equal(t, msgMinimal.Nonce, uint64(0))
 }

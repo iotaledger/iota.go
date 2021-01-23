@@ -75,8 +75,7 @@ func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
 	ms := &iota.Milestone{
 		Index:                1337,
 		Timestamp:            13371337,
-		Parent1:              rand32ByteHash(),
-		Parent2:              rand32ByteHash(),
+		Parents:              iota.MilestoneParentMessageIDs{rand32ByteHash(), rand32ByteHash()},
 		InclusionMerkleProof: rand32ByteHash(),
 		PublicKeys: []iota.MilestonePublicKey{
 			rand32ByteHash(),
@@ -124,8 +123,10 @@ func TestMilestoneSigning(t *testing.T) {
 			pubKeys := []iota.MilestonePublicKey{pubKey1}
 
 			msPayload := &iota.Milestone{
-				Index: 1000, Timestamp: uint64(time.Now().Unix()), PublicKeys: pubKeys,
-				Parent1: rand32ByteHash(), Parent2: rand32ByteHash(),
+				Parents:              iota.MilestoneParentMessageIDs{rand32ByteHash(), rand32ByteHash()},
+				Index:                1000,
+				Timestamp:            uint64(time.Now().Unix()),
+				PublicKeys:           pubKeys,
 				InclusionMerkleProof: rand32ByteHash(),
 			}
 
@@ -153,8 +154,10 @@ func TestMilestoneSigning(t *testing.T) {
 			// only 1 and 2
 			pubKeys := []iota.MilestonePublicKey{pubKey1, pubKey2}
 			msPayload := &iota.Milestone{
-				Index: 1000, Timestamp: uint64(time.Now().Unix()), PublicKeys: pubKeys,
-				Parent1: rand32ByteHash(), Parent2: rand32ByteHash(),
+				Parents:              iota.MilestoneParentMessageIDs{rand32ByteHash(), rand32ByteHash()},
+				Index:                1000,
+				Timestamp:            uint64(time.Now().Unix()),
+				PublicKeys:           pubKeys,
 				InclusionMerkleProof: rand32ByteHash(),
 			}
 
@@ -179,8 +182,10 @@ func TestMilestoneSigning(t *testing.T) {
 			pubKeys := []iota.MilestonePublicKey{pubKey1}
 
 			msPayload := &iota.Milestone{
-				Index: 1000, Timestamp: uint64(time.Now().Unix()), PublicKeys: pubKeys,
-				Parent1: rand32ByteHash(), Parent2: rand32ByteHash(),
+				Parents:              iota.MilestoneParentMessageIDs{rand32ByteHash(), rand32ByteHash()},
+				Index:                1000,
+				Timestamp:            uint64(time.Now().Unix()),
+				PublicKeys:           pubKeys,
 				InclusionMerkleProof: rand32ByteHash(),
 			}
 
@@ -219,19 +224,18 @@ func TestMilestoneSigning(t *testing.T) {
 }
 
 func TestNewMilestone(t *testing.T) {
-	parent1, parent2 := rand32ByteHash(), rand32ByteHash()
+	parents := iota.MilestoneParentMessageIDs{rand32ByteHash(), rand32ByteHash()}
 	inclusionMerkleProof := rand32ByteHash()
 	const msIndex, timestamp = 1000, 133713371337
 	unsortedPubKeys := []iota.MilestonePublicKey{{3}, {2}, {1}, {5}}
 
-	ms, err := iota.NewMilestone(msIndex, timestamp, parent1, parent2, inclusionMerkleProof, unsortedPubKeys)
+	ms, err := iota.NewMilestone(msIndex, timestamp, parents, inclusionMerkleProof, unsortedPubKeys)
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, &iota.Milestone{
 		Index:                msIndex,
 		Timestamp:            timestamp,
-		Parent1:              parent1,
-		Parent2:              parent2,
+		Parents:              parents,
 		InclusionMerkleProof: inclusionMerkleProof,
 		PublicKeys:           []iota.MilestonePublicKey{{1}, {2}, {3}, {5}},
 		Signatures:           nil,
