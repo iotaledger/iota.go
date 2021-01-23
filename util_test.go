@@ -46,6 +46,15 @@ func rand32ByteHash() [32]byte {
 	return h
 }
 
+func sortedRand32ByteHashes(count int) [][32]byte {
+	msgs := iota.LexicalOrdered32ByteArrays{}
+	for i := 0; i < count; i++ {
+		msgs = append(msgs, rand32ByteHash())
+	}
+	sort.Sort(msgs)
+	return msgs
+}
+
 func rand64ByteHash() [64]byte {
 	var h [64]byte
 	b := randBytes(64)
@@ -157,13 +166,18 @@ func randTransactionEssence() (*iota.TransactionEssence, []byte) {
 	return tx, buf.Bytes()
 }
 
-func randMilestone() (*iota.Milestone, []byte) {
+func randMilestone(parents iota.MessageIDs) (*iota.Milestone, []byte) {
 	inclusionMerkleProof := randBytes(iota.MilestoneInclusionMerkleProofLength)
 	const sigsCount = 3
+
+	if parents == nil {
+		parents = sortedRand32ByteHashes(1 + rand.Intn(7))
+	}
+
 	msPayload := &iota.Milestone{
 		Index:     uint32(rand.Intn(1000)),
 		Timestamp: uint64(time.Now().Unix()),
-		Parents:   iota.MilestoneParentMessageIDs{rand32ByteHash(), rand32ByteHash()},
+		Parents:   parents,
 		InclusionMerkleProof: func() [iota.MilestoneInclusionMerkleProofLength]byte {
 			b := [iota.MilestoneInclusionMerkleProofLength]byte{}
 			copy(b[:], inclusionMerkleProof)
@@ -191,6 +205,7 @@ func randMilestone() (*iota.Milestone, []byte) {
 	must(binary.Write(&b, binary.LittleEndian, iota.MilestonePayloadTypeID))
 	must(binary.Write(&b, binary.LittleEndian, msPayload.Index))
 	must(binary.Write(&b, binary.LittleEndian, msPayload.Timestamp))
+	must(binary.Write(&b, binary.LittleEndian, byte(len(msPayload.Parents))))
 	for _, parent := range msPayload.Parents {
 		if _, err := b.Write(parent[:]); err != nil {
 			panic(err)
@@ -256,31 +271,26 @@ func randMessage(withPayloadType uint32) (*iota.Message, []byte) {
 	var payload iota.Serializable
 	var payloadData []byte
 
+	parents := sortedRand32ByteHashes(1 + rand.Intn(7))
+
 	switch withPayloadType {
 	case iota.TransactionPayloadTypeID:
 		payload, payloadData = randTransaction()
 	case iota.IndexationPayloadTypeID:
 		payload, payloadData = randIndexation()
 	case iota.MilestonePayloadTypeID:
-		payload, payloadData = randMilestone()
+		payload, payloadData = randMilestone(parents)
 	}
 
 	m := &iota.Message{}
 	m.NetworkID = 1
 	m.Payload = payload
 	m.Nonce = uint64(rand.Intn(1000))
-
-	m.Parents = iota.MessageIDs{}
-	for parentCnt := 0; parentCnt < 2+rand.Intn(6); parentCnt++ {
-		parent := iota.MessageID{}
-		copy(parent[:], randBytes(iota.MessageIDLength))
-		m.Parents = append(m.Parents, parent)
-	}
+	m.Parents = parents
 
 	var b bytes.Buffer
-	if err := binary.Write(&b, binary.LittleEndian, m.NetworkID); err != nil {
-		panic(err)
-	}
+	must(binary.Write(&b, binary.LittleEndian, m.NetworkID))
+	must(binary.Write(&b, binary.LittleEndian, byte(len(m.Parents))))
 
 	for _, parent := range m.Parents {
 		if _, err := b.Write(parent[:]); err != nil {
@@ -291,21 +301,15 @@ func randMessage(withPayloadType uint32) (*iota.Message, []byte) {
 	switch {
 	case payload == nil:
 		// zero length payload
-		if err := binary.Write(&b, binary.LittleEndian, uint32(0)); err != nil {
-			panic(err)
-		}
+		must(binary.Write(&b, binary.LittleEndian, uint32(0)))
 	default:
-		if err := binary.Write(&b, binary.LittleEndian, uint32(len(payloadData))); err != nil {
-			panic(err)
-		}
+		must(binary.Write(&b, binary.LittleEndian, uint32(len(payloadData))))
 		if _, err := b.Write(payloadData); err != nil {
 			panic(err)
 		}
 	}
 
-	if err := binary.Write(&b, binary.LittleEndian, m.Nonce); err != nil {
-		panic(err)
-	}
+	must(binary.Write(&b, binary.LittleEndian, m.Nonce))
 
 	return m, b.Bytes()
 }

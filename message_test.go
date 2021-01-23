@@ -142,6 +142,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 
 	minimal := `
 		{
+		  "parentMessageIds": ["0000000000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000000000"],
 		  "payload": null
 		}`
 	msgMinimal := &iota.Message{}

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"testing"
 	"time"
@@ -88,9 +89,12 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 	msgHash := rand32ByteHash()
 	msgHashStr := hex.EncodeToString(msgHash[:])
 
-	incompleteMsg := &iota.Message{}
+	incompleteMsg := &iota.Message{
+		Parents: sortedRand32ByteHashes(1),
+	}
+
 	completeMsg := &iota.Message{
-		Parents: iota.MessageIDs{rand32ByteHash(), rand32ByteHash()},
+		Parents: sortedRand32ByteHashes(1 + rand.Intn(7)),
 		Payload: nil,
 		Nonce:   3495721389537486,
 	}
@@ -158,7 +162,7 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := rand32ByteHash()
-	parents := iota.MessageIDs{rand32ByteHash(), rand32ByteHash()}
+	parents := sortedRand32ByteHashes(1 + rand.Intn(7))
 
 	queryHash := hex.EncodeToString(identifier[:])
 
@@ -195,7 +199,7 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 	queryHash := hex.EncodeToString(identifier[:])
 
 	originMsg := &iota.Message{
-		Parents: iota.MessageIDs{rand32ByteHash(), rand32ByteHash()},
+		Parents: sortedRand32ByteHashes(1 + rand.Intn(7)),
 		Payload: nil,
 		Nonce:   16345984576234,
 	}

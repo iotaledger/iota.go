@@ -159,6 +159,21 @@ func (l LexicalOrderedByteSlices) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
+// LexicalOrdered32ByteArrays are 32 byte arrays ordered in lexical order.
+type LexicalOrdered32ByteArrays [][32]byte
+
+func (l LexicalOrdered32ByteArrays) Len() int {
+	return len(l)
+}
+
+func (l LexicalOrdered32ByteArrays) Less(i, j int) bool {
+	return bytes.Compare(l[i][:], l[j][:]) < 0
+}
+
+func (l LexicalOrdered32ByteArrays) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
+}
+
 // SortedSerializables are Serializables sorted by their serialized form.
 type SortedSerializables Serializables
 
