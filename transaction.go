@@ -20,9 +20,10 @@ const (
 
 	// Defines the divisor used to compute the allowed dust outputs on an address.
 	// The amount of dust outputs on an address is calculated by:
-	//	sum(dust_allowance_output_deposit) / DustAllowanceDivisor
-	// Example: 1_000_000 / 10_000 = 100 dust outputs
-	DustAllowanceDivisor int64 = 10_000
+	//	min(sum(dust_allowance_output_deposit) / DustAllowanceDivisor, dustOutputCountLimit)
+	DustAllowanceDivisor int64 = 100_000
+	// Defines the maximum amount of dust outputs allowed to "reside" on an address.
+	MaxDustOutputsOnAddress = 100
 )
 
 var (
@@ -215,8 +216,8 @@ type DustAllowanceFunc func(addr Address) (dustAllowanceSum uint64, amountDustOu
 //		- consuming a SigLockedDustAllowanceOutput on address A or
 //		- creating a SigLockedSingleOutput with deposit amount < OutputSigLockedDustAllowanceOutputMinDeposit (dust output)
 //	is only semantically valid, if after the transaction is booked, the number of dust outputs on address A does not exceed the allowed
-//	threshold of the sum of S / div. Where S is the sum of deposits of all dust allowance outputs on address A.
-func NewDustSemanticValidation(div int64, dustAllowanceFunc DustAllowanceFunc) SemanticValidationFunc {
+//	threshold of the sum of min(S / div, dustOutputsCountLimit). Where S is the sum of deposits of all dust allowance outputs on address A.
+func NewDustSemanticValidation(div int64, dustOutputsCountLimit int64, dustAllowanceFunc DustAllowanceFunc) SemanticValidationFunc {
 	return func(t *Transaction, utxos InputToOutputMapping) error {
 		essence := t.Essence.(*TransactionEssence)
 
@@ -278,6 +279,11 @@ func NewDustSemanticValidation(div int64, dustAllowanceFunc DustAllowanceFunc) S
 			// Go integer division floors the value
 			prevAllowed := dustAllowanceDepositSum / div
 			allowed := (dustAllowanceDepositSum + dustAllowanceAddrToBalance[addrKey]) / div
+
+			// limit
+			if allowed > dustOutputsCountLimit {
+				allowed = dustOutputsCountLimit
+			}
 
 			if numDustOutputs > allowed {
 				short := numDustOutputs - allowed

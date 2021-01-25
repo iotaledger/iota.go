@@ -251,7 +251,7 @@ func TestDustAllowance(t *testing.T) {
 				dustAllowanceFunc: func() iota.DustAllowanceFunc {
 					dustOutputsAmount := map[string]int64{
 						(&inputAddr).String(): 5,
-						outputAddr1.String():  10,
+						outputAddr1.String():  5,
 					}
 					dustAllowanceSum := map[string]uint64{
 						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
@@ -480,7 +480,7 @@ func TestDustAllowance(t *testing.T) {
 
 			semanticErr := payload.SemanticallyValidate(
 				test.inputUTXOs,
-				iota.NewDustSemanticValidation(iota.DustAllowanceDivisor, test.dustAllowanceFunc),
+				iota.NewDustSemanticValidation(iota.DustAllowanceDivisor, iota.MaxDustOutputsOnAddress, test.dustAllowanceFunc),
 			)
 
 			if test.validErr != nil {
