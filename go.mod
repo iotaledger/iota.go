@@ -3,6 +3,7 @@ module github.com/iotaledger/iota.go
 go 1.15
 
 require (
+	filippo.io/edwards25519 v1.0.0-beta.2
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
