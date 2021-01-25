@@ -384,6 +384,29 @@ func TestNodeAPI_MilestoneByIndex(t *testing.T) {
 	require.EqualValues(t, originRes, resp)
 }
 
+var sampleGossipInfo = &iota.GossipInfo{
+	Heartbeat: &iota.GossipHeartbeat{
+		SolidMilestoneIndex:  234,
+		PrunedMilestoneIndex: 5872,
+		LatestMilestoneIndex: 1294,
+		ConnectedNeighbors:   2392,
+		SyncedNeighbors:      1234,
+	},
+	Metrics: iota.PeerGossipMetrics{
+		NewMessages:               40,
+		KnownMessages:             60,
+		ReceivedMessages:          100,
+		ReceivedMessageRequests:   345,
+		ReceivedMilestoneRequests: 194,
+		ReceivedHeartbeats:        5,
+		SentMessages:              492,
+		SentMessageRequests:       2396,
+		SentMilestoneRequests:     9837,
+		SentHeartbeats:            3,
+		DroppedPackets:            10,
+	},
+}
+
 func TestNodeAPI_PeerByID(t *testing.T) {
 	defer gock.Off()
 
@@ -394,19 +417,7 @@ func TestNodeAPI_PeerByID(t *testing.T) {
 		ID:             peerID,
 		Connected:      true,
 		Relation:       "autopeered",
-		GossipMetrics: &iota.PeerGossipMetrics{
-			NewMessages:               40,
-			KnownMessages:             60,
-			ReceivedMessages:          100,
-			ReceivedMessageRequests:   345,
-			ReceivedMilestoneRequests: 194,
-			ReceivedHeartbeats:        5,
-			SentMessages:              492,
-			SentMessageRequests:       2396,
-			SentMilestoneRequests:     9837,
-			SentHeartbeats:            3,
-			DroppedPackets:            10,
-		},
+		Gossip:         sampleGossipInfo,
 	}
 
 	gock.New(nodeAPIUrl).
@@ -447,38 +458,14 @@ func TestNodeAPI_Peers(t *testing.T) {
 			ID:             peerID1,
 			Connected:      true,
 			Relation:       "autopeered",
-			GossipMetrics: &iota.PeerGossipMetrics{
-				NewMessages:               40,
-				KnownMessages:             60,
-				ReceivedMessages:          100,
-				ReceivedMessageRequests:   345,
-				ReceivedMilestoneRequests: 194,
-				ReceivedHeartbeats:        5,
-				SentMessages:              492,
-				SentMessageRequests:       2396,
-				SentMilestoneRequests:     9837,
-				SentHeartbeats:            3,
-				DroppedPackets:            10,
-			},
+			Gossip:         sampleGossipInfo,
 		},
 		{
 			MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID2)},
 			ID:             peerID2,
 			Connected:      true,
 			Relation:       "static",
-			GossipMetrics: &iota.PeerGossipMetrics{
-				NewMessages:               45430,
-				KnownMessages:             66540,
-				ReceivedMessages:          12300,
-				ReceivedMessageRequests:   345,
-				ReceivedMilestoneRequests: 194,
-				ReceivedHeartbeats:        345,
-				SentMessages:              492,
-				SentMessageRequests:       265396,
-				SentMilestoneRequests:     9837,
-				SentHeartbeats:            343,
-				DroppedPackets:            12340,
-			},
+			Gossip:         sampleGossipInfo,
 		},
 	}
 
@@ -504,19 +491,7 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 		ID:             peerID,
 		Connected:      true,
 		Relation:       "autopeered",
-		GossipMetrics: &iota.PeerGossipMetrics{
-			NewMessages:               40,
-			KnownMessages:             60,
-			ReceivedMessages:          100,
-			ReceivedMessageRequests:   345,
-			ReceivedMilestoneRequests: 194,
-			ReceivedHeartbeats:        5,
-			SentMessages:              492,
-			SentMessageRequests:       2396,
-			SentMilestoneRequests:     9837,
-			SentHeartbeats:            3,
-			DroppedPackets:            10,
-		},
+		Gossip:         sampleGossipInfo,
 	}
 
 	req := &iota.AddPeerRequest{MultiAddress: multiAddr}

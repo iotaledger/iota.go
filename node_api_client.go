@@ -593,8 +593,36 @@ type PeerResponse struct {
 	Relation string `json:"relation"`
 	// Whether the peer is connected.
 	Connected bool `json:"connected"`
-	// The gossip metrics of the peer.
-	GossipMetrics *PeerGossipMetrics `json:"gossipMetrics,omitempty"`
+	// The gossip related information about this peer.
+	Gossip *GossipInfo `json:"gossip,omitempty"`
+}
+
+// GossipInfo represents information about an ongoing gossip protocol.
+type GossipInfo struct {
+	// The last received heartbeat by the given node.
+	Heartbeat *GossipHeartbeat `json:"heartbeat"`
+	// The metrics about sent and received protocol messages.
+	Metrics PeerGossipMetrics `json:"metrics"`
+}
+
+// GossipHeartbeat represents a gossip heartbeat message.
+// Peers send each other this gossip protocol message when their
+// state is updated, such as when:
+//	- a new milestone was received
+//	- the solid milestone changed
+//	- the node performed pruning of data
+type GossipHeartbeat struct {
+	// The solid milestone of the node.
+	SolidMilestoneIndex uint32 `json:"solidMilestoneIndex"`
+	// The milestone index at which the node pruned its data.
+	PrunedMilestoneIndex uint32 `json:"prunedMilestoneIndex"`
+	// The latest known milestone index by the node.
+	LatestMilestoneIndex uint32 `json:"latestMilestoneIndex"`
+	// The amount of currently connected neighbors.
+	ConnectedNeighbors int `json:"connectedNeighbors"`
+	// The amount of currently connected neighbors who also
+	// are synchronized with the network.
+	SyncedNeighbors int `json:"syncedNeighbors"`
 }
 
 // PeerGossipMetrics defines the peer gossip metrics.
