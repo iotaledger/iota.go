@@ -370,12 +370,12 @@ func ValidBundle(bundle Bundle, applyMigrationChecks ...bool) error {
 				}
 
 				// must deposit to a migration address
-				if err := address.IsMigrationAddress(tx.Address); err != nil {
+				if _, err := address.ParseMigrationAddress(tx.Address); err != nil {
 					return err
 				}
 			case tx.Value < 0:
 				// the input address can not be a migration address itself (this prevents non-state mutating value bundles)
-				if err := address.IsMigrationAddress(tx.Address); err == nil {
+				if _, err := address.ParseMigrationAddress(tx.Address); err == nil {
 					return errors.Wrapf(ErrInvalidMigrationBundle, "input transactions must not have migration addresses")
 				}
 				// move to next input address

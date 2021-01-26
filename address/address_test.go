@@ -2,6 +2,7 @@ package address_test
 
 import (
 	. "github.com/iotaledger/iota.go/address"
+	"github.com/iotaledger/iota.go/checksum"
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
 	. "github.com/onsi/ginkgo"
@@ -27,6 +28,10 @@ var _ = Describe("Address", func() {
 	for i := range addresses {
 		addressesWithChecksum[i] = addresses[i] + checksums[i]
 	}
+
+	migrationAddress := "TRANSFERCDJWLVPAIXRWNAPXV9WYKVUZWWKXVBE9JBABJ9D9C9F9OEGADYO9CWDAGZHBRWIXLXG9MAJV9"
+	migrationAddressWithChecksum, _ := checksum.AddChecksum(migrationAddress, true, AddressChecksumTrytesSize)
+	ed25519Addr := [32]byte{111, 158, 133, 16, 184, 139, 14, 164, 251, 198, 132, 223, 144, 186, 49, 5, 64, 55, 10, 4, 3, 6, 123, 34, 206, 244, 151, 31, 236, 62, 139, 184}
 
 	Context("Checksum()", func() {
 		It("returns the correct checksum", func() {
@@ -99,22 +104,44 @@ var _ = Describe("Address", func() {
 		})
 	})
 
-	Context("IsMigrationAddress", func() {
-		It("returns nil for a valid migration address", func() {
-			addr := "TRANSFERCDJWLVPAIXRWNAPXV9WYKVUZWWKXVBE9JBABJ9D9C9F9OEGADYO9CWDAGZHBRWIXLXG9MAJV9"
-			Expect(IsMigrationAddress(addr)).NotTo(HaveOccurred())
+	Context("GenerateMigrationAddress", func() {
+		It("returns the correct migration address", func() {
+			addr, err := GenerateMigrationAddress(ed25519Addr)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(addr).To(Equal(migrationAddress))
 		})
+		It("returns the correct migration address with checksum", func() {
+			addr, err := GenerateMigrationAddress(ed25519Addr, true)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(addr).To(Equal(migrationAddressWithChecksum))
+		})
+	})
+
+	Context("ParseMigrationAddress", func() {
 		It("returns an error for a migration address with a wrong prefix", func() {
 			addr := "WILDLIFECDJWLVPAIXRWNAPXV9WYKVUZWWKXVBE9JBABJ9D9C9F9OEGADYO9CWDAGZHBRWIXLXG9MAJV9"
-			Expect(IsMigrationAddress(addr)).To(HaveOccurred())
+			_, err := ParseMigrationAddress(addr)
+			Expect(err).To(HaveOccurred())
 		})
 		It("returns an error for a migration address with a non '9' tryte as the suffix", func() {
 			addr := "TRANSFERCDJWLVPAIXRWNAPXV9WYKVUZWWKXVBE9JBABJ9D9C9F9OEGADYO9CWDAGZHBRWIXLXG9MAJVA"
-			Expect(IsMigrationAddress(addr)).To(HaveOccurred())
+			_, err := ParseMigrationAddress(addr)
+			Expect(err).To(HaveOccurred())
 		})
 		It("returns an error for a migration address with an invalid Ed25519 checksum", func() {
 			addr := "TRANSFERCDJWLVPAIXRWNAPXV9WYKVUZWWKXVBE9JBABJ9D9C9F9OEGADYO9CWDAGZHBRWIXLXG9MAJZ9"
-			Expect(IsMigrationAddress(addr)).To(HaveOccurred())
+			_, err := ParseMigrationAddress(addr)
+			Expect(err).To(HaveOccurred())
+		})
+		It("parses a valid migration address", func() {
+			parsed, err := ParseMigrationAddress(migrationAddress)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(parsed).To(Equal(ed25519Addr))
+		})
+		It("parses a valid migration address with checksum", func() {
+			parsed, err := ParseMigrationAddress(migrationAddressWithChecksum)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(parsed).To(Equal(ed25519Addr))
 		})
 	})
 
