@@ -138,6 +138,11 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 
 func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	data, err := NewSerializer().
+		Do(func() {
+			if deSeriMode.HasMode(DeSeriModePerformLexicalOrdering) {
+				m.Parents = RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(m.Parents)
+			}
+		}).
 		WriteNum(m.NetworkID, func(err error) error {
 			return fmt.Errorf("unable to serialize message network ID: %w", err)
 		}).
