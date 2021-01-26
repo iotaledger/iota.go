@@ -73,14 +73,14 @@ var (
 	milestoneParentArrayRules = ArrayRules{
 		Min:            MinParentsInAMessage,
 		Max:            MaxParentsInAMessage,
-		ValidationMode: ArrayValidModeDuplicates | ArrayValidModeLexicalOrdering,
+		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
 	}
 
 	// restrictions around public keys within a Milestone.
 	milestonePublicKeyArrayRules = ArrayRules{
 		Min:            MinPublicKeysInAMilestone,
 		Max:            MaxPublicKeysInAMilestone,
-		ValidationMode: ArrayValidModeDuplicates | ArrayValidModeLexicalOrdering,
+		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
 	}
 
 	// restrictions around signatures within a Milestone.
@@ -380,9 +380,9 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 	jsonMilestonePayload.Type = int(MilestonePayloadTypeID)
 	jsonMilestonePayload.Index = int(m.Index)
 	jsonMilestonePayload.Timestamp = int(m.Timestamp)
-	jsonMilestonePayload.Parents = []string{}
-	for _, parent := range m.Parents {
-		jsonMilestonePayload.Parents = append(jsonMilestonePayload.Parents, hex.EncodeToString(parent[:]))
+	jsonMilestonePayload.Parents = make([]string, len(m.Parents))
+	for i, parent := range m.Parents {
+		jsonMilestonePayload.Parents[i] = hex.EncodeToString(parent[:])
 	}
 	jsonMilestonePayload.InclusionMerkleProof = hex.EncodeToString(m.InclusionMerkleProof[:])
 
@@ -430,17 +430,13 @@ func (j *jsonmilestonepayload) ToSerializable() (Serializable, error) {
 	payload.Index = uint32(j.Index)
 	payload.Timestamp = uint64(j.Timestamp)
 
-	payload.Parents = MilestoneParentMessageIDs{}
-	for nr, jparent := range j.Parents {
-		parent := MilestoneParentMessageID{}
-
+	payload.Parents = make(MilestoneParentMessageIDs, len(j.Parents))
+	for i, jparent := range j.Parents {
 		parentBytes, err := hex.DecodeString(jparent)
 		if err != nil {
-			return nil, fmt.Errorf("unable to decode parent %d from JSON for milestone payload: %w", nr+1, err)
+			return nil, fmt.Errorf("unable to decode parent %d from JSON for milestone payload: %w", i+1, err)
 		}
-
-		copy(parent[:], parentBytes)
-		payload.Parents = append(payload.Parents, parent)
+		copy(payload.Parents[i][:], parentBytes)
 	}
 
 	inclusionMerkleProofBytes, err := hex.DecodeString(j.InclusionMerkleProof)

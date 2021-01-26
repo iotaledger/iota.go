@@ -209,20 +209,20 @@ func TestArrayValidationMode_HasMode(t *testing.T) {
 	}{
 		{
 			"has no validation",
-			iota.ArrayValidModeNoValidation,
-			args{mode: iota.ArrayValidModeDuplicates},
+			iota.ArrayValidationModeNone,
+			args{mode: iota.ArrayValidationModeNoDuplicates},
 			false,
 		},
 		{
 			"has mode duplicates",
-			iota.ArrayValidModeDuplicates,
-			args{mode: iota.ArrayValidModeDuplicates},
+			iota.ArrayValidationModeNoDuplicates,
+			args{mode: iota.ArrayValidationModeNoDuplicates},
 			true,
 		},
 		{
 			"has mode lexical order",
-			iota.ArrayValidModeLexicalOrdering,
-			args{mode: iota.ArrayValidModeLexicalOrdering},
+			iota.ArrayValidationModeLexicalOrdering,
+			args{mode: iota.ArrayValidationModeLexicalOrdering},
 			true,
 		},
 	}
@@ -274,7 +274,6 @@ func TestArrayRules_ElementUniqueValidator(t *testing.T) {
 			for i := range tt.args {
 				element := tt.args[i]
 
-				// check array element validation against previous element
 				if err := arrayElementValidator(i, element); err != nil {
 					valid = false
 				}
@@ -398,7 +397,6 @@ func TestArrayRules_LexicalOrderValidator(t *testing.T) {
 			for i := range tt.args {
 				element := tt.args[i]
 
-				// check array element validation against previous element
 				if err := arrayElementValidator(i, element); err != nil {
 					valid = false
 				}
@@ -466,7 +464,6 @@ func TestArrayRules_LexicalOrderWithoutDupsValidator(t *testing.T) {
 			for i := range tt.args {
 				element := tt.args[i]
 
-				// check array element validation against previous element
 				if err := arrayElementValidator(i, element); err != nil {
 					valid = false
 				}

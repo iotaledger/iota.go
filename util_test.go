@@ -47,12 +47,12 @@ func rand32ByteHash() [32]byte {
 }
 
 func sortedRand32ByteHashes(count int) [][32]byte {
-	msgs := iota.LexicalOrdered32ByteArrays{}
+	hashes := make(iota.LexicalOrdered32ByteArrays, count)
 	for i := 0; i < count; i++ {
-		msgs = append(msgs, rand32ByteHash())
+		hashes[i] = rand32ByteHash()
 	}
-	sort.Sort(msgs)
-	return msgs
+	sort.Sort(hashes)
+	return hashes
 }
 
 func rand64ByteHash() [64]byte {

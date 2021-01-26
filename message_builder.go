@@ -77,14 +77,14 @@ func (mb *MessageBuilder) Tips(nodeAPI *NodeAPI) *MessageBuilder {
 		return mb
 	}
 
-	parents := [][]byte{}
-	for nr, tip := range tips.Tips {
+	parents := make([][]byte, len(tips.Tips))
+	for i, tip := range tips.Tips {
 		parent, err := hex.DecodeString(tip)
 		if err != nil {
-			mb.err = fmt.Errorf("unable to decode parent %d from hex: %w", nr+1, err)
+			mb.err = fmt.Errorf("unable to decode parent %d from hex: %w", i+1, err)
 			return mb
 		}
-		parents = append(parents, parent)
+		parents[i] = parent
 	}
 	mb.Parents(parents)
 
@@ -97,12 +97,13 @@ func (mb *MessageBuilder) Parents(parents [][]byte) *MessageBuilder {
 		return mb
 	}
 
-	for _, parentBytes := range parents {
+	pars := make(MessageIDs, len(parents))
+	for i, parentBytes := range parents {
 		parent := MessageID{}
 		copy(parent[:], parentBytes)
-		mb.msg.Parents = append(mb.msg.Parents, parent)
+		pars[i] = parent
 	}
-
+	mb.msg.Parents = RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(pars)
 	return mb
 }
 

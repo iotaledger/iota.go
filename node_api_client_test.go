@@ -166,9 +166,9 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 
 	queryHash := hex.EncodeToString(identifier[:])
 
-	parentMessageIDs := []string{}
-	for _, p := range parents {
-		parentMessageIDs = append(parentMessageIDs, hex.EncodeToString(p[:]))
+	parentMessageIDs := make([]string, len(parents))
+	for i, p := range parents {
+		parentMessageIDs[i] = hex.EncodeToString(p[:])
 	}
 
 	originRes := &iota.MessageMetadataResponse{

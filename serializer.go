@@ -172,24 +172,13 @@ func (s *Serializer) Write32BytesArraySlice(data SliceOfArraysOf32Bytes, deSeriM
 			return s
 		}
 
-		switch arrayRules.ValidationMode {
-		case ArrayValidModeNoValidation:
-		case ArrayValidModeDuplicates:
-			arrayElementValidator = arrayRules.ElementUniqueValidator()
-		case ArrayValidModeLexicalOrdering:
-			arrayElementValidator = arrayRules.LexicalOrderValidator()
-		case ArrayValidModeDuplicates | ArrayValidModeLexicalOrdering:
-			arrayElementValidator = arrayRules.LexicalOrderWithoutDupsValidator()
-		default:
-			panic(ErrUnknownArrayValidationMode)
-		}
+		arrayElementValidator = arrayRules.ElementValidationFunc(arrayRules.ValidationMode)
 	}
 
 	_ = s.writeSliceLength(sliceLength, lenType, errProducer)
 	for i := range data {
 		element := data[i][:]
 
-		// check array element validation against previous element
 		if arrayElementValidator != nil {
 			if err := arrayElementValidator(i, element); err != nil {
 				s.err = errProducer(err)
@@ -220,24 +209,13 @@ func (s *Serializer) Write64BytesArraySlice(data SliceOfArraysOf64Bytes, deSeriM
 			return s
 		}
 
-		switch arrayRules.ValidationMode {
-		case ArrayValidModeNoValidation:
-		case ArrayValidModeDuplicates:
-			arrayElementValidator = arrayRules.ElementUniqueValidator()
-		case ArrayValidModeLexicalOrdering:
-			arrayElementValidator = arrayRules.LexicalOrderValidator()
-		case ArrayValidModeDuplicates | ArrayValidModeLexicalOrdering:
-			arrayElementValidator = arrayRules.LexicalOrderWithoutDupsValidator()
-		default:
-			panic(ErrUnknownArrayValidationMode)
-		}
+		arrayElementValidator = arrayRules.ElementValidationFunc(arrayRules.ValidationMode)
 	}
 
 	_ = s.writeSliceLength(sliceLength, lenType, errProducer)
 	for i := range data {
 		element := data[i][:]
 
-		// check array element validation against previous element
 		if arrayElementValidator != nil {
 			if err := arrayElementValidator(i, element); err != nil {
 				s.err = errProducer(err)
@@ -563,17 +541,7 @@ func (d *Deserializer) ReadSliceOfArraysOf32Bytes(slice *SliceOfArraysOf32Bytes,
 			return d
 		}
 
-		switch arrayRules.ValidationMode {
-		case ArrayValidModeNoValidation:
-		case ArrayValidModeDuplicates:
-			arrayElementValidator = arrayRules.ElementUniqueValidator()
-		case ArrayValidModeLexicalOrdering:
-			arrayElementValidator = arrayRules.LexicalOrderValidator()
-		case ArrayValidModeDuplicates | ArrayValidModeLexicalOrdering:
-			arrayElementValidator = arrayRules.LexicalOrderWithoutDupsValidator()
-		default:
-			panic(ErrUnknownArrayValidationMode)
-		}
+		arrayElementValidator = arrayRules.ElementValidationFunc(arrayRules.ValidationMode)
 	}
 
 	s := make(SliceOfArraysOf32Bytes, sliceLength)
@@ -583,7 +551,6 @@ func (d *Deserializer) ReadSliceOfArraysOf32Bytes(slice *SliceOfArraysOf32Bytes,
 			return d
 		}
 
-		// check array element validation against previous element
 		if arrayElementValidator != nil {
 			if err := arrayElementValidator(i, d.src[:length]); err != nil {
 				d.err = errProducer(err)
@@ -621,17 +588,7 @@ func (d *Deserializer) ReadSliceOfArraysOf64Bytes(slice *SliceOfArraysOf64Bytes,
 			return d
 		}
 
-		switch arrayRules.ValidationMode {
-		case ArrayValidModeNoValidation:
-		case ArrayValidModeDuplicates:
-			arrayElementValidator = arrayRules.ElementUniqueValidator()
-		case ArrayValidModeLexicalOrdering:
-			arrayElementValidator = arrayRules.LexicalOrderValidator()
-		case ArrayValidModeDuplicates | ArrayValidModeLexicalOrdering:
-			arrayElementValidator = arrayRules.LexicalOrderWithoutDupsValidator()
-		default:
-			panic(ErrUnknownArrayValidationMode)
-		}
+		arrayElementValidator = arrayRules.ElementValidationFunc(arrayRules.ValidationMode)
 	}
 
 	s := make(SliceOfArraysOf64Bytes, sliceLength)
@@ -641,7 +598,6 @@ func (d *Deserializer) ReadSliceOfArraysOf64Bytes(slice *SliceOfArraysOf64Bytes,
 			return d
 		}
 
-		// check array element validation against previous element
 		if arrayElementValidator != nil {
 			if err := arrayElementValidator(i, d.src[:length]); err != nil {
 				d.err = errProducer(err)
@@ -724,17 +680,7 @@ func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode 
 			return d
 		}
 
-		switch arrayRules.ValidationMode {
-		case ArrayValidModeNoValidation:
-		case ArrayValidModeDuplicates:
-			arrayElementValidator = arrayRules.ElementUniqueValidator()
-		case ArrayValidModeLexicalOrdering:
-			arrayElementValidator = arrayRules.LexicalOrderValidator()
-		case ArrayValidModeDuplicates | ArrayValidModeLexicalOrdering:
-			arrayElementValidator = arrayRules.LexicalOrderWithoutDupsValidator()
-		default:
-			panic(ErrUnknownArrayValidationMode)
-		}
+		arrayElementValidator = arrayRules.ElementValidationFunc(arrayRules.ValidationMode)
 	}
 
 	var seris Serializables
@@ -759,7 +705,6 @@ func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode 
 
 		bytesConsumed := d.offset - offsetBefore
 
-		// check array element validation against previous element
 		if arrayElementValidator != nil {
 			if err := arrayElementValidator(i, srcBefore[:bytesConsumed]); err != nil {
 				d.err = errProducer(err)

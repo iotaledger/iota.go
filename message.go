@@ -34,7 +34,7 @@ var (
 	messageParentArrayRules = ArrayRules{
 		Min:            MinParentsInAMessage,
 		Max:            MaxParentsInAMessage,
-		ValidationMode: ArrayValidModeDuplicates | ArrayValidModeLexicalOrdering,
+		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
 	}
 )
 
@@ -163,9 +163,9 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 func (m *Message) MarshalJSON() ([]byte, error) {
 	jsonMsg := &jsonmessage{}
 	jsonMsg.NetworkID = strconv.FormatUint(m.NetworkID, 10)
-	jsonMsg.Parents = []string{}
-	for _, parent := range m.Parents {
-		jsonMsg.Parents = append(jsonMsg.Parents, hex.EncodeToString(parent[:]))
+	jsonMsg.Parents = make([]string, len(m.Parents))
+	for i, parent := range m.Parents {
+		jsonMsg.Parents[i] = hex.EncodeToString(parent[:])
 	}
 	jsonMsg.Nonce = strconv.FormatUint(m.Nonce, 10)
 	if m.Payload != nil {
@@ -243,17 +243,14 @@ func (jm *jsonmessage) ToSerializable() (Serializable, error) {
 	}
 	m.Nonce = parsedNonce
 
-	m.Parents = MessageIDs{}
-	for nr, jparent := range jm.Parents {
-		parent := MessageID{}
-
+	m.Parents = make(MessageIDs, len(jm.Parents))
+	for i, jparent := range jm.Parents {
 		parentBytes, err := hex.DecodeString(jparent)
 		if err != nil {
-			return nil, fmt.Errorf("unable to decode hex parent %d from JSON: %w", nr+1, err)
+			return nil, fmt.Errorf("unable to decode hex parent %d from JSON: %w", i+1, err)
 		}
 
-		copy(parent[:], parentBytes)
-		m.Parents = append(m.Parents, parent)
+		copy(m.Parents[i][:], parentBytes)
 	}
 
 	if jm.Payload != nil {

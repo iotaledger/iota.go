@@ -15,7 +15,7 @@ func TestMessageBuilder(t *testing.T) {
 
 	msg, err := iota.NewMessageBuilder().
 		Payload(&iota.Indexation{Index: "hello world", Data: []byte{1, 2, 3, 4}}).
-		Parents([][]byte{parents[0][:], parents[1][:], parents[2][:], parents[3][:]}).
+		Parents([][]byte{parents[0][:], parents[0][:], parents[1][:], parents[2][:], parents[3][:]}).
 		ProofOfWork(context.Background(), targetPoWScore).
 		Build()
 	require.NoError(t, err)

@@ -33,9 +33,9 @@ var (
 	// Returned if the count of elements is too big.
 	ErrArrayValidationMaxElementsExceeded = errors.New("max count of elements within the array exceeded")
 	// Returned if the array elements are not unique.
-	ErrArrayValidationViolatesUniqueness = errors.New("array elements must be unique when serialized")
-	// Returned if the array elements are not in lexical order when serialized.
-	ErrArrayValidationOrderViolatesLexicalOrder = errors.New("array elements must be in their lexical order (byte wise) when serialized")
+	ErrArrayValidationViolatesUniqueness = errors.New("array elements must be unique")
+	// Returned if the array elements are not in lexical order.
+	ErrArrayValidationOrderViolatesLexicalOrder = errors.New("array elements must be in their lexical order (byte wise)")
 	// Returned if there is not enough data available to deserialize a given object.
 	ErrDeserializationNotEnoughData = errors.New("not enough data for deserialization")
 	// Returned if a length denotation exceeds a specified limit.

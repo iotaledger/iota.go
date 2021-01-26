@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
 )
 
 // Serializable is something which knows how to serialize/deserialize itself from/into bytes.
@@ -45,16 +46,16 @@ func (sm DeSerializationMode) HasMode(mode DeSerializationMode) bool {
 	return sm&mode > 0
 }
 
-// ArrayValidationMode defines the mode of array elements validation.
+// ArrayValidationMode defines the mode of array validation.
 type ArrayValidationMode byte
 
 const (
-	// Instructs the array element validation to perform no validation.
-	ArrayValidModeNoValidation ArrayValidationMode = 0
-	// Instructs the array element validation to check for duplicates.
-	ArrayValidModeDuplicates ArrayValidationMode = 1 << 0
-	// Instructs the array element validation to check for lexical order.
-	ArrayValidModeLexicalOrdering ArrayValidationMode = 1 << 1
+	// Instructs the array validation to perform no validation.
+	ArrayValidationModeNone ArrayValidationMode = 0
+	// Instructs the array validation to check for duplicates.
+	ArrayValidationModeNoDuplicates ArrayValidationMode = 1 << 0
+	// Instructs the array validation to check for lexical order.
+	ArrayValidationModeLexicalOrdering ArrayValidationMode = 1 << 1
 )
 
 // HasMode checks whether the array element validation mode includes the given mode.
@@ -69,7 +70,7 @@ type ArrayRules struct {
 	Min uint16
 	// The max array bound.
 	Max uint16
-	// The mode of array elements validation.
+	// The mode of validation.
 	ValidationMode ArrayValidationMode
 }
 
@@ -84,23 +85,23 @@ func (ar *ArrayRules) CheckBounds(count uint16) error {
 	return nil
 }
 
-// ElementValidationFunc is a function which runs during array element validation (e.g. lexical ordering).
+// ElementValidationFunc is a function which runs during array validation (e.g. lexical ordering).
 type ElementValidationFunc func(index int, next []byte) error
 
-// ElementUniqueValidator returns a ElementValidationFunc which returns an error if the given element is not unique.
+// ElementUniqueValidator returns an ElementValidationFunc which returns an error if the given element is not unique.
 func (ar *ArrayRules) ElementUniqueValidator() ElementValidationFunc {
-	set := map[string]struct{}{}
+	set := map[string]int{}
 	return func(index int, next []byte) error {
 		k := string(next)
 		if j, has := set[k]; has {
 			return fmt.Errorf("%w: element %d and %d are duplicates", ErrArrayValidationViolatesUniqueness, j, index)
 		}
-		set[k] = struct{}{}
+		set[k] = index
 		return nil
 	}
 }
 
-// LexicalOrderValidator returns a ElementValidationFunc which returns an error if the given byte slices
+// LexicalOrderValidator returns an ElementValidationFunc which returns an error if the given byte slices
 // are not ordered lexicographically.
 func (ar *ArrayRules) LexicalOrderValidator() ElementValidationFunc {
 	var prev []byte
@@ -120,7 +121,7 @@ func (ar *ArrayRules) LexicalOrderValidator() ElementValidationFunc {
 	}
 }
 
-// LexicalOrderWithoutDupsValidator returns a ElementValidationFunc which returns an error if the given byte slices
+// LexicalOrderWithoutDupsValidator returns an ElementValidationFunc which returns an error if the given byte slices
 // are not ordered lexicographically or any elements are duplicated.
 func (ar *ArrayRules) LexicalOrderWithoutDupsValidator() ElementValidationFunc {
 	var prev []byte
@@ -142,6 +143,25 @@ func (ar *ArrayRules) LexicalOrderWithoutDupsValidator() ElementValidationFunc {
 		prevIndex = index
 		return nil
 	}
+}
+
+// ElementValidationFunc returns a new ElementValidationFunc according to the given mode.
+func (ar *ArrayRules) ElementValidationFunc(mode ArrayValidationMode) ElementValidationFunc {
+	var arrayElementValidator ElementValidationFunc
+
+	switch mode {
+	case ArrayValidationModeNone:
+	case ArrayValidationModeNoDuplicates:
+		arrayElementValidator = ar.ElementUniqueValidator()
+	case ArrayValidationModeLexicalOrdering:
+		arrayElementValidator = ar.LexicalOrderValidator()
+	case ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering:
+		arrayElementValidator = ar.LexicalOrderWithoutDupsValidator()
+	default:
+		panic(ErrUnknownArrayValidationMode)
+	}
+
+	return arrayElementValidator
 }
 
 // LexicalOrderedByteSlices are byte slices ordered in lexical order.
@@ -172,6 +192,28 @@ func (l LexicalOrdered32ByteArrays) Less(i, j int) bool {
 
 func (l LexicalOrdered32ByteArrays) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
+}
+
+// RemoveDupsAndSortByLexicalOrderArrayOf32Bytes returns a new SliceOfArraysOf32Bytes sorted by lexical order and without duplicates.
+func RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(slice SliceOfArraysOf32Bytes) SliceOfArraysOf32Bytes {
+
+	seen := make(map[string]struct{})
+	orderedArray := make(LexicalOrdered32ByteArrays, len(slice))
+
+	uniqueElements := 0
+	for i, v := range slice {
+		k := string(v[:])
+		if _, has := seen[k]; has {
+			continue
+		}
+		seen[k] = struct{}{}
+		orderedArray[i] = v
+		uniqueElements++
+	}
+	orderedArray = orderedArray[:uniqueElements]
+	sort.Sort(orderedArray)
+
+	return SliceOfArraysOf32Bytes(orderedArray)
 }
 
 // SortedSerializables are Serializables sorted by their serialized form.
