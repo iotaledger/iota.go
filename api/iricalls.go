@@ -342,3 +342,17 @@ func (api *API) WereAddressesSpentFrom(addresses ...Hash) ([]bool, error) {
 	}
 	return rsp.States, nil
 }
+
+// GetWhiteFlagConfirmation returns the milestone bundle and the included state mutating bundles of the given index.
+func (api *API) GetWhiteFlagConfirmation(milestoneIndex uint32) (*WhiteFlagConfirmation, error) {
+	cmd := &GetWhiteFlagConfirmationCommand{MilestoneIndex: milestoneIndex, Command: Command{GetWhiteFlagConfirmationCmd}}
+	rsp := &GetWhiteFlagConfirmationResponse{}
+	if err := api.provider.Send(cmd, rsp); err != nil {
+		return nil, err
+	}
+	confirmation := &WhiteFlagConfirmation{
+		MilestoneBundle: rsp.MilestoneBundle,
+		IncludedBundles: rsp.IncludedBundles,
+	}
+	return confirmation, nil
+}
