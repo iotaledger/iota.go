@@ -3,7 +3,6 @@ package iota
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 )
@@ -18,20 +17,10 @@ const (
 )
 
 var (
-	// Returned if the count of MigratedFundsEntry items is too small.
-	ErrMinMigratedFundsEntriesNotReached = fmt.Errorf("min %d migrated fund entries are required within a receipt", MinMigratedFundsEntryCount)
-	// Returned if the count of MigratedFundsEntry items is too big.
-	ErrMaxMigratedFundsEntriesExceeded = fmt.Errorf("max %d migrated fund entries are allowed within a receipt", MaxMigratedFundsEntryCount)
-	// Returned if the MigratedFundsEntry items are not in lexical order when serialized.
-	ErrMigratedFundsEntriesOrderViolatesLexicalOrder = errors.New("migrated fund entries must be in their lexical order (byte wise) when serialized")
-
 	migratedFundEntriesArrayRules = &ArrayRules{
-		Min:                         MinMigratedFundsEntryCount,
-		Max:                         MaxMigratedFundsEntryCount,
-		MinErr:                      ErrMinMigratedFundsEntriesNotReached,
-		MaxErr:                      ErrMaxMigratedFundsEntriesExceeded,
-		ElementBytesLexicalOrder:    true,
-		ElementBytesLexicalOrderErr: ErrMigratedFundsEntriesOrderViolatesLexicalOrder,
+		Min:            MinMigratedFundsEntryCount,
+		Max:            MaxMigratedFundsEntryCount,
+		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
 	}
 )
 
@@ -87,7 +76,7 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 func (r *Receipt) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	var migratedFundsEntriesWrittenConsumer WrittenObjectConsumer
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if migratedFundEntriesArrayRules.ElementBytesLexicalOrder {
+		if migratedFundEntriesArrayRules.ValidationMode.HasMode(ArrayValidationModeLexicalOrdering) {
 			migratedFundEntriesLexicalOrderValidator := migratedFundEntriesArrayRules.LexicalOrderValidator()
 			migratedFundsEntriesWrittenConsumer = func(index int, written []byte) error {
 				if err := migratedFundEntriesLexicalOrderValidator(index, written); err != nil {
