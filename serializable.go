@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
 )
 
 // Serializable is something which knows how to serialize/deserialize itself from/into bytes.
@@ -45,6 +46,23 @@ func (sm DeSerializationMode) HasMode(mode DeSerializationMode) bool {
 	return sm&mode > 0
 }
 
+// ArrayValidationMode defines the mode of array validation.
+type ArrayValidationMode byte
+
+const (
+	// Instructs the array validation to perform no validation.
+	ArrayValidationModeNone ArrayValidationMode = 0
+	// Instructs the array validation to check for duplicates.
+	ArrayValidationModeNoDuplicates ArrayValidationMode = 1 << 0
+	// Instructs the array validation to check for lexical order.
+	ArrayValidationModeLexicalOrdering ArrayValidationMode = 1 << 1
+)
+
+// HasMode checks whether the array element validation mode includes the given mode.
+func (av ArrayValidationMode) HasMode(mode ArrayValidationMode) bool {
+	return av&mode > 0
+}
+
 // ArrayRules defines rules around a to be deserialized array.
 // Min and Max at 0 define an unbounded array.
 type ArrayRules struct {
@@ -52,33 +70,40 @@ type ArrayRules struct {
 	Min uint16
 	// The max array bound.
 	Max uint16
-	// The error returned if the min bound is violated.
-	MinErr error
-	// The error returned if the max bound is violated.
-	MaxErr error
-	// Whether the bytes of the elements have to be in lexical order.
-	ElementBytesLexicalOrder bool
-	// The error returned if the element bytes lexical order is violated.
-	ElementBytesLexicalOrderErr error
+	// The mode of validation.
+	ValidationMode ArrayValidationMode
 }
 
 // CheckBounds checks whether the given count violates the array bounds.
 func (ar *ArrayRules) CheckBounds(count uint16) error {
 	if ar.Min != 0 && count < ar.Min {
-		return fmt.Errorf("%w: min is %d but count is %d", ar.MinErr, ar.Min, count)
+		return fmt.Errorf("%w: min is %d but count is %d", ErrArrayValidationMinElementsNotReached, ar.Min, count)
 	}
 	if ar.Max != 0 && count > ar.Max {
-		return fmt.Errorf("%w: max is %d but count is %d", ar.MaxErr, ar.Max, count)
+		return fmt.Errorf("%w: max is %d but count is %d", ErrArrayValidationMaxElementsExceeded, ar.Max, count)
 	}
 	return nil
 }
 
-// LexicalOrderFunc is a function which runs during lexical order validation.
-type LexicalOrderFunc func(int, []byte) error
+// ElementValidationFunc is a function which runs during array validation (e.g. lexical ordering).
+type ElementValidationFunc func(index int, next []byte) error
 
-// LexicalOrderValidator returns a LexicalOrderFunc which returns an error if the given byte slices
+// ElementUniqueValidator returns an ElementValidationFunc which returns an error if the given element is not unique.
+func (ar *ArrayRules) ElementUniqueValidator() ElementValidationFunc {
+	set := map[string]int{}
+	return func(index int, next []byte) error {
+		k := string(next)
+		if j, has := set[k]; has {
+			return fmt.Errorf("%w: element %d and %d are duplicates", ErrArrayValidationViolatesUniqueness, j, index)
+		}
+		set[k] = index
+		return nil
+	}
+}
+
+// LexicalOrderValidator returns an ElementValidationFunc which returns an error if the given byte slices
 // are not ordered lexicographically.
-func (ar *ArrayRules) LexicalOrderValidator() LexicalOrderFunc {
+func (ar *ArrayRules) LexicalOrderValidator() ElementValidationFunc {
 	var prev []byte
 	var prevIndex int
 	return func(index int, next []byte) error {
@@ -87,7 +112,7 @@ func (ar *ArrayRules) LexicalOrderValidator() LexicalOrderFunc {
 			prev = next
 			prevIndex = index
 		case bytes.Compare(prev, next) > 0:
-			return fmt.Errorf("%w: element %d should have been before element %d", ar.ElementBytesLexicalOrderErr, index, prevIndex)
+			return fmt.Errorf("%w: element %d should have been before element %d", ErrArrayValidationOrderViolatesLexicalOrder, index, prevIndex)
 		default:
 			prev = next
 			prevIndex = index
@@ -96,9 +121,9 @@ func (ar *ArrayRules) LexicalOrderValidator() LexicalOrderFunc {
 	}
 }
 
-// LexicalOrderWithoutDupsValidator returns a LexicalOrderFunc which returns an error if the given byte slices
+// LexicalOrderWithoutDupsValidator returns an ElementValidationFunc which returns an error if the given byte slices
 // are not ordered lexicographically or any elements are duplicated.
-func (ar *ArrayRules) LexicalOrderWithoutDupsValidator() LexicalOrderFunc {
+func (ar *ArrayRules) LexicalOrderWithoutDupsValidator() ElementValidationFunc {
 	var prev []byte
 	var prevIndex int
 	return func(index int, next []byte) error {
@@ -109,15 +134,34 @@ func (ar *ArrayRules) LexicalOrderWithoutDupsValidator() LexicalOrderFunc {
 		}
 		switch bytes.Compare(prev, next) {
 		case 1:
-			return fmt.Errorf("%w: element %d should have been before element %d", ar.ElementBytesLexicalOrderErr, index, prevIndex)
+			return fmt.Errorf("%w: element %d should have been before element %d", ErrArrayValidationOrderViolatesLexicalOrder, index, prevIndex)
 		case 0:
 			// dup
-			return fmt.Errorf("%w: element %d and %d are duplicates", ar.ElementBytesLexicalOrderErr, index, prevIndex)
+			return fmt.Errorf("%w: element %d and %d are duplicates", ErrArrayValidationViolatesUniqueness, index, prevIndex)
 		}
 		prev = next
 		prevIndex = index
 		return nil
 	}
+}
+
+// ElementValidationFunc returns a new ElementValidationFunc according to the given mode.
+func (ar *ArrayRules) ElementValidationFunc(mode ArrayValidationMode) ElementValidationFunc {
+	var arrayElementValidator ElementValidationFunc
+
+	switch mode {
+	case ArrayValidationModeNone:
+	case ArrayValidationModeNoDuplicates:
+		arrayElementValidator = ar.ElementUniqueValidator()
+	case ArrayValidationModeLexicalOrdering:
+		arrayElementValidator = ar.LexicalOrderValidator()
+	case ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering:
+		arrayElementValidator = ar.LexicalOrderWithoutDupsValidator()
+	default:
+		panic(ErrUnknownArrayValidationMode)
+	}
+
+	return arrayElementValidator
 }
 
 // LexicalOrderedByteSlices are byte slices ordered in lexical order.
@@ -133,6 +177,43 @@ func (l LexicalOrderedByteSlices) Less(i, j int) bool {
 
 func (l LexicalOrderedByteSlices) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
+}
+
+// LexicalOrdered32ByteArrays are 32 byte arrays ordered in lexical order.
+type LexicalOrdered32ByteArrays [][32]byte
+
+func (l LexicalOrdered32ByteArrays) Len() int {
+	return len(l)
+}
+
+func (l LexicalOrdered32ByteArrays) Less(i, j int) bool {
+	return bytes.Compare(l[i][:], l[j][:]) < 0
+}
+
+func (l LexicalOrdered32ByteArrays) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
+}
+
+// RemoveDupsAndSortByLexicalOrderArrayOf32Bytes returns a new SliceOfArraysOf32Bytes sorted by lexical order and without duplicates.
+func RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(slice SliceOfArraysOf32Bytes) SliceOfArraysOf32Bytes {
+
+	seen := make(map[string]struct{})
+	orderedArray := make(LexicalOrdered32ByteArrays, len(slice))
+
+	uniqueElements := 0
+	for i, v := range slice {
+		k := string(v[:])
+		if _, has := seen[k]; has {
+			continue
+		}
+		seen[k] = struct{}{}
+		orderedArray[i] = v
+		uniqueElements++
+	}
+	orderedArray = orderedArray[:uniqueElements]
+	sort.Sort(orderedArray)
+
+	return SliceOfArraysOf32Bytes(orderedArray)
 }
 
 // SortedSerializables are Serializables sorted by their serialized form.

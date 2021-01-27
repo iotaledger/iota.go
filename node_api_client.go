@@ -292,10 +292,8 @@ func (api *NodeAPI) Info() (*NodeInfoResponse, error) {
 
 // NodeTipsResponse defines the response of a GET tips REST API call.
 type NodeTipsResponse struct {
-	// The hex encoded message ID of the 1st tip.
-	Tip1 string `json:"tip1MessageId"`
-	// The hex encoded message ID of the 2nd tip.
-	Tip2 string `json:"tip2MessageId"`
+	// The hex encoded message IDs of the tips.
+	Tips []string `json:"tipMessageIds"`
 }
 
 // Tips gets the two tips from the node.
@@ -368,10 +366,8 @@ func (api *NodeAPI) MessageIDsByIndex(index string) (*MessageIDsByIndexResponse,
 type MessageMetadataResponse struct {
 	// The hex encoded message ID of the message.
 	MessageID string `json:"messageId"`
-	// The hex encoded message ID of the 1st parent the message references.
-	Parent1 string `json:"parent1MessageId"`
-	// The hex encoded message ID of the 2nd parent the message references.
-	Parent2 string `json:"parent2MessageId"`
+	// The hex encoded message IDs of the parents the message references.
+	Parents []string `json:"parentMessageIds"`
 	// Whether the message is solid.
 	Solid bool `json:"isSolid"`
 	// The milestone index that references this message.

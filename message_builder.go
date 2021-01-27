@@ -70,41 +70,40 @@ func (mb *MessageBuilder) Tips(nodeAPI *NodeAPI) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
+
 	tips, err := nodeAPI.Tips()
 	if err != nil {
 		mb.err = fmt.Errorf("unable to fetch tips from node API: %w", err)
 		return mb
 	}
-	parent1, err := hex.DecodeString(tips.Tip1)
-	if err != nil {
-		mb.err = fmt.Errorf("unable to decode parent 1 from hex: %w", err)
-		return mb
+
+	parents := make([][]byte, len(tips.Tips))
+	for i, tip := range tips.Tips {
+		parent, err := hex.DecodeString(tip)
+		if err != nil {
+			mb.err = fmt.Errorf("unable to decode parent %d from hex: %w", i+1, err)
+			return mb
+		}
+		parents[i] = parent
 	}
-	parent2, err := hex.DecodeString(tips.Tip2)
-	if err != nil {
-		mb.err = fmt.Errorf("unable to decode parent 2 from hex: %w", err)
-		return mb
-	}
-	mb.Parent1(parent1)
-	mb.Parent2(parent2)
+	mb.Parents(parents)
+
 	return mb
 }
 
-// Parent1 sets the first parent of the message.
-func (mb *MessageBuilder) Parent1(parent1 []byte) *MessageBuilder {
+// Parents sets the parents of the message.
+func (mb *MessageBuilder) Parents(parents [][]byte) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
-	copy(mb.msg.Parent1[:], parent1)
-	return mb
-}
 
-// Parent2 sets the second parent of the message.
-func (mb *MessageBuilder) Parent2(parent2 []byte) *MessageBuilder {
-	if mb.err != nil {
-		return mb
+	pars := make(MessageIDs, len(parents))
+	for i, parentBytes := range parents {
+		parent := MessageID{}
+		copy(parent[:], parentBytes)
+		pars[i] = parent
 	}
-	copy(mb.msg.Parent2[:], parent2)
+	mb.msg.Parents = RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(pars)
 	return mb
 }
 

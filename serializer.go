@@ -158,13 +158,35 @@ func (s *Serializer) WriteVariableByteSlice(data []byte, lenType SeriSliceLength
 }
 
 // Write32BytesArraySlice writes a slice of arrays of 32 bytes to the Serializer.
-func (s *Serializer) Write32BytesArraySlice(data SliceOfArraysOf32Bytes, lenType SeriSliceLengthType, errProducer ErrProducer) *Serializer {
+func (s *Serializer) Write32BytesArraySlice(data SliceOfArraysOf32Bytes, deSeriMode DeSerializationMode, lenType SeriSliceLengthType, arrayRules *ArrayRules, errProducer ErrProducer) *Serializer {
 	if s.err != nil {
 		return s
 	}
-	_ = s.writeSliceLength(len(data), lenType, errProducer)
+
+	sliceLength := len(data)
+
+	var arrayElementValidator ElementValidationFunc
+	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
+		if err := arrayRules.CheckBounds(uint16(sliceLength)); err != nil {
+			s.err = errProducer(err)
+			return s
+		}
+
+		arrayElementValidator = arrayRules.ElementValidationFunc(arrayRules.ValidationMode)
+	}
+
+	_ = s.writeSliceLength(sliceLength, lenType, errProducer)
 	for i := range data {
-		if _, err := s.buf.Write(data[i][:]); err != nil {
+		element := data[i][:]
+
+		if arrayElementValidator != nil {
+			if err := arrayElementValidator(i, element); err != nil {
+				s.err = errProducer(err)
+				return s
+			}
+		}
+
+		if _, err := s.buf.Write(element); err != nil {
 			s.err = errProducer(err)
 			return s
 		}
@@ -173,13 +195,35 @@ func (s *Serializer) Write32BytesArraySlice(data SliceOfArraysOf32Bytes, lenType
 }
 
 // Write64BytesArraySlice writes a slice of arrays of 64 bytes to the Serializer.
-func (s *Serializer) Write64BytesArraySlice(data SliceOfArraysOf64Bytes, lenType SeriSliceLengthType, errProducer ErrProducer) *Serializer {
+func (s *Serializer) Write64BytesArraySlice(data SliceOfArraysOf64Bytes, deSeriMode DeSerializationMode, lenType SeriSliceLengthType, arrayRules *ArrayRules, errProducer ErrProducer) *Serializer {
 	if s.err != nil {
 		return s
 	}
-	_ = s.writeSliceLength(len(data), lenType, errProducer)
+
+	sliceLength := len(data)
+
+	var arrayElementValidator ElementValidationFunc
+	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
+		if err := arrayRules.CheckBounds(uint16(sliceLength)); err != nil {
+			s.err = errProducer(err)
+			return s
+		}
+
+		arrayElementValidator = arrayRules.ElementValidationFunc(arrayRules.ValidationMode)
+	}
+
+	_ = s.writeSliceLength(sliceLength, lenType, errProducer)
 	for i := range data {
-		if _, err := s.buf.Write(data[i][:]); err != nil {
+		element := data[i][:]
+
+		if arrayElementValidator != nil {
+			if err := arrayElementValidator(i, element); err != nil {
+				s.err = errProducer(err)
+				return s
+			}
+		}
+
+		if _, err := s.buf.Write(element); err != nil {
 			s.err = errProducer(err)
 			return s
 		}
@@ -478,7 +522,7 @@ func (d *Deserializer) readSliceLength(lenType SeriSliceLengthType, errProducer 
 }
 
 // ReadSliceOfArraysOf32Bytes reads a slice of arrays of 32 bytes.
-func (d *Deserializer) ReadSliceOfArraysOf32Bytes(slice *SliceOfArraysOf32Bytes, lenType SeriSliceLengthType, errProducer ErrProducer) *Deserializer {
+func (d *Deserializer) ReadSliceOfArraysOf32Bytes(slice *SliceOfArraysOf32Bytes, deSeriMode DeSerializationMode, lenType SeriSliceLengthType, arrayRules *ArrayRules, errProducer ErrProducer) *Deserializer {
 	if d.err != nil {
 		return d
 	}
@@ -490,12 +534,30 @@ func (d *Deserializer) ReadSliceOfArraysOf32Bytes(slice *SliceOfArraysOf32Bytes,
 		return d
 	}
 
+	var arrayElementValidator ElementValidationFunc
+	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
+		if err := arrayRules.CheckBounds(uint16(sliceLength)); err != nil {
+			d.err = errProducer(err)
+			return d
+		}
+
+		arrayElementValidator = arrayRules.ElementValidationFunc(arrayRules.ValidationMode)
+	}
+
 	s := make(SliceOfArraysOf32Bytes, sliceLength)
 	for i := 0; i < sliceLength; i++ {
 		if len(d.src) < length {
 			d.err = errProducer(ErrDeserializationNotEnoughData)
 			return d
 		}
+
+		if arrayElementValidator != nil {
+			if err := arrayElementValidator(i, d.src[:length]); err != nil {
+				d.err = errProducer(err)
+				return d
+			}
+		}
+
 		copy(s[i][:], d.src[:length])
 		d.offset += length
 		d.src = d.src[length:]
@@ -507,7 +569,7 @@ func (d *Deserializer) ReadSliceOfArraysOf32Bytes(slice *SliceOfArraysOf32Bytes,
 }
 
 // ReadSliceOfArraysOf64Bytes reads a slice of arrays of 64 bytes.
-func (d *Deserializer) ReadSliceOfArraysOf64Bytes(slice *SliceOfArraysOf64Bytes, lenType SeriSliceLengthType, errProducer ErrProducer) *Deserializer {
+func (d *Deserializer) ReadSliceOfArraysOf64Bytes(slice *SliceOfArraysOf64Bytes, deSeriMode DeSerializationMode, lenType SeriSliceLengthType, arrayRules *ArrayRules, errProducer ErrProducer) *Deserializer {
 	if d.err != nil {
 		return d
 	}
@@ -519,12 +581,30 @@ func (d *Deserializer) ReadSliceOfArraysOf64Bytes(slice *SliceOfArraysOf64Bytes,
 		return d
 	}
 
+	var arrayElementValidator ElementValidationFunc
+	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
+		if err := arrayRules.CheckBounds(uint16(sliceLength)); err != nil {
+			d.err = errProducer(err)
+			return d
+		}
+
+		arrayElementValidator = arrayRules.ElementValidationFunc(arrayRules.ValidationMode)
+	}
+
 	s := make(SliceOfArraysOf64Bytes, sliceLength)
 	for i := 0; i < sliceLength; i++ {
 		if len(d.src) < length {
 			d.err = errProducer(ErrDeserializationNotEnoughData)
 			return d
 		}
+
+		if arrayElementValidator != nil {
+			if err := arrayElementValidator(i, d.src[:length]); err != nil {
+				d.err = errProducer(err)
+				return d
+			}
+		}
+
 		copy(s[i][:], d.src[:length])
 		d.offset += length
 		d.src = d.src[length:]
@@ -593,16 +673,14 @@ func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode 
 	d.offset += StructArrayLengthByteSize
 	d.src = d.src[StructArrayLengthByteSize:]
 
+	var arrayElementValidator ElementValidationFunc
 	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if err := arrayRules.CheckBounds(seriCount); err != nil {
 			d.err = errProducer(err)
 			return d
 		}
-	}
 
-	var lexicalOrderValidator LexicalOrderFunc
-	if arrayRules != nil && arrayRules.ElementBytesLexicalOrder {
-		lexicalOrderValidator = arrayRules.LexicalOrderValidator()
+		arrayElementValidator = arrayRules.ElementValidationFunc(arrayRules.ValidationMode)
 	}
 
 	var seris Serializables
@@ -627,9 +705,8 @@ func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode 
 
 		bytesConsumed := d.offset - offsetBefore
 
-		// check lexical order against previous element
-		if lexicalOrderValidator != nil {
-			if err := lexicalOrderValidator(i, srcBefore[:bytesConsumed]); err != nil {
+		if arrayElementValidator != nil {
+			if err := arrayElementValidator(i, srcBefore[:bytesConsumed]); err != nil {
 				d.err = errProducer(err)
 				return d
 			}

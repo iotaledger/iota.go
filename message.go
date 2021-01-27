@@ -16,15 +16,26 @@ const (
 	MessageIDLength = blake2b.Size256
 	// Defines the length of the network ID in bytes.
 	MessageNetworkIDLength = UInt64ByteSize
-	// Defines the minimum size of a message: network ID + 2 msg IDs + uint16 payload length + nonce
-	MessageBinSerializedMinSize = MessageNetworkIDLength + 2*MessageIDLength + UInt32ByteSize + UInt64ByteSize
+	// Defines the minimum size of a message: network ID + parent count + 1 parent + uint16 payload length + nonce
+	MessageBinSerializedMinSize = MessageNetworkIDLength + OneByte + MessageIDLength + UInt32ByteSize + UInt64ByteSize
 	// Defines the maximum size of a message.
 	MessageBinSerializedMaxSize = 32768
+	// Defines the minimum amount of parents in a message.
+	MinParentsInAMessage = 1
+	// Defines the maximum amount of parents in a message.
+	MaxParentsInAMessage = 8
 )
 
 var (
 	// Returned when a serialized message exceeds MessageBinSerializedMaxSize.
 	ErrMessageExceedsMaxSize = errors.New("message exceeds max size")
+
+	// restrictions around parents within a message.
+	messageParentArrayRules = ArrayRules{
+		Min:            MinParentsInAMessage,
+		Max:            MaxParentsInAMessage,
+		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
+	}
 )
 
 // PayloadSelector implements SerializableSelectorFunc for payload types.
@@ -67,10 +78,8 @@ func MessageIDFromHexString(messageIDHex string) (MessageID, error) {
 type Message struct {
 	// The network ID for which this message is meant for.
 	NetworkID uint64
-	// The 1st parent the message references.
-	Parent1 [MessageIDLength]byte
-	// The 2nd parent the message references.
-	Parent2 [MessageIDLength]byte
+	// The parents the message references.
+	Parents MessageIDs
 	// The inner payload of the message. Can be nil.
 	Payload Serializable
 	// The nonce which lets this message fulfill the PoW requirements.
@@ -112,11 +121,8 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 		ReadNum(&m.NetworkID, func(err error) error {
 			return fmt.Errorf("unable to deserialize message network ID: %w", err)
 		}).
-		ReadArrayOf32Bytes(&m.Parent1, func(err error) error {
-			return fmt.Errorf("unable to deserialize message parent 1: %w", err)
-		}).
-		ReadArrayOf32Bytes(&m.Parent2, func(err error) error {
-			return fmt.Errorf("unable to deserialize message parent 2: %w", err)
+		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, SeriSliceLengthAsByte, &messageParentArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize message parents: %w", err)
 		}).
 		ReadPayload(func(seri Serializable) { m.Payload = seri }, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to deserialize message's inner payload: %w", err)
@@ -132,14 +138,16 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 
 func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	data, err := NewSerializer().
+		Do(func() {
+			if deSeriMode.HasMode(DeSeriModePerformLexicalOrdering) {
+				m.Parents = RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(m.Parents)
+			}
+		}).
 		WriteNum(m.NetworkID, func(err error) error {
 			return fmt.Errorf("unable to serialize message network ID: %w", err)
 		}).
-		WriteBytes(m.Parent1[:], func(err error) error {
-			return fmt.Errorf("unable to serialize message parent 1: %w", err)
-		}).
-		WriteBytes(m.Parent2[:], func(err error) error {
-			return fmt.Errorf("unable to serialize message parent 2: %w", err)
+		Write32BytesArraySlice(m.Parents, deSeriMode, SeriSliceLengthAsByte, &messageParentArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize message parents: %w", err)
 		}).
 		WritePayload(m.Payload, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to serialize message inner payload: %w", err)
@@ -160,8 +168,10 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 func (m *Message) MarshalJSON() ([]byte, error) {
 	jsonMsg := &jsonmessage{}
 	jsonMsg.NetworkID = strconv.FormatUint(m.NetworkID, 10)
-	jsonMsg.Parent1 = hex.EncodeToString(m.Parent1[:])
-	jsonMsg.Parent2 = hex.EncodeToString(m.Parent2[:])
+	jsonMsg.Parents = make([]string, len(m.Parents))
+	for i, parent := range m.Parents {
+		jsonMsg.Parents[i] = hex.EncodeToString(parent[:])
+	}
 	jsonMsg.Nonce = strconv.FormatUint(m.Nonce, 10)
 	if m.Payload != nil {
 		jsonPayload, err := m.Payload.MarshalJSON()
@@ -207,10 +217,8 @@ func jsonpayloadselector(ty int) (JSONSerializable, error) {
 type jsonmessage struct {
 	// The network ID identifying the network for this message.
 	NetworkID string `json:"networkId"`
-	// The hex encoded message ID of the first referenced parent.
-	Parent1 string `json:"parent1MessageId"`
-	// The hex encoded message ID of the second referenced parent.
-	Parent2 string `json:"parent2MessageId"`
+	// The hex encoded message IDs of the referenced parents.
+	Parents []string `json:"parentMessageIds"`
 	// The payload within the message.
 	Payload *json.RawMessage `json:"payload"`
 	// The nonce the message used to fulfill the PoW requirement.
@@ -218,23 +226,9 @@ type jsonmessage struct {
 }
 
 func (jm *jsonmessage) ToSerializable() (Serializable, error) {
-	parent1, err := hex.DecodeString(jm.Parent1)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decode hex parent 1 from JSON: %w", err)
-	}
+	var err error
 
-	parent2, err := hex.DecodeString(jm.Parent2)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decode hex parent 2 from JSON: %w", err)
-	}
-
-	var parsedNonce uint64
-	if len(jm.Nonce) != 0 {
-		parsedNonce, err = strconv.ParseUint(jm.Nonce, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse message nonce from JSON: %w", err)
-		}
-	}
+	m := &Message{}
 
 	var parsedNetworkID uint64
 	if len(jm.NetworkID) != 0 {
@@ -243,8 +237,26 @@ func (jm *jsonmessage) ToSerializable() (Serializable, error) {
 			return nil, fmt.Errorf("unable to parse message network ID from JSON: %w", err)
 		}
 	}
+	m.NetworkID = parsedNetworkID
 
-	m := &Message{NetworkID: parsedNetworkID, Nonce: parsedNonce}
+	var parsedNonce uint64
+	if len(jm.Nonce) != 0 {
+		parsedNonce, err = strconv.ParseUint(jm.Nonce, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse message nonce from JSON: %w", err)
+		}
+	}
+	m.Nonce = parsedNonce
+
+	m.Parents = make(MessageIDs, len(jm.Parents))
+	for i, jparent := range jm.Parents {
+		parentBytes, err := hex.DecodeString(jparent)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode hex parent %d from JSON: %w", i+1, err)
+		}
+
+		copy(m.Parents[i][:], parentBytes)
+	}
 
 	if jm.Payload != nil {
 		jsonPayload, err := DeserializeObjectFromJSON(jm.Payload, jsonpayloadselector)
@@ -257,9 +269,6 @@ func (jm *jsonmessage) ToSerializable() (Serializable, error) {
 			return nil, err
 		}
 	}
-
-	copy(m.Parent1[:], parent1)
-	copy(m.Parent2[:], parent2)
 
 	return m, nil
 }

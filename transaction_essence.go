@@ -54,22 +54,16 @@ var (
 
 	// restrictions around input within a transaction.
 	inputsArrayBound = ArrayRules{
-		Min:                         MinInputsCount,
-		Max:                         MaxInputsCount,
-		MinErr:                      ErrMinInputsNotReached,
-		MaxErr:                      ErrMaxInputsExceeded,
-		ElementBytesLexicalOrder:    true,
-		ElementBytesLexicalOrderErr: ErrInputsOrderViolatesLexicalOrder,
+		Min:            MinInputsCount,
+		Max:            MaxInputsCount,
+		ValidationMode: ArrayValidationModeLexicalOrdering,
 	}
 
 	// restrictions around outputs within a transaction.
 	outputsArrayBound = ArrayRules{
-		Min:                         MinInputsCount,
-		Max:                         MaxInputsCount,
-		MinErr:                      ErrMinOutputsNotReached,
-		MaxErr:                      ErrMaxOutputsExceeded,
-		ElementBytesLexicalOrder:    true,
-		ElementBytesLexicalOrderErr: ErrOutputsOrderViolatesLexicalOrder,
+		Min:            MinInputsCount,
+		Max:            MaxInputsCount,
+		ValidationMode: ArrayValidationModeLexicalOrdering,
 	}
 )
 
@@ -160,7 +154,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
 	var inputsWrittenConsumer, outputsWrittenConsumer WrittenObjectConsumer
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if inputsArrayBound.ElementBytesLexicalOrder {
+		if inputsArrayBound.ValidationMode.HasMode(ArrayValidationModeLexicalOrdering) {
 			inputsLexicalOrderValidator := inputsArrayBound.LexicalOrderValidator()
 			inputsWrittenConsumer = func(index int, written []byte) error {
 				if err := inputsLexicalOrderValidator(index, written); err != nil {
@@ -169,7 +163,7 @@ func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []b
 				return nil
 			}
 		}
-		if outputsArrayBound.ElementBytesLexicalOrder {
+		if outputsArrayBound.ValidationMode.HasMode(ArrayValidationModeLexicalOrdering) {
 			outputsLexicalOrderValidator := outputsArrayBound.LexicalOrderValidator()
 			outputsWrittenConsumer = func(index int, written []byte) error {
 				if err := outputsLexicalOrderValidator(index, written); err != nil {

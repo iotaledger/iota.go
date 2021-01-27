@@ -66,10 +66,7 @@ func (t *Transaction) ID() (*TransactionID, error) {
 }
 
 func (t *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	unlockBlockArrayRules := &ArrayRules{
-		MinErr: ErrUnlockBlocksMustMatchInputCount,
-		MaxErr: ErrUnlockBlocksMustMatchInputCount,
-	}
+	unlockBlockArrayRules := &ArrayRules{}
 
 	return NewDeserializer(data).
 		AbortIf(func(err error) error {

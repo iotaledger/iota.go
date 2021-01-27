@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"testing"
 	"time"
@@ -68,8 +69,7 @@ func TestNodeAPI_Tips(t *testing.T) {
 	defer gock.Off()
 
 	originRes := &iota.NodeTipsResponse{
-		Tip1: "733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d",
-		Tip2: "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe",
+		Tips: []string{"733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d", "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe"},
 	}
 
 	gock.New(nodeAPIUrl).
@@ -89,10 +89,12 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 	msgHash := rand32ByteHash()
 	msgHashStr := hex.EncodeToString(msgHash[:])
 
-	incompleteMsg := &iota.Message{}
+	incompleteMsg := &iota.Message{
+		Parents: sortedRand32ByteHashes(1),
+	}
+
 	completeMsg := &iota.Message{
-		Parent1: rand32ByteHash(),
-		Parent2: rand32ByteHash(),
+		Parents: sortedRand32ByteHashes(1 + rand.Intn(7)),
 		Payload: nil,
 		Nonce:   3495721389537486,
 	}
@@ -160,17 +162,18 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := rand32ByteHash()
-	parent1 := rand32ByteHash()
-	parent2 := rand32ByteHash()
+	parents := sortedRand32ByteHashes(1 + rand.Intn(7))
 
 	queryHash := hex.EncodeToString(identifier[:])
-	parent1MessageID := hex.EncodeToString(parent1[:])
-	parent2MessageID := hex.EncodeToString(parent2[:])
+
+	parentMessageIDs := make([]string, len(parents))
+	for i, p := range parents {
+		parentMessageIDs[i] = hex.EncodeToString(p[:])
+	}
 
 	originRes := &iota.MessageMetadataResponse{
 		MessageID:                  queryHash,
-		Parent1:                    parent1MessageID,
-		Parent2:                    parent2MessageID,
+		Parents:                    parentMessageIDs,
 		Solid:                      true,
 		ReferencedByMilestoneIndex: nil,
 		LedgerInclusionState:       nil,
@@ -196,8 +199,7 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 	queryHash := hex.EncodeToString(identifier[:])
 
 	originMsg := &iota.Message{
-		Parent1: rand32ByteHash(),
-		Parent2: rand32ByteHash(),
+		Parents: sortedRand32ByteHashes(1 + rand.Intn(7)),
 		Payload: nil,
 		Nonce:   16345984576234,
 	}

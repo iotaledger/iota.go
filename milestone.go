@@ -28,8 +28,8 @@ const (
 	// Defines the length of a public key within a milestone.
 	MilestonePublicKeyLength = ed25519.PublicKeySize
 	// Defines the serialized size of a milestone payload.
-	// payload type+index+timestamp+parent1+parent2+inclusion-merkle-proof+pubkeys-length+pubkey+sigs-length+sigs
-	MilestoneBinSerializedMinSize = TypeDenotationByteSize + UInt32ByteSize + UInt64ByteSize + MessageIDLength + MessageIDLength +
+	// payload type + index + timestamp + parent count + 1 parent + inclusion-merkle-proof + pubkeys-length + pubkey + sigs-length + sigs
+	MilestoneBinSerializedMinSize = TypeDenotationByteSize + UInt32ByteSize + UInt64ByteSize + OneByte + MessageIDLength +
 		MilestoneInclusionMerkleProofLength + OneByte + ed25519.PublicKeySize + OneByte + MilestoneSignatureLength
 	// MaxSignaturesInAMilestone is the maximum amount of signatures in a milestone.
 	MaxSignaturesInAMilestone = 255
@@ -48,8 +48,6 @@ var (
 	ErrMilestoneTooFewSignaturesForVerificationThreshold = errors.New("too few signatures for verification")
 	// Returned if a to be deserialized Milestone does not contain at least one public key.
 	ErrMilestoneTooFewPublicKeys = errors.New("a milestone must hold at least one public key")
-	// Returned if the Milestone public keys are not in lexical order when serialized.
-	ErrMilestonePublicKeyOrderViolatesLexicalOrder = errors.New("public keys must be in their lexical order (byte wise) when serialized")
 	// Returned when a MilestoneSigningFunc produces less signatures than expected.
 	ErrMilestoneProducedSignaturesCountMismatch = errors.New("produced and wanted signature count mismatch")
 	// Returned when the count of signatures and public keys within a Milestone don't match.
@@ -71,9 +69,24 @@ var (
 	// Returned when a Milestone contains duplicated public keys.
 	ErrMilestoneDuplicatedPublicKey = fmt.Errorf("milestone contains duplicated public keys")
 
+	// restrictions around parents within a Milestone.
+	milestoneParentArrayRules = ArrayRules{
+		Min:            MinParentsInAMessage,
+		Max:            MaxParentsInAMessage,
+		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
+	}
+
 	// restrictions around public keys within a Milestone.
 	milestonePublicKeyArrayRules = ArrayRules{
-		ElementBytesLexicalOrderErr: ErrMilestonePublicKeyOrderViolatesLexicalOrder,
+		Min:            MinPublicKeysInAMilestone,
+		Max:            MaxPublicKeysInAMilestone,
+		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
+	}
+
+	// restrictions around signatures within a Milestone.
+	milestoneSignatureArrayRules = ArrayRules{
+		Min: MinSignaturesInAMilestone,
+		Max: MaxSignaturesInAMilestone,
 	}
 )
 
@@ -89,17 +102,19 @@ type (
 	// MilestonePublicKeyMapping is a mapping from a public key to a private key.
 	MilestonePublicKeyMapping = map[MilestonePublicKey]ed25519.PrivateKey
 	// MilestoneParentMessageID is a reference to a parent message.
-	MilestoneParentMessageID = [MessageIDLength]byte
+	MilestoneParentMessageID = MessageID
+	// MilestoneParentMessageIDs are references to parent messages.
+	MilestoneParentMessageIDs = []MilestoneParentMessageID
 	// MilestoneInclusionMerkleProof is the inclusion merkle proof data of a milestone.
 	MilestoneInclusionMerkleProof = [MilestoneInclusionMerkleProofLength]byte
 )
 
 // NewMilestone creates a new Milestone. It automatically orders the given public keys by their byte order.
-func NewMilestone(index uint32, timestamp uint64, parent1, parent2 MilestoneParentMessageID, inclMerkleProof MilestoneInclusionMerkleProof, pubKeys []MilestonePublicKey) (*Milestone, error) {
+func NewMilestone(index uint32, timestamp uint64, parents MilestoneParentMessageIDs, inclMerkleProof MilestoneInclusionMerkleProof, pubKeys []MilestonePublicKey) (*Milestone, error) {
 	ms := &Milestone{
-		Index:     index,
-		Timestamp: timestamp,
-		Parent1:   parent1, Parent2: parent2,
+		Index:                index,
+		Timestamp:            timestamp,
+		Parents:              parents,
 		InclusionMerkleProof: inclMerkleProof,
 		PublicKeys:           pubKeys,
 	}
@@ -119,10 +134,8 @@ type Milestone struct {
 	Index uint32
 	// The time at which this milestone was issued.
 	Timestamp uint64
-	// The 1st parent where this milestone attaches to.
-	Parent1 MilestoneParentMessageID
-	// The 2nd parent where this milestone attaches to.
-	Parent2 MilestoneParentMessageID
+	// The parents where this milestone attaches to.
+	Parents MilestoneParentMessageIDs
 	// The inclusion merkle proof of included/newly confirmed transaction IDs.
 	InclusionMerkleProof MilestoneInclusionMerkleProof
 	// The public keys validating the signatures of the milestone.
@@ -156,16 +169,13 @@ func (m *Milestone) Essence() ([]byte, error) {
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone as essence: %w", err)
 		}).
-		WriteBytes(m.Parent1[:], func(err error) error {
-			return fmt.Errorf("unable to serialize milestone parent 1 for essence: %w", err)
-		}).
-		WriteBytes(m.Parent2[:], func(err error) error {
-			return fmt.Errorf("unable to serialize milestone parent 2 for essence: %w", err)
+		Write32BytesArraySlice(m.Parents, DeSeriModePerformValidation, SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone parents: %w", err)
 		}).
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof for essence: %w", err)
 		}).
-		Write32BytesArraySlice(m.PublicKeys, SeriSliceLengthAsByte, func(err error) error {
+		Write32BytesArraySlice(m.PublicKeys, DeSeriModePerformValidation, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys for essence: %w", err)
 		}).
 		Serialize()
@@ -318,34 +328,17 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		ReadNum(&m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone timestamp: %w", err)
 		}).
-		ReadArrayOf32Bytes(&m.Parent1, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone parent 1: %w", err)
-		}).
-		ReadArrayOf32Bytes(&m.Parent2, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone parent 2: %w", err)
+		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone parents: %w", err)
 		}).
 		ReadArrayOf32Bytes(&m.InclusionMerkleProof, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone inclusion merkle proof: %w", err)
 		}).
-		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, SeriSliceLengthAsByte, func(err error) error {
+		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, deSeriMode, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
 		}).
-		AbortIf(func(err error) error {
-			if len(m.PublicKeys) == 0 {
-				return ErrMilestoneTooFewPublicKeys
-			}
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderWithoutDupsValidator()
-				for i := range m.PublicKeys {
-					if err := pubKeyLexicalOrderValidator(i, m.PublicKeys[i][:]); err != nil {
-						return err
-					}
-				}
-			}
-			return nil
-		}).
-		ReadSliceOfArraysOf64Bytes(&m.Signatures, SeriSliceLengthAsByte, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
+		ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone signatures: %w", err)
 		}).
 		AbortIf(func(err error) error {
 			if len(m.PublicKeys) != len(m.Signatures) {
@@ -358,28 +351,6 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 
 func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	return NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				pubKeyLexicalOrderValidator := milestonePublicKeyArrayRules.LexicalOrderWithoutDupsValidator()
-				for i := range m.PublicKeys {
-					if err := pubKeyLexicalOrderValidator(i, m.PublicKeys[i][:]); err != nil {
-						return err
-					}
-				}
-
-				switch {
-				case len(m.PublicKeys) > MaxPublicKeysInAMilestone:
-					return fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooManyPublicKeys)
-				case len(m.PublicKeys) < MinPublicKeysInAMilestone:
-					return fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooFewPublicKeys)
-				case len(m.Signatures) > MaxSignaturesInAMilestone:
-					return fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooManySignatures)
-				case len(m.Signatures) < MinSignaturesInAMilestone:
-					return fmt.Errorf("unable to serialize milestone: %w", ErrMilestoneTooFewSignatures)
-				}
-			}
-			return nil
-		}).
 		WriteNum(MilestonePayloadTypeID, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone payload ID: %w", err)
 		}).
@@ -389,19 +360,16 @@ func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp: %w", err)
 		}).
-		WriteBytes(m.Parent1[:], func(err error) error {
-			return fmt.Errorf("unable to serialize milestone parent 1: %w", err)
-		}).
-		WriteBytes(m.Parent2[:], func(err error) error {
-			return fmt.Errorf("unable to serialize milestone parent 2: %w", err)
+		Write32BytesArraySlice(m.Parents, deSeriMode, SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone parents: %w", err)
 		}).
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof: %w", err)
 		}).
-		Write32BytesArraySlice(m.PublicKeys, SeriSliceLengthAsByte, func(err error) error {
+		Write32BytesArraySlice(m.PublicKeys, deSeriMode, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys: %w", err)
 		}).
-		Write64BytesArraySlice(m.Signatures, SeriSliceLengthAsByte, func(err error) error {
+		Write64BytesArraySlice(m.Signatures, deSeriMode, SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone signatures: %w", err)
 		}).
 		Serialize()
@@ -412,8 +380,10 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 	jsonMilestonePayload.Type = int(MilestonePayloadTypeID)
 	jsonMilestonePayload.Index = int(m.Index)
 	jsonMilestonePayload.Timestamp = int(m.Timestamp)
-	jsonMilestonePayload.Parent1 = hex.EncodeToString(m.Parent1[:])
-	jsonMilestonePayload.Parent2 = hex.EncodeToString(m.Parent2[:])
+	jsonMilestonePayload.Parents = make([]string, len(m.Parents))
+	for i, parent := range m.Parents {
+		jsonMilestonePayload.Parents[i] = hex.EncodeToString(parent[:])
+	}
 	jsonMilestonePayload.InclusionMerkleProof = hex.EncodeToString(m.InclusionMerkleProof[:])
 
 	jsonMilestonePayload.PublicKeys = make([]string, len(m.PublicKeys))
@@ -447,29 +417,27 @@ type jsonmilestonepayload struct {
 	Type                 int      `json:"type"`
 	Index                int      `json:"index"`
 	Timestamp            int      `json:"timestamp"`
-	Parent1              string   `json:"parent1MessageId"`
-	Parent2              string   `json:"parent2MessageId"`
+	Parents              []string `json:"parentMessageIds"`
 	InclusionMerkleProof string   `json:"inclusionMerkleProof"`
 	PublicKeys           []string `json:"publicKeys"`
 	Signatures           []string `json:"signatures"`
 }
 
 func (j *jsonmilestonepayload) ToSerializable() (Serializable, error) {
+	var err error
+
 	payload := &Milestone{}
 	payload.Index = uint32(j.Index)
 	payload.Timestamp = uint64(j.Timestamp)
 
-	parent1Bytes, err := hex.DecodeString(j.Parent1)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decode parent 1 from JSON for milestone payload: %w", err)
+	payload.Parents = make(MilestoneParentMessageIDs, len(j.Parents))
+	for i, jparent := range j.Parents {
+		parentBytes, err := hex.DecodeString(jparent)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode parent %d from JSON for milestone payload: %w", i+1, err)
+		}
+		copy(payload.Parents[i][:], parentBytes)
 	}
-	copy(payload.Parent1[:], parent1Bytes)
-
-	parent2Bytes, err := hex.DecodeString(j.Parent2)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decode parent 2 from JSON for milestone payload: %w", err)
-	}
-	copy(payload.Parent2[:], parent2Bytes)
 
 	inclusionMerkleProofBytes, err := hex.DecodeString(j.InclusionMerkleProof)
 	if err != nil {
