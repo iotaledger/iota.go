@@ -3,10 +3,11 @@ package api
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/iotaledger/iota.go/bundle"
 	. "github.com/iotaledger/iota.go/consts"
 	. "github.com/iotaledger/iota.go/trinary"
-	"time"
 )
 
 // FindTransactionsQuery represents the payload to the FindTransactions API call.
@@ -52,6 +53,14 @@ type Neighbor struct {
 type TransactionsToApprove struct {
 	TrunkTransaction  Hash
 	BranchTransaction Hash
+}
+
+// WhiteFlagConfirmation contains the milestone bundle and all bundles of the white-flag confirmation.
+type WhiteFlagConfirmation struct {
+	// The trytes of the milestone bundle.
+	MilestoneBundle []Trytes
+	// The included bundles of the white-flag confirmation in their DFS order.
+	IncludedBundles [][]Trytes
 }
 
 // AccountData is an object containing an account's current state derived from the available

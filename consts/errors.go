@@ -33,6 +33,10 @@ var (
 	ErrInvalidBundleTotalValue = errors.New("invalid bundle total value")
 	// ErrInvalidBundleAddressValue gets returned for Bundles with balance mutations in an address that would overflow/underflow from the total supply.
 	ErrInvalidBundleAddressValue = errors.New("invalid bundle address value")
+	// ErrInvalidMigrationBundle gets returned for bundles which do not fulfill the criteria for migration bundles.
+	ErrInvalidMigrationBundle = errors.New("invalid migration bundle")
+	// ErrInvalidMigrationAddress gets returned for bundles which contain an invalid target migration address.
+	ErrInvalidMigrationAddress = errors.New("invalid migration address")
 	// ErrInvalidBundleHash gets returned for invalid bundle hash parameters.
 	ErrInvalidBundleHash = errors.New("invalid bundle hash")
 	// ErrInvalidSignature gets returned for bundles with invalid signatures.

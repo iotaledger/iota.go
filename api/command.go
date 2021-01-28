@@ -24,6 +24,7 @@ const (
 	StoreTransactionsCmd        IRICommand = "storeTransactions"
 	CheckConsistencyCmd         IRICommand = "checkConsistency"
 	WereAddressesSpentFromCmd   IRICommand = "wereAddressesSpentFrom"
+	GetWhiteFlagConfirmationCmd IRICommand = "getWhiteFlagConfirmation"
 )
 
 type Commander interface {
@@ -222,4 +223,16 @@ type WereAddressesSpentFromCommand struct {
 // WereAddressesSpentFromResponse is the response from the WereAddressesSpentFrom API call.
 type WereAddressesSpentFromResponse struct {
 	States []bool `json:"states"`
+}
+
+// GetWhiteFlagConfirmationCommand represents the payload to the GetWhiteFlagConfirmation API call.
+type GetWhiteFlagConfirmationCommand struct {
+	Command
+	MilestoneIndex uint32 `json:"milestoneIndex"`
+}
+
+// GetWhiteFlagConfirmationResponse defines the response of a getWhiteFlagConfirmation API call.
+type GetWhiteFlagConfirmationResponse struct {
+	MilestoneBundle []Trytes   `json:"milestoneBundle"`
+	IncludedBundles [][]Trytes `json:"includedBundles"`
 }

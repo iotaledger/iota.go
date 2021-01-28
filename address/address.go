@@ -2,12 +2,23 @@
 package address
 
 import (
+	"bytes"
+	"strings"
+
 	"github.com/iotaledger/iota.go/checksum"
 	. "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/encoding/b1t6"
 	"github.com/iotaledger/iota.go/kerl"
 	. "github.com/iotaledger/iota.go/signing"
 	"github.com/iotaledger/iota.go/signing/key"
 	. "github.com/iotaledger/iota.go/trinary"
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/blake2b"
+)
+
+const (
+	// The prefix of migration addresses.
+	MigrationAddressPrefix = "TRANSFER"
 )
 
 // Checksum returns the checksum of the given address.
@@ -108,4 +119,52 @@ func GenerateAddresses(seed Trytes, start uint64, count uint64, secLvl SecurityL
 		}
 	}
 	return addresses, nil
+}
+
+// GenerateMigrationAddress generates a migration address from the given Ed25519 raw bytes.
+func GenerateMigrationAddress(ed25519Addr [32]byte, addChecksum ...bool) (Hash, error) {
+	ed25519Checksum := blake2b.Sum256(ed25519Addr[:])
+	ed25519Part := append(ed25519Addr[:], ed25519Checksum[:4]...)
+	migrAddr := MigrationAddressPrefix + b1t6.EncodeToTrytes(ed25519Part) + "9"
+	if len(addChecksum) > 0 && addChecksum[0] {
+		return checksum.AddChecksum(migrAddr, true, 9)
+	}
+	return migrAddr, nil
+}
+
+// ParseMigrationAddress parses the given migration address.
+// It returns the corresponding Ed25519 raw bytes or an error if address is not a valid migration address.
+// A valid migration address has the following properties:
+//	- it starts with the prefix 'TRANSFER'
+//	- it ends with '9'
+//	- the 72 trytes after 'TRANSFER' converted with B1T6 resulting in 36 bytes resolves to:
+//		- the 32 bytes being the Ed25519 address
+//		- the last 4 bytes of the 36 bytes being the Blake2b-256 hash of the Ed25519 address
+func ParseMigrationAddress(address Hash) ([32]byte, error) {
+	if err := ValidAddress(address); err != nil {
+		return [32]byte{}, errors.Wrapf(ErrInvalidMigrationAddress, "%s", err)
+	}
+	address = address[:HashTrytesSize] // remove checksum if present
+
+	if !strings.HasPrefix(address, MigrationAddressPrefix) {
+		return [32]byte{}, errors.Wrapf(ErrInvalidMigrationAddress, "does not start with prefix '%s'", MigrationAddressPrefix)
+	}
+	if !strings.HasSuffix(address, "9") {
+		return [32]byte{}, errors.Wrap(ErrInvalidMigrationAddress, "does not end with '9'")
+	}
+	ed25519PartTrytes := address[len(MigrationAddressPrefix) : len(MigrationAddressPrefix)+72]
+	ed25519Part, err := b1t6.DecodeTrytes(ed25519PartTrytes)
+	if err != nil {
+		return [32]byte{}, errors.Wrapf(ErrInvalidMigrationAddress, "binary part is not valid B1T6: %s", err)
+	}
+
+	// compute hash
+	computedChecksum := blake2b.Sum256(ed25519Part[:32])
+	if !bytes.Equal(computedChecksum[:4], ed25519Part[32:]) {
+		return [32]byte{}, errors.Wrap(ErrInvalidMigrationAddress, "Ed25519 checksum does not match computed")
+	}
+
+	var ed25519Addr [32]byte
+	copy(ed25519Addr[:], ed25519Part)
+	return ed25519Addr, nil
 }
