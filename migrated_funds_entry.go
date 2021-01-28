@@ -6,10 +6,18 @@ import (
 	"fmt"
 )
 
+const (
+	// Defines the minimum amount a MigratedFundEntry must deposit.
+	MinMigratedFundsEntryDeposit = 1_000_000
+)
+
+// LegacyTailTransactionHash represents the bytes of a T5B1 encoded legacy tail transaction hash.
+type LegacyTailTransactionHash = [49]byte
+
 // MigratedFundsEntry are funds which were migrated from a legacy network.
 type MigratedFundsEntry struct {
 	// The tail transaction hash of the migration bundle.
-	TailTransactionHash [49]byte
+	TailTransactionHash LegacyTailTransactionHash
 	// The target address of the migrated funds.
 	Address Serializable
 	// The amount of the deposit.

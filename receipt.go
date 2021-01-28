@@ -2,6 +2,7 @@ package iota
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 )
@@ -101,7 +102,7 @@ func (r *Receipt) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	var migratedFundsEntriesWrittenConsumer WrittenObjectConsumer
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if migratedFundEntriesArrayRules.ValidationMode.HasMode(ArrayValidationModeLexicalOrdering) {
-			migratedFundEntriesLexicalOrderValidator := migratedFundEntriesArrayRules.LexicalOrderValidator()
+			migratedFundEntriesLexicalOrderValidator := migratedFundEntriesArrayRules.LexicalOrderWithoutDupsValidator()
 			migratedFundsEntriesWrittenConsumer = func(index int, written []byte) error {
 				if err := migratedFundEntriesLexicalOrderValidator(index, written); err != nil {
 					return fmt.Errorf("%w: unable to serialize migrated fund entries of receipt since they are not in lexical order", err)
@@ -184,4 +185,90 @@ func (j *jsonreceiptpayload) ToSerializable() (Serializable, error) {
 		migratedFundsEntries[i] = migratedFundsEntry
 	}
 	return payload, nil
+}
+
+var (
+	// Returned when a set of receipts are invalid.
+	ErrInvalidReceiptsSet = errors.New("invalid receipt set")
+)
+
+// ValidateReceipts validates whether given the following receipts:
+//	- They all share the same Receipt.MigratedAt index
+//	- All MigratedFundsEntry objects are unique.
+//	- None of the MigratedFundsEntry objects deposits more than the max supply or zero and minimum
+//	  MinMigratedFundsEntryDeposit tokens.
+//	- The sum of all migrated fund entries is not bigger than the total supply.
+//	- There is at most one which includes a TreasuryTransaction.
+//	- The previous unspent TreasuryOutput minus the sum of all migrated funds
+//    equals the amount of the new TreasuryOutput.
+// This function panics if the receipt slice is nil or empty and if any receipt
+// does not include any migrated fund entries. The order of the receipts does not matter.
+func ValidateReceipts(receipts []*Receipt, prevTreasuryOutput *TreasuryOutput) error {
+	switch {
+	case receipts == nil || len(receipts) == 0:
+		panic("no receipts passed for validation")
+	case prevTreasuryOutput == nil:
+		panic("given previous treasury output is nil")
+	}
+
+	var migratedAt uint32
+	var migratedFundsSum uint64
+	var treasuryTransaction *TreasuryTransaction
+	type tailloc struct {
+		receipt int
+		index   int
+	}
+	seenTailTxHashes := make(map[LegacyTailTransactionHash]tailloc)
+	for rIndex, r := range receipts {
+		if tt := r.Treasury(); tt != nil {
+			if treasuryTransaction != nil {
+				return fmt.Errorf("%w: only one receipt can contain a treasury transaction", ErrInvalidReceiptsSet)
+			}
+			treasuryTransaction = tt
+		}
+
+		if migratedAt == 0 {
+			migratedAt = r.MigratedAt
+		}
+
+		if r.MigratedAt != migratedAt {
+			return fmt.Errorf("%w: the migrated at index must be the same across all receipts", ErrInvalidReceiptsSet)
+		}
+
+		if r.Funds == nil || len(r.Funds) == 0 {
+			panic("receipt includes not migrated funds")
+		}
+
+		for fIndex, f := range r.Funds {
+			entry := f.(*MigratedFundsEntry)
+			if tailLoc, seen := seenTailTxHashes[entry.TailTransactionHash]; seen {
+				return fmt.Errorf("%w: same legacy tail transaction occurs multiple times, seen in receipt %d (index %d) and receipt %d (index %d)", ErrInvalidReceiptsSet, tailLoc.receipt, tailLoc.index, rIndex, fIndex)
+			}
+			seenTailTxHashes[entry.TailTransactionHash] = tailloc{rIndex, fIndex}
+			switch {
+			case entry.Deposit == 0:
+				return fmt.Errorf("%w: migrated fund entry at receipt %d (index %d) deposits zero", ErrInvalidReceiptsSet, rIndex, fIndex)
+			case entry.Deposit < MinMigratedFundsEntryDeposit:
+				return fmt.Errorf("%w: migrated fund entry at receipt %d (index %d) deposits less than %d", ErrInvalidReceiptsSet, rIndex, fIndex, MinMigratedFundsEntryDeposit)
+			case entry.Deposit > TokenSupply:
+				return fmt.Errorf("%w: migrated fund entry at receipt %d (index %d) deposits more than total supply", ErrInvalidReceiptsSet, rIndex, fIndex)
+			case entry.Deposit+migratedFundsSum > TokenSupply:
+				return fmt.Errorf("%w: migrated fund entry at receipt %d (index %d) deposits overflows total supply", ErrInvalidReceiptsSet, rIndex, fIndex)
+			}
+
+			migratedFundsSum += entry.Deposit
+		}
+	}
+
+	if treasuryTransaction == nil {
+		return fmt.Errorf("%w: no treasury transaction was included in any receipt", ErrInvalidReceiptsSet)
+	}
+
+	prevTreasury := prevTreasuryOutput.Amount
+	newTreasury := treasuryTransaction.Output.(*TreasuryOutput).Amount
+	if prevTreasury-migratedFundsSum != newTreasury {
+		return fmt.Errorf("%w: new treasury amount mismatch, prev %d, delta %d (migrated funds), new %d", ErrInvalidReceiptsSet, prevTreasury, migratedFundsSum, newTreasury)
+	}
+
+	return nil
 }
