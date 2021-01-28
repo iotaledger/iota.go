@@ -193,7 +193,7 @@ func randMigratedFundsEntry() (*iota.MigratedFundsEntry, []byte) {
 }
 
 func randReceipt(withTx bool) (*iota.Receipt, []byte) {
-	receipt := &iota.Receipt{MigratedAt: 1000,}
+	receipt := &iota.Receipt{MigratedAt: 1000}
 
 	var b bytes.Buffer
 
@@ -407,6 +407,16 @@ func randTransaction() (*iota.Transaction, []byte) {
 	return sigTxPayload, buf.Bytes()
 }
 
+func randTreasuryInput() (*iota.TreasuryInput, []byte) {
+	treasuryInput := &iota.TreasuryInput{}
+	input := randBytes(iota.TreasuryInputBytesLength)
+	copy(treasuryInput[:], input)
+	var b [iota.TreasuryInputSerializedBytesSize]byte
+	b[0] = iota.InputTreasury
+	copy(b[iota.SmallTypeDenotationByteSize:], input)
+	return treasuryInput, b[:]
+}
+
 func randUTXOInput() (*iota.UTXOInput, []byte) {
 	utxoInput := &iota.UTXOInput{}
 	var b [iota.UTXOInputSize]byte
@@ -435,15 +445,15 @@ func randTreasuryOutput() (*iota.TreasuryOutput, []byte) {
 func randTreasuryTransaction() (*iota.TreasuryTransaction, []byte) {
 	var b bytes.Buffer
 
-	utxoInput, utxoInputBytes := randUTXOInput()
+	treasuryInput, treasuryInputBytes := randTreasuryInput()
 	treasuryOutput, treasuryOutputBytes := randTreasuryOutput()
 	must(binary.Write(&b, binary.LittleEndian, iota.TreasuryTransactionPayloadTypeID))
-	_, err := b.Write(utxoInputBytes)
+	_, err := b.Write(treasuryInputBytes)
 	must(err)
 	_, err = b.Write(treasuryOutputBytes)
 	must(err)
 	return &iota.TreasuryTransaction{
-		Input:  utxoInput,
+		Input:  treasuryInput,
 		Output: treasuryOutput,
 	}, b.Bytes()
 }

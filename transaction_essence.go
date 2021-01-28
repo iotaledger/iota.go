@@ -104,7 +104,14 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 		Skip(SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip transaction essence ID during deserialization: %w", err)
 		}).
-		ReadSliceOfObjects(func(seri Serializables) { u.Inputs = seri }, deSeriMode, TypeDenotationByte, InputSelector, &inputsArrayBound, func(err error) error {
+		ReadSliceOfObjects(func(seri Serializables) { u.Inputs = seri }, deSeriMode, TypeDenotationByte, func(ty uint32) (Serializable, error) {
+			switch ty {
+			case uint32(InputUTXO):
+			default:
+				return nil, fmt.Errorf("transaction essence can only contain UTXO input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+			}
+			return InputSelector(ty)
+		}, &inputsArrayBound, func(err error) error {
 			return fmt.Errorf("unable to deserialize inputs of transaction essence: %w", err)
 		}).
 		AbortIf(func(err error) error {
@@ -115,7 +122,15 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 			}
 			return nil
 		}).
-		ReadSliceOfObjects(func(seri Serializables) { u.Outputs = seri }, deSeriMode, TypeDenotationByte, OutputSelector, &outputsArrayBound, func(err error) error {
+		ReadSliceOfObjects(func(seri Serializables) { u.Outputs = seri }, deSeriMode, TypeDenotationByte, func(ty uint32) (Serializable, error) {
+			switch ty {
+			case uint32(OutputSigLockedSingleOutput):
+			case uint32(OutputSigLockedDustAllowanceOutput):
+			default:
+				return nil, fmt.Errorf("transaction essence can only contain treasury output as outputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+			}
+			return OutputSelector(ty)
+		}, &outputsArrayBound, func(err error) error {
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
 		}).
 		AbortIf(func(err error) error {

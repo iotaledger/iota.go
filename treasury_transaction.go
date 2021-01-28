@@ -9,7 +9,7 @@ const (
 	// Defines the TreasuryTransaction payload's ID.
 	TreasuryTransactionPayloadTypeID uint32 = 4
 	// Defines the serialized size of a TreasuryTransaction.
-	TreasuryTransactionByteSize = TypeDenotationByteSize + UTXOInputSize + TreasuryOutputBytesSize
+	TreasuryTransactionByteSize = TypeDenotationByteSize + TreasuryInputSerializedBytesSize + TreasuryOutputBytesSize
 )
 
 // TreasuryTransaction represents a transaction which moves funds from the treasury.
@@ -37,8 +37,8 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 			return fmt.Errorf("unable to skip treasury transaction payload ID during deserialization: %w", err)
 		}).
 		ReadObject(func(seri Serializable) { t.Input = seri }, deSeriMode, TypeDenotationByte, func(ty uint32) (Serializable, error) {
-			if ty != uint32(InputUTXO) {
-				return nil, fmt.Errorf("receipts can only contain UTXO input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+			if ty != uint32(InputTreasury) {
+				return nil, fmt.Errorf("receipts can only contain treasury input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 			}
 			return InputSelector(ty)
 		}, func(err error) error {
@@ -57,7 +57,7 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 
 func (t *TreasuryTransaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if _, isUTXOInput := t.Input.(*UTXOInput); !isUTXOInput {
+		if _, isUTXOInput := t.Input.(*TreasuryInput); !isUTXOInput {
 			return nil, fmt.Errorf("%w: treasury transaction must contain a UTXO input but got %T instead", ErrInvalidBytes, t.Input)
 		}
 		if _, isTreasuryOutput := t.Output.(*TreasuryOutput); !isTreasuryOutput {
@@ -122,7 +122,7 @@ func (j *jsontreasurytransaction) ToSerializable() (Serializable, error) {
 	dep := &TreasuryTransaction{}
 
 	jsonInput, err := DeserializeObjectFromJSON(j.Input, func(ty int) (JSONSerializable, error) {
-		return &jsonutxoinput{}, nil
+		return &jsontreasuryinput{}, nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("can't decode input from JSON: %w", err)
