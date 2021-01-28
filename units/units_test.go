@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/iotaledger/iota.go/units"
+	"github.com/iotaledger/iota.go/v2/units"
 	"github.com/stretchr/testify/assert"
 )
 

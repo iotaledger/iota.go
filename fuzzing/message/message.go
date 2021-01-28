@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/iotaledger/iota.go"
+	"github.com/iotaledger/iota.go/v2"
 )
 
 func Fuzz(data []byte) int {

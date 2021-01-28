@@ -7,10 +7,10 @@ import (
 	"sync"
 	"sync/atomic"
 
+	legacy "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/curl/bct"
 	"github.com/iotaledger/iota.go/encoding/b1t6"
-	"github.com/iotaledger/iota.go/legacy"
-	"github.com/iotaledger/iota.go/legacy/curl/bct"
-	"github.com/iotaledger/iota.go/legacy/trinary"
+	"github.com/iotaledger/iota.go/trinary"
 )
 
 // errors returned by the PoW

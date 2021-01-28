@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/iotaledger/iota.go"
+	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/encoding/t5b1"
-	"github.com/iotaledger/iota.go/legacy"
-	"github.com/iotaledger/iota.go/legacy/trinary"
+	"github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/v2"
 )
 
 func must(err error) {

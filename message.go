@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/iotaledger/iota.go/pow"
+	"github.com/iotaledger/iota.go/v2/pow"
 	"golang.org/x/crypto/blake2b"
 )
 

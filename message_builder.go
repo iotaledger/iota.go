@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/iotaledger/iota.go/pow"
+	"github.com/iotaledger/iota.go/v2/pow"
 )
 
 // NewMessageBuilder creates a new MessageBuilder.

@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 	"google.golang.org/grpc"
 
-	"github.com/iotaledger/iota.go/remotesigner"
+	"github.com/iotaledger/iota.go/v2/remotesigner"
 )
 
 const (

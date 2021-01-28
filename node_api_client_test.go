@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iotaledger/iota.go"
+	"github.com/iotaledger/iota.go/v2"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 )

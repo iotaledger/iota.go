@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"github.com/iotaledger/iota.go"
+	"github.com/iotaledger/iota.go/v2"
 	"github.com/stretchr/testify/assert"
 )
 
