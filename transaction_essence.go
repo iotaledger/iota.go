@@ -128,6 +128,11 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 		}).
 		ReadPayload(func(seri Serializable) { u.Payload = seri }, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
+		}, func(ty uint32) (Serializable, error) {
+			if ty != IndexationPayloadTypeID {
+				return nil, fmt.Errorf("transaction essence can only contain an indexation payload: %w", ErrUnsupportedPayloadType)
+			}
+			return PayloadSelector(ty)
 		}).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(DeSeriModePerformValidation) {

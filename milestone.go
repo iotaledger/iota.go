@@ -342,20 +342,15 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		}).
 		ReadPayload(func(seri Serializable) { m.Receipt = seri }, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone receipt: %w", err)
-		}).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				if m.Receipt != nil {
-					// supports only receipts
-					if _, isReceiptPayload := m.Receipt.(*Indexation); !isReceiptPayload {
-						return fmt.Errorf("%w: milestones only allow embedded receipt payloads but got %T instead", ErrInvalidBytes, m.Receipt)
-					}
-				}
+		}, func(ty uint32) (Serializable, error) {
+			if ty != ReceiptPayloadTypeID {
+				return nil, fmt.Errorf("a milestone can only contain a receipt payload but got type ID %d:  %w", ty, ErrUnknownPayloadType)
 			}
-			return nil
-		}).ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
-		return fmt.Errorf("unable to deserialize milestone signatures: %w", err)
-	}).
+			return PayloadSelector(ty)
+		}).
+		ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone signatures: %w", err)
+		}).
 		AbortIf(func(err error) error {
 			if len(m.PublicKeys) != len(m.Signatures) {
 				return ErrMilestoneSignaturesPublicKeyCountMismatch

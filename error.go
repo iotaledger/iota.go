@@ -12,6 +12,10 @@ var (
 	// Returned when a denoted type for a given object is mismatched.
 	// For example, while trying to deserialize a signature unlock block, a reference unlock block is seen.
 	ErrDeserializationTypeMismatch = errors.New("data type is invalid for deserialization")
+	// Returned for unsupported payload types.
+	ErrUnsupportedPayloadType = errors.New("unsupported payload type")
+	// Returned for unsupported object types.
+	ErrUnsupportedObjectType = errors.New("unsupported object type")
 	// Returned for unknown payload types.
 	ErrUnknownPayloadType = errors.New("unknown payload type")
 	// Returned for unknown address types.

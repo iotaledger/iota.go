@@ -744,7 +744,7 @@ func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode 
 }
 
 // ReadPayload reads a payload.
-func (d *Deserializer) ReadPayload(f ReadObjectConsumerFunc, deSeriMode DeSerializationMode, errProducer ErrProducer) *Deserializer {
+func (d *Deserializer) ReadPayload(f ReadObjectConsumerFunc, deSeriMode DeSerializationMode, errProducer ErrProducer, selector ...SerializableSelectorFunc) *Deserializer {
 	if d.err != nil {
 		return d
 	}
@@ -772,7 +772,12 @@ func (d *Deserializer) ReadPayload(f ReadObjectConsumerFunc, deSeriMode DeSerial
 		return d
 	}
 
-	payload, err := PayloadSelector(binary.LittleEndian.Uint32(d.src))
+	sel := PayloadSelector
+	if len(selector)> 0 {
+		sel = selector[0]
+	}
+
+	payload, err := sel(binary.LittleEndian.Uint32(d.src))
 	if err != nil {
 		d.err = errProducer(err)
 		return d

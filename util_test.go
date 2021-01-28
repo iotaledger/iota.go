@@ -46,6 +46,13 @@ func rand32ByteHash() [32]byte {
 	return h
 }
 
+func rand49ByteHash() [49]byte {
+	var h [49]byte
+	b := randBytes(49)
+	copy(h[:], b)
+	return h
+}
+
 func sortedRand32ByteHashes(count int) [][32]byte {
 	hashes := make(iota.LexicalOrdered32ByteArrays, count)
 	for i := 0; i < count; i++ {
@@ -164,6 +171,69 @@ func randTransactionEssence() (*iota.TransactionEssence, []byte) {
 	must(binary.Write(&buf, binary.LittleEndian, uint32(0)))
 
 	return tx, buf.Bytes()
+}
+
+func randMigratedFundsEntry() (*iota.MigratedFundsEntry, []byte) {
+	tailTxHash := rand49ByteHash()
+	addr, addrBytes := randEd25519Addr()
+	deposit := rand.Uint64()
+
+	var b bytes.Buffer
+	_, err := b.Write(tailTxHash[:])
+	must(err)
+	_, err = b.Write(addrBytes)
+	must(err)
+	must(binary.Write(&b, binary.LittleEndian, deposit))
+
+	return &iota.MigratedFundsEntry{
+		TailTransactionHash: tailTxHash,
+		Address:             addr,
+		Deposit:             deposit,
+	}, b.Bytes()
+}
+
+func randReceipt(withTx bool) (*iota.Receipt, []byte) {
+	receipt := &iota.Receipt{MigratedAt: 1000,}
+
+	var b bytes.Buffer
+
+	must(binary.Write(&b, binary.LittleEndian, iota.ReceiptPayloadTypeID))
+	must(binary.Write(&b, binary.LittleEndian, receipt.MigratedAt))
+
+	migFundsEntriesBytes := iota.LexicalOrderedByteSlices{}
+	migFundsEntriesCount := rand.Intn(10) + 1
+	must(binary.Write(&b, binary.LittleEndian, uint16(migFundsEntriesCount)))
+	for i := migFundsEntriesCount; i > 0; i-- {
+		_, migFundsEntryBytes := randMigratedFundsEntry()
+		migFundsEntriesBytes = append(migFundsEntriesBytes, migFundsEntryBytes)
+	}
+
+	sort.Sort(migFundsEntriesBytes)
+
+	for _, migFundEntryBytes := range migFundsEntriesBytes {
+		_, err := b.Write(migFundEntryBytes)
+		must(err)
+		migFundsEntry := &iota.MigratedFundsEntry{}
+		if _, err := migFundsEntry.Deserialize(migFundEntryBytes, iota.DeSeriModePerformValidation); err != nil {
+			panic(err)
+		}
+		receipt.Funds = append(receipt.Funds, migFundsEntry)
+	}
+
+	if !withTx {
+		must(binary.Write(&b, binary.LittleEndian, uint32(0)))
+		return receipt, b.Bytes()
+	}
+
+	randTreasuryTx, randTreasuryTxBytes := randTreasuryTransaction()
+	receipt.Transaction = randTreasuryTx
+
+	must(binary.Write(&b, binary.LittleEndian, uint32(len(randTreasuryTxBytes))))
+	if _, err := b.Write(randTreasuryTxBytes); err != nil {
+		must(err)
+	}
+
+	return receipt, b.Bytes()
 }
 
 func randMilestone(parents iota.MessageIDs) (*iota.Milestone, []byte) {
@@ -350,6 +420,32 @@ func randUTXOInput() (*iota.UTXOInput, []byte) {
 	binary.LittleEndian.PutUint16(b[len(b)-iota.UInt16ByteSize:], index)
 	utxoInput.TransactionOutputIndex = index
 	return utxoInput, b[:]
+}
+
+func randTreasuryOutput() (*iota.TreasuryOutput, []byte) {
+	var b bytes.Buffer
+
+	deposit := rand.Uint64()
+	must(binary.Write(&b, binary.LittleEndian, iota.OutputTreasuryOutput))
+	must(binary.Write(&b, binary.LittleEndian, deposit))
+
+	return &iota.TreasuryOutput{Amount: deposit}, b.Bytes()
+}
+
+func randTreasuryTransaction() (*iota.TreasuryTransaction, []byte) {
+	var b bytes.Buffer
+
+	utxoInput, utxoInputBytes := randUTXOInput()
+	treasuryOutput, treasuryOutputBytes := randTreasuryOutput()
+	must(binary.Write(&b, binary.LittleEndian, iota.TreasuryTransactionPayloadTypeID))
+	_, err := b.Write(utxoInputBytes)
+	must(err)
+	_, err = b.Write(treasuryOutputBytes)
+	must(err)
+	return &iota.TreasuryTransaction{
+		Input:  utxoInput,
+		Output: treasuryOutput,
+	}, b.Bytes()
 }
 
 func randSigLockedSingleOutput(addrType iota.AddressType) (*iota.SigLockedSingleOutput, []byte) {
