@@ -90,7 +90,7 @@ func TestValidateReceipts(t *testing.T) {
 				Address:             addr,
 				Deposit:             1000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
-			return test{"err - migrated less tha minimum", receipt, currentTreasury, iota.ErrInvalidReceiptsSet}
+			return test{"err - migrated less tha minimum", receipt, currentTreasury, iota.ErrInvalidReceipt}
 		}(),
 		func() test {
 			addr, _ := randEd25519Addr()
@@ -99,7 +99,7 @@ func TestValidateReceipts(t *testing.T) {
 				Address:             addr,
 				Deposit:             iota.TokenSupply + 1,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
-			return test{"err - total supply overflow", receipt, currentTreasury, iota.ErrInvalidReceiptsSet}
+			return test{"err - total supply overflow", receipt, currentTreasury, iota.ErrInvalidReceipt}
 		}(),
 		func() test {
 			addr, _ := randEd25519Addr()
@@ -108,7 +108,7 @@ func TestValidateReceipts(t *testing.T) {
 				Address:             addr,
 				Deposit:             6_000_000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
-			return test{"err - invalid new treasury amount", receipt, currentTreasury, iota.ErrInvalidReceiptsSet}
+			return test{"err - invalid new treasury amount", receipt, currentTreasury, iota.ErrInvalidReceipt}
 		}(),
 	}
 	for _, tt := range tests {

@@ -234,8 +234,8 @@ func (j *jsonreceiptpayload) ToSerializable() (Serializable, error) {
 }
 
 var (
-	// Returned when a set of receipts are invalid.
-	ErrInvalidReceiptsSet = errors.New("invalid receipt set")
+	// Returned when a receipt is invalid
+	ErrInvalidReceipt = errors.New("invalid receipt")
 )
 
 // ValidateReceipt validates whether given the following receipt:
@@ -261,18 +261,23 @@ func ValidateReceipt(receipt *Receipt, prevTreasuryOutput *TreasuryOutput) error
 		panic("receipt has no migrated funds")
 	}
 
+	seenTailTxHashes := make(map[LegacyTailTransactionHash]int)
 	var migratedFundsSum uint64
 	for fIndex, f := range receipt.Funds {
 		entry := f.(*MigratedFundsEntry)
+		if prevIndex, seen := seenTailTxHashes[entry.TailTransactionHash]; seen {
+			return fmt.Errorf("%w: tail transaction hash at index %d occurrs multiple times (previous %d)", ErrInvalidReceipt, fIndex, prevIndex)
+		}
+		seenTailTxHashes[entry.TailTransactionHash] = fIndex
 
 		switch {
 		case entry.Deposit < MinMigratedFundsEntryDeposit:
-			return fmt.Errorf("%w: migrated fund entry at index %d deposits less than %d", ErrInvalidReceiptsSet, fIndex, MinMigratedFundsEntryDeposit)
+			return fmt.Errorf("%w: migrated fund entry at index %d deposits less than %d", ErrInvalidReceipt, fIndex, MinMigratedFundsEntryDeposit)
 		case entry.Deposit > TokenSupply:
-			return fmt.Errorf("%w: migrated fund entry at index %d deposits more than total supply", ErrInvalidReceiptsSet, fIndex)
+			return fmt.Errorf("%w: migrated fund entry at index %d deposits more than total supply", ErrInvalidReceipt, fIndex)
 		case entry.Deposit+migratedFundsSum > TokenSupply:
 			// this can't overflow because the previous case ensures that
-			return fmt.Errorf("%w: migrated fund entry at index %d overflows total supply", ErrInvalidReceiptsSet, fIndex)
+			return fmt.Errorf("%w: migrated fund entry at index %d overflows total supply", ErrInvalidReceipt, fIndex)
 		}
 
 		migratedFundsSum += entry.Deposit
@@ -281,7 +286,7 @@ func ValidateReceipt(receipt *Receipt, prevTreasuryOutput *TreasuryOutput) error
 	prevTreasury := prevTreasuryOutput.Amount
 	newTreasury := treasuryTransaction.Output.(*TreasuryOutput).Amount
 	if prevTreasury-migratedFundsSum != newTreasury {
-		return fmt.Errorf("%w: new treasury amount mismatch, prev %d, delta %d (migrated funds), new %d", ErrInvalidReceiptsSet, prevTreasury, migratedFundsSum, newTreasury)
+		return fmt.Errorf("%w: new treasury amount mismatch, prev %d, delta %d (migrated funds), new %d", ErrInvalidReceipt, prevTreasury, migratedFundsSum, newTreasury)
 	}
 
 	return nil
