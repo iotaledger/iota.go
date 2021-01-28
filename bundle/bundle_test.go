@@ -293,7 +293,7 @@ var _ = Describe("Bundle", func() {
 		randMigrationAddress := func() Hash {
 			var ed25519Addr [32]byte
 			rand.Read(ed25519Addr[:])
-			migrAddr, err := address.GenerateMigrationAddress(ed25519Addr)
+			migrAddr, err := address.GenerateMigrationAddress(ed25519Addr, true)
 			Expect(err).ToNot(HaveOccurred())
 			return migrAddr
 		}
