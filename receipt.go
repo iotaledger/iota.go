@@ -205,7 +205,7 @@ var (
 // does not include any migrated fund entries. The order of the receipts does not matter.
 func ValidateReceipts(receipts []*Receipt, prevTreasuryOutput *TreasuryOutput) error {
 	switch {
-	case receipts == nil || len(receipts) == 0:
+	case len(receipts) == 0:
 		panic("no receipts passed for validation")
 	case prevTreasuryOutput == nil:
 		panic("given previous treasury output is nil")
@@ -236,7 +236,7 @@ func ValidateReceipts(receipts []*Receipt, prevTreasuryOutput *TreasuryOutput) e
 		}
 
 		if r.Funds == nil || len(r.Funds) == 0 {
-			panic("receipt includes not migrated funds")
+			panic("receipt has no migrated funds")
 		}
 
 		for fIndex, f := range r.Funds {
@@ -253,6 +253,7 @@ func ValidateReceipts(receipts []*Receipt, prevTreasuryOutput *TreasuryOutput) e
 			case entry.Deposit > TokenSupply:
 				return fmt.Errorf("%w: migrated fund entry at receipt %d (index %d) deposits more than total supply", ErrInvalidReceiptsSet, rIndex, fIndex)
 			case entry.Deposit+migratedFundsSum > TokenSupply:
+				// this can't overflow because the previous case ensures that
 				return fmt.Errorf("%w: migrated fund entry at receipt %d (index %d) deposits overflows total supply", ErrInvalidReceiptsSet, rIndex, fIndex)
 			}
 
