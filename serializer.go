@@ -107,6 +107,23 @@ func (s *Serializer) WriteNum(v interface{}, errProducer ErrProducer) *Serialize
 	return s
 }
 
+// WriteBool writes the given bool to the Serializer.
+func (s *Serializer) WriteBool(v bool, errProducer ErrProducer) *Serializer {
+	if s.err != nil {
+		return s
+	}
+
+	var val byte
+	if v {
+		val = 1
+	}
+
+	if err := s.buf.WriteByte(val); err != nil {
+		s.err = errProducer(err)
+	}
+	return s
+}
+
 // WriteBytes writes the given byte slice to the Serializer.
 // Use this function only to write fixed size slices/arrays, otherwise
 // use WriteVariableByteSlice instead.
@@ -360,6 +377,32 @@ func (d *Deserializer) Skip(skip int, errProducer ErrProducer) *Deserializer {
 	}
 	d.offset += skip
 	d.src = d.src[skip:]
+	return d
+}
+
+// ReadBool reads a bool into dest.
+func (d *Deserializer) ReadBool(dest *bool, errProducer ErrProducer) *Deserializer {
+	if d.err != nil {
+		return d
+	}
+
+	if len(d.src) == 0 {
+		d.err = errProducer(ErrDeserializationNotEnoughData)
+		return d
+	}
+
+	switch d.src[0] {
+	case 0:
+		*dest = false
+	case 1:
+		*dest = true
+	default:
+		d.err = errProducer(ErrDeserializationInvalidBoolValue)
+		return d
+	}
+
+	d.offset += OneByte
+	d.src = d.src[OneByte:]
 	return d
 }
 
@@ -773,7 +816,7 @@ func (d *Deserializer) ReadPayload(f ReadObjectConsumerFunc, deSeriMode DeSerial
 	}
 
 	sel := PayloadSelector
-	if len(selector)> 0 {
+	if len(selector) > 0 {
 		sel = selector[0]
 	}
 

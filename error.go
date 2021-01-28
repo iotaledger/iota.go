@@ -42,6 +42,8 @@ var (
 	ErrArrayValidationOrderViolatesLexicalOrder = errors.New("array elements must be in their lexical order (byte wise)")
 	// Returned if there is not enough data available to deserialize a given object.
 	ErrDeserializationNotEnoughData = errors.New("not enough data for deserialization")
+	// Returned when a bool value is tried to be read but it is neither 0 or 1.
+	ErrDeserializationInvalidBoolValue = errors.New("invalid bool value")
 	// Returned if the size of a presumably read static object does not match the specified size.
 	ErrDeserializationStaticSizeMismatch = errors.New("object did not match the specified static size")
 	// Returned if a length denotation exceeds a specified limit.

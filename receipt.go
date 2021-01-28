@@ -17,6 +17,9 @@ const (
 )
 
 var (
+	// Returned if a Receipt does not contain a TreasuryTransaction.
+	ErrReceiptMustContainATreasuryTransaction = errors.New("receipt must contain a treasury transaction")
+
 	migratedFundEntriesArrayRules = &ArrayRules{
 		Min:            MinMigratedFundsEntryCount,
 		Max:            MaxMigratedFundsEntryCount,
@@ -28,11 +31,11 @@ var (
 type Receipt struct {
 	// The milestone index at which the funds were migrated in the legacy network.
 	MigratedAt uint32
+	// Whether this Receipt is the final one for a given migrated at index.
+	Final bool
 	// The funds which were migrated with this Receipt.
 	Funds Serializables
-	// The TreasuryTransaction used to fund the funds. Might be nil.
-	// A non nil Receipt.Transaction field indicates that this receipt
-	// is the last one for the given MigratedAt milestone index.
+	// The TreasuryTransaction used to fund the funds.
 	Transaction Serializable
 }
 
@@ -80,6 +83,9 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 		ReadNum(&r.MigratedAt, func(err error) error {
 			return fmt.Errorf("unable to deserialize receipt migrated index: %w", err)
 		}).
+		ReadBool(&r.Final, func(err error) error {
+			return fmt.Errorf("unable to deserialize receipt final flag: %w", err)
+		}).
 		// special as the MigratedFundsEntry has no type denotation byte
 		ReadSliceOfObjects(func(seri Serializables) { r.Funds = seri }, deSeriMode, TypeDenotationNone, func(_ uint32) (Serializable, error) {
 			// there is no real selector, so we always return a fresh MigratedFundsEntry
@@ -95,10 +101,19 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 			}
 			return PayloadSelector(ty)
 		}).
+		AbortIf(func(err error) error {
+			if r.Transaction == nil {
+				return ErrReceiptMustContainATreasuryTransaction
+			}
+			return nil
+		}).
 		Done()
 }
 
 func (r *Receipt) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
+	if r.Transaction == nil {
+		return nil, ErrReceiptMustContainATreasuryTransaction
+	}
 	var migratedFundsEntriesWrittenConsumer WrittenObjectConsumer
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if migratedFundEntriesArrayRules.ValidationMode.HasMode(ArrayValidationModeLexicalOrdering) {
@@ -123,6 +138,9 @@ func (r *Receipt) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		WriteNum(r.MigratedAt, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt payload ID: %w", err)
 		}).
+		WriteBool(r.Final, func(err error) error {
+			return fmt.Errorf("unable to serialize receipt final flag: %w", err)
+		}).
 		WriteSliceOfObjects(r.Funds, deSeriMode, migratedFundsEntriesWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt funds: %w", err)
 		}).
@@ -136,6 +154,7 @@ func (r *Receipt) MarshalJSON() ([]byte, error) {
 	jsonReceiptPayload := &jsonreceiptpayload{}
 	jsonReceiptPayload.Type = int(MilestonePayloadTypeID)
 	jsonReceiptPayload.MigratedAt = int(r.MigratedAt)
+
 	jsonReceiptPayload.Funds = make([]*json.RawMessage, len(r.Funds))
 	for i, migratedFundsEntry := range r.Funds {
 		jsonMigratedFundsEntry, err := migratedFundsEntry.MarshalJSON()
@@ -145,6 +164,15 @@ func (r *Receipt) MarshalJSON() ([]byte, error) {
 		rawMsgJsonMigratedFundsEntry := json.RawMessage(jsonMigratedFundsEntry)
 		jsonReceiptPayload.Funds[i] = &rawMsgJsonMigratedFundsEntry
 	}
+
+	jsonTreasuryTransaction, err := r.Transaction.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	rawMsgJsonTreasuryTransaction := json.RawMessage(jsonTreasuryTransaction)
+	jsonReceiptPayload.Transaction = &rawMsgJsonTreasuryTransaction
+
+	jsonReceiptPayload.Final = r.Final
 
 	return json.Marshal(jsonReceiptPayload)
 }
@@ -164,9 +192,11 @@ func (r *Receipt) UnmarshalJSON(bytes []byte) error {
 
 // jsonreceiptpayload defines the json representation of a Receipt.
 type jsonreceiptpayload struct {
-	Type       int                `json:"type"`
-	MigratedAt int                `json:"migratedAt"`
-	Funds      []*json.RawMessage `json:"funds"`
+	Type        int                `json:"type"`
+	MigratedAt  int                `json:"migratedAt"`
+	Funds       []*json.RawMessage `json:"funds"`
+	Transaction *json.RawMessage   `json:"transaction"`
+	Final       bool               `json:"final"`
 }
 
 func (j *jsonreceiptpayload) ToSerializable() (Serializable, error) {
@@ -184,6 +214,22 @@ func (j *jsonreceiptpayload) ToSerializable() (Serializable, error) {
 		}
 		migratedFundsEntries[i] = migratedFundsEntry
 	}
+
+	if j.Transaction == nil {
+		return nil, fmt.Errorf("%w: JSON receipt must contain a treasury transaction", ErrInvalidJSON)
+	}
+
+	jsonTreasuryTransaction, _ := DeserializeObjectFromJSON(j.Transaction, func(ty int) (JSONSerializable, error) {
+		return &jsontreasurytransaction{}, nil
+	})
+
+	treasuryTransaction, err := jsonTreasuryTransaction.ToSerializable()
+	if err != nil {
+		return nil, err
+	}
+	payload.Transaction = treasuryTransaction
+	payload.Final = j.Final
+
 	return payload, nil
 }
 
@@ -192,77 +238,44 @@ var (
 	ErrInvalidReceiptsSet = errors.New("invalid receipt set")
 )
 
-// ValidateReceipts validates whether given the following receipts:
-//	- They all share the same Receipt.MigratedAt index
-//	- All MigratedFundsEntry objects are unique.
-//	- None of the MigratedFundsEntry objects deposits more than the max supply or zero and minimum
+// ValidateReceipt validates whether given the following receipt:
+//	- None of the MigratedFundsEntry objects deposits more than the max supply and deposits at least
 //	  MinMigratedFundsEntryDeposit tokens.
 //	- The sum of all migrated fund entries is not bigger than the total supply.
-//	- There is at most one which includes a TreasuryTransaction.
 //	- The previous unspent TreasuryOutput minus the sum of all migrated funds
 //    equals the amount of the new TreasuryOutput.
-// This function panics if the receipt slice is nil or empty and if any receipt
-// does not include any migrated fund entries. The order of the receipts does not matter.
-func ValidateReceipts(receipts []*Receipt, prevTreasuryOutput *TreasuryOutput) error {
+// This function panics if the receipt is nil, the receipt does not include any migrated fund entries or
+// the given treasury output is nil.
+func ValidateReceipt(receipt *Receipt, prevTreasuryOutput *TreasuryOutput) error {
 	switch {
-	case len(receipts) == 0:
-		panic("no receipts passed for validation")
 	case prevTreasuryOutput == nil:
 		panic("given previous treasury output is nil")
 	}
 
-	var migratedAt uint32
-	var migratedFundsSum uint64
-	var treasuryTransaction *TreasuryTransaction
-	type tailloc struct {
-		receipt int
-		index   int
-	}
-	seenTailTxHashes := make(map[LegacyTailTransactionHash]tailloc)
-	for rIndex, r := range receipts {
-		if tt := r.Treasury(); tt != nil {
-			if treasuryTransaction != nil {
-				return fmt.Errorf("%w: only one receipt can contain a treasury transaction", ErrInvalidReceiptsSet)
-			}
-			treasuryTransaction = tt
-		}
-
-		if migratedAt == 0 {
-			migratedAt = r.MigratedAt
-		}
-
-		if r.MigratedAt != migratedAt {
-			return fmt.Errorf("%w: the migrated at index must be the same across all receipts", ErrInvalidReceiptsSet)
-		}
-
-		if r.Funds == nil || len(r.Funds) == 0 {
-			panic("receipt has no migrated funds")
-		}
-
-		for fIndex, f := range r.Funds {
-			entry := f.(*MigratedFundsEntry)
-			if tailLoc, seen := seenTailTxHashes[entry.TailTransactionHash]; seen {
-				return fmt.Errorf("%w: same legacy tail transaction occurs multiple times, seen in receipt %d (index %d) and receipt %d (index %d)", ErrInvalidReceiptsSet, tailLoc.receipt, tailLoc.index, rIndex, fIndex)
-			}
-			seenTailTxHashes[entry.TailTransactionHash] = tailloc{rIndex, fIndex}
-			switch {
-			case entry.Deposit == 0:
-				return fmt.Errorf("%w: migrated fund entry at receipt %d (index %d) deposits zero", ErrInvalidReceiptsSet, rIndex, fIndex)
-			case entry.Deposit < MinMigratedFundsEntryDeposit:
-				return fmt.Errorf("%w: migrated fund entry at receipt %d (index %d) deposits less than %d", ErrInvalidReceiptsSet, rIndex, fIndex, MinMigratedFundsEntryDeposit)
-			case entry.Deposit > TokenSupply:
-				return fmt.Errorf("%w: migrated fund entry at receipt %d (index %d) deposits more than total supply", ErrInvalidReceiptsSet, rIndex, fIndex)
-			case entry.Deposit+migratedFundsSum > TokenSupply:
-				// this can't overflow because the previous case ensures that
-				return fmt.Errorf("%w: migrated fund entry at receipt %d (index %d) deposits overflows total supply", ErrInvalidReceiptsSet, rIndex, fIndex)
-			}
-
-			migratedFundsSum += entry.Deposit
-		}
-	}
-
+	treasuryTransaction := receipt.Treasury()
 	if treasuryTransaction == nil {
-		return fmt.Errorf("%w: no treasury transaction was included in any receipt", ErrInvalidReceiptsSet)
+		return ErrReceiptMustContainATreasuryTransaction
+	}
+
+	if receipt.Funds == nil || len(receipt.Funds) == 0 {
+		panic("receipt has no migrated funds")
+	}
+
+	var migratedFundsSum uint64
+	for fIndex, f := range receipt.Funds {
+		entry := f.(*MigratedFundsEntry)
+
+		switch {
+		case entry.Deposit < MinMigratedFundsEntryDeposit:
+			return fmt.Errorf("%w: migrated fund entry at index %d deposits less than %d", ErrInvalidReceiptsSet, fIndex, MinMigratedFundsEntryDeposit)
+		case entry.Deposit > TokenSupply:
+			return fmt.Errorf("%w: migrated fund entry at index %d deposits more than total supply", ErrInvalidReceiptsSet, fIndex)
+		case entry.Deposit+migratedFundsSum > TokenSupply:
+			// this can't overflow because the previous case ensures that
+			return fmt.Errorf("%w: migrated fund entry at index %d overflows total supply", ErrInvalidReceiptsSet, fIndex)
+		}
+
+		migratedFundsSum += entry.Deposit
 	}
 
 	prevTreasury := prevTreasuryOutput.Amount

@@ -192,13 +192,14 @@ func randMigratedFundsEntry() (*iota.MigratedFundsEntry, []byte) {
 	}, b.Bytes()
 }
 
-func randReceipt(withTx bool) (*iota.Receipt, []byte) {
-	receipt := &iota.Receipt{MigratedAt: 1000}
+func randReceipt() (*iota.Receipt, []byte) {
+	receipt := &iota.Receipt{MigratedAt: 1000, Final: true}
 
 	var b bytes.Buffer
 
 	must(binary.Write(&b, binary.LittleEndian, iota.ReceiptPayloadTypeID))
 	must(binary.Write(&b, binary.LittleEndian, receipt.MigratedAt))
+	must(b.WriteByte(1))
 
 	migFundsEntriesBytes := iota.LexicalOrderedByteSlices{}
 	migFundsEntriesCount := rand.Intn(10) + 1
@@ -218,11 +219,6 @@ func randReceipt(withTx bool) (*iota.Receipt, []byte) {
 			panic(err)
 		}
 		receipt.Funds = append(receipt.Funds, migFundsEntry)
-	}
-
-	if !withTx {
-		must(binary.Write(&b, binary.LittleEndian, uint32(0)))
-		return receipt, b.Bytes()
 	}
 
 	randTreasuryTx, randTreasuryTxBytes := randTreasuryTransaction()
