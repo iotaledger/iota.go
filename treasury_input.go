@@ -39,10 +39,10 @@ func (ti *TreasuryInput) Serialize(deSeriMode DeSerializationMode) (data []byte,
 }
 
 func (ti *TreasuryInput) MarshalJSON() ([]byte, error) {
-	jsonTreasuryInput := &jsontreasuryinput{}
-	jsonTreasuryInput.Type = int(AddressEd25519)
-	jsonTreasuryInput.MilestoneHash = hex.EncodeToString(ti[:])
-	return json.Marshal(jsonTreasuryInput)
+	return json.Marshal(&jsontreasuryinput{
+		Type:          int(InputTreasury),
+		MilestoneHash: hex.EncodeToString(ti[:]),
+	})
 }
 
 func (ti *TreasuryInput) UnmarshalJSON(bytes []byte) error {

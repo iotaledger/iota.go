@@ -49,11 +49,10 @@ func (t *TreasuryOutput) Serialize(deSeriMode DeSerializationMode) ([]byte, erro
 }
 
 func (t *TreasuryOutput) MarshalJSON() ([]byte, error) {
-	jsonDep := &jsontreasuryoutput{
+	return json.Marshal(&jsontreasuryoutput{
 		Type:   int(OutputTreasuryOutput),
 		Amount: int(t.Amount),
-	}
-	return json.Marshal(jsonDep)
+	})
 }
 
 func (t *TreasuryOutput) UnmarshalJSON(bytes []byte) error {
