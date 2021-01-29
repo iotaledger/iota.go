@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iotaledger/iota.go"
+	"github.com/iotaledger/iota.go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

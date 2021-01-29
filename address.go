@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/iotaledger/iota.go/bech32"
 	"github.com/iotaledger/iota.go/encoding/t5b1"
-	"github.com/iotaledger/iota.go/legacy/trinary"
+	"github.com/iotaledger/iota.go/trinary"
+	"github.com/iotaledger/iota.go/v2/bech32"
 	"golang.org/x/crypto/blake2b"
 )
 

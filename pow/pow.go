@@ -6,10 +6,10 @@ import (
 	"encoding/binary"
 	"math"
 
+	legacy "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/curl"
 	"github.com/iotaledger/iota.go/encoding/b1t6"
-	"github.com/iotaledger/iota.go/legacy"
-	"github.com/iotaledger/iota.go/legacy/curl"
-	"github.com/iotaledger/iota.go/legacy/trinary"
+	"github.com/iotaledger/iota.go/trinary"
 	_ "golang.org/x/crypto/blake2b" // BLAKE2b_256 is the default hash function for the PoW digest
 )
 
