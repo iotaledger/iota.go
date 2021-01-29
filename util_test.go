@@ -2,7 +2,6 @@ package iota_test
 
 import (
 	"bytes"
-	"crypto/ed25519"
 	"encoding/binary"
 	"fmt"
 	"math/rand"
@@ -14,6 +13,7 @@ import (
 	"github.com/iotaledger/iota.go/encoding/t5b1"
 	"github.com/iotaledger/iota.go/trinary"
 	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/iota.go/v2/ed25519"
 )
 
 func must(err error) {

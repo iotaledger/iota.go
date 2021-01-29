@@ -1,9 +1,10 @@
 package iota
 
 import (
-	"crypto/ed25519"
 	"errors"
 	"fmt"
+
+	"github.com/iotaledger/iota.go/v2/ed25519"
 )
 
 var (

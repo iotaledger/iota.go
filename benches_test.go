@@ -1,10 +1,10 @@
 package iota_test
 
 import (
-	"crypto/ed25519"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/iota.go/v2/ed25519"
 )
 
 func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {

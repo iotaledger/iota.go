@@ -1,11 +1,11 @@
 package iota_test
 
 import (
-	"crypto/ed25519"
 	"errors"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/iota.go/v2/ed25519"
 	"github.com/stretchr/testify/assert"
 )
 

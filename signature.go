@@ -2,12 +2,12 @@ package iota
 
 import (
 	"bytes"
-	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 
+	"github.com/iotaledger/iota.go/v2/ed25519"
 	_ "golang.org/x/crypto/blake2b"
 )
 

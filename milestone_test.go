@@ -2,7 +2,6 @@ package iota_test
 
 import (
 	"bytes"
-	"crypto/ed25519"
 	"encoding/json"
 	"errors"
 	"math/rand"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/iota.go/v2/ed25519"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

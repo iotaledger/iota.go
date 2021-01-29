@@ -1,7 +1,6 @@
 package iota
 
 import (
-	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"github.com/iotaledger/iota.go/encoding/t5b1"
 	"github.com/iotaledger/iota.go/trinary"
 	"github.com/iotaledger/iota.go/v2/bech32"
+	"github.com/iotaledger/iota.go/v2/ed25519"
 	"golang.org/x/crypto/blake2b"
 )
 

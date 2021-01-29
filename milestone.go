@@ -3,13 +3,13 @@ package iota
 import (
 	"bytes"
 	"context"
-	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
 
+	"github.com/iotaledger/iota.go/v2/ed25519"
 	"golang.org/x/crypto/blake2b"
 	"google.golang.org/grpc"
 
