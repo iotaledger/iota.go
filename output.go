@@ -14,6 +14,8 @@ const (
 	OutputSigLockedSingleOutput OutputType = iota
 	// Like OutputSigLockedSingleOutput but it is used to increase the allowance/amount of dust outputs on a given address.
 	OutputSigLockedDustAllowanceOutput
+	// Denotes the type of the TreasuryOutput.
+	OutputTreasuryOutput
 	// OutputSigLockedDustAllowanceOutputMinDeposit defines the minimum deposit amount of a SigLockedDustAllowanceOutput.
 	OutputSigLockedDustAllowanceOutputMinDeposit uint64 = 1_000_000
 )
@@ -46,6 +48,8 @@ func OutputSelector(outputType uint32) (Serializable, error) {
 		seri = &SigLockedSingleOutput{}
 	case OutputSigLockedDustAllowanceOutput:
 		seri = &SigLockedDustAllowanceOutput{}
+	case OutputTreasuryOutput:
+		seri = &TreasuryOutput{}
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownOutputType, outputType)
 	}
@@ -158,6 +162,8 @@ func jsonoutputselector(ty int) (JSONSerializable, error) {
 		obj = &jsonsiglockedsingleoutput{}
 	case OutputSigLockedDustAllowanceOutput:
 		obj = &jsonsiglockeddustallowanceoutput{}
+	case OutputTreasuryOutput:
+		obj = &jsontreasuryoutput{}
 	default:
 		return nil, fmt.Errorf("unable to decode output type from JSON: %w", ErrUnknownOutputType)
 	}

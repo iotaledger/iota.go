@@ -48,6 +48,10 @@ func PayloadSelector(payloadType uint32) (Serializable, error) {
 		seri = &Milestone{}
 	case IndexationPayloadTypeID:
 		seri = &Indexation{}
+	case ReceiptPayloadTypeID:
+		seri = &Receipt{}
+	case TreasuryTransactionPayloadTypeID:
+		seri = &TreasuryTransaction{}
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownPayloadType, payloadType)
 	}
@@ -126,6 +130,15 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 		}).
 		ReadPayload(func(seri Serializable) { m.Payload = seri }, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to deserialize message's inner payload: %w", err)
+		}, func(ty uint32) (Serializable, error) {
+			switch ty {
+			case TransactionPayloadTypeID:
+			case IndexationPayloadTypeID:
+			case MilestonePayloadTypeID:
+			default:
+				return nil, fmt.Errorf("a message can only contain a transaction, indexation or milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
+			}
+			return PayloadSelector(ty)
 		}).
 		ReadNum(&m.Nonce, func(err error) error {
 			return fmt.Errorf("unable to deserialize message nonce: %w", err)

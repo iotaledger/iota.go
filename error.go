@@ -12,6 +12,10 @@ var (
 	// Returned when a denoted type for a given object is mismatched.
 	// For example, while trying to deserialize a signature unlock block, a reference unlock block is seen.
 	ErrDeserializationTypeMismatch = errors.New("data type is invalid for deserialization")
+	// Returned for unsupported payload types.
+	ErrUnsupportedPayloadType = errors.New("unsupported payload type")
+	// Returned for unsupported object types.
+	ErrUnsupportedObjectType = errors.New("unsupported object type")
 	// Returned for unknown payload types.
 	ErrUnknownPayloadType = errors.New("unknown payload type")
 	// Returned for unknown address types.
@@ -38,6 +42,10 @@ var (
 	ErrArrayValidationOrderViolatesLexicalOrder = errors.New("array elements must be in their lexical order (byte wise)")
 	// Returned if there is not enough data available to deserialize a given object.
 	ErrDeserializationNotEnoughData = errors.New("not enough data for deserialization")
+	// Returned when a bool value is tried to be read but it is neither 0 or 1.
+	ErrDeserializationInvalidBoolValue = errors.New("invalid bool value")
+	// Returned if the size of a presumably read static object does not match the specified size.
+	ErrDeserializationStaticSizeMismatch = errors.New("object did not match the specified static size")
 	// Returned if a length denotation exceeds a specified limit.
 	ErrDeserializationLengthInvalid = errors.New("length denotation invalid")
 	// Returned if not all bytes were consumed during deserialization of a given type.

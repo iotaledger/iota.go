@@ -13,6 +13,9 @@ type (
 	// ArrayOf64Bytes is an array of 64 bytes.
 	ArrayOf64Bytes = [64]byte
 
+	// ArrayOf49Bytes is an array of 49 bytes.
+	ArrayOf49Bytes = [49]byte
+
 	// SliceOfArraysOf32Bytes is a slice of arrays of which each is 32 bytes.
 	SliceOfArraysOf32Bytes = []ArrayOf32Bytes
 
@@ -99,6 +102,23 @@ func (s *Serializer) WriteNum(v interface{}, errProducer ErrProducer) *Serialize
 		return s
 	}
 	if err := binary.Write(&s.buf, binary.LittleEndian, v); err != nil {
+		s.err = errProducer(err)
+	}
+	return s
+}
+
+// WriteBool writes the given bool to the Serializer.
+func (s *Serializer) WriteBool(v bool, errProducer ErrProducer) *Serializer {
+	if s.err != nil {
+		return s
+	}
+
+	var val byte
+	if v {
+		val = 1
+	}
+
+	if err := s.buf.WriteByte(val); err != nil {
 		s.err = errProducer(err)
 	}
 	return s
@@ -360,6 +380,32 @@ func (d *Deserializer) Skip(skip int, errProducer ErrProducer) *Deserializer {
 	return d
 }
 
+// ReadBool reads a bool into dest.
+func (d *Deserializer) ReadBool(dest *bool, errProducer ErrProducer) *Deserializer {
+	if d.err != nil {
+		return d
+	}
+
+	if len(d.src) == 0 {
+		d.err = errProducer(ErrDeserializationNotEnoughData)
+		return d
+	}
+
+	switch d.src[0] {
+	case 0:
+		*dest = false
+	case 1:
+		*dest = true
+	default:
+		d.err = errProducer(ErrDeserializationInvalidBoolValue)
+		return d
+	}
+
+	d.offset += OneByte
+	d.src = d.src[OneByte:]
+	return d
+}
+
 // ReadNum reads a number into dest.
 func (d *Deserializer) ReadNum(dest interface{}, errProducer ErrProducer) *Deserializer {
 	if d.err != nil {
@@ -469,6 +515,26 @@ func (d *Deserializer) ReadArrayOf64Bytes(arr *ArrayOf64Bytes, errProducer ErrPr
 		return d
 	}
 	const length = 64
+
+	l := len(d.src)
+	if l < length {
+		d.err = errProducer(ErrDeserializationNotEnoughData)
+		return d
+	}
+
+	copy(arr[:], d.src[:length])
+	d.offset += length
+	d.src = d.src[length:]
+
+	return d
+}
+
+// ReadArrayOf49Bytes reads an array of 49 bytes.
+func (d *Deserializer) ReadArrayOf49Bytes(arr *ArrayOf49Bytes, errProducer ErrProducer) *Deserializer {
+	if d.err != nil {
+		return d
+	}
+	const length = 49
 
 	l := len(d.src)
 	if l < length {
@@ -636,6 +702,8 @@ func (d *Deserializer) ReadObject(f ReadObjectConsumerFunc, deSeriMode DeSeriali
 			return d
 		}
 		ty = uint32(d.src[0])
+	case TypeDenotationNone:
+		// object has no type denotation
 	}
 
 	seri, err := serSel(ty)
@@ -692,9 +760,7 @@ func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode 
 
 		var seri Serializable
 		// this mutates d.src/d.offset
-		d.ReadObject(func(readSeri Serializable) {
-			seri = readSeri
-		}, deSeriMode, typeDen, serSel, func(err error) error {
+		d.ReadObject(func(readSeri Serializable) { seri = readSeri }, deSeriMode, typeDen, serSel, func(err error) error {
 			return errProducer(err)
 		})
 
@@ -721,7 +787,7 @@ func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode 
 }
 
 // ReadPayload reads a payload.
-func (d *Deserializer) ReadPayload(f ReadObjectConsumerFunc, deSeriMode DeSerializationMode, errProducer ErrProducer) *Deserializer {
+func (d *Deserializer) ReadPayload(f ReadObjectConsumerFunc, deSeriMode DeSerializationMode, errProducer ErrProducer, selector ...SerializableSelectorFunc) *Deserializer {
 	if d.err != nil {
 		return d
 	}
@@ -749,7 +815,12 @@ func (d *Deserializer) ReadPayload(f ReadObjectConsumerFunc, deSeriMode DeSerial
 		return d
 	}
 
-	payload, err := PayloadSelector(binary.LittleEndian.Uint32(d.src))
+	sel := PayloadSelector
+	if len(selector) > 0 {
+		sel = selector[0]
+	}
+
+	payload, err := sel(binary.LittleEndian.Uint32(d.src))
 	if err != nil {
 		d.err = errProducer(err)
 		return d
