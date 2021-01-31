@@ -201,13 +201,13 @@ func RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(slice SliceOfArraysOf32Bytes)
 	orderedArray := make(LexicalOrdered32ByteArrays, len(slice))
 
 	uniqueElements := 0
-	for i, v := range slice {
+	for _, v := range slice {
 		k := string(v[:])
 		if _, has := seen[k]; has {
 			continue
 		}
 		seen[k] = struct{}{}
-		orderedArray[i] = v
+		orderedArray[uniqueElements] = v
 		uniqueElements++
 	}
 	orderedArray = orderedArray[:uniqueElements]
