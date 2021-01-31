@@ -310,7 +310,10 @@ func (api *NodeAPI) Tips() (*NodeTipsResponse, error) {
 // The node will take care of filling missing information.
 // This function returns the finalized message created by the node.
 func (api *NodeAPI) SubmitMessage(m *Message) (*Message, error) {
-	data, err := m.Serialize(DeSeriModePerformValidation)
+	// Do not check the message because the validation would fail if
+	// no parents were given. The node will first add this missing information and
+	// validate the message afterwards.
+	data, err := m.Serialize(DeSeriModeNoValidation)
 	if err != nil {
 		return nil, err
 	}
