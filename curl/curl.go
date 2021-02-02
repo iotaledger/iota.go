@@ -61,13 +61,9 @@ func (c *Curl) squeeze(hash Trits) {
 	}
 	c.direction = SpongeSqueezing
 
-	_ = hash[HashTrinarySize-1]
-	for i := uint(0); i <= HashTrinarySize-1; i++ {
-		if c.p[0].bit(i) != 0 {
-			hash[i] = 1
-		} else if c.n[0].bit(i) != 0 {
-			hash[i] = -1
-		}
+	hash = hash[:HashTrinarySize]
+	for i := uint(0); i < HashTrinarySize; i++ {
+		hash[i] = int8(c.p[0].bit(i)) - int8(c.n[0].bit(i)) // avoid branching
 	}
 }
 
@@ -114,10 +110,11 @@ func (c *Curl) Absorb(in Trits) error {
 	for len(in) >= HashTrinarySize {
 		var p, n uint256
 		for i := uint(0); i < HashTrinarySize; i++ {
-			switch in[i] {
-			case 1:
+			v := in[i]
+			switch {
+			case v > 0:
 				p.setBit(i)
-			case -1:
+			case v < 0:
 				n.setBit(i)
 			}
 		}
