@@ -42,6 +42,12 @@ func (c *Curl) Clone() *Curl {
 	}
 }
 
+// CopyState copies the content of the Curl state buffer into l and h.
+func (c *Curl) CopyState(l, h []uint) {
+	copy(l, c.l[:])
+	copy(h, c.h[:])
+}
+
 // Absorb fills the states of the sponge with src; each element of src must have the length tritsCount.
 // The value tritsCount has to be a multiple of HashTrinarySize.
 func (c *Curl) Absorb(src []trinary.Trits, tritsCount int) error {
