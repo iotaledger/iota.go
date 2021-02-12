@@ -1,10 +1,12 @@
 package ed25519_test
 
 import (
+	"bytes"
 	"compress/gzip"
-	"crypto/rand"
+	std "crypto/ed25519"
 	"encoding/csv"
 	"encoding/hex"
+	"math/rand"
 	"os"
 	"path"
 	"testing"
@@ -14,8 +16,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var nullSeed = make([]byte, ed25519.SeedSize)
+
+func TestGenerateKey(t *testing.T) {
+	public, private, err := ed25519.GenerateKey(bytes.NewReader(nullSeed))
+	require.NoError(t, err)
+	assert.Equalf(t, public, private.Public(), "private.Public() is not Equal to public")
+
+	// calling GenerateKey with the same entropy should return the same keys
+	pubClone, privClone, _ := ed25519.GenerateKey(bytes.NewReader(nullSeed))
+	assert.Truef(t, private.Equal(privClone), "private keys are not equal")
+	assert.Truef(t, public.Equal(pubClone), "public keys are not equal")
+
+	// calling GenerateKey with a different entropy should return different keys
+	pubOther, privOther, _ := ed25519.GenerateKey(bytes.NewReader((&[32]byte{1})[:]))
+	assert.False(t, public.Equal(pubOther), "private keys are equal")
+	assert.False(t, private.Equal(privOther), "public keys are equal")
+
+	_, _, err = ed25519.GenerateKey(new(bytes.Reader))
+	assert.Errorf(t, err, "calling GenerateKey(rand) from insufficient entropy is invalid")
+}
+
 func TestSignVerify(t *testing.T) {
-	publicKey, privateKey, _ := ed25519.GenerateKey(rand.Reader)
+	publicKey, privateKey, _ := ed25519.GenerateKey(bytes.NewReader(nullSeed))
 
 	message := []byte("test message")
 	sig := ed25519.Sign(privateKey, message)
@@ -23,15 +46,6 @@ func TestSignVerify(t *testing.T) {
 
 	wrongMessage := []byte("wrong message")
 	assert.False(t, ed25519.Verify(publicKey, wrongMessage, sig), "signature of different message accepted")
-}
-
-func TestEqual(t *testing.T) {
-	public, private, _ := ed25519.GenerateKey(rand.Reader)
-	assert.Equalf(t, public, private.Public(), " private.Public() is not Equal to public")
-
-	otherPub, otherPriv, _ := ed25519.GenerateKey(rand.Reader)
-	assert.NotEqual(t, public, otherPub)
-	assert.NotEqual(t, private, otherPriv)
 }
 
 func TestMalleability(t *testing.T) {
@@ -53,7 +67,7 @@ func TestMalleability(t *testing.T) {
 		0xb1, 0x08, 0xc3, 0xbd, 0xae, 0x36, 0x9e, 0xf5, 0x49, 0xfa,
 	}
 
-	require.False(t, ed25519.Verify(publicKey, message, sig))
+	assert.False(t, ed25519.Verify(publicKey, message, sig))
 }
 
 func TestGolden(t *testing.T) {
@@ -82,20 +96,38 @@ func TestGolden(t *testing.T) {
 		s := sm[:ed25519.SignatureSize]
 
 		privateKey := ed25519.NewKeyFromSeed(sk[:ed25519.SeedSize])
-		assert.EqualValues(t, sk, privateKey, "different private key")
-		assert.EqualValues(t, sk[:ed25519.SeedSize], privateKey.Seed(), "different seed")
+		assert.EqualValuesf(t, sk, privateKey, "different private key")
+		assert.EqualValuesf(t, sk[:ed25519.SeedSize], privateKey.Seed(), "different seed")
 
 		publicKey := privateKey.Public().(ed25519.PublicKey)
-		assert.EqualValues(t, pk, publicKey, "different public key")
+		assert.EqualValuesf(t, pk, publicKey, "different public key")
 
 		sig := ed25519.Sign(privateKey, m)
-		assert.Equal(t, s, sig, "different signature")
-		assert.True(t, ed25519.Verify(publicKey, m, sig), "invalid signature")
+		assert.Equalf(t, s, sig, "different signature")
+		assert.Truef(t, ed25519.Verify(publicKey, m, sig), "invalid signature")
+	}
+}
+
+func TestSTDLib(t *testing.T) {
+	// test random seeds against crypto/ed25519
+	rand.Seed(1)
+	seed := make([]byte, ed25519.SeedSize)
+	for i := 0; i < 1000; i++ {
+		rand.Read(seed)
+		pub, priv, _ := ed25519.GenerateKey(bytes.NewReader(seed))
+		pubExpected, privExpected, _ := std.GenerateKey(bytes.NewReader(seed))
+		assert.EqualValuesf(t, privExpected, priv, "different private key")
+		assert.EqualValuesf(t, pubExpected, pub, "different public key")
+
+		message := []byte("test message")
+		sig := ed25519.Sign(priv, message)
+		sigExpected := std.Sign(privExpected, message)
+		assert.Equalf(t, sigExpected, sig, "different signature")
 	}
 }
 
 func BenchmarkSign(b *testing.B) {
-	_, privateKey, _ := ed25519.GenerateKey(rand.Reader)
+	_, privateKey, _ := ed25519.GenerateKey(nil)
 	data := make([][64]byte, b.N)
 	for i := range data {
 		if _, err := rand.Read(data[i][:]); err != nil {
@@ -110,7 +142,7 @@ func BenchmarkSign(b *testing.B) {
 }
 
 func BenchmarkVerify(b *testing.B) {
-	publicKey, privateKey, _ := ed25519.GenerateKey(rand.Reader)
+	publicKey, privateKey, _ := ed25519.GenerateKey(nil)
 	data := make([]struct {
 		message []byte
 		sig     []byte
