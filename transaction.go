@@ -306,7 +306,7 @@ func (t *Transaction) SemanticallyValidate(utxos InputToOutputMapping, semValFun
 		return fmt.Errorf("%w: transaction is not *TransactionEssence", ErrInvalidTransactionEssence)
 	}
 
-	txEssenceBytes, err := txEssence.Serialize(DeSeriModeNoValidation)
+	txEssenceBytes, err := txEssence.SigningMessage()
 	if err != nil {
 		return err
 	}

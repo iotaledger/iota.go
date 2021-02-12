@@ -1,7 +1,6 @@
 package iota_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"math/rand"
@@ -63,14 +62,6 @@ func TestMilestone_Serialize(t *testing.T) {
 			assert.Equal(t, tt.target, edData)
 		})
 	}
-}
-
-func TestMilestone_Essence(t *testing.T) {
-	ms, msBytes := randMilestone(nil)
-	msBytes = msBytes[iota.TypeDenotationByteSize:]
-	msEssence, err := ms.Essence()
-	require.NoError(t, err)
-	require.True(t, bytes.Equal(msBytes[:len(msEssence)], msEssence))
 }
 
 func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {

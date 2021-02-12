@@ -53,7 +53,7 @@ func (b *TransactionBuilder) AddIndexationPayload(payload *Indexation) *Transact
 func (b *TransactionBuilder) Build(signer AddressSigner) (*Transaction, error) {
 
 	// sort inputs and outputs by their serialized byte order
-	txEssenceData, err := b.essence.Serialize(DeSeriModePerformValidation | DeSeriModePerformLexicalOrdering)
+	txEssenceData, err := b.essence.SigningMessage()
 	if err != nil {
 		return nil, err
 	}

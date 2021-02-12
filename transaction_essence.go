@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+
+	"golang.org/x/crypto/blake2b"
 )
 
 // Defines the type of transaction.
@@ -86,6 +88,16 @@ type TransactionEssence struct {
 func (u *TransactionEssence) SortInputsOutputs() {
 	sort.Sort(SortedSerializables(u.Inputs))
 	sort.Sort(SortedSerializables(u.Outputs))
+}
+
+// SigningMessage returns the to be signed message.
+func (u *TransactionEssence) SigningMessage() ([]byte, error) {
+	essenceBytes, err := u.Serialize(DeSeriModePerformValidation | DeSeriModePerformLexicalOrdering)
+	if err != nil {
+		return nil, err
+	}
+	essenceBytesHash := blake2b.Sum256(essenceBytes)
+	return essenceBytesHash[:], nil
 }
 
 func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
