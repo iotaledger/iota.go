@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/iotaledger/iota.go/v2/ed25519"
 	"golang.org/x/crypto/blake2b"
 	"google.golang.org/grpc"
 
+	"github.com/iotaledger/iota.go/v2/ed25519"
 	"github.com/iotaledger/iota.go/v2/remotesigner"
 )
 
