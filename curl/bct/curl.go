@@ -42,6 +42,12 @@ func (c *Curl) Clone() *Curl {
 	}
 }
 
+// CopyState copies the content of the Curl state buffer into l and h.
+func (c *Curl) CopyState(l, h []uint) {
+	copy(l, c.l[:])
+	copy(h, c.h[:])
+}
+
 // Absorb fills the states of the sponge with src; each element of src must have the length tritsCount.
 // The value tritsCount has to be a multiple of HashTrinarySize.
 func (c *Curl) Absorb(src []trinary.Trits, tritsCount int) error {
@@ -96,40 +102,22 @@ func (c *Curl) Squeeze(dst []trinary.Trits, tritsCount int) error {
 
 // in sets the idx-th entry of the internal state to src.
 func (c *Curl) in(src trinary.Trits, idx uint) {
-	// bounds check hint to compiler
-	if len(src) < consts.HashTrinarySize {
-		panic(consts.ErrInvalidTritsLength)
-	}
-
-	idx &= bits.UintSize - 1 // hint to the compiler that shifts don't need guard code
+	src = src[:consts.HashTrinarySize] // bounds check hint to compiler
+	idx &= bits.UintSize - 1           // hint to the compiler that shifts don't need guard code
 	m := ^(uint(1) << idx)
 	for i := 0; i < consts.HashTrinarySize; i++ {
-		switch src[i] {
-		case 1:
-			c.l[i] &= m
-		case -1:
-			c.h[i] &= m
-		}
+		s := src[i]                    // avoid branching
+		c.l[i] &= bool2int(s <= 0) | m // if s > 0, clear the l-bit
+		c.h[i] &= bool2int(s >= 0) | m // if s < 0, clear the h-bit
 	}
 }
 
 // out extracts the idx-th entry of the internal state to dst.
 func (c *Curl) out(dst trinary.Trits, idx uint) {
-	// bounds check hint to compiler
-	if len(dst) < consts.HashTrinarySize {
-		panic(consts.ErrInvalidTritsLength)
-	}
-
-	idx &= bits.UintSize - 1 // hint to the compiler that idx is always smaller UintSize
-	m := uint(1) << idx
+	dst = dst[:consts.HashTrinarySize] // bounds check hint to compiler
+	idx &= bits.UintSize - 1           // hint to the compiler that shifts don't need guard code
 	for i := 0; i < consts.HashTrinarySize; i++ {
-		l, h := c.l[i]&m, c.h[i]&m
-		switch {
-		case l == 0:
-			dst[i] = 1
-		case h == 0:
-			dst[i] = -1
-		}
+		dst[i] = int8((c.h[i]>>idx)&1) - int8((c.l[i]>>idx)&1) // avoid branching
 	}
 }
 
@@ -138,4 +126,13 @@ func (c *Curl) transform() {
 	var ltmp, htmp [curl.StateSize]uint
 	transform(&ltmp, &htmp, &c.l, &c.h, curl.NumRounds)
 	c.l, c.h = ltmp, htmp
+}
+
+// bool2int returns 0 when b is false and -1 otherwise.
+// bool2int can be optimized by the compiler to not use conditional branching.
+func bool2int(b bool) uint {
+	if b {
+		return ^uint(0)
+	}
+	return 0
 }
