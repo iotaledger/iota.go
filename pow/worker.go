@@ -65,6 +65,7 @@ func (w *Worker) Mine(ctx context.Context, data []byte, targetScore float64) (ui
 			return
 		}
 	}()
+
 	// compute the minimum numbers of trailing zeros required to get a PoW score ≥ targetScore
 	targetZeros := uint(math.Ceil(math.Log(float64(len(data)+nonceBytes)*targetScore) / ln3))
 
