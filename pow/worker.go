@@ -96,7 +96,7 @@ func (w *Worker) Mine(ctx context.Context, data []byte, targetScore float64) (ui
 
 func (w *Worker) worker(powDigest []byte, startNonce uint64, target uint, done *uint32, counter *uint64) (uint64, error) {
 	if target > legacy.HashTrinarySize {
-		panic("invalid trailing zeroes target")
+		panic("pow: invalid trailing zeros target")
 	}
 
 	// use batched Curl hashing
@@ -123,7 +123,7 @@ func (w *Worker) worker(powDigest []byte, startNonce uint64, target uint, done *
 		if err := c.Absorb(buf, legacy.HashTrinarySize); err != nil {
 			return 0, err
 		}
-		c.CopyState(l[:], h[:]) // the first 243 entries of the state correspond to the computed hashes
+		c.CopyState(l[:], h[:]) // the first 243 entries of the state correspond to the resulting hashes
 		atomic.AddUint64(counter, bct.MaxBatchSize)
 
 		// check the state whether it corresponds to a hash with sufficient amount of trailing zeros

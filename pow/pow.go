@@ -22,6 +22,10 @@ const (
 
 // Score returns the PoW score of msg.
 func Score(msg []byte) float64 {
+	if len(msg) < nonceBytes {
+		panic("pow: invalid message length")
+	}
+
 	h := Hash.New()
 	dataLen := len(msg) - nonceBytes
 	// the PoW digest is the hash of msg without the nonce
