@@ -156,7 +156,7 @@ func (m *Milestone) ID() (*MilestoneID, error) {
 
 // Essence returns the essence bytes (the bytes to be signed) of the Milestone.
 func (m *Milestone) Essence() ([]byte, error) {
-	return NewSerializer().
+	essenceBytes, err := NewSerializer().
 		AbortIf(func(err error) error {
 			if len(m.PublicKeys) < MinPublicKeysInAMilestone {
 				return fmt.Errorf("unable to serialize milestone as essence: %w", ErrMilestoneTooFewPublicKeys)
@@ -182,6 +182,11 @@ func (m *Milestone) Essence() ([]byte, error) {
 			return fmt.Errorf("unable to serialize milestone receipt for essence: %w", err)
 		}).
 		Serialize()
+	if err != nil {
+		return nil, err
+	}
+	essenceHash := blake2b.Sum256(essenceBytes)
+	return essenceHash[:], nil
 }
 
 // VerifySignatures verifies that min. minSigThreshold signatures occur in the Milestone and that all

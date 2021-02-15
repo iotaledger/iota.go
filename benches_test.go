@@ -63,7 +63,7 @@ func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Essence.Serialize(iota.DeSeriModeNoValidation)
+	txEssenceData, err := txPayload.Essence.(*iota.TransactionEssence).SigningMessage()
 	must(err)
 
 	seed := randEd25519Seed()
@@ -79,7 +79,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Essence.Serialize(iota.DeSeriModeNoValidation)
+	txEssenceData, err := txPayload.Essence.(*iota.TransactionEssence).SigningMessage()
 	must(err)
 
 	seed := randEd25519Seed()
