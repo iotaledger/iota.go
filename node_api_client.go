@@ -89,6 +89,10 @@ const (
 	// GET returns the outputIDs for all outputs of this address (optional query parameters: "include-spent").
 	NodeAPIRouteAddressEd25519Outputs = "/api/v1/addresses/ed25519/%s/outputs"
 
+	// NodeAPIRouteTreasury is the route for getting the current treasury.
+	// GET returns the treasury.
+	NodeAPIRouteTreasury = "/api/v1/treasury"
+
 	// NodeAPIRoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
@@ -542,6 +546,23 @@ func (api *NodeAPI) OutputIDsByEd25519Address(address string, includeSpentOutput
 
 	res := &AddressOutputsResponse{}
 	_, err := api.do(http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// TreasuryResponse defines the response of a GET treasury REST API call.
+type TreasuryResponse struct {
+	MilestoneID string `json:"milestoneId"`
+	Amount      uint64 `json:"amount"`
+}
+
+// Treasury gets the current treasury.
+func (api *NodeAPI) Treasury() (*TreasuryResponse, error) {
+	res := &TreasuryResponse{}
+	_, err := api.do(http.MethodGet, NodeAPIRouteTreasury, nil, res)
 	if err != nil {
 		return nil, err
 	}
