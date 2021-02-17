@@ -368,7 +368,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 	if deSeriMode.HasMode(DeSeriModePerformValidation) {
 		if m.Receipt != nil {
-			if _, isReceiptPayload := m.Receipt.(*Indexation); !isReceiptPayload {
+			if _, isReceiptPayload := m.Receipt.(*Receipt); !isReceiptPayload {
 				return nil, fmt.Errorf("%w: milestones only allow embedded receipt payloads but got %T instead", ErrInvalidBytes, m.Receipt)
 			}
 		}
