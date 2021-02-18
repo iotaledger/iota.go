@@ -501,7 +501,7 @@ func (api *NodeAPI) OutputByID(utxoID UTXOInputID) (*NodeOutputResponse, error) 
 
 // AddressBalanceResponse defines the response of a GET addresses REST API call.
 type AddressBalanceResponse struct {
-	// The type of the address (0=WOTS, 1=Ed25519).
+	// The type of the address.
 	AddressType byte `json:"addressType"`
 	// The hex encoded address.
 	Address string `json:"address"`
@@ -524,7 +524,7 @@ func (api *NodeAPI) BalanceByEd25519Address(address string) (*AddressBalanceResp
 
 // AddressOutputsResponse defines the response of a GET outputs by address REST API call.
 type AddressOutputsResponse struct {
-	// The type of the address (0=WOTS, 1=Ed25519).
+	// The type of the address.
 	AddressType byte `json:"addressType"`
 	// The hex encoded address.
 	Address string `json:"address"`

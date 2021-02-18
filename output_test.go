@@ -22,14 +22,6 @@ func TestSigLockedSingleOutput_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			dep, depData := randSigLockedSingleOutput(iota.AddressWOTS)
-			return test{"ok wots", depData, dep, nil}
-		}(),
-		func() test {
-			dep, depData := randSigLockedSingleOutput(iota.AddressWOTS)
-			return test{"not enough data wots", depData[:5], dep, iota.ErrDeserializationNotEnoughData}
-		}(),
-		func() test {
 			dep, depData := randSigLockedSingleOutput(iota.AddressEd25519)
 			return test{"ok ed25519", depData, dep, nil}
 		}(),

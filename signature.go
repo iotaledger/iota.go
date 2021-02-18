@@ -15,10 +15,8 @@ import (
 type SignatureType = byte
 
 const (
-	// Denotes a WOTS signature.
-	SignatureWOTS SignatureType = iota
 	// Denotes an Ed25519 signature.
-	SignatureEd25519
+	SignatureEd25519 SignatureType = iota
 
 	// The size of a serialized Ed25519 signature with its type denoting byte and public key.
 	Ed25519SignatureSerializedBytesSize = SmallTypeDenotationByteSize + ed25519.PublicKeySize + ed25519.SignatureSize
@@ -35,38 +33,12 @@ var (
 func SignatureSelector(sigType uint32) (Serializable, error) {
 	var seri Serializable
 	switch byte(sigType) {
-	case SignatureWOTS:
-		seri = &WOTSSignature{}
 	case SignatureEd25519:
 		seri = &Ed25519Signature{}
 	default:
 		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownSignatureType, sigType)
 	}
 	return seri, nil
-}
-
-// WOTSSignature defines a WOTS signature.
-type WOTSSignature struct{}
-
-func (w *WOTSSignature) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := checkTypeByte(data, SignatureWOTS); err != nil {
-			return 0, fmt.Errorf("unable to deserialize WOTS signature: %w", err)
-		}
-	}
-	return 0, ErrWOTSNotImplemented
-}
-
-func (w *WOTSSignature) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	return nil, ErrWOTSNotImplemented
-}
-
-func (w *WOTSSignature) MarshalJSON() ([]byte, error) {
-	return nil, ErrWOTSNotImplemented
-}
-
-func (w *WOTSSignature) UnmarshalJSON(i []byte) error {
-	return ErrWOTSNotImplemented
 }
 
 // Ed25519Signature defines an Ed25519 signature.
@@ -139,8 +111,6 @@ func (e *Ed25519Signature) UnmarshalJSON(bytes []byte) error {
 func JSONSignatureSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch byte(ty) {
-	case SignatureWOTS:
-		obj = &JSONWOTSSignature{}
 	case SignatureEd25519:
 		obj = &JSONEd25519Signature{}
 	default:
@@ -172,13 +142,4 @@ func (j *JSONEd25519Signature) ToSerializable() (Serializable, error) {
 	copy(sig.PublicKey[:], pubKeyBytes)
 	copy(sig.Signature[:], sigBytes)
 	return sig, nil
-}
-
-// JSONWOTSSignature defines the json representation of a WOTSSignature.
-type JSONWOTSSignature struct {
-	// TODO: implement
-}
-
-func (j *JSONWOTSSignature) ToSerializable() (Serializable, error) {
-	return nil, ErrWOTSNotImplemented
 }

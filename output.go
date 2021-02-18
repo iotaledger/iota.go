@@ -76,10 +76,6 @@ func OutputsAddrUniqueValidator() OutputsValidatorFunc {
 
 		// can't be reduced to one b.Write()
 		switch addr := target.(type) {
-		case *WOTSAddress:
-			if _, err := b.Write(addr[:]); err != nil {
-				return fmt.Errorf("%w: unable to serialize WOTS address in addr unique validator", err)
-			}
 		case *Ed25519Address:
 			if _, err := b.Write(addr[:]); err != nil {
 				return fmt.Errorf("%w: unable to serialize Ed25519 address in addr unique validator", err)

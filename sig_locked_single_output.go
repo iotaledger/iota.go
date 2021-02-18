@@ -6,8 +6,6 @@ import (
 )
 
 const (
-	// The size of a sig locked single deposit containing a WOTS address as its deposit address.
-	SigLockedSingleOutputWOTSAddrBytesSize = SmallTypeDenotationByteSize + WOTSAddressSerializedBytesSize + UInt64ByteSize
 	// The size of a sig locked single deposit containing an Ed25519 address as its deposit address.
 	SigLockedSingleOutputEd25519AddrBytesSize = SmallTypeDenotationByteSize + Ed25519AddressSerializedBytesSize + UInt64ByteSize
 
@@ -79,7 +77,6 @@ func (s *SigLockedSingleOutput) Serialize(deSeriMode DeSerializationMode) (data 
 				}
 
 				switch s.Address.(type) {
-				case *WOTSAddress:
 				case *Ed25519Address:
 				default:
 					return fmt.Errorf("%w: signature locked single output defines unknown address", ErrUnknownAddrType)

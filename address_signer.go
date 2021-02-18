@@ -51,9 +51,6 @@ type InMemoryAddressSigner struct {
 
 func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Serializable, err error) {
 	switch addr.(type) {
-	case *WOTSAddress:
-		// TODO: implement
-		return nil, ErrWOTSNotImplemented
 	case *Ed25519Address:
 		prvKey, ok := s.addrKeys[addr.String()].(ed25519.PrivateKey)
 		if !ok {

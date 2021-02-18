@@ -171,8 +171,6 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 				return fmt.Errorf("%w: at index %d is nil", ErrSigUnlockBlockHasNilSig, index)
 			}
 			switch y := x.Signature.(type) {
-			case *WOTSSignature:
-				// TODO: implement
 			case *Ed25519Signature:
 				k := string(y.PublicKey[:])
 				j, has := seenEdPubKeys[k]
