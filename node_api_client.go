@@ -354,11 +354,11 @@ type MessageIDsByIndexResponse struct {
 }
 
 // MessageIDsByIndex gets message IDs filtered by index from the node.
-func (api *NodeAPI) MessageIDsByIndex(index string) (*MessageIDsByIndexResponse, error) {
+func (api *NodeAPI) MessageIDsByIndex(index []byte) (*MessageIDsByIndexResponse, error) {
 	var query strings.Builder
 	query.WriteString(NodeAPIRouteMessages)
 	query.WriteString("?index=")
-	query.WriteString(index)
+	query.WriteString(hex.EncodeToString(index))
 
 	res := &MessageIDsByIndexResponse{}
 	_, err := api.do(http.MethodGet, query.String(), nil, res)

@@ -136,7 +136,7 @@ func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
 	id3 := rand32ByteHash()
 
 	msgIDsByIndex := &iota.MessageIDsByIndexResponse{
-		Index:      index,
+		Index:      hex.EncodeToString([]byte(index)),
 		MaxResults: 1000,
 		Count:      3,
 		MessageIDs: []string{
@@ -148,12 +148,12 @@ func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
 
 	gock.New(nodeAPIUrl).
 		Get(iota.NodeAPIRouteMessages).
-		MatchParam("index", index).
+		MatchParam("index", hex.EncodeToString([]byte(index))).
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: msgIDsByIndex})
 
 	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
-	resMsgIDsByIndex, err := nodeAPI.MessageIDsByIndex(index)
+	resMsgIDsByIndex, err := nodeAPI.MessageIDsByIndex([]byte(index))
 	require.NoError(t, err)
 	require.EqualValues(t, msgIDsByIndex, resMsgIDsByIndex)
 }
