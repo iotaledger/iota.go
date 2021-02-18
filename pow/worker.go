@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math"
+	"math/bits"
 	"sync"
 	"sync/atomic"
 
@@ -66,7 +67,7 @@ func (w *Worker) Mine(ctx context.Context, data []byte, targetScore float64) (ui
 	}()
 
 	// compute the minimum numbers of trailing zeros required to get a PoW score ≥ targetScore
-	targetZeros := int(math.Ceil(math.Log(float64(len(data)+nonceBytes)*targetScore) / ln3))
+	targetZeros := uint(math.Ceil(math.Log(float64(len(data)+nonceBytes)*targetScore) / ln3))
 
 	workerWidth := math.MaxUint64 / uint64(w.numWorkers)
 	for i := 0; i < w.numWorkers; i++ {
@@ -94,10 +95,14 @@ func (w *Worker) Mine(ctx context.Context, data []byte, targetScore float64) (ui
 	return nonce, nil
 }
 
-func (w *Worker) worker(powDigest []byte, startNonce uint64, target int, done *uint32, counter *uint64) (uint64, error) {
+func (w *Worker) worker(powDigest []byte, startNonce uint64, target uint, done *uint32, counter *uint64) (uint64, error) {
+	if target > legacy.HashTrinarySize {
+		panic("pow: invalid trailing zeros target")
+	}
+
 	// use batched Curl hashing
 	c := bct.NewCurlP81()
-	hashes := make([]trinary.Trits, bct.MaxBatchSize)
+	var l, h [legacy.HashTrinarySize]uint
 
 	// allocate exactly one Curl block for each batch index and fill it with the encoded digest
 	buf := make([]trinary.Trits, bct.MaxBatchSize)
@@ -119,17 +124,23 @@ func (w *Worker) worker(powDigest []byte, startNonce uint64, target int, done *u
 		if err := c.Absorb(buf, legacy.HashTrinarySize); err != nil {
 			return 0, err
 		}
-		if err := c.Squeeze(hashes, legacy.HashTrinarySize); err != nil {
-			return 0, err
-		}
+		c.CopyState(l[:], h[:]) // the first 243 entries of the state correspond to the resulting hashes
 		atomic.AddUint64(counter, bct.MaxBatchSize)
 
-		// check each hash, whether it has the sufficient amount of trailing zeros
-		for i := range hashes {
-			if trinary.TrailingZeros(hashes[i]) >= target {
-				return nonce + uint64(i), nil
-			}
+		// check the state whether it corresponds to a hash with sufficient amount of trailing zeros
+		// this is equivalent to computing the hashes with Squeeze and then checking TrailingZeros of each
+		if i := checkStateTrits(&l, &h, target); i < bct.MaxBatchSize {
+			return nonce + uint64(i), nil
 		}
 	}
 	return 0, ErrDone
+}
+
+func checkStateTrits(l, h *[legacy.HashTrinarySize]uint, n uint) int {
+	var v uint
+	for i := legacy.HashTrinarySize - n; i < legacy.HashTrinarySize; i++ {
+		v |= l[i] ^ h[i] // 0 if trit is zero, 1 otherwise
+	}
+	// return the index of the first zero bit, this corresponds to the index of the hash with n trailing zero trits
+	return bits.TrailingZeros(^v)
 }

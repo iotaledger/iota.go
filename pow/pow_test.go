@@ -2,16 +2,18 @@ package pow
 
 import (
 	"context"
-	"crypto"
 	"encoding/binary"
 	"math"
 	"math/rand"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/blake2b"
 )
 
 const (
@@ -82,16 +84,20 @@ func BenchmarkScore(b *testing.B) {
 
 func BenchmarkWorker(b *testing.B) {
 	var (
+		wg      sync.WaitGroup
 		w       = New(1)
-		digest  = make([]byte, crypto.BLAKE2b_256.Size())
+		digest  = blake2b.Sum256(nil)
 		done    uint32
 		counter uint64
 	)
+	wg.Add(1)
 	go func() {
-		_, _ = w.worker(digest[:], 0, math.MaxInt32, &done, &counter)
+		defer wg.Done()
+		_, _ = w.worker(digest[:], 0, legacy.HashTrinarySize, &done, &counter)
 	}()
 	b.ResetTimer()
 	for atomic.LoadUint64(&counter) < uint64(b.N) {
 	}
 	atomic.StoreUint32(&done, 1)
+	wg.Wait()
 }
