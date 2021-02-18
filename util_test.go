@@ -10,7 +10,6 @@ import (
 	"time"
 
 	legacy "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/encoding/t5b1"
 	"github.com/iotaledger/iota.go/trinary"
 	"github.com/iotaledger/iota.go/v2"
 	"github.com/iotaledger/iota.go/v2/ed25519"
@@ -67,15 +66,6 @@ func rand64ByteHash() [64]byte {
 	b := randBytes(64)
 	copy(h[:], b)
 	return h
-}
-
-func randWOTSAddr() (*iota.WOTSAddress, []byte) {
-	// type
-	wotsAddr := &iota.WOTSAddress{}
-	addr := t5b1.EncodeTrytes(randTrytes(legacy.HashTrytesSize))
-	copy(wotsAddr[:], addr)
-	// serialized
-	return wotsAddr, append([]byte{iota.AddressWOTS}, addr...)
 }
 
 func randEd25519Addr() (*iota.Ed25519Address, []byte) {
@@ -462,8 +452,6 @@ func randSigLockedSingleOutput(addrType iota.AddressType) (*iota.SigLockedSingle
 
 	var addrData []byte
 	switch addrType {
-	case iota.AddressWOTS:
-		dep.Address, addrData = randWOTSAddr()
 	case iota.AddressEd25519:
 		dep.Address, addrData = randEd25519Addr()
 	default:

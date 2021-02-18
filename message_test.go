@@ -98,7 +98,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 				{
 				  "type": 0,
 				  "address": {
-					"type": 1,
+					"type": 0,
 					"address": "5f24ebcb5d48acbbfe6e7401b502ba7bb93acb3591d55eda7d32c37306cc805f"
 				  },
 				  "amount": 5710
@@ -114,7 +114,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 			  {
 				"type": 0,
 				"signature": {
-				  "type": 1,
+				  "type": 0,
 				  "publicKey": "ed3c3f1a319ff4e909cf2771d79fece0ac9bd9fd2ee49ea6c0885c9cb3b1248c",
 				  "signature": "651941eddb3e68cb1f6ef4ef5b04625dcf5c70de1fdc4b1c9eadb2c219c074e0ed3c3f1a319ff4e909cf2771d79fece0ac9bd9fd2ee49ea6c0885c9cb3b1248c"
 				}

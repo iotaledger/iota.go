@@ -52,8 +52,6 @@ var (
 	ErrDeserializationNotAllConsumed = errors.New("not all data has been consumed but should have been")
 	// Returned for unknown bech32 network HRP.
 	ErrUnknownNetworkPrefix = errors.New("unknown network prefix")
-	// Returned when WOTS objects are tried to be de/serialized.
-	ErrWOTSNotImplemented = errors.New("unfortunately WOTS is not yet implemented")
 )
 
 // checkType checks that the denoted type equals the shouldType.

@@ -410,9 +410,6 @@ func createSigValidationFunc(pos int, sig Serializable, sigBlockIndex int, txEss
 		return nil, fmt.Errorf("unable to get target for UTXO: %w", err)
 	}
 	switch addr := addr.(type) {
-	case *WOTSAddress:
-		// TODO: implement
-		return nil, fmt.Errorf("%w: unsupported address type at index %d", ErrWOTSNotImplemented, pos)
 	case *Ed25519Address:
 		return createEd25519SigValidationFunc(pos, sig, sigBlockIndex, addr, txEssenceBytes)
 	default:
