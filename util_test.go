@@ -314,7 +314,7 @@ func randIndexation(dataLength ...int) (*iota.Indexation, []byte) {
 		data = randBytes(rand.Intn(200) + 1)
 	}
 
-	indexationPayload := &iota.Indexation{Index: index, Data: data}
+	indexationPayload := &iota.Indexation{Index: []byte(index), Data: data}
 
 	var b bytes.Buffer
 	must(binary.Write(&b, binary.LittleEndian, iota.IndexationPayloadTypeID))

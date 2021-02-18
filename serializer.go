@@ -44,9 +44,9 @@ type SeriSliceLengthType byte
 const (
 	// SeriSliceLengthAsByte defines a slice length to be denoted by a byte.
 	SeriSliceLengthAsByte SeriSliceLengthType = iota
-	// SeriSliceLengthAsUin16 defines a slice length to be denoted by a uint16.
-	SeriSliceLengthAsUin16
-	// SeriSliceLengthAsUin32 defines a slice length to be denoted by a uint32.
+	// SeriSliceLengthAsUint16 defines a slice length to be denoted by a uint16.
+	SeriSliceLengthAsUint16
+	// SeriSliceLengthAsUint32 defines a slice length to be denoted by a uint32.
 	SeriSliceLengthAsUint32
 )
 
@@ -148,7 +148,7 @@ func (s *Serializer) writeSliceLength(l int, lenType SeriSliceLengthType, errPro
 			s.err = errProducer(err)
 			return s
 		}
-	case SeriSliceLengthAsUin16:
+	case SeriSliceLengthAsUint16:
 		if err := binary.Write(&s.buf, binary.LittleEndian, uint16(l)); err != nil {
 			s.err = errProducer(err)
 			return s
@@ -563,7 +563,7 @@ func (d *Deserializer) readSliceLength(lenType SeriSliceLengthType, errProducer 
 		l = OneByte
 		sliceLength = int(d.src[0])
 
-	case SeriSliceLengthAsUin16:
+	case SeriSliceLengthAsUint16:
 		if l < UInt16ByteSize {
 			return 0, errProducer(ErrDeserializationNotEnoughData)
 		}

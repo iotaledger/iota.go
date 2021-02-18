@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"unicode/utf8"
 )
 
 const (
@@ -20,8 +19,6 @@ const (
 )
 
 var (
-	// Returned when an Indexation contains a non UTF-8 index.
-	ErrIndexationNonUTF8Index = errors.New("index is not valid utf-8")
 	// Returned when an Indexation's index exceeds IndexationIndexMaxLength.
 	ErrIndexationIndexExceedsMaxSize = errors.New("index exceeds max size")
 	// Returned when an Indexation's index is under IndexationIndexMinLength.
@@ -31,7 +28,7 @@ var (
 // Indexation is a payload which holds an index and associated data.
 type Indexation struct {
 	// The index to use to index the enclosing message and data.
-	Index string `json:"index"`
+	Index []byte `json:"index"`
 	// The data within the payload.
 	Data []byte `json:"data"`
 }
@@ -53,18 +50,14 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode DeSerializationMode) (i
 		Skip(TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip indexation payload ID during deserialization: %w", err)
 		}).
-		ReadString(&u.Index, func(err error) error {
+		ReadVariableByteSlice(&u.Index, SeriSliceLengthAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation index: %w", err)
 		}, IndexationIndexMaxLength).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(DeSeriModePerformValidation) {
 				switch {
-				case len(u.Index) > IndexationIndexMaxLength:
-					return fmt.Errorf("unable to deserialize indexation index: %w", ErrIndexationIndexExceedsMaxSize)
 				case len(u.Index) < IndexationIndexMinLength:
 					return fmt.Errorf("unable to deserialize indexation index: %w", ErrIndexationIndexUnderMinSize)
-				case !utf8.ValidString(u.Index):
-					return fmt.Errorf("unable to deserialize indexation index: %w", ErrIndexationNonUTF8Index)
 				}
 			}
 			return nil
@@ -84,8 +77,6 @@ func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 					return fmt.Errorf("unable to serialize indexation index: %w", ErrIndexationIndexExceedsMaxSize)
 				case len(u.Index) < IndexationIndexMinLength:
 					return fmt.Errorf("unable to serialize indexation index: %w", ErrIndexationIndexUnderMinSize)
-				case !utf8.ValidString(u.Index):
-					return fmt.Errorf("unable to serialize indexation index: %w", ErrIndexationNonUTF8Index)
 				}
 				// TODO: check data length
 			}
@@ -94,7 +85,7 @@ func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		WriteNum(IndexationPayloadTypeID, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation payload ID: %w", err)
 		}).
-		WriteString(u.Index, func(err error) error {
+		WriteVariableByteSlice(u.Index, SeriSliceLengthAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation index: %w", err)
 		}).
 		WriteVariableByteSlice(u.Data, SeriSliceLengthAsUint32, func(err error) error {
@@ -106,7 +97,7 @@ func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 func (u *Indexation) MarshalJSON() ([]byte, error) {
 	jsonIndexPayload := &jsonindexation{}
 	jsonIndexPayload.Type = int(IndexationPayloadTypeID)
-	jsonIndexPayload.Index = u.Index
+	jsonIndexPayload.Index = hex.EncodeToString(u.Index)
 	jsonIndexPayload.Data = hex.EncodeToString(u.Data)
 	return json.Marshal(jsonIndexPayload)
 }
@@ -132,12 +123,15 @@ type jsonindexation struct {
 }
 
 func (j *jsonindexation) ToSerializable() (Serializable, error) {
+	indexBytes, err := hex.DecodeString(j.Index)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode index from JSON for indexation: %w", err)
+	}
+
 	dataBytes, err := hex.DecodeString(j.Data)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode data from JSON for indexation: %w", err)
 	}
 
-	payload := &Indexation{Index: j.Index}
-	payload.Data = dataBytes
-	return payload, nil
+	return &Indexation{Index: indexBytes, Data: dataBytes}, nil
 }

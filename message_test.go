@@ -106,7 +106,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 			  ],
 			  "payload": {
 				"type": 2,
-				"index": "allyourtritsbelongtous",
+				"index": "616c6c796f7572747269747362656c6f6e67746f7573",
 				"data": "a487f431d852b060b49427f513dca1d5288e697e8bd9eb062534d09e7cb337ac"
 			  }
 			},
