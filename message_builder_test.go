@@ -14,7 +14,7 @@ func TestMessageBuilder(t *testing.T) {
 	parents := sortedRand32ByteHashes(4)
 
 	msg, err := iota.NewMessageBuilder().
-		Payload(&iota.Indexation{Index: "hello world", Data: []byte{1, 2, 3, 4}}).
+		Payload(&iota.Indexation{Index: []byte("hello world"), Data: []byte{1, 2, 3, 4}}).
 		Parents([][]byte{parents[0][:], parents[0][:], parents[1][:], parents[2][:], parents[3][:]}).
 		ProofOfWork(context.Background(), targetPoWScore).
 		Build()

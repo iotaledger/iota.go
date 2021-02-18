@@ -43,7 +43,7 @@ func TestTransactionBuilder(t *testing.T) {
 			builder := iota.NewTransactionBuilder().
 				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
 				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50}).
-				AddIndexationPayload(&iota.Indexation{Index: "index", Data: nil})
+				AddIndexationPayload(&iota.Indexation{Index: []byte("index"), Data: nil})
 
 			return test{
 				name:       "ok - with indexation payload",
