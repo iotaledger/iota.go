@@ -134,8 +134,8 @@ type HTTPOkResponseEnvelope struct {
 	Data interface{} `json:"data"`
 }
 
-// rawDataEnvelope is used internally to encapsulate binary data.
-type rawDataEnvelope struct {
+// RawDataEnvelope is used internally to encapsulate binary data.
+type RawDataEnvelope struct {
 	// The encapsulated binary data.
 	Data []byte
 }
@@ -161,7 +161,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 			return err
 		}
 
-		if rawData, ok := decodeTo.(*rawDataEnvelope); ok {
+		if rawData, ok := decodeTo.(*RawDataEnvelope); ok {
 			rawData.Data = make([]byte, len(resBody))
 			copy(rawData.Data, resBody)
 			return nil
@@ -193,7 +193,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 	return fmt.Errorf("%w: url %s, error message: %s", err, res.Request.URL.String(), errRes.Error.Message)
 }
 
-func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
+func (api *NodeAPI) Do(method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
 	// marshal request object
 	var data []byte
 	var raw bool
@@ -201,7 +201,7 @@ func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj i
 	if reqObj != nil {
 		var err error
 
-		if rawData, ok := reqObj.(*rawDataEnvelope); !ok {
+		if rawData, ok := reqObj.(*RawDataEnvelope); !ok {
 			data, err = json.Marshal(reqObj)
 			if err != nil {
 				return nil, fmt.Errorf("unable to serialize request object to JSON: %w", err)
@@ -246,7 +246,7 @@ func (api *NodeAPI) do(method string, route string, reqObj interface{}, resObj i
 
 // Health returns whether the given node is healthy.
 func (api *NodeAPI) Health() (bool, error) {
-	res, err := api.do(http.MethodGet, NodeAPIRouteHealth, nil, nil)
+	res, err := api.Do(http.MethodGet, NodeAPIRouteHealth, nil, nil)
 	if err != nil {
 		return false, err
 	}
@@ -287,7 +287,7 @@ type NodeInfoResponse struct {
 // Info gets the info of the node.
 func (api *NodeAPI) Info() (*NodeInfoResponse, error) {
 	res := &NodeInfoResponse{}
-	_, err := api.do(http.MethodGet, NodeAPIRouteInfo, nil, res)
+	_, err := api.Do(http.MethodGet, NodeAPIRouteInfo, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +303,7 @@ type NodeTipsResponse struct {
 // Tips gets the two tips from the node.
 func (api *NodeAPI) Tips() (*NodeTipsResponse, error) {
 	res := &NodeTipsResponse{}
-	_, err := api.do(http.MethodGet, NodeAPIRouteTips, nil, res)
+	_, err := api.Do(http.MethodGet, NodeAPIRouteTips, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -322,8 +322,8 @@ func (api *NodeAPI) SubmitMessage(m *Message) (*Message, error) {
 		return nil, err
 	}
 
-	req := &rawDataEnvelope{Data: data}
-	res, err := api.do(http.MethodPost, NodeAPIRouteMessages, req, nil)
+	req := &RawDataEnvelope{Data: data}
+	res, err := api.Do(http.MethodPost, NodeAPIRouteMessages, req, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +361,7 @@ func (api *NodeAPI) MessageIDsByIndex(index []byte) (*MessageIDsByIndexResponse,
 	query.WriteString(hex.EncodeToString(index))
 
 	res := &MessageIDsByIndexResponse{}
-	_, err := api.do(http.MethodGet, query.String(), nil, res)
+	_, err := api.Do(http.MethodGet, query.String(), nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -394,7 +394,7 @@ func (api *NodeAPI) MessageMetadataByMessageID(msgID MessageID) (*MessageMetadat
 	query := fmt.Sprintf(NodeAPIRouteMessageMetadata, hex.EncodeToString(msgID[:]))
 
 	res := &MessageMetadataResponse{}
-	_, err := api.do(http.MethodGet, query, nil, res)
+	_, err := api.Do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -406,8 +406,8 @@ func (api *NodeAPI) MessageMetadataByMessageID(msgID MessageID) (*MessageMetadat
 func (api *NodeAPI) MessageByMessageID(msgID MessageID) (*Message, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageBytes, hex.EncodeToString(msgID[:]))
 
-	res := &rawDataEnvelope{}
-	_, err := api.do(http.MethodGet, query, nil, res)
+	res := &RawDataEnvelope{}
+	_, err := api.Do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -437,7 +437,7 @@ func (api *NodeAPI) ChildrenByMessageID(msgID MessageID) (*ChildrenResponse, err
 	query := fmt.Sprintf(NodeAPIRouteMessageChildren, hex.EncodeToString(msgID[:]))
 
 	res := &ChildrenResponse{}
-	_, err := api.do(http.MethodGet, query, nil, res)
+	_, err := api.Do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -492,7 +492,7 @@ func (api *NodeAPI) OutputByID(utxoID UTXOInputID) (*NodeOutputResponse, error) 
 	query := fmt.Sprintf(NodeAPIRouteOutput, utxoID.ToHex())
 
 	res := &NodeOutputResponse{}
-	_, err := api.do(http.MethodGet, query, nil, &res)
+	_, err := api.Do(http.MethodGet, query, nil, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -514,7 +514,7 @@ func (api *NodeAPI) BalanceByEd25519Address(address string) (*AddressBalanceResp
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Balance, address)
 
 	res := &AddressBalanceResponse{}
-	_, err := api.do(http.MethodGet, query, nil, res)
+	_, err := api.Do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -545,7 +545,7 @@ func (api *NodeAPI) OutputIDsByEd25519Address(address string, includeSpentOutput
 	}
 
 	res := &AddressOutputsResponse{}
-	_, err := api.do(http.MethodGet, query, nil, res)
+	_, err := api.Do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -562,7 +562,7 @@ type TreasuryResponse struct {
 // Treasury gets the current treasury.
 func (api *NodeAPI) Treasury() (*TreasuryResponse, error) {
 	res := &TreasuryResponse{}
-	_, err := api.do(http.MethodGet, NodeAPIRouteTreasury, nil, res)
+	_, err := api.Do(http.MethodGet, NodeAPIRouteTreasury, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +585,7 @@ func (api *NodeAPI) MilestoneByIndex(index uint32) (*MilestoneResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMilestone, strconv.FormatUint(uint64(index), 10))
 
 	res := &MilestoneResponse{}
-	_, err := api.do(http.MethodGet, query, nil, res)
+	_, err := api.Do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -676,7 +676,7 @@ func (api *NodeAPI) PeerByID(id string) (*PeerResponse, error) {
 	query := fmt.Sprintf(NodeAPIRoutePeer, id)
 
 	res := &PeerResponse{}
-	_, err := api.do(http.MethodGet, query, nil, res)
+	_, err := api.Do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -688,7 +688,7 @@ func (api *NodeAPI) PeerByID(id string) (*PeerResponse, error) {
 func (api *NodeAPI) RemovePeerByID(id string) error {
 	query := fmt.Sprintf(NodeAPIRoutePeer, id)
 
-	_, err := api.do(http.MethodDelete, query, nil, nil)
+	_, err := api.Do(http.MethodDelete, query, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -699,7 +699,7 @@ func (api *NodeAPI) RemovePeerByID(id string) error {
 // Peers returns a list of all peers.
 func (api *NodeAPI) Peers() ([]*PeerResponse, error) {
 	res := []*PeerResponse{}
-	_, err := api.do(http.MethodGet, NodeAPIRoutePeers, nil, &res)
+	_, err := api.Do(http.MethodGet, NodeAPIRoutePeers, nil, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -718,7 +718,7 @@ func (api *NodeAPI) AddPeer(multiAddress string, alias ...string) (*PeerResponse
 	}
 
 	res := &PeerResponse{}
-	_, err := api.do(http.MethodPost, NodeAPIRoutePeers, req, res)
+	_, err := api.Do(http.MethodPost, NodeAPIRoutePeers, req, res)
 	if err != nil {
 		return nil, err
 	}
