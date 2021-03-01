@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ func TestMigratedFundsEntry_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target *iota.MigratedFundsEntry
+		target *iotago.MigratedFundsEntry
 		err    error
 	}
 	tests := []test{
@@ -24,8 +24,8 @@ func TestMigratedFundsEntry_Deserialize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			migFundsEntry := &iota.MigratedFundsEntry{}
-			bytesRead, err := migFundsEntry.Deserialize(tt.source, iota.DeSeriModePerformValidation)
+			migFundsEntry := &iotago.MigratedFundsEntry{}
+			bytesRead, err := migFundsEntry.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -40,7 +40,7 @@ func TestMigratedFundsEntry_Deserialize(t *testing.T) {
 func TestMigratedFundsEntry_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.MigratedFundsEntry
+		source *iotago.MigratedFundsEntry
 		target []byte
 	}
 	tests := []test{
@@ -51,7 +51,7 @@ func TestMigratedFundsEntry_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})

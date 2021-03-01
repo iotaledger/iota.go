@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"bytes"
@@ -12,27 +12,27 @@ import (
 func TestDeserializer_ReadObject(t *testing.T) {
 	seriA := randSerializedA()
 
-	var objA iota.Serializable
-	bytesRead, err := iota.NewDeserializer(seriA).
-		ReadObject(func(seri iota.Serializable) { objA = seri }, iota.DeSeriModePerformValidation, iota.TypeDenotationByte, DummyTypeSelector, func(err error) error { return err }).
+	var objA iotago.Serializable
+	bytesRead, err := iotago.NewDeserializer(seriA).
+		ReadObject(func(seri iotago.Serializable) { objA = seri }, iotago.DeSeriModePerformValidation, iotago.TypeDenotationByte, DummyTypeSelector, func(err error) error { return err }).
 		ConsumedAll(func(left int, err error) error { return err }).
 		Done()
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(seriA), bytesRead)
 	assert.IsType(t, &A{}, objA)
-	assert.Equal(t, seriA[iota.SmallTypeDenotationByteSize:], objA.(*A).Key[:])
+	assert.Equal(t, seriA[iotago.SmallTypeDenotationByteSize:], objA.(*A).Key[:])
 }
 
 func TestDeserializer_ReadSliceOfObjects(t *testing.T) {
 	var buf bytes.Buffer
-	originObjs := iota.Serializables{
+	originObjs := iotago.Serializables{
 		randA(), randA(), randB(), randA(), randB(), randB(),
 	}
 	assert.NoError(t, binary.Write(&buf, binary.LittleEndian, uint16(len(originObjs))))
 
 	for _, seri := range originObjs {
-		seriBytes, err := seri.Serialize(iota.DeSeriModePerformValidation)
+		seriBytes, err := seri.Serialize(iotago.DeSeriModePerformValidation)
 		assert.NoError(t, err)
 		written, err := buf.Write(seriBytes)
 		assert.NoError(t, err)
@@ -41,11 +41,11 @@ func TestDeserializer_ReadSliceOfObjects(t *testing.T) {
 
 	data := buf.Bytes()
 
-	var readObjects iota.Serializables
-	bytesRead, err := iota.NewDeserializer(data).
-		ReadSliceOfObjects(func(seri iota.Serializables) {
+	var readObjects iotago.Serializables
+	bytesRead, err := iotago.NewDeserializer(data).
+		ReadSliceOfObjects(func(seri iotago.Serializables) {
 			readObjects = seri
-		}, iota.DeSeriModePerformValidation, iota.TypeDenotationByte, DummyTypeSelector, nil, func(err error) error { return err }).
+		}, iotago.DeSeriModePerformValidation, iotago.TypeDenotationByte, DummyTypeSelector, nil, func(err error) error { return err }).
 		ConsumedAll(func(left int, err error) error { return err }).
 		Done()
 
@@ -92,7 +92,7 @@ func TestDeserializer_ReadString(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var s string
-			_, err := iota.NewDeserializer(tt.args.data).
+			_, err := iotago.NewDeserializer(tt.args.data).
 				ReadString(&s, func(err error) error {
 					return err
 				}).

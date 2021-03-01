@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"errors"
@@ -9,15 +9,15 @@ import (
 )
 
 func TestSignatureSelector(t *testing.T) {
-	_, err := iota.SignatureSelector(100)
-	assert.True(t, errors.Is(err, iota.ErrUnknownSignatureType))
+	_, err := iotago.SignatureSelector(100)
+	assert.True(t, errors.Is(err, iotago.ErrUnknownSignatureType))
 }
 
 func TestEd25519Signature_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iota.Serializable
+		target iotago.Serializable
 		err    error
 	}
 	tests := []test{
@@ -27,14 +27,14 @@ func TestEd25519Signature_Deserialize(t *testing.T) {
 		}(),
 		func() test {
 			edSig, edSigData := randEd25519Signature()
-			return test{"not enough data", edSigData[:5], edSig, iota.ErrDeserializationNotEnoughData}
+			return test{"not enough data", edSigData[:5], edSig, iotago.ErrDeserializationNotEnoughData}
 		}(),
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edSig := &iota.Ed25519Signature{}
-			bytesRead, err := edSig.Deserialize(tt.source, iota.DeSeriModePerformValidation)
+			edSig := &iotago.Ed25519Signature{}
+			bytesRead, err := edSig.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -49,7 +49,7 @@ func TestEd25519Signature_Deserialize(t *testing.T) {
 func TestEd25519Signature_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.Ed25519Signature
+		source *iotago.Ed25519Signature
 		target []byte
 	}
 	tests := []test{
@@ -60,7 +60,7 @@ func TestEd25519Signature_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})

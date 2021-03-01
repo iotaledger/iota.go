@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"errors"
@@ -13,16 +13,16 @@ func TestUTXOInput_Deserialize(t *testing.T) {
 	tests := []struct {
 		name   string
 		data   []byte
-		target *iota.UTXOInput
+		target *iotago.UTXOInput
 		err    error
 	}{
 		{"ok", randSerializedUTXOInput, randUTXOInput, nil},
-		{"not enough data", randSerializedUTXOInput[:iota.UTXOInputSize-1], randUTXOInput, iota.ErrDeserializationNotEnoughData},
+		{"not enough data", randSerializedUTXOInput[:iotago.UTXOInputSize-1], randUTXOInput, iotago.ErrDeserializationNotEnoughData},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			u := &iota.UTXOInput{}
-			bytesRead, err := u.Deserialize(tt.data, iota.DeSeriModePerformValidation)
+			u := &iotago.UTXOInput{}
+			bytesRead, err := u.Deserialize(tt.data, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -37,7 +37,7 @@ func TestUTXOInput_Serialize(t *testing.T) {
 	randUTXOInput, randSerializedUTXOInput := randUTXOInput()
 	tests := []struct {
 		name   string
-		source *iota.UTXOInput
+		source *iotago.UTXOInput
 		target []byte
 		err    error
 	}{
@@ -45,7 +45,7 @@ func TestUTXOInput_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			data, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return

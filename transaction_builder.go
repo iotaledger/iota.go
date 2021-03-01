@@ -1,4 +1,4 @@
-package iota
+package iotago
 
 import (
 	"fmt"

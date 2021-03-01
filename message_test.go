@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ func TestMessage_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iota.Serializable
+		target iotago.Serializable
 		err    error
 	}
 
@@ -24,23 +24,23 @@ func TestMessage_Deserialize(t *testing.T) {
 			return test{"ok - no payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iota.TransactionPayloadTypeID)
+			msgPayload, msgPayloadData := randMessage(iotago.TransactionPayloadTypeID)
 			return test{"ok - transaction payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iota.MilestonePayloadTypeID)
+			msgPayload, msgPayloadData := randMessage(iotago.MilestonePayloadTypeID)
 			return test{"ok - milestone payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iota.IndexationPayloadTypeID)
+			msgPayload, msgPayloadData := randMessage(iotago.IndexationPayloadTypeID)
 			return test{"ok - indexation payload", msgPayloadData, msgPayload, nil}
 		}(),
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			msg := &iota.Message{}
-			bytesRead, err := msg.Deserialize(tt.source, iota.DeSeriModePerformValidation)
+			msg := &iotago.Message{}
+			bytesRead, err := msg.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -55,12 +55,12 @@ func TestMessage_Deserialize(t *testing.T) {
 func TestMessage_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.Message
+		source *iotago.Message
 		target []byte
 	}
 	tests := []test{
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iota.TransactionPayloadTypeID)
+			msgPayload, msgPayloadData := randMessage(iotago.TransactionPayloadTypeID)
 			return test{"ok - with transaction payload", msgPayload, msgPayloadData}
 		}(),
 		func() test {
@@ -70,7 +70,7 @@ func TestMessage_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -124,7 +124,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 		  "nonce": "133945865838"
 		}`
 
-	msg := &iota.Message{}
+	msg := &iotago.Message{}
 	assert.NoError(t, json.Unmarshal([]byte(data), msg))
 
 	var emptyID = [32]byte{}
@@ -135,7 +135,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 	msgJson, err := json.Marshal(msg)
 	assert.NoError(t, err)
 
-	msg2 := &iota.Message{}
+	msg2 := &iotago.Message{}
 	assert.NoError(t, json.Unmarshal(msgJson, msg2))
 
 	assert.EqualValues(t, msg, msg2)
@@ -145,7 +145,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 		  "parentMessageIds": ["0000000000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000000000"],
 		  "payload": null
 		}`
-	msgMinimal := &iota.Message{}
+	msgMinimal := &iotago.Message{}
 	assert.NoError(t, json.Unmarshal([]byte(minimal), msgMinimal))
 
 	assert.Len(t, msgMinimal.Parents, 2)

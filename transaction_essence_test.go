@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"errors"
@@ -9,15 +9,15 @@ import (
 )
 
 func TestTransactionEssenceSelector(t *testing.T) {
-	_, err := iota.TransactionEssenceSelector(100)
-	assert.True(t, errors.Is(err, iota.ErrUnknownTransactionEssenceType))
+	_, err := iotago.TransactionEssenceSelector(100)
+	assert.True(t, errors.Is(err, iotago.ErrUnknownTransactionEssenceType))
 }
 
 func TestTransactionEssence_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iota.Serializable
+		target iotago.Serializable
 		err    error
 	}
 	tests := []test{
@@ -29,8 +29,8 @@ func TestTransactionEssence_Deserialize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tx := &iota.TransactionEssence{}
-			bytesRead, err := tx.Deserialize(tt.source, iota.DeSeriModePerformValidation)
+			tx := &iotago.TransactionEssence{}
+			bytesRead, err := tx.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -45,7 +45,7 @@ func TestTransactionEssence_Deserialize(t *testing.T) {
 func TestTransactionEssence_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.TransactionEssence
+		source *iotago.TransactionEssence
 		target []byte
 	}
 	tests := []test{
@@ -56,7 +56,7 @@ func TestTransactionEssence_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})

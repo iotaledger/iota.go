@@ -1,4 +1,4 @@
-package iota
+package iotago
 
 const (
 	// The byte size of a single byte.

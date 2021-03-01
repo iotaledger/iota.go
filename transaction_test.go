@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ func TestTransaction_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iota.Serializable
+		target iotago.Serializable
 		err    error
 	}
 	tests := []test{
@@ -25,8 +25,8 @@ func TestTransaction_Deserialize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tx := &iota.Transaction{}
-			bytesRead, err := tx.Deserialize(tt.source, iota.DeSeriModePerformValidation)
+			tx := &iotago.Transaction{}
+			bytesRead, err := tx.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -41,7 +41,7 @@ func TestTransaction_Deserialize(t *testing.T) {
 func TestTransaction_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.Transaction
+		source *iotago.Transaction
 		target []byte
 	}
 	tests := []test{
@@ -52,7 +52,7 @@ func TestTransaction_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -61,14 +61,14 @@ func TestTransaction_Serialize(t *testing.T) {
 
 func TestTransaction_SemanticallyValidate(t *testing.T) {
 	identityOne := randEd25519PrivateKey()
-	inputAddr := iota.AddressFromEd25519PubKey(identityOne.Public().(ed25519.PublicKey))
-	addrKeys := iota.AddressKeys{Address: &inputAddr, Keys: identityOne}
+	inputAddr := iotago.AddressFromEd25519PubKey(identityOne.Public().(ed25519.PublicKey))
+	addrKeys := iotago.AddressKeys{Address: &inputAddr, Keys: identityOne}
 
 	type test struct {
 		name       string
-		addrSigner iota.AddressSigner
-		builder    *iota.TransactionBuilder
-		inputUTXOs iota.InputToOutputMapping
+		addrSigner iotago.AddressSigner
+		builder    *iotago.TransactionBuilder
+		inputUTXOs iotago.InputToOutputMapping
 		buildErr   error
 		validErr   error
 	}
@@ -77,18 +77,18 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
 				name:       "ok - 1 input/output",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
 			}
 		}(),
@@ -99,63 +99,63 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 			outputAddr3, _ := randEd25519Addr()
 			outputAddr4, _ := randEd25519Addr()
 
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
-			inputUTXO2 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO2 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO2}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 20}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr2, Amount: 10}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr3, Amount: 20}).
-				AddOutput(&iota.SigLockedDustAllowanceOutput{Address: outputAddr4, Amount: 1_000_000})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO2}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 20}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr2, Amount: 10}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr3, Amount: 20}).
+				AddOutput(&iotago.SigLockedDustAllowanceOutput{Address: outputAddr4, Amount: 1_000_000})
 
 			return test{
 				name:       "ok - 2 inputs, 4 outputs",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
-					inputUTXO2.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 1_000_000},
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
+					inputUTXO2.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: 1_000_000},
 				},
 			}
 		}(),
 		func() test {
-			builder := iota.NewTransactionBuilder()
+			builder := iotago.NewTransactionBuilder()
 			return test{
 				name:       "err - no inputs",
 				addrSigner: nil,
 				builder:    builder,
-				buildErr:   iota.ErrMinInputsNotReached,
+				buildErr:   iotago.ErrMinInputsNotReached,
 			}
 		}(),
 		func() test {
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1})
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1})
 			return test{
 				name:       "err - no outputs",
 				addrSigner: nil,
 				builder:    builder,
-				buildErr:   iota.ErrMinOutputsNotReached,
+				buildErr:   iotago.ErrMinOutputsNotReached,
 			}
 		}(),
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 100})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 100})
 
 			return test{
 				name:       "err - input output sum mismatch",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				validErr:   iota.ErrInputOutputSumMismatch,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
+				validErr:   iotago.ErrInputOutputSumMismatch,
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
 			}
 		}(),
@@ -178,7 +178,7 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 			}
 			assert.NoError(t, semanticErr)
 
-			_, err = payload.Serialize(iota.DeSeriModePerformValidation)
+			_, err = payload.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 		})
 	}
@@ -187,15 +187,15 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 
 func TestDustAllowance(t *testing.T) {
 	identityOne := randEd25519PrivateKey()
-	inputAddr := iota.AddressFromEd25519PubKey(identityOne.Public().(ed25519.PublicKey))
-	addrKeys := iota.AddressKeys{Address: &inputAddr, Keys: identityOne}
+	inputAddr := iotago.AddressFromEd25519PubKey(identityOne.Public().(ed25519.PublicKey))
+	addrKeys := iotago.AddressKeys{Address: &inputAddr, Keys: identityOne}
 
 	type test struct {
 		name              string
-		addrSigner        iota.AddressSigner
-		builder           *iota.TransactionBuilder
-		inputUTXOs        iota.InputToOutputMapping
-		dustAllowanceFunc iota.DustAllowanceFunc
+		addrSigner        iotago.AddressSigner
+		builder           *iotago.TransactionBuilder
+		inputUTXOs        iotago.InputToOutputMapping
+		dustAllowanceFunc iotago.DustAllowanceFunc
 		buildErr          error
 		validErr          error
 	}
@@ -204,29 +204,29 @@ func TestDustAllowance(t *testing.T) {
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
 				name:       "ok - create dust output on address with enough allowance by consuming the only dust output",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
-				dustAllowanceFunc: func() iota.DustAllowanceFunc {
+				dustAllowanceFunc: func() iotago.DustAllowanceFunc {
 					dustOutputsAmount := map[string]int64{
 						(&inputAddr).String(): 1,
 						// zero on output address
 					}
 					dustAllowanceSum := map[string]uint64{
 						// we have one dust allowance output on the target address
-						outputAddr1.String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						outputAddr1.String(): iotago.OutputSigLockedDustAllowanceOutputMinDeposit,
 					}
-					return func(addr iota.Address) (uint64, int64, error) {
+					return func(addr iotago.Address) (uint64, int64, error) {
 						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
@@ -235,29 +235,29 @@ func TestDustAllowance(t *testing.T) {
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
 				name:       "ok - create dust output on address with enough allowance while still having dust on both source and target",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
-				dustAllowanceFunc: func() iota.DustAllowanceFunc {
+				dustAllowanceFunc: func() iotago.DustAllowanceFunc {
 					dustOutputsAmount := map[string]int64{
 						(&inputAddr).String(): 5,
 						outputAddr1.String():  5,
 					}
 					dustAllowanceSum := map[string]uint64{
-						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
-						outputAddr1.String():  iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						(&inputAddr).String(): iotago.OutputSigLockedDustAllowanceOutputMinDeposit,
+						outputAddr1.String():  iotago.OutputSigLockedDustAllowanceOutputMinDeposit,
 					}
-					return func(addr iota.Address) (uint64, int64, error) {
+					return func(addr iotago.Address) (uint64, int64, error) {
 						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
@@ -266,21 +266,21 @@ func TestDustAllowance(t *testing.T) {
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50}).
-				AddOutput(&iota.SigLockedDustAllowanceOutput{Address: outputAddr1, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 50}).
+				AddOutput(&iotago.SigLockedDustAllowanceOutput{Address: outputAddr1, Amount: iotago.OutputSigLockedDustAllowanceOutputMinDeposit})
 
 			return test{
 				name:       "ok - create dust output on address with enough allowance through companion dust allowance output",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit + 50},
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: iotago.OutputSigLockedDustAllowanceOutputMinDeposit + 50},
 				},
-				dustAllowanceFunc: func() iota.DustAllowanceFunc {
+				dustAllowanceFunc: func() iotago.DustAllowanceFunc {
 					dustOutputsAmount := map[string]int64{
 						(&inputAddr).String(): 0,
 						outputAddr1.String():  0,
@@ -291,7 +291,7 @@ func TestDustAllowance(t *testing.T) {
 						// but we will have it via the transaction
 						outputAddr1.String(): 0,
 					}
-					return func(addr iota.Address) (uint64, int64, error) {
+					return func(addr iotago.Address) (uint64, int64, error) {
 						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
@@ -300,32 +300,32 @@ func TestDustAllowance(t *testing.T) {
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
-			inputUTXO2 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO2 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO2}).
-				AddOutput(&iota.SigLockedDustAllowanceOutput{Address: outputAddr1, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO2}).
+				AddOutput(&iotago.SigLockedDustAllowanceOutput{Address: outputAddr1, Amount: iotago.OutputSigLockedDustAllowanceOutputMinDeposit})
 
 			return test{
 				name:       "ok - create dust allowance output by combining multiple dust outputs as inputs",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit / 2},
-					inputUTXO2.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit / 2},
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: iotago.OutputSigLockedDustAllowanceOutputMinDeposit / 2},
+					inputUTXO2.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: iotago.OutputSigLockedDustAllowanceOutputMinDeposit / 2},
 				},
-				dustAllowanceFunc: func() iota.DustAllowanceFunc {
+				dustAllowanceFunc: func() iotago.DustAllowanceFunc {
 					dustOutputsAmount := map[string]int64{
 						(&inputAddr).String(): 2,
 						outputAddr1.String():  0,
 					}
 					dustAllowanceSum := map[string]uint64{
-						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						(&inputAddr).String(): iotago.OutputSigLockedDustAllowanceOutputMinDeposit,
 						outputAddr1.String():  0,
 					}
-					return func(addr iota.Address) (uint64, int64, error) {
+					return func(addr iotago.Address) (uint64, int64, error) {
 						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
@@ -334,88 +334,88 @@ func TestDustAllowance(t *testing.T) {
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
 				name:       "err - create dust output on address without enough allowance",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
-				dustAllowanceFunc: func() iota.DustAllowanceFunc {
+				dustAllowanceFunc: func() iotago.DustAllowanceFunc {
 					dustOutputsAmount := map[string]int64{
 						(&inputAddr).String(): 1,
 						outputAddr1.String():  0,
 					}
 					dustAllowanceSum := map[string]uint64{
 						// we are allowed to have outputs on our input address
-						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						(&inputAddr).String(): iotago.OutputSigLockedDustAllowanceOutputMinDeposit,
 						// this should result in an error, since no dust allowance is present
 						outputAddr1.String(): 0,
 					}
-					return func(addr iota.Address) (uint64, int64, error) {
+					return func(addr iotago.Address) (uint64, int64, error) {
 						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
-				validErr: iota.ErrInvalidDustAllowance,
+				validErr: iotago.ErrInvalidDustAllowance,
 			}
 		}(),
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
 				name:       "err - create dust output on address exceeding allowance by 1",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: 50},
 				},
-				dustAllowanceFunc: func() iota.DustAllowanceFunc {
+				dustAllowanceFunc: func() iotago.DustAllowanceFunc {
 					dustOutputsAmount := map[string]int64{
 						(&inputAddr).String(): 1,
 						outputAddr1.String():  100,
 					}
 					dustAllowanceSum := map[string]uint64{
-						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						(&inputAddr).String(): iotago.OutputSigLockedDustAllowanceOutputMinDeposit,
 						// this should result in an error, since we're creating one
 						// dust output over the limit
-						outputAddr1.String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						outputAddr1.String(): iotago.OutputSigLockedDustAllowanceOutputMinDeposit,
 					}
-					return func(addr iota.Address) (uint64, int64, error) {
+					return func(addr iotago.Address) (uint64, int64, error) {
 						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
-				validErr: iota.ErrInvalidDustAllowance,
+				validErr: iotago.ErrInvalidDustAllowance,
 			}
 		}(),
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedDustAllowanceOutput{Address: outputAddr1, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit - 1})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddOutput(&iotago.SigLockedDustAllowanceOutput{Address: outputAddr1, Amount: iotago.OutputSigLockedDustAllowanceOutputMinDeposit - 1})
 
 			return test{
 				name:       "err - create dust allowance output which does not reach the minimum dust allowance amount",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedSingleOutput{Address: &inputAddr, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit},
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedSingleOutput{Address: &inputAddr, Amount: iotago.OutputSigLockedDustAllowanceOutputMinDeposit},
 				},
-				dustAllowanceFunc: func() iota.DustAllowanceFunc {
+				dustAllowanceFunc: func() iotago.DustAllowanceFunc {
 					dustOutputsAmount := map[string]int64{
 						(&inputAddr).String(): 0,
 						outputAddr1.String():  0,
@@ -425,30 +425,30 @@ func TestDustAllowance(t *testing.T) {
 						// no dust allowance yet on target
 						outputAddr1.String(): 0,
 					}
-					return func(addr iota.Address) (uint64, int64, error) {
+					return func(addr iotago.Address) (uint64, int64, error) {
 						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
-				buildErr: iota.ErrOutputDustAllowanceLessThanMinDeposit,
+				buildErr: iotago.ErrOutputDustAllowanceLessThanMinDeposit,
 			}
 		}(),
 		func() test {
 
 			outputAddr1, _ := randEd25519Addr()
-			inputUTXO1 := &iota.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: rand32ByteHash(), TransactionOutputIndex: 0}
 
-			builder := iota.NewTransactionBuilder().
-				AddInput(&iota.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iota.SigLockedSingleOutput{Address: outputAddr1, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit})
+			builder := iotago.NewTransactionBuilder().
+				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: iotago.OutputSigLockedDustAllowanceOutputMinDeposit})
 
 			return test{
 				name:       "err - consume dust allowance output without enough remaining allowance",
-				addrSigner: iota.NewInMemoryAddressSigner(addrKeys),
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iota.InputToOutputMapping{
-					inputUTXO1.ID(): &iota.SigLockedDustAllowanceOutput{Address: &inputAddr, Amount: iota.OutputSigLockedDustAllowanceOutputMinDeposit},
+				inputUTXOs: iotago.InputToOutputMapping{
+					inputUTXO1.ID(): &iotago.SigLockedDustAllowanceOutput{Address: &inputAddr, Amount: iotago.OutputSigLockedDustAllowanceOutputMinDeposit},
 				},
-				dustAllowanceFunc: func() iota.DustAllowanceFunc {
+				dustAllowanceFunc: func() iotago.DustAllowanceFunc {
 					dustOutputsAmount := map[string]int64{
 						(&inputAddr).String(): 50,
 						outputAddr1.String():  0,
@@ -456,14 +456,14 @@ func TestDustAllowance(t *testing.T) {
 					dustAllowanceSum := map[string]uint64{
 						// we spend the only dust allowance output on the address while still
 						// having 50 dust outputs on it
-						(&inputAddr).String(): iota.OutputSigLockedDustAllowanceOutputMinDeposit,
+						(&inputAddr).String(): iotago.OutputSigLockedDustAllowanceOutputMinDeposit,
 						outputAddr1.String():  0,
 					}
-					return func(addr iota.Address) (uint64, int64, error) {
+					return func(addr iotago.Address) (uint64, int64, error) {
 						return dustAllowanceSum[addr.String()], dustOutputsAmount[addr.String()], nil
 					}
 				}(),
-				validErr: iota.ErrInvalidDustAllowance,
+				validErr: iotago.ErrInvalidDustAllowance,
 			}
 		}(),
 	}
@@ -480,7 +480,7 @@ func TestDustAllowance(t *testing.T) {
 
 			semanticErr := payload.SemanticallyValidate(
 				test.inputUTXOs,
-				iota.NewDustSemanticValidation(iota.DustAllowanceDivisor, iota.MaxDustOutputsOnAddress, test.dustAllowanceFunc),
+				iotago.NewDustSemanticValidation(iotago.DustAllowanceDivisor, iotago.MaxDustOutputsOnAddress, test.dustAllowanceFunc),
 			)
 
 			if test.validErr != nil {
@@ -489,7 +489,7 @@ func TestDustAllowance(t *testing.T) {
 			}
 			assert.NoError(t, semanticErr)
 
-			_, err = payload.Serialize(iota.DeSeriModePerformValidation)
+			_, err = payload.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 		})
 	}

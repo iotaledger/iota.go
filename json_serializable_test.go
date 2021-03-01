@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"encoding/json"

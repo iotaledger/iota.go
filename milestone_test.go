@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ func TestMilestone_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target *iota.Milestone
+		target *iotago.Milestone
 		err    error
 	}
 	tests := []test{
@@ -30,8 +30,8 @@ func TestMilestone_Deserialize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			msPayload := &iota.Milestone{}
-			bytesRead, err := msPayload.Deserialize(tt.source, iota.DeSeriModePerformValidation)
+			msPayload := &iotago.Milestone{}
+			bytesRead, err := msPayload.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -46,7 +46,7 @@ func TestMilestone_Deserialize(t *testing.T) {
 func TestMilestone_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.Milestone
+		source *iotago.Milestone
 		target []byte
 	}
 	tests := []test{
@@ -57,7 +57,7 @@ func TestMilestone_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -65,13 +65,13 @@ func TestMilestone_Serialize(t *testing.T) {
 }
 
 func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
-	ms := &iota.Milestone{
+	ms := &iotago.Milestone{
 		Index:                1337,
 		Timestamp:            13371337,
 		Parents:              sortedRand32ByteHashes(2),
 		InclusionMerkleProof: rand32ByteHash(),
 		PublicKeys:           sortedRand32ByteHashes(3),
-		Signatures: []iota.MilestoneSignature{
+		Signatures: []iotago.MilestoneSignature{
 			rand64ByteHash(),
 			rand64ByteHash(),
 			rand64ByteHash(),
@@ -81,7 +81,7 @@ func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
 	msJSON, err := json.Marshal(ms)
 	require.NoError(t, err)
 
-	desMs := &iota.Milestone{}
+	desMs := &iotago.Milestone{}
 	require.NoError(t, json.Unmarshal(msJSON, desMs))
 
 	require.EqualValues(t, ms, desMs)
@@ -90,16 +90,16 @@ func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
 func TestMilestoneSigning(t *testing.T) {
 	type test struct {
 		name            string
-		ms              *iota.Milestone
-		signer          iota.MilestoneSigningFunc
+		ms              *iotago.Milestone
+		signer          iotago.MilestoneSigningFunc
 		minSigThreshold int
-		pubKeySet       iota.MilestonePublicKeySet
+		pubKeySet       iotago.MilestonePublicKeySet
 		signingErr      error
 		verificationErr error
 	}
 
-	pubKeyFromPrv := func(prvKey ed25519.PrivateKey) iota.MilestonePublicKey {
-		var pubKey iota.MilestonePublicKey
+	pubKeyFromPrv := func(prvKey ed25519.PrivateKey) iotago.MilestonePublicKey {
+		var pubKey iotago.MilestonePublicKey
 		copy(pubKey[:], prvKey.Public().(ed25519.PublicKey))
 		return pubKey
 	}
@@ -109,9 +109,9 @@ func TestMilestoneSigning(t *testing.T) {
 			prvKey := randEd25519PrivateKey()
 			pubKey1 := pubKeyFromPrv(prvKey)
 
-			pubKeys := []iota.MilestonePublicKey{pubKey1}
+			pubKeys := []iotago.MilestonePublicKey{pubKey1}
 
-			msPayload := &iota.Milestone{
+			msPayload := &iotago.Milestone{
 				Parents:              sortedRand32ByteHashes(1 + rand.Intn(7)),
 				Index:                1000,
 				Timestamp:            uint64(time.Now().Unix()),
@@ -122,11 +122,11 @@ func TestMilestoneSigning(t *testing.T) {
 			return test{
 				name: "ok",
 				ms:   msPayload,
-				signer: iota.InMemoryEd25519MilestoneSigner(iota.MilestonePublicKeyMapping{
+				signer: iotago.InMemoryEd25519MilestoneSigner(iotago.MilestonePublicKeyMapping{
 					pubKey1: prvKey,
 				}),
 				minSigThreshold: 1,
-				pubKeySet:       map[iota.MilestonePublicKey]struct{}{pubKey1: {}},
+				pubKeySet:       map[iotago.MilestonePublicKey]struct{}{pubKey1: {}},
 				signingErr:      nil,
 				verificationErr: nil,
 			}
@@ -141,10 +141,10 @@ func TestMilestoneSigning(t *testing.T) {
 			pubKey3 := pubKeyFromPrv(prvKey3)
 
 			// only 1 and 2
-			pubKeys := iota.LexicalOrdered32ByteArrays{pubKey1, pubKey2}
+			pubKeys := iotago.LexicalOrdered32ByteArrays{pubKey1, pubKey2}
 			sort.Sort(pubKeys)
 
-			msPayload := &iota.Milestone{
+			msPayload := &iotago.Milestone{
 				Parents:              sortedRand32ByteHashes(1 + rand.Intn(7)),
 				Index:                1000,
 				Timestamp:            uint64(time.Now().Unix()),
@@ -155,13 +155,13 @@ func TestMilestoneSigning(t *testing.T) {
 			return test{
 				name: "ok - 2 of 3 from applicable set",
 				ms:   msPayload,
-				signer: iota.InMemoryEd25519MilestoneSigner(iota.MilestonePublicKeyMapping{
+				signer: iotago.InMemoryEd25519MilestoneSigner(iotago.MilestonePublicKeyMapping{
 					pubKey1: prvKey1,
 					pubKey2: prvKey2,
 					pubKey3: prvKey3,
 				}),
 				minSigThreshold: 2,
-				pubKeySet:       map[iota.MilestonePublicKey]struct{}{pubKey1: {}, pubKey2: {}, pubKey3: {}},
+				pubKeySet:       map[iotago.MilestonePublicKey]struct{}{pubKey1: {}, pubKey2: {}, pubKey3: {}},
 				signingErr:      nil,
 				verificationErr: nil,
 			}
@@ -170,9 +170,9 @@ func TestMilestoneSigning(t *testing.T) {
 			prvKey := randEd25519PrivateKey()
 			pubKey1 := pubKeyFromPrv(prvKey)
 
-			pubKeys := []iota.MilestonePublicKey{pubKey1}
+			pubKeys := []iotago.MilestonePublicKey{pubKey1}
 
-			msPayload := &iota.Milestone{
+			msPayload := &iotago.Milestone{
 				Parents:              sortedRand32ByteHashes(1 + rand.Intn(7)),
 				Index:                1000,
 				Timestamp:            uint64(time.Now().Unix()),
@@ -183,14 +183,14 @@ func TestMilestoneSigning(t *testing.T) {
 			return test{
 				name: "err - invalid signature",
 				ms:   msPayload,
-				signer: iota.InMemoryEd25519MilestoneSigner(iota.MilestonePublicKeyMapping{
+				signer: iotago.InMemoryEd25519MilestoneSigner(iotago.MilestonePublicKeyMapping{
 					// signature will be signed with a non matching private key
 					pubKey1: randEd25519PrivateKey(),
 				}),
 				minSigThreshold: 1,
-				pubKeySet:       map[iota.MilestonePublicKey]struct{}{pubKey1: {}},
+				pubKeySet:       map[iotago.MilestonePublicKey]struct{}{pubKey1: {}},
 				signingErr:      nil,
-				verificationErr: iota.ErrMilestoneInvalidSignature,
+				verificationErr: iotago.ErrMilestoneInvalidSignature,
 			}
 		}(),
 	}
@@ -218,17 +218,17 @@ func TestNewMilestone(t *testing.T) {
 	parents := sortedRand32ByteHashes(1 + rand.Intn(7))
 	inclusionMerkleProof := rand32ByteHash()
 	const msIndex, timestamp = 1000, 133713371337
-	unsortedPubKeys := []iota.MilestonePublicKey{{3}, {2}, {1}, {5}}
+	unsortedPubKeys := []iotago.MilestonePublicKey{{3}, {2}, {1}, {5}}
 
-	ms, err := iota.NewMilestone(msIndex, timestamp, parents, inclusionMerkleProof, unsortedPubKeys)
+	ms, err := iotago.NewMilestone(msIndex, timestamp, parents, inclusionMerkleProof, unsortedPubKeys)
 	assert.NoError(t, err)
 
-	assert.EqualValues(t, &iota.Milestone{
+	assert.EqualValues(t, &iotago.Milestone{
 		Index:                msIndex,
 		Timestamp:            timestamp,
 		Parents:              parents,
 		InclusionMerkleProof: inclusionMerkleProof,
-		PublicKeys:           []iota.MilestonePublicKey{{1}, {2}, {3}, {5}},
+		PublicKeys:           []iotago.MilestonePublicKey{{1}, {2}, {3}, {5}},
 		Signatures:           nil,
 	}, ms)
 }

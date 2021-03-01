@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"errors"
@@ -9,15 +9,15 @@ import (
 )
 
 func TestUnlockBlockSelector(t *testing.T) {
-	_, err := iota.UnlockBlockSelector(100)
-	assert.True(t, errors.Is(err, iota.ErrUnknownUnlockBlockType))
+	_, err := iotago.UnlockBlockSelector(100)
+	assert.True(t, errors.Is(err, iotago.ErrUnknownUnlockBlockType))
 }
 
 func TestSignatureUnlockBlock_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iota.Serializable
+		target iotago.Serializable
 		err    error
 	}
 	tests := []test{
@@ -27,14 +27,14 @@ func TestSignatureUnlockBlock_Deserialize(t *testing.T) {
 		}(),
 		func() test {
 			edSigBlock, edSigBlockData := randEd25519SignatureUnlockBlock()
-			return test{"not enough data", edSigBlockData[:5], edSigBlock, iota.ErrDeserializationNotEnoughData}
+			return test{"not enough data", edSigBlockData[:5], edSigBlock, iotago.ErrDeserializationNotEnoughData}
 		}(),
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edSig := &iota.SignatureUnlockBlock{}
-			bytesRead, err := edSig.Deserialize(tt.source, iota.DeSeriModePerformValidation)
+			edSig := &iotago.SignatureUnlockBlock{}
+			bytesRead, err := edSig.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -49,7 +49,7 @@ func TestSignatureUnlockBlock_Deserialize(t *testing.T) {
 func TestUnlockBlockSignature_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.SignatureUnlockBlock
+		source *iotago.SignatureUnlockBlock
 		target []byte
 	}
 	tests := []test{
@@ -60,7 +60,7 @@ func TestUnlockBlockSignature_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -71,7 +71,7 @@ func TestReferenceUnlockBlock_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iota.Serializable
+		target iotago.Serializable
 		err    error
 	}
 	tests := []test{
@@ -83,8 +83,8 @@ func TestReferenceUnlockBlock_Deserialize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edSig := &iota.ReferenceUnlockBlock{}
-			bytesRead, err := edSig.Deserialize(tt.source, iota.DeSeriModePerformValidation)
+			edSig := &iotago.ReferenceUnlockBlock{}
+			bytesRead, err := edSig.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -99,7 +99,7 @@ func TestReferenceUnlockBlock_Deserialize(t *testing.T) {
 func TestUnlockBlockReference_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.ReferenceUnlockBlock
+		source *iotago.ReferenceUnlockBlock
 		target []byte
 	}
 	tests := []test{
@@ -110,7 +110,7 @@ func TestUnlockBlockReference_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -119,8 +119,8 @@ func TestUnlockBlockReference_Serialize(t *testing.T) {
 
 func TestUnlockBlockValidatorFunc(t *testing.T) {
 	type args struct {
-		inputs []iota.Serializable
-		funcs  []iota.UnlockBlockValidatorFunc
+		inputs []iotago.Serializable
+		funcs  []iotago.UnlockBlockValidatorFunc
 	}
 	tests := []struct {
 		name    string
@@ -129,57 +129,57 @@ func TestUnlockBlockValidatorFunc(t *testing.T) {
 	}{
 		{
 			"ok",
-			args{inputs: []iota.Serializable{
-				func() iota.Serializable {
+			args{inputs: []iotago.Serializable{
+				func() iotago.Serializable {
 					block, _ := randEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() iota.Serializable {
+				func() iotago.Serializable {
 					block, _ := randEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() iota.Serializable {
-					return &iota.ReferenceUnlockBlock{Reference: 0}
+				func() iotago.Serializable {
+					return &iotago.ReferenceUnlockBlock{Reference: 0}
 				}(),
-			}, funcs: []iota.UnlockBlockValidatorFunc{iota.UnlockBlocksSigUniqueAndRefValidator()}}, false,
+			}, funcs: []iotago.UnlockBlockValidatorFunc{iotago.UnlockBlocksSigUniqueAndRefValidator()}}, false,
 		},
 		{
 			"duplicate ed25519 sig block",
-			args{inputs: []iota.Serializable{
-				func() iota.Serializable {
-					return &iota.SignatureUnlockBlock{Signature: &iota.Ed25519Signature{
+			args{inputs: []iotago.Serializable{
+				func() iotago.Serializable {
+					return &iotago.SignatureUnlockBlock{Signature: &iotago.Ed25519Signature{
 						PublicKey: [32]byte{},
 						Signature: [64]byte{},
 					}}
 				}(),
-				func() iota.Serializable {
-					return &iota.SignatureUnlockBlock{Signature: &iota.Ed25519Signature{
+				func() iotago.Serializable {
+					return &iotago.SignatureUnlockBlock{Signature: &iotago.Ed25519Signature{
 						PublicKey: [32]byte{},
 						Signature: [64]byte{},
 					}}
 				}(),
-			}, funcs: []iota.UnlockBlockValidatorFunc{iota.UnlockBlocksSigUniqueAndRefValidator()}}, true,
+			}, funcs: []iotago.UnlockBlockValidatorFunc{iotago.UnlockBlocksSigUniqueAndRefValidator()}}, true,
 		},
 		{
 			"invalid ref",
-			args{inputs: []iota.Serializable{
-				func() iota.Serializable {
+			args{inputs: []iotago.Serializable{
+				func() iotago.Serializable {
 					block, _ := randEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() iota.Serializable {
+				func() iotago.Serializable {
 					block, _ := randEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() iota.Serializable {
-					return &iota.ReferenceUnlockBlock{Reference: 2}
+				func() iotago.Serializable {
+					return &iotago.ReferenceUnlockBlock{Reference: 2}
 				}(),
-			}, funcs: []iota.UnlockBlockValidatorFunc{iota.UnlockBlocksSigUniqueAndRefValidator()}}, true,
+			}, funcs: []iotago.UnlockBlockValidatorFunc{iotago.UnlockBlocksSigUniqueAndRefValidator()}}, true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := iota.ValidateUnlockBlocks(tt.args.inputs, tt.args.funcs...); (err != nil) != tt.wantErr {
+			if err := iotago.ValidateUnlockBlocks(tt.args.inputs, tt.args.funcs...); (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"bytes"
@@ -20,16 +20,16 @@ const nodeAPIUrl = "http://127.0.0.1:14265"
 func TestNodeAPI_Health(t *testing.T) {
 	defer gock.Off()
 	gock.New(nodeAPIUrl).
-		Get(iota.NodeAPIRouteHealth).
+		Get(iotago.NodeAPIRouteHealth).
 		Reply(200)
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	healthy, err := nodeAPI.Health()
 	require.NoError(t, err)
 	require.True(t, healthy)
 
 	gock.New(nodeAPIUrl).
-		Get(iota.NodeAPIRouteHealth).
+		Get(iotago.NodeAPIRouteHealth).
 		Reply(503)
 
 	healthy, err = nodeAPI.Health()
@@ -40,7 +40,7 @@ func TestNodeAPI_Health(t *testing.T) {
 func TestNodeAPI_Info(t *testing.T) {
 	defer gock.Off()
 
-	originInfo := &iota.NodeInfoResponse{
+	originInfo := &iotago.NodeInfoResponse{
 		Name:                    "HORNET",
 		Version:                 "1.0.0",
 		IsHealthy:               true,
@@ -53,11 +53,11 @@ func TestNodeAPI_Info(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(iota.NodeAPIRouteInfo).
+		Get(iotago.NodeAPIRouteInfo).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originInfo})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originInfo})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	info, err := nodeAPI.Info()
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
@@ -66,16 +66,16 @@ func TestNodeAPI_Info(t *testing.T) {
 func TestNodeAPI_Tips(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &iota.NodeTipsResponse{
+	originRes := &iotago.NodeTipsResponse{
 		Tips: []string{"733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d", "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe"},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(iota.NodeAPIRouteTips).
+		Get(iotago.NodeAPIRouteTips).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	tips, err := nodeAPI.Tips()
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, tips)
@@ -87,39 +87,39 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 	msgHash := rand32ByteHash()
 	msgHashStr := hex.EncodeToString(msgHash[:])
 
-	incompleteMsg := &iota.Message{
+	incompleteMsg := &iotago.Message{
 		Parents: sortedRand32ByteHashes(1),
 	}
 
-	completeMsg := &iota.Message{
+	completeMsg := &iotago.Message{
 		Parents: sortedRand32ByteHashes(1 + rand.Intn(7)),
 		Payload: nil,
 		Nonce:   3495721389537486,
 	}
 
-	serializedCompleteMsg, err := completeMsg.Serialize(iota.DeSeriModeNoValidation)
+	serializedCompleteMsg, err := completeMsg.Serialize(iotago.DeSeriModeNoValidation)
 	require.NoError(t, err)
 
 	// we need to do this, otherwise gock doesn't match the body
 	gock.BodyTypes = append(gock.BodyTypes, "application/octet-stream")
 	gock.BodyTypeAliases["octet"] = "application/octet-stream"
 
-	serializedIncompleteMsg, err := incompleteMsg.Serialize(iota.DeSeriModePerformValidation)
+	serializedIncompleteMsg, err := incompleteMsg.Serialize(iotago.DeSeriModePerformValidation)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Post(iota.NodeAPIRouteMessages).
+		Post(iotago.NodeAPIRouteMessages).
 		MatchType("octet").
 		Body(bytes.NewReader(serializedIncompleteMsg)).
 		Reply(200).
 		AddHeader("Location", msgHashStr)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(iota.NodeAPIRouteMessageBytes, msgHashStr)).
+		Get(fmt.Sprintf(iotago.NodeAPIRouteMessageBytes, msgHashStr)).
 		Reply(200).
 		Body(bytes.NewReader(serializedCompleteMsg))
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.SubmitMessage(incompleteMsg)
 	require.NoError(t, err)
 	require.EqualValues(t, completeMsg, resp)
@@ -133,7 +133,7 @@ func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
 	id2 := rand32ByteHash()
 	id3 := rand32ByteHash()
 
-	msgIDsByIndex := &iota.MessageIDsByIndexResponse{
+	msgIDsByIndex := &iotago.MessageIDsByIndexResponse{
 		Index:      hex.EncodeToString([]byte(index)),
 		MaxResults: 1000,
 		Count:      3,
@@ -145,12 +145,12 @@ func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(iota.NodeAPIRouteMessages).
+		Get(iotago.NodeAPIRouteMessages).
 		MatchParam("index", hex.EncodeToString([]byte(index))).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: msgIDsByIndex})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: msgIDsByIndex})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resMsgIDsByIndex, err := nodeAPI.MessageIDsByIndex([]byte(index))
 	require.NoError(t, err)
 	require.EqualValues(t, msgIDsByIndex, resMsgIDsByIndex)
@@ -169,7 +169,7 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 		parentMessageIDs[i] = hex.EncodeToString(p[:])
 	}
 
-	originRes := &iota.MessageMetadataResponse{
+	originRes := &iotago.MessageMetadataResponse{
 		MessageID:                  queryHash,
 		Parents:                    parentMessageIDs,
 		Solid:                      true,
@@ -180,11 +180,11 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(iota.NodeAPIRouteMessageMetadata, queryHash)).
+		Get(fmt.Sprintf(iotago.NodeAPIRouteMessageMetadata, queryHash)).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	meta, err := nodeAPI.MessageMetadataByMessageID(identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, meta)
@@ -196,21 +196,21 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 	identifier := rand32ByteHash()
 	queryHash := hex.EncodeToString(identifier[:])
 
-	originMsg := &iota.Message{
+	originMsg := &iotago.Message{
 		Parents: sortedRand32ByteHashes(1 + rand.Intn(7)),
 		Payload: nil,
 		Nonce:   16345984576234,
 	}
 
-	data, err := originMsg.Serialize(iota.DeSeriModePerformValidation)
+	data, err := originMsg.Serialize(iotago.DeSeriModePerformValidation)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(iota.NodeAPIRouteMessageBytes, queryHash)).
+		Get(fmt.Sprintf(iotago.NodeAPIRouteMessageBytes, queryHash)).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	responseMsg, err := nodeAPI.MessageByMessageID(identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originMsg, responseMsg)
@@ -226,7 +226,7 @@ func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 	child2 := rand32ByteHash()
 	child3 := rand32ByteHash()
 
-	originRes := &iota.ChildrenResponse{
+	originRes := &iotago.ChildrenResponse{
 		MessageID:  hexMsgID,
 		MaxResults: 1000,
 		Count:      3,
@@ -238,11 +238,11 @@ func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(iota.NodeAPIRouteMessageChildren, hexMsgID)).
+		Get(fmt.Sprintf(iotago.NodeAPIRouteMessageChildren, hexMsgID)).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	res, err := nodeAPI.ChildrenByMessageID(msgID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
@@ -251,29 +251,29 @@ func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 func TestNodeAPI_OutputByID(t *testing.T) {
 	defer gock.Off()
 
-	originOutput, _ := randSigLockedSingleOutput(iota.AddressEd25519)
+	originOutput, _ := randSigLockedSingleOutput(iotago.AddressEd25519)
 	sigDepJson, err := originOutput.MarshalJSON()
 	require.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
 
 	txID := rand32ByteHash()
 	hexTxID := hex.EncodeToString(txID[:])
-	originRes := &iota.NodeOutputResponse{
+	originRes := &iotago.NodeOutputResponse{
 		TransactionID: hexTxID,
 		OutputIndex:   3,
 		Spent:         true,
 		RawOutput:     &rawMsgSigDepJson,
 	}
 
-	utxoInput := &iota.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
+	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
 	utxoInputId := utxoInput.ID()
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(iota.NodeAPIRouteOutput, utxoInputId.ToHex())).
+		Get(fmt.Sprintf(iotago.NodeAPIRouteOutput, utxoInputId.ToHex())).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.OutputByID(utxoInputId)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -289,18 +289,18 @@ func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 	ed25519Addr, _ := randEd25519Addr()
 	ed25519AddrHex := ed25519Addr.String()
 
-	originRes := &iota.AddressBalanceResponse{
+	originRes := &iotago.AddressBalanceResponse{
 		AddressType: 1,
 		Address:     ed25519AddrHex,
 		Balance:     13371337,
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(iota.NodeAPIRouteAddressEd25519Balance, ed25519AddrHex)).
+		Get(fmt.Sprintf(iotago.NodeAPIRouteAddressEd25519Balance, ed25519AddrHex)).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.BalanceByEd25519Address(ed25519AddrHex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -315,7 +315,7 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 	output1 := rand32ByteHash()
 	output2 := rand32ByteHash()
 	output3 := rand32ByteHash()
-	originRes := &iota.AddressOutputsResponse{
+	originRes := &iotago.AddressOutputsResponse{
 		AddressType: 1,
 		Address:     ed25519AddrHex,
 		MaxResults:  1000,
@@ -326,7 +326,7 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		},
 	}
 
-	originResWithUnspent := &iota.AddressOutputsResponse{
+	originResWithUnspent := &iotago.AddressOutputsResponse{
 		AddressType: 1,
 		Address:     ed25519AddrHex,
 		MaxResults:  1000,
@@ -338,13 +338,13 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		},
 	}
 
-	route := fmt.Sprintf(iota.NodeAPIRouteAddressEd25519Outputs, ed25519AddrHex)
+	route := fmt.Sprintf(iotago.NodeAPIRouteAddressEd25519Outputs, ed25519AddrHex)
 	gock.New(nodeAPIUrl).
 		Get(route).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.OutputIDsByEd25519Address(ed25519AddrHex, false)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -353,7 +353,7 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		Get(route).
 		MatchParam("include-spent", "true").
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originResWithUnspent})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originResWithUnspent})
 
 	resp, err = nodeAPI.OutputIDsByEd25519Address(ed25519AddrHex, true)
 	require.NoError(t, err)
@@ -363,17 +363,17 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 func TestNodeAPIClient_Treasury(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &iota.TreasuryResponse{
+	originRes := &iotago.TreasuryResponse{
 		MilestoneID: "733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d",
 		Amount:      133713371337,
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(iota.NodeAPIRouteTreasury).
+		Get(iotago.NodeAPIRouteTreasury).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.Treasury()
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -382,32 +382,32 @@ func TestNodeAPIClient_Treasury(t *testing.T) {
 func TestNodeAPIClient_Receipts(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &iota.ReceiptsResponse{
-		Receipts: []*iota.Receipt{
+	originRes := &iotago.ReceiptsResponse{
+		Receipts: []*iotago.Receipt{
 			{
 				MigratedAt: 1000,
 				Final:      false,
-				Funds: []iota.Serializable{
-					&iota.MigratedFundsEntry{
-						TailTransactionHash: iota.LegacyTailTransactionHash{},
-						Address:             &iota.Ed25519Address{},
+				Funds: []iotago.Serializable{
+					&iotago.MigratedFundsEntry{
+						TailTransactionHash: iotago.LegacyTailTransactionHash{},
+						Address:             &iotago.Ed25519Address{},
 						Deposit:             10000,
 					},
 				},
-				Transaction: &iota.TreasuryTransaction{
-					Input:  &iota.TreasuryInput{},
-					Output: &iota.TreasuryOutput{Amount: 10000},
+				Transaction: &iotago.TreasuryTransaction{
+					Input:  &iotago.TreasuryInput{},
+					Output: &iotago.TreasuryOutput{Amount: 10000},
 				},
 			},
 		},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(iota.NodeAPIRouteReceipts).
+		Get(iotago.NodeAPIRouteReceipts).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.Receipts()
 	require.NoError(t, err)
 	require.EqualValues(t, originRes.Receipts, resp)
@@ -418,32 +418,32 @@ func TestNodeAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 
 	var index uint32 = 1000
 
-	originRes := &iota.ReceiptsResponse{
-		Receipts: []*iota.Receipt{
+	originRes := &iotago.ReceiptsResponse{
+		Receipts: []*iotago.Receipt{
 			{
 				MigratedAt: 1000,
 				Final:      false,
-				Funds: []iota.Serializable{
-					&iota.MigratedFundsEntry{
-						TailTransactionHash: iota.LegacyTailTransactionHash{},
-						Address:             &iota.Ed25519Address{},
+				Funds: []iotago.Serializable{
+					&iotago.MigratedFundsEntry{
+						TailTransactionHash: iotago.LegacyTailTransactionHash{},
+						Address:             &iotago.Ed25519Address{},
 						Deposit:             10000,
 					},
 				},
-				Transaction: &iota.TreasuryTransaction{
-					Input:  &iota.TreasuryInput{},
-					Output: &iota.TreasuryOutput{Amount: 10000},
+				Transaction: &iotago.TreasuryTransaction{
+					Input:  &iotago.TreasuryInput{},
+					Output: &iotago.TreasuryOutput{Amount: 10000},
 				},
 			},
 		},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(iota.NodeAPIRouteReceiptsByMigratedAtIndex, strconv.FormatUint(uint64(index), 10))).
+		Get(fmt.Sprintf(iotago.NodeAPIRouteReceiptsByMigratedAtIndex, strconv.FormatUint(uint64(index), 10))).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.ReceiptsByMigratedAtIndex(index)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes.Receipts, resp)
@@ -456,32 +456,32 @@ func TestNodeAPI_MilestoneByIndex(t *testing.T) {
 	milestoneIndexStr := strconv.Itoa(int(milestoneIndex))
 	msgID := rand32ByteHash()
 
-	originRes := &iota.MilestoneResponse{
+	originRes := &iotago.MilestoneResponse{
 		Index:     milestoneIndex,
 		MessageID: hex.EncodeToString(msgID[:]),
 		Time:      time.Now().Unix(),
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(iota.NodeAPIRouteMilestone, milestoneIndexStr)).
+		Get(fmt.Sprintf(iotago.NodeAPIRouteMilestone, milestoneIndexStr)).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.MilestoneByIndex(milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
 
-var sampleGossipInfo = &iota.GossipInfo{
-	Heartbeat: &iota.GossipHeartbeat{
+var sampleGossipInfo = &iotago.GossipInfo{
+	Heartbeat: &iotago.GossipHeartbeat{
 		SolidMilestoneIndex:  234,
 		PrunedMilestoneIndex: 5872,
 		LatestMilestoneIndex: 1294,
 		ConnectedNeighbors:   2392,
 		SyncedNeighbors:      1234,
 	},
-	Metrics: iota.PeerGossipMetrics{
+	Metrics: iotago.PeerGossipMetrics{
 		NewMessages:               40,
 		KnownMessages:             60,
 		ReceivedMessages:          100,
@@ -501,7 +501,7 @@ func TestNodeAPI_PeerByID(t *testing.T) {
 
 	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
 
-	originRes := &iota.PeerResponse{
+	originRes := &iotago.PeerResponse{
 		MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
 		ID:             peerID,
 		Connected:      true,
@@ -510,11 +510,11 @@ func TestNodeAPI_PeerByID(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(iota.NodeAPIRoutePeer, peerID)).
+		Get(fmt.Sprintf(iotago.NodeAPIRoutePeer, peerID)).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.PeerByID(peerID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -526,11 +526,11 @@ func TestNodeAPI_RemovePeerByID(t *testing.T) {
 	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
 
 	gock.New(nodeAPIUrl).
-		Delete(fmt.Sprintf(iota.NodeAPIRoutePeer, peerID)).
+		Delete(fmt.Sprintf(iotago.NodeAPIRoutePeer, peerID)).
 		Reply(200).
 		Status(200)
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	err := nodeAPI.RemovePeerByID(peerID)
 	require.NoError(t, err)
 }
@@ -541,7 +541,7 @@ func TestNodeAPI_Peers(t *testing.T) {
 	peerID1 := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
 	peerID2 := "12D3KooWFJ8Nq6gHLLvigTpPdddddsadsadscpJof8Y4y8yFAB32"
 
-	originRes := []*iota.PeerResponse{
+	originRes := []*iotago.PeerResponse{
 		{
 			MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID1)},
 			ID:             peerID1,
@@ -559,11 +559,11 @@ func TestNodeAPI_Peers(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(iota.NodeAPIRoutePeers).
+		Get(iotago.NodeAPIRoutePeers).
 		Reply(200).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.Peers()
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -575,7 +575,7 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
 	multiAddr := fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)
 
-	originRes := &iota.PeerResponse{
+	originRes := &iotago.PeerResponse{
 		MultiAddresses: []string{multiAddr},
 		ID:             peerID,
 		Connected:      true,
@@ -583,14 +583,14 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 		Gossip:         sampleGossipInfo,
 	}
 
-	req := &iota.AddPeerRequest{MultiAddress: multiAddr}
+	req := &iotago.AddPeerRequest{MultiAddress: multiAddr}
 	gock.New(nodeAPIUrl).
-		Post(iota.NodeAPIRoutePeers).
+		Post(iotago.NodeAPIRoutePeers).
 		JSON(req).
 		Reply(201).
-		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.AddPeer(multiAddr)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)

@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ func TestReceipt_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target *iota.Receipt
+		target *iotago.Receipt
 		err    error
 	}
 	tests := []test{
@@ -24,8 +24,8 @@ func TestReceipt_Deserialize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			receipt := &iota.Receipt{}
-			bytesRead, err := receipt.Deserialize(tt.source, iota.DeSeriModePerformValidation)
+			receipt := &iotago.Receipt{}
+			bytesRead, err := receipt.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -40,7 +40,7 @@ func TestReceipt_Deserialize(t *testing.T) {
 func TestReceipt_Serialize(t *testing.T) {
 	type test struct {
 		name   string
-		source *iota.Receipt
+		source *iotago.Receipt
 		target []byte
 	}
 	tests := []test{
@@ -51,7 +51,7 @@ func TestReceipt_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -61,21 +61,21 @@ func TestReceipt_Serialize(t *testing.T) {
 func TestValidateReceipts(t *testing.T) {
 	type test struct {
 		name      string
-		source    *iota.Receipt
-		prevInput *iota.TreasuryOutput
+		source    *iotago.Receipt
+		prevInput *iotago.TreasuryOutput
 		err       error
 	}
-	currentTreasury := &iota.TreasuryOutput{Amount: 10_000_000}
+	currentTreasury := &iotago.TreasuryOutput{Amount: 10_000_000}
 	inputID := rand32ByteHash()
-	sampleTreasuryTx := &iota.TreasuryTransaction{Output: &iota.TreasuryOutput{Amount: 3_000_000}}
-	treasuryInput := &iota.TreasuryInput{}
+	sampleTreasuryTx := &iotago.TreasuryTransaction{Output: &iotago.TreasuryOutput{Amount: 3_000_000}}
+	treasuryInput := &iotago.TreasuryInput{}
 	copy(treasuryInput[:], inputID[:])
 	sampleTreasuryTx.Input = treasuryInput
 
 	tests := []test{
 		func() test {
 			addr, _ := randEd25519Addr()
-			receipt, _ := iota.NewReceiptBuilder(100).AddEntry(&iota.MigratedFundsEntry{
+			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: rand49ByteHash(),
 				Address:             addr,
 				Deposit:             7_000_000,
@@ -84,35 +84,35 @@ func TestValidateReceipts(t *testing.T) {
 		}(),
 		func() test {
 			addr, _ := randEd25519Addr()
-			receipt, _ := iota.NewReceiptBuilder(100).AddEntry(&iota.MigratedFundsEntry{
+			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: rand49ByteHash(),
 				Address:             addr,
 				Deposit:             1000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
-			return test{"err - migrated less tha minimum", receipt, currentTreasury, iota.ErrInvalidReceipt}
+			return test{"err - migrated less tha minimum", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 		func() test {
 			addr, _ := randEd25519Addr()
-			receipt, _ := iota.NewReceiptBuilder(100).AddEntry(&iota.MigratedFundsEntry{
+			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: rand49ByteHash(),
 				Address:             addr,
-				Deposit:             iota.TokenSupply + 1,
+				Deposit:             iotago.TokenSupply + 1,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
-			return test{"err - total supply overflow", receipt, currentTreasury, iota.ErrInvalidReceipt}
+			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 		func() test {
 			addr, _ := randEd25519Addr()
-			receipt, _ := iota.NewReceiptBuilder(100).AddEntry(&iota.MigratedFundsEntry{
+			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: rand49ByteHash(),
 				Address:             addr,
 				Deposit:             6_000_000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
-			return test{"err - invalid new treasury amount", receipt, currentTreasury, iota.ErrInvalidReceipt}
+			return test{"err - invalid new treasury amount", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := iota.ValidateReceipt(tt.source, tt.prevInput)
+			err := iotago.ValidateReceipt(tt.source, tt.prevInput)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return

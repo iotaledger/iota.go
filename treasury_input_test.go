@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"errors"
@@ -13,16 +13,16 @@ func TestTreasuryInput_Deserialize(t *testing.T) {
 	tests := []struct {
 		name   string
 		data   []byte
-		target *iota.TreasuryInput
+		target *iotago.TreasuryInput
 		err    error
 	}{
 		{"ok", randTreasuryInputData, randTreasuryInput, nil},
-		{"not enough data", randTreasuryInputData[:iota.TreasuryInputSerializedBytesSize-1], randTreasuryInput, iota.ErrDeserializationNotEnoughData},
+		{"not enough data", randTreasuryInputData[:iotago.TreasuryInputSerializedBytesSize-1], randTreasuryInput, iotago.ErrDeserializationNotEnoughData},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			u := &iota.TreasuryInput{}
-			bytesRead, err := u.Deserialize(tt.data, iota.DeSeriModePerformValidation)
+			u := &iotago.TreasuryInput{}
+			bytesRead, err := u.Deserialize(tt.data, iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -37,7 +37,7 @@ func TestTreasuryInput_Serialize(t *testing.T) {
 	randTreasuryInput, randTreasuryInputData := randTreasuryInput()
 	tests := []struct {
 		name   string
-		source *iota.TreasuryInput
+		source *iotago.TreasuryInput
 		target []byte
 		err    error
 	}{
@@ -45,7 +45,7 @@ func TestTreasuryInput_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := tt.source.Serialize(iota.DeSeriModePerformValidation)
+			data, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return

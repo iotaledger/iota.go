@@ -1,4 +1,4 @@
-package iota_test
+package iotago_test
 
 import (
 	"testing"
@@ -8,38 +8,38 @@ import (
 )
 
 func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {
-	data, err := oneInputOutputTransaction().Serialize(iota.DeSeriModeNoValidation)
+	data, err := oneInputOutputTransaction().Serialize(iotago.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
 
-	target := &iota.Transaction{}
-	_, err = target.Deserialize(data, iota.DeSeriModeNoValidation)
+	target := &iotago.Transaction{}
+	_, err = target.Deserialize(data, iotago.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, iota.DeSeriModePerformValidation)
+		target.Deserialize(data, iotago.DeSeriModePerformValidation)
 	}
 }
 
 func BenchmarkDeserializeWithoutValidationOneIOTxPayload(b *testing.B) {
-	data, err := oneInputOutputTransaction().Serialize(iota.DeSeriModeNoValidation)
+	data, err := oneInputOutputTransaction().Serialize(iotago.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
 
-	target := &iota.Transaction{}
-	_, err = target.Deserialize(data, iota.DeSeriModeNoValidation)
+	target := &iotago.Transaction{}
+	_, err = target.Deserialize(data, iotago.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, iota.DeSeriModeNoValidation)
+		target.Deserialize(data, iotago.DeSeriModeNoValidation)
 	}
 }
 
@@ -47,7 +47,7 @@ func BenchmarkSerializeWithValidationOneIOTxPayload(b *testing.B) {
 	txPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		txPayload.Serialize(iota.DeSeriModePerformValidation)
+		txPayload.Serialize(iotago.DeSeriModePerformValidation)
 	}
 }
 
@@ -55,7 +55,7 @@ func BenchmarkSerializeWithoutValidationOneIOTxPayload(b *testing.B) {
 	sigTxPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		sigTxPayload.Serialize(iota.DeSeriModeNoValidation)
+		sigTxPayload.Serialize(iotago.DeSeriModeNoValidation)
 	}
 }
 
@@ -63,7 +63,7 @@ func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Essence.(*iota.TransactionEssence).SigningMessage()
+	txEssenceData, err := txPayload.Essence.(*iotago.TransactionEssence).SigningMessage()
 	must(err)
 
 	seed := randEd25519Seed()
@@ -79,7 +79,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := oneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Essence.(*iota.TransactionEssence).SigningMessage()
+	txEssenceData, err := txPayload.Essence.(*iotago.TransactionEssence).SigningMessage()
 	must(err)
 
 	seed := randEd25519Seed()
@@ -97,7 +97,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 func BenchmarkSerializeAndHashMessageWithTransactionPayload(b *testing.B) {
 	txPayload := oneInputOutputTransaction()
 
-	m := &iota.Message{
+	m := &iotago.Message{
 		Parents: sortedRand32ByteHashes(2),
 		Payload: txPayload,
 		Nonce:   0,
