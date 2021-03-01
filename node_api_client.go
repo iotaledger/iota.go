@@ -319,14 +319,10 @@ type NodeInfoResponse struct {
 	Bech32HRP string `json:"bech32HRP"`
 	// The minimum pow score of the network.
 	MinPowScore float64 `json:"minPowScore"`
-	// The hex encoded ID of the latest known milestone.
-	LatestMilestoneID string `json:"latestMilestoneId"`
 	// The latest known milestone index.
 	LatestMilestoneIndex uint32 `json:"latestMilestoneIndex"`
-	// The hex encoded ID of the current solid milestone.
-	SolidMilestoneID string `json:"solidMilestoneId"`
-	// The current solid milestone's index.
-	SolidMilestoneIndex uint32 `json:"solidMilestoneIndex"`
+	// The current confirmed milestone's index.
+	ConfirmedMilestoneIndex uint32 `json:"confirmedMilestoneIndex"`
 	// The milestone index at which the last pruning commenced.
 	PruningIndex uint32 `json:"pruningIndex"`
 	// The features this node exposes.
