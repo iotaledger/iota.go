@@ -65,8 +65,8 @@ func (mb *MessageBuilder) Payload(seri Serializable) *MessageBuilder {
 	return mb
 }
 
-// Tips uses the given NodeAPI to query for parents to use.
-func (mb *MessageBuilder) Tips(nodeAPI *NodeAPI) *MessageBuilder {
+// Tips uses the given NodeAPIClient to query for parents to use.
+func (mb *MessageBuilder) Tips(nodeAPI *NodeAPIClient) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}

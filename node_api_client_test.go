@@ -23,7 +23,7 @@ func TestNodeAPI_Health(t *testing.T) {
 		Get(iota.NodeAPIRouteHealth).
 		Reply(200)
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	healthy, err := nodeAPI.Health()
 	require.NoError(t, err)
 	require.True(t, healthy)
@@ -59,7 +59,7 @@ func TestNodeAPI_Info(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originInfo})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	info, err := nodeAPI.Info()
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
@@ -77,7 +77,7 @@ func TestNodeAPI_Tips(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	tips, err := nodeAPI.Tips()
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, tips)
@@ -121,7 +121,7 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(serializedCompleteMsg))
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.SubmitMessage(incompleteMsg)
 	require.NoError(t, err)
 	require.EqualValues(t, completeMsg, resp)
@@ -152,7 +152,7 @@ func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: msgIDsByIndex})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	resMsgIDsByIndex, err := nodeAPI.MessageIDsByIndex([]byte(index))
 	require.NoError(t, err)
 	require.EqualValues(t, msgIDsByIndex, resMsgIDsByIndex)
@@ -186,7 +186,7 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	meta, err := nodeAPI.MessageMetadataByMessageID(identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, meta)
@@ -212,7 +212,7 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(data))
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	responseMsg, err := nodeAPI.MessageByMessageID(identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originMsg, responseMsg)
@@ -244,7 +244,7 @@ func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	res, err := nodeAPI.ChildrenByMessageID(msgID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
@@ -275,7 +275,7 @@ func TestNodeAPI_OutputByID(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.OutputByID(utxoInputId)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -302,7 +302,7 @@ func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.BalanceByEd25519Address(ed25519AddrHex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -346,7 +346,7 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.OutputIDsByEd25519Address(ed25519AddrHex, false)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -380,7 +380,7 @@ func TestNodeAPI_MilestoneByIndex(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.MilestoneByIndex(milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -427,7 +427,7 @@ func TestNodeAPI_PeerByID(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.PeerByID(peerID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -443,7 +443,7 @@ func TestNodeAPI_RemovePeerByID(t *testing.T) {
 		Reply(200).
 		Status(200)
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	err := nodeAPI.RemovePeerByID(peerID)
 	require.NoError(t, err)
 }
@@ -476,7 +476,7 @@ func TestNodeAPI_Peers(t *testing.T) {
 		Reply(200).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.Peers()
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -503,7 +503,7 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 		Reply(201).
 		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iota.NewNodeAPI(nodeAPIUrl)
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.AddPeer(multiAddr)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
