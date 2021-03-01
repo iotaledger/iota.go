@@ -383,20 +383,23 @@ func TestNodeAPIClient_Receipts(t *testing.T) {
 	defer gock.Off()
 
 	originRes := &iotago.ReceiptsResponse{
-		Receipts: []*iotago.Receipt{
+		Receipts: []*iotago.ReceiptTuple{
 			{
-				MigratedAt: 1000,
-				Final:      false,
-				Funds: []iotago.Serializable{
-					&iotago.MigratedFundsEntry{
-						TailTransactionHash: iotago.LegacyTailTransactionHash{},
-						Address:             &iotago.Ed25519Address{},
-						Deposit:             10000,
+				MilestoneIndex: 1000,
+				Receipt: &iotago.Receipt{
+					MigratedAt: 1000,
+					Final:      false,
+					Funds: []iotago.Serializable{
+						&iotago.MigratedFundsEntry{
+							TailTransactionHash: iotago.LegacyTailTransactionHash{},
+							Address:             &iotago.Ed25519Address{},
+							Deposit:             10000,
+						},
 					},
-				},
-				Transaction: &iotago.TreasuryTransaction{
-					Input:  &iotago.TreasuryInput{},
-					Output: &iotago.TreasuryOutput{Amount: 10000},
+					Transaction: &iotago.TreasuryTransaction{
+						Input:  &iotago.TreasuryInput{},
+						Output: &iotago.TreasuryOutput{Amount: 10000},
+					},
 				},
 			},
 		},
@@ -419,20 +422,23 @@ func TestNodeAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 	var index uint32 = 1000
 
 	originRes := &iotago.ReceiptsResponse{
-		Receipts: []*iotago.Receipt{
+		Receipts: []*iotago.ReceiptTuple{
 			{
-				MigratedAt: 1000,
-				Final:      false,
-				Funds: []iotago.Serializable{
-					&iotago.MigratedFundsEntry{
-						TailTransactionHash: iotago.LegacyTailTransactionHash{},
-						Address:             &iotago.Ed25519Address{},
-						Deposit:             10000,
+				MilestoneIndex: 1000,
+				Receipt: &iotago.Receipt{
+					MigratedAt: 1000,
+					Final:      false,
+					Funds: []iotago.Serializable{
+						&iotago.MigratedFundsEntry{
+							TailTransactionHash: iotago.LegacyTailTransactionHash{},
+							Address:             &iotago.Ed25519Address{},
+							Deposit:             10000,
+						},
 					},
-				},
-				Transaction: &iotago.TreasuryTransaction{
-					Input:  &iotago.TreasuryInput{},
-					Output: &iotago.TreasuryOutput{Amount: 10000},
+					Transaction: &iotago.TreasuryTransaction{
+						Input:  &iotago.TreasuryInput{},
+						Output: &iotago.TreasuryOutput{Amount: 10000},
+					},
 				},
 			},
 		},

@@ -625,11 +625,17 @@ func (api *NodeAPIClient) Treasury() (*TreasuryResponse, error) {
 
 // ReceiptsResponse defines the response of for receipts GET related REST API calls.
 type ReceiptsResponse struct {
-	Receipts []*Receipt `json:"receipts"`
+	Receipts []*ReceiptTuple `json:"receipts"`
+}
+
+// ReceiptTuple represents a receipt and the milestone index in which it was contained.
+type ReceiptTuple struct {
+	Receipt        *Receipt `json:"receipt"`
+	MilestoneIndex uint32   `json:"milestoneIndex"`
 }
 
 // Receipts gets all receipts persisted on the node.
-func (api *NodeAPIClient) Receipts() ([]*Receipt, error) {
+func (api *NodeAPIClient) Receipts() ([]*ReceiptTuple, error) {
 	res := &ReceiptsResponse{}
 	_, err := api.Do(http.MethodGet, NodeAPIRouteReceipts, nil, res)
 	if err != nil {
@@ -640,7 +646,7 @@ func (api *NodeAPIClient) Receipts() ([]*Receipt, error) {
 }
 
 // Receipts gets all receipts for the given migrated at index persisted on the node.
-func (api *NodeAPIClient) ReceiptsByMigratedAtIndex(index uint32) ([]*Receipt, error) {
+func (api *NodeAPIClient) ReceiptsByMigratedAtIndex(index uint32) ([]*ReceiptTuple, error) {
 	query := fmt.Sprintf(NodeAPIRouteReceiptsByMigratedAtIndex, strconv.FormatUint(uint64(index), 10))
 
 	res := &ReceiptsResponse{}
