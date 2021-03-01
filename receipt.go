@@ -214,6 +214,7 @@ func (j *jsonreceiptpayload) ToSerializable() (Serializable, error) {
 		}
 		migratedFundsEntries[i] = migratedFundsEntry
 	}
+	payload.Funds = migratedFundsEntries
 
 	if j.Transaction == nil {
 		return nil, fmt.Errorf("%w: JSON receipt must contain a treasury transaction", ErrInvalidJSON)

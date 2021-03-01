@@ -360,6 +360,95 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 	require.EqualValues(t, originResWithUnspent, resp)
 }
 
+func TestNodeAPIClient_Treasury(t *testing.T) {
+	defer gock.Off()
+
+	originRes := &iota.TreasuryResponse{
+		MilestoneID: "733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d",
+		Amount:      133713371337,
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(iota.NodeAPIRouteTreasury).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	resp, err := nodeAPI.Treasury()
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
+}
+
+func TestNodeAPIClient_Receipts(t *testing.T) {
+	defer gock.Off()
+
+	originRes := &iota.ReceiptsResponse{
+		Receipts: []*iota.Receipt{
+			{
+				MigratedAt: 1000,
+				Final:      false,
+				Funds: []iota.Serializable{
+					&iota.MigratedFundsEntry{
+						TailTransactionHash: iota.LegacyTailTransactionHash{},
+						Address:             &iota.Ed25519Address{},
+						Deposit:             10000,
+					},
+				},
+				Transaction: &iota.TreasuryTransaction{
+					Input:  &iota.TreasuryInput{},
+					Output: &iota.TreasuryOutput{Amount: 10000},
+				},
+			},
+		},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(iota.NodeAPIRouteReceipts).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	resp, err := nodeAPI.Receipts()
+	require.NoError(t, err)
+	require.EqualValues(t, originRes.Receipts, resp)
+}
+
+func TestNodeAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
+	defer gock.Off()
+
+	var index uint32 = 1000
+
+	originRes := &iota.ReceiptsResponse{
+		Receipts: []*iota.Receipt{
+			{
+				MigratedAt: 1000,
+				Final:      false,
+				Funds: []iota.Serializable{
+					&iota.MigratedFundsEntry{
+						TailTransactionHash: iota.LegacyTailTransactionHash{},
+						Address:             &iota.Ed25519Address{},
+						Deposit:             10000,
+					},
+				},
+				Transaction: &iota.TreasuryTransaction{
+					Input:  &iota.TreasuryInput{},
+					Output: &iota.TreasuryOutput{Amount: 10000},
+				},
+			},
+		},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(fmt.Sprintf(iota.NodeAPIRouteReceiptsByMigratedAtIndex, strconv.FormatUint(uint64(index), 10))).
+		Reply(200).
+		JSON(&iota.HTTPOkResponseEnvelope{Data: originRes})
+
+	nodeAPI := iota.NewNodeAPIClient(nodeAPIUrl)
+	resp, err := nodeAPI.ReceiptsByMigratedAtIndex(index)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes.Receipts, resp)
+}
+
 func TestNodeAPI_MilestoneByIndex(t *testing.T) {
 	defer gock.Off()
 
