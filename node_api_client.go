@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -104,20 +105,63 @@ const (
 	NodeAPIRoutePeers = "/api/v1/peers"
 )
 
-// NewNodeAPI returns a new NodeAPI with the given BaseURL and HTTPClient.
-func NewNodeAPI(baseURL string, httpClient ...http.Client) *NodeAPI {
-	if len(httpClient) > 0 {
-		return &NodeAPI{BaseURL: baseURL, HTTPClient: httpClient[0]}
+// the default options applied to the NodeAPI.
+var defaultNodeAPIOptions = []NodeAPIOption{
+	WithHTTPClient(http.DefaultClient),
+	WithUserInfo(nil),
+}
+
+// NodeAPIOptions define options for the NodeAPI.
+type NodeAPIOptions struct {
+	// The HTTP client to use.
+	httpClient *http.Client
+	// The username and password information.
+	userInfo *url.Userinfo
+}
+
+// applies the given NodeAPIOption.
+func (no *NodeAPIOptions) apply(opts ...NodeAPIOption) {
+	for _, opt := range opts {
+		opt(no)
 	}
-	return &NodeAPI{BaseURL: baseURL}
+}
+
+// WithHTTPClient sets the used HTTP Client.
+func WithHTTPClient(httpClient *http.Client) NodeAPIOption {
+	return func(opts *NodeAPIOptions) {
+		opts.httpClient = httpClient
+	}
+}
+
+// WithUserInfo sets the Userinfo used to add basic auth "Authorization" headers to the requests.
+func WithUserInfo(userInfo *url.Userinfo) NodeAPIOption {
+	return func(opts *NodeAPIOptions) {
+		opts.userInfo = userInfo
+	}
+}
+
+// NodeAPIOption is a function setting a NodeAPI option.
+type NodeAPIOption func(opts *NodeAPIOptions)
+
+// NewNodeAPI returns a new NodeAPI with the given BaseURL.
+func NewNodeAPI(baseURL string, opts ...NodeAPIOption) *NodeAPI {
+
+	options := &NodeAPIOptions{}
+	options.apply(defaultNodeAPIOptions...)
+	options.apply(opts...)
+
+	return &NodeAPI{
+		BaseURL: baseURL,
+		opts:    options,
+	}
 }
 
 // NodeAPI is a client for node HTTP REST APIs.
 type NodeAPI struct {
-	// The HTTP client to use.
-	HTTPClient http.Client
 	// The base URL for all API calls.
 	BaseURL string
+	// holds the NodeAPI options.
+	opts *NodeAPIOptions
 }
 
 // defines the error response schema for node API responses.
@@ -223,6 +267,11 @@ func (api *NodeAPI) Do(method string, route string, reqObj interface{}, resObj i
 		return nil, fmt.Errorf("unable to build http request: %w", err)
 	}
 
+	if api.opts.userInfo != nil {
+		// set the userInfo for basic auth
+		req.URL.User = api.opts.userInfo
+	}
+
 	if data != nil {
 		if !raw {
 			req.Header.Set("Content-Type", contentTypeJSON)
@@ -232,7 +281,7 @@ func (api *NodeAPI) Do(method string, route string, reqObj interface{}, resObj i
 	}
 
 	// make the request
-	res, err := api.HTTPClient.Do(req)
+	res, err := api.opts.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
