@@ -5,7 +5,5 @@ package bct
 
 import "github.com/iotaledger/iota.go/curl"
 
-var Indices = curl.Indices
-
 //go:noescape
-func transform(lto, hto, lfrom, hfrom *[curl.StateSize]uint, rounds uint)
+func transform(lto, hto, lfrom, hfrom *[curl.StateSize]uint)

@@ -124,7 +124,7 @@ func (c *Curl) out(dst trinary.Trits, idx uint) {
 // transform transforms the sponge.
 func (c *Curl) transform() {
 	var ltmp, htmp [curl.StateSize]uint
-	transform(&ltmp, &htmp, &c.l, &c.h, curl.NumRounds)
+	transform(&ltmp, &htmp, &c.l, &c.h)
 	c.l, c.h = ltmp, htmp
 }
 
