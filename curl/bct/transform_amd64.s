@@ -49,9 +49,25 @@ LOOP:
     NOTQ R14                    // lto[i+1] = ^a
     MOVQ R14, 8(AX)(DI*8)
 
-    DECQ R8                     // t--
-    ADDQ $2, DI                 // i += 2
-    CMPQ DI, $728               // if i < 728 goto ROUND
+    MOVQ 2904(CX)(R8*8), R10    // l0 = lfrom[t+363]
+    MOVQ 2904(DX)(R8*8), R11    // h0 = hfrom[t+363]
+
+    SBOX(R12, R13, R10, R11)    // a, b = sBox(l1, h1, l0, h0)
+    MOVQ R15, 16(BX)(DI*8)      // hto[i+2] = b
+    NOTQ R14                    // lto[i+2] = ^a
+    MOVQ R14, 16(AX)(DI*8)
+
+    MOVQ -16(CX)(R8*8), R12     // l1 := lfrom[t-2]
+    MOVQ -16(DX)(R8*8), R13     // h1 := hfrom[t-2]
+
+    SBOX(R10, R11, R12, R13)    // a, b = sBox(l0, h0, l1, h1)
+    MOVQ R15, 24(BX)(DI*8)      // hto[i+3] = b
+    NOTQ R14                    // lto[i+3] = ^a
+    MOVQ R14, 24(AX)(DI*8)
+
+    SUBQ $2, R8                 // t -= 2
+    ADDQ $4, DI                 // i += 4
+    CMPQ DI, $726               // if i < 726 goto ROUND
     JL LOOP
 
     XCHGQ AX, CX                // lfrom, lto = lto, lfrom

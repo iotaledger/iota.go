@@ -11,7 +11,7 @@ func transformGeneric(lto, hto, lfrom, hfrom *[curl.StateSize]uint) {
 		lto[0], hto[0] = sBox(l0, h0, l1, h1)
 
 		t := 364
-		for i := 1; i < curl.StateSize-1; i += 2 {
+		for i := 1; i <= curl.StateSize-4; i += 4 {
 			t += 364
 			l0, h0 = lfrom[t], hfrom[t]
 			lto[i+0], hto[i+0] = sBox(l1, h1, l0, h0)
@@ -19,6 +19,14 @@ func transformGeneric(lto, hto, lfrom, hfrom *[curl.StateSize]uint) {
 			t -= 365
 			l1, h1 = lfrom[t], hfrom[t]
 			lto[i+1], hto[i+1] = sBox(l0, h0, l1, h1)
+
+			t += 364
+			l0, h0 = lfrom[t], hfrom[t]
+			lto[i+2], hto[i+2] = sBox(l1, h1, l0, h0)
+
+			t -= 365
+			l1, h1 = lfrom[t], hfrom[t]
+			lto[i+3], hto[i+3] = sBox(l0, h0, l1, h1)
 		}
 		// swap buffers
 		lfrom, lto = lto, lfrom
