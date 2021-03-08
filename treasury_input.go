@@ -40,8 +40,8 @@ func (ti *TreasuryInput) Serialize(deSeriMode DeSerializationMode) (data []byte,
 
 func (ti *TreasuryInput) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&jsontreasuryinput{
-		Type:          int(InputTreasury),
-		MilestoneHash: hex.EncodeToString(ti[:]),
+		Type:        int(InputTreasury),
+		MilestoneID: hex.EncodeToString(ti[:]),
 	})
 }
 
@@ -60,12 +60,12 @@ func (ti *TreasuryInput) UnmarshalJSON(bytes []byte) error {
 
 // jsontreasuryinput defines the json representation of a TreasuryInput.
 type jsontreasuryinput struct {
-	Type          int    `json:"type"`
-	MilestoneHash string `json:"milestoneHash"`
+	Type        int    `json:"type"`
+	MilestoneID string `json:"milestoneId"`
 }
 
 func (j *jsontreasuryinput) ToSerializable() (Serializable, error) {
-	msHash, err := hex.DecodeString(j.MilestoneHash)
+	msHash, err := hex.DecodeString(j.MilestoneID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode milestone hash from JSON for treasury input: %w", err)
 	}
