@@ -9,8 +9,7 @@ import (
 
 func Fuzz(data []byte) int {
 	m := &iotago.Message{}
-	_, err := m.Deserialize(data, iotago.DeSeriModePerformValidation)
-	if err != nil {
+	if _, err := m.Deserialize(data, iotago.DeSeriModePerformValidation); err != nil {
 		return 0
 	}
 	seriData, err := m.Serialize(iotago.DeSeriModePerformValidation)

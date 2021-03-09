@@ -56,6 +56,9 @@ var (
 
 // checkType checks that the denoted type equals the shouldType.
 func checkType(data []byte, shouldType uint32) error {
+	if len(data) < 4 {
+		return fmt.Errorf("%w: can't check type denotation", ErrDeserializationNotEnoughData)
+	}
 	actualType := binary.LittleEndian.Uint32(data)
 	if actualType != shouldType {
 		return fmt.Errorf("%w: type denotation must be %d but is %d", ErrDeserializationTypeMismatch, shouldType, actualType)
