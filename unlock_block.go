@@ -162,23 +162,31 @@ type UnlockBlockValidatorFunc func(index int, unlockBlock Serializable) error
 //	1. signature unlock blocks are unique
 //	2. reference unlock blocks reference a previous signature unlock block
 func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
-	seenEdPubKeys := map[string]int{}
 	seenSigBlocks := map[int]struct{}{}
+	seenSigBlocksBytes := map[string]int{}
+
 	return func(index int, unlockBlock Serializable) error {
 		switch x := unlockBlock.(type) {
 		case *SignatureUnlockBlock:
 			if x.Signature == nil {
 				return fmt.Errorf("%w: at index %d is nil", ErrSigUnlockBlockHasNilSig, index)
 			}
-			switch y := x.Signature.(type) {
+
+			sigBlockBytes, err := x.Serialize(DeSeriModeNoValidation)
+			if err != nil {
+				return fmt.Errorf("unable to serialize signature unlock block at index %d for dup check: %w", index, err)
+			}
+
+			if existingIndex, exists := seenSigBlocksBytes[string(sigBlockBytes)]; exists {
+				return fmt.Errorf("%w: signature unlock block at index %d is the same as %d", ErrSigUnlockBlocksNotUnique, index, existingIndex)
+			}
+			seenSigBlocksBytes[string(sigBlockBytes)] = index
+
+			switch x.Signature.(type) {
 			case *Ed25519Signature:
-				k := string(y.PublicKey[:])
-				j, has := seenEdPubKeys[k]
-				if has {
-					return fmt.Errorf("%w: unlock block %d has the same Ed25519 public key as %d", ErrSigUnlockBlocksNotUnique, index, j)
-				}
-				seenEdPubKeys[k] = index
 				seenSigBlocks[index] = struct{}{}
+			default:
+				return fmt.Errorf("%w: signature unblock block at index %d holds unknown signature type %T", ErrUnknownSignatureType, index, x)
 			}
 		case *ReferenceUnlockBlock:
 			reference := int(x.Reference)
@@ -186,7 +194,7 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 				return fmt.Errorf("%w: %d references non existent unlock block %d", ErrRefUnlockBlockInvalidRef, index, reference)
 			}
 		default:
-			return fmt.Errorf("%w: %T", ErrUnknownUnlockBlockType, x)
+			return fmt.Errorf("%w: unlock block at index %d is of unknown type %T", ErrUnknownUnlockBlockType, index, x)
 		}
 
 		return nil

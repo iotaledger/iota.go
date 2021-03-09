@@ -6,6 +6,7 @@ import (
 
 	"github.com/iotaledger/iota.go/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestReceipt_Deserialize(t *testing.T) {
@@ -54,6 +55,43 @@ func TestReceipt_Serialize(t *testing.T) {
 			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
+		})
+	}
+}
+
+func TestReceiptFuzzingCrashers(t *testing.T) {
+	type test struct {
+		in []byte
+	}
+	tests := []test{
+		{
+			in: []byte("000"),
+		},
+		{
+			in: []byte("00"),
+		},
+		{
+			in: []byte("0"),
+		},
+		{
+			in: []byte(""),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.in), func(t *testing.T) {
+			m := &iotago.Receipt{}
+			_, err := m.Deserialize(tt.in, iotago.DeSeriModePerformValidation)
+			if err != nil {
+				return
+			}
+
+			seriData, err := m.Serialize(iotago.DeSeriModePerformValidation)
+			if err != nil {
+				return
+			}
+
+			require.EqualValues(t, tt.in[:len(seriData)], seriData)
 		})
 	}
 }
