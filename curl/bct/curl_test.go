@@ -1,6 +1,10 @@
 package bct_test
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"strings"
 
 	"github.com/iotaledger/iota.go/consts"
@@ -12,7 +16,41 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+type Test struct {
+	In   trinary.Trytes `json:"in"`
+	Hash trinary.Trytes `json:"hash"`
+}
+
 var _ = Describe("BCT Curl", func() {
+
+	Context("golden", func() {
+		var tests []Test
+
+		BeforeSuite(func() {
+			b, err := ioutil.ReadFile(filepath.Join("..", "testdata", "curlp81.json"))
+			Expect(err).ToNot(HaveOccurred())
+			err = json.Unmarshal(b, &tests)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("absorb and squeeze single trits slice", func() {
+			for i, tt := range tests {
+				By(fmt.Sprintf("test vector: %d", i), func() {
+					inTrits := trinary.MustTrytesToTrits(tt.In)
+					hashTrits := trinary.MustTrytesToTrits(tt.Hash)
+
+					c := bct.NewCurlP81()
+					err := c.Absorb([]trinary.Trits{inTrits}, len(inTrits))
+					Expect(err).ToNot(HaveOccurred())
+
+					dst := make([]trinary.Trits, 1)
+					err = c.Squeeze(dst, len(hashTrits))
+					Expect(err).ToNot(HaveOccurred())
+					Expect(dst).To(Equal([]trinary.Trits{hashTrits}))
+				})
+			}
+		})
+	})
 
 	DescribeTable("Hash",
 		func(src []trinary.Trits, hashLen int) {
