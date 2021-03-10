@@ -2,6 +2,10 @@
 
 package bct
 
-func transform(lto, hto, lfrom, hfrom *[729]uint) {
+import (
+	"github.com/iotaledger/iota.go/curl"
+)
+
+func transform(lto, hto, lfrom, hfrom *[curl.StateSize]uint) {
 	transformGeneric(lto, hto, lfrom, hfrom)
 }
