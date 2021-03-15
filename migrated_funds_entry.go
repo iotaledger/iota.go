@@ -94,7 +94,7 @@ func (j *jsonmigratedfundsentry) ToSerializable() (Serializable, error) {
 	}
 	copy(payload.TailTransactionHash[:], tailTransactionHash)
 	payload.Deposit = uint64(j.Deposit)
-	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonaddressselector)
+	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonAddressSelector)
 	if err != nil {
 		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
 	}

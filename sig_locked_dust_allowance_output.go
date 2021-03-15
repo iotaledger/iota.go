@@ -134,7 +134,7 @@ type jsonsiglockeddustallowanceoutput struct {
 func (j *jsonsiglockeddustallowanceoutput) ToSerializable() (Serializable, error) {
 	dep := &SigLockedDustAllowanceOutput{Amount: uint64(j.Amount)}
 
-	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonaddressselector)
+	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonAddressSelector)
 	if err != nil {
 		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
 	}

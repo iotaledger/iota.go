@@ -133,7 +133,7 @@ type jsonsiglockedsingleoutput struct {
 func (j *jsonsiglockedsingleoutput) ToSerializable() (Serializable, error) {
 	dep := &SigLockedSingleOutput{Amount: uint64(j.Amount)}
 
-	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonaddressselector)
+	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonAddressSelector)
 	if err != nil {
 		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
 	}
