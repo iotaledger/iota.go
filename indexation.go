@@ -43,7 +43,6 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode DeSerializationMode) (i
 				if err := checkType(data, IndexationPayloadTypeID); err != nil {
 					return fmt.Errorf("unable to deserialize indexation: %w", err)
 				}
-				// TODO: check data length
 			}
 			return nil
 		}).
@@ -78,7 +77,9 @@ func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 				case len(u.Index) < IndexationIndexMinLength:
 					return fmt.Errorf("unable to serialize indexation index: %w", ErrIndexationIndexUnderMinSize)
 				}
-				// TODO: check data length
+				// we do not check the length of the data field as in any circumstance
+				// the max size it can take up is dependent on how big the enclosing
+				// parent object is
 			}
 			return nil
 		}).
@@ -95,7 +96,7 @@ func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 }
 
 func (u *Indexation) MarshalJSON() ([]byte, error) {
-	jsonIndexPayload := &jsonindexation{}
+	jsonIndexPayload := &jsonIndexation{}
 	jsonIndexPayload.Type = int(IndexationPayloadTypeID)
 	jsonIndexPayload.Index = hex.EncodeToString(u.Index)
 	jsonIndexPayload.Data = hex.EncodeToString(u.Data)
@@ -103,7 +104,7 @@ func (u *Indexation) MarshalJSON() ([]byte, error) {
 }
 
 func (u *Indexation) UnmarshalJSON(bytes []byte) error {
-	jsonIndexPayload := &jsonindexation{}
+	jsonIndexPayload := &jsonIndexation{}
 	if err := json.Unmarshal(bytes, jsonIndexPayload); err != nil {
 		return err
 	}
@@ -115,14 +116,14 @@ func (u *Indexation) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// jsonindexation defines the json representation of an Indexation.
-type jsonindexation struct {
+// jsonIndexation defines the json representation of an Indexation.
+type jsonIndexation struct {
 	Type  int    `json:"type"`
 	Index string `json:"index"`
 	Data  string `json:"data"`
 }
 
-func (j *jsonindexation) ToSerializable() (Serializable, error) {
+func (j *jsonIndexation) ToSerializable() (Serializable, error) {
 	indexBytes, err := hex.DecodeString(j.Index)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode index from JSON for indexation: %w", err)

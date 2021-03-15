@@ -219,7 +219,7 @@ func jsonpayloadselector(ty int) (JSONSerializable, error) {
 	case MilestonePayloadTypeID:
 		obj = &jsonmilestonepayload{}
 	case IndexationPayloadTypeID:
-		obj = &jsonindexation{}
+		obj = &jsonIndexation{}
 	default:
 		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
 	}

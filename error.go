@@ -44,14 +44,10 @@ var (
 	ErrDeserializationNotEnoughData = errors.New("not enough data for deserialization")
 	// Returned when a bool value is tried to be read but it is neither 0 or 1.
 	ErrDeserializationInvalidBoolValue = errors.New("invalid bool value")
-	// Returned if the size of a presumably read static object does not match the specified size.
-	ErrDeserializationStaticSizeMismatch = errors.New("object did not match the specified static size")
 	// Returned if a length denotation exceeds a specified limit.
 	ErrDeserializationLengthInvalid = errors.New("length denotation invalid")
 	// Returned if not all bytes were consumed during deserialization of a given type.
 	ErrDeserializationNotAllConsumed = errors.New("not all data has been consumed but should have been")
-	// Returned for unknown bech32 network HRP.
-	ErrUnknownNetworkPrefix = errors.New("unknown network prefix")
 )
 
 // checkType checks that the denoted type equals the shouldType.
@@ -85,29 +81,10 @@ func checkExactByteLength(exact int, length int) error {
 	return nil
 }
 
-// checkByteLengthRange checks that length is within min and max.
-func checkByteLengthRange(min int, max int, length int) error {
-	if err := checkMinByteLength(min, length); err != nil {
-		return err
-	}
-	if err := checkMaxByteLength(max, length); err != nil {
-		return err
-	}
-	return nil
-}
-
 // checkMinByteLength checks that length is min. min.
 func checkMinByteLength(min int, length int) error {
 	if length < min {
 		return fmt.Errorf("%w: data must be at least %d bytes long but is %d", ErrDeserializationNotEnoughData, min, length)
-	}
-	return nil
-}
-
-// checkMaxByteLength checks that length is max. max.
-func checkMaxByteLength(max int, length int) error {
-	if length > max {
-		return fmt.Errorf("%w: data must be max %d bytes long but is %d", ErrInvalidBytes, max, length)
 	}
 	return nil
 }

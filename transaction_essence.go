@@ -377,7 +377,7 @@ func (j *jsontransactionessence) ToSerializable() (Serializable, error) {
 		return nil, err
 	}
 
-	if _, isJSONIndexationPayload := jsonPayload.(*jsonindexation); !isJSONIndexationPayload {
+	if _, isJSONIndexationPayload := jsonPayload.(*jsonIndexation); !isJSONIndexationPayload {
 		return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got type %T instead", ErrInvalidJSON, jsonPayload)
 	}
 
