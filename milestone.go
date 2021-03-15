@@ -417,6 +417,15 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 		jsonMilestonePayload.PublicKeys[i] = hex.EncodeToString(pubKey[:])
 	}
 
+	if m.Receipt != nil {
+		jsonReceipt, err := m.Receipt.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawReceiptJsonPayload := json.RawMessage(jsonReceipt)
+		jsonMilestonePayload.Receipt = &rawReceiptJsonPayload
+	}
+
 	jsonMilestonePayload.Signatures = make([]string, len(m.Signatures))
 	for i, sig := range m.Signatures {
 		jsonMilestonePayload.Signatures[i] = hex.EncodeToString(sig[:])

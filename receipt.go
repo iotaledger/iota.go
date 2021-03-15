@@ -152,7 +152,7 @@ func (r *Receipt) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 
 func (r *Receipt) MarshalJSON() ([]byte, error) {
 	jsonReceiptPayload := &jsonreceiptpayload{}
-	jsonReceiptPayload.Type = int(MilestonePayloadTypeID)
+	jsonReceiptPayload.Type = int(ReceiptPayloadTypeID)
 	jsonReceiptPayload.MigratedAt = int(r.MigratedAt)
 
 	jsonReceiptPayload.Funds = make([]*json.RawMessage, len(r.Funds))
