@@ -85,7 +85,6 @@ func TestOutputsValidatorFunc(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
 			"ok addr",
 			args{outputs: []iotago.Serializable{

@@ -125,33 +125,33 @@ func (t *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) 
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {
-	jsonSigTxPayload := &jsontransaction{
+	jTransaction := &jsonTransaction{
 		UnlockBlocks: make([]*json.RawMessage, len(t.UnlockBlocks)),
 	}
-	jsonSigTxPayload.Type = int(TransactionPayloadTypeID)
+	jTransaction.Type = int(TransactionPayloadTypeID)
 	txJson, err := t.Essence.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 	rawMsgTxJson := json.RawMessage(txJson)
-	jsonSigTxPayload.Essence = &rawMsgTxJson
+	jTransaction.Essence = &rawMsgTxJson
 	for i, ub := range t.UnlockBlocks {
 		jsonUB, err := ub.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
 		rawMsgJsonUB := json.RawMessage(jsonUB)
-		jsonSigTxPayload.UnlockBlocks[i] = &rawMsgJsonUB
+		jTransaction.UnlockBlocks[i] = &rawMsgJsonUB
 	}
-	return json.Marshal(jsonSigTxPayload)
+	return json.Marshal(jTransaction)
 }
 
 func (t *Transaction) UnmarshalJSON(bytes []byte) error {
-	jsonSigTxPayload := &jsontransaction{}
-	if err := json.Unmarshal(bytes, jsonSigTxPayload); err != nil {
+	jTransaction := &jsonTransaction{}
+	if err := json.Unmarshal(bytes, jTransaction); err != nil {
 		return err
 	}
-	seri, err := jsonSigTxPayload.ToSerializable()
+	seri, err := jTransaction.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -452,15 +452,15 @@ func (t *Transaction) SemanticallyValidateOutputs(transaction *TransactionEssenc
 	return outputSum, nil
 }
 
-// jsontransaction defines the json representation of a Transaction.
-type jsontransaction struct {
+// jsonTransaction defines the json representation of a Transaction.
+type jsonTransaction struct {
 	Type         int                `json:"type"`
 	Essence      *json.RawMessage   `json:"essence"`
 	UnlockBlocks []*json.RawMessage `json:"unlockBlocks"`
 }
 
-func (jsontx *jsontransaction) ToSerializable() (Serializable, error) {
-	jsonTxEssence, err := DeserializeObjectFromJSON(jsontx.Essence, jsontransactionessenceselector)
+func (jsontx *jsonTransaction) ToSerializable() (Serializable, error) {
+	jsonTxEssence, err := DeserializeObjectFromJSON(jsontx.Essence, jsonTransactionEssenceSelector)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode transaction essence from JSON: %w", err)
 	}
@@ -472,7 +472,7 @@ func (jsontx *jsontransaction) ToSerializable() (Serializable, error) {
 
 	unlockBlocks := make(Serializables, len(jsontx.UnlockBlocks))
 	for i, ele := range jsontx.UnlockBlocks {
-		jsonUnlockBlock, err := DeserializeObjectFromJSON(ele, jsonunlockblockselector)
+		jsonUnlockBlock, err := DeserializeObjectFromJSON(ele, jsonUnlockBlockSelector)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode unlock block type from JSON, pos %d: %w", i, err)
 		}

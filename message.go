@@ -179,30 +179,30 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 }
 
 func (m *Message) MarshalJSON() ([]byte, error) {
-	jsonMsg := &jsonMessage{}
-	jsonMsg.NetworkID = strconv.FormatUint(m.NetworkID, 10)
-	jsonMsg.Parents = make([]string, len(m.Parents))
+	jMessage := &jsonMessage{}
+	jMessage.NetworkID = strconv.FormatUint(m.NetworkID, 10)
+	jMessage.Parents = make([]string, len(m.Parents))
 	for i, parent := range m.Parents {
-		jsonMsg.Parents[i] = hex.EncodeToString(parent[:])
+		jMessage.Parents[i] = hex.EncodeToString(parent[:])
 	}
-	jsonMsg.Nonce = strconv.FormatUint(m.Nonce, 10)
+	jMessage.Nonce = strconv.FormatUint(m.Nonce, 10)
 	if m.Payload != nil {
 		jsonPayload, err := m.Payload.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
 		rawMsgJsonPayload := json.RawMessage(jsonPayload)
-		jsonMsg.Payload = &rawMsgJsonPayload
+		jMessage.Payload = &rawMsgJsonPayload
 	}
-	return json.Marshal(jsonMsg)
+	return json.Marshal(jMessage)
 }
 
 func (m *Message) UnmarshalJSON(bytes []byte) error {
-	jsonMsg := &jsonMessage{}
-	if err := json.Unmarshal(bytes, jsonMsg); err != nil {
+	jMessage := &jsonMessage{}
+	if err := json.Unmarshal(bytes, jMessage); err != nil {
 		return err
 	}
-	seri, err := jsonMsg.ToSerializable()
+	seri, err := jMessage.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -215,9 +215,9 @@ func jsonPayloadSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch uint32(ty) {
 	case TransactionPayloadTypeID:
-		obj = &jsontransaction{}
+		obj = &jsonTransaction{}
 	case MilestonePayloadTypeID:
-		obj = &jsonmilestonepayload{}
+		obj = &jsonMilestone{}
 	case IndexationPayloadTypeID:
 		obj = &jsonIndexation{}
 	default:

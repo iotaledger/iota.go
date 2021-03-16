@@ -96,7 +96,7 @@ func (s *SigLockedSingleOutput) Serialize(deSeriMode DeSerializationMode) (data 
 }
 
 func (s *SigLockedSingleOutput) MarshalJSON() ([]byte, error) {
-	jsonDep := &jsonsiglockedsingleoutput{}
+	jSigLockedSingleOutput := &jsonSigLockedSingleOutput{}
 
 	addrJsonBytes, err := s.Address.MarshalJSON()
 	if err != nil {
@@ -104,18 +104,18 @@ func (s *SigLockedSingleOutput) MarshalJSON() ([]byte, error) {
 	}
 	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
 
-	jsonDep.Address = &jsonRawMsgAddr
-	jsonDep.Amount = int(s.Amount)
-	jsonDep.Type = int(OutputSigLockedSingleOutput)
-	return json.Marshal(jsonDep)
+	jSigLockedSingleOutput.Type = int(OutputSigLockedSingleOutput)
+	jSigLockedSingleOutput.Address = &jsonRawMsgAddr
+	jSigLockedSingleOutput.Amount = int(s.Amount)
+	return json.Marshal(jSigLockedSingleOutput)
 }
 
 func (s *SigLockedSingleOutput) UnmarshalJSON(bytes []byte) error {
-	jsonDep := &jsonsiglockedsingleoutput{}
-	if err := json.Unmarshal(bytes, jsonDep); err != nil {
+	jSigLockedSingleOutput := &jsonSigLockedSingleOutput{}
+	if err := json.Unmarshal(bytes, jSigLockedSingleOutput); err != nil {
 		return err
 	}
-	seri, err := jsonDep.ToSerializable()
+	seri, err := jSigLockedSingleOutput.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -123,14 +123,14 @@ func (s *SigLockedSingleOutput) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// jsonsiglockedsingleoutput defines the json representation of a SigLockedSingleOutput.
-type jsonsiglockedsingleoutput struct {
+// jsonSigLockedSingleOutput defines the json representation of a SigLockedSingleOutput.
+type jsonSigLockedSingleOutput struct {
 	Type    int              `json:"type"`
 	Address *json.RawMessage `json:"address"`
 	Amount  int              `json:"amount"`
 }
 
-func (j *jsonsiglockedsingleoutput) ToSerializable() (Serializable, error) {
+func (j *jsonSigLockedSingleOutput) ToSerializable() (Serializable, error) {
 	dep := &SigLockedSingleOutput{Amount: uint64(j.Amount)}
 
 	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonAddressSelector)

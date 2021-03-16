@@ -538,7 +538,7 @@ func (nor *NodeOutputResponse) TxID() (*TransactionID, error) {
 
 // Output deserializes the RawOutput to an Output.
 func (nor *NodeOutputResponse) Output() (Output, error) {
-	jsonSeri, err := DeserializeObjectFromJSON(nor.RawOutput, jsonoutputselector)
+	jsonSeri, err := DeserializeObjectFromJSON(nor.RawOutput, jsonOutputSelector)
 	if err != nil {
 		return nil, err
 	}

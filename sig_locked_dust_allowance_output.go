@@ -97,7 +97,7 @@ func (s *SigLockedDustAllowanceOutput) Serialize(deSeriMode DeSerializationMode)
 }
 
 func (s *SigLockedDustAllowanceOutput) MarshalJSON() ([]byte, error) {
-	jsonDep := &jsonsiglockeddustallowanceoutput{}
+	jSigLockedDustAllowanceOutput := &jsonSigLockedDustAllowanceOutput{}
 
 	addrJsonBytes, err := s.Address.MarshalJSON()
 	if err != nil {
@@ -105,18 +105,18 @@ func (s *SigLockedDustAllowanceOutput) MarshalJSON() ([]byte, error) {
 	}
 	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
 
-	jsonDep.Address = &jsonRawMsgAddr
-	jsonDep.Amount = int(s.Amount)
-	jsonDep.Type = int(OutputSigLockedDustAllowanceOutput)
-	return json.Marshal(jsonDep)
+	jSigLockedDustAllowanceOutput.Type = int(OutputSigLockedDustAllowanceOutput)
+	jSigLockedDustAllowanceOutput.Address = &jsonRawMsgAddr
+	jSigLockedDustAllowanceOutput.Amount = int(s.Amount)
+	return json.Marshal(jSigLockedDustAllowanceOutput)
 }
 
 func (s *SigLockedDustAllowanceOutput) UnmarshalJSON(bytes []byte) error {
-	jsonDep := &jsonsiglockeddustallowanceoutput{}
-	if err := json.Unmarshal(bytes, jsonDep); err != nil {
+	jSigLockedDustAllowanceOutput := &jsonSigLockedDustAllowanceOutput{}
+	if err := json.Unmarshal(bytes, jSigLockedDustAllowanceOutput); err != nil {
 		return err
 	}
-	seri, err := jsonDep.ToSerializable()
+	seri, err := jSigLockedDustAllowanceOutput.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -124,14 +124,14 @@ func (s *SigLockedDustAllowanceOutput) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// jsonsiglockeddustallowanceoutput defines the json representation of a SigLockedDustAllowanceOutput.
-type jsonsiglockeddustallowanceoutput struct {
+// jsonSigLockedDustAllowanceOutput defines the json representation of a SigLockedDustAllowanceOutput.
+type jsonSigLockedDustAllowanceOutput struct {
 	Type    int              `json:"type"`
 	Address *json.RawMessage `json:"address"`
 	Amount  int              `json:"amount"`
 }
 
-func (j *jsonsiglockeddustallowanceoutput) ToSerializable() (Serializable, error) {
+func (j *jsonSigLockedDustAllowanceOutput) ToSerializable() (Serializable, error) {
 	dep := &SigLockedDustAllowanceOutput{Amount: uint64(j.Amount)}
 
 	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonAddressSelector)

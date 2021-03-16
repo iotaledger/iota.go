@@ -87,19 +87,19 @@ func (e *Ed25519Signature) Serialize(deSeriMode DeSerializationMode) ([]byte, er
 }
 
 func (e *Ed25519Signature) MarshalJSON() ([]byte, error) {
-	jsonEdSig := &JSONEd25519Signature{}
-	jsonEdSig.Type = int(SignatureEd25519)
-	jsonEdSig.PublicKey = hex.EncodeToString(e.PublicKey[:])
-	jsonEdSig.Signature = hex.EncodeToString(e.Signature[:])
-	return json.Marshal(jsonEdSig)
+	jEd25519Signature := &jsonEd25519Signature{}
+	jEd25519Signature.Type = int(SignatureEd25519)
+	jEd25519Signature.PublicKey = hex.EncodeToString(e.PublicKey[:])
+	jEd25519Signature.Signature = hex.EncodeToString(e.Signature[:])
+	return json.Marshal(jEd25519Signature)
 }
 
 func (e *Ed25519Signature) UnmarshalJSON(bytes []byte) error {
-	jsonEdSig := &JSONEd25519Signature{}
-	if err := json.Unmarshal(bytes, jsonEdSig); err != nil {
+	jEd25519Signature := &jsonEd25519Signature{}
+	if err := json.Unmarshal(bytes, jEd25519Signature); err != nil {
 		return err
 	}
-	seri, err := jsonEdSig.ToSerializable()
+	seri, err := jEd25519Signature.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -107,26 +107,26 @@ func (e *Ed25519Signature) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// JSONSignatureSelector selects the json signature object for the given type.
-func JSONSignatureSelector(ty int) (JSONSerializable, error) {
+// jsonSignatureSelector selects the json signature object for the given type.
+func jsonSignatureSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch byte(ty) {
 	case SignatureEd25519:
-		obj = &JSONEd25519Signature{}
+		obj = &jsonEd25519Signature{}
 	default:
 		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", ErrUnknownUnlockBlockType)
 	}
 	return obj, nil
 }
 
-// JSONEd25519Signature defines the json representation of an Ed25519Signature.
-type JSONEd25519Signature struct {
+// jsonEd25519Signature defines the json representation of an Ed25519Signature.
+type jsonEd25519Signature struct {
 	Type      int    `json:"type"`
 	PublicKey string `json:"publicKey"`
 	Signature string `json:"signature"`
 }
 
-func (j *JSONEd25519Signature) ToSerializable() (Serializable, error) {
+func (j *jsonEd25519Signature) ToSerializable() (Serializable, error) {
 	sig := &Ed25519Signature{}
 
 	pubKeyBytes, err := hex.DecodeString(j.PublicKey)

@@ -133,18 +133,18 @@ func (edAddr *Ed25519Address) Serialize(deSeriMode DeSerializationMode) (data []
 }
 
 func (edAddr *Ed25519Address) MarshalJSON() ([]byte, error) {
-	jsonAddr := &jsonEd25519Address{}
-	jsonAddr.Address = hex.EncodeToString(edAddr[:])
-	jsonAddr.Type = int(AddressEd25519)
-	return json.Marshal(jsonAddr)
+	jEd25519Address := &jsonEd25519Address{}
+	jEd25519Address.Address = hex.EncodeToString(edAddr[:])
+	jEd25519Address.Type = int(AddressEd25519)
+	return json.Marshal(jEd25519Address)
 }
 
 func (edAddr *Ed25519Address) UnmarshalJSON(bytes []byte) error {
-	jsonAddr := &jsonEd25519Address{}
-	if err := json.Unmarshal(bytes, jsonAddr); err != nil {
+	jEd25519Address := &jsonEd25519Address{}
+	if err := json.Unmarshal(bytes, jEd25519Address); err != nil {
 		return err
 	}
-	seri, err := jsonAddr.ToSerializable()
+	seri, err := jEd25519Address.ToSerializable()
 	if err != nil {
 		return err
 	}

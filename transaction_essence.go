@@ -234,12 +234,12 @@ func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []b
 }
 
 func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
-	jsonTx := &jsontransactionessence{
+	jTransactionEssence := &jsonTransactionEssence{
 		Inputs:  make([]*json.RawMessage, len(u.Inputs)),
 		Outputs: make([]*json.RawMessage, len(u.Outputs)),
 		Payload: nil,
 	}
-	jsonTx.Type = int(TransactionEssenceNormal)
+	jTransactionEssence.Type = int(TransactionEssenceNormal)
 
 	for i, input := range u.Inputs {
 		inputJson, err := input.MarshalJSON()
@@ -247,7 +247,7 @@ func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 			return nil, err
 		}
 		rawMsgInputJson := json.RawMessage(inputJson)
-		jsonTx.Inputs[i] = &rawMsgInputJson
+		jTransactionEssence.Inputs[i] = &rawMsgInputJson
 
 	}
 	for i, output := range u.Outputs {
@@ -256,7 +256,7 @@ func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 			return nil, err
 		}
 		rawMsgOutputJson := json.RawMessage(outputJson)
-		jsonTx.Outputs[i] = &rawMsgOutputJson
+		jTransactionEssence.Outputs[i] = &rawMsgOutputJson
 	}
 
 	if u.Payload != nil {
@@ -265,17 +265,17 @@ func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 			return nil, err
 		}
 		rawMsgJsonPayload := json.RawMessage(jsonPayload)
-		jsonTx.Payload = &rawMsgJsonPayload
+		jTransactionEssence.Payload = &rawMsgJsonPayload
 	}
-	return json.Marshal(jsonTx)
+	return json.Marshal(jTransactionEssence)
 }
 
 func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
-	jsonTx := &jsontransactionessence{}
-	if err := json.Unmarshal(bytes, jsonTx); err != nil {
+	jTransactionEssence := &jsonTransactionEssence{}
+	if err := json.Unmarshal(bytes, jTransactionEssence); err != nil {
 		return err
 	}
-	seri, err := jsonTx.ToSerializable()
+	seri, err := jTransactionEssence.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -316,12 +316,12 @@ func (u *TransactionEssence) SyntacticallyValidate() error {
 	return nil
 }
 
-// jsontransactionessenceselector selects the json transaction essence object for the given type.
-func jsontransactionessenceselector(ty int) (JSONSerializable, error) {
+// jsonTransactionEssenceSelector selects the json transaction essence object for the given type.
+func jsonTransactionEssenceSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch byte(ty) {
 	case TransactionEssenceNormal:
-		obj = &jsontransactionessence{}
+		obj = &jsonTransactionEssence{}
 	default:
 		return nil, fmt.Errorf("unable to decode transaction essence type from JSON: %w", ErrUnknownTransactionEssenceType)
 	}
@@ -329,15 +329,15 @@ func jsontransactionessenceselector(ty int) (JSONSerializable, error) {
 	return obj, nil
 }
 
-// jsontransactionessence defines the json representation of a TransactionEssence.
-type jsontransactionessence struct {
+// jsonTransactionEssence defines the json representation of a TransactionEssence.
+type jsonTransactionEssence struct {
 	Type    int                `json:"type"`
 	Inputs  []*json.RawMessage `json:"inputs"`
 	Outputs []*json.RawMessage `json:"outputs"`
 	Payload *json.RawMessage   `json:"payload"`
 }
 
-func (j *jsontransactionessence) ToSerializable() (Serializable, error) {
+func (j *jsonTransactionEssence) ToSerializable() (Serializable, error) {
 	unsigTx := &TransactionEssence{
 		Inputs:  make(Serializables, len(j.Inputs)),
 		Outputs: make(Serializables, len(j.Outputs)),
@@ -357,7 +357,7 @@ func (j *jsontransactionessence) ToSerializable() (Serializable, error) {
 	}
 
 	for i, output := range j.Outputs {
-		jsonOutput, err := DeserializeObjectFromJSON(output, jsonoutputselector)
+		jsonOutput, err := DeserializeObjectFromJSON(output, jsonOutputSelector)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode output type from JSON, pos %d: %w", i, err)
 		}

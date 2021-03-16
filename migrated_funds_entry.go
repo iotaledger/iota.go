@@ -53,25 +53,25 @@ func (m *MigratedFundsEntry) Serialize(deSeriMode DeSerializationMode) ([]byte, 
 }
 
 func (m *MigratedFundsEntry) MarshalJSON() ([]byte, error) {
-	jsonMigratedFundsEntry := &jsonmigratedfundsentry{}
-	jsonMigratedFundsEntry.TailTransactionHash = hex.EncodeToString(m.TailTransactionHash[:])
+	jMigratedFundsEntry := &jsonMigratedFundsEntry{}
+	jMigratedFundsEntry.TailTransactionHash = hex.EncodeToString(m.TailTransactionHash[:])
 	addrJsonBytes, err := m.Address.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
-	jsonMigratedFundsEntry.Address = &jsonRawMsgAddr
-	jsonMigratedFundsEntry.Deposit = int(m.Deposit)
+	jMigratedFundsEntry.Address = &jsonRawMsgAddr
+	jMigratedFundsEntry.Deposit = int(m.Deposit)
 
-	return json.Marshal(jsonMigratedFundsEntry)
+	return json.Marshal(jMigratedFundsEntry)
 }
 
 func (m *MigratedFundsEntry) UnmarshalJSON(bytes []byte) error {
-	jsonMigratedFundsEntry := &jsonmigratedfundsentry{}
-	if err := json.Unmarshal(bytes, jsonMigratedFundsEntry); err != nil {
+	jMigratedFundsEntry := &jsonMigratedFundsEntry{}
+	if err := json.Unmarshal(bytes, jMigratedFundsEntry); err != nil {
 		return err
 	}
-	seri, err := jsonMigratedFundsEntry.ToSerializable()
+	seri, err := jMigratedFundsEntry.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -79,14 +79,14 @@ func (m *MigratedFundsEntry) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// jsonmigratedfundsentry defines the json representation of a MigratedFundsEntry.
-type jsonmigratedfundsentry struct {
+// jsonMigratedFundsEntry defines the json representation of a MigratedFundsEntry.
+type jsonMigratedFundsEntry struct {
 	TailTransactionHash string           `json:"tailTransactionHash"`
 	Address             *json.RawMessage `json:"address"`
 	Deposit             int              `json:"deposit"`
 }
 
-func (j *jsonmigratedfundsentry) ToSerializable() (Serializable, error) {
+func (j *jsonMigratedFundsEntry) ToSerializable() (Serializable, error) {
 	payload := &MigratedFundsEntry{}
 	tailTransactionHash, err := hex.DecodeString(j.TailTransactionHash)
 	if err != nil {

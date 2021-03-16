@@ -78,32 +78,32 @@ func (t *TreasuryTransaction) Serialize(deSeriMode DeSerializationMode) ([]byte,
 }
 
 func (t *TreasuryTransaction) MarshalJSON() ([]byte, error) {
-	jsonTreasuryTransaction := &jsontreasurytransaction{}
-	jsonTreasuryTransaction.Type = int(TreasuryTransactionPayloadTypeID)
+	jTreasuryTransaction := &jsonTreasuryTransaction{}
+	jTreasuryTransaction.Type = int(TreasuryTransactionPayloadTypeID)
 
 	jsonInput, err := t.Input.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 	rawJsonInput := json.RawMessage(jsonInput)
-	jsonTreasuryTransaction.Input = &rawJsonInput
+	jTreasuryTransaction.Input = &rawJsonInput
 
 	jsonOutput, err := t.Output.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 	rawJsonOutput := json.RawMessage(jsonOutput)
-	jsonTreasuryTransaction.Output = &rawJsonOutput
+	jTreasuryTransaction.Output = &rawJsonOutput
 
-	return json.Marshal(jsonTreasuryTransaction)
+	return json.Marshal(jTreasuryTransaction)
 }
 
 func (t *TreasuryTransaction) UnmarshalJSON(bytes []byte) error {
-	jsonTreasuryTransaction := &jsontreasurytransaction{}
-	if err := json.Unmarshal(bytes, jsonTreasuryTransaction); err != nil {
+	jTreasuryTransaction := &jsonTreasuryTransaction{}
+	if err := json.Unmarshal(bytes, jTreasuryTransaction); err != nil {
 		return err
 	}
-	seri, err := jsonTreasuryTransaction.ToSerializable()
+	seri, err := jTreasuryTransaction.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -111,18 +111,18 @@ func (t *TreasuryTransaction) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// jsontreasurytransaction defines the json representation of a TreasuryTransaction.
-type jsontreasurytransaction struct {
+// jsonTreasuryTransaction defines the json representation of a TreasuryTransaction.
+type jsonTreasuryTransaction struct {
 	Type   int              `json:"type"`
 	Input  *json.RawMessage `json:"input"`
 	Output *json.RawMessage `json:"output"`
 }
 
-func (j *jsontreasurytransaction) ToSerializable() (Serializable, error) {
+func (j *jsonTreasuryTransaction) ToSerializable() (Serializable, error) {
 	dep := &TreasuryTransaction{}
 
 	jsonInput, err := DeserializeObjectFromJSON(j.Input, func(ty int) (JSONSerializable, error) {
-		return &jsontreasuryinput{}, nil
+		return &jsonTreasuryInput{}, nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("can't decode input from JSON: %w", err)
@@ -134,7 +134,7 @@ func (j *jsontreasurytransaction) ToSerializable() (Serializable, error) {
 	}
 
 	jsonOutput, err := DeserializeObjectFromJSON(j.Output, func(ty int) (JSONSerializable, error) {
-		return &jsontreasuryoutput{}, nil
+		return &jsonTreasuryOutput{}, nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("can't decode treasury output from JSON: %w", err)

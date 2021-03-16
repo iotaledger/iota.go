@@ -93,7 +93,7 @@ func jsonInputSelector(ty int) (JSONSerializable, error) {
 	case InputUTXO:
 		obj = &jsonUTXOInput{}
 	case InputTreasury:
-		obj = &jsontreasuryinput{}
+		obj = &jsonTreasuryInput{}
 	default:
 		return nil, fmt.Errorf("unable to decode input type from JSON: %w", ErrUnknownInputType)
 	}

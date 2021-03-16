@@ -96,19 +96,19 @@ func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 }
 
 func (u *Indexation) MarshalJSON() ([]byte, error) {
-	jsonIndexPayload := &jsonIndexation{}
-	jsonIndexPayload.Type = int(IndexationPayloadTypeID)
-	jsonIndexPayload.Index = hex.EncodeToString(u.Index)
-	jsonIndexPayload.Data = hex.EncodeToString(u.Data)
-	return json.Marshal(jsonIndexPayload)
+	jIndexation := &jsonIndexation{}
+	jIndexation.Type = int(IndexationPayloadTypeID)
+	jIndexation.Index = hex.EncodeToString(u.Index)
+	jIndexation.Data = hex.EncodeToString(u.Data)
+	return json.Marshal(jIndexation)
 }
 
 func (u *Indexation) UnmarshalJSON(bytes []byte) error {
-	jsonIndexPayload := &jsonIndexation{}
-	if err := json.Unmarshal(bytes, jsonIndexPayload); err != nil {
+	jIndexation := &jsonIndexation{}
+	if err := json.Unmarshal(bytes, jIndexation); err != nil {
 		return err
 	}
-	seri, err := jsonIndexPayload.ToSerializable()
+	seri, err := jIndexation.ToSerializable()
 	if err != nil {
 		return err
 	}
