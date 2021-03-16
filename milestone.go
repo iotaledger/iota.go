@@ -402,19 +402,19 @@ func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 }
 
 func (m *Milestone) MarshalJSON() ([]byte, error) {
-	jsonMilestonePayload := &jsonmilestonepayload{}
-	jsonMilestonePayload.Type = int(MilestonePayloadTypeID)
-	jsonMilestonePayload.Index = int(m.Index)
-	jsonMilestonePayload.Timestamp = int(m.Timestamp)
-	jsonMilestonePayload.Parents = make([]string, len(m.Parents))
+	jMilestone := &jsonMilestone{}
+	jMilestone.Type = int(MilestonePayloadTypeID)
+	jMilestone.Index = int(m.Index)
+	jMilestone.Timestamp = int(m.Timestamp)
+	jMilestone.Parents = make([]string, len(m.Parents))
 	for i, parent := range m.Parents {
-		jsonMilestonePayload.Parents[i] = hex.EncodeToString(parent[:])
+		jMilestone.Parents[i] = hex.EncodeToString(parent[:])
 	}
-	jsonMilestonePayload.InclusionMerkleProof = hex.EncodeToString(m.InclusionMerkleProof[:])
+	jMilestone.InclusionMerkleProof = hex.EncodeToString(m.InclusionMerkleProof[:])
 
-	jsonMilestonePayload.PublicKeys = make([]string, len(m.PublicKeys))
+	jMilestone.PublicKeys = make([]string, len(m.PublicKeys))
 	for i, pubKey := range m.PublicKeys {
-		jsonMilestonePayload.PublicKeys[i] = hex.EncodeToString(pubKey[:])
+		jMilestone.PublicKeys[i] = hex.EncodeToString(pubKey[:])
 	}
 
 	if m.Receipt != nil {
@@ -423,23 +423,23 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 			return nil, err
 		}
 		rawReceiptJsonPayload := json.RawMessage(jsonReceipt)
-		jsonMilestonePayload.Receipt = &rawReceiptJsonPayload
+		jMilestone.Receipt = &rawReceiptJsonPayload
 	}
 
-	jsonMilestonePayload.Signatures = make([]string, len(m.Signatures))
+	jMilestone.Signatures = make([]string, len(m.Signatures))
 	for i, sig := range m.Signatures {
-		jsonMilestonePayload.Signatures[i] = hex.EncodeToString(sig[:])
+		jMilestone.Signatures[i] = hex.EncodeToString(sig[:])
 	}
 
-	return json.Marshal(jsonMilestonePayload)
+	return json.Marshal(jMilestone)
 }
 
 func (m *Milestone) UnmarshalJSON(bytes []byte) error {
-	jsonMilestonePayload := &jsonmilestonepayload{}
-	if err := json.Unmarshal(bytes, jsonMilestonePayload); err != nil {
+	jMilestone := &jsonMilestone{}
+	if err := json.Unmarshal(bytes, jMilestone); err != nil {
 		return err
 	}
-	seri, err := jsonMilestonePayload.ToSerializable()
+	seri, err := jMilestone.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -447,8 +447,8 @@ func (m *Milestone) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// jsonmilestonepayload defines the json representation of a Milestone.
-type jsonmilestonepayload struct {
+// jsonMilestone defines the json representation of a Milestone.
+type jsonMilestone struct {
 	Type                 int              `json:"type"`
 	Index                int              `json:"index"`
 	Timestamp            int              `json:"timestamp"`
@@ -459,7 +459,7 @@ type jsonmilestonepayload struct {
 	Signatures           []string         `json:"signatures"`
 }
 
-func (j *jsonmilestonepayload) ToSerializable() (Serializable, error) {
+func (j *jsonMilestone) ToSerializable() (Serializable, error) {
 	var err error
 
 	payload := &Milestone{}
@@ -492,7 +492,7 @@ func (j *jsonmilestonepayload) ToSerializable() (Serializable, error) {
 
 	if j.Receipt != nil {
 		jsonPayload, err := DeserializeObjectFromJSON(j.Receipt, func(ty int) (JSONSerializable, error) {
-			return &jsonreceiptpayload{}, nil
+			return &jsonReceipt{}, nil
 		})
 		if err != nil {
 			return nil, err

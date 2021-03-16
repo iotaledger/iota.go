@@ -8,8 +8,10 @@ import (
 )
 
 var (
-	// Returned if the needed keys to sign a message are absent.
-	ErrAddressKeysMissing = errors.New("keys for address missing")
+	// Returned if the needed keys to sign a message are absent/not mapped.
+	ErrAddressKeysNotMapped = errors.New("key(s) for address not mapped")
+	// Returned if the specified keys to sign a message for a given address are of the wrong type.
+	ErrAddressKeysWrongType = errors.New("key(s) for address are of wrong type")
 )
 
 // AddressSigner produces signatures for messages which get verified against a given address.
@@ -33,6 +35,11 @@ type AddressKeys struct {
 	Keys interface{} `json:"keys"`
 }
 
+// NewAddressKeysForEd25519Address returns new AddressKeys for Ed25519Address.
+func NewAddressKeysForEd25519Address(addr *Ed25519Address, prvKey ed25519.PrivateKey) AddressKeys {
+	return AddressKeys{Address: addr, Keys: prvKey}
+}
+
 // NewInMemoryAddressSigner creates a new InMemoryAddressSigner holding the given AddressKeys.
 func NewInMemoryAddressSigner(addrKeys ...AddressKeys) AddressSigner {
 	ss := &InMemoryAddressSigner{
@@ -52,9 +59,14 @@ type InMemoryAddressSigner struct {
 func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Serializable, err error) {
 	switch addr.(type) {
 	case *Ed25519Address:
-		prvKey, ok := s.addrKeys[addr.String()].(ed25519.PrivateKey)
+		maybePrvKey, ok := s.addrKeys[addr.String()]
 		if !ok {
-			return nil, fmt.Errorf("%w: can't sign message for Ed25519 address", ErrAddressKeysMissing)
+			return nil, fmt.Errorf("can't sign message for Ed25519 address: %w", ErrAddressKeysNotMapped)
+		}
+
+		prvKey, ok := maybePrvKey.(ed25519.PrivateKey)
+		if !ok {
+			return nil, fmt.Errorf("%w: Ed25519 address needs to have a %T private key mapped but got %T", ErrAddressKeysWrongType, ed25519.PrivateKey{}, maybePrvKey)
 		}
 
 		ed25519Sig := &Ed25519Signature{}
@@ -63,6 +75,6 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Serial
 
 		return ed25519Sig, nil
 	default:
-		return nil, fmt.Errorf("%w: unknown address type %T", ErrUnknownAddrType, addr)
+		return nil, fmt.Errorf("%w: type %T", ErrUnknownAddrType, addr)
 	}
 }

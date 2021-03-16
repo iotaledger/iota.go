@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 
 	"github.com/iotaledger/iota.go/v2/pow"
@@ -71,22 +70,19 @@ func (mb *MessageBuilder) Tips(nodeAPI *NodeAPIClient) *MessageBuilder {
 		return mb
 	}
 
-	tips, err := nodeAPI.Tips()
+	res, err := nodeAPI.Tips()
 	if err != nil {
 		mb.err = fmt.Errorf("unable to fetch tips from node API: %w", err)
 		return mb
 	}
 
-	parents := make([][]byte, len(tips.Tips))
-	for i, tip := range tips.Tips {
-		parent, err := hex.DecodeString(tip)
-		if err != nil {
-			mb.err = fmt.Errorf("unable to decode parent %d from hex: %w", i+1, err)
-			return mb
-		}
-		parents[i] = parent
+	parents, err := res.Tips()
+	if err != nil {
+		mb.err = fmt.Errorf("unable to fetch tips: %w", err)
+		return mb
 	}
-	mb.Parents(parents)
+
+	mb.ParentsMessageIDs(parents)
 
 	return mb
 }
@@ -104,6 +100,16 @@ func (mb *MessageBuilder) Parents(parents [][]byte) *MessageBuilder {
 		pars[i] = parent
 	}
 	mb.msg.Parents = RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(pars)
+	return mb
+}
+
+// ParentsMessageIDs sets the parents of the message.
+func (mb *MessageBuilder) ParentsMessageIDs(parents MessageIDs) *MessageBuilder {
+	if mb.err != nil {
+		return mb
+	}
+
+	mb.msg.Parents = RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(parents)
 	return mb
 }
 

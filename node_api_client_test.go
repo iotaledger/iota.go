@@ -67,7 +67,7 @@ func TestNodeAPI_Tips(t *testing.T) {
 	defer gock.Off()
 
 	originRes := &iotago.NodeTipsResponse{
-		Tips: []string{"733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d", "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe"},
+		TipsHex: []string{"733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d", "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe"},
 	}
 
 	gock.New(nodeAPIUrl).

@@ -150,16 +150,16 @@ func ValidateOutputs(outputs Serializables, funcs ...OutputsValidatorFunc) error
 	return nil
 }
 
-// jsonoutputselector selects the json output implementation for the given type.
-func jsonoutputselector(ty int) (JSONSerializable, error) {
+// jsonOutputSelector selects the json output implementation for the given type.
+func jsonOutputSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch byte(ty) {
 	case OutputSigLockedSingleOutput:
-		obj = &jsonsiglockedsingleoutput{}
+		obj = &jsonSigLockedSingleOutput{}
 	case OutputSigLockedDustAllowanceOutput:
-		obj = &jsonsiglockeddustallowanceoutput{}
+		obj = &jsonSigLockedDustAllowanceOutput{}
 	case OutputTreasuryOutput:
-		obj = &jsontreasuryoutput{}
+		obj = &jsonTreasuryOutput{}
 	default:
 		return nil, fmt.Errorf("unable to decode output type from JSON: %w", ErrUnknownOutputType)
 	}
