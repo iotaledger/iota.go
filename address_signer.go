@@ -37,10 +37,7 @@ type AddressKeys struct {
 
 // NewAddressKeysForEd25519Address returns new AddressKeys for Ed25519Address.
 func NewAddressKeysForEd25519Address(addr *Ed25519Address, prvKey ed25519.PrivateKey) AddressKeys {
-	return AddressKeys{
-		Address: addr,
-		Keys:    prvKey,
-	}
+	return AddressKeys{Address: addr, Keys: prvKey}
 }
 
 // NewInMemoryAddressSigner creates a new InMemoryAddressSigner holding the given AddressKeys.
