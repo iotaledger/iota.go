@@ -350,7 +350,20 @@ func (api *NodeAPIClient) Info() (*NodeInfoResponse, error) {
 // NodeTipsResponse defines the response of a GET tips REST API call.
 type NodeTipsResponse struct {
 	// The hex encoded message IDs of the tips.
-	Tips []string `json:"tipMessageIds"`
+	TipsHex []string `json:"tipMessageIds"`
+}
+
+// Tips returns the hex encoded tips as MessageIDs.
+func (ntr *NodeTipsResponse) Tips() (MessageIDs, error) {
+	msgIDs := make(MessageIDs, len(ntr.TipsHex))
+	for i, tip := range ntr.TipsHex {
+		msgID, err := hex.DecodeString(tip)
+		if err != nil {
+			return nil, err
+		}
+		copy(msgIDs[i][:], msgID)
+	}
+	return msgIDs, nil
 }
 
 // Tips gets the two tips from the node.
