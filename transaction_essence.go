@@ -14,7 +14,6 @@ type TransactionEssenceType = byte
 
 const (
 	// Denotes a standard transaction essence.
-	// TODO: find a better name for this
 	TransactionEssenceNormal TransactionEssenceType = iota
 
 	// Defines the minimum size of a TransactionEssence.

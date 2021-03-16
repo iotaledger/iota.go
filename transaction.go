@@ -35,6 +35,8 @@ var (
 	ErrMissingUTXO = errors.New("missing utxo")
 	// Returned if a transaction does not spend the entirety of the inputs to the outputs.
 	ErrInputOutputSumMismatch = errors.New("inputs and outputs do not spend/deposit the same amount")
+	// ErrInputSignatureUnlockBlockInvalid returned for errors where an input has a wrong companion signature unlock block.
+	ErrInputSignatureUnlockBlockInvalid = errors.New("companion signature unlock block is invalid for input")
 	// Returned if an address of an input has a companion signature unlock block with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = errors.New("address and signature type are not compatible")
 	// Returned for errors where the dust allowance is semantically invalid.
@@ -87,7 +89,6 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (
 			return fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
 		}).
 		Do(func() {
-			// TODO: tx must be a TransactionEssence but might be something else in the future
 			inputCount := uint16(len(t.Essence.(*TransactionEssence).Inputs))
 			unlockBlockArrayRules.Min = inputCount
 			unlockBlockArrayRules.Max = inputCount
@@ -347,18 +348,18 @@ func (t *Transaction) SemanticallyValidate(utxos InputToOutputMapping, semValFun
 func (t *Transaction) SemanticallyValidateInputs(utxos InputToOutputMapping, transaction *TransactionEssence, txEssenceBytes []byte) (uint64, []SigValidationFunc, error) {
 	var sigValidFuncs []SigValidationFunc
 	var inputSum uint64
+	seenInputAddr := make(map[string]int)
 
 	for i, input := range transaction.Inputs {
-		// TODO: switch out with type switch or interface once more types are known
-		in, ok := input.(*UTXOInput)
-		if !ok {
+		in, alreadySeen := input.(*UTXOInput)
+		if !alreadySeen {
 			return 0, nil, fmt.Errorf("%w: unsupported input type at index %d", ErrUnknownInputType, i)
 		}
 
 		// check that we got the needed UTXO
 		utxoID := in.ID()
-		utxo, ok := utxos[utxoID]
-		if !ok {
+		utxo, has := utxos[utxoID]
+		if !has {
 			return 0, nil, fmt.Errorf("%w: UTXO for ID %v is not provided (input at index %d)", ErrMissingUTXO, utxoID, i)
 		}
 
@@ -374,11 +375,32 @@ func (t *Transaction) SemanticallyValidateInputs(utxos InputToOutputMapping, tra
 			return 0, nil, err
 		}
 
-		// TODO: optimization: currently the same signature is validated "inputs-with-same-addr"-times instead of only once
-		sigValidF, err := createSigValidationFunc(i, sigBlock.Signature, sigBlockIndex, txEssenceBytes, utxo)
+		target, err := utxo.Target()
+		if err != nil {
+			return 0, nil, fmt.Errorf("unable to get target for UTXO %v: %w", utxoID, err)
+		}
+
+		// change this logic here once we got tx output types without addrs
+		addr, isAddr := target.(Address)
+		if !isAddr {
+			return 0, nil, fmt.Errorf("target for UTXO %v must be an address: %w", utxoID, err)
+		}
+
+		usedSigBlockIndex, alreadySeen := seenInputAddr[addr.String()]
+		if alreadySeen {
+			if usedSigBlockIndex != sigBlockIndex {
+				return 0, nil, fmt.Errorf("%w: target for UTXO %v uses a different signature unlock block (%d) than a previous UTXO (%d) for the same address", ErrInputSignatureUnlockBlockInvalid, utxoID, sigBlockIndex, usedSigBlockIndex)
+			}
+			// we can skip here as we already created a sig validation func
+			continue
+		}
+
+		sigValidF, err := createSigValidationFunc(i, sigBlock.Signature, sigBlockIndex, txEssenceBytes, addr)
 		if err != nil {
 			return 0, nil, err
 		}
+
+		seenInputAddr[addr.String()] = sigBlockIndex
 
 		sigValidFuncs = append(sigValidFuncs, sigValidF)
 	}
@@ -404,11 +426,7 @@ func (t *Transaction) signatureUnlockBlock(index int) (*SignatureUnlockBlock, in
 }
 
 // creates a SigValidationFunc appropriate for the underlying signature type.
-func createSigValidationFunc(pos int, sig Serializable, sigBlockIndex int, txEssenceBytes []byte, utxo Output) (SigValidationFunc, error) {
-	addr, err := utxo.Target()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get target for UTXO: %w", err)
-	}
+func createSigValidationFunc(pos int, sig Serializable, sigBlockIndex int, txEssenceBytes []byte, addr Address) (SigValidationFunc, error) {
 	switch addr := addr.(type) {
 	case *Ed25519Address:
 		return createEd25519SigValidationFunc(pos, sig, sigBlockIndex, addr, txEssenceBytes)
@@ -437,7 +455,6 @@ func createEd25519SigValidationFunc(pos int, sig Serializable, sigBlockIndex int
 func (t *Transaction) SemanticallyValidateOutputs(transaction *TransactionEssence) (uint64, error) {
 	var outputSum uint64
 	for i, output := range transaction.Outputs {
-		// TODO: switch out with type switch
 		out, ok := output.(Output)
 		if !ok {
 			return 0, fmt.Errorf("%w: unsupported output type at index %d", ErrUnknownOutputType, i)
