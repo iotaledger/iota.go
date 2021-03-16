@@ -70,13 +70,13 @@ func (mb *MessageBuilder) Tips(nodeAPI *NodeAPIClient) *MessageBuilder {
 		return mb
 	}
 
-	tips, err := nodeAPI.Tips()
+	res, err := nodeAPI.Tips()
 	if err != nil {
 		mb.err = fmt.Errorf("unable to fetch tips from node API: %w", err)
 		return mb
 	}
 
-	parents, err := tips.Tips()
+	parents, err := res.Tips()
 	if err != nil {
 		mb.err = fmt.Errorf("unable to fetch tips: %w", err)
 		return mb

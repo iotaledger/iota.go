@@ -372,7 +372,7 @@ func (j *jsontransactionessence) ToSerializable() (Serializable, error) {
 		return unsigTx, nil
 	}
 
-	jsonPayload, err := DeserializeObjectFromJSON(j.Payload, jsonpayloadselector)
+	jsonPayload, err := DeserializeObjectFromJSON(j.Payload, jsonPayloadSelector)
 	if err != nil {
 		return nil, err
 	}
