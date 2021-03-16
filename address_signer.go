@@ -9,9 +9,9 @@ import (
 
 var (
 	// Returned if the needed keys to sign a message are absent/not mapped.
-	ErrAddressKeysNotMapped = errors.New("keys for address not mapped")
+	ErrAddressKeysNotMapped = errors.New("key(s) for address not mapped")
 	// Returned if the specified keys to sign a message for a given address are of the wrong type.
-	ErrAddressKeysWrongType = errors.New("keys for address are of wrong type")
+	ErrAddressKeysWrongType = errors.New("key(s) for address are of wrong type")
 )
 
 // AddressSigner produces signatures for messages which get verified against a given address.
