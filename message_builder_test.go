@@ -19,7 +19,7 @@ func TestMessageBuilder(t *testing.T) {
 	}
 	msg, err := iotago.NewMessageBuilder().
 		Payload(indexationPayload).
-		Parents([][]byte{parents[0][:], parents[0][:], parents[1][:], parents[2][:], parents[3][:]}).
+		ParentsMessageIDs(parents).
 		ProofOfWork(context.Background(), targetPoWScore).
 		Build()
 	require.NoError(t, err)
