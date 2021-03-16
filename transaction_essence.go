@@ -345,7 +345,7 @@ func (j *jsontransactionessence) ToSerializable() (Serializable, error) {
 	}
 
 	for i, input := range j.Inputs {
-		jsonInput, err := DeserializeObjectFromJSON(input, jsoninputselector)
+		jsonInput, err := DeserializeObjectFromJSON(input, jsonInputSelector)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode input type from JSON, pos %d: %w", i, err)
 		}

@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"strings"
 )
@@ -87,36 +86,16 @@ func ValidateInputs(inputs Serializables, funcs ...InputsValidatorFunc) error {
 	return nil
 }
 
-// jsoninputselector selects the json input implementation for the given type.
-func jsoninputselector(ty int) (JSONSerializable, error) {
+// jsonInputSelector selects the json input implementation for the given type.
+func jsonInputSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch byte(ty) {
 	case InputUTXO:
-		obj = &jsonutxoinput{}
+		obj = &jsonUTXOInput{}
 	case InputTreasury:
 		obj = &jsontreasuryinput{}
 	default:
 		return nil, fmt.Errorf("unable to decode input type from JSON: %w", ErrUnknownInputType)
 	}
 	return obj, nil
-}
-
-// jsonutxoinput defines the JSON representation of a UTXOInput.
-type jsonutxoinput struct {
-	Type                   int    `json:"type"`
-	TransactionID          string `json:"transactionId"`
-	TransactionOutputIndex int    `json:"transactionOutputIndex"`
-}
-
-func (j *jsonutxoinput) ToSerializable() (Serializable, error) {
-	utxoInput := &UTXOInput{
-		TransactionID:          [32]byte{},
-		TransactionOutputIndex: uint16(j.TransactionOutputIndex),
-	}
-	transactionIDBytes, err := hex.DecodeString(j.TransactionID)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decode transaction ID from JSON for UTXO input: %w", err)
-	}
-	copy(utxoInput.TransactionID[:], transactionIDBytes)
-	return utxoInput, nil
 }
