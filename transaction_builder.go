@@ -1,7 +1,14 @@
 package iotago
 
 import (
+	"errors"
 	"fmt"
+)
+
+var (
+	// ErrTransactionBuilderUnsupportedAddress gets returned when an unsupported address type
+	// is given for a builder operation.
+	ErrTransactionBuilderUnsupportedAddress = errors.New("unsupported address type")
 )
 
 // NewTransactionBuilder creates a new TransactionBuilder.
@@ -18,8 +25,9 @@ func NewTransactionBuilder() *TransactionBuilder {
 
 // TransactionBuilder is used to easily build up a Transaction.
 type TransactionBuilder struct {
-	essence     *TransactionEssence
-	inputToAddr map[UTXOInputID]Address
+	occurredBuildErr error
+	essence          *TransactionEssence
+	inputToAddr      map[UTXOInputID]Address
 }
 
 // ToBeSignedUTXOInput defines a UTXO input which needs to be signed.
@@ -37,6 +45,38 @@ func (b *TransactionBuilder) AddInput(input *ToBeSignedUTXOInput) *TransactionBu
 	return b
 }
 
+// TransactionBuilderInputFilter is a filter function which determines whether
+// an input should be used or not. (returning true = pass). The filter can also
+// be used to accumulate data over the set of inputs, i.e. the input sum etc.
+type TransactionBuilderInputFilter func(utxoInput *UTXOInput, input Output) bool
+
+// AddInputsViaNodeQuery adds any unspent outputs by the given address as an input to the built transaction
+// if it passes the filter function. It is the caller's job to ensure that the limit of returned outputs on the queried
+// node is enough high for the application's purpose.
+func (b *TransactionBuilder) AddInputsViaNodeQuery(addr Address, nodeAPIClient *NodeAPIClient, filter TransactionBuilderInputFilter) *TransactionBuilder {
+	switch x := addr.(type) {
+	case *Ed25519Address:
+	default:
+		b.occurredBuildErr = fmt.Errorf("%w: auto. inputs via node query only supports Ed25519Address but got %T", ErrTransactionBuilderUnsupportedAddress, x)
+	}
+
+	_, unspentOutputs, err := nodeAPIClient.OutputsByEd25519Address(addr.(*Ed25519Address), false)
+	if err != nil {
+		b.occurredBuildErr = err
+		return b
+	}
+
+	for utxoInput, output := range unspentOutputs {
+		if filter != nil && !filter(utxoInput, output) {
+			continue
+		}
+
+		b.AddInput(&ToBeSignedUTXOInput{Address: addr, Input: utxoInput})
+	}
+
+	return b
+}
+
 // AddOutput adds the given output to the builder.
 func (b *TransactionBuilder) AddOutput(output Output) *TransactionBuilder {
 	b.essence.Outputs = append(b.essence.Outputs, output)
@@ -51,6 +91,10 @@ func (b *TransactionBuilder) AddIndexationPayload(payload *Indexation) *Transact
 
 // Build sings the inputs with the given signer and returns the built payload.
 func (b *TransactionBuilder) Build(signer AddressSigner) (*Transaction, error) {
+
+	if b.occurredBuildErr != nil {
+		return nil, b.occurredBuildErr
+	}
 
 	// sort inputs and outputs by their serialized byte order
 	txEssenceData, err := b.essence.SigningMessage()

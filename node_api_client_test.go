@@ -301,7 +301,7 @@ func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
 	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
-	resp, err := nodeAPI.BalanceByEd25519Address(ed25519AddrHex)
+	resp, err := nodeAPI.BalanceByEd25519Address(ed25519Addr)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
@@ -320,9 +320,9 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		Address:     ed25519AddrHex,
 		MaxResults:  1000,
 		Count:       2,
-		OutputIDs: []string{
-			hex.EncodeToString(output1[:]),
-			hex.EncodeToString(output2[:]),
+		OutputIDs: []iotago.OutputIDHex{
+			iotago.OutputIDHex(hex.EncodeToString(output1[:])),
+			iotago.OutputIDHex(hex.EncodeToString(output2[:])),
 		},
 	}
 
@@ -331,10 +331,10 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		Address:     ed25519AddrHex,
 		MaxResults:  1000,
 		Count:       3,
-		OutputIDs: []string{
-			hex.EncodeToString(output1[:]),
-			hex.EncodeToString(output2[:]),
-			hex.EncodeToString(output3[:]),
+		OutputIDs: []iotago.OutputIDHex{
+			iotago.OutputIDHex(hex.EncodeToString(output1[:])),
+			iotago.OutputIDHex(hex.EncodeToString(output2[:])),
+			iotago.OutputIDHex(hex.EncodeToString(output3[:])),
 		},
 	}
 
@@ -345,7 +345,7 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
 	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
-	resp, err := nodeAPI.OutputIDsByEd25519Address(ed25519AddrHex, false)
+	resp, err := nodeAPI.OutputIDsByEd25519Address(ed25519Addr, false)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 
@@ -355,7 +355,7 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originResWithUnspent})
 
-	resp, err = nodeAPI.OutputIDsByEd25519Address(ed25519AddrHex, true)
+	resp, err = nodeAPI.OutputIDsByEd25519Address(ed25519Addr, true)
 	require.NoError(t, err)
 	require.EqualValues(t, originResWithUnspent, resp)
 }
