@@ -99,6 +99,7 @@ func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(signer AddressSigner, 
 	tx, err := b.Build(signer)
 	if err != nil {
 		msgBuilder.err = err
+		return msgBuilder
 	}
 	if txFunc != nil {
 		txFunc(tx)
