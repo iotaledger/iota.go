@@ -576,8 +576,8 @@ type AddressBalanceResponse struct {
 }
 
 // BalanceByEd25519Address returns the balance of an Ed25519 address.
-func (api *NodeAPIClient) BalanceByEd25519Address(address string) (*AddressBalanceResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Balance, address)
+func (api *NodeAPIClient) BalanceByEd25519Address(addr *Ed25519Address) (*AddressBalanceResponse, error) {
+	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Balance, addr.String())
 
 	res := &AddressBalanceResponse{}
 	_, err := api.Do(http.MethodGet, query, nil, res)
@@ -599,13 +599,13 @@ type AddressOutputsResponse struct {
 	// The actual count of results that are returned.
 	Count uint32 `json:"count"`
 	// The output IDs (transaction ID + output index) of the outputs on this address.
-	OutputIDs []string `json:"outputIDs"`
+	OutputIDs []OutputIDHex `json:"outputIDs"`
 }
 
 // OutputIDsByEd25519Address gets outputs IDs by ed25519 addresses from the node.
-// Per default only unspent outputs are returned. Set includeSpentOutputs to true to also returned spent outputs.
-func (api *NodeAPIClient) OutputIDsByEd25519Address(address string, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, address)
+// Per default only unspent outputs IDs are returned. Set includeSpentOutputs to true to also returned spent outputs IDs.
+func (api *NodeAPIClient) OutputIDsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
+	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, addr.String())
 	if includeSpentOutputs {
 		query += "?include-spent=true"
 	}
@@ -617,6 +617,42 @@ func (api *NodeAPIClient) OutputIDsByEd25519Address(address string, includeSpent
 	}
 
 	return res, nil
+}
+
+// OutputsByEd25519Address gets the outputs by the ed25519 address from the node.
+// Per default only unspent outputs are returned. Set includeSpentOutputs to true to also returned spent outputs.
+func (api *NodeAPIClient) OutputsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
+	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, addr.String())
+	if includeSpentOutputs {
+		query += "?include-spent=true"
+	}
+
+	res := &AddressOutputsResponse{}
+	_, err := api.Do(http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	outputs := make(map[*UTXOInput]Output)
+	for _, outputIDHex := range res.OutputIDs {
+		utxoInput, err := outputIDHex.AsUTXOInput()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		outputRes, err := api.OutputByID(utxoInput.ID())
+		if err != nil {
+			return nil, nil, err
+		}
+
+		output, err := outputRes.Output()
+		if err != nil {
+			return nil, nil, err
+		}
+		outputs[utxoInput] = output
+	}
+
+	return res, outputs, nil
 }
 
 // TreasuryResponse defines the response of a GET treasury REST API call.
