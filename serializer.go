@@ -473,7 +473,6 @@ func (d *Deserializer) ReadVariableByteSlice(slice *[]byte, lenType SeriSliceLen
 		return d
 	}
 
-	// TODO: validate this value
 	dest := make([]byte, sliceLength)
 	if len(d.src) < sliceLength {
 		d.err = errProducer(ErrDeserializationNotEnoughData)

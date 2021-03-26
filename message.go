@@ -179,30 +179,30 @@ func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 }
 
 func (m *Message) MarshalJSON() ([]byte, error) {
-	jsonMsg := &jsonmessage{}
-	jsonMsg.NetworkID = strconv.FormatUint(m.NetworkID, 10)
-	jsonMsg.Parents = make([]string, len(m.Parents))
+	jMessage := &jsonMessage{}
+	jMessage.NetworkID = strconv.FormatUint(m.NetworkID, 10)
+	jMessage.Parents = make([]string, len(m.Parents))
 	for i, parent := range m.Parents {
-		jsonMsg.Parents[i] = hex.EncodeToString(parent[:])
+		jMessage.Parents[i] = hex.EncodeToString(parent[:])
 	}
-	jsonMsg.Nonce = strconv.FormatUint(m.Nonce, 10)
+	jMessage.Nonce = strconv.FormatUint(m.Nonce, 10)
 	if m.Payload != nil {
 		jsonPayload, err := m.Payload.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
 		rawMsgJsonPayload := json.RawMessage(jsonPayload)
-		jsonMsg.Payload = &rawMsgJsonPayload
+		jMessage.Payload = &rawMsgJsonPayload
 	}
-	return json.Marshal(jsonMsg)
+	return json.Marshal(jMessage)
 }
 
 func (m *Message) UnmarshalJSON(bytes []byte) error {
-	jsonMsg := &jsonmessage{}
-	if err := json.Unmarshal(bytes, jsonMsg); err != nil {
+	jMessage := &jsonMessage{}
+	if err := json.Unmarshal(bytes, jMessage); err != nil {
 		return err
 	}
-	seri, err := jsonMsg.ToSerializable()
+	seri, err := jMessage.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -211,23 +211,23 @@ func (m *Message) UnmarshalJSON(bytes []byte) error {
 }
 
 // selects the json object for the given type.
-func jsonpayloadselector(ty int) (JSONSerializable, error) {
+func jsonPayloadSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch uint32(ty) {
 	case TransactionPayloadTypeID:
-		obj = &jsontransaction{}
+		obj = &jsonTransaction{}
 	case MilestonePayloadTypeID:
-		obj = &jsonmilestonepayload{}
+		obj = &jsonMilestone{}
 	case IndexationPayloadTypeID:
-		obj = &jsonindexation{}
+		obj = &jsonIndexation{}
 	default:
 		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
 	}
 	return obj, nil
 }
 
-// jsonmessage defines the JSON representation of a Message.
-type jsonmessage struct {
+// jsonMessage defines the JSON representation of a Message.
+type jsonMessage struct {
 	// The network ID identifying the network for this message.
 	NetworkID string `json:"networkId"`
 	// The hex encoded message IDs of the referenced parents.
@@ -238,7 +238,7 @@ type jsonmessage struct {
 	Nonce string `json:"nonce"`
 }
 
-func (jm *jsonmessage) ToSerializable() (Serializable, error) {
+func (jm *jsonMessage) ToSerializable() (Serializable, error) {
 	var err error
 
 	m := &Message{}
@@ -272,7 +272,7 @@ func (jm *jsonmessage) ToSerializable() (Serializable, error) {
 	}
 
 	if jm.Payload != nil {
-		jsonPayload, err := DeserializeObjectFromJSON(jm.Payload, jsonpayloadselector)
+		jsonPayload, err := DeserializeObjectFromJSON(jm.Payload, jsonPayloadSelector)
 		if err != nil {
 			return nil, err
 		}

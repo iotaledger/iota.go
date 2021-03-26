@@ -49,18 +49,18 @@ func (t *TreasuryOutput) Serialize(deSeriMode DeSerializationMode) ([]byte, erro
 }
 
 func (t *TreasuryOutput) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&jsontreasuryoutput{
+	return json.Marshal(&jsonTreasuryOutput{
 		Type:   int(OutputTreasuryOutput),
 		Amount: int(t.Amount),
 	})
 }
 
 func (t *TreasuryOutput) UnmarshalJSON(bytes []byte) error {
-	jsonDep := &jsontreasuryoutput{}
-	if err := json.Unmarshal(bytes, jsonDep); err != nil {
+	jTreasuryOutput := &jsonTreasuryOutput{}
+	if err := json.Unmarshal(bytes, jTreasuryOutput); err != nil {
 		return err
 	}
-	seri, err := jsonDep.ToSerializable()
+	seri, err := jTreasuryOutput.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -68,12 +68,12 @@ func (t *TreasuryOutput) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// jsontreasuryoutput defines the json representation of a TreasuryOutput.
-type jsontreasuryoutput struct {
+// jsonTreasuryOutput defines the json representation of a TreasuryOutput.
+type jsonTreasuryOutput struct {
 	Type   int `json:"type"`
 	Amount int `json:"amount"`
 }
 
-func (j *jsontreasuryoutput) ToSerializable() (Serializable, error) {
+func (j *jsonTreasuryOutput) ToSerializable() (Serializable, error) {
 	return &TreasuryOutput{Amount: uint64(j.Amount)}, nil
 }

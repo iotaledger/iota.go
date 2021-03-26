@@ -109,22 +109,42 @@ func (u *UTXOInput) Serialize(deSeriMode DeSerializationMode) (data []byte, err 
 }
 
 func (u *UTXOInput) MarshalJSON() ([]byte, error) {
-	jsonUTXO := &jsonutxoinput{}
-	jsonUTXO.TransactionID = hex.EncodeToString(u.TransactionID[:])
-	jsonUTXO.TransactionOutputIndex = int(u.TransactionOutputIndex)
-	jsonUTXO.Type = int(InputUTXO)
-	return json.Marshal(jsonUTXO)
+	jUTXOInput := &jsonUTXOInput{}
+	jUTXOInput.TransactionID = hex.EncodeToString(u.TransactionID[:])
+	jUTXOInput.TransactionOutputIndex = int(u.TransactionOutputIndex)
+	jUTXOInput.Type = int(InputUTXO)
+	return json.Marshal(jUTXOInput)
 }
 
 func (u *UTXOInput) UnmarshalJSON(bytes []byte) error {
-	jsonUTXO := &jsonutxoinput{}
-	if err := json.Unmarshal(bytes, jsonUTXO); err != nil {
+	jUTXOInput := &jsonUTXOInput{}
+	if err := json.Unmarshal(bytes, jUTXOInput); err != nil {
 		return err
 	}
-	seri, err := jsonUTXO.ToSerializable()
+	seri, err := jUTXOInput.ToSerializable()
 	if err != nil {
 		return err
 	}
 	*u = *seri.(*UTXOInput)
 	return nil
+}
+
+// jsonUTXOInput defines the JSON representation of a UTXOInput.
+type jsonUTXOInput struct {
+	Type                   int    `json:"type"`
+	TransactionID          string `json:"transactionId"`
+	TransactionOutputIndex int    `json:"transactionOutputIndex"`
+}
+
+func (j *jsonUTXOInput) ToSerializable() (Serializable, error) {
+	utxoInput := &UTXOInput{
+		TransactionID:          [32]byte{},
+		TransactionOutputIndex: uint16(j.TransactionOutputIndex),
+	}
+	transactionIDBytes, err := hex.DecodeString(j.TransactionID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode transaction ID from JSON for UTXO input: %w", err)
+	}
+	copy(utxoInput.TransactionID[:], transactionIDBytes)
+	return utxoInput, nil
 }

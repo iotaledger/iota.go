@@ -88,7 +88,7 @@ func TestTransactionBuilder(t *testing.T) {
 				name:       "err - missing address keys",
 				addrSigner: iotago.NewInMemoryAddressSigner(wrongAddrKeys),
 				builder:    builder,
-				buildErr:   iotago.ErrAddressKeysMissing,
+				buildErr:   iotago.ErrAddressKeysNotMapped,
 			}
 		}(),
 		func() test {
@@ -103,7 +103,7 @@ func TestTransactionBuilder(t *testing.T) {
 				name:       "err - missing address keys (no keys given at all)",
 				addrSigner: iotago.NewInMemoryAddressSigner(),
 				builder:    builder,
-				buildErr:   iotago.ErrAddressKeysMissing,
+				buildErr:   iotago.ErrAddressKeysNotMapped,
 			}
 		}(),
 	}

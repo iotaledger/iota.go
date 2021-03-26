@@ -151,18 +151,18 @@ func (r *Receipt) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 }
 
 func (r *Receipt) MarshalJSON() ([]byte, error) {
-	jsonReceiptPayload := &jsonreceiptpayload{}
-	jsonReceiptPayload.Type = int(ReceiptPayloadTypeID)
-	jsonReceiptPayload.MigratedAt = int(r.MigratedAt)
+	jReceipt := &jsonReceipt{}
+	jReceipt.Type = int(ReceiptPayloadTypeID)
+	jReceipt.MigratedAt = int(r.MigratedAt)
 
-	jsonReceiptPayload.Funds = make([]*json.RawMessage, len(r.Funds))
+	jReceipt.Funds = make([]*json.RawMessage, len(r.Funds))
 	for i, migratedFundsEntry := range r.Funds {
 		jsonMigratedFundsEntry, err := migratedFundsEntry.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
 		rawMsgJsonMigratedFundsEntry := json.RawMessage(jsonMigratedFundsEntry)
-		jsonReceiptPayload.Funds[i] = &rawMsgJsonMigratedFundsEntry
+		jReceipt.Funds[i] = &rawMsgJsonMigratedFundsEntry
 	}
 
 	jsonTreasuryTransaction, err := r.Transaction.MarshalJSON()
@@ -170,19 +170,19 @@ func (r *Receipt) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	rawMsgJsonTreasuryTransaction := json.RawMessage(jsonTreasuryTransaction)
-	jsonReceiptPayload.Transaction = &rawMsgJsonTreasuryTransaction
+	jReceipt.Transaction = &rawMsgJsonTreasuryTransaction
 
-	jsonReceiptPayload.Final = r.Final
+	jReceipt.Final = r.Final
 
-	return json.Marshal(jsonReceiptPayload)
+	return json.Marshal(jReceipt)
 }
 
 func (r *Receipt) UnmarshalJSON(bytes []byte) error {
-	jsonReceiptPayload := &jsonreceiptpayload{}
-	if err := json.Unmarshal(bytes, jsonReceiptPayload); err != nil {
+	jReceipt := &jsonReceipt{}
+	if err := json.Unmarshal(bytes, jReceipt); err != nil {
 		return err
 	}
-	seri, err := jsonReceiptPayload.ToSerializable()
+	seri, err := jReceipt.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -190,8 +190,8 @@ func (r *Receipt) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// jsonreceiptpayload defines the json representation of a Receipt.
-type jsonreceiptpayload struct {
+// jsonReceipt defines the json representation of a Receipt.
+type jsonReceipt struct {
 	Type        int                `json:"type"`
 	MigratedAt  int                `json:"migratedAt"`
 	Funds       []*json.RawMessage `json:"funds"`
@@ -199,14 +199,14 @@ type jsonreceiptpayload struct {
 	Final       bool               `json:"final"`
 }
 
-func (j *jsonreceiptpayload) ToSerializable() (Serializable, error) {
+func (j *jsonReceipt) ToSerializable() (Serializable, error) {
 	payload := &Receipt{}
 	payload.MigratedAt = uint32(j.MigratedAt)
 
 	migratedFundsEntries := make(Serializables, len(j.Funds))
 	for i, ele := range j.Funds {
 		jsonMigratedFundsEntry, _ := DeserializeObjectFromJSON(ele, func(ty int) (JSONSerializable, error) {
-			return &jsonmigratedfundsentry{}, nil
+			return &jsonMigratedFundsEntry{}, nil
 		})
 		migratedFundsEntry, err := jsonMigratedFundsEntry.ToSerializable()
 		if err != nil {
@@ -221,7 +221,7 @@ func (j *jsonreceiptpayload) ToSerializable() (Serializable, error) {
 	}
 
 	jsonTreasuryTransaction, _ := DeserializeObjectFromJSON(j.Transaction, func(ty int) (JSONSerializable, error) {
-		return &jsontreasurytransaction{}, nil
+		return &jsonTreasuryTransaction{}, nil
 	})
 
 	treasuryTransaction, err := jsonTreasuryTransaction.ToSerializable()

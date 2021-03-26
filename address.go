@@ -14,54 +14,36 @@ import (
 type AddressType = byte
 
 const (
-	// Denotes a Ed25510 address.
+	// Denotes an Ed25519 address.
 	AddressEd25519 AddressType = iota
 )
 
 // NetworkPrefix denotes the different network prefixes.
-type NetworkPrefix int
+type NetworkPrefix string
 
-// Network prefix options
+// Network prefixes.
 const (
-	PrefixMainnet NetworkPrefix = iota
-	PrefixTestnet
+	PrefixMainnet NetworkPrefix = "iota"
+	PrefixTestnet NetworkPrefix = "atoi"
 )
 
 const (
-	// The length of a Ed25519 address
+	// The length of an Ed25519 address
 	Ed25519AddressBytesLength = blake2b.Size256
 	// The size of a serialized Ed25519 address with its type denoting byte.
 	Ed25519AddressSerializedBytesSize = SmallTypeDenotationByteSize + Ed25519AddressBytesLength
 )
 
-func (p NetworkPrefix) String() string {
-	return hrpStrings[p]
-}
-
-// ParsePrefix parses the string and returns the corresponding NetworkPrefix.
-func ParsePrefix(s string) (NetworkPrefix, error) {
-	for i := range hrpStrings {
-		if s == hrpStrings[i] {
-			return NetworkPrefix(i), nil
-		}
-	}
-	return 0, fmt.Errorf("%w: prefix %s", ErrUnknownNetworkPrefix, s)
-}
-
-var (
-	hrpStrings = [...]string{"iota", "atoi"}
-)
-
 // Address describes a general address.
 type Address interface {
 	Serializable
+	fmt.Stringer
 
 	// Type returns the type of the address.
 	Type() AddressType
+
 	// Bech32 encodes the address as a bech32 string.
 	Bech32(hrp NetworkPrefix) string
-
-	String() string
 }
 
 // AddressSelector implements SerializableSelectorFunc for address types.
@@ -80,7 +62,7 @@ func newAddress(addressType byte) (address Address, err error) {
 
 func bech32String(hrp NetworkPrefix, addr Address) string {
 	bytes, _ := addr.Serialize(DeSeriModeNoValidation)
-	s, err := bech32.Encode(hrp.String(), bytes)
+	s, err := bech32.Encode(string(hrp), bytes)
 	if err != nil {
 		panic(err)
 	}
@@ -91,28 +73,28 @@ func bech32String(hrp NetworkPrefix, addr Address) string {
 func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	hrp, addrData, err := bech32.Decode(s)
 	if err != nil {
-		return 0, nil, fmt.Errorf("invalid bech32 encoding: %w", err)
+		return "", nil, fmt.Errorf("invalid bech32 encoding: %w", err)
 	}
-	prefix, err := ParsePrefix(hrp)
-	if err != nil {
-		return 0, nil, fmt.Errorf("invalid human-readable prefix: %w", err)
-	}
+
 	if len(addrData) == 0 {
-		return 0, nil, ErrDeserializationNotEnoughData
+		return "", nil, ErrDeserializationNotEnoughData
 	}
 
 	addr, err := newAddress(addrData[0])
 	if err != nil {
-		return 0, nil, err
+		return "", nil, err
 	}
+
 	n, err := addr.Deserialize(addrData, DeSeriModePerformValidation)
 	if err != nil {
-		return 0, nil, err
+		return "", nil, err
 	}
+
 	if n != len(addrData) {
-		return 0, nil, ErrDeserializationNotAllConsumed
+		return "", nil, ErrDeserializationNotAllConsumed
 	}
-	return prefix, addr, nil
+
+	return NetworkPrefix(hrp), addr, nil
 }
 
 // Defines an Ed25519 address.
@@ -151,18 +133,18 @@ func (edAddr *Ed25519Address) Serialize(deSeriMode DeSerializationMode) (data []
 }
 
 func (edAddr *Ed25519Address) MarshalJSON() ([]byte, error) {
-	jsonAddr := &jsoned25519{}
-	jsonAddr.Address = hex.EncodeToString(edAddr[:])
-	jsonAddr.Type = int(AddressEd25519)
-	return json.Marshal(jsonAddr)
+	jEd25519Address := &jsonEd25519Address{}
+	jEd25519Address.Address = hex.EncodeToString(edAddr[:])
+	jEd25519Address.Type = int(AddressEd25519)
+	return json.Marshal(jEd25519Address)
 }
 
 func (edAddr *Ed25519Address) UnmarshalJSON(bytes []byte) error {
-	jsonAddr := &jsoned25519{}
-	if err := json.Unmarshal(bytes, jsonAddr); err != nil {
+	jEd25519Address := &jsonEd25519Address{}
+	if err := json.Unmarshal(bytes, jEd25519Address); err != nil {
 		return err
 	}
-	seri, err := jsonAddr.ToSerializable()
+	seri, err := jEd25519Address.ToSerializable()
 	if err != nil {
 		return err
 	}
@@ -176,24 +158,24 @@ func AddressFromEd25519PubKey(pubKey ed25519.PublicKey) Ed25519Address {
 }
 
 // selects the json object for the given type.
-func jsonaddressselector(ty int) (JSONSerializable, error) {
+func jsonAddressSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch byte(ty) {
 	case AddressEd25519:
-		obj = &jsoned25519{}
+		obj = &jsonEd25519Address{}
 	default:
 		return nil, fmt.Errorf("unable to decode address type from JSON: %w", ErrUnknownAddrType)
 	}
 	return obj, nil
 }
 
-// jsoned25519 defines the json representation of an Ed25519Address.
-type jsoned25519 struct {
+// jsonEd25519Address defines the json representation of an Ed25519Address.
+type jsonEd25519Address struct {
 	Type    int    `json:"type"`
 	Address string `json:"address"`
 }
 
-func (j *jsoned25519) ToSerializable() (Serializable, error) {
+func (j *jsonEd25519Address) ToSerializable() (Serializable, error) {
 	addrBytes, err := hex.DecodeString(j.Address)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
