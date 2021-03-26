@@ -52,7 +52,7 @@ type TransactionBuilderInputFilter func(utxoInput *UTXOInput, input Output) bool
 
 // AddInputsViaNodeQuery adds any unspent outputs by the given address as an input to the built transaction
 // if it passes the filter function. It is the caller's job to ensure that the limit of returned outputs on the queried
-// node is enough high for the application's purpose.
+// node is enough high for the application's purpose. filter can be nil.
 func (b *TransactionBuilder) AddInputsViaNodeQuery(addr Address, nodeAPIClient *NodeAPIClient, filter TransactionBuilderInputFilter) *TransactionBuilder {
 	switch x := addr.(type) {
 	case *Ed25519Address:
@@ -87,6 +87,24 @@ func (b *TransactionBuilder) AddOutput(output Output) *TransactionBuilder {
 func (b *TransactionBuilder) AddIndexationPayload(payload *Indexation) *TransactionBuilder {
 	b.essence.Payload = payload
 	return b
+}
+
+// TransactionFunc is a function which receives a Transaction as its parameter.
+type TransactionFunc func(tx *Transaction)
+
+// BuildAndSwapToMessageBuilder builds the transaction and then swaps to a MessageBuilder with
+// the transaction set as its payload. txFunc can be nil.
+func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(signer AddressSigner, txFunc TransactionFunc) *MessageBuilder {
+	msgBuilder := NewMessageBuilder()
+	tx, err := b.Build(signer)
+	if err != nil {
+		msgBuilder.err = err
+		return msgBuilder
+	}
+	if txFunc != nil {
+		txFunc(tx)
+	}
+	return msgBuilder.Payload(tx)
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
