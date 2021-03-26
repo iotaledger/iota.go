@@ -97,6 +97,27 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	return NetworkPrefix(hrp), addr, nil
 }
 
+// ParseEd25519AddressFromHexString parses the given hex string into an Ed25519Address.
+func ParseEd25519AddressFromHexString(hexAddr string) (*Ed25519Address, error) {
+	addrBytes, err := hex.DecodeString(hexAddr)
+	if err != nil {
+		return nil, err
+	}
+	addr := &Ed25519Address{}
+	copy(addr[:], addrBytes)
+	return addr, nil
+}
+
+// MustParseEd25519AddressFromHexString parses the given hex string into an Ed25519Address.
+// It panics if the hex address is invalid.
+func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
+	addr, err := ParseEd25519AddressFromHexString(hexAddr)
+	if err != nil {
+		panic(err)
+	}
+	return addr
+}
+
 // Defines an Ed25519 address.
 type Ed25519Address [Ed25519AddressBytesLength]byte
 

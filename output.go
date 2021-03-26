@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -54,6 +56,53 @@ func OutputSelector(outputType uint32) (Serializable, error) {
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownOutputType, outputType)
 	}
 	return seri, nil
+}
+
+// OutputIDHex is the hex representation of an output ID.
+type OutputIDHex string
+
+// MustSplitParts returns the transaction ID and output index parts of the hex output ID.
+// It panics if the hex output ID is invalid.
+func (oih OutputIDHex) MustSplitParts() (*TransactionID, uint16) {
+	txID, outputIndex, err := oih.SplitParts()
+	if err != nil {
+		panic(err)
+	}
+	return txID, outputIndex
+}
+
+// SplitParts returns the transaction ID and output index parts of the hex output ID.
+func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
+	outputIDBytes, err := hex.DecodeString(string(oih))
+	if err != nil {
+		return nil, 0, err
+	}
+	var txID TransactionID
+	copy(txID[:], outputIDBytes[:TransactionIDLength])
+	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[TransactionIDLength : TransactionIDLength+UInt16ByteSize])
+	return &txID, outputIndex, nil
+}
+
+// MustAsUTXOInput converts the hex output ID to a UTXOInput.
+// It panics if the hex output ID is invalid.
+func (oih OutputIDHex) MustAsUTXOInput() *UTXOInput {
+	utxoInput, err := oih.AsUTXOInput()
+	if err != nil {
+		panic(err)
+	}
+	return utxoInput
+}
+
+// AsUTXOInput converts the hex output ID to a UTXOInput.
+func (oih OutputIDHex) AsUTXOInput() (*UTXOInput, error) {
+	var utxoInput UTXOInput
+	txID, outputIndex, err := oih.SplitParts()
+	if err != nil {
+		return nil, err
+	}
+	copy(utxoInput.TransactionID[:], txID[:])
+	utxoInput.TransactionOutputIndex = outputIndex
+	return &utxoInput, nil
 }
 
 // OutputsValidatorFunc which given the index of an output and the output itself, runs validations and returns an error if any should fail.
