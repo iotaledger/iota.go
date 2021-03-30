@@ -76,6 +76,10 @@ const (
 	// GET returns the milestone.
 	NodeAPIRouteMilestone = "/api/v1/milestones/%s"
 
+	// NodeAPIRouteMilestoneUTXOChanges is the route for getting all UTXO changes of a milestone by it's milestoneIndex.
+	// GET returns the output IDs of all UTXO changes.
+	NodeAPIRouteMilestoneUTXOChanges = "/milestones/%s/utxo-changes"
+
 	// NodeAPIRouteOutput is the route for getting outputs by their outputID (transactionHash + outputIndex).
 	// GET returns the output.
 	NodeAPIRouteOutput = "/api/v1/outputs/%s"
@@ -327,6 +331,14 @@ type NodeInfoResponse struct {
 	Bech32HRP string `json:"bech32HRP"`
 	// The minimum pow score of the network.
 	MinPowScore float64 `json:"minPowScore"`
+	// The current rate of new messages per second.
+	MessagesPerSecond float64 `json:"messagesPerSecond"`
+	// The current rate of referenced messages per second.
+	ReferencedMessagesPerSecond float64 `json:"referencedMessagesPerSecond"`
+	// The ratio of referenced messages in relation to new messages of the last confirmed milestone.
+	ReferencedRate float64 `json:"referencedRate"`
+	// The timestamp of the latest known milestone.
+	LatestMilestoneTimestamp int64 `json:"latestMilestoneTimestamp"`
 	// The latest known milestone index.
 	LatestMilestoneIndex uint32 `json:"latestMilestoneIndex"`
 	// The current confirmed milestone's index.
@@ -445,6 +457,8 @@ type MessageMetadataResponse struct {
 	Solid bool `json:"isSolid"`
 	// The milestone index that references this message.
 	ReferencedByMilestoneIndex *uint32 `json:"referencedByMilestoneIndex,omitempty"`
+	// If this message represents a milestone this is the milestone index
+	MilestoneIndex *uint32 `json:"milestoneIndex,omitempty"`
 	// The ledger inclusion state of the transaction payload.
 	LedgerInclusionState *string `json:"ledgerInclusionState,omitempty"`
 	// Whether the message should be promoted.
@@ -558,7 +572,7 @@ func (api *NodeAPIClient) OutputByID(utxoID UTXOInputID) (*NodeOutputResponse, e
 	query := fmt.Sprintf(NodeAPIRouteOutput, utxoID.ToHex())
 
 	res := &NodeOutputResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, &res)
+	_, err := api.Do(http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -573,6 +587,8 @@ type AddressBalanceResponse struct {
 	Address string `json:"address"`
 	// The balance of the address.
 	Balance uint64 `json:"balance"`
+	// Indicates if dust is allowed on this address.
+	DustAllowed bool `json:"dustAllowed"`
 }
 
 // BalanceByEd25519Address returns the balance of an Ed25519 address.
@@ -727,6 +743,28 @@ func (api *NodeAPIClient) MilestoneByIndex(index uint32) (*MilestoneResponse, er
 		return nil, err
 	}
 
+	return res, nil
+}
+
+// MilestoneUTXOChangesResponse defines the response of a GET milestone UTXO changes REST API call.
+type MilestoneUTXOChangesResponse struct {
+	// The index of the milestone.
+	Index uint32 `json:"index"`
+	// The output IDs (transaction hash + output index) of the newly created outputs.
+	CreatedOutputs []string `json:"createdOutputs"`
+	// The output IDs (transaction hash + output index) of the consumed (spent) outputs.
+	ConsumedOutputs []string `json:"consumedOutputs"`
+}
+
+// RouteMilestoneUTXOChanges returns all UTXO changes of a milestone by it's milestoneIndex.
+func (api *NodeAPIClient) MilestoneUTXOChangesByIndex(index uint32) (*MilestoneUTXOChangesResponse, error) {
+	query := fmt.Sprintf(NodeAPIRouteMilestoneUTXOChanges, strconv.FormatUint(uint64(index), 10))
+
+	res := &MilestoneUTXOChangesResponse{}
+	_, err := api.Do(http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, err
+	}
 	return res, nil
 }
 
