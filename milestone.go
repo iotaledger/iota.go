@@ -446,6 +446,8 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 		jMilestone.Parents[i] = hex.EncodeToString(parent[:])
 	}
 	jMilestone.InclusionMerkleProof = hex.EncodeToString(m.InclusionMerkleProof[:])
+	jMilestone.NextPoWScore = int(m.NextPoWScore)
+	jMilestone.NextPoWScoreMilestoneIndex = int(m.NextPoWScoreMilestoneIndex)
 
 	jMilestone.PublicKeys = make([]string, len(m.PublicKeys))
 	for i, pubKey := range m.PublicKeys {
@@ -484,14 +486,16 @@ func (m *Milestone) UnmarshalJSON(bytes []byte) error {
 
 // jsonMilestone defines the json representation of a Milestone.
 type jsonMilestone struct {
-	Type                 int              `json:"type"`
-	Index                int              `json:"index"`
-	Timestamp            int              `json:"timestamp"`
-	Parents              []string         `json:"parentMessageIds"`
-	InclusionMerkleProof string           `json:"inclusionMerkleProof"`
-	PublicKeys           []string         `json:"publicKeys"`
-	Receipt              *json.RawMessage `json:"receipt"`
-	Signatures           []string         `json:"signatures"`
+	Type                       int              `json:"type"`
+	Index                      int              `json:"index"`
+	Timestamp                  int              `json:"timestamp"`
+	Parents                    []string         `json:"parentMessageIds"`
+	InclusionMerkleProof       string           `json:"inclusionMerkleProof"`
+	NextPoWScore               int              `json:"nextPoWScore"`
+	NextPoWScoreMilestoneIndex int              `json:"nextPoWScoreMilestoneIndex"`
+	PublicKeys                 []string         `json:"publicKeys"`
+	Receipt                    *json.RawMessage `json:"receipt"`
+	Signatures                 []string         `json:"signatures"`
 }
 
 func (j *jsonMilestone) ToSerializable() (Serializable, error) {
@@ -515,6 +519,9 @@ func (j *jsonMilestone) ToSerializable() (Serializable, error) {
 		return nil, fmt.Errorf("unable to decode inlcusion merkle proof from JSON for milestone payload: %w", err)
 	}
 	copy(payload.InclusionMerkleProof[:], inclusionMerkleProofBytes)
+
+	payload.NextPoWScore = uint32(j.NextPoWScore)
+	payload.NextPoWScoreMilestoneIndex = uint32(j.NextPoWScoreMilestoneIndex)
 
 	payload.PublicKeys = make([]MilestonePublicKey, len(j.PublicKeys))
 	for i, pubKeyHex := range j.PublicKeys {
