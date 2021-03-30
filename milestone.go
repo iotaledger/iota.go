@@ -66,6 +66,8 @@ var (
 	ErrMilestoneInMemorySignerPrivateKeyMissing = fmt.Errorf("private key missing")
 	// Returned when a Milestone contains duplicated public keys.
 	ErrMilestoneDuplicatedPublicKey = fmt.Errorf("milestone contains duplicated public keys")
+	// Returned when the min. PoW score fields are invalid.
+	ErrMilestoneInvalidMinPoWScoreValues = fmt.Errorf("invalid milestone min pow score values")
 
 	// restrictions around parents within a Milestone.
 	milestoneParentArrayRules = ArrayRules{
@@ -136,6 +138,10 @@ type Milestone struct {
 	Parents MilestoneParentMessageIDs
 	// The inclusion merkle proof of included/newly confirmed transaction IDs.
 	InclusionMerkleProof MilestoneInclusionMerkleProof
+	// The next minimum PoW score to use after NextPoWScoreMilestoneIndex is hit.
+	NextPoWScore uint32
+	// The milestone index at which the PoW score changes to NextPoWScore.
+	NextPoWScoreMilestoneIndex uint32
 	// The public keys validating the signatures of the milestone.
 	PublicKeys []MilestonePublicKey
 	// The inner payload of the milestone. Can be nil or a Receipt.
@@ -164,16 +170,22 @@ func (m *Milestone) Essence() ([]byte, error) {
 			return nil
 		}).
 		WriteNum(m.Index, func(err error) error {
-			return fmt.Errorf("unable to serialize milestone as essence: %w", err)
+			return fmt.Errorf("unable to serialize milestone index for essence: %w", err)
 		}).
 		WriteNum(m.Timestamp, func(err error) error {
-			return fmt.Errorf("unable to serialize milestone as essence: %w", err)
+			return fmt.Errorf("unable to serialize milestone timestamp for essence: %w", err)
 		}).
 		Write32BytesArraySlice(m.Parents, DeSeriModePerformValidation, SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize milestone parents: %w", err)
+			return fmt.Errorf("unable to serialize milestone parents for essence: %w", err)
 		}).
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof for essence: %w", err)
+		}).
+		WriteNum(m.NextPoWScore, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone next pow score for essence: %w", err)
+		}).
+		WriteNum(m.NextPoWScoreMilestoneIndex, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone next pow score milestone index for essence: %w", err)
 		}).
 		Write32BytesArraySlice(m.PublicKeys, DeSeriModePerformValidation, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys for essence: %w", err)
@@ -342,6 +354,19 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		ReadArrayOf32Bytes(&m.InclusionMerkleProof, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone inclusion merkle proof: %w", err)
 		}).
+		ReadNum(&m.NextPoWScore, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone next pow score: %w", err)
+		}).
+		ReadNum(&m.NextPoWScoreMilestoneIndex, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone next pow score milestone index: %w", err)
+		}).
+		AbortIf(func(err error) error {
+			switch {
+			case m.NextPoWScore != 0 && m.NextPoWScoreMilestoneIndex == 0:
+				return fmt.Errorf("%w: next-pow-score-milestone-index is zero but next-pow-score is not", ErrMilestoneInvalidMinPoWScoreValues)
+			}
+			return nil
+		}).
 		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, deSeriMode, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
 		}).
@@ -372,6 +397,10 @@ func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 				return nil, fmt.Errorf("%w: milestones only allow embedded receipt payloads but got %T instead", ErrInvalidBytes, m.Receipt)
 			}
 		}
+		switch {
+		case m.NextPoWScore != 0 && m.NextPoWScoreMilestoneIndex == 0:
+			return nil, fmt.Errorf("%w: next-pow-score-milestone-index is zero but next-pow-score is not", ErrMilestoneInvalidMinPoWScoreValues)
+		}
 	}
 	return NewSerializer().
 		WriteNum(MilestonePayloadTypeID, func(err error) error {
@@ -388,6 +417,12 @@ func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		}).
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof: %w", err)
+		}).
+		WriteNum(m.NextPoWScore, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone next pow score: %w", err)
+		}).
+		WriteNum(m.NextPoWScoreMilestoneIndex, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone next pow score milestone index: %w", err)
 		}).
 		Write32BytesArraySlice(m.PublicKeys, deSeriMode, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys: %w", err)
