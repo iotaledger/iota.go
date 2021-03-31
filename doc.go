@@ -3,10 +3,10 @@
 // Creating Messages
 //
 //	// create a new node API client
-// 	nodeAPIClient := iotago.NewNodeAPIClient("https://example.com")
+// 	nodeHTTPAPIClient := iotago.NewNodeHTTPAPIClient("https://example.com")
 //
 //	// fetch the node's info to know the min. required PoW score
-//	info, err := nodeAPIClient.Info()
+//	info, err := nodeHTTPAPIClient.Info()
 //	if err != nil {
 //		return err
 //	}
@@ -23,12 +23,12 @@
 //	// build a message by fetching tips via the node API client and then do local Proof-of-Work
 //	msg, err := iotago.NewMessageBuilder().
 //		Payload(indexationPayload).
-//		Tips(nodeAPIClient).
+//		Tips(nodeHTTPAPIClient).
 //		ProofOfWork(ctx, info.MinPowScore).
 //		Build()
 //
 //	// submit the message to the node
-//	if _, err := nodeAPIClient.SubmitMessage(msg); err != nil {
+//	if _, err := nodeHTTPAPIClient.SubmitMessage(msg); err != nil {
 //		return err
 //	}
 package iotago

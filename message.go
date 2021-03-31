@@ -78,6 +78,21 @@ func MessageIDFromHexString(messageIDHex string) (MessageID, error) {
 	return messageID, nil
 }
 
+// MessageIDToHexString converts the given message ID to their hex representation.
+func MessageIDToHexString(msgID MessageID) string {
+	return hex.EncodeToString(msgID[:])
+}
+
+// MustMessageIDFromHexString converts the given message IDs from their hex
+// to MessageID representation.
+func MustMessageIDFromHexString(messageIDHex string) MessageID {
+	msgID, err := MessageIDFromHexString(messageIDHex)
+	if err != nil {
+		panic(err)
+	}
+	return msgID
+}
+
 // Message can carry a payload and references two other messages.
 type Message struct {
 	// The network ID for which this message is meant for.
@@ -98,6 +113,15 @@ func (m *Message) ID() (*MessageID, error) {
 	}
 	h := blake2b.Sum256(data)
 	return &h, nil
+}
+
+// MustID works like ID but panics if the MessageID can't be computed.
+func (m *Message) MustID() MessageID {
+	msgID, err := m.ID()
+	if err != nil {
+		panic(err)
+	}
+	return *msgID
 }
 
 // POW computes the PoW score of the Message.

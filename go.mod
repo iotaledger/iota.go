@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	filippo.io/edwards25519 v1.0.0-beta.2
+	github.com/eclipse/paho.mqtt.golang v1.3.2 // indirect
 	github.com/iotaledger/iota.go v1.0.0-beta.15.0.20210212090247-51c40bcebea7
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.6.1
