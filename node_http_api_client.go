@@ -113,63 +113,63 @@ const (
 	NodeAPIRoutePeers = "/api/v1/peers"
 )
 
-// the default options applied to the NodeAPIClient.
-var defaultNodeAPIOptions = []NodeAPIClientOption{
-	WithNodeAPIClientHTTPClient(http.DefaultClient),
-	WithNodeAPIClientUserInfo(nil),
+// the default options applied to the NodeHTTPAPIClient.
+var defaultNodeAPIOptions = []NodeHTTPAPIClientOption{
+	WithNodeHTTPAPIClientHTTPClient(http.DefaultClient),
+	WithNodeHTTPAPIClientUserInfo(nil),
 }
 
-// NodeAPIClientOptions define options for the NodeAPIClient.
-type NodeAPIClientOptions struct {
+// NodeHTTPAPIClientOptions define options for the NodeHTTPAPIClient.
+type NodeHTTPAPIClientOptions struct {
 	// The HTTP client to use.
 	httpClient *http.Client
 	// The username and password information.
 	userInfo *url.Userinfo
 }
 
-// applies the given NodeAPIClientOption.
-func (no *NodeAPIClientOptions) apply(opts ...NodeAPIClientOption) {
+// applies the given NodeHTTPAPIClientOption.
+func (no *NodeHTTPAPIClientOptions) apply(opts ...NodeHTTPAPIClientOption) {
 	for _, opt := range opts {
 		opt(no)
 	}
 }
 
-// WithNodeAPIClientHTTPClient sets the used HTTP Client.
-func WithNodeAPIClientHTTPClient(httpClient *http.Client) NodeAPIClientOption {
-	return func(opts *NodeAPIClientOptions) {
+// WithNodeHTTPAPIClientHTTPClient sets the used HTTP Client.
+func WithNodeHTTPAPIClientHTTPClient(httpClient *http.Client) NodeHTTPAPIClientOption {
+	return func(opts *NodeHTTPAPIClientOptions) {
 		opts.httpClient = httpClient
 	}
 }
 
-// WithNodeAPIClientUserInfo sets the Userinfo used to add basic auth "Authorization" headers to the requests.
-func WithNodeAPIClientUserInfo(userInfo *url.Userinfo) NodeAPIClientOption {
-	return func(opts *NodeAPIClientOptions) {
+// WithNodeHTTPAPIClientUserInfo sets the Userinfo used to add basic auth "Authorization" headers to the requests.
+func WithNodeHTTPAPIClientUserInfo(userInfo *url.Userinfo) NodeHTTPAPIClientOption {
+	return func(opts *NodeHTTPAPIClientOptions) {
 		opts.userInfo = userInfo
 	}
 }
 
-// NodeAPIClientOption is a function setting a NodeAPIClient option.
-type NodeAPIClientOption func(opts *NodeAPIClientOptions)
+// NodeHTTPAPIClientOption is a function setting a NodeHTTPAPIClient option.
+type NodeHTTPAPIClientOption func(opts *NodeHTTPAPIClientOptions)
 
-// NewNodeAPIClient returns a new NodeAPIClient with the given BaseURL.
-func NewNodeAPIClient(baseURL string, opts ...NodeAPIClientOption) *NodeAPIClient {
+// NewNodeHTTPAPIClient returns a new NodeHTTPAPIClient with the given BaseURL.
+func NewNodeHTTPAPIClient(baseURL string, opts ...NodeHTTPAPIClientOption) *NodeHTTPAPIClient {
 
-	options := &NodeAPIClientOptions{}
+	options := &NodeHTTPAPIClientOptions{}
 	options.apply(defaultNodeAPIOptions...)
 	options.apply(opts...)
 
-	return &NodeAPIClient{
+	return &NodeHTTPAPIClient{
 		BaseURL: baseURL,
 		opts:    options,
 	}
 }
 
-// NodeAPIClient is a client for node HTTP REST API endpoints.
-type NodeAPIClient struct {
+// NodeHTTPAPIClient is a client for node HTTP REST API endpoints.
+type NodeHTTPAPIClient struct {
 	// The base URL for all API calls.
 	BaseURL string
-	// holds the NodeAPIClient options.
-	opts *NodeAPIClientOptions
+	// holds the NodeHTTPAPIClient options.
+	opts *NodeHTTPAPIClientOptions
 }
 
 // defines the error response schema for node API responses.
@@ -245,7 +245,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 	return fmt.Errorf("%w: url %s, error message: %s", err, res.Request.URL.String(), errRes.Error.Message)
 }
 
-func (api *NodeAPIClient) Do(method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
+func (api *NodeHTTPAPIClient) Do(method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
 	// marshal request object
 	var data []byte
 	var raw bool
@@ -302,7 +302,7 @@ func (api *NodeAPIClient) Do(method string, route string, reqObj interface{}, re
 }
 
 // Health returns whether the given node is healthy.
-func (api *NodeAPIClient) Health() (bool, error) {
+func (api *NodeHTTPAPIClient) Health() (bool, error) {
 	res, err := api.Do(http.MethodGet, NodeAPIRouteHealth, nil, nil)
 	if err != nil {
 		return false, err
@@ -338,7 +338,7 @@ type NodeInfoResponse struct {
 }
 
 // Info gets the info of the node.
-func (api *NodeAPIClient) Info() (*NodeInfoResponse, error) {
+func (api *NodeHTTPAPIClient) Info() (*NodeInfoResponse, error) {
 	res := &NodeInfoResponse{}
 	_, err := api.Do(http.MethodGet, NodeAPIRouteInfo, nil, res)
 	if err != nil {
@@ -367,7 +367,7 @@ func (ntr *NodeTipsResponse) Tips() (MessageIDs, error) {
 }
 
 // Tips gets the two tips from the node.
-func (api *NodeAPIClient) Tips() (*NodeTipsResponse, error) {
+func (api *NodeHTTPAPIClient) Tips() (*NodeTipsResponse, error) {
 	res := &NodeTipsResponse{}
 	_, err := api.Do(http.MethodGet, NodeAPIRouteTips, nil, res)
 	if err != nil {
@@ -379,7 +379,7 @@ func (api *NodeAPIClient) Tips() (*NodeTipsResponse, error) {
 // SubmitMessage submits the given Message to the node.
 // The node will take care of filling missing information.
 // This function returns the finalized message created by the node.
-func (api *NodeAPIClient) SubmitMessage(m *Message) (*Message, error) {
+func (api *NodeHTTPAPIClient) SubmitMessage(m *Message) (*Message, error) {
 	// Do not check the message because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the message afterwards.
@@ -420,7 +420,7 @@ type MessageIDsByIndexResponse struct {
 }
 
 // MessageIDsByIndex gets message IDs filtered by index from the node.
-func (api *NodeAPIClient) MessageIDsByIndex(index []byte) (*MessageIDsByIndexResponse, error) {
+func (api *NodeHTTPAPIClient) MessageIDsByIndex(index []byte) (*MessageIDsByIndexResponse, error) {
 	var query strings.Builder
 	query.WriteString(NodeAPIRouteMessages)
 	query.WriteString("?index=")
@@ -456,7 +456,7 @@ type MessageMetadataResponse struct {
 }
 
 // MessageByMessageID gets the metadata of a message by it's message ID from the node.
-func (api *NodeAPIClient) MessageMetadataByMessageID(msgID MessageID) (*MessageMetadataResponse, error) {
+func (api *NodeHTTPAPIClient) MessageMetadataByMessageID(msgID MessageID) (*MessageMetadataResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageMetadata, hex.EncodeToString(msgID[:]))
 
 	res := &MessageMetadataResponse{}
@@ -469,7 +469,7 @@ func (api *NodeAPIClient) MessageMetadataByMessageID(msgID MessageID) (*MessageM
 }
 
 // MessageByMessageID get a message by it's message ID from the node.
-func (api *NodeAPIClient) MessageByMessageID(msgID MessageID) (*Message, error) {
+func (api *NodeHTTPAPIClient) MessageByMessageID(msgID MessageID) (*Message, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageBytes, hex.EncodeToString(msgID[:]))
 
 	res := &RawDataEnvelope{}
@@ -499,7 +499,7 @@ type ChildrenResponse struct {
 }
 
 // MessageByMessageID get a message by it's message ID from the node.
-func (api *NodeAPIClient) ChildrenByMessageID(msgID MessageID) (*ChildrenResponse, error) {
+func (api *NodeHTTPAPIClient) ChildrenByMessageID(msgID MessageID) (*ChildrenResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageChildren, hex.EncodeToString(msgID[:]))
 
 	res := &ChildrenResponse{}
@@ -554,7 +554,7 @@ func (nor *NodeOutputResponse) Output() (Output, error) {
 }
 
 // OutputByID gets an outputs by its ID from the node.
-func (api *NodeAPIClient) OutputByID(utxoID UTXOInputID) (*NodeOutputResponse, error) {
+func (api *NodeHTTPAPIClient) OutputByID(utxoID UTXOInputID) (*NodeOutputResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteOutput, utxoID.ToHex())
 
 	res := &NodeOutputResponse{}
@@ -576,7 +576,7 @@ type AddressBalanceResponse struct {
 }
 
 // BalanceByEd25519Address returns the balance of an Ed25519 address.
-func (api *NodeAPIClient) BalanceByEd25519Address(addr *Ed25519Address) (*AddressBalanceResponse, error) {
+func (api *NodeHTTPAPIClient) BalanceByEd25519Address(addr *Ed25519Address) (*AddressBalanceResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Balance, addr.String())
 
 	res := &AddressBalanceResponse{}
@@ -604,7 +604,7 @@ type AddressOutputsResponse struct {
 
 // OutputIDsByEd25519Address gets outputs IDs by ed25519 addresses from the node.
 // Per default only unspent outputs IDs are returned. Set includeSpentOutputs to true to also returned spent outputs IDs.
-func (api *NodeAPIClient) OutputIDsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
+func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, addr.String())
 	if includeSpentOutputs {
 		query += "?include-spent=true"
@@ -621,7 +621,7 @@ func (api *NodeAPIClient) OutputIDsByEd25519Address(addr *Ed25519Address, includ
 
 // OutputsByEd25519Address gets the outputs by the ed25519 address from the node.
 // Per default only unspent outputs are returned. Set includeSpentOutputs to true to also returned spent outputs.
-func (api *NodeAPIClient) OutputsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
+func (api *NodeHTTPAPIClient) OutputsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, addr.String())
 	if includeSpentOutputs {
 		query += "?include-spent=true"
@@ -662,7 +662,7 @@ type TreasuryResponse struct {
 }
 
 // Treasury gets the current treasury.
-func (api *NodeAPIClient) Treasury() (*TreasuryResponse, error) {
+func (api *NodeHTTPAPIClient) Treasury() (*TreasuryResponse, error) {
 	res := &TreasuryResponse{}
 	_, err := api.Do(http.MethodGet, NodeAPIRouteTreasury, nil, res)
 	if err != nil {
@@ -684,7 +684,7 @@ type ReceiptTuple struct {
 }
 
 // Receipts gets all receipts persisted on the node.
-func (api *NodeAPIClient) Receipts() ([]*ReceiptTuple, error) {
+func (api *NodeHTTPAPIClient) Receipts() ([]*ReceiptTuple, error) {
 	res := &ReceiptsResponse{}
 	_, err := api.Do(http.MethodGet, NodeAPIRouteReceipts, nil, res)
 	if err != nil {
@@ -695,7 +695,7 @@ func (api *NodeAPIClient) Receipts() ([]*ReceiptTuple, error) {
 }
 
 // Receipts gets all receipts for the given migrated at index persisted on the node.
-func (api *NodeAPIClient) ReceiptsByMigratedAtIndex(index uint32) ([]*ReceiptTuple, error) {
+func (api *NodeHTTPAPIClient) ReceiptsByMigratedAtIndex(index uint32) ([]*ReceiptTuple, error) {
 	query := fmt.Sprintf(NodeAPIRouteReceiptsByMigratedAtIndex, strconv.FormatUint(uint64(index), 10))
 
 	res := &ReceiptsResponse{}
@@ -718,7 +718,7 @@ type MilestoneResponse struct {
 }
 
 // MilestoneByIndex gets a milestone by its index.
-func (api *NodeAPIClient) MilestoneByIndex(index uint32) (*MilestoneResponse, error) {
+func (api *NodeHTTPAPIClient) MilestoneByIndex(index uint32) (*MilestoneResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMilestone, strconv.FormatUint(uint64(index), 10))
 
 	res := &MilestoneResponse{}
@@ -809,7 +809,7 @@ type PeerGossipMetrics struct {
 }
 
 // PeerByID gets a peer by its identifier.
-func (api *NodeAPIClient) PeerByID(id string) (*PeerResponse, error) {
+func (api *NodeHTTPAPIClient) PeerByID(id string) (*PeerResponse, error) {
 	query := fmt.Sprintf(NodeAPIRoutePeer, id)
 
 	res := &PeerResponse{}
@@ -822,7 +822,7 @@ func (api *NodeAPIClient) PeerByID(id string) (*PeerResponse, error) {
 }
 
 // RemovePeerByID removes a peer by its identifier.
-func (api *NodeAPIClient) RemovePeerByID(id string) error {
+func (api *NodeHTTPAPIClient) RemovePeerByID(id string) error {
 	query := fmt.Sprintf(NodeAPIRoutePeer, id)
 
 	_, err := api.Do(http.MethodDelete, query, nil, nil)
@@ -834,7 +834,7 @@ func (api *NodeAPIClient) RemovePeerByID(id string) error {
 }
 
 // Peers returns a list of all peers.
-func (api *NodeAPIClient) Peers() ([]*PeerResponse, error) {
+func (api *NodeHTTPAPIClient) Peers() ([]*PeerResponse, error) {
 	res := []*PeerResponse{}
 	_, err := api.Do(http.MethodGet, NodeAPIRoutePeers, nil, &res)
 	if err != nil {
@@ -845,7 +845,7 @@ func (api *NodeAPIClient) Peers() ([]*PeerResponse, error) {
 }
 
 // AddPeer adds a new peer by libp2p multi address with optional alias.
-func (api *NodeAPIClient) AddPeer(multiAddress string, alias ...string) (*PeerResponse, error) {
+func (api *NodeHTTPAPIClient) AddPeer(multiAddress string, alias ...string) (*PeerResponse, error) {
 	req := &AddPeerRequest{
 		MultiAddress: multiAddress,
 	}
