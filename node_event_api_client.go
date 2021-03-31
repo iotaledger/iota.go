@@ -63,7 +63,10 @@ type NodeEventAPIClient struct {
 // Multiple calls to the same non parameterized registration will override the previously created channel.
 type EventChannelsHandle struct {
 	// The context over the EventChannelsHandle.
-	Ctx        context.Context
+	Ctx context.Context
+	// A channel up on which errors are returned from within subscriptions.
+	// Errors may be dropped silently if no receiver is listening for them.
+	Errors     chan error
 	mqttClient mqtt.Client
 }
 
@@ -73,13 +76,20 @@ func panicIfEventChannelsHandleInactive(ech *EventChannelsHandle) {
 	}
 }
 
+func sendErrOrDrop(errChan chan error, err error) {
+	select {
+	case errChan <- err:
+	default:
+	}
+}
+
 // Connect connects to the node event API and returns a handle to subscribe to events.
 // The returned EventChannelsHandle handle remains active as long as the given context isn't done/cancelled.
 func (nea *NodeEventAPIClient) Connect(ctx context.Context) (*EventChannelsHandle, error) {
 	if token := nea.MQTTClient.Connect(); token.Wait() && token.Error() != nil {
 		return nil, token.Error()
 	}
-	return &EventChannelsHandle{mqttClient: nea.MQTTClient, Ctx: ctx}, nil
+	return &EventChannelsHandle{mqttClient: nea.MQTTClient, Ctx: ctx, Errors: make(chan error)}, nil
 }
 
 // Disconnect disconnects the underlying MQTT client.
@@ -95,6 +105,7 @@ func (ech *EventChannelsHandle) Messages() <-chan *Message {
 	ech.mqttClient.Subscribe(NodeEventMessages, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &Message{}
 		if _, err := msg.Deserialize(mqttMsg.Payload(), DeSeriModePerformValidation); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -113,6 +124,7 @@ func (ech *EventChannelsHandle) ReferencedMessagesMetadata() <-chan *MessageMeta
 	ech.mqttClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -131,6 +143,7 @@ func (ech *EventChannelsHandle) ReferencedMessages(nodeHTTPAPIClient *NodeHTTPAP
 	ech.mqttClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 
@@ -155,6 +168,7 @@ func (ech *EventChannelsHandle) MessagesWithIndex(index string) <-chan *Message 
 	ech.mqttClient.Subscribe(strings.Replace(NodeEventMessagesIndexation, "{index}", index, 1), 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &Message{}
 		if _, err := msg.Deserialize(mqttMsg.Payload(), DeSeriModePerformValidation); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -174,6 +188,7 @@ func (ech *EventChannelsHandle) MessageMetadataChange(msgID MessageID) <-chan *M
 	ech.mqttClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -193,6 +208,7 @@ func (ech *EventChannelsHandle) AddressOutputs(addr Address, netPrefix NetworkPr
 	ech.mqttClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &NodeOutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -212,6 +228,7 @@ func (ech *EventChannelsHandle) Ed25519AddressOutputs(addr *Ed25519Address) <-ch
 	ech.mqttClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &NodeOutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -231,6 +248,7 @@ func (ech *EventChannelsHandle) TransactionIncludedMessage(txID TransactionID) <
 	ech.mqttClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &Message{}
 		if _, err := msg.Deserialize(mqttMsg.Payload(), DeSeriModePerformValidation); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -250,6 +268,7 @@ func (ech *EventChannelsHandle) Output(outputID UTXOInputID) <-chan *NodeOutputR
 	ech.mqttClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &NodeOutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -268,6 +287,7 @@ func (ech *EventChannelsHandle) Receipts() <-chan *Receipt {
 	ech.mqttClient.Subscribe(NodeEventReceipts, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		receipt := &Receipt{}
 		if err := json.Unmarshal(mqttMsg.Payload(), receipt); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -292,6 +312,7 @@ func (ech *EventChannelsHandle) LatestMilestones() <-chan *MilestonePointer {
 	ech.mqttClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -310,14 +331,17 @@ func (ech *EventChannelsHandle) LatestMilestoneMessages(nodeHTTPAPIClient *NodeH
 	ech.mqttClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		res, err := nodeHTTPAPIClient.MilestoneByIndex(msPointer.Index)
 		if err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		msg, err := nodeHTTPAPIClient.MessageByMessageID(MustMessageIDFromHexString(res.MessageID))
 		if err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -336,6 +360,7 @@ func (ech *EventChannelsHandle) ConfirmedMilestones() <-chan *MilestonePointer {
 	ech.mqttClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
@@ -354,14 +379,17 @@ func (ech *EventChannelsHandle) ConfirmedMilestoneMessages(nodeHTTPAPIClient *No
 	ech.mqttClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		res, err := nodeHTTPAPIClient.MilestoneByIndex(msPointer.Index)
 		if err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		msg, err := nodeHTTPAPIClient.MessageByMessageID(MustMessageIDFromHexString(res.MessageID))
 		if err != nil {
+			sendErrOrDrop(ech.Errors, err)
 			return
 		}
 		select {
