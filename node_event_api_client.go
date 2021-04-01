@@ -74,8 +74,10 @@ type NodeEventAPIClient struct {
 	MQTTClient mqtt.Client
 	// The context over the EventChannelsHandle.
 	Ctx context.Context
-	// A channel up on which errors are returned from within subscriptions.
-	// Errors may be dropped silently if no receiver is listening for them.
+	// A channel up on which errors are returned from within subscriptions or when the connection is lost.
+	// It is the instantiater's job to ensure that the respective connection handlers are linked to this error channel
+	// if the client was created without NewNodeEventAPIClient.
+	// Errors are dropped silently if no receiver is listening for them or can consume them fast enough.
 	Errors chan error
 }
 
