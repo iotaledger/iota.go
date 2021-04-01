@@ -15,11 +15,13 @@ func TestNewNodeEventAPIClient(t *testing.T) {
 	mock := &mockMqttClient{payload: originMsgBytes}
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
-	eventAPIClient := &iotago.NodeEventAPIClient{MQTTClient: mock}
-	eventHandle, err := eventAPIClient.Connect(ctx)
-	require.NoError(t, err)
+	eventAPIClient := &iotago.NodeEventAPIClient{
+		MQTTClient: mock,
+		Errors:     make(chan error),
+	}
+	require.NoError(t, eventAPIClient.Connect(ctx))
 
-	msgChan := eventHandle.Messages()
+	msgChan := eventAPIClient.Messages()
 	require.Eventually(t, func() bool {
 		select {
 		case msg := <-msgChan:
@@ -70,7 +72,7 @@ func (m *mockMsg) Payload() []byte {
 
 func (m *mockMsg) Ack() { panic("implement me") }
 
-func (m *mockMqttClient) IsConnected() bool { panic("implement me") }
+func (m *mockMqttClient) IsConnected() bool { return true }
 
 func (m *mockMqttClient) IsConnectionOpen() bool { panic("implement me") }
 

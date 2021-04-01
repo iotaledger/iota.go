@@ -5,7 +5,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math/rand"
+	"strconv"
 	"strings"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -41,38 +45,46 @@ const (
 )
 
 var (
-	// ErrNodeEventChannelsHandleInactive gets returned when a EventChannelsHandle is inactive.
-	ErrNodeEventChannelsHandleInactive = errors.New("event channels handle is inactive")
+	// ErrNodeEventAPIClientInactive gets returned when a NodeEventAPIClient is inactive.
+	ErrNodeEventAPIClientInactive = errors.New("node event api client is inactive")
 )
+
+func randMQTTClientID() string {
+	return strconv.FormatInt(rand.NewSource(time.Now().UnixNano()).Int63(), 10)
+}
 
 // NewNodeEventAPIClient creates a new NodeEventAPIClient using the given broker URI and default MQTT client options.
 func NewNodeEventAPIClient(brokerURI string) *NodeEventAPIClient {
 	clientOpts := mqtt.NewClientOptions()
 	clientOpts.Order = false
+	clientOpts.ClientID = randMQTTClientID()
 	clientOpts.AddBroker(brokerURI)
-	return &NodeEventAPIClient{MQTTClient: mqtt.NewClient(clientOpts)}
+	errChan := make(chan error)
+	clientOpts.OnConnectionLost = func(client mqtt.Client, err error) { sendErrOrDrop(errChan, err) }
+	return &NodeEventAPIClient{
+		MQTTClient: mqtt.NewClient(clientOpts),
+		Errors:     errChan,
+	}
 }
 
-// NodeEventAPIClient is a client for node events.
+// NodeEventAPIClient represents a handle to retrieve channels for node events.
+// Any registration will panic if the NodeEventAPIClient.Ctx is done or the client isn't connected.
+// Multiple calls to the same channel registration will override the previously created channel.
 type NodeEventAPIClient struct {
 	MQTTClient mqtt.Client
-}
-
-// EventChannelsHandle represents a handle to retrieve channels for events.
-// Any registration will panic if the EventChannelsHandle.Ctx is done.
-// Multiple calls to the same non parameterized registration will override the previously created channel.
-type EventChannelsHandle struct {
 	// The context over the EventChannelsHandle.
 	Ctx context.Context
 	// A channel up on which errors are returned from within subscriptions.
 	// Errors may be dropped silently if no receiver is listening for them.
-	Errors     chan error
-	mqttClient mqtt.Client
+	Errors chan error
 }
 
-func panicIfEventChannelsHandleInactive(ech *EventChannelsHandle) {
-	if err := ech.Ctx.Err(); err != nil {
-		panic(ErrNodeEventChannelsHandleInactive)
+func panicIfNodeEventAPIClientInactive(neac *NodeEventAPIClient) {
+	if err := neac.Ctx.Err(); err != nil {
+		panic(fmt.Errorf("%w: context is cancelled/done", ErrNodeEventAPIClientInactive))
+	}
+	if !neac.MQTTClient.IsConnected() {
+		panic(fmt.Errorf("%w: client is not connected", ErrNodeEventAPIClientInactive))
 	}
 }
 
@@ -83,33 +95,34 @@ func sendErrOrDrop(errChan chan error, err error) {
 	}
 }
 
-// Connect connects to the node event API and returns a handle to subscribe to events.
-// The returned EventChannelsHandle handle remains active as long as the given context isn't done/cancelled.
-func (nea *NodeEventAPIClient) Connect(ctx context.Context) (*EventChannelsHandle, error) {
-	if token := nea.MQTTClient.Connect(); token.Wait() && token.Error() != nil {
-		return nil, token.Error()
+// Connect connects the NodeEventAPIClient to the specified brokers.
+// The NodeEventAPIClient remains active as long as the given context isn't done/cancelled.
+func (neac *NodeEventAPIClient) Connect(ctx context.Context) error {
+	neac.Ctx = ctx
+	if token := neac.MQTTClient.Connect(); token.Wait() && token.Error() != nil {
+		return token.Error()
 	}
-	return &EventChannelsHandle{mqttClient: nea.MQTTClient, Ctx: ctx, Errors: make(chan error)}, nil
+	return nil
 }
 
-// Disconnect disconnects the underlying MQTT client.
+// Close disconnects the underlying MQTT client.
 // Call this function to clean up any registered channels.
-func (ech *EventChannelsHandle) Disconnect() {
-	ech.mqttClient.Disconnect(0)
+func (neac *NodeEventAPIClient) Close() {
+	neac.MQTTClient.Disconnect(0)
 }
 
 // Messages returns a channel of newly received messages.
-func (ech *EventChannelsHandle) Messages() <-chan *Message {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) Messages() <-chan *Message {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *Message)
-	ech.mqttClient.Subscribe(NodeEventMessages, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(NodeEventMessages, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &Message{}
 		if _, err := msg.Deserialize(mqttMsg.Payload(), DeSeriModePerformValidation); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- msg:
 		}
@@ -118,17 +131,17 @@ func (ech *EventChannelsHandle) Messages() <-chan *Message {
 }
 
 // ReferencedMessagesMetadata returns a channel of message metadata of newly referenced messages.
-func (ech *EventChannelsHandle) ReferencedMessagesMetadata() <-chan *MessageMetadataResponse {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) ReferencedMessagesMetadata() <-chan *MessageMetadataResponse {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *MessageMetadataResponse)
-	ech.mqttClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- metadataRes:
 		}
@@ -137,13 +150,13 @@ func (ech *EventChannelsHandle) ReferencedMessagesMetadata() <-chan *MessageMeta
 }
 
 // ReferencedMessages returns a channel of newly referenced messages.
-func (ech *EventChannelsHandle) ReferencedMessages(nodeHTTPAPIClient *NodeHTTPAPIClient) <-chan *Message {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) ReferencedMessages(nodeHTTPAPIClient *NodeHTTPAPIClient) <-chan *Message {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *Message)
-	ech.mqttClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 
@@ -153,7 +166,7 @@ func (ech *EventChannelsHandle) ReferencedMessages(nodeHTTPAPIClient *NodeHTTPAP
 		}
 
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- msg:
 		}
@@ -162,17 +175,17 @@ func (ech *EventChannelsHandle) ReferencedMessages(nodeHTTPAPIClient *NodeHTTPAP
 }
 
 // MessagesWithIndex returns a channel of newly received messages with the given index.
-func (ech *EventChannelsHandle) MessagesWithIndex(index string) <-chan *Message {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) MessagesWithIndex(index string) <-chan *Message {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *Message)
-	ech.mqttClient.Subscribe(strings.Replace(NodeEventMessagesIndexation, "{index}", index, 1), 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(strings.Replace(NodeEventMessagesIndexation, "{index}", index, 1), 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &Message{}
 		if _, err := msg.Deserialize(mqttMsg.Payload(), DeSeriModePerformValidation); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- msg:
 		}
@@ -181,18 +194,18 @@ func (ech *EventChannelsHandle) MessagesWithIndex(index string) <-chan *Message 
 }
 
 // MessageMetadataChange returns a channel of MessageMetadataResponse each time the given message's state changes.
-func (ech *EventChannelsHandle) MessageMetadataChange(msgID MessageID) <-chan *MessageMetadataResponse {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) MessageMetadataChange(msgID MessageID) <-chan *MessageMetadataResponse {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *MessageMetadataResponse)
 	topic := strings.Replace(NodeEventMessagesMetadata, "{messageId}", MessageIDToHexString(msgID), 1)
-	ech.mqttClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- metadataRes:
 		}
@@ -201,18 +214,18 @@ func (ech *EventChannelsHandle) MessageMetadataChange(msgID MessageID) <-chan *M
 }
 
 // AddressOutputs returns a channel of newly created or spent outputs on the given address.
-func (ech *EventChannelsHandle) AddressOutputs(addr Address, netPrefix NetworkPrefix) <-chan *NodeOutputResponse {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) AddressOutputs(addr Address, netPrefix NetworkPrefix) <-chan *NodeOutputResponse {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *NodeOutputResponse)
 	topic := strings.Replace(NodeEventAddressesOutput, "{address}", addr.Bech32(netPrefix), 1)
-	ech.mqttClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &NodeOutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- res:
 		}
@@ -221,18 +234,18 @@ func (ech *EventChannelsHandle) AddressOutputs(addr Address, netPrefix NetworkPr
 }
 
 // Ed25519AddressOutputs returns a channel of newly created or spent outputs on the given ed25519 address.
-func (ech *EventChannelsHandle) Ed25519AddressOutputs(addr *Ed25519Address) <-chan *NodeOutputResponse {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) Ed25519AddressOutputs(addr *Ed25519Address) <-chan *NodeOutputResponse {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *NodeOutputResponse)
 	topic := strings.Replace(NodeEventAddressesEd25519Output, "{address}", addr.String(), 1)
-	ech.mqttClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &NodeOutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- res:
 		}
@@ -241,18 +254,18 @@ func (ech *EventChannelsHandle) Ed25519AddressOutputs(addr *Ed25519Address) <-ch
 }
 
 // TransactionIncludedMessage returns a channel of the included message which carries the transaction with the given ID.
-func (ech *EventChannelsHandle) TransactionIncludedMessage(txID TransactionID) <-chan *Message {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) TransactionIncludedMessage(txID TransactionID) <-chan *Message {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *Message)
 	topic := strings.Replace(NodeEventTransactionsIncludedMessage, "{transactionId}", MessageIDToHexString(txID), 1)
-	ech.mqttClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &Message{}
 		if _, err := msg.Deserialize(mqttMsg.Payload(), DeSeriModePerformValidation); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- msg:
 		}
@@ -261,18 +274,18 @@ func (ech *EventChannelsHandle) TransactionIncludedMessage(txID TransactionID) <
 }
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
-func (ech *EventChannelsHandle) Output(outputID UTXOInputID) <-chan *NodeOutputResponse {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) Output(outputID UTXOInputID) <-chan *NodeOutputResponse {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *NodeOutputResponse)
 	topic := strings.Replace(NodeEventOutputs, "{outputId}", hex.EncodeToString(outputID[:]), 1)
-	ech.mqttClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &NodeOutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- res:
 		}
@@ -281,17 +294,17 @@ func (ech *EventChannelsHandle) Output(outputID UTXOInputID) <-chan *NodeOutputR
 }
 
 // Receipts returns a channel which returns newly applied receipts.
-func (ech *EventChannelsHandle) Receipts() <-chan *Receipt {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) Receipts() <-chan *Receipt {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *Receipt)
-	ech.mqttClient.Subscribe(NodeEventReceipts, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(NodeEventReceipts, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		receipt := &Receipt{}
 		if err := json.Unmarshal(mqttMsg.Payload(), receipt); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- receipt:
 		}
@@ -306,17 +319,17 @@ type MilestonePointer struct {
 }
 
 // LatestMilestones returns a channel of newly seen latest milestones.
-func (ech *EventChannelsHandle) LatestMilestones() <-chan *MilestonePointer {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) LatestMilestones() <-chan *MilestonePointer {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *MilestonePointer)
-	ech.mqttClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- msPointer:
 		}
@@ -325,27 +338,27 @@ func (ech *EventChannelsHandle) LatestMilestones() <-chan *MilestonePointer {
 }
 
 // LatestMilestoneMessages returns a channel of newly seen latest milestones messages.
-func (ech *EventChannelsHandle) LatestMilestoneMessages(nodeHTTPAPIClient *NodeHTTPAPIClient) <-chan *Message {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) LatestMilestoneMessages(nodeHTTPAPIClient *NodeHTTPAPIClient) <-chan *Message {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *Message)
-	ech.mqttClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		res, err := nodeHTTPAPIClient.MilestoneByIndex(msPointer.Index)
 		if err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		msg, err := nodeHTTPAPIClient.MessageByMessageID(MustMessageIDFromHexString(res.MessageID))
 		if err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- msg:
 		}
@@ -354,17 +367,17 @@ func (ech *EventChannelsHandle) LatestMilestoneMessages(nodeHTTPAPIClient *NodeH
 }
 
 // ConfirmedMilestones returns a channel of newly confirmed milestones.
-func (ech *EventChannelsHandle) ConfirmedMilestones() <-chan *MilestonePointer {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) ConfirmedMilestones() <-chan *MilestonePointer {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *MilestonePointer)
-	ech.mqttClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- msPointer:
 		}
@@ -373,27 +386,27 @@ func (ech *EventChannelsHandle) ConfirmedMilestones() <-chan *MilestonePointer {
 }
 
 // ConfirmedMilestoneMessages returns a channel of newly confirmed milestones messages.
-func (ech *EventChannelsHandle) ConfirmedMilestoneMessages(nodeHTTPAPIClient *NodeHTTPAPIClient) <-chan *Message {
-	panicIfEventChannelsHandleInactive(ech)
+func (neac *NodeEventAPIClient) ConfirmedMilestoneMessages(nodeHTTPAPIClient *NodeHTTPAPIClient) <-chan *Message {
+	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *Message)
-	ech.mqttClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	neac.MQTTClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		res, err := nodeHTTPAPIClient.MilestoneByIndex(msPointer.Index)
 		if err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		msg, err := nodeHTTPAPIClient.MessageByMessageID(MustMessageIDFromHexString(res.MessageID))
 		if err != nil {
-			sendErrOrDrop(ech.Errors, err)
+			sendErrOrDrop(neac.Errors, err)
 			return
 		}
 		select {
-		case <-ech.Ctx.Done():
+		case <-neac.Ctx.Done():
 			return
 		case channel <- msg:
 		}
