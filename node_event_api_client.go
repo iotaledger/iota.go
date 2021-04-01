@@ -376,7 +376,7 @@ func (ech *EventChannelsHandle) ConfirmedMilestones() <-chan *MilestonePointer {
 func (ech *EventChannelsHandle) ConfirmedMilestoneMessages(nodeHTTPAPIClient *NodeHTTPAPIClient) <-chan *Message {
 	panicIfEventChannelsHandleInactive(ech)
 	channel := make(chan *Message)
-	ech.mqttClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	ech.mqttClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
 			sendErrOrDrop(ech.Errors, err)
