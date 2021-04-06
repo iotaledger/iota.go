@@ -6,6 +6,6 @@ import (
 	"github.com/iotaledger/iota.go/curl"
 )
 
-func transform(lto, hto, lfrom, hfrom *[curl.StateSize]uint, rounds uint) {
-	transformGeneric(lto, hto, lfrom, hfrom, rounds)
+func transform(lto, hto, lfrom, hfrom *[curl.StateSize]uint) {
+	transformGeneric(lto, hto, lfrom, hfrom)
 }

@@ -4,23 +4,29 @@ import (
 	"github.com/iotaledger/iota.go/curl"
 )
 
-func transformGeneric(lto, hto, lfrom, hfrom *[curl.StateSize]uint, rounds uint) {
-	for r := rounds; r > 0; r-- {
-		// three iterations unrolled
-		for i := 0; i <= curl.StateSize-3; i += 3 {
-			t0 := curl.Indices[i+0]
-			t1 := curl.Indices[i+1]
-			t2 := curl.Indices[i+2]
-			t3 := curl.Indices[i+3]
+func transformGeneric(lto, hto, lfrom, hfrom *[curl.StateSize]uint) {
+	for r := curl.NumRounds; r > 0; r-- {
+		l0, h0 := lfrom[0], hfrom[0]
+		l1, h1 := lfrom[364], hfrom[364]
+		lto[0], hto[0] = sBox(l0, h0, l1, h1)
 
-			l0, h0 := lfrom[t0], hfrom[t0]
-			l1, h1 := lfrom[t1], hfrom[t1]
-			l2, h2 := lfrom[t2], hfrom[t2]
-			l3, h3 := lfrom[t3], hfrom[t3]
+		t := 364
+		for i := 1; i <= curl.StateSize-4; i += 4 {
+			t += 364
+			l0, h0 = lfrom[t], hfrom[t]
+			lto[i+0], hto[i+0] = sBox(l1, h1, l0, h0)
 
-			lto[i+0], hto[i+0] = sBox(l0, h0, l1, h1)
-			lto[i+1], hto[i+1] = sBox(l1, h1, l2, h2)
-			lto[i+2], hto[i+2] = sBox(l2, h2, l3, h3)
+			t -= 365
+			l1, h1 = lfrom[t], hfrom[t]
+			lto[i+1], hto[i+1] = sBox(l0, h0, l1, h1)
+
+			t += 364
+			l0, h0 = lfrom[t], hfrom[t]
+			lto[i+2], hto[i+2] = sBox(l1, h1, l0, h0)
+
+			t -= 365
+			l1, h1 = lfrom[t], hfrom[t]
+			lto[i+3], hto[i+3] = sBox(l0, h0, l1, h1)
 		}
 		// swap buffers
 		lfrom, lto = lto, lfrom
