@@ -270,6 +270,10 @@ func randMilestone(parents iotago.MessageIDs) (*iotago.Milestone, []byte) {
 	if _, err := b.Write(msPayload.InclusionMerkleProof[:]); err != nil {
 		panic(err)
 	}
+
+	must(binary.Write(&b, binary.LittleEndian, msPayload.NextPoWScore))
+	must(binary.Write(&b, binary.LittleEndian, msPayload.NextPoWScoreMilestoneIndex))
+
 	must(b.WriteByte(sigsCount))
 	for _, pubKey := range msPayload.PublicKeys {
 		if _, err := b.Write(pubKey[:]); err != nil {
