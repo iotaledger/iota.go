@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/iotaledger/iota.go/v2/ed25519"
 	"golang.org/x/crypto/blake2b"
 	"google.golang.org/grpc"
 
+	"github.com/iotaledger/iota.go/v2/ed25519"
 	"github.com/iotaledger/iota.go/v2/remotesigner"
 )
 
@@ -491,8 +491,8 @@ type jsonMilestone struct {
 	Timestamp                  int              `json:"timestamp"`
 	Parents                    []string         `json:"parentMessageIds"`
 	InclusionMerkleProof       string           `json:"inclusionMerkleProof"`
-	NextPoWScore               int              `json:"nextPoWScore"`
-	NextPoWScoreMilestoneIndex int              `json:"nextPoWScoreMilestoneIndex"`
+	NextPoWScore               int              `json:"nextPowScore"`
+	NextPoWScoreMilestoneIndex int              `json:"nextPowScoreMilestoneIndex"`
 	PublicKeys                 []string         `json:"publicKeys"`
 	Receipt                    *json.RawMessage `json:"receipt"`
 	Signatures                 []string         `json:"signatures"`
