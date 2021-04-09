@@ -10,9 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iotaledger/iota.go/v2"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
+
+	iotago "github.com/iotaledger/iota.go/v2"
 )
 
 const nodeAPIUrl = "http://127.0.0.1:14265"
@@ -41,15 +42,20 @@ func TestNodeAPI_Info(t *testing.T) {
 	defer gock.Off()
 
 	originInfo := &iotago.NodeInfoResponse{
-		Name:                    "HORNET",
-		Version:                 "1.0.0",
-		IsHealthy:               true,
-		NetworkID:               "alphanet@1",
-		MinPowScore:             4000.0,
-		LatestMilestoneIndex:    1337,
-		ConfirmedMilestoneIndex: 666,
-		PruningIndex:            142857,
-		Features:                []string{"Lazers"},
+		Name:                        "HORNET",
+		Version:                     "1.0.0",
+		IsHealthy:                   true,
+		NetworkID:                   "alphanet@1",
+		Bech32HRP:                   "atoi",
+		MinPowScore:                 4000.0,
+		MessagesPerSecond:           20.0,
+		ReferencedMessagesPerSecond: 10.0,
+		ReferencedRate:              50.0,
+		LatestMilestoneTimestamp:    1333337,
+		LatestMilestoneIndex:        1337,
+		ConfirmedMilestoneIndex:     666,
+		PruningIndex:                142857,
+		Features:                    []string{"Lazers"},
 	}
 
 	gock.New(nodeAPIUrl).
@@ -173,10 +179,12 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 		MessageID:                  queryHash,
 		Parents:                    parentMessageIDs,
 		Solid:                      true,
+		MilestoneIndex:             nil,
 		ReferencedByMilestoneIndex: nil,
 		LedgerInclusionState:       nil,
 		ShouldPromote:              nil,
 		ShouldReattach:             nil,
+		ConflictReason:             0,
 	}
 
 	gock.New(nodeAPIUrl).
@@ -293,6 +301,7 @@ func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 		AddressType: 1,
 		Address:     ed25519AddrHex,
 		Balance:     13371337,
+		DustAllowed: false,
 	}
 
 	gock.New(nodeAPIUrl).
@@ -475,6 +484,32 @@ func TestNodeAPI_MilestoneByIndex(t *testing.T) {
 
 	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.MilestoneByIndex(milestoneIndex)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
+}
+
+func TestNodeAPI_MilestoneUTXOChangesByIndex(t *testing.T) {
+	defer gock.Off()
+
+	var milestoneIndex uint32 = 1337
+	milestoneIndexStr := strconv.Itoa(int(milestoneIndex))
+
+	randCreatedOutput, _ := randUTXOInput()
+	randConsumedOutput, _ := randUTXOInput()
+
+	originRes := &iotago.MilestoneUTXOChangesResponse{
+		Index:           milestoneIndex,
+		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
+		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(fmt.Sprintf(iotago.NodeAPIRouteMilestoneUTXOChanges, milestoneIndexStr)).
+		Reply(200).
+		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
+
+	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
+	resp, err := nodeAPI.MilestoneUTXOChangesByIndex(milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
