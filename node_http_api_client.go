@@ -326,7 +326,7 @@ type NodeInfoResponse struct {
 	// The HRP prefix used for Bech32 addresses in the node's network.
 	Bech32HRP string `json:"bech32HRP"`
 	// The minimum pow score of the network.
-	MinPowScore float64 `json:"minPowScore"`
+	MinPowScore float64 `json:"minPoWScore"`
 	// The latest known milestone index.
 	LatestMilestoneIndex uint32 `json:"latestMilestoneIndex"`
 	// The current confirmed milestone's index.
