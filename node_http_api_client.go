@@ -756,8 +756,8 @@ type MilestoneUTXOChangesResponse struct {
 	ConsumedOutputs []string `json:"consumedOutputs"`
 }
 
-// RouteMilestoneUTXOChanges returns all UTXO changes of a milestone by it's milestoneIndex.
-func (api *NodeAPIClient) MilestoneUTXOChangesByIndex(index uint32) (*MilestoneUTXOChangesResponse, error) {
+// MilestoneUTXOChangesByIndex returns all UTXO changes of a milestone by it's milestoneIndex.
+func (api *NodeHTTPAPIClient) MilestoneUTXOChangesByIndex(index uint32) (*MilestoneUTXOChangesResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMilestoneUTXOChanges, strconv.FormatUint(uint64(index), 10))
 
 	res := &MilestoneUTXOChangesResponse{}

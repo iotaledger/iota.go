@@ -508,7 +508,7 @@ func TestNodeAPI_MilestoneUTXOChangesByIndex(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
 	resp, err := nodeAPI.MilestoneUTXOChangesByIndex(milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
