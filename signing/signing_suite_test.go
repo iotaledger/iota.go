@@ -26,10 +26,10 @@ const (
 var update = flag.Bool("update", false, "update golden files")
 
 type Test struct {
-	Key       trinary.Trytes
-	Address   trinary.Hash
-	Hash      trinary.Hash
-	Signature trinary.Trytes
+	Key       trinary.Trytes `json:"key"`
+	Address   trinary.Hash   `json:"address"`
+	Hash      trinary.Hash   `json:"hash"`
+	Signature trinary.Trytes `json:"signature"`
 }
 
 func TestSigning(t *testing.T) {
