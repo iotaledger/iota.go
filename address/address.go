@@ -121,7 +121,7 @@ func GenerateAddresses(seed Trytes, start uint64, count uint64, secLvl SecurityL
 	return addresses, nil
 }
 
-// GenerateMigrationAddress generates a migration address from the given Ed25519 raw bytes.
+// GenerateMigrationAddress generates a migration address from the given Ed25519 address bytes (Ed25519 address being the Blake2b-256 hash of the Ed25519 public key).
 func GenerateMigrationAddress(ed25519Addr [32]byte, addChecksum ...bool) (Hash, error) {
 	ed25519Checksum := blake2b.Sum256(ed25519Addr[:])
 	ed25519Part := append(ed25519Addr[:], ed25519Checksum[:4]...)
