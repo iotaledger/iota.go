@@ -11,21 +11,21 @@ import (
 	_ "golang.org/x/crypto/blake2b"
 )
 
-// Defines the type of signature.
+// SignatureType defines the type of signature.
 type SignatureType = byte
 
 const (
-	// Denotes an Ed25519 signature.
+	// SignatureEd25519 denotes an Ed25519Signature.
 	SignatureEd25519 SignatureType = iota
 
-	// The size of a serialized Ed25519 signature with its type denoting byte and public key.
+	// Ed25519SignatureSerializedBytesSize defines the size of a serialized Ed25519Signature with its type denoting byte and public key.
 	Ed25519SignatureSerializedBytesSize = SmallTypeDenotationByteSize + ed25519.PublicKeySize + ed25519.SignatureSize
 )
 
 var (
-	// Returned when an Ed25519 address and public key do not correspond to each other.
+	// ErrEd25519PubKeyAndAddrMismatch gets returned when an Ed25519Address and public key do not correspond to each other.
 	ErrEd25519PubKeyAndAddrMismatch = errors.New("public key and address do not correspond to each other (Ed25519)")
-	// Returned for invalid Ed25519 signatures.
+	// ErrEd25519SignatureInvalid gets returned for invalid an Ed25519Signature.
 	ErrEd25519SignatureInvalid = errors.New("signature is invalid (Ed25519")
 )
 

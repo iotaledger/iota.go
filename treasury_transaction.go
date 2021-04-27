@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	// Defines the TreasuryTransaction payload's ID.
+	// TreasuryTransactionPayloadTypeID defines the TreasuryTransaction payload's ID.
 	TreasuryTransactionPayloadTypeID uint32 = 4
-	// Defines the serialized size of a TreasuryTransaction.
+	// TreasuryTransactionByteSize defines the serialized size of a TreasuryTransaction.
 	TreasuryTransactionByteSize = TypeDenotationByteSize + TreasuryInputSerializedBytesSize + TreasuryOutputBytesSize
 )
 

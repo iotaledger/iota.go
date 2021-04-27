@@ -8,16 +8,16 @@ import (
 )
 
 const (
-	// Defines the Receipt payload's ID.
+	// ReceiptPayloadTypeID defines the Receipt payload's ID.
 	ReceiptPayloadTypeID uint32 = 3
-	// Defines the minimum amount of MigratedFundsEntry items within a Receipt.
+	// MinMigratedFundsEntryCount defines the minimum amount of MigratedFundsEntry items within a Receipt.
 	MinMigratedFundsEntryCount = 1
-	// Defines the maximum amount of MigratedFundsEntry items within a Receipt.
+	// MaxMigratedFundsEntryCount defines the maximum amount of MigratedFundsEntry items within a Receipt.
 	MaxMigratedFundsEntryCount = 127
 )
 
 var (
-	// Returned if a Receipt does not contain a TreasuryTransaction.
+	// ErrReceiptMustContainATreasuryTransaction gets returned if a Receipt does not contain a TreasuryTransaction.
 	ErrReceiptMustContainATreasuryTransaction = errors.New("receipt must contain a treasury transaction")
 
 	migratedFundEntriesArrayRules = &ArrayRules{
@@ -235,7 +235,7 @@ func (j *jsonReceipt) ToSerializable() (Serializable, error) {
 }
 
 var (
-	// Returned when a receipt is invalid
+	// ErrInvalidReceipt gets returned when a receipt is invalid.
 	ErrInvalidReceipt = errors.New("invalid receipt")
 )
 

@@ -9,40 +9,40 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
-// Defines the type of transaction.
+// TransactionEssenceType defines the type of transaction.
 type TransactionEssenceType = byte
 
 const (
-	// Denotes a standard transaction essence.
+	// TransactionEssenceNormal denotes a standard transaction essence.
 	TransactionEssenceNormal TransactionEssenceType = iota
 
-	// Defines the minimum size of a TransactionEssence.
+	// TransactionEssenceMinByteSize defines the minimum size of a TransactionEssence.
 	TransactionEssenceMinByteSize = TypeDenotationByteSize + StructArrayLengthByteSize + StructArrayLengthByteSize + PayloadLengthByteSize
 
-	// Defines the maximum amount of inputs within a TransactionEssence.
+	// MaxInputsCount defines the maximum amount of inputs within a TransactionEssence.
 	MaxInputsCount = 127
-	// Defines the minimum amount of inputs within a TransactionEssence.
+	// MinInputsCount defines the minimum amount of inputs within a TransactionEssence.
 	MinInputsCount = 1
-	// Defines the maximum amount of outputs within a TransactionEssence.
+	// MaxOutputsCount defines the maximum amount of outputs within a TransactionEssence.
 	MaxOutputsCount = 127
-	// Defines the minimum amount of inputs within a TransactionEssence.
+	// MinOutputsCount defines the minimum amount of inputs within a TransactionEssence.
 	MinOutputsCount = 1
 )
 
 var (
-	// Returned if the count of inputs is too small.
+	// ErrMinInputsNotReached gets returned if the count of inputs is too small.
 	ErrMinInputsNotReached = fmt.Errorf("min %d input(s) are required within a transaction", MinInputsCount)
-	// Returned if the count of outputs is too small.
+	// ErrMinOutputsNotReached gets returned if the count of outputs is too small.
 	ErrMinOutputsNotReached = fmt.Errorf("min %d output(s) are required within a transaction", MinOutputsCount)
-	// Returned if multiple inputs reference the same UTXO.
+	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
-	// Returned if multiple outputs deposit to the same address.
+	// ErrOutputAddrNotUnique gets returned if multiple outputs deposit to the same address.
 	ErrOutputAddrNotUnique = errors.New("outputs must each deposit to a unique address")
-	// Returned if the sum of the output deposits exceeds the total supply of tokens.
+	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
-	// Returned if an output deposits more than the total supply.
+	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
 	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
-	// Returned if a SigLockedDustAllowanceOutput deposits less than OutputSigLockedDustAllowanceOutputMinDeposit.
+	// ErrOutputDustAllowanceLessThanMinDeposit gets returned if a SigLockedDustAllowanceOutput deposits less than OutputSigLockedDustAllowanceOutputMinDeposit.
 	ErrOutputDustAllowanceLessThanMinDeposit = errors.New("dust allowance output deposits less than the minimum required amount")
 
 	// restrictions around input within a transaction.
@@ -82,7 +82,7 @@ type TransactionEssence struct {
 	Payload Serializable `json:"payload"`
 }
 
-// SortInputsOuputs sorts the inputs and outputs according to their serialized lexical representation.
+// SortInputsOutputs sorts the inputs and outputs according to their serialized lexical representation.
 // Usually an implicit call to SortInputsOutputs() should be done by instructing serialization to use DeSeriModePerformLexicalOrdering.
 func (u *TransactionEssence) SortInputsOutputs() {
 	sort.Sort(SortedSerializables(u.Inputs))

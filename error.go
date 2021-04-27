@@ -7,46 +7,46 @@ import (
 )
 
 var (
-	// Returned for bytes which are invalid for deserialization.
+	// ErrInvalidBytes gets returned when data is invalid for deserialization.
 	ErrInvalidBytes = errors.New("invalid bytes")
-	// Returned when a denoted type for a given object is mismatched.
+	// ErrDeserializationTypeMismatch gets returned when a denoted type for a given object is mismatched.
 	// For example, while trying to deserialize a signature unlock block, a reference unlock block is seen.
 	ErrDeserializationTypeMismatch = errors.New("data type is invalid for deserialization")
-	// Returned for unsupported payload types.
+	// ErrUnsupportedPayloadType gets returned for unsupported payload types.
 	ErrUnsupportedPayloadType = errors.New("unsupported payload type")
-	// Returned for unsupported object types.
+	// ErrUnsupportedObjectType gets returned for unsupported object types.
 	ErrUnsupportedObjectType = errors.New("unsupported object type")
-	// Returned for unknown payload types.
+	// ErrUnknownPayloadType gets returned for unknown payload types.
 	ErrUnknownPayloadType = errors.New("unknown payload type")
-	// Returned for unknown address types.
+	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = errors.New("unknown address type")
-	// Returned for unknown input types.
+	// ErrUnknownInputType gets returned for unknown input types.
 	ErrUnknownInputType = errors.New("unknown input type")
-	// Returned for unknown output types.
+	// ErrUnknownOutputType gets returned for unknown output types.
 	ErrUnknownOutputType = errors.New("unknown output type")
-	// Returned for unknown transaction essence types.
+	// ErrUnknownTransactionEssenceType gets returned for unknown transaction essence types.
 	ErrUnknownTransactionEssenceType = errors.New("unknown transaction essence type")
-	// Returned for unknown unlock blocks.
+	// ErrUnknownUnlockBlockType gets returned for unknown unlock blocks.
 	ErrUnknownUnlockBlockType = errors.New("unknown unlock block type")
-	// Returned for unknown signature types.
+	// ErrUnknownSignatureType gets returned for unknown signature types.
 	ErrUnknownSignatureType = errors.New("unknown signature type")
-	// Returned for unknown array validation modes.
+	// ErrUnknownArrayValidationMode gets returned for unknown array validation modes.
 	ErrUnknownArrayValidationMode = errors.New("unknown array validation mode")
-	// Returned if the count of elements is too small.
+	// ErrArrayValidationMinElementsNotReached gets returned if the count of elements is too small.
 	ErrArrayValidationMinElementsNotReached = errors.New("min count of elements within the array not reached")
-	// Returned if the count of elements is too big.
+	// ErrArrayValidationMaxElementsExceeded gets returned if the count of elements is too big.
 	ErrArrayValidationMaxElementsExceeded = errors.New("max count of elements within the array exceeded")
-	// Returned if the array elements are not unique.
+	// ErrArrayValidationViolatesUniqueness gets returned if the array elements are not unique.
 	ErrArrayValidationViolatesUniqueness = errors.New("array elements must be unique")
-	// Returned if the array elements are not in lexical order.
+	// ErrArrayValidationOrderViolatesLexicalOrder gets returned if the array elements are not in lexical order.
 	ErrArrayValidationOrderViolatesLexicalOrder = errors.New("array elements must be in their lexical order (byte wise)")
-	// Returned if there is not enough data available to deserialize a given object.
+	// ErrDeserializationNotEnoughData gets returned if there is not enough data available to deserialize a given object.
 	ErrDeserializationNotEnoughData = errors.New("not enough data for deserialization")
-	// Returned when a bool value is tried to be read but it is neither 0 or 1.
+	// ErrDeserializationInvalidBoolValue gets returned when a bool value is tried to be read but it is neither 0 or 1.
 	ErrDeserializationInvalidBoolValue = errors.New("invalid bool value")
-	// Returned if a length denotation exceeds a specified limit.
+	// ErrDeserializationLengthInvalid gets returned if a length denotation exceeds a specified limit.
 	ErrDeserializationLengthInvalid = errors.New("length denotation invalid")
-	// Returned if not all bytes were consumed during deserialization of a given type.
+	// ErrDeserializationNotAllConsumed gets returned if not all bytes were consumed during deserialization of a given type.
 	ErrDeserializationNotAllConsumed = errors.New("not all data has been consumed but should have been")
 )
 

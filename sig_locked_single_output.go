@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	// The size of a sig locked single deposit containing an Ed25519 address as its deposit address.
+	// SigLockedSingleOutputEd25519AddrBytesSize defines the size of a SigLockedSingleOutput containing an Ed25519Address as its deposit address.
 	SigLockedSingleOutputEd25519AddrBytesSize = SmallTypeDenotationByteSize + Ed25519AddressSerializedBytesSize + UInt64ByteSize
 
-	// Defines the minimum size a sig locked single deposit must be.
+	// SigLockedSingleOutputBytesMinSize defines the minimum size a SigLockedSingleOutput.
 	SigLockedSingleOutputBytesMinSize = SigLockedSingleOutputEd25519AddrBytesSize
-	// Defines the offset at which the address portion within a sig locked single deposit begins.
+	// SigLockedSingleOutputAddressOffset defines the offset at which the address portion within a SigLockedSingleOutput begins.
 	SigLockedSingleOutputAddressOffset = SmallTypeDenotationByteSize
 )
 

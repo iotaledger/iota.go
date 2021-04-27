@@ -10,11 +10,11 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
-// Defines the type of addresses.
+// AddressType defines the type of addresses.
 type AddressType = byte
 
 const (
-	// Denotes an Ed25519 address.
+	// AddressEd25519 denotes an Ed25519 address.
 	AddressEd25519 AddressType = iota
 )
 
@@ -28,9 +28,9 @@ const (
 )
 
 const (
-	// The length of an Ed25519 address
+	// Ed25519AddressBytesLength is the length of an Ed25519 address.
 	Ed25519AddressBytesLength = blake2b.Size256
-	// The size of a serialized Ed25519 address with its type denoting byte.
+	// Ed25519AddressSerializedBytesSize is the size of a serialized Ed25519 address with its type denoting byte.
 	Ed25519AddressSerializedBytesSize = SmallTypeDenotationByteSize + Ed25519AddressBytesLength
 )
 
@@ -118,7 +118,8 @@ func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
 	return addr
 }
 
-// Defines an Ed25519 address.
+// Ed25519Address defines an Ed25519 address.
+// An Ed25519Address is the Blake2b-256 hash of a Ed25519 public key.
 type Ed25519Address [Ed25519AddressBytesLength]byte
 
 func (edAddr *Ed25519Address) Type() AddressType {

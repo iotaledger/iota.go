@@ -12,22 +12,22 @@ import (
 )
 
 const (
-	// Defines the length of a message ID.
+	// MessageIDLength defines the length of a message ID.
 	MessageIDLength = blake2b.Size256
-	// Defines the length of the network ID in bytes.
+	// MessageNetworkIDLength defines the length of the network ID in bytes.
 	MessageNetworkIDLength = UInt64ByteSize
-	// Defines the minimum size of a message: network ID + parent count + 1 parent + uint16 payload length + nonce
+	// MessageBinSerializedMinSize defines the minimum size of a message: network ID + parent count + 1 parent + uint16 payload length + nonce
 	MessageBinSerializedMinSize = MessageNetworkIDLength + OneByte + MessageIDLength + UInt32ByteSize + UInt64ByteSize
-	// Defines the maximum size of a message.
+	// MessageBinSerializedMaxSize defines the maximum size of a message.
 	MessageBinSerializedMaxSize = 32768
-	// Defines the minimum amount of parents in a message.
+	// MinParentsInAMessage defines the minimum amount of parents in a message.
 	MinParentsInAMessage = 1
-	// Defines the maximum amount of parents in a message.
+	// MaxParentsInAMessage defines the maximum amount of parents in a message.
 	MaxParentsInAMessage = 8
 )
 
 var (
-	// Returned when a serialized message exceeds MessageBinSerializedMaxSize.
+	// ErrMessageExceedsMaxSize gets returned when a serialized message exceeds MessageBinSerializedMaxSize.
 	ErrMessageExceedsMaxSize = errors.New("message exceeds max size")
 
 	// restrictions around parents within a message.

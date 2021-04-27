@@ -6,18 +6,18 @@ import (
 	"strings"
 )
 
-// Defines the type of inputs.
+// InputType defines the type of inputs.
 type InputType = byte
 
 const (
-	// A type of input which references an unspent transaction output.
+	// InputUTXO is a type of input which references an unspent transaction output.
 	InputUTXO InputType = iota
-	// A type of input which references a milestone which generated a treasury output.
+	// InputTreasury is a type of input which references a milestone which generated a treasury output.
 	InputTreasury
 )
 
 var (
-	// Returned on invalid UTXO indices.
+	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
 	ErrRefUTXOIndexInvalid = fmt.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
 )
 

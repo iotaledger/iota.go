@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	// Defines the minimum amount a MigratedFundEntry must deposit.
+	// MinMigratedFundsEntryDeposit defines the minimum amount a MigratedFundsEntry must deposit.
 	MinMigratedFundsEntryDeposit = 1_000_000
 )
 
