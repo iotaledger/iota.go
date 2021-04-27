@@ -15,17 +15,17 @@ import (
 )
 
 var (
-	// Returned for 400 bad request HTTP responses.
+	// ErrHTTPBadRequest gets returned for 400 bad request HTTP responses.
 	ErrHTTPBadRequest = errors.New("bad request")
-	// Returned for 500 internal server error HTTP responses.
+	// ErrHTTPInternalServerError gets returned for 500 internal server error HTTP responses.
 	ErrHTTPInternalServerError = errors.New("internal server error")
-	// Returned for 404 not found error HTTP responses.
+	// ErrHTTPNotFound gets returned for 404 not found error HTTP responses.
 	ErrHTTPNotFound = errors.New("not found")
-	// Returned for 401 unauthorized error HTTP responses.
+	// ErrHTTPUnauthorized gets returned for 401 unauthorized error HTTP responses.
 	ErrHTTPUnauthorized = errors.New("unauthorized")
-	// Returned for unknown error HTTP responses.
+	// ErrHTTPUnknownError gets returned for unknown error HTTP responses.
 	ErrHTTPUnknownError = errors.New("unknown error")
-	// Returned for 501 not implemented error HTTP responses.
+	// ErrHTTPNotImplemented gets returned for 501 not implemented error HTTP responses.
 	ErrHTTPNotImplemented = errors.New("operation not implemented/supported/available")
 
 	httpCodeToErr = map[int]error{
@@ -55,15 +55,15 @@ const (
 	// GET returns the tips.
 	NodeAPIRouteTips = "/api/v1/tips"
 
-	// NodeAPIRouteMessageMetadata is the route for getting message metadata by it's messageID.
+	// NodeAPIRouteMessageMetadata is the route for getting message metadata by its messageID.
 	// GET returns message metadata (including info about "promotion/reattachment needed").
 	NodeAPIRouteMessageMetadata = "/api/v1/messages/%s/metadata"
 
-	// NodeAPIRouteMessageBytes is the route for getting message raw data by it's messageID.
+	// NodeAPIRouteMessageBytes is the route for getting message raw data by its messageID.
 	// GET returns raw message data (bytes).
 	NodeAPIRouteMessageBytes = "/api/v1/messages/%s/raw"
 
-	// NodeAPIRouteMessageChildren is the route for getting message IDs of the children of a message, identified by it's messageID.
+	// NodeAPIRouteMessageChildren is the route for getting message IDs of the children of a message, identified by its messageID.
 	// GET returns the message IDs of all children.
 	NodeAPIRouteMessageChildren = "/api/v1/messages/%s/children"
 
@@ -72,11 +72,11 @@ const (
 	// POST creates a single new message and returns the new message ID.
 	NodeAPIRouteMessages = "/api/v1/messages"
 
-	// NodeAPIRouteMilestone is the route for getting a milestone by it's milestoneIndex.
+	// NodeAPIRouteMilestone is the route for getting a milestone by its milestoneIndex.
 	// GET returns the milestone.
 	NodeAPIRouteMilestone = "/api/v1/milestones/%s"
 
-	// NodeAPIRouteMilestoneUTXOChanges is the route for getting all UTXO changes of a milestone by it's milestoneIndex.
+	// NodeAPIRouteMilestoneUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
 	NodeAPIRouteMilestoneUTXOChanges = "/milestones/%s/utxo-changes"
 
@@ -176,7 +176,7 @@ type NodeHTTPAPIClient struct {
 	opts *NodeHTTPAPIClientOptions
 }
 
-// defines the error response schema for node API responses.
+// HTTPErrorResponseEnvelope defines the error response schema for node API responses.
 type HTTPErrorResponseEnvelope struct {
 	Error struct {
 		Code    string `json:"code"`
@@ -184,7 +184,7 @@ type HTTPErrorResponseEnvelope struct {
 	} `json:"error"`
 }
 
-// defines the ok response schema for node API responses.
+// HTTPOkResponseEnvelope defines the ok response schema for node API responses.
 type HTTPOkResponseEnvelope struct {
 	// The encapsulated json data.
 	Data interface{} `json:"data"`
@@ -469,7 +469,7 @@ type MessageMetadataResponse struct {
 	ConflictReason uint8 `json:"conflictReason,omitempty"`
 }
 
-// MessageByMessageID gets the metadata of a message by it's message ID from the node.
+// MessageMetadataByMessageID gets the metadata of a message by its message ID from the node.
 func (api *NodeHTTPAPIClient) MessageMetadataByMessageID(msgID MessageID) (*MessageMetadataResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageMetadata, hex.EncodeToString(msgID[:]))
 
@@ -482,7 +482,7 @@ func (api *NodeHTTPAPIClient) MessageMetadataByMessageID(msgID MessageID) (*Mess
 	return res, nil
 }
 
-// MessageByMessageID get a message by it's message ID from the node.
+// MessageByMessageID get a message by its message ID from the node.
 func (api *NodeHTTPAPIClient) MessageByMessageID(msgID MessageID) (*Message, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageBytes, hex.EncodeToString(msgID[:]))
 
@@ -512,7 +512,7 @@ type ChildrenResponse struct {
 	Children []string `json:"childrenMessageIds"`
 }
 
-// MessageByMessageID get a message by it's message ID from the node.
+// ChildrenByMessageID get a message by its message ID from the node.
 func (api *NodeHTTPAPIClient) ChildrenByMessageID(msgID MessageID) (*ChildrenResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageChildren, hex.EncodeToString(msgID[:]))
 
@@ -618,8 +618,8 @@ type AddressOutputsResponse struct {
 	OutputIDs []OutputIDHex `json:"outputIDs"`
 }
 
-// OutputIDsByEd25519Address gets outputs IDs by ed25519 addresses from the node.
-// Per default only unspent outputs IDs are returned. Set includeSpentOutputs to true to also returned spent outputs IDs.
+// OutputIDsByEd25519Address gets outputs IDs of outputs residing on the given Ed25519Address.
+// Per default only unspent outputs IDs are returned. Set includeSpentOutputs to true to also returne spent outputs IDs.
 func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, addr.String())
 	if includeSpentOutputs {
@@ -635,8 +635,8 @@ func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(addr *Ed25519Address, in
 	return res, nil
 }
 
-// OutputsByEd25519Address gets the outputs by the ed25519 address from the node.
-// Per default only unspent outputs are returned. Set includeSpentOutputs to true to also returned spent outputs.
+// OutputsByEd25519Address gets the outputs residing on the given Ed25519Address.
+// Per default only unspent outputs are returned. Set includeSpentOutputs to true to also return spent outputs.
 func (api *NodeHTTPAPIClient) OutputsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, addr.String())
 	if includeSpentOutputs {
@@ -688,7 +688,7 @@ func (api *NodeHTTPAPIClient) Treasury() (*TreasuryResponse, error) {
 	return res, nil
 }
 
-// ReceiptsResponse defines the response of for receipts GET related REST API calls.
+// ReceiptsResponse defines the response for receipts GET related REST API calls.
 type ReceiptsResponse struct {
 	Receipts []*ReceiptTuple `json:"receipts"`
 }
@@ -710,7 +710,7 @@ func (api *NodeHTTPAPIClient) Receipts() ([]*ReceiptTuple, error) {
 	return res.Receipts, nil
 }
 
-// Receipts gets all receipts for the given migrated at index persisted on the node.
+// ReceiptsByMigratedAtIndex gets all receipts for the given migrated at index persisted on the node.
 func (api *NodeHTTPAPIClient) ReceiptsByMigratedAtIndex(index uint32) ([]*ReceiptTuple, error) {
 	query := fmt.Sprintf(NodeAPIRouteReceiptsByMigratedAtIndex, strconv.FormatUint(uint64(index), 10))
 
@@ -756,7 +756,7 @@ type MilestoneUTXOChangesResponse struct {
 	ConsumedOutputs []string `json:"consumedOutputs"`
 }
 
-// MilestoneUTXOChangesByIndex returns all UTXO changes of a milestone by it's milestoneIndex.
+// MilestoneUTXOChangesByIndex returns all UTXO changes of a milestone by its milestoneIndex.
 func (api *NodeHTTPAPIClient) MilestoneUTXOChangesByIndex(index uint32) (*MilestoneUTXOChangesResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMilestoneUTXOChanges, strconv.FormatUint(uint64(index), 10))
 

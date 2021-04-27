@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	// The size of a sig locked dust allowance output containing an Ed25519 address as its deposit address.
+	// SigLockedDustAllowanceOutputEd25519AddrBytesSize is the size of a SigLockedDustAllowanceOutput containing an Ed25519Address as its deposit address.
 	SigLockedDustAllowanceOutputEd25519AddrBytesSize = SmallTypeDenotationByteSize + Ed25519AddressSerializedBytesSize + UInt64ByteSize
 
-	// Defines the minimum size a sig locked dust allowance output must be.
+	// SigLockedDustAllowanceOutputBytesMinSize defines the minimum size of a SigLockedDustAllowanceOutput.
 	SigLockedDustAllowanceOutputBytesMinSize = SigLockedDustAllowanceOutputEd25519AddrBytesSize
-	// Defines the offset at which the address portion within a sig locked dust allowance begins.
+	// SigLockedDustAllowanceOutputAddressOffset defines the offset at which the address portion within a SigLockedDustAllowanceOutput begins.
 	SigLockedDustAllowanceOutputAddressOffset = SmallTypeDenotationByteSize
 )
 

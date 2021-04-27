@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	// Defines the binary serialized size of a TreasuryOutput.
+	// TreasuryOutputBytesSize defines the binary serialized size of a TreasuryOutput.
 	TreasuryOutputBytesSize = SmallTypeDenotationByteSize + UInt64ByteSize
 )
 

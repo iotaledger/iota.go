@@ -8,22 +8,22 @@ import (
 	"strings"
 )
 
-// Defines the type of outputs.
+// OutputType defines the type of outputs.
 type OutputType = byte
 
 const (
-	// Denotes a type of output which is locked by a signature and deposits onto a single address.
+	// OutputSigLockedSingleOutput denotes a type of output which is locked by a signature and deposits onto a single address.
 	OutputSigLockedSingleOutput OutputType = iota
-	// Like OutputSigLockedSingleOutput but it is used to increase the allowance/amount of dust outputs on a given address.
+	// OutputSigLockedDustAllowanceOutput is like OutputSigLockedSingleOutput but it is used to increase the allowance/amount of dust outputs on a given address.
 	OutputSigLockedDustAllowanceOutput
-	// Denotes the type of the TreasuryOutput.
+	// OutputTreasuryOutput denotes the type of the TreasuryOutput.
 	OutputTreasuryOutput
 	// OutputSigLockedDustAllowanceOutputMinDeposit defines the minimum deposit amount of a SigLockedDustAllowanceOutput.
 	OutputSigLockedDustAllowanceOutputMinDeposit uint64 = 1_000_000
 )
 
 var (
-	// Returned if the deposit amount of an output is less or equal zero.
+	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.
 	ErrDepositAmountMustBeGreaterThanZero = errors.New("deposit amount must be greater than zero")
 )
 

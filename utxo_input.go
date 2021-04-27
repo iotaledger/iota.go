@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	// The minimum index of a referenced UTXO.
+	// RefUTXOIndexMin is the minimum index of a referenced UTXO.
 	RefUTXOIndexMin = 0
-	// The maximum index of a referenced UTXO.
+	// RefUTXOIndexMax is the maximum index of a referenced UTXO.
 	RefUTXOIndexMax = 126
 
-	// The size of a UTXO input: input type + tx id + index
+	// UTXOInputSize is the size of a UTXO input: input type + tx id + index
 	UTXOInputSize = SmallTypeDenotationByteSize + TransactionIDLength + UInt16ByteSize
 )
 

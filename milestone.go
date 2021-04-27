@@ -17,18 +17,18 @@ import (
 )
 
 const (
-	// Defines the Milestone payload's ID.
+	// MilestonePayloadTypeID defines the Milestone payload's ID.
 	MilestonePayloadTypeID uint32 = 1
-	// Defines the length of the inclusion merkle proof within a milestone payload.
+	// MilestoneInclusionMerkleProofLength defines the length of the inclusion merkle proof within a milestone payload.
 	MilestoneInclusionMerkleProofLength = blake2b.Size256
-	// Defines the length of the milestone signature.
+	// MilestoneSignatureLength defines the length of the milestone signature.
 	MilestoneSignatureLength = ed25519.SignatureSize
-	// Defines the length of a Milestone ID.
+	// MilestoneIDLength defines the length of a Milestone ID.
 	MilestoneIDLength = blake2b.Size256
-	// Defines the length of a public key within a milestone.
+	// MilestonePublicKeyLength defines the length of a public key within a milestone.
 	MilestonePublicKeyLength = ed25519.PublicKeySize
-	// Defines the serialized size of a milestone payload.
-	// payload type + index + timestamp + parent count + 1 parent + inclusion-merkle-proof + pubkeys-length + pubkey + sigs-length + sigs
+	// MilestoneBinSerializedMinSize defines the serialized size of a milestone payload.
+	// 	payload type + index + timestamp + parent count + 1 parent + inclusion-merkle-proof + pubkeys-length + pubkey + sigs-length + sigs
 	MilestoneBinSerializedMinSize = TypeDenotationByteSize + UInt32ByteSize + UInt64ByteSize + OneByte + MessageIDLength +
 		MilestoneInclusionMerkleProofLength + OneByte + ed25519.PublicKeySize + OneByte + MilestoneSignatureLength
 	// MaxSignaturesInAMilestone is the maximum amount of signatures in a milestone.
@@ -42,31 +42,31 @@ const (
 )
 
 var (
-	// Returned if a to be deserialized Milestone does not contain at least one signature.
+	// ErrMilestoneTooFewSignatures gets returned if a to be deserialized Milestone does not contain at least one signature.
 	ErrMilestoneTooFewSignatures = errors.New("a milestone must hold at least one signature")
-	// Returned if there are less signatures within a Milestone than the min. threshold.
+	// ErrMilestoneTooFewSignaturesForVerificationThreshold gets returned if there are less signatures within a Milestone than the min. threshold.
 	ErrMilestoneTooFewSignaturesForVerificationThreshold = errors.New("too few signatures for verification")
-	// Returned if a to be deserialized Milestone does not contain at least one public key.
+	// ErrMilestoneTooFewPublicKeys gets returned if a to be deserialized Milestone does not contain at least one public key.
 	ErrMilestoneTooFewPublicKeys = errors.New("a milestone must hold at least one public key")
-	// Returned when a MilestoneSigningFunc produces less signatures than expected.
+	// ErrMilestoneProducedSignaturesCountMismatch gets returned when a MilestoneSigningFunc produces less signatures than expected.
 	ErrMilestoneProducedSignaturesCountMismatch = errors.New("produced and wanted signature count mismatch")
-	// Returned when the count of signatures and public keys within a Milestone don't match.
+	// ErrMilestoneSignaturesPublicKeyCountMismatch gets returned when the count of signatures and public keys within a Milestone don't match.
 	ErrMilestoneSignaturesPublicKeyCountMismatch = errors.New("milestone signatures and public keys count must be equal")
-	// Returned when a Milestone holds more than 255 signatures.
+	// ErrMilestoneTooManySignatures gets returned when a Milestone holds more than 255 signatures.
 	ErrMilestoneTooManySignatures = fmt.Errorf("a milestone can hold max %d signatures", MaxSignaturesInAMilestone)
-	// Returned when an invalid min signatures threshold is given the the verification function.
+	// ErrMilestoneInvalidMinSignatureThreshold gets returned when an invalid min signatures threshold is given to the verification function.
 	ErrMilestoneInvalidMinSignatureThreshold = fmt.Errorf("min threshold must be at least 1")
-	// Returned when a Milestone contains a public key which isn't in the applicable public key set.
+	// ErrMilestoneNonApplicablePublicKey gets returned when a Milestone contains a public key which isn't in the applicable public key set.
 	ErrMilestoneNonApplicablePublicKey = fmt.Errorf("non applicable public key found")
-	// Returned when a min. signature threshold is greater than a given applicable public key set.
+	// ErrMilestoneSignatureThresholdGreaterThanApplicablePublicKeySet gets returned when a min. signature threshold is greater than a given applicable public key set.
 	ErrMilestoneSignatureThresholdGreaterThanApplicablePublicKeySet = fmt.Errorf("the min. signature threshold must be less or equal the applicable public key set")
-	// Returned when a Milestone's signature is invalid.
+	// ErrMilestoneInvalidSignature gets returned when a Milestone's signature is invalid.
 	ErrMilestoneInvalidSignature = fmt.Errorf("invalid milestone signature")
-	// Returned when a InMemoryEd25519MilestoneSigner is missing a private key.
+	// ErrMilestoneInMemorySignerPrivateKeyMissing gets returned when an InMemoryEd25519MilestoneSigner is missing a private key.
 	ErrMilestoneInMemorySignerPrivateKeyMissing = fmt.Errorf("private key missing")
-	// Returned when a Milestone contains duplicated public keys.
+	// ErrMilestoneDuplicatedPublicKey gets returned when a Milestone contains duplicated public keys.
 	ErrMilestoneDuplicatedPublicKey = fmt.Errorf("milestone contains duplicated public keys")
-	// Returned when the min. PoW score fields are invalid.
+	// ErrMilestoneInvalidMinPoWScoreValues gets returned when the min. PoW score fields are invalid.
 	ErrMilestoneInvalidMinPoWScoreValues = fmt.Errorf("invalid milestone min pow score values")
 
 	// restrictions around parents within a Milestone.

@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	// The length of a TreasuryInput
+	// TreasuryInputBytesLength is the length of a TreasuryInput.
 	TreasuryInputBytesLength = blake2b.Size256
-	// The size of a serialized TreasuryInput with its type denoting byte.
+	// TreasuryInputSerializedBytesSize is the size of a serialized TreasuryInput with its type denoting byte.
 	TreasuryInputSerializedBytesSize = SmallTypeDenotationByteSize + TreasuryInputBytesLength
 )
 

@@ -7,27 +7,27 @@ import (
 	"fmt"
 )
 
-// Defines a type of unlock block.
+// UnlockBlockType defines a type of unlock block.
 type UnlockBlockType = byte
 
 const (
-	// Denotes a signature unlock block.
+	// UnlockBlockSignature denotes a signature unlock block.
 	UnlockBlockSignature UnlockBlockType = iota
-	// Denotes a reference unlock block.
+	// UnlockBlockReference denotes a reference unlock block.
 	UnlockBlockReference
 
-	// Defines the minimum size of a signature unlock block.
+	// SignatureUnlockBlockMinSize defines the minimum size of a signature unlock block.
 	SignatureUnlockBlockMinSize = SmallTypeDenotationByteSize + Ed25519SignatureSerializedBytesSize
-	// Defines the size of a reference unlock block.
+	// ReferenceUnlockBlockSize defines the size of a reference unlock block.
 	ReferenceUnlockBlockSize = SmallTypeDenotationByteSize + UInt16ByteSize
 )
 
 var (
-	// Returned if unlock blocks making part of a transaction aren't unique.
+	// ErrSigUnlockBlocksNotUnique gets returned if unlock blocks making part of a transaction aren't unique.
 	ErrSigUnlockBlocksNotUnique = errors.New("signature unlock blocks must be unique")
-	// Returned if a reference unlock block does not reference a signature unlock block.
+	// ErrRefUnlockBlockInvalidRef gets returned if a reference unlock block does not reference a signature unlock block.
 	ErrRefUnlockBlockInvalidRef = errors.New("reference unlock block must point to a previous signature unlock block")
-	// Returned if a signature unlock block contains a nil signature.
+	// ErrSigUnlockBlockHasNilSig gets returned if a signature unlock block contains a nil signature.
 	ErrSigUnlockBlockHasNilSig = errors.New("signature is nil")
 )
 

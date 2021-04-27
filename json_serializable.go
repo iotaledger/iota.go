@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	// Returned when invalid JSOn is tried to get parsed.
+	// ErrInvalidJSON gets returned when invalid JSON is tried to get parsed.
 	ErrInvalidJSON = errors.New("invalid json")
 )
 

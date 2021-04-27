@@ -9,37 +9,37 @@ import (
 )
 
 const (
-	// Defines the transaction payload's type ID.
+	// TransactionPayloadTypeID defines the transaction payload's type ID.
 	TransactionPayloadTypeID uint32 = 0
 
-	// Defines the length of a Transaction ID.
+	// TransactionIDLength defines the length of a Transaction ID.
 	TransactionIDLength = blake2b.Size256
 
-	// Defines the minimum size of a serialized Transaction.
+	// TransactionBinSerializedMinSize defines the minimum size of a serialized Transaction.
 	TransactionBinSerializedMinSize = UInt32ByteSize
 
-	// Defines the divisor used to compute the allowed dust outputs on an address.
+	// DustAllowanceDivisor defines the divisor used to compute the allowed dust outputs on an address.
 	// The amount of dust outputs on an address is calculated by:
 	//	min(sum(dust_allowance_output_deposit) / DustAllowanceDivisor, dustOutputCountLimit)
 	DustAllowanceDivisor int64 = 100_000
-	// Defines the maximum amount of dust outputs allowed to "reside" on an address.
+	// MaxDustOutputsOnAddress defines the maximum amount of dust outputs allowed to "reside" on an address.
 	MaxDustOutputsOnAddress = 100
 )
 
 var (
-	// Returned if the count of unlock blocks doesn't match the count of inputs.
+	// ErrUnlockBlocksMustMatchInputCount gets returned if the count of unlock blocks doesn't match the count of inputs.
 	ErrUnlockBlocksMustMatchInputCount = errors.New("the count of unlock blocks must match the inputs of the transaction")
-	// Returned if the transaction essence within a Transaction is invalid.
+	// ErrInvalidTransactionEssence gets returned if the transaction essence within a Transaction is invalid.
 	ErrInvalidTransactionEssence = errors.New("transaction essence is invalid")
-	// Returned if an UTXO is missing to commence a certain operation.
+	// ErrMissingUTXO gets returned if an UTXO is missing to commence a certain operation.
 	ErrMissingUTXO = errors.New("missing utxo")
-	// Returned if a transaction does not spend the entirety of the inputs to the outputs.
+	// ErrInputOutputSumMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
 	ErrInputOutputSumMismatch = errors.New("inputs and outputs do not spend/deposit the same amount")
-	// ErrInputSignatureUnlockBlockInvalid returned for errors where an input has a wrong companion signature unlock block.
+	// ErrInputSignatureUnlockBlockInvalid gets returned for errors where an input has a wrong companion signature unlock block.
 	ErrInputSignatureUnlockBlockInvalid = errors.New("companion signature unlock block is invalid for input")
-	// Returned if an address of an input has a companion signature unlock block with the wrong signature type.
+	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock block with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = errors.New("address and signature type are not compatible")
-	// Returned for errors where the dust allowance is semantically invalid.
+	// ErrInvalidDustAllowance gets returned for errors where the dust allowance is semantically invalid.
 	ErrInvalidDustAllowance = errors.New("invalid dust allowance")
 )
 

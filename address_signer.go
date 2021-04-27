@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	// Returned if the needed keys to sign a message are absent/not mapped.
+	// ErrAddressKeysNotMapped gets returned if the needed keys to sign a message are absent/not mapped.
 	ErrAddressKeysNotMapped = errors.New("key(s) for address not mapped")
-	// Returned if the specified keys to sign a message for a given address are of the wrong type.
+	// ErrAddressKeysWrongType gets returned if the specified keys to sign a message for a given address are of the wrong type.
 	ErrAddressKeysWrongType = errors.New("key(s) for address are of wrong type")
 )
 

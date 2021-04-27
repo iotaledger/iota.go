@@ -33,11 +33,11 @@ type SerializableSelectorFunc func(ty uint32) (Serializable, error)
 type DeSerializationMode byte
 
 const (
-	// Instructs de/serialization to perform no validation.
+	// DeSeriModeNoValidation instructs de/serialization to perform no validation.
 	DeSeriModeNoValidation DeSerializationMode = 0
-	// Instructs de/serialization to perform validation.
+	// DeSeriModePerformValidation instructs de/serialization to perform validation.
 	DeSeriModePerformValidation DeSerializationMode = 1 << 0
-	// Instructs de/deserialization to perform ordering of certain struct arrays by their lexical serialized form.
+	// DeSeriModePerformLexicalOrdering instructs de/deserialization to perform ordering of certain struct arrays by their lexical serialized form.
 	DeSeriModePerformLexicalOrdering DeSerializationMode = 1 << 1
 )
 
@@ -50,11 +50,11 @@ func (sm DeSerializationMode) HasMode(mode DeSerializationMode) bool {
 type ArrayValidationMode byte
 
 const (
-	// Instructs the array validation to perform no validation.
+	// ArrayValidationModeNone instructs the array validation to perform no validation.
 	ArrayValidationModeNone ArrayValidationMode = 0
-	// Instructs the array validation to check for duplicates.
+	// ArrayValidationModeNoDuplicates instructs the array validation to check for duplicates.
 	ArrayValidationModeNoDuplicates ArrayValidationMode = 1 << 0
-	// Instructs the array validation to check for lexical order.
+	// ArrayValidationModeLexicalOrdering instructs the array validation to check for lexical order.
 	ArrayValidationModeLexicalOrdering ArrayValidationMode = 1 << 1
 )
 

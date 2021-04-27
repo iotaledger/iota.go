@@ -8,20 +8,21 @@ import (
 )
 
 const (
-	// Defines the indexation payload's ID.
+	// IndexationPayloadTypeID defines the indexation payload's ID.
 	IndexationPayloadTypeID uint32 = 2
-	// type bytes + index prefix + one char + data length
+	// IndexationBinSerializedMinSize is the minimum size of an Indexation.
+	// 	type bytes + index prefix + one char + data length
 	IndexationBinSerializedMinSize = TypeDenotationByteSize + UInt16ByteSize + OneByte + UInt32ByteSize
-	// Defines the max length of the index within an Indexation.
+	// IndexationIndexMaxLength defines the max length of the index within an Indexation.
 	IndexationIndexMaxLength = 64
-	// Defines the min length of the index within an Indexation.
+	// IndexationIndexMinLength defines the min length of the index within an Indexation.
 	IndexationIndexMinLength = 1
 )
 
 var (
-	// Returned when an Indexation's index exceeds IndexationIndexMaxLength.
+	// ErrIndexationIndexExceedsMaxSize gets returned when an Indexation's index exceeds IndexationIndexMaxLength.
 	ErrIndexationIndexExceedsMaxSize = errors.New("index exceeds max size")
-	// Returned when an Indexation's index is under IndexationIndexMinLength.
+	// ErrIndexationIndexUnderMinSize gets returned when an Indexation's index is under IndexationIndexMinLength.
 	ErrIndexationIndexUnderMinSize = errors.New("index is below min size")
 )
 
