@@ -84,10 +84,18 @@ const (
 	// GET returns the output.
 	NodeAPIRouteOutput = "/api/v1/outputs/%s"
 
+	// NodeAPIRouteAddressBech32Balance is the route for getting the total balance of all unspent outputs of a Bech32 address.
+	// GET returns the balance of all unspent outputs of this address.
+	NodeAPIRouteAddressBech32Balance = "/api/v1/addresses/%s"
+
 	// NodeAPIRouteAddressEd25519Balance is the route for getting the total balance of all unspent outputs of an ed25519 address.
 	// The ed25519 address must be encoded in hex.
 	// GET returns the balance of all unspent outputs of this address.
 	NodeAPIRouteAddressEd25519Balance = "/api/v1/addresses/ed25519/%s"
+
+	// NodeAPIRouteAddressBech32Outputs is the route for getting all output IDs for a Bech32 address.
+	// GET returns the outputIDs for all outputs of this address (optional query parameters: "include-spent").
+	NodeAPIRouteAddressBech32Outputs = "/api/v1/addresses/%s/outputs"
 
 	// NodeAPIRouteAddressEd25519Outputs is the route for getting all output IDs for an ed25519 address.
 	// The ed25519 address must be encoded in hex.
@@ -589,6 +597,20 @@ type AddressBalanceResponse struct {
 	Balance uint64 `json:"balance"`
 	// Indicates if dust is allowed on this address.
 	DustAllowed bool `json:"dustAllowed"`
+	// The ledger index at which this balance was queried at.
+	LedgerIndex uint64 `json:"ledgerIndex"`
+}
+
+// BalanceByBech32Address returns the balance of the given Bech32 address.
+func (api *NodeHTTPAPIClient) BalanceByBech32Address(bech32Addr string) (*AddressBalanceResponse, error) {
+	query := fmt.Sprintf(NodeAPIRouteAddressBech32Balance, bech32Addr)
+
+	res := &AddressBalanceResponse{}
+	_, err := api.Do(http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 // BalanceByEd25519Address returns the balance of an Ed25519 address.
@@ -616,10 +638,40 @@ type AddressOutputsResponse struct {
 	Count uint32 `json:"count"`
 	// The output IDs (transaction ID + output index) of the outputs on this address.
 	OutputIDs []OutputIDHex `json:"outputIDs"`
+	// The ledger index at which these outputs where available at.
+	LedgerIndex uint64 `json:"ledgerIndex"`
 }
 
-// OutputIDsByEd25519Address gets outputs IDs of outputs residing on the given Ed25519Address.
-// Per default only unspent outputs IDs are returned. Set includeSpentOutputs to true to also returne spent outputs IDs.
+// OutputIDsByBech32Address gets output IDs of outputs residing on the given Bech32 address.
+// Per default only unspent outputs IDs are returned. Set includeSpentOutputs to true to also return spent output IDs.
+func (api *NodeHTTPAPIClient) OutputIDsByBech32Address(bech32Addr string, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
+	query := fmt.Sprintf(NodeAPIRouteAddressBech32Outputs, bech32Addr)
+	if includeSpentOutputs {
+		query += "?include-spent=true"
+	}
+
+	res := &AddressOutputsResponse{}
+	_, err := api.Do(http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// OutputsByBech32Address gets the outputs residing on the given Bech32 address.
+// Per default only unspent outputs are returned. Set includeSpentOutputs to true to also return spent outputs.
+func (api *NodeHTTPAPIClient) OutputsByBech32Address(bech32Addr string, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
+	res, err := api.OutputIDsByBech32Address(bech32Addr, includeSpentOutputs)
+	if err != nil {
+		return  nil, nil, err
+	}
+
+	return api.outputIDsToOutputs(res)
+}
+
+// OutputIDsByEd25519Address gets output IDs of outputs residing on the given Ed25519Address.
+// Per default only unspent output IDs are returned. Set includeSpentOutputs to true to also return spent output IDs.
 func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, addr.String())
 	if includeSpentOutputs {
@@ -638,17 +690,16 @@ func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(addr *Ed25519Address, in
 // OutputsByEd25519Address gets the outputs residing on the given Ed25519Address.
 // Per default only unspent outputs are returned. Set includeSpentOutputs to true to also return spent outputs.
 func (api *NodeHTTPAPIClient) OutputsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
-	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, addr.String())
-	if includeSpentOutputs {
-		query += "?include-spent=true"
-	}
-
-	res := &AddressOutputsResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	res, err := api.OutputIDsByEd25519Address(addr, includeSpentOutputs)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	return api.outputIDsToOutputs(res)
+}
+
+// queries the actual outputs given an AddressOutputsResponse.
+func (api *NodeHTTPAPIClient) outputIDsToOutputs(res *AddressOutputsResponse) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
 	outputs := make(map[*UTXOInput]Output)
 	for _, outputIDHex := range res.OutputIDs {
 		utxoInput, err := outputIDHex.AsUTXOInput()
