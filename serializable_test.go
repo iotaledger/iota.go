@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/iota.go/v2/test"
 	"sort"
 	"testing"
 
@@ -63,14 +64,14 @@ func (a *A) Serialize(deSeriMode iotago.DeSerializationMode) ([]byte, error) {
 func randSerializedA() []byte {
 	var b [typeALength]byte
 	b[0] = TypeA
-	keyData := randBytes(aKeyLength)
+	keyData := test.RandBytes(aKeyLength)
 	copy(b[iotago.SmallTypeDenotationByteSize:], keyData)
 	return b[:]
 }
 
 func randA() *A {
 	var k [aKeyLength]byte
-	copy(k[:], randBytes(aKeyLength))
+	copy(k[:], test.RandBytes(aKeyLength))
 	return &A{Key: k}
 }
 
@@ -102,14 +103,14 @@ func (b *B) Serialize(deSeriMode iotago.DeSerializationMode) ([]byte, error) {
 func randSerializedB() []byte {
 	var bf [typeBLength]byte
 	bf[0] = TypeB
-	nameData := randBytes(bNameLength)
+	nameData := test.RandBytes(bNameLength)
 	copy(bf[iotago.SmallTypeDenotationByteSize:], nameData)
 	return bf[:]
 }
 
 func randB() *B {
 	var n [bNameLength]byte
-	copy(n[:], randBytes(bNameLength))
+	copy(n[:], test.RandBytes(bNameLength))
 	return &B{Name: n}
 }
 

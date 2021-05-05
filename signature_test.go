@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	test2 "github.com/iotaledger/iota.go/v2/test"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -22,11 +23,11 @@ func TestEd25519Signature_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			edSig, edSigData := randEd25519Signature()
+			edSig, edSigData := test2.RandEd25519Signature()
 			return test{"ok", edSigData, edSig, nil}
 		}(),
 		func() test {
-			edSig, edSigData := randEd25519Signature()
+			edSig, edSigData := test2.RandEd25519Signature()
 			return test{"not enough data", edSigData[:5], edSig, iotago.ErrDeserializationNotEnoughData}
 		}(),
 	}
@@ -54,7 +55,7 @@ func TestEd25519Signature_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			edSig, edSigData := randEd25519Signature()
+			edSig, edSigData := test2.RandEd25519Signature()
 			return test{"ok", edSig, edSigData}
 		}(),
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	test2 "github.com/iotaledger/iota.go/v2/test"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -20,19 +21,19 @@ func TestMessage_Deserialize(t *testing.T) {
 
 	tests := []test{
 		func() test {
-			msgPayload, msgPayloadData := randMessage(1337)
+			msgPayload, msgPayloadData := test2.RandMessage(1337)
 			return test{"ok - no payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iotago.TransactionPayloadTypeID)
+			msgPayload, msgPayloadData := test2.RandMessage(iotago.TransactionPayloadTypeID)
 			return test{"ok - transaction payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iotago.MilestonePayloadTypeID)
+			msgPayload, msgPayloadData := test2.RandMessage(iotago.MilestonePayloadTypeID)
 			return test{"ok - milestone payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iotago.IndexationPayloadTypeID)
+			msgPayload, msgPayloadData := test2.RandMessage(iotago.IndexationPayloadTypeID)
 			return test{"ok - indexation payload", msgPayloadData, msgPayload, nil}
 		}(),
 	}
@@ -60,11 +61,11 @@ func TestMessage_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			msgPayload, msgPayloadData := randMessage(iotago.TransactionPayloadTypeID)
+			msgPayload, msgPayloadData := test2.RandMessage(iotago.TransactionPayloadTypeID)
 			return test{"ok - with transaction payload", msgPayload, msgPayloadData}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := randMessage(1337)
+			msgPayload, msgPayloadData := test2.RandMessage(1337)
 			return test{"ok - without any payload", msgPayload, msgPayloadData}
 		}(),
 	}

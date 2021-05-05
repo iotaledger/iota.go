@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/iota.go/v2/test"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -22,15 +23,15 @@ func TestSigLockedSingleOutput_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			dep, depData := randSigLockedSingleOutput(iotago.AddressEd25519)
+			dep, depData := test.RandSigLockedSingleOutput(iotago.AddressEd25519)
 			return test{"ok ed25519", depData, dep, nil}
 		}(),
 		func() test {
-			dep, depData := randSigLockedSingleOutput(iotago.AddressEd25519)
+			dep, depData := test.RandSigLockedSingleOutput(iotago.AddressEd25519)
 			return test{"not enough data ed25519", depData[:5], dep, iotago.ErrDeserializationNotEnoughData}
 		}(),
 		func() test {
-			dep, depData := randSigLockedSingleOutput(iotago.AddressEd25519)
+			dep, depData := test.RandSigLockedSingleOutput(iotago.AddressEd25519)
 			depData[iotago.SigLockedSingleOutputAddressOffset] = 100
 			return test{"unknown addr type", depData, dep, iotago.ErrUnknownAddrType}
 		}(),
@@ -59,7 +60,7 @@ func TestSigLockedSingleOutput_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			dep, depData := randSigLockedSingleOutput(iotago.AddressEd25519)
+			dep, depData := test.RandSigLockedSingleOutput(iotago.AddressEd25519)
 			return test{"ok", dep, depData, nil}
 		}(),
 	}
@@ -90,14 +91,14 @@ func TestOutputsValidatorFunc(t *testing.T) {
 			args{outputs: []iotago.Serializable{
 				&iotago.SigLockedSingleOutput{
 					Address: func() iotago.Serializable {
-						addr, _ := randEd25519Addr()
+						addr, _ := test.RandEd25519Address()
 						return addr
 					}(),
 					Amount: 0,
 				},
 				&iotago.SigLockedSingleOutput{
 					Address: func() iotago.Serializable {
-						addr, _ := randEd25519Addr()
+						addr, _ := test.RandEd25519Address()
 						return addr
 					}(),
 					Amount: 0,
@@ -109,7 +110,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 			args{outputs: []iotago.Serializable{
 				&iotago.SigLockedSingleOutput{
 					Address: func() iotago.Serializable {
-						addr, _ := randEd25519Addr()
+						addr, _ := test.RandEd25519Address()
 						for i := 0; i < len(addr); i++ {
 							addr[i] = 3
 						}
@@ -119,7 +120,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 				},
 				&iotago.SigLockedSingleOutput{
 					Address: func() iotago.Serializable {
-						addr, _ := randEd25519Addr()
+						addr, _ := test.RandEd25519Address()
 						for i := 0; i < len(addr); i++ {
 							addr[i] = 3
 						}

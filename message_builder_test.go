@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"context"
+	"github.com/iotaledger/iota.go/v2/test"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -11,7 +12,7 @@ import (
 func TestMessageBuilder(t *testing.T) {
 	const targetPoWScore float64 = 500
 
-	parents := sortedRand32ByteHashes(4)
+	parents := test.SortedRand32BytArray(4)
 
 	indexationPayload := &iotago.Indexation{
 		Index: []byte("hello world"),

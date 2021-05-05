@@ -3,6 +3,7 @@ package iotago_test
 import (
 	"encoding/json"
 	"errors"
+	"github.com/iotaledger/iota.go/v2/test"
 	"math/rand"
 	"sort"
 	"testing"
@@ -23,7 +24,7 @@ func TestMilestone_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			msPayload, msPayloadData := randMilestone(nil)
+			msPayload, msPayloadData := test.RandMilestone(nil)
 			return test{"ok", msPayloadData, msPayload, nil}
 		}(),
 	}
@@ -51,7 +52,7 @@ func TestMilestone_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			msPayload, msPayloadData := randMilestone(nil)
+			msPayload, msPayloadData := test.RandMilestone(nil)
 			return test{"ok", msPayload, msPayloadData}
 		}(),
 	}
@@ -68,13 +69,13 @@ func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
 	ms := &iotago.Milestone{
 		Index:                1337,
 		Timestamp:            13371337,
-		Parents:              sortedRand32ByteHashes(2),
-		InclusionMerkleProof: rand32ByteHash(),
-		PublicKeys:           sortedRand32ByteHashes(3),
+		Parents:              test.SortedRand32BytArray(2),
+		InclusionMerkleProof: test.Rand32ByteArray(),
+		PublicKeys:           test.SortedRand32BytArray(3),
 		Signatures: []iotago.MilestoneSignature{
-			rand64ByteHash(),
-			rand64ByteHash(),
-			rand64ByteHash(),
+			test.Rand64ByteArray(),
+			test.Rand64ByteArray(),
+			test.Rand64ByteArray(),
 		},
 	}
 
@@ -106,17 +107,17 @@ func TestMilestoneSigning(t *testing.T) {
 
 	tests := []test{
 		func() test {
-			prvKey := randEd25519PrivateKey()
+			prvKey := test.RandEd25519PrivateKey()
 			pubKey1 := pubKeyFromPrv(prvKey)
 
 			pubKeys := []iotago.MilestonePublicKey{pubKey1}
 
 			msPayload := &iotago.Milestone{
-				Parents:              sortedRand32ByteHashes(1 + rand.Intn(7)),
+				Parents:              test.SortedRand32BytArray(1 + rand.Intn(7)),
 				Index:                1000,
 				Timestamp:            uint64(time.Now().Unix()),
 				PublicKeys:           pubKeys,
-				InclusionMerkleProof: rand32ByteHash(),
+				InclusionMerkleProof: test.Rand32ByteArray(),
 			}
 
 			return test{
@@ -133,9 +134,9 @@ func TestMilestoneSigning(t *testing.T) {
 		}(),
 		func() test {
 
-			prvKey1 := randEd25519PrivateKey()
-			prvKey2 := randEd25519PrivateKey()
-			prvKey3 := randEd25519PrivateKey()
+			prvKey1 := test.RandEd25519PrivateKey()
+			prvKey2 := test.RandEd25519PrivateKey()
+			prvKey3 := test.RandEd25519PrivateKey()
 			pubKey1 := pubKeyFromPrv(prvKey1)
 			pubKey2 := pubKeyFromPrv(prvKey2)
 			pubKey3 := pubKeyFromPrv(prvKey3)
@@ -145,11 +146,11 @@ func TestMilestoneSigning(t *testing.T) {
 			sort.Sort(pubKeys)
 
 			msPayload := &iotago.Milestone{
-				Parents:              sortedRand32ByteHashes(1 + rand.Intn(7)),
+				Parents:              test.SortedRand32BytArray(1 + rand.Intn(7)),
 				Index:                1000,
 				Timestamp:            uint64(time.Now().Unix()),
 				PublicKeys:           pubKeys,
-				InclusionMerkleProof: rand32ByteHash(),
+				InclusionMerkleProof: test.Rand32ByteArray(),
 			}
 
 			return test{
@@ -167,17 +168,17 @@ func TestMilestoneSigning(t *testing.T) {
 			}
 		}(),
 		func() test {
-			prvKey := randEd25519PrivateKey()
+			prvKey := test.RandEd25519PrivateKey()
 			pubKey1 := pubKeyFromPrv(prvKey)
 
 			pubKeys := []iotago.MilestonePublicKey{pubKey1}
 
 			msPayload := &iotago.Milestone{
-				Parents:              sortedRand32ByteHashes(1 + rand.Intn(7)),
+				Parents:              test.SortedRand32BytArray(1 + rand.Intn(7)),
 				Index:                1000,
 				Timestamp:            uint64(time.Now().Unix()),
 				PublicKeys:           pubKeys,
-				InclusionMerkleProof: rand32ByteHash(),
+				InclusionMerkleProof: test.Rand32ByteArray(),
 			}
 
 			return test{
@@ -185,7 +186,7 @@ func TestMilestoneSigning(t *testing.T) {
 				ms:   msPayload,
 				signer: iotago.InMemoryEd25519MilestoneSigner(iotago.MilestonePublicKeyMapping{
 					// signature will be signed with a non matching private key
-					pubKey1: randEd25519PrivateKey(),
+					pubKey1: test.RandEd25519PrivateKey(),
 				}),
 				minSigThreshold: 1,
 				pubKeySet:       map[iotago.MilestonePublicKey]struct{}{pubKey1: {}},
@@ -215,8 +216,8 @@ func TestMilestoneSigning(t *testing.T) {
 }
 
 func TestNewMilestone(t *testing.T) {
-	parents := sortedRand32ByteHashes(1 + rand.Intn(7))
-	inclusionMerkleProof := rand32ByteHash()
+	parents := test.SortedRand32BytArray(1 + rand.Intn(7))
+	inclusionMerkleProof := test.Rand32ByteArray()
 	const msIndex, timestamp = 1000, 133713371337
 	unsortedPubKeys := []iotago.MilestonePublicKey{{3}, {2}, {1}, {5}}
 

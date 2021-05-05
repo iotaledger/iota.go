@@ -1,6 +1,7 @@
 package iotago_test
 
 import (
+	"github.com/iotaledger/iota.go/v2/test"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -8,7 +9,7 @@ import (
 )
 
 func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {
-	data, err := oneInputOutputTransaction().Serialize(iotago.DeSeriModeNoValidation)
+	data, err := test.oneInputOutputTransaction().Serialize(iotago.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -26,7 +27,7 @@ func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {
 }
 
 func BenchmarkDeserializeWithoutValidationOneIOTxPayload(b *testing.B) {
-	data, err := oneInputOutputTransaction().Serialize(iotago.DeSeriModeNoValidation)
+	data, err := test.oneInputOutputTransaction().Serialize(iotago.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -44,7 +45,7 @@ func BenchmarkDeserializeWithoutValidationOneIOTxPayload(b *testing.B) {
 }
 
 func BenchmarkSerializeWithValidationOneIOTxPayload(b *testing.B) {
-	txPayload := oneInputOutputTransaction()
+	txPayload := test.oneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		txPayload.Serialize(iotago.DeSeriModePerformValidation)
@@ -52,7 +53,7 @@ func BenchmarkSerializeWithValidationOneIOTxPayload(b *testing.B) {
 }
 
 func BenchmarkSerializeWithoutValidationOneIOTxPayload(b *testing.B) {
-	sigTxPayload := oneInputOutputTransaction()
+	sigTxPayload := test.oneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sigTxPayload.Serialize(iotago.DeSeriModeNoValidation)
@@ -60,13 +61,13 @@ func BenchmarkSerializeWithoutValidationOneIOTxPayload(b *testing.B) {
 }
 
 func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
-	txPayload := oneInputOutputTransaction()
+	txPayload := test.oneInputOutputTransaction()
 	b.ResetTimer()
 
 	txEssenceData, err := txPayload.Essence.(*iotago.TransactionEssence).SigningMessage()
-	must(err)
+	test.must(err)
 
-	seed := randEd25519Seed()
+	seed := test.RandEd25519Seed()
 	prvKey := ed25519.NewKeyFromSeed(seed[:])
 
 	b.ResetTimer()
@@ -76,13 +77,13 @@ func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
 }
 
 func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
-	txPayload := oneInputOutputTransaction()
+	txPayload := test.oneInputOutputTransaction()
 	b.ResetTimer()
 
 	txEssenceData, err := txPayload.Essence.(*iotago.TransactionEssence).SigningMessage()
-	must(err)
+	test.must(err)
 
-	seed := randEd25519Seed()
+	seed := test.RandEd25519Seed()
 	prvKey := ed25519.NewKeyFromSeed(seed[:])
 
 	sig := ed25519.Sign(prvKey, txEssenceData)
@@ -95,10 +96,10 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 }
 
 func BenchmarkSerializeAndHashMessageWithTransactionPayload(b *testing.B) {
-	txPayload := oneInputOutputTransaction()
+	txPayload := test.oneInputOutputTransaction()
 
 	m := &iotago.Message{
-		Parents: sortedRand32ByteHashes(2),
+		Parents: test.SortedRand32BytArray(2),
 		Payload: txPayload,
 		Nonce:   0,
 	}
