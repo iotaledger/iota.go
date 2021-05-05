@@ -2,7 +2,7 @@ package iotago_test
 
 import (
 	"errors"
-	"github.com/iotaledger/iota.go/v2/test"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestUTXOInput_Deserialize(t *testing.T) {
-	randUTXOInput, randSerializedUTXOInput := test.RandUTXOInput()
+	randUTXOInput, randSerializedUTXOInput := tpkg.RandUTXOInput()
 	tests := []struct {
 		name   string
 		data   []byte
@@ -35,7 +35,7 @@ func TestUTXOInput_Deserialize(t *testing.T) {
 }
 
 func TestUTXOInput_Serialize(t *testing.T) {
-	randUTXOInput, randSerializedUTXOInput := test.RandUTXOInput()
+	randUTXOInput, randSerializedUTXOInput := tpkg.RandUTXOInput()
 	tests := []struct {
 		name   string
 		source *iotago.UTXOInput

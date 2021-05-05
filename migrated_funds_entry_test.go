@@ -2,7 +2,7 @@ package iotago_test
 
 import (
 	"errors"
-	test2 "github.com/iotaledger/iota.go/v2/test"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -18,7 +18,7 @@ func TestMigratedFundsEntry_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			migFundsEntry, migFundsEntryData := test2.RandMigratedFundsEntry()
+			migFundsEntry, migFundsEntryData := tpkg.RandMigratedFundsEntry()
 			return test{"ok- w/o migFundsEntry", migFundsEntryData, migFundsEntry, nil}
 		}(),
 	}
@@ -46,7 +46,7 @@ func TestMigratedFundsEntry_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			migFundsEntry, migFundsEntryData := test2.RandMigratedFundsEntry()
+			migFundsEntry, migFundsEntryData := tpkg.RandMigratedFundsEntry()
 			return test{"ok- w/o migFundsEntry", migFundsEntry, migFundsEntryData}
 		}(),
 	}

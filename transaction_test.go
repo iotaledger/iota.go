@@ -2,7 +2,7 @@ package iotago_test
 
 import (
 	"errors"
-	test2 "github.com/iotaledger/iota.go/v2/test"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -19,7 +19,7 @@ func TestTransaction_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			txPayload, txPayloadData := test2.RandTransaction()
+			txPayload, txPayloadData := tpkg.RandTransaction()
 			return test{"ok", txPayloadData, txPayload, nil}
 		}(),
 	}
@@ -47,7 +47,7 @@ func TestTransaction_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			txPayload, txPayloadData := test2.RandTransaction()
+			txPayload, txPayloadData := tpkg.RandTransaction()
 			return test{"ok", txPayload, txPayloadData}
 		}(),
 	}
@@ -61,7 +61,7 @@ func TestTransaction_Serialize(t *testing.T) {
 }
 
 func TestTransaction_SemanticallyValidate(t *testing.T) {
-	identityOne := test2.RandEd25519PrivateKey()
+	identityOne := tpkg.RandEd25519PrivateKey()
 	inputAddr := iotago.AddressFromEd25519PubKey(identityOne.Public().(ed25519.PublicKey))
 	addrKeys := iotago.AddressKeys{Address: &inputAddr, Keys: identityOne}
 
@@ -77,8 +77,8 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 	tests := []test{
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -95,13 +95,13 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			outputAddr2, _ := test2.RandEd25519Address()
-			outputAddr3, _ := test2.RandEd25519Address()
-			outputAddr4, _ := test2.RandEd25519Address()
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			outputAddr2, _ := tpkg.RandEd25519Address()
+			outputAddr3, _ := tpkg.RandEd25519Address()
+			outputAddr4, _ := tpkg.RandEd25519Address()
 
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
-			inputUTXO2 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
+			inputUTXO2 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -131,7 +131,7 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 			}
 		}(),
 		func() test {
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1})
 			return test{
@@ -143,8 +143,8 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -187,7 +187,7 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 }
 
 func TestDustAllowance(t *testing.T) {
-	identityOne := test2.RandEd25519PrivateKey()
+	identityOne := tpkg.RandEd25519PrivateKey()
 	inputAddr := iotago.AddressFromEd25519PubKey(identityOne.Public().(ed25519.PublicKey))
 	addrKeys := iotago.AddressKeys{Address: &inputAddr, Keys: identityOne}
 
@@ -204,8 +204,8 @@ func TestDustAllowance(t *testing.T) {
 	tests := []test{
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -235,8 +235,8 @@ func TestDustAllowance(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -266,8 +266,8 @@ func TestDustAllowance(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -300,9 +300,9 @@ func TestDustAllowance(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
-			inputUTXO2 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
+			inputUTXO2 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -334,8 +334,8 @@ func TestDustAllowance(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -368,8 +368,8 @@ func TestDustAllowance(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -402,8 +402,8 @@ func TestDustAllowance(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
@@ -435,8 +435,8 @@ func TestDustAllowance(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := test2.RandEd25519Address()
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: test2.Rand32ByteArray(), TransactionOutputIndex: 0}
+			outputAddr1, _ := tpkg.RandEd25519Address()
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).

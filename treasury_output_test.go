@@ -2,7 +2,7 @@ package iotago_test
 
 import (
 	"errors"
-	test2 "github.com/iotaledger/iota.go/v2/test"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -18,7 +18,7 @@ func TestTreasuryOutput_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			treasuryOutput, treasuryOutputData := test2.RandTreasuryOutput()
+			treasuryOutput, treasuryOutputData := tpkg.RandTreasuryOutput()
 			return test{"ok- w/o treasuryOutput", treasuryOutputData, treasuryOutput, nil}
 		}(),
 	}
@@ -46,7 +46,7 @@ func TestTreasuryOutput_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			treasuryOutput, treasuryOutputData := test2.RandTreasuryOutput()
+			treasuryOutput, treasuryOutputData := tpkg.RandTreasuryOutput()
 			return test{"ok- w/o treasuryOutput", treasuryOutput, treasuryOutputData}
 		}(),
 	}

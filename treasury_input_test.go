@@ -2,7 +2,7 @@ package iotago_test
 
 import (
 	"errors"
-	"github.com/iotaledger/iota.go/v2/test"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestTreasuryInput_Deserialize(t *testing.T) {
-	randTreasuryInput, randTreasuryInputData := test.RandTreasuryInput()
+	randTreasuryInput, randTreasuryInputData := tpkg.RandTreasuryInput()
 	tests := []struct {
 		name   string
 		data   []byte
@@ -35,7 +35,7 @@ func TestTreasuryInput_Deserialize(t *testing.T) {
 }
 
 func TestTreasuryInput_Serialize(t *testing.T) {
-	randTreasuryInput, randTreasuryInputData := test.RandTreasuryInput()
+	randTreasuryInput, randTreasuryInputData := tpkg.RandTreasuryInput()
 	tests := []struct {
 		name   string
 		source *iotago.TreasuryInput

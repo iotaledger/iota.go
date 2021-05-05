@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/iotaledger/iota.go/v2/test"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -91,15 +91,15 @@ func TestNodeAPI_Tips(t *testing.T) {
 func TestNodeAPI_SubmitMessage(t *testing.T) {
 	defer gock.Off()
 
-	msgHash := test.Rand32ByteArray()
+	msgHash := tpkg.Rand32ByteArray()
 	msgHashStr := hex.EncodeToString(msgHash[:])
 
 	incompleteMsg := &iotago.Message{
-		Parents: test.SortedRand32BytArray(1),
+		Parents: tpkg.SortedRand32BytArray(1),
 	}
 
 	completeMsg := &iotago.Message{
-		Parents: test.SortedRand32BytArray(1 + rand.Intn(7)),
+		Parents: tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 		Payload: nil,
 		Nonce:   3495721389537486,
 	}
@@ -136,9 +136,9 @@ func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
 	defer gock.Off()
 	index := "बेकार पाठ"
 
-	id1 := test.Rand32ByteArray()
-	id2 := test.Rand32ByteArray()
-	id3 := test.Rand32ByteArray()
+	id1 := tpkg.Rand32ByteArray()
+	id2 := tpkg.Rand32ByteArray()
+	id3 := tpkg.Rand32ByteArray()
 
 	msgIDsByIndex := &iotago.MessageIDsByIndexResponse{
 		Index:      hex.EncodeToString([]byte(index)),
@@ -166,8 +166,8 @@ func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
 func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
-	identifier := test.Rand32ByteArray()
-	parents := test.SortedRand32BytArray(1 + rand.Intn(7))
+	identifier := tpkg.Rand32ByteArray()
+	parents := tpkg.SortedRand32BytArray(1 + rand.Intn(7))
 
 	queryHash := hex.EncodeToString(identifier[:])
 
@@ -202,11 +202,11 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 func TestNodeAPI_MessageByMessageID(t *testing.T) {
 	defer gock.Off()
 
-	identifier := test.Rand32ByteArray()
+	identifier := tpkg.Rand32ByteArray()
 	queryHash := hex.EncodeToString(identifier[:])
 
 	originMsg := &iotago.Message{
-		Parents: test.SortedRand32BytArray(1 + rand.Intn(7)),
+		Parents: tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 		Payload: nil,
 		Nonce:   16345984576234,
 	}
@@ -228,12 +228,12 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 	defer gock.Off()
 
-	msgID := test.Rand32ByteArray()
+	msgID := tpkg.Rand32ByteArray()
 	hexMsgID := hex.EncodeToString(msgID[:])
 
-	child1 := test.Rand32ByteArray()
-	child2 := test.Rand32ByteArray()
-	child3 := test.Rand32ByteArray()
+	child1 := tpkg.Rand32ByteArray()
+	child2 := tpkg.Rand32ByteArray()
+	child3 := tpkg.Rand32ByteArray()
 
 	originRes := &iotago.ChildrenResponse{
 		MessageID:  hexMsgID,
@@ -260,12 +260,12 @@ func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 func TestNodeAPI_OutputByID(t *testing.T) {
 	defer gock.Off()
 
-	originOutput, _ := test.RandSigLockedSingleOutput(iotago.AddressEd25519)
+	originOutput, _ := tpkg.RandSigLockedSingleOutput(iotago.AddressEd25519)
 	sigDepJson, err := originOutput.MarshalJSON()
 	require.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
 
-	txID := test.Rand32ByteArray()
+	txID := tpkg.Rand32ByteArray()
 	hexTxID := hex.EncodeToString(txID[:])
 	originRes := &iotago.NodeOutputResponse{
 		TransactionID: hexTxID,
@@ -295,7 +295,7 @@ func TestNodeAPI_OutputByID(t *testing.T) {
 func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 	defer gock.Off()
 
-	ed25519Addr, _ := test.RandEd25519Address()
+	ed25519Addr, _ := tpkg.RandEd25519Address()
 	ed25519AddrHex := ed25519Addr.String()
 
 	originRes := &iotago.AddressBalanceResponse{
@@ -319,12 +319,12 @@ func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 	defer gock.Off()
 
-	ed25519Addr, _ := test.RandEd25519Address()
+	ed25519Addr, _ := tpkg.RandEd25519Address()
 	ed25519AddrHex := ed25519Addr.String()
 
-	output1 := test.Rand32ByteArray()
-	output2 := test.Rand32ByteArray()
-	output3 := test.Rand32ByteArray()
+	output1 := tpkg.Rand32ByteArray()
+	output2 := tpkg.Rand32ByteArray()
+	output3 := tpkg.Rand32ByteArray()
 	originRes := &iotago.AddressOutputsResponse{
 		AddressType: 1,
 		Address:     ed25519AddrHex,
@@ -470,7 +470,7 @@ func TestNodeAPI_MilestoneByIndex(t *testing.T) {
 
 	var milestoneIndex uint32 = 1337
 	milestoneIndexStr := strconv.Itoa(int(milestoneIndex))
-	msgID := test.Rand32ByteArray()
+	msgID := tpkg.Rand32ByteArray()
 
 	originRes := &iotago.MilestoneResponse{
 		Index:     milestoneIndex,
@@ -495,8 +495,8 @@ func TestNodeAPI_MilestoneUTXOChangesByIndex(t *testing.T) {
 	var milestoneIndex uint32 = 1337
 	milestoneIndexStr := strconv.Itoa(int(milestoneIndex))
 
-	randCreatedOutput, _ := test.RandUTXOInput()
-	randConsumedOutput, _ := test.RandUTXOInput()
+	randCreatedOutput, _ := tpkg.RandUTXOInput()
+	randConsumedOutput, _ := tpkg.RandUTXOInput()
 
 	originRes := &iotago.MilestoneUTXOChangesResponse{
 		Index:           milestoneIndex,

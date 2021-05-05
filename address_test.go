@@ -2,7 +2,7 @@ package iotago_test
 
 import (
 	"errors"
-	"github.com/iotaledger/iota.go/v2/test"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -18,7 +18,7 @@ func TestEd25519Address_Deserialize(t *testing.T) {
 		{
 			"ok",
 			func() []byte {
-				_, edAddrData := test.RandEd25519Address()
+				_, edAddrData := tpkg.RandEd25519Address()
 				return edAddrData
 			}(),
 			nil,
@@ -26,7 +26,7 @@ func TestEd25519Address_Deserialize(t *testing.T) {
 		{
 			"not enough bytes",
 			func() []byte {
-				_, edAddrData := test.RandEd25519Address()
+				_, edAddrData := tpkg.RandEd25519Address()
 				return edAddrData[:iotago.Ed25519AddressSerializedBytesSize-1]
 			}(),
 			iotago.ErrDeserializationNotEnoughData,
@@ -49,7 +49,7 @@ func TestEd25519Address_Deserialize(t *testing.T) {
 }
 
 func TestEd25519Address_Serialize(t *testing.T) {
-	originEdAddr, originData := test.RandEd25519Address()
+	originEdAddr, originData := tpkg.RandEd25519Address()
 	tests := []struct {
 		name   string
 		source *iotago.Ed25519Address

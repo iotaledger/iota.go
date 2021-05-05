@@ -1,4 +1,4 @@
-package test
+package tpkg
 
 import (
 	"bytes"
@@ -15,7 +15,8 @@ import (
 	"github.com/iotaledger/iota.go/v2/ed25519"
 )
 
-func must(err error) {
+// Must panics if the given error is not nil.
+func Must(err error) {
 	if err != nil {
 		panic(err)
 	}
@@ -127,11 +128,11 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 	var buf bytes.Buffer
 
 	tx := &iotago.TransactionEssence{}
-	must(buf.WriteByte(iotago.TransactionEssenceNormal))
+	Must(buf.WriteByte(iotago.TransactionEssenceNormal))
 
 	inputsBytes := iotago.LexicalOrderedByteSlices{}
 	inputCount := rand.Intn(10) + 1
-	must(binary.Write(&buf, binary.LittleEndian, uint16(inputCount)))
+	Must(binary.Write(&buf, binary.LittleEndian, uint16(inputCount)))
 	for i := inputCount; i > 0; i-- {
 		_, inputData := RandUTXOInput()
 		inputsBytes = append(inputsBytes, inputData)
@@ -141,7 +142,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 
 	for _, inputData := range inputsBytes {
 		_, err := buf.Write(inputData)
-		must(err)
+		Must(err)
 		input := &iotago.UTXOInput{}
 		if _, err := input.Deserialize(inputData, iotago.DeSeriModePerformValidation); err != nil {
 			panic(err)
@@ -151,7 +152,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 
 	outputsBytes := iotago.LexicalOrderedByteSlices{}
 	outputCount := rand.Intn(10) + 1
-	must(binary.Write(&buf, binary.LittleEndian, uint16(outputCount)))
+	Must(binary.Write(&buf, binary.LittleEndian, uint16(outputCount)))
 	for i := outputCount; i > 0; i-- {
 		_, depData := RandSigLockedSingleOutput(iotago.AddressEd25519)
 		outputsBytes = append(outputsBytes, depData)
@@ -160,7 +161,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 	sort.Sort(outputsBytes)
 	for _, outputData := range outputsBytes {
 		_, err := buf.Write(outputData)
-		must(err)
+		Must(err)
 		output := &iotago.SigLockedSingleOutput{}
 		if _, err := output.Deserialize(outputData, iotago.DeSeriModePerformValidation); err != nil {
 			panic(err)
@@ -169,7 +170,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 	}
 
 	// empty payload
-	must(binary.Write(&buf, binary.LittleEndian, uint32(0)))
+	Must(binary.Write(&buf, binary.LittleEndian, uint32(0)))
 
 	return tx, buf.Bytes()
 }
@@ -182,10 +183,10 @@ func RandMigratedFundsEntry() (*iotago.MigratedFundsEntry, []byte) {
 
 	var b bytes.Buffer
 	_, err := b.Write(tailTxHash[:])
-	must(err)
+	Must(err)
 	_, err = b.Write(addrBytes)
-	must(err)
-	must(binary.Write(&b, binary.LittleEndian, deposit))
+	Must(err)
+	Must(binary.Write(&b, binary.LittleEndian, deposit))
 
 	return &iotago.MigratedFundsEntry{
 		TailTransactionHash: tailTxHash,
@@ -200,13 +201,13 @@ func RandReceipt() (*iotago.Receipt, []byte) {
 
 	var b bytes.Buffer
 
-	must(binary.Write(&b, binary.LittleEndian, iotago.ReceiptPayloadTypeID))
-	must(binary.Write(&b, binary.LittleEndian, receipt.MigratedAt))
-	must(b.WriteByte(1))
+	Must(binary.Write(&b, binary.LittleEndian, iotago.ReceiptPayloadTypeID))
+	Must(binary.Write(&b, binary.LittleEndian, receipt.MigratedAt))
+	Must(b.WriteByte(1))
 
 	migFundsEntriesBytes := iotago.LexicalOrderedByteSlices{}
 	migFundsEntriesCount := rand.Intn(10) + 1
-	must(binary.Write(&b, binary.LittleEndian, uint16(migFundsEntriesCount)))
+	Must(binary.Write(&b, binary.LittleEndian, uint16(migFundsEntriesCount)))
 	for i := migFundsEntriesCount; i > 0; i-- {
 		_, migFundsEntryBytes := RandMigratedFundsEntry()
 		migFundsEntriesBytes = append(migFundsEntriesBytes, migFundsEntryBytes)
@@ -216,7 +217,7 @@ func RandReceipt() (*iotago.Receipt, []byte) {
 
 	for _, migFundEntryBytes := range migFundsEntriesBytes {
 		_, err := b.Write(migFundEntryBytes)
-		must(err)
+		Must(err)
 		migFundsEntry := &iotago.MigratedFundsEntry{}
 		if _, err := migFundsEntry.Deserialize(migFundEntryBytes, iotago.DeSeriModePerformValidation); err != nil {
 			panic(err)
@@ -227,9 +228,9 @@ func RandReceipt() (*iotago.Receipt, []byte) {
 	randTreasuryTx, randTreasuryTxBytes := RandTreasuryTransaction()
 	receipt.Transaction = randTreasuryTx
 
-	must(binary.Write(&b, binary.LittleEndian, uint32(len(randTreasuryTxBytes))))
+	Must(binary.Write(&b, binary.LittleEndian, uint32(len(randTreasuryTxBytes))))
 	if _, err := b.Write(randTreasuryTxBytes); err != nil {
-		must(err)
+		Must(err)
 	}
 
 	return receipt, b.Bytes()
@@ -272,10 +273,10 @@ func RandMilestone(parents iotago.MessageIDs) (*iotago.Milestone, []byte) {
 	}
 
 	var b bytes.Buffer
-	must(binary.Write(&b, binary.LittleEndian, iotago.MilestonePayloadTypeID))
-	must(binary.Write(&b, binary.LittleEndian, msPayload.Index))
-	must(binary.Write(&b, binary.LittleEndian, msPayload.Timestamp))
-	must(binary.Write(&b, binary.LittleEndian, byte(len(msPayload.Parents))))
+	Must(binary.Write(&b, binary.LittleEndian, iotago.MilestonePayloadTypeID))
+	Must(binary.Write(&b, binary.LittleEndian, msPayload.Index))
+	Must(binary.Write(&b, binary.LittleEndian, msPayload.Timestamp))
+	Must(binary.Write(&b, binary.LittleEndian, byte(len(msPayload.Parents))))
 	for _, parent := range msPayload.Parents {
 		if _, err := b.Write(parent[:]); err != nil {
 			panic(err)
@@ -285,17 +286,17 @@ func RandMilestone(parents iotago.MessageIDs) (*iotago.Milestone, []byte) {
 		panic(err)
 	}
 
-	must(binary.Write(&b, binary.LittleEndian, msPayload.NextPoWScore))
-	must(binary.Write(&b, binary.LittleEndian, msPayload.NextPoWScoreMilestoneIndex))
+	Must(binary.Write(&b, binary.LittleEndian, msPayload.NextPoWScore))
+	Must(binary.Write(&b, binary.LittleEndian, msPayload.NextPoWScoreMilestoneIndex))
 
-	must(b.WriteByte(sigsCount))
+	Must(b.WriteByte(sigsCount))
 	for _, pubKey := range msPayload.PublicKeys {
 		if _, err := b.Write(pubKey[:]); err != nil {
 			panic(err)
 		}
 	}
-	must(binary.Write(&b, binary.LittleEndian, uint32(0)))
-	must(b.WriteByte(sigsCount))
+	Must(binary.Write(&b, binary.LittleEndian, uint32(0)))
+	Must(b.WriteByte(sigsCount))
 	for _, sig := range msPayload.Signatures {
 		if _, err := b.Write(sig[:]); err != nil {
 			panic(err)
@@ -327,16 +328,16 @@ func RandIndexation(dataLength ...int) (*iotago.Indexation, []byte) {
 	indexationPayload := &iotago.Indexation{Index: []byte(index), Data: data}
 
 	var b bytes.Buffer
-	must(binary.Write(&b, binary.LittleEndian, iotago.IndexationPayloadTypeID))
+	Must(binary.Write(&b, binary.LittleEndian, iotago.IndexationPayloadTypeID))
 
 	strLen := uint16(len(index))
-	must(binary.Write(&b, binary.LittleEndian, strLen))
+	Must(binary.Write(&b, binary.LittleEndian, strLen))
 
 	if _, err := b.Write([]byte(index)); err != nil {
 		panic(err)
 	}
 
-	must(binary.Write(&b, binary.LittleEndian, uint32(len(indexationPayload.Data))))
+	Must(binary.Write(&b, binary.LittleEndian, uint32(len(indexationPayload.Data))))
 	if _, err := b.Write(indexationPayload.Data); err != nil {
 		panic(err)
 	}
@@ -367,8 +368,8 @@ func RandMessage(withPayloadType uint32) (*iotago.Message, []byte) {
 	m.Parents = parents
 
 	var b bytes.Buffer
-	must(binary.Write(&b, binary.LittleEndian, m.NetworkID))
-	must(binary.Write(&b, binary.LittleEndian, byte(len(m.Parents))))
+	Must(binary.Write(&b, binary.LittleEndian, m.NetworkID))
+	Must(binary.Write(&b, binary.LittleEndian, byte(len(m.Parents))))
 
 	for _, parent := range m.Parents {
 		if _, err := b.Write(parent[:]); err != nil {
@@ -379,15 +380,15 @@ func RandMessage(withPayloadType uint32) (*iotago.Message, []byte) {
 	switch {
 	case payload == nil:
 		// zero length payload
-		must(binary.Write(&b, binary.LittleEndian, uint32(0)))
+		Must(binary.Write(&b, binary.LittleEndian, uint32(0)))
 	default:
-		must(binary.Write(&b, binary.LittleEndian, uint32(len(payloadData))))
+		Must(binary.Write(&b, binary.LittleEndian, uint32(len(payloadData))))
 		if _, err := b.Write(payloadData); err != nil {
 			panic(err)
 		}
 	}
 
-	must(binary.Write(&b, binary.LittleEndian, m.Nonce))
+	Must(binary.Write(&b, binary.LittleEndian, m.Nonce))
 
 	return m, b.Bytes()
 }
@@ -395,20 +396,20 @@ func RandMessage(withPayloadType uint32) (*iotago.Message, []byte) {
 // RandTransaction returns a random transaction.
 func RandTransaction() (*iotago.Transaction, []byte) {
 	var buf bytes.Buffer
-	must(binary.Write(&buf, binary.LittleEndian, iotago.TransactionPayloadTypeID))
+	Must(binary.Write(&buf, binary.LittleEndian, iotago.TransactionPayloadTypeID))
 
 	sigTxPayload := &iotago.Transaction{}
 	unTx, unTxData := RandTransactionEssence()
 	_, err := buf.Write(unTxData)
-	must(err)
+	Must(err)
 	sigTxPayload.Essence = unTx
 
 	unlockBlocksCount := len(unTx.Inputs)
-	must(binary.Write(&buf, binary.LittleEndian, uint16(unlockBlocksCount)))
+	Must(binary.Write(&buf, binary.LittleEndian, uint16(unlockBlocksCount)))
 	for i := unlockBlocksCount; i > 0; i-- {
 		unlockBlock, unlockBlockData := RandEd25519SignatureUnlockBlock()
 		_, err := buf.Write(unlockBlockData)
-		must(err)
+		Must(err)
 		sigTxPayload.UnlockBlocks = append(sigTxPayload.UnlockBlocks, unlockBlock)
 	}
 
@@ -447,8 +448,8 @@ func RandTreasuryOutput() (*iotago.TreasuryOutput, []byte) {
 	var b bytes.Buffer
 
 	deposit := rand.Uint64()
-	must(binary.Write(&b, binary.LittleEndian, iotago.OutputTreasuryOutput))
-	must(binary.Write(&b, binary.LittleEndian, deposit))
+	Must(binary.Write(&b, binary.LittleEndian, iotago.OutputTreasuryOutput))
+	Must(binary.Write(&b, binary.LittleEndian, deposit))
 
 	return &iotago.TreasuryOutput{Amount: deposit}, b.Bytes()
 }
@@ -459,11 +460,11 @@ func RandTreasuryTransaction() (*iotago.TreasuryTransaction, []byte) {
 
 	treasuryInput, treasuryInputBytes := RandTreasuryInput()
 	treasuryOutput, treasuryOutputBytes := RandTreasuryOutput()
-	must(binary.Write(&b, binary.LittleEndian, iotago.TreasuryTransactionPayloadTypeID))
+	Must(binary.Write(&b, binary.LittleEndian, iotago.TreasuryTransactionPayloadTypeID))
 	_, err := b.Write(treasuryInputBytes)
-	must(err)
+	Must(err)
 	_, err = b.Write(treasuryOutputBytes)
-	must(err)
+	Must(err)
 	return &iotago.TreasuryTransaction{
 		Input:  treasuryInput,
 		Output: treasuryOutput,
@@ -473,7 +474,7 @@ func RandTreasuryTransaction() (*iotago.TreasuryTransaction, []byte) {
 // RandSigLockedSingleOutput returns a random signature locked single output.
 func RandSigLockedSingleOutput(addrType iotago.AddressType) (*iotago.SigLockedSingleOutput, []byte) {
 	var buf bytes.Buffer
-	must(buf.WriteByte(iotago.OutputSigLockedSingleOutput))
+	Must(buf.WriteByte(iotago.OutputSigLockedSingleOutput))
 
 	dep := &iotago.SigLockedSingleOutput{}
 
@@ -486,16 +487,17 @@ func RandSigLockedSingleOutput(addrType iotago.AddressType) (*iotago.SigLockedSi
 	}
 
 	_, err := buf.Write(addrData)
-	must(err)
+	Must(err)
 
 	amount := uint64(rand.Intn(10000))
-	must(binary.Write(&buf, binary.LittleEndian, amount))
+	Must(binary.Write(&buf, binary.LittleEndian, amount))
 	dep.Amount = amount
 
 	return dep, buf.Bytes()
 }
 
-func oneInputOutputTransaction() *iotago.Transaction {
+// OneInputOutputTransaction generates a random transaction with one input and output.
+func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
 			Inputs: []iotago.Serializable{

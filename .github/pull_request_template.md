@@ -1,6 +1,7 @@
 # Description of change
 
-Please write a summary of your changes and why you made them. Be sure to reference any related issues by adding `fixes # (issue)`.
+Please write a summary of your changes and why you made them. Be sure to reference any related issues by
+adding `fixes # (issue)`.
 
 ## Type of change
 
