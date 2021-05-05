@@ -19,7 +19,7 @@
     <a href="https://goreportcard.com/report/github.com/iotaledger/iota.go" style="text-decoration:none;"><img src="https://goreportcard.com/badge/github.com/iotaledger/iota.go" alt="Code quality"></a>
     <a href="https://travis-ci.org/iotaledger/iota.go" style="text-decoration:none;"><img src="https://travis-ci.org/iotaledger/iota.go.svg?branch=master" alt="Build status"></a>
 </p>
-      
+
 <p align="center">
   <a href="#about">About</a> ◈
   <a href="#prerequisites">Prerequisites</a> ◈
@@ -37,8 +37,8 @@
 
 This is the **official** Go client library for Chrysalis Phase 2.
 
-This is beta software, so there may be performance and stability issues.
-Please report any issues in our [issue tracker](https://github.com/iotaledger/iota.go/issues/new).
+This is beta software, so there may be performance and stability issues. Please report any issues in
+our [issue tracker](https://github.com/iotaledger/iota.go/issues/new).
 
 ## Prerequisites
 
@@ -51,7 +51,7 @@ Please report any issues in our [issue tracker](https://github.com/iotaledger/io
 ## Getting started
 
 -
-	
+
 ## Examples
 
 -
@@ -76,4 +76,6 @@ See the [contributing guidelines](.github/CONTRIBUTING.md) for more information.
 
 ## Joining the discussion
 
-If you want to get involved in the community, need help with getting setup, have any issues related with the library or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord](https://discord.iota.org/).
+If you want to get involved in the community, need help with getting setup, have any issues related with the library or
+just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join
+our [Discord](https://discord.iota.org/).

@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -22,11 +23,11 @@ func TestSignatureUnlockBlock_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			edSigBlock, edSigBlockData := randEd25519SignatureUnlockBlock()
+			edSigBlock, edSigBlockData := tpkg.RandEd25519SignatureUnlockBlock()
 			return test{"ok", edSigBlockData, edSigBlock, nil}
 		}(),
 		func() test {
-			edSigBlock, edSigBlockData := randEd25519SignatureUnlockBlock()
+			edSigBlock, edSigBlockData := tpkg.RandEd25519SignatureUnlockBlock()
 			return test{"not enough data", edSigBlockData[:5], edSigBlock, iotago.ErrDeserializationNotEnoughData}
 		}(),
 	}
@@ -54,7 +55,7 @@ func TestUnlockBlockSignature_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			edSigBlock, edSigBlockData := randEd25519SignatureUnlockBlock()
+			edSigBlock, edSigBlockData := tpkg.RandEd25519SignatureUnlockBlock()
 			return test{"ok", edSigBlock, edSigBlockData}
 		}(),
 	}
@@ -76,7 +77,7 @@ func TestReferenceUnlockBlock_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			refBlock, refBlockData := randReferenceUnlockBlock()
+			refBlock, refBlockData := tpkg.RandReferenceUnlockBlock()
 			return test{"ok", refBlockData, refBlock, nil}
 		}(),
 	}
@@ -104,7 +105,7 @@ func TestUnlockBlockReference_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			refBlock, refBlockData := randReferenceUnlockBlock()
+			refBlock, refBlockData := tpkg.RandReferenceUnlockBlock()
 			return test{"ok", refBlock, refBlockData}
 		}(),
 	}
@@ -131,11 +132,11 @@ func TestUnlockBlockValidatorFunc(t *testing.T) {
 			"ok",
 			args{inputs: []iotago.Serializable{
 				func() iotago.Serializable {
-					block, _ := randEd25519SignatureUnlockBlock()
+					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
 				func() iotago.Serializable {
-					block, _ := randEd25519SignatureUnlockBlock()
+					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
 				func() iotago.Serializable {
@@ -164,11 +165,11 @@ func TestUnlockBlockValidatorFunc(t *testing.T) {
 			"invalid ref",
 			args{inputs: []iotago.Serializable{
 				func() iotago.Serializable {
-					block, _ := randEd25519SignatureUnlockBlock()
+					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
 				func() iotago.Serializable {
-					block, _ := randEd25519SignatureUnlockBlock()
+					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
 				func() iotago.Serializable {

@@ -1,7 +1,5 @@
 ---
-name: Report a bug in the Go client library
-about: Report a bug
-labels: bug
+name: Report a bug in the Go client library about: Report a bug labels: bug
 
 ---
 
@@ -21,9 +19,9 @@ What hardware are you using?
 
 Explain how the maintainer can reproduce the bug.
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Expected behaviour
 

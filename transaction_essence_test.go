@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -22,7 +23,7 @@ func TestTransactionEssence_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			unTx, unTxData := randTransactionEssence()
+			unTx, unTxData := tpkg.RandTransactionEssence()
 			return test{"ok", unTxData, unTx, nil}
 		}(),
 	}
@@ -50,7 +51,7 @@ func TestTransactionEssence_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			unTx, unTxData := randTransactionEssence()
+			unTx, unTxData := tpkg.RandTransactionEssence()
 			return test{"ok", unTx, unTxData}
 		}(),
 	}

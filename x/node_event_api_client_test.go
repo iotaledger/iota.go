@@ -1,7 +1,9 @@
-package iotago_test
+package iotagox_test
 
 import (
 	"context"
+	"github.com/iotaledger/iota.go/v2/tpkg"
+	"github.com/iotaledger/iota.go/v2/x"
 	"testing"
 	"time"
 
@@ -11,11 +13,11 @@ import (
 )
 
 func TestNewNodeEventAPIClient(t *testing.T) {
-	_, originMsgBytes := randMessage(iotago.IndexationPayloadTypeID)
+	_, originMsgBytes := tpkg.RandMessage(iotago.IndexationPayloadTypeID)
 	mock := &mockMqttClient{payload: originMsgBytes}
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
-	eventAPIClient := &iotago.NodeEventAPIClient{
+	eventAPIClient := &iotagox.NodeEventAPIClient{
 		MQTTClient: mock,
 		Errors:     make(chan error),
 	}

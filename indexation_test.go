@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -17,7 +18,7 @@ func TestIndexation_Deserialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			indexationPayload, indexationPayloadData := randIndexation()
+			indexationPayload, indexationPayloadData := tpkg.RandIndexation()
 			return test{"ok", indexationPayloadData, indexationPayload, nil}
 		}(),
 	}
@@ -45,7 +46,7 @@ func TestIndexation_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			indexationPayload, indexationPayloadData := randIndexation()
+			indexationPayload, indexationPayloadData := tpkg.RandIndexation()
 			return test{"ok", indexationPayload, indexationPayloadData}
 		}(),
 	}
