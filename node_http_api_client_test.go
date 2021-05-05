@@ -302,6 +302,7 @@ func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 		Address:     ed25519AddrHex,
 		Balance:     13371337,
 		DustAllowed: false,
+		LedgerIndex: 1337,
 	}
 
 	gock.New(nodeAPIUrl).
@@ -333,6 +334,7 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 			iotago.OutputIDHex(hex.EncodeToString(output1[:])),
 			iotago.OutputIDHex(hex.EncodeToString(output2[:])),
 		},
+		LedgerIndex: 1337,
 	}
 
 	originResWithUnspent := &iotago.AddressOutputsResponse{
