@@ -638,7 +638,7 @@ type AddressOutputsResponse struct {
 	Count uint32 `json:"count"`
 	// The output IDs (transaction ID + output index) of the outputs on this address.
 	OutputIDs []OutputIDHex `json:"outputIDs"`
-	// The ledger index at which this balance was queried at.
+	// The ledger index at which these outputs where available at.
 	LedgerIndex uint64 `json:"ledgerIndex"`
 }
 
