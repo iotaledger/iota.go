@@ -65,12 +65,12 @@ func (mb *MessageBuilder) Payload(seri Serializable) *MessageBuilder {
 }
 
 // Tips uses the given NodeHTTPAPIClient to query for parents to use.
-func (mb *MessageBuilder) Tips(nodeAPI *NodeHTTPAPIClient) *MessageBuilder {
+func (mb *MessageBuilder) Tips(ctx context.Context, nodeAPI *NodeHTTPAPIClient) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
 
-	res, err := nodeAPI.Tips()
+	res, err := nodeAPI.Tips(ctx)
 	if err != nil {
 		mb.err = fmt.Errorf("unable to fetch tips from node API: %w", err)
 		return mb
