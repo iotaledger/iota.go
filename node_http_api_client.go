@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -257,7 +258,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 	return fmt.Errorf("%w: url %s, error message: %s", err, res.Request.URL.String(), errRes.Error.Message)
 }
 
-func (api *NodeHTTPAPIClient) Do(method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
+func (api *NodeHTTPAPIClient) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
 	// marshal request object
 	var data []byte
 	var raw bool
@@ -277,7 +278,7 @@ func (api *NodeHTTPAPIClient) Do(method string, route string, reqObj interface{}
 	}
 
 	// construct request
-	req, err := http.NewRequest(method, fmt.Sprintf("%s%s", api.BaseURL, route), func() io.Reader {
+	req, err := http.NewRequestWithContext(ctx, method, fmt.Sprintf("%s%s", api.BaseURL, route), func() io.Reader {
 		if data == nil {
 			return nil
 		}
@@ -314,8 +315,8 @@ func (api *NodeHTTPAPIClient) Do(method string, route string, reqObj interface{}
 }
 
 // Health returns whether the given node is healthy.
-func (api *NodeHTTPAPIClient) Health() (bool, error) {
-	res, err := api.Do(http.MethodGet, NodeAPIRouteHealth, nil, nil)
+func (api *NodeHTTPAPIClient) Health(ctx context.Context) (bool, error) {
+	res, err := api.Do(ctx, http.MethodGet, NodeAPIRouteHealth, nil, nil)
 	if err != nil {
 		return false, err
 	}
@@ -358,9 +359,9 @@ type NodeInfoResponse struct {
 }
 
 // Info gets the info of the node.
-func (api *NodeHTTPAPIClient) Info() (*NodeInfoResponse, error) {
+func (api *NodeHTTPAPIClient) Info(ctx context.Context) (*NodeInfoResponse, error) {
 	res := &NodeInfoResponse{}
-	_, err := api.Do(http.MethodGet, NodeAPIRouteInfo, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, NodeAPIRouteInfo, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -387,9 +388,9 @@ func (ntr *NodeTipsResponse) Tips() (MessageIDs, error) {
 }
 
 // Tips gets the two tips from the node.
-func (api *NodeHTTPAPIClient) Tips() (*NodeTipsResponse, error) {
+func (api *NodeHTTPAPIClient) Tips(ctx context.Context) (*NodeTipsResponse, error) {
 	res := &NodeTipsResponse{}
-	_, err := api.Do(http.MethodGet, NodeAPIRouteTips, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, NodeAPIRouteTips, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +400,7 @@ func (api *NodeHTTPAPIClient) Tips() (*NodeTipsResponse, error) {
 // SubmitMessage submits the given Message to the node.
 // The node will take care of filling missing information.
 // This function returns the finalized message created by the node.
-func (api *NodeHTTPAPIClient) SubmitMessage(m *Message) (*Message, error) {
+func (api *NodeHTTPAPIClient) SubmitMessage(ctx context.Context, m *Message) (*Message, error) {
 	// Do not check the message because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the message afterwards.
@@ -409,7 +410,7 @@ func (api *NodeHTTPAPIClient) SubmitMessage(m *Message) (*Message, error) {
 	}
 
 	req := &RawDataEnvelope{Data: data}
-	res, err := api.Do(http.MethodPost, NodeAPIRouteMessages, req, nil)
+	res, err := api.Do(ctx, http.MethodPost, NodeAPIRouteMessages, req, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +420,7 @@ func (api *NodeHTTPAPIClient) SubmitMessage(m *Message) (*Message, error) {
 		return nil, err
 	}
 
-	msg, err := api.MessageByMessageID(messageID)
+	msg, err := api.MessageByMessageID(ctx, messageID)
 	if err != nil {
 		return nil, err
 	}
@@ -440,14 +441,14 @@ type MessageIDsByIndexResponse struct {
 }
 
 // MessageIDsByIndex gets message IDs filtered by index from the node.
-func (api *NodeHTTPAPIClient) MessageIDsByIndex(index []byte) (*MessageIDsByIndexResponse, error) {
+func (api *NodeHTTPAPIClient) MessageIDsByIndex(ctx context.Context, index []byte) (*MessageIDsByIndexResponse, error) {
 	var query strings.Builder
 	query.WriteString(NodeAPIRouteMessages)
 	query.WriteString("?index=")
 	query.WriteString(hex.EncodeToString(index))
 
 	res := &MessageIDsByIndexResponse{}
-	_, err := api.Do(http.MethodGet, query.String(), nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query.String(), nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -478,11 +479,11 @@ type MessageMetadataResponse struct {
 }
 
 // MessageMetadataByMessageID gets the metadata of a message by its message ID from the node.
-func (api *NodeHTTPAPIClient) MessageMetadataByMessageID(msgID MessageID) (*MessageMetadataResponse, error) {
+func (api *NodeHTTPAPIClient) MessageMetadataByMessageID(ctx context.Context, msgID MessageID) (*MessageMetadataResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageMetadata, hex.EncodeToString(msgID[:]))
 
 	res := &MessageMetadataResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -491,11 +492,11 @@ func (api *NodeHTTPAPIClient) MessageMetadataByMessageID(msgID MessageID) (*Mess
 }
 
 // MessageByMessageID get a message by its message ID from the node.
-func (api *NodeHTTPAPIClient) MessageByMessageID(msgID MessageID) (*Message, error) {
+func (api *NodeHTTPAPIClient) MessageByMessageID(ctx context.Context, msgID MessageID) (*Message, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageBytes, hex.EncodeToString(msgID[:]))
 
 	res := &RawDataEnvelope{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -521,11 +522,11 @@ type ChildrenResponse struct {
 }
 
 // ChildrenByMessageID get a message by its message ID from the node.
-func (api *NodeHTTPAPIClient) ChildrenByMessageID(msgID MessageID) (*ChildrenResponse, error) {
+func (api *NodeHTTPAPIClient) ChildrenByMessageID(ctx context.Context, msgID MessageID) (*ChildrenResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageChildren, hex.EncodeToString(msgID[:]))
 
 	res := &ChildrenResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -576,11 +577,11 @@ func (nor *NodeOutputResponse) Output() (Output, error) {
 }
 
 // OutputByID gets an outputs by its ID from the node.
-func (api *NodeHTTPAPIClient) OutputByID(utxoID UTXOInputID) (*NodeOutputResponse, error) {
+func (api *NodeHTTPAPIClient) OutputByID(ctx context.Context, utxoID UTXOInputID) (*NodeOutputResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteOutput, utxoID.ToHex())
 
 	res := &NodeOutputResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -602,11 +603,11 @@ type AddressBalanceResponse struct {
 }
 
 // BalanceByBech32Address returns the balance of the given Bech32 address.
-func (api *NodeHTTPAPIClient) BalanceByBech32Address(bech32Addr string) (*AddressBalanceResponse, error) {
+func (api *NodeHTTPAPIClient) BalanceByBech32Address(ctx context.Context, bech32Addr string) (*AddressBalanceResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressBech32Balance, bech32Addr)
 
 	res := &AddressBalanceResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -614,11 +615,11 @@ func (api *NodeHTTPAPIClient) BalanceByBech32Address(bech32Addr string) (*Addres
 }
 
 // BalanceByEd25519Address returns the balance of an Ed25519 address.
-func (api *NodeHTTPAPIClient) BalanceByEd25519Address(addr *Ed25519Address) (*AddressBalanceResponse, error) {
+func (api *NodeHTTPAPIClient) BalanceByEd25519Address(ctx context.Context, addr *Ed25519Address) (*AddressBalanceResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Balance, addr.String())
 
 	res := &AddressBalanceResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -644,14 +645,14 @@ type AddressOutputsResponse struct {
 
 // OutputIDsByBech32Address gets output IDs of outputs residing on the given Bech32 address.
 // Per default only unspent outputs IDs are returned. Set includeSpentOutputs to true to also return spent output IDs.
-func (api *NodeHTTPAPIClient) OutputIDsByBech32Address(bech32Addr string, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
+func (api *NodeHTTPAPIClient) OutputIDsByBech32Address(ctx context.Context, bech32Addr string, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressBech32Outputs, bech32Addr)
 	if includeSpentOutputs {
 		query += "?include-spent=true"
 	}
 
 	res := &AddressOutputsResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -661,25 +662,25 @@ func (api *NodeHTTPAPIClient) OutputIDsByBech32Address(bech32Addr string, includ
 
 // OutputsByBech32Address gets the outputs residing on the given Bech32 address.
 // Per default only unspent outputs are returned. Set includeSpentOutputs to true to also return spent outputs.
-func (api *NodeHTTPAPIClient) OutputsByBech32Address(bech32Addr string, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
-	res, err := api.OutputIDsByBech32Address(bech32Addr, includeSpentOutputs)
+func (api *NodeHTTPAPIClient) OutputsByBech32Address(ctx context.Context, bech32Addr string, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
+	res, err := api.OutputIDsByBech32Address(ctx, bech32Addr, includeSpentOutputs)
 	if err != nil {
-		return  nil, nil, err
+		return nil, nil, err
 	}
 
-	return api.outputIDsToOutputs(res)
+	return api.outputIDsToOutputs(ctx, res)
 }
 
 // OutputIDsByEd25519Address gets output IDs of outputs residing on the given Ed25519Address.
 // Per default only unspent output IDs are returned. Set includeSpentOutputs to true to also return spent output IDs.
-func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
+func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(ctx context.Context, addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, addr.String())
 	if includeSpentOutputs {
 		query += "?include-spent=true"
 	}
 
 	res := &AddressOutputsResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -689,17 +690,17 @@ func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(addr *Ed25519Address, in
 
 // OutputsByEd25519Address gets the outputs residing on the given Ed25519Address.
 // Per default only unspent outputs are returned. Set includeSpentOutputs to true to also return spent outputs.
-func (api *NodeHTTPAPIClient) OutputsByEd25519Address(addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
-	res, err := api.OutputIDsByEd25519Address(addr, includeSpentOutputs)
+func (api *NodeHTTPAPIClient) OutputsByEd25519Address(ctx context.Context, addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
+	res, err := api.OutputIDsByEd25519Address(ctx, addr, includeSpentOutputs)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return api.outputIDsToOutputs(res)
+	return api.outputIDsToOutputs(ctx, res)
 }
 
 // queries the actual outputs given an AddressOutputsResponse.
-func (api *NodeHTTPAPIClient) outputIDsToOutputs(res *AddressOutputsResponse) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
+func (api *NodeHTTPAPIClient) outputIDsToOutputs(ctx context.Context, res *AddressOutputsResponse) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
 	outputs := make(map[*UTXOInput]Output)
 	for _, outputIDHex := range res.OutputIDs {
 		utxoInput, err := outputIDHex.AsUTXOInput()
@@ -707,7 +708,7 @@ func (api *NodeHTTPAPIClient) outputIDsToOutputs(res *AddressOutputsResponse) (*
 			return nil, nil, err
 		}
 
-		outputRes, err := api.OutputByID(utxoInput.ID())
+		outputRes, err := api.OutputByID(ctx, utxoInput.ID())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -729,9 +730,9 @@ type TreasuryResponse struct {
 }
 
 // Treasury gets the current treasury.
-func (api *NodeHTTPAPIClient) Treasury() (*TreasuryResponse, error) {
+func (api *NodeHTTPAPIClient) Treasury(ctx context.Context) (*TreasuryResponse, error) {
 	res := &TreasuryResponse{}
-	_, err := api.Do(http.MethodGet, NodeAPIRouteTreasury, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, NodeAPIRouteTreasury, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -751,9 +752,9 @@ type ReceiptTuple struct {
 }
 
 // Receipts gets all receipts persisted on the node.
-func (api *NodeHTTPAPIClient) Receipts() ([]*ReceiptTuple, error) {
+func (api *NodeHTTPAPIClient) Receipts(ctx context.Context) ([]*ReceiptTuple, error) {
 	res := &ReceiptsResponse{}
-	_, err := api.Do(http.MethodGet, NodeAPIRouteReceipts, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, NodeAPIRouteReceipts, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -762,11 +763,11 @@ func (api *NodeHTTPAPIClient) Receipts() ([]*ReceiptTuple, error) {
 }
 
 // ReceiptsByMigratedAtIndex gets all receipts for the given migrated at index persisted on the node.
-func (api *NodeHTTPAPIClient) ReceiptsByMigratedAtIndex(index uint32) ([]*ReceiptTuple, error) {
+func (api *NodeHTTPAPIClient) ReceiptsByMigratedAtIndex(ctx context.Context, index uint32) ([]*ReceiptTuple, error) {
 	query := fmt.Sprintf(NodeAPIRouteReceiptsByMigratedAtIndex, strconv.FormatUint(uint64(index), 10))
 
 	res := &ReceiptsResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -785,11 +786,11 @@ type MilestoneResponse struct {
 }
 
 // MilestoneByIndex gets a milestone by its index.
-func (api *NodeHTTPAPIClient) MilestoneByIndex(index uint32) (*MilestoneResponse, error) {
+func (api *NodeHTTPAPIClient) MilestoneByIndex(ctx context.Context, index uint32) (*MilestoneResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMilestone, strconv.FormatUint(uint64(index), 10))
 
 	res := &MilestoneResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -808,11 +809,11 @@ type MilestoneUTXOChangesResponse struct {
 }
 
 // MilestoneUTXOChangesByIndex returns all UTXO changes of a milestone by its milestoneIndex.
-func (api *NodeHTTPAPIClient) MilestoneUTXOChangesByIndex(index uint32) (*MilestoneUTXOChangesResponse, error) {
+func (api *NodeHTTPAPIClient) MilestoneUTXOChangesByIndex(ctx context.Context, index uint32) (*MilestoneUTXOChangesResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMilestoneUTXOChanges, strconv.FormatUint(uint64(index), 10))
 
 	res := &MilestoneUTXOChangesResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -898,11 +899,11 @@ type PeerGossipMetrics struct {
 }
 
 // PeerByID gets a peer by its identifier.
-func (api *NodeHTTPAPIClient) PeerByID(id string) (*PeerResponse, error) {
+func (api *NodeHTTPAPIClient) PeerByID(ctx context.Context, id string) (*PeerResponse, error) {
 	query := fmt.Sprintf(NodeAPIRoutePeer, id)
 
 	res := &PeerResponse{}
-	_, err := api.Do(http.MethodGet, query, nil, res)
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
 	if err != nil {
 		return nil, err
 	}
@@ -911,10 +912,10 @@ func (api *NodeHTTPAPIClient) PeerByID(id string) (*PeerResponse, error) {
 }
 
 // RemovePeerByID removes a peer by its identifier.
-func (api *NodeHTTPAPIClient) RemovePeerByID(id string) error {
+func (api *NodeHTTPAPIClient) RemovePeerByID(ctx context.Context, id string) error {
 	query := fmt.Sprintf(NodeAPIRoutePeer, id)
 
-	_, err := api.Do(http.MethodDelete, query, nil, nil)
+	_, err := api.Do(ctx, http.MethodDelete, query, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -923,9 +924,9 @@ func (api *NodeHTTPAPIClient) RemovePeerByID(id string) error {
 }
 
 // Peers returns a list of all peers.
-func (api *NodeHTTPAPIClient) Peers() ([]*PeerResponse, error) {
+func (api *NodeHTTPAPIClient) Peers(ctx context.Context) ([]*PeerResponse, error) {
 	res := []*PeerResponse{}
-	_, err := api.Do(http.MethodGet, NodeAPIRoutePeers, nil, &res)
+	_, err := api.Do(ctx, http.MethodGet, NodeAPIRoutePeers, nil, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -934,7 +935,7 @@ func (api *NodeHTTPAPIClient) Peers() ([]*PeerResponse, error) {
 }
 
 // AddPeer adds a new peer by libp2p multi address with optional alias.
-func (api *NodeHTTPAPIClient) AddPeer(multiAddress string, alias ...string) (*PeerResponse, error) {
+func (api *NodeHTTPAPIClient) AddPeer(ctx context.Context, multiAddress string, alias ...string) (*PeerResponse, error) {
 	req := &AddPeerRequest{
 		MultiAddress: multiAddress,
 	}
@@ -944,7 +945,7 @@ func (api *NodeHTTPAPIClient) AddPeer(multiAddress string, alias ...string) (*Pe
 	}
 
 	res := &PeerResponse{}
-	_, err := api.Do(http.MethodPost, NodeAPIRoutePeers, req, res)
+	_, err := api.Do(ctx, http.MethodPost, NodeAPIRoutePeers, req, res)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"context"
 	"errors"
 	"fmt"
 )
@@ -53,14 +54,14 @@ type TransactionBuilderInputFilter func(utxoInput *UTXOInput, input Output) bool
 // AddInputsViaNodeQuery adds any unspent outputs by the given address as an input to the built transaction
 // if it passes the filter function. It is the caller's job to ensure that the limit of returned outputs on the queried
 // node is enough high for the application's purpose. filter can be nil.
-func (b *TransactionBuilder) AddInputsViaNodeQuery(addr Address, nodeHTTPAPIClient *NodeHTTPAPIClient, filter TransactionBuilderInputFilter) *TransactionBuilder {
+func (b *TransactionBuilder) AddInputsViaNodeQuery(ctx context.Context, addr Address, nodeHTTPAPIClient *NodeHTTPAPIClient, filter TransactionBuilderInputFilter) *TransactionBuilder {
 	switch x := addr.(type) {
 	case *Ed25519Address:
 	default:
 		b.occurredBuildErr = fmt.Errorf("%w: auto. inputs via node query only supports Ed25519Address but got %T", ErrTransactionBuilderUnsupportedAddress, x)
 	}
 
-	_, unspentOutputs, err := nodeHTTPAPIClient.OutputsByEd25519Address(addr.(*Ed25519Address), false)
+	_, unspentOutputs, err := nodeHTTPAPIClient.OutputsByEd25519Address(ctx, addr.(*Ed25519Address), false)
 	if err != nil {
 		b.occurredBuildErr = err
 		return b
