@@ -1,81 +1,43 @@
-<h1 align="center">
-  <br>
-  <a href="https://docs.iota.org/docs/client-libraries/0.1/getting-started/go-quickstart"><img src="iota-go.png"></a>
-</h1>
+# iota.go
 
-<h2 align="center">The official Go client library for interacting with the Tangle</h2>
+Official Go library.
 
-<p align="center">
-    <a href="https://docs.iota.org/docs/client-libraries/0.1/getting-started/go-quickstart" style="text-decoration:none;">
-    <img src="https://img.shields.io/badge/Documentation%20portal-blue.svg?style=for-the-badge"
-         alt="Developer documentation portal">
-      </p>
-<p align="center">
-	<a href="https://godoc.org/github.com/iotaledger/iota.go" style="text-decoration:none;"><img src="https://godoc.org/github.com/iotaledger/iota.go?status.svg" alt="Auto-generated docs"></a>
-	<a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/badge/Discord-9cf.svg?logo=discord" alt="Discord"></a>
-    <a href="https://iota.stackexchange.com/" style="text-decoration:none;"><img src="https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange" alt="StackExchange"></a>
-    <a href="https://raw.githubusercontent.com/iotaledger/iota.go/master/LICENSE" style="text-decoration:none;"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT license"></a>
-    <a href="https://docs.iota.org/docs/node-software/0.1/iri/references/api-reference" style="text-decoration:none;"><img src="https://img.shields.io/badge/Node%20API%20coverage-17/18%20commands-green.svg" alt="Supported IRI API endpoints"></a>
-    <a href="https://goreportcard.com/report/github.com/iotaledger/iota.go" style="text-decoration:none;"><img src="https://goreportcard.com/badge/github.com/iotaledger/iota.go" alt="Code quality"></a>
-    <a href="https://travis-ci.org/iotaledger/iota.go" style="text-decoration:none;"><img src="https://travis-ci.org/iotaledger/iota.go.svg?branch=master" alt="Build status"></a>
-</p>
+This library allows you to do the following:
 
-<p align="center">
-  <a href="#about">About</a> ◈
-  <a href="#prerequisites">Prerequisites</a> ◈
-  <a href="#installation">Installation</a> ◈
-  <a href="#getting-started">Getting started</a> ◈
-  <a href="#api-reference">API reference</a> ◈
-  <a href="#examples">Examples</a> ◈
-  <a href="#supporting-the-project">Supporting the project</a> ◈
-  <a href="#joining-the-discussion">Joining the discussion</a> 
-</p>
+- Create messages with indexation and transaction payloads
+- Get messages and outputs
+- Sign transactions
+- Generate addresses
+- Interact with an IOTA node
+- Act as a foundation for Go based node software
 
----
+If you need to have more sophisticated account management, have a look
+at [wallet.rs](https://github.com/iotaledger/wallet.rs) for which we also provide bindings in Python and JavaScript.
 
-## About
+## Requirements
 
-This is the **official** Go client library for Chrysalis Phase 2.
+> This library was mainly tested with Go version 1.16.x
 
-This is beta software, so there may be performance and stability issues. Please report any issues in
-our [issue tracker](https://github.com/iotaledger/iota.go/issues/new).
+To use the library, we recommend you update Go [to the latest stable version](https://golang.org/).
 
-## Prerequisites
+## Using the library
 
--
+Using the library is easy, just `go get` it as any other dependency:
 
-## Installation
+```bash
+go get github.com/iotaledger/iota.go/v2
+```
 
--
+## API reference
 
-## Getting started
-
--
-
-## Examples
-
--
-
-### Native code and PoW
-
--
-
-## Supporting the project
-
--
-
-See the [contributing guidelines](.github/CONTRIBUTING.md) for more information.
-
-### Writing tests
-
--
-
-### Writing documentation and example code
-
--
+You can read the API reference [here](https://pkg.go.dev/github.com/iotaledger/iota.go/v2).
 
 ## Joining the discussion
 
-If you want to get involved in the community, need help with getting setup, have any issues related with the library or
-just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join
-our [Discord](https://discord.iota.org/).
+If you want to get involved in the community, need help with setting up, have any issues or just want to discuss IOTA
+with other people, feel free to join our [Discord](https://discord.iota.org/) in the `#clients-dev`
+and `#clients-discussion` channels.
+
+## License
+
+The MIT license can be found [here](LICENSE).

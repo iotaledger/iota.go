@@ -22,7 +22,7 @@ func Must(err error) {
 	}
 }
 
-// returns length amount random bytes
+// RandBytes returns length amount random bytes.
 func RandBytes(length int) []byte {
 	var b []byte
 	for i := 0; i < length; i++ {
