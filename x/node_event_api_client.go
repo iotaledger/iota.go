@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/iotaledger/iota.go/v2"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
+	iotago "github.com/iotaledger/iota.go/v2"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -163,7 +164,7 @@ func (neac *NodeEventAPIClient) ReferencedMessages(nodeHTTPAPIClient *iotago.Nod
 			return
 		}
 
-		msg, err := nodeHTTPAPIClient.MessageByMessageID(iotago.MustMessageIDFromHexString(metadataRes.MessageID))
+		msg, err := nodeHTTPAPIClient.MessageByMessageID(context.Background(), iotago.MustMessageIDFromHexString(metadataRes.MessageID))
 		if err != nil {
 			return
 		}
@@ -350,12 +351,12 @@ func (neac *NodeEventAPIClient) LatestMilestoneMessages(nodeHTTPAPIClient *iotag
 			sendErrOrDrop(neac.Errors, err)
 			return
 		}
-		res, err := nodeHTTPAPIClient.MilestoneByIndex(msPointer.Index)
+		res, err := nodeHTTPAPIClient.MilestoneByIndex(context.Background(), msPointer.Index)
 		if err != nil {
 			sendErrOrDrop(neac.Errors, err)
 			return
 		}
-		msg, err := nodeHTTPAPIClient.MessageByMessageID(iotago.MustMessageIDFromHexString(res.MessageID))
+		msg, err := nodeHTTPAPIClient.MessageByMessageID(context.Background(), iotago.MustMessageIDFromHexString(res.MessageID))
 		if err != nil {
 			sendErrOrDrop(neac.Errors, err)
 			return
@@ -398,12 +399,12 @@ func (neac *NodeEventAPIClient) ConfirmedMilestoneMessages(nodeHTTPAPIClient *io
 			sendErrOrDrop(neac.Errors, err)
 			return
 		}
-		res, err := nodeHTTPAPIClient.MilestoneByIndex(msPointer.Index)
+		res, err := nodeHTTPAPIClient.MilestoneByIndex(context.Background(), msPointer.Index)
 		if err != nil {
 			sendErrOrDrop(neac.Errors, err)
 			return
 		}
-		msg, err := nodeHTTPAPIClient.MessageByMessageID(iotago.MustMessageIDFromHexString(res.MessageID))
+		msg, err := nodeHTTPAPIClient.MessageByMessageID(context.Background(), iotago.MustMessageIDFromHexString(res.MessageID))
 		if err != nil {
 			sendErrOrDrop(neac.Errors, err)
 			return
