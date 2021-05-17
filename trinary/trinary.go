@@ -163,11 +163,9 @@ func MinTrits(value int64) int {
 }
 
 // IntToTrits converts int64 to a slice of trits.
-func IntToTrits(value int64) Trits {
-	numTrits := MinTrits(value)
-	numTrytes := (numTrits + TritsPerTryte - 1) / TritsPerTryte
-	trits := MustTrytesToTrits(IntToTrytes(value, numTrytes))
-	return trits[:numTrits]
+func IntToTrits(value int64, tritsCnt int) Trits {
+	trits := MustTrytesToTrits(IntToTrytes(value, (tritsCnt + TritsPerTryte - 1) / TritsPerTryte))
+	return trits[:tritsCnt]
 }
 
 // TritsToInt converts a slice of trits into an integer and assumes little-endian notation.

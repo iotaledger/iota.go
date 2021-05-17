@@ -2,15 +2,16 @@ package deposit
 
 import (
 	"fmt"
+	"net/url"
+	"strconv"
+	"time"
+
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/checksum"
 	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl"
 	. "github.com/iotaledger/iota.go/trinary"
 	"github.com/pkg/errors"
-	"net/url"
-	"strconv"
-	"time"
 )
 
 // ErrAddressInvalid is returned when an address is invalid when parsed from a serialized form.
@@ -92,10 +93,10 @@ func (dc *CDA) Checksum() (Trytes, error) {
 	if err != nil {
 		return "", err
 	}
-	timeoutAtTrits := MustPadTrits(IntToTrits(dc.TimeoutAt.Unix()), 27)
+	timeoutAtTrits := IntToTrits(dc.TimeoutAt.Unix(), 27)
 	var expectedAmountTrits Trits
 	if dc.ExpectedAmount != nil {
-		expectedAmountTrits = MustPadTrits(IntToTrits(int64(*dc.ExpectedAmount)), 81)
+		expectedAmountTrits = IntToTrits(int64(*dc.ExpectedAmount), 81)
 	} else {
 		expectedAmountTrits = MustPadTrits(expectedAmountTrits, 81)
 	}

@@ -155,19 +155,19 @@ func TransactionToTrits(t *Transaction) (Trits, error) {
 	}
 	copy(tr[AddressTrinaryOffset:], MustTrytesToTrits(t.Address))
 
-	copy(tr[ValueOffsetTrinary:], IntToTrits(t.Value))
+	copy(tr[ValueOffsetTrinary:], IntToTrits(t.Value, ValueSizeTrinary))
 	if !guards.IsTrytesOfExactLength(t.ObsoleteTag, ObsoleteTagTrinarySize/3) {
 		return nil, errors.Wrap(ErrInvalidTrytes, "invalid obsolete tag")
 	}
 	copy(tr[ObsoleteTagTrinaryOffset:], MustTrytesToTrits(t.ObsoleteTag))
 
-	copy(tr[TimestampTrinaryOffset:], IntToTrits(int64(t.Timestamp)))
+	copy(tr[TimestampTrinaryOffset:], IntToTrits(int64(t.Timestamp), TimestampTrinarySize))
 	if t.CurrentIndex > t.LastIndex {
 		return nil, errors.Wrap(ErrInvalidIndex, "current index is bigger than last index")
 	}
 
-	copy(tr[CurrentIndexTrinaryOffset:], IntToTrits(int64(t.CurrentIndex)))
-	copy(tr[LastIndexTrinaryOffset:], IntToTrits(int64(t.LastIndex)))
+	copy(tr[CurrentIndexTrinaryOffset:], IntToTrits(int64(t.CurrentIndex), CurrentIndexTrinarySize))
+	copy(tr[LastIndexTrinaryOffset:], IntToTrits(int64(t.LastIndex), LastIndexTrinarySize))
 	if !guards.IsTrytesOfExactLength(t.Bundle, BundleTrinarySize/3) {
 		return nil, errors.Wrap(ErrInvalidTrytes, "invalid bundle hash")
 	}
@@ -187,9 +187,9 @@ func TransactionToTrits(t *Transaction) (Trits, error) {
 		return nil, errors.Wrap(ErrInvalidTrytes, "invalid tag")
 	}
 	copy(tr[TagTrinaryOffset:], MustTrytesToTrits(t.Tag))
-	copy(tr[AttachmentTimestampTrinaryOffset:], IntToTrits(t.AttachmentTimestamp))
-	copy(tr[AttachmentTimestampLowerBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampLowerBound))
-	copy(tr[AttachmentTimestampUpperBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampUpperBound))
+	copy(tr[AttachmentTimestampTrinaryOffset:], IntToTrits(t.AttachmentTimestamp, AttachmentTimestampTrinarySize))
+	copy(tr[AttachmentTimestampLowerBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampLowerBound, AttachmentTimestampLowerBoundTrinarySize))
+	copy(tr[AttachmentTimestampUpperBoundTrinaryOffset:], IntToTrits(t.AttachmentTimestampUpperBound, AttachmentTimestampUpperBoundTrinarySize))
 	if !guards.IsTrytesOfExactLength(t.Nonce, NonceTrinarySize/3) {
 		return nil, errors.Wrap(ErrInvalidTrytes, "invalid nonce")
 	}

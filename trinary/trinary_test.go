@@ -75,15 +75,15 @@ var _ = Describe("Trinary", func() {
 
 	Context("IntToTrits()", func() {
 		It("should return correct trits representation for positive int64", func() {
-			Expect(IntToTrits(12)).To(Equal(Trits{0, 1, 1}))
-			Expect(IntToTrits(2)).To(Equal(Trits{-1, 1}))
-			Expect(IntToTrits(3332727)).To(Equal(Trits{0, 0, 1, -1, 0, -1, 0, 0, 1, 1, -1, 1, 0, -1, 1}))
-			Expect(IntToTrits(0)).To(Equal(Trits{0}))
+			Expect(IntToTrits(12, MinTrits(12))).To(Equal(Trits{0, 1, 1}))
+			Expect(IntToTrits(2, MinTrits(2))).To(Equal(Trits{-1, 1}))
+			Expect(IntToTrits(3332727, MinTrits(3332727))).To(Equal(Trits{0, 0, 1, -1, 0, -1, 0, 0, 1, 1, -1, 1, 0, -1, 1}))
+			Expect(IntToTrits(0, MinTrits(0))).To(Equal(Trits{0}))
 		})
 
 		It("should return correct trits representation for negative int64", func() {
-			Expect(IntToTrits(-7)).To(Equal(Trits{-1, 1, -1}))
-			Expect(IntToTrits(-1094385)).To(Equal(Trits{0, -1, 1, 0, 1, -1, -1, 1, 1, 1, -1, 0, 1, -1}))
+			Expect(IntToTrits(-7, MinTrits(-7))).To(Equal(Trits{-1, 1, -1}))
+			Expect(IntToTrits(-1094385, MinTrits(-1094385))).To(Equal(Trits{0, -1, 1, 0, 1, -1, -1, 1, 1, 1, -1, 0, 1, -1}))
 		})
 	})
 
@@ -299,9 +299,9 @@ var _ = Describe("Trinary", func() {
 
 	Context("AddTrits()", func() {
 		It("should correctly add trits together (positive)", func() {
-			Expect(TritsToInt(AddTrits(IntToTrits(5), IntToTrits(5)))).To(Equal(int64(10)))
-			Expect(TritsToInt(AddTrits(IntToTrits(0), IntToTrits(0)))).To(Equal(int64(0)))
-			Expect(TritsToInt(AddTrits(IntToTrits(-100), IntToTrits(-20)))).To(Equal(int64(-120)))
+			Expect(TritsToInt(AddTrits(IntToTrits(5, MinTrits(5)), IntToTrits(5, MinTrits(5))))).To(Equal(int64(10)))
+			Expect(TritsToInt(AddTrits(IntToTrits(0, MinTrits(0)), IntToTrits(0, MinTrits(0))))).To(Equal(int64(0)))
+			Expect(TritsToInt(AddTrits(IntToTrits(-100, MinTrits(-100)), IntToTrits(-20, MinTrits(-20))))).To(Equal(int64(-120)))
 		})
 	})
 })

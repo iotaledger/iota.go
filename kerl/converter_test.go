@@ -163,7 +163,7 @@ var _ = Describe("Converter", func() {
 
 		It("should return bytes for the uint32 chunk size", func() {
 			// in: balanced 243-trit representation of 27⁶
-			trits, _ := PadTrits(IntToTrits(0x17179149), HashTrinarySize)
+			trits := IntToTrits(0x17179149, HashTrinarySize)
 			// expected: unsigned 384-bit representation of -⌊3²⁴² / 2⌋
 			expected := "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017179149"
 
@@ -336,7 +336,7 @@ var _ = Describe("Converter", func() {
 	Context("KerlBytesToTrits()", func() {
 		It("should return trits for all '0x00's", func() {
 			bytes, _ := hex.DecodeString("000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
-			expected, _ := PadTrits(IntToTrits(0), HashTrinarySize)
+			expected := IntToTrits(0, HashTrinarySize)
 
 			trits, err := KerlBytesToTrits(bytes)
 			Expect(err).ToNot(HaveOccurred())
