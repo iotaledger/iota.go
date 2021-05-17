@@ -2,6 +2,7 @@ package trinary_examples_test
 
 import (
 	"fmt"
+
 	"github.com/iotaledger/iota.go/trinary"
 )
 
@@ -27,7 +28,7 @@ func ExampleTritsEqual() {}
 // i req: value, The int value to convert to Trits.
 // o: Trits, The Trits representation of the int value.
 func ExampleIntToTrits() {
-	trits := trinary.IntToTrits(12)
+	trits := trinary.IntToTrits(12, trinary.MinTrits(12))
 	fmt.Println(trits)
 	// output: {0, 1, 1}
 }

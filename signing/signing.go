@@ -27,7 +27,8 @@ func Subseed(seed Trytes, index uint64, spongeFunc ...SpongeFunction) (Trits, er
 		return nil, err
 	}
 
-	incrementedSeed := AddTrits(trits, IntToTrits(int64(index)))
+	int64Index := int64(index)
+	incrementedSeed := AddTrits(trits, IntToTrits(int64Index, MinTrits(int64Index)))
 
 	h := GetSpongeFunc(spongeFunc, defaultCreator)
 	defer h.Reset()
