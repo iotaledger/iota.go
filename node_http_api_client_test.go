@@ -11,9 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iotaledger/iota.go/v2/tpkg"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
+
+	"github.com/iotaledger/iota.go/v2/tpkg"
 
 	iotago "github.com/iotaledger/iota.go/v2"
 )
@@ -272,6 +273,7 @@ func TestNodeAPI_OutputByID(t *testing.T) {
 		TransactionID: hexTxID,
 		OutputIndex:   3,
 		Spent:         true,
+		LedgerIndex:   1337,
 		RawOutput:     &rawMsgSigDepJson,
 	}
 
