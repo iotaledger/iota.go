@@ -544,6 +544,8 @@ type NodeOutputResponse struct {
 	OutputIndex uint16 `json:"outputIndex"`
 	// Whether this output is spent.
 	Spent bool `json:"isSpent"`
+	// The ledger index at which this output was available at.
+	LedgerIndex uint64 `json:"ledgerIndex"`
 	// The output in its serialized form.
 	RawOutput *json.RawMessage `json:"output"`
 }
