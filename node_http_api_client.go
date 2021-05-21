@@ -79,7 +79,7 @@ const (
 
 	// NodeAPIRouteMilestoneUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	NodeAPIRouteMilestoneUTXOChanges = "/milestones/%s/utxo-changes"
+	NodeAPIRouteMilestoneUTXOChanges = "/api/v1/milestones/%s/utxo-changes"
 
 	// NodeAPIRouteOutput is the route for getting outputs by their outputID (transactionHash + outputIndex).
 	// GET returns the output.
