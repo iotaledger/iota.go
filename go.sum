@@ -159,6 +159,8 @@ github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpO
 github.com/hydrogen18/memlistener v0.0.0-20141126152155-54553eb933fb/go.mod h1:qEIFzExnS6016fRpRfxrExeVn2gbClQA99gQhnIcdhE=
 github.com/imkira/go-interpol v1.1.0/go.mod h1:z0h2/2T3XF8kyEPpRgJ3kmNv+C43p+I/CoI+jC3w2iA=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
+github.com/iotaledger/hive.go v0.0.0-20210813153031-912521f33edb h1:pecsgrtFMV3Xl+Iq+IW3heYRX6p9gtxVqKa5WBhtftY=
+github.com/iotaledger/hive.go v0.0.0-20210813153031-912521f33edb/go.mod h1:NyBg/Ny7FFAdDs59zdwTVoysU2ZbJVQnRwyLIDFKJYA=
 github.com/iotaledger/iota.go v1.0.0-beta.15.0.20210406071024-a52cf8c2c21e h1:J8SDeVkkK5u0MKKusDy4hOBK3xRDpuGpuMLZkLCkEyk=
 github.com/iotaledger/iota.go v1.0.0-beta.15.0.20210406071024-a52cf8c2c21e/go.mod h1:RiKYwDyY7aCD1L0YRzHSjOsJ5mUR9yvQpvhZncNcGQI=
 github.com/iris-contrib/blackfriday v2.0.0+incompatible/go.mod h1:UzZ2bDEoaSGPbkg6SAB4att1aAwTmVIx/5gCVqeyUdI=
