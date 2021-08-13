@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 // it is used to increase the allowance/amount of dust outputs on a given address.
 type SigLockedDustAllowanceOutput struct {
 	// The actual address.
-	Address Serializable `json:"address"`
+	Address serializer.Serializable `json:"address"`
 	// The amount to deposit.
 	Amount uint64 `json:"amount"`
 }
@@ -28,7 +29,7 @@ func (s *SigLockedDustAllowanceOutput) Type() OutputType {
 	return OutputSigLockedDustAllowanceOutput
 }
 
-func (s *SigLockedDustAllowanceOutput) Target() (Serializable, error) {
+func (s *SigLockedDustAllowanceOutput) Target() (serializer.Serializable, error) {
 	return s.Address, nil
 }
 
@@ -36,10 +37,10 @@ func (s *SigLockedDustAllowanceOutput) Deposit() (uint64, error) {
 	return s.Amount, nil
 }
 
-func (s *SigLockedDustAllowanceOutput) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (s *SigLockedDustAllowanceOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := checkMinByteLength(SigLockedDustAllowanceOutputBytesMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid signature locked dust allowance output bytes: %w", err)
 				}
@@ -52,14 +53,14 @@ func (s *SigLockedDustAllowanceOutput) Deserialize(data []byte, deSeriMode DeSer
 		Skip(SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip signature locked dust allowance output type during deserialization: %w", err)
 		}).
-		ReadObject(func(seri Serializable) { s.Address = seri }, deSeriMode, TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(func(seri serializer.Serializable) { s.Address = seri }, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for signature locked dust allowance output: %w", err)
 		}).
 		ReadNum(&s.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for signature locked dust allowance output: %w", err)
 		}).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := outputAmountValidator(-1, s); err != nil {
 					return fmt.Errorf("%w: unable to deserialize signature locked dust allowance output", err)
 				}
@@ -69,10 +70,10 @@ func (s *SigLockedDustAllowanceOutput) Deserialize(data []byte, deSeriMode DeSer
 		Done()
 }
 
-func (s *SigLockedDustAllowanceOutput) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
-	return NewSerializer().
+func (s *SigLockedDustAllowanceOutput) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
+	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := outputAmountValidator(-1, s); err != nil {
 					return fmt.Errorf("%w: unable to serialize signature locked dust allowance output", err)
 				}
@@ -131,7 +132,7 @@ type jsonSigLockedDustAllowanceOutput struct {
 	Amount  int              `json:"amount"`
 }
 
-func (j *jsonSigLockedDustAllowanceOutput) ToSerializable() (Serializable, error) {
+func (j *jsonSigLockedDustAllowanceOutput) ToSerializable() (serializer.Serializable, error) {
 	dep := &SigLockedDustAllowanceOutput{Amount: uint64(j.Amount)}
 
 	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonAddressSelector)

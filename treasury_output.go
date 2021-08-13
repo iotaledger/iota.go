@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 const (
@@ -16,10 +17,10 @@ type TreasuryOutput struct {
 	Amount uint64 `json:"deposit"`
 }
 
-func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := checkMinByteLength(TreasuryOutputBytesSize, len(data)); err != nil {
 					return fmt.Errorf("invalid treasury output bytes: %w", err)
 				}
@@ -38,8 +39,8 @@ func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode DeSerializationMode
 		Done()
 }
 
-func (t *TreasuryOutput) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	return NewSerializer().
+func (t *TreasuryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	return serializer.NewSerializer().
 		WriteNum(OutputTreasuryOutput, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury output type ID: %w", err)
 		}).
@@ -74,6 +75,6 @@ type jsonTreasuryOutput struct {
 	Amount int `json:"amount"`
 }
 
-func (j *jsonTreasuryOutput) ToSerializable() (Serializable, error) {
+func (j *jsonTreasuryOutput) ToSerializable() (serializer.Serializable, error) {
 	return &TreasuryOutput{Amount: uint64(j.Amount)}, nil
 }

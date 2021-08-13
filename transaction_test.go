@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
@@ -14,7 +15,7 @@ func TestTransaction_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iotago.Serializable
+		target serializer.Serializable
 		err    error
 	}
 	tests := []test{
@@ -27,7 +28,7 @@ func TestTransaction_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tx := &iotago.Transaction{}
-			bytesRead, err := tx.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
+			bytesRead, err := tx.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -53,7 +54,7 @@ func TestTransaction_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -179,7 +180,7 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 			}
 			assert.NoError(t, semanticErr)
 
-			_, err = payload.Serialize(iotago.DeSeriModePerformValidation)
+			_, err = payload.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 		})
 	}
@@ -490,7 +491,7 @@ func TestDustAllowance(t *testing.T) {
 			}
 			assert.NoError(t, semanticErr)
 
-			_, err = payload.Serialize(iotago.DeSeriModePerformValidation)
+			_, err = payload.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 		})
 	}

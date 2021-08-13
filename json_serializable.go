@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/json"
 	"errors"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 var (
@@ -13,7 +14,7 @@ var (
 // JSONSerializable is an object which can return a Serializable.
 type JSONSerializable interface {
 	// ToSerializable returns the Serializable form of the JSONSerializable.
-	ToSerializable() (Serializable, error)
+	ToSerializable() (serializer.Serializable, error)
 }
 
 // JSONObjectEnvelope defines the envelope for looking-ahead an object's type

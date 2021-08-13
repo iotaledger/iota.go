@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 
 	"golang.org/x/crypto/blake2b"
 )
@@ -18,8 +19,8 @@ const (
 // TreasuryInput is an input which references a milestone which generated a TreasuryOutput.
 type TreasuryInput [32]byte
 
-func (ti *TreasuryInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
+func (ti *TreasuryInput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := checkMinByteLength(TreasuryInputSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid treasury input bytes: %w", err)
 		}
@@ -31,7 +32,7 @@ func (ti *TreasuryInput) Deserialize(data []byte, deSeriMode DeSerializationMode
 	return TreasuryInputSerializedBytesSize, nil
 }
 
-func (ti *TreasuryInput) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
+func (ti *TreasuryInput) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
 	var b [TreasuryInputSerializedBytesSize]byte
 	b[0] = InputTreasury
 	copy(b[SmallTypeDenotationByteSize:], ti[:])
@@ -64,7 +65,7 @@ type jsonTreasuryInput struct {
 	MilestoneID string `json:"milestoneId"`
 }
 
-func (j *jsonTreasuryInput) ToSerializable() (Serializable, error) {
+func (j *jsonTreasuryInput) ToSerializable() (serializer.Serializable, error) {
 	msHash, err := hex.DecodeString(j.MilestoneID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode milestone hash from JSON for treasury input: %w", err)

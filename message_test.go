@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
@@ -15,7 +16,7 @@ func TestMessage_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iotago.Serializable
+		target serializer.Serializable
 		err    error
 	}
 
@@ -41,7 +42,7 @@ func TestMessage_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			msg := &iotago.Message{}
-			bytesRead, err := msg.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
+			bytesRead, err := msg.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -71,7 +72,7 @@ func TestMessage_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})

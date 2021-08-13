@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 const (
@@ -15,15 +16,15 @@ const (
 // TreasuryTransaction represents a transaction which moves funds from the treasury.
 type TreasuryTransaction struct {
 	// The input of this transaction.
-	Input Serializable `json:"input"`
+	Input serializer.Serializable `json:"input"`
 	// The output of this transaction.
-	Output Serializable `json:"output"`
+	Output serializer.Serializable `json:"output"`
 }
 
-func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := checkMinByteLength(TreasuryTransactionByteSize, len(data)); err != nil {
 					return fmt.Errorf("invalid treasury transaction bytes: %w", err)
 				}
@@ -36,7 +37,7 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 		Skip(TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip treasury transaction payload ID during deserialization: %w", err)
 		}).
-		ReadObject(func(seri Serializable) { t.Input = seri }, deSeriMode, TypeDenotationByte, func(ty uint32) (Serializable, error) {
+		ReadObject(func(seri serializer.Serializable) { t.Input = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			if ty != uint32(InputTreasury) {
 				return nil, fmt.Errorf("receipts can only contain treasury input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 			}
@@ -44,7 +45,7 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 		}, func(err error) error {
 			return fmt.Errorf("unable to deserialize treasury transaction input: %w", err)
 		}).
-		ReadObject(func(seri Serializable) { t.Output = seri }, deSeriMode, TypeDenotationByte, func(ty uint32) (Serializable, error) {
+		ReadObject(func(seri serializer.Serializable) { t.Output = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			if ty != uint32(OutputTreasuryOutput) {
 				return nil, fmt.Errorf("receipts can only contain treasury output as outputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 			}
@@ -55,8 +56,8 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode DeSerializatio
 		Done()
 }
 
-func (t *TreasuryTransaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
+func (t *TreasuryTransaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if _, isUTXOInput := t.Input.(*TreasuryInput); !isUTXOInput {
 			return nil, fmt.Errorf("%w: treasury transaction must contain a UTXO input but got %T instead", ErrInvalidBytes, t.Input)
 		}
@@ -64,7 +65,7 @@ func (t *TreasuryTransaction) Serialize(deSeriMode DeSerializationMode) ([]byte,
 			return nil, fmt.Errorf("%w: treasury transaction must contain a treasury output but got %T instead", ErrInvalidBytes, t.Output)
 		}
 	}
-	return NewSerializer().
+	return serializer.NewSerializer().
 		WriteNum(TreasuryTransactionPayloadTypeID, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury transaction type ID: %w", err)
 		}).
@@ -118,7 +119,7 @@ type jsonTreasuryTransaction struct {
 	Output *json.RawMessage `json:"output"`
 }
 
-func (j *jsonTreasuryTransaction) ToSerializable() (Serializable, error) {
+func (j *jsonTreasuryTransaction) ToSerializable() (serializer.Serializable, error) {
 	dep := &TreasuryTransaction{}
 
 	jsonInput, err := DeserializeObjectFromJSON(j.Input, func(ty int) (JSONSerializable, error) {

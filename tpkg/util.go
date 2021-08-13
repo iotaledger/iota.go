@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/iotaledger/hive.go/serializer"
 	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
 	"github.com/iotaledger/iota.go/v2"
@@ -66,7 +67,7 @@ func Rand64ByteArray() [64]byte {
 
 // SortedRand32BytArray returns a count length slice of sorted 32 byte arrays.
 func SortedRand32BytArray(count int) [][32]byte {
-	hashes := make(iotago.LexicalOrdered32ByteArrays, count)
+	hashes := make(serializer.LexicalOrdered32ByteArrays, count)
 	for i := 0; i < count; i++ {
 		hashes[i] = Rand32ByteArray()
 	}
@@ -130,7 +131,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 	tx := &iotago.TransactionEssence{}
 	Must(buf.WriteByte(iotago.TransactionEssenceNormal))
 
-	inputsBytes := iotago.LexicalOrderedByteSlices{}
+	inputsBytes := serializer.LexicalOrderedByteSlices{}
 	inputCount := rand.Intn(10) + 1
 	Must(binary.Write(&buf, binary.LittleEndian, uint16(inputCount)))
 	for i := inputCount; i > 0; i-- {
@@ -144,13 +145,13 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 		_, err := buf.Write(inputData)
 		Must(err)
 		input := &iotago.UTXOInput{}
-		if _, err := input.Deserialize(inputData, iotago.DeSeriModePerformValidation); err != nil {
+		if _, err := input.Deserialize(inputData, serializer.DeSeriModePerformValidation); err != nil {
 			panic(err)
 		}
 		tx.Inputs = append(tx.Inputs, input)
 	}
 
-	outputsBytes := iotago.LexicalOrderedByteSlices{}
+	outputsBytes := serializer.LexicalOrderedByteSlices{}
 	outputCount := rand.Intn(10) + 1
 	Must(binary.Write(&buf, binary.LittleEndian, uint16(outputCount)))
 	for i := outputCount; i > 0; i-- {
@@ -163,7 +164,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 		_, err := buf.Write(outputData)
 		Must(err)
 		output := &iotago.SigLockedSingleOutput{}
-		if _, err := output.Deserialize(outputData, iotago.DeSeriModePerformValidation); err != nil {
+		if _, err := output.Deserialize(outputData, serializer.DeSeriModePerformValidation); err != nil {
 			panic(err)
 		}
 		tx.Outputs = append(tx.Outputs, output)
@@ -205,7 +206,7 @@ func RandReceipt() (*iotago.Receipt, []byte) {
 	Must(binary.Write(&b, binary.LittleEndian, receipt.MigratedAt))
 	Must(b.WriteByte(1))
 
-	migFundsEntriesBytes := iotago.LexicalOrderedByteSlices{}
+	migFundsEntriesBytes := serializer.LexicalOrderedByteSlices{}
 	migFundsEntriesCount := rand.Intn(10) + 1
 	Must(binary.Write(&b, binary.LittleEndian, uint16(migFundsEntriesCount)))
 	for i := migFundsEntriesCount; i > 0; i-- {
@@ -219,7 +220,7 @@ func RandReceipt() (*iotago.Receipt, []byte) {
 		_, err := b.Write(migFundEntryBytes)
 		Must(err)
 		migFundsEntry := &iotago.MigratedFundsEntry{}
-		if _, err := migFundsEntry.Deserialize(migFundEntryBytes, iotago.DeSeriModePerformValidation); err != nil {
+		if _, err := migFundsEntry.Deserialize(migFundEntryBytes, serializer.DeSeriModePerformValidation); err != nil {
 			panic(err)
 		}
 		receipt.Funds = append(receipt.Funds, migFundsEntry)
@@ -347,7 +348,7 @@ func RandIndexation(dataLength ...int) (*iotago.Indexation, []byte) {
 
 // RandMessage returns a random message with the given inner payload.
 func RandMessage(withPayloadType uint32) (*iotago.Message, []byte) {
-	var payload iotago.Serializable
+	var payload serializer.Serializable
 	var payloadData []byte
 
 	parents := SortedRand32BytArray(1 + rand.Intn(7))
@@ -500,7 +501,7 @@ func RandSigLockedSingleOutput(addrType iotago.AddressType) (*iotago.SigLockedSi
 func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
-			Inputs: []iotago.Serializable{
+			Inputs: []serializer.Serializable{
 				&iotago.UTXOInput{
 					TransactionID: func() [iotago.TransactionIDLength]byte {
 						var b [iotago.TransactionIDLength]byte
@@ -510,9 +511,9 @@ func OneInputOutputTransaction() *iotago.Transaction {
 					TransactionOutputIndex: 0,
 				},
 			},
-			Outputs: []iotago.Serializable{
+			Outputs: []serializer.Serializable{
 				&iotago.SigLockedSingleOutput{
-					Address: func() iotago.Serializable {
+					Address: func() serializer.Serializable {
 						edAddr, _ := RandEd25519Address()
 						return edAddr
 					}(),
@@ -521,9 +522,9 @@ func OneInputOutputTransaction() *iotago.Transaction {
 			},
 			Payload: nil,
 		},
-		UnlockBlocks: []iotago.Serializable{
+		UnlockBlocks: []serializer.Serializable{
 			&iotago.SignatureUnlockBlock{
-				Signature: func() iotago.Serializable {
+				Signature: func() serializer.Serializable {
 					edSig, _ := RandEd25519Signature()
 					return edSig
 				}(),

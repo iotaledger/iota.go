@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 	"sort"
 
 	"golang.org/x/crypto/blake2b"
@@ -46,23 +47,23 @@ var (
 	ErrOutputDustAllowanceLessThanMinDeposit = errors.New("dust allowance output deposits less than the minimum required amount")
 
 	// restrictions around input within a transaction.
-	inputsArrayBound = ArrayRules{
+	inputsArrayBound = serializer.ArrayRules{
 		Min:            MinInputsCount,
 		Max:            MaxInputsCount,
-		ValidationMode: ArrayValidationModeLexicalOrdering,
+		ValidationMode: serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	// restrictions around outputs within a transaction.
-	outputsArrayBound = ArrayRules{
+	outputsArrayBound = serializer.ArrayRules{
 		Min:            MinOutputsCount,
 		Max:            MaxOutputsCount,
-		ValidationMode: ArrayValidationModeLexicalOrdering,
+		ValidationMode: serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
 
 // TransactionEssenceSelector implements SerializableSelectorFunc for transaction essence types.
-func TransactionEssenceSelector(txType uint32) (Serializable, error) {
-	var seri Serializable
+func TransactionEssenceSelector(txType uint32) (serializer.Serializable, error) {
+	var seri serializer.Serializable
 	switch byte(txType) {
 	case TransactionEssenceNormal:
 		seri = &TransactionEssence{}
@@ -75,23 +76,23 @@ func TransactionEssenceSelector(txType uint32) (Serializable, error) {
 // TransactionEssence is the essence part of a Transaction.
 type TransactionEssence struct {
 	// The inputs of this transaction.
-	Inputs Serializables `json:"inputs"`
+	Inputs serializer.Serializables `json:"inputs"`
 	// The outputs of this transaction.
-	Outputs Serializables `json:"outputs"`
+	Outputs serializer.Serializables `json:"outputs"`
 	// The optional embedded payload.
-	Payload Serializable `json:"payload"`
+	Payload serializer.Serializable `json:"payload"`
 }
 
 // SortInputsOutputs sorts the inputs and outputs according to their serialized lexical representation.
 // Usually an implicit call to SortInputsOutputs() should be done by instructing serialization to use DeSeriModePerformLexicalOrdering.
 func (u *TransactionEssence) SortInputsOutputs() {
-	sort.Sort(SortedSerializables(u.Inputs))
-	sort.Sort(SortedSerializables(u.Outputs))
+	sort.Sort(serializer.SortedSerializables(u.Inputs))
+	sort.Sort(serializer.SortedSerializables(u.Outputs))
 }
 
 // SigningMessage returns the to be signed message.
 func (u *TransactionEssence) SigningMessage() ([]byte, error) {
-	essenceBytes, err := u.Serialize(DeSeriModePerformValidation | DeSeriModePerformLexicalOrdering)
+	essenceBytes, err := u.Serialize(serializer.DeSeriModePerformValidation | serializer.DeSeriModePerformLexicalOrdering)
 	if err != nil {
 		return nil, err
 	}
@@ -99,10 +100,10 @@ func (u *TransactionEssence) SigningMessage() ([]byte, error) {
 	return essenceBytesHash[:], nil
 }
 
-func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := checkMinByteLength(TransactionEssenceMinByteSize, len(data)); err != nil {
 					return fmt.Errorf("invalid transaction essence bytes: %w", err)
 				}
@@ -115,7 +116,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 		Skip(SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip transaction essence ID during deserialization: %w", err)
 		}).
-		ReadSliceOfObjects(func(seri Serializables) { u.Inputs = seri }, deSeriMode, TypeDenotationByte, func(ty uint32) (Serializable, error) {
+		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Inputs = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			switch ty {
 			case uint32(InputUTXO):
 			default:
@@ -126,14 +127,14 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 			return fmt.Errorf("unable to deserialize inputs of transaction essence: %w", err)
 		}).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := ValidateInputs(u.Inputs, InputsUTXORefsUniqueValidator()); err != nil {
 					return fmt.Errorf("%w: unable to deserialize inputs of transaction essence since they are invalid", err)
 				}
 			}
 			return nil
 		}).
-		ReadSliceOfObjects(func(seri Serializables) { u.Outputs = seri }, deSeriMode, TypeDenotationByte, func(ty uint32) (Serializable, error) {
+		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Outputs = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			switch ty {
 			case uint32(OutputSigLockedSingleOutput):
 			case uint32(OutputSigLockedDustAllowanceOutput):
@@ -145,23 +146,25 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
 		}).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := ValidateOutputs(u.Outputs, OutputsAddrUniqueValidator()); err != nil {
 					return fmt.Errorf("%w: unable to deserialize outputs of transaction essence since they are invalid", err)
 				}
 			}
 			return nil
 		}).
-		ReadPayload(func(seri Serializable) { u.Payload = seri }, deSeriMode, func(err error) error {
-			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
-		}, func(ty uint32) (Serializable, error) {
-			if ty != IndexationPayloadTypeID {
-				return nil, fmt.Errorf("transaction essence can only contain an indexation payload: %w", ErrUnsupportedPayloadType)
-			}
-			return PayloadSelector(ty)
-		}).
+		ReadPayload(func(seri serializer.Serializable) { u.Payload = seri }, deSeriMode,
+			func(ty uint32) (serializer.Serializable, error) {
+				if ty != IndexationPayloadTypeID {
+					return nil, fmt.Errorf("transaction essence can only contain an indexation payload: %w", ErrUnsupportedPayloadType)
+				}
+				return PayloadSelector(ty)
+			},
+			func(err error) error {
+				return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
+			}).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if u.Payload != nil {
 					// supports only indexation payloads
 					if _, isIndexationPayload := u.Payload.(*Indexation); !isIndexationPayload {
@@ -174,16 +177,16 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 		Done()
 }
 
-func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
-	var inputsWrittenConsumer, outputsWrittenConsumer WrittenObjectConsumer
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
+func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
+	var inputsWrittenConsumer, outputsWrittenConsumer serializer.WrittenObjectConsumer
+	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 
 		if u.Payload != nil {
 			if _, isIndexationPayload := u.Payload.(*Indexation); !isIndexationPayload {
 				return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", ErrInvalidBytes, u.Payload)
 			}
 		}
-		if inputsArrayBound.ValidationMode.HasMode(ArrayValidationModeLexicalOrdering) {
+		if inputsArrayBound.ValidationMode.HasMode(serializer.ArrayValidationModeLexicalOrdering) {
 			inputsLexicalOrderValidator := inputsArrayBound.LexicalOrderValidator()
 			inputsWrittenConsumer = func(index int, written []byte) error {
 				if err := inputsLexicalOrderValidator(index, written); err != nil {
@@ -192,7 +195,7 @@ func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []b
 				return nil
 			}
 		}
-		if outputsArrayBound.ValidationMode.HasMode(ArrayValidationModeLexicalOrdering) {
+		if outputsArrayBound.ValidationMode.HasMode(serializer.ArrayValidationModeLexicalOrdering) {
 			outputsLexicalOrderValidator := outputsArrayBound.LexicalOrderValidator()
 			outputsWrittenConsumer = func(index int, written []byte) error {
 				if err := outputsLexicalOrderValidator(index, written); err != nil {
@@ -203,14 +206,14 @@ func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []b
 		}
 	}
 
-	return NewSerializer().
+	return serializer.NewSerializer().
 		Do(func() {
-			if deSeriMode.HasMode(DeSeriModePerformLexicalOrdering) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
 				u.SortInputsOutputs()
 			}
 		}).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := u.SyntacticallyValidate(); err != nil {
 					return err
 				}
@@ -336,10 +339,10 @@ type jsonTransactionEssence struct {
 	Payload *json.RawMessage   `json:"payload"`
 }
 
-func (j *jsonTransactionEssence) ToSerializable() (Serializable, error) {
+func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, error) {
 	unsigTx := &TransactionEssence{
-		Inputs:  make(Serializables, len(j.Inputs)),
-		Outputs: make(Serializables, len(j.Outputs)),
+		Inputs:  make(serializer.Serializables, len(j.Inputs)),
+		Outputs: make(serializer.Serializables, len(j.Outputs)),
 		Payload: nil,
 	}
 

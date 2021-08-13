@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 
 	"github.com/iotaledger/iota.go/v2/ed25519"
 	_ "golang.org/x/crypto/blake2b"
@@ -30,8 +31,8 @@ var (
 )
 
 // SignatureSelector implements SerializableSelectorFunc for signature types.
-func SignatureSelector(sigType uint32) (Serializable, error) {
-	var seri Serializable
+func SignatureSelector(sigType uint32) (serializer.Serializable, error) {
+	var seri serializer.Serializable
 	switch byte(sigType) {
 	case SignatureEd25519:
 		seri = &Ed25519Signature{}
@@ -62,8 +63,8 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	return nil
 }
 
-func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
+func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := checkMinByteLength(Ed25519SignatureSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid Ed25519 signature bytes: %w", err)
 		}
@@ -78,7 +79,7 @@ func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode DeSerializationMo
 	return Ed25519SignatureSerializedBytesSize, nil
 }
 
-func (e *Ed25519Signature) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
+func (e *Ed25519Signature) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	var b [Ed25519SignatureSerializedBytesSize]byte
 	b[0] = SignatureEd25519
 	copy(b[SmallTypeDenotationByteSize:], e.PublicKey[:])
@@ -126,7 +127,7 @@ type jsonEd25519Signature struct {
 	Signature string `json:"signature"`
 }
 
-func (j *jsonEd25519Signature) ToSerializable() (Serializable, error) {
+func (j *jsonEd25519Signature) ToSerializable() (serializer.Serializable, error) {
 	sig := &Ed25519Signature{}
 
 	pubKeyBytes, err := hex.DecodeString(j.PublicKey)

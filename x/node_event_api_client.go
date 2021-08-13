@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/iotaledger/hive.go/serializer"
 	iotago "github.com/iotaledger/iota.go/v2"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -121,7 +122,7 @@ func (neac *NodeEventAPIClient) Messages() <-chan *iotago.Message {
 	channel := make(chan *iotago.Message)
 	neac.MQTTClient.Subscribe(NodeEventMessages, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &iotago.Message{}
-		if _, err := msg.Deserialize(mqttMsg.Payload(), iotago.DeSeriModePerformValidation); err != nil {
+		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModePerformValidation); err != nil {
 			sendErrOrDrop(neac.Errors, err)
 			return
 		}
@@ -184,7 +185,7 @@ func (neac *NodeEventAPIClient) MessagesWithIndex(index string) <-chan *iotago.M
 	channel := make(chan *iotago.Message)
 	neac.MQTTClient.Subscribe(strings.Replace(NodeEventMessagesIndexation, "{index}", index, 1), 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &iotago.Message{}
-		if _, err := msg.Deserialize(mqttMsg.Payload(), iotago.DeSeriModePerformValidation); err != nil {
+		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModePerformValidation); err != nil {
 			sendErrOrDrop(neac.Errors, err)
 			return
 		}
@@ -264,7 +265,7 @@ func (neac *NodeEventAPIClient) TransactionIncludedMessage(txID iotago.Transacti
 	topic := strings.Replace(NodeEventTransactionsIncludedMessage, "{transactionId}", iotago.MessageIDToHexString(txID), 1)
 	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &iotago.Message{}
-		if _, err := msg.Deserialize(mqttMsg.Payload(), iotago.DeSeriModePerformValidation); err != nil {
+		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModePerformValidation); err != nil {
 			sendErrOrDrop(neac.Errors, err)
 			return
 		}

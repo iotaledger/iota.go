@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 	"sort"
 )
 
@@ -20,10 +21,10 @@ var (
 	// ErrReceiptMustContainATreasuryTransaction gets returned if a Receipt does not contain a TreasuryTransaction.
 	ErrReceiptMustContainATreasuryTransaction = errors.New("receipt must contain a treasury transaction")
 
-	migratedFundEntriesArrayRules = &ArrayRules{
+	migratedFundEntriesArrayRules = &serializer.ArrayRules{
 		Min:            MinMigratedFundsEntryCount,
 		Max:            MaxMigratedFundsEntryCount,
-		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
 
@@ -34,14 +35,14 @@ type Receipt struct {
 	// Whether this Receipt is the final one for a given migrated at index.
 	Final bool
 	// The funds which were migrated with this Receipt.
-	Funds Serializables
+	Funds serializer.Serializables
 	// The TreasuryTransaction used to fund the funds.
-	Transaction Serializable
+	Transaction serializer.Serializable
 }
 
 // SortFunds sorts the funds within the receipt after their serialized binary form in lexical order.
 func (r *Receipt) SortFunds() {
-	sort.Sort(SortedSerializables(r.Funds))
+	sort.Sort(serializer.SortedSerializables(r.Funds))
 }
 
 // Sum returns the sum of all MigratedFundsEntry items within the Receipt.
@@ -67,10 +68,10 @@ func (r *Receipt) Treasury() *TreasuryTransaction {
 	return t
 }
 
-func (r *Receipt) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := checkType(data, ReceiptPayloadTypeID); err != nil {
 					return fmt.Errorf("unable to deserialize receipt: %w", err)
 				}
@@ -87,19 +88,19 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 			return fmt.Errorf("unable to deserialize receipt final flag: %w", err)
 		}).
 		// special as the MigratedFundsEntry has no type denotation byte
-		ReadSliceOfObjects(func(seri Serializables) { r.Funds = seri }, deSeriMode, TypeDenotationNone, func(_ uint32) (Serializable, error) {
+		ReadSliceOfObjects(func(seri serializer.Serializables) { r.Funds = seri }, deSeriMode, serializer.TypeDenotationNone, func(_ uint32) (serializer.Serializable, error) {
 			// there is no real selector, so we always return a fresh MigratedFundsEntry
 			return &MigratedFundsEntry{}, nil
 		}, migratedFundEntriesArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize receipt migrated fund entries: %w", err)
 		}).
-		ReadPayload(func(seri Serializable) { r.Transaction = seri }, deSeriMode, func(err error) error {
-			return fmt.Errorf("unable to deserialize receipt transaction: %w", err)
-		}, func(ty uint32) (Serializable, error) {
+		ReadPayload(func(seri serializer.Serializable) { r.Transaction = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
 			if ty != TreasuryTransactionPayloadTypeID {
 				return nil, fmt.Errorf("a receipt can only contain a treasury transaction but got type ID %d:  %w", ty, ErrUnknownPayloadType)
 			}
 			return PayloadSelector(ty)
+		}, func(err error) error {
+			return fmt.Errorf("unable to deserialize receipt transaction: %w", err)
 		}).
 		AbortIf(func(err error) error {
 			if r.Transaction == nil {
@@ -110,13 +111,13 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 		Done()
 }
 
-func (r *Receipt) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
+func (r *Receipt) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	if r.Transaction == nil {
 		return nil, ErrReceiptMustContainATreasuryTransaction
 	}
-	var migratedFundsEntriesWrittenConsumer WrittenObjectConsumer
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if migratedFundEntriesArrayRules.ValidationMode.HasMode(ArrayValidationModeLexicalOrdering) {
+	var migratedFundsEntriesWrittenConsumer serializer.WrittenObjectConsumer
+	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
+		if migratedFundEntriesArrayRules.ValidationMode.HasMode(serializer.ArrayValidationModeLexicalOrdering) {
 			migratedFundEntriesLexicalOrderValidator := migratedFundEntriesArrayRules.LexicalOrderWithoutDupsValidator()
 			migratedFundsEntriesWrittenConsumer = func(index int, written []byte) error {
 				if err := migratedFundEntriesLexicalOrderValidator(index, written); err != nil {
@@ -126,9 +127,9 @@ func (r *Receipt) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 			}
 		}
 	}
-	return NewSerializer().
+	return serializer.NewSerializer().
 		Do(func() {
-			if deSeriMode.HasMode(DeSeriModePerformLexicalOrdering) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
 				r.SortFunds()
 			}
 		}).
@@ -199,11 +200,11 @@ type jsonReceipt struct {
 	Final       bool               `json:"final"`
 }
 
-func (j *jsonReceipt) ToSerializable() (Serializable, error) {
+func (j *jsonReceipt) ToSerializable() (serializer.Serializable, error) {
 	payload := &Receipt{}
 	payload.MigratedAt = uint32(j.MigratedAt)
 
-	migratedFundsEntries := make(Serializables, len(j.Funds))
+	migratedFundsEntries := make(serializer.Serializables, len(j.Funds))
 	for i, ele := range j.Funds {
 		jsonMigratedFundsEntry, _ := DeserializeObjectFromJSON(ele, func(ty int) (JSONSerializable, error) {
 			return &jsonMigratedFundsEntry{}, nil

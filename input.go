@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 	"strings"
 )
 
@@ -22,8 +23,8 @@ var (
 )
 
 // InputSelector implements SerializableSelectorFunc for input types.
-func InputSelector(inputType uint32) (Serializable, error) {
-	var seri Serializable
+func InputSelector(inputType uint32) (serializer.Serializable, error) {
+	var seri serializer.Serializable
 	switch byte(inputType) {
 	case InputUTXO:
 		seri = &UTXOInput{}
@@ -71,7 +72,7 @@ func InputsUTXORefIndexBoundsValidator() InputsValidatorFunc {
 var utxoInputRefBoundsValidator = InputsUTXORefIndexBoundsValidator()
 
 // ValidateInputs validates the inputs by running them against the given InputsValidatorFunc.
-func ValidateInputs(inputs Serializables, funcs ...InputsValidatorFunc) error {
+func ValidateInputs(inputs serializer.Serializables, funcs ...InputsValidatorFunc) error {
 	for i, input := range inputs {
 		dep, ok := input.(*UTXOInput)
 		if !ok {

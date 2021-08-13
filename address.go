@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/bech32"
 	"github.com/iotaledger/iota.go/v2/ed25519"
 	"golang.org/x/crypto/blake2b"
@@ -36,7 +37,7 @@ const (
 
 // Address describes a general address.
 type Address interface {
-	Serializable
+	serializer.Serializable
 	fmt.Stringer
 
 	// Type returns the type of the address.
@@ -47,7 +48,7 @@ type Address interface {
 }
 
 // AddressSelector implements SerializableSelectorFunc for address types.
-func AddressSelector(addressType uint32) (Serializable, error) {
+func AddressSelector(addressType uint32) (serializer.Serializable, error) {
 	return newAddress(byte(addressType))
 }
 
@@ -61,7 +62,7 @@ func newAddress(addressType byte) (address Address, err error) {
 }
 
 func bech32String(hrp NetworkPrefix, addr Address) string {
-	bytes, _ := addr.Serialize(DeSeriModeNoValidation)
+	bytes, _ := addr.Serialize(serializer.DeSeriModeNoValidation)
 	s, err := bech32.Encode(string(hrp), bytes)
 	if err != nil {
 		panic(err)
@@ -85,7 +86,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		return "", nil, err
 	}
 
-	n, err := addr.Deserialize(addrData, DeSeriModePerformValidation)
+	n, err := addr.Deserialize(addrData, serializer.DeSeriModePerformValidation)
 	if err != nil {
 		return "", nil, err
 	}
@@ -134,8 +135,8 @@ func (edAddr *Ed25519Address) String() string {
 	return hex.EncodeToString(edAddr[:])
 }
 
-func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
+func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := checkMinByteLength(Ed25519AddressSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid Ed25519 address bytes: %w", err)
 		}
@@ -147,7 +148,7 @@ func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode DeSerializatio
 	return Ed25519AddressSerializedBytesSize, nil
 }
 
-func (edAddr *Ed25519Address) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
+func (edAddr *Ed25519Address) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
 	var b [Ed25519AddressSerializedBytesSize]byte
 	b[0] = AddressEd25519
 	copy(b[SmallTypeDenotationByteSize:], edAddr[:])
@@ -197,7 +198,7 @@ type jsonEd25519Address struct {
 	Address string `json:"address"`
 }
 
-func (j *jsonEd25519Address) ToSerializable() (Serializable, error) {
+func (j *jsonEd25519Address) ToSerializable() (serializer.Serializable, error) {
 	addrBytes, err := hex.DecodeString(j.Address)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)

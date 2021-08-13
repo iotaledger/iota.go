@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/hive.go/serializer"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v2"
@@ -15,7 +16,7 @@ func TestInputSelector(t *testing.T) {
 
 func TestInputsValidatorFunc(t *testing.T) {
 	type args struct {
-		inputs []iotago.Serializable
+		inputs []serializer.Serializable
 		funcs  []iotago.InputsValidatorFunc
 	}
 	tests := []struct {
@@ -25,7 +26,7 @@ func TestInputsValidatorFunc(t *testing.T) {
 	}{
 		{
 			"ok addr",
-			args{inputs: []iotago.Serializable{
+			args{inputs: []serializer.Serializable{
 				&iotago.UTXOInput{
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 0,
@@ -38,7 +39,7 @@ func TestInputsValidatorFunc(t *testing.T) {
 		},
 		{
 			"addr not unique",
-			args{inputs: []iotago.Serializable{
+			args{inputs: []serializer.Serializable{
 				&iotago.UTXOInput{
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 0,
@@ -51,7 +52,7 @@ func TestInputsValidatorFunc(t *testing.T) {
 		},
 		{
 			"ok UTXO ref index",
-			args{inputs: []iotago.Serializable{
+			args{inputs: []serializer.Serializable{
 				&iotago.UTXOInput{
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 0,
@@ -60,7 +61,7 @@ func TestInputsValidatorFunc(t *testing.T) {
 		},
 		{
 			"invalid UTXO ref index",
-			args{inputs: []iotago.Serializable{
+			args{inputs: []serializer.Serializable{
 				&iotago.UTXOInput{
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 250,

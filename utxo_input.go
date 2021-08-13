@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 const (
@@ -54,10 +55,10 @@ func (u *UTXOInput) ID() UTXOInputID {
 	return id
 }
 
-func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (u *UTXOInput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := checkMinByteLength(UTXOInputSize, len(data)); err != nil {
 					return fmt.Errorf("invalid UTXO input bytes: %w", err)
 				}
@@ -77,7 +78,7 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 			return fmt.Errorf("unable to deserialize transaction output index in UTXO input: %w", err)
 		}).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := utxoInputRefBoundsValidator(-1, u); err != nil {
 					return fmt.Errorf("%w: unable to deserialize UTXO input", err)
 				}
@@ -87,10 +88,10 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		Done()
 }
 
-func (u *UTXOInput) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
-	return NewSerializer().
+func (u *UTXOInput) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
+	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := utxoInputRefBoundsValidator(-1, u); err != nil {
 					return fmt.Errorf("%w: unable to serialize UTXO input", err)
 				}
@@ -136,7 +137,7 @@ type jsonUTXOInput struct {
 	TransactionOutputIndex int    `json:"transactionOutputIndex"`
 }
 
-func (j *jsonUTXOInput) ToSerializable() (Serializable, error) {
+func (j *jsonUTXOInput) ToSerializable() (serializer.Serializable, error) {
 	utxoInput := &UTXOInput{
 		TransactionID:          [32]byte{},
 		TransactionOutputIndex: uint16(j.TransactionOutputIndex),

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -404,7 +405,7 @@ func (api *NodeHTTPAPIClient) SubmitMessage(ctx context.Context, m *Message) (*M
 	// Do not check the message because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the message afterwards.
-	data, err := m.Serialize(DeSeriModeNoValidation)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation)
 	if err != nil {
 		return nil, err
 	}
@@ -502,7 +503,7 @@ func (api *NodeHTTPAPIClient) MessageByMessageID(ctx context.Context, msgID Mess
 	}
 
 	msg := &Message{}
-	_, err = msg.Deserialize(res.Data, DeSeriModePerformValidation)
+	_, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation)
 	if err != nil {
 		return nil, err
 	}

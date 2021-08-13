@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 // SigLockedSingleOutput is an output type which can be unlocked via a signature. It deposits onto one single address.
 type SigLockedSingleOutput struct {
 	// The actual address.
-	Address Serializable `json:"address"`
+	Address serializer.Serializable `json:"address"`
 	// The amount to deposit.
 	Amount uint64 `json:"amount"`
 }
@@ -27,7 +28,7 @@ func (s *SigLockedSingleOutput) Type() OutputType {
 	return OutputSigLockedSingleOutput
 }
 
-func (s *SigLockedSingleOutput) Target() (Serializable, error) {
+func (s *SigLockedSingleOutput) Target() (serializer.Serializable, error) {
 	return s.Address, nil
 }
 
@@ -35,10 +36,10 @@ func (s *SigLockedSingleOutput) Deposit() (uint64, error) {
 	return s.Amount, nil
 }
 
-func (s *SigLockedSingleOutput) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (s *SigLockedSingleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := checkMinByteLength(SigLockedSingleOutputBytesMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid signature locked single output bytes: %w", err)
 				}
@@ -51,14 +52,14 @@ func (s *SigLockedSingleOutput) Deserialize(data []byte, deSeriMode DeSerializat
 		Skip(SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip signature locked single output type during deserialization: %w", err)
 		}).
-		ReadObject(func(seri Serializable) { s.Address = seri }, deSeriMode, TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(func(seri serializer.Serializable) { s.Address = seri }, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for signature locked single output: %w", err)
 		}).
 		ReadNum(&s.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for signature locked single output: %w", err)
 		}).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := outputAmountValidator(-1, s); err != nil {
 					return fmt.Errorf("%w: unable to deserialize signature locked single output", err)
 				}
@@ -68,10 +69,10 @@ func (s *SigLockedSingleOutput) Deserialize(data []byte, deSeriMode DeSerializat
 		Done()
 }
 
-func (s *SigLockedSingleOutput) Serialize(deSeriMode DeSerializationMode) (data []byte, err error) {
-	return NewSerializer().
+func (s *SigLockedSingleOutput) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
+	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := outputAmountValidator(-1, s); err != nil {
 					return fmt.Errorf("%w: unable to serialize signature locked single output", err)
 				}
@@ -130,7 +131,7 @@ type jsonSigLockedSingleOutput struct {
 	Amount  int              `json:"amount"`
 }
 
-func (j *jsonSigLockedSingleOutput) ToSerializable() (Serializable, error) {
+func (j *jsonSigLockedSingleOutput) ToSerializable() (serializer.Serializable, error) {
 	dep := &SigLockedSingleOutput{Amount: uint64(j.Amount)}
 
 	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonAddressSelector)

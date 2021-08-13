@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
@@ -18,7 +19,7 @@ func TestSigLockedSingleOutput_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iotago.Serializable
+		target serializer.Serializable
 		err    error
 	}
 	tests := []test{
@@ -39,7 +40,7 @@ func TestSigLockedSingleOutput_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dep := &iotago.SigLockedSingleOutput{}
-			bytesRead, err := dep.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
+			bytesRead, err := dep.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -66,7 +67,7 @@ func TestSigLockedSingleOutput_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
+			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -78,7 +79,7 @@ func TestSigLockedSingleOutput_Serialize(t *testing.T) {
 
 func TestOutputsValidatorFunc(t *testing.T) {
 	type args struct {
-		outputs iotago.Serializables
+		outputs serializer.Serializables
 		funcs   []iotago.OutputsValidatorFunc
 	}
 	tests := []struct {
@@ -88,16 +89,16 @@ func TestOutputsValidatorFunc(t *testing.T) {
 	}{
 		{
 			"ok addr",
-			args{outputs: []iotago.Serializable{
+			args{outputs: []serializer.Serializable{
 				&iotago.SigLockedSingleOutput{
-					Address: func() iotago.Serializable {
+					Address: func() serializer.Serializable {
 						addr, _ := tpkg.RandEd25519Address()
 						return addr
 					}(),
 					Amount: 0,
 				},
 				&iotago.SigLockedSingleOutput{
-					Address: func() iotago.Serializable {
+					Address: func() serializer.Serializable {
 						addr, _ := tpkg.RandEd25519Address()
 						return addr
 					}(),
@@ -107,9 +108,9 @@ func TestOutputsValidatorFunc(t *testing.T) {
 		},
 		{
 			"addr not unique",
-			args{outputs: []iotago.Serializable{
+			args{outputs: []serializer.Serializable{
 				&iotago.SigLockedSingleOutput{
-					Address: func() iotago.Serializable {
+					Address: func() serializer.Serializable {
 						addr, _ := tpkg.RandEd25519Address()
 						for i := 0; i < len(addr); i++ {
 							addr[i] = 3
@@ -119,7 +120,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 					Amount: 0,
 				},
 				&iotago.SigLockedSingleOutput{
-					Address: func() iotago.Serializable {
+					Address: func() serializer.Serializable {
 						addr, _ := tpkg.RandEd25519Address()
 						for i := 0; i < len(addr); i++ {
 							addr[i] = 3
@@ -132,7 +133,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 		},
 		{
 			"ok amount",
-			args{outputs: []iotago.Serializable{
+			args{outputs: []serializer.Serializable{
 				&iotago.SigLockedSingleOutput{
 					Address: nil,
 					Amount:  iotago.TokenSupply,
@@ -141,7 +142,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 		},
 		{
 			"spends more than total supply",
-			args{outputs: []iotago.Serializable{
+			args{outputs: []serializer.Serializable{
 				&iotago.SigLockedSingleOutput{
 					Address: nil,
 					Amount:  iotago.TokenSupply + 1,
@@ -150,7 +151,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 		},
 		{
 			"sum more than total supply",
-			args{outputs: []iotago.Serializable{
+			args{outputs: []serializer.Serializable{
 				&iotago.SigLockedSingleOutput{
 					Address: nil,
 					Amount:  iotago.TokenSupply - 1,

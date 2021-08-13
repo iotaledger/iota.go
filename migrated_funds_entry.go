@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 const (
@@ -19,17 +20,17 @@ type MigratedFundsEntry struct {
 	// The tail transaction hash of the migration bundle.
 	TailTransactionHash LegacyTailTransactionHash
 	// The target address of the migrated funds.
-	Address Serializable
+	Address serializer.Serializable
 	// The amount of the deposit.
 	Deposit uint64
 }
 
-func (m *MigratedFundsEntry) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (m *MigratedFundsEntry) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		ReadArrayOf49Bytes(&m.TailTransactionHash, func(err error) error {
 			return fmt.Errorf("unable to deserialize migrated funds entry tail transaction hash: %w", err)
 		}).
-		ReadObject(func(seri Serializable) { m.Address = seri }, deSeriMode, TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(func(seri serializer.Serializable) { m.Address = seri }, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for migrated funds entry: %w", err)
 		}).
 		ReadNum(&m.Deposit, func(err error) error {
@@ -38,8 +39,8 @@ func (m *MigratedFundsEntry) Deserialize(data []byte, deSeriMode DeSerialization
 		Done()
 }
 
-func (m *MigratedFundsEntry) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	return NewSerializer().
+func (m *MigratedFundsEntry) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	return serializer.NewSerializer().
 		WriteBytes(m.TailTransactionHash[:], func(err error) error {
 			return fmt.Errorf("unable to serialize migrated funds entry tail transaction hash: %w", err)
 		}).
@@ -86,7 +87,7 @@ type jsonMigratedFundsEntry struct {
 	Deposit             int              `json:"deposit"`
 }
 
-func (j *jsonMigratedFundsEntry) ToSerializable() (Serializable, error) {
+func (j *jsonMigratedFundsEntry) ToSerializable() (serializer.Serializable, error) {
 	payload := &MigratedFundsEntry{}
 	tailTransactionHash, err := hex.DecodeString(j.TailTransactionHash)
 	if err != nil {

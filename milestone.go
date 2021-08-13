@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/ed25519"
 	"golang.org/x/crypto/blake2b"
 	"google.golang.org/grpc"
@@ -70,21 +71,21 @@ var (
 	ErrMilestoneInvalidMinPoWScoreValues = fmt.Errorf("invalid milestone min pow score values")
 
 	// restrictions around parents within a Milestone.
-	milestoneParentArrayRules = ArrayRules{
+	milestoneParentArrayRules = serializer.ArrayRules{
 		Min:            MinParentsInAMessage,
 		Max:            MaxParentsInAMessage,
-		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	// restrictions around public keys within a Milestone.
-	milestonePublicKeyArrayRules = ArrayRules{
+	milestonePublicKeyArrayRules = serializer.ArrayRules{
 		Min:            MinPublicKeysInAMilestone,
 		Max:            MaxPublicKeysInAMilestone,
-		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	// restrictions around signatures within a Milestone.
-	milestoneSignatureArrayRules = ArrayRules{
+	milestoneSignatureArrayRules = serializer.ArrayRules{
 		Min: MinSignaturesInAMilestone,
 		Max: MaxSignaturesInAMilestone,
 	}
@@ -145,14 +146,14 @@ type Milestone struct {
 	// The public keys validating the signatures of the milestone.
 	PublicKeys []MilestonePublicKey
 	// The inner payload of the milestone. Can be nil or a Receipt.
-	Receipt Serializable
+	Receipt serializer.Serializable
 	// The signatures held by the milestone.
 	Signatures []MilestoneSignature
 }
 
 // ID computes the ID of the Milestone.
 func (m *Milestone) ID() (*MilestoneID, error) {
-	data, err := m.Serialize(DeSeriModeNoValidation)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation)
 	if err != nil {
 		return nil, fmt.Errorf("can't compute milestone payload ID: %w", err)
 	}
@@ -162,7 +163,7 @@ func (m *Milestone) ID() (*MilestoneID, error) {
 
 // Essence returns the essence bytes (the bytes to be signed) of the Milestone.
 func (m *Milestone) Essence() ([]byte, error) {
-	essenceBytes, err := NewSerializer().
+	essenceBytes, err := serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if len(m.PublicKeys) < MinPublicKeysInAMilestone {
 				return fmt.Errorf("unable to serialize milestone as essence: %w", ErrMilestoneTooFewPublicKeys)
@@ -175,7 +176,7 @@ func (m *Milestone) Essence() ([]byte, error) {
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp for essence: %w", err)
 		}).
-		Write32BytesArraySlice(m.Parents, DeSeriModePerformValidation, SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.Parents, serializer.DeSeriModePerformValidation, serializer.SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents for essence: %w", err)
 		}).
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
@@ -187,10 +188,10 @@ func (m *Milestone) Essence() ([]byte, error) {
 		WriteNum(m.NextPoWScoreMilestoneIndex, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone next pow score milestone index for essence: %w", err)
 		}).
-		Write32BytesArraySlice(m.PublicKeys, DeSeriModePerformValidation, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.PublicKeys, serializer.DeSeriModePerformValidation, serializer.SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys for essence: %w", err)
 		}).
-		WritePayload(m.Receipt, DeSeriModePerformValidation, func(err error) error {
+		WritePayload(m.Receipt, serializer.DeSeriModePerformValidation, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone receipt for essence: %w", err)
 		}).
 		Serialize()
@@ -326,10 +327,10 @@ func (m *Milestone) Sign(signingFunc MilestoneSigningFunc) error {
 	return nil
 }
 
-func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := checkMinByteLength(MilestoneBinSerializedMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid milestone bytes: %w", err)
 				}
@@ -348,7 +349,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		ReadNum(&m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone timestamp: %w", err)
 		}).
-		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
+		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone parents: %w", err)
 		}).
 		ReadArrayOf32Bytes(&m.InclusionMerkleProof, func(err error) error {
@@ -367,18 +368,18 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 			}
 			return nil
 		}).
-		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, deSeriMode, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
+		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, deSeriMode, serializer.SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
 		}).
-		ReadPayload(func(seri Serializable) { m.Receipt = seri }, deSeriMode, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone receipt: %w", err)
-		}, func(ty uint32) (Serializable, error) {
+		ReadPayload(func(seri serializer.Serializable) { m.Receipt = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
 			if ty != ReceiptPayloadTypeID {
 				return nil, fmt.Errorf("a milestone can only contain a receipt payload but got type ID %d:  %w", ty, ErrUnknownPayloadType)
 			}
 			return PayloadSelector(ty)
+		}, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone receipt: %w", err)
 		}).
-		ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
+		ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, serializer.SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone signatures: %w", err)
 		}).
 		AbortIf(func(err error) error {
@@ -390,8 +391,8 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode DeSerializationMode) (in
 		Done()
 }
 
-func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	if deSeriMode.HasMode(DeSeriModePerformValidation) {
+func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if m.Receipt != nil {
 			if _, isReceiptPayload := m.Receipt.(*Receipt); !isReceiptPayload {
 				return nil, fmt.Errorf("%w: milestones only allow embedded receipt payloads but got %T instead", ErrInvalidBytes, m.Receipt)
@@ -402,7 +403,7 @@ func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 			return nil, fmt.Errorf("%w: next-pow-score-milestone-index is zero but next-pow-score is not", ErrMilestoneInvalidMinPoWScoreValues)
 		}
 	}
-	return NewSerializer().
+	return serializer.NewSerializer().
 		WriteNum(MilestonePayloadTypeID, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone payload ID: %w", err)
 		}).
@@ -412,7 +413,7 @@ func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp: %w", err)
 		}).
-		Write32BytesArraySlice(m.Parents, deSeriMode, SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents: %w", err)
 		}).
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
@@ -424,13 +425,13 @@ func (m *Milestone) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		WriteNum(m.NextPoWScoreMilestoneIndex, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone next pow score milestone index: %w", err)
 		}).
-		Write32BytesArraySlice(m.PublicKeys, deSeriMode, SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.PublicKeys, deSeriMode, serializer.SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys: %w", err)
 		}).
 		WritePayload(m.Receipt, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone receipt: %w", err)
 		}).
-		Write64BytesArraySlice(m.Signatures, deSeriMode, SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
+		Write64BytesArraySlice(m.Signatures, deSeriMode, serializer.SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone signatures: %w", err)
 		}).
 		Serialize()
@@ -498,7 +499,7 @@ type jsonMilestone struct {
 	Signatures                 []string         `json:"signatures"`
 }
 
-func (j *jsonMilestone) ToSerializable() (Serializable, error) {
+func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 	var err error
 
 	payload := &Milestone{}
