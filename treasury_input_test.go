@@ -19,7 +19,7 @@ func TestTreasuryInput_Deserialize(t *testing.T) {
 		err    error
 	}{
 		{"ok", randTreasuryInputData, randTreasuryInput, nil},
-		{"not enough data", randTreasuryInputData[:iotago.TreasuryInputSerializedBytesSize-1], randTreasuryInput, iotago.ErrDeserializationNotEnoughData},
+		{"not enough data", randTreasuryInputData[:iotago.TreasuryInputSerializedBytesSize-1], randTreasuryInput, serializer.ErrDeserializationNotEnoughData},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

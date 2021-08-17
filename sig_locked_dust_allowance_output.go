@@ -8,12 +8,12 @@ import (
 
 const (
 	// SigLockedDustAllowanceOutputEd25519AddrBytesSize is the size of a SigLockedDustAllowanceOutput containing an Ed25519Address as its deposit address.
-	SigLockedDustAllowanceOutputEd25519AddrBytesSize = SmallTypeDenotationByteSize + Ed25519AddressSerializedBytesSize + UInt64ByteSize
+	SigLockedDustAllowanceOutputEd25519AddrBytesSize = serializer.SmallTypeDenotationByteSize + Ed25519AddressSerializedBytesSize + serializer.UInt64ByteSize
 
 	// SigLockedDustAllowanceOutputBytesMinSize defines the minimum size of a SigLockedDustAllowanceOutput.
 	SigLockedDustAllowanceOutputBytesMinSize = SigLockedDustAllowanceOutputEd25519AddrBytesSize
 	// SigLockedDustAllowanceOutputAddressOffset defines the offset at which the address portion within a SigLockedDustAllowanceOutput begins.
-	SigLockedDustAllowanceOutputAddressOffset = SmallTypeDenotationByteSize
+	SigLockedDustAllowanceOutputAddressOffset = serializer.SmallTypeDenotationByteSize
 )
 
 // SigLockedDustAllowanceOutput functions like a SigLockedSingleOutput but as a special property
@@ -41,16 +41,16 @@ func (s *SigLockedDustAllowanceOutput) Deserialize(data []byte, deSeriMode seria
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkMinByteLength(SigLockedDustAllowanceOutputBytesMinSize, len(data)); err != nil {
+				if err := serializer.CheckMinByteLength(SigLockedDustAllowanceOutputBytesMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid signature locked dust allowance output bytes: %w", err)
 				}
-				if err := checkTypeByte(data, OutputSigLockedDustAllowanceOutput); err != nil {
+				if err := serializer.CheckTypeByte(data, OutputSigLockedDustAllowanceOutput); err != nil {
 					return fmt.Errorf("unable to deserialize signature locked dust allowance output: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(SmallTypeDenotationByteSize, func(err error) error {
+		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip signature locked dust allowance output type during deserialization: %w", err)
 		}).
 		ReadObject(func(seri serializer.Serializable) { s.Address = seri }, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
@@ -81,7 +81,7 @@ func (s *SigLockedDustAllowanceOutput) Serialize(deSeriMode serializer.DeSeriali
 				switch s.Address.(type) {
 				case *Ed25519Address:
 				default:
-					return fmt.Errorf("%w: signature locked dust allowance output defines unknown address", ErrUnknownAddrType)
+					return fmt.Errorf("%w: signature locked dust allowance output defines unknown address", serializer.ErrUnknownAddrType)
 				}
 			}
 			return nil

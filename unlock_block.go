@@ -18,9 +18,9 @@ const (
 	UnlockBlockReference
 
 	// SignatureUnlockBlockMinSize defines the minimum size of a signature unlock block.
-	SignatureUnlockBlockMinSize = SmallTypeDenotationByteSize + Ed25519SignatureSerializedBytesSize
+	SignatureUnlockBlockMinSize = serializer.SmallTypeDenotationByteSize + Ed25519SignatureSerializedBytesSize
 	// ReferenceUnlockBlockSize defines the size of a reference unlock block.
-	ReferenceUnlockBlockSize = SmallTypeDenotationByteSize + UInt16ByteSize
+	ReferenceUnlockBlockSize = serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 )
 
 var (
@@ -41,7 +41,7 @@ func UnlockBlockSelector(unlockBlockType uint32) (serializer.Serializable, error
 	case UnlockBlockReference:
 		seri = &ReferenceUnlockBlock{}
 	default:
-		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownUnlockBlockType, unlockBlockType)
+		return nil, fmt.Errorf("%w: type byte %d", serializer.ErrUnknownUnlockBlockType, unlockBlockType)
 	}
 	return seri, nil
 }
@@ -56,16 +56,16 @@ func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode serializer.De
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkMinByteLength(SignatureUnlockBlockMinSize, len(data)); err != nil {
+				if err := serializer.CheckMinByteLength(SignatureUnlockBlockMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid signature unlock block bytes: %w", err)
 				}
-				if err := checkTypeByte(data, UnlockBlockSignature); err != nil {
+				if err := serializer.CheckTypeByte(data, UnlockBlockSignature); err != nil {
 					return fmt.Errorf("unable to deserialize signature unlock block: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(SmallTypeDenotationByteSize, func(err error) error {
+		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip milestone payload ID during deserialization: %w", err)
 		}).
 		ReadObject(func(seri serializer.Serializable) { s.Signature = seri }, deSeriMode, serializer.TypeDenotationByte, SignatureSelector, func(err error) error {
@@ -117,14 +117,14 @@ type ReferenceUnlockBlock struct {
 
 func (r *ReferenceUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-		if err := checkMinByteLength(ReferenceUnlockBlockSize, len(data)); err != nil {
+		if err := serializer.CheckMinByteLength(ReferenceUnlockBlockSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid reference unlock block bytes: %w", err)
 		}
-		if err := checkTypeByte(data, UnlockBlockReference); err != nil {
+		if err := serializer.CheckTypeByte(data, UnlockBlockReference); err != nil {
 			return 0, fmt.Errorf("unable to deserialize reference unlock block: %w", err)
 		}
 	}
-	data = data[SmallTypeDenotationByteSize:]
+	data = data[serializer.SmallTypeDenotationByteSize:]
 	r.Reference = binary.LittleEndian.Uint16(data)
 	return ReferenceUnlockBlockSize, nil
 }
@@ -132,7 +132,7 @@ func (r *ReferenceUnlockBlock) Deserialize(data []byte, deSeriMode serializer.De
 func (r *ReferenceUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	var b [ReferenceUnlockBlockSize]byte
 	b[0] = UnlockBlockReference
-	binary.LittleEndian.PutUint16(b[SmallTypeDenotationByteSize:], r.Reference)
+	binary.LittleEndian.PutUint16(b[serializer.SmallTypeDenotationByteSize:], r.Reference)
 	return b[:], nil
 }
 
@@ -187,7 +187,7 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 			case *Ed25519Signature:
 				seenSigBlocks[index] = struct{}{}
 			default:
-				return fmt.Errorf("%w: signature unblock block at index %d holds unknown signature type %T", ErrUnknownSignatureType, index, x)
+				return fmt.Errorf("%w: signature unblock block at index %d holds unknown signature type %T", serializer.ErrUnknownSignatureType, index, x)
 			}
 		case *ReferenceUnlockBlock:
 			reference := int(x.Reference)
@@ -195,7 +195,7 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 				return fmt.Errorf("%w: %d references non existent unlock block %d", ErrRefUnlockBlockInvalidRef, index, reference)
 			}
 		default:
-			return fmt.Errorf("%w: unlock block at index %d is of unknown type %T", ErrUnknownUnlockBlockType, index, x)
+			return fmt.Errorf("%w: unlock block at index %d is of unknown type %T", serializer.ErrUnknownUnlockBlockType, index, x)
 		}
 
 		return nil
@@ -209,7 +209,7 @@ func ValidateUnlockBlocks(unlockBlocks serializer.Serializables, funcs ...Unlock
 		case *SignatureUnlockBlock:
 		case *ReferenceUnlockBlock:
 		default:
-			return fmt.Errorf("%w: can only validate signature or reference unlock blocks", ErrUnknownInputType)
+			return fmt.Errorf("%w: can only validate signature or reference unlock blocks", serializer.ErrUnknownInputType)
 		}
 		for _, f := range funcs {
 			if err := f(i, unlockBlock); err != nil {
@@ -229,7 +229,7 @@ func jsonUnlockBlockSelector(ty int) (JSONSerializable, error) {
 	case UnlockBlockReference:
 		obj = &jsonReferenceUnlockBlock{}
 	default:
-		return nil, fmt.Errorf("unable to decode unlock block type from JSON: %w", ErrUnknownUnlockBlockType)
+		return nil, fmt.Errorf("unable to decode unlock block type from JSON: %w", serializer.ErrUnknownUnlockBlockType)
 	}
 	return obj, nil
 }

@@ -84,7 +84,7 @@ func RandEd25519Address() (*iotago.Ed25519Address, []byte) {
 	// serialized
 	var b [iotago.Ed25519AddressSerializedBytesSize]byte
 	b[0] = iotago.AddressEd25519
-	copy(b[iotago.SmallTypeDenotationByteSize:], addr)
+	copy(b[serializer.SmallTypeDenotationByteSize:], addr)
 	return edAddr, b[:]
 }
 
@@ -99,8 +99,8 @@ func RandEd25519Signature() (*iotago.Ed25519Signature, []byte) {
 	// serialized
 	var b [iotago.Ed25519SignatureSerializedBytesSize]byte
 	b[0] = iotago.SignatureEd25519
-	copy(b[iotago.SmallTypeDenotationByteSize:], pub)
-	copy(b[iotago.SmallTypeDenotationByteSize+ed25519.PublicKeySize:], sig)
+	copy(b[serializer.SmallTypeDenotationByteSize:], pub)
+	copy(b[serializer.SmallTypeDenotationByteSize+ed25519.PublicKeySize:], sig)
 	return edSig, b[:]
 }
 
@@ -120,7 +120,7 @@ func RandReferenceUnlockBlock() (*iotago.ReferenceUnlockBlock, []byte) {
 func ReferenceUnlockBlock(index uint16) (*iotago.ReferenceUnlockBlock, []byte) {
 	var b [iotago.ReferenceUnlockBlockSize]byte
 	b[0] = iotago.UnlockBlockReference
-	binary.LittleEndian.PutUint16(b[iotago.SmallTypeDenotationByteSize:], index)
+	binary.LittleEndian.PutUint16(b[serializer.SmallTypeDenotationByteSize:], index)
 	return &iotago.ReferenceUnlockBlock{Reference: index}, b[:]
 }
 
@@ -424,7 +424,7 @@ func RandTreasuryInput() (*iotago.TreasuryInput, []byte) {
 	copy(treasuryInput[:], input)
 	var b [iotago.TreasuryInputSerializedBytesSize]byte
 	b[0] = iotago.InputTreasury
-	copy(b[iotago.SmallTypeDenotationByteSize:], input)
+	copy(b[serializer.SmallTypeDenotationByteSize:], input)
 	return treasuryInput, b[:]
 }
 
@@ -435,11 +435,11 @@ func RandUTXOInput() (*iotago.UTXOInput, []byte) {
 	b[0] = iotago.InputUTXO
 
 	txID := RandBytes(iotago.TransactionIDLength)
-	copy(b[iotago.SmallTypeDenotationByteSize:], txID)
+	copy(b[serializer.SmallTypeDenotationByteSize:], txID)
 	copy(utxoInput.TransactionID[:], txID)
 
 	index := uint16(rand.Intn(iotago.RefUTXOIndexMax))
-	binary.LittleEndian.PutUint16(b[len(b)-iotago.UInt16ByteSize:], index)
+	binary.LittleEndian.PutUint16(b[len(b)-serializer.UInt16ByteSize:], index)
 	utxoInput.TransactionOutputIndex = index
 	return utxoInput, b[:]
 }

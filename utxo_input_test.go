@@ -19,7 +19,7 @@ func TestUTXOInput_Deserialize(t *testing.T) {
 		err    error
 	}{
 		{"ok", randSerializedUTXOInput, randUTXOInput, nil},
-		{"not enough data", randSerializedUTXOInput[:iotago.UTXOInputSize-1], randUTXOInput, iotago.ErrDeserializationNotEnoughData},
+		{"not enough data", randSerializedUTXOInput[:iotago.UTXOInputSize-1], randUTXOInput, serializer.ErrDeserializationNotEnoughData},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

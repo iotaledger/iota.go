@@ -72,13 +72,13 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkType(data, ReceiptPayloadTypeID); err != nil {
+				if err := serializer.CheckType(data, ReceiptPayloadTypeID); err != nil {
 					return fmt.Errorf("unable to deserialize receipt: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(TypeDenotationByteSize, func(err error) error {
+		Skip(serializer.TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip receipt payload ID during deserialization: %w", err)
 		}).
 		ReadNum(&r.MigratedAt, func(err error) error {
@@ -96,7 +96,7 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		}).
 		ReadPayload(func(seri serializer.Serializable) { r.Transaction = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
 			if ty != TreasuryTransactionPayloadTypeID {
-				return nil, fmt.Errorf("a receipt can only contain a treasury transaction but got type ID %d:  %w", ty, ErrUnknownPayloadType)
+				return nil, fmt.Errorf("a receipt can only contain a treasury transaction but got type ID %d:  %w", ty, serializer.ErrUnknownPayloadType)
 			}
 			return PayloadSelector(ty)
 		}, func(err error) error {
@@ -275,9 +275,9 @@ func ValidateReceipt(receipt *Receipt, prevTreasuryOutput *TreasuryOutput) error
 		switch {
 		case entry.Deposit < MinMigratedFundsEntryDeposit:
 			return fmt.Errorf("%w: migrated fund entry at index %d deposits less than %d", ErrInvalidReceipt, fIndex, MinMigratedFundsEntryDeposit)
-		case entry.Deposit > TokenSupply:
+		case entry.Deposit > serializer.TokenSupply:
 			return fmt.Errorf("%w: migrated fund entry at index %d deposits more than total supply", ErrInvalidReceipt, fIndex)
-		case entry.Deposit+migratedFundsSum > TokenSupply:
+		case entry.Deposit+migratedFundsSum > serializer.TokenSupply:
 			// this can't overflow because the previous case ensures that
 			return fmt.Errorf("%w: migrated fund entry at index %d overflows total supply", ErrInvalidReceipt, fIndex)
 		}

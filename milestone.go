@@ -30,8 +30,8 @@ const (
 	MilestonePublicKeyLength = ed25519.PublicKeySize
 	// MilestoneBinSerializedMinSize defines the serialized size of a milestone payload.
 	// 	payload type + index + timestamp + parent count + 1 parent + inclusion-merkle-proof + pubkeys-length + pubkey + sigs-length + sigs
-	MilestoneBinSerializedMinSize = TypeDenotationByteSize + UInt32ByteSize + UInt64ByteSize + OneByte + MessageIDLength +
-		MilestoneInclusionMerkleProofLength + OneByte + ed25519.PublicKeySize + OneByte + MilestoneSignatureLength
+	MilestoneBinSerializedMinSize = serializer.TypeDenotationByteSize + serializer.UInt32ByteSize + serializer.UInt64ByteSize + serializer.OneByte + MessageIDLength +
+		MilestoneInclusionMerkleProofLength + serializer.OneByte + ed25519.PublicKeySize + serializer.OneByte + MilestoneSignatureLength
 	// MaxSignaturesInAMilestone is the maximum amount of signatures in a milestone.
 	MaxSignaturesInAMilestone = 255
 	// MinSignaturesInAMilestone is the minimum amount of signatures in a milestone.
@@ -331,16 +331,16 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkMinByteLength(MilestoneBinSerializedMinSize, len(data)); err != nil {
+				if err := serializer.CheckMinByteLength(MilestoneBinSerializedMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid milestone bytes: %w", err)
 				}
-				if err := checkType(data, MilestonePayloadTypeID); err != nil {
+				if err := serializer.CheckType(data, MilestonePayloadTypeID); err != nil {
 					return fmt.Errorf("unable to deserialize milestone: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(TypeDenotationByteSize, func(err error) error {
+		Skip(serializer.TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip milestone payload ID during deserialization: %w", err)
 		}).
 		ReadNum(&m.Index, func(err error) error {
@@ -373,7 +373,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		}).
 		ReadPayload(func(seri serializer.Serializable) { m.Receipt = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
 			if ty != ReceiptPayloadTypeID {
-				return nil, fmt.Errorf("a milestone can only contain a receipt payload but got type ID %d:  %w", ty, ErrUnknownPayloadType)
+				return nil, fmt.Errorf("a milestone can only contain a receipt payload but got type ID %d:  %w", ty, serializer.ErrUnknownPayloadType)
 			}
 			return PayloadSelector(ty)
 		}, func(err error) error {
@@ -395,7 +395,7 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if m.Receipt != nil {
 			if _, isReceiptPayload := m.Receipt.(*Receipt); !isReceiptPayload {
-				return nil, fmt.Errorf("%w: milestones only allow embedded receipt payloads but got %T instead", ErrInvalidBytes, m.Receipt)
+				return nil, fmt.Errorf("%w: milestones only allow embedded receipt payloads but got %T instead", serializer.ErrInvalidBytes, m.Receipt)
 			}
 		}
 		switch {

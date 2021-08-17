@@ -31,7 +31,7 @@ func InputSelector(inputType uint32) (serializer.Serializable, error) {
 	case InputTreasury:
 		seri = &TreasuryInput{}
 	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownInputType, inputType)
+		return nil, fmt.Errorf("%w: type %d", serializer.ErrUnknownInputType, inputType)
 	}
 	return seri, nil
 }
@@ -76,7 +76,7 @@ func ValidateInputs(inputs serializer.Serializables, funcs ...InputsValidatorFun
 	for i, input := range inputs {
 		dep, ok := input.(*UTXOInput)
 		if !ok {
-			return fmt.Errorf("%w: can only validate on UTXO inputs", ErrUnknownInputType)
+			return fmt.Errorf("%w: can only validate on UTXO inputs", serializer.ErrUnknownInputType)
 		}
 		for _, f := range funcs {
 			if err := f(i, dep); err != nil {
@@ -96,7 +96,7 @@ func jsonInputSelector(ty int) (JSONSerializable, error) {
 	case InputTreasury:
 		obj = &jsonTreasuryInput{}
 	default:
-		return nil, fmt.Errorf("unable to decode input type from JSON: %w", ErrUnknownInputType)
+		return nil, fmt.Errorf("unable to decode input type from JSON: %w", serializer.ErrUnknownInputType)
 	}
 	return obj, nil
 }

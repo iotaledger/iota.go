@@ -15,12 +15,12 @@ const (
 	RefUTXOIndexMax = 126
 
 	// UTXOInputSize is the size of a UTXO input: input type + tx id + index
-	UTXOInputSize = SmallTypeDenotationByteSize + TransactionIDLength + UInt16ByteSize
+	UTXOInputSize = serializer.SmallTypeDenotationByteSize + TransactionIDLength + serializer.UInt16ByteSize
 )
 
 // UTXOInputID defines the identifier for an UTXO input which consists
 // out of the referenced transaction ID and the given output index.
-type UTXOInputID [TransactionIDLength + UInt16ByteSize]byte
+type UTXOInputID [TransactionIDLength + serializer.UInt16ByteSize]byte
 
 // ToHex converts the UTXOInputID to its hex representation.
 func (utxoInputID UTXOInputID) ToHex() string {
@@ -59,16 +59,16 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkMinByteLength(UTXOInputSize, len(data)); err != nil {
+				if err := serializer.CheckMinByteLength(UTXOInputSize, len(data)); err != nil {
 					return fmt.Errorf("invalid UTXO input bytes: %w", err)
 				}
-				if err := checkTypeByte(data, InputUTXO); err != nil {
+				if err := serializer.CheckTypeByte(data, InputUTXO); err != nil {
 					return fmt.Errorf("unable to deserialize UTXO input: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(SmallTypeDenotationByteSize, func(err error) error {
+		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip UTXO input type during deserialization: %w", err)
 		}).
 		ReadArrayOf32Bytes(&u.TransactionID, func(err error) error {

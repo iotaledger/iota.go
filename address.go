@@ -32,7 +32,7 @@ const (
 	// Ed25519AddressBytesLength is the length of an Ed25519 address.
 	Ed25519AddressBytesLength = blake2b.Size256
 	// Ed25519AddressSerializedBytesSize is the size of a serialized Ed25519 address with its type denoting byte.
-	Ed25519AddressSerializedBytesSize = SmallTypeDenotationByteSize + Ed25519AddressBytesLength
+	Ed25519AddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + Ed25519AddressBytesLength
 )
 
 // Address describes a general address.
@@ -57,7 +57,7 @@ func newAddress(addressType byte) (address Address, err error) {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
 	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownAddrType, addressType)
+		return nil, fmt.Errorf("%w: type %d", serializer.ErrUnknownAddrType, addressType)
 	}
 }
 
@@ -78,7 +78,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	}
 
 	if len(addrData) == 0 {
-		return "", nil, ErrDeserializationNotEnoughData
+		return "", nil, serializer.ErrDeserializationNotEnoughData
 	}
 
 	addr, err := newAddress(addrData[0])
@@ -92,7 +92,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	}
 
 	if n != len(addrData) {
-		return "", nil, ErrDeserializationNotAllConsumed
+		return "", nil, serializer.ErrDeserializationNotAllConsumed
 	}
 
 	return NetworkPrefix(hrp), addr, nil
@@ -137,21 +137,21 @@ func (edAddr *Ed25519Address) String() string {
 
 func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-		if err := checkMinByteLength(Ed25519AddressSerializedBytesSize, len(data)); err != nil {
+		if err := serializer.CheckMinByteLength(Ed25519AddressSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid Ed25519 address bytes: %w", err)
 		}
-		if err := checkTypeByte(data, AddressEd25519); err != nil {
+		if err := serializer.CheckTypeByte(data, AddressEd25519); err != nil {
 			return 0, fmt.Errorf("unable to deserialize Ed25519 address: %w", err)
 		}
 	}
-	copy(edAddr[:], data[SmallTypeDenotationByteSize:])
+	copy(edAddr[:], data[serializer.SmallTypeDenotationByteSize:])
 	return Ed25519AddressSerializedBytesSize, nil
 }
 
 func (edAddr *Ed25519Address) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
 	var b [Ed25519AddressSerializedBytesSize]byte
 	b[0] = AddressEd25519
-	copy(b[SmallTypeDenotationByteSize:], edAddr[:])
+	copy(b[serializer.SmallTypeDenotationByteSize:], edAddr[:])
 	return b[:], nil
 }
 
@@ -187,7 +187,7 @@ func jsonAddressSelector(ty int) (JSONSerializable, error) {
 	case AddressEd25519:
 		obj = &jsonEd25519Address{}
 	default:
-		return nil, fmt.Errorf("unable to decode address type from JSON: %w", ErrUnknownAddrType)
+		return nil, fmt.Errorf("unable to decode address type from JSON: %w", serializer.ErrUnknownAddrType)
 	}
 	return obj, nil
 }
@@ -203,7 +203,7 @@ func (j *jsonEd25519Address) ToSerializable() (serializer.Serializable, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
 	}
-	if err := checkExactByteLength(len(addrBytes), Ed25519AddressBytesLength); err != nil {
+	if err := serializer.CheckExactByteLength(len(addrBytes), Ed25519AddressBytesLength); err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
 	}
 	addr := &Ed25519Address{}

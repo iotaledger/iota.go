@@ -13,7 +13,7 @@ const (
 	IndexationPayloadTypeID uint32 = 2
 	// IndexationBinSerializedMinSize is the minimum size of an Indexation.
 	// 	type bytes + index prefix + one char + data length
-	IndexationBinSerializedMinSize = TypeDenotationByteSize + UInt16ByteSize + OneByte + UInt32ByteSize
+	IndexationBinSerializedMinSize = serializer.TypeDenotationByteSize + serializer.UInt16ByteSize + serializer.OneByte + serializer.UInt32ByteSize
 	// IndexationIndexMaxLength defines the max length of the index within an Indexation.
 	IndexationIndexMaxLength = 64
 	// IndexationIndexMinLength defines the min length of the index within an Indexation.
@@ -39,16 +39,16 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkMinByteLength(IndexationBinSerializedMinSize, len(data)); err != nil {
+				if err := serializer.CheckMinByteLength(IndexationBinSerializedMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid indexation bytes: %w", err)
 				}
-				if err := checkType(data, IndexationPayloadTypeID); err != nil {
+				if err := serializer.CheckType(data, IndexationPayloadTypeID); err != nil {
 					return fmt.Errorf("unable to deserialize indexation: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(TypeDenotationByteSize, func(err error) error {
+		Skip(serializer.TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip indexation payload ID during deserialization: %w", err)
 		}).
 		ReadVariableByteSlice(&u.Index, serializer.SeriSliceLengthAsUint16, func(err error) error {

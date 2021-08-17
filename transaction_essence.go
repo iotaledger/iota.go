@@ -18,7 +18,7 @@ const (
 	TransactionEssenceNormal TransactionEssenceType = iota
 
 	// TransactionEssenceMinByteSize defines the minimum size of a TransactionEssence.
-	TransactionEssenceMinByteSize = TypeDenotationByteSize + StructArrayLengthByteSize + StructArrayLengthByteSize + PayloadLengthByteSize
+	TransactionEssenceMinByteSize = serializer.TypeDenotationByteSize + serializer.StructArrayLengthByteSize + serializer.StructArrayLengthByteSize + serializer.PayloadLengthByteSize
 
 	// MaxInputsCount defines the maximum amount of inputs within a TransactionEssence.
 	MaxInputsCount = 127
@@ -68,7 +68,7 @@ func TransactionEssenceSelector(txType uint32) (serializer.Serializable, error) 
 	case TransactionEssenceNormal:
 		seri = &TransactionEssence{}
 	default:
-		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownTransactionEssenceType, txType)
+		return nil, fmt.Errorf("%w: type byte %d", serializer.ErrUnknownTransactionEssenceType, txType)
 	}
 	return seri, nil
 }
@@ -104,23 +104,23 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkMinByteLength(TransactionEssenceMinByteSize, len(data)); err != nil {
+				if err := serializer.CheckMinByteLength(TransactionEssenceMinByteSize, len(data)); err != nil {
 					return fmt.Errorf("invalid transaction essence bytes: %w", err)
 				}
-				if err := checkTypeByte(data, TransactionEssenceNormal); err != nil {
+				if err := serializer.CheckTypeByte(data, TransactionEssenceNormal); err != nil {
 					return fmt.Errorf("unable to deserialize transaction essence: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(SmallTypeDenotationByteSize, func(err error) error {
+		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip transaction essence ID during deserialization: %w", err)
 		}).
 		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Inputs = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			switch ty {
 			case uint32(InputUTXO):
 			default:
-				return nil, fmt.Errorf("transaction essence can only contain UTXO input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+				return nil, fmt.Errorf("transaction essence can only contain UTXO input as inputs but got type ID %d: %w", ty, serializer.ErrUnsupportedObjectType)
 			}
 			return InputSelector(ty)
 		}, &inputsArrayBound, func(err error) error {
@@ -139,7 +139,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 			case uint32(OutputSigLockedSingleOutput):
 			case uint32(OutputSigLockedDustAllowanceOutput):
 			default:
-				return nil, fmt.Errorf("transaction essence can only contain treasury output as outputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+				return nil, fmt.Errorf("transaction essence can only contain treasury output as outputs but got type ID %d: %w", ty, serializer.ErrUnsupportedObjectType)
 			}
 			return OutputSelector(ty)
 		}, &outputsArrayBound, func(err error) error {
@@ -156,7 +156,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 		ReadPayload(func(seri serializer.Serializable) { u.Payload = seri }, deSeriMode,
 			func(ty uint32) (serializer.Serializable, error) {
 				if ty != IndexationPayloadTypeID {
-					return nil, fmt.Errorf("transaction essence can only contain an indexation payload: %w", ErrUnsupportedPayloadType)
+					return nil, fmt.Errorf("transaction essence can only contain an indexation payload: %w", serializer.ErrUnsupportedPayloadType)
 				}
 				return PayloadSelector(ty)
 			},
@@ -168,7 +168,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 				if u.Payload != nil {
 					// supports only indexation payloads
 					if _, isIndexationPayload := u.Payload.(*Indexation); !isIndexationPayload {
-						return fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", ErrInvalidBytes, u.Payload)
+						return fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", serializer.ErrInvalidBytes, u.Payload)
 					}
 				}
 			}
@@ -183,7 +183,7 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 
 		if u.Payload != nil {
 			if _, isIndexationPayload := u.Payload.(*Indexation); !isIndexationPayload {
-				return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", ErrInvalidBytes, u.Payload)
+				return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", serializer.ErrInvalidBytes, u.Payload)
 			}
 		}
 		if inputsArrayBound.ValidationMode.HasMode(serializer.ArrayValidationModeLexicalOrdering) {
@@ -325,7 +325,7 @@ func jsonTransactionEssenceSelector(ty int) (JSONSerializable, error) {
 	case TransactionEssenceNormal:
 		obj = &jsonTransactionEssence{}
 	default:
-		return nil, fmt.Errorf("unable to decode transaction essence type from JSON: %w", ErrUnknownTransactionEssenceType)
+		return nil, fmt.Errorf("unable to decode transaction essence type from JSON: %w", serializer.ErrUnknownTransactionEssenceType)
 	}
 
 	return obj, nil

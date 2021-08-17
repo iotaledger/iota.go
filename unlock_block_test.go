@@ -12,7 +12,7 @@ import (
 
 func TestUnlockBlockSelector(t *testing.T) {
 	_, err := iotago.UnlockBlockSelector(100)
-	assert.True(t, errors.Is(err, iotago.ErrUnknownUnlockBlockType))
+	assert.True(t, errors.Is(err, serializer.ErrUnknownUnlockBlockType))
 }
 
 func TestSignatureUnlockBlock_Deserialize(t *testing.T) {
@@ -29,7 +29,7 @@ func TestSignatureUnlockBlock_Deserialize(t *testing.T) {
 		}(),
 		func() test {
 			edSigBlock, edSigBlockData := tpkg.RandEd25519SignatureUnlockBlock()
-			return test{"not enough data", edSigBlockData[:5], edSigBlock, iotago.ErrDeserializationNotEnoughData}
+			return test{"not enough data", edSigBlockData[:5], edSigBlock, serializer.ErrDeserializationNotEnoughData}
 		}(),
 	}
 

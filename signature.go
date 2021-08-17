@@ -20,7 +20,7 @@ const (
 	SignatureEd25519 SignatureType = iota
 
 	// Ed25519SignatureSerializedBytesSize defines the size of a serialized Ed25519Signature with its type denoting byte and public key.
-	Ed25519SignatureSerializedBytesSize = SmallTypeDenotationByteSize + ed25519.PublicKeySize + ed25519.SignatureSize
+	Ed25519SignatureSerializedBytesSize = serializer.SmallTypeDenotationByteSize + ed25519.PublicKeySize + ed25519.SignatureSize
 )
 
 var (
@@ -37,7 +37,7 @@ func SignatureSelector(sigType uint32) (serializer.Serializable, error) {
 	case SignatureEd25519:
 		seri = &Ed25519Signature{}
 	default:
-		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownSignatureType, sigType)
+		return nil, fmt.Errorf("%w: type byte %d", serializer.ErrUnknownSignatureType, sigType)
 	}
 	return seri, nil
 }
@@ -65,15 +65,15 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 
 func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-		if err := checkMinByteLength(Ed25519SignatureSerializedBytesSize, len(data)); err != nil {
+		if err := serializer.CheckMinByteLength(Ed25519SignatureSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid Ed25519 signature bytes: %w", err)
 		}
-		if err := checkTypeByte(data, SignatureEd25519); err != nil {
+		if err := serializer.CheckTypeByte(data, SignatureEd25519); err != nil {
 			return 0, fmt.Errorf("unable to deserialize Ed25519 signature: %w", err)
 		}
 	}
 	// skip type byte
-	data = data[SmallTypeDenotationByteSize:]
+	data = data[serializer.SmallTypeDenotationByteSize:]
 	copy(e.PublicKey[:], data[:ed25519.PublicKeySize])
 	copy(e.Signature[:], data[ed25519.PublicKeySize:])
 	return Ed25519SignatureSerializedBytesSize, nil
@@ -82,8 +82,8 @@ func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode serializer.DeSeri
 func (e *Ed25519Signature) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	var b [Ed25519SignatureSerializedBytesSize]byte
 	b[0] = SignatureEd25519
-	copy(b[SmallTypeDenotationByteSize:], e.PublicKey[:])
-	copy(b[SmallTypeDenotationByteSize+ed25519.PublicKeySize:], e.Signature[:])
+	copy(b[serializer.SmallTypeDenotationByteSize:], e.PublicKey[:])
+	copy(b[serializer.SmallTypeDenotationByteSize+ed25519.PublicKeySize:], e.Signature[:])
 	return b[:], nil
 }
 
@@ -115,7 +115,7 @@ func jsonSignatureSelector(ty int) (JSONSerializable, error) {
 	case SignatureEd25519:
 		obj = &jsonEd25519Signature{}
 	default:
-		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", ErrUnknownUnlockBlockType)
+		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", serializer.ErrUnknownUnlockBlockType)
 	}
 	return obj, nil
 }

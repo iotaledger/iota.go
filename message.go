@@ -16,9 +16,9 @@ const (
 	// MessageIDLength defines the length of a message ID.
 	MessageIDLength = blake2b.Size256
 	// MessageNetworkIDLength defines the length of the network ID in bytes.
-	MessageNetworkIDLength = UInt64ByteSize
+	MessageNetworkIDLength = serializer.UInt64ByteSize
 	// MessageBinSerializedMinSize defines the minimum size of a message: network ID + parent count + 1 parent + uint16 payload length + nonce
-	MessageBinSerializedMinSize = MessageNetworkIDLength + OneByte + MessageIDLength + UInt32ByteSize + UInt64ByteSize
+	MessageBinSerializedMinSize = MessageNetworkIDLength + serializer.OneByte + MessageIDLength + serializer.UInt32ByteSize + serializer.UInt64ByteSize
 	// MessageBinSerializedMaxSize defines the maximum size of a message.
 	MessageBinSerializedMaxSize = 32768
 	// MinParentsInAMessage defines the minimum amount of parents in a message.
@@ -54,7 +54,7 @@ func PayloadSelector(payloadType uint32) (serializer.Serializable, error) {
 	case TreasuryTransactionPayloadTypeID:
 		seri = &TreasuryTransaction{}
 	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownPayloadType, payloadType)
+		return nil, fmt.Errorf("%w: type %d", serializer.ErrUnknownPayloadType, payloadType)
 	}
 	return seri, nil
 }
@@ -141,7 +141,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
+				if err := serializer.CheckMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid message bytes: %w", err)
 				}
 			}
@@ -159,7 +159,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 			case IndexationPayloadTypeID:
 			case MilestonePayloadTypeID:
 			default:
-				return nil, fmt.Errorf("a message can only contain a transaction, indexation or milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
+				return nil, fmt.Errorf("a message can only contain a transaction, indexation or milestone but got type ID %d: %w", ty, serializer.ErrUnsupportedPayloadType)
 			}
 			return PayloadSelector(ty)
 		}, func(err error) error {
@@ -246,7 +246,7 @@ func jsonPayloadSelector(ty int) (JSONSerializable, error) {
 	case IndexationPayloadTypeID:
 		obj = &jsonIndexation{}
 	default:
-		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
+		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", serializer.ErrUnknownPayloadType)
 	}
 	return obj, nil
 }

@@ -30,7 +30,7 @@ func TestEd25519Address_Deserialize(t *testing.T) {
 				_, edAddrData := tpkg.RandEd25519Address()
 				return edAddrData[:iotago.Ed25519AddressSerializedBytesSize-1]
 			}(),
-			iotago.ErrDeserializationNotEnoughData,
+			serializer.ErrDeserializationNotEnoughData,
 		},
 	}
 
@@ -44,7 +44,7 @@ func TestEd25519Address_Deserialize(t *testing.T) {
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, len(tt.edAddrData), bytesRead)
-			assert.Equal(t, tt.edAddrData[iotago.SmallTypeDenotationByteSize:], edAddr[:])
+			assert.Equal(t, tt.edAddrData[serializer.SmallTypeDenotationByteSize:], edAddr[:])
 		})
 	}
 }

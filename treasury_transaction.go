@@ -10,7 +10,7 @@ const (
 	// TreasuryTransactionPayloadTypeID defines the TreasuryTransaction payload's ID.
 	TreasuryTransactionPayloadTypeID uint32 = 4
 	// TreasuryTransactionByteSize defines the serialized size of a TreasuryTransaction.
-	TreasuryTransactionByteSize = TypeDenotationByteSize + TreasuryInputSerializedBytesSize + TreasuryOutputBytesSize
+	TreasuryTransactionByteSize = serializer.TypeDenotationByteSize + TreasuryInputSerializedBytesSize + TreasuryOutputBytesSize
 )
 
 // TreasuryTransaction represents a transaction which moves funds from the treasury.
@@ -25,21 +25,21 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeS
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkMinByteLength(TreasuryTransactionByteSize, len(data)); err != nil {
+				if err := serializer.CheckMinByteLength(TreasuryTransactionByteSize, len(data)); err != nil {
 					return fmt.Errorf("invalid treasury transaction bytes: %w", err)
 				}
-				if err := checkType(data, TreasuryTransactionPayloadTypeID); err != nil {
+				if err := serializer.CheckType(data, TreasuryTransactionPayloadTypeID); err != nil {
 					return fmt.Errorf("unable to deserialize treasury transaction: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(TypeDenotationByteSize, func(err error) error {
+		Skip(serializer.TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip treasury transaction payload ID during deserialization: %w", err)
 		}).
 		ReadObject(func(seri serializer.Serializable) { t.Input = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			if ty != uint32(InputTreasury) {
-				return nil, fmt.Errorf("receipts can only contain treasury input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+				return nil, fmt.Errorf("receipts can only contain treasury input as inputs but got type ID %d: %w", ty, serializer.ErrUnsupportedObjectType)
 			}
 			return InputSelector(ty)
 		}, func(err error) error {
@@ -47,7 +47,7 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeS
 		}).
 		ReadObject(func(seri serializer.Serializable) { t.Output = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			if ty != uint32(OutputTreasuryOutput) {
-				return nil, fmt.Errorf("receipts can only contain treasury output as outputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+				return nil, fmt.Errorf("receipts can only contain treasury output as outputs but got type ID %d: %w", ty, serializer.ErrUnsupportedObjectType)
 			}
 			return OutputSelector(ty)
 		}, func(err error) error {
@@ -59,10 +59,10 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeS
 func (t *TreasuryTransaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if _, isUTXOInput := t.Input.(*TreasuryInput); !isUTXOInput {
-			return nil, fmt.Errorf("%w: treasury transaction must contain a UTXO input but got %T instead", ErrInvalidBytes, t.Input)
+			return nil, fmt.Errorf("%w: treasury transaction must contain a UTXO input but got %T instead", serializer.ErrInvalidBytes, t.Input)
 		}
 		if _, isTreasuryOutput := t.Output.(*TreasuryOutput); !isTreasuryOutput {
-			return nil, fmt.Errorf("%w: treasury transaction must contain a treasury output but got %T instead", ErrInvalidBytes, t.Output)
+			return nil, fmt.Errorf("%w: treasury transaction must contain a treasury output but got %T instead", serializer.ErrInvalidBytes, t.Output)
 		}
 	}
 	return serializer.NewSerializer().

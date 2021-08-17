@@ -12,7 +12,7 @@ import (
 
 func TestSignatureSelector(t *testing.T) {
 	_, err := iotago.SignatureSelector(100)
-	assert.True(t, errors.Is(err, iotago.ErrUnknownSignatureType))
+	assert.True(t, errors.Is(err, serializer.ErrUnknownSignatureType))
 }
 
 func TestEd25519Signature_Deserialize(t *testing.T) {
@@ -29,7 +29,7 @@ func TestEd25519Signature_Deserialize(t *testing.T) {
 		}(),
 		func() test {
 			edSig, edSigData := tpkg.RandEd25519Signature()
-			return test{"not enough data", edSigData[:5], edSig, iotago.ErrDeserializationNotEnoughData}
+			return test{"not enough data", edSigData[:5], edSig, serializer.ErrDeserializationNotEnoughData}
 		}(),
 	}
 

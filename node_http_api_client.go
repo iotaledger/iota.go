@@ -574,7 +574,7 @@ func (nor *NodeOutputResponse) Output() (Output, error) {
 	}
 	output, isOutput := seri.(Output)
 	if !isOutput {
-		return nil, ErrUnknownOutputType
+		return nil, serializer.ErrUnknownOutputType
 	}
 	return output, nil
 }

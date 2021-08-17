@@ -8,12 +8,12 @@ import (
 
 const (
 	// SigLockedSingleOutputEd25519AddrBytesSize defines the size of a SigLockedSingleOutput containing an Ed25519Address as its deposit address.
-	SigLockedSingleOutputEd25519AddrBytesSize = SmallTypeDenotationByteSize + Ed25519AddressSerializedBytesSize + UInt64ByteSize
+	SigLockedSingleOutputEd25519AddrBytesSize = serializer.SmallTypeDenotationByteSize + Ed25519AddressSerializedBytesSize + serializer.UInt64ByteSize
 
 	// SigLockedSingleOutputBytesMinSize defines the minimum size a SigLockedSingleOutput.
 	SigLockedSingleOutputBytesMinSize = SigLockedSingleOutputEd25519AddrBytesSize
 	// SigLockedSingleOutputAddressOffset defines the offset at which the address portion within a SigLockedSingleOutput begins.
-	SigLockedSingleOutputAddressOffset = SmallTypeDenotationByteSize
+	SigLockedSingleOutputAddressOffset = serializer.SmallTypeDenotationByteSize
 )
 
 // SigLockedSingleOutput is an output type which can be unlocked via a signature. It deposits onto one single address.
@@ -40,16 +40,16 @@ func (s *SigLockedSingleOutput) Deserialize(data []byte, deSeriMode serializer.D
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkMinByteLength(SigLockedSingleOutputBytesMinSize, len(data)); err != nil {
+				if err := serializer.CheckMinByteLength(SigLockedSingleOutputBytesMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid signature locked single output bytes: %w", err)
 				}
-				if err := checkTypeByte(data, OutputSigLockedSingleOutput); err != nil {
+				if err := serializer.CheckTypeByte(data, OutputSigLockedSingleOutput); err != nil {
 					return fmt.Errorf("unable to deserialize signature locked single output: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(SmallTypeDenotationByteSize, func(err error) error {
+		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip signature locked single output type during deserialization: %w", err)
 		}).
 		ReadObject(func(seri serializer.Serializable) { s.Address = seri }, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
@@ -80,7 +80,7 @@ func (s *SigLockedSingleOutput) Serialize(deSeriMode serializer.DeSerializationM
 				switch s.Address.(type) {
 				case *Ed25519Address:
 				default:
-					return fmt.Errorf("%w: signature locked single output defines unknown address", ErrUnknownAddrType)
+					return fmt.Errorf("%w: signature locked single output defines unknown address", serializer.ErrUnknownAddrType)
 				}
 			}
 			return nil

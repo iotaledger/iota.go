@@ -54,7 +54,7 @@ func OutputSelector(outputType uint32) (serializer.Serializable, error) {
 	case OutputTreasuryOutput:
 		seri = &TreasuryOutput{}
 	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownOutputType, outputType)
+		return nil, fmt.Errorf("%w: type %d", serializer.ErrUnknownOutputType, outputType)
 	}
 	return seri, nil
 }
@@ -80,7 +80,7 @@ func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
 	}
 	var txID TransactionID
 	copy(txID[:], outputIDBytes[:TransactionIDLength])
-	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[TransactionIDLength : TransactionIDLength+UInt16ByteSize])
+	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[TransactionIDLength : TransactionIDLength+serializer.UInt16ByteSize])
 	return &txID, outputIndex, nil
 }
 
@@ -169,10 +169,10 @@ func OutputsDepositAmountValidator() OutputsValidatorFunc {
 				return fmt.Errorf("%w: output %d", ErrOutputDustAllowanceLessThanMinDeposit, index)
 			}
 		}
-		if deposit > TokenSupply {
+		if deposit > serializer.TokenSupply {
 			return fmt.Errorf("%w: output %d", ErrOutputDepositsMoreThanTotalSupply, index)
 		}
-		if sum+deposit > TokenSupply {
+		if sum+deposit > serializer.TokenSupply {
 			return fmt.Errorf("%w: output %d", ErrOutputsSumExceedsTotalSupply, index)
 		}
 		if index != -1 {
@@ -189,7 +189,7 @@ var outputAmountValidator = OutputsDepositAmountValidator()
 func ValidateOutputs(outputs serializer.Serializables, funcs ...OutputsValidatorFunc) error {
 	for i, output := range outputs {
 		if _, isOutput := output.(Output); !isOutput {
-			return fmt.Errorf("%w: can only validate outputs but got %T instead", ErrUnknownOutputType, output)
+			return fmt.Errorf("%w: can only validate outputs but got %T instead", serializer.ErrUnknownOutputType, output)
 		}
 		for _, f := range funcs {
 			if err := f(i, output.(Output)); err != nil {
@@ -211,7 +211,7 @@ func jsonOutputSelector(ty int) (JSONSerializable, error) {
 	case OutputTreasuryOutput:
 		obj = &jsonTreasuryOutput{}
 	default:
-		return nil, fmt.Errorf("unable to decode output type from JSON: %w", ErrUnknownOutputType)
+		return nil, fmt.Errorf("unable to decode output type from JSON: %w", serializer.ErrUnknownOutputType)
 	}
 	return obj, nil
 }

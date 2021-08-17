@@ -58,7 +58,7 @@ func (mb *MessageBuilder) Payload(seri serializer.Serializable) *MessageBuilder 
 	case *Transaction:
 	case nil:
 	default:
-		mb.err = fmt.Errorf("%w: unsupported type %T", ErrUnknownPayloadType, seri)
+		mb.err = fmt.Errorf("%w: unsupported type %T", serializer.ErrUnknownPayloadType, seri)
 		return mb
 	}
 	mb.msg.Payload = seri
@@ -128,7 +128,7 @@ func (mb *MessageBuilder) ProofOfWork(ctx context.Context, targetScore float64, 
 	}
 
 	// cut out the nonce
-	powRelevantData := msgData[:len(msgData)-UInt64ByteSize]
+	powRelevantData := msgData[:len(msgData)-serializer.UInt64ByteSize]
 	worker := pow.New(numWorkers...)
 	nonce, err := worker.Mine(ctx, powRelevantData, targetScore)
 	if err != nil {

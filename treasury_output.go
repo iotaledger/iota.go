@@ -8,7 +8,7 @@ import (
 
 const (
 	// TreasuryOutputBytesSize defines the binary serialized size of a TreasuryOutput.
-	TreasuryOutputBytesSize = SmallTypeDenotationByteSize + UInt64ByteSize
+	TreasuryOutputBytesSize = serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize
 )
 
 // TreasuryOutput is an output which holds the treasury of a network.
@@ -21,16 +21,16 @@ func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := checkMinByteLength(TreasuryOutputBytesSize, len(data)); err != nil {
+				if err := serializer.CheckMinByteLength(TreasuryOutputBytesSize, len(data)); err != nil {
 					return fmt.Errorf("invalid treasury output bytes: %w", err)
 				}
-				if err := checkTypeByte(data, OutputTreasuryOutput); err != nil {
+				if err := serializer.CheckTypeByte(data, OutputTreasuryOutput); err != nil {
 					return fmt.Errorf("unable to deserialize treasury output: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(SmallTypeDenotationByteSize, func(err error) error {
+		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip treasury output type during deserialization: %w", err)
 		}).
 		ReadNum(&t.Amount, func(err error) error {
