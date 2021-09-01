@@ -23,10 +23,6 @@ const (
 	TypeDenotationByteSize = UInt32ByteSize
 	// SmallTypeDenotationByteSize is the size of a type denotation for a small range of possible values.
 	SmallTypeDenotationByteSize = OneByte
-	// StructArrayLengthByteSize is the byte size of struct array lengths.
-	StructArrayLengthByteSize = UInt16ByteSize
-	// ByteArrayLengthByteSize is the byte size of byte array lengths.
-	ByteArrayLengthByteSize = UInt32ByteSize
 	// PayloadLengthByteSize is the size of the payload length denoting bytes.
 	PayloadLengthByteSize = UInt32ByteSize
 	// MinPayloadByteSize is the minimum size of a payload (together with its length denotation).

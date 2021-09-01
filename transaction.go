@@ -89,11 +89,11 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (
 			return fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
 		}).
 		Do(func() {
-			inputCount := uint16(len(t.Essence.(*TransactionEssence).Inputs))
+			inputCount := uint(len(t.Essence.(*TransactionEssence).Inputs))
 			unlockBlockArrayRules.Min = inputCount
 			unlockBlockArrayRules.Max = inputCount
 		}).
-		ReadSliceOfObjects(func(seri Serializables) { t.UnlockBlocks = seri }, deSeriMode, TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(func(seri Serializables) { t.UnlockBlocks = seri }, deSeriMode, SeriSliceLengthAsUint16, TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize unlock blocks", err)
 		}).
 		AbortIf(func(err error) error {
@@ -119,7 +119,7 @@ func (t *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) 
 		WriteObject(t.Essence, deSeriMode, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's essence", err)
 		}).
-		WriteSliceOfObjects(t.UnlockBlocks, deSeriMode, nil, func(err error) error {
+		WriteSliceOfObjects(t.UnlockBlocks, deSeriMode, SeriSliceLengthAsUint16, nil, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's unlock blocks", err)
 		}).
 		Serialize()

@@ -45,7 +45,7 @@ func TestDeserializer_ReadSliceOfObjects(t *testing.T) {
 	bytesRead, err := iotago.NewDeserializer(data).
 		ReadSliceOfObjects(func(seri iotago.Serializables) {
 			readObjects = seri
-		}, iotago.DeSeriModePerformValidation, iotago.TypeDenotationByte, DummyTypeSelector, nil, func(err error) error { return err }).
+		}, iotago.DeSeriModePerformValidation, iotago.SeriSliceLengthAsUint16, iotago.TypeDenotationByte, DummyTypeSelector, nil, func(err error) error { return err }).
 		ConsumedAll(func(left int, err error) error { return err }).
 		Done()
 
@@ -93,7 +93,7 @@ func TestDeserializer_ReadString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var s string
 			_, err := iotago.NewDeserializer(tt.args.data).
-				ReadString(&s, func(err error) error {
+				ReadString(&s, iotago.SeriSliceLengthAsUint16, func(err error) error {
 					return err
 				}).
 				ConsumedAll(func(left int, err error) error { return err }).

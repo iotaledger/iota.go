@@ -67,15 +67,15 @@ func (av ArrayValidationMode) HasMode(mode ArrayValidationMode) bool {
 // Min and Max at 0 define an unbounded array.
 type ArrayRules struct {
 	// The min array bound.
-	Min uint16
+	Min uint
 	// The max array bound.
-	Max uint16
+	Max uint
 	// The mode of validation.
 	ValidationMode ArrayValidationMode
 }
 
 // CheckBounds checks whether the given count violates the array bounds.
-func (ar *ArrayRules) CheckBounds(count uint16) error {
+func (ar *ArrayRules) CheckBounds(count uint) error {
 	if ar.Min != 0 && count < ar.Min {
 		return fmt.Errorf("%w: min is %d but count is %d", ErrArrayValidationMinElementsNotReached, ar.Min, count)
 	}

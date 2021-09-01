@@ -17,7 +17,7 @@ const (
 	TransactionEssenceNormal TransactionEssenceType = iota
 
 	// TransactionEssenceMinByteSize defines the minimum size of a TransactionEssence.
-	TransactionEssenceMinByteSize = TypeDenotationByteSize + StructArrayLengthByteSize + StructArrayLengthByteSize + PayloadLengthByteSize
+	TransactionEssenceMinByteSize = TypeDenotationByteSize + UInt16ByteSize + UInt16ByteSize + PayloadLengthByteSize
 
 	// MaxInputsCount defines the maximum amount of inputs within a TransactionEssence.
 	MaxInputsCount = 127
@@ -115,7 +115,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 		Skip(SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip transaction essence ID during deserialization: %w", err)
 		}).
-		ReadSliceOfObjects(func(seri Serializables) { u.Inputs = seri }, deSeriMode, TypeDenotationByte, func(ty uint32) (Serializable, error) {
+		ReadSliceOfObjects(func(seri Serializables) { u.Inputs = seri }, deSeriMode, SeriSliceLengthAsUint16, TypeDenotationByte, func(ty uint32) (Serializable, error) {
 			switch ty {
 			case uint32(InputUTXO):
 			default:
@@ -133,7 +133,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode DeSerialization
 			}
 			return nil
 		}).
-		ReadSliceOfObjects(func(seri Serializables) { u.Outputs = seri }, deSeriMode, TypeDenotationByte, func(ty uint32) (Serializable, error) {
+		ReadSliceOfObjects(func(seri Serializables) { u.Outputs = seri }, deSeriMode, SeriSliceLengthAsUint16, TypeDenotationByte, func(ty uint32) (Serializable, error) {
 			switch ty {
 			case uint32(OutputSigLockedSingleOutput):
 			case uint32(OutputSigLockedDustAllowanceOutput):
@@ -220,10 +220,10 @@ func (u *TransactionEssence) Serialize(deSeriMode DeSerializationMode) (data []b
 		WriteNum(TransactionEssenceNormal, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence type ID: %w", err)
 		}).
-		WriteSliceOfObjects(u.Inputs, deSeriMode, inputsWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(u.Inputs, deSeriMode, SeriSliceLengthAsUint16, inputsWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence inputs: %w", err)
 		}).
-		WriteSliceOfObjects(u.Outputs, deSeriMode, outputsWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(u.Outputs, deSeriMode, SeriSliceLengthAsUint16, outputsWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence outputs: %w", err)
 		}).
 		WritePayload(u.Payload, deSeriMode, func(err error) error {

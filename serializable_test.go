@@ -392,9 +392,9 @@ func TestArrayRules_Bounds(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			arrayRules.Min = uint16(tt.min)
-			arrayRules.Max = uint16(tt.max)
-			err := arrayRules.CheckBounds(uint16(len(tt.args)))
+			arrayRules.Min = uint(tt.min)
+			arrayRules.Max = uint(tt.max)
+			err := arrayRules.CheckBounds(uint(len(tt.args)))
 			assert.Equal(t, tt.valid, err == nil)
 		})
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math"
 )
 
 type (
@@ -144,16 +145,28 @@ func (s *Serializer) writeSliceLength(l int, lenType SeriSliceLengthType, errPro
 	}
 	switch lenType {
 	case SeriSliceLengthAsByte:
+		if l > math.MaxUint8 {
+			s.err = errProducer(fmt.Errorf("unable to serialize slice length: length %d is out of range (0-%d)", l, math.MaxUint8))
+			return s
+		}
 		if err := s.buf.WriteByte(byte(l)); err != nil {
 			s.err = errProducer(err)
 			return s
 		}
 	case SeriSliceLengthAsUint16:
+		if l > math.MaxUint16 {
+			s.err = errProducer(fmt.Errorf("unable to serialize slice length: length %d is out of range (0-%d)", l, math.MaxUint16))
+			return s
+		}
 		if err := binary.Write(&s.buf, binary.LittleEndian, uint16(l)); err != nil {
 			s.err = errProducer(err)
 			return s
 		}
 	case SeriSliceLengthAsUint32:
+		if l > math.MaxUint32 {
+			s.err = errProducer(fmt.Errorf("unable to serialize slice length: length %d is out of range (0-%d)", l, math.MaxUint32))
+			return s
+		}
 		if err := binary.Write(&s.buf, binary.LittleEndian, uint32(l)); err != nil {
 			s.err = errProducer(err)
 			return s
@@ -187,7 +200,7 @@ func (s *Serializer) Write32BytesArraySlice(data SliceOfArraysOf32Bytes, deSeriM
 
 	var arrayElementValidator ElementValidationFunc
 	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := arrayRules.CheckBounds(uint16(sliceLength)); err != nil {
+		if err := arrayRules.CheckBounds(uint(sliceLength)); err != nil {
 			s.err = errProducer(err)
 			return s
 		}
@@ -224,7 +237,7 @@ func (s *Serializer) Write64BytesArraySlice(data SliceOfArraysOf64Bytes, deSeriM
 
 	var arrayElementValidator ElementValidationFunc
 	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := arrayRules.CheckBounds(uint16(sliceLength)); err != nil {
+		if err := arrayRules.CheckBounds(uint(sliceLength)); err != nil {
 			s.err = errProducer(err)
 			return s
 		}
@@ -272,16 +285,12 @@ func (s *Serializer) WriteObject(seri Serializable, deSeriMode DeSerializationMo
 
 // WriteSliceOfObjects writes Serializables into the Serializer.
 // For every written Serializable, the given WrittenObjectConsumer is called if it isn't nil.
-func (s *Serializer) WriteSliceOfObjects(seris Serializables, deSeriMode DeSerializationMode, woc WrittenObjectConsumer, errProducer ErrProducer) *Serializer {
+func (s *Serializer) WriteSliceOfObjects(seris Serializables, deSeriMode DeSerializationMode, lenType SeriSliceLengthType, woc WrittenObjectConsumer, errProducer ErrProducer) *Serializer {
 	if s.err != nil {
 		return s
 	}
 
-	if err := binary.Write(&s.buf, binary.LittleEndian, uint16(len(seris))); err != nil {
-		s.err = errProducer(err)
-		return s
-	}
-
+	_ = s.writeSliceLength(len(seris), lenType, errProducer)
 	for i, seri := range seris {
 		ser, err := seri.Serialize(deSeriMode)
 		if err != nil {
@@ -312,7 +321,7 @@ func (s *Serializer) WritePayload(payload Serializable, deSeriMode DeSerializati
 
 	if payload == nil {
 		if err := binary.Write(&s.buf, binary.LittleEndian, uint32(0)); err != nil {
-			s.err = errProducer(fmt.Errorf("unable to serialize zero paylaod length: %w", err))
+			s.err = errProducer(fmt.Errorf("unable to serialize zero payload length: %w", err))
 		}
 		return s
 	}
@@ -324,7 +333,7 @@ func (s *Serializer) WritePayload(payload Serializable, deSeriMode DeSerializati
 	}
 
 	if err := binary.Write(&s.buf, binary.LittleEndian, uint32(len(payloadBytes))); err != nil {
-		s.err = errProducer(fmt.Errorf("unable to serialize paylaod length: %w", err))
+		s.err = errProducer(fmt.Errorf("unable to serialize payload length: %w", err))
 		return s
 	}
 
@@ -336,16 +345,12 @@ func (s *Serializer) WritePayload(payload Serializable, deSeriMode DeSerializati
 }
 
 // WriteString writes the given string to the Serializer.
-func (s *Serializer) WriteString(str string, errProducer ErrProducer) *Serializer {
+func (s *Serializer) WriteString(str string, lenType SeriSliceLengthType, errProducer ErrProducer) *Serializer {
 	if s.err != nil {
 		return s
 	}
 
-	if err := binary.Write(&s.buf, binary.LittleEndian, uint16(len(str))); err != nil {
-		s.err = errProducer(err)
-		return s
-	}
-
+	_ = s.writeSliceLength(len(str), lenType, errProducer)
 	if _, err := s.buf.Write([]byte(str)); err != nil {
 		s.err = errProducer(err)
 	}
@@ -601,7 +606,7 @@ func (d *Deserializer) ReadSliceOfArraysOf32Bytes(slice *SliceOfArraysOf32Bytes,
 
 	var arrayElementValidator ElementValidationFunc
 	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := arrayRules.CheckBounds(uint16(sliceLength)); err != nil {
+		if err := arrayRules.CheckBounds(uint(sliceLength)); err != nil {
 			d.err = errProducer(err)
 			return d
 		}
@@ -648,7 +653,7 @@ func (d *Deserializer) ReadSliceOfArraysOf64Bytes(slice *SliceOfArraysOf64Bytes,
 
 	var arrayElementValidator ElementValidationFunc
 	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := arrayRules.CheckBounds(uint16(sliceLength)); err != nil {
+		if err := arrayRules.CheckBounds(uint(sliceLength)); err != nil {
 			d.err = errProducer(err)
 			return d
 		}
@@ -726,23 +731,20 @@ func (d *Deserializer) ReadObject(f ReadObjectConsumerFunc, deSeriMode DeSeriali
 }
 
 // ReadSliceOfObjects reads a slice of objects.
-func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode DeSerializationMode, typeDen TypeDenotationType, serSel SerializableSelectorFunc, arrayRules *ArrayRules, errProducer ErrProducer) *Deserializer {
+func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode DeSerializationMode, lenType SeriSliceLengthType, typeDen TypeDenotationType, serSel SerializableSelectorFunc, arrayRules *ArrayRules, errProducer ErrProducer) *Deserializer {
 	if d.err != nil {
 		return d
 	}
 
-	if len(d.src) < StructArrayLengthByteSize {
-		d.err = errProducer(fmt.Errorf("%w: not enough data to deserialize struct array", ErrDeserializationNotEnoughData))
+	sliceLength, err := d.readSliceLength(lenType, errProducer)
+	if err != nil {
+		d.err = err
 		return d
 	}
 
-	seriCount := binary.LittleEndian.Uint16(d.src)
-	d.offset += StructArrayLengthByteSize
-	d.src = d.src[StructArrayLengthByteSize:]
-
 	var arrayElementValidator ElementValidationFunc
 	if arrayRules != nil && deSeriMode.HasMode(DeSeriModePerformValidation) {
-		if err := arrayRules.CheckBounds(seriCount); err != nil {
+		if err := arrayRules.CheckBounds(uint(sliceLength)); err != nil {
 			d.err = errProducer(err)
 			return d
 		}
@@ -751,7 +753,7 @@ func (d *Deserializer) ReadSliceOfObjects(f ReadObjectsConsumerFunc, deSeriMode 
 	}
 
 	var seris Serializables
-	for i := 0; i < int(seriCount); i++ {
+	for i := 0; i < int(sliceLength); i++ {
 
 		// remember where we were before reading the object
 		srcBefore := d.src
@@ -845,23 +847,20 @@ func (d *Deserializer) ReadPayload(f ReadObjectConsumerFunc, deSeriMode DeSerial
 }
 
 // ReadString reads a string.
-func (d *Deserializer) ReadString(s *string, errProducer ErrProducer, maxSize ...uint16) *Deserializer {
+func (d *Deserializer) ReadString(s *string, lenType SeriSliceLengthType, errProducer ErrProducer, maxSize ...int) *Deserializer {
 	if d.err != nil {
 		return d
 	}
 
-	if len(d.src) < UInt16ByteSize {
-		d.err = errProducer(fmt.Errorf("%w: can't read string length", ErrDeserializationNotEnoughData))
+	strLen, err := d.readSliceLength(lenType, errProducer)
+	if err != nil {
+		d.err = err
 		return d
 	}
 
-	strLen := binary.LittleEndian.Uint16(d.src)
 	if len(maxSize) > 0 && strLen > maxSize[0] {
 		d.err = errProducer(fmt.Errorf("%w: string defined to be of %d bytes length but max %d is allowed", ErrDeserializationLengthInvalid, strLen, maxSize[0]))
 	}
-
-	d.offset += UInt16ByteSize
-	d.src = d.src[UInt16ByteSize:]
 
 	if len(d.src) < int(strLen) {
 		d.err = errProducer(fmt.Errorf("%w: data is smaller than (%d) denoted string length of %d", ErrDeserializationNotEnoughData, len(d.src), strLen))

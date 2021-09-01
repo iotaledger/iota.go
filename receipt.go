@@ -87,7 +87,7 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 			return fmt.Errorf("unable to deserialize receipt final flag: %w", err)
 		}).
 		// special as the MigratedFundsEntry has no type denotation byte
-		ReadSliceOfObjects(func(seri Serializables) { r.Funds = seri }, deSeriMode, TypeDenotationNone, func(_ uint32) (Serializable, error) {
+		ReadSliceOfObjects(func(seri Serializables) { r.Funds = seri }, deSeriMode, SeriSliceLengthAsUint16, TypeDenotationNone, func(_ uint32) (Serializable, error) {
 			// there is no real selector, so we always return a fresh MigratedFundsEntry
 			return &MigratedFundsEntry{}, nil
 		}, migratedFundEntriesArrayRules, func(err error) error {
@@ -141,7 +141,7 @@ func (r *Receipt) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		WriteBool(r.Final, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt final flag: %w", err)
 		}).
-		WriteSliceOfObjects(r.Funds, deSeriMode, migratedFundsEntriesWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(r.Funds, deSeriMode, SeriSliceLengthAsUint16, migratedFundsEntriesWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt funds: %w", err)
 		}).
 		WritePayload(r.Transaction, deSeriMode, func(err error) error {
