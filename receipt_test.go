@@ -136,7 +136,7 @@ func TestValidateReceipts(t *testing.T) {
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             addr,
-				Deposit:             serializer.TokenSupply + 1,
+				Deposit:             iotago.TokenSupply + 1,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
 			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),

@@ -11,7 +11,7 @@ import (
 
 func TestInputSelector(t *testing.T) {
 	_, err := iotago.InputSelector(100)
-	assert.True(t, errors.Is(err, serializer.ErrUnknownInputType))
+	assert.True(t, errors.Is(err, iotago.ErrUnknownInputType))
 }
 
 func TestInputsValidatorFunc(t *testing.T) {

@@ -373,7 +373,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		}).
 		ReadPayload(func(seri serializer.Serializable) { m.Receipt = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
 			if ty != ReceiptPayloadTypeID {
-				return nil, fmt.Errorf("a milestone can only contain a receipt payload but got type ID %d:  %w", ty, serializer.ErrUnknownPayloadType)
+				return nil, fmt.Errorf("a milestone can only contain a receipt payload but got type ID %d:  %w", ty, ErrUnknownPayloadType)
 			}
 			return PayloadSelector(ty)
 		}, func(err error) error {

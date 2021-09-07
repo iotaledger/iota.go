@@ -76,6 +76,6 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature serial
 
 		return ed25519Sig, nil
 	default:
-		return nil, fmt.Errorf("%w: type %T", serializer.ErrUnknownAddrType, addr)
+		return nil, fmt.Errorf("%w: type %T", ErrUnknownAddrType, addr)
 	}
 }

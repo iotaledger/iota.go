@@ -12,7 +12,7 @@ import (
 
 func TestSignatureSelector(t *testing.T) {
 	_, err := iotago.SignatureSelector(100)
-	assert.True(t, errors.Is(err, serializer.ErrUnknownSignatureType))
+	assert.True(t, errors.Is(err, iotago.ErrUnknownSignatureType))
 }
 
 func TestEd25519Signature_Deserialize(t *testing.T) {

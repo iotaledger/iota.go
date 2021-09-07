@@ -354,7 +354,7 @@ func (t *Transaction) SemanticallyValidateInputs(utxos InputToOutputMapping, tra
 	for i, input := range transaction.Inputs {
 		in, alreadySeen := input.(*UTXOInput)
 		if !alreadySeen {
-			return 0, nil, fmt.Errorf("%w: unsupported input type at index %d", serializer.ErrUnknownInputType, i)
+			return 0, nil, fmt.Errorf("%w: unsupported input type at index %d", ErrUnknownInputType, i)
 		}
 
 		// check that we got the needed UTXO
@@ -422,7 +422,7 @@ func (t *Transaction) signatureUnlockBlock(index int) (*SignatureUnlockBlock, in
 		sigUBIndex := int(ub.Reference)
 		return t.UnlockBlocks[sigUBIndex].(*SignatureUnlockBlock), sigUBIndex, nil
 	default:
-		return nil, 0, fmt.Errorf("%w: unsupported unlock block type at index %d", serializer.ErrUnknownUnlockBlockType, index)
+		return nil, 0, fmt.Errorf("%w: unsupported unlock block type at index %d", ErrUnknownUnlockBlockType, index)
 	}
 }
 
@@ -432,7 +432,7 @@ func createSigValidationFunc(pos int, sig serializer.Serializable, sigBlockIndex
 	case *Ed25519Address:
 		return createEd25519SigValidationFunc(pos, sig, sigBlockIndex, addr, txEssenceBytes)
 	default:
-		return nil, fmt.Errorf("%w: unsupported address type at index %d", serializer.ErrUnknownAddrType, pos)
+		return nil, fmt.Errorf("%w: unsupported address type at index %d", ErrUnknownAddrType, pos)
 	}
 }
 
@@ -458,7 +458,7 @@ func (t *Transaction) SemanticallyValidateOutputs(transaction *TransactionEssenc
 	for i, output := range transaction.Outputs {
 		out, ok := output.(Output)
 		if !ok {
-			return 0, fmt.Errorf("%w: unsupported output type at index %d", serializer.ErrUnknownOutputType, i)
+			return 0, fmt.Errorf("%w: unsupported output type at index %d", ErrUnknownOutputType, i)
 		}
 		deposit, err := out.Deposit()
 		if err != nil {

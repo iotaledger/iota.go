@@ -37,7 +37,7 @@ func SignatureSelector(sigType uint32) (serializer.Serializable, error) {
 	case SignatureEd25519:
 		seri = &Ed25519Signature{}
 	default:
-		return nil, fmt.Errorf("%w: type byte %d", serializer.ErrUnknownSignatureType, sigType)
+		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownSignatureType, sigType)
 	}
 	return seri, nil
 }
@@ -115,7 +115,7 @@ func jsonSignatureSelector(ty int) (JSONSerializable, error) {
 	case SignatureEd25519:
 		obj = &jsonEd25519Signature{}
 	default:
-		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", serializer.ErrUnknownUnlockBlockType)
+		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", ErrUnknownUnlockBlockType)
 	}
 	return obj, nil
 }

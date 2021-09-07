@@ -12,7 +12,7 @@ import (
 
 func TestOutputSelector(t *testing.T) {
 	_, err := iotago.OutputSelector(100)
-	assert.True(t, errors.Is(err, serializer.ErrUnknownOutputType))
+	assert.True(t, errors.Is(err, iotago.ErrUnknownOutputType))
 }
 
 func TestSigLockedSingleOutput_Deserialize(t *testing.T) {
@@ -34,7 +34,7 @@ func TestSigLockedSingleOutput_Deserialize(t *testing.T) {
 		func() test {
 			dep, depData := tpkg.RandSigLockedSingleOutput(iotago.AddressEd25519)
 			depData[iotago.SigLockedSingleOutputAddressOffset] = 100
-			return test{"unknown addr type", depData, dep, serializer.ErrUnknownAddrType}
+			return test{"unknown addr type", depData, dep, iotago.ErrUnknownAddrType}
 		}(),
 	}
 	for _, tt := range tests {
@@ -136,7 +136,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 			args{outputs: []serializer.Serializable{
 				&iotago.SigLockedSingleOutput{
 					Address: nil,
-					Amount:  serializer.TokenSupply,
+					Amount:  iotago.TokenSupply,
 				},
 			}, funcs: []iotago.OutputsValidatorFunc{iotago.OutputsDepositAmountValidator()}}, false,
 		},
@@ -145,7 +145,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 			args{outputs: []serializer.Serializable{
 				&iotago.SigLockedSingleOutput{
 					Address: nil,
-					Amount:  serializer.TokenSupply + 1,
+					Amount:  iotago.TokenSupply + 1,
 				},
 			}, funcs: []iotago.OutputsValidatorFunc{iotago.OutputsDepositAmountValidator()}}, true,
 		},
@@ -154,11 +154,11 @@ func TestOutputsValidatorFunc(t *testing.T) {
 			args{outputs: []serializer.Serializable{
 				&iotago.SigLockedSingleOutput{
 					Address: nil,
-					Amount:  serializer.TokenSupply - 1,
+					Amount:  iotago.TokenSupply - 1,
 				},
 				&iotago.SigLockedSingleOutput{
 					Address: nil,
-					Amount:  serializer.TokenSupply - 1,
+					Amount:  iotago.TokenSupply - 1,
 				},
 			}, funcs: []iotago.OutputsValidatorFunc{iotago.OutputsDepositAmountValidator()}}, true,
 		},

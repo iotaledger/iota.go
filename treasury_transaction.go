@@ -39,7 +39,7 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeS
 		}).
 		ReadObject(func(seri serializer.Serializable) { t.Input = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			if ty != uint32(InputTreasury) {
-				return nil, fmt.Errorf("receipts can only contain treasury input as inputs but got type ID %d: %w", ty, serializer.ErrUnsupportedObjectType)
+				return nil, fmt.Errorf("receipts can only contain treasury input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 			}
 			return InputSelector(ty)
 		}, func(err error) error {
@@ -47,7 +47,7 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeS
 		}).
 		ReadObject(func(seri serializer.Serializable) { t.Output = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			if ty != uint32(OutputTreasuryOutput) {
-				return nil, fmt.Errorf("receipts can only contain treasury output as outputs but got type ID %d: %w", ty, serializer.ErrUnsupportedObjectType)
+				return nil, fmt.Errorf("receipts can only contain treasury output as outputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 			}
 			return OutputSelector(ty)
 		}, func(err error) error {

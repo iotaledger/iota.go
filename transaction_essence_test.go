@@ -12,7 +12,7 @@ import (
 
 func TestTransactionEssenceSelector(t *testing.T) {
 	_, err := iotago.TransactionEssenceSelector(100)
-	assert.True(t, errors.Is(err, serializer.ErrUnknownTransactionEssenceType))
+	assert.True(t, errors.Is(err, iotago.ErrUnknownTransactionEssenceType))
 }
 
 func TestTransactionEssence_Deserialize(t *testing.T) {

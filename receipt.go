@@ -96,7 +96,7 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		}).
 		ReadPayload(func(seri serializer.Serializable) { r.Transaction = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
 			if ty != TreasuryTransactionPayloadTypeID {
-				return nil, fmt.Errorf("a receipt can only contain a treasury transaction but got type ID %d:  %w", ty, serializer.ErrUnknownPayloadType)
+				return nil, fmt.Errorf("a receipt can only contain a treasury transaction but got type ID %d:  %w", ty, ErrUnknownPayloadType)
 			}
 			return PayloadSelector(ty)
 		}, func(err error) error {
@@ -275,9 +275,9 @@ func ValidateReceipt(receipt *Receipt, prevTreasuryOutput *TreasuryOutput) error
 		switch {
 		case entry.Deposit < MinMigratedFundsEntryDeposit:
 			return fmt.Errorf("%w: migrated fund entry at index %d deposits less than %d", ErrInvalidReceipt, fIndex, MinMigratedFundsEntryDeposit)
-		case entry.Deposit > serializer.TokenSupply:
+		case entry.Deposit > TokenSupply:
 			return fmt.Errorf("%w: migrated fund entry at index %d deposits more than total supply", ErrInvalidReceipt, fIndex)
-		case entry.Deposit+migratedFundsSum > serializer.TokenSupply:
+		case entry.Deposit+migratedFundsSum > TokenSupply:
 			// this can't overflow because the previous case ensures that
 			return fmt.Errorf("%w: migrated fund entry at index %d overflows total supply", ErrInvalidReceipt, fIndex)
 		}

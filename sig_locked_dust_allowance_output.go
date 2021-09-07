@@ -81,7 +81,7 @@ func (s *SigLockedDustAllowanceOutput) Serialize(deSeriMode serializer.DeSeriali
 				switch s.Address.(type) {
 				case *Ed25519Address:
 				default:
-					return fmt.Errorf("%w: signature locked dust allowance output defines unknown address", serializer.ErrUnknownAddrType)
+					return fmt.Errorf("%w: signature locked dust allowance output defines unknown address", ErrUnknownAddrType)
 				}
 			}
 			return nil

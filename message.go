@@ -54,7 +54,7 @@ func PayloadSelector(payloadType uint32) (serializer.Serializable, error) {
 	case TreasuryTransactionPayloadTypeID:
 		seri = &TreasuryTransaction{}
 	default:
-		return nil, fmt.Errorf("%w: type %d", serializer.ErrUnknownPayloadType, payloadType)
+		return nil, fmt.Errorf("%w: type %d", ErrUnknownPayloadType, payloadType)
 	}
 	return seri, nil
 }
@@ -159,7 +159,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 			case IndexationPayloadTypeID:
 			case MilestonePayloadTypeID:
 			default:
-				return nil, fmt.Errorf("a message can only contain a transaction, indexation or milestone but got type ID %d: %w", ty, serializer.ErrUnsupportedPayloadType)
+				return nil, fmt.Errorf("a message can only contain a transaction, indexation or milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
 			}
 			return PayloadSelector(ty)
 		}, func(err error) error {
@@ -246,7 +246,7 @@ func jsonPayloadSelector(ty int) (JSONSerializable, error) {
 	case IndexationPayloadTypeID:
 		obj = &jsonIndexation{}
 	default:
-		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", serializer.ErrUnknownPayloadType)
+		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
 	}
 	return obj, nil
 }

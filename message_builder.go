@@ -58,7 +58,7 @@ func (mb *MessageBuilder) Payload(seri serializer.Serializable) *MessageBuilder 
 	case *Transaction:
 	case nil:
 	default:
-		mb.err = fmt.Errorf("%w: unsupported type %T", serializer.ErrUnknownPayloadType, seri)
+		mb.err = fmt.Errorf("%w: unsupported type %T", ErrUnknownPayloadType, seri)
 		return mb
 	}
 	mb.msg.Payload = seri

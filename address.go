@@ -57,7 +57,7 @@ func newAddress(addressType byte) (address Address, err error) {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
 	default:
-		return nil, fmt.Errorf("%w: type %d", serializer.ErrUnknownAddrType, addressType)
+		return nil, fmt.Errorf("%w: type %d", ErrUnknownAddrType, addressType)
 	}
 }
 
@@ -187,7 +187,7 @@ func jsonAddressSelector(ty int) (JSONSerializable, error) {
 	case AddressEd25519:
 		obj = &jsonEd25519Address{}
 	default:
-		return nil, fmt.Errorf("unable to decode address type from JSON: %w", serializer.ErrUnknownAddrType)
+		return nil, fmt.Errorf("unable to decode address type from JSON: %w", ErrUnknownAddrType)
 	}
 	return obj, nil
 }

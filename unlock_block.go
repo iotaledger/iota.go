@@ -41,7 +41,7 @@ func UnlockBlockSelector(unlockBlockType uint32) (serializer.Serializable, error
 	case UnlockBlockReference:
 		seri = &ReferenceUnlockBlock{}
 	default:
-		return nil, fmt.Errorf("%w: type byte %d", serializer.ErrUnknownUnlockBlockType, unlockBlockType)
+		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownUnlockBlockType, unlockBlockType)
 	}
 	return seri, nil
 }
@@ -187,7 +187,7 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 			case *Ed25519Signature:
 				seenSigBlocks[index] = struct{}{}
 			default:
-				return fmt.Errorf("%w: signature unblock block at index %d holds unknown signature type %T", serializer.ErrUnknownSignatureType, index, x)
+				return fmt.Errorf("%w: signature unblock block at index %d holds unknown signature type %T", ErrUnknownSignatureType, index, x)
 			}
 		case *ReferenceUnlockBlock:
 			reference := int(x.Reference)
@@ -195,7 +195,7 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 				return fmt.Errorf("%w: %d references non existent unlock block %d", ErrRefUnlockBlockInvalidRef, index, reference)
 			}
 		default:
-			return fmt.Errorf("%w: unlock block at index %d is of unknown type %T", serializer.ErrUnknownUnlockBlockType, index, x)
+			return fmt.Errorf("%w: unlock block at index %d is of unknown type %T", ErrUnknownUnlockBlockType, index, x)
 		}
 
 		return nil
@@ -209,7 +209,7 @@ func ValidateUnlockBlocks(unlockBlocks serializer.Serializables, funcs ...Unlock
 		case *SignatureUnlockBlock:
 		case *ReferenceUnlockBlock:
 		default:
-			return fmt.Errorf("%w: can only validate signature or reference unlock blocks", serializer.ErrUnknownInputType)
+			return fmt.Errorf("%w: can only validate signature or reference unlock blocks", ErrUnknownInputType)
 		}
 		for _, f := range funcs {
 			if err := f(i, unlockBlock); err != nil {
@@ -229,7 +229,7 @@ func jsonUnlockBlockSelector(ty int) (JSONSerializable, error) {
 	case UnlockBlockReference:
 		obj = &jsonReferenceUnlockBlock{}
 	default:
-		return nil, fmt.Errorf("unable to decode unlock block type from JSON: %w", serializer.ErrUnknownUnlockBlockType)
+		return nil, fmt.Errorf("unable to decode unlock block type from JSON: %w", ErrUnknownUnlockBlockType)
 	}
 	return obj, nil
 }

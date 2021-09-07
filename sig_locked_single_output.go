@@ -80,7 +80,7 @@ func (s *SigLockedSingleOutput) Serialize(deSeriMode serializer.DeSerializationM
 				switch s.Address.(type) {
 				case *Ed25519Address:
 				default:
-					return fmt.Errorf("%w: signature locked single output defines unknown address", serializer.ErrUnknownAddrType)
+					return fmt.Errorf("%w: signature locked single output defines unknown address", ErrUnknownAddrType)
 				}
 			}
 			return nil

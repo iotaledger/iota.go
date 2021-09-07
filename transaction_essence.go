@@ -68,7 +68,7 @@ func TransactionEssenceSelector(txType uint32) (serializer.Serializable, error) 
 	case TransactionEssenceNormal:
 		seri = &TransactionEssence{}
 	default:
-		return nil, fmt.Errorf("%w: type byte %d", serializer.ErrUnknownTransactionEssenceType, txType)
+		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownTransactionEssenceType, txType)
 	}
 	return seri, nil
 }
@@ -120,7 +120,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 			switch ty {
 			case uint32(InputUTXO):
 			default:
-				return nil, fmt.Errorf("transaction essence can only contain UTXO input as inputs but got type ID %d: %w", ty, serializer.ErrUnsupportedObjectType)
+				return nil, fmt.Errorf("transaction essence can only contain UTXO input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 			}
 			return InputSelector(ty)
 		}, &inputsArrayBound, func(err error) error {
@@ -139,7 +139,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 			case uint32(OutputSigLockedSingleOutput):
 			case uint32(OutputSigLockedDustAllowanceOutput):
 			default:
-				return nil, fmt.Errorf("transaction essence can only contain treasury output as outputs but got type ID %d: %w", ty, serializer.ErrUnsupportedObjectType)
+				return nil, fmt.Errorf("transaction essence can only contain treasury output as outputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 			}
 			return OutputSelector(ty)
 		}, &outputsArrayBound, func(err error) error {
@@ -156,7 +156,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 		ReadPayload(func(seri serializer.Serializable) { u.Payload = seri }, deSeriMode,
 			func(ty uint32) (serializer.Serializable, error) {
 				if ty != IndexationPayloadTypeID {
-					return nil, fmt.Errorf("transaction essence can only contain an indexation payload: %w", serializer.ErrUnsupportedPayloadType)
+					return nil, fmt.Errorf("transaction essence can only contain an indexation payload: %w", ErrUnsupportedPayloadType)
 				}
 				return PayloadSelector(ty)
 			},
@@ -325,7 +325,7 @@ func jsonTransactionEssenceSelector(ty int) (JSONSerializable, error) {
 	case TransactionEssenceNormal:
 		obj = &jsonTransactionEssence{}
 	default:
-		return nil, fmt.Errorf("unable to decode transaction essence type from JSON: %w", serializer.ErrUnknownTransactionEssenceType)
+		return nil, fmt.Errorf("unable to decode transaction essence type from JSON: %w", ErrUnknownTransactionEssenceType)
 	}
 
 	return obj, nil

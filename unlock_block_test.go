@@ -12,7 +12,7 @@ import (
 
 func TestUnlockBlockSelector(t *testing.T) {
 	_, err := iotago.UnlockBlockSelector(100)
-	assert.True(t, errors.Is(err, serializer.ErrUnknownUnlockBlockType))
+	assert.True(t, errors.Is(err, iotago.ErrUnknownUnlockBlockType))
 }
 
 func TestSignatureUnlockBlock_Deserialize(t *testing.T) {
