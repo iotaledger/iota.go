@@ -121,7 +121,10 @@ func newKeyFromSeed(privateKey, seed []byte) {
 
 	digest := sha512.Sum512(seed)
 
-	s := new(edwards25519.Scalar).SetBytesWithClamping(digest[:32])
+	s, err := new(edwards25519.Scalar).SetBytesWithClamping(digest[:32])
+	if err != nil {
+		panic(err)
+	}
 	A := new(edwards25519.Point).ScalarBaseMult(s)
 
 	copy(privateKey, seed)
@@ -148,14 +151,20 @@ func sign(signature, privateKey, message []byte) {
 	var digest1, messageDigest, hramDigest [64]byte
 	h.Sum(digest1[:0])
 
-	s := new(edwards25519.Scalar).SetBytesWithClamping(digest1[:32])
+	s, err := new(edwards25519.Scalar).SetBytesWithClamping(digest1[:32])
+	if err != nil {
+		panic(err)
+	}
 
 	h.Reset()
 	h.Write(digest1[32:])
 	h.Write(message)
 	h.Sum(messageDigest[:0])
 
-	rReduced := new(edwards25519.Scalar).SetUniformBytes(messageDigest[:])
+	rReduced, err := new(edwards25519.Scalar).SetUniformBytes(messageDigest[:])
+	if err != nil {
+		panic(err)
+	}
 	R := new(edwards25519.Point).ScalarBaseMult(rReduced)
 
 	encodedR := R.Bytes()
@@ -166,7 +175,10 @@ func sign(signature, privateKey, message []byte) {
 	h.Write(message)
 	h.Sum(hramDigest[:0])
 
-	kReduced := new(edwards25519.Scalar).SetUniformBytes(hramDigest[:])
+	kReduced, err := new(edwards25519.Scalar).SetUniformBytes(hramDigest[:])
+	if err != nil {
+		panic(err)
+	}
 	S := new(edwards25519.Scalar).MultiplyAdd(kReduced, s, rReduced)
 
 	copy(signature[:], encodedR[:])
@@ -197,7 +209,10 @@ func Verify(publicKey PublicKey, message, sig []byte) bool {
 	var digest [64]byte
 	h.Sum(digest[:0])
 
-	hReduced := new(edwards25519.Scalar).SetUniformBytes(digest[:])
+	hReduced, err := new(edwards25519.Scalar).SetUniformBytes(digest[:])
+	if err != nil {
+		panic(err)
+	}
 
 	// ZIP215: this works because SetBytes does not check that encodings are canonical
 	checkR, err := new(edwards25519.Point).SetBytes(sig[:32])
