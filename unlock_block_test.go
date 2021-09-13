@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
@@ -18,7 +19,7 @@ func TestSignatureUnlockBlock_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iotago.Serializable
+		target serializer.Serializable
 		err    error
 	}
 	tests := []test{
@@ -28,14 +29,14 @@ func TestSignatureUnlockBlock_Deserialize(t *testing.T) {
 		}(),
 		func() test {
 			edSigBlock, edSigBlockData := tpkg.RandEd25519SignatureUnlockBlock()
-			return test{"not enough data", edSigBlockData[:5], edSigBlock, iotago.ErrDeserializationNotEnoughData}
+			return test{"not enough data", edSigBlockData[:5], edSigBlock, serializer.ErrDeserializationNotEnoughData}
 		}(),
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			edSig := &iotago.SignatureUnlockBlock{}
-			bytesRead, err := edSig.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
+			bytesRead, err := edSig.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -61,7 +62,7 @@ func TestUnlockBlockSignature_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -72,7 +73,7 @@ func TestReferenceUnlockBlock_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iotago.Serializable
+		target serializer.Serializable
 		err    error
 	}
 	tests := []test{
@@ -85,7 +86,7 @@ func TestReferenceUnlockBlock_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			edSig := &iotago.ReferenceUnlockBlock{}
-			bytesRead, err := edSig.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
+			bytesRead, err := edSig.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -111,7 +112,7 @@ func TestUnlockBlockReference_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -120,7 +121,7 @@ func TestUnlockBlockReference_Serialize(t *testing.T) {
 
 func TestUnlockBlockValidatorFunc(t *testing.T) {
 	type args struct {
-		inputs []iotago.Serializable
+		inputs []serializer.Serializable
 		funcs  []iotago.UnlockBlockValidatorFunc
 	}
 	tests := []struct {
@@ -130,30 +131,30 @@ func TestUnlockBlockValidatorFunc(t *testing.T) {
 	}{
 		{
 			"ok",
-			args{inputs: []iotago.Serializable{
-				func() iotago.Serializable {
+			args{inputs: []serializer.Serializable{
+				func() serializer.Serializable {
 					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() iotago.Serializable {
+				func() serializer.Serializable {
 					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() iotago.Serializable {
+				func() serializer.Serializable {
 					return &iotago.ReferenceUnlockBlock{Reference: 0}
 				}(),
 			}, funcs: []iotago.UnlockBlockValidatorFunc{iotago.UnlockBlocksSigUniqueAndRefValidator()}}, false,
 		},
 		{
 			"duplicate ed25519 sig block",
-			args{inputs: []iotago.Serializable{
-				func() iotago.Serializable {
+			args{inputs: []serializer.Serializable{
+				func() serializer.Serializable {
 					return &iotago.SignatureUnlockBlock{Signature: &iotago.Ed25519Signature{
 						PublicKey: [32]byte{},
 						Signature: [64]byte{},
 					}}
 				}(),
-				func() iotago.Serializable {
+				func() serializer.Serializable {
 					return &iotago.SignatureUnlockBlock{Signature: &iotago.Ed25519Signature{
 						PublicKey: [32]byte{},
 						Signature: [64]byte{},
@@ -163,16 +164,16 @@ func TestUnlockBlockValidatorFunc(t *testing.T) {
 		},
 		{
 			"invalid ref",
-			args{inputs: []iotago.Serializable{
-				func() iotago.Serializable {
+			args{inputs: []serializer.Serializable{
+				func() serializer.Serializable {
 					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() iotago.Serializable {
+				func() serializer.Serializable {
 					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() iotago.Serializable {
+				func() serializer.Serializable {
 					return &iotago.ReferenceUnlockBlock{Reference: 2}
 				}(),
 			}, funcs: []iotago.UnlockBlockValidatorFunc{iotago.UnlockBlocksSigUniqueAndRefValidator()}}, true,

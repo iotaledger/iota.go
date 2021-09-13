@@ -3,11 +3,12 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 const (
 	// TreasuryOutputBytesSize defines the binary serialized size of a TreasuryOutput.
-	TreasuryOutputBytesSize = SmallTypeDenotationByteSize + UInt64ByteSize
+	TreasuryOutputBytesSize = serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize
 )
 
 // TreasuryOutput is an output which holds the treasury of a network.
@@ -16,20 +17,20 @@ type TreasuryOutput struct {
 	Amount uint64 `json:"deposit"`
 }
 
-func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				if err := checkMinByteLength(TreasuryOutputBytesSize, len(data)); err != nil {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
+				if err := serializer.CheckMinByteLength(TreasuryOutputBytesSize, len(data)); err != nil {
 					return fmt.Errorf("invalid treasury output bytes: %w", err)
 				}
-				if err := checkTypeByte(data, OutputTreasuryOutput); err != nil {
+				if err := serializer.CheckTypeByte(data, OutputTreasuryOutput); err != nil {
 					return fmt.Errorf("unable to deserialize treasury output: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(SmallTypeDenotationByteSize, func(err error) error {
+		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip treasury output type during deserialization: %w", err)
 		}).
 		ReadNum(&t.Amount, func(err error) error {
@@ -38,8 +39,8 @@ func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode DeSerializationMode
 		Done()
 }
 
-func (t *TreasuryOutput) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	return NewSerializer().
+func (t *TreasuryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	return serializer.NewSerializer().
 		WriteNum(OutputTreasuryOutput, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury output type ID: %w", err)
 		}).
@@ -74,6 +75,6 @@ type jsonTreasuryOutput struct {
 	Amount int `json:"amount"`
 }
 
-func (j *jsonTreasuryOutput) ToSerializable() (Serializable, error) {
+func (j *jsonTreasuryOutput) ToSerializable() (serializer.Serializable, error) {
 	return &TreasuryOutput{Amount: uint64(j.Amount)}, nil
 }

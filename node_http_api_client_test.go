@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -106,14 +107,14 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 		Nonce:   3495721389537486,
 	}
 
-	serializedCompleteMsg, err := completeMsg.Serialize(iotago.DeSeriModeNoValidation)
+	serializedCompleteMsg, err := completeMsg.Serialize(serializer.DeSeriModeNoValidation)
 	require.NoError(t, err)
 
 	// we need to do this, otherwise gock doesn't match the body
 	gock.BodyTypes = append(gock.BodyTypes, "application/octet-stream")
 	gock.BodyTypeAliases["octet"] = "application/octet-stream"
 
-	serializedIncompleteMsg, err := incompleteMsg.Serialize(iotago.DeSeriModePerformValidation)
+	serializedIncompleteMsg, err := incompleteMsg.Serialize(serializer.DeSeriModePerformValidation)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -213,7 +214,7 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 		Nonce:   16345984576234,
 	}
 
-	data, err := originMsg.Serialize(iotago.DeSeriModePerformValidation)
+	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -404,7 +405,7 @@ func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 				Receipt: &iotago.Receipt{
 					MigratedAt: 1000,
 					Final:      false,
-					Funds: []iotago.Serializable{
+					Funds: []serializer.Serializable{
 						&iotago.MigratedFundsEntry{
 							TailTransactionHash: iotago.LegacyTailTransactionHash{},
 							Address:             &iotago.Ed25519Address{},
@@ -443,7 +444,7 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 				Receipt: &iotago.Receipt{
 					MigratedAt: 1000,
 					Final:      false,
-					Funds: []iotago.Serializable{
+					Funds: []serializer.Serializable{
 						&iotago.MigratedFundsEntry{
 							TailTransactionHash: iotago.LegacyTailTransactionHash{},
 							Address:             &iotago.Ed25519Address{},

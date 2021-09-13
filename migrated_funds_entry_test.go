@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
@@ -26,7 +27,7 @@ func TestMigratedFundsEntry_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			migFundsEntry := &iotago.MigratedFundsEntry{}
-			bytesRead, err := migFundsEntry.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
+			bytesRead, err := migFundsEntry.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -52,7 +53,7 @@ func TestMigratedFundsEntry_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})

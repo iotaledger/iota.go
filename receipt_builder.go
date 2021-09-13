@@ -1,13 +1,16 @@
 package iotago
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
+)
 
 // NewReceiptBuilder creates a new ReceiptBuilder.
 func NewReceiptBuilder(migratedAt uint32) *ReceiptBuilder {
 	return &ReceiptBuilder{
 		r: &Receipt{
 			MigratedAt:  migratedAt,
-			Funds:       Serializables{},
+			Funds:       serializer.Serializables{},
 			Transaction: nil,
 		},
 	}
@@ -33,7 +36,7 @@ func (rb *ReceiptBuilder) AddTreasuryTransaction(tx *TreasuryTransaction) *Recei
 
 // Build builds the Receipt.
 func (rb *ReceiptBuilder) Build() (*Receipt, error) {
-	if _, err := rb.r.Serialize(DeSeriModePerformValidation | DeSeriModePerformLexicalOrdering); err != nil {
+	if _, err := rb.r.Serialize(serializer.DeSeriModePerformValidation | serializer.DeSeriModePerformLexicalOrdering); err != nil {
 		return nil, fmt.Errorf("unable to build receipt: %w", err)
 	}
 	return rb.r, nil

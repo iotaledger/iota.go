@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
@@ -18,7 +19,7 @@ func TestEd25519Signature_Deserialize(t *testing.T) {
 	type test struct {
 		name   string
 		source []byte
-		target iotago.Serializable
+		target serializer.Serializable
 		err    error
 	}
 	tests := []test{
@@ -28,14 +29,14 @@ func TestEd25519Signature_Deserialize(t *testing.T) {
 		}(),
 		func() test {
 			edSig, edSigData := tpkg.RandEd25519Signature()
-			return test{"not enough data", edSigData[:5], edSig, iotago.ErrDeserializationNotEnoughData}
+			return test{"not enough data", edSigData[:5], edSig, serializer.ErrDeserializationNotEnoughData}
 		}(),
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			edSig := &iotago.Ed25519Signature{}
-			bytesRead, err := edSig.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
+			bytesRead, err := edSig.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -61,7 +62,7 @@ func TestEd25519Signature_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})

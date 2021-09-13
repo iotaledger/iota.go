@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/ed25519"
 )
 
@@ -17,13 +18,13 @@ var (
 // AddressSigner produces signatures for messages which get verified against a given address.
 type AddressSigner interface {
 	// Sign produces the signature for the given message.
-	Sign(addr Address, msg []byte) (signature Serializable, err error)
+	Sign(addr Address, msg []byte) (signature serializer.Serializable, err error)
 }
 
 // AddressSignerFunc implements the AddressSigner interface.
-type AddressSignerFunc func(addr Address, msg []byte) (signature Serializable, err error)
+type AddressSignerFunc func(addr Address, msg []byte) (signature serializer.Serializable, err error)
 
-func (s AddressSignerFunc) Sign(addr Address, msg []byte) (signature Serializable, err error) {
+func (s AddressSignerFunc) Sign(addr Address, msg []byte) (signature serializer.Serializable, err error) {
 	return s(addr, msg)
 }
 
@@ -56,7 +57,7 @@ type InMemoryAddressSigner struct {
 	addrKeys map[string]interface{}
 }
 
-func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Serializable, err error) {
+func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature serializer.Serializable, err error) {
 	switch addr.(type) {
 	case *Ed25519Address:
 		maybePrvKey, ok := s.addrKeys[addr.String()]

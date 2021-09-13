@@ -3,6 +3,7 @@ package iotago_test
 import (
 	"encoding/json"
 	"errors"
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/tpkg"
 	"math/rand"
 	"sort"
@@ -32,7 +33,7 @@ func TestMilestone_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			msPayload := &iotago.Milestone{}
-			bytesRead, err := msPayload.Deserialize(tt.source, iotago.DeSeriModePerformValidation)
+			bytesRead, err := msPayload.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -58,7 +59,7 @@ func TestMilestone_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -142,7 +143,7 @@ func TestMilestoneSigning(t *testing.T) {
 			pubKey3 := pubKeyFromPrv(prvKey3)
 
 			// only 1 and 2
-			pubKeys := iotago.LexicalOrdered32ByteArrays{pubKey1, pubKey2}
+			pubKeys := serializer.LexicalOrdered32ByteArrays{pubKey1, pubKey2}
 			sort.Sort(pubKeys)
 
 			msPayload := &iotago.Milestone{

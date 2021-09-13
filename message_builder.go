@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/pow"
 )
 
@@ -47,7 +48,7 @@ func (mb *MessageBuilder) NetworkIDFromString(networkIDStr string) *MessageBuild
 }
 
 // Payload sets the payload to embed within the message.
-func (mb *MessageBuilder) Payload(seri Serializable) *MessageBuilder {
+func (mb *MessageBuilder) Payload(seri serializer.Serializable) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
@@ -99,7 +100,7 @@ func (mb *MessageBuilder) Parents(parents [][]byte) *MessageBuilder {
 		copy(parent[:], parentBytes)
 		pars[i] = parent
 	}
-	mb.msg.Parents = RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(pars)
+	mb.msg.Parents = serializer.RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(pars)
 	return mb
 }
 
@@ -109,7 +110,7 @@ func (mb *MessageBuilder) ParentsMessageIDs(parents MessageIDs) *MessageBuilder 
 		return mb
 	}
 
-	mb.msg.Parents = RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(parents)
+	mb.msg.Parents = serializer.RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(parents)
 	return mb
 }
 
@@ -120,14 +121,14 @@ func (mb *MessageBuilder) ProofOfWork(ctx context.Context, targetScore float64, 
 	if mb.err != nil {
 		return mb
 	}
-	msgData, err := mb.msg.Serialize(DeSeriModePerformValidation)
+	msgData, err := mb.msg.Serialize(serializer.DeSeriModePerformValidation)
 	if err != nil {
 		mb.err = err
 		return mb
 	}
 
 	// cut out the nonce
-	powRelevantData := msgData[:len(msgData)-UInt64ByteSize]
+	powRelevantData := msgData[:len(msgData)-serializer.UInt64ByteSize]
 	worker := pow.New(numWorkers...)
 	nonce, err := worker.Mine(ctx, powRelevantData, targetScore)
 	if err != nil {

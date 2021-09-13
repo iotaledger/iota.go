@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 const (
@@ -12,7 +13,7 @@ const (
 	IndexationPayloadTypeID uint32 = 2
 	// IndexationBinSerializedMinSize is the minimum size of an Indexation.
 	// 	type bytes + index prefix + one char + data length
-	IndexationBinSerializedMinSize = TypeDenotationByteSize + UInt16ByteSize + OneByte + UInt32ByteSize
+	IndexationBinSerializedMinSize = serializer.TypeDenotationByteSize + serializer.UInt16ByteSize + serializer.OneByte + serializer.UInt32ByteSize
 	// IndexationIndexMaxLength defines the max length of the index within an Indexation.
 	IndexationIndexMaxLength = 64
 	// IndexationIndexMinLength defines the min length of the index within an Indexation.
@@ -34,27 +35,27 @@ type Indexation struct {
 	Data []byte `json:"data"`
 }
 
-func (u *Indexation) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	return NewDeserializer(data).
+func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				if err := checkMinByteLength(IndexationBinSerializedMinSize, len(data)); err != nil {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
+				if err := serializer.CheckMinByteLength(IndexationBinSerializedMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid indexation bytes: %w", err)
 				}
-				if err := checkType(data, IndexationPayloadTypeID); err != nil {
+				if err := serializer.CheckType(data, IndexationPayloadTypeID); err != nil {
 					return fmt.Errorf("unable to deserialize indexation: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(TypeDenotationByteSize, func(err error) error {
+		Skip(serializer.TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip indexation payload ID during deserialization: %w", err)
 		}).
-		ReadVariableByteSlice(&u.Index, SeriSliceLengthAsUint16, func(err error) error {
+		ReadVariableByteSlice(&u.Index, serializer.SeriSliceLengthAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation index: %w", err)
 		}, IndexationIndexMaxLength).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				switch {
 				case len(u.Index) < IndexationIndexMinLength:
 					return fmt.Errorf("unable to deserialize indexation index: %w", ErrIndexationIndexUnderMinSize)
@@ -62,16 +63,16 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode DeSerializationMode) (i
 			}
 			return nil
 		}).
-		ReadVariableByteSlice(&u.Data, SeriSliceLengthAsUint32, func(err error) error {
+		ReadVariableByteSlice(&u.Data, serializer.SeriSliceLengthAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation data: %w", err)
 		}, MessageBinSerializedMaxSize). // obviously can never be that size
 		Done()
 }
 
-func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	return NewSerializer().
+func (u *Indexation) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				switch {
 				case len(u.Index) > IndexationIndexMaxLength:
 					return fmt.Errorf("unable to serialize indexation index: %w", ErrIndexationIndexExceedsMaxSize)
@@ -87,10 +88,10 @@ func (u *Indexation) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
 		WriteNum(IndexationPayloadTypeID, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation payload ID: %w", err)
 		}).
-		WriteVariableByteSlice(u.Index, SeriSliceLengthAsUint16, func(err error) error {
+		WriteVariableByteSlice(u.Index, serializer.SeriSliceLengthAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation index: %w", err)
 		}).
-		WriteVariableByteSlice(u.Data, SeriSliceLengthAsUint32, func(err error) error {
+		WriteVariableByteSlice(u.Data, serializer.SeriSliceLengthAsUint32, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation data: %w", err)
 		}).
 		Serialize()
@@ -124,7 +125,7 @@ type jsonIndexation struct {
 	Data  string `json:"data"`
 }
 
-func (j *jsonIndexation) ToSerializable() (Serializable, error) {
+func (j *jsonIndexation) ToSerializable() (serializer.Serializable, error) {
 	indexBytes, err := hex.DecodeString(j.Index)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode index from JSON for indexation: %w", err)

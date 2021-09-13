@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
@@ -29,21 +30,21 @@ func TestEd25519Address_Deserialize(t *testing.T) {
 				_, edAddrData := tpkg.RandEd25519Address()
 				return edAddrData[:iotago.Ed25519AddressSerializedBytesSize-1]
 			}(),
-			iotago.ErrDeserializationNotEnoughData,
+			serializer.ErrDeserializationNotEnoughData,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			edAddr := &iotago.Ed25519Address{}
-			bytesRead, err := edAddr.Deserialize(tt.edAddrData, iotago.DeSeriModePerformValidation)
+			bytesRead, err := edAddr.Deserialize(tt.edAddrData, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, len(tt.edAddrData), bytesRead)
-			assert.Equal(t, tt.edAddrData[iotago.SmallTypeDenotationByteSize:], edAddr[:])
+			assert.Equal(t, tt.edAddrData[serializer.SmallTypeDenotationByteSize:], edAddr[:])
 		})
 	}
 }
@@ -61,7 +62,7 @@ func TestEd25519Address_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(iotago.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 
 	"golang.org/x/crypto/blake2b"
 )
@@ -16,7 +17,7 @@ const (
 	TransactionIDLength = blake2b.Size256
 
 	// TransactionBinSerializedMinSize defines the minimum size of a serialized Transaction.
-	TransactionBinSerializedMinSize = UInt32ByteSize
+	TransactionBinSerializedMinSize = serializer.UInt32ByteSize
 
 	// DustAllowanceDivisor defines the divisor used to compute the allowed dust outputs on an address.
 	// The amount of dust outputs on an address is calculated by:
@@ -52,14 +53,14 @@ type TransactionIDs []TransactionID
 // Transaction is a transaction with its inputs, outputs and unlock blocks.
 type Transaction struct {
 	// The transaction essence, respectively the transfer part of a Transaction.
-	Essence Serializable
+	Essence serializer.Serializable
 	// The unlock blocks defining the unlocking data for the inputs within the Essence.
-	UnlockBlocks Serializables
+	UnlockBlocks serializer.Serializables
 }
 
 // ID computes the ID of the Transaction.
 func (t *Transaction) ID() (*TransactionID, error) {
-	data, err := t.Serialize(DeSeriModeNoValidation)
+	data, err := t.Serialize(serializer.DeSeriModeNoValidation)
 	if err != nil {
 		return nil, fmt.Errorf("can't compute transaction ID: %w", err)
 	}
@@ -67,25 +68,25 @@ func (t *Transaction) ID() (*TransactionID, error) {
 	return &h, nil
 }
 
-func (t *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
-	unlockBlockArrayRules := &ArrayRules{}
+func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+	unlockBlockArrayRules := &serializer.ArrayRules{}
 
-	return NewDeserializer(data).
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				if err := checkMinByteLength(TransactionBinSerializedMinSize, len(data)); err != nil {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
+				if err := serializer.CheckMinByteLength(TransactionBinSerializedMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid transaction bytes: %w", err)
 				}
-				if err := checkType(data, TransactionPayloadTypeID); err != nil {
+				if err := serializer.CheckType(data, TransactionPayloadTypeID); err != nil {
 					return fmt.Errorf("unable to deserialize transaction: %w", err)
 				}
 			}
 			return nil
 		}).
-		Skip(TypeDenotationByteSize, func(err error) error {
+		Skip(serializer.TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip transaction payload ID during deserialization: %w", err)
 		}).
-		ReadObject(func(seri Serializable) { t.Essence = seri }, deSeriMode, TypeDenotationByte, TransactionEssenceSelector, func(err error) error {
+		ReadObject(func(seri serializer.Serializable) { t.Essence = seri }, deSeriMode, serializer.TypeDenotationByte, TransactionEssenceSelector, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
 		}).
 		Do(func() {
@@ -93,11 +94,11 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (
 			unlockBlockArrayRules.Min = inputCount
 			unlockBlockArrayRules.Max = inputCount
 		}).
-		ReadSliceOfObjects(func(seri Serializables) { t.UnlockBlocks = seri }, deSeriMode, TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(func(seri serializer.Serializables) { t.UnlockBlocks = seri }, deSeriMode, serializer.TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize unlock blocks", err)
 		}).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				return t.SyntacticallyValidate()
 			}
 			return nil
@@ -105,10 +106,10 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode DeSerializationMode) (
 		Done()
 }
 
-func (t *Transaction) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	return NewSerializer().
+func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				return t.SyntacticallyValidate()
 			}
 			return nil
@@ -426,7 +427,7 @@ func (t *Transaction) signatureUnlockBlock(index int) (*SignatureUnlockBlock, in
 }
 
 // creates a SigValidationFunc appropriate for the underlying signature type.
-func createSigValidationFunc(pos int, sig Serializable, sigBlockIndex int, txEssenceBytes []byte, addr Address) (SigValidationFunc, error) {
+func createSigValidationFunc(pos int, sig serializer.Serializable, sigBlockIndex int, txEssenceBytes []byte, addr Address) (SigValidationFunc, error) {
 	switch addr := addr.(type) {
 	case *Ed25519Address:
 		return createEd25519SigValidationFunc(pos, sig, sigBlockIndex, addr, txEssenceBytes)
@@ -436,7 +437,7 @@ func createSigValidationFunc(pos int, sig Serializable, sigBlockIndex int, txEss
 }
 
 // creates a SigValidationFunc validating the given Ed25519Signature against the Ed25519Address.
-func createEd25519SigValidationFunc(pos int, sig Serializable, sigBlockIndex int, addr *Ed25519Address, essenceBytes []byte) (SigValidationFunc, error) {
+func createEd25519SigValidationFunc(pos int, sig serializer.Serializable, sigBlockIndex int, addr *Ed25519Address, essenceBytes []byte) (SigValidationFunc, error) {
 	ed25519Sig, isEd25519Sig := sig.(*Ed25519Signature)
 	if !isEd25519Sig {
 		return nil, fmt.Errorf("%w: UTXO at index %d has an Ed25519 address but its corresponding signature is of type %T (at index %d)", ErrSignatureAndAddrIncompatible, pos, sig, sigBlockIndex)
@@ -476,7 +477,7 @@ type jsonTransaction struct {
 	UnlockBlocks []*json.RawMessage `json:"unlockBlocks"`
 }
 
-func (jsontx *jsonTransaction) ToSerializable() (Serializable, error) {
+func (jsontx *jsonTransaction) ToSerializable() (serializer.Serializable, error) {
 	jsonTxEssence, err := DeserializeObjectFromJSON(jsontx.Essence, jsonTransactionEssenceSelector)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode transaction essence from JSON: %w", err)
@@ -487,7 +488,7 @@ func (jsontx *jsonTransaction) ToSerializable() (Serializable, error) {
 		return nil, err
 	}
 
-	unlockBlocks := make(Serializables, len(jsontx.UnlockBlocks))
+	unlockBlocks := make(serializer.Serializables, len(jsontx.UnlockBlocks))
 	for i, ele := range jsontx.UnlockBlocks {
 		jsonUnlockBlock, err := DeserializeObjectFromJSON(ele, jsonUnlockBlockSelector)
 		if err != nil {

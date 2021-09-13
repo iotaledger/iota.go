@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/pow"
 	"golang.org/x/crypto/blake2b"
 )
@@ -15,9 +16,9 @@ const (
 	// MessageIDLength defines the length of a message ID.
 	MessageIDLength = blake2b.Size256
 	// MessageNetworkIDLength defines the length of the network ID in bytes.
-	MessageNetworkIDLength = UInt64ByteSize
+	MessageNetworkIDLength = serializer.UInt64ByteSize
 	// MessageBinSerializedMinSize defines the minimum size of a message: network ID + parent count + 1 parent + uint16 payload length + nonce
-	MessageBinSerializedMinSize = MessageNetworkIDLength + OneByte + MessageIDLength + UInt32ByteSize + UInt64ByteSize
+	MessageBinSerializedMinSize = MessageNetworkIDLength + serializer.OneByte + MessageIDLength + serializer.UInt32ByteSize + serializer.UInt64ByteSize
 	// MessageBinSerializedMaxSize defines the maximum size of a message.
 	MessageBinSerializedMaxSize = 32768
 	// MinParentsInAMessage defines the minimum amount of parents in a message.
@@ -31,16 +32,16 @@ var (
 	ErrMessageExceedsMaxSize = errors.New("message exceeds max size")
 
 	// restrictions around parents within a message.
-	messageParentArrayRules = ArrayRules{
+	messageParentArrayRules = serializer.ArrayRules{
 		Min:            MinParentsInAMessage,
 		Max:            MaxParentsInAMessage,
-		ValidationMode: ArrayValidationModeNoDuplicates | ArrayValidationModeLexicalOrdering,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
 
 // PayloadSelector implements SerializableSelectorFunc for payload types.
-func PayloadSelector(payloadType uint32) (Serializable, error) {
-	var seri Serializable
+func PayloadSelector(payloadType uint32) (serializer.Serializable, error) {
+	var seri serializer.Serializable
 	switch payloadType {
 	case TransactionPayloadTypeID:
 		seri = &Transaction{}
@@ -100,14 +101,14 @@ type Message struct {
 	// The parents the message references.
 	Parents MessageIDs
 	// The inner payload of the message. Can be nil.
-	Payload Serializable
+	Payload serializer.Serializable
 	// The nonce which lets this message fulfill the PoW requirements.
 	Nonce uint64
 }
 
 // ID computes the ID of the Message.
 func (m *Message) ID() (*MessageID, error) {
-	data, err := m.Serialize(DeSeriModeNoValidation)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation)
 	if err != nil {
 		return nil, fmt.Errorf("can't compute message ID: %w", err)
 	}
@@ -126,21 +127,21 @@ func (m *Message) MustID() MessageID {
 
 // POW computes the PoW score of the Message.
 func (m *Message) POW() (float64, error) {
-	data, err := m.Serialize(DeSeriModeNoValidation)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation)
 	if err != nil {
 		return 0, fmt.Errorf("can't compute message PoW score: %w", err)
 	}
 	return pow.Score(data), nil
 }
 
-func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int, error) {
+func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	if len(data) > MessageBinSerializedMaxSize {
 		return 0, fmt.Errorf("%w: size %d bytes", ErrMessageExceedsMaxSize, len(data))
 	}
-	return NewDeserializer(data).
+	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(DeSeriModePerformValidation) {
-				if err := checkMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
+				if err := serializer.CheckMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid message bytes: %w", err)
 				}
 			}
@@ -149,12 +150,10 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 		ReadNum(&m.NetworkID, func(err error) error {
 			return fmt.Errorf("unable to deserialize message network ID: %w", err)
 		}).
-		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, SeriSliceLengthAsByte, &messageParentArrayRules, func(err error) error {
+		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriSliceLengthAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize message parents: %w", err)
 		}).
-		ReadPayload(func(seri Serializable) { m.Payload = seri }, deSeriMode, func(err error) error {
-			return fmt.Errorf("unable to deserialize message's inner payload: %w", err)
-		}, func(ty uint32) (Serializable, error) {
+		ReadPayload(func(seri serializer.Serializable) { m.Payload = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
 			switch ty {
 			case TransactionPayloadTypeID:
 			case IndexationPayloadTypeID:
@@ -163,6 +162,8 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 				return nil, fmt.Errorf("a message can only contain a transaction, indexation or milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
 			}
 			return PayloadSelector(ty)
+		}, func(err error) error {
+			return fmt.Errorf("unable to deserialize message's inner payload: %w", err)
 		}).
 		ReadNum(&m.Nonce, func(err error) error {
 			return fmt.Errorf("unable to deserialize message nonce: %w", err)
@@ -173,17 +174,17 @@ func (m *Message) Deserialize(data []byte, deSeriMode DeSerializationMode) (int,
 		Done()
 }
 
-func (m *Message) Serialize(deSeriMode DeSerializationMode) ([]byte, error) {
-	data, err := NewSerializer().
+func (m *Message) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	data, err := serializer.NewSerializer().
 		Do(func() {
-			if deSeriMode.HasMode(DeSeriModePerformLexicalOrdering) {
-				m.Parents = RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(m.Parents)
+			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
+				m.Parents = serializer.RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(m.Parents)
 			}
 		}).
 		WriteNum(m.NetworkID, func(err error) error {
 			return fmt.Errorf("unable to serialize message network ID: %w", err)
 		}).
-		Write32BytesArraySlice(m.Parents, deSeriMode, SeriSliceLengthAsByte, &messageParentArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriSliceLengthAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize message parents: %w", err)
 		}).
 		WritePayload(m.Payload, deSeriMode, func(err error) error {
@@ -262,7 +263,7 @@ type jsonMessage struct {
 	Nonce string `json:"nonce"`
 }
 
-func (jm *jsonMessage) ToSerializable() (Serializable, error) {
+func (jm *jsonMessage) ToSerializable() (serializer.Serializable, error) {
 	var err error
 
 	m := &Message{}

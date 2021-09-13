@@ -1,6 +1,7 @@
 package iotago_test
 
 import (
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
@@ -9,38 +10,38 @@ import (
 )
 
 func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {
-	data, err := tpkg.OneInputOutputTransaction().Serialize(iotago.DeSeriModeNoValidation)
+	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	target := &iotago.Transaction{}
-	_, err = target.Deserialize(data, iotago.DeSeriModeNoValidation)
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, iotago.DeSeriModePerformValidation)
+		target.Deserialize(data, serializer.DeSeriModePerformValidation)
 	}
 }
 
 func BenchmarkDeserializeWithoutValidationOneIOTxPayload(b *testing.B) {
-	data, err := tpkg.OneInputOutputTransaction().Serialize(iotago.DeSeriModeNoValidation)
+	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	target := &iotago.Transaction{}
-	_, err = target.Deserialize(data, iotago.DeSeriModeNoValidation)
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, iotago.DeSeriModeNoValidation)
+		target.Deserialize(data, serializer.DeSeriModeNoValidation)
 	}
 }
 
@@ -48,7 +49,7 @@ func BenchmarkSerializeWithValidationOneIOTxPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		txPayload.Serialize(iotago.DeSeriModePerformValidation)
+		txPayload.Serialize(serializer.DeSeriModePerformValidation)
 	}
 }
 
@@ -56,7 +57,7 @@ func BenchmarkSerializeWithoutValidationOneIOTxPayload(b *testing.B) {
 	sigTxPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		sigTxPayload.Serialize(iotago.DeSeriModeNoValidation)
+		sigTxPayload.Serialize(serializer.DeSeriModeNoValidation)
 	}
 }
 

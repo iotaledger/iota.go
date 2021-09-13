@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer"
 	"strings"
 )
 
@@ -32,19 +33,19 @@ type Outputs []Output
 
 // Output defines the deposit of funds.
 type Output interface {
-	Serializable
+	serializer.Serializable
 	// Deposit returns the amount this Output deposits.
 	Deposit() (uint64, error)
 	// Target returns the target of the deposit.
 	// If the type of output does not have/support a target, nil is returned.
-	Target() (Serializable, error)
+	Target() (serializer.Serializable, error)
 	// Type returns the type of the output.
 	Type() OutputType
 }
 
 // OutputSelector implements SerializableSelectorFunc for output types.
-func OutputSelector(outputType uint32) (Serializable, error) {
-	var seri Serializable
+func OutputSelector(outputType uint32) (serializer.Serializable, error) {
+	var seri serializer.Serializable
 	switch byte(outputType) {
 	case OutputSigLockedSingleOutput:
 		seri = &SigLockedSingleOutput{}
@@ -79,7 +80,7 @@ func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
 	}
 	var txID TransactionID
 	copy(txID[:], outputIDBytes[:TransactionIDLength])
-	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[TransactionIDLength : TransactionIDLength+UInt16ByteSize])
+	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[TransactionIDLength : TransactionIDLength+serializer.UInt16ByteSize])
 	return &txID, outputIndex, nil
 }
 
@@ -185,7 +186,7 @@ func OutputsDepositAmountValidator() OutputsValidatorFunc {
 var outputAmountValidator = OutputsDepositAmountValidator()
 
 // ValidateOutputs validates the outputs by running them against the given OutputsValidatorFunc.
-func ValidateOutputs(outputs Serializables, funcs ...OutputsValidatorFunc) error {
+func ValidateOutputs(outputs serializer.Serializables, funcs ...OutputsValidatorFunc) error {
 	for i, output := range outputs {
 		if _, isOutput := output.(Output); !isOutput {
 			return fmt.Errorf("%w: can only validate outputs but got %T instead", ErrUnknownOutputType, output)
