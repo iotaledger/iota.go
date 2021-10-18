@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer"
 
 	"golang.org/x/crypto/blake2b"
@@ -90,11 +91,11 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 			return fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
 		}).
 		Do(func() {
-			inputCount := uint16(len(t.Essence.(*TransactionEssence).Inputs))
+			inputCount := uint(len(t.Essence.(*TransactionEssence).Inputs))
 			unlockBlockArrayRules.Min = inputCount
 			unlockBlockArrayRules.Max = inputCount
 		}).
-		ReadSliceOfObjects(func(seri serializer.Serializables) { t.UnlockBlocks = seri }, deSeriMode, serializer.TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(func(seri serializer.Serializables) { t.UnlockBlocks = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize unlock blocks", err)
 		}).
 		AbortIf(func(err error) error {
@@ -120,7 +121,7 @@ func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]by
 		WriteObject(t.Essence, deSeriMode, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's essence", err)
 		}).
-		WriteSliceOfObjects(t.UnlockBlocks, deSeriMode, nil, func(err error) error {
+		WriteSliceOfObjects(t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's unlock blocks", err)
 		}).
 		Serialize()

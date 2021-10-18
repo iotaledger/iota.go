@@ -170,6 +170,8 @@ github.com/imkira/go-interpol v1.1.0/go.mod h1:z0h2/2T3XF8kyEPpRgJ3kmNv+C43p+I/C
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/iotaledger/hive.go v0.0.0-20210907083658-27edf6b49375 h1:fIUDROnv3eUGkgPWlU7RUQQZIXfS0GT9ZYPJn5JdOog=
 github.com/iotaledger/hive.go v0.0.0-20210907083658-27edf6b49375/go.mod h1:vZXMpgveUkATu1IueKmUJK3/OVgrYRQdH/Jh/yZ2j9Q=
+github.com/iotaledger/hive.go v0.0.0-20211011085923-fd2eb0a47bf8 h1:kAB5+8LBTMZSXaud4PrPsklqf7LUBrUy6ZtAlq+El9g=
+github.com/iotaledger/hive.go v0.0.0-20211011085923-fd2eb0a47bf8/go.mod h1:vZXMpgveUkATu1IueKmUJK3/OVgrYRQdH/Jh/yZ2j9Q=
 github.com/iotaledger/iota.go v1.0.0 h1:tqm1FxJ/zOdzbrAaQ5BQpVF8dUy2eeGlSeWlNG8GoXY=
 github.com/iotaledger/iota.go v1.0.0/go.mod h1:RiKYwDyY7aCD1L0YRzHSjOsJ5mUR9yvQpvhZncNcGQI=
 github.com/iris-contrib/blackfriday v2.0.0+incompatible/go.mod h1:UzZ2bDEoaSGPbkg6SAB4att1aAwTmVIx/5gCVqeyUdI=

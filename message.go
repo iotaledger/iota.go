@@ -150,7 +150,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		ReadNum(&m.NetworkID, func(err error) error {
 			return fmt.Errorf("unable to deserialize message network ID: %w", err)
 		}).
-		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriSliceLengthAsByte, &messageParentArrayRules, func(err error) error {
+		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize message parents: %w", err)
 		}).
 		ReadPayload(func(seri serializer.Serializable) { m.Payload = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
@@ -184,7 +184,7 @@ func (m *Message) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, 
 		WriteNum(m.NetworkID, func(err error) error {
 			return fmt.Errorf("unable to serialize message network ID: %w", err)
 		}).
-		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriSliceLengthAsByte, &messageParentArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize message parents: %w", err)
 		}).
 		WritePayload(m.Payload, deSeriMode, func(err error) error {

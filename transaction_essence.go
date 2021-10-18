@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer"
 	"sort"
+
+	"github.com/iotaledger/hive.go/serializer"
 
 	"golang.org/x/crypto/blake2b"
 )
@@ -18,7 +19,7 @@ const (
 	TransactionEssenceNormal TransactionEssenceType = iota
 
 	// TransactionEssenceMinByteSize defines the minimum size of a TransactionEssence.
-	TransactionEssenceMinByteSize = serializer.TypeDenotationByteSize + serializer.StructArrayLengthByteSize + serializer.StructArrayLengthByteSize + serializer.PayloadLengthByteSize
+	TransactionEssenceMinByteSize = serializer.TypeDenotationByteSize + serializer.UInt16ByteSize + serializer.UInt16ByteSize + serializer.PayloadLengthByteSize
 
 	// MaxInputsCount defines the maximum amount of inputs within a TransactionEssence.
 	MaxInputsCount = 127
@@ -116,7 +117,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip transaction essence ID during deserialization: %w", err)
 		}).
-		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Inputs = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
+		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Inputs = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			switch ty {
 			case uint32(InputUTXO):
 			default:
@@ -134,7 +135,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 			}
 			return nil
 		}).
-		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Outputs = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
+		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Outputs = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			switch ty {
 			case uint32(OutputSigLockedSingleOutput):
 			case uint32(OutputSigLockedDustAllowanceOutput):
@@ -223,10 +224,10 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 		WriteNum(TransactionEssenceNormal, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence type ID: %w", err)
 		}).
-		WriteSliceOfObjects(u.Inputs, deSeriMode, inputsWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(u.Inputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, inputsWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence inputs: %w", err)
 		}).
-		WriteSliceOfObjects(u.Outputs, deSeriMode, outputsWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(u.Outputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, outputsWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence outputs: %w", err)
 		}).
 		WritePayload(u.Payload, deSeriMode, func(err error) error {
