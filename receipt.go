@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer"
 	"sort"
+
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 const (
@@ -88,7 +89,7 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 			return fmt.Errorf("unable to deserialize receipt final flag: %w", err)
 		}).
 		// special as the MigratedFundsEntry has no type denotation byte
-		ReadSliceOfObjects(func(seri serializer.Serializables) { r.Funds = seri }, deSeriMode, serializer.TypeDenotationNone, func(_ uint32) (serializer.Serializable, error) {
+		ReadSliceOfObjects(func(seri serializer.Serializables) { r.Funds = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, func(_ uint32) (serializer.Serializable, error) {
 			// there is no real selector, so we always return a fresh MigratedFundsEntry
 			return &MigratedFundsEntry{}, nil
 		}, migratedFundEntriesArrayRules, func(err error) error {
@@ -142,7 +143,7 @@ func (r *Receipt) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, 
 		WriteBool(r.Final, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt final flag: %w", err)
 		}).
-		WriteSliceOfObjects(r.Funds, deSeriMode, migratedFundsEntriesWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(r.Funds, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, migratedFundsEntriesWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt funds: %w", err)
 		}).
 		WritePayload(r.Transaction, deSeriMode, func(err error) error {

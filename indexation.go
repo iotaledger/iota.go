@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer"
 )
 
@@ -51,7 +52,7 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 		Skip(serializer.TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip indexation payload ID during deserialization: %w", err)
 		}).
-		ReadVariableByteSlice(&u.Index, serializer.SeriSliceLengthAsUint16, func(err error) error {
+		ReadVariableByteSlice(&u.Index, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation index: %w", err)
 		}, IndexationIndexMaxLength).
 		AbortIf(func(err error) error {
@@ -63,7 +64,7 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 			}
 			return nil
 		}).
-		ReadVariableByteSlice(&u.Data, serializer.SeriSliceLengthAsUint32, func(err error) error {
+		ReadVariableByteSlice(&u.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation data: %w", err)
 		}, MessageBinSerializedMaxSize). // obviously can never be that size
 		Done()
@@ -88,10 +89,10 @@ func (u *Indexation) Serialize(deSeriMode serializer.DeSerializationMode) ([]byt
 		WriteNum(IndexationPayloadTypeID, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation payload ID: %w", err)
 		}).
-		WriteVariableByteSlice(u.Index, serializer.SeriSliceLengthAsUint16, func(err error) error {
+		WriteVariableByteSlice(u.Index, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation index: %w", err)
 		}).
-		WriteVariableByteSlice(u.Data, serializer.SeriSliceLengthAsUint32, func(err error) error {
+		WriteVariableByteSlice(u.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation data: %w", err)
 		}).
 		Serialize()

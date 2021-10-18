@@ -176,7 +176,7 @@ func (m *Milestone) Essence() ([]byte, error) {
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp for essence: %w", err)
 		}).
-		Write32BytesArraySlice(m.Parents, serializer.DeSeriModePerformValidation, serializer.SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.Parents, serializer.DeSeriModePerformValidation, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents for essence: %w", err)
 		}).
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
@@ -188,7 +188,7 @@ func (m *Milestone) Essence() ([]byte, error) {
 		WriteNum(m.NextPoWScoreMilestoneIndex, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone next pow score milestone index for essence: %w", err)
 		}).
-		Write32BytesArraySlice(m.PublicKeys, serializer.DeSeriModePerformValidation, serializer.SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.PublicKeys, serializer.DeSeriModePerformValidation, serializer.SeriLengthPrefixTypeAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys for essence: %w", err)
 		}).
 		WritePayload(m.Receipt, serializer.DeSeriModePerformValidation, func(err error) error {
@@ -349,7 +349,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadNum(&m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone timestamp: %w", err)
 		}).
-		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
+		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone parents: %w", err)
 		}).
 		ReadArrayOf32Bytes(&m.InclusionMerkleProof, func(err error) error {
@@ -368,7 +368,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 			}
 			return nil
 		}).
-		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, deSeriMode, serializer.SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
+		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
 		}).
 		ReadPayload(func(seri serializer.Serializable) { m.Receipt = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
@@ -379,7 +379,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		}, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone receipt: %w", err)
 		}).
-		ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, serializer.SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
+		ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneSignatureArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone signatures: %w", err)
 		}).
 		AbortIf(func(err error) error {
@@ -413,7 +413,7 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp: %w", err)
 		}).
-		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriSliceLengthAsByte, &milestoneParentArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents: %w", err)
 		}).
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
@@ -425,13 +425,13 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte
 		WriteNum(m.NextPoWScoreMilestoneIndex, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone next pow score milestone index: %w", err)
 		}).
-		Write32BytesArraySlice(m.PublicKeys, deSeriMode, serializer.SeriSliceLengthAsByte, &milestonePublicKeyArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.PublicKeys, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys: %w", err)
 		}).
 		WritePayload(m.Receipt, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone receipt: %w", err)
 		}).
-		Write64BytesArraySlice(m.Signatures, deSeriMode, serializer.SeriSliceLengthAsByte, &milestoneSignatureArrayRules, func(err error) error {
+		Write64BytesArraySlice(m.Signatures, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneSignatureArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone signatures: %w", err)
 		}).
 		Serialize()
