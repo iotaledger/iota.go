@@ -3,7 +3,7 @@ package math_test
 import (
 	"testing"
 
-	"github.com/iotaledger/iota.go/v2/math"
+	"github.com/iotaledger/iota.go/v3/math"
 	"github.com/stretchr/testify/assert"
 )
 

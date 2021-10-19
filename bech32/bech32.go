@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/iotaledger/iota.go/v2/bech32/internal/base32"
+	"github.com/iotaledger/iota.go/v3/bech32/internal/base32"
 )
 
 const (

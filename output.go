@@ -5,22 +5,36 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer"
 	"strings"
+
+	"github.com/iotaledger/hive.go/serializer"
 )
+
+const (
+	// OutputIDLength defines the length of an OutputID.
+	OutputIDLength = TransactionIDLength + serializer.UInt16ByteSize
+)
+
+// OutputID defines an identifier of an Output which consists of the hash of the transaction
+// containing the output and the positioning index of that output within that transaction.
+type OutputID [OutputIDLength]byte
 
 // OutputType defines the type of outputs.
 type OutputType = byte
 
 const (
-	// OutputSigLockedSingleOutput denotes a type of output which is locked by a signature and deposits onto a single address.
-	OutputSigLockedSingleOutput OutputType = iota
-	// OutputSigLockedDustAllowanceOutput is like OutputSigLockedSingleOutput but it is used to increase the allowance/amount of dust outputs on a given address.
-	OutputSigLockedDustAllowanceOutput
-	// OutputTreasuryOutput denotes the type of the TreasuryOutput.
-	OutputTreasuryOutput
-	// OutputSigLockedDustAllowanceOutputMinDeposit defines the minimum deposit amount of a SigLockedDustAllowanceOutput.
-	OutputSigLockedDustAllowanceOutputMinDeposit uint64 = 1_000_000
+	// OutputSimple denotes a type of output which is locked by a signature and deposits onto a single address.
+	OutputSimple OutputType = iota
+	// OutputExtended denotes a type of output which can also hold native tokens and feature blocks.
+	OutputExtended
+	// OutputTreasury denotes the type of the TreasuryOutput.
+	OutputTreasury
+	// OutputAlias denotes the type of an AliasOutput.
+	OutputAlias
+	// OutputFoundry denotes the type of a FoundryOutput.
+	OutputFoundry
+	// OutputNFT denotes the type of an NFTOutput.
+	OutputNFT
 )
 
 var (
@@ -47,12 +61,18 @@ type Output interface {
 func OutputSelector(outputType uint32) (serializer.Serializable, error) {
 	var seri serializer.Serializable
 	switch byte(outputType) {
-	case OutputSigLockedSingleOutput:
-		seri = &SigLockedSingleOutput{}
-	case OutputSigLockedDustAllowanceOutput:
-		seri = &SigLockedDustAllowanceOutput{}
-	case OutputTreasuryOutput:
+	case OutputSimple:
+		seri = &SimpleOutput{}
+	case OutputExtended:
+		seri = &ExtendedOutput{}
+	case OutputTreasury:
 		seri = &TreasuryOutput{}
+	case OutputAlias:
+		seri = &AliasOutput{}
+	case OutputFoundry:
+		seri = &FoundryOutput{}
+	case OutputNFT:
+		seri = &NFTOutput{}
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownOutputType, outputType)
 	}
@@ -149,10 +169,9 @@ func OutputsAddrUniqueValidator() OutputsValidatorFunc {
 }
 
 // OutputsDepositAmountValidator returns a validator which checks that:
-//	1. every output deposits more than zero
-//	2. every output deposits less than the total supply
-//	3. the sum of deposits does not exceed the total supply
-//	4. SigLockedDustAllowanceOutput deposits at least OutputSigLockedDustAllowanceOutputMinDeposit.
+//	- every output deposits more than zero
+//	- every output deposits less than the total supply
+//	- the sum of deposits does not exceed the total supply
 // If -1 is passed to the validator func, then the sum is not aggregated over multiple calls.
 func OutputsDepositAmountValidator() OutputsValidatorFunc {
 	var sum uint64
@@ -163,11 +182,6 @@ func OutputsDepositAmountValidator() OutputsValidatorFunc {
 		}
 		if deposit == 0 {
 			return fmt.Errorf("%w: output %d", ErrDepositAmountMustBeGreaterThanZero, index)
-		}
-		if _, isAllowanceOutput := dep.(*SigLockedDustAllowanceOutput); isAllowanceOutput {
-			if deposit < OutputSigLockedDustAllowanceOutputMinDeposit {
-				return fmt.Errorf("%w: output %d", ErrOutputDustAllowanceLessThanMinDeposit, index)
-			}
 		}
 		if deposit > TokenSupply {
 			return fmt.Errorf("%w: output %d", ErrOutputDepositsMoreThanTotalSupply, index)
@@ -204,12 +218,18 @@ func ValidateOutputs(outputs serializer.Serializables, funcs ...OutputsValidator
 func jsonOutputSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch byte(ty) {
-	case OutputSigLockedSingleOutput:
-		obj = &jsonSigLockedSingleOutput{}
-	case OutputSigLockedDustAllowanceOutput:
-		obj = &jsonSigLockedDustAllowanceOutput{}
-	case OutputTreasuryOutput:
+	case OutputSimple:
+		obj = &jsonSimpleOutput{}
+	case OutputExtended:
+		obj = &jsonExtendedOutput{}
+	case OutputTreasury:
 		obj = &jsonTreasuryOutput{}
+	case OutputAlias:
+		obj = &jsonAliasOutput{}
+	case OutputFoundry:
+		obj = &jsonFoundryOutput{}
+	case OutputNFT:
+		obj = &jsonNFTOutput{}
 	default:
 		return nil, fmt.Errorf("unable to decode output type from JSON: %w", ErrUnknownOutputType)
 	}

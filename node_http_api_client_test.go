@@ -6,18 +6,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/iotaledger/hive.go/serializer"
+
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
-	"github.com/iotaledger/iota.go/v2/tpkg"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 
-	iotago "github.com/iotaledger/iota.go/v2"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 const nodeAPIUrl = "http://127.0.0.1:14265"
@@ -263,7 +264,7 @@ func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 func TestNodeAPI_OutputByID(t *testing.T) {
 	defer gock.Off()
 
-	originOutput, _ := tpkg.RandSigLockedSingleOutput(iotago.AddressEd25519)
+	originOutput, _ := tpkg.RandSimpleOutput(iotago.AddressEd25519)
 	sigDepJson, err := originOutput.MarshalJSON()
 	require.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
@@ -306,7 +307,6 @@ func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 		AddressType: 1,
 		Address:     ed25519AddrHex,
 		Balance:     13371337,
-		DustAllowed: false,
 		LedgerIndex: 1337,
 	}
 

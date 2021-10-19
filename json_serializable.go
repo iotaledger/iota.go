@@ -3,6 +3,8 @@ package iotago
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer"
 )
 
@@ -55,4 +57,30 @@ func DeserializeObjectFromJSON(raw *json.RawMessage, selector JSONSerializableSe
 	}
 
 	return obj, nil
+}
+
+func serializablesToJSONRawMsgs(seris serializer.Serializables) ([]*json.RawMessage, error) {
+	msgs := make([]*json.RawMessage, len(seris))
+	for i, seri := range seris {
+		jSeri, err := seri.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawSeriJson := json.RawMessage(jSeri)
+		msgs[i] = &rawSeriJson
+	}
+	return msgs, nil
+}
+
+func jsonRawMsgsToSerializables(msgs []*json.RawMessage, selector JSONSerializableSelectorFunc) (serializer.Serializables, error) {
+	seris := make(serializer.Serializables, len(msgs))
+	for i, ele := range msgs {
+		jSeri, _ := DeserializeObjectFromJSON(ele, selector)
+		seri, err := jSeri.ToSerializable()
+		if err != nil {
+			return nil, fmt.Errorf("pos %d: %w", i, err)
+		}
+		seris[i] = seri
+	}
+	return seris, nil
 }

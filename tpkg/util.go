@@ -12,8 +12,8 @@ import (
 	"github.com/iotaledger/hive.go/serializer"
 	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
-	"github.com/iotaledger/iota.go/v2"
-	"github.com/iotaledger/iota.go/v2/ed25519"
+	"github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/ed25519"
 )
 
 // Must panics if the given error is not nil.
@@ -88,6 +88,45 @@ func RandEd25519Address() (*iotago.Ed25519Address, []byte) {
 	return edAddr, b[:]
 }
 
+// RandBLSAddress returns a random BLS address.
+func RandBLSAddress() (*iotago.BLSAddress, []byte) {
+	// type
+	blsAddr := &iotago.BLSAddress{}
+	addr := RandBytes(iotago.BLSAddressBytesLength)
+	copy(blsAddr[:], addr)
+	// serialized
+	var b [iotago.BLSAddressSerializedBytesSize]byte
+	b[0] = iotago.AddressBLS
+	copy(b[serializer.SmallTypeDenotationByteSize:], addr)
+	return blsAddr, b[:]
+}
+
+// RandAliasAddress returns a random alias address.
+func RandAliasAddress() (*iotago.AliasAddress, []byte) {
+	// type
+	aliasAddr := &iotago.AliasAddress{}
+	addr := RandBytes(iotago.AliasAddressBytesLength)
+	copy(aliasAddr[:], addr)
+	// serialized
+	var b [iotago.AliasAddressSerializedBytesSize]byte
+	b[0] = iotago.AddressAlias
+	copy(b[serializer.SmallTypeDenotationByteSize:], addr)
+	return aliasAddr, b[:]
+}
+
+// RandNFTAddress returns a random NFT address.
+func RandNFTAddress() (*iotago.NFTAddress, []byte) {
+	// type
+	nftAddr := &iotago.NFTAddress{}
+	addr := RandBytes(iotago.NFTAddressBytesLength)
+	copy(nftAddr[:], addr)
+	// serialized
+	var b [iotago.NFTAddressSerializedBytesSize]byte
+	b[0] = iotago.AddressNFT
+	copy(b[serializer.SmallTypeDenotationByteSize:], addr)
+	return nftAddr, b[:]
+}
+
 // RandEd25519Signature returns a random Ed25519 signature.
 func RandEd25519Signature() (*iotago.Ed25519Signature, []byte) {
 	// type
@@ -155,7 +194,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 	outputCount := rand.Intn(10) + 1
 	Must(binary.Write(&buf, binary.LittleEndian, uint16(outputCount)))
 	for i := outputCount; i > 0; i-- {
-		_, depData := RandSigLockedSingleOutput(iotago.AddressEd25519)
+		_, depData := RandSimpleOutput(iotago.AddressEd25519)
 		outputsBytes = append(outputsBytes, depData)
 	}
 
@@ -163,7 +202,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 	for _, outputData := range outputsBytes {
 		_, err := buf.Write(outputData)
 		Must(err)
-		output := &iotago.SigLockedSingleOutput{}
+		output := &iotago.SimpleOutput{}
 		if _, err := output.Deserialize(outputData, serializer.DeSeriModePerformValidation); err != nil {
 			panic(err)
 		}
@@ -449,7 +488,7 @@ func RandTreasuryOutput() (*iotago.TreasuryOutput, []byte) {
 	var b bytes.Buffer
 
 	deposit := rand.Uint64()
-	Must(binary.Write(&b, binary.LittleEndian, iotago.OutputTreasuryOutput))
+	Must(binary.Write(&b, binary.LittleEndian, iotago.OutputTreasury))
 	Must(binary.Write(&b, binary.LittleEndian, deposit))
 
 	return &iotago.TreasuryOutput{Amount: deposit}, b.Bytes()
@@ -472,12 +511,12 @@ func RandTreasuryTransaction() (*iotago.TreasuryTransaction, []byte) {
 	}, b.Bytes()
 }
 
-// RandSigLockedSingleOutput returns a random signature locked single output.
-func RandSigLockedSingleOutput(addrType iotago.AddressType) (*iotago.SigLockedSingleOutput, []byte) {
+// RandSimpleOutput returns a random simple output.
+func RandSimpleOutput(addrType iotago.AddressType) (*iotago.SimpleOutput, []byte) {
 	var buf bytes.Buffer
-	Must(buf.WriteByte(iotago.OutputSigLockedSingleOutput))
+	Must(buf.WriteByte(iotago.OutputSimple))
 
-	dep := &iotago.SigLockedSingleOutput{}
+	dep := &iotago.SimpleOutput{}
 
 	var addrData []byte
 	switch addrType {
@@ -512,7 +551,7 @@ func OneInputOutputTransaction() *iotago.Transaction {
 				},
 			},
 			Outputs: []serializer.Serializable{
-				&iotago.SigLockedSingleOutput{
+				&iotago.SimpleOutput{
 					Address: func() serializer.Serializable {
 						edAddr, _ := RandEd25519Address()
 						return edAddr

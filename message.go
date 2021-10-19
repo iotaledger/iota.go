@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v2/pow"
+	"github.com/iotaledger/iota.go/v3/pow"
 	"golang.org/x/crypto/blake2b"
 )
 

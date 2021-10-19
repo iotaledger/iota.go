@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v2/tpkg"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
 )
 

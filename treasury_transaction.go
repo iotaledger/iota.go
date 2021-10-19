@@ -46,7 +46,7 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeS
 			return fmt.Errorf("unable to deserialize treasury transaction input: %w", err)
 		}).
 		ReadObject(func(seri serializer.Serializable) { t.Output = seri }, deSeriMode, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
-			if ty != uint32(OutputTreasuryOutput) {
+			if ty != uint32(OutputTreasury) {
 				return nil, fmt.Errorf("receipts can only contain treasury output as outputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 			}
 			return OutputSelector(ty)

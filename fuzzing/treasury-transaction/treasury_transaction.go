@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/iota.go/v3"
 )
 
 func Fuzz(data []byte) int {

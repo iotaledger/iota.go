@@ -19,13 +19,6 @@ const (
 
 	// TransactionBinSerializedMinSize defines the minimum size of a serialized Transaction.
 	TransactionBinSerializedMinSize = serializer.UInt32ByteSize
-
-	// DustAllowanceDivisor defines the divisor used to compute the allowed dust outputs on an address.
-	// The amount of dust outputs on an address is calculated by:
-	//	min(sum(dust_allowance_output_deposit) / DustAllowanceDivisor, dustOutputCountLimit)
-	DustAllowanceDivisor int64 = 100_000
-	// MaxDustOutputsOnAddress defines the maximum amount of dust outputs allowed to "reside" on an address.
-	MaxDustOutputsOnAddress = 100
 )
 
 var (
@@ -41,8 +34,6 @@ var (
 	ErrInputSignatureUnlockBlockInvalid = errors.New("companion signature unlock block is invalid for input")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock block with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = errors.New("address and signature type are not compatible")
-	// ErrInvalidDustAllowance gets returned for errors where the dust allowance is semantically invalid.
-	ErrInvalidDustAllowance = errors.New("invalid dust allowance")
 )
 
 // TransactionID is the ID of a Transaction.
@@ -207,94 +198,6 @@ type SigValidationFunc = func() error
 // the transaction is passing a specific semantic validation rule or not.
 type SemanticValidationFunc = func(t *Transaction, utxos InputToOutputMapping) error
 
-// DustAllowanceFunc returns the deposit sum of dust allowance outputs and amount of dust outputs on the given address.
-type DustAllowanceFunc func(addr Address) (dustAllowanceSum uint64, amountDustOutputs int64, err error)
-
-// NewDustSemanticValidation returns a SemanticValidationFunc which verifies whether
-// a transaction fulfils the semantics regarding dust outputs:
-//	A transaction:
-//		- consuming a SigLockedDustAllowanceOutput on address A or
-//		- creating a SigLockedSingleOutput with deposit amount < OutputSigLockedDustAllowanceOutputMinDeposit (dust output)
-//	is only semantically valid, if after the transaction is booked, the number of dust outputs on address A does not exceed the allowed
-//	threshold of the sum of min(S / div, dustOutputsCountLimit). Where S is the sum of deposits of all dust allowance outputs on address A.
-func NewDustSemanticValidation(div int64, dustOutputsCountLimit int64, dustAllowanceFunc DustAllowanceFunc) SemanticValidationFunc {
-	return func(t *Transaction, utxos InputToOutputMapping) error {
-		essence := t.Essence.(*TransactionEssence)
-
-		addrToValidate := make(map[string]Address)
-		dustAllowanceAddrToBalance := make(map[string]int64)
-		dustAllowanceAddrToNumOfDustOutputs := make(map[string]int64)
-
-		for _, output := range essence.Outputs {
-			switch out := output.(type) {
-			case *SigLockedDustAllowanceOutput:
-				addrToValidate[out.Address.(Address).String()] = out.Address.(Address)
-				dustAllowanceAddrToBalance[out.Address.(Address).String()] += int64(out.Amount)
-			case *SigLockedSingleOutput:
-				if out.Amount < OutputSigLockedDustAllowanceOutputMinDeposit {
-					addrToValidate[out.Address.(Address).String()] = out.Address.(Address)
-					dustAllowanceAddrToNumOfDustOutputs[out.Address.(Address).String()] += 1
-				}
-			}
-		}
-
-		for i, x := range t.Essence.(*TransactionEssence).Inputs {
-			utxoID := x.(*UTXOInput).ID()
-			utxo, ok := utxos[utxoID]
-			if !ok {
-				return fmt.Errorf("%w: UTXO for ID %v is not provided (input at index %d)", ErrMissingUTXO, utxoID, i)
-			}
-
-			deposit, err := utxo.Deposit()
-			if err != nil {
-				return fmt.Errorf("unable to get deposit from UTXO %v (input at index %d): %w", utxoID, i, err)
-			}
-
-			target, err := utxo.Target()
-			if err != nil {
-				return fmt.Errorf("unable to get target of UTXO %v (input at index %d): %w", utxoID, i, err)
-			}
-
-			if deposit < OutputSigLockedDustAllowanceOutputMinDeposit {
-				addrToValidate[target.(Address).String()] = target.(Address)
-				dustAllowanceAddrToNumOfDustOutputs[target.(Address).String()] -= 1
-				continue
-			}
-
-			if utxo.Type() == OutputSigLockedDustAllowanceOutput {
-				addrToValidate[target.(Address).String()] = target.(Address)
-				dustAllowanceAddrToBalance[target.(Address).String()] -= int64(deposit)
-			}
-		}
-
-		for addrKey, addr := range addrToValidate {
-			dustAllowanceDepositSumUint64, numDustOutputs, err := dustAllowanceFunc(addr)
-			if err != nil {
-				return fmt.Errorf("unable to fetch dust allowance information on address %v: %w", addr, err)
-			}
-			numDustOutputsPrev := numDustOutputs
-			numDustOutputs += dustAllowanceAddrToNumOfDustOutputs[addrKey]
-
-			var dustAllowanceDepositSum = int64(dustAllowanceDepositSumUint64)
-			// Go integer division floors the value
-			prevAllowed := dustAllowanceDepositSum / div
-			allowed := (dustAllowanceDepositSum + dustAllowanceAddrToBalance[addrKey]) / div
-
-			// limit
-			if allowed > dustOutputsCountLimit {
-				allowed = dustOutputsCountLimit
-			}
-
-			if numDustOutputs > allowed {
-				short := numDustOutputs - allowed
-				return fmt.Errorf("%w: addr %s, new num of dust outputs %d (previous %d), allowance deposit %d (previous %d), short %d", ErrInvalidDustAllowance, addrKey, numDustOutputs, numDustOutputsPrev, allowed, prevAllowed, short)
-			}
-		}
-
-		return nil
-	}
-}
-
 // InputToOutputMapping maps inputs to their origin UTXOs.
 type InputToOutputMapping = map[UTXOInputID]Output
 
@@ -432,6 +335,8 @@ func createSigValidationFunc(pos int, sig serializer.Serializable, sigBlockIndex
 	switch addr := addr.(type) {
 	case *Ed25519Address:
 		return createEd25519SigValidationFunc(pos, sig, sigBlockIndex, addr, txEssenceBytes)
+	case *BLSAddress:
+		return createBLSSigValidationFunc(pos, sig, sigBlockIndex, addr, txEssenceBytes)
 	default:
 		return nil, fmt.Errorf("%w: unsupported address type at index %d", ErrUnknownAddrType, pos)
 	}
@@ -446,6 +351,21 @@ func createEd25519SigValidationFunc(pos int, sig serializer.Serializable, sigBlo
 
 	return func() error {
 		if err := ed25519Sig.Valid(essenceBytes, addr); err != nil {
+			return fmt.Errorf("%w: input at index %d, signature block at index %d", err, pos, sigBlockIndex)
+		}
+		return nil
+	}, nil
+}
+
+// creates a SigValidationFunc validating the given BLSSignature against the BLSAddress.
+func createBLSSigValidationFunc(pos int, sig serializer.Serializable, sigBlockIndex int, addr *BLSAddress, essenceBytes []byte) (SigValidationFunc, error) {
+	blsSig, isBLSSig := sig.(*BLSSignature)
+	if !isBLSSig {
+		return nil, fmt.Errorf("%w: UTXO at index %d has a BLS address but its corresponding signature is of type %T (at index %d)", ErrSignatureAndAddrIncompatible, pos, sig, sigBlockIndex)
+	}
+
+	return func() error {
+		if err := blsSig.Valid(essenceBytes, addr); err != nil {
 			return fmt.Errorf("%w: input at index %d, signature block at index %d", err, pos, sigBlockIndex)
 		}
 		return nil

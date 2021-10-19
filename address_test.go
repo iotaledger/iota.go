@@ -2,69 +2,86 @@ package iotago_test
 
 import (
 	"errors"
-	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v2/tpkg"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/hive.go/serializer"
+	"github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEd25519Address_Deserialize(t *testing.T) {
+func TestAddressDeSerialization(t *testing.T) {
 	tests := []struct {
 		name       string
-		edAddrData []byte
+		sourceData []byte
+		target     serializer.Serializable
+		checkBytes func(target serializer.Serializable) []byte
 		err        error
 	}{
 		{
-			"ok",
+			"ok - Ed25519Address",
 			func() []byte {
-				_, edAddrData := tpkg.RandEd25519Address()
-				return edAddrData
+				_, data := tpkg.RandEd25519Address()
+				return data
 			}(),
+			&iotago.Ed25519Address{},
+			func(target serializer.Serializable) []byte {
+				return target.(*iotago.Ed25519Address)[:]
+			},
 			nil,
 		},
 		{
-			"not enough bytes",
+			"ok - BLSAddress",
 			func() []byte {
-				_, edAddrData := tpkg.RandEd25519Address()
-				return edAddrData[:iotago.Ed25519AddressSerializedBytesSize-1]
+				_, data := tpkg.RandBLSAddress()
+				return data
 			}(),
-			serializer.ErrDeserializationNotEnoughData,
+			&iotago.BLSAddress{},
+			func(target serializer.Serializable) []byte {
+				return target.(*iotago.BLSAddress)[:]
+			},
+			nil,
+		},
+		{
+			"ok - AliasAddress",
+			func() []byte {
+				_, data := tpkg.RandAliasAddress()
+				return data
+			}(),
+			&iotago.AliasAddress{},
+			func(target serializer.Serializable) []byte {
+				return target.(*iotago.AliasAddress)[:]
+			},
+			nil,
+		},
+		{
+			"ok - NFTAddress",
+			func() []byte {
+				_, data := tpkg.RandNFTAddress()
+				return data
+			}(),
+			&iotago.NFTAddress{},
+			func(target serializer.Serializable) []byte {
+				return target.(*iotago.NFTAddress)[:]
+			},
+			nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edAddr := &iotago.Ed25519Address{}
-			bytesRead, err := edAddr.Deserialize(tt.edAddrData, serializer.DeSeriModePerformValidation)
+			bytesRead, err := tt.target.Deserialize(tt.sourceData, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
 			}
 			assert.NoError(t, err)
-			assert.Equal(t, len(tt.edAddrData), bytesRead)
-			assert.Equal(t, tt.edAddrData[serializer.SmallTypeDenotationByteSize:], edAddr[:])
-		})
-	}
-}
+			assert.Equal(t, len(tt.sourceData), bytesRead)
+			assert.Equal(t, tt.sourceData[serializer.SmallTypeDenotationByteSize:], tt.checkBytes(tt.target))
 
-func TestEd25519Address_Serialize(t *testing.T) {
-	originEdAddr, originData := tpkg.RandEd25519Address()
-	tests := []struct {
-		name   string
-		source *iotago.Ed25519Address
-		target []byte
-	}{
-		{
-			"ok", originEdAddr, originData,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
+			outputData, err := tt.target.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
-			assert.Equal(t, tt.target, edData)
+			assert.Equal(t, tt.sourceData, outputData)
 		})
 	}
 }

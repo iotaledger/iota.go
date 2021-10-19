@@ -5,7 +5,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
 )
 
