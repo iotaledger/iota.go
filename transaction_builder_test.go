@@ -2,17 +2,17 @@ package iotago_test
 
 import (
 	"errors"
-	"github.com/iotaledger/iota.go/v2/tpkg"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v2"
-	"github.com/iotaledger/iota.go/v2/ed25519"
+	"github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTransactionBuilder(t *testing.T) {
 	identityOne := tpkg.RandEd25519PrivateKey()
-	inputAddr := iotago.AddressFromEd25519PubKey(identityOne.Public().(ed25519.PublicKey))
+	inputAddr := iotago.Ed25519AddressFromPubKey(identityOne.Public().(ed25519.PublicKey))
 	addrKeys := iotago.AddressKeys{Address: &inputAddr, Keys: identityOne}
 
 	type test struct {
@@ -29,7 +29,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
+				AddOutput(&iotago.SimpleOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
 				name:       "ok - 1 input/output",
@@ -43,7 +43,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 50}).
+				AddOutput(&iotago.SimpleOutput{Address: outputAddr1, Amount: 50}).
 				AddIndexationPayload(&iotago.Indexation{Index: []byte("index"), Data: nil})
 
 			return test{
@@ -78,11 +78,11 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
+				AddOutput(&iotago.SimpleOutput{Address: outputAddr1, Amount: 50})
 
 			// wrong address/keys
 			wrongIdentity := tpkg.RandEd25519PrivateKey()
-			wrongAddr := iotago.AddressFromEd25519PubKey(wrongIdentity.Public().(ed25519.PublicKey))
+			wrongAddr := iotago.Ed25519AddressFromPubKey(wrongIdentity.Public().(ed25519.PublicKey))
 			wrongAddrKeys := iotago.AddressKeys{Address: &wrongAddr, Keys: wrongIdentity}
 
 			return test{
@@ -98,7 +98,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.SigLockedSingleOutput{Address: outputAddr1, Amount: 50})
+				AddOutput(&iotago.SimpleOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
 				name:       "err - missing address keys (no keys given at all)",

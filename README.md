@@ -25,12 +25,12 @@ To use the library, we recommend you update Go [to the latest stable version](ht
 Using the library is easy, just `go get` it as any other dependency:
 
 ```bash
-go get github.com/iotaledger/iota.go/v2
+go get github.com/iotaledger/iota.go/v3
 ```
 
 ## API reference
 
-You can read the API reference [here](https://pkg.go.dev/github.com/iotaledger/iota.go/v2).
+You can read the API reference [here](https://pkg.go.dev/github.com/iotaledger/iota.go/v3).
 
 ## Joining the discussion
 

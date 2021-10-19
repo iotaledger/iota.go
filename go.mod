@@ -1,10 +1,13 @@
-module github.com/iotaledger/iota.go/v2
+module github.com/iotaledger/iota.go/v3
 
 go 1.16
+
+replace github.com/iotaledger/hive.go => D:/Projects/hive.go
 
 require (
 	filippo.io/edwards25519 v1.0.0-rc.1
 	github.com/eclipse/paho.mqtt.golang v1.3.5
+	github.com/ethereum/go-ethereum v1.10.11 // indirect
 	github.com/iotaledger/hive.go v0.0.0-20211011085923-fd2eb0a47bf8
 	github.com/iotaledger/iota.go v1.0.0
 	github.com/stretchr/testify v1.7.0

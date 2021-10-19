@@ -44,8 +44,6 @@ var (
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
 	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
-	// ErrOutputDustAllowanceLessThanMinDeposit gets returned if a SigLockedDustAllowanceOutput deposits less than OutputSigLockedDustAllowanceOutputMinDeposit.
-	ErrOutputDustAllowanceLessThanMinDeposit = errors.New("dust allowance output deposits less than the minimum required amount")
 
 	// restrictions around input within a transaction.
 	inputsArrayBound = serializer.ArrayRules{
@@ -136,11 +134,8 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 			return nil
 		}).
 		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Outputs = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
-			switch ty {
-			case uint32(OutputSigLockedSingleOutput):
-			case uint32(OutputSigLockedDustAllowanceOutput):
-			default:
-				return nil, fmt.Errorf("transaction essence can only contain treasury output as outputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+			if !outputTypeSupportedByTxEssence(ty) {
+				return nil, fmt.Errorf("transaction essence can only contain simple/extended/alias/foundry/nft outputs types but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 			}
 			return OutputSelector(ty)
 		}, &outputsArrayBound, func(err error) error {
@@ -176,6 +171,19 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 			return nil
 		}).
 		Done()
+}
+
+func outputTypeSupportedByTxEssence(ty uint32) bool {
+	switch ty {
+	case uint32(OutputSimple):
+	case uint32(OutputExtended):
+	case uint32(OutputAlias):
+	case uint32(OutputFoundry):
+	case uint32(OutputNFT):
+	default:
+		return false
+	}
+	return true
 }
 
 func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
@@ -287,10 +295,9 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 }
 
 // SyntacticallyValidate checks whether the transaction essence is syntactically valid by checking whether:
-//	1. every input references a unique UTXO and has valid UTXO index bounds
-//	2. every output (per type) deposits to a unique address and deposits more than zero
-//	3. the accumulated deposit output is not over the total supply
-//	4. SigLockedDustAllowanceOutput deposits at least OutputSigLockedDustAllowanceOutputMinDeposit.
+//	- every input references a unique UTXO and has valid UTXO index bounds
+//	- every output (per type) deposits to a unique address and deposits more than zero
+//	- the accumulated deposit output is not over the total supply
 // The function does not syntactically validate the input or outputs themselves.
 func (u *TransactionEssence) SyntacticallyValidate() error {
 

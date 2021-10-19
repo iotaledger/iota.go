@@ -2,10 +2,10 @@ package iotago_test
 
 import (
 	"context"
-	"github.com/iotaledger/iota.go/v2/tpkg"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/require"
 )
 

@@ -11,7 +11,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v2/ed25519"
+	"github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -3,27 +3,27 @@ package iotago_test
 import (
 	"errors"
 	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v2/tpkg"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTreasuryInput_Deserialize(t *testing.T) {
-	randTreasuryInput, randTreasuryInputData := tpkg.RandTreasuryInput()
+func TestUTXOInput_Deserialize(t *testing.T) {
+	randUTXOInput, randSerializedUTXOInput := tpkg.RandUTXOInput()
 	tests := []struct {
 		name   string
 		data   []byte
-		target *iotago.TreasuryInput
+		target *iotago.UTXOInput
 		err    error
 	}{
-		{"ok", randTreasuryInputData, randTreasuryInput, nil},
-		{"not enough data", randTreasuryInputData[:iotago.TreasuryInputSerializedBytesSize-1], randTreasuryInput, serializer.ErrDeserializationNotEnoughData},
+		{"ok", randSerializedUTXOInput, randUTXOInput, nil},
+		{"not enough data", randSerializedUTXOInput[:iotago.UTXOInputSize-1], randUTXOInput, serializer.ErrDeserializationNotEnoughData},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			u := &iotago.TreasuryInput{}
+			u := &iotago.UTXOInput{}
 			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
@@ -35,15 +35,15 @@ func TestTreasuryInput_Deserialize(t *testing.T) {
 	}
 }
 
-func TestTreasuryInput_Serialize(t *testing.T) {
-	randTreasuryInput, randTreasuryInputData := tpkg.RandTreasuryInput()
+func TestUTXOInput_Serialize(t *testing.T) {
+	randUTXOInput, randSerializedUTXOInput := tpkg.RandUTXOInput()
 	tests := []struct {
 		name   string
-		source *iotago.TreasuryInput
+		source *iotago.UTXOInput
 		target []byte
 		err    error
 	}{
-		{"ok", randTreasuryInput, randTreasuryInputData, nil},
+		{"ok", randUTXOInput, randSerializedUTXOInput, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -24,7 +24,7 @@ func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 				if err := serializer.CheckMinByteLength(TreasuryOutputBytesSize, len(data)); err != nil {
 					return fmt.Errorf("invalid treasury output bytes: %w", err)
 				}
-				if err := serializer.CheckTypeByte(data, OutputTreasuryOutput); err != nil {
+				if err := serializer.CheckTypeByte(data, OutputTreasury); err != nil {
 					return fmt.Errorf("unable to deserialize treasury output: %w", err)
 				}
 			}
@@ -41,7 +41,7 @@ func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 
 func (t *TreasuryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(OutputTreasuryOutput, func(err error) error {
+		WriteNum(OutputTreasury, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury output type ID: %w", err)
 		}).
 		WriteNum(t.Amount, func(err error) error {
@@ -51,7 +51,7 @@ func (t *TreasuryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([
 
 func (t *TreasuryOutput) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&jsonTreasuryOutput{
-		Type:   int(OutputTreasuryOutput),
+		Type:   int(OutputTreasury),
 		Amount: int(t.Amount),
 	})
 }

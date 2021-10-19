@@ -3,13 +3,13 @@ package iotagox_test
 import (
 	"context"
 	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v2/tpkg"
-	"github.com/iotaledger/iota.go/v2/x"
+	"github.com/iotaledger/iota.go/v3/tpkg"
+	"github.com/iotaledger/iota.go/v3/x"
 	"testing"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	iotago "github.com/iotaledger/iota.go/v2"
+	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/require"
 )
 

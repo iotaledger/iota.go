@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/serializer"
-	iotago "github.com/iotaledger/iota.go/v2"
+	iotago "github.com/iotaledger/iota.go/v3"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )

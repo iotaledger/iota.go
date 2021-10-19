@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v2/ed25519"
+	"github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v2/ed25519"
+	"github.com/iotaledger/iota.go/v3/ed25519"
 )
 
 var (

@@ -1,10 +1,9 @@
 package iotago
 
 import (
-	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer"
 )
 
@@ -44,116 +43,6 @@ func UnlockBlockSelector(unlockBlockType uint32) (serializer.Serializable, error
 		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownUnlockBlockType, unlockBlockType)
 	}
 	return seri, nil
-}
-
-// SignatureUnlockBlock holds a signature which unlocks inputs.
-type SignatureUnlockBlock struct {
-	// The signature of this unlock block.
-	Signature serializer.Serializable `json:"signature"`
-}
-
-func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
-	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckMinByteLength(SignatureUnlockBlockMinSize, len(data)); err != nil {
-					return fmt.Errorf("invalid signature unlock block bytes: %w", err)
-				}
-				if err := serializer.CheckTypeByte(data, UnlockBlockSignature); err != nil {
-					return fmt.Errorf("unable to deserialize signature unlock block: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip milestone payload ID during deserialization: %w", err)
-		}).
-		ReadObject(func(seri serializer.Serializable) { s.Signature = seri }, deSeriMode, serializer.TypeDenotationByte, SignatureSelector, func(err error) error {
-			return fmt.Errorf("unable to deserialize signature within signature unlock block: %w", err)
-		}).Done()
-}
-
-func (s *SignatureUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
-	return serializer.NewSerializer().
-		WriteNum(UnlockBlockSignature, func(err error) error {
-			return fmt.Errorf("unable to serialize signature unlock block type ID: %w", err)
-		}).
-		WriteObject(s.Signature, deSeriMode, func(err error) error {
-			return fmt.Errorf("unable to serialize signature unlock block signature: %w", err)
-		}).
-		Serialize()
-}
-
-func (s *SignatureUnlockBlock) MarshalJSON() ([]byte, error) {
-	jSignatureUnlockBlock := &jsonSignatureUnlockBlock{}
-	jSignature, err := s.Signature.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	rawMsgJsonSig := json.RawMessage(jSignature)
-	jSignatureUnlockBlock.Signature = &rawMsgJsonSig
-	jSignatureUnlockBlock.Type = int(UnlockBlockSignature)
-	return json.Marshal(jSignatureUnlockBlock)
-}
-
-func (s *SignatureUnlockBlock) UnmarshalJSON(bytes []byte) error {
-	jSignatureUnlockBlock := &jsonSignatureUnlockBlock{}
-	if err := json.Unmarshal(bytes, jSignatureUnlockBlock); err != nil {
-		return err
-	}
-	seri, err := jSignatureUnlockBlock.ToSerializable()
-	if err != nil {
-		return err
-	}
-	*s = *seri.(*SignatureUnlockBlock)
-	return nil
-}
-
-// ReferenceUnlockBlock is an unlock block which references a previous unlock block.
-type ReferenceUnlockBlock struct {
-	// The other unlock block this reference unlock block references to.
-	Reference uint16 `json:"reference"`
-}
-
-func (r *ReferenceUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-		if err := serializer.CheckMinByteLength(ReferenceUnlockBlockSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid reference unlock block bytes: %w", err)
-		}
-		if err := serializer.CheckTypeByte(data, UnlockBlockReference); err != nil {
-			return 0, fmt.Errorf("unable to deserialize reference unlock block: %w", err)
-		}
-	}
-	data = data[serializer.SmallTypeDenotationByteSize:]
-	r.Reference = binary.LittleEndian.Uint16(data)
-	return ReferenceUnlockBlockSize, nil
-}
-
-func (r *ReferenceUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
-	var b [ReferenceUnlockBlockSize]byte
-	b[0] = UnlockBlockReference
-	binary.LittleEndian.PutUint16(b[serializer.SmallTypeDenotationByteSize:], r.Reference)
-	return b[:], nil
-}
-
-func (r *ReferenceUnlockBlock) MarshalJSON() ([]byte, error) {
-	jReferenceUnlockBlock := &jsonReferenceUnlockBlock{}
-	jReferenceUnlockBlock.Type = int(UnlockBlockReference)
-	jReferenceUnlockBlock.Reference = int(r.Reference)
-	return json.Marshal(jReferenceUnlockBlock)
-}
-
-func (r *ReferenceUnlockBlock) UnmarshalJSON(bytes []byte) error {
-	jReferenceUnlockBlock := &jsonReferenceUnlockBlock{}
-	if err := json.Unmarshal(bytes, jReferenceUnlockBlock); err != nil {
-		return err
-	}
-	seri, err := jReferenceUnlockBlock.ToSerializable()
-	if err != nil {
-		return err
-	}
-	*r = *seri.(*ReferenceUnlockBlock)
-	return nil
 }
 
 // UnlockBlockValidatorFunc which given the index of an unlock block and the unlock block itself, runs validations and returns an error if any should fail.
@@ -218,49 +107,4 @@ func ValidateUnlockBlocks(unlockBlocks serializer.Serializables, funcs ...Unlock
 		}
 	}
 	return nil
-}
-
-// jsonUnlockBlockSelector selects the json unlock block object for the given type.
-func jsonUnlockBlockSelector(ty int) (JSONSerializable, error) {
-	var obj JSONSerializable
-	switch byte(ty) {
-	case UnlockBlockSignature:
-		obj = &jsonSignatureUnlockBlock{}
-	case UnlockBlockReference:
-		obj = &jsonReferenceUnlockBlock{}
-	default:
-		return nil, fmt.Errorf("unable to decode unlock block type from JSON: %w", ErrUnknownUnlockBlockType)
-	}
-	return obj, nil
-}
-
-// jsonSignatureUnlockBlock defines the json representation of a SignatureUnlockBlock.
-type jsonSignatureUnlockBlock struct {
-	Type      int              `json:"type"`
-	Signature *json.RawMessage `json:"signature"`
-}
-
-func (j *jsonSignatureUnlockBlock) ToSerializable() (serializer.Serializable, error) {
-	jsonSig, err := DeserializeObjectFromJSON(j.Signature, jsonSignatureSelector)
-	if err != nil {
-		return nil, err
-	}
-
-	sig, err := jsonSig.ToSerializable()
-	if err != nil {
-		return nil, err
-	}
-
-	return &SignatureUnlockBlock{Signature: sig}, nil
-}
-
-// jsonReferenceUnlockBlock defines the json representation of a ReferenceUnlockBlock.
-type jsonReferenceUnlockBlock struct {
-	Type      int `json:"type"`
-	Reference int `json:"reference"`
-}
-
-func (j *jsonReferenceUnlockBlock) ToSerializable() (serializer.Serializable, error) {
-	block := &ReferenceUnlockBlock{Reference: uint16(j.Reference)}
-	return block, nil
 }
