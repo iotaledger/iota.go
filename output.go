@@ -130,6 +130,7 @@ func (oih OutputIDHex) AsUTXOInput() (*UTXOInput, error) {
 type OutputsValidatorFunc func(index int, output Output) error
 
 // OutputsAddrUniqueValidator returns a validator which checks that all addresses are unique per OutputType.
+// Deprecated: an output set no longer needs to hold unique addresses per output.
 func OutputsAddrUniqueValidator() OutputsValidatorFunc {
 	set := map[OutputType]map[string]int{}
 	return func(index int, dep Output) error {
