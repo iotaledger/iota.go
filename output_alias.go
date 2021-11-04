@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/iotaledger/hive.go/serializer"
 )
@@ -108,6 +109,7 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 }
 
 func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	var nativeTokensWrittenConsumer serializer.WrittenObjectConsumer
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
@@ -119,10 +121,23 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]by
 					return fmt.Errorf("invalid state controller set in alias output: %w", err)
 				}
 				if err := isValidAddrType(a.GovernanceController); err != nil {
-					return fmt.Errorf("invalid state controller set in alias output: %w", err)
+					return fmt.Errorf("invalid governance controller set in alias output: %w", err)
+				}
+
+				nativeTokensLexicalNoDupsValidator := nativeTokensArrayRules.LexicalOrderWithoutDupsValidator()
+				nativeTokensWrittenConsumer = func(index int, written []byte) error {
+					if err := nativeTokensLexicalNoDupsValidator(index, written); err != nil {
+						return fmt.Errorf("%w: unable to serialize native tokens of alias output since inputs are not lexically sorted or contain duplicates", err)
+					}
+					return nil
 				}
 			}
 			return nil
+		}).
+		Do(func() {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
+				sort.Sort(serializer.SortedSerializables(a.NativeTokens))
+			}
 		}).
 		WriteNum(OutputAlias, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output type ID: %w", err)

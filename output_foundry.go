@@ -97,6 +97,7 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 }
 
 func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	var nativeTokensWrittenConsumer serializer.WrittenObjectConsumer
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
@@ -107,6 +108,14 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]
 				if err := isValidAddrType(f.Address); err != nil {
 					return fmt.Errorf("invalid address set in foundry output: %w", err)
 				}
+
+				nativeTokensLexicalNoDupsValidator := nativeTokensArrayRules.LexicalOrderWithoutDupsValidator()
+				nativeTokensWrittenConsumer = func(index int, written []byte) error {
+					if err := nativeTokensLexicalNoDupsValidator(index, written); err != nil {
+						return fmt.Errorf("%w: unable to serialize native tokens of alias output since inputs are not lexically sorted or contain duplicates", err)
+					}
+					return nil
+				}
 			}
 			return nil
 		}).
@@ -116,7 +125,7 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]
 		WriteNum(f.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output amount: %w", err)
 		}).
-		WriteSliceOfObjects(f.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
+		WriteSliceOfObjects(f.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output native tokens: %w", err)
 		}).
 		WriteObject(f.Address, deSeriMode, func(err error) error {

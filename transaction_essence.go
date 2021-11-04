@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 
 	"github.com/iotaledger/hive.go/serializer"
 
@@ -80,13 +79,6 @@ type TransactionEssence struct {
 	Outputs serializer.Serializables `json:"outputs"`
 	// The optional embedded payload.
 	Payload serializer.Serializable `json:"payload"`
-}
-
-// SortInputsOutputs sorts the inputs and outputs according to their serialized lexical representation.
-// Usually an implicit call to SortInputsOutputs() should be done by instructing serialization to use DeSeriModePerformLexicalOrdering.
-func (u *TransactionEssence) SortInputsOutputs() {
-	sort.Sort(serializer.SortedSerializables(u.Inputs))
-	sort.Sort(serializer.SortedSerializables(u.Outputs))
 }
 
 // SigningMessage returns the to be signed message.
@@ -199,11 +191,6 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 	}
 
 	return serializer.NewSerializer().
-		Do(func() {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
-				u.SortInputsOutputs()
-			}
-		}).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if err := u.SyntacticallyValidate(); err != nil {
