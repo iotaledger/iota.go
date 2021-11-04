@@ -2,7 +2,6 @@ package iotago_test
 
 import (
 	"errors"
-	"sort"
 	"testing"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -92,6 +91,36 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 				},
 			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateDepositAmount()}}, true,
 		},
+		{
+			"native tokens count - ok",
+			args{outputs: serializer.Serializables{
+				&iotago.ExtendedOutput{
+					Amount:       1,
+					NativeTokens: tpkg.RandSortNativeTokens(5),
+					Address:      tpkg.RandEd25519Address(),
+				},
+				&iotago.ExtendedOutput{
+					Amount:       1,
+					NativeTokens: tpkg.RandSortNativeTokens(10),
+					Address:      tpkg.RandEd25519Address(),
+				},
+			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateNativeTokensCount()}}, false,
+		},
+		{
+			"native tokens count - sum more than max native tokens count",
+			args{outputs: serializer.Serializables{
+				&iotago.ExtendedOutput{
+					Amount:       1,
+					NativeTokens: tpkg.RandSortNativeTokens(200),
+					Address:      tpkg.RandEd25519Address(),
+				},
+				&iotago.ExtendedOutput{
+					Amount:       1,
+					NativeTokens: tpkg.RandSortNativeTokens(200),
+					Address:      tpkg.RandEd25519Address(),
+				},
+			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateNativeTokensCount()}}, true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -103,23 +132,15 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 }
 
 func TestOutputsNativeTokenSet(t *testing.T) {
-	sortedNativeTokens := func() serializer.Serializables {
-		nativeTokens := serializer.Serializables{}
-		for i := 0; i < 5; i++ {
-			nativeTokens = append(nativeTokens, tpkg.RandNativeToken())
-		}
-		sort.Sort(serializer.SortedSerializables(nativeTokens))
-		return nativeTokens
-	}
 
 	notSortedNativeTokens := func() serializer.Serializables {
-		nativeTokens := sortedNativeTokens()
+		nativeTokens := tpkg.RandSortNativeTokens(5)
 		nativeTokens[0], nativeTokens[1] = nativeTokens[1], nativeTokens[0]
 		return nativeTokens
 	}
 
 	dupedNativeTokens := func() serializer.Serializables {
-		nativeTokens := sortedNativeTokens()
+		nativeTokens := tpkg.RandSortNativeTokens(2)
 		nativeTokens[0], nativeTokens[1] = nativeTokens[0], nativeTokens[0]
 		return nativeTokens
 	}
@@ -135,19 +156,19 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 			sources: []iotago.Output{
 				&iotago.ExtendedOutput{
 					Amount:       1,
-					NativeTokens: sortedNativeTokens(),
+					NativeTokens: tpkg.RandSortNativeTokens(5),
 					Address:      tpkg.RandEd25519Address(),
 				},
 				&iotago.AliasOutput{
 					Amount:               1,
-					NativeTokens:         sortedNativeTokens(),
+					NativeTokens:         tpkg.RandSortNativeTokens(5),
 					AliasID:              iotago.AliasID{},
 					StateController:      tpkg.RandEd25519Address(),
 					GovernanceController: tpkg.RandEd25519Address(),
 				},
 				&iotago.FoundryOutput{
 					Amount:            1,
-					NativeTokens:      sortedNativeTokens(),
+					NativeTokens:      tpkg.RandSortNativeTokens(5),
 					Address:           tpkg.RandEd25519Address(),
 					CirculatingSupply: tpkg.RandUint256(),
 					MaximumSupply:     tpkg.RandUint256(),
@@ -155,7 +176,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 				},
 				&iotago.NFTOutput{
 					Amount:       1,
-					NativeTokens: sortedNativeTokens(),
+					NativeTokens: tpkg.RandSortNativeTokens(5),
 					Address:      tpkg.RandEd25519Address(),
 				},
 			},

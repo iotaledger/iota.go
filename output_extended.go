@@ -20,6 +20,10 @@ type ExtendedOutput struct {
 	Blocks serializer.Serializables
 }
 
+func (e *ExtendedOutput) NativeTokenSet() serializer.Serializables {
+	return e.NativeTokens
+}
+
 func (e *ExtendedOutput) Deposit() (uint64, error) {
 	return e.Amount, nil
 }
