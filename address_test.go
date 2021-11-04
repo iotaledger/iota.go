@@ -21,7 +21,7 @@ func TestAddressDeSerialization(t *testing.T) {
 		{
 			"ok - Ed25519Address",
 			func() []byte {
-				_, data := tpkg.RandEd25519Address()
+				_, data := tpkg.RandEd25519AddressAndBytes()
 				return data
 			}(),
 			&iotago.Ed25519Address{},

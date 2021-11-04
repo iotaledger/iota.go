@@ -114,7 +114,7 @@ func TestValidateReceipts(t *testing.T) {
 
 	tests := []test{
 		func() test {
-			addr, _ := tpkg.RandEd25519Address()
+			addr, _ := tpkg.RandEd25519AddressAndBytes()
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             addr,
@@ -123,7 +123,7 @@ func TestValidateReceipts(t *testing.T) {
 			return test{"ok", receipt, currentTreasury, nil}
 		}(),
 		func() test {
-			addr, _ := tpkg.RandEd25519Address()
+			addr, _ := tpkg.RandEd25519AddressAndBytes()
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             addr,
@@ -132,7 +132,7 @@ func TestValidateReceipts(t *testing.T) {
 			return test{"err - migrated less tha minimum", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 		func() test {
-			addr, _ := tpkg.RandEd25519Address()
+			addr, _ := tpkg.RandEd25519AddressAndBytes()
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             addr,
@@ -141,7 +141,7 @@ func TestValidateReceipts(t *testing.T) {
 			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 		func() test {
-			addr, _ := tpkg.RandEd25519Address()
+			addr, _ := tpkg.RandEd25519AddressAndBytes()
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             addr,

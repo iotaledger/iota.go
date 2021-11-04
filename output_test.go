@@ -2,6 +2,7 @@ package iotago_test
 
 import (
 	"errors"
+	"sort"
 	"testing"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -16,7 +17,7 @@ func TestOutputSelector(t *testing.T) {
 	assert.True(t, errors.Is(err, iotago.ErrUnknownOutputType))
 }
 
-func TestOutputsValidatorFunc(t *testing.T) {
+func TestOutputsPredicateFuncs(t *testing.T) {
 	type args struct {
 		outputs serializer.Serializables
 		funcs   []iotago.OutputsPredicateFunc
@@ -27,30 +28,24 @@ func TestOutputsValidatorFunc(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"ok addr",
-			args{outputs: []serializer.Serializable{
+			"addr unique - ok",
+			args{outputs: serializer.Serializables{
 				&iotago.SimpleOutput{
-					Address: func() serializer.Serializable {
-						addr, _ := tpkg.RandEd25519Address()
-						return addr
-					}(),
-					Amount: 0,
+					Address: tpkg.RandEd25519Address(),
+					Amount:  0,
 				},
 				&iotago.SimpleOutput{
-					Address: func() serializer.Serializable {
-						addr, _ := tpkg.RandEd25519Address()
-						return addr
-					}(),
-					Amount: 0,
+					Address: tpkg.RandEd25519Address(),
+					Amount:  0,
 				},
 			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateAddrUnique()}}, false,
 		},
 		{
-			"addr not unique",
-			args{outputs: []serializer.Serializable{
+			"addr unique - not unique",
+			args{outputs: serializer.Serializables{
 				&iotago.SimpleOutput{
 					Address: func() serializer.Serializable {
-						addr, _ := tpkg.RandEd25519Address()
+						addr := tpkg.RandEd25519Address()
 						for i := 0; i < len(addr); i++ {
 							addr[i] = 3
 						}
@@ -60,7 +55,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 				},
 				&iotago.SimpleOutput{
 					Address: func() serializer.Serializable {
-						addr, _ := tpkg.RandEd25519Address()
+						addr := tpkg.RandEd25519Address()
 						for i := 0; i < len(addr); i++ {
 							addr[i] = 3
 						}
@@ -71,33 +66,29 @@ func TestOutputsValidatorFunc(t *testing.T) {
 			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateAddrUnique()}}, true,
 		},
 		{
-			"ok amount",
-			args{outputs: []serializer.Serializable{
+			"deposit amount - ok",
+			args{outputs: serializer.Serializables{
 				&iotago.SimpleOutput{
-					Address: nil,
-					Amount:  iotago.TokenSupply,
+					Amount: iotago.TokenSupply,
 				},
 			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateDepositAmount()}}, false,
 		},
 		{
-			"spends more than total supply",
-			args{outputs: []serializer.Serializable{
+			"deposit amount - more than total supply",
+			args{outputs: serializer.Serializables{
 				&iotago.SimpleOutput{
-					Address: nil,
-					Amount:  iotago.TokenSupply + 1,
+					Amount: iotago.TokenSupply + 1,
 				},
 			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateDepositAmount()}}, true,
 		},
 		{
-			"sum more than total supply",
-			args{outputs: []serializer.Serializable{
+			"deposit amount- sum more than total supply",
+			args{outputs: serializer.Serializables{
 				&iotago.SimpleOutput{
-					Address: nil,
-					Amount:  iotago.TokenSupply - 1,
+					Amount: iotago.TokenSupply - 1,
 				},
 				&iotago.SimpleOutput{
-					Address: nil,
-					Amount:  iotago.TokenSupply - 1,
+					Amount: iotago.TokenSupply - 1,
 				},
 			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateDepositAmount()}}, true,
 		},
@@ -106,6 +97,138 @@ func TestOutputsValidatorFunc(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := iotago.ValidateOutputs(tt.args.outputs, tt.args.funcs...); (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestOutputsNativeTokenSet(t *testing.T) {
+	sortedNativeTokens := func() serializer.Serializables {
+		nativeTokens := serializer.Serializables{}
+		for i := 0; i < 5; i++ {
+			nativeTokens = append(nativeTokens, tpkg.RandNativeToken())
+		}
+		sort.Sort(serializer.SortedSerializables(nativeTokens))
+		return nativeTokens
+	}
+
+	notSortedNativeTokens := func() serializer.Serializables {
+		nativeTokens := sortedNativeTokens()
+		nativeTokens[0], nativeTokens[1] = nativeTokens[1], nativeTokens[0]
+		return nativeTokens
+	}
+
+	dupedNativeTokens := func() serializer.Serializables {
+		nativeTokens := sortedNativeTokens()
+		nativeTokens[0], nativeTokens[1] = nativeTokens[0], nativeTokens[0]
+		return nativeTokens
+	}
+
+	tests := []struct {
+		name    string
+		wantErr bool
+		sources []iotago.Output
+	}{
+		{
+			name:    "ok",
+			wantErr: false,
+			sources: []iotago.Output{
+				&iotago.ExtendedOutput{
+					Amount:       1,
+					NativeTokens: sortedNativeTokens(),
+					Address:      tpkg.RandEd25519Address(),
+				},
+				&iotago.AliasOutput{
+					Amount:               1,
+					NativeTokens:         sortedNativeTokens(),
+					AliasID:              iotago.AliasID{},
+					StateController:      tpkg.RandEd25519Address(),
+					GovernanceController: tpkg.RandEd25519Address(),
+				},
+				&iotago.FoundryOutput{
+					Amount:            1,
+					NativeTokens:      sortedNativeTokens(),
+					Address:           tpkg.RandEd25519Address(),
+					CirculatingSupply: tpkg.RandUint256(),
+					MaximumSupply:     tpkg.RandUint256(),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+				},
+				&iotago.NFTOutput{
+					Amount:       1,
+					NativeTokens: sortedNativeTokens(),
+					Address:      tpkg.RandEd25519Address(),
+				},
+			},
+		},
+		{
+			name:    "not sorted",
+			wantErr: true,
+			sources: []iotago.Output{
+				&iotago.ExtendedOutput{
+					Amount:       1,
+					NativeTokens: notSortedNativeTokens(),
+					Address:      tpkg.RandEd25519Address(),
+				},
+				&iotago.AliasOutput{
+					Amount:               1,
+					NativeTokens:         notSortedNativeTokens(),
+					AliasID:              iotago.AliasID{},
+					StateController:      tpkg.RandEd25519Address(),
+					GovernanceController: tpkg.RandEd25519Address(),
+				},
+				&iotago.FoundryOutput{
+					Amount:            1,
+					NativeTokens:      notSortedNativeTokens(),
+					Address:           tpkg.RandEd25519Address(),
+					CirculatingSupply: tpkg.RandUint256(),
+					MaximumSupply:     tpkg.RandUint256(),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+				},
+				&iotago.NFTOutput{
+					Amount:       1,
+					NativeTokens: notSortedNativeTokens(),
+					Address:      tpkg.RandEd25519Address(),
+				},
+			},
+		},
+		{
+			name:    "duped",
+			wantErr: true,
+			sources: []iotago.Output{
+				&iotago.ExtendedOutput{
+					Amount:       1,
+					NativeTokens: dupedNativeTokens(),
+					Address:      tpkg.RandEd25519Address(),
+				},
+				&iotago.AliasOutput{
+					Amount:               1,
+					NativeTokens:         dupedNativeTokens(),
+					AliasID:              iotago.AliasID{},
+					StateController:      tpkg.RandEd25519Address(),
+					GovernanceController: tpkg.RandEd25519Address(),
+				},
+				&iotago.FoundryOutput{
+					Amount:            1,
+					NativeTokens:      dupedNativeTokens(),
+					Address:           tpkg.RandEd25519Address(),
+					CirculatingSupply: tpkg.RandUint256(),
+					MaximumSupply:     tpkg.RandUint256(),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+				},
+				&iotago.NFTOutput{
+					Amount:       1,
+					NativeTokens: dupedNativeTokens(),
+					Address:      tpkg.RandEd25519Address(),
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			for _, source := range test.sources {
+				if _, err := source.Serialize(serializer.DeSeriModePerformValidation); (err != nil) != test.wantErr {
+					t.Errorf("error = %v, wantErr %v", err, test.wantErr)
+				}
 			}
 		})
 	}
