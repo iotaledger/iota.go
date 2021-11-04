@@ -179,7 +179,7 @@ func outputTypeSupportedByTxEssence(ty uint32) bool {
 }
 
 func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
-	var inputsWrittenConsumer, outputsWrittenConsumer serializer.WrittenObjectConsumer
+	var inputsWrittenConsumer serializer.WrittenObjectConsumer
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 
 		if u.Payload != nil {
@@ -187,20 +187,11 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 				return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", serializer.ErrInvalidBytes, u.Payload)
 			}
 		}
-		if inputsArrayBound.ValidationMode.HasMode(serializer.ArrayValidationModeLexicalOrdering) {
-			inputsLexicalOrderValidator := inputsArrayBound.LexicalOrderValidator()
+		if inputsArrayBound.ValidationMode.HasMode(serializer.ArrayValidationModeNoDuplicates) {
+			inputsUniqueValidator := inputsArrayBound.ElementUniqueValidator()
 			inputsWrittenConsumer = func(index int, written []byte) error {
-				if err := inputsLexicalOrderValidator(index, written); err != nil {
-					return fmt.Errorf("%w: unable to serialize inputs of transaction essence since inputs are not in lexical order", err)
-				}
-				return nil
-			}
-		}
-		if outputsArrayBound.ValidationMode.HasMode(serializer.ArrayValidationModeLexicalOrdering) {
-			outputsLexicalOrderValidator := outputsArrayBound.LexicalOrderValidator()
-			outputsWrittenConsumer = func(index int, written []byte) error {
-				if err := outputsLexicalOrderValidator(index, written); err != nil {
-					return fmt.Errorf("%w: unable to serialize outputs of transaction essence since outputs are not in lexical order", err)
+				if err := inputsUniqueValidator(index, written); err != nil {
+					return fmt.Errorf("%w: unable to serialize inputs of transaction essence since inputs are not unique", err)
 				}
 				return nil
 			}
@@ -227,7 +218,7 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 		WriteSliceOfObjects(u.Inputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, inputsWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence inputs: %w", err)
 		}).
-		WriteSliceOfObjects(u.Outputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, outputsWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(u.Outputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence outputs: %w", err)
 		}).
 		WritePayload(u.Payload, deSeriMode, func(err error) error {
@@ -288,7 +279,7 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 
 // SyntacticallyValidate checks whether the transaction essence is syntactically valid by checking whether:
 //	- every input references a unique UTXO and has valid UTXO index bounds
-//	- every output (per type) deposits to a unique address and deposits more than zero
+//	- every output (per type) deposits more than zero
 //	- the accumulated deposit output is not over the total supply
 // The function does not syntactically validate the input or outputs themselves.
 func (u *TransactionEssence) SyntacticallyValidate() error {
@@ -309,7 +300,6 @@ func (u *TransactionEssence) SyntacticallyValidate() error {
 	}
 
 	if err := ValidateOutputs(u.Outputs,
-		OutputsAddrUniqueValidator(),
 		OutputsDepositAmountValidator(),
 	); err != nil {
 		return err
