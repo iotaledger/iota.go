@@ -49,14 +49,14 @@ var (
 	inputsArrayBound = serializer.ArrayRules{
 		Min:            MinInputsCount,
 		Max:            MaxInputsCount,
-		ValidationMode: serializer.ArrayValidationModeLexicalOrdering,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates,
 	}
 
 	// restrictions around outputs within a transaction.
 	outputsArrayBound = serializer.ArrayRules{
 		Min:            MinOutputsCount,
 		Max:            MaxOutputsCount,
-		ValidationMode: serializer.ArrayValidationModeLexicalOrdering,
+		ValidationMode: serializer.ArrayValidationModeNone,
 	}
 )
 
@@ -124,14 +124,6 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 			return InputSelector(ty)
 		}, &inputsArrayBound, func(err error) error {
 			return fmt.Errorf("unable to deserialize inputs of transaction essence: %w", err)
-		}).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := ValidateInputs(u.Inputs, InputsUTXORefsUniqueValidator()); err != nil {
-					return fmt.Errorf("%w: unable to deserialize inputs of transaction essence since they are invalid", err)
-				}
-			}
-			return nil
 		}).
 		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Outputs = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
 			if !outputTypeSupportedByTxEssence(ty) {
