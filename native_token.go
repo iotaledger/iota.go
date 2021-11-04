@@ -15,6 +15,9 @@ const (
 	// MaxNativeTokenCountPerOutput max number of different native tokens that can reside in one output.
 	MaxNativeTokenCountPerOutput = 256
 
+	// MaxNativeTokensCount is the max number of native tokens which can occur in a transaction (sum input/output side).
+	MaxNativeTokensCount = 256
+
 	TokenTagLength = 12
 
 	// FoundryIDLength is the byte length of a FoundryID consisting out of the alias address, serial number and token scheme.

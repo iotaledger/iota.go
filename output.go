@@ -57,6 +57,13 @@ type Output interface {
 	Type() OutputType
 }
 
+// NativeTokenOutput is a type of Output which also can hold NativeToken.
+type NativeTokenOutput interface {
+	Output
+	// NativeTokenSet returns the NativeToken this output defines.
+	NativeTokenSet() serializer.Serializables
+}
+
 // OutputSelector implements SerializableSelectorFunc for output types.
 func OutputSelector(outputType uint32) (serializer.Serializable, error) {
 	var seri serializer.Serializable
@@ -169,7 +176,7 @@ func OutputsPredicateAddrUnique() OutputsPredicateFunc {
 	}
 }
 
-// OutputsPredicateDepositAmount returns a OutputsPredicateFunc which checks that:
+// OutputsPredicateDepositAmount returns an OutputsPredicateFunc which checks that:
 //	- every output deposits more than zero
 //	- every output deposits less than the total supply
 //	- the sum of deposits does not exceed the total supply
@@ -192,6 +199,21 @@ func OutputsPredicateDepositAmount() OutputsPredicateFunc {
 		}
 		if index != -1 {
 			sum += deposit
+		}
+		return nil
+	}
+}
+
+// OutputsPredicateNativeTokensCount returns an OutputsPredicateFunc which checks that:
+//	- the sum of native tokens count across all outputs does not exceed MaxNativeTokensCount
+func OutputsPredicateNativeTokensCount() OutputsPredicateFunc {
+	var nativeTokensCount int
+	return func(index int, output Output) error {
+		if nativeTokenOutput, is := output.(NativeTokenOutput); is {
+			nativeTokensCount += len(nativeTokenOutput.NativeTokenSet())
+			if nativeTokensCount > MaxNativeTokensCount {
+				return ErrOutputsExceedMaxNativeTokensCount
+			}
 		}
 		return nil
 	}

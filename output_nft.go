@@ -33,6 +33,10 @@ type NFTOutput struct {
 	Blocks serializer.Serializables
 }
 
+func (n *NFTOutput) NativeTokenSet() serializer.Serializables {
+	return n.NativeTokens
+}
+
 func (n *NFTOutput) Deposit() (uint64, error) {
 	return n.Amount, nil
 }

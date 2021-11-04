@@ -43,6 +43,8 @@ var (
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
 	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
+	// ErrOutputsExceedMaxNativeTokensCount gets returned if outputs exceed the MaxNativeTokensCount.
+	ErrOutputsExceedMaxNativeTokensCount = errors.New("outputs exceeds max native tokens count")
 
 	// restrictions around input within a transaction.
 	inputsArrayBound = serializer.ArrayRules{
@@ -288,6 +290,7 @@ func (u *TransactionEssence) SyntacticallyValidate() error {
 
 	if err := ValidateOutputs(u.Outputs,
 		OutputsPredicateDepositAmount(),
+		OutputsPredicateNativeTokensCount(),
 	); err != nil {
 		return err
 	}

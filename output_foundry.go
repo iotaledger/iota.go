@@ -34,6 +34,10 @@ type FoundryOutput struct {
 	Blocks serializer.Serializables
 }
 
+func (f *FoundryOutput) NativeTokenSet() serializer.Serializables {
+	return f.NativeTokens
+}
+
 func (f *FoundryOutput) Deposit() (uint64, error) {
 	return f.Amount, nil
 }

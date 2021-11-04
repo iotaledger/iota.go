@@ -50,6 +50,16 @@ func RandNativeToken() *iotago.NativeToken {
 	return nt
 }
 
+// RandSortNativeTokens returns count sorted NativeToken.
+func RandSortNativeTokens(count int) serializer.Serializables {
+	nativeTokens := serializer.Serializables{}
+	for i := 0; i < count; i++ {
+		nativeTokens = append(nativeTokens, RandNativeToken())
+	}
+	sort.Sort(serializer.SortedSerializables(nativeTokens))
+	return nativeTokens
+}
+
 func RandUint256() *big.Int {
 	return new(big.Int).SetUint64(rand.Uint64())
 }

@@ -40,6 +40,10 @@ type AliasOutput struct {
 	Blocks serializer.Serializables
 }
 
+func (a *AliasOutput) NativeTokenSet() serializer.Serializables {
+	return a.NativeTokens
+}
+
 func (a *AliasOutput) Deposit() (uint64, error) {
 	return a.Amount, nil
 }
