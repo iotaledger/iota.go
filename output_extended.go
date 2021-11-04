@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/iotaledger/hive.go/serializer"
 )
@@ -70,6 +71,7 @@ func (e *ExtendedOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 }
 
 func (e *ExtendedOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	var nativeTokensWrittenConsumer serializer.WrittenObjectConsumer
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
@@ -80,8 +82,20 @@ func (e *ExtendedOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([
 				if err := isValidAddrType(e.Address); err != nil {
 					return fmt.Errorf("invalid address set in extended output: %w", err)
 				}
+				nativeTokensLexicalNoDupsValidator := nativeTokensArrayRules.LexicalOrderWithoutDupsValidator()
+				nativeTokensWrittenConsumer = func(index int, written []byte) error {
+					if err := nativeTokensLexicalNoDupsValidator(index, written); err != nil {
+						return fmt.Errorf("%w: unable to serialize native tokens of extended output since inputs are not lexically sorted or contain duplicates", err)
+					}
+					return nil
+				}
 			}
 			return nil
+		}).
+		Do(func() {
+			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
+				sort.Sort(serializer.SortedSerializables(e.NativeTokens))
+			}
 		}).
 		WriteNum(OutputExtended, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output type ID: %w", err)
@@ -89,7 +103,7 @@ func (e *ExtendedOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([
 		WriteNum(e.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output amount: %w", err)
 		}).
-		WriteSliceOfObjects(e.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
+		WriteSliceOfObjects(e.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output native tokens: %w", err)
 		}).
 		WriteObject(e.Address, deSeriMode, func(err error) error {

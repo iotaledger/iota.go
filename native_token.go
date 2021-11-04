@@ -26,10 +26,9 @@ const (
 
 var (
 	nativeTokensArrayRules = &serializer.ArrayRules{
-		Min: MinMigratedFundsEntryCount,
-		Max: MaxNativeTokenCountPerOutput,
-		// TODO: figure out how to handle native tokens
-		//ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
+		Min:            MinNativeTokenCountPerOutput,
+		Max:            MaxNativeTokenCountPerOutput,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
 
