@@ -126,12 +126,12 @@ func (oih OutputIDHex) AsUTXOInput() (*UTXOInput, error) {
 	return &utxoInput, nil
 }
 
-// OutputsValidatorFunc which given the index of an output and the output itself, runs validations and returns an error if any should fail.
-type OutputsValidatorFunc func(index int, output Output) error
+// OutputsPredicateFunc which given the index of an output and the output itself, runs validations and returns an error if any should fail.
+type OutputsPredicateFunc func(index int, output Output) error
 
-// OutputsAddrUniqueValidator returns a validator which checks that all addresses are unique per OutputType.
+// OutputsPredicateAddrUnique returns an OutputsPredicateFunc which checks that all addresses are unique per OutputType.
 // Deprecated: an output set no longer needs to hold unique addresses per output.
-func OutputsAddrUniqueValidator() OutputsValidatorFunc {
+func OutputsPredicateAddrUnique() OutputsPredicateFunc {
 	set := map[OutputType]map[string]int{}
 	return func(index int, dep Output) error {
 		var b strings.Builder
@@ -169,12 +169,12 @@ func OutputsAddrUniqueValidator() OutputsValidatorFunc {
 	}
 }
 
-// OutputsDepositAmountValidator returns a validator which checks that:
+// OutputsPredicateDepositAmount returns a OutputsPredicateFunc which checks that:
 //	- every output deposits more than zero
 //	- every output deposits less than the total supply
 //	- the sum of deposits does not exceed the total supply
 // If -1 is passed to the validator func, then the sum is not aggregated over multiple calls.
-func OutputsDepositAmountValidator() OutputsValidatorFunc {
+func OutputsPredicateDepositAmount() OutputsPredicateFunc {
 	var sum uint64
 	return func(index int, dep Output) error {
 		deposit, err := dep.Deposit()
@@ -198,10 +198,10 @@ func OutputsDepositAmountValidator() OutputsValidatorFunc {
 }
 
 // supposed to be called with -1 as input in order to be used over multiple calls.
-var outputAmountValidator = OutputsDepositAmountValidator()
+var outputAmountValidator = OutputsPredicateDepositAmount()
 
-// ValidateOutputs validates the outputs by running them against the given OutputsValidatorFunc.
-func ValidateOutputs(outputs serializer.Serializables, funcs ...OutputsValidatorFunc) error {
+// ValidateOutputs validates the outputs by running them against the given OutputsPredicateFunc(s).
+func ValidateOutputs(outputs serializer.Serializables, funcs ...OutputsPredicateFunc) error {
 	for i, output := range outputs {
 		if _, isOutput := output.(Output); !isOutput {
 			return fmt.Errorf("%w: can only validate outputs but got %T instead", ErrUnknownOutputType, output)

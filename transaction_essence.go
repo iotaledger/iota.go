@@ -135,7 +135,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 		}).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := ValidateOutputs(u.Outputs, OutputsAddrUniqueValidator()); err != nil {
+				if err := ValidateOutputs(u.Outputs, OutputsPredicateAddrUnique()); err != nil {
 					return fmt.Errorf("%w: unable to deserialize outputs of transaction essence since they are invalid", err)
 				}
 			}
@@ -293,14 +293,14 @@ func (u *TransactionEssence) SyntacticallyValidate() error {
 	}
 
 	if err := ValidateInputs(u.Inputs,
-		InputsUTXORefIndexBoundsValidator(),
-		InputsUTXORefsUniqueValidator(),
+		InputsPredicateUnique(),
+		InputsPredicateIndicesWithinBounds(),
 	); err != nil {
 		return err
 	}
 
 	if err := ValidateOutputs(u.Outputs,
-		OutputsDepositAmountValidator(),
+		OutputsPredicateDepositAmount(),
 	); err != nil {
 		return err
 	}

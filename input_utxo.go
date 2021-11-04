@@ -80,7 +80,7 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		}).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := utxoInputRefBoundsValidator(-1, u); err != nil {
+				if err := inputsPredicateIndicesWithinBounds(-1, u); err != nil {
 					return fmt.Errorf("%w: unable to deserialize UTXO input", err)
 				}
 			}
@@ -93,7 +93,7 @@ func (u *UTXOInput) Serialize(deSeriMode serializer.DeSerializationMode) (data [
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := utxoInputRefBoundsValidator(-1, u); err != nil {
+				if err := inputsPredicateIndicesWithinBounds(-1, u); err != nil {
 					return fmt.Errorf("%w: unable to serialize UTXO input", err)
 				}
 			}

@@ -19,7 +19,7 @@ func TestOutputSelector(t *testing.T) {
 func TestOutputsValidatorFunc(t *testing.T) {
 	type args struct {
 		outputs serializer.Serializables
-		funcs   []iotago.OutputsValidatorFunc
+		funcs   []iotago.OutputsPredicateFunc
 	}
 	tests := []struct {
 		name    string
@@ -43,7 +43,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 					}(),
 					Amount: 0,
 				},
-			}, funcs: []iotago.OutputsValidatorFunc{iotago.OutputsAddrUniqueValidator()}}, false,
+			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateAddrUnique()}}, false,
 		},
 		{
 			"addr not unique",
@@ -68,7 +68,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 					}(),
 					Amount: 0,
 				},
-			}, funcs: []iotago.OutputsValidatorFunc{iotago.OutputsAddrUniqueValidator()}}, true,
+			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateAddrUnique()}}, true,
 		},
 		{
 			"ok amount",
@@ -77,7 +77,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 					Address: nil,
 					Amount:  iotago.TokenSupply,
 				},
-			}, funcs: []iotago.OutputsValidatorFunc{iotago.OutputsDepositAmountValidator()}}, false,
+			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateDepositAmount()}}, false,
 		},
 		{
 			"spends more than total supply",
@@ -86,7 +86,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 					Address: nil,
 					Amount:  iotago.TokenSupply + 1,
 				},
-			}, funcs: []iotago.OutputsValidatorFunc{iotago.OutputsDepositAmountValidator()}}, true,
+			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateDepositAmount()}}, true,
 		},
 		{
 			"sum more than total supply",
@@ -99,7 +99,7 @@ func TestOutputsValidatorFunc(t *testing.T) {
 					Address: nil,
 					Amount:  iotago.TokenSupply - 1,
 				},
-			}, funcs: []iotago.OutputsValidatorFunc{iotago.OutputsDepositAmountValidator()}}, true,
+			}, funcs: []iotago.OutputsPredicateFunc{iotago.OutputsPredicateDepositAmount()}}, true,
 		},
 	}
 	for _, tt := range tests {

@@ -3,8 +3,9 @@ package iotago
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer"
 	"strings"
+
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 // InputType defines the type of inputs.
@@ -36,11 +37,11 @@ func InputSelector(inputType uint32) (serializer.Serializable, error) {
 	return seri, nil
 }
 
-// InputsValidatorFunc which given the index of an input and the input itself, runs validations and returns an error if any should fail.
-type InputsValidatorFunc func(index int, input *UTXOInput) error
+// InputsPredicateFunc which given the index of an input and the input itself, runs validations and returns an error if any should fail.
+type InputsPredicateFunc func(index int, input *UTXOInput) error
 
-// InputsUTXORefsUniqueValidator returns a validator which checks that every input has a unique UTXO ref.
-func InputsUTXORefsUniqueValidator() InputsValidatorFunc {
+// InputsPredicateUnique returns an InputsPredicateFunc which checks that every input has a unique UTXO ref.
+func InputsPredicateUnique() InputsPredicateFunc {
 	set := map[string]int{}
 	return func(index int, input *UTXOInput) error {
 		var b strings.Builder
@@ -59,8 +60,8 @@ func InputsUTXORefsUniqueValidator() InputsValidatorFunc {
 	}
 }
 
-// InputsUTXORefIndexBoundsValidator returns a validator which checks that the UTXO ref index is within bounds.
-func InputsUTXORefIndexBoundsValidator() InputsValidatorFunc {
+// InputsPredicateIndicesWithinBounds returns an InputsPredicateFunc which checks that the UTXO ref index is within bounds.
+func InputsPredicateIndicesWithinBounds() InputsPredicateFunc {
 	return func(index int, input *UTXOInput) error {
 		if input.TransactionOutputIndex < RefUTXOIndexMin || input.TransactionOutputIndex > RefUTXOIndexMax {
 			return fmt.Errorf("%w: input %d", ErrRefUTXOIndexInvalid, index)
@@ -69,10 +70,10 @@ func InputsUTXORefIndexBoundsValidator() InputsValidatorFunc {
 	}
 }
 
-var utxoInputRefBoundsValidator = InputsUTXORefIndexBoundsValidator()
+var inputsPredicateIndicesWithinBounds = InputsPredicateIndicesWithinBounds()
 
-// ValidateInputs validates the inputs by running them against the given InputsValidatorFunc.
-func ValidateInputs(inputs serializer.Serializables, funcs ...InputsValidatorFunc) error {
+// ValidateInputs validates the inputs by running them against the given InputsPredicateFunc(s).
+func ValidateInputs(inputs serializer.Serializables, funcs ...InputsPredicateFunc) error {
 	for i, input := range inputs {
 		dep, ok := input.(*UTXOInput)
 		if !ok {
