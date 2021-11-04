@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math/big"
 	"math/rand"
 	"sort"
 	"strings"
@@ -41,6 +42,18 @@ func RandTrytes(length int) trinary.Trytes {
 	return trytes.String()
 }
 
+// RandNativeToken returns a random NativeToken.
+func RandNativeToken() *iotago.NativeToken {
+	b := RandBytes(iotago.NativeTokenIDLength)
+	nt := &iotago.NativeToken{Amount: RandUint256()}
+	copy(nt.NFTID[:], b)
+	return nt
+}
+
+func RandUint256() *big.Int {
+	return new(big.Int).SetUint64(rand.Uint64())
+}
+
 // Rand32ByteArray returns an array with 32 random bytes.
 func Rand32ByteArray() [32]byte {
 	var h [32]byte
@@ -75,8 +88,8 @@ func SortedRand32BytArray(count int) [][32]byte {
 	return hashes
 }
 
-// RandEd25519Address returns a random Ed25519 address.
-func RandEd25519Address() (*iotago.Ed25519Address, []byte) {
+// RandEd25519AddressAndBytes returns a random Ed25519 address.
+func RandEd25519AddressAndBytes() (*iotago.Ed25519Address, []byte) {
 	// type
 	edAddr := &iotago.Ed25519Address{}
 	addr := RandBytes(iotago.Ed25519AddressBytesLength)
@@ -86,6 +99,12 @@ func RandEd25519Address() (*iotago.Ed25519Address, []byte) {
 	b[0] = iotago.AddressEd25519
 	copy(b[serializer.SmallTypeDenotationByteSize:], addr)
 	return edAddr, b[:]
+}
+
+// RandEd25519AddressAndBytes returns a random Ed25519 address.
+func RandEd25519Address() *iotago.Ed25519Address {
+	addr, _ := RandEd25519AddressAndBytes()
+	return addr
 }
 
 // RandBLSAddress returns a random BLS address.
@@ -218,7 +237,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 // RandMigratedFundsEntry returns a random migrated funds entry.
 func RandMigratedFundsEntry() (*iotago.MigratedFundsEntry, []byte) {
 	tailTxHash := Rand49ByteArray()
-	addr, addrBytes := RandEd25519Address()
+	addr, addrBytes := RandEd25519AddressAndBytes()
 	deposit := rand.Uint64()
 
 	var b bytes.Buffer
@@ -521,7 +540,7 @@ func RandSimpleOutput(addrType iotago.AddressType) (*iotago.SimpleOutput, []byte
 	var addrData []byte
 	switch addrType {
 	case iotago.AddressEd25519:
-		dep.Address, addrData = RandEd25519Address()
+		dep.Address, addrData = RandEd25519AddressAndBytes()
 	default:
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
@@ -553,7 +572,7 @@ func OneInputOutputTransaction() *iotago.Transaction {
 			Outputs: []serializer.Serializable{
 				&iotago.SimpleOutput{
 					Address: func() serializer.Serializable {
-						edAddr, _ := RandEd25519Address()
+						edAddr, _ := RandEd25519AddressAndBytes()
 						return edAddr
 					}(),
 					Amount: 1337,

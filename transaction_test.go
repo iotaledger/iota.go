@@ -79,7 +79,7 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 	tests := []test{
 		func() test {
 
-			outputAddr1, _ := tpkg.RandEd25519Address()
+			outputAddr1, _ := tpkg.RandEd25519AddressAndBytes()
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
@@ -97,10 +97,10 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := tpkg.RandEd25519Address()
-			outputAddr2, _ := tpkg.RandEd25519Address()
-			outputAddr3, _ := tpkg.RandEd25519Address()
-			outputAddr4, _ := tpkg.RandEd25519Address()
+			outputAddr1, _ := tpkg.RandEd25519AddressAndBytes()
+			outputAddr2, _ := tpkg.RandEd25519AddressAndBytes()
+			outputAddr3, _ := tpkg.RandEd25519AddressAndBytes()
+			outputAddr4, _ := tpkg.RandEd25519AddressAndBytes()
 
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 			inputUTXO2 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
@@ -145,7 +145,7 @@ func TestTransaction_SemanticallyValidate(t *testing.T) {
 		}(),
 		func() test {
 
-			outputAddr1, _ := tpkg.RandEd25519Address()
+			outputAddr1, _ := tpkg.RandEd25519AddressAndBytes()
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().

@@ -24,7 +24,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 	tests := []test{
 		func() test {
-			outputAddr1, _ := tpkg.RandEd25519Address()
+			outputAddr1, _ := tpkg.RandEd25519AddressAndBytes()
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
@@ -38,7 +38,7 @@ func TestTransactionBuilder(t *testing.T) {
 			}
 		}(),
 		func() test {
-			outputAddr1, _ := tpkg.RandEd25519Address()
+			outputAddr1, _ := tpkg.RandEd25519AddressAndBytes()
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
@@ -73,7 +73,7 @@ func TestTransactionBuilder(t *testing.T) {
 			}
 		}(),
 		func() test {
-			outputAddr1, _ := tpkg.RandEd25519Address()
+			outputAddr1, _ := tpkg.RandEd25519AddressAndBytes()
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
@@ -93,7 +93,7 @@ func TestTransactionBuilder(t *testing.T) {
 			}
 		}(),
 		func() test {
-			outputAddr1, _ := tpkg.RandEd25519Address()
+			outputAddr1, _ := tpkg.RandEd25519AddressAndBytes()
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			builder := iotago.NewTransactionBuilder().
