@@ -145,7 +145,7 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]by
 		WriteNum(a.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output amount: %w", err)
 		}).
-		WriteSliceOfObjects(a.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
+		WriteSliceOfObjects(a.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensWrittenConsumer, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output native tokens: %w", err)
 		}).
 		WriteBytes(a.AliasID[:], func(err error) error {
