@@ -38,6 +38,10 @@ func (f *FoundryOutput) NativeTokenSet() serializer.Serializables {
 	return f.NativeTokens
 }
 
+func (f *FoundryOutput) FeatureBlocks() serializer.Serializables {
+	return f.Blocks
+}
+
 func (f *FoundryOutput) Deposit() (uint64, error) {
 	return f.Amount, nil
 }
@@ -86,8 +90,13 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		ReadObject(func(seri serializer.Serializable) { f.TokenScheme = seri }, deSeriMode, serializer.TypeDenotationByte, TokenSchemeSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize token scheme for foundry output: %w", err)
 		}).
-		ReadSliceOfObjects(func(seri serializer.Serializables) { f.Blocks = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, FeatureBlockSelector, featBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize feature blocks for foundry output: %w", err)
+		ReadSliceOfObjects(func(seri serializer.Serializables) { f.Blocks = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
+		if !featureBlocksSupportedByFoundryOutput(ty) {
+			return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(ty))
+		}
+			return FeatureBlockSelector(ty)
+		}, featBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
 		}).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
@@ -100,8 +109,16 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		Done()
 }
 
+func featureBlocksSupportedByFoundryOutput(ty uint32) bool {
+	switch ty {
+	case uint32(FeatureBlockMetadata):
+	default:
+		return false
+	}
+	return true
+}
+
 func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
-	var nativeTokensWrittenConsumer serializer.WrittenObjectConsumer
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
@@ -113,12 +130,8 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]
 					return fmt.Errorf("invalid address set in foundry output: %w", err)
 				}
 
-				nativeTokensLexicalNoDupsValidator := nativeTokensArrayRules.LexicalOrderWithoutDupsValidator()
-				nativeTokensWrittenConsumer = func(index int, written []byte) error {
-					if err := nativeTokensLexicalNoDupsValidator(index, written); err != nil {
-						return fmt.Errorf("%w: unable to serialize native tokens of alias output since inputs are not lexically sorted or contain duplicates", err)
-					}
-					return nil
+				if err := featureBlockSupported(f.FeatureBlocks(), featureBlocksSupportedByFoundryOutput); err != nil {
+					return fmt.Errorf("invalid feature blocks set in foundry output: %w", err)
 				}
 			}
 			return nil
@@ -129,7 +142,7 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]
 		WriteNum(f.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output amount: %w", err)
 		}).
-		WriteSliceOfObjects(f.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(f.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output native tokens: %w", err)
 		}).
 		WriteObject(f.Address, deSeriMode, func(err error) error {
@@ -150,7 +163,7 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]
 		WriteObject(f.TokenScheme, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output token scheme: %w", err)
 		}).
-		WriteSliceOfObjects(f.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
+		WriteSliceOfObjects(f.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, featBlockArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output feature blocks: %w", err)
 		}).
 		Serialize()

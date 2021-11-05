@@ -17,17 +17,18 @@ var (
 	featBlockArrayRules = &serializer.ArrayRules{
 		Min: MinFeatBlockCount,
 		Max: MaxFeatBlockCount,
-		// TODO: add
-		//ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 )
 
-// FeatureBlock defines the type of feature blocks.
-type FeatureBlock = byte
+// FeatureBlockType defines the type of feature blocks.
+type FeatureBlockType = byte
 
 const (
 	// FeatureBlockSender denotes a SenderFeatureBlock.
-	FeatureBlockSender byte = iota
+	FeatureBlockSender FeatureBlockType = iota
 	// FeatureBlockIssuer denotes an IssuerFeatureBlock.
 	FeatureBlockIssuer
 	// FeatureBlockReturn denotes a ReturnFeatureBlock.
@@ -45,6 +46,49 @@ const (
 	// FeatureBlockIndexation denotes an IndexationFeatureBlock.
 	FeatureBlockIndexation
 )
+
+// FeatureBlockTypeToString returns the name of a FeatureBlock given the type.
+func FeatureBlockTypeToString(ty uint32) string {
+	switch byte(ty) {
+	case FeatureBlockSender:
+		return "FeatureBlockSender"
+	case FeatureBlockIssuer:
+		return "FeatureBlockIssuer"
+	case FeatureBlockReturn:
+		return "FeatureBlockReturn"
+	case FeatureBlockTimelockMilestoneIndex:
+		return "FeatureBlockTimelockMilestoneIndex"
+	case FeatureBlockTimelockUnix:
+		return "FeatureBlockTimelockUnix"
+	case FeatureBlockExpirationMilestoneIndex:
+		return "FeatureBlockExpirationMilestoneIndex"
+	case FeatureBlockExpirationUnix:
+		return "FeatureBlockExpirationUnix"
+	case FeatureBlockMetadata:
+		return "FeatureBlockMetadata"
+	}
+	return ""
+}
+
+// FeatureBlock is an abstract building block extending the features of an Output.
+type FeatureBlock interface {
+	serializer.Serializable
+	// Type returns the type of the FeatureBlock.
+	Type() FeatureBlockType
+}
+
+func featureBlockSupported(seris serializer.Serializables, f func(ty uint32) bool) error {
+	for i, seri := range seris {
+		featBlock, isFeatureBlock := seri.(FeatureBlock)
+		if !isFeatureBlock {
+			return fmt.Errorf("%w: element at %d is not a feature block", ErrUnsupportedObjectType, i)
+		}
+		if !f(uint32(featBlock.Type())) {
+			return fmt.Errorf("%w: element at %d with type %T", ErrUnsupportedFeatureBlockType, i, seri)
+		}
+	}
+	return nil
+}
 
 // FeatureBlockSelector implements SerializableSelectorFunc for feature blocks.
 func FeatureBlockSelector(featBlockType uint32) (serializer.Serializable, error) {
