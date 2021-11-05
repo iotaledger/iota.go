@@ -39,6 +39,18 @@ var (
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
 	// ErrOutputAddrNotUnique gets returned if multiple outputs deposit to the same address.
 	ErrOutputAddrNotUnique = errors.New("outputs must each deposit to a unique address")
+	// ErrOutputRequiresSenderFeatureBlock gets returned if an output does not contain a SenderFeatureBlock even though another FeatureBlock requires it.
+	ErrOutputRequiresSenderFeatureBlock = errors.New("output does not contain SenderFeatureBlock")
+	// ErrAliasOutputNonEmptyState gets returned if an AliasOutput with zeroed AliasID contains state (counters non-zero etc.).
+	ErrAliasOutputNonEmptyState = errors.New("alias output is not empty state")
+	// ErrAliasOutputCyclicAddress gets returned if an AliasOutput's AliasID results into the same address as the State/Governance controller.
+	ErrAliasOutputCyclicAddress = errors.New("alias output's AliasID corresponds to state and/or governance controller")
+	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
+	ErrNFTOutputCyclicAddress = errors.New("nft output's NFTID corresponds to address field")
+	// ErrFoundryOutputInvalidMaximumSupply gets returned when a FoundryOutput's MaximumSupply is invalid.
+	ErrFoundryOutputInvalidMaximumSupply = errors.New("foundry output's maximum supply is invalid")
+	// ErrFoundryOutputInvalidCirculatingSupply gets returned when a FoundryOutput's CirculatingSupply is invalid.
+	ErrFoundryOutputInvalidCirculatingSupply = errors.New("foundry output's circulating supply is invalid")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
@@ -291,6 +303,8 @@ func (u *TransactionEssence) SyntacticallyValidate() error {
 	if err := ValidateOutputs(u.Outputs,
 		OutputsPredicateDepositAmount(),
 		OutputsPredicateNativeTokensCount(),
+		OutputsPredicateSenderFeatureBlockRequirement(),
+		OutputsPredicateFoundry(),
 	); err != nil {
 		return err
 	}

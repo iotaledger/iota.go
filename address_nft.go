@@ -16,6 +16,10 @@ const (
 	NFTAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + NFTAddressBytesLength
 )
 
+var (
+	emptyNFTAddress = [20]byte{}
+)
+
 // ParseNFTAddressFromHexString parses the given hex string into an NFTAddress.
 func ParseNFTAddressFromHexString(hexAddr string) (*NFTAddress, error) {
 	addrBytes, err := hex.DecodeString(hexAddr)
@@ -94,7 +98,7 @@ func (nftAddr *NFTAddress) UnmarshalJSON(bytes []byte) error {
 }
 
 // NFTAddressFromOutputID returns the NFT address computed from a given OutputID.
-func NFTAddressFromOutputID(outputID OutputID) NFTAddress {
+func NFTAddressFromOutputID(outputID UTXOInputID) NFTAddress {
 	// TODO: maybe use pkg with Sum160 exposed
 	blake2b160, _ := blake2b.New(20, nil)
 	var nftAddress NFTAddress
