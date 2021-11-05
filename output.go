@@ -64,6 +64,12 @@ type NativeTokenOutput interface {
 	NativeTokenSet() serializer.Serializables
 }
 
+// FeatureBlockOutput is a type of Output which can hold FeatureBlock.
+type FeatureBlockOutput interface {
+	// FeatureBlocks returns the feature blocks this output defines.
+	FeatureBlocks() serializer.Serializables
+}
+
 // OutputSelector implements SerializableSelectorFunc for output types.
 func OutputSelector(outputType uint32) (serializer.Serializable, error) {
 	var seri serializer.Serializable

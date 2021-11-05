@@ -37,6 +37,10 @@ func (n *NFTOutput) NativeTokenSet() serializer.Serializables {
 	return n.NativeTokens
 }
 
+func (n *NFTOutput) FeatureBlocks() serializer.Serializables {
+	return n.Blocks
+}
+
 func (n *NFTOutput) Deposit() (uint64, error) {
 	return n.Amount, nil
 }
@@ -79,7 +83,9 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadVariableByteSlice(&n.ImmutableMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize immutable metadata for NFT output: %w", err)
 		}, MessageBinSerializedMaxSize).
-		ReadSliceOfObjects(func(seri serializer.Serializables) { n.Blocks = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, FeatureBlockSelector, featBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(func(seri serializer.Serializables) { n.Blocks = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
+			return FeatureBlockSelector(ty)
+		}, featBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
 		}).
 		AbortIf(func(err error) error {
@@ -94,7 +100,6 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 }
 
 func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
-	var nativeTokensWrittenConsumer serializer.WrittenObjectConsumer
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
@@ -105,14 +110,6 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte
 				if err := isValidAddrType(n.Address); err != nil {
 					return fmt.Errorf("invalid address set in NFT output: %w", err)
 				}
-
-				nativeTokensLexicalNoDupsValidator := nativeTokensArrayRules.LexicalOrderWithoutDupsValidator()
-				nativeTokensWrittenConsumer = func(index int, written []byte) error {
-					if err := nativeTokensLexicalNoDupsValidator(index, written); err != nil {
-						return fmt.Errorf("%w: unable to serialize native tokens of NFT output since inputs are not lexically sorted or contain duplicates", err)
-					}
-					return nil
-				}
 			}
 			return nil
 		}).
@@ -122,7 +119,7 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte
 		WriteNum(n.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output amount: %w", err)
 		}).
-		WriteSliceOfObjects(n.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(n.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output native tokens: %w", err)
 		}).
 		WriteObject(n.Address, deSeriMode, func(err error) error {
@@ -134,7 +131,7 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte
 		WriteVariableByteSlice(n.ImmutableMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output immutable metadata: %w", err)
 		}).
-		WriteSliceOfObjects(n.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
+		WriteSliceOfObjects(n.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, featBlockArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output feature blocks: %w", err)
 		}).
 		Serialize()

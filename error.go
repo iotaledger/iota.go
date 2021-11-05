@@ -9,6 +9,8 @@ var (
 	ErrUnsupportedPayloadType = errors.New("unsupported payload type")
 	// ErrUnsupportedObjectType gets returned for unsupported object types.
 	ErrUnsupportedObjectType = errors.New("unsupported object type")
+	// ErrUnsupportedFeatureBlockType gets returned when an unsupported feature block exists in a set.
+	ErrUnsupportedFeatureBlockType = errors.New("unsupported feature block type")
 	// ErrUnknownPayloadType gets returned for unknown payload types.
 	ErrUnknownPayloadType = errors.New("unknown payload type")
 	// ErrUnknownAddrType gets returned for unknown address types.
