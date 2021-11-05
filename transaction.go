@@ -177,6 +177,18 @@ func (t *Transaction) SyntacticallyValidate() error {
 		return fmt.Errorf("%w: transaction essence part is invalid", err)
 	}
 
+	txID, err := t.ID()
+	if err != nil {
+		return err
+	}
+
+	if err := ValidateOutputs(txEssence.Outputs,
+		OutputsPredicateAlias(txID),
+		OutputsPredicateNFT(txID),
+	); err != nil {
+		return err
+	}
+
 	inputCount := len(txEssence.Inputs)
 	unlockBlockCount := len(t.UnlockBlocks)
 	if inputCount != unlockBlockCount {

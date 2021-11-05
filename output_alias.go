@@ -14,6 +14,10 @@ const (
 	AliasIDLength = 20
 )
 
+var (
+	emptyAliasID = [AliasIDLength]byte{}
+)
+
 // AliasID is the identifier for an alias account.
 // It is computed as the Blake2b-160 hash of the OutputID of the output which created the account.
 type AliasID = [AliasIDLength]byte
@@ -98,7 +102,7 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadVariableByteSlice(&a.StateMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			// TODO: replace max read with actual variable
 			return fmt.Errorf("unable to deserialize state metadata for alias output: %w", err)
-		}, MessageBinSerializedMaxSize).
+		}, MaxMetadataLength).
 		ReadNum(&a.FoundryCounter, func(err error) error {
 			return fmt.Errorf("unable to deserialize foundry counter for alias output: %w", err)
 		}).

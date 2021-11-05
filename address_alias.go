@@ -16,6 +16,10 @@ const (
 	AliasAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + AliasAddressBytesLength
 )
 
+var (
+	emptyAliasAddress = [20]byte{}
+)
+
 // ParseAliasAddressFromHexString parses the given hex string into an AliasAddress.
 func ParseAliasAddressFromHexString(hexAddr string) (*AliasAddress, error) {
 	addrBytes, err := hex.DecodeString(hexAddr)
@@ -94,7 +98,7 @@ func (aliasAddr *AliasAddress) UnmarshalJSON(bytes []byte) error {
 }
 
 // AliasAddressFromOutputID returns the alias address computed from a given OutputID.
-func AliasAddressFromOutputID(outputID OutputID) AliasAddress {
+func AliasAddressFromOutputID(outputID UTXOInputID) AliasAddress {
 	// TODO: maybe use pkg with Sum160 exposed
 	blake2b160, _ := blake2b.New(20, nil)
 	var aliasAddress AliasAddress

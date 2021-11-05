@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -14,10 +15,6 @@ const (
 	// OutputIDLength defines the length of an OutputID.
 	OutputIDLength = TransactionIDLength + serializer.UInt16ByteSize
 )
-
-// OutputID defines an identifier of an Output which consists of the hash of the transaction
-// containing the output and the positioning index of that output within that transaction.
-type OutputID [OutputIDLength]byte
 
 // OutputType defines the type of outputs.
 type OutputType = byte
@@ -221,6 +218,120 @@ func OutputsPredicateNativeTokensCount() OutputsPredicateFunc {
 				return ErrOutputsExceedMaxNativeTokensCount
 			}
 		}
+		return nil
+	}
+}
+
+// OutputsPredicateSenderFeatureBlockRequirement returns an OutputsPredicateFunc which checks that:
+//	- if an output contains a SenderFeatureBlock if another FeatureBlock (example ReturnFeatureBlock) requires it
+func OutputsPredicateSenderFeatureBlockRequirement() OutputsPredicateFunc {
+	return func(index int, output Output) error {
+		featureBlockOutput, is := output.(FeatureBlockOutput)
+		if !is {
+			return nil
+		}
+		var hasReturnFeatBlock, hasExpMsFeatBlock, hasExpUnixFeatBlock, hasSenderFeatBlock bool
+		for _, featureBlock := range featureBlockOutput.FeatureBlocks() {
+			switch featureBlock.(type) {
+			case *ReturnFeatureBlock:
+				hasReturnFeatBlock = true
+			case *ExpirationMilestoneIndexFeatureBlock:
+				hasExpMsFeatBlock = true
+			case *ExpirationUnixFeatureBlock:
+				hasExpUnixFeatBlock = true
+			case *SenderFeatureBlock:
+				hasSenderFeatBlock = true
+			}
+		}
+		if (hasReturnFeatBlock || hasExpMsFeatBlock || hasExpUnixFeatBlock) && !hasSenderFeatBlock {
+			return fmt.Errorf("%w: output %d", ErrOutputRequiresSenderFeatureBlock, index)
+		}
+		return nil
+	}
+}
+
+// OutputsPredicateAlias returns an OutputsPredicateFunc which checks that AliasOutput(s)':
+//	- StateIndex/FoundryCounter are zero if the AliasID is zeroed
+//	- StateController and GovernanceController must be different from AliasAddress derived from AliasID
+func OutputsPredicateAlias(txID *TransactionID) OutputsPredicateFunc {
+	return func(index int, output Output) error {
+		aliasOutput, is := output.(*AliasOutput)
+		if !is {
+			return nil
+		}
+
+		var outputAliasAddr AliasAddress
+		if aliasOutput.AliasID == emptyAliasID {
+			switch {
+			case aliasOutput.StateIndex != 0:
+				return fmt.Errorf("%w: output %d, state index not zero", ErrAliasOutputNonEmptyState, index)
+			case aliasOutput.FoundryCounter != 0:
+				return fmt.Errorf("%w: output %d, foundry counter not zero", ErrAliasOutputNonEmptyState, index)
+			}
+
+			// build AliasID using the transaction ID
+			outputAliasAddr = AliasAddressFromOutputID(UTXOIDFromTransactionIDAndIndex(*txID, uint16(index)))
+		}
+
+		if outputAliasAddr == emptyAliasAddress {
+			copy(outputAliasAddr[:], aliasOutput.AliasID[:])
+		}
+
+		if stateCtrlAddr, ok := aliasOutput.StateController.(*AliasAddress); ok && outputAliasAddr == *stateCtrlAddr {
+			return fmt.Errorf("%w: output %d, AliasID=StateController", ErrAliasOutputCyclicAddress, index)
+		}
+		if govCtrlAddr, ok := aliasOutput.GovernanceController.(*AliasAddress); ok && outputAliasAddr == *govCtrlAddr {
+			return fmt.Errorf("%w: output %d, AliasID=GovernanceController", ErrAliasOutputCyclicAddress, index)
+		}
+
+		return nil
+	}
+}
+
+// OutputsPredicateFoundry returns an OutputsPredicateFunc which checks that FoundryOutput(s)':
+//	- CirculatingSupply is less equal MaximumSupply
+//	- MaximumSupply is not zero
+func OutputsPredicateFoundry() OutputsPredicateFunc {
+	return func(index int, output Output) error {
+		foundryOutput, is := output.(*FoundryOutput)
+		if !is {
+			return nil
+		}
+
+		if r := foundryOutput.MaximumSupply.Cmp(new(big.Int).SetInt64(0)); r == -1 || r == 0 {
+			return fmt.Errorf("%w: output %d, less than equal zero", ErrFoundryOutputInvalidMaximumSupply, index)
+		}
+
+		if r := foundryOutput.CirculatingSupply.Cmp(foundryOutput.MaximumSupply); r == 1 {
+			return fmt.Errorf("%w: output %d, bigger than maximum supply", ErrFoundryOutputInvalidCirculatingSupply, index)
+		}
+
+		return nil
+	}
+}
+
+// OutputsPredicateNFT returns an OutputsPredicateFunc which checks that NFTOutput(s)':
+//	- Address must be different from NFTAddress derived from NFTID
+func OutputsPredicateNFT(txID *TransactionID) OutputsPredicateFunc {
+	return func(index int, output Output) error {
+		nftOutput, is := output.(*NFTOutput)
+		if !is {
+			return nil
+		}
+
+		var outputNFTAddr NFTAddress
+		if nftOutput.NFTID == emptyNFTID {
+			outputNFTAddr = NFTAddressFromOutputID(UTXOIDFromTransactionIDAndIndex(*txID, uint16(index)))
+		}
+
+		if outputNFTAddr == emptyNFTAddress {
+			copy(outputNFTAddr[:], nftOutput.NFTID[:])
+		}
+
+		if addr, ok := nftOutput.Address.(*NFTAddress); ok && outputNFTAddr == *addr {
+			return fmt.Errorf("%w: output %d, AliasID=StateController", ErrNFTOutputCyclicAddress, index)
+		}
+
 		return nil
 	}
 }

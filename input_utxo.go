@@ -28,6 +28,13 @@ func (utxoInputID UTXOInputID) ToHex() string {
 	return fmt.Sprintf("%x", utxoInputID)
 }
 
+// UTXOIDFromTransactionIDAndIndex creates a UTXOInputID from the given TransactionID and index.
+func UTXOIDFromTransactionIDAndIndex(txID TransactionID, index uint16) UTXOInputID {
+	utxo := UTXOInput{TransactionOutputIndex: uint16(index)}
+	copy(utxo.TransactionID[:], (txID)[:])
+	return utxo.ID()
+}
+
 // UTXOInputIDs is a slice of UTXOInputID.
 type UTXOInputIDs []UTXOInputID
 
