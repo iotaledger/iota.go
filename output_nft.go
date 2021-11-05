@@ -184,7 +184,7 @@ type jsonNFTOutput struct {
 	Amount        int                `json:"amount"`
 	NativeTokens  []*json.RawMessage `json:"nativeTokens"`
 	Address       *json.RawMessage   `json:"address"`
-	NFTID         string             `json:"nftID"`
+	NFTID         string             `json:"nftId"`
 	ImmutableData string             `json:"immutableData"`
 	Blocks        []*json.RawMessage `json:"blocks"`
 }

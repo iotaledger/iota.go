@@ -244,7 +244,7 @@ type jsonAliasOutput struct {
 	Type                 int                `json:"type"`
 	Amount               int                `json:"amount"`
 	NativeTokens         []*json.RawMessage `json:"nativeTokens"`
-	AliasID              string             `json:"aliasID"`
+	AliasID              string             `json:"aliasId"`
 	StateController      *json.RawMessage   `json:"stateController"`
 	GovernanceController *json.RawMessage   `json:"governanceController"`
 	StateIndex           int                `json:"stateIndex"`
