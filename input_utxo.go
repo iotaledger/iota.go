@@ -55,6 +55,18 @@ type UTXOInput struct {
 	TransactionOutputIndex uint16
 }
 
+func (u *UTXOInput) Type() InputType {
+	return InputUTXO
+}
+
+func (u *UTXOInput) Ref() UTXOInputID {
+	return u.ID()
+}
+
+func (u *UTXOInput) Index() uint16 {
+	return u.TransactionOutputIndex
+}
+
 // ID returns the UTXOInputID.
 func (u *UTXOInput) ID() UTXOInputID {
 	var id UTXOInputID
@@ -70,7 +82,7 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 				if err := serializer.CheckMinByteLength(UTXOInputSize, len(data)); err != nil {
 					return fmt.Errorf("invalid UTXO input bytes: %w", err)
 				}
-				if err := serializer.CheckTypeByte(data, InputUTXO); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(InputUTXO)); err != nil {
 					return fmt.Errorf("unable to deserialize UTXO input: %w", err)
 				}
 			}

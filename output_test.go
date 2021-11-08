@@ -18,7 +18,7 @@ func TestOutputSelector(t *testing.T) {
 
 func TestOutputsPredicateFuncs(t *testing.T) {
 	type args struct {
-		outputs serializer.Serializables
+		outputs iotago.Outputs
 		funcs   []iotago.OutputsPredicateFunc
 	}
 	tests := []struct {
@@ -28,7 +28,7 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 	}{
 		{
 			"addr unique - ok",
-			args{outputs: serializer.Serializables{
+			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
 					Address: tpkg.RandEd25519Address(),
 					Amount:  0,
@@ -41,9 +41,9 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 		},
 		{
 			"addr unique - not unique",
-			args{outputs: serializer.Serializables{
+			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
-					Address: func() serializer.Serializable {
+					Address: func() iotago.Address {
 						addr := tpkg.RandEd25519Address()
 						for i := 0; i < len(addr); i++ {
 							addr[i] = 3
@@ -53,7 +53,7 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 					Amount: 0,
 				},
 				&iotago.SimpleOutput{
-					Address: func() serializer.Serializable {
+					Address: func() iotago.Address {
 						addr := tpkg.RandEd25519Address()
 						for i := 0; i < len(addr); i++ {
 							addr[i] = 3
@@ -66,7 +66,7 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 		},
 		{
 			"deposit amount - ok",
-			args{outputs: serializer.Serializables{
+			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
 					Amount: iotago.TokenSupply,
 				},
@@ -74,7 +74,7 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 		},
 		{
 			"deposit amount - more than total supply",
-			args{outputs: serializer.Serializables{
+			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
 					Amount: iotago.TokenSupply + 1,
 				},
@@ -82,7 +82,7 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 		},
 		{
 			"deposit amount- sum more than total supply",
-			args{outputs: serializer.Serializables{
+			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
 					Amount: iotago.TokenSupply - 1,
 				},
@@ -93,7 +93,7 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 		},
 		{
 			"native tokens count - ok",
-			args{outputs: serializer.Serializables{
+			args{outputs: iotago.Outputs{
 				&iotago.ExtendedOutput{
 					Amount:       1,
 					NativeTokens: tpkg.RandSortNativeTokens(5),
@@ -108,7 +108,7 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 		},
 		{
 			"native tokens count - sum more than max native tokens count",
-			args{outputs: serializer.Serializables{
+			args{outputs: iotago.Outputs{
 				&iotago.ExtendedOutput{
 					Amount:       1,
 					NativeTokens: tpkg.RandSortNativeTokens(200),
@@ -133,13 +133,13 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 
 func TestOutputsNativeTokenSet(t *testing.T) {
 
-	notSortedNativeTokens := func() serializer.Serializables {
+	notSortedNativeTokens := func() iotago.NativeTokens {
 		nativeTokens := tpkg.RandSortNativeTokens(5)
 		nativeTokens[0], nativeTokens[1] = nativeTokens[1], nativeTokens[0]
 		return nativeTokens
 	}
 
-	dupedNativeTokens := func() serializer.Serializables {
+	dupedNativeTokens := func() iotago.NativeTokens {
 		nativeTokens := tpkg.RandSortNativeTokens(2)
 		nativeTokens[0], nativeTokens[1] = nativeTokens[0], nativeTokens[0]
 		return nativeTokens

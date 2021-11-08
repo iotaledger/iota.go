@@ -31,6 +31,10 @@ type BLSSignature struct {
 	Signature [bls.SignatureSize]byte
 }
 
+func (blsSig *BLSSignature) Type() SignatureType {
+	return SignatureBLS
+}
+
 // Valid verifies whether given the message and BLS address, the signature is valid.
 func (blsSig *BLSSignature) Valid(msg []byte, addr *BLSAddress) error {
 	pubKey, _, err := bls.PublicKeyFromBytes(blsSig.PublicKey[:])
@@ -56,7 +60,7 @@ func (blsSig *BLSSignature) Deserialize(data []byte, deSeriMode serializer.DeSer
 		if err := serializer.CheckMinByteLength(BLSSignatureSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid BLS signature bytes: %w", err)
 		}
-		if err := serializer.CheckTypeByte(data, SignatureBLS); err != nil {
+		if err := serializer.CheckTypeByte(data, byte(SignatureBLS)); err != nil {
 			return 0, fmt.Errorf("unable to deserialize BLS signature: %w", err)
 		}
 	}
@@ -69,7 +73,7 @@ func (blsSig *BLSSignature) Deserialize(data []byte, deSeriMode serializer.DeSer
 
 func (blsSig *BLSSignature) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
 	var b [BLSSignatureSerializedBytesSize]byte
-	b[0] = SignatureBLS
+	b[0] = byte(SignatureBLS)
 	copy(b[serializer.SmallTypeDenotationByteSize:], blsSig.PublicKey[:])
 	copy(b[serializer.SmallTypeDenotationByteSize+bls.PublicKeySize:], blsSig.Signature[:])
 	return b[:], nil

@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer"
 )
 
@@ -10,7 +11,7 @@ func NewReceiptBuilder(migratedAt uint32) *ReceiptBuilder {
 	return &ReceiptBuilder{
 		r: &Receipt{
 			MigratedAt:  migratedAt,
-			Funds:       serializer.Serializables{},
+			Funds:       MigratedFundsEntries{},
 			Transaction: nil,
 		},
 	}

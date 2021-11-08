@@ -59,14 +59,14 @@ var (
 	ErrOutputsExceedMaxNativeTokensCount = errors.New("outputs exceeds max native tokens count")
 
 	// restrictions around input within a transaction.
-	inputsArrayBound = serializer.ArrayRules{
+	inputsArrayRules = serializer.ArrayRules{
 		Min:            MinInputsCount,
 		Max:            MaxInputsCount,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates,
 	}
 
 	// restrictions around outputs within a transaction.
-	outputsArrayBound = serializer.ArrayRules{
+	outputsArrayRules = serializer.ArrayRules{
 		Min:            MinOutputsCount,
 		Max:            MaxOutputsCount,
 		ValidationMode: serializer.ArrayValidationModeNone,
@@ -88,11 +88,11 @@ func TransactionEssenceSelector(txType uint32) (serializer.Serializable, error) 
 // TransactionEssence is the essence part of a Transaction.
 type TransactionEssence struct {
 	// The inputs of this transaction.
-	Inputs serializer.Serializables `json:"inputs"`
+	Inputs Inputs `json:"inputs"`
 	// The outputs of this transaction.
-	Outputs serializer.Serializables `json:"outputs"`
+	Outputs Outputs `json:"outputs"`
 	// The optional embedded payload.
-	Payload serializer.Serializable `json:"payload"`
+	Payload Payload `json:"payload"`
 }
 
 // SigningMessage returns the to be signed message.
@@ -121,22 +121,10 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip transaction essence ID during deserialization: %w", err)
 		}).
-		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Inputs = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
-			switch ty {
-			case uint32(InputUTXO):
-			default:
-				return nil, fmt.Errorf("transaction essence can only contain UTXO input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
-			}
-			return InputSelector(ty)
-		}, &inputsArrayBound, func(err error) error {
+		ReadSliceOfObjects(&u.Inputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceInputsGuard, &inputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize inputs of transaction essence: %w", err)
 		}).
-		ReadSliceOfObjects(func(seri serializer.Serializables) { u.Outputs = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
-			if !outputTypeSupportedByTxEssence(ty) {
-				return nil, fmt.Errorf("transaction essence can only contain simple/extended/alias/foundry/nft outputs types but got type ID %d: %w", ty, ErrUnsupportedObjectType)
-			}
-			return OutputSelector(ty)
-		}, &outputsArrayBound, func(err error) error {
+		ReadSliceOfObjects(&u.Outputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceOutputsGuard, &outputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
 		}).
 		AbortIf(func(err error) error {
@@ -147,16 +135,9 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 			}
 			return nil
 		}).
-		ReadPayload(func(seri serializer.Serializable) { u.Payload = seri }, deSeriMode,
-			func(ty uint32) (serializer.Serializable, error) {
-				if ty != IndexationPayloadTypeID {
-					return nil, fmt.Errorf("transaction essence can only contain an indexation payload: %w", ErrUnsupportedPayloadType)
-				}
-				return PayloadSelector(ty)
-			},
-			func(err error) error {
-				return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
-			}).
+		ReadPayload(&u.Payload, deSeriMode, essencePayloadGuard, func(err error) error {
+			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
+		}).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if u.Payload != nil {
@@ -169,6 +150,29 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 			return nil
 		}).
 		Done()
+}
+
+func essencePayloadGuard(ty uint32) (serializer.Serializable, error) {
+	if PayloadType(ty) != PayloadIndexation {
+		return nil, fmt.Errorf("transaction essence can only contain an indexation payload: %w", ErrUnsupportedPayloadType)
+	}
+	return PayloadSelector(ty)
+}
+
+func essenceOutputsGuard(ty uint32) (serializer.Serializable, error) {
+	if !outputTypeSupportedByTxEssence(ty) {
+		return nil, fmt.Errorf("transaction essence can only contain simple/extended/alias/foundry/nft outputs types but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+	}
+	return OutputSelector(ty)
+}
+
+func essenceInputsGuard(ty uint32) (serializer.Serializable, error) {
+	switch ty {
+	case uint32(InputUTXO):
+	default:
+		return nil, fmt.Errorf("transaction essence can only contain UTXO input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+	}
+	return InputSelector(ty)
 }
 
 func outputTypeSupportedByTxEssence(ty uint32) bool {
@@ -185,21 +189,10 @@ func outputTypeSupportedByTxEssence(ty uint32) bool {
 }
 
 func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
-	var inputsWrittenConsumer serializer.WrittenObjectConsumer
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-
 		if u.Payload != nil {
 			if _, isIndexationPayload := u.Payload.(*Indexation); !isIndexationPayload {
 				return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got %T instead", serializer.ErrInvalidBytes, u.Payload)
-			}
-		}
-		if inputsArrayBound.ValidationMode.HasMode(serializer.ArrayValidationModeNoDuplicates) {
-			inputsUniqueValidator := inputsArrayBound.ElementUniqueValidator()
-			inputsWrittenConsumer = func(index int, written []byte) error {
-				if err := inputsUniqueValidator(index, written); err != nil {
-					return fmt.Errorf("%w: unable to serialize inputs of transaction essence since inputs are not unique", err)
-				}
-				return nil
 			}
 		}
 	}
@@ -216,10 +209,10 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 		WriteNum(TransactionEssenceNormal, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence type ID: %w", err)
 		}).
-		WriteSliceOfObjects(u.Inputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, inputsWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(&u.Inputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, inputsArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence inputs: %w", err)
 		}).
-		WriteSliceOfObjects(u.Outputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
+		WriteSliceOfObjects(&u.Outputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, outputsArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence outputs: %w", err)
 		}).
 		WritePayload(u.Payload, deSeriMode, func(err error) error {
@@ -335,13 +328,13 @@ type jsonTransactionEssence struct {
 
 func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, error) {
 	unsigTx := &TransactionEssence{
-		Inputs:  make(serializer.Serializables, len(j.Inputs)),
-		Outputs: make(serializer.Serializables, len(j.Outputs)),
+		Inputs:  make(Inputs, len(j.Inputs)),
+		Outputs: make(Outputs, len(j.Outputs)),
 		Payload: nil,
 	}
 
-	for i, input := range j.Inputs {
-		jsonInput, err := DeserializeObjectFromJSON(input, jsonInputSelector)
+	for i, jInput := range j.Inputs {
+		jsonInput, err := DeserializeObjectFromJSON(jInput, jsonInputSelector)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode input type from JSON, pos %d: %w", i, err)
 		}
@@ -349,11 +342,11 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 		if err != nil {
 			return nil, fmt.Errorf("pos %d: %w", i, err)
 		}
-		unsigTx.Inputs[i] = input
+		unsigTx.Inputs[i] = input.(Input)
 	}
 
-	for i, output := range j.Outputs {
-		jsonOutput, err := DeserializeObjectFromJSON(output, jsonOutputSelector)
+	for i, jOutput := range j.Outputs {
+		jsonOutput, err := DeserializeObjectFromJSON(jOutput, jsonOutputSelector)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode output type from JSON, pos %d: %w", i, err)
 		}
@@ -361,25 +354,21 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 		if err != nil {
 			return nil, fmt.Errorf("pos %d: %w", i, err)
 		}
-		unsigTx.Outputs[i] = output
+		unsigTx.Outputs[i] = output.(Output)
 	}
 
 	if j.Payload == nil {
 		return unsigTx, nil
 	}
 
-	jsonPayload, err := DeserializeObjectFromJSON(j.Payload, jsonPayloadSelector)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, isJSONIndexationPayload := jsonPayload.(*jsonIndexation); !isJSONIndexationPayload {
-		return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got type %T instead", ErrInvalidJSON, jsonPayload)
-	}
-
-	unsigTx.Payload, err = jsonPayload.ToSerializable()
+	var err error
+	unsigTx.Payload, err = payloadFromJSONRawMsg(j.Payload)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode inner transaction essence payload: %w", err)
+	}
+
+	if _, isIndexationPayload := unsigTx.Payload.(*Indexation); !isIndexationPayload {
+		return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got type %T instead", ErrInvalidJSON, unsigTx.Payload)
 	}
 
 	return unsigTx, nil

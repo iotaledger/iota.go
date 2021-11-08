@@ -17,7 +17,7 @@ const (
 )
 
 // OutputType defines the type of outputs.
-type OutputType = byte
+type OutputType byte
 
 const (
 	// OutputSimple denotes a type of output which is locked by a signature and deposits onto a single address.
@@ -34,6 +34,25 @@ const (
 	OutputNFT
 )
 
+// OutputTypeToString returns the name of an Output given the type.
+func OutputTypeToString(ty OutputType) string {
+	switch ty {
+	case OutputSimple:
+		return "SimpleOutput"
+	case OutputExtended:
+		return "ExtendedOutput"
+	case OutputTreasury:
+		return "TreasuryOutput"
+	case OutputAlias:
+		return "AliasOutput"
+	case OutputFoundry:
+		return "FoundryOutput"
+	case OutputNFT:
+		return "NFTOutput"
+	}
+	return "unknown output"
+}
+
 var (
 	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.
 	ErrDepositAmountMustBeGreaterThanZero = errors.New("deposit amount must be greater than zero")
@@ -42,9 +61,25 @@ var (
 // Outputs is a slice of Output.
 type Outputs []Output
 
+func (o Outputs) ToSerializables() serializer.Serializables {
+	seris := make(serializer.Serializables, len(o))
+	for i, x := range o {
+		seris[i] = x.(serializer.Serializable)
+	}
+	return seris
+}
+
+func (o *Outputs) FromSerializables(seris serializer.Serializables) {
+	*o = make(Outputs, len(seris))
+	for i, seri := range seris {
+		(*o)[i] = seri.(Output)
+	}
+}
+
 // Output defines the deposit of funds.
 type Output interface {
 	serializer.Serializable
+
 	// Deposit returns the amount this Output deposits.
 	Deposit() (uint64, error)
 	// Target returns the target of the deposit.
@@ -58,19 +93,19 @@ type Output interface {
 type NativeTokenOutput interface {
 	Output
 	// NativeTokenSet returns the NativeToken this output defines.
-	NativeTokenSet() serializer.Serializables
+	NativeTokenSet() NativeTokens
 }
 
 // FeatureBlockOutput is a type of Output which can hold FeatureBlock.
 type FeatureBlockOutput interface {
 	// FeatureBlocks returns the feature blocks this output defines.
-	FeatureBlocks() serializer.Serializables
+	FeatureBlocks() FeatureBlocks
 }
 
 // OutputSelector implements SerializableSelectorFunc for output types.
 func OutputSelector(outputType uint32) (serializer.Serializable, error) {
 	var seri serializer.Serializable
-	switch byte(outputType) {
+	switch OutputType(outputType) {
 	case OutputSimple:
 		seri = &SimpleOutput{}
 	case OutputExtended:
@@ -340,13 +375,10 @@ func OutputsPredicateNFT(txID *TransactionID) OutputsPredicateFunc {
 var outputAmountValidator = OutputsPredicateDepositAmount()
 
 // ValidateOutputs validates the outputs by running them against the given OutputsPredicateFunc(s).
-func ValidateOutputs(outputs serializer.Serializables, funcs ...OutputsPredicateFunc) error {
+func ValidateOutputs(outputs Outputs, funcs ...OutputsPredicateFunc) error {
 	for i, output := range outputs {
-		if _, isOutput := output.(Output); !isOutput {
-			return fmt.Errorf("%w: can only validate outputs but got %T instead", ErrUnknownOutputType, output)
-		}
 		for _, f := range funcs {
-			if err := f(i, output.(Output)); err != nil {
+			if err := f(i, output); err != nil {
 				return err
 			}
 		}
@@ -357,7 +389,7 @@ func ValidateOutputs(outputs serializer.Serializables, funcs ...OutputsPredicate
 // jsonOutputSelector selects the json output implementation for the given type.
 func jsonOutputSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
-	switch byte(ty) {
+	switch OutputType(ty) {
 	case OutputSimple:
 		obj = &jsonSimpleOutput{}
 	case OutputExtended:

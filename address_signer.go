@@ -18,7 +18,7 @@ var (
 // AddressSigner produces signatures for messages which get verified against a given address.
 type AddressSigner interface {
 	// Sign produces the signature for the given message.
-	Sign(addr Address, msg []byte) (signature serializer.Serializable, err error)
+	Sign(addr Address, msg []byte) (signature Signature, err error)
 }
 
 // AddressSignerFunc implements the AddressSigner interface.
@@ -57,7 +57,7 @@ type InMemoryAddressSigner struct {
 	addrKeys map[string]interface{}
 }
 
-func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature serializer.Serializable, err error) {
+func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signature, err error) {
 	switch addr.(type) {
 	case *Ed25519Address:
 		maybePrvKey, ok := s.addrKeys[addr.String()]

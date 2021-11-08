@@ -18,8 +18,6 @@ import (
 )
 
 const (
-	// MilestonePayloadTypeID defines the Milestone payload's ID.
-	MilestonePayloadTypeID uint32 = 1
 	// MilestoneInclusionMerkleProofLength defines the length of the inclusion merkle proof within a milestone payload.
 	MilestoneInclusionMerkleProofLength = blake2b.Size256
 	// MilestoneSignatureLength defines the length of the milestone signature.
@@ -149,6 +147,10 @@ type Milestone struct {
 	Receipt serializer.Serializable
 	// The signatures held by the milestone.
 	Signatures []MilestoneSignature
+}
+
+func (m *Milestone) PayloadType() PayloadType {
+	return PayloadMilestone
 }
 
 // ID computes the ID of the Milestone.
@@ -334,7 +336,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 				if err := serializer.CheckMinByteLength(MilestoneBinSerializedMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid milestone bytes: %w", err)
 				}
-				if err := serializer.CheckType(data, MilestonePayloadTypeID); err != nil {
+				if err := serializer.CheckType(data, uint32(PayloadMilestone)); err != nil {
 					return fmt.Errorf("unable to deserialize milestone: %w", err)
 				}
 			}
@@ -371,12 +373,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
 		}).
-		ReadPayload(func(seri serializer.Serializable) { m.Receipt = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
-			if ty != ReceiptPayloadTypeID {
-				return nil, fmt.Errorf("a milestone can only contain a receipt payload but got type ID %d:  %w", ty, ErrUnknownPayloadType)
-			}
-			return PayloadSelector(ty)
-		}, func(err error) error {
+		ReadPayload(&m.Receipt, deSeriMode, milestonePayloadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone receipt: %w", err)
 		}).
 		ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneSignatureArrayRules, func(err error) error {
@@ -389,6 +386,22 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 			return nil
 		}).
 		Done()
+}
+
+func milestonePayloadGuard(ty uint32) (serializer.Serializable, error) {
+	if !payloadsSupportedByMilestone(ty) {
+		return nil, fmt.Errorf("%w: unable to deserialize milestone, unsupported payload type %s", ErrUnsupportedPayloadType, PayloadTypeToString(PayloadType(ty)))
+	}
+	return PayloadSelector(ty)
+}
+
+func payloadsSupportedByMilestone(ty uint32) bool {
+	switch ty {
+	case uint32(PayloadReceipt):
+	default:
+		return false
+	}
+	return true
 }
 
 func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
@@ -404,7 +417,7 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte
 		}
 	}
 	return serializer.NewSerializer().
-		WriteNum(MilestonePayloadTypeID, func(err error) error {
+		WriteNum(PayloadMilestone, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone payload ID: %w", err)
 		}).
 		WriteNum(m.Index, func(err error) error {
@@ -439,7 +452,7 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte
 
 func (m *Milestone) MarshalJSON() ([]byte, error) {
 	jMilestone := &jsonMilestone{}
-	jMilestone.Type = int(MilestonePayloadTypeID)
+	jMilestone.Type = int(PayloadMilestone)
 	jMilestone.Index = int(m.Index)
 	jMilestone.Timestamp = int(m.Timestamp)
 	jMilestone.Parents = make([]string, len(m.Parents))

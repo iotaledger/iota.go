@@ -14,12 +14,16 @@ type ReferenceUnlockBlock struct {
 	Reference uint16 `json:"reference"`
 }
 
+func (r *ReferenceUnlockBlock) Type() UnlockBlockType {
+	return UnlockBlockReference
+}
+
 func (r *ReferenceUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(ReferenceUnlockBlockSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid reference unlock block bytes: %w", err)
 		}
-		if err := serializer.CheckTypeByte(data, UnlockBlockReference); err != nil {
+		if err := serializer.CheckTypeByte(data, byte(UnlockBlockReference)); err != nil {
 			return 0, fmt.Errorf("unable to deserialize reference unlock block: %w", err)
 		}
 	}
@@ -30,7 +34,7 @@ func (r *ReferenceUnlockBlock) Deserialize(data []byte, deSeriMode serializer.De
 
 func (r *ReferenceUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	var b [ReferenceUnlockBlockSize]byte
-	b[0] = UnlockBlockReference
+	b[0] = byte(UnlockBlockReference)
 	binary.LittleEndian.PutUint16(b[serializer.SmallTypeDenotationByteSize:], r.Reference)
 	return b[:], nil
 }
@@ -53,20 +57,6 @@ func (r *ReferenceUnlockBlock) UnmarshalJSON(bytes []byte) error {
 	}
 	*r = *seri.(*ReferenceUnlockBlock)
 	return nil
-}
-
-// jsonUnlockBlockSelector selects the json unlock block object for the given type.
-func jsonUnlockBlockSelector(ty int) (JSONSerializable, error) {
-	var obj JSONSerializable
-	switch byte(ty) {
-	case UnlockBlockSignature:
-		obj = &jsonSignatureUnlockBlock{}
-	case UnlockBlockReference:
-		obj = &jsonReferenceUnlockBlock{}
-	default:
-		return nil, fmt.Errorf("unable to decode unlock block type from JSON: %w", ErrUnknownUnlockBlockType)
-	}
-	return obj, nil
 }
 
 // jsonReferenceUnlockBlock defines the json representation of a ReferenceUnlockBlock.

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer"
 )
 
 var (
@@ -17,8 +16,8 @@ var (
 func NewTransactionBuilder() *TransactionBuilder {
 	return &TransactionBuilder{
 		essence: &TransactionEssence{
-			Inputs:  serializer.Serializables{},
-			Outputs: serializer.Serializables{},
+			Inputs:  Inputs{},
+			Outputs: Outputs{},
 			Payload: nil,
 		},
 		inputToAddr: map[UTXOInputID]Address{},
@@ -123,7 +122,7 @@ func (b *TransactionBuilder) Build(signer AddressSigner) (*Transaction, error) {
 	}
 
 	sigBlockPos := map[string]int{}
-	unlockBlocks := serializer.Serializables{}
+	unlockBlocks := UnlockBlocks{}
 	for i, input := range b.essence.Inputs {
 		addr := b.inputToAddr[input.(*UTXOInput).ID()]
 		addrStr := addr.(fmt.Stringer).String()
@@ -138,7 +137,7 @@ func (b *TransactionBuilder) Build(signer AddressSigner) (*Transaction, error) {
 		}
 
 		// create a new signature for the given address
-		var signature serializer.Serializable
+		var signature Signature
 		signature, err = signer.Sign(addr, txEssenceData)
 		if err != nil {
 			return nil, err

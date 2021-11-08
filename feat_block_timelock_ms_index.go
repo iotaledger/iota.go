@@ -14,11 +14,15 @@ type TimelockMilestoneIndexFeatureBlock struct {
 	MilestoneIndex uint32
 }
 
+func (s *TimelockMilestoneIndexFeatureBlock) Type() FeatureBlockType {
+	return FeatureBlockTimelockMilestoneIndex
+}
+
 func (s *TimelockMilestoneIndexFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, FeatureBlockTimelockMilestoneIndex); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(FeatureBlockTimelockMilestoneIndex)); err != nil {
 					return fmt.Errorf("unable to deserialize timelock milestone index feature block: %w", err)
 				}
 			}

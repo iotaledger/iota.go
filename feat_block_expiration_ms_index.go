@@ -16,11 +16,15 @@ type ExpirationMilestoneIndexFeatureBlock struct {
 	MilestoneIndex uint32
 }
 
+func (s *ExpirationMilestoneIndexFeatureBlock) Type() FeatureBlockType {
+	return FeatureBlockExpirationMilestoneIndex
+}
+
 func (s *ExpirationMilestoneIndexFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, FeatureBlockExpirationMilestoneIndex); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(FeatureBlockExpirationMilestoneIndex)); err != nil {
 					return fmt.Errorf("unable to deserialize expiration milestone index feature block: %w", err)
 				}
 			}

@@ -2,9 +2,10 @@ package iotago_test
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"testing"
 
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
@@ -121,7 +122,7 @@ func TestUnlockBlockReference_Serialize(t *testing.T) {
 
 func TestUnlockBlockValidatorFunc(t *testing.T) {
 	type args struct {
-		inputs []serializer.Serializable
+		inputs iotago.UnlockBlocks
 		funcs  []iotago.UnlockBlockValidatorFunc
 	}
 	tests := []struct {
@@ -131,30 +132,30 @@ func TestUnlockBlockValidatorFunc(t *testing.T) {
 	}{
 		{
 			"ok",
-			args{inputs: []serializer.Serializable{
-				func() serializer.Serializable {
+			args{inputs: iotago.UnlockBlocks{
+				func() iotago.UnlockBlock {
 					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() serializer.Serializable {
+				func() iotago.UnlockBlock {
 					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() serializer.Serializable {
+				func() iotago.UnlockBlock {
 					return &iotago.ReferenceUnlockBlock{Reference: 0}
 				}(),
 			}, funcs: []iotago.UnlockBlockValidatorFunc{iotago.UnlockBlocksSigUniqueAndRefValidator()}}, false,
 		},
 		{
 			"duplicate ed25519 sig block",
-			args{inputs: []serializer.Serializable{
-				func() serializer.Serializable {
+			args{inputs: iotago.UnlockBlocks{
+				func() iotago.UnlockBlock {
 					return &iotago.SignatureUnlockBlock{Signature: &iotago.Ed25519Signature{
 						PublicKey: [32]byte{},
 						Signature: [64]byte{},
 					}}
 				}(),
-				func() serializer.Serializable {
+				func() iotago.UnlockBlock {
 					return &iotago.SignatureUnlockBlock{Signature: &iotago.Ed25519Signature{
 						PublicKey: [32]byte{},
 						Signature: [64]byte{},
@@ -164,16 +165,16 @@ func TestUnlockBlockValidatorFunc(t *testing.T) {
 		},
 		{
 			"invalid ref",
-			args{inputs: []serializer.Serializable{
-				func() serializer.Serializable {
+			args{inputs: iotago.UnlockBlocks{
+				func() iotago.UnlockBlock {
 					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() serializer.Serializable {
+				func() iotago.UnlockBlock {
 					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
 				}(),
-				func() serializer.Serializable {
+				func() iotago.UnlockBlock {
 					return &iotago.ReferenceUnlockBlock{Reference: 2}
 				}(),
 			}, funcs: []iotago.UnlockBlockValidatorFunc{iotago.UnlockBlocksSigUniqueAndRefValidator()}}, true,

@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -8,7 +9,7 @@ import (
 )
 
 // UnlockBlockType defines a type of unlock block.
-type UnlockBlockType = byte
+type UnlockBlockType byte
 
 const (
 	// UnlockBlockSignature denotes a signature unlock block.
@@ -34,7 +35,7 @@ var (
 // UnlockBlockSelector implements SerializableSelectorFunc for unlock block types.
 func UnlockBlockSelector(unlockBlockType uint32) (serializer.Serializable, error) {
 	var seri serializer.Serializable
-	switch byte(unlockBlockType) {
+	switch UnlockBlockType(unlockBlockType) {
 	case UnlockBlockSignature:
 		seri = &SignatureUnlockBlock{}
 	case UnlockBlockReference:
@@ -45,8 +46,68 @@ func UnlockBlockSelector(unlockBlockType uint32) (serializer.Serializable, error
 	return seri, nil
 }
 
+// UnlockBlockTypeToString returns a name for the given UnlockBlock type.
+func UnlockBlockTypeToString(ty UnlockBlockType) string {
+	switch ty {
+	case UnlockBlockSignature:
+		return "UnlockBlockSignature"
+	case UnlockBlockReference:
+		return "UnlockBlockReference"
+	default:
+		return ""
+	}
+}
+
+type UnlockBlocks []UnlockBlock
+
+func (o UnlockBlocks) ToSerializables() serializer.Serializables {
+	seris := make(serializer.Serializables, len(o))
+	for i, x := range o {
+		seris[i] = x.(serializer.Serializable)
+	}
+	return seris
+}
+
+func (o *UnlockBlocks) FromSerializables(seris serializer.Serializables) {
+	*o = make(UnlockBlocks, len(seris))
+	for i, seri := range seris {
+		(*o)[i] = seri.(UnlockBlock)
+	}
+}
+
+// jsonUnlockBlockSelector selects the json unlock block object for the given type.
+func jsonUnlockBlockSelector(ty int) (JSONSerializable, error) {
+	var obj JSONSerializable
+	switch UnlockBlockType(ty) {
+	case UnlockBlockSignature:
+		obj = &jsonSignatureUnlockBlock{}
+	case UnlockBlockReference:
+		obj = &jsonReferenceUnlockBlock{}
+	default:
+		return nil, fmt.Errorf("unable to decode unlock block type from JSON: %w", ErrUnknownUnlockBlockType)
+	}
+	return obj, nil
+}
+
+func unlockBlocksFromJSONRawMsg(jUnlockBlocks []*json.RawMessage) (UnlockBlocks, error) {
+	blocks, err := jsonRawMsgsToSerializables(jUnlockBlocks, jsonUnlockBlockSelector)
+	if err != nil {
+		return nil, err
+	}
+	var unlockB UnlockBlocks
+	unlockB.FromSerializables(blocks)
+	return unlockB, nil
+}
+
+type UnlockBlock interface {
+	serializer.Serializable
+
+	// Type returns the type of the UnlockBlock.
+	Type() UnlockBlockType
+}
+
 // UnlockBlockValidatorFunc which given the index of an unlock block and the unlock block itself, runs validations and returns an error if any should fail.
-type UnlockBlockValidatorFunc func(index int, unlockBlock serializer.Serializable) error
+type UnlockBlockValidatorFunc func(index int, unlockBlock UnlockBlock) error
 
 // UnlockBlocksSigUniqueAndRefValidator returns a validator which checks that:
 //	1. signature unlock blocks are unique
@@ -54,8 +115,7 @@ type UnlockBlockValidatorFunc func(index int, unlockBlock serializer.Serializabl
 func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 	seenSigBlocks := map[int]struct{}{}
 	seenSigBlocksBytes := map[string]int{}
-
-	return func(index int, unlockBlock serializer.Serializable) error {
+	return func(index int, unlockBlock UnlockBlock) error {
 		switch x := unlockBlock.(type) {
 		case *SignatureUnlockBlock:
 			if x.Signature == nil {
@@ -92,14 +152,8 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 }
 
 // ValidateUnlockBlocks validates the unlock blocks by running them against the given UnlockBlockValidatorFunc.
-func ValidateUnlockBlocks(unlockBlocks serializer.Serializables, funcs ...UnlockBlockValidatorFunc) error {
+func ValidateUnlockBlocks(unlockBlocks UnlockBlocks, funcs ...UnlockBlockValidatorFunc) error {
 	for i, unlockBlock := range unlockBlocks {
-		switch unlockBlock.(type) {
-		case *SignatureUnlockBlock:
-		case *ReferenceUnlockBlock:
-		default:
-			return fmt.Errorf("%w: can only validate signature or reference unlock blocks", ErrUnknownInputType)
-		}
 		for _, f := range funcs {
 			if err := f(i, unlockBlock); err != nil {
 				return err

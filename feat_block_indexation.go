@@ -26,6 +26,10 @@ type IndexationFeatureBlock struct {
 	Tag []byte
 }
 
+func (s *IndexationFeatureBlock) Type() FeatureBlockType {
+	return FeatureBlockIndexation
+}
+
 func (s *IndexationFeatureBlock) ValidTagSize() error {
 	switch {
 	case len(s.Tag) == 0:
@@ -40,7 +44,7 @@ func (s *IndexationFeatureBlock) Deserialize(data []byte, deSeriMode serializer.
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, FeatureBlockIndexation); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(FeatureBlockIndexation)); err != nil {
 					return fmt.Errorf("unable to deserialize indexation feature block: %w", err)
 				}
 			}
