@@ -17,11 +17,15 @@ type ReturnFeatureBlock struct {
 	Amount uint64
 }
 
+func (s *ReturnFeatureBlock) Type() FeatureBlockType {
+	return FeatureBlockReturn
+}
+
 func (s *ReturnFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, FeatureBlockReturn); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(FeatureBlockReturn)); err != nil {
 					return fmt.Errorf("unable to deserialize return feature block: %w", err)
 				}
 			}

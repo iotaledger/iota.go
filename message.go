@@ -39,26 +39,6 @@ var (
 	}
 )
 
-// PayloadSelector implements SerializableSelectorFunc for payload types.
-func PayloadSelector(payloadType uint32) (serializer.Serializable, error) {
-	var seri serializer.Serializable
-	switch payloadType {
-	case TransactionPayloadTypeID:
-		seri = &Transaction{}
-	case MilestonePayloadTypeID:
-		seri = &Milestone{}
-	case IndexationPayloadTypeID:
-		seri = &Indexation{}
-	case ReceiptPayloadTypeID:
-		seri = &Receipt{}
-	case TreasuryTransactionPayloadTypeID:
-		seri = &TreasuryTransaction{}
-	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownPayloadType, payloadType)
-	}
-	return seri, nil
-}
-
 // MessageID is the ID of a Message.
 type MessageID = [MessageIDLength]byte
 
@@ -101,7 +81,7 @@ type Message struct {
 	// The parents the message references.
 	Parents MessageIDs
 	// The inner payload of the message. Can be nil.
-	Payload serializer.Serializable
+	Payload Payload
 	// The nonce which lets this message fulfill the PoW requirements.
 	Nonce uint64
 }
@@ -153,16 +133,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize message parents: %w", err)
 		}).
-		ReadPayload(func(seri serializer.Serializable) { m.Payload = seri }, deSeriMode, func(ty uint32) (serializer.Serializable, error) {
-			switch ty {
-			case TransactionPayloadTypeID:
-			case IndexationPayloadTypeID:
-			case MilestonePayloadTypeID:
-			default:
-				return nil, fmt.Errorf("a message can only contain a transaction, indexation or milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
-			}
-			return PayloadSelector(ty)
-		}, func(err error) error {
+		ReadPayload(&m.Payload, deSeriMode, messagePayloadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize message's inner payload: %w", err)
 		}).
 		ReadNum(&m.Nonce, func(err error) error {
@@ -172,6 +143,17 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 			return fmt.Errorf("%w: unable to deserialize message: %d bytes are still available", err, leftOver)
 		}).
 		Done()
+}
+
+func messagePayloadGuard(ty uint32) (serializer.Serializable, error) {
+	switch PayloadType(ty) {
+	case PayloadTransaction:
+	case PayloadIndexation:
+	case PayloadMilestone:
+	default:
+		return nil, fmt.Errorf("a message can only contain a transaction, indexation or milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
+	}
+	return PayloadSelector(ty)
 }
 
 func (m *Message) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
@@ -235,22 +217,6 @@ func (m *Message) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// selects the json object for the given type.
-func jsonPayloadSelector(ty int) (JSONSerializable, error) {
-	var obj JSONSerializable
-	switch uint32(ty) {
-	case TransactionPayloadTypeID:
-		obj = &jsonTransaction{}
-	case MilestonePayloadTypeID:
-		obj = &jsonMilestone{}
-	case IndexationPayloadTypeID:
-		obj = &jsonIndexation{}
-	default:
-		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
-	}
-	return obj, nil
-}
-
 // jsonMessage defines the JSON representation of a Message.
 type jsonMessage struct {
 	// The network ID identifying the network for this message.
@@ -297,12 +263,7 @@ func (jm *jsonMessage) ToSerializable() (serializer.Serializable, error) {
 	}
 
 	if jm.Payload != nil {
-		jsonPayload, err := DeserializeObjectFromJSON(jm.Payload, jsonPayloadSelector)
-		if err != nil {
-			return nil, err
-		}
-
-		m.Payload, err = jsonPayload.ToSerializable()
+		m.Payload, err = payloadFromJSONRawMsg(jm.Payload)
 		if err != nil {
 			return nil, err
 		}

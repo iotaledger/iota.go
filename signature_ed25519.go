@@ -31,6 +31,10 @@ type Ed25519Signature struct {
 	Signature [ed25519.SignatureSize]byte
 }
 
+func (e *Ed25519Signature) Type() SignatureType {
+	return SignatureEd25519
+}
+
 // Valid verifies whether given the message and Ed25519 address, the signature is valid.
 func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	// an address is the Blake2b 256 hash of the public key
@@ -49,7 +53,7 @@ func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode serializer.DeSeri
 		if err := serializer.CheckMinByteLength(Ed25519SignatureSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid Ed25519 signature bytes: %w", err)
 		}
-		if err := serializer.CheckTypeByte(data, SignatureEd25519); err != nil {
+		if err := serializer.CheckTypeByte(data, byte(SignatureEd25519)); err != nil {
 			return 0, fmt.Errorf("unable to deserialize Ed25519 signature: %w", err)
 		}
 	}
@@ -62,7 +66,7 @@ func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode serializer.DeSeri
 
 func (e *Ed25519Signature) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	var b [Ed25519SignatureSerializedBytesSize]byte
-	b[0] = SignatureEd25519
+	b[0] = byte(SignatureEd25519)
 	copy(b[serializer.SmallTypeDenotationByteSize:], e.PublicKey[:])
 	copy(b[serializer.SmallTypeDenotationByteSize+ed25519.PublicKeySize:], e.Signature[:])
 	return b[:], nil

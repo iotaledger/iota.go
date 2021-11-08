@@ -11,9 +11,6 @@ import (
 )
 
 const (
-	// TransactionPayloadTypeID defines the transaction payload's type ID.
-	TransactionPayloadTypeID uint32 = 0
-
 	// TransactionIDLength defines the length of a Transaction ID.
 	TransactionIDLength = blake2b.Size256
 
@@ -47,7 +44,11 @@ type Transaction struct {
 	// The transaction essence, respectively the transfer part of a Transaction.
 	Essence serializer.Serializable
 	// The unlock blocks defining the unlocking data for the inputs within the Essence.
-	UnlockBlocks serializer.Serializables
+	UnlockBlocks UnlockBlocks
+}
+
+func (t *Transaction) PayloadType() PayloadType {
+	return PayloadTransaction
 }
 
 // ID computes the ID of the Transaction.
@@ -69,7 +70,7 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 				if err := serializer.CheckMinByteLength(TransactionBinSerializedMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid transaction bytes: %w", err)
 				}
-				if err := serializer.CheckType(data, TransactionPayloadTypeID); err != nil {
+				if err := serializer.CheckType(data, uint32(PayloadTransaction)); err != nil {
 					return fmt.Errorf("unable to deserialize transaction: %w", err)
 				}
 			}
@@ -78,7 +79,7 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		Skip(serializer.TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip transaction payload ID during deserialization: %w", err)
 		}).
-		ReadObject(func(seri serializer.Serializable) { t.Essence = seri }, deSeriMode, serializer.TypeDenotationByte, TransactionEssenceSelector, func(err error) error {
+		ReadObject(&t.Essence, deSeriMode, serializer.TypeDenotationByte, TransactionEssenceSelector, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
 		}).
 		Do(func() {
@@ -86,7 +87,7 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 			unlockBlockArrayRules.Min = inputCount
 			unlockBlockArrayRules.Max = inputCount
 		}).
-		ReadSliceOfObjects(func(seri serializer.Serializables) { t.UnlockBlocks = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize unlock blocks", err)
 		}).
 		AbortIf(func(err error) error {
@@ -106,13 +107,13 @@ func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]by
 			}
 			return nil
 		}).
-		WriteNum(TransactionPayloadTypeID, func(err error) error {
+		WriteNum(PayloadTransaction, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction payload ID", err)
 		}).
 		WriteObject(t.Essence, deSeriMode, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's essence", err)
 		}).
-		WriteSliceOfObjects(t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
+		WriteSliceOfObjects(&t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's unlock blocks", err)
 		}).
 		Serialize()
@@ -122,7 +123,7 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 	jTransaction := &jsonTransaction{
 		UnlockBlocks: make([]*json.RawMessage, len(t.UnlockBlocks)),
 	}
-	jTransaction.Type = int(TransactionPayloadTypeID)
+	jTransaction.Type = int(PayloadTransaction)
 	txJson, err := t.Essence.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -421,17 +422,9 @@ func (jsontx *jsonTransaction) ToSerializable() (serializer.Serializable, error)
 		return nil, err
 	}
 
-	unlockBlocks := make(serializer.Serializables, len(jsontx.UnlockBlocks))
-	for i, ele := range jsontx.UnlockBlocks {
-		jsonUnlockBlock, err := DeserializeObjectFromJSON(ele, jsonUnlockBlockSelector)
-		if err != nil {
-			return nil, fmt.Errorf("unable to decode unlock block type from JSON, pos %d: %w", i, err)
-		}
-		unlockBlock, err := jsonUnlockBlock.ToSerializable()
-		if err != nil {
-			return nil, fmt.Errorf("pos %d: %w", i, err)
-		}
-		unlockBlocks[i] = unlockBlock
+	unlockBlocks, err := unlockBlocksFromJSONRawMsg(jsontx.UnlockBlocks)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Transaction{Essence: txEssenceSeri, UnlockBlocks: unlockBlocks}, nil

@@ -10,8 +10,6 @@ import (
 )
 
 const (
-	// IndexationPayloadTypeID defines the indexation payload's ID.
-	IndexationPayloadTypeID uint32 = 2
 	// IndexationBinSerializedMinSize is the minimum size of an Indexation.
 	// 	type bytes + index prefix + one char + data length
 	IndexationBinSerializedMinSize = serializer.TypeDenotationByteSize + serializer.UInt16ByteSize + serializer.OneByte + serializer.UInt32ByteSize
@@ -36,6 +34,10 @@ type Indexation struct {
 	Data []byte `json:"data"`
 }
 
+func (u *Indexation) PayloadType() PayloadType {
+	return PayloadIndexation
+}
+
 func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
@@ -43,7 +45,7 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 				if err := serializer.CheckMinByteLength(IndexationBinSerializedMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid indexation bytes: %w", err)
 				}
-				if err := serializer.CheckType(data, IndexationPayloadTypeID); err != nil {
+				if err := serializer.CheckType(data, uint32(PayloadIndexation)); err != nil {
 					return fmt.Errorf("unable to deserialize indexation: %w", err)
 				}
 			}
@@ -86,7 +88,7 @@ func (u *Indexation) Serialize(deSeriMode serializer.DeSerializationMode) ([]byt
 			}
 			return nil
 		}).
-		WriteNum(IndexationPayloadTypeID, func(err error) error {
+		WriteNum(PayloadIndexation, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation payload ID: %w", err)
 		}).
 		WriteVariableByteSlice(u.Index, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
@@ -100,7 +102,7 @@ func (u *Indexation) Serialize(deSeriMode serializer.DeSerializationMode) ([]byt
 
 func (u *Indexation) MarshalJSON() ([]byte, error) {
 	jIndexation := &jsonIndexation{}
-	jIndexation.Type = int(IndexationPayloadTypeID)
+	jIndexation.Type = int(PayloadIndexation)
 	jIndexation.Index = hex.EncodeToString(u.Index)
 	jIndexation.Data = hex.EncodeToString(u.Data)
 	return json.Marshal(jIndexation)

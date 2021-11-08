@@ -405,7 +405,7 @@ func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 				Receipt: &iotago.Receipt{
 					MigratedAt: 1000,
 					Final:      false,
-					Funds: []serializer.Serializable{
+					Funds: iotago.MigratedFundsEntries{
 						&iotago.MigratedFundsEntry{
 							TailTransactionHash: iotago.LegacyTailTransactionHash{},
 							Address:             &iotago.Ed25519Address{},
@@ -444,7 +444,7 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 				Receipt: &iotago.Receipt{
 					MigratedAt: 1000,
 					Final:      false,
-					Funds: []serializer.Serializable{
+					Funds: iotago.MigratedFundsEntries{
 						&iotago.MigratedFundsEntry{
 							TailTransactionHash: iotago.LegacyTailTransactionHash{},
 							Address:             &iotago.Ed25519Address{},

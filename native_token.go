@@ -38,6 +38,24 @@ var (
 // NativeTokenID is an identifier which uniquely identifies a NativeToken.
 type NativeTokenID = [NativeTokenIDLength]byte
 
+// NativeTokens is a set of NativeToken.
+type NativeTokens []*NativeToken
+
+func (n NativeTokens) ToSerializables() serializer.Serializables {
+	seris := make(serializer.Serializables, len(n))
+	for i, x := range n {
+		seris[i] = x
+	}
+	return seris
+}
+
+func (n *NativeTokens) FromSerializables(seris serializer.Serializables) {
+	*n = make(NativeTokens, len(seris))
+	for i, seri := range seris {
+		(*n)[i] = seri.(*NativeToken)
+	}
+}
+
 // NativeToken represents a token natively
 type NativeToken struct {
 	NFTID  NativeTokenID
@@ -84,6 +102,18 @@ func (n *NativeToken) UnmarshalJSON(bytes []byte) error {
 	}
 	*n = *seri.(*NativeToken)
 	return nil
+}
+
+func nativeTokensFromJSONRawMsg(jNativeTokens []*json.RawMessage) (NativeTokens, error) {
+	tokens, err := jsonRawMsgsToSerializables(jNativeTokens, func(ty int) (JSONSerializable, error) {
+		return &jsonNativeToken{}, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	var nativeTokens NativeTokens
+	nativeTokens.FromSerializables(tokens)
+	return nativeTokens, nil
 }
 
 // jsonNativeToken defines the json representation of a NativeToken.

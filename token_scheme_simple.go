@@ -11,11 +11,15 @@ import (
 // the token ID of native tokens held by the foundry.
 type SimpleTokenScheme struct{}
 
+func (s *SimpleTokenScheme) Type() TokenSchemeType {
+	return TokenSchemeSimple
+}
+
 func (s *SimpleTokenScheme) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, TokenSchemeSimple); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(TokenSchemeSimple)); err != nil {
 					return fmt.Errorf("unable to deserialize simple token scheme: %w", err)
 				}
 			}
@@ -23,14 +27,16 @@ func (s *SimpleTokenScheme) Deserialize(data []byte, deSeriMode serializer.DeSer
 		}).
 		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip token scheme type during deserialization: %w", err)
-		}).Done()
+		}).
+		Done()
 }
 
 func (s *SimpleTokenScheme) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(TokenSchemeSimple, func(err error) error {
 			return fmt.Errorf("unable to serialize simple token scheme type ID: %w", err)
-		}).Serialize()
+		}).
+		Serialize()
 }
 
 func (s *SimpleTokenScheme) MarshalJSON() ([]byte, error) {

@@ -20,9 +20,9 @@ const (
 // SimpleOutput is an output type which can be unlocked via a signature. It deposits onto one single address.
 type SimpleOutput struct {
 	// The actual address.
-	Address serializer.Serializable `json:"address"`
+	Address Address
 	// The amount of IOTA tokens held by the output.
-	Amount uint64 `json:"amount"`
+	Amount uint64
 }
 
 func (s *SimpleOutput) Type() OutputType {
@@ -44,7 +44,7 @@ func (s *SimpleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializ
 				if err := serializer.CheckMinByteLength(SimpleOutputBytesMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid simple output bytes: %w", err)
 				}
-				if err := serializer.CheckTypeByte(data, OutputSimple); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(OutputSimple)); err != nil {
 					return fmt.Errorf("unable to deserialize simple output: %w", err)
 				}
 			}
@@ -53,7 +53,7 @@ func (s *SimpleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializ
 		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip simple output type during deserialization: %w", err)
 		}).
-		ReadObject(func(seri serializer.Serializable) { s.Address = seri }, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for simple output: %w", err)
 		}).
 		ReadNum(&s.Amount, func(err error) error {

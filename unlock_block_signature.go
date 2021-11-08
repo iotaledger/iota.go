@@ -10,7 +10,11 @@ import (
 // SignatureUnlockBlock holds a signature which unlocks inputs.
 type SignatureUnlockBlock struct {
 	// The signature of this unlock block.
-	Signature serializer.Serializable `json:"signature"`
+	Signature Signature `json:"signature"`
+}
+
+func (s *SignatureUnlockBlock) Type() UnlockBlockType {
+	return UnlockBlockSignature
 }
 
 func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
@@ -20,7 +24,7 @@ func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode serializer.De
 				if err := serializer.CheckMinByteLength(SignatureUnlockBlockMinSize, len(data)); err != nil {
 					return fmt.Errorf("invalid signature unlock block bytes: %w", err)
 				}
-				if err := serializer.CheckTypeByte(data, UnlockBlockSignature); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(UnlockBlockSignature)); err != nil {
 					return fmt.Errorf("unable to deserialize signature unlock block: %w", err)
 				}
 			}
@@ -29,7 +33,7 @@ func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode serializer.De
 		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip milestone payload ID during deserialization: %w", err)
 		}).
-		ReadObject(func(seri serializer.Serializable) { s.Signature = seri }, deSeriMode, serializer.TypeDenotationByte, SignatureSelector, func(err error) error {
+		ReadObject(&s.Signature, deSeriMode, serializer.TypeDenotationByte, SignatureSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize signature within signature unlock block: %w", err)
 		}).Done()
 }
@@ -77,12 +81,7 @@ type jsonSignatureUnlockBlock struct {
 }
 
 func (j *jsonSignatureUnlockBlock) ToSerializable() (serializer.Serializable, error) {
-	jsonSig, err := DeserializeObjectFromJSON(j.Signature, jsonSignatureSelector)
-	if err != nil {
-		return nil, err
-	}
-
-	sig, err := jsonSig.ToSerializable()
+	sig, err := signatureFromJSONRawMsg(j.Signature)
 	if err != nil {
 		return nil, err
 	}

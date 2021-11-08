@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer"
 )
 
@@ -15,12 +16,30 @@ const (
 // LegacyTailTransactionHash represents the bytes of a T5B1 encoded legacy tail transaction hash.
 type LegacyTailTransactionHash = [49]byte
 
+// MigratedFundsEntries is a slice of MigratedFundsEntry.
+type MigratedFundsEntries []*MigratedFundsEntry
+
+func (o MigratedFundsEntries) ToSerializables() serializer.Serializables {
+	seris := make(serializer.Serializables, len(o))
+	for i, x := range o {
+		seris[i] = x
+	}
+	return seris
+}
+
+func (o *MigratedFundsEntries) FromSerializables(seris serializer.Serializables) {
+	*o = make(MigratedFundsEntries, len(seris))
+	for i, seri := range seris {
+		(*o)[i] = seri.(*MigratedFundsEntry)
+	}
+}
+
 // MigratedFundsEntry are funds which were migrated from a legacy network.
 type MigratedFundsEntry struct {
 	// The tail transaction hash of the migration bundle.
 	TailTransactionHash LegacyTailTransactionHash
 	// The target address of the migrated funds.
-	Address serializer.Serializable
+	Address Address
 	// The amount of the deposit.
 	Deposit uint64
 }
@@ -30,7 +49,7 @@ func (m *MigratedFundsEntry) Deserialize(data []byte, deSeriMode serializer.DeSe
 		ReadArrayOf49Bytes(&m.TailTransactionHash, func(err error) error {
 			return fmt.Errorf("unable to deserialize migrated funds entry tail transaction hash: %w", err)
 		}).
-		ReadObject(func(seri serializer.Serializable) { m.Address = seri }, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&m.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for migrated funds entry: %w", err)
 		}).
 		ReadNum(&m.Deposit, func(err error) error {
@@ -95,12 +114,8 @@ func (j *jsonMigratedFundsEntry) ToSerializable() (serializer.Serializable, erro
 	}
 	copy(payload.TailTransactionHash[:], tailTransactionHash)
 	payload.Deposit = uint64(j.Deposit)
-	jsonAddr, err := DeserializeObjectFromJSON(j.Address, jsonAddressSelector)
-	if err != nil {
-		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
-	}
 
-	payload.Address, err = jsonAddr.ToSerializable()
+	payload.Address, err = addressFromJSONRawMsg(j.Address)
 	if err != nil {
 		return nil, err
 	}

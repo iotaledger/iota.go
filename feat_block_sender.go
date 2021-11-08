@@ -11,14 +11,18 @@ import (
 // with a sender identity. The sender identity needs to be unlocked in the transaction
 // for the SenderFeatureBlock block to be valid.
 type SenderFeatureBlock struct {
-	Address serializer.Serializable
+	Address Address
+}
+
+func (s *SenderFeatureBlock) Type() FeatureBlockType {
+	return FeatureBlockSender
 }
 
 func (s *SenderFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, FeatureBlockSender); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(FeatureBlockSender)); err != nil {
 					return fmt.Errorf("unable to deserialize sender feature block: %w", err)
 				}
 			}
@@ -27,7 +31,7 @@ func (s *SenderFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSe
 		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip sender feature block type during deserialization: %w", err)
 		}).
-		ReadObject(func(seri serializer.Serializable) { s.Address = seri }, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for sender feature block: %w", err)
 		}).Done()
 }
@@ -89,7 +93,7 @@ func (j *jsonSenderFeatureBlock) ToSerializable() (serializer.Serializable, erro
 		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
 	}
 
-	dep.Address, err = jsonAddr.ToSerializable()
+	dep.Address, err = jsonAddressToAddress(jsonAddr)
 	if err != nil {
 		return nil, err
 	}

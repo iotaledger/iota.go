@@ -13,14 +13,18 @@ import (
 // afterwards, the issuer block must not change, meaning that subsequent outputs
 // must always define the same issuer identity (the identity does not need to be unlocked anymore though).
 type IssuerFeatureBlock struct {
-	Address serializer.Serializable
+	Address Address
+}
+
+func (s *IssuerFeatureBlock) Type() FeatureBlockType {
+	return FeatureBlockIssuer
 }
 
 func (s *IssuerFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, FeatureBlockIssuer); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(FeatureBlockIssuer)); err != nil {
 					return fmt.Errorf("unable to deserialize issuer feature block: %w", err)
 				}
 			}
@@ -29,7 +33,7 @@ func (s *IssuerFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSe
 		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip issuer feature block type during deserialization: %w", err)
 		}).
-		ReadObject(func(seri serializer.Serializable) { s.Address = seri }, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for issuer feature block: %w", err)
 		}).Done()
 }
@@ -91,7 +95,7 @@ func (j *jsonIssuerFeatureBlock) ToSerializable() (serializer.Serializable, erro
 		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
 	}
 
-	dep.Address, err = jsonAddr.ToSerializable()
+	dep.Address, err = jsonAddressToAddress(jsonAddr)
 	if err != nil {
 		return nil, err
 	}

@@ -48,20 +48,17 @@ func (mb *MessageBuilder) NetworkIDFromString(networkIDStr string) *MessageBuild
 }
 
 // Payload sets the payload to embed within the message.
-func (mb *MessageBuilder) Payload(seri serializer.Serializable) *MessageBuilder {
+func (mb *MessageBuilder) Payload(payload Payload) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
-	switch seri.(type) {
-	case *Indexation:
-	case *Milestone:
-	case *Transaction:
-	case nil:
-	default:
-		mb.err = fmt.Errorf("%w: unsupported type %T", ErrUnknownPayloadType, seri)
+
+	if _, err := messagePayloadGuard(uint32(payload.PayloadType())); err != nil {
+		mb.err = fmt.Errorf("%w: unsupported type %s", ErrUnknownPayloadType, PayloadTypeToString(payload.PayloadType()))
 		return mb
 	}
-	mb.msg.Payload = seri
+
+	mb.msg.Payload = payload
 	return mb
 }
 

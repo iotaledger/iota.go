@@ -15,11 +15,15 @@ type TimelockUnixFeatureBlock struct {
 	UnixTime uint64
 }
 
+func (s *TimelockUnixFeatureBlock) Type() FeatureBlockType {
+	return FeatureBlockTimelockUnix
+}
+
 func (s *TimelockUnixFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, FeatureBlockTimelockUnix); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(FeatureBlockTimelockUnix)); err != nil {
 					return fmt.Errorf("unable to deserialize timelock unix feature block: %w", err)
 				}
 			}

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer"
 
 	"golang.org/x/crypto/blake2b"
@@ -19,12 +20,16 @@ const (
 // TreasuryInput is an input which references a milestone which generated a TreasuryOutput.
 type TreasuryInput [32]byte
 
+func (ti *TreasuryInput) Type() InputType {
+	return InputTreasury
+}
+
 func (ti *TreasuryInput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(TreasuryInputSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid treasury input bytes: %w", err)
 		}
-		if err := serializer.CheckTypeByte(data, InputTreasury); err != nil {
+		if err := serializer.CheckTypeByte(data, byte(InputTreasury)); err != nil {
 			return 0, fmt.Errorf("unable to deserialize treasury input: %w", err)
 		}
 	}
@@ -34,7 +39,7 @@ func (ti *TreasuryInput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 
 func (ti *TreasuryInput) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
 	var b [TreasuryInputSerializedBytesSize]byte
-	b[0] = InputTreasury
+	b[0] = byte(InputTreasury)
 	copy(b[serializer.SmallTypeDenotationByteSize:], ti[:])
 	return b[:], nil
 }

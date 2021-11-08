@@ -28,6 +28,10 @@ type MetadataFeatureBlock struct {
 	Data []byte
 }
 
+func (s *MetadataFeatureBlock) Type() FeatureBlockType {
+	return FeatureBlockMetadata
+}
+
 func (s *MetadataFeatureBlock) ValidDataSize() error {
 	switch {
 	case len(s.Data) == 0:
@@ -42,7 +46,7 @@ func (s *MetadataFeatureBlock) Deserialize(data []byte, deSeriMode serializer.De
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, FeatureBlockMetadata); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(FeatureBlockMetadata)); err != nil {
 					return fmt.Errorf("unable to deserialize metadata feature block: %w", err)
 				}
 			}

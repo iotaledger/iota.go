@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -24,7 +25,7 @@ var (
 )
 
 // FeatureBlockType defines the type of feature blocks.
-type FeatureBlockType = byte
+type FeatureBlockType byte
 
 const (
 	// FeatureBlockSender denotes a SenderFeatureBlock.
@@ -48,43 +49,57 @@ const (
 )
 
 // FeatureBlockTypeToString returns the name of a FeatureBlock given the type.
-func FeatureBlockTypeToString(ty uint32) string {
-	switch byte(ty) {
+func FeatureBlockTypeToString(ty FeatureBlockType) string {
+	switch ty {
 	case FeatureBlockSender:
-		return "FeatureBlockSender"
+		return "SenderFeatureBlock"
 	case FeatureBlockIssuer:
-		return "FeatureBlockIssuer"
+		return "IssuerFeatureBlock"
 	case FeatureBlockReturn:
-		return "FeatureBlockReturn"
+		return "ReturnFeatureBlock"
 	case FeatureBlockTimelockMilestoneIndex:
-		return "FeatureBlockTimelockMilestoneIndex"
+		return "TimelockMilestoneIndexFeatureBlock"
 	case FeatureBlockTimelockUnix:
-		return "FeatureBlockTimelockUnix"
+		return "TimelockUnixFeatureBlock"
 	case FeatureBlockExpirationMilestoneIndex:
-		return "FeatureBlockExpirationMilestoneIndex"
+		return "ExpirationMilestoneIndexFeatureBlock"
 	case FeatureBlockExpirationUnix:
-		return "FeatureBlockExpirationUnix"
+		return "ExpirationUnixFeatureBlock"
 	case FeatureBlockMetadata:
-		return "FeatureBlockMetadata"
+		return "MetadataFeatureBlock"
 	}
-	return ""
+	return "unknown feature block"
+}
+
+type FeatureBlocks []FeatureBlock
+
+func (f FeatureBlocks) ToSerializables() serializer.Serializables {
+	seris := make(serializer.Serializables, len(f))
+	for i, x := range f {
+		seris[i] = x.(serializer.Serializable)
+	}
+	return seris
+}
+
+func (f *FeatureBlocks) FromSerializables(seris serializer.Serializables) {
+	*f = make(FeatureBlocks, len(seris))
+	for i, seri := range seris {
+		(*f)[i] = seri.(FeatureBlock)
+	}
 }
 
 // FeatureBlock is an abstract building block extending the features of an Output.
 type FeatureBlock interface {
 	serializer.Serializable
+
 	// Type returns the type of the FeatureBlock.
 	Type() FeatureBlockType
 }
 
-func featureBlockSupported(seris serializer.Serializables, f func(ty uint32) bool) error {
-	for i, seri := range seris {
-		featBlock, isFeatureBlock := seri.(FeatureBlock)
-		if !isFeatureBlock {
-			return fmt.Errorf("%w: element at %d is not a feature block", ErrUnsupportedObjectType, i)
-		}
+func featureBlockSupported(featBlocks FeatureBlocks, f func(ty uint32) bool) error {
+	for i, featBlock := range featBlocks {
 		if !f(uint32(featBlock.Type())) {
-			return fmt.Errorf("%w: element at %d with type %T", ErrUnsupportedFeatureBlockType, i, seri)
+			return fmt.Errorf("%w: element at %d with type %T", ErrUnsupportedFeatureBlockType, i, featBlock)
 		}
 	}
 	return nil
@@ -93,7 +108,7 @@ func featureBlockSupported(seris serializer.Serializables, f func(ty uint32) boo
 // FeatureBlockSelector implements SerializableSelectorFunc for feature blocks.
 func FeatureBlockSelector(featBlockType uint32) (serializer.Serializable, error) {
 	var seri serializer.Serializable
-	switch byte(featBlockType) {
+	switch FeatureBlockType(featBlockType) {
 	case FeatureBlockSender:
 		seri = &SenderFeatureBlock{}
 	case FeatureBlockIssuer:
@@ -121,7 +136,7 @@ func FeatureBlockSelector(featBlockType uint32) (serializer.Serializable, error)
 // selects the json object for the given type.
 func jsonFeatureBlockSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
-	switch byte(ty) {
+	switch FeatureBlockType(ty) {
 	case FeatureBlockSender:
 		obj = &jsonSenderFeatureBlock{}
 	case FeatureBlockIssuer:
@@ -144,4 +159,14 @@ func jsonFeatureBlockSelector(ty int) (JSONSerializable, error) {
 		return nil, fmt.Errorf("unable to decode feature block type from JSON: %w", ErrUnknownFeatureBlockType)
 	}
 	return obj, nil
+}
+
+func featureBlocksFromJSONRawMsg(jFeatureBlocks []*json.RawMessage) (FeatureBlocks, error) {
+	blocks, err := jsonRawMsgsToSerializables(jFeatureBlocks, jsonFeatureBlockSelector)
+	if err != nil {
+		return nil, err
+	}
+	var featureBlocks FeatureBlocks
+	featureBlocks.FromSerializables(blocks)
+	return featureBlocks, nil
 }

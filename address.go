@@ -69,6 +69,14 @@ func newAddress(addressType byte) (address Address, err error) {
 	}
 }
 
+func jsonAddressToAddress(jAddr JSONSerializable) (Address, error) {
+	addr, err := jAddr.ToSerializable()
+	if err != nil {
+		return nil, err
+	}
+	return addr.(Address), nil
+}
+
 // checks whether the given serializable is an address and also an existing type of address.
 func isValidAddrType(seri serializer.Serializable) error {
 	if seri == nil {
@@ -84,7 +92,7 @@ func isValidAddrType(seri serializer.Serializable) error {
 	return nil
 }
 
-func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (serializer.Serializable, error) {
+func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (Address, error) {
 	jsonAddr, err := DeserializeObjectFromJSON(jRawMsg, jsonAddressSelector)
 	if err != nil {
 		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
@@ -94,7 +102,7 @@ func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (serializer.Serializable, e
 	if err != nil {
 		return nil, err
 	}
-	return addr, nil
+	return addr.(Address), nil
 }
 
 func addressToJSONRawMsg(addr serializer.Serializable) (*json.RawMessage, error) {

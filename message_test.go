@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"testing"
+
 	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"testing"
 
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
@@ -26,15 +27,15 @@ func TestMessage_Deserialize(t *testing.T) {
 			return test{"ok - no payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.TransactionPayloadTypeID)
+			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.PayloadTransaction)
 			return test{"ok - transaction payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.MilestonePayloadTypeID)
+			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.PayloadMilestone)
 			return test{"ok - milestone payload", msgPayloadData, msgPayload, nil}
 		}(),
 		func() test {
-			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.IndexationPayloadTypeID)
+			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.PayloadIndexation)
 			return test{"ok - indexation payload", msgPayloadData, msgPayload, nil}
 		}(),
 	}
@@ -62,7 +63,7 @@ func TestMessage_Serialize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.TransactionPayloadTypeID)
+			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.PayloadTransaction)
 			return test{"ok - with transaction payload", msgPayload, msgPayloadData}
 		}(),
 		func() test {

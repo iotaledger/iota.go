@@ -13,18 +13,18 @@ type ExtendedOutput struct {
 	// The amount of IOTA tokens held by the output.
 	Amount uint64
 	// The native tokens held by the output.
-	NativeTokens serializer.Serializables
+	NativeTokens NativeTokens
 	// The deposit address.
-	Address serializer.Serializable
+	Address Address
 	// The feature blocks which modulate the constraints on the output.
-	Blocks serializer.Serializables
+	Blocks FeatureBlocks
 }
 
-func (e *ExtendedOutput) NativeTokenSet() serializer.Serializables {
+func (e *ExtendedOutput) NativeTokenSet() NativeTokens {
 	return e.NativeTokens
 }
 
-func (e *ExtendedOutput) FeatureBlocks() serializer.Serializables {
+func (e *ExtendedOutput) FeatureBlocks() FeatureBlocks {
 	return e.Blocks
 }
 
@@ -44,7 +44,7 @@ func (e *ExtendedOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 	return serializer.NewDeserializer(data).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, OutputExtended); err != nil {
+				if err := serializer.CheckTypeByte(data, byte(OutputExtended)); err != nil {
 					return fmt.Errorf("unable to deserialize extended output: %w", err)
 				}
 			}
@@ -56,20 +56,15 @@ func (e *ExtendedOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 		ReadNum(&e.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for extended output: %w", err)
 		}).
-		ReadSliceOfObjects(func(seri serializer.Serializables) { e.NativeTokens = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, func(ty uint32) (serializer.Serializable, error) {
+		ReadSliceOfObjects(&e.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, func(ty uint32) (serializer.Serializable, error) {
 			return &NativeToken{}, nil
 		}, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize native tokens for extended output: %w", err)
 		}).
-		ReadObject(func(seri serializer.Serializable) { e.Address = seri }, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&e.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for extended output: %w", err)
 		}).
-		ReadSliceOfObjects(func(seri serializer.Serializables) { e.Blocks = seri }, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, func(ty uint32) (serializer.Serializable, error) {
-			if !featureBlocksSupportedByExtendedOutput(ty) {
-				return nil, fmt.Errorf("%w: unable to deserialize extended output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(ty))
-			}
-			return FeatureBlockSelector(ty)
-		}, featBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&e.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, extendedOutputFeatureBlocksGuard, featBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
 		}).
 		AbortIf(func(err error) error {
@@ -81,6 +76,13 @@ func (e *ExtendedOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 			return nil
 		}).
 		Done()
+}
+
+func extendedOutputFeatureBlocksGuard(ty uint32) (serializer.Serializable, error) {
+	if !featureBlocksSupportedByExtendedOutput(ty) {
+		return nil, fmt.Errorf("%w: unable to deserialize extended output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
+	}
+	return FeatureBlockSelector(ty)
 }
 
 func featureBlocksSupportedByExtendedOutput(ty uint32) bool {
@@ -118,7 +120,9 @@ func (e *ExtendedOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([
 		}).
 		Do(func() {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
-				sort.Sort(serializer.SortedSerializables(e.NativeTokens))
+				seris := e.NativeTokens.ToSerializables()
+				sort.Sort(serializer.SortedSerializables(seris))
+				e.NativeTokens.FromSerializables(seris)
 			}
 		}).
 		WriteNum(OutputExtended, func(err error) error {
@@ -127,13 +131,13 @@ func (e *ExtendedOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([
 		WriteNum(e.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output amount: %w", err)
 		}).
-		WriteSliceOfObjects(e.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
+		WriteSliceOfObjects(&e.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
 			return fmt.Errorf("unable to serialize extended output native tokens: %w", err)
 		}).
 		WriteObject(e.Address, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output address: %w", err)
 		}).
-		WriteSliceOfObjects(e.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, featBlockArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
+		WriteSliceOfObjects(&e.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, featBlockArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
 			return fmt.Errorf("unable to serialize extended output feature blocks: %w", err)
 		}).
 		Serialize()
@@ -151,12 +155,12 @@ func (e *ExtendedOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jExtendedOutput.NativeTokens, err = serializablesToJSONRawMsgs(e.NativeTokens)
+	jExtendedOutput.NativeTokens, err = serializablesToJSONRawMsgs(e.NativeTokens.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
 
-	jExtendedOutput.Blocks, err = serializablesToJSONRawMsgs(e.Blocks)
+	jExtendedOutput.Blocks, err = serializablesToJSONRawMsgs(e.Blocks.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
@@ -197,14 +201,12 @@ func (j *jsonExtendedOutput) ToSerializable() (serializer.Serializable, error) {
 		return nil, err
 	}
 
-	e.NativeTokens, err = jsonRawMsgsToSerializables(j.NativeTokens, func(ty int) (JSONSerializable, error) {
-		return &jsonNativeToken{}, nil
-	})
+	e.NativeTokens, err = nativeTokensFromJSONRawMsg(j.NativeTokens)
 	if err != nil {
 		return nil, err
 	}
 
-	e.Blocks, err = jsonRawMsgsToSerializables(j.Blocks, jsonFeatureBlockSelector)
+	e.Blocks, err = featureBlocksFromJSONRawMsg(j.Blocks)
 	if err != nil {
 		return nil, err
 	}
