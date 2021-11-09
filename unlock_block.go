@@ -39,6 +39,10 @@ func UnlockBlockSelector(unlockBlockType uint32) (serializer.Serializable, error
 		seri = &SignatureUnlockBlock{}
 	case UnlockBlockReference:
 		seri = &ReferenceUnlockBlock{}
+	case UnlockBlockAlias:
+		seri = &AliasUnlockBlock{}
+	case UnlockBlockNFT:
+		seri = &NFTUnlockBlock{}
 	default:
 		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownUnlockBlockType, unlockBlockType)
 	}
@@ -49,9 +53,13 @@ func UnlockBlockSelector(unlockBlockType uint32) (serializer.Serializable, error
 func UnlockBlockTypeToString(ty UnlockBlockType) string {
 	switch ty {
 	case UnlockBlockSignature:
-		return "UnlockBlockSignature"
+		return "SignatureUnlockBlock"
 	case UnlockBlockReference:
-		return "UnlockBlockReference"
+		return "ReferenceUnlockBlock"
+	case UnlockBlockAlias:
+		return "AliasUnlockBlock"
+	case UnlockBlockNFT:
+		return "NFTUnlockBlock"
 	default:
 		return ""
 	}
@@ -82,6 +90,10 @@ func jsonUnlockBlockSelector(ty int) (JSONSerializable, error) {
 		obj = &jsonSignatureUnlockBlock{}
 	case UnlockBlockReference:
 		obj = &jsonReferenceUnlockBlock{}
+	case UnlockBlockAlias:
+		obj = &jsonAliasUnlockBlock{}
+	case UnlockBlockNFT:
+		obj = &NFTUnlockBlock{}
 	default:
 		return nil, fmt.Errorf("unable to decode unlock block type from JSON: %w", ErrUnknownUnlockBlockType)
 	}
