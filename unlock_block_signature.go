@@ -19,23 +19,13 @@ func (s *SignatureUnlockBlock) Type() UnlockBlockType {
 
 func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckMinByteLength(SignatureUnlockBlockMinSize, len(data)); err != nil {
-					return fmt.Errorf("invalid signature unlock block bytes: %w", err)
-				}
-				if err := serializer.CheckTypeByte(data, byte(UnlockBlockSignature)); err != nil {
-					return fmt.Errorf("unable to deserialize signature unlock block: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip milestone payload ID during deserialization: %w", err)
+		CheckTypePrefix(uint32(UnlockBlockSignature), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize signature unlock block: %w", err)
 		}).
 		ReadObject(&s.Signature, deSeriMode, serializer.TypeDenotationByte, SignatureSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize signature within signature unlock block: %w", err)
-		}).Done()
+		}).
+		Done()
 }
 
 func (s *SignatureUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {

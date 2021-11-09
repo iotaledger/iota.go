@@ -17,16 +17,8 @@ func (s *SimpleTokenScheme) Type() TokenSchemeType {
 
 func (s *SimpleTokenScheme) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, byte(TokenSchemeSimple)); err != nil {
-					return fmt.Errorf("unable to deserialize simple token scheme: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip token scheme type during deserialization: %w", err)
+		CheckTypePrefix(uint32(TokenSchemeSimple), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize simple token scheme: %w", err)
 		}).
 		Done()
 }

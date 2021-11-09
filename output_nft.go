@@ -60,16 +60,8 @@ func (n *NFTOutput) Type() OutputType {
 
 func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, byte(OutputNFT)); err != nil {
-					return fmt.Errorf("unable to deserialize NFT output: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip NFT output type during deserialization: %w", err)
+		CheckTypePrefix(uint32(OutputNFT), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize NFT output: %w", err)
 		}).
 		ReadNum(&n.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for NFT output: %w", err)

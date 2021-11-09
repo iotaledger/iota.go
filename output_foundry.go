@@ -56,16 +56,8 @@ func (f *FoundryOutput) Type() OutputType {
 
 func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, byte(OutputAlias)); err != nil {
-					return fmt.Errorf("unable to deserialize foundry output: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip foundry output type during deserialization: %w", err)
+		CheckTypePrefix(uint32(OutputAlias), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize foundry output: %w", err)
 		}).
 		ReadNum(&f.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for foundry output: %w", err)

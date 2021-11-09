@@ -42,23 +42,13 @@ func (s *IndexationFeatureBlock) ValidTagSize() error {
 
 func (s *IndexationFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, byte(FeatureBlockIndexation)); err != nil {
-					return fmt.Errorf("unable to deserialize indexation feature block: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip indexation feature block type during deserialization: %w", err)
+		CheckTypePrefix(uint32(FeatureBlockIndexation), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize indexation feature block: %w", err)
 		}).
 		ReadVariableByteSlice(&s.Tag, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize tag for indexation feature block: %w", err)
 		}, MaxIndexationTagLength).
-		AbortIf(func(err error) error {
-			return s.ValidTagSize()
-		}).
+		AbortIf(func(err error) error { return s.ValidTagSize() }).
 		Done()
 }
 
@@ -69,6 +59,9 @@ func (s *IndexationFeatureBlock) Serialize(deSeriMode serializer.DeSerialization
 				return s.ValidTagSize()
 			}
 			return nil
+		}).
+		WriteNum(byte(FeatureBlockIndexation), func(err error) error {
+			return fmt.Errorf("unable to serialize indexation feature block type ID: %w", err)
 		}).
 		WriteVariableByteSlice(s.Tag, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation feature block data: %w", err)

@@ -40,19 +40,8 @@ func (u *Indexation) PayloadType() PayloadType {
 
 func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckMinByteLength(IndexationBinSerializedMinSize, len(data)); err != nil {
-					return fmt.Errorf("invalid indexation bytes: %w", err)
-				}
-				if err := serializer.CheckType(data, uint32(PayloadIndexation)); err != nil {
-					return fmt.Errorf("unable to deserialize indexation: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.TypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip indexation payload ID during deserialization: %w", err)
+		CheckTypePrefix(uint32(PayloadIndexation), serializer.TypeDenotationUint32, func(err error) error {
+			return fmt.Errorf("unable to deserialize indexation: %w", err)
 		}).
 		ReadVariableByteSlice(&u.Index, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation index: %w", err)

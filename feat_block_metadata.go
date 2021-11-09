@@ -44,16 +44,8 @@ func (s *MetadataFeatureBlock) ValidDataSize() error {
 
 func (s *MetadataFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, byte(FeatureBlockMetadata)); err != nil {
-					return fmt.Errorf("unable to deserialize metadata feature block: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip metadata feature block type during deserialization: %w", err)
+		CheckTypePrefix(uint32(FeatureBlockMetadata), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize metadata feature block: %w", err)
 		}).
 		ReadVariableByteSlice(&s.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize data for metadata feature block: %w", err)
@@ -71,6 +63,9 @@ func (s *MetadataFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMo
 				return s.ValidDataSize()
 			}
 			return nil
+		}).
+		WriteNum(byte(FeatureBlockMetadata), func(err error) error {
+			return fmt.Errorf("unable to serialize metadata feature block type ID: %w", err)
 		}).
 		WriteVariableByteSlice(s.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to serialize metadata feature block data: %w", err)

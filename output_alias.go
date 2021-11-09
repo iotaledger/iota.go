@@ -68,16 +68,8 @@ func (a *AliasOutput) Type() OutputType {
 
 func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, byte(OutputAlias)); err != nil {
-					return fmt.Errorf("unable to deserialize alias output: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip alias output type during deserialization: %w", err)
+		CheckTypePrefix(uint32(OutputAlias), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize alias output: %w", err)
 		}).
 		ReadNum(&a.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for alias output: %w", err)

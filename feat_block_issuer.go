@@ -22,16 +22,8 @@ func (s *IssuerFeatureBlock) Type() FeatureBlockType {
 
 func (s *IssuerFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, byte(FeatureBlockIssuer)); err != nil {
-					return fmt.Errorf("unable to deserialize issuer feature block: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip issuer feature block type during deserialization: %w", err)
+		CheckTypePrefix(uint32(FeatureBlockIssuer), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize issuer feature block: %w", err)
 		}).
 		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for issuer feature block: %w", err)
@@ -47,6 +39,9 @@ func (s *IssuerFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMode
 				}
 			}
 			return nil
+		}).
+		WriteNum(byte(FeatureBlockIssuer), func(err error) error {
+			return fmt.Errorf("unable to serialize issuer feature block type ID: %w", err)
 		}).
 		WriteObject(s.Address, deSeriMode, func(err error) error {
 			return fmt.Errorf("unable to serialize issuer feature block address: %w", err)

@@ -22,19 +22,8 @@ type TreasuryTransaction struct {
 
 func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckMinByteLength(TreasuryTransactionByteSize, len(data)); err != nil {
-					return fmt.Errorf("invalid treasury transaction bytes: %w", err)
-				}
-				if err := serializer.CheckType(data, uint32(PayloadTreasuryTransaction)); err != nil {
-					return fmt.Errorf("unable to deserialize treasury transaction: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.TypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip treasury transaction payload ID during deserialization: %w", err)
+		CheckTypePrefix(uint32(PayloadTreasuryTransaction), serializer.TypeDenotationUint32, func(err error) error {
+			return fmt.Errorf("unable to deserialize treasury transaction: %w", err)
 		}).
 		ReadObject(&t.Input, deSeriMode, serializer.TypeDenotationByte, treasuryTxInputGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize treasury transaction input: %w", err)
