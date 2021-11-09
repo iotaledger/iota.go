@@ -12,15 +12,14 @@ import (
 type UnlockBlockType byte
 
 const (
-	// UnlockBlockSignature denotes a signature unlock block.
+	// UnlockBlockSignature denotes a SignatureUnlockBlock.
 	UnlockBlockSignature UnlockBlockType = iota
-	// UnlockBlockReference denotes a reference unlock block.
+	// UnlockBlockReference denotes a ReferenceUnlockBlock.
 	UnlockBlockReference
-
-	// SignatureUnlockBlockMinSize defines the minimum size of a signature unlock block.
-	SignatureUnlockBlockMinSize = serializer.SmallTypeDenotationByteSize + Ed25519SignatureSerializedBytesSize
-	// ReferenceUnlockBlockSize defines the size of a reference unlock block.
-	ReferenceUnlockBlockSize = serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
+	// UnlockBlockAlias denotes an AliasUnlockBlock.
+	UnlockBlockAlias
+	// UnlockBlockNFT denotes a NFTUnlockBlock.
+	UnlockBlockNFT
 )
 
 var (
@@ -99,11 +98,20 @@ func unlockBlocksFromJSONRawMsg(jUnlockBlocks []*json.RawMessage) (UnlockBlocks,
 	return unlockB, nil
 }
 
+// UnlockBlock is a block of data which unlocks inputs of a Transaction.
 type UnlockBlock interface {
 	serializer.Serializable
 
 	// Type returns the type of the UnlockBlock.
 	Type() UnlockBlockType
+}
+
+// ReferentialUnlockBlock is an UnlockBlock which references another UnlockBlock.
+type ReferentialUnlockBlock interface {
+	UnlockBlock
+
+	// Ref returns the index of the UnlockBlock this ReferentialUnlockBlock references.
+	Ref() uint16
 }
 
 // UnlockBlockValidatorFunc which given the index of an unlock block and the unlock block itself, runs validations and returns an error if any should fail.

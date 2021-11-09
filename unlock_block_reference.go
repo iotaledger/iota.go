@@ -8,10 +8,19 @@ import (
 	"github.com/iotaledger/hive.go/serializer"
 )
 
-// ReferenceUnlockBlock is an unlock block which references a previous unlock block.
+const (
+	// ReferenceUnlockBlockSize defines the size of a ReferenceUnlockBlock.
+	ReferenceUnlockBlockSize = serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
+)
+
+// ReferenceUnlockBlock is an UnlockBlock which references a previous unlock block.
 type ReferenceUnlockBlock struct {
-	// The other unlock block this reference unlock block references to.
-	Reference uint16 `json:"reference"`
+	// The other unlock block this ReferenceUnlockBlock references to.
+	Reference uint16
+}
+
+func (r *ReferenceUnlockBlock) Ref() uint16 {
+	return r.Reference
 }
 
 func (r *ReferenceUnlockBlock) Type() UnlockBlockType {
