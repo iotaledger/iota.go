@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/iotaledger/hive.go/serializer"
 )
 
@@ -76,7 +77,63 @@ func (o *Outputs) FromSerializables(seris serializer.Serializables) {
 	}
 }
 
-// Output defines the deposit of funds.
+// ToOutputsByType converts the Outputs slice to OutputsByType.
+func (o Outputs) ToOutputsByType() OutputsByType {
+	outputsByType := make(OutputsByType)
+	for _, output := range o {
+		slice, has := outputsByType[output.Type()]
+		if !has {
+			slice = make(Outputs, 0)
+		}
+		outputsByType[output.Type()] = append(slice, output)
+	}
+	return outputsByType
+}
+
+// OutputsByType is a map of OutputType(s) to slice of Output(s).
+type OutputsByType map[OutputType][]Output
+
+// NativeTokenOutputs returns a slice of Outputs which are NativeTokenOutput.
+func (outputs OutputsByType) NativeTokenOutputs() NativeTokenOutputs {
+	nativeTokenOutputs := make(NativeTokenOutputs, 0)
+	for _, slice := range outputs {
+		for _, output := range slice {
+			nativeTokenOutput, is := output.(NativeTokenOutput)
+			if !is {
+				continue
+			}
+			nativeTokenOutputs = append(nativeTokenOutputs, nativeTokenOutput)
+		}
+	}
+	return nativeTokenOutputs
+}
+
+// NativeTokenOutputs is a slice of NativeTokenOutput.
+type NativeTokenOutputs []NativeTokenOutput
+
+// Sum sums up the different NativeTokens occurring within the given outputs.
+func (ntOutputs NativeTokenOutputs) Sum() (NativeTokenSum, error) {
+	sum := make(map[NativeTokenID]*big.Int)
+	for _, output := range ntOutputs {
+		for _, nativeToken := range output.NativeTokenSet() {
+			if sign := nativeToken.Amount.Sign(); sign == -1 || sign == 0 {
+				return nil, ErrNativeTokenAmountLessThanEqualZero
+			}
+			val := sum[nativeToken.ID]
+			if val == nil {
+				val = new(big.Int)
+			}
+			val.Add(val, nativeToken.Amount)
+			if val.Cmp(abi.MaxUint256) == 1 {
+				return nil, ErrNativeTokenSumExceedsUint256
+			}
+			sum[nativeToken.ID] = val
+		}
+	}
+	return sum, nil
+}
+
+// Output defines a unit of output of a transaction.
 type Output interface {
 	serializer.Serializable
 

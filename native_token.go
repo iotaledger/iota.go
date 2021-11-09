@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -28,7 +29,13 @@ const (
 )
 
 var (
-	nativeTokensArrayRules = &serializer.ArrayRules{
+	// ErrNativeTokenAmountLessThanEqualZero gets returned when a NativeToken.Amount is not bigger than 0.
+	ErrNativeTokenAmountLessThanEqualZero = errors.New("native token must be a value bigger than zero")
+	// ErrNativeTokenSumExceedsUint256 gets returned when a NativeToken.Amount addition results in a value bigger than the max value of a uint256.
+	ErrNativeTokenSumExceedsUint256 = errors.New("native token sum exceeds max value of a uint256")
+	// ErrNativeTokenSumUnbalanced gets returned when two NativeTokenSum(s) are unbalanced.
+	ErrNativeTokenSumUnbalanced = errors.New("native token sums are unbalanced")
+	nativeTokensArrayRules      = &serializer.ArrayRules{
 		Min:            MinNativeTokenCountPerOutput,
 		Max:            MaxNativeTokenCountPerOutput,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
@@ -37,6 +44,30 @@ var (
 
 // NativeTokenID is an identifier which uniquely identifies a NativeToken.
 type NativeTokenID = [NativeTokenIDLength]byte
+
+func (ntID NativeTokenID) String() string {
+	return hex.EncodeToString(ntID[:])
+}
+
+// NativeTokenSum is a mapping of NativeTokenID to a sum value.
+type NativeTokenSum map[NativeTokenID]*big.Int
+
+// Balanced checks whether the set of NativeTokens are balanced between the two NativeTokenSum.
+func (nts NativeTokenSum) Balanced(other NativeTokenSum) error {
+	if len(nts) != len(other) {
+		return fmt.Errorf("%w: length mismatch, source %d, other %d", ErrNativeTokenSumUnbalanced, len(nts), len(other))
+	}
+	for id, sum := range nts {
+		otherSum := other[id]
+		if otherSum == nil {
+			return fmt.Errorf("%w: native token %s missing in other", ErrNativeTokenSumUnbalanced, id)
+		}
+		if sum.Cmp(otherSum) != 0 {
+			return fmt.Errorf("%w: sum mismatch, source %d, other %d", ErrNativeTokenSumUnbalanced)
+		}
+	}
+	return nil
+}
 
 // NativeTokens is a set of NativeToken.
 type NativeTokens []*NativeToken
@@ -58,13 +89,13 @@ func (n *NativeTokens) FromSerializables(seris serializer.Serializables) {
 
 // NativeToken represents a token natively
 type NativeToken struct {
-	NFTID  NativeTokenID
+	ID     NativeTokenID
 	Amount *big.Int
 }
 
 func (n *NativeToken) Deserialize(data []byte, _ serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		ReadArrayOf38Bytes(&n.NFTID, func(err error) error {
+		ReadArrayOf38Bytes(&n.ID, func(err error) error {
 			return fmt.Errorf("unable to deserialize ID for native token: %w", err)
 		}).
 		ReadUint256(n.Amount, func(err error) error {
@@ -75,7 +106,7 @@ func (n *NativeToken) Deserialize(data []byte, _ serializer.DeSerializationMode)
 
 func (n *NativeToken) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteBytes(n.NFTID[:], func(err error) error {
+		WriteBytes(n.ID[:], func(err error) error {
 			return fmt.Errorf("unable to serialize native token ID: %w", err)
 		}).
 		WriteUint256(n.Amount, func(err error) error {
@@ -86,7 +117,7 @@ func (n *NativeToken) Serialize(_ serializer.DeSerializationMode) ([]byte, error
 
 func (n *NativeToken) MarshalJSON() ([]byte, error) {
 	jNativeToken := &jsonNativeToken{}
-	jNativeToken.ID = hex.EncodeToString(n.NFTID[:])
+	jNativeToken.ID = hex.EncodeToString(n.ID[:])
 	jNativeToken.Amount = n.Amount.String()
 	return json.Marshal(jNativeToken)
 }
@@ -129,7 +160,7 @@ func (j *jsonNativeToken) ToSerializable() (serializer.Serializable, error) {
 	if err != nil {
 		return nil, err
 	}
-	copy(n.NFTID[:], nftIDBytes)
+	copy(n.ID[:], nftIDBytes)
 
 	var ok bool
 	n.Amount, ok = new(big.Int).SetString(j.Amount, 10)

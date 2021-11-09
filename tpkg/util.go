@@ -46,7 +46,7 @@ func RandTrytes(length int) trinary.Trytes {
 func RandNativeToken() *iotago.NativeToken {
 	b := RandBytes(iotago.NativeTokenIDLength)
 	nt := &iotago.NativeToken{Amount: RandUint256()}
-	copy(nt.NFTID[:], b)
+	copy(nt.ID[:], b)
 	return nt
 }
 
