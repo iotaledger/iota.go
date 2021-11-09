@@ -107,19 +107,8 @@ func (u *TransactionEssence) SigningMessage() ([]byte, error) {
 
 func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckMinByteLength(TransactionEssenceMinByteSize, len(data)); err != nil {
-					return fmt.Errorf("invalid transaction essence bytes: %w", err)
-				}
-				if err := serializer.CheckTypeByte(data, TransactionEssenceNormal); err != nil {
-					return fmt.Errorf("unable to deserialize transaction essence: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip transaction essence ID during deserialization: %w", err)
+		CheckTypePrefix(uint32(TransactionEssenceNormal), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize transaction essence: %w", err)
 		}).
 		ReadSliceOfObjects(&u.Inputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceInputsGuard, &inputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize inputs of transaction essence: %w", err)

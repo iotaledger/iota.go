@@ -20,18 +20,10 @@ func (s *ExpirationMilestoneIndexFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockExpirationMilestoneIndex
 }
 
-func (s *ExpirationMilestoneIndexFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (s *ExpirationMilestoneIndexFeatureBlock) Deserialize(data []byte, _ serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, byte(FeatureBlockExpirationMilestoneIndex)); err != nil {
-					return fmt.Errorf("unable to deserialize expiration milestone index feature block: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip expiration milestone index feature block type during deserialization: %w", err)
+		CheckTypePrefix(uint32(FeatureBlockExpirationMilestoneIndex), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize expiration milestone index feature block: %w", err)
 		}).
 		ReadNum(&s.MilestoneIndex, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone index for expiration milestone index feature block: %w", err)
@@ -41,6 +33,9 @@ func (s *ExpirationMilestoneIndexFeatureBlock) Deserialize(data []byte, deSeriMo
 
 func (s *ExpirationMilestoneIndexFeatureBlock) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
+		WriteNum(byte(FeatureBlockTimelockMilestoneIndex), func(err error) error {
+			return fmt.Errorf("unable to serialize expiration milestone index feature block type ID: %w", err)
+		}).
 		WriteNum(s.MilestoneIndex, func(err error) error {
 			return fmt.Errorf("unable to serialize expiration milestone index feature block milestone index: %w", err)
 		}).

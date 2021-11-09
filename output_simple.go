@@ -39,19 +39,8 @@ func (s *SimpleOutput) Deposit() (uint64, error) {
 
 func (s *SimpleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckMinByteLength(SimpleOutputBytesMinSize, len(data)); err != nil {
-					return fmt.Errorf("invalid simple output bytes: %w", err)
-				}
-				if err := serializer.CheckTypeByte(data, byte(OutputSimple)); err != nil {
-					return fmt.Errorf("unable to deserialize simple output: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip simple output type during deserialization: %w", err)
+		CheckTypePrefix(uint32(OutputSimple), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize simple output: %w", err)
 		}).
 		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for simple output: %w", err)

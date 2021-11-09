@@ -67,16 +67,8 @@ func (r *Receipt) Treasury() *TreasuryTransaction {
 
 func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckType(data, uint32(PayloadReceipt)); err != nil {
-					return fmt.Errorf("unable to deserialize receipt: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.TypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip receipt payload ID during deserialization: %w", err)
+		CheckTypePrefix(uint32(PayloadReceipt), serializer.TypeDenotationUint32, func(err error) error {
+			return fmt.Errorf("unable to deserialize receipt: %w", err)
 		}).
 		ReadNum(&r.MigratedAt, func(err error) error {
 			return fmt.Errorf("unable to deserialize receipt migrated index: %w", err)

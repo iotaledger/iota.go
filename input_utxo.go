@@ -77,19 +77,8 @@ func (u *UTXOInput) ID() UTXOInputID {
 
 func (u *UTXOInput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckMinByteLength(UTXOInputSize, len(data)); err != nil {
-					return fmt.Errorf("invalid UTXO input bytes: %w", err)
-				}
-				if err := serializer.CheckTypeByte(data, byte(InputUTXO)); err != nil {
-					return fmt.Errorf("unable to deserialize UTXO input: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip UTXO input type during deserialization: %w", err)
+		CheckTypePrefix(uint32(InputUTXO), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize UTXO input: %w", err)
 		}).
 		ReadArrayOf32Bytes(&u.TransactionID, func(err error) error {
 			return fmt.Errorf("unable to deserialize transaction ID in UTXO input: %w", err)

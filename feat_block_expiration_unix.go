@@ -23,16 +23,8 @@ func (s *ExpirationUnixFeatureBlock) Type() FeatureBlockType {
 
 func (s *ExpirationUnixFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, byte(FeatureBlockExpirationUnix)); err != nil {
-					return fmt.Errorf("unable to deserialize expiration unix feature block: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip expiration unix feature block type during deserialization: %w", err)
+		CheckTypePrefix(uint32(FeatureBlockExpirationUnix), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize expiration unix feature block: %w", err)
 		}).
 		ReadNum(&s.UnixTime, func(err error) error {
 			return fmt.Errorf("unable to deserialize unix time for expiration unix feature block: %w", err)
@@ -42,6 +34,9 @@ func (s *ExpirationUnixFeatureBlock) Deserialize(data []byte, deSeriMode seriali
 
 func (s *ExpirationUnixFeatureBlock) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
+		WriteNum(byte(FeatureBlockExpirationUnix), func(err error) error {
+			return fmt.Errorf("unable to serialize expiration unix feature block type ID: %w", err)
+		}).
 		WriteNum(s.UnixTime, func(err error) error {
 			return fmt.Errorf("unable to serialize expiration unix feature block unix time: %w", err)
 		}).

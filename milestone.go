@@ -331,19 +331,8 @@ func (m *Milestone) Sign(signingFunc MilestoneSigningFunc) error {
 
 func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckMinByteLength(MilestoneBinSerializedMinSize, len(data)); err != nil {
-					return fmt.Errorf("invalid milestone bytes: %w", err)
-				}
-				if err := serializer.CheckType(data, uint32(PayloadMilestone)); err != nil {
-					return fmt.Errorf("unable to deserialize milestone: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.TypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip milestone payload ID during deserialization: %w", err)
+		CheckTypePrefix(uint32(PayloadMilestone), serializer.TypeDenotationUint32, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone: %w", err)
 		}).
 		ReadNum(&m.Index, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone index: %w", err)

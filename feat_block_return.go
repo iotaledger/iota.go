@@ -23,16 +23,8 @@ func (s *ReturnFeatureBlock) Type() FeatureBlockType {
 
 func (s *ReturnFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckTypeByte(data, byte(FeatureBlockReturn)); err != nil {
-					return fmt.Errorf("unable to deserialize return feature block: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.SmallTypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip return feature block type during deserialization: %w", err)
+		CheckTypePrefix(uint32(FeatureBlockReturn), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize return feature block: %w", err)
 		}).
 		ReadNum(&s.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for return feature block: %w", err)
@@ -42,6 +34,9 @@ func (s *ReturnFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSe
 
 func (s *ReturnFeatureBlock) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
+		WriteNum(byte(FeatureBlockReturn), func(err error) error {
+			return fmt.Errorf("unable to serialize return feature block type ID: %w", err)
+		}).
 		WriteNum(s.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize return feature block amount: %w", err)
 		}).

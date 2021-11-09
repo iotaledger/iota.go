@@ -65,19 +65,8 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 	unlockBlockArrayRules := &serializer.ArrayRules{}
 
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckMinByteLength(TransactionBinSerializedMinSize, len(data)); err != nil {
-					return fmt.Errorf("invalid transaction bytes: %w", err)
-				}
-				if err := serializer.CheckType(data, uint32(PayloadTransaction)); err != nil {
-					return fmt.Errorf("unable to deserialize transaction: %w", err)
-				}
-			}
-			return nil
-		}).
-		Skip(serializer.TypeDenotationByteSize, func(err error) error {
-			return fmt.Errorf("unable to skip transaction payload ID during deserialization: %w", err)
+		CheckTypePrefix(uint32(PayloadTransaction), serializer.TypeDenotationUint32, func(err error) error {
+			return fmt.Errorf("unable to deserialize transaction: %w", err)
 		}).
 		ReadObject(&t.Essence, deSeriMode, serializer.TypeDenotationByte, TransactionEssenceSelector, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
