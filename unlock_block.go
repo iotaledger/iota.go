@@ -25,8 +25,8 @@ const (
 var (
 	// ErrSigUnlockBlocksNotUnique gets returned if unlock blocks making part of a transaction aren't unique.
 	ErrSigUnlockBlocksNotUnique = errors.New("signature unlock blocks must be unique")
-	// ErrRefUnlockBlockInvalidRef gets returned if a reference unlock block does not reference a signature unlock block.
-	ErrRefUnlockBlockInvalidRef = errors.New("reference unlock block must point to a previous signature unlock block")
+	// ErrRefUnlockBlockInvalidRef gets returned if a ReferentialUnlockBlock does not reference a SignatureUnlockBlock.
+	ErrRefUnlockBlockInvalidRef = errors.New("referential unlock block must point to a previous signature unlock block")
 	// ErrSigUnlockBlockHasNilSig gets returned if a signature unlock block contains a nil signature.
 	ErrSigUnlockBlockHasNilSig = errors.New("signature is nil")
 )
@@ -82,6 +82,22 @@ func (o *UnlockBlocks) FromSerializables(seris serializer.Serializables) {
 	}
 }
 
+// ToUnlockBlocksByType converts the UnlockBlocks slice to UnlockBlocksByType.
+func (o UnlockBlocks) ToUnlockBlocksByType() UnlockBlocksByType {
+	unlockBlocksByType := make(UnlockBlocksByType)
+	for _, unlockBlock := range o {
+		slice, has := unlockBlocksByType[unlockBlock.Type()]
+		if !has {
+			slice = make(UnlockBlocks, 0)
+		}
+		unlockBlocksByType[unlockBlock.Type()] = append(slice, unlockBlock)
+	}
+	return unlockBlocksByType
+}
+
+// UnlockBlocksByType is a map of UnlockBlockType(s) to slice of UnlockBlock(s).
+type UnlockBlocksByType map[UnlockBlockType][]UnlockBlock
+
 // jsonUnlockBlockSelector selects the json unlock block object for the given type.
 func jsonUnlockBlockSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
@@ -126,14 +142,14 @@ type ReferentialUnlockBlock interface {
 	Ref() uint16
 }
 
-// UnlockBlockValidatorFunc which given the index of an unlock block and the unlock block itself, runs validations and returns an error if any should fail.
+// UnlockBlockValidatorFunc which given the index and the UnlockBlock itself, runs validations and returns an error if any should fail.
 type UnlockBlockValidatorFunc func(index int, unlockBlock UnlockBlock) error
 
 // UnlockBlocksSigUniqueAndRefValidator returns a validator which checks that:
-//	1. signature unlock blocks are unique
-//	2. reference unlock blocks reference a previous signature unlock block
+//	1. SignatureUnlockBlock(s) are unique
+//	2. ReferenceUnlockBlock(s), AliasUnlockBlock(s), NFTUnlockBlock(s) reference a previous SignatureUnlockBlock
 func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
-	seenSigBlocks := map[int]struct{}{}
+	seenSigBlocks := map[uint16]struct{}{}
 	seenSigBlocksBytes := map[string]int{}
 	return func(index int, unlockBlock UnlockBlock) error {
 		switch x := unlockBlock.(type) {
@@ -150,18 +166,12 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 			if existingIndex, exists := seenSigBlocksBytes[string(sigBlockBytes)]; exists {
 				return fmt.Errorf("%w: signature unlock block at index %d is the same as %d", ErrSigUnlockBlocksNotUnique, index, existingIndex)
 			}
-			seenSigBlocksBytes[string(sigBlockBytes)] = index
 
-			switch x.Signature.(type) {
-			case *Ed25519Signature:
-				seenSigBlocks[index] = struct{}{}
-			default:
-				return fmt.Errorf("%w: signature unblock block at index %d holds unknown signature type %T", ErrUnknownSignatureType, index, x)
-			}
-		case *ReferenceUnlockBlock:
-			reference := int(x.Reference)
-			if _, has := seenSigBlocks[reference]; !has {
-				return fmt.Errorf("%w: %d references non existent unlock block %d", ErrRefUnlockBlockInvalidRef, index, reference)
+			seenSigBlocksBytes[string(sigBlockBytes)] = index
+			seenSigBlocks[uint16(index)] = struct{}{}
+		case ReferentialUnlockBlock:
+			if _, has := seenSigBlocks[x.Ref()]; !has {
+				return fmt.Errorf("%w: %d references non existent unlock block %d", ErrRefUnlockBlockInvalidRef, index, x.Ref())
 			}
 		default:
 			return fmt.Errorf("%w: unlock block at index %d is of unknown type %T", ErrUnknownUnlockBlockType, index, x)

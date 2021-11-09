@@ -198,16 +198,23 @@ type SigValidationFunc = func() error
 
 // SemanticValidationFunc is a function which when called tells whether
 // the transaction is passing a specific semantic validation rule or not.
-type SemanticValidationFunc = func(t *Transaction, utxos InputToOutputMapping) error
+type SemanticValidationFunc = func(t *Transaction, utxos InputSet) error
 
-// InputToOutputMapping maps inputs to their origin UTXOs.
-type InputToOutputMapping = map[UTXOInputID]Output
+// InputSet maps inputs to their origin UTXOs.
+type InputSet = map[UTXOInputID]Output
 
-// SemanticallyValidate semantically validates the Transaction
-// by checking that the given input UTXOs are spent entirely and the signatures
-// provided are valid. SyntacticallyValidate() should be called before SemanticallyValidate() to
+// SemanticValidationContext defines the context under which a semantic validation for a Transaction is happening.
+type SemanticValidationContext struct {
+	// The confirming milestone's index.
+	ConfirmingMilestoneIndex uint32
+	// The confirming milestone's unix seconds timestamp.
+	ConfirmingMilestoneUnix uint64
+}
+
+// SemanticallyValidate semantically validates the Transaction by checking that the semantic rules applied to the inputs
+// and outputs are fulfilled. SyntacticallyValidate() should be called before SemanticallyValidate() to
 // ensure that the essence part of the transaction is syntactically valid.
-func (t *Transaction) SemanticallyValidate(utxos InputToOutputMapping, semValFuncs ...SemanticValidationFunc) error {
+func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inputs InputSet, semValFuncs ...SemanticValidationFunc) error {
 
 	txEssence, ok := t.Essence.(*TransactionEssence)
 	if !ok {
@@ -219,7 +226,7 @@ func (t *Transaction) SemanticallyValidate(utxos InputToOutputMapping, semValFun
 		return err
 	}
 
-	inputSum, sigValidFuncs, err := t.SemanticallyValidateInputs(utxos, txEssence, txEssenceBytes)
+	inputSum, sigValidFuncs, err := t.SemanticallyValidateInputs(inputs, txEssence, txEssenceBytes)
 	if err != nil {
 		return err
 	}
@@ -234,7 +241,7 @@ func (t *Transaction) SemanticallyValidate(utxos InputToOutputMapping, semValFun
 	}
 
 	for _, semValFunc := range semValFuncs {
-		if err := semValFunc(t, utxos); err != nil {
+		if err := semValFunc(t, inputs); err != nil {
 			return err
 		}
 	}
@@ -249,29 +256,41 @@ func (t *Transaction) SemanticallyValidate(utxos InputToOutputMapping, semValFun
 	return nil
 }
 
+// TxSemanticValidationFunc is a function which given the context, input, outputs and
+// unlock blocks runs a specific semantic validation.
+type TxSemanticValidationFunc func(svCtx *SemanticValidationContext, inputs OutputsByType, outputs OutputsByType, unlockBlocks UnlockBlocksByType) error
+
+// TxSemanticNativeTokens validates following rules regarding NativeTokens:
+//	- If a FoundryOutput is absent in the outputs, then the NativeTokens between Inputs / Outputs must be balanced
+func TxSemanticNativeTokens() TxSemanticValidationFunc {
+	return func(svCtx *SemanticValidationContext, inputs OutputsByType, outputs OutputsByType, unlockBlocks UnlockBlocksByType) error {
+		return nil
+	}
+}
+
 // SemanticallyValidateInputs checks that every referenced UTXO is available, computes the input sum
 // and returns functions which can be called to verify the signatures.
 // This function should only be called from SemanticallyValidate().
-func (t *Transaction) SemanticallyValidateInputs(utxos InputToOutputMapping, transaction *TransactionEssence, txEssenceBytes []byte) (uint64, []SigValidationFunc, error) {
+func (t *Transaction) SemanticallyValidateInputs(inputs InputSet, essence *TransactionEssence, txEssenceBytes []byte) (uint64, []SigValidationFunc, error) {
 	var sigValidFuncs []SigValidationFunc
 	var inputSum uint64
 	seenInputAddr := make(map[string]int)
 
-	for i, input := range transaction.Inputs {
-		in, alreadySeen := input.(*UTXOInput)
-		if !alreadySeen {
+	for i, input := range essence.Inputs {
+		utxoInput, isUTXOInput := input.(IndexedUTXOReferencer)
+		if !isUTXOInput {
 			return 0, nil, fmt.Errorf("%w: unsupported input type at index %d", ErrUnknownInputType, i)
 		}
 
 		// check that we got the needed UTXO
-		utxoID := in.ID()
-		utxo, has := utxos[utxoID]
+		utxoID := utxoInput.Ref()
+		input, has := inputs[utxoID]
 		if !has {
 			return 0, nil, fmt.Errorf("%w: UTXO for ID %v is not provided (input at index %d)", ErrMissingUTXO, utxoID, i)
 		}
 
 		var err error
-		deposit, err := utxo.Deposit()
+		deposit, err := input.Deposit()
 		if err != nil {
 			return 0, nil, fmt.Errorf("unable to get deposit from UTXO %v (input at index %d): %w", utxoID, i, err)
 		}
@@ -282,7 +301,7 @@ func (t *Transaction) SemanticallyValidateInputs(utxos InputToOutputMapping, tra
 			return 0, nil, err
 		}
 
-		target, err := utxo.Target()
+		target, err := input.Target()
 		if err != nil {
 			return 0, nil, fmt.Errorf("unable to get target for UTXO %v: %w", utxoID, err)
 		}
@@ -316,7 +335,7 @@ func (t *Transaction) SemanticallyValidateInputs(utxos InputToOutputMapping, tra
 }
 
 // retrieves the SignatureUnlockBlock at the given index or follows
-// the reference of an ReferenceUnlockBlock to retrieve it.
+// the reference of a ReferenceUnlockBlock to retrieve it.
 func (t *Transaction) signatureUnlockBlock(index int) (*SignatureUnlockBlock, int, error) {
 	// indexation valid via SyntacticallyValidate()
 	switch ub := t.UnlockBlocks[index].(type) {
