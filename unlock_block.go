@@ -93,7 +93,7 @@ func jsonUnlockBlockSelector(ty int) (JSONSerializable, error) {
 	case UnlockBlockAlias:
 		obj = &jsonAliasUnlockBlock{}
 	case UnlockBlockNFT:
-		obj = &NFTUnlockBlock{}
+		obj = &jsonNFTUnlockBlock{}
 	default:
 		return nil, fmt.Errorf("unable to decode unlock block type from JSON: %w", ErrUnknownUnlockBlockType)
 	}
