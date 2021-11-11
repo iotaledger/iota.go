@@ -46,7 +46,8 @@ func MustParseAliasAddressFromHexString(hexAddr string) *AliasAddress {
 type AliasAddress [AliasAddressBytesLength]byte
 
 func (aliasAddr *AliasAddress) Account() AccountID {
-	return AliasID(*aliasAddr)
+	aliasID := AliasID(*aliasAddr)
+	return &aliasID
 }
 
 func (aliasAddr *AliasAddress) Equal(other Address) bool {
