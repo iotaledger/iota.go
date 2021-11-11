@@ -116,14 +116,6 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 		ReadSliceOfObjects(&u.Outputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceOutputsGuard, &outputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
 		}).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := ValidateOutputs(u.Outputs, OutputsPredicateAddrUnique()); err != nil {
-					return fmt.Errorf("%w: unable to deserialize outputs of transaction essence since they are invalid", err)
-				}
-			}
-			return nil
-		}).
 		ReadPayload(&u.Payload, deSeriMode, essencePayloadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
 		}).

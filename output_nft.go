@@ -22,6 +22,10 @@ var (
 // It is computed as the Blake2b-160 hash of the OutputID of the output which created the NFT.
 type NFTID [NFTIDLength]byte
 
+func (nftID *NFTID) Empty() bool {
+	return *nftID == emptyNFTID
+}
+
 func (nftID *NFTID) Matches(other AccountID) bool {
 	otherNFTID, isNFTID := other.(*NFTID)
 	if !isNFTID {

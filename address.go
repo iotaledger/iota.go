@@ -71,6 +71,8 @@ type AccountID interface {
 	Matches(other AccountID) bool
 	// ToAddress converts this AccountID into an AccountAddress.
 	ToAddress() AccountAddress
+	// Empty tells whether the AccountID is empty.
+	Empty() bool
 }
 
 // AddressSelector implements SerializableSelectorFunc for address types.

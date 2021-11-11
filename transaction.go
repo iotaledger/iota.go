@@ -189,10 +189,6 @@ func (t *Transaction) SyntacticallyValidate() error {
 	return nil
 }
 
-// SigValidationFunc is a function which when called tells whether
-// its signature verification computation was successful or not.
-type SigValidationFunc = func() error
-
 // SemanticValidationFunc is a function which when called tells whether
 // the transaction is passing a specific semantic validation rule or not.
 type SemanticValidationFunc = func(t *Transaction, utxos InputSet) error
@@ -205,21 +201,24 @@ type SemanticValidationContext struct {
 	ConfirmingMilestoneUnix uint64
 
 	// fields filled by iota.go
-	unlockedIdents     UnlockedIdentities
-	inputSet           InputSet
-	tx                 *Transaction
-	essence            *TransactionEssence
-	essenceBytes       []byte
-	inputsByType       OutputsByType
-	outputsByType      OutputsByType
-	unlockBlocksByType UnlockBlocksByType
+	unlockedIdents       UnlockedIdentities
+	inputSet             InputSet
+	tx                   *Transaction
+	essence              *TransactionEssence
+	essenceBytes         []byte
+	inputsByType         OutputsByType
+	inputsNonNewAliases  AliasOutputsSet
+	inputsNewAliases     AliasOutputsSet
+	inputAliases         AliasOutputsSet
+	outputsByType        OutputsByType
+	outputsNonNewAliases AliasOutputsSet
+	unlockBlocksByType   UnlockBlocksByType
 }
 
 // SemanticallyValidate semantically validates the Transaction by checking that the semantic rules applied to the inputs
 // and outputs are fulfilled. SyntacticallyValidate() should be called before SemanticallyValidate() to
 // ensure that the essence part of the transaction is syntactically valid.
 func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inputs InputSet, semValFuncs ...SemanticValidationFunc) error {
-
 	txEssence, ok := t.Essence.(*TransactionEssence)
 	if !ok {
 		return fmt.Errorf("%w: transaction is not *TransactionEssence", ErrInvalidTransactionEssence)
@@ -244,36 +243,47 @@ func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inp
 		}
 		return slice.ToOutputsByType()
 	}()
+	svCtx.inputsNonNewAliases, err = svCtx.inputsByType.NonNewAliasOutputsSet()
+	if err != nil {
+		return fmt.Errorf("unable to compute non-new aliases (input side): %w", err)
+	}
+	svCtx.inputsNewAliases = svCtx.inputSet.NewAliases()
+	svCtx.inputAliases, err = svCtx.inputsNewAliases.Merge(svCtx.inputsNonNewAliases)
+	if err != nil {
+		return fmt.Errorf("unable to compute alias input set: %w", err)
+	}
 	svCtx.outputsByType = txEssence.Outputs.ToOutputsByType()
+	svCtx.outputsNonNewAliases, err = svCtx.outputsByType.NonNewAliasOutputsSet()
+	if err != nil {
+		return fmt.Errorf("unable to compute non-new aliases (output side): %w", err)
+	}
 	svCtx.unlockBlocksByType = t.UnlockBlocks.ToUnlockBlocksByType()
 
-	inputSum, sigValidFuncs, err := t.SemanticallyValidateInputs(inputs, txEssence, txEssenceBytes)
-	if err != nil {
+	// TODO:
+	//	- iota token sum balance
+	// 	- max 256 native tokens in/out
+	// 	- etc.
+
+	// do not change the order of these functions as
+	// some of them might depend on certain mutations
+	// on the given SemanticValidationContext
+	if err := runSemanticValidations(svCtx,
+		TxSemanticInputUnlocks(),
+		TxSemanticTimelock(),
+		TxSemanticNativeTokens(),
+		TxSemanticAlias()); err != nil {
 		return err
 	}
 
-	outputSum, err := t.SemanticallyValidateOutputs(txEssence)
-	if err != nil {
-		return err
-	}
+	return nil
+}
 
-	if inputSum != outputSum {
-		return fmt.Errorf("%w: inputs sum %d, outputs sum %d", ErrInputOutputSumMismatch, inputSum, outputSum)
-	}
-
-	for _, semValFunc := range semValFuncs {
-		if err := semValFunc(t, inputs); err != nil {
+func runSemanticValidations(svCtx *SemanticValidationContext, checks ...TxSemanticValidationFunc) error {
+	for _, check := range checks {
+		if err := check(svCtx); err != nil {
 			return err
 		}
 	}
-
-	// sig verifications runs at the end as they are the most computationally expensive operation
-	for _, f := range sigValidFuncs {
-		if err := f(); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -295,48 +305,109 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 				return fmt.Errorf("%w: utxo for input %d not supplied", ErrMissingUTXO, inputIndex)
 			}
 
-			switch in := input.(type) {
-			case SingleIdentOutput:
-				if err := unlockSingleIdentOutput(svCtx, in, inputIndex); err != nil {
-					return err
-				}
-			case MultiIdentOutput:
-				if err := unlockMultiIdentOutput(svCtx, in, inputIndex); err != nil {
-					return err
-				}
-			default:
-				panic("unknown ident output in semantic unlocks")
+			if err := unlockOutput(svCtx, input, inputIndex); err != nil {
+				return err
 			}
-
 		}
 		return nil
 	}
 }
 
-func unlockMultiIdentOutput(svCtx *SemanticValidationContext, multiIdentOutput MultiIdentOutput, inputIndex int) error {
-	 svCtx.outputsByType.MultiIdentOutputsSet()
-	outputNonNewAliases, err := svCtx.outputsByType.NonNewAliasOutputsSet()
+func identToUnlock(svCtx *SemanticValidationContext, input Output, inputIndex int) (Address, error) {
+	switch in := input.(type) {
+	case SingleIdentOutput:
+		return in.Ident()
+	case MultiIdentOutput:
+		return identToUnlockFromMultiIdentOutput(svCtx, in, inputIndex)
+	default:
+		panic("unknown ident output type in semantic unlocks")
+	}
+}
+
+// TODO: abstract this all to work with MultiIdentOutput / AccountID
+func identToUnlockFromMultiIdentOutput(svCtx *SemanticValidationContext, inputMultiIdentOutput MultiIdentOutput, inputIndex int) (Address, error) {
+	inputAliasOutput, is := inputMultiIdentOutput.(*AliasOutput)
+	if !is {
+		// this can not happen because only AliasOutput implements MultiIdentOutput
+		panic("non alias output is implementing multi ident output in semantic unlocks")
+	}
+
+	aliasID := inputAliasOutput.AliasID
+	if aliasID.Empty() {
+		aliasID = AliasIDFromOutputID(svCtx.essence.Inputs[inputIndex].(IndexedUTXOReferencer).Ref())
+	}
+
+	ident := inputAliasOutput.StateController
+
+	// means a governance transition as either state did not change
+	// or the alias output is being destroyed
+	if outputAliasOutput, has := svCtx.outputsNonNewAliases[aliasID]; !has || inputAliasOutput.StateIndex == outputAliasOutput.StateIndex {
+		ident = inputAliasOutput.GovernanceController
+	}
+
+	return ident, nil
+}
+
+func checkSenderFeatureBlockIdentUnlock(svCtx *SemanticValidationContext, output Output) (Address, error) {
+	featBlockOutput, is := output.(FeatureBlockOutput)
+	if !is {
+		return nil, nil
+	}
+
+	featBlockSet, err := featBlockOutput.FeatureBlocks().Set()
+	if err != nil {
+		return nil, err
+	}
+
+	featBlockExpMsIndex := featBlockSet[FeatureBlockExpirationMilestoneIndex]
+	featBlockExpUnix := featBlockSet[FeatureBlockExpirationUnix]
+
+	if featBlockExpMsIndex == nil && featBlockExpUnix == nil {
+		return nil, nil
+	}
+
+	// existence guaranteed by syntactical validation
+	featBlockSender := featBlockSet[FeatureBlockSender].(*SenderFeatureBlock)
+
+	switch {
+	case featBlockExpMsIndex != nil && featBlockExpUnix != nil:
+		if featBlockExpMsIndex.(*ExpirationMilestoneIndexFeatureBlock).MilestoneIndex <= svCtx.ConfirmingMilestoneIndex &&
+			featBlockExpUnix.(*ExpirationUnixFeatureBlock).UnixTime <= svCtx.ConfirmingMilestoneUnix {
+			return featBlockSender.Address, nil
+		}
+	case featBlockExpMsIndex != nil:
+		if featBlockExpMsIndex.(*ExpirationMilestoneIndexFeatureBlock).MilestoneIndex <= svCtx.ConfirmingMilestoneIndex {
+			return featBlockSender.Address, nil
+		}
+	case featBlockExpUnix != nil:
+		if featBlockExpUnix.(*ExpirationUnixFeatureBlock).UnixTime <= svCtx.ConfirmingMilestoneUnix {
+			return featBlockSender.Address, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex int) error {
+	targetIdent, err := identToUnlock(svCtx, output, inputIndex)
+	if err != nil {
+		return fmt.Errorf("unable to retrieve ident to unlock of input %d: %w", inputIndex, err)
+	}
+
+	actualIdentToUnlock, err := checkSenderFeatureBlockIdentUnlock(svCtx, output)
 	if err != nil {
 		return err
 	}
-	accountID := multiIdentOutput.Account()
-	outputNonNewAliases[]
-}
-
-func unlockSingleIdentOutput(svCtx *SemanticValidationContext, singleIdentInput SingleIdentOutput, inputIndex int) error {
-	identToUnlock, err := singleIdentInput.Ident()
-	if err != nil {
-		return fmt.Errorf("unable to retrieve ident of input %d: %w", inputIndex, err)
+	if actualIdentToUnlock != nil {
+		targetIdent = actualIdentToUnlock
 	}
-
-	// TODO: examine feature block constraints
 
 	unlockBlock := svCtx.tx.UnlockBlocks[inputIndex]
 
-	switch ident := identToUnlock.(type) {
+	switch ident := targetIdent.(type) {
 	case AccountAddress:
 		referentialUnlockBlock, isReferentialUnlockBlock := unlockBlock.(ReferentialUnlockBlock)
-		if !isReferentialUnlockBlock || !referentialUnlockBlock.Chainable() || !referentialUnlockBlock.SourceAllowed(identToUnlock) {
+		if !isReferentialUnlockBlock || !referentialUnlockBlock.Chainable() || !referentialUnlockBlock.SourceAllowed(targetIdent) {
 			return fmt.Errorf("%w: input %d has an account address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(ident.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
 		}
 
@@ -346,14 +417,14 @@ func unlockSingleIdentOutput(svCtx *SemanticValidationContext, singleIdentInput 
 		}
 
 		// since this input is now unlocked, and it has an AccountAddress, it becomes automatically unlocked
-		if accountOutput, isAccountOutput := singleIdentInput.(AccountOutput); isAccountOutput {
+		if accountOutput, isAccountOutput := output.(AccountOutput); isAccountOutput {
 			svCtx.unlockedIdents[accountOutput.Account().ToAddress()] = uint16(inputIndex)
 		}
 
 	case DirectUnlockableAddress:
 		switch uBlock := unlockBlock.(type) {
 		case ReferentialUnlockBlock:
-			if uBlock.Chainable() || !uBlock.SourceAllowed(identToUnlock) {
+			if uBlock.Chainable() || !uBlock.SourceAllowed(targetIdent) {
 				return fmt.Errorf("%w: input %d has none account address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(ident.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
 			}
 
@@ -381,7 +452,7 @@ func unlockSingleIdentOutput(svCtx *SemanticValidationContext, singleIdentInput 
 
 // TxSemanticTimelock validates following rules regarding timelocked inputs:
 //	- Inputs with a TimelockMilestone<Index,Unix>FeatureBlock can only be unlocked if the confirming milestone allows it.
-func TxSemanticTimelock(TxSemanticValidationFunc) TxSemanticValidationFunc {
+func TxSemanticTimelock() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		for inputIndex, input := range svCtx.inputSet {
 			inputWithFeatureBlocks, is := input.(FeatureBlockOutput)
@@ -415,29 +486,12 @@ func TxSemanticTimelock(TxSemanticValidationFunc) TxSemanticValidationFunc {
 //		- Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated
 func TxSemanticAlias() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
-		inputsNewAliases := svCtx.inputSet.NewAliases()
-
-		outputsNonNewAliases, err := svCtx.outputsByType.NonNewAliasOutputsSet()
-		if err != nil {
-			return fmt.Errorf("unable to compute non-new aliases (output side): %w", err)
-		}
-
-		inputsNonNewAliases, err := svCtx.inputsByType.NonNewAliasOutputsSet()
-		if err != nil {
-			return fmt.Errorf("unable to compute non-new aliases (input side): %w", err)
-		}
-
-		inputAliases, err := inputsNewAliases.Merge(inputsNonNewAliases)
-		if err != nil {
-			return fmt.Errorf("unable to compute alias input set: %w", err)
-		}
-
 		// for every non-new alias, there must be a corresponding alias on the input side (new or existing)
-		if err := outputsNonNewAliases.Includes(inputAliases); err != nil {
+		if err := svCtx.outputsNonNewAliases.Includes(svCtx.inputAliases); err != nil {
 			return fmt.Errorf("missing aliases on the input side to satisfy non-new aliases on the output side: %w", err)
 		}
 
-		if err := inputAliases.EveryTuple(outputsNonNewAliases, func(in *AliasOutput, out *AliasOutput) error {
+		if err := svCtx.inputAliases.EveryTuple(svCtx.outputsNonNewAliases, func(in *AliasOutput, out *AliasOutput) error {
 			return in.TransitionWith(out)
 		}); err != nil {
 			return err
@@ -452,7 +506,7 @@ func TxSemanticAlias() TxSemanticValidationFunc {
 //	- Within transitioning FoundryOutput(s) only the circulating supply and contained NativeTokens can change.
 //	- TODO: The newly created FoundryOutput(s) belonging to an alias account must be sorted on the output side according to their
 //	  serial number and must fill the gap between the alias account's starting/closing(inclusive) foundry counter.
-func TxSemanticNativeTokens(originInputs Outputs, originOutput Outputs) TxSemanticValidationFunc {
+func TxSemanticNativeTokens() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		inputNativeTokens, err := svCtx.inputsByType.NativeTokenOutputs().Sum()
 		if err != nil {
@@ -494,150 +548,6 @@ func TxSemanticNativeTokens(originInputs Outputs, originOutput Outputs) TxSemant
 
 		return nil
 	}
-}
-
-// SemanticallyValidateInputs checks that every referenced UTXO is available, computes the input sum
-// and returns functions which can be called to verify the signatures.
-// This function should only be called from SemanticallyValidate().
-func (t *Transaction) SemanticallyValidateInputs(inputs InputSet, essence *TransactionEssence, txEssenceBytes []byte) (uint64, []SigValidationFunc, error) {
-	var sigValidFuncs []SigValidationFunc
-	var inputSum uint64
-	seenInputAddr := make(map[string]int)
-
-	for i, input := range essence.Inputs {
-		utxoInput, isUTXOInput := input.(IndexedUTXOReferencer)
-		if !isUTXOInput {
-			return 0, nil, fmt.Errorf("%w: unsupported input type at index %d", ErrUnknownInputType, i)
-		}
-
-		// check that we got the needed UTXO
-		utxoID := utxoInput.Ref()
-		input, has := inputs[utxoID]
-		if !has {
-			return 0, nil, fmt.Errorf("%w: UTXO for ID %v is not provided (input at index %d)", ErrMissingUTXO, utxoID, i)
-		}
-
-		var err error
-		deposit, err := input.Deposit()
-		if err != nil {
-			return 0, nil, fmt.Errorf("unable to get deposit from UTXO %v (input at index %d): %w", utxoID, i, err)
-		}
-		inputSum += deposit
-
-		sigBlock, sigBlockIndex, err := t.signatureUnlockBlock(i)
-		if err != nil {
-			return 0, nil, err
-		}
-
-		target, err := input.Target()
-		if err != nil {
-			return 0, nil, fmt.Errorf("unable to get target for UTXO %v: %w", utxoID, err)
-		}
-
-		// change this logic here once we got tx output types without addrs
-		addr, isAddr := target.(Address)
-		if !isAddr {
-			return 0, nil, fmt.Errorf("target for UTXO %v must be an address: %w", utxoID, err)
-		}
-
-		usedSigBlockIndex, alreadySeen := seenInputAddr[addr.String()]
-		if alreadySeen {
-			if usedSigBlockIndex != sigBlockIndex {
-				return 0, nil, fmt.Errorf("%w: target for UTXO %v uses a different signature unlock block (%d) than a previous UTXO (%d) for the same address", ErrInputSignatureUnlockBlockInvalid, utxoID, sigBlockIndex, usedSigBlockIndex)
-			}
-			// we can skip here as we already created a sig validation func
-			continue
-		}
-
-		sigValidF, err := createSigValidationFunc(i, sigBlock.Signature, sigBlockIndex, txEssenceBytes, addr)
-		if err != nil {
-			return 0, nil, err
-		}
-
-		seenInputAddr[addr.String()] = sigBlockIndex
-
-		sigValidFuncs = append(sigValidFuncs, sigValidF)
-	}
-
-	return inputSum, sigValidFuncs, nil
-}
-
-// retrieves the SignatureUnlockBlock at the given index or follows
-// the reference of a ReferenceUnlockBlock to retrieve it.
-func (t *Transaction) signatureUnlockBlock(index int) (*SignatureUnlockBlock, int, error) {
-	// indexation valid via SyntacticallyValidate()
-	switch ub := t.UnlockBlocks[index].(type) {
-	case *SignatureUnlockBlock:
-		return ub, index, nil
-	case *ReferenceUnlockBlock:
-		// it is ensured by the syntactical validation that
-		// the corresponding signature unlock block exists
-		sigUBIndex := int(ub.Reference)
-		return t.UnlockBlocks[sigUBIndex].(*SignatureUnlockBlock), sigUBIndex, nil
-	default:
-		return nil, 0, fmt.Errorf("%w: unsupported unlock block type at index %d", ErrUnknownUnlockBlockType, index)
-	}
-}
-
-// creates a SigValidationFunc appropriate for the underlying signature type.
-func createSigValidationFunc(pos int, sig serializer.Serializable, sigBlockIndex int, txEssenceBytes []byte, addr Address) (SigValidationFunc, error) {
-	switch addr := addr.(type) {
-	case *Ed25519Address:
-		return createEd25519SigValidationFunc(pos, sig, sigBlockIndex, addr, txEssenceBytes)
-	case *BLSAddress:
-		return createBLSSigValidationFunc(pos, sig, sigBlockIndex, addr, txEssenceBytes)
-	default:
-		return nil, fmt.Errorf("%w: unsupported address type at index %d", ErrUnknownAddrType, pos)
-	}
-}
-
-// creates a SigValidationFunc validating the given Ed25519Signature against the Ed25519Address.
-func createEd25519SigValidationFunc(pos int, sig serializer.Serializable, sigBlockIndex int, addr *Ed25519Address, essenceBytes []byte) (SigValidationFunc, error) {
-	ed25519Sig, isEd25519Sig := sig.(*Ed25519Signature)
-	if !isEd25519Sig {
-		return nil, fmt.Errorf("%w: UTXO at index %d has an Ed25519 address but its corresponding signature is of type %T (at index %d)", ErrSignatureAndAddrIncompatible, pos, sig, sigBlockIndex)
-	}
-
-	return func() error {
-		if err := ed25519Sig.Valid(essenceBytes, addr); err != nil {
-			return fmt.Errorf("%w: input at index %d, signature block at index %d", err, pos, sigBlockIndex)
-		}
-		return nil
-	}, nil
-}
-
-// creates a SigValidationFunc validating the given BLSSignature against the BLSAddress.
-func createBLSSigValidationFunc(pos int, sig serializer.Serializable, sigBlockIndex int, addr *BLSAddress, essenceBytes []byte) (SigValidationFunc, error) {
-	blsSig, isBLSSig := sig.(*BLSSignature)
-	if !isBLSSig {
-		return nil, fmt.Errorf("%w: UTXO at index %d has a BLS address but its corresponding signature is of type %T (at index %d)", ErrSignatureAndAddrIncompatible, pos, sig, sigBlockIndex)
-	}
-
-	return func() error {
-		if err := blsSig.Valid(essenceBytes, addr); err != nil {
-			return fmt.Errorf("%w: input at index %d, signature block at index %d", err, pos, sigBlockIndex)
-		}
-		return nil
-	}, nil
-}
-
-// SemanticallyValidateOutputs accumulates the sum of all outputs.
-// This function should only be called from SemanticallyValidate().
-func (t *Transaction) SemanticallyValidateOutputs(transaction *TransactionEssence) (uint64, error) {
-	var outputSum uint64
-	for i, output := range transaction.Outputs {
-		out, ok := output.(Output)
-		if !ok {
-			return 0, fmt.Errorf("%w: unsupported output type at index %d", ErrUnknownOutputType, i)
-		}
-		deposit, err := out.Deposit()
-		if err != nil {
-			return 0, fmt.Errorf("unable to get deposit from output at index %d: %w", i, err)
-		}
-		outputSum += deposit
-	}
-
-	return outputSum, nil
 }
 
 // jsonTransaction defines the json representation of a Transaction.

@@ -46,7 +46,8 @@ func MustParseNFTAddressFromHexString(hexAddr string) *NFTAddress {
 type NFTAddress [NFTAddressBytesLength]byte
 
 func (nftAddr *NFTAddress) Account() AccountID {
-	return NFTID(*nftAddr)
+	nftID := NFTID(*nftAddr)
+	return &nftID
 }
 
 func (nftAddr *NFTAddress) Equal(other Address) bool {

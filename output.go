@@ -5,11 +5,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math/big"
-	"strings"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/iotaledger/hive.go/serializer"
+	"math/big"
 )
 
 const (
@@ -61,6 +59,8 @@ var (
 	ErrMultiIdentOutputMismatch = errors.New("multi ident output mismatch")
 	// ErrNonUniqueMultiIdentOutputs gets returned when multiple MultiIdentOutput(s) with the same AccountID exist within an OutputsByType.
 	ErrNonUniqueMultiIdentOutputs = errors.New("non unique multi ident within outputs")
+	// ErrAccountMissing gets returned when an account is missing.
+	ErrAccountMissing = errors.New("account missing")
 )
 
 // Outputs is a slice of Output.
@@ -149,9 +149,13 @@ func (outputs OutputsByType) MultiIdentOutputs() MultiIdentOutputs {
 
 // MultiIdentOutputsSet returns a map of AccountID to MultiIdentOutput.
 // If multiple MultiIdentOutput(s) exist for a given AccountID, an error is returned.
+// Empty AccountIDs are ignored.
 func (outputs OutputsByType) MultiIdentOutputsSet() (MultiIdentOutputsSet, error) {
 	multiIdentOutputsSet := make(MultiIdentOutputsSet, 0)
 	for _, output := range outputs.MultiIdentOutputs() {
+		if output.Account().Empty() {
+			continue
+		}
 		if _, has := multiIdentOutputsSet[output.Account()]; has {
 			return nil, ErrNonUniqueMultiIdentOutputs
 		}
@@ -395,46 +399,6 @@ func (oih OutputIDHex) AsUTXOInput() (*UTXOInput, error) {
 
 // OutputsPredicateFunc which given the index of an output and the output itself, runs validations and returns an error if any should fail.
 type OutputsPredicateFunc func(index int, output Output) error
-
-// OutputsPredicateAddrUnique returns an OutputsPredicateFunc which checks that all addresses are unique per OutputType.
-// Deprecated: an output set no longer needs to hold unique addresses per output.
-func OutputsPredicateAddrUnique() OutputsPredicateFunc {
-	set := map[OutputType]map[string]int{}
-	return func(index int, dep Output) error {
-		var b strings.Builder
-
-		target, err := dep.Target()
-		if err != nil {
-			return fmt.Errorf("unable to get target of output: %w", err)
-		}
-
-		if target == nil {
-			return nil
-		}
-
-		// can't be reduced to one b.Write()
-		switch addr := target.(type) {
-		case *Ed25519Address:
-			if _, err := b.Write(addr[:]); err != nil {
-				return fmt.Errorf("%w: unable to serialize Ed25519 address in addr unique validator", err)
-			}
-		}
-
-		k := b.String()
-
-		m, ok := set[dep.Type()]
-		if !ok {
-			m = make(map[string]int)
-			set[dep.Type()] = m
-		}
-
-		if j, has := m[k]; has {
-			return fmt.Errorf("%w: output %d and %d share the same address", ErrOutputAddrNotUnique, j, index)
-		}
-		m[k] = index
-		return nil
-	}
-}
 
 // OutputsPredicateDepositAmount returns an OutputsPredicateFunc which checks that:
 //	- every output deposits more than zero

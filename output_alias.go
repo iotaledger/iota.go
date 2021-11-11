@@ -33,6 +33,10 @@ var (
 // It is computed as the Blake2b-160 hash of the OutputID of the output which created the account.
 type AliasID [AliasIDLength]byte
 
+func (id *AliasID) Empty() bool {
+	return *id == emptyAliasID
+}
+
 func (id AliasID) String() string {
 	return hex.EncodeToString(id[:])
 }
