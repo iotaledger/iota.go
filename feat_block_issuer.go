@@ -16,6 +16,15 @@ type IssuerFeatureBlock struct {
 	Address Address
 }
 
+func (s *IssuerFeatureBlock) Equal(other FeatureBlock) bool {
+	otherBlock, is := other.(*IssuerFeatureBlock)
+	if !is {
+		return false
+	}
+
+	return s.Address.Equal(otherBlock.Address)
+}
+
 func (s *IssuerFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockIssuer
 }

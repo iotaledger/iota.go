@@ -19,6 +19,15 @@ type ReferenceUnlockBlock struct {
 	Reference uint16
 }
 
+func (r *ReferenceUnlockBlock) SourceAllowed(address Address) bool {
+	_, ok := address.(AccountAddress)
+	return !ok
+}
+
+func (r *ReferenceUnlockBlock) Chainable() bool {
+	return false
+}
+
 func (r *ReferenceUnlockBlock) Ref() uint16 {
 	return r.Reference
 }

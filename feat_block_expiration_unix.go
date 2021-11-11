@@ -17,6 +17,15 @@ type ExpirationUnixFeatureBlock struct {
 	UnixTime uint64
 }
 
+func (s *ExpirationUnixFeatureBlock) Equal(other FeatureBlock) bool {
+	otherBlock, is := other.(*ExpirationUnixFeatureBlock)
+	if !is {
+		return false
+	}
+
+	return s.UnixTime == otherBlock.UnixTime
+}
+
 func (s *ExpirationUnixFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockExpirationUnix
 }

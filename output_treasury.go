@@ -22,10 +22,6 @@ func (t *TreasuryOutput) Deposit() (uint64, error) {
 	return t.Amount, nil
 }
 
-func (t *TreasuryOutput) Target() (serializer.Serializable, error) {
-	return nil, nil
-}
-
 func (t *TreasuryOutput) Type() OutputType {
 	return OutputTreasury
 }

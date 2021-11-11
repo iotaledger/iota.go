@@ -20,7 +20,21 @@ var (
 
 // NFTID is the identifier for an NFT.
 // It is computed as the Blake2b-160 hash of the OutputID of the output which created the NFT.
-type NFTID = [NFTIDLength]byte
+type NFTID [NFTIDLength]byte
+
+func (nftID *NFTID) Matches(other AccountID) bool {
+	otherNFTID, isNFTID := other.(*NFTID)
+	if !isNFTID {
+		return false
+	}
+	return *nftID == *otherNFTID
+}
+
+func (nftID NFTID) ToAddress() AccountAddress {
+	var addr NFTAddress
+	copy(addr[:], nftID[:])
+	return &addr
+}
 
 // NFTOutput is an output type used to implement non-fungible tokens.
 type NFTOutput struct {
@@ -38,6 +52,10 @@ type NFTOutput struct {
 	Blocks FeatureBlocks
 }
 
+func (n *NFTOutput) Account() AccountID {
+	return &n.NFTID
+}
+
 func (n *NFTOutput) NativeTokenSet() NativeTokens {
 	return n.NativeTokens
 }
@@ -50,7 +68,7 @@ func (n *NFTOutput) Deposit() (uint64, error) {
 	return n.Amount, nil
 }
 
-func (n *NFTOutput) Target() (serializer.Serializable, error) {
+func (n *NFTOutput) Ident() (Address, error) {
 	return n.Address, nil
 }
 
@@ -74,7 +92,7 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadObject(&n.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for NFT output: %w", err)
 		}).
-		ReadArrayOf20Bytes(&n.NFTID, func(err error) error {
+		ReadBytesInPlace(n.NFTID[:], func(err error) error {
 			return fmt.Errorf("unable to deserialize NFT ID for NFT output: %w", err)
 		}).
 		ReadVariableByteSlice(&n.ImmutableMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {

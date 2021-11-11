@@ -14,6 +14,15 @@ type TimelockMilestoneIndexFeatureBlock struct {
 	MilestoneIndex uint32
 }
 
+func (s *TimelockMilestoneIndexFeatureBlock) Equal(other FeatureBlock) bool {
+	otherBlock, is := other.(*TimelockMilestoneIndexFeatureBlock)
+	if !is {
+		return false
+	}
+
+	return s.MilestoneIndex == otherBlock.MilestoneIndex
+}
+
 func (s *TimelockMilestoneIndexFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockTimelockMilestoneIndex
 }

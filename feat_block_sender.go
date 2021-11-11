@@ -3,7 +3,6 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/iotaledger/hive.go/serializer"
 )
 
@@ -12,6 +11,15 @@ import (
 // for the SenderFeatureBlock block to be valid.
 type SenderFeatureBlock struct {
 	Address Address
+}
+
+func (s *SenderFeatureBlock) Equal(other FeatureBlock) bool {
+	otherBlock, is := other.(*SenderFeatureBlock)
+	if !is {
+		return false
+	}
+
+	return s.Address.Equal(otherBlock.Address)
 }
 
 func (s *SenderFeatureBlock) Type() FeatureBlockType {

@@ -19,6 +19,15 @@ type NFTUnlockBlock struct {
 	Reference uint16
 }
 
+func (r *NFTUnlockBlock) SourceAllowed(address Address) bool {
+	_, ok := address.(*NFTAddress)
+	return ok
+}
+
+func (r *NFTUnlockBlock) Chainable() bool {
+	return true
+}
+
 func (r *NFTUnlockBlock) Ref() uint16 {
 	return r.Reference
 }

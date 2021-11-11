@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -26,6 +27,15 @@ var (
 // interpreted by higher layer applications.
 type MetadataFeatureBlock struct {
 	Data []byte
+}
+
+func (s *MetadataFeatureBlock) Equal(other FeatureBlock) bool {
+	otherBlock, is := other.(*MetadataFeatureBlock)
+	if !is {
+		return false
+	}
+
+	return bytes.Equal(s.Data, otherBlock.Data)
 }
 
 func (s *MetadataFeatureBlock) Type() FeatureBlockType {
