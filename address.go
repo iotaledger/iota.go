@@ -47,11 +47,51 @@ type Address interface {
 
 	// Bech32 encodes the address as a bech32 string.
 	Bech32(hrp NetworkPrefix) string
+
+	// Equal checks whether other is equal to this Address.
+	Equal(other Address) bool
+}
+
+// DirectUnlockableAddress is a type of Address which can be directly unlocked.
+type DirectUnlockableAddress interface {
+	Address
+	// Unlock unlocks this DirectUnlockableAddress given the Signature.
+	Unlock(msg []byte, sig Signature) error
+}
+
+// AccountAddress is a type of Address representing ownership of an output by an AccountOutput.
+type AccountAddress interface {
+	Address
+	Account() AccountID
+}
+
+// AccountID represents the account ID owning an AccountAddress.
+type AccountID interface {
+	// Matches checks whether other matches this AccountID.
+	Matches(other AccountID) bool
+	// ToAddress converts this AccountID into an AccountAddress.
+	ToAddress() AccountAddress
 }
 
 // AddressSelector implements SerializableSelectorFunc for address types.
 func AddressSelector(addressType uint32) (serializer.Serializable, error) {
 	return newAddress(byte(addressType))
+}
+
+// AddressTypeToString returns the name for the given AddressType.
+func AddressTypeToString(ty AddressType) string {
+	switch ty {
+	case AddressEd25519:
+		return "Ed25519Address"
+	case AddressBLS:
+		return "BLSAddress"
+	case AddressAlias:
+		return "AliasAddress"
+	case AddressNFT:
+		return "NFTAddress"
+	default:
+		return "unknown address typ"
+	}
 }
 
 func newAddress(addressType byte) (address Address, err error) {

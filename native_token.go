@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -20,9 +21,6 @@ const (
 	MaxNativeTokensCount = 256
 
 	TokenTagLength = 12
-
-	// FoundryIDLength is the byte length of a FoundryID consisting out of the alias address, serial number and token scheme.
-	FoundryIDLength = AliasAddressSerializedBytesSize + serializer.UInt32ByteSize + serializer.OneByte
 
 	// NativeTokenIDLength is the byte length of a NativeTokenID consisting out of the FoundryID plus TokenTag.
 	NativeTokenIDLength = FoundryIDLength + TokenTagLength
@@ -43,16 +41,24 @@ var (
 )
 
 // NativeTokenID is an identifier which uniquely identifies a NativeToken.
-type NativeTokenID = [NativeTokenIDLength]byte
+type NativeTokenID [NativeTokenIDLength]byte
 
 func (ntID NativeTokenID) String() string {
 	return hex.EncodeToString(ntID[:])
+}
+
+// FoundryID returns the FoundryID to which this NativeTokenID belongs to.
+func (ntID NativeTokenID) FoundryID() FoundryID {
+	var foundryID FoundryID
+	copy(foundryID[:], ntID[:])
+	return foundryID
 }
 
 // NativeTokenSum is a mapping of NativeTokenID to a sum value.
 type NativeTokenSum map[NativeTokenID]*big.Int
 
 // Balanced checks whether the set of NativeTokens are balanced between the two NativeTokenSum.
+// This function is only appropriate for checking NativeToken balances if there are no underlying foundry state transitions.
 func (nts NativeTokenSum) Balanced(other NativeTokenSum) error {
 	if len(nts) != len(other) {
 		return fmt.Errorf("%w: length mismatch, source %d, other %d", ErrNativeTokenSumUnbalanced, len(nts), len(other))
@@ -63,9 +69,79 @@ func (nts NativeTokenSum) Balanced(other NativeTokenSum) error {
 			return fmt.Errorf("%w: native token %s missing in other", ErrNativeTokenSumUnbalanced, id)
 		}
 		if sum.Cmp(otherSum) != 0 {
-			return fmt.Errorf("%w: sum mismatch, source %d, other %d", ErrNativeTokenSumUnbalanced)
+			return fmt.Errorf("%w: sum mismatch, source %d, other %d", ErrNativeTokenSumUnbalanced, sum, other)
 		}
 	}
+	return nil
+}
+
+// BalancedWithDiffs works like Balanced but incorporates the foundry state transitions:
+//	- There must not be a specific NativeToken set on the input side if on the output side its foundry is created.
+//	- If a specific NativeToken set is balanced, then either no foundry diff is present,
+//	  the foundry is destroyed or the foundry transitions with a zero diff.
+//	- If a specific NativeToken set is unbalanced then a foundry diff with transition FoundryTransitionStateChange balancing that set must exist.
+//	- For all new NativeToken sets on the outputs side, foundry diffs with FoundryTransitionNew balancing those sets must exist.
+func (nts NativeTokenSum) BalancedWithDiffs(other NativeTokenSum, diffs FoundryStateDiffs) error {
+	for id, srcSum := range nts {
+		otherSum := other[id]
+		if otherSum == nil {
+			return fmt.Errorf("%w: native token %s missing in other", ErrNativeTokenSumUnbalanced, id)
+		}
+
+		foundryDiff := diffs[id.FoundryID()]
+
+		// impossible invariant as the tokens already exist on the input side
+		if foundryDiff != nil && foundryDiff.Transition == FoundryTransitionNew {
+			return fmt.Errorf("%w: foundry %s can not be newly created if its tokens already exist on the inputs", ErrInvalidFoundryTransition, id.FoundryID())
+		}
+
+		switch srcSum.Cmp(otherSum) {
+		// equal
+		case 0:
+			// we either have a foundry diff which state transitions with 0 delta or gets destroyed,
+			// or we don't have a diff at all
+			if foundryDiff == nil || foundryDiff.Transition == FoundryTransitionDestroyed {
+				continue
+			}
+			// here we have a state transition which must be zero
+			if foundryDiff.SupplyDiff.Cmp(common.Big0) != 0 {
+				return fmt.Errorf("%w: native tokens are balanced on inputs/outputs but foundry %s's circulating supply diff is %s instead of zero", ErrInvalidFoundryTransition, id.FoundryID(), foundryDiff.SupplyDiff)
+			}
+		default:
+			// must have a foundry diff with the appropriate diff
+			if foundryDiff == nil {
+				return fmt.Errorf("%w: missing foundry %s for native token %s", ErrMissingFoundryTransition, id.FoundryID(), id)
+			}
+
+			// impossible invariant as a destroyed foundry can't adjust the circulating supply
+			if foundryDiff.Transition == FoundryTransitionDestroyed {
+				return fmt.Errorf("%w: foundry %s can not be destroyed if tokens are unbalanced between inputs/outputs", ErrInvalidFoundryTransition, id.FoundryID())
+			}
+
+			actualDiff := new(big.Int).Sub(otherSum, srcSum)
+			if actualDiff.Cmp(foundryDiff.SupplyDiff) != 0 {
+				return fmt.Errorf("%w: foundry %s's circulating supply changes by %s but native token diff between inputs/outputs is %s", ErrNativeTokenSumUnbalanced, id.FoundryID(), foundryDiff.SupplyDiff, actualDiff)
+			}
+		}
+	}
+
+	// check that for newly created foundries the corresponding native tokens exist on the output side
+	for foundryID, foundryDiff := range diffs {
+		if foundryDiff.Transition != FoundryTransitionNew {
+			continue
+		}
+
+		otherSum := other[foundryDiff.NativeTokenID]
+		if otherSum == nil {
+			return fmt.Errorf("%w: new foundry %s's circulating supply is %s but none of the new native tokens reside on the output side", ErrNativeTokenSumUnbalanced, foundryID, foundryDiff.SupplyDiff)
+		}
+
+		// since this is a new foundry, the foundry diff equals the actual wanted circulating supply
+		if otherSum.Cmp(foundryDiff.SupplyDiff) != 0 {
+			return fmt.Errorf("%w: new foundry %s's circulating supply is %s but the native tokens sum on output side is %s", ErrNativeTokenSumUnbalanced, foundryID, foundryDiff.SupplyDiff, otherSum)
+		}
+	}
+
 	return nil
 }
 
@@ -87,15 +163,36 @@ func (n *NativeTokens) FromSerializables(seris serializer.Serializables) {
 	}
 }
 
-// NativeToken represents a token natively
+// Equal checks whether other is equal to this slice.
+func (n NativeTokens) Equal(other NativeTokens) bool {
+	if len(n) != len(other) {
+		return false
+	}
+	for i, a := range n {
+		if !a.Equal(other[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// NativeToken represents a token which resides natively on the ledger.
 type NativeToken struct {
 	ID     NativeTokenID
 	Amount *big.Int
 }
 
+// Equal checks whether other is equal to this NativeToken.
+func (n *NativeToken) Equal(other *NativeToken) bool {
+	if n.ID != other.ID {
+		return false
+	}
+	return n.Amount.Cmp(other.Amount) == 0
+}
+
 func (n *NativeToken) Deserialize(data []byte, _ serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		ReadArrayOf38Bytes(&n.ID, func(err error) error {
+		ReadBytesInPlace(n.ID[:], func(err error) error {
 			return fmt.Errorf("unable to deserialize ID for native token: %w", err)
 		}).
 		ReadUint256(n.Amount, func(err error) error {

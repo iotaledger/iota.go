@@ -15,6 +15,15 @@ type TimelockUnixFeatureBlock struct {
 	UnixTime uint64
 }
 
+func (s *TimelockUnixFeatureBlock) Equal(other FeatureBlock) bool {
+	otherBlock, is := other.(*TimelockUnixFeatureBlock)
+	if !is {
+		return false
+	}
+
+	return s.UnixTime == otherBlock.UnixTime
+}
+
 func (s *TimelockUnixFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockTimelockUnix
 }

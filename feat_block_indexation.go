@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -24,6 +25,15 @@ var (
 // IndexationFeatureBlock is a feature block which allows to additionally tag an output by a user defined value.
 type IndexationFeatureBlock struct {
 	Tag []byte
+}
+
+func (s *IndexationFeatureBlock) Equal(other FeatureBlock) bool {
+	otherBlock, is := other.(*IndexationFeatureBlock)
+	if !is {
+		return false
+	}
+
+	return bytes.Equal(s.Tag, otherBlock.Tag)
 }
 
 func (s *IndexationFeatureBlock) Type() FeatureBlockType {

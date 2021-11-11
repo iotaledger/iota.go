@@ -16,6 +16,15 @@ type ExpirationMilestoneIndexFeatureBlock struct {
 	MilestoneIndex uint32
 }
 
+func (s *ExpirationMilestoneIndexFeatureBlock) Equal(other FeatureBlock) bool {
+	otherBlock, is := other.(*ExpirationMilestoneIndexFeatureBlock)
+	if !is {
+		return false
+	}
+
+	return s.MilestoneIndex == otherBlock.MilestoneIndex
+}
+
 func (s *ExpirationMilestoneIndexFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockExpirationMilestoneIndex
 }

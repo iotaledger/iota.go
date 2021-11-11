@@ -29,7 +29,7 @@ func (s *SimpleOutput) Type() OutputType {
 	return OutputSimple
 }
 
-func (s *SimpleOutput) Target() (serializer.Serializable, error) {
+func (s *SimpleOutput) Ident() (Address, error) {
 	return s.Address, nil
 }
 

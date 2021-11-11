@@ -32,7 +32,7 @@ func (e *ExtendedOutput) Deposit() (uint64, error) {
 	return e.Amount, nil
 }
 
-func (e *ExtendedOutput) Target() (serializer.Serializable, error) {
+func (e *ExtendedOutput) Ident() (Address, error) {
 	return e.Address, nil
 }
 

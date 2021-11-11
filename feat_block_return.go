@@ -17,6 +17,15 @@ type ReturnFeatureBlock struct {
 	Amount uint64
 }
 
+func (s *ReturnFeatureBlock) Equal(other FeatureBlock) bool {
+	otherBlock, is := other.(*ReturnFeatureBlock)
+	if !is {
+		return false
+	}
+
+	return s.Amount == otherBlock.Amount
+}
+
 func (s *ReturnFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockReturn
 }

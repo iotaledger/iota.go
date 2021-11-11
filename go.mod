@@ -2,7 +2,7 @@ module github.com/iotaledger/iota.go/v3
 
 go 1.16
 
-replace github.com/iotaledger/hive.go => D:/Projects/hive.go
+replace github.com/iotaledger/hive.go => /Users/lucamoser/Projects/hive.go
 
 require (
 	filippo.io/edwards25519 v1.0.0-rc.1

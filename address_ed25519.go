@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-
 	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/ed25519"
 	"golang.org/x/crypto/blake2b"
@@ -41,6 +40,22 @@ func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
 // Ed25519Address defines an Ed25519 address.
 // An Ed25519Address is the Blake2b-256 hash of a Ed25519 public key.
 type Ed25519Address [Ed25519AddressBytesLength]byte
+
+func (edAddr *Ed25519Address) Unlock(msg []byte, sig Signature) error {
+	edSig, isEdSig := sig.(*Ed25519Signature)
+	if !isEdSig {
+		return fmt.Errorf("%w: can not unlock Ed25519 address with signature of type %s", ErrSignatureAndAddrIncompatible, SignatureTypeToString(sig.Type()))
+	}
+	return edSig.Valid(msg, edAddr)
+}
+
+func (edAddr *Ed25519Address) Equal(other Address) bool {
+	otherAddr, is := other.(*Ed25519Address)
+	if !is {
+		return false
+	}
+	return *edAddr == *otherAddr
+}
 
 func (edAddr *Ed25519Address) Type() AddressType {
 	return AddressEd25519

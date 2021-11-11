@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -15,7 +16,9 @@ const (
 )
 
 var (
-	featBlockArrayRules = &serializer.ArrayRules{
+	// ErrNonUniqueFeatureBlocks gets returned when multiple FeatureBlock(s) with the same FeatureBlock exist within sets.
+	ErrNonUniqueFeatureBlocks = errors.New("non unique feature blocks within outputs")
+	featBlockArrayRules       = &serializer.ArrayRules{
 		Min: MinFeatBlockCount,
 		Max: MaxFeatBlockCount,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
@@ -88,12 +91,60 @@ func (f *FeatureBlocks) FromSerializables(seris serializer.Serializables) {
 	}
 }
 
+// Set converts the slice into a FeatureBlocksSet.
+// Returns an error if a FeatureBlockType occurs multiple times.
+func (f FeatureBlocks) Set() (FeatureBlocksSet, error) {
+	set := make(FeatureBlocksSet)
+	for _, block := range f {
+		if _, has := set[block.Type()]; has {
+			return nil, ErrNonUniqueFeatureBlocks
+		}
+		set[block.Type()] = block
+	}
+	return set, nil
+}
+
+// Equal checks whether this slice is equal to other.
+func (f FeatureBlocks) Equal(other FeatureBlocks) bool {
+	if len(f) != len(other) {
+		return false
+	}
+	for i, aBlock := range f {
+		if !aBlock.Equal(other[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// FeatureBlocksSet is a set of FeatureBlock(s).
+type FeatureBlocksSet map[FeatureBlockType]FeatureBlock
+
+// EveryTuple runs f for every key which exists in both this set and other.
+// Returns a bool indicating whether all element of this set existed on the other set.
+func (f FeatureBlocksSet) EveryTuple(other FeatureBlocksSet, fun func(a FeatureBlock, b FeatureBlock) error) (bool, error) {
+	hadAll := true
+	for ty, blockA := range f {
+		blockB, has := other[ty]
+		if !has {
+			hadAll = false
+			continue
+		}
+		if err := fun(blockA, blockB); err != nil {
+			return false, err
+		}
+	}
+	return hadAll, nil
+}
+
 // FeatureBlock is an abstract building block extending the features of an Output.
 type FeatureBlock interface {
 	serializer.Serializable
 
 	// Type returns the type of the FeatureBlock.
 	Type() FeatureBlockType
+	// Equal tells whether this FeatureBlock is equal to other.
+	Equal(other FeatureBlock) bool
 }
 
 func featureBlockSupported(featBlocks FeatureBlocks, f func(ty uint32) bool) error {

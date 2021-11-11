@@ -140,6 +140,10 @@ type ReferentialUnlockBlock interface {
 
 	// Ref returns the index of the UnlockBlock this ReferentialUnlockBlock references.
 	Ref() uint16
+	// Chainable indicates whether this block can reference another ReferentialUnlockBlock.
+	Chainable() bool
+	// SourceAllowed tells whether the given Address is allowed to be the source of this ReferentialUnlockBlock.
+	SourceAllowed(address Address) bool
 }
 
 // UnlockBlockValidatorFunc which given the index and the UnlockBlock itself, runs validations and returns an error if any should fail.
@@ -147,9 +151,11 @@ type UnlockBlockValidatorFunc func(index int, unlockBlock UnlockBlock) error
 
 // UnlockBlocksSigUniqueAndRefValidator returns a validator which checks that:
 //	1. SignatureUnlockBlock(s) are unique
-//	2. ReferenceUnlockBlock(s), AliasUnlockBlock(s), NFTUnlockBlock(s) reference a previous SignatureUnlockBlock
+//	2. ReferenceUnlockBlock(s) reference a previous SignatureUnlockBlock
+//  3. Following through AliasUnlockBlock(s), NFTUnlockBlock(s) refs results to a SignatureUnlockBlock
 func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 	seenSigBlocks := map[uint16]struct{}{}
+	seenRefBlocks := map[uint16]ReferentialUnlockBlock{}
 	seenSigBlocksBytes := map[string]int{}
 	return func(index int, unlockBlock UnlockBlock) error {
 		switch x := unlockBlock.(type) {
@@ -170,9 +176,19 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 			seenSigBlocksBytes[string(sigBlockBytes)] = index
 			seenSigBlocks[uint16(index)] = struct{}{}
 		case ReferentialUnlockBlock:
-			if _, has := seenSigBlocks[x.Ref()]; !has {
-				return fmt.Errorf("%w: %d references non existent unlock block %d", ErrRefUnlockBlockInvalidRef, index, x.Ref())
+			originRef := x
+			for currentRef := x; ; {
+				prevRef := seenRefBlocks[currentRef.Ref()]
+				if prevRef != nil {
+					currentRef = prevRef
+					continue
+				}
+				if _, has := seenSigBlocks[currentRef.Ref()]; !has {
+					return fmt.Errorf("%w: %d references non existent unlock block %d", ErrRefUnlockBlockInvalidRef, index, x.Ref())
+				}
+				break
 			}
+			seenRefBlocks[uint16(index)] = originRef
 		default:
 			return fmt.Errorf("%w: unlock block at index %d is of unknown type %T", ErrUnknownUnlockBlockType, index, x)
 		}

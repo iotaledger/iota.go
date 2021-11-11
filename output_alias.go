@@ -1,9 +1,12 @@
 package iotago
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"golang.org/x/crypto/blake2b"
 	"sort"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -15,12 +18,104 @@ const (
 )
 
 var (
-	emptyAliasID = [AliasIDLength]byte{}
+	// ErrNonUniqueAliasOutputs gets returned when multiple AliasOutputs(s) with the same AliasID exist within sets.
+	ErrNonUniqueAliasOutputs = errors.New("non unique aliases within outputs")
+	// ErrInvalidAliasStateTransition gets returned when an alias is doing an invalid state transition.
+	ErrInvalidAliasStateTransition = errors.New("invalid alias state transition")
+	// ErrInvalidAliasGovernanceTransition gets returned when an alias is doing an invalid governance transition.
+	ErrInvalidAliasGovernanceTransition = errors.New("invalid alias governance transition")
+	// ErrAliasMissing gets returned when an alias is missing
+	ErrAliasMissing = errors.New("alias is missing")
+	emptyAliasID    = [AliasIDLength]byte{}
 )
 
 // AliasID is the identifier for an alias account.
 // It is computed as the Blake2b-160 hash of the OutputID of the output which created the account.
-type AliasID = [AliasIDLength]byte
+type AliasID [AliasIDLength]byte
+
+func (id AliasID) String() string {
+	return hex.EncodeToString(id[:])
+}
+
+func (id *AliasID) Matches(other AccountID) bool {
+	otherAliasID, isAliasID := other.(*AliasID)
+	if !isAliasID {
+		return false
+	}
+	return *id == *otherAliasID
+}
+
+func (id *AliasID) ToAddress() AccountAddress {
+	var addr AliasAddress
+	copy(addr[:], id[:])
+	return &addr
+}
+
+// AliasIDFromOutputID returns the AliasID computed from a given UTXOInputID.
+func AliasIDFromOutputID(outputID UTXOInputID) AliasID {
+	// TODO: maybe use pkg with Sum160 exposed
+	blake2b160, _ := blake2b.New(20, nil)
+	var aliasID AliasID
+	copy(aliasID[:], blake2b160.Sum(outputID[:]))
+	return aliasID
+}
+
+// AliasOutputs is a slice of AliasOutput(s).
+type AliasOutputs []*AliasOutput
+
+// Every checks whether every element passes f.
+// Returns either -1 if all elements passed f or the index of the first element which didn't
+func (outputs AliasOutputs) Every(f func(output *AliasOutput) bool) int {
+	for i, output := range outputs {
+		if !f(output) {
+			return i
+		}
+	}
+	return -1
+}
+
+// AliasOutputsSet is a set of AliasOutput(s).
+type AliasOutputsSet map[AliasID]*AliasOutput
+
+// Includes checks whether all aliases included in other exist in this set.
+func (set AliasOutputsSet) Includes(other AliasOutputsSet) error {
+	for aliasID := range other {
+		if _, has := set[aliasID]; !has {
+			return fmt.Errorf("%w: %s missing in source", ErrAliasMissing, aliasID)
+		}
+	}
+	return nil
+}
+
+// EveryTuple runs f for every key which exists in both this set and other.
+func (set AliasOutputsSet) EveryTuple(other AliasOutputsSet, f func(in *AliasOutput, out *AliasOutput) error) error {
+	for k, v := range set {
+		v2, has := other[k]
+		if !has {
+			continue
+		}
+		if err := f(v, v2); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Merge merges other with this set in a new set.
+// Returns an error if an alias isn't unique across both sets.
+func (set AliasOutputsSet) Merge(other AliasOutputsSet) (AliasOutputsSet, error) {
+	newSet := make(AliasOutputsSet)
+	for k, v := range set {
+		newSet[k] = v
+	}
+	for k, v := range other {
+		if _, has := newSet[k]; has {
+			return nil, fmt.Errorf("%w: alias %s exists in both sets", ErrNonUniqueAliasOutputs, k)
+		}
+		newSet[k] = v
+	}
+	return newSet, nil
+}
 
 // AliasOutput is an output type which represents an alias account.
 type AliasOutput struct {
@@ -42,6 +137,94 @@ type AliasOutput struct {
 	FoundryCounter uint32
 	// The feature blocks which modulate the constraints on the output.
 	Blocks FeatureBlocks
+}
+
+func (a *AliasOutput) Ident(nextState MultiIdentOutput) (Address, error) {
+	otherAliasOutput, isAliasOutput := nextState.(*AliasOutput)
+	if !isAliasOutput {
+		return nil, fmt.Errorf("%w: expected AliasOutput but got %s for ident computation", ErrMultiIdentOutputMismatch, OutputTypeToString(nextState.Type()))
+	}
+	switch {
+	case a.StateIndex == otherAliasOutput.StateIndex:
+		return a.GovernanceController, nil
+	case a.StateIndex+1 == otherAliasOutput.StateIndex:
+		return a.StateController, nil
+	default:
+		return nil, fmt.Errorf("%w: can not compute right ident for alias output as state index delta is invalid", ErrMultiIdentOutputMismatch)
+	}
+}
+
+func (a *AliasOutput) Account() AccountID {
+	return &a.AliasID
+}
+
+// GovernanceTransitionWith checks whether the governance transition with other is valid.
+// Under a governance transition, only the StateController, GovernanceController and MetadataFeatureBlock can change.
+func (a *AliasOutput) GovernanceTransitionWith(other *AliasOutput) error {
+	switch {
+	case a.Amount != other.Amount:
+		return fmt.Errorf("%w: amount changed, in %d / out %d ", ErrInvalidAliasGovernanceTransition, a.Amount, other.Amount)
+	case !a.NativeTokens.Equal(other.NativeTokens):
+		return fmt.Errorf("%w: native tokens changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.NativeTokens, other.NativeTokens)
+	case a.StateIndex != other.StateIndex:
+		return fmt.Errorf("%w: state index changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.StateIndex, other.StateIndex)
+	case !bytes.Equal(a.StateMetadata, other.StateMetadata):
+		return fmt.Errorf("%w: state metadata changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.StateMetadata, other.StateMetadata)
+	case a.FoundryCounter != other.FoundryCounter:
+		return fmt.Errorf("%w: foundry counter changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.FoundryCounter, other.FoundryCounter)
+	}
+
+	srcBlockSet, err := a.Blocks.Set()
+	if err != nil {
+		return fmt.Errorf("can not produce source feature block set: %w", err)
+	}
+
+	otherBlockSet, err := other.Blocks.Set()
+	if err != nil {
+		return fmt.Errorf("can not produce target feature block set: %w", err)
+	}
+
+	// check that the IssuerFeatureBlock did not change, note that MetadataFeatureBlock is allowed to change
+	if _, err := srcBlockSet.EveryTuple(otherBlockSet, func(aBlock FeatureBlock, bBlock FeatureBlock) error {
+		if aBlock.Type() == FeatureBlockIssuer && !aBlock.Equal(bBlock) {
+			return fmt.Errorf("%w: issuer feature block changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, aBlock, bBlock)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// StateTransitionWith checks whether the state transition with other is valid.
+// Under a state transition, only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can change.
+func (a *AliasOutput) StateTransitionWith(other *AliasOutput) error {
+	switch {
+	case !a.StateController.Equal(other.StateController):
+		return fmt.Errorf("%w: state controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, other.StateController)
+	case !a.GovernanceController.Equal(other.GovernanceController):
+		return fmt.Errorf("%w: governance controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, other.StateController)
+	case !a.FeatureBlocks().Equal(other.FeatureBlocks()):
+		return fmt.Errorf("%w: feature blocks changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, other.StateController)
+	case a.FoundryCounter > other.FoundryCounter:
+		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", ErrInvalidAliasStateTransition, a.FoundryCounter, other.FoundryCounter)
+	case a.StateIndex+1 != other.StateIndex:
+		return fmt.Errorf("%w: state index %d on the input side but %d on the output side", ErrInvalidAliasStateTransition, a.StateIndex, other.StateIndex)
+	}
+	return nil
+}
+
+// TransitionWith checks whether either the governance (if state index is the same) or state transitions are valid with other.
+func (a *AliasOutput) TransitionWith(other *AliasOutput) error {
+	if a.StateIndex == other.StateIndex {
+		return a.GovernanceTransitionWith(other)
+	}
+	return a.StateTransitionWith(other)
+}
+
+func (a *AliasOutput) AliasEmpty() bool {
+	return a.AliasID == emptyAliasID
 }
 
 func (a *AliasOutput) NativeTokenSet() NativeTokens {
@@ -79,7 +262,7 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		}, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize native tokens for alias output: %w", err)
 		}).
-		ReadArrayOf20Bytes(&a.AliasID, func(err error) error {
+		ReadBytesInPlace(a.AliasID[:], func(err error) error {
 			return fmt.Errorf("unable to deserialize alias ID for alias output: %w", err)
 		}).
 		ReadObject(&a.StateController, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {

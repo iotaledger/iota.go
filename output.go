@@ -57,6 +57,10 @@ func OutputTypeToString(ty OutputType) string {
 var (
 	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.
 	ErrDepositAmountMustBeGreaterThanZero = errors.New("deposit amount must be greater than zero")
+	// ErrMultiIdentOutputMismatch gets returned when MultiIdentOutput(s) aren't compatible.
+	ErrMultiIdentOutputMismatch = errors.New("multi ident output mismatch")
+	// ErrNonUniqueMultiIdentOutputs gets returned when multiple MultiIdentOutput(s) with the same AccountID exist within an OutputsByType.
+	ErrNonUniqueMultiIdentOutputs = errors.New("non unique multi ident within outputs")
 )
 
 // Outputs is a slice of Output.
@@ -90,6 +94,26 @@ func (o Outputs) ToOutputsByType() OutputsByType {
 	return outputsByType
 }
 
+// OutputsFilterFunc is a predicate function operating on an Output.
+type OutputsFilterFunc func(output Output) bool
+
+// OutputsFilterByType is an OutputsFilterFunc which filters Outputs by OutputType.
+func OutputsFilterByType(ty OutputType) OutputsFilterFunc {
+	return func(output Output) bool { return output.Type() == ty }
+}
+
+// Filter returns Outputs (retained order) passing the given OutputsFilterFunc.
+func (o Outputs) Filter(f OutputsFilterFunc) Outputs {
+	filtered := make(Outputs, 0)
+	for _, output := range o {
+		if !f(output) {
+			continue
+		}
+		filtered = append(filtered, output)
+	}
+	return filtered
+}
+
 // OutputsByType is a map of OutputType(s) to slice of Output(s).
 type OutputsByType map[OutputType][]Output
 
@@ -108,7 +132,100 @@ func (outputs OutputsByType) NativeTokenOutputs() NativeTokenOutputs {
 	return nativeTokenOutputs
 }
 
-// NativeTokenOutputs is a slice of NativeTokenOutput.
+// MultiIdentOutputs returns a slice of Outputs which are MultiIdentOutput.
+func (outputs OutputsByType) MultiIdentOutputs() MultiIdentOutputs {
+	multiIdentOutputs := make(MultiIdentOutputs, 0)
+	for _, slice := range outputs {
+		for _, output := range slice {
+			multiIdentOutput, is := output.(MultiIdentOutput)
+			if !is {
+				continue
+			}
+			multiIdentOutputs = append(multiIdentOutputs, multiIdentOutput)
+		}
+	}
+	return multiIdentOutputs
+}
+
+// MultiIdentOutputsSet returns a map of AccountID to MultiIdentOutput.
+// If multiple MultiIdentOutput(s) exist for a given AccountID, an error is returned.
+func (outputs OutputsByType) MultiIdentOutputsSet() (MultiIdentOutputsSet, error) {
+	multiIdentOutputsSet := make(MultiIdentOutputsSet, 0)
+	for _, output := range outputs.MultiIdentOutputs() {
+		if _, has := multiIdentOutputsSet[output.Account()]; has {
+			return nil, ErrNonUniqueMultiIdentOutputs
+		}
+		multiIdentOutputsSet[output.Account()] = output
+	}
+	return multiIdentOutputsSet, nil
+}
+
+// FoundryOutputs returns a slice of Outputs which are FoundryOutput.
+func (outputs OutputsByType) FoundryOutputs() FoundryOutputs {
+	foundryOutputs := make(FoundryOutputs, 0)
+	for _, output := range outputs[OutputFoundry] {
+		foundryOutput, is := output.(*FoundryOutput)
+		if !is {
+			continue
+		}
+		foundryOutputs = append(foundryOutputs, foundryOutput)
+	}
+	return foundryOutputs
+}
+
+// FoundryOutputsSet returns a map of FoundryID to FoundryOutput.
+// If multiple FoundryOutput(s) exist for a given FoundryID, an error is returned.
+func (outputs OutputsByType) FoundryOutputsSet() (FoundryOutputsSet, error) {
+	foundryOutputsSet := make(FoundryOutputsSet, 0)
+	for _, output := range outputs[OutputFoundry] {
+		foundryOutput, is := output.(*FoundryOutput)
+		if !is {
+			continue
+		}
+		foundryID, err := foundryOutput.ID()
+		if err != nil {
+			return nil, err
+		}
+		if _, has := foundryOutputsSet[foundryID]; has {
+			return nil, ErrNonUniqueFoundryOutputs
+		}
+		foundryOutputsSet[foundryID] = foundryOutput
+	}
+	return foundryOutputsSet, nil
+}
+
+// AliasOutputs returns a slice of Outputs which are AliasOutput.
+func (outputs OutputsByType) AliasOutputs() AliasOutputs {
+	aliasOutputs := make(AliasOutputs, 0)
+	for _, output := range outputs[OutputFoundry] {
+		aliasOutput, is := output.(*AliasOutput)
+		if !is {
+			continue
+		}
+		aliasOutputs = append(aliasOutputs, aliasOutput)
+	}
+	return aliasOutputs
+}
+
+// NonNewAliasOutputsSet returns a map of AliasID to AliasOutput.
+// If multiple AliasOutput(s) exist for a given AliasID, an error is returned.
+// The produced set does not include AliasOutputs of which their AliasID are zeroed.
+func (outputs OutputsByType) NonNewAliasOutputsSet() (AliasOutputsSet, error) {
+	aliasOutputsSet := make(AliasOutputsSet, 0)
+	for _, output := range outputs[OutputFoundry] {
+		aliasOutput, is := output.(*AliasOutput)
+		if !is || aliasOutput.AliasEmpty() {
+			continue
+		}
+		if _, has := aliasOutputsSet[aliasOutput.AliasID]; has {
+			return nil, ErrNonUniqueAliasOutputs
+		}
+		aliasOutputsSet[aliasOutput.AliasID] = aliasOutput
+	}
+	return aliasOutputsSet, nil
+}
+
+// NativeTokenOutputs is a slice of NativeTokenOutput(s).
 type NativeTokenOutputs []NativeTokenOutput
 
 // Sum sums up the different NativeTokens occurring within the given outputs.
@@ -119,12 +236,13 @@ func (ntOutputs NativeTokenOutputs) Sum() (NativeTokenSum, error) {
 			if sign := nativeToken.Amount.Sign(); sign == -1 || sign == 0 {
 				return nil, ErrNativeTokenAmountLessThanEqualZero
 			}
+
 			val := sum[nativeToken.ID]
 			if val == nil {
 				val = new(big.Int)
 			}
-			val.Add(val, nativeToken.Amount)
-			if val.Cmp(abi.MaxUint256) == 1 {
+
+			if val.Add(val, nativeToken.Amount).Cmp(abi.MaxUint256) == 1 {
 				return nil, ErrNativeTokenSumExceedsUint256
 			}
 			sum[nativeToken.ID] = val
@@ -133,20 +251,67 @@ func (ntOutputs NativeTokenOutputs) Sum() (NativeTokenSum, error) {
 	return sum, nil
 }
 
+// InputSet maps inputs to their origin UTXOs.
+type InputSet map[UTXOInputID]Output
+
+// NewAliases returns an AliasOutputsSet for all AliasOutputs which are new.
+func (inputSet InputSet) NewAliases() AliasOutputsSet {
+	set := make(AliasOutputsSet)
+	for utxoInputID, output := range inputSet {
+		aliasOutput, is := output.(*AliasOutput)
+		if !is || !aliasOutput.AliasEmpty() {
+			continue
+		}
+		set[AliasIDFromOutputID(utxoInputID)] = aliasOutput
+	}
+	return set
+}
+
 // Output defines a unit of output of a transaction.
 type Output interface {
 	serializer.Serializable
 
 	// Deposit returns the amount this Output deposits.
 	Deposit() (uint64, error)
-	// Target returns the target of the deposit.
-	// If the type of output does not have/support a target, nil is returned.
-	Target() (serializer.Serializable, error)
 	// Type returns the type of the output.
 	Type() OutputType
 }
 
-// NativeTokenOutput is a type of Output which also can hold NativeToken.
+// SingleIdentOutput is a type of Output where without considering its FeatureBlocks,
+// only one identity needs to be unlocked.
+type SingleIdentOutput interface {
+	Output
+	// Ident returns the identity to which this output is locked to.
+	Ident() (Address, error)
+}
+
+// AccountOutput is a type of Output which encapsulates the concept of an account.
+type AccountOutput interface {
+	Output
+	Account() AccountID
+}
+
+// MultiIdentOutputsSet is a set of MultiIdentOutput(s).
+type MultiIdentOutputsSet map[AccountID]MultiIdentOutput
+
+// MultiIdentOutputs is a slice of MultiIdentOutput(s).
+type MultiIdentOutputs []MultiIdentOutput
+
+// MultiIdentOutput is a type of Output which multiple identities can control/modify.
+// Unlike the SingleIdentOutput, the MultiIdentOutput's to unlock identity is dependent
+// on the transition the output does between inputs and outputs.
+type MultiIdentOutput interface {
+	AccountOutput
+	// Ident computes the identity to which this output is locked to by examining
+	// the transition to the next output state.
+	// Note that it is the caller's job to ensure that the given other MultiIdentOutput
+	// corresponds to this MultiIdentOutput.
+	// If this MultiIdentOutput is not dependent on a transition to compute the ident,
+	// nil can be passed as an argument.
+	Ident(nextState MultiIdentOutput) (Address, error)
+}
+
+// NativeTokenOutput is a type of Output which can hold NativeToken.
 type NativeTokenOutput interface {
 	Output
 	// NativeTokenSet returns the NativeToken this output defines.
@@ -353,7 +518,7 @@ func OutputsPredicateAlias(txID *TransactionID) OutputsPredicateFunc {
 		}
 
 		var outputAliasAddr AliasAddress
-		if aliasOutput.AliasID == emptyAliasID {
+		if aliasOutput.AliasEmpty() {
 			switch {
 			case aliasOutput.StateIndex != 0:
 				return fmt.Errorf("%w: output %d, state index not zero", ErrAliasOutputNonEmptyState, index)
