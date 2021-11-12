@@ -607,7 +607,7 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 		for nativeTokenID, outSum := range svCtx.WorkingSet.OutNativeTokens {
 			if inSum := svCtx.WorkingSet.InNativeTokens[nativeTokenID]; inSum == nil || inSum.Cmp(outSum) != 0 {
 				if _, foundryIsTransitioning := svCtx.WorkingSet.OutChains[nativeTokenID.FoundryID()]; !foundryIsTransitioning {
-					return fmt.Errorf("%w: native token %d exists on input but not output side and the foundry is not transitioning", ErrNativeTokenSumUnbalanced, nativeTokenID)
+					return fmt.Errorf("%w: native token %d exists on output but not input side and the foundry is not transitioning", ErrNativeTokenSumUnbalanced, nativeTokenID)
 				}
 				continue
 			}
