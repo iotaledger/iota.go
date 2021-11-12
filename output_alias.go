@@ -33,23 +33,36 @@ var (
 // It is computed as the Blake2b-160 hash of the OutputID of the output which created the account.
 type AliasID [AliasIDLength]byte
 
-func (id *AliasID) Empty() bool {
-	return *id == emptyAliasID
+func (id AliasID) Addressable() bool {
+	return true
+}
+
+func (id AliasID) Key() interface{} {
+	return id.String()
+}
+
+func (id AliasID) FromUTXOInputID(in UTXOInputID) ChainID {
+	aliasID := AliasIDFromOutputID(in)
+	return &aliasID
+}
+
+func (id AliasID) Empty() bool {
+	return id == emptyAliasID
 }
 
 func (id AliasID) String() string {
 	return hex.EncodeToString(id[:])
 }
 
-func (id *AliasID) Matches(other AccountID) bool {
-	otherAliasID, isAliasID := other.(*AliasID)
+func (id AliasID) Matches(other ChainID) bool {
+	otherAliasID, isAliasID := other.(AliasID)
 	if !isAliasID {
 		return false
 	}
-	return *id == *otherAliasID
+	return id == otherAliasID
 }
 
-func (id *AliasID) ToAddress() AccountAddress {
+func (id AliasID) ToAddress() ChainConstrainedAddress {
 	var addr AliasAddress
 	copy(addr[:], id[:])
 	return &addr
@@ -143,6 +156,37 @@ type AliasOutput struct {
 	Blocks FeatureBlocks
 }
 
+func (a *AliasOutput) IsNewChain(_ Side, _ *SemanticValidationContext) (bool, error) {
+	return a.AliasID.Empty(), nil
+}
+
+func (a *AliasOutput) HasUTXODependableChainID() bool {
+	return true
+}
+
+func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
+	switch transType {
+	case ChainTransitionTypeNew:
+		return IsIssuerOnOutputUnlocked(a, semValCtx.WorkingSet.UnlockedIdents)
+	case ChainTransitionTypeStateChange:
+		nextAliasOutput, is := next.(*AliasOutput)
+		if !is {
+			return fmt.Errorf("%w: alias output can only state transition to another alias output", ErrInvalidChainStateTransition)
+		}
+		if err := IssuerBlockUnchanged(a, nextAliasOutput); err != nil {
+			return err
+		}
+		if a.StateIndex == nextAliasOutput.StateIndex {
+			return a.GovernanceSTVF(nextAliasOutput, semValCtx)
+		}
+		return a.StateSTVF(nextAliasOutput, semValCtx)
+	case ChainTransitionTypeDestroy:
+	// TODO: check specifics
+	default:
+		panic("invalid chain transition in AliasOutput")
+	}
+}
+
 func (a *AliasOutput) Ident(nextState MultiIdentOutput) (Address, error) {
 	otherAliasOutput, isAliasOutput := nextState.(*AliasOutput)
 	if !isAliasOutput {
@@ -158,52 +202,31 @@ func (a *AliasOutput) Ident(nextState MultiIdentOutput) (Address, error) {
 	}
 }
 
-func (a *AliasOutput) Account() AccountID {
-	return &a.AliasID
+func (a *AliasOutput) Chain() ChainID {
+	return a.AliasID
 }
 
-// GovernanceTransitionWith checks whether the governance transition with other is valid.
+// GovernanceSTVF checks whether the governance transition with other is valid.
 // Under a governance transition, only the StateController, GovernanceController and MetadataFeatureBlock can change.
-func (a *AliasOutput) GovernanceTransitionWith(other *AliasOutput) error {
+func (a *AliasOutput) GovernanceSTVF(nextState *AliasOutput, semValCtx *SemanticValidationContext) error {
 	switch {
-	case a.Amount != other.Amount:
-		return fmt.Errorf("%w: amount changed, in %d / out %d ", ErrInvalidAliasGovernanceTransition, a.Amount, other.Amount)
-	case !a.NativeTokens.Equal(other.NativeTokens):
-		return fmt.Errorf("%w: native tokens changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.NativeTokens, other.NativeTokens)
-	case a.StateIndex != other.StateIndex:
-		return fmt.Errorf("%w: state index changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.StateIndex, other.StateIndex)
-	case !bytes.Equal(a.StateMetadata, other.StateMetadata):
-		return fmt.Errorf("%w: state metadata changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.StateMetadata, other.StateMetadata)
-	case a.FoundryCounter != other.FoundryCounter:
-		return fmt.Errorf("%w: foundry counter changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.FoundryCounter, other.FoundryCounter)
+	case a.Amount != nextState.Amount:
+		return fmt.Errorf("%w: amount changed, in %d / out %d ", ErrInvalidAliasGovernanceTransition, a.Amount, nextState.Amount)
+	case !a.NativeTokens.Equal(nextState.NativeTokens):
+		return fmt.Errorf("%w: native tokens changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.NativeTokens, nextState.NativeTokens)
+	case a.StateIndex != nextState.StateIndex:
+		return fmt.Errorf("%w: state index changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.StateIndex, nextState.StateIndex)
+	case !bytes.Equal(a.StateMetadata, nextState.StateMetadata):
+		return fmt.Errorf("%w: state metadata changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.StateMetadata, nextState.StateMetadata)
+	case a.FoundryCounter != nextState.FoundryCounter:
+		return fmt.Errorf("%w: foundry counter changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.FoundryCounter, nextState.FoundryCounter)
 	}
-
-	srcBlockSet, err := a.Blocks.Set()
-	if err != nil {
-		return fmt.Errorf("can not produce source feature block set: %w", err)
-	}
-
-	otherBlockSet, err := other.Blocks.Set()
-	if err != nil {
-		return fmt.Errorf("can not produce target feature block set: %w", err)
-	}
-
-	// check that the IssuerFeatureBlock did not change, note that MetadataFeatureBlock is allowed to change
-	if _, err := srcBlockSet.EveryTuple(otherBlockSet, func(aBlock FeatureBlock, bBlock FeatureBlock) error {
-		if aBlock.Type() == FeatureBlockIssuer && !aBlock.Equal(bBlock) {
-			return fmt.Errorf("%w: issuer feature block changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, aBlock, bBlock)
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-// StateTransitionWith checks whether the state transition with other is valid.
+// StateSTVF checks whether the state transition with other is valid.
 // Under a state transition, only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can change.
-func (a *AliasOutput) StateTransitionWith(other *AliasOutput) error {
+func (a *AliasOutput) StateSTVF(other *AliasOutput, semValCtx *SemanticValidationContext) error {
 	switch {
 	case !a.StateController.Equal(other.StateController):
 		return fmt.Errorf("%w: state controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, other.StateController)
@@ -217,14 +240,6 @@ func (a *AliasOutput) StateTransitionWith(other *AliasOutput) error {
 		return fmt.Errorf("%w: state index %d on the input side but %d on the output side", ErrInvalidAliasStateTransition, a.StateIndex, other.StateIndex)
 	}
 	return nil
-}
-
-// TransitionWith checks whether either the governance (if state index is the same) or state transitions are valid with other.
-func (a *AliasOutput) TransitionWith(other *AliasOutput) error {
-	if a.StateIndex == other.StateIndex {
-		return a.GovernanceTransitionWith(other)
-	}
-	return a.StateTransitionWith(other)
 }
 
 func (a *AliasOutput) AliasEmpty() bool {

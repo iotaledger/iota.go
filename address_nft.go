@@ -45,9 +45,8 @@ func MustParseNFTAddressFromHexString(hexAddr string) *NFTAddress {
 // An NFTAddress is the Blake2b-160 hash of the OutputID which created it.
 type NFTAddress [NFTAddressBytesLength]byte
 
-func (nftAddr *NFTAddress) Account() AccountID {
-	nftID := NFTID(*nftAddr)
-	return &nftID
+func (nftAddr *NFTAddress) Chain() ChainID {
+	return NFTID(*nftAddr)
 }
 
 func (nftAddr *NFTAddress) Equal(other Address) bool {

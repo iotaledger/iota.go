@@ -59,20 +59,29 @@ type DirectUnlockableAddress interface {
 	Unlock(msg []byte, sig Signature) error
 }
 
-// AccountAddress is a type of Address representing ownership of an output by an AccountOutput.
-type AccountAddress interface {
+// ChainConstrainedAddress is a type of Address representing ownership of an output by a ChainConstrainedOutput.
+type ChainConstrainedAddress interface {
 	Address
-	Account() AccountID
+	Chain() ChainID
 }
 
-// AccountID represents the account ID owning an AccountAddress.
-type AccountID interface {
-	// Matches checks whether other matches this AccountID.
-	Matches(other AccountID) bool
-	// ToAddress converts this AccountID into an AccountAddress.
-	ToAddress() AccountAddress
-	// Empty tells whether the AccountID is empty.
+// ChainID represents the chain ID owning an ChainConstrainedAddress.
+type ChainID interface {
+	// Matches checks whether other matches this ChainID.
+	Matches(other ChainID) bool
+	// Addressable tells whether this ChainID can be converted into a ChainConstrainedAddress.
+	Addressable() bool
+	// ToAddress converts this ChainID into an ChainConstrainedAddress.
+	ToAddress() ChainConstrainedAddress
+	// Empty tells whether the ChainID is empty.
 	Empty() bool
+	// Key returns a key to use to index this ChainID.
+	Key() interface{}
+}
+
+// UTXOIDChainID is a ChainID which gets produced by taking a UTXOInputID.
+type UTXOIDChainID interface {
+	FromUTXOInputID(id UTXOInputID) ChainID
 }
 
 // AddressSelector implements SerializableSelectorFunc for address types.

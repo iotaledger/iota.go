@@ -33,6 +33,10 @@ var (
 	ErrSignatureAndAddrIncompatible = errors.New("address and signature type are not compatible")
 	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
 	ErrInvalidInputUnlock = errors.New("invalid input unlock")
+	// ErrSenderFeatureBlockNotUnlocked gets returned when an output contains a SenderFeatureBlock with an ident which is not unlocked.
+	ErrSenderFeatureBlockNotUnlocked = errors.New("sender feature block is not unlocked")
+	// ErrIssuerFeatureBlockNotUnlocked gets returned when an output contains a IssuerFeatureBlock with an ident which is not unlocked.
+	ErrIssuerFeatureBlockNotUnlocked = errors.New("issuer feature block is not unlocked")
 )
 
 // TransactionID is the ID of a Transaction.
@@ -44,7 +48,7 @@ type TransactionIDs []TransactionID
 // Transaction is a transaction with its inputs, outputs and unlock blocks.
 type Transaction struct {
 	// The transaction essence, respectively the transfer part of a Transaction.
-	Essence serializer.Serializable
+	Essence *TransactionEssence
 	// The unlock blocks defining the unlocking data for the inputs within the Essence.
 	UnlockBlocks UnlockBlocks
 }
@@ -74,7 +78,7 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 			return fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
 		}).
 		Do(func() {
-			inputCount := uint(len(t.Essence.(*TransactionEssence).Inputs))
+			inputCount := uint(len(t.Essence.Inputs))
 			unlockBlockArrayRules.Min = inputCount
 			unlockBlockArrayRules.Max = inputCount
 		}).
@@ -158,12 +162,7 @@ func (t *Transaction) SyntacticallyValidate() error {
 		return fmt.Errorf("%w: unlock blocks are nil", ErrInvalidTransactionEssence)
 	}
 
-	txEssence, ok := t.Essence.(*TransactionEssence)
-	if !ok {
-		return fmt.Errorf("%w: transaction essence is not *TransactionEssence", ErrInvalidTransactionEssence)
-	}
-
-	if err := txEssence.SyntacticallyValidate(); err != nil {
+	if err := t.Essence.SyntacticallyValidate(); err != nil {
 		return fmt.Errorf("%w: transaction essence part is invalid", err)
 	}
 
@@ -172,13 +171,13 @@ func (t *Transaction) SyntacticallyValidate() error {
 		return err
 	}
 
-	inputCount := len(txEssence.Inputs)
+	inputCount := len(t.Essence.Inputs)
 	unlockBlockCount := len(t.UnlockBlocks)
 	if inputCount != unlockBlockCount {
 		return fmt.Errorf("%w: num of inputs %d, num of unlock blocks %d", ErrUnlockBlocksMustMatchInputCount, inputCount, unlockBlockCount)
 	}
 
-	if err := ValidateOutputs(txEssence.Outputs, OutputsPredicateAlias(txID), OutputsPredicateNFT(txID)); err != nil {
+	if err := ValidateOutputs(t.Essence.Outputs, OutputsPredicateAlias(txID), OutputsPredicateNFT(txID)); err != nil {
 		return err
 	}
 
@@ -200,41 +199,61 @@ type SemanticValidationContext struct {
 	// The confirming milestone's unix seconds timestamp.
 	ConfirmingMilestoneUnix uint64
 
-	// fields filled by iota.go
-	unlockedIdents       UnlockedIdentities
-	inputSet             InputSet
-	tx                   *Transaction
-	essence              *TransactionEssence
-	essenceBytes         []byte
-	inputsByType         OutputsByType
-	inputsNonNewAliases  AliasOutputsSet
-	inputsNewAliases     AliasOutputsSet
-	inputAliases         AliasOutputsSet
-	outputsByType        OutputsByType
-	outputsNonNewAliases AliasOutputsSet
-	unlockBlocksByType   UnlockBlocksByType
+	// The working set which is auto. populated during the semantic validation.
+	WorkingSet *SemValiContextWorkingSet
 }
 
-// SemanticallyValidate semantically validates the Transaction by checking that the semantic rules applied to the inputs
-// and outputs are fulfilled. SyntacticallyValidate() should be called before SemanticallyValidate() to
-// ensure that the essence part of the transaction is syntactically valid.
-func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inputs InputSet, semValFuncs ...SemanticValidationFunc) error {
-	txEssence, ok := t.Essence.(*TransactionEssence)
-	if !ok {
-		return fmt.Errorf("%w: transaction is not *TransactionEssence", ErrInvalidTransactionEssence)
+// SemValiContextWorkingSet contains fields which get automatically populated
+// by the library during the semantic validation of a Transaction.
+type SemValiContextWorkingSet struct {
+	// The identities which are successfully unlocked from the input side.
+	UnlockedIdents UnlockedIdentities
+	// The mapping of UTXOInputID to the actual Outputs.
+	InputSet InputSet
+	// The transaction for which this semantic validation happens.
+	Tx *Transaction
+	// The message which signatures are signing.
+	EssenceMsgtoSign []byte
+	// The inputs of the transaction mapped by type.
+	InputsByType OutputsByType
+	// The ChainConstrainedOutput(s) from the input side which are not new.
+	InNonNewChains ChainConstrainedOutputsSet
+	// The ChainConstrainedOutput(s) from the input side which are new.
+	InNewChains ChainConstrainedOutputsSet
+	// The set of ChainConstrainedOutput(s) occurring on the input side.
+	InChains ChainConstrainedOutputsSet
+	// The Outputs of the transaction mapped by type.
+	OutputsByType OutputsByType
+	// The ChainConstrainedOutput(s) at the output side which are not new.
+	OutNonNewChains ChainConstrainedOutputsSet
+	// The UnlockBlocks carried by the transaction mapped by type.
+	UnlockBlocksByType UnlockBlocksByType
+}
+
+func featureBlockSetFromOutput(output ChainConstrainedOutput) (FeatureBlocksSet, error) {
+	featureBlockOutput, is := output.(FeatureBlockOutput)
+	if !is {
+		return nil, nil
 	}
 
-	txEssenceBytes, err := txEssence.SigningMessage()
+	featureBlocks, err := featureBlockOutput.FeatureBlocks().Set()
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("unable to compute feature block set for output: %w", err)
 	}
+	return featureBlocks, nil
+}
 
-	svCtx.unlockedIdents = make(UnlockedIdentities)
-	svCtx.inputSet = inputs
-	svCtx.tx = t
-	svCtx.essence = txEssence
-	svCtx.essenceBytes = txEssenceBytes
-	svCtx.inputsByType = func() OutputsByType {
+func NewSemValiContextWorkingSet(t *Transaction, inputs InputSet) (*SemValiContextWorkingSet, error) {
+	var err error
+	workingSet := &SemValiContextWorkingSet{}
+	workingSet.UnlockedIdents = make(UnlockedIdentities)
+	workingSet.InputSet = inputs
+	workingSet.Tx = t
+	workingSet.EssenceMsgtoSign, err = t.Essence.SigningMessage()
+	if err != nil {
+		return nil, err
+	}
+	workingSet.InputsByType = func() OutputsByType {
 		slice := make(Outputs, len(inputs))
 		var i int
 		for _, output := range inputs {
@@ -243,21 +262,36 @@ func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inp
 		}
 		return slice.ToOutputsByType()
 	}()
-	svCtx.inputsNonNewAliases, err = svCtx.inputsByType.NonNewAliasOutputsSet()
+	workingSet.InNonNewChains, err = workingSet.InputsByType.NonNewChainConstrainedOutputsSet()
 	if err != nil {
-		return fmt.Errorf("unable to compute non-new aliases (input side): %w", err)
+		return nil, fmt.Errorf("unable to compute non-new chains (input side): %w", err)
 	}
-	svCtx.inputsNewAliases = svCtx.inputSet.NewAliases()
-	svCtx.inputAliases, err = svCtx.inputsNewAliases.Merge(svCtx.inputsNonNewAliases)
+	workingSet.InNewChains, err = workingSet.InputSet.NewChains(SideIn, nil)
 	if err != nil {
-		return fmt.Errorf("unable to compute alias input set: %w", err)
+		return nil, fmt.Errorf("unable to compute new chains (input side): %w", err)
 	}
-	svCtx.outputsByType = txEssence.Outputs.ToOutputsByType()
-	svCtx.outputsNonNewAliases, err = svCtx.outputsByType.NonNewAliasOutputsSet()
+	workingSet.InChains, err = workingSet.InNewChains.Merge(workingSet.InNonNewChains)
 	if err != nil {
-		return fmt.Errorf("unable to compute non-new aliases (output side): %w", err)
+		return nil, fmt.Errorf("unable to compute input chains set: %w", err)
 	}
-	svCtx.unlockBlocksByType = t.UnlockBlocks.ToUnlockBlocksByType()
+	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
+	workingSet.OutNonNewChains, err = workingSet.OutputsByType.NonNewChainConstrainedOutputsSet()
+	if err != nil {
+		return nil, fmt.Errorf("unable to compute non-new chains (output side): %w", err)
+	}
+	workingSet.UnlockBlocksByType = t.UnlockBlocks.ToUnlockBlocksByType()
+	return workingSet, nil
+}
+
+// SemanticallyValidate semantically validates the Transaction by checking that the semantic rules applied to the inputs
+// and outputs are fulfilled. SyntacticallyValidate() should be called before SemanticallyValidate() to
+// ensure that the essence part of the transaction is syntactically valid.
+func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inputs InputSet, semValFuncs ...SemanticValidationFunc) error {
+	var err error
+	svCtx.WorkingSet, err = NewSemValiContextWorkingSet(t, inputs)
+	if err != nil {
+		return err
+	}
 
 	// TODO:
 	//	- iota token sum balance
@@ -270,8 +304,9 @@ func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inp
 	if err := runSemanticValidations(svCtx,
 		TxSemanticInputUnlocks(),
 		TxSemanticTimelock(),
+		TxSemanticOutputsSender(),
 		TxSemanticNativeTokens(),
-		TxSemanticAlias()); err != nil {
+		TxSemanticChainConstrainedSTVF()); err != nil {
 		return err
 	}
 
@@ -299,8 +334,8 @@ type TxSemanticValidationFunc func(svCtx *SemanticValidationContext) error
 // and verifies that inputs are correctly unlocked.
 func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
-		for inputIndex, inputRef := range svCtx.essence.Inputs {
-			input, ok := svCtx.inputSet[inputRef.(IndexedUTXOReferencer).Ref()]
+		for inputIndex, inputRef := range svCtx.WorkingSet.Tx.Essence.Inputs {
+			input, ok := svCtx.WorkingSet.InputSet[inputRef.(IndexedUTXOReferencer).Ref()]
 			if !ok {
 				return fmt.Errorf("%w: utxo for input %d not supplied", ErrMissingUTXO, inputIndex)
 			}
@@ -324,7 +359,7 @@ func identToUnlock(svCtx *SemanticValidationContext, input Output, inputIndex in
 	}
 }
 
-// TODO: abstract this all to work with MultiIdentOutput / AccountID
+// TODO: abstract this all to work with MultiIdentOutput / ChainID
 func identToUnlockFromMultiIdentOutput(svCtx *SemanticValidationContext, inputMultiIdentOutput MultiIdentOutput, inputIndex int) (Address, error) {
 	inputAliasOutput, is := inputMultiIdentOutput.(*AliasOutput)
 	if !is {
@@ -334,14 +369,15 @@ func identToUnlockFromMultiIdentOutput(svCtx *SemanticValidationContext, inputMu
 
 	aliasID := inputAliasOutput.AliasID
 	if aliasID.Empty() {
-		aliasID = AliasIDFromOutputID(svCtx.essence.Inputs[inputIndex].(IndexedUTXOReferencer).Ref())
+		aliasID = AliasIDFromOutputID(svCtx.WorkingSet.Tx.Essence.Inputs[inputIndex].(IndexedUTXOReferencer).Ref())
 	}
 
 	ident := inputAliasOutput.StateController
 
 	// means a governance transition as either state did not change
 	// or the alias output is being destroyed
-	if outputAliasOutput, has := svCtx.outputsNonNewAliases[aliasID]; !has || inputAliasOutput.StateIndex == outputAliasOutput.StateIndex {
+	if outputAliasOutput, has := svCtx.WorkingSet.OutNonNewChains[aliasID]; !has ||
+		inputAliasOutput.StateIndex == outputAliasOutput.(*AliasOutput).StateIndex {
 		ident = inputAliasOutput.GovernanceController
 	}
 
@@ -402,47 +438,47 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex in
 		targetIdent = actualIdentToUnlock
 	}
 
-	unlockBlock := svCtx.tx.UnlockBlocks[inputIndex]
+	unlockBlock := svCtx.WorkingSet.Tx.UnlockBlocks[inputIndex]
 
 	switch ident := targetIdent.(type) {
-	case AccountAddress:
+	case ChainConstrainedAddress:
 		referentialUnlockBlock, isReferentialUnlockBlock := unlockBlock.(ReferentialUnlockBlock)
 		if !isReferentialUnlockBlock || !referentialUnlockBlock.Chainable() || !referentialUnlockBlock.SourceAllowed(targetIdent) {
-			return fmt.Errorf("%w: input %d has an account address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(ident.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
+			return fmt.Errorf("%w: input %d has an chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(ident.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
 		}
 
-		unlockedAtIndex, wasUnlocked := svCtx.unlockedIdents[ident]
+		unlockedAtIndex, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[ident]
 		if !wasUnlocked || unlockedAtIndex != referentialUnlockBlock.Ref() {
-			return fmt.Errorf("%w: input %d's account address is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, referentialUnlockBlock.Ref())
+			return fmt.Errorf("%w: input %d's chain constrained address is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, referentialUnlockBlock.Ref())
 		}
 
-		// since this input is now unlocked, and it has an AccountAddress, it becomes automatically unlocked
-		if accountOutput, isAccountOutput := output.(AccountOutput); isAccountOutput {
-			svCtx.unlockedIdents[accountOutput.Account().ToAddress()] = uint16(inputIndex)
+		// since this input is now unlocked, and it has a ChainConstrainedAddress, it becomes automatically unlocked
+		if chainConstrainedOutput, isChainConstrainedOutput := output.(ChainConstrainedOutput); isChainConstrainedOutput && chainConstrainedOutput.Chain().Addressable() {
+			svCtx.WorkingSet.UnlockedIdents[chainConstrainedOutput.Chain().ToAddress()] = uint16(inputIndex)
 		}
 
 	case DirectUnlockableAddress:
 		switch uBlock := unlockBlock.(type) {
 		case ReferentialUnlockBlock:
 			if uBlock.Chainable() || !uBlock.SourceAllowed(targetIdent) {
-				return fmt.Errorf("%w: input %d has none account address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(ident.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
+				return fmt.Errorf("%w: input %d has not chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(ident.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
 			}
 
-			unlockedAtIndex, wasUnlocked := svCtx.unlockedIdents[ident]
+			unlockedAtIndex, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[ident]
 			if !wasUnlocked || unlockedAtIndex != uBlock.Ref() {
 				return fmt.Errorf("%w: input %d's address is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, uBlock.Ref())
 			}
 		case *SignatureUnlockBlock:
 			// ident must not be unlocked already
-			if _, wasAlreadyUnlocked := svCtx.unlockedIdents[ident]; wasAlreadyUnlocked {
-				return fmt.Errorf("%w: input %d's address is already unlocked through input %d's unlock block but the input uses a non referential unlock block", ErrInvalidInputUnlock, inputIndex, uBlock.Ref())
+			if unlockedAtIndex, wasAlreadyUnlocked := svCtx.WorkingSet.UnlockedIdents[ident]; wasAlreadyUnlocked {
+				return fmt.Errorf("%w: input %d's address is already unlocked through input %d's unlock block but the input uses a non referential unlock block", ErrInvalidInputUnlock, inputIndex, unlockedAtIndex)
 			}
 
-			if err := ident.Unlock(svCtx.essenceBytes, uBlock.Signature); err != nil {
+			if err := ident.Unlock(svCtx.WorkingSet.EssenceMsgtoSign, uBlock.Signature); err != nil {
 				return fmt.Errorf("%w: input %d's address is not unlocked through its signature unlock block", err, inputIndex)
 			}
 
-			svCtx.unlockedIdents[ident] = uint16(inputIndex)
+			svCtx.WorkingSet.UnlockedIdents[ident] = uint16(inputIndex)
 		}
 	default:
 		panic("unknown address in semantic unlocks")
@@ -450,11 +486,41 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex in
 	return nil
 }
 
+// TxSemanticOutputsSender validates that for SenderFeatureBlock occurring on the output side,
+// the given identity is unlocked on the input side.
+func TxSemanticOutputsSender() TxSemanticValidationFunc {
+	return func(svCtx *SemanticValidationContext) error {
+		for outputIndex, output := range svCtx.WorkingSet.Tx.Essence.Outputs {
+			featureBlockOutput, is := output.(FeatureBlockOutput)
+			if !is {
+				continue
+			}
+
+			featureBlocks, err := featureBlockOutput.FeatureBlocks().Set()
+			if err != nil {
+				return fmt.Errorf("unable to compute feature block set for output %d: %w", outputIndex, err)
+			}
+
+			senderFeatureBlock, has := featureBlocks[FeatureBlockSender]
+			if !has {
+				continue
+			}
+
+			// check unlocked
+			sender := senderFeatureBlock.(*SenderFeatureBlock).Address
+			if _, isUnlocked := svCtx.WorkingSet.UnlockedIdents[sender]; !isUnlocked {
+				return fmt.Errorf("%w: output %d", ErrSenderFeatureBlockNotUnlocked, outputIndex)
+			}
+		}
+		return nil
+	}
+}
+
 // TxSemanticTimelock validates following rules regarding timelocked inputs:
 //	- Inputs with a TimelockMilestone<Index,Unix>FeatureBlock can only be unlocked if the confirming milestone allows it.
 func TxSemanticTimelock() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
-		for inputIndex, input := range svCtx.inputSet {
+		for inputIndex, input := range svCtx.WorkingSet.InputSet {
 			inputWithFeatureBlocks, is := input.(FeatureBlockOutput)
 			if !is {
 				continue
@@ -476,7 +542,7 @@ func TxSemanticTimelock() TxSemanticValidationFunc {
 	}
 }
 
-// TxSemanticAlias validates following rules regarding aliases:
+// TxSemanticChainConstrainedSTVF validates following rules regarding ChainConstrainedOutput(s):
 //	- For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either
 //	  its AliasID is zeroed and StateIndex and FoundryCounter are zero or an input AliasOutput with the same AliasID.
 //	- On alias state transitions:
@@ -484,17 +550,39 @@ func TxSemanticTimelock() TxSemanticValidationFunc {
 //		- Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated
 //	- On alias governance transition:
 //		- Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated
-func TxSemanticAlias() TxSemanticValidationFunc {
+func TxSemanticChainConstrainedSTVF() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
-		// for every non-new alias, there must be a corresponding alias on the input side (new or existing)
-		if err := svCtx.outputsNonNewAliases.Includes(svCtx.inputAliases); err != nil {
-			return fmt.Errorf("missing aliases on the input side to satisfy non-new aliases on the output side: %w", err)
+		// for every non-new chain on the output side, there must be a corresponding chain on the input side (new or existing)
+		if err := svCtx.WorkingSet.OutNonNewChains.Includes(svCtx.WorkingSet.InChains); err != nil {
+			return fmt.Errorf("missing chain on the input side to satisfy non-new chains on the output side: %w", err)
 		}
 
-		if err := svCtx.inputAliases.EveryTuple(svCtx.outputsNonNewAliases, func(in *AliasOutput, out *AliasOutput) error {
-			return in.TransitionWith(out)
-		}); err != nil {
+		// state change transitions
+		if err := svCtx.WorkingSet.InChains.EveryTuple(svCtx.WorkingSet.OutNonNewChains, ValidateStateTransitionOnTuple(svCtx)); err != nil {
+			// TODO: fmt.Errorf
 			return err
+		}
+
+		// new state transitions
+		for outputIndex, output := range svCtx.WorkingSet.Tx.Essence.Outputs {
+			chainConstrainedOutput, is := output.(ChainConstrainedOutput)
+			if !is {
+				continue
+			}
+
+			isNewChain, err := chainConstrainedOutput.IsNewChain(SideOut, svCtx)
+			if err != nil {
+				// TODO: fmt.Errorf
+				return err
+			}
+
+			if !isNewChain {
+				continue
+			}
+
+			if err := chainConstrainedOutput.ValidateStateTransition(ChainTransitionTypeNew, nil, svCtx); err != nil {
+				return fmt.Errorf("new chain constrained output %d state transition failed: %w", outputIndex, err)
+			}
 		}
 
 		return nil
@@ -508,29 +596,29 @@ func TxSemanticAlias() TxSemanticValidationFunc {
 //	  serial number and must fill the gap between the alias account's starting/closing(inclusive) foundry counter.
 func TxSemanticNativeTokens() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
-		inputNativeTokens, err := svCtx.inputsByType.NativeTokenOutputs().Sum()
+		inputNativeTokens, err := svCtx.WorkingSet.InputsByType.NativeTokenOutputs().Sum()
 		if err != nil {
 			return fmt.Errorf("invalid input native token set: %w", err)
 		}
-		outputNativeTokens, err := svCtx.inputsByType.NativeTokenOutputs().Sum()
+		outputNativeTokens, err := svCtx.WorkingSet.InputsByType.NativeTokenOutputs().Sum()
 		if err != nil {
 			return fmt.Errorf("invalid output native token set: %w", err)
 		}
 
 		// easy route, tokens must be balanced between both sets
-		_, hasOutputFoundryOutput := svCtx.outputsByType[OutputFoundry]
-		_, hasInputFoundryOutput := svCtx.inputsByType[OutputFoundry]
+		_, hasOutputFoundryOutput := svCtx.WorkingSet.OutputsByType[OutputFoundry]
+		_, hasInputFoundryOutput := svCtx.WorkingSet.InputsByType[OutputFoundry]
 		if !hasInputFoundryOutput && !hasOutputFoundryOutput {
 			if err := inputNativeTokens.Balanced(outputNativeTokens); err != nil {
 				return err
 			}
 		}
 
-		inputFoundryOutputs, err := svCtx.inputsByType.FoundryOutputsSet()
+		inputFoundryOutputs, err := svCtx.WorkingSet.InputsByType.FoundryOutputsSet()
 		if err != nil {
 			return fmt.Errorf("invalid input foundry outputs: %w", err)
 		}
-		outputFoundryOutputs, err := svCtx.outputsByType.FoundryOutputsSet()
+		outputFoundryOutputs, err := svCtx.WorkingSet.OutputsByType.FoundryOutputsSet()
 		if err != nil {
 			return fmt.Errorf("invalid output foundry outputs: %w", err)
 		}
@@ -573,5 +661,5 @@ func (jsontx *jsonTransaction) ToSerializable() (serializer.Serializable, error)
 		return nil, err
 	}
 
-	return &Transaction{Essence: txEssenceSeri, UnlockBlocks: unlockBlocks}, nil
+	return &Transaction{Essence: txEssenceSeri.(*TransactionEssence), UnlockBlocks: unlockBlocks}, nil
 }

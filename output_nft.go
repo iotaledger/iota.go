@@ -22,22 +22,39 @@ var (
 // It is computed as the Blake2b-160 hash of the OutputID of the output which created the NFT.
 type NFTID [NFTIDLength]byte
 
-func (nftID *NFTID) Empty() bool {
-	return *nftID == emptyNFTID
+func (nftID NFTID) Addressable() bool {
+	return true
 }
 
-func (nftID *NFTID) Matches(other AccountID) bool {
-	otherNFTID, isNFTID := other.(*NFTID)
+func (nftID NFTID) Key() interface{} {
+	return nftID.String()
+}
+
+func (nftID NFTID) FromUTXOInputID(id UTXOInputID) ChainID {
+	addr := NFTAddressFromOutputID(id)
+	return addr.Chain()
+}
+
+func (nftID NFTID) Empty() bool {
+	return nftID == emptyNFTID
+}
+
+func (nftID NFTID) Matches(other ChainID) bool {
+	otherNFTID, isNFTID := other.(NFTID)
 	if !isNFTID {
 		return false
 	}
-	return *nftID == *otherNFTID
+	return nftID == otherNFTID
 }
 
-func (nftID NFTID) ToAddress() AccountAddress {
+func (nftID NFTID) ToAddress() ChainConstrainedAddress {
 	var addr NFTAddress
 	copy(addr[:], nftID[:])
 	return &addr
+}
+
+func (nftID NFTID) String() string {
+	return hex.EncodeToString(nftID[:])
 }
 
 // NFTOutput is an output type used to implement non-fungible tokens.
@@ -56,8 +73,27 @@ type NFTOutput struct {
 	Blocks FeatureBlocks
 }
 
-func (n *NFTOutput) Account() AccountID {
-	return &n.NFTID
+func (n *NFTOutput) IsNewChain(_ Side, _ *SemanticValidationContext) (bool, error){
+	return n.NFTID.Empty(), nil
+}
+
+func (n *NFTOutput) HasUTXODependableChainID() bool {
+	return true
+}
+
+func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
+	switch transType {
+	case ChainTransitionTypeNew:
+
+	case ChainTransitionTypeStateChange:
+	case ChainTransitionTypeDestroy:
+	default:
+		panic("unknown chain transition type in NFTOutput")
+	}
+}
+
+func (n *NFTOutput) Chain() ChainID {
+	return n.NFTID
 }
 
 func (n *NFTOutput) NativeTokenSet() NativeTokens {
