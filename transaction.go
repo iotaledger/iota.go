@@ -177,7 +177,10 @@ func (t *Transaction) SyntacticallyValidate() error {
 		return fmt.Errorf("%w: num of inputs %d, num of unlock blocks %d", ErrUnlockBlocksMustMatchInputCount, inputCount, unlockBlockCount)
 	}
 
-	if err := ValidateOutputs(t.Essence.Outputs, OutputsPredicateAlias(txID), OutputsPredicateNFT(txID)); err != nil {
+	if err := ValidateOutputs(t.Essence.Outputs,
+		OutputsPredicateAlias(txID),
+		OutputsPredicateNFT(txID),
+	); err != nil {
 		return err
 	}
 
