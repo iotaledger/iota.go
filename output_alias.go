@@ -211,37 +211,63 @@ func (a *AliasOutput) Chain() ChainID {
 
 // GovernanceSTVF checks whether the governance transition with other is valid.
 // Under a governance transition, only the StateController, GovernanceController and MetadataFeatureBlock can change.
-func (a *AliasOutput) GovernanceSTVF(nextState *AliasOutput, semValCtx *SemanticValidationContext) error {
+func (a *AliasOutput) GovernanceSTVF(nextAliasOutput *AliasOutput, semValCtx *SemanticValidationContext) error {
 	switch {
-	case a.Amount != nextState.Amount:
-		return fmt.Errorf("%w: amount changed, in %d / out %d ", ErrInvalidAliasGovernanceTransition, a.Amount, nextState.Amount)
-	case !a.NativeTokens.Equal(nextState.NativeTokens):
-		return fmt.Errorf("%w: native tokens changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.NativeTokens, nextState.NativeTokens)
-	case a.StateIndex != nextState.StateIndex:
-		return fmt.Errorf("%w: state index changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.StateIndex, nextState.StateIndex)
-	case !bytes.Equal(a.StateMetadata, nextState.StateMetadata):
-		return fmt.Errorf("%w: state metadata changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.StateMetadata, nextState.StateMetadata)
-	case a.FoundryCounter != nextState.FoundryCounter:
-		return fmt.Errorf("%w: foundry counter changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.FoundryCounter, nextState.FoundryCounter)
+	case a.Amount != nextAliasOutput.Amount:
+		return fmt.Errorf("%w: amount changed, in %d / out %d ", ErrInvalidAliasGovernanceTransition, a.Amount, nextAliasOutput.Amount)
+	case !a.NativeTokens.Equal(nextAliasOutput.NativeTokens):
+		return fmt.Errorf("%w: native tokens changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.NativeTokens, nextAliasOutput.NativeTokens)
+	case a.StateIndex != nextAliasOutput.StateIndex:
+		return fmt.Errorf("%w: state index changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.StateIndex, nextAliasOutput.StateIndex)
+	case !bytes.Equal(a.StateMetadata, nextAliasOutput.StateMetadata):
+		return fmt.Errorf("%w: state metadata changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.StateMetadata, nextAliasOutput.StateMetadata)
+	case a.FoundryCounter != nextAliasOutput.FoundryCounter:
+		return fmt.Errorf("%w: foundry counter changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.FoundryCounter, nextAliasOutput.FoundryCounter)
 	}
 	return nil
 }
 
 // StateSTVF checks whether the state transition with other is valid.
 // Under a state transition, only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can change.
-func (a *AliasOutput) StateSTVF(other *AliasOutput, semValCtx *SemanticValidationContext) error {
+func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *SemanticValidationContext) error {
 	switch {
-	case !a.StateController.Equal(other.StateController):
-		return fmt.Errorf("%w: state controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, other.StateController)
-	case !a.GovernanceController.Equal(other.GovernanceController):
-		return fmt.Errorf("%w: governance controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, other.StateController)
-	case !a.FeatureBlocks().Equal(other.FeatureBlocks()):
-		return fmt.Errorf("%w: feature blocks changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, other.StateController)
-	case a.FoundryCounter > other.FoundryCounter:
-		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", ErrInvalidAliasStateTransition, a.FoundryCounter, other.FoundryCounter)
-	case a.StateIndex+1 != other.StateIndex:
-		return fmt.Errorf("%w: state index %d on the input side but %d on the output side", ErrInvalidAliasStateTransition, a.StateIndex, other.StateIndex)
+	case !a.StateController.Equal(nextAliasOutput.StateController):
+		return fmt.Errorf("%w: state controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, nextAliasOutput.StateController)
+	case !a.GovernanceController.Equal(nextAliasOutput.GovernanceController):
+		return fmt.Errorf("%w: governance controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, nextAliasOutput.StateController)
+	case !a.FeatureBlocks().Equal(nextAliasOutput.FeatureBlocks()):
+		return fmt.Errorf("%w: feature blocks changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, nextAliasOutput.StateController)
+	case a.FoundryCounter > nextAliasOutput.FoundryCounter:
+		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", ErrInvalidAliasStateTransition, a.FoundryCounter, nextAliasOutput.FoundryCounter)
+	case a.StateIndex+1 != nextAliasOutput.StateIndex:
+		return fmt.Errorf("%w: state index %d on the input side but %d on the output side", ErrInvalidAliasStateTransition, a.StateIndex, nextAliasOutput.StateIndex)
 	}
+
+	// check that for a foundry counter change, X amount of foundries were actually created
+	if a.FoundryCounter == nextAliasOutput.FoundryCounter {
+		return nil
+	}
+
+	var seenNewFoundriesOfAlias uint32
+	for _, output := range semValCtx.WorkingSet.Tx.Essence.Outputs {
+		foundryOutput, is := output.(*FoundryOutput)
+		if !is {
+			continue
+		}
+		foundryAliasID := foundryOutput.Address.(*AliasAddress).Chain()
+		if foundryAliasID != a.AliasID {
+			continue
+		}
+		if _, notNew := semValCtx.WorkingSet.InChains[foundryAliasID]; notNew {
+			continue
+		}
+	}
+
+	expectedNewFoundriesCount := nextAliasOutput.FoundryCounter - a.FoundryCounter
+	if expectedNewFoundriesCount != seenNewFoundriesOfAlias {
+		return fmt.Errorf("%w: %d new foundries were created but the alias output's foundry counter changed by %d", ErrInvalidAliasStateTransition, seenNewFoundriesOfAlias, expectedNewFoundriesCount)
+	}
+
 	return nil
 }
 

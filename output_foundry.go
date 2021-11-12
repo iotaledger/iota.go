@@ -103,9 +103,64 @@ func (f *FoundryOutput) Chain() ChainID {
 func (f *FoundryOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
 	inSums := semValCtx.WorkingSet.InNativeTokens
 	outSums := semValCtx.WorkingSet.OutNativeTokens
+
+	thisFoundryID, err := f.ID()
+	if err != nil {
+		return err
+	}
+
 	switch transType {
 	case ChainTransitionTypeNew:
 		// TODO: check SerialNumber
+
+		// grab foundry counter from transitioning AliasOutput
+		aliasID := f.Address.(*AliasAddress).Chain()
+		inAlias, ok := semValCtx.WorkingSet.InChains[aliasID]
+		if !ok {
+			return fmt.Errorf("%w: missing input transitioning alias output %s for new foundry output %s", ErrInvalidChainStateTransition, aliasID, thisFoundryID)
+		}
+		outAlias, ok := semValCtx.WorkingSet.OutChains[aliasID]
+		if !ok {
+			return fmt.Errorf("%w: missing output transitioning alias output %s for new foundry output %s", ErrInvalidChainStateTransition, aliasID, thisFoundryID)
+		}
+
+		// this new foundry's serial number must be between the given foundry counter interval
+		startSerial := inAlias.(*AliasOutput).FoundryCounter
+		endIncSerial := outAlias.(*AliasOutput).FoundryCounter
+		if startSerial >= f.SerialNumber || f.SerialNumber > endIncSerial {
+			return fmt.Errorf("%w: new foundry output %s's serial number is not between the foundry counter interval of [%d,%d)", ErrInvalidChainStateTransition, thisFoundryID, startSerial, endIncSerial)
+		}
+
+		// OPTIMIZE: this loop happens for on every STVF of every new foundry output
+		// check order of serial number
+		for outputIndex, output := range semValCtx.WorkingSet.Tx.Essence.Outputs {
+			otherFoundryOutput, is := output.(*FoundryOutput)
+			if !is {
+				continue
+			}
+			if !otherFoundryOutput.Address.Equal(f.Address) {
+				continue
+			}
+
+			otherFoundryID, err := otherFoundryOutput.ID()
+			if err != nil {
+				return err
+			}
+
+			if _, isNotNew := semValCtx.WorkingSet.InChains[otherFoundryID]; isNotNew {
+				continue
+			}
+
+			// only check up to own foundry whether it is ordered
+			if otherFoundryID == thisFoundryID {
+				break
+			}
+
+			if otherFoundryOutput.SerialNumber >= f.SerialNumber {
+				return fmt.Errorf("%w: new foundry output %s at index %d has bigger equal serial number than this foundry %s", ErrInvalidChainStateTransition, otherFoundryID, outputIndex, thisFoundryID)
+			}
+		}
+
 		if err := NativeTokenSumBalancedWithDiff(f.MustNativeTokenID(), inSums, outSums, f.CirculatingSupply); err != nil {
 			return fmt.Errorf("%w: new foundry state does not balance NativeToken %s", err, f.MustNativeTokenID())
 		}

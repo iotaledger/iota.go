@@ -213,7 +213,7 @@ type SemValiContextWorkingSet struct {
 	// The transaction for which this semantic validation happens.
 	Tx *Transaction
 	// The message which signatures are signing.
-	EssenceMsgtoSign []byte
+	EssenceMsgToSign []byte
 	// The inputs of the transaction mapped by type.
 	InputsByType OutputsByType
 	// The ChainConstrainedOutput(s) at the input side.
@@ -249,7 +249,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs InputSet) (*SemValiConte
 	workingSet.UnlockedIdents = make(UnlockedIdentities)
 	workingSet.InputSet = inputs
 	workingSet.Tx = t
-	workingSet.EssenceMsgtoSign, err = t.Essence.SigningMessage()
+	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage()
 	if err != nil {
 		return nil, err
 	}
@@ -468,7 +468,7 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex in
 				return fmt.Errorf("%w: input %d's address is already unlocked through input %d's unlock block but the input uses a non referential unlock block", ErrInvalidInputUnlock, inputIndex, unlockedAtIndex)
 			}
 
-			if err := ident.Unlock(svCtx.WorkingSet.EssenceMsgtoSign, uBlock.Signature); err != nil {
+			if err := ident.Unlock(svCtx.WorkingSet.EssenceMsgToSign, uBlock.Signature); err != nil {
 				return fmt.Errorf("%w: input %d's address is not unlocked through its signature unlock block", err, inputIndex)
 			}
 
