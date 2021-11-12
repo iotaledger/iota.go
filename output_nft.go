@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -73,20 +74,28 @@ type NFTOutput struct {
 	Blocks FeatureBlocks
 }
 
-func (n *NFTOutput) IsNewChain(_ Side, _ *SemanticValidationContext) (bool, error){
-	return n.NFTID.Empty(), nil
-}
-
-func (n *NFTOutput) HasUTXODependableChainID() bool {
-	return true
-}
-
 func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
 	switch transType {
 	case ChainTransitionTypeNew:
-
+		if !n.NFTID.Empty() {
+			return fmt.Errorf("%w: NFTOutput's ID is not zeroed even though it is new", ErrInvalidChainStateTransition)
+		}
+		return IsIssuerOnOutputUnlocked(n, semValCtx.WorkingSet.UnlockedIdents)
 	case ChainTransitionTypeStateChange:
+		nextNFTOutput, is := next.(*NFTOutput)
+		if !is {
+			return fmt.Errorf("%w: NFTOutput can only state transition to another NFTOutput", ErrInvalidChainStateTransition)
+		}
+		if err := IssuerBlockUnchanged(n, nextNFTOutput); err != nil {
+			return err
+		}
+		// immutable metadata must not change
+		if !bytes.Equal(n.ImmutableMetadata, nextNFTOutput.ImmutableMetadata) {
+			return fmt.Errorf("%w: can not change NFTOutput's immutable metadata in state change transition", ErrInvalidChainStateTransition)
+		}
+		return nil
 	case ChainTransitionTypeDestroy:
+		return nil
 	default:
 		panic("unknown chain transition type in NFTOutput")
 	}

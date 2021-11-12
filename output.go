@@ -85,6 +85,31 @@ func (o *Outputs) FromSerializables(seris serializer.Serializables) {
 	}
 }
 
+// ChainConstrainedOutputSet returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs in Outputs.
+func (o Outputs) ChainConstrainedOutputSet(txID TransactionID) ChainConstrainedOutputsSet {
+	set := make(ChainConstrainedOutputsSet)
+	for outputIndex, output := range o {
+		chainConstrainedOutput, is := output.(ChainConstrainedOutput)
+		if !is {
+			continue
+		}
+
+		chainID := chainConstrainedOutput.Chain()
+		if chainID.Empty() {
+			if utxoIDChainID, is := chainConstrainedOutput.Chain().(UTXOIDChainID); is {
+				chainID = utxoIDChainID.FromUTXOInputID(UTXOIDFromTransactionIDAndIndex(txID, uint16(outputIndex)))
+			}
+		}
+
+		if chainID.Empty() {
+			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", OutputTypeToString(output.Type())))
+		}
+
+		set[chainID] = chainConstrainedOutput
+	}
+	return set
+}
+
 // ToOutputsByType converts the Outputs slice to OutputsByType.
 func (o Outputs) ToOutputsByType() OutputsByType {
 	outputsByType := make(OutputsByType)
@@ -233,10 +258,9 @@ func (outputs OutputsByType) NonNewAliasOutputsSet() (AliasOutputsSet, error) {
 	return aliasOutputsSet, nil
 }
 
-// NonNewChainConstrainedOutputsSet returns a map of ChainID to ChainConstrainedOutput.
+// ChainConstrainedOutputsSet returns a map of ChainID to ChainConstrainedOutput.
 // If multiple ChainConstrainedOutput(s) exist for a given ChainID, an error is returned.
-// The produced set does not include ChainConstrainedOutput(s) of which their ChainID are empty.
-func (outputs OutputsByType) NonNewChainConstrainedOutputsSet() (ChainConstrainedOutputsSet, error) {
+func (outputs OutputsByType) ChainConstrainedOutputsSet() (ChainConstrainedOutputsSet, error) {
 	chainConstrainedOutputs := make(ChainConstrainedOutputsSet, 0)
 	for _, ty := range []OutputType{OutputAlias, OutputFoundry, OutputNFT} {
 		for _, output := range outputs[ty] {
@@ -310,8 +334,8 @@ func (inputSet InputSet) NewAliases() AliasOutputsSet {
 	return set
 }
 
-// NewChains returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs which are new.
-func (inputSet InputSet) NewChains(side Side, svCtx *SemanticValidationContext) (ChainConstrainedOutputsSet, error) {
+// ChainConstrainedOutputSet returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs in the InputSet.
+func (inputSet InputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSet {
 	set := make(ChainConstrainedOutputsSet)
 	for utxoInputID, output := range inputSet {
 		chainConstrainedOutput, is := output.(ChainConstrainedOutput)
@@ -319,27 +343,20 @@ func (inputSet InputSet) NewChains(side Side, svCtx *SemanticValidationContext) 
 			continue
 		}
 
-		isNew, err := chainConstrainedOutput.IsNewChain(side, svCtx)
-		if err != nil {
-			return nil, err
-		}
-		if !isNew {
-			continue
-		}
-
 		chainID := chainConstrainedOutput.Chain()
-		if utxoIDChainID, is := chainConstrainedOutput.Chain().(UTXOIDChainID); is {
-			chainID = utxoIDChainID.FromUTXOInputID(utxoInputID)
+		if chainID.Empty() {
+			if utxoIDChainID, is := chainConstrainedOutput.Chain().(UTXOIDChainID); is {
+				chainID = utxoIDChainID.FromUTXOInputID(utxoInputID)
+			}
 		}
 
-		// this can never happen as chain constrained outputs which are not dependable
-		// on utxo IDs produce their chain ID from themselves
-		if !chainConstrainedOutput.HasUTXODependableChainID() && chainID.Empty() {
+		if chainID.Empty() {
 			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", OutputTypeToString(output.Type())))
 		}
+
 		set[chainID] = chainConstrainedOutput
 	}
-	return set, nil
+	return set
 }
 
 // Output defines a unit of output of a transaction.

@@ -216,16 +216,16 @@ type SemValiContextWorkingSet struct {
 	EssenceMsgtoSign []byte
 	// The inputs of the transaction mapped by type.
 	InputsByType OutputsByType
-	// The ChainConstrainedOutput(s) from the input side which are not new.
-	InNonNewChains ChainConstrainedOutputsSet
-	// The ChainConstrainedOutput(s) from the input side which are new.
-	InNewChains ChainConstrainedOutputsSet
-	// The set of ChainConstrainedOutput(s) occurring on the input side.
+	// The ChainConstrainedOutput(s) at the input side.
 	InChains ChainConstrainedOutputsSet
+	// The sum of NativeTokens at the input side.
+	InNativeTokens NativeTokenSum
 	// The Outputs of the transaction mapped by type.
 	OutputsByType OutputsByType
-	// The ChainConstrainedOutput(s) at the output side which are not new.
-	OutNonNewChains ChainConstrainedOutputsSet
+	// The ChainConstrainedOutput(s) at the output side.
+	OutChains ChainConstrainedOutputsSet
+	// The sum of NativeTokens at the output side.
+	OutNativeTokens NativeTokenSum
 	// The UnlockBlocks carried by the transaction mapped by type.
 	UnlockBlocksByType UnlockBlocksByType
 }
@@ -253,6 +253,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs InputSet) (*SemValiConte
 	if err != nil {
 		return nil, err
 	}
+
 	workingSet.InputsByType = func() OutputsByType {
 		slice := make(Outputs, len(inputs))
 		var i int
@@ -262,23 +263,16 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs InputSet) (*SemValiConte
 		}
 		return slice.ToOutputsByType()
 	}()
-	workingSet.InNonNewChains, err = workingSet.InputsByType.NonNewChainConstrainedOutputsSet()
+
+	txID, err := workingSet.Tx.ID()
 	if err != nil {
-		return nil, fmt.Errorf("unable to compute non-new chains (input side): %w", err)
+		return nil, err
 	}
-	workingSet.InNewChains, err = workingSet.InputSet.NewChains(SideIn, nil)
-	if err != nil {
-		return nil, fmt.Errorf("unable to compute new chains (input side): %w", err)
-	}
-	workingSet.InChains, err = workingSet.InNewChains.Merge(workingSet.InNonNewChains)
-	if err != nil {
-		return nil, fmt.Errorf("unable to compute input chains set: %w", err)
-	}
+
+	workingSet.InChains = workingSet.InputSet.ChainConstrainedOutputSet()
 	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
-	workingSet.OutNonNewChains, err = workingSet.OutputsByType.NonNewChainConstrainedOutputsSet()
-	if err != nil {
-		return nil, fmt.Errorf("unable to compute non-new chains (output side): %w", err)
-	}
+	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainConstrainedOutputSet(*txID)
+
 	workingSet.UnlockBlocksByType = t.UnlockBlocks.ToUnlockBlocksByType()
 	return workingSet, nil
 }
@@ -303,10 +297,10 @@ func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inp
 	// on the given SemanticValidationContext
 	if err := runSemanticValidations(svCtx,
 		TxSemanticInputUnlocks(),
+		TxSemanticNativeTokens(),
 		TxSemanticTimelock(),
 		TxSemanticOutputsSender(),
-		TxSemanticNativeTokens(),
-		TxSemanticChainConstrainedSTVF()); err != nil {
+		TxSemanticSTVFOnChains()); err != nil {
 		return err
 	}
 
@@ -376,7 +370,7 @@ func identToUnlockFromMultiIdentOutput(svCtx *SemanticValidationContext, inputMu
 
 	// means a governance transition as either state did not change
 	// or the alias output is being destroyed
-	if outputAliasOutput, has := svCtx.WorkingSet.OutNonNewChains[aliasID]; !has ||
+	if outputAliasOutput, has := svCtx.WorkingSet.OutChains[aliasID]; !has ||
 		inputAliasOutput.StateIndex == outputAliasOutput.(*AliasOutput).StateIndex {
 		ident = inputAliasOutput.GovernanceController
 	}
@@ -542,46 +536,29 @@ func TxSemanticTimelock() TxSemanticValidationFunc {
 	}
 }
 
-// TxSemanticChainConstrainedSTVF validates following rules regarding ChainConstrainedOutput(s):
-//	- For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either
-//	  its AliasID is zeroed and StateIndex and FoundryCounter are zero or an input AliasOutput with the same AliasID.
-//	- On alias state transitions:
-//		- The StateIndex must be incremented by 1
-//		- Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated
-//	- On alias governance transition:
-//		- Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated
-func TxSemanticChainConstrainedSTVF() TxSemanticValidationFunc {
+// TxSemanticSTVFOnChains executes StateTransitionValidationFunc(s) on ChainConstrainedOutput(s).
+func TxSemanticSTVFOnChains() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
-		// for every non-new chain on the output side, there must be a corresponding chain on the input side (new or existing)
-		if err := svCtx.WorkingSet.OutNonNewChains.Includes(svCtx.WorkingSet.InChains); err != nil {
-			return fmt.Errorf("missing chain on the input side to satisfy non-new chains on the output side: %w", err)
-		}
 
-		// state change transitions
-		if err := svCtx.WorkingSet.InChains.EveryTuple(svCtx.WorkingSet.OutNonNewChains, ValidateStateTransitionOnTuple(svCtx)); err != nil {
-			// TODO: fmt.Errorf
-			return err
-		}
-
-		// new state transitions
-		for outputIndex, output := range svCtx.WorkingSet.Tx.Essence.Outputs {
-			chainConstrainedOutput, is := output.(ChainConstrainedOutput)
-			if !is {
+		for chainID, inputChain := range svCtx.WorkingSet.InChains {
+			nextState := svCtx.WorkingSet.OutChains[chainID]
+			if nextState == nil {
+				if err := inputChain.ValidateStateTransition(ChainTransitionTypeDestroy, nil, svCtx); err != nil {
+					return fmt.Errorf("chain input %s state destroy transition failed: %w", chainID, err)
+				}
 				continue
 			}
-
-			isNewChain, err := chainConstrainedOutput.IsNewChain(SideOut, svCtx)
-			if err != nil {
-				// TODO: fmt.Errorf
-				return err
+			if err := inputChain.ValidateStateTransition(ChainTransitionTypeStateChange, nextState, svCtx); err != nil {
+				return fmt.Errorf("chain %s state transition failed: %w", chainID, err)
 			}
+		}
 
-			if !isNewChain {
-				continue
-			}
-
-			if err := chainConstrainedOutput.ValidateStateTransition(ChainTransitionTypeNew, nil, svCtx); err != nil {
-				return fmt.Errorf("new chain constrained output %d state transition failed: %w", outputIndex, err)
+		for chainID, outputChain := range svCtx.WorkingSet.OutChains {
+			previousState := svCtx.WorkingSet.InChains[chainID]
+			if previousState == nil {
+				if err := outputChain.ValidateStateTransition(ChainTransitionTypeNew, nil, svCtx); err != nil {
+					return fmt.Errorf("new chain %s state transition failed: %w", chainID, err)
+				}
 			}
 		}
 
@@ -596,42 +573,22 @@ func TxSemanticChainConstrainedSTVF() TxSemanticValidationFunc {
 //	  serial number and must fill the gap between the alias account's starting/closing(inclusive) foundry counter.
 func TxSemanticNativeTokens() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
-		inputNativeTokens, err := svCtx.WorkingSet.InputsByType.NativeTokenOutputs().Sum()
+		var err error
+		svCtx.WorkingSet.InNativeTokens, err = svCtx.WorkingSet.InputsByType.NativeTokenOutputs().Sum()
 		if err != nil {
 			return fmt.Errorf("invalid input native token set: %w", err)
 		}
-		outputNativeTokens, err := svCtx.WorkingSet.InputsByType.NativeTokenOutputs().Sum()
+
+		svCtx.WorkingSet.OutNativeTokens, err = svCtx.WorkingSet.InputsByType.NativeTokenOutputs().Sum()
 		if err != nil {
 			return fmt.Errorf("invalid output native token set: %w", err)
 		}
 
 		// easy route, tokens must be balanced between both sets
-		_, hasOutputFoundryOutput := svCtx.WorkingSet.OutputsByType[OutputFoundry]
-		_, hasInputFoundryOutput := svCtx.WorkingSet.InputsByType[OutputFoundry]
-		if !hasInputFoundryOutput && !hasOutputFoundryOutput {
-			if err := inputNativeTokens.Balanced(outputNativeTokens); err != nil {
+		if svCtx.WorkingSet.OutputsByType[OutputFoundry] == nil && svCtx.WorkingSet.InputsByType[OutputFoundry] == nil {
+			if err := svCtx.WorkingSet.InNativeTokens.Balanced(svCtx.WorkingSet.OutNativeTokens); err != nil {
 				return err
 			}
-		}
-
-		inputFoundryOutputs, err := svCtx.WorkingSet.InputsByType.FoundryOutputsSet()
-		if err != nil {
-			return fmt.Errorf("invalid input foundry outputs: %w", err)
-		}
-		outputFoundryOutputs, err := svCtx.WorkingSet.OutputsByType.FoundryOutputsSet()
-		if err != nil {
-			return fmt.Errorf("invalid output foundry outputs: %w", err)
-		}
-
-		diffs, err := inputFoundryOutputs.Diff(outputFoundryOutputs)
-		if err != nil {
-			return fmt.Errorf("unable to compute foundry outputs diff: %w", err)
-		}
-
-		// TODO: diffs.CheckFoundryOutputsSerialNumber()
-
-		if err := inputNativeTokens.BalancedWithDiffs(outputNativeTokens, diffs); err != nil {
-			return err
 		}
 
 		return nil

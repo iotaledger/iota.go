@@ -75,71 +75,24 @@ func (nts NativeTokenSum) Balanced(other NativeTokenSum) error {
 	return nil
 }
 
-// BalancedWithDiffs works like Balanced but incorporates the foundry state transitions:
-//	- There must not be a specific NativeToken set on the input side if on the output side its foundry is created.
-//	- If a specific NativeToken set is balanced, then either no foundry diff is present,
-//	  the foundry is destroyed or the foundry transitions with a zero diff.
-//	- If a specific NativeToken set is unbalanced then a foundry diff with transition FoundryTransitionStateChange balancing that set must exist.
-//	- For all new NativeToken sets on the outputs side, foundry diffs with FoundryTransitionNew balancing those sets must exist.
-func (nts NativeTokenSum) BalancedWithDiffs(other NativeTokenSum, diffs FoundryStateDiffs) error {
-	for id, srcSum := range nts {
-		otherSum := other[id]
-		if otherSum == nil {
-			return fmt.Errorf("%w: native token %s missing in other", ErrNativeTokenSumUnbalanced, id)
-		}
+// NativeTokenSumBalancedWithDiff checks whether the supply diff from the foundry state transition balances the in/out native token sums.
+func NativeTokenSumBalancedWithDiff(nativeTokenID NativeTokenID, inSums NativeTokenSum, outSums NativeTokenSum, circSupplyChange *big.Int) error {
+	inSum := inSums[nativeTokenID]
+	outSum := outSums[nativeTokenID]
 
-		foundryDiff := diffs[id.FoundryID()]
-
-		// impossible invariant as the tokens already exist on the input side
-		if foundryDiff != nil && foundryDiff.Transition == FoundryTransitionNew {
-			return fmt.Errorf("%w: foundry %s can not be newly created if its tokens already exist on the inputs", ErrInvalidFoundryTransition, id.FoundryID())
-		}
-
-		switch srcSum.Cmp(otherSum) {
-		// equal
-		case 0:
-			// we either have a foundry diff which state transitions with 0 delta or gets destroyed,
-			// or we don't have a diff at all
-			if foundryDiff == nil || foundryDiff.Transition == FoundryTransitionDestroyed {
-				continue
-			}
-			// here we have a state transition which must be zero
-			if foundryDiff.SupplyDiff.Cmp(common.Big0) != 0 {
-				return fmt.Errorf("%w: native tokens are balanced on inputs/outputs but foundry %s's circulating supply diff is %s instead of zero", ErrInvalidFoundryTransition, id.FoundryID(), foundryDiff.SupplyDiff)
-			}
-		default:
-			// must have a foundry diff with the appropriate diff
-			if foundryDiff == nil {
-				return fmt.Errorf("%w: missing foundry %s for native token %s", ErrMissingFoundryTransition, id.FoundryID(), id)
-			}
-
-			// impossible invariant as a destroyed foundry can't adjust the circulating supply
-			if foundryDiff.Transition == FoundryTransitionDestroyed {
-				return fmt.Errorf("%w: foundry %s can not be destroyed if tokens are unbalanced between inputs/outputs", ErrInvalidFoundryTransition, id.FoundryID())
-			}
-
-			actualDiff := new(big.Int).Sub(otherSum, srcSum)
-			if actualDiff.Cmp(foundryDiff.SupplyDiff) != 0 {
-				return fmt.Errorf("%w: foundry %s's circulating supply changes by %s but native token diff between inputs/outputs is %s", ErrNativeTokenSumUnbalanced, id.FoundryID(), foundryDiff.SupplyDiff, actualDiff)
-			}
-		}
-	}
-
-	// check that for newly created foundries the corresponding native tokens exist on the output side
-	for foundryID, foundryDiff := range diffs {
-		if foundryDiff.Transition != FoundryTransitionNew {
-			continue
-		}
-
-		otherSum := other[foundryDiff.NativeTokenID]
-		if otherSum == nil {
-			return fmt.Errorf("%w: new foundry %s's circulating supply is %s but none of the new native tokens reside on the output side", ErrNativeTokenSumUnbalanced, foundryID, foundryDiff.SupplyDiff)
-		}
-
-		// since this is a new foundry, the foundry diff equals the actual wanted circulating supply
-		if otherSum.Cmp(foundryDiff.SupplyDiff) != 0 {
-			return fmt.Errorf("%w: new foundry %s's circulating supply is %s but the native tokens sum on output side is %s", ErrNativeTokenSumUnbalanced, foundryID, foundryDiff.SupplyDiff, otherSum)
-		}
+	switch {
+	case outSum == nil && inSum == nil && circSupplyChange.Cmp(common.Big0) != 0:
+		// impossible invariant as foundry can not change supply without any sums on any side
+		return fmt.Errorf("%w: circulating supply change %s of %s without native tokens in transaction", ErrNativeTokenSumUnbalanced, circSupplyChange, nativeTokenID)
+	case outSum != nil && inSum == nil && outSum.Cmp(circSupplyChange) != 0:
+		// newly minted tokens without any on the input
+		fallthrough
+	case outSum == nil && inSum != nil && new(big.Int).Sub(inSum, circSupplyChange).Cmp(common.Big0) != 0:
+		// burning tokens just from the input side without producing/having transferred any to the output
+		fallthrough
+	case outSum != nil && inSum != nil && new(big.Int).Sub(outSum, inSum).Cmp(circSupplyChange) != 0:
+		// minting or burning tokens
+		return fmt.Errorf("%w: unbalanced circulating supply change %s of %s", ErrNativeTokenSumUnbalanced, circSupplyChange, nativeTokenID)
 	}
 
 	return nil
