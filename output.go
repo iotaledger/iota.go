@@ -57,10 +57,14 @@ var (
 	ErrDepositAmountMustBeGreaterThanZero = errors.New("deposit amount must be greater than zero")
 	// ErrMultiIdentOutputMismatch gets returned when MultiIdentOutput(s) aren't compatible.
 	ErrMultiIdentOutputMismatch = errors.New("multi ident output mismatch")
-	// ErrNonUniqueMultiIdentOutputs gets returned when multiple MultiIdentOutput(s) with the same AccountID exist within an OutputsByType.
+	// ErrNonUniqueMultiIdentOutputs gets returned when multiple MultiIdentOutput(s) with the same ChainID exist within an OutputsByType.
 	ErrNonUniqueMultiIdentOutputs = errors.New("non unique multi ident within outputs")
-	// ErrAccountMissing gets returned when an account is missing.
-	ErrAccountMissing = errors.New("account missing")
+	// ErrChainMissing gets returned when a chain is missing.
+	ErrChainMissing = errors.New("chain missing")
+	// ErrNonUniqueChainConstrainedOutputs gets returned when multiple ChainConstrainedOutputs(s) with the same ChainID exist within sets.
+	ErrNonUniqueChainConstrainedOutputs = errors.New("non unique chain constrained outputs")
+	// ErrInvalidChainStateTransition gets returned when a state transition validation fails for a ChainConstrainedOutput.
+	ErrInvalidChainStateTransition = errors.New("invalid chain state transition")
 )
 
 // Outputs is a slice of Output.
@@ -147,19 +151,19 @@ func (outputs OutputsByType) MultiIdentOutputs() MultiIdentOutputs {
 	return multiIdentOutputs
 }
 
-// MultiIdentOutputsSet returns a map of AccountID to MultiIdentOutput.
-// If multiple MultiIdentOutput(s) exist for a given AccountID, an error is returned.
+// MultiIdentOutputsSet returns a map of ChainID to MultiIdentOutput.
+// If multiple MultiIdentOutput(s) exist for a given ChainID, an error is returned.
 // Empty AccountIDs are ignored.
 func (outputs OutputsByType) MultiIdentOutputsSet() (MultiIdentOutputsSet, error) {
 	multiIdentOutputsSet := make(MultiIdentOutputsSet, 0)
 	for _, output := range outputs.MultiIdentOutputs() {
-		if output.Account().Empty() {
+		if output.Chain().Empty() {
 			continue
 		}
-		if _, has := multiIdentOutputsSet[output.Account()]; has {
+		if _, has := multiIdentOutputsSet[output.Chain()]; has {
 			return nil, ErrNonUniqueMultiIdentOutputs
 		}
-		multiIdentOutputsSet[output.Account()] = output
+		multiIdentOutputsSet[output.Chain()] = output
 	}
 	return multiIdentOutputsSet, nil
 }
@@ -216,7 +220,7 @@ func (outputs OutputsByType) AliasOutputs() AliasOutputs {
 // The produced set does not include AliasOutputs of which their AliasID are zeroed.
 func (outputs OutputsByType) NonNewAliasOutputsSet() (AliasOutputsSet, error) {
 	aliasOutputsSet := make(AliasOutputsSet, 0)
-	for _, output := range outputs[OutputFoundry] {
+	for _, output := range outputs[OutputAlias] {
 		aliasOutput, is := output.(*AliasOutput)
 		if !is || aliasOutput.AliasEmpty() {
 			continue
@@ -227,6 +231,41 @@ func (outputs OutputsByType) NonNewAliasOutputsSet() (AliasOutputsSet, error) {
 		aliasOutputsSet[aliasOutput.AliasID] = aliasOutput
 	}
 	return aliasOutputsSet, nil
+}
+
+// NonNewChainConstrainedOutputsSet returns a map of ChainID to ChainConstrainedOutput.
+// If multiple ChainConstrainedOutput(s) exist for a given ChainID, an error is returned.
+// The produced set does not include ChainConstrainedOutput(s) of which their ChainID are empty.
+func (outputs OutputsByType) NonNewChainConstrainedOutputsSet() (ChainConstrainedOutputsSet, error) {
+	chainConstrainedOutputs := make(ChainConstrainedOutputsSet, 0)
+	for _, ty := range []OutputType{OutputAlias, OutputFoundry, OutputNFT} {
+		for _, output := range outputs[ty] {
+			chainConstrainedOutput, is := output.(ChainConstrainedOutput)
+			if !is || chainConstrainedOutput.Chain().Empty() {
+				continue
+			}
+			if _, has := chainConstrainedOutputs[chainConstrainedOutput.Chain()]; has {
+				return nil, ErrNonUniqueChainConstrainedOutputs
+			}
+			chainConstrainedOutputs[chainConstrainedOutput.Chain()] = chainConstrainedOutput
+		}
+	}
+	return chainConstrainedOutputs, nil
+}
+
+// ChainConstrainedOutputs returns a slice of Outputs which are ChainConstrainedOutput.
+func (outputs OutputsByType) ChainConstrainedOutputs() ChainConstrainedOutputs {
+	chainConstrainedOutputs := make(ChainConstrainedOutputs, 0)
+	for _, ty := range []OutputType{OutputAlias, OutputFoundry, OutputNFT} {
+		for _, output := range outputs[ty] {
+			chainConstrainedOutput, is := output.(ChainConstrainedOutput)
+			if !is {
+				continue
+			}
+			chainConstrainedOutputs = append(chainConstrainedOutputs, chainConstrainedOutput)
+		}
+	}
+	return chainConstrainedOutputs
 }
 
 // NativeTokenOutputs is a slice of NativeTokenOutput(s).
@@ -271,6 +310,38 @@ func (inputSet InputSet) NewAliases() AliasOutputsSet {
 	return set
 }
 
+// NewChains returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs which are new.
+func (inputSet InputSet) NewChains(side Side, svCtx *SemanticValidationContext) (ChainConstrainedOutputsSet, error) {
+	set := make(ChainConstrainedOutputsSet)
+	for utxoInputID, output := range inputSet {
+		chainConstrainedOutput, is := output.(ChainConstrainedOutput)
+		if !is {
+			continue
+		}
+
+		isNew, err := chainConstrainedOutput.IsNewChain(side, svCtx)
+		if err != nil {
+			return nil, err
+		}
+		if !isNew {
+			continue
+		}
+
+		chainID := chainConstrainedOutput.Chain()
+		if utxoIDChainID, is := chainConstrainedOutput.Chain().(UTXOIDChainID); is {
+			chainID = utxoIDChainID.FromUTXOInputID(utxoInputID)
+		}
+
+		// this can never happen as chain constrained outputs which are not dependable
+		// on utxo IDs produce their chain ID from themselves
+		if !chainConstrainedOutput.HasUTXODependableChainID() && chainID.Empty() {
+			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", OutputTypeToString(output.Type())))
+		}
+		set[chainID] = chainConstrainedOutput
+	}
+	return set, nil
+}
+
 // Output defines a unit of output of a transaction.
 type Output interface {
 	serializer.Serializable
@@ -289,14 +360,8 @@ type SingleIdentOutput interface {
 	Ident() (Address, error)
 }
 
-// AccountOutput is a type of Output which encapsulates the concept of an account.
-type AccountOutput interface {
-	Output
-	Account() AccountID
-}
-
 // MultiIdentOutputsSet is a set of MultiIdentOutput(s).
-type MultiIdentOutputsSet map[AccountID]MultiIdentOutput
+type MultiIdentOutputsSet map[ChainID]MultiIdentOutput
 
 // MultiIdentOutputs is a slice of MultiIdentOutput(s).
 type MultiIdentOutputs []MultiIdentOutput
@@ -305,7 +370,7 @@ type MultiIdentOutputs []MultiIdentOutput
 // Unlike the SingleIdentOutput, the MultiIdentOutput's to unlock identity is dependent
 // on the transition the output does between inputs and outputs.
 type MultiIdentOutput interface {
-	AccountOutput
+	ChainConstrainedOutput
 	// Ident computes the identity to which this output is locked to by examining
 	// the transition to the next output state.
 	// Note that it is the caller's job to ensure that the given other MultiIdentOutput

@@ -18,6 +18,8 @@ const (
 var (
 	// ErrNonUniqueFeatureBlocks gets returned when multiple FeatureBlock(s) with the same FeatureBlock exist within sets.
 	ErrNonUniqueFeatureBlocks = errors.New("non unique feature blocks within outputs")
+	// ErrInvalidFeatureBlockTransition gets returned when a FeatureBlock's transition within a ChainConstrainedOutput is invalid.
+	ErrInvalidFeatureBlockTransition = errors.New("invalid feature block transition")
 	featBlockArrayRules       = &serializer.ArrayRules{
 		Min: MinFeatBlockCount,
 		Max: MaxFeatBlockCount,
@@ -102,6 +104,17 @@ func (f FeatureBlocks) Set() (FeatureBlocksSet, error) {
 		set[block.Type()] = block
 	}
 	return set, nil
+}
+
+// MustSet works like Set but panics if an error occurs.
+// This function is therefore only safe to be called when it is given,
+// that a FeatureBlocks slice does not contain the same FeatureBlockType multiple times.
+func (f FeatureBlocks) MustSet() FeatureBlocksSet {
+	set, err := f.Set()
+	if err != nil {
+		panic(err)
+	}
+	return set
 }
 
 // Equal checks whether this slice is equal to other.

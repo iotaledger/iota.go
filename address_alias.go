@@ -45,7 +45,7 @@ func MustParseAliasAddressFromHexString(hexAddr string) *AliasAddress {
 // An AliasAddress is the Blake2b-160 hash of the OutputID which created it.
 type AliasAddress [AliasAddressBytesLength]byte
 
-func (aliasAddr *AliasAddress) Account() AccountID {
+func (aliasAddr *AliasAddress) Chain() ChainID {
 	aliasID := AliasID(*aliasAddr)
 	return &aliasID
 }

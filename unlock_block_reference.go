@@ -20,7 +20,7 @@ type ReferenceUnlockBlock struct {
 }
 
 func (r *ReferenceUnlockBlock) SourceAllowed(address Address) bool {
-	_, ok := address.(AccountAddress)
+	_, ok := address.(ChainConstrainedAddress)
 	return !ok
 }
 

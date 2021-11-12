@@ -25,6 +25,8 @@ var (
 	ErrInvalidFoundryTransition = errors.New("invalid foundry transition")
 	// ErrInvalidFoundryState gets returned when the state between two FoundryOutput(s) is invalid.
 	ErrInvalidFoundryState = errors.New("invalid foundry state")
+
+	emptyFoundryID = [FoundryIDLength]byte{}
 )
 
 // TokenTag is a tag holding some additional data which might be interpreted by higher layers.
@@ -32,6 +34,30 @@ type TokenTag = [TokenTagLength]byte
 
 // FoundryID defines the identifier for a foundry consisting out of the address, serial number and TokenScheme.
 type FoundryID [FoundryIDLength]byte
+
+func (fID FoundryID) Addressable() bool {
+	return false
+}
+
+func (fID FoundryID) Matches(other ChainID) bool {
+	otherFID, is := other.(FoundryID)
+	if !is {
+		return false
+	}
+	return fID == otherFID
+}
+
+func (fID FoundryID) ToAddress() ChainConstrainedAddress {
+	panic("foundry ID is not addressable")
+}
+
+func (fID FoundryID) Empty() bool {
+	return fID == emptyFoundryID
+}
+
+func (fID FoundryID) Key() interface{} {
+	return fID.Key()
+}
 
 func (fID FoundryID) String() string {
 	return hex.EncodeToString(fID[:])
@@ -65,7 +91,7 @@ func (set FoundryOutputsSet) Diff(other FoundryOutputsSet) (FoundryStateDiffs, e
 			continue
 		}
 
-		if err := foundryOutput.StateChangeOk(otherFoundryOutput); err != nil {
+		if err := foundryOutput.ValidateStateTransition(otherFoundryOutput); err != nil {
 			return nil, err
 		}
 
@@ -170,12 +196,50 @@ type FoundryOutput struct {
 	Blocks FeatureBlocks
 }
 
-func (f *FoundryOutput) StateChangeOk(other *FoundryOutput) error {
+func (f *FoundryOutput) Chain() ChainID {
+	foundryID, err := f.ID()
+	if err != nil {
+		panic(err)
+	}
+	return foundryID
+}
+
+func (f *FoundryOutput) IsNewChain(side Side, svCtx *SemanticValidationContext) (bool, error) {
+	if side == SideIn {
+		return false, nil
+	}
+	// a foundry output is creating a new chain if its serial number falls
+	// between the delta of the in/out state transition of the alias which controls it
+	aliasID := f.Address.(*AliasAddress).Chain()
+	inputAlias := svCtx.WorkingSet.InNonNewChains[aliasID]
+	if inputAlias == nil {
+		// TODO: replace with concrete error
+		return false, fmt.Errorf("missing input alias output for foundry output")
+	}
+	outputAlias := svCtx.WorkingSet.OutNonNewChains[aliasID]
+	if outputAlias == nil {
+		// TODO: replace with concrete error
+		return false, fmt.Errorf("missing output alias output for foundry output")
+	}
+	return inputAlias.(*AliasOutput).FoundryCounter < f.SerialNumber &&
+		f.SerialNumber <= outputAlias.(*AliasOutput).FoundryCounter, nil
+}
+
+func (f *FoundryOutput) HasUTXODependableChainID() bool {
+	return false
+}
+
+func (f *FoundryOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
+	nextFoundryOutput, is := next.(*FoundryOutput)
+	if !is {
+		return fmt.Errorf("%w: foundry output can only state transition to another foundry output", ErrInvalidChainStateTransition)
+	}
+
 	srcID, err := f.ID()
 	if err != nil {
 		return err
 	}
-	otherID, err := other.ID()
+	otherID, err := nextFoundryOutput.ID()
 	if err != nil {
 		return err
 	}
@@ -183,10 +247,10 @@ func (f *FoundryOutput) StateChangeOk(other *FoundryOutput) error {
 	switch {
 	case srcID != otherID:
 		return fmt.Errorf("%w: ID mismatch wanted %s but got %s", ErrInvalidFoundryState, srcID, otherID)
-	case f.MaximumSupply.Cmp(other.MaximumSupply) != 0:
-		return fmt.Errorf("%w: maximum supply mismatch wanted %s but got %s", ErrInvalidFoundryState, f.MaximumSupply, other.MaximumSupply)
-	case f.TokenScheme.Type() != other.TokenScheme.Type():
-		return fmt.Errorf("%w: token scheme mismatch wanted %s but got %s", ErrInvalidFoundryState, TokenSchemeTypeToString(f.TokenScheme.Type()), TokenSchemeTypeToString(other.TokenScheme.Type()))
+	case f.MaximumSupply.Cmp(nextFoundryOutput.MaximumSupply) != 0:
+		return fmt.Errorf("%w: maximum supply mismatch wanted %s but got %s", ErrInvalidFoundryState, f.MaximumSupply, nextFoundryOutput.MaximumSupply)
+	case f.TokenScheme.Type() != nextFoundryOutput.TokenScheme.Type():
+		return fmt.Errorf("%w: token scheme mismatch wanted %s but got %s", ErrInvalidFoundryState, TokenSchemeTypeToString(f.TokenScheme.Type()), TokenSchemeTypeToString(nextFoundryOutput.TokenScheme.Type()))
 	}
 	return nil
 }
