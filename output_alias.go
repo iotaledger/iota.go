@@ -156,22 +156,25 @@ type AliasOutput struct {
 	Blocks FeatureBlocks
 }
 
-func (a *AliasOutput) IsNewChain(_ Side, _ *SemanticValidationContext) (bool, error) {
-	return a.AliasID.Empty(), nil
-}
-
-func (a *AliasOutput) HasUTXODependableChainID() bool {
-	return true
-}
-
+//	TODO: document transitions
+//	- For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either
+//	  its AliasID is zeroed and StateIndex and FoundryCounter are zero or an input AliasOutput with the same AliasID.
+//	- On alias state transitions:
+//		- The StateIndex must be incremented by 1
+//		- Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated
+//	- On alias governance transition:
+//		- Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated
 func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
 	switch transType {
 	case ChainTransitionTypeNew:
+		if !a.AliasID.Empty() {
+			return fmt.Errorf("%w: AliasOutput's ID is not zeroed even though it is new", ErrInvalidChainStateTransition)
+		}
 		return IsIssuerOnOutputUnlocked(a, semValCtx.WorkingSet.UnlockedIdents)
 	case ChainTransitionTypeStateChange:
 		nextAliasOutput, is := next.(*AliasOutput)
 		if !is {
-			return fmt.Errorf("%w: alias output can only state transition to another alias output", ErrInvalidChainStateTransition)
+			return fmt.Errorf("%w: AliasOutput can only state transition to another alias output", ErrInvalidChainStateTransition)
 		}
 		if err := IssuerBlockUnchanged(a, nextAliasOutput); err != nil {
 			return err
@@ -181,7 +184,7 @@ func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, nex
 		}
 		return a.StateSTVF(nextAliasOutput, semValCtx)
 	case ChainTransitionTypeDestroy:
-	// TODO: check specifics
+		return nil
 	default:
 		panic("invalid chain transition in AliasOutput")
 	}

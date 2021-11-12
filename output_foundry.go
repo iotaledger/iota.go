@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -69,111 +70,6 @@ type FoundryOutputs []*FoundryOutput
 // FoundryOutputsSet is a set of FoundryOutput(s).
 type FoundryOutputsSet map[FoundryID]*FoundryOutput
 
-// Diff returns the supply diff between the given sets of FoundryOutput(s).
-func (set FoundryOutputsSet) Diff(other FoundryOutputsSet) (FoundryStateDiffs, error) {
-	diffs := make(FoundryStateDiffs)
-	seen := make(map[FoundryID]struct{})
-	for foundryID, foundryOutput := range set {
-		seen[foundryID] = struct{}{}
-		nativeTokenID, err := foundryOutput.NativeTokenID()
-		if err != nil {
-			return nil, err
-		}
-
-		otherFoundryOutput, has := other[foundryID]
-		if !has {
-			negCircSupply := new(big.Int)
-			diffs[foundryID] = &FoundryDiff{
-				NativeTokenID: nativeTokenID,
-				SupplyDiff:    negCircSupply.Neg(foundryOutput.CirculatingSupply),
-				Transition:    FoundryTransitionDestroyed,
-			}
-			continue
-		}
-
-		if err := foundryOutput.ValidateStateTransition(otherFoundryOutput); err != nil {
-			return nil, err
-		}
-
-		diff := new(big.Int)
-		diff.Sub(otherFoundryOutput.CirculatingSupply, foundryOutput.CirculatingSupply)
-		diffs[foundryID] = &FoundryDiff{
-			NativeTokenID: nativeTokenID,
-			Transition:    FoundryTransitionStateChange,
-		}
-	}
-
-	for foundryID, foundryOutput := range other {
-		if _, alreadySeen := seen[foundryID]; alreadySeen {
-			continue
-		}
-
-		nativeTokenID, err := foundryOutput.NativeTokenID()
-		if err != nil {
-			return nil, err
-		}
-
-		diffs[foundryID] = &FoundryDiff{
-			NativeTokenID: nativeTokenID,
-			SupplyDiff:    foundryOutput.CirculatingSupply,
-			Transition:    FoundryTransitionNew,
-		}
-	}
-
-	return diffs, nil
-}
-
-// FoundryStateDiffs defines a map of diffs computed from the circulating supply for a given NativeToken
-// when comparing the state transition of a certain foundry.
-type FoundryStateDiffs map[FoundryID]*FoundryDiff
-
-func (fsd FoundryStateDiffs) CheckFoundryOutputsSerialNumber(inputs Outputs, outputs Outputs) {
-	// TODO
-}
-
-// FoundryDiffs is a slice of FoundryDiff(s).
-type FoundryDiffs []*FoundryDiff
-
-// FoundryDiff defines the circulating supply diff of the computation when looking at specific FoundryOutput(s) state transition.
-type FoundryDiff struct {
-	// The NativeTokenID to which this diff applies to.
-	NativeTokenID NativeTokenID
-	// The circulating supply diff between the FoundryOutput(s).
-	// Positive if the supply increased, negative if tokens were burned.
-	SupplyDiff *big.Int
-	// The type of state transition.
-	//	- If the transition is FoundryTransitionNew then SupplyDiff corresponds to the circulating supply.
-	//	- If the transition is FoundryTransitionDestroyed then SupplyDiff equals nil.
-	// 	- If the transition is FoundryTransitionStateChange, then SupplyDiff represents the actual delta between the states.
-	Transition FoundryTransition
-}
-
-// FoundryTransition defines the transition type of a FoundryOutput.
-type FoundryTransition byte
-
-const (
-	// FoundryTransitionNew defines a transition where a foundry is created.
-	FoundryTransitionNew FoundryTransition = iota
-	// FoundryTransitionStateChange defines a transition where a foundry's state is changed.
-	FoundryTransitionStateChange
-	// FoundryTransitionDestroyed defines a transition where a foundry is destroyed.
-	FoundryTransitionDestroyed
-)
-
-// FoundryTransitionToString returns the name for the given FoundryTransition.
-func FoundryTransitionToString(tr FoundryTransition) string {
-	switch tr {
-	case FoundryTransitionNew:
-		return "FoundryTransitionNew"
-	case FoundryTransitionStateChange:
-		return "FoundryTransitionStateChange"
-	case FoundryTransitionDestroyed:
-		return "FoundryTransitionDestroyed"
-	default:
-		return "unknown foundry transition"
-	}
-}
-
 // FoundryOutput is an output type which controls the supply of user defined native tokens.
 type FoundryOutput struct {
 	// The amount of IOTA tokens held by the output.
@@ -204,55 +100,46 @@ func (f *FoundryOutput) Chain() ChainID {
 	return foundryID
 }
 
-func (f *FoundryOutput) IsNewChain(side Side, svCtx *SemanticValidationContext) (bool, error) {
-	if side == SideIn {
-		return false, nil
-	}
-	// a foundry output is creating a new chain if its serial number falls
-	// between the delta of the in/out state transition of the alias which controls it
-	aliasID := f.Address.(*AliasAddress).Chain()
-	inputAlias := svCtx.WorkingSet.InNonNewChains[aliasID]
-	if inputAlias == nil {
-		// TODO: replace with concrete error
-		return false, fmt.Errorf("missing input alias output for foundry output")
-	}
-	outputAlias := svCtx.WorkingSet.OutNonNewChains[aliasID]
-	if outputAlias == nil {
-		// TODO: replace with concrete error
-		return false, fmt.Errorf("missing output alias output for foundry output")
-	}
-	return inputAlias.(*AliasOutput).FoundryCounter < f.SerialNumber &&
-		f.SerialNumber <= outputAlias.(*AliasOutput).FoundryCounter, nil
-}
-
-func (f *FoundryOutput) HasUTXODependableChainID() bool {
-	return false
-}
-
 func (f *FoundryOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
-	nextFoundryOutput, is := next.(*FoundryOutput)
-	if !is {
-		return fmt.Errorf("%w: foundry output can only state transition to another foundry output", ErrInvalidChainStateTransition)
-	}
+	inSums := semValCtx.WorkingSet.InNativeTokens
+	outSums := semValCtx.WorkingSet.OutNativeTokens
+	switch transType {
+	case ChainTransitionTypeNew:
+		// TODO: check SerialNumber
+		if err := NativeTokenSumBalancedWithDiff(f.MustNativeTokenID(), inSums, outSums, f.CirculatingSupply); err != nil {
+			return fmt.Errorf("%w: new foundry state does not balance NativeToken %s", err, f.MustNativeTokenID())
+		}
+		return nil
+	case ChainTransitionTypeStateChange:
+		nextFoundryOutput, is := next.(*FoundryOutput)
+		if !is {
+			return fmt.Errorf("%w: foundry output can only state transition to another foundry output", ErrInvalidChainStateTransition)
+		}
 
-	srcID, err := f.ID()
-	if err != nil {
-		return err
-	}
-	otherID, err := nextFoundryOutput.ID()
-	if err != nil {
-		return err
-	}
+		// the check for the serial number not being mutated is implicit
+		// as a change would cause the foundry ID to be different
+		switch {
+		case f.MaximumSupply.Cmp(nextFoundryOutput.MaximumSupply) != 0:
+			return fmt.Errorf("%w: maximum supply mismatch wanted %s but got %s", ErrInvalidFoundryState, f.MaximumSupply, nextFoundryOutput.MaximumSupply)
+		case f.TokenScheme.Type() != nextFoundryOutput.TokenScheme.Type():
+			return fmt.Errorf("%w: token scheme mismatch wanted %s but got %s", ErrInvalidFoundryState, TokenSchemeTypeToString(f.TokenScheme.Type()), TokenSchemeTypeToString(nextFoundryOutput.TokenScheme.Type()))
+		}
 
-	switch {
-	case srcID != otherID:
-		return fmt.Errorf("%w: ID mismatch wanted %s but got %s", ErrInvalidFoundryState, srcID, otherID)
-	case f.MaximumSupply.Cmp(nextFoundryOutput.MaximumSupply) != 0:
-		return fmt.Errorf("%w: maximum supply mismatch wanted %s but got %s", ErrInvalidFoundryState, f.MaximumSupply, nextFoundryOutput.MaximumSupply)
-	case f.TokenScheme.Type() != nextFoundryOutput.TokenScheme.Type():
-		return fmt.Errorf("%w: token scheme mismatch wanted %s but got %s", ErrInvalidFoundryState, TokenSchemeTypeToString(f.TokenScheme.Type()), TokenSchemeTypeToString(nextFoundryOutput.TokenScheme.Type()))
+		diff := new(big.Int)
+		diff.Sub(nextFoundryOutput.CirculatingSupply, f.CirculatingSupply)
+		if err := NativeTokenSumBalancedWithDiff(f.MustNativeTokenID(), inSums, outSums, diff); err != nil {
+			return fmt.Errorf("%w: foundry state transition does not balance NativeToken %s", err, f.MustNativeTokenID())
+		}
+
+		return nil
+	case ChainTransitionTypeDestroy:
+		if err := NativeTokenSumBalancedWithDiff(f.MustNativeTokenID(), inSums, outSums, common.Big0); err != nil {
+			return fmt.Errorf("%w: destroy foundry state transition does not balance NativeToken %s", err, f.MustNativeTokenID())
+		}
+		return nil
+	default:
+		panic("invalid chain transition in FoundryOutput")
 	}
-	return nil
 }
 
 // ID returns the FoundryID of this FoundryOutput.
@@ -266,6 +153,15 @@ func (f *FoundryOutput) ID() (FoundryID, error) {
 	binary.LittleEndian.PutUint32(foundryID[len(addrBytes):], f.SerialNumber)
 	foundryID[len(foundryID)-1] = byte(f.TokenScheme.Type())
 	return foundryID, nil
+}
+
+// MustNativeTokenID works like NativeTokenID but panics if there is an error.
+func (f *FoundryOutput) MustNativeTokenID() NativeTokenID {
+	nativeTokenID, err := f.NativeTokenID()
+	if err != nil {
+		panic(err)
+	}
+	return nativeTokenID
 }
 
 // NativeTokenID returns the NativeTokenID this FoundryOutput operates on.

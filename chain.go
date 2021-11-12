@@ -56,6 +56,8 @@ const (
 	SideIn Side = iota
 	// SideOut defines the output Side.
 	SideOut
+	// SideUnknown defines the unknown Side.
+	SideUnknown
 )
 
 // ChainConstrainedOutput is a type of Output which represents a chain of state transitions.
@@ -63,13 +65,8 @@ type ChainConstrainedOutput interface {
 	Output
 	// Chain returns the ChainID to which this Output belongs to.
 	Chain() ChainID
-	// IsNewChain tells whether this ChainConstrainedOutput is new.
-	IsNewChain(side Side, svCtx *SemanticValidationContext) (bool, error)
-	// HasUTXODependableChainID tells whether the ChainID is produced by taking
-	// the UTXOInputID of the output which generated this ChainConstrainedOutput.
-	HasUTXODependableChainID() bool
 	// ValidateStateTransition runs a StateTransitionValidationFunc with next.
-	// If next is nil, it indicates that this state transition is executed when the chain is new.
+	// Next is nil transType is ChainTransitionTypeNew or ChainTransitionTypeDestroy.
 	ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error
 }
 
@@ -99,15 +96,7 @@ func ValidateStateTransitionOnTuple(svCtx *SemanticValidationContext) StateTrans
 
 // IsIssuerOnOutputUnlocked checks whether the issuer in an IssuerFeatureBlock of this new ChainConstrainedOutput has been unlocked.
 // This function is a no-op if the chain is not new, or it does not contain an IssuerFeatureBlock.
-func IsIssuerOnOutputUnlocked(svCtx *SemanticValidationContext, output ChainConstrainedOutput, unlockedIdents UnlockedIdentities) error {
-	isNew, err := output.IsNewChain(svCtx)
-	if err != nil {
-		return err
-	}
-	if !isNew {
-		return nil
-	}
-
+func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents UnlockedIdentities) error {
 	featureBlocks, err := featureBlockSetFromOutput(output)
 	if err != nil {
 		return err
