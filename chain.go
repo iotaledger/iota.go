@@ -48,25 +48,13 @@ func (set ChainConstrainedOutputsSet) Merge(other ChainConstrainedOutputsSet) (C
 	return newSet, nil
 }
 
-// Side defines the sides of a Transaction.
-type Side byte
-
-const (
-	// SideIn defines the input Side.
-	SideIn Side = iota
-	// SideOut defines the output Side.
-	SideOut
-	// SideUnknown defines the unknown Side.
-	SideUnknown
-)
-
 // ChainConstrainedOutput is a type of Output which represents a chain of state transitions.
 type ChainConstrainedOutput interface {
 	Output
 	// Chain returns the ChainID to which this Output belongs to.
 	Chain() ChainID
 	// ValidateStateTransition runs a StateTransitionValidationFunc with next.
-	// Next is nil transType is ChainTransitionTypeNew or ChainTransitionTypeDestroy.
+	// Next is nil if transType is ChainTransitionTypeGenesis or ChainTransitionTypeDestroy.
 	ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error
 }
 
@@ -74,8 +62,8 @@ type ChainConstrainedOutput interface {
 type ChainTransitionType byte
 
 const (
-	// ChainTransitionTypeNew indicates that the chain is new.
-	ChainTransitionTypeNew ChainTransitionType = iota
+	// ChainTransitionTypeGenesis indicates that the chain is in its genesis, aka it is new.
+	ChainTransitionTypeGenesis ChainTransitionType = iota
 	// ChainTransitionTypeStateChange indicates that the chain is state transitioning.
 	ChainTransitionTypeStateChange
 	// ChainTransitionTypeDestroy indicates that the chain is being destroyed.
