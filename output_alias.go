@@ -186,7 +186,7 @@ func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, nex
 	case ChainTransitionTypeDestroy:
 		return nil
 	default:
-		panic("invalid chain transition in AliasOutput")
+		panic("unknown chain transition type in AliasOutput")
 	}
 }
 
