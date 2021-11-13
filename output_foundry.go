@@ -120,7 +120,7 @@ func (f *FoundryOutput) ValidateStateTransition(transType ChainTransitionType, n
 		}
 		return nil
 	default:
-		panic("invalid chain transition in FoundryOutput")
+		panic("unknown chain transition type in FoundryOutput")
 	}
 }
 
