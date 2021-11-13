@@ -20,10 +20,6 @@ const (
 var (
 	// ErrNonUniqueFoundryOutputs gets returned when multiple FoundryOutput(s) with the same FoundryID exist within an OutputsByType.
 	ErrNonUniqueFoundryOutputs = errors.New("non unique foundries within outputs")
-	// ErrMissingFoundryTransition gets returned when a FoundryDiff is missing for a computation.
-	ErrMissingFoundryTransition = errors.New("missing foundry transition")
-	// ErrInvalidFoundryTransition gets returned when a foundry transition is invalid.
-	ErrInvalidFoundryTransition = errors.New("invalid foundry transition")
 	// ErrInvalidFoundryState gets returned when the state between two FoundryOutput(s) is invalid.
 	ErrInvalidFoundryState = errors.New("invalid foundry state")
 
@@ -57,7 +53,7 @@ func (fID FoundryID) Empty() bool {
 }
 
 func (fID FoundryID) Key() interface{} {
-	return fID.Key()
+	return fID.String()
 }
 
 func (fID FoundryID) String() string {
