@@ -76,7 +76,7 @@ type NFTOutput struct {
 
 func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
 	switch transType {
-	case ChainTransitionTypeNew:
+	case ChainTransitionTypeGenesis:
 		if !n.NFTID.Empty() {
 			return fmt.Errorf("%w: NFTOutput's ID is not zeroed even though it is new", ErrInvalidChainStateTransition)
 		}

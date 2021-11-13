@@ -166,7 +166,7 @@ type AliasOutput struct {
 //		- Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated
 func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
 	switch transType {
-	case ChainTransitionTypeNew:
+	case ChainTransitionTypeGenesis:
 		if !a.AliasID.Empty() {
 			return fmt.Errorf("%w: AliasOutput's ID is not zeroed even though it is new", ErrInvalidChainStateTransition)
 		}

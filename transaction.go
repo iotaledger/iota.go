@@ -559,7 +559,7 @@ func TxSemanticSTVFOnChains() TxSemanticValidationFunc {
 		for chainID, outputChain := range svCtx.WorkingSet.OutChains {
 			previousState := svCtx.WorkingSet.InChains[chainID]
 			if previousState == nil {
-				if err := outputChain.ValidateStateTransition(ChainTransitionTypeNew, nil, svCtx); err != nil {
+				if err := outputChain.ValidateStateTransition(ChainTransitionTypeGenesis, nil, svCtx); err != nil {
 					return fmt.Errorf("new chain %s state transition failed: %w", chainID, err)
 				}
 			}
