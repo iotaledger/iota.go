@@ -479,15 +479,15 @@ func (oih OutputIDHex) AsUTXOInput() (*UTXOInput, error) {
 	return &utxoInput, nil
 }
 
-// OutputsPredicateFunc which given the index of an output and the output itself, runs validations and returns an error if any should fail.
-type OutputsPredicateFunc func(index int, output Output) error
+// OutputsSyntacticalValidationFunc which given the index of an output and the output itself, runs syntactical validations and returns an error if any should fail.
+type OutputsSyntacticalValidationFunc func(index int, output Output) error
 
-// OutputsPredicateDepositAmount returns an OutputsPredicateFunc which checks that:
+// OutputsSyntacticalDepositAmount returns an OutputsSyntacticalValidationFunc which checks that:
 //	- every output deposits more than zero
 //	- every output deposits less than the total supply
 //	- the sum of deposits does not exceed the total supply
 // If -1 is passed to the validator func, then the sum is not aggregated over multiple calls.
-func OutputsPredicateDepositAmount() OutputsPredicateFunc {
+func OutputsSyntacticalDepositAmount() OutputsSyntacticalValidationFunc {
 	var sum uint64
 	return func(index int, dep Output) error {
 		deposit, err := dep.Deposit()
@@ -510,9 +510,9 @@ func OutputsPredicateDepositAmount() OutputsPredicateFunc {
 	}
 }
 
-// OutputsPredicateNativeTokensCount returns an OutputsPredicateFunc which checks that:
+// OutputsSyntacticalNativeTokensCount returns an OutputsSyntacticalValidationFunc which checks that:
 //	- the sum of native tokens count across all outputs does not exceed MaxNativeTokensCount
-func OutputsPredicateNativeTokensCount() OutputsPredicateFunc {
+func OutputsSyntacticalNativeTokensCount() OutputsSyntacticalValidationFunc {
 	var nativeTokensCount int
 	return func(index int, output Output) error {
 		if nativeTokenOutput, is := output.(NativeTokenOutput); is {
@@ -525,9 +525,9 @@ func OutputsPredicateNativeTokensCount() OutputsPredicateFunc {
 	}
 }
 
-// OutputsPredicateSenderFeatureBlockRequirement returns an OutputsPredicateFunc which checks that:
+// OutputsSyntacticalSenderFeatureBlockRequirement returns an OutputsSyntacticalValidationFunc which checks that:
 //	- if an output contains a SenderFeatureBlock if another FeatureBlock (example ReturnFeatureBlock) requires it
-func OutputsPredicateSenderFeatureBlockRequirement() OutputsPredicateFunc {
+func OutputsSyntacticalSenderFeatureBlockRequirement() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		featureBlockOutput, is := output.(FeatureBlockOutput)
 		if !is {
@@ -553,10 +553,10 @@ func OutputsPredicateSenderFeatureBlockRequirement() OutputsPredicateFunc {
 	}
 }
 
-// OutputsPredicateAlias returns an OutputsPredicateFunc which checks that AliasOutput(s)':
+// OutputsSyntacticalAlias returns an OutputsSyntacticalValidationFunc which checks that AliasOutput(s)':
 //	- StateIndex/FoundryCounter are zero if the AliasID is zeroed
 //	- StateController and GovernanceController must be different from AliasAddress derived from AliasID
-func OutputsPredicateAlias(txID *TransactionID) OutputsPredicateFunc {
+func OutputsSyntacticalAlias(txID *TransactionID) OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		aliasOutput, is := output.(*AliasOutput)
 		if !is {
@@ -591,10 +591,10 @@ func OutputsPredicateAlias(txID *TransactionID) OutputsPredicateFunc {
 	}
 }
 
-// OutputsPredicateFoundry returns an OutputsPredicateFunc which checks that FoundryOutput(s)':
+// OutputsSyntacticalFoundry returns an OutputsSyntacticalValidationFunc which checks that FoundryOutput(s)':
 //	- CirculatingSupply is less equal MaximumSupply
 //	- MaximumSupply is not zero
-func OutputsPredicateFoundry() OutputsPredicateFunc {
+func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		foundryOutput, is := output.(*FoundryOutput)
 		if !is {
@@ -613,9 +613,9 @@ func OutputsPredicateFoundry() OutputsPredicateFunc {
 	}
 }
 
-// OutputsPredicateNFT returns an OutputsPredicateFunc which checks that NFTOutput(s)':
+// OutputsSyntacticalNFT returns an OutputsSyntacticalValidationFunc which checks that NFTOutput(s)':
 //	- Address must be different from NFTAddress derived from NFTID
-func OutputsPredicateNFT(txID *TransactionID) OutputsPredicateFunc {
+func OutputsSyntacticalNFT(txID *TransactionID) OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		nftOutput, is := output.(*NFTOutput)
 		if !is {
@@ -640,10 +640,10 @@ func OutputsPredicateNFT(txID *TransactionID) OutputsPredicateFunc {
 }
 
 // supposed to be called with -1 as input in order to be used over multiple calls.
-var outputAmountValidator = OutputsPredicateDepositAmount()
+var outputAmountValidator = OutputsSyntacticalDepositAmount()
 
-// ValidateOutputs validates the outputs by running them against the given OutputsPredicateFunc(s).
-func ValidateOutputs(outputs Outputs, funcs ...OutputsPredicateFunc) error {
+// ValidateOutputs validates the outputs by running them against the given OutputsSyntacticalValidationFunc(s).
+func ValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalValidationFunc) error {
 	for i, output := range outputs {
 		for _, f := range funcs {
 			if err := f(i, output); err != nil {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -13,9 +14,15 @@ import (
 const (
 	// 	NFTIDLength = 20 is the byte length of an NFTID.
 	NFTIDLength = 20
+	// ImmutableMetadataMaxLength defines the max of a NFTOutput's immutable data.
+	// TODO: replace with TBD value
+	ImmutableMetadataMaxLength = 1000
 )
 
 var (
+	// ErrImmutableMetadataExceedsMaxLength gets returned when a NFTOutput's immutable data exceeds ImmutableMetadataMaxLength.
+	ErrImmutableMetadataExceedsMaxLength = errors.New("NFT output's immutable metadata exceeds max length")
+
 	emptyNFTID = [NFTIDLength]byte{}
 )
 
@@ -146,7 +153,7 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		}).
 		ReadVariableByteSlice(&n.ImmutableMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize immutable metadata for NFT output: %w", err)
-		}, MessageBinSerializedMaxSize).
+		}, ImmutableMetadataMaxLength).
 		ReadSliceOfObjects(&n.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, nftOutputFeatureBlocksGuard, featBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
 		}).
@@ -162,6 +169,7 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 }
 
 func nftOutputFeatureBlocksGuard(ty uint32) (serializer.Serializable, error) {
+	// supports all feature blocks
 	return FeatureBlockSelector(ty)
 }
 
@@ -175,6 +183,10 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte
 
 				if err := isValidAddrType(n.Address); err != nil {
 					return fmt.Errorf("invalid address set in NFT output: %w", err)
+				}
+
+				if len(n.ImmutableMetadata) > ImmutableMetadataMaxLength {
+					return fmt.Errorf("%w: %d instead of max %d", ErrImmutableMetadataExceedsMaxLength, len(n.ImmutableMetadata), ImmutableMetadataMaxLength)
 				}
 			}
 			return nil

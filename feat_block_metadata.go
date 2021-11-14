@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	// MaxMetadataLength defines the max. length of the data within a MetadataFeatureBlock.
-	// TODO: replace with actual value (TBD)
-	MaxMetadataLength = MessageBinSerializedMaxSize
+	// MaxMetadataLength defines the max length of the data within a MetadataFeatureBlock.
+	// TODO: replace with TBD value
+	MaxMetadataLength = 1000
 )
 
 var (

@@ -99,7 +99,7 @@ func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents Unlo
 		return nil
 	}
 
-	if _, isUnlocked := unlockedIdents[issuerFeatureBlock.(*IssuerFeatureBlock).Address]; !isUnlocked {
+	if _, isUnlocked := unlockedIdents[issuerFeatureBlock.(*IssuerFeatureBlock).Address.Key()]; !isUnlocked {
 		return ErrIssuerFeatureBlockNotUnlocked
 	}
 	return nil

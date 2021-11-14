@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 	"github.com/iotaledger/hive.go/serializer"
 
 	"golang.org/x/crypto/blake2b"
@@ -13,9 +12,6 @@ import (
 const (
 	// TransactionIDLength defines the length of a Transaction ID.
 	TransactionIDLength = blake2b.Size256
-
-	// TransactionBinSerializedMinSize defines the minimum size of a serialized Transaction.
-	TransactionBinSerializedMinSize = serializer.UInt32ByteSize
 )
 
 var (
@@ -27,8 +23,6 @@ var (
 	ErrMissingUTXO = errors.New("missing utxo")
 	// ErrInputOutputSumMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
 	ErrInputOutputSumMismatch = errors.New("inputs and outputs do not spend/deposit the same amount")
-	// ErrInputSignatureUnlockBlockInvalid gets returned for errors where an input has a wrong companion signature unlock block.
-	ErrInputSignatureUnlockBlockInvalid = errors.New("companion signature unlock block is invalid for input")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock block with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = errors.New("address and signature type are not compatible")
 	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
@@ -37,6 +31,8 @@ var (
 	ErrSenderFeatureBlockNotUnlocked = errors.New("sender feature block is not unlocked")
 	// ErrIssuerFeatureBlockNotUnlocked gets returned when an output contains a IssuerFeatureBlock with an ident which is not unlocked.
 	ErrIssuerFeatureBlockNotUnlocked = errors.New("issuer feature block is not unlocked")
+	// ErrReturnAmountNotFulFilled gets returned when a return amount in a transaction is not fulfilled by the output side.
+	ErrReturnAmountNotFulFilled = errors.New("return amount not fulfilled")
 )
 
 // TransactionID is the ID of a Transaction.
@@ -178,8 +174,8 @@ func (t *Transaction) SyntacticallyValidate() error {
 	}
 
 	if err := ValidateOutputs(t.Essence.Outputs,
-		OutputsPredicateAlias(txID),
-		OutputsPredicateNFT(txID),
+		OutputsSyntacticalAlias(txID),
+		OutputsSyntacticalNFT(txID),
 	); err != nil {
 		return err
 	}
@@ -231,6 +227,9 @@ type SemValiContextWorkingSet struct {
 	OutNativeTokens NativeTokenSum
 	// The UnlockBlocks carried by the transaction mapped by type.
 	UnlockBlocksByType UnlockBlocksByType
+	// The amount of IOTA tokens moved to an identity with SimpleOutput(s) / ExtendedOutput(s)
+	// that do not have any constrains imposed by FeatureBlock(s).
+	SimpleTransfers map[string]uint64
 }
 
 func featureBlockSetFromOutput(output ChainConstrainedOutput) (FeatureBlocksSet, error) {
@@ -250,6 +249,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs InputSet) (*SemValiConte
 	var err error
 	workingSet := &SemValiContextWorkingSet{}
 	workingSet.UnlockedIdents = make(UnlockedIdentities)
+	workingSet.SimpleTransfers = make(map[string]uint64)
 	workingSet.InputSet = inputs
 	workingSet.Tx = t
 	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage()
@@ -291,15 +291,14 @@ func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inp
 	}
 
 	// TODO:
-	//	- iota token sum balance
-	// 	- max 256 native tokens in/out
-	// 	- etc.
+	// 	- max 256 native tokens in/out (?)
 
 	// do not change the order of these functions as
 	// some of them might depend on certain mutations
 	// on the given SemanticValidationContext
 	if err := runSemanticValidations(svCtx,
 		TxSemanticInputUnlocks(),
+		TxSemanticDeposit(),
 		TxSemanticNativeTokens(),
 		TxSemanticTimelock(),
 		TxSemanticOutputsSender(),
@@ -320,7 +319,7 @@ func runSemanticValidations(svCtx *SemanticValidationContext, checks ...TxSemant
 }
 
 // UnlockedIdentities defines a set of identities which are unlocked from the input side of a Transaction.
-type UnlockedIdentities map[Address]uint16
+type UnlockedIdentities map[string]uint16
 
 // TxSemanticValidationFunc is a function which given the context, input, outputs and
 // unlock blocks runs a specific semantic validation. The function might also modify the SemanticValidationContext
@@ -331,6 +330,8 @@ type TxSemanticValidationFunc func(svCtx *SemanticValidationContext) error
 // and verifies that inputs are correctly unlocked.
 func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
+		// it is important that the inputs are checked in order as referential unlocks
+		// check against previous unlocks
 		for inputIndex, inputRef := range svCtx.WorkingSet.Tx.Essence.Inputs {
 			input, ok := svCtx.WorkingSet.InputSet[inputRef.(IndexedUTXOReferencer).Ref()]
 			if !ok {
@@ -356,7 +357,7 @@ func identToUnlock(svCtx *SemanticValidationContext, input Output, inputIndex in
 	}
 }
 
-// TODO: abstract this all to work with MultiIdentOutput / ChainID
+// TODO: abstract this all to work with MultiIdentOutput / ChainID instead
 func identToUnlockFromMultiIdentOutput(svCtx *SemanticValidationContext, inputMultiIdentOutput MultiIdentOutput, inputIndex int) (Address, error) {
 	inputAliasOutput, is := inputMultiIdentOutput.(*AliasOutput)
 	if !is {
@@ -444,14 +445,14 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex in
 			return fmt.Errorf("%w: input %d has a chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(ident.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
 		}
 
-		unlockedAtIndex, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[ident]
+		unlockedAtIndex, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[ident.Key()]
 		if !wasUnlocked || unlockedAtIndex != referentialUnlockBlock.Ref() {
 			return fmt.Errorf("%w: input %d's chain constrained address is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, referentialUnlockBlock.Ref())
 		}
 
 		// since this input is now unlocked, and it has a ChainConstrainedAddress, it becomes automatically unlocked
 		if chainConstrainedOutput, isChainConstrainedOutput := output.(ChainConstrainedOutput); isChainConstrainedOutput && chainConstrainedOutput.Chain().Addressable() {
-			svCtx.WorkingSet.UnlockedIdents[chainConstrainedOutput.Chain().ToAddress()] = uint16(inputIndex)
+			svCtx.WorkingSet.UnlockedIdents[chainConstrainedOutput.Chain().ToAddress().Key()] = uint16(inputIndex)
 		}
 
 	case DirectUnlockableAddress:
@@ -461,13 +462,13 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex in
 				return fmt.Errorf("%w: input %d has not chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(ident.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
 			}
 
-			unlockedAtIndex, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[ident]
+			unlockedAtIndex, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[ident.Key()]
 			if !wasUnlocked || unlockedAtIndex != uBlock.Ref() {
 				return fmt.Errorf("%w: input %d's address is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, uBlock.Ref())
 			}
 		case *SignatureUnlockBlock:
 			// ident must not be unlocked already
-			if unlockedAtIndex, wasAlreadyUnlocked := svCtx.WorkingSet.UnlockedIdents[ident]; wasAlreadyUnlocked {
+			if unlockedAtIndex, wasAlreadyUnlocked := svCtx.WorkingSet.UnlockedIdents[ident.Key()]; wasAlreadyUnlocked {
 				return fmt.Errorf("%w: input %d's address is already unlocked through input %d's unlock block but the input uses a non referential unlock block", ErrInvalidInputUnlock, inputIndex, unlockedAtIndex)
 			}
 
@@ -475,7 +476,7 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex in
 				return fmt.Errorf("%w: input %d's address is not unlocked through its signature unlock block", err, inputIndex)
 			}
 
-			svCtx.WorkingSet.UnlockedIdents[ident] = uint16(inputIndex)
+			svCtx.WorkingSet.UnlockedIdents[ident.Key()] = uint16(inputIndex)
 		}
 	default:
 		panic("unknown address in semantic unlocks")
@@ -505,10 +506,81 @@ func TxSemanticOutputsSender() TxSemanticValidationFunc {
 
 			// check unlocked
 			sender := senderFeatureBlock.(*SenderFeatureBlock).Address
-			if _, isUnlocked := svCtx.WorkingSet.UnlockedIdents[sender]; !isUnlocked {
+			if _, isUnlocked := svCtx.WorkingSet.UnlockedIdents[sender.Key()]; !isUnlocked {
 				return fmt.Errorf("%w: output %d", ErrSenderFeatureBlockNotUnlocked, outputIndex)
 			}
 		}
+		return nil
+	}
+}
+
+// TxSemanticDeposit validates that the IOTA tokens are balanced from the input/output side.
+// It additionally also incorporates the check whether return amounts via ReturnFeatureBlock(s) for specified identities
+// are fulfilled from the output side.
+func TxSemanticDeposit() TxSemanticValidationFunc {
+	return func(svCtx *SemanticValidationContext) error {
+		// note that due to syntactic validation of outputs, input and output deposit sums
+		// are always within bounds of the total token supply
+		var in, out uint64
+		inputSumReturnAmountPerIdent := make(map[string]uint64)
+		for utxoID, input := range svCtx.WorkingSet.InputSet {
+			inDeposit, err := input.Deposit()
+			if err != nil {
+				return fmt.Errorf("unable to check deposit of input %s: %w", utxoID, err)
+			}
+			in += inDeposit
+			featureBlockOutput, is := input.(FeatureBlockOutput)
+			if !is {
+				continue
+			}
+			featBlockSet, err := featureBlockOutput.FeatureBlocks().Set()
+			if err != nil {
+				return err
+			}
+			returnFeatBlock, has := featBlockSet[FeatureBlockReturn]
+			if !has {
+				continue
+			}
+			// guaranteed by syntactical checks
+			ident := featBlockSet[FeatureBlockSender].(*SenderFeatureBlock).Address.Key()
+			inputSumReturnAmountPerIdent[ident] += returnFeatBlock.(*ReturnFeatureBlock).Amount
+		}
+
+		outputSimpleTransfersPerIdent := make(map[string]uint64)
+		for outputIndex, output := range svCtx.WorkingSet.Tx.Essence.Outputs {
+			outDeposit, err := output.Deposit()
+			if err != nil {
+				return fmt.Errorf("unable to check deposit of output at index %d: %w", outputIndex, err)
+			}
+			out += outDeposit
+
+			// accumulate simple transfers for ReturnFeatureBlock checks
+			switch outputTy := output.(type) {
+			case *SimpleOutput:
+				outputSimpleTransfersPerIdent[outputTy.Address.Key()] += outDeposit
+			case *ExtendedOutput:
+				if len(outputTy.FeatureBlocks()) > 0 {
+					continue
+				}
+				outputSimpleTransfersPerIdent[outputTy.Address.Key()] += outDeposit
+			}
+		}
+
+		if in != out {
+			return fmt.Errorf("%w: in %d, out %d", ErrInputOutputSumMismatch, in, out)
+		}
+
+		// TODO: augment error with better context
+		for ident, returnSum := range inputSumReturnAmountPerIdent {
+			outSum, has := outputSimpleTransfersPerIdent[ident]
+			if !has {
+				return fmt.Errorf("%w: return amount of %d not fulfilled as there is no output for %s", ErrReturnAmountNotFulFilled, returnSum, ident)
+			}
+			if outSum < returnSum {
+				return fmt.Errorf("%w: return amount of %d not fulfilled as output is only %d for %s", ErrReturnAmountNotFulFilled, returnSum, outSum, ident)
+			}
+		}
+
 		return nil
 	}
 }

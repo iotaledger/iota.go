@@ -65,7 +65,7 @@ func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Essence.(*iotago.TransactionEssence).SigningMessage()
+	txEssenceData, err := txPayload.Essence.SigningMessage()
 	tpkg.Must(err)
 
 	seed := tpkg.RandEd25519Seed()
@@ -81,7 +81,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Essence.(*iotago.TransactionEssence).SigningMessage()
+	txEssenceData, err := txPayload.Essence.SigningMessage()
 	tpkg.Must(err)
 
 	seed := tpkg.RandEd25519Seed()

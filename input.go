@@ -83,11 +83,11 @@ func InputSelector(inputType uint32) (serializer.Serializable, error) {
 	return seri, nil
 }
 
-// InputsPredicateFunc which given the index of an input and the input itself, runs validations and returns an error if any should fail.
-type InputsPredicateFunc func(index int, input Input) error
+// InputsSyntacticalValidationFunc which given the index of an input and the input itself, runs syntactical validations and returns an error if any should fail.
+type InputsSyntacticalValidationFunc func(index int, input Input) error
 
-// InputsPredicateUnique returns an InputsPredicateFunc which checks that every input has a unique UTXO ref.
-func InputsPredicateUnique() InputsPredicateFunc {
+// InputsSyntacticalUnique returns an InputsSyntacticalValidationFunc which checks that every input has a unique UTXO ref.
+func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 	set := map[string]int{}
 	return func(index int, input Input) error {
 		ref, is := input.(IndexedUTXOReferencer)
@@ -104,8 +104,8 @@ func InputsPredicateUnique() InputsPredicateFunc {
 	}
 }
 
-// InputsPredicateIndicesWithinBounds returns an InputsPredicateFunc which checks that the UTXO ref index is within bounds.
-func InputsPredicateIndicesWithinBounds() InputsPredicateFunc {
+// InputsSyntacticalIndicesWithinBounds returns an InputsSyntacticalValidationFunc which checks that the UTXO ref index is within bounds.
+func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 	return func(index int, input Input) error {
 		ref, is := input.(IndexedUTXOReferencer)
 		if !is {
@@ -118,10 +118,10 @@ func InputsPredicateIndicesWithinBounds() InputsPredicateFunc {
 	}
 }
 
-var inputsPredicateIndicesWithinBounds = InputsPredicateIndicesWithinBounds()
+var inputsPredicateIndicesWithinBounds = InputsSyntacticalIndicesWithinBounds()
 
-// ValidateInputs validates the inputs by running them against the given InputsPredicateFunc(s).
-func ValidateInputs(inputs Inputs, funcs ...InputsPredicateFunc) error {
+// ValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
+func ValidateInputs(inputs Inputs, funcs ...InputsSyntacticalValidationFunc) error {
 	for i, input := range inputs {
 		dep, ok := input.(*UTXOInput)
 		if !ok {

@@ -16,7 +16,7 @@ func TestInputSelector(t *testing.T) {
 func TestInputsValidatorFunc(t *testing.T) {
 	type args struct {
 		inputs iotago.Inputs
-		funcs  []iotago.InputsPredicateFunc
+		funcs  []iotago.InputsSyntacticalValidationFunc
 	}
 	tests := []struct {
 		name    string
@@ -34,7 +34,7 @@ func TestInputsValidatorFunc(t *testing.T) {
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 1,
 				},
-			}, funcs: []iotago.InputsPredicateFunc{iotago.InputsPredicateUnique()}}, false,
+			}, funcs: []iotago.InputsSyntacticalValidationFunc{iotago.InputsSyntacticalUnique()}}, false,
 		},
 		{
 			"addr not unique",
@@ -47,7 +47,7 @@ func TestInputsValidatorFunc(t *testing.T) {
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 0,
 				},
-			}, funcs: []iotago.InputsPredicateFunc{iotago.InputsPredicateUnique()}}, true,
+			}, funcs: []iotago.InputsSyntacticalValidationFunc{iotago.InputsSyntacticalUnique()}}, true,
 		},
 		{
 			"ok UTXO ref index",
@@ -56,7 +56,7 @@ func TestInputsValidatorFunc(t *testing.T) {
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 0,
 				},
-			}, funcs: []iotago.InputsPredicateFunc{iotago.InputsPredicateIndicesWithinBounds()}}, false,
+			}, funcs: []iotago.InputsSyntacticalValidationFunc{iotago.InputsSyntacticalIndicesWithinBounds()}}, false,
 		},
 		{
 			"invalid UTXO ref index",
@@ -65,7 +65,7 @@ func TestInputsValidatorFunc(t *testing.T) {
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 250,
 				},
-			}, funcs: []iotago.InputsPredicateFunc{iotago.InputsPredicateIndicesWithinBounds()}}, true,
+			}, funcs: []iotago.InputsSyntacticalValidationFunc{iotago.InputsSyntacticalIndicesWithinBounds()}}, true,
 		},
 	}
 	for _, tt := range tests {

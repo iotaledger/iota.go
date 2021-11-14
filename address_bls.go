@@ -42,6 +42,10 @@ func MustParseBLSAddressFromHexString(hexAddr string) *BLSAddress {
 // A BLSAddress is the Blake2b-256 hash of a BLS public key.
 type BLSAddress [BLSAddressBytesLength]byte
 
+func (blsAddr *BLSAddress) Key() string {
+	return string(append([]byte{AddressBLS}, (*blsAddr)[:]...))
+}
+
 func (blsAddr *BLSAddress) Unlock(msg []byte, sig Signature) error {
 	blsSig, isBLSSig := sig.(*BLSSignature)
 	if !isBLSSig {

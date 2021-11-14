@@ -50,6 +50,9 @@ type Address interface {
 
 	// Equal checks whether other is equal to this Address.
 	Equal(other Address) bool
+
+	// Key returns a string which can be used to index the Address in a map.
+	Key() string
 }
 
 // DirectUnlockableAddress is a type of Address which can be directly unlocked.
