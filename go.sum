@@ -323,6 +323,8 @@ github.com/iotaledger/hive.go v0.0.0-20210907083658-27edf6b49375 h1:fIUDROnv3eUG
 github.com/iotaledger/hive.go v0.0.0-20210907083658-27edf6b49375/go.mod h1:vZXMpgveUkATu1IueKmUJK3/OVgrYRQdH/Jh/yZ2j9Q=
 github.com/iotaledger/hive.go v0.0.0-20211011085923-fd2eb0a47bf8 h1:kAB5+8LBTMZSXaud4PrPsklqf7LUBrUy6ZtAlq+El9g=
 github.com/iotaledger/hive.go v0.0.0-20211011085923-fd2eb0a47bf8/go.mod h1:vZXMpgveUkATu1IueKmUJK3/OVgrYRQdH/Jh/yZ2j9Q=
+github.com/iotaledger/hive.go v0.0.0-20211114115219-34d09af1fc8c h1:+5VisRWMRNZqjtAuEpkX6o/d94b3iZ077JboWsclW3Q=
+github.com/iotaledger/hive.go v0.0.0-20211114115219-34d09af1fc8c/go.mod h1:kXXwk29J4q/oZpWh/yuxFXlJJ1HJzhoOR4CEY7PerBc=
 github.com/iotaledger/iota.go v1.0.0 h1:tqm1FxJ/zOdzbrAaQ5BQpVF8dUy2eeGlSeWlNG8GoXY=
 github.com/iotaledger/iota.go v1.0.0/go.mod h1:RiKYwDyY7aCD1L0YRzHSjOsJ5mUR9yvQpvhZncNcGQI=
 github.com/iris-contrib/blackfriday v2.0.0+incompatible/go.mod h1:UzZ2bDEoaSGPbkg6SAB4att1aAwTmVIx/5gCVqeyUdI=
