@@ -62,7 +62,7 @@ func TestTransaction_Serialize(t *testing.T) {
 	}
 }
 
-func TestTransaction_SemanticallyValidate(t *testing.T) {
+func XTestTransaction_SemanticallyValidate(t *testing.T) {
 	identityOne := tpkg.RandEd25519PrivateKey()
 	inputAddr := iotago.Ed25519AddressFromPubKey(identityOne.Public().(ed25519.PublicKey))
 	addrKeys := iotago.AddressKeys{Address: &inputAddr, Keys: identityOne}

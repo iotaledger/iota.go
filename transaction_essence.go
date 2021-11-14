@@ -259,26 +259,25 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 // The function does not syntactically validate the input or outputs themselves.
 func (u *TransactionEssence) SyntacticallyValidate() error {
 
-	if len(u.Inputs) == 0 {
+	switch {
+	case len(u.Inputs) == 0:
 		return ErrMinInputsNotReached
-	}
-
-	if len(u.Outputs) == 0 {
+	case len(u.Outputs) == 0:
 		return ErrMinOutputsNotReached
 	}
 
 	if err := ValidateInputs(u.Inputs,
-		InputsPredicateUnique(),
-		InputsPredicateIndicesWithinBounds(),
+		InputsSyntacticalUnique(),
+		InputsSyntacticalIndicesWithinBounds(),
 	); err != nil {
 		return err
 	}
 
 	if err := ValidateOutputs(u.Outputs,
-		OutputsPredicateDepositAmount(),
-		OutputsPredicateNativeTokensCount(),
-		OutputsPredicateSenderFeatureBlockRequirement(),
-		OutputsPredicateFoundry(),
+		OutputsSyntacticalDepositAmount(),
+		OutputsSyntacticalNativeTokensCount(),
+		OutputsSyntacticalSenderFeatureBlockRequirement(),
+		OutputsSyntacticalFoundry(),
 	); err != nil {
 		return err
 	}

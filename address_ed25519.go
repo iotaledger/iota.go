@@ -41,6 +41,10 @@ func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
 // An Ed25519Address is the Blake2b-256 hash of a Ed25519 public key.
 type Ed25519Address [Ed25519AddressBytesLength]byte
 
+func (edAddr *Ed25519Address) Key() string {
+	return string(append([]byte{AddressEd25519}, (*edAddr)[:]...))
+}
+
 func (edAddr *Ed25519Address) Unlock(msg []byte, sig Signature) error {
 	edSig, isEdSig := sig.(*Ed25519Signature)
 	if !isEdSig {
