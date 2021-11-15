@@ -8,7 +8,7 @@ type ChainConstrainedOutputs []ChainConstrainedOutput
 // ChainConstrainedOutputsSet is a map of ChainID to ChainConstrainedOutput.
 type ChainConstrainedOutputsSet map[ChainID]ChainConstrainedOutput
 
-// Includes checks whether all aliases included in other exist in this set.
+// Includes checks whether all chains included in other exist in this set.
 func (set ChainConstrainedOutputsSet) Includes(other ChainConstrainedOutputsSet) error {
 	for chainID := range other {
 		if _, has := set[chainID]; !has {

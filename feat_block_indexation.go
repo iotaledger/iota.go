@@ -27,6 +27,10 @@ type IndexationFeatureBlock struct {
 	Tag []byte
 }
 
+func (s *IndexationFeatureBlock) VirtualByteCost(costStruct *VirtualByteCostStructure) uint64 {
+	return uint64(serializer.SmallTypeDenotationByteSize+serializer.OneByte+len(s.Tag)) * uint64(costStruct.FactorKey)
+}
+
 func (s *IndexationFeatureBlock) Equal(other FeatureBlock) bool {
 	otherBlock, is := other.(*IndexationFeatureBlock)
 	if !is {
@@ -55,7 +59,7 @@ func (s *IndexationFeatureBlock) Deserialize(data []byte, deSeriMode serializer.
 		CheckTypePrefix(uint32(FeatureBlockIndexation), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation feature block: %w", err)
 		}).
-		ReadVariableByteSlice(&s.Tag, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
+		ReadVariableByteSlice(&s.Tag, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize tag for indexation feature block: %w", err)
 		}, MaxIndexationTagLength).
 		AbortIf(func(err error) error { return s.ValidTagSize() }).

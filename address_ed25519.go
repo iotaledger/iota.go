@@ -38,8 +38,12 @@ func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
 }
 
 // Ed25519Address defines an Ed25519 address.
-// An Ed25519Address is the Blake2b-256 hash of a Ed25519 public key.
+// An Ed25519Address is the Blake2b-256 hash of an Ed25519 public key.
 type Ed25519Address [Ed25519AddressBytesLength]byte
+
+func (edAddr *Ed25519Address) VirtualByteCost(costStruct *VirtualByteCostStructure) uint64 {
+	return uint64((serializer.SmallTypeDenotationByteSize + Ed25519AddressBytesLength) * costStruct.FactorKey)
+}
 
 func (edAddr *Ed25519Address) Key() string {
 	return string(append([]byte{AddressEd25519}, (*edAddr)[:]...))
