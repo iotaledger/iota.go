@@ -45,7 +45,7 @@ type RentStructure struct {
 // by examining the virtual bytes cost of the object.
 // Returns the minimum rent computed and an error if it is not covered by rent.
 func (vbcs *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint64) (uint64, error) {
-	minRent := object.VByteCost(vbcs, nil)
+	minRent := vbcs.VByteCost * object.VByteCost(vbcs, nil)
 	if rent < minRent {
 		return 0, fmt.Errorf("%w: needed %d but only got %d", ErrVByteRentNotCovered, minRent, rent)
 	}
