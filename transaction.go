@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer"
 
 	"golang.org/x/crypto/blake2b"
@@ -81,23 +82,11 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadSliceOfObjects(&t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize unlock blocks", err)
 		}).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				return t.SyntacticallyValidate()
-			}
-			return nil
-		}).
 		Done()
 }
 
 func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				return t.SyntacticallyValidate()
-			}
-			return nil
-		}).
 		WriteNum(PayloadTransaction, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction payload ID", err)
 		}).
@@ -145,12 +134,8 @@ func (t *Transaction) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// SyntacticallyValidate syntactically validates the Transaction:
-//	1. The TransactionEssence isn't nil
-//	2. syntactic validation on the TransactionEssence
-//	3. input and unlock blocks count must match
-//	4. signatures are unique and ref. unlock blocks reference a previous unlock block.
-func (t *Transaction) SyntacticallyValidate() error {
+// SyntacticallyValidate syntactically validates the Transaction.
+func (t *Transaction) SyntacticallyValidate(minDustDep uint64, rentStruct *RentStructure) error {
 	switch {
 	case t.Essence == nil:
 		return fmt.Errorf("%w: transaction is nil", ErrInvalidTransactionEssence)
@@ -158,7 +143,7 @@ func (t *Transaction) SyntacticallyValidate() error {
 		return fmt.Errorf("%w: unlock blocks are nil", ErrInvalidTransactionEssence)
 	}
 
-	if err := t.Essence.SyntacticallyValidate(); err != nil {
+	if err := t.Essence.SyntacticallyValidate(minDustDep, rentStruct); err != nil {
 		return fmt.Errorf("%w: transaction essence part is invalid", err)
 	}
 

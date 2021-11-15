@@ -2,8 +2,9 @@ package iotago_test
 
 import (
 	"errors"
-	"github.com/iotaledger/iota.go/v3/tpkg"
 	"testing"
+
+	"github.com/iotaledger/iota.go/v3/tpkg"
 
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/ed25519"
@@ -111,7 +112,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := test.builder.Build(test.addrSigner)
+			_, err := test.builder.Build(0, zeroRentStruct, test.addrSigner)
 			if test.buildErr != nil {
 				assert.True(t, errors.Is(err, test.buildErr))
 				return

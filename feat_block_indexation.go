@@ -27,8 +27,12 @@ type IndexationFeatureBlock struct {
 	Tag []byte
 }
 
-func (s *IndexationFeatureBlock) VirtualByteCost(costStruct *VirtualByteCostStructure) uint64 {
-	return uint64(serializer.SmallTypeDenotationByteSize+serializer.OneByte+len(s.Tag)) * uint64(costStruct.FactorKey)
+func (s *IndexationFeatureBlock) VByteCost(costStruct *RentStructure, f VByteCostFunc) uint64 {
+	if f != nil {
+		return f(costStruct)
+	}
+	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.OneByte) +
+		costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(uint64(len(s.Tag)))
 }
 
 func (s *IndexationFeatureBlock) Equal(other FeatureBlock) bool {

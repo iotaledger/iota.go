@@ -5,7 +5,7 @@ go 1.16
 require (
 	filippo.io/edwards25519 v1.0.0-rc.1
 	github.com/eclipse/paho.mqtt.golang v1.3.5
-	github.com/ethereum/go-ethereum v1.10.11 // indirect
+	github.com/ethereum/go-ethereum v1.10.11
 	github.com/iotaledger/hive.go v0.0.0-20211114115219-34d09af1fc8c
 	github.com/iotaledger/iota.go v1.0.0
 	github.com/stretchr/testify v1.7.0

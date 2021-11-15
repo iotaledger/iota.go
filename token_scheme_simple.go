@@ -11,6 +11,10 @@ import (
 // the token ID of native tokens held by the foundry.
 type SimpleTokenScheme struct{}
 
+func (s *SimpleTokenScheme) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
+	return costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(serializer.OneByte)
+}
+
 func (s *SimpleTokenScheme) Type() TokenSchemeType {
 	return TokenSchemeSimple
 }

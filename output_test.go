@@ -11,6 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	zeroRentStruct = &iotago.RentStructure{
+		VByteCost:    0,
+		VBFactorData: 0,
+		VBFactorKey:  0,
+	}
+)
+
 func TestOutputSelector(t *testing.T) {
 	_, err := iotago.OutputSelector(100)
 	assert.True(t, errors.Is(err, iotago.ErrUnknownOutputType))
@@ -31,27 +39,31 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
 					Amount: iotago.TokenSupply,
+					Address: tpkg.RandEd25519Address(),
 				},
-			}, funcs: []iotago.OutputsSyntacticalValidationFunc{iotago.OutputsSyntacticalDepositAmount()}}, false,
+			}, funcs: []iotago.OutputsSyntacticalValidationFunc{iotago.OutputsSyntacticalDepositAmount(0, zeroRentStruct)}}, false,
 		},
 		{
 			"deposit amount - more than total supply",
 			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
 					Amount: iotago.TokenSupply + 1,
+					Address: tpkg.RandEd25519Address(),
 				},
-			}, funcs: []iotago.OutputsSyntacticalValidationFunc{iotago.OutputsSyntacticalDepositAmount()}}, true,
+			}, funcs: []iotago.OutputsSyntacticalValidationFunc{iotago.OutputsSyntacticalDepositAmount(0, zeroRentStruct)}}, true,
 		},
 		{
 			"deposit amount- sum more than total supply",
 			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
 					Amount: iotago.TokenSupply - 1,
+					Address: tpkg.RandEd25519Address(),
 				},
 				&iotago.SimpleOutput{
 					Amount: iotago.TokenSupply - 1,
+					Address: tpkg.RandEd25519Address(),
 				},
-			}, funcs: []iotago.OutputsSyntacticalValidationFunc{iotago.OutputsSyntacticalDepositAmount()}}, true,
+			}, funcs: []iotago.OutputsSyntacticalValidationFunc{iotago.OutputsSyntacticalDepositAmount(0, zeroRentStruct)}}, true,
 		},
 		{
 			"native tokens count - ok",

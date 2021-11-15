@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/ed25519"
 	"golang.org/x/crypto/blake2b"
@@ -41,8 +42,8 @@ func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
 // An Ed25519Address is the Blake2b-256 hash of an Ed25519 public key.
 type Ed25519Address [Ed25519AddressBytesLength]byte
 
-func (edAddr *Ed25519Address) VirtualByteCost(costStruct *VirtualByteCostStructure) uint64 {
-	return uint64((serializer.SmallTypeDenotationByteSize + Ed25519AddressBytesLength) * costStruct.FactorKey)
+func (edAddr *Ed25519Address) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	return costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(serializer.SmallTypeDenotationByteSize + Ed25519AddressBytesLength)
 }
 
 func (edAddr *Ed25519Address) Key() string {

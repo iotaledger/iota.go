@@ -42,8 +42,8 @@ func MustParseBLSAddressFromHexString(hexAddr string) *BLSAddress {
 // A BLSAddress is the Blake2b-256 hash of a BLS public key.
 type BLSAddress [BLSAddressBytesLength]byte
 
-func (blsAddr *BLSAddress) VirtualByteCost(costStruct *VirtualByteCostStructure) uint64 {
-	return uint64((serializer.SmallTypeDenotationByteSize + BLSAddressBytesLength) * costStruct.FactorKey)
+func (blsAddr *BLSAddress) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	return costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(serializer.SmallTypeDenotationByteSize + BLSAddressBytesLength)
 }
 
 func (blsAddr *BLSAddress) Key() string {

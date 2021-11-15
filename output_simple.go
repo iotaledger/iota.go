@@ -11,8 +11,6 @@ const (
 	// SimpleOutputEd25519AddrBytesSize defines the size of a SimpleOutput containing an Ed25519Address as its deposit address.
 	SimpleOutputEd25519AddrBytesSize = serializer.SmallTypeDenotationByteSize + Ed25519AddressSerializedBytesSize + serializer.UInt64ByteSize
 
-	// SimpleOutputBytesMinSize defines the minimum size a SimpleOutput.
-	SimpleOutputBytesMinSize = SimpleOutputEd25519AddrBytesSize
 	// SimpleOutputAddressOffset defines the offset at which the address portion within a SimpleOutput begins.
 	SimpleOutputAddressOffset = serializer.SmallTypeDenotationByteSize
 )
@@ -23,6 +21,12 @@ type SimpleOutput struct {
 	Address Address
 	// The amount of IOTA tokens held by the output.
 	Amount uint64
+}
+
+func (s *SimpleOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	return costStruct.VBFactorKey.Multiply(UTXOIDLength) +
+		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		s.Address.VByteCost(costStruct, nil)
 }
 
 func (s *SimpleOutput) Type() OutputType {
@@ -48,14 +52,6 @@ func (s *SimpleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializ
 		ReadNum(&s.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for simple output: %w", err)
 		}).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := outputAmountValidator(-1, s); err != nil {
-					return fmt.Errorf("%w: unable to deserialize simple output", err)
-				}
-			}
-			return nil
-		}).
 		Done()
 }
 
@@ -63,10 +59,6 @@ func (s *SimpleOutput) Serialize(deSeriMode serializer.DeSerializationMode) (dat
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := outputAmountValidator(-1, s); err != nil {
-					return fmt.Errorf("%w: unable to serialize simple output", err)
-				}
-
 				if err := isValidAddrType(s.Address); err != nil {
 					return fmt.Errorf("invalid address set in simple output: %w", err)
 				}

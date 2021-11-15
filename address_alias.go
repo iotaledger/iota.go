@@ -45,8 +45,9 @@ func MustParseAliasAddressFromHexString(hexAddr string) *AliasAddress {
 // An AliasAddress is the Blake2b-160 hash of the OutputID which created it.
 type AliasAddress [AliasAddressBytesLength]byte
 
-func (aliasAddr *AliasAddress) VirtualByteCost(costStruct *VirtualByteCostStructure) uint64 {
-	return uint64((serializer.SmallTypeDenotationByteSize + AliasAddressBytesLength) * costStruct.FactorKey)
+func (aliasAddr *AliasAddress) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	return costStruct.VBFactorKey.With(costStruct.VBFactorData).
+		Multiply(serializer.SmallTypeDenotationByteSize + AliasAddressBytesLength)
 }
 
 func (aliasAddr *AliasAddress) Key() string {
