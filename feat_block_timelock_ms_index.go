@@ -14,6 +14,10 @@ type TimelockMilestoneIndexFeatureBlock struct {
 	MilestoneIndex uint32
 }
 
+func (s *TimelockMilestoneIndexFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize)
+}
+
 func (s *TimelockMilestoneIndexFeatureBlock) Equal(other FeatureBlock) bool {
 	otherBlock, is := other.(*TimelockMilestoneIndexFeatureBlock)
 	if !is {

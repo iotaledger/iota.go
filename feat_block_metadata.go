@@ -29,6 +29,10 @@ type MetadataFeatureBlock struct {
 	Data []byte
 }
 
+func (s *MetadataFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	return costStruct.VBFactorData.Multiply(uint64(serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize + len(s.Data)))
+}
+
 func (s *MetadataFeatureBlock) Equal(other FeatureBlock) bool {
 	otherBlock, is := other.(*MetadataFeatureBlock)
 	if !is {

@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/iotaledger/hive.go/serializer"
 )
@@ -22,8 +23,14 @@ const (
 
 	TokenTagLength = 12
 
+	// Uint256ByteSize defines the size of an uint256.
+	Uint256ByteSize = 32
+
 	// NativeTokenIDLength is the byte length of a NativeTokenID consisting out of the FoundryID plus TokenTag.
 	NativeTokenIDLength = FoundryIDLength + TokenTagLength
+
+	// NativeTokenVByteCost defines the static virtual byte cost of a NativeToken.
+	NativeTokenVByteCost = serializer.UInt16ByteSize + Uint256ByteSize
 )
 
 var (
@@ -101,6 +108,10 @@ func NativeTokenSumBalancedWithDiff(nativeTokenID NativeTokenID, inSums NativeTo
 // NativeTokens is a set of NativeToken.
 type NativeTokens []*NativeToken
 
+func (n NativeTokens) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
+	return costStruct.VBFactorData.Multiply(uint64(serializer.UInt16ByteSize + len(n)*NativeTokenVByteCost))
+}
+
 func (n NativeTokens) ToSerializables() serializer.Serializables {
 	seris := make(serializer.Serializables, len(n))
 	for i, x := range n {
@@ -133,6 +144,10 @@ func (n NativeTokens) Equal(other NativeTokens) bool {
 type NativeToken struct {
 	ID     NativeTokenID
 	Amount *big.Int
+}
+
+func (n *NativeToken) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
+	return NativeTokenVByteCost
 }
 
 // Equal checks whether other is equal to this NativeToken.

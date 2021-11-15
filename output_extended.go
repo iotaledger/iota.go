@@ -10,14 +10,22 @@ import (
 
 // ExtendedOutput is an output type which can hold native tokens and feature blocks.
 type ExtendedOutput struct {
+	// The deposit address.
+	Address Address
 	// The amount of IOTA tokens held by the output.
 	Amount uint64
 	// The native tokens held by the output.
 	NativeTokens NativeTokens
-	// The deposit address.
-	Address Address
 	// The feature blocks which modulate the constraints on the output.
 	Blocks FeatureBlocks
+}
+
+func (e *ExtendedOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	return costStruct.VBFactorKey.Multiply(UTXOIDLength) +
+		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		e.NativeTokens.VByteCost(costStruct, nil) +
+		e.Address.VByteCost(costStruct, nil) +
+		e.Blocks.VByteCost(costStruct, nil)
 }
 
 func (e *ExtendedOutput) NativeTokenSet() NativeTokens {
@@ -45,6 +53,9 @@ func (e *ExtendedOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 		CheckTypePrefix(uint32(OutputExtended), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize extended output: %w", err)
 		}).
+		ReadObject(&e.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+			return fmt.Errorf("unable to deserialize address for extended output: %w", err)
+		}).
 		ReadNum(&e.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for extended output: %w", err)
 		}).
@@ -53,19 +64,8 @@ func (e *ExtendedOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 		}, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize native tokens for extended output: %w", err)
 		}).
-		ReadObject(&e.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
-			return fmt.Errorf("unable to deserialize address for extended output: %w", err)
-		}).
 		ReadSliceOfObjects(&e.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, extendedOutputFeatureBlocksGuard, featBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
-		}).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := outputAmountValidator(-1, e); err != nil {
-					return fmt.Errorf("%w: unable to deserialize extended output", err)
-				}
-			}
-			return nil
 		}).
 		Done()
 }
@@ -96,10 +96,6 @@ func (e *ExtendedOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := outputAmountValidator(-1, e); err != nil {
-					return fmt.Errorf("%w: unable to serialize extended output", err)
-				}
-
 				if err := isValidAddrType(e.Address); err != nil {
 					return fmt.Errorf("invalid address set in extended output: %w", err)
 				}
@@ -120,14 +116,14 @@ func (e *ExtendedOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([
 		WriteNum(OutputExtended, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output type ID: %w", err)
 		}).
+		WriteObject(e.Address, deSeriMode, func(err error) error {
+			return fmt.Errorf("unable to serialize extended output address: %w", err)
+		}).
 		WriteNum(e.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output amount: %w", err)
 		}).
 		WriteSliceOfObjects(&e.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
 			return fmt.Errorf("unable to serialize extended output native tokens: %w", err)
-		}).
-		WriteObject(e.Address, deSeriMode, func(err error) error {
-			return fmt.Errorf("unable to serialize extended output address: %w", err)
 		}).
 		WriteSliceOfObjects(&e.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, featBlockArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
 			return fmt.Errorf("unable to serialize extended output feature blocks: %w", err)

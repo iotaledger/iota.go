@@ -17,11 +17,14 @@ const (
 
 	// UTXOInputSize is the size of a UTXO input: input type + tx id + index
 	UTXOInputSize = serializer.SmallTypeDenotationByteSize + TransactionIDLength + serializer.UInt16ByteSize
+
+	// UTXOIDLength defines the length of a UTXOInputID
+	UTXOIDLength = TransactionIDLength + serializer.UInt16ByteSize
 )
 
 // UTXOInputID defines the identifier for an UTXO input which consists
 // out of the referenced transaction ID and the given output index.
-type UTXOInputID [TransactionIDLength + serializer.UInt16ByteSize]byte
+type UTXOInputID [UTXOIDLength]byte
 
 // ToHex converts the UTXOInputID to its hex representation.
 func (utxoInputID UTXOInputID) ToHex() string {

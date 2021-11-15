@@ -167,7 +167,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			payload, err := test.builder.Build(test.addrSigner)
+			payload, err := test.builder.Build(0, zeroRentStruct, test.addrSigner)
 			if test.buildErr != nil {
 				assert.True(t, errors.Is(err, test.buildErr))
 				return

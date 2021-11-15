@@ -78,6 +78,38 @@ func FeatureBlockTypeToString(ty FeatureBlockType) string {
 
 type FeatureBlocks []FeatureBlock
 
+func (f FeatureBlocks) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	fSet, _ := f.Set()
+	_, hasSender := fSet[FeatureBlockSender]
+	_, hasIndexation := fSet[FeatureBlockIndexation]
+
+	var sumCost uint64
+	for _, featBlock := range f {
+		switch specFeatBlock := featBlock.(type) {
+		case *SenderFeatureBlock:
+			if hasIndexation {
+				sumCost += specFeatBlock.VByteCost(costStruct, func(costStruct *RentStructure) uint64 {
+					return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) +
+						(specFeatBlock.Address.VByteCost(costStruct, nil) * 2)
+				})
+				continue
+			}
+		case *IndexationFeatureBlock:
+			if hasSender {
+				sumCost += specFeatBlock.VByteCost(costStruct, func(costStruct *RentStructure) uint64 {
+					return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.OneByte) +
+						(uint64(len(specFeatBlock.Tag)) * uint64((costStruct.VBFactorKey+costStruct.VBFactorData)*2))
+				})
+				continue
+			}
+		}
+		sumCost += featBlock.VByteCost(costStruct, nil)
+	}
+
+	// length + sum cost of blocks
+	return costStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
+}
+
 func (f FeatureBlocks) ToSerializables() serializer.Serializables {
 	seris := make(serializer.Serializables, len(f))
 	for i, x := range f {
@@ -153,6 +185,7 @@ func (f FeatureBlocksSet) EveryTuple(other FeatureBlocksSet, fun func(a FeatureB
 // FeatureBlock is an abstract building block extending the features of an Output.
 type FeatureBlock interface {
 	serializer.Serializable
+	NonEphemeralObject
 
 	// Type returns the type of the FeatureBlock.
 	Type() FeatureBlockType

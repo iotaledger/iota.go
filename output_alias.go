@@ -6,8 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/crypto/blake2b"
 	"sort"
+
+	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer"
 )
@@ -154,6 +155,17 @@ type AliasOutput struct {
 	FoundryCounter uint32
 	// The feature blocks which modulate the constraints on the output.
 	Blocks FeatureBlocks
+}
+
+func (a *AliasOutput) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
+	return costStruct.VBFactorKey.Multiply(UTXOIDLength) +
+		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		a.NativeTokens.VByteCost(costStruct, nil) +
+		costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(AliasIDLength) +
+		a.StateController.VByteCost(costStruct, nil) +
+		a.GovernanceController.VByteCost(costStruct, nil) +
+		costStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+serializer.UInt32ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
+		a.Blocks.VByteCost(costStruct, nil)
 }
 
 //	TODO: document transitions
@@ -332,14 +344,6 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadSliceOfObjects(&a.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, aliasOutputFeatureBlocksGuard, featBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
 		}).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := outputAmountValidator(-1, a); err != nil {
-					return fmt.Errorf("%w: unable to deserialize alias output", err)
-				}
-			}
-			return nil
-		}).
 		Done()
 }
 
@@ -364,9 +368,6 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]by
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := outputAmountValidator(-1, a); err != nil {
-					return fmt.Errorf("%w: unable to serialize alias output", err)
-				}
 
 				if err := isValidAddrType(a.StateController); err != nil {
 					return fmt.Errorf("invalid state controller set in alias output: %w", err)

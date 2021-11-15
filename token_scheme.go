@@ -18,6 +18,7 @@ const (
 // TokenScheme defines a scheme for to be used for an OutputFoundry.
 type TokenScheme interface {
 	serializer.Serializable
+	NonEphemeralObject
 
 	// Type returns the type of the TokenScheme.
 	Type() TokenSchemeType

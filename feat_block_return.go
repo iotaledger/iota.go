@@ -17,8 +17,8 @@ type ReturnFeatureBlock struct {
 	Amount uint64
 }
 
-func (s *ReturnFeatureBlock) VirtualByteCost(_ *VirtualByteCostStructure) uint64 {
-	return serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize
+func (s *ReturnFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
 }
 
 func (s *ReturnFeatureBlock) Equal(other FeatureBlock) bool {

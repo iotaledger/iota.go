@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer"
 )
 
@@ -11,6 +12,13 @@ import (
 // for the SenderFeatureBlock block to be valid.
 type SenderFeatureBlock struct {
 	Address Address
+}
+
+func (s *SenderFeatureBlock) VByteCost(costStruct *RentStructure, f VByteCostFunc) uint64 {
+	if f != nil {
+		return f(costStruct)
+	}
+	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) + s.Address.VByteCost(costStruct, nil)
 }
 
 func (s *SenderFeatureBlock) Equal(other FeatureBlock) bool {

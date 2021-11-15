@@ -45,8 +45,8 @@ func MustParseNFTAddressFromHexString(hexAddr string) *NFTAddress {
 // An NFTAddress is the Blake2b-160 hash of the OutputID which created it.
 type NFTAddress [NFTAddressBytesLength]byte
 
-func (nftAddr *NFTAddress) VirtualByteCost(costStruct *VirtualByteCostStructure) uint64 {
-	return uint64((serializer.SmallTypeDenotationByteSize + NFTAddressBytesLength) * costStruct.FactorKey)
+func (nftAddr *NFTAddress) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	return costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(serializer.SmallTypeDenotationByteSize + NFTAddressBytesLength)
 }
 
 func (nftAddr *NFTAddress) Key() string {

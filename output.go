@@ -5,9 +5,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/iotaledger/hive.go/serializer"
-	"math/big"
 )
 
 const (
@@ -362,6 +363,7 @@ func (inputSet InputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSet 
 // Output defines a unit of output of a transaction.
 type Output interface {
 	serializer.Serializable
+	NonEphemeralObject
 
 	// Deposit returns the amount this Output deposits.
 	Deposit() (uint64, error)
@@ -486,23 +488,48 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //	- every output deposits more than zero
 //	- every output deposits less than the total supply
 //	- the sum of deposits does not exceed the total supply
+//	- the deposit fulfils the minimum deposit as calculated from the virtual byte cost of the output
+//	- if the output contains a ReturnFeatureBlock, it must "return" bigger equal than the minimum dust deposit
+//	  and must be less equal the minimum virtual byte rent cost for the output.
 // If -1 is passed to the validator func, then the sum is not aggregated over multiple calls.
-func OutputsSyntacticalDepositAmount() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDepositAmount(minDustDep uint64, costStruct *RentStructure) OutputsSyntacticalValidationFunc {
 	var sum uint64
-	return func(index int, dep Output) error {
-		deposit, err := dep.Deposit()
+	return func(index int, output Output) error {
+		deposit, err := output.Deposit()
 		if err != nil {
 			return fmt.Errorf("unable to get deposit of output: %w", err)
 		}
-		if deposit == 0 {
+
+		switch {
+		case deposit == 0:
 			return fmt.Errorf("%w: output %d", ErrDepositAmountMustBeGreaterThanZero, index)
-		}
-		if deposit > TokenSupply {
+		case deposit > TokenSupply:
 			return fmt.Errorf("%w: output %d", ErrOutputDepositsMoreThanTotalSupply, index)
-		}
-		if sum+deposit > TokenSupply {
+		case sum+deposit > TokenSupply:
 			return fmt.Errorf("%w: output %d", ErrOutputsSumExceedsTotalSupply, index)
 		}
+
+		minRent, err := costStruct.CoversStateRent(output, deposit)
+		if err != nil {
+			return fmt.Errorf("%w: output %d", err, index)
+		}
+
+		if featureBlockOutput, is := output.(FeatureBlockOutput); is {
+			featBlockSet, err := featureBlockOutput.FeatureBlocks().Set()
+			if err != nil {
+				return fmt.Errorf("unable to compute feature block set in deposit syntactic checks for output %d: %w", index, err)
+			}
+			if returnFeatBlock := featBlockSet[FeatureBlockReturn]; returnFeatBlock != nil {
+				returnAmount := returnFeatBlock.(*ReturnFeatureBlock).Amount
+				switch {
+				case returnAmount > minRent:
+					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsMoreThanVBRent, index)
+				case returnAmount < minDustDep:
+					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsLessThanMinDust, index)
+				}
+			}
+		}
+
 		if index != -1 {
 			sum += deposit
 		}
@@ -638,9 +665,6 @@ func OutputsSyntacticalNFT(txID *TransactionID) OutputsSyntacticalValidationFunc
 		return nil
 	}
 }
-
-// supposed to be called with -1 as input in order to be used over multiple calls.
-var outputAmountValidator = OutputsSyntacticalDepositAmount()
 
 // ValidateOutputs validates the outputs by running them against the given OutputsSyntacticalValidationFunc(s).
 func ValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalValidationFunc) error {

@@ -95,9 +95,9 @@ type TransactionFunc func(tx *Transaction)
 
 // BuildAndSwapToMessageBuilder builds the transaction and then swaps to a MessageBuilder with
 // the transaction set as its payload. txFunc can be nil.
-func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(signer AddressSigner, txFunc TransactionFunc) *MessageBuilder {
+func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(minDustDep uint64, rentStruct *RentStructure, signer AddressSigner, txFunc TransactionFunc) *MessageBuilder {
 	msgBuilder := NewMessageBuilder()
-	tx, err := b.Build(signer)
+	tx, err := b.Build(minDustDep, rentStruct, signer)
 	if err != nil {
 		msgBuilder.err = err
 		return msgBuilder
@@ -109,10 +109,14 @@ func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(signer AddressSigner, 
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(signer AddressSigner) (*Transaction, error) {
+func (b *TransactionBuilder) Build(minDustDep uint64, rentStruct *RentStructure, signer AddressSigner) (*Transaction, error) {
 
 	if b.occurredBuildErr != nil {
 		return nil, b.occurredBuildErr
+	}
+
+	if err := b.essence.SyntacticallyValidate(minDustDep, rentStruct); err != nil {
+		return nil, err
 	}
 
 	// sort inputs and outputs by their serialized byte order

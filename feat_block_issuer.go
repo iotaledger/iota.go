@@ -16,8 +16,9 @@ type IssuerFeatureBlock struct {
 	Address Address
 }
 
-func (s *IssuerFeatureBlock) VirtualByteCost(costStruct *VirtualByteCostStructure) uint64 {
-	return serializer.SmallTypeDenotationByteSize + s.Address.VirtualByteCost(costStruct)
+func (s *IssuerFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) +
+		s.Address.VByteCost(costStruct, nil)
 }
 
 func (s *IssuerFeatureBlock) Equal(other FeatureBlock) bool {

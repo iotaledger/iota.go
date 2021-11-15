@@ -17,9 +17,6 @@ const (
 	// TransactionEssenceNormal denotes a standard transaction essence.
 	TransactionEssenceNormal TransactionEssenceType = iota
 
-	// TransactionEssenceMinByteSize defines the minimum size of a TransactionEssence.
-	TransactionEssenceMinByteSize = serializer.TypeDenotationByteSize + serializer.UInt16ByteSize + serializer.UInt16ByteSize + serializer.PayloadLengthByteSize
-
 	// MaxInputsCount defines the maximum amount of inputs within a TransactionEssence.
 	MaxInputsCount = 127
 	// MinInputsCount defines the minimum amount of inputs within a TransactionEssence.
@@ -37,8 +34,6 @@ var (
 	ErrMinOutputsNotReached = fmt.Errorf("min %d output(s) are required within a transaction", MinOutputsCount)
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
-	// ErrOutputAddrNotUnique gets returned if multiple outputs deposit to the same address.
-	ErrOutputAddrNotUnique = errors.New("outputs must each deposit to a unique address")
 	// ErrOutputRequiresSenderFeatureBlock gets returned if an output does not contain a SenderFeatureBlock even though another FeatureBlock requires it.
 	ErrOutputRequiresSenderFeatureBlock = errors.New("output does not contain SenderFeatureBlock")
 	// ErrAliasOutputNonEmptyState gets returned if an AliasOutput with zeroed AliasID contains state (counters non-zero etc.).
@@ -55,6 +50,13 @@ var (
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
 	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
+	// ErrOutputDepositsLessThanMinDust gets returned if an output deposits less than the minimum dust deposit.
+	ErrOutputDepositsLessThanMinDust = errors.New("output deposits less than minimum dust deposit")
+	// ErrOutputReturnBlockIsMoreThanVBRent gets returned if an output defines within its ReturnFeatureBlock more
+	// than what is needed to cover the virtual byte renting costs.
+	ErrOutputReturnBlockIsMoreThanVBRent = errors.New("output's return feature block's amount is bigger than the minimum virtual byte rent cost")
+	// ErrOutputReturnBlockIsLessThanMinDust gets returned if an output defines within its ReturnFeatureBlock less than the minimum dust deposit.
+	ErrOutputReturnBlockIsLessThanMinDust = errors.New("output's return feature block's amount is less than the minimum dust amount")
 	// ErrOutputsExceedMaxNativeTokensCount gets returned if outputs exceed the MaxNativeTokensCount.
 	ErrOutputsExceedMaxNativeTokensCount = errors.New("outputs exceeds max native tokens count")
 
@@ -179,14 +181,6 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 	}
 
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := u.SyntacticallyValidate(); err != nil {
-					return err
-				}
-			}
-			return nil
-		}).
 		WriteNum(TransactionEssenceNormal, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence type ID: %w", err)
 		}).
@@ -257,7 +251,7 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 //	- every output (per type) deposits more than zero
 //	- the accumulated deposit output is not over the total supply
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) SyntacticallyValidate() error {
+func (u *TransactionEssence) SyntacticallyValidate(minDustDep uint64, rentStruct *RentStructure) error {
 
 	switch {
 	case len(u.Inputs) == 0:
@@ -274,9 +268,9 @@ func (u *TransactionEssence) SyntacticallyValidate() error {
 	}
 
 	if err := ValidateOutputs(u.Outputs,
-		OutputsSyntacticalDepositAmount(),
-		OutputsSyntacticalNativeTokensCount(),
 		OutputsSyntacticalSenderFeatureBlockRequirement(),
+		OutputsSyntacticalDepositAmount(minDustDep, rentStruct),
+		OutputsSyntacticalNativeTokensCount(),
 		OutputsSyntacticalFoundry(),
 	); err != nil {
 		return err
