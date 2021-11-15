@@ -68,7 +68,7 @@ type ChainConstrainedAddress interface {
 	Chain() ChainID
 }
 
-// ChainID represents the chain ID owning an ChainConstrainedAddress.
+// ChainID represents the chain ID of a chain created by a ChainConstrainedOutput.
 type ChainID interface {
 	// Matches checks whether other matches this ChainID.
 	Matches(other ChainID) bool
