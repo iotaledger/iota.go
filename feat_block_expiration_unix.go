@@ -17,6 +17,10 @@ type ExpirationUnixFeatureBlock struct {
 	UnixTime uint64
 }
 
+func (s *ExpirationUnixFeatureBlock) VirtualByteCost(costStruct *VirtualByteCostStructure) uint64 {
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize
+}
+
 func (s *ExpirationUnixFeatureBlock) Equal(other FeatureBlock) bool {
 	otherBlock, is := other.(*ExpirationUnixFeatureBlock)
 	if !is {

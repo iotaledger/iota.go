@@ -20,7 +20,7 @@ var (
 	ErrNonUniqueFeatureBlocks = errors.New("non unique feature blocks within outputs")
 	// ErrInvalidFeatureBlockTransition gets returned when a FeatureBlock's transition within a ChainConstrainedOutput is invalid.
 	ErrInvalidFeatureBlockTransition = errors.New("invalid feature block transition")
-	featBlockArrayRules       = &serializer.ArrayRules{
+	featBlockArrayRules              = &serializer.ArrayRules{
 		Min: MinFeatBlockCount,
 		Max: MaxFeatBlockCount,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |

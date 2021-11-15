@@ -9,12 +9,16 @@ import (
 
 // ReturnFeatureBlock is a feature block which defines
 // the amount of tokens which must be sent back to the sender identity, when the output in which it occurs in,
-// is consumed by the receiver. This block must have a companion SenderFeatureBlock occurring in the same output
+// is consumed. This block must have a companion SenderFeatureBlock occurring in the same output
 // from which the sender identity can be extracted from.
 // If a transaction consumes multiple outputs which have a ReturnFeatureBlock, then on the output side at least
 // the sum of all occurring ReturnFeatureBlock(s) on the input side must be deposited to the designated origin sender.
 type ReturnFeatureBlock struct {
 	Amount uint64
+}
+
+func (s *ReturnFeatureBlock) VirtualByteCost(_ *VirtualByteCostStructure) uint64 {
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize
 }
 
 func (s *ReturnFeatureBlock) Equal(other FeatureBlock) bool {

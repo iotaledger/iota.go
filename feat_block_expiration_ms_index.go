@@ -16,6 +16,10 @@ type ExpirationMilestoneIndexFeatureBlock struct {
 	MilestoneIndex uint32
 }
 
+func (s *ExpirationMilestoneIndexFeatureBlock) VirtualByteCost(_ *VirtualByteCostStructure) uint64 {
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize
+}
+
 func (s *ExpirationMilestoneIndexFeatureBlock) Equal(other FeatureBlock) bool {
 	otherBlock, is := other.(*ExpirationMilestoneIndexFeatureBlock)
 	if !is {

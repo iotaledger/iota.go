@@ -40,6 +40,7 @@ const (
 // Address describes a general address.
 type Address interface {
 	serializer.Serializable
+	NonEphemeralObject
 	fmt.Stringer
 
 	// Type returns the type of the address.
