@@ -489,7 +489,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //	- every output deposits less than the total supply
 //	- the sum of deposits does not exceed the total supply
 //	- the deposit fulfils the minimum deposit as calculated from the virtual byte cost of the output
-//	- if the output contains a ReturnFeatureBlock, it must "return" bigger equal than the minimum dust deposit
+//	- if the output contains a DustDepositReturnFeatureBlock, it must "return" bigger equal than the minimum dust deposit
 //	  and must be less equal the minimum virtual byte rent cost for the output.
 // If -1 is passed to the validator func, then the sum is not aggregated over multiple calls.
 func OutputsSyntacticalDepositAmount(minDustDep uint64, costStruct *RentStructure) OutputsSyntacticalValidationFunc {
@@ -519,8 +519,8 @@ func OutputsSyntacticalDepositAmount(minDustDep uint64, costStruct *RentStructur
 			if err != nil {
 				return fmt.Errorf("unable to compute feature block set in deposit syntactic checks for output %d: %w", index, err)
 			}
-			if returnFeatBlock := featBlockSet[FeatureBlockReturn]; returnFeatBlock != nil {
-				returnAmount := returnFeatBlock.(*ReturnFeatureBlock).Amount
+			if returnFeatBlock := featBlockSet[FeatureBlockDustDepositReturn]; returnFeatBlock != nil {
+				returnAmount := returnFeatBlock.(*DustDepositReturnFeatureBlock).Amount
 				switch {
 				case returnAmount > minRent:
 					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsMoreThanVBRent, index)
@@ -553,7 +553,7 @@ func OutputsSyntacticalNativeTokensCount() OutputsSyntacticalValidationFunc {
 }
 
 // OutputsSyntacticalSenderFeatureBlockRequirement returns an OutputsSyntacticalValidationFunc which checks that:
-//	- if an output contains a SenderFeatureBlock if another FeatureBlock (example ReturnFeatureBlock) requires it
+//	- if an output contains a SenderFeatureBlock if another FeatureBlock (example DustDepositReturnFeatureBlock) requires it
 func OutputsSyntacticalSenderFeatureBlockRequirement() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		featureBlockOutput, is := output.(FeatureBlockOutput)
@@ -563,7 +563,7 @@ func OutputsSyntacticalSenderFeatureBlockRequirement() OutputsSyntacticalValidat
 		var hasReturnFeatBlock, hasExpMsFeatBlock, hasExpUnixFeatBlock, hasSenderFeatBlock bool
 		for _, featureBlock := range featureBlockOutput.FeatureBlocks() {
 			switch featureBlock.(type) {
-			case *ReturnFeatureBlock:
+			case *DustDepositReturnFeatureBlock:
 				hasReturnFeatBlock = true
 			case *ExpirationMilestoneIndexFeatureBlock:
 				hasExpMsFeatBlock = true

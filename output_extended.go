@@ -80,7 +80,7 @@ func extendedOutputFeatureBlocksGuard(ty uint32) (serializer.Serializable, error
 func featureBlocksSupportedByExtendedOutput(ty uint32) bool {
 	switch ty {
 	case uint32(FeatureBlockSender):
-	case uint32(FeatureBlockReturn):
+	case uint32(FeatureBlockDustDepositReturn):
 	case uint32(FeatureBlockTimelockMilestoneIndex):
 	case uint32(FeatureBlockTimelockUnix):
 	case uint32(FeatureBlockExpirationMilestoneIndex):

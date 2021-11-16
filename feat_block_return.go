@@ -7,22 +7,22 @@ import (
 	"github.com/iotaledger/hive.go/serializer"
 )
 
-// ReturnFeatureBlock is a feature block which defines
+// DustDepositReturnFeatureBlock is a feature block which defines
 // the amount of tokens which must be sent back to the sender identity, when the output in which it occurs in,
 // is consumed. This block must have a companion SenderFeatureBlock occurring in the same output
 // from which the sender identity can be extracted from.
-// If a transaction consumes multiple outputs which have a ReturnFeatureBlock, then on the output side at least
-// the sum of all occurring ReturnFeatureBlock(s) on the input side must be deposited to the designated origin sender.
-type ReturnFeatureBlock struct {
+// If a transaction consumes multiple outputs which have a DustDepositReturnFeatureBlock, then on the output side at least
+// the sum of all occurring DustDepositReturnFeatureBlock(s) on the input side must be deposited to the designated origin sender.
+type DustDepositReturnFeatureBlock struct {
 	Amount uint64
 }
 
-func (s *ReturnFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (s *DustDepositReturnFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
 }
 
-func (s *ReturnFeatureBlock) Equal(other FeatureBlock) bool {
-	otherBlock, is := other.(*ReturnFeatureBlock)
+func (s *DustDepositReturnFeatureBlock) Equal(other FeatureBlock) bool {
+	otherBlock, is := other.(*DustDepositReturnFeatureBlock)
 	if !is {
 		return false
 	}
@@ -30,13 +30,13 @@ func (s *ReturnFeatureBlock) Equal(other FeatureBlock) bool {
 	return s.Amount == otherBlock.Amount
 }
 
-func (s *ReturnFeatureBlock) Type() FeatureBlockType {
-	return FeatureBlockReturn
+func (s *DustDepositReturnFeatureBlock) Type() FeatureBlockType {
+	return FeatureBlockDustDepositReturn
 }
 
-func (s *ReturnFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (s *DustDepositReturnFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
 	return serializer.NewDeserializer(data).
-		CheckTypePrefix(uint32(FeatureBlockReturn), serializer.TypeDenotationByte, func(err error) error {
+		CheckTypePrefix(uint32(FeatureBlockDustDepositReturn), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize return feature block: %w", err)
 		}).
 		ReadNum(&s.Amount, func(err error) error {
@@ -45,9 +45,9 @@ func (s *ReturnFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSe
 		Done()
 }
 
-func (s *ReturnFeatureBlock) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
+func (s *DustDepositReturnFeatureBlock) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(byte(FeatureBlockReturn), func(err error) error {
+		WriteNum(byte(FeatureBlockDustDepositReturn), func(err error) error {
 			return fmt.Errorf("unable to serialize return feature block type ID: %w", err)
 		}).
 		WriteNum(s.Amount, func(err error) error {
@@ -56,13 +56,13 @@ func (s *ReturnFeatureBlock) Serialize(_ serializer.DeSerializationMode) ([]byte
 		Serialize()
 }
 
-func (s *ReturnFeatureBlock) MarshalJSON() ([]byte, error) {
+func (s *DustDepositReturnFeatureBlock) MarshalJSON() ([]byte, error) {
 	jReturnFeatBlock := &jsonReturnFeatureBlock{Amount: int(s.Amount)}
-	jReturnFeatBlock.Type = int(FeatureBlockReturn)
+	jReturnFeatBlock.Type = int(FeatureBlockDustDepositReturn)
 	return json.Marshal(jReturnFeatBlock)
 }
 
-func (s *ReturnFeatureBlock) UnmarshalJSON(bytes []byte) error {
+func (s *DustDepositReturnFeatureBlock) UnmarshalJSON(bytes []byte) error {
 	jReturnFeatBlock := &jsonReturnFeatureBlock{}
 	if err := json.Unmarshal(bytes, jReturnFeatBlock); err != nil {
 		return err
@@ -71,16 +71,16 @@ func (s *ReturnFeatureBlock) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	*s = *seri.(*ReturnFeatureBlock)
+	*s = *seri.(*DustDepositReturnFeatureBlock)
 	return nil
 }
 
-// jsonReturnFeatureBlock defines the json representation of a ReturnFeatureBlock.
+// jsonReturnFeatureBlock defines the json representation of a DustDepositReturnFeatureBlock.
 type jsonReturnFeatureBlock struct {
 	Type   int `json:"type"`
 	Amount int `json:"amount"`
 }
 
 func (j *jsonReturnFeatureBlock) ToSerializable() (serializer.Serializable, error) {
-	return &ReturnFeatureBlock{Amount: uint64(j.Amount)}, nil
+	return &DustDepositReturnFeatureBlock{Amount: uint64(j.Amount)}, nil
 }
