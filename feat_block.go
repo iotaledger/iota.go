@@ -165,6 +165,87 @@ func (f FeatureBlocks) Equal(other FeatureBlocks) bool {
 // FeatureBlocksSet is a set of FeatureBlock(s).
 type FeatureBlocksSet map[FeatureBlockType]FeatureBlock
 
+// SenderFeatureBlock returns the SenderFeatureBlock in the set or nil.
+func (f FeatureBlocksSet) SenderFeatureBlock() *SenderFeatureBlock {
+	b, has := f[FeatureBlockSender]
+	if !has {
+		return nil
+	}
+	return b.(*SenderFeatureBlock)
+}
+
+// IssuerFeatureBlock returns the IssuerFeatureBlock in the set or nil.
+func (f FeatureBlocksSet) IssuerFeatureBlock() *IssuerFeatureBlock {
+	b, has := f[FeatureBlockIssuer]
+	if !has {
+		return nil
+	}
+	return b.(*IssuerFeatureBlock)
+}
+
+// DustDepositReturnFeatureBlock returns the DustDepositReturnFeatureBlock in the set or nil.
+func (f FeatureBlocksSet) DustDepositReturnFeatureBlock() *DustDepositReturnFeatureBlock {
+	b, has := f[FeatureBlockDustDepositReturn]
+	if !has {
+		return nil
+	}
+	return b.(*DustDepositReturnFeatureBlock)
+}
+
+// TimelockMilestoneIndexFeatureBlock returns the TimelockMilestoneIndexFeatureBlock in the set or nil.
+func (f FeatureBlocksSet) TimelockMilestoneIndexFeatureBlock() *TimelockMilestoneIndexFeatureBlock {
+	b, has := f[FeatureBlockTimelockMilestoneIndex]
+	if !has {
+		return nil
+	}
+	return b.(*TimelockMilestoneIndexFeatureBlock)
+}
+
+// TimelockUnixFeatureBlock returns the TimelockUnixFeatureBlock in the set or nil.
+func (f FeatureBlocksSet) TimelockUnixFeatureBlock() *TimelockUnixFeatureBlock {
+	b, has := f[FeatureBlockTimelockUnix]
+	if !has {
+		return nil
+	}
+	return b.(*TimelockUnixFeatureBlock)
+}
+
+// ExpirationMilestoneIndexFeatureBlock returns the ExpirationMilestoneIndexFeatureBlock in the set or nil.
+func (f FeatureBlocksSet) ExpirationMilestoneIndexFeatureBlock() *ExpirationMilestoneIndexFeatureBlock {
+	b, has := f[FeatureBlockExpirationMilestoneIndex]
+	if !has {
+		return nil
+	}
+	return b.(*ExpirationMilestoneIndexFeatureBlock)
+}
+
+// ExpirationUnixFeatureBlock returns the ExpirationUnixFeatureBlock in the set or nil.
+func (f FeatureBlocksSet) ExpirationUnixFeatureBlock() *ExpirationUnixFeatureBlock {
+	b, has := f[FeatureBlockExpirationUnix]
+	if !has {
+		return nil
+	}
+	return b.(*ExpirationUnixFeatureBlock)
+}
+
+// MetadataFeatureBlock returns the MetadataFeatureBlock in the set or nil.
+func (f FeatureBlocksSet) MetadataFeatureBlock() *MetadataFeatureBlock {
+	b, has := f[FeatureBlockMetadata]
+	if !has {
+		return nil
+	}
+	return b.(*MetadataFeatureBlock)
+}
+
+// IndexationFeatureBlock returns the IndexationFeatureBlock in the set or nil.
+func (f FeatureBlocksSet) IndexationFeatureBlock() *IndexationFeatureBlock {
+	b, has := f[FeatureBlockIndexation]
+	if !has {
+		return nil
+	}
+	return b.(*IndexationFeatureBlock)
+}
+
 // EveryTuple runs f for every key which exists in both this set and other.
 // Returns a bool indicating whether all element of this set existed on the other set.
 func (f FeatureBlocksSet) EveryTuple(other FeatureBlocksSet, fun func(a FeatureBlock, b FeatureBlock) error) (bool, error) {
