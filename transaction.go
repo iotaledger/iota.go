@@ -500,7 +500,7 @@ func TxSemanticOutputsSender() TxSemanticValidationFunc {
 }
 
 // TxSemanticDeposit validates that the IOTA tokens are balanced from the input/output side.
-// It additionally also incorporates the check whether return amounts via ReturnFeatureBlock(s) for specified identities
+// It additionally also incorporates the check whether return amounts via DustDepositReturnFeatureBlock(s) for specified identities
 // are fulfilled from the output side.
 func TxSemanticDeposit() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
@@ -522,13 +522,13 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 			if err != nil {
 				return err
 			}
-			returnFeatBlock, has := featBlockSet[FeatureBlockReturn]
+			returnFeatBlock, has := featBlockSet[FeatureBlockDustDepositReturn]
 			if !has {
 				continue
 			}
 			// guaranteed by syntactical checks
 			ident := featBlockSet[FeatureBlockSender].(*SenderFeatureBlock).Address.Key()
-			inputSumReturnAmountPerIdent[ident] += returnFeatBlock.(*ReturnFeatureBlock).Amount
+			inputSumReturnAmountPerIdent[ident] += returnFeatBlock.(*DustDepositReturnFeatureBlock).Amount
 		}
 
 		outputSimpleTransfersPerIdent := make(map[string]uint64)
@@ -539,7 +539,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 			}
 			out += outDeposit
 
-			// accumulate simple transfers for ReturnFeatureBlock checks
+			// accumulate simple transfers for DustDepositReturnFeatureBlock checks
 			switch outputTy := output.(type) {
 			case *SimpleOutput:
 				outputSimpleTransfersPerIdent[outputTy.Address.Key()] += outDeposit

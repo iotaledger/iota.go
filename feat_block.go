@@ -37,8 +37,8 @@ const (
 	FeatureBlockSender FeatureBlockType = iota
 	// FeatureBlockIssuer denotes an IssuerFeatureBlock.
 	FeatureBlockIssuer
-	// FeatureBlockReturn denotes a ReturnFeatureBlock.
-	FeatureBlockReturn
+	// FeatureBlockDustDepositReturn denotes a DustDepositReturnFeatureBlock.
+	FeatureBlockDustDepositReturn
 	// FeatureBlockTimelockMilestoneIndex denotes a TimelockMilestoneIndexFeatureBlock.
 	FeatureBlockTimelockMilestoneIndex
 	// FeatureBlockTimelockUnix denotes a TimelockUnixFeatureBlock.
@@ -60,8 +60,8 @@ func FeatureBlockTypeToString(ty FeatureBlockType) string {
 		return "SenderFeatureBlock"
 	case FeatureBlockIssuer:
 		return "IssuerFeatureBlock"
-	case FeatureBlockReturn:
-		return "ReturnFeatureBlock"
+	case FeatureBlockDustDepositReturn:
+		return "DustDepositReturnFeatureBlock"
 	case FeatureBlockTimelockMilestoneIndex:
 		return "TimelockMilestoneIndexFeatureBlock"
 	case FeatureBlockTimelockUnix:
@@ -210,8 +210,8 @@ func FeatureBlockSelector(featBlockType uint32) (serializer.Serializable, error)
 		seri = &SenderFeatureBlock{}
 	case FeatureBlockIssuer:
 		seri = &IssuerFeatureBlock{}
-	case FeatureBlockReturn:
-		seri = &ReturnFeatureBlock{}
+	case FeatureBlockDustDepositReturn:
+		seri = &DustDepositReturnFeatureBlock{}
 	case FeatureBlockTimelockMilestoneIndex:
 		seri = &TimelockMilestoneIndexFeatureBlock{}
 	case FeatureBlockTimelockUnix:
@@ -238,7 +238,7 @@ func jsonFeatureBlockSelector(ty int) (JSONSerializable, error) {
 		obj = &jsonSenderFeatureBlock{}
 	case FeatureBlockIssuer:
 		obj = &jsonIssuerFeatureBlock{}
-	case FeatureBlockReturn:
+	case FeatureBlockDustDepositReturn:
 		obj = &jsonReturnFeatureBlock{}
 	case FeatureBlockTimelockMilestoneIndex:
 		obj = &jsonTimelockMilestoneIndexFeatureBlock{}

@@ -52,10 +52,10 @@ var (
 	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
 	// ErrOutputDepositsLessThanMinDust gets returned if an output deposits less than the minimum dust deposit.
 	ErrOutputDepositsLessThanMinDust = errors.New("output deposits less than minimum dust deposit")
-	// ErrOutputReturnBlockIsMoreThanVBRent gets returned if an output defines within its ReturnFeatureBlock more
+	// ErrOutputReturnBlockIsMoreThanVBRent gets returned if an output defines within its DustDepositReturnFeatureBlock more
 	// than what is needed to cover the virtual byte renting costs.
 	ErrOutputReturnBlockIsMoreThanVBRent = errors.New("output's return feature block's amount is bigger than the minimum virtual byte rent cost")
-	// ErrOutputReturnBlockIsLessThanMinDust gets returned if an output defines within its ReturnFeatureBlock less than the minimum dust deposit.
+	// ErrOutputReturnBlockIsLessThanMinDust gets returned if an output defines within its DustDepositReturnFeatureBlock less than the minimum dust deposit.
 	ErrOutputReturnBlockIsLessThanMinDust = errors.New("output's return feature block's amount is less than the minimum dust amount")
 	// ErrOutputsExceedMaxNativeTokensCount gets returned if outputs exceed the MaxNativeTokensCount.
 	ErrOutputsExceedMaxNativeTokensCount = errors.New("outputs exceeds max native tokens count")
@@ -246,10 +246,7 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// SyntacticallyValidate checks whether the transaction essence is syntactically valid by checking whether:
-//	- every input references a unique UTXO and has valid UTXO index bounds
-//	- every output (per type) deposits more than zero
-//	- the accumulated deposit output is not over the total supply
+// SyntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
 func (u *TransactionEssence) SyntacticallyValidate(minDustDep uint64, rentStruct *RentStructure) error {
 
