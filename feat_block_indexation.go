@@ -81,7 +81,7 @@ func (s *IndexationFeatureBlock) Serialize(deSeriMode serializer.DeSerialization
 		WriteNum(byte(FeatureBlockIndexation), func(err error) error {
 			return fmt.Errorf("unable to serialize indexation feature block type ID: %w", err)
 		}).
-		WriteVariableByteSlice(s.Tag, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
+		WriteVariableByteSlice(s.Tag, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to serialize indexation feature block data: %w", err)
 		}).
 		Serialize()
