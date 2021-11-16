@@ -89,7 +89,7 @@ type FoundryOutput struct {
 	Blocks FeatureBlocks
 }
 
-func (f *FoundryOutput) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
+func (f *FoundryOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorKey.Multiply(UTXOIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		f.Address.VByteCost(costStruct, nil) +
