@@ -38,6 +38,8 @@ var (
 	ErrNativeTokenAmountLessThanEqualZero = errors.New("native token must be a value bigger than zero")
 	// ErrNativeTokenSumExceedsUint256 gets returned when a NativeToken.Amount addition results in a value bigger than the max value of a uint256.
 	ErrNativeTokenSumExceedsUint256 = errors.New("native token sum exceeds max value of a uint256")
+	// ErrNonUniqueNativeTokens gets returned when multiple NativeToken(s) with the same NativeTokenID exist within sets.
+	ErrNonUniqueNativeTokens = errors.New("non unique native tokens")
 	// ErrNativeTokenSumUnbalanced gets returned when two NativeTokenSum(s) are unbalanced.
 	ErrNativeTokenSumUnbalanced = errors.New("native token sums are unbalanced")
 	nativeTokensArrayRules      = &serializer.ArrayRules{
@@ -105,8 +107,35 @@ func NativeTokenSumBalancedWithDiff(nativeTokenID NativeTokenID, inSums NativeTo
 	return nil
 }
 
+// NativeTokensSet is a set of NativeToken(s).
+type NativeTokensSet map[NativeTokenID]*NativeToken
+
 // NativeTokens is a set of NativeToken.
 type NativeTokens []*NativeToken
+
+// Set converts the slice into a NativeTokenSet.
+// Returns an error if a NativeTokenID occurs multiple times.
+func (n NativeTokens) Set() (NativeTokensSet, error) {
+	set := make(NativeTokensSet)
+	for _, token := range n {
+		if _, has := set[token.ID]; has {
+			return nil, ErrNonUniqueNativeTokens
+		}
+		set[token.ID] = token
+	}
+	return set, nil
+}
+
+// MustSet works like Set but panics if an error occurs.
+// This function is therefore only safe to be called when it is given,
+// that a NativeTokens slice does not contain the same NativeTokenID multiple times.
+func (n NativeTokens) MustSet() NativeTokensSet {
+	set, err := n.Set()
+	if err != nil {
+		panic(err)
+	}
+	return set
+}
 
 func (n NativeTokens) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(uint64(serializer.UInt16ByteSize + len(n)*NativeTokenVByteCost))
