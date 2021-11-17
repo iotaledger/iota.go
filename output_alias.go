@@ -304,6 +304,7 @@ func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *Semanti
 		if _, notNew := semValCtx.WorkingSet.InChains[foundryAliasID]; notNew {
 			continue
 		}
+		seenNewFoundriesOfAlias++
 	}
 
 	expectedNewFoundriesCount := nextAliasOutput.FoundryCounter - a.FoundryCounter

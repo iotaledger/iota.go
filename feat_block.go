@@ -267,15 +267,6 @@ type FeatureBlock interface {
 	Equal(other FeatureBlock) bool
 }
 
-func featureBlockSupported(featBlocks FeatureBlocks, f func(ty uint32) bool) error {
-	for i, featBlock := range featBlocks {
-		if !f(uint32(featBlock.Type())) {
-			return fmt.Errorf("%w: element at %d with type %T", ErrUnsupportedFeatureBlockType, i, featBlock)
-		}
-	}
-	return nil
-}
-
 // FeatureBlockSelector implements SerializableSelectorFunc for feature blocks.
 func FeatureBlockSelector(featBlockType uint32) (serializer.Serializable, error) {
 	var seri serializer.Serializable

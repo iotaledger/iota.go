@@ -395,28 +395,15 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		Done()
 }
 
-func payloadsSupportedByMilestone(ty uint32) bool {
-	switch ty {
-	case uint32(PayloadReceipt):
-	default:
-		return false
-	}
-	return true
-}
-
 func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
-	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-		if m.Receipt != nil {
-			if _, isReceiptPayload := m.Receipt.(*Receipt); !isReceiptPayload {
-				return nil, fmt.Errorf("%w: milestones only allow embedded receipt payloads but got %T instead", serializer.ErrInvalidBytes, m.Receipt)
-			}
-		}
-		switch {
-		case m.NextPoWScore != 0 && m.NextPoWScoreMilestoneIndex == 0:
-			return nil, fmt.Errorf("%w: next-pow-score-milestone-index is zero but next-pow-score is not", ErrMilestoneInvalidMinPoWScoreValues)
-		}
-	}
 	return serializer.NewSerializer().
+		WithValidation(deSeriMode, func(err error) error {
+			switch {
+			case m.NextPoWScore != 0 && m.NextPoWScoreMilestoneIndex == 0:
+				return fmt.Errorf("%w: next-pow-score-milestone-index is zero but next-pow-score is not", ErrMilestoneInvalidMinPoWScoreValues)
+			}
+			return nil
+		}).
 		WriteNum(PayloadMilestone, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone payload ID: %w", err)
 		}).

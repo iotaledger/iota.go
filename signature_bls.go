@@ -43,14 +43,14 @@ func (blsSig *BLSSignature) Valid(msg []byte, addr *BLSAddress) error {
 	}
 	addrFromPubKey := BLSAddressFromPubKey(pubKey)
 	if !bytes.Equal(addr[:], addrFromPubKey[:]) {
-		return fmt.Errorf("%w: address %s, public key %s", ErrBLSPubKeyAndAddrMismatch, addr[:], addrFromPubKey)
+		return fmt.Errorf("%w: address %s, public key %v", ErrBLSPubKeyAndAddrMismatch, addr[:], addrFromPubKey)
 	}
 	sig, _, err := bls.SignatureFromBytes(blsSig.Signature[:])
 	if err != nil {
 		return fmt.Errorf("unable to build BLS signature for validation: %w", err)
 	}
 	if valid := pubKey.SignatureValid(msg, sig); !valid {
-		return fmt.Errorf("%w: address %s, public key %s, signature %s ", ErrBLSSignatureInvalid, addr[:], blsSig.PublicKey, blsSig.Signature)
+		return fmt.Errorf("%w: address %s, public key %v, signature %s", ErrBLSSignatureInvalid, addr[:], blsSig.PublicKey, blsSig.Signature)
 	}
 	return nil
 }
