@@ -17,40 +17,9 @@ const (
 
 	// UTXOInputSize is the size of a UTXO input: input type + tx id + index
 	UTXOInputSize = serializer.SmallTypeDenotationByteSize + TransactionIDLength + serializer.UInt16ByteSize
-
-	// UTXOIDLength defines the length of a UTXOInputID
-	UTXOIDLength = TransactionIDLength + serializer.UInt16ByteSize
 )
 
-// UTXOInputID defines the identifier for an UTXO input which consists
-// out of the referenced transaction ID and the given output index.
-type UTXOInputID [UTXOIDLength]byte
-
-// ToHex converts the UTXOInputID to its hex representation.
-func (utxoInputID UTXOInputID) ToHex() string {
-	return fmt.Sprintf("%x", utxoInputID)
-}
-
-// UTXOIDFromTransactionIDAndIndex creates a UTXOInputID from the given TransactionID and index.
-func UTXOIDFromTransactionIDAndIndex(txID TransactionID, index uint16) UTXOInputID {
-	utxo := UTXOInput{TransactionOutputIndex: uint16(index)}
-	copy(utxo.TransactionID[:], (txID)[:])
-	return utxo.ID()
-}
-
-// UTXOInputIDs is a slice of UTXOInputID.
-type UTXOInputIDs []UTXOInputID
-
-// ToHex converts all UTXOInput to their hex string representation.
-func (utxoInputIDs UTXOInputIDs) ToHex() []string {
-	ids := make([]string, len(utxoInputIDs))
-	for i := range utxoInputIDs {
-		ids[i] = fmt.Sprintf("%x", utxoInputIDs[i])
-	}
-	return ids
-}
-
-// UTXOInput references an unspent transaction output by the Transaction's ID and the corresponding index of the output.
+// UTXOInput references an unspent transaction output by the Transaction's ID and the corresponding index of the Output.
 type UTXOInput struct {
 	// The transaction ID of the referenced transaction.
 	TransactionID [TransactionIDLength]byte
@@ -62,7 +31,7 @@ func (u *UTXOInput) Type() InputType {
 	return InputUTXO
 }
 
-func (u *UTXOInput) Ref() UTXOInputID {
+func (u *UTXOInput) Ref() OutputID {
 	return u.ID()
 }
 
@@ -70,9 +39,9 @@ func (u *UTXOInput) Index() uint16 {
 	return u.TransactionOutputIndex
 }
 
-// ID returns the UTXOInputID.
-func (u *UTXOInput) ID() UTXOInputID {
-	var id UTXOInputID
+// ID returns the OutputID.
+func (u *UTXOInput) ID() OutputID {
+	var id OutputID
 	copy(id[:TransactionIDLength], u.TransactionID[:])
 	binary.LittleEndian.PutUint16(id[TransactionIDLength:], u.TransactionOutputIndex)
 	return id

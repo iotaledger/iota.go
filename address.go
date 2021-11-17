@@ -93,9 +93,9 @@ type ChainID interface {
 	Key() interface{}
 }
 
-// UTXOIDChainID is a ChainID which gets produced by taking a UTXOInputID.
+// UTXOIDChainID is a ChainID which gets produced by taking an OutputID.
 type UTXOIDChainID interface {
-	FromUTXOInputID(id UTXOInputID) ChainID
+	FromOutputID(id OutputID) ChainID
 }
 
 // AddressSelector implements SerializableSelectorFunc for address types.

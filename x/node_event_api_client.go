@@ -279,7 +279,7 @@ func (neac *NodeEventAPIClient) TransactionIncludedMessage(txID iotago.Transacti
 }
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
-func (neac *NodeEventAPIClient) Output(outputID iotago.UTXOInputID) <-chan *iotago.NodeOutputResponse {
+func (neac *NodeEventAPIClient) Output(outputID iotago.OutputID) <-chan *iotago.NodeOutputResponse {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.NodeOutputResponse)
 	topic := strings.Replace(NodeEventOutputs, "{outputId}", hex.EncodeToString(outputID[:]), 1)

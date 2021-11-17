@@ -121,7 +121,7 @@ type FoundryOutput struct {
 }
 
 func (f *FoundryOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.Multiply(UTXOIDLength) +
+	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		f.Address.VByteCost(costStruct, nil) +
 		f.NativeTokens.VByteCost(costStruct, nil) +

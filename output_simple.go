@@ -28,7 +28,7 @@ type SimpleOutput struct {
 }
 
 func (s *SimpleOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.Multiply(UTXOIDLength) +
+	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		s.Address.VByteCost(costStruct, nil)
 }

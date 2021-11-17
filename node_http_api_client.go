@@ -616,8 +616,8 @@ func (nor *NodeOutputResponse) Output() (Output, error) {
 }
 
 // OutputByID gets an outputs by its ID from the node.
-func (api *NodeHTTPAPIClient) OutputByID(ctx context.Context, utxoID UTXOInputID) (*NodeOutputResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteOutput, utxoID.ToHex())
+func (api *NodeHTTPAPIClient) OutputByID(ctx context.Context, outputID OutputID) (*NodeOutputResponse, error) {
+	query := fmt.Sprintf(NodeAPIRouteOutput, outputID.ToHex())
 
 	res := &NodeOutputResponse{}
 	_, err := api.Do(ctx, http.MethodGet, query, nil, res)

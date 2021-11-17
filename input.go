@@ -56,7 +56,7 @@ type IndexedUTXOReferencer interface {
 	Input
 
 	// Ref returns the UTXO this Input references.
-	Ref() UTXOInputID
+	Ref() OutputID
 	// Index returns the output index of the UTXO this Input references.
 	Index() uint16
 }

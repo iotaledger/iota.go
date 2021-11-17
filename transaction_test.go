@@ -71,7 +71,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 		name       string
 		addrSigner iotago.AddressSigner
 		builder    *iotago.TransactionBuilder
-		inputUTXOs iotago.InputSet
+		inputUTXOs iotago.OutputSet
 		buildErr   error
 		validErr   error
 	}
@@ -90,7 +90,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 				name:       "ok - 1 input/output",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iotago.InputSet{
+				inputUTXOs: iotago.OutputSet{
 					inputUTXO1.ID(): &iotago.SimpleOutput{Address: &inputAddr, Amount: 50},
 				},
 			}
@@ -117,7 +117,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 				name:       "ok - 2 inputs, 4 outputs",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				inputUTXOs: iotago.InputSet{
+				inputUTXOs: iotago.OutputSet{
 					inputUTXO1.ID(): &iotago.SimpleOutput{Address: &inputAddr, Amount: 50},
 					inputUTXO2.ID(): &iotago.SimpleOutput{Address: &inputAddr, Amount: 1_000_000},
 				},
@@ -157,7 +157,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
 				validErr:   iotago.ErrInputOutputSumMismatch,
-				inputUTXOs: iotago.InputSet{
+				inputUTXOs: iotago.OutputSet{
 					inputUTXO1.ID(): &iotago.SimpleOutput{Address: &inputAddr, Amount: 50},
 				},
 			}

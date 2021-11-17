@@ -76,6 +76,19 @@ func (t *Transaction) PayloadType() PayloadType {
 	return PayloadTransaction
 }
 
+// OutputsSet returns an OutputSet from the Transaction's outputs, mapped by their OutputID.
+func (t *Transaction) OutputsSet() (OutputSet, error) {
+	txID, err := t.ID()
+	if err != nil {
+		return nil, err
+	}
+	set := make(OutputSet)
+	for index, output := range t.Essence.Outputs {
+		set[OutputIDFromTransactionIDAndIndex(*txID, uint16(index))] = output
+	}
+	return set, nil
+}
+
 // ID computes the ID of the Transaction.
 func (t *Transaction) ID() (*TransactionID, error) {
 	data, err := t.Serialize(serializer.DeSeriModeNoValidation)
@@ -199,7 +212,7 @@ func (t *Transaction) SyntacticallyValidate(minDustDep uint64, rentStruct *RentS
 
 // SemanticValidationFunc is a function which when called tells whether
 // the transaction is passing a specific semantic validation rule or not.
-type SemanticValidationFunc = func(t *Transaction, utxos InputSet) error
+type SemanticValidationFunc = func(t *Transaction, inputs OutputSet) error
 
 // SemanticValidationContext defines the context under which a semantic validation for a Transaction is happening.
 type SemanticValidationContext struct {
@@ -217,8 +230,8 @@ type SemanticValidationContext struct {
 type SemValiContextWorkingSet struct {
 	// The identities which are successfully unlocked from the input side.
 	UnlockedIdents UnlockedIdentities
-	// The mapping of UTXOInputID to the actual Outputs.
-	InputSet InputSet
+	// The mapping of OutputID to the actual Outputs.
+	InputSet OutputSet
 	// The transaction for which this semantic validation happens.
 	Tx *Transaction
 	// The message which signatures are signing.
@@ -255,7 +268,7 @@ func featureBlockSetFromOutput(output ChainConstrainedOutput) (FeatureBlocksSet,
 	return featureBlocks, nil
 }
 
-func NewSemValiContextWorkingSet(t *Transaction, inputs InputSet) (*SemValiContextWorkingSet, error) {
+func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiContextWorkingSet, error) {
 	var err error
 	workingSet := &SemValiContextWorkingSet{}
 	workingSet.UnlockedIdents = make(UnlockedIdentities)
@@ -293,7 +306,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs InputSet) (*SemValiConte
 // SemanticallyValidate semantically validates the Transaction by checking that the semantic rules applied to the inputs
 // and outputs are fulfilled. SyntacticallyValidate() should be called before SemanticallyValidate() to
 // ensure that the essence part of the transaction is syntactically valid.
-func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inputs InputSet, semValFuncs ...SemanticValidationFunc) error {
+func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inputs OutputSet, semValFuncs ...SemanticValidationFunc) error {
 	var err error
 	svCtx.WorkingSet, err = NewSemValiContextWorkingSet(t, inputs)
 	if err != nil {
