@@ -31,6 +31,32 @@ var (
 	// ErrMessageExceedsMaxSize gets returned when a serialized message exceeds MessageBinSerializedMaxSize.
 	ErrMessageExceedsMaxSize = errors.New("message exceeds max size")
 
+	messagePayloadGuard = serializer.SerializableGuard{
+		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+			switch PayloadType(ty) {
+			case PayloadTransaction:
+			case PayloadIndexation:
+			case PayloadMilestone:
+			default:
+				return nil, fmt.Errorf("a message can only contain a transaction/indexation/milestone but got type ID %d: %w", ty, ErrTypeIsNotSupportedPayload)
+			}
+			return PayloadSelector(ty)
+		},
+		WriteGuard: func(seri serializer.Serializable) error {
+			if seri == nil {
+				return nil
+			}
+			switch seri.(type) {
+			case *Transaction:
+			case *Indexation:
+			case *Milestone:
+			default:
+				return ErrTypeIsNotSupportedPayload
+			}
+			return nil
+		},
+	}
+
 	// restrictions around parents within a message.
 	messageParentArrayRules = serializer.ArrayRules{
 		Min:            MinParentsInAMessage,
@@ -133,7 +159,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize message parents: %w", err)
 		}).
-		ReadPayload(&m.Payload, deSeriMode, messagePayloadGuard, func(err error) error {
+		ReadPayload(&m.Payload, deSeriMode, messagePayloadGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize message's inner payload: %w", err)
 		}).
 		ReadNum(&m.Nonce, func(err error) error {
@@ -143,17 +169,6 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 			return fmt.Errorf("%w: unable to deserialize message: %d bytes are still available", err, leftOver)
 		}).
 		Done()
-}
-
-func messagePayloadGuard(ty uint32) (serializer.Serializable, error) {
-	switch PayloadType(ty) {
-	case PayloadTransaction:
-	case PayloadIndexation:
-	case PayloadMilestone:
-	default:
-		return nil, fmt.Errorf("a message can only contain a transaction, indexation or milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
-	}
-	return PayloadSelector(ty)
 }
 
 func (m *Message) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
@@ -169,7 +184,7 @@ func (m *Message) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, 
 		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize message parents: %w", err)
 		}).
-		WritePayload(m.Payload, deSeriMode, func(err error) error {
+		WritePayload(m.Payload, deSeriMode, messagePayloadGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize message inner payload: %w", err)
 		}).
 		WriteNum(m.Nonce, func(err error) error {

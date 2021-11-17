@@ -34,6 +34,28 @@ var (
 	ErrIssuerFeatureBlockNotUnlocked = errors.New("issuer feature block is not unlocked")
 	// ErrReturnAmountNotFulFilled gets returned when a return amount in a transaction is not fulfilled by the output side.
 	ErrReturnAmountNotFulFilled = errors.New("return amount not fulfilled")
+	// ErrTypeIsNotSupportedEssence gets returned when a serializable was found to not be a supported essence.
+	ErrTypeIsNotSupportedEssence = errors.New("serializable is not a supported essence")
+
+	txEssenceGuard = serializer.SerializableGuard{
+		ReadGuard: TransactionEssenceSelector,
+		WriteGuard: func(seri serializer.Serializable) error {
+			if seri == nil {
+				return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedEssence)
+			}
+			if _, is := seri.(*TransactionEssence); !is {
+				return fmt.Errorf("%w: because not *TransactionEssence", ErrTypeIsNotSupportedEssence)
+			}
+			return nil
+		},
+	}
+	txUnlockBlockArrayRules = serializer.ArrayRules{
+		// min/max filled out in serialize/deserialize
+		Guards: serializer.SerializableGuard{
+			ReadGuard:  UnlockBlockSelector,
+			WriteGuard: unlockBlockWriteGuard(),
+		},
+	}
 )
 
 // TransactionID is the ID of a Transaction.
@@ -65,35 +87,38 @@ func (t *Transaction) ID() (*TransactionID, error) {
 }
 
 func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
-	unlockBlockArrayRules := &serializer.ArrayRules{}
-
+	unlockBlockArrayRulesCopy := txUnlockBlockArrayRules
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(PayloadTransaction), serializer.TypeDenotationUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize transaction: %w", err)
 		}).
-		ReadObject(&t.Essence, deSeriMode, serializer.TypeDenotationByte, TransactionEssenceSelector, func(err error) error {
+		ReadObject(&t.Essence, deSeriMode, serializer.TypeDenotationByte, txEssenceGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
 		}).
 		Do(func() {
 			inputCount := uint(len(t.Essence.Inputs))
-			unlockBlockArrayRules.Min = inputCount
-			unlockBlockArrayRules.Max = inputCount
+			unlockBlockArrayRulesCopy.Min = inputCount
+			unlockBlockArrayRulesCopy.Max = inputCount
 		}).
-		ReadSliceOfObjects(&t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, UnlockBlockSelector, unlockBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, &unlockBlockArrayRulesCopy, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize unlock blocks", err)
 		}).
 		Done()
 }
 
 func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+	unlockBlockArrayRulesCopy := txUnlockBlockArrayRules
+	inputCount := uint(len(t.Essence.Inputs))
+	unlockBlockArrayRulesCopy.Min = inputCount
+	unlockBlockArrayRulesCopy.Max = inputCount
 	return serializer.NewSerializer().
 		WriteNum(PayloadTransaction, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction payload ID", err)
 		}).
-		WriteObject(t.Essence, deSeriMode, func(err error) error {
+		WriteObject(t.Essence, deSeriMode, txEssenceGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's essence", err)
 		}).
-		WriteSliceOfObjects(&t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nil, func(err error) error {
+		WriteSliceOfObjects(&t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, &unlockBlockArrayRulesCopy, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's unlock blocks", err)
 		}).
 		Serialize()

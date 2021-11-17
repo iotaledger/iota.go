@@ -20,9 +20,31 @@ var (
 	// ErrReceiptMustContainATreasuryTransaction gets returned if a Receipt does not contain a TreasuryTransaction.
 	ErrReceiptMustContainATreasuryTransaction = errors.New("receipt must contain a treasury transaction")
 
+	receiptPayloadGuard = serializer.SerializableGuard{
+		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+			if PayloadType(ty) != PayloadTreasuryTransaction {
+				return nil, ErrTypeIsNotSupportedPayload
+			}
+			return PayloadSelector(ty)
+		},
+		WriteGuard: func(seri serializer.Serializable) error {
+			if seri == nil {
+				return ErrReceiptMustContainATreasuryTransaction
+			}
+			if _, is := seri.(*TreasuryTransaction); !is {
+				return ErrTypeIsNotSupportedPayload
+			}
+			return nil
+		},
+	}
+
 	migratedFundEntriesArrayRules = &serializer.ArrayRules{
-		Min:            MinMigratedFundsEntryCount,
-		Max:            MaxMigratedFundsEntryCount,
+		Min: MinMigratedFundsEntryCount,
+		Max: MaxMigratedFundsEntryCount,
+		Guards: serializer.SerializableGuard{
+			ReadGuard:  func(_ uint32) (serializer.Serializable, error) { return &MigratedFundsEntry{}, nil },
+			WriteGuard: nil,
+		},
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
@@ -77,13 +99,10 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 			return fmt.Errorf("unable to deserialize receipt final flag: %w", err)
 		}).
 		// special as the MigratedFundsEntry has no type denotation byte
-		ReadSliceOfObjects(&r.Funds, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, func(_ uint32) (serializer.Serializable, error) {
-			// there is no real selector, so we always return a fresh MigratedFundsEntry
-			return &MigratedFundsEntry{}, nil
-		}, migratedFundEntriesArrayRules, func(err error) error {
+		ReadSliceOfObjects(&r.Funds, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, migratedFundEntriesArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize receipt migrated fund entries: %w", err)
 		}).
-		ReadPayload(&r.Transaction, deSeriMode, receiptTransactionGuard, func(err error) error {
+		ReadPayload(&r.Transaction, deSeriMode, receiptPayloadGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize receipt transaction: %w", err)
 		}).
 		AbortIf(func(err error) error {
@@ -95,35 +114,11 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		Done()
 }
 
-func receiptTransactionGuard(ty uint32) (serializer.Serializable, error) {
-	if PayloadType(ty) != PayloadTreasuryTransaction {
-		return nil, fmt.Errorf("a receipt can only contain a treasury transaction but got type ID %d:  %w", ty, ErrUnknownPayloadType)
-	}
-	return PayloadSelector(ty)
-}
-
 func (r *Receipt) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	if r.Transaction == nil {
 		return nil, ErrReceiptMustContainATreasuryTransaction
 	}
-	var migratedFundsEntriesWrittenConsumer serializer.WrittenObjectConsumer
-	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-		if migratedFundEntriesArrayRules.ValidationMode.HasMode(serializer.ArrayValidationModeLexicalOrdering) {
-			migratedFundEntriesLexicalOrderValidator := migratedFundEntriesArrayRules.LexicalOrderWithoutDupsValidator()
-			migratedFundsEntriesWrittenConsumer = func(index int, written []byte) error {
-				if err := migratedFundEntriesLexicalOrderValidator(index, written); err != nil {
-					return fmt.Errorf("%w: unable to serialize migrated fund entries of receipt since they are not in lexical order", err)
-				}
-				return nil
-			}
-		}
-	}
 	return serializer.NewSerializer().
-		Do(func() {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
-				r.SortFunds()
-			}
-		}).
 		WriteNum(PayloadReceipt, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt payload ID: %w", err)
 		}).
@@ -133,10 +128,16 @@ func (r *Receipt) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, 
 		WriteBool(r.Final, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt final flag: %w", err)
 		}).
-		WriteSliceOfObjects(&r.Funds, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, migratedFundsEntriesWrittenConsumer, func(err error) error {
+		WriteSliceOfObjects(&r.Funds, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, migratedFundEntriesArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt funds: %w", err)
 		}).
-		WritePayload(r.Transaction, deSeriMode, func(err error) error {
+		AbortIf(func(err error) error {
+			if r.Transaction == nil {
+				return ErrReceiptMustContainATreasuryTransaction
+			}
+			return nil
+		}).
+		WritePayload(r.Transaction, deSeriMode, receiptPayloadGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt transaction: %w", err)
 		}).
 		Serialize()

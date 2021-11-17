@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -28,6 +27,38 @@ var (
 	// ErrAliasMissing gets returned when an alias is missing
 	ErrAliasMissing = errors.New("alias is missing")
 	emptyAliasID    = [AliasIDLength]byte{}
+
+	aliasOutputAddrGuard = &serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(AddressTypeSet{AddressAlias: struct{}{}, AddressEd25519: struct{}{}}),
+		WriteGuard: addrWriteGuard(AddressTypeSet{AddressAlias: struct{}{}, AddressEd25519: struct{}{}}),
+	}
+	aliasOutputFeatBlockArrayRules = &serializer.ArrayRules{
+		Min: 0,
+		Max: 2,
+		Guards: serializer.SerializableGuard{
+			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+				switch ty {
+				case uint32(FeatureBlockIssuer):
+				case uint32(FeatureBlockMetadata):
+				default:
+					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
+				}
+				return FeatureBlockSelector(ty)
+			},
+			WriteGuard: func(seri serializer.Serializable) error {
+				switch seri.(type) {
+				case *IssuerFeatureBlock:
+				case *MetadataFeatureBlock:
+				default:
+					return fmt.Errorf("%w: in alias output", ErrUnsupportedFeatureBlockType)
+				}
+				return nil
+			},
+		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+	}
 )
 
 // AliasID is the identifier for an alias account.
@@ -317,18 +348,16 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadNum(&a.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for alias output: %w", err)
 		}).
-		ReadSliceOfObjects(&a.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, func(ty uint32) (serializer.Serializable, error) {
-			return &NativeToken{}, nil
-		}, nativeTokensArrayRules, func(err error) error {
+		ReadSliceOfObjects(&a.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize native tokens for alias output: %w", err)
 		}).
 		ReadBytesInPlace(a.AliasID[:], func(err error) error {
 			return fmt.Errorf("unable to deserialize alias ID for alias output: %w", err)
 		}).
-		ReadObject(&a.StateController, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&a.StateController, deSeriMode, serializer.TypeDenotationByte, aliasOutputAddrGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize state controller for alias output: %w", err)
 		}).
-		ReadObject(&a.GovernanceController, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&a.GovernanceController, deSeriMode, serializer.TypeDenotationByte, aliasOutputAddrGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize governance controller for alias output: %w", err)
 		}).
 		ReadNum(&a.StateIndex, func(err error) error {
@@ -341,69 +370,30 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadNum(&a.FoundryCounter, func(err error) error {
 			return fmt.Errorf("unable to deserialize foundry counter for alias output: %w", err)
 		}).
-		ReadSliceOfObjects(&a.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputFeatureBlocksGuard, featBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&a.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
 		}).
 		Done()
 }
 
-func aliasOutputFeatureBlocksGuard(ty uint32) (serializer.Serializable, error) {
-	if !featureBlocksSupportedByAliasOutput(ty) {
-		return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
-	}
-	return FeatureBlockSelector(ty)
-}
-
-func featureBlocksSupportedByAliasOutput(ty uint32) bool {
-	switch ty {
-	case uint32(FeatureBlockIssuer):
-	case uint32(FeatureBlockMetadata):
-	default:
-		return false
-	}
-	return true
-}
-
 func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := isValidAddrType(a.StateController); err != nil {
-					return fmt.Errorf("invalid state controller set in alias output: %w", err)
-				}
-				if err := isValidAddrType(a.GovernanceController); err != nil {
-					return fmt.Errorf("invalid governance controller set in alias output: %w", err)
-				}
-
-				if err := featureBlockSupported(a.FeatureBlocks(), featureBlocksSupportedByAliasOutput); err != nil {
-					return fmt.Errorf("invalid feature blocks set in alias output: %w", err)
-				}
-			}
-			return nil
-		}).
-		Do(func() {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
-				seris := a.NativeTokens.ToSerializables()
-				sort.Sort(serializer.SortedSerializables(seris))
-				a.NativeTokens.FromSerializables(seris)
-			}
-		}).
 		WriteNum(OutputAlias, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output type ID: %w", err)
 		}).
 		WriteNum(a.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output amount: %w", err)
 		}).
-		WriteSliceOfObjects(&a.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
+		WriteSliceOfObjects(&a.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output native tokens: %w", err)
 		}).
 		WriteBytes(a.AliasID[:], func(err error) error {
 			return fmt.Errorf("unable to serialize alias output alias ID: %w", err)
 		}).
-		WriteObject(a.StateController, deSeriMode, func(err error) error {
+		WriteObject(a.StateController, deSeriMode, aliasOutputAddrGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output state controller: %w", err)
 		}).
-		WriteObject(a.GovernanceController, deSeriMode, func(err error) error {
+		WriteObject(a.GovernanceController, deSeriMode, aliasOutputAddrGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output governance controller: %w", err)
 		}).
 		WriteNum(a.StateIndex, func(err error) error {
@@ -415,7 +405,7 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]by
 		WriteNum(a.FoundryCounter, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output foundry counter: %w", err)
 		}).
-		WriteSliceOfObjects(&a.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, featBlockArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
+		WriteSliceOfObjects(&a.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, aliasOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output feature blocks: %w", err)
 		}).
 		Serialize()

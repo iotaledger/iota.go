@@ -7,9 +7,42 @@ import (
 	"github.com/iotaledger/hive.go/serializer"
 )
 
-const (
-	// TreasuryTransactionByteSize defines the serialized size of a TreasuryTransaction.
-	TreasuryTransactionByteSize = serializer.TypeDenotationByteSize + TreasuryInputSerializedBytesSize + TreasuryOutputBytesSize
+var (
+	treasuryTxInputGuard = serializer.SerializableGuard{
+		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+			if InputType(ty) != InputTreasury {
+				return nil, fmt.Errorf("%w: treasury tx only supports treasury input as input", ErrTypeIsNotSupportedInput)
+			}
+			return InputSelector(ty)
+		},
+		WriteGuard: func(seri serializer.Serializable) error {
+			if seri == nil {
+				return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedInput)
+			}
+			if _, is := seri.(*TreasuryInput); !is {
+				return fmt.Errorf("%w: treasury tx only supports treasury input as input", ErrTypeIsNotSupportedInput)
+			}
+			return nil
+		},
+	}
+
+	treasuryTxOutputGuard = serializer.SerializableGuard{
+		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+			if OutputType(ty) != OutputTreasury {
+				return nil, fmt.Errorf("%w: treasury tx only supports treasury output as output", ErrTypeIsNotSupportedInput)
+			}
+			return OutputSelector(ty)
+		},
+		WriteGuard: func(seri serializer.Serializable) error {
+			if seri == nil {
+				return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedInput)
+			}
+			if _, is := seri.(*TreasuryOutput); !is {
+				return fmt.Errorf("%w: treasury tx only supports treasury output as output", ErrTypeIsNotSupportedInput)
+			}
+			return nil
+		},
+	}
 )
 
 // TreasuryTransaction represents a transaction which moves funds from the treasury.
@@ -25,27 +58,13 @@ func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeS
 		CheckTypePrefix(uint32(PayloadTreasuryTransaction), serializer.TypeDenotationUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize treasury transaction: %w", err)
 		}).
-		ReadObject(&t.Input, deSeriMode, serializer.TypeDenotationByte, treasuryTxInputGuard, func(err error) error {
+		ReadObject(&t.Input, deSeriMode, serializer.TypeDenotationByte, treasuryTxInputGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize treasury transaction input: %w", err)
 		}).
-		ReadObject(&t.Output, deSeriMode, serializer.TypeDenotationByte, treasuryTxOutputGuard, func(err error) error {
+		ReadObject(&t.Output, deSeriMode, serializer.TypeDenotationByte, treasuryTxOutputGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize treasury transaction output: %w", err)
 		}).
 		Done()
-}
-
-func treasuryTxOutputGuard(ty uint32) (serializer.Serializable, error) {
-	if ty != uint32(OutputTreasury) {
-		return nil, fmt.Errorf("receipts can only contain treasury output as outputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
-	}
-	return OutputSelector(ty)
-}
-
-func treasuryTxInputGuard(ty uint32) (serializer.Serializable, error) {
-	if ty != uint32(InputTreasury) {
-		return nil, fmt.Errorf("receipts can only contain treasury input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
-	}
-	return InputSelector(ty)
 }
 
 func (t *TreasuryTransaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
@@ -53,10 +72,10 @@ func (t *TreasuryTransaction) Serialize(deSeriMode serializer.DeSerializationMod
 		WriteNum(PayloadTreasuryTransaction, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury transaction type ID: %w", err)
 		}).
-		WriteObject(t.Input, deSeriMode, func(err error) error {
+		WriteObject(t.Input, deSeriMode, treasuryTxInputGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury transaction input: %w", err)
 		}).
-		WriteObject(t.Output, deSeriMode, func(err error) error {
+		WriteObject(t.Output, deSeriMode, treasuryTxOutputGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury transaction output: %w", err)
 		}).
 		Serialize()

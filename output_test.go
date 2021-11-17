@@ -38,7 +38,7 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 			"deposit amount - ok",
 			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
-					Amount: iotago.TokenSupply,
+					Amount:  iotago.TokenSupply,
 					Address: tpkg.RandEd25519Address(),
 				},
 			}, funcs: []iotago.OutputsSyntacticalValidationFunc{iotago.OutputsSyntacticalDepositAmount(0, zeroRentStruct)}}, false,
@@ -47,7 +47,7 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 			"deposit amount - more than total supply",
 			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
-					Amount: iotago.TokenSupply + 1,
+					Amount:  iotago.TokenSupply + 1,
 					Address: tpkg.RandEd25519Address(),
 				},
 			}, funcs: []iotago.OutputsSyntacticalValidationFunc{iotago.OutputsSyntacticalDepositAmount(0, zeroRentStruct)}}, true,
@@ -56,11 +56,11 @@ func TestOutputsPredicateFuncs(t *testing.T) {
 			"deposit amount- sum more than total supply",
 			args{outputs: iotago.Outputs{
 				&iotago.SimpleOutput{
-					Amount: iotago.TokenSupply - 1,
+					Amount:  iotago.TokenSupply - 1,
 					Address: tpkg.RandEd25519Address(),
 				},
 				&iotago.SimpleOutput{
-					Amount: iotago.TokenSupply - 1,
+					Amount:  iotago.TokenSupply - 1,
 					Address: tpkg.RandEd25519Address(),
 				},
 			}, funcs: []iotago.OutputsSyntacticalValidationFunc{iotago.OutputsSyntacticalDepositAmount(0, zeroRentStruct)}}, true,
@@ -143,7 +143,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 				&iotago.FoundryOutput{
 					Amount:            1,
 					NativeTokens:      tpkg.RandSortNativeTokens(5),
-					Address:           tpkg.RandEd25519Address(),
+					Address:           tpkg.RandAliasAddress(),
 					CirculatingSupply: tpkg.RandUint256(),
 					MaximumSupply:     tpkg.RandUint256(),
 					TokenScheme:       &iotago.SimpleTokenScheme{},

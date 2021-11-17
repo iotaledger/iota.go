@@ -52,12 +52,6 @@ func (mb *MessageBuilder) Payload(payload Payload) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
-
-	if _, err := messagePayloadGuard(uint32(payload.PayloadType())); err != nil {
-		mb.err = fmt.Errorf("%w: unsupported type %s", ErrUnknownPayloadType, PayloadTypeToString(payload.PayloadType()))
-		return mb
-	}
-
 	mb.msg.Payload = payload
 	return mb
 }
@@ -118,6 +112,7 @@ func (mb *MessageBuilder) ProofOfWork(ctx context.Context, targetScore float64, 
 	if mb.err != nil {
 		return mb
 	}
+
 	msgData, err := mb.msg.Serialize(serializer.DeSeriModePerformValidation)
 	if err != nil {
 		mb.err = err

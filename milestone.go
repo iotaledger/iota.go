@@ -68,6 +68,24 @@ var (
 	// ErrMilestoneInvalidMinPoWScoreValues gets returned when the min. PoW score fields are invalid.
 	ErrMilestoneInvalidMinPoWScoreValues = fmt.Errorf("invalid milestone min pow score values")
 
+	milestonePayloadGuard = serializer.SerializableGuard{
+		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+			if PayloadType(ty) != PayloadReceipt {
+				return nil, ErrTypeIsNotSupportedPayload
+			}
+			return PayloadSelector(ty)
+		},
+		WriteGuard: func(seri serializer.Serializable) error {
+			if seri == nil {
+				return nil
+			}
+			if _, is := seri.(*Receipt); !is {
+				return ErrTypeIsNotSupportedPayload
+			}
+			return nil
+		},
+	}
+
 	// restrictions around parents within a Milestone.
 	milestoneParentArrayRules = serializer.ArrayRules{
 		Min:            MinParentsInAMessage,
@@ -193,7 +211,7 @@ func (m *Milestone) Essence() ([]byte, error) {
 		Write32BytesArraySlice(m.PublicKeys, serializer.DeSeriModePerformValidation, serializer.SeriLengthPrefixTypeAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys for essence: %w", err)
 		}).
-		WritePayload(m.Receipt, serializer.DeSeriModePerformValidation, func(err error) error {
+		WritePayload(m.Receipt, serializer.DeSeriModePerformValidation, milestonePayloadGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone receipt for essence: %w", err)
 		}).
 		Serialize()
@@ -362,7 +380,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadSliceOfArraysOf32Bytes(&m.PublicKeys, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone public keys: %w", err)
 		}).
-		ReadPayload(&m.Receipt, deSeriMode, milestonePayloadGuard, func(err error) error {
+		ReadPayload(&m.Receipt, deSeriMode, milestonePayloadGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone receipt: %w", err)
 		}).
 		ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneSignatureArrayRules, func(err error) error {
@@ -375,13 +393,6 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 			return nil
 		}).
 		Done()
-}
-
-func milestonePayloadGuard(ty uint32) (serializer.Serializable, error) {
-	if !payloadsSupportedByMilestone(ty) {
-		return nil, fmt.Errorf("%w: unable to deserialize milestone, unsupported payload type %s", ErrUnsupportedPayloadType, PayloadTypeToString(PayloadType(ty)))
-	}
-	return PayloadSelector(ty)
 }
 
 func payloadsSupportedByMilestone(ty uint32) bool {
@@ -430,7 +441,7 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte
 		Write32BytesArraySlice(m.PublicKeys, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestonePublicKeyArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone public keys: %w", err)
 		}).
-		WritePayload(m.Receipt, deSeriMode, func(err error) error {
+		WritePayload(m.Receipt, deSeriMode, milestonePayloadGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone receipt: %w", err)
 		}).
 		Write64BytesArraySlice(m.Signatures, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneSignatureArrayRules, func(err error) error {

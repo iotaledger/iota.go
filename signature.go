@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -17,6 +18,11 @@ const (
 	SignatureEd25519 SignatureType = iota
 	// SignatureBLS denotes a BLSSignature.
 	SignatureBLS
+)
+
+var (
+	// ErrTypeIsNotSupportedSignature gets returned when a serializable was found to not be a supported Signature.
+	ErrTypeIsNotSupportedSignature = errors.New("serializable is not a supported signature")
 )
 
 // SignatureTypeToString returns the name of a Signature given the type.

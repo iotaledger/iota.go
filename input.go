@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -19,6 +20,9 @@ const (
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
 	ErrRefUTXOIndexInvalid = fmt.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
+
+	// ErrTypeIsNotSupportedInput gets returned when a serializable was found to not be a supported Input.
+	ErrTypeIsNotSupportedInput = errors.New("serializable is not a supported input")
 )
 
 // Inputs a slice of Input.

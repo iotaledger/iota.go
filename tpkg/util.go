@@ -113,14 +113,14 @@ func RandEd25519AddressAndBytes() (*iotago.Ed25519Address, []byte) {
 	return edAddr, b[:]
 }
 
-// RandEd25519AddressAndBytes returns a random Ed25519 address.
+// RandEd25519Address returns a random Ed25519 address.
 func RandEd25519Address() *iotago.Ed25519Address {
 	addr, _ := RandEd25519AddressAndBytes()
 	return addr
 }
 
-// RandBLSAddress returns a random BLS address.
-func RandBLSAddress() (*iotago.BLSAddress, []byte) {
+// RandBLSAddressAndBytes returns a random BLSAddress.
+func RandBLSAddressAndBytes() (*iotago.BLSAddress, []byte) {
 	// type
 	blsAddr := &iotago.BLSAddress{}
 	addr := RandBytes(iotago.BLSAddressBytesLength)
@@ -132,8 +132,14 @@ func RandBLSAddress() (*iotago.BLSAddress, []byte) {
 	return blsAddr, b[:]
 }
 
-// RandAliasAddress returns a random alias address.
-func RandAliasAddress() (*iotago.AliasAddress, []byte) {
+// RandBLSAddress returns a random BLSAddress.
+func RandBLSAddress() *iotago.BLSAddress {
+	addr, _ := RandBLSAddressAndBytes()
+	return addr
+}
+
+// RandAliasAddressAndBytes returns a random AliasAddress.
+func RandAliasAddressAndBytes() (*iotago.AliasAddress, []byte) {
 	// type
 	aliasAddr := &iotago.AliasAddress{}
 	addr := RandBytes(iotago.AliasAddressBytesLength)
@@ -145,8 +151,14 @@ func RandAliasAddress() (*iotago.AliasAddress, []byte) {
 	return aliasAddr, b[:]
 }
 
-// RandNFTAddress returns a random NFT address.
-func RandNFTAddress() (*iotago.NFTAddress, []byte) {
+// RandAliasAddress returns a random AliasAddress.
+func RandAliasAddress() *iotago.AliasAddress {
+	addr, _ := RandAliasAddressAndBytes()
+	return addr
+}
+
+// RandNFTAddressAndBytes returns a random NFTAddress.
+func RandNFTAddressAndBytes() (*iotago.NFTAddress, []byte) {
 	// type
 	nftAddr := &iotago.NFTAddress{}
 	addr := RandBytes(iotago.NFTAddressBytesLength)
@@ -156,6 +168,12 @@ func RandNFTAddress() (*iotago.NFTAddress, []byte) {
 	b[0] = iotago.AddressNFT
 	copy(b[serializer.SmallTypeDenotationByteSize:], addr)
 	return nftAddr, b[:]
+}
+
+// RandNFTAddress returns a random NFTAddress.
+func RandNFTAddress() *iotago.NFTAddress {
+	addr, _ := RandNFTAddressAndBytes()
+	return addr
 }
 
 // RandEd25519Signature returns a random Ed25519 signature.

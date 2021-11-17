@@ -25,6 +25,37 @@ var (
 	ErrInvalidFoundryState = errors.New("invalid foundry state")
 
 	emptyFoundryID = [FoundryIDLength]byte{}
+
+	foundryOutputAddrGuard = serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(AddressTypeSet{AddressAlias: struct{}{}}),
+		WriteGuard: addrWriteGuard(AddressTypeSet{AddressAlias: struct{}{}}),
+	}
+
+	foundryOutputFeatBlockArrayRules = &serializer.ArrayRules{
+		Min: 0,
+		Max: 1,
+		Guards: serializer.SerializableGuard{
+			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+				switch ty {
+				case uint32(FeatureBlockMetadata):
+				default:
+					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
+				}
+				return FeatureBlockSelector(ty)
+			},
+			WriteGuard: func(seri serializer.Serializable) error {
+				switch seri.(type) {
+				case *MetadataFeatureBlock:
+				default:
+					return fmt.Errorf("%w: in foundry output", ErrUnsupportedFeatureBlockType)
+				}
+				return nil
+			},
+		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+	}
 )
 
 // TokenTag is a tag holding some additional data which might be interpreted by higher layers.
@@ -277,15 +308,13 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		CheckTypePrefix(uint32(OutputAlias), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize foundry output: %w", err)
 		}).
-		ReadObject(&f.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&f.Address, deSeriMode, serializer.TypeDenotationByte, foundryOutputAddrGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for foundry output: %w", err)
 		}).
 		ReadNum(&f.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for foundry output: %w", err)
 		}).
-		ReadSliceOfObjects(&f.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, func(ty uint32) (serializer.Serializable, error) {
-			return &NativeToken{}, nil
-		}, nativeTokensArrayRules, func(err error) error {
+		ReadSliceOfObjects(&f.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize native tokens for foundry output: %w", err)
 		}).
 		ReadNum(&f.SerialNumber, func(err error) error {
@@ -303,52 +332,24 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		ReadObject(&f.TokenScheme, deSeriMode, serializer.TypeDenotationByte, TokenSchemeSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize token scheme for foundry output: %w", err)
 		}).
-		ReadSliceOfObjects(&f.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputFeatureBlocksGuard, featBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&f.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
 		}).
 		Done()
 }
 
-func foundryOutputFeatureBlocksGuard(ty uint32) (serializer.Serializable, error) {
-	if !featureBlocksSupportedByFoundryOutput(ty) {
-		return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
-	}
-	return FeatureBlockSelector(ty)
-}
-
-func featureBlocksSupportedByFoundryOutput(ty uint32) bool {
-	switch ty {
-	case uint32(FeatureBlockMetadata):
-	default:
-		return false
-	}
-	return true
-}
-
 func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := isValidAddrType(f.Address); err != nil {
-					return fmt.Errorf("invalid address set in foundry output: %w", err)
-				}
-
-				if err := featureBlockSupported(f.FeatureBlocks(), featureBlocksSupportedByFoundryOutput); err != nil {
-					return fmt.Errorf("invalid feature blocks set in foundry output: %w", err)
-				}
-			}
-			return nil
-		}).
 		WriteNum(OutputFoundry, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output type ID: %w", err)
 		}).
-		WriteObject(f.Address, deSeriMode, func(err error) error {
+		WriteObject(f.Address, deSeriMode, foundryOutputAddrGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output address: %w", err)
 		}).
 		WriteNum(f.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output amount: %w", err)
 		}).
-		WriteSliceOfObjects(&f.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
+		WriteSliceOfObjects(&f.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output native tokens: %w", err)
 		}).
 		WriteNum(f.SerialNumber, func(err error) error {
@@ -363,10 +364,10 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]
 		WriteUint256(f.MaximumSupply, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output maximum supply: %w", err)
 		}).
-		WriteObject(f.TokenScheme, deSeriMode, func(err error) error {
+		WriteObject(f.TokenScheme, deSeriMode, tokenSchemeWriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output token scheme: %w", err)
 		}).
-		WriteSliceOfObjects(&f.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, featBlockArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
+		WriteSliceOfObjects(&f.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, foundryOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output feature blocks: %w", err)
 		}).
 		Serialize()

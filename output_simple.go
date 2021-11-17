@@ -8,11 +8,15 @@ import (
 )
 
 const (
-	// SimpleOutputEd25519AddrBytesSize defines the size of a SimpleOutput containing an Ed25519Address as its deposit address.
-	SimpleOutputEd25519AddrBytesSize = serializer.SmallTypeDenotationByteSize + Ed25519AddressSerializedBytesSize + serializer.UInt64ByteSize
-
 	// SimpleOutputAddressOffset defines the offset at which the address portion within a SimpleOutput begins.
 	SimpleOutputAddressOffset = serializer.SmallTypeDenotationByteSize
+)
+
+var (
+	simpleOutputAddrGuard = &serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(allAddressTypeSet),
+		WriteGuard: addrWriteGuard(allAddressTypeSet),
+	}
 )
 
 // SimpleOutput is an output type which can be unlocked via a signature. It deposits onto one single address.
@@ -46,7 +50,7 @@ func (s *SimpleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializ
 		CheckTypePrefix(uint32(OutputSimple), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize simple output: %w", err)
 		}).
-		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, simpleOutputAddrGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for simple output: %w", err)
 		}).
 		ReadNum(&s.Amount, func(err error) error {
@@ -57,18 +61,10 @@ func (s *SimpleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializ
 
 func (s *SimpleOutput) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := isValidAddrType(s.Address); err != nil {
-					return fmt.Errorf("invalid address set in simple output: %w", err)
-				}
-			}
-			return nil
-		}).
 		WriteNum(OutputSimple, func(err error) error {
 			return fmt.Errorf("unable to serialize simple output type ID: %w", err)
 		}).
-		WriteObject(s.Address, deSeriMode, func(err error) error {
+		WriteObject(s.Address, deSeriMode, simpleOutputAddrGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize simple output address: %w", err)
 		}).
 		WriteNum(s.Amount, func(err error) error {

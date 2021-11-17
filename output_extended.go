@@ -3,9 +3,55 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"github.com/iotaledger/hive.go/serializer"
+)
+
+var (
+	extendedOutputAddrGuard = serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(allAddressTypeSet),
+		WriteGuard: addrWriteGuard(allAddressTypeSet),
+	}
+
+	extendedOutputFeatBlockArrayRules = &serializer.ArrayRules{
+		Min: 0,
+		Max: 8,
+		Guards: serializer.SerializableGuard{
+			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+				switch ty {
+				case uint32(FeatureBlockSender):
+				case uint32(FeatureBlockDustDepositReturn):
+				case uint32(FeatureBlockTimelockMilestoneIndex):
+				case uint32(FeatureBlockTimelockUnix):
+				case uint32(FeatureBlockExpirationMilestoneIndex):
+				case uint32(FeatureBlockExpirationUnix):
+				case uint32(FeatureBlockMetadata):
+				case uint32(FeatureBlockIndexation):
+				default:
+					return nil, fmt.Errorf("%w: unable to deserialize extended output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
+				}
+				return FeatureBlockSelector(ty)
+			},
+			WriteGuard: func(seri serializer.Serializable) error {
+				switch seri.(type) {
+				case *SenderFeatureBlock:
+				case *DustDepositReturnFeatureBlock:
+				case *TimelockMilestoneIndexFeatureBlock:
+				case *TimelockUnixFeatureBlock:
+				case *ExpirationMilestoneIndexFeatureBlock:
+				case *ExpirationUnixFeatureBlock:
+				case *MetadataFeatureBlock:
+				case *IndexationFeatureBlock:
+				default:
+					return fmt.Errorf("%w: in extended output", ErrUnsupportedFeatureBlockType)
+				}
+				return nil
+			},
+		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+	}
 )
 
 // ExtendedOutput is an output type which can hold native tokens and feature blocks.
@@ -53,79 +99,36 @@ func (e *ExtendedOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 		CheckTypePrefix(uint32(OutputExtended), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize extended output: %w", err)
 		}).
-		ReadObject(&e.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&e.Address, deSeriMode, serializer.TypeDenotationByte, extendedOutputAddrGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for extended output: %w", err)
 		}).
 		ReadNum(&e.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for extended output: %w", err)
 		}).
-		ReadSliceOfObjects(&e.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, func(ty uint32) (serializer.Serializable, error) {
-			return &NativeToken{}, nil
-		}, nativeTokensArrayRules, func(err error) error {
+		ReadSliceOfObjects(&e.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize native tokens for extended output: %w", err)
 		}).
-		ReadSliceOfObjects(&e.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, extendedOutputFeatureBlocksGuard, featBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&e.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, extendedOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
 		}).
 		Done()
 }
 
-func extendedOutputFeatureBlocksGuard(ty uint32) (serializer.Serializable, error) {
-	if !featureBlocksSupportedByExtendedOutput(ty) {
-		return nil, fmt.Errorf("%w: unable to deserialize extended output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
-	}
-	return FeatureBlockSelector(ty)
-}
-
-func featureBlocksSupportedByExtendedOutput(ty uint32) bool {
-	switch ty {
-	case uint32(FeatureBlockSender):
-	case uint32(FeatureBlockDustDepositReturn):
-	case uint32(FeatureBlockTimelockMilestoneIndex):
-	case uint32(FeatureBlockTimelockUnix):
-	case uint32(FeatureBlockExpirationMilestoneIndex):
-	case uint32(FeatureBlockExpirationUnix):
-	case uint32(FeatureBlockMetadata):
-	default:
-		return false
-	}
-	return true
-}
-
 func (e *ExtendedOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := isValidAddrType(e.Address); err != nil {
-					return fmt.Errorf("invalid address set in extended output: %w", err)
-				}
-
-				if err := featureBlockSupported(e.FeatureBlocks(), featureBlocksSupportedByExtendedOutput); err != nil {
-					return fmt.Errorf("invalid feature blocks set in extended output: %w", err)
-				}
-			}
-			return nil
-		}).
-		Do(func() {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
-				seris := e.NativeTokens.ToSerializables()
-				sort.Sort(serializer.SortedSerializables(seris))
-				e.NativeTokens.FromSerializables(seris)
-			}
-		}).
 		WriteNum(OutputExtended, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output type ID: %w", err)
 		}).
-		WriteObject(e.Address, deSeriMode, func(err error) error {
+		WriteObject(e.Address, deSeriMode, extendedOutputAddrGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output address: %w", err)
 		}).
 		WriteNum(e.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output amount: %w", err)
 		}).
-		WriteSliceOfObjects(&e.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
+		WriteSliceOfObjects(&e.NativeTokens, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output native tokens: %w", err)
 		}).
-		WriteSliceOfObjects(&e.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, featBlockArrayRules.ToWrittenObjectConsumer(deSeriMode), func(err error) error {
+		WriteSliceOfObjects(&e.Blocks, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, extendedOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output feature blocks: %w", err)
 		}).
 		Serialize()

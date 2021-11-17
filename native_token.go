@@ -43,8 +43,12 @@ var (
 	// ErrNativeTokenSumUnbalanced gets returned when two NativeTokenSum(s) are unbalanced.
 	ErrNativeTokenSumUnbalanced = errors.New("native token sums are unbalanced")
 	nativeTokensArrayRules      = &serializer.ArrayRules{
-		Min:            MinNativeTokenCountPerOutput,
-		Max:            MaxNativeTokenCountPerOutput,
+		Min: MinNativeTokenCountPerOutput,
+		Max: MaxNativeTokenCountPerOutput,
+		Guards: serializer.SerializableGuard{
+			ReadGuard:  func(ty uint32) (serializer.Serializable, error) { return &NativeToken{}, nil },
+			WriteGuard: nil,
+		},
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
