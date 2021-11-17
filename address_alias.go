@@ -120,7 +120,7 @@ func (aliasAddr *AliasAddress) UnmarshalJSON(bytes []byte) error {
 }
 
 // AliasAddressFromOutputID returns the alias address computed from a given OutputID.
-func AliasAddressFromOutputID(outputID UTXOInputID) AliasAddress {
+func AliasAddressFromOutputID(outputID OutputID) AliasAddress {
 	// TODO: maybe use pkg with Sum160 exposed
 	blake2b160, _ := blake2b.New(20, nil)
 	var aliasAddress AliasAddress

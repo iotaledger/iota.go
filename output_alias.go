@@ -73,7 +73,7 @@ func (id AliasID) Key() interface{} {
 	return id.String()
 }
 
-func (id AliasID) FromUTXOInputID(in UTXOInputID) ChainID {
+func (id AliasID) FromOutputID(in OutputID) ChainID {
 	aliasID := AliasIDFromOutputID(in)
 	return &aliasID
 }
@@ -100,8 +100,8 @@ func (id AliasID) ToAddress() ChainConstrainedAddress {
 	return &addr
 }
 
-// AliasIDFromOutputID returns the AliasID computed from a given UTXOInputID.
-func AliasIDFromOutputID(outputID UTXOInputID) AliasID {
+// AliasIDFromOutputID returns the AliasID computed from a given OutputID.
+func AliasIDFromOutputID(outputID OutputID) AliasID {
 	// TODO: maybe use pkg with Sum160 exposed
 	blake2b160, _ := blake2b.New(20, nil)
 	var aliasID AliasID
@@ -189,7 +189,7 @@ type AliasOutput struct {
 }
 
 func (a *AliasOutput) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.Multiply(UTXOIDLength) +
+	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		a.NativeTokens.VByteCost(costStruct, nil) +
 		costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(AliasIDLength) +

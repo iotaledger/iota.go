@@ -67,7 +67,7 @@ type ExtendedOutput struct {
 }
 
 func (e *ExtendedOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.Multiply(UTXOIDLength) +
+	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		e.NativeTokens.VByteCost(costStruct, nil) +
 		e.Address.VByteCost(costStruct, nil) +

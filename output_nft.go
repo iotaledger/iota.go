@@ -84,7 +84,7 @@ func (nftID NFTID) Key() interface{} {
 	return nftID.String()
 }
 
-func (nftID NFTID) FromUTXOInputID(id UTXOInputID) ChainID {
+func (nftID NFTID) FromOutputID(id OutputID) ChainID {
 	addr := NFTAddressFromOutputID(id)
 	return addr.Chain()
 }
@@ -128,7 +128,7 @@ type NFTOutput struct {
 }
 
 func (n *NFTOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.Multiply(UTXOIDLength) +
+	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		n.Address.VByteCost(costStruct, nil) +
 		n.NativeTokens.VByteCost(costStruct, nil) +

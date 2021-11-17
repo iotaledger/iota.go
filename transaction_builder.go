@@ -20,7 +20,7 @@ func NewTransactionBuilder() *TransactionBuilder {
 			Outputs: Outputs{},
 			Payload: nil,
 		},
-		inputToAddr: map[UTXOInputID]Address{},
+		inputToAddr: map[OutputID]Address{},
 	}
 }
 
@@ -28,7 +28,7 @@ func NewTransactionBuilder() *TransactionBuilder {
 type TransactionBuilder struct {
 	occurredBuildErr error
 	essence          *TransactionEssence
-	inputToAddr      map[UTXOInputID]Address
+	inputToAddr      map[OutputID]Address
 }
 
 // ToBeSignedUTXOInput defines a UTXO input which needs to be signed.

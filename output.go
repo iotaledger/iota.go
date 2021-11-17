@@ -16,6 +16,49 @@ const (
 	OutputIDLength = TransactionIDLength + serializer.UInt16ByteSize
 )
 
+// OutputID defines the identifier for an UTXO which consists
+// out of the referenced TransactionID and the output's index.
+type OutputID [OutputIDLength]byte
+
+// ToHex converts the OutputID to its hex representation.
+func (outputID OutputID) ToHex() string {
+	return fmt.Sprintf("%x", outputID)
+}
+
+// Index returns the index of the Output this OutputID references.
+func (outputID OutputID) Index() uint16 {
+	return binary.LittleEndian.Uint16(outputID[TransactionIDLength:])
+}
+
+// TransactionID returns the TransactionID of the Output this OutputID references.
+func (outputID OutputID) TransactionID() TransactionID {
+	var txID TransactionID
+	copy(txID[:], outputID[:TransactionIDLength])
+	return txID
+}
+
+// OutputIDFromTransactionIDAndIndex creates a OutputID from the given TransactionID and index.
+func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputID {
+	utxo := UTXOInput{TransactionOutputIndex: index}
+	copy(utxo.TransactionID[:], (txID)[:])
+	return utxo.ID()
+}
+
+// OutputSet is a map of the OutputID to Output.
+type OutputSet map[OutputID]Output
+
+// OutputIDs is a slice of OutputID.
+type OutputIDs []OutputID
+
+// ToHex converts all UTXOInput to their hex string representation.
+func (outputIDs OutputIDs) ToHex() []string {
+	ids := make([]string, len(outputIDs))
+	for i := range outputIDs {
+		ids[i] = fmt.Sprintf("%x", outputIDs[i])
+	}
+	return ids
+}
+
 // OutputType defines the type of outputs.
 type OutputType byte
 
@@ -100,7 +143,7 @@ func (o Outputs) ChainConstrainedOutputSet(txID TransactionID) ChainConstrainedO
 		chainID := chainConstrainedOutput.Chain()
 		if chainID.Empty() {
 			if utxoIDChainID, is := chainConstrainedOutput.Chain().(UTXOIDChainID); is {
-				chainID = utxoIDChainID.FromUTXOInputID(UTXOIDFromTransactionIDAndIndex(txID, uint16(outputIndex)))
+				chainID = utxoIDChainID.FromOutputID(OutputIDFromTransactionIDAndIndex(txID, uint16(outputIndex)))
 			}
 		}
 
@@ -321,11 +364,8 @@ func (ntOutputs NativeTokenOutputs) Sum() (NativeTokenSum, error) {
 	return sum, nil
 }
 
-// InputSet maps inputs to their origin UTXOs.
-type InputSet map[UTXOInputID]Output
-
 // NewAliases returns an AliasOutputsSet for all AliasOutputs which are new.
-func (inputSet InputSet) NewAliases() AliasOutputsSet {
+func (inputSet OutputSet) NewAliases() AliasOutputsSet {
 	set := make(AliasOutputsSet)
 	for utxoInputID, output := range inputSet {
 		aliasOutput, is := output.(*AliasOutput)
@@ -337,8 +377,8 @@ func (inputSet InputSet) NewAliases() AliasOutputsSet {
 	return set
 }
 
-// ChainConstrainedOutputSet returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs in the InputSet.
-func (inputSet InputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSet {
+// ChainConstrainedOutputSet returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs in the OutputSet.
+func (inputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSet {
 	set := make(ChainConstrainedOutputsSet)
 	for utxoInputID, output := range inputSet {
 		chainConstrainedOutput, is := output.(ChainConstrainedOutput)
@@ -349,7 +389,7 @@ func (inputSet InputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSet 
 		chainID := chainConstrainedOutput.Chain()
 		if chainID.Empty() {
 			if utxoIDChainID, is := chainConstrainedOutput.Chain().(UTXOIDChainID); is {
-				chainID = utxoIDChainID.FromUTXOInputID(utxoInputID)
+				chainID = utxoIDChainID.FromOutputID(utxoInputID)
 			}
 		}
 
@@ -602,7 +642,7 @@ func OutputsSyntacticalAlias(txID *TransactionID) OutputsSyntacticalValidationFu
 			}
 
 			// build AliasID using the transaction ID
-			outputAliasAddr = AliasAddressFromOutputID(UTXOIDFromTransactionIDAndIndex(*txID, uint16(index)))
+			outputAliasAddr = AliasAddressFromOutputID(OutputIDFromTransactionIDAndIndex(*txID, uint16(index)))
 		}
 
 		if outputAliasAddr == emptyAliasAddress {
@@ -653,7 +693,7 @@ func OutputsSyntacticalNFT(txID *TransactionID) OutputsSyntacticalValidationFunc
 
 		var outputNFTAddr NFTAddress
 		if nftOutput.NFTID == emptyNFTID {
-			outputNFTAddr = NFTAddressFromOutputID(UTXOIDFromTransactionIDAndIndex(*txID, uint16(index)))
+			outputNFTAddr = NFTAddressFromOutputID(OutputIDFromTransactionIDAndIndex(*txID, uint16(index)))
 		}
 
 		if outputNFTAddr == emptyNFTAddress {

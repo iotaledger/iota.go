@@ -118,7 +118,7 @@ func (nftAddr *NFTAddress) UnmarshalJSON(bytes []byte) error {
 }
 
 // NFTAddressFromOutputID returns the NFT address computed from a given OutputID.
-func NFTAddressFromOutputID(outputID UTXOInputID) NFTAddress {
+func NFTAddressFromOutputID(outputID OutputID) NFTAddress {
 	// TODO: maybe use pkg with Sum160 exposed
 	blake2b160, _ := blake2b.New(20, nil)
 	var nftAddress NFTAddress
