@@ -226,7 +226,7 @@ func (outputs OutputsByType) MultiIdentOutputs() MultiIdentOutputs {
 // If multiple MultiIdentOutput(s) exist for a given ChainID, an error is returned.
 // Empty AccountIDs are ignored.
 func (outputs OutputsByType) MultiIdentOutputsSet() (MultiIdentOutputsSet, error) {
-	multiIdentOutputsSet := make(MultiIdentOutputsSet, 0)
+	multiIdentOutputsSet := make(MultiIdentOutputsSet)
 	for _, output := range outputs.MultiIdentOutputs() {
 		if output.Chain().Empty() {
 			continue
@@ -255,7 +255,7 @@ func (outputs OutputsByType) FoundryOutputs() FoundryOutputs {
 // FoundryOutputsSet returns a map of FoundryID to FoundryOutput.
 // If multiple FoundryOutput(s) exist for a given FoundryID, an error is returned.
 func (outputs OutputsByType) FoundryOutputsSet() (FoundryOutputsSet, error) {
-	foundryOutputsSet := make(FoundryOutputsSet, 0)
+	foundryOutputsSet := make(FoundryOutputsSet)
 	for _, output := range outputs[OutputFoundry] {
 		foundryOutput, is := output.(*FoundryOutput)
 		if !is {
@@ -290,7 +290,7 @@ func (outputs OutputsByType) AliasOutputs() AliasOutputs {
 // If multiple AliasOutput(s) exist for a given AliasID, an error is returned.
 // The produced set does not include AliasOutputs of which their AliasID are zeroed.
 func (outputs OutputsByType) NonNewAliasOutputsSet() (AliasOutputsSet, error) {
-	aliasOutputsSet := make(AliasOutputsSet, 0)
+	aliasOutputsSet := make(AliasOutputsSet)
 	for _, output := range outputs[OutputAlias] {
 		aliasOutput, is := output.(*AliasOutput)
 		if !is || aliasOutput.AliasEmpty() {
@@ -307,7 +307,7 @@ func (outputs OutputsByType) NonNewAliasOutputsSet() (AliasOutputsSet, error) {
 // ChainConstrainedOutputsSet returns a map of ChainID to ChainConstrainedOutput.
 // If multiple ChainConstrainedOutput(s) exist for a given ChainID, an error is returned.
 func (outputs OutputsByType) ChainConstrainedOutputsSet() (ChainConstrainedOutputsSet, error) {
-	chainConstrainedOutputs := make(ChainConstrainedOutputsSet, 0)
+	chainConstrainedOutputs := make(ChainConstrainedOutputsSet)
 	for _, ty := range []OutputType{OutputAlias, OutputFoundry, OutputNFT} {
 		for _, output := range outputs[ty] {
 			chainConstrainedOutput, is := output.(ChainConstrainedOutput)

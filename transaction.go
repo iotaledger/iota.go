@@ -549,7 +549,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 		for utxoID, input := range svCtx.WorkingSet.InputSet {
 			inDeposit, err := input.Deposit()
 			if err != nil {
-				return fmt.Errorf("unable to check deposit of input %s: %w", utxoID, err)
+				return fmt.Errorf("unable to check deposit of input %d: %w", utxoID.Index(), err)
 			}
 			in += inDeposit
 			featureBlockOutput, is := input.(FeatureBlockOutput)

@@ -115,7 +115,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 
 	dupedNativeTokens := func() iotago.NativeTokens {
 		nativeTokens := tpkg.RandSortNativeTokens(2)
-		nativeTokens[0], nativeTokens[1] = nativeTokens[0], nativeTokens[0]
+		nativeTokens[1] = nativeTokens[0]
 		return nativeTokens
 	}
 
