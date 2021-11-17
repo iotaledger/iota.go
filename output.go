@@ -20,18 +20,18 @@ const (
 type OutputType byte
 
 const (
-	// OutputSimple denotes a type of output which is locked by a signature and deposits onto a single address.
-	OutputSimple OutputType = iota
-	// OutputExtended denotes a type of output which can also hold native tokens and feature blocks.
-	OutputExtended
+	// OutputSimple denotes a SimpleOutput
+	OutputSimple OutputType = 0
 	// OutputTreasury denotes the type of the TreasuryOutput.
-	OutputTreasury
-	// OutputAlias denotes the type of an AliasOutput.
-	OutputAlias
-	// OutputFoundry denotes the type of a FoundryOutput.
-	OutputFoundry
-	// OutputNFT denotes the type of an NFTOutput.
-	OutputNFT
+	OutputTreasury OutputType = 2
+	// OutputExtended denotes an ExtendedOutput.
+	OutputExtended OutputType = 3
+	// OutputAlias denotes an AliasOutput.
+	OutputAlias OutputType = 4
+	// OutputFoundry denotes a FoundryOutput.
+	OutputFoundry OutputType = 5
+	// OutputNFT denotes an NFTOutput.
+	OutputNFT OutputType = 6
 )
 
 // OutputTypeToString returns the name of an Output given the type.

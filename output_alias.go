@@ -368,7 +368,6 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]by
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-
 				if err := isValidAddrType(a.StateController); err != nil {
 					return fmt.Errorf("invalid state controller set in alias output: %w", err)
 				}
