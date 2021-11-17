@@ -184,7 +184,7 @@ func (m *Milestone) ID() (*MilestoneID, error) {
 // Essence returns the essence bytes (the bytes to be signed) of the Milestone.
 func (m *Milestone) Essence() ([]byte, error) {
 	essenceBytes, err := serializer.NewSerializer().
-		AbortIf(func(err error) error {
+		WithValidation(serializer.DeSeriModePerformValidation, func(err error) error {
 			if len(m.PublicKeys) < MinPublicKeysInAMilestone {
 				return fmt.Errorf("unable to serialize milestone as essence: %w", ErrMilestoneTooFewPublicKeys)
 			}
@@ -370,7 +370,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadNum(&m.NextPoWScoreMilestoneIndex, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone next pow score milestone index: %w", err)
 		}).
-		AbortIf(func(err error) error {
+		WithValidation(deSeriMode, func(err error) error {
 			switch {
 			case m.NextPoWScore != 0 && m.NextPoWScoreMilestoneIndex == 0:
 				return fmt.Errorf("%w: next-pow-score-milestone-index is zero but next-pow-score is not", ErrMilestoneInvalidMinPoWScoreValues)
@@ -386,7 +386,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadSliceOfArraysOf64Bytes(&m.Signatures, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneSignatureArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone signatures: %w", err)
 		}).
-		AbortIf(func(err error) error {
+		WithValidation(deSeriMode, func(err error) error {
 			if len(m.PublicKeys) != len(m.Signatures) {
 				return ErrMilestoneSignaturesPublicKeyCountMismatch
 			}

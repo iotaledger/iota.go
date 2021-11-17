@@ -46,12 +46,10 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 		ReadVariableByteSlice(&u.Index, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation index: %w", err)
 		}, IndexationIndexMaxLength).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				switch {
-				case len(u.Index) < IndexationIndexMinLength:
-					return fmt.Errorf("unable to deserialize indexation index: %w", ErrIndexationIndexUnderMinSize)
-				}
+		WithValidation(deSeriMode, func(err error) error {
+			switch {
+			case len(u.Index) < IndexationIndexMinLength:
+				return fmt.Errorf("unable to deserialize indexation index: %w", ErrIndexationIndexUnderMinSize)
 			}
 			return nil
 		}).
@@ -63,7 +61,7 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 
 func (u *Indexation) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
+		WithValidation(deSeriMode, func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				switch {
 				case len(u.Index) > IndexationIndexMaxLength:

@@ -105,7 +105,7 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		ReadPayload(&r.Transaction, deSeriMode, receiptPayloadGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize receipt transaction: %w", err)
 		}).
-		AbortIf(func(err error) error {
+		WithValidation(deSeriMode, func(err error) error {
 			if r.Transaction == nil {
 				return ErrReceiptMustContainATreasuryTransaction
 			}
@@ -131,7 +131,7 @@ func (r *Receipt) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, 
 		WriteSliceOfObjects(&r.Funds, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, migratedFundEntriesArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt funds: %w", err)
 		}).
-		AbortIf(func(err error) error {
+		WithValidation(deSeriMode, func(err error) error {
 			if r.Transaction == nil {
 				return ErrReceiptMustContainATreasuryTransaction
 			}
