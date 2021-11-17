@@ -43,7 +43,7 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 		return fmt.Errorf("%w: address %s, public key %v", ErrEd25519PubKeyAndAddrMismatch, addr[:], addrFromPubKey)
 	}
 	if valid := ed25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
-		return fmt.Errorf("%w: address %s, public key %v, signature %s", ErrEd25519SignatureInvalid, addr[:], e.PublicKey, e.Signature)
+		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrEd25519SignatureInvalid, addr[:], e.PublicKey, e.Signature)
 	}
 	return nil
 }
