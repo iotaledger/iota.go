@@ -58,11 +58,9 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadNum(&u.TransactionOutputIndex, func(err error) error {
 			return fmt.Errorf("unable to deserialize transaction output index in UTXO input: %w", err)
 		}).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := inputsPredicateIndicesWithinBounds(-1, u); err != nil {
-					return fmt.Errorf("%w: unable to deserialize UTXO input", err)
-				}
+		WithValidation(deSeriMode, func(err error) error {
+			if err := inputsPredicateIndicesWithinBounds(-1, u); err != nil {
+				return fmt.Errorf("%w: unable to deserialize UTXO input", err)
 			}
 			return nil
 		}).
@@ -71,11 +69,9 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 
 func (u *UTXOInput) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := inputsPredicateIndicesWithinBounds(-1, u); err != nil {
-					return fmt.Errorf("%w: unable to serialize UTXO input", err)
-				}
+		WithValidation(deSeriMode, func(err error) error {
+			if err := inputsPredicateIndicesWithinBounds(-1, u); err != nil {
+				return fmt.Errorf("%w: unable to serialize UTXO input", err)
 			}
 			return nil
 		}).

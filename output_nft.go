@@ -216,12 +216,9 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 
 func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-
-				if len(n.ImmutableMetadata) > ImmutableMetadataMaxLength {
-					return fmt.Errorf("%w: %d instead of max %d", ErrImmutableMetadataExceedsMaxLength, len(n.ImmutableMetadata), ImmutableMetadataMaxLength)
-				}
+		WithValidation(deSeriMode, func(err error) error {
+			if len(n.ImmutableMetadata) > ImmutableMetadataMaxLength {
+				return fmt.Errorf("%w: %d instead of max %d", ErrImmutableMetadataExceedsMaxLength, len(n.ImmutableMetadata), ImmutableMetadataMaxLength)
 			}
 			return nil
 		}).

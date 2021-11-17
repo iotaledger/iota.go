@@ -145,11 +145,9 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		return 0, fmt.Errorf("%w: size %d bytes", ErrMessageExceedsMaxSize, len(data))
 	}
 	return serializer.NewDeserializer(data).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := serializer.CheckMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
-					return fmt.Errorf("invalid message bytes: %w", err)
-				}
+		WithValidation(deSeriMode, func(err error) error {
+			if err := serializer.CheckMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
+				return fmt.Errorf("invalid message bytes: %w", err)
 			}
 			return nil
 		}).

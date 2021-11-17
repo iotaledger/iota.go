@@ -318,8 +318,8 @@ github.com/influxdata/promql/v2 v2.12.0/go.mod h1:fxOPu+DY0bqCTCECchSRtWfc+0X19y
 github.com/influxdata/roaring v0.4.13-0.20180809181101-fc520f41fab6/go.mod h1:bSgUQ7q5ZLSO+bKBGqJiCBGAl+9DxyW63zLTujjUlOE=
 github.com/influxdata/tdigest v0.0.0-20181121200506-bf2b5ad3c0a9/go.mod h1:Js0mqiSBE6Ffsg94weZZ2c+v/ciT8QRHFOap7EKDrR0=
 github.com/influxdata/usage-client v0.0.0-20160829180054-6d3895376368/go.mod h1:Wbbw6tYNvwa5dlB6304Sd+82Z3f7PmVZHVKU637d4po=
-github.com/iotaledger/hive.go v0.0.0-20211117161358-ab7cbdf93598 h1:wrvEvhCEzMp8Te8ZNP6gWgukpgsIEbp245JWlAL3NEg=
-github.com/iotaledger/hive.go v0.0.0-20211117161358-ab7cbdf93598/go.mod h1:kXXwk29J4q/oZpWh/yuxFXlJJ1HJzhoOR4CEY7PerBc=
+github.com/iotaledger/hive.go v0.0.0-20211117191756-d4a7bbf5fe1f h1:06AhfhOIxZsqqRo4b9gP4dSJgrIKQixUsC7FqO1KHwc=
+github.com/iotaledger/hive.go v0.0.0-20211117191756-d4a7bbf5fe1f/go.mod h1:kXXwk29J4q/oZpWh/yuxFXlJJ1HJzhoOR4CEY7PerBc=
 github.com/iotaledger/iota.go v1.0.0 h1:tqm1FxJ/zOdzbrAaQ5BQpVF8dUy2eeGlSeWlNG8GoXY=
 github.com/iotaledger/iota.go v1.0.0/go.mod h1:RiKYwDyY7aCD1L0YRzHSjOsJ5mUR9yvQpvhZncNcGQI=
 github.com/iris-contrib/blackfriday v2.0.0+incompatible/go.mod h1:UzZ2bDEoaSGPbkg6SAB4att1aAwTmVIx/5gCVqeyUdI=
