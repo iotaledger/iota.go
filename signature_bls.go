@@ -50,7 +50,7 @@ func (blsSig *BLSSignature) Valid(msg []byte, addr *BLSAddress) error {
 		return fmt.Errorf("unable to build BLS signature for validation: %w", err)
 	}
 	if valid := pubKey.SignatureValid(msg, sig); !valid {
-		return fmt.Errorf("%w: address %s, public key %v, signature %s", ErrBLSSignatureInvalid, addr[:], blsSig.PublicKey, blsSig.Signature)
+		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrBLSSignatureInvalid, addr[:], blsSig.PublicKey, blsSig.Signature)
 	}
 	return nil
 }
