@@ -7,6 +7,13 @@ import (
 	"github.com/iotaledger/hive.go/serializer"
 )
 
+var (
+	issuerFeatBlockAddrGuard = serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(allAddressTypeSet),
+		WriteGuard: addrWriteGuard(allAddressTypeSet),
+	}
+)
+
 // IssuerFeatureBlock is a feature block which associates an output
 // with an issuer identity. Unlike the SenderFeatureBlock, the issuer identity
 // only has to be unlocked when the state machine type of output is first created,
@@ -39,25 +46,17 @@ func (s *IssuerFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSe
 		CheckTypePrefix(uint32(FeatureBlockIssuer), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize issuer feature block: %w", err)
 		}).
-		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, AddressSelector, func(err error) error {
+		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, issuerFeatBlockAddrGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for issuer feature block: %w", err)
 		}).Done()
 }
 
 func (s *IssuerFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if err := isValidAddrType(s.Address); err != nil {
-					return fmt.Errorf("invalid address set in issuer feature block: %w", err)
-				}
-			}
-			return nil
-		}).
 		WriteNum(byte(FeatureBlockIssuer), func(err error) error {
 			return fmt.Errorf("unable to serialize issuer feature block type ID: %w", err)
 		}).
-		WriteObject(s.Address, deSeriMode, func(err error) error {
+		WriteObject(s.Address, deSeriMode, issuerFeatBlockAddrGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize issuer feature block address: %w", err)
 		}).
 		Serialize()

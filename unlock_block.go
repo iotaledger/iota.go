@@ -29,6 +29,8 @@ var (
 	ErrRefUnlockBlockInvalidRef = errors.New("referential unlock block must point to a previous signature unlock block")
 	// ErrSigUnlockBlockHasNilSig gets returned if a signature unlock block contains a nil signature.
 	ErrSigUnlockBlockHasNilSig = errors.New("signature is nil")
+	// ErrTypeIsNotSupportedUnlockBlock gets returned when a serializable was found to not be a supported UnlockBlock.
+	ErrTypeIsNotSupportedUnlockBlock = errors.New("serializable is not a supported unlock block")
 )
 
 // UnlockBlockSelector implements SerializableSelectorFunc for unlock block types.
@@ -97,6 +99,23 @@ func (o UnlockBlocks) ToUnlockBlocksByType() UnlockBlocksByType {
 
 // UnlockBlocksByType is a map of UnlockBlockType(s) to slice of UnlockBlock(s).
 type UnlockBlocksByType map[UnlockBlockType][]UnlockBlock
+
+func unlockBlockWriteGuard() serializer.SerializableWriteGuardFunc {
+	return func(seri serializer.Serializable) error {
+		if seri == nil {
+			return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedUnlockBlock)
+		}
+		switch seri.(type) {
+		case *SignatureUnlockBlock:
+		case *ReferenceUnlockBlock:
+		case *AliasUnlockBlock:
+		case *NFTUnlockBlock:
+		default:
+			return ErrTypeIsNotSupportedUnlockBlock
+		}
+		return nil
+	}
+}
 
 // jsonUnlockBlockSelector selects the json unlock block object for the given type.
 func jsonUnlockBlockSelector(ty int) (JSONSerializable, error) {

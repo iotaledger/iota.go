@@ -23,9 +23,19 @@ const (
 	AddressNFT = 16
 )
 
+// AddressTypeSet is a set of AddressType.
+type AddressTypeSet map[AddressType]struct{}
+
 var (
-	// ErrTypeIsNotAddress gets returned when a serializable was found to not be an Address.
-	ErrTypeIsNotAddress = errors.New("serializable is not an address")
+	// ErrTypeIsNotSupportedAddress gets returned when a serializable was found to not be a supported Address.
+	ErrTypeIsNotSupportedAddress = errors.New("serializable is not a supported address")
+
+	allAddressTypeSet = AddressTypeSet{
+		AddressEd25519: struct{}{},
+		AddressBLS:     struct{}{},
+		AddressAlias:   struct{}{},
+		AddressNFT:     struct{}{},
+	}
 )
 
 // NetworkPrefix denotes the different network prefixes.
@@ -132,19 +142,32 @@ func jsonAddressToAddress(jAddr JSONSerializable) (Address, error) {
 	return addr.(Address), nil
 }
 
-// checks whether the given serializable is an address and also an existing type of address.
-func isValidAddrType(seri serializer.Serializable) error {
-	if seri == nil {
-		return ErrTypeIsNotAddress
+// checks whether the given Serializable is an Address and also supported AddressType.
+func addrWriteGuard(supportedAddr AddressTypeSet) serializer.SerializableWriteGuardFunc {
+	return func(seri serializer.Serializable) error {
+		if seri == nil {
+			return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedAddress)
+		}
+		addr, is := seri.(Address)
+		if !is {
+			return fmt.Errorf("%w: because not address", ErrTypeIsNotSupportedAddress)
+		}
+
+		if _, supported := supportedAddr[addr.Type()]; !supported {
+			return fmt.Errorf("%w: because not in set %v", ErrTypeIsNotSupportedAddress, supported)
+		}
+
+		return nil
 	}
-	addr, isAddress := seri.(Address)
-	if !isAddress {
-		return ErrTypeIsNotAddress
+}
+
+func addrReadGuard(supportedAddr AddressTypeSet) serializer.SerializableReadGuardFunc {
+	return func(ty uint32) (serializer.Serializable, error) {
+		if _, supported := supportedAddr[byte(ty)]; !supported {
+			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedAddress, supportedAddr, ty)
+		}
+		return AddressSelector(ty)
 	}
-	if _, err := AddressSelector(uint32(addr.Type())); err != nil {
-		return err
-	}
-	return nil
 }
 
 func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (Address, error) {
@@ -161,9 +184,6 @@ func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (Address, error) {
 }
 
 func addressToJSONRawMsg(addr serializer.Serializable) (*json.RawMessage, error) {
-	if err := isValidAddrType(addr); err != nil {
-		return nil, err
-	}
 	addrJsonBytes, err := addr.MarshalJSON()
 	if err != nil {
 		return nil, err

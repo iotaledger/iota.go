@@ -66,6 +66,8 @@ var (
 	ErrNonUniqueChainConstrainedOutputs = errors.New("non unique chain constrained outputs")
 	// ErrInvalidChainStateTransition gets returned when a state transition validation fails for a ChainConstrainedOutput.
 	ErrInvalidChainStateTransition = errors.New("invalid chain state transition")
+	// ErrTypeIsNotSupportedOutput gets returned when a serializable was found to not be a supported Output.
+	ErrTypeIsNotSupportedOutput = errors.New("serializable is not a supported output")
 )
 
 // Outputs is a slice of Output.

@@ -8,6 +8,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSimpleOutput_Deserialize(t *testing.T) {
@@ -29,7 +30,7 @@ func TestSimpleOutput_Deserialize(t *testing.T) {
 		func() test {
 			dep, depData := tpkg.RandSimpleOutput(iotago.AddressEd25519)
 			depData[iotago.SimpleOutputAddressOffset] = 100
-			return test{"unknown addr type", depData, dep, iotago.ErrUnknownAddrType}
+			return test{"unknown addr type", depData, dep, iotago.ErrTypeIsNotSupportedAddress}
 		}(),
 	}
 	for _, tt := range tests {
@@ -37,7 +38,7 @@ func TestSimpleOutput_Deserialize(t *testing.T) {
 			dep := &iotago.SimpleOutput{}
 			bytesRead, err := dep.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
 			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
+				require.ErrorIs(t, err, tt.err)
 				return
 			}
 			assert.NoError(t, err)

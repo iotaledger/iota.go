@@ -7,6 +7,24 @@ import (
 	"github.com/iotaledger/hive.go/serializer"
 )
 
+var (
+	sigUnlockBlockSigGuard = serializer.SerializableGuard{
+		ReadGuard: SignatureSelector,
+		WriteGuard: func(seri serializer.Serializable) error {
+			if seri == nil {
+				return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedSignature)
+			}
+			switch seri.(type) {
+			case *Ed25519Signature:
+			case *BLSSignature:
+			default:
+				return ErrTypeIsNotSupportedSignature
+			}
+			return nil
+		},
+	}
+)
+
 // SignatureUnlockBlock holds a signature which unlocks inputs.
 type SignatureUnlockBlock struct {
 	// The signature of this unlock block.
@@ -22,7 +40,7 @@ func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode serializer.De
 		CheckTypePrefix(uint32(UnlockBlockSignature), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize signature unlock block: %w", err)
 		}).
-		ReadObject(&s.Signature, deSeriMode, serializer.TypeDenotationByte, SignatureSelector, func(err error) error {
+		ReadObject(&s.Signature, deSeriMode, serializer.TypeDenotationByte, sigUnlockBlockSigGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize signature within signature unlock block: %w", err)
 		}).
 		Done()
@@ -33,7 +51,7 @@ func (s *SignatureUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMo
 		WriteNum(UnlockBlockSignature, func(err error) error {
 			return fmt.Errorf("unable to serialize signature unlock block type ID: %w", err)
 		}).
-		WriteObject(s.Signature, deSeriMode, func(err error) error {
+		WriteObject(s.Signature, deSeriMode, sigUnlockBlockSigGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize signature unlock block signature: %w", err)
 		}).
 		Serialize()

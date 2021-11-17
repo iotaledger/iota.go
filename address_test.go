@@ -33,7 +33,7 @@ func TestAddressDeSerialization(t *testing.T) {
 		{
 			"ok - BLSAddress",
 			func() []byte {
-				_, data := tpkg.RandBLSAddress()
+				_, data := tpkg.RandBLSAddressAndBytes()
 				return data
 			}(),
 			&iotago.BLSAddress{},
@@ -45,7 +45,7 @@ func TestAddressDeSerialization(t *testing.T) {
 		{
 			"ok - AliasAddress",
 			func() []byte {
-				_, data := tpkg.RandAliasAddress()
+				_, data := tpkg.RandAliasAddressAndBytes()
 				return data
 			}(),
 			&iotago.AliasAddress{},
@@ -57,7 +57,7 @@ func TestAddressDeSerialization(t *testing.T) {
 		{
 			"ok - NFTAddress",
 			func() []byte {
-				_, data := tpkg.RandNFTAddress()
+				_, data := tpkg.RandNFTAddressAndBytes()
 				return data
 			}(),
 			&iotago.NFTAddress{},

@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -13,6 +14,11 @@ type TokenSchemeType byte
 const (
 	// TokenSchemeSimple denotes a type of output which is locked by a signature and deposits onto a single address.
 	TokenSchemeSimple TokenSchemeType = iota
+)
+
+var (
+	// ErrTypeIsNotSupportedTokenScheme gets returned when a serializable was found to not be a supported TokenScheme.
+	ErrTypeIsNotSupportedTokenScheme = errors.New("serializable is not an address")
 )
 
 // TokenScheme defines a scheme for to be used for an OutputFoundry.
@@ -32,6 +38,19 @@ func TokenSchemeTypeToString(ty TokenSchemeType) string {
 	default:
 		return "unknown token scheme"
 	}
+}
+
+// checks whether the given serializable is a TokenScheme.
+func tokenSchemeWriteGuard(seri serializer.Serializable) error {
+	if seri == nil {
+		return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedTokenScheme)
+	}
+	switch seri.(type) {
+	case *SimpleTokenScheme:
+	default:
+		return ErrTypeIsNotSupportedTokenScheme
+	}
+	return nil
 }
 
 // TokenSchemeSelector implements SerializableSelectorFunc for token scheme types.

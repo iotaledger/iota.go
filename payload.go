@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer"
@@ -21,6 +22,11 @@ const (
 	PayloadReceipt
 	// PayloadTreasuryTransaction denotes a TreasuryTransaction.
 	PayloadTreasuryTransaction
+)
+
+var (
+	// ErrTypeIsNotSupportedPayload gets returned when a serializable was found to not be a supported Payload.
+	ErrTypeIsNotSupportedPayload = errors.New("serializable is not a supported payload")
 )
 
 // Payload is an object which can be embedded into other objects.
