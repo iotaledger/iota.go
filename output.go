@@ -534,7 +534,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //	- if the output contains a DustDepositReturnFeatureBlock, it must "return" bigger equal than the minimum dust deposit
 //	  and must be less equal the minimum virtual byte rent cost for the output.
 // If -1 is passed to the validator func, then the sum is not aggregated over multiple calls.
-func OutputsSyntacticalDepositAmount(minDustDep uint64, costStruct *RentStructure) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDepositAmount(minDustDep uint64, rentStruct *RentStructure) OutputsSyntacticalValidationFunc {
 	var sum uint64
 	return func(index int, output Output) error {
 		deposit, err := output.Deposit()
@@ -551,7 +551,7 @@ func OutputsSyntacticalDepositAmount(minDustDep uint64, costStruct *RentStructur
 			return fmt.Errorf("%w: output %d", ErrOutputsSumExceedsTotalSupply, index)
 		}
 
-		minRent, err := costStruct.CoversStateRent(output, deposit)
+		minRent, err := rentStruct.CoversStateRent(output, deposit)
 		if err != nil {
 			return fmt.Errorf("%w: output %d", err, index)
 		}
@@ -564,10 +564,10 @@ func OutputsSyntacticalDepositAmount(minDustDep uint64, costStruct *RentStructur
 			if returnFeatBlock := featBlockSet[FeatureBlockDustDepositReturn]; returnFeatBlock != nil {
 				returnAmount := returnFeatBlock.(*DustDepositReturnFeatureBlock).Amount
 				switch {
-				case returnAmount > minRent:
-					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsMoreThanVBRent, index)
 				case returnAmount < minDustDep:
 					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsLessThanMinDust, index)
+				case returnAmount > minRent:
+					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsMoreThanVBRent, index)
 				}
 			}
 		}
