@@ -2,11 +2,12 @@ package iotagox_test
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/iotaledger/iota.go/v3/x"
-	"testing"
-	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -28,7 +29,7 @@ func TestNewNodeEventAPIClient(t *testing.T) {
 	require.Eventually(t, func() bool {
 		select {
 		case msg := <-msgChan:
-			gottenMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation)
+			gottenMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, nil)
 			require.NoError(t, err)
 			require.Equal(t, originMsgBytes, gottenMsgBytes)
 			return true
