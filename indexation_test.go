@@ -2,9 +2,10 @@ package iotago_test
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"testing"
 
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,7 @@ func TestIndexation_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			indexationPayload := &iotago.Indexation{}
-			bytesRead, err := indexationPayload.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
+			bytesRead, err := indexationPayload.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -53,7 +54,7 @@ func TestIndexation_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})

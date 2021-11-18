@@ -31,7 +31,7 @@ func (s *TimelockMilestoneIndexFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockTimelockMilestoneIndex
 }
 
-func (s *TimelockMilestoneIndexFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (s *TimelockMilestoneIndexFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(FeatureBlockTimelockMilestoneIndex), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize timelock milestone index feature block: %w", err)
@@ -42,7 +42,7 @@ func (s *TimelockMilestoneIndexFeatureBlock) Deserialize(data []byte, deSeriMode
 		Done()
 }
 
-func (s *TimelockMilestoneIndexFeatureBlock) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
+func (s *TimelockMilestoneIndexFeatureBlock) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(byte(FeatureBlockTimelockMilestoneIndex), func(err error) error {
 			return fmt.Errorf("unable to serialize timelock milestone index feature block type ID: %w", err)

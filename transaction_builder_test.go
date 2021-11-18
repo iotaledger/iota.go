@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
 	"github.com/iotaledger/iota.go/v3"
@@ -57,9 +58,9 @@ func TestTransactionBuilder(t *testing.T) {
 			builder := iotago.NewTransactionBuilder()
 			return test{
 				name:       "err - no inputs",
-				addrSigner: nil,
+				addrSigner: iotago.NewInMemoryAddressSigner(),
 				builder:    builder,
-				buildErr:   iotago.ErrMinInputsNotReached,
+				buildErr:   serializer.ErrArrayValidationMinElementsNotReached,
 			}
 		}(),
 		func() test {
@@ -68,9 +69,9 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1})
 			return test{
 				name:       "err - no outputs",
-				addrSigner: nil,
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
-				buildErr:   iotago.ErrMinOutputsNotReached,
+				buildErr:   serializer.ErrArrayValidationMinElementsNotReached,
 			}
 		}(),
 		func() test {
@@ -112,7 +113,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := test.builder.Build(0, zeroRentStruct, test.addrSigner)
+			_, err := test.builder.Build(DefDeSeriParas, test.addrSigner)
 			if test.buildErr != nil {
 				assert.True(t, errors.Is(err, test.buildErr))
 				return

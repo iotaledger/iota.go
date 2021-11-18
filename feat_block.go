@@ -8,13 +8,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer"
 )
 
-const (
-	// MinFeatBlockCount min number of feature blocks in an output.
-	MinFeatBlockCount = 0
-	// MaxFeatBlockCount max number of feature blocks in an output.
-	MaxFeatBlockCount = 9
-)
-
 var (
 	// ErrNonUniqueFeatureBlocks gets returned when multiple FeatureBlock(s) with the same FeatureBlock exist within sets.
 	ErrNonUniqueFeatureBlocks = errors.New("non unique feature blocks within outputs")

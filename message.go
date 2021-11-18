@@ -114,7 +114,7 @@ type Message struct {
 
 // ID computes the ID of the Message.
 func (m *Message) ID() (*MessageID, error) {
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, fmt.Errorf("can't compute message ID: %w", err)
 	}
@@ -133,19 +133,19 @@ func (m *Message) MustID() MessageID {
 
 // POW computes the PoW score of the Message.
 func (m *Message) POW() (float64, error) {
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return 0, fmt.Errorf("can't compute message PoW score: %w", err)
 	}
 	return pow.Score(data), nil
 }
 
-func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if len(data) > MessageBinSerializedMaxSize {
 		return 0, fmt.Errorf("%w: size %d bytes", ErrMessageExceedsMaxSize, len(data))
 	}
 	return serializer.NewDeserializer(data).
-		WithValidation(deSeriMode, func(err error) error {
+		WithValidation(deSeriMode, func(_ []byte, err error) error {
 			if err := serializer.CheckMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
 				return fmt.Errorf("invalid message bytes: %w", err)
 			}
@@ -157,7 +157,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize message parents: %w", err)
 		}).
-		ReadPayload(&m.Payload, deSeriMode, messagePayloadGuard.ReadGuard, func(err error) error {
+		ReadPayload(&m.Payload, deSeriMode, deSeriCtx, messagePayloadGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize message's inner payload: %w", err)
 		}).
 		ReadNum(&m.Nonce, func(err error) error {
@@ -169,7 +169,7 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		Done()
 }
 
-func (m *Message) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (m *Message) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	data, err := serializer.NewSerializer().
 		Do(func() {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
@@ -182,7 +182,7 @@ func (m *Message) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, 
 		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize message parents: %w", err)
 		}).
-		WritePayload(m.Payload, deSeriMode, messagePayloadGuard.WriteGuard, func(err error) error {
+		WritePayload(m.Payload, deSeriMode, deSeriCtx, messagePayloadGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize message inner payload: %w", err)
 		}).
 		WriteNum(m.Nonce, func(err error) error {

@@ -36,7 +36,7 @@ func (r *NFTUnlockBlock) Type() UnlockBlockType {
 	return UnlockBlockNFT
 }
 
-func (r *NFTUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (r *NFTUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(NFTUnlockBlockSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid nft unlock block bytes: %w", err)
@@ -50,7 +50,7 @@ func (r *NFTUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerial
 	return NFTUnlockBlockSize, nil
 }
 
-func (r *NFTUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (r *NFTUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	var b [NFTUnlockBlockSize]byte
 	b[0] = byte(UnlockBlockNFT)
 	binary.LittleEndian.PutUint16(b[serializer.SmallTypeDenotationByteSize:], r.Reference)

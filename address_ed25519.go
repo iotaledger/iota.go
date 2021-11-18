@@ -78,7 +78,7 @@ func (edAddr *Ed25519Address) String() string {
 	return hex.EncodeToString(edAddr[:])
 }
 
-func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(Ed25519AddressSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid Ed25519 address bytes: %w", err)
@@ -91,7 +91,7 @@ func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode serializer.DeS
 	return Ed25519AddressSerializedBytesSize, nil
 }
 
-func (edAddr *Ed25519Address) Serialize(_ serializer.DeSerializationMode) (data []byte, err error) {
+func (edAddr *Ed25519Address) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	var b [Ed25519AddressSerializedBytesSize]byte
 	b[0] = AddressEd25519
 	copy(b[serializer.SmallTypeDenotationByteSize:], edAddr[:])

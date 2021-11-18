@@ -55,7 +55,7 @@ func (blsSig *BLSSignature) Valid(msg []byte, addr *BLSAddress) error {
 	return nil
 }
 
-func (blsSig *BLSSignature) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (blsSig *BLSSignature) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(BLSSignatureSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid BLS signature bytes: %w", err)
@@ -71,7 +71,7 @@ func (blsSig *BLSSignature) Deserialize(data []byte, deSeriMode serializer.DeSer
 	return BLSSignatureSerializedBytesSize, nil
 }
 
-func (blsSig *BLSSignature) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
+func (blsSig *BLSSignature) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	var b [BLSSignatureSerializedBytesSize]byte
 	b[0] = byte(SignatureBLS)
 	copy(b[serializer.SmallTypeDenotationByteSize:], blsSig.PublicKey[:])

@@ -70,7 +70,7 @@ func TestAddressDeSerialization(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bytesRead, err := tt.target.Deserialize(tt.sourceData, serializer.DeSeriModePerformValidation)
+			bytesRead, err := tt.target.Deserialize(tt.sourceData, serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -79,7 +79,7 @@ func TestAddressDeSerialization(t *testing.T) {
 			assert.Equal(t, len(tt.sourceData), bytesRead)
 			assert.Equal(t, tt.sourceData[serializer.SmallTypeDenotationByteSize:], tt.checkBytes(tt.target))
 
-			outputData, err := tt.target.Serialize(serializer.DeSeriModePerformValidation)
+			outputData, err := tt.target.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.sourceData, outputData)
 		})

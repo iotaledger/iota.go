@@ -108,12 +108,12 @@ func (mb *MessageBuilder) ParentsMessageIDs(parents MessageIDs) *MessageBuilder 
 // ProofOfWork does the proof-of-work needed in order to satisfy the given target score.
 // It can be cancelled by cancelling the given context. This function should appear
 // as the last step before Build.
-func (mb *MessageBuilder) ProofOfWork(ctx context.Context, targetScore float64, numWorkers ...int) *MessageBuilder {
+func (mb *MessageBuilder) ProofOfWork(ctx context.Context, deSeriPara *DeSerializationParameters, targetScore float64, numWorkers ...int) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
 
-	msgData, err := mb.msg.Serialize(serializer.DeSeriModePerformValidation)
+	msgData, err := mb.msg.Serialize(serializer.DeSeriModePerformValidation, deSeriPara)
 	if err != nil {
 		mb.err = err
 		return mb

@@ -78,7 +78,7 @@ func (blsAddr *BLSAddress) String() string {
 	return hex.EncodeToString(blsAddr[:])
 }
 
-func (blsAddr *BLSAddress) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (blsAddr *BLSAddress) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(BLSAddressSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid BLS address bytes: %w", err)
@@ -91,7 +91,7 @@ func (blsAddr *BLSAddress) Deserialize(data []byte, deSeriMode serializer.DeSeri
 	return BLSAddressSerializedBytesSize, nil
 }
 
-func (blsAddr *BLSAddress) Serialize(_ serializer.DeSerializationMode) (data []byte, err error) {
+func (blsAddr *BLSAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	var b [BLSAddressSerializedBytesSize]byte
 	b[0] = AddressBLS
 	copy(b[serializer.SmallTypeDenotationByteSize:], blsAddr[:])

@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 var (
 	// ErrTransactionBuilderUnsupportedAddress gets returned when an unsupported address type
 	// is given for a builder operation.
 	ErrTransactionBuilderUnsupportedAddress = errors.New("unsupported address type")
+	// ErrTransactionBuilder defines a generic error occurring within the TransactionBuilder.
+	ErrTransactionBuilder = errors.New("transaction builder error")
 )
 
 // NewTransactionBuilder creates a new TransactionBuilder.
@@ -95,9 +99,9 @@ type TransactionFunc func(tx *Transaction)
 
 // BuildAndSwapToMessageBuilder builds the transaction and then swaps to a MessageBuilder with
 // the transaction set as its payload. txFunc can be nil.
-func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(minDustDep uint64, rentStruct *RentStructure, signer AddressSigner, txFunc TransactionFunc) *MessageBuilder {
+func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(deSeriParas *DeSerializationParameters, signer AddressSigner, txFunc TransactionFunc) *MessageBuilder {
 	msgBuilder := NewMessageBuilder()
-	tx, err := b.Build(minDustDep, rentStruct, signer)
+	tx, err := b.Build(deSeriParas, signer)
 	if err != nil {
 		msgBuilder.err = err
 		return msgBuilder
@@ -109,14 +113,14 @@ func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(minDustDep uint64, ren
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(minDustDep uint64, rentStruct *RentStructure, signer AddressSigner) (*Transaction, error) {
-
-	if b.occurredBuildErr != nil {
+func (b *TransactionBuilder) Build(deSeriParas *DeSerializationParameters, signer AddressSigner) (*Transaction, error) {
+	switch {
+	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
-	}
-
-	if err := b.essence.SyntacticallyValidate(minDustDep, rentStruct); err != nil {
-		return nil, err
+	case deSeriParas == nil:
+		return nil, fmt.Errorf("%w: must supply de/serialization parameters", ErrTransactionBuilder)
+	case signer == nil:
+		return nil, fmt.Errorf("%w: must supply signer", ErrTransactionBuilder)
 	}
 
 	// sort inputs and outputs by their serialized byte order
@@ -152,6 +156,10 @@ func (b *TransactionBuilder) Build(minDustDep uint64, rentStruct *RentStructure,
 	}
 
 	sigTxPayload := &Transaction{Essence: b.essence, UnlockBlocks: unlockBlocks}
+
+	if _, err := sigTxPayload.Serialize(serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
+		return nil, err
+	}
 
 	return sigTxPayload, nil
 }

@@ -19,7 +19,7 @@ func (s *SimpleTokenScheme) Type() TokenSchemeType {
 	return TokenSchemeSimple
 }
 
-func (s *SimpleTokenScheme) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (s *SimpleTokenScheme) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(TokenSchemeSimple), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize simple token scheme: %w", err)
@@ -27,7 +27,7 @@ func (s *SimpleTokenScheme) Deserialize(data []byte, deSeriMode serializer.DeSer
 		Done()
 }
 
-func (s *SimpleTokenScheme) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (s *SimpleTokenScheme) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(TokenSchemeSimple, func(err error) error {
 			return fmt.Errorf("unable to serialize simple token scheme type ID: %w", err)

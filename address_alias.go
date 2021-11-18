@@ -79,7 +79,7 @@ func (aliasAddr *AliasAddress) String() string {
 	return hex.EncodeToString(aliasAddr[:])
 }
 
-func (aliasAddr *AliasAddress) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (aliasAddr *AliasAddress) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(AliasAddressSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid alias address bytes: %w", err)
@@ -92,7 +92,7 @@ func (aliasAddr *AliasAddress) Deserialize(data []byte, deSeriMode serializer.De
 	return AliasAddressSerializedBytesSize, nil
 }
 
-func (aliasAddr *AliasAddress) Serialize(_ serializer.DeSerializationMode) (data []byte, err error) {
+func (aliasAddr *AliasAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	var b [AliasAddressSerializedBytesSize]byte
 	b[0] = AddressAlias
 	copy(b[serializer.SmallTypeDenotationByteSize:], aliasAddr[:])

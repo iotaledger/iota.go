@@ -32,7 +32,7 @@ func (s *TimelockUnixFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockTimelockUnix
 }
 
-func (s *TimelockUnixFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (s *TimelockUnixFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(FeatureBlockTimelockUnix), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize timelock unix feature block: %w", err)
@@ -43,7 +43,7 @@ func (s *TimelockUnixFeatureBlock) Deserialize(data []byte, deSeriMode serialize
 		Done()
 }
 
-func (s *TimelockUnixFeatureBlock) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
+func (s *TimelockUnixFeatureBlock) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(byte(FeatureBlockTimelockUnix), func(err error) error {
 			return fmt.Errorf("unable to serialize timelock unix feature block type ID: %w", err)

@@ -184,22 +184,24 @@ func WithNodeHTTPAPIClientRequestURLHook(requestURLHook RequestURLHook) NodeHTTP
 type NodeHTTPAPIClientOption func(opts *NodeHTTPAPIClientOptions)
 
 // NewNodeHTTPAPIClient returns a new NodeHTTPAPIClient with the given BaseURL.
-func NewNodeHTTPAPIClient(baseURL string, opts ...NodeHTTPAPIClientOption) *NodeHTTPAPIClient {
+func NewNodeHTTPAPIClient(baseURL string, deSeriParas *DeSerializationParameters, opts ...NodeHTTPAPIClientOption) *NodeHTTPAPIClient {
 
 	options := &NodeHTTPAPIClientOptions{}
 	options.apply(defaultNodeAPIOptions...)
 	options.apply(opts...)
 
 	return &NodeHTTPAPIClient{
-		BaseURL: baseURL,
-		opts:    options,
+		BaseURL:     baseURL,
+		deSeriParas: deSeriParas,
+		opts:        options,
 	}
 }
 
 // NodeHTTPAPIClient is a client for node HTTP REST API endpoints.
 type NodeHTTPAPIClient struct {
 	// The base URL for all API calls.
-	BaseURL string
+	BaseURL     string
+	deSeriParas *DeSerializationParameters
 	// holds the NodeHTTPAPIClient options.
 	opts *NodeHTTPAPIClientOptions
 }
@@ -429,7 +431,7 @@ func (api *NodeHTTPAPIClient) SubmitMessage(ctx context.Context, m *Message) (*M
 	// Do not check the message because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the message afterwards.
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation, api.deSeriParas)
 	if err != nil {
 		return nil, err
 	}
@@ -539,8 +541,7 @@ func (api *NodeHTTPAPIClient) MessageByMessageID(ctx context.Context, msgID Mess
 	}
 
 	msg := &Message{}
-	_, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation)
-	if err != nil {
+	if _, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, api.deSeriParas); err != nil {
 		return nil, err
 	}
 	return msg, nil

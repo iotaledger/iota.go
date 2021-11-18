@@ -29,7 +29,7 @@ func TestNodeAPI_Health(t *testing.T) {
 		Get(iotago.NodeAPIRouteHealth).
 		Reply(200)
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	healthy, err := nodeAPI.Health(context.Background())
 	require.NoError(t, err)
 	require.True(t, healthy)
@@ -68,7 +68,7 @@ func TestNodeAPI_Info(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originInfo})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	info, err := nodeAPI.Info(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
@@ -86,7 +86,7 @@ func TestNodeAPI_Tips(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	tips, err := nodeAPI.Tips(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, tips)
@@ -108,14 +108,14 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 		Nonce:   3495721389537486,
 	}
 
-	serializedCompleteMsg, err := completeMsg.Serialize(serializer.DeSeriModeNoValidation)
+	serializedCompleteMsg, err := completeMsg.Serialize(serializer.DeSeriModeNoValidation, DefDeSeriParas)
 	require.NoError(t, err)
 
 	// we need to do this, otherwise gock doesn't match the body
 	gock.BodyTypes = append(gock.BodyTypes, "application/octet-stream")
 	gock.BodyTypeAliases["octet"] = "application/octet-stream"
 
-	serializedIncompleteMsg, err := incompleteMsg.Serialize(serializer.DeSeriModePerformValidation)
+	serializedIncompleteMsg, err := incompleteMsg.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -130,7 +130,7 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(serializedCompleteMsg))
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.SubmitMessage(context.Background(), incompleteMsg)
 	require.NoError(t, err)
 	require.EqualValues(t, completeMsg, resp)
@@ -161,7 +161,7 @@ func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: msgIDsByIndex})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resMsgIDsByIndex, err := nodeAPI.MessageIDsByIndex(context.Background(), []byte(index))
 	require.NoError(t, err)
 	require.EqualValues(t, msgIDsByIndex, resMsgIDsByIndex)
@@ -197,7 +197,7 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	meta, err := nodeAPI.MessageMetadataByMessageID(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, meta)
@@ -215,7 +215,7 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 		Nonce:   16345984576234,
 	}
 
-	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation)
+	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -223,7 +223,7 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(data))
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	responseMsg, err := nodeAPI.MessageByMessageID(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originMsg, responseMsg)
@@ -255,7 +255,7 @@ func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	res, err := nodeAPI.ChildrenByMessageID(context.Background(), msgID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
@@ -287,7 +287,7 @@ func TestNodeAPI_OutputByID(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.OutputByID(context.Background(), utxoInputId)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -315,7 +315,7 @@ func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.BalanceByEd25519Address(context.Background(), ed25519Addr)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -360,7 +360,7 @@ func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.OutputIDsByEd25519Address(context.Background(), ed25519Addr, false)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -389,7 +389,7 @@ func TestNodeHTTPAPIClient_Treasury(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.Treasury(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -426,7 +426,7 @@ func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.Receipts(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes.Receipts, resp)
@@ -465,7 +465,7 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.ReceiptsByMigratedAtIndex(context.Background(), index)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes.Receipts, resp)
@@ -489,7 +489,7 @@ func TestNodeAPI_MilestoneByIndex(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.MilestoneByIndex(context.Background(), milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -515,7 +515,7 @@ func TestNodeAPI_MilestoneUTXOChangesByIndex(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.MilestoneUTXOChangesByIndex(context.Background(), milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -562,7 +562,7 @@ func TestNodeAPI_PeerByID(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.PeerByID(context.Background(), peerID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -578,7 +578,7 @@ func TestNodeAPI_RemovePeerByID(t *testing.T) {
 		Reply(200).
 		Status(200)
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	err := nodeAPI.RemovePeerByID(context.Background(), peerID)
 	require.NoError(t, err)
 }
@@ -611,7 +611,7 @@ func TestNodeAPI_Peers(t *testing.T) {
 		Reply(200).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.Peers(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -638,7 +638,7 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 		Reply(201).
 		JSON(&iotago.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl)
+	nodeAPI := iotago.NewNodeHTTPAPIClient(nodeAPIUrl, DefDeSeriParas)
 	resp, err := nodeAPI.AddPeer(context.Background(), multiAddr)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)

@@ -36,8 +36,8 @@ func (rb *ReceiptBuilder) AddTreasuryTransaction(tx *TreasuryTransaction) *Recei
 }
 
 // Build builds the Receipt.
-func (rb *ReceiptBuilder) Build() (*Receipt, error) {
-	if _, err := rb.r.Serialize(serializer.DeSeriModePerformValidation | serializer.DeSeriModePerformLexicalOrdering); err != nil {
+func (rb *ReceiptBuilder) Build(deSeriParas *DeSerializationParameters) (*Receipt, error) {
+	if _, err := rb.r.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, deSeriParas); err != nil {
 		return nil, fmt.Errorf("unable to build receipt: %w", err)
 	}
 	return rb.r, nil

@@ -176,8 +176,8 @@ func RandNFTAddress() *iotago.NFTAddress {
 	return addr
 }
 
-// RandEd25519Signature returns a random Ed25519 signature.
-func RandEd25519Signature() (*iotago.Ed25519Signature, []byte) {
+// RandEd25519SignatureAndBytes returns a random Ed25519 signature.
+func RandEd25519SignatureAndBytes() (*iotago.Ed25519Signature, []byte) {
 	// type
 	edSig := &iotago.Ed25519Signature{}
 	pub := RandBytes(ed25519.PublicKeySize)
@@ -192,9 +192,15 @@ func RandEd25519Signature() (*iotago.Ed25519Signature, []byte) {
 	return edSig, b[:]
 }
 
+// RandEd25519Signature returns a random Ed25519 signature.
+func RandEd25519Signature() *iotago.Ed25519Signature {
+	sig, _ := RandEd25519SignatureAndBytes()
+	return sig
+}
+
 // RandEd25519SignatureUnlockBlock returns a random Ed25519 signature unlock block.
 func RandEd25519SignatureUnlockBlock() (*iotago.SignatureUnlockBlock, []byte) {
-	edSig, edSigData := RandEd25519Signature()
+	edSig, edSigData := RandEd25519SignatureAndBytes()
 	block := &iotago.SignatureUnlockBlock{Signature: edSig}
 	return block, append([]byte{byte(iotago.UnlockBlockSignature)}, edSigData...)
 }
@@ -233,7 +239,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 		_, err := buf.Write(inputData)
 		Must(err)
 		input := &iotago.UTXOInput{}
-		if _, err := input.Deserialize(inputData, serializer.DeSeriModePerformValidation); err != nil {
+		if _, err := input.Deserialize(inputData, serializer.DeSeriModeNoValidation, nil); err != nil {
 			panic(err)
 		}
 		tx.Inputs = append(tx.Inputs, input)
@@ -252,7 +258,7 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 		_, err := buf.Write(outputData)
 		Must(err)
 		output := &iotago.SimpleOutput{}
-		if _, err := output.Deserialize(outputData, serializer.DeSeriModePerformValidation); err != nil {
+		if _, err := output.Deserialize(outputData, serializer.DeSeriModeNoValidation, nil); err != nil {
 			panic(err)
 		}
 		tx.Outputs = append(tx.Outputs, output)
@@ -308,7 +314,7 @@ func RandReceipt() (*iotago.Receipt, []byte) {
 		_, err := b.Write(migFundEntryBytes)
 		Must(err)
 		migFundsEntry := &iotago.MigratedFundsEntry{}
-		if _, err := migFundsEntry.Deserialize(migFundEntryBytes, serializer.DeSeriModePerformValidation); err != nil {
+		if _, err := migFundsEntry.Deserialize(migFundEntryBytes, serializer.DeSeriModeNoValidation, nil); err != nil {
 			panic(err)
 		}
 		receipt.Funds = append(receipt.Funds, migFundsEntry)
@@ -613,7 +619,7 @@ func OneInputOutputTransaction() *iotago.Transaction {
 		UnlockBlocks: iotago.UnlockBlocks{
 			&iotago.SignatureUnlockBlock{
 				Signature: func() iotago.Signature {
-					edSig, _ := RandEd25519Signature()
+					edSig, _ := RandEd25519SignatureAndBytes()
 					return edSig
 				}(),
 			},

@@ -34,7 +34,7 @@ func (s *DustDepositReturnFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockDustDepositReturn
 }
 
-func (s *DustDepositReturnFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (s *DustDepositReturnFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(FeatureBlockDustDepositReturn), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize return feature block: %w", err)
@@ -45,7 +45,7 @@ func (s *DustDepositReturnFeatureBlock) Deserialize(data []byte, deSeriMode seri
 		Done()
 }
 
-func (s *DustDepositReturnFeatureBlock) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
+func (s *DustDepositReturnFeatureBlock) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(byte(FeatureBlockDustDepositReturn), func(err error) error {
 			return fmt.Errorf("unable to serialize return feature block type ID: %w", err)

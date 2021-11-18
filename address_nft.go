@@ -77,7 +77,7 @@ func (nftAddr *NFTAddress) String() string {
 	return hex.EncodeToString(nftAddr[:])
 }
 
-func (nftAddr *NFTAddress) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (nftAddr *NFTAddress) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(NFTAddressSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid nft address bytes: %w", err)
@@ -90,7 +90,7 @@ func (nftAddr *NFTAddress) Deserialize(data []byte, deSeriMode serializer.DeSeri
 	return NFTAddressSerializedBytesSize, nil
 }
 
-func (nftAddr *NFTAddress) Serialize(_ serializer.DeSerializationMode) (data []byte, err error) {
+func (nftAddr *NFTAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	var b [NFTAddressSerializedBytesSize]byte
 	b[0] = AddressNFT
 	copy(b[serializer.SmallTypeDenotationByteSize:], nftAddr[:])

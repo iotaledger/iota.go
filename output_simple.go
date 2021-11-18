@@ -45,12 +45,12 @@ func (s *SimpleOutput) Deposit() (uint64, error) {
 	return s.Amount, nil
 }
 
-func (s *SimpleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (s *SimpleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(OutputSimple), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize simple output: %w", err)
 		}).
-		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, simpleOutputAddrGuard.ReadGuard, func(err error) error {
+		ReadObject(&s.Address, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, simpleOutputAddrGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for simple output: %w", err)
 		}).
 		ReadNum(&s.Amount, func(err error) error {
@@ -59,12 +59,12 @@ func (s *SimpleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializ
 		Done()
 }
 
-func (s *SimpleOutput) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
+func (s *SimpleOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	return serializer.NewSerializer().
 		WriteNum(OutputSimple, func(err error) error {
 			return fmt.Errorf("unable to serialize simple output type ID: %w", err)
 		}).
-		WriteObject(s.Address, deSeriMode, simpleOutputAddrGuard.WriteGuard, func(err error) error {
+		WriteObject(s.Address, deSeriMode, deSeriCtx, simpleOutputAddrGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize simple output address: %w", err)
 		}).
 		WriteNum(s.Amount, func(err error) error {

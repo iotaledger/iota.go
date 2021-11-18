@@ -183,7 +183,7 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 				return fmt.Errorf("%w: at index %d is nil", ErrSigUnlockBlockHasNilSig, index)
 			}
 
-			sigBlockBytes, err := x.Serialize(serializer.DeSeriModeNoValidation)
+			sigBlockBytes, err := x.Serialize(serializer.DeSeriModeNoValidation, nil)
 			if err != nil {
 				return fmt.Errorf("unable to serialize signature unlock block at index %d for dup check: %w", index, err)
 			}
