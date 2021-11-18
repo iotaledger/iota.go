@@ -74,8 +74,8 @@ func InputTypeToString(ty InputType) string {
 }
 
 // InputSelector implements SerializableSelectorFunc for input types.
-func InputSelector(inputType uint32) (serializer.Serializable, error) {
-	var seri serializer.Serializable
+func InputSelector(inputType uint32) (Input, error) {
+	var seri Input
 	switch InputType(inputType) {
 	case InputUTXO:
 		seri = &UTXOInput{}

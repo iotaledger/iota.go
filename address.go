@@ -99,7 +99,7 @@ type UTXOIDChainID interface {
 }
 
 // AddressSelector implements SerializableSelectorFunc for address types.
-func AddressSelector(addressType uint32) (serializer.Serializable, error) {
+func AddressSelector(addressType uint32) (Address, error) {
 	return newAddress(byte(addressType))
 }
 

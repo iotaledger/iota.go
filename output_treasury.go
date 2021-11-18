@@ -18,6 +18,10 @@ type TreasuryOutput struct {
 	Amount uint64 `json:"deposit"`
 }
 
+func (t *TreasuryOutput) VByteCost(_ *RentStructure, _ VByteCostFunc) uint64 {
+	return 0
+}
+
 func (t *TreasuryOutput) Deposit() (uint64, error) {
 	return t.Amount, nil
 }

@@ -34,7 +34,9 @@ var (
 	ErrTypeIsNotSupportedEssence = errors.New("serializable is not a supported essence")
 
 	txEssenceGuard = serializer.SerializableGuard{
-		ReadGuard: TransactionEssenceSelector,
+		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+			return TransactionEssenceSelector(ty)
+		},
 		WriteGuard: func(seri serializer.Serializable) error {
 			if seri == nil {
 				return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedEssence)
