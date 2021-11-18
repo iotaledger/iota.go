@@ -9,7 +9,9 @@ import (
 
 var (
 	sigUnlockBlockSigGuard = serializer.SerializableGuard{
-		ReadGuard: SignatureSelector,
+		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+			return SignatureSelector(ty)
+		},
 		WriteGuard: func(seri serializer.Serializable) error {
 			if seri == nil {
 				return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedSignature)

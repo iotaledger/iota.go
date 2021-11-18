@@ -455,8 +455,8 @@ type FeatureBlockOutput interface {
 }
 
 // OutputSelector implements SerializableSelectorFunc for output types.
-func OutputSelector(outputType uint32) (serializer.Serializable, error) {
-	var seri serializer.Serializable
+func OutputSelector(outputType uint32) (Output, error) {
+	var seri Output
 	switch OutputType(outputType) {
 	case OutputSimple:
 		seri = &SimpleOutput{}

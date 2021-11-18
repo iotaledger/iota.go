@@ -261,8 +261,8 @@ type FeatureBlock interface {
 }
 
 // FeatureBlockSelector implements SerializableSelectorFunc for feature blocks.
-func FeatureBlockSelector(featBlockType uint32) (serializer.Serializable, error) {
-	var seri serializer.Serializable
+func FeatureBlockSelector(featBlockType uint32) (FeatureBlock, error) {
+	var seri FeatureBlock
 	switch FeatureBlockType(featBlockType) {
 	case FeatureBlockSender:
 		seri = &SenderFeatureBlock{}

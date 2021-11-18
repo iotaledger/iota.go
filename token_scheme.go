@@ -53,9 +53,13 @@ func tokenSchemeWriteGuard(seri serializer.Serializable) error {
 	return nil
 }
 
+func wrappedTokenSchemeSelector(tokenSchemeType uint32) (serializer.Serializable, error) {
+	return TokenSchemeSelector(tokenSchemeType)
+}
+
 // TokenSchemeSelector implements SerializableSelectorFunc for token scheme types.
-func TokenSchemeSelector(tokenSchemeType uint32) (serializer.Serializable, error) {
-	var seri serializer.Serializable
+func TokenSchemeSelector(tokenSchemeType uint32) (TokenScheme, error) {
+	var seri TokenScheme
 	switch TokenSchemeType(tokenSchemeType) {
 	case TokenSchemeSimple:
 		seri = &SimpleTokenScheme{}

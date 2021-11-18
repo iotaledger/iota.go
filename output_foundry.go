@@ -329,7 +329,7 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		ReadUint256(f.MaximumSupply, func(err error) error {
 			return fmt.Errorf("unable to deserialize maximum supply for foundry output: %w", err)
 		}).
-		ReadObject(&f.TokenScheme, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, TokenSchemeSelector, func(err error) error {
+		ReadObject(&f.TokenScheme, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, wrappedTokenSchemeSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize token scheme for foundry output: %w", err)
 		}).
 		ReadSliceOfObjects(&f.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputFeatBlockArrayRules, func(err error) error {

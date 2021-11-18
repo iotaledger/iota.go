@@ -45,8 +45,8 @@ type Signature interface {
 }
 
 // SignatureSelector implements SerializableSelectorFunc for signature types.
-func SignatureSelector(sigType uint32) (serializer.Serializable, error) {
-	var seri serializer.Serializable
+func SignatureSelector(sigType uint32) (Signature, error) {
+	var seri Signature
 	switch SignatureType(sigType) {
 	case SignatureEd25519:
 		seri = &Ed25519Signature{}

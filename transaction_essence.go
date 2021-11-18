@@ -141,8 +141,8 @@ var (
 )
 
 // TransactionEssenceSelector implements SerializableSelectorFunc for transaction essence types.
-func TransactionEssenceSelector(txType uint32) (serializer.Serializable, error) {
-	var seri serializer.Serializable
+func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
+	var seri *TransactionEssence
 	switch byte(txType) {
 	case TransactionEssenceNormal:
 		seri = &TransactionEssence{}
