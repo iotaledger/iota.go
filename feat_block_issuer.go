@@ -41,22 +41,22 @@ func (s *IssuerFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockIssuer
 }
 
-func (s *IssuerFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (s *IssuerFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(FeatureBlockIssuer), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize issuer feature block: %w", err)
 		}).
-		ReadObject(&s.Address, deSeriMode, serializer.TypeDenotationByte, issuerFeatBlockAddrGuard.ReadGuard, func(err error) error {
+		ReadObject(&s.Address, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, issuerFeatBlockAddrGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for issuer feature block: %w", err)
 		}).Done()
 }
 
-func (s *IssuerFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (s *IssuerFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(byte(FeatureBlockIssuer), func(err error) error {
 			return fmt.Errorf("unable to serialize issuer feature block type ID: %w", err)
 		}).
-		WriteObject(s.Address, deSeriMode, issuerFeatBlockAddrGuard.WriteGuard, func(err error) error {
+		WriteObject(s.Address, deSeriMode, deSeriCtx, issuerFeatBlockAddrGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize issuer feature block address: %w", err)
 		}).
 		Serialize()

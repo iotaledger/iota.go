@@ -48,7 +48,7 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	return nil
 }
 
-func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(Ed25519SignatureSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid Ed25519 signature bytes: %w", err)
@@ -64,7 +64,7 @@ func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode serializer.DeSeri
 	return Ed25519SignatureSerializedBytesSize, nil
 }
 
-func (e *Ed25519Signature) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (e *Ed25519Signature) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	var b [Ed25519SignatureSerializedBytesSize]byte
 	b[0] = byte(SignatureEd25519)
 	copy(b[serializer.SmallTypeDenotationByteSize:], e.PublicKey[:])

@@ -29,7 +29,7 @@ func TestTransaction_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tx := &iotago.Transaction{}
-			bytesRead, err := tx.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
+			bytesRead, err := tx.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -55,7 +55,7 @@ func TestTransaction_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -129,7 +129,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 				name:       "err - no inputs",
 				addrSigner: nil,
 				builder:    builder,
-				buildErr:   iotago.ErrMinInputsNotReached,
+				buildErr:   serializer.ErrArrayValidationMinElementsNotReached,
 			}
 		}(),
 		func() test {
@@ -140,7 +140,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 				name:       "err - no outputs",
 				addrSigner: nil,
 				builder:    builder,
-				buildErr:   iotago.ErrMinOutputsNotReached,
+				buildErr:   serializer.ErrArrayValidationMinElementsNotReached,
 			}
 		}(),
 		func() test {
@@ -167,7 +167,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			payload, err := test.builder.Build(0, zeroRentStruct, test.addrSigner)
+			payload, err := test.builder.Build(DefDeSeriParas, test.addrSigner)
 			if test.buildErr != nil {
 				assert.True(t, errors.Is(err, test.buildErr))
 				return
@@ -181,7 +181,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 			}
 			assert.NoError(t, semanticErr)
 
-			_, err = payload.Serialize(serializer.DeSeriModePerformValidation)
+			_, err = payload.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			assert.NoError(t, err)
 		})
 	}

@@ -42,14 +42,17 @@ var (
 	ErrNonUniqueNativeTokens = errors.New("non unique native tokens")
 	// ErrNativeTokenSumUnbalanced gets returned when two NativeTokenSum(s) are unbalanced.
 	ErrNativeTokenSumUnbalanced = errors.New("native token sums are unbalanced")
-	nativeTokensArrayRules      = &serializer.ArrayRules{
+
+	nativeTokensArrayRules = &serializer.ArrayRules{
 		Min: MinNativeTokenCountPerOutput,
 		Max: MaxNativeTokenCountPerOutput,
 		Guards: serializer.SerializableGuard{
 			ReadGuard:  func(ty uint32) (serializer.Serializable, error) { return &NativeToken{}, nil },
 			WriteGuard: nil,
 		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
+		// uniqueness must be checked only by examining the actual NativeTokenID bytes
+		UniquenessSliceFunc: func(next []byte) []byte { return next[:NativeTokenIDLength] },
+		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
 
@@ -179,7 +182,7 @@ type NativeToken struct {
 	Amount *big.Int
 }
 
-func (n *NativeToken) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
+func (n *NativeToken) VByteCost(_ *RentStructure, _ VByteCostFunc) uint64 {
 	return NativeTokenVByteCost
 }
 
@@ -191,7 +194,7 @@ func (n *NativeToken) Equal(other *NativeToken) bool {
 	return n.Amount.Cmp(other.Amount) == 0
 }
 
-func (n *NativeToken) Deserialize(data []byte, _ serializer.DeSerializationMode) (int, error) {
+func (n *NativeToken) Deserialize(data []byte, _ serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		ReadBytesInPlace(n.ID[:], func(err error) error {
 			return fmt.Errorf("unable to deserialize ID for native token: %w", err)
@@ -202,7 +205,7 @@ func (n *NativeToken) Deserialize(data []byte, _ serializer.DeSerializationMode)
 		Done()
 }
 
-func (n *NativeToken) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
+func (n *NativeToken) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteBytes(n.ID[:], func(err error) error {
 			return fmt.Errorf("unable to serialize native token ID: %w", err)

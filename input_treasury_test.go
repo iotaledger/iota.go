@@ -2,9 +2,10 @@ package iotago_test
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"testing"
 
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +25,7 @@ func TestTreasuryInput_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &iotago.TreasuryInput{}
-			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation)
+			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -47,7 +48,7 @@ func TestTreasuryInput_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
+			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return

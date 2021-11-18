@@ -38,7 +38,7 @@ func (u *Indexation) PayloadType() PayloadType {
 	return PayloadIndexation
 }
 
-func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(PayloadIndexation), serializer.TypeDenotationUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation: %w", err)
@@ -46,7 +46,7 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 		ReadVariableByteSlice(&u.Index, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize indexation index: %w", err)
 		}, IndexationIndexMaxLength).
-		WithValidation(deSeriMode, func(err error) error {
+		WithValidation(deSeriMode, func(_ []byte,err error) error {
 			switch {
 			case len(u.Index) < IndexationIndexMinLength:
 				return fmt.Errorf("unable to deserialize indexation index: %w", ErrIndexationIndexUnderMinSize)
@@ -59,9 +59,9 @@ func (u *Indexation) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 		Done()
 }
 
-func (u *Indexation) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (u *Indexation) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WithValidation(deSeriMode, func(err error) error {
+		WithValidation(deSeriMode, func(_ []byte,err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				switch {
 				case len(u.Index) > IndexationIndexMaxLength:

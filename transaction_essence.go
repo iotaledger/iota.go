@@ -28,10 +28,6 @@ const (
 )
 
 var (
-	// ErrMinInputsNotReached gets returned if the count of inputs is too small.
-	ErrMinInputsNotReached = fmt.Errorf("min %d input(s) are required within a transaction", MinInputsCount)
-	// ErrMinOutputsNotReached gets returned if the count of outputs is too small.
-	ErrMinOutputsNotReached = fmt.Errorf("min %d output(s) are required within a transaction", MinOutputsCount)
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
 	// ErrOutputRequiresSenderFeatureBlock gets returned if an output does not contain a SenderFeatureBlock even though another FeatureBlock requires it.
@@ -168,7 +164,7 @@ type TransactionEssence struct {
 
 // SigningMessage returns the to be signed message.
 func (u *TransactionEssence) SigningMessage() ([]byte, error) {
-	essenceBytes, err := u.Serialize(serializer.DeSeriModePerformValidation | serializer.DeSeriModePerformLexicalOrdering)
+	essenceBytes, err := u.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -176,35 +172,35 @@ func (u *TransactionEssence) SigningMessage() ([]byte, error) {
 	return essenceBytesHash[:], nil
 }
 
-func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(TransactionEssenceNormal), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize transaction essence: %w", err)
 		}).
-		ReadSliceOfObjects(&u.Inputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceInputsArrayRules, func(err error) error {
+		ReadSliceOfObjects(&u.Inputs, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceInputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize inputs of transaction essence: %w", err)
 		}).
-		ReadSliceOfObjects(&u.Outputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceOutputsArrayRules, func(err error) error {
+		ReadSliceOfObjects(&u.Outputs, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceOutputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
 		}).
-		ReadPayload(&u.Payload, deSeriMode, essencePayloadGuard.ReadGuard, func(err error) error {
+		ReadPayload(&u.Payload, deSeriMode, deSeriCtx, essencePayloadGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
 		}).
 		Done()
 }
 
-func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
+func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	return serializer.NewSerializer().
 		WriteNum(TransactionEssenceNormal, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence type ID: %w", err)
 		}).
-		WriteSliceOfObjects(&u.Inputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, essenceInputsArrayRules, func(err error) error {
+		WriteSliceOfObjects(&u.Inputs, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, essenceInputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence inputs: %w", err)
 		}).
-		WriteSliceOfObjects(&u.Outputs, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, essenceOutputsArrayRules, func(err error) error {
+		WriteSliceOfObjects(&u.Outputs, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, essenceOutputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence outputs: %w", err)
 		}).
-		WritePayload(u.Payload, deSeriMode, essencePayloadGuard.WriteGuard, func(err error) error {
+		WritePayload(u.Payload, deSeriMode, deSeriCtx, essencePayloadGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence's embedded output: %w", err)
 		}).
 		Serialize()
@@ -260,17 +256,9 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// SyntacticallyValidate checks whether the transaction essence is syntactically valid.
+// syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) SyntacticallyValidate(minDustDep uint64, rentStruct *RentStructure) error {
-
-	switch {
-	case len(u.Inputs) == 0:
-		return ErrMinInputsNotReached
-	case len(u.Outputs) == 0:
-		return ErrMinOutputsNotReached
-	}
-
+func (u *TransactionEssence) syntacticallyValidate(minDustDep uint64, rentStruct *RentStructure) error {
 	if err := ValidateInputs(u.Inputs,
 		InputsSyntacticalUnique(),
 		InputsSyntacticalIndicesWithinBounds(),

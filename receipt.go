@@ -87,7 +87,7 @@ func (r *Receipt) Treasury() *TreasuryTransaction {
 	return r.Transaction
 }
 
-func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(PayloadReceipt), serializer.TypeDenotationUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize receipt: %w", err)
@@ -99,13 +99,13 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 			return fmt.Errorf("unable to deserialize receipt final flag: %w", err)
 		}).
 		// special as the MigratedFundsEntry has no type denotation byte
-		ReadSliceOfObjects(&r.Funds, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, migratedFundEntriesArrayRules, func(err error) error {
+		ReadSliceOfObjects(&r.Funds, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, migratedFundEntriesArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize receipt migrated fund entries: %w", err)
 		}).
-		ReadPayload(&r.Transaction, deSeriMode, receiptPayloadGuard.ReadGuard, func(err error) error {
+		ReadPayload(&r.Transaction, deSeriMode, deSeriCtx, receiptPayloadGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize receipt transaction: %w", err)
 		}).
-		WithValidation(deSeriMode, func(err error) error {
+		WithValidation(deSeriMode, func(_ []byte, err error) error {
 			if r.Transaction == nil {
 				return ErrReceiptMustContainATreasuryTransaction
 			}
@@ -114,7 +114,7 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		Done()
 }
 
-func (r *Receipt) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (r *Receipt) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	if r.Transaction == nil {
 		return nil, ErrReceiptMustContainATreasuryTransaction
 	}
@@ -128,16 +128,16 @@ func (r *Receipt) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, 
 		WriteBool(r.Final, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt final flag: %w", err)
 		}).
-		WriteSliceOfObjects(&r.Funds, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, migratedFundEntriesArrayRules, func(err error) error {
+		WriteSliceOfObjects(&r.Funds, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, migratedFundEntriesArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt funds: %w", err)
 		}).
-		WithValidation(deSeriMode, func(err error) error {
+		WithValidation(deSeriMode, func(_ []byte, err error) error {
 			if r.Transaction == nil {
 				return ErrReceiptMustContainATreasuryTransaction
 			}
 			return nil
 		}).
-		WritePayload(r.Transaction, deSeriMode, receiptPayloadGuard.WriteGuard, func(err error) error {
+		WritePayload(r.Transaction, deSeriMode, deSeriCtx, receiptPayloadGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize receipt transaction: %w", err)
 		}).
 		Serialize()

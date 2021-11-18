@@ -16,10 +16,6 @@ const (
 )
 
 var (
-	// ErrUnlockBlocksMustMatchInputCount gets returned if the count of unlock blocks doesn't match the count of inputs.
-	ErrUnlockBlocksMustMatchInputCount = errors.New("the count of unlock blocks must match the inputs of the transaction")
-	// ErrInvalidTransactionEssence gets returned if the transaction essence within a Transaction is invalid.
-	ErrInvalidTransactionEssence = errors.New("transaction essence is invalid")
 	// ErrMissingUTXO gets returned if an UTXO is missing to commence a certain operation.
 	ErrMissingUTXO = errors.New("missing utxo")
 	// ErrInputOutputSumMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
@@ -91,7 +87,7 @@ func (t *Transaction) OutputsSet() (OutputSet, error) {
 
 // ID computes the ID of the Transaction.
 func (t *Transaction) ID() (*TransactionID, error) {
-	data, err := t.Serialize(serializer.DeSeriModeNoValidation)
+	data, err := t.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, fmt.Errorf("can't compute transaction ID: %w", err)
 	}
@@ -99,13 +95,13 @@ func (t *Transaction) ID() (*TransactionID, error) {
 	return &h, nil
 }
 
-func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	unlockBlockArrayRulesCopy := txUnlockBlockArrayRules
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(PayloadTransaction), serializer.TypeDenotationUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize transaction: %w", err)
 		}).
-		ReadObject(&t.Essence, deSeriMode, serializer.TypeDenotationByte, txEssenceGuard.ReadGuard, func(err error) error {
+		ReadObject(&t.Essence, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, txEssenceGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
 		}).
 		Do(func() {
@@ -113,13 +109,14 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 			unlockBlockArrayRulesCopy.Min = inputCount
 			unlockBlockArrayRulesCopy.Max = inputCount
 		}).
-		ReadSliceOfObjects(&t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, &unlockBlockArrayRulesCopy, func(err error) error {
+		ReadSliceOfObjects(&t.UnlockBlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, &unlockBlockArrayRulesCopy, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize unlock blocks", err)
 		}).
+		WithValidation(deSeriMode, txDeSeriValidation(t, deSeriCtx)).
 		Done()
 }
 
-func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	unlockBlockArrayRulesCopy := txUnlockBlockArrayRules
 	inputCount := uint(len(t.Essence.Inputs))
 	unlockBlockArrayRulesCopy.Min = inputCount
@@ -128,12 +125,13 @@ func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]by
 		WriteNum(PayloadTransaction, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction payload ID", err)
 		}).
-		WriteObject(t.Essence, deSeriMode, txEssenceGuard.WriteGuard, func(err error) error {
+		WriteObject(t.Essence, deSeriMode, deSeriCtx, txEssenceGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's essence", err)
 		}).
-		WriteSliceOfObjects(&t.UnlockBlocks, deSeriMode, serializer.SeriLengthPrefixTypeAsUint16, &unlockBlockArrayRulesCopy, func(err error) error {
+		WriteSliceOfObjects(&t.UnlockBlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, &unlockBlockArrayRulesCopy, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's unlock blocks", err)
 		}).
+		WithValidation(deSeriMode, txDeSeriValidation(t, deSeriCtx)).
 		Serialize()
 }
 
@@ -172,39 +170,34 @@ func (t *Transaction) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// SyntacticallyValidate syntactically validates the Transaction.
-func (t *Transaction) SyntacticallyValidate(minDustDep uint64, rentStruct *RentStructure) error {
-	switch {
-	case t.Essence == nil:
-		return fmt.Errorf("%w: transaction is nil", ErrInvalidTransactionEssence)
-	case t.UnlockBlocks == nil:
-		return fmt.Errorf("%w: unlock blocks are nil", ErrInvalidTransactionEssence)
+func txDeSeriValidation(tx *Transaction, deSeriCtx interface{}) serializer.ErrProducerWithRWBytes {
+	return func(readBytes []byte, err error) error {
+		deSeriParas, ok := deSeriCtx.(*DeSerializationParameters)
+		if !ok {
+			return fmt.Errorf("unable to validate transaction: %w", ErrMissingDeSerializationParas)
+		}
+		return tx.syntacticallyValidate(readBytes, deSeriParas.MinDustDeposit, deSeriParas.RentStructure)
+	}
+}
+
+// syntacticallyValidate syntactically validates the Transaction.
+func (t *Transaction) syntacticallyValidate(readBytes []byte, minDustDep uint64, rentStruct *RentStructure) error {
+	if err := t.Essence.syntacticallyValidate(minDustDep, rentStruct); err != nil {
+		return fmt.Errorf("transaction essence is invalid: %w", err)
 	}
 
-	if err := t.Essence.SyntacticallyValidate(minDustDep, rentStruct); err != nil {
-		return fmt.Errorf("%w: transaction essence part is invalid", err)
-	}
-
-	txID, err := t.ID()
-	if err != nil {
-		return err
-	}
-
-	inputCount := len(t.Essence.Inputs)
-	unlockBlockCount := len(t.UnlockBlocks)
-	if inputCount != unlockBlockCount {
-		return fmt.Errorf("%w: num of inputs %d, num of unlock blocks %d", ErrUnlockBlocksMustMatchInputCount, inputCount, unlockBlockCount)
-	}
-
+	txID := blake2b.Sum256(readBytes)
 	if err := ValidateOutputs(t.Essence.Outputs,
-		OutputsSyntacticalAlias(txID),
-		OutputsSyntacticalNFT(txID),
+		OutputsSyntacticalAlias(&txID),
+		OutputsSyntacticalNFT(&txID),
 	); err != nil {
 		return err
 	}
 
-	if err := ValidateUnlockBlocks(t.UnlockBlocks, UnlockBlocksSigUniqueAndRefValidator()); err != nil {
-		return fmt.Errorf("%w: invalid unlock blocks", err)
+	if err := ValidateUnlockBlocks(t.UnlockBlocks,
+		UnlockBlocksSigUniqueAndRefValidator(),
+	); err != nil {
+		return fmt.Errorf("invalid unlock blocks: %w", err)
 	}
 
 	return nil

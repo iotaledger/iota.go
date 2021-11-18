@@ -2,9 +2,10 @@ package iotago_test
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"testing"
 
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,7 @@ func TestReceipt_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			receipt := &iotago.Receipt{}
-			bytesRead, err := receipt.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
+			bytesRead, err := receipt.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -54,7 +55,7 @@ func TestReceipt_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -83,12 +84,12 @@ func TestReceiptFuzzingCrashers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.in), func(t *testing.T) {
 			m := &iotago.Receipt{}
-			_, err := m.Deserialize(tt.in, serializer.DeSeriModePerformValidation)
+			_, err := m.Deserialize(tt.in, serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if err != nil {
 				return
 			}
 
-			seriData, err := m.Serialize(serializer.DeSeriModePerformValidation)
+			seriData, err := m.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if err != nil {
 				return
 			}
@@ -119,7 +120,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             addr,
 				Deposit:             7_000_000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefDeSeriParas)
 			return test{"ok", receipt, currentTreasury, nil}
 		}(),
 		func() test {
@@ -128,7 +129,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             addr,
 				Deposit:             1000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefDeSeriParas)
 			return test{"err - migrated less tha minimum", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 		func() test {
@@ -137,7 +138,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             addr,
 				Deposit:             iotago.TokenSupply + 1,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefDeSeriParas)
 			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 		func() test {
@@ -146,7 +147,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             addr,
 				Deposit:             6_000_000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefDeSeriParas)
 			return test{"err - invalid new treasury amount", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 	}

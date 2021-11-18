@@ -221,7 +221,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			for _, source := range test.sources {
-				if _, err := source.Serialize(serializer.DeSeriModePerformValidation); (err != nil) != test.wantErr {
+				if _, err := source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas); (err != nil) != test.wantErr {
 					t.Errorf("error = %v, wantErr %v", err, test.wantErr)
 				}
 			}

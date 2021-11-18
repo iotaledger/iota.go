@@ -24,7 +24,7 @@ func (ti *TreasuryInput) Type() InputType {
 	return InputTreasury
 }
 
-func (ti *TreasuryInput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (ti *TreasuryInput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(TreasuryInputSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid treasury input bytes: %w", err)
@@ -37,7 +37,7 @@ func (ti *TreasuryInput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 	return TreasuryInputSerializedBytesSize, nil
 }
 
-func (ti *TreasuryInput) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
+func (ti *TreasuryInput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	var b [TreasuryInputSerializedBytesSize]byte
 	b[0] = byte(InputTreasury)
 	copy(b[serializer.SmallTypeDenotationByteSize:], ti[:])

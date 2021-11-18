@@ -51,12 +51,12 @@ type MigratedFundsEntry struct {
 	Deposit uint64
 }
 
-func (m *MigratedFundsEntry) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (m *MigratedFundsEntry) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		ReadArrayOf49Bytes(&m.TailTransactionHash, func(err error) error {
 			return fmt.Errorf("unable to deserialize migrated funds entry tail transaction hash: %w", err)
 		}).
-		ReadObject(&m.Address, deSeriMode, serializer.TypeDenotationByte, migratedFundEntryFeatBlockAddrGuard.ReadGuard, func(err error) error {
+		ReadObject(&m.Address, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, migratedFundEntryFeatBlockAddrGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize address for migrated funds entry: %w", err)
 		}).
 		ReadNum(&m.Deposit, func(err error) error {
@@ -65,12 +65,12 @@ func (m *MigratedFundsEntry) Deserialize(data []byte, deSeriMode serializer.DeSe
 		Done()
 }
 
-func (m *MigratedFundsEntry) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (m *MigratedFundsEntry) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteBytes(m.TailTransactionHash[:], func(err error) error {
 			return fmt.Errorf("unable to serialize migrated funds entry tail transaction hash: %w", err)
 		}).
-		WriteObject(m.Address, deSeriMode, migratedFundEntryFeatBlockAddrGuard.WriteGuard, func(err error) error {
+		WriteObject(m.Address, deSeriMode, deSeriCtx, migratedFundEntryFeatBlockAddrGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize migrated funds entry address: %w", err)
 		}).
 		WriteNum(m.Deposit, func(err error) error {

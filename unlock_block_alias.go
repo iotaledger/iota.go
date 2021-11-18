@@ -36,7 +36,7 @@ func (r *AliasUnlockBlock) Type() UnlockBlockType {
 	return UnlockBlockAlias
 }
 
-func (r *AliasUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (r *AliasUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(AliasUnlockBlockSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid alias unlock block bytes: %w", err)
@@ -50,7 +50,7 @@ func (r *AliasUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSeri
 	return AliasUnlockBlockSize, nil
 }
 
-func (r *AliasUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (r *AliasUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	var b [AliasUnlockBlockSize]byte
 	b[0] = byte(UnlockBlockAlias)
 	binary.LittleEndian.PutUint16(b[serializer.SmallTypeDenotationByteSize:], r.Reference)

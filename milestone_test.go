@@ -3,12 +3,13 @@ package iotago_test
 import (
 	"encoding/json"
 	"errors"
-	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v3/tpkg"
 	"math/rand"
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/iotaledger/hive.go/serializer"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/ed25519"
@@ -33,7 +34,7 @@ func TestMilestone_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			msPayload := &iotago.Milestone{}
-			bytesRead, err := msPayload.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
+			bytesRead, err := msPayload.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -59,7 +60,7 @@ func TestMilestone_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})

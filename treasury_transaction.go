@@ -53,29 +53,29 @@ type TreasuryTransaction struct {
 	Output *TreasuryOutput
 }
 
-func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(PayloadTreasuryTransaction), serializer.TypeDenotationUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize treasury transaction: %w", err)
 		}).
-		ReadObject(&t.Input, deSeriMode, serializer.TypeDenotationByte, treasuryTxInputGuard.ReadGuard, func(err error) error {
+		ReadObject(&t.Input, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, treasuryTxInputGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize treasury transaction input: %w", err)
 		}).
-		ReadObject(&t.Output, deSeriMode, serializer.TypeDenotationByte, treasuryTxOutputGuard.ReadGuard, func(err error) error {
+		ReadObject(&t.Output, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, treasuryTxOutputGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize treasury transaction output: %w", err)
 		}).
 		Done()
 }
 
-func (t *TreasuryTransaction) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (t *TreasuryTransaction) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(PayloadTreasuryTransaction, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury transaction type ID: %w", err)
 		}).
-		WriteObject(t.Input, deSeriMode, treasuryTxInputGuard.WriteGuard, func(err error) error {
+		WriteObject(t.Input, deSeriMode, deSeriCtx, treasuryTxInputGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury transaction input: %w", err)
 		}).
-		WriteObject(t.Output, deSeriMode, treasuryTxOutputGuard.WriteGuard, func(err error) error {
+		WriteObject(t.Output, deSeriMode, deSeriCtx, treasuryTxOutputGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury transaction output: %w", err)
 		}).
 		Serialize()

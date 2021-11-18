@@ -35,23 +35,23 @@ func (s *SignatureUnlockBlock) Type() UnlockBlockType {
 	return UnlockBlockSignature
 }
 
-func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(UnlockBlockSignature), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize signature unlock block: %w", err)
 		}).
-		ReadObject(&s.Signature, deSeriMode, serializer.TypeDenotationByte, sigUnlockBlockSigGuard.ReadGuard, func(err error) error {
+		ReadObject(&s.Signature, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, sigUnlockBlockSigGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize signature within signature unlock block: %w", err)
 		}).
 		Done()
 }
 
-func (s *SignatureUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (s *SignatureUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(UnlockBlockSignature, func(err error) error {
 			return fmt.Errorf("unable to serialize signature unlock block type ID: %w", err)
 		}).
-		WriteObject(s.Signature, deSeriMode, sigUnlockBlockSigGuard.WriteGuard, func(err error) error {
+		WriteObject(s.Signature, deSeriMode, deSeriCtx, sigUnlockBlockSigGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize signature unlock block signature: %w", err)
 		}).
 		Serialize()

@@ -36,7 +36,7 @@ func (r *ReferenceUnlockBlock) Type() UnlockBlockType {
 	return UnlockBlockReference
 }
 
-func (r *ReferenceUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (r *ReferenceUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(ReferenceUnlockBlockSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid reference unlock block bytes: %w", err)
@@ -50,7 +50,7 @@ func (r *ReferenceUnlockBlock) Deserialize(data []byte, deSeriMode serializer.De
 	return ReferenceUnlockBlockSize, nil
 }
 
-func (r *ReferenceUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (r *ReferenceUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	var b [ReferenceUnlockBlockSize]byte
 	b[0] = byte(UnlockBlockReference)
 	binary.LittleEndian.PutUint16(b[serializer.SmallTypeDenotationByteSize:], r.Reference)

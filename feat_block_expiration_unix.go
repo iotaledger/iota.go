@@ -34,7 +34,7 @@ func (s *ExpirationUnixFeatureBlock) Type() FeatureBlockType {
 	return FeatureBlockExpirationUnix
 }
 
-func (s *ExpirationUnixFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (s *ExpirationUnixFeatureBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(FeatureBlockExpirationUnix), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize expiration unix feature block: %w", err)
@@ -45,7 +45,7 @@ func (s *ExpirationUnixFeatureBlock) Deserialize(data []byte, deSeriMode seriali
 		Done()
 }
 
-func (s *ExpirationUnixFeatureBlock) Serialize(_ serializer.DeSerializationMode) ([]byte, error) {
+func (s *ExpirationUnixFeatureBlock) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(byte(FeatureBlockExpirationUnix), func(err error) error {
 			return fmt.Errorf("unable to serialize expiration unix feature block type ID: %w", err)

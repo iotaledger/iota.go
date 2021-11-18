@@ -211,7 +211,7 @@ func jsonAddressSelector(ty int) (JSONSerializable, error) {
 }
 
 func bech32String(hrp NetworkPrefix, addr Address) string {
-	bytes, _ := addr.Serialize(serializer.DeSeriModeNoValidation)
+	bytes, _ := addr.Serialize(serializer.DeSeriModeNoValidation, nil)
 	s, err := bech32.Encode(string(hrp), bytes)
 	if err != nil {
 		panic(err)
@@ -235,7 +235,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		return "", nil, err
 	}
 
-	n, err := addr.Deserialize(addrData, serializer.DeSeriModePerformValidation)
+	n, err := addr.Deserialize(addrData, serializer.DeSeriModePerformValidation, nil)
 	if err != nil {
 		return "", nil, err
 	}

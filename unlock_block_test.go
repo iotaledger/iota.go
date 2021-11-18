@@ -37,7 +37,7 @@ func TestSignatureUnlockBlock_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			edSig := &iotago.SignatureUnlockBlock{}
-			bytesRead, err := edSig.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
+			bytesRead, err := edSig.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -63,7 +63,7 @@ func TestUnlockBlockSignature_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -87,7 +87,7 @@ func TestReferenceUnlockBlock_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			edSig := &iotago.ReferenceUnlockBlock{}
-			bytesRead, err := edSig.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
+			bytesRead, err := edSig.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -113,7 +113,7 @@ func TestUnlockBlockReference_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})

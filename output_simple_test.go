@@ -36,7 +36,7 @@ func TestSimpleOutput_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dep := &iotago.SimpleOutput{}
-			bytesRead, err := dep.Deserialize(tt.source, serializer.DeSeriModePerformValidation)
+			bytesRead, err := dep.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				require.ErrorIs(t, err, tt.err)
 				return
@@ -63,7 +63,7 @@ func TestSimpleOutput_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
+			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return

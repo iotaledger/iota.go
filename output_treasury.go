@@ -26,7 +26,7 @@ func (t *TreasuryOutput) Type() OutputType {
 	return OutputTreasury
 }
 
-func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
+func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(OutputTreasury), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize treasury output: %w", err)
@@ -37,7 +37,7 @@ func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 		Done()
 }
 
-func (t *TreasuryOutput) Serialize(deSeriMode serializer.DeSerializationMode) ([]byte, error) {
+func (t *TreasuryOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(OutputTreasury, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury output type ID: %w", err)
