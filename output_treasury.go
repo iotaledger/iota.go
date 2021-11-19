@@ -22,8 +22,8 @@ func (t *TreasuryOutput) VByteCost(_ *RentStructure, _ VByteCostFunc) uint64 {
 	return 0
 }
 
-func (t *TreasuryOutput) Deposit() (uint64, error) {
-	return t.Amount, nil
+func (t *TreasuryOutput) Deposit() uint64 {
+	return t.Amount
 }
 
 func (t *TreasuryOutput) Type() OutputType {

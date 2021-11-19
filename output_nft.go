@@ -176,8 +176,8 @@ func (n *NFTOutput) FeatureBlocks() FeatureBlocks {
 	return n.Blocks
 }
 
-func (n *NFTOutput) Deposit() (uint64, error) {
-	return n.Amount, nil
+func (n *NFTOutput) Deposit() uint64 {
+	return n.Amount
 }
 
 func (n *NFTOutput) Ident() (Address, error) {

@@ -327,8 +327,8 @@ func (a *AliasOutput) FeatureBlocks() FeatureBlocks {
 	return a.Blocks
 }
 
-func (a *AliasOutput) Deposit() (uint64, error) {
-	return a.Amount, nil
+func (a *AliasOutput) Deposit() uint64 {
+	return a.Amount
 }
 
 func (a *AliasOutput) Target() (serializer.Serializable, error) {

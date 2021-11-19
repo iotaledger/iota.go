@@ -41,8 +41,8 @@ func (s *SimpleOutput) Ident() (Address, error) {
 	return s.Address, nil
 }
 
-func (s *SimpleOutput) Deposit() (uint64, error) {
-	return s.Amount, nil
+func (s *SimpleOutput) Deposit() uint64 {
+	return s.Amount
 }
 
 func (s *SimpleOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
