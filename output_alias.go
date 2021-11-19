@@ -372,7 +372,7 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 			return fmt.Errorf("unable to deserialize foundry counter for alias output: %w", err)
 		}).
 		ReadSliceOfObjects(&a.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
+			return fmt.Errorf("unable to deserialize feature blocks for alias output: %w", err)
 		}).
 		Done()
 }

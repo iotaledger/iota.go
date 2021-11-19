@@ -113,7 +113,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := test.builder.Build(DefDeSeriParas, test.addrSigner)
+			_, err := test.builder.Build(DefZeroRentParas, test.addrSigner)
 			if test.buildErr != nil {
 				assert.True(t, errors.Is(err, test.buildErr))
 				return

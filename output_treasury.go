@@ -7,11 +7,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer"
 )
 
-const (
-	// TreasuryOutputBytesSize defines the binary serialized size of a TreasuryOutput.
-	TreasuryOutputBytesSize = serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize
-)
-
 // TreasuryOutput is an output which holds the treasury of a network.
 type TreasuryOutput struct {
 	// The currently residing funds in the treasury.
@@ -30,7 +25,7 @@ func (t *TreasuryOutput) Type() OutputType {
 	return OutputTreasury
 }
 
-func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
+func (t *TreasuryOutput) Deserialize(data []byte, _ serializer.DeSerializationMode, _ interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(OutputTreasury), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize treasury output: %w", err)
@@ -41,7 +36,7 @@ func (t *TreasuryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 		Done()
 }
 
-func (t *TreasuryOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
+func (t *TreasuryOutput) Serialize(_ serializer.DeSerializationMode, _ interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteNum(OutputTreasury, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury output type ID: %w", err)

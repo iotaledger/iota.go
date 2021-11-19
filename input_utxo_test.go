@@ -25,7 +25,7 @@ func TestUTXOInput_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &iotago.UTXOInput{}
-			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, DefDeSeriParas)
+			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, DefZeroRentParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -48,7 +48,7 @@ func TestUTXOInput_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
+			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return

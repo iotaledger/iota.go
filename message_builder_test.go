@@ -22,7 +22,7 @@ func TestMessageBuilder(t *testing.T) {
 	msg, err := iotago.NewMessageBuilder().
 		Payload(indexationPayload).
 		ParentsMessageIDs(parents).
-		ProofOfWork(context.Background(), DefDeSeriParas, targetPoWScore).
+		ProofOfWork(context.Background(), DefZeroRentParas, targetPoWScore).
 		Build()
 	require.NoError(t, err)
 
