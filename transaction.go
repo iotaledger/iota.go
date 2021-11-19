@@ -245,9 +245,6 @@ type SemValiContextWorkingSet struct {
 	OutNativeTokens NativeTokenSum
 	// The UnlockBlocks carried by the transaction mapped by type.
 	UnlockBlocksByType UnlockBlocksByType
-	// The amount of IOTA tokens moved to an identity with SimpleOutput(s) / ExtendedOutput(s)
-	// that do not have any constrains imposed by FeatureBlock(s).
-	SimpleTransfers map[string]uint64
 }
 
 func featureBlockSetFromOutput(output ChainConstrainedOutput) (FeatureBlocksSet, error) {
@@ -267,7 +264,6 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiCont
 	var err error
 	workingSet := &SemValiContextWorkingSet{}
 	workingSet.UnlockedIdents = make(UnlockedIdentities)
-	workingSet.SimpleTransfers = make(map[string]uint64)
 	workingSet.InputSet = inputs
 	workingSet.Tx = t
 	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage()
