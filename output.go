@@ -534,7 +534,6 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //	- the deposit fulfils the minimum deposit as calculated from the virtual byte cost of the output
 //	- if the output contains a DustDepositReturnFeatureBlock, it must "return" bigger equal than the minimum dust deposit
 //	  and must be less equal the minimum virtual byte rent cost for the output.
-// If -1 is passed to the validator func, then the sum is not aggregated over multiple calls.
 func OutputsSyntacticalDepositAmount(minDustDep uint64, rentStruct *RentStructure) OutputsSyntacticalValidationFunc {
 	var sum uint64
 	return func(index int, output Output) error {
@@ -570,9 +569,7 @@ func OutputsSyntacticalDepositAmount(minDustDep uint64, rentStruct *RentStructur
 			}
 		}
 
-		if index != -1 {
-			sum += deposit
-		}
+		sum += deposit
 		return nil
 	}
 }

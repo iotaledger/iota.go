@@ -10,20 +10,20 @@ import (
 )
 
 func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {
-	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation, DefDeSeriParas)
+	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation, DefZeroRentParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	target := &iotago.Transaction{}
-	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, DefDeSeriParas)
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, DefZeroRentParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModePerformValidation, DefDeSeriParas)
+		target.Deserialize(data, serializer.DeSeriModePerformValidation, DefZeroRentParas)
 	}
 }
 
@@ -63,38 +63,38 @@ func BenchmarkDeserializeWithValidationLargeTxPayload(b *testing.B) {
 		}(),
 	}
 
-	data, err := origin.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, DefDeSeriParas)
+	data, err := origin.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, DefZeroRentParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	target := &iotago.Transaction{}
-	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, DefDeSeriParas)
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, DefZeroRentParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModePerformValidation, DefDeSeriParas)
+		target.Deserialize(data, serializer.DeSeriModePerformValidation, DefZeroRentParas)
 	}
 }
 
 func BenchmarkDeserializeWithoutValidationOneIOTxPayload(b *testing.B) {
-	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation, DefDeSeriParas)
+	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation, DefZeroRentParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	target := &iotago.Transaction{}
-	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, DefDeSeriParas)
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, DefZeroRentParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModeNoValidation, DefDeSeriParas)
+		target.Deserialize(data, serializer.DeSeriModeNoValidation, DefZeroRentParas)
 	}
 }
 
@@ -102,7 +102,7 @@ func BenchmarkSerializeWithValidationOneIOTxPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		txPayload.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
+		txPayload.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
 	}
 }
 
@@ -110,7 +110,7 @@ func BenchmarkSerializeWithoutValidationOneIOTxPayload(b *testing.B) {
 	sigTxPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		sigTxPayload.Serialize(serializer.DeSeriModeNoValidation, DefDeSeriParas)
+		sigTxPayload.Serialize(serializer.DeSeriModeNoValidation, DefZeroRentParas)
 	}
 }
 

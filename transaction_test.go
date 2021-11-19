@@ -29,7 +29,7 @@ func TestTransaction_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tx := &iotago.Transaction{}
-			bytesRead, err := tx.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefDeSeriParas)
+			bytesRead, err := tx.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefZeroRentParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -55,7 +55,7 @@ func TestTransaction_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
@@ -167,7 +167,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			payload, err := test.builder.Build(DefDeSeriParas, test.addrSigner)
+			payload, err := test.builder.Build(DefZeroRentParas, test.addrSigner)
 			if test.buildErr != nil {
 				assert.True(t, errors.Is(err, test.buildErr))
 				return
@@ -181,7 +181,7 @@ func XTestTransaction_SemanticallyValidate(t *testing.T) {
 			}
 			assert.NoError(t, semanticErr)
 
-			_, err = payload.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
+			_, err = payload.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
 			assert.NoError(t, err)
 		})
 	}

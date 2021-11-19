@@ -37,7 +37,7 @@ func TestEd25519Signature_Deserialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			edSig := &iotago.Ed25519Signature{}
-			bytesRead, err := edSig.Deserialize(tt.source, serializer.DeSeriModePerformValidation,DefDeSeriParas)
+			bytesRead, err := edSig.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefZeroRentParas)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return
@@ -63,7 +63,7 @@ func TestEd25519Signature_Serialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefDeSeriParas)
+			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
 		})
