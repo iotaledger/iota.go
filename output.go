@@ -408,7 +408,8 @@ type Output interface {
 	NonEphemeralObject
 
 	// Deposit returns the amount this Output deposits.
-	Deposit() (uint64, error)
+	Deposit() uint64
+
 	// Type returns the type of the output.
 	Type() OutputType
 }
@@ -537,10 +538,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 func OutputsSyntacticalDepositAmount(minDustDep uint64, rentStruct *RentStructure) OutputsSyntacticalValidationFunc {
 	var sum uint64
 	return func(index int, output Output) error {
-		deposit, err := output.Deposit()
-		if err != nil {
-			return fmt.Errorf("unable to get deposit of output: %w", err)
-		}
+		deposit := output.Deposit()
 
 		switch {
 		case deposit == 0:

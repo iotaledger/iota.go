@@ -541,12 +541,8 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 		// are always within bounds of the total token supply
 		var in, out uint64
 		inputSumReturnAmountPerIdent := make(map[string]uint64)
-		for utxoID, input := range svCtx.WorkingSet.InputSet {
-			inDeposit, err := input.Deposit()
-			if err != nil {
-				return fmt.Errorf("unable to check deposit of input %d: %w", utxoID.Index(), err)
-			}
-			in += inDeposit
+		for _, input := range svCtx.WorkingSet.InputSet {
+			in += input.Deposit()
 			featureBlockOutput, is := input.(FeatureBlockOutput)
 			if !is {
 				continue
@@ -565,11 +561,8 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 		}
 
 		outputSimpleTransfersPerIdent := make(map[string]uint64)
-		for outputIndex, output := range svCtx.WorkingSet.Tx.Essence.Outputs {
-			outDeposit, err := output.Deposit()
-			if err != nil {
-				return fmt.Errorf("unable to check deposit of output at index %d: %w", outputIndex, err)
-			}
+		for _, output := range svCtx.WorkingSet.Tx.Essence.Outputs {
+			outDeposit := output.Deposit()
 			out += outDeposit
 
 			// accumulate simple transfers for DustDepositReturnFeatureBlock checks

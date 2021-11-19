@@ -291,8 +291,8 @@ func (f *FoundryOutput) FeatureBlocks() FeatureBlocks {
 	return f.Blocks
 }
 
-func (f *FoundryOutput) Deposit() (uint64, error) {
-	return f.Amount, nil
+func (f *FoundryOutput) Deposit() uint64 {
+	return f.Amount
 }
 
 func (f *FoundryOutput) Ident() (Address, error) {

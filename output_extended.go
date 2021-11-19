@@ -82,8 +82,8 @@ func (e *ExtendedOutput) FeatureBlocks() FeatureBlocks {
 	return e.Blocks
 }
 
-func (e *ExtendedOutput) Deposit() (uint64, error) {
-	return e.Amount, nil
+func (e *ExtendedOutput) Deposit() uint64 {
+	return e.Amount
 }
 
 func (e *ExtendedOutput) Ident() (Address, error) {
