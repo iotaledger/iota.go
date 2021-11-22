@@ -120,7 +120,7 @@ func TestUnlockBlockReference_Serialize(t *testing.T) {
 	}
 }
 
-func TestUnlockBlockValidatorFunc(t *testing.T) {
+func TestUnlockBlocksSigUniqueAndRefValidator(t *testing.T) {
 	type args struct {
 		inputs iotago.UnlockBlocks
 		funcs  []iotago.UnlockBlockValidatorFunc

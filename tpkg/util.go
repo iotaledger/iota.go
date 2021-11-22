@@ -66,6 +66,22 @@ func RandUint256() *big.Int {
 	return new(big.Int).SetUint64(rand.Uint64())
 }
 
+// Rand12ByteArray returns an array with 12 random bytes.
+func Rand12ByteArray() [12]byte {
+	var h [12]byte
+	b := RandBytes(12)
+	copy(h[:], b)
+	return h
+}
+
+// Rand20ByteArray returns an array with 20 random bytes.
+func Rand20ByteArray() [20]byte {
+	var h [20]byte
+	b := RandBytes(20)
+	copy(h[:], b)
+	return h
+}
+
 // Rand32ByteArray returns an array with 32 random bytes.
 func Rand32ByteArray() [32]byte {
 	var h [32]byte
