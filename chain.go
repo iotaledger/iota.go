@@ -74,14 +74,6 @@ const (
 // validates the state transition.
 type StateTransitionValidationFunc func(current ChainConstrainedOutput, next ChainConstrainedOutput) error
 
-// ValidateStateTransitionOnTuple returns a StateTransitionValidationFunc which executes the transition
-// checks on tuple of state transitioning ChainConstrainedOutput(s).
-func ValidateStateTransitionOnTuple(svCtx *SemanticValidationContext) StateTransitionValidationFunc {
-	return func(current ChainConstrainedOutput, next ChainConstrainedOutput) error {
-		return current.ValidateStateTransition(ChainTransitionTypeStateChange, next, svCtx)
-	}
-}
-
 // IsIssuerOnOutputUnlocked checks whether the issuer in an IssuerFeatureBlock of this new ChainConstrainedOutput has been unlocked.
 // This function is a no-op if the chain is not new, or it does not contain an IssuerFeatureBlock.
 func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents UnlockedIdentities) error {

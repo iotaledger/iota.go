@@ -8,6 +8,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/iotaledger/hive.go/serializer"
 )
 
@@ -597,20 +598,20 @@ func OutputsSyntacticalSenderFeatureBlockRequirement() OutputsSyntacticalValidat
 		if !is {
 			return nil
 		}
-		var hasReturnFeatBlock, hasExpMsFeatBlock, hasExpUnixFeatBlock, hasSenderFeatBlock bool
+		var hasSenderFeatBlock, hasFeatBlockReqSenderFeatBlock bool
 		for _, featureBlock := range featureBlockOutput.FeatureBlocks() {
-			switch featureBlock.(type) {
-			case *DustDepositReturnFeatureBlock:
-				hasReturnFeatBlock = true
-			case *ExpirationMilestoneIndexFeatureBlock:
-				hasExpMsFeatBlock = true
-			case *ExpirationUnixFeatureBlock:
-				hasExpUnixFeatBlock = true
-			case *SenderFeatureBlock:
+			switch featureBlock.Type() {
+			case FeatureBlockDustDepositReturn:
+				fallthrough
+			case FeatureBlockExpirationMilestoneIndex:
+				fallthrough
+			case FeatureBlockExpirationUnix:
+				hasFeatBlockReqSenderFeatBlock = true
+			case FeatureBlockSender:
 				hasSenderFeatBlock = true
 			}
 		}
-		if (hasReturnFeatBlock || hasExpMsFeatBlock || hasExpUnixFeatBlock) && !hasSenderFeatBlock {
+		if hasFeatBlockReqSenderFeatBlock && !hasSenderFeatBlock {
 			return fmt.Errorf("%w: output %d", ErrOutputRequiresSenderFeatureBlock, index)
 		}
 		return nil
@@ -636,7 +637,7 @@ func OutputsSyntacticalAlias(txID *TransactionID) OutputsSyntacticalValidationFu
 				return fmt.Errorf("%w: output %d, foundry counter not zero", ErrAliasOutputNonEmptyState, index)
 			}
 
-			// build AliasID using the transaction ID
+			// build address using the transaction ID
 			outputAliasAddr = AliasAddressFromOutputID(OutputIDFromTransactionIDAndIndex(*txID, uint16(index)))
 		}
 
@@ -665,7 +666,7 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 			return nil
 		}
 
-		if r := foundryOutput.MaximumSupply.Cmp(new(big.Int).SetInt64(0)); r == -1 || r == 0 {
+		if r := foundryOutput.MaximumSupply.Cmp(common.Big0); r == -1 || r == 0 {
 			return fmt.Errorf("%w: output %d, less than equal zero", ErrFoundryOutputInvalidMaximumSupply, index)
 		}
 

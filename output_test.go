@@ -1,138 +1,14 @@
 package iotago_test
 
 import (
-	"reflect"
+	"math/big"
 	"testing"
 
-	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/iota.go/v3"
 )
-
-func TestOutputsNativeTokenSet(t *testing.T) {
-	notSortedNativeTokens := func() iotago.NativeTokens {
-		nativeTokens := tpkg.RandSortNativeTokens(5)
-		nativeTokens[0], nativeTokens[1] = nativeTokens[1], nativeTokens[0]
-		return nativeTokens
-	}
-
-	dupedNativeTokens := func() iotago.NativeTokens {
-		nativeTokens := tpkg.RandSortNativeTokens(2)
-		nativeTokens[1] = nativeTokens[0]
-		return nativeTokens
-	}
-
-	tests := []struct {
-		name    string
-		wantErr bool
-		sources []iotago.Output
-	}{
-		{
-			name:    "ok",
-			wantErr: false,
-			sources: []iotago.Output{
-				&iotago.ExtendedOutput{
-					Amount:       1,
-					NativeTokens: tpkg.RandSortNativeTokens(5),
-					Address:      tpkg.RandEd25519Address(),
-				},
-				&iotago.AliasOutput{
-					Amount:               1,
-					NativeTokens:         tpkg.RandSortNativeTokens(5),
-					AliasID:              iotago.AliasID{},
-					StateController:      tpkg.RandEd25519Address(),
-					GovernanceController: tpkg.RandEd25519Address(),
-				},
-				&iotago.FoundryOutput{
-					Amount:            1,
-					NativeTokens:      tpkg.RandSortNativeTokens(5),
-					Address:           tpkg.RandAliasAddress(),
-					CirculatingSupply: tpkg.RandUint256(),
-					MaximumSupply:     tpkg.RandUint256(),
-					TokenScheme:       &iotago.SimpleTokenScheme{},
-				},
-				&iotago.NFTOutput{
-					Amount:       1,
-					NativeTokens: tpkg.RandSortNativeTokens(5),
-					Address:      tpkg.RandEd25519Address(),
-				},
-			},
-		},
-		{
-			name:    "not sorted",
-			wantErr: true,
-			sources: []iotago.Output{
-				&iotago.ExtendedOutput{
-					Amount:       1,
-					NativeTokens: notSortedNativeTokens(),
-					Address:      tpkg.RandEd25519Address(),
-				},
-				&iotago.AliasOutput{
-					Amount:               1,
-					NativeTokens:         notSortedNativeTokens(),
-					AliasID:              iotago.AliasID{},
-					StateController:      tpkg.RandEd25519Address(),
-					GovernanceController: tpkg.RandEd25519Address(),
-				},
-				&iotago.FoundryOutput{
-					Amount:            1,
-					NativeTokens:      notSortedNativeTokens(),
-					Address:           tpkg.RandEd25519Address(),
-					CirculatingSupply: tpkg.RandUint256(),
-					MaximumSupply:     tpkg.RandUint256(),
-					TokenScheme:       &iotago.SimpleTokenScheme{},
-				},
-				&iotago.NFTOutput{
-					Amount:       1,
-					NativeTokens: notSortedNativeTokens(),
-					Address:      tpkg.RandEd25519Address(),
-				},
-			},
-		},
-		{
-			name:    "duped",
-			wantErr: true,
-			sources: []iotago.Output{
-				&iotago.ExtendedOutput{
-					Amount:       1,
-					NativeTokens: dupedNativeTokens(),
-					Address:      tpkg.RandEd25519Address(),
-				},
-				&iotago.AliasOutput{
-					Amount:               1,
-					NativeTokens:         dupedNativeTokens(),
-					AliasID:              iotago.AliasID{},
-					StateController:      tpkg.RandEd25519Address(),
-					GovernanceController: tpkg.RandEd25519Address(),
-				},
-				&iotago.FoundryOutput{
-					Amount:            1,
-					NativeTokens:      dupedNativeTokens(),
-					Address:           tpkg.RandEd25519Address(),
-					CirculatingSupply: tpkg.RandUint256(),
-					MaximumSupply:     tpkg.RandUint256(),
-					TokenScheme:       &iotago.SimpleTokenScheme{},
-				},
-				&iotago.NFTOutput{
-					Amount:       1,
-					NativeTokens: dupedNativeTokens(),
-					Address:      tpkg.RandEd25519Address(),
-				},
-			},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			for _, source := range test.sources {
-				if _, err := source.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas); (err != nil) != test.wantErr {
-					t.Errorf("error = %v, wantErr %v", err, test.wantErr)
-				}
-			}
-		})
-	}
-}
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 
@@ -322,16 +198,107 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 
 func TestOutputsSyntacticalSenderFeatureBlockRequirement(t *testing.T) {
 	tests := []struct {
-		name string
-		want iotago.OutputsSyntacticalValidationFunc
+		name    string
+		outputs iotago.Outputs
+		wantErr error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok - dust deposit return",
+			outputs: iotago.Outputs{
+				&iotago.ExtendedOutput{
+					Address:      tpkg.RandEd25519Address(),
+					Amount:       100,
+					NativeTokens: nil,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.DustDepositReturnFeatureBlock{Amount: OneMi},
+						&iotago.SenderFeatureBlock{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+		},
+		{
+			name: "fail - dust deposit return",
+			outputs: iotago.Outputs{
+				&iotago.ExtendedOutput{
+					Address:      tpkg.RandEd25519Address(),
+					Amount:       100,
+					NativeTokens: nil,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.DustDepositReturnFeatureBlock{Amount: OneMi},
+					},
+				},
+			},
+			wantErr: iotago.ErrOutputRequiresSenderFeatureBlock,
+		},
+		{
+			name: "ok - expiration milestone index",
+			outputs: iotago.Outputs{
+				&iotago.ExtendedOutput{
+					Address:      tpkg.RandEd25519Address(),
+					Amount:       100,
+					NativeTokens: nil,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.ExpirationMilestoneIndexFeatureBlock{MilestoneIndex: 1337},
+						&iotago.SenderFeatureBlock{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+		},
+		{
+			name: "fail - expiration milestone index",
+			outputs: iotago.Outputs{
+				&iotago.ExtendedOutput{
+					Address:      tpkg.RandEd25519Address(),
+					Amount:       100,
+					NativeTokens: nil,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.ExpirationMilestoneIndexFeatureBlock{MilestoneIndex: 1337},
+					},
+				},
+			},
+			wantErr: iotago.ErrOutputRequiresSenderFeatureBlock,
+		},
+		{
+			name: "ok - expiration unix",
+			outputs: iotago.Outputs{
+				&iotago.ExtendedOutput{
+					Address:      tpkg.RandEd25519Address(),
+					Amount:       100,
+					NativeTokens: nil,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.ExpirationUnixFeatureBlock{UnixTime: 1337},
+						&iotago.SenderFeatureBlock{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+		},
+		{
+			name: "fail - expiration unix",
+			outputs: iotago.Outputs{
+				&iotago.ExtendedOutput{
+					Address:      tpkg.RandEd25519Address(),
+					Amount:       100,
+					NativeTokens: nil,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.ExpirationUnixFeatureBlock{UnixTime: 1337},
+					},
+				},
+			},
+			wantErr: iotago.ErrOutputRequiresSenderFeatureBlock,
+		},
 	}
+	valFunc := iotago.OutputsSyntacticalSenderFeatureBlockRequirement()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := iotago.OutputsSyntacticalSenderFeatureBlockRequirement(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("OutputsSyntacticalSenderFeatureBlockRequirement() = %v, want %v", got, tt.want)
-			}
+			t.Run(tt.name, func(t *testing.T) {
+				var runErr error
+				for index, output := range tt.outputs {
+					if err := valFunc(index, output); err != nil {
+						runErr = err
+					}
+				}
+				require.ErrorIs(t, runErr, tt.wantErr)
+			})
 		})
 	}
 }
@@ -341,53 +308,253 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 		txID *iotago.TransactionID
 	}
 	tests := []struct {
-		name string
-		args args
-		want iotago.OutputsSyntacticalValidationFunc
+		name    string
+		outputs iotago.Outputs
+		wantErr error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok - empty state",
+			outputs: iotago.Outputs{
+				&iotago.AliasOutput{
+					Amount:               OneMi,
+					AliasID:              iotago.AliasID{},
+					StateController:      tpkg.RandAliasAddress(),
+					GovernanceController: tpkg.RandAliasAddress(),
+					StateIndex:           0,
+					FoundryCounter:       0,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ok - non empty state",
+			outputs: iotago.Outputs{
+				&iotago.AliasOutput{
+					Amount:               OneMi,
+					AliasID:              tpkg.Rand20ByteArray(),
+					StateController:      tpkg.RandAliasAddress(),
+					GovernanceController: tpkg.RandAliasAddress(),
+					StateIndex:           10,
+					FoundryCounter:       1337,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - state index non zero on empty alias ID",
+			outputs: iotago.Outputs{
+				&iotago.AliasOutput{
+					Amount:               OneMi,
+					AliasID:              iotago.AliasID{},
+					StateController:      tpkg.RandAliasAddress(),
+					GovernanceController: tpkg.RandAliasAddress(),
+					StateIndex:           1,
+					FoundryCounter:       0,
+				},
+			},
+			wantErr: iotago.ErrAliasOutputNonEmptyState,
+		},
+		{
+			name: "fail - foundry counter non zero on empty alias ID",
+			outputs: iotago.Outputs{
+				&iotago.AliasOutput{
+					Amount:               OneMi,
+					AliasID:              iotago.AliasID{},
+					StateController:      tpkg.RandAliasAddress(),
+					GovernanceController: tpkg.RandAliasAddress(),
+					StateIndex:           0,
+					FoundryCounter:       1,
+				},
+			},
+			wantErr: iotago.ErrAliasOutputNonEmptyState,
+		},
+		{
+			name: "fail - cyclic state controller",
+			outputs: iotago.Outputs{
+				func() *iotago.AliasOutput {
+					aliasID := iotago.AliasID(tpkg.Rand20ByteArray())
+					return &iotago.AliasOutput{
+						Amount:               OneMi,
+						AliasID:              aliasID,
+						StateController:      aliasID.ToAddress(),
+						GovernanceController: tpkg.RandAliasAddress(),
+						StateIndex:           10,
+						FoundryCounter:       1337,
+					}
+				}(),
+			},
+			wantErr: iotago.ErrAliasOutputCyclicAddress,
+		},
+		{
+			name: "fail - cyclic governance controller",
+			outputs: iotago.Outputs{
+				func() *iotago.AliasOutput {
+					aliasID := iotago.AliasID(tpkg.Rand20ByteArray())
+					return &iotago.AliasOutput{
+						Amount:               OneMi,
+						AliasID:              aliasID,
+						StateController:      tpkg.RandAliasAddress(),
+						GovernanceController: aliasID.ToAddress(),
+						StateIndex:           10,
+						FoundryCounter:       1337,
+					}
+				}(),
+			},
+			wantErr: iotago.ErrAliasOutputCyclicAddress,
+		},
 	}
+	randTxID := tpkg.Rand32ByteArray()
+	valFunc := iotago.OutputsSyntacticalAlias(&randTxID)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := iotago.OutputsSyntacticalAlias(tt.args.txID); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("OutputsSyntacticalAlias() = %v, want %v", got, tt.want)
-			}
+			t.Run(tt.name, func(t *testing.T) {
+				var runErr error
+				for index, output := range tt.outputs {
+					if err := valFunc(index, output); err != nil {
+						runErr = err
+					}
+				}
+				require.ErrorIs(t, runErr, tt.wantErr)
+			})
 		})
 	}
 }
 
 func TestOutputsSyntacticalFoundry(t *testing.T) {
 	tests := []struct {
-		name string
-		want iotago.OutputsSyntacticalValidationFunc
+		name    string
+		outputs iotago.Outputs
+		wantErr error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok",
+			outputs: iotago.Outputs{
+				&iotago.FoundryOutput{
+					Address:           tpkg.RandAliasAddress(),
+					Amount:            1337,
+					NativeTokens:      nil,
+					SerialNumber:      5,
+					TokenTag:          tpkg.Rand12ByteArray(),
+					CirculatingSupply: new(big.Int).SetUint64(5),
+					MaximumSupply:     new(big.Int).SetUint64(10),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Blocks:            nil,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ok - circ and max supply same",
+			outputs: iotago.Outputs{
+				&iotago.FoundryOutput{
+					Address:           tpkg.RandAliasAddress(),
+					Amount:            1337,
+					NativeTokens:      nil,
+					SerialNumber:      5,
+					TokenTag:          tpkg.Rand12ByteArray(),
+					CirculatingSupply: new(big.Int).SetUint64(10),
+					MaximumSupply:     new(big.Int).SetUint64(10),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Blocks:            nil,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - invalid maximum supply",
+			outputs: iotago.Outputs{
+				&iotago.FoundryOutput{
+					Address:           tpkg.RandAliasAddress(),
+					Amount:            1337,
+					NativeTokens:      nil,
+					SerialNumber:      5,
+					TokenTag:          tpkg.Rand12ByteArray(),
+					CirculatingSupply: new(big.Int).SetUint64(5),
+					MaximumSupply:     new(big.Int).SetUint64(0),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Blocks:            nil,
+				},
+			},
+			wantErr: iotago.ErrFoundryOutputInvalidMaximumSupply,
+		},
+		{
+			name: "fail - invalid circulating supply",
+			outputs: iotago.Outputs{
+				&iotago.FoundryOutput{
+					Address:           tpkg.RandAliasAddress(),
+					Amount:            1337,
+					NativeTokens:      nil,
+					SerialNumber:      5,
+					TokenTag:          tpkg.Rand12ByteArray(),
+					CirculatingSupply: new(big.Int).SetUint64(5),
+					MaximumSupply:     new(big.Int).SetUint64(4),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Blocks:            nil,
+				},
+			},
+			wantErr: iotago.ErrFoundryOutputInvalidCirculatingSupply,
+		},
 	}
+	valFunc := iotago.OutputsSyntacticalFoundry()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := iotago.OutputsSyntacticalFoundry(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("OutputsSyntacticalFoundry() = %v, want %v", got, tt.want)
-			}
+			t.Run(tt.name, func(t *testing.T) {
+				var runErr error
+				for index, output := range tt.outputs {
+					if err := valFunc(index, output); err != nil {
+						runErr = err
+					}
+				}
+				require.ErrorIs(t, runErr, tt.wantErr)
+			})
 		})
 	}
 }
 
 func TestOutputsSyntacticalNFT(t *testing.T) {
-	type args struct {
-		txID *iotago.TransactionID
-	}
 	tests := []struct {
-		name string
-		args args
-		want iotago.OutputsSyntacticalValidationFunc
+		name    string
+		outputs iotago.Outputs
+		wantErr error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "ok",
+			outputs: iotago.Outputs{
+				&iotago.NFTOutput{
+					Address: tpkg.RandEd25519Address(),
+					Amount:  OneMi,
+					NFTID:   iotago.NFTID{},
+				},
+			},
+		},
+		{
+			name: "fail - cyclic",
+			outputs: iotago.Outputs{
+				func() *iotago.NFTOutput {
+					nftID := iotago.NFTID(tpkg.Rand20ByteArray())
+					return &iotago.NFTOutput{
+						Address: nftID.ToAddress(),
+						Amount:  OneMi,
+						NFTID:   nftID,
+					}
+				}(),
+			},
+			wantErr: iotago.ErrNFTOutputCyclicAddress,
+		},
 	}
+	randTxID := tpkg.Rand32ByteArray()
+	valFunc := iotago.OutputsSyntacticalNFT(&randTxID)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := iotago.OutputsSyntacticalNFT(tt.args.txID); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("OutputsSyntacticalNFT() = %v, want %v", got, tt.want)
-			}
+			t.Run(tt.name, func(t *testing.T) {
+				var runErr error
+				for index, output := range tt.outputs {
+					if err := valFunc(index, output); err != nil {
+						runErr = err
+					}
+				}
+				require.ErrorIs(t, runErr, tt.wantErr)
+			})
 		})
 	}
 }
