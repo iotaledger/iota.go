@@ -140,6 +140,16 @@ var (
 	}
 )
 
+// TransactionEssenceInputsArrayRules returns array rules defining the constraints on Inputs within a TransactionEssence.
+func TransactionEssenceInputsArrayRules() serializer.ArrayRules {
+	return *essenceInputsArrayRules
+}
+
+// TransactionEssenceOutputsArrayRules returns array rules defining the constraints on Outputs within a TransactionEssence.
+func TransactionEssenceOutputsArrayRules() serializer.ArrayRules {
+	return *essenceOutputsArrayRules
+}
+
 // TransactionEssenceSelector implements SerializableSelectorFunc for transaction essence types.
 func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 	var seri *TransactionEssence

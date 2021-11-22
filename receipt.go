@@ -49,6 +49,11 @@ var (
 	}
 )
 
+// MigratedFundEntriesArrayRules returns array rules defining the constraints of a slice of MigratedFundsEntry.
+func MigratedFundEntriesArrayRules() serializer.ArrayRules {
+	return *migratedFundEntriesArrayRules
+}
+
 // Receipt is a listing of migrated funds.
 type Receipt struct {
 	// The milestone index at which the funds were migrated in the legacy network.

@@ -56,6 +56,11 @@ var (
 	}
 )
 
+// NativeTokenArrayRules returns array rules defining the constraints on a slice of NativeTokens.
+func NativeTokenArrayRules() serializer.ArrayRules {
+	return *nativeTokensArrayRules
+}
+
 // NativeTokenID is an identifier which uniquely identifies a NativeToken.
 type NativeTokenID [NativeTokenIDLength]byte
 

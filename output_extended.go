@@ -54,6 +54,11 @@ var (
 	}
 )
 
+// ExtendedOutputFeatureBlocksArrayRules returns array rules defining the constraints on FeatureBlocks within an ExtendedOutput.
+func ExtendedOutputFeatureBlocksArrayRules() serializer.ArrayRules {
+	return *extendedOutputFeatBlockArrayRules
+}
+
 // ExtendedOutput is an output type which can hold native tokens and feature blocks.
 type ExtendedOutput struct {
 	// The deposit address.

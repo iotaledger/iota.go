@@ -56,6 +56,11 @@ var (
 	}
 )
 
+// TransactionUnlockBlocksArrayRules returns array rules defining the constraints on UnlockBlocks within a Transaction.
+func TransactionUnlockBlocksArrayRules() serializer.ArrayRules {
+	return txUnlockBlockArrayRules
+}
+
 // TransactionID is the ID of a Transaction.
 type TransactionID = [TransactionIDLength]byte
 

@@ -61,6 +61,11 @@ var (
 	}
 )
 
+// AliasOutputFeatureBlocksArrayRules returns array rules defining the constraints on FeatureBlocks within an AliasOutput.
+func AliasOutputFeatureBlocksArrayRules() serializer.ArrayRules {
+	return *aliasOutputFeatBlockArrayRules
+}
+
 // AliasID is the identifier for an alias account.
 // It is computed as the Blake2b-160 hash of the OutputID of the output which created the account.
 type AliasID [AliasIDLength]byte
