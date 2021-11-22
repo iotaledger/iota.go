@@ -107,6 +107,21 @@ var (
 	}
 )
 
+// MilestoneParentArrayRules returns array rules defining the constraints on a slice of milestone parent references.
+func MilestoneParentArrayRules() serializer.ArrayRules {
+	return milestoneParentArrayRules
+}
+
+// MilestonePublicKeyArrayRules returns array rules defining the constraints on a slice of public keys within a milestone.
+func MilestonePublicKeyArrayRules() serializer.ArrayRules {
+	return milestonePublicKeyArrayRules
+}
+
+// MilestoneSignatureArrayRules returns array rules defining the constraints on a slice of signatures within a milestone.
+func MilestoneSignatureArrayRules() serializer.ArrayRules {
+	return milestoneSignatureArrayRules
+}
+
 type (
 	// MilestoneID is the ID of a Milestone.
 	MilestoneID = [MilestoneIDLength]byte

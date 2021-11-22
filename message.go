@@ -65,6 +65,11 @@ var (
 	}
 )
 
+// MessageParentArrayRules returns array rules defining the constraints on a slice of message parent references.
+func MessageParentArrayRules() serializer.ArrayRules {
+	return messageParentArrayRules
+}
+
 // MessageID is the ID of a Message.
 type MessageID = [MessageIDLength]byte
 

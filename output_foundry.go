@@ -58,6 +58,11 @@ var (
 	}
 )
 
+// FoundryOutputFeatureBlocksArrayRules returns array rules defining the constraints on FeatureBlocks within an FoundryOutput.
+func FoundryOutputFeatureBlocksArrayRules() serializer.ArrayRules {
+	return *foundryOutputFeatBlockArrayRules
+}
+
 // TokenTag is a tag holding some additional data which might be interpreted by higher layers.
 type TokenTag = [TokenTagLength]byte
 

@@ -72,6 +72,11 @@ var (
 	}
 )
 
+// NFTOutputFeatureBlocksArrayRules returns array rules defining the constraints on FeatureBlocks within an NFTOutput.
+func NFTOutputFeatureBlocksArrayRules() serializer.ArrayRules {
+	return *nftOutputFeatBlockArrayRules
+}
+
 // NFTID is the identifier for an NFT.
 // It is computed as the Blake2b-160 hash of the OutputID of the output which created the NFT.
 type NFTID [NFTIDLength]byte
