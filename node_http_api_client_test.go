@@ -264,7 +264,7 @@ func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 func TestNodeAPI_OutputByID(t *testing.T) {
 	defer gock.Off()
 
-	originOutput, _ := tpkg.RandSimpleOutput(iotago.AddressEd25519)
+	originOutput := tpkg.RandExtendedOutput(iotago.AddressEd25519)
 	sigDepJson, err := originOutput.MarshalJSON()
 	require.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)

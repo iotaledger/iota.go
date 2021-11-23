@@ -13,6 +13,11 @@ var (
 	ErrNonUniqueFeatureBlocks = errors.New("non unique feature blocks within outputs")
 	// ErrInvalidFeatureBlockTransition gets returned when a FeatureBlock's transition within a ChainConstrainedOutput is invalid.
 	ErrInvalidFeatureBlockTransition = errors.New("invalid feature block transition")
+	// ErrTimelockNotExpired gets returned when timelocks in a FeatureBlocksSet are not expired.
+	ErrTimelockNotExpired = errors.New("timelock not expired")
+	// ErrIdentNotSender gets returned when checking whether an ident can unlock an output but that ident is not the
+	// sender which can actually unlock the output.
+	ErrIdentNotSender = errors.New("ident is not sender")
 )
 
 // FeatureBlockType defines the type of feature blocks.
@@ -62,6 +67,7 @@ func FeatureBlockTypeToString(ty FeatureBlockType) string {
 	return "unknown feature block"
 }
 
+// FeatureBlocks is a slice of FeatureBlock(s).
 type FeatureBlocks []FeatureBlock
 
 func (f FeatureBlocks) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
@@ -150,6 +156,77 @@ func (f FeatureBlocks) Equal(other FeatureBlocks) bool {
 
 // FeatureBlocksSet is a set of FeatureBlock(s).
 type FeatureBlocksSet map[FeatureBlockType]FeatureBlock
+
+// tells whether the given ident can unlock an output containing this set of FeatureBlock(s)
+// when taking into consideration the constraints enforced by them:
+//	- If the timelocks are not expired, then nobody can unlock.
+//	- If the expiration blocks are expired, then only the sender ident can unlock.
+// returns a boolean indicating whether the given ident was the sender and that the sender can unlock.
+// an error is returned in any case where ident can not unlock given the FeatureBlock(s).
+func (f FeatureBlocksSet) unlockableBy(ident Address, extParas *ExternalUnlockParameters) (bool, error) {
+	if err := f.TimelocksExpired(extParas); err != nil {
+		return false, err
+	}
+
+	// if the sender can unlock, then ident must be the sender
+	if senderFeatBlock := f.SenderFeatureBlock(); senderFeatBlock != nil && f.senderCanUnlock(extParas) {
+		if !ident.Equal(senderFeatBlock.Address) {
+			return false, ErrIdentNotSender
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// tells whether a sender defined in a SenderFeatureBlock within this set is the actual
+// identity which could unlock an Output containing this FeatureBlocksSet given the ExternalUnlockParameters.
+func (f FeatureBlocksSet) senderCanUnlock(extParas *ExternalUnlockParameters) bool {
+	featBlockExpMsIndex := f.ExpirationMilestoneIndexFeatureBlock()
+	featBlockExpUnix := f.ExpirationUnixFeatureBlock()
+
+	if featBlockExpMsIndex == nil && featBlockExpUnix == nil {
+		return false
+	}
+
+	featBlockSender := f.SenderFeatureBlock()
+	if featBlockSender == nil {
+		return false
+	}
+
+	switch {
+	case featBlockExpMsIndex != nil && featBlockExpUnix != nil:
+		if featBlockExpMsIndex.MilestoneIndex <= extParas.ConfMsIndex &&
+			featBlockExpUnix.UnixTime <= extParas.ConfUnix {
+			return true
+		}
+	case featBlockExpMsIndex != nil:
+		if featBlockExpMsIndex.MilestoneIndex <= extParas.ConfMsIndex {
+			return true
+		}
+	case featBlockExpUnix != nil:
+		if featBlockExpUnix.UnixTime <= extParas.ConfUnix {
+			return true
+		}
+	}
+
+	return false
+}
+
+// TimelocksExpired tells whether FeatureBlock(s) in this slice which impose a timelock are expired
+// in relation to the given ExternalUnlockParameters.
+func (f FeatureBlocksSet) TimelocksExpired(extParas *ExternalUnlockParameters) error {
+	if lockMsIndex := f.TimelockMilestoneIndexFeatureBlock(); lockMsIndex != nil && extParas.ConfMsIndex < lockMsIndex.MilestoneIndex {
+		return fmt.Errorf("%w: block/ext %d%d", ErrTimelockNotExpired, lockMsIndex.MilestoneIndex, extParas.ConfMsIndex)
+	}
+
+	if lockUnix := f.TimelockUnixFeatureBlock(); lockUnix != nil &&
+		extParas.ConfUnix < lockUnix.UnixTime {
+		return fmt.Errorf("%w: block/ext %d%d", ErrTimelockNotExpired, lockUnix.UnixTime, extParas.ConfUnix)
+	}
+
+	return nil
+}
 
 // SenderFeatureBlock returns the SenderFeatureBlock in the set or nil.
 func (f FeatureBlocksSet) SenderFeatureBlock() *SenderFeatureBlock {

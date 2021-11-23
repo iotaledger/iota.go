@@ -273,15 +273,19 @@ func RandTransactionEssence() (*iotago.TransactionEssence, []byte) {
 	outputCount := rand.Intn(10) + 1
 	Must(binary.Write(&buf, binary.LittleEndian, uint16(outputCount)))
 	for i := outputCount; i > 0; i-- {
-		_, depData := RandSimpleOutput(iotago.AddressEd25519)
-		outputsBytes = append(outputsBytes, depData)
+		output := RandExtendedOutput(iotago.AddressEd25519)
+		outputBytes, err := output.Serialize(serializer.DeSeriModeNoValidation, nil)
+		if err != nil {
+			panic(err)
+		}
+		outputsBytes = append(outputsBytes, outputBytes)
 	}
 
 	sort.Sort(outputsBytes)
 	for _, outputData := range outputsBytes {
 		_, err := buf.Write(outputData)
 		Must(err)
-		output := &iotago.SimpleOutput{}
+		output := &iotago.ExtendedOutput{}
 		if _, err := output.Deserialize(outputData, serializer.DeSeriModeNoValidation, nil); err != nil {
 			panic(err)
 		}
@@ -590,29 +594,20 @@ func RandTreasuryTransaction() (*iotago.TreasuryTransaction, []byte) {
 	}, b.Bytes()
 }
 
-// RandSimpleOutput returns a random simple output.
-func RandSimpleOutput(addrType iotago.AddressType) (*iotago.SimpleOutput, []byte) {
-	var buf bytes.Buffer
-	Must(buf.WriteByte(byte(iotago.OutputSimple)))
+// RandExtendedOutput returns a random extended output (with no feature blocks).
+func RandExtendedOutput(addrType iotago.AddressType) *iotago.ExtendedOutput {
+	dep := &iotago.ExtendedOutput{}
 
-	dep := &iotago.SimpleOutput{}
-
-	var addrData []byte
 	switch addrType {
 	case iotago.AddressEd25519:
-		dep.Address, addrData = RandEd25519AddressAndBytes()
+		dep.Address = RandEd25519Address()
 	default:
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
 
-	_, err := buf.Write(addrData)
-	Must(err)
-
 	amount := uint64(rand.Intn(10000))
-	Must(binary.Write(&buf, binary.LittleEndian, amount))
 	dep.Amount = amount
-
-	return dep, buf.Bytes()
+	return dep
 }
 
 // OneInputOutputTransaction generates a random transaction with one input and output.
@@ -630,7 +625,7 @@ func OneInputOutputTransaction() *iotago.Transaction {
 				},
 			},
 			Outputs: iotago.Outputs{
-				&iotago.SimpleOutput{
+				&iotago.ExtendedOutput{
 					Address: func() iotago.Address {
 						edAddr, _ := RandEd25519AddressAndBytes()
 						return edAddr

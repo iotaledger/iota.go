@@ -132,6 +132,14 @@ type NFTOutput struct {
 	Blocks FeatureBlocks
 }
 
+func (n *NFTOutput) Ident() Address {
+	return n.Address
+}
+
+func (n *NFTOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) (bool, error) {
+	return outputUnlockable(n, nil, ident, extParas)
+}
+
 func (n *NFTOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
@@ -183,10 +191,6 @@ func (n *NFTOutput) FeatureBlocks() FeatureBlocks {
 
 func (n *NFTOutput) Deposit() uint64 {
 	return n.Amount
-}
-
-func (n *NFTOutput) Ident() (Address, error) {
-	return n.Address, nil
 }
 
 func (n *NFTOutput) Type() OutputType {
