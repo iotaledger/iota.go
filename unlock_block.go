@@ -25,8 +25,8 @@ const (
 var (
 	// ErrSigUnlockBlocksNotUnique gets returned if unlock blocks making part of a transaction aren't unique.
 	ErrSigUnlockBlocksNotUnique = errors.New("signature unlock blocks must be unique")
-	// ErrRefUnlockBlockInvalidRef gets returned if a ReferentialUnlockBlock does not reference a SignatureUnlockBlock.
-	ErrRefUnlockBlockInvalidRef = errors.New("referential unlock block must point to a previous signature unlock block")
+	// ErrReferentialUnlockBlockInvalid gets returned when a ReferentialUnlockBlock is invalid.
+	ErrReferentialUnlockBlockInvalid = errors.New("invalid referential unlock block")
 	// ErrSigUnlockBlockHasNilSig gets returned if a signature unlock block contains a nil signature.
 	ErrSigUnlockBlockHasNilSig = errors.New("signature is nil")
 	// ErrTypeIsNotSupportedUnlockBlock gets returned when a serializable was found to not be a supported UnlockBlock.
@@ -195,19 +195,18 @@ func UnlockBlocksSigUniqueAndRefValidator() UnlockBlockValidatorFunc {
 			seenSigBlocksBytes[string(sigBlockBytes)] = index
 			seenSigBlocks[uint16(index)] = struct{}{}
 		case ReferentialUnlockBlock:
-			originRef := x
-			for currentRef := x; ; {
-				prevRef := seenRefBlocks[currentRef.Ref()]
-				if prevRef != nil {
-					currentRef = prevRef
-					continue
+			if prevRef := seenRefBlocks[x.Ref()]; prevRef != nil {
+				if !x.Chainable() {
+					return fmt.Errorf("%w: %d references existing referential unlock block %d but it does not support chaining", ErrReferentialUnlockBlockInvalid, index, x.Ref())
 				}
-				if _, has := seenSigBlocks[currentRef.Ref()]; !has {
-					return fmt.Errorf("%w: %d references non existent unlock block %d", ErrRefUnlockBlockInvalidRef, index, x.Ref())
-				}
+				seenRefBlocks[uint16(index)] = x
 				break
 			}
-			seenRefBlocks[uint16(index)] = originRef
+			// must reference a sig unlock block here
+			if _, has := seenSigBlocks[x.Ref()]; !has {
+				return fmt.Errorf("%w: %d references non existent unlock block %d", ErrReferentialUnlockBlockInvalid, index, x.Ref())
+			}
+			seenRefBlocks[uint16(index)] = x
 		default:
 			return fmt.Errorf("%w: unlock block at index %d is of unknown type %T", ErrUnknownUnlockBlockType, index, x)
 		}

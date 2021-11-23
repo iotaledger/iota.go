@@ -1,31 +1,21 @@
 package iotago_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v3"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestInputSelector(t *testing.T) {
-	_, err := iotago.InputSelector(100)
-	assert.True(t, errors.Is(err, iotago.ErrUnknownInputType))
-}
-
-func TestInputsValidatorFunc(t *testing.T) {
-	type args struct {
-		inputs iotago.Inputs
-		funcs  []iotago.InputsSyntacticalValidationFunc
-	}
+func TestInputsSyntacticalUnique(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    args
-		wantErr bool
+		inputs  iotago.Inputs
+		wantErr error
 	}{
 		{
-			"ok addr",
-			args{inputs: iotago.Inputs{
+			name: "ok",
+			inputs: iotago.Inputs{
 				&iotago.UTXOInput{
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 0,
@@ -34,11 +24,12 @@ func TestInputsValidatorFunc(t *testing.T) {
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 1,
 				},
-			}, funcs: []iotago.InputsSyntacticalValidationFunc{iotago.InputsSyntacticalUnique()}}, false,
+			},
+			wantErr: nil,
 		},
 		{
-			"addr not unique",
-			args{inputs: iotago.Inputs{
+			name: "fail - addr not unique",
+			inputs: iotago.Inputs{
 				&iotago.UTXOInput{
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 0,
@@ -47,32 +38,61 @@ func TestInputsValidatorFunc(t *testing.T) {
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 0,
 				},
-			}, funcs: []iotago.InputsSyntacticalValidationFunc{iotago.InputsSyntacticalUnique()}}, true,
-		},
-		{
-			"ok UTXO ref index",
-			args{inputs: iotago.Inputs{
-				&iotago.UTXOInput{
-					TransactionID:          [32]byte{},
-					TransactionOutputIndex: 0,
-				},
-			}, funcs: []iotago.InputsSyntacticalValidationFunc{iotago.InputsSyntacticalIndicesWithinBounds()}}, false,
-		},
-		{
-			"invalid UTXO ref index",
-			args{inputs: iotago.Inputs{
-				&iotago.UTXOInput{
-					TransactionID:          [32]byte{},
-					TransactionOutputIndex: 250,
-				},
-			}, funcs: []iotago.InputsSyntacticalValidationFunc{iotago.InputsSyntacticalIndicesWithinBounds()}}, true,
+			},
+			wantErr: iotago.ErrInputUTXORefsNotUnique,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := iotago.ValidateInputs(tt.args.inputs, tt.args.funcs...); (err != nil) != tt.wantErr {
-				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+			valFunc := iotago.InputsSyntacticalUnique()
+			var runErr error
+			for index, input := range tt.inputs {
+				if err := valFunc(index, input); err != nil {
+					runErr = err
+				}
 			}
+			require.ErrorIs(t, runErr, tt.wantErr)
+		})
+	}
+}
+
+func TestInputsSyntacticalIndicesWithinBounds(t *testing.T) {
+	tests := []struct {
+		name    string
+		inputs  iotago.Inputs
+		wantErr error
+	}{
+		{
+			name: "ok",
+			inputs: iotago.Inputs{
+				&iotago.UTXOInput{
+					TransactionID:          [32]byte{},
+					TransactionOutputIndex: 0,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - invalid UTXO ref index",
+			inputs: iotago.Inputs{
+				&iotago.UTXOInput{
+					TransactionID:          [32]byte{},
+					TransactionOutputIndex: 250,
+				},
+			},
+			wantErr: iotago.ErrRefUTXOIndexInvalid,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			valFunc := iotago.InputsSyntacticalIndicesWithinBounds()
+			var runErr error
+			for index, input := range tt.inputs {
+				if err := valFunc(index, input); err != nil {
+					runErr = err
+				}
+			}
+			require.ErrorIs(t, runErr, tt.wantErr)
 		})
 	}
 }

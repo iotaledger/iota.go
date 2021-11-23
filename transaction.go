@@ -300,8 +300,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiCont
 }
 
 // SemanticallyValidate semantically validates the Transaction by checking that the semantic rules applied to the inputs
-// and outputs are fulfilled. SyntacticallyValidate() should be called before SemanticallyValidate() to
-// ensure that the essence part of the transaction is syntactically valid.
+// and outputs are fulfilled. Semantic validation should only be executed on Transaction(s) which are syntactically valid.
 func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inputs OutputSet, semValFuncs ...SemanticValidationFunc) error {
 	var err error
 	svCtx.WorkingSet, err = NewSemValiContextWorkingSet(t, inputs)
