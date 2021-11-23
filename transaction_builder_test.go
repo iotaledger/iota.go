@@ -31,7 +31,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.SimpleOutput{Address: outputAddr1, Amount: 50})
+				AddOutput(&iotago.ExtendedOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
 				name:       "ok - 1 input/output",
@@ -45,7 +45,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.SimpleOutput{Address: outputAddr1, Amount: 50}).
+				AddOutput(&iotago.ExtendedOutput{Address: outputAddr1, Amount: 50}).
 				AddIndexationPayload(&iotago.Indexation{Index: []byte("index"), Data: nil})
 
 			return test{
@@ -80,7 +80,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.SimpleOutput{Address: outputAddr1, Amount: 50})
+				AddOutput(&iotago.ExtendedOutput{Address: outputAddr1, Amount: 50})
 
 			// wrong address/keys
 			wrongIdentity := tpkg.RandEd25519PrivateKey()
@@ -100,7 +100,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.SimpleOutput{Address: outputAddr1, Amount: 50})
+				AddOutput(&iotago.ExtendedOutput{Address: outputAddr1, Amount: 50})
 
 			return test{
 				name:       "err - missing address keys (no keys given at all)",

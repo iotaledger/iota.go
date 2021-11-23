@@ -216,10 +216,7 @@ type SemanticValidationFunc = func(t *Transaction, inputs OutputSet) error
 
 // SemanticValidationContext defines the context under which a semantic validation for a Transaction is happening.
 type SemanticValidationContext struct {
-	// The confirming milestone's index.
-	ConfirmingMilestoneIndex uint32
-	// The confirming milestone's unix seconds timestamp.
-	ConfirmingMilestoneUnix uint64
+	ExtParas *ExternalUnlockParameters
 
 	// The working set which is auto. populated during the semantic validation.
 	WorkingSet *SemValiContextWorkingSet
@@ -337,6 +334,7 @@ func runSemanticValidations(svCtx *SemanticValidationContext, checks ...TxSemant
 }
 
 // UnlockedIdentities defines a set of identities which are unlocked from the input side of a Transaction.
+// The value represent the index of the unlock block which unlocked the identity.
 type UnlockedIdentities map[string]uint16
 
 // TxSemanticValidationFunc is a function which given the context, input, outputs and
@@ -366,41 +364,38 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 
 func identToUnlock(svCtx *SemanticValidationContext, input Output, inputIndex int) (Address, error) {
 	switch in := input.(type) {
-	case SingleIdentOutput:
-		return in.Ident()
-	case MultiIdentOutput:
-		return identToUnlockFromMultiIdentOutput(svCtx, in, inputIndex)
+
+	case TransIndepIdentOutput:
+		return in.Ident(), nil
+
+	case TransDepIdentOutput:
+		chainID := in.Chain()
+		if chainID.Empty() {
+			utxoChainID, is := chainID.(UTXOIDChainID)
+			if !is {
+				return nil, ErrTransDepIdentOutputNonUTXOChainID
+			}
+			chainID = utxoChainID.FromOutputID(svCtx.WorkingSet.Tx.Essence.Inputs[inputIndex].(IndexedUTXOReferencer).Ref())
+		}
+
+		next := svCtx.WorkingSet.OutChains[chainID]
+		if next == nil {
+			return in.Ident(nil)
+		}
+
+		nextTransDepIdentOutput, ok := next.(TransDepIdentOutput)
+		if !ok {
+			return nil, ErrTransDepIdentOutputNextInvalid
+		}
+
+		return in.Ident(nextTransDepIdentOutput)
+
 	default:
 		panic("unknown ident output type in semantic unlocks")
 	}
 }
 
-// TODO: abstract this all to work with MultiIdentOutput / ChainID instead
-func identToUnlockFromMultiIdentOutput(svCtx *SemanticValidationContext, inputMultiIdentOutput MultiIdentOutput, inputIndex int) (Address, error) {
-	inputAliasOutput, is := inputMultiIdentOutput.(*AliasOutput)
-	if !is {
-		// this can not happen because only AliasOutput implements MultiIdentOutput
-		panic("non alias output is implementing multi ident output in semantic unlocks")
-	}
-
-	aliasID := inputAliasOutput.AliasID
-	if aliasID.Empty() {
-		aliasID = AliasIDFromOutputID(svCtx.WorkingSet.Tx.Essence.Inputs[inputIndex].(IndexedUTXOReferencer).Ref())
-	}
-
-	ident := inputAliasOutput.StateController
-
-	// means a governance transition as either state did not change
-	// or the alias output is being destroyed
-	if outputAliasOutput, has := svCtx.WorkingSet.OutChains[aliasID]; !has ||
-		inputAliasOutput.StateIndex == outputAliasOutput.(*AliasOutput).StateIndex {
-		ident = inputAliasOutput.GovernanceController
-	}
-
-	return ident, nil
-}
-
-func checkSenderFeatureBlockIdentUnlock(svCtx *SemanticValidationContext, output Output) (Address, error) {
+func checkExpiredForReceiver(svCtx *SemanticValidationContext, output Output) (Address, error) {
 	featBlockOutput, is := output.(FeatureBlockOutput)
 	if !is {
 		return nil, nil
@@ -411,30 +406,8 @@ func checkSenderFeatureBlockIdentUnlock(svCtx *SemanticValidationContext, output
 		return nil, err
 	}
 
-	featBlockExpMsIndex := featBlockSet[FeatureBlockExpirationMilestoneIndex]
-	featBlockExpUnix := featBlockSet[FeatureBlockExpirationUnix]
-
-	if featBlockExpMsIndex == nil && featBlockExpUnix == nil {
-		return nil, nil
-	}
-
-	// existence guaranteed by syntactical validation
-	featBlockSender := featBlockSet[FeatureBlockSender].(*SenderFeatureBlock)
-
-	switch {
-	case featBlockExpMsIndex != nil && featBlockExpUnix != nil:
-		if featBlockExpMsIndex.(*ExpirationMilestoneIndexFeatureBlock).MilestoneIndex <= svCtx.ConfirmingMilestoneIndex &&
-			featBlockExpUnix.(*ExpirationUnixFeatureBlock).UnixTime <= svCtx.ConfirmingMilestoneUnix {
-			return featBlockSender.Address, nil
-		}
-	case featBlockExpMsIndex != nil:
-		if featBlockExpMsIndex.(*ExpirationMilestoneIndexFeatureBlock).MilestoneIndex <= svCtx.ConfirmingMilestoneIndex {
-			return featBlockSender.Address, nil
-		}
-	case featBlockExpUnix != nil:
-		if featBlockExpUnix.(*ExpirationUnixFeatureBlock).UnixTime <= svCtx.ConfirmingMilestoneUnix {
-			return featBlockSender.Address, nil
-		}
+	if featBlockSet.senderCanUnlock(svCtx.ExtParas) {
+		return featBlockSet.SenderFeatureBlock().Address, nil
 	}
 
 	return nil, nil
@@ -446,7 +419,7 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex in
 		return fmt.Errorf("unable to retrieve ident to unlock of input %d: %w", inputIndex, err)
 	}
 
-	actualIdentToUnlock, err := checkSenderFeatureBlockIdentUnlock(svCtx, output)
+	actualIdentToUnlock, err := checkExpiredForReceiver(svCtx, output)
 	if err != nil {
 		return err
 	}
@@ -567,8 +540,6 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 
 			// accumulate simple transfers for DustDepositReturnFeatureBlock checks
 			switch outputTy := output.(type) {
-			case *SimpleOutput:
-				outputSimpleTransfersPerIdent[outputTy.Address.Key()] += outDeposit
 			case *ExtendedOutput:
 				if len(outputTy.FeatureBlocks()) > 0 {
 					continue
@@ -605,17 +576,17 @@ func TxSemanticTimelock() TxSemanticValidationFunc {
 			if !is {
 				continue
 			}
-			for _, featureBlock := range inputWithFeatureBlocks.FeatureBlocks() {
-				switch block := featureBlock.(type) {
-				case *TimelockMilestoneIndexFeatureBlock:
-					if svCtx.ConfirmingMilestoneIndex < block.MilestoneIndex {
-						return fmt.Errorf("%w: input at index %d's milestone index timelock is not expired, at %d, current %d", ErrInvalidInputUnlock, inputIndex, block.MilestoneIndex, svCtx.ConfirmingMilestoneIndex)
-					}
-				case *TimelockUnixFeatureBlock:
-					if svCtx.ConfirmingMilestoneUnix < block.UnixTime {
-						return fmt.Errorf("%w: input at index %d's unix timelock is not expired, at %d, current %d", ErrInvalidInputUnlock, inputIndex, block.UnixTime, svCtx.ConfirmingMilestoneUnix)
-					}
-				}
+
+			featBlockSet := inputWithFeatureBlocks.FeatureBlocks().MustSet()
+
+			if lockMsIndex := featBlockSet.TimelockMilestoneIndexFeatureBlock(); lockMsIndex != nil &&
+				svCtx.ExtParas.ConfMsIndex < lockMsIndex.MilestoneIndex {
+				return fmt.Errorf("%w: input at index %d's milestone index timelock is not expired, at %d, current %d", ErrInvalidInputUnlock, inputIndex, lockMsIndex.MilestoneIndex, svCtx.ExtParas.ConfMsIndex)
+			}
+
+			if lockUnix := featBlockSet.TimelockUnixFeatureBlock(); lockUnix != nil &&
+				svCtx.ExtParas.ConfUnix < lockUnix.UnixTime {
+				return fmt.Errorf("%w: input at index %d's unix timelock is not expired, at %d, current %d", ErrInvalidInputUnlock, inputIndex, lockUnix.UnixTime, svCtx.ExtParas.ConfUnix)
 			}
 		}
 		return nil

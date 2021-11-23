@@ -30,7 +30,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			name:        "ok",
 			deSeriParas: DefZeroRentParas,
 			outputs: iotago.Outputs{
-				&iotago.SimpleOutput{Amount: iotago.TokenSupply, Address: tpkg.RandEd25519Address()},
+				&iotago.ExtendedOutput{Amount: iotago.TokenSupply, Address: tpkg.RandEd25519Address()},
 			},
 			wantErr: nil,
 		},
@@ -38,7 +38,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			name:        "ok - state rent covered",
 			deSeriParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
-				&iotago.SimpleOutput{Amount: 580, Address: tpkg.RandAliasAddress()},
+				&iotago.ExtendedOutput{Amount: 583, Address: tpkg.RandAliasAddress()},
 			},
 			wantErr: nil,
 		},
@@ -97,7 +97,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			name:        "fail - state rent not covered",
 			deSeriParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
-				&iotago.SimpleOutput{Amount: 100, Address: tpkg.RandAliasAddress()},
+				&iotago.ExtendedOutput{Amount: 100, Address: tpkg.RandAliasAddress()},
 			},
 			wantErr: iotago.ErrVByteRentNotCovered,
 		},
@@ -105,7 +105,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			name:        "fail - zero deposit",
 			deSeriParas: DefZeroRentParas,
 			outputs: iotago.Outputs{
-				&iotago.SimpleOutput{Amount: 0, Address: tpkg.RandEd25519Address()},
+				&iotago.ExtendedOutput{Amount: 0, Address: tpkg.RandEd25519Address()},
 			},
 			wantErr: iotago.ErrDepositAmountMustBeGreaterThanZero,
 		},
@@ -113,7 +113,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			name:        "fail - more than total supply on single output",
 			deSeriParas: DefZeroRentParas,
 			outputs: iotago.Outputs{
-				&iotago.SimpleOutput{Amount: iotago.TokenSupply + 1, Address: tpkg.RandEd25519Address()},
+				&iotago.ExtendedOutput{Amount: iotago.TokenSupply + 1, Address: tpkg.RandEd25519Address()},
 			},
 			wantErr: iotago.ErrOutputDepositsMoreThanTotalSupply,
 		},
@@ -121,8 +121,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			name:        "fail - sum more than total supply over multiple outputs",
 			deSeriParas: DefZeroRentParas,
 			outputs: iotago.Outputs{
-				&iotago.SimpleOutput{Amount: iotago.TokenSupply - 1, Address: tpkg.RandEd25519Address()},
-				&iotago.SimpleOutput{Amount: iotago.TokenSupply - 1, Address: tpkg.RandEd25519Address()},
+				&iotago.ExtendedOutput{Amount: iotago.TokenSupply - 1, Address: tpkg.RandEd25519Address()},
+				&iotago.ExtendedOutput{Amount: iotago.TokenSupply - 1, Address: tpkg.RandEd25519Address()},
 			},
 			wantErr: iotago.ErrOutputsSumExceedsTotalSupply,
 		},

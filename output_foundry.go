@@ -125,6 +125,14 @@ type FoundryOutput struct {
 	Blocks FeatureBlocks
 }
 
+func (f *FoundryOutput) Ident() Address {
+	return f.Address
+}
+
+func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) (bool, error) {
+	return outputUnlockable(f, nil, ident, extParas)
+}
+
 func (f *FoundryOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
@@ -298,10 +306,6 @@ func (f *FoundryOutput) FeatureBlocks() FeatureBlocks {
 
 func (f *FoundryOutput) Deposit() uint64 {
 	return f.Amount
-}
-
-func (f *FoundryOutput) Ident() (Address, error) {
-	return f.Address, nil
 }
 
 func (f *FoundryOutput) Type() OutputType {

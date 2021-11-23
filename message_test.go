@@ -99,7 +99,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 			  ],
 			  "outputs": [
 				{
-				  "type": 0,
+				  "type": 3,
 				  "address": {
 					"type": 0,
 					"address": "5f24ebcb5d48acbbfe6e7401b502ba7bb93acb3591d55eda7d32c37306cc805f"

@@ -17,6 +17,13 @@ const (
 	OutputIDLength = TransactionIDLength + serializer.UInt16ByteSize
 )
 
+var (
+	// ErrTransDepIdentOutputNonUTXOChainID gets returned when a TransDepIdentOutput has a ChainID which is not a UTXOIDChainID.
+	ErrTransDepIdentOutputNonUTXOChainID = errors.New("transition dependable ident outputs must have UTXO chain IDs")
+	// ErrTransDepIdentOutputNextInvalid gets returned when a TransDepIdentOutput's next state is invalid.
+	ErrTransDepIdentOutputNextInvalid = errors.New("transition dependable ident output's next output is invalid")
+)
+
 // OutputID defines the identifier for an UTXO which consists
 // out of the referenced TransactionID and the output's index.
 type OutputID [OutputIDLength]byte
@@ -64,8 +71,6 @@ func (outputIDs OutputIDs) ToHex() []string {
 type OutputType byte
 
 const (
-	// OutputSimple denotes a SimpleOutput
-	OutputSimple OutputType = 0
 	// OutputTreasury denotes the type of the TreasuryOutput.
 	OutputTreasury OutputType = 2
 	// OutputExtended denotes an ExtendedOutput.
@@ -81,8 +86,6 @@ const (
 // OutputTypeToString returns the name of an Output given the type.
 func OutputTypeToString(ty OutputType) string {
 	switch ty {
-	case OutputSimple:
-		return "SimpleOutput"
 	case OutputExtended:
 		return "ExtendedOutput"
 	case OutputTreasury:
@@ -100,10 +103,6 @@ func OutputTypeToString(ty OutputType) string {
 var (
 	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.
 	ErrDepositAmountMustBeGreaterThanZero = errors.New("deposit amount must be greater than zero")
-	// ErrMultiIdentOutputMismatch gets returned when MultiIdentOutput(s) aren't compatible.
-	ErrMultiIdentOutputMismatch = errors.New("multi ident output mismatch")
-	// ErrNonUniqueMultiIdentOutputs gets returned when multiple MultiIdentOutput(s) with the same ChainID exist within an OutputsByType.
-	ErrNonUniqueMultiIdentOutputs = errors.New("non unique multi ident within outputs")
 	// ErrChainMissing gets returned when a chain is missing.
 	ErrChainMissing = errors.New("chain missing")
 	// ErrNonUniqueChainConstrainedOutputs gets returned when multiple ChainConstrainedOutputs(s) with the same ChainID exist within sets.
@@ -206,38 +205,6 @@ func (outputs OutputsByType) NativeTokenOutputs() NativeTokenOutputs {
 		}
 	}
 	return nativeTokenOutputs
-}
-
-// MultiIdentOutputs returns a slice of Outputs which are MultiIdentOutput.
-func (outputs OutputsByType) MultiIdentOutputs() MultiIdentOutputs {
-	multiIdentOutputs := make(MultiIdentOutputs, 0)
-	for _, slice := range outputs {
-		for _, output := range slice {
-			multiIdentOutput, is := output.(MultiIdentOutput)
-			if !is {
-				continue
-			}
-			multiIdentOutputs = append(multiIdentOutputs, multiIdentOutput)
-		}
-	}
-	return multiIdentOutputs
-}
-
-// MultiIdentOutputsSet returns a map of ChainID to MultiIdentOutput.
-// If multiple MultiIdentOutput(s) exist for a given ChainID, an error is returned.
-// Empty AccountIDs are ignored.
-func (outputs OutputsByType) MultiIdentOutputsSet() (MultiIdentOutputsSet, error) {
-	multiIdentOutputsSet := make(MultiIdentOutputsSet)
-	for _, output := range outputs.MultiIdentOutputs() {
-		if output.Chain().Empty() {
-			continue
-		}
-		if _, has := multiIdentOutputsSet[output.Chain()]; has {
-			return nil, ErrNonUniqueMultiIdentOutputs
-		}
-		multiIdentOutputsSet[output.Chain()] = output
-	}
-	return multiIdentOutputsSet, nil
 }
 
 // FoundryOutputs returns a slice of Outputs which are FoundryOutput.
@@ -403,6 +370,44 @@ func (inputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSet
 	return set
 }
 
+func outputUnlockable(output Output, next TransDepIdentOutput, target Address, extParas *ExternalUnlockParameters) (bool, error) {
+	var featBlock FeatureBlocks
+
+	if featBlockOutput, ok := output.(FeatureBlockOutput); ok {
+		featBlock = featBlockOutput.FeatureBlocks()
+	}
+
+	checkIdentOfOutput := func() (bool, error) {
+		switch x := output.(type) {
+		case TransIndepIdentOutput:
+			return x.Ident().Equal(target), nil
+		case TransDepIdentOutput:
+			targetToUnlock, err := x.Ident(next)
+			if err != nil {
+				return false, err
+			}
+			return targetToUnlock.Equal(target), nil
+		default:
+			panic("invalid output type in outputUnlockable")
+		}
+	}
+
+	if featBlock == nil {
+		return checkIdentOfOutput()
+	}
+
+	targetIsSenderAndCanUnlock, err := featBlock.MustSet().unlockableBy(target, extParas)
+	if err != nil {
+		return false, nil
+	}
+
+	if targetIsSenderAndCanUnlock {
+		return true, nil
+	}
+
+	return checkIdentOfOutput()
+}
+
 // Output defines a unit of output of a transaction.
 type Output interface {
 	serializer.Serializable
@@ -415,32 +420,39 @@ type Output interface {
 	Type() OutputType
 }
 
-// SingleIdentOutput is a type of Output where without considering its FeatureBlocks,
-// only one identity needs to be unlocked.
-type SingleIdentOutput interface {
-	Output
-	// Ident returns the identity to which this output is locked to.
-	Ident() (Address, error)
+// ExternalUnlockParameters defines a palette of external system parameters which are used to
+// determine whether an Output can be unlocked.
+type ExternalUnlockParameters struct {
+	// The confirmed milestone index.
+	ConfMsIndex uint32
+	// The confirmed unix epoch time in seconds.
+	ConfUnix uint64
 }
 
-// MultiIdentOutputsSet is a set of MultiIdentOutput(s).
-type MultiIdentOutputsSet map[ChainID]MultiIdentOutput
+// TransIndepIdentOutput is a type of Output where the identity to unlock is independent
+// of any transition the output does (without considering FeatureBlock(s)).
+type TransIndepIdentOutput interface {
+	Output
+	// Ident returns the default identity to which this output is locked to.
+	Ident() Address
+	// UnlockableBy tells whether the given ident can unlock this Output
+	// while also taking into consideration constraints enforced by FeatureBlock(s) within this Output (if any).
+	UnlockableBy(ident Address, extParas *ExternalUnlockParameters) (bool, error)
+}
 
-// MultiIdentOutputs is a slice of MultiIdentOutput(s).
-type MultiIdentOutputs []MultiIdentOutput
-
-// MultiIdentOutput is a type of Output which multiple identities can control/modify.
-// Unlike the SingleIdentOutput, the MultiIdentOutput's to unlock identity is dependent
-// on the transition the output does between inputs and outputs.
-type MultiIdentOutput interface {
+// TransDepIdentOutput is a type of Output where the identity to unlock is dependent
+// on the transition the output does (without considering FeatureBlock(s)).
+type TransDepIdentOutput interface {
 	ChainConstrainedOutput
 	// Ident computes the identity to which this output is locked to by examining
-	// the transition to the next output state.
-	// Note that it is the caller's job to ensure that the given other MultiIdentOutput
-	// corresponds to this MultiIdentOutput.
-	// If this MultiIdentOutput is not dependent on a transition to compute the ident,
-	// nil can be passed as an argument.
-	Ident(nextState MultiIdentOutput) (Address, error)
+	// the transition to the next output state. If next is nil, then this TransDepIdentOutput
+	// treats the ident computation as being for ChainTransitionTypeDestroy.
+	Ident(next TransDepIdentOutput) (Address, error)
+	// UnlockableBy tells whether the given ident can unlock this Output
+	// while also taking into consideration constraints enforced by FeatureBlock(s) within this Output
+	// and the next state of this TransDepIdentOutput. To indicate that this TransDepIdentOutput
+	// is to be destroyed, pass nil as next.
+	UnlockableBy(ident Address, next TransDepIdentOutput, extParas *ExternalUnlockParameters) (bool, error)
 }
 
 // NativeTokenOutput is a type of Output which can hold NativeToken.
@@ -460,8 +472,6 @@ type FeatureBlockOutput interface {
 func OutputSelector(outputType uint32) (Output, error) {
 	var seri Output
 	switch OutputType(outputType) {
-	case OutputSimple:
-		seri = &SimpleOutput{}
 	case OutputExtended:
 		seri = &ExtendedOutput{}
 	case OutputTreasury:
@@ -720,8 +730,6 @@ func ValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalValidationFunc)
 func jsonOutputSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch OutputType(ty) {
-	case OutputSimple:
-		obj = &jsonSimpleOutput{}
 	case OutputExtended:
 		obj = &jsonExtendedOutput{}
 	case OutputTreasury:

@@ -71,6 +71,10 @@ type ExtendedOutput struct {
 	Blocks FeatureBlocks
 }
 
+func (e *ExtendedOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) (bool, error) {
+	return outputUnlockable(e, nil, ident, extParas)
+}
+
 func (e *ExtendedOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
@@ -91,8 +95,8 @@ func (e *ExtendedOutput) Deposit() uint64 {
 	return e.Amount
 }
 
-func (e *ExtendedOutput) Ident() (Address, error) {
-	return e.Address, nil
+func (e *ExtendedOutput) Ident() Address {
+	return e.Address
 }
 
 func (e *ExtendedOutput) Type() OutputType {

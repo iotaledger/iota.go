@@ -46,8 +46,6 @@ var (
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
 	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
-	// ErrOutputDepositsLessThanMinDust gets returned if an output deposits less than the minimum dust deposit.
-	ErrOutputDepositsLessThanMinDust = errors.New("output deposits less than minimum dust deposit")
 	// ErrOutputReturnBlockIsMoreThanVBRent gets returned if an output defines within its DustDepositReturnFeatureBlock more
 	// than what is needed to cover the virtual byte renting costs.
 	ErrOutputReturnBlockIsMoreThanVBRent = errors.New("output's return feature block's amount is bigger than the minimum virtual byte rent cost")
@@ -110,7 +108,6 @@ var (
 		Guards: serializer.SerializableGuard{
 			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
 				switch ty {
-				case uint32(OutputSimple):
 				case uint32(OutputExtended):
 				case uint32(OutputAlias):
 				case uint32(OutputFoundry):
@@ -125,7 +122,6 @@ var (
 					return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedOutput)
 				}
 				switch seri.(type) {
-				case *SimpleOutput:
 				case *ExtendedOutput:
 				case *AliasOutput:
 				case *FoundryOutput:

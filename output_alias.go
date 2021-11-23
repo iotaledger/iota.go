@@ -193,6 +193,10 @@ type AliasOutput struct {
 	Blocks FeatureBlocks
 }
 
+func (a *AliasOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extParas *ExternalUnlockParameters) (bool, error) {
+	return outputUnlockable(a, next, ident, extParas)
+}
+
 func (a *AliasOutput) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
 	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
@@ -238,10 +242,14 @@ func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, nex
 	}
 }
 
-func (a *AliasOutput) Ident(nextState MultiIdentOutput) (Address, error) {
+func (a *AliasOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
+	// if there isn't a next state, then only the governance address can destroy the alias
+	if nextState == nil {
+		return a.GovernanceController, nil
+	}
 	otherAliasOutput, isAliasOutput := nextState.(*AliasOutput)
 	if !isAliasOutput {
-		return nil, fmt.Errorf("%w: expected AliasOutput but got %s for ident computation", ErrMultiIdentOutputMismatch, OutputTypeToString(nextState.Type()))
+		return nil, fmt.Errorf("%w: expected AliasOutput but got %s for ident computation", ErrTransDepIdentOutputNextInvalid, OutputTypeToString(nextState.Type()))
 	}
 	switch {
 	case a.StateIndex == otherAliasOutput.StateIndex:
@@ -249,7 +257,7 @@ func (a *AliasOutput) Ident(nextState MultiIdentOutput) (Address, error) {
 	case a.StateIndex+1 == otherAliasOutput.StateIndex:
 		return a.StateController, nil
 	default:
-		return nil, fmt.Errorf("%w: can not compute right ident for alias output as state index delta is invalid", ErrMultiIdentOutputMismatch)
+		return nil, fmt.Errorf("%w: can not compute right ident for alias output as state index delta is invalid", ErrTransDepIdentOutputNextInvalid)
 	}
 }
 
