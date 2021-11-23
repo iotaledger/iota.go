@@ -1,12 +1,30 @@
 package iotago_test
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/iotaledger/hive.go/serializer"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
+	"github.com/stretchr/testify/require"
 )
+
+func TestNativeTokenDeSerialization(t *testing.T) {
+	ntIn := iotago.NativeToken{
+		ID:     tpkg.Rand38ByteArray(),
+		Amount: new(big.Int).SetUint64(1000),
+	}
+
+	ntBytes, err := ntIn.Serialize(serializer.DeSeriModeNoValidation, nil)
+	require.NoError(t, err)
+
+	var ntOut iotago.NativeToken
+	_, err = ntOut.Deserialize(ntBytes, serializer.DeSeriModeNoValidation, nil)
+	require.NoError(t, err)
+
+	require.EqualValues(t, ntIn, ntOut)
+}
 
 func TestOutputsNativeTokenSet(t *testing.T) {
 	notSortedNativeTokens := func() iotago.NativeTokens {

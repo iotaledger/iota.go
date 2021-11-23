@@ -204,7 +204,7 @@ func (n *NativeToken) Deserialize(data []byte, _ serializer.DeSerializationMode,
 		ReadBytesInPlace(n.ID[:], func(err error) error {
 			return fmt.Errorf("unable to deserialize ID for native token: %w", err)
 		}).
-		ReadUint256(n.Amount, func(err error) error {
+		ReadUint256(&n.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for native token: %w", err)
 		}).
 		Done()

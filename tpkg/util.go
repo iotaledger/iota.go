@@ -90,6 +90,14 @@ func Rand32ByteArray() [32]byte {
 	return h
 }
 
+// Rand38ByteArray returns an array with 38 random bytes.
+func Rand38ByteArray() [38]byte {
+	var h [38]byte
+	b := RandBytes(38)
+	copy(h[:], b)
+	return h
+}
+
 // Rand49ByteArray returns an array with 49 random bytes.
 func Rand49ByteArray() [49]byte {
 	var h [49]byte

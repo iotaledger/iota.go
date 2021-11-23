@@ -6,6 +6,7 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/tpkg"
+	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
@@ -121,18 +122,14 @@ func TestUnlockBlockReference_Serialize(t *testing.T) {
 }
 
 func TestUnlockBlocksSigUniqueAndRefValidator(t *testing.T) {
-	type args struct {
-		inputs iotago.UnlockBlocks
-		funcs  []iotago.UnlockBlockValidatorFunc
-	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name         string
+		unlockBlocks iotago.UnlockBlocks
+		wantErr      error
 	}{
 		{
-			"ok",
-			args{inputs: iotago.UnlockBlocks{
+			name: "ok",
+			unlockBlocks: iotago.UnlockBlocks{
 				func() iotago.UnlockBlock {
 					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
@@ -144,11 +141,31 @@ func TestUnlockBlocksSigUniqueAndRefValidator(t *testing.T) {
 				func() iotago.UnlockBlock {
 					return &iotago.ReferenceUnlockBlock{Reference: 0}
 				}(),
-			}, funcs: []iotago.UnlockBlockValidatorFunc{iotago.UnlockBlocksSigUniqueAndRefValidator()}}, false,
+			},
+			wantErr: nil,
 		},
 		{
-			"duplicate ed25519 sig block",
-			args{inputs: iotago.UnlockBlocks{
+			name: "ok - chainable referential unlock block",
+			unlockBlocks: iotago.UnlockBlocks{
+				func() iotago.UnlockBlock {
+					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
+					return block
+				}(),
+				func() iotago.UnlockBlock {
+					return &iotago.AliasUnlockBlock{Reference: 0}
+				}(),
+				func() iotago.UnlockBlock {
+					return &iotago.AliasUnlockBlock{Reference: 1}
+				}(),
+				func() iotago.UnlockBlock {
+					return &iotago.NFTUnlockBlock{Reference: 2}
+				}(),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - duplicate ed25519 sig block",
+			unlockBlocks: iotago.UnlockBlocks{
 				func() iotago.UnlockBlock {
 					return &iotago.SignatureUnlockBlock{Signature: &iotago.Ed25519Signature{
 						PublicKey: [32]byte{},
@@ -161,11 +178,12 @@ func TestUnlockBlocksSigUniqueAndRefValidator(t *testing.T) {
 						Signature: [64]byte{},
 					}}
 				}(),
-			}, funcs: []iotago.UnlockBlockValidatorFunc{iotago.UnlockBlocksSigUniqueAndRefValidator()}}, true,
+			},
+			wantErr: iotago.ErrSigUnlockBlocksNotUnique,
 		},
 		{
-			"invalid ref",
-			args{inputs: iotago.UnlockBlocks{
+			name: "fail - reference unlock block invalid ref",
+			unlockBlocks: iotago.UnlockBlocks{
 				func() iotago.UnlockBlock {
 					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
 					return block
@@ -175,16 +193,38 @@ func TestUnlockBlocksSigUniqueAndRefValidator(t *testing.T) {
 					return block
 				}(),
 				func() iotago.UnlockBlock {
-					return &iotago.ReferenceUnlockBlock{Reference: 2}
+					return &iotago.ReferenceUnlockBlock{Reference: 1337}
 				}(),
-			}, funcs: []iotago.UnlockBlockValidatorFunc{iotago.UnlockBlocksSigUniqueAndRefValidator()}}, true,
+			},
+			wantErr: iotago.ErrReferentialUnlockBlockInvalid,
+		},
+		{
+			name: "fail - reference unlock block refs non sig unlock block",
+			unlockBlocks: iotago.UnlockBlocks{
+				func() iotago.UnlockBlock {
+					block, _ := tpkg.RandEd25519SignatureUnlockBlock()
+					return block
+				}(),
+				func() iotago.UnlockBlock {
+					return &iotago.ReferenceUnlockBlock{Reference: 0}
+				}(),
+				func() iotago.UnlockBlock {
+					return &iotago.ReferenceUnlockBlock{Reference: 1}
+				}(),
+			},
+			wantErr: iotago.ErrReferentialUnlockBlockInvalid,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := iotago.ValidateUnlockBlocks(tt.args.inputs, tt.args.funcs...); (err != nil) != tt.wantErr {
-				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+			valFunc := iotago.UnlockBlocksSigUniqueAndRefValidator()
+			var runErr error
+			for index, unlockBlock := range tt.unlockBlocks {
+				if err := valFunc(index, unlockBlock); err != nil {
+					runErr = err
+				}
 			}
+			require.ErrorIs(t, runErr, tt.wantErr)
 		})
 	}
 }

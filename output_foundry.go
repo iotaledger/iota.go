@@ -328,10 +328,10 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		ReadArrayOf12Bytes(&f.TokenTag, func(err error) error {
 			return fmt.Errorf("unable to deserialize token tag for foundry output: %w", err)
 		}).
-		ReadUint256(f.CirculatingSupply, func(err error) error {
+		ReadUint256(&f.CirculatingSupply, func(err error) error {
 			return fmt.Errorf("unable to deserialize circulating supply for foundry output: %w", err)
 		}).
-		ReadUint256(f.MaximumSupply, func(err error) error {
+		ReadUint256(&f.MaximumSupply, func(err error) error {
 			return fmt.Errorf("unable to deserialize maximum supply for foundry output: %w", err)
 		}).
 		ReadObject(&f.TokenScheme, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, wrappedTokenSchemeSelector, func(err error) error {

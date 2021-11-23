@@ -11,7 +11,6 @@ import (
 )
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
-
 	nonZeroCostParas := &iotago.DeSerializationParameters{
 		RentStructure: &iotago.RentStructure{
 			VByteCost:    1,
