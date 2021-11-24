@@ -557,3 +557,291 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 		})
 	}
 }
+
+func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
+	type test struct {
+		name                  string
+		output                iotago.TransIndepIdentOutput
+		targetIdent           iotago.Address
+		identCanUnlockInstead iotago.Address
+		extParas              *iotago.ExternalUnlockParameters
+		canUnlock             bool
+	}
+	tests := []test{
+		func() test {
+			sourceIdent := tpkg.RandEd25519Address()
+			return test{
+				name: "can unlock - target is source (no feature blocks)",
+				output: &iotago.ExtendedOutput{
+					Address: sourceIdent,
+					Amount:  OneMi,
+				},
+				targetIdent: sourceIdent,
+				extParas:    &iotago.ExternalUnlockParameters{},
+				canUnlock:   true,
+			}
+		}(),
+		func() test {
+			return test{
+				name: "can not unlock - target is not source (no feature blocks)",
+				output: &iotago.ExtendedOutput{
+					Address: tpkg.RandEd25519Address(),
+					Amount:  OneMi,
+				},
+				targetIdent: tpkg.RandEd25519Address(),
+				extParas:    &iotago.ExternalUnlockParameters{},
+				canUnlock:   false,
+			}
+		}(),
+		func() test {
+			sourceIdent := tpkg.RandEd25519Address()
+			return test{
+				name: "can unlock - output not expired for source ident (ms index expiration)",
+				output: &iotago.ExtendedOutput{
+					Address: sourceIdent,
+					Amount:  OneMi,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.ExpirationMilestoneIndexFeatureBlock{MilestoneIndex: 10},
+						&iotago.SenderFeatureBlock{Address: tpkg.RandEd25519Address()},
+					},
+				},
+				targetIdent:           sourceIdent,
+				identCanUnlockInstead: nil,
+				extParas:              &iotago.ExternalUnlockParameters{ConfMsIndex: 5},
+				canUnlock:             true,
+			}
+		}(),
+		func() test {
+			sourceIdent := tpkg.RandEd25519Address()
+			return test{
+				name: "can unlock - output not expired for source ident (unix expiration)",
+				output: &iotago.ExtendedOutput{
+					Address: sourceIdent,
+					Amount:  OneMi,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.ExpirationUnixFeatureBlock{UnixTime: 10},
+						&iotago.SenderFeatureBlock{Address: tpkg.RandEd25519Address()},
+					},
+				},
+				targetIdent:           sourceIdent,
+				identCanUnlockInstead: nil,
+				extParas:              &iotago.ExternalUnlockParameters{ConfUnix: 5},
+				canUnlock:             true,
+			}
+		}(),
+		func() test {
+			sourceIdent := tpkg.RandEd25519Address()
+			senderIdent := tpkg.RandEd25519Address()
+			return test{
+				name: "can not unlock - output expired for source ident (ms index expiration)",
+				output: &iotago.ExtendedOutput{
+					Address: sourceIdent,
+					Amount:  OneMi,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.ExpirationMilestoneIndexFeatureBlock{MilestoneIndex: 5},
+						&iotago.SenderFeatureBlock{Address: senderIdent},
+					},
+				},
+				targetIdent:           sourceIdent,
+				identCanUnlockInstead: senderIdent,
+				extParas:              &iotago.ExternalUnlockParameters{ConfMsIndex: 10},
+				canUnlock:             false,
+			}
+		}(),
+		func() test {
+			sourceIdent := tpkg.RandEd25519Address()
+			senderIdent := tpkg.RandEd25519Address()
+			return test{
+				name: "can not unlock - output expired for source ident (unix expiration)",
+				output: &iotago.ExtendedOutput{
+					Address: sourceIdent,
+					Amount:  OneMi,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.ExpirationUnixFeatureBlock{UnixTime: 5},
+						&iotago.SenderFeatureBlock{Address: senderIdent},
+					},
+				},
+				targetIdent:           sourceIdent,
+				identCanUnlockInstead: senderIdent,
+				extParas:              &iotago.ExternalUnlockParameters{ConfUnix: 10},
+				canUnlock:             false,
+			}
+		}(),
+		func() test {
+			sourceIdent := tpkg.RandEd25519Address()
+			return test{
+				name: "can unlock - expired ms index timelock feature blocks",
+				output: &iotago.ExtendedOutput{
+					Address: sourceIdent,
+					Amount:  OneMi,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.TimelockMilestoneIndexFeatureBlock{MilestoneIndex: 5},
+					},
+				},
+				targetIdent: sourceIdent,
+				extParas:    &iotago.ExternalUnlockParameters{ConfMsIndex: 10},
+				canUnlock:   true,
+			}
+		}(),
+		func() test {
+			sourceIdent := tpkg.RandEd25519Address()
+			return test{
+				name: "can not unlock - not expired ms index timelock feature blocks",
+				output: &iotago.ExtendedOutput{
+					Address: sourceIdent,
+					Amount:  OneMi,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.TimelockMilestoneIndexFeatureBlock{MilestoneIndex: 10},
+					},
+				},
+				targetIdent: sourceIdent,
+				extParas:    &iotago.ExternalUnlockParameters{ConfMsIndex: 5},
+				canUnlock:   false,
+			}
+		}(),
+		func() test {
+			sourceIdent := tpkg.RandEd25519Address()
+			return test{
+				name: "can unlock - expired unix timelock feature blocks",
+				output: &iotago.ExtendedOutput{
+					Address: sourceIdent,
+					Amount:  OneMi,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.TimelockUnixFeatureBlock{UnixTime: 5},
+					},
+				},
+				targetIdent: sourceIdent,
+				extParas:    &iotago.ExternalUnlockParameters{ConfUnix: 10},
+				canUnlock:   true,
+			}
+		}(),
+		func() test {
+			sourceIdent := tpkg.RandEd25519Address()
+			return test{
+				name: "can not unlock - not expired unix timelock feature blocks",
+				output: &iotago.ExtendedOutput{
+					Address: sourceIdent,
+					Amount:  OneMi,
+					Blocks: iotago.FeatureBlocks{
+						&iotago.TimelockUnixFeatureBlock{UnixTime: 10},
+					},
+				},
+				targetIdent: sourceIdent,
+				extParas:    &iotago.ExternalUnlockParameters{ConfUnix: 5},
+				canUnlock:   false,
+			}
+		}(),
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(t *testing.T) {
+				require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetIdent, tt.extParas))
+				if tt.identCanUnlockInstead == nil {
+					return
+				}
+				require.True(t, tt.output.UnlockableBy(tt.identCanUnlockInstead, tt.extParas))
+			})
+		})
+	}
+}
+
+func TestAliasOutput_UnlockableBy(t *testing.T) {
+	type test struct {
+		name                  string
+		current               iotago.TransDepIdentOutput
+		next                  iotago.TransDepIdentOutput
+		targetIdent           iotago.Address
+		identCanUnlockInstead iotago.Address
+		extParas              *iotago.ExternalUnlockParameters
+		wantErr               error
+		canUnlock             bool
+	}
+	tests := []test{
+		func() test {
+			stateCtrl := tpkg.RandEd25519Address()
+			govCtrl := tpkg.RandEd25519Address()
+			return test{
+				name: "state ctrl can unlock - state index increase",
+				current: &iotago.AliasOutput{
+					Amount:               OneMi,
+					NativeTokens:         nil,
+					StateController:      stateCtrl,
+					GovernanceController: govCtrl,
+					StateIndex:           0,
+				},
+				next: &iotago.AliasOutput{
+					Amount:               OneMi,
+					StateController:      stateCtrl,
+					GovernanceController: govCtrl,
+					StateIndex:           1,
+				},
+				targetIdent: stateCtrl,
+				extParas:    &iotago.ExternalUnlockParameters{},
+				canUnlock:   true,
+			}
+		}(),
+		func() test {
+			stateCtrl := tpkg.RandEd25519Address()
+			govCtrl := tpkg.RandEd25519Address()
+			return test{
+				name: "state ctrl can not unlock - state index same",
+				current: &iotago.AliasOutput{
+					Amount:               OneMi,
+					NativeTokens:         nil,
+					StateController:      stateCtrl,
+					GovernanceController: govCtrl,
+					StateIndex:           0,
+				},
+				next: &iotago.AliasOutput{
+					Amount:               OneMi,
+					StateController:      stateCtrl,
+					GovernanceController: govCtrl,
+					StateIndex:           0,
+				},
+				targetIdent:           stateCtrl,
+				identCanUnlockInstead: govCtrl,
+				extParas:              &iotago.ExternalUnlockParameters{},
+				canUnlock:             false,
+			}
+		}(),
+		func() test {
+			stateCtrl := tpkg.RandEd25519Address()
+			govCtrl := tpkg.RandEd25519Address()
+			return test{
+				name: "state ctrl can not unlock - transition destroy",
+				current: &iotago.AliasOutput{
+					Amount:               OneMi,
+					NativeTokens:         nil,
+					StateController:      stateCtrl,
+					GovernanceController: govCtrl,
+					StateIndex:           0,
+				},
+				next:                  nil,
+				targetIdent:           stateCtrl,
+				identCanUnlockInstead: govCtrl,
+				extParas:              &iotago.ExternalUnlockParameters{},
+				canUnlock:             false,
+			}
+		}(),
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(t *testing.T) {
+				canUnlock, err := tt.current.UnlockableBy(tt.targetIdent, tt.next, tt.extParas)
+				if tt.wantErr != nil {
+					require.ErrorIs(t, err, tt.wantErr)
+					return
+				}
+				require.Equal(t, tt.canUnlock, canUnlock)
+				if tt.identCanUnlockInstead == nil {
+					return
+				}
+				canUnlockInstead, err := tt.current.UnlockableBy(tt.identCanUnlockInstead, tt.next, tt.extParas)
+				require.NoError(t, err)
+				require.True(t, canUnlockInstead)
+			})
+		})
+	}
+}

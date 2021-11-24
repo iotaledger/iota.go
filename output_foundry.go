@@ -129,8 +129,9 @@ func (f *FoundryOutput) Ident() Address {
 	return f.Address
 }
 
-func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) (bool, error) {
-	return outputUnlockable(f, nil, ident, extParas)
+func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
+	ok, _ := outputUnlockable(f, nil, ident, extParas)
+	return ok
 }
 
 func (f *FoundryOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
