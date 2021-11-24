@@ -15,9 +15,6 @@ var (
 	ErrInvalidFeatureBlockTransition = errors.New("invalid feature block transition")
 	// ErrTimelockNotExpired gets returned when timelocks in a FeatureBlocksSet are not expired.
 	ErrTimelockNotExpired = errors.New("timelock not expired")
-	// ErrIdentNotSender gets returned when checking whether an ident can unlock an output but that ident is not the
-	// sender which can actually unlock the output.
-	ErrIdentNotSender = errors.New("ident is not sender")
 )
 
 // FeatureBlockType defines the type of feature blocks.
@@ -156,6 +153,17 @@ func (f FeatureBlocks) Equal(other FeatureBlocks) bool {
 
 // FeatureBlocksSet is a set of FeatureBlock(s).
 type FeatureBlocksSet map[FeatureBlockType]FeatureBlock
+
+// HasExpirationBlocks tells whether this set has any feature block putting an expiration constraint.
+func (f FeatureBlocksSet) HasExpirationBlocks() bool {
+	if f.ExpirationMilestoneIndexFeatureBlock() != nil {
+		return true
+	}
+	if f.ExpirationUnixFeatureBlock() != nil {
+		return true
+	}
+	return false
+}
 
 // tells whether the given ident can unlock an output containing this set of FeatureBlock(s)
 // when taking into consideration the constraints enforced by them:
