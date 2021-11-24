@@ -229,6 +229,8 @@ type SemValiContextWorkingSet struct {
 	UnlockedIdents UnlockedIdentities
 	// The mapping of OutputID to the actual Outputs.
 	InputSet OutputSet
+	// The mapping of inputs' OutputID to the index.
+	InputIDToIndex map[OutputID]uint16
 	// The transaction for which this semantic validation happens.
 	Tx *Transaction
 	// The message which signatures are signing.
@@ -267,6 +269,13 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiCont
 	workingSet := &SemValiContextWorkingSet{}
 	workingSet.UnlockedIdents = make(UnlockedIdentities)
 	workingSet.InputSet = inputs
+	workingSet.InputIDToIndex = func() map[OutputID]uint16 {
+		m := make(map[OutputID]uint16)
+		for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
+			m[inputRef.(IndexedUTXOReferencer).Ref()] = uint16(inputIndex)
+		}
+		return m
+	}()
 	workingSet.Tx = t
 	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage()
 	if err != nil {
@@ -312,10 +321,10 @@ func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inp
 	// some of them might depend on certain mutations
 	// on the given SemanticValidationContext
 	if err := runSemanticValidations(svCtx,
+		TxSemanticTimelock(),
 		TxSemanticInputUnlocks(),
 		TxSemanticDeposit(),
 		TxSemanticNativeTokens(),
-		TxSemanticTimelock(),
 		TxSemanticOutputsSender(),
 		TxSemanticSTVFOnChains()); err != nil {
 		return err
@@ -335,7 +344,26 @@ func runSemanticValidations(svCtx *SemanticValidationContext, checks ...TxSemant
 
 // UnlockedIdentities defines a set of identities which are unlocked from the input side of a Transaction.
 // The value represent the index of the unlock block which unlocked the identity.
-type UnlockedIdentities map[string]uint16
+type UnlockedIdentities map[string]UnlockedIndices
+
+// AddInputUnlockedBy adds an entry defining that the given identity unlocked an input at the given index.
+func (unlockedIdents UnlockedIdentities) AddInputUnlockedBy(identKey string, inputIndex uint16) {
+	unlockedIndices, ok := unlockedIdents[identKey]
+	if !ok {
+		unlockedIndices = make(UnlockedIndices)
+	}
+	unlockedIndices[inputIndex] = struct{}{}
+	unlockedIdents[identKey] = unlockedIndices
+}
+
+// UnlockedIndices is a set of unlocked indices of outputs an identity unlocked.
+type UnlockedIndices map[uint16]struct{}
+
+// Unlocked tells whether x is in this set.
+func (indices UnlockedIndices) Unlocked(x uint16) bool {
+	_, has := indices[x]
+	return has
+}
 
 // TxSemanticValidationFunc is a function which given the context, input, outputs and
 // unlock blocks runs a specific semantic validation. The function might also modify the SemanticValidationContext
@@ -354,7 +382,7 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 				return fmt.Errorf("%w: utxo for input %d not supplied", ErrMissingUTXO, inputIndex)
 			}
 
-			if err := unlockOutput(svCtx, input, inputIndex); err != nil {
+			if err := unlockOutput(svCtx, input, uint16(inputIndex)); err != nil {
 				return err
 			}
 		}
@@ -362,7 +390,7 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 	}
 }
 
-func identToUnlock(svCtx *SemanticValidationContext, input Output, inputIndex int) (Address, error) {
+func identToUnlock(svCtx *SemanticValidationContext, input Output, inputIndex uint16) (Address, error) {
 	switch in := input.(type) {
 
 	case TransIndepIdentOutput:
@@ -395,83 +423,85 @@ func identToUnlock(svCtx *SemanticValidationContext, input Output, inputIndex in
 	}
 }
 
-func checkExpiredForReceiver(svCtx *SemanticValidationContext, output Output) (Address, error) {
+func checkExpiredForReceiver(svCtx *SemanticValidationContext, output Output) Address {
 	featBlockOutput, is := output.(FeatureBlockOutput)
 	if !is {
-		return nil, nil
+		return nil
 	}
 
-	featBlockSet, err := featBlockOutput.FeatureBlocks().Set()
-	if err != nil {
-		return nil, err
-	}
-
+	featBlockSet := featBlockOutput.FeatureBlocks().MustSet()
 	if featBlockSet.senderCanUnlock(svCtx.ExtParas) {
-		return featBlockSet.SenderFeatureBlock().Address, nil
+		return featBlockSet.SenderFeatureBlock().Address
 	}
 
-	return nil, nil
+	return nil
 }
 
-func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex int) error {
-	targetIdent, err := identToUnlock(svCtx, output, inputIndex)
+func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex uint16) error {
+	ownerIdent, err := identToUnlock(svCtx, output, inputIndex)
 	if err != nil {
 		return fmt.Errorf("unable to retrieve ident to unlock of input %d: %w", inputIndex, err)
 	}
 
-	actualIdentToUnlock, err := checkExpiredForReceiver(svCtx, output)
-	if err != nil {
-		return err
-	}
-	if actualIdentToUnlock != nil {
-		targetIdent = actualIdentToUnlock
+	if actualIdentToUnlock := checkExpiredForReceiver(svCtx, output); actualIdentToUnlock != nil {
+		ownerIdent = actualIdentToUnlock
 	}
 
 	unlockBlock := svCtx.WorkingSet.Tx.UnlockBlocks[inputIndex]
 
-	switch ident := targetIdent.(type) {
+	switch owner := ownerIdent.(type) {
 	case ChainConstrainedAddress:
 		referentialUnlockBlock, isReferentialUnlockBlock := unlockBlock.(ReferentialUnlockBlock)
-		if !isReferentialUnlockBlock || !referentialUnlockBlock.Chainable() || !referentialUnlockBlock.SourceAllowed(targetIdent) {
-			return fmt.Errorf("%w: input %d has a chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(ident.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
+		if !isReferentialUnlockBlock || !referentialUnlockBlock.Chainable() || !referentialUnlockBlock.SourceAllowed(ownerIdent) {
+			return fmt.Errorf("%w: input %d has a chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(owner.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
 		}
 
-		unlockedAtIndex, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[ident.Key()]
-		if !wasUnlocked || unlockedAtIndex != referentialUnlockBlock.Ref() {
+		unlockedIndices, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[owner.Key()]
+		if !wasUnlocked || !unlockedIndices.Unlocked(referentialUnlockBlock.Ref()) {
 			return fmt.Errorf("%w: input %d's chain constrained address is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, referentialUnlockBlock.Ref())
 		}
 
-		// since this input is now unlocked, and it has a ChainConstrainedAddress, it becomes automatically unlocked
-		if chainConstrainedOutput, isChainConstrainedOutput := output.(ChainConstrainedOutput); isChainConstrainedOutput && chainConstrainedOutput.Chain().Addressable() {
-			svCtx.WorkingSet.UnlockedIdents[chainConstrainedOutput.Chain().ToAddress().Key()] = uint16(inputIndex)
-		}
+		svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(owner.Key(), inputIndex)
 
 	case DirectUnlockableAddress:
 		switch uBlock := unlockBlock.(type) {
 		case ReferentialUnlockBlock:
-			if uBlock.Chainable() || !uBlock.SourceAllowed(targetIdent) {
-				return fmt.Errorf("%w: input %d has none chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(ident.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
+			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
+				return fmt.Errorf("%w: input %d has none chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(owner.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
 			}
 
-			unlockedAtIndex, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[ident.Key()]
-			if !wasUnlocked || unlockedAtIndex != uBlock.Ref() {
+			unlockedIndices, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[owner.Key()]
+			if !wasUnlocked || !unlockedIndices.Unlocked(uBlock.Ref()) {
 				return fmt.Errorf("%w: input %d's address is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, uBlock.Ref())
 			}
+
+			svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(owner.Key(), inputIndex)
+
 		case *SignatureUnlockBlock:
-			// ident must not be unlocked already
-			if unlockedAtIndex, wasAlreadyUnlocked := svCtx.WorkingSet.UnlockedIdents[ident.Key()]; wasAlreadyUnlocked {
+			// owner must not be unlocked already
+			if unlockedAtIndex, wasAlreadyUnlocked := svCtx.WorkingSet.UnlockedIdents[owner.Key()]; wasAlreadyUnlocked {
 				return fmt.Errorf("%w: input %d's address is already unlocked through input %d's unlock block but the input uses a non referential unlock block", ErrInvalidInputUnlock, inputIndex, unlockedAtIndex)
 			}
 
-			if err := ident.Unlock(svCtx.WorkingSet.EssenceMsgToSign, uBlock.Signature); err != nil {
+			if err := owner.Unlock(svCtx.WorkingSet.EssenceMsgToSign, uBlock.Signature); err != nil {
 				return fmt.Errorf("%w: input %d's address is not unlocked through its signature unlock block", err, inputIndex)
 			}
 
-			svCtx.WorkingSet.UnlockedIdents[ident.Key()] = uint16(inputIndex)
+			svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(owner.Key(), inputIndex)
 		}
 	default:
 		panic("unknown address in semantic unlocks")
 	}
+
+	// since this input is now unlocked, and it has a ChainConstrainedAddress, it becomes automatically unlocked
+	if chainConstrOutput, is := output.(ChainConstrainedOutput); is && chainConstrOutput.Chain().Addressable() {
+		chainID := chainConstrOutput.Chain()
+		if chainID.Empty() {
+			chainID = chainID.(UTXOIDChainID).FromOutputID(svCtx.WorkingSet.Tx.Essence.Inputs[inputIndex].(*UTXOInput).Ref())
+		}
+		svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(chainID.ToAddress().Key(), inputIndex)
+	}
+
 	return nil
 }
 
@@ -485,18 +515,13 @@ func TxSemanticOutputsSender() TxSemanticValidationFunc {
 				continue
 			}
 
-			featureBlocks, err := featureBlockOutput.FeatureBlocks().Set()
-			if err != nil {
-				return fmt.Errorf("unable to compute feature block set for output %d: %w", outputIndex, err)
-			}
-
-			senderFeatureBlock, has := featureBlocks[FeatureBlockSender]
-			if !has {
+			senderFeatureBlock := featureBlockOutput.FeatureBlocks().MustSet().SenderFeatureBlock()
+			if senderFeatureBlock == nil {
 				continue
 			}
 
 			// check unlocked
-			sender := senderFeatureBlock.(*SenderFeatureBlock).Address
+			sender := senderFeatureBlock.Address
 			if _, isUnlocked := svCtx.WorkingSet.UnlockedIdents[sender.Key()]; !isUnlocked {
 				return fmt.Errorf("%w: output %d", ErrSenderFeatureBlockNotUnlocked, outputIndex)
 			}
@@ -514,23 +539,34 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 		// are always within bounds of the total token supply
 		var in, out uint64
 		inputSumReturnAmountPerIdent := make(map[string]uint64)
-		for _, input := range svCtx.WorkingSet.InputSet {
+		for inputID, input := range svCtx.WorkingSet.InputSet {
 			in += input.Deposit()
 			featureBlockOutput, is := input.(FeatureBlockOutput)
 			if !is {
 				continue
 			}
-			featBlockSet, err := featureBlockOutput.FeatureBlocks().Set()
-			if err != nil {
-				return err
-			}
-			returnFeatBlock, has := featBlockSet[FeatureBlockDustDepositReturn]
-			if !has {
+
+			featureBlocks := featureBlockOutput.FeatureBlocks().MustSet()
+			returnFeatBlock := featureBlocks.DustDepositReturnFeatureBlock()
+			if returnFeatBlock == nil {
 				continue
 			}
+
+			if !featureBlocks.HasExpirationBlocks() {
+				continue
+			}
+
 			// guaranteed by syntactical checks
-			ident := featBlockSet[FeatureBlockSender].(*SenderFeatureBlock).Address.Key()
-			inputSumReturnAmountPerIdent[ident] += returnFeatBlock.(*DustDepositReturnFeatureBlock).Amount
+			senderIdent := featureBlocks.SenderFeatureBlock().Address.Key()
+
+			// if the sender unlocked this input, then the return amount does
+			// not have to be fulfilled
+			unlockedIndices, has := svCtx.WorkingSet.UnlockedIdents[senderIdent]
+			if has && unlockedIndices.Unlocked(svCtx.WorkingSet.InputIDToIndex[inputID]) {
+				continue
+			}
+
+			inputSumReturnAmountPerIdent[senderIdent] += returnFeatBlock.Amount
 		}
 
 		outputSimpleTransfersPerIdent := make(map[string]uint64)
@@ -539,12 +575,11 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 			out += outDeposit
 
 			// accumulate simple transfers for DustDepositReturnFeatureBlock checks
-			switch outputTy := output.(type) {
-			case *ExtendedOutput:
-				if len(outputTy.FeatureBlocks()) > 0 {
+			if extendedOutput, is := output.(*ExtendedOutput); is {
+				if len(extendedOutput.FeatureBlocks()) > 0 {
 					continue
 				}
-				outputSimpleTransfersPerIdent[outputTy.Address.Key()] += outDeposit
+				outputSimpleTransfersPerIdent[extendedOutput.Address.Key()] += outDeposit
 			}
 		}
 
