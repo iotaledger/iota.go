@@ -136,8 +136,9 @@ func (n *NFTOutput) Ident() Address {
 	return n.Address
 }
 
-func (n *NFTOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) (bool, error) {
-	return outputUnlockable(n, nil, ident, extParas)
+func (n *NFTOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
+	ok, _ := outputUnlockable(n, nil, ident, extParas)
+	return ok
 }
 
 func (n *NFTOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {

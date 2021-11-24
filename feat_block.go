@@ -161,22 +161,21 @@ type FeatureBlocksSet map[FeatureBlockType]FeatureBlock
 // when taking into consideration the constraints enforced by them:
 //	- If the timelocks are not expired, then nobody can unlock.
 //	- If the expiration blocks are expired, then only the sender ident can unlock.
-// returns a boolean indicating whether the given ident was the sender and that the sender can unlock.
-// an error is returned in any case where ident can not unlock given the FeatureBlock(s).
-func (f FeatureBlocksSet) unlockableBy(ident Address, extParas *ExternalUnlockParameters) (bool, error) {
+// returns booleans indicating whether the given ident can unlock and whether the sender ident can unlock.
+func (f FeatureBlocksSet) unlockableBy(ident Address, extParas *ExternalUnlockParameters) (identCanUnlock bool, senderCanUnlock bool) {
 	if err := f.TimelocksExpired(extParas); err != nil {
-		return false, err
+		return false, false
 	}
 
 	// if the sender can unlock, then ident must be the sender
 	if senderFeatBlock := f.SenderFeatureBlock(); senderFeatBlock != nil && f.senderCanUnlock(extParas) {
 		if !ident.Equal(senderFeatBlock.Address) {
-			return false, ErrIdentNotSender
+			return false, true
 		}
-		return true, nil
+		return true, true
 	}
 
-	return false, nil
+	return true, false
 }
 
 // tells whether a sender defined in a SenderFeatureBlock within this set is the actual
@@ -217,12 +216,11 @@ func (f FeatureBlocksSet) senderCanUnlock(extParas *ExternalUnlockParameters) bo
 // in relation to the given ExternalUnlockParameters.
 func (f FeatureBlocksSet) TimelocksExpired(extParas *ExternalUnlockParameters) error {
 	if lockMsIndex := f.TimelockMilestoneIndexFeatureBlock(); lockMsIndex != nil && extParas.ConfMsIndex < lockMsIndex.MilestoneIndex {
-		return fmt.Errorf("%w: block/ext %d%d", ErrTimelockNotExpired, lockMsIndex.MilestoneIndex, extParas.ConfMsIndex)
+		return fmt.Errorf("%w: (ms index) block %d vs. ext %d", ErrTimelockNotExpired, lockMsIndex.MilestoneIndex, extParas.ConfMsIndex)
 	}
 
-	if lockUnix := f.TimelockUnixFeatureBlock(); lockUnix != nil &&
-		extParas.ConfUnix < lockUnix.UnixTime {
-		return fmt.Errorf("%w: block/ext %d%d", ErrTimelockNotExpired, lockUnix.UnixTime, extParas.ConfUnix)
+	if lockUnix := f.TimelockUnixFeatureBlock(); lockUnix != nil && extParas.ConfUnix < lockUnix.UnixTime {
+		return fmt.Errorf("%w: (unix) block %d vs. ext %d", ErrTimelockNotExpired, lockUnix.UnixTime, extParas.ConfUnix)
 	}
 
 	return nil

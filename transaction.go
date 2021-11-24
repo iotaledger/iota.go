@@ -567,26 +567,17 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 	}
 }
 
-// TxSemanticTimelock validates following rules regarding timelocked inputs:
-//	- Inputs with a TimelockMilestone<Index,Unix>FeatureBlock can only be unlocked if the confirming milestone allows it.
+// TxSemanticTimelock validates that the inputs' timelocks are expired.
 func TxSemanticTimelock() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		for inputIndex, input := range svCtx.WorkingSet.InputSet {
-			inputWithFeatureBlocks, is := input.(FeatureBlockOutput)
+			featBlockOutput, is := input.(FeatureBlockOutput)
 			if !is {
 				continue
 			}
 
-			featBlockSet := inputWithFeatureBlocks.FeatureBlocks().MustSet()
-
-			if lockMsIndex := featBlockSet.TimelockMilestoneIndexFeatureBlock(); lockMsIndex != nil &&
-				svCtx.ExtParas.ConfMsIndex < lockMsIndex.MilestoneIndex {
-				return fmt.Errorf("%w: input at index %d's milestone index timelock is not expired, at %d, current %d", ErrInvalidInputUnlock, inputIndex, lockMsIndex.MilestoneIndex, svCtx.ExtParas.ConfMsIndex)
-			}
-
-			if lockUnix := featBlockSet.TimelockUnixFeatureBlock(); lockUnix != nil &&
-				svCtx.ExtParas.ConfUnix < lockUnix.UnixTime {
-				return fmt.Errorf("%w: input at index %d's unix timelock is not expired, at %d, current %d", ErrInvalidInputUnlock, inputIndex, lockUnix.UnixTime, svCtx.ExtParas.ConfUnix)
+			if err := featBlockOutput.FeatureBlocks().MustSet().TimelocksExpired(svCtx.ExtParas); err != nil {
+				return fmt.Errorf("%w: input at index %d's timelocks are not expired", ErrInvalidInputUnlock, inputIndex)
 			}
 		}
 		return nil

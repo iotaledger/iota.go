@@ -71,8 +71,9 @@ type ExtendedOutput struct {
 	Blocks FeatureBlocks
 }
 
-func (e *ExtendedOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) (bool, error) {
-	return outputUnlockable(e, nil, ident, extParas)
+func (e *ExtendedOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
+	ok, _ := outputUnlockable(e, nil, ident, extParas)
+	return ok
 }
 
 func (e *ExtendedOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {

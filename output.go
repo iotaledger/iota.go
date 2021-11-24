@@ -377,7 +377,7 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 		featBlock = featBlockOutput.FeatureBlocks()
 	}
 
-	checkIdentOfOutput := func() (bool, error) {
+	checkTargetIdentOfOutput := func() (bool, error) {
 		switch x := output.(type) {
 		case TransIndepIdentOutput:
 			return x.Ident().Equal(target), nil
@@ -393,19 +393,20 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 	}
 
 	if featBlock == nil {
-		return checkIdentOfOutput()
+		return checkTargetIdentOfOutput()
 	}
 
-	targetIsSenderAndCanUnlock, err := featBlock.MustSet().unlockableBy(target, extParas)
-	if err != nil {
+	targetIdentCanUnlock, senderIdentCanUnlock := featBlock.MustSet().unlockableBy(target, extParas)
+	if !targetIdentCanUnlock {
 		return false, nil
 	}
 
-	if targetIsSenderAndCanUnlock {
+	// the target ident is the sender which can unlock
+	if senderIdentCanUnlock {
 		return true, nil
 	}
 
-	return checkIdentOfOutput()
+	return checkTargetIdentOfOutput()
 }
 
 // Output defines a unit of output of a transaction.
@@ -437,7 +438,7 @@ type TransIndepIdentOutput interface {
 	Ident() Address
 	// UnlockableBy tells whether the given ident can unlock this Output
 	// while also taking into consideration constraints enforced by FeatureBlock(s) within this Output (if any).
-	UnlockableBy(ident Address, extParas *ExternalUnlockParameters) (bool, error)
+	UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool
 }
 
 // TransDepIdentOutput is a type of Output where the identity to unlock is dependent
