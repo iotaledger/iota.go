@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/v2/serializer"
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v3/ed25519"
 	"golang.org/x/crypto/blake2b"
 )

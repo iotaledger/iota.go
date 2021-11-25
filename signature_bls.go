@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/v2/crypto/bls"
-	"github.com/iotaledger/hive.go/v2/serializer"
+	"github.com/iotaledger/hive.go/crypto/bls"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 const (
