@@ -31,18 +31,6 @@ func TestAddressDeSerialization(t *testing.T) {
 			nil,
 		},
 		{
-			"ok - BLSAddress",
-			func() []byte {
-				_, data := tpkg.RandBLSAddressAndBytes()
-				return data
-			}(),
-			&iotago.BLSAddress{},
-			func(target serializer.Serializable) []byte {
-				return target.(*iotago.BLSAddress)[:]
-			},
-			nil,
-		},
-		{
 			"ok - AliasAddress",
 			func() []byte {
 				_, data := tpkg.RandAliasAddressAndBytes()

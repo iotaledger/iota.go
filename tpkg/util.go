@@ -143,25 +143,6 @@ func RandEd25519Address() *iotago.Ed25519Address {
 	return addr
 }
 
-// RandBLSAddressAndBytes returns a random BLSAddress.
-func RandBLSAddressAndBytes() (*iotago.BLSAddress, []byte) {
-	// type
-	blsAddr := &iotago.BLSAddress{}
-	addr := RandBytes(iotago.BLSAddressBytesLength)
-	copy(blsAddr[:], addr)
-	// serialized
-	var b [iotago.BLSAddressSerializedBytesSize]byte
-	b[0] = iotago.AddressBLS
-	copy(b[serializer.SmallTypeDenotationByteSize:], addr)
-	return blsAddr, b[:]
-}
-
-// RandBLSAddress returns a random BLSAddress.
-func RandBLSAddress() *iotago.BLSAddress {
-	addr, _ := RandBLSAddressAndBytes()
-	return addr
-}
-
 // RandAliasAddressAndBytes returns a random AliasAddress.
 func RandAliasAddressAndBytes() (*iotago.AliasAddress, []byte) {
 	// type
