@@ -340,6 +340,8 @@ github.com/iotaledger/hive.go/serializer/v2 v0.0.0-20211125112301-564751995bb5/g
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211125113956-c6d4ebfffb3b/go.mod h1:Aw7fS+UjhMBj4hxTBxSG8Ti/5ifp1SWFpyapGZFuzdc=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211125114051-449d0023eb32 h1:VjjwZB8S1/g0J9pUKtdboeKz0NPE5U1fdlC/Of8+jrc=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211125114051-449d0023eb32/go.mod h1:Aw7fS+UjhMBj4hxTBxSG8Ti/5ifp1SWFpyapGZFuzdc=
+github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211125134700-408c53353b22 h1:GrPnUcKD0poLCq7o0AOT/CMpJZbX16aVxTHcUC+SL54=
+github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211125134700-408c53353b22/go.mod h1:Aw7fS+UjhMBj4hxTBxSG8Ti/5ifp1SWFpyapGZFuzdc=
 github.com/iotaledger/hive.go/serializer/v2/v2 v2.0.0-20211125114051-449d0023eb32 h1:VjjwZB8S1/g0J9pUKtdboeKz0NPE5U1fdlC/Of8+jrc=
 github.com/iotaledger/hive.go/serializer/v2/v2 v2.0.0-20211125114051-449d0023eb32/go.mod h1:Aw7fS+UjhMBj4hxTBxSG8Ti/5ifp1SWFpyapGZFuzdc=
 github.com/iotaledger/hive.go/v2 v2.0.0-20211125104322-59fec895a275 h1:A9dy/T8G0L77GzHqyOkKFGh4GYIsbt9LKf2sMNNPFGI=
