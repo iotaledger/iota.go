@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/serializer"
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // ExpirationMilestoneIndexFeatureBlock is a feature block which puts a time constraint on whether the receiver or sender identity
