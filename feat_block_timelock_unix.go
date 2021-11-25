@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/v2/serializer"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 // TimelockUnixFeatureBlock is a feature block which puts a time constraint on an output depending

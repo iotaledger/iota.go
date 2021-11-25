@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/iotaledger/hive.go/v2/serializer"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 var (

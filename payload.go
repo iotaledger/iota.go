@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/v2/serializer"
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 // PayloadType denotes a type of a payload.
