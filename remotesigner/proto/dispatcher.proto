@@ -1,5 +1,5 @@
 syntax = "proto3";
-package dispatcher;
+package dispatcherv3;
 
 option go_package = "github.com/iotaledger/iota.go/v3;remotesigner";
 
