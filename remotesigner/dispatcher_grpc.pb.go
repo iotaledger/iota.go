@@ -11,6 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // SignatureDispatcherClient is the client API for SignatureDispatcher service.
@@ -30,7 +31,7 @@ func NewSignatureDispatcherClient(cc grpc.ClientConnInterface) SignatureDispatch
 
 func (c *signatureDispatcherClient) SignMilestone(ctx context.Context, in *SignMilestoneRequest, opts ...grpc.CallOption) (*SignMilestoneResponse, error) {
 	out := new(SignMilestoneResponse)
-	err := c.cc.Invoke(ctx, "/dispatcher.SignatureDispatcher/SignMilestone", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/dispatcherv3.SignatureDispatcher/SignMilestone", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ type UnsafeSignatureDispatcherServer interface {
 }
 
 func RegisterSignatureDispatcherServer(s grpc.ServiceRegistrar, srv SignatureDispatcherServer) {
-	s.RegisterService(&_SignatureDispatcher_serviceDesc, srv)
+	s.RegisterService(&SignatureDispatcher_ServiceDesc, srv)
 }
 
 func _SignatureDispatcher_SignMilestone_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -75,7 +76,7 @@ func _SignatureDispatcher_SignMilestone_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/dispatcher.SignatureDispatcher/SignMilestone",
+		FullMethod: "/dispatcherv3.SignatureDispatcher/SignMilestone",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SignatureDispatcherServer).SignMilestone(ctx, req.(*SignMilestoneRequest))
@@ -83,8 +84,11 @@ func _SignatureDispatcher_SignMilestone_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-var _SignatureDispatcher_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "dispatcher.SignatureDispatcher",
+// SignatureDispatcher_ServiceDesc is the grpc.ServiceDesc for SignatureDispatcher service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var SignatureDispatcher_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "dispatcherv3.SignatureDispatcher",
 	HandlerType: (*SignatureDispatcherServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -93,5 +97,5 @@ var _SignatureDispatcher_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/dispatcher.proto",
+	Metadata: "dispatcher.proto",
 }
