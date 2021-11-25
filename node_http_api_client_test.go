@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iotaledger/hive.go/serializer"
+	"github.com/iotaledger/hive.go/v2/serializer"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"

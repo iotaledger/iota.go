@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/serializer"
+	"github.com/iotaledger/hive.go/v2/serializer"
 )
 
 const (
