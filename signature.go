@@ -16,8 +16,6 @@ type SignatureType byte
 const (
 	// SignatureEd25519 denotes an Ed25519Signature.
 	SignatureEd25519 SignatureType = iota
-	// SignatureBLS denotes a BLSSignature.
-	SignatureBLS
 )
 
 var (
@@ -30,8 +28,6 @@ func SignatureTypeToString(ty SignatureType) string {
 	switch ty {
 	case SignatureEd25519:
 		return "Ed25519Signature"
-	case SignatureBLS:
-		return "BLSSignature"
 	}
 	return "unknown signature"
 }
@@ -50,8 +46,6 @@ func SignatureSelector(sigType uint32) (Signature, error) {
 	switch SignatureType(sigType) {
 	case SignatureEd25519:
 		seri = &Ed25519Signature{}
-	case SignatureBLS:
-		seri = &BLSSignature{}
 	default:
 		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownSignatureType, sigType)
 	}
@@ -77,8 +71,6 @@ func jsonSignatureSelector(ty int) (JSONSerializable, error) {
 	switch SignatureType(ty) {
 	case SignatureEd25519:
 		obj = &jsonEd25519Signature{}
-	case SignatureBLS:
-		obj = &jsonBLSSignature{}
 	default:
 		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", ErrUnknownUnlockBlockType)
 	}

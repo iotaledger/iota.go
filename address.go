@@ -15,8 +15,6 @@ type AddressType = byte
 const (
 	// AddressEd25519 denotes an Ed25519 address.
 	AddressEd25519 = 0
-	// AddressBLS denotes a BLS address.
-	AddressBLS = 1
 	// AddressAlias denotes an Alias address.
 	AddressAlias = 8
 	// AddressNFT denotes an NFT address.
@@ -32,7 +30,6 @@ var (
 
 	allAddressTypeSet = AddressTypeSet{
 		AddressEd25519: struct{}{},
-		AddressBLS:     struct{}{},
 		AddressAlias:   struct{}{},
 		AddressNFT:     struct{}{},
 	}
@@ -108,8 +105,6 @@ func AddressTypeToString(ty AddressType) string {
 	switch ty {
 	case AddressEd25519:
 		return "Ed25519Address"
-	case AddressBLS:
-		return "BLSAddress"
 	case AddressAlias:
 		return "AliasAddress"
 	case AddressNFT:
@@ -123,8 +118,6 @@ func newAddress(addressType byte) (address Address, err error) {
 	switch addressType {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
-	case AddressBLS:
-		return &BLSAddress{}, nil
 	case AddressAlias:
 		return &AliasAddress{}, nil
 	case AddressNFT:
@@ -198,8 +191,6 @@ func jsonAddressSelector(ty int) (JSONSerializable, error) {
 	switch byte(ty) {
 	case AddressEd25519:
 		obj = &jsonEd25519Address{}
-	case AddressBLS:
-		obj = &jsonBLSAddress{}
 	case AddressAlias:
 		obj = &jsonAliasAddress{}
 	case AddressNFT:
