@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/iotaledger/hive.go/serializer"
+	"github.com/iotaledger/hive.go/v2/serializer"
 )
 
 const (
