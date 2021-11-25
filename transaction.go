@@ -269,6 +269,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiCont
 	workingSet := &SemValiContextWorkingSet{}
 	workingSet.UnlockedIdents = make(UnlockedIdentities)
 	workingSet.InputSet = inputs
+	workingSet.Tx = t
 	workingSet.InputIDToIndex = func() map[OutputID]uint16 {
 		m := make(map[OutputID]uint16)
 		for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
@@ -276,7 +277,6 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiCont
 		}
 		return m
 	}()
-	workingSet.Tx = t
 	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage()
 	if err != nil {
 		return nil, err
