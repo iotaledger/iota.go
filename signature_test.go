@@ -1,13 +1,17 @@
 package iotago_test
 
 import (
+	"encoding/json"
 	"errors"
-	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v2/tpkg"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/iotaledger/hive.go/serializer"
 	"github.com/iotaledger/iota.go/v2"
+	"github.com/iotaledger/iota.go/v2/tpkg"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSignatureSelector(t *testing.T) {
@@ -65,6 +69,42 @@ func TestEd25519Signature_Serialize(t *testing.T) {
 			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.target, edData)
+		})
+	}
+}
+
+type validTest struct {
+	Address   tpkg.HexBytes `json:"address"`
+	Message   tpkg.HexBytes `json:"message"`
+	PublicKey tpkg.HexBytes `json:"pub_key"`
+	Signature tpkg.HexBytes `json:"signature"`
+	Valid     bool          `json:"valid"`
+}
+
+func TestEd25519Signature_Valid(t *testing.T) {
+	b, err := os.ReadFile(filepath.Join("testdata", t.Name()+".json"))
+	require.NoError(t, err)
+
+	var tests []validTest
+	require.NoError(t, json.Unmarshal(b, &tests))
+	for _, tt := range tests {
+		t.Run("", func(t *testing.T) {
+			// deserialize the address from the test
+			addr := &iotago.Ed25519Address{}
+			_, err = addr.Deserialize(tt.Address, serializer.DeSeriModePerformValidation)
+			require.NoError(t, err)
+			// create the signature type
+			sig := &iotago.Ed25519Signature{}
+			copy(sig.PublicKey[:], tt.PublicKey)
+			copy(sig.Signature[:], tt.Signature)
+
+			sigError := sig.Valid(tt.Message, addr)
+			switch tt.Valid {
+			case true:
+				assert.NoError(t, sigError)
+			case false:
+				assert.Error(t, sigError)
+			}
 		})
 	}
 }
