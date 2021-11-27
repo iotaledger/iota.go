@@ -73,20 +73,20 @@ func TestEd25519Signature_Serialize(t *testing.T) {
 	}
 }
 
-type validTest struct {
-	Address   tpkg.HexBytes `json:"address"`
-	Message   tpkg.HexBytes `json:"message"`
-	PublicKey tpkg.HexBytes `json:"pub_key"`
-	Signature tpkg.HexBytes `json:"signature"`
-	Valid     bool          `json:"valid"`
-}
-
 func TestEd25519Signature_Valid(t *testing.T) {
+	type test struct {
+		Address   tpkg.HexBytes `json:"address"`
+		Message   tpkg.HexBytes `json:"message"`
+		PublicKey tpkg.HexBytes `json:"pub_key"`
+		Signature tpkg.HexBytes `json:"signature"`
+		Valid     bool          `json:"valid"`
+	}
+	var tests []test
+	// load the tests from file
 	b, err := ioutil.ReadFile(filepath.Join("testdata", t.Name()+".json"))
 	require.NoError(t, err)
-
-	var tests []validTest
 	require.NoError(t, json.Unmarshal(b, &tests))
+
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
 			// deserialize the address from the test
