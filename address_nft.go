@@ -57,6 +57,10 @@ func (nftAddr *NFTAddress) Chain() ChainID {
 	return NFTID(*nftAddr)
 }
 
+func (nftAddr *NFTAddress) NFTID() NFTID {
+	return NFTID(*nftAddr)
+}
+
 func (nftAddr *NFTAddress) Equal(other Address) bool {
 	otherAddr, is := other.(*NFTAddress)
 	if !is {

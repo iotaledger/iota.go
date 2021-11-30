@@ -1,76 +1,34 @@
 package iotago_test
 
 import (
-	"errors"
 	"testing"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAddressDeSerialization(t *testing.T) {
-	tests := []struct {
-		name       string
-		sourceData []byte
-		target     serializer.Serializable
-		checkBytes func(target serializer.Serializable) []byte
-		err        error
-	}{
+func TestAddressDeSerialize(t *testing.T) {
+	tests := []deSerializeTest{
 		{
-			"ok - Ed25519Address",
-			func() []byte {
-				_, data := tpkg.RandEd25519AddressAndBytes()
-				return data
-			}(),
-			&iotago.Ed25519Address{},
-			func(target serializer.Serializable) []byte {
-				return target.(*iotago.Ed25519Address)[:]
-			},
-			nil,
+			name:   "ok - Ed25519Address",
+			source: tpkg.RandEd25519Address(),
+			target: &iotago.Ed25519Address{},
 		},
 		{
-			"ok - AliasAddress",
-			func() []byte {
-				_, data := tpkg.RandAliasAddressAndBytes()
-				return data
-			}(),
-			&iotago.AliasAddress{},
-			func(target serializer.Serializable) []byte {
-				return target.(*iotago.AliasAddress)[:]
-			},
-			nil,
+			name:   "ok - AliasAddress",
+			source: tpkg.RandAliasAddress(),
+			target: &iotago.AliasAddress{},
 		},
 		{
-			"ok - NFTAddress",
-			func() []byte {
-				_, data := tpkg.RandNFTAddressAndBytes()
-				return data
-			}(),
-			&iotago.NFTAddress{},
-			func(target serializer.Serializable) []byte {
-				return target.(*iotago.NFTAddress)[:]
-			},
-			nil,
+			name:   "ok - NFTAddress",
+			source: tpkg.RandEd25519Address(),
+			target: &iotago.Ed25519Address{},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			bytesRead, err := tt.target.Deserialize(tt.sourceData, serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
-				return
-			}
-			assert.NoError(t, err)
-			assert.Equal(t, len(tt.sourceData), bytesRead)
-			assert.Equal(t, tt.sourceData[serializer.SmallTypeDenotationByteSize:], tt.checkBytes(tt.target))
-
-			outputData, err := tt.target.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.sourceData, outputData)
-		})
+		t.Run(tt.name, tt.deSerialize)
 	}
 }
 

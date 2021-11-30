@@ -300,7 +300,7 @@ func TestNodeAPI_OutputByID(t *testing.T) {
 func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 	defer gock.Off()
 
-	ed25519Addr, _ := tpkg.RandEd25519AddressAndBytes()
+	ed25519Addr := tpkg.RandEd25519Address()
 	ed25519AddrHex := ed25519Addr.String()
 
 	originRes := &iotago.AddressBalanceResponse{
@@ -324,7 +324,7 @@ func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
 func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
 	defer gock.Off()
 
-	ed25519Addr, _ := tpkg.RandEd25519AddressAndBytes()
+	ed25519Addr := tpkg.RandEd25519Address()
 	ed25519AddrHex := ed25519Addr.String()
 
 	output1 := tpkg.Rand32ByteArray()
@@ -501,8 +501,8 @@ func TestNodeAPI_MilestoneUTXOChangesByIndex(t *testing.T) {
 	var milestoneIndex uint32 = 1337
 	milestoneIndexStr := strconv.Itoa(int(milestoneIndex))
 
-	randCreatedOutput, _ := tpkg.RandUTXOInput()
-	randConsumedOutput, _ := tpkg.RandUTXOInput()
+	randCreatedOutput := tpkg.RandUTXOInput()
+	randConsumedOutput := tpkg.RandUTXOInput()
 
 	originRes := &iotago.MilestoneUTXOChangesResponse{
 		Index:           milestoneIndex,

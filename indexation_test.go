@@ -1,62 +1,23 @@
 package iotago_test
 
 import (
-	"errors"
 	"testing"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
 	"github.com/iotaledger/iota.go/v3"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestIndexation_Deserialize(t *testing.T) {
-	type test struct {
-		name   string
-		source []byte
-		target serializer.Serializable
-		err    error
-	}
-	tests := []test{
-		func() test {
-			indexationPayload, indexationPayloadData := tpkg.RandIndexation()
-			return test{"ok", indexationPayloadData, indexationPayload, nil}
-		}(),
+func TestIndexationDeSerialize(t *testing.T) {
+	tests := []deSerializeTest{
+		{
+			name:   "ok",
+			source: tpkg.RandIndexation(),
+			target: &iotago.Indexation{},
+		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			indexationPayload := &iotago.Indexation{}
-			bytesRead, err := indexationPayload.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
-				return
-			}
-			assert.NoError(t, err)
-			assert.Equal(t, len(tt.source), bytesRead)
-			assert.EqualValues(t, tt.target, indexationPayload)
-		})
-	}
-}
-
-func TestIndexation_Serialize(t *testing.T) {
-	type test struct {
-		name   string
-		source *iotago.Indexation
-		target []byte
-	}
-	tests := []test{
-		func() test {
-			indexationPayload, indexationPayloadData := tpkg.RandIndexation()
-			return test{"ok", indexationPayload, indexationPayloadData}
-		}(),
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.target, edData)
-		})
+		t.Run(tt.name, tt.deSerialize)
 	}
 }

@@ -12,53 +12,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReceipt_Deserialize(t *testing.T) {
-	type test struct {
-		name   string
-		source []byte
-		target *iotago.Receipt
-		err    error
-	}
-	tests := []test{
-		func() test {
-			receipt, receiptData := tpkg.RandReceipt()
-			return test{"ok", receiptData, receipt, nil}
-		}(),
+func TestReceipt_DeSerialize(t *testing.T) {
+	tests := []deSerializeTest{
+		{
+			name:   "",
+			source: tpkg.RandReceipt(),
+			target: &iotago.Receipt{},
+		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			receipt := &iotago.Receipt{}
-			bytesRead, err := receipt.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
-				return
-			}
-			assert.NoError(t, err)
-			assert.Equal(t, len(tt.source), bytesRead)
-			assert.EqualValues(t, tt.target, receipt)
-		})
-	}
-}
-
-func TestReceipt_Serialize(t *testing.T) {
-	type test struct {
-		name   string
-		source *iotago.Receipt
-		target []byte
-	}
-	tests := []test{
-		func() test {
-			receipt, receiptData := tpkg.RandReceipt()
-			return test{"ok", receipt, receiptData}
-		}(),
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.target, edData)
-		})
+		t.Run(tt.name, tt.deSerialize)
 	}
 }
 
@@ -115,37 +79,33 @@ func TestValidateReceipts(t *testing.T) {
 
 	tests := []test{
 		func() test {
-			addr, _ := tpkg.RandEd25519AddressAndBytes()
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: tpkg.Rand49ByteArray(),
-				Address:             addr,
+				Address:             tpkg.RandEd25519Address(),
 				Deposit:             7_000_000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefZeroRentParas)
 			return test{"ok", receipt, currentTreasury, nil}
 		}(),
 		func() test {
-			addr, _ := tpkg.RandEd25519AddressAndBytes()
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: tpkg.Rand49ByteArray(),
-				Address:             addr,
+				Address:             tpkg.RandEd25519Address(),
 				Deposit:             1000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefZeroRentParas)
 			return test{"err - migrated less tha minimum", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 		func() test {
-			addr, _ := tpkg.RandEd25519AddressAndBytes()
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: tpkg.Rand49ByteArray(),
-				Address:             addr,
+				Address:             tpkg.RandEd25519Address(),
 				Deposit:             iotago.TokenSupply + 1,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefZeroRentParas)
 			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 		func() test {
-			addr, _ := tpkg.RandEd25519AddressAndBytes()
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: tpkg.Rand49ByteArray(),
-				Address:             addr,
+				Address:             tpkg.RandEd25519Address(),
 				Deposit:             6_000_000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefZeroRentParas)
 			return test{"err - invalid new treasury amount", receipt, currentTreasury, iotago.ErrInvalidReceipt}

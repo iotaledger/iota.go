@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-
 	"golang.org/x/crypto/blake2b"
 )
 
@@ -176,6 +175,27 @@ func (u *TransactionEssence) SigningMessage() ([]byte, error) {
 	}
 	essenceBytesHash := blake2b.Sum256(essenceBytes)
 	return essenceBytesHash[:], nil
+}
+
+// Sign produces signatures signing the essence for every given AddressKeys.
+// The produced signatures are in the same order as the AddressKeys.
+func (u *TransactionEssence) Sign(addrKeys ...AddressKeys) ([]Signature, error) {
+	signMsg, err := u.SigningMessage()
+	if err != nil {
+		return nil, err
+	}
+
+	sigs := make([]Signature, len(addrKeys))
+	signer := NewInMemoryAddressSigner(addrKeys...)
+	for i, v := range addrKeys {
+		sig, err := signer.Sign(v.Address, signMsg)
+		if err != nil {
+			return nil, err
+		}
+		sigs[i] = sig
+	}
+
+	return sigs, nil
 }
 
 func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {

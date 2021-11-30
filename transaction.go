@@ -210,10 +210,6 @@ func (t *Transaction) syntacticallyValidate(readBytes []byte, minDustDep uint64,
 	return nil
 }
 
-// SemanticValidationFunc is a function which when called tells whether
-// the transaction is passing a specific semantic validation rule or not.
-type SemanticValidationFunc = func(t *Transaction, inputs OutputSet) error
-
 // SemanticValidationContext defines the context under which a semantic validation for a Transaction is happening.
 type SemanticValidationContext struct {
 	ExtParas *ExternalUnlockParameters
@@ -251,6 +247,12 @@ type SemValiContextWorkingSet struct {
 	UnlockBlocksByType UnlockBlocksByType
 }
 
+// UTXOInputAtIndex retrieves the UTXOInput at the given index.
+// Caller must ensure that the index is valid.
+func (workingSet *SemValiContextWorkingSet) UTXOInputAtIndex(inputIndex uint16) *UTXOInput {
+	return workingSet.Tx.Essence.Inputs[inputIndex].(*UTXOInput)
+}
+
 func featureBlockSetFromOutput(output ChainConstrainedOutput) (FeatureBlocksSet, error) {
 	featureBlockOutput, is := output.(FeatureBlockOutput)
 	if !is {
@@ -267,6 +269,7 @@ func featureBlockSetFromOutput(output ChainConstrainedOutput) (FeatureBlocksSet,
 func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiContextWorkingSet, error) {
 	var err error
 	workingSet := &SemValiContextWorkingSet{}
+	workingSet.Tx = t
 	workingSet.UnlockedIdents = make(UnlockedIdentities)
 	workingSet.InputSet = inputs
 	workingSet.InputIDToIndex = func() map[OutputID]uint16 {
@@ -276,7 +279,6 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiCont
 		}
 		return m
 	}()
-	workingSet.Tx = t
 	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage()
 	if err != nil {
 		return nil, err
@@ -306,16 +308,20 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiCont
 }
 
 // SemanticallyValidate semantically validates the Transaction by checking that the semantic rules applied to the inputs
-// and outputs are fulfilled. Semantic validation should only be executed on Transaction(s) which are syntactically valid.
-func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inputs OutputSet, semValFuncs ...SemanticValidationFunc) error {
+// and outputs are fulfilled. Semantic validation must only be executed on Transaction(s) which are syntactically valid.
+func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inputs OutputSet, semValFuncs ...TxSemanticValidationFunc) error {
 	var err error
 	svCtx.WorkingSet, err = NewSemValiContextWorkingSet(t, inputs)
 	if err != nil {
 		return err
 	}
 
-	// TODO:
-	// 	- max 256 native tokens in/out (?)
+	if len(semValFuncs) > 0 {
+		if err := runSemanticValidations(svCtx, semValFuncs...); err != nil {
+			return err
+		}
+		return nil
+	}
 
 	// do not change the order of these functions as
 	// some of them might depend on certain mutations
@@ -385,6 +391,15 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 			if err := unlockOutput(svCtx, input, uint16(inputIndex)); err != nil {
 				return err
 			}
+
+			// since this input is now unlocked, and it is a ChainConstrainedOutput, the chain's address becomes automatically unlocked
+			if chainConstrOutput, is := input.(ChainConstrainedOutput); is && chainConstrOutput.Chain().Addressable() {
+				chainID := chainConstrOutput.Chain()
+				if chainID.Empty() {
+					chainID = chainID.(UTXOIDChainID).FromOutputID(svCtx.WorkingSet.UTXOInputAtIndex(uint16(inputIndex)).Ref())
+				}
+				svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(chainID.ToAddress().Key(), uint16(inputIndex))
+			}
 		}
 		return nil
 	}
@@ -453,15 +468,13 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 	case ChainConstrainedAddress:
 		referentialUnlockBlock, isReferentialUnlockBlock := unlockBlock.(ReferentialUnlockBlock)
 		if !isReferentialUnlockBlock || !referentialUnlockBlock.Chainable() || !referentialUnlockBlock.SourceAllowed(ownerIdent) {
-			return fmt.Errorf("%w: input %d has a chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(owner.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
+			return fmt.Errorf("%w: input %d has a chain constrained address (%T) but its corresponding unlock block is of type %T", ErrInvalidInputUnlock, inputIndex, owner, unlockBlock)
 		}
 
 		unlockedIndices, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[owner.Key()]
 		if !wasUnlocked || !unlockedIndices.Unlocked(referentialUnlockBlock.Ref()) {
-			return fmt.Errorf("%w: input %d's chain constrained address is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, referentialUnlockBlock.Ref())
+			return fmt.Errorf("%w: input %d's chain constrained address (%T) is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, owner, referentialUnlockBlock.Ref())
 		}
-
-		svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(owner.Key(), inputIndex)
 
 	case DirectUnlockableAddress:
 		switch uBlock := unlockBlock.(type) {
@@ -475,8 +488,6 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 				return fmt.Errorf("%w: input %d's address is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, uBlock.Ref())
 			}
 
-			svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(owner.Key(), inputIndex)
-
 		case *SignatureUnlockBlock:
 			// owner must not be unlocked already
 			if unlockedAtIndex, wasAlreadyUnlocked := svCtx.WorkingSet.UnlockedIdents[owner.Key()]; wasAlreadyUnlocked {
@@ -486,21 +497,12 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 			if err := owner.Unlock(svCtx.WorkingSet.EssenceMsgToSign, uBlock.Signature); err != nil {
 				return fmt.Errorf("%w: input %d's address is not unlocked through its signature unlock block", err, inputIndex)
 			}
-
-			svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(owner.Key(), inputIndex)
 		}
 	default:
 		panic("unknown address in semantic unlocks")
 	}
 
-	// since this input is now unlocked, and it has a ChainConstrainedAddress, it becomes automatically unlocked
-	if chainConstrOutput, is := output.(ChainConstrainedOutput); is && chainConstrOutput.Chain().Addressable() {
-		chainID := chainConstrOutput.Chain()
-		if chainID.Empty() {
-			chainID = chainID.(UTXOIDChainID).FromOutputID(svCtx.WorkingSet.Tx.Essence.Inputs[inputIndex].(*UTXOInput).Ref())
-		}
-		svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(chainID.ToAddress().Key(), inputIndex)
-	}
+	svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(ownerIdent.Key(), inputIndex)
 
 	return nil
 }
@@ -652,6 +654,7 @@ func TxSemanticSTVFOnChains() TxSemanticValidationFunc {
 // TxSemanticNativeTokens validates following rules regarding NativeTokens:
 //	- The NativeTokens between Inputs / Outputs must be balanced in terms of circulating supply adjustments if
 //	  there is no foundry state transition for a given NativeToken.
+// 	- TODO: max 256 native tokens in/out (?)
 func TxSemanticNativeTokens() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		// native token set creates handle overflows

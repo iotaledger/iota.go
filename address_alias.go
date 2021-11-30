@@ -59,6 +59,10 @@ func (aliasAddr *AliasAddress) Chain() ChainID {
 	return &aliasID
 }
 
+func (aliasAddr *AliasAddress) AliasID() AliasID {
+	return AliasID(*aliasAddr)
+}
+
 func (aliasAddr *AliasAddress) Equal(other Address) bool {
 	otherAddr, is := other.(*AliasAddress)
 	if !is {
