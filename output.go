@@ -45,6 +45,14 @@ func (outputID OutputID) TransactionID() TransactionID {
 	return txID
 }
 
+// UTXOInput creates a UTXOInput from this OutputID.
+func (outputID OutputID) UTXOInput() *UTXOInput {
+	utxoInput := &UTXOInput{}
+	copy(utxoInput.TransactionID[:], outputID[:TransactionIDLength])
+	utxoInput.TransactionOutputIndex = binary.LittleEndian.Uint16(outputID[TransactionIDLength:])
+	return utxoInput
+}
+
 // OutputIDFromTransactionIDAndIndex creates a OutputID from the given TransactionID and index.
 func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputID {
 	utxo := UTXOInput{TransactionOutputIndex: index}
@@ -65,6 +73,15 @@ func (outputIDs OutputIDs) ToHex() []string {
 		ids[i] = fmt.Sprintf("%x", outputIDs[i])
 	}
 	return ids
+}
+
+// UTXOInputs converts the OutputIDs slice to Inputs.
+func (outputIDs OutputIDs) UTXOInputs() Inputs {
+	inputs := make(Inputs, 0)
+	for _, outputID := range outputIDs {
+		inputs = append(inputs, outputID.UTXOInput())
+	}
+	return inputs
 }
 
 // OutputType defines the type of outputs.
@@ -333,9 +350,9 @@ func (ntOutputs NativeTokenOutputs) Sum() (NativeTokenSum, error) {
 }
 
 // NewAliases returns an AliasOutputsSet for all AliasOutputs which are new.
-func (inputSet OutputSet) NewAliases() AliasOutputsSet {
+func (outputSet OutputSet) NewAliases() AliasOutputsSet {
 	set := make(AliasOutputsSet)
-	for utxoInputID, output := range inputSet {
+	for utxoInputID, output := range outputSet {
 		aliasOutput, is := output.(*AliasOutput)
 		if !is || !aliasOutput.AliasEmpty() {
 			continue
@@ -346,9 +363,9 @@ func (inputSet OutputSet) NewAliases() AliasOutputsSet {
 }
 
 // ChainConstrainedOutputSet returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs in the OutputSet.
-func (inputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSet {
+func (outputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSet {
 	set := make(ChainConstrainedOutputsSet)
-	for utxoInputID, output := range inputSet {
+	for utxoInputID, output := range outputSet {
 		chainConstrainedOutput, is := output.(ChainConstrainedOutput)
 		if !is {
 			continue

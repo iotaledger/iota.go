@@ -3,80 +3,40 @@ package iotago_test
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"testing"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMessage_Deserialize(t *testing.T) {
-	type test struct {
-		name   string
-		source []byte
-		target serializer.Serializable
-		err    error
-	}
-
-	tests := []test{
-		func() test {
-			msgPayload, msgPayloadData := tpkg.RandMessage(1337)
-			return test{"ok - no payload", msgPayloadData, msgPayload, nil}
-		}(),
-		func() test {
-			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.PayloadTransaction)
-			return test{"ok - transaction payload", msgPayloadData, msgPayload, nil}
-		}(),
-		func() test {
-			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.PayloadMilestone)
-			return test{"ok - milestone payload", msgPayloadData, msgPayload, nil}
-		}(),
-		func() test {
-			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.PayloadIndexation)
-			return test{"ok - indexation payload", msgPayloadData, msgPayload, nil}
-		}(),
+func TestMessage_DeSerialize(t *testing.T) {
+	tests := []deSerializeTest{
+		{
+			name:   "ok - no payload",
+			source: tpkg.RandMessage(1337),
+			target: &iotago.Message{},
+		},
+		{
+			name:   "ok - transaction",
+			source: tpkg.RandMessage(iotago.PayloadTransaction),
+			target: &iotago.Message{},
+		},
+		{
+			name:   "ok - milestone",
+			source: tpkg.RandMessage(iotago.PayloadMilestone),
+			target: &iotago.Message{},
+		},
+		{
+			name:   "ok - indexation",
+			source: tpkg.RandMessage(iotago.PayloadIndexation),
+			target: &iotago.Message{},
+		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			msg := &iotago.Message{}
-			bytesRead, err := msg.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
-				return
-			}
-			assert.NoError(t, err)
-			assert.Equal(t, len(tt.source), bytesRead)
-			assert.EqualValues(t, tt.target, msg)
-		})
-	}
-}
-
-func TestMessage_Serialize(t *testing.T) {
-	type test struct {
-		name   string
-		source *iotago.Message
-		target []byte
-	}
-	tests := []test{
-		func() test {
-			msgPayload, msgPayloadData := tpkg.RandMessage(iotago.PayloadTransaction)
-			return test{"ok - with transaction payload", msgPayload, msgPayloadData}
-		}(),
-		func() test {
-			msgPayload, msgPayloadData := tpkg.RandMessage(1337)
-			return test{"ok - without any payload", msgPayload, msgPayloadData}
-		}(),
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.target, edData)
-		})
+		t.Run(tt.name, tt.deSerialize)
 	}
 }
 

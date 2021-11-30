@@ -2,7 +2,6 @@ package iotago_test
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -13,62 +12,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSignatureSelector(t *testing.T) {
-	_, err := iotago.SignatureSelector(100)
-	assert.True(t, errors.Is(err, iotago.ErrUnknownSignatureType))
-}
-
-func TestEd25519Signature_Deserialize(t *testing.T) {
-	type test struct {
-		name   string
-		source []byte
-		target serializer.Serializable
-		err    error
-	}
-	tests := []test{
-		func() test {
-			edSig, edSigData := tpkg.RandEd25519SignatureAndBytes()
-			return test{"ok", edSigData, edSig, nil}
-		}(),
-		func() test {
-			edSig, edSigData := tpkg.RandEd25519SignatureAndBytes()
-			return test{"not enough data", edSigData[:5], edSig, serializer.ErrDeserializationNotEnoughData}
-		}(),
+func TestEd25519Signature_DeSerialize(t *testing.T) {
+	tests := []deSerializeTest{
+		{
+			name:   "ok",
+			source: tpkg.RandEd25519Signature(),
+			target: &iotago.Ed25519Signature{},
+		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			edSig := &iotago.Ed25519Signature{}
-			bytesRead, err := edSig.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
-				return
-			}
-			assert.NoError(t, err)
-			assert.Equal(t, len(tt.source), bytesRead)
-			assert.EqualValues(t, tt.target, edSig)
-		})
-	}
-}
-
-func TestEd25519Signature_Serialize(t *testing.T) {
-	type test struct {
-		name   string
-		source *iotago.Ed25519Signature
-		target []byte
-	}
-	tests := []test{
-		func() test {
-			edSig, edSigData := tpkg.RandEd25519SignatureAndBytes()
-			return test{"ok", edSig, edSigData}
-		}(),
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.target, edData)
-		})
+		t.Run(tt.name, tt.deSerialize)
 	}
 }
 

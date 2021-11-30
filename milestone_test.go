@@ -17,53 +17,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMilestone_Deserialize(t *testing.T) {
-	type test struct {
-		name   string
-		source []byte
-		target *iotago.Milestone
-		err    error
-	}
-	tests := []test{
-		func() test {
-			msPayload, msPayloadData := tpkg.RandMilestone(nil)
-			return test{"ok", msPayloadData, msPayload, nil}
-		}(),
+func TestMilestone__DeSerialize(t *testing.T) {
+	tests := []deSerializeTest{
+		{
+			name:   "ok",
+			source: tpkg.RandMilestone(nil),
+			target: &iotago.Milestone{},
+		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			msPayload := &iotago.Milestone{}
-			bytesRead, err := msPayload.Deserialize(tt.source, serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
-				return
-			}
-			assert.NoError(t, err)
-			assert.Equal(t, len(tt.source), bytesRead)
-			assert.EqualValues(t, tt.target, msPayload)
-		})
-	}
-}
-
-func TestMilestone_Serialize(t *testing.T) {
-	type test struct {
-		name   string
-		source *iotago.Milestone
-		target []byte
-	}
-	tests := []test{
-		func() test {
-			msPayload, msPayloadData := tpkg.RandMilestone(nil)
-			return test{"ok", msPayload, msPayloadData}
-		}(),
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			edData, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.target, edData)
-		})
+		t.Run(tt.name, tt.deSerialize)
 	}
 }
 
