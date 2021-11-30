@@ -15,7 +15,9 @@ import (
 )
 
 func TestNewNodeEventAPIClient(t *testing.T) {
-	_, originMsgBytes := tpkg.RandMessage(iotago.PayloadIndexation)
+	msg := tpkg.RandMessage(iotago.PayloadIndexation)
+	originMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, nil)
+	require.NoError(t, err)
 	mock := &mockMqttClient{payload: originMsgBytes}
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
