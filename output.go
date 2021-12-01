@@ -327,12 +327,16 @@ func (outputs OutputsByType) ChainConstrainedOutputs() ChainConstrainedOutputs {
 type NativeTokenOutputs []NativeTokenOutput
 
 // Sum sums up the different NativeTokens occurring within the given outputs.
-func (ntOutputs NativeTokenOutputs) Sum() (NativeTokenSum, error) {
+// limit defines the max amount of native tokens which are allowewd
+func (ntOutputs NativeTokenOutputs) Sum() (NativeTokenSum, int, error) {
 	sum := make(map[NativeTokenID]*big.Int)
+	var ntCount int
 	for _, output := range ntOutputs {
-		for _, nativeToken := range output.NativeTokenSet() {
+		set := output.NativeTokenSet()
+		ntCount += len(set)
+		for _, nativeToken := range set {
 			if sign := nativeToken.Amount.Sign(); sign == -1 || sign == 0 {
-				return nil, ErrNativeTokenAmountLessThanEqualZero
+				return nil, 0, ErrNativeTokenAmountLessThanEqualZero
 			}
 
 			val := sum[nativeToken.ID]
@@ -341,12 +345,12 @@ func (ntOutputs NativeTokenOutputs) Sum() (NativeTokenSum, error) {
 			}
 
 			if val.Add(val, nativeToken.Amount).Cmp(abi.MaxUint256) == 1 {
-				return nil, ErrNativeTokenSumExceedsUint256
+				return nil, 0, ErrNativeTokenSumExceedsUint256
 			}
 			sum[nativeToken.ID] = val
 		}
 	}
-	return sum, nil
+	return sum, ntCount, nil
 }
 
 // NewAliases returns an AliasOutputsSet for all AliasOutputs which are new.
@@ -611,7 +615,7 @@ func OutputsSyntacticalNativeTokensCount() OutputsSyntacticalValidationFunc {
 		if nativeTokenOutput, is := output.(NativeTokenOutput); is {
 			nativeTokensCount += len(nativeTokenOutput.NativeTokenSet())
 			if nativeTokensCount > MaxNativeTokensCount {
-				return ErrOutputsExceedMaxNativeTokensCount
+				return ErrMaxNativeTokensCountExceeded
 			}
 		}
 		return nil

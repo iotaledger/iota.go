@@ -178,7 +178,7 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 					Address:      tpkg.RandEd25519Address(),
 				},
 			},
-			wantErr: iotago.ErrOutputsExceedMaxNativeTokensCount,
+			wantErr: iotago.ErrMaxNativeTokensCountExceeded,
 		},
 	}
 	valFunc := iotago.OutputsSyntacticalNativeTokensCount()

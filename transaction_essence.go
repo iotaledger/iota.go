@@ -50,8 +50,8 @@ var (
 	ErrOutputReturnBlockIsMoreThanVBRent = errors.New("output's return feature block's amount is bigger than the minimum virtual byte rent cost")
 	// ErrOutputReturnBlockIsLessThanMinDust gets returned if an output defines within its DustDepositReturnFeatureBlock less than the minimum dust deposit.
 	ErrOutputReturnBlockIsLessThanMinDust = errors.New("output's return feature block's amount is less than the minimum dust amount")
-	// ErrOutputsExceedMaxNativeTokensCount gets returned if outputs exceed the MaxNativeTokensCount.
-	ErrOutputsExceedMaxNativeTokensCount = errors.New("outputs exceeds max native tokens count")
+	// ErrMaxNativeTokensCountExceeded gets returned if outputs or transactions exceed the MaxNativeTokensCount.
+	ErrMaxNativeTokensCountExceeded = errors.New("max native tokens count exceeded")
 
 	essencePayloadGuard = serializer.SerializableGuard{
 		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
