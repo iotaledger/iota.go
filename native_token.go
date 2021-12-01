@@ -82,15 +82,15 @@ type NativeTokenSum map[NativeTokenID]*big.Int
 // This function is only appropriate for checking NativeToken balances if there are no underlying foundry state transitions.
 func (nts NativeTokenSum) Balanced(other NativeTokenSum) error {
 	if len(nts) != len(other) {
-		return fmt.Errorf("%w: length mismatch, source %d, other %d", ErrNativeTokenSumUnbalanced, len(nts), len(other))
+		return fmt.Errorf("%w: length mismatch, in %d, out %d", ErrNativeTokenSumUnbalanced, len(nts), len(other))
 	}
 	for id, sum := range nts {
 		otherSum := other[id]
 		if otherSum == nil {
-			return fmt.Errorf("%w: native token %s missing in other", ErrNativeTokenSumUnbalanced, id)
+			return fmt.Errorf("%w: native token %s missing in out", ErrNativeTokenSumUnbalanced, id)
 		}
 		if sum.Cmp(otherSum) != 0 {
-			return fmt.Errorf("%w: sum mismatch, source %d, other %d", ErrNativeTokenSumUnbalanced, sum, other)
+			return fmt.Errorf("%w: sum mismatch, in %d, out %d", ErrNativeTokenSumUnbalanced, sum, other)
 		}
 	}
 	return nil
@@ -149,6 +149,15 @@ func (n NativeTokens) MustSet() NativeTokensSet {
 	return set
 }
 
+// Clone clones this slice of NativeToken(s).
+func (n NativeTokens) Clone() NativeTokens {
+	cpy := make(NativeTokens, len(n))
+	for i, ele := range n {
+		cpy[i] = ele.Clone()
+	}
+	return cpy
+}
+
 func (n NativeTokens) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(uint64(serializer.UInt16ByteSize + len(n)*NativeTokenVByteCost))
 }
@@ -185,6 +194,14 @@ func (n NativeTokens) Equal(other NativeTokens) bool {
 type NativeToken struct {
 	ID     NativeTokenID
 	Amount *big.Int
+}
+
+// Clone clones the NativeToken.
+func (n *NativeToken) Clone() *NativeToken {
+	cpy := &NativeToken{}
+	copy(cpy.ID[:], n.ID[:])
+	cpy.Amount = new(big.Int).Set(n.Amount)
+	return cpy
 }
 
 func (n *NativeToken) VByteCost(_ *RentStructure, _ VByteCostFunc) uint64 {

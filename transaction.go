@@ -329,9 +329,9 @@ func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inp
 	if err := runSemanticValidations(svCtx,
 		TxSemanticTimelock(),
 		TxSemanticInputUnlocks(),
+		TxSemanticOutputsSender(),
 		TxSemanticDeposit(),
 		TxSemanticNativeTokens(),
-		TxSemanticOutputsSender(),
 		TxSemanticSTVFOnChains()); err != nil {
 		return err
 	}
@@ -589,7 +589,6 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 			return fmt.Errorf("%w: in %d, out %d", ErrInputOutputSumMismatch, in, out)
 		}
 
-		// TODO: augment error with better context
 		for ident, returnSum := range inputSumReturnAmountPerIdent {
 			outSum, has := outputSimpleTransfersPerIdent[ident]
 			if !has {
@@ -614,7 +613,7 @@ func TxSemanticTimelock() TxSemanticValidationFunc {
 			}
 
 			if err := featBlockOutput.FeatureBlocks().MustSet().TimelocksExpired(svCtx.ExtParas); err != nil {
-				return fmt.Errorf("%w: input at index %d's timelocks are not expired", ErrInvalidInputUnlock, inputIndex)
+				return fmt.Errorf("%w: input at index %d's timelocks are not expired", err, inputIndex)
 			}
 		}
 		return nil
@@ -654,19 +653,28 @@ func TxSemanticSTVFOnChains() TxSemanticValidationFunc {
 // TxSemanticNativeTokens validates following rules regarding NativeTokens:
 //	- The NativeTokens between Inputs / Outputs must be balanced in terms of circulating supply adjustments if
 //	  there is no foundry state transition for a given NativeToken.
-// 	- TODO: max 256 native tokens in/out (?)
+// 	- Max MaxNativeTokensCount native tokens within inputs + outputs
 func TxSemanticNativeTokens() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		// native token set creates handle overflows
 		var err error
-		svCtx.WorkingSet.InNativeTokens, err = svCtx.WorkingSet.InputsByType.NativeTokenOutputs().Sum()
+		var inNTCount, outNTCount int
+		svCtx.WorkingSet.InNativeTokens, inNTCount, err = svCtx.WorkingSet.InputsByType.NativeTokenOutputs().Sum()
 		if err != nil {
 			return fmt.Errorf("invalid input native token set: %w", err)
 		}
 
-		svCtx.WorkingSet.OutNativeTokens, err = svCtx.WorkingSet.InputsByType.NativeTokenOutputs().Sum()
+		if inNTCount > MaxNativeTokensCount {
+			return fmt.Errorf("%w: inputs native token count %d exceeds max of %d", ErrMaxNativeTokensCountExceeded, inNTCount, MaxNativeTokensCount)
+		}
+
+		svCtx.WorkingSet.OutNativeTokens, outNTCount, err = svCtx.WorkingSet.OutputsByType.NativeTokenOutputs().Sum()
 		if err != nil {
 			return fmt.Errorf("invalid output native token set: %w", err)
+		}
+
+		if inNTCount+outNTCount > MaxNativeTokensCount {
+			return fmt.Errorf("%w: native token count (in %d + out %d) exceeds max of %d", ErrMaxNativeTokensCountExceeded, inNTCount, outNTCount, MaxNativeTokensCount)
 		}
 
 		// easy route, tokens must be balanced between both sets
@@ -677,25 +685,34 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 			return nil
 		}
 
-		// check for the input and output side whether we have the state transitioning foundry
+		// check for the input and output side whether we have the transitioning foundry
 		// in case either side is missing its companion sum or the tokens are unbalanced by
 		// just looking at both sides' sums
 
 		for nativeTokenID, inSum := range svCtx.WorkingSet.InNativeTokens {
-			if outSum := svCtx.WorkingSet.OutNativeTokens[nativeTokenID]; outSum == nil || inSum.Cmp(outSum) != 0 {
-				if _, foundryIsTransitioning := svCtx.WorkingSet.OutChains[nativeTokenID.FoundryID()]; !foundryIsTransitioning {
-					return fmt.Errorf("%w: native token %d exists on input but not output side and the foundry is not transitioning", ErrNativeTokenSumUnbalanced, nativeTokenID)
-				}
+			outSum := svCtx.WorkingSet.OutNativeTokens[nativeTokenID]
+			_, foundryIsTransitioning := svCtx.WorkingSet.OutChains[nativeTokenID.FoundryID()]
+
+			if foundryIsTransitioning {
 				continue
+			}
+
+			switch {
+			case outSum == nil:
+				return fmt.Errorf("%w: native token %d exists on input but not output side and the foundry is not transitioning", ErrNativeTokenSumUnbalanced, nativeTokenID)
+			case inSum.Cmp(outSum) != 0:
+				return fmt.Errorf("%w: native token %d is unbalanced between input (%d) and output (%d) but the foundry is not transitioning", ErrNativeTokenSumUnbalanced, inSum, outSum, nativeTokenID)
 			}
 		}
 
-		for nativeTokenID, outSum := range svCtx.WorkingSet.OutNativeTokens {
-			if inSum := svCtx.WorkingSet.InNativeTokens[nativeTokenID]; inSum == nil || inSum.Cmp(outSum) != 0 {
-				if _, foundryIsTransitioning := svCtx.WorkingSet.OutChains[nativeTokenID.FoundryID()]; !foundryIsTransitioning {
-					return fmt.Errorf("%w: native token %d exists on output but not input side and the foundry is not transitioning", ErrNativeTokenSumUnbalanced, nativeTokenID)
-				}
-				continue
+		for nativeTokenID := range svCtx.WorkingSet.OutNativeTokens {
+			inSum := svCtx.WorkingSet.InNativeTokens[nativeTokenID]
+			_, foundryIsTransitioning := svCtx.WorkingSet.OutChains[nativeTokenID.FoundryID()]
+
+			// just need to check whether the foundry is transitioning, since the balancing
+			// between in and out is already given from the previous check
+			if inSum == nil && !foundryIsTransitioning {
+				return fmt.Errorf("%w: native token %d is new on the output side but the foundry is not transitioning", ErrNativeTokenSumUnbalanced, nativeTokenID)
 			}
 		}
 
