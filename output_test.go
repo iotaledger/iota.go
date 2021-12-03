@@ -33,7 +33,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 			target: &iotago.ExtendedOutput{},
 		},
 		{
-			name: "ok - Alias",
+			name: "ok - AliasOutput",
 			source: &iotago.AliasOutput{
 				Amount:               1337,
 				NativeTokens:         tpkg.RandSortNativeTokens(2),
