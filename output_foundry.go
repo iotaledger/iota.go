@@ -179,7 +179,7 @@ func (f *FoundryOutput) ValidateStateTransition(transType ChainTransitionType, n
 
 func (f *FoundryOutput) checkStateGenesisTransition(semValCtx *SemanticValidationContext, thisFoundryID FoundryID, inSums NativeTokenSum, outSums NativeTokenSum) error {
 	// grab foundry counter from transitioning AliasOutput
-	aliasID := f.Address.(*AliasAddress).Chain()
+	aliasID := f.Address.(*AliasAddress).AliasID()
 	inAlias, ok := semValCtx.WorkingSet.InChains[aliasID]
 	if !ok {
 		return fmt.Errorf("%w: missing input transitioning alias output %s for new foundry output %s", ErrInvalidChainStateTransition, aliasID, thisFoundryID)
@@ -324,7 +324,7 @@ func (f *FoundryOutput) Type() OutputType {
 
 func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
-		CheckTypePrefix(uint32(OutputAlias), serializer.TypeDenotationByte, func(err error) error {
+		CheckTypePrefix(uint32(OutputFoundry), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize foundry output: %w", err)
 		}).
 		ReadObject(&f.Address, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, foundryOutputAddrGuard.ReadGuard, func(err error) error {

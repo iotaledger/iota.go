@@ -18,14 +18,14 @@ func copyObject(t *testing.T, source serializer.Serializable, mutations fieldMut
 	srcBytes, err := source.Serialize(serializer.DeSeriModeNoValidation, nil)
 	require.NoError(t, err)
 
-	ptrToSrc := reflect.New(reflect.ValueOf(source).Elem().Type())
+	ptrToCpyOfSrc := reflect.New(reflect.ValueOf(source).Elem().Type())
 
-	cpySeri := ptrToSrc.Interface().(serializer.Serializable)
+	cpySeri := ptrToCpyOfSrc.Interface().(serializer.Serializable)
 	_, err = cpySeri.Deserialize(srcBytes, serializer.DeSeriModeNoValidation, nil)
 	require.NoError(t, err)
 
 	for fieldName, newVal := range mutations {
-		ptrToSrc.Elem().FieldByName(fieldName).Set(reflect.ValueOf(newVal))
+		ptrToCpyOfSrc.Elem().FieldByName(fieldName).Set(reflect.ValueOf(newVal))
 	}
 
 	return cpySeri
