@@ -119,7 +119,7 @@ func (e *ExtendedOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 			return fmt.Errorf("unable to deserialize native tokens for extended output: %w", err)
 		}).
 		ReadSliceOfObjects(&e.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, extendedOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
+			return fmt.Errorf("unable to deserialize feature blocks for extended output: %w", err)
 		}).
 		Done()
 }
