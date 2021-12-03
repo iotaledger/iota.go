@@ -46,7 +46,7 @@ func (s *ExpirationMilestoneIndexFeatureBlock) Deserialize(data []byte, _ serial
 
 func (s *ExpirationMilestoneIndexFeatureBlock) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(byte(FeatureBlockTimelockMilestoneIndex), func(err error) error {
+		WriteNum(byte(FeatureBlockExpirationMilestoneIndex), func(err error) error {
 			return fmt.Errorf("unable to serialize expiration milestone index feature block type ID: %w", err)
 		}).
 		WriteNum(s.MilestoneIndex, func(err error) error {
