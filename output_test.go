@@ -12,6 +12,90 @@ import (
 	"github.com/iotaledger/iota.go/v3"
 )
 
+func TestOutputsDeSerialize(t *testing.T) {
+	tests := []deSerializeTest{
+		{
+			name: "ok - ExtendedOutput",
+			source: &iotago.ExtendedOutput{
+				Address:      tpkg.RandEd25519Address(),
+				Amount:       1337,
+				NativeTokens: tpkg.RandSortNativeTokens(2),
+				Blocks: iotago.FeatureBlocks{
+					&iotago.SenderFeatureBlock{Address: tpkg.RandEd25519Address()},
+					&iotago.DustDepositReturnFeatureBlock{Amount: 1000},
+					&iotago.TimelockMilestoneIndexFeatureBlock{MilestoneIndex: 1337},
+					&iotago.TimelockUnixFeatureBlock{UnixTime: 1000},
+					&iotago.ExpirationMilestoneIndexFeatureBlock{MilestoneIndex: 4000},
+					&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(100)},
+					&iotago.IndexationFeatureBlock{Tag: tpkg.RandBytes(32)},
+				},
+			},
+			target: &iotago.ExtendedOutput{},
+		},
+		{
+			name: "ok - Alias",
+			source: &iotago.AliasOutput{
+				Amount:               1337,
+				NativeTokens:         tpkg.RandSortNativeTokens(2),
+				AliasID:              tpkg.RandAliasAddress().AliasID(),
+				StateController:      tpkg.RandEd25519Address(),
+				GovernanceController: tpkg.RandEd25519Address(),
+				StateIndex:           10,
+				StateMetadata:        []byte("hello world"),
+				FoundryCounter:       1337,
+				Blocks: iotago.FeatureBlocks{
+					&iotago.SenderFeatureBlock{Address: tpkg.RandEd25519Address()},
+					&iotago.IssuerFeatureBlock{Address: tpkg.RandEd25519Address()},
+					&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(100)},
+				},
+			},
+			target: &iotago.AliasOutput{},
+		},
+		{
+			name: "ok - FoundryOutput",
+			source: &iotago.FoundryOutput{
+				Address:           tpkg.RandAliasAddress(),
+				Amount:            1337,
+				NativeTokens:      tpkg.RandSortNativeTokens(2),
+				SerialNumber:      0,
+				TokenTag:          tpkg.Rand12ByteArray(),
+				CirculatingSupply: new(big.Int).SetUint64(100),
+				MaximumSupply:     new(big.Int).SetUint64(1000),
+				TokenScheme:       &iotago.SimpleTokenScheme{},
+				Blocks: iotago.FeatureBlocks{
+					&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(100)},
+				},
+			},
+			target: &iotago.FoundryOutput{},
+		},
+		{
+			name: "ok - NFTOutput",
+			source: &iotago.NFTOutput{
+				Address:           tpkg.RandEd25519Address(),
+				Amount:            1337,
+				NativeTokens:      tpkg.RandSortNativeTokens(2),
+				NFTID:             tpkg.Rand20ByteArray(),
+				ImmutableMetadata: tpkg.RandBytes(10),
+				Blocks: iotago.FeatureBlocks{
+					&iotago.SenderFeatureBlock{Address: tpkg.RandEd25519Address()},
+					&iotago.IssuerFeatureBlock{Address: tpkg.RandEd25519Address()},
+					&iotago.DustDepositReturnFeatureBlock{Amount: 1000},
+					&iotago.TimelockMilestoneIndexFeatureBlock{MilestoneIndex: 1337},
+					&iotago.TimelockUnixFeatureBlock{UnixTime: 1000},
+					&iotago.ExpirationMilestoneIndexFeatureBlock{MilestoneIndex: 4000},
+					&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(100)},
+					&iotago.IndexationFeatureBlock{Tag: tpkg.RandBytes(32)},
+				},
+			},
+			target: &iotago.NFTOutput{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, tt.deSerialize)
+	}
+}
+
 type fieldMutations map[string]interface{}
 
 func copyObject(t *testing.T, source serializer.Serializable, mutations fieldMutations) serializer.Serializable {

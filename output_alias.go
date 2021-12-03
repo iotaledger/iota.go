@@ -34,10 +34,11 @@ var (
 	}
 	aliasOutputFeatBlockArrayRules = &serializer.ArrayRules{
 		Min: 0,
-		Max: 2,
+		Max: 3,
 		Guards: serializer.SerializableGuard{
 			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
 				switch ty {
+				case uint32(FeatureBlockSender):
 				case uint32(FeatureBlockIssuer):
 				case uint32(FeatureBlockMetadata):
 				default:
@@ -47,6 +48,7 @@ var (
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
 				switch seri.(type) {
+				case *SenderFeatureBlock:
 				case *IssuerFeatureBlock:
 				case *MetadataFeatureBlock:
 				default:
