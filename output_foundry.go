@@ -276,6 +276,15 @@ func (f *FoundryOutput) ID() (FoundryID, error) {
 	return foundryID, nil
 }
 
+// MustID works like ID but panics if an error occurs.
+func (f *FoundryOutput) MustID() FoundryID {
+	id, err := f.ID()
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // MustNativeTokenID works like NativeTokenID but panics if there is an error.
 func (f *FoundryOutput) MustNativeTokenID() NativeTokenID {
 	nativeTokenID, err := f.NativeTokenID()
