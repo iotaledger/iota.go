@@ -2,13 +2,34 @@ package iotago_test
 
 import (
 	"math/big"
+	"reflect"
 	"testing"
 
+	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/iota.go/v3"
 )
+
+type fieldMutations map[string]interface{}
+
+func copyObject(t *testing.T, source serializer.Serializable, mutations fieldMutations) serializer.Serializable {
+	srcBytes, err := source.Serialize(serializer.DeSeriModeNoValidation, nil)
+	require.NoError(t, err)
+
+	ptrToSrc := reflect.New(reflect.ValueOf(source).Elem().Type())
+
+	cpySeri := ptrToSrc.Interface().(serializer.Serializable)
+	_, err = cpySeri.Deserialize(srcBytes, serializer.DeSeriModeNoValidation, nil)
+	require.NoError(t, err)
+
+	for fieldName, newVal := range mutations {
+		ptrToSrc.Elem().FieldByName(fieldName).Set(reflect.ValueOf(newVal))
+	}
+
+	return cpySeri
+}
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	nonZeroCostParas := &iotago.DeSerializationParameters{

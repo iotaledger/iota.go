@@ -310,11 +310,13 @@ func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *Semanti
 		if !is {
 			continue
 		}
-		foundryAliasID := foundryOutput.Address.(*AliasAddress).Chain()
-		if !foundryAliasID.Matches(a.AliasID) {
+
+		if _, notNew := semValCtx.WorkingSet.InChains[foundryOutput.MustID()]; notNew {
 			continue
 		}
-		if _, notNew := semValCtx.WorkingSet.InChains[foundryOutput.MustID()]; notNew {
+
+		foundryAliasID := foundryOutput.Address.(*AliasAddress).Chain()
+		if !foundryAliasID.Matches(a.AliasID) {
 			continue
 		}
 		seenNewFoundriesOfAlias++
