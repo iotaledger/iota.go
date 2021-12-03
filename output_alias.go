@@ -197,7 +197,7 @@ func (a *AliasOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extP
 	return outputUnlockable(a, next, ident, extParas)
 }
 
-func (a *AliasOutput) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
+func (a *AliasOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		a.NativeTokens.VByteCost(costStruct, nil) +

@@ -41,6 +41,17 @@ const (
 	FeatureBlockIndexation
 )
 
+var (
+	// defines the set of FeatureBlockType(s) which put spending constraints onto Output(s).
+	constraintBlocks = map[FeatureBlockType]struct{}{
+		FeatureBlockExpirationUnix:           {},
+		FeatureBlockExpirationMilestoneIndex: {},
+		FeatureBlockTimelockUnix:             {},
+		FeatureBlockTimelockMilestoneIndex:   {},
+		FeatureBlockDustDepositReturn:        {},
+	}
+)
+
 // FeatureBlockTypeToString returns the name of a FeatureBlock given the type.
 func FeatureBlockTypeToString(ty FeatureBlockType) string {
 	switch ty {
@@ -66,6 +77,16 @@ func FeatureBlockTypeToString(ty FeatureBlockType) string {
 
 // FeatureBlocks is a slice of FeatureBlock(s).
 type FeatureBlocks []FeatureBlock
+
+// HasConstraints tells whether any FeatureBlock is present which creates spending constraints.
+func (f FeatureBlocks) HasConstraints() bool {
+	for _, block := range f {
+		if _, has := constraintBlocks[block.Type()]; has {
+			return true
+		}
+	}
+	return false
+}
 
 func (f FeatureBlocks) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	fSet, _ := f.Set()
