@@ -164,7 +164,7 @@ func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next 
 			return fmt.Errorf("%w: NFTOutput can only state transition to another NFTOutput", ErrInvalidChainStateTransition)
 		}
 		if err := IssuerBlockUnchanged(n, nextNFTOutput); err != nil {
-			return err
+			return fmt.Errorf("%w: %s", ErrInvalidChainStateTransition, err)
 		}
 		// immutable metadata must not change
 		if !bytes.Equal(n.ImmutableMetadata, nextNFTOutput.ImmutableMetadata) {

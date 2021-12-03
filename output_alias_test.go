@@ -37,6 +37,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		svCtx     *iotago.SemanticValidationContext
 		wantErr   error
 	}
+
 	tests := []test{
 		{
 			name: "ok - genesis transition",
