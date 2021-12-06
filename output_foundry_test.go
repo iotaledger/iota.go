@@ -11,20 +11,17 @@ import (
 )
 
 func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
-	exampleIssuer := tpkg.RandEd25519Address()
 	exampleAliasIdent := tpkg.RandAliasAddress()
 
+	startingSupply := new(big.Int).SetUint64(100)
 	genesisFoundry := &iotago.FoundryOutput{
 		Address:           exampleAliasIdent,
 		Amount:            100,
 		SerialNumber:      6,
 		TokenTag:          tpkg.Rand12ByteArray(),
-		CirculatingSupply: new(big.Int).SetUint64(100),
+		CirculatingSupply: startingSupply,
 		MaximumSupply:     new(big.Int).SetUint64(1000),
 		TokenScheme:       &iotago.SimpleTokenScheme{},
-		Blocks: iotago.FeatureBlocks{
-			&iotago.IssuerFeatureBlock{Address: exampleIssuer},
-		},
 	}
 
 	type test struct {
@@ -44,33 +41,242 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			next:      nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &iotago.SemanticValidationContext{
-				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
 					UnlockedIdents: map[string]iotago.UnlockedIndices{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							Outputs: iotago.Outputs{
-								genesisFoundry,
-							},
+							Outputs: iotago.Outputs{genesisFoundry},
 						},
 						UnlockBlocks: nil,
 					},
 					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
-						exampleAliasIdent.AliasID(): &iotago.AliasOutput{
-							FoundryCounter: 5,
-						},
+						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 5},
 					},
 					OutChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
-						exampleAliasIdent.AliasID(): &iotago.AliasOutput{
-							FoundryCounter: 6,
-						},
+						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 6},
 					},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
-						genesisFoundry.MustNativeTokenID(): new(big.Int).SetUint64(100),
+						// since foundry has a circulating supply of 100
+						genesisFoundry.MustNativeTokenID(): startingSupply,
 					},
 				},
 			},
 			wantErr: nil,
+		},
+		{
+			name:      "fail - genesis transition - serial number not in interval",
+			current:   genesisFoundry,
+			next:      nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							Outputs: iotago.Outputs{genesisFoundry},
+						},
+						UnlockBlocks: nil,
+					},
+					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
+						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 6},
+					},
+					OutChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
+						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 7},
+					},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): startingSupply,
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidChainStateTransition,
+		},
+		{
+			name:    "ok - state transition - metadata feature block",
+			current: genesisFoundry,
+			nextMut: map[string]fieldMutations{
+				"change_metadata": {
+					"Blocks": iotago.FeatureBlocks{
+						&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(20)},
+					},
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:    "ok - state transition - mint",
+			current: genesisFoundry,
+			nextMut: map[string]fieldMutations{
+				"+300": {
+					"CirculatingSupply": big.NewInt(400),
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): new(big.Int).SetUint64(300),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:    "ok - state transition - burn",
+			current: genesisFoundry,
+			nextMut: map[string]fieldMutations{
+				"-50": {
+					"CirculatingSupply": big.NewInt(50),
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): startingSupply,
+					},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): new(big.Int).SetUint64(50),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:    "fail - state transition - mint (out: excess)",
+			current: genesisFoundry,
+			nextMut: map[string]fieldMutations{
+				"+100": {
+					"CirculatingSupply": big.NewInt(200),
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						// 100 excess
+						genesisFoundry.MustNativeTokenID(): new(big.Int).SetUint64(200),
+					},
+				},
+			},
+			wantErr: iotago.ErrNativeTokenSumUnbalanced,
+		},
+		{
+			name:    "fail - state transition - mint (out: deficit)",
+			current: genesisFoundry,
+			nextMut: map[string]fieldMutations{
+				"+100": {
+					"CirculatingSupply": big.NewInt(200),
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						// 50 deficit
+						genesisFoundry.MustNativeTokenID(): new(big.Int).SetUint64(50),
+					},
+				},
+			},
+			wantErr: iotago.ErrNativeTokenSumUnbalanced,
+		},
+		{
+			name:    "fail - state transition - burn (out: excess)",
+			current: genesisFoundry,
+			nextMut: map[string]fieldMutations{
+				"-50": {
+					"CirculatingSupply": big.NewInt(50),
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): startingSupply,
+					},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						// 25 excess
+						genesisFoundry.MustNativeTokenID(): new(big.Int).SetUint64(75),
+					},
+				},
+			},
+			wantErr: iotago.ErrNativeTokenSumUnbalanced,
+		},
+		{
+			name:    "fail - state transition - burn (out: deficit)",
+			current: genesisFoundry,
+			nextMut: map[string]fieldMutations{
+				"-50": {
+					"CirculatingSupply": big.NewInt(50),
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): startingSupply,
+					},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						// 25 deficit
+						genesisFoundry.MustNativeTokenID(): new(big.Int).SetUint64(25),
+					},
+				},
+			},
+			wantErr: iotago.ErrNativeTokenSumUnbalanced,
+		},
+		{
+			name:    "fail - state transition",
+			current: genesisFoundry,
+			nextMut: map[string]fieldMutations{
+				"maximum_supply": {
+					"MaximumSupply": big.NewInt(1337),
+				},
+				"token_tag": {
+					"TokenTag": tpkg.Rand12ByteArray(),
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{},
+			},
+			wantErr: iotago.ErrInvalidChainStateTransition,
+		},
+		{
+			name:      "ok - destroy transition",
+			current:   genesisFoundry,
+			transType: iotago.ChainTransitionTypeDestroy,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): startingSupply,
+					},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): startingSupply,
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:      "fail - destroy transition - foundry token unbalanced",
+			current:   genesisFoundry,
+			transType: iotago.ChainTransitionTypeDestroy,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): startingSupply,
+					},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): new(big.Int).Mul(startingSupply, new(big.Int).SetUint64(2)),
+					},
+				},
+			},
+			wantErr: iotago.ErrNativeTokenSumUnbalanced,
 		},
 	}
 
@@ -79,7 +285,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.current, muts).(*iotago.NFTOutput)
+					cpy := copyObject(t, tt.current, muts).(*iotago.FoundryOutput)
 					err := tt.current.ValidateStateTransition(tt.transType, cpy, tt.svCtx)
 					if tt.wantErr != nil {
 						require.ErrorIs(t, err, tt.wantErr)

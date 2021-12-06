@@ -21,8 +21,6 @@ const (
 var (
 	// ErrNonUniqueFoundryOutputs gets returned when multiple FoundryOutput(s) with the same FoundryID exist within an OutputsByType.
 	ErrNonUniqueFoundryOutputs = errors.New("non unique foundries within outputs")
-	// ErrInvalidFoundryState gets returned when the state between two FoundryOutput(s) is invalid.
-	ErrInvalidFoundryState = errors.New("invalid foundry state")
 
 	emptyFoundryID = [FoundryIDLength]byte{}
 
@@ -157,14 +155,9 @@ func (f *FoundryOutput) ValidateStateTransition(transType ChainTransitionType, n
 	inSums := semValCtx.WorkingSet.InNativeTokens
 	outSums := semValCtx.WorkingSet.OutNativeTokens
 
-	thisFoundryID, err := f.ID()
-	if err != nil {
-		return err
-	}
-
 	switch transType {
 	case ChainTransitionTypeGenesis:
-		return f.checkStateGenesisTransition(semValCtx, thisFoundryID, inSums, outSums)
+		return f.checkStateGenesisTransition(semValCtx, f.MustID(), inSums, outSums)
 	case ChainTransitionTypeStateChange:
 		return f.checkStateChangeTransition(next, inSums, outSums)
 	case ChainTransitionTypeDestroy:
@@ -245,13 +238,17 @@ func (f *FoundryOutput) checkStateChangeTransition(next ChainConstrainedOutput, 
 		return fmt.Errorf("%w: foundry output can only state transition to another foundry output", ErrInvalidChainStateTransition)
 	}
 
-	// the check for the serial number/token tag not being mutated is implicit
-	// as a change would cause the foundry ID to be different
+	// the check for the serial number and token scheme not being mutated is implicit
+	// as a change would cause the foundry ID to be different, which would result in
+	// no matching foundry to be found to validate the state transition against
 	switch {
+	case f.MustID() != nextFoundryOutput.MustID():
+		// impossible invariant as the STVF should be called via the matching next foundry output
+		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %v got %v", f.MustID(), nextFoundryOutput.MustID()))
 	case f.MaximumSupply.Cmp(nextFoundryOutput.MaximumSupply) != 0:
-		return fmt.Errorf("%w: maximum supply mismatch wanted %s but got %s", ErrInvalidFoundryState, f.MaximumSupply, nextFoundryOutput.MaximumSupply)
-	case f.TokenScheme.Type() != nextFoundryOutput.TokenScheme.Type():
-		return fmt.Errorf("%w: token scheme mismatch wanted %s but got %s", ErrInvalidFoundryState, TokenSchemeTypeToString(f.TokenScheme.Type()), TokenSchemeTypeToString(nextFoundryOutput.TokenScheme.Type()))
+		return fmt.Errorf("%w: maximum supply mismatch wanted %s but got %s", ErrInvalidChainStateTransition, f.MaximumSupply, nextFoundryOutput.MaximumSupply)
+	case f.TokenTag != nextFoundryOutput.TokenTag:
+		return fmt.Errorf("%w: token tag mismatch wanted %s but got %s", ErrInvalidChainStateTransition, f.TokenTag, nextFoundryOutput.TokenTag)
 	}
 
 	diff := new(big.Int)
