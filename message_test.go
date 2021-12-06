@@ -3,6 +3,7 @@ package iotago_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -58,6 +59,7 @@ func TestMessageDeserializeRustFuzzerErrorProducingCorpus(t *testing.T) {
 
 		msg := &iotago.Message{}
 		_, err = msg.Deserialize(data, serializer.DeSeriModePerformValidation, DefZeroRentParas)
+		fmt.Println(err)
 		require.Error(t, err)
 		return nil
 	})
