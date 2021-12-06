@@ -1,7 +1,6 @@
 package tpkg
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -307,7 +306,6 @@ func RandIndexation(dataLength ...int) *iotago.Indexation {
 // RandMessage returns a random message with the given inner payload.
 func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
 	var payload iotago.Payload
-	var payloadData []byte
 
 	parents := SortedRand32BytArray(1 + rand.Intn(7))
 
@@ -325,29 +323,6 @@ func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
 	m.Payload = payload
 	m.Nonce = uint64(rand.Intn(1000))
 	m.Parents = parents
-
-	var b bytes.Buffer
-	Must(binary.Write(&b, binary.LittleEndian, m.NetworkID))
-	Must(binary.Write(&b, binary.LittleEndian, byte(len(m.Parents))))
-
-	for _, parent := range m.Parents {
-		if _, err := b.Write(parent[:]); err != nil {
-			panic(err)
-		}
-	}
-
-	switch {
-	case payload == nil:
-		// zero length payload
-		Must(binary.Write(&b, binary.LittleEndian, uint32(0)))
-	default:
-		Must(binary.Write(&b, binary.LittleEndian, uint32(len(payloadData))))
-		if _, err := b.Write(payloadData); err != nil {
-			panic(err)
-		}
-	}
-
-	Must(binary.Write(&b, binary.LittleEndian, m.Nonce))
 
 	return m
 }
