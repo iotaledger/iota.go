@@ -1,8 +1,8 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
   - name: Discord
     url: https://discord.iota.org/
-    about: Please ask and answer questions about IRI here.
+    about: Please ask and answer questions about iota.go here.
   - name: Security vulnerabilities
     url: security@iota.org
     about: Please report security vulnerabilities here.
