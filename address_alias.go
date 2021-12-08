@@ -55,8 +55,7 @@ func (aliasAddr *AliasAddress) Key() string {
 }
 
 func (aliasAddr *AliasAddress) Chain() ChainID {
-	aliasID := AliasID(*aliasAddr)
-	return &aliasID
+	return AliasID(*aliasAddr)
 }
 
 func (aliasAddr *AliasAddress) AliasID() AliasID {

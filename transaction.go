@@ -628,12 +628,12 @@ func TxSemanticSTVFOnChains() TxSemanticValidationFunc {
 			nextState := svCtx.WorkingSet.OutChains[chainID]
 			if nextState == nil {
 				if err := inputChain.ValidateStateTransition(ChainTransitionTypeDestroy, nil, svCtx); err != nil {
-					return fmt.Errorf("chain input %s state destroy transition failed: %w", chainID, err)
+					return fmt.Errorf("input chain %s (%T) destruction transition failed: %w", chainID, inputChain, err)
 				}
 				continue
 			}
 			if err := inputChain.ValidateStateTransition(ChainTransitionTypeStateChange, nextState, svCtx); err != nil {
-				return fmt.Errorf("chain %s state transition failed: %w", chainID, err)
+				return fmt.Errorf("chain %s (%T) state transition failed: %w", chainID, inputChain, err)
 			}
 		}
 
@@ -641,7 +641,7 @@ func TxSemanticSTVFOnChains() TxSemanticValidationFunc {
 			previousState := svCtx.WorkingSet.InChains[chainID]
 			if previousState == nil {
 				if err := outputChain.ValidateStateTransition(ChainTransitionTypeGenesis, nil, svCtx); err != nil {
-					return fmt.Errorf("new chain %s state transition failed: %w", chainID, err)
+					return fmt.Errorf("new chain %s (%T) state transition failed: %w", chainID, outputChain, err)
 				}
 			}
 		}
