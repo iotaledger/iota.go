@@ -1,7 +1,6 @@
 package iotago_test
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -182,7 +181,6 @@ func TestTransactionSemanticValidation(t *testing.T) {
 			}
 
 			foundry1Ident3NativeTokenID := inputs[inputIDs[9]].(*iotago.FoundryOutput).MustNativeTokenID()
-			fmt.Println("foundry serial 1 native token ID:", foundry1Ident3NativeTokenID)
 			foundry2Ident3NativeTokenID := inputs[inputIDs[10]].(*iotago.FoundryOutput).MustNativeTokenID()
 
 			inputs[inputIDs[10]].(*iotago.FoundryOutput).NativeTokens = iotago.NativeTokens{
