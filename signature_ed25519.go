@@ -2,13 +2,14 @@ package iotago
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/ed25519"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 )
 
 const (
@@ -42,7 +43,7 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	if !bytes.Equal(addr[:], addrFromPubKey[:]) {
 		return fmt.Errorf("%w: address %s, public key %v", ErrEd25519PubKeyAndAddrMismatch, addr[:], addrFromPubKey)
 	}
-	if valid := ed25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
+	if valid := iotagoEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
 		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrEd25519SignatureInvalid, addr[:], e.PublicKey, e.Signature)
 	}
 	return nil

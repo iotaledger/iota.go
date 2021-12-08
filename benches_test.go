@@ -1,11 +1,12 @@
 package iotago_test
 
 import (
+	"crypto/ed25519"
 	"testing"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/ed25519"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
@@ -145,7 +146,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	pubKey := prvKey.Public().(ed25519.PublicKey)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ed25519.Verify(pubKey, txEssenceData, sig)
+		iotagoEd25519.Verify(pubKey, txEssenceData, sig)
 	}
 }
 

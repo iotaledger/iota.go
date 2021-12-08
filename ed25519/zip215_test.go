@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v3/ed25519"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +15,7 @@ func TestZIP215(t *testing.T) {
 		publicKey, _ := hex.DecodeString(tt.pk)
 		sig, _ := hex.DecodeString(tt.s)
 
-		assert.Truef(t, ed25519.Verify(publicKey, message, sig), "test %d failed to verify", i)
+		assert.Truef(t, iotagoEd25519.Verify(publicKey, message, sig), "test %d failed to verify", i)
 	}
 }
 

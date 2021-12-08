@@ -1,14 +1,13 @@
 package iotago_test
 
 import (
+	"crypto/ed25519"
 	"errors"
 	"testing"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/tpkg"
-
 	"github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/ed25519"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/assert"
 )
 

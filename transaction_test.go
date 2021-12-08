@@ -1,11 +1,11 @@
 package iotago_test
 
 import (
+	"crypto/ed25519"
 	"math/big"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/require"
 )

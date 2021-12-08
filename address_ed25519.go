@@ -1,12 +1,12 @@
 package iotago
 
 import (
+	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/ed25519"
 	"golang.org/x/crypto/blake2b"
 )
 
