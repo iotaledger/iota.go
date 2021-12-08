@@ -1,6 +1,7 @@
 package iotago_test
 
 import (
+	"crypto/ed25519"
 	"encoding/json"
 	"errors"
 	"math/rand"
@@ -12,7 +13,6 @@ import (
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
 	"github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -1,11 +1,11 @@
 package iotago
 
 import (
+	"crypto/ed25519"
 	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/ed25519"
 )
 
 var (

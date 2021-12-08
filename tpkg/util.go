@@ -1,6 +1,7 @@
 package tpkg
 
 import (
+	"crypto/ed25519"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -13,7 +14,6 @@ import (
 	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
 	"github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/ed25519"
 )
 
 // Must panics if the given error is not nil.

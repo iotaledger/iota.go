@@ -3,6 +3,7 @@ package iotago
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -10,7 +11,7 @@ import (
 	"sort"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/ed25519"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 	"golang.org/x/crypto/blake2b"
 	"google.golang.org/grpc"
 
@@ -270,7 +271,7 @@ func (m *Milestone) VerifySignatures(minSigThreshold int, applicablePubKeys Mile
 			return fmt.Errorf("%w: public key %s is not applicable", ErrMilestoneNonApplicablePublicKey, hex.EncodeToString(msPubKey[:]))
 		}
 
-		if ok := ed25519.Verify(msPubKey[:], msEssence[:], m.Signatures[msPubKeyIndex][:]); !ok {
+		if ok := iotagoEd25519.Verify(msPubKey[:], msEssence[:], m.Signatures[msPubKeyIndex][:]); !ok {
 			return fmt.Errorf("%w: at index %d, checked against public key %s", ErrMilestoneInvalidSignature, msPubKeyIndex, hex.EncodeToString(msPubKey[:]))
 		}
 
