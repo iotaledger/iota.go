@@ -36,7 +36,7 @@ func (s *SimpleTokenScheme) Serialize(deSeriMode serializer.DeSerializationMode,
 }
 
 func (s *SimpleTokenScheme) MarshalJSON() ([]byte, error) {
-	jSimpleTokenScheme := &jsonFoundryOutput{
+	jSimpleTokenScheme := &jsonSimpleTokenScheme{
 		Type: int(TokenSchemeSimple),
 	}
 	return json.Marshal(jSimpleTokenScheme)
