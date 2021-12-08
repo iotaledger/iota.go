@@ -183,13 +183,13 @@ func txDeSeriValidation(tx *Transaction, deSeriCtx interface{}) serializer.ErrPr
 		if !ok {
 			return fmt.Errorf("unable to validate transaction: %w", ErrMissingDeSerializationParas)
 		}
-		return tx.syntacticallyValidate(readBytes, deSeriParas.MinDustDeposit, deSeriParas.RentStructure)
+		return tx.syntacticallyValidate(readBytes, deSeriParas.RentStructure)
 	}
 }
 
 // syntacticallyValidate syntactically validates the Transaction.
-func (t *Transaction) syntacticallyValidate(readBytes []byte, minDustDep uint64, rentStruct *RentStructure) error {
-	if err := t.Essence.syntacticallyValidate(minDustDep, rentStruct); err != nil {
+func (t *Transaction) syntacticallyValidate(readBytes []byte, rentStruct *RentStructure) error {
+	if err := t.Essence.syntacticallyValidate(rentStruct); err != nil {
 		return fmt.Errorf("transaction essence is invalid: %w", err)
 	}
 

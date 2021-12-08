@@ -567,7 +567,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //	- the deposit fulfils the minimum deposit as calculated from the virtual byte cost of the output
 //	- if the output contains a DustDepositReturnFeatureBlock, it must "return" bigger equal than the minimum dust deposit
 //	  and must be less equal the minimum virtual byte rent cost for the output.
-func OutputsSyntacticalDepositAmount(minDustDep uint64, rentStruct *RentStructure) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntacticalValidationFunc {
 	var sum uint64
 	return func(index int, output Output) error {
 		deposit := output.Deposit()
@@ -591,10 +591,11 @@ func OutputsSyntacticalDepositAmount(minDustDep uint64, rentStruct *RentStructur
 			if err != nil {
 				return fmt.Errorf("unable to compute feature block set in deposit syntactic checks for output %d: %w", index, err)
 			}
-			if returnFeatBlock := featBlockSet[FeatureBlockDustDepositReturn]; returnFeatBlock != nil {
-				returnAmount := returnFeatBlock.(*DustDepositReturnFeatureBlock).Amount
+
+			if returnFeatBlock := featBlockSet.DustDepositReturnFeatureBlock(); returnFeatBlock != nil {
+				returnAmount := returnFeatBlock.Amount
 				switch {
-				case returnAmount < minDustDep:
+				case returnAmount < rentStruct.MinDustDeposit(featBlockSet.SenderFeatureBlock().Address):
 					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsLessThanMinDust, index)
 				case returnAmount > minRent:
 					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsMoreThanVBRent, index)

@@ -284,7 +284,7 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) syntacticallyValidate(minDustDep uint64, rentStruct *RentStructure) error {
+func (u *TransactionEssence) syntacticallyValidate(rentStruct *RentStructure) error {
 	if err := ValidateInputs(u.Inputs,
 		InputsSyntacticalUnique(),
 		InputsSyntacticalIndicesWithinBounds(),
@@ -294,7 +294,7 @@ func (u *TransactionEssence) syntacticallyValidate(minDustDep uint64, rentStruct
 
 	if err := ValidateOutputs(u.Outputs,
 		OutputsSyntacticalSenderFeatureBlockRequirement(),
-		OutputsSyntacticalDepositAmount(minDustDep, rentStruct),
+		OutputsSyntacticalDepositAmount(rentStruct),
 		OutputsSyntacticalNativeTokensCount(),
 		OutputsSyntacticalFoundry(),
 	); err != nil {
