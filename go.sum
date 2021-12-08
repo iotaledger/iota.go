@@ -228,6 +228,8 @@ github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211126120241-38c397025408 h
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211126120241-38c397025408/go.mod h1:Aw7fS+UjhMBj4hxTBxSG8Ti/5ifp1SWFpyapGZFuzdc=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211206123632-ee51e4bac436 h1:sRWTby19nsUuMyr2eViM51UbYzwoYUNGMGgwyshrvas=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211206123632-ee51e4bac436/go.mod h1:Aw7fS+UjhMBj4hxTBxSG8Ti/5ifp1SWFpyapGZFuzdc=
+github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211208125510-04baae2057d6 h1:6F21gQEr4Q0l5QrHMT+tusPJjCDjVspQWKXVHlX8TcA=
+github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20211208125510-04baae2057d6/go.mod h1:Aw7fS+UjhMBj4hxTBxSG8Ti/5ifp1SWFpyapGZFuzdc=
 github.com/iotaledger/iota.go v1.0.0 h1:tqm1FxJ/zOdzbrAaQ5BQpVF8dUy2eeGlSeWlNG8GoXY=
 github.com/iotaledger/iota.go v1.0.0/go.mod h1:RiKYwDyY7aCD1L0YRzHSjOsJ5mUR9yvQpvhZncNcGQI=
 github.com/jackpal/go-nat-pmp v1.0.2-0.20160603034137-1fa385a6f458/go.mod h1:QPH045xvCAeXUZOxsnwmrtiCoxIr9eob+4orBN1SBKc=
