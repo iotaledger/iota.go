@@ -81,8 +81,7 @@ func (id AliasID) Key() interface{} {
 }
 
 func (id AliasID) FromOutputID(in OutputID) ChainID {
-	aliasID := AliasIDFromOutputID(in)
-	return &aliasID
+	return AliasIDFromOutputID(in)
 }
 
 func (id AliasID) Empty() bool {
@@ -318,7 +317,7 @@ func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *Semanti
 		}
 
 		foundryAliasID := foundryOutput.Address.(*AliasAddress).Chain()
-		if !foundryAliasID.Matches(a.AliasID) {
+		if !foundryAliasID.Matches(nextAliasOutput.AliasID) {
 			continue
 		}
 		seenNewFoundriesOfAlias++

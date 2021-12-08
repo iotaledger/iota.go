@@ -1,6 +1,7 @@
 package iotago_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -20,6 +21,352 @@ func TestTransactionDeSerialize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
+	}
+}
+
+func TestTransactionSemanticValidation(t *testing.T) {
+	type test struct {
+		name    string
+		svCtx   *iotago.SemanticValidationContext
+		inputs  iotago.OutputSet
+		tx      *iotago.Transaction
+		wantErr error
+	}
+	tests := []test{
+		func() test {
+			var (
+				_, ident1, ident1AddrKeys = tpkg.RandEd25519Identity()
+				_, ident2, ident2AddrKeys = tpkg.RandEd25519Identity()
+				_, ident3, ident3AddrKeys = tpkg.RandEd25519Identity()
+				_, ident4, ident4AddrKeys = tpkg.RandEd25519Identity()
+				_, ident5, _              = tpkg.RandEd25519Identity()
+			)
+
+			var (
+				defaultAmount            uint64 = OneMi
+				confirmingMilestoneIndex uint32 = 750
+				dustDepositReturn        uint64 = OneMi / 2
+				nativeTokenTransfer1            = tpkg.RandSortNativeTokens(50)
+				nativeTokenTransfer2            = tpkg.RandSortNativeTokens(50)
+			)
+
+			var (
+				foundry1Ident3TokenTag = tpkg.Rand12ByteArray()
+				foundry2Ident3TokenTag = tpkg.Rand12ByteArray()
+				foundry3Ident3TokenTag = tpkg.Rand12ByteArray()
+				foundry4Ident3TokenTag = tpkg.Rand12ByteArray()
+			)
+
+			var (
+				nft1ID = tpkg.Rand20ByteArray()
+				nft2ID = tpkg.Rand20ByteArray()
+			)
+
+			inputIDs := tpkg.RandOutputIDs(16)
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.ExtendedOutput{Address: ident1, Amount: defaultAmount},
+				inputIDs[1]: &iotago.ExtendedOutput{Address: ident2, Amount: defaultAmount, NativeTokens: nativeTokenTransfer1},
+				inputIDs[2]: &iotago.ExtendedOutput{Address: ident2, Amount: defaultAmount, NativeTokens: nativeTokenTransfer2},
+				inputIDs[3]: &iotago.ExtendedOutput{Address: ident2, Amount: defaultAmount, Blocks: iotago.FeatureBlocks{
+					&iotago.ExpirationMilestoneIndexFeatureBlock{MilestoneIndex: 500},
+					&iotago.SenderFeatureBlock{Address: ident1},
+				}},
+				inputIDs[4]: &iotago.ExtendedOutput{Address: ident2, Amount: defaultAmount, Blocks: iotago.FeatureBlocks{
+					&iotago.TimelockMilestoneIndexFeatureBlock{MilestoneIndex: 500},
+				}},
+				inputIDs[5]: &iotago.ExtendedOutput{Address: ident2, Amount: defaultAmount + dustDepositReturn, Blocks: iotago.FeatureBlocks{
+					&iotago.TimelockMilestoneIndexFeatureBlock{MilestoneIndex: 500},
+					&iotago.ExpirationMilestoneIndexFeatureBlock{MilestoneIndex: 900},
+					&iotago.SenderFeatureBlock{Address: ident1},
+					&iotago.DustDepositReturnFeatureBlock{Amount: dustDepositReturn},
+				}},
+				inputIDs[6]: &iotago.AliasOutput{
+					Amount:               defaultAmount,
+					NativeTokens:         nil,
+					AliasID:              iotago.AliasID{},
+					StateController:      ident3,
+					GovernanceController: ident4,
+					StateIndex:           0,
+					StateMetadata:        []byte("gov transitioning"),
+					FoundryCounter:       0,
+					Blocks:               nil,
+				},
+				inputIDs[7]: &iotago.AliasOutput{
+					Amount:               defaultAmount + defaultAmount, // to fund also the new alias output
+					NativeTokens:         nil,
+					AliasID:              iotago.AliasID{},
+					StateController:      ident3,
+					GovernanceController: ident4,
+					StateIndex:           5,
+					StateMetadata:        []byte("current state"),
+					FoundryCounter:       5,
+					Blocks:               nil,
+				},
+				inputIDs[8]: &iotago.AliasOutput{
+					Amount:               defaultAmount,
+					NativeTokens:         nil,
+					AliasID:              iotago.AliasID{},
+					StateController:      ident3,
+					GovernanceController: ident3,
+					StateIndex:           0,
+					StateMetadata:        []byte("going to be destroyed"),
+					FoundryCounter:       0,
+					Blocks:               nil,
+				},
+				inputIDs[9]: &iotago.FoundryOutput{
+					Address:           iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress(),
+					Amount:            defaultAmount,
+					NativeTokens:      nil,
+					SerialNumber:      1,
+					TokenTag:          foundry1Ident3TokenTag,
+					CirculatingSupply: new(big.Int).SetUint64(100),
+					MaximumSupply:     new(big.Int).SetUint64(1000),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Blocks:            nil,
+				},
+				inputIDs[10]: &iotago.FoundryOutput{
+					Address:           iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress(),
+					Amount:            defaultAmount,
+					NativeTokens:      nil, // filled out later
+					SerialNumber:      2,
+					TokenTag:          foundry2Ident3TokenTag,
+					CirculatingSupply: new(big.Int).SetUint64(100),
+					MaximumSupply:     new(big.Int).SetUint64(1000),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Blocks:            nil,
+				},
+				inputIDs[11]: &iotago.FoundryOutput{
+					Address:           iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress(),
+					Amount:            defaultAmount,
+					NativeTokens:      nil,
+					SerialNumber:      3,
+					TokenTag:          foundry3Ident3TokenTag,
+					CirculatingSupply: new(big.Int).SetUint64(100),
+					MaximumSupply:     new(big.Int).SetUint64(1000),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Blocks:            nil,
+				},
+				inputIDs[12]: &iotago.FoundryOutput{
+					Address:           iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress(),
+					Amount:            defaultAmount,
+					NativeTokens:      nil,
+					SerialNumber:      4,
+					TokenTag:          foundry4Ident3TokenTag,
+					CirculatingSupply: new(big.Int).SetUint64(100),
+					MaximumSupply:     new(big.Int).SetUint64(1000),
+					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Blocks:            nil,
+				},
+				inputIDs[13]: &iotago.NFTOutput{
+					Address:           ident3,
+					Amount:            defaultAmount,
+					NativeTokens:      nil,
+					NFTID:             nft1ID,
+					ImmutableMetadata: []byte("transfer to 4"),
+					Blocks: iotago.FeatureBlocks{
+						&iotago.IssuerFeatureBlock{Address: ident3},
+					},
+				},
+				inputIDs[14]: &iotago.NFTOutput{
+					Address:           ident4,
+					Amount:            defaultAmount,
+					NativeTokens:      nil,
+					NFTID:             nft2ID,
+					ImmutableMetadata: []byte("going to be destroyed"),
+					Blocks: iotago.FeatureBlocks{
+						&iotago.IssuerFeatureBlock{Address: ident3},
+					},
+				},
+				inputIDs[15]: &iotago.ExtendedOutput{Address: iotago.NFTID(nft1ID).ToAddress(), Amount: defaultAmount},
+			}
+
+			foundry1Ident3NativeTokenID := inputs[inputIDs[9]].(*iotago.FoundryOutput).MustNativeTokenID()
+			fmt.Println("foundry serial 1 native token ID:", foundry1Ident3NativeTokenID)
+			foundry2Ident3NativeTokenID := inputs[inputIDs[10]].(*iotago.FoundryOutput).MustNativeTokenID()
+
+			inputs[inputIDs[10]].(*iotago.FoundryOutput).NativeTokens = iotago.NativeTokens{
+				{
+					ID:     foundry2Ident3NativeTokenID,
+					Amount: big.NewInt(100),
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.ExtendedOutput{Address: ident5, Amount: defaultAmount},
+					&iotago.ExtendedOutput{Address: ident3, Amount: defaultAmount, NativeTokens: nativeTokenTransfer1},
+					&iotago.ExtendedOutput{Address: ident4, Amount: defaultAmount, NativeTokens: nativeTokenTransfer2},
+					&iotago.ExtendedOutput{Address: ident2, Amount: defaultAmount},
+					&iotago.ExtendedOutput{Address: ident2, Amount: defaultAmount},
+					&iotago.ExtendedOutput{Address: ident1, Amount: dustDepositReturn},
+					&iotago.AliasOutput{
+						Amount:               defaultAmount,
+						NativeTokens:         nil,
+						AliasID:              iotago.AliasID{},
+						StateController:      ident3,
+						GovernanceController: ident4,
+						StateIndex:           0,
+						StateMetadata:        []byte("a new alias output"),
+						FoundryCounter:       0,
+						Blocks:               nil,
+					},
+					&iotago.AliasOutput{
+						Amount:               defaultAmount,
+						NativeTokens:         nil,
+						AliasID:              iotago.AliasIDFromOutputID(inputIDs[6]),
+						StateController:      ident3,
+						GovernanceController: ident4,
+						StateIndex:           0,
+						StateMetadata:        []byte("gov transitioning"),
+						FoundryCounter:       0,
+						Blocks: iotago.FeatureBlocks{
+							&iotago.MetadataFeatureBlock{Data: []byte("the gov mutation on this output")},
+						},
+					},
+					&iotago.AliasOutput{
+						Amount:               defaultAmount,
+						NativeTokens:         nil,
+						AliasID:              iotago.AliasIDFromOutputID(inputIDs[7]),
+						StateController:      ident3,
+						GovernanceController: ident4,
+						StateIndex:           6,
+						StateMetadata:        []byte("next state"),
+						FoundryCounter:       6,
+						Blocks:               nil,
+					},
+					// new foundry
+					&iotago.FoundryOutput{
+						Address:           iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress(),
+						Amount:            defaultAmount,
+						NativeTokens:      nil,
+						SerialNumber:      6,
+						TokenTag:          tpkg.Rand12ByteArray(),
+						CirculatingSupply: new(big.Int).SetInt64(0),
+						MaximumSupply:     new(big.Int).SetInt64(1000),
+						TokenScheme:       &iotago.SimpleTokenScheme{},
+						Blocks:            nil,
+					},
+					&iotago.FoundryOutput{
+						Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress(),
+						Amount:  defaultAmount,
+						NativeTokens: iotago.NativeTokens{
+							{
+								ID:     foundry1Ident3NativeTokenID,
+								Amount: new(big.Int).SetUint64(100), // freshly minted
+							},
+						},
+						SerialNumber:      1,
+						TokenTag:          foundry1Ident3TokenTag,
+						CirculatingSupply: new(big.Int).SetInt64(200),
+						MaximumSupply:     new(big.Int).SetInt64(1000),
+						TokenScheme:       &iotago.SimpleTokenScheme{},
+						Blocks:            nil,
+					},
+					&iotago.FoundryOutput{
+						Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress(),
+						Amount:  defaultAmount,
+						NativeTokens: iotago.NativeTokens{
+							{
+								ID:     foundry2Ident3NativeTokenID,
+								Amount: new(big.Int).SetUint64(50), // burned to 50
+							},
+						},
+						SerialNumber:      2,
+						TokenTag:          foundry2Ident3TokenTag,
+						CirculatingSupply: new(big.Int).SetInt64(50),
+						MaximumSupply:     new(big.Int).SetInt64(1000),
+						TokenScheme:       &iotago.SimpleTokenScheme{},
+						Blocks:            nil,
+					},
+					&iotago.FoundryOutput{
+						Address:           iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress(),
+						Amount:            defaultAmount,
+						NativeTokens:      nil,
+						SerialNumber:      3,
+						TokenTag:          foundry3Ident3TokenTag,
+						CirculatingSupply: new(big.Int).SetInt64(100),
+						MaximumSupply:     new(big.Int).SetInt64(1000),
+						TokenScheme:       &iotago.SimpleTokenScheme{},
+						Blocks: iotago.FeatureBlocks{
+							&iotago.MetadataFeatureBlock{Data: []byte("interesting metadata")},
+						},
+					},
+					// from foundry 4 ident 3 destruction remainder
+					&iotago.ExtendedOutput{Address: ident3, Amount: defaultAmount},
+					&iotago.NFTOutput{
+						Address:           ident4,
+						Amount:            defaultAmount,
+						NativeTokens:      nil,
+						NFTID:             iotago.NFTID{},
+						ImmutableMetadata: []byte("immutable metadata"),
+						Blocks:            nil,
+					},
+					&iotago.NFTOutput{
+						Address:           ident4,
+						Amount:            defaultAmount,
+						NativeTokens:      nil,
+						NFTID:             nft1ID,
+						ImmutableMetadata: []byte("transfer to 4"),
+						Blocks: iotago.FeatureBlocks{
+							&iotago.IssuerFeatureBlock{Address: ident3},
+						},
+					},
+					// from NFT ident 4 destruction remainder
+					&iotago.ExtendedOutput{Address: ident3, Amount: defaultAmount},
+					// from NFT 1 to ident 5
+					&iotago.ExtendedOutput{Address: ident5, Amount: defaultAmount},
+				},
+			}
+
+			sigs, err := essence.Sign(ident1AddrKeys, ident2AddrKeys, ident3AddrKeys, ident4AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name: "ok",
+				svCtx: &iotago.SemanticValidationContext{
+					ExtParas: &iotago.ExternalUnlockParameters{ConfMsIndex: confirmingMilestoneIndex},
+				},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					UnlockBlocks: iotago.UnlockBlocks{
+						// extended
+						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+						&iotago.SignatureUnlockBlock{Signature: sigs[1]},
+						&iotago.ReferenceUnlockBlock{Reference: 1},
+						&iotago.ReferenceUnlockBlock{Reference: 0},
+						&iotago.ReferenceUnlockBlock{Reference: 1},
+						&iotago.ReferenceUnlockBlock{Reference: 1},
+						// alias
+						&iotago.SignatureUnlockBlock{Signature: sigs[3]},
+						&iotago.SignatureUnlockBlock{Signature: sigs[2]},
+						&iotago.ReferenceUnlockBlock{Reference: 7},
+						// foundries
+						&iotago.AliasUnlockBlock{Reference: 7},
+						&iotago.AliasUnlockBlock{Reference: 7},
+						&iotago.AliasUnlockBlock{Reference: 7},
+						&iotago.AliasUnlockBlock{Reference: 7},
+						// nfts
+						&iotago.ReferenceUnlockBlock{Reference: 7},
+						&iotago.ReferenceUnlockBlock{Reference: 6},
+						&iotago.NFTUnlockBlock{Reference: 13},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.tx.SemanticallyValidate(tt.svCtx, tt.inputs)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
 	}
 }
 
