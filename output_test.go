@@ -122,7 +122,6 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			VBFactorData: iotago.VByteCostFactorData,
 			VBFactorKey:  iotago.VByteCostFactorKey,
 		},
-		MinDustDeposit: 580,
 	}
 
 	tests := []struct {
@@ -159,6 +158,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 						&iotago.DustDepositReturnFeatureBlock{
 							Amount: 592,
 						},
+						&iotago.SenderFeatureBlock{Address: tpkg.RandAliasAddress()},
 					},
 				},
 			},
@@ -174,8 +174,9 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					NativeTokens: nil,
 					Blocks: iotago.FeatureBlocks{
 						&iotago.DustDepositReturnFeatureBlock{
-							Amount: 593, // off by 1
+							Amount: 825, // off by 1
 						},
+						&iotago.SenderFeatureBlock{Address: tpkg.RandAliasAddress()},
 					},
 				},
 			},
@@ -193,6 +194,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 						&iotago.DustDepositReturnFeatureBlock{
 							Amount: 579, // off by 1
 						},
+						&iotago.SenderFeatureBlock{Address: tpkg.RandAliasAddress()},
 					},
 				},
 			},
@@ -235,7 +237,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.OutputsSyntacticalDepositAmount(tt.deSeriParas.MinDustDeposit, tt.deSeriParas.RentStructure)
+			valFunc := iotago.OutputsSyntacticalDepositAmount(tt.deSeriParas.RentStructure)
 			var runErr error
 			for index, output := range tt.outputs {
 				if err := valFunc(index, output); err != nil {

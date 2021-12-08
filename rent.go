@@ -52,6 +52,12 @@ func (vbcs *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint6
 	return minRent, nil
 }
 
+// MinDustDeposit returns the minimum renting costs for an ExtendedOutput which returns
+// a DustDepositReturnFeatureBlock amount back to the origin sender.
+func (vbcs *RentStructure) MinDustDeposit(sender Address) uint64 {
+	return (&ExtendedOutput{Address: sender, Amount: 0}).VByteCost(vbcs, nil)
+}
+
 // NonEphemeralObject is an object which can not be pruned by nodes as it
 // makes up an integral part to execute the IOTA protocol. This kind of objects are associated
 // with costs in terms of the resources they take up.

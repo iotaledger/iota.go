@@ -28,6 +28,4 @@ type DeSerializationParameters struct {
 	// Used to determine the validity of Outputs by checking whether
 	// they fulfil the virtual byte rent cost given their deposit value.
 	RentStructure *RentStructure
-	// MinDustDeposit defines the minimum dust deposit.
-	MinDustDeposit uint64
 }
