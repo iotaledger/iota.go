@@ -53,7 +53,7 @@ func (b *TransactionBuilder) AddInput(input *ToBeSignedUTXOInput) *TransactionBu
 // TransactionBuilderInputFilter is a filter function which determines whether
 // an input should be used or not. (returning true = pass). The filter can also
 // be used to accumulate data over the set of inputs, i.e. the input sum etc.
-type TransactionBuilderInputFilter func(utxoInput *UTXOInput, input Output) bool
+type TransactionBuilderInputFilter func(outputID OutputID, input Output) bool
 
 // AddInputsViaNodeQuery adds any unspent outputs by the given address as an input to the built transaction
 // if it passes the filter function. It is the caller's job to ensure that the limit of returned outputs on the queried
@@ -71,12 +71,12 @@ func (b *TransactionBuilder) AddInputsViaNodeQuery(ctx context.Context, addr Add
 		return b
 	}
 
-	for utxoInput, output := range unspentOutputs {
-		if filter != nil && !filter(utxoInput, output) {
+	for outputID, output := range unspentOutputs {
+		if filter != nil && !filter(outputID, output) {
 			continue
 		}
 
-		b.AddInput(&ToBeSignedUTXOInput{Address: addr, Input: utxoInput})
+		b.AddInput(&ToBeSignedUTXOInput{Address: addr, Input: outputID.UTXOInput()})
 	}
 
 	return b

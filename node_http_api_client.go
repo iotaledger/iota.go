@@ -665,7 +665,7 @@ func (api *NodeHTTPAPIClient) OutputIDsByBech32Address(ctx context.Context, bech
 
 // OutputsByBech32Address gets the outputs residing on the given Bech32 address.
 // Per default only unspent outputs are returned. Set includeSpentOutputs to true to also return spent outputs.
-func (api *NodeHTTPAPIClient) OutputsByBech32Address(ctx context.Context, bech32Addr string, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
+func (api *NodeHTTPAPIClient) OutputsByBech32Address(ctx context.Context, bech32Addr string, includeSpentOutputs bool) (*AddressOutputsResponse, OutputSet, error) {
 	res, err := api.OutputIDsByBech32Address(ctx, bech32Addr, includeSpentOutputs)
 	if err != nil {
 		return nil, nil, err
@@ -693,7 +693,7 @@ func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(ctx context.Context, add
 
 // OutputsByEd25519Address gets the outputs residing on the given Ed25519Address.
 // Per default only unspent outputs are returned. Set includeSpentOutputs to true to also return spent outputs.
-func (api *NodeHTTPAPIClient) OutputsByEd25519Address(ctx context.Context, addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
+func (api *NodeHTTPAPIClient) OutputsByEd25519Address(ctx context.Context, addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, OutputSet, error) {
 	res, err := api.OutputIDsByEd25519Address(ctx, addr, includeSpentOutputs)
 	if err != nil {
 		return nil, nil, err
@@ -703,15 +703,15 @@ func (api *NodeHTTPAPIClient) OutputsByEd25519Address(ctx context.Context, addr 
 }
 
 // queries the actual outputs given an AddressOutputsResponse.
-func (api *NodeHTTPAPIClient) outputIDsToOutputs(ctx context.Context, res *AddressOutputsResponse) (*AddressOutputsResponse, map[*UTXOInput]Output, error) {
-	outputs := make(map[*UTXOInput]Output)
+func (api *NodeHTTPAPIClient) outputIDsToOutputs(ctx context.Context, res *AddressOutputsResponse) (*AddressOutputsResponse, OutputSet, error) {
+	outputs := make(OutputSet)
 	for _, outputIDHex := range res.OutputIDs {
-		utxoInput, err := outputIDHex.AsUTXOInput()
+		outputID, err := OutputIDFromHex(string(outputIDHex))
 		if err != nil {
 			return nil, nil, err
 		}
 
-		outputRes, err := api.OutputByID(ctx, utxoInput.ID())
+		outputRes, err := api.OutputByID(ctx, outputID)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -720,7 +720,8 @@ func (api *NodeHTTPAPIClient) outputIDsToOutputs(ctx context.Context, res *Addre
 		if err != nil {
 			return nil, nil, err
 		}
-		outputs[utxoInput] = output
+
+		outputs[outputID] = output
 	}
 
 	return res, outputs, nil
