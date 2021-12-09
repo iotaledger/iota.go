@@ -60,6 +60,28 @@ func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputI
 	return utxo.ID()
 }
 
+// OutputIDFromHex creates a OutputID from the given hex encoded OututID data.
+func OutputIDFromHex(hexStr string) (OutputID, error) {
+	var outputID OutputID
+	outputIDData, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return outputID, err
+	}
+	copy(outputID[:], outputIDData)
+	return outputID, nil
+}
+
+// MustOutputIDFromHex works like OutputIDFromHex but panics if an error is encountered.
+func MustOutputIDFromHex(hexStr string) (OutputID, error) {
+	var outputID OutputID
+	outputIDData, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return outputID, err
+	}
+	copy(outputID[:], outputIDData)
+	return outputID, nil
+}
+
 // OutputSet is a map of the OutputID to Output.
 type OutputSet map[OutputID]Output
 
