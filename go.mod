@@ -1,4 +1,4 @@
-module github.com/lunfardo314/iota.go/v3
+module github.com/iotaledger/iota.go/v3
 
 go 1.16
 
