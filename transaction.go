@@ -468,8 +468,14 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 	case ChainConstrainedAddress:
 		referentialUnlockBlock, isReferentialUnlockBlock := unlockBlock.(ReferentialUnlockBlock)
 		//if !isReferentialUnlockBlock || !referentialUnlockBlock.Chainable() || !referentialUnlockBlock.SourceAllowed(ownerIdent) {
-		if !isReferentialUnlockBlock || !referentialUnlockBlock.SourceAllowed(ownerIdent) {
-			return fmt.Errorf("%w: input %d has a chain constrained address (%T) but its corresponding unlock block is of type %T", ErrInvalidInputUnlock, inputIndex, owner, unlockBlock)
+
+		if !isReferentialUnlockBlock {
+			return fmt.Errorf("%w: input %d has a chain constrained address (%T) but its corresponding unlock block is of type %T, while reference is expected",
+				ErrInvalidInputUnlock, inputIndex, owner, unlockBlock)
+		}
+		if !referentialUnlockBlock.SourceAllowed(ownerIdent) {
+			return fmt.Errorf("%w: input %d has a chain constrained address (%T) but its unlock block references ident ((%T) which not allowed",
+				ErrInvalidInputUnlock, inputIndex, owner, ownerIdent)
 		}
 
 		unlockedIndices, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[owner.Key()]
