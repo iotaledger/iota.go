@@ -470,6 +470,8 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 
 		//if !isReferentialUnlockBlock || !referentialUnlockBlock.Chainable() || !referentialUnlockBlock.SourceAllowed(ownerIdent) {
 
+		// FIXME changes do not fix the bug
+
 		if !isReferentialUnlockBlock {
 			return fmt.Errorf("%w: input %d has a chain constrained address (%T) but its corresponding unlock block is of type %T, while reference is expected",
 				ErrInvalidInputUnlock, inputIndex, owner, unlockBlock)
