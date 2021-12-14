@@ -85,6 +85,17 @@ func MustOutputIDFromHex(hexStr string) (OutputID, error) {
 // OutputSet is a map of the OutputID to Output.
 type OutputSet map[OutputID]Output
 
+// Filter creates a new OutputSet with Outputs which pass the filter function f.
+func (outputSet OutputSet) Filter(f func(outputID OutputID, output Output) bool) OutputSet {
+	m := make(OutputSet)
+	for id, output := range outputSet {
+		if f(id, output) {
+			m[id] = output
+		}
+	}
+	return m
+}
+
 // OutputIDs is a slice of OutputID.
 type OutputIDs []OutputID
 

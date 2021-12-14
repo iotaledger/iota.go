@@ -81,6 +81,9 @@ func NFTOutputFeatureBlocksArrayRules() serializer.ArrayRules {
 // It is computed as the Blake2b-160 hash of the OutputID of the output which created the NFT.
 type NFTID [NFTIDLength]byte
 
+// NFTIDs are NFTID(s).
+type NFTIDs []NFTID
+
 func (nftID NFTID) Addressable() bool {
 	return true
 }
