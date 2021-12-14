@@ -291,8 +291,6 @@ func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *Semanti
 		return fmt.Errorf("%w: state controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, nextAliasOutput.StateController)
 	case !a.GovernanceController.Equal(nextAliasOutput.GovernanceController):
 		return fmt.Errorf("%w: governance controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, nextAliasOutput.StateController)
-	case !a.FeatureBlocks().Equal(nextAliasOutput.FeatureBlocks()):
-		return fmt.Errorf("%w: feature blocks changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, nextAliasOutput.StateController)
 	case a.FoundryCounter > nextAliasOutput.FoundryCounter:
 		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", ErrInvalidAliasStateTransition, a.FoundryCounter, nextAliasOutput.FoundryCounter)
 	case a.StateIndex+1 != nextAliasOutput.StateIndex:

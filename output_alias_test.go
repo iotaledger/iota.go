@@ -128,6 +128,9 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				StateIndex:           11,
 				StateMetadata:        []byte("1337"),
 				FoundryCounter:       7,
+				Blocks: iotago.FeatureBlocks{
+					&iotago.MetadataFeatureBlock{Data: []byte("some metadata")},
+				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &iotago.SemanticValidationContext{
@@ -204,6 +207,9 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				GovernanceController: exampleGovCtrl,
 				StateIndex:           10,
 				FoundryCounter:       5,
+				Blocks: iotago.FeatureBlocks{
+					&iotago.IssuerFeatureBlock{Address: exampleIssuer},
+				},
 			},
 			nextMut: map[string]fieldMutations{
 				"state_controller": {
@@ -213,12 +219,6 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				"governance_controller": {
 					"GovernanceController": tpkg.RandEd25519Address(),
 					"StateIndex":           uint32(11),
-				},
-				"feature_blocks": {
-					"Blocks": iotago.FeatureBlocks{
-						&iotago.MetadataFeatureBlock{Data: []byte("git gud")},
-					},
-					"StateIndex": uint32(11),
 				},
 				"foundry_counter_lower_than_current": {
 					"FoundryCounter": uint32(4),
