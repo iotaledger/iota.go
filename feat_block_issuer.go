@@ -16,7 +16,7 @@ var (
 
 // IssuerFeatureBlock is a feature block which associates an output
 // with an issuer identity. Unlike the SenderFeatureBlock, the issuer identity
-// only has to be unlocked when the state machine type of output is first created,
+// only has to be unlocked when the ChainConstrainedOutput is first created,
 // afterwards, the issuer block must not change, meaning that subsequent outputs
 // must always define the same issuer identity (the identity does not need to be unlocked anymore though).
 type IssuerFeatureBlock struct {

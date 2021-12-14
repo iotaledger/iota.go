@@ -209,7 +209,6 @@ func (a *AliasOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint
 		a.Blocks.VByteCost(costStruct, nil)
 }
 
-//	TODO: document transitions
 //	- For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either
 //	  its AliasID is zeroed and StateIndex and FoundryCounter are zero or an input AliasOutput with the same AliasID.
 //	- On alias state transitions:
