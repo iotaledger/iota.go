@@ -196,8 +196,8 @@ func (f *FoundryOutput) checkSerialNumberAgainstAliasFoundries(semValCtx *Semant
 	// this new foundry's serial number must be between the given foundry counter interval
 	startSerial := inAlias.FoundryCounter
 	endIncSerial := outAlias.FoundryCounter
-	if startSerial >= f.SerialNumber || f.SerialNumber > endIncSerial {
-		return fmt.Errorf("%w: new foundry output %s's serial number is not between the foundry counter interval of [%d,%d)", ErrInvalidChainStateTransition, thisFoundryID, startSerial, endIncSerial)
+	if f.SerialNumber < startSerial || f.SerialNumber >= endIncSerial {
+		return fmt.Errorf("%w: new foundry output %s's serial number (%d) is not between the foundry counter interval of [%d,%d)", ErrInvalidChainStateTransition, thisFoundryID, f.SerialNumber, startSerial, endIncSerial)
 	}
 
 	// OPTIMIZE: this loop happens on every STVF of every new foundry output
