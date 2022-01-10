@@ -114,7 +114,7 @@ func NativeTokenSumBalancedWithDiff(nativeTokenID NativeTokenID, inSums NativeTo
 	case outSum != nil && inSum == nil && outSum.Cmp(circSupplyChange) != 0:
 		// newly minted tokens without any on the input
 		fallthrough
-	case outSum == nil && inSum != nil && new(big.Int).Sub(inSum, circSupplyChange).Cmp(common.Big0) != 0:
+	case outSum == nil && inSum != nil && new(big.Int).Add(inSum, circSupplyChange).Cmp(common.Big0) != 0:
 		// burning tokens just from the input side without producing/having transferred any to the output
 		fallthrough
 	case outSum != nil && inSum != nil && new(big.Int).Sub(outSum, inSum).Cmp(circSupplyChange) != 0:
