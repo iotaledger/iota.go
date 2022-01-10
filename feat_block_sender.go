@@ -21,6 +21,10 @@ type SenderFeatureBlock struct {
 	Address Address
 }
 
+func (s *SenderFeatureBlock) Clone() FeatureBlock {
+	return &SenderFeatureBlock{Address: s.Address.Clone()}
+}
+
 func (s *SenderFeatureBlock) VByteCost(costStruct *RentStructure, f VByteCostFunc) uint64 {
 	if f != nil {
 		return f(costStruct)

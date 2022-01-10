@@ -27,6 +27,10 @@ type IndexationFeatureBlock struct {
 	Tag []byte
 }
 
+func (s *IndexationFeatureBlock) Clone() FeatureBlock {
+	return &IndexationFeatureBlock{Tag: append([]byte(nil), s.Tag...)}
+}
+
 func (s *IndexationFeatureBlock) VByteCost(costStruct *RentStructure, f VByteCostFunc) uint64 {
 	if f != nil {
 		return f(costStruct)

@@ -61,6 +61,9 @@ type Address interface {
 
 	// Key returns a string which can be used to index the Address in a map.
 	Key() string
+
+	// Clone clones the Address.
+	Clone() Address
 }
 
 // DirectUnlockableAddress is a type of Address which can be directly unlocked.

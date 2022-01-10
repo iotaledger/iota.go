@@ -42,6 +42,12 @@ func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
 // An Ed25519Address is the Blake2b-256 hash of an Ed25519 public key.
 type Ed25519Address [Ed25519AddressBytesLength]byte
 
+func (edAddr *Ed25519Address) Clone() Address {
+	cpy := &Ed25519Address{}
+	copy(cpy[:], edAddr[:])
+	return cpy
+}
+
 func (edAddr *Ed25519Address) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(serializer.SmallTypeDenotationByteSize + Ed25519AddressBytesLength)
 }

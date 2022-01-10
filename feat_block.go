@@ -78,6 +78,15 @@ func FeatureBlockTypeToString(ty FeatureBlockType) string {
 // FeatureBlocks is a slice of FeatureBlock(s).
 type FeatureBlocks []FeatureBlock
 
+// Clone clones the FeatureBlocks.
+func (f FeatureBlocks) Clone() FeatureBlocks {
+	cpy := make(FeatureBlocks, len(f))
+	for i, v := range f {
+		cpy[i] = v.Clone()
+	}
+	return cpy
+}
+
 // HasConstraints tells whether any FeatureBlock is present which creates spending constraints.
 func (f FeatureBlocks) HasConstraints() bool {
 	for _, block := range f {
@@ -174,6 +183,15 @@ func (f FeatureBlocks) Equal(other FeatureBlocks) bool {
 
 // FeatureBlocksSet is a set of FeatureBlock(s).
 type FeatureBlocksSet map[FeatureBlockType]FeatureBlock
+
+// Clone clones the FeatureBlockSet.
+func (f FeatureBlocksSet) Clone() FeatureBlocksSet {
+	cpy := make(FeatureBlocksSet, len(f))
+	for k, v := range f {
+		cpy[k] = v.Clone()
+	}
+	return cpy
+}
 
 // HasExpirationBlocks tells whether this set has any feature block putting an expiration constraint.
 func (f FeatureBlocksSet) HasExpirationBlocks() bool {
@@ -360,8 +378,12 @@ type FeatureBlock interface {
 
 	// Type returns the type of the FeatureBlock.
 	Type() FeatureBlockType
+
 	// Equal tells whether this FeatureBlock is equal to other.
 	Equal(other FeatureBlock) bool
+
+	// Clone clones the FeatureBlock.
+	Clone() FeatureBlock
 }
 
 // FeatureBlockSelector implements SerializableSelectorFunc for feature blocks.

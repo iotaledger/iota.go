@@ -16,6 +16,10 @@ type ExpirationMilestoneIndexFeatureBlock struct {
 	MilestoneIndex uint32
 }
 
+func (s *ExpirationMilestoneIndexFeatureBlock) Clone() FeatureBlock {
+	return &ExpirationMilestoneIndexFeatureBlock{MilestoneIndex: s.MilestoneIndex}
+}
+
 func (s *ExpirationMilestoneIndexFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize)
 }

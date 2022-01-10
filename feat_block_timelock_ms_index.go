@@ -14,6 +14,10 @@ type TimelockMilestoneIndexFeatureBlock struct {
 	MilestoneIndex uint32
 }
 
+func (s *TimelockMilestoneIndexFeatureBlock) Clone() FeatureBlock {
+	return &TimelockMilestoneIndexFeatureBlock{MilestoneIndex: s.MilestoneIndex}
+}
+
 func (s *TimelockMilestoneIndexFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize)
 }
