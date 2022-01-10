@@ -128,9 +128,6 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				StateIndex:           11,
 				StateMetadata:        []byte("1337"),
 				FoundryCounter:       7,
-				Blocks: iotago.FeatureBlocks{
-					&iotago.MetadataFeatureBlock{Data: []byte("some metadata")},
-				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &iotago.SemanticValidationContext{
