@@ -148,6 +148,25 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name:    "ok - state transition - burn complete supply",
+			current: genesisFoundry,
+			nextMut: map[string]fieldMutations{
+				"-100": {
+					"CirculatingSupply": big.NewInt(0),
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						genesisFoundry.MustNativeTokenID(): startingSupply,
+					},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
+				},
+			},
+			wantErr: nil,
+		},
+		{
 			name:    "fail - state transition - mint (out: excess)",
 			current: genesisFoundry,
 			nextMut: map[string]fieldMutations{
