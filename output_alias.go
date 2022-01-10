@@ -228,7 +228,7 @@ func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, nex
 		if !is {
 			return fmt.Errorf("%w: AliasOutput can only state transition to another alias output", ErrInvalidChainStateTransition)
 		}
-		if err := IssuerBlockUnchanged(a, nextAliasOutput); err != nil {
+		if err := FeatureBlockUnchanged(FeatureBlockIssuer, a.Blocks.MustSet(), nextAliasOutput.Blocks.MustSet()); err != nil {
 			return err
 		}
 		if a.StateIndex == nextAliasOutput.StateIndex {
@@ -284,7 +284,7 @@ func (a *AliasOutput) GovernanceSTVF(nextAliasOutput *AliasOutput, semValCtx *Se
 }
 
 // StateSTVF checks whether the state transition with other is valid.
-// Under a state transition, only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can change.
+// Under a state transition, only Amount, NativeTokens, StateIndex, StateMetadata, SenderFeatureBlock and FoundryCounter can change.
 func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *SemanticValidationContext) error {
 	switch {
 	case !a.StateController.Equal(nextAliasOutput.StateController):
@@ -295,6 +295,10 @@ func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *Semanti
 		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", ErrInvalidAliasStateTransition, a.FoundryCounter, nextAliasOutput.FoundryCounter)
 	case a.StateIndex+1 != nextAliasOutput.StateIndex:
 		return fmt.Errorf("%w: state index %d on the input side but %d on the output side", ErrInvalidAliasStateTransition, a.StateIndex, nextAliasOutput.StateIndex)
+	}
+
+	if err := FeatureBlockUnchanged(FeatureBlockMetadata, a.Blocks.MustSet(), nextAliasOutput.Blocks.MustSet()); err != nil {
+		return fmt.Errorf("%w: %s", ErrInvalidAliasStateTransition, err)
 	}
 
 	// check that for a foundry counter change, X amount of foundries were actually created

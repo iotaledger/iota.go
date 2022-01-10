@@ -100,26 +100,26 @@ func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents Unlo
 // FeatureBlockSetTransitionValidationFunc checks whether the FeatureBlocks transition from in to out is valid.
 type FeatureBlockSetTransitionValidationFunc func(inSet FeatureBlocksSet, outSet FeatureBlocksSet) error
 
-// IssuerBlockUnchanged checks whether the IssuerFeatureBlock is unchanged between in and out,
-// and that out does not suddenly have an issuer block.
-func IssuerBlockUnchanged(inState FeatureBlockOutput, outState FeatureBlockOutput) error {
-	inBlockSet := inState.FeatureBlocks().MustSet()
-	outBlockSet := outState.FeatureBlocks().MustSet()
+// FeatureBlockUnchanged checks whether the specified FeatureBlock type is unchanged between in and out.
+// Unchanged also means that the block's existence is unchanged between both sets.
+func FeatureBlockUnchanged(featBlockType FeatureBlockType, inBlockSet FeatureBlocksSet, outBlockSet FeatureBlocksSet) error {
+	in, inHas := inBlockSet[featBlockType]
+	out, outHas := outBlockSet[featBlockType]
 
 	switch {
-	case outBlockSet[FeatureBlockIssuer] != nil && inBlockSet[FeatureBlockIssuer] == nil:
-		return fmt.Errorf("%w: issuer feature block in next state but not in previous", ErrInvalidFeatureBlockTransition)
-	case outBlockSet[FeatureBlockIssuer] == nil && inBlockSet[FeatureBlockIssuer] != nil:
-		return fmt.Errorf("%w: issuer feature block in current state but not in next", ErrInvalidFeatureBlockTransition)
+	case outHas && !inHas:
+		return fmt.Errorf("%w: %s in next state but not in previous", ErrInvalidFeatureBlockTransition, FeatureBlockTypeToString(featBlockType))
+	case !outHas && inHas:
+		return fmt.Errorf("%w: %s in current state but not in next", ErrInvalidFeatureBlockTransition, FeatureBlockTypeToString(featBlockType))
 	}
 
-	if _, err := inBlockSet.EveryTuple(outBlockSet, func(aBlock FeatureBlock, bBlock FeatureBlock) error {
-		if aBlock.Type() == FeatureBlockIssuer && !aBlock.Equal(bBlock) {
-			return fmt.Errorf("%w: issuer feature block changed, in %v / out %v", ErrInvalidFeatureBlockTransition, aBlock, bBlock)
-		}
+	// not in both sets
+	if in == nil {
 		return nil
-	}); err != nil {
-		return err
+	}
+
+	if !in.Equal(out) {
+		return fmt.Errorf("%w: %s changed, in %v / out %v", ErrInvalidFeatureBlockTransition, FeatureBlockTypeToString(featBlockType), in, out)
 	}
 
 	return nil
