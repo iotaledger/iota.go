@@ -17,6 +17,10 @@ type DustDepositReturnFeatureBlock struct {
 	Amount uint64
 }
 
+func (s *DustDepositReturnFeatureBlock) Clone() FeatureBlock {
+	return &DustDepositReturnFeatureBlock{Amount: s.Amount}
+}
+
 func (s *DustDepositReturnFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
 }

@@ -473,6 +473,9 @@ type Output interface {
 
 	// Type returns the type of the output.
 	Type() OutputType
+
+	// Clone clones the Output.
+	Clone() Output
 }
 
 // ExternalUnlockParameters defines a palette of external system parameters which are used to

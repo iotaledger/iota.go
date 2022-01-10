@@ -15,6 +15,10 @@ type TimelockUnixFeatureBlock struct {
 	UnixTime uint64
 }
 
+func (s *TimelockUnixFeatureBlock) Clone() FeatureBlock {
+	return &TimelockUnixFeatureBlock{UnixTime: s.UnixTime}
+}
+
 func (s *TimelockUnixFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
 }

@@ -194,6 +194,20 @@ type AliasOutput struct {
 	Blocks FeatureBlocks
 }
 
+func (a *AliasOutput) Clone() Output {
+	return &AliasOutput{
+		Amount:               a.Amount,
+		AliasID:              a.AliasID,
+		NativeTokens:         a.NativeTokens.Clone(),
+		StateController:      a.StateController.Clone(),
+		GovernanceController: a.GovernanceController.Clone(),
+		StateIndex:           a.StateIndex,
+		StateMetadata:        append([]byte(nil), a.StateMetadata...),
+		FoundryCounter:       a.FoundryCounter,
+		Blocks:               a.Blocks.Clone(),
+	}
+}
+
 func (a *AliasOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extParas *ExternalUnlockParameters) (bool, error) {
 	return outputUnlockable(a, next, ident, extParas)
 }

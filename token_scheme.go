@@ -28,6 +28,9 @@ type TokenScheme interface {
 
 	// Type returns the type of the TokenScheme.
 	Type() TokenSchemeType
+
+	// Clone clones the TokenScheme.
+	Clone() TokenScheme
 }
 
 // TokenSchemeTypeToString returns a name for the given TokenScheme type.

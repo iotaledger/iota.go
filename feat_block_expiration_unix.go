@@ -17,6 +17,10 @@ type ExpirationUnixFeatureBlock struct {
 	UnixTime uint64
 }
 
+func (s *ExpirationUnixFeatureBlock) Clone() FeatureBlock {
+	return &ExpirationUnixFeatureBlock{UnixTime: s.UnixTime}
+}
+
 func (s *ExpirationUnixFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
 }

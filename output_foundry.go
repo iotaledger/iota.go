@@ -128,6 +128,20 @@ type FoundryOutput struct {
 	Blocks FeatureBlocks
 }
 
+func (f *FoundryOutput) Clone() Output {
+	return &FoundryOutput{
+		Address:           f.Address.Clone(),
+		Amount:            f.Amount,
+		NativeTokens:      f.NativeTokens.Clone(),
+		SerialNumber:      f.SerialNumber,
+		TokenTag:          f.TokenTag,
+		CirculatingSupply: new(big.Int).Set(f.CirculatingSupply),
+		MaximumSupply:     new(big.Int).Set(f.MaximumSupply),
+		TokenScheme:       f.TokenScheme.Clone(),
+		Blocks:            f.Blocks,
+	}
+}
+
 func (f *FoundryOutput) Ident() Address {
 	return f.Address
 }

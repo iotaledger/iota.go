@@ -71,6 +71,15 @@ type ExtendedOutput struct {
 	Blocks FeatureBlocks
 }
 
+func (e *ExtendedOutput) Clone() Output {
+	return &ExtendedOutput{
+		Address:      e.Address.Clone(),
+		Amount:       e.Amount,
+		NativeTokens: e.NativeTokens.Clone(),
+		Blocks:       e.Blocks.Clone(),
+	}
+}
+
 func (e *ExtendedOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
 	ok, _ := outputUnlockable(e, nil, ident, extParas)
 	return ok

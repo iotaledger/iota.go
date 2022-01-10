@@ -13,6 +13,10 @@ type TreasuryOutput struct {
 	Amount uint64 `json:"deposit"`
 }
 
+func (t *TreasuryOutput) Clone() Output {
+	return &TreasuryOutput{Amount: t.Amount}
+}
+
 func (t *TreasuryOutput) VByteCost(_ *RentStructure, _ VByteCostFunc) uint64 {
 	return 0
 }

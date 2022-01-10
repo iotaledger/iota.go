@@ -29,6 +29,10 @@ type MetadataFeatureBlock struct {
 	Data []byte
 }
 
+func (s *MetadataFeatureBlock) Clone() FeatureBlock {
+	return &MetadataFeatureBlock{Data: append([]byte(nil), s.Data...)}
+}
+
 func (s *MetadataFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(uint64(serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize + len(s.Data)))
 }
@@ -70,7 +74,7 @@ func (s *MetadataFeatureBlock) Deserialize(data []byte, deSeriMode serializer.De
 
 func (s *MetadataFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WithValidation(deSeriMode, func(_ []byte,err error) error { return s.ValidDataSize() }).
+		WithValidation(deSeriMode, func(_ []byte, err error) error { return s.ValidDataSize() }).
 		WriteNum(byte(FeatureBlockMetadata), func(err error) error {
 			return fmt.Errorf("unable to serialize metadata feature block type ID: %w", err)
 		}).

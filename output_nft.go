@@ -135,6 +135,17 @@ type NFTOutput struct {
 	Blocks FeatureBlocks
 }
 
+func (n *NFTOutput) Clone() Output {
+	return &NFTOutput{
+		Address:           n.Address.Clone(),
+		Amount:            n.Amount,
+		NativeTokens:      n.NativeTokens.Clone(),
+		NFTID:             n.NFTID,
+		ImmutableMetadata: append([]byte(nil), n.ImmutableMetadata...),
+		Blocks:            n.Blocks.Clone(),
+	}
+}
+
 func (n *NFTOutput) Ident() Address {
 	return n.Address
 }
