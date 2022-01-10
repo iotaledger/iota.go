@@ -71,6 +71,11 @@ func (fID FoundryID) Addressable() bool {
 	return false
 }
 
+// FoundrySerialNumber returns the serial number of the foundry.
+func (fID FoundryID) FoundrySerialNumber() uint32 {
+	return binary.LittleEndian.Uint32(fID[AliasAddressSerializedBytesSize : AliasAddressSerializedBytesSize+serializer.UInt32ByteSize])
+}
+
 func (fID FoundryID) Matches(other ChainID) bool {
 	otherFID, is := other.(FoundryID)
 	if !is {

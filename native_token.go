@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -73,6 +74,11 @@ func (ntID NativeTokenID) FoundryID() FoundryID {
 	var foundryID FoundryID
 	copy(foundryID[:], ntID[:])
 	return foundryID
+}
+
+// FoundrySerialNumber returns the serial number of the foundry which handles this token.
+func (ntID NativeTokenID) FoundrySerialNumber() uint32 {
+	return binary.LittleEndian.Uint32(ntID[AliasAddressSerializedBytesSize : AliasAddressSerializedBytesSize+serializer.UInt32ByteSize])
 }
 
 // NativeTokenSum is a mapping of NativeTokenID to a sum value.
