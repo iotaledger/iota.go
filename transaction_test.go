@@ -23,6 +23,98 @@ func TestTransactionDeSerialize(t *testing.T) {
 	}
 }
 
+func TestCirculatingSupplyBurn(t *testing.T) {
+	_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+	aliasIdent1 := tpkg.RandAliasAddress()
+
+	tokenTag := tpkg.Rand12ByteArray()
+
+	inputIDs := tpkg.RandOutputIDs(3)
+	inputs := iotago.OutputSet{
+		inputIDs[0]: &iotago.ExtendedOutput{
+			Address: ident1,
+			Amount:  OneMi,
+		},
+		inputIDs[1]: &iotago.AliasOutput{
+			Amount:               OneMi,
+			NativeTokens:         nil,
+			AliasID:              aliasIdent1.AliasID(),
+			StateController:      ident1,
+			GovernanceController: ident1,
+			StateIndex:           1,
+			StateMetadata:        nil,
+			FoundryCounter:       1,
+			Blocks:               nil,
+		},
+		inputIDs[2]: &iotago.FoundryOutput{
+			Address:           aliasIdent1,
+			Amount:            OneMi,
+			NativeTokens:      nil,
+			SerialNumber:      1,
+			TokenTag:          tokenTag,
+			CirculatingSupply: big.NewInt(50),
+			MaximumSupply:     big.NewInt(50),
+			TokenScheme:       &iotago.SimpleTokenScheme{},
+			Blocks:            nil,
+		},
+	}
+
+	// set input ExtendedOutput NativeToken to 50 which get burned
+	foundryNativeTokenID := inputs[inputIDs[2]].(*iotago.FoundryOutput).MustNativeTokenID()
+	inputs[inputIDs[0]].(*iotago.ExtendedOutput).NativeTokens = iotago.NativeTokens{
+		{
+			ID:     foundryNativeTokenID,
+			Amount: new(big.Int).SetInt64(50),
+		},
+	}
+
+	essence := &iotago.TransactionEssence{
+		Inputs: inputIDs.UTXOInputs(),
+		Outputs: iotago.Outputs{
+			&iotago.AliasOutput{
+				Amount:               OneMi,
+				NativeTokens:         nil,
+				AliasID:              aliasIdent1.AliasID(),
+				StateController:      ident1,
+				GovernanceController: ident1,
+				StateIndex:           1,
+				StateMetadata:        nil,
+				FoundryCounter:       1,
+				Blocks:               nil,
+			},
+			&iotago.FoundryOutput{
+				Address:      aliasIdent1,
+				Amount:       2 * OneMi,
+				NativeTokens: nil,
+				SerialNumber: 1,
+				TokenTag:     tokenTag,
+				// burn supply by -50
+				CirculatingSupply: big.NewInt(0),
+				MaximumSupply:     big.NewInt(50),
+				TokenScheme:       &iotago.SimpleTokenScheme{},
+				Blocks:            nil,
+			},
+		},
+	}
+
+	sigs, err := essence.Sign(ident1AddrKeys)
+	require.NoError(t, err)
+
+	tx := &iotago.Transaction{
+		Essence: essence,
+		UnlockBlocks: iotago.UnlockBlocks{
+			&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+			&iotago.ReferenceUnlockBlock{Reference: 0},
+			&iotago.AliasUnlockBlock{Reference: 1},
+		},
+	}
+
+	require.NoError(t, tx.SemanticallyValidate(&iotago.SemanticValidationContext{
+		ExtParas:   nil,
+		WorkingSet: nil,
+	}, inputs))
+}
+
 func TestTransactionSemanticValidation(t *testing.T) {
 	type test struct {
 		name    string
