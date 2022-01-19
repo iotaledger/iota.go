@@ -29,8 +29,6 @@ const (
 var (
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
-	// ErrOutputRequiresSenderFeatureBlock gets returned if an output does not contain a SenderFeatureBlock even though another FeatureBlock requires it.
-	ErrOutputRequiresSenderFeatureBlock = errors.New("output does not contain SenderFeatureBlock")
 	// ErrAliasOutputNonEmptyState gets returned if an AliasOutput with zeroed AliasID contains state (counters non-zero etc.).
 	ErrAliasOutputNonEmptyState = errors.New("alias output is not empty state")
 	// ErrAliasOutputCyclicAddress gets returned if an AliasOutput's AliasID results into the same address as the State/Governance controller.
@@ -45,18 +43,18 @@ var (
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
 	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
-	// ErrOutputReturnBlockIsMoreThanVBRent gets returned if an output defines within its DustDepositReturnFeatureBlock more
+	// ErrOutputReturnBlockIsMoreThanVBRent gets returned if an output defines within its DustDepositReturnUnlockCondition more
 	// than what is needed to cover the virtual byte renting costs.
 	ErrOutputReturnBlockIsMoreThanVBRent = errors.New("output's return feature block's amount is bigger than the minimum virtual byte rent cost")
-	// ErrOutputReturnBlockIsLessThanMinDust gets returned if an output defines within its DustDepositReturnFeatureBlock less than the minimum dust deposit.
+	// ErrOutputReturnBlockIsLessThanMinDust gets returned if an output defines within its DustDepositReturnUnlockCondition less than the minimum dust deposit.
 	ErrOutputReturnBlockIsLessThanMinDust = errors.New("output's return feature block's amount is less than the minimum dust amount")
 	// ErrMaxNativeTokensCountExceeded gets returned if outputs or transactions exceed the MaxNativeTokensCount.
 	ErrMaxNativeTokensCountExceeded = errors.New("max native tokens count exceeded")
 
 	essencePayloadGuard = serializer.SerializableGuard{
 		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
-			if PayloadType(ty) != PayloadIndexation {
-				return nil, fmt.Errorf("transaction essence can only contain an indexation payload: %w", ErrTypeIsNotSupportedPayload)
+			if PayloadType(ty) != PayloadTaggedData {
+				return nil, fmt.Errorf("transaction essence can only contain a tagged data payload: %w", ErrTypeIsNotSupportedPayload)
 			}
 			return PayloadSelector(ty)
 		},
@@ -65,7 +63,7 @@ var (
 				// can be nil
 				return nil
 			}
-			if _, is := seri.(*Indexation); !is {
+			if _, is := seri.(*TaggedData); !is {
 				return ErrTypeIsNotSupportedPayload
 			}
 			return nil
@@ -293,7 +291,7 @@ func (u *TransactionEssence) syntacticallyValidate(rentStruct *RentStructure) er
 	}
 
 	if err := ValidateOutputs(u.Outputs,
-		OutputsSyntacticalSenderFeatureBlockRequirement(),
+		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalDepositAmount(rentStruct),
 		OutputsSyntacticalNativeTokensCount(),
 		OutputsSyntacticalFoundry(),
@@ -366,8 +364,8 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 		return nil, fmt.Errorf("unable to decode inner transaction essence payload: %w", err)
 	}
 
-	if _, isIndexationPayload := unsigTx.Payload.(*Indexation); !isIndexationPayload {
-		return nil, fmt.Errorf("%w: transaction essences only allow embedded indexation payloads but got type %T instead", ErrInvalidJSON, unsigTx.Payload)
+	if _, isIndexationPayload := unsigTx.Payload.(*TaggedData); !isIndexationPayload {
+		return nil, fmt.Errorf("%w: transaction essences only allow embedded tagged data payloads but got type %T instead", ErrInvalidJSON, unsigTx.Payload)
 	}
 
 	return unsigTx, nil

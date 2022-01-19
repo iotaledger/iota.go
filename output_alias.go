@@ -28,10 +28,37 @@ var (
 	ErrAliasMissing = errors.New("alias is missing")
 	emptyAliasID    = [AliasIDLength]byte{}
 
-	aliasOutputAddrGuard = &serializer.SerializableGuard{
-		ReadGuard:  addrReadGuard(AddressTypeSet{AddressAlias: struct{}{}, AddressEd25519: struct{}{}}),
-		WriteGuard: addrWriteGuard(AddressTypeSet{AddressAlias: struct{}{}, AddressEd25519: struct{}{}}),
+	aliasOutputUnlockCondsArrayRules = &serializer.ArrayRules{
+		Min: 2, Max: 2,
+		MustOccur: serializer.TypePrefixes{
+			uint32(UnlockConditionStateControllerAddress): struct{}{},
+			uint32(UnlockConditionGovernorAddress):        struct{}{},
+		},
+		Guards: serializer.SerializableGuard{
+			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+				switch ty {
+				case uint32(UnlockConditionStateControllerAddress):
+				case uint32(UnlockConditionGovernorAddress):
+				default:
+					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionTypeToString(UnlockConditionType(ty)))
+				}
+				return UnlockConditionSelector(ty)
+			},
+			WriteGuard: func(seri serializer.Serializable) error {
+				switch seri.(type) {
+				case *StateControllerAddressUnlockCondition:
+				case *GovernorAddressUnlockCondition:
+				default:
+					return fmt.Errorf("%w: in alias output", ErrUnsupportedUnlockConditionType)
+				}
+				return nil
+			},
+		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
+
 	aliasOutputFeatBlockArrayRules = &serializer.ArrayRules{
 		Min: 0,
 		Max: 3,
@@ -180,31 +207,36 @@ type AliasOutput struct {
 	NativeTokens NativeTokens
 	// The identifier for this alias account.
 	AliasID AliasID
-	// The entity which is allowed to control this alias account state.
-	StateController Address
-	// The entity which is allowed to govern this alias account.
-	GovernanceController Address
 	// The index of the state.
 	StateIndex uint32
 	// The state of the alias account which can only be mutated by the state controller.
 	StateMetadata []byte
 	// The counter that denotes the number of foundries created by this alias account.
 	FoundryCounter uint32
+	// The unlock conditions on this output.
+	Conditions UnlockConditions
 	// The feature blocks which modulate the constraints on the output.
 	Blocks FeatureBlocks
 }
 
+func (a *AliasOutput) GovernorAddress() Address {
+	return a.Conditions.MustSet().GovernorAddress().Address
+}
+
+func (a *AliasOutput) StateController() Address {
+	return a.Conditions.MustSet().StateControllerAddress().Address
+}
+
 func (a *AliasOutput) Clone() Output {
 	return &AliasOutput{
-		Amount:               a.Amount,
-		AliasID:              a.AliasID,
-		NativeTokens:         a.NativeTokens.Clone(),
-		StateController:      a.StateController.Clone(),
-		GovernanceController: a.GovernanceController.Clone(),
-		StateIndex:           a.StateIndex,
-		StateMetadata:        append([]byte(nil), a.StateMetadata...),
-		FoundryCounter:       a.FoundryCounter,
-		Blocks:               a.Blocks.Clone(),
+		Amount:         a.Amount,
+		AliasID:        a.AliasID,
+		NativeTokens:   a.NativeTokens.Clone(),
+		StateIndex:     a.StateIndex,
+		StateMetadata:  append([]byte(nil), a.StateMetadata...),
+		FoundryCounter: a.FoundryCounter,
+		Conditions:     a.Conditions.Clone(),
+		Blocks:         a.Blocks.Clone(),
 	}
 }
 
@@ -217,9 +249,8 @@ func (a *AliasOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		a.NativeTokens.VByteCost(costStruct, nil) +
 		costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(AliasIDLength) +
-		a.StateController.VByteCost(costStruct, nil) +
-		a.GovernanceController.VByteCost(costStruct, nil) +
 		costStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+serializer.UInt32ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
+		a.Conditions.VByteCost(costStruct, nil) +
 		a.Blocks.VByteCost(costStruct, nil)
 }
 
@@ -259,7 +290,7 @@ func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, nex
 func (a *AliasOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 	// if there isn't a next state, then only the governance address can destroy the alias
 	if nextState == nil {
-		return a.GovernanceController, nil
+		return a.GovernorAddress(), nil
 	}
 	otherAliasOutput, isAliasOutput := nextState.(*AliasOutput)
 	if !isAliasOutput {
@@ -267,9 +298,9 @@ func (a *AliasOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 	}
 	switch {
 	case a.StateIndex == otherAliasOutput.StateIndex:
-		return a.GovernanceController, nil
+		return a.GovernorAddress(), nil
 	case a.StateIndex+1 == otherAliasOutput.StateIndex:
-		return a.StateController, nil
+		return a.StateController(), nil
 	default:
 		return nil, fmt.Errorf("%w: can not compute right ident for alias output as state index delta is invalid", ErrTransDepIdentOutputNextInvalid)
 	}
@@ -301,10 +332,10 @@ func (a *AliasOutput) GovernanceSTVF(nextAliasOutput *AliasOutput, semValCtx *Se
 // Under a state transition, only Amount, NativeTokens, StateIndex, StateMetadata, SenderFeatureBlock and FoundryCounter can change.
 func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *SemanticValidationContext) error {
 	switch {
-	case !a.StateController.Equal(nextAliasOutput.StateController):
-		return fmt.Errorf("%w: state controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, nextAliasOutput.StateController)
-	case !a.GovernanceController.Equal(nextAliasOutput.GovernanceController):
-		return fmt.Errorf("%w: governance controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController, nextAliasOutput.StateController)
+	case !a.StateController().Equal(nextAliasOutput.StateController()):
+		return fmt.Errorf("%w: state controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController(), nextAliasOutput.StateController())
+	case !a.GovernorAddress().Equal(nextAliasOutput.GovernorAddress()):
+		return fmt.Errorf("%w: governance controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController(), nextAliasOutput.StateController())
 	case a.FoundryCounter > nextAliasOutput.FoundryCounter:
 		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", ErrInvalidAliasStateTransition, a.FoundryCounter, nextAliasOutput.FoundryCounter)
 	case a.StateIndex+1 != nextAliasOutput.StateIndex:
@@ -331,7 +362,7 @@ func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *Semanti
 			continue
 		}
 
-		foundryAliasID := foundryOutput.Address.(*AliasAddress).Chain()
+		foundryAliasID := foundryOutput.Ident().(*AliasAddress).Chain()
 		if !foundryAliasID.Matches(nextAliasOutput.AliasID) {
 			continue
 		}
@@ -356,6 +387,10 @@ func (a *AliasOutput) NativeTokenSet() NativeTokens {
 
 func (a *AliasOutput) FeatureBlocks() FeatureBlocks {
 	return a.Blocks
+}
+
+func (a *AliasOutput) UnlockConditions() UnlockConditions {
+	return a.Conditions
 }
 
 func (a *AliasOutput) Deposit() uint64 {
@@ -386,12 +421,6 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadBytesInPlace(a.AliasID[:], func(err error) error {
 			return fmt.Errorf("unable to deserialize alias ID for alias output: %w", err)
 		}).
-		ReadObject(&a.StateController, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, aliasOutputAddrGuard.ReadGuard, func(err error) error {
-			return fmt.Errorf("unable to deserialize state controller for alias output: %w", err)
-		}).
-		ReadObject(&a.GovernanceController, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, aliasOutputAddrGuard.ReadGuard, func(err error) error {
-			return fmt.Errorf("unable to deserialize governance controller for alias output: %w", err)
-		}).
 		ReadNum(&a.StateIndex, func(err error) error {
 			return fmt.Errorf("unable to deserialize state index for alias output: %w", err)
 		}).
@@ -401,6 +430,9 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		}, MaxMetadataLength).
 		ReadNum(&a.FoundryCounter, func(err error) error {
 			return fmt.Errorf("unable to deserialize foundry counter for alias output: %w", err)
+		}).
+		ReadSliceOfObjects(&a.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputUnlockCondsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize unlock conditions for alias output: %w", err)
 		}).
 		ReadSliceOfObjects(&a.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for alias output: %w", err)
@@ -422,12 +454,6 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 		WriteBytes(a.AliasID[:], func(err error) error {
 			return fmt.Errorf("unable to serialize alias output alias ID: %w", err)
 		}).
-		WriteObject(a.StateController, deSeriMode, deSeriCtx, aliasOutputAddrGuard.WriteGuard, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output state controller: %w", err)
-		}).
-		WriteObject(a.GovernanceController, deSeriMode, deSeriCtx, aliasOutputAddrGuard.WriteGuard, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output governance controller: %w", err)
-		}).
 		WriteNum(a.StateIndex, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output state index: %w", err)
 		}).
@@ -436,6 +462,9 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 		}).
 		WriteNum(a.FoundryCounter, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output foundry counter: %w", err)
+		}).
+		WriteSliceOfObjects(&a.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, aliasOutputUnlockCondsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize alias output unlock conditions: %w", err)
 		}).
 		WriteSliceOfObjects(&a.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, aliasOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output feature blocks: %w", err)
@@ -459,17 +488,12 @@ func (a *AliasOutput) MarshalJSON() ([]byte, error) {
 
 	jAliasOutput.AliasID = hex.EncodeToString(a.AliasID[:])
 
-	jAliasOutput.StateController, err = addressToJSONRawMsg(a.StateController)
-	if err != nil {
-		return nil, err
-	}
-
-	jAliasOutput.GovernanceController, err = addressToJSONRawMsg(a.GovernanceController)
-	if err != nil {
-		return nil, err
-	}
-
 	jAliasOutput.StateMetadata = hex.EncodeToString(a.StateMetadata)
+
+	jAliasOutput.Conditions, err = serializablesToJSONRawMsgs(a.Conditions.ToSerializables())
+	if err != nil {
+		return nil, err
+	}
 
 	jAliasOutput.Blocks, err = serializablesToJSONRawMsgs(a.Blocks.ToSerializables())
 	if err != nil {
@@ -494,16 +518,15 @@ func (a *AliasOutput) UnmarshalJSON(bytes []byte) error {
 
 // jsonAliasOutput defines the json representation of an AliasOutput.
 type jsonAliasOutput struct {
-	Type                 int                `json:"type"`
-	Amount               int                `json:"amount"`
-	NativeTokens         []*json.RawMessage `json:"nativeTokens"`
-	AliasID              string             `json:"aliasId"`
-	StateController      *json.RawMessage   `json:"stateController"`
-	GovernanceController *json.RawMessage   `json:"governanceController"`
-	StateIndex           int                `json:"stateIndex"`
-	StateMetadata        string             `json:"stateMetadata"`
-	FoundryCounter       int                `json:"foundryCounter"`
-	Blocks               []*json.RawMessage `json:"blocks"`
+	Type           int                `json:"type"`
+	Amount         int                `json:"amount"`
+	NativeTokens   []*json.RawMessage `json:"nativeTokens"`
+	AliasID        string             `json:"aliasId"`
+	StateIndex     int                `json:"stateIndex"`
+	StateMetadata  string             `json:"stateMetadata"`
+	FoundryCounter int                `json:"foundryCounter"`
+	Conditions     []*json.RawMessage `json:"unlockConditions"`
+	Blocks         []*json.RawMessage `json:"blocks"`
 }
 
 func (j *jsonAliasOutput) ToSerializable() (serializer.Serializable, error) {
@@ -525,17 +548,12 @@ func (j *jsonAliasOutput) ToSerializable() (serializer.Serializable, error) {
 	}
 	copy(e.AliasID[:], aliasIDSlice)
 
-	e.StateController, err = addressFromJSONRawMsg(j.StateController)
-	if err != nil {
-		return nil, err
-	}
-
-	e.GovernanceController, err = addressFromJSONRawMsg(j.GovernanceController)
-	if err != nil {
-		return nil, err
-	}
-
 	e.StateMetadata, err = hex.DecodeString(j.StateMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	e.Conditions, err = unlockConditionsFromJSONRawMsg(j.Conditions)
 	if err != nil {
 		return nil, err
 	}

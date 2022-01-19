@@ -16,12 +16,12 @@ const (
 	PayloadTransaction PayloadType = iota
 	// PayloadMilestone denotes a Milestone.
 	PayloadMilestone
-	// PayloadIndexation denotes an Indexation.
-	PayloadIndexation
 	// PayloadReceipt denotes a Receipt.
 	PayloadReceipt
 	// PayloadTreasuryTransaction denotes a TreasuryTransaction.
 	PayloadTreasuryTransaction
+	// PayloadTaggedData denotes a TaggedData payload.
+	PayloadTaggedData PayloadType = 5
 )
 
 var (
@@ -44,8 +44,8 @@ func PayloadTypeToString(ty PayloadType) string {
 		return "Transaction"
 	case PayloadMilestone:
 		return "Milestone"
-	case PayloadIndexation:
-		return "Indexation"
+	case PayloadTaggedData:
+		return "TaggedData"
 	case PayloadReceipt:
 		return "Receipt"
 	case PayloadTreasuryTransaction:
@@ -63,8 +63,8 @@ func PayloadSelector(payloadType uint32) (serializer.Serializable, error) {
 		seri = &Transaction{}
 	case PayloadMilestone:
 		seri = &Milestone{}
-	case PayloadIndexation:
-		seri = &Indexation{}
+	case PayloadTaggedData:
+		seri = &TaggedData{}
 	case PayloadReceipt:
 		seri = &Receipt{}
 	case PayloadTreasuryTransaction:
@@ -96,8 +96,8 @@ func jsonPayloadSelector(ty int) (JSONSerializable, error) {
 		obj = &jsonTransaction{}
 	case PayloadMilestone:
 		obj = &jsonMilestone{}
-	case PayloadIndexation:
-		obj = &jsonIndexation{}
+	case PayloadTaggedData:
+		obj = &jsonTaggedData{}
 	default:
 		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
 	}

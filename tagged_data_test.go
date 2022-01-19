@@ -8,12 +8,12 @@ import (
 	"github.com/iotaledger/iota.go/v3"
 )
 
-func TestIndexationDeSerialize(t *testing.T) {
+func TestTaggedDataDeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok",
-			source: tpkg.RandIndexation(),
-			target: &iotago.Indexation{},
+			source: tpkg.RandTaggedData(),
+			target: &iotago.TaggedData{},
 		},
 	}
 

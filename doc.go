@@ -11,9 +11,9 @@
 //		return err
 //	}
 //
-//	// craft an indexation payload
-//	indexationPayload := &iotago.Indexation{
-//		Index: []byte("hello world"),
+//	// craft a tagged data payload
+//	taggedDataPayload := &iotago.TaggedData{
+//		Tag: []byte("hello world"),
 //		Data:  []byte{1, 2, 3, 4},
 //	}
 //
@@ -22,7 +22,7 @@
 //
 //	// build a message by fetching tips via the node API client and then do local Proof-of-Work
 //	msg, err := iotago.NewMessageBuilder().
-//		Payload(indexationPayload).
+//		Payload(taggedDataPayload).
 //		Tips(nodeHTTPAPIClient).
 //		ProofOfWork(ctx, info.MinPowScore).
 //		Build()

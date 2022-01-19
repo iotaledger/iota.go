@@ -53,9 +53,9 @@ func (vbcs *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint6
 }
 
 // MinDustDeposit returns the minimum renting costs for an ExtendedOutput which returns
-// a DustDepositReturnFeatureBlock amount back to the origin sender.
+// a DustDepositReturnUnlockCondition amount back to the origin sender.
 func (vbcs *RentStructure) MinDustDeposit(sender Address) uint64 {
-	return (&ExtendedOutput{Address: sender, Amount: 0}).VByteCost(vbcs, nil)
+	return (&ExtendedOutput{Conditions: UnlockConditions{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VByteCost(vbcs, nil)
 }
 
 // NonEphemeralObject is an object which can not be pruned by nodes as it

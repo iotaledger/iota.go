@@ -13,10 +13,12 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 	exampleIssuer := tpkg.RandEd25519Address()
 
 	exampleCurrentNFTOutput := &iotago.NFTOutput{
-		Address:           tpkg.RandEd25519Address(),
 		Amount:            100,
 		NFTID:             iotago.NFTID{},
 		ImmutableMetadata: []byte("some-ipfs-link"),
+		Conditions: iotago.UnlockConditions{
+			&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+		},
 		Blocks: iotago.FeatureBlocks{
 			&iotago.IssuerFeatureBlock{Address: exampleIssuer},
 		},
@@ -69,7 +71,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 					"Amount": uint64(1337),
 				},
 				"address": {
-					"Address": tpkg.RandEd25519Address(),
+					"Conditions": iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
 				},
 				"native_tokens": {
 					"NativeTokens": tpkg.RandSortNativeTokens(10),

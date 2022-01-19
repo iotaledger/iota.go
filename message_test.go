@@ -3,17 +3,10 @@ package iotago_test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"io/fs"
-	"os"
-	"path/filepath"
 	"testing"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/tpkg"
-	"github.com/stretchr/testify/require"
-
 	"github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,8 +28,8 @@ func TestMessage_DeSerialize(t *testing.T) {
 			target: &iotago.Message{},
 		},
 		{
-			name:   "ok - indexation",
-			source: tpkg.RandMessage(iotago.PayloadIndexation),
+			name:   "ok - tagged data",
+			source: tpkg.RandMessage(iotago.PayloadTaggedData),
 			target: &iotago.Message{},
 		},
 	}
@@ -44,26 +37,6 @@ func TestMessage_DeSerialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
 	}
-}
-
-func TestMessageDeserializeRustFuzzerErrorProducingCorpus(t *testing.T) {
-	err := filepath.Walk("./testdata/rust_fuzzer_err_generating_corpus", func(path string, info fs.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		msg := &iotago.Message{}
-		_, err = msg.Deserialize(data, serializer.DeSeriModePerformValidation, DefZeroRentParas)
-		fmt.Println(err)
-		require.Error(t, err)
-		return nil
-	})
-	require.NoError(t, err)
 }
 
 func TestMessage_UnmarshalJSON(t *testing.T) {
@@ -94,8 +67,8 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 				}
 			  ],
 			  "payload": {
-				"type": 2,
-				"index": "616c6c796f7572747269747362656c6f6e67746f7573",
+				"type": 5,
+				"tag": "616c6c796f7572747269747362656c6f6e67746f7573",
 				"data": "a487f431d852b060b49427f513dca1d5288e697e8bd9eb062534d09e7cb337ac"
 			  }
 			},

@@ -425,10 +425,10 @@ func (outputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSe
 }
 
 func outputUnlockable(output Output, next TransDepIdentOutput, target Address, extParas *ExternalUnlockParameters) (bool, error) {
-	var featBlock FeatureBlocks
+	var unlockConds UnlockConditions
 
-	if featBlockOutput, ok := output.(FeatureBlockOutput); ok {
-		featBlock = featBlockOutput.FeatureBlocks()
+	if unlockCondOutput, ok := output.(UnlockConditionOutput); ok {
+		unlockConds = unlockCondOutput.UnlockConditions()
 	}
 
 	checkTargetIdentOfOutput := func() (bool, error) {
@@ -446,17 +446,17 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 		}
 	}
 
-	if featBlock == nil {
+	if unlockConds == nil {
 		return checkTargetIdentOfOutput()
 	}
 
-	targetIdentCanUnlock, senderIdentCanUnlock := featBlock.MustSet().unlockableBy(target, extParas)
+	targetIdentCanUnlock, returnIdentCanUnlock := unlockConds.MustSet().unlockableBy(target, extParas)
 	if !targetIdentCanUnlock {
 		return false, nil
 	}
 
-	// the target ident is the sender which can unlock
-	if senderIdentCanUnlock {
+	// the target ident is the return ident which can unlock
+	if returnIdentCanUnlock {
 		return true, nil
 	}
 
@@ -484,7 +484,7 @@ type ExternalUnlockParameters struct {
 	// The confirmed milestone index.
 	ConfMsIndex uint32
 	// The confirmed unix epoch time in seconds.
-	ConfUnix uint64
+	ConfUnix uint32
 }
 
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent
@@ -494,12 +494,12 @@ type TransIndepIdentOutput interface {
 	// Ident returns the default identity to which this output is locked to.
 	Ident() Address
 	// UnlockableBy tells whether the given ident can unlock this Output
-	// while also taking into consideration constraints enforced by FeatureBlock(s) within this Output (if any).
+	// while also taking into consideration constraints enforced by UnlockConditions(s) within this Output (if any).
 	UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool
 }
 
 // TransDepIdentOutput is a type of Output where the identity to unlock is dependent
-// on the transition the output does (without considering FeatureBlock(s)).
+// on the transition the output does (without considering UnlockConditions(s)).
 type TransDepIdentOutput interface {
 	ChainConstrainedOutput
 	// Ident computes the identity to which this output is locked to by examining
@@ -507,7 +507,7 @@ type TransDepIdentOutput interface {
 	// treats the ident computation as being for ChainTransitionTypeDestroy.
 	Ident(next TransDepIdentOutput) (Address, error)
 	// UnlockableBy tells whether the given ident can unlock this Output
-	// while also taking into consideration constraints enforced by FeatureBlock(s) within this Output
+	// while also taking into consideration constraints enforced by UnlockConditions(s) within this Output
 	// and the next state of this TransDepIdentOutput. To indicate that this TransDepIdentOutput
 	// is to be destroyed, pass nil as next.
 	UnlockableBy(ident Address, next TransDepIdentOutput, extParas *ExternalUnlockParameters) (bool, error)
@@ -520,10 +520,16 @@ type NativeTokenOutput interface {
 	NativeTokenSet() NativeTokens
 }
 
-// FeatureBlockOutput is a type of Output which can hold FeatureBlock.
+// FeatureBlockOutput is a type of Output which can hold FeatureBlocks.
 type FeatureBlockOutput interface {
-	// FeatureBlocks returns the feature blocks this output defines.
+	// FeatureBlocks returns the FeatureBlocks this output defines.
 	FeatureBlocks() FeatureBlocks
+}
+
+// UnlockConditionOutput is a type of Output which can hold UnlockConditions.
+type UnlockConditionOutput interface {
+	// UnlockConditions returns the UnlockConditions this output defines.
+	UnlockConditions() UnlockConditions
 }
 
 // OutputSelector implements SerializableSelectorFunc for output types.
@@ -601,7 +607,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //	- every output deposits less than the total supply
 //	- the sum of deposits does not exceed the total supply
 //	- the deposit fulfils the minimum deposit as calculated from the virtual byte cost of the output
-//	- if the output contains a DustDepositReturnFeatureBlock, it must "return" bigger equal than the minimum dust deposit
+//	- if the output contains a DustDepositReturnUnlockCondition, it must "return" bigger equal than the minimum dust deposit
 //	  and must be less equal the minimum virtual byte rent cost for the output.
 func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntacticalValidationFunc {
 	var sum uint64
@@ -622,16 +628,16 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 			return fmt.Errorf("%w: output %d", err, index)
 		}
 
-		if featureBlockOutput, is := output.(FeatureBlockOutput); is {
-			featBlockSet, err := featureBlockOutput.FeatureBlocks().Set()
+		if unlockConditionOutput, is := output.(UnlockConditionOutput); is {
+			unlockConditionsSet, err := unlockConditionOutput.UnlockConditions().Set()
 			if err != nil {
-				return fmt.Errorf("unable to compute feature block set in deposit syntactic checks for output %d: %w", index, err)
+				return fmt.Errorf("unable to compute unlock conditions set in deposit syntactic checks for output %d: %w", index, err)
 			}
 
-			if returnFeatBlock := featBlockSet.DustDepositReturnFeatureBlock(); returnFeatBlock != nil {
+			if returnFeatBlock := unlockConditionsSet.DustDepositReturn(); returnFeatBlock != nil {
 				returnAmount := returnFeatBlock.Amount
 				switch {
-				case returnAmount < rentStruct.MinDustDeposit(featBlockSet.SenderFeatureBlock().Address):
+				case returnAmount < rentStruct.MinDustDeposit(returnFeatBlock.ReturnAddress):
 					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsLessThanMinDust, index)
 				case returnAmount > minRent:
 					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsMoreThanVBRent, index)
@@ -659,8 +665,35 @@ func OutputsSyntacticalNativeTokensCount() OutputsSyntacticalValidationFunc {
 	}
 }
 
+// OutputsSyntacticalExpirationAndTimelock returns an OutputsSyntacticalValidationFunc which checks that:
+// That ExpirationUnlockCondition and TimelockUnlockCondition does not have both of its milestone and unix criteria set to zero.
+func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc {
+	return func(index int, output Output) error {
+		if unlockConditionOutput, is := output.(UnlockConditionOutput); is {
+			unlockConditionsSet, err := unlockConditionOutput.UnlockConditions().Set()
+			if err != nil {
+				return fmt.Errorf("unable to compute unlock conditions set in expiration/timelock syntactic checks for output %d: %w", index, err)
+			}
+
+			if expiration := unlockConditionsSet.Expiration(); expiration != nil {
+				if expiration.MilestoneIndex == 0 && expiration.UnixTime == 0 {
+					return ErrExpirationConditionsZero
+				}
+			}
+
+			if timelock := unlockConditionsSet.Timelock(); timelock != nil {
+				if timelock.MilestoneIndex == 0 && timelock.UnixTime == 0 {
+					return ErrTimelockConditionsZero
+				}
+			}
+		}
+		return nil
+	}
+}
+
+/*
 // OutputsSyntacticalSenderFeatureBlockRequirement returns an OutputsSyntacticalValidationFunc which checks that:
-//	- if an output contains a SenderFeatureBlock if another FeatureBlock (example DustDepositReturnFeatureBlock) requires it
+//	- if an output contains a SenderFeatureBlock if another FeatureBlock (example DustDepositReturnUnlockCondition) requires it
 func OutputsSyntacticalSenderFeatureBlockRequirement() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		featureBlockOutput, is := output.(FeatureBlockOutput)
@@ -686,6 +719,7 @@ func OutputsSyntacticalSenderFeatureBlockRequirement() OutputsSyntacticalValidat
 		return nil
 	}
 }
+*/
 
 // OutputsSyntacticalAlias returns an OutputsSyntacticalValidationFunc which checks that AliasOutput(s)':
 //	- StateIndex/FoundryCounter are zero if the AliasID is zeroed
@@ -714,10 +748,10 @@ func OutputsSyntacticalAlias(txID *TransactionID) OutputsSyntacticalValidationFu
 			copy(outputAliasAddr[:], aliasOutput.AliasID[:])
 		}
 
-		if stateCtrlAddr, ok := aliasOutput.StateController.(*AliasAddress); ok && outputAliasAddr == *stateCtrlAddr {
+		if stateCtrlAddr, ok := aliasOutput.StateController().(*AliasAddress); ok && outputAliasAddr == *stateCtrlAddr {
 			return fmt.Errorf("%w: output %d, AliasID=StateController", ErrAliasOutputCyclicAddress, index)
 		}
-		if govCtrlAddr, ok := aliasOutput.GovernanceController.(*AliasAddress); ok && outputAliasAddr == *govCtrlAddr {
+		if govCtrlAddr, ok := aliasOutput.GovernorAddress().(*AliasAddress); ok && outputAliasAddr == *govCtrlAddr {
 			return fmt.Errorf("%w: output %d, AliasID=GovernanceController", ErrAliasOutputCyclicAddress, index)
 		}
 
@@ -765,7 +799,7 @@ func OutputsSyntacticalNFT(txID *TransactionID) OutputsSyntacticalValidationFunc
 			copy(outputNFTAddr[:], nftOutput.NFTID[:])
 		}
 
-		if addr, ok := nftOutput.Address.(*NFTAddress); ok && outputNFTAddr == *addr {
+		if addr, ok := nftOutput.Ident().(*NFTAddress); ok && outputNFTAddr == *addr {
 			return fmt.Errorf("%w: output %d, AliasID=StateController", ErrNFTOutputCyclicAddress, index)
 		}
 

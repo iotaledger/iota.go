@@ -39,7 +39,7 @@ func TestTxBuilder(t *testing.T) {
 				},
 				Return: 500,
 			},
-			Index:    []byte("purchase-23847258"),
+			Tag:    []byte("purchase-23847258"),
 			Metadata: []byte("token-transfer"),
 		}).
 		Transfer(alias1Ident, 0, nfTID, nil, builder.TransferOpts{
@@ -55,7 +55,7 @@ func TestTxBuilder(t *testing.T) {
 				},
 				Return: 500,
 			},
-			Index:    []byte("nft-transfer-1238573"),
+			Tag:    []byte("nft-transfer-1238573"),
 			Metadata: []byte("nft-transfer"),
 		}).
 		Alias(alias1ID).GovTransition(builder.AliasGovOpts{
@@ -91,4 +91,4 @@ func TestTxBuilder(t *testing.T) {
 		Build(keys)
 
 }
- */
+*/

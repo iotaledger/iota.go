@@ -18,13 +18,15 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 	exampleGovCtrl := tpkg.RandEd25519Address()
 
 	exampleExistingFoundryOutput := &iotago.FoundryOutput{
-		Address:           exampleAliasID.ToAddress(),
 		Amount:            100,
 		SerialNumber:      5,
 		TokenTag:          iotago.TokenTag{},
 		CirculatingSupply: new(big.Int).SetInt64(1000),
 		MaximumSupply:     new(big.Int).SetInt64(10000),
 		TokenScheme:       &iotago.SimpleTokenScheme{},
+		Conditions: iotago.UnlockConditions{
+			&iotago.AddressUnlockCondition{Address: exampleAliasID.ToAddress()},
+		},
 	}
 	exampleExistingFoundryOutputID := exampleExistingFoundryOutput.MustID()
 
@@ -42,10 +44,12 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "ok - genesis transition",
 			current: &iotago.AliasOutput{
-				Amount:               100,
-				AliasID:              iotago.AliasID{},
-				StateController:      tpkg.RandEd25519Address(),
-				GovernanceController: tpkg.RandEd25519Address(),
+				Amount:  100,
+				AliasID: iotago.AliasID{},
+				Conditions: iotago.UnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
 				Blocks: iotago.FeatureBlocks{
 					&iotago.IssuerFeatureBlock{Address: exampleIssuer},
 				},
@@ -65,10 +69,12 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "ok - destroy transition",
 			current: &iotago.AliasOutput{
-				Amount:               100,
-				AliasID:              tpkg.RandAliasAddress().AliasID(),
-				StateController:      exampleStateCtrl,
-				GovernanceController: exampleGovCtrl,
+				Amount:  100,
+				AliasID: tpkg.RandAliasAddress().AliasID(),
+				Conditions: iotago.UnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
 			},
 			next:      nil,
 			transType: iotago.ChainTransitionTypeDestroy,
@@ -83,19 +89,23 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "ok - gov transition",
 			current: &iotago.AliasOutput{
-				Amount:               100,
-				AliasID:              exampleAliasID,
-				StateController:      exampleStateCtrl,
-				GovernanceController: exampleGovCtrl,
-				StateIndex:           10,
-			},
-			next: &iotago.AliasOutput{
 				Amount:  100,
 				AliasID: exampleAliasID,
+				Conditions: iotago.UnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				StateIndex: 10,
+			},
+			next: &iotago.AliasOutput{
+				Amount:     100,
+				AliasID:    exampleAliasID,
+				StateIndex: 10,
 				// mutating controllers
-				StateController:      tpkg.RandEd25519Address(),
-				GovernanceController: tpkg.RandEd25519Address(),
-				StateIndex:           10,
+				Conditions: iotago.UnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
 				Blocks: iotago.FeatureBlocks{
 					&iotago.MetadataFeatureBlock{Data: []byte("1337")},
 				},
@@ -112,22 +122,26 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "ok - state transition",
 			current: &iotago.AliasOutput{
-				Amount:               100,
-				AliasID:              exampleAliasID,
-				StateController:      exampleStateCtrl,
-				GovernanceController: exampleGovCtrl,
-				StateIndex:           10,
-				FoundryCounter:       5,
+				Amount:  100,
+				AliasID: exampleAliasID,
+				Conditions: iotago.UnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				StateIndex:     10,
+				FoundryCounter: 5,
 			},
 			next: &iotago.AliasOutput{
-				Amount:               200,
-				NativeTokens:         tpkg.RandSortNativeTokens(50),
-				AliasID:              exampleAliasID,
-				StateController:      exampleStateCtrl,
-				GovernanceController: exampleGovCtrl,
-				StateIndex:           11,
-				StateMetadata:        []byte("1337"),
-				FoundryCounter:       7,
+				Amount:       200,
+				NativeTokens: tpkg.RandSortNativeTokens(50),
+				AliasID:      exampleAliasID,
+				Conditions: iotago.UnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				StateIndex:     11,
+				StateMetadata:  []byte("1337"),
+				FoundryCounter: 7,
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &iotago.SemanticValidationContext{
@@ -143,18 +157,22 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 							Inputs: nil,
 							Outputs: iotago.Outputs{
 								&iotago.FoundryOutput{
-									Address:      exampleAliasID.ToAddress(),
 									Amount:       100,
 									SerialNumber: 6,
 									TokenTag:     tpkg.Rand12ByteArray(),
 									TokenScheme:  &iotago.SimpleTokenScheme{},
+									Conditions: iotago.UnlockConditions{
+										&iotago.AddressUnlockCondition{Address: exampleAliasID.ToAddress()},
+									},
 								},
 								&iotago.FoundryOutput{
-									Address:      exampleAliasID.ToAddress(),
 									Amount:       100,
 									SerialNumber: 7,
 									TokenTag:     tpkg.Rand12ByteArray(),
 									TokenScheme:  &iotago.SimpleTokenScheme{},
+									Conditions: iotago.UnlockConditions{
+										&iotago.AddressUnlockCondition{Address: exampleAliasID.ToAddress()},
+									},
 								},
 							},
 						},
@@ -166,11 +184,13 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "fail - gov transition",
 			current: &iotago.AliasOutput{
-				Amount:               100,
-				AliasID:              exampleAliasID,
-				StateController:      exampleStateCtrl,
-				GovernanceController: exampleGovCtrl,
-				StateIndex:           10,
+				Amount:     100,
+				AliasID:    exampleAliasID,
+				StateIndex: 10,
+				Conditions: iotago.UnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
 			},
 			nextMut: map[string]fieldMutations{
 				"amount": {
@@ -198,24 +218,32 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "fail - state transition",
 			current: &iotago.AliasOutput{
-				Amount:               100,
-				AliasID:              exampleAliasID,
-				StateController:      exampleStateCtrl,
-				GovernanceController: exampleGovCtrl,
-				StateIndex:           10,
-				FoundryCounter:       5,
+				Amount:         100,
+				AliasID:        exampleAliasID,
+				StateIndex:     10,
+				FoundryCounter: 5,
+				Conditions: iotago.UnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
 				Blocks: iotago.FeatureBlocks{
 					&iotago.IssuerFeatureBlock{Address: exampleIssuer},
 				},
 			},
 			nextMut: map[string]fieldMutations{
 				"state_controller": {
-					"StateController": tpkg.RandEd25519Address(),
-					"StateIndex":      uint32(11),
+					"StateIndex": uint32(11),
+					"Conditions": iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
 				},
 				"governance_controller": {
-					"GovernanceController": tpkg.RandEd25519Address(),
-					"StateIndex":           uint32(11),
+					"StateIndex": uint32(11),
+					"Conditions": iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
 				},
 				"foundry_counter_lower_than_current": {
 					"FoundryCounter": uint32(4),

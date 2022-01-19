@@ -15,13 +15,15 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 
 	startingSupply := new(big.Int).SetUint64(100)
 	genesisFoundry := &iotago.FoundryOutput{
-		Address:           exampleAliasIdent,
 		Amount:            100,
 		SerialNumber:      6,
 		TokenTag:          tpkg.Rand12ByteArray(),
 		CirculatingSupply: startingSupply,
 		MaximumSupply:     new(big.Int).SetUint64(1000),
 		TokenScheme:       &iotago.SimpleTokenScheme{},
+		Conditions: iotago.UnlockConditions{
+			&iotago.AddressUnlockCondition{Address: exampleAliasIdent},
+		},
 	}
 
 	type test struct {

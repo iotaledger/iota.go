@@ -15,12 +15,12 @@ func TestMessageBuilder(t *testing.T) {
 
 	parents := tpkg.SortedRand32BytArray(4)
 
-	indexationPayload := &iotago.Indexation{
-		Index: []byte("hello world"),
-		Data:  []byte{1, 2, 3, 4},
+	taggedDataPayload := &iotago.TaggedData{
+		Tag:  []byte("hello world"),
+		Data: []byte{1, 2, 3, 4},
 	}
 	msg, err := iotago.NewMessageBuilder().
-		Payload(indexationPayload).
+		Payload(taggedDataPayload).
 		ParentsMessageIDs(parents).
 		ProofOfWork(context.Background(), DefZeroRentParas, targetPoWScore).
 		Build()

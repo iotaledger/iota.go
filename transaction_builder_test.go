@@ -29,7 +29,12 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.ExtendedOutput{Address: tpkg.RandEd25519Address(), Amount: 50})
+				AddOutput(&iotago.ExtendedOutput{
+					Amount: 50,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				})
 
 			return test{
 				name:       "ok - 1 input/output",
@@ -42,11 +47,16 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.ExtendedOutput{Address: tpkg.RandEd25519Address(), Amount: 50}).
-				AddIndexationPayload(&iotago.Indexation{Index: []byte("index"), Data: nil})
+				AddOutput(&iotago.ExtendedOutput{
+					Amount: 50,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				}).
+				AddTaggedDataPayload(&iotago.TaggedData{Tag: []byte("index"), Data: nil})
 
 			return test{
-				name:       "ok - with indexation payload",
+				name:       "ok - with tagged data payload",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    builder,
 			}
@@ -76,7 +86,12 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.ExtendedOutput{Address: tpkg.RandEd25519Address(), Amount: 50})
+				AddOutput(&iotago.ExtendedOutput{
+					Amount: 50,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				})
 
 			// wrong address/keys
 			wrongIdentity := tpkg.RandEd25519PrivateKey()
@@ -95,7 +110,12 @@ func TestTransactionBuilder(t *testing.T) {
 
 			builder := iotago.NewTransactionBuilder().
 				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.ExtendedOutput{Address: tpkg.RandEd25519Address(), Amount: 50})
+				AddOutput(&iotago.ExtendedOutput{
+					Amount: 50,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				})
 
 			return test{
 				name:       "err - missing address keys (no keys given at all)",

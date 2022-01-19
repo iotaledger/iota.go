@@ -24,9 +24,38 @@ var (
 
 	emptyNFTID = [NFTIDLength]byte{}
 
-	nftOutputAddrGuard = &serializer.SerializableGuard{
-		ReadGuard:  addrReadGuard(allAddressTypeSet),
-		WriteGuard: addrWriteGuard(allAddressTypeSet),
+	nftOutputUnlockCondsArrayRules = &serializer.ArrayRules{
+		Min: 1, Max: 4,
+		MustOccur: serializer.TypePrefixes{
+			uint32(UnlockConditionAddress): struct{}{},
+		},
+		Guards: serializer.SerializableGuard{
+			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+				switch ty {
+				case uint32(UnlockConditionAddress):
+				case uint32(UnlockConditionDustDepositReturn):
+				case uint32(UnlockConditionTimelock):
+				case uint32(UnlockConditionExpiration):
+				default:
+					return nil, fmt.Errorf("%w: unable to deserialize NFT output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionTypeToString(UnlockConditionType(ty)))
+				}
+				return UnlockConditionSelector(ty)
+			},
+			WriteGuard: func(seri serializer.Serializable) error {
+				switch seri.(type) {
+				case *AddressUnlockCondition:
+				case *DustDepositReturnUnlockCondition:
+				case *TimelockUnlockCondition:
+				case *ExpirationUnlockCondition:
+				default:
+					return fmt.Errorf("%w: in NFT output", ErrUnsupportedUnlockConditionType)
+				}
+				return nil
+			},
+		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	nftOutputFeatBlockArrayRules = &serializer.ArrayRules{
@@ -37,13 +66,8 @@ var (
 				switch ty {
 				case uint32(FeatureBlockSender):
 				case uint32(FeatureBlockIssuer):
-				case uint32(FeatureBlockDustDepositReturn):
-				case uint32(FeatureBlockTimelockMilestoneIndex):
-				case uint32(FeatureBlockTimelockUnix):
-				case uint32(FeatureBlockExpirationMilestoneIndex):
-				case uint32(FeatureBlockExpirationUnix):
 				case uint32(FeatureBlockMetadata):
-				case uint32(FeatureBlockIndexation):
+				case uint32(FeatureBlockTag):
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize nft output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
 				}
@@ -53,13 +77,8 @@ var (
 				switch seri.(type) {
 				case *SenderFeatureBlock:
 				case *IssuerFeatureBlock:
-				case *DustDepositReturnFeatureBlock:
-				case *TimelockMilestoneIndexFeatureBlock:
-				case *TimelockUnixFeatureBlock:
-				case *ExpirationMilestoneIndexFeatureBlock:
-				case *ExpirationUnixFeatureBlock:
 				case *MetadataFeatureBlock:
-				case *IndexationFeatureBlock:
+				case *TagFeatureBlock:
 				default:
 					return fmt.Errorf("%w: in nft output", ErrUnsupportedFeatureBlockType)
 				}
@@ -121,8 +140,6 @@ func (nftID NFTID) String() string {
 
 // NFTOutput is an output type used to implement non-fungible tokens.
 type NFTOutput struct {
-	// The actual address.
-	Address Address
 	// The amount of IOTA tokens held by the output.
 	Amount uint64
 	// The native tokens held by the output.
@@ -131,23 +148,25 @@ type NFTOutput struct {
 	NFTID NFTID
 	// Arbitrary immutable binary data attached to this NFT.
 	ImmutableMetadata []byte
+	// The unlock conditions on this output.
+	Conditions UnlockConditions
 	// The feature blocks which modulate the constraints on the output.
 	Blocks FeatureBlocks
 }
 
 func (n *NFTOutput) Clone() Output {
 	return &NFTOutput{
-		Address:           n.Address.Clone(),
 		Amount:            n.Amount,
 		NativeTokens:      n.NativeTokens.Clone(),
 		NFTID:             n.NFTID,
 		ImmutableMetadata: append([]byte(nil), n.ImmutableMetadata...),
+		Conditions:        n.Conditions.Clone(),
 		Blocks:            n.Blocks.Clone(),
 	}
 }
 
 func (n *NFTOutput) Ident() Address {
-	return n.Address
+	return n.Conditions.MustSet().Address().Address
 }
 
 func (n *NFTOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
@@ -158,10 +177,10 @@ func (n *NFTOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParamete
 func (n *NFTOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
-		n.Address.VByteCost(costStruct, nil) +
 		n.NativeTokens.VByteCost(costStruct, nil) +
 		costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(NFTIDLength) +
 		costStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+len(n.ImmutableMetadata))) +
+		n.Conditions.VByteCost(costStruct, nil) +
 		n.Blocks.VByteCost(costStruct, nil)
 }
 
@@ -217,9 +236,6 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		CheckTypePrefix(uint32(OutputNFT), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize NFT output: %w", err)
 		}).
-		ReadObject(&n.Address, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, nftOutputAddrGuard.ReadGuard, func(err error) error {
-			return fmt.Errorf("unable to deserialize address for NFT output: %w", err)
-		}).
 		ReadNum(&n.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for NFT output: %w", err)
 		}).
@@ -232,6 +248,9 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadVariableByteSlice(&n.ImmutableMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize immutable metadata for NFT output: %w", err)
 		}, ImmutableMetadataMaxLength).
+		ReadSliceOfObjects(&n.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, nftOutputUnlockCondsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize unlock conditions for NFT output: %w", err)
+		}).
 		ReadSliceOfObjects(&n.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, nftOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
 		}).
@@ -249,9 +268,6 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		WriteNum(OutputNFT, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output type ID: %w", err)
 		}).
-		WriteObject(n.Address, deSeriMode, deSeriCtx, nftOutputAddrGuard.WriteGuard, func(err error) error {
-			return fmt.Errorf("unable to serialize NFT output address: %w", err)
-		}).
 		WriteNum(n.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output amount: %w", err)
 		}).
@@ -263,6 +279,9 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		}).
 		WriteVariableByteSlice(n.ImmutableMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output immutable metadata: %w", err)
+		}).
+		WriteSliceOfObjects(&n.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nftOutputUnlockCondsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize NFT output unlock conditions: %w", err)
 		}).
 		WriteSliceOfObjects(&n.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nftOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output feature blocks: %w", err)
@@ -282,13 +301,13 @@ func (n *NFTOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jNFTOutput.Address, err = addressToJSONRawMsg(n.Address)
+	jNFTOutput.NFTID = hex.EncodeToString(n.NFTID[:])
+	jNFTOutput.ImmutableData = hex.EncodeToString(n.ImmutableMetadata[:])
+
+	jNFTOutput.Conditions, err = serializablesToJSONRawMsgs(n.Conditions.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
-
-	jNFTOutput.NFTID = hex.EncodeToString(n.NFTID[:])
-	jNFTOutput.ImmutableData = hex.EncodeToString(n.ImmutableMetadata[:])
 
 	jNFTOutput.Blocks, err = serializablesToJSONRawMsgs(n.Blocks.ToSerializables())
 	if err != nil {
@@ -319,6 +338,7 @@ type jsonNFTOutput struct {
 	Address       *json.RawMessage   `json:"address"`
 	NFTID         string             `json:"nftId"`
 	ImmutableData string             `json:"immutableData"`
+	Conditions    []*json.RawMessage `json:"unlockConditions"`
 	Blocks        []*json.RawMessage `json:"blocks"`
 }
 
@@ -329,11 +349,6 @@ func (j *jsonNFTOutput) ToSerializable() (serializer.Serializable, error) {
 	}
 
 	e.NativeTokens, err = nativeTokensFromJSONRawMsg(j.NativeTokens)
-	if err != nil {
-		return nil, err
-	}
-
-	e.Address, err = addressFromJSONRawMsg(j.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -349,6 +364,11 @@ func (j *jsonNFTOutput) ToSerializable() (serializer.Serializable, error) {
 		return nil, err
 	}
 	copy(e.ImmutableMetadata[:], immuDataBytes)
+
+	e.Conditions, err = unlockConditionsFromJSONRawMsg(j.Conditions)
+	if err != nil {
+		return nil, err
+	}
 
 	e.Blocks, err = featureBlocksFromJSONRawMsg(j.Blocks)
 	if err != nil {

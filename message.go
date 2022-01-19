@@ -35,10 +35,10 @@ var (
 		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
 			switch PayloadType(ty) {
 			case PayloadTransaction:
-			case PayloadIndexation:
+			case PayloadTaggedData:
 			case PayloadMilestone:
 			default:
-				return nil, fmt.Errorf("a message can only contain a transaction/indexation/milestone but got type ID %d: %w", ty, ErrTypeIsNotSupportedPayload)
+				return nil, fmt.Errorf("a message can only contain a transaction/tagged data/milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
 			}
 			return PayloadSelector(ty)
 		},
@@ -48,10 +48,10 @@ var (
 			}
 			switch seri.(type) {
 			case *Transaction:
-			case *Indexation:
+			case *TaggedData:
 			case *Milestone:
 			default:
-				return ErrTypeIsNotSupportedPayload
+				return ErrUnsupportedPayloadType
 			}
 			return nil
 		},
