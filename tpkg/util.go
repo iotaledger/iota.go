@@ -286,8 +286,8 @@ func RandMilestoneSig() [iotago.MilestoneSignatureLength]byte {
 	return sig
 }
 
-// RandIndexation returns a random indexation payload.
-func RandIndexation(dataLength ...int) *iotago.Indexation {
+// RandTaggedData returns a random tagged data payload.
+func RandTaggedData(dataLength ...int) *iotago.TaggedData {
 	const index = "寿司を作って"
 
 	var data []byte
@@ -298,9 +298,7 @@ func RandIndexation(dataLength ...int) *iotago.Indexation {
 		data = RandBytes(rand.Intn(200) + 1)
 	}
 
-	indexationPayload := &iotago.Indexation{Index: []byte(index), Data: data}
-
-	return indexationPayload
+	return &iotago.TaggedData{Tag: []byte(index), Data: data}
 }
 
 // RandMessage returns a random message with the given inner payload.
@@ -312,8 +310,8 @@ func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
 	switch withPayloadType {
 	case iotago.PayloadTransaction:
 		payload = RandTransaction()
-	case iotago.PayloadIndexation:
-		payload = RandIndexation()
+	case iotago.PayloadTaggedData:
+		payload = RandTaggedData()
 	case iotago.PayloadMilestone:
 		payload = RandMilestone(parents)
 	}
@@ -379,7 +377,7 @@ func RandExtendedOutput(addrType iotago.AddressType) *iotago.ExtendedOutput {
 
 	switch addrType {
 	case iotago.AddressEd25519:
-		dep.Address = RandEd25519Address()
+		dep.Conditions = iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: RandEd25519Address()}}
 	default:
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
@@ -405,8 +403,10 @@ func OneInputOutputTransaction() *iotago.Transaction {
 			},
 			Outputs: iotago.Outputs{
 				&iotago.ExtendedOutput{
-					Address: RandEd25519Address(),
-					Amount:  1337,
+					Amount: 1337,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: RandEd25519Address()},
+					},
 				},
 			},
 			Payload: nil,

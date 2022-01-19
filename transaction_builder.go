@@ -88,8 +88,8 @@ func (b *TransactionBuilder) AddOutput(output Output) *TransactionBuilder {
 	return b
 }
 
-// AddIndexationPayload adds the given Indexation as the inner payload.
-func (b *TransactionBuilder) AddIndexationPayload(payload *Indexation) *TransactionBuilder {
+// AddTaggedDataPayload adds the given TaggedData as the inner payload.
+func (b *TransactionBuilder) AddTaggedDataPayload(payload *TaggedData) *TransactionBuilder {
 	b.essence.Payload = payload
 	return b
 }

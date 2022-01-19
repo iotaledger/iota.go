@@ -24,9 +24,43 @@ var (
 
 	emptyFoundryID = [FoundryIDLength]byte{}
 
-	foundryOutputAddrGuard = serializer.SerializableGuard{
-		ReadGuard:  addrReadGuard(AddressTypeSet{AddressAlias: struct{}{}}),
-		WriteGuard: addrWriteGuard(AddressTypeSet{AddressAlias: struct{}{}}),
+	foundryOutputUnlockCondsArrayRules = &serializer.ArrayRules{
+		Min: 1, Max: 1,
+		MustOccur: serializer.TypePrefixes{
+			uint32(UnlockConditionAddress): struct{}{},
+		},
+		Guards: serializer.SerializableGuard{
+			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+				switch ty {
+				case uint32(UnlockConditionAddress):
+				default:
+					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionTypeToString(UnlockConditionType(ty)))
+				}
+				return UnlockConditionSelector(ty)
+			},
+			PostReadGuard: func(seri serializer.Serializable) error {
+				if addrUnlockCond, ok := seri.(*AddressUnlockCondition); ok {
+					if addrUnlockCond.Address.Type() != AddressAlias {
+						return fmt.Errorf("%w: unable to deserialize foundry output, unsupported address in address unlock condition", ErrUnsupportedUnlockConditionType)
+					}
+				}
+				return nil
+			},
+			WriteGuard: func(seri serializer.Serializable) error {
+				switch x := seri.(type) {
+				case *AddressUnlockCondition:
+					if x.Address.Type() != AddressAlias {
+						return fmt.Errorf("%w: in foundry output, address unlock condition holds non alias address", ErrUnsupportedUnlockConditionType)
+					}
+				default:
+					return fmt.Errorf("%w: in foundry output", ErrUnsupportedUnlockConditionType)
+				}
+				return nil
+			},
+		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	foundryOutputFeatBlockArrayRules = &serializer.ArrayRules{
@@ -108,8 +142,6 @@ type FoundryOutputsSet map[FoundryID]*FoundryOutput
 
 // FoundryOutput is an output type which controls the supply of user defined native tokens.
 type FoundryOutput struct {
-	// The alias controlling the foundry.
-	Address Address
 	// The amount of IOTA tokens held by the output.
 	Amount uint64
 	// The native tokens held by the output.
@@ -124,13 +156,14 @@ type FoundryOutput struct {
 	MaximumSupply *big.Int
 	// The token scheme this foundry uses.
 	TokenScheme TokenScheme
+	// The unlock conditions on this output.
+	Conditions UnlockConditions
 	// The feature blocks which modulate the constraints on the output.
 	Blocks FeatureBlocks
 }
 
 func (f *FoundryOutput) Clone() Output {
 	return &FoundryOutput{
-		Address:           f.Address.Clone(),
 		Amount:            f.Amount,
 		NativeTokens:      f.NativeTokens.Clone(),
 		SerialNumber:      f.SerialNumber,
@@ -138,12 +171,13 @@ func (f *FoundryOutput) Clone() Output {
 		CirculatingSupply: new(big.Int).Set(f.CirculatingSupply),
 		MaximumSupply:     new(big.Int).Set(f.MaximumSupply),
 		TokenScheme:       f.TokenScheme.Clone(),
+		Conditions:        f.Conditions.Clone(),
 		Blocks:            f.Blocks,
 	}
 }
 
 func (f *FoundryOutput) Ident() Address {
-	return f.Address
+	return f.Conditions.MustSet().Address().Address
 }
 
 func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
@@ -154,11 +188,11 @@ func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockPara
 func (f *FoundryOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
-		f.Address.VByteCost(costStruct, nil) +
 		f.NativeTokens.VByteCost(costStruct, nil) +
 		costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(uint64(f.SerialNumber)) +
 		costStruct.VBFactorData.Multiply(TokenTagLength+Uint256ByteSize+Uint256ByteSize) +
 		f.TokenScheme.VByteCost(costStruct, nil) +
+		f.Conditions.VByteCost(costStruct, nil) +
 		f.Blocks.VByteCost(costStruct, nil)
 }
 
@@ -191,7 +225,7 @@ func (f *FoundryOutput) ValidateStateTransition(transType ChainTransitionType, n
 
 func (f *FoundryOutput) checkStateGenesisTransition(semValCtx *SemanticValidationContext, thisFoundryID FoundryID, inSums NativeTokenSum, outSums NativeTokenSum) error {
 	// grab foundry counter from transitioning AliasOutput
-	aliasID := f.Address.(*AliasAddress).AliasID()
+	aliasID := f.Ident().(*AliasAddress).AliasID()
 	inAlias, ok := semValCtx.WorkingSet.InChains[aliasID]
 	if !ok {
 		return fmt.Errorf("%w: missing input transitioning alias output %s for new foundry output %s", ErrInvalidChainStateTransition, aliasID, thisFoundryID)
@@ -226,7 +260,8 @@ func (f *FoundryOutput) checkSerialNumberAgainstAliasFoundries(semValCtx *Semant
 		if !is {
 			continue
 		}
-		if !otherFoundryOutput.Address.Equal(f.Address) {
+
+		if !otherFoundryOutput.Ident().Equal(f.Ident()) {
 			continue
 		}
 
@@ -282,7 +317,7 @@ func (f *FoundryOutput) checkStateChangeTransition(next ChainConstrainedOutput, 
 // ID returns the FoundryID of this FoundryOutput.
 func (f *FoundryOutput) ID() (FoundryID, error) {
 	var foundryID FoundryID
-	addrBytes, err := f.Address.Serialize(serializer.DeSeriModeNoValidation, nil)
+	addrBytes, err := f.Ident().Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return foundryID, err
 	}
@@ -326,6 +361,10 @@ func (f *FoundryOutput) NativeTokenSet() NativeTokens {
 	return f.NativeTokens
 }
 
+func (f *FoundryOutput) UnlockConditions() UnlockConditions {
+	return f.Conditions
+}
+
 func (f *FoundryOutput) FeatureBlocks() FeatureBlocks {
 	return f.Blocks
 }
@@ -342,9 +381,6 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(OutputFoundry), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize foundry output: %w", err)
-		}).
-		ReadObject(&f.Address, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, foundryOutputAddrGuard.ReadGuard, func(err error) error {
-			return fmt.Errorf("unable to deserialize address for foundry output: %w", err)
 		}).
 		ReadNum(&f.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for foundry output: %w", err)
@@ -367,6 +403,9 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		ReadObject(&f.TokenScheme, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, wrappedTokenSchemeSelector, func(err error) error {
 			return fmt.Errorf("unable to deserialize token scheme for foundry output: %w", err)
 		}).
+		ReadSliceOfObjects(&f.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputUnlockCondsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize unlock conditions for NFT output: %w", err)
+		}).
 		ReadSliceOfObjects(&f.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
 		}).
@@ -377,9 +416,6 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode, deS
 	return serializer.NewSerializer().
 		WriteNum(OutputFoundry, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output type ID: %w", err)
-		}).
-		WriteObject(f.Address, deSeriMode, deSeriCtx, foundryOutputAddrGuard.WriteGuard, func(err error) error {
-			return fmt.Errorf("unable to serialize foundry output address: %w", err)
 		}).
 		WriteNum(f.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output amount: %w", err)
@@ -402,6 +438,9 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode, deS
 		WriteObject(f.TokenScheme, deSeriMode, deSeriCtx, tokenSchemeWriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output token scheme: %w", err)
 		}).
+		WriteSliceOfObjects(&f.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, foundryOutputUnlockCondsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize foundry output unlock conditions: %w", err)
+		}).
 		WriteSliceOfObjects(&f.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, foundryOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output feature blocks: %w", err)
 		}).
@@ -421,11 +460,6 @@ func (f *FoundryOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jFoundryOutput.Address, err = addressToJSONRawMsg(f.Address)
-	if err != nil {
-		return nil, err
-	}
-
 	jFoundryOutput.TokenTag = hex.EncodeToString(f.TokenTag[:])
 
 	jFoundryOutput.CirculatingSupply = f.CirculatingSupply.String()
@@ -437,6 +471,11 @@ func (f *FoundryOutput) MarshalJSON() ([]byte, error) {
 	}
 	jsonRawMsgTokenScheme := json.RawMessage(jTokenSchemeBytes)
 	jFoundryOutput.TokenScheme = &jsonRawMsgTokenScheme
+
+	jFoundryOutput.Conditions, err = serializablesToJSONRawMsgs(f.Conditions.ToSerializables())
+	if err != nil {
+		return nil, err
+	}
 
 	jFoundryOutput.Blocks, err = serializablesToJSONRawMsgs(f.Blocks.ToSerializables())
 	if err != nil {
@@ -464,12 +503,12 @@ type jsonFoundryOutput struct {
 	Type              int                `json:"type"`
 	Amount            int                `json:"amount"`
 	NativeTokens      []*json.RawMessage `json:"nativeTokens"`
-	Address           *json.RawMessage   `json:"address"`
 	SerialNumber      int                `json:"serialNumber"`
 	TokenTag          string             `json:"tokenTag"`
 	CirculatingSupply string             `json:"circulatingSupply"`
 	MaximumSupply     string             `json:"maximumSupply"`
 	TokenScheme       *json.RawMessage   `json:"tokenScheme"`
+	Conditions        []*json.RawMessage `json:"unlockConditions"`
 	Blocks            []*json.RawMessage `json:"blocks"`
 }
 
@@ -481,11 +520,6 @@ func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
 	}
 
 	e.NativeTokens, err = nativeTokensFromJSONRawMsg(j.NativeTokens)
-	if err != nil {
-		return nil, err
-	}
-
-	e.Address, err = addressFromJSONRawMsg(j.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -508,6 +542,11 @@ func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
 	}
 
 	e.TokenScheme, err = tokenSchemeFromJSONRawMsg(j.TokenScheme)
+	if err != nil {
+		return nil, err
+	}
+
+	e.Conditions, err = unlockConditionsFromJSONRawMsg(j.Conditions)
 	if err != nil {
 		return nil, err
 	}

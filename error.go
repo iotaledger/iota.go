@@ -11,12 +11,16 @@ var (
 	ErrUnsupportedObjectType = errors.New("unsupported object type")
 	// ErrUnsupportedFeatureBlockType gets returned when an unsupported feature block exists in a set.
 	ErrUnsupportedFeatureBlockType = errors.New("unsupported feature block type")
+	// ErrUnsupportedUnlockConditionType gets returned when an unsupported unlock condition exists in a set.
+	ErrUnsupportedUnlockConditionType = errors.New("unsupported unlock condition type")
 	// ErrUnknownPayloadType gets returned for unknown payload types.
 	ErrUnknownPayloadType = errors.New("unknown payload type")
 	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = errors.New("unknown address type")
 	// ErrUnknownFeatureBlockType gets returned for unknown feature block types.
 	ErrUnknownFeatureBlockType = errors.New("unknown feature block type")
+	// ErrUnknownUnlockConditionType gets returned for unknown unlock condition types.
+	ErrUnknownUnlockConditionType = errors.New("unknown unlock condition type")
 	// ErrUnknownInputType gets returned for unknown input types.
 	ErrUnknownInputType = errors.New("unknown input type")
 	// ErrUnknownOutputType gets returned for unknown output types.

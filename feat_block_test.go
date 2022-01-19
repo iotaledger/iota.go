@@ -20,41 +20,6 @@ func TestFeatureBlocksDeSerialize(t *testing.T) {
 			target: &iotago.IssuerFeatureBlock{},
 		},
 		{
-			name: "ok - DustDepositReturnFeatureBlock",
-			source: &iotago.DustDepositReturnFeatureBlock{
-				Amount: 1337,
-			},
-			target: &iotago.DustDepositReturnFeatureBlock{},
-		},
-		{
-			name: "ok - TimelockMilestoneIndexFeatureBlock",
-			source: &iotago.TimelockMilestoneIndexFeatureBlock{
-				MilestoneIndex: 100,
-			},
-			target: &iotago.TimelockMilestoneIndexFeatureBlock{},
-		},
-		{
-			name: "ok - TimelockUnixFeatureBlock",
-			source: &iotago.TimelockUnixFeatureBlock{
-				UnixTime: 1000,
-			},
-			target: &iotago.TimelockUnixFeatureBlock{},
-		},
-		{
-			name: "ok - ExpirationMilestoneIndexFeatureBlock",
-			source: &iotago.ExpirationMilestoneIndexFeatureBlock{
-				MilestoneIndex: 100,
-			},
-			target: &iotago.ExpirationMilestoneIndexFeatureBlock{},
-		},
-		{
-			name: "ok - ExpirationUnixFeatureBlock",
-			source: &iotago.ExpirationUnixFeatureBlock{
-				UnixTime: 1000,
-			},
-			target: &iotago.ExpirationUnixFeatureBlock{},
-		},
-		{
 			name: "ok - MetadataFeatureBlock",
 			source: &iotago.MetadataFeatureBlock{
 				Data: []byte("hello world"),
@@ -62,11 +27,11 @@ func TestFeatureBlocksDeSerialize(t *testing.T) {
 			target: &iotago.MetadataFeatureBlock{},
 		},
 		{
-			name: "ok - IndexationFeatureBlock",
-			source: &iotago.IndexationFeatureBlock{
+			name: "ok - TagFeatureBlock",
+			source: &iotago.TagFeatureBlock{
 				Tag: []byte("hello world"),
 			},
-			target: &iotago.IndexationFeatureBlock{},
+			target: &iotago.TagFeatureBlock{},
 		},
 	}
 

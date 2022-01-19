@@ -4,7 +4,7 @@ Official Go library.
 
 This library allows you to do the following:
 
-- Create messages with indexation and transaction payloads
+- Create messages with tagged data and transaction payloads
 - Get messages and outputs
 - Sign transactions
 - Generate addresses
