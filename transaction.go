@@ -554,7 +554,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 				continue
 			}
 
-			if !unlockCondSet.HasExpirationConditions() {
+			if !unlockCondSet.HasExpirationCondition() {
 				continue
 			}
 
