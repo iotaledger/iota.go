@@ -364,7 +364,7 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 		return nil, fmt.Errorf("unable to decode inner transaction essence payload: %w", err)
 	}
 
-	if _, isIndexationPayload := unsigTx.Payload.(*TaggedData); !isIndexationPayload {
+	if _, isTaggedDataPayload := unsigTx.Payload.(*TaggedData); !isTaggedDataPayload {
 		return nil, fmt.Errorf("%w: transaction essences only allow embedded tagged data payloads but got type %T instead", ErrInvalidJSON, unsigTx.Payload)
 	}
 
