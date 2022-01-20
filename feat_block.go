@@ -59,13 +59,13 @@ func (f FeatureBlocks) Clone() FeatureBlocks {
 func (f FeatureBlocks) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	fSet, _ := f.Set()
 	_, hasSender := fSet[FeatureBlockSender]
-	_, hasIndexation := fSet[FeatureBlockTag]
+	_, hasTaggedData := fSet[FeatureBlockTag]
 
 	var sumCost uint64
 	for _, featBlock := range f {
 		switch specFeatBlock := featBlock.(type) {
 		case *SenderFeatureBlock:
-			if hasIndexation {
+			if hasTaggedData {
 				sumCost += specFeatBlock.VByteCost(costStruct, func(costStruct *RentStructure) uint64 {
 					return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) +
 						(specFeatBlock.Address.VByteCost(costStruct, nil) * 2)
@@ -180,7 +180,7 @@ func (f FeatureBlocksSet) MetadataFeatureBlock() *MetadataFeatureBlock {
 }
 
 // TagFeatureBlock returns the TagFeatureBlock in the set or nil.
-func (f FeatureBlocksSet) IndexationFeatureBlock() *TagFeatureBlock {
+func (f FeatureBlocksSet) TagFeatureBlock() *TagFeatureBlock {
 	b, has := f[FeatureBlockTag]
 	if !has {
 		return nil
