@@ -219,6 +219,10 @@ func (n *NFTOutput) NativeTokenSet() NativeTokens {
 	return n.NativeTokens
 }
 
+func (n *NFTOutput) UnlockConditions() UnlockConditions {
+	return n.Conditions
+}
+
 func (n *NFTOutput) FeatureBlocks() FeatureBlocks {
 	return n.Blocks
 }
