@@ -111,9 +111,19 @@ func (f UnlockConditions) MustSet() UnlockConditionsSet {
 // UnlockConditionsSet is a set of UnlockCondition(s).
 type UnlockConditionsSet map[UnlockConditionType]UnlockCondition
 
-// HasExpirationConditions tells whether this set has any conditions putting an expiration.
-func (f UnlockConditionsSet) HasExpirationConditions() bool {
+// HasDustDepositReturnCondition tells whether this set has a DustDepositReturnUnlockCondition.
+func (f UnlockConditionsSet) HasDustDepositReturnCondition() bool {
+	return f.DustDepositReturn() != nil
+}
+
+// HasExpirationCondition tells whether this set has an ExpirationUnlockCondition.
+func (f UnlockConditionsSet) HasExpirationCondition() bool {
 	return f.Expiration() != nil
+}
+
+// HasTimelockCondition tells whether this set has a TimelockUnlockCondition.
+func (f UnlockConditionsSet) HasTimelockCondition() bool {
+	return f.Timelock() != nil
 }
 
 // tells whether the given ident can unlock an output containing this set of UnlockCondition(s)
