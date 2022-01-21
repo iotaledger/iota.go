@@ -52,80 +52,80 @@ const (
 
 	// NodeAPIRouteInfo is the route for getting the node info.
 	// GET returns the node info.
-	NodeAPIRouteInfo = "/api/v1/info"
+	NodeAPIRouteInfo = "/api/v2/info"
 
 	// NodeAPIRouteTips is the route for getting two tips.
 	// GET returns the tips.
-	NodeAPIRouteTips = "/api/v1/tips"
+	NodeAPIRouteTips = "/api/v2/tips"
 
 	// NodeAPIRouteMessageMetadata is the route for getting message metadata by its messageID.
 	// GET returns message metadata (including info about "promotion/reattachment needed").
-	NodeAPIRouteMessageMetadata = "/api/v1/messages/%s/metadata"
+	NodeAPIRouteMessageMetadata = "/api/v2/messages/%s/metadata"
 
 	// NodeAPIRouteMessageBytes is the route for getting message raw data by its messageID.
 	// GET returns raw message data (bytes).
-	NodeAPIRouteMessageBytes = "/api/v1/messages/%s/raw"
+	NodeAPIRouteMessageBytes = "/api/v2/messages/%s/raw"
 
 	// NodeAPIRouteMessageChildren is the route for getting message IDs of the children of a message, identified by its messageID.
 	// GET returns the message IDs of all children.
-	NodeAPIRouteMessageChildren = "/api/v1/messages/%s/children"
+	NodeAPIRouteMessageChildren = "/api/v2/messages/%s/children"
 
 	// NodeAPIRouteMessages is the route for getting message IDs or creating new messages.
 	// GET with query parameter (mandatory) returns all message IDs that fit these filter criteria (query parameters: "index").
 	// POST creates a single new message and returns the new message ID.
-	NodeAPIRouteMessages = "/api/v1/messages"
+	NodeAPIRouteMessages = "/api/v2/messages"
 
 	// NodeAPIRouteMilestone is the route for getting a milestone by its milestoneIndex.
 	// GET returns the milestone.
-	NodeAPIRouteMilestone = "/api/v1/milestones/%s"
+	NodeAPIRouteMilestone = "/api/v2/milestones/%s"
 
 	// NodeAPIRouteMilestoneUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	NodeAPIRouteMilestoneUTXOChanges = "/api/v1/milestones/%s/utxo-changes"
+	NodeAPIRouteMilestoneUTXOChanges = "/api/v2/milestones/%s/utxo-changes"
 
 	// NodeAPIRouteOutput is the route for getting outputs by their outputID (transactionHash + outputIndex).
 	// GET returns the output.
-	NodeAPIRouteOutput = "/api/v1/outputs/%s"
+	NodeAPIRouteOutput = "/api/v2/outputs/%s"
 
 	// NodeAPIRouteAddressBech32Balance is the route for getting the total balance of all unspent outputs of a Bech32 address.
 	// GET returns the balance of all unspent outputs of this address.
-	NodeAPIRouteAddressBech32Balance = "/api/v1/addresses/%s"
+	NodeAPIRouteAddressBech32Balance = "/api/v2/addresses/%s"
 
 	// NodeAPIRouteAddressEd25519Balance is the route for getting the total balance of all unspent outputs of an ed25519 address.
 	// The ed25519 address must be encoded in hex.
 	// GET returns the balance of all unspent outputs of this address.
-	NodeAPIRouteAddressEd25519Balance = "/api/v1/addresses/ed25519/%s"
+	NodeAPIRouteAddressEd25519Balance = "/api/v2/addresses/ed25519/%s"
 
 	// NodeAPIRouteAddressBech32Outputs is the route for getting all output IDs for a Bech32 address.
 	// GET returns the outputIDs for all outputs of this address (optional query parameters: "include-spent").
-	NodeAPIRouteAddressBech32Outputs = "/api/v1/addresses/%s/outputs"
+	NodeAPIRouteAddressBech32Outputs = "/api/v2/addresses/%s/outputs"
 
 	// NodeAPIRouteAddressEd25519Outputs is the route for getting all output IDs for an ed25519 address.
 	// The ed25519 address must be encoded in hex.
 	// GET returns the outputIDs for all outputs of this address (optional query parameters: "include-spent").
-	NodeAPIRouteAddressEd25519Outputs = "/api/v1/addresses/ed25519/%s/outputs"
+	NodeAPIRouteAddressEd25519Outputs = "/api/v2/addresses/ed25519/%s/outputs"
 
 	// NodeAPIRouteTreasury is the route for getting the current treasury.
 	// GET returns the treasury.
-	NodeAPIRouteTreasury = "/api/v1/treasury"
+	NodeAPIRouteTreasury = "/api/v2/treasury"
 
 	// NodeAPIRouteReceipts is the route for getting all persisted receipts on a node.
 	// GET returns the receipts.
-	NodeAPIRouteReceipts = "/api/v1/receipts"
+	NodeAPIRouteReceipts = "/api/v2/receipts"
 
 	// NodeAPIRouteReceiptsByMigratedAtIndex is the route for getting all persisted receipts for a given migrated at index on a node.
 	// GET returns the receipts for the given migrated at index.
-	NodeAPIRouteReceiptsByMigratedAtIndex = "/api/v1/receipts/%s"
+	NodeAPIRouteReceiptsByMigratedAtIndex = "/api/v2/receipts/%s"
 
 	// NodeAPIRoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
-	NodeAPIRoutePeer = "/api/v1/peers/%s"
+	NodeAPIRoutePeer = "/api/v2/peers/%s"
 
 	// NodeAPIRoutePeers is the route for getting all peers of the node.
 	// GET returns a list of all peers.
 	// POST adds a new peer.
-	NodeAPIRoutePeers = "/api/v1/peers"
+	NodeAPIRoutePeers = "/api/v2/peers"
 )
 
 // the default options applied to the NodeHTTPAPIClient.
@@ -360,6 +360,8 @@ type NodeInfoResponse struct {
 	PruningIndex uint32 `json:"pruningIndex"`
 	// The features this node exposes.
 	Features []string `json:"features"`
+	// The plugins this node exposes.
+	Plugins []string `json:"plugins"`
 }
 
 // Info gets the info of the node.
