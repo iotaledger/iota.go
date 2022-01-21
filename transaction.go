@@ -180,7 +180,7 @@ func (t *Transaction) UnmarshalJSON(bytes []byte) error {
 func txDeSeriValidation(tx *Transaction, deSeriCtx interface{}) serializer.ErrProducerWithRWBytes {
 	return func(readBytes []byte, err error) error {
 		deSeriParas, ok := deSeriCtx.(*DeSerializationParameters)
-		if !ok {
+		if !ok || deSeriParas == nil {
 			return fmt.Errorf("unable to validate transaction: %w", ErrMissingDeSerializationParas)
 		}
 		return tx.syntacticallyValidate(readBytes, deSeriParas.RentStructure)
