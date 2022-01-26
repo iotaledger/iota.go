@@ -40,7 +40,7 @@ func (u *TaggedData) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 		CheckTypePrefix(uint32(PayloadTaggedData), serializer.TypeDenotationUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize tagged data: %w", err)
 		}).
-		ReadVariableByteSlice(&u.Tag, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
+		ReadVariableByteSlice(&u.Tag, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize tagged data tag: %w", err)
 		}, TaggedPayloadTagMaxLength).
 		WithValidation(deSeriMode, func(_ []byte, err error) error {
@@ -75,7 +75,7 @@ func (u *TaggedData) Serialize(deSeriMode serializer.DeSerializationMode, deSeri
 		WriteNum(PayloadTaggedData, func(err error) error {
 			return fmt.Errorf("unable to serialize tagged data payload ID: %w", err)
 		}).
-		WriteVariableByteSlice(u.Tag, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
+		WriteVariableByteSlice(u.Tag, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to serialize tagged data tag: %w", err)
 		}).
 		WriteVariableByteSlice(u.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
