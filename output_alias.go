@@ -40,7 +40,7 @@ var (
 				case uint32(UnlockConditionStateControllerAddress):
 				case uint32(UnlockConditionGovernorAddress):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionTypeToString(UnlockConditionType(ty)))
+					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
 				}
 				return UnlockConditionSelector(ty)
 			},
@@ -69,7 +69,7 @@ var (
 				case uint32(FeatureBlockIssuer):
 				case uint32(FeatureBlockMetadata):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
+					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
 				}
 				return FeatureBlockSelector(ty)
 			},
@@ -294,7 +294,7 @@ func (a *AliasOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 	}
 	otherAliasOutput, isAliasOutput := nextState.(*AliasOutput)
 	if !isAliasOutput {
-		return nil, fmt.Errorf("%w: expected AliasOutput but got %s for ident computation", ErrTransDepIdentOutputNextInvalid, OutputTypeToString(nextState.Type()))
+		return nil, fmt.Errorf("%w: expected AliasOutput but got %s for ident computation", ErrTransDepIdentOutputNextInvalid, nextState.Type())
 	}
 	switch {
 	case a.StateIndex == otherAliasOutput.StateIndex:

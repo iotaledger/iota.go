@@ -56,7 +56,7 @@ func (nftAddr *NFTAddress) VByteCost(costStruct *RentStructure, _ VByteCostFunc)
 }
 
 func (nftAddr *NFTAddress) Key() string {
-	return string(append([]byte{AddressNFT}, (*nftAddr)[:]...))
+	return string(append([]byte{byte(AddressNFT)}, (*nftAddr)[:]...))
 }
 
 func (nftAddr *NFTAddress) Chain() ChainID {
@@ -92,7 +92,7 @@ func (nftAddr *NFTAddress) Deserialize(data []byte, deSeriMode serializer.DeSeri
 		if err := serializer.CheckMinByteLength(NFTAddressSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid nft address bytes: %w", err)
 		}
-		if err := serializer.CheckTypeByte(data, AddressNFT); err != nil {
+		if err := serializer.CheckTypeByte(data, byte(AddressNFT)); err != nil {
 			return 0, fmt.Errorf("unable to deserialize nft address: %w", err)
 		}
 	}
@@ -102,7 +102,7 @@ func (nftAddr *NFTAddress) Deserialize(data []byte, deSeriMode serializer.DeSeri
 
 func (nftAddr *NFTAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	var b [NFTAddressSerializedBytesSize]byte
-	b[0] = AddressNFT
+	b[0] = byte(AddressNFT)
 	copy(b[serializer.SmallTypeDenotationByteSize:], nftAddr[:])
 	return b[:], nil
 }
@@ -110,7 +110,7 @@ func (nftAddr *NFTAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx
 func (nftAddr *NFTAddress) MarshalJSON() ([]byte, error) {
 	jNFTAddress := &jsonNFTAddress{}
 	jNFTAddress.Address = hex.EncodeToString(nftAddr[:])
-	jNFTAddress.Type = AddressNFT
+	jNFTAddress.Type = int(AddressNFT)
 	return json.Marshal(jNFTAddress)
 }
 

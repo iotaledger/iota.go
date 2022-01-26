@@ -22,6 +22,22 @@ const (
 	UnlockBlockNFT
 )
 
+func (unlockBlockType UnlockBlockType) String() string {
+	if int(unlockBlockType) >= len(unlockBlockNames) {
+		return fmt.Sprintf("unknown unlock block type: %d", unlockBlockType)
+	}
+	return unlockBlockNames[unlockBlockType]
+}
+
+var (
+	unlockBlockNames = [UnlockBlockNFT + 1]string{
+		"SignatureUnlockBlock",
+		"ReferenceUnlockBlock",
+		"AliasUnlockBlock",
+		"NFTUnlockBlock",
+	}
+)
+
 var (
 	// ErrSigUnlockBlocksNotUnique gets returned if unlock blocks making part of a transaction aren't unique.
 	ErrSigUnlockBlocksNotUnique = errors.New("signature unlock blocks must be unique")
@@ -49,22 +65,6 @@ func UnlockBlockSelector(unlockBlockType uint32) (serializer.Serializable, error
 		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownUnlockBlockType, unlockBlockType)
 	}
 	return seri, nil
-}
-
-// UnlockBlockTypeToString returns a name for the given UnlockBlock type.
-func UnlockBlockTypeToString(ty UnlockBlockType) string {
-	switch ty {
-	case UnlockBlockSignature:
-		return "SignatureUnlockBlock"
-	case UnlockBlockReference:
-		return "ReferenceUnlockBlock"
-	case UnlockBlockAlias:
-		return "AliasUnlockBlock"
-	case UnlockBlockNFT:
-		return "NFTUnlockBlock"
-	default:
-		return ""
-	}
 }
 
 type UnlockBlocks []UnlockBlock

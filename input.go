@@ -17,6 +17,17 @@ const (
 	InputTreasury
 )
 
+func (inputType InputType) String() string {
+	if int(inputType) >= len(inputNames) {
+		return fmt.Sprintf("unknown input type: %d", inputType)
+	}
+	return inputNames[inputType]
+}
+
+var (
+	inputNames = [InputTreasury + 1]string{"UTXOInput", "TreasuryInput"}
+)
+
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
 	ErrRefUTXOIndexInvalid = fmt.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
@@ -59,18 +70,6 @@ type IndexedUTXOReferencer interface {
 	Ref() OutputID
 	// Index returns the output index of the UTXO this Input references.
 	Index() uint16
-}
-
-// InputTypeToString returns the name of an Input given the type.
-func InputTypeToString(ty InputType) string {
-	switch ty {
-	case InputUTXO:
-		return "UTXOInput"
-	case InputTreasury:
-		return "TreasuryInput"
-	default:
-		return "unknown input"
-	}
 }
 
 // InputSelector implements SerializableSelectorFunc for input types.

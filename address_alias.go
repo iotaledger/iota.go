@@ -57,7 +57,7 @@ func (aliasAddr *AliasAddress) VByteCost(costStruct *RentStructure, _ VByteCostF
 }
 
 func (aliasAddr *AliasAddress) Key() string {
-	return string(append([]byte{AddressAlias}, (*aliasAddr)[:]...))
+	return string(append([]byte{byte(AddressAlias)}, (*aliasAddr)[:]...))
 }
 
 func (aliasAddr *AliasAddress) Chain() ChainID {
@@ -93,7 +93,7 @@ func (aliasAddr *AliasAddress) Deserialize(data []byte, deSeriMode serializer.De
 		if err := serializer.CheckMinByteLength(AliasAddressSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid alias address bytes: %w", err)
 		}
-		if err := serializer.CheckTypeByte(data, AddressAlias); err != nil {
+		if err := serializer.CheckTypeByte(data, byte(AddressAlias)); err != nil {
 			return 0, fmt.Errorf("unable to deserialize alias address: %w", err)
 		}
 	}
@@ -103,7 +103,7 @@ func (aliasAddr *AliasAddress) Deserialize(data []byte, deSeriMode serializer.De
 
 func (aliasAddr *AliasAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	var b [AliasAddressSerializedBytesSize]byte
-	b[0] = AddressAlias
+	b[0] = byte(AddressAlias)
 	copy(b[serializer.SmallTypeDenotationByteSize:], aliasAddr[:])
 	return b[:], nil
 }
@@ -111,7 +111,7 @@ func (aliasAddr *AliasAddress) Serialize(_ serializer.DeSerializationMode, deSer
 func (aliasAddr *AliasAddress) MarshalJSON() ([]byte, error) {
 	jAliasAddress := &jsonAliasAddress{}
 	jAliasAddress.Address = hex.EncodeToString(aliasAddr[:])
-	jAliasAddress.Type = AddressAlias
+	jAliasAddress.Type = int(AddressAlias)
 	return json.Marshal(jAliasAddress)
 }
 

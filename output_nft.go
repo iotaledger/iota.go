@@ -37,7 +37,7 @@ var (
 				case uint32(UnlockConditionTimelock):
 				case uint32(UnlockConditionExpiration):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize NFT output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionTypeToString(UnlockConditionType(ty)))
+					return nil, fmt.Errorf("%w: unable to deserialize NFT output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
 				}
 				return UnlockConditionSelector(ty)
 			},
@@ -69,7 +69,7 @@ var (
 				case uint32(FeatureBlockMetadata):
 				case uint32(FeatureBlockTag):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize nft output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
+					return nil, fmt.Errorf("%w: unable to deserialize nft output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
 				}
 				return FeatureBlockSelector(ty)
 			},

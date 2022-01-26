@@ -10,16 +10,23 @@ import (
 )
 
 // AddressType defines the type of addresses.
-type AddressType = byte
+type AddressType byte
 
 const (
 	// AddressEd25519 denotes an Ed25519 address.
-	AddressEd25519 = 0
+	AddressEd25519 AddressType = 0
 	// AddressAlias denotes an Alias address.
-	AddressAlias = 8
+	AddressAlias AddressType = 8
 	// AddressNFT denotes an NFT address.
-	AddressNFT = 16
+	AddressNFT AddressType = 16
 )
+
+func (addrType AddressType) String() string {
+	if int(addrType) >= len(addressNames) {
+		return fmt.Sprintf("unknown address type: %d", addrType)
+	}
+	return addressNames[addrType]
+}
 
 // AddressTypeSet is a set of AddressType.
 type AddressTypeSet map[AddressType]struct{}
@@ -27,7 +34,11 @@ type AddressTypeSet map[AddressType]struct{}
 var (
 	// ErrTypeIsNotSupportedAddress gets returned when a serializable was found to not be a supported Address.
 	ErrTypeIsNotSupportedAddress = errors.New("serializable is not a supported address")
-
+	addressNames                 = [AddressNFT + 1]string{
+		"Ed25519Address", "", "", "", "", "", "", "",
+		"AliasAddress", "", "", "", "", "", "", "",
+		"NFTAddress",
+	}
 	allAddressTypeSet = AddressTypeSet{
 		AddressEd25519: struct{}{},
 		AddressAlias:   struct{}{},
@@ -103,22 +114,8 @@ func AddressSelector(addressType uint32) (Address, error) {
 	return newAddress(byte(addressType))
 }
 
-// AddressTypeToString returns the name for the given AddressType.
-func AddressTypeToString(ty AddressType) string {
-	switch ty {
-	case AddressEd25519:
-		return "Ed25519Address"
-	case AddressAlias:
-		return "AliasAddress"
-	case AddressNFT:
-		return "NFTAddress"
-	default:
-		return "unknown address typ"
-	}
-}
-
 func newAddress(addressType byte) (address Address, err error) {
-	switch addressType {
+	switch AddressType(addressType) {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
 	case AddressAlias:
@@ -159,7 +156,7 @@ func addrWriteGuard(supportedAddr AddressTypeSet) serializer.SerializableWriteGu
 
 func addrReadGuard(supportedAddr AddressTypeSet) serializer.SerializableReadGuardFunc {
 	return func(ty uint32) (serializer.Serializable, error) {
-		if _, supported := supportedAddr[byte(ty)]; !supported {
+		if _, supported := supportedAddr[AddressType(ty)]; !supported {
 			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedAddress, supportedAddr, ty)
 		}
 		return AddressSelector(ty)
@@ -191,7 +188,7 @@ func addressToJSONRawMsg(addr serializer.Serializable) (*json.RawMessage, error)
 // selects the json object for the given type.
 func jsonAddressSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
-	switch byte(ty) {
+	switch AddressType(ty) {
 	case AddressEd25519:
 		obj = &jsonEd25519Address{}
 	case AddressAlias:

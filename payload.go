@@ -24,6 +24,24 @@ const (
 	PayloadTaggedData PayloadType = 5
 )
 
+func (payloadType PayloadType) String() string {
+	if int(payloadType) >= len(payloadNames) {
+		return fmt.Sprintf("unknown payload type: %d", payloadType)
+	}
+	return payloadNames[payloadType]
+}
+
+var (
+	payloadNames = [PayloadTaggedData + 1]string{
+		"Transaction",
+		"Milestone",
+		"Receipt",
+		"TreasuryTransaction",
+		"Deprecated-Indexation",
+		"TaggedData",
+	}
+)
+
 var (
 	// ErrTypeIsNotSupportedPayload gets returned when a serializable was found to not be a supported Payload.
 	ErrTypeIsNotSupportedPayload = errors.New("serializable is not a supported payload")
@@ -35,24 +53,6 @@ type Payload interface {
 
 	// PayloadType returns the type of the payload.
 	PayloadType() PayloadType
-}
-
-// PayloadTypeToString returns the name of a Payload given the type.
-func PayloadTypeToString(ty PayloadType) string {
-	switch ty {
-	case PayloadTransaction:
-		return "Transaction"
-	case PayloadMilestone:
-		return "Milestone"
-	case PayloadTaggedData:
-		return "TaggedData"
-	case PayloadReceipt:
-		return "Receipt"
-	case PayloadTreasuryTransaction:
-		return "TreasuryTransaction"
-	default:
-		return "unknown payload"
-	}
 }
 
 // PayloadSelector implements SerializableSelectorFunc for payload types.

@@ -18,19 +18,18 @@ const (
 	SignatureEd25519 SignatureType = iota
 )
 
+func (sigType SignatureType) String() string {
+	if int(sigType) >= len(sigNames) {
+		return fmt.Sprintf("unknown signature type: %d", sigType)
+	}
+	return sigNames[sigType]
+}
+
 var (
+	sigNames = [SignatureEd25519 + 1]string{"Ed25519Signature"}
 	// ErrTypeIsNotSupportedSignature gets returned when a serializable was found to not be a supported Signature.
 	ErrTypeIsNotSupportedSignature = errors.New("serializable is not a supported signature")
 )
-
-// SignatureTypeToString returns the name of a Signature given the type.
-func SignatureTypeToString(ty SignatureType) string {
-	switch ty {
-	case SignatureEd25519:
-		return "Ed25519Signature"
-	}
-	return "unknown signature"
-}
 
 // Signature is a signature.
 type Signature interface {
