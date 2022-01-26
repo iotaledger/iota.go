@@ -480,7 +480,7 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 		switch uBlock := unlockBlock.(type) {
 		case ReferentialUnlockBlock:
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
-				return fmt.Errorf("%w: input %d has none chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, AddressTypeToString(owner.Type()), UnlockBlockTypeToString(unlockBlock.Type()))
+				return fmt.Errorf("%w: input %d has none chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, owner.Type(), unlockBlock.Type())
 			}
 
 			unlockedIndices, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[owner.Key()]

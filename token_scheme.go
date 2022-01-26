@@ -16,6 +16,19 @@ const (
 	TokenSchemeSimple TokenSchemeType = iota
 )
 
+func (tokenSchemeType TokenSchemeType) String() string {
+	if int(tokenSchemeType) >= len(tokenSchemeNames) {
+		return fmt.Sprintf("unknown token scheme type: %d", tokenSchemeType)
+	}
+	return tokenSchemeNames[tokenSchemeType]
+}
+
+var (
+	tokenSchemeNames = [TokenSchemeSimple + 1]string{
+		"SimpleTokenScheme",
+	}
+)
+
 var (
 	// ErrTypeIsNotSupportedTokenScheme gets returned when a serializable was found to not be a supported TokenScheme.
 	ErrTypeIsNotSupportedTokenScheme = errors.New("serializable is not an address")
@@ -31,16 +44,6 @@ type TokenScheme interface {
 
 	// Clone clones the TokenScheme.
 	Clone() TokenScheme
-}
-
-// TokenSchemeTypeToString returns a name for the given TokenScheme type.
-func TokenSchemeTypeToString(ty TokenSchemeType) string {
-	switch ty {
-	case TokenSchemeSimple:
-		return "SimpleTokenScheme"
-	default:
-		return "unknown token scheme"
-	}
 }
 
 // checks whether the given serializable is a TokenScheme.

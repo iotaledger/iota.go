@@ -108,9 +108,9 @@ func FeatureBlockUnchanged(featBlockType FeatureBlockType, inBlockSet FeatureBlo
 
 	switch {
 	case outHas && !inHas:
-		return fmt.Errorf("%w: %s in next state but not in previous", ErrInvalidFeatureBlockTransition, FeatureBlockTypeToString(featBlockType))
+		return fmt.Errorf("%w: %s in next state but not in previous", ErrInvalidFeatureBlockTransition, featBlockType)
 	case !outHas && inHas:
-		return fmt.Errorf("%w: %s in current state but not in next", ErrInvalidFeatureBlockTransition, FeatureBlockTypeToString(featBlockType))
+		return fmt.Errorf("%w: %s in current state but not in next", ErrInvalidFeatureBlockTransition, featBlockType)
 	}
 
 	// not in both sets
@@ -119,7 +119,7 @@ func FeatureBlockUnchanged(featBlockType FeatureBlockType, inBlockSet FeatureBlo
 	}
 
 	if !in.Equal(out) {
-		return fmt.Errorf("%w: %s changed, in %v / out %v", ErrInvalidFeatureBlockTransition, FeatureBlockTypeToString(featBlockType), in, out)
+		return fmt.Errorf("%w: %s changed, in %v / out %v", ErrInvalidFeatureBlockTransition, featBlockType, in, out)
 	}
 
 	return nil

@@ -53,13 +53,13 @@ func (edAddr *Ed25519Address) VByteCost(costStruct *RentStructure, _ VByteCostFu
 }
 
 func (edAddr *Ed25519Address) Key() string {
-	return string(append([]byte{AddressEd25519}, (*edAddr)[:]...))
+	return string(append([]byte{byte(AddressEd25519)}, (*edAddr)[:]...))
 }
 
 func (edAddr *Ed25519Address) Unlock(msg []byte, sig Signature) error {
 	edSig, isEdSig := sig.(*Ed25519Signature)
 	if !isEdSig {
-		return fmt.Errorf("%w: can not unlock Ed25519 address with signature of type %s", ErrSignatureAndAddrIncompatible, SignatureTypeToString(sig.Type()))
+		return fmt.Errorf("%w: can not unlock Ed25519 address with signature of type %s", ErrSignatureAndAddrIncompatible, sig.Type())
 	}
 	return edSig.Valid(msg, edAddr)
 }
@@ -89,7 +89,7 @@ func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode serializer.DeS
 		if err := serializer.CheckMinByteLength(Ed25519AddressSerializedBytesSize, len(data)); err != nil {
 			return 0, fmt.Errorf("invalid Ed25519 address bytes: %w", err)
 		}
-		if err := serializer.CheckTypeByte(data, AddressEd25519); err != nil {
+		if err := serializer.CheckTypeByte(data, byte(AddressEd25519)); err != nil {
 			return 0, fmt.Errorf("unable to deserialize Ed25519 address: %w", err)
 		}
 	}
@@ -99,7 +99,7 @@ func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode serializer.DeS
 
 func (edAddr *Ed25519Address) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	var b [Ed25519AddressSerializedBytesSize]byte
-	b[0] = AddressEd25519
+	b[0] = byte(AddressEd25519)
 	copy(b[serializer.SmallTypeDenotationByteSize:], edAddr[:])
 	return b[:], nil
 }
@@ -107,7 +107,7 @@ func (edAddr *Ed25519Address) Serialize(_ serializer.DeSerializationMode, deSeri
 func (edAddr *Ed25519Address) MarshalJSON() ([]byte, error) {
 	jEd25519Address := &jsonEd25519Address{}
 	jEd25519Address.Address = hex.EncodeToString(edAddr[:])
-	jEd25519Address.Type = AddressEd25519
+	jEd25519Address.Type = int(AddressEd25519)
 	return json.Marshal(jEd25519Address)
 }
 

@@ -133,22 +133,23 @@ const (
 	OutputNFT OutputType = 6
 )
 
-// OutputTypeToString returns the name of an Output given the type.
-func OutputTypeToString(ty OutputType) string {
-	switch ty {
-	case OutputExtended:
-		return "ExtendedOutput"
-	case OutputTreasury:
-		return "TreasuryOutput"
-	case OutputAlias:
-		return "AliasOutput"
-	case OutputFoundry:
-		return "FoundryOutput"
-	case OutputNFT:
-		return "NFTOutput"
+func (outputType OutputType) String() string {
+	if int(outputType) >= len(outputNames) {
+		return fmt.Sprintf("unknown output type: %d", outputType)
 	}
-	return "unknown output"
+	return outputNames[outputType]
 }
+
+var (
+	outputNames = [OutputNFT + 1]string{
+		"LegacyOutput",
+		"TreasuryOutput",
+		"ExtendedOutput",
+		"AliasOutput",
+		"FoundryOutput",
+		"NFTOutput",
+	}
+)
 
 var (
 	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.
@@ -198,7 +199,7 @@ func (o Outputs) ChainConstrainedOutputSet(txID TransactionID) ChainConstrainedO
 		}
 
 		if chainID.Empty() {
-			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", OutputTypeToString(output.Type())))
+			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", output.Type()))
 		}
 
 		set[chainID] = chainConstrainedOutput
@@ -416,7 +417,7 @@ func (outputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSe
 		}
 
 		if chainID.Empty() {
-			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", OutputTypeToString(output.Type())))
+			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", output.Type()))
 		}
 
 		set[chainID] = chainConstrainedOutput

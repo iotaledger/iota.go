@@ -37,6 +37,24 @@ const (
 	UnlockConditionGovernorAddress
 )
 
+func (unlockCondType UnlockConditionType) String() string {
+	if int(unlockCondType) >= len(unlockCondNames) {
+		return fmt.Sprintf("unknown unlock condition type: %d", unlockCondType)
+	}
+	return unlockCondNames[unlockCondType]
+}
+
+var (
+	unlockCondNames = [UnlockConditionGovernorAddress + 1]string{
+		"AddressUnlockCondition",
+		"DustDepositReturnUnlockCondition",
+		"TimelockUnlockCondition",
+		"ExpirationUnlockCondition",
+		"StateControllerAddressUnlockCondition",
+		"GovernorAddressUnlockCondition",
+	}
+)
+
 // UnlockCondition is an abstract building block defining the unlock conditions of an Output.
 type UnlockCondition interface {
 	serializer.Serializable
@@ -248,25 +266,6 @@ func (f UnlockConditionsSet) Expiration() *ExpirationUnlockCondition {
 		return nil
 	}
 	return b.(*ExpirationUnlockCondition)
-}
-
-// UnlockConditionTypeToString returns the name of an UnlockCondition given the type.
-func UnlockConditionTypeToString(ty UnlockConditionType) string {
-	switch ty {
-	case UnlockConditionAddress:
-		return "AddressUnlockCondition"
-	case UnlockConditionDustDepositReturn:
-		return "DustDepositReturnUnlockCondition"
-	case UnlockConditionTimelock:
-		return "TimelockUnlockCondition"
-	case UnlockConditionExpiration:
-		return "ExpirationUnlockCondition"
-	case UnlockConditionStateControllerAddress:
-		return "StateControllerAddressUnlockCondition"
-	case UnlockConditionGovernorAddress:
-		return "GovernorAddressUnlockCondition"
-	}
-	return "unknown unlock condition"
 }
 
 // UnlockConditionSelector implements SerializableSelectorFunc for unlock conditions.

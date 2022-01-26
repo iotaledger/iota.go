@@ -29,20 +29,18 @@ const (
 	FeatureBlockTag
 )
 
-// FeatureBlockTypeToString returns the name of a FeatureBlock given the type.
-func FeatureBlockTypeToString(ty FeatureBlockType) string {
-	switch ty {
-	case FeatureBlockSender:
-		return "SenderFeatureBlock"
-	case FeatureBlockIssuer:
-		return "IssuerFeatureBlock"
-	case FeatureBlockMetadata:
-		return "MetadataFeatureBlock"
-	case FeatureBlockTag:
-		return "TagFeatureBlock"
+func (featBlockType FeatureBlockType) String() string {
+	if int(featBlockType) >= len(featBlockNames) {
+		return fmt.Sprintf("unknown feature block type: %d", featBlockType)
 	}
-	return "unknown feature block"
+	return featBlockNames[featBlockType]
 }
+
+var (
+	featBlockNames = [FeatureBlockTag + 1]string{
+		"SenderFeatureBlock", "IssuerFeatureBlock", "MetadataFeatureBlock", "TagFeatureBlock",
+	}
+)
 
 // FeatureBlocks is a slice of FeatureBlock(s).
 type FeatureBlocks []FeatureBlock

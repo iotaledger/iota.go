@@ -34,7 +34,7 @@ var (
 				switch ty {
 				case uint32(UnlockConditionAddress):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionTypeToString(UnlockConditionType(ty)))
+					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
 				}
 				return UnlockConditionSelector(ty)
 			},
@@ -71,7 +71,7 @@ var (
 				switch ty {
 				case uint32(FeatureBlockMetadata):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockTypeToString(FeatureBlockType(ty)))
+					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
 				}
 				return FeatureBlockSelector(ty)
 			},
