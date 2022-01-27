@@ -820,8 +820,8 @@ func ValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalValidationFunc)
 	return nil
 }
 
-// jsonOutputSelector selects the json output implementation for the given type.
-func jsonOutputSelector(ty int) (JSONSerializable, error) {
+// JsonOutputSelector selects the json output implementation for the given type.
+func JsonOutputSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch OutputType(ty) {
 	case OutputExtended:

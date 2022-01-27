@@ -1,12 +1,13 @@
-package iotago_test
+package builder_test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/builder"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
-	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,10 +20,10 @@ func TestMessageBuilder(t *testing.T) {
 		Tag:  []byte("hello world"),
 		Data: []byte{1, 2, 3, 4},
 	}
-	msg, err := iotago.NewMessageBuilder().
+	msg, err := builder.NewMessageBuilder().
 		Payload(taggedDataPayload).
 		ParentsMessageIDs(parents).
-		ProofOfWork(context.Background(), DefZeroRentParas, targetPoWScore).
+		ProofOfWork(context.Background(), iotago.ZeroRentParas, targetPoWScore).
 		Build()
 	require.NoError(t, err)
 

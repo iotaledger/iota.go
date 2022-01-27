@@ -1,4 +1,4 @@
-package iotago
+package builder
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/nodeclient"
 )
 
 var (
@@ -19,28 +21,28 @@ var (
 // NewTransactionBuilder creates a new TransactionBuilder.
 func NewTransactionBuilder() *TransactionBuilder {
 	return &TransactionBuilder{
-		essence: &TransactionEssence{
-			Inputs:  Inputs{},
-			Outputs: Outputs{},
+		essence: &iotago.TransactionEssence{
+			Inputs:  iotago.Inputs{},
+			Outputs: iotago.Outputs{},
 			Payload: nil,
 		},
-		inputToAddr: map[OutputID]Address{},
+		inputToAddr: map[iotago.OutputID]iotago.Address{},
 	}
 }
 
 // TransactionBuilder is used to easily build up a Transaction.
 type TransactionBuilder struct {
 	occurredBuildErr error
-	essence          *TransactionEssence
-	inputToAddr      map[OutputID]Address
+	essence          *iotago.TransactionEssence
+	inputToAddr      map[iotago.OutputID]iotago.Address
 }
 
 // ToBeSignedUTXOInput defines a UTXO input which needs to be signed.
 type ToBeSignedUTXOInput struct {
 	// The address to which this input belongs to.
-	Address Address `json:"address"`
+	Address iotago.Address `json:"address"`
 	// The actual UTXO input.
-	Input *UTXOInput `json:"input"`
+	Input *iotago.UTXOInput `json:"input"`
 }
 
 // AddInput adds the given input to the builder.
@@ -53,19 +55,19 @@ func (b *TransactionBuilder) AddInput(input *ToBeSignedUTXOInput) *TransactionBu
 // TransactionBuilderInputFilter is a filter function which determines whether
 // an input should be used or not. (returning true = pass). The filter can also
 // be used to accumulate data over the set of inputs, i.e. the input sum etc.
-type TransactionBuilderInputFilter func(outputID OutputID, input Output) bool
+type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.Output) bool
 
 // AddInputsViaNodeQuery adds any unspent outputs by the given address as an input to the built transaction
 // if it passes the filter function. It is the caller's job to ensure that the limit of returned outputs on the queried
 // node is enough high for the application's purpose. filter can be nil.
-func (b *TransactionBuilder) AddInputsViaNodeQuery(ctx context.Context, addr Address, nodeHTTPAPIClient *NodeHTTPAPIClient, filter TransactionBuilderInputFilter) *TransactionBuilder {
+func (b *TransactionBuilder) AddInputsViaNodeQuery(ctx context.Context, addr iotago.Address, nodeHTTPAPIClient *nodeclient.NodeHTTPAPIClient, filter TransactionBuilderInputFilter) *TransactionBuilder {
 	switch x := addr.(type) {
-	case *Ed25519Address:
+	case *iotago.Ed25519Address:
 	default:
 		b.occurredBuildErr = fmt.Errorf("%w: auto. inputs via node query only supports Ed25519Address but got %T", ErrTransactionBuilderUnsupportedAddress, x)
 	}
 
-	_, unspentOutputs, err := nodeHTTPAPIClient.OutputsByEd25519Address(ctx, addr.(*Ed25519Address), false)
+	_, unspentOutputs, err := nodeHTTPAPIClient.OutputsByEd25519Address(ctx, addr.(*iotago.Ed25519Address), false)
 	if err != nil {
 		b.occurredBuildErr = err
 		return b
@@ -83,23 +85,23 @@ func (b *TransactionBuilder) AddInputsViaNodeQuery(ctx context.Context, addr Add
 }
 
 // AddOutput adds the given output to the builder.
-func (b *TransactionBuilder) AddOutput(output Output) *TransactionBuilder {
+func (b *TransactionBuilder) AddOutput(output iotago.Output) *TransactionBuilder {
 	b.essence.Outputs = append(b.essence.Outputs, output)
 	return b
 }
 
 // AddTaggedDataPayload adds the given TaggedData as the inner payload.
-func (b *TransactionBuilder) AddTaggedDataPayload(payload *TaggedData) *TransactionBuilder {
+func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *TransactionBuilder {
 	b.essence.Payload = payload
 	return b
 }
 
 // TransactionFunc is a function which receives a Transaction as its parameter.
-type TransactionFunc func(tx *Transaction)
+type TransactionFunc func(tx *iotago.Transaction)
 
 // BuildAndSwapToMessageBuilder builds the transaction and then swaps to a MessageBuilder with
 // the transaction set as its payload. txFunc can be nil.
-func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(deSeriParas *DeSerializationParameters, signer AddressSigner, txFunc TransactionFunc) *MessageBuilder {
+func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(deSeriParas *iotago.DeSerializationParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *MessageBuilder {
 	msgBuilder := NewMessageBuilder()
 	tx, err := b.Build(deSeriParas, signer)
 	if err != nil {
@@ -113,7 +115,7 @@ func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(deSeriParas *DeSeriali
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(deSeriParas *DeSerializationParameters, signer AddressSigner) (*Transaction, error) {
+func (b *TransactionBuilder) Build(deSeriParas *iotago.DeSerializationParameters, signer iotago.AddressSigner) (*iotago.Transaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
@@ -130,9 +132,9 @@ func (b *TransactionBuilder) Build(deSeriParas *DeSerializationParameters, signe
 	}
 
 	sigBlockPos := map[string]int{}
-	unlockBlocks := UnlockBlocks{}
+	unlockBlocks := iotago.UnlockBlocks{}
 	for i, input := range b.essence.Inputs {
-		addr := b.inputToAddr[input.(*UTXOInput).ID()]
+		addr := b.inputToAddr[input.(*iotago.UTXOInput).ID()]
 		addrStr := addr.(fmt.Stringer).String()
 
 		// check whether a previous signature unlock block
@@ -140,22 +142,22 @@ func (b *TransactionBuilder) Build(deSeriParas *DeSerializationParameters, signe
 		pos, alreadySigned := sigBlockPos[addrStr]
 		if alreadySigned {
 			// create a reference unlock block instead
-			unlockBlocks = append(unlockBlocks, &ReferenceUnlockBlock{Reference: uint16(pos)})
+			unlockBlocks = append(unlockBlocks, &iotago.ReferenceUnlockBlock{Reference: uint16(pos)})
 			continue
 		}
 
 		// create a new signature for the given address
-		var signature Signature
+		var signature iotago.Signature
 		signature, err = signer.Sign(addr, txEssenceData)
 		if err != nil {
 			return nil, err
 		}
 
-		unlockBlocks = append(unlockBlocks, &SignatureUnlockBlock{Signature: signature})
+		unlockBlocks = append(unlockBlocks, &iotago.SignatureUnlockBlock{Signature: signature})
 		sigBlockPos[addrStr] = i
 	}
 
-	sigTxPayload := &Transaction{Essence: b.essence, UnlockBlocks: unlockBlocks}
+	sigTxPayload := &iotago.Transaction{Essence: b.essence, UnlockBlocks: unlockBlocks}
 
 	if _, err := sigTxPayload.Serialize(serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
 		return nil, err

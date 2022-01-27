@@ -1,28 +1,30 @@
-package iotago
+package builder
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/nodeclient"
 	"github.com/iotaledger/iota.go/v3/pow"
 )
 
 // NewMessageBuilder creates a new MessageBuilder.
 func NewMessageBuilder() *MessageBuilder {
 	return &MessageBuilder{
-		msg: &Message{},
+		msg: &iotago.Message{},
 	}
 }
 
 // MessageBuilder is used to easily build up a Message.
 type MessageBuilder struct {
-	msg *Message
+	msg *iotago.Message
 	err error
 }
 
 // Build builds the Message or returns any error which occurred during the build steps.
-func (mb *MessageBuilder) Build() (*Message, error) {
+func (mb *MessageBuilder) Build() (*iotago.Message, error) {
 	if mb.err != nil {
 		return nil, mb.err
 	}
@@ -43,12 +45,12 @@ func (mb *MessageBuilder) NetworkIDFromString(networkIDStr string) *MessageBuild
 	if mb.err != nil {
 		return mb
 	}
-	mb.msg.NetworkID = NetworkIDFromString(networkIDStr)
+	mb.msg.NetworkID = iotago.NetworkIDFromString(networkIDStr)
 	return mb
 }
 
 // Payload sets the payload to embed within the message.
-func (mb *MessageBuilder) Payload(payload Payload) *MessageBuilder {
+func (mb *MessageBuilder) Payload(payload iotago.Payload) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
@@ -57,7 +59,7 @@ func (mb *MessageBuilder) Payload(payload Payload) *MessageBuilder {
 }
 
 // Tips uses the given NodeHTTPAPIClient to query for parents to use.
-func (mb *MessageBuilder) Tips(ctx context.Context, nodeAPI *NodeHTTPAPIClient) *MessageBuilder {
+func (mb *MessageBuilder) Tips(ctx context.Context, nodeAPI *nodeclient.NodeHTTPAPIClient) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
@@ -85,9 +87,9 @@ func (mb *MessageBuilder) Parents(parents [][]byte) *MessageBuilder {
 		return mb
 	}
 
-	pars := make(MessageIDs, len(parents))
+	pars := make(iotago.MessageIDs, len(parents))
 	for i, parentBytes := range parents {
-		parent := MessageID{}
+		parent := iotago.MessageID{}
 		copy(parent[:], parentBytes)
 		pars[i] = parent
 	}
@@ -96,7 +98,7 @@ func (mb *MessageBuilder) Parents(parents [][]byte) *MessageBuilder {
 }
 
 // ParentsMessageIDs sets the parents of the message.
-func (mb *MessageBuilder) ParentsMessageIDs(parents MessageIDs) *MessageBuilder {
+func (mb *MessageBuilder) ParentsMessageIDs(parents iotago.MessageIDs) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
@@ -108,7 +110,7 @@ func (mb *MessageBuilder) ParentsMessageIDs(parents MessageIDs) *MessageBuilder 
 // ProofOfWork does the proof-of-work needed in order to satisfy the given target score.
 // It can be cancelled by cancelling the given context. This function should appear
 // as the last step before Build.
-func (mb *MessageBuilder) ProofOfWork(ctx context.Context, deSeriPara *DeSerializationParameters, targetScore float64, numWorkers ...int) *MessageBuilder {
+func (mb *MessageBuilder) ProofOfWork(ctx context.Context, deSeriPara *iotago.DeSerializationParameters, targetScore float64, numWorkers ...int) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}

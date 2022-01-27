@@ -48,12 +48,12 @@ func TestReceiptFuzzingCrashers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.in), func(t *testing.T) {
 			m := &iotago.Receipt{}
-			_, err := m.Deserialize(tt.in, serializer.DeSeriModePerformValidation, DefZeroRentParas)
+			_, err := m.Deserialize(tt.in, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
 			if err != nil {
 				return
 			}
 
-			seriData, err := m.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
+			seriData, err := m.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
 			if err != nil {
 				return
 			}
@@ -83,7 +83,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             7_000_000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefZeroRentParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
 			return test{"ok", receipt, currentTreasury, nil}
 		}(),
 		func() test {
@@ -91,7 +91,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             1000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefZeroRentParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
 			return test{"err - migrated less tha minimum", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 		func() test {
@@ -99,7 +99,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             iotago.TokenSupply + 1,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefZeroRentParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
 			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 		func() test {
@@ -107,7 +107,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             6_000_000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(DefZeroRentParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
 			return test{"err - invalid new treasury amount", receipt, currentTreasury, iotago.ErrInvalidReceipt}
 		}(),
 	}

@@ -343,7 +343,7 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 	}
 
 	for i, jOutput := range j.Outputs {
-		jsonOutput, err := DeserializeObjectFromJSON(jOutput, jsonOutputSelector)
+		jsonOutput, err := DeserializeObjectFromJSON(jOutput, JsonOutputSelector)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode output type from JSON, pos %d: %w", i, err)
 		}

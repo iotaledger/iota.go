@@ -23,6 +23,58 @@ func TestTransactionDeSerialize(t *testing.T) {
 	}
 }
 
+func TestNFTTransition(t *testing.T) {
+	_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+
+	inputIDs := tpkg.RandOutputIDs(1)
+	inputs := iotago.OutputSet{
+		inputIDs[0]: &iotago.NFTOutput{
+			Amount:            OneMi,
+			NativeTokens:      nil,
+			NFTID:             iotago.NFTID{},
+			ImmutableMetadata: nil,
+			Conditions: iotago.UnlockConditions{
+				&iotago.AddressUnlockCondition{Address: ident1},
+			},
+			Blocks: nil,
+		},
+	}
+
+	nftAddr := iotago.NFTAddressFromOutputID(inputIDs[0])
+	nftID := nftAddr.NFTID()
+
+	essence := &iotago.TransactionEssence{
+		Inputs: inputIDs.UTXOInputs(),
+		Outputs: iotago.Outputs{
+			&iotago.NFTOutput{
+				Amount:            OneMi,
+				NativeTokens:      nil,
+				NFTID:             nftID,
+				ImmutableMetadata: nil,
+				Conditions: iotago.UnlockConditions{
+					&iotago.AddressUnlockCondition{Address: ident1},
+				},
+				Blocks: nil,
+			},
+		},
+	}
+
+	sigs, err := essence.Sign(ident1AddrKeys)
+	require.NoError(t, err)
+
+	tx := &iotago.Transaction{
+		Essence: essence,
+		UnlockBlocks: iotago.UnlockBlocks{
+			&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+		},
+	}
+
+	require.NoError(t, tx.SemanticallyValidate(&iotago.SemanticValidationContext{
+		ExtParas:   nil,
+		WorkingSet: nil,
+	}, inputs))
+}
+
 func TestCirculatingSupplyBurn(t *testing.T) {
 	_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 	aliasIdent1 := tpkg.RandAliasAddress()

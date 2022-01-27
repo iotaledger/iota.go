@@ -138,7 +138,10 @@ func AliasIDFromOutputID(outputID OutputID) AliasID {
 	// TODO: maybe use pkg with Sum160 exposed
 	blake2b160, _ := blake2b.New(20, nil)
 	var aliasID AliasID
-	copy(aliasID[:], blake2b160.Sum(outputID[:]))
+	if _, err := blake2b160.Write(outputID[:]); err != nil {
+		panic(err)
+	}
+	copy(aliasID[:], blake2b160.Sum(nil))
 	return aliasID
 }
 

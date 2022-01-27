@@ -132,7 +132,10 @@ func NFTAddressFromOutputID(outputID OutputID) NFTAddress {
 	// TODO: maybe use pkg with Sum160 exposed
 	blake2b160, _ := blake2b.New(20, nil)
 	var nftAddress NFTAddress
-	copy(nftAddress[:], blake2b160.Sum(outputID[:]))
+	if _, err := blake2b160.Write(outputID[:]); err != nil {
+		panic(err)
+	}
+	copy(nftAddress[:], blake2b160.Sum(nil))
 	return nftAddress
 }
 
