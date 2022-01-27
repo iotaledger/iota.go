@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	iotago "github.com/iotaledger/iota.go/v3"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
@@ -22,14 +23,6 @@ import (
 )
 
 const nodeAPIUrl = "http://127.0.0.1:14265"
-
-var (
-	iotago.ZeroRentParas = &iotago.DeSerializationParameters{RentStructure: &iotago.RentStructure{
-VByteCost:    0,
-VBFactorData: 0,
-VBFactorKey:  0,
-}}
-)
 
 func TestNodeAPI_Health(t *testing.T) {
 	defer gock.Off()
