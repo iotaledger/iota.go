@@ -1,4 +1,4 @@
-package iotago_test
+package builder_test
 
 import (
 	"crypto/ed25519"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/builder"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +20,7 @@ func TestTransactionBuilder(t *testing.T) {
 	type test struct {
 		name       string
 		addrSigner iotago.AddressSigner
-		builder    *iotago.TransactionBuilder
+		builder    *builder.TransactionBuilder
 		buildErr   error
 	}
 
@@ -27,8 +28,8 @@ func TestTransactionBuilder(t *testing.T) {
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			builder := iotago.NewTransactionBuilder().
-				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+			bdl := builder.NewTransactionBuilder().
+				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
 				AddOutput(&iotago.ExtendedOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
@@ -39,14 +40,14 @@ func TestTransactionBuilder(t *testing.T) {
 			return test{
 				name:       "ok - 1 input/output",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
-				builder:    builder,
+				builder:    bdl,
 			}
 		}(),
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			builder := iotago.NewTransactionBuilder().
-				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+			bdl := builder.NewTransactionBuilder().
+				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
 				AddOutput(&iotago.ExtendedOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
@@ -58,34 +59,34 @@ func TestTransactionBuilder(t *testing.T) {
 			return test{
 				name:       "ok - with tagged data payload",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
-				builder:    builder,
+				builder:    bdl,
 			}
 		}(),
 		func() test {
-			builder := iotago.NewTransactionBuilder()
+			bdl := builder.NewTransactionBuilder()
 			return test{
 				name:       "err - no inputs",
 				addrSigner: iotago.NewInMemoryAddressSigner(),
-				builder:    builder,
+				builder:    bdl,
 				buildErr:   serializer.ErrArrayValidationMinElementsNotReached,
 			}
 		}(),
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
-			builder := iotago.NewTransactionBuilder().
-				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1})
+			bdl := builder.NewTransactionBuilder().
+				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1})
 			return test{
 				name:       "err - no outputs",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
-				builder:    builder,
+				builder:    bdl,
 				buildErr:   serializer.ErrArrayValidationMinElementsNotReached,
 			}
 		}(),
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			builder := iotago.NewTransactionBuilder().
-				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+			bdl := builder.NewTransactionBuilder().
+				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
 				AddOutput(&iotago.ExtendedOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
@@ -101,15 +102,15 @@ func TestTransactionBuilder(t *testing.T) {
 			return test{
 				name:       "err - missing address keys",
 				addrSigner: iotago.NewInMemoryAddressSigner(wrongAddrKeys),
-				builder:    builder,
+				builder:    bdl,
 				buildErr:   iotago.ErrAddressKeysNotMapped,
 			}
 		}(),
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			builder := iotago.NewTransactionBuilder().
-				AddInput(&iotago.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
+			bdl := builder.NewTransactionBuilder().
+				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
 				AddOutput(&iotago.ExtendedOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
@@ -120,7 +121,7 @@ func TestTransactionBuilder(t *testing.T) {
 			return test{
 				name:       "err - missing address keys (no keys given at all)",
 				addrSigner: iotago.NewInMemoryAddressSigner(),
-				builder:    builder,
+				builder:    bdl,
 				buildErr:   iotago.ErrAddressKeysNotMapped,
 			}
 		}(),
@@ -128,7 +129,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := test.builder.Build(DefZeroRentParas, test.addrSigner)
+			_, err := test.builder.Build(iotago.ZeroRentParas, test.addrSigner)
 			if test.buildErr != nil {
 				assert.True(t, errors.Is(err, test.buildErr))
 				return

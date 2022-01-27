@@ -133,7 +133,10 @@ func AliasAddressFromOutputID(outputID OutputID) AliasAddress {
 	// TODO: maybe use pkg with Sum160 exposed
 	blake2b160, _ := blake2b.New(20, nil)
 	var aliasAddress AliasAddress
-	copy(aliasAddress[:], blake2b160.Sum(outputID[:]))
+	if _, err := blake2b160.Write(outputID[:]); err != nil {
+		panic(err)
+	}
+	copy(aliasAddress[:], blake2b160.Sum(nil))
 	return aliasAddress
 }
 

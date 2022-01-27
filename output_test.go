@@ -150,7 +150,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	}{
 		{
 			name:        "ok",
-			deSeriParas: DefZeroRentParas,
+			deSeriParas: iotago.ZeroRentParas,
 			outputs: iotago.Outputs{
 				&iotago.ExtendedOutput{
 					Amount:     iotago.TokenSupply,
@@ -243,7 +243,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - zero deposit",
-			deSeriParas: DefZeroRentParas,
+			deSeriParas: iotago.ZeroRentParas,
 			outputs: iotago.Outputs{
 				&iotago.ExtendedOutput{
 					Amount: 0,
@@ -256,7 +256,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - more than total supply on single output",
-			deSeriParas: DefZeroRentParas,
+			deSeriParas: iotago.ZeroRentParas,
 			outputs: iotago.Outputs{
 				&iotago.ExtendedOutput{
 					Amount: iotago.TokenSupply + 1,
@@ -269,7 +269,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - sum more than total supply over multiple outputs",
-			deSeriParas: DefZeroRentParas,
+			deSeriParas: iotago.ZeroRentParas,
 			outputs: iotago.Outputs{
 				&iotago.ExtendedOutput{
 					Amount: iotago.TokenSupply - 1,

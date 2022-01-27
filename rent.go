@@ -19,6 +19,14 @@ var (
 	// ErrVByteRentNotCovered gets returned when a NonEphemeralObject does not cover the state rent
 	// cost which are calculated from its virtual byte costs.
 	ErrVByteRentNotCovered = errors.New("virtual byte rent costs not covered")
+
+	// ZeroRentParas are test parameters for de/serialization using zero vbyte rent cost.
+	// Only use this var in testing. Do not modify.
+	ZeroRentParas = &DeSerializationParameters{RentStructure: &RentStructure{
+		VByteCost:    0,
+		VBFactorData: 0,
+		VBFactorKey:  0,
+	}}
 )
 
 // Multiply multiplies in with this factor.

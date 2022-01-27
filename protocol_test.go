@@ -13,15 +13,6 @@ const (
 	OneMi = 1_000_000
 )
 
-var (
-	// DefZeroRentParas are the default parameters for de/serialization using zero vbyte rent cost.
-	DefZeroRentParas = &iotago.DeSerializationParameters{RentStructure: &iotago.RentStructure{
-		VByteCost:    0,
-		VBFactorData: 0,
-		VBFactorKey:  0,
-	}}
-)
-
 type deSerializeTest struct {
 	name      string
 	source    serializer.Serializable
@@ -31,14 +22,14 @@ type deSerializeTest struct {
 }
 
 func (test *deSerializeTest) deSerialize(t *testing.T) {
-	data, err := test.source.Serialize(serializer.DeSeriModePerformValidation, DefZeroRentParas)
+	data, err := test.source.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
 	if test.seriErr != nil {
 		require.Error(t, err, test.seriErr)
 		return
 	}
 	assert.NoError(t, err)
 
-	bytesRead, err := test.target.Deserialize(data, serializer.DeSeriModePerformValidation, DefZeroRentParas)
+	bytesRead, err := test.target.Deserialize(data, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
 	if test.deSeriErr != nil {
 		require.Error(t, err, test.deSeriErr)
 		return

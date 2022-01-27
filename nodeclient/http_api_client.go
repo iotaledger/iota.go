@@ -1,4 +1,4 @@
-package iotago
+package nodeclient
 
 import (
 	"bytes"
@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 var (
@@ -167,7 +168,7 @@ func WithNodeHTTPAPIClientUserInfo(userInfo *url.Userinfo) NodeHTTPAPIClientOpti
 type NodeHTTPAPIClientOption func(opts *NodeHTTPAPIClientOptions)
 
 // NewNodeHTTPAPIClient returns a new NodeHTTPAPIClient with the given BaseURL.
-func NewNodeHTTPAPIClient(baseURL string, deSeriParas *DeSerializationParameters, opts ...NodeHTTPAPIClientOption) *NodeHTTPAPIClient {
+func NewNodeHTTPAPIClient(baseURL string, deSeriParas *iotago.DeSerializationParameters, opts ...NodeHTTPAPIClientOption) *NodeHTTPAPIClient {
 
 	options := &NodeHTTPAPIClientOptions{}
 	options.apply(defaultNodeAPIOptions...)
@@ -184,7 +185,7 @@ func NewNodeHTTPAPIClient(baseURL string, deSeriParas *DeSerializationParameters
 type NodeHTTPAPIClient struct {
 	// The base URL for all API calls.
 	BaseURL     string
-	deSeriParas *DeSerializationParameters
+	deSeriParas *iotago.DeSerializationParameters
 	// holds the NodeHTTPAPIClient options.
 	opts *NodeHTTPAPIClientOptions
 }
@@ -381,8 +382,8 @@ type NodeTipsResponse struct {
 }
 
 // Tips returns the hex encoded tips as MessageIDs.
-func (ntr *NodeTipsResponse) Tips() (MessageIDs, error) {
-	msgIDs := make(MessageIDs, len(ntr.TipsHex))
+func (ntr *NodeTipsResponse) Tips() (iotago.MessageIDs, error) {
+	msgIDs := make(iotago.MessageIDs, len(ntr.TipsHex))
 	for i, tip := range ntr.TipsHex {
 		msgID, err := hex.DecodeString(tip)
 		if err != nil {
@@ -406,7 +407,7 @@ func (api *NodeHTTPAPIClient) Tips(ctx context.Context) (*NodeTipsResponse, erro
 // SubmitMessage submits the given Message to the node.
 // The node will take care of filling missing information.
 // This function returns the finalized message created by the node.
-func (api *NodeHTTPAPIClient) SubmitMessage(ctx context.Context, m *Message) (*Message, error) {
+func (api *NodeHTTPAPIClient) SubmitMessage(ctx context.Context, m *iotago.Message) (*iotago.Message, error) {
 	// Do not check the message because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the message afterwards.
@@ -421,7 +422,7 @@ func (api *NodeHTTPAPIClient) SubmitMessage(ctx context.Context, m *Message) (*M
 		return nil, err
 	}
 
-	messageID, err := MessageIDFromHexString(res.Header.Get(locationHeader))
+	messageID, err := iotago.MessageIDFromHexString(res.Header.Get(locationHeader))
 	if err != nil {
 		return nil, err
 	}
@@ -485,7 +486,7 @@ type MessageMetadataResponse struct {
 }
 
 // MessageMetadataByMessageID gets the metadata of a message by its message ID from the node.
-func (api *NodeHTTPAPIClient) MessageMetadataByMessageID(ctx context.Context, msgID MessageID) (*MessageMetadataResponse, error) {
+func (api *NodeHTTPAPIClient) MessageMetadataByMessageID(ctx context.Context, msgID iotago.MessageID) (*MessageMetadataResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageMetadata, hex.EncodeToString(msgID[:]))
 
 	res := &MessageMetadataResponse{}
@@ -498,7 +499,7 @@ func (api *NodeHTTPAPIClient) MessageMetadataByMessageID(ctx context.Context, ms
 }
 
 // MessageByMessageID get a message by its message ID from the node.
-func (api *NodeHTTPAPIClient) MessageByMessageID(ctx context.Context, msgID MessageID) (*Message, error) {
+func (api *NodeHTTPAPIClient) MessageByMessageID(ctx context.Context, msgID iotago.MessageID) (*iotago.Message, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageBytes, hex.EncodeToString(msgID[:]))
 
 	res := &RawDataEnvelope{}
@@ -507,7 +508,7 @@ func (api *NodeHTTPAPIClient) MessageByMessageID(ctx context.Context, msgID Mess
 		return nil, err
 	}
 
-	msg := &Message{}
+	msg := &iotago.Message{}
 	if _, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, api.deSeriParas); err != nil {
 		return nil, err
 	}
@@ -527,7 +528,7 @@ type ChildrenResponse struct {
 }
 
 // ChildrenByMessageID get a message by its message ID from the node.
-func (api *NodeHTTPAPIClient) ChildrenByMessageID(ctx context.Context, msgID MessageID) (*ChildrenResponse, error) {
+func (api *NodeHTTPAPIClient) ChildrenByMessageID(ctx context.Context, msgID iotago.MessageID) (*ChildrenResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageChildren, hex.EncodeToString(msgID[:]))
 
 	res := &ChildrenResponse{}
@@ -556,19 +557,19 @@ type NodeOutputResponse struct {
 }
 
 // TxID returns the TransactionID.
-func (nor *NodeOutputResponse) TxID() (*TransactionID, error) {
+func (nor *NodeOutputResponse) TxID() (*iotago.TransactionID, error) {
 	txIDBytes, err := hex.DecodeString(nor.TransactionID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
 	}
-	var txID TransactionID
+	var txID iotago.TransactionID
 	copy(txID[:], txIDBytes)
 	return &txID, nil
 }
 
 // Output deserializes the RawOutput to an Output.
-func (nor *NodeOutputResponse) Output() (Output, error) {
-	jsonSeri, err := DeserializeObjectFromJSON(nor.RawOutput, jsonOutputSelector)
+func (nor *NodeOutputResponse) Output() (iotago.Output, error) {
+	jsonSeri, err := iotago.DeserializeObjectFromJSON(nor.RawOutput, iotago.JsonOutputSelector)
 	if err != nil {
 		return nil, err
 	}
@@ -576,15 +577,15 @@ func (nor *NodeOutputResponse) Output() (Output, error) {
 	if err != nil {
 		return nil, err
 	}
-	output, isOutput := seri.(Output)
+	output, isOutput := seri.(iotago.Output)
 	if !isOutput {
-		return nil, ErrUnknownOutputType
+		return nil, iotago.ErrUnknownOutputType
 	}
 	return output, nil
 }
 
 // OutputByID gets an outputs by its ID from the node.
-func (api *NodeHTTPAPIClient) OutputByID(ctx context.Context, outputID OutputID) (*NodeOutputResponse, error) {
+func (api *NodeHTTPAPIClient) OutputByID(ctx context.Context, outputID iotago.OutputID) (*NodeOutputResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteOutput, outputID.ToHex())
 
 	res := &NodeOutputResponse{}
@@ -620,7 +621,7 @@ func (api *NodeHTTPAPIClient) BalanceByBech32Address(ctx context.Context, bech32
 }
 
 // BalanceByEd25519Address returns the balance of an Ed25519 address.
-func (api *NodeHTTPAPIClient) BalanceByEd25519Address(ctx context.Context, addr *Ed25519Address) (*AddressBalanceResponse, error) {
+func (api *NodeHTTPAPIClient) BalanceByEd25519Address(ctx context.Context, addr *iotago.Ed25519Address) (*AddressBalanceResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Balance, addr.String())
 
 	res := &AddressBalanceResponse{}
@@ -643,7 +644,7 @@ type AddressOutputsResponse struct {
 	// The actual count of results that are returned.
 	Count uint32 `json:"count"`
 	// The output IDs (transaction ID + output index) of the outputs on this address.
-	OutputIDs []OutputIDHex `json:"outputIDs"`
+	OutputIDs []iotago.OutputIDHex `json:"outputIDs"`
 	// The ledger index at which these outputs where available at.
 	LedgerIndex uint64 `json:"ledgerIndex"`
 }
@@ -667,7 +668,7 @@ func (api *NodeHTTPAPIClient) OutputIDsByBech32Address(ctx context.Context, bech
 
 // OutputsByBech32Address gets the outputs residing on the given Bech32 address.
 // Per default only unspent outputs are returned. Set includeSpentOutputs to true to also return spent outputs.
-func (api *NodeHTTPAPIClient) OutputsByBech32Address(ctx context.Context, bech32Addr string, includeSpentOutputs bool) (*AddressOutputsResponse, OutputSet, error) {
+func (api *NodeHTTPAPIClient) OutputsByBech32Address(ctx context.Context, bech32Addr string, includeSpentOutputs bool) (*AddressOutputsResponse, iotago.OutputSet, error) {
 	res, err := api.OutputIDsByBech32Address(ctx, bech32Addr, includeSpentOutputs)
 	if err != nil {
 		return nil, nil, err
@@ -678,7 +679,7 @@ func (api *NodeHTTPAPIClient) OutputsByBech32Address(ctx context.Context, bech32
 
 // OutputIDsByEd25519Address gets output IDs of outputs residing on the given Ed25519Address.
 // Per default only unspent output IDs are returned. Set includeSpentOutputs to true to also return spent output IDs.
-func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(ctx context.Context, addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
+func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(ctx context.Context, addr *iotago.Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteAddressEd25519Outputs, addr.String())
 	if includeSpentOutputs {
 		query += "?include-spent=true"
@@ -695,7 +696,7 @@ func (api *NodeHTTPAPIClient) OutputIDsByEd25519Address(ctx context.Context, add
 
 // OutputsByEd25519Address gets the outputs residing on the given Ed25519Address.
 // Per default only unspent outputs are returned. Set includeSpentOutputs to true to also return spent outputs.
-func (api *NodeHTTPAPIClient) OutputsByEd25519Address(ctx context.Context, addr *Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, OutputSet, error) {
+func (api *NodeHTTPAPIClient) OutputsByEd25519Address(ctx context.Context, addr *iotago.Ed25519Address, includeSpentOutputs bool) (*AddressOutputsResponse, iotago.OutputSet, error) {
 	res, err := api.OutputIDsByEd25519Address(ctx, addr, includeSpentOutputs)
 	if err != nil {
 		return nil, nil, err
@@ -705,10 +706,10 @@ func (api *NodeHTTPAPIClient) OutputsByEd25519Address(ctx context.Context, addr 
 }
 
 // queries the actual outputs given an AddressOutputsResponse.
-func (api *NodeHTTPAPIClient) outputIDsToOutputs(ctx context.Context, res *AddressOutputsResponse) (*AddressOutputsResponse, OutputSet, error) {
-	outputs := make(OutputSet)
+func (api *NodeHTTPAPIClient) outputIDsToOutputs(ctx context.Context, res *AddressOutputsResponse) (*AddressOutputsResponse, iotago.OutputSet, error) {
+	outputs := make(iotago.OutputSet)
 	for _, outputIDHex := range res.OutputIDs {
-		outputID, err := OutputIDFromHex(string(outputIDHex))
+		outputID, err := iotago.OutputIDFromHex(string(outputIDHex))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -753,8 +754,8 @@ type ReceiptsResponse struct {
 
 // ReceiptTuple represents a receipt and the milestone index in which it was contained.
 type ReceiptTuple struct {
-	Receipt        *Receipt `json:"receipt"`
-	MilestoneIndex uint32   `json:"milestoneIndex"`
+	Receipt        *iotago.Receipt `json:"receipt"`
+	MilestoneIndex uint32          `json:"milestoneIndex"`
 }
 
 // Receipts gets all receipts persisted on the node.
