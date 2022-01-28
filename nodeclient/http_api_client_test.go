@@ -24,13 +24,13 @@ import (
 
 const nodeAPIUrl = "http://127.0.0.1:14265"
 
-func TestNodeAPI_Health(t *testing.T) {
+func TestClient_Health(t *testing.T) {
 	defer gock.Off()
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.NodeAPIRouteHealth).
 		Reply(200)
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	healthy, err := nodeAPI.Health(context.Background())
 	require.NoError(t, err)
 	require.True(t, healthy)
@@ -44,10 +44,10 @@ func TestNodeAPI_Health(t *testing.T) {
 	require.False(t, healthy)
 }
 
-func TestNodeAPI_Info(t *testing.T) {
+func TestClient_Info(t *testing.T) {
 	defer gock.Off()
 
-	originInfo := &nodeclient.NodeInfoResponse{
+	originInfo := &nodeclient.InfoResponse{
 		Name:                        "HORNET",
 		Version:                     "1.0.0",
 		IsHealthy:                   true,
@@ -69,13 +69,13 @@ func TestNodeAPI_Info(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originInfo})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	info, err := nodeAPI.Info(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
 }
 
-func TestNodeAPI_Tips(t *testing.T) {
+func TestClient_Tips(t *testing.T) {
 	defer gock.Off()
 
 	originRes := &nodeclient.NodeTipsResponse{
@@ -87,13 +87,13 @@ func TestNodeAPI_Tips(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	tips, err := nodeAPI.Tips(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, tips)
 }
 
-func TestNodeAPI_SubmitMessage(t *testing.T) {
+func TestClient_SubmitMessage(t *testing.T) {
 	defer gock.Off()
 
 	msgHash := tpkg.Rand32ByteArray()
@@ -131,44 +131,13 @@ func TestNodeAPI_SubmitMessage(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(serializedCompleteMsg))
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.SubmitMessage(context.Background(), incompleteMsg)
 	require.NoError(t, err)
 	require.EqualValues(t, completeMsg, resp)
 }
 
-func TestNodeAPI_MessageIDsByIndex(t *testing.T) {
-	defer gock.Off()
-	index := "बेकार पाठ"
-
-	id1 := tpkg.Rand32ByteArray()
-	id2 := tpkg.Rand32ByteArray()
-	id3 := tpkg.Rand32ByteArray()
-
-	msgIDsByIndex := &nodeclient.MessageIDsByIndexResponse{
-		Index:      hex.EncodeToString([]byte(index)),
-		MaxResults: 1000,
-		Count:      3,
-		MessageIDs: []string{
-			hex.EncodeToString(id1[:]),
-			hex.EncodeToString(id2[:]),
-			hex.EncodeToString(id3[:]),
-		},
-	}
-
-	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteMessages).
-		MatchParam("index", hex.EncodeToString([]byte(index))).
-		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: msgIDsByIndex})
-
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
-	resMsgIDsByIndex, err := nodeAPI.MessageIDsByIndex(context.Background(), []byte(index))
-	require.NoError(t, err)
-	require.EqualValues(t, msgIDsByIndex, resMsgIDsByIndex)
-}
-
-func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
+func TestClient_MessageMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
@@ -198,13 +167,13 @@ func TestNodeAPI_MessageMetadataByMessageID(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	meta, err := nodeAPI.MessageMetadataByMessageID(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, meta)
 }
 
-func TestNodeAPI_MessageByMessageID(t *testing.T) {
+func TestClient_MessageByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
@@ -224,13 +193,13 @@ func TestNodeAPI_MessageByMessageID(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(data))
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	responseMsg, err := nodeAPI.MessageByMessageID(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originMsg, responseMsg)
 }
 
-func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
+func TestClient_ChildrenByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	msgID := tpkg.Rand32ByteArray()
@@ -256,13 +225,13 @@ func TestNodeAPI_ChildrenByMessageID(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	res, err := nodeAPI.ChildrenByMessageID(context.Background(), msgID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
 }
 
-func TestNodeAPI_OutputByID(t *testing.T) {
+func TestClient_OutputByID(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandExtendedOutput(iotago.AddressEd25519)
@@ -272,7 +241,7 @@ func TestNodeAPI_OutputByID(t *testing.T) {
 
 	txID := tpkg.Rand32ByteArray()
 	hexTxID := hex.EncodeToString(txID[:])
-	originRes := &nodeclient.NodeOutputResponse{
+	originRes := &nodeclient.OutputResponse{
 		TransactionID: hexTxID,
 		OutputIndex:   3,
 		Spent:         true,
@@ -288,7 +257,7 @@ func TestNodeAPI_OutputByID(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.OutputByID(context.Background(), utxoInputId)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -296,85 +265,6 @@ func TestNodeAPI_OutputByID(t *testing.T) {
 	resTxID, err := resp.TxID()
 	require.NoError(t, err)
 	require.EqualValues(t, txID, *resTxID)
-}
-
-func TestNodeAPI_BalanceByEd25519Address(t *testing.T) {
-	defer gock.Off()
-
-	ed25519Addr := tpkg.RandEd25519Address()
-	ed25519AddrHex := ed25519Addr.String()
-
-	originRes := &nodeclient.AddressBalanceResponse{
-		AddressType: 1,
-		Address:     ed25519AddrHex,
-		Balance:     13371337,
-		LedgerIndex: 1337,
-	}
-
-	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteAddressEd25519Balance, ed25519AddrHex)).
-		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
-
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
-	resp, err := nodeAPI.BalanceByEd25519Address(context.Background(), ed25519Addr)
-	require.NoError(t, err)
-	require.EqualValues(t, originRes, resp)
-}
-
-func TestNodeAPI_OutputIDsByAddress(t *testing.T) {
-	defer gock.Off()
-
-	ed25519Addr := tpkg.RandEd25519Address()
-	ed25519AddrHex := ed25519Addr.String()
-
-	output1 := tpkg.Rand32ByteArray()
-	output2 := tpkg.Rand32ByteArray()
-	output3 := tpkg.Rand32ByteArray()
-	originRes := &nodeclient.AddressOutputsResponse{
-		AddressType: 1,
-		Address:     ed25519AddrHex,
-		MaxResults:  1000,
-		Count:       2,
-		OutputIDs: []iotago.OutputIDHex{
-			iotago.OutputIDHex(hex.EncodeToString(output1[:])),
-			iotago.OutputIDHex(hex.EncodeToString(output2[:])),
-		},
-		LedgerIndex: 1337,
-	}
-
-	originResWithUnspent := &nodeclient.AddressOutputsResponse{
-		AddressType: 1,
-		Address:     ed25519AddrHex,
-		MaxResults:  1000,
-		Count:       3,
-		OutputIDs: []iotago.OutputIDHex{
-			iotago.OutputIDHex(hex.EncodeToString(output1[:])),
-			iotago.OutputIDHex(hex.EncodeToString(output2[:])),
-			iotago.OutputIDHex(hex.EncodeToString(output3[:])),
-		},
-	}
-
-	route := fmt.Sprintf(nodeclient.NodeAPIRouteAddressEd25519Outputs, ed25519AddrHex)
-	gock.New(nodeAPIUrl).
-		Get(route).
-		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
-
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
-	resp, err := nodeAPI.OutputIDsByEd25519Address(context.Background(), ed25519Addr, false)
-	require.NoError(t, err)
-	require.EqualValues(t, originRes, resp)
-
-	gock.New(nodeAPIUrl).
-		Get(route).
-		MatchParam("include-spent", "true").
-		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originResWithUnspent})
-
-	resp, err = nodeAPI.OutputIDsByEd25519Address(context.Background(), ed25519Addr, true)
-	require.NoError(t, err)
-	require.EqualValues(t, originResWithUnspent, resp)
 }
 
 func TestNodeHTTPAPIClient_Treasury(t *testing.T) {
@@ -390,7 +280,7 @@ func TestNodeHTTPAPIClient_Treasury(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.Treasury(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -427,7 +317,7 @@ func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.Receipts(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes.Receipts, resp)
@@ -466,13 +356,13 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.ReceiptsByMigratedAtIndex(context.Background(), index)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes.Receipts, resp)
 }
 
-func TestNodeAPI_MilestoneByIndex(t *testing.T) {
+func TestClient_MilestoneByIndex(t *testing.T) {
 	defer gock.Off()
 
 	var milestoneIndex uint32 = 1337
@@ -490,13 +380,13 @@ func TestNodeAPI_MilestoneByIndex(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.MilestoneByIndex(context.Background(), milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
 
-func TestNodeAPI_MilestoneUTXOChangesByIndex(t *testing.T) {
+func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 	defer gock.Off()
 
 	var milestoneIndex uint32 = 1337
@@ -516,7 +406,7 @@ func TestNodeAPI_MilestoneUTXOChangesByIndex(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.MilestoneUTXOChangesByIndex(context.Background(), milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -545,7 +435,7 @@ var sampleGossipInfo = &nodeclient.GossipInfo{
 	},
 }
 
-func TestNodeAPI_PeerByID(t *testing.T) {
+func TestClient_PeerByID(t *testing.T) {
 	defer gock.Off()
 
 	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
@@ -563,13 +453,13 @@ func TestNodeAPI_PeerByID(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.PeerByID(context.Background(), peerID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
 
-func TestNodeAPI_RemovePeerByID(t *testing.T) {
+func TestClient_RemovePeerByID(t *testing.T) {
 	defer gock.Off()
 
 	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
@@ -579,12 +469,12 @@ func TestNodeAPI_RemovePeerByID(t *testing.T) {
 		Reply(200).
 		Status(200)
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	err := nodeAPI.RemovePeerByID(context.Background(), peerID)
 	require.NoError(t, err)
 }
 
-func TestNodeAPI_Peers(t *testing.T) {
+func TestClient_Peers(t *testing.T) {
 	defer gock.Off()
 
 	peerID1 := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
@@ -612,13 +502,13 @@ func TestNodeAPI_Peers(t *testing.T) {
 		Reply(200).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.Peers(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
 
-func TestNodeAPI_AddPeer(t *testing.T) {
+func TestClient_AddPeer(t *testing.T) {
 	defer gock.Off()
 
 	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
@@ -639,7 +529,7 @@ func TestNodeAPI_AddPeer(t *testing.T) {
 		Reply(201).
 		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
 
-	nodeAPI := nodeclient.NewNodeHTTPAPIClient(nodeAPIUrl, iotago.ZeroRentParas)
+	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.AddPeer(context.Background(), multiAddr)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)

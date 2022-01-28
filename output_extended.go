@@ -83,6 +83,9 @@ func ExtendedOutputFeatureBlocksArrayRules() serializer.ArrayRules {
 	return *extOutputFeatBlockArrayRules
 }
 
+// ExtendedOutputs is a slice of ExtendedOutput(s).
+type ExtendedOutputs []*ExtendedOutput
+
 // ExtendedOutput is an output type which can hold native tokens and feature blocks.
 type ExtendedOutput struct {
 	// The amount of IOTA tokens held by the output.

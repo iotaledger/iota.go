@@ -53,6 +53,31 @@ func (outputID OutputID) UTXOInput() *UTXOInput {
 	return utxoInput
 }
 
+// HexOutputIDs is a slice of hex encoded OutputID strings.
+type HexOutputIDs []string
+
+// MustOutputIDs converts the hex strings into OutputIDs.
+func (ids HexOutputIDs) MustOutputIDs() OutputIDs {
+	vals, err := ids.OutputIDs()
+	if err != nil {
+		panic(err)
+	}
+	return vals
+}
+
+// OutputIDs converts the hex strings into OutputIDs.
+func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
+	vals := make(OutputIDs, len(ids))
+	for i, v := range ids {
+		val, err := hex.DecodeString(v)
+		if err != nil {
+			return nil, err
+		}
+		copy(vals[i][:], val)
+	}
+	return vals, nil
+}
+
 // OutputIDFromTransactionIDAndIndex creates a OutputID from the given TransactionID and index.
 func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputID {
 	utxo := UTXOInput{TransactionOutputIndex: index}
@@ -258,6 +283,19 @@ func (outputs OutputsByType) NativeTokenOutputs() NativeTokenOutputs {
 	return nativeTokenOutputs
 }
 
+// ExtendedOutputs returns a slice of Outputs which are ExtendedOutput.
+func (outputs OutputsByType) ExtendedOutputs() ExtendedOutputs {
+	extOutputs := make(ExtendedOutputs, 0)
+	for _, output := range outputs[OutputExtended] {
+		extOutput, is := output.(*ExtendedOutput)
+		if !is {
+			continue
+		}
+		extOutputs = append(extOutputs, extOutput)
+	}
+	return extOutputs
+}
+
 // FoundryOutputs returns a slice of Outputs which are FoundryOutput.
 func (outputs OutputsByType) FoundryOutputs() FoundryOutputs {
 	foundryOutputs := make(FoundryOutputs, 0)
@@ -295,7 +333,7 @@ func (outputs OutputsByType) FoundryOutputsSet() (FoundryOutputsSet, error) {
 // AliasOutputs returns a slice of Outputs which are AliasOutput.
 func (outputs OutputsByType) AliasOutputs() AliasOutputs {
 	aliasOutputs := make(AliasOutputs, 0)
-	for _, output := range outputs[OutputFoundry] {
+	for _, output := range outputs[OutputAlias] {
 		aliasOutput, is := output.(*AliasOutput)
 		if !is {
 			continue
