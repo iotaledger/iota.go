@@ -1,9 +1,0 @@
-panic: runtime error: index out of range [3] with length 1
-encoding/binary.littleEndian.Uint32
-github.com/iotaledger/iota.go/v2.checkType
-github.com/iotaledger/iota.go/v2.(*Receipt).Deserialize.func1
-github.com/iotaledger/iota.go/v2.(*Deserializer).AbortIf
-github.com/iotaledger/iota.go/v2.(*Receipt).Deserialize
-receipt-fuzzing.Fuzz
-go-fuzz-dep.Main
-main.main
