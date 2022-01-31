@@ -1344,53 +1344,6 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 		func() test {
 			inputIDs := tpkg.RandOutputIDs(2)
 
-			ntCount := iotago.MaxNativeTokensCount + 1
-			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
-
-			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
-					Amount:       100,
-					NativeTokens: nativeTokens[:ntCount/2],
-					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					},
-				},
-				inputIDs[1]: &iotago.ExtendedOutput{
-					Amount:       100,
-					NativeTokens: nativeTokens[ntCount/2:],
-					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					},
-				},
-			}
-
-			essence := &iotago.TransactionEssence{
-				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
-						Amount:       200,
-						NativeTokens: nativeTokens,
-						Conditions: iotago.UnlockConditions{
-							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-						},
-					},
-				},
-			}
-
-			return test{
-				name:   "fail - exceeds limit (just in)",
-				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
-				inputs: inputs,
-				tx: &iotago.Transaction{
-					Essence:      essence,
-					UnlockBlocks: iotago.UnlockBlocks{},
-				},
-				wantErr: iotago.ErrMaxNativeTokensCountExceeded,
-			}
-		}(),
-		func() test {
-			inputIDs := tpkg.RandOutputIDs(2)
-
 			inCount := 20
 			outCount := 250
 

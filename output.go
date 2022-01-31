@@ -658,6 +658,7 @@ func OutputsSyntacticalNativeTokensCount() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		if nativeTokenOutput, is := output.(NativeTokenOutput); is {
 			nativeTokensCount += len(nativeTokenOutput.NativeTokenSet())
+			fmt.Println(nativeTokensCount, MaxNativeTokensCount)
 			if nativeTokensCount > MaxNativeTokensCount {
 				return ErrMaxNativeTokensCountExceeded
 			}

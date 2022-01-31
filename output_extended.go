@@ -149,7 +149,7 @@ func (e *ExtendedOutput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 		ReadNum(&e.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for extended output: %w", err)
 		}).
-		ReadSliceOfObjects(&e.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
+		ReadSliceOfObjects(&e.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize native tokens for extended output: %w", err)
 		}).
 		ReadSliceOfObjects(&e.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, extOutputUnlockCondsArrayRules, func(err error) error {
@@ -169,7 +169,7 @@ func (e *ExtendedOutput) Serialize(deSeriMode serializer.DeSerializationMode, de
 		WriteNum(e.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output amount: %w", err)
 		}).
-		WriteSliceOfObjects(&e.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules, func(err error) error {
+		WriteSliceOfObjects(&e.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize extended output native tokens: %w", err)
 		}).
 		WriteSliceOfObjects(&e.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, extOutputUnlockCondsArrayRules, func(err error) error {

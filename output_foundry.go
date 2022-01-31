@@ -385,7 +385,7 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		ReadNum(&f.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for foundry output: %w", err)
 		}).
-		ReadSliceOfObjects(&f.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
+		ReadSliceOfObjects(&f.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize native tokens for foundry output: %w", err)
 		}).
 		ReadNum(&f.SerialNumber, func(err error) error {
@@ -420,7 +420,7 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode, deS
 		WriteNum(f.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output amount: %w", err)
 		}).
-		WriteSliceOfObjects(&f.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules, func(err error) error {
+		WriteSliceOfObjects(&f.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output native tokens: %w", err)
 		}).
 		WriteNum(f.SerialNumber, func(err error) error {
