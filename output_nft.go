@@ -243,7 +243,7 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadNum(&n.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for NFT output: %w", err)
 		}).
-		ReadSliceOfObjects(&n.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
+		ReadSliceOfObjects(&n.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize native tokens for NFT output: %w", err)
 		}).
 		ReadBytesInPlace(n.NFTID[:], func(err error) error {
@@ -275,7 +275,7 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		WriteNum(n.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output amount: %w", err)
 		}).
-		WriteSliceOfObjects(&n.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules, func(err error) error {
+		WriteSliceOfObjects(&n.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output native tokens: %w", err)
 		}).
 		WriteBytes(n.NFTID[:], func(err error) error {

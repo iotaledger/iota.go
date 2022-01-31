@@ -418,7 +418,7 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadNum(&a.Amount, func(err error) error {
 			return fmt.Errorf("unable to deserialize amount for alias output: %w", err)
 		}).
-		ReadSliceOfObjects(&a.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
+		ReadSliceOfObjects(&a.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize native tokens for alias output: %w", err)
 		}).
 		ReadBytesInPlace(a.AliasID[:], func(err error) error {
@@ -451,7 +451,7 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 		WriteNum(a.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output amount: %w", err)
 		}).
-		WriteSliceOfObjects(&a.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, nativeTokensArrayRules, func(err error) error {
+		WriteSliceOfObjects(&a.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nativeTokensArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output native tokens: %w", err)
 		}).
 		WriteBytes(a.AliasID[:], func(err error) error {
