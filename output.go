@@ -295,7 +295,7 @@ func (outputs OutputsByType) FoundryOutputsSet() (FoundryOutputsSet, error) {
 // AliasOutputs returns a slice of Outputs which are AliasOutput.
 func (outputs OutputsByType) AliasOutputs() AliasOutputs {
 	aliasOutputs := make(AliasOutputs, 0)
-	for _, output := range outputs[OutputFoundry] {
+	for _, output := range outputs[OutputAlias] {
 		aliasOutput, is := output.(*AliasOutput)
 		if !is {
 			continue
