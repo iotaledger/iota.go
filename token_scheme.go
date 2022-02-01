@@ -75,10 +75,14 @@ func TokenSchemeSelector(tokenSchemeType uint32) (TokenScheme, error) {
 	return seri, nil
 }
 
-func tokenSchemeFromJSONRawMsg(jTokenScheme *json.RawMessage) (TokenScheme, error) {
-	tokenScheme, err := DeserializeObjectFromJSON(jTokenScheme, jsonTokenSchemeSelector)
+func tokenSchemeFromJSONRawMsg(rawMsg *json.RawMessage) (TokenScheme, error) {
+	jTokenScheme, err := DeserializeObjectFromJSON(rawMsg, jsonTokenSchemeSelector)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode token scheme from JSON: %w", err)
+	}
+	tokenScheme, err := jTokenScheme.ToSerializable()
+	if err != nil {
+		return nil, err
 	}
 	return tokenScheme.(TokenScheme), nil
 }

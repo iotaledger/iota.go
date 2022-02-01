@@ -711,7 +711,7 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 			// just need to check whether the foundry is transitioning, since the balancing
 			// between in and out is already given from the previous check
 			if inSum == nil && !foundryIsTransitioning {
-				return fmt.Errorf("%w: native token %d is new on the output side but the foundry is not transitioning", ErrNativeTokenSumUnbalanced, nativeTokenID)
+				return fmt.Errorf("%w: native token %s is new on the output side but the foundry is not transitioning", ErrNativeTokenSumUnbalanced, nativeTokenID)
 			}
 		}
 
