@@ -486,11 +486,11 @@ func (f *FoundryOutput) MarshalJSON() ([]byte, error) {
 }
 
 func (f *FoundryOutput) UnmarshalJSON(bytes []byte) error {
-	jNFTOutput := &jsonNFTOutput{}
-	if err := json.Unmarshal(bytes, jNFTOutput); err != nil {
+	jFoundryOutput := &jsonFoundryOutput{}
+	if err := json.Unmarshal(bytes, jFoundryOutput); err != nil {
 		return err
 	}
-	seri, err := jNFTOutput.ToSerializable()
+	seri, err := jFoundryOutput.ToSerializable()
 	if err != nil {
 		return err
 	}
