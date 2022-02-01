@@ -42,11 +42,11 @@ func (factor VByteCostFactor) With(other VByteCostFactor) VByteCostFactor {
 // RentStructure defines the parameters of rent cost calculations on objects which take node resources.
 type RentStructure struct {
 	// Defines the rent of a single virtual byte denoted in IOTA tokens.
-	VByteCost uint64
+	VByteCost uint64 `json:"vByteCost"`
 	// Defines the factor to be used for data only fields.
-	VBFactorData VByteCostFactor
+	VBFactorData VByteCostFactor `json:"vByteFactorData"`
 	// defines the factor to be used for key/lookup generating fields.
-	VBFactorKey VByteCostFactor
+	VBFactorKey VByteCostFactor `json:"vByteFactorKey"`
 }
 
 // CoversStateRent tells whether given this NonEphemeralObject, the given rent fulfils the renting costs
