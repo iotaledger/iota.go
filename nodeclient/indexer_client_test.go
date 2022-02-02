@@ -41,7 +41,10 @@ func TestOutputsQuery_Build(t *testing.T) {
 		AddressBech32: "alice",
 		SenderBech32:  "bob",
 		Tag:           "charlie",
-		Offset:        "dave",
+		Cursor: func() *string {
+			str := "dave"
+			return &str
+		}(),
 	}
 
 	_, err := query.URLParas()
@@ -76,25 +79,26 @@ func TestIndexerClient_Outputs(t *testing.T) {
 		Reply(200).
 		JSON(nodeclient.IndexerResponse{
 			LedgerIndex: 1337,
-			Limit:       1,
-			Count:       1,
-			OutputIds:   iotago.HexOutputIDs{fakeOutputID},
-			Offset:      "some-offset-key",
+			PageSize:    1,
+			Items:       iotago.HexOutputIDs{fakeOutputID},
+			Cursor: func() *string {
+				str := "some-offset-key"
+				return &str
+			}(),
 		})
 
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.IndexerAPIRouteOutputs).
 		MatchParams(map[string]string{
-			"offset": "some-offset-key",
+			"cursor": "some-offset-key",
 			"tag":    "some-tag",
 		}).
 		Reply(200).
 		JSON(nodeclient.IndexerResponse{
 			LedgerIndex: 1338,
-			Limit:       1,
-			Count:       1,
-			OutputIds:   iotago.HexOutputIDs{fakeOutputID},
-			Offset:      "",
+			PageSize:    1,
+			Items:       iotago.HexOutputIDs{fakeOutputID},
+			Cursor:      nil,
 		})
 
 	outputRoute := fmt.Sprintf(nodeclient.NodeAPIRouteOutput, fakeOutputID)
@@ -118,6 +122,6 @@ func TestIndexerClient_Outputs(t *testing.T) {
 		require.Equal(t, originOutput, outputs[0])
 	}
 
-	require.Equal(t, 2, runs)
 	require.NoError(t, resultSet.Error)
+	require.Equal(t, 2, runs)
 }
