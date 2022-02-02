@@ -58,8 +58,8 @@ func (mb *MessageBuilder) Payload(payload iotago.Payload) *MessageBuilder {
 	return mb
 }
 
-// Tips uses the given NodeHTTPAPIClient to query for parents to use.
-func (mb *MessageBuilder) Tips(ctx context.Context, nodeAPI *nodeclient.NodeHTTPAPIClient) *MessageBuilder {
+// Tips uses the given Client to query for parents to use.
+func (mb *MessageBuilder) Tips(ctx context.Context, nodeAPI *nodeclient.Client) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}

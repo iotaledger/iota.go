@@ -156,7 +156,7 @@ func (neac *NodeEventAPIClient) ReferencedMessagesMetadata() <-chan *nodeclient.
 }
 
 // ReferencedMessages returns a channel of newly referenced messages.
-func (neac *NodeEventAPIClient) ReferencedMessages(nodeHTTPAPIClient *nodeclient.NodeHTTPAPIClient) <-chan *iotago.Message {
+func (neac *NodeEventAPIClient) ReferencedMessages(nodeHTTPAPIClient *nodeclient.Client) <-chan *iotago.Message {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.Message)
 	neac.MQTTClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
@@ -220,12 +220,12 @@ func (neac *NodeEventAPIClient) MessageMetadataChange(msgID iotago.MessageID) <-
 }
 
 // AddressOutputs returns a channel of newly created or spent outputs on the given address.
-func (neac *NodeEventAPIClient) AddressOutputs(addr iotago.Address, netPrefix iotago.NetworkPrefix) <-chan *nodeclient.NodeOutputResponse {
+func (neac *NodeEventAPIClient) AddressOutputs(addr iotago.Address, netPrefix iotago.NetworkPrefix) <-chan *nodeclient.OutputResponse {
 	panicIfNodeEventAPIClientInactive(neac)
-	channel := make(chan *nodeclient.NodeOutputResponse)
+	channel := make(chan *nodeclient.OutputResponse)
 	topic := strings.Replace(NodeEventAddressesOutput, "{address}", addr.Bech32(netPrefix), 1)
 	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		res := &nodeclient.NodeOutputResponse{}
+		res := &nodeclient.OutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
 			sendErrOrDrop(neac.Errors, err)
 			return
@@ -240,12 +240,12 @@ func (neac *NodeEventAPIClient) AddressOutputs(addr iotago.Address, netPrefix io
 }
 
 // Ed25519AddressOutputs returns a channel of newly created or spent outputs on the given ed25519 address.
-func (neac *NodeEventAPIClient) Ed25519AddressOutputs(addr *iotago.Ed25519Address) <-chan *nodeclient.NodeOutputResponse {
+func (neac *NodeEventAPIClient) Ed25519AddressOutputs(addr *iotago.Ed25519Address) <-chan *nodeclient.OutputResponse {
 	panicIfNodeEventAPIClientInactive(neac)
-	channel := make(chan *nodeclient.NodeOutputResponse)
+	channel := make(chan *nodeclient.OutputResponse)
 	topic := strings.Replace(NodeEventAddressesEd25519Output, "{address}", addr.String(), 1)
 	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		res := &nodeclient.NodeOutputResponse{}
+		res := &nodeclient.OutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
 			sendErrOrDrop(neac.Errors, err)
 			return
@@ -280,12 +280,12 @@ func (neac *NodeEventAPIClient) TransactionIncludedMessage(txID iotago.Transacti
 }
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
-func (neac *NodeEventAPIClient) Output(outputID iotago.OutputID) <-chan *nodeclient.NodeOutputResponse {
+func (neac *NodeEventAPIClient) Output(outputID iotago.OutputID) <-chan *nodeclient.OutputResponse {
 	panicIfNodeEventAPIClientInactive(neac)
-	channel := make(chan *nodeclient.NodeOutputResponse)
+	channel := make(chan *nodeclient.OutputResponse)
 	topic := strings.Replace(NodeEventOutputs, "{outputId}", hex.EncodeToString(outputID[:]), 1)
 	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		res := &nodeclient.NodeOutputResponse{}
+		res := &nodeclient.OutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
 			sendErrOrDrop(neac.Errors, err)
 			return
@@ -344,7 +344,7 @@ func (neac *NodeEventAPIClient) LatestMilestones() <-chan *MilestonePointer {
 }
 
 // LatestMilestoneMessages returns a channel of newly seen latest milestones messages.
-func (neac *NodeEventAPIClient) LatestMilestoneMessages(nodeHTTPAPIClient *nodeclient.NodeHTTPAPIClient) <-chan *iotago.Message {
+func (neac *NodeEventAPIClient) LatestMilestoneMessages(nodeHTTPAPIClient *nodeclient.Client) <-chan *iotago.Message {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.Message)
 	neac.MQTTClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
@@ -392,7 +392,7 @@ func (neac *NodeEventAPIClient) ConfirmedMilestones() <-chan *MilestonePointer {
 }
 
 // ConfirmedMilestoneMessages returns a channel of newly confirmed milestones messages.
-func (neac *NodeEventAPIClient) ConfirmedMilestoneMessages(nodeHTTPAPIClient *nodeclient.NodeHTTPAPIClient) <-chan *iotago.Message {
+func (neac *NodeEventAPIClient) ConfirmedMilestoneMessages(nodeHTTPAPIClient *nodeclient.Client) <-chan *iotago.Message {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.Message)
 	neac.MQTTClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
