@@ -343,7 +343,7 @@ type jsonNFTOutput struct {
 	NFTID         string             `json:"nftId"`
 	ImmutableData string             `json:"immutableData"`
 	Conditions    []*json.RawMessage `json:"unlockConditions"`
-	Blocks        []*json.RawMessage `json:"blocks"`
+	Blocks        []*json.RawMessage `json:"featureBlocks"`
 }
 
 func (j *jsonNFTOutput) ToSerializable() (serializer.Serializable, error) {
