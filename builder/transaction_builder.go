@@ -1,19 +1,14 @@
 package builder
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/nodeclient"
 )
 
 var (
-	// ErrTransactionBuilderUnsupportedAddress gets returned when an unsupported address type
-	// is given for a builder operation.
-	ErrTransactionBuilderUnsupportedAddress = errors.New("unsupported address type")
 	// ErrTransactionBuilder defines a generic error occurring within the TransactionBuilder.
 	ErrTransactionBuilder = errors.New("transaction builder error")
 )
@@ -56,33 +51,6 @@ func (b *TransactionBuilder) AddInput(input *ToBeSignedUTXOInput) *TransactionBu
 // an input should be used or not. (returning true = pass). The filter can also
 // be used to accumulate data over the set of inputs, i.e. the input sum etc.
 type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.Output) bool
-
-// AddInputsViaNodeQuery adds any unspent outputs by the given address as an input to the built transaction
-// if it passes the filter function. It is the caller's job to ensure that the limit of returned outputs on the queried
-// node is enough high for the application's purpose. filter can be nil.
-func (b *TransactionBuilder) AddInputsViaNodeQuery(ctx context.Context, addr iotago.Address, nodeHTTPAPIClient *nodeclient.NodeHTTPAPIClient, filter TransactionBuilderInputFilter) *TransactionBuilder {
-	switch x := addr.(type) {
-	case *iotago.Ed25519Address:
-	default:
-		b.occurredBuildErr = fmt.Errorf("%w: auto. inputs via node query only supports Ed25519Address but got %T", ErrTransactionBuilderUnsupportedAddress, x)
-	}
-
-	_, unspentOutputs, err := nodeHTTPAPIClient.OutputsByEd25519Address(ctx, addr.(*iotago.Ed25519Address), false)
-	if err != nil {
-		b.occurredBuildErr = err
-		return b
-	}
-
-	for outputID, output := range unspentOutputs {
-		if filter != nil && !filter(outputID, output) {
-			continue
-		}
-
-		b.AddInput(&ToBeSignedUTXOInput{Address: addr, Input: outputID.UTXOInput()})
-	}
-
-	return b
-}
 
 // AddOutput adds the given output to the builder.
 func (b *TransactionBuilder) AddOutput(output iotago.Output) *TransactionBuilder {
