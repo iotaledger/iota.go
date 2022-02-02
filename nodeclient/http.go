@@ -68,8 +68,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 			return nil
 		}
 
-		okRes := &HTTPOkResponseEnvelope{Data: decodeTo}
-		return json.Unmarshal(resBody, okRes)
+		return json.Unmarshal(resBody, decodeTo)
 	}
 
 	if res.StatusCode == http.StatusServiceUnavailable {

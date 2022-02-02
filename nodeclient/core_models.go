@@ -15,20 +15,22 @@ type (
 		Name string `json:"name"`
 		// The semver version of the node software.
 		Version string `json:"version"`
+		// Status information.
+		Status InfoResStatus `json:"status"`
+		// Protocol information.
+		Protocol InfoResProtocol `json:"protocol"`
+		// Metrics information.
+		Metrics InfoResMetrics `json:"metrics"`
+		// The features this node exposes.
+		Features []string `json:"features"`
+		// The plugins this node exposes.
+		Plugins []string `json:"plugins"`
+	}
+
+	// InfoResStatus defines info res status information.
+	InfoResStatus struct {
 		// Whether the node is healthy.
 		IsHealthy bool `json:"isHealthy"`
-		// The human friendly name of the network ID on which the node operates on.
-		NetworkID string `json:"networkId"`
-		// The HRP prefix used for Bech32 addresses in the node's network.
-		Bech32HRP string `json:"bech32HRP"`
-		// The minimum pow score of the network.
-		MinPowScore float64 `json:"minPoWScore"`
-		// The current rate of new messages per second.
-		MessagesPerSecond float64 `json:"messagesPerSecond"`
-		// The current rate of referenced messages per second.
-		ReferencedMessagesPerSecond float64 `json:"referencedMessagesPerSecond"`
-		// The ratio of referenced messages in relation to new messages of the last confirmed milestone.
-		ReferencedRate float64 `json:"referencedRate"`
 		// The timestamp of the latest known milestone.
 		LatestMilestoneTimestamp int64 `json:"latestMilestoneTimestamp"`
 		// The latest known milestone index.
@@ -37,10 +39,28 @@ type (
 		ConfirmedMilestoneIndex uint32 `json:"confirmedMilestoneIndex"`
 		// The milestone index at which the last pruning commenced.
 		PruningIndex uint32 `json:"pruningIndex"`
-		// The features this node exposes.
-		Features []string `json:"features"`
-		// The plugins this node exposes.
-		Plugins []string `json:"plugins"`
+	}
+
+	// InfoResProtocol defines info res protocol information.
+	InfoResProtocol struct {
+		// The human friendly name of the network on which the node operates on.
+		NetworkName string `json:"networkName"`
+		// The HRP prefix used for Bech32 addresses in the node's network.
+		Bech32HRP string `json:"bech32HRP"`
+		// The minimum pow score of the network.
+		MinPowScore float64 `json:"minPoWScore"`
+		// The rent structure used by given node/network.
+		RentStructure iotago.RentStructure `json:"rentStructure"`
+	}
+
+	// InfoResMetrics defines info res metrics information.
+	InfoResMetrics struct {
+		// The current rate of new messages per second.
+		MessagesPerSecond float64 `json:"messagesPerSecond"`
+		// The current rate of referenced messages per second.
+		ReferencedMessagesPerSecond float64 `json:"referencedMessagesPerSecond"`
+		// The ratio of referenced messages in relation to new messages of the last confirmed milestone.
+		ReferencedRate float64 `json:"referencedRate"`
 	}
 
 	// MessageMetadataResponse defines the response of a GET message metadata REST API call.
