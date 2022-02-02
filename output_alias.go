@@ -531,7 +531,7 @@ type jsonAliasOutput struct {
 	StateMetadata  string             `json:"stateMetadata"`
 	FoundryCounter int                `json:"foundryCounter"`
 	Conditions     []*json.RawMessage `json:"unlockConditions"`
-	Blocks         []*json.RawMessage `json:"blocks"`
+	Blocks         []*json.RawMessage `json:"featureBlocks"`
 }
 
 func (j *jsonAliasOutput) ToSerializable() (serializer.Serializable, error) {

@@ -226,7 +226,7 @@ type jsonExtendedOutput struct {
 	Amount       int                `json:"amount"`
 	NativeTokens []*json.RawMessage `json:"nativeTokens"`
 	Conditions   []*json.RawMessage `json:"unlockConditions"`
-	Blocks       []*json.RawMessage `json:"blocks"`
+	Blocks       []*json.RawMessage `json:"featureBlocks"`
 }
 
 func (j *jsonExtendedOutput) ToSerializable() (serializer.Serializable, error) {

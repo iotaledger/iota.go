@@ -510,7 +510,7 @@ type jsonFoundryOutput struct {
 	MaximumSupply     string             `json:"maximumSupply"`
 	TokenScheme       *json.RawMessage   `json:"tokenScheme"`
 	Conditions        []*json.RawMessage `json:"unlockConditions"`
-	Blocks            []*json.RawMessage `json:"blocks"`
+	Blocks            []*json.RawMessage `json:"featureBlocks"`
 }
 
 func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
