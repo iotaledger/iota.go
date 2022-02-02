@@ -124,7 +124,7 @@ func TestClient_SubmitMessage(t *testing.T) {
 	serializedCompleteMsg, err := completeMsg.Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
 	require.NoError(t, err)
 
-	// we need to do this, otherwise gock doesn't match the body
+	// we need to Do this, otherwise gock doesn't match the body
 	gock.BodyTypes = append(gock.BodyTypes, "application/octet-stream")
 	gock.BodyTypeAliases["octet"] = "application/octet-stream"
 

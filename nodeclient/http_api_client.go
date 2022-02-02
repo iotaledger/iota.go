@@ -499,4 +499,4 @@ func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ..
 	}
 
 	return res, nil
-}
+}S
