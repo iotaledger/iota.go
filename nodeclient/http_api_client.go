@@ -171,7 +171,7 @@ type RawDataEnvelope struct {
 	Data []byte
 }
 
-// Do executes a request against the endpoint with the given base URL and route.
+// Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *Client) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
 	return do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, method, route, reqObj, resObj)
