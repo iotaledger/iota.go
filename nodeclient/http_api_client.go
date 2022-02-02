@@ -165,12 +165,6 @@ type HTTPErrorResponseEnvelope struct {
 	} `json:"error"`
 }
 
-// HTTPOkResponseEnvelope defines the ok response schema for node API responses.
-type HTTPOkResponseEnvelope struct {
-	// The encapsulated json data.
-	Data interface{} `json:"data"`
-}
-
 // RawDataEnvelope is used internally to encapsulate binary data.
 type RawDataEnvelope struct {
 	// The encapsulated binary data.

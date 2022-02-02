@@ -48,26 +48,38 @@ func TestClient_Info(t *testing.T) {
 	defer gock.Off()
 
 	originInfo := &nodeclient.InfoResponse{
-		Name:                        "HORNET",
-		Version:                     "1.0.0",
-		IsHealthy:                   true,
-		NetworkID:                   "alphanet@1",
-		Bech32HRP:                   "atoi",
-		MinPowScore:                 4000.0,
-		MessagesPerSecond:           20.0,
-		ReferencedMessagesPerSecond: 10.0,
-		ReferencedRate:              50.0,
-		LatestMilestoneTimestamp:    1333337,
-		LatestMilestoneIndex:        1337,
-		ConfirmedMilestoneIndex:     666,
-		PruningIndex:                142857,
-		Features:                    []string{"Lazers"},
+		Name:    "HORNET",
+		Version: "1.0.0",
+		Status: nodeclient.InfoResStatus{
+			IsHealthy:                true,
+			LatestMilestoneTimestamp: 1333337,
+			LatestMilestoneIndex:     1337,
+			ConfirmedMilestoneIndex:  666,
+			PruningIndex:             142857,
+		},
+		Protocol: nodeclient.InfoResProtocol{
+			NetworkName: "alphanet",
+			Bech32HRP:   "atoi",
+			MinPowScore: 4000.0,
+			RentStructure: iotago.RentStructure{
+				VByteCost:    500,
+				VBFactorData: 1,
+				VBFactorKey:  10,
+			},
+		},
+		Metrics: nodeclient.InfoResMetrics{
+			MessagesPerSecond:           20.0,
+			ReferencedMessagesPerSecond: 10.0,
+			ReferencedRate:              50.0,
+		},
+		Features: []string{"Lazers"},
+		Plugins:  []string{"indexer/v1"},
 	}
 
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.NodeAPIRouteInfo).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originInfo})
+		JSON(originInfo)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	info, err := nodeAPI.Info(context.Background())
@@ -85,7 +97,7 @@ func TestClient_Tips(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.NodeAPIRouteTips).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	tips, err := nodeAPI.Tips(context.Background())
@@ -165,7 +177,7 @@ func TestClient_MessageMetadataByMessageID(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMessageMetadata, queryHash)).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	meta, err := nodeAPI.MessageMetadataByMessageID(context.Background(), identifier)
@@ -223,7 +235,7 @@ func TestClient_ChildrenByMessageID(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMessageChildren, hexMsgID)).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	res, err := nodeAPI.ChildrenByMessageID(context.Background(), msgID)
@@ -255,7 +267,7 @@ func TestClient_OutputByID(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.NodeAPIRouteOutput, utxoInputId.ToHex())).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.OutputByID(context.Background(), utxoInputId)
@@ -278,7 +290,7 @@ func TestNodeHTTPAPIClient_Treasury(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.NodeAPIRouteTreasury).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.Treasury(context.Background())
@@ -315,7 +327,7 @@ func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.NodeAPIRouteReceipts).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.Receipts(context.Background())
@@ -354,7 +366,7 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.NodeAPIRouteReceiptsByMigratedAtIndex, strconv.FormatUint(uint64(index), 10))).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.ReceiptsByMigratedAtIndex(context.Background(), index)
@@ -378,7 +390,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMilestone, milestoneIndexStr)).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.MilestoneByIndex(context.Background(), milestoneIndex)
@@ -404,7 +416,7 @@ func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMilestoneUTXOChanges, milestoneIndexStr)).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.MilestoneUTXOChangesByIndex(context.Background(), milestoneIndex)
@@ -451,7 +463,7 @@ func TestClient_PeerByID(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.NodeAPIRoutePeer, peerID)).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.PeerByID(context.Background(), peerID)
@@ -500,7 +512,7 @@ func TestClient_Peers(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.NodeAPIRoutePeers).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.Peers(context.Background())
@@ -527,7 +539,7 @@ func TestClient_AddPeer(t *testing.T) {
 		Post(nodeclient.NodeAPIRoutePeers).
 		JSON(req).
 		Reply(201).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: originRes})
+		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas)
 	resp, err := nodeAPI.AddPeer(context.Background(), multiAddr)

@@ -74,13 +74,13 @@ func TestIndexerClient_Outputs(t *testing.T) {
 		Get(nodeclient.IndexerAPIRouteOutputs).
 		MatchParam("tag", "some-tag").
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: nodeclient.IndexerResponse{
+		JSON(nodeclient.IndexerResponse{
 			LedgerIndex: 1337,
 			Limit:       1,
 			Count:       1,
 			OutputIds:   iotago.HexOutputIDs{fakeOutputID},
 			Offset:      "some-offset-key",
-		}})
+		})
 
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.IndexerAPIRouteOutputs).
@@ -89,20 +89,20 @@ func TestIndexerClient_Outputs(t *testing.T) {
 			"tag":    "some-tag",
 		}).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: nodeclient.IndexerResponse{
+		JSON(nodeclient.IndexerResponse{
 			LedgerIndex: 1338,
 			Limit:       1,
 			Count:       1,
 			OutputIds:   iotago.HexOutputIDs{fakeOutputID},
 			Offset:      "",
-		}})
+		})
 
 	outputRoute := fmt.Sprintf(nodeclient.NodeAPIRouteOutput, fakeOutputID)
 	gock.New(nodeAPIUrl).
 		Persist().
 		Get(outputRoute).
 		Reply(200).
-		JSON(&nodeclient.HTTPOkResponseEnvelope{Data: outputRes})
+		JSON(outputRes)
 
 	client := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas, nodeclient.WithIndexer())
 
