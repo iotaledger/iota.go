@@ -19,7 +19,9 @@ var (
 	IndexerAPIRouteFoundry   = "/api/plugins/indexer/v1/foundries/%s"
 	IndexerAPIRouteNFTs      = "/api/plugins/indexer/v1/nfts"
 	IndexerAPIRouteNFT       = "/api/plugins/indexer/v1/nfts/%s"
+)
 
+var (
 	// ErrIndexerNotFound gets returned when the indexer doesn't find any result.
 	// Only applicable to single element queries.
 	ErrIndexerNotFound = errors.New("no result found")
@@ -49,7 +51,7 @@ type (
 	// IndexerQuery is a query executed against the indexer.
 	IndexerQuery interface {
 		// SetOffset sets the offset for the query.
-		SetOffset(offset string)
+		SetOffset(offset *string)
 		// URLParas returns the query parameters as URL encoded query parameters.
 		URLParas() (string, error)
 		// OutputType returns the output type for which the query is for.
@@ -77,7 +79,7 @@ type IndexerResultSet struct {
 // Next runs the next query against the indexer.
 // Returns false if there are no more results to collect.
 func (resultSet *IndexerResultSet) Next() bool {
-	if resultSet.firstQueryDone && len(resultSet.Response.Offset) == 0 {
+	if resultSet.firstQueryDone && resultSet.Response.Cursor == nil {
 		return false
 	}
 
@@ -87,15 +89,15 @@ func (resultSet *IndexerResultSet) Next() bool {
 	}
 
 	// set offset for next query
-	resultSet.query.SetOffset(resultSet.Response.Offset)
+	resultSet.query.SetOffset(resultSet.Response.Cursor)
 	resultSet.firstQueryDone = true
 
-	return len(resultSet.Response.OutputIds) > 0
+	return len(resultSet.Response.Items) > 0
 }
 
 // Outputs collects/fetches the outputs result from the query.
 func (resultSet *IndexerResultSet) Outputs() (iotago.Outputs, error) {
-	outputIDs := resultSet.Response.OutputIds.MustOutputIDs()
+	outputIDs := resultSet.Response.Items.MustOutputIDs()
 	outputs := make(iotago.Outputs, len(outputIDs))
 	for i, outputID := range outputIDs {
 		res, err := resultSet.client.OutputByID(resultSet.ctx, outputID)
@@ -145,11 +147,11 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 		return nil, err
 	}
 
-	if len(res.OutputIds) == 0 {
+	if len(res.Items) == 0 {
 		return nil, fmt.Errorf("%w for route %s", ErrIndexerNotFound, route)
 	}
 
-	outputRes, err := client.core.OutputByID(ctx, res.OutputIds.MustOutputIDs()[0])
+	outputRes, err := client.core.OutputByID(ctx, res.Items.MustOutputIDs()[0])
 	if err != nil {
 		return nil, err
 	}

@@ -7,16 +7,14 @@ import (
 
 // IndexerResponse is the standard successful response by the indexer.
 type IndexerResponse struct {
-	// The milestone index of the ledger while the query was executed.
+	// The ledger index at which these outputs where available at.
 	LedgerIndex int `json:"ledgerIndex"`
-	// The limit of the query.
-	Limit int `json:"limit"`
-	// The count of result elements.
-	Count int `json:"count"`
-	// The result output IDs from the query.
-	OutputIds iotago.HexOutputIDs `json:"outputIds"`
-	// The offset by which to query for the next page.
-	Offset string `json:"offset"`
+	// The maximum count of results that are returned by the node.
+	PageSize int `json:"pageSize"`
+	// The output IDs (transaction hash + output index) of the outputs on this address.
+	Items iotago.HexOutputIDs `json:"items"`
+	// The cursor to use for getting the next results.
+	Cursor *string `json:"cursor"`
 }
 
 // IndexerTimelockParas define timelock query parameters.
@@ -79,15 +77,15 @@ type OutputsQuery struct {
 	// Filters outputs based on matching tag feature block.
 	Tag string `qs:"tag,omitempty"`
 	// The offset from which to query from.
-	Offset string `qs:"offset,omitempty"`
+	Cursor *string `qs:"cursor,omitempty"`
 }
 
 func (query *OutputsQuery) OutputType() iotago.OutputType {
 	return iotago.OutputExtended
 }
 
-func (query *OutputsQuery) SetOffset(offset string) {
-	query.Offset = offset
+func (query *OutputsQuery) SetOffset(cursor *string) {
+	query.Cursor = cursor
 }
 
 func (query *OutputsQuery) URLParas() (string, error) {
@@ -107,15 +105,15 @@ type AliasesQuery struct {
 	// Filters outputs based on matching tag feature block.
 	Tag string `qs:"tag,omitempty"`
 	// The offset from which to query from.
-	Offset string `qs:"offset,omitempty"`
+	Cursor *string `qs:"cursor,omitempty"`
 }
 
 func (query *AliasesQuery) OutputType() iotago.OutputType {
 	return iotago.OutputAlias
 }
 
-func (query *AliasesQuery) SetOffset(offset string) {
-	query.Offset = offset
+func (query *AliasesQuery) SetOffset(cursor *string) {
+	query.Cursor = cursor
 }
 
 func (query *AliasesQuery) URLParas() (string, error) {
@@ -128,15 +126,15 @@ type FoundriesQuery struct {
 	// Bech32-encoded address that should be searched for.
 	AddressBech32 string `qs:"address,omitempty"`
 	// The offset from which to query from.
-	Offset string `qs:"offset,omitempty"`
+	Cursor *string `qs:"cursor,omitempty"`
 }
 
 func (query *FoundriesQuery) OutputType() iotago.OutputType {
 	return iotago.OutputFoundry
 }
 
-func (query *FoundriesQuery) SetOffset(offset string) {
-	query.Offset = offset
+func (query *FoundriesQuery) SetOffset(cursor *string) {
+	query.Cursor = cursor
 }
 
 func (query *FoundriesQuery) URLParas() (string, error) {
@@ -159,15 +157,15 @@ type NFTsQuery struct {
 	// Filters outputs based on matching tag feature block.
 	Tag string `qs:"tag,omitempty"`
 	// The offset from which to query from.
-	Offset string `qs:"offset,omitempty"`
+	Cursor *string `qs:"cursor,omitempty"`
 }
 
 func (query *NFTsQuery) OutputType() iotago.OutputType {
 	return iotago.OutputNFT
 }
 
-func (query *NFTsQuery) SetOffset(offset string) {
-	query.Offset = offset
+func (query *NFTsQuery) SetOffset(cursor *string) {
+	query.Cursor = cursor
 }
 
 func (query *NFTsQuery) URLParas() (string, error) {
