@@ -24,6 +24,13 @@ var (
 	ErrTransDepIdentOutputNextInvalid = errors.New("transition dependable ident output's next output is invalid")
 )
 
+// defines the default offset virtual byte costs for an output.
+func outputOffsetVByteCost(costStruct *RentStructure) uint64 {
+	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
+		// included msg id, conf ms index, conf ms ts
+		costStruct.VBFactorData.Multiply(MessageIDLength+serializer.UInt32ByteSize+serializer.UInt32ByteSize)
+}
+
 // OutputID defines the identifier for an UTXO which consists
 // out of the referenced TransactionID and the output's index.
 type OutputID [OutputIDLength]byte
@@ -637,11 +644,12 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 
 			if returnFeatBlock := unlockConditionsSet.DustDepositReturn(); returnFeatBlock != nil {
 				returnAmount := returnFeatBlock.Amount
+				minDustForReturnOutput := rentStruct.MinDustDeposit(returnFeatBlock.ReturnAddress)
 				switch {
-				case returnAmount < rentStruct.MinDustDeposit(returnFeatBlock.ReturnAddress):
-					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsLessThanMinDust, index)
+				case returnAmount < minDustForReturnOutput:
+					return fmt.Errorf("%w: output %d, needed %d, have %d", ErrOutputReturnBlockIsLessThanMinDust, index, minDustForReturnOutput, returnAmount)
 				case returnAmount > minRent:
-					return fmt.Errorf("%w: output %d", ErrOutputReturnBlockIsMoreThanVBRent, index)
+					return fmt.Errorf("%w: output %d, rent for output %d, have %d", ErrOutputReturnBlockIsMoreThanVBRent, index, minRent, returnAmount)
 				}
 			}
 		}

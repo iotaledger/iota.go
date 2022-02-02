@@ -25,8 +25,7 @@ func (s *TimelockUnlockCondition) Clone() UnlockCondition {
 }
 
 func (s *TimelockUnlockCondition) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	// TODO: adjust
-	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize)
+	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize + serializer.UInt32ByteSize)
 }
 
 func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {

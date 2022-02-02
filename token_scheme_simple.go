@@ -16,7 +16,7 @@ func (s *SimpleTokenScheme) Clone() TokenScheme {
 }
 
 func (s *SimpleTokenScheme) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(serializer.OneByte)
+	return costStruct.VBFactorData.Multiply(serializer.OneByte)
 }
 
 func (s *SimpleTokenScheme) Type() TokenSchemeType {

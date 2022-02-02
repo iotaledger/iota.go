@@ -248,11 +248,13 @@ func (a *AliasOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extP
 }
 
 func (a *AliasOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
+	return outputOffsetVByteCost(costStruct) +
+		// prefix + amount
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		a.NativeTokens.VByteCost(costStruct, nil) +
-		costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(AliasIDLength) +
-		costStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+serializer.UInt32ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
+		costStruct.VBFactorData.Multiply(AliasIDLength) +
+		// state index, state meta length, state meta, foundry counter
+		costStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
 		a.Conditions.VByteCost(costStruct, nil) +
 		a.Blocks.VByteCost(costStruct, nil)
 }
@@ -427,7 +429,7 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadNum(&a.StateIndex, func(err error) error {
 			return fmt.Errorf("unable to deserialize state index for alias output: %w", err)
 		}).
-		ReadVariableByteSlice(&a.StateMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
+		ReadVariableByteSlice(&a.StateMetadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			// TODO: replace max read with actual variable
 			return fmt.Errorf("unable to deserialize state metadata for alias output: %w", err)
 		}, MaxMetadataLength).
@@ -460,7 +462,7 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 		WriteNum(a.StateIndex, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output state index: %w", err)
 		}).
-		WriteVariableByteSlice(a.StateMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
+		WriteVariableByteSlice(a.StateMetadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output state metadata: %w", err)
 		}).
 		WriteNum(a.FoundryCounter, func(err error) error {

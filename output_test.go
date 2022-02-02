@@ -164,32 +164,30 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			deSeriParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
 				&iotago.ExtendedOutput{
-					Amount:     583,
+					Amount:     414, // min amount
 					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()}},
 				},
 			},
 			wantErr: nil,
 		},
-		/*
-			{
-				name:        "ok - dust deposit return",
-				deSeriParas: nonZeroCostParas,
-				outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
-						Amount:       OneMi * 2,
-						NativeTokens: nil,
-						Conditions: iotago.UnlockConditions{
-							&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
-							&iotago.DustDepositReturnUnlockCondition{
-								ReturnAddress: tpkg.RandAliasAddress(),
-								Amount:        592,
-							},
+		{
+			name:        "ok - dust deposit return",
+			deSeriParas: nonZeroCostParas,
+			outputs: iotago.Outputs{
+				// min 444
+				&iotago.ExtendedOutput{
+					Amount: OneMi * 2,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.DustDepositReturnUnlockCondition{
+							ReturnAddress: tpkg.RandAliasAddress(),
+							Amount:        414,
 						},
 					},
 				},
-				wantErr: nil,
 			},
-		*/
+			wantErr: nil,
+		},
 		{
 			name:        "fail - dust deposit return more than state rent",
 			deSeriParas: nonZeroCostParas,
@@ -208,26 +206,24 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			},
 			wantErr: iotago.ErrOutputReturnBlockIsMoreThanVBRent,
 		},
-		/*
-			{
-				name:        "fail - dust deposit return less than min dust deposit",
-				deSeriParas: nonZeroCostParas,
-				outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
-						Amount:       OneMi * 2,
-						NativeTokens: nil,
-						Conditions: iotago.UnlockConditions{
-							&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
-							&iotago.DustDepositReturnUnlockCondition{
-								ReturnAddress: tpkg.RandAliasAddress(),
-								Amount:        579, // off by 1
-							},
+		{
+			name:        "fail - dust deposit return less than min dust deposit",
+			deSeriParas: nonZeroCostParas,
+			outputs: iotago.Outputs{
+				&iotago.ExtendedOutput{
+					Amount:       OneMi * 2,
+					NativeTokens: nil,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.DustDepositReturnUnlockCondition{
+							ReturnAddress: tpkg.RandAliasAddress(),
+							Amount:        413, // off by 1
 						},
 					},
 				},
-				wantErr: iotago.ErrOutputReturnBlockIsLessThanMinDust,
 			},
-		*/
+			wantErr: iotago.ErrOutputReturnBlockIsLessThanMinDust,
+		},
 		{
 			name:        "fail - state rent not covered",
 			deSeriParas: nonZeroCostParas,

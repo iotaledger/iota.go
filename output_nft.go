@@ -175,11 +175,12 @@ func (n *NFTOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParamete
 }
 
 func (n *NFTOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
+	return outputOffsetVByteCost(costStruct) +
+		// prefix + amount
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		n.NativeTokens.VByteCost(costStruct, nil) +
-		costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(NFTIDLength) +
-		costStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+len(n.ImmutableMetadata))) +
+		// nft id, imm. data length prefix, imm. data
+		costStruct.VBFactorData.Multiply(NFTIDLength+serializer.UInt16ByteSize+uint64(len(n.ImmutableMetadata))) +
 		n.Conditions.VByteCost(costStruct, nil) +
 		n.Blocks.VByteCost(costStruct, nil)
 }
@@ -249,7 +250,7 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadBytesInPlace(n.NFTID[:], func(err error) error {
 			return fmt.Errorf("unable to deserialize NFT ID for NFT output: %w", err)
 		}).
-		ReadVariableByteSlice(&n.ImmutableMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
+		ReadVariableByteSlice(&n.ImmutableMetadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize immutable metadata for NFT output: %w", err)
 		}, ImmutableMetadataMaxLength).
 		ReadSliceOfObjects(&n.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, nftOutputUnlockCondsArrayRules, func(err error) error {
@@ -281,7 +282,7 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		WriteBytes(n.NFTID[:], func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output NFT ID: %w", err)
 		}).
-		WriteVariableByteSlice(n.ImmutableMetadata, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
+		WriteVariableByteSlice(n.ImmutableMetadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output immutable metadata: %w", err)
 		}).
 		WriteSliceOfObjects(&n.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nftOutputUnlockCondsArrayRules, func(err error) error {

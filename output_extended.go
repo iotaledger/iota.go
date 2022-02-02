@@ -110,7 +110,8 @@ func (e *ExtendedOutput) UnlockableBy(ident Address, extParas *ExternalUnlockPar
 }
 
 func (e *ExtendedOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
+	return outputOffsetVByteCost(costStruct) +
+		// prefix + amount
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		e.NativeTokens.VByteCost(costStruct, nil) +
 		e.Conditions.VByteCost(costStruct, nil) +
