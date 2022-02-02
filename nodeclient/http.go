@@ -93,7 +93,8 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 	return fmt.Errorf("%w: url %s, error message: %s", err, res.Request.URL.String(), errRes.Error.Message)
 }
 
-func do(httpClient *http.Client, baseURL string, ctx context.Context, userInfo *url.Userinfo, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
+// Do executes a request against the endpoint with the given base URL and route.
+func Do(httpClient *http.Client, baseURL string, ctx context.Context, userInfo *url.Userinfo, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
 	// marshal request object
 	var data []byte
 	var raw bool

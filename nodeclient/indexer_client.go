@@ -130,7 +130,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 		}
 
 		routeWithParas := fmt.Sprintf("%s?%s", baseRoute, urlParas)
-		_, reqErr := do(client.core.opts.httpClient, client.core.BaseURL, ctx, client.core.opts.userInfo, http.MethodGet, routeWithParas, nil, res.Response)
+		_, reqErr := Do(client.core.opts.httpClient, client.core.BaseURL, ctx, client.core.opts.userInfo, http.MethodGet, routeWithParas, nil, res.Response)
 		return reqErr
 	}
 	res.nextFunc = nextFunc
@@ -140,7 +140,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 
 func (client *indexerClient) singleOutputQuery(ctx context.Context, route string) (iotago.Output, error) {
 	res := &IndexerResponse{}
-	_, err := do(client.core.opts.httpClient, client.core.BaseURL, ctx, client.core.opts.userInfo, http.MethodGet, route, nil, res)
+	_, err := Do(client.core.opts.httpClient, client.core.BaseURL, ctx, client.core.opts.userInfo, http.MethodGet, route, nil, res)
 	if err != nil {
 		return nil, err
 	}
