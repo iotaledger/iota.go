@@ -36,8 +36,8 @@ func (s *ExpirationUnlockCondition) Clone() UnlockCondition {
 }
 
 func (s *ExpirationUnlockCondition) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	// TODO: adjust
-	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
+	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt32ByteSize+serializer.UInt32ByteSize) +
+		s.ReturnAddress.VByteCost(costStruct, nil)
 }
 
 func (s *ExpirationUnlockCondition) Equal(other UnlockCondition) bool {

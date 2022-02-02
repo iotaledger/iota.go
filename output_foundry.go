@@ -186,11 +186,12 @@ func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockPara
 }
 
 func (f *FoundryOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
+	return outputOffsetVByteCost(costStruct) +
+		// prefix + amount
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		f.NativeTokens.VByteCost(costStruct, nil) +
-		costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(uint64(f.SerialNumber)) +
-		costStruct.VBFactorData.Multiply(TokenTagLength+Uint256ByteSize+Uint256ByteSize) +
+		// serial number, token tag, circ. supply, max. supply
+		costStruct.VBFactorData.Multiply(serializer.UInt32ByteSize+TokenTagLength+Uint256ByteSize+Uint256ByteSize) +
 		f.TokenScheme.VByteCost(costStruct, nil) +
 		f.Conditions.VByteCost(costStruct, nil) +
 		f.Blocks.VByteCost(costStruct, nil)

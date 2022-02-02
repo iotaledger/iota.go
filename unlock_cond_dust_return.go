@@ -32,8 +32,8 @@ func (s *DustDepositReturnUnlockCondition) Clone() UnlockCondition {
 }
 
 func (s *DustDepositReturnUnlockCondition) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	// adjust
-	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
+	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		s.ReturnAddress.VByteCost(costStruct, nil)
 }
 
 func (s *DustDepositReturnUnlockCondition) Equal(other UnlockCondition) bool {

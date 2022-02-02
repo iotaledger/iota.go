@@ -74,8 +74,13 @@ type UnlockCondition interface {
 type UnlockConditions []UnlockCondition
 
 func (f UnlockConditions) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
-	// TODO: adjust
-	return 0
+	var sumCost uint64
+	for _, unlockCond := range f {
+		sumCost += unlockCond.VByteCost(costStruct, nil)
+	}
+
+	// length prefix + sum cost of conditions
+	return costStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
 }
 
 // Clone clones the UnlockConditions.

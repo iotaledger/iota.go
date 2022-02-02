@@ -49,7 +49,7 @@ func (edAddr *Ed25519Address) Clone() Address {
 }
 
 func (edAddr *Ed25519Address) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(serializer.SmallTypeDenotationByteSize + Ed25519AddressBytesLength)
+	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + Ed25519AddressBytesLength)
 }
 
 func (edAddr *Ed25519Address) Key() string {

@@ -35,8 +35,7 @@ func (s *TagFeatureBlock) VByteCost(costStruct *RentStructure, f VByteCostFunc) 
 	if f != nil {
 		return f(costStruct)
 	}
-	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.OneByte) +
-		costStruct.VBFactorKey.With(costStruct.VBFactorData).Multiply(uint64(len(s.Tag)))
+	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.OneByte + uint64(len(s.Tag)))
 }
 
 func (s *TagFeatureBlock) Equal(other FeatureBlock) bool {

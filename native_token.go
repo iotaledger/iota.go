@@ -31,7 +31,7 @@ const (
 	NativeTokenIDLength = FoundryIDLength + TokenTagLength
 
 	// NativeTokenVByteCost defines the static virtual byte cost of a NativeToken.
-	NativeTokenVByteCost = serializer.UInt16ByteSize + Uint256ByteSize
+	NativeTokenVByteCost = NativeTokenIDLength + Uint256ByteSize
 )
 
 var (
@@ -164,8 +164,9 @@ func (n NativeTokens) Clone() NativeTokens {
 	return cpy
 }
 
-func (n NativeTokens) VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64 {
-	return costStruct.VBFactorData.Multiply(uint64(serializer.UInt16ByteSize + len(n)*NativeTokenVByteCost))
+func (n NativeTokens) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+	// length prefix + (native token count * static native token cost)
+	return costStruct.VBFactorData.Multiply(uint64(serializer.OneByte + len(n)*NativeTokenVByteCost))
 }
 
 func (n NativeTokens) ToSerializables() serializer.Serializables {

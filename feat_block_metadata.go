@@ -12,8 +12,7 @@ import (
 
 const (
 	// MaxMetadataLength defines the max length of the data within a MetadataFeatureBlock.
-	// TODO: replace with TBD value
-	MaxMetadataLength = 1000
+	MaxMetadataLength = 8192
 )
 
 var (
@@ -34,7 +33,7 @@ func (s *MetadataFeatureBlock) Clone() FeatureBlock {
 }
 
 func (s *MetadataFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorData.Multiply(uint64(serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize + len(s.Data)))
+	return costStruct.VBFactorData.Multiply(uint64(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
 }
 
 func (s *MetadataFeatureBlock) Equal(other FeatureBlock) bool {
@@ -65,7 +64,7 @@ func (s *MetadataFeatureBlock) Deserialize(data []byte, deSeriMode serializer.De
 		CheckTypePrefix(uint32(FeatureBlockMetadata), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize metadata feature block: %w", err)
 		}).
-		ReadVariableByteSlice(&s.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
+		ReadVariableByteSlice(&s.Data, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize data for metadata feature block: %w", err)
 		}, MaxMetadataLength).
 		WithValidation(deSeriMode, func(_ []byte, err error) error { return s.ValidDataSize() }).
@@ -78,7 +77,7 @@ func (s *MetadataFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMo
 		WriteNum(byte(FeatureBlockMetadata), func(err error) error {
 			return fmt.Errorf("unable to serialize metadata feature block type ID: %w", err)
 		}).
-		WriteVariableByteSlice(s.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
+		WriteVariableByteSlice(s.Data, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize metadata feature block data: %w", err)
 		}).
 		Serialize()
