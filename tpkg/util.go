@@ -211,7 +211,7 @@ func RandTransactionEssence() *iotago.TransactionEssence {
 
 	outputCount := rand.Intn(10) + 1
 	for i := outputCount; i > 0; i-- {
-		tx.Outputs = append(tx.Outputs, RandExtendedOutput(iotago.AddressEd25519))
+		tx.Outputs = append(tx.Outputs, RandBasicOutput(iotago.AddressEd25519))
 	}
 
 	return tx
@@ -371,9 +371,9 @@ func RandTreasuryTransaction() *iotago.TreasuryTransaction {
 	}
 }
 
-// RandExtendedOutput returns a random extended output (with no feature blocks).
-func RandExtendedOutput(addrType iotago.AddressType) *iotago.ExtendedOutput {
-	dep := &iotago.ExtendedOutput{}
+// RandBasicOutput returns a random basic output (with no feature blocks).
+func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
+	dep := &iotago.BasicOutput{}
 
 	switch addrType {
 	case iotago.AddressEd25519:
@@ -402,7 +402,7 @@ func OneInputOutputTransaction() *iotago.Transaction {
 				},
 			},
 			Outputs: iotago.Outputs{
-				&iotago.ExtendedOutput{
+				&iotago.BasicOutput{
 					Amount: 1337,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: RandEd25519Address()},

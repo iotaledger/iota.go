@@ -83,7 +83,7 @@ func TestCirculatingSupplyBurn(t *testing.T) {
 
 	inputIDs := tpkg.RandOutputIDs(3)
 	inputs := iotago.OutputSet{
-		inputIDs[0]: &iotago.ExtendedOutput{
+		inputIDs[0]: &iotago.BasicOutput{
 			Amount: OneMi,
 			Conditions: iotago.UnlockConditions{
 				&iotago.AddressUnlockCondition{Address: ident1},
@@ -117,9 +117,9 @@ func TestCirculatingSupplyBurn(t *testing.T) {
 		},
 	}
 
-	// set input ExtendedOutput NativeToken to 50 which get burned
+	// set input BasicOutput NativeToken to 50 which get burned
 	foundryNativeTokenID := inputs[inputIDs[2]].(*iotago.FoundryOutput).MustNativeTokenID()
-	inputs[inputIDs[0]].(*iotago.ExtendedOutput).NativeTokens = iotago.NativeTokens{
+	inputs[inputIDs[0]].(*iotago.BasicOutput).NativeTokens = iotago.NativeTokens{
 		{
 			ID:     foundryNativeTokenID,
 			Amount: new(big.Int).SetInt64(50),
@@ -218,27 +218,27 @@ func TestTransactionSemanticValidation(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(16)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: defaultAmount,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
-				inputIDs[1]: &iotago.ExtendedOutput{
+				inputIDs[1]: &iotago.BasicOutput{
 					Amount:       defaultAmount,
 					NativeTokens: nativeTokenTransfer1,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 					},
 				},
-				inputIDs[2]: &iotago.ExtendedOutput{
+				inputIDs[2]: &iotago.BasicOutput{
 					Amount:       defaultAmount,
 					NativeTokens: nativeTokenTransfer2,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 					},
 				},
-				inputIDs[3]: &iotago.ExtendedOutput{
+				inputIDs[3]: &iotago.BasicOutput{
 					Amount: defaultAmount,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
@@ -248,7 +248,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[4]: &iotago.ExtendedOutput{
+				inputIDs[4]: &iotago.BasicOutput{
 					Amount: defaultAmount,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
@@ -257,7 +257,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[5]: &iotago.ExtendedOutput{
+				inputIDs[5]: &iotago.BasicOutput{
 					Amount: defaultAmount + dustDepositReturn,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
@@ -389,7 +389,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						&iotago.IssuerFeatureBlock{Address: ident3},
 					},
 				},
-				inputIDs[15]: &iotago.ExtendedOutput{
+				inputIDs[15]: &iotago.BasicOutput{
 					Amount: defaultAmount,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: iotago.NFTID(nft1ID).ToAddress()},
@@ -410,39 +410,39 @@ func TestTransactionSemanticValidation(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident5},
 						},
 					},
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nativeTokenTransfer1,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident3},
 						},
 					},
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nativeTokenTransfer2,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident4},
 						},
 					},
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
 					},
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
 					},
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: dustDepositReturn,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
@@ -555,7 +555,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						},
 					},
 					// from foundry 4 ident 3 destruction remainder
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident3},
@@ -584,14 +584,14 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						},
 					},
 					// from NFT ident 4 destruction remainder
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident3},
 						},
 					},
 					// from NFT 1 to ident 5
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident5},
@@ -612,7 +612,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 				tx: &iotago.Transaction{
 					Essence: essence,
 					UnlockBlocks: iotago.UnlockBlocks{
-						// extended
+						// basic
 						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
 						&iotago.SignatureUnlockBlock{Signature: sigs[1]},
 						&iotago.ReferenceUnlockBlock{Reference: 1},
@@ -668,7 +668,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			nftIdent1 := tpkg.RandNFTAddress()
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -682,7 +682,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: ident1},
 					},
 				},
-				inputIDs[2]: &iotago.ExtendedOutput{
+				inputIDs[2]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: &aliasIdent1},
@@ -695,14 +695,14 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: &aliasIdent1},
 					},
 				},
-				inputIDs[4]: &iotago.ExtendedOutput{
+				inputIDs[4]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: nftIdent1},
 					},
 				},
 				// unlockable by sender as expired
-				inputIDs[5]: &iotago.ExtendedOutput{
+				inputIDs[5]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -713,7 +713,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					},
 				},
 				// not unlockable by sender as not expired
-				inputIDs[6]: &iotago.ExtendedOutput{
+				inputIDs[6]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -770,7 +770,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(8)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -803,13 +803,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(2)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
-				inputIDs[1]: &iotago.ExtendedOutput{
+				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -850,7 +850,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: ident1},
 					},
 				},
-				inputIDs[1]: &iotago.ExtendedOutput{
+				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: &aliasIdent1},
@@ -890,7 +890,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
-				inputIDs[1]: &iotago.ExtendedOutput{
+				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: &nftIdent1},
@@ -923,7 +923,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -961,7 +961,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -1024,14 +1024,14 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(3)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
 				// unlocked by ident1 as it is not expired
-				inputIDs[1]: &iotago.ExtendedOutput{
+				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 500,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -1046,7 +1046,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 				// unlocked by ident2 as it is expired
-				inputIDs[2]: &iotago.ExtendedOutput{
+				inputIDs[2]: &iotago.BasicOutput{
 					Amount: 500,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -1065,13 +1065,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: 180,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						// return via ident1 + reclaim
 						Amount: 420 + 500,
 						Conditions: iotago.UnlockConditions{
@@ -1105,7 +1105,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -1116,7 +1116,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -1147,7 +1147,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -1158,7 +1158,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: 50,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -1190,7 +1190,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 500,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -1210,7 +1210,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
@@ -1301,14 +1301,14 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[:ntCount/2],
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
-				inputIDs[1]: &iotago.ExtendedOutput{
+				inputIDs[1]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[ntCount/2:],
 					Conditions: iotago.UnlockConditions{
@@ -1320,7 +1320,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount:       200,
 						NativeTokens: nativeTokens,
 						Conditions: iotago.UnlockConditions{
@@ -1348,7 +1348,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			outCount := 250
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: tpkg.RandSortNativeTokens(inCount),
 					Conditions: iotago.UnlockConditions{
@@ -1360,7 +1360,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount:       200,
 						NativeTokens: tpkg.RandSortNativeTokens(outCount),
 						Conditions: iotago.UnlockConditions{
@@ -1388,14 +1388,14 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[:ntCount/2],
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
-				inputIDs[1]: &iotago.ExtendedOutput{
+				inputIDs[1]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[ntCount/2:],
 					Conditions: iotago.UnlockConditions{
@@ -1411,14 +1411,14 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: cpyNativeTokens[:ntCount/2],
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: cpyNativeTokens[ntCount/2:],
 						Conditions: iotago.UnlockConditions{
@@ -1446,14 +1446,14 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[:ntCount/2],
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
-				inputIDs[1]: &iotago.ExtendedOutput{
+				inputIDs[1]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[ntCount/2:],
 					Conditions: iotago.UnlockConditions{
@@ -1470,14 +1470,14 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: cpyNativeTokens[:ntCount/2],
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: cpyNativeTokens[ntCount/2:],
 						Conditions: iotago.UnlockConditions{
@@ -1507,14 +1507,14 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[:ntCount/2],
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
-				inputIDs[1]: &iotago.ExtendedOutput{
+				inputIDs[1]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[ntCount/2:],
 					Conditions: iotago.UnlockConditions{
@@ -1531,14 +1531,14 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: cpyNativeTokens[:ntCount/2],
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: cpyNativeTokens[ntCount/2:],
 						Conditions: iotago.UnlockConditions{
@@ -1591,7 +1591,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -1602,7 +1602,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: 1337,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -1634,7 +1634,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -1645,7 +1645,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
-					&iotago.ExtendedOutput{
+					&iotago.BasicOutput{
 						Amount: 1337,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -1704,7 +1704,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
@@ -1739,7 +1739,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
@@ -1774,7 +1774,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.ExtendedOutput{
+				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},

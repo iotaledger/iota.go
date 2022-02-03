@@ -27,10 +27,10 @@ var (
 	ErrIndexerNotFound = errors.New("no result found")
 
 	outputTypeToIndexerRoute = map[iotago.OutputType]string{
-		iotago.OutputExtended: IndexerAPIRouteOutputs,
-		iotago.OutputAlias:    IndexerAPIRouteAliases,
-		iotago.OutputFoundry:  IndexerAPIRouteFoundries,
-		iotago.OutputNFT:      IndexerAPIRouteNFTs,
+		iotago.OutputBasic:   IndexerAPIRouteOutputs,
+		iotago.OutputAlias:   IndexerAPIRouteAliases,
+		iotago.OutputFoundry: IndexerAPIRouteFoundries,
+		iotago.OutputNFT:     IndexerAPIRouteNFTs,
 	}
 )
 

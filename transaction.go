@@ -576,11 +576,11 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 			out += outDeposit
 
 			// accumulate simple transfers for DustDepositReturnUnlockCondition checks
-			if extendedOutput, is := output.(*ExtendedOutput); is {
-				if len(extendedOutput.FeatureBlocks()) > 0 {
+			if basicOutput, is := output.(*BasicOutput); is {
+				if len(basicOutput.FeatureBlocks()) > 0 {
 					continue
 				}
-				outputSimpleTransfersPerIdent[extendedOutput.Ident().Key()] += outDeposit
+				outputSimpleTransfersPerIdent[basicOutput.Ident().Key()] += outDeposit
 			}
 		}
 
