@@ -31,24 +31,6 @@ func (mb *MessageBuilder) Build() (*iotago.Message, error) {
 	return mb.msg, nil
 }
 
-// NetworkID sets the network ID for which this message is meant for.
-func (mb *MessageBuilder) NetworkID(networkID uint64) *MessageBuilder {
-	if mb.err != nil {
-		return mb
-	}
-	mb.msg.NetworkID = networkID
-	return mb
-}
-
-// NetworkIDFromString sets the network ID for which this message is meant for.
-func (mb *MessageBuilder) NetworkIDFromString(networkIDStr string) *MessageBuilder {
-	if mb.err != nil {
-		return mb
-	}
-	mb.msg.NetworkID = iotago.NetworkIDFromString(networkIDStr)
-	return mb
-}
-
 // Payload sets the payload to embed within the message.
 func (mb *MessageBuilder) Payload(payload iotago.Payload) *MessageBuilder {
 	if mb.err != nil {
