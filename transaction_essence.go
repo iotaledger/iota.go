@@ -105,12 +105,12 @@ var (
 		Guards: serializer.SerializableGuard{
 			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
 				switch ty {
-				case uint32(OutputExtended):
+				case uint32(OutputBasic):
 				case uint32(OutputAlias):
 				case uint32(OutputFoundry):
 				case uint32(OutputNFT):
 				default:
-					return nil, fmt.Errorf("transaction essence can only contain simple/extended/alias/foundry/nft outputs types but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+					return nil, fmt.Errorf("transaction essence can only contain basic/alias/foundry/nft outputs types but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 				}
 				return OutputSelector(ty)
 			},
@@ -119,7 +119,7 @@ var (
 					return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedOutput)
 				}
 				switch seri.(type) {
-				case *ExtendedOutput:
+				case *BasicOutput:
 				case *AliasOutput:
 				case *FoundryOutput:
 				case *NFTOutput:

@@ -30,7 +30,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			bdl := builder.NewTransactionBuilder().
 				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.ExtendedOutput{
+				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -48,7 +48,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			bdl := builder.NewTransactionBuilder().
 				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.ExtendedOutput{
+				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -87,7 +87,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			bdl := builder.NewTransactionBuilder().
 				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.ExtendedOutput{
+				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -111,7 +111,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			bdl := builder.NewTransactionBuilder().
 				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, Input: inputUTXO1}).
-				AddOutput(&iotago.ExtendedOutput{
+				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},

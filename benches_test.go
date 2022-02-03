@@ -44,7 +44,7 @@ func BenchmarkDeserializeWithValidationLargeTxPayload(b *testing.B) {
 			Outputs: func() iotago.Outputs {
 				var outputs iotago.Outputs
 				for i := 0; i < iotago.MaxOutputsCount; i++ {
-					outputs = append(outputs, &iotago.ExtendedOutput{
+					outputs = append(outputs, &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},

@@ -54,7 +54,7 @@ func TestOutputsQuery_Build(t *testing.T) {
 func TestIndexerClient_Outputs(t *testing.T) {
 	defer gock.Off()
 
-	originOutput := tpkg.RandExtendedOutput(iotago.AddressEd25519)
+	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 	originOutput.NativeTokens = iotago.NativeTokens{}
 	originOutput.Blocks = iotago.FeatureBlocks{}
 	sigDepJson, err := originOutput.MarshalJSON()

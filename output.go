@@ -155,8 +155,8 @@ type OutputType byte
 const (
 	// OutputTreasury denotes the type of the TreasuryOutput.
 	OutputTreasury OutputType = 2
-	// OutputExtended denotes an ExtendedOutput.
-	OutputExtended OutputType = 3
+	// OutputBasic denotes an BasicOutput.
+	OutputBasic OutputType = 3
 	// OutputAlias denotes an AliasOutput.
 	OutputAlias OutputType = 4
 	// OutputFoundry denotes a FoundryOutput.
@@ -176,7 +176,7 @@ var (
 	outputNames = [OutputNFT + 1]string{
 		"LegacyOutput",
 		"TreasuryOutput",
-		"ExtendedOutput",
+		"BasicOutput",
 		"AliasOutput",
 		"FoundryOutput",
 		"NFTOutput",
@@ -290,11 +290,11 @@ func (outputs OutputsByType) NativeTokenOutputs() NativeTokenOutputs {
 	return nativeTokenOutputs
 }
 
-// ExtendedOutputs returns a slice of Outputs which are ExtendedOutput.
-func (outputs OutputsByType) ExtendedOutputs() ExtendedOutputs {
-	extOutputs := make(ExtendedOutputs, 0)
-	for _, output := range outputs[OutputExtended] {
-		extOutput, is := output.(*ExtendedOutput)
+// BasicOutputs returns a slice of Outputs which are BasicOutput.
+func (outputs OutputsByType) ExtendedOutputs() BasicOutputs {
+	extOutputs := make(BasicOutputs, 0)
+	for _, output := range outputs[OutputBasic] {
+		extOutput, is := output.(*BasicOutput)
 		if !is {
 			continue
 		}
@@ -582,8 +582,8 @@ type UnlockConditionOutput interface {
 func OutputSelector(outputType uint32) (Output, error) {
 	var seri Output
 	switch OutputType(outputType) {
-	case OutputExtended:
-		seri = &ExtendedOutput{}
+	case OutputBasic:
+		seri = &BasicOutput{}
 	case OutputTreasury:
 		seri = &TreasuryOutput{}
 	case OutputAlias:
@@ -870,7 +870,7 @@ func ValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalValidationFunc)
 func JsonOutputSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
 	switch OutputType(ty) {
-	case OutputExtended:
+	case OutputBasic:
 		obj = &jsonExtendedOutput{}
 	case OutputTreasury:
 		obj = &jsonTreasuryOutput{}

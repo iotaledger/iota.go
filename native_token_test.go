@@ -48,7 +48,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 			name:    "ok",
 			wantErr: false,
 			sources: []iotago.Output{
-				&iotago.ExtendedOutput{
+				&iotago.BasicOutput{
 					Amount:       1,
 					NativeTokens: tpkg.RandSortNativeTokens(5),
 					Conditions: iotago.UnlockConditions{
@@ -87,7 +87,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 			name:    "not sorted",
 			wantErr: true,
 			sources: []iotago.Output{
-				&iotago.ExtendedOutput{
+				&iotago.BasicOutput{
 					Amount:       1,
 					NativeTokens: notSortedNativeTokens(),
 					Conditions: iotago.UnlockConditions{
@@ -126,7 +126,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 			name:    "duped",
 			wantErr: true,
 			sources: []iotago.Output{
-				&iotago.ExtendedOutput{
+				&iotago.BasicOutput{
 					Amount:       1,
 					NativeTokens: dupedNativeTokens(),
 					Conditions: iotago.UnlockConditions{

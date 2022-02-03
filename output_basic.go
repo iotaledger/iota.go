@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	extOutputUnlockCondsArrayRules = &serializer.ArrayRules{
+	basicOutputUnlockCondsArrayRules = &serializer.ArrayRules{
 		Min: 1, Max: 4,
 		MustOccur: serializer.TypePrefixes{
 			uint32(UnlockConditionAddress): struct{}{},
@@ -21,7 +21,7 @@ var (
 				case uint32(UnlockConditionTimelock):
 				case uint32(UnlockConditionExpiration):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize extended output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
+					return nil, fmt.Errorf("%w: unable to deserialize basic output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
 				}
 				return UnlockConditionSelector(ty)
 			},
@@ -32,7 +32,7 @@ var (
 				case *TimelockUnlockCondition:
 				case *ExpirationUnlockCondition:
 				default:
-					return fmt.Errorf("%w: in extended output", ErrUnsupportedUnlockConditionType)
+					return fmt.Errorf("%w: in basic output", ErrUnsupportedUnlockConditionType)
 				}
 				return nil
 			},
@@ -42,7 +42,7 @@ var (
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
-	extOutputFeatBlockArrayRules = &serializer.ArrayRules{
+	basicOutputFeatBlockArrayRules = &serializer.ArrayRules{
 		Min: 0,
 		Max: 8,
 		Guards: serializer.SerializableGuard{
@@ -52,7 +52,7 @@ var (
 				case uint32(FeatureBlockMetadata):
 				case uint32(FeatureBlockTag):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize extended output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
+					return nil, fmt.Errorf("%w: unable to deserialize basic output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
 				}
 				return FeatureBlockSelector(ty)
 			},
@@ -62,7 +62,7 @@ var (
 				case *MetadataFeatureBlock:
 				case *TagFeatureBlock:
 				default:
-					return fmt.Errorf("%w: in extended output", ErrUnsupportedFeatureBlockType)
+					return fmt.Errorf("%w: in basic output", ErrUnsupportedFeatureBlockType)
 				}
 				return nil
 			},
@@ -73,21 +73,21 @@ var (
 	}
 )
 
-// ExtendedOutputUnlockConditionsArrayRules returns array rules defining the constraints on UnlockConditions within an ExtendedOutput.
-func ExtendedOutputUnlockConditionsArrayRules() serializer.ArrayRules {
-	return *extOutputUnlockCondsArrayRules
+// BasicOutputUnlockConditionsArrayRules returns array rules defining the constraints on UnlockConditions within an BasicOutput.
+func BasicOutputUnlockConditionsArrayRules() serializer.ArrayRules {
+	return *basicOutputUnlockCondsArrayRules
 }
 
-// ExtendedOutputFeatureBlocksArrayRules returns array rules defining the constraints on FeatureBlocks within an ExtendedOutput.
-func ExtendedOutputFeatureBlocksArrayRules() serializer.ArrayRules {
-	return *extOutputFeatBlockArrayRules
+// BasicOutputFeatureBlocksArrayRules returns array rules defining the constraints on FeatureBlocks within an BasicOutput.
+func BasicOutputFeatureBlocksArrayRules() serializer.ArrayRules {
+	return *basicOutputFeatBlockArrayRules
 }
 
-// ExtendedOutputs is a slice of ExtendedOutput(s).
-type ExtendedOutputs []*ExtendedOutput
+// BasicOutputs is a slice of BasicOutput(s).
+type BasicOutputs []*BasicOutput
 
-// ExtendedOutput is an output type which can hold native tokens and feature blocks.
-type ExtendedOutput struct {
+// BasicOutput is an output type which can hold native tokens and feature blocks.
+type BasicOutput struct {
 	// The amount of IOTA tokens held by the output.
 	Amount uint64
 	// The native tokens held by the output.
@@ -98,8 +98,8 @@ type ExtendedOutput struct {
 	Blocks FeatureBlocks
 }
 
-func (e *ExtendedOutput) Clone() Output {
-	return &ExtendedOutput{
+func (e *BasicOutput) Clone() Output {
+	return &BasicOutput{
 		Amount:       e.Amount,
 		NativeTokens: e.NativeTokens.Clone(),
 		Conditions:   e.Conditions.Clone(),
@@ -107,12 +107,12 @@ func (e *ExtendedOutput) Clone() Output {
 	}
 }
 
-func (e *ExtendedOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
+func (e *BasicOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
 	ok, _ := outputUnlockable(e, nil, ident, extParas)
 	return ok
 }
 
-func (e *ExtendedOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (e *BasicOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return outputOffsetVByteCost(costStruct) +
 		// prefix + amount
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
@@ -121,74 +121,74 @@ func (e *ExtendedOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) u
 		e.Blocks.VByteCost(costStruct, nil)
 }
 
-func (e *ExtendedOutput) NativeTokenSet() NativeTokens {
+func (e *BasicOutput) NativeTokenSet() NativeTokens {
 	return e.NativeTokens
 }
 
-func (e *ExtendedOutput) FeatureBlocks() FeatureBlocks {
+func (e *BasicOutput) FeatureBlocks() FeatureBlocks {
 	return e.Blocks
 }
 
-func (e *ExtendedOutput) UnlockConditions() UnlockConditions {
+func (e *BasicOutput) UnlockConditions() UnlockConditions {
 	return e.Conditions
 }
 
-func (e *ExtendedOutput) Deposit() uint64 {
+func (e *BasicOutput) Deposit() uint64 {
 	return e.Amount
 }
 
-func (e *ExtendedOutput) Ident() Address {
+func (e *BasicOutput) Ident() Address {
 	return e.Conditions.MustSet().Address().Address
 }
 
-func (e *ExtendedOutput) Type() OutputType {
-	return OutputExtended
+func (e *BasicOutput) Type() OutputType {
+	return OutputBasic
 }
 
-func (e *ExtendedOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
+func (e *BasicOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
-		CheckTypePrefix(uint32(OutputExtended), serializer.TypeDenotationByte, func(err error) error {
-			return fmt.Errorf("unable to deserialize extended output: %w", err)
+		CheckTypePrefix(uint32(OutputBasic), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize basic output: %w", err)
 		}).
 		ReadNum(&e.Amount, func(err error) error {
-			return fmt.Errorf("unable to deserialize amount for extended output: %w", err)
+			return fmt.Errorf("unable to deserialize amount for basic output: %w", err)
 		}).
 		ReadSliceOfObjects(&e.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize native tokens for extended output: %w", err)
+			return fmt.Errorf("unable to deserialize native tokens for basic output: %w", err)
 		}).
-		ReadSliceOfObjects(&e.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, extOutputUnlockCondsArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize unlock conditions for extended output: %w", err)
+		ReadSliceOfObjects(&e.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, basicOutputUnlockCondsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize unlock conditions for basic output: %w", err)
 		}).
-		ReadSliceOfObjects(&e.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, extOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize feature blocks for extended output: %w", err)
+		ReadSliceOfObjects(&e.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, basicOutputFeatBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize feature blocks for basic output: %w", err)
 		}).
 		Done()
 }
 
-func (e *ExtendedOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
+func (e *BasicOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(OutputExtended, func(err error) error {
-			return fmt.Errorf("unable to serialize extended output type ID: %w", err)
+		WriteNum(OutputBasic, func(err error) error {
+			return fmt.Errorf("unable to serialize basic output type ID: %w", err)
 		}).
 		WriteNum(e.Amount, func(err error) error {
-			return fmt.Errorf("unable to serialize extended output amount: %w", err)
+			return fmt.Errorf("unable to serialize basic output amount: %w", err)
 		}).
 		WriteSliceOfObjects(&e.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nativeTokensArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize extended output native tokens: %w", err)
+			return fmt.Errorf("unable to serialize basic output native tokens: %w", err)
 		}).
-		WriteSliceOfObjects(&e.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, extOutputUnlockCondsArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize extended output unlock conditions: %w", err)
+		WriteSliceOfObjects(&e.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, basicOutputUnlockCondsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize basic output unlock conditions: %w", err)
 		}).
-		WriteSliceOfObjects(&e.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, extOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize extended output feature blocks: %w", err)
+		WriteSliceOfObjects(&e.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, basicOutputFeatBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize basic output feature blocks: %w", err)
 		}).
 		Serialize()
 }
 
-func (e *ExtendedOutput) MarshalJSON() ([]byte, error) {
+func (e *BasicOutput) MarshalJSON() ([]byte, error) {
 	var err error
 	jExtendedOutput := &jsonExtendedOutput{
-		Type:   int(OutputExtended),
+		Type:   int(OutputBasic),
 		Amount: int(e.Amount),
 	}
 
@@ -210,7 +210,7 @@ func (e *ExtendedOutput) MarshalJSON() ([]byte, error) {
 	return json.Marshal(jExtendedOutput)
 }
 
-func (e *ExtendedOutput) UnmarshalJSON(bytes []byte) error {
+func (e *BasicOutput) UnmarshalJSON(bytes []byte) error {
 	jExtendedOutput := &jsonExtendedOutput{}
 	if err := json.Unmarshal(bytes, jExtendedOutput); err != nil {
 		return err
@@ -219,11 +219,11 @@ func (e *ExtendedOutput) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	*e = *seri.(*ExtendedOutput)
+	*e = *seri.(*BasicOutput)
 	return nil
 }
 
-// jsonExtendedOutput defines the json representation of a ExtendedOutput.
+// jsonExtendedOutput defines the json representation of a BasicOutput.
 type jsonExtendedOutput struct {
 	Type         int                `json:"type"`
 	Amount       int                `json:"amount"`
@@ -234,7 +234,7 @@ type jsonExtendedOutput struct {
 
 func (j *jsonExtendedOutput) ToSerializable() (serializer.Serializable, error) {
 	var err error
-	e := &ExtendedOutput{
+	e := &BasicOutput{
 		Amount: uint64(j.Amount),
 	}
 

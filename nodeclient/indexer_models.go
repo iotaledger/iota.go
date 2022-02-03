@@ -81,7 +81,7 @@ type OutputsQuery struct {
 }
 
 func (query *OutputsQuery) OutputType() iotago.OutputType {
-	return iotago.OutputExtended
+	return iotago.OutputBasic
 }
 
 func (query *OutputsQuery) SetOffset(cursor *string) {
