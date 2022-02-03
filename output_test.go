@@ -54,8 +54,10 @@ func TestOutputsDeSerialize(t *testing.T) {
 				},
 				Blocks: iotago.FeatureBlocks{
 					&iotago.SenderFeatureBlock{Address: tpkg.RandEd25519Address()},
-					&iotago.IssuerFeatureBlock{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(100)},
+				},
+				ImmutableBlocks: iotago.FeatureBlocks{
+					&iotago.IssuerFeatureBlock{Address: tpkg.RandEd25519Address()},
 				},
 			},
 			target: &iotago.AliasOutput{},
@@ -71,7 +73,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 				MaximumSupply:     new(big.Int).SetUint64(1000),
 				TokenScheme:       &iotago.SimpleTokenScheme{},
 				Conditions: iotago.UnlockConditions{
-					&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+					&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
 				},
 				Blocks: iotago.FeatureBlocks{
 					&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(100)},
@@ -82,10 +84,9 @@ func TestOutputsDeSerialize(t *testing.T) {
 		{
 			name: "ok - NFTOutput",
 			source: &iotago.NFTOutput{
-				Amount:            1337,
-				NativeTokens:      tpkg.RandSortNativeTokens(2),
-				NFTID:             tpkg.Rand20ByteArray(),
-				ImmutableMetadata: tpkg.RandBytes(10),
+				Amount:       1337,
+				NativeTokens: tpkg.RandSortNativeTokens(2),
+				NFTID:        tpkg.Rand20ByteArray(),
 				Conditions: iotago.UnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.DustDepositReturnUnlockCondition{
@@ -100,9 +101,12 @@ func TestOutputsDeSerialize(t *testing.T) {
 				},
 				Blocks: iotago.FeatureBlocks{
 					&iotago.SenderFeatureBlock{Address: tpkg.RandEd25519Address()},
-					&iotago.IssuerFeatureBlock{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(100)},
 					&iotago.TagFeatureBlock{Tag: tpkg.RandBytes(32)},
+				},
+				ImmutableBlocks: iotago.FeatureBlocks{
+					&iotago.IssuerFeatureBlock{Address: tpkg.RandEd25519Address()},
+					&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(10)},
 				},
 			},
 			target: &iotago.NFTOutput{},

@@ -29,10 +29,9 @@ func TestNFTTransition(t *testing.T) {
 	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := iotago.OutputSet{
 		inputIDs[0]: &iotago.NFTOutput{
-			Amount:            OneMi,
-			NativeTokens:      nil,
-			NFTID:             iotago.NFTID{},
-			ImmutableMetadata: nil,
+			Amount:       OneMi,
+			NativeTokens: nil,
+			NFTID:        iotago.NFTID{},
 			Conditions: iotago.UnlockConditions{
 				&iotago.AddressUnlockCondition{Address: ident1},
 			},
@@ -47,10 +46,9 @@ func TestNFTTransition(t *testing.T) {
 		Inputs: inputIDs.UTXOInputs(),
 		Outputs: iotago.Outputs{
 			&iotago.NFTOutput{
-				Amount:            OneMi,
-				NativeTokens:      nil,
-				NFTID:             nftID,
-				ImmutableMetadata: nil,
+				Amount:       OneMi,
+				NativeTokens: nil,
+				NFTID:        nftID,
 				Conditions: iotago.UnlockConditions{
 					&iotago.AddressUnlockCondition{Address: ident1},
 				},
@@ -111,7 +109,7 @@ func TestCirculatingSupplyBurn(t *testing.T) {
 			MaximumSupply:     big.NewInt(50),
 			TokenScheme:       &iotago.SimpleTokenScheme{},
 			Conditions: iotago.UnlockConditions{
-				&iotago.AddressUnlockCondition{Address: aliasIdent1},
+				&iotago.ImmutableAliasUnlockCondition{Address: aliasIdent1},
 			},
 			Blocks: nil,
 		},
@@ -152,7 +150,7 @@ func TestCirculatingSupplyBurn(t *testing.T) {
 				MaximumSupply:     big.NewInt(50),
 				TokenScheme:       &iotago.SimpleTokenScheme{},
 				Conditions: iotago.UnlockConditions{
-					&iotago.AddressUnlockCondition{Address: aliasIdent1},
+					&iotago.ImmutableAliasUnlockCondition{Address: aliasIdent1},
 				},
 				Blocks: nil,
 			},
@@ -322,7 +320,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					MaximumSupply:     new(big.Int).SetUint64(1000),
 					TokenScheme:       &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress()},
+						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Blocks: nil,
 				},
@@ -335,7 +333,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					MaximumSupply:     new(big.Int).SetUint64(1000),
 					TokenScheme:       &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress()},
+						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Blocks: nil,
 				},
@@ -348,7 +346,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					MaximumSupply:     new(big.Int).SetUint64(1000),
 					TokenScheme:       &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress()},
+						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Blocks: nil,
 				},
@@ -361,32 +359,36 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					MaximumSupply:     new(big.Int).SetUint64(1000),
 					TokenScheme:       &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress()},
+						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Blocks: nil,
 				},
 				inputIDs[13]: &iotago.NFTOutput{
-					Amount:            defaultAmount,
-					NativeTokens:      nil,
-					NFTID:             nft1ID,
-					ImmutableMetadata: []byte("transfer to 4"),
+					Amount:       defaultAmount,
+					NativeTokens: nil,
+					NFTID:        nft1ID,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident3},
 					},
 					Blocks: iotago.FeatureBlocks{
 						&iotago.IssuerFeatureBlock{Address: ident3},
 					},
+					ImmutableBlocks: iotago.FeatureBlocks{
+						&iotago.MetadataFeatureBlock{Data: []byte("transfer to 4")},
+					},
 				},
 				inputIDs[14]: &iotago.NFTOutput{
-					Amount:            defaultAmount,
-					NativeTokens:      nil,
-					NFTID:             nft2ID,
-					ImmutableMetadata: []byte("going to be destroyed"),
+					Amount:       defaultAmount,
+					NativeTokens: nil,
+					NFTID:        nft2ID,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident4},
 					},
 					Blocks: iotago.FeatureBlocks{
 						&iotago.IssuerFeatureBlock{Address: ident3},
+					},
+					ImmutableBlocks: iotago.FeatureBlocks{
+						&iotago.MetadataFeatureBlock{Data: []byte("going to be destroyed")},
 					},
 				},
 				inputIDs[15]: &iotago.BasicOutput{
@@ -499,7 +501,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						MaximumSupply:     new(big.Int).SetInt64(1000),
 						TokenScheme:       &iotago.SimpleTokenScheme{},
 						Conditions: iotago.UnlockConditions{
-							&iotago.AddressUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress()},
+							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
 						Blocks: nil,
 					},
@@ -517,7 +519,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						MaximumSupply:     new(big.Int).SetInt64(1000),
 						TokenScheme:       &iotago.SimpleTokenScheme{},
 						Conditions: iotago.UnlockConditions{
-							&iotago.AddressUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress()},
+							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
 						Blocks: nil,
 					},
@@ -535,7 +537,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						MaximumSupply:     new(big.Int).SetInt64(1000),
 						TokenScheme:       &iotago.SimpleTokenScheme{},
 						Conditions: iotago.UnlockConditions{
-							&iotago.AddressUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress()},
+							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
 						Blocks: nil,
 					},
@@ -548,7 +550,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						MaximumSupply:     new(big.Int).SetInt64(1000),
 						TokenScheme:       &iotago.SimpleTokenScheme{},
 						Conditions: iotago.UnlockConditions{
-							&iotago.AddressUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress()},
+							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
 						Blocks: iotago.FeatureBlocks{
 							&iotago.MetadataFeatureBlock{Data: []byte("interesting metadata")},
@@ -562,25 +564,29 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						},
 					},
 					&iotago.NFTOutput{
-						Amount:            defaultAmount,
-						NativeTokens:      nil,
-						NFTID:             iotago.NFTID{},
-						ImmutableMetadata: []byte("immutable metadata"),
+						Amount:       defaultAmount,
+						NativeTokens: nil,
+						NFTID:        iotago.NFTID{},
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident4},
 						},
 						Blocks: nil,
+						ImmutableBlocks: iotago.FeatureBlocks{
+							&iotago.MetadataFeatureBlock{Data: []byte("immutable metadata")},
+						},
 					},
 					&iotago.NFTOutput{
-						Amount:            defaultAmount,
-						NativeTokens:      nil,
-						NFTID:             nft1ID,
-						ImmutableMetadata: []byte("transfer to 4"),
+						Amount:       defaultAmount,
+						NativeTokens: nil,
+						NFTID:        nft1ID,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident4},
 						},
 						Blocks: iotago.FeatureBlocks{
 							&iotago.IssuerFeatureBlock{Address: ident3},
+						},
+						ImmutableBlocks: iotago.FeatureBlocks{
+							&iotago.MetadataFeatureBlock{Data: []byte("transfer to 4")},
 						},
 					},
 					// from NFT ident 4 destruction remainder
@@ -729,7 +735,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					TokenTag:     tpkg.Rand12ByteArray(),
 					TokenScheme:  &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: &aliasIdent1},
+						&iotago.ImmutableAliasUnlockCondition{Address: &aliasIdent1},
 					},
 				},
 			}
@@ -1270,7 +1276,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 		MaximumSupply:     foundryMaxSupply,
 		TokenScheme:       foundryTokenScheme,
 		Conditions: iotago.UnlockConditions{
-			&iotago.AddressUnlockCondition{Address: foundryAliasIdent},
+			&iotago.ImmutableAliasUnlockCondition{Address: foundryAliasIdent},
 		},
 	}
 
@@ -1282,7 +1288,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 		MaximumSupply:     foundryMaxSupply,
 		TokenScheme:       foundryTokenScheme,
 		Conditions: iotago.UnlockConditions{
-			&iotago.AddressUnlockCondition{Address: foundryAliasIdent},
+			&iotago.ImmutableAliasUnlockCondition{Address: foundryAliasIdent},
 		},
 	}
 

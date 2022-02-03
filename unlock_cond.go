@@ -35,6 +35,8 @@ const (
 	UnlockConditionStateControllerAddress
 	// UnlockConditionGovernorAddress denotes a GovernorAddressUnlockCondition.
 	UnlockConditionGovernorAddress
+	// UnlockConditionImmutableAlias denotes an ImmutableAliasUnlockCondition.
+	UnlockConditionImmutableAlias
 )
 
 func (unlockCondType UnlockConditionType) String() string {
@@ -45,13 +47,14 @@ func (unlockCondType UnlockConditionType) String() string {
 }
 
 var (
-	unlockCondNames = [UnlockConditionGovernorAddress + 1]string{
+	unlockCondNames = [UnlockConditionImmutableAlias + 1]string{
 		"AddressUnlockCondition",
 		"DustDepositReturnUnlockCondition",
 		"TimelockUnlockCondition",
 		"ExpirationUnlockCondition",
 		"StateControllerAddressUnlockCondition",
 		"GovernorAddressUnlockCondition",
+		"ImmutableAliasUnlockCondition",
 	}
 )
 
@@ -237,6 +240,15 @@ func (f UnlockConditionsSet) Address() *AddressUnlockCondition {
 	return b.(*AddressUnlockCondition)
 }
 
+// ImmutableAlias returns the ImmutableAliasUnlockCondition in the set or nil.
+func (f UnlockConditionsSet) ImmutableAlias() *ImmutableAliasUnlockCondition {
+	b, has := f[UnlockConditionImmutableAlias]
+	if !has {
+		return nil
+	}
+	return b.(*ImmutableAliasUnlockCondition)
+}
+
 // GovernorAddress returns the GovernorAddressUnlockCondition in the set or nil.
 func (f UnlockConditionsSet) GovernorAddress() *GovernorAddressUnlockCondition {
 	b, has := f[UnlockConditionGovernorAddress]
@@ -289,6 +301,8 @@ func UnlockConditionSelector(unlockCondType uint32) (UnlockCondition, error) {
 		seri = &StateControllerAddressUnlockCondition{}
 	case UnlockConditionGovernorAddress:
 		seri = &GovernorAddressUnlockCondition{}
+	case UnlockConditionImmutableAlias:
+		seri = &ImmutableAliasUnlockCondition{}
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownUnlockConditionType, unlockCondType)
 	}
@@ -311,6 +325,8 @@ func jsonUnlockConditionSelector(ty int) (JSONSerializable, error) {
 		obj = &jsonStateControllerAddressUnlockCondition{}
 	case UnlockConditionGovernorAddress:
 		obj = &jsonGovernorAddressUnlockCondition{}
+	case UnlockConditionImmutableAlias:
+		obj = &jsonImmutableAliasUnlockCondition{}
 	default:
 		return nil, fmt.Errorf("unable to decode unlock condition type from JSON: %w", ErrUnknownUnlockConditionType)
 	}
