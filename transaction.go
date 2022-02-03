@@ -253,19 +253,6 @@ func (workingSet *SemValiContextWorkingSet) UTXOInputAtIndex(inputIndex uint16) 
 	return workingSet.Tx.Essence.Inputs[inputIndex].(*UTXOInput)
 }
 
-func featureBlockSetFromOutput(output ChainConstrainedOutput) (FeatureBlocksSet, error) {
-	featureBlockOutput, is := output.(FeatureBlockOutput)
-	if !is {
-		return nil, nil
-	}
-
-	featureBlocks, err := featureBlockOutput.FeatureBlocks().Set()
-	if err != nil {
-		return nil, fmt.Errorf("unable to compute feature block set for output: %w", err)
-	}
-	return featureBlocks, nil
-}
-
 func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiContextWorkingSet, error) {
 	var err error
 	workingSet := &SemValiContextWorkingSet{}

@@ -398,6 +398,10 @@ func (f *FoundryOutput) FeatureBlocks() FeatureBlocks {
 	return f.Blocks
 }
 
+func (f *FoundryOutput) ImmutableFeatureBlocks() FeatureBlocks {
+	return f.ImmutableBlocks
+}
+
 func (f *FoundryOutput) Deposit() uint64 {
 	return f.Amount
 }

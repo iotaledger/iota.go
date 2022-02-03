@@ -248,6 +248,10 @@ func (n *NFTOutput) FeatureBlocks() FeatureBlocks {
 	return n.Blocks
 }
 
+func (n *NFTOutput) ImmutableFeatureBlocks() FeatureBlocks {
+	return n.ImmutableBlocks
+}
+
 func (n *NFTOutput) Deposit() uint64 {
 	return n.Amount
 }
