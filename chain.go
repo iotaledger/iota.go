@@ -56,6 +56,9 @@ type ChainConstrainedOutput interface {
 	// ValidateStateTransition runs a StateTransitionValidationFunc with next.
 	// Next is nil if transType is ChainTransitionTypeGenesis or ChainTransitionTypeDestroy.
 	ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error
+
+	// ImmutableFeatureBlocks returns the immutable FeatureBlocks this output contains.
+	ImmutableFeatureBlocks() FeatureBlocks
 }
 
 // ChainTransitionType defines the type of transition a ChainConstrainedOutput is doing.
@@ -77,21 +80,16 @@ type StateTransitionValidationFunc func(current ChainConstrainedOutput, next Cha
 // IsIssuerOnOutputUnlocked checks whether the issuer in an IssuerFeatureBlock of this new ChainConstrainedOutput has been unlocked.
 // This function is a no-op if the chain is not new, or it does not contain an IssuerFeatureBlock.
 func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents UnlockedIdentities) error {
-	featureBlocks, err := featureBlockSetFromOutput(output)
-	if err != nil {
-		return err
-	}
-
-	if featureBlocks == nil {
+	immFeatblocks := output.ImmutableFeatureBlocks()
+	if immFeatblocks == nil || len(immFeatblocks) == 0 {
 		return nil
 	}
 
-	issuerFeatureBlock, has := featureBlocks[FeatureBlockIssuer]
-	if !has {
+	issuerFeatureBlock := immFeatblocks.MustSet().IssuerFeatureBlock()
+	if issuerFeatureBlock == nil {
 		return nil
 	}
-
-	if _, isUnlocked := unlockedIdents[issuerFeatureBlock.(*IssuerFeatureBlock).Address.Key()]; !isUnlocked {
+	if _, isUnlocked := unlockedIdents[issuerFeatureBlock.Address.Key()]; !isUnlocked {
 		return ErrIssuerFeatureBlockNotUnlocked
 	}
 	return nil

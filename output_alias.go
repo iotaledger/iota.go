@@ -429,6 +429,10 @@ func (a *AliasOutput) FeatureBlocks() FeatureBlocks {
 	return a.Blocks
 }
 
+func (a *AliasOutput) ImmutableFeatureBlocks() FeatureBlocks {
+	return a.ImmutableBlocks
+}
+
 func (a *AliasOutput) UnlockConditions() UnlockConditions {
 	return a.Conditions
 }

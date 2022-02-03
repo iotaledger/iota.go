@@ -568,7 +568,7 @@ type NativeTokenOutput interface {
 
 // FeatureBlockOutput is a type of Output which can hold FeatureBlocks.
 type FeatureBlockOutput interface {
-	// FeatureBlocks returns the FeatureBlocks this output defines.
+	// FeatureBlocks returns the FeatureBlocks this output contains.
 	FeatureBlocks() FeatureBlocks
 }
 
