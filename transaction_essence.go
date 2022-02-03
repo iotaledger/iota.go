@@ -17,11 +17,11 @@ const (
 	TransactionEssenceNormal TransactionEssenceType = iota
 
 	// MaxInputsCount defines the maximum amount of inputs within a TransactionEssence.
-	MaxInputsCount = 127
+	MaxInputsCount = 128
 	// MinInputsCount defines the minimum amount of inputs within a TransactionEssence.
 	MinInputsCount = 1
 	// MaxOutputsCount defines the maximum amount of outputs within a TransactionEssence.
-	MaxOutputsCount = 127
+	MaxOutputsCount = 128
 	// MinOutputsCount defines the minimum amount of inputs within a TransactionEssence.
 	MinOutputsCount = 1
 )
