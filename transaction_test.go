@@ -199,8 +199,8 @@ func TestTransactionSemanticValidation(t *testing.T) {
 				defaultAmount            uint64 = OneMi
 				confirmingMilestoneIndex uint32 = 750
 				dustDepositReturn        uint64 = OneMi / 2
-				nativeTokenTransfer1            = tpkg.RandSortNativeTokens(50)
-				nativeTokenTransfer2            = tpkg.RandSortNativeTokens(50)
+				nativeTokenTransfer1            = tpkg.RandSortNativeTokens(10)
+				nativeTokenTransfer2            = tpkg.RandSortNativeTokens(10)
 			)
 
 			var (
@@ -1297,7 +1297,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 		func() test {
 			inputIDs := tpkg.RandOutputIDs(4)
 
-			ntCount := 100
+			ntCount := 10
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
 			inputs := iotago.OutputSet{
