@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,9 +25,14 @@ const (
 	MaxOutputsCount = 128
 	// MinOutputsCount defines the minimum amount of inputs within a TransactionEssence.
 	MinOutputsCount = 1
+
+	// InputsCommitmentLength defines the length of the inputs commitment hash.
+	InputsCommitmentLength = blake2b.Size256
 )
 
 var (
+	// ErrInvalidInputsCommitment gets returned when the inputs commitment is invalid.
+	ErrInvalidInputsCommitment = errors.New("invalid inputs commitment")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
 	// ErrAliasOutputNonEmptyState gets returned if an AliasOutput with zeroed AliasID contains state (counters non-zero etc.).
@@ -155,10 +161,15 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 	return seri, nil
 }
 
+// InputsCommitment is a commitment to the inputs of a transaction.
+type InputsCommitment = [InputsCommitmentLength]byte
+
 // TransactionEssence is the essence part of a Transaction.
 type TransactionEssence struct {
 	// The inputs of this transaction.
 	Inputs Inputs `json:"inputs"`
+	// The commitment to the referenced inputs.
+	InputsCommitment InputsCommitment `json:"inputsCommitment"`
 	// The outputs of this transaction.
 	Outputs Outputs `json:"outputs"`
 	// The optional embedded payload.
@@ -177,7 +188,13 @@ func (u *TransactionEssence) SigningMessage() ([]byte, error) {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (u *TransactionEssence) Sign(addrKeys ...AddressKeys) ([]Signature, error) {
+func (u *TransactionEssence) Sign(inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
+	if inputsCommitment == nil || len(inputsCommitment) != InputsCommitmentLength {
+		return nil, ErrInvalidInputsCommitment
+	}
+
+	copy(u.InputsCommitment[:], inputsCommitment)
+
 	signMsg, err := u.SigningMessage()
 	if err != nil {
 		return nil, err
@@ -204,6 +221,9 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 		ReadSliceOfObjects(&u.Inputs, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceInputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize inputs of transaction essence: %w", err)
 		}).
+		ReadArrayOf32Bytes(&u.InputsCommitment, func(err error) error {
+			return fmt.Errorf("unable to deserialize inputs commitment of transaction essence: %w", err)
+		}).
 		ReadSliceOfObjects(&u.Outputs, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceOutputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize outputs of transaction essence: %w", err)
 		}).
@@ -221,6 +241,9 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 		WriteSliceOfObjects(&u.Inputs, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, essenceInputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence inputs: %w", err)
 		}).
+		WriteBytes(u.InputsCommitment[:], func(err error) error {
+			return fmt.Errorf("unable to serialize transaction essence inputs commitment: %w", err)
+		}).
 		WriteSliceOfObjects(&u.Outputs, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, essenceOutputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence outputs: %w", err)
 		}).
@@ -232,9 +255,10 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 
 func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 	jTransactionEssence := &jsonTransactionEssence{
-		Inputs:  make([]*json.RawMessage, len(u.Inputs)),
-		Outputs: make([]*json.RawMessage, len(u.Outputs)),
-		Payload: nil,
+		Inputs:           make([]*json.RawMessage, len(u.Inputs)),
+		InputsCommitment: hex.EncodeToString(u.InputsCommitment[:]),
+		Outputs:          make([]*json.RawMessage, len(u.Outputs)),
+		Payload:          nil,
 	}
 	jTransactionEssence.Type = int(TransactionEssenceNormal)
 
@@ -245,8 +269,8 @@ func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 		}
 		rawMsgInputJson := json.RawMessage(inputJson)
 		jTransactionEssence.Inputs[i] = &rawMsgInputJson
-
 	}
+
 	for i, output := range u.Outputs {
 		outputJson, err := output.MarshalJSON()
 		if err != nil {
@@ -317,10 +341,11 @@ func jsonTransactionEssenceSelector(ty int) (JSONSerializable, error) {
 
 // jsonTransactionEssence defines the json representation of a TransactionEssence.
 type jsonTransactionEssence struct {
-	Type    int                `json:"type"`
-	Inputs  []*json.RawMessage `json:"inputs"`
-	Outputs []*json.RawMessage `json:"outputs"`
-	Payload *json.RawMessage   `json:"payload"`
+	Type             int                `json:"type"`
+	Inputs           []*json.RawMessage `json:"inputs"`
+	InputsCommitment string             `json:"inputsCommitment"`
+	Outputs          []*json.RawMessage `json:"outputs"`
+	Payload          *json.RawMessage   `json:"payload"`
 }
 
 func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, error) {
@@ -342,6 +367,13 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 		unsigTx.Inputs[i] = input.(Input)
 	}
 
+	var err error
+	inputsCommitmentSlice, err := hex.DecodeString(j.InputsCommitment)
+	if err != nil {
+		return unsigTx, fmt.Errorf("unable to decode JSON inputs commitment: %w", err)
+	}
+	copy(unsigTx.InputsCommitment[:], inputsCommitmentSlice)
+
 	for i, jOutput := range j.Outputs {
 		jsonOutput, err := DeserializeObjectFromJSON(jOutput, JsonOutputSelector)
 		if err != nil {
@@ -358,7 +390,6 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 		return unsigTx, nil
 	}
 
-	var err error
 	unsigTx.Payload, err = payloadFromJSONRawMsg(j.Payload)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode inner transaction essence payload: %w", err)

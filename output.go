@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"golang.org/x/crypto/blake2b"
 )
 
 const (
@@ -149,6 +150,15 @@ func (outputIDs OutputIDs) UTXOInputs() Inputs {
 	return inputs
 }
 
+// OrderedSet returns an Outputs slice ordered by this OutputIDs slice given a OutputSet.
+func (outputIDs OutputIDs) OrderedSet(set OutputSet) Outputs {
+	outputs := make(Outputs, len(outputIDs))
+	for i, outputID := range outputIDs {
+		outputs[i] = set[outputID]
+	}
+	return outputs
+}
+
 // OutputType defines the type of outputs.
 type OutputType byte
 
@@ -212,6 +222,33 @@ func (o *Outputs) FromSerializables(seris serializer.Serializables) {
 	for i, seri := range seris {
 		(*o)[i] = seri.(Output)
 	}
+}
+
+// MustCommitment works like Commitment but panics if there's an error.
+func (o Outputs) MustCommitment() []byte {
+	comm, err := o.Commitment()
+	if err != nil {
+		panic(err)
+	}
+	return comm
+}
+
+// Commitment computes a hash of the outputs slice to be used as a commitment.
+func (o Outputs) Commitment() ([]byte, error) {
+	h, err := blake2b.New256(nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, output := range o {
+		outputBytes, err := output.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
+		if err != nil {
+			return nil, fmt.Errorf("unable to compute commitment hash: %w", err)
+		}
+		if _, err := h.Write(outputBytes); err != nil {
+			return nil, fmt.Errorf("unable to write output bytes for commitment hash: %w", err)
+		}
+	}
+	return h.Sum(nil), nil
 }
 
 // ChainConstrainedOutputSet returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs in Outputs.
