@@ -71,7 +71,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 					MaximumSupply:     tpkg.RandUint256(),
 					TokenScheme:       &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 				},
 				&iotago.NFTOutput{
@@ -110,7 +110,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 					MaximumSupply:     tpkg.RandUint256(),
 					TokenScheme:       &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 				},
 				&iotago.NFTOutput{

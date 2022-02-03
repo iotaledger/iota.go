@@ -13,14 +13,14 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 	exampleIssuer := tpkg.RandEd25519Address()
 
 	exampleCurrentNFTOutput := &iotago.NFTOutput{
-		Amount:            100,
-		NFTID:             iotago.NFTID{},
-		ImmutableMetadata: []byte("some-ipfs-link"),
+		Amount: 100,
+		NFTID:  iotago.NFTID{},
 		Conditions: iotago.UnlockConditions{
 			&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 		},
-		Blocks: iotago.FeatureBlocks{
+		ImmutableBlocks: iotago.FeatureBlocks{
 			&iotago.IssuerFeatureBlock{Address: exampleIssuer},
+			&iotago.MetadataFeatureBlock{Data: []byte("some-ipfs-link")},
 		},
 	}
 
@@ -93,10 +93,12 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleCurrentNFTOutput,
 			nextMut: map[string]fieldMutations{
 				"immutable_metadata": {
-					"ImmutableMetadata": []byte("link-to-cat.gif"),
+					"ImmutableBlocks": iotago.FeatureBlocks{
+						&iotago.MetadataFeatureBlock{Data: []byte("link-to-cat.gif")},
+					},
 				},
 				"issuer": {
-					"Blocks": iotago.FeatureBlocks{
+					"ImmutableBlocks": iotago.FeatureBlocks{
 						&iotago.IssuerFeatureBlock{Address: tpkg.RandEd25519Address()},
 					},
 				},

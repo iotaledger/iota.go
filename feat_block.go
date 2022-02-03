@@ -13,6 +13,8 @@ var (
 	ErrNonUniqueFeatureBlocks = errors.New("non unique feature blocks within outputs")
 	// ErrInvalidFeatureBlockTransition gets returned when a FeatureBlock's transition within a ChainConstrainedOutput is invalid.
 	ErrInvalidFeatureBlockTransition = errors.New("invalid feature block transition")
+	// ErrImmutableFeatureBlocksMutated gets returned when an immutable FeatureBlocks is mutated between chain transitions.
+	ErrImmutableFeatureBlocksMutated = errors.New("invalid feature block transition")
 )
 
 // FeatureBlockType defines the type of feature blocks.

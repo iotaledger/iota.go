@@ -27,31 +27,20 @@ var (
 	foundryOutputUnlockCondsArrayRules = &serializer.ArrayRules{
 		Min: 1, Max: 1,
 		MustOccur: serializer.TypePrefixes{
-			uint32(UnlockConditionAddress): struct{}{},
+			uint32(UnlockConditionImmutableAlias): struct{}{},
 		},
 		Guards: serializer.SerializableGuard{
 			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
 				switch ty {
-				case uint32(UnlockConditionAddress):
+				case uint32(UnlockConditionImmutableAlias):
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
 				}
 				return UnlockConditionSelector(ty)
 			},
-			PostReadGuard: func(seri serializer.Serializable) error {
-				if addrUnlockCond, ok := seri.(*AddressUnlockCondition); ok {
-					if addrUnlockCond.Address.Type() != AddressAlias {
-						return fmt.Errorf("%w: unable to deserialize foundry output, unsupported address in address unlock condition", ErrUnsupportedUnlockConditionType)
-					}
-				}
-				return nil
-			},
 			WriteGuard: func(seri serializer.Serializable) error {
-				switch x := seri.(type) {
-				case *AddressUnlockCondition:
-					if x.Address.Type() != AddressAlias {
-						return fmt.Errorf("%w: in foundry output, address unlock condition holds non alias address", ErrUnsupportedUnlockConditionType)
-					}
+				switch seri.(type) {
+				case *ImmutableAliasUnlockCondition:
 				default:
 					return fmt.Errorf("%w: in foundry output", ErrUnsupportedUnlockConditionType)
 				}
@@ -88,11 +77,42 @@ var (
 			serializer.ArrayValidationModeLexicalOrdering |
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
+
+	foundryOutputImmFeatBlockArrayRules = &serializer.ArrayRules{
+		Min: 0,
+		Max: 1,
+		Guards: serializer.SerializableGuard{
+			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+				switch ty {
+				case uint32(FeatureBlockMetadata):
+				default:
+					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported immutable feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
+				}
+				return FeatureBlockSelector(ty)
+			},
+			WriteGuard: func(seri serializer.Serializable) error {
+				switch seri.(type) {
+				case *MetadataFeatureBlock:
+				default:
+					return fmt.Errorf("%w: in foundry output", ErrUnsupportedFeatureBlockType)
+				}
+				return nil
+			},
+		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+	}
 )
 
 // FoundryOutputFeatureBlocksArrayRules returns array rules defining the constraints on FeatureBlocks within an FoundryOutput.
 func FoundryOutputFeatureBlocksArrayRules() serializer.ArrayRules {
 	return *foundryOutputFeatBlockArrayRules
+}
+
+// FoundryOutputImmutableFeatureBlocksArrayRules returns array rules defining the constraints on immutable FeatureBlocks within an FoundryOutput.
+func FoundryOutputImmutableFeatureBlocksArrayRules() serializer.ArrayRules {
+	return *foundryOutputImmFeatBlockArrayRules
 }
 
 // TokenTag is a tag holding some additional data which might be interpreted by higher layers.
@@ -158,8 +178,10 @@ type FoundryOutput struct {
 	TokenScheme TokenScheme
 	// The unlock conditions on this output.
 	Conditions UnlockConditions
-	// The feature blocks which modulate the constraints on the output.
+	// The feature blocks on the output.
 	Blocks FeatureBlocks
+	// The immutable feature blocks on the output.
+	ImmutableBlocks FeatureBlocks
 }
 
 func (f *FoundryOutput) Clone() Output {
@@ -172,12 +194,13 @@ func (f *FoundryOutput) Clone() Output {
 		MaximumSupply:     new(big.Int).Set(f.MaximumSupply),
 		TokenScheme:       f.TokenScheme.Clone(),
 		Conditions:        f.Conditions.Clone(),
-		Blocks:            f.Blocks,
+		Blocks:            f.Blocks.Clone(),
+		ImmutableBlocks:   f.ImmutableBlocks.Clone(),
 	}
 }
 
 func (f *FoundryOutput) Ident() Address {
-	return f.Conditions.MustSet().Address().Address
+	return f.Conditions.MustSet().ImmutableAlias().Address
 }
 
 func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
@@ -194,7 +217,8 @@ func (f *FoundryOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) ui
 		costStruct.VBFactorData.Multiply(serializer.UInt32ByteSize+TokenTagLength+Uint256ByteSize+Uint256ByteSize) +
 		f.TokenScheme.VByteCost(costStruct, nil) +
 		f.Conditions.VByteCost(costStruct, nil) +
-		f.Blocks.VByteCost(costStruct, nil)
+		f.Blocks.VByteCost(costStruct, nil) +
+		f.ImmutableBlocks.VByteCost(costStruct, nil)
 }
 
 func (f *FoundryOutput) Chain() ChainID {
@@ -288,26 +312,30 @@ func (f *FoundryOutput) checkSerialNumberAgainstAliasFoundries(semValCtx *Semant
 }
 
 func (f *FoundryOutput) checkStateChangeTransition(next ChainConstrainedOutput, inSums NativeTokenSum, outSums NativeTokenSum) error {
-	nextFoundryOutput, is := next.(*FoundryOutput)
+	nextState, is := next.(*FoundryOutput)
 	if !is {
 		return fmt.Errorf("%w: foundry output can only state transition to another foundry output", ErrInvalidChainStateTransition)
+	}
+
+	if !f.ImmutableBlocks.Equal(nextState.ImmutableBlocks) {
+		return fmt.Errorf("%w: old state %s, next state %s", ErrInvalidChainStateTransition, f.ImmutableBlocks, nextState.ImmutableBlocks)
 	}
 
 	// the check for the serial number and token scheme not being mutated is implicit
 	// as a change would cause the foundry ID to be different, which would result in
 	// no matching foundry to be found to validate the state transition against
 	switch {
-	case f.MustID() != nextFoundryOutput.MustID():
+	case f.MustID() != nextState.MustID():
 		// impossible invariant as the STVF should be called via the matching next foundry output
-		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %v got %v", f.MustID(), nextFoundryOutput.MustID()))
-	case f.MaximumSupply.Cmp(nextFoundryOutput.MaximumSupply) != 0:
-		return fmt.Errorf("%w: maximum supply mismatch wanted %s but got %s", ErrInvalidChainStateTransition, f.MaximumSupply, nextFoundryOutput.MaximumSupply)
-	case f.TokenTag != nextFoundryOutput.TokenTag:
-		return fmt.Errorf("%w: token tag mismatch wanted %s but got %s", ErrInvalidChainStateTransition, f.TokenTag, nextFoundryOutput.TokenTag)
+		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %v got %v", f.MustID(), nextState.MustID()))
+	case f.MaximumSupply.Cmp(nextState.MaximumSupply) != 0:
+		return fmt.Errorf("%w: maximum supply mismatch wanted %s but got %s", ErrInvalidChainStateTransition, f.MaximumSupply, nextState.MaximumSupply)
+	case f.TokenTag != nextState.TokenTag:
+		return fmt.Errorf("%w: token tag mismatch wanted %s but got %s", ErrInvalidChainStateTransition, f.TokenTag, nextState.TokenTag)
 	}
 
 	diff := new(big.Int)
-	diff.Sub(nextFoundryOutput.CirculatingSupply, f.CirculatingSupply)
+	diff.Sub(nextState.CirculatingSupply, f.CirculatingSupply)
 	if err := NativeTokenSumBalancedWithDiff(f.MustNativeTokenID(), inSums, outSums, diff); err != nil {
 		return fmt.Errorf("%w: foundry state transition does not balance NativeToken %s", err, f.MustNativeTokenID())
 	}
@@ -405,10 +433,13 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 			return fmt.Errorf("unable to deserialize token scheme for foundry output: %w", err)
 		}).
 		ReadSliceOfObjects(&f.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputUnlockCondsArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize unlock conditions for NFT output: %w", err)
+			return fmt.Errorf("unable to deserialize unlock conditions for foundry output: %w", err)
 		}).
 		ReadSliceOfObjects(&f.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize feature blocks for NFT output: %w", err)
+			return fmt.Errorf("unable to deserialize feature blocks for foundry output: %w", err)
+		}).
+		ReadSliceOfObjects(&f.ImmutableBlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputImmFeatBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize immutable feature blocks for foundry output: %w", err)
 		}).
 		Done()
 }
@@ -444,6 +475,9 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode, deS
 		}).
 		WriteSliceOfObjects(&f.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, foundryOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output feature blocks: %w", err)
+		}).
+		WriteSliceOfObjects(&f.ImmutableBlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, foundryOutputImmFeatBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize foundry output immutable feature blocks: %w", err)
 		}).
 		Serialize()
 }
@@ -483,6 +517,11 @@ func (f *FoundryOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
+	jFoundryOutput.ImmutableBlocks, err = serializablesToJSONRawMsgs(f.ImmutableBlocks.ToSerializables())
+	if err != nil {
+		return nil, err
+	}
+
 	return json.Marshal(jFoundryOutput)
 }
 
@@ -511,6 +550,7 @@ type jsonFoundryOutput struct {
 	TokenScheme       *json.RawMessage   `json:"tokenScheme"`
 	Conditions        []*json.RawMessage `json:"unlockConditions"`
 	Blocks            []*json.RawMessage `json:"featureBlocks"`
+	ImmutableBlocks   []*json.RawMessage `json:"immutableFeatureBlocks"`
 }
 
 func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
@@ -553,6 +593,11 @@ func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
 	}
 
 	e.Blocks, err = featureBlocksFromJSONRawMsg(j.Blocks)
+	if err != nil {
+		return nil, err
+	}
+
+	e.ImmutableBlocks, err = featureBlocksFromJSONRawMsg(j.ImmutableBlocks)
 	if err != nil {
 		return nil, err
 	}

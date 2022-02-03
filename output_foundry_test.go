@@ -22,7 +22,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		MaximumSupply:     new(big.Int).SetUint64(1000),
 		TokenScheme:       &iotago.SimpleTokenScheme{},
 		Conditions: iotago.UnlockConditions{
-			&iotago.AddressUnlockCondition{Address: exampleAliasIdent},
+			&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasIdent},
 		},
 	}
 

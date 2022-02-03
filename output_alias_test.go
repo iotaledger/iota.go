@@ -25,7 +25,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		MaximumSupply:     new(big.Int).SetInt64(10000),
 		TokenScheme:       &iotago.SimpleTokenScheme{},
 		Conditions: iotago.UnlockConditions{
-			&iotago.AddressUnlockCondition{Address: exampleAliasID.ToAddress()},
+			&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasID.ToAddress().(*iotago.AliasAddress)},
 		},
 	}
 	exampleExistingFoundryOutputID := exampleExistingFoundryOutput.MustID()
@@ -50,7 +50,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
-				Blocks: iotago.FeatureBlocks{
+				ImmutableBlocks: iotago.FeatureBlocks{
 					&iotago.IssuerFeatureBlock{Address: exampleIssuer},
 				},
 			},
@@ -162,7 +162,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 									TokenTag:     tpkg.Rand12ByteArray(),
 									TokenScheme:  &iotago.SimpleTokenScheme{},
 									Conditions: iotago.UnlockConditions{
-										&iotago.AddressUnlockCondition{Address: exampleAliasID.ToAddress()},
+										&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasID.ToAddress().(*iotago.AliasAddress)},
 									},
 								},
 								&iotago.FoundryOutput{
@@ -171,7 +171,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 									TokenTag:     tpkg.Rand12ByteArray(),
 									TokenScheme:  &iotago.SimpleTokenScheme{},
 									Conditions: iotago.UnlockConditions{
-										&iotago.AddressUnlockCondition{Address: exampleAliasID.ToAddress()},
+										&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasID.ToAddress().(*iotago.AliasAddress)},
 									},
 								},
 							},
@@ -226,7 +226,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				Blocks: iotago.FeatureBlocks{
+				ImmutableBlocks: iotago.FeatureBlocks{
 					&iotago.IssuerFeatureBlock{Address: exampleIssuer},
 				},
 			},
