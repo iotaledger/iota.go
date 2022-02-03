@@ -329,14 +329,14 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
 					Amount:       1,
-					NativeTokens: tpkg.RandSortNativeTokens(200),
+					NativeTokens: tpkg.RandSortNativeTokens(50),
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 				&iotago.BasicOutput{
 					Amount:       1,
-					NativeTokens: tpkg.RandSortNativeTokens(200),
+					NativeTokens: tpkg.RandSortNativeTokens(50),
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},

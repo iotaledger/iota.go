@@ -17,10 +17,10 @@ const (
 	// MinNativeTokenCountPerOutput min number of different native tokens that can reside in one output.
 	MinNativeTokenCountPerOutput = 0
 	// MaxNativeTokenCountPerOutput max number of different native tokens that can reside in one output.
-	MaxNativeTokenCountPerOutput = 255
+	MaxNativeTokenCountPerOutput = 64
 
 	// MaxNativeTokensCount is the max number of native tokens which can occur in a transaction (sum input/output side).
-	MaxNativeTokensCount = 255
+	MaxNativeTokensCount = 64
 
 	TokenTagLength = 12
 
