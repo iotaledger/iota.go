@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -262,7 +263,8 @@ func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiCont
 	workingSet.InputIDToIndex = func() map[OutputID]uint16 {
 		m := make(map[OutputID]uint16)
 		for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
-			m[inputRef.(IndexedUTXOReferencer).Ref()] = uint16(inputIndex)
+			ref := inputRef.(IndexedUTXOReferencer).Ref()
+			m[ref] = uint16(inputIndex)
 		}
 		return m
 	}()
@@ -364,9 +366,11 @@ func (indices UnlockedIndices) Unlocked(x uint16) bool {
 type TxSemanticValidationFunc func(svCtx *SemanticValidationContext) error
 
 // TxSemanticInputUnlocks produces the UnlockedIdentities which will be set into the given SemanticValidationContext
-// and verifies that inputs are correctly unlocked.
+// and verifies that inputs are correctly unlocked and that the inputs commitment matches.
 func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
+		var inputs Outputs
+
 		// it is important that the inputs are checked in order as referential unlocks
 		// check against previous unlocks
 		for inputIndex, inputRef := range svCtx.WorkingSet.Tx.Essence.Inputs {
@@ -374,7 +378,20 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 			if !ok {
 				return fmt.Errorf("%w: utxo for input %d not supplied", ErrMissingUTXO, inputIndex)
 			}
+			inputs = append(inputs, input)
+		}
 
+		actualInputCommitment, err := inputs.Commitment()
+		if err != nil {
+			return fmt.Errorf("unable to compute hash of inputs: %w", err)
+		}
+
+		expectedInputCommitment := svCtx.WorkingSet.Tx.Essence.InputsCommitment[:]
+		if !bytes.Equal(expectedInputCommitment, actualInputCommitment) {
+			return fmt.Errorf("%w: specified %v but got %v", ErrInvalidInputsCommitment, expectedInputCommitment, actualInputCommitment)
+		}
+
+		for inputIndex, input := range inputs {
 			if err := unlockOutput(svCtx, input, uint16(inputIndex)); err != nil {
 				return err
 			}
@@ -388,6 +405,7 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 				svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(chainID.ToAddress().Key(), uint16(inputIndex))
 			}
 		}
+
 		return nil
 	}
 }

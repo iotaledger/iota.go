@@ -166,6 +166,8 @@ type InputsCommitment = [InputsCommitmentLength]byte
 
 // TransactionEssence is the essence part of a Transaction.
 type TransactionEssence struct {
+	// The network ID for which this essence is valid for.
+	NetworkID NetworkID
 	// The inputs of this transaction.
 	Inputs Inputs `json:"inputs"`
 	// The commitment to the referenced inputs.
@@ -218,6 +220,9 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 		CheckTypePrefix(uint32(TransactionEssenceNormal), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize transaction essence: %w", err)
 		}).
+		ReadNum(&u.NetworkID, func(err error) error {
+			return fmt.Errorf("unable to deserialize network ID of transaction essence: %w", err)
+		}).
 		ReadSliceOfObjects(&u.Inputs, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, essenceInputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize inputs of transaction essence: %w", err)
 		}).
@@ -238,6 +243,9 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 		WriteNum(TransactionEssenceNormal, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence type ID: %w", err)
 		}).
+		WriteNum(u.NetworkID, func(err error) error {
+			return fmt.Errorf("unable to serialize transaction essence network ID: %w", err)
+		}).
 		WriteSliceOfObjects(&u.Inputs, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, essenceInputsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence inputs: %w", err)
 		}).
@@ -255,6 +263,7 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 
 func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 	jTransactionEssence := &jsonTransactionEssence{
+		NetworkID:        int(u.NetworkID),
 		Inputs:           make([]*json.RawMessage, len(u.Inputs)),
 		InputsCommitment: hex.EncodeToString(u.InputsCommitment[:]),
 		Outputs:          make([]*json.RawMessage, len(u.Outputs)),
@@ -342,6 +351,7 @@ func jsonTransactionEssenceSelector(ty int) (JSONSerializable, error) {
 // jsonTransactionEssence defines the json representation of a TransactionEssence.
 type jsonTransactionEssence struct {
 	Type             int                `json:"type"`
+	NetworkID        int                `json:"networkID"`
 	Inputs           []*json.RawMessage `json:"inputs"`
 	InputsCommitment string             `json:"inputsCommitment"`
 	Outputs          []*json.RawMessage `json:"outputs"`
@@ -350,9 +360,10 @@ type jsonTransactionEssence struct {
 
 func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, error) {
 	unsigTx := &TransactionEssence{
-		Inputs:  make(Inputs, len(j.Inputs)),
-		Outputs: make(Outputs, len(j.Outputs)),
-		Payload: nil,
+		NetworkID: uint64(j.NetworkID),
+		Inputs:    make(Inputs, len(j.Inputs)),
+		Outputs:   make(Outputs, len(j.Outputs)),
+		Payload:   nil,
 	}
 
 	for i, jInput := range j.Inputs {
@@ -367,7 +378,6 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 		unsigTx.Inputs[i] = input.(Input)
 	}
 
-	var err error
 	inputsCommitmentSlice, err := hex.DecodeString(j.InputsCommitment)
 	if err != nil {
 		return unsigTx, fmt.Errorf("unable to decode JSON inputs commitment: %w", err)

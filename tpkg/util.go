@@ -317,7 +317,6 @@ func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
 	}
 
 	m := &iotago.Message{}
-	m.NetworkID = 1
 	m.Payload = payload
 	m.Nonce = uint64(rand.Intn(1000))
 	m.Parents = parents
