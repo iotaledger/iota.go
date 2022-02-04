@@ -107,6 +107,8 @@ func MustMessageIDFromHexString(messageIDHex string) MessageID {
 
 // Message can carry a payload and references two other messages.
 type Message struct {
+	// The protocol version under which this message operates.
+	ProtocolVersion byte
 	// The parents the message references.
 	Parents MessageIDs
 	// The inner payload of the message. Can be nil.
@@ -154,6 +156,9 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 			}
 			return nil
 		}).
+		ReadNum(&m.ProtocolVersion, func(err error) error {
+			return fmt.Errorf("unable to deserialize message protocol version: %w", err)
+		}).
 		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize message parents: %w", err)
 		}).
@@ -176,6 +181,9 @@ func (m *Message) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx
 				m.Parents = serializer.RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(m.Parents)
 			}
 		}).
+		WriteNum(m.ProtocolVersion, func(err error) error {
+			return fmt.Errorf("unable to serialize message protocol version: %w", err)
+		}).
 		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &messageParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize message parents: %w", err)
 		}).
@@ -196,7 +204,9 @@ func (m *Message) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx
 }
 
 func (m *Message) MarshalJSON() ([]byte, error) {
-	jMessage := &jsonMessage{}
+	jMessage := &jsonMessage{
+		ProtocolVersion: int(m.ProtocolVersion),
+	}
 	jMessage.Parents = make([]string, len(m.Parents))
 	for i, parent := range m.Parents {
 		jMessage.Parents[i] = hex.EncodeToString(parent[:])
@@ -228,6 +238,7 @@ func (m *Message) UnmarshalJSON(bytes []byte) error {
 
 // jsonMessage defines the JSON representation of a Message.
 type jsonMessage struct {
+	ProtocolVersion int `json:"protocolVersion"`
 	// The hex encoded message IDs of the referenced parents.
 	Parents []string `json:"parentMessageIds"`
 	// The payload within the message.
@@ -239,7 +250,9 @@ type jsonMessage struct {
 func (jm *jsonMessage) ToSerializable() (serializer.Serializable, error) {
 	var err error
 
-	m := &Message{}
+	m := &Message{
+		ProtocolVersion: byte(jm.ProtocolVersion),
+	}
 
 	var parsedNonce uint64
 	if len(jm.Nonce) != 0 {
