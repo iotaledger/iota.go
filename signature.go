@@ -33,7 +33,7 @@ var (
 
 // Signature is a signature.
 type Signature interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 
 	// Type returns the type of the Signature.
 	Type() SignatureType

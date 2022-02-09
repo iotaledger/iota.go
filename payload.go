@@ -31,25 +31,21 @@ func (payloadType PayloadType) String() string {
 	return payloadNames[payloadType]
 }
 
-var (
-	payloadNames = [PayloadTaggedData + 1]string{
-		"Transaction",
-		"Milestone",
-		"Receipt",
-		"TreasuryTransaction",
-		"Deprecated-Indexation",
-		"TaggedData",
-	}
-)
+var payloadNames = [PayloadTaggedData + 1]string{
+	"Transaction",
+	"Milestone",
+	"Receipt",
+	"TreasuryTransaction",
+	"Deprecated-Indexation",
+	"TaggedData",
+}
 
-var (
-	// ErrTypeIsNotSupportedPayload gets returned when a serializable was found to not be a supported Payload.
-	ErrTypeIsNotSupportedPayload = errors.New("serializable is not a supported payload")
-)
+// ErrTypeIsNotSupportedPayload gets returned when a serializable was found to not be a supported Payload.
+var ErrTypeIsNotSupportedPayload = errors.New("serializable is not a supported payload")
 
 // Payload is an object which can be embedded into other objects.
 type Payload interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 
 	// PayloadType returns the type of the payload.
 	PayloadType() PayloadType

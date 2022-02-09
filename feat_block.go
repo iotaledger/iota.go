@@ -38,11 +38,9 @@ func (featBlockType FeatureBlockType) String() string {
 	return featBlockNames[featBlockType]
 }
 
-var (
-	featBlockNames = [FeatureBlockTag + 1]string{
-		"SenderFeatureBlock", "IssuerFeatureBlock", "MetadataFeatureBlock", "TagFeatureBlock",
-	}
-)
+var featBlockNames = [FeatureBlockTag + 1]string{
+	"SenderFeatureBlock", "IssuerFeatureBlock", "MetadataFeatureBlock", "TagFeatureBlock",
+}
 
 // FeatureBlocks is a slice of FeatureBlock(s).
 type FeatureBlocks []FeatureBlock
@@ -79,6 +77,14 @@ func (f *FeatureBlocks) FromSerializables(seris serializer.Serializables) {
 	for i, seri := range seris {
 		(*f)[i] = seri.(FeatureBlock)
 	}
+}
+
+func (f FeatureBlocks) Size() int {
+	sum := 0
+	for _, block := range f {
+		sum += block.Size()
+	}
+	return sum
 }
 
 // Set converts the slice into a FeatureBlocksSet.
@@ -185,7 +191,7 @@ func (f FeatureBlocksSet) EveryTuple(other FeatureBlocksSet, fun func(a FeatureB
 
 // FeatureBlock is an abstract building block extending the features of an Output.
 type FeatureBlock interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 	NonEphemeralObject
 
 	// Type returns the type of the FeatureBlock.

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 var (
@@ -167,7 +168,7 @@ func (e *BasicOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 
 func (e *BasicOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(OutputBasic, func(err error) error {
+		WriteNum(byte(OutputBasic), func(err error) error {
 			return fmt.Errorf("unable to serialize basic output type ID: %w", err)
 		}).
 		WriteNum(e.Amount, func(err error) error {
@@ -183,6 +184,10 @@ func (e *BasicOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 			return fmt.Errorf("unable to serialize basic output feature blocks: %w", err)
 		}).
 		Serialize()
+}
+
+func (e *BasicOutput) Size() int {
+	return util.NumByteLen(byte(OutputBasic)) + util.NumByteLen(e.Amount) + e.NativeTokens.Size() + e.Conditions.Size() + e.Blocks.Size()
 }
 
 func (e *BasicOutput) MarshalJSON() ([]byte, error) {

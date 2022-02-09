@@ -5,14 +5,13 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var (
-	addrUnlockCondAddrGuard = &serializer.SerializableGuard{
-		ReadGuard:  addrReadGuard(allAddressTypeSet),
-		WriteGuard: addrWriteGuard(allAddressTypeSet),
-	}
-)
+var addrUnlockCondAddrGuard = &serializer.SerializableGuard{
+	ReadGuard:  addrReadGuard(allAddressTypeSet),
+	WriteGuard: addrWriteGuard(allAddressTypeSet),
+}
 
 // AddressUnlockCondition is an UnlockCondition defining an identity which has to be unlocked.
 type AddressUnlockCondition struct {
@@ -61,6 +60,10 @@ func (s *AddressUnlockCondition) Serialize(deSeriMode serializer.DeSerialization
 			return fmt.Errorf("unable to serialize address unlock condition address: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *AddressUnlockCondition) Size() int {
+	return util.NumByteLen(byte(UnlockConditionAddress)) + s.Address.Size()
 }
 
 func (s *AddressUnlockCondition) MarshalJSON() ([]byte, error) {

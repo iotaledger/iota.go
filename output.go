@@ -182,16 +182,14 @@ func (outputType OutputType) String() string {
 	return outputNames[outputType]
 }
 
-var (
-	outputNames = [OutputNFT + 1]string{
-		"LegacyOutput",
-		"TreasuryOutput",
-		"BasicOutput",
-		"AliasOutput",
-		"FoundryOutput",
-		"NFTOutput",
-	}
-)
+var outputNames = [OutputNFT + 1]string{
+	"LegacyOutput",
+	"TreasuryOutput",
+	"BasicOutput",
+	"AliasOutput",
+	"FoundryOutput",
+	"NFTOutput",
+}
 
 var (
 	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.
@@ -222,6 +220,14 @@ func (o *Outputs) FromSerializables(seris serializer.Serializables) {
 	for i, seri := range seris {
 		(*o)[i] = seri.(Output)
 	}
+}
+
+func (o Outputs) Size() int {
+	sum := 0
+	for _, output := range o {
+		sum += output.Size()
+	}
+	return sum
 }
 
 // MustCommitment works like Commitment but panics if there's an error.
@@ -548,7 +554,7 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 
 // Output defines a unit of output of a transaction.
 type Output interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 	NonEphemeralObject
 
 	// Deposit returns the amount this Output deposits.

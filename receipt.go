@@ -232,10 +232,8 @@ func (j *jsonReceipt) ToSerializable() (serializer.Serializable, error) {
 	return payload, nil
 }
 
-var (
-	// ErrInvalidReceipt gets returned when a receipt is invalid.
-	ErrInvalidReceipt = errors.New("invalid receipt")
-)
+// ErrInvalidReceipt gets returned when a receipt is invalid.
+var ErrInvalidReceipt = errors.New("invalid receipt")
 
 // ValidateReceipt validates whether given the following receipt:
 //	- None of the MigratedFundsEntry objects deposits more than the max supply and deposits at least

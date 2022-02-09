@@ -5,26 +5,25 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var (
-	sigUnlockBlockSigGuard = serializer.SerializableGuard{
-		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
-			return SignatureSelector(ty)
-		},
-		WriteGuard: func(seri serializer.Serializable) error {
-			if seri == nil {
-				return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedSignature)
-			}
-			switch seri.(type) {
-			case *Ed25519Signature:
-			default:
-				return ErrTypeIsNotSupportedSignature
-			}
-			return nil
-		},
-	}
-)
+var sigUnlockBlockSigGuard = serializer.SerializableGuard{
+	ReadGuard: func(ty uint32) (serializer.Serializable, error) {
+		return SignatureSelector(ty)
+	},
+	WriteGuard: func(seri serializer.Serializable) error {
+		if seri == nil {
+			return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedSignature)
+		}
+		switch seri.(type) {
+		case *Ed25519Signature:
+		default:
+			return ErrTypeIsNotSupportedSignature
+		}
+		return nil
+	},
+}
 
 // SignatureUnlockBlock holds a signature which unlocks inputs.
 type SignatureUnlockBlock struct {
@@ -49,13 +48,17 @@ func (s *SignatureUnlockBlock) Deserialize(data []byte, deSeriMode serializer.De
 
 func (s *SignatureUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(UnlockBlockSignature, func(err error) error {
+		WriteNum(byte(UnlockBlockSignature), func(err error) error {
 			return fmt.Errorf("unable to serialize signature unlock block type ID: %w", err)
 		}).
 		WriteObject(s.Signature, deSeriMode, deSeriCtx, sigUnlockBlockSigGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize signature unlock block signature: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *SignatureUnlockBlock) Size() int {
+	return util.NumByteLen(byte(UnlockBlockSignature)) + s.Signature.Size()
 }
 
 func (s *SignatureUnlockBlock) MarshalJSON() ([]byte, error) {

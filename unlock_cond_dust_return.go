@@ -5,14 +5,13 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var (
-	dustDepReturnUnlockCondAddrGuard = &serializer.SerializableGuard{
-		ReadGuard:  addrReadGuard(allAddressTypeSet),
-		WriteGuard: addrWriteGuard(allAddressTypeSet),
-	}
-)
+var dustDepReturnUnlockCondAddrGuard = &serializer.SerializableGuard{
+	ReadGuard:  addrReadGuard(allAddressTypeSet),
+	WriteGuard: addrWriteGuard(allAddressTypeSet),
+}
 
 // DustDepositReturnUnlockCondition is an unlock condition which defines
 // the amount of tokens which must be sent back to the return identity, when the output in which it occurs in,
@@ -82,6 +81,10 @@ func (s *DustDepositReturnUnlockCondition) Serialize(deSeriMode serializer.DeSer
 			return fmt.Errorf("unable to serialize dust deposit return unlock condition amount: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *DustDepositReturnUnlockCondition) Size() int {
+	return util.NumByteLen(byte(UnlockConditionDustDepositReturn)) + s.ReturnAddress.Size() + 8
 }
 
 func (s *DustDepositReturnUnlockCondition) MarshalJSON() ([]byte, error) {

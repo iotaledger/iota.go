@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 
 	"golang.org/x/crypto/blake2b"
 )
@@ -141,6 +142,10 @@ func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 		}).
 		WithValidation(deSeriMode, txDeSeriValidation(t, deSeriCtx)).
 		Serialize()
+}
+
+func (t *Transaction) Size() int {
+	return util.NumByteLen(PayloadTransaction) + t.Essence.Size() + t.UnlockBlocks.Size()
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {
@@ -627,7 +632,6 @@ func TxSemanticTimelock() TxSemanticValidationFunc {
 // TxSemanticSTVFOnChains executes StateTransitionValidationFunc(s) on ChainConstrainedOutput(s).
 func TxSemanticSTVFOnChains() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
-
 		for chainID, inputChain := range svCtx.WorkingSet.InChains {
 			nextState := svCtx.WorkingSet.OutChains[chainID]
 			if nextState == nil {

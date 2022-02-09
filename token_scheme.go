@@ -23,20 +23,16 @@ func (tokenSchemeType TokenSchemeType) String() string {
 	return tokenSchemeNames[tokenSchemeType]
 }
 
-var (
-	tokenSchemeNames = [TokenSchemeSimple + 1]string{
-		"SimpleTokenScheme",
-	}
-)
+var tokenSchemeNames = [TokenSchemeSimple + 1]string{
+	"SimpleTokenScheme",
+}
 
-var (
-	// ErrTypeIsNotSupportedTokenScheme gets returned when a serializable was found to not be a supported TokenScheme.
-	ErrTypeIsNotSupportedTokenScheme = errors.New("serializable is not an address")
-)
+// ErrTypeIsNotSupportedTokenScheme gets returned when a serializable was found to not be a supported TokenScheme.
+var ErrTypeIsNotSupportedTokenScheme = errors.New("serializable is not an address")
 
 // TokenScheme defines a scheme for to be used for an OutputFoundry.
 type TokenScheme interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 	NonEphemeralObject
 
 	// Type returns the type of the TokenScheme.

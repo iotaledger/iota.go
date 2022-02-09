@@ -16,9 +16,7 @@ const (
 	NFTAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + NFTAddressBytesLength
 )
 
-var (
-	emptyNFTAddress = [20]byte{}
-)
+var emptyNFTAddress = [20]byte{}
 
 // ParseNFTAddressFromHexString parses the given hex string into an NFTAddress.
 func ParseNFTAddressFromHexString(hexAddr string) (*NFTAddress, error) {
@@ -105,6 +103,10 @@ func (nftAddr *NFTAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx
 	b[0] = byte(AddressNFT)
 	copy(b[serializer.SmallTypeDenotationByteSize:], nftAddr[:])
 	return b[:], nil
+}
+
+func (nftAddr *NFTAddress) Size() int {
+	return NFTAddressSerializedBytesSize
 }
 
 func (nftAddr *NFTAddress) MarshalJSON() ([]byte, error) {

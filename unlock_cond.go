@@ -46,21 +46,19 @@ func (unlockCondType UnlockConditionType) String() string {
 	return unlockCondNames[unlockCondType]
 }
 
-var (
-	unlockCondNames = [UnlockConditionImmutableAlias + 1]string{
-		"AddressUnlockCondition",
-		"DustDepositReturnUnlockCondition",
-		"TimelockUnlockCondition",
-		"ExpirationUnlockCondition",
-		"StateControllerAddressUnlockCondition",
-		"GovernorAddressUnlockCondition",
-		"ImmutableAliasUnlockCondition",
-	}
-)
+var unlockCondNames = [UnlockConditionImmutableAlias + 1]string{
+	"AddressUnlockCondition",
+	"DustDepositReturnUnlockCondition",
+	"TimelockUnlockCondition",
+	"ExpirationUnlockCondition",
+	"StateControllerAddressUnlockCondition",
+	"GovernorAddressUnlockCondition",
+	"ImmutableAliasUnlockCondition",
+}
 
 // UnlockCondition is an abstract building block defining the unlock conditions of an Output.
 type UnlockCondition interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 	NonEphemeralObject
 
 	// Type returns the type of the UnlockCondition.
@@ -108,6 +106,14 @@ func (f *UnlockConditions) FromSerializables(seris serializer.Serializables) {
 	for i, seri := range seris {
 		(*f)[i] = seri.(UnlockCondition)
 	}
+}
+
+func (f UnlockConditions) Size() int {
+	sum := 0
+	for _, uc := range f {
+		sum += uc.Size()
+	}
+	return sum
 }
 
 // Set converts the slice into an UnlockConditionsSet.

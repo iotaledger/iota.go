@@ -29,14 +29,12 @@ func (unlockBlockType UnlockBlockType) String() string {
 	return unlockBlockNames[unlockBlockType]
 }
 
-var (
-	unlockBlockNames = [UnlockBlockNFT + 1]string{
-		"SignatureUnlockBlock",
-		"ReferenceUnlockBlock",
-		"AliasUnlockBlock",
-		"NFTUnlockBlock",
-	}
-)
+var unlockBlockNames = [UnlockBlockNFT + 1]string{
+	"SignatureUnlockBlock",
+	"ReferenceUnlockBlock",
+	"AliasUnlockBlock",
+	"NFTUnlockBlock",
+}
 
 var (
 	// ErrSigUnlockBlocksNotUnique gets returned if unlock blocks making part of a transaction aren't unique.
@@ -97,6 +95,14 @@ func (o UnlockBlocks) ToUnlockBlocksByType() UnlockBlocksByType {
 	return unlockBlocksByType
 }
 
+func (o UnlockBlocks) Size() int {
+	sum := 0
+	for _, block := range o {
+		sum += block.Size()
+	}
+	return sum
+}
+
 // UnlockBlocksByType is a map of UnlockBlockType(s) to slice of UnlockBlock(s).
 type UnlockBlocksByType map[UnlockBlockType][]UnlockBlock
 
@@ -147,7 +153,7 @@ func unlockBlocksFromJSONRawMsg(jUnlockBlocks []*json.RawMessage) (UnlockBlocks,
 
 // UnlockBlock is a block of data which unlocks inputs of a Transaction.
 type UnlockBlock interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 
 	// Type returns the type of the UnlockBlock.
 	Type() UnlockBlockType

@@ -12,6 +12,7 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
+	"github.com/iotaledger/iota.go/v3/util"
 	"golang.org/x/crypto/blake2b"
 	"google.golang.org/grpc"
 
@@ -451,6 +452,22 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 			return fmt.Errorf("unable to serialize milestone signatures: %w", err)
 		}).
 		Serialize()
+}
+
+func (m *Milestone) Size() int {
+	// 1 byte for length prefixes
+	parentMessagesByteLen := 1*len(m.Parents) + MessageIDLength*len(m.Parents)
+	pubKeysByteLen := 1*len(m.PublicKeys) + MilestonePublicKeyLength*len(m.PublicKeys)
+	signatureByteLen := 1*len(m.Signatures) + MilestoneSignatureLength*len(m.Signatures)
+
+	// in theory `Size()` should not serialize, just return the size - but Milestone.Size() probably won't be used, so it should be fine to be non-optimal
+	receiptBytes, err := m.Receipt.Serialize(serializer.DeSeriModeNoValidation, nil)
+	if err != nil {
+		return 0
+	}
+	return util.NumByteLen(PayloadMilestone) + util.NumByteLen(m.Index) + util.NumByteLen(m.Timestamp) +
+		parentMessagesByteLen + MilestoneInclusionMerkleProofLength + util.NumByteLen(m.NextPoWScore) +
+		util.NumByteLen(m.NextPoWScoreMilestoneIndex) + pubKeysByteLen + len(receiptBytes) + signatureByteLen
 }
 
 func (m *Milestone) MarshalJSON() ([]byte, error) {

@@ -5,14 +5,13 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var (
-	expUnlockCondAddrGuard = &serializer.SerializableGuard{
-		ReadGuard:  addrReadGuard(allAddressTypeSet),
-		WriteGuard: addrWriteGuard(allAddressTypeSet),
-	}
-)
+var expUnlockCondAddrGuard = &serializer.SerializableGuard{
+	ReadGuard:  addrReadGuard(allAddressTypeSet),
+	WriteGuard: addrWriteGuard(allAddressTypeSet),
+}
 
 // ExpirationUnlockCondition is an unlock condition which puts a time constraint on whether the receiver or return identity
 // can consume an output depending on the latest confirmed milestone's index and/or timestamp T:
@@ -94,6 +93,11 @@ func (s *ExpirationUnlockCondition) Serialize(deSeriMode serializer.DeSerializat
 			return fmt.Errorf("unable to serialize expiration unlock condition unix time: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *ExpirationUnlockCondition) Size() int {
+	return util.NumByteLen(byte(UnlockConditionExpiration)) + s.ReturnAddress.Size() +
+		util.NumByteLen(s.MilestoneIndex) + util.NumByteLen(s.UnixTime)
 }
 
 func (s *ExpirationUnlockCondition) MarshalJSON() ([]byte, error) {

@@ -16,9 +16,7 @@ const (
 	AliasAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + AliasAddressBytesLength
 )
 
-var (
-	emptyAliasAddress = [20]byte{}
-)
+var emptyAliasAddress = [20]byte{}
 
 // ParseAliasAddressFromHexString parses the given hex string into an AliasAddress.
 func ParseAliasAddressFromHexString(hexAddr string) (*AliasAddress, error) {
@@ -98,6 +96,10 @@ func (aliasAddr *AliasAddress) Deserialize(data []byte, deSeriMode serializer.De
 	}
 	copy(aliasAddr[:], data[serializer.SmallTypeDenotationByteSize:])
 	return AliasAddressSerializedBytesSize, nil
+}
+
+func (aliasAddr *AliasAddress) Size() int {
+	return AliasAddressSerializedBytesSize
 }
 
 func (aliasAddr *AliasAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {

@@ -24,9 +24,7 @@ func (inputType InputType) String() string {
 	return inputNames[inputType]
 }
 
-var (
-	inputNames = [InputTreasury + 1]string{"UTXOInput", "TreasuryInput"}
-)
+var inputNames = [InputTreasury + 1]string{"UTXOInput", "TreasuryInput"}
 
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
@@ -54,9 +52,17 @@ func (in *Inputs) FromSerializables(seris serializer.Serializables) {
 	}
 }
 
+func (in Inputs) Size() int {
+	sum := 0
+	for _, i := range in {
+		sum += i.Size()
+	}
+	return sum
+}
+
 // Input references a UTXO.
 type Input interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 
 	// Type returns the type of Input.
 	Type() InputType
