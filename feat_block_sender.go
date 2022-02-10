@@ -8,10 +8,12 @@ import (
 	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var senderFeatBlockAddrGuard = serializer.SerializableGuard{
-	ReadGuard:  addrReadGuard(allAddressTypeSet),
-	WriteGuard: addrWriteGuard(allAddressTypeSet),
-}
+var (
+	senderFeatBlockAddrGuard = serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(allAddressTypeSet),
+		WriteGuard: addrWriteGuard(allAddressTypeSet),
+	}
+)
 
 // SenderFeatureBlock is a feature block which associates an output
 // with a sender identity. The sender identity needs to be unlocked in the transaction
