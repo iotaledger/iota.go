@@ -13,7 +13,9 @@ import (
 // NewMessageBuilder creates a new MessageBuilder.
 func NewMessageBuilder() *MessageBuilder {
 	return &MessageBuilder{
-		msg: &iotago.Message{},
+		msg: &iotago.Message{
+			ProtocolVersion: iotago.ProtocolVersion,
+		},
 	}
 }
 
