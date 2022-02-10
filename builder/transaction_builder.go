@@ -14,12 +14,13 @@ var (
 )
 
 // NewTransactionBuilder creates a new TransactionBuilder.
-func NewTransactionBuilder() *TransactionBuilder {
+func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 	return &TransactionBuilder{
 		essence: &iotago.TransactionEssence{
-			Inputs:  iotago.Inputs{},
-			Outputs: iotago.Outputs{},
-			Payload: nil,
+			NetworkID: networkID,
+			Inputs:    iotago.Inputs{},
+			Outputs:   iotago.Outputs{},
+			Payload:   nil,
 		},
 		inputToAddr: map[iotago.OutputID]iotago.Address{},
 	}
