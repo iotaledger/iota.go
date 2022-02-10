@@ -38,9 +38,11 @@ func (featBlockType FeatureBlockType) String() string {
 	return featBlockNames[featBlockType]
 }
 
-var featBlockNames = [FeatureBlockTag + 1]string{
-	"SenderFeatureBlock", "IssuerFeatureBlock", "MetadataFeatureBlock", "TagFeatureBlock",
-}
+var (
+	featBlockNames = [FeatureBlockTag + 1]string{
+		"SenderFeatureBlock", "IssuerFeatureBlock", "MetadataFeatureBlock", "TagFeatureBlock",
+	}
+)
 
 // FeatureBlocks is a slice of FeatureBlock(s).
 type FeatureBlocks []FeatureBlock

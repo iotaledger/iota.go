@@ -46,15 +46,17 @@ func (unlockCondType UnlockConditionType) String() string {
 	return unlockCondNames[unlockCondType]
 }
 
-var unlockCondNames = [UnlockConditionImmutableAlias + 1]string{
-	"AddressUnlockCondition",
-	"DustDepositReturnUnlockCondition",
-	"TimelockUnlockCondition",
-	"ExpirationUnlockCondition",
-	"StateControllerAddressUnlockCondition",
-	"GovernorAddressUnlockCondition",
-	"ImmutableAliasUnlockCondition",
-}
+var (
+	unlockCondNames = [UnlockConditionImmutableAlias + 1]string{
+		"AddressUnlockCondition",
+		"DustDepositReturnUnlockCondition",
+		"TimelockUnlockCondition",
+		"ExpirationUnlockCondition",
+		"StateControllerAddressUnlockCondition",
+		"GovernorAddressUnlockCondition",
+		"ImmutableAliasUnlockCondition",
+	}
+)
 
 // UnlockCondition is an abstract building block defining the unlock conditions of an Output.
 type UnlockCondition interface {

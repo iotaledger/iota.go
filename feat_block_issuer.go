@@ -8,10 +8,12 @@ import (
 	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var issuerFeatBlockAddrGuard = serializer.SerializableGuard{
-	ReadGuard:  addrReadGuard(allAddressTypeSet),
-	WriteGuard: addrWriteGuard(allAddressTypeSet),
-}
+var (
+	issuerFeatBlockAddrGuard = serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(allAddressTypeSet),
+		WriteGuard: addrWriteGuard(allAddressTypeSet),
+	}
+)
 
 // IssuerFeatureBlock is a feature block which associates an output
 // with an issuer identity. Unlike the SenderFeatureBlock, the issuer identity

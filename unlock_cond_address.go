@@ -8,10 +8,12 @@ import (
 	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var addrUnlockCondAddrGuard = &serializer.SerializableGuard{
-	ReadGuard:  addrReadGuard(allAddressTypeSet),
-	WriteGuard: addrWriteGuard(allAddressTypeSet),
-}
+var (
+	addrUnlockCondAddrGuard = &serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(allAddressTypeSet),
+		WriteGuard: addrWriteGuard(allAddressTypeSet),
+	}
+)
 
 // AddressUnlockCondition is an UnlockCondition defining an identity which has to be unlocked.
 type AddressUnlockCondition struct {

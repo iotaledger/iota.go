@@ -8,8 +8,10 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// ErrInvalidJSON gets returned when invalid JSON is tried to get parsed.
-var ErrInvalidJSON = errors.New("invalid json")
+var (
+	// ErrInvalidJSON gets returned when invalid JSON is tried to get parsed.
+	ErrInvalidJSON = errors.New("invalid json")
+)
 
 // JSONSerializable is an object which can return a Serializable.
 type JSONSerializable interface {

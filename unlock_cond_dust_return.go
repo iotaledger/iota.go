@@ -8,10 +8,12 @@ import (
 	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var dustDepReturnUnlockCondAddrGuard = &serializer.SerializableGuard{
-	ReadGuard:  addrReadGuard(allAddressTypeSet),
-	WriteGuard: addrWriteGuard(allAddressTypeSet),
-}
+var (
+	dustDepReturnUnlockCondAddrGuard = &serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(allAddressTypeSet),
+		WriteGuard: addrWriteGuard(allAddressTypeSet),
+	}
+)
 
 // DustDepositReturnUnlockCondition is an unlock condition which defines
 // the amount of tokens which must be sent back to the return identity, when the output in which it occurs in,

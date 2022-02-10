@@ -8,10 +8,12 @@ import (
 	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var stateCtrlUnlockCondAddrGuard = &serializer.SerializableGuard{
-	ReadGuard:  addrReadGuard(allAddressTypeSet),
-	WriteGuard: addrWriteGuard(allAddressTypeSet),
-}
+var (
+	stateCtrlUnlockCondAddrGuard = &serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(allAddressTypeSet),
+		WriteGuard: addrWriteGuard(allAddressTypeSet),
+	}
+)
 
 // StateControllerAddressUnlockCondition is an UnlockCondition defining the state controller identity for an AliasOutput.
 type StateControllerAddressUnlockCondition struct {

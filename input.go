@@ -24,7 +24,9 @@ func (inputType InputType) String() string {
 	return inputNames[inputType]
 }
 
-var inputNames = [InputTreasury + 1]string{"UTXOInput", "TreasuryInput"}
+var (
+	inputNames = [InputTreasury + 1]string{"UTXOInput", "TreasuryInput"}
+)
 
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.

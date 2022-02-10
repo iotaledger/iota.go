@@ -8,10 +8,12 @@ import (
 	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var govAddrUnlockCondAddrGuard = &serializer.SerializableGuard{
-	ReadGuard:  addrReadGuard(allAddressTypeSet),
-	WriteGuard: addrWriteGuard(allAddressTypeSet),
-}
+var (
+	govAddrUnlockCondAddrGuard = &serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(allAddressTypeSet),
+		WriteGuard: addrWriteGuard(allAddressTypeSet),
+	}
+)
 
 // GovernorAddressUnlockCondition is an UnlockCondition defining the governor identity for an AliasOutput.
 type GovernorAddressUnlockCondition struct {

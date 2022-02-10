@@ -8,10 +8,12 @@ import (
 	"github.com/iotaledger/iota.go/v3/util"
 )
 
-var immAliasUnlockCondAddrGuard = &serializer.SerializableGuard{
-	ReadGuard:  addrReadGuard(AddressTypeSet{AddressAlias: struct{}{}}),
-	WriteGuard: addrWriteGuard(AddressTypeSet{AddressAlias: struct{}{}}),
-}
+var (
+	immAliasUnlockCondAddrGuard = &serializer.SerializableGuard{
+		ReadGuard:  addrReadGuard(AddressTypeSet{AddressAlias: struct{}{}}),
+		WriteGuard: addrWriteGuard(AddressTypeSet{AddressAlias: struct{}{}}),
+	}
+)
 
 // ImmutableAliasUnlockCondition is an UnlockCondition defining an alias which has to be unlocked.
 // Unlike the AddressUnlockCondition, this unlock condition is immutable for an output which contains it,

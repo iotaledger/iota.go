@@ -182,14 +182,16 @@ func (outputType OutputType) String() string {
 	return outputNames[outputType]
 }
 
-var outputNames = [OutputNFT + 1]string{
-	"LegacyOutput",
-	"TreasuryOutput",
-	"BasicOutput",
-	"AliasOutput",
-	"FoundryOutput",
-	"NFTOutput",
-}
+var (
+	outputNames = [OutputNFT + 1]string{
+		"LegacyOutput",
+		"TreasuryOutput",
+		"BasicOutput",
+		"AliasOutput",
+		"FoundryOutput",
+		"NFTOutput",
+	}
+)
 
 var (
 	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.

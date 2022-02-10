@@ -29,12 +29,14 @@ func (unlockBlockType UnlockBlockType) String() string {
 	return unlockBlockNames[unlockBlockType]
 }
 
-var unlockBlockNames = [UnlockBlockNFT + 1]string{
-	"SignatureUnlockBlock",
-	"ReferenceUnlockBlock",
-	"AliasUnlockBlock",
-	"NFTUnlockBlock",
-}
+var (
+	unlockBlockNames = [UnlockBlockNFT + 1]string{
+		"SignatureUnlockBlock",
+		"ReferenceUnlockBlock",
+		"AliasUnlockBlock",
+		"NFTUnlockBlock",
+	}
+)
 
 var (
 	// ErrSigUnlockBlocksNotUnique gets returned if unlock blocks making part of a transaction aren't unique.
