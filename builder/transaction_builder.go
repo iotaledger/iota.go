@@ -14,14 +14,16 @@ var (
 )
 
 // NewTransactionBuilder creates a new TransactionBuilder.
-func NewTransactionBuilder() *TransactionBuilder {
+func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 	return &TransactionBuilder{
 		essence: &iotago.TransactionEssence{
-			Inputs:  iotago.Inputs{},
-			Outputs: iotago.Outputs{},
-			Payload: nil,
+			NetworkID: networkID,
+			Inputs:    iotago.Inputs{},
+			Outputs:   iotago.Outputs{},
+			Payload:   nil,
 		},
 		inputToAddr: map[iotago.OutputID]iotago.Address{},
+		inputs:      iotago.OutputSet{},
 	}
 }
 
@@ -29,6 +31,7 @@ func NewTransactionBuilder() *TransactionBuilder {
 type TransactionBuilder struct {
 	occurredBuildErr error
 	essence          *iotago.TransactionEssence
+	inputs           iotago.OutputSet
 	inputToAddr      map[iotago.OutputID]iotago.Address
 }
 
@@ -37,13 +40,16 @@ type ToBeSignedUTXOInput struct {
 	// The address to which this input belongs to.
 	Address iotago.Address `json:"address"`
 	// The actual UTXO input.
-	Input *iotago.UTXOInput `json:"input"`
+	OutputID iotago.OutputID `json:"outputID"`
+	// The actual UTXO used as the input.
+	Output iotago.Output `json:"output"`
 }
 
 // AddInput adds the given input to the builder.
 func (b *TransactionBuilder) AddInput(input *ToBeSignedUTXOInput) *TransactionBuilder {
-	b.inputToAddr[input.Input.ID()] = input.Address
-	b.essence.Inputs = append(b.essence.Inputs, input.Input)
+	b.inputToAddr[input.OutputID] = input.Address
+	b.essence.Inputs = append(b.essence.Inputs, input.OutputID.UTXOInput())
+	b.inputs[input.OutputID] = input.Output
 	return b
 }
 
@@ -93,7 +99,17 @@ func (b *TransactionBuilder) Build(deSeriParas *iotago.DeSerializationParameters
 		return nil, fmt.Errorf("%w: must supply signer", ErrTransactionBuilder)
 	}
 
-	// sort inputs and outputs by their serialized byte order
+	// prepare the inputs commitment in the same order as the inputs in the essence
+	var inputIDs iotago.OutputIDs
+	for _, input := range b.essence.Inputs {
+		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).ID())
+	}
+	commitment, err := inputIDs.OrderedSet(b.inputs).Commitment()
+	if err != nil {
+		return nil, err
+	}
+	copy(b.essence.InputsCommitment[:], commitment)
+
 	txEssenceData, err := b.essence.SigningMessage()
 	if err != nil {
 		return nil, err
