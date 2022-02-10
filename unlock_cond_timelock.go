@@ -78,7 +78,7 @@ func (s *TimelockUnlockCondition) Serialize(_ serializer.DeSerializationMode, de
 }
 
 func (s *TimelockUnlockCondition) Size() int {
-	return util.NumByteLen(UnlockConditionTimelock) +
+	return util.NumByteLen(byte(UnlockConditionTimelock)) +
 		util.NumByteLen(s.MilestoneIndex) +
 		util.NumByteLen(s.UnixTime)
 }

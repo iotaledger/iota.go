@@ -1,5 +1,7 @@
 package util
 
+import "math/big"
+
 // NumByteLen returns the number of bytes a given number will occupy when serialized
 func NumByteLen(n interface{}) int {
 	switch n.(type) {
@@ -15,6 +17,8 @@ func NumByteLen(n interface{}) int {
 		return 4
 	case float64, *float64:
 		return 8
+	case *big.Int, big.Int:
+		return 32
 	}
 	panic("NumByteLen type not supported")
 }

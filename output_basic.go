@@ -187,7 +187,8 @@ func (e *BasicOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 }
 
 func (e *BasicOutput) Size() int {
-	return util.NumByteLen(byte(OutputBasic)) + util.NumByteLen(e.Amount) + e.NativeTokens.Size() + e.Conditions.Size() + e.Blocks.Size()
+	// length prefixes are 1 byte
+	return util.NumByteLen(byte(OutputBasic)) + util.NumByteLen(e.Amount) + 1 + e.NativeTokens.Size() + 1 + e.Conditions.Size() + 1 + e.Blocks.Size()
 }
 
 func (e *BasicOutput) MarshalJSON() ([]byte, error) {

@@ -263,8 +263,16 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 }
 
 func (u *TransactionEssence) Size() int {
-	return util.NumByteLen(TransactionEssenceNormal) + util.NumByteLen(u.NetworkID) +
-		u.Inputs.Size() + InputsCommitmentLength + u.Outputs.Size() + u.Payload.Size()
+	payloadSize := util.NumByteLen(uint32(0))
+	if u.Payload != nil {
+		payloadSize = u.Payload.Size()
+	}
+	return util.NumByteLen(byte(TransactionEssenceNormal)) +
+		util.NumByteLen(u.NetworkID) +
+		2 + u.Inputs.Size() + //2 bytes length prefix
+		InputsCommitmentLength +
+		2 + u.Outputs.Size() + //2 bytes length prefix
+		payloadSize
 }
 
 func (u *TransactionEssence) MarshalJSON() ([]byte, error) {

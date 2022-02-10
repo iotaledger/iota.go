@@ -87,7 +87,7 @@ func (u *TaggedData) Serialize(deSeriMode serializer.DeSerializationMode, deSeri
 
 func (u *TaggedData) Size() int {
 	// length prefixes for tag and data  = 1 (uint8) and 4 (uint32)
-	return util.NumByteLen(PayloadTaggedData) + 1 + len(u.Tag) + 4 + len(u.Data)
+	return util.NumByteLen(uint32(PayloadTaggedData)) + 1 + len(u.Tag) + 4 + len(u.Data)
 }
 
 func (u *TaggedData) MarshalJSON() ([]byte, error) {

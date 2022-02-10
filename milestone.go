@@ -456,18 +456,22 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 
 func (m *Milestone) Size() int {
 	// 1 byte for length prefixes
-	parentMessagesByteLen := 1*len(m.Parents) + MessageIDLength*len(m.Parents)
-	pubKeysByteLen := 1*len(m.PublicKeys) + MilestonePublicKeyLength*len(m.PublicKeys)
-	signatureByteLen := 1*len(m.Signatures) + MilestoneSignatureLength*len(m.Signatures)
+	parentMessagesByteLen := 1 + MessageIDLength*len(m.Parents)
+	pubKeysByteLen := 1 + MilestonePublicKeyLength*len(m.PublicKeys)
+	signatureByteLen := 1 + MilestoneSignatureLength*len(m.Signatures)
 
 	// in theory `Size()` should not serialize, just return the size - but Milestone.Size() probably won't be used, so it should be fine to be non-optimal
-	receiptBytes, err := m.Receipt.Serialize(serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		return 0
+	receiptBytesLen := util.NumByteLen(uint32(0)) // 4 bytes for length prefix if receipt is nil
+	if m.Receipt != nil {
+		receiptBytes, err := m.Receipt.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
+		if err != nil {
+			return 0
+		}
+		receiptBytesLen = len(receiptBytes)
 	}
-	return util.NumByteLen(PayloadMilestone) + util.NumByteLen(m.Index) + util.NumByteLen(m.Timestamp) +
+	return util.NumByteLen(uint32(PayloadMilestone)) + util.NumByteLen(m.Index) + util.NumByteLen(m.Timestamp) +
 		parentMessagesByteLen + MilestoneInclusionMerkleProofLength + util.NumByteLen(m.NextPoWScore) +
-		util.NumByteLen(m.NextPoWScoreMilestoneIndex) + pubKeysByteLen + len(receiptBytes) + signatureByteLen
+		util.NumByteLen(m.NextPoWScoreMilestoneIndex) + pubKeysByteLen + receiptBytesLen + signatureByteLen
 }
 
 func (m *Milestone) MarshalJSON() ([]byte, error) {

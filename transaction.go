@@ -145,7 +145,9 @@ func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 }
 
 func (t *Transaction) Size() int {
-	return util.NumByteLen(PayloadTransaction) + t.Essence.Size() + t.UnlockBlocks.Size()
+	return util.NumByteLen(uint32(PayloadTransaction)) +
+		t.Essence.Size() +
+		2 + t.UnlockBlocks.Size() //2 bytes length prefix
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {

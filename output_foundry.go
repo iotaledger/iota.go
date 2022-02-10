@@ -490,15 +490,15 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode, deS
 func (f *FoundryOutput) Size() int {
 	return util.NumByteLen(byte(OutputFoundry)) +
 		util.NumByteLen(f.Amount) +
-		f.NativeTokens.Size() +
+		1 + f.NativeTokens.Size() + //1 byte length prefix
 		util.NumByteLen(f.SerialNumber) +
 		TokenTagLength +
 		util.NumByteLen(f.CirculatingSupply) +
 		util.NumByteLen(f.MaximumSupply) +
 		f.TokenScheme.Size() +
-		f.Conditions.Size() +
-		f.Blocks.Size() +
-		f.ImmutableBlocks.Size()
+		1 + f.Conditions.Size() + //1 byte length prefix
+		1 + f.Blocks.Size() + //1 byte length prefix
+		1 + f.ImmutableBlocks.Size() //1 byte length prefix
 }
 
 func (f *FoundryOutput) MarshalJSON() ([]byte, error) {

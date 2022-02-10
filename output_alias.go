@@ -526,15 +526,15 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 func (a *AliasOutput) Size() int {
 	return util.NumByteLen(byte(OutputAlias)) +
 		util.NumByteLen(a.Amount) +
-		a.NativeTokens.Size() +
+		1 + a.NativeTokens.Size() + //1 byte length prefix
 		AliasIDLength +
 		util.NumByteLen(a.StateIndex) +
 		2 + // stateMetadata length prefix = 2 bytes (uint16)
 		len(a.StateMetadata) +
 		util.NumByteLen(a.FoundryCounter) +
-		a.Conditions.Size() +
-		a.Blocks.Size() +
-		a.ImmutableBlocks.Size()
+		1 + a.Conditions.Size() + //1 byte length prefix
+		1 + a.Blocks.Size() + //1 byte length prefix
+		1 + a.ImmutableBlocks.Size() //1 byte length prefix
 }
 
 func (a *AliasOutput) MarshalJSON() ([]byte, error) {
