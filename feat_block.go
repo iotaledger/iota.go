@@ -81,6 +81,14 @@ func (f *FeatureBlocks) FromSerializables(seris serializer.Serializables) {
 	}
 }
 
+func (f FeatureBlocks) Size() int {
+	sum := serializer.OneByte // 1 byte length prefix
+	for _, block := range f {
+		sum += block.Size()
+	}
+	return sum
+}
+
 // Set converts the slice into a FeatureBlocksSet.
 // Returns an error if a FeatureBlockType occurs multiple times.
 func (f FeatureBlocks) Set() (FeatureBlocksSet, error) {
@@ -185,7 +193,7 @@ func (f FeatureBlocksSet) EveryTuple(other FeatureBlocksSet, fun func(a FeatureB
 
 // FeatureBlock is an abstract building block extending the features of an Output.
 type FeatureBlock interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 	NonEphemeralObject
 
 	// Type returns the type of the FeatureBlock.

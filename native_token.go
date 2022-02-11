@@ -184,6 +184,14 @@ func (n *NativeTokens) FromSerializables(seris serializer.Serializables) {
 	}
 }
 
+func (n NativeTokens) Size() int {
+	sum := serializer.OneByte // 1 byte length prefix
+	for _, token := range n {
+		sum += token.Size()
+	}
+	return sum
+}
+
 // Equal checks whether other is equal to this slice.
 func (n NativeTokens) Equal(other NativeTokens) bool {
 	if len(n) != len(other) {
@@ -243,6 +251,11 @@ func (n *NativeToken) Serialize(_ serializer.DeSerializationMode, deSeriCtx inte
 			return fmt.Errorf("unable to serialize native token amount: %w", err)
 		}).
 		Serialize()
+}
+
+func (n *NativeToken) Size() int {
+	// amount = 32 bytes(uint256)
+	return NativeTokenIDLength + serializer.UInt256ByteSize
 }
 
 func (n *NativeToken) MarshalJSON() ([]byte, error) {

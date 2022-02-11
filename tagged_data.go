@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 const (
@@ -82,6 +83,13 @@ func (u *TaggedData) Serialize(deSeriMode serializer.DeSerializationMode, deSeri
 			return fmt.Errorf("unable to serialize tagged data data: %w", err)
 		}).
 		Serialize()
+}
+
+func (u *TaggedData) Size() int {
+	// length prefixes for tag and data  = 1 (uint8) and 4 (uint32)
+	return util.NumByteLen(uint32(PayloadTaggedData)) +
+		serializer.OneByte + len(u.Tag) +
+		serializer.UInt32ByteSize + len(u.Data)
 }
 
 func (u *TaggedData) MarshalJSON() ([]byte, error) {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 	"golang.org/x/crypto/blake2b"
 )
 
@@ -240,7 +241,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 
 func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	return serializer.NewSerializer().
-		WriteNum(TransactionEssenceNormal, func(err error) error {
+		WriteNum(byte(TransactionEssenceNormal), func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence type ID: %w", err)
 		}).
 		WriteNum(u.NetworkID, func(err error) error {
@@ -259,6 +260,19 @@ func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode
 			return fmt.Errorf("unable to serialize transaction essence's embedded output: %w", err)
 		}).
 		Serialize()
+}
+
+func (u *TransactionEssence) Size() int {
+	payloadSize := util.NumByteLen(uint32(0))
+	if u.Payload != nil {
+		payloadSize = u.Payload.Size()
+	}
+	return util.NumByteLen(byte(TransactionEssenceNormal)) +
+		util.NumByteLen(u.NetworkID) +
+		u.Inputs.Size() +
+		InputsCommitmentLength +
+		u.Outputs.Size() +
+		payloadSize
 }
 
 func (u *TransactionEssence) MarshalJSON() ([]byte, error) {

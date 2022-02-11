@@ -104,6 +104,10 @@ func (edAddr *Ed25519Address) Serialize(_ serializer.DeSerializationMode, deSeri
 	return b[:], nil
 }
 
+func (edAddr *Ed25519Address) Size() int {
+	return Ed25519AddressSerializedBytesSize
+}
+
 func (edAddr *Ed25519Address) MarshalJSON() ([]byte, error) {
 	jEd25519Address := &jsonEd25519Address{}
 	jEd25519Address.Address = hex.EncodeToString(edAddr[:])

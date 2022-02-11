@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 const (
@@ -81,6 +82,11 @@ func (s *MetadataFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMo
 			return fmt.Errorf("unable to serialize metadata feature block data: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *MetadataFeatureBlock) Size() int {
+	// data length prefix as uint16 = 2 bytes
+	return util.NumByteLen(byte(FeatureBlockMetadata)) + serializer.UInt16ByteSize + len(s.Data)
 }
 
 func (s *MetadataFeatureBlock) MarshalJSON() ([]byte, error) {

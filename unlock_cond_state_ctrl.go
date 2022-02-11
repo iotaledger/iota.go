@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 var (
@@ -61,6 +62,10 @@ func (s *StateControllerAddressUnlockCondition) Serialize(deSeriMode serializer.
 			return fmt.Errorf("unable to serialize state controller address unlock condition address: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *StateControllerAddressUnlockCondition) Size() int {
+	return util.NumByteLen(byte(UnlockConditionStateControllerAddress)) + s.Address.Size()
 }
 
 func (s *StateControllerAddressUnlockCondition) MarshalJSON() ([]byte, error) {

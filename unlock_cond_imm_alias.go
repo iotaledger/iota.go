@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 var (
@@ -63,6 +64,10 @@ func (s *ImmutableAliasUnlockCondition) Serialize(deSeriMode serializer.DeSerial
 			return fmt.Errorf("unable to serialize immutable alias unlock condition address: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *ImmutableAliasUnlockCondition) Size() int {
+	return util.NumByteLen(byte(UnlockConditionImmutableAlias)) + s.Address.Size()
 }
 
 func (s *ImmutableAliasUnlockCondition) MarshalJSON() ([]byte, error) {

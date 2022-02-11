@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 const (
@@ -450,7 +451,7 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 
 func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(OutputFoundry, func(err error) error {
+		WriteNum(byte(OutputFoundry), func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output type ID: %w", err)
 		}).
 		WriteNum(f.Amount, func(err error) error {
@@ -484,6 +485,20 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode, deS
 			return fmt.Errorf("unable to serialize foundry output immutable feature blocks: %w", err)
 		}).
 		Serialize()
+}
+
+func (f *FoundryOutput) Size() int {
+	return util.NumByteLen(byte(OutputFoundry)) +
+		util.NumByteLen(f.Amount) +
+		f.NativeTokens.Size() +
+		util.NumByteLen(f.SerialNumber) +
+		TokenTagLength +
+		util.NumByteLen(f.CirculatingSupply) +
+		util.NumByteLen(f.MaximumSupply) +
+		f.TokenScheme.Size() +
+		f.Conditions.Size() +
+		f.Blocks.Size() +
+		f.ImmutableBlocks.Size()
 }
 
 func (f *FoundryOutput) MarshalJSON() ([]byte, error) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 // TreasuryOutput is an output which holds the treasury of a network.
@@ -42,12 +43,16 @@ func (t *TreasuryOutput) Deserialize(data []byte, _ serializer.DeSerializationMo
 
 func (t *TreasuryOutput) Serialize(_ serializer.DeSerializationMode, _ interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(OutputTreasury, func(err error) error {
+		WriteNum(byte(OutputTreasury), func(err error) error {
 			return fmt.Errorf("unable to serialize treasury output type ID: %w", err)
 		}).
 		WriteNum(t.Amount, func(err error) error {
 			return fmt.Errorf("unable to serialize treasury output amount: %w", err)
 		}).Serialize()
+}
+
+func (t *TreasuryOutput) Size() int {
+	return util.NumByteLen(byte(OutputTreasury)) + util.NumByteLen(t.Amount)
 }
 
 func (t *TreasuryOutput) MarshalJSON() ([]byte, error) {

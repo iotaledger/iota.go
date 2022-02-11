@@ -57,7 +57,7 @@ const (
 
 // Address describes a general address.
 type Address interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 	NonEphemeralObject
 	fmt.Stringer
 

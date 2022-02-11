@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 const (
@@ -83,6 +84,11 @@ func (s *TagFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMode, d
 			return fmt.Errorf("unable to serialize tag feature block tag: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *TagFeatureBlock) Size() int {
+	// tag length prefix = 1 byte
+	return util.NumByteLen(byte(FeatureBlockSender)) + serializer.OneByte + len(s.Tag)
 }
 
 func (s *TagFeatureBlock) MarshalJSON() ([]byte, error) {

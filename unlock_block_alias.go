@@ -57,6 +57,10 @@ func (r *AliasUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode, 
 	return b[:], nil
 }
 
+func (r *AliasUnlockBlock) Size() int {
+	return AliasUnlockBlockSize
+}
+
 func (r *AliasUnlockBlock) MarshalJSON() ([]byte, error) {
 	jAliasUnlockBlock := &jsonAliasUnlockBlock{}
 	jAliasUnlockBlock.Type = int(UnlockBlockAlias)

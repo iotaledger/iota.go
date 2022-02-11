@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 var (
@@ -61,6 +62,10 @@ func (s *GovernorAddressUnlockCondition) Serialize(deSeriMode serializer.DeSeria
 			return fmt.Errorf("unable to serialize governor address unlock condition address: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *GovernorAddressUnlockCondition) Size() int {
+	return util.NumByteLen(byte(UnlockConditionGovernorAddress)) + s.Address.Size()
 }
 
 func (s *GovernorAddressUnlockCondition) MarshalJSON() ([]byte, error) {

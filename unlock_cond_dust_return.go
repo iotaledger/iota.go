@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 var (
@@ -82,6 +83,10 @@ func (s *DustDepositReturnUnlockCondition) Serialize(deSeriMode serializer.DeSer
 			return fmt.Errorf("unable to serialize dust deposit return unlock condition amount: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *DustDepositReturnUnlockCondition) Size() int {
+	return util.NumByteLen(byte(UnlockConditionDustDepositReturn)) + s.ReturnAddress.Size() + serializer.UInt64ByteSize
 }
 
 func (s *DustDepositReturnUnlockCondition) MarshalJSON() ([]byte, error) {

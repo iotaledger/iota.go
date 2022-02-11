@@ -28,6 +28,9 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 		return
 	}
 	assert.NoError(t, err)
+	if src, ok := test.source.(serializer.SerializableWithSize); ok {
+		assert.Equal(t, len(data), src.Size())
+	}
 
 	bytesRead, err := test.target.Deserialize(data, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
 	if test.deSeriErr != nil {

@@ -54,9 +54,17 @@ func (in *Inputs) FromSerializables(seris serializer.Serializables) {
 	}
 }
 
+func (in Inputs) Size() int {
+	sum := serializer.UInt16ByteSize
+	for _, i := range in {
+		sum += i.Size()
+	}
+	return sum
+}
+
 // Input references a UTXO.
 type Input interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 
 	// Type returns the type of Input.
 	Type() InputType

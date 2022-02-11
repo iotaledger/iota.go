@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 const (
@@ -288,7 +289,7 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 
 func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(OutputNFT, func(err error) error {
+		WriteNum(byte(OutputNFT), func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output type ID: %w", err)
 		}).
 		WriteNum(n.Amount, func(err error) error {
@@ -310,6 +311,16 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 			return fmt.Errorf("unable to serialize NFT output immutable feature blocks: %w", err)
 		}).
 		Serialize()
+}
+
+func (n *NFTOutput) Size() int {
+	return util.NumByteLen(byte(OutputNFT)) +
+		util.NumByteLen(n.Amount) +
+		n.NativeTokens.Size() +
+		NFTIDLength +
+		n.Conditions.Size() +
+		n.Blocks.Size() +
+		n.ImmutableBlocks.Size()
 }
 
 func (n *NFTOutput) MarshalJSON() ([]byte, error) {

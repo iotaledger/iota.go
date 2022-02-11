@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 // SimpleTokenScheme is a token scheme which checks that the TokenTag within a foundry matches
@@ -33,10 +34,14 @@ func (s *SimpleTokenScheme) Deserialize(data []byte, deSeriMode serializer.DeSer
 
 func (s *SimpleTokenScheme) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(TokenSchemeSimple, func(err error) error {
+		WriteNum(byte(TokenSchemeSimple), func(err error) error {
 			return fmt.Errorf("unable to serialize simple token scheme type ID: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *SimpleTokenScheme) Size() int {
+	return util.NumByteLen(byte(TokenSchemeSimple))
 }
 
 func (s *SimpleTokenScheme) MarshalJSON() ([]byte, error) {

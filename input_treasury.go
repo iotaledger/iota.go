@@ -44,6 +44,10 @@ func (ti *TreasuryInput) Serialize(deSeriMode serializer.DeSerializationMode, de
 	return b[:], nil
 }
 
+func (ti *TreasuryInput) Size() int {
+	return TreasuryInputSerializedBytesSize
+}
+
 func (ti *TreasuryInput) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&jsonTreasuryInput{
 		Type:        int(InputTreasury),
