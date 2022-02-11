@@ -271,7 +271,7 @@ func (u *TransactionEssence) Size() int {
 		util.NumByteLen(u.NetworkID) +
 		u.Inputs.Size() +
 		InputsCommitmentLength +
-		2 + u.Outputs.Size() + //2 bytes length prefix
+		u.Outputs.Size() +
 		payloadSize
 }
 
