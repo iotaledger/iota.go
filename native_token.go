@@ -255,7 +255,7 @@ func (n *NativeToken) Serialize(_ serializer.DeSerializationMode, deSeriCtx inte
 
 func (n *NativeToken) Size() int {
 	// amount = 32 bytes(uint256)
-	return NativeTokenIDLength + 32
+	return NativeTokenIDLength + serializer.UInt256ByteSize
 }
 
 func (n *NativeToken) MarshalJSON() ([]byte, error) {
