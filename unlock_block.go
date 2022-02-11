@@ -98,7 +98,7 @@ func (o UnlockBlocks) ToUnlockBlocksByType() UnlockBlocksByType {
 }
 
 func (o UnlockBlocks) Size() int {
-	sum := 0
+	sum := serializer.UInt16ByteSize
 	for _, block := range o {
 		sum += block.Size()
 	}
