@@ -456,12 +456,12 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 
 func (m *Milestone) Size() int {
 	// 1 byte for length prefixes
-	parentMessagesByteLen := 1 + MessageIDLength*len(m.Parents)
-	pubKeysByteLen := 1 + MilestonePublicKeyLength*len(m.PublicKeys)
-	signatureByteLen := 1 + MilestoneSignatureLength*len(m.Signatures)
+	parentMessagesByteLen := serializer.OneByte + MessageIDLength*len(m.Parents)
+	pubKeysByteLen := serializer.OneByte + MilestonePublicKeyLength*len(m.PublicKeys)
+	signatureByteLen := serializer.OneByte + MilestoneSignatureLength*len(m.Signatures)
 
 	// in theory `Size()` should not serialize, just return the size - but Milestone.Size() probably won't be used, so it should be fine to be non-optimal
-	receiptBytesLen := util.NumByteLen(uint32(0)) // 4 bytes for length prefix if receipt is nil
+	receiptBytesLen := serializer.UInt32ByteSize // 4 bytes for length prefix if receipt is nil
 	if m.Receipt != nil {
 		receiptBytes, err := m.Receipt.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
 		if err != nil {

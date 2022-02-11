@@ -111,7 +111,7 @@ func (f *UnlockConditions) FromSerializables(seris serializer.Serializables) {
 }
 
 func (f UnlockConditions) Size() int {
-	sum := 0
+	sum := serializer.OneByte // 1 byte length prefix
 	for _, uc := range f {
 		sum += uc.Size()
 	}

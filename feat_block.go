@@ -82,7 +82,7 @@ func (f *FeatureBlocks) FromSerializables(seris serializer.Serializables) {
 }
 
 func (f FeatureBlocks) Size() int {
-	sum := 0
+	sum := serializer.OneByte // 1 byte length prefix
 	for _, block := range f {
 		sum += block.Size()
 	}

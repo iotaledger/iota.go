@@ -185,7 +185,7 @@ func (n *NativeTokens) FromSerializables(seris serializer.Serializables) {
 }
 
 func (n NativeTokens) Size() int {
-	sum := 0
+	sum := serializer.OneByte // 1 byte length prefix
 	for _, token := range n {
 		sum += token.Size()
 	}

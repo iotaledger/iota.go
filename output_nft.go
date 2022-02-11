@@ -316,11 +316,11 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 func (n *NFTOutput) Size() int {
 	return util.NumByteLen(byte(OutputNFT)) +
 		util.NumByteLen(n.Amount) +
-		1 + n.NativeTokens.Size() + //1 byte length prefix
+		n.NativeTokens.Size() +
 		NFTIDLength +
-		1 + n.Conditions.Size() + //1 byte length prefix
-		1 + n.Blocks.Size() + //1 byte length prefix
-		1 + n.ImmutableBlocks.Size() //1 byte length prefix
+		n.Conditions.Size() +
+		n.Blocks.Size() +
+		n.ImmutableBlocks.Size()
 }
 
 func (n *NFTOutput) MarshalJSON() ([]byte, error) {

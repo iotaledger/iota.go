@@ -88,7 +88,7 @@ func (s *TagFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMode, d
 
 func (s *TagFeatureBlock) Size() int {
 	// tag length prefix = 1 byte
-	return util.NumByteLen(byte(FeatureBlockSender)) + 1 + len(s.Tag)
+	return util.NumByteLen(byte(FeatureBlockSender)) + serializer.OneByte + len(s.Tag)
 }
 
 func (s *TagFeatureBlock) MarshalJSON() ([]byte, error) {
