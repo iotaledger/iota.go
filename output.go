@@ -225,7 +225,7 @@ func (o *Outputs) FromSerializables(seris serializer.Serializables) {
 }
 
 func (o Outputs) Size() int {
-	sum := 0
+	sum := serializer.UInt16ByteSize
 	for _, output := range o {
 		sum += output.Size()
 	}
