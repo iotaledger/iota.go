@@ -9,7 +9,7 @@ import (
 	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 func TestOutputsDeSerialize(t *testing.T) {

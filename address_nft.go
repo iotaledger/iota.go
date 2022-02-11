@@ -107,6 +107,10 @@ func (nftAddr *NFTAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx
 	return b[:], nil
 }
 
+func (nftAddr *NFTAddress) Size() int {
+	return NFTAddressSerializedBytesSize
+}
+
 func (nftAddr *NFTAddress) MarshalJSON() ([]byte, error) {
 	jNFTAddress := &jsonNFTAddress{}
 	jNFTAddress.Address = hex.EncodeToString(nftAddr[:])

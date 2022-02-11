@@ -57,6 +57,10 @@ func (r *ReferenceUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMo
 	return b[:], nil
 }
 
+func (r *ReferenceUnlockBlock) Size() int {
+	return ReferenceUnlockBlockSize
+}
+
 func (r *ReferenceUnlockBlock) MarshalJSON() ([]byte, error) {
 	jReferenceUnlockBlock := &jsonReferenceUnlockBlock{}
 	jReferenceUnlockBlock.Type = int(UnlockBlockReference)

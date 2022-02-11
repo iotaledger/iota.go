@@ -60,7 +60,7 @@ var (
 
 // UnlockCondition is an abstract building block defining the unlock conditions of an Output.
 type UnlockCondition interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 	NonEphemeralObject
 
 	// Type returns the type of the UnlockCondition.
@@ -108,6 +108,14 @@ func (f *UnlockConditions) FromSerializables(seris serializer.Serializables) {
 	for i, seri := range seris {
 		(*f)[i] = seri.(UnlockCondition)
 	}
+}
+
+func (f UnlockConditions) Size() int {
+	sum := serializer.OneByte // 1 byte length prefix
+	for _, uc := range f {
+		sum += uc.Size()
+	}
+	return sum
 }
 
 // Set converts the slice into an UnlockConditionsSet.

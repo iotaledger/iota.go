@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 var (
@@ -64,6 +65,10 @@ func (s *SenderFeatureBlock) Serialize(deSeriMode serializer.DeSerializationMode
 			return fmt.Errorf("unable to serialize sender feature block address: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *SenderFeatureBlock) Size() int {
+	return util.NumByteLen(byte(FeatureBlockSender)) + s.Address.Size()
 }
 
 func (s *SenderFeatureBlock) MarshalJSON() ([]byte, error) {

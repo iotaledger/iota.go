@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 const (
@@ -75,7 +76,7 @@ func (u *UTXOInput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 			}
 			return nil
 		}).
-		WriteNum(InputUTXO, func(err error) error {
+		WriteNum(byte(InputUTXO), func(err error) error {
 			return fmt.Errorf("unable to serialize UTXO input type ID: %w", err)
 		}).
 		WriteBytes(u.TransactionID[:], func(err error) error {
@@ -84,6 +85,10 @@ func (u *UTXOInput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		WriteNum(u.TransactionOutputIndex, func(err error) error {
 			return fmt.Errorf("unable to serialize UTXO input transaction output index: %w", err)
 		}).Serialize()
+}
+
+func (u *UTXOInput) Size() int {
+	return util.NumByteLen(byte(InputUTXO)) + TransactionIDLength + util.NumByteLen(u.TransactionOutputIndex)
 }
 
 func (u *UTXOInput) MarshalJSON() ([]byte, error) {

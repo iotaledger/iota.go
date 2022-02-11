@@ -97,6 +97,14 @@ func (o UnlockBlocks) ToUnlockBlocksByType() UnlockBlocksByType {
 	return unlockBlocksByType
 }
 
+func (o UnlockBlocks) Size() int {
+	sum := serializer.UInt16ByteSize
+	for _, block := range o {
+		sum += block.Size()
+	}
+	return sum
+}
+
 // UnlockBlocksByType is a map of UnlockBlockType(s) to slice of UnlockBlock(s).
 type UnlockBlocksByType map[UnlockBlockType][]UnlockBlock
 
@@ -147,7 +155,7 @@ func unlockBlocksFromJSONRawMsg(jUnlockBlocks []*json.RawMessage) (UnlockBlocks,
 
 // UnlockBlock is a block of data which unlocks inputs of a Transaction.
 type UnlockBlock interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 
 	// Type returns the type of the UnlockBlock.
 	Type() UnlockBlockType

@@ -73,6 +73,10 @@ func (e *Ed25519Signature) Serialize(deSeriMode serializer.DeSerializationMode, 
 	return b[:], nil
 }
 
+func (e *Ed25519Signature) Size() int {
+	return serializer.SmallTypeDenotationByteSize + ed25519.PublicKeySize + ed25519.SignatureSize
+}
+
 func (e *Ed25519Signature) MarshalJSON() ([]byte, error) {
 	jEd25519Signature := &jsonEd25519Signature{}
 	jEd25519Signature.Type = int(SignatureEd25519)

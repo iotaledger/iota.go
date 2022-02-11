@@ -57,6 +57,10 @@ func (r *NFTUnlockBlock) Serialize(deSeriMode serializer.DeSerializationMode, de
 	return b[:], nil
 }
 
+func (r *NFTUnlockBlock) Size() int {
+	return NFTUnlockBlockSize
+}
+
 func (r *NFTUnlockBlock) MarshalJSON() ([]byte, error) {
 	jNFTUnlockBlock := &jsonNFTUnlockBlock{}
 	jNFTUnlockBlock.Type = int(UnlockBlockNFT)

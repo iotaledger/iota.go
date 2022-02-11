@@ -49,7 +49,7 @@ var (
 
 // Payload is an object which can be embedded into other objects.
 type Payload interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 
 	// PayloadType returns the type of the payload.
 	PayloadType() PayloadType

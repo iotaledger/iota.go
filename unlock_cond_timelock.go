@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 // TimelockUnlockCondition is an unlock condition which puts a time constraint on an output depending
@@ -74,6 +75,12 @@ func (s *TimelockUnlockCondition) Serialize(_ serializer.DeSerializationMode, de
 			return fmt.Errorf("unable to serialize timelock unlock condition unix time: %w", err)
 		}).
 		Serialize()
+}
+
+func (s *TimelockUnlockCondition) Size() int {
+	return util.NumByteLen(byte(UnlockConditionTimelock)) +
+		util.NumByteLen(s.MilestoneIndex) +
+		util.NumByteLen(s.UnixTime)
 }
 
 func (s *TimelockUnlockCondition) MarshalJSON() ([]byte, error) {

@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 const (
@@ -489,7 +490,7 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 
 func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WriteNum(OutputAlias, func(err error) error {
+		WriteNum(byte(OutputAlias), func(err error) error {
 			return fmt.Errorf("unable to serialize alias output type ID: %w", err)
 		}).
 		WriteNum(a.Amount, func(err error) error {
@@ -520,6 +521,20 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 			return fmt.Errorf("unable to serialize alias output immutable feature blocks: %w", err)
 		}).
 		Serialize()
+}
+
+func (a *AliasOutput) Size() int {
+	return util.NumByteLen(byte(OutputAlias)) +
+		util.NumByteLen(a.Amount) +
+		a.NativeTokens.Size() +
+		AliasIDLength +
+		util.NumByteLen(a.StateIndex) +
+		serializer.UInt16ByteSize +
+		len(a.StateMetadata) +
+		util.NumByteLen(a.FoundryCounter) +
+		a.Conditions.Size() +
+		a.Blocks.Size() +
+		a.ImmutableBlocks.Size()
 }
 
 func (a *AliasOutput) MarshalJSON() ([]byte, error) {

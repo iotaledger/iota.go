@@ -224,6 +224,14 @@ func (o *Outputs) FromSerializables(seris serializer.Serializables) {
 	}
 }
 
+func (o Outputs) Size() int {
+	sum := serializer.UInt16ByteSize
+	for _, output := range o {
+		sum += output.Size()
+	}
+	return sum
+}
+
 // MustCommitment works like Commitment but panics if there's an error.
 func (o Outputs) MustCommitment() []byte {
 	comm, err := o.Commitment()
@@ -548,7 +556,7 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 
 // Output defines a unit of output of a transaction.
 type Output interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
 	NonEphemeralObject
 
 	// Deposit returns the amount this Output deposits.
