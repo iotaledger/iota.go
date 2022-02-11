@@ -55,7 +55,7 @@ func (in *Inputs) FromSerializables(seris serializer.Serializables) {
 }
 
 func (in Inputs) Size() int {
-	sum := 0
+	sum := serializer.UInt16ByteSize
 	for _, i := range in {
 		sum += i.Size()
 	}
