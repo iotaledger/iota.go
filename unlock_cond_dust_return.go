@@ -86,7 +86,7 @@ func (s *DustDepositReturnUnlockCondition) Serialize(deSeriMode serializer.DeSer
 }
 
 func (s *DustDepositReturnUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionDustDepositReturn)) + s.ReturnAddress.Size() + 8
+	return util.NumByteLen(byte(UnlockConditionDustDepositReturn)) + s.ReturnAddress.Size() + serializer.UInt64ByteSize
 }
 
 func (s *DustDepositReturnUnlockCondition) MarshalJSON() ([]byte, error) {
