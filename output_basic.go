@@ -187,7 +187,6 @@ func (e *BasicOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 }
 
 func (e *BasicOutput) Size() int {
-	// length prefixes are 1 byte
 	return util.NumByteLen(byte(OutputBasic)) +
 		util.NumByteLen(e.Amount) +
 		e.NativeTokens.Size() +
