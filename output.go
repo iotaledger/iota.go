@@ -209,32 +209,32 @@ var (
 // Outputs is a slice of Output.
 type Outputs []Output
 
-func (o Outputs) ToSerializables() serializer.Serializables {
-	seris := make(serializer.Serializables, len(o))
-	for i, x := range o {
+func (outputs Outputs) ToSerializables() serializer.Serializables {
+	seris := make(serializer.Serializables, len(outputs))
+	for i, x := range outputs {
 		seris[i] = x.(serializer.Serializable)
 	}
 	return seris
 }
 
-func (o *Outputs) FromSerializables(seris serializer.Serializables) {
-	*o = make(Outputs, len(seris))
+func (outputs *Outputs) FromSerializables(seris serializer.Serializables) {
+	*outputs = make(Outputs, len(seris))
 	for i, seri := range seris {
-		(*o)[i] = seri.(Output)
+		(*outputs)[i] = seri.(Output)
 	}
 }
 
-func (o Outputs) Size() int {
+func (outputs Outputs) Size() int {
 	sum := serializer.UInt16ByteSize
-	for _, output := range o {
+	for _, output := range outputs {
 		sum += output.Size()
 	}
 	return sum
 }
 
 // MustCommitment works like Commitment but panics if there's an error.
-func (o Outputs) MustCommitment() []byte {
-	comm, err := o.Commitment()
+func (outputs Outputs) MustCommitment() []byte {
+	comm, err := outputs.Commitment()
 	if err != nil {
 		panic(err)
 	}
@@ -242,12 +242,12 @@ func (o Outputs) MustCommitment() []byte {
 }
 
 // Commitment computes a hash of the outputs slice to be used as a commitment.
-func (o Outputs) Commitment() ([]byte, error) {
+func (outputs Outputs) Commitment() ([]byte, error) {
 	h, err := blake2b.New256(nil)
 	if err != nil {
 		return nil, err
 	}
-	for _, output := range o {
+	for _, output := range outputs {
 		outputBytes, err := output.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
 		if err != nil {
 			return nil, fmt.Errorf("unable to compute commitment hash: %w", err)
@@ -260,9 +260,9 @@ func (o Outputs) Commitment() ([]byte, error) {
 }
 
 // ChainConstrainedOutputSet returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs in Outputs.
-func (o Outputs) ChainConstrainedOutputSet(txID TransactionID) ChainConstrainedOutputsSet {
+func (outputs Outputs) ChainConstrainedOutputSet(txID TransactionID) ChainConstrainedOutputsSet {
 	set := make(ChainConstrainedOutputsSet)
-	for outputIndex, output := range o {
+	for outputIndex, output := range outputs {
 		chainConstrainedOutput, is := output.(ChainConstrainedOutput)
 		if !is {
 			continue
@@ -285,9 +285,9 @@ func (o Outputs) ChainConstrainedOutputSet(txID TransactionID) ChainConstrainedO
 }
 
 // ToOutputsByType converts the Outputs slice to OutputsByType.
-func (o Outputs) ToOutputsByType() OutputsByType {
+func (outputs Outputs) ToOutputsByType() OutputsByType {
 	outputsByType := make(OutputsByType)
-	for _, output := range o {
+	for _, output := range outputs {
 		slice, has := outputsByType[output.Type()]
 		if !has {
 			slice = make(Outputs, 0)
@@ -306,9 +306,9 @@ func OutputsFilterByType(ty OutputType) OutputsFilterFunc {
 }
 
 // Filter returns Outputs (retained order) passing the given OutputsFilterFunc.
-func (o Outputs) Filter(f OutputsFilterFunc) Outputs {
+func (outputs Outputs) Filter(f OutputsFilterFunc) Outputs {
 	filtered := make(Outputs, 0)
-	for _, output := range o {
+	for _, output := range outputs {
 		if !f(output) {
 			continue
 		}
@@ -317,26 +317,38 @@ func (o Outputs) Filter(f OutputsFilterFunc) Outputs {
 	return filtered
 }
 
+// NativeTokenSum sums up the different NativeTokens occurring within the given outputs.
+// limit defines the max amount of native tokens which are allowed
+func (outputs Outputs) NativeTokenSum() (NativeTokenSum, int, error) {
+	sum := make(map[NativeTokenID]*big.Int)
+	var ntCount int
+	for _, output := range outputs {
+		set := output.NativeTokenSet()
+		ntCount += len(set)
+		for _, nativeToken := range set {
+			if sign := nativeToken.Amount.Sign(); sign == -1 || sign == 0 {
+				return nil, 0, ErrNativeTokenAmountLessThanEqualZero
+			}
+
+			val := sum[nativeToken.ID]
+			if val == nil {
+				val = new(big.Int)
+			}
+
+			if val.Add(val, nativeToken.Amount).Cmp(abi.MaxUint256) == 1 {
+				return nil, 0, ErrNativeTokenSumExceedsUint256
+			}
+			sum[nativeToken.ID] = val
+		}
+	}
+	return sum, ntCount, nil
+}
+
 // OutputsByType is a map of OutputType(s) to slice of Output(s).
 type OutputsByType map[OutputType][]Output
 
-// NativeTokenOutputs returns a slice of Outputs which are NativeTokenOutput.
-func (outputs OutputsByType) NativeTokenOutputs() NativeTokenOutputs {
-	nativeTokenOutputs := make(NativeTokenOutputs, 0)
-	for _, slice := range outputs {
-		for _, output := range slice {
-			nativeTokenOutput, is := output.(NativeTokenOutput)
-			if !is {
-				continue
-			}
-			nativeTokenOutputs = append(nativeTokenOutputs, nativeTokenOutput)
-		}
-	}
-	return nativeTokenOutputs
-}
-
 // BasicOutputs returns a slice of Outputs which are BasicOutput.
-func (outputs OutputsByType) ExtendedOutputs() BasicOutputs {
+func (outputs OutputsByType) BasicOutputs() BasicOutputs {
 	extOutputs := make(BasicOutputs, 0)
 	for _, output := range outputs[OutputBasic] {
 		extOutput, is := output.(*BasicOutput)
@@ -447,36 +459,6 @@ func (outputs OutputsByType) ChainConstrainedOutputs() ChainConstrainedOutputs {
 	return chainConstrainedOutputs
 }
 
-// NativeTokenOutputs is a slice of NativeTokenOutput(s).
-type NativeTokenOutputs []NativeTokenOutput
-
-// Sum sums up the different NativeTokens occurring within the given outputs.
-// limit defines the max amount of native tokens which are allowed
-func (ntOutputs NativeTokenOutputs) Sum() (NativeTokenSum, int, error) {
-	sum := make(map[NativeTokenID]*big.Int)
-	var ntCount int
-	for _, output := range ntOutputs {
-		set := output.NativeTokenSet()
-		ntCount += len(set)
-		for _, nativeToken := range set {
-			if sign := nativeToken.Amount.Sign(); sign == -1 || sign == 0 {
-				return nil, 0, ErrNativeTokenAmountLessThanEqualZero
-			}
-
-			val := sum[nativeToken.ID]
-			if val == nil {
-				val = new(big.Int)
-			}
-
-			if val.Add(val, nativeToken.Amount).Cmp(abi.MaxUint256) == 1 {
-				return nil, 0, ErrNativeTokenSumExceedsUint256
-			}
-			sum[nativeToken.ID] = val
-		}
-	}
-	return sum, ntCount, nil
-}
-
 // NewAliases returns an AliasOutputsSet for all AliasOutputs which are new.
 func (outputSet OutputSet) NewAliases() AliasOutputsSet {
 	set := make(AliasOutputsSet)
@@ -516,11 +498,7 @@ func (outputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSe
 }
 
 func outputUnlockable(output Output, next TransDepIdentOutput, target Address, extParas *ExternalUnlockParameters) (bool, error) {
-	var unlockConds UnlockConditions
-
-	if unlockCondOutput, ok := output.(UnlockConditionOutput); ok {
-		unlockConds = unlockCondOutput.UnlockConditions()
-	}
+	unlockConds := output.UnlockConditions()
 
 	checkTargetIdentOfOutput := func() (bool, error) {
 		switch x := output.(type) {
@@ -562,6 +540,15 @@ type Output interface {
 	// Deposit returns the amount this Output deposits.
 	Deposit() uint64
 
+	// NativeTokenSet returns the NativeToken this output defines.
+	NativeTokenSet() NativeTokens
+
+	// UnlockConditions returns the UnlockConditions this output defines.
+	UnlockConditions() UnlockConditions
+
+	// FeatureBlocks returns the FeatureBlocks this output contains.
+	FeatureBlocks() FeatureBlocks
+
 	// Type returns the type of the output.
 	Type() OutputType
 
@@ -602,25 +589,6 @@ type TransDepIdentOutput interface {
 	// and the next state of this TransDepIdentOutput. To indicate that this TransDepIdentOutput
 	// is to be destroyed, pass nil as next.
 	UnlockableBy(ident Address, next TransDepIdentOutput, extParas *ExternalUnlockParameters) (bool, error)
-}
-
-// NativeTokenOutput is a type of Output which can hold NativeToken.
-type NativeTokenOutput interface {
-	Output
-	// NativeTokenSet returns the NativeToken this output defines.
-	NativeTokenSet() NativeTokens
-}
-
-// FeatureBlockOutput is a type of Output which can hold FeatureBlocks.
-type FeatureBlockOutput interface {
-	// FeatureBlocks returns the FeatureBlocks this output contains.
-	FeatureBlocks() FeatureBlocks
-}
-
-// UnlockConditionOutput is a type of Output which can hold UnlockConditions.
-type UnlockConditionOutput interface {
-	// UnlockConditions returns the UnlockConditions this output defines.
-	UnlockConditions() UnlockConditions
 }
 
 // OutputSelector implements SerializableSelectorFunc for output types.
@@ -719,21 +687,19 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 			return fmt.Errorf("%w: output %d", err, index)
 		}
 
-		if unlockConditionOutput, is := output.(UnlockConditionOutput); is {
-			unlockConditionsSet, err := unlockConditionOutput.UnlockConditions().Set()
-			if err != nil {
-				return fmt.Errorf("unable to compute unlock conditions set in deposit syntactic checks for output %d: %w", index, err)
-			}
+		unlockConditionsSet, err := output.UnlockConditions().Set()
+		if err != nil {
+			return fmt.Errorf("unable to compute unlock conditions set in deposit syntactic checks for output %d: %w", index, err)
+		}
 
-			if returnFeatBlock := unlockConditionsSet.DustDepositReturn(); returnFeatBlock != nil {
-				returnAmount := returnFeatBlock.Amount
-				minDustForReturnOutput := rentStruct.MinDustDeposit(returnFeatBlock.ReturnAddress)
-				switch {
-				case returnAmount < minDustForReturnOutput:
-					return fmt.Errorf("%w: output %d, needed %d, have %d", ErrOutputReturnBlockIsLessThanMinDust, index, minDustForReturnOutput, returnAmount)
-				case returnAmount > minRent:
-					return fmt.Errorf("%w: output %d, rent for output %d, have %d", ErrOutputReturnBlockIsMoreThanVBRent, index, minRent, returnAmount)
-				}
+		if returnFeatBlock := unlockConditionsSet.DustDepositReturn(); returnFeatBlock != nil {
+			returnAmount := returnFeatBlock.Amount
+			minDustForReturnOutput := rentStruct.MinDustDeposit(returnFeatBlock.ReturnAddress)
+			switch {
+			case returnAmount < minDustForReturnOutput:
+				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrOutputReturnBlockIsLessThanMinDust, index, minDustForReturnOutput, returnAmount)
+			case returnAmount > minRent:
+				return fmt.Errorf("%w: output %d, rent for output %d, have %d", ErrOutputReturnBlockIsMoreThanVBRent, index, minRent, returnAmount)
 			}
 		}
 
@@ -747,11 +713,9 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 func OutputsSyntacticalNativeTokensCount() OutputsSyntacticalValidationFunc {
 	var nativeTokensCount int
 	return func(index int, output Output) error {
-		if nativeTokenOutput, is := output.(NativeTokenOutput); is {
-			nativeTokensCount += len(nativeTokenOutput.NativeTokenSet())
-			if nativeTokensCount > MaxNativeTokensCount {
-				return ErrMaxNativeTokensCountExceeded
-			}
+		nativeTokensCount += len(output.NativeTokenSet())
+		if nativeTokensCount > MaxNativeTokensCount {
+			return ErrMaxNativeTokensCountExceeded
 		}
 		return nil
 	}
@@ -761,24 +725,23 @@ func OutputsSyntacticalNativeTokensCount() OutputsSyntacticalValidationFunc {
 // That ExpirationUnlockCondition and TimelockUnlockCondition does not have both of its milestone and unix criteria set to zero.
 func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
-		if unlockConditionOutput, is := output.(UnlockConditionOutput); is {
-			unlockConditionsSet, err := unlockConditionOutput.UnlockConditions().Set()
-			if err != nil {
-				return fmt.Errorf("unable to compute unlock conditions set in expiration/timelock syntactic checks for output %d: %w", index, err)
-			}
+		unlockConditionsSet, err := output.UnlockConditions().Set()
+		if err != nil {
+			return fmt.Errorf("unable to compute unlock conditions set in expiration/timelock syntactic checks for output %d: %w", index, err)
+		}
 
-			if expiration := unlockConditionsSet.Expiration(); expiration != nil {
-				if expiration.MilestoneIndex == 0 && expiration.UnixTime == 0 {
-					return ErrExpirationConditionsZero
-				}
-			}
-
-			if timelock := unlockConditionsSet.Timelock(); timelock != nil {
-				if timelock.MilestoneIndex == 0 && timelock.UnixTime == 0 {
-					return ErrTimelockConditionsZero
-				}
+		if expiration := unlockConditionsSet.Expiration(); expiration != nil {
+			if expiration.MilestoneIndex == 0 && expiration.UnixTime == 0 {
+				return ErrExpirationConditionsZero
 			}
 		}
+
+		if timelock := unlockConditionsSet.Timelock(); timelock != nil {
+			if timelock.MilestoneIndex == 0 && timelock.UnixTime == 0 {
+				return ErrTimelockConditionsZero
+			}
+		}
+
 		return nil
 	}
 }

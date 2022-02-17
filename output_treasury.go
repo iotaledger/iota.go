@@ -14,6 +14,18 @@ type TreasuryOutput struct {
 	Amount uint64 `json:"deposit"`
 }
 
+func (t *TreasuryOutput) NativeTokenSet() NativeTokens {
+	return nil
+}
+
+func (t *TreasuryOutput) UnlockConditions() UnlockConditions {
+	return nil
+}
+
+func (t *TreasuryOutput) FeatureBlocks() FeatureBlocks {
+	return nil
+}
+
 func (t *TreasuryOutput) Clone() Output {
 	return &TreasuryOutput{Amount: t.Amount}
 }

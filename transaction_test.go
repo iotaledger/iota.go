@@ -1301,7 +1301,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			inputIDs := tpkg.RandOutputIDs(4)
+			inputIDs := tpkg.RandOutputIDs(2)
 
 			ntCount := 10
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
@@ -1348,7 +1348,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 		}(),
 		func() test {
-			inputIDs := tpkg.RandOutputIDs(2)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inCount := 20
 			outCount := 250
@@ -1567,12 +1567,10 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 		}(),
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			err := tt.tx.SemanticallyValidate(tt.svCtx, tt.inputs,
-				iotago.TxSemanticNativeTokens(),
-			)
+			err := tt.tx.SemanticallyValidate(tt.svCtx, tt.inputs, iotago.TxSemanticNativeTokens())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
