@@ -17,6 +17,14 @@ type IndexerResponse struct {
 	Cursor *string `json:"cursor"`
 }
 
+// IndexerCursorParas define page size and cursor query parameters.
+type IndexerCursorParas struct {
+	// The maximum amount of items returned in one call.
+	PageSize int `qs:"pageSize,omitempty"`
+	// The offset from which to query from.
+	Cursor *string `qs:"cursor,omitempty"`
+}
+
 // IndexerTimelockParas define timelock query parameters.
 type IndexerTimelockParas struct {
 	// Filters outputs based on the presence of timelock unlock condition.
@@ -65,6 +73,7 @@ type IndexerDustParas struct {
 
 // OutputsQuery defines parameters for an outputs query.
 type OutputsQuery struct {
+	IndexerCursorParas
 	IndexerTimelockParas
 	IndexerExpirationParas
 	IndexerCreationParas
@@ -76,8 +85,6 @@ type OutputsQuery struct {
 	SenderBech32 string `qs:"sender,omitempty"`
 	// Filters outputs based on matching tag feature block.
 	Tag string `qs:"tag,omitempty"`
-	// The offset from which to query from.
-	Cursor *string `qs:"cursor,omitempty"`
 }
 
 func (query *OutputsQuery) OutputType() iotago.OutputType {
@@ -94,6 +101,7 @@ func (query *OutputsQuery) URLParas() (string, error) {
 
 // AliasesQuery defines parameters for an alias outputs query.
 type AliasesQuery struct {
+	IndexerCursorParas
 	// Bech32-encoded state controller address that should be searched for.
 	StateControllerBech32 string `qs:"stateController,omitempty"`
 	// Bech32-encoded governor address that should be searched for.
@@ -104,8 +112,6 @@ type AliasesQuery struct {
 	IssuerBech32 string `qs:"issuer,omitempty"`
 	// Filters outputs based on matching tag feature block.
 	Tag string `qs:"tag,omitempty"`
-	// The offset from which to query from.
-	Cursor *string `qs:"cursor,omitempty"`
 }
 
 func (query *AliasesQuery) OutputType() iotago.OutputType {
@@ -122,11 +128,10 @@ func (query *AliasesQuery) URLParas() (string, error) {
 
 // FoundriesQuery defines parameters for a foundry outputs query.
 type FoundriesQuery struct {
+	IndexerCursorParas
 	IndexerCreationParas
 	// Bech32-encoded address that should be searched for.
 	AddressBech32 string `qs:"address,omitempty"`
-	// The offset from which to query from.
-	Cursor *string `qs:"cursor,omitempty"`
 }
 
 func (query *FoundriesQuery) OutputType() iotago.OutputType {
@@ -143,6 +148,7 @@ func (query *FoundriesQuery) URLParas() (string, error) {
 
 // NFTsQuery defines parameters for an NFT outputs query.
 type NFTsQuery struct {
+	IndexerCursorParas
 	IndexerTimelockParas
 	IndexerExpirationParas
 	IndexerDustParas
@@ -156,8 +162,6 @@ type NFTsQuery struct {
 	IssuerBech32 string `qs:"issuer,omitempty"`
 	// Filters outputs based on matching tag feature block.
 	Tag string `qs:"tag,omitempty"`
-	// The offset from which to query from.
-	Cursor *string `qs:"cursor,omitempty"`
 }
 
 func (query *NFTsQuery) OutputType() iotago.OutputType {
