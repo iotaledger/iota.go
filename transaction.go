@@ -233,6 +233,8 @@ type SemValiContextWorkingSet struct {
 	UnlockedIdents UnlockedIdentities
 	// The mapping of OutputID to the actual Outputs.
 	InputSet OutputSet
+	// The inputs to the transaction.
+	Inputs Outputs
 	// The mapping of inputs' OutputID to the index.
 	InputIDToIndex map[OutputID]uint16
 	// The transaction for which this semantic validation happens.
@@ -261,29 +263,32 @@ func (workingSet *SemValiContextWorkingSet) UTXOInputAtIndex(inputIndex uint16) 
 	return workingSet.Tx.Essence.Inputs[inputIndex].(*UTXOInput)
 }
 
-func NewSemValiContextWorkingSet(t *Transaction, inputs OutputSet) (*SemValiContextWorkingSet, error) {
+func NewSemValiContextWorkingSet(t *Transaction, inputsSet OutputSet) (*SemValiContextWorkingSet, error) {
 	var err error
 	workingSet := &SemValiContextWorkingSet{}
 	workingSet.Tx = t
 	workingSet.UnlockedIdents = make(UnlockedIdentities)
-	workingSet.InputSet = inputs
-	workingSet.InputIDToIndex = func() map[OutputID]uint16 {
-		m := make(map[OutputID]uint16)
-		for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
-			ref := inputRef.(IndexedUTXOReferencer).Ref()
-			m[ref] = uint16(inputIndex)
+	workingSet.InputSet = inputsSet
+	workingSet.InputIDToIndex = make(map[OutputID]uint16)
+	for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
+		ref := inputRef.(IndexedUTXOReferencer).Ref()
+		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
+		input, ok := workingSet.InputSet[ref]
+		if !ok {
+			return nil, fmt.Errorf("%w: utxo for input %d not supplied", ErrMissingUTXO, inputIndex)
 		}
-		return m
-	}()
+		workingSet.Inputs = append(workingSet.Inputs, input)
+	}
+
 	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage()
 	if err != nil {
 		return nil, err
 	}
 
 	workingSet.InputsByType = func() OutputsByType {
-		slice := make(Outputs, len(inputs))
+		slice := make(Outputs, len(inputsSet))
 		var i int
-		for _, output := range inputs {
+		for _, output := range inputsSet {
 			slice[i] = output
 			i++
 		}
@@ -376,19 +381,7 @@ type TxSemanticValidationFunc func(svCtx *SemanticValidationContext) error
 // and verifies that inputs are correctly unlocked and that the inputs commitment matches.
 func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
-		var inputs Outputs
-
-		// it is important that the inputs are checked in order as referential unlocks
-		// check against previous unlocks
-		for inputIndex, inputRef := range svCtx.WorkingSet.Tx.Essence.Inputs {
-			input, ok := svCtx.WorkingSet.InputSet[inputRef.(IndexedUTXOReferencer).Ref()]
-			if !ok {
-				return fmt.Errorf("%w: utxo for input %d not supplied", ErrMissingUTXO, inputIndex)
-			}
-			inputs = append(inputs, input)
-		}
-
-		actualInputCommitment, err := inputs.Commitment()
+		actualInputCommitment, err := svCtx.WorkingSet.Inputs.Commitment()
 		if err != nil {
 			return fmt.Errorf("unable to compute hash of inputs: %w", err)
 		}
@@ -398,7 +391,7 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 			return fmt.Errorf("%w: specified %v but got %v", ErrInvalidInputsCommitment, expectedInputCommitment, actualInputCommitment)
 		}
 
-		for inputIndex, input := range inputs {
+		for inputIndex, input := range svCtx.WorkingSet.Inputs {
 			if err := unlockOutput(svCtx, input, uint16(inputIndex)); err != nil {
 				return err
 			}
@@ -451,12 +444,7 @@ func identToUnlock(svCtx *SemanticValidationContext, input Output, inputIndex ui
 }
 
 func checkExpiredForReceiver(svCtx *SemanticValidationContext, output Output) Address {
-	unlockConditionOutput, is := output.(UnlockConditionOutput)
-	if !is {
-		return nil
-	}
-
-	unlockCondSet := unlockConditionOutput.UnlockConditions().MustSet()
+	unlockCondSet := output.UnlockConditions().MustSet()
 	if ok, returnIdent := unlockCondSet.returnIdentCanUnlock(svCtx.ExtParas); ok {
 		return returnIdent
 	}
@@ -524,12 +512,7 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 func TxSemanticOutputsSender() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		for outputIndex, output := range svCtx.WorkingSet.Tx.Essence.Outputs {
-			featureBlockOutput, is := output.(FeatureBlockOutput)
-			if !is {
-				continue
-			}
-
-			senderFeatureBlock := featureBlockOutput.FeatureBlocks().MustSet().SenderFeatureBlock()
+			senderFeatureBlock := output.FeatureBlocks().MustSet().SenderFeatureBlock()
 			if senderFeatureBlock == nil {
 				continue
 			}
@@ -555,12 +538,8 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 		inputSumReturnAmountPerIdent := make(map[string]uint64)
 		for inputID, input := range svCtx.WorkingSet.InputSet {
 			in += input.Deposit()
-			unlockConditionOutput, is := input.(UnlockConditionOutput)
-			if !is {
-				continue
-			}
 
-			unlockCondSet := unlockConditionOutput.UnlockConditions().MustSet()
+			unlockCondSet := input.UnlockConditions().MustSet()
 			dustDepositReturnUnlockCondition := unlockCondSet.DustDepositReturn()
 			if dustDepositReturnUnlockCondition == nil {
 				continue
@@ -618,12 +597,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 func TxSemanticTimelock() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		for inputIndex, input := range svCtx.WorkingSet.InputSet {
-			unlockConditionOutput, is := input.(UnlockConditionOutput)
-			if !is {
-				continue
-			}
-
-			if err := unlockConditionOutput.UnlockConditions().MustSet().TimelocksExpired(svCtx.ExtParas); err != nil {
+			if err := input.UnlockConditions().MustSet().TimelocksExpired(svCtx.ExtParas); err != nil {
 				return fmt.Errorf("%w: input at index %d's timelocks are not expired", err, inputIndex)
 			}
 		}
@@ -669,7 +643,7 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 		// native token set creates handle overflows
 		var err error
 		var inNTCount, outNTCount int
-		svCtx.WorkingSet.InNativeTokens, inNTCount, err = svCtx.WorkingSet.InputsByType.NativeTokenOutputs().Sum()
+		svCtx.WorkingSet.InNativeTokens, inNTCount, err = svCtx.WorkingSet.Inputs.NativeTokenSum()
 		if err != nil {
 			return fmt.Errorf("invalid input native token set: %w", err)
 		}
@@ -678,7 +652,7 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 			return fmt.Errorf("%w: inputs native token count %d exceeds max of %d", ErrMaxNativeTokensCountExceeded, inNTCount, MaxNativeTokensCount)
 		}
 
-		svCtx.WorkingSet.OutNativeTokens, outNTCount, err = svCtx.WorkingSet.OutputsByType.NativeTokenOutputs().Sum()
+		svCtx.WorkingSet.OutNativeTokens, outNTCount, err = svCtx.WorkingSet.Tx.Essence.Outputs.NativeTokenSum()
 		if err != nil {
 			return fmt.Errorf("invalid output native token set: %w", err)
 		}
