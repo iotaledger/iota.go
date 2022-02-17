@@ -451,7 +451,7 @@ func (outputs OutputsByType) ChainConstrainedOutputs() ChainConstrainedOutputs {
 type NativeTokenOutputs []NativeTokenOutput
 
 // Sum sums up the different NativeTokens occurring within the given outputs.
-// limit defines the max amount of native tokens which are allowewd
+// limit defines the max amount of native tokens which are allowed
 func (ntOutputs NativeTokenOutputs) Sum() (NativeTokenSum, int, error) {
 	sum := make(map[NativeTokenID]*big.Int)
 	var ntCount int
