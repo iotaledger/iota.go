@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/util"
@@ -277,7 +278,7 @@ func (u *TransactionEssence) Size() int {
 
 func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 	jTransactionEssence := &jsonTransactionEssence{
-		NetworkID:        int(u.NetworkID),
+		NetworkID:        strconv.FormatUint(u.NetworkID, 10),
 		Inputs:           make([]*json.RawMessage, len(u.Inputs)),
 		InputsCommitment: hex.EncodeToString(u.InputsCommitment[:]),
 		Outputs:          make([]*json.RawMessage, len(u.Outputs)),
@@ -365,7 +366,7 @@ func jsonTransactionEssenceSelector(ty int) (JSONSerializable, error) {
 // jsonTransactionEssence defines the json representation of a TransactionEssence.
 type jsonTransactionEssence struct {
 	Type             int                `json:"type"`
-	NetworkID        int                `json:"networkID"`
+	NetworkID        string             `json:"networkId"`
 	Inputs           []*json.RawMessage `json:"inputs"`
 	InputsCommitment string             `json:"inputsCommitment"`
 	Outputs          []*json.RawMessage `json:"outputs"`
@@ -374,10 +375,15 @@ type jsonTransactionEssence struct {
 
 func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, error) {
 	unsigTx := &TransactionEssence{
-		NetworkID: uint64(j.NetworkID),
-		Inputs:    make(Inputs, len(j.Inputs)),
-		Outputs:   make(Outputs, len(j.Outputs)),
-		Payload:   nil,
+		Inputs:  make(Inputs, len(j.Inputs)),
+		Outputs: make(Outputs, len(j.Outputs)),
+		Payload: nil,
+	}
+
+	var err error
+	unsigTx.NetworkID, err = strconv.ParseUint(j.NetworkID, 10, 64)
+	if err != nil {
+		return nil, err
 	}
 
 	for i, jInput := range j.Inputs {
