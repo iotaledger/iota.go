@@ -41,10 +41,12 @@ func TestOutputsQuery_Build(t *testing.T) {
 		AddressBech32: "alice",
 		SenderBech32:  "bob",
 		Tag:           "charlie",
-		Cursor: func() *string {
-			str := "dave"
-			return &str
-		}(),
+		IndexerCursorParas: nodeclient.IndexerCursorParas{
+			Cursor: func() *string {
+				str := "dave"
+				return &str
+			}(),
+		},
 	}
 
 	_, err := query.URLParas()
