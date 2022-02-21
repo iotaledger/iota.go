@@ -113,7 +113,7 @@ func (nftAddr *NFTAddress) Size() int {
 
 func (nftAddr *NFTAddress) MarshalJSON() ([]byte, error) {
 	jNFTAddress := &jsonNFTAddress{}
-	jNFTAddress.Address = hex.EncodeToString(nftAddr[:])
+	jNFTAddress.NFTId = hex.EncodeToString(nftAddr[:])
 	jNFTAddress.Type = int(AddressNFT)
 	return json.Marshal(jNFTAddress)
 }
@@ -145,12 +145,12 @@ func NFTAddressFromOutputID(outputID OutputID) NFTAddress {
 
 // jsonNFTAddress defines the json representation of an NFTAddress.
 type jsonNFTAddress struct {
-	Type    int    `json:"type"`
-	Address string `json:"address"`
+	Type  int    `json:"type"`
+	NFTId string `json:"nftId"`
 }
 
 func (j *jsonNFTAddress) ToSerializable() (serializer.Serializable, error) {
-	addrBytes, err := hex.DecodeString(j.Address)
+	addrBytes, err := hex.DecodeString(j.NFTId)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for NFT address: %w", err)
 	}
