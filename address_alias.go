@@ -113,7 +113,7 @@ func (aliasAddr *AliasAddress) Serialize(_ serializer.DeSerializationMode, deSer
 
 func (aliasAddr *AliasAddress) MarshalJSON() ([]byte, error) {
 	jAliasAddress := &jsonAliasAddress{}
-	jAliasAddress.Address = hex.EncodeToString(aliasAddr[:])
+	jAliasAddress.AliasId = hex.EncodeToString(aliasAddr[:])
 	jAliasAddress.Type = int(AddressAlias)
 	return json.Marshal(jAliasAddress)
 }
@@ -146,11 +146,11 @@ func AliasAddressFromOutputID(outputID OutputID) AliasAddress {
 // jsonAliasAddress defines the json representation of an AliasAddress.
 type jsonAliasAddress struct {
 	Type    int    `json:"type"`
-	Address string `json:"address"`
+	AliasId string `json:"aliasId"`
 }
 
 func (j *jsonAliasAddress) ToSerializable() (serializer.Serializable, error) {
-	addrBytes, err := hex.DecodeString(j.Address)
+	addrBytes, err := hex.DecodeString(j.AliasId)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for alias address: %w", err)
 	}

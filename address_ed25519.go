@@ -110,7 +110,7 @@ func (edAddr *Ed25519Address) Size() int {
 
 func (edAddr *Ed25519Address) MarshalJSON() ([]byte, error) {
 	jEd25519Address := &jsonEd25519Address{}
-	jEd25519Address.Address = hex.EncodeToString(edAddr[:])
+	jEd25519Address.PubKeyHash = hex.EncodeToString(edAddr[:])
 	jEd25519Address.Type = int(AddressEd25519)
 	return json.Marshal(jEd25519Address)
 }
@@ -135,12 +135,12 @@ func Ed25519AddressFromPubKey(pubKey ed25519.PublicKey) Ed25519Address {
 
 // jsonEd25519Address defines the json representation of an Ed25519Address.
 type jsonEd25519Address struct {
-	Type    int    `json:"type"`
-	Address string `json:"address"`
+	Type       int    `json:"type"`
+	PubKeyHash string `json:"pubKeyHash"`
 }
 
 func (j *jsonEd25519Address) ToSerializable() (serializer.Serializable, error) {
-	addrBytes, err := hex.DecodeString(j.Address)
+	addrBytes, err := hex.DecodeString(j.PubKeyHash)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
 	}
