@@ -48,6 +48,19 @@ func (u *UTXOInput) ID() OutputID {
 	return id
 }
 
+func (u *UTXOInput) Equals(other *UTXOInput) bool {
+	if u == nil {
+		return other == nil
+	}
+	if other == nil {
+		return false
+	}
+	if u.TransactionID != other.TransactionID {
+		return false
+	}
+	return u.TransactionOutputIndex == other.TransactionOutputIndex
+}
+
 func (u *UTXOInput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(InputUTXO), serializer.TypeDenotationByte, func(err error) error {
