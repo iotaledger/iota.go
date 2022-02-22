@@ -666,7 +666,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //	- every output deposits less than the total supply
 //	- the sum of deposits does not exceed the total supply
 //	- the deposit fulfils the minimum deposit as calculated from the virtual byte cost of the output
-//	- if the output contains a DustDepositReturnUnlockCondition, it must "return" bigger equal than the minimum dust deposit
+//	- if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //	  and must be less equal the minimum virtual byte rent cost for the output.
 func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntacticalValidationFunc {
 	var sum uint64
@@ -692,12 +692,12 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 			return fmt.Errorf("unable to compute unlock conditions set in deposit syntactic checks for output %d: %w", index, err)
 		}
 
-		if returnFeatBlock := unlockConditionsSet.DustDepositReturn(); returnFeatBlock != nil {
+		if returnFeatBlock := unlockConditionsSet.StorageDepositReturn(); returnFeatBlock != nil {
 			returnAmount := returnFeatBlock.Amount
-			minDustForReturnOutput := rentStruct.MinDustDeposit(returnFeatBlock.ReturnAddress)
+			minStorageDepositForReturnOutput := rentStruct.MinStorageDeposit(returnFeatBlock.ReturnAddress)
 			switch {
-			case returnAmount < minDustForReturnOutput:
-				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrOutputReturnBlockIsLessThanMinDust, index, minDustForReturnOutput, returnAmount)
+			case returnAmount < minStorageDepositForReturnOutput:
+				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrOutputReturnBlockIsLessThanMinStorageDeposit, index, minStorageDepositForReturnOutput, returnAmount)
 			case returnAmount > minRent:
 				return fmt.Errorf("%w: output %d, rent for output %d, have %d", ErrOutputReturnBlockIsMoreThanVBRent, index, minRent, returnAmount)
 			}
@@ -748,7 +748,7 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 
 /*
 // OutputsSyntacticalSenderFeatureBlockRequirement returns an OutputsSyntacticalValidationFunc which checks that:
-//	- if an output contains a SenderFeatureBlock if another FeatureBlock (example DustDepositReturnUnlockCondition) requires it
+//	- if an output contains a SenderFeatureBlock if another FeatureBlock (example StorageDepositReturnUnlockCondition) requires it
 func OutputsSyntacticalSenderFeatureBlockRequirement() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		featureBlockOutput, is := output.(FeatureBlockOutput)
@@ -758,7 +758,7 @@ func OutputsSyntacticalSenderFeatureBlockRequirement() OutputsSyntacticalValidat
 		var hasSenderFeatBlock, hasFeatBlockReqSenderFeatBlock bool
 		for _, featureBlock := range featureBlockOutput.FeatureBlocks() {
 			switch featureBlock.Type() {
-			case FeatureBlockDustDepositReturn:
+			case FeatureBlockStorageDepositReturn:
 				fallthrough
 			case FeatureBlockExpirationMilestoneIndex:
 				fallthrough

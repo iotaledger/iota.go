@@ -194,7 +194,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 			var (
 				defaultAmount            uint64 = OneMi
 				confirmingMilestoneIndex uint32 = 750
-				dustDepositReturn        uint64 = OneMi / 2
+				storageDepositReturn     uint64 = OneMi / 2
 				nativeTokenTransfer1            = tpkg.RandSortNativeTokens(10)
 				nativeTokenTransfer2            = tpkg.RandSortNativeTokens(10)
 			)
@@ -254,12 +254,12 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					},
 				},
 				inputIDs[5]: &iotago.BasicOutput{
-					Amount: defaultAmount + dustDepositReturn,
+					Amount: defaultAmount + storageDepositReturn,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
-						&iotago.DustDepositReturnUnlockCondition{
+						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident1,
-							Amount:        dustDepositReturn,
+							Amount:        storageDepositReturn,
 						},
 						&iotago.TimelockUnlockCondition{
 							MilestoneIndex: 500,
@@ -443,7 +443,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						},
 					},
 					&iotago.BasicOutput{
-						Amount: dustDepositReturn,
+						Amount: storageDepositReturn,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
@@ -1041,7 +1041,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					Amount: 500,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
-						&iotago.DustDepositReturnUnlockCondition{
+						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
 							Amount:        420,
 						},
@@ -1056,7 +1056,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					Amount: 500,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
-						&iotago.DustDepositReturnUnlockCondition{
+						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
 							Amount:        420,
 						},
@@ -1200,7 +1200,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					Amount: 500,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
-						&iotago.DustDepositReturnUnlockCondition{
+						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
 							Amount:        420,
 						},

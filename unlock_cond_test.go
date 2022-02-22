@@ -17,12 +17,12 @@ func TestUnlockConditionsDeSerialize(t *testing.T) {
 			target: &iotago.AddressUnlockCondition{},
 		},
 		{
-			name: "ok - DustDepositReturnUnlockCondition",
-			source: &iotago.DustDepositReturnUnlockCondition{
+			name: "ok - StorageDepositReturnUnlockCondition",
+			source: &iotago.StorageDepositReturnUnlockCondition{
 				ReturnAddress: tpkg.RandEd25519Address(),
 				Amount:        1337,
 			},
-			target: &iotago.DustDepositReturnUnlockCondition{},
+			target: &iotago.StorageDepositReturnUnlockCondition{},
 		},
 		{
 			name: "ok - TimelockUnlockCondition",

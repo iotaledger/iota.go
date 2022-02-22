@@ -34,9 +34,9 @@ func TestOutputsQuery_Build(t *testing.T) {
 			CreatedBefore: 9,
 			CreatedAfter:  10,
 		},
-		IndexerDustParas: nodeclient.IndexerDustParas{
-			RequiresDustReturn:      true,
-			DustReturnAddressBech32: "",
+		IndexerStorageDepositParas: nodeclient.IndexerStorageDepositParas{
+			RequiresStorageDepositReturn:      true,
+			StorageDepositReturnAddressBech32: "",
 		},
 		AddressBech32: "alice",
 		SenderBech32:  "bob",

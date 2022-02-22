@@ -60,9 +60,9 @@ func (vbcs *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint6
 	return minRent, nil
 }
 
-// MinDustDeposit returns the minimum renting costs for an BasicOutput which returns
-// a DustDepositReturnUnlockCondition amount back to the origin sender.
-func (vbcs *RentStructure) MinDustDeposit(sender Address) uint64 {
+// MinStorageDeposit returns the minimum renting costs for an BasicOutput which returns
+// a StorageDepositReturnUnlockCondition amount back to the origin sender.
+func (vbcs *RentStructure) MinStorageDeposit(sender Address) uint64 {
 	return (&BasicOutput{Conditions: UnlockConditions{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VByteCost(vbcs, nil)
 }
 

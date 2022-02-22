@@ -25,8 +25,8 @@ type UnlockConditionType byte
 const (
 	// UnlockConditionAddress denotes an AddressUnlockCondition.
 	UnlockConditionAddress UnlockConditionType = iota
-	// UnlockConditionDustDepositReturn denotes a DustDepositReturnUnlockCondition.
-	UnlockConditionDustDepositReturn
+	// UnlockConditionStorageDepositReturn denotes a StorageDepositReturnUnlockCondition.
+	UnlockConditionStorageDepositReturn
 	// UnlockConditionTimelock denotes a TimelockUnlockCondition.
 	UnlockConditionTimelock
 	// UnlockConditionExpiration denotes an ExpirationUnlockCondition.
@@ -49,7 +49,7 @@ func (unlockCondType UnlockConditionType) String() string {
 var (
 	unlockCondNames = [UnlockConditionImmutableAlias + 1]string{
 		"AddressUnlockCondition",
-		"DustDepositReturnUnlockCondition",
+		"StorageDepositReturnUnlockCondition",
 		"TimelockUnlockCondition",
 		"ExpirationUnlockCondition",
 		"StateControllerAddressUnlockCondition",
@@ -145,9 +145,9 @@ func (f UnlockConditions) MustSet() UnlockConditionsSet {
 // UnlockConditionsSet is a set of UnlockCondition(s).
 type UnlockConditionsSet map[UnlockConditionType]UnlockCondition
 
-// HasDustDepositReturnCondition tells whether this set has a DustDepositReturnUnlockCondition.
-func (f UnlockConditionsSet) HasDustDepositReturnCondition() bool {
-	return f.DustDepositReturn() != nil
+// HasStorageDepositReturnCondition tells whether this set has a StorageDepositReturnUnlockCondition.
+func (f UnlockConditionsSet) HasStorageDepositReturnCondition() bool {
+	return f.StorageDepositReturn() != nil
 }
 
 // HasExpirationCondition tells whether this set has an ExpirationUnlockCondition.
@@ -230,13 +230,13 @@ func (f UnlockConditionsSet) TimelocksExpired(extParas *ExternalUnlockParameters
 	return nil
 }
 
-// DustDepositReturn returns the DustDepositReturnUnlockCondition in the set or nil.
-func (f UnlockConditionsSet) DustDepositReturn() *DustDepositReturnUnlockCondition {
-	b, has := f[UnlockConditionDustDepositReturn]
+// StorageDepositReturn returns the StorageDepositReturnUnlockCondition in the set or nil.
+func (f UnlockConditionsSet) StorageDepositReturn() *StorageDepositReturnUnlockCondition {
+	b, has := f[UnlockConditionStorageDepositReturn]
 	if !has {
 		return nil
 	}
-	return b.(*DustDepositReturnUnlockCondition)
+	return b.(*StorageDepositReturnUnlockCondition)
 }
 
 // Address returns the AddressUnlockCondition in the set or nil.
@@ -299,8 +299,8 @@ func UnlockConditionSelector(unlockCondType uint32) (UnlockCondition, error) {
 	switch UnlockConditionType(unlockCondType) {
 	case UnlockConditionAddress:
 		seri = &AddressUnlockCondition{}
-	case UnlockConditionDustDepositReturn:
-		seri = &DustDepositReturnUnlockCondition{}
+	case UnlockConditionStorageDepositReturn:
+		seri = &StorageDepositReturnUnlockCondition{}
 	case UnlockConditionTimelock:
 		seri = &TimelockUnlockCondition{}
 	case UnlockConditionExpiration:
@@ -323,8 +323,8 @@ func jsonUnlockConditionSelector(ty int) (JSONSerializable, error) {
 	switch UnlockConditionType(ty) {
 	case UnlockConditionAddress:
 		obj = &jsonAddressUnlockCondition{}
-	case UnlockConditionDustDepositReturn:
-		obj = &jsonDustDepositReturnUnlockCondition{}
+	case UnlockConditionStorageDepositReturn:
+		obj = &jsonStorageDepositReturnUnlockCondition{}
 	case UnlockConditionTimelock:
 		obj = &jsonTimelockUnlockCondition{}
 	case UnlockConditionExpiration:
