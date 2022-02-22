@@ -51,9 +51,6 @@ var (
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
 	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
-	// ErrOutputReturnBlockIsMoreThanVBRent gets returned if an output defines within its StorageDepositReturnUnlockCondition more
-	// than what is needed to cover the virtual byte renting costs.
-	ErrOutputReturnBlockIsMoreThanVBRent = errors.New("output's return feature block's amount is bigger than the minimum virtual byte rent cost")
 	// ErrOutputReturnBlockIsLessThanMinStorageDeposit gets returned if an output defines within its StorageDepositReturnUnlockCondition less than the minimum storage deposit.
 	ErrOutputReturnBlockIsLessThanMinStorageDeposit = errors.New("output's return feature block's amount is less than the minimum storage amount")
 	// ErrMaxNativeTokensCountExceeded gets returned if outputs or transactions exceed the MaxNativeTokensCount.

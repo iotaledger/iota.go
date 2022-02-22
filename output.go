@@ -665,9 +665,9 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //	- every output deposits more than zero
 //	- every output deposits less than the total supply
 //	- the sum of deposits does not exceed the total supply
-//	- the deposit fulfils the minimum deposit as calculated from the virtual byte cost of the output
+//	- the deposit fulfils the minimum storage deposit as calculated from the virtual byte cost of the output
 //	- if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
-//	  and must be less equal the minimum virtual byte rent cost for the output.
+//	  required for the sender to send back the tokens.
 func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntacticalValidationFunc {
 	var sum uint64
 	return func(index int, output Output) error {
@@ -682,8 +682,8 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 			return fmt.Errorf("%w: output %d", ErrOutputsSumExceedsTotalSupply, index)
 		}
 
-		minRent, err := rentStruct.CoversStateRent(output, deposit)
-		if err != nil {
+		// check whether deposit fulfils the storage deposit cost
+		if _, err := rentStruct.CoversStateRent(output, deposit); err != nil {
 			return fmt.Errorf("%w: output %d", err, index)
 		}
 
@@ -692,14 +692,11 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 			return fmt.Errorf("unable to compute unlock conditions set in deposit syntactic checks for output %d: %w", index, err)
 		}
 
-		if returnFeatBlock := unlockConditionsSet.StorageDepositReturn(); returnFeatBlock != nil {
-			returnAmount := returnFeatBlock.Amount
-			minStorageDepositForReturnOutput := rentStruct.MinStorageDeposit(returnFeatBlock.ReturnAddress)
-			switch {
-			case returnAmount < minStorageDepositForReturnOutput:
-				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrOutputReturnBlockIsLessThanMinStorageDeposit, index, minStorageDepositForReturnOutput, returnAmount)
-			case returnAmount > minRent:
-				return fmt.Errorf("%w: output %d, rent for output %d, have %d", ErrOutputReturnBlockIsMoreThanVBRent, index, minRent, returnAmount)
+		// check whether the amount in the return condition allows the receiver to fulfil the storage deposit for the return output
+		if storageDep := unlockConditionsSet.StorageDepositReturn(); storageDep != nil {
+			minStorageDepositForReturnOutput := rentStruct.MinStorageDeposit(storageDep.ReturnAddress)
+			if storageDep.Amount < minStorageDepositForReturnOutput {
+				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrOutputReturnBlockIsLessThanMinStorageDeposit, index, minStorageDepositForReturnOutput, storageDep.Amount)
 			}
 		}
 
