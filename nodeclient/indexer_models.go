@@ -63,12 +63,12 @@ type IndexerCreationParas struct {
 	CreatedAfter int `qs:"createdAfter,omitempty"`
 }
 
-// IndexerDustParas define dust deposit based query parameters.
-type IndexerDustParas struct {
-	// Filters outputs based on the presence of dust return unlock condition.
-	RequiresDustReturn bool `qs:"requiresDustReturn,omitempty"`
-	// Filter outputs based on the presence of a specific return address in the dust deposit return unlock condition.
-	DustReturnAddressBech32 string `qs:"dustReturnAddress,omitempty"`
+// IndexerStorageDepositParas define storage deposit based query parameters.
+type IndexerStorageDepositParas struct {
+	// Filters outputs based on the presence of storage deposit return unlock condition.
+	RequiresStorageDepositReturn bool `qs:"requiresStorageDepositReturn,omitempty"`
+	// Filter outputs based on the presence of a specific return address in the storage deposit return unlock condition.
+	StorageDepositReturnAddressBech32 string `qs:"storageDepositAddress,omitempty"`
 }
 
 // OutputsQuery defines parameters for an outputs query.
@@ -77,7 +77,7 @@ type OutputsQuery struct {
 	IndexerTimelockParas
 	IndexerExpirationParas
 	IndexerCreationParas
-	IndexerDustParas
+	IndexerStorageDepositParas
 
 	// Bech32-encoded address that should be searched for.
 	AddressBech32 string `qs:"address,omitempty"`
@@ -151,7 +151,7 @@ type NFTsQuery struct {
 	IndexerCursorParas
 	IndexerTimelockParas
 	IndexerExpirationParas
-	IndexerDustParas
+	IndexerStorageDepositParas
 	IndexerCreationParas
 
 	// Bech32-encoded address that should be searched for.

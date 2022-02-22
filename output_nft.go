@@ -26,7 +26,7 @@ var (
 			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
 				switch ty {
 				case uint32(UnlockConditionAddress):
-				case uint32(UnlockConditionDustDepositReturn):
+				case uint32(UnlockConditionStorageDepositReturn):
 				case uint32(UnlockConditionTimelock):
 				case uint32(UnlockConditionExpiration):
 				default:
@@ -37,7 +37,7 @@ var (
 			WriteGuard: func(seri serializer.Serializable) error {
 				switch seri.(type) {
 				case *AddressUnlockCondition:
-				case *DustDepositReturnUnlockCondition:
+				case *StorageDepositReturnUnlockCondition:
 				case *TimelockUnlockCondition:
 				case *ExpirationUnlockCondition:
 				default:

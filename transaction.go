@@ -528,7 +528,7 @@ func TxSemanticOutputsSender() TxSemanticValidationFunc {
 }
 
 // TxSemanticDeposit validates that the IOTA tokens are balanced from the input/output side.
-// It additionally also incorporates the check whether return amounts via DustDepositReturnUnlockCondition(s) for specified identities
+// It additionally also incorporates the check whether return amounts via StorageDepositReturnUnlockCondition(s) for specified identities
 // are fulfilled from the output side.
 func TxSemanticDeposit() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
@@ -540,8 +540,8 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 			in += input.Deposit()
 
 			unlockCondSet := input.UnlockConditions().MustSet()
-			dustDepositReturnUnlockCondition := unlockCondSet.DustDepositReturn()
-			if dustDepositReturnUnlockCondition == nil {
+			storageDepositReturnUnlockCondition := unlockCondSet.StorageDepositReturn()
+			if storageDepositReturnUnlockCondition == nil {
 				continue
 			}
 
@@ -549,16 +549,16 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 				continue
 			}
 
-			dustDepositReturnIdentKey := dustDepositReturnUnlockCondition.ReturnAddress.Key()
+			storageDepositReturnIdentKey := storageDepositReturnUnlockCondition.ReturnAddress.Key()
 
 			// if the return ident unlocked this input, then the return amount does
 			// not have to be fulfilled
-			unlockedIndices, has := svCtx.WorkingSet.UnlockedIdents[dustDepositReturnIdentKey]
+			unlockedIndices, has := svCtx.WorkingSet.UnlockedIdents[storageDepositReturnIdentKey]
 			if has && unlockedIndices.Unlocked(svCtx.WorkingSet.InputIDToIndex[inputID]) {
 				continue
 			}
 
-			inputSumReturnAmountPerIdent[dustDepositReturnIdentKey] += dustDepositReturnUnlockCondition.Amount
+			inputSumReturnAmountPerIdent[storageDepositReturnIdentKey] += storageDepositReturnUnlockCondition.Amount
 		}
 
 		outputSimpleTransfersPerIdent := make(map[string]uint64)
@@ -566,7 +566,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 			outDeposit := output.Deposit()
 			out += outDeposit
 
-			// accumulate simple transfers for DustDepositReturnUnlockCondition checks
+			// accumulate simple transfers for StorageDepositReturnUnlockCondition checks
 			if basicOutput, is := output.(*BasicOutput); is {
 				if len(basicOutput.FeatureBlocks()) > 0 {
 					continue
