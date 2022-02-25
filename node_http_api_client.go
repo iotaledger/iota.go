@@ -7,13 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/iotaledger/hive.go/serializer"
 )
 
 var (
@@ -56,6 +57,10 @@ const (
 	// NodeAPIRouteTips is the route for getting two tips.
 	// GET returns the tips.
 	NodeAPIRouteTips = "/api/v1/tips"
+
+	// NodeAPIRouteMessageData is the route for getting message data by its messageID.
+	// GET returns message data (json).
+	NodeAPIRouteMessageData = "/api/v1/messages/%s"
 
 	// NodeAPIRouteMessageMetadata is the route for getting message metadata by its messageID.
 	// GET returns message metadata (including info about "promotion/reattachment needed").
@@ -127,10 +132,14 @@ const (
 	NodeAPIRoutePeers = "/api/v1/peers"
 )
 
+// RequestURLHook is a function to modify the URL before sending a request.
+type RequestURLHook func(url string) string
+
 // the default options applied to the NodeHTTPAPIClient.
 var defaultNodeAPIOptions = []NodeHTTPAPIClientOption{
 	WithNodeHTTPAPIClientHTTPClient(http.DefaultClient),
 	WithNodeHTTPAPIClientUserInfo(nil),
+	WithNodeHTTPAPIClientRequestURLHook(nil),
 }
 
 // NodeHTTPAPIClientOptions define options for the NodeHTTPAPIClient.
@@ -139,6 +148,8 @@ type NodeHTTPAPIClientOptions struct {
 	httpClient *http.Client
 	// The username and password information.
 	userInfo *url.Userinfo
+	// The hook to modify the URL before sending a request.
+	requestURLHook RequestURLHook
 }
 
 // applies the given NodeHTTPAPIClientOption.
@@ -159,6 +170,13 @@ func WithNodeHTTPAPIClientHTTPClient(httpClient *http.Client) NodeHTTPAPIClientO
 func WithNodeHTTPAPIClientUserInfo(userInfo *url.Userinfo) NodeHTTPAPIClientOption {
 	return func(opts *NodeHTTPAPIClientOptions) {
 		opts.userInfo = userInfo
+	}
+}
+
+// WithNodeHTTPAPIClientRequestURLHook is used to modify the URL before sending a request.
+func WithNodeHTTPAPIClientRequestURLHook(requestURLHook RequestURLHook) NodeHTTPAPIClientOption {
+	return func(opts *NodeHTTPAPIClientOptions) {
+		opts.requestURLHook = requestURLHook
 	}
 }
 
@@ -278,8 +296,14 @@ func (api *NodeHTTPAPIClient) Do(ctx context.Context, method string, route strin
 		}
 	}
 
+	// construct request URL
+	url := fmt.Sprintf("%s%s", api.BaseURL, route)
+	if api.opts.requestURLHook != nil {
+		url = api.opts.requestURLHook(url)
+	}
+
 	// construct request
-	req, err := http.NewRequestWithContext(ctx, method, fmt.Sprintf("%s%s", api.BaseURL, route), func() io.Reader {
+	req, err := http.NewRequestWithContext(ctx, method, url, func() io.Reader {
 		if data == nil {
 			return nil
 		}
@@ -492,7 +516,19 @@ func (api *NodeHTTPAPIClient) MessageMetadataByMessageID(ctx context.Context, ms
 	return res, nil
 }
 
-// MessageByMessageID get a message by its message ID from the node.
+// MessageJSONByMessageID get a message by its message ID from the node (json).
+func (api *NodeHTTPAPIClient) MessageJSONByMessageID(ctx context.Context, msgID MessageID) (*Message, error) {
+	query := fmt.Sprintf(NodeAPIRouteMessageData, hex.EncodeToString(msgID[:]))
+
+	res := &Message{}
+	_, err := api.Do(ctx, http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// MessageByMessageID get a message by its message ID from the node (bytes).
 func (api *NodeHTTPAPIClient) MessageByMessageID(ctx context.Context, msgID MessageID) (*Message, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageBytes, hex.EncodeToString(msgID[:]))
 
