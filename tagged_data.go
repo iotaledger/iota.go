@@ -14,7 +14,7 @@ const (
 	// TaggedPayloadTagMaxLength defines the max length of the tag within a TaggedData payload.
 	TaggedPayloadTagMaxLength = 64
 	// TaggedPayloadTagMinLength defines the min length of the tag within a TaggedData payload.
-	TaggedPayloadTagMinLength = 1
+	TaggedPayloadTagMinLength = 0
 )
 
 var (
