@@ -12,16 +12,20 @@ import (
 type PayloadType uint32
 
 const (
-	// PayloadTransaction denotes a Transaction.
-	PayloadTransaction PayloadType = iota
+	// Deprecated payload types
+	// PayloadTransactionTIP7 = 0
+	// PayloadIndexationTIP6 = 2
+
 	// PayloadMilestone denotes a Milestone.
-	PayloadMilestone
+	PayloadMilestone PayloadType = 1
 	// PayloadReceipt denotes a Receipt.
-	PayloadReceipt
+	PayloadReceipt PayloadType = 3
 	// PayloadTreasuryTransaction denotes a TreasuryTransaction.
-	PayloadTreasuryTransaction
+	PayloadTreasuryTransaction PayloadType = 4
 	// PayloadTaggedData denotes a TaggedData payload.
 	PayloadTaggedData PayloadType = 5
+	// PayloadTransaction denotes a Transaction.
+	PayloadTransaction PayloadType = 6
 )
 
 func (payloadType PayloadType) String() string {
@@ -32,13 +36,14 @@ func (payloadType PayloadType) String() string {
 }
 
 var (
-	payloadNames = [PayloadTaggedData + 1]string{
-		"Transaction",
+	payloadNames = [PayloadTransaction + 1]string{
+		"Deprecated-TransactionTIP7",
 		"Milestone",
+		"Deprecated-Indexation",
 		"Receipt",
 		"TreasuryTransaction",
-		"Deprecated-Indexation",
 		"TaggedData",
+		"Transaction",
 	}
 )
 

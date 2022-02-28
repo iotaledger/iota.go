@@ -45,7 +45,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 		  "protocolVersion": 1,
 		  "parentMessageIds": ["f532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d", "78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2"],
 		  "payload": {
-			"type": 0,
+			"type": 6,
 			"essence": {
 			  "type": 0,
               "networkId": "1337133713371337",
