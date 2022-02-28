@@ -47,7 +47,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 		  "payload": {
 			"type": 6,
 			"essence": {
-			  "type": 0,
+			  "type": 1,
               "networkId": "1337133713371337",
 			  "inputs": [
 				{
