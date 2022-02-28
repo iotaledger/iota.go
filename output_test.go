@@ -180,12 +180,12 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			outputs: iotago.Outputs{
 				// min 444
 				&iotago.BasicOutput{
-					Amount: OneMi * 2,
+					Amount: 1000,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAliasAddress(),
-							Amount:        414,
+							Amount:        566, // 1000 - 444
 						},
 					},
 				},
@@ -197,8 +197,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			deSeriParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
-					Amount:       OneMi * 2,
-					NativeTokens: nil,
+					Amount: 1000,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
@@ -208,7 +207,25 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrOutputReturnBlockIsLessThanMinStorageDeposit,
+			wantErr: iotago.ErrStorageDepositLessThanMinReturnOutputStorageDeposit,
+		},
+		{
+			name:        "fail - storage deposit to deposit delta more than required target output storage deposit",
+			deSeriParas: nonZeroCostParas,
+			outputs: iotago.Outputs{
+				&iotago.BasicOutput{
+					Amount: OneMi,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.StorageDepositReturnUnlockCondition{
+							ReturnAddress: tpkg.RandAliasAddress(),
+							// storage cost of this output 444, off by one
+							Amount: OneMi - 445,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrStorageDepositExceedsTargetOutputCost,
 		},
 		{
 			name:        "fail - state rent not covered",
