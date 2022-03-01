@@ -41,11 +41,11 @@ const (
 
 	// NodeAPIRouteMilestone is the route for getting a milestone by its milestoneIndex.
 	// GET returns the milestone.
-	NodeAPIRouteMilestone = "/api/v2/milestones/%s"
+	NodeAPIRouteMilestone = "/api/v2/milestones/%d"
 
 	// NodeAPIRouteMilestoneUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	NodeAPIRouteMilestoneUTXOChanges = "/api/v2/milestones/%s/utxo-changes"
+	NodeAPIRouteMilestoneUTXOChanges = "/api/v2/milestones/%d/utxo-changes"
 
 	// NodeAPIRouteOutput is the route for getting outputs by their outputID (transactionHash + outputIndex).
 	// GET returns the output.
@@ -65,7 +65,7 @@ const (
 
 	// NodeAPIRouteReceiptsByMigratedAtIndex is the route for getting all persisted receipts for a given migrated at index on a node.
 	// GET returns the receipts for the given migrated at index.
-	NodeAPIRouteReceiptsByMigratedAtIndex = "/api/v2/receipts/%s"
+	NodeAPIRouteReceiptsByMigratedAtIndex = "/api/v2/receipts/%d"
 
 	// NodeAPIRoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
@@ -344,7 +344,7 @@ func (client *Client) Receipts(ctx context.Context) ([]*ReceiptTuple, error) {
 
 // ReceiptsByMigratedAtIndex gets all receipts for the given migrated at index persisted on the node.
 func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index uint32) ([]*ReceiptTuple, error) {
-	query := fmt.Sprintf(NodeAPIRouteReceiptsByMigratedAtIndex, iotago.EncodeUint64(uint64(index)))
+	query := fmt.Sprintf(NodeAPIRouteReceiptsByMigratedAtIndex, index)
 
 	res := &ReceiptsResponse{}
 	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
@@ -357,7 +357,7 @@ func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index uint3
 
 // MilestoneByIndex gets a milestone by its index.
 func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*MilestoneResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteMilestone, iotago.EncodeUint64(uint64(index)))
+	query := fmt.Sprintf(NodeAPIRouteMilestone, index)
 
 	res := &MilestoneResponse{}
 	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
@@ -370,7 +370,7 @@ func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*Mile
 
 // MilestoneUTXOChangesByIndex returns all UTXO changes of a milestone by its milestoneIndex.
 func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uint32) (*MilestoneUTXOChangesResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteMilestoneUTXOChanges, iotago.EncodeUint64(uint64(index)))
+	query := fmt.Sprintf(NodeAPIRouteMilestoneUTXOChanges, index)
 
 	res := &MilestoneUTXOChangesResponse{}
 	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
