@@ -162,6 +162,13 @@ func (nftID NFTID) String() string {
 	return EncodeHex(nftID[:])
 }
 
+func NFTIDFromOutputID(o OutputID) NFTID {
+	ret := NFTID{}
+	addr := NFTAddressFromOutputID(o)
+	copy(ret[:], addr[:])
+	return ret
+}
+
 // NFTOutput is an output type used to implement non-fungible tokens.
 type NFTOutput struct {
 	// The amount of IOTA tokens held by the output.
