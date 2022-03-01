@@ -1,11 +1,9 @@
 package iotago
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/util"
@@ -277,9 +275,9 @@ func (u *TransactionEssence) Size() int {
 
 func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 	jTransactionEssence := &jsonTransactionEssence{
-		NetworkID:        strconv.FormatUint(u.NetworkID, 10),
+		NetworkID:        EncodeUint64(u.NetworkID),
 		Inputs:           make([]*json.RawMessage, len(u.Inputs)),
-		InputsCommitment: hex.EncodeToString(u.InputsCommitment[:]),
+		InputsCommitment: EncodeHex(u.InputsCommitment[:]),
 		Outputs:          make([]*json.RawMessage, len(u.Outputs)),
 		Payload:          nil,
 	}
@@ -380,7 +378,7 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 	}
 
 	var err error
-	unsigTx.NetworkID, err = strconv.ParseUint(j.NetworkID, 10, 64)
+	unsigTx.NetworkID, err = DecodeUint64(j.NetworkID)
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +395,7 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 		unsigTx.Inputs[i] = input.(Input)
 	}
 
-	inputsCommitmentSlice, err := hex.DecodeString(j.InputsCommitment)
+	inputsCommitmentSlice, err := DecodeHex(j.InputsCommitment)
 	if err != nil {
 		return unsigTx, fmt.Errorf("unable to decode JSON inputs commitment: %w", err)
 	}

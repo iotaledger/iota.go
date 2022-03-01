@@ -1,7 +1,6 @@
 package nodeclient
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -126,7 +125,7 @@ type (
 	// TreasuryResponse defines the response of a GET treasury REST API call.
 	TreasuryResponse struct {
 		MilestoneID string `json:"milestoneId"`
-		Amount      uint64 `json:"amount"`
+		Amount      string `json:"amount"`
 	}
 
 	// ReceiptsResponse defines the response for receipts GET related REST API calls.
@@ -241,7 +240,7 @@ type (
 
 // TxID returns the TransactionID.
 func (nor *OutputResponse) TxID() (*iotago.TransactionID, error) {
-	txIDBytes, err := hex.DecodeString(nor.TransactionID)
+	txIDBytes, err := iotago.DecodeHex(nor.TransactionID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
 	}

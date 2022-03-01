@@ -2,7 +2,6 @@ package nodeclient_test
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -65,7 +64,7 @@ func TestIndexerClient_Outputs(t *testing.T) {
 
 	txID := tpkg.Rand32ByteArray()
 	fakeOutputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 1).ToHex()
-	hexTxID := hex.EncodeToString(txID[:])
+	hexTxID := iotago.EncodeHex(txID[:])
 
 	outputRes := &nodeclient.OutputResponse{
 		TransactionID: hexTxID,

@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -106,7 +105,7 @@ func (u *UTXOInput) Size() int {
 
 func (u *UTXOInput) MarshalJSON() ([]byte, error) {
 	jUTXOInput := &jsonUTXOInput{}
-	jUTXOInput.TransactionID = hex.EncodeToString(u.TransactionID[:])
+	jUTXOInput.TransactionID = EncodeHex(u.TransactionID[:])
 	jUTXOInput.TransactionOutputIndex = int(u.TransactionOutputIndex)
 	jUTXOInput.Type = int(InputUTXO)
 	return json.Marshal(jUTXOInput)
@@ -137,7 +136,7 @@ func (j *jsonUTXOInput) ToSerializable() (serializer.Serializable, error) {
 		TransactionID:          [32]byte{},
 		TransactionOutputIndex: uint16(j.TransactionOutputIndex),
 	}
-	transactionIDBytes, err := hex.DecodeString(j.TransactionID)
+	transactionIDBytes, err := DecodeHex(j.TransactionID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode transaction ID from JSON for UTXO input: %w", err)
 	}

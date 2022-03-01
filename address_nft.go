@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -22,7 +21,7 @@ var (
 
 // ParseNFTAddressFromHexString parses the given hex string into an NFTAddress.
 func ParseNFTAddressFromHexString(hexAddr string) (*NFTAddress, error) {
-	addrBytes, err := hex.DecodeString(hexAddr)
+	addrBytes, err := DecodeHex(hexAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +83,7 @@ func (nftAddr *NFTAddress) Bech32(hrp NetworkPrefix) string {
 }
 
 func (nftAddr *NFTAddress) String() string {
-	return hex.EncodeToString(nftAddr[:])
+	return EncodeHex(nftAddr[:])
 }
 
 func (nftAddr *NFTAddress) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
@@ -113,7 +112,7 @@ func (nftAddr *NFTAddress) Size() int {
 
 func (nftAddr *NFTAddress) MarshalJSON() ([]byte, error) {
 	jNFTAddress := &jsonNFTAddress{}
-	jNFTAddress.NFTId = hex.EncodeToString(nftAddr[:])
+	jNFTAddress.NFTId = EncodeHex(nftAddr[:])
 	jNFTAddress.Type = int(AddressNFT)
 	return json.Marshal(jNFTAddress)
 }
@@ -150,7 +149,7 @@ type jsonNFTAddress struct {
 }
 
 func (j *jsonNFTAddress) ToSerializable() (serializer.Serializable, error) {
-	addrBytes, err := hex.DecodeString(j.NFTId)
+	addrBytes, err := DecodeHex(j.NFTId)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for NFT address: %w", err)
 	}

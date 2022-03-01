@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -38,7 +37,7 @@ type OutputID [OutputIDLength]byte
 
 // ToHex converts the OutputID to its hex representation.
 func (outputID OutputID) ToHex() string {
-	return fmt.Sprintf("%x", outputID)
+	return EncodeHex(outputID[:])
 }
 
 // Index returns the index of the Output this OutputID references.
@@ -77,7 +76,7 @@ func (ids HexOutputIDs) MustOutputIDs() OutputIDs {
 func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 	vals := make(OutputIDs, len(ids))
 	for i, v := range ids {
-		val, err := hex.DecodeString(v)
+		val, err := DecodeHex(v)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +95,7 @@ func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputI
 // OutputIDFromHex creates a OutputID from the given hex encoded OututID data.
 func OutputIDFromHex(hexStr string) (OutputID, error) {
 	var outputID OutputID
-	outputIDData, err := hex.DecodeString(hexStr)
+	outputIDData, err := DecodeHex(hexStr)
 	if err != nil {
 		return outputID, err
 	}
@@ -107,7 +106,7 @@ func OutputIDFromHex(hexStr string) (OutputID, error) {
 // MustOutputIDFromHex works like OutputIDFromHex but panics if an error is encountered.
 func MustOutputIDFromHex(hexStr string) (OutputID, error) {
 	var outputID OutputID
-	outputIDData, err := hex.DecodeString(hexStr)
+	outputIDData, err := DecodeHex(hexStr)
 	if err != nil {
 		return outputID, err
 	}
@@ -136,7 +135,7 @@ type OutputIDs []OutputID
 func (outputIDs OutputIDs) ToHex() []string {
 	ids := make([]string, len(outputIDs))
 	for i := range outputIDs {
-		ids[i] = fmt.Sprintf("%x", outputIDs[i])
+		ids[i] = EncodeHex(outputIDs[i][:])
 	}
 	return ids
 }
@@ -626,7 +625,7 @@ func (oih OutputIDHex) MustSplitParts() (*TransactionID, uint16) {
 
 // SplitParts returns the transaction ID and output index parts of the hex output ID.
 func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
-	outputIDBytes, err := hex.DecodeString(string(oih))
+	outputIDBytes, err := DecodeHex(string(oih))
 	if err != nil {
 		return nil, 0, err
 	}

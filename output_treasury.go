@@ -70,7 +70,7 @@ func (t *TreasuryOutput) Size() int {
 func (t *TreasuryOutput) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&jsonTreasuryOutput{
 		Type:   int(OutputTreasury),
-		Amount: int(t.Amount),
+		Amount: EncodeUint64(t.Amount),
 	})
 }
 
@@ -89,10 +89,16 @@ func (t *TreasuryOutput) UnmarshalJSON(bytes []byte) error {
 
 // jsonTreasuryOutput defines the json representation of a TreasuryOutput.
 type jsonTreasuryOutput struct {
-	Type   int `json:"type"`
-	Amount int `json:"amount"`
+	Type   int    `json:"type"`
+	Amount string `json:"amount"`
 }
 
 func (j *jsonTreasuryOutput) ToSerializable() (serializer.Serializable, error) {
-	return &TreasuryOutput{Amount: uint64(j.Amount)}, nil
+	var err error
+	t := &TreasuryOutput{}
+	t.Amount, err = DecodeUint64(j.Amount)
+	if err != nil {
+		return nil, err
+	}
+	return t, nil
 }

@@ -3,7 +3,6 @@ package iotago
 import (
 	"bytes"
 	"crypto/ed25519"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -80,8 +79,8 @@ func (e *Ed25519Signature) Size() int {
 func (e *Ed25519Signature) MarshalJSON() ([]byte, error) {
 	jEd25519Signature := &jsonEd25519Signature{}
 	jEd25519Signature.Type = int(SignatureEd25519)
-	jEd25519Signature.PublicKey = hex.EncodeToString(e.PublicKey[:])
-	jEd25519Signature.Signature = hex.EncodeToString(e.Signature[:])
+	jEd25519Signature.PublicKey = EncodeHex(e.PublicKey[:])
+	jEd25519Signature.Signature = EncodeHex(e.Signature[:])
 	return json.Marshal(jEd25519Signature)
 }
 
@@ -108,12 +107,12 @@ type jsonEd25519Signature struct {
 func (j *jsonEd25519Signature) ToSerializable() (serializer.Serializable, error) {
 	sig := &Ed25519Signature{}
 
-	pubKeyBytes, err := hex.DecodeString(j.PublicKey)
+	pubKeyBytes, err := DecodeHex(j.PublicKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode public key from JSON for Ed25519 signature: %w", err)
 	}
 
-	sigBytes, err := hex.DecodeString(j.Signature)
+	sigBytes, err := DecodeHex(j.Signature)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode signature from JSON for Ed25519 signature: %w", err)
 	}

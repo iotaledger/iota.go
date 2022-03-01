@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -22,7 +21,7 @@ var (
 
 // ParseAliasAddressFromHexString parses the given hex string into an AliasAddress.
 func ParseAliasAddressFromHexString(hexAddr string) (*AliasAddress, error) {
-	addrBytes, err := hex.DecodeString(hexAddr)
+	addrBytes, err := DecodeHex(hexAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +83,7 @@ func (aliasAddr *AliasAddress) Bech32(hrp NetworkPrefix) string {
 }
 
 func (aliasAddr *AliasAddress) String() string {
-	return hex.EncodeToString(aliasAddr[:])
+	return EncodeHex(aliasAddr[:])
 }
 
 func (aliasAddr *AliasAddress) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
@@ -113,7 +112,7 @@ func (aliasAddr *AliasAddress) Serialize(_ serializer.DeSerializationMode, deSer
 
 func (aliasAddr *AliasAddress) MarshalJSON() ([]byte, error) {
 	jAliasAddress := &jsonAliasAddress{}
-	jAliasAddress.AliasId = hex.EncodeToString(aliasAddr[:])
+	jAliasAddress.AliasId = EncodeHex(aliasAddr[:])
 	jAliasAddress.Type = int(AddressAlias)
 	return json.Marshal(jAliasAddress)
 }
@@ -150,7 +149,7 @@ type jsonAliasAddress struct {
 }
 
 func (j *jsonAliasAddress) ToSerializable() (serializer.Serializable, error) {
-	addrBytes, err := hex.DecodeString(j.AliasId)
+	addrBytes, err := DecodeHex(j.AliasId)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for alias address: %w", err)
 	}

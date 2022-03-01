@@ -198,7 +198,7 @@ func (e *BasicOutput) MarshalJSON() ([]byte, error) {
 	var err error
 	jExtendedOutput := &jsonExtendedOutput{
 		Type:   int(OutputBasic),
-		Amount: int(e.Amount),
+		Amount: EncodeUint64(e.Amount),
 	}
 
 	jExtendedOutput.NativeTokens, err = serializablesToJSONRawMsgs(e.NativeTokens.ToSerializables())
@@ -235,7 +235,7 @@ func (e *BasicOutput) UnmarshalJSON(bytes []byte) error {
 // jsonExtendedOutput defines the json representation of a BasicOutput.
 type jsonExtendedOutput struct {
 	Type         int                `json:"type"`
-	Amount       int                `json:"amount"`
+	Amount       string             `json:"amount"`
 	NativeTokens []*json.RawMessage `json:"nativeTokens"`
 	Conditions   []*json.RawMessage `json:"unlockConditions"`
 	Blocks       []*json.RawMessage `json:"featureBlocks"`
@@ -243,8 +243,11 @@ type jsonExtendedOutput struct {
 
 func (j *jsonExtendedOutput) ToSerializable() (serializer.Serializable, error) {
 	var err error
-	e := &BasicOutput{
-		Amount: uint64(j.Amount),
+	e := &BasicOutput{}
+
+	e.Amount, err = DecodeUint64(j.Amount)
+	if err != nil {
+		return nil, err
 	}
 
 	e.NativeTokens, err = nativeTokensFromJSONRawMsg(j.NativeTokens)
