@@ -515,8 +515,8 @@ func (f *FoundryOutput) MarshalJSON() ([]byte, error) {
 
 	jFoundryOutput.TokenTag = EncodeHex(f.TokenTag[:])
 
-	jFoundryOutput.CirculatingSupply = f.CirculatingSupply.String()
-	jFoundryOutput.MaximumSupply = f.MaximumSupply.String()
+	jFoundryOutput.CirculatingSupply = EncodeUint256(f.CirculatingSupply)
+	jFoundryOutput.MaximumSupply = EncodeUint256(f.MaximumSupply)
 
 	jTokenSchemeBytes, err := f.TokenScheme.MarshalJSON()
 	if err != nil {
@@ -593,15 +593,14 @@ func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
 	}
 	copy(e.TokenTag[:], tokenTagBytes)
 
-	var ok bool
-	e.CirculatingSupply, ok = new(big.Int).SetString(j.CirculatingSupply, 10)
-	if !ok {
-		return nil, fmt.Errorf("%w: circluating supply field of foundry output '%s'", ErrDecodeJSONUint256Str, j.CirculatingSupply)
+	e.CirculatingSupply, err = DecodeUint256(j.CirculatingSupply)
+	if err != nil {
+		return nil, fmt.Errorf("%w: circluating supply field of foundry output '%s', inner error %s", ErrDecodeJSONUint256Str, j.CirculatingSupply, err)
 	}
 
-	e.MaximumSupply, ok = new(big.Int).SetString(j.MaximumSupply, 10)
-	if !ok {
-		return nil, fmt.Errorf("%w: maximum supply field of foundry output '%s'", ErrDecodeJSONUint256Str, j.MaximumSupply)
+	e.MaximumSupply, err = DecodeUint256(j.MaximumSupply)
+	if err != nil {
+		return nil, fmt.Errorf("%w: maximum supply field of foundry output '%s', inner err %s", ErrDecodeJSONUint256Str, j.MaximumSupply, err)
 	}
 
 	e.TokenScheme, err = tokenSchemeFromJSONRawMsg(j.TokenScheme)

@@ -260,7 +260,7 @@ func (n *NativeToken) Size() int {
 func (n *NativeToken) MarshalJSON() ([]byte, error) {
 	jNativeToken := &jsonNativeToken{}
 	jNativeToken.ID = EncodeHex(n.ID[:])
-	jNativeToken.Amount = n.Amount.String()
+	jNativeToken.Amount = EncodeUint256(n.Amount)
 	return json.Marshal(jNativeToken)
 }
 
@@ -304,10 +304,9 @@ func (j *jsonNativeToken) ToSerializable() (serializer.Serializable, error) {
 	}
 	copy(n.ID[:], nftIDBytes)
 
-	var ok bool
-	n.Amount, ok = new(big.Int).SetString(j.Amount, 10)
-	if !ok {
-		return nil, fmt.Errorf("%w: amount field of native token '%s'", ErrDecodeJSONUint256Str, j.Amount)
+	n.Amount, err = DecodeUint256(j.Amount)
+	if err != nil {
+		return nil, fmt.Errorf("%w: amount field of native token '%s', inner err %s", ErrDecodeJSONUint256Str, j.Amount, err)
 	}
 
 	return n, nil
