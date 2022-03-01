@@ -283,7 +283,7 @@ func TestNodeHTTPAPIClient_Treasury(t *testing.T) {
 
 	originRes := &nodeclient.TreasuryResponse{
 		MilestoneID: "733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d",
-		Amount:      133713371337,
+		Amount:      "133713371337",
 	}
 
 	gock.New(nodeAPIUrl).
@@ -363,7 +363,7 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteReceiptsByMigratedAtIndex, strconv.FormatUint(uint64(index), 10))).
+		Get(fmt.Sprintf(nodeclient.NodeAPIRouteReceiptsByMigratedAtIndex, iotago.EncodeUint64(uint64(index)))).
 		Reply(200).
 		JSON(originRes)
 

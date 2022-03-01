@@ -115,7 +115,7 @@ type (
 	// TreasuryResponse defines the response of a GET treasury REST API call.
 	TreasuryResponse struct {
 		MilestoneID string `json:"milestoneId"`
-		Amount      uint64 `json:"amount"`
+		Amount      string `json:"amount"`
 	}
 
 	// ReceiptsResponse defines the response for receipts GET related REST API calls.

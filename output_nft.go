@@ -326,7 +326,7 @@ func (n *NFTOutput) MarshalJSON() ([]byte, error) {
 	var err error
 	jNFTOutput := &jsonNFTOutput{
 		Type:   int(OutputNFT),
-		Amount: int(n.Amount),
+		Amount: EncodeUint64(n.Amount),
 	}
 
 	jNFTOutput.NativeTokens, err = serializablesToJSONRawMsgs(n.NativeTokens.ToSerializables())
@@ -370,7 +370,7 @@ func (n *NFTOutput) UnmarshalJSON(bytes []byte) error {
 // jsonNFTOutput defines the json representation of a NFTOutput.
 type jsonNFTOutput struct {
 	Type            int                `json:"type"`
-	Amount          int                `json:"amount"`
+	Amount          string             `json:"amount"`
 	NativeTokens    []*json.RawMessage `json:"nativeTokens"`
 	NFTID           string             `json:"nftId"`
 	Conditions      []*json.RawMessage `json:"unlockConditions"`
@@ -380,8 +380,11 @@ type jsonNFTOutput struct {
 
 func (j *jsonNFTOutput) ToSerializable() (serializer.Serializable, error) {
 	var err error
-	e := &NFTOutput{
-		Amount: uint64(j.Amount),
+	e := &NFTOutput{}
+
+	e.Amount, err = DecodeUint64(j.Amount)
+	if err != nil {
+		return nil, err
 	}
 
 	e.NativeTokens, err = nativeTokensFromJSONRawMsg(j.NativeTokens)

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -345,7 +344,7 @@ func (client *Client) Receipts(ctx context.Context) ([]*ReceiptTuple, error) {
 
 // ReceiptsByMigratedAtIndex gets all receipts for the given migrated at index persisted on the node.
 func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index uint32) ([]*ReceiptTuple, error) {
-	query := fmt.Sprintf(NodeAPIRouteReceiptsByMigratedAtIndex, strconv.FormatUint(uint64(index), 10))
+	query := fmt.Sprintf(NodeAPIRouteReceiptsByMigratedAtIndex, iotago.EncodeUint64(uint64(index)))
 
 	res := &ReceiptsResponse{}
 	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
@@ -358,7 +357,7 @@ func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index uint3
 
 // MilestoneByIndex gets a milestone by its index.
 func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*MilestoneResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteMilestone, strconv.FormatUint(uint64(index), 10))
+	query := fmt.Sprintf(NodeAPIRouteMilestone, iotago.EncodeUint64(uint64(index)))
 
 	res := &MilestoneResponse{}
 	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
@@ -371,7 +370,7 @@ func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*Mile
 
 // MilestoneUTXOChangesByIndex returns all UTXO changes of a milestone by its milestoneIndex.
 func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uint32) (*MilestoneUTXOChangesResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteMilestoneUTXOChanges, strconv.FormatUint(uint64(index), 10))
+	query := fmt.Sprintf(NodeAPIRouteMilestoneUTXOChanges, iotago.EncodeUint64(uint64(index)))
 
 	res := &MilestoneUTXOChangesResponse{}
 	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)

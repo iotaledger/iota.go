@@ -504,7 +504,7 @@ func (f *FoundryOutput) MarshalJSON() ([]byte, error) {
 	var err error
 	jFoundryOutput := &jsonFoundryOutput{
 		Type:         int(OutputFoundry),
-		Amount:       int(f.Amount),
+		Amount:       EncodeUint64(f.Amount),
 		SerialNumber: int(f.SerialNumber),
 	}
 
@@ -559,7 +559,7 @@ func (f *FoundryOutput) UnmarshalJSON(bytes []byte) error {
 // jsonFoundryOutput defines the json representation of a FoundryOutput.
 type jsonFoundryOutput struct {
 	Type              int                `json:"type"`
-	Amount            int                `json:"amount"`
+	Amount            string             `json:"amount"`
 	NativeTokens      []*json.RawMessage `json:"nativeTokens"`
 	SerialNumber      int                `json:"serialNumber"`
 	TokenTag          string             `json:"tokenTag"`
@@ -574,8 +574,12 @@ type jsonFoundryOutput struct {
 func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
 	var err error
 	e := &FoundryOutput{
-		Amount:       uint64(j.Amount),
 		SerialNumber: uint32(j.SerialNumber),
+	}
+
+	e.Amount, err = DecodeUint64(j.Amount)
+	if err != nil {
+		return nil, err
 	}
 
 	e.NativeTokens, err = nativeTokensFromJSONRawMsg(j.NativeTokens)

@@ -89,7 +89,7 @@ func (s *StorageDepositReturnUnlockCondition) Size() int {
 }
 
 func (s *StorageDepositReturnUnlockCondition) MarshalJSON() ([]byte, error) {
-	jUnlockCond := &jsonStorageDepositReturnUnlockCondition{Amount: int(s.Amount)}
+	jUnlockCond := &jsonStorageDepositReturnUnlockCondition{Amount: EncodeUint64(s.Amount)}
 	jUnlockCond.Type = int(UnlockConditionStorageDepositReturn)
 	var err error
 	jUnlockCond.ReturnAddress, err = addressToJSONRawMsg(s.ReturnAddress)
@@ -116,13 +116,18 @@ func (s *StorageDepositReturnUnlockCondition) UnmarshalJSON(bytes []byte) error 
 type jsonStorageDepositReturnUnlockCondition struct {
 	Type          int              `json:"type"`
 	ReturnAddress *json.RawMessage `json:"returnAddress"`
-	Amount        int              `json:"amount"`
+	Amount        string           `json:"amount"`
 }
 
 func (j *jsonStorageDepositReturnUnlockCondition) ToSerializable() (serializer.Serializable, error) {
-	unlockCond := &StorageDepositReturnUnlockCondition{Amount: uint64(j.Amount)}
-
 	var err error
+	unlockCond := &StorageDepositReturnUnlockCondition{}
+
+	unlockCond.Amount, err = DecodeUint64(j.Amount)
+	if err != nil {
+		return nil, err
+	}
+
 	unlockCond.ReturnAddress, err = addressFromJSONRawMsg(j.ReturnAddress)
 	if err != nil {
 		return nil, err

@@ -540,7 +540,7 @@ func (a *AliasOutput) MarshalJSON() ([]byte, error) {
 	var err error
 	jAliasOutput := &jsonAliasOutput{
 		Type:           int(OutputAlias),
-		Amount:         int(a.Amount),
+		Amount:         EncodeUint64(a.Amount),
 		StateIndex:     int(a.StateIndex),
 		FoundryCounter: int(a.FoundryCounter),
 	}
@@ -588,7 +588,7 @@ func (a *AliasOutput) UnmarshalJSON(bytes []byte) error {
 // jsonAliasOutput defines the json representation of an AliasOutput.
 type jsonAliasOutput struct {
 	Type            int                `json:"type"`
-	Amount          int                `json:"amount"`
+	Amount          string             `json:"amount"`
 	NativeTokens    []*json.RawMessage `json:"nativeTokens"`
 	AliasID         string             `json:"aliasId"`
 	StateIndex      int                `json:"stateIndex"`
@@ -602,9 +602,13 @@ type jsonAliasOutput struct {
 func (j *jsonAliasOutput) ToSerializable() (serializer.Serializable, error) {
 	var err error
 	e := &AliasOutput{
-		Amount:         uint64(j.Amount),
 		StateIndex:     uint32(j.StateIndex),
 		FoundryCounter: uint32(j.FoundryCounter),
+	}
+
+	e.Amount, err = DecodeUint64(j.Amount)
+	if err != nil {
+		return nil, err
 	}
 
 	e.NativeTokens, err = nativeTokensFromJSONRawMsg(j.NativeTokens)

@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"strconv"
 )
 
 // EncodeHex encodes the bytes string to a hex string. It always adds the 0x prefix.
@@ -19,4 +20,14 @@ func DecodeHex(s string) ([]byte, error) {
 		return nil, err
 	}
 	return b, nil
+}
+
+// EncodeUint64 encodes the uint64 to a base 10 string.
+func EncodeUint64(n uint64) string {
+	return strconv.FormatUint(n, 10)
+}
+
+// DecodeUint64 encodes the base 10 string to an uint64.
+func DecodeUint64(s string) (uint64, error) {
+	return strconv.ParseUint(s, 10, 64)
 }

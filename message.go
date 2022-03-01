@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/pow"
@@ -210,7 +209,7 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 	for i, parent := range m.Parents {
 		jMessage.Parents[i] = EncodeHex(parent[:])
 	}
-	jMessage.Nonce = strconv.FormatUint(m.Nonce, 10)
+	jMessage.Nonce = EncodeUint64(m.Nonce)
 	if m.Payload != nil {
 		jsonPayload, err := m.Payload.MarshalJSON()
 		if err != nil {
@@ -255,7 +254,7 @@ func (jm *jsonMessage) ToSerializable() (serializer.Serializable, error) {
 
 	var parsedNonce uint64
 	if len(jm.Nonce) != 0 {
-		parsedNonce, err = strconv.ParseUint(jm.Nonce, 10, 64)
+		parsedNonce, err = DecodeUint64(jm.Nonce)
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse message nonce from JSON: %w", err)
 		}

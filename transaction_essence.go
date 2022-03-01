@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/util"
@@ -274,7 +273,7 @@ func (u *TransactionEssence) Size() int {
 
 func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 	jTransactionEssence := &jsonTransactionEssence{
-		NetworkID:        strconv.FormatUint(u.NetworkID, 10),
+		NetworkID:        EncodeUint64(u.NetworkID),
 		Inputs:           make([]*json.RawMessage, len(u.Inputs)),
 		InputsCommitment: EncodeHex(u.InputsCommitment[:]),
 		Outputs:          make([]*json.RawMessage, len(u.Outputs)),
@@ -377,7 +376,7 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 	}
 
 	var err error
-	unsigTx.NetworkID, err = strconv.ParseUint(j.NetworkID, 10, 64)
+	unsigTx.NetworkID, err = DecodeUint64(j.NetworkID)
 	if err != nil {
 		return nil, err
 	}
