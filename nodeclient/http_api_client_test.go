@@ -3,7 +3,6 @@ package nodeclient_test
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -109,7 +108,7 @@ func TestClient_SubmitMessage(t *testing.T) {
 	defer gock.Off()
 
 	msgHash := tpkg.Rand32ByteArray()
-	msgHashStr := hex.EncodeToString(msgHash[:])
+	msgHashStr := iotago.EncodeHex(msgHash[:])
 
 	incompleteMsg := &iotago.Message{
 		Parents: tpkg.SortedRand32BytArray(1),
@@ -155,11 +154,11 @@ func TestClient_MessageMetadataByMessageID(t *testing.T) {
 	identifier := tpkg.Rand32ByteArray()
 	parents := tpkg.SortedRand32BytArray(1 + rand.Intn(7))
 
-	queryHash := hex.EncodeToString(identifier[:])
+	queryHash := iotago.EncodeHex(identifier[:])
 
 	parentMessageIDs := make([]string, len(parents))
 	for i, p := range parents {
-		parentMessageIDs[i] = hex.EncodeToString(p[:])
+		parentMessageIDs[i] = iotago.EncodeHex(p[:])
 	}
 
 	originRes := &nodeclient.MessageMetadataResponse{
@@ -189,7 +188,7 @@ func TestClient_MessageByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
-	queryHash := hex.EncodeToString(identifier[:])
+	queryHash := iotago.EncodeHex(identifier[:])
 
 	originMsg := &iotago.Message{
 		Parents: tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
@@ -215,7 +214,7 @@ func TestClient_ChildrenByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	msgID := tpkg.Rand32ByteArray()
-	hexMsgID := hex.EncodeToString(msgID[:])
+	hexMsgID := iotago.EncodeHex(msgID[:])
 
 	child1 := tpkg.Rand32ByteArray()
 	child2 := tpkg.Rand32ByteArray()
@@ -226,9 +225,9 @@ func TestClient_ChildrenByMessageID(t *testing.T) {
 		MaxResults: 1000,
 		Count:      3,
 		Children: []string{
-			hex.EncodeToString(child1[:]),
-			hex.EncodeToString(child2[:]),
-			hex.EncodeToString(child3[:]),
+			iotago.EncodeHex(child1[:]),
+			iotago.EncodeHex(child2[:]),
+			iotago.EncodeHex(child3[:]),
 		},
 	}
 
@@ -252,7 +251,7 @@ func TestClient_OutputByID(t *testing.T) {
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
 
 	txID := tpkg.Rand32ByteArray()
-	hexTxID := hex.EncodeToString(txID[:])
+	hexTxID := iotago.EncodeHex(txID[:])
 	originRes := &nodeclient.OutputResponse{
 		TransactionID: hexTxID,
 		OutputIndex:   3,
@@ -383,7 +382,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 
 	originRes := &nodeclient.MilestoneResponse{
 		Index:     milestoneIndex,
-		MessageID: hex.EncodeToString(msgID[:]),
+		MessageID: iotago.EncodeHex(msgID[:]),
 		Time:      time.Now().Unix(),
 	}
 

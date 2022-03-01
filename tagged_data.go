@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -95,8 +94,8 @@ func (u *TaggedData) Size() int {
 func (u *TaggedData) MarshalJSON() ([]byte, error) {
 	jTaggedData := &jsonTaggedData{}
 	jTaggedData.Type = int(PayloadTaggedData)
-	jTaggedData.Tag = hex.EncodeToString(u.Tag)
-	jTaggedData.Data = hex.EncodeToString(u.Data)
+	jTaggedData.Tag = EncodeHex(u.Tag)
+	jTaggedData.Data = EncodeHex(u.Data)
 	return json.Marshal(jTaggedData)
 }
 
@@ -121,12 +120,12 @@ type jsonTaggedData struct {
 }
 
 func (j *jsonTaggedData) ToSerializable() (serializer.Serializable, error) {
-	tagBytes, err := hex.DecodeString(j.Tag)
+	tagBytes, err := DecodeHex(j.Tag)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode tag from JSON for tagged data payload: %w", err)
 	}
 
-	dataBytes, err := hex.DecodeString(j.Data)
+	dataBytes, err := DecodeHex(j.Data)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode data from JSON for tagged data payload: %w", err)
 	}

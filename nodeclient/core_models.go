@@ -1,7 +1,6 @@
 package nodeclient
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -231,7 +230,7 @@ type (
 
 // TxID returns the TransactionID.
 func (nor *OutputResponse) TxID() (*iotago.TransactionID, error) {
-	txIDBytes, err := hex.DecodeString(nor.TransactionID)
+	txIDBytes, err := iotago.DecodeHex(nor.TransactionID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
 	}

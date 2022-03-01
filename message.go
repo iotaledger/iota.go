@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -79,7 +78,7 @@ type MessageIDs = []MessageID
 // MessageIDFromHexString converts the given message IDs from their hex
 // to MessageID representation.
 func MessageIDFromHexString(messageIDHex string) (MessageID, error) {
-	messageIDBytes, err := hex.DecodeString(messageIDHex)
+	messageIDBytes, err := DecodeHex(messageIDHex)
 	if err != nil {
 		return MessageID{}, err
 	}
@@ -92,7 +91,7 @@ func MessageIDFromHexString(messageIDHex string) (MessageID, error) {
 
 // MessageIDToHexString converts the given message ID to their hex representation.
 func MessageIDToHexString(msgID MessageID) string {
-	return hex.EncodeToString(msgID[:])
+	return EncodeHex(msgID[:])
 }
 
 // MustMessageIDFromHexString converts the given message IDs from their hex
@@ -209,7 +208,7 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 	}
 	jMessage.Parents = make([]string, len(m.Parents))
 	for i, parent := range m.Parents {
-		jMessage.Parents[i] = hex.EncodeToString(parent[:])
+		jMessage.Parents[i] = EncodeHex(parent[:])
 	}
 	jMessage.Nonce = strconv.FormatUint(m.Nonce, 10)
 	if m.Payload != nil {
@@ -265,7 +264,7 @@ func (jm *jsonMessage) ToSerializable() (serializer.Serializable, error) {
 
 	m.Parents = make(MessageIDs, len(jm.Parents))
 	for i, jparent := range jm.Parents {
-		parentBytes, err := hex.DecodeString(jparent)
+		parentBytes, err := DecodeHex(jparent)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode hex parent %d from JSON: %w", i+1, err)
 		}

@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -152,7 +151,7 @@ func (fID FoundryID) Key() interface{} {
 }
 
 func (fID FoundryID) String() string {
-	return hex.EncodeToString(fID[:])
+	return EncodeHex(fID[:])
 }
 
 // FoundryOutputs is a slice of FoundryOutput(s).
@@ -514,7 +513,7 @@ func (f *FoundryOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jFoundryOutput.TokenTag = hex.EncodeToString(f.TokenTag[:])
+	jFoundryOutput.TokenTag = EncodeHex(f.TokenTag[:])
 
 	jFoundryOutput.CirculatingSupply = f.CirculatingSupply.String()
 	jFoundryOutput.MaximumSupply = f.MaximumSupply.String()
@@ -584,7 +583,7 @@ func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
 		return nil, err
 	}
 
-	tokenTagBytes, err := hex.DecodeString(j.TokenTag)
+	tokenTagBytes, err := DecodeHex(j.TokenTag)
 	if err != nil {
 		return nil, err
 	}

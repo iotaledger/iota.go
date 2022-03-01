@@ -2,7 +2,6 @@ package nodeclient
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -159,7 +158,7 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 }
 
 func (client *indexerClient) Alias(ctx context.Context, aliasID iotago.AliasID) (*iotago.AliasOutput, error) {
-	output, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteAlias, hex.EncodeToString(aliasID[:])))
+	output, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteAlias, iotago.EncodeHex(aliasID[:])))
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +166,7 @@ func (client *indexerClient) Alias(ctx context.Context, aliasID iotago.AliasID) 
 }
 
 func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.FoundryOutput, error) {
-	output, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteFoundry, hex.EncodeToString(foundryID[:])))
+	output, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteFoundry, iotago.EncodeHex(foundryID[:])))
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +174,7 @@ func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.Found
 }
 
 func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.NFTOutput, error) {
-	output, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteNFT, hex.EncodeToString(nftID[:])))
+	output, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteNFT, iotago.EncodeHex(nftID[:])))
 	if err != nil {
 		return nil, err
 	}

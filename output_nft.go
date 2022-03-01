@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -160,7 +159,7 @@ func (nftID NFTID) ToAddress() ChainConstrainedAddress {
 }
 
 func (nftID NFTID) String() string {
-	return hex.EncodeToString(nftID[:])
+	return EncodeHex(nftID[:])
 }
 
 // NFTOutput is an output type used to implement non-fungible tokens.
@@ -335,7 +334,7 @@ func (n *NFTOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jNFTOutput.NFTID = hex.EncodeToString(n.NFTID[:])
+	jNFTOutput.NFTID = EncodeHex(n.NFTID[:])
 
 	jNFTOutput.Conditions, err = serializablesToJSONRawMsgs(n.Conditions.ToSerializables())
 	if err != nil {
@@ -390,7 +389,7 @@ func (j *jsonNFTOutput) ToSerializable() (serializer.Serializable, error) {
 		return nil, err
 	}
 
-	nftIDBytes, err := hex.DecodeString(j.NFTID)
+	nftIDBytes, err := DecodeHex(j.NFTID)
 	if err != nil {
 		return nil, err
 	}

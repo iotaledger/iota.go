@@ -43,7 +43,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 	data := `
 		{
 		  "protocolVersion": 1,
-		  "parentMessageIds": ["f532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d", "78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2"],
+		  "parentMessageIds": ["0xf532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d", "0x78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2"],
 		  "payload": {
 			"type": 0,
 			"essence": {
@@ -52,7 +52,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 			  "inputs": [
 				{
 				  "type": 0,
-				  "transactionId": "162863a2f4b134d352a886bf9cfb08788735499694864753ee686e02b3763d9d",
+				  "transactionId": "0x162863a2f4b134d352a886bf9cfb08788735499694864753ee686e02b3763d9d",
 				  "transactionOutputIndex": 3
 				}
 			  ],
@@ -61,15 +61,15 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 				  "type": 3,
 				  "address": {
 					"type": 0,
-					"address": "5f24ebcb5d48acbbfe6e7401b502ba7bb93acb3591d55eda7d32c37306cc805f"
+					"address": "0x5f24ebcb5d48acbbfe6e7401b502ba7bb93acb3591d55eda7d32c37306cc805f"
 				  },
 				  "amount": 5710
 				}
 			  ],
 			  "payload": {
 				"type": 5,
-				"tag": "616c6c796f7572747269747362656c6f6e67746f7573",
-				"data": "a487f431d852b060b49427f513dca1d5288e697e8bd9eb062534d09e7cb337ac"
+				"tag": "0x616c6c796f7572747269747362656c6f6e67746f7573",
+				"data": "0xa487f431d852b060b49427f513dca1d5288e697e8bd9eb062534d09e7cb337ac"
 			  }
 			},
 			"unlockBlocks": [
@@ -77,8 +77,8 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 				"type": 0,
 				"signature": {
 				  "type": 0,
-				  "publicKey": "ed3c3f1a319ff4e909cf2771d79fece0ac9bd9fd2ee49ea6c0885c9cb3b1248c",
-				  "signature": "651941eddb3e68cb1f6ef4ef5b04625dcf5c70de1fdc4b1c9eadb2c219c074e0ed3c3f1a319ff4e909cf2771d79fece0ac9bd9fd2ee49ea6c0885c9cb3b1248c"
+				  "publicKey": "0xed3c3f1a319ff4e909cf2771d79fece0ac9bd9fd2ee49ea6c0885c9cb3b1248c",
+				  "signature": "0x651941eddb3e68cb1f6ef4ef5b04625dcf5c70de1fdc4b1c9eadb2c219c074e0ed3c3f1a319ff4e909cf2771d79fece0ac9bd9fd2ee49ea6c0885c9cb3b1248c"
 				}
 			  }
 			]
@@ -104,7 +104,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 
 	minimal := `
 		{
-		  "parentMessageIds": ["0000000000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000000000"],
+		  "parentMessageIds": ["0x0000000000000000000000000000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000000000000000000000000000"],
 		  "payload": null
 		}`
 	msgMinimal := &iotago.Message{}

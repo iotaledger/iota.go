@@ -2,7 +2,6 @@ package iotagox
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -283,7 +282,7 @@ func (neac *NodeEventAPIClient) TransactionIncludedMessage(txID iotago.Transacti
 func (neac *NodeEventAPIClient) Output(outputID iotago.OutputID) <-chan *nodeclient.OutputResponse {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *nodeclient.OutputResponse)
-	topic := strings.Replace(NodeEventOutputs, "{outputId}", hex.EncodeToString(outputID[:]), 1)
+	topic := strings.Replace(NodeEventOutputs, "{outputId}", iotago.EncodeHex(outputID[:]), 1)
 	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &nodeclient.OutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {

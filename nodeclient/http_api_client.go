@@ -2,7 +2,6 @@ package nodeclient
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -217,7 +216,7 @@ type NodeTipsResponse struct {
 func (ntr *NodeTipsResponse) Tips() (iotago.MessageIDs, error) {
 	msgIDs := make(iotago.MessageIDs, len(ntr.TipsHex))
 	for i, tip := range ntr.TipsHex {
-		msgID, err := hex.DecodeString(tip)
+		msgID, err := iotago.DecodeHex(tip)
 		if err != nil {
 			return nil, err
 		}
@@ -269,7 +268,7 @@ func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message) (*io
 
 // MessageMetadataByMessageID gets the metadata of a message by its message ID from the node.
 func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iotago.MessageID) (*MessageMetadataResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteMessageMetadata, hex.EncodeToString(msgID[:]))
+	query := fmt.Sprintf(NodeAPIRouteMessageMetadata, iotago.EncodeHex(msgID[:]))
 
 	res := &MessageMetadataResponse{}
 	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
@@ -282,7 +281,7 @@ func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iota
 
 // MessageByMessageID get a message by its message ID from the node.
 func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.MessageID) (*iotago.Message, error) {
-	query := fmt.Sprintf(NodeAPIRouteMessageBytes, hex.EncodeToString(msgID[:]))
+	query := fmt.Sprintf(NodeAPIRouteMessageBytes, iotago.EncodeHex(msgID[:]))
 
 	res := &RawDataEnvelope{}
 	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
@@ -299,7 +298,7 @@ func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.Messa
 
 // ChildrenByMessageID gets the MessageIDs of the child messages of a given message.
 func (client *Client) ChildrenByMessageID(ctx context.Context, parentMsgID iotago.MessageID) (*ChildrenResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteMessageChildren, hex.EncodeToString(parentMsgID[:]))
+	query := fmt.Sprintf(NodeAPIRouteMessageChildren, iotago.EncodeHex(parentMsgID[:]))
 
 	res := &ChildrenResponse{}
 	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)

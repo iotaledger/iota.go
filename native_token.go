@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -66,7 +65,7 @@ func NativeTokenArrayRules() serializer.ArrayRules {
 type NativeTokenID [NativeTokenIDLength]byte
 
 func (ntID NativeTokenID) String() string {
-	return hex.EncodeToString(ntID[:])
+	return EncodeHex(ntID[:])
 }
 
 // FoundryID returns the FoundryID to which this NativeTokenID belongs to.
@@ -260,7 +259,7 @@ func (n *NativeToken) Size() int {
 
 func (n *NativeToken) MarshalJSON() ([]byte, error) {
 	jNativeToken := &jsonNativeToken{}
-	jNativeToken.ID = hex.EncodeToString(n.ID[:])
+	jNativeToken.ID = EncodeHex(n.ID[:])
 	jNativeToken.Amount = n.Amount.String()
 	return json.Marshal(jNativeToken)
 }
@@ -299,7 +298,7 @@ type jsonNativeToken struct {
 func (j *jsonNativeToken) ToSerializable() (serializer.Serializable, error) {
 	n := &NativeToken{}
 
-	nftIDBytes, err := hex.DecodeString(j.ID)
+	nftIDBytes, err := DecodeHex(j.ID)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -148,7 +147,7 @@ func (id AliasID) Empty() bool {
 }
 
 func (id AliasID) String() string {
-	return hex.EncodeToString(id[:])
+	return EncodeHex(id[:])
 }
 
 func (id AliasID) Matches(other ChainID) bool {
@@ -551,9 +550,9 @@ func (a *AliasOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jAliasOutput.AliasID = hex.EncodeToString(a.AliasID[:])
+	jAliasOutput.AliasID = EncodeHex(a.AliasID[:])
 
-	jAliasOutput.StateMetadata = hex.EncodeToString(a.StateMetadata)
+	jAliasOutput.StateMetadata = EncodeHex(a.StateMetadata)
 
 	jAliasOutput.Conditions, err = serializablesToJSONRawMsgs(a.Conditions.ToSerializables())
 	if err != nil {
@@ -613,13 +612,13 @@ func (j *jsonAliasOutput) ToSerializable() (serializer.Serializable, error) {
 		return nil, err
 	}
 
-	aliasIDSlice, err := hex.DecodeString(j.AliasID)
+	aliasIDSlice, err := DecodeHex(j.AliasID)
 	if err != nil {
 		return nil, err
 	}
 	copy(e.AliasID[:], aliasIDSlice)
 
-	e.StateMetadata, err = hex.DecodeString(j.StateMetadata)
+	e.StateMetadata, err = DecodeHex(j.StateMetadata)
 	if err != nil {
 		return nil, err
 	}

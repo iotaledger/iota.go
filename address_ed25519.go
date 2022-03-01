@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"crypto/ed25519"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -19,7 +18,7 @@ const (
 
 // ParseEd25519AddressFromHexString parses the given hex string into an Ed25519Address.
 func ParseEd25519AddressFromHexString(hexAddr string) (*Ed25519Address, error) {
-	addrBytes, err := hex.DecodeString(hexAddr)
+	addrBytes, err := DecodeHex(hexAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +80,7 @@ func (edAddr *Ed25519Address) Bech32(hrp NetworkPrefix) string {
 }
 
 func (edAddr *Ed25519Address) String() string {
-	return hex.EncodeToString(edAddr[:])
+	return EncodeHex(edAddr[:])
 }
 
 func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
@@ -110,7 +109,7 @@ func (edAddr *Ed25519Address) Size() int {
 
 func (edAddr *Ed25519Address) MarshalJSON() ([]byte, error) {
 	jEd25519Address := &jsonEd25519Address{}
-	jEd25519Address.PubKeyHash = hex.EncodeToString(edAddr[:])
+	jEd25519Address.PubKeyHash = EncodeHex(edAddr[:])
 	jEd25519Address.Type = int(AddressEd25519)
 	return json.Marshal(jEd25519Address)
 }
@@ -140,7 +139,7 @@ type jsonEd25519Address struct {
 }
 
 func (j *jsonEd25519Address) ToSerializable() (serializer.Serializable, error) {
-	addrBytes, err := hex.DecodeString(j.PubKeyHash)
+	addrBytes, err := DecodeHex(j.PubKeyHash)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
 	}

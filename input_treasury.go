@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -51,7 +50,7 @@ func (ti *TreasuryInput) Size() int {
 func (ti *TreasuryInput) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&jsonTreasuryInput{
 		Type:        int(InputTreasury),
-		MilestoneID: hex.EncodeToString(ti[:]),
+		MilestoneID: EncodeHex(ti[:]),
 	})
 }
 
@@ -75,7 +74,7 @@ type jsonTreasuryInput struct {
 }
 
 func (j *jsonTreasuryInput) ToSerializable() (serializer.Serializable, error) {
-	msHash, err := hex.DecodeString(j.MilestoneID)
+	msHash, err := DecodeHex(j.MilestoneID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode milestone hash from JSON for treasury input: %w", err)
 	}

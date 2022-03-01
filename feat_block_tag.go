@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -94,7 +93,7 @@ func (s *TagFeatureBlock) Size() int {
 func (s *TagFeatureBlock) MarshalJSON() ([]byte, error) {
 	jTagFeatBlock := &jsonTagFeatureBlock{}
 	jTagFeatBlock.Type = int(FeatureBlockTag)
-	jTagFeatBlock.Tag = hex.EncodeToString(s.Tag)
+	jTagFeatBlock.Tag = EncodeHex(s.Tag)
 	return json.Marshal(jTagFeatBlock)
 }
 
@@ -118,7 +117,7 @@ type jsonTagFeatureBlock struct {
 }
 
 func (j *jsonTagFeatureBlock) ToSerializable() (serializer.Serializable, error) {
-	dataBytes, err := hex.DecodeString(j.Tag)
+	dataBytes, err := DecodeHex(j.Tag)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode tag from JSON for tag feature block: %w", err)
 	}

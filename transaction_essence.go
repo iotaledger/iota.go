@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -277,7 +276,7 @@ func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 	jTransactionEssence := &jsonTransactionEssence{
 		NetworkID:        strconv.FormatUint(u.NetworkID, 10),
 		Inputs:           make([]*json.RawMessage, len(u.Inputs)),
-		InputsCommitment: hex.EncodeToString(u.InputsCommitment[:]),
+		InputsCommitment: EncodeHex(u.InputsCommitment[:]),
 		Outputs:          make([]*json.RawMessage, len(u.Outputs)),
 		Payload:          nil,
 	}
@@ -395,7 +394,7 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 		unsigTx.Inputs[i] = input.(Input)
 	}
 
-	inputsCommitmentSlice, err := hex.DecodeString(j.InputsCommitment)
+	inputsCommitmentSlice, err := DecodeHex(j.InputsCommitment)
 	if err != nil {
 		return unsigTx, fmt.Errorf("unable to decode JSON inputs commitment: %w", err)
 	}
