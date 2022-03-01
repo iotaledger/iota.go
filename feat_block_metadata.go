@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -92,7 +91,7 @@ func (s *MetadataFeatureBlock) Size() int {
 func (s *MetadataFeatureBlock) MarshalJSON() ([]byte, error) {
 	jMetadataFeatBlock := &jsonMetadataFeatureBlock{}
 	jMetadataFeatBlock.Type = int(FeatureBlockMetadata)
-	jMetadataFeatBlock.Data = hex.EncodeToString(s.Data)
+	jMetadataFeatBlock.Data = EncodeHex(s.Data)
 	return json.Marshal(jMetadataFeatBlock)
 }
 
@@ -116,7 +115,7 @@ type jsonMetadataFeatureBlock struct {
 }
 
 func (j *jsonMetadataFeatureBlock) ToSerializable() (serializer.Serializable, error) {
-	dataBytes, err := hex.DecodeString(j.Data)
+	dataBytes, err := DecodeHex(j.Data)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode data from JSON for metadata feature block: %w", err)
 	}

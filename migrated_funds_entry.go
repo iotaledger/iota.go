@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -81,7 +80,7 @@ func (m *MigratedFundsEntry) Serialize(deSeriMode serializer.DeSerializationMode
 
 func (m *MigratedFundsEntry) MarshalJSON() ([]byte, error) {
 	jMigratedFundsEntry := &jsonMigratedFundsEntry{}
-	jMigratedFundsEntry.TailTransactionHash = hex.EncodeToString(m.TailTransactionHash[:])
+	jMigratedFundsEntry.TailTransactionHash = EncodeHex(m.TailTransactionHash[:])
 	addrJsonBytes, err := m.Address.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -115,7 +114,7 @@ type jsonMigratedFundsEntry struct {
 
 func (j *jsonMigratedFundsEntry) ToSerializable() (serializer.Serializable, error) {
 	payload := &MigratedFundsEntry{}
-	tailTransactionHash, err := hex.DecodeString(j.TailTransactionHash)
+	tailTransactionHash, err := DecodeHex(j.TailTransactionHash)
 	if err != nil {
 		return nil, fmt.Errorf("can't decode tail transaction hash for migrated funds entry from JSON: %w", err)
 	}

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -269,11 +268,11 @@ func (m *Milestone) VerifySignatures(minSigThreshold int, applicablePubKeys Mile
 		}
 
 		if _, has := applicablePubKeys[msPubKey]; !has {
-			return fmt.Errorf("%w: public key %s is not applicable", ErrMilestoneNonApplicablePublicKey, hex.EncodeToString(msPubKey[:]))
+			return fmt.Errorf("%w: public key %s is not applicable", ErrMilestoneNonApplicablePublicKey, EncodeHex(msPubKey[:]))
 		}
 
 		if ok := iotagoEd25519.Verify(msPubKey[:], msEssence[:], m.Signatures[msPubKeyIndex][:]); !ok {
-			return fmt.Errorf("%w: at index %d, checked against public key %s", ErrMilestoneInvalidSignature, msPubKeyIndex, hex.EncodeToString(msPubKey[:]))
+			return fmt.Errorf("%w: at index %d, checked against public key %s", ErrMilestoneInvalidSignature, msPubKeyIndex, EncodeHex(msPubKey[:]))
 		}
 
 		seenPubKeys[msPubKey] = msPubKeyIndex
@@ -293,7 +292,7 @@ func InMemoryEd25519MilestoneSigner(prvKeys MilestonePublicKeyMapping) Milestone
 		for i, pubKey := range pubKeys {
 			prvKey, ok := prvKeys[pubKey]
 			if !ok {
-				return nil, fmt.Errorf("%w: needed for public key %s", ErrMilestoneInMemorySignerPrivateKeyMissing, hex.EncodeToString(pubKey[:]))
+				return nil, fmt.Errorf("%w: needed for public key %s", ErrMilestoneInMemorySignerPrivateKeyMissing, EncodeHex(pubKey[:]))
 			}
 			sig := ed25519.Sign(prvKey, msEssence)
 			copy(sigs[i][:], sig)
@@ -481,15 +480,15 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 	jMilestone.Timestamp = int(m.Timestamp)
 	jMilestone.Parents = make([]string, len(m.Parents))
 	for i, parent := range m.Parents {
-		jMilestone.Parents[i] = hex.EncodeToString(parent[:])
+		jMilestone.Parents[i] = EncodeHex(parent[:])
 	}
-	jMilestone.InclusionMerkleProof = hex.EncodeToString(m.InclusionMerkleProof[:])
+	jMilestone.InclusionMerkleProof = EncodeHex(m.InclusionMerkleProof[:])
 	jMilestone.NextPoWScore = int(m.NextPoWScore)
 	jMilestone.NextPoWScoreMilestoneIndex = int(m.NextPoWScoreMilestoneIndex)
 
 	jMilestone.PublicKeys = make([]string, len(m.PublicKeys))
 	for i, pubKey := range m.PublicKeys {
-		jMilestone.PublicKeys[i] = hex.EncodeToString(pubKey[:])
+		jMilestone.PublicKeys[i] = EncodeHex(pubKey[:])
 	}
 
 	if m.Receipt != nil {
@@ -503,7 +502,7 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 
 	jMilestone.Signatures = make([]string, len(m.Signatures))
 	for i, sig := range m.Signatures {
-		jMilestone.Signatures[i] = hex.EncodeToString(sig[:])
+		jMilestone.Signatures[i] = EncodeHex(sig[:])
 	}
 
 	return json.Marshal(jMilestone)
@@ -545,14 +544,14 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 
 	payload.Parents = make(MilestoneParentMessageIDs, len(j.Parents))
 	for i, jparent := range j.Parents {
-		parentBytes, err := hex.DecodeString(jparent)
+		parentBytes, err := DecodeHex(jparent)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode parent %d from JSON for milestone payload: %w", i+1, err)
 		}
 		copy(payload.Parents[i][:], parentBytes)
 	}
 
-	inclusionMerkleProofBytes, err := hex.DecodeString(j.InclusionMerkleProof)
+	inclusionMerkleProofBytes, err := DecodeHex(j.InclusionMerkleProof)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode inlcusion merkle proof from JSON for milestone payload: %w", err)
 	}
@@ -563,7 +562,7 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 
 	payload.PublicKeys = make([]MilestonePublicKey, len(j.PublicKeys))
 	for i, pubKeyHex := range j.PublicKeys {
-		pubKeyBytes, err := hex.DecodeString(pubKeyHex)
+		pubKeyBytes, err := DecodeHex(pubKeyHex)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode public key from JSON for milestone payload at pos %d: %w", i, err)
 		}
@@ -586,7 +585,7 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 
 	payload.Signatures = make([]MilestoneSignature, len(j.Signatures))
 	for i, sigHex := range j.Signatures {
-		sigBytes, err := hex.DecodeString(sigHex)
+		sigBytes, err := DecodeHex(sigHex)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode signature from JSON for milestone payload at pos %d: %w", i, err)
 		}
