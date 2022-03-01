@@ -18,12 +18,13 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 	exampleGovCtrl := tpkg.RandEd25519Address()
 
 	exampleExistingFoundryOutput := &iotago.FoundryOutput{
-		Amount:            100,
-		SerialNumber:      5,
-		TokenTag:          iotago.TokenTag{},
-		CirculatingSupply: new(big.Int).SetInt64(1000),
-		MaximumSupply:     new(big.Int).SetInt64(10000),
-		TokenScheme:       &iotago.SimpleTokenScheme{},
+		Amount:        100,
+		SerialNumber:  5,
+		TokenTag:      iotago.TokenTag{},
+		MintedTokens:  new(big.Int).SetInt64(1000),
+		MeltedTokens:  big.NewInt(0),
+		MaximumSupply: new(big.Int).SetInt64(10000),
+		TokenScheme:   &iotago.SimpleTokenScheme{},
 		Conditions: iotago.UnlockConditions{
 			&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasID.ToAddress().(*iotago.AliasAddress)},
 		},

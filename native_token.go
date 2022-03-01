@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -83,46 +81,8 @@ func (ntID NativeTokenID) FoundrySerialNumber() uint32 {
 // NativeTokenSum is a mapping of NativeTokenID to a sum value.
 type NativeTokenSum map[NativeTokenID]*big.Int
 
-// Balanced checks whether the set of NativeTokens are balanced between the two NativeTokenSum.
-// This function is only appropriate for checking NativeToken balances if there are no underlying foundry state transitions.
-func (nts NativeTokenSum) Balanced(other NativeTokenSum) error {
-	if len(nts) != len(other) {
-		return fmt.Errorf("%w: length mismatch, in %d, out %d", ErrNativeTokenSumUnbalanced, len(nts), len(other))
-	}
-	for id, sum := range nts {
-		otherSum := other[id]
-		if otherSum == nil {
-			return fmt.Errorf("%w: native token %s missing in out", ErrNativeTokenSumUnbalanced, id)
-		}
-		if sum.Cmp(otherSum) != 0 {
-			return fmt.Errorf("%w: sum mismatch, in %d, out %d", ErrNativeTokenSumUnbalanced, sum, other)
-		}
-	}
-	return nil
-}
-
-// NativeTokenSumBalancedWithDiff checks whether the supply diff from the foundry state transition balances the in/out native token sums.
-func NativeTokenSumBalancedWithDiff(nativeTokenID NativeTokenID, inSums NativeTokenSum, outSums NativeTokenSum, circSupplyChange *big.Int) error {
-	inSum := inSums[nativeTokenID]
-	outSum := outSums[nativeTokenID]
-
-	switch {
-	case outSum == nil && inSum == nil && circSupplyChange.Cmp(common.Big0) != 0:
-		// impossible invariant as foundry can not change supply without any sums on any side
-		return fmt.Errorf("%w: circulating supply change %s of %s without native tokens in transaction", ErrNativeTokenSumUnbalanced, circSupplyChange, nativeTokenID)
-	case outSum != nil && inSum == nil && outSum.Cmp(circSupplyChange) != 0:
-		// newly minted tokens without any on the input
-		fallthrough
-	case outSum == nil && inSum != nil && new(big.Int).Add(inSum, circSupplyChange).Cmp(common.Big0) != 0:
-		// burning tokens just from the input side without producing/having transferred any to the output
-		fallthrough
-	case outSum != nil && inSum != nil && new(big.Int).Sub(outSum, inSum).Cmp(circSupplyChange) != 0:
-		// minting or burning tokens
-		return fmt.Errorf("%w: unbalanced circulating supply change %s of %s", ErrNativeTokenSumUnbalanced, circSupplyChange, nativeTokenID)
-	}
-
-	return nil
-}
+// NativeTokenSumFunc gets called with a NativeTokenID and the sums of input/output side.
+type NativeTokenSumFunc func(id NativeTokenID, aSum *big.Int, bSum *big.Int) error
 
 // NativeTokensSet is a set of NativeToken(s).
 type NativeTokensSet map[NativeTokenID]*NativeToken

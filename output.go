@@ -816,7 +816,7 @@ func OutputsSyntacticalAlias(txID *TransactionID) OutputsSyntacticalValidationFu
 }
 
 // OutputsSyntacticalFoundry returns an OutputsSyntacticalValidationFunc which checks that FoundryOutput(s)':
-//	- CirculatingSupply is less equal MaximumSupply
+//	- Minted and melted supply is less equal MaximumSupply
 //	- MaximumSupply is not zero
 func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
@@ -829,9 +829,10 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 			return fmt.Errorf("%w: output %d, less than equal zero", ErrFoundryOutputInvalidMaximumSupply, index)
 		}
 
-		if r := foundryOutput.CirculatingSupply.Cmp(foundryOutput.MaximumSupply); r == 1 {
-			return fmt.Errorf("%w: output %d, bigger than maximum supply", ErrFoundryOutputInvalidCirculatingSupply, index)
-		}
+		// TODO: more syntactic checks are possible but not defined in the TIP:
+		// - minted - melted > 0: foundry can never have melted more than minted
+		// - minted - melted <= max supply: can never have minted more than max supply
+		// - melted <= minted: can never have melted more than minted
 
 		return nil
 	}
