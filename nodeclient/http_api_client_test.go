@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"strconv"
 	"testing"
 	"time"
 
@@ -363,7 +362,7 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteReceiptsByMigratedAtIndex, iotago.EncodeUint64(uint64(index)))).
+		Get(fmt.Sprintf(nodeclient.NodeAPIRouteReceiptsByMigratedAtIndex, index)).
 		Reply(200).
 		JSON(originRes)
 
@@ -377,7 +376,6 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 	defer gock.Off()
 
 	var milestoneIndex uint32 = 1337
-	milestoneIndexStr := strconv.Itoa(int(milestoneIndex))
 	msgID := tpkg.Rand32ByteArray()
 
 	originRes := &nodeclient.MilestoneResponse{
@@ -387,7 +385,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMilestone, milestoneIndexStr)).
+		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMilestone, milestoneIndex)).
 		Reply(200).
 		JSON(originRes)
 
@@ -401,7 +399,6 @@ func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 	defer gock.Off()
 
 	var milestoneIndex uint32 = 1337
-	milestoneIndexStr := strconv.Itoa(int(milestoneIndex))
 
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
@@ -413,7 +410,7 @@ func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMilestoneUTXOChanges, milestoneIndexStr)).
+		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMilestoneUTXOChanges, milestoneIndex)).
 		Reply(200).
 		JSON(originRes)
 
