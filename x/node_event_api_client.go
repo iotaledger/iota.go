@@ -38,19 +38,32 @@ const (
 
 	// NodeEventOutputs is the name of the outputs event channel.
 	NodeEventOutputs = "outputs/{outputId}"
+	// NodeEventOutputsByUnlockConditionAndAddress is the name of the outputs by unlock condition address event channel.
+	NodeEventOutputsByUnlockConditionAndAddress = "outputs/unlock/{condition}/{address}"
+	// NodeEventSpentOutputsByUnlockConditionAndAddress is the name of the spent outputs by unlock condition address event channel.
+	NodeEventSpentOutputsByUnlockConditionAndAddress = "outputs/unlock/{condition}/{address}/spent"
 
 	// NodeEventReceipts is the name of the receipts event channel.
 	NodeEventReceipts = "receipts"
-
-	// NodeEventAddressesOutput is the name of the address outputs event channel.
-	NodeEventAddressesOutput = "addresses/{address}/outputs"
-	// NodeEventAddressesEd25519Output is the name of the ed25519 address outputs event channel.
-	NodeEventAddressesEd25519Output = "addresses/ed25519/{address}/outputs"
 )
 
 var (
 	// ErrNodeEventAPIClientInactive gets returned when a NodeEventAPIClient is inactive.
 	ErrNodeEventAPIClientInactive = errors.New("node event api client is inactive")
+)
+
+// NodeEventUnlockCondition denotes the different unlock conditions.
+type NodeEventUnlockCondition string
+
+// Unlock conditions.
+const (
+	UnlockConditionAny              NodeEventUnlockCondition = "+"
+	UnlockConditionAddress          NodeEventUnlockCondition = "address"
+	UnlockConditionStorageReturn    NodeEventUnlockCondition = "storageReturn"
+	UnlockConditionExpirationReturn NodeEventUnlockCondition = "expirationReturn"
+	UnlockConditionStateController  NodeEventUnlockCondition = "stateController"
+	UnlockConditionGovernor         NodeEventUnlockCondition = "governor"
+	UnlockConditionImmutableAlias   NodeEventUnlockCondition = "immutableAlias"
 )
 
 func randMQTTClientID() string {
@@ -219,11 +232,12 @@ func (neac *NodeEventAPIClient) MessageMetadataChange(msgID iotago.MessageID) <-
 	return channel
 }
 
-// AddressOutputs returns a channel of newly created or spent outputs on the given address.
-func (neac *NodeEventAPIClient) AddressOutputs(addr iotago.Address, netPrefix iotago.NetworkPrefix) <-chan *nodeclient.OutputResponse {
+// OutputsByUnlockConditionAndAddress returns a channel of newly created outputs on the given unlock condition and address.
+func (neac *NodeEventAPIClient) OutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition NodeEventUnlockCondition) <-chan *nodeclient.OutputResponse {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *nodeclient.OutputResponse)
-	topic := strings.Replace(NodeEventAddressesOutput, "{address}", addr.Bech32(netPrefix), 1)
+	topic := strings.Replace(NodeEventOutputsByUnlockConditionAndAddress, "{address}", addr.Bech32(netPrefix), 1)
+	topic = strings.Replace(topic, "{condition}", string(condition), 1)
 	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &nodeclient.OutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
@@ -239,11 +253,12 @@ func (neac *NodeEventAPIClient) AddressOutputs(addr iotago.Address, netPrefix io
 	return channel
 }
 
-// Ed25519AddressOutputs returns a channel of newly created or spent outputs on the given ed25519 address.
-func (neac *NodeEventAPIClient) Ed25519AddressOutputs(addr *iotago.Ed25519Address) <-chan *nodeclient.OutputResponse {
+// SpentOutputsByUnlockConditionAndAddress returns a channel of newly spent outputs on the given unlock condition and address.
+func (neac *NodeEventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition NodeEventUnlockCondition) <-chan *nodeclient.OutputResponse {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *nodeclient.OutputResponse)
-	topic := strings.Replace(NodeEventAddressesEd25519Output, "{address}", addr.String(), 1)
+	topic := strings.Replace(NodeEventSpentOutputsByUnlockConditionAndAddress, "{address}", addr.Bech32(netPrefix), 1)
+	topic = strings.Replace(topic, "{condition}", string(condition), 1)
 	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &nodeclient.OutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
