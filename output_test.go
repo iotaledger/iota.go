@@ -474,7 +474,7 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 			wantErr: iotago.ErrAliasOutputCyclicAddress,
 		},
 	}
-	randTxID := tpkg.Rand32ByteArray()
+	randTxID := tpkg.RandTransactionID()
 	valFunc := iotago.OutputsSyntacticalAlias(&randTxID)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -625,7 +625,7 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 			wantErr: iotago.ErrNFTOutputCyclicAddress,
 		},
 	}
-	randTxID := tpkg.Rand32ByteArray()
+	randTxID := tpkg.RandTransactionID()
 	valFunc := iotago.OutputsSyntacticalNFT(&randTxID)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

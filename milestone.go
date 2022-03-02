@@ -125,7 +125,7 @@ func MilestoneSignatureArrayRules() serializer.ArrayRules {
 
 type (
 	// MilestoneID is the ID of a Milestone.
-	MilestoneID = [MilestoneIDLength]byte
+	MilestoneID [MilestoneIDLength]byte
 	// MilestonePublicKey is a public key within a Milestone.
 	MilestonePublicKey = [MilestonePublicKeyLength]byte
 	// MilestonePublicKeySet is a set of unique MilestonePublicKey.
@@ -141,6 +141,11 @@ type (
 	// MilestoneInclusionMerkleProof is the inclusion merkle proof data of a milestone.
 	MilestoneInclusionMerkleProof = [MilestoneInclusionMerkleProofLength]byte
 )
+
+// ToHex converts the MilestoneID to its hex representation.
+func (milestoneID MilestoneID) ToHex() string {
+	return EncodeHex(milestoneID[:])
+}
 
 // NewMilestone creates a new Milestone. It automatically orders the given public keys by their byte order.
 func NewMilestone(index uint32, timestamp uint64, parents MilestoneParentMessageIDs, inclMerkleProof MilestoneInclusionMerkleProof, pubKeys []MilestonePublicKey) (*Milestone, error) {
@@ -194,7 +199,9 @@ func (m *Milestone) ID() (*MilestoneID, error) {
 		return nil, fmt.Errorf("can't compute milestone payload ID: %w", err)
 	}
 	h := blake2b.Sum256(data)
-	return &h, nil
+	mID := &MilestoneID{}
+	copy(mID[:], h[:])
+	return mID, nil
 }
 
 // Essence returns the essence bytes (the bytes to be signed) of the Milestone.

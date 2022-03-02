@@ -59,6 +59,15 @@ func RandOutputIDs(count uint16) iotago.OutputIDs {
 	return outputIDs
 }
 
+func RandTransactionID() iotago.TransactionID {
+	var transactionID iotago.TransactionID
+	_, err := rand.Read(transactionID[:iotago.TransactionIDLength])
+	if err != nil {
+		panic(err)
+	}
+	return transactionID
+}
+
 // RandNativeToken returns a random NativeToken.
 func RandNativeToken() *iotago.NativeToken {
 	b := RandBytes(iotago.NativeTokenIDLength)
