@@ -281,7 +281,7 @@ func TestNodeHTTPAPIClient_Treasury(t *testing.T) {
 	defer gock.Off()
 
 	originRes := &nodeclient.TreasuryResponse{
-		MilestoneID: "733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d",
+		MilestoneID: "0x733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d",
 		Amount:      "133713371337",
 	}
 
