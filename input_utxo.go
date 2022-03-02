@@ -22,7 +22,7 @@ const (
 // UTXOInput references an unspent transaction output by the Transaction's ID and the corresponding index of the Output.
 type UTXOInput struct {
 	// The transaction ID of the referenced transaction.
-	TransactionID [TransactionIDLength]byte
+	TransactionID TransactionID
 	// The output index of the output on the referenced transaction.
 	TransactionOutputIndex uint16
 }
@@ -65,7 +65,7 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		CheckTypePrefix(uint32(InputUTXO), serializer.TypeDenotationByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize UTXO input: %w", err)
 		}).
-		ReadArrayOf32Bytes(&u.TransactionID, func(err error) error {
+		ReadBytesInPlace(u.TransactionID[:], func(err error) error {
 			return fmt.Errorf("unable to deserialize transaction ID in UTXO input: %w", err)
 		}).
 		ReadNum(&u.TransactionOutputIndex, func(err error) error {
@@ -105,7 +105,7 @@ func (u *UTXOInput) Size() int {
 
 func (u *UTXOInput) MarshalJSON() ([]byte, error) {
 	jUTXOInput := &jsonUTXOInput{}
-	jUTXOInput.TransactionID = EncodeHex(u.TransactionID[:])
+	jUTXOInput.TransactionID = u.TransactionID.ToHex()
 	jUTXOInput.TransactionOutputIndex = int(u.TransactionOutputIndex)
 	jUTXOInput.Type = int(InputUTXO)
 	return json.Marshal(jUTXOInput)
