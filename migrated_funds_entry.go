@@ -87,7 +87,7 @@ func (m *MigratedFundsEntry) MarshalJSON() ([]byte, error) {
 	}
 	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
 	jMigratedFundsEntry.Address = &jsonRawMsgAddr
-	jMigratedFundsEntry.Deposit = int(m.Deposit)
+	jMigratedFundsEntry.Deposit = EncodeUint64(m.Deposit)
 
 	return json.Marshal(jMigratedFundsEntry)
 }
@@ -109,7 +109,7 @@ func (m *MigratedFundsEntry) UnmarshalJSON(bytes []byte) error {
 type jsonMigratedFundsEntry struct {
 	TailTransactionHash string           `json:"tailTransactionHash"`
 	Address             *json.RawMessage `json:"address"`
-	Deposit             int              `json:"deposit"`
+	Deposit             string           `json:"deposit"`
 }
 
 func (j *jsonMigratedFundsEntry) ToSerializable() (serializer.Serializable, error) {
@@ -119,7 +119,11 @@ func (j *jsonMigratedFundsEntry) ToSerializable() (serializer.Serializable, erro
 		return nil, fmt.Errorf("can't decode tail transaction hash for migrated funds entry from JSON: %w", err)
 	}
 	copy(payload.TailTransactionHash[:], tailTransactionHash)
-	payload.Deposit = uint64(j.Deposit)
+
+	payload.Deposit, err = DecodeUint64(j.Deposit)
+	if err != nil {
+		return nil, err
+	}
 
 	payload.Address, err = addressFromJSONRawMsg(j.Address)
 	if err != nil {
