@@ -11,7 +11,7 @@ import (
 // TreasuryOutput is an output which holds the treasury of a network.
 type TreasuryOutput struct {
 	// The currently residing funds in the treasury.
-	Amount uint64 `json:"deposit"`
+	Amount uint64
 }
 
 func (t *TreasuryOutput) NativeTokenSet() NativeTokens {
