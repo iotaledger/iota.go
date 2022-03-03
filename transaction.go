@@ -64,7 +64,7 @@ func TransactionUnlockBlocksArrayRules() serializer.ArrayRules {
 }
 
 // TransactionID is the ID of a Transaction.
-type TransactionID = [TransactionIDLength]byte
+type TransactionID [TransactionIDLength]byte
 
 // TransactionIDs are IDs of transactions.
 type TransactionIDs []TransactionID
@@ -75,6 +75,11 @@ type Transaction struct {
 	Essence *TransactionEssence
 	// The unlock blocks defining the unlocking data for the inputs within the Essence.
 	UnlockBlocks UnlockBlocks
+}
+
+// ToHex converts the TransactionID to its hex representation.
+func (transactionID TransactionID) ToHex() string {
+	return EncodeHex(transactionID[:])
 }
 
 func (t *Transaction) PayloadType() PayloadType {
@@ -101,7 +106,9 @@ func (t *Transaction) ID() (*TransactionID, error) {
 		return nil, fmt.Errorf("can't compute transaction ID: %w", err)
 	}
 	h := blake2b.Sum256(data)
-	return &h, nil
+	tID := &TransactionID{}
+	copy(tID[:], h[:])
+	return tID, nil
 }
 
 func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
@@ -200,11 +207,12 @@ func (t *Transaction) syntacticallyValidate(readBytes []byte, rentStruct *RentSt
 	if err := t.Essence.syntacticallyValidate(rentStruct); err != nil {
 		return fmt.Errorf("transaction essence is invalid: %w", err)
 	}
-
-	txID := blake2b.Sum256(readBytes)
+	h := blake2b.Sum256(readBytes)
+	txID := &TransactionID{}
+	copy(txID[:], h[:])
 	if err := ValidateOutputs(t.Essence.Outputs,
-		OutputsSyntacticalAlias(&txID),
-		OutputsSyntacticalNFT(&txID),
+		OutputsSyntacticalAlias(txID),
+		OutputsSyntacticalNFT(txID),
 	); err != nil {
 		return err
 	}
