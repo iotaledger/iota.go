@@ -67,7 +67,6 @@ var (
 			WriteGuard: func(seri serializer.Serializable) error {
 				switch seri.(type) {
 				case *SenderFeatureBlock:
-				case *IssuerFeatureBlock:
 				case *MetadataFeatureBlock:
 				case *TagFeatureBlock:
 				default:
