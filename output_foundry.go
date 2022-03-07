@@ -242,17 +242,15 @@ func (f *FoundryOutput) ValidateStateTransition(transType ChainTransitionType, n
 	case ChainTransitionTypeStateChange:
 		return f.checkStateChangeTransition(next, inSums, outSums)
 	case ChainTransitionTypeDestroy:
-		return NativeTokenInvariantsValid(f.MustNativeTokenID(), inSums, outSums, f, nil)
+		return f.checkStateDestroyTransition(inSums, outSums)
 	default:
 		panic("unknown chain transition type in FoundryOutput")
 	}
 }
 
 func (f *FoundryOutput) checkStateGenesisTransition(semValCtx *SemanticValidationContext, thisFoundryID FoundryID, outSums NativeTokenSum) error {
-	// minted and melted counter must be zero at genesis
+	// melted counter must be zero at genesis
 	switch {
-	case f.MintedTokens.Cmp(common.Big0) != 0:
-		return fmt.Errorf("%w: minted supply must be zero on new foundry %s", ErrInvalidChainStateTransition, thisFoundryID)
 	case f.MeltedTokens.Cmp(common.Big0) != 0:
 		return fmt.Errorf("%w: melted supply must be zero on new foundry %s", ErrInvalidChainStateTransition, thisFoundryID)
 	}
@@ -273,8 +271,9 @@ func (f *FoundryOutput) checkStateGenesisTransition(semValCtx *SemanticValidatio
 	}
 
 	nativeTokenID := f.MustNativeTokenID()
-	if _, has := outSums[nativeTokenID]; has {
-		return fmt.Errorf("%w: native token %s can not exist on new foundry %s", ErrNativeTokenSumUnbalanced, nativeTokenID, thisFoundryID)
+	outSum := outSums.ValueOrBigInt0(nativeTokenID)
+	if outSum.Cmp(f.MintedTokens) != 0 {
+		return fmt.Errorf("%w: genesis foundry requires output tokens amount to equal minted count: minted %s vs. tokens occuring %s", ErrInvalidChainStateTransition, f.MintedTokens, outSum)
 	}
 
 	return nil
@@ -348,10 +347,67 @@ func (f *FoundryOutput) checkStateChangeTransition(next ChainConstrainedOutput, 
 		return fmt.Errorf("%w: current melted supply (%s) bigger than next melted supply (%s)", ErrInvalidChainStateTransition, f.MeltedTokens, nextState.MeltedTokens)
 	}
 
-	if err := NativeTokenInvariantsValid(f.MustNativeTokenID(), inSums, outSums, f, nextState); err != nil {
+	if err := foundryStateChangeTokenInvariantsValid(f.MustNativeTokenID(), inSums, outSums, f, nextState); err != nil {
 		return fmt.Errorf("%w: foundry state transition does not balance NativeToken %s", err, f.MustNativeTokenID())
 	}
 
+	return nil
+}
+
+// checks whether the input/output native tokens are valid given a state change transition
+// of a foundry. Current and next must not be nil.
+func foundryStateChangeTokenInvariantsValid(nativeTokenID NativeTokenID, inSums NativeTokenSum, outSums NativeTokenSum, current *FoundryOutput, next *FoundryOutput) error {
+	var (
+		inSum             = inSums.ValueOrBigInt0(nativeTokenID)
+		outSum            = outSums.ValueOrBigInt0(nativeTokenID)
+		tokenDiff         = big.NewInt(0).Sub(outSum, inSum)
+		tokenDiffType     = tokenDiff.Cmp(common.Big0)
+		mintedSupplyDelta = big.NewInt(0).Sub(next.MintedTokens, current.MintedTokens)
+		meltedSupplyDelta = big.NewInt(0).Sub(next.MeltedTokens, current.MeltedTokens)
+	)
+
+	switch {
+	case tokenDiffType == 1:
+		switch {
+		case mintedSupplyDelta.Cmp(tokenDiff) != 0:
+			// positive token diff requires the minted supply delta to equal the token diff
+			return fmt.Errorf("%w: positive token diff for %s not balanced by minted supply change: next minted supply %s - current minted supply %s = %s != token delta %s", ErrNativeTokenSumUnbalanced, nativeTokenID, next.MintedTokens, current.MintedTokens, mintedSupplyDelta, tokenDiff)
+		case next.MeltedTokens.Cmp(current.MeltedTokens) != 0:
+			// must not change melted supply while minting
+			return fmt.Errorf("%w: positive token diff for %s requires equal melted supply between current/next state: current (melted=%s), next (melted=%s)", ErrNativeTokenSumUnbalanced, nativeTokenID, current.MeltedTokens, next.MeltedTokens)
+		}
+
+	case tokenDiffType == -1:
+		switch {
+		case meltedSupplyDelta.Cmp(big.NewInt(0).Abs(tokenDiff)) == 1:
+			// negative token diff requires the melted supply delta to be equal less than the token diff.
+			// can be less than because we support burning and melting at the same time
+			return fmt.Errorf("%w: negative token diff for %s not balanced by melted supply change: next melted supply %s - current melted supply %s = %s which is > abs. delta %s", ErrNativeTokenSumUnbalanced, nativeTokenID, next.MintedTokens, current.MintedTokens, meltedSupplyDelta, tokenDiff)
+		case next.MintedTokens.Cmp(current.MintedTokens) != 0:
+			// must not change minting supply while melting
+			return fmt.Errorf("%w: negative token diff for %s requires equal minted supply between current/next state: current (minted=%s), next (minted=%s)", ErrNativeTokenSumUnbalanced, nativeTokenID, current.MintedTokens, next.MintedTokens)
+		}
+
+	case tokenDiffType == 0:
+		switch {
+		case current.MintedTokens.Cmp(next.MintedTokens) != 0 || current.MeltedTokens.Cmp(next.MeltedTokens) != 0:
+			// no mutations to minted/melted fields while balance is kept
+			return fmt.Errorf("%w: zero token diff for %s requires equal minted/melted supply between current/next state: current (minted/melted=%s/%s), next (minted/melted=%s/%s)", ErrNativeTokenSumUnbalanced, nativeTokenID, current.MintedTokens, current.MeltedTokens, next.MintedTokens, next.MeltedTokens)
+		}
+	}
+
+	return nil
+}
+
+func (f *FoundryOutput) checkStateDestroyTransition(inSums NativeTokenSum, outSums NativeTokenSum) error {
+	var (
+		nativeTokenID = f.MustNativeTokenID()
+		tokenDiff     = big.NewInt(0).Sub(outSums.ValueOrBigInt0(nativeTokenID), inSums.ValueOrBigInt0(nativeTokenID))
+	)
+	if big.NewInt(0).Add(f.MintedTokens, tokenDiff).Cmp(f.MeltedTokens) != 0 {
+		// foundry must have melted all tokens it ever created when it gets destroyed
+		return fmt.Errorf("%w: destroying foundry requires it to have melted all of its tokens (%s): minted (%s) + token diff (%d) != melted tokens (%s)", ErrNativeTokenSumUnbalanced, nativeTokenID, f.MintedTokens, tokenDiff, f.MeltedTokens)
+	}
 	return nil
 }
 
@@ -650,69 +706,4 @@ func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
 	}
 
 	return e, nil
-}
-
-// NativeTokenInvariantsValid checks whether the input/output native tokens are valid given the state transition of a foundry.
-func NativeTokenInvariantsValid(nativeTokenID NativeTokenID, inSums NativeTokenSum, outSums NativeTokenSum, f *FoundryOutput, nextF *FoundryOutput) error {
-	inSum := inSums[nativeTokenID]
-	outSum := outSums[nativeTokenID]
-
-	if inSum == nil {
-		inSum = big.NewInt(0)
-	}
-	if outSum == nil {
-		outSum = big.NewInt(0)
-	}
-
-	var (
-		tokenDiff = big.NewInt(0).Sub(outSum, inSum)
-	)
-
-	// handle the case where the foundry is destroyed (hence nextF is nil)
-	if nextF == nil {
-		switch {
-		case big.NewInt(0).Add(f.MintedTokens, tokenDiff).Cmp(f.MeltedTokens) != 0:
-			// foundry must have melted all tokens it ever created when it gets destroyed
-			return fmt.Errorf("%w: destroying foundry requires it to have melted all of its tokens (%s): minted (%s) + token diff (%d) != melted tokens (%s)", ErrNativeTokenSumUnbalanced, nativeTokenID, f.MintedTokens, tokenDiff, f.MeltedTokens)
-		}
-		return nil
-	}
-
-	var (
-		tokenDiffType     = tokenDiff.Cmp(common.Big0)
-		mintedSupplyDelta = big.NewInt(0).Sub(nextF.MintedTokens, f.MintedTokens)
-		meltedSupplyDelta = big.NewInt(0).Sub(nextF.MeltedTokens, f.MeltedTokens)
-	)
-
-	switch {
-	case tokenDiffType == 1:
-		switch {
-		case mintedSupplyDelta.Cmp(tokenDiff) != 0:
-			// positive token diff requires the minted supply delta to equal the token diff
-			return fmt.Errorf("%w: positive token diff for %s not balanced by minted supply change: next minted supply %s - current minted supply %s = %s != token delta %s", ErrNativeTokenSumUnbalanced, nativeTokenID, nextF.MintedTokens, f.MintedTokens, mintedSupplyDelta, tokenDiff)
-		case nextF.MeltedTokens.Cmp(f.MeltedTokens) != 0:
-			// must not change melted supply while minting
-			return fmt.Errorf("%w: positive token diff for %s requires equal melted supply between current/next state: current (melted=%s), next (melted=%s)", ErrNativeTokenSumUnbalanced, nativeTokenID, f.MeltedTokens, nextF.MeltedTokens)
-		}
-
-	case tokenDiffType == -1:
-		switch {
-		case meltedSupplyDelta.Cmp(big.NewInt(0).Abs(tokenDiff)) == 1:
-			// negative token diff requires the melted supply delta to be equal less than the token diff.
-			// can be less than because we support burning and melting at the same time
-			return fmt.Errorf("%w: negative token diff for %s not balanced by melted supply change: next melted supply %s - current melted supply %s = %s which is > abs. delta %s", ErrNativeTokenSumUnbalanced, nativeTokenID, nextF.MintedTokens, f.MintedTokens, meltedSupplyDelta, tokenDiff)
-		case nextF.MintedTokens.Cmp(f.MintedTokens) != 0:
-			// must not change minting supply while melting
-			return fmt.Errorf("%w: negative token diff for %s requires equal minted supply between current/next state: current (minted=%s), next (minted=%s)", ErrNativeTokenSumUnbalanced, nativeTokenID, f.MintedTokens, nextF.MintedTokens)
-		}
-
-	case tokenDiffType == 0:
-		switch {
-		case f.MintedTokens.Cmp(nextF.MintedTokens) != 0 || f.MeltedTokens.Cmp(nextF.MeltedTokens) != 0:
-			// no mutations to minted/melted fields while balance is kept
-			return fmt.Errorf("%w: zero token diff for %s requires equal minted/melted supply between current/next state: current (minted/melted=%s/%s), next (minted/melted=%s/%s)", ErrNativeTokenSumUnbalanced, nativeTokenID, f.MintedTokens, f.MeltedTokens, nextF.MintedTokens, nextF.MeltedTokens)
-		}
-	}
-
-	return nil
 }

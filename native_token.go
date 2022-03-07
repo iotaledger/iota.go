@@ -81,6 +81,15 @@ func (ntID NativeTokenID) FoundrySerialNumber() uint32 {
 // NativeTokenSum is a mapping of NativeTokenID to a sum value.
 type NativeTokenSum map[NativeTokenID]*big.Int
 
+// ValueOrBigInt0 returns the value for the given native token or a 0 big int.
+func (sum NativeTokenSum) ValueOrBigInt0(id NativeTokenID) *big.Int {
+	v, has := sum[id]
+	if !has {
+		return big.NewInt(0)
+	}
+	return v
+}
+
 // NativeTokenSumFunc gets called with a NativeTokenID and the sums of input/output side.
 type NativeTokenSumFunc func(id NativeTokenID, aSum *big.Int, bSum *big.Int) error
 

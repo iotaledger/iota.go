@@ -14,20 +14,6 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 	exampleAliasIdent := tpkg.RandAliasAddress()
 
 	startingSupply := new(big.Int).SetUint64(100)
-
-	genesisFoundry := &iotago.FoundryOutput{
-		Amount:        100,
-		SerialNumber:  6,
-		TokenTag:      tpkg.Rand12ByteArray(),
-		MintedTokens:  big.NewInt(0),
-		MeltedTokens:  big.NewInt(0),
-		MaximumSupply: new(big.Int).SetUint64(1000),
-		TokenScheme:   &iotago.SimpleTokenScheme{},
-		Conditions: iotago.UnlockConditions{
-			&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasIdent},
-		},
-	}
-
 	exampleFoundry := &iotago.FoundryOutput{
 		Amount:        100,
 		SerialNumber:  6,
@@ -67,7 +53,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 	tests := []test{
 		{
 			name:      "ok - genesis transition",
-			current:   genesisFoundry,
+			current:   exampleFoundry,
 			next:      nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &iotago.SemanticValidationContext{
@@ -75,7 +61,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: map[string]iotago.UnlockedIndices{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							Outputs: iotago.Outputs{genesisFoundry},
+							Outputs: iotago.Outputs{exampleFoundry},
 						},
 						UnlockBlocks: nil,
 					},
@@ -85,10 +71,39 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					OutChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
 						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 6},
 					},
-					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						exampleFoundry.MustNativeTokenID(): startingSupply,
+					},
 				},
 			},
 			wantErr: nil,
+		},
+		{
+			name:      "fail - genesis transition - mint supply not equal to out",
+			current:   exampleFoundry,
+			next:      nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							Outputs: iotago.Outputs{exampleFoundry},
+						},
+						UnlockBlocks: nil,
+					},
+					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
+						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 5},
+					},
+					OutChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
+						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 6},
+					},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						// absent but should be there
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidChainStateTransition,
 		},
 		{
 			name:      "fail - genesis transition - serial number not in interval",
@@ -111,33 +126,6 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 7},
 					},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
-				},
-			},
-			wantErr: iotago.ErrInvalidChainStateTransition,
-		},
-		{
-			name:      "fail - genesis transition - non mint supply",
-			current:   exampleFoundry,
-			next:      nil,
-			transType: iotago.ChainTransitionTypeGenesis,
-			svCtx: &iotago.SemanticValidationContext{
-				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							Outputs: iotago.Outputs{exampleFoundry},
-						},
-						UnlockBlocks: nil,
-					},
-					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
-						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 6},
-					},
-					OutChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
-						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 7},
-					},
-					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
-						exampleFoundry.MustNativeTokenID(): startingSupply,
-					},
 				},
 			},
 			wantErr: iotago.ErrInvalidChainStateTransition,
