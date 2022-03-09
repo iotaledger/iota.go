@@ -27,13 +27,18 @@ func TestNewNodeEventAPIClient(t *testing.T) {
 	}
 	require.NoError(t, eventAPIClient.Connect(ctx))
 
-	msgChan := eventAPIClient.Messages()
+	msgChan, sub := eventAPIClient.Messages()
+	require.NoError(t, sub.Error())
 	require.Eventually(t, func() bool {
 		select {
 		case msg := <-msgChan:
 			gottenMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, nil)
 			require.NoError(t, err)
 			require.Equal(t, originMsgBytes, gottenMsgBytes)
+
+			require.NoError(t, sub.Close())
+			require.ErrorIs(t, sub.Close(), iotagox.ErrNodeEventAPIClientSubscriptionAlreadyClosed)
+
 			return true
 		default:
 			return false
@@ -99,7 +104,9 @@ func (m *mockMqttClient) SubscribeMultiple(filters map[string]byte, callback mqt
 	panic("implement me")
 }
 
-func (m *mockMqttClient) Unsubscribe(topics ...string) mqtt.Token { panic("implement me") }
+func (m *mockMqttClient) Unsubscribe(topics ...string) mqtt.Token {
+	return &mockToken{}
+}
 
 func (m *mockMqttClient) AddRoute(topic string, callback mqtt.MessageHandler) { panic("implement me") }
 
