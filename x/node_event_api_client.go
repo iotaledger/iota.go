@@ -97,6 +97,44 @@ type NodeEventAPIClient struct {
 	Errors chan error
 }
 
+// NodeEventAPIClientSubscription holds any error that happened when trying to subscribe to an event.
+// It also allows to close the subscription to cleanly unsubscribe from the node.
+type NodeEventAPIClientSubscription struct {
+	mqttClient mqtt.Client
+	topic      string
+	error      error
+}
+
+func newSubscription(client mqtt.Client, topic string) *NodeEventAPIClientSubscription {
+	return &NodeEventAPIClientSubscription{
+		mqttClient: client,
+		topic:      topic,
+	}
+}
+
+func newSubscriptionWithError(err error) *NodeEventAPIClientSubscription {
+	return &NodeEventAPIClientSubscription{
+		error: err,
+	}
+}
+
+// Error holds any error that happened when trying to subscribe.
+func (s *NodeEventAPIClientSubscription) Error() error {
+	return s.error
+}
+
+// Close allows to close the subscription to cleanly unsubscribe from the node.
+// It returns ErrNodeEventAPIClientSubscriptionAlreadyClosed if called multiple times.
+func (s *NodeEventAPIClientSubscription) Close() error {
+	if s.error != nil {
+		return s.error
+	}
+	if token := s.mqttClient.Unsubscribe(s.topic); token.Wait() && token.Error() != nil {
+		return token.Error()
+	}
+	return nil
+}
+
 func panicIfNodeEventAPIClientInactive(neac *NodeEventAPIClient) {
 	if err := neac.Ctx.Err(); err != nil {
 		panic(fmt.Errorf("%w: context is cancelled/done", ErrNodeEventAPIClientInactive))
@@ -130,10 +168,10 @@ func (neac *NodeEventAPIClient) Close() {
 }
 
 // Messages returns a channel of newly received messages.
-func (neac *NodeEventAPIClient) Messages() <-chan *iotago.Message {
+func (neac *NodeEventAPIClient) Messages() (<-chan *iotago.Message, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.Message)
-	neac.MQTTClient.Subscribe(NodeEventMessages, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(NodeEventMessages, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &iotago.Message{}
 		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModeNoValidation, nil); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -144,15 +182,17 @@ func (neac *NodeEventAPIClient) Messages() <-chan *iotago.Message {
 			return
 		case channel <- msg:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, NodeEventMessages)
 }
 
 // ReferencedMessagesMetadata returns a channel of message metadata of newly referenced messages.
-func (neac *NodeEventAPIClient) ReferencedMessagesMetadata() <-chan *nodeclient.MessageMetadataResponse {
+func (neac *NodeEventAPIClient) ReferencedMessagesMetadata() (<-chan *nodeclient.MessageMetadataResponse, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *nodeclient.MessageMetadataResponse)
-	neac.MQTTClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &nodeclient.MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -163,15 +203,17 @@ func (neac *NodeEventAPIClient) ReferencedMessagesMetadata() <-chan *nodeclient.
 			return
 		case channel <- metadataRes:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, NodeEventMessagesReferenced)
 }
 
 // ReferencedMessages returns a channel of newly referenced messages.
-func (neac *NodeEventAPIClient) ReferencedMessages(nodeHTTPAPIClient *nodeclient.Client) <-chan *iotago.Message {
+func (neac *NodeEventAPIClient) ReferencedMessages(nodeHTTPAPIClient *nodeclient.Client) (<-chan *iotago.Message, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.Message)
-	neac.MQTTClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(NodeEventMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &nodeclient.MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -188,15 +230,17 @@ func (neac *NodeEventAPIClient) ReferencedMessages(nodeHTTPAPIClient *nodeclient
 			return
 		case channel <- msg:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, NodeEventMessagesReferenced)
 }
 
 // MessagesWithIndex returns a channel of newly received messages with the given index.
-func (neac *NodeEventAPIClient) MessagesWithIndex(index string) <-chan *iotago.Message {
+func (neac *NodeEventAPIClient) MessagesWithIndex(index string) (<-chan *iotago.Message, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.Message)
-	neac.MQTTClient.Subscribe(strings.Replace(NodeEventMessagesIndexation, "{index}", index, 1), 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(strings.Replace(NodeEventMessagesIndexation, "{index}", index, 1), 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &iotago.Message{}
 		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModeNoValidation, nil); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -207,16 +251,18 @@ func (neac *NodeEventAPIClient) MessagesWithIndex(index string) <-chan *iotago.M
 			return
 		case channel <- msg:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, NodeEventMessagesIndexation)
 }
 
 // MessageMetadataChange returns a channel of MessageMetadataResponse each time the given message's state changes.
-func (neac *NodeEventAPIClient) MessageMetadataChange(msgID iotago.MessageID) <-chan *nodeclient.MessageMetadataResponse {
+func (neac *NodeEventAPIClient) MessageMetadataChange(msgID iotago.MessageID) (<-chan *nodeclient.MessageMetadataResponse, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *nodeclient.MessageMetadataResponse)
 	topic := strings.Replace(NodeEventMessagesMetadata, "{messageId}", iotago.MessageIDToHexString(msgID), 1)
-	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &nodeclient.MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -227,17 +273,19 @@ func (neac *NodeEventAPIClient) MessageMetadataChange(msgID iotago.MessageID) <-
 			return
 		case channel <- metadataRes:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, topic)
 }
 
 // OutputsByUnlockConditionAndAddress returns a channel of newly created outputs on the given unlock condition and address.
-func (neac *NodeEventAPIClient) OutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition NodeEventUnlockCondition) <-chan *nodeclient.OutputResponse {
+func (neac *NodeEventAPIClient) OutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition NodeEventUnlockCondition) (<-chan *nodeclient.OutputResponse, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *nodeclient.OutputResponse)
 	topic := strings.Replace(NodeEventOutputsByUnlockConditionAndAddress, "{address}", addr.Bech32(netPrefix), 1)
 	topic = strings.Replace(topic, "{condition}", string(condition), 1)
-	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &nodeclient.OutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -248,17 +296,19 @@ func (neac *NodeEventAPIClient) OutputsByUnlockConditionAndAddress(addr iotago.A
 			return
 		case channel <- res:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, topic)
 }
 
 // SpentOutputsByUnlockConditionAndAddress returns a channel of newly spent outputs on the given unlock condition and address.
-func (neac *NodeEventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition NodeEventUnlockCondition) <-chan *nodeclient.OutputResponse {
+func (neac *NodeEventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition NodeEventUnlockCondition) (<-chan *nodeclient.OutputResponse, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *nodeclient.OutputResponse)
 	topic := strings.Replace(NodeEventSpentOutputsByUnlockConditionAndAddress, "{address}", addr.Bech32(netPrefix), 1)
 	topic = strings.Replace(topic, "{condition}", string(condition), 1)
-	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &nodeclient.OutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -269,16 +319,18 @@ func (neac *NodeEventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iot
 			return
 		case channel <- res:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, topic)
 }
 
 // TransactionIncludedMessage returns a channel of the included message which carries the transaction with the given ID.
-func (neac *NodeEventAPIClient) TransactionIncludedMessage(txID iotago.TransactionID) <-chan *iotago.Message {
+func (neac *NodeEventAPIClient) TransactionIncludedMessage(txID iotago.TransactionID) (<-chan *iotago.Message, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.Message)
 	topic := strings.Replace(NodeEventTransactionsIncludedMessage, "{transactionId}", iotago.MessageIDToHexString(txID), 1)
-	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &iotago.Message{}
 		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModePerformValidation, nil); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -289,16 +341,18 @@ func (neac *NodeEventAPIClient) TransactionIncludedMessage(txID iotago.Transacti
 			return
 		case channel <- msg:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, topic)
 }
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
-func (neac *NodeEventAPIClient) Output(outputID iotago.OutputID) <-chan *nodeclient.OutputResponse {
+func (neac *NodeEventAPIClient) Output(outputID iotago.OutputID) (<-chan *nodeclient.OutputResponse, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *nodeclient.OutputResponse)
 	topic := strings.Replace(NodeEventOutputs, "{outputId}", iotago.EncodeHex(outputID[:]), 1)
-	neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		res := &nodeclient.OutputResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -309,15 +363,17 @@ func (neac *NodeEventAPIClient) Output(outputID iotago.OutputID) <-chan *nodecli
 			return
 		case channel <- res:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, topic)
 }
 
 // Receipts returns a channel which returns newly applied receipts.
-func (neac *NodeEventAPIClient) Receipts() <-chan *iotago.Receipt {
+func (neac *NodeEventAPIClient) Receipts() (<-chan *iotago.Receipt, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.Receipt)
-	neac.MQTTClient.Subscribe(NodeEventReceipts, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(NodeEventReceipts, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		receipt := &iotago.Receipt{}
 		if err := json.Unmarshal(mqttMsg.Payload(), receipt); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -328,8 +384,10 @@ func (neac *NodeEventAPIClient) Receipts() <-chan *iotago.Receipt {
 			return
 		case channel <- receipt:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, NodeEventReceipts)
 }
 
 // MilestonePointer is an informative struct holding a milestone index and timestamp.
@@ -339,10 +397,10 @@ type MilestonePointer struct {
 }
 
 // LatestMilestones returns a channel of newly seen latest milestones.
-func (neac *NodeEventAPIClient) LatestMilestones() <-chan *MilestonePointer {
+func (neac *NodeEventAPIClient) LatestMilestones() (<-chan *MilestonePointer, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *MilestonePointer)
-	neac.MQTTClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -353,15 +411,17 @@ func (neac *NodeEventAPIClient) LatestMilestones() <-chan *MilestonePointer {
 			return
 		case channel <- msPointer:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, NodeEventMilestonesLatest)
 }
 
 // LatestMilestoneMessages returns a channel of newly seen latest milestones messages.
-func (neac *NodeEventAPIClient) LatestMilestoneMessages(nodeHTTPAPIClient *nodeclient.Client) <-chan *iotago.Message {
+func (neac *NodeEventAPIClient) LatestMilestoneMessages(nodeHTTPAPIClient *nodeclient.Client) (<-chan *iotago.Message, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.Message)
-	neac.MQTTClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(NodeEventMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -382,15 +442,17 @@ func (neac *NodeEventAPIClient) LatestMilestoneMessages(nodeHTTPAPIClient *nodec
 			return
 		case channel <- msg:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, NodeEventMilestonesLatest)
 }
 
 // ConfirmedMilestones returns a channel of newly confirmed milestones.
-func (neac *NodeEventAPIClient) ConfirmedMilestones() <-chan *MilestonePointer {
+func (neac *NodeEventAPIClient) ConfirmedMilestones() (<-chan *MilestonePointer, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *MilestonePointer)
-	neac.MQTTClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -401,15 +463,17 @@ func (neac *NodeEventAPIClient) ConfirmedMilestones() <-chan *MilestonePointer {
 			return
 		case channel <- msPointer:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, NodeEventMilestonesConfirmed)
 }
 
 // ConfirmedMilestoneMessages returns a channel of newly confirmed milestones messages.
-func (neac *NodeEventAPIClient) ConfirmedMilestoneMessages(nodeHTTPAPIClient *nodeclient.Client) <-chan *iotago.Message {
+func (neac *NodeEventAPIClient) ConfirmedMilestoneMessages(nodeHTTPAPIClient *nodeclient.Client) (<-chan *iotago.Message, *NodeEventAPIClientSubscription) {
 	panicIfNodeEventAPIClientInactive(neac)
 	channel := make(chan *iotago.Message)
-	neac.MQTTClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := neac.MQTTClient.Subscribe(NodeEventMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msPointer := &MilestonePointer{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
 			sendErrOrDrop(neac.Errors, err)
@@ -430,6 +494,8 @@ func (neac *NodeEventAPIClient) ConfirmedMilestoneMessages(nodeHTTPAPIClient *no
 			return
 		case channel <- msg:
 		}
-	})
-	return channel
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(neac.MQTTClient, NodeEventMilestonesConfirmed)
 }
