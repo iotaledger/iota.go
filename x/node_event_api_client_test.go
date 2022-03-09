@@ -37,7 +37,7 @@ func TestNewNodeEventAPIClient(t *testing.T) {
 			require.Equal(t, originMsgBytes, gottenMsgBytes)
 
 			require.NoError(t, sub.Close())
-			require.ErrorIs(t, sub.Close(), iotagox.ErrNodeEventAPIClientSubscriptionAlreadyClosed)
+			require.NoError(t, sub.Close())
 
 			return true
 		default:

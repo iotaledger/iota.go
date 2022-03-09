@@ -49,9 +49,6 @@ const (
 var (
 	// ErrNodeEventAPIClientInactive gets returned when a NodeEventAPIClient is inactive.
 	ErrNodeEventAPIClientInactive = errors.New("node event api client is inactive")
-
-	// ErrNodeEventAPIClientSubscriptionAlreadyClosed gets returned when a NodeEventAPISubscription was already closed.
-	ErrNodeEventAPIClientSubscriptionAlreadyClosed = errors.New("node event api client subscription is already closed")
 )
 
 // NodeEventUnlockCondition denotes the different unlock conditions.
@@ -100,7 +97,7 @@ type NodeEventAPIClient struct {
 	Errors chan error
 }
 
-// NodeEventAPIClientSubscription holds any error that happened when trying to subscribe to an events.
+// NodeEventAPIClientSubscription holds any error that happened when trying to subscribe to an event.
 // It also allows to close the subscription to cleanly unsubscribe from the node.
 type NodeEventAPIClientSubscription struct {
 	mqttClient mqtt.Client
@@ -132,13 +129,9 @@ func (s *NodeEventAPIClientSubscription) Close() error {
 	if s.error != nil {
 		return s.error
 	}
-	if s.mqttClient == nil {
-		return ErrNodeEventAPIClientSubscriptionAlreadyClosed
-	}
 	if token := s.mqttClient.Unsubscribe(s.topic); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
-	s.mqttClient = nil
 	return nil
 }
 
