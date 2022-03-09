@@ -15,6 +15,8 @@ type AddressType byte
 const (
 	// AddressEd25519 denotes an Ed25519 address.
 	AddressEd25519 AddressType = 0
+	// AddressBLS denotes a BLS address
+	AddressBLS AddressType = 1
 	// AddressAlias denotes an Alias address.
 	AddressAlias AddressType = 8
 	// AddressNFT denotes an NFT address.
@@ -35,12 +37,13 @@ var (
 	// ErrTypeIsNotSupportedAddress gets returned when a serializable was found to not be a supported Address.
 	ErrTypeIsNotSupportedAddress = errors.New("serializable is not a supported address")
 	addressNames                 = [AddressNFT + 1]string{
-		"Ed25519Address", "", "", "", "", "", "", "",
+		"Ed25519Address", "BLSAddress", "", "", "", "", "", "",
 		"AliasAddress", "", "", "", "", "", "", "",
 		"NFTAddress",
 	}
 	allAddressTypeSet = AddressTypeSet{
 		AddressEd25519: struct{}{},
+		AddressBLS:     struct{}{},
 		AddressAlias:   struct{}{},
 		AddressNFT:     struct{}{},
 	}
@@ -118,6 +121,8 @@ func newAddress(addressType byte) (address Address, err error) {
 	switch AddressType(addressType) {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
+	case AddressBLS:
+		return &BLSAddress{}, nil
 	case AddressAlias:
 		return &AliasAddress{}, nil
 	case AddressNFT:
@@ -191,6 +196,8 @@ func jsonAddressSelector(ty int) (JSONSerializable, error) {
 	switch AddressType(ty) {
 	case AddressEd25519:
 		obj = &jsonEd25519Address{}
+	case AddressBLS:
+		obj = &jsonBLSAddress{}
 	case AddressAlias:
 		obj = &jsonAliasAddress{}
 	case AddressNFT:

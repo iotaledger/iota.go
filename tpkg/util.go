@@ -174,6 +174,15 @@ func RandNFTAddress() *iotago.NFTAddress {
 	return nftAddr
 }
 
+// RandBLSAddress returns a random BLSAddress.
+func RandBLSAddress() *iotago.BLSAddress {
+	// type
+	blsAddr := &iotago.BLSAddress{}
+	addr := RandBytes(iotago.BLSAddressBytesLength)
+	copy(blsAddr[:], addr)
+	return blsAddr
+}
+
 // RandEd25519Signature returns a random Ed25519 signature.
 func RandEd25519Signature() *iotago.Ed25519Signature {
 	edSig := &iotago.Ed25519Signature{}
@@ -182,6 +191,16 @@ func RandEd25519Signature() *iotago.Ed25519Signature {
 	copy(edSig.PublicKey[:], pub)
 	copy(edSig.Signature[:], sig)
 	return edSig
+}
+
+// RandBLSSignature returns a random BLS signature.
+func RandBLSSignature() *iotago.BLSSignature {
+	blsSig := &iotago.BLSSignature{}
+	pub := RandBytes(ed25519.PublicKeySize)
+	sig := RandBytes(ed25519.SignatureSize)
+	copy(blsSig.PublicKey[:], pub)
+	copy(blsSig.Signature[:], sig)
+	return blsSig
 }
 
 // RandEd25519SignatureUnlockBlock returns a random Ed25519 signature unlock block.

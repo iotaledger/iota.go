@@ -19,12 +19,17 @@ func TestSignatureSelector(t *testing.T) {
 	assert.True(t, errors.Is(err, iotago.ErrUnknownSignatureType))
 }
 
-func TestEd25519Signature_DeSerialize(t *testing.T) {
+func TestSignatures_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
-			name:   "ok",
+			name:   "ok - Ed25519",
 			source: tpkg.RandEd25519Signature(),
 			target: &iotago.Ed25519Signature{},
+		},
+		{
+			name:   "ok - BLS",
+			source: tpkg.RandBLSSignature(),
+			target: &iotago.BLSSignature{},
 		},
 	}
 

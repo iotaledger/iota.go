@@ -18,6 +18,7 @@ var sigUnlockBlockSigGuard = serializer.SerializableGuard{
 		}
 		switch seri.(type) {
 		case *Ed25519Signature:
+		case *BLSSignature:
 		default:
 			return ErrTypeIsNotSupportedSignature
 		}

@@ -16,6 +16,8 @@ type SignatureType byte
 const (
 	// SignatureEd25519 denotes an Ed25519Signature.
 	SignatureEd25519 SignatureType = iota
+	// SignatureBLS denotes a BLSSignature
+	SignatureBLS SignatureType = 1
 )
 
 func (sigType SignatureType) String() string {
@@ -26,7 +28,7 @@ func (sigType SignatureType) String() string {
 }
 
 var (
-	sigNames = [SignatureEd25519 + 1]string{"Ed25519Signature"}
+	sigNames = [SignatureBLS + 1]string{"Ed25519Signature", "BLSSignature"}
 	// ErrTypeIsNotSupportedSignature gets returned when a serializable was found to not be a supported Signature.
 	ErrTypeIsNotSupportedSignature = errors.New("serializable is not a supported signature")
 )
@@ -45,6 +47,8 @@ func SignatureSelector(sigType uint32) (Signature, error) {
 	switch SignatureType(sigType) {
 	case SignatureEd25519:
 		seri = &Ed25519Signature{}
+	case SignatureBLS:
+		seri = &BLSSignature{}
 	default:
 		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownSignatureType, sigType)
 	}
@@ -70,6 +74,8 @@ func jsonSignatureSelector(ty int) (JSONSerializable, error) {
 	switch SignatureType(ty) {
 	case SignatureEd25519:
 		obj = &jsonEd25519Signature{}
+	case SignatureBLS:
+		obj = &jsonBLSSignature{}
 	default:
 		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", ErrUnknownUnlockBlockType)
 	}

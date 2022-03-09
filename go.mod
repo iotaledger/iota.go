@@ -6,11 +6,12 @@ require (
 	filippo.io/edwards25519 v1.0.0-rc.1
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/ethereum/go-ethereum v1.10.13
+	github.com/iotaledger/hive.go v0.0.0-20220210121915-5c76c0ccc668
 	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220209164443-53ca2b8201b4
 	github.com/iotaledger/iota.go v1.0.0
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/h2non/gock.v1 v1.1.2
