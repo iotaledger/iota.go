@@ -25,23 +25,12 @@ func DecodeHex(s string) ([]byte, error) {
 
 // EncodeUint256 encodes the uint256 to a little-endian encoded hex string.
 func EncodeUint256(n *big.Int) string {
-	numBytes := n.Bytes()
-	for i, j := 0, len(numBytes)-1; i < j; i, j = i+1, j-1 {
-		numBytes[i], numBytes[j] = numBytes[j], numBytes[i]
-	}
-	return EncodeHex(append(numBytes, make([]byte, 32-len(numBytes))...))
+	return hexutil.EncodeBig(n)
 }
 
 // DecodeUint256 decodes the little-endian hex encoded string to an uint256.
 func DecodeUint256(s string) (*big.Int, error) {
-	source, err := DecodeHex(s)
-	if err != nil {
-		return nil, err
-	}
-	for i, j := 0, len(source)-1; i < j; i, j = i+1, j-1 {
-		source[i], source[j] = source[j], source[i]
-	}
-	return new(big.Int).SetBytes(source), nil
+	return hexutil.DecodeBig(s)
 }
 
 // EncodeUint64 encodes the uint64 to a base 10 string.
