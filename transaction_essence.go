@@ -43,10 +43,8 @@ var (
 	ErrNFTOutputCyclicAddress = errors.New("nft output's NFTID corresponds to address field")
 	// ErrFoundryOutputInvalidMaximumSupply gets returned when a FoundryOutput's MaximumSupply is invalid.
 	ErrFoundryOutputInvalidMaximumSupply = errors.New("foundry output's maximum supply is invalid")
-	// ErrFoundryOutputInvalidMintedSupply gets returned when a FoundryOutput's minted is invalid.
-	ErrFoundryOutputInvalidMintedSupply = errors.New("foundry output's minted supply is invalid")
-	// ErrFoundryOutputInvalidMeltedSupply gets returned when a FoundryOutput's melted is invalid.
-	ErrFoundryOutputInvalidMeltedSupply = errors.New("foundry output's melted supply is invalid")
+	// ErrFoundryOutputInvalidMintedMeltedTokens gets returned when a FoundryOutput's minted is invalid.
+	ErrFoundryOutputInvalidMintedMeltedTokens = errors.New("foundry output's minted/melted tokens counters are invalid")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.

@@ -825,14 +825,20 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 			return nil
 		}
 
-		if r := foundryOutput.MaximumSupply.Cmp(common.Big0); r == -1 || r == 0 {
+		if r := foundryOutput.MaximumSupply.Cmp(common.Big0); r != 1 {
 			return fmt.Errorf("%w: output %d, less than equal zero", ErrFoundryOutputInvalidMaximumSupply, index)
 		}
 
-		// TODO: more syntactic checks are possible but not defined in the TIP:
-		// - minted - melted > 0: foundry can never have melted more than minted
-		// - minted - melted <= max supply: can never have minted more than max supply
-		// - melted <= minted: can never have melted more than minted
+		// minted - melted > 0: foundry can never have melted more than minted
+		mintedMeltedDelta := big.NewInt(0).Sub(foundryOutput.MintedTokens, foundryOutput.MeltedTokens)
+		if r := mintedMeltedDelta.Cmp(common.Big0); r == -1 {
+			return fmt.Errorf("%w: output %d, minted/melted delta less than zero: %s", ErrFoundryOutputInvalidMintedMeltedTokens, index, mintedMeltedDelta)
+		}
+
+		// minted - melted <= max supply: can never have minted more than max supply
+		if r := mintedMeltedDelta.Cmp(foundryOutput.MaximumSupply); r == 1 {
+			return fmt.Errorf("%w: output %d, minted/melted delta more than maximum supply: %s (delta) vs. %s (max supply)", ErrFoundryOutputInvalidMintedMeltedTokens, index, mintedMeltedDelta, foundryOutput.MaximumSupply)
+		}
 
 		return nil
 	}

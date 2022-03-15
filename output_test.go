@@ -558,6 +558,46 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 			},
 			wantErr: iotago.ErrFoundryOutputInvalidMaximumSupply,
 		},
+		{
+			name: "fail - minted less than melted",
+			outputs: iotago.Outputs{
+				&iotago.FoundryOutput{
+					Amount:        1337,
+					NativeTokens:  nil,
+					SerialNumber:  5,
+					TokenTag:      tpkg.Rand12ByteArray(),
+					MintedTokens:  big.NewInt(5),
+					MeltedTokens:  big.NewInt(10),
+					MaximumSupply: new(big.Int).SetUint64(100),
+					TokenScheme:   &iotago.SimpleTokenScheme{},
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+					},
+					Blocks: nil,
+				},
+			},
+			wantErr: iotago.ErrFoundryOutputInvalidMintedMeltedTokens,
+		},
+		{
+			name: "fail - minted melted delta is bigger than maximum supply",
+			outputs: iotago.Outputs{
+				&iotago.FoundryOutput{
+					Amount:        1337,
+					NativeTokens:  nil,
+					SerialNumber:  5,
+					TokenTag:      tpkg.Rand12ByteArray(),
+					MintedTokens:  big.NewInt(50),
+					MeltedTokens:  big.NewInt(20),
+					MaximumSupply: new(big.Int).SetUint64(10),
+					TokenScheme:   &iotago.SimpleTokenScheme{},
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+					},
+					Blocks: nil,
+				},
+			},
+			wantErr: iotago.ErrFoundryOutputInvalidMintedMeltedTokens,
+		},
 	}
 	valFunc := iotago.OutputsSyntacticalFoundry()
 	for _, tt := range tests {
