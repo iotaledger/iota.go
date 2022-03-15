@@ -816,7 +816,7 @@ func OutputsSyntacticalAlias(txID *TransactionID) OutputsSyntacticalValidationFu
 }
 
 // OutputsSyntacticalFoundry returns an OutputsSyntacticalValidationFunc which checks that FoundryOutput(s)':
-//	- CirculatingSupply is less equal MaximumSupply
+//	- Minted and melted supply is less equal MaximumSupply
 //	- MaximumSupply is not zero
 func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
@@ -825,12 +825,19 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 			return nil
 		}
 
-		if r := foundryOutput.MaximumSupply.Cmp(common.Big0); r == -1 || r == 0 {
+		if r := foundryOutput.MaximumSupply.Cmp(common.Big0); r != 1 {
 			return fmt.Errorf("%w: output %d, less than equal zero", ErrFoundryOutputInvalidMaximumSupply, index)
 		}
 
-		if r := foundryOutput.CirculatingSupply.Cmp(foundryOutput.MaximumSupply); r == 1 {
-			return fmt.Errorf("%w: output %d, bigger than maximum supply", ErrFoundryOutputInvalidCirculatingSupply, index)
+		// minted - melted > 0: foundry can never have melted more than minted
+		mintedMeltedDelta := big.NewInt(0).Sub(foundryOutput.MintedTokens, foundryOutput.MeltedTokens)
+		if r := mintedMeltedDelta.Cmp(common.Big0); r == -1 {
+			return fmt.Errorf("%w: output %d, minted/melted delta less than zero: %s", ErrFoundryOutputInvalidMintedMeltedTokens, index, mintedMeltedDelta)
+		}
+
+		// minted - melted <= max supply: can never have minted more than max supply
+		if r := mintedMeltedDelta.Cmp(foundryOutput.MaximumSupply); r == 1 {
+			return fmt.Errorf("%w: output %d, minted/melted delta more than maximum supply: %s (delta) vs. %s (max supply)", ErrFoundryOutputInvalidMintedMeltedTokens, index, mintedMeltedDelta, foundryOutput.MaximumSupply)
 		}
 
 		return nil

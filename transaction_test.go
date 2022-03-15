@@ -71,7 +71,7 @@ func TestNFTTransition(t *testing.T) {
 	}, inputs))
 }
 
-func TestCirculatingSupplyBurn(t *testing.T) {
+func TestCirculatingSupplyMelting(t *testing.T) {
 	_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 	aliasIdent1 := tpkg.RandAliasAddress()
 
@@ -99,13 +99,14 @@ func TestCirculatingSupplyBurn(t *testing.T) {
 			Blocks: nil,
 		},
 		inputIDs[2]: &iotago.FoundryOutput{
-			Amount:            OneMi,
-			NativeTokens:      nil,
-			SerialNumber:      1,
-			TokenTag:          tokenTag,
-			CirculatingSupply: big.NewInt(50),
-			MaximumSupply:     big.NewInt(50),
-			TokenScheme:       &iotago.SimpleTokenScheme{},
+			Amount:        OneMi,
+			NativeTokens:  nil,
+			SerialNumber:  1,
+			TokenTag:      tokenTag,
+			MintedTokens:  big.NewInt(50),
+			MeltedTokens:  big.NewInt(0),
+			MaximumSupply: big.NewInt(50),
+			TokenScheme:   &iotago.SimpleTokenScheme{},
 			Conditions: iotago.UnlockConditions{
 				&iotago.ImmutableAliasUnlockCondition{Address: aliasIdent1},
 			},
@@ -113,7 +114,7 @@ func TestCirculatingSupplyBurn(t *testing.T) {
 		},
 	}
 
-	// set input BasicOutput NativeToken to 50 which get burned
+	// set input BasicOutput NativeToken to 50 which get melted
 	foundryNativeTokenID := inputs[inputIDs[2]].(*iotago.FoundryOutput).MustNativeTokenID()
 	inputs[inputIDs[0]].(*iotago.BasicOutput).NativeTokens = iotago.NativeTokens{
 		{
@@ -139,14 +140,14 @@ func TestCirculatingSupplyBurn(t *testing.T) {
 				Blocks: nil,
 			},
 			&iotago.FoundryOutput{
-				Amount:       2 * OneMi,
-				NativeTokens: nil,
-				SerialNumber: 1,
-				TokenTag:     tokenTag,
-				// burn supply by -50
-				CirculatingSupply: big.NewInt(0),
-				MaximumSupply:     big.NewInt(50),
-				TokenScheme:       &iotago.SimpleTokenScheme{},
+				Amount:        2 * OneMi,
+				NativeTokens:  nil,
+				SerialNumber:  1,
+				TokenTag:      tokenTag,
+				MintedTokens:  big.NewInt(50),
+				MeltedTokens:  big.NewInt(50),
+				MaximumSupply: big.NewInt(50),
+				TokenScheme:   &iotago.SimpleTokenScheme{},
 				Conditions: iotago.UnlockConditions{
 					&iotago.ImmutableAliasUnlockCondition{Address: aliasIdent1},
 				},
@@ -310,52 +311,56 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Blocks: nil,
 				},
 				inputIDs[9]: &iotago.FoundryOutput{
-					Amount:            defaultAmount,
-					NativeTokens:      nil,
-					SerialNumber:      1,
-					TokenTag:          foundry1Ident3TokenTag,
-					CirculatingSupply: new(big.Int).SetUint64(100),
-					MaximumSupply:     new(big.Int).SetUint64(1000),
-					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Amount:        defaultAmount,
+					NativeTokens:  nil,
+					SerialNumber:  1,
+					TokenTag:      foundry1Ident3TokenTag,
+					MintedTokens:  new(big.Int).SetUint64(100),
+					MeltedTokens:  big.NewInt(0),
+					MaximumSupply: new(big.Int).SetUint64(1000),
+					TokenScheme:   &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Blocks: nil,
 				},
 				inputIDs[10]: &iotago.FoundryOutput{
-					Amount:            defaultAmount,
-					NativeTokens:      nil, // filled out later
-					SerialNumber:      2,
-					TokenTag:          foundry2Ident3TokenTag,
-					CirculatingSupply: new(big.Int).SetUint64(100),
-					MaximumSupply:     new(big.Int).SetUint64(1000),
-					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Amount:        defaultAmount,
+					NativeTokens:  nil, // filled out later
+					SerialNumber:  2,
+					TokenTag:      foundry2Ident3TokenTag,
+					MintedTokens:  new(big.Int).SetUint64(100),
+					MeltedTokens:  big.NewInt(0),
+					MaximumSupply: new(big.Int).SetUint64(1000),
+					TokenScheme:   &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Blocks: nil,
 				},
 				inputIDs[11]: &iotago.FoundryOutput{
-					Amount:            defaultAmount,
-					NativeTokens:      nil,
-					SerialNumber:      3,
-					TokenTag:          foundry3Ident3TokenTag,
-					CirculatingSupply: new(big.Int).SetUint64(100),
-					MaximumSupply:     new(big.Int).SetUint64(1000),
-					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Amount:        defaultAmount,
+					NativeTokens:  nil,
+					SerialNumber:  3,
+					TokenTag:      foundry3Ident3TokenTag,
+					MintedTokens:  new(big.Int).SetUint64(100),
+					MeltedTokens:  big.NewInt(0),
+					MaximumSupply: new(big.Int).SetUint64(1000),
+					TokenScheme:   &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Blocks: nil,
 				},
 				inputIDs[12]: &iotago.FoundryOutput{
-					Amount:            defaultAmount,
-					NativeTokens:      nil,
-					SerialNumber:      4,
-					TokenTag:          foundry4Ident3TokenTag,
-					CirculatingSupply: new(big.Int).SetUint64(100),
-					MaximumSupply:     new(big.Int).SetUint64(1000),
-					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Amount:        defaultAmount,
+					NativeTokens:  nil,
+					SerialNumber:  4,
+					TokenTag:      foundry4Ident3TokenTag,
+					MintedTokens:  new(big.Int).SetUint64(100),
+					MeltedTokens:  big.NewInt(50),
+					MaximumSupply: new(big.Int).SetUint64(1000),
+					TokenScheme:   &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
@@ -399,11 +404,19 @@ func TestTransactionSemanticValidation(t *testing.T) {
 
 			foundry1Ident3NativeTokenID := inputs[inputIDs[9]].(*iotago.FoundryOutput).MustNativeTokenID()
 			foundry2Ident3NativeTokenID := inputs[inputIDs[10]].(*iotago.FoundryOutput).MustNativeTokenID()
+			foundry4Ident3NativeTokenID := inputs[inputIDs[12]].(*iotago.FoundryOutput).MustNativeTokenID()
 
 			inputs[inputIDs[10]].(*iotago.FoundryOutput).NativeTokens = iotago.NativeTokens{
 				{
 					ID:     foundry2Ident3NativeTokenID,
 					Amount: big.NewInt(100),
+				},
+			}
+
+			inputs[inputIDs[12]].(*iotago.FoundryOutput).NativeTokens = iotago.NativeTokens{
+				{
+					ID:     foundry4Ident3NativeTokenID,
+					Amount: big.NewInt(50),
 				},
 			}
 
@@ -491,13 +504,14 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					},
 					// new foundry
 					&iotago.FoundryOutput{
-						Amount:            defaultAmount,
-						NativeTokens:      nil,
-						SerialNumber:      6,
-						TokenTag:          tpkg.Rand12ByteArray(),
-						CirculatingSupply: new(big.Int).SetInt64(0),
-						MaximumSupply:     new(big.Int).SetInt64(1000),
-						TokenScheme:       &iotago.SimpleTokenScheme{},
+						Amount:        defaultAmount,
+						NativeTokens:  nil,
+						SerialNumber:  6,
+						TokenTag:      tpkg.Rand12ByteArray(),
+						MintedTokens:  big.NewInt(0),
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: new(big.Int).SetInt64(1000),
+						TokenScheme:   &iotago.SimpleTokenScheme{},
 						Conditions: iotago.UnlockConditions{
 							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
@@ -511,11 +525,12 @@ func TestTransactionSemanticValidation(t *testing.T) {
 								Amount: new(big.Int).SetUint64(100), // freshly minted
 							},
 						},
-						SerialNumber:      1,
-						TokenTag:          foundry1Ident3TokenTag,
-						CirculatingSupply: new(big.Int).SetInt64(200),
-						MaximumSupply:     new(big.Int).SetInt64(1000),
-						TokenScheme:       &iotago.SimpleTokenScheme{},
+						SerialNumber:  1,
+						TokenTag:      foundry1Ident3TokenTag,
+						MintedTokens:  new(big.Int).SetInt64(200),
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: new(big.Int).SetInt64(1000),
+						TokenScheme:   &iotago.SimpleTokenScheme{},
 						Conditions: iotago.UnlockConditions{
 							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
@@ -526,27 +541,29 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						NativeTokens: iotago.NativeTokens{
 							{
 								ID:     foundry2Ident3NativeTokenID,
-								Amount: new(big.Int).SetUint64(50), // burned to 50
+								Amount: new(big.Int).SetUint64(50), // melted to 50
 							},
 						},
-						SerialNumber:      2,
-						TokenTag:          foundry2Ident3TokenTag,
-						CirculatingSupply: new(big.Int).SetInt64(50),
-						MaximumSupply:     new(big.Int).SetInt64(1000),
-						TokenScheme:       &iotago.SimpleTokenScheme{},
+						SerialNumber:  2,
+						TokenTag:      foundry2Ident3TokenTag,
+						MintedTokens:  new(big.Int).SetInt64(100),
+						MeltedTokens:  big.NewInt(50),
+						MaximumSupply: new(big.Int).SetInt64(1000),
+						TokenScheme:   &iotago.SimpleTokenScheme{},
 						Conditions: iotago.UnlockConditions{
 							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
 						Blocks: nil,
 					},
 					&iotago.FoundryOutput{
-						Amount:            defaultAmount,
-						NativeTokens:      nil,
-						SerialNumber:      3,
-						TokenTag:          foundry3Ident3TokenTag,
-						CirculatingSupply: new(big.Int).SetInt64(100),
-						MaximumSupply:     new(big.Int).SetInt64(1000),
-						TokenScheme:       &iotago.SimpleTokenScheme{},
+						Amount:        defaultAmount,
+						NativeTokens:  nil,
+						SerialNumber:  3,
+						TokenTag:      foundry3Ident3TokenTag,
+						MintedTokens:  new(big.Int).SetInt64(100),
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: new(big.Int).SetInt64(1000),
+						TokenScheme:   &iotago.SimpleTokenScheme{},
 						Conditions: iotago.UnlockConditions{
 							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
@@ -728,12 +745,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					},
 				},
 				inputIDs[7]: &iotago.FoundryOutput{
-					Amount:            100,
-					SerialNumber:      0,
-					TokenTag:          tpkg.Rand12ByteArray(),
-					CirculatingSupply: new(big.Int).SetInt64(100),
-					MaximumSupply:     new(big.Int).SetInt64(1000),
-					TokenScheme:       &iotago.SimpleTokenScheme{},
+					Amount:        100,
+					SerialNumber:  0,
+					TokenTag:      tpkg.Rand12ByteArray(),
+					MintedTokens:  new(big.Int).SetInt64(100),
+					MeltedTokens:  big.NewInt(0),
+					MaximumSupply: new(big.Int).SetInt64(1000),
+					TokenScheme:   &iotago.SimpleTokenScheme{},
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: &aliasIdent1},
 					},
@@ -1266,27 +1284,29 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 	foundryTokenTag := tpkg.Rand12ByteArray()
 	foundryTokenScheme := &iotago.SimpleTokenScheme{}
 	foundryMaxSupply := new(big.Int).SetInt64(1000)
-	foundryCircSupply := new(big.Int).SetInt64(500)
+	foundryMintedSupply := new(big.Int).SetInt64(500)
 
 	inUnrelatedFoundryOutput := &iotago.FoundryOutput{
-		Amount:            100,
-		SerialNumber:      0,
-		TokenTag:          foundryTokenTag,
-		CirculatingSupply: foundryCircSupply,
-		MaximumSupply:     foundryMaxSupply,
-		TokenScheme:       foundryTokenScheme,
+		Amount:        100,
+		SerialNumber:  0,
+		TokenTag:      foundryTokenTag,
+		MintedTokens:  foundryMintedSupply,
+		MeltedTokens:  big.NewInt(0),
+		MaximumSupply: foundryMaxSupply,
+		TokenScheme:   foundryTokenScheme,
 		Conditions: iotago.UnlockConditions{
 			&iotago.ImmutableAliasUnlockCondition{Address: foundryAliasIdent},
 		},
 	}
 
 	outUnrelatedFoundryOutput := &iotago.FoundryOutput{
-		Amount:            100,
-		SerialNumber:      0,
-		TokenTag:          foundryTokenTag,
-		CirculatingSupply: foundryCircSupply,
-		MaximumSupply:     foundryMaxSupply,
-		TokenScheme:       foundryTokenScheme,
+		Amount:        100,
+		SerialNumber:  0,
+		TokenTag:      foundryTokenTag,
+		MintedTokens:  foundryMintedSupply,
+		MeltedTokens:  big.NewInt(0),
+		MaximumSupply: foundryMaxSupply,
+		TokenScheme:   foundryTokenScheme,
 		Conditions: iotago.UnlockConditions{
 			&iotago.ImmutableAliasUnlockCondition{Address: foundryAliasIdent},
 		},
@@ -1388,45 +1408,32 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 		}(),
 		func() test {
-			inputIDs := tpkg.RandOutputIDs(2)
+			inputIDs := tpkg.RandOutputIDs(1)
 
-			ntCount := 20
+			ntCount := 10
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount:       100,
-					NativeTokens: nativeTokens[:ntCount/2],
-					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					},
-				},
-				inputIDs[1]: &iotago.BasicOutput{
-					Amount:       100,
-					NativeTokens: nativeTokens[ntCount/2:],
+					NativeTokens: nativeTokens,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 			}
 
-			// unbalance
+			// unbalance by making one token be excess on the output side
 			cpyNativeTokens := nativeTokens.Clone()
-			cpyNativeTokens[ntCount/2].Amount = tpkg.RandUint256()
+			amountToModify := cpyNativeTokens[ntCount/2].Amount
+			amountToModify.Add(amountToModify, big.NewInt(1))
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.Outputs{
 					&iotago.BasicOutput{
 						Amount:       100,
-						NativeTokens: cpyNativeTokens[:ntCount/2],
-						Conditions: iotago.UnlockConditions{
-							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-						},
-					},
-					&iotago.BasicOutput{
-						Amount:       100,
-						NativeTokens: cpyNativeTokens[ntCount/2:],
+						NativeTokens: cpyNativeTokens,
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
@@ -1435,68 +1442,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			return test{
-				name:   "fail - unbalanced",
-				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
-				inputs: inputs,
-				tx: &iotago.Transaction{
-					Essence:      essence,
-					UnlockBlocks: iotago.UnlockBlocks{},
-				},
-				wantErr: iotago.ErrNativeTokenSumUnbalanced,
-			}
-		}(),
-		func() test {
-			inputIDs := tpkg.RandOutputIDs(3)
-
-			ntCount := 20
-			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
-
-			inputs := iotago.OutputSet{
-				inputIDs[0]: &iotago.BasicOutput{
-					Amount:       100,
-					NativeTokens: nativeTokens[:ntCount/2],
-					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					},
-				},
-				inputIDs[1]: &iotago.BasicOutput{
-					Amount:       100,
-					NativeTokens: nativeTokens[ntCount/2:],
-					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					},
-				},
-				inputIDs[2]: inUnrelatedFoundryOutput,
-			}
-
-			// unbalance
-			cpyNativeTokens := nativeTokens.Clone()
-			cpyNativeTokens[ntCount/2].Amount = tpkg.RandUint256()
-
-			essence := &iotago.TransactionEssence{
-				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs{
-					&iotago.BasicOutput{
-						Amount:       100,
-						NativeTokens: cpyNativeTokens[:ntCount/2],
-						Conditions: iotago.UnlockConditions{
-							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-						},
-					},
-					&iotago.BasicOutput{
-						Amount:       100,
-						NativeTokens: cpyNativeTokens[ntCount/2:],
-						Conditions: iotago.UnlockConditions{
-							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-						},
-					},
-					outUnrelatedFoundryOutput,
-				},
-			}
-
-			// this test circumvents the short path of the validation func when no foundry exists
-			return test{
-				name:   "fail - unbalanced with unrelated foundry",
+				name:   "fail - unbalanced on output",
 				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
