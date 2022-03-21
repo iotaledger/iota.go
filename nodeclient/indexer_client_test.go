@@ -52,6 +52,42 @@ func TestOutputsQuery_Build(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func Test_IndexerEnabled(t *testing.T) {
+	defer gock.Off()
+
+	originInfo := &nodeclient.InfoResponse{
+		Plugins: []string{"indexer/v1"},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(nodeclient.NodeAPIRouteInfo).
+		Reply(200).
+		JSON(originInfo)
+
+	client := nodeclient.New(nodeAPIUrl)
+
+	_, err := client.Indexer(context.TODO())
+	require.NoError(t, err)
+}
+
+func Test_IndexerDisabled(t *testing.T) {
+	defer gock.Off()
+
+	originInfo := &nodeclient.InfoResponse{
+		Plugins: []string{"someplugin/v1"},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(nodeclient.NodeAPIRouteInfo).
+		Reply(200).
+		JSON(originInfo)
+
+	client := nodeclient.New(nodeAPIUrl)
+
+	_, err := client.Indexer(context.TODO())
+	require.ErrorIs(t, err, nodeclient.ErrIndexerPluginNotAvailable)
+}
+
 func TestIndexerClient_Outputs(t *testing.T) {
 	defer gock.Off()
 
@@ -73,6 +109,15 @@ func TestIndexerClient_Outputs(t *testing.T) {
 		LedgerIndex:   1337,
 		RawOutput:     &rawMsgSigDepJson,
 	}
+
+	originInfo := &nodeclient.InfoResponse{
+		Plugins: []string{"indexer/v1"},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(nodeclient.NodeAPIRouteInfo).
+		Reply(200).
+		JSON(originInfo)
 
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.IndexerAPIRouteOutputs).
@@ -109,9 +154,12 @@ func TestIndexerClient_Outputs(t *testing.T) {
 		Reply(200).
 		JSON(outputRes)
 
-	client := nodeclient.New(nodeAPIUrl, iotago.ZeroRentParas, nodeclient.WithIndexer())
+	client := nodeclient.New(nodeAPIUrl)
 
-	resultSet, err := client.Indexer().Outputs(context.TODO(), &nodeclient.OutputsQuery{Tag: "some-tag"})
+	indexer, err := client.Indexer(context.TODO())
+	require.NoError(t, err)
+
+	resultSet, err := indexer.Outputs(context.TODO(), &nodeclient.OutputsQuery{Tag: "some-tag"})
 	require.NoError(t, err)
 
 	var runs int
