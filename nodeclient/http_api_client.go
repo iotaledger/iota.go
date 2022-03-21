@@ -196,12 +196,12 @@ func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
 
 // Health returns whether the given node is healthy.
 func (client *Client) Health(ctx context.Context) (bool, error) {
-	res, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, NodeAPIRouteHealth, nil, nil)
+	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, NodeAPIRouteHealth, nil, nil)
 	if err != nil {
+		if errors.Is(err, ErrHTTPServiceUnavailable) {
+			return false, nil
+		}
 		return false, err
-	}
-	if res.StatusCode == http.StatusServiceUnavailable {
-		return false, nil
 	}
 	return true, nil
 }
