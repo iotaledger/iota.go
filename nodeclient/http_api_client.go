@@ -306,6 +306,23 @@ func (client *Client) ChildrenByMessageID(ctx context.Context, parentMsgID iotag
 	return res, nil
 }
 
+// TransactionIncludedMessage get a message that included the given transaction ID in the ledger.
+func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotago.TransactionID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
+	query := fmt.Sprintf(NodeAPIRouteTxIncludedMessage, iotago.EncodeHex(txID[:]))
+
+	res := &RawDataEnvelope{}
+	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := &iotago.Message{}
+	if _, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
+		return nil, err
+	}
+	return msg, nil
+}
+
 // OutputByID gets an outputs by its ID from the node.
 func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) (*OutputResponse, error) {
 	query := fmt.Sprintf(NodeAPIRouteOutput, outputID.ToHex())

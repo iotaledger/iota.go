@@ -241,6 +241,32 @@ func TestClient_ChildrenByMessageID(t *testing.T) {
 	require.EqualValues(t, originRes, res)
 }
 
+func TestClient_TransactionIncludedMessage(t *testing.T) {
+	defer gock.Off()
+
+	identifier := tpkg.Rand32ByteArray()
+	queryHash := iotago.EncodeHex(identifier[:])
+
+	originMsg := &iotago.Message{
+		Parents: tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
+		Payload: nil,
+		Nonce:   16345984576234,
+	}
+
+	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	require.NoError(t, err)
+
+	gock.New(nodeAPIUrl).
+		Get(fmt.Sprintf(nodeclient.NodeAPIRouteTxIncludedMessage, queryHash)).
+		Reply(200).
+		Body(bytes.NewReader(data))
+
+	nodeAPI := nodeclient.New(nodeAPIUrl)
+	responseMsg, err := nodeAPI.TransactionIncludedMessage(context.Background(), identifier, iotago.ZeroRentParas)
+	require.NoError(t, err)
+	require.EqualValues(t, originMsg, responseMsg)
+}
+
 func TestClient_OutputByID(t *testing.T) {
 	defer gock.Off()
 
