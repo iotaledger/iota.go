@@ -2,6 +2,7 @@ package nodeclient
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -11,6 +12,9 @@ import (
 )
 
 const (
+	IndexerPluginName = "indexer/v1"
+	MQTTPluginName    = "mqtt/v1"
+
 	// NodeAPIRouteHealth is the route for querying a node's health status.
 	NodeAPIRouteHealth = "/health"
 
@@ -78,6 +82,11 @@ const (
 	NodeAPIRoutePeers = "/api/v2/peers"
 )
 
+var (
+	ErrIndexerPluginNotAvailable = errors.New("indexer plugin not available on the current node")
+	ErrMQTTPluginNotAvailable    = errors.New("mqtt plugin not available on the current node")
+)
+
 // the default options applied to the Client.
 var defaultNodeAPIOptions = []ClientOption{
 	WithHTTPClient(http.DefaultClient),
@@ -90,8 +99,6 @@ type ClientOptions struct {
 	httpClient *http.Client
 	// The username and password information.
 	userInfo *url.Userinfo
-	// Whether the indexer routes can be used.
-	indexer bool
 }
 
 // applies the given ClientOption.
@@ -115,31 +122,19 @@ func WithUserInfo(userInfo *url.Userinfo) ClientOption {
 	}
 }
 
-// WithIndexer instructs the client that the endpoint supports the optional indexer routes.
-func WithIndexer() ClientOption {
-	return func(opts *ClientOptions) {
-		opts.indexer = true
-	}
-}
-
 // ClientOption is a function setting a Client option.
 type ClientOption func(opts *ClientOptions)
 
 // New returns a new Client using the given base URL.
-func New(baseURL string, deSeriParas *iotago.DeSerializationParameters, opts ...ClientOption) *Client {
+func New(baseURL string, opts ...ClientOption) *Client {
 
 	options := &ClientOptions{}
 	options.apply(defaultNodeAPIOptions...)
 	options.apply(opts...)
 
 	client := &Client{
-		BaseURL:     baseURL,
-		deSeriParas: deSeriParas,
-		opts:        options,
-	}
-
-	if options.indexer {
-		client.indexerClient = &indexerClient{core: client}
+		BaseURL: baseURL,
+		opts:    options,
 	}
 
 	return client
@@ -148,9 +143,7 @@ func New(baseURL string, deSeriParas *iotago.DeSerializationParameters, opts ...
 // Client is a client for node HTTP REST API endpoints.
 type Client struct {
 	// The base URL for all API calls.
-	BaseURL       string
-	indexerClient IndexerClient
-	deSeriParas   *iotago.DeSerializationParameters
+	BaseURL string
 	// holds the Client options.
 	opts *ClientOptions
 }
@@ -175,12 +168,30 @@ func (client *Client) Do(ctx context.Context, method string, route string, reqOb
 	return do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, method, route, reqObj, resObj)
 }
 
-// Indexer returns the IndexerClient. This function panics if Client is not initialized with WithIndexer.
-func (client *Client) Indexer() IndexerClient {
-	if client.indexerClient == nil {
-		panic("node http client is initialized without indexer support")
+// Indexer returns the IndexerClient.
+// Returns ErrIndexerPluginNotAvailable if the current node does not support the plugin.
+func (client *Client) Indexer(ctx context.Context) (IndexerClient, error) {
+	hasPlugin, err := client.NodeSupportPlugin(ctx, IndexerPluginName)
+	if err != nil {
+		return nil, err
 	}
-	return client.indexerClient
+	if !hasPlugin {
+		return nil, ErrIndexerPluginNotAvailable
+	}
+	return &indexerClient{core: client}, nil
+}
+
+// EventAPI returns the EventAPIClient if supported by the node.
+// Returns ErrMQTTPluginNotAvailable if the current node does not support the plugin.
+func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
+	hasPlugin, err := client.NodeSupportPlugin(ctx, MQTTPluginName)
+	if err != nil {
+		return nil, err
+	}
+	if !hasPlugin {
+		return nil, ErrMQTTPluginNotAvailable
+	}
+	return newEventAPIClient(client), nil
 }
 
 // Health returns whether the given node is healthy.
@@ -203,6 +214,20 @@ func (client *Client) Info(ctx context.Context) (*InfoResponse, error) {
 		return nil, err
 	}
 	return res, nil
+}
+
+// NodeSupportPlugin gets the info of the node and checks if the given plugin is enabled.
+func (client *Client) NodeSupportPlugin(ctx context.Context, pluginName string) (bool, error) {
+	info, err := client.Info(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, p := range info.Plugins {
+		if p == pluginName {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // NodeTipsResponse defines the response of a GET tips REST API call.
@@ -237,11 +262,11 @@ func (client *Client) Tips(ctx context.Context) (*NodeTipsResponse, error) {
 // SubmitMessage submits the given Message to the node.
 // The node will take care of filling missing information.
 // This function returns the finalized message created by the node.
-func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message) (*iotago.Message, error) {
+func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
 	// do not check the message because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the message afterwards.
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, client.deSeriParas)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation, deSeriParas)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +282,7 @@ func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message) (*io
 		return nil, err
 	}
 
-	msg, err := client.MessageByMessageID(ctx, messageID)
+	msg, err := client.MessageByMessageID(ctx, messageID, deSeriParas)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +304,7 @@ func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iota
 }
 
 // MessageByMessageID get a message by its message ID from the node.
-func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.MessageID) (*iotago.Message, error) {
+func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.MessageID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageBytes, iotago.EncodeHex(msgID[:]))
 
 	res := &RawDataEnvelope{}
@@ -289,7 +314,7 @@ func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.Messa
 	}
 
 	msg := &iotago.Message{}
-	if _, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, client.deSeriParas); err != nil {
+	if _, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
 		return nil, err
 	}
 	return msg, nil
@@ -306,6 +331,23 @@ func (client *Client) ChildrenByMessageID(ctx context.Context, parentMsgID iotag
 	}
 
 	return res, nil
+}
+
+// TransactionIncludedMessage get a message that included the given transaction ID in the ledger.
+func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotago.TransactionID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
+	query := fmt.Sprintf(NodeAPIRouteTxIncludedMessage, iotago.EncodeHex(txID[:]))
+
+	res := &RawDataEnvelope{}
+	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := &iotago.Message{}
+	if _, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
+		return nil, err
+	}
+	return msg, nil
 }
 
 // OutputByID gets an outputs by its ID from the node.
