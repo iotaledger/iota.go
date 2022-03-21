@@ -367,7 +367,7 @@ type jsonTransactionEssence struct {
 	Inputs           []*json.RawMessage `json:"inputs"`
 	InputsCommitment string             `json:"inputsCommitment"`
 	Outputs          []*json.RawMessage `json:"outputs"`
-	Payload          *json.RawMessage   `json:"payload"`
+	Payload          *json.RawMessage   `json:"payload,omitempty"`
 }
 
 func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, error) {

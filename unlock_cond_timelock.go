@@ -108,8 +108,8 @@ func (s *TimelockUnlockCondition) UnmarshalJSON(bytes []byte) error {
 // jsonTimelockUnlockCondition defines the json representation of a TimelockUnlockCondition.
 type jsonTimelockUnlockCondition struct {
 	Type           int `json:"type"`
-	MilestoneIndex int `json:"milestoneIndex"`
-	UnixTime       int `json:"unixTime"`
+	MilestoneIndex int `json:"milestoneIndex,omitempty"`
+	UnixTime       int `json:"unixTime,omitempty"`
 }
 
 func (j *jsonTimelockUnlockCondition) ToSerializable() (serializer.Serializable, error) {
