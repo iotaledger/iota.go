@@ -45,7 +45,7 @@ const (
 )
 
 var (
-	// ErrEventAPIClientInactive gets returned when a EventAPIClient is inactive.
+	// ErrEventAPIClientInactive gets returned when an EventAPIClient is inactive.
 	ErrEventAPIClientInactive = errors.New("event api client is inactive")
 )
 
