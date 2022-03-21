@@ -80,8 +80,10 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 	}
 
 	errRes := &HTTPErrorResponseEnvelope{}
-	if err := json.Unmarshal(resBody, errRes); err != nil {
-		return fmt.Errorf("unable to read error from response body: %w", err)
+	if len(resBody) > 0 {
+		if err := json.Unmarshal(resBody, errRes); err != nil {
+			return fmt.Errorf("unable to read error from response body: %w", err)
+		}
 	}
 
 	err, ok := httpCodeToErr[res.StatusCode]
