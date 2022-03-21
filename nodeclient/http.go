@@ -25,6 +25,8 @@ var (
 	ErrHTTPUnknownError = errors.New("unknown error")
 	// ErrHTTPNotImplemented gets returned for 501 not implemented error HTTP responses.
 	ErrHTTPNotImplemented = errors.New("operation not implemented/supported/available")
+	// ErrHTTPServiceUnavailable gets returned for 503 service unavailable error HTTP responses.
+	ErrHTTPServiceUnavailable = errors.New("service unavailable")
 
 	httpCodeToErr = map[int]error{
 		http.StatusBadRequest:          ErrHTTPBadRequest,
@@ -32,6 +34,7 @@ var (
 		http.StatusNotFound:            ErrHTTPNotFound,
 		http.StatusUnauthorized:        ErrHTTPUnauthorized,
 		http.StatusNotImplemented:      ErrHTTPNotImplemented,
+		http.StatusServiceUnavailable:  ErrHTTPServiceUnavailable,
 	}
 )
 
@@ -69,10 +72,6 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 		}
 
 		return json.Unmarshal(resBody, decodeTo)
-	}
-
-	if res.StatusCode == http.StatusServiceUnavailable {
-		return nil
 	}
 
 	resBody, err := readBody(res)
