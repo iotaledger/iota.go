@@ -552,14 +552,10 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 				continue
 			}
 
-			if !unlockCondSet.HasExpirationCondition() {
-				continue
-			}
-
 			storageDepositReturnIdentKey := storageDepositReturnUnlockCondition.ReturnAddress.Key()
 
 			// if the return ident unlocked this input, then the return amount does
-			// not have to be fulfilled
+			// not have to be fulfilled (this can happen implicit through an expiration condition)
 			unlockedIndices, has := svCtx.WorkingSet.UnlockedIdents[storageDepositReturnIdentKey]
 			if has && unlockedIndices.Unlocked(svCtx.WorkingSet.InputIDToIndex[inputID]) {
 				continue
