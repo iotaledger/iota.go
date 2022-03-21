@@ -13,6 +13,7 @@ import (
 
 const (
 	IndexerPluginName = "indexer/v1"
+	MQTTPluginName    = "mqtt/v1"
 
 	// NodeAPIRouteHealth is the route for querying a node's health status.
 	NodeAPIRouteHealth = "/health"
@@ -83,6 +84,7 @@ const (
 
 var (
 	ErrIndexerPluginNotAvailable = errors.New("indexer plugin not available on the current node")
+	ErrMQTTPluginNotAvailable    = errors.New("mqtt plugin not available on the current node")
 )
 
 // the default options applied to the Client.
@@ -177,6 +179,19 @@ func (client *Client) Indexer(ctx context.Context) (IndexerClient, error) {
 		return nil, ErrIndexerPluginNotAvailable
 	}
 	return &indexerClient{core: client}, nil
+}
+
+// EventAPI returns the EventAPIClient if supported by the node.
+// Returns ErrMQTTPluginNotAvailable if the current node does not support the plugin.
+func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
+	hasPlugin, err := client.NodeSupportPlugin(ctx, MQTTPluginName)
+	if err != nil {
+		return nil, err
+	}
+	if !hasPlugin {
+		return nil, ErrMQTTPluginNotAvailable
+	}
+	return newEventAPIClient(client), nil
 }
 
 // Health returns whether the given node is healthy.
