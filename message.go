@@ -240,7 +240,7 @@ type jsonMessage struct {
 	// The hex encoded message IDs of the referenced parents.
 	Parents []string `json:"parentMessageIds"`
 	// The payload within the message.
-	Payload *json.RawMessage `json:"payload"`
+	Payload *json.RawMessage `json:"payload,omitempty"`
 	// The nonce the message used to fulfill the PoW requirement.
 	Nonce string `json:"nonce"`
 }

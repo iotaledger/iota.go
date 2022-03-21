@@ -538,7 +538,7 @@ type jsonMilestone struct {
 	NextPoWScore               int              `json:"nextPoWScore"`
 	NextPoWScoreMilestoneIndex int              `json:"nextPoWScoreMilestoneIndex"`
 	PublicKeys                 []string         `json:"publicKeys"`
-	Receipt                    *json.RawMessage `json:"receipt"`
+	Receipt                    *json.RawMessage `json:"receipt,omitempty"`
 	Signatures                 []string         `json:"signatures"`
 }
 
