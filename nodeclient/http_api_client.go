@@ -126,7 +126,7 @@ func WithIndexer() ClientOption {
 type ClientOption func(opts *ClientOptions)
 
 // New returns a new Client using the given base URL.
-func New(baseURL string, deSeriParas *iotago.DeSerializationParameters, opts ...ClientOption) *Client {
+func New(baseURL string, opts ...ClientOption) *Client {
 
 	options := &ClientOptions{}
 	options.apply(defaultNodeAPIOptions...)
@@ -134,7 +134,6 @@ func New(baseURL string, deSeriParas *iotago.DeSerializationParameters, opts ...
 
 	client := &Client{
 		BaseURL:     baseURL,
-		deSeriParas: deSeriParas,
 		opts:        options,
 	}
 
@@ -150,7 +149,6 @@ type Client struct {
 	// The base URL for all API calls.
 	BaseURL       string
 	indexerClient IndexerClient
-	deSeriParas   *iotago.DeSerializationParameters
 	// holds the Client options.
 	opts *ClientOptions
 }
@@ -237,11 +235,11 @@ func (client *Client) Tips(ctx context.Context) (*NodeTipsResponse, error) {
 // SubmitMessage submits the given Message to the node.
 // The node will take care of filling missing information.
 // This function returns the finalized message created by the node.
-func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message) (*iotago.Message, error) {
+func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
 	// do not check the message because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the message afterwards.
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, client.deSeriParas)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation, deSeriParas)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +255,7 @@ func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message) (*io
 		return nil, err
 	}
 
-	msg, err := client.MessageByMessageID(ctx, messageID)
+	msg, err := client.MessageByMessageID(ctx, messageID, deSeriParas)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +277,7 @@ func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iota
 }
 
 // MessageByMessageID get a message by its message ID from the node.
-func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.MessageID) (*iotago.Message, error) {
+func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.MessageID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
 	query := fmt.Sprintf(NodeAPIRouteMessageBytes, iotago.EncodeHex(msgID[:]))
 
 	res := &RawDataEnvelope{}
@@ -289,7 +287,7 @@ func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.Messa
 	}
 
 	msg := &iotago.Message{}
-	if _, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, client.deSeriParas); err != nil {
+	if _, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
 		return nil, err
 	}
 	return msg, nil
