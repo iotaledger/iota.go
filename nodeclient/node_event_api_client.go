@@ -25,7 +25,7 @@ const (
 	NodeEventAPIMessages = "messages"
 	// NodeEventAPIMessagesReferenced is the name of the referenced messages metadata event channel.
 	NodeEventAPIMessagesReferenced = "messages/referenced"
-	// NodeEventAPIMessagesIndexation is the name of the indexed messages  event channel.
+	// NodeEventAPIMessagesIndexation is the name of the indexed messages event channel.
 	NodeEventAPIMessagesIndexation = "messages/indexation/{index}"
 	// NodeEventAPIMessagesMetadata is the name of the message metadata event channel.
 	NodeEventAPIMessagesMetadata = "messages/{messageId}/metadata"
