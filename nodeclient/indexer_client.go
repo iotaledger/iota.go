@@ -112,6 +112,12 @@ func (resultSet *IndexerResultSet) Outputs() (iotago.Outputs, error) {
 	return outputs, nil
 }
 
+// Do executes a request against the endpoint.
+// This function is only meant to be used for special routes not covered through the standard API.
+func (client *indexerClient) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
+	return do(client.core.opts.httpClient, client.core.BaseURL, ctx, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, reqObj, resObj)
+}
+
 func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*IndexerResultSet, error) {
 	res := &IndexerResultSet{
 		ctx:    ctx,
@@ -131,7 +137,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 		}
 
 		routeWithParas := fmt.Sprintf("%s?%s", baseRoute, urlParas)
-		_, reqErr := do(client.core.opts.httpClient, client.core.BaseURL, ctx, client.core.opts.userInfo, http.MethodGet, routeWithParas, nil, res.Response)
+		_, reqErr := client.Do(ctx, http.MethodGet, routeWithParas, nil, res.Response)
 		return reqErr
 	}
 	res.nextFunc = nextFunc
@@ -141,8 +147,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 
 func (client *indexerClient) singleOutputQuery(ctx context.Context, route string) (iotago.Output, error) {
 	res := &IndexerResponse{}
-	_, err := do(client.core.opts.httpClient, client.core.BaseURL, ctx, client.core.opts.userInfo, http.MethodGet, route, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, route, nil, res); err != nil {
 		return nil, err
 	}
 

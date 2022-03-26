@@ -26,6 +26,10 @@ const (
 	// GET returns the tips.
 	NodeAPIRouteTips = "/api/v2/tips"
 
+	// NodeAPIRouteMessageData is the route for getting message data by its messageID.
+	// GET returns message data (json).
+	NodeAPIRouteMessageData = "/api/v2/messages/%s"
+
 	// NodeAPIRouteMessageMetadata is the route for getting message metadata by its messageID.
 	// GET returns message metadata (including info about "promotion/reattachment needed").
 	NodeAPIRouteMessageMetadata = "/api/v2/messages/%s/metadata"
@@ -87,10 +91,14 @@ var (
 	ErrMQTTPluginNotAvailable    = errors.New("mqtt plugin not available on the current node")
 )
 
+// RequestURLHook is a function to modify the URL before sending a request.
+type RequestURLHook func(url string) string
+
 // the default options applied to the Client.
 var defaultNodeAPIOptions = []ClientOption{
 	WithHTTPClient(http.DefaultClient),
 	WithUserInfo(nil),
+	WithRequestURLHook(nil),
 }
 
 // ClientOptions define options for the Client.
@@ -99,6 +107,8 @@ type ClientOptions struct {
 	httpClient *http.Client
 	// The username and password information.
 	userInfo *url.Userinfo
+	// The hook to modify the URL before sending a request.
+	requestURLHook RequestURLHook
 }
 
 // applies the given ClientOption.
@@ -119,6 +129,13 @@ func WithHTTPClient(httpClient *http.Client) ClientOption {
 func WithUserInfo(userInfo *url.Userinfo) ClientOption {
 	return func(opts *ClientOptions) {
 		opts.userInfo = userInfo
+	}
+}
+
+// WithRequestURLHook is used to modify the URL before sending a request.
+func WithRequestURLHook(requestURLHook RequestURLHook) ClientOption {
+	return func(opts *ClientOptions) {
+		opts.requestURLHook = requestURLHook
 	}
 }
 
@@ -165,7 +182,7 @@ type RawDataEnvelope struct {
 // Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *Client) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, method, route, reqObj, resObj)
+	return do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, method, route, client.opts.requestURLHook, reqObj, resObj)
 }
 
 // Indexer returns the IndexerClient.
@@ -196,23 +213,24 @@ func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
 
 // Health returns whether the given node is healthy.
 func (client *Client) Health(ctx context.Context) (bool, error) {
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, NodeAPIRouteHealth, nil, nil)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRouteHealth, nil, nil); err != nil {
 		if errors.Is(err, ErrHTTPServiceUnavailable) {
 			return false, nil
 		}
+
 		return false, err
 	}
+
 	return true, nil
 }
 
 // Info gets the info of the node.
 func (client *Client) Info(ctx context.Context) (*InfoResponse, error) {
 	res := &InfoResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, NodeAPIRouteInfo, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRouteInfo, nil, res); err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }
 
@@ -252,10 +270,10 @@ func (ntr *NodeTipsResponse) Tips() (iotago.MessageIDs, error) {
 // Tips gets the two tips from the node.
 func (client *Client) Tips(ctx context.Context) (*NodeTipsResponse, error) {
 	res := &NodeTipsResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, NodeAPIRouteTips, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRouteTips, nil, res); err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }
 
@@ -272,7 +290,7 @@ func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message, deSe
 	}
 
 	req := &RawDataEnvelope{Data: data}
-	res, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodPost, NodeAPIRouteMessages, req, nil)
+	res, err := client.Do(ctx, http.MethodPost, NodeAPIRouteMessages, req, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -295,8 +313,23 @@ func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iota
 	query := fmt.Sprintf(NodeAPIRouteMessageMetadata, iotago.EncodeHex(msgID[:]))
 
 	res := &MessageMetadataResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// MessageJSONByMessageID get a message by its message ID from the node (json).
+func (client *Client) MessageJSONByMessageID(ctx context.Context, msgID iotago.MessageID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
+	query := fmt.Sprintf(NodeAPIRouteMessageData, iotago.EncodeHex(msgID[:]))
+
+	res := &iotago.Message{}
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	if _, err := res.Serialize(serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
 		return nil, err
 	}
 
@@ -308,15 +341,15 @@ func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.Messa
 	query := fmt.Sprintf(NodeAPIRouteMessageBytes, iotago.EncodeHex(msgID[:]))
 
 	res := &RawDataEnvelope{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
 	msg := &iotago.Message{}
-	if _, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
+	if _, err := msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
 		return nil, err
 	}
+
 	return msg, nil
 }
 
@@ -325,8 +358,7 @@ func (client *Client) ChildrenByMessageID(ctx context.Context, parentMsgID iotag
 	query := fmt.Sprintf(NodeAPIRouteMessageChildren, iotago.EncodeHex(parentMsgID[:]))
 
 	res := &ChildrenResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -338,15 +370,15 @@ func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotag
 	query := fmt.Sprintf(NodeAPIRouteTxIncludedMessage, iotago.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
 	msg := &iotago.Message{}
-	if _, err = msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
+	if _, err := msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
 		return nil, err
 	}
+
 	return msg, nil
 }
 
@@ -355,18 +387,17 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 	query := fmt.Sprintf(NodeAPIRouteOutput, outputID.ToHex())
 
 	res := &OutputResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }
 
 // Treasury gets the current treasury.
 func (client *Client) Treasury(ctx context.Context) (*TreasuryResponse, error) {
 	res := &TreasuryResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, NodeAPIRouteTreasury, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRouteTreasury, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -376,8 +407,7 @@ func (client *Client) Treasury(ctx context.Context) (*TreasuryResponse, error) {
 // Receipts gets all receipts persisted on the node.
 func (client *Client) Receipts(ctx context.Context) ([]*ReceiptTuple, error) {
 	res := &ReceiptsResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, NodeAPIRouteReceipts, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRouteReceipts, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -389,8 +419,7 @@ func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index uint3
 	query := fmt.Sprintf(NodeAPIRouteReceiptsByMigratedAtIndex, index)
 
 	res := &ReceiptsResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -402,8 +431,7 @@ func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*Mile
 	query := fmt.Sprintf(NodeAPIRouteMilestone, index)
 
 	res := &MilestoneResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -415,10 +443,10 @@ func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uin
 	query := fmt.Sprintf(NodeAPIRouteMilestoneUTXOChanges, index)
 
 	res := &MilestoneUTXOChangesResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }
 
@@ -427,8 +455,7 @@ func (client *Client) PeerByID(ctx context.Context, id string) (*PeerResponse, e
 	query := fmt.Sprintf(NodeAPIRoutePeer, id)
 
 	res := &PeerResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, query, nil, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -439,8 +466,7 @@ func (client *Client) PeerByID(ctx context.Context, id string) (*PeerResponse, e
 func (client *Client) RemovePeerByID(ctx context.Context, id string) error {
 	query := fmt.Sprintf(NodeAPIRoutePeer, id)
 
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodDelete, query, nil, nil)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodDelete, query, nil, nil); err != nil {
 		return err
 	}
 
@@ -450,8 +476,7 @@ func (client *Client) RemovePeerByID(ctx context.Context, id string) error {
 // Peers returns a list of all peers.
 func (client *Client) Peers(ctx context.Context) ([]*PeerResponse, error) {
 	res := []*PeerResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodGet, NodeAPIRoutePeers, nil, &res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRoutePeers, nil, &res); err != nil {
 		return nil, err
 	}
 
@@ -469,8 +494,7 @@ func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ..
 	}
 
 	res := &PeerResponse{}
-	_, err := do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, http.MethodPost, NodeAPIRoutePeers, req, res)
-	if err != nil {
+	if _, err := client.Do(ctx, http.MethodPost, NodeAPIRoutePeers, req, res); err != nil {
 		return nil, err
 	}
 
