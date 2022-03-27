@@ -1,27 +1,65 @@
-package iotagox_test
+package nodeclient_test
 
 import (
 	"context"
+	"github.com/iotaledger/iota.go/v3/nodeclient"
+	"gopkg.in/h2non/gock.v1"
 	"testing"
 	"time"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/tpkg"
-	"github.com/iotaledger/iota.go/v3/x"
-
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewNodeEventAPIClient(t *testing.T) {
+func Test_EventAPIEnabled(t *testing.T) {
+	defer gock.Off()
+
+	originInfo := &nodeclient.InfoResponse{
+		Plugins: []string{"mqtt/v1"},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(nodeclient.NodeAPIRouteInfo).
+		Reply(200).
+		JSON(originInfo)
+
+	client := nodeclient.New(nodeAPIUrl)
+
+	_, err := client.EventAPI(context.TODO())
+	require.NoError(t, err)
+}
+
+func Test_EventAPIDisabled(t *testing.T) {
+	defer gock.Off()
+
+	originInfo := &nodeclient.InfoResponse{
+		Plugins: []string{"someplugin/v1"},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(nodeclient.NodeAPIRouteInfo).
+		Reply(200).
+		JSON(originInfo)
+
+	client := nodeclient.New(nodeAPIUrl)
+
+	_, err := client.EventAPI(context.TODO())
+	require.ErrorIs(t, err, nodeclient.ErrMQTTPluginNotAvailable)
+}
+
+func Test_NewNodeEventAPIClient(t *testing.T) {
+
 	msg := tpkg.RandMessage(iotago.PayloadTaggedData)
 	originMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, nil)
 	require.NoError(t, err)
 	mock := &mockMqttClient{payload: originMsgBytes}
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
-	eventAPIClient := &iotagox.NodeEventAPIClient{
+	eventAPIClient := &nodeclient.EventAPIClient{
+		Client:     nodeclient.New(nodeAPIUrl),
 		MQTTClient: mock,
 		Errors:     make(chan error),
 	}

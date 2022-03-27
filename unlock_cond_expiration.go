@@ -133,8 +133,8 @@ func (s *ExpirationUnlockCondition) UnmarshalJSON(bytes []byte) error {
 type jsonExpirationUnlockCondition struct {
 	Type           int              `json:"type"`
 	ReturnAddress  *json.RawMessage `json:"returnAddress"`
-	MilestoneIndex int              `json:"milestoneIndex"`
-	UnixTime       int              `json:"unixTime"`
+	MilestoneIndex int              `json:"milestoneIndex,omitempty"`
+	UnixTime       int              `json:"unixTime,omitempty"`
 }
 
 func (j *jsonExpirationUnlockCondition) ToSerializable() (serializer.Serializable, error) {

@@ -25,6 +25,8 @@ var (
 	ErrHTTPUnknownError = errors.New("unknown error")
 	// ErrHTTPNotImplemented gets returned for 501 not implemented error HTTP responses.
 	ErrHTTPNotImplemented = errors.New("operation not implemented/supported/available")
+	// ErrHTTPServiceUnavailable gets returned for 503 service unavailable error HTTP responses.
+	ErrHTTPServiceUnavailable = errors.New("service unavailable")
 
 	httpCodeToErr = map[int]error{
 		http.StatusBadRequest:          ErrHTTPBadRequest,
@@ -32,6 +34,7 @@ var (
 		http.StatusNotFound:            ErrHTTPNotFound,
 		http.StatusUnauthorized:        ErrHTTPUnauthorized,
 		http.StatusNotImplemented:      ErrHTTPNotImplemented,
+		http.StatusServiceUnavailable:  ErrHTTPServiceUnavailable,
 	}
 )
 
@@ -71,18 +74,16 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 		return json.Unmarshal(resBody, decodeTo)
 	}
 
-	if res.StatusCode == http.StatusServiceUnavailable {
-		return nil
-	}
-
 	resBody, err := readBody(res)
 	if err != nil {
 		return err
 	}
 
 	errRes := &HTTPErrorResponseEnvelope{}
-	if err := json.Unmarshal(resBody, errRes); err != nil {
-		return fmt.Errorf("unable to read error from response body: %w", err)
+	if len(resBody) > 0 {
+		if err := json.Unmarshal(resBody, errRes); err != nil {
+			return fmt.Errorf("unable to read error from response body: %w", err)
+		}
 	}
 
 	err, ok := httpCodeToErr[res.StatusCode]
@@ -93,7 +94,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 	return fmt.Errorf("%w: url %s, error message: %s", err, res.Request.URL.String(), errRes.Error.Message)
 }
 
-func do(httpClient *http.Client, baseURL string, ctx context.Context, userInfo *url.Userinfo, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
+func do(httpClient *http.Client, baseURL string, ctx context.Context, userInfo *url.Userinfo, method string, route string, requestURLHook RequestURLHook, reqObj interface{}, resObj interface{}) (*http.Response, error) {
 	// marshal request object
 	var data []byte
 	var raw bool
@@ -112,8 +113,14 @@ func do(httpClient *http.Client, baseURL string, ctx context.Context, userInfo *
 		}
 	}
 
+	// construct request URL
+	url := fmt.Sprintf("%s%s", baseURL, route)
+	if requestURLHook != nil {
+		url = requestURLHook(url)
+	}
+
 	// construct request
-	req, err := http.NewRequestWithContext(ctx, method, fmt.Sprintf("%s%s", baseURL, route), func() io.Reader {
+	req, err := http.NewRequestWithContext(ctx, method, url, func() io.Reader {
 		if data == nil {
 			return nil
 		}
