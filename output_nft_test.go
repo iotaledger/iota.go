@@ -110,7 +110,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: map[string]iotago.UnlockedIndices{},
 				},
 			},
-			wantErr: iotago.ErrInvalidChainStateTransition,
+			wantErr: &iotago.ChainTransitionError{},
 		},
 	}
 
@@ -122,7 +122,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 					cpy := copyObject(t, tt.current, muts).(*iotago.NFTOutput)
 					err := tt.current.ValidateStateTransition(tt.transType, cpy, tt.svCtx)
 					if tt.wantErr != nil {
-						require.ErrorIs(t, err, tt.wantErr)
+						require.ErrorAs(t, err, &tt.wantErr)
 						return
 					}
 					require.NoError(t, err)
@@ -134,7 +134,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.current.ValidateStateTransition(tt.transType, tt.next, tt.svCtx)
 			if tt.wantErr != nil {
-				require.ErrorIs(t, err, tt.wantErr)
+				require.ErrorAs(t, err, &tt.wantErr)
 				return
 			}
 			require.NoError(t, err)

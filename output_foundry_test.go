@@ -2,12 +2,12 @@ package iotago_test
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"math/big"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
@@ -15,26 +15,28 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 
 	startingSupply := new(big.Int).SetUint64(100)
 	exampleFoundry := &iotago.FoundryOutput{
-		Amount:        100,
-		SerialNumber:  6,
-		TokenTag:      tpkg.Rand12ByteArray(),
-		MintedTokens:  startingSupply,
-		MeltedTokens:  big.NewInt(0),
-		MaximumSupply: new(big.Int).SetUint64(1000),
-		TokenScheme:   &iotago.SimpleTokenScheme{},
+		Amount:       100,
+		SerialNumber: 6,
+		TokenTag:     tpkg.Rand12ByteArray(),
+		TokenScheme: &iotago.SimpleTokenScheme{
+			MintedTokens:  startingSupply,
+			MeltedTokens:  big.NewInt(0),
+			MaximumSupply: new(big.Int).SetUint64(1000),
+		},
 		Conditions: iotago.UnlockConditions{
 			&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasIdent},
 		},
 	}
 
 	toBeDestoyedFoundry := &iotago.FoundryOutput{
-		Amount:        100,
-		SerialNumber:  6,
-		TokenTag:      tpkg.Rand12ByteArray(),
-		MintedTokens:  startingSupply,
-		MeltedTokens:  startingSupply,
-		MaximumSupply: new(big.Int).SetUint64(1000),
-		TokenScheme:   &iotago.SimpleTokenScheme{},
+		Amount:       100,
+		SerialNumber: 6,
+		TokenTag:     tpkg.Rand12ByteArray(),
+		TokenScheme: &iotago.SimpleTokenScheme{
+			MintedTokens:  startingSupply,
+			MeltedTokens:  startingSupply,
+			MaximumSupply: new(big.Int).SetUint64(1000),
+		},
 		Conditions: iotago.UnlockConditions{
 			&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasIdent},
 		},
@@ -103,7 +105,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidChainStateTransition,
+			wantErr: &iotago.ChainTransitionError{},
 		},
 		{
 			name:      "fail - genesis transition - serial number not in interval",
@@ -128,7 +130,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
 				},
 			},
-			wantErr: iotago.ErrInvalidChainStateTransition,
+			wantErr: &iotago.ChainTransitionError{},
 		},
 		{
 			name:    "ok - state transition - metadata feature block",
@@ -153,7 +155,11 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"+300": {
-					"MintedTokens": big.NewInt(400),
+					"TokenScheme": &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(400),
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: new(big.Int).SetUint64(1000),
+					},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -171,8 +177,11 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"-50": {
-					"MintedTokens": big.NewInt(100),
-					"MeltedTokens": big.NewInt(50),
+					"TokenScheme": &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(100),
+						MeltedTokens:  big.NewInt(50),
+						MaximumSupply: new(big.Int).SetUint64(1000),
+					},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -210,8 +219,11 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"-100": {
-					"MintedTokens": big.NewInt(100),
-					"MeltedTokens": big.NewInt(100),
+					"TokenScheme": &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(100),
+						MeltedTokens:  big.NewInt(100),
+						MaximumSupply: new(big.Int).SetUint64(1000),
+					},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -230,7 +242,11 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"+100": {
-					"MintedTokens": big.NewInt(200),
+					"TokenScheme": &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(200),
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: new(big.Int).SetUint64(1000),
+					},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -249,7 +265,11 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"+100": {
-					"MintedTokens": big.NewInt(200),
+					"TokenScheme": &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(200),
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: new(big.Int).SetUint64(1000),
+					},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -268,8 +288,11 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"-50": {
-					"MintedTokens": big.NewInt(100),
-					"MeltedTokens": big.NewInt(50),
+					"TokenScheme": &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(100),
+						MeltedTokens:  big.NewInt(50),
+						MaximumSupply: new(big.Int).SetUint64(1000),
+					},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -291,7 +314,11 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"maximum_supply": {
-					"MaximumSupply": big.NewInt(1337),
+					"TokenScheme": &iotago.SimpleTokenScheme{
+						MintedTokens:  startingSupply,
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: big.NewInt(1337),
+					},
 				},
 				"token_tag": {
 					"TokenTag": tpkg.Rand12ByteArray(),
@@ -301,7 +328,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				WorkingSet: &iotago.SemValiContextWorkingSet{},
 			},
-			wantErr: iotago.ErrInvalidChainStateTransition,
+			wantErr: &iotago.ChainTransitionError{},
 		},
 		{
 			name:      "ok - destroy transition",
@@ -341,7 +368,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					cpy := copyObject(t, tt.current, muts).(*iotago.FoundryOutput)
 					err := tt.current.ValidateStateTransition(tt.transType, cpy, tt.svCtx)
 					if tt.wantErr != nil {
-						require.ErrorIs(t, err, tt.wantErr)
+						require.ErrorAs(t, err, &tt.wantErr)
 						return
 					}
 					require.NoError(t, err)
@@ -353,7 +380,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.current.ValidateStateTransition(tt.transType, tt.next, tt.svCtx)
 			if tt.wantErr != nil {
-				require.ErrorIs(t, err, tt.wantErr)
+				require.ErrorAs(t, err, &tt.wantErr)
 				return
 			}
 			require.NoError(t, err)

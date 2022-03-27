@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -44,6 +45,12 @@ type TokenScheme interface {
 
 	// Clone clones the TokenScheme.
 	Clone() TokenScheme
+
+	// StateTransition validates the transition of the token scheme against its new state.
+	StateTransition(transType ChainTransitionType, nextState TokenScheme, in *big.Int, out *big.Int) error
+
+	// SyntacticalValidation validates the syntactical rules.
+	SyntacticalValidation() error
 }
 
 // checks whether the given serializable is a TokenScheme.

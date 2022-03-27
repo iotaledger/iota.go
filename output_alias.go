@@ -302,29 +302,42 @@ func (a *AliasOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint
 //	- On alias governance transition:
 //		- Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated
 func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
+	var err error
 	switch transType {
 	case ChainTransitionTypeGenesis:
-		if !a.AliasID.Empty() {
-			return fmt.Errorf("%w: AliasOutput's ID is not zeroed even though it is new", ErrInvalidChainStateTransition)
-		}
-		return IsIssuerOnOutputUnlocked(a, semValCtx.WorkingSet.UnlockedIdents)
+		err = a.genesisValid(semValCtx)
 	case ChainTransitionTypeStateChange:
-		nextState, is := next.(*AliasOutput)
-		if !is {
-			return fmt.Errorf("%w: AliasOutput can only state transition to another alias output", ErrInvalidChainStateTransition)
-		}
-		if !a.ImmutableBlocks.Equal(nextState.ImmutableBlocks) {
-			return fmt.Errorf("%w: old state %s, next state %s", ErrInvalidChainStateTransition, a.ImmutableBlocks, nextState.ImmutableBlocks)
-		}
-		if a.StateIndex == nextState.StateIndex {
-			return a.GovernanceSTVF(nextState, semValCtx)
-		}
-		return a.StateSTVF(nextState, semValCtx)
+		err = a.stateChangeValid(semValCtx, next)
 	case ChainTransitionTypeDestroy:
 		return nil
 	default:
 		panic("unknown chain transition type in AliasOutput")
 	}
+	if err != nil {
+		return &ChainTransitionError{Inner: err, Msg: fmt.Sprintf("alias %s", a.AliasID)}
+	}
+	return nil
+}
+
+func (a *AliasOutput) genesisValid(semValCtx *SemanticValidationContext) error {
+	if !a.AliasID.Empty() {
+		return fmt.Errorf("AliasOutput's ID is not zeroed even though it is new")
+	}
+	return IsIssuerOnOutputUnlocked(a, semValCtx.WorkingSet.UnlockedIdents)
+}
+
+func (a *AliasOutput) stateChangeValid(semValCtx *SemanticValidationContext, next ChainConstrainedOutput) error {
+	nextState, is := next.(*AliasOutput)
+	if !is {
+		return fmt.Errorf("can only state transition to another alias output")
+	}
+	if !a.ImmutableBlocks.Equal(nextState.ImmutableBlocks) {
+		return fmt.Errorf("old state %s, next state %s", a.ImmutableBlocks, nextState.ImmutableBlocks)
+	}
+	if a.StateIndex == nextState.StateIndex {
+		return a.GovernanceSTVF(nextState, semValCtx)
+	}
+	return a.StateSTVF(nextState, semValCtx)
 }
 
 func (a *AliasOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
