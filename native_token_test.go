@@ -65,12 +65,13 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 					},
 				},
 				&iotago.FoundryOutput{
-					Amount:        1,
-					NativeTokens:  tpkg.RandSortNativeTokens(5),
-					MintedTokens:  tpkg.RandUint256(),
-					MeltedTokens:  tpkg.RandUint256(),
-					MaximumSupply: tpkg.RandUint256(),
-					TokenScheme:   &iotago.SimpleTokenScheme{},
+					Amount:       1,
+					NativeTokens: tpkg.RandSortNativeTokens(5),
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  tpkg.RandUint256(),
+						MeltedTokens:  tpkg.RandUint256(),
+						MaximumSupply: tpkg.RandUint256(),
+					},
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
@@ -105,12 +106,13 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 					},
 				},
 				&iotago.FoundryOutput{
-					Amount:        1,
-					NativeTokens:  notSortedNativeTokens(),
-					MintedTokens:  tpkg.RandUint256(),
-					MeltedTokens:  tpkg.RandUint256(),
-					MaximumSupply: tpkg.RandUint256(),
-					TokenScheme:   &iotago.SimpleTokenScheme{},
+					Amount:       1,
+					NativeTokens: notSortedNativeTokens(),
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  tpkg.RandUint256(),
+						MeltedTokens:  tpkg.RandUint256(),
+						MaximumSupply: tpkg.RandUint256(),
+					},
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
@@ -145,12 +147,13 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 					},
 				},
 				&iotago.FoundryOutput{
-					Amount:        1,
-					NativeTokens:  dupedNativeTokens(),
-					MintedTokens:  tpkg.RandUint256(),
-					MeltedTokens:  tpkg.RandUint256(),
-					MaximumSupply: tpkg.RandUint256(),
-					TokenScheme:   &iotago.SimpleTokenScheme{},
+					Amount:       1,
+					NativeTokens: dupedNativeTokens(),
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  tpkg.RandUint256(),
+						MeltedTokens:  tpkg.RandUint256(),
+						MaximumSupply: tpkg.RandUint256(),
+					},
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},

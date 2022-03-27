@@ -65,14 +65,15 @@ func TestOutputsDeSerialize(t *testing.T) {
 		{
 			name: "ok - FoundryOutput",
 			source: &iotago.FoundryOutput{
-				Amount:        1337,
-				NativeTokens:  tpkg.RandSortNativeTokens(2),
-				SerialNumber:  0,
-				TokenTag:      tpkg.Rand12ByteArray(),
-				MintedTokens:  new(big.Int).SetUint64(100),
-				MeltedTokens:  big.NewInt(50),
-				MaximumSupply: new(big.Int).SetUint64(1000),
-				TokenScheme:   &iotago.SimpleTokenScheme{},
+				Amount:       1337,
+				NativeTokens: tpkg.RandSortNativeTokens(2),
+				SerialNumber: 0,
+				TokenTag:     tpkg.Rand12ByteArray(),
+				TokenScheme: &iotago.SimpleTokenScheme{
+					MintedTokens:  new(big.Int).SetUint64(100),
+					MeltedTokens:  big.NewInt(50),
+					MaximumSupply: new(big.Int).SetUint64(1000),
+				},
 				Conditions: iotago.UnlockConditions{
 					&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
 				},
@@ -502,14 +503,15 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 			name: "ok",
 			outputs: iotago.Outputs{
 				&iotago.FoundryOutput{
-					Amount:        1337,
-					NativeTokens:  nil,
-					SerialNumber:  5,
-					TokenTag:      tpkg.Rand12ByteArray(),
-					MintedTokens:  new(big.Int).SetUint64(5),
-					MeltedTokens:  big.NewInt(2),
-					MaximumSupply: new(big.Int).SetUint64(10),
-					TokenScheme:   &iotago.SimpleTokenScheme{},
+					Amount:       1337,
+					NativeTokens: nil,
+					SerialNumber: 5,
+					TokenTag:     tpkg.Rand12ByteArray(),
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  new(big.Int).SetUint64(5),
+						MeltedTokens:  big.NewInt(2),
+						MaximumSupply: new(big.Int).SetUint64(10),
+					},
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
@@ -522,14 +524,15 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 			name: "ok - minted and max supply same",
 			outputs: iotago.Outputs{
 				&iotago.FoundryOutput{
-					Amount:        1337,
-					NativeTokens:  nil,
-					SerialNumber:  5,
-					TokenTag:      tpkg.Rand12ByteArray(),
-					MintedTokens:  new(big.Int).SetUint64(10),
-					MeltedTokens:  big.NewInt(0),
-					MaximumSupply: new(big.Int).SetUint64(10),
-					TokenScheme:   &iotago.SimpleTokenScheme{},
+					Amount:       1337,
+					NativeTokens: nil,
+					SerialNumber: 5,
+					TokenTag:     tpkg.Rand12ByteArray(),
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  new(big.Int).SetUint64(10),
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: new(big.Int).SetUint64(10),
+					},
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
@@ -542,61 +545,64 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 			name: "fail - invalid maximum supply",
 			outputs: iotago.Outputs{
 				&iotago.FoundryOutput{
-					Amount:        1337,
-					NativeTokens:  nil,
-					SerialNumber:  5,
-					TokenTag:      tpkg.Rand12ByteArray(),
-					MintedTokens:  new(big.Int).SetUint64(5),
-					MeltedTokens:  big.NewInt(0),
-					MaximumSupply: new(big.Int).SetUint64(0),
-					TokenScheme:   &iotago.SimpleTokenScheme{},
+					Amount:       1337,
+					NativeTokens: nil,
+					SerialNumber: 5,
+					TokenTag:     tpkg.Rand12ByteArray(),
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  new(big.Int).SetUint64(5),
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: new(big.Int).SetUint64(0),
+					},
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 					Blocks: nil,
 				},
 			},
-			wantErr: iotago.ErrFoundryOutputInvalidMaximumSupply,
+			wantErr: iotago.ErrSimpleTokenSchemeInvalidMaximumSupply,
 		},
 		{
 			name: "fail - minted less than melted",
 			outputs: iotago.Outputs{
 				&iotago.FoundryOutput{
-					Amount:        1337,
-					NativeTokens:  nil,
-					SerialNumber:  5,
-					TokenTag:      tpkg.Rand12ByteArray(),
-					MintedTokens:  big.NewInt(5),
-					MeltedTokens:  big.NewInt(10),
-					MaximumSupply: new(big.Int).SetUint64(100),
-					TokenScheme:   &iotago.SimpleTokenScheme{},
+					Amount:       1337,
+					NativeTokens: nil,
+					SerialNumber: 5,
+					TokenTag:     tpkg.Rand12ByteArray(),
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(5),
+						MeltedTokens:  big.NewInt(10),
+						MaximumSupply: new(big.Int).SetUint64(100),
+					},
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 					Blocks: nil,
 				},
 			},
-			wantErr: iotago.ErrFoundryOutputInvalidMintedMeltedTokens,
+			wantErr: iotago.ErrSimpleTokenSchemeInvalidMintedMeltedTokens,
 		},
 		{
 			name: "fail - minted melted delta is bigger than maximum supply",
 			outputs: iotago.Outputs{
 				&iotago.FoundryOutput{
-					Amount:        1337,
-					NativeTokens:  nil,
-					SerialNumber:  5,
-					TokenTag:      tpkg.Rand12ByteArray(),
-					MintedTokens:  big.NewInt(50),
-					MeltedTokens:  big.NewInt(20),
-					MaximumSupply: new(big.Int).SetUint64(10),
-					TokenScheme:   &iotago.SimpleTokenScheme{},
+					Amount:       1337,
+					NativeTokens: nil,
+					SerialNumber: 5,
+					TokenTag:     tpkg.Rand12ByteArray(),
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(50),
+						MeltedTokens:  big.NewInt(20),
+						MaximumSupply: new(big.Int).SetUint64(10),
+					},
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 					Blocks: nil,
 				},
 			},
-			wantErr: iotago.ErrFoundryOutputInvalidMintedMeltedTokens,
+			wantErr: iotago.ErrSimpleTokenSchemeInvalidMintedMeltedTokens,
 		},
 	}
 	valFunc := iotago.OutputsSyntacticalFoundry()

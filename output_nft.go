@@ -216,26 +216,39 @@ func (n *NFTOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64
 }
 
 func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
+	var err error
 	switch transType {
 	case ChainTransitionTypeGenesis:
-		if !n.NFTID.Empty() {
-			return fmt.Errorf("%w: NFTOutput's ID is not zeroed even though it is new", ErrInvalidChainStateTransition)
-		}
-		return IsIssuerOnOutputUnlocked(n, semValCtx.WorkingSet.UnlockedIdents)
+		err = n.genesisValid(semValCtx)
 	case ChainTransitionTypeStateChange:
-		nextState, is := next.(*NFTOutput)
-		if !is {
-			return fmt.Errorf("%w: NFTOutput can only state transition to another NFTOutput", ErrInvalidChainStateTransition)
-		}
-		if !n.ImmutableBlocks.Equal(nextState.ImmutableBlocks) {
-			return fmt.Errorf("%w: old state %s, next state %s", ErrInvalidChainStateTransition, n.ImmutableBlocks, nextState.ImmutableBlocks)
-		}
-		return nil
+		err = n.stateChangeValid(next)
 	case ChainTransitionTypeDestroy:
 		return nil
 	default:
 		panic("unknown chain transition type in NFTOutput")
 	}
+	if err != nil {
+		return &ChainTransitionError{Inner: err, Msg: fmt.Sprintf("nft %s", n.NFTID)}
+	}
+	return nil
+}
+
+func (n *NFTOutput) genesisValid(semValCtx *SemanticValidationContext) error {
+	if !n.NFTID.Empty() {
+		return fmt.Errorf("NFTOutput's ID is not zeroed even though it is new")
+	}
+	return IsIssuerOnOutputUnlocked(n, semValCtx.WorkingSet.UnlockedIdents)
+}
+
+func (n *NFTOutput) stateChangeValid(next ChainConstrainedOutput) error {
+	nextState, is := next.(*NFTOutput)
+	if !is {
+		return fmt.Errorf("NFTOutput can only state transition to another NFTOutput")
+	}
+	if !n.ImmutableBlocks.Equal(nextState.ImmutableBlocks) {
+		return fmt.Errorf("old state %s, next state %s", n.ImmutableBlocks, nextState.ImmutableBlocks)
+	}
+	return nil
 }
 
 func (n *NFTOutput) Chain() ChainID {

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"golang.org/x/crypto/blake2b"
 )
@@ -199,11 +199,31 @@ var (
 	ErrChainMissing = errors.New("chain missing")
 	// ErrNonUniqueChainConstrainedOutputs gets returned when multiple ChainConstrainedOutputs(s) with the same ChainID exist within sets.
 	ErrNonUniqueChainConstrainedOutputs = errors.New("non unique chain constrained outputs")
-	// ErrInvalidChainStateTransition gets returned when a state transition validation fails for a ChainConstrainedOutput.
-	ErrInvalidChainStateTransition = errors.New("invalid chain state transition")
 	// ErrTypeIsNotSupportedOutput gets returned when a serializable was found to not be a supported Output.
 	ErrTypeIsNotSupportedOutput = errors.New("serializable is not a supported output")
 )
+
+// ChainTransitionError gets returned when a state transition validation fails for a ChainConstrainedOutput.
+type ChainTransitionError struct {
+	Inner error
+	Msg   string
+}
+
+func (i *ChainTransitionError) Error() string {
+	var s strings.Builder
+	s.WriteString("invalid chain transition")
+	if i.Inner != nil {
+		s.WriteString(fmt.Sprintf("; inner err: %s", i.Inner))
+	}
+	if len(i.Msg) > 0 {
+		s.WriteString(fmt.Sprintf("; %s", i.Msg))
+	}
+	return s.String()
+}
+
+func (i *ChainTransitionError) Unwrap() error {
+	return i.Inner
+}
 
 // Outputs is a slice of Output.
 type Outputs []Output
@@ -825,19 +845,8 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 			return nil
 		}
 
-		if r := foundryOutput.MaximumSupply.Cmp(common.Big0); r != 1 {
-			return fmt.Errorf("%w: output %d, less than equal zero", ErrFoundryOutputInvalidMaximumSupply, index)
-		}
-
-		// minted - melted > 0: foundry can never have melted more than minted
-		mintedMeltedDelta := big.NewInt(0).Sub(foundryOutput.MintedTokens, foundryOutput.MeltedTokens)
-		if r := mintedMeltedDelta.Cmp(common.Big0); r == -1 {
-			return fmt.Errorf("%w: output %d, minted/melted delta less than zero: %s", ErrFoundryOutputInvalidMintedMeltedTokens, index, mintedMeltedDelta)
-		}
-
-		// minted - melted <= max supply: can never have minted more than max supply
-		if r := mintedMeltedDelta.Cmp(foundryOutput.MaximumSupply); r == 1 {
-			return fmt.Errorf("%w: output %d, minted/melted delta more than maximum supply: %s (delta) vs. %s (max supply)", ErrFoundryOutputInvalidMintedMeltedTokens, index, mintedMeltedDelta, foundryOutput.MaximumSupply)
+		if err := foundryOutput.TokenScheme.SyntacticalValidation(); err != nil {
+			return fmt.Errorf("%w: output %d", err, index)
 		}
 
 		return nil
