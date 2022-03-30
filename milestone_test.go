@@ -37,11 +37,10 @@ func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
 		Timestamp:            13371337,
 		Parents:              tpkg.SortedRand32BytArray(2),
 		InclusionMerkleProof: tpkg.Rand32ByteArray(),
-		PublicKeys:           tpkg.SortedRand32BytArray(3),
-		Signatures: []iotago.MilestoneSignature{
-			tpkg.Rand64ByteArray(),
-			tpkg.Rand64ByteArray(),
-			tpkg.Rand64ByteArray(),
+		Signatures: iotago.Signatures{
+			tpkg.RandEd25519Signature(),
+			tpkg.RandEd25519Signature(),
+			tpkg.RandEd25519Signature(),
 		},
 	}
 
@@ -58,6 +57,7 @@ func TestMilestoneSigning(t *testing.T) {
 	type test struct {
 		name            string
 		ms              *iotago.Milestone
+		pubKeys         []iotago.MilestonePublicKey
 		signer          iotago.MilestoneSigningFunc
 		minSigThreshold int
 		pubKeySet       iotago.MilestonePublicKeySet
@@ -82,7 +82,6 @@ func TestMilestoneSigning(t *testing.T) {
 				Parents:              tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 				Index:                1000,
 				Timestamp:            uint64(time.Now().Unix()),
-				PublicKeys:           pubKeys,
 				InclusionMerkleProof: tpkg.Rand32ByteArray(),
 			}
 
@@ -93,6 +92,7 @@ func TestMilestoneSigning(t *testing.T) {
 					pubKey1: prvKey,
 				}),
 				minSigThreshold: 1,
+				pubKeys:         pubKeys,
 				pubKeySet:       map[iotago.MilestonePublicKey]struct{}{pubKey1: {}},
 				signingErr:      nil,
 				verificationErr: nil,
@@ -115,7 +115,6 @@ func TestMilestoneSigning(t *testing.T) {
 				Parents:              tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 				Index:                1000,
 				Timestamp:            uint64(time.Now().Unix()),
-				PublicKeys:           pubKeys,
 				InclusionMerkleProof: tpkg.Rand32ByteArray(),
 			}
 
@@ -128,6 +127,7 @@ func TestMilestoneSigning(t *testing.T) {
 					pubKey3: prvKey3,
 				}),
 				minSigThreshold: 2,
+				pubKeys:         pubKeys,
 				pubKeySet:       map[iotago.MilestonePublicKey]struct{}{pubKey1: {}, pubKey2: {}, pubKey3: {}},
 				signingErr:      nil,
 				verificationErr: nil,
@@ -143,7 +143,6 @@ func TestMilestoneSigning(t *testing.T) {
 				Parents:              tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 				Index:                1000,
 				Timestamp:            uint64(time.Now().Unix()),
-				PublicKeys:           pubKeys,
 				InclusionMerkleProof: tpkg.Rand32ByteArray(),
 			}
 
@@ -155,6 +154,7 @@ func TestMilestoneSigning(t *testing.T) {
 					pubKey1: tpkg.RandEd25519PrivateKey(),
 				}),
 				minSigThreshold: 1,
+				pubKeys:         pubKeys,
 				pubKeySet:       map[iotago.MilestonePublicKey]struct{}{pubKey1: {}},
 				signingErr:      nil,
 				verificationErr: iotago.ErrMilestoneInvalidSignature,
@@ -162,18 +162,18 @@ func TestMilestoneSigning(t *testing.T) {
 		}(),
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			err := test.ms.Sign(test.signer)
-			if test.signingErr != nil {
-				assert.True(t, errors.Is(err, test.signingErr))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.ms.Sign(tt.pubKeys, tt.signer)
+			if tt.signingErr != nil {
+				assert.True(t, errors.Is(err, tt.signingErr))
 				return
 			}
 			assert.NoError(t, err)
 
-			err = test.ms.VerifySignatures(test.minSigThreshold, test.pubKeySet)
-			if test.verificationErr != nil {
-				assert.True(t, errors.Is(err, test.verificationErr))
+			err = tt.ms.VerifySignatures(tt.minSigThreshold, tt.pubKeySet)
+			if tt.verificationErr != nil {
+				assert.True(t, errors.Is(err, tt.verificationErr))
 				return
 			}
 			assert.NoError(t, err)
@@ -185,9 +185,8 @@ func TestNewMilestone(t *testing.T) {
 	parents := tpkg.SortedRand32BytArray(1 + rand.Intn(7))
 	inclusionMerkleProof := tpkg.Rand32ByteArray()
 	const msIndex, timestamp = 1000, 133713371337
-	unsortedPubKeys := []iotago.MilestonePublicKey{{3}, {2}, {1}, {5}}
 
-	ms, err := iotago.NewMilestone(msIndex, timestamp, parents, inclusionMerkleProof, unsortedPubKeys)
+	ms, err := iotago.NewMilestone(msIndex, timestamp, parents, inclusionMerkleProof)
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, &iotago.Milestone{
@@ -195,7 +194,6 @@ func TestNewMilestone(t *testing.T) {
 		Timestamp:            timestamp,
 		Parents:              parents,
 		InclusionMerkleProof: inclusionMerkleProof,
-		PublicKeys:           []iotago.MilestonePublicKey{{1}, {2}, {3}, {5}},
 		Signatures:           nil,
 	}, ms)
 }

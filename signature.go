@@ -29,7 +29,38 @@ var (
 	sigNames = [SignatureEd25519 + 1]string{"Ed25519Signature"}
 	// ErrTypeIsNotSupportedSignature gets returned when a serializable was found to not be a supported Signature.
 	ErrTypeIsNotSupportedSignature = errors.New("serializable is not a supported signature")
+	allSignatureTypeSet            = SignatureTypeSet{
+		SignatureEd25519: struct{}{},
+	}
 )
+
+// Signatures is a slice of Signature(s).
+type Signatures []Signature
+
+func (sigs Signatures) ToSerializables() serializer.Serializables {
+	seris := make(serializer.Serializables, len(sigs))
+	for i, x := range sigs {
+		seris[i] = x.(serializer.Serializable)
+	}
+	return seris
+}
+
+func (sigs *Signatures) FromSerializables(seris serializer.Serializables) {
+	*sigs = make(Signatures, len(seris))
+	for i, seri := range seris {
+		(*sigs)[i] = seri.(Signature)
+	}
+}
+
+func signaturesFromJSONRawMsg(jSignatures []*json.RawMessage) (Signatures, error) {
+	sigs, err := jsonRawMsgsToSerializables(jSignatures, jsonSignatureSelector)
+	if err != nil {
+		return nil, err
+	}
+	var signatures Signatures
+	signatures.FromSerializables(sigs)
+	return signatures, nil
+}
 
 // Signature is a signature.
 type Signature interface {
@@ -37,6 +68,38 @@ type Signature interface {
 
 	// Type returns the type of the Signature.
 	Type() SignatureType
+}
+
+// SignatureTypeSet is a set of SignatureType.
+type SignatureTypeSet map[SignatureType]struct{}
+
+// checks whether the given Serializable is a Signature and also supported SignatureType.
+func sigWriteGuard(supportedSigs SignatureTypeSet) serializer.SerializableWriteGuardFunc {
+	return func(seri serializer.Serializable) error {
+		if seri == nil {
+			return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedSignature)
+		}
+
+		sig, is := seri.(Signature)
+		if !is {
+			return fmt.Errorf("%w: because not signature", ErrTypeIsNotSupportedSignature)
+		}
+
+		if _, supported := supportedSigs[sig.Type()]; !supported {
+			return fmt.Errorf("%w: because not in set %v", ErrTypeIsNotSupportedSignature, supported)
+		}
+
+		return nil
+	}
+}
+
+func sigReadGuard(supportedSigs SignatureTypeSet) serializer.SerializableReadGuardFunc {
+	return func(ty uint32) (serializer.Serializable, error) {
+		if _, supported := supportedSigs[SignatureType(ty)]; !supported {
+			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedSignature, supportedSigs, ty)
+		}
+		return SignatureSelector(ty)
+	}
 }
 
 // SignatureSelector implements SerializableSelectorFunc for signature types.
