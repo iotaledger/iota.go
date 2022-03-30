@@ -1,6 +1,7 @@
 package tpkg
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"encoding/binary"
 	"fmt"
@@ -267,32 +268,19 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 			copy(b[:], inclusionMerkleProof)
 			return b
 		}(),
-		PublicKeys: func() [][iotago.MilestonePublicKeyLength]byte {
-			msPubKeys := make([][iotago.MilestonePublicKeyLength]byte, sigsCount)
+		Signatures: func() iotago.Signatures {
+			msSigs := make(iotago.Signatures, sigsCount)
 			for i := 0; i < sigsCount; i++ {
-				msPubKeys[i] = Rand32ByteArray()
-				// ensure lexical ordering
-				msPubKeys[i][0] = byte(i)
+				msSigs[i] = RandEd25519Signature()
 			}
-			return msPubKeys
-		}(),
-		Signatures: func() [][iotago.MilestoneSignatureLength]byte {
-			msSigs := make([][iotago.MilestoneSignatureLength]byte, sigsCount)
-			for i := 0; i < sigsCount; i++ {
-				msSigs[i] = RandMilestoneSig()
-			}
+			sort.Slice(msSigs, func(i, j int) bool {
+				return bytes.Compare(msSigs[i].(*iotago.Ed25519Signature).PublicKey[:], msSigs[j].(*iotago.Ed25519Signature).PublicKey[:]) == -1
+			})
 			return msSigs
 		}(),
 	}
 
 	return msPayload
-}
-
-// RandMilestoneSig returns a random milestone signature.
-func RandMilestoneSig() [iotago.MilestoneSignatureLength]byte {
-	var sig [iotago.MilestoneSignatureLength]byte
-	copy(sig[:], RandBytes(iotago.MilestoneSignatureLength))
-	return sig
 }
 
 // RandTaggedData returns a random tagged data payload.

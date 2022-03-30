@@ -35,6 +35,10 @@ func (e *Ed25519Signature) Type() SignatureType {
 	return SignatureEd25519
 }
 
+func (e *Ed25519Signature) String() string {
+	return fmt.Sprintf("publick key: %s, signature: %s", EncodeHex(e.PublicKey[:]), EncodeHex(e.Signature[:]))
+}
+
 // Valid verifies whether given the message and Ed25519 address, the signature is valid.
 func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	// an address is the Blake2b 256 hash of the public key

@@ -14,10 +14,9 @@ type PayloadType uint32
 const (
 	// Deprecated payload types
 	// PayloadTransactionTIP7 = 0
+	// PayloadMilestoneTIP8 = 1
 	// PayloadIndexationTIP6 = 2
 
-	// PayloadMilestone denotes a Milestone.
-	PayloadMilestone PayloadType = 1
 	// PayloadReceipt denotes a Receipt.
 	PayloadReceipt PayloadType = 3
 	// PayloadTreasuryTransaction denotes a TreasuryTransaction.
@@ -26,6 +25,8 @@ const (
 	PayloadTaggedData PayloadType = 5
 	// PayloadTransaction denotes a Transaction.
 	PayloadTransaction PayloadType = 6
+	// PayloadMilestone denotes a Milestone.
+	PayloadMilestone PayloadType = 7
 )
 
 func (payloadType PayloadType) String() string {
@@ -36,14 +37,15 @@ func (payloadType PayloadType) String() string {
 }
 
 var (
-	payloadNames = [PayloadTransaction + 1]string{
+	payloadNames = [PayloadMilestone + 1]string{
 		"Deprecated-TransactionTIP7",
-		"Milestone",
-		"Deprecated-Indexation",
+		"Deprecated-MilestoneTIP8",
+		"Deprecated-IndexationTIP6",
 		"Receipt",
 		"TreasuryTransaction",
 		"TaggedData",
 		"Transaction",
+		"Milestone",
 	}
 )
 
