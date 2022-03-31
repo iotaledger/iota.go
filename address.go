@@ -52,7 +52,9 @@ type NetworkPrefix string
 // Network prefixes.
 const (
 	PrefixMainnet NetworkPrefix = "iota"
-	PrefixTestnet NetworkPrefix = "atoi"
+	PrefixDevnet  NetworkPrefix = "atoi"
+	PrefixShimmer NetworkPrefix = "smr"
+	PrefixTestnet NetworkPrefix = "rms"
 )
 
 // Address describes a general address.
