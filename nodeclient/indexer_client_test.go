@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/nodeclient"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestOutputsQuery_Build(t *testing.T) {
-	query := &nodeclient.OutputsQuery{
+	query := &nodeclient.BasicOutputsQuery{
 		IndexerTimelockParas: nodeclient.IndexerTimelockParas{
 			HasTimelockCondition:      true,
 			TimelockedBefore:          1,
@@ -159,7 +159,7 @@ func TestIndexerClient_Outputs(t *testing.T) {
 	indexer, err := client.Indexer(context.TODO())
 	require.NoError(t, err)
 
-	resultSet, err := indexer.Outputs(context.TODO(), &nodeclient.OutputsQuery{Tag: "some-tag"})
+	resultSet, err := indexer.Outputs(context.TODO(), &nodeclient.BasicOutputsQuery{Tag: "some-tag"})
 	require.NoError(t, err)
 
 	var runs int
