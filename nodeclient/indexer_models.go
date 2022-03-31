@@ -1,7 +1,7 @@
 package nodeclient
 
 import (
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/pasztorpisti/qs"
 )
 
@@ -71,8 +71,8 @@ type IndexerStorageDepositParas struct {
 	StorageDepositReturnAddressBech32 string `qs:"storageDepositAddress,omitempty"`
 }
 
-// OutputsQuery defines parameters for an outputs query.
-type OutputsQuery struct {
+// BasicOutputsQuery defines parameters for an basic outputs query.
+type BasicOutputsQuery struct {
 	IndexerCursorParas
 	IndexerTimelockParas
 	IndexerExpirationParas
@@ -87,15 +87,15 @@ type OutputsQuery struct {
 	Tag string `qs:"tag,omitempty"`
 }
 
-func (query *OutputsQuery) OutputType() iotago.OutputType {
+func (query *BasicOutputsQuery) OutputType() iotago.OutputType {
 	return iotago.OutputBasic
 }
 
-func (query *OutputsQuery) SetOffset(cursor *string) {
+func (query *BasicOutputsQuery) SetOffset(cursor *string) {
 	query.Cursor = cursor
 }
 
-func (query *OutputsQuery) URLParas() (string, error) {
+func (query *BasicOutputsQuery) URLParas() (string, error) {
 	return qs.Marshal(query)
 }
 
