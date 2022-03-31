@@ -332,10 +332,12 @@ func (u *TransactionEssence) syntacticallyValidate(rentStruct *RentStructure) er
 	}
 
 	if err := ValidateOutputs(u.Outputs,
-		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalDepositAmount(rentStruct),
+		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokensCount(),
 		OutputsSyntacticalFoundry(),
+		OutputsSyntacticalAlias(),
+		OutputsSyntacticalNFT(),
 	); err != nil {
 		return err
 	}

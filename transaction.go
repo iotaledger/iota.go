@@ -202,18 +202,9 @@ func txDeSeriValidation(tx *Transaction, deSeriCtx interface{}) serializer.ErrPr
 }
 
 // syntacticallyValidate syntactically validates the Transaction.
-func (t *Transaction) syntacticallyValidate(readBytes []byte, rentStruct *RentStructure) error {
+func (t *Transaction) syntacticallyValidate(_ []byte, rentStruct *RentStructure) error {
 	if err := t.Essence.syntacticallyValidate(rentStruct); err != nil {
 		return fmt.Errorf("transaction essence is invalid: %w", err)
-	}
-	h := blake2b.Sum256(readBytes)
-	txID := &TransactionID{}
-	copy(txID[:], h[:])
-	if err := ValidateOutputs(t.Essence.Outputs,
-		OutputsSyntacticalAlias(txID),
-		OutputsSyntacticalNFT(txID),
-	); err != nil {
-		return err
 	}
 
 	if err := ValidateUnlockBlocks(t.UnlockBlocks,

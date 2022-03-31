@@ -800,14 +800,13 @@ func OutputsSyntacticalSenderFeatureBlockRequirement() OutputsSyntacticalValidat
 // OutputsSyntacticalAlias returns an OutputsSyntacticalValidationFunc which checks that AliasOutput(s)':
 //	- StateIndex/FoundryCounter are zero if the AliasID is zeroed
 //	- StateController and GovernanceController must be different from AliasAddress derived from AliasID
-func OutputsSyntacticalAlias(txID *TransactionID) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalAlias() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		aliasOutput, is := output.(*AliasOutput)
 		if !is {
 			return nil
 		}
 
-		var outputAliasAddr AliasAddress
 		if aliasOutput.AliasEmpty() {
 			switch {
 			case aliasOutput.StateIndex != 0:
@@ -815,15 +814,11 @@ func OutputsSyntacticalAlias(txID *TransactionID) OutputsSyntacticalValidationFu
 			case aliasOutput.FoundryCounter != 0:
 				return fmt.Errorf("%w: output %d, foundry counter not zero", ErrAliasOutputNonEmptyState, index)
 			}
-
-			// build address using the transaction ID
-			outputAliasAddr = AliasAddressFromOutputID(OutputIDFromTransactionIDAndIndex(*txID, uint16(index)))
+			// can not be cyclic when the AliasOutput is new
+			return nil
 		}
 
-		if outputAliasAddr == emptyAliasAddress {
-			copy(outputAliasAddr[:], aliasOutput.AliasID[:])
-		}
-
+		outputAliasAddr := AliasAddress(aliasOutput.AliasID)
 		if stateCtrlAddr, ok := aliasOutput.StateController().(*AliasAddress); ok && outputAliasAddr == *stateCtrlAddr {
 			return fmt.Errorf("%w: output %d, AliasID=StateController", ErrAliasOutputCyclicAddress, index)
 		}
@@ -855,24 +850,20 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 
 // OutputsSyntacticalNFT returns an OutputsSyntacticalValidationFunc which checks that NFTOutput(s)':
 //	- Address must be different from NFTAddress derived from NFTID
-func OutputsSyntacticalNFT(txID *TransactionID) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalNFT() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		nftOutput, is := output.(*NFTOutput)
 		if !is {
 			return nil
 		}
 
-		var outputNFTAddr NFTAddress
-		if nftOutput.NFTID == emptyNFTID {
-			outputNFTAddr = NFTAddressFromOutputID(OutputIDFromTransactionIDAndIndex(*txID, uint16(index)))
+		if nftOutput.NFTID.Empty() {
+			// can not be cyclic when the NFTOutput is new
+			return nil
 		}
 
-		if outputNFTAddr == emptyNFTAddress {
-			copy(outputNFTAddr[:], nftOutput.NFTID[:])
-		}
-
-		if addr, ok := nftOutput.Ident().(*NFTAddress); ok && outputNFTAddr == *addr {
-			return fmt.Errorf("%w: output %d, AliasID=StateController", ErrNFTOutputCyclicAddress, index)
+		if addr, ok := nftOutput.Ident().(*NFTAddress); ok && NFTAddress(nftOutput.NFTID) == *addr {
+			return fmt.Errorf("%w: output %d", ErrNFTOutputCyclicAddress, index)
 		}
 
 		return nil
