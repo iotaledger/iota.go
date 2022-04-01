@@ -203,10 +203,11 @@ func TestTransactionSemanticValidation(t *testing.T) {
 			)
 
 			var (
-				foundry1Ident3TokenTag = tpkg.Rand12ByteArray()
-				foundry2Ident3TokenTag = tpkg.Rand12ByteArray()
-				foundry3Ident3TokenTag = tpkg.Rand12ByteArray()
-				foundry4Ident3TokenTag = tpkg.Rand12ByteArray()
+				foundry1Ident3TokenTag  = tpkg.Rand12ByteArray()
+				foundry2Ident3TokenTag  = tpkg.Rand12ByteArray()
+				foundry3Ident3TokenTag  = tpkg.Rand12ByteArray()
+				foundry4Ident3TokenTag  = tpkg.Rand12ByteArray()
+				newFoundryIdentTokenTag = tpkg.Rand12ByteArray()
 			)
 
 			var (
@@ -412,6 +413,29 @@ func TestTransactionSemanticValidation(t *testing.T) {
 			foundry2Ident3NativeTokenID := inputs[inputIDs[10]].(*iotago.FoundryOutput).MustNativeTokenID()
 			foundry4Ident3NativeTokenID := inputs[inputIDs[12]].(*iotago.FoundryOutput).MustNativeTokenID()
 
+			newFoundryWithInitialSupply := &iotago.FoundryOutput{
+				Amount:       defaultAmount,
+				NativeTokens: nil,
+				SerialNumber: 6,
+				TokenTag:     newFoundryIdentTokenTag,
+				TokenScheme: &iotago.SimpleTokenScheme{
+					MintedTokens:  big.NewInt(100),
+					MeltedTokens:  big.NewInt(0),
+					MaximumSupply: new(big.Int).SetInt64(1000),
+				},
+				Conditions: iotago.UnlockConditions{
+					&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
+				},
+				Blocks: nil,
+			}
+			newFoundryNativeTokenID := newFoundryWithInitialSupply.MustNativeTokenID()
+			newFoundryWithInitialSupply.NativeTokens = iotago.NativeTokens{
+				{
+					ID:     newFoundryNativeTokenID,
+					Amount: big.NewInt(100),
+				},
+			}
+
 			inputs[inputIDs[10]].(*iotago.FoundryOutput).NativeTokens = iotago.NativeTokens{
 				{
 					ID:     foundry2Ident3NativeTokenID,
@@ -509,21 +533,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						Blocks: nil,
 					},
 					// new foundry
-					&iotago.FoundryOutput{
-						Amount:       defaultAmount,
-						NativeTokens: nil,
-						SerialNumber: 6,
-						TokenTag:     tpkg.Rand12ByteArray(),
-						TokenScheme: &iotago.SimpleTokenScheme{
-							MintedTokens:  big.NewInt(0),
-							MeltedTokens:  big.NewInt(0),
-							MaximumSupply: new(big.Int).SetInt64(1000),
-						},
-						Conditions: iotago.UnlockConditions{
-							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
-						},
-						Blocks: nil,
-					},
+					newFoundryWithInitialSupply,
 					&iotago.FoundryOutput{
 						Amount: defaultAmount,
 						NativeTokens: iotago.NativeTokens{
