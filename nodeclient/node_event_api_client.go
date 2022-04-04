@@ -345,7 +345,7 @@ func (eac *EventAPIClient) TransactionMessagesMetadata() (<-chan *MessageMetadat
 	return eac.subscribeToMessageMetadataTopic(NodeEventAPIMessagesTransaction)
 }
 
-// TransactionMessages returns a channel of messages containing transactions
+// TransactionMessages returns a channel of messages containing transactions.
 func (eac *EventAPIClient) TransactionMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	return eac.subscribeToMessageMetadataMessagesTopic(NodeEventAPIMessagesTransaction, deSeriParas)
 }
