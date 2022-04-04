@@ -35,6 +35,12 @@ const (
 
 	// NodeEventAPIOutputs is the name of the outputs event channel.
 	NodeEventAPIOutputs = "outputs/{outputId}"
+	// NodeEventAPINFTOutputs is the name of the NFT output event channel to retrieve NFT mutations by their ID.
+	NodeEventAPINFTOutputs = "outputs/nfts/{nftId}"
+	// NodeEventAPIAliasOutputs is the name of the Alias output event channel to retrieve Alias mutations by their ID.
+	NodeEventAPIAliasOutputs = "outputs/aliases/{aliasId}"
+	// NodeEventAPIFoundryOutputs is the name of the Foundry output event channel to retrieve Foundry mutations by their ID.
+	NodeEventAPIFoundryOutputs = "outputs/foundries/{foundryId}"
 	// NodeEventAPIOutputsByUnlockConditionAndAddress is the name of the outputs by unlock condition address event channel.
 	NodeEventAPIOutputsByUnlockConditionAndAddress = "outputs/unlock/{condition}/{address}"
 	// NodeEventAPISpentOutputsByUnlockConditionAndAddress is the name of the spent outputs by unlock condition address event channel.
@@ -278,6 +284,72 @@ func (eac *EventAPIClient) MessageMetadataChange(msgID iotago.MessageID) (<-chan
 		case <-eac.Ctx.Done():
 			return
 		case channel <- metadataRes:
+		}
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(eac.MQTTClient, topic)
+}
+
+// NFTOutputsByID returns a channel of newly created outputs to track the chain mutations of a given NFT.
+func (eac *EventAPIClient) NFTOutputsByID(nftID iotago.NFTID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
+	panicIfEventAPIClientInactive(eac)
+	channel := make(chan *OutputResponse)
+	topic := strings.Replace(NodeEventAPINFTOutputs, "{nftId}", nftID.String(), 1)
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+		res := &OutputResponse{}
+		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
+			sendErrOrDrop(eac.Errors, err)
+			return
+		}
+		select {
+		case <-eac.Ctx.Done():
+			return
+		case channel <- res:
+		}
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(eac.MQTTClient, topic)
+}
+
+// AliasOutputsByID returns a channel of newly created outputs to track the chain mutations of a given Alias.
+func (eac *EventAPIClient) AliasOutputsByID(aliasID iotago.AliasID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
+	panicIfEventAPIClientInactive(eac)
+	channel := make(chan *OutputResponse)
+	topic := strings.Replace(NodeEventAPIAliasOutputs, "{aliasId}", aliasID.String(), 1)
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+		res := &OutputResponse{}
+		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
+			sendErrOrDrop(eac.Errors, err)
+			return
+		}
+		select {
+		case <-eac.Ctx.Done():
+			return
+		case channel <- res:
+		}
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(eac.MQTTClient, topic)
+}
+
+// FoundryOutputsByID returns a channel of newly created outputs to track the chain mutations of a given Foundry.
+func (eac *EventAPIClient) FoundryOutputsByID(foundryID iotago.FoundryID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
+	panicIfEventAPIClientInactive(eac)
+	channel := make(chan *OutputResponse)
+	topic := strings.Replace(NodeEventAPIFoundryOutputs, "{foundryId}", foundryID.String(), 1)
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+		res := &OutputResponse{}
+		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
+			sendErrOrDrop(eac.Errors, err)
+			return
+		}
+		select {
+		case <-eac.Ctx.Done():
+			return
+		case channel <- res:
 		}
 	}); token.Wait() && token.Error() != nil {
 		return nil, newSubscriptionWithError(token.Error())
