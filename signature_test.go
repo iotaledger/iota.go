@@ -3,6 +3,7 @@ package iotago_test
 import (
 	"encoding/json"
 	"errors"
+	"github.com/iotaledger/hive.go/serializer/v2"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
