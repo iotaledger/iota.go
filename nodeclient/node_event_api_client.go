@@ -25,8 +25,18 @@ const (
 	NodeEventAPIMessages = "messages"
 	// NodeEventAPIMessagesReferenced is the name of the referenced messages metadata event channel.
 	NodeEventAPIMessagesReferenced = "messages/referenced"
-	// NodeEventAPIMessagesIndexation is the name of the indexed messages event channel.
-	NodeEventAPIMessagesIndexation = "messages/indexation/{index}"
+	// NodeEventAPIMessagesTransaction is the name of the transaction messages metadata event channel.
+	NodeEventAPIMessagesTransaction = "messages/transaction"
+	// NodeEventAPIMessagesTransactionTaggedData is the name of the transaction with tagged data messages metadata event channel.
+	NodeEventAPIMessagesTransactionTaggedData = "messages/transaction/taggedData"
+	// NodeEventAPIMessagesTransactionTaggedDataTag is the name of the transaction with tagged data with tag messages metadata event channel.
+	NodeEventAPIMessagesTransactionTaggedDataTag = "messages/transaction/taggedData/{tag}"
+	// NodeEventAPIMessagesMilestone is the name of the milestone messages metadata event channel.
+	NodeEventAPIMessagesMilestone = "messages/milestone"
+	// NodeEventAPIMessagesTaggedData is the name of the tagged data messages metadata event channel.
+	NodeEventAPIMessagesTaggedData = "messages/taggedData"
+	// NodeEventAPIMessagesTaggedDataTag is the name of the tagged data with tag messages metadata event channel.
+	NodeEventAPIMessagesTaggedDataTag = "messages/taggedData/{tag}"
 	// NodeEventAPIMessagesMetadata is the name of the message metadata event channel.
 	NodeEventAPIMessagesMetadata = "messages/{messageId}/metadata"
 
@@ -179,32 +189,30 @@ func (eac *EventAPIClient) Close() {
 	eac.MQTTClient.Disconnect(0)
 }
 
-// Messages returns a channel of newly received messages.
-func (eac *EventAPIClient) Messages() (<-chan *iotago.Message, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) subscribeToOutputsTopic(topic string) (<-chan *OutputResponse, *EventAPIClientSubscription) {
 	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *iotago.Message)
-	if token := eac.MQTTClient.Subscribe(NodeEventAPIMessages, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		msg := &iotago.Message{}
-		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModeNoValidation, nil); err != nil {
+	channel := make(chan *OutputResponse)
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+		res := &OutputResponse{}
+		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return
 		}
 		select {
 		case <-eac.Ctx.Done():
 			return
-		case channel <- msg:
+		case channel <- res:
 		}
 	}); token.Wait() && token.Error() != nil {
 		return nil, newSubscriptionWithError(token.Error())
 	}
-	return channel, newSubscription(eac.MQTTClient, NodeEventAPIMessages)
+	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
-// ReferencedMessagesMetadata returns a channel of message metadata of newly referenced messages.
-func (eac *EventAPIClient) ReferencedMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) subscribeToMessageMetadataTopic(topic string) (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
 	panicIfEventAPIClientInactive(eac)
 	channel := make(chan *MessageMetadataResponse)
-	if token := eac.MQTTClient.Subscribe(NodeEventAPIMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
 			sendErrOrDrop(eac.Errors, err)
@@ -218,14 +226,13 @@ func (eac *EventAPIClient) ReferencedMessagesMetadata() (<-chan *MessageMetadata
 	}); token.Wait() && token.Error() != nil {
 		return nil, newSubscriptionWithError(token.Error())
 	}
-	return channel, newSubscription(eac.MQTTClient, NodeEventAPIMessagesReferenced)
+	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
-// ReferencedMessages returns a channel of newly referenced messages.
-func (eac *EventAPIClient) ReferencedMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) subscribeToMessageMetadataMessagesTopic(topic string, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	panicIfEventAPIClientInactive(eac)
 	channel := make(chan *iotago.Message)
-	if token := eac.MQTTClient.Subscribe(NodeEventAPIMessagesReferenced, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		metadataRes := &MessageMetadataResponse{}
 		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
 			sendErrOrDrop(eac.Errors, err)
@@ -245,16 +252,15 @@ func (eac *EventAPIClient) ReferencedMessages(deSeriParas *iotago.DeSerializatio
 	}); token.Wait() && token.Error() != nil {
 		return nil, newSubscriptionWithError(token.Error())
 	}
-	return channel, newSubscription(eac.MQTTClient, NodeEventAPIMessagesReferenced)
+	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
-// MessagesWithIndex returns a channel of newly received messages with the given index.
-func (eac *EventAPIClient) MessagesWithIndex(index string) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) subscribeToMessagesTopic(topic string, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	panicIfEventAPIClientInactive(eac)
 	channel := make(chan *iotago.Message)
-	if token := eac.MQTTClient.Subscribe(strings.Replace(NodeEventAPIMessagesIndexation, "{index}", index, 1), 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &iotago.Message{}
-		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModeNoValidation, nil); err != nil {
+		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModeNoValidation, deSeriParas); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return
 		}
@@ -266,185 +272,186 @@ func (eac *EventAPIClient) MessagesWithIndex(index string) (<-chan *iotago.Messa
 	}); token.Wait() && token.Error() != nil {
 		return nil, newSubscriptionWithError(token.Error())
 	}
-	return channel, newSubscription(eac.MQTTClient, NodeEventAPIMessagesIndexation)
+	return channel, newSubscription(eac.MQTTClient, topic)
+}
+
+func (eac *EventAPIClient) subscribeToMilestonesTopic(topic string) (<-chan *MilestonePointer, *EventAPIClientSubscription) {
+	panicIfEventAPIClientInactive(eac)
+	channel := make(chan *MilestonePointer)
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+		msPointer := &MilestonePointer{}
+		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
+			sendErrOrDrop(eac.Errors, err)
+			return
+		}
+		select {
+		case <-eac.Ctx.Done():
+			return
+		case channel <- msPointer:
+		}
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(eac.MQTTClient, topic)
+}
+
+func (eac *EventAPIClient) subscribeToMilestoneMessagesTopic(topic string, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	panicIfEventAPIClientInactive(eac)
+	channel := make(chan *iotago.Message)
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+		msPointer := &MilestonePointer{}
+		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
+			sendErrOrDrop(eac.Errors, err)
+			return
+		}
+		res, err := eac.Client.MilestoneByIndex(context.Background(), msPointer.Index)
+		if err != nil {
+			sendErrOrDrop(eac.Errors, err)
+			return
+		}
+		msg, err := eac.Client.MessageByMessageID(context.Background(), iotago.MustMessageIDFromHexString(res.MessageID), deSeriParas)
+		if err != nil {
+			sendErrOrDrop(eac.Errors, err)
+			return
+		}
+		select {
+		case <-eac.Ctx.Done():
+			return
+		case channel <- msg:
+		}
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(eac.MQTTClient, topic)
+}
+
+// Messages returns a channel of newly received messages.
+func (eac *EventAPIClient) Messages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessagesTopic(NodeEventAPIMessages, deSeriParas)
+}
+
+// ReferencedMessagesMetadata returns a channel of message metadata of newly referenced messages.
+func (eac *EventAPIClient) ReferencedMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataTopic(NodeEventAPIMessagesReferenced)
+}
+
+// ReferencedMessages returns a channel of newly referenced messages.
+func (eac *EventAPIClient) ReferencedMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataMessagesTopic(NodeEventAPIMessagesReferenced, deSeriParas)
+}
+
+// TransactionMessagesMetadata returns a channel of message metadata of messages containing transactions.
+func (eac *EventAPIClient) TransactionMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataTopic(NodeEventAPIMessagesTransaction)
+}
+
+// TransactionMessages returns a channel of messages containing transactions.
+func (eac *EventAPIClient) TransactionMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataMessagesTopic(NodeEventAPIMessagesTransaction, deSeriParas)
+}
+
+// TransactionTaggedDataMessages returns a channel of messages containing transactions with tagged data.
+func (eac *EventAPIClient) TransactionTaggedDataMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataMessagesTopic(NodeEventAPIMessagesTransactionTaggedData, deSeriParas)
+}
+
+// TransactionTaggedDataMessagesMetadata returns a channel of message metadata of messages containing transactions with tagged data.
+func (eac *EventAPIClient) TransactionTaggedDataMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataTopic(NodeEventAPIMessagesTransactionTaggedData)
+}
+
+// TransactionTaggedDataWithTagMessages returns a channel of messages containing transactions with tagged data containing the given tag.
+func (eac *EventAPIClient) TransactionTaggedDataWithTagMessages(tag []byte, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	topic := strings.Replace(NodeEventAPIMessagesTransactionTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
+	return eac.subscribeToMessageMetadataMessagesTopic(topic, deSeriParas)
+}
+
+// TransactionTaggedDataMessagesWithTagMetadata returns a channel of message metadata of messages containing transactions with tagged data containing the given tag.
+func (eac *EventAPIClient) TransactionTaggedDataMessagesWithTagMetadata(tag []byte) (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
+	topic := strings.Replace(NodeEventAPIMessagesTransactionTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
+	return eac.subscribeToMessageMetadataTopic(topic)
+}
+
+// MilestoneMessagesMetadata returns a channel of message metadata of messages containing milestones.
+func (eac *EventAPIClient) MilestoneMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataTopic(NodeEventAPIMessagesMilestone)
+}
+
+// MilestoneMessages returns a channel of messages containing milestones.
+func (eac *EventAPIClient) MilestoneMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataMessagesTopic(NodeEventAPIMessagesMilestone, deSeriParas)
+}
+
+// TaggedDataMessagesMetadata returns a channel of message metadata of messages containing tagged data.
+func (eac *EventAPIClient) TaggedDataMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataTopic(NodeEventAPIMessagesTaggedData)
+}
+
+// TaggedDataMessages returns a channel of messages containing tagged data containing the given tag.
+func (eac *EventAPIClient) TaggedDataMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataMessagesTopic(NodeEventAPIMessagesTaggedData, deSeriParas)
+}
+
+// TaggedDataWithTagMessagesMetadata returns a channel of message metadata of messages containing tagged data containing the given tag.
+func (eac *EventAPIClient) TaggedDataWithTagMessagesMetadata(tag []byte) (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
+	topic := strings.Replace(NodeEventAPIMessagesTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
+	return eac.subscribeToMessageMetadataTopic(topic)
+}
+
+// TaggedDataWithTagMessages returns a channel of messages containing tagged data.
+func (eac *EventAPIClient) TaggedDataWithTagMessages(tag []byte, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	topic := strings.Replace(NodeEventAPIMessagesTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
+	return eac.subscribeToMessageMetadataMessagesTopic(topic, deSeriParas)
 }
 
 // MessageMetadataChange returns a channel of MessageMetadataResponse each time the given message's state changes.
 func (eac *EventAPIClient) MessageMetadataChange(msgID iotago.MessageID) (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *MessageMetadataResponse)
 	topic := strings.Replace(NodeEventAPIMessagesMetadata, "{messageId}", iotago.MessageIDToHexString(msgID), 1)
-	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		metadataRes := &MessageMetadataResponse{}
-		if err := json.Unmarshal(mqttMsg.Payload(), metadataRes); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- metadataRes:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, topic)
+	return eac.subscribeToMessageMetadataTopic(topic)
 }
 
 // NFTOutputsByID returns a channel of newly created outputs to track the chain mutations of a given NFT.
 func (eac *EventAPIClient) NFTOutputsByID(nftID iotago.NFTID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *OutputResponse)
 	topic := strings.Replace(NodeEventAPINFTOutputs, "{nftId}", nftID.String(), 1)
-	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		res := &OutputResponse{}
-		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- res:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, topic)
+	return eac.subscribeToOutputsTopic(topic)
 }
 
 // AliasOutputsByID returns a channel of newly created outputs to track the chain mutations of a given Alias.
 func (eac *EventAPIClient) AliasOutputsByID(aliasID iotago.AliasID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *OutputResponse)
 	topic := strings.Replace(NodeEventAPIAliasOutputs, "{aliasId}", aliasID.String(), 1)
-	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		res := &OutputResponse{}
-		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- res:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, topic)
+	return eac.subscribeToOutputsTopic(topic)
 }
 
 // FoundryOutputsByID returns a channel of newly created outputs to track the chain mutations of a given Foundry.
 func (eac *EventAPIClient) FoundryOutputsByID(foundryID iotago.FoundryID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *OutputResponse)
 	topic := strings.Replace(NodeEventAPIFoundryOutputs, "{foundryId}", foundryID.String(), 1)
-	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		res := &OutputResponse{}
-		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- res:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, topic)
+	return eac.subscribeToOutputsTopic(topic)
 }
 
 // OutputsByUnlockConditionAndAddress returns a channel of newly created outputs on the given unlock condition and address.
 func (eac *EventAPIClient) OutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition EventAPIUnlockCondition) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *OutputResponse)
 	topic := strings.Replace(NodeEventAPIOutputsByUnlockConditionAndAddress, "{address}", addr.Bech32(netPrefix), 1)
 	topic = strings.Replace(topic, "{condition}", string(condition), 1)
-	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		res := &OutputResponse{}
-		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- res:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, topic)
+	return eac.subscribeToOutputsTopic(topic)
 }
 
 // SpentOutputsByUnlockConditionAndAddress returns a channel of newly spent outputs on the given unlock condition and address.
 func (eac *EventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition EventAPIUnlockCondition) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *OutputResponse)
 	topic := strings.Replace(NodeEventAPISpentOutputsByUnlockConditionAndAddress, "{address}", addr.Bech32(netPrefix), 1)
 	topic = strings.Replace(topic, "{condition}", string(condition), 1)
-	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		res := &OutputResponse{}
-		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- res:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, topic)
+	return eac.subscribeToOutputsTopic(topic)
 }
 
 // TransactionIncludedMessage returns a channel of the included message which carries the transaction with the given ID.
-func (eac *EventAPIClient) TransactionIncludedMessage(txID iotago.TransactionID) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *iotago.Message)
+func (eac *EventAPIClient) TransactionIncludedMessage(txID iotago.TransactionID, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	topic := strings.Replace(NodeEventAPITransactionsIncludedMessage, "{transactionId}", iotago.MessageIDToHexString(txID), 1)
-	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		msg := &iotago.Message{}
-		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModePerformValidation, nil); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- msg:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, topic)
+	return eac.subscribeToMessagesTopic(topic, deSeriParas)
 }
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
 func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *OutputResponse)
 	topic := strings.Replace(NodeEventAPIOutputs, "{outputId}", iotago.EncodeHex(outputID[:]), 1)
-	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		res := &OutputResponse{}
-		if err := json.Unmarshal(mqttMsg.Payload(), res); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- res:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, topic)
+	return eac.subscribeToOutputsTopic(topic)
 }
 
 // Receipts returns a channel which returns newly applied receipts.
@@ -476,104 +483,20 @@ type MilestonePointer struct {
 
 // LatestMilestones returns a channel of newly seen latest milestones.
 func (eac *EventAPIClient) LatestMilestones() (<-chan *MilestonePointer, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *MilestonePointer)
-	if token := eac.MQTTClient.Subscribe(NodeEventAPIMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		msPointer := &MilestonePointer{}
-		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- msPointer:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, NodeEventAPIMilestonesLatest)
+	return eac.subscribeToMilestonesTopic(NodeEventAPIMilestonesLatest)
 }
 
 // LatestMilestoneMessages returns a channel of newly seen latest milestones messages.
 func (eac *EventAPIClient) LatestMilestoneMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *iotago.Message)
-	if token := eac.MQTTClient.Subscribe(NodeEventAPIMilestonesLatest, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		msPointer := &MilestonePointer{}
-		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		res, err := eac.Client.MilestoneByIndex(context.Background(), msPointer.Index)
-		if err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		msg, err := eac.Client.MessageByMessageID(context.Background(), iotago.MustMessageIDFromHexString(res.MessageID), deSeriParas)
-		if err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- msg:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, NodeEventAPIMilestonesLatest)
+	return eac.subscribeToMilestoneMessagesTopic(NodeEventAPIMilestonesLatest, deSeriParas)
 }
 
 // ConfirmedMilestones returns a channel of newly confirmed milestones.
 func (eac *EventAPIClient) ConfirmedMilestones() (<-chan *MilestonePointer, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *MilestonePointer)
-	if token := eac.MQTTClient.Subscribe(NodeEventAPIMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		msPointer := &MilestonePointer{}
-		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- msPointer:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, NodeEventAPIMilestonesConfirmed)
+	return eac.subscribeToMilestonesTopic(NodeEventAPIMilestonesConfirmed)
 }
 
 // ConfirmedMilestoneMessages returns a channel of newly confirmed milestones messages.
 func (eac *EventAPIClient) ConfirmedMilestoneMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *iotago.Message)
-	if token := eac.MQTTClient.Subscribe(NodeEventAPIMilestonesConfirmed, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		msPointer := &MilestonePointer{}
-		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		res, err := eac.Client.MilestoneByIndex(context.Background(), msPointer.Index)
-		if err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		msg, err := eac.Client.MessageByMessageID(context.Background(), iotago.MustMessageIDFromHexString(res.MessageID), deSeriParas)
-		if err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- msg:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, NodeEventAPIMilestonesConfirmed)
+	return eac.subscribeToMilestoneMessagesTopic(NodeEventAPIMilestonesConfirmed, deSeriParas)
 }

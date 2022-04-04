@@ -65,7 +65,7 @@ func Test_NewNodeEventAPIClient(t *testing.T) {
 	}
 	require.NoError(t, eventAPIClient.Connect(ctx))
 
-	msgChan, sub := eventAPIClient.Messages()
+	msgChan, sub := eventAPIClient.Messages(iotago.ZeroRentParas)
 	require.NoError(t, sub.Error())
 	require.Eventually(t, func() bool {
 		select {
