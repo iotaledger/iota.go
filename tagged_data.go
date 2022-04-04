@@ -115,7 +115,7 @@ func (u *TaggedData) UnmarshalJSON(bytes []byte) error {
 // jsonTaggedData defines the json representation of a TaggedData payload.
 type jsonTaggedData struct {
 	Type int    `json:"type"`
-	Tag  string `json:"tag"`
+	Tag  string `json:"tag,omitempty"`
 	Data string `json:"data"`
 }
 
