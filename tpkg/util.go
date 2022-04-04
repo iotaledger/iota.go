@@ -268,6 +268,7 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 			copy(b[:], inclusionMerkleProof)
 			return b
 		}(),
+		Metadata: RandBytes(10),
 		Signatures: func() iotago.Signatures {
 			msSigs := make(iotago.Signatures, sigsCount)
 			for i := 0; i < sigsCount; i++ {

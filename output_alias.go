@@ -482,7 +482,6 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 			return fmt.Errorf("unable to deserialize state index for alias output: %w", err)
 		}).
 		ReadVariableByteSlice(&a.StateMetadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
-			// TODO: replace max read with actual variable
 			return fmt.Errorf("unable to deserialize state metadata for alias output: %w", err)
 		}, MaxMetadataLength).
 		ReadNum(&a.FoundryCounter, func(err error) error {

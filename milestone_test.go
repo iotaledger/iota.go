@@ -37,6 +37,7 @@ func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
 		Timestamp:            13371337,
 		Parents:              tpkg.SortedRand32BytArray(2),
 		InclusionMerkleProof: tpkg.Rand32ByteArray(),
+		Metadata:             tpkg.RandBytes(10),
 		Signatures: iotago.Signatures{
 			tpkg.RandEd25519Signature(),
 			tpkg.RandEd25519Signature(),
