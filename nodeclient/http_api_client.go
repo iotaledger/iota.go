@@ -248,12 +248,6 @@ func (client *Client) NodeSupportPlugin(ctx context.Context, pluginName string) 
 	return false, nil
 }
 
-// NodeTipsResponse defines the response of a GET tips REST API call.
-type NodeTipsResponse struct {
-	// The hex encoded message IDs of the tips.
-	TipsHex []string `json:"tipMessageIds"`
-}
-
 // Tips returns the hex encoded tips as MessageIDs.
 func (ntr *NodeTipsResponse) Tips() (iotago.MessageIDs, error) {
 	msgIDs := make(iotago.MessageIDs, len(ntr.TipsHex))
