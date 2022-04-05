@@ -25,7 +25,7 @@ const nodeAPIUrl = "http://127.0.0.1:14265"
 func TestClient_Health(t *testing.T) {
 	defer gock.Off()
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteHealth).
+		Get(nodeclient.RouteHealth).
 		Reply(200)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
@@ -34,7 +34,7 @@ func TestClient_Health(t *testing.T) {
 	require.True(t, healthy)
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteHealth).
+		Get(nodeclient.RouteHealth).
 		Reply(503)
 
 	healthy, err = nodeAPI.Health(context.Background())
@@ -75,7 +75,7 @@ func TestClient_Info(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteInfo).
+		Get(nodeclient.RouteInfo).
 		Reply(200).
 		JSON(originInfo)
 
@@ -88,12 +88,12 @@ func TestClient_Info(t *testing.T) {
 func TestClient_Tips(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &nodeclient.NodeTipsResponse{
+	originRes := &nodeclient.TipsResponse{
 		TipsHex: []string{"733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d", "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe"},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteTips).
+		Get(nodeclient.RouteTips).
 		Reply(200).
 		JSON(originRes)
 
@@ -130,14 +130,14 @@ func TestClient_SubmitMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Post(nodeclient.NodeAPIRouteMessages).
+		Post(nodeclient.RouteMessages).
 		MatchType("octet").
 		Body(bytes.NewReader(serializedIncompleteMsg)).
 		Reply(200).
 		AddHeader("Location", msgHashStr)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMessageBytes, msgHashStr)).
+		Get(fmt.Sprintf(nodeclient.RouteMessageBytes, msgHashStr)).
 		Reply(200).
 		Body(bytes.NewReader(serializedCompleteMsg))
 
@@ -173,7 +173,7 @@ func TestClient_MessageMetadataByMessageID(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMessageMetadata, queryHash)).
+		Get(fmt.Sprintf(nodeclient.RouteMessageMetadata, queryHash)).
 		Reply(200).
 		JSON(originRes)
 
@@ -199,7 +199,7 @@ func TestClient_MessageByMessageID(t *testing.T) {
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMessageBytes, queryHash)).
+		Get(fmt.Sprintf(nodeclient.RouteMessageBytes, queryHash)).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
@@ -231,7 +231,7 @@ func TestClient_ChildrenByMessageID(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMessageChildren, hexMsgID)).
+		Get(fmt.Sprintf(nodeclient.RouteMessageChildren, hexMsgID)).
 		Reply(200).
 		JSON(originRes)
 
@@ -257,7 +257,7 @@ func TestClient_TransactionIncludedMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteTxIncludedMessage, queryHash)).
+		Get(fmt.Sprintf(nodeclient.RouteTransactionsIncludedMessage, queryHash)).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
@@ -289,7 +289,37 @@ func TestClient_OutputByID(t *testing.T) {
 	utxoInputId := utxoInput.ID()
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteOutput, utxoInputId.ToHex())).
+		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputId.ToHex())).
+		Reply(200).
+		JSON(originRes)
+
+	nodeAPI := nodeclient.New(nodeAPIUrl)
+	resp, err := nodeAPI.OutputByID(context.Background(), utxoInputId)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
+
+	resTxID, err := resp.TxID()
+	require.NoError(t, err)
+	require.EqualValues(t, txID, *resTxID)
+}
+
+func TestClient_OutputMetadataByID(t *testing.T) {
+	defer gock.Off()
+
+	txID := tpkg.Rand32ByteArray()
+	hexTxID := iotago.EncodeHex(txID[:])
+	originRes := &nodeclient.OutputResponse{
+		TransactionID: hexTxID,
+		OutputIndex:   3,
+		Spent:         true,
+		LedgerIndex:   1337,
+	}
+
+	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
+	utxoInputId := utxoInput.ID()
+
+	gock.New(nodeAPIUrl).
+		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputId.ToHex())).
 		Reply(200).
 		JSON(originRes)
 
@@ -312,7 +342,7 @@ func TestNodeHTTPAPIClient_Treasury(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteTreasury).
+		Get(nodeclient.RouteTreasury).
 		Reply(200).
 		JSON(originRes)
 
@@ -349,7 +379,7 @@ func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteReceipts).
+		Get(nodeclient.RouteReceipts).
 		Reply(200).
 		JSON(originRes)
 
@@ -388,7 +418,7 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteReceiptsByMigratedAtIndex, index)).
+		Get(fmt.Sprintf(nodeclient.RouteReceiptsMigratedAtIndex, index)).
 		Reply(200).
 		JSON(originRes)
 
@@ -411,7 +441,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMilestone, milestoneIndex)).
+		Get(fmt.Sprintf(nodeclient.RouteMilestone, milestoneIndex)).
 		Reply(200).
 		JSON(originRes)
 
@@ -436,7 +466,7 @@ func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRouteMilestoneUTXOChanges, milestoneIndex)).
+		Get(fmt.Sprintf(nodeclient.RouteMilestoneUTXOChanges, milestoneIndex)).
 		Reply(200).
 		JSON(originRes)
 
@@ -483,7 +513,7 @@ func TestClient_PeerByID(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.NodeAPIRoutePeer, peerID)).
+		Get(fmt.Sprintf(nodeclient.RoutePeer, peerID)).
 		Reply(200).
 		JSON(originRes)
 
@@ -499,7 +529,7 @@ func TestClient_RemovePeerByID(t *testing.T) {
 	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
 
 	gock.New(nodeAPIUrl).
-		Delete(fmt.Sprintf(nodeclient.NodeAPIRoutePeer, peerID)).
+		Delete(fmt.Sprintf(nodeclient.RoutePeer, peerID)).
 		Reply(200).
 		Status(200)
 
@@ -532,7 +562,7 @@ func TestClient_Peers(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRoutePeers).
+		Get(nodeclient.RoutePeers).
 		Reply(200).
 		JSON(originRes)
 
@@ -558,7 +588,7 @@ func TestClient_AddPeer(t *testing.T) {
 
 	req := &nodeclient.AddPeerRequest{MultiAddress: multiAddr}
 	gock.New(nodeAPIUrl).
-		Post(nodeclient.NodeAPIRoutePeers).
+		Post(nodeclient.RoutePeers).
 		JSON(req).
 		Reply(201).
 		JSON(originRes)

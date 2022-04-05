@@ -12,83 +12,93 @@ import (
 )
 
 const (
+	// IndexerPluginName is the name for the indexer plugin.
 	IndexerPluginName = "indexer/v1"
-	MQTTPluginName    = "mqtt/v1"
 
-	// NodeAPIRouteHealth is the route for querying a node's health status.
-	NodeAPIRouteHealth = "/health"
+	// MQTTPluginName is the name for the MQTT plugin.
+	MQTTPluginName = "mqtt/v1"
+)
 
-	// NodeAPIRouteInfo is the route for getting the node info.
+const (
+	// RouteHealth is the route for querying a node's health status.
+	RouteHealth = "/health"
+
+	// RouteInfo is the route for getting the node info.
 	// GET returns the node info.
-	NodeAPIRouteInfo = "/api/v2/info"
+	RouteInfo = "/api/v2/info"
 
-	// NodeAPIRouteTips is the route for getting two tips.
+	// RouteTips is the route for getting tips.
 	// GET returns the tips.
-	NodeAPIRouteTips = "/api/v2/tips"
+	RouteTips = "/api/v2/tips"
 
-	// NodeAPIRouteMessageData is the route for getting message data by its messageID.
+	// RouteMessageData is the route for getting message data by its messageID.
 	// GET returns message data (json).
-	NodeAPIRouteMessageData = "/api/v2/messages/%s"
+	RouteMessageData = "/api/v2/messages/%s"
 
-	// NodeAPIRouteMessageMetadata is the route for getting message metadata by its messageID.
+	// RouteMessageMetadata is the route for getting message metadata by its messageID.
 	// GET returns message metadata (including info about "promotion/reattachment needed").
-	NodeAPIRouteMessageMetadata = "/api/v2/messages/%s/metadata"
+	RouteMessageMetadata = "/api/v2/messages/%s/metadata"
 
-	// NodeAPIRouteMessageBytes is the route for getting message raw data by its messageID.
+	// RouteMessageBytes is the route for getting message raw data by its messageID.
 	// GET returns raw message data (bytes).
-	NodeAPIRouteMessageBytes = "/api/v2/messages/%s/raw"
+	RouteMessageBytes = "/api/v2/messages/%s/raw"
 
-	// NodeAPIRouteMessageChildren is the route for getting message IDs of the children of a message, identified by its messageID.
+	// RouteMessageChildren is the route for getting message IDs of the children of a message, identified by its messageID.
 	// GET returns the message IDs of all children.
-	NodeAPIRouteMessageChildren = "/api/v2/messages/%s/children"
+	RouteMessageChildren = "/api/v2/messages/%s/children"
 
-	// NodeAPIRouteMessages is the route for getting message IDs or creating new messages.
-	// GET with query parameter (mandatory) returns all message IDs that fit these filter criteria (query parameters: "index").
+	// RouteMessages is the route for creating new messages.
 	// POST creates a single new message and returns the new message ID.
-	NodeAPIRouteMessages = "/api/v2/messages"
+	RouteMessages = "/api/v2/messages"
 
-	// NodeAPIRouteMilestone is the route for getting a milestone by its milestoneIndex.
+	// RouteTransactionsIncludedMessage is the route for getting the message that was included in the ledger for a given transaction ID.
+	// GET returns message data (json).
+	RouteTransactionsIncludedMessage = "/api/v2/transactions/%s/included-message"
+
+	// RouteMilestone is the route for getting a milestone by its milestoneIndex.
 	// GET returns the milestone.
-	NodeAPIRouteMilestone = "/api/v2/milestones/%d"
+	RouteMilestone = "/api/v2/milestones/%d"
 
-	// NodeAPIRouteMilestoneUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
+	// RouteMilestoneUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	NodeAPIRouteMilestoneUTXOChanges = "/api/v2/milestones/%d/utxo-changes"
+	RouteMilestoneUTXOChanges = "/api/v2/milestones/%d/utxo-changes"
 
-	// NodeAPIRouteOutput is the route for getting outputs by their outputID (transactionHash + outputIndex).
-	// GET returns the output.
-	NodeAPIRouteOutput = "/api/v2/outputs/%s"
+	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
+	// GET returns the output (json).
+	RouteOutput = "/api/v2/outputs/%s"
 
-	// NodeAPIRouteTreasury is the route for getting the current treasury.
+	// RouteOutputMetadata is the route for getting output metadata by its outputID (transactionHash + outputIndex) without getting the data again.
+	// GET returns the output metadata.
+	RouteOutputMetadata = "/api/v2/outputs/%s/metadata"
+
+	// RouteTreasury is the route for getting the current treasury output.
 	// GET returns the treasury.
-	NodeAPIRouteTreasury = "/api/v2/treasury"
+	RouteTreasury = "/api/v2/treasury"
 
-	// NodeAPIRouteTxIncludedMessage is the route for getting the included message of a transaction.
-	// GET returns the message.
-	NodeAPIRouteTxIncludedMessage = "/api/v2/transactions/%s/included-message"
-
-	// NodeAPIRouteReceipts is the route for getting all persisted receipts on a node.
+	// RouteReceipts is the route for getting all persisted receipts on a node.
 	// GET returns the receipts.
-	NodeAPIRouteReceipts = "/api/v2/receipts"
+	RouteReceipts = "/api/v2/receipts"
 
-	// NodeAPIRouteReceiptsByMigratedAtIndex is the route for getting all persisted receipts for a given migrated at index on a node.
+	// RouteReceiptsMigratedAtIndex is the route for getting all persisted receipts for a given migrated at index on a node.
 	// GET returns the receipts for the given migrated at index.
-	NodeAPIRouteReceiptsByMigratedAtIndex = "/api/v2/receipts/%d"
+	RouteReceiptsMigratedAtIndex = "/api/v2/receipts/%d"
 
-	// NodeAPIRoutePeer is the route for getting peers by their peerID.
+	// RoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
-	NodeAPIRoutePeer = "/api/v2/peers/%s"
+	RoutePeer = "/api/v2/peers/%s"
 
-	// NodeAPIRoutePeers is the route for getting all peers of the node.
+	// RoutePeers is the route for getting all peers of the node.
 	// GET returns a list of all peers.
 	// POST adds a new peer.
-	NodeAPIRoutePeers = "/api/v2/peers"
+	RoutePeers = "/api/v2/peers"
 )
 
 var (
+	// ErrIndexerPluginNotAvailable is returned when the indexer plugin is not available on the node.
 	ErrIndexerPluginNotAvailable = errors.New("indexer plugin not available on the current node")
-	ErrMQTTPluginNotAvailable    = errors.New("mqtt plugin not available on the current node")
+	// ErrMQTTPluginNotAvailable is returned when the MQTT plugin is not available on the node.
+	ErrMQTTPluginNotAvailable = errors.New("mqtt plugin not available on the current node")
 )
 
 // RequestURLHook is a function to modify the URL before sending a request.
@@ -188,7 +198,7 @@ func (client *Client) Do(ctx context.Context, method string, route string, reqOb
 // Indexer returns the IndexerClient.
 // Returns ErrIndexerPluginNotAvailable if the current node does not support the plugin.
 func (client *Client) Indexer(ctx context.Context) (IndexerClient, error) {
-	hasPlugin, err := client.NodeSupportPlugin(ctx, IndexerPluginName)
+	hasPlugin, err := client.NodeSupportsPlugin(ctx, IndexerPluginName)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +211,7 @@ func (client *Client) Indexer(ctx context.Context) (IndexerClient, error) {
 // EventAPI returns the EventAPIClient if supported by the node.
 // Returns ErrMQTTPluginNotAvailable if the current node does not support the plugin.
 func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
-	hasPlugin, err := client.NodeSupportPlugin(ctx, MQTTPluginName)
+	hasPlugin, err := client.NodeSupportsPlugin(ctx, MQTTPluginName)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +223,7 @@ func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
 
 // Health returns whether the given node is healthy.
 func (client *Client) Health(ctx context.Context) (bool, error) {
-	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRouteHealth, nil, nil); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, RouteHealth, nil, nil); err != nil {
 		if errors.Is(err, ErrHTTPServiceUnavailable) {
 			return false, nil
 		}
@@ -227,15 +237,15 @@ func (client *Client) Health(ctx context.Context) (bool, error) {
 // Info gets the info of the node.
 func (client *Client) Info(ctx context.Context) (*InfoResponse, error) {
 	res := &InfoResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRouteInfo, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, RouteInfo, nil, res); err != nil {
 		return nil, err
 	}
 
 	return res, nil
 }
 
-// NodeSupportPlugin gets the info of the node and checks if the given plugin is enabled.
-func (client *Client) NodeSupportPlugin(ctx context.Context, pluginName string) (bool, error) {
+// NodeSupportsPlugin gets the info of the node and checks if the given plugin is enabled.
+func (client *Client) NodeSupportsPlugin(ctx context.Context, pluginName string) (bool, error) {
 	info, err := client.Info(ctx)
 	if err != nil {
 		return false, err
@@ -249,7 +259,7 @@ func (client *Client) NodeSupportPlugin(ctx context.Context, pluginName string) 
 }
 
 // Tips returns the hex encoded tips as MessageIDs.
-func (ntr *NodeTipsResponse) Tips() (iotago.MessageIDs, error) {
+func (ntr *TipsResponse) Tips() (iotago.MessageIDs, error) {
 	msgIDs := make(iotago.MessageIDs, len(ntr.TipsHex))
 	for i, tip := range ntr.TipsHex {
 		msgID, err := iotago.DecodeHex(tip)
@@ -262,9 +272,9 @@ func (ntr *NodeTipsResponse) Tips() (iotago.MessageIDs, error) {
 }
 
 // Tips gets the two tips from the node.
-func (client *Client) Tips(ctx context.Context) (*NodeTipsResponse, error) {
-	res := &NodeTipsResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRouteTips, nil, res); err != nil {
+func (client *Client) Tips(ctx context.Context) (*TipsResponse, error) {
+	res := &TipsResponse{}
+	if _, err := client.Do(ctx, http.MethodGet, RouteTips, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -284,7 +294,7 @@ func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message, deSe
 	}
 
 	req := &RawDataEnvelope{Data: data}
-	res, err := client.Do(ctx, http.MethodPost, NodeAPIRouteMessages, req, nil)
+	res, err := client.Do(ctx, http.MethodPost, RouteMessages, req, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +314,7 @@ func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message, deSe
 
 // MessageMetadataByMessageID gets the metadata of a message by its message ID from the node.
 func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iotago.MessageID) (*MessageMetadataResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteMessageMetadata, iotago.EncodeHex(msgID[:]))
+	query := fmt.Sprintf(RouteMessageMetadata, iotago.EncodeHex(msgID[:]))
 
 	res := &MessageMetadataResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -316,7 +326,7 @@ func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iota
 
 // MessageJSONByMessageID get a message by its message ID from the node (json).
 func (client *Client) MessageJSONByMessageID(ctx context.Context, msgID iotago.MessageID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
-	query := fmt.Sprintf(NodeAPIRouteMessageData, iotago.EncodeHex(msgID[:]))
+	query := fmt.Sprintf(RouteMessageData, iotago.EncodeHex(msgID[:]))
 
 	res := &iotago.Message{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -332,7 +342,7 @@ func (client *Client) MessageJSONByMessageID(ctx context.Context, msgID iotago.M
 
 // MessageByMessageID get a message by its message ID from the node.
 func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.MessageID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
-	query := fmt.Sprintf(NodeAPIRouteMessageBytes, iotago.EncodeHex(msgID[:]))
+	query := fmt.Sprintf(RouteMessageBytes, iotago.EncodeHex(msgID[:]))
 
 	res := &RawDataEnvelope{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -349,7 +359,7 @@ func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.Messa
 
 // ChildrenByMessageID gets the MessageIDs of the child messages of a given message.
 func (client *Client) ChildrenByMessageID(ctx context.Context, parentMsgID iotago.MessageID) (*ChildrenResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteMessageChildren, iotago.EncodeHex(parentMsgID[:]))
+	query := fmt.Sprintf(RouteMessageChildren, iotago.EncodeHex(parentMsgID[:]))
 
 	res := &ChildrenResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -361,7 +371,7 @@ func (client *Client) ChildrenByMessageID(ctx context.Context, parentMsgID iotag
 
 // TransactionIncludedMessage get a message that included the given transaction ID in the ledger.
 func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotago.TransactionID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
-	query := fmt.Sprintf(NodeAPIRouteTxIncludedMessage, iotago.EncodeHex(txID[:]))
+	query := fmt.Sprintf(RouteTransactionsIncludedMessage, iotago.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -376,9 +386,21 @@ func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotag
 	return msg, nil
 }
 
-// OutputByID gets an outputs by its ID from the node.
+// OutputByID gets an output by its ID from the node.
 func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) (*OutputResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteOutput, outputID.ToHex())
+	query := fmt.Sprintf(RouteOutput, outputID.ToHex())
+
+	res := &OutputResponse{}
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// OutputMetadataByID gets an output's metadata by its ID from the node without getting the output data again.
+func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*OutputResponse, error) {
+	query := fmt.Sprintf(RouteOutputMetadata, outputID.ToHex())
 
 	res := &OutputResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -391,7 +413,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 // Treasury gets the current treasury.
 func (client *Client) Treasury(ctx context.Context) (*TreasuryResponse, error) {
 	res := &TreasuryResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRouteTreasury, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, RouteTreasury, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -401,7 +423,7 @@ func (client *Client) Treasury(ctx context.Context) (*TreasuryResponse, error) {
 // Receipts gets all receipts persisted on the node.
 func (client *Client) Receipts(ctx context.Context) ([]*ReceiptTuple, error) {
 	res := &ReceiptsResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRouteReceipts, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, RouteReceipts, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -410,7 +432,7 @@ func (client *Client) Receipts(ctx context.Context) ([]*ReceiptTuple, error) {
 
 // ReceiptsByMigratedAtIndex gets all receipts for the given migrated at index persisted on the node.
 func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index uint32) ([]*ReceiptTuple, error) {
-	query := fmt.Sprintf(NodeAPIRouteReceiptsByMigratedAtIndex, index)
+	query := fmt.Sprintf(RouteReceiptsMigratedAtIndex, index)
 
 	res := &ReceiptsResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -422,7 +444,7 @@ func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index uint3
 
 // MilestoneByIndex gets a milestone by its index.
 func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*MilestoneResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteMilestone, index)
+	query := fmt.Sprintf(RouteMilestone, index)
 
 	res := &MilestoneResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -434,7 +456,7 @@ func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*Mile
 
 // MilestoneUTXOChangesByIndex returns all UTXO changes of a milestone by its milestoneIndex.
 func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uint32) (*MilestoneUTXOChangesResponse, error) {
-	query := fmt.Sprintf(NodeAPIRouteMilestoneUTXOChanges, index)
+	query := fmt.Sprintf(RouteMilestoneUTXOChanges, index)
 
 	res := &MilestoneUTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -446,7 +468,7 @@ func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uin
 
 // PeerByID gets a peer by its identifier.
 func (client *Client) PeerByID(ctx context.Context, id string) (*PeerResponse, error) {
-	query := fmt.Sprintf(NodeAPIRoutePeer, id)
+	query := fmt.Sprintf(RoutePeer, id)
 
 	res := &PeerResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -458,7 +480,7 @@ func (client *Client) PeerByID(ctx context.Context, id string) (*PeerResponse, e
 
 // RemovePeerByID removes a peer by its identifier.
 func (client *Client) RemovePeerByID(ctx context.Context, id string) error {
-	query := fmt.Sprintf(NodeAPIRoutePeer, id)
+	query := fmt.Sprintf(RoutePeer, id)
 
 	if _, err := client.Do(ctx, http.MethodDelete, query, nil, nil); err != nil {
 		return err
@@ -470,7 +492,7 @@ func (client *Client) RemovePeerByID(ctx context.Context, id string) error {
 // Peers returns a list of all peers.
 func (client *Client) Peers(ctx context.Context) ([]*PeerResponse, error) {
 	res := []*PeerResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, NodeAPIRoutePeers, nil, &res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, RoutePeers, nil, &res); err != nil {
 		return nil, err
 	}
 
@@ -488,7 +510,7 @@ func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ..
 	}
 
 	res := &PeerResponse{}
-	if _, err := client.Do(ctx, http.MethodPost, NodeAPIRoutePeers, req, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodPost, RoutePeers, req, res); err != nil {
 		return nil, err
 	}
 

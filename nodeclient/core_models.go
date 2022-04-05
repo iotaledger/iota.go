@@ -125,7 +125,7 @@ type (
 		// The ledger index at which this output was available at.
 		LedgerIndex uint32 `json:"ledgerIndex"`
 		// The output in its serialized form.
-		RawOutput *json.RawMessage `json:"output"`
+		RawOutput *json.RawMessage `json:"output,omitempty"`
 	}
 
 	// TreasuryResponse defines the response of a GET treasury REST API call.

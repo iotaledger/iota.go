@@ -22,7 +22,7 @@ func Test_EventAPIEnabled(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteInfo).
+		Get(nodeclient.RouteInfo).
 		Reply(200).
 		JSON(originInfo)
 
@@ -40,7 +40,7 @@ func Test_EventAPIDisabled(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteInfo).
+		Get(nodeclient.RouteInfo).
 		Reply(200).
 		JSON(originInfo)
 
@@ -50,7 +50,7 @@ func Test_EventAPIDisabled(t *testing.T) {
 	require.ErrorIs(t, err, nodeclient.ErrMQTTPluginNotAvailable)
 }
 
-func Test_NewNodeEventAPIClient(t *testing.T) {
+func Test_NewEventAPIClient(t *testing.T) {
 
 	msg := tpkg.RandMessage(iotago.PayloadTaggedData)
 	originMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, nil)
