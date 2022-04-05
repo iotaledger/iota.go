@@ -11,9 +11,10 @@ import (
 	"path"
 	"testing"
 
-	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 )
 
 var nullSeed = make([]byte, std.SeedSize)
@@ -71,7 +72,7 @@ func TestMalleability(t *testing.T) {
 }
 
 func TestGolden(t *testing.T) {
-	// sign.input.gz is a selection of test tests from https://std.cr.yp.to/python/sign.input
+	// sign.input.gz is a selection of test tests from https://ed25519.cr.yp.to/python/sign.input
 	file, err := os.Open(path.Join("testdata", "sign.input.gz"))
 	require.NoError(t, err)
 	defer file.Close()
