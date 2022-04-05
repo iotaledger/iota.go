@@ -110,16 +110,22 @@ func TestClient_SubmitMessage(t *testing.T) {
 	msgHashStr := iotago.EncodeHex(msgHash[:])
 
 	incompleteMsg := &iotago.Message{
-		Parents: tpkg.SortedRand32BytArray(1),
+		ProtocolVersion: iotago.ProtocolVersion,
+		Parents:         tpkg.SortedRand32BytArray(1),
 	}
 
 	completeMsg := &iotago.Message{
-		Parents: tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
-		Payload: nil,
-		Nonce:   3495721389537486,
+		ProtocolVersion: iotago.ProtocolVersion,
+		Parents:         tpkg.SortedRand32BytArray(1),
+		Payload:         nil,
+		Nonce:           3495721389537486,
 	}
 
 	serializedCompleteMsg, err := completeMsg.Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+	require.NoError(t, err)
+
+	msg2 := iotago.Message{}
+	_, err = msg2.Deserialize(serializedCompleteMsg, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
 	require.NoError(t, err)
 
 	// we need to do this, otherwise gock doesn't match the body
@@ -190,9 +196,10 @@ func TestClient_MessageByMessageID(t *testing.T) {
 	queryHash := iotago.EncodeHex(identifier[:])
 
 	originMsg := &iotago.Message{
-		Parents: tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
-		Payload: nil,
-		Nonce:   16345984576234,
+		ProtocolVersion: iotago.ProtocolVersion,
+		Parents:         tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
+		Payload:         nil,
+		Nonce:           16345984576234,
 	}
 
 	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
@@ -248,9 +255,10 @@ func TestClient_TransactionIncludedMessage(t *testing.T) {
 	queryHash := iotago.EncodeHex(identifier[:])
 
 	originMsg := &iotago.Message{
-		Parents: tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
-		Payload: nil,
-		Nonce:   16345984576234,
+		ProtocolVersion: iotago.ProtocolVersion,
+		Parents:         tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
+		Payload:         nil,
+		Nonce:           16345984576234,
 	}
 
 	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)

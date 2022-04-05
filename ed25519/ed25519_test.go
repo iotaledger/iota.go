@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +19,13 @@ import (
 )
 
 var nullSeed = make([]byte, std.SeedSize)
+
+func TestMain(m *testing.M) {
+	rand.Seed(time.Now().UnixNano())
+
+	// call the tests
+	os.Exit(m.Run())
+}
 
 func TestGenerateKey(t *testing.T) {
 	public, private, err := std.GenerateKey(bytes.NewReader(nullSeed))

@@ -3,7 +3,10 @@ package iotago_test
 import (
 	"bytes"
 	"encoding/json"
+	"math/rand"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,6 +15,13 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 )
+
+func TestMain(m *testing.M) {
+	rand.Seed(time.Now().UnixNano())
+
+	// call the tests
+	os.Exit(m.Run())
+}
 
 func TestMessage_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{

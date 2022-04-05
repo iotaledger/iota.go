@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 )
@@ -156,9 +156,10 @@ func BenchmarkSerializeAndHashMessageWithTransactionPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 
 	m := &iotago.Message{
-		Parents: tpkg.SortedRand32BytArray(2),
-		Payload: txPayload,
-		Nonce:   0,
+		ProtocolVersion: iotago.ProtocolVersion,
+		Parents:         tpkg.SortedRand32BytArray(2),
+		Payload:         txPayload,
+		Nonce:           0,
 	}
 	for i := 0; i < b.N; i++ {
 		_, _ = m.ID()
