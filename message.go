@@ -5,18 +5,19 @@ import (
 	"errors"
 	"fmt"
 
+	"golang.org/x/crypto/blake2b"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/pow"
-	"golang.org/x/crypto/blake2b"
 )
 
 const (
 	// MessageIDLength defines the length of a message ID.
 	MessageIDLength = blake2b.Size256
-	// MessageNetworkIDLength defines the length of the network ID in bytes.
-	MessageNetworkIDLength = serializer.UInt64ByteSize
-	// MessageBinSerializedMinSize defines the minimum size of a message: network ID + parent count + 1 parent + uint16 payload length + nonce
-	MessageBinSerializedMinSize = MessageNetworkIDLength + serializer.OneByte + MessageIDLength + serializer.UInt32ByteSize + serializer.UInt64ByteSize
+	// MessageProtocolVersionSize defines the length of the ProtocolVersion in bytes.
+	MessageProtocolVersionSize = serializer.OneByte
+	// MessageBinSerializedMinSize defines the minimum size of a message: protocol version + parent count + 1 parent + uint16 payload length + nonce
+	MessageBinSerializedMinSize = MessageProtocolVersionSize + serializer.OneByte + MessageIDLength + serializer.UInt32ByteSize + serializer.UInt64ByteSize
 	// MessageBinSerializedMaxSize defines the maximum size of a message.
 	MessageBinSerializedMaxSize = 32768
 	// MinParentsInAMessage defines the minimum amount of parents in a message.

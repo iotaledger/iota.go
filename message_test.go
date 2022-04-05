@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/iotaledger/hive.go/serializer/v2"
+	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 func TestMessage_DeSerialize(t *testing.T) {
@@ -37,6 +40,23 @@ func TestMessage_DeSerialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
 	}
+}
+
+func TestMessage_MinSize(t *testing.T) {
+
+	msg := &iotago.Message{
+		ProtocolVersion: iotago.ProtocolVersion,
+		Parents:         tpkg.SortedRand32BytArray(1),
+		Payload:         nil,
+	}
+
+	msgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+	require.NoError(t, err)
+
+	msg2 := &iotago.Message{}
+	_, err = msg2.Deserialize(msgBytes, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	require.NoError(t, err)
+	require.Equal(t, msg, msg2)
 }
 
 func TestMessage_UnmarshalJSON(t *testing.T) {
@@ -104,12 +124,12 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 
 	minimal := `
 		{
-		  "parentMessageIds": ["0x0000000000000000000000000000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000000000000000000000000000"]
+		  "parentMessageIds": ["0x0000000000000000000000000000000000000000000000000000000000000000"]
 		}`
 	msgMinimal := &iotago.Message{}
 	assert.NoError(t, json.Unmarshal([]byte(minimal), msgMinimal))
 
-	assert.Len(t, msgMinimal.Parents, 2)
+	assert.Len(t, msgMinimal.Parents, 1)
 	for _, parent := range msgMinimal.Parents {
 		assert.True(t, bytes.Equal(parent[:], emptyID[:]))
 	}
