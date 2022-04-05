@@ -511,7 +511,7 @@ type jsonMilestone struct {
 	InclusionMerkleProof       string             `json:"inclusionMerkleProof"`
 	NextPoWScore               int                `json:"nextPoWScore"`
 	NextPoWScoreMilestoneIndex int                `json:"nextPoWScoreMilestoneIndex"`
-	Metadata                   string             `json:"metadata"`
+	Metadata                   string             `json:"metadata,omitempty"`
 	Receipt                    *json.RawMessage   `json:"receipt,omitempty"`
 	Signatures                 []*json.RawMessage `json:"signatures"`
 }
