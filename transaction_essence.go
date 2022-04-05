@@ -47,8 +47,8 @@ var (
 	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
 	// ErrStorageDepositLessThanMinReturnOutputStorageDeposit gets returned when the storage deposit condition's amount is less than the min storage deposit for the return output.
 	ErrStorageDepositLessThanMinReturnOutputStorageDeposit = errors.New("storage deposit return amount is less than the min storage deposit needed for the return output")
-	// ErrStorageDepositExceedsTargetOutputCost gets returned when the storage deposit condition's amount exceeds the needed amount for covering the target output's storage deposit.
-	ErrStorageDepositExceedsTargetOutputCost = errors.New("storage deposit return amount exceeds needed amount for target output's storage deposit")
+	// ErrStorageDepositExceedsTargetOutputDeposit gets returned when the storage deposit condition's amount exceeds the target output's deposit.
+	ErrStorageDepositExceedsTargetOutputDeposit = errors.New("storage deposit return amount exceeds target output's deposit")
 	// ErrMaxNativeTokensCountExceeded gets returned if outputs or transactions exceed the MaxNativeTokensCount.
 	ErrMaxNativeTokensCountExceeded = errors.New("max native tokens count exceeded")
 

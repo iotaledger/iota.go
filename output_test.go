@@ -212,7 +212,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrStorageDepositLessThanMinReturnOutputStorageDeposit,
 		},
 		{
-			name:        "fail - storage deposit to deposit delta more than required target output storage deposit",
+			name:        "fail - storage deposit more than target output deposit",
 			deSeriParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
@@ -221,13 +221,13 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAliasAddress(),
-							// storage cost of this output 444, off by one
-							Amount: OneMi - 445,
+							// off by one from the deposit
+							Amount: OneMi + 1,
 						},
 					},
 				},
 			},
-			wantErr: iotago.ErrStorageDepositExceedsTargetOutputCost,
+			wantErr: iotago.ErrStorageDepositExceedsTargetOutputDeposit,
 		},
 		{
 			name:        "fail - state rent not covered",

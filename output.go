@@ -702,8 +702,7 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 		}
 
 		// check whether deposit fulfils the storage deposit cost
-		outputStorageDepositCost, err := rentStruct.CoversStateRent(output, deposit)
-		if err != nil {
+		if _, err := rentStruct.CoversStateRent(output, deposit); err != nil {
 			return fmt.Errorf("%w: output %d", err, index)
 		}
 
@@ -715,12 +714,11 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 		// check whether the amount in the return condition allows the receiver to fulfil the storage deposit for the return output
 		if storageDep := unlockConditionsSet.StorageDepositReturn(); storageDep != nil {
 			minStorageDepositForReturnOutput := rentStruct.MinStorageDeposit(storageDep.ReturnAddress)
-			depositToStorageDepDelta := deposit - storageDep.Amount
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
 				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrStorageDepositLessThanMinReturnOutputStorageDeposit, index, minStorageDepositForReturnOutput, storageDep.Amount)
-			case depositToStorageDepDelta > outputStorageDepositCost:
-				return fmt.Errorf("%w: output %d, target output storage deposit %d, (deposit - storage deposit) %d", ErrStorageDepositExceedsTargetOutputCost, index, outputStorageDepositCost, depositToStorageDepDelta)
+			case storageDep.Amount > deposit:
+				return fmt.Errorf("%w: output %d, target output's deposit %d < storage deposit %d", ErrStorageDepositExceedsTargetOutputDeposit, index, deposit, storageDep.Amount)
 			}
 		}
 
