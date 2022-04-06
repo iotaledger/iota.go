@@ -122,14 +122,14 @@ func TestOutputsDeSerialize(t *testing.T) {
 
 type fieldMutations map[string]interface{}
 
-func copyObject(t *testing.T, source serializer.Serializable, mutations fieldMutations) serializer.Serializable {
-	srcBytes, err := source.Serialize(serializer.DeSeriModeNoValidation, nil)
+func copyObject(t *testing.T, source serializer.Serializable, mutations fieldMutations, deSeriCtx interface{}) serializer.Serializable {
+	srcBytes, err := source.Serialize(serializer.DeSeriModeNoValidation, deSeriCtx)
 	require.NoError(t, err)
 
 	ptrToCpyOfSrc := reflect.New(reflect.ValueOf(source).Elem().Type())
 
 	cpySeri := ptrToCpyOfSrc.Interface().(serializer.Serializable)
-	_, err = cpySeri.Deserialize(srcBytes, serializer.DeSeriModeNoValidation, nil)
+	_, err = cpySeri.Deserialize(srcBytes, serializer.DeSeriModeNoValidation, deSeriCtx)
 	require.NoError(t, err)
 
 	for fieldName, newVal := range mutations {

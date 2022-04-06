@@ -175,7 +175,7 @@ type TransactionEssence struct {
 
 // SigningMessage returns the to be signed message.
 func (u *TransactionEssence) SigningMessage() ([]byte, error) {
-	essenceBytes, err := u.Serialize(serializer.DeSeriModeNoValidation, nil)
+	essenceBytes, err := u.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
 	if err != nil {
 		return nil, err
 	}

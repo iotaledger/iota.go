@@ -65,7 +65,7 @@ func Test_EventAPIDisabled(t *testing.T) {
 func Test_NewEventAPIClient(t *testing.T) {
 
 	msg := tpkg.RandMessage(iotago.PayloadTaggedData)
-	originMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, nil)
+	originMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
 	require.NoError(t, err)
 	mock := &mockMqttClient{payload: originMsgBytes}
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -82,7 +82,7 @@ func Test_NewEventAPIClient(t *testing.T) {
 	require.Eventually(t, func() bool {
 		select {
 		case msg := <-msgChan:
-			gottenMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, nil)
+			gottenMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
 			require.NoError(t, err)
 			require.Equal(t, originMsgBytes, gottenMsgBytes)
 

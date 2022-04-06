@@ -7,12 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+
+	"golang.org/x/crypto/blake2b"
+	"google.golang.org/grpc"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/iotaledger/iota.go/v3/util"
-	"golang.org/x/crypto/blake2b"
-	"google.golang.org/grpc"
-	"sort"
 
 	"github.com/iotaledger/iota.go/v3/remotesigner"
 )
@@ -442,7 +444,7 @@ func (m *Milestone) Size() int {
 	// in theory `Size()` should not serialize, just return the size - but Milestone.Size() probably won't be used, so it should be fine to be non-optimal
 	receiptBytesLen := serializer.UInt32ByteSize // 4 bytes for length prefix if receipt is nil
 	if m.Receipt != nil {
-		receiptBytes, err := m.Receipt.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
+		receiptBytes, err := m.Receipt.Serialize(serializer.DeSeriModeNoValidation, nil)
 		if err != nil {
 			return 0
 		}
