@@ -4,11 +4,22 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/rand"
+	"os"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/iotaledger/iota.go/v3/bech32/internal/base32"
-	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	rand.Seed(time.Now().UnixNano())
+
+	// call the tests
+	os.Exit(m.Run())
+}
 
 func TestEncode(t *testing.T) {
 	var tests = []*struct {

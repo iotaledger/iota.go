@@ -48,12 +48,12 @@ func TestReceiptFuzzingCrashers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.in), func(t *testing.T) {
 			m := &iotago.Receipt{}
-			_, err := m.Deserialize(tt.in, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+			_, err := m.Deserialize(tt.in, serializer.DeSeriModePerformValidation, nil)
 			if err != nil {
 				return
 			}
 
-			seriData, err := m.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+			seriData, err := m.Serialize(serializer.DeSeriModePerformValidation, nil)
 			if err != nil {
 				return
 			}

@@ -60,7 +60,7 @@ func Test_IndexerEnabled(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteInfo).
+		Get(nodeclient.RouteInfo).
 		Reply(200).
 		JSON(originInfo)
 
@@ -78,7 +78,7 @@ func Test_IndexerDisabled(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteInfo).
+		Get(nodeclient.RouteInfo).
 		Reply(200).
 		JSON(originInfo)
 
@@ -115,7 +115,7 @@ func TestIndexerClient_Outputs(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteInfo).
+		Get(nodeclient.RouteInfo).
 		Reply(200).
 		JSON(originInfo)
 
@@ -147,7 +147,7 @@ func TestIndexerClient_Outputs(t *testing.T) {
 			Cursor:      nil,
 		})
 
-	outputRoute := fmt.Sprintf(nodeclient.NodeAPIRouteOutput, fakeOutputID)
+	outputRoute := fmt.Sprintf(nodeclient.RouteOutput, fakeOutputID)
 	gock.New(nodeAPIUrl).
 		Persist().
 		Get(outputRoute).

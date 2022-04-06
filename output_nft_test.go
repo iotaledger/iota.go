@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/require"
+
+	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 func TestNFTOutput_ValidateStateTransition(t *testing.T) {
@@ -119,7 +120,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.current, muts).(*iotago.NFTOutput)
+					cpy := copyObject(t, tt.current, muts, iotago.ZeroRentParas).(*iotago.NFTOutput)
 					err := tt.current.ValidateStateTransition(tt.transType, cpy, tt.svCtx)
 					if tt.wantErr != nil {
 						require.ErrorAs(t, err, &tt.wantErr)

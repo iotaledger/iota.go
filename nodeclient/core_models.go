@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 type (
@@ -60,6 +60,12 @@ type (
 		ReferencedMessagesPerSecond float64 `json:"referencedMessagesPerSecond"`
 		// The ratio of referenced messages in relation to new messages of the last confirmed milestone.
 		ReferencedRate float64 `json:"referencedRate"`
+	}
+
+	// TipsResponse defines the response of a GET tips REST API call.
+	TipsResponse struct {
+		// The hex encoded message IDs of the tips.
+		TipsHex []string `json:"tipMessageIds"`
 	}
 
 	// MessageMetadataResponse defines the response of a GET message metadata REST API call.
@@ -119,7 +125,7 @@ type (
 		// The ledger index at which this output was available at.
 		LedgerIndex uint32 `json:"ledgerIndex"`
 		// The output in its serialized form.
-		RawOutput *json.RawMessage `json:"output"`
+		RawOutput *json.RawMessage `json:"output,omitempty"`
 	}
 
 	// TreasuryResponse defines the response of a GET treasury REST API call.

@@ -14,7 +14,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 // Must panics if the given error is not nil.
@@ -311,12 +311,12 @@ func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
 		payload = RandMilestone(parents)
 	}
 
-	m := &iotago.Message{}
-	m.Payload = payload
-	m.Nonce = uint64(rand.Intn(1000))
-	m.Parents = parents
-
-	return m
+	return &iotago.Message{
+		ProtocolVersion: iotago.ProtocolVersion,
+		Parents:         parents,
+		Payload:         payload,
+		Nonce:           uint64(rand.Intn(1000)),
+	}
 }
 
 // RandTransaction returns a random transaction.
