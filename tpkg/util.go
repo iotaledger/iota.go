@@ -285,9 +285,7 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 }
 
 // RandTaggedData returns a random tagged data payload.
-func RandTaggedData(dataLength ...int) *iotago.TaggedData {
-	const index = "寿司を作って"
-
+func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	var data []byte
 	switch {
 	case len(dataLength) > 0:
@@ -295,8 +293,7 @@ func RandTaggedData(dataLength ...int) *iotago.TaggedData {
 	default:
 		data = RandBytes(rand.Intn(200) + 1)
 	}
-
-	return &iotago.TaggedData{Tag: []byte(index), Data: data}
+	return &iotago.TaggedData{Tag: tag, Data: data}
 }
 
 // RandMessage returns a random message with the given inner payload.
@@ -309,7 +306,7 @@ func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
 	case iotago.PayloadTransaction:
 		payload = RandTransaction()
 	case iotago.PayloadTaggedData:
-		payload = RandTaggedData()
+		payload = RandTaggedData([]byte("tag"))
 	case iotago.PayloadMilestone:
 		payload = RandMilestone(parents)
 	}
