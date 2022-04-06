@@ -69,6 +69,15 @@ func TestMessage_MinSize(t *testing.T) {
 	require.Equal(t, msg, msg2)
 }
 
+func TestMessage_DeserializationNotEnoughData(t *testing.T) {
+
+	msgBytes := []byte{iotago.ProtocolVersion, 1}
+
+	msg := &iotago.Message{}
+	_, err := msg.Deserialize(msgBytes, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	require.ErrorIs(t, err, serializer.ErrDeserializationNotEnoughData)
+}
+
 func TestMessage_UnmarshalJSON(t *testing.T) {
 	data := `
 		{

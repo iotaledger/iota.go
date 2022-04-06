@@ -14,10 +14,6 @@ import (
 const (
 	// MessageIDLength defines the length of a message ID.
 	MessageIDLength = blake2b.Size256
-	// MessageProtocolVersionSize defines the length of the ProtocolVersion in bytes.
-	MessageProtocolVersionSize = serializer.OneByte
-	// MessageBinSerializedMinSize defines the minimum size of a message: protocol version + parent count + 1 parent + uint16 payload length + nonce
-	MessageBinSerializedMinSize = MessageProtocolVersionSize + serializer.OneByte + MessageIDLength + serializer.UInt32ByteSize + serializer.UInt64ByteSize
 	// MessageBinSerializedMaxSize defines the maximum size of a message.
 	MessageBinSerializedMaxSize = 32768
 	// MinParentsInAMessage defines the minimum amount of parents in a message.
@@ -149,12 +145,6 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		return 0, fmt.Errorf("%w: size %d bytes", ErrMessageExceedsMaxSize, len(data))
 	}
 	return serializer.NewDeserializer(data).
-		WithValidation(deSeriMode, func(_ []byte, err error) error {
-			if err := serializer.CheckMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
-				return fmt.Errorf("invalid message bytes: %w", err)
-			}
-			return nil
-		}).
 		ReadNum(&m.ProtocolVersion, func(err error) error {
 			return fmt.Errorf("unable to deserialize message protocol version: %w", err)
 		}).
