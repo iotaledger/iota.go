@@ -6,11 +6,12 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/builder"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestTransactionBuilder(t *testing.T) {
@@ -101,7 +102,7 @@ func TestTransactionBuilder(t *testing.T) {
 			wrongAddrKeys := iotago.AddressKeys{Address: &wrongAddr, Keys: wrongIdentity}
 
 			return test{
-				name:       "err - missing address keys",
+				name:       "err - missing address keys (wrong address)",
 				addrSigner: iotago.NewInMemoryAddressSigner(wrongAddrKeys),
 				builder:    bdl,
 				buildErr:   iotago.ErrAddressKeysNotMapped,
@@ -132,7 +133,7 @@ func TestTransactionBuilder(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			_, err := test.builder.Build(iotago.ZeroRentParas, test.addrSigner)
 			if test.buildErr != nil {
-				assert.True(t, errors.Is(err, test.buildErr))
+				assert.True(t, errors.Is(err, test.buildErr), "wrong error : %s != %s", err, test.buildErr)
 				return
 			}
 			assert.NoError(t, err)
