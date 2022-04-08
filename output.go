@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"strings"
 
@@ -727,14 +728,22 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 	}
 }
 
-// OutputsSyntacticalNativeTokensCount returns an OutputsSyntacticalValidationFunc which checks that:
+// OutputsSyntacticalNativeTokens returns an OutputsSyntacticalValidationFunc which checks that:
 //	- the sum of native tokens count across all outputs does not exceed MaxNativeTokensCount
-func OutputsSyntacticalNativeTokensCount() OutputsSyntacticalValidationFunc {
+//	- each native token holds an amount bigger than zero
+func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
 	var nativeTokensCount int
 	return func(index int, output Output) error {
-		nativeTokensCount += len(output.NativeTokenSet())
+		set := output.NativeTokenSet()
+		nativeTokensCount += len(set)
 		if nativeTokensCount > MaxNativeTokensCount {
 			return ErrMaxNativeTokensCountExceeded
+		}
+
+		for i, nt := range set {
+			if nt.Amount.Cmp(common.Big0) == 0 {
+				return fmt.Errorf("%w: output %d, native token index %d", ErrNativeTokenAmountLessThanEqualZero, index, i)
+			}
 		}
 		return nil
 	}

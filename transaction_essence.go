@@ -334,7 +334,7 @@ func (u *TransactionEssence) syntacticallyValidate(rentStruct *RentStructure) er
 	if err := ValidateOutputs(u.Outputs,
 		OutputsSyntacticalDepositAmount(rentStruct),
 		OutputsSyntacticalExpirationAndTimelock(),
-		OutputsSyntacticalNativeTokensCount(),
+		OutputsSyntacticalNativeTokens(),
 		OutputsSyntacticalFoundry(),
 		OutputsSyntacticalAlias(),
 		OutputsSyntacticalNFT(),

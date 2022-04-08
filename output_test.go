@@ -349,8 +349,26 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 			},
 			wantErr: iotago.ErrMaxNativeTokensCountExceeded,
 		},
+		{
+			name: "fail - native token with zero amount",
+			outputs: iotago.Outputs{
+				&iotago.BasicOutput{
+					Amount: 1,
+					NativeTokens: iotago.NativeTokens{
+						&iotago.NativeToken{
+							ID:     iotago.NativeTokenID{},
+							Amount: big.NewInt(0),
+						},
+					},
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			wantErr: iotago.ErrNativeTokenAmountLessThanEqualZero,
+		},
 	}
-	valFunc := iotago.OutputsSyntacticalNativeTokensCount()
+	valFunc := iotago.OutputsSyntacticalNativeTokens()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var runErr error
