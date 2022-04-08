@@ -368,9 +368,9 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 			wantErr: iotago.ErrNativeTokenAmountLessThanEqualZero,
 		},
 	}
-	valFunc := iotago.OutputsSyntacticalNativeTokens()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			valFunc := iotago.OutputsSyntacticalNativeTokens()
 			var runErr error
 			for index, output := range tt.outputs {
 				if err := valFunc(index, output); err != nil {
