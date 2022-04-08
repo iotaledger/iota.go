@@ -10,13 +10,22 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
-	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 )
 
 var nullSeed = make([]byte, std.SeedSize)
+
+func TestMain(m *testing.M) {
+	rand.Seed(time.Now().UnixNano())
+
+	// call the tests
+	os.Exit(m.Run())
+}
 
 func TestGenerateKey(t *testing.T) {
 	public, private, err := std.GenerateKey(bytes.NewReader(nullSeed))
@@ -71,7 +80,7 @@ func TestMalleability(t *testing.T) {
 }
 
 func TestGolden(t *testing.T) {
-	// sign.input.gz is a selection of test tests from https://std.cr.yp.to/python/sign.input
+	// sign.input.gz is a selection of test tests from https://ed25519.cr.yp.to/python/sign.input
 	file, err := os.Open(path.Join("testdata", "sign.input.gz"))
 	require.NoError(t, err)
 	defer file.Close()

@@ -14,7 +14,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 // Must panics if the given error is not nil.
@@ -285,9 +285,7 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 }
 
 // RandTaggedData returns a random tagged data payload.
-func RandTaggedData(dataLength ...int) *iotago.TaggedData {
-	const index = "寿司を作って"
-
+func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	var data []byte
 	switch {
 	case len(dataLength) > 0:
@@ -295,8 +293,7 @@ func RandTaggedData(dataLength ...int) *iotago.TaggedData {
 	default:
 		data = RandBytes(rand.Intn(200) + 1)
 	}
-
-	return &iotago.TaggedData{Tag: []byte(index), Data: data}
+	return &iotago.TaggedData{Tag: tag, Data: data}
 }
 
 // RandMessage returns a random message with the given inner payload.
@@ -309,17 +306,17 @@ func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
 	case iotago.PayloadTransaction:
 		payload = RandTransaction()
 	case iotago.PayloadTaggedData:
-		payload = RandTaggedData()
+		payload = RandTaggedData([]byte("tag"))
 	case iotago.PayloadMilestone:
 		payload = RandMilestone(parents)
 	}
 
-	m := &iotago.Message{}
-	m.Payload = payload
-	m.Nonce = uint64(rand.Intn(1000))
-	m.Parents = parents
-
-	return m
+	return &iotago.Message{
+		ProtocolVersion: iotago.ProtocolVersion,
+		Parents:         parents,
+		Payload:         payload,
+		Nonce:           uint64(rand.Intn(1000)),
+	}
 }
 
 // RandTransaction returns a random transaction.

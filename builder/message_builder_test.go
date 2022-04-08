@@ -2,14 +2,24 @@ package builder_test
 
 import (
 	"context"
+	"math/rand"
+	"os"
 	"testing"
+	"time"
 
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/builder"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	rand.Seed(time.Now().UnixNano())
+
+	// call the tests
+	os.Exit(m.Run())
+}
 
 func TestMessageBuilder(t *testing.T) {
 	const targetPoWScore float64 = 500

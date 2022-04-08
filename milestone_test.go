@@ -18,10 +18,19 @@ import (
 )
 
 func TestMilestone__DeSerialize(t *testing.T) {
+
+	milestoneWithoutMetadata := tpkg.RandMilestone(nil)
+	milestoneWithoutMetadata.Metadata = nil
+
 	tests := []deSerializeTest{
 		{
 			name:   "ok",
 			source: tpkg.RandMilestone(nil),
+			target: &iotago.Milestone{},
+		},
+		{
+			name:   "empty-metadata",
+			source: milestoneWithoutMetadata,
 			target: &iotago.Milestone{},
 		},
 	}

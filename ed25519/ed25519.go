@@ -7,6 +7,14 @@ import (
 	"crypto/ed25519"
 	"crypto/sha512"
 
+	// We need to use this package to have access to low-level edwards25519 operations.
+	//
+	// Excerpt from the docs:
+	// https://pkg.go.dev/crypto/ed25519/internal/edwards25519?utm_source=godoc
+	//
+	// However, developers who do need to interact with low-level edwards25519
+	// operations can use filippo.io/edwards25519,
+	// an extended version of this package repackaged as an importable module.
 	"filippo.io/edwards25519"
 )
 

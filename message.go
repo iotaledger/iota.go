@@ -5,18 +5,15 @@ import (
 	"errors"
 	"fmt"
 
+	"golang.org/x/crypto/blake2b"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/pow"
-	"golang.org/x/crypto/blake2b"
 )
 
 const (
 	// MessageIDLength defines the length of a message ID.
 	MessageIDLength = blake2b.Size256
-	// MessageNetworkIDLength defines the length of the network ID in bytes.
-	MessageNetworkIDLength = serializer.UInt64ByteSize
-	// MessageBinSerializedMinSize defines the minimum size of a message: network ID + parent count + 1 parent + uint16 payload length + nonce
-	MessageBinSerializedMinSize = MessageNetworkIDLength + serializer.OneByte + MessageIDLength + serializer.UInt32ByteSize + serializer.UInt64ByteSize
 	// MessageBinSerializedMaxSize defines the maximum size of a message.
 	MessageBinSerializedMaxSize = 32768
 	// MinParentsInAMessage defines the minimum amount of parents in a message.
@@ -117,7 +114,7 @@ type Message struct {
 
 // ID computes the ID of the Message.
 func (m *Message) ID() (*MessageID, error) {
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, nil)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
 	if err != nil {
 		return nil, fmt.Errorf("can't compute message ID: %w", err)
 	}
@@ -136,7 +133,7 @@ func (m *Message) MustID() MessageID {
 
 // POW computes the PoW score of the Message.
 func (m *Message) POW() (float64, error) {
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, nil)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
 	if err != nil {
 		return 0, fmt.Errorf("can't compute message PoW score: %w", err)
 	}
@@ -148,12 +145,6 @@ func (m *Message) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		return 0, fmt.Errorf("%w: size %d bytes", ErrMessageExceedsMaxSize, len(data))
 	}
 	return serializer.NewDeserializer(data).
-		WithValidation(deSeriMode, func(_ []byte, err error) error {
-			if err := serializer.CheckMinByteLength(MessageBinSerializedMinSize, len(data)); err != nil {
-				return fmt.Errorf("invalid message bytes: %w", err)
-			}
-			return nil
-		}).
 		ReadNum(&m.ProtocolVersion, func(err error) error {
 			return fmt.Errorf("unable to deserialize message protocol version: %w", err)
 		}).

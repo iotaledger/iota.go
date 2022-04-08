@@ -2,17 +2,29 @@ package nodeclient_test
 
 import (
 	"context"
-	"github.com/iotaledger/iota.go/v3/nodeclient"
-	"gopkg.in/h2non/gock.v1"
+	"math/rand"
+	"os"
 	"testing"
 	"time"
 
+	"gopkg.in/h2non/gock.v1"
+
+	"github.com/iotaledger/iota.go/v3/nodeclient"
+
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/stretchr/testify/require"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	rand.Seed(time.Now().UnixNano())
+
+	// call the tests
+	os.Exit(m.Run())
+}
 
 func Test_EventAPIEnabled(t *testing.T) {
 	defer gock.Off()
@@ -22,7 +34,7 @@ func Test_EventAPIEnabled(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteInfo).
+		Get(nodeclient.RouteInfo).
 		Reply(200).
 		JSON(originInfo)
 
@@ -40,7 +52,7 @@ func Test_EventAPIDisabled(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.NodeAPIRouteInfo).
+		Get(nodeclient.RouteInfo).
 		Reply(200).
 		JSON(originInfo)
 
@@ -50,10 +62,10 @@ func Test_EventAPIDisabled(t *testing.T) {
 	require.ErrorIs(t, err, nodeclient.ErrMQTTPluginNotAvailable)
 }
 
-func Test_NewNodeEventAPIClient(t *testing.T) {
+func Test_NewEventAPIClient(t *testing.T) {
 
 	msg := tpkg.RandMessage(iotago.PayloadTaggedData)
-	originMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, nil)
+	originMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
 	require.NoError(t, err)
 	mock := &mockMqttClient{payload: originMsgBytes}
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -70,7 +82,7 @@ func Test_NewNodeEventAPIClient(t *testing.T) {
 	require.Eventually(t, func() bool {
 		select {
 		case msg := <-msgChan:
-			gottenMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, nil)
+			gottenMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
 			require.NoError(t, err)
 			require.Equal(t, originMsgBytes, gottenMsgBytes)
 

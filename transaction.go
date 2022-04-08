@@ -101,7 +101,7 @@ func (t *Transaction) OutputsSet() (OutputSet, error) {
 
 // ID computes the ID of the Transaction.
 func (t *Transaction) ID() (*TransactionID, error) {
-	data, err := t.Serialize(serializer.DeSeriModeNoValidation, nil)
+	data, err := t.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
 	if err != nil {
 		return nil, fmt.Errorf("can't compute transaction ID: %w", err)
 	}
