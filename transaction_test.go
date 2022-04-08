@@ -1038,6 +1038,67 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrEd25519PubKeyAndAddrMismatch,
 			}
 		}(),
+		func() test {
+			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(3)
+
+			var (
+				aliasAddr1 = tpkg.RandAliasAddress()
+				aliasAddr2 = tpkg.RandAliasAddress()
+				aliasAddr3 = tpkg.RandAliasAddress()
+			)
+
+			inputs := iotago.OutputSet{
+				// owned by ident1
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:  100,
+					AliasID: aliasAddr1.AliasID(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+						&iotago.GovernorAddressUnlockCondition{Address: ident1},
+					},
+				},
+				// owned by alias1
+				inputIDs[1]: &iotago.AliasOutput{
+					Amount:  100,
+					AliasID: aliasAddr2.AliasID(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: aliasAddr1},
+						&iotago.GovernorAddressUnlockCondition{Address: aliasAddr1},
+					},
+				},
+				// owned by alias1
+				inputIDs[2]: &iotago.AliasOutput{
+					Amount:  100,
+					AliasID: aliasAddr3.AliasID(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: aliasAddr1},
+						&iotago.GovernorAddressUnlockCondition{Address: aliasAddr1},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
+
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "fail - referencing other alias unlocked by source alias",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					UnlockBlocks: iotago.UnlockBlocks{
+						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+						&iotago.AliasUnlockBlock{Reference: 0},
+						// error, should be 0, because alias3 is unlocked by alias1, not alias2
+						&iotago.AliasUnlockBlock{Reference: 1},
+					},
+				},
+				wantErr: iotago.ErrInvalidInputUnlock,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

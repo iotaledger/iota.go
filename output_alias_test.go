@@ -61,8 +61,8 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{
-						exampleIssuer.Key(): {0: {}},
+					UnlockedIdents: iotago.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
 				},
 			},
@@ -83,7 +83,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 				},
 			},
 			wantErr: nil,
@@ -116,7 +116,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 				},
 			},
 			wantErr: nil,
@@ -149,7 +149,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
 						// serial number 5
 						exampleExistingFoundryOutputID: exampleExistingFoundryOutput,
@@ -212,7 +212,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 				},
 			},
 			wantErr: iotago.ErrInvalidAliasGovernanceTransition,
@@ -266,7 +266,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 					InChains:       map[iotago.ChainID]iotago.ChainConstrainedOutput{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{},

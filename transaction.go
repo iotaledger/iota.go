@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/util"
-
 	"golang.org/x/crypto/blake2b"
+	"sort"
+	"strings"
 )
 
 const (
@@ -349,25 +350,101 @@ func runSemanticValidations(svCtx *SemanticValidationContext, checks ...TxSemant
 
 // UnlockedIdentities defines a set of identities which are unlocked from the input side of a Transaction.
 // The value represent the index of the unlock block which unlocked the identity.
-type UnlockedIdentities map[string]UnlockedIndices
+type UnlockedIdentities map[string]*UnlockedIdentity
 
-// AddInputUnlockedBy adds an entry defining that the given identity unlocked an input at the given index.
-func (unlockedIdents UnlockedIdentities) AddInputUnlockedBy(identKey string, inputIndex uint16) {
-	unlockedIndices, ok := unlockedIdents[identKey]
-	if !ok {
-		unlockedIndices = make(UnlockedIndices)
+// SigUnlock performs a signature unlock check and adds the given ident to the set of unlocked identities if
+// the signature is valid, otherwise returns an error.
+func (unlockedIdents UnlockedIdentities) SigUnlock(ident DirectUnlockableAddress, essence []byte, sig Signature, inputIndex uint16) error {
+	if err := ident.Unlock(essence, sig); err != nil {
+		return fmt.Errorf("%w: input %d's address is not unlocked through its signature unlock block", err, inputIndex)
 	}
-	unlockedIndices[inputIndex] = struct{}{}
-	unlockedIdents[identKey] = unlockedIndices
+
+	unlockedIdents[ident.Key()] = &UnlockedIdentity{
+		Ident:      ident,
+		UnlockedAt: inputIndex, ReferencedBy: map[uint16]struct{}{},
+	}
+	return nil
 }
 
-// UnlockedIndices is a set of unlocked indices of outputs an identity unlocked.
-type UnlockedIndices map[uint16]struct{}
+// RefUnlock performs a check whether the given ident is unlocked at ref and if so,
+// adds the index of the input to the set of unlocked inputs by this identity.
+func (unlockedIdents UnlockedIdentities) RefUnlock(identKey string, ref uint16, inputIndex uint16) error {
+	ident, has := unlockedIdents[identKey]
+	if !has || ident.UnlockedAt != ref {
+		return fmt.Errorf("%w: input %d is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, ref)
+	}
 
-// Unlocked tells whether x is in this set.
-func (indices UnlockedIndices) Unlocked(x uint16) bool {
-	_, has := indices[x]
-	return has
+	ident.ReferencedBy[inputIndex] = struct{}{}
+	return nil
+}
+
+// AddUnlockedChain allocates an UnlockedIdentity for the given chain.
+func (unlockedIdents UnlockedIdentities) AddUnlockedChain(chainAddr ChainConstrainedAddress, inputIndex uint16) {
+	unlockedIdents[chainAddr.Key()] = &UnlockedIdentity{
+		Ident:        chainAddr,
+		UnlockedAt:   inputIndex,
+		ReferencedBy: map[uint16]struct{}{},
+	}
+}
+
+func (unlockedIdents UnlockedIdentities) String() string {
+	var b strings.Builder
+	var idents []*UnlockedIdentity
+	for _, ident := range unlockedIdents {
+		idents = append(idents, ident)
+	}
+	sort.Slice(idents, func(i, j int) bool {
+		x, y := idents[i].UnlockedAt, idents[j].UnlockedAt
+		// prefer to show direct unlockable addresses first in string
+		if x == y {
+			if _, is := idents[i].Ident.(ChainConstrainedAddress); is {
+				return false
+			}
+			return true
+		}
+		return x < y
+	})
+	for _, ident := range idents {
+		b.WriteString(ident.String() + "\n")
+	}
+	return b.String()
+}
+
+// UnlockedBy checks whether the given input was unlocked either directly by a signature or indirectly
+// through a ReferentialUnlockBlock by the given identity.
+func (unlockedIdents UnlockedIdentities) UnlockedBy(inputIndex uint16, identKey string) bool {
+	unlockedIdent, has := unlockedIdents[identKey]
+	if !has {
+		return false
+	}
+
+	if unlockedIdent.UnlockedAt == inputIndex {
+		return true
+	}
+
+	_, refUnlocked := unlockedIdent.ReferencedBy[inputIndex]
+	return refUnlocked
+}
+
+// UnlockedIdentity represents an unlocked identity.
+type UnlockedIdentity struct {
+	// The source ident which got unlocked.
+	Ident Address
+	// The index at which this identity has been unlocked.
+	UnlockedAt uint16
+	// A set of input/unlock-block indices which referenced this unlocked identity.
+	ReferencedBy map[uint16]struct{}
+}
+
+func (unlockedIdent *UnlockedIdentity) String() string {
+	var refs []int
+	for ref := range unlockedIdent.ReferencedBy {
+		refs = append(refs, int(ref))
+	}
+	sort.Ints(refs)
+
+	return fmt.Sprintf("ident %s (%s), unlocked at %d, ref unlocks at %v", unlockedIdent.Ident, unlockedIdent.Ident.Type(),
+		unlockedIdent.UnlockedAt, refs)
 }
 
 // TxSemanticValidationFunc is a function which given the context, input, outputs and
@@ -396,12 +473,14 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 
 			// since this input is now unlocked, and it is a ChainConstrainedOutput, the chain's address becomes automatically unlocked
 			if chainConstrOutput, is := input.(ChainConstrainedOutput); is && chainConstrOutput.Chain().Addressable() {
+				// mark this ChainConstrainedOutput's identity as unlocked by this input
 				chainID := chainConstrOutput.Chain()
 				if chainID.Empty() {
 					chainID = chainID.(UTXOIDChainID).FromOutputID(svCtx.WorkingSet.UTXOInputAtIndex(uint16(inputIndex)).Ref())
 				}
-				svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(chainID.ToAddress().Key(), uint16(inputIndex))
+				svCtx.WorkingSet.UnlockedIdents.AddUnlockedChain(chainID.ToAddress(), uint16(inputIndex))
 			}
+
 		}
 
 		return nil
@@ -464,14 +543,13 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 
 	switch owner := ownerIdent.(type) {
 	case ChainConstrainedAddress:
-		referentialUnlockBlock, isReferentialUnlockBlock := unlockBlock.(ReferentialUnlockBlock)
-		if !isReferentialUnlockBlock || !referentialUnlockBlock.Chainable() || !referentialUnlockBlock.SourceAllowed(ownerIdent) {
+		refUnlockBlock, isReferentialUnlockBlock := unlockBlock.(ReferentialUnlockBlock)
+		if !isReferentialUnlockBlock || !refUnlockBlock.Chainable() || !refUnlockBlock.SourceAllowed(ownerIdent) {
 			return fmt.Errorf("%w: input %d has a chain constrained address (%T) but its corresponding unlock block is of type %T", ErrInvalidInputUnlock, inputIndex, owner, unlockBlock)
 		}
 
-		unlockedIndices, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[owner.Key()]
-		if !wasUnlocked || !unlockedIndices.Unlocked(referentialUnlockBlock.Ref()) {
-			return fmt.Errorf("%w: input %d's chain constrained address (%T) is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, owner, referentialUnlockBlock.Ref())
+		if err := svCtx.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), refUnlockBlock.Ref(), inputIndex); err != nil {
+			return fmt.Errorf("%w: chain constrained address %s (%T)", err, owner, owner)
 		}
 
 	case DirectUnlockableAddress:
@@ -481,9 +559,8 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 				return fmt.Errorf("%w: input %d has none chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, owner.Type(), unlockBlock.Type())
 			}
 
-			unlockedIndices, wasUnlocked := svCtx.WorkingSet.UnlockedIdents[owner.Key()]
-			if !wasUnlocked || !unlockedIndices.Unlocked(uBlock.Ref()) {
-				return fmt.Errorf("%w: input %d's address is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, uBlock.Ref())
+			if err := svCtx.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex); err != nil {
+				return fmt.Errorf("%w: direct unlockable address %s (%T)", err, owner, owner)
 			}
 
 		case *SignatureUnlockBlock:
@@ -492,15 +569,14 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 				return fmt.Errorf("%w: input %d's address is already unlocked through input %d's unlock block but the input uses a non referential unlock block", ErrInvalidInputUnlock, inputIndex, unlockedAtIndex)
 			}
 
-			if err := owner.Unlock(svCtx.WorkingSet.EssenceMsgToSign, uBlock.Signature); err != nil {
-				return fmt.Errorf("%w: input %d's address is not unlocked through its signature unlock block", err, inputIndex)
+			if err := svCtx.WorkingSet.UnlockedIdents.SigUnlock(owner, svCtx.WorkingSet.EssenceMsgToSign, uBlock.Signature, inputIndex); err != nil {
+				return err
 			}
+
 		}
 	default:
 		panic("unknown address in semantic unlocks")
 	}
-
-	svCtx.WorkingSet.UnlockedIdents.AddInputUnlockedBy(ownerIdent.Key(), inputIndex)
 
 	return nil
 }
@@ -538,21 +614,22 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 			in += input.Deposit()
 
 			unlockCondSet := input.UnlockConditions().MustSet()
-			storageDepositReturnUnlockCondition := unlockCondSet.StorageDepositReturn()
-			if storageDepositReturnUnlockCondition == nil {
+			returnUnlockCond := unlockCondSet.StorageDepositReturn()
+			if returnUnlockCond == nil {
 				continue
 			}
 
-			storageDepositReturnIdentKey := storageDepositReturnUnlockCondition.ReturnAddress.Key()
+			returnIdent := returnUnlockCond.ReturnAddress.Key()
 
 			// if the return ident unlocked this input, then the return amount does
 			// not have to be fulfilled (this can happen implicit through an expiration condition)
-			unlockedIndices, has := svCtx.WorkingSet.UnlockedIdents[storageDepositReturnIdentKey]
-			if has && unlockedIndices.Unlocked(svCtx.WorkingSet.InputIDToIndex[inputID]) {
+			if svCtx.WorkingSet.UnlockedIdents.UnlockedBy(svCtx.WorkingSet.InputIDToIndex[inputID], returnIdent) {
 				continue
 			}
 
-			inputSumReturnAmountPerIdent[storageDepositReturnIdentKey] += storageDepositReturnUnlockCondition.Amount
+			// check through reference
+
+			inputSumReturnAmountPerIdent[returnIdent] += returnUnlockCond.Amount
 		}
 
 		outputSimpleTransfersPerIdent := make(map[string]uint64)

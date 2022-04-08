@@ -60,7 +60,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &iotago.SemanticValidationContext{
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
 							Outputs: iotago.Outputs{exampleFoundry},
@@ -87,7 +87,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &iotago.SemanticValidationContext{
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
 							Outputs: iotago.Outputs{exampleFoundry},
@@ -114,7 +114,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &iotago.SemanticValidationContext{
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
 							Outputs: iotago.Outputs{exampleFoundry},

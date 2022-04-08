@@ -43,8 +43,8 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{
-						exampleIssuer.Key(): {0: {}},
+					UnlockedIdents: iotago.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
 				},
 			},
@@ -58,7 +58,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 				},
 			},
 			wantErr: nil,
@@ -83,7 +83,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 				},
 			},
 			wantErr: nil,
@@ -107,7 +107,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: map[string]iotago.UnlockedIndices{},
+					UnlockedIdents: iotago.UnlockedIdentities{},
 				},
 			},
 			wantErr: &iotago.ChainTransitionError{},
