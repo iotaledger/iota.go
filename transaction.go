@@ -627,8 +627,6 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 				continue
 			}
 
-			// check through reference
-
 			inputSumReturnAmountPerIdent[returnIdent] += returnUnlockCond.Amount
 		}
 
