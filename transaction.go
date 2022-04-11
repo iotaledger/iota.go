@@ -733,7 +733,8 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 		// check invariants for when token foundry is absent
 
 		for nativeTokenID, inSum := range svCtx.WorkingSet.InNativeTokens {
-			if _, foundryIsTransitioning := svCtx.WorkingSet.OutChains[nativeTokenID.FoundryID()]; foundryIsTransitioning {
+			if foundry, foundryIsTransitioning := svCtx.WorkingSet.OutChains[nativeTokenID.FoundryID()]; foundryIsTransitioning &&
+				foundry.(*FoundryOutput).MustNativeTokenID() == nativeTokenID {
 				continue
 			}
 
@@ -744,7 +745,8 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 		}
 
 		for nativeTokenID := range svCtx.WorkingSet.OutNativeTokens {
-			if _, foundryIsTransitioning := svCtx.WorkingSet.OutChains[nativeTokenID.FoundryID()]; foundryIsTransitioning {
+			if foundry, foundryIsTransitioning := svCtx.WorkingSet.OutChains[nativeTokenID.FoundryID()]; foundryIsTransitioning &&
+				foundry.(*FoundryOutput).MustNativeTokenID() == nativeTokenID {
 				continue
 			}
 
