@@ -252,7 +252,6 @@ func RandReceipt() *iotago.ReceiptMilestoneOpt {
 
 // RandMilestone returns a random milestone with the given parent messages.
 func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
-	inclusionMerkleProof := RandBytes(iotago.MilestoneInclusionMerkleProofLength)
 	const sigsCount = 3
 
 	if parents == nil {
@@ -260,12 +259,18 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 	}
 
 	msPayload := &iotago.Milestone{
-		Index:     uint32(rand.Intn(1000)),
-		Timestamp: uint64(time.Now().Unix()),
-		Parents:   parents,
-		InclusionMerkleProof: func() [iotago.MilestoneInclusionMerkleProofLength]byte {
-			b := [iotago.MilestoneInclusionMerkleProofLength]byte{}
-			copy(b[:], inclusionMerkleProof)
+		Index:         uint32(rand.Intn(1000)),
+		Timestamp:     uint64(time.Now().Unix()),
+		LastMilestone: Rand32ByteArray(),
+		Parents:       parents,
+		PastConeMerkleProof: func() iotago.MilestoneMerkleProof {
+			var b iotago.MilestoneMerkleProof
+			copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
+			return b
+		}(),
+		InclusionMerkleProof: func() iotago.MilestoneMerkleProof {
+			var b iotago.MilestoneMerkleProof
+			copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
 			return b
 		}(),
 		Metadata: RandBytes(10),

@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	// MilestoneInclusionMerkleProofLength defines the length of the inclusion merkle proof within a milestone payload.
-	MilestoneInclusionMerkleProofLength = blake2b.Size256
+	// MilestoneMerkleProofLength defines the length of a merkle proof within a milestone payload.
+	MilestoneMerkleProofLength = blake2b.Size256
 	// MilestoneSignatureLength defines the length of the milestone signature.
 	MilestoneSignatureLength = ed25519.SignatureSize
 	// MilestoneIDLength defines the length of a Milestone ID.
@@ -99,7 +99,7 @@ func MilestoneSignatureArrayRules() serializer.ArrayRules {
 
 type (
 	// MilestoneID is the ID of a Milestone.
-	MilestoneID [MilestoneIDLength]byte
+	MilestoneID = [MilestoneIDLength]byte
 	// MilestonePublicKey is a public key within a Milestone.
 	MilestonePublicKey = [MilestonePublicKeyLength]byte
 	// MilestonePublicKeySet is a set of unique MilestonePublicKey.
@@ -112,21 +112,18 @@ type (
 	MilestoneParentMessageID = MessageID
 	// MilestoneParentMessageIDs are references to parent messages.
 	MilestoneParentMessageIDs = []MilestoneParentMessageID
-	// MilestoneInclusionMerkleProof is the inclusion merkle proof data of a milestone.
-	MilestoneInclusionMerkleProof = [MilestoneInclusionMerkleProofLength]byte
+	// MilestoneMerkleProof is the merkle root within a milestone.
+	MilestoneMerkleProof = [MilestoneMerkleProofLength]byte
 )
 
-// ToHex converts the MilestoneID to its hex representation.
-func (milestoneID MilestoneID) ToHex() string {
-	return EncodeHex(milestoneID[:])
-}
-
 // NewMilestone creates a new unsigned Milestone.
-func NewMilestone(index uint32, timestamp uint64, parents MilestoneParentMessageIDs, inclMerkleProof MilestoneInclusionMerkleProof) (*Milestone, error) {
+func NewMilestone(index uint32, timestamp uint64, lastMs MilestoneID, parents MilestoneParentMessageIDs, pastConeMerkleProof MilestoneMerkleProof, inclMerkleProof MilestoneMerkleProof) (*Milestone, error) {
 	ms := &Milestone{
 		Index:                index,
 		Timestamp:            timestamp,
+		LastMilestone:        lastMs,
 		Parents:              parents,
+		PastConeMerkleProof:  pastConeMerkleProof,
 		InclusionMerkleProof: inclMerkleProof,
 	}
 	return ms, nil
@@ -138,10 +135,16 @@ type Milestone struct {
 	Index uint32
 	// The time at which this milestone was issued.
 	Timestamp uint64
+	// The pointer to the previous milestone.
+	// Zeroed if there wasn't a previous milestone.
+	LastMilestone MilestoneID
 	// The parents where this milestone attaches to.
 	Parents MilestoneParentMessageIDs
-	// The inclusion merkle proof of included/newly confirmed transaction IDs.
-	InclusionMerkleProof MilestoneInclusionMerkleProof
+	// The merkle root of all directly/indirectly referenced messages (their IDs) which
+	// were newly confirmed by this milestone.
+	PastConeMerkleProof MilestoneMerkleProof
+	// The merkle root of all messages (their IDs) carrying ledger state mutating transactions.
+	InclusionMerkleProof MilestoneMerkleProof
 	// The metadata associated with this milestone.
 	Metadata []byte
 	// The milestone options carried with this milestone.
@@ -175,8 +178,14 @@ func (m *Milestone) Essence() ([]byte, error) {
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp for essence: %w", err)
 		}).
+		WriteBytes(m.LastMilestone[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone last milestone for essence: %w", err)
+		}).
 		Write32BytesArraySlice(m.Parents, serializer.DeSeriModePerformValidation, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents for essence: %w", err)
+		}).
+		WriteBytes(m.PastConeMerkleProof[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone past cone merkle proof for essence: %w", err)
 		}).
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof for essence: %w", err)
@@ -343,8 +352,14 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadNum(&m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone timestamp: %w", err)
 		}).
+		ReadArrayOf32Bytes(&m.LastMilestone, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone last milestone hash: %w", err)
+		}).
 		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone parents: %w", err)
+		}).
+		ReadArrayOf32Bytes(&m.PastConeMerkleProof, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone past cone merkle proof: %w", err)
 		}).
 		ReadArrayOf32Bytes(&m.InclusionMerkleProof, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone inclusion merkle proof: %w", err)
@@ -372,8 +387,14 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp: %w", err)
 		}).
+		WriteBytes(m.LastMilestone[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone last milestone for essence: %w", err)
+		}).
 		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents: %w", err)
+		}).
+		WriteBytes(m.PastConeMerkleProof[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone past cone merkle proof: %w", err)
 		}).
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof: %w", err)
@@ -397,7 +418,8 @@ func (m *Milestone) Size() int {
 	metadataLen := serializer.UInt16ByteSize + len(m.Metadata)
 
 	return util.NumByteLen(uint32(PayloadMilestone)) + util.NumByteLen(m.Index) + util.NumByteLen(m.Timestamp) +
-		parentMessagesByteLen + MilestoneInclusionMerkleProofLength + metadataLen + m.Opts.Size() + signatureByteLen
+		MilestoneIDLength + parentMessagesByteLen + MilestoneMerkleProofLength + MilestoneMerkleProofLength +
+		metadataLen + m.Opts.Size() + signatureByteLen
 }
 
 func (m *Milestone) MarshalJSON() ([]byte, error) {
@@ -405,10 +427,12 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 	jMilestone.Type = int(PayloadMilestone)
 	jMilestone.Index = int(m.Index)
 	jMilestone.Timestamp = int(m.Timestamp)
+	jMilestone.LastMilestone = EncodeHex(m.LastMilestone[:])
 	jMilestone.Parents = make([]string, len(m.Parents))
 	for i, parent := range m.Parents {
 		jMilestone.Parents[i] = EncodeHex(parent[:])
 	}
+	jMilestone.PastConeMerkleProof = EncodeHex(m.PastConeMerkleProof[:])
 	jMilestone.InclusionMerkleProof = EncodeHex(m.InclusionMerkleProof[:])
 
 	jMilestone.Opts = make([]*json.RawMessage, len(m.Opts))
@@ -454,7 +478,9 @@ type jsonMilestone struct {
 	Type                 int                `json:"type"`
 	Index                int                `json:"index"`
 	Timestamp            int                `json:"timestamp"`
+	LastMilestone        string             `json:"lastMilestone"`
 	Parents              []string           `json:"parentMessageIds"`
+	PastConeMerkleProof  string             `json:"pastConeMerkleProof"`
 	InclusionMerkleProof string             `json:"inclusionMerkleProof"`
 	Metadata             string             `json:"metadata,omitempty"`
 	Opts                 []*json.RawMessage `json:"options,omitempty"`
@@ -467,19 +493,30 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 	payload := &Milestone{}
 	payload.Index = uint32(j.Index)
 	payload.Timestamp = uint64(j.Timestamp)
+	lastMilestone, err := DecodeHex(j.LastMilestone)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode milestone last milestone from JSON: %w", err)
+	}
+	copy(payload.LastMilestone[:], lastMilestone)
 
 	payload.Parents = make(MilestoneParentMessageIDs, len(j.Parents))
 	for i, jParent := range j.Parents {
 		parentBytes, err := DecodeHex(jParent)
 		if err != nil {
-			return nil, fmt.Errorf("unable to decode parent %d from JSON for milestone payload: %w", i+1, err)
+			return nil, fmt.Errorf("unable to decode parent %d from JSON: %w", i+1, err)
 		}
 		copy(payload.Parents[i][:], parentBytes)
 	}
 
+	pastConeMerklePRoof, err := DecodeHex(j.PastConeMerkleProof)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode past cone merkle proof from JSON: %w", err)
+	}
+	copy(payload.PastConeMerkleProof[:], pastConeMerklePRoof)
+
 	inclusionMerkleProofBytes, err := DecodeHex(j.InclusionMerkleProof)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode inlcusion merkle proof from JSON for milestone payload: %w", err)
+		return nil, fmt.Errorf("unable to decode inlcusion merkle proof from JSON: %w", err)
 	}
 	copy(payload.InclusionMerkleProof[:], inclusionMerkleProofBytes)
 
