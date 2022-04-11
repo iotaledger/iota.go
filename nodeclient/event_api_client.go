@@ -454,11 +454,11 @@ func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan *OutputRespo
 }
 
 // Receipts returns a channel which returns newly applied receipts.
-func (eac *EventAPIClient) Receipts() (<-chan *iotago.Receipt, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) Receipts() (<-chan *iotago.ReceiptMilestoneOpt, *EventAPIClientSubscription) {
 	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *iotago.Receipt)
+	channel := make(chan *iotago.ReceiptMilestoneOpt)
 	if token := eac.MQTTClient.Subscribe(EventAPIReceipts, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		receipt := &iotago.Receipt{}
+		receipt := &iotago.ReceiptMilestoneOpt{}
 		if err := json.Unmarshal(mqttMsg.Payload(), receipt); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return

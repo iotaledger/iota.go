@@ -9,7 +9,7 @@ import (
 // NewReceiptBuilder creates a new ReceiptBuilder.
 func NewReceiptBuilder(migratedAt uint32) *ReceiptBuilder {
 	return &ReceiptBuilder{
-		r: &Receipt{
+		r: &ReceiptMilestoneOpt{
 			MigratedAt:  migratedAt,
 			Funds:       MigratedFundsEntries{},
 			Transaction: nil,
@@ -17,9 +17,9 @@ func NewReceiptBuilder(migratedAt uint32) *ReceiptBuilder {
 	}
 }
 
-// ReceiptBuilder is used to easily build up a Receipt.
+// ReceiptBuilder is used to easily build up a ReceiptMilestoneOpt.
 type ReceiptBuilder struct {
-	r *Receipt
+	r *ReceiptMilestoneOpt
 }
 
 // AddEntry adds the given MigratedFundsEntry to the receipt.
@@ -35,8 +35,8 @@ func (rb *ReceiptBuilder) AddTreasuryTransaction(tx *TreasuryTransaction) *Recei
 	return rb
 }
 
-// Build builds the Receipt.
-func (rb *ReceiptBuilder) Build(deSeriParas *DeSerializationParameters) (*Receipt, error) {
+// Build builds the ReceiptMilestoneOpt.
+func (rb *ReceiptBuilder) Build(deSeriParas *DeSerializationParameters) (*ReceiptMilestoneOpt, error) {
 	if _, err := rb.r.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, deSeriParas); err != nil {
 		return nil, fmt.Errorf("unable to build receipt: %w", err)
 	}

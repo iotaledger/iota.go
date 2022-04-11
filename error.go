@@ -13,12 +13,16 @@ var (
 	ErrUnsupportedFeatureBlockType = errors.New("unsupported feature block type")
 	// ErrUnsupportedUnlockConditionType gets returned when an unsupported unlock condition exists in a set.
 	ErrUnsupportedUnlockConditionType = errors.New("unsupported unlock condition type")
+	// ErrUnsupportedMilestoneOptType gets returned when an unsupported milestone option exists in a set.
+	ErrUnsupportedMilestoneOptType = errors.New("unsupported milestone option type")
 	// ErrUnknownPayloadType gets returned for unknown payload types.
 	ErrUnknownPayloadType = errors.New("unknown payload type")
 	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = errors.New("unknown address type")
 	// ErrUnknownFeatureBlockType gets returned for unknown feature block types.
 	ErrUnknownFeatureBlockType = errors.New("unknown feature block type")
+	// ErrUnknownMilestoneOptType gets returned for unknown milestone options types.
+	ErrUnknownMilestoneOptType = errors.New("unknown milestone option type")
 	// ErrUnknownUnlockConditionType gets returned for unknown unlock condition types.
 	ErrUnknownUnlockConditionType = errors.New("unknown unlock condition type")
 	// ErrUnknownInputType gets returned for unknown input types.

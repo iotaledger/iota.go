@@ -141,8 +141,8 @@ type (
 
 	// ReceiptTuple represents a receipt and the milestone index in which it was contained.
 	ReceiptTuple struct {
-		Receipt        *iotago.Receipt `json:"receipt"`
-		MilestoneIndex uint32          `json:"milestoneIndex"`
+		Receipt        *iotago.ReceiptMilestoneOpt `json:"receipt"`
+		MilestoneIndex uint32                      `json:"milestoneIndex"`
 	}
 
 	// MilestoneResponse defines the response of a GET milestones REST API call.

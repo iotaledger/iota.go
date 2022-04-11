@@ -237,8 +237,8 @@ func RandMigratedFundsEntry() *iotago.MigratedFundsEntry {
 }
 
 // RandReceipt returns a random receipt.
-func RandReceipt() *iotago.Receipt {
-	receipt := &iotago.Receipt{MigratedAt: 1000, Final: true}
+func RandReceipt() *iotago.ReceiptMilestoneOpt {
+	receipt := &iotago.ReceiptMilestoneOpt{MigratedAt: 1000, Final: true}
 
 	migFundsEntriesCount := rand.Intn(10) + 1
 	for i := migFundsEntriesCount; i > 0; i-- {
@@ -269,6 +269,12 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 			return b
 		}(),
 		Metadata: RandBytes(10),
+		Opts: iotago.MilestoneOpts{
+			&iotago.ProtocolParamsMilestoneOpt{
+				NextPoWScore:               100,
+				NextPoWScoreMilestoneIndex: 1000,
+			},
+		},
 		Signatures: func() iotago.Signatures {
 			msSigs := make(iotago.Signatures, sigsCount)
 			for i := 0; i < sigsCount; i++ {

@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReceipt_DeSerialize(t *testing.T) {
+func TestReceiptMilestoneOpt_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
-			name:   "",
+			name:   "ok - receipt milestone option",
 			source: tpkg.RandReceipt(),
-			target: &iotago.Receipt{},
+			target: &iotago.ReceiptMilestoneOpt{},
 		},
 	}
 
@@ -47,7 +47,7 @@ func TestReceiptFuzzingCrashers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.in), func(t *testing.T) {
-			m := &iotago.Receipt{}
+			m := &iotago.ReceiptMilestoneOpt{}
 			_, err := m.Deserialize(tt.in, serializer.DeSeriModePerformValidation, nil)
 			if err != nil {
 				return
@@ -66,7 +66,7 @@ func TestReceiptFuzzingCrashers(t *testing.T) {
 func TestValidateReceipts(t *testing.T) {
 	type test struct {
 		name      string
-		source    *iotago.Receipt
+		source    *iotago.ReceiptMilestoneOpt
 		prevInput *iotago.TreasuryOutput
 		err       error
 	}
@@ -92,7 +92,7 @@ func TestValidateReceipts(t *testing.T) {
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             1000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
-			return test{"err - migrated less tha minimum", receipt, currentTreasury, iotago.ErrInvalidReceipt}
+			return test{"err - migrated less tha minimum", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 		func() test {
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
@@ -100,7 +100,7 @@ func TestValidateReceipts(t *testing.T) {
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             iotago.TokenSupply + 1,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
-			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceipt}
+			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 		func() test {
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
@@ -108,7 +108,7 @@ func TestValidateReceipts(t *testing.T) {
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             6_000_000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
-			return test{"err - invalid new treasury amount", receipt, currentTreasury, iotago.ErrInvalidReceipt}
+			return test{"err - invalid new treasury amount", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 	}
 	for _, tt := range tests {

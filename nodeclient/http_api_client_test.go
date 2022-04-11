@@ -367,7 +367,7 @@ func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 		Receipts: []*nodeclient.ReceiptTuple{
 			{
 				MilestoneIndex: 1000,
-				Receipt: &iotago.Receipt{
+				Receipt: &iotago.ReceiptMilestoneOpt{
 					MigratedAt: 1000,
 					Final:      false,
 					Funds: iotago.MigratedFundsEntries{
@@ -406,7 +406,7 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 		Receipts: []*nodeclient.ReceiptTuple{
 			{
 				MilestoneIndex: 1000,
-				Receipt: &iotago.Receipt{
+				Receipt: &iotago.ReceiptMilestoneOpt{
 					MigratedAt: 1000,
 					Final:      false,
 					Funds: iotago.MigratedFundsEntries{

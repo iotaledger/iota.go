@@ -3,7 +3,6 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -51,6 +50,17 @@ type TreasuryTransaction struct {
 	Input *TreasuryInput
 	// The output of this transaction.
 	Output *TreasuryOutput
+}
+
+func (t *TreasuryTransaction) Size() int {
+	return serializer.UInt32ByteSize + t.Input.Size() + t.Output.Size()
+}
+
+func (t *TreasuryTransaction) Clone() *TreasuryTransaction {
+	return &TreasuryTransaction{
+		Input:  t.Input.Clone(),
+		Output: t.Output.Clone().(*TreasuryOutput),
+	}
 }
 
 func (t *TreasuryTransaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {

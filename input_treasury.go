@@ -23,6 +23,11 @@ func (ti *TreasuryInput) Type() InputType {
 	return InputTreasury
 }
 
+func (ti *TreasuryInput) Clone() *TreasuryInput {
+	p := *ti
+	return &p
+}
+
 func (ti *TreasuryInput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(TreasuryInputSerializedBytesSize, len(data)); err != nil {

@@ -53,25 +53,16 @@ var (
 	ErrMilestoneInvalidSignature = fmt.Errorf("invalid milestone signature")
 	// ErrMilestoneInMemorySignerPrivateKeyMissing gets returned when an InMemoryEd25519MilestoneSigner is missing a private key.
 	ErrMilestoneInMemorySignerPrivateKeyMissing = fmt.Errorf("private key missing")
-	// ErrMilestoneInvalidMinPoWScoreValues gets returned when the min. PoW score fields are invalid.
-	ErrMilestoneInvalidMinPoWScoreValues = fmt.Errorf("invalid milestone min pow score values")
 
-	milestonePayloadGuard = serializer.SerializableGuard{
-		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
-			if PayloadType(ty) != PayloadReceipt {
-				return nil, ErrTypeIsNotSupportedPayload
-			}
-			return PayloadSelector(ty)
+	milestoneSupportedMsOptTypes = MilestoneOptTypeSet{MilestoneOptReceipt: struct{}{}, MilestoneOptProtocolParams: struct{}{}}
+	milestoneOptsArrayRules      = serializer.ArrayRules{
+		Min: 0,
+		Max: 2,
+		Guards: serializer.SerializableGuard{
+			ReadGuard:  msOptReadGuard(milestoneSupportedMsOptTypes),
+			WriteGuard: msOptWriteGuard(milestoneSupportedMsOptTypes),
 		},
-		WriteGuard: func(seri serializer.Serializable) error {
-			if seri == nil {
-				return nil
-			}
-			if _, is := seri.(*Receipt); !is {
-				return ErrTypeIsNotSupportedPayload
-			}
-			return nil
-		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	// restrictions around parents within a Milestone.
@@ -151,14 +142,10 @@ type Milestone struct {
 	Parents MilestoneParentMessageIDs
 	// The inclusion merkle proof of included/newly confirmed transaction IDs.
 	InclusionMerkleProof MilestoneInclusionMerkleProof
-	// The next minimum PoW score to use after NextPoWScoreMilestoneIndex is hit.
-	NextPoWScore uint32
-	// The milestone index at which the PoW score changes to NextPoWScore.
-	NextPoWScoreMilestoneIndex uint32
 	// The metadata associated with this milestone.
 	Metadata []byte
-	// The inner payload of the milestone. Can be nil or a Receipt.
-	Receipt serializer.Serializable
+	// The milestone options carried with this milestone.
+	Opts MilestoneOpts
 	// The signatures held by the milestone.
 	Signatures Signatures
 }
@@ -194,17 +181,11 @@ func (m *Milestone) Essence() ([]byte, error) {
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof for essence: %w", err)
 		}).
-		WriteNum(m.NextPoWScore, func(err error) error {
-			return fmt.Errorf("unable to serialize milestone next pow score for essence: %w", err)
-		}).
-		WriteNum(m.NextPoWScoreMilestoneIndex, func(err error) error {
-			return fmt.Errorf("unable to serialize milestone next pow score milestone index for essence: %w", err)
-		}).
 		WriteVariableByteSlice(m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone metadata for essence: %w", err)
 		}).
-		WritePayload(m.Receipt, serializer.DeSeriModePerformValidation, nil, milestonePayloadGuard.WriteGuard, func(err error) error {
-			return fmt.Errorf("unable to serialize milestone receipt for essence: %w", err)
+		WriteSliceOfObjects(&m.Opts, serializer.DeSeriModePerformValidation, nil, serializer.SeriLengthPrefixTypeAsByte, &milestoneOptsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone options for essence: %w", err)
 		}).
 		Serialize()
 	if err != nil {
@@ -368,24 +349,11 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadArrayOf32Bytes(&m.InclusionMerkleProof, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone inclusion merkle proof: %w", err)
 		}).
-		ReadNum(&m.NextPoWScore, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone next pow score: %w", err)
-		}).
-		ReadNum(&m.NextPoWScoreMilestoneIndex, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone next pow score milestone index: %w", err)
-		}).
-		WithValidation(deSeriMode, func(_ []byte, err error) error {
-			switch {
-			case m.NextPoWScore != 0 && m.NextPoWScoreMilestoneIndex == 0:
-				return fmt.Errorf("%w: next-pow-score-milestone-index is zero but next-pow-score is not", ErrMilestoneInvalidMinPoWScoreValues)
-			}
-			return nil
-		}).
 		ReadVariableByteSlice(&m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone metadata: %w", err)
 		}, MaxMetadataLength).
-		ReadPayload(&m.Receipt, deSeriMode, deSeriCtx, milestonePayloadGuard.ReadGuard, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone receipt: %w", err)
+		ReadSliceOfObjects(&m.Opts, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, &milestoneOptsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone options: %w", err)
 		}).
 		ReadSliceOfObjects(&m.Signatures, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, &milestoneSignatureArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone signatures: %w", err)
@@ -395,13 +363,6 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 
 func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WithValidation(deSeriMode, func(_ []byte, err error) error {
-			switch {
-			case m.NextPoWScore != 0 && m.NextPoWScoreMilestoneIndex == 0:
-				return fmt.Errorf("%w: next-pow-score-milestone-index is zero but next-pow-score is not", ErrMilestoneInvalidMinPoWScoreValues)
-			}
-			return nil
-		}).
 		WriteNum(PayloadMilestone, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone payload ID: %w", err)
 		}).
@@ -417,17 +378,11 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof: %w", err)
 		}).
-		WriteNum(m.NextPoWScore, func(err error) error {
-			return fmt.Errorf("unable to serialize milestone next pow score: %w", err)
-		}).
-		WriteNum(m.NextPoWScoreMilestoneIndex, func(err error) error {
-			return fmt.Errorf("unable to serialize milestone next pow score milestone index: %w", err)
-		}).
 		WriteVariableByteSlice(m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone metadata: %w", err)
 		}).
-		WritePayload(m.Receipt, deSeriMode, deSeriCtx, milestonePayloadGuard.WriteGuard, func(err error) error {
-			return fmt.Errorf("unable to serialize milestone receipt: %w", err)
+		WriteSliceOfObjects(&m.Opts, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, &milestoneOptsArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone options: %w", err)
 		}).
 		WriteSliceOfObjects(&m.Signatures, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, &milestoneSignatureArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone signatures: %w", err)
@@ -441,18 +396,8 @@ func (m *Milestone) Size() int {
 	signatureByteLen := serializer.OneByte + ((&Ed25519Signature{}).Size())*len(m.Signatures)
 	metadataLen := serializer.UInt16ByteSize + len(m.Metadata)
 
-	// in theory `Size()` should not serialize, just return the size - but Milestone.Size() probably won't be used, so it should be fine to be non-optimal
-	receiptBytesLen := serializer.UInt32ByteSize // 4 bytes for length prefix if receipt is nil
-	if m.Receipt != nil {
-		receiptBytes, err := m.Receipt.Serialize(serializer.DeSeriModeNoValidation, nil)
-		if err != nil {
-			return 0
-		}
-		receiptBytesLen = len(receiptBytes)
-	}
 	return util.NumByteLen(uint32(PayloadMilestone)) + util.NumByteLen(m.Index) + util.NumByteLen(m.Timestamp) +
-		parentMessagesByteLen + MilestoneInclusionMerkleProofLength + util.NumByteLen(m.NextPoWScore) +
-		util.NumByteLen(m.NextPoWScoreMilestoneIndex) + metadataLen + receiptBytesLen + signatureByteLen
+		parentMessagesByteLen + MilestoneInclusionMerkleProofLength + metadataLen + m.Opts.Size() + signatureByteLen
 }
 
 func (m *Milestone) MarshalJSON() ([]byte, error) {
@@ -465,18 +410,18 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 		jMilestone.Parents[i] = EncodeHex(parent[:])
 	}
 	jMilestone.InclusionMerkleProof = EncodeHex(m.InclusionMerkleProof[:])
-	jMilestone.NextPoWScore = int(m.NextPoWScore)
-	jMilestone.NextPoWScoreMilestoneIndex = int(m.NextPoWScoreMilestoneIndex)
-	jMilestone.Metadata = EncodeHex(m.Metadata[:])
 
-	if m.Receipt != nil {
-		jReceipt, err := m.Receipt.MarshalJSON()
+	jMilestone.Opts = make([]*json.RawMessage, len(m.Opts))
+	for i, opt := range m.Opts {
+		jsonOpt, err := opt.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
-		rawReceiptJsonPayload := json.RawMessage(jReceipt)
-		jMilestone.Receipt = &rawReceiptJsonPayload
+		rawJsonSig := json.RawMessage(jsonOpt)
+		jMilestone.Opts[i] = &rawJsonSig
 	}
+
+	jMilestone.Metadata = EncodeHex(m.Metadata[:])
 
 	jMilestone.Signatures = make([]*json.RawMessage, len(m.Signatures))
 	for i, sig := range m.Signatures {
@@ -506,16 +451,14 @@ func (m *Milestone) UnmarshalJSON(bytes []byte) error {
 
 // jsonMilestone defines the json representation of a Milestone.
 type jsonMilestone struct {
-	Type                       int                `json:"type"`
-	Index                      int                `json:"index"`
-	Timestamp                  int                `json:"timestamp"`
-	Parents                    []string           `json:"parentMessageIds"`
-	InclusionMerkleProof       string             `json:"inclusionMerkleProof"`
-	NextPoWScore               int                `json:"nextPoWScore"`
-	NextPoWScoreMilestoneIndex int                `json:"nextPoWScoreMilestoneIndex"`
-	Metadata                   string             `json:"metadata,omitempty"`
-	Receipt                    *json.RawMessage   `json:"receipt,omitempty"`
-	Signatures                 []*json.RawMessage `json:"signatures"`
+	Type                 int                `json:"type"`
+	Index                int                `json:"index"`
+	Timestamp            int                `json:"timestamp"`
+	Parents              []string           `json:"parentMessageIds"`
+	InclusionMerkleProof string             `json:"inclusionMerkleProof"`
+	Metadata             string             `json:"metadata,omitempty"`
+	Opts                 []*json.RawMessage `json:"options,omitempty"`
+	Signatures           []*json.RawMessage `json:"signatures"`
 }
 
 func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
@@ -526,8 +469,8 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 	payload.Timestamp = uint64(j.Timestamp)
 
 	payload.Parents = make(MilestoneParentMessageIDs, len(j.Parents))
-	for i, jparent := range j.Parents {
-		parentBytes, err := DecodeHex(jparent)
+	for i, jParent := range j.Parents {
+		parentBytes, err := DecodeHex(jParent)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode parent %d from JSON for milestone payload: %w", i+1, err)
 		}
@@ -540,25 +483,14 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 	}
 	copy(payload.InclusionMerkleProof[:], inclusionMerkleProofBytes)
 
-	payload.NextPoWScore = uint32(j.NextPoWScore)
-	payload.NextPoWScoreMilestoneIndex = uint32(j.NextPoWScoreMilestoneIndex)
 	payload.Metadata, err = DecodeHex(j.Metadata)
 	if err != nil {
 		return nil, err
 	}
 
-	if j.Receipt != nil {
-		jsonPayload, err := DeserializeObjectFromJSON(j.Receipt, func(ty int) (JSONSerializable, error) {
-			return &jsonReceipt{}, nil
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		payload.Receipt, err = jsonPayload.ToSerializable()
-		if err != nil {
-			return nil, fmt.Errorf("unable to decode inner milestone receipt: %w", err)
-		}
+	payload.Opts, err = milestoneOptsFromJSONRawMsg(j.Opts)
+	if err != nil {
+		return nil, err
 	}
 
 	payload.Signatures, err = signaturesFromJSONRawMsg(j.Signatures)

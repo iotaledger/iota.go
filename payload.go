@@ -8,7 +8,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// PayloadType denotes a type of a payload.
+// PayloadType denotes a type of payload.
 type PayloadType uint32
 
 const (
@@ -16,9 +16,8 @@ const (
 	// PayloadTransactionTIP7 = 0
 	// PayloadMilestoneTIP8 = 1
 	// PayloadIndexationTIP6 = 2
+	// PayloadReceiptTIP17TIP8 = 3
 
-	// PayloadReceipt denotes a Receipt.
-	PayloadReceipt PayloadType = 3
 	// PayloadTreasuryTransaction denotes a TreasuryTransaction.
 	PayloadTreasuryTransaction PayloadType = 4
 	// PayloadTaggedData denotes a TaggedData payload.
@@ -41,7 +40,7 @@ var (
 		"Deprecated-TransactionTIP7",
 		"Deprecated-MilestoneTIP8",
 		"Deprecated-IndexationTIP6",
-		"Receipt",
+		"Deprecated-ReceiptTIP17TIP8",
 		"TreasuryTransaction",
 		"TaggedData",
 		"Transaction",
@@ -72,8 +71,6 @@ func PayloadSelector(payloadType uint32) (serializer.Serializable, error) {
 		seri = &Milestone{}
 	case PayloadTaggedData:
 		seri = &TaggedData{}
-	case PayloadReceipt:
-		seri = &Receipt{}
 	case PayloadTreasuryTransaction:
 		seri = &TreasuryTransaction{}
 	default:

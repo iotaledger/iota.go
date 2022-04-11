@@ -9,15 +9,20 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
+var (
+	// ErrInvalidReceiptMilestoneOpt gets returned when a ReceiptMilestoneOpt is invalid.
+	ErrInvalidReceiptMilestoneOpt = errors.New("invalid receipt")
+)
+
 const (
-	// MinMigratedFundsEntryCount defines the minimum amount of MigratedFundsEntry items within a Receipt.
+	// MinMigratedFundsEntryCount defines the minimum amount of MigratedFundsEntry items within a ReceiptMilestoneOpt.
 	MinMigratedFundsEntryCount = 1
-	// MaxMigratedFundsEntryCount defines the maximum amount of MigratedFundsEntry items within a Receipt.
+	// MaxMigratedFundsEntryCount defines the maximum amount of MigratedFundsEntry items within a ReceiptMilestoneOpt.
 	MaxMigratedFundsEntryCount = 127
 )
 
 var (
-	// ErrReceiptMustContainATreasuryTransaction gets returned if a Receipt does not contain a TreasuryTransaction.
+	// ErrReceiptMustContainATreasuryTransaction gets returned if a ReceiptMilestoneOpt does not contain a TreasuryTransaction.
 	ErrReceiptMustContainATreasuryTransaction = errors.New("receipt must contain a treasury transaction")
 
 	receiptPayloadGuard = serializer.SerializableGuard{
@@ -54,31 +59,46 @@ func MigratedFundEntriesArrayRules() serializer.ArrayRules {
 	return *migratedFundEntriesArrayRules
 }
 
-// Receipt is a listing of migrated funds.
-type Receipt struct {
+// ReceiptMilestoneOpt is a listing of migrated funds.
+type ReceiptMilestoneOpt struct {
 	// The milestone index at which the funds were migrated in the legacy network.
 	MigratedAt uint32
-	// Whether this Receipt is the final one for a given migrated at index.
+	// Whether this ReceiptMilestoneOpt is the final one for a given migrated at index.
 	Final bool
-	// The funds which were migrated with this Receipt.
+	// The funds which were migrated with this ReceiptMilestoneOpt.
 	Funds MigratedFundsEntries
 	// The TreasuryTransaction used to fund the funds.
 	Transaction *TreasuryTransaction
 }
 
-func (r *Receipt) PayloadType() PayloadType {
-	return PayloadReceipt
+func (r *ReceiptMilestoneOpt) Size() int {
+	return serializer.OneByte + serializer.UInt32ByteSize + serializer.OneByte + r.Funds.Size() +
+		// payloads have a 4 byte length prefix
+		serializer.UInt32ByteSize + r.Transaction.Size()
+}
+
+func (r *ReceiptMilestoneOpt) Type() MilestoneOptType {
+	return MilestoneOptReceipt
+}
+
+func (r *ReceiptMilestoneOpt) Clone() MilestoneOpt {
+	return &ReceiptMilestoneOpt{
+		MigratedAt:  r.MigratedAt,
+		Final:       r.Final,
+		Funds:       r.Funds.Clone(),
+		Transaction: r.Transaction.Clone(),
+	}
 }
 
 // SortFunds sorts the funds within the receipt after their serialized binary form in lexical order.
-func (r *Receipt) SortFunds() {
+func (r *ReceiptMilestoneOpt) SortFunds() {
 	seris := r.Funds.ToSerializables()
 	sort.Sort(serializer.SortedSerializables(seris))
 	r.Funds.FromSerializables(seris)
 }
 
-// Sum returns the sum of all MigratedFundsEntry items within the Receipt.
-func (r *Receipt) Sum() uint64 {
+// Sum returns the sum of all MigratedFundsEntry items within the ReceiptMilestoneOpt.
+func (r *ReceiptMilestoneOpt) Sum() uint64 {
 	var sum uint64
 	for _, item := range r.Funds {
 		sum += item.Deposit
@@ -87,28 +107,28 @@ func (r *Receipt) Sum() uint64 {
 }
 
 // Treasury returns the TreasuryTransaction within the receipt or nil if none is contained.
-// This function panics if the Receipt.Transaction is not nil and not a TreasuryTransaction.
-func (r *Receipt) Treasury() *TreasuryTransaction {
+// This function panics if the ReceiptMilestoneOpt.Transaction is not nil and not a TreasuryTransaction.
+func (r *ReceiptMilestoneOpt) Treasury() *TreasuryTransaction {
 	return r.Transaction
 }
 
-func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
+func (r *ReceiptMilestoneOpt) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
-		CheckTypePrefix(uint32(PayloadReceipt), serializer.TypeDenotationUint32, func(err error) error {
-			return fmt.Errorf("unable to deserialize receipt: %w", err)
+		CheckTypePrefix(uint32(MilestoneOptReceipt), serializer.TypeDenotationByte, func(err error) error {
+			return fmt.Errorf("unable to deserialize receipt milestone option: %w", err)
 		}).
 		ReadNum(&r.MigratedAt, func(err error) error {
-			return fmt.Errorf("unable to deserialize receipt migrated index: %w", err)
+			return fmt.Errorf("unable to deserialize receipt milestone option migrated at index: %w", err)
 		}).
 		ReadBool(&r.Final, func(err error) error {
-			return fmt.Errorf("unable to deserialize receipt final flag: %w", err)
+			return fmt.Errorf("unable to deserialize receipt milestone option final flag: %w", err)
 		}).
 		// special as the MigratedFundsEntry has no type denotation byte
 		ReadSliceOfObjects(&r.Funds, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationNone, migratedFundEntriesArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize receipt migrated fund entries: %w", err)
+			return fmt.Errorf("unable to deserialize receipt milestone option migrated fund entries: %w", err)
 		}).
 		ReadPayload(&r.Transaction, deSeriMode, deSeriCtx, receiptPayloadGuard.ReadGuard, func(err error) error {
-			return fmt.Errorf("unable to deserialize receipt transaction: %w", err)
+			return fmt.Errorf("unable to deserialize receipt milestone option transaction: %w", err)
 		}).
 		WithValidation(deSeriMode, func(_ []byte, err error) error {
 			if r.Transaction == nil {
@@ -119,22 +139,22 @@ func (r *Receipt) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		Done()
 }
 
-func (r *Receipt) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
+func (r *ReceiptMilestoneOpt) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	if r.Transaction == nil {
 		return nil, ErrReceiptMustContainATreasuryTransaction
 	}
 	return serializer.NewSerializer().
-		WriteNum(PayloadReceipt, func(err error) error {
-			return fmt.Errorf("unable to serialize receipt payload ID: %w", err)
+		WriteNum(byte(MilestoneOptReceipt), func(err error) error {
+			return fmt.Errorf("unable to serialize receipt milestone option type ID: %w", err)
 		}).
 		WriteNum(r.MigratedAt, func(err error) error {
-			return fmt.Errorf("unable to serialize receipt payload ID: %w", err)
+			return fmt.Errorf("unable to serialize receipt milestone option migrated at index: %w", err)
 		}).
 		WriteBool(r.Final, func(err error) error {
-			return fmt.Errorf("unable to serialize receipt final flag: %w", err)
+			return fmt.Errorf("unable to serialize receipt milestone option final flag: %w", err)
 		}).
 		WriteSliceOfObjects(&r.Funds, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, migratedFundEntriesArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize receipt funds: %w", err)
+			return fmt.Errorf("unable to serialize receipt milestone option funds: %w", err)
 		}).
 		WithValidation(deSeriMode, func(_ []byte, err error) error {
 			if r.Transaction == nil {
@@ -143,31 +163,31 @@ func (r *Receipt) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx
 			return nil
 		}).
 		WritePayload(r.Transaction, deSeriMode, deSeriCtx, receiptPayloadGuard.WriteGuard, func(err error) error {
-			return fmt.Errorf("unable to serialize receipt transaction: %w", err)
+			return fmt.Errorf("unable to serialize receipt milestone option transaction: %w", err)
 		}).
 		Serialize()
 }
 
-func (r *Receipt) MarshalJSON() ([]byte, error) {
-	jReceipt := &jsonReceipt{}
-	jReceipt.Type = int(PayloadReceipt)
+func (r *ReceiptMilestoneOpt) MarshalJSON() ([]byte, error) {
+	jReceipt := &jsonReceiptMilestoneOpt{}
+	jReceipt.Type = int(MilestoneOptReceipt)
 	jReceipt.MigratedAt = int(r.MigratedAt)
 
 	jReceipt.Funds = make([]*json.RawMessage, len(r.Funds))
 	for i, migratedFundsEntry := range r.Funds {
-		jsonMigratedFundsEntry, err := migratedFundsEntry.MarshalJSON()
+		jMigratedFundsEntry, err := migratedFundsEntry.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
-		rawMsgJsonMigratedFundsEntry := json.RawMessage(jsonMigratedFundsEntry)
+		rawMsgJsonMigratedFundsEntry := json.RawMessage(jMigratedFundsEntry)
 		jReceipt.Funds[i] = &rawMsgJsonMigratedFundsEntry
 	}
 
-	jsonTreasuryTransaction, err := r.Transaction.MarshalJSON()
+	jTreasuryTransaction, err := r.Transaction.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
-	rawMsgJsonTreasuryTransaction := json.RawMessage(jsonTreasuryTransaction)
+	rawMsgJsonTreasuryTransaction := json.RawMessage(jTreasuryTransaction)
 	jReceipt.Transaction = &rawMsgJsonTreasuryTransaction
 
 	jReceipt.Final = r.Final
@@ -175,8 +195,8 @@ func (r *Receipt) MarshalJSON() ([]byte, error) {
 	return json.Marshal(jReceipt)
 }
 
-func (r *Receipt) UnmarshalJSON(bytes []byte) error {
-	jReceipt := &jsonReceipt{}
+func (r *ReceiptMilestoneOpt) UnmarshalJSON(bytes []byte) error {
+	jReceipt := &jsonReceiptMilestoneOpt{}
 	if err := json.Unmarshal(bytes, jReceipt); err != nil {
 		return err
 	}
@@ -184,12 +204,12 @@ func (r *Receipt) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	*r = *seri.(*Receipt)
+	*r = *seri.(*ReceiptMilestoneOpt)
 	return nil
 }
 
-// jsonReceipt defines the json representation of a Receipt.
-type jsonReceipt struct {
+// jsonReceiptMilestoneOpt defines the json representation of a ReceiptMilestoneOpt.
+type jsonReceiptMilestoneOpt struct {
 	Type        int                `json:"type"`
 	MigratedAt  int                `json:"migratedAt"`
 	Funds       []*json.RawMessage `json:"funds"`
@@ -197,16 +217,16 @@ type jsonReceipt struct {
 	Final       bool               `json:"final"`
 }
 
-func (j *jsonReceipt) ToSerializable() (serializer.Serializable, error) {
-	payload := &Receipt{}
+func (j *jsonReceiptMilestoneOpt) ToSerializable() (serializer.Serializable, error) {
+	payload := &ReceiptMilestoneOpt{}
 	payload.MigratedAt = uint32(j.MigratedAt)
 
 	migratedFundsEntries := make(MigratedFundsEntries, len(j.Funds))
 	for i, ele := range j.Funds {
-		jsonMigratedFundsEntry, _ := DeserializeObjectFromJSON(ele, func(ty int) (JSONSerializable, error) {
+		jMigratedFundsEntry, _ := DeserializeObjectFromJSON(ele, func(ty int) (JSONSerializable, error) {
 			return &jsonMigratedFundsEntry{}, nil
 		})
-		migratedFundsEntry, err := jsonMigratedFundsEntry.ToSerializable()
+		migratedFundsEntry, err := jMigratedFundsEntry.ToSerializable()
 		if err != nil {
 			return nil, fmt.Errorf("pos %d: %w", i, err)
 		}
@@ -218,11 +238,11 @@ func (j *jsonReceipt) ToSerializable() (serializer.Serializable, error) {
 		return nil, fmt.Errorf("%w: JSON receipt must contain a treasury transaction", ErrInvalidJSON)
 	}
 
-	jsonTreasuryTransaction, _ := DeserializeObjectFromJSON(j.Transaction, func(ty int) (JSONSerializable, error) {
+	jTreasuryTransaction, _ := DeserializeObjectFromJSON(j.Transaction, func(ty int) (JSONSerializable, error) {
 		return &jsonTreasuryTransaction{}, nil
 	})
 
-	treasuryTransaction, err := jsonTreasuryTransaction.ToSerializable()
+	treasuryTransaction, err := jTreasuryTransaction.ToSerializable()
 	if err != nil {
 		return nil, err
 	}
@@ -232,11 +252,6 @@ func (j *jsonReceipt) ToSerializable() (serializer.Serializable, error) {
 	return payload, nil
 }
 
-var (
-	// ErrInvalidReceipt gets returned when a receipt is invalid.
-	ErrInvalidReceipt = errors.New("invalid receipt")
-)
-
 // ValidateReceipt validates whether given the following receipt:
 //	- None of the MigratedFundsEntry objects deposits more than the max supply and deposits at least
 //	  MinMigratedFundsEntryDeposit tokens.
@@ -245,7 +260,7 @@ var (
 //    equals the amount of the new TreasuryOutput.
 // This function panics if the receipt is nil, the receipt does not include any migrated fund entries or
 // the given treasury output is nil.
-func ValidateReceipt(receipt *Receipt, prevTreasuryOutput *TreasuryOutput) error {
+func ValidateReceipt(receipt *ReceiptMilestoneOpt, prevTreasuryOutput *TreasuryOutput) error {
 	switch {
 	case prevTreasuryOutput == nil:
 		panic("given previous treasury output is nil")
@@ -264,18 +279,18 @@ func ValidateReceipt(receipt *Receipt, prevTreasuryOutput *TreasuryOutput) error
 	var migratedFundsSum uint64
 	for fIndex, entry := range receipt.Funds {
 		if prevIndex, seen := seenTailTxHashes[entry.TailTransactionHash]; seen {
-			return fmt.Errorf("%w: tail transaction hash at index %d occurrs multiple times (previous %d)", ErrInvalidReceipt, fIndex, prevIndex)
+			return fmt.Errorf("%w: tail transaction hash at index %d occurrs multiple times (previous %d)", ErrInvalidReceiptMilestoneOpt, fIndex, prevIndex)
 		}
 		seenTailTxHashes[entry.TailTransactionHash] = fIndex
 
 		switch {
 		case entry.Deposit < MinMigratedFundsEntryDeposit:
-			return fmt.Errorf("%w: migrated fund entry at index %d deposits less than %d", ErrInvalidReceipt, fIndex, MinMigratedFundsEntryDeposit)
+			return fmt.Errorf("%w: migrated fund entry at index %d deposits less than %d", ErrInvalidReceiptMilestoneOpt, fIndex, MinMigratedFundsEntryDeposit)
 		case entry.Deposit > TokenSupply:
-			return fmt.Errorf("%w: migrated fund entry at index %d deposits more than total supply", ErrInvalidReceipt, fIndex)
+			return fmt.Errorf("%w: migrated fund entry at index %d deposits more than total supply", ErrInvalidReceiptMilestoneOpt, fIndex)
 		case entry.Deposit+migratedFundsSum > TokenSupply:
 			// this can't overflow because the previous case ensures that
-			return fmt.Errorf("%w: migrated fund entry at index %d overflows total supply", ErrInvalidReceipt, fIndex)
+			return fmt.Errorf("%w: migrated fund entry at index %d overflows total supply", ErrInvalidReceiptMilestoneOpt, fIndex)
 		}
 
 		migratedFundsSum += entry.Deposit
@@ -284,7 +299,7 @@ func ValidateReceipt(receipt *Receipt, prevTreasuryOutput *TreasuryOutput) error
 	prevTreasury := prevTreasuryOutput.Amount
 	newTreasury := treasuryTransaction.Output.Amount
 	if prevTreasury-migratedFundsSum != newTreasury {
-		return fmt.Errorf("%w: new treasury amount mismatch, prev %d, delta %d (migrated funds), new %d", ErrInvalidReceipt, prevTreasury, migratedFundsSum, newTreasury)
+		return fmt.Errorf("%w: new treasury amount mismatch, prev %d, delta %d (migrated funds), new %d", ErrInvalidReceiptMilestoneOpt, prevTreasury, migratedFundsSum, newTreasury)
 	}
 
 	return nil
