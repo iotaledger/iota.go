@@ -194,16 +194,20 @@ func TestMilestoneSigning(t *testing.T) {
 
 func TestNewMilestone(t *testing.T) {
 	parents := tpkg.SortedRand32BytArray(1 + rand.Intn(7))
+	lastMs := tpkg.Rand32ByteArray()
+	pastConeMerkleProof := tpkg.Rand32ByteArray()
 	inclusionMerkleProof := tpkg.Rand32ByteArray()
 	const msIndex, timestamp = 1000, 133713371337
 
-	ms, err := iotago.NewMilestone(msIndex, timestamp, parents, inclusionMerkleProof)
+	ms, err := iotago.NewMilestone(msIndex, timestamp, lastMs, parents, pastConeMerkleProof, inclusionMerkleProof)
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, &iotago.Milestone{
 		Index:                msIndex,
 		Timestamp:            timestamp,
+		LastMilestone:        lastMs,
 		Parents:              parents,
+		PastConeMerkleProof:  pastConeMerkleProof,
 		InclusionMerkleProof: inclusionMerkleProof,
 		Signatures:           nil,
 	}, ms)
