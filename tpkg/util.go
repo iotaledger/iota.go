@@ -263,12 +263,12 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 		Timestamp:     uint64(time.Now().Unix()),
 		LastMilestone: Rand32ByteArray(),
 		Parents:       parents,
-		PastConeMerkleProof: func() iotago.MilestoneMerkleProof {
+		ConfirmedMerkleRoot: func() iotago.MilestoneMerkleProof {
 			var b iotago.MilestoneMerkleProof
 			copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
 			return b
 		}(),
-		InclusionMerkleProof: func() iotago.MilestoneMerkleProof {
+		AppliedMerkleRoot: func() iotago.MilestoneMerkleProof {
 			var b iotago.MilestoneMerkleProof
 			copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
 			return b

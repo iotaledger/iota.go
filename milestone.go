@@ -117,14 +117,14 @@ type (
 )
 
 // NewMilestone creates a new unsigned Milestone.
-func NewMilestone(index uint32, timestamp uint64, lastMs MilestoneID, parents MilestoneParentMessageIDs, pastConeMerkleProof MilestoneMerkleProof, inclMerkleProof MilestoneMerkleProof) (*Milestone, error) {
+func NewMilestone(index uint32, timestamp uint64, lastMs MilestoneID, parents MilestoneParentMessageIDs, confMerkleRoot MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) (*Milestone, error) {
 	ms := &Milestone{
-		Index:                index,
-		Timestamp:            timestamp,
-		LastMilestone:        lastMs,
-		Parents:              parents,
-		PastConeMerkleProof:  pastConeMerkleProof,
-		InclusionMerkleProof: inclMerkleProof,
+		Index:               index,
+		Timestamp:           timestamp,
+		LastMilestone:       lastMs,
+		Parents:             parents,
+		ConfirmedMerkleRoot: confMerkleRoot,
+		AppliedMerkleRoot:   appliedMerkleRoot,
 	}
 	return ms, nil
 }
@@ -142,9 +142,9 @@ type Milestone struct {
 	Parents MilestoneParentMessageIDs
 	// The merkle root of all directly/indirectly referenced messages (their IDs) which
 	// were newly confirmed by this milestone.
-	PastConeMerkleProof MilestoneMerkleProof
+	ConfirmedMerkleRoot MilestoneMerkleProof
 	// The merkle root of all messages (their IDs) carrying ledger state mutating transactions.
-	InclusionMerkleProof MilestoneMerkleProof
+	AppliedMerkleRoot MilestoneMerkleProof
 	// The metadata associated with this milestone.
 	Metadata []byte
 	// The milestone options carried with this milestone.
@@ -184,10 +184,10 @@ func (m *Milestone) Essence() ([]byte, error) {
 		Write32BytesArraySlice(m.Parents, serializer.DeSeriModePerformValidation, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents for essence: %w", err)
 		}).
-		WriteBytes(m.PastConeMerkleProof[:], func(err error) error {
+		WriteBytes(m.ConfirmedMerkleRoot[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone past cone merkle proof for essence: %w", err)
 		}).
-		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
+		WriteBytes(m.AppliedMerkleRoot[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof for essence: %w", err)
 		}).
 		WriteVariableByteSlice(m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
@@ -358,10 +358,10 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone parents: %w", err)
 		}).
-		ReadArrayOf32Bytes(&m.PastConeMerkleProof, func(err error) error {
+		ReadArrayOf32Bytes(&m.ConfirmedMerkleRoot, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone past cone merkle proof: %w", err)
 		}).
-		ReadArrayOf32Bytes(&m.InclusionMerkleProof, func(err error) error {
+		ReadArrayOf32Bytes(&m.AppliedMerkleRoot, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone inclusion merkle proof: %w", err)
 		}).
 		ReadVariableByteSlice(&m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
@@ -393,10 +393,10 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents: %w", err)
 		}).
-		WriteBytes(m.PastConeMerkleProof[:], func(err error) error {
+		WriteBytes(m.ConfirmedMerkleRoot[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone past cone merkle proof: %w", err)
 		}).
-		WriteBytes(m.InclusionMerkleProof[:], func(err error) error {
+		WriteBytes(m.AppliedMerkleRoot[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone inclusion merkle proof: %w", err)
 		}).
 		WriteVariableByteSlice(m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
@@ -432,8 +432,8 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 	for i, parent := range m.Parents {
 		jMilestone.Parents[i] = EncodeHex(parent[:])
 	}
-	jMilestone.PastConeMerkleProof = EncodeHex(m.PastConeMerkleProof[:])
-	jMilestone.InclusionMerkleProof = EncodeHex(m.InclusionMerkleProof[:])
+	jMilestone.PastConeMerkleProof = EncodeHex(m.ConfirmedMerkleRoot[:])
+	jMilestone.InclusionMerkleProof = EncodeHex(m.AppliedMerkleRoot[:])
 
 	jMilestone.Opts = make([]*json.RawMessage, len(m.Opts))
 	for i, opt := range m.Opts {
@@ -512,13 +512,13 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode past cone merkle proof from JSON: %w", err)
 	}
-	copy(payload.PastConeMerkleProof[:], pastConeMerklePRoof)
+	copy(payload.ConfirmedMerkleRoot[:], pastConeMerklePRoof)
 
 	inclusionMerkleProofBytes, err := DecodeHex(j.InclusionMerkleProof)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode inlcusion merkle proof from JSON: %w", err)
 	}
-	copy(payload.InclusionMerkleProof[:], inclusionMerkleProofBytes)
+	copy(payload.AppliedMerkleRoot[:], inclusionMerkleProofBytes)
 
 	payload.Metadata, err = DecodeHex(j.Metadata)
 	if err != nil {
