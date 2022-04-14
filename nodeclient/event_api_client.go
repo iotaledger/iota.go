@@ -29,15 +29,15 @@ const (
 	// EventAPIMessagesTransaction is the name of the transaction messages metadata event channel.
 	EventAPIMessagesTransaction = "messages/transaction"
 	// EventAPIMessagesTransactionTaggedData is the name of the transaction with tagged data messages metadata event channel.
-	EventAPIMessagesTransactionTaggedData = "messages/transaction/taggedData"
+	EventAPIMessagesTransactionTaggedData = "messages/transaction/tagged-data"
 	// EventAPIMessagesTransactionTaggedDataTag is the name of the transaction with tagged data with tag messages metadata event channel.
-	EventAPIMessagesTransactionTaggedDataTag = "messages/transaction/taggedData/{tag}"
+	EventAPIMessagesTransactionTaggedDataTag = "messages/transaction/tagged-data/{tag}"
 	// EventAPIMessagesMilestone is the name of the milestone messages metadata event channel.
 	EventAPIMessagesMilestone = "messages/milestone"
 	// EventAPIMessagesTaggedData is the name of the tagged data messages metadata event channel.
-	EventAPIMessagesTaggedData = "messages/taggedData"
+	EventAPIMessagesTaggedData = "messages/tagged-data"
 	// EventAPIMessagesTaggedDataTag is the name of the tagged data with tag messages metadata event channel.
-	EventAPIMessagesTaggedDataTag = "messages/taggedData/{tag}"
+	EventAPIMessagesTaggedDataTag = "messages/tagged-data/{tag}"
 	// EventAPIMessagesMetadata is the name of the message metadata event channel.
 	EventAPIMessagesMetadata = "messages/{messageId}/metadata"
 
@@ -73,11 +73,11 @@ type EventAPIUnlockCondition string
 const (
 	UnlockConditionAny              EventAPIUnlockCondition = "+"
 	UnlockConditionAddress          EventAPIUnlockCondition = "address"
-	UnlockConditionStorageReturn    EventAPIUnlockCondition = "storageReturn"
-	UnlockConditionExpirationReturn EventAPIUnlockCondition = "expirationReturn"
-	UnlockConditionStateController  EventAPIUnlockCondition = "stateController"
+	UnlockConditionStorageReturn    EventAPIUnlockCondition = "storage-return"
+	UnlockConditionExpirationReturn EventAPIUnlockCondition = "expiration"
+	UnlockConditionStateController  EventAPIUnlockCondition = "state-controller"
 	UnlockConditionGovernor         EventAPIUnlockCondition = "governor"
-	UnlockConditionImmutableAlias   EventAPIUnlockCondition = "immutableAlias"
+	UnlockConditionImmutableAlias   EventAPIUnlockCondition = "immutable-alias"
 )
 
 func randMQTTClientID() string {
