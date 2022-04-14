@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	// EventAPIMilestonesLatest is the name of the latest milestone event channel.
-	EventAPIMilestonesLatest = "milestones/latest"
-	// EventAPIMilestonesConfirmed is the name of the confirmed milestone event channel.
-	EventAPIMilestonesConfirmed = "milestones/confirmed"
+	// EventAPIMilestoneIndexLatest is the name of the latest milestone event channel.
+	EventAPIMilestoneIndexLatest = "milestone-index/latest"
+	// EventAPIMilestoneIndexConfirmed is the name of the confirmed milestone event channel.
+	EventAPIMilestoneIndexConfirmed = "milestone-index/confirmed"
 
 	// EventAPIMessages is the name of the received messages event channel.
 	EventAPIMessages = "messages"
@@ -274,7 +274,7 @@ func (eac *EventAPIClient) subscribeToMessagesTopic(topic string, deSeriParas *i
 	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
-func (eac *EventAPIClient) subscribeToMilestonesTopic(topic string) (<-chan *MilestonePointer, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) subscribeToMilestoneIndexTopic(topic string) (<-chan *MilestonePointer, *EventAPIClientSubscription) {
 	panicIfEventAPIClientInactive(eac)
 	channel := make(chan *MilestonePointer)
 	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
@@ -287,36 +287,6 @@ func (eac *EventAPIClient) subscribeToMilestonesTopic(topic string) (<-chan *Mil
 		case <-eac.Ctx.Done():
 			return
 		case channel <- msPointer:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, topic)
-}
-
-func (eac *EventAPIClient) subscribeToMilestoneMessagesTopic(topic string, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *iotago.Message)
-	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		msPointer := &MilestonePointer{}
-		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		res, err := eac.Client.MilestoneByIndex(context.Background(), msPointer.Index)
-		if err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		msg, err := eac.Client.MessageByMessageID(context.Background(), iotago.MustMessageIDFromHexString(res.MessageID), deSeriParas)
-		if err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- msg:
 		}
 	}); token.Wait() && token.Error() != nil {
 		return nil, newSubscriptionWithError(token.Error())
@@ -482,20 +452,10 @@ type MilestonePointer struct {
 
 // LatestMilestones returns a channel of newly seen latest milestones.
 func (eac *EventAPIClient) LatestMilestones() (<-chan *MilestonePointer, *EventAPIClientSubscription) {
-	return eac.subscribeToMilestonesTopic(EventAPIMilestonesLatest)
-}
-
-// LatestMilestoneMessages returns a channel of newly seen latest milestones messages.
-func (eac *EventAPIClient) LatestMilestoneMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMilestoneMessagesTopic(EventAPIMilestonesLatest, deSeriParas)
+	return eac.subscribeToMilestoneIndexTopic(EventAPIMilestoneIndexLatest)
 }
 
 // ConfirmedMilestones returns a channel of newly confirmed milestones.
 func (eac *EventAPIClient) ConfirmedMilestones() (<-chan *MilestonePointer, *EventAPIClientSubscription) {
-	return eac.subscribeToMilestonesTopic(EventAPIMilestonesConfirmed)
-}
-
-// ConfirmedMilestoneMessages returns a channel of newly confirmed milestones messages.
-func (eac *EventAPIClient) ConfirmedMilestoneMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMilestoneMessagesTopic(EventAPIMilestonesConfirmed, deSeriParas)
+	return eac.subscribeToMilestoneIndexTopic(EventAPIMilestoneIndexConfirmed)
 }
