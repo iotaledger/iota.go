@@ -12,9 +12,10 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
-	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 func TestMilestone__DeSerialize(t *testing.T) {
@@ -92,7 +93,7 @@ func TestMilestoneSigning(t *testing.T) {
 			msPayload := &iotago.Milestone{
 				Parents:              tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 				Index:                1000,
-				Timestamp:            uint64(time.Now().Unix()),
+				Timestamp:            uint32(time.Now().Unix()),
 				InclusionMerkleProof: tpkg.Rand32ByteArray(),
 			}
 
@@ -125,7 +126,7 @@ func TestMilestoneSigning(t *testing.T) {
 			msPayload := &iotago.Milestone{
 				Parents:              tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 				Index:                1000,
-				Timestamp:            uint64(time.Now().Unix()),
+				Timestamp:            uint32(time.Now().Unix()),
 				InclusionMerkleProof: tpkg.Rand32ByteArray(),
 			}
 
@@ -153,7 +154,7 @@ func TestMilestoneSigning(t *testing.T) {
 			msPayload := &iotago.Milestone{
 				Parents:              tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 				Index:                1000,
-				Timestamp:            uint64(time.Now().Unix()),
+				Timestamp:            uint32(time.Now().Unix()),
 				InclusionMerkleProof: tpkg.Rand32ByteArray(),
 			}
 
@@ -197,7 +198,7 @@ func TestNewMilestone(t *testing.T) {
 	lastMs := tpkg.Rand32ByteArray()
 	pastConeMerkleProof := tpkg.Rand32ByteArray()
 	inclusionMerkleProof := tpkg.Rand32ByteArray()
-	const msIndex, timestamp = 1000, 133713371337
+	const msIndex, timestamp = 1000, 1333333337
 
 	ms, err := iotago.NewMilestone(msIndex, timestamp, lastMs, parents, pastConeMerkleProof, inclusionMerkleProof)
 	assert.NoError(t, err)

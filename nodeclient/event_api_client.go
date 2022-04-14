@@ -477,7 +477,7 @@ func (eac *EventAPIClient) Receipts() (<-chan *iotago.ReceiptMilestoneOpt, *Even
 // MilestonePointer is an informative struct holding a milestone index and timestamp.
 type MilestonePointer struct {
 	Index     uint32 `json:"index"`
-	Timestamp uint64 `json:"timestamp"`
+	Timestamp uint32 `json:"timestamp"`
 }
 
 // LatestMilestones returns a channel of newly seen latest milestones.

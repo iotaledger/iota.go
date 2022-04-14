@@ -31,7 +31,7 @@ type (
 		// Whether the node is healthy.
 		IsHealthy bool `json:"isHealthy"`
 		// The timestamp of the latest known milestone.
-		LatestMilestoneTimestamp int64 `json:"latestMilestoneTimestamp"`
+		LatestMilestoneTimestamp uint32 `json:"latestMilestoneTimestamp"`
 		// The latest known milestone index.
 		LatestMilestoneIndex uint32 `json:"latestMilestoneIndex"`
 		// The current confirmed milestone's index.
@@ -152,7 +152,7 @@ type (
 		// The hex encoded message ID of the message.
 		MessageID string `json:"messageId"`
 		// The unix time of the milestone payload.
-		Time int64 `json:"timestamp"`
+		Time uint32 `json:"timestamp"`
 	}
 
 	// MilestoneUTXOChangesResponse defines the response of a GET milestone UTXO changes REST API call.
