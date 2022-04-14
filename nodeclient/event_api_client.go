@@ -17,34 +17,33 @@ import (
 )
 
 const (
-	// EventAPIMilestoneIndexLatest is the name of the latest milestone event channel.
-	EventAPIMilestoneIndexLatest = "milestone-index/latest"
-	// EventAPIMilestoneIndexConfirmed is the name of the confirmed milestone event channel.
-	EventAPIMilestoneIndexConfirmed = "milestone-index/confirmed"
+	// EventAPIMilestoneInfoLatest is the name of the latest milestone info event channel.
+	EventAPIMilestoneInfoLatest = "milestone-info/latest"
+	// EventAPIMilestoneInfoConfirmed is the name of the confirmed milestone info event channel.
+	EventAPIMilestoneInfoConfirmed = "milestone-info/confirmed"
 	// EventAPIMilestones is the name of the milestone event channel.
 	EventAPIMilestones = "milestones"
 
 	// EventAPIMessages is the name of the received messages event channel.
 	EventAPIMessages = "messages"
-	// EventAPIMessagesReferenced is the name of the referenced messages metadata event channel.
-	EventAPIMessagesReferenced = "messages/referenced"
-	// EventAPIMessagesTransaction is the name of the transaction messages metadata event channel.
+	// EventAPIMessagesTransaction is the name of the messages containing transactions event channel.
 	EventAPIMessagesTransaction = "messages/transaction"
-	// EventAPIMessagesTransactionTaggedData is the name of the transaction with tagged data messages metadata event channel.
+	// EventAPIMessagesTransactionTaggedData is the name of the messages containing transaction with tagged data event channel.
 	EventAPIMessagesTransactionTaggedData = "messages/transaction/tagged-data"
-	// EventAPIMessagesTransactionTaggedDataTag is the name of the transaction with tagged data with tag messages metadata event channel.
+	// EventAPIMessagesTransactionTaggedDataTag is the name of the messages containing transaction with a specific tagged data event channel.
 	EventAPIMessagesTransactionTaggedDataTag = "messages/transaction/tagged-data/{tag}"
-	// EventAPIMessagesMilestone is the name of the milestone messages metadata event channel.
-	EventAPIMessagesMilestone = "messages/milestone"
-	// EventAPIMessagesTaggedData is the name of the tagged data messages metadata event channel.
+	// EventAPIMessagesTaggedData is the name of the messages containing tagged data event channel.
 	EventAPIMessagesTaggedData = "messages/tagged-data"
-	// EventAPIMessagesTaggedDataTag is the name of the tagged data with tag messages metadata event channel.
+	// EventAPIMessagesTaggedDataTag is the name of the messages containing a specific tagged data event channel.
 	EventAPIMessagesTaggedDataTag = "messages/tagged-data/{tag}"
-	// EventAPIMessagesMetadata is the name of the message metadata event channel.
-	EventAPIMessagesMetadata = "messages/{messageId}/metadata"
 
 	// EventAPITransactionsIncludedMessage is the name of the included transaction message event channel.
 	EventAPITransactionsIncludedMessage = "transactions/{transactionId}/included-message"
+
+	// EventAPIMessageMetadata is the name of the message metadata event channel.
+	EventAPIMessageMetadata = "message-metadata/{messageId}"
+	// EventAPIMessageMetadataReferenced is the name of the referenced messages metadata event channel.
+	EventAPIMessageMetadataReferenced = "message-metadata/referenced"
 
 	// EventAPIOutputs is the name of the outputs event channel.
 	EventAPIOutputs = "outputs/{outputId}"
@@ -276,11 +275,11 @@ func (eac *EventAPIClient) subscribeToMessagesTopic(topic string, deSeriParas *i
 	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
-func (eac *EventAPIClient) subscribeToMilestoneIndexTopic(topic string) (<-chan *MilestonePointer, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) subscribeToMilestoneInfoTopic(topic string) (<-chan *MilestoneInfo, *EventAPIClientSubscription) {
 	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *MilestonePointer)
+	channel := make(chan *MilestoneInfo)
 	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		msPointer := &MilestonePointer{}
+		msPointer := &MilestoneInfo{}
 		if err := json.Unmarshal(mqttMsg.Payload(), msPointer); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return
@@ -316,6 +315,26 @@ func (eac *EventAPIClient) subscribeToMilestoneTopic(topic string) (<-chan *iota
 	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
+func (eac *EventAPIClient) subscribeToReceiptsTopic(topic string) (<-chan *iotago.ReceiptMilestoneOpt, *EventAPIClientSubscription) {
+	panicIfEventAPIClientInactive(eac)
+	channel := make(chan *iotago.ReceiptMilestoneOpt)
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+		receipt := &iotago.ReceiptMilestoneOpt{}
+		if err := json.Unmarshal(mqttMsg.Payload(), receipt); err != nil {
+			sendErrOrDrop(eac.Errors, err)
+			return
+		}
+		select {
+		case <-eac.Ctx.Done():
+			return
+		case channel <- receipt:
+		}
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(eac.MQTTClient, topic)
+}
+
 // Messages returns a channel of newly received messages.
 func (eac *EventAPIClient) Messages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	return eac.subscribeToMessagesTopic(EventAPIMessages, deSeriParas)
@@ -323,81 +342,44 @@ func (eac *EventAPIClient) Messages(deSeriParas *iotago.DeSerializationParameter
 
 // ReferencedMessagesMetadata returns a channel of message metadata of newly referenced messages.
 func (eac *EventAPIClient) ReferencedMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataTopic(EventAPIMessagesReferenced)
+	return eac.subscribeToMessageMetadataTopic(EventAPIMessageMetadataReferenced)
 }
 
 // ReferencedMessages returns a channel of newly referenced messages.
 func (eac *EventAPIClient) ReferencedMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataMessagesTopic(EventAPIMessagesReferenced, deSeriParas)
-}
-
-// TransactionMessagesMetadata returns a channel of message metadata of messages containing transactions.
-func (eac *EventAPIClient) TransactionMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataTopic(EventAPIMessagesTransaction)
+	return eac.subscribeToMessageMetadataMessagesTopic(EventAPIMessageMetadataReferenced, deSeriParas)
 }
 
 // TransactionMessages returns a channel of messages containing transactions.
 func (eac *EventAPIClient) TransactionMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataMessagesTopic(EventAPIMessagesTransaction, deSeriParas)
+	return eac.subscribeToMessagesTopic(EventAPIMessagesTransaction, deSeriParas)
 }
 
 // TransactionTaggedDataMessages returns a channel of messages containing transactions with tagged data.
 func (eac *EventAPIClient) TransactionTaggedDataMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataMessagesTopic(EventAPIMessagesTransactionTaggedData, deSeriParas)
-}
-
-// TransactionTaggedDataMessagesMetadata returns a channel of message metadata of messages containing transactions with tagged data.
-func (eac *EventAPIClient) TransactionTaggedDataMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataTopic(EventAPIMessagesTransactionTaggedData)
+	return eac.subscribeToMessagesTopic(EventAPIMessagesTransactionTaggedData, deSeriParas)
 }
 
 // TransactionTaggedDataWithTagMessages returns a channel of messages containing transactions with tagged data containing the given tag.
 func (eac *EventAPIClient) TransactionTaggedDataWithTagMessages(tag []byte, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIMessagesTransactionTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
-	return eac.subscribeToMessageMetadataMessagesTopic(topic, deSeriParas)
-}
-
-// TransactionTaggedDataMessagesWithTagMetadata returns a channel of message metadata of messages containing transactions with tagged data containing the given tag.
-func (eac *EventAPIClient) TransactionTaggedDataMessagesWithTagMetadata(tag []byte) (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIMessagesTransactionTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
-	return eac.subscribeToMessageMetadataTopic(topic)
-}
-
-// MilestoneMessagesMetadata returns a channel of message metadata of messages containing milestones.
-func (eac *EventAPIClient) MilestoneMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataTopic(EventAPIMessagesMilestone)
-}
-
-// MilestoneMessages returns a channel of messages containing milestones.
-func (eac *EventAPIClient) MilestoneMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataMessagesTopic(EventAPIMessagesMilestone, deSeriParas)
-}
-
-// TaggedDataMessagesMetadata returns a channel of message metadata of messages containing tagged data.
-func (eac *EventAPIClient) TaggedDataMessagesMetadata() (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataTopic(EventAPIMessagesTaggedData)
+	return eac.subscribeToMessagesTopic(topic, deSeriParas)
 }
 
 // TaggedDataMessages returns a channel of messages containing tagged data containing the given tag.
 func (eac *EventAPIClient) TaggedDataMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataMessagesTopic(EventAPIMessagesTaggedData, deSeriParas)
-}
-
-// TaggedDataWithTagMessagesMetadata returns a channel of message metadata of messages containing tagged data containing the given tag.
-func (eac *EventAPIClient) TaggedDataWithTagMessagesMetadata(tag []byte) (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIMessagesTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
-	return eac.subscribeToMessageMetadataTopic(topic)
+	return eac.subscribeToMessagesTopic(EventAPIMessagesTaggedData, deSeriParas)
 }
 
 // TaggedDataWithTagMessages returns a channel of messages containing tagged data.
 func (eac *EventAPIClient) TaggedDataWithTagMessages(tag []byte, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIMessagesTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
-	return eac.subscribeToMessageMetadataMessagesTopic(topic, deSeriParas)
+	return eac.subscribeToMessagesTopic(topic, deSeriParas)
 }
 
 // MessageMetadataChange returns a channel of MessageMetadataResponse each time the given message's state changes.
 func (eac *EventAPIClient) MessageMetadataChange(msgID iotago.MessageID) (<-chan *MessageMetadataResponse, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIMessagesMetadata, "{messageId}", iotago.MessageIDToHexString(msgID), 1)
+	topic := strings.Replace(EventAPIMessageMetadata, "{messageId}", iotago.MessageIDToHexString(msgID), 1)
 	return eac.subscribeToMessageMetadataTopic(topic)
 }
 
@@ -447,39 +429,23 @@ func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan *OutputRespo
 
 // Receipts returns a channel which returns newly applied receipts.
 func (eac *EventAPIClient) Receipts() (<-chan *iotago.ReceiptMilestoneOpt, *EventAPIClientSubscription) {
-	panicIfEventAPIClientInactive(eac)
-	channel := make(chan *iotago.ReceiptMilestoneOpt)
-	if token := eac.MQTTClient.Subscribe(EventAPIReceipts, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
-		receipt := &iotago.ReceiptMilestoneOpt{}
-		if err := json.Unmarshal(mqttMsg.Payload(), receipt); err != nil {
-			sendErrOrDrop(eac.Errors, err)
-			return
-		}
-		select {
-		case <-eac.Ctx.Done():
-			return
-		case channel <- receipt:
-		}
-	}); token.Wait() && token.Error() != nil {
-		return nil, newSubscriptionWithError(token.Error())
-	}
-	return channel, newSubscription(eac.MQTTClient, EventAPIReceipts)
+	return eac.subscribeToReceiptsTopic(EventAPIReceipts)
 }
 
-// MilestonePointer is an informative struct holding a milestone index and timestamp.
-type MilestonePointer struct {
+// MilestoneInfo is an informative struct holding a milestone index and timestamp.
+type MilestoneInfo struct {
 	Index     uint32 `json:"index"`
 	Timestamp uint32 `json:"timestamp"`
 }
 
-// LatestMilestones returns a channel of newly seen latest milestones.
-func (eac *EventAPIClient) LatestMilestones() (<-chan *MilestonePointer, *EventAPIClientSubscription) {
-	return eac.subscribeToMilestoneIndexTopic(EventAPIMilestoneIndexLatest)
+// LatestMilestones returns a channel of infos about newly seen latest milestones.
+func (eac *EventAPIClient) LatestMilestones() (<-chan *MilestoneInfo, *EventAPIClientSubscription) {
+	return eac.subscribeToMilestoneInfoTopic(EventAPIMilestoneInfoLatest)
 }
 
-// ConfirmedMilestones returns a channel of newly confirmed milestones.
-func (eac *EventAPIClient) ConfirmedMilestones() (<-chan *MilestonePointer, *EventAPIClientSubscription) {
-	return eac.subscribeToMilestoneIndexTopic(EventAPIMilestoneIndexConfirmed)
+// ConfirmedMilestones returns a channel of infos about newly confirmed milestones.
+func (eac *EventAPIClient) ConfirmedMilestones() (<-chan *MilestoneInfo, *EventAPIClientSubscription) {
+	return eac.subscribeToMilestoneInfoTopic(EventAPIMilestoneInfoConfirmed)
 }
 
 // Milestones returns a channel of newly received milestones.
