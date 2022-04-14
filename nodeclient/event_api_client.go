@@ -21,6 +21,8 @@ const (
 	EventAPIMilestoneIndexLatest = "milestone-index/latest"
 	// EventAPIMilestoneIndexConfirmed is the name of the confirmed milestone event channel.
 	EventAPIMilestoneIndexConfirmed = "milestone-index/confirmed"
+	// EventAPIMilestones is the name of the milestone event channel.
+	EventAPIMilestones = "milestones"
 
 	// EventAPIMessages is the name of the received messages event channel.
 	EventAPIMessages = "messages"
@@ -294,6 +296,26 @@ func (eac *EventAPIClient) subscribeToMilestoneIndexTopic(topic string) (<-chan 
 	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
+func (eac *EventAPIClient) subscribeToMilestoneTopic(topic string) (<-chan *iotago.Milestone, *EventAPIClientSubscription) {
+	panicIfEventAPIClientInactive(eac)
+	channel := make(chan *iotago.Milestone)
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+		msPayload := &iotago.Milestone{}
+		if err := json.Unmarshal(mqttMsg.Payload(), msPayload); err != nil {
+			sendErrOrDrop(eac.Errors, err)
+			return
+		}
+		select {
+		case <-eac.Ctx.Done():
+			return
+		case channel <- msPayload:
+		}
+	}); token.Wait() && token.Error() != nil {
+		return nil, newSubscriptionWithError(token.Error())
+	}
+	return channel, newSubscription(eac.MQTTClient, topic)
+}
+
 // Messages returns a channel of newly received messages.
 func (eac *EventAPIClient) Messages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	return eac.subscribeToMessagesTopic(EventAPIMessages, deSeriParas)
@@ -458,4 +480,9 @@ func (eac *EventAPIClient) LatestMilestones() (<-chan *MilestonePointer, *EventA
 // ConfirmedMilestones returns a channel of newly confirmed milestones.
 func (eac *EventAPIClient) ConfirmedMilestones() (<-chan *MilestonePointer, *EventAPIClientSubscription) {
 	return eac.subscribeToMilestoneIndexTopic(EventAPIMilestoneIndexConfirmed)
+}
+
+// Milestones returns a channel of newly received milestones.
+func (eac *EventAPIClient) Milestones() (<-chan *iotago.Milestone, *EventAPIClientSubscription) {
+	return eac.subscribeToMilestoneTopic(EventAPIMilestones)
 }
