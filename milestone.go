@@ -117,7 +117,7 @@ type (
 )
 
 // NewMilestone creates a new unsigned Milestone.
-func NewMilestone(index uint32, timestamp uint64, lastMs MilestoneID, parents MilestoneParentMessageIDs, pastConeMerkleProof MilestoneMerkleProof, inclMerkleProof MilestoneMerkleProof) (*Milestone, error) {
+func NewMilestone(index uint32, timestamp uint32, lastMs MilestoneID, parents MilestoneParentMessageIDs, pastConeMerkleProof MilestoneMerkleProof, inclMerkleProof MilestoneMerkleProof) (*Milestone, error) {
 	ms := &Milestone{
 		Index:                index,
 		Timestamp:            timestamp,
@@ -134,7 +134,7 @@ type Milestone struct {
 	// The index of this milestone.
 	Index uint32
 	// The time at which this milestone was issued.
-	Timestamp uint64
+	Timestamp uint32
 	// The pointer to the previous milestone.
 	// Zeroed if there wasn't a previous milestone.
 	LastMilestone MilestoneID
@@ -492,7 +492,7 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 
 	payload := &Milestone{}
 	payload.Index = uint32(j.Index)
-	payload.Timestamp = uint64(j.Timestamp)
+	payload.Timestamp = uint32(j.Timestamp)
 	lastMilestone, err := DecodeHex(j.LastMilestone)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode milestone last milestone from JSON: %w", err)
