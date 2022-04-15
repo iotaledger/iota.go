@@ -445,7 +445,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 	originRes := &nodeclient.MilestoneResponse{
 		Index:     milestoneIndex,
 		MessageID: iotago.EncodeHex(msgID[:]),
-		Time:      time.Now().Unix(),
+		Time:      uint32(time.Now().Unix()),
 	}
 
 	gock.New(nodeAPIUrl).

@@ -1,14 +1,15 @@
 package nodeclient
 
 import (
-	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/pasztorpisti/qs"
+
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 // IndexerResponse is the standard successful response by the indexer.
 type IndexerResponse struct {
 	// The ledger index at which these outputs where available at.
-	LedgerIndex int `json:"ledgerIndex"`
+	LedgerIndex uint32 `json:"ledgerIndex"`
 	// The maximum count of results that are returned by the node.
 	PageSize int `json:"pageSize"`
 	// The output IDs (transaction hash + output index) of the outputs on this address.
@@ -30,13 +31,13 @@ type IndexerTimelockParas struct {
 	// Filters outputs based on the presence of timelock unlock condition.
 	HasTimelockCondition bool `qs:"hasTimelockCondition,omitempty"`
 	// Return outputs that are timelocked before a certain Unix timestamp.
-	TimelockedBefore int `qs:"timelockedBefore,omitempty"`
+	TimelockedBefore uint32 `qs:"timelockedBefore,omitempty"`
 	// Return outputs that are timelocked after a certain Unix timestamp.
-	TimelockedAfter int `qs:"timelockedAfter,omitempty"`
+	TimelockedAfter uint32 `qs:"timelockedAfter,omitempty"`
 	// Return outputs that are timelocked before a certain milestone index.
-	TimelockedBeforeMilestone int `qs:"timelockedBeforeMilestone,omitempty"`
+	TimelockedBeforeMilestone uint32 `qs:"timelockedBeforeMilestone,omitempty"`
 	// Return outputs that are timelocked after a certain milestone index.
-	TimelockedAfterMilestone int `qs:"timelockedAfterMilestone,omitempty"`
+	TimelockedAfterMilestone uint32 `qs:"timelockedAfterMilestone,omitempty"`
 }
 
 // IndexerExpirationParas define expiration query parameters.
@@ -44,13 +45,13 @@ type IndexerExpirationParas struct {
 	// Filters outputs based on the presence of expiration unlock condition.
 	HasExpirationCondition bool `qs:"hasExpirationCondition,omitempty"`
 	// Return outputs that expire before a certain Unix timestamp.
-	ExpiresBefore int `qs:"expiresBefore,omitempty"`
+	ExpiresBefore uint32 `qs:"expiresBefore,omitempty"`
 	// Return outputs that expire after a certain Unix timestamp.
-	ExpiresAfter int `qs:"expiresAfter,omitempty"`
+	ExpiresAfter uint32 `qs:"expiresAfter,omitempty"`
 	// Return outputs that expire before a certain milestone index.
-	ExpiresBeforeMilestone int `qs:"expiresBeforeMilestone,omitempty"`
+	ExpiresBeforeMilestone uint32 `qs:"expiresBeforeMilestone,omitempty"`
 	// Return outputs that expire after a certain milestone index.
-	ExpiresAfterMilestone int `qs:"expiresAfterMilestone,omitempty"`
+	ExpiresAfterMilestone uint32 `qs:"expiresAfterMilestone,omitempty"`
 	// Filter outputs based on the presence of a specific return address in the expiration unlock condition.
 	ExpirationReturnAddressBech32 string `qs:"expirationReturnAddress,omitempty"`
 }
@@ -58,9 +59,9 @@ type IndexerExpirationParas struct {
 // IndexerCreationParas define creation time query parameters.
 type IndexerCreationParas struct {
 	// Return outputs that were created before a certain Unix timestamp.
-	CreatedBefore int `qs:"createdBefore,omitempty"`
+	CreatedBefore uint32 `qs:"createdBefore,omitempty"`
 	// Return outputs that were created after a certain Unix timestamp.
-	CreatedAfter int `qs:"createdAfter,omitempty"`
+	CreatedAfter uint32 `qs:"createdAfter,omitempty"`
 }
 
 // IndexerStorageDepositParas define storage deposit based query parameters.

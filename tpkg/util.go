@@ -260,7 +260,7 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 
 	msPayload := &iotago.Milestone{
 		Index:         uint32(rand.Intn(1000)),
-		Timestamp:     uint64(time.Now().Unix()),
+		Timestamp:     uint32(time.Now().Unix()),
 		LastMilestone: Rand32ByteArray(),
 		Parents:       parents,
 		ConfirmedMerkleRoot: func() iotago.MilestoneMerkleProof {
