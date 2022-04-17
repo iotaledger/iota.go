@@ -12,6 +12,10 @@ import (
 )
 
 const (
+	MIMEApplicationVendorIOTASerializer = "application/vnd.iota.serializer-v1"
+)
+
+const (
 	// IndexerPluginName is the name for the indexer plugin.
 	IndexerPluginName = "indexer/v1"
 
@@ -31,17 +35,15 @@ const (
 	// GET returns the tips.
 	RouteTips = "/api/v2/tips"
 
-	// RouteMessageData is the route for getting message data by its messageID.
-	// GET returns message data (json).
-	RouteMessageData = "/api/v2/messages/%s"
+	// RouteMessage is the route for getting a message by its messageID.
+	// GET returns the message based on the given type in the request "Accept" header.
+	// MIMEApplicationJSON => json
+	// MIMEVendorIOTASerializer => bytes
+	RouteMessage = "/api/v2/messages/%s"
 
 	// RouteMessageMetadata is the route for getting message metadata by its messageID.
 	// GET returns message metadata (including info about "promotion/reattachment needed").
 	RouteMessageMetadata = "/api/v2/messages/%s/metadata"
-
-	// RouteMessageBytes is the route for getting message raw data by its messageID.
-	// GET returns raw message data (bytes).
-	RouteMessageBytes = "/api/v2/messages/%s/raw"
 
 	// RouteMessageChildren is the route for getting message IDs of the children of a message, identified by its messageID.
 	// GET returns the message IDs of all children.
@@ -49,10 +51,15 @@ const (
 
 	// RouteMessages is the route for creating new messages.
 	// POST creates a single new message and returns the new message ID.
+	// The message is parsed based on the given type in the request "Content-Type" header.
+	// MIMEApplicationJSON => json
+	// MIMEVendorIOTASerializer => bytes
 	RouteMessages = "/api/v2/messages"
 
 	// RouteTransactionsIncludedMessage is the route for getting the message that was included in the ledger for a given transaction ID.
-	// GET returns message data (json).
+	// GET returns the message based on the given type in the request "Accept" header.
+	// MIMEApplicationJSON => json
+	// MIMEVendorIOTASerializer => bytes
 	RouteTransactionsIncludedMessage = "/api/v2/transactions/%s/included-message"
 
 	// RouteMilestone is the route for getting a milestone by its milestoneIndex.
@@ -64,7 +71,9 @@ const (
 	RouteMilestoneUTXOChanges = "/api/v2/milestones/%d/utxo-changes"
 
 	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
-	// GET returns the output (json).
+	// GET returns the output based on the given type in the request "Accept" header.
+	// MIMEApplicationJSON => json
+	// MIMEVendorIOTASerializer => bytes
 	RouteOutput = "/api/v2/outputs/%s"
 
 	// RouteOutputMetadata is the route for getting output metadata by its outputID (transactionHash + outputIndex) without getting the data again.
@@ -103,6 +112,9 @@ var (
 
 // RequestURLHook is a function to modify the URL before sending a request.
 type RequestURLHook func(url string) string
+
+// RequestHeaderHook is a function to modify the request header before sending a request.
+type RequestHeaderHook func(header http.Header)
 
 // the default options applied to the Client.
 var defaultNodeAPIOptions = []ClientOption{
@@ -192,7 +204,13 @@ type RawDataEnvelope struct {
 // Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *Client) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, method, route, client.opts.requestURLHook, reqObj, resObj)
+	return do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, method, route, client.opts.requestURLHook, nil, reqObj, resObj)
+}
+
+// DoWithRequestHeaderHook executes a request against the endpoint.
+// This function is only meant to be used for special routes not covered through the standard API.
+func (client *Client) DoWithRequestHeaderHook(ctx context.Context, method string, route string, requestHeaderHook RequestHeaderHook, reqObj interface{}, resObj interface{}) (*http.Response, error) {
+	return do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, method, route, client.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
 }
 
 // Indexer returns the IndexerClient.
@@ -324,28 +342,14 @@ func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iota
 	return res, nil
 }
 
-// MessageJSONByMessageID get a message by its message ID from the node (json).
-func (client *Client) MessageJSONByMessageID(ctx context.Context, msgID iotago.MessageID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
-	query := fmt.Sprintf(RouteMessageData, iotago.EncodeHex(msgID[:]))
-
-	res := &iotago.Message{}
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
-		return nil, err
-	}
-
-	if _, err := res.Serialize(serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
 // MessageByMessageID get a message by its message ID from the node.
 func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.MessageID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
-	query := fmt.Sprintf(RouteMessageBytes, iotago.EncodeHex(msgID[:]))
+	query := fmt.Sprintf(RouteMessage, iotago.EncodeHex(msgID[:]))
 
 	res := &RawDataEnvelope{}
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, func(header http.Header) {
+		header.Set("Accept", MIMEApplicationVendorIOTASerializer)
+	}, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -374,7 +378,9 @@ func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotag
 	query := fmt.Sprintf(RouteTransactionsIncludedMessage, iotago.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, func(header http.Header) {
+		header.Set("Accept", MIMEApplicationVendorIOTASerializer)
+	}, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -391,7 +397,9 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 	query := fmt.Sprintf(RouteOutput, outputID.ToHex())
 
 	res := &OutputResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, func(header http.Header) {
+		header.Set("Accept", "application/json")
+	}, nil, res); err != nil {
 		return nil, err
 	}
 

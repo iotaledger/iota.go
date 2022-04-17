@@ -94,7 +94,18 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 	return fmt.Errorf("%w: url %s, error message: %s", err, res.Request.URL.String(), errRes.Error.Message)
 }
 
-func do(httpClient *http.Client, baseURL string, ctx context.Context, userInfo *url.Userinfo, method string, route string, requestURLHook RequestURLHook, reqObj interface{}, resObj interface{}) (*http.Response, error) {
+func do(
+	httpClient *http.Client,
+	baseURL string,
+	ctx context.Context,
+	userInfo *url.Userinfo,
+	method string,
+	route string,
+	requestURLHook RequestURLHook,
+	requestHeaderHook RequestHeaderHook,
+	reqObj interface{},
+	resObj interface{}) (*http.Response, error) {
+
 	// marshal request object
 	var data []byte
 	var raw bool
@@ -133,6 +144,10 @@ func do(httpClient *http.Client, baseURL string, ctx context.Context, userInfo *
 	if userInfo != nil {
 		// set the userInfo for basic auth
 		req.URL.User = userInfo
+	}
+
+	if requestHeaderHook != nil {
+		requestHeaderHook(req.Header)
 	}
 
 	if data != nil {

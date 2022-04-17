@@ -143,7 +143,7 @@ func TestClient_SubmitMessage(t *testing.T) {
 		AddHeader("Location", msgHashStr)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMessageBytes, msgHashStr)).
+		Get(fmt.Sprintf(nodeclient.RouteMessage, msgHashStr)).
 		Reply(200).
 		Body(bytes.NewReader(serializedCompleteMsg))
 
@@ -206,7 +206,7 @@ func TestClient_MessageByMessageID(t *testing.T) {
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMessageBytes, queryHash)).
+		Get(fmt.Sprintf(nodeclient.RouteMessage, queryHash)).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
