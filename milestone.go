@@ -432,8 +432,8 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 	for i, parent := range m.Parents {
 		jMilestone.Parents[i] = EncodeHex(parent[:])
 	}
-	jMilestone.PastConeMerkleProof = EncodeHex(m.ConfirmedMerkleRoot[:])
-	jMilestone.InclusionMerkleProof = EncodeHex(m.AppliedMerkleRoot[:])
+	jMilestone.ConfirmedMerkleRoot = EncodeHex(m.ConfirmedMerkleRoot[:])
+	jMilestone.AppliedMerkleRoot = EncodeHex(m.AppliedMerkleRoot[:])
 
 	jMilestone.Opts = make([]*json.RawMessage, len(m.Opts))
 	for i, opt := range m.Opts {
@@ -475,16 +475,16 @@ func (m *Milestone) UnmarshalJSON(bytes []byte) error {
 
 // jsonMilestone defines the json representation of a Milestone.
 type jsonMilestone struct {
-	Type                 int                `json:"type"`
-	Index                int                `json:"index"`
-	Timestamp            int                `json:"timestamp"`
-	LastMilestone        string             `json:"lastMilestone"`
-	Parents              []string           `json:"parentMessageIds"`
-	PastConeMerkleProof  string             `json:"pastConeMerkleProof"`
-	InclusionMerkleProof string             `json:"inclusionMerkleProof"`
-	Metadata             string             `json:"metadata,omitempty"`
-	Opts                 []*json.RawMessage `json:"options,omitempty"`
-	Signatures           []*json.RawMessage `json:"signatures"`
+	Type                int                `json:"type"`
+	Index               int                `json:"index"`
+	Timestamp           int                `json:"timestamp"`
+	LastMilestone       string             `json:"lastMilestone"`
+	Parents             []string           `json:"parentMessageIds"`
+	ConfirmedMerkleRoot string             `json:"confirmedMerkleRoot"`
+	AppliedMerkleRoot   string             `json:"appliedMerkleRoot"`
+	Metadata            string             `json:"metadata,omitempty"`
+	Opts                []*json.RawMessage `json:"options,omitempty"`
+	Signatures          []*json.RawMessage `json:"signatures"`
 }
 
 func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
@@ -508,17 +508,17 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 		copy(payload.Parents[i][:], parentBytes)
 	}
 
-	pastConeMerklePRoof, err := DecodeHex(j.PastConeMerkleProof)
+	confirmedMerkleRoot, err := DecodeHex(j.ConfirmedMerkleRoot)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode past cone merkle proof from JSON: %w", err)
+		return nil, fmt.Errorf("unable to decode confirmed merkle root from JSON: %w", err)
 	}
-	copy(payload.ConfirmedMerkleRoot[:], pastConeMerklePRoof)
+	copy(payload.ConfirmedMerkleRoot[:], confirmedMerkleRoot)
 
-	inclusionMerkleProofBytes, err := DecodeHex(j.InclusionMerkleProof)
+	appliedMerkleRoot, err := DecodeHex(j.AppliedMerkleRoot)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode inlcusion merkle proof from JSON: %w", err)
+		return nil, fmt.Errorf("unable to decode applied merkle root from JSON: %w", err)
 	}
-	copy(payload.AppliedMerkleRoot[:], inclusionMerkleProofBytes)
+	copy(payload.AppliedMerkleRoot[:], appliedMerkleRoot)
 
 	payload.Metadata, err = DecodeHex(j.Metadata)
 	if err != nil {
