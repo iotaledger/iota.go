@@ -117,11 +117,11 @@ type (
 )
 
 // NewMilestone creates a new unsigned Milestone.
-func NewMilestone(index uint32, timestamp uint32, lastMs MilestoneID, parents MilestoneParentMessageIDs, confMerkleRoot MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) (*Milestone, error) {
+func NewMilestone(index uint32, timestamp uint32, lastMsID MilestoneID, parents MilestoneParentMessageIDs, confMerkleRoot MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) (*Milestone, error) {
 	ms := &Milestone{
 		Index:               index,
 		Timestamp:           timestamp,
-		LastMilestone:       lastMs,
+		LastMilestoneID:     lastMsID,
 		Parents:             parents,
 		ConfirmedMerkleRoot: confMerkleRoot,
 		AppliedMerkleRoot:   appliedMerkleRoot,
@@ -137,7 +137,7 @@ type Milestone struct {
 	Timestamp uint32
 	// The pointer to the previous milestone.
 	// Zeroed if there wasn't a previous milestone.
-	LastMilestone MilestoneID
+	LastMilestoneID MilestoneID
 	// The parents where this milestone attaches to.
 	Parents MilestoneParentMessageIDs
 	// The merkle root of all directly/indirectly referenced messages (their IDs) which
@@ -159,14 +159,13 @@ func (m *Milestone) PayloadType() PayloadType {
 
 // ID computes the ID of the Milestone.
 func (m *Milestone) ID() (*MilestoneID, error) {
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, nil)
+	var msID MilestoneID
+	data, err := m.Essence()
 	if err != nil {
-		return nil, fmt.Errorf("can't compute milestone payload ID: %w", err)
+		return nil, err
 	}
-	h := blake2b.Sum256(data)
-	mID := &MilestoneID{}
-	copy(mID[:], h[:])
-	return mID, nil
+	copy(msID[:], data)
+	return &msID, nil
 }
 
 // Essence returns the essence bytes (the bytes to be signed) of the Milestone.
@@ -178,8 +177,8 @@ func (m *Milestone) Essence() ([]byte, error) {
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp for essence: %w", err)
 		}).
-		WriteBytes(m.LastMilestone[:], func(err error) error {
-			return fmt.Errorf("unable to serialize milestone last milestone for essence: %w", err)
+		WriteBytes(m.LastMilestoneID[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone last milestone ID for essence: %w", err)
 		}).
 		Write32BytesArraySlice(m.Parents, serializer.DeSeriModePerformValidation, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents for essence: %w", err)
@@ -352,8 +351,8 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadNum(&m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone timestamp: %w", err)
 		}).
-		ReadArrayOf32Bytes(&m.LastMilestone, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone last milestone hash: %w", err)
+		ReadArrayOf32Bytes(&m.LastMilestoneID, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone last milestone ID: %w", err)
 		}).
 		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone parents: %w", err)
@@ -387,8 +386,8 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp: %w", err)
 		}).
-		WriteBytes(m.LastMilestone[:], func(err error) error {
-			return fmt.Errorf("unable to serialize milestone last milestone for essence: %w", err)
+		WriteBytes(m.LastMilestoneID[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone last milestone ID for essence: %w", err)
 		}).
 		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents: %w", err)
@@ -427,7 +426,7 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 	jMilestone.Type = int(PayloadMilestone)
 	jMilestone.Index = int(m.Index)
 	jMilestone.Timestamp = int(m.Timestamp)
-	jMilestone.LastMilestone = EncodeHex(m.LastMilestone[:])
+	jMilestone.LastMilestoneID = EncodeHex(m.LastMilestoneID[:])
 	jMilestone.Parents = make([]string, len(m.Parents))
 	for i, parent := range m.Parents {
 		jMilestone.Parents[i] = EncodeHex(parent[:])
@@ -478,7 +477,7 @@ type jsonMilestone struct {
 	Type                int                `json:"type"`
 	Index               int                `json:"index"`
 	Timestamp           int                `json:"timestamp"`
-	LastMilestone       string             `json:"lastMilestone"`
+	LastMilestoneID     string             `json:"lastMilestoneId"`
 	Parents             []string           `json:"parentMessageIds"`
 	ConfirmedMerkleRoot string             `json:"confirmedMerkleRoot"`
 	AppliedMerkleRoot   string             `json:"appliedMerkleRoot"`
@@ -493,11 +492,11 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 	payload := &Milestone{}
 	payload.Index = uint32(j.Index)
 	payload.Timestamp = uint32(j.Timestamp)
-	lastMilestone, err := DecodeHex(j.LastMilestone)
+	lastMsID, err := DecodeHex(j.LastMilestoneID)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode milestone last milestone from JSON: %w", err)
+		return nil, fmt.Errorf("unable to decode milestone last milestone ID from JSON: %w", err)
 	}
-	copy(payload.LastMilestone[:], lastMilestone)
+	copy(payload.LastMilestoneID[:], lastMsID)
 
 	payload.Parents = make(MilestoneParentMessageIDs, len(j.Parents))
 	for i, jParent := range j.Parents {

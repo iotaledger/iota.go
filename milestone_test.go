@@ -206,7 +206,7 @@ func TestNewMilestone(t *testing.T) {
 	assert.EqualValues(t, &iotago.Milestone{
 		Index:               msIndex,
 		Timestamp:           timestamp,
-		LastMilestone:       lastMs,
+		LastMilestoneID:     lastMs,
 		Parents:             parents,
 		ConfirmedMerkleRoot: pastConeMerkleProof,
 		AppliedMerkleRoot:   inclusionMerkleProof,
