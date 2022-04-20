@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	MIMEApplicationVendorIOTASerializer = "application/vnd.iota.serializer-v1"
+	MIMEApplicationJSON                   = "application/json"
+	MIMEApplicationVendorIOTASerializerV1 = "application/vnd.iota.serializer-v1"
 )
 
 const (
@@ -119,6 +120,13 @@ type RequestURLHook func(url string) string
 
 // RequestHeaderHook is a function to modify the request header before sending a request.
 type RequestHeaderHook func(header http.Header)
+
+var (
+	// RequestHeaderHookAcceptJSON is used to set the request "Accept" header to MIMEApplicationJSON.
+	RequestHeaderHookAcceptJSON = func(header http.Header) { header.Set("Accept", MIMEApplicationJSON) }
+	// RequestHeaderHookAcceptIOTASerializerV1 is used to set the request "Accept" header to MIMEApplicationVendorIOTASerializerV1.
+	RequestHeaderHookAcceptIOTASerializerV1 = func(header http.Header) { header.Set("Accept", MIMEApplicationVendorIOTASerializerV1) }
+)
 
 // the default options applied to the Client.
 var defaultNodeAPIOptions = []ClientOption{
@@ -351,9 +359,7 @@ func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.Messa
 	query := fmt.Sprintf(RouteMessage, iotago.EncodeHex(msgID[:]))
 
 	res := &RawDataEnvelope{}
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, func(header http.Header) {
-		header.Set("Accept", MIMEApplicationVendorIOTASerializer)
-	}, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -382,9 +388,7 @@ func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotag
 	query := fmt.Sprintf(RouteTransactionsIncludedMessage, iotago.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, func(header http.Header) {
-		header.Set("Accept", MIMEApplicationVendorIOTASerializer)
-	}, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -401,9 +405,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 	query := fmt.Sprintf(RouteOutput, outputID.ToHex())
 
 	res := &OutputResponse{}
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, func(header http.Header) {
-		header.Set("Accept", "application/json")
-	}, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 

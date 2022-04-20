@@ -146,16 +146,16 @@ func do(
 		req.URL.User = userInfo
 	}
 
-	if requestHeaderHook != nil {
-		requestHeaderHook(req.Header)
-	}
-
 	if data != nil {
 		if !raw {
 			req.Header.Set("Content-Type", contentTypeJSON)
 		} else {
 			req.Header.Set("Content-Type", contentTypeOctetStream)
 		}
+	}
+
+	if requestHeaderHook != nil {
+		requestHeaderHook(req.Header)
 	}
 
 	// make the request
