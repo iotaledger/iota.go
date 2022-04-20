@@ -128,22 +128,19 @@ func TestClient_SubmitMessage(t *testing.T) {
 	_, err = msg2.Deserialize(serializedCompleteMsg, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
 	require.NoError(t, err)
 
-	// we need to do this, otherwise gock doesn't match the body
-	gock.BodyTypes = append(gock.BodyTypes, "application/octet-stream")
-	gock.BodyTypeAliases["octet"] = "application/octet-stream"
-
 	serializedIncompleteMsg, err := incompleteMsg.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
 		Post(nodeclient.RouteMessages).
-		MatchType("octet").
+		MatchType(nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Body(bytes.NewReader(serializedIncompleteMsg)).
 		Reply(200).
 		AddHeader("Location", msgHashStr)
 
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.RouteMessage, msgHashStr)).
+		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
 		Body(bytes.NewReader(serializedCompleteMsg))
 
@@ -207,6 +204,7 @@ func TestClient_MessageByMessageID(t *testing.T) {
 
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.RouteMessage, queryHash)).
+		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
@@ -266,6 +264,7 @@ func TestClient_TransactionIncludedMessage(t *testing.T) {
 
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.RouteTransactionsIncludedMessage, queryHash)).
+		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
@@ -298,6 +297,7 @@ func TestClient_OutputByID(t *testing.T) {
 
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputId.ToHex())).
+		MatchHeader("Accept", nodeclient.MIMEApplicationJSON).
 		Reply(200).
 		JSON(originRes)
 

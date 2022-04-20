@@ -12,11 +12,6 @@ import (
 )
 
 const (
-	MIMEApplicationJSON                   = "application/json"
-	MIMEApplicationVendorIOTASerializerV1 = "application/vnd.iota.serializer-v1"
-)
-
-const (
 	// IndexerPluginName is the name for the indexer plugin.
 	IndexerPluginName = "indexer/v1"
 
