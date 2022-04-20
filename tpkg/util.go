@@ -450,3 +450,13 @@ func RandEd25519Identity() (ed25519.PrivateKey, *iotago.Ed25519Address, iotago.A
 	addrKeys := iotago.NewAddressKeysForEd25519Address(&edAddr, edSk)
 	return edSk, &edAddr, addrKeys
 }
+
+// RandMilestoneID produces a random milestone ID.
+func RandMilestoneID() iotago.MilestoneID {
+	return Rand32ByteArray()
+}
+
+// RandMilestoneMerkleProof produces a random milestone merkle proof.
+func RandMilestoneMerkleProof() iotago.MilestoneMerkleProof {
+	return Rand32ByteArray()
+}

@@ -165,6 +165,34 @@ type (
 		ConsumedOutputs []string `json:"consumedOutputs"`
 	}
 
+	// ComputeWhiteFlagMutationsRequest defines the request for a POST ComputeWhiteFlagMutations REST API call.
+	ComputeWhiteFlagMutationsRequest struct {
+		// The index of the milestone.
+		Index uint32 `json:"index"`
+		// The timestamp of the milestone.
+		Timestamp uint32 `json:"timestamp"`
+		// The hex encoded message IDs of the parents the milestone references.
+		Parents []string `json:"parentMessageIds"`
+		// The hex encoded milestone ID of the previous milestone.
+		LastMilestoneID string `json:"lastMilestoneId"`
+	}
+
+	// ComputeWhiteFlagMutationsResponseInternal defines the internal response for a POST ComputeWhiteFlagMutations REST API call.
+	ComputeWhiteFlagMutationsResponseInternal struct {
+		// The hex encoded confirmed merkle tree root as a result of the white flag computation.
+		ConfirmedMerkleRoot string `json:"confirmedMerkleRoot"`
+		// The hex encoded applied merkle tree root as a result of the white flag computation.
+		AppliedMerkleRoot string `json:"appliedMerkleRoot"`
+	}
+
+	// ComputeWhiteFlagMutationsResponse defines the response for a POST ComputeWhiteFlagMutations REST API call.
+	ComputeWhiteFlagMutationsResponse struct {
+		// The confirmed merkle tree root as a result of the white flag computation.
+		ConfirmedMerkleRoot iotago.MilestoneMerkleProof
+		// The applied merkle tree root as a result of the white flag computation.
+		AppliedMerkleRoot iotago.MilestoneMerkleProof
+	}
+
 	// AddPeerRequest defines the request for a POST peer REST API call.
 	AddPeerRequest struct {
 		// The libp2p multi address of the peer.
