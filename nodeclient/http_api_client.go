@@ -92,6 +92,10 @@ const (
 	// GET returns the receipts for the given migrated at index.
 	RouteReceiptsMigratedAtIndex = "/api/v2/receipts/%d"
 
+	// RouteComputeWhiteFlagMutations is the route to compute the white flag mutations for the cone of the given parents.
+	// POST computes the white flag mutations.
+	RouteComputeWhiteFlagMutations = "/api/v2/whiteflag"
+
 	// RoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
@@ -472,6 +476,55 @@ func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uin
 	}
 
 	return res, nil
+}
+
+// ComputeWhiteFlagMutations is the route to compute the white flag mutations for the cone of the given parents.
+// This function returns the merkle tree roots calculated by the node.
+func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index uint32, timestamp uint32, parents iotago.MessageIDs, lastMilestoneID iotago.MilestoneID) (*ComputeWhiteFlagMutationsResponse, error) {
+
+	parentsHex := make([]string, len(parents))
+	for i, parent := range parents {
+		parentsHex[i] = iotago.EncodeHex(parent[:])
+	}
+
+	req := &ComputeWhiteFlagMutationsRequest{
+		Index:           index,
+		Timestamp:       timestamp,
+		Parents:         parentsHex,
+		LastMilestoneID: iotago.EncodeHex(lastMilestoneID[:]),
+	}
+
+	res := &ComputeWhiteFlagMutationsResponseInternal{}
+	if _, err := client.Do(ctx, http.MethodPost, RouteComputeWhiteFlagMutations, req, res); err != nil {
+		return nil, err
+	}
+
+	confirmedMerkleRootBytes, err := iotago.DecodeHex(res.ConfirmedMerkleRoot)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(confirmedMerkleRootBytes) != iotago.MilestoneMerkleProofLength {
+		return nil, fmt.Errorf("unknown confirmed merkle tree hash length (%d)", len(confirmedMerkleRootBytes))
+	}
+
+	appliedMerkleRootBytes, err := iotago.DecodeHex(res.AppliedMerkleRoot)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(appliedMerkleRootBytes) != iotago.MilestoneMerkleProofLength {
+		return nil, fmt.Errorf("unknown applied merkle tree hash length (%d)", len(appliedMerkleRootBytes))
+	}
+
+	result := &ComputeWhiteFlagMutationsResponse{
+		ConfirmedMerkleRoot: iotago.MilestoneMerkleProof{},
+		AppliedMerkleRoot:   iotago.MilestoneMerkleProof{},
+	}
+	copy(result.ConfirmedMerkleRoot[:], confirmedMerkleRootBytes)
+	copy(result.AppliedMerkleRoot[:], appliedMerkleRootBytes)
+
+	return result, nil
 }
 
 // PeerByID gets a peer by its identifier.

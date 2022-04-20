@@ -484,6 +484,51 @@ func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 	require.EqualValues(t, originRes, resp)
 }
 
+func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
+	defer gock.Off()
+
+	var milestoneIndex uint32 = 1337
+	var milestoneTimestamp uint32 = 1333337
+
+	parents := tpkg.SortedRand32BytArray(1 + rand.Intn(7))
+	parentMessageIDs := make([]string, len(parents))
+	for i, p := range parents {
+		parentMessageIDs[i] = iotago.EncodeHex(p[:])
+	}
+
+	randConfirmedMerkleRoot := tpkg.RandMilestoneMerkleProof()
+	randAppliedMerkleRoot := tpkg.RandMilestoneMerkleProof()
+
+	milestoneID := tpkg.RandMilestoneID()
+	req := &nodeclient.ComputeWhiteFlagMutationsRequest{
+		Index:           milestoneIndex,
+		Timestamp:       milestoneTimestamp,
+		Parents:         parentMessageIDs,
+		LastMilestoneID: iotago.EncodeHex(milestoneID[:]),
+	}
+
+	internalRes := &nodeclient.ComputeWhiteFlagMutationsResponseInternal{
+		ConfirmedMerkleRoot: iotago.EncodeHex(randConfirmedMerkleRoot[:]),
+		AppliedMerkleRoot:   iotago.EncodeHex(randAppliedMerkleRoot[:]),
+	}
+
+	originRes := &nodeclient.ComputeWhiteFlagMutationsResponse{
+		ConfirmedMerkleRoot: randConfirmedMerkleRoot,
+		AppliedMerkleRoot:   randAppliedMerkleRoot,
+	}
+
+	gock.New(nodeAPIUrl).
+		Post(nodeclient.RouteComputeWhiteFlagMutations).
+		JSON(req).
+		Reply(200).
+		JSON(internalRes)
+
+	nodeAPI := nodeclient.New(nodeAPIUrl)
+	resp, err := nodeAPI.ComputeWhiteFlagMutations(context.Background(), milestoneIndex, milestoneTimestamp, parents, milestoneID)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
+}
+
 var sampleGossipInfo = &nodeclient.GossipInfo{
 	Heartbeat: &nodeclient.GossipHeartbeat{
 		SolidMilestoneIndex:  234,
