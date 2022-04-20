@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
+
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/nodeclient"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/h2non/gock.v1"
 )
 
 func TestOutputsQuery_Build(t *testing.T) {
@@ -88,7 +89,7 @@ func Test_IndexerDisabled(t *testing.T) {
 	require.ErrorIs(t, err, nodeclient.ErrIndexerPluginNotAvailable)
 }
 
-func TestIndexerClient_Outputs(t *testing.T) {
+func TestIndexerClient_BasicOutputs(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
@@ -120,7 +121,7 @@ func TestIndexerClient_Outputs(t *testing.T) {
 		JSON(originInfo)
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.IndexerAPIRouteOutputs).
+		Get(nodeclient.IndexerAPIRouteBasicOutputs).
 		MatchParam("tag", "some-tag").
 		Reply(200).
 		JSON(nodeclient.IndexerResponse{
@@ -134,7 +135,7 @@ func TestIndexerClient_Outputs(t *testing.T) {
 		})
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.IndexerAPIRouteOutputs).
+		Get(nodeclient.IndexerAPIRouteBasicOutputs).
 		MatchParams(map[string]string{
 			"cursor": "some-offset-key",
 			"tag":    "some-tag",

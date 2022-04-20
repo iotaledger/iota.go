@@ -11,13 +11,13 @@ import (
 
 // Indexer plugin routes
 var (
-	IndexerAPIRouteOutputs   = "/api/plugins/" + IndexerPluginName + "/outputs"
-	IndexerAPIRouteAliases   = "/api/plugins/" + IndexerPluginName + "/aliases"
-	IndexerAPIRouteAlias     = "/api/plugins/" + IndexerPluginName + "/aliases/%s"
-	IndexerAPIRouteFoundries = "/api/plugins/" + IndexerPluginName + "/foundries"
-	IndexerAPIRouteFoundry   = "/api/plugins/" + IndexerPluginName + "/foundries/%s"
-	IndexerAPIRouteNFTs      = "/api/plugins/" + IndexerPluginName + "/nfts"
-	IndexerAPIRouteNFT       = "/api/plugins/" + IndexerPluginName + "/nfts/%s"
+	IndexerAPIRouteBasicOutputs = "/api/plugins/" + IndexerPluginName + "/basic-outputs"
+	IndexerAPIRouteAliases      = "/api/plugins/" + IndexerPluginName + "/aliases"
+	IndexerAPIRouteAlias        = "/api/plugins/" + IndexerPluginName + "/aliases/%s"
+	IndexerAPIRouteFoundries    = "/api/plugins/" + IndexerPluginName + "/foundries"
+	IndexerAPIRouteFoundry      = "/api/plugins/" + IndexerPluginName + "/foundries/%s"
+	IndexerAPIRouteNFTs         = "/api/plugins/" + IndexerPluginName + "/nfts"
+	IndexerAPIRouteNFT          = "/api/plugins/" + IndexerPluginName + "/nfts/%s"
 )
 
 var (
@@ -26,7 +26,7 @@ var (
 	ErrIndexerNotFound = errors.New("no result found")
 
 	outputTypeToIndexerRoute = map[iotago.OutputType]string{
-		iotago.OutputBasic:   IndexerAPIRouteOutputs,
+		iotago.OutputBasic:   IndexerAPIRouteBasicOutputs,
 		iotago.OutputAlias:   IndexerAPIRouteAliases,
 		iotago.OutputFoundry: IndexerAPIRouteFoundries,
 		iotago.OutputNFT:     IndexerAPIRouteNFTs,
