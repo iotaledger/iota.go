@@ -83,7 +83,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             7_000_000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
 			return test{"ok", receipt, currentTreasury, nil}
 		}(),
 		func() test {
@@ -91,15 +91,15 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             1000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
 			return test{"err - migrated less tha minimum", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 		func() test {
 			receipt, _ := iotago.NewReceiptBuilder(100).AddEntry(&iotago.MigratedFundsEntry{
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
-				Deposit:             iotago.TokenSupply + 1,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
+				Deposit:             tpkg.TestTokenSupply + 1,
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
 			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 		func() test {
@@ -107,13 +107,13 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             6_000_000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(iotago.ZeroRentParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
 			return test{"err - invalid new treasury amount", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := iotago.ValidateReceipt(tt.source, tt.prevInput)
+			err := iotago.ValidateReceipt(tt.source, tt.prevInput, tpkg.TestTokenSupply)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
 				return

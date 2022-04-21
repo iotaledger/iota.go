@@ -1,10 +1,10 @@
 package iotago_test
 
 import (
+	"github.com/iotaledger/iota.go/v3/tpkg"
 	"testing"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ type deSerializeTest struct {
 }
 
 func (test *deSerializeTest) deSerialize(t *testing.T) {
-	data, err := test.source.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	data, err := test.source.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	if test.seriErr != nil {
 		require.Error(t, err, test.seriErr)
 		return
@@ -32,7 +32,7 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 		assert.Equal(t, len(data), src.Size())
 	}
 
-	bytesRead, err := test.target.Deserialize(data, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	bytesRead, err := test.target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	if test.deSeriErr != nil {
 		require.Error(t, err, test.deSeriErr)
 		return

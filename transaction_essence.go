@@ -175,7 +175,7 @@ type TransactionEssence struct {
 
 // SigningMessage returns the to be signed message.
 func (u *TransactionEssence) SigningMessage() ([]byte, error) {
-	essenceBytes, err := u.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
+	essenceBytes, err := u.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +323,7 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) syntacticallyValidate(rentStruct *RentStructure) error {
+func (u *TransactionEssence) syntacticallyValidate(protoParas *ProtocolParameters) error {
 	if err := ValidateInputs(u.Inputs,
 		InputsSyntacticalUnique(),
 		InputsSyntacticalIndicesWithinBounds(),
@@ -332,7 +332,7 @@ func (u *TransactionEssence) syntacticallyValidate(rentStruct *RentStructure) er
 	}
 
 	if err := ValidateOutputs(u.Outputs,
-		OutputsSyntacticalDepositAmount(rentStruct),
+		OutputsSyntacticalDepositAmount(protoParas),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
 		OutputsSyntacticalFoundry(),

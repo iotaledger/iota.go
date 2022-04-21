@@ -56,9 +56,11 @@ func TestClient_Info(t *testing.T) {
 			PruningIndex:             142857,
 		},
 		Protocol: nodeclient.InfoResProtocol{
+			TokenSupply: iotago.EncodeUint64(tpkg.TestTokenSupply),
+			Version:     2,
 			NetworkName: "alphanet",
 			Bech32HRP:   "atoi",
-			MinPowScore: 4000.0,
+			MinPowScore: 40000.0,
 			RentStructure: iotago.RentStructure{
 				VByteCost:    500,
 				VBFactorData: 1,
@@ -83,6 +85,9 @@ func TestClient_Info(t *testing.T) {
 	info, err := nodeAPI.Info(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
+	protoParas, err := originInfo.ProtocolParameters()
+	require.NoError(t, err)
+	require.EqualValues(t, protoParas.TokenSupply, tpkg.TestTokenSupply)
 }
 
 func TestClient_Tips(t *testing.T) {
@@ -110,25 +115,25 @@ func TestClient_SubmitMessage(t *testing.T) {
 	msgHashStr := iotago.EncodeHex(msgHash[:])
 
 	incompleteMsg := &iotago.Message{
-		ProtocolVersion: iotago.ProtocolVersion,
+		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(1),
 	}
 
 	completeMsg := &iotago.Message{
-		ProtocolVersion: iotago.ProtocolVersion,
+		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(1),
 		Payload:         nil,
 		Nonce:           3495721389537486,
 	}
 
-	serializedCompleteMsg, err := completeMsg.Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+	serializedCompleteMsg, err := completeMsg.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
 	msg2 := iotago.Message{}
-	_, err = msg2.Deserialize(serializedCompleteMsg, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	_, err = msg2.Deserialize(serializedCompleteMsg, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
-	serializedIncompleteMsg, err := incompleteMsg.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	serializedIncompleteMsg, err := incompleteMsg.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -145,7 +150,7 @@ func TestClient_SubmitMessage(t *testing.T) {
 		Body(bytes.NewReader(serializedCompleteMsg))
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	resp, err := nodeAPI.SubmitMessage(context.Background(), incompleteMsg, iotago.ZeroRentParas)
+	resp, err := nodeAPI.SubmitMessage(context.Background(), incompleteMsg, tpkg.TestProtoParas)
 	require.NoError(t, err)
 	require.EqualValues(t, completeMsg, resp)
 }
@@ -193,13 +198,13 @@ func TestClient_MessageByMessageID(t *testing.T) {
 	queryHash := iotago.EncodeHex(identifier[:])
 
 	originMsg := &iotago.Message{
-		ProtocolVersion: iotago.ProtocolVersion,
+		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
 
-	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -209,7 +214,7 @@ func TestClient_MessageByMessageID(t *testing.T) {
 		Body(bytes.NewReader(data))
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	responseMsg, err := nodeAPI.MessageByMessageID(context.Background(), identifier, iotago.ZeroRentParas)
+	responseMsg, err := nodeAPI.MessageByMessageID(context.Background(), identifier, tpkg.TestProtoParas)
 	require.NoError(t, err)
 	require.EqualValues(t, originMsg, responseMsg)
 }
@@ -253,13 +258,13 @@ func TestClient_TransactionIncludedMessage(t *testing.T) {
 	queryHash := iotago.EncodeHex(identifier[:])
 
 	originMsg := &iotago.Message{
-		ProtocolVersion: iotago.ProtocolVersion,
+		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
 
-	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -269,7 +274,7 @@ func TestClient_TransactionIncludedMessage(t *testing.T) {
 		Body(bytes.NewReader(data))
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	responseMsg, err := nodeAPI.TransactionIncludedMessage(context.Background(), identifier, iotago.ZeroRentParas)
+	responseMsg, err := nodeAPI.TransactionIncludedMessage(context.Background(), identifier, tpkg.TestProtoParas)
 	require.NoError(t, err)
 	require.EqualValues(t, originMsg, responseMsg)
 }

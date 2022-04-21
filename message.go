@@ -114,7 +114,7 @@ type Message struct {
 
 // ID computes the ID of the Message.
 func (m *Message) ID() (*MessageID, error) {
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, fmt.Errorf("can't compute message ID: %w", err)
 	}
@@ -133,7 +133,7 @@ func (m *Message) MustID() MessageID {
 
 // POW computes the PoW score of the Message.
 func (m *Message) POW() (float64, error) {
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return 0, fmt.Errorf("can't compute message PoW score: %w", err)
 	}

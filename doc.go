@@ -41,18 +41,21 @@
 //			return err
 //		}
 //
-//		// get the parameters for the storage deposit
-//		nodeRentParas := &iotago.DeSerializationParameters{RentStructure: &info.Protocol.RentStructure}
+//		// get the current protocol parameters
+//		protoParas, err := info.ProtocolParameters()
+//		if err != nil {
+//			return err
+//		}
 //
 //		// build a message by adding the paylod and the tips and then do local Proof-of-Work
 //		msg, err := builder.NewMessageBuilder().
 //			Payload(taggedDataPayload).
 //			ParentsMessageIDs(tips).
-//			ProofOfWork(ctx, nodeRentParas, info.Protocol.MinPowScore).
+//			ProofOfWork(ctx, protoParas, info.Protocol.MinPowScore).
 //			Build()
 //
 //		// submit the message to the node
-//		if _, err := nodeHTTPAPIClient.SubmitMessage(ctx, msg, nodeRentParas); err != nil {
+//		if _, err := nodeHTTPAPIClient.SubmitMessage(ctx, msg, protoParas); err != nil {
 //			return err
 //		}
 //

@@ -36,8 +36,8 @@ func (rb *ReceiptBuilder) AddTreasuryTransaction(tx *TreasuryTransaction) *Recei
 }
 
 // Build builds the ReceiptMilestoneOpt.
-func (rb *ReceiptBuilder) Build(deSeriParas *DeSerializationParameters) (*ReceiptMilestoneOpt, error) {
-	if _, err := rb.r.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, deSeriParas); err != nil {
+func (rb *ReceiptBuilder) Build(protoParas *ProtocolParameters) (*ReceiptMilestoneOpt, error) {
+	if _, err := rb.r.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, protoParas); err != nil {
 		return nil, fmt.Errorf("unable to build receipt: %w", err)
 	}
 	return rb.r, nil

@@ -268,7 +268,7 @@ func (outputs Outputs) Commitment() ([]byte, error) {
 		return nil, err
 	}
 	for _, output := range outputs {
-		outputBytes, err := output.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
+		outputBytes, err := output.Serialize(serializer.DeSeriModeNoValidation, nil)
 		if err != nil {
 			return nil, fmt.Errorf("unable to compute commitment hash: %w", err)
 		}
@@ -688,7 +688,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //	- the deposit fulfils the minimum storage deposit as calculated from the virtual byte cost of the output
 //	- if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //	  required for the sender to send back the tokens.
-func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSyntacticalValidationFunc {
 	var sum uint64
 	return func(index int, output Output) error {
 		deposit := output.Deposit()
@@ -696,14 +696,14 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 		switch {
 		case deposit == 0:
 			return fmt.Errorf("%w: output %d", ErrDepositAmountMustBeGreaterThanZero, index)
-		case deposit > TokenSupply:
+		case deposit > protoParas.TokenSupply:
 			return fmt.Errorf("%w: output %d", ErrOutputDepositsMoreThanTotalSupply, index)
-		case sum+deposit > TokenSupply:
+		case sum+deposit > protoParas.TokenSupply:
 			return fmt.Errorf("%w: output %d", ErrOutputsSumExceedsTotalSupply, index)
 		}
 
 		// check whether deposit fulfils the storage deposit cost
-		if _, err := rentStruct.CoversStateRent(output, deposit); err != nil {
+		if _, err := protoParas.RentStructure.CoversStateRent(output, deposit); err != nil {
 			return fmt.Errorf("%w: output %d", err, index)
 		}
 
@@ -714,7 +714,7 @@ func OutputsSyntacticalDepositAmount(rentStruct *RentStructure) OutputsSyntactic
 
 		// check whether the amount in the return condition allows the receiver to fulfil the storage deposit for the return output
 		if storageDep := unlockConditionsSet.StorageDepositReturn(); storageDep != nil {
-			minStorageDepositForReturnOutput := rentStruct.MinStorageDeposit(storageDep.ReturnAddress)
+			minStorageDepositForReturnOutput := protoParas.RentStructure.MinStorageDeposit(storageDep.ReturnAddress)
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
 				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrStorageDepositLessThanMinReturnOutputStorageDeposit, index, minStorageDepositForReturnOutput, storageDep.Amount)

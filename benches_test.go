@@ -5,26 +5,26 @@ import (
 	"testing"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {
-	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	target := &iotago.Transaction{}
-	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+		target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -66,38 +66,38 @@ func BenchmarkDeserializeWithValidationLargeTxPayload(b *testing.B) {
 		}(),
 	}
 
-	data, err := origin.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, iotago.ZeroRentParas)
+	data, err := origin.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, tpkg.TestProtoParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	target := &iotago.Transaction{}
-	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+		target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	}
 }
 
 func BenchmarkDeserializeWithoutValidationOneIOTxPayload(b *testing.B) {
-	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	target := &iotago.Transaction{}
-	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+		target.Deserialize(data, serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -105,7 +105,7 @@ func BenchmarkSerializeWithValidationOneIOTxPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		txPayload.Serialize(serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+		txPayload.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -113,7 +113,7 @@ func BenchmarkSerializeWithoutValidationOneIOTxPayload(b *testing.B) {
 	sigTxPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		sigTxPayload.Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+		sigTxPayload.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -156,7 +156,7 @@ func BenchmarkSerializeAndHashMessageWithTransactionPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 
 	m := &iotago.Message{
-		ProtocolVersion: iotago.ProtocolVersion,
+		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(2),
 		Payload:         txPayload,
 		Nonce:           0,

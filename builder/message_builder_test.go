@@ -30,10 +30,10 @@ func TestMessageBuilder(t *testing.T) {
 		Tag:  []byte("hello world"),
 		Data: []byte{1, 2, 3, 4},
 	}
-	msg, err := builder.NewMessageBuilder().
+	msg, err := builder.NewMessageBuilder(tpkg.TestProtoParas.Version).
 		Payload(taggedDataPayload).
 		ParentsMessageIDs(parents).
-		ProofOfWork(context.Background(), iotago.ZeroRentParas, targetPoWScore).
+		ProofOfWork(context.Background(), tpkg.TestProtoParas, targetPoWScore).
 		Build()
 	require.NoError(t, err)
 
