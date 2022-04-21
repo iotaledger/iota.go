@@ -3,7 +3,6 @@ package builder
 import (
 	"context"
 	"fmt"
-
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/nodeclient"
@@ -11,10 +10,10 @@ import (
 )
 
 // NewMessageBuilder creates a new MessageBuilder.
-func NewMessageBuilder() *MessageBuilder {
+func NewMessageBuilder(protoVersion byte) *MessageBuilder {
 	return &MessageBuilder{
 		msg: &iotago.Message{
-			ProtocolVersion: iotago.ProtocolVersion,
+			ProtocolVersion: protoVersion,
 		},
 	}
 }
@@ -94,12 +93,12 @@ func (mb *MessageBuilder) ParentsMessageIDs(parents iotago.MessageIDs) *MessageB
 // ProofOfWork does the proof-of-work needed in order to satisfy the given target score.
 // It can be cancelled by cancelling the given context. This function should appear
 // as the last step before Build.
-func (mb *MessageBuilder) ProofOfWork(ctx context.Context, deSeriPara *iotago.DeSerializationParameters, targetScore float64, numWorkers ...int) *MessageBuilder {
+func (mb *MessageBuilder) ProofOfWork(ctx context.Context, protoParas *iotago.ProtocolParameters, targetScore float64, numWorkers ...int) *MessageBuilder {
 	if mb.err != nil {
 		return mb
 	}
 
-	msgData, err := mb.msg.Serialize(serializer.DeSeriModePerformValidation, deSeriPara)
+	msgData, err := mb.msg.Serialize(serializer.DeSeriModePerformValidation, protoParas)
 	if err != nil {
 		mb.err = err
 		return mb

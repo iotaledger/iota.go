@@ -283,7 +283,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.current, muts, iotago.ZeroRentParas).(*iotago.AliasOutput)
+					cpy := copyObject(t, tt.current, muts, tpkg.TestProtoParas).(*iotago.AliasOutput)
 					err := tt.current.ValidateStateTransition(tt.transType, cpy, tt.svCtx)
 					if tt.wantErr != nil {
 						require.ErrorIs(t, err, tt.wantErr)

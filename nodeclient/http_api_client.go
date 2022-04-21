@@ -309,11 +309,11 @@ func (client *Client) Tips(ctx context.Context) (*TipsResponse, error) {
 // SubmitMessage submits the given Message to the node.
 // The node will take care of filling missing information.
 // This function returns the finalized message created by the node.
-func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
+func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message, protoParas *iotago.ProtocolParameters) (*iotago.Message, error) {
 	// do not check the message because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the message afterwards.
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, deSeriParas)
+	data, err := m.Serialize(serializer.DeSeriModeNoValidation, protoParas)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message, deSe
 		return nil, err
 	}
 
-	msg, err := client.MessageByMessageID(ctx, messageID, deSeriParas)
+	msg, err := client.MessageByMessageID(ctx, messageID, protoParas)
 	if err != nil {
 		return nil, err
 	}
@@ -350,7 +350,7 @@ func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iota
 }
 
 // MessageByMessageID get a message by its message ID from the node.
-func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.MessageID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
+func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.MessageID, protoParas *iotago.ProtocolParameters) (*iotago.Message, error) {
 	query := fmt.Sprintf(RouteMessage, iotago.EncodeHex(msgID[:]))
 
 	res := &RawDataEnvelope{}
@@ -359,7 +359,7 @@ func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.Messa
 	}
 
 	msg := &iotago.Message{}
-	if _, err := msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
+	if _, err := msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, protoParas); err != nil {
 		return nil, err
 	}
 
@@ -379,7 +379,7 @@ func (client *Client) ChildrenByMessageID(ctx context.Context, parentMsgID iotag
 }
 
 // TransactionIncludedMessage get a message that included the given transaction ID in the ledger.
-func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotago.TransactionID, deSeriParas *iotago.DeSerializationParameters) (*iotago.Message, error) {
+func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotago.TransactionID, protoParas *iotago.ProtocolParameters) (*iotago.Message, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedMessage, iotago.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
@@ -388,7 +388,7 @@ func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotag
 	}
 
 	msg := &iotago.Message{}
-	if _, err := msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
+	if _, err := msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, protoParas); err != nil {
 		return nil, err
 	}
 

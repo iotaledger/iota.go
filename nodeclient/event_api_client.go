@@ -229,7 +229,7 @@ func (eac *EventAPIClient) subscribeToMessageMetadataTopic(topic string) (<-chan
 	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
-func (eac *EventAPIClient) subscribeToMessageMetadataMessagesTopic(topic string, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) subscribeToMessageMetadataMessagesTopic(topic string, protoParas *iotago.ProtocolParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	panicIfEventAPIClientInactive(eac)
 	channel := make(chan *iotago.Message)
 	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
@@ -239,7 +239,7 @@ func (eac *EventAPIClient) subscribeToMessageMetadataMessagesTopic(topic string,
 			return
 		}
 
-		msg, err := eac.Client.MessageByMessageID(context.Background(), iotago.MustMessageIDFromHexString(metadataRes.MessageID), deSeriParas)
+		msg, err := eac.Client.MessageByMessageID(context.Background(), iotago.MustMessageIDFromHexString(metadataRes.MessageID), protoParas)
 		if err != nil {
 			return
 		}
@@ -255,12 +255,12 @@ func (eac *EventAPIClient) subscribeToMessageMetadataMessagesTopic(topic string,
 	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
-func (eac *EventAPIClient) subscribeToMessagesTopic(topic string, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) subscribeToMessagesTopic(topic string, protoParas *iotago.ProtocolParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	panicIfEventAPIClientInactive(eac)
 	channel := make(chan *iotago.Message)
 	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
 		msg := &iotago.Message{}
-		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModeNoValidation, deSeriParas); err != nil {
+		if _, err := msg.Deserialize(mqttMsg.Payload(), serializer.DeSeriModeNoValidation, protoParas); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return
 		}
@@ -336,8 +336,8 @@ func (eac *EventAPIClient) subscribeToReceiptsTopic(topic string) (<-chan *iotag
 }
 
 // Messages returns a channel of newly received messages.
-func (eac *EventAPIClient) Messages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMessagesTopic(EventAPIMessages, deSeriParas)
+func (eac *EventAPIClient) Messages(protoParas *iotago.ProtocolParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessagesTopic(EventAPIMessages, protoParas)
 }
 
 // ReferencedMessagesMetadata returns a channel of message metadata of newly referenced messages.
@@ -346,35 +346,35 @@ func (eac *EventAPIClient) ReferencedMessagesMetadata() (<-chan *MessageMetadata
 }
 
 // ReferencedMessages returns a channel of newly referenced messages.
-func (eac *EventAPIClient) ReferencedMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMessageMetadataMessagesTopic(EventAPIMessageMetadataReferenced, deSeriParas)
+func (eac *EventAPIClient) ReferencedMessages(protoParas *iotago.ProtocolParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessageMetadataMessagesTopic(EventAPIMessageMetadataReferenced, protoParas)
 }
 
 // TransactionMessages returns a channel of messages containing transactions.
-func (eac *EventAPIClient) TransactionMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMessagesTopic(EventAPIMessagesTransaction, deSeriParas)
+func (eac *EventAPIClient) TransactionMessages(protoParas *iotago.ProtocolParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessagesTopic(EventAPIMessagesTransaction, protoParas)
 }
 
 // TransactionTaggedDataMessages returns a channel of messages containing transactions with tagged data.
-func (eac *EventAPIClient) TransactionTaggedDataMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMessagesTopic(EventAPIMessagesTransactionTaggedData, deSeriParas)
+func (eac *EventAPIClient) TransactionTaggedDataMessages(protoParas *iotago.ProtocolParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessagesTopic(EventAPIMessagesTransactionTaggedData, protoParas)
 }
 
 // TransactionTaggedDataWithTagMessages returns a channel of messages containing transactions with tagged data containing the given tag.
-func (eac *EventAPIClient) TransactionTaggedDataWithTagMessages(tag []byte, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) TransactionTaggedDataWithTagMessages(tag []byte, protoParas *iotago.ProtocolParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIMessagesTransactionTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
-	return eac.subscribeToMessagesTopic(topic, deSeriParas)
+	return eac.subscribeToMessagesTopic(topic, protoParas)
 }
 
 // TaggedDataMessages returns a channel of messages containing tagged data containing the given tag.
-func (eac *EventAPIClient) TaggedDataMessages(deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
-	return eac.subscribeToMessagesTopic(EventAPIMessagesTaggedData, deSeriParas)
+func (eac *EventAPIClient) TaggedDataMessages(protoParas *iotago.ProtocolParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+	return eac.subscribeToMessagesTopic(EventAPIMessagesTaggedData, protoParas)
 }
 
 // TaggedDataWithTagMessages returns a channel of messages containing tagged data.
-func (eac *EventAPIClient) TaggedDataWithTagMessages(tag []byte, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) TaggedDataWithTagMessages(tag []byte, protoParas *iotago.ProtocolParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIMessagesTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
-	return eac.subscribeToMessagesTopic(topic, deSeriParas)
+	return eac.subscribeToMessagesTopic(topic, protoParas)
 }
 
 // MessageMetadataChange returns a channel of MessageMetadataResponse each time the given message's state changes.
@@ -416,9 +416,9 @@ func (eac *EventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.A
 }
 
 // TransactionIncludedMessage returns a channel of the included message which carries the transaction with the given ID.
-func (eac *EventAPIClient) TransactionIncludedMessage(txID iotago.TransactionID, deSeriParas *iotago.DeSerializationParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) TransactionIncludedMessage(txID iotago.TransactionID, protoParas *iotago.ProtocolParameters) (<-chan *iotago.Message, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPITransactionsIncludedMessage, "{transactionId}", iotago.MessageIDToHexString(txID), 1)
-	return eac.subscribeToMessagesTopic(topic, deSeriParas)
+	return eac.subscribeToMessagesTopic(topic, protoParas)
 }
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.

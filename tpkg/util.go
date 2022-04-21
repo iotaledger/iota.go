@@ -323,7 +323,7 @@ func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
 	}
 
 	return &iotago.Message{
-		ProtocolVersion: iotago.ProtocolVersion,
+		ProtocolVersion: TestProtocolVersion,
 		Parents:         parents,
 		Payload:         payload,
 		Nonce:           uint64(rand.Intn(1000)),

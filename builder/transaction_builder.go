@@ -75,9 +75,9 @@ type TransactionFunc func(tx *iotago.Transaction)
 
 // BuildAndSwapToMessageBuilder builds the transaction and then swaps to a MessageBuilder with
 // the transaction set as its payload. txFunc can be nil.
-func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(deSeriParas *iotago.DeSerializationParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *MessageBuilder {
-	msgBuilder := NewMessageBuilder()
-	tx, err := b.Build(deSeriParas, signer)
+func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(protoParas *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *MessageBuilder {
+	msgBuilder := NewMessageBuilder(protoParas.Version)
+	tx, err := b.Build(protoParas, signer)
 	if err != nil {
 		msgBuilder.err = err
 		return msgBuilder
@@ -89,12 +89,12 @@ func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(deSeriParas *iotago.De
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(deSeriParas *iotago.DeSerializationParameters, signer iotago.AddressSigner) (*iotago.Transaction, error) {
+func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer iotago.AddressSigner) (*iotago.Transaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
-	case deSeriParas == nil:
-		return nil, fmt.Errorf("%w: must supply de/serialization parameters", ErrTransactionBuilder)
+	case protoParas == nil:
+		return nil, fmt.Errorf("%w: must supply protocol parameters", ErrTransactionBuilder)
 	case signer == nil:
 		return nil, fmt.Errorf("%w: must supply signer", ErrTransactionBuilder)
 	}
@@ -143,7 +143,7 @@ func (b *TransactionBuilder) Build(deSeriParas *iotago.DeSerializationParameters
 
 	sigTxPayload := &iotago.Transaction{Essence: b.essence, UnlockBlocks: unlockBlocks}
 
-	if _, err := sigTxPayload.Serialize(serializer.DeSeriModePerformValidation, deSeriParas); err != nil {
+	if _, err := sigTxPayload.Serialize(serializer.DeSeriModePerformValidation, protoParas); err != nil {
 		return nil, err
 	}
 

@@ -131,7 +131,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := test.builder.Build(iotago.ZeroRentParas, test.addrSigner)
+			_, err := test.builder.Build(tpkg.TestProtoParas, test.addrSigner)
 			if test.buildErr != nil {
 				assert.True(t, errors.Is(err, test.buildErr), "wrong error : %s != %s", err, test.buildErr)
 				return

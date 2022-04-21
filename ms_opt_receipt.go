@@ -260,7 +260,7 @@ func (j *jsonReceiptMilestoneOpt) ToSerializable() (serializer.Serializable, err
 //    equals the amount of the new TreasuryOutput.
 // This function panics if the receipt is nil, the receipt does not include any migrated fund entries or
 // the given treasury output is nil.
-func ValidateReceipt(receipt *ReceiptMilestoneOpt, prevTreasuryOutput *TreasuryOutput) error {
+func ValidateReceipt(receipt *ReceiptMilestoneOpt, prevTreasuryOutput *TreasuryOutput, totalSupply uint64) error {
 	switch {
 	case prevTreasuryOutput == nil:
 		panic("given previous treasury output is nil")
@@ -286,9 +286,9 @@ func ValidateReceipt(receipt *ReceiptMilestoneOpt, prevTreasuryOutput *TreasuryO
 		switch {
 		case entry.Deposit < MinMigratedFundsEntryDeposit:
 			return fmt.Errorf("%w: migrated fund entry at index %d deposits less than %d", ErrInvalidReceiptMilestoneOpt, fIndex, MinMigratedFundsEntryDeposit)
-		case entry.Deposit > TokenSupply:
+		case entry.Deposit > totalSupply:
 			return fmt.Errorf("%w: migrated fund entry at index %d deposits more than total supply", ErrInvalidReceiptMilestoneOpt, fIndex)
-		case entry.Deposit+migratedFundsSum > TokenSupply:
+		case entry.Deposit+migratedFundsSum > totalSupply:
 			// this can't overflow because the previous case ensures that
 			return fmt.Errorf("%w: migrated fund entry at index %d overflows total supply", ErrInvalidReceiptMilestoneOpt, fIndex)
 		}

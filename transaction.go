@@ -101,7 +101,7 @@ func (t *Transaction) OutputsSet() (OutputSet, error) {
 
 // ID computes the ID of the Transaction.
 func (t *Transaction) ID() (*TransactionID, error) {
-	data, err := t.Serialize(serializer.DeSeriModeNoValidation, ZeroRentParas)
+	data, err := t.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, fmt.Errorf("can't compute transaction ID: %w", err)
 	}
@@ -194,17 +194,17 @@ func (t *Transaction) UnmarshalJSON(bytes []byte) error {
 
 func txDeSeriValidation(tx *Transaction, deSeriCtx interface{}) serializer.ErrProducerWithRWBytes {
 	return func(readBytes []byte, err error) error {
-		deSeriParas, ok := deSeriCtx.(*DeSerializationParameters)
-		if !ok || deSeriParas == nil {
-			return fmt.Errorf("unable to validate transaction: %w", ErrMissingDeSerializationParas)
+		protoParas, ok := deSeriCtx.(*ProtocolParameters)
+		if !ok || protoParas == nil {
+			return fmt.Errorf("unable to validate transaction: %w", ErrMissingProtocolParas)
 		}
-		return tx.syntacticallyValidate(readBytes, deSeriParas.RentStructure)
+		return tx.syntacticallyValidate(protoParas)
 	}
 }
 
 // syntacticallyValidate syntactically validates the Transaction.
-func (t *Transaction) syntacticallyValidate(_ []byte, rentStruct *RentStructure) error {
-	if err := t.Essence.syntacticallyValidate(rentStruct); err != nil {
+func (t *Transaction) syntacticallyValidate(protoParas *ProtocolParameters) error {
+	if err := t.Essence.syntacticallyValidate(protoParas); err != nil {
 		return fmt.Errorf("transaction essence is invalid: %w", err)
 	}
 

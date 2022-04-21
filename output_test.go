@@ -140,34 +140,35 @@ func copyObject(t *testing.T, source serializer.Serializable, mutations fieldMut
 }
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
-	nonZeroCostParas := &iotago.DeSerializationParameters{
-		RentStructure: &iotago.RentStructure{
+	nonZeroCostParas := &iotago.ProtocolParameters{
+		RentStructure: iotago.RentStructure{
 			VByteCost:    1,
 			VBFactorData: iotago.VByteCostFactorData,
 			VBFactorKey:  iotago.VByteCostFactorKey,
 		},
+		TokenSupply: tpkg.TestTokenSupply,
 	}
 
 	tests := []struct {
-		name        string
-		deSeriParas *iotago.DeSerializationParameters
-		outputs     iotago.Outputs
-		wantErr     error
+		name       string
+		protoParas *iotago.ProtocolParameters
+		outputs    iotago.Outputs
+		wantErr    error
 	}{
 		{
-			name:        "ok",
-			deSeriParas: iotago.ZeroRentParas,
+			name:       "ok",
+			protoParas: tpkg.TestProtoParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
-					Amount:     iotago.TokenSupply,
+					Amount:     tpkg.TestTokenSupply,
 					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()}},
 				},
 			},
 			wantErr: nil,
 		},
 		{
-			name:        "ok - state rent covered",
-			deSeriParas: nonZeroCostParas,
+			name:       "ok - state rent covered",
+			protoParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
 					Amount:     414, // min amount
@@ -177,8 +178,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:        "ok - storage deposit return",
-			deSeriParas: nonZeroCostParas,
+			name:       "ok - storage deposit return",
+			protoParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
 				// min 444
 				&iotago.BasicOutput{
@@ -195,8 +196,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:        "fail - storage deposit return less than min storage deposit",
-			deSeriParas: nonZeroCostParas,
+			name:       "fail - storage deposit return less than min storage deposit",
+			protoParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
 					Amount: 1000,
@@ -212,8 +213,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrStorageDepositLessThanMinReturnOutputStorageDeposit,
 		},
 		{
-			name:        "fail - storage deposit more than target output deposit",
-			deSeriParas: nonZeroCostParas,
+			name:       "fail - storage deposit more than target output deposit",
+			protoParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
 					Amount: OneMi,
@@ -230,8 +231,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrStorageDepositExceedsTargetOutputDeposit,
 		},
 		{
-			name:        "fail - state rent not covered",
-			deSeriParas: nonZeroCostParas,
+			name:       "fail - state rent not covered",
+			protoParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
 					Amount: 100,
@@ -243,8 +244,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrVByteRentNotCovered,
 		},
 		{
-			name:        "fail - zero deposit",
-			deSeriParas: iotago.ZeroRentParas,
+			name:       "fail - zero deposit",
+			protoParas: tpkg.TestProtoParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
 					Amount: 0,
@@ -256,11 +257,11 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrDepositAmountMustBeGreaterThanZero,
 		},
 		{
-			name:        "fail - more than total supply on single output",
-			deSeriParas: iotago.ZeroRentParas,
+			name:       "fail - more than total supply on single output",
+			protoParas: tpkg.TestProtoParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
-					Amount: iotago.TokenSupply + 1,
+					Amount: tpkg.TestTokenSupply + 1,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -269,17 +270,17 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrOutputDepositsMoreThanTotalSupply,
 		},
 		{
-			name:        "fail - sum more than total supply over multiple outputs",
-			deSeriParas: iotago.ZeroRentParas,
+			name:       "fail - sum more than total supply over multiple outputs",
+			protoParas: tpkg.TestProtoParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
-					Amount: iotago.TokenSupply - 1,
+					Amount: tpkg.TestTokenSupply - 1,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 				&iotago.BasicOutput{
-					Amount: iotago.TokenSupply - 1,
+					Amount: tpkg.TestTokenSupply - 1,
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -291,7 +292,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.OutputsSyntacticalDepositAmount(tt.deSeriParas.RentStructure)
+			valFunc := iotago.OutputsSyntacticalDepositAmount(tt.protoParas)
 			var runErr error
 			for index, output := range tt.outputs {
 				if err := valFunc(index, output); err != nil {

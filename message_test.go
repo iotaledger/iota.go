@@ -55,26 +55,26 @@ func TestMessage_DeSerialize(t *testing.T) {
 func TestMessage_MinSize(t *testing.T) {
 
 	msg := &iotago.Message{
-		ProtocolVersion: iotago.ProtocolVersion,
+		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(1),
 		Payload:         nil,
 	}
 
-	msgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, iotago.ZeroRentParas)
+	msgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
 	msg2 := &iotago.Message{}
-	_, err = msg2.Deserialize(msgBytes, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	_, err = msg2.Deserialize(msgBytes, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 	require.Equal(t, msg, msg2)
 }
 
 func TestMessage_DeserializationNotEnoughData(t *testing.T) {
 
-	msgBytes := []byte{iotago.ProtocolVersion, 1}
+	msgBytes := []byte{tpkg.TestProtocolVersion, 1}
 
 	msg := &iotago.Message{}
-	_, err := msg.Deserialize(msgBytes, serializer.DeSeriModePerformValidation, iotago.ZeroRentParas)
+	_, err := msg.Deserialize(msgBytes, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.ErrorIs(t, err, serializer.ErrDeserializationNotEnoughData)
 }
 

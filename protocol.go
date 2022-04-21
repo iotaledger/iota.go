@@ -8,9 +8,8 @@ import (
 )
 
 var (
-	// ErrMissingDeSerializationParas is returned when DeSerializationParameters are missing while
-	// performing de/serialization on an object which requires them.
-	ErrMissingDeSerializationParas = errors.New("missing de/serialization parameters")
+	// ErrMissingProtocolParas is returned when ProtocolParameters are missing for operations which require them.
+	ErrMissingProtocolParas = errors.New("missing protocol parameters")
 )
 
 // NetworkID defines the ID of the network on which entities operate on.
@@ -22,10 +21,18 @@ func NetworkIDFromString(networkIDStr string) NetworkID {
 	return binary.LittleEndian.Uint64(networkIDBlakeHash[:])
 }
 
-// DeSerializationParameters defines parameters which must be given into de/serialization context
-// if de/serialization is executed with syntactical validation.
-type DeSerializationParameters struct {
-	// Used to determine the validity of Outputs by checking whether
-	// they fulfil the virtual byte rent cost given their deposit value.
-	RentStructure *RentStructure
+// ProtocolParameters defines the parameters of the protocol.
+type ProtocolParameters struct {
+	// The version of the protocol running.
+	Version byte
+	// The human friendly name of the network.
+	NetworkName string
+	// The HRP prefix used for Bech32 addresses in the network.
+	Bech32HRP string
+	// The minimum pow score of the network.
+	MinPowScore float64
+	// The rent structure used by given node/network.
+	RentStructure RentStructure
+	// TokenSupply defines the current token supply on the network.
+	TokenSupply uint64
 }
