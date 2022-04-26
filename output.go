@@ -877,8 +877,8 @@ func OutputsSyntacticalNFT() OutputsSyntacticalValidationFunc {
 	}
 }
 
-// ValidateOutputs validates the outputs by running them against the given OutputsSyntacticalValidationFunc(s).
-func ValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalValidationFunc) error {
+// SyntacticallyValidateOutputs validates the outputs by running them against the given OutputsSyntacticalValidationFunc(s).
+func SyntacticallyValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalValidationFunc) error {
 	for i, output := range outputs {
 		for _, f := range funcs {
 			if err := f(i, output); err != nil {

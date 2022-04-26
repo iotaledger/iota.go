@@ -324,14 +324,14 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
 func (u *TransactionEssence) syntacticallyValidate(protoParas *ProtocolParameters) error {
-	if err := ValidateInputs(u.Inputs,
+	if err := SyntacticallyValidateInputs(u.Inputs,
 		InputsSyntacticalUnique(),
 		InputsSyntacticalIndicesWithinBounds(),
 	); err != nil {
 		return err
 	}
 
-	if err := ValidateOutputs(u.Outputs,
+	if err := SyntacticallyValidateOutputs(u.Outputs,
 		OutputsSyntacticalDepositAmount(protoParas),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),

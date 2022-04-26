@@ -131,8 +131,8 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 
 var inputsPredicateIndicesWithinBounds = InputsSyntacticalIndicesWithinBounds()
 
-// ValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
-func ValidateInputs(inputs Inputs, funcs ...InputsSyntacticalValidationFunc) error {
+// SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
+func SyntacticallyValidateInputs(inputs Inputs, funcs ...InputsSyntacticalValidationFunc) error {
 	for i, input := range inputs {
 		dep, ok := input.(*UTXOInput)
 		if !ok {
