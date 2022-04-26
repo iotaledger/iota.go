@@ -6,7 +6,7 @@ require (
 	filippo.io/edwards25519 v1.0.0-rc.1
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/ethereum/go-ethereum v1.10.17
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220406082310-fa38df493f6b
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220426085024-dfad09f16be5
 	github.com/iotaledger/iota.go v1.0.0
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
 	github.com/stretchr/testify v1.7.1

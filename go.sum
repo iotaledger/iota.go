@@ -236,6 +236,8 @@ github.com/influxdata/tdigest v0.0.0-20181121200506-bf2b5ad3c0a9/go.mod h1:Js0mq
 github.com/influxdata/usage-client v0.0.0-20160829180054-6d3895376368/go.mod h1:Wbbw6tYNvwa5dlB6304Sd+82Z3f7PmVZHVKU637d4po=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220406082310-fa38df493f6b h1:mqrzjajY0gyIPPiA715TNlZMt7YF6NWtMePSF+SXa/4=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220406082310-fa38df493f6b/go.mod h1:O18k+0+qtbHfk8AYI+dgMOoDBDKy9vwXk2ocyD7MyRI=
+github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220426085024-dfad09f16be5 h1:s1ku9sIx2Y82NCNnNoWCNJgeUwGCrlthwLaSSuJ3pJM=
+github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220426085024-dfad09f16be5/go.mod h1:O18k+0+qtbHfk8AYI+dgMOoDBDKy9vwXk2ocyD7MyRI=
 github.com/iotaledger/iota.go v1.0.0 h1:tqm1FxJ/zOdzbrAaQ5BQpVF8dUy2eeGlSeWlNG8GoXY=
 github.com/iotaledger/iota.go v1.0.0/go.mod h1:RiKYwDyY7aCD1L0YRzHSjOsJ5mUR9yvQpvhZncNcGQI=
 github.com/jackpal/go-nat-pmp v1.0.2/go.mod h1:QPH045xvCAeXUZOxsnwmrtiCoxIr9eob+4orBN1SBKc=
