@@ -32,7 +32,7 @@ func (s *MetadataFeatureBlock) Clone() FeatureBlock {
 	return &MetadataFeatureBlock{Data: append([]byte(nil), s.Data...)}
 }
 
-func (s *MetadataFeatureBlock) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (s *MetadataFeatureBlock) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(uint64(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
 }
 

@@ -54,10 +54,10 @@ func (f FeatureBlocks) Clone() FeatureBlocks {
 	return cpy
 }
 
-func (f FeatureBlocks) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (f FeatureBlocks) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	var sumCost uint64
 	for _, featBlock := range f {
-		sumCost += featBlock.VByteCost(costStruct, nil)
+		sumCost += featBlock.VByte(costStruct, nil)
 	}
 
 	// length prefix + sum cost of blocks

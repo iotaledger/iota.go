@@ -132,7 +132,7 @@ func (n NativeTokens) Clone() NativeTokens {
 	return cpy
 }
 
-func (n NativeTokens) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (n NativeTokens) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	// length prefix + (native token count * static native token cost)
 	return costStruct.VBFactorData.Multiply(uint64(serializer.OneByte + len(n)*NativeTokenVByteCost))
 }
@@ -187,7 +187,7 @@ func (n *NativeToken) Clone() *NativeToken {
 	return cpy
 }
 
-func (n *NativeToken) VByteCost(_ *RentStructure, _ VByteCostFunc) uint64 {
+func (n *NativeToken) VBytes(_ *RentStructure, _ VByteCostFunc) uint64 {
 	return NativeTokenVByteCost
 }
 

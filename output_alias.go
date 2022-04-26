@@ -281,17 +281,17 @@ func (a *AliasOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extP
 	return outputUnlockable(a, next, ident, extParas)
 }
 
-func (a *AliasOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (a *AliasOutput) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return outputOffsetVByteCost(costStruct) +
 		// prefix + amount
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
-		a.NativeTokens.VByteCost(costStruct, nil) +
+		a.NativeTokens.VByte(costStruct, nil) +
 		costStruct.VBFactorData.Multiply(AliasIDLength) +
 		// state index, state meta length, state meta, foundry counter
 		costStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
-		a.Conditions.VByteCost(costStruct, nil) +
-		a.Blocks.VByteCost(costStruct, nil) +
-		a.ImmutableBlocks.VByteCost(costStruct, nil)
+		a.Conditions.VByte(costStruct, nil) +
+		a.Blocks.VByte(costStruct, nil) +
+		a.ImmutableBlocks.VByte(costStruct, nil)
 }
 
 //	- For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either

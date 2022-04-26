@@ -31,9 +31,9 @@ func (s *StorageDepositReturnUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *StorageDepositReturnUnlockCondition) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (s *StorageDepositReturnUnlockCondition) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
-		s.ReturnAddress.VByteCost(costStruct, nil)
+		s.ReturnAddress.VByte(costStruct, nil)
 }
 
 func (s *StorageDepositReturnUnlockCondition) Equal(other UnlockCondition) bool {

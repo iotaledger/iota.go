@@ -45,7 +45,7 @@ type RentStructure struct {
 // by examining the virtual bytes cost of the object.
 // Returns the minimum rent computed and an error if it is not covered by rent.
 func (vbcs *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint64) (uint64, error) {
-	minRent := vbcs.VByteCost * object.VByteCost(vbcs, nil)
+	minRent := vbcs.VByteCost * object.VBytes(vbcs, nil)
 	if rent < minRent {
 		return 0, fmt.Errorf("%w: needed %d but only got %d", ErrVByteRentNotCovered, minRent, rent)
 	}
@@ -55,18 +55,18 @@ func (vbcs *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint6
 // MinStorageDeposit returns the minimum renting costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
 func (vbcs *RentStructure) MinStorageDeposit(sender Address) uint64 {
-	return (&BasicOutput{Conditions: UnlockConditions{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VByteCost(vbcs, nil)
+	return (&BasicOutput{Conditions: UnlockConditions{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(vbcs, nil)
 }
 
 // NonEphemeralObject is an object which can not be pruned by nodes as it
 // makes up an integral part to execute the IOTA protocol. This kind of objects are associated
 // with costs in terms of the resources they take up.
 type NonEphemeralObject interface {
-	// VByteCost returns the cost this object has in terms of taking up
+	// VBytes returns the cost this object has in terms of taking up
 	// virtual and physical space within the data set needed to implement the IOTA protocol.
 	// The override parameter acts as an escape hatch in case the cost needs to be adjusted
 	// according to some external properties outside the NonEphemeralObject.
-	VByteCost(costStruct *RentStructure, override VByteCostFunc) uint64
+	VBytes(rentStruct *RentStructure, override VByteCostFunc) uint64
 }
 
 // VByteCostFunc is a function which computes the virtual byte cost of a NonEphemeralObject.

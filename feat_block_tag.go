@@ -31,7 +31,7 @@ func (s *TagFeatureBlock) Clone() FeatureBlock {
 	return &TagFeatureBlock{Tag: append([]byte(nil), s.Tag...)}
 }
 
-func (s *TagFeatureBlock) VByteCost(costStruct *RentStructure, f VByteCostFunc) uint64 {
+func (s *TagFeatureBlock) VBytes(costStruct *RentStructure, f VByteCostFunc) uint64 {
 	if f != nil {
 		return f(costStruct)
 	}

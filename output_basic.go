@@ -113,13 +113,13 @@ func (e *BasicOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParame
 	return ok
 }
 
-func (e *BasicOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (e *BasicOutput) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return outputOffsetVByteCost(costStruct) +
 		// prefix + amount
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
-		e.NativeTokens.VByteCost(costStruct, nil) +
-		e.Conditions.VByteCost(costStruct, nil) +
-		e.Blocks.VByteCost(costStruct, nil)
+		e.NativeTokens.VByte(costStruct, nil) +
+		e.Conditions.VByte(costStruct, nil) +
+		e.Blocks.VByte(costStruct, nil)
 }
 
 func (e *BasicOutput) NativeTokenSet() NativeTokens {

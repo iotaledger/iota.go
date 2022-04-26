@@ -50,7 +50,7 @@ func (aliasAddr *AliasAddress) Clone() Address {
 	return cpy
 }
 
-func (aliasAddr *AliasAddress) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (aliasAddr *AliasAddress) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(AliasAddressSerializedBytesSize)
 }
 

@@ -198,17 +198,17 @@ func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockPara
 	return ok
 }
 
-func (f *FoundryOutput) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (f *FoundryOutput) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return outputOffsetVByteCost(costStruct) +
 		// prefix + amount
 		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
-		f.NativeTokens.VByteCost(costStruct, nil) +
+		f.NativeTokens.VBytes(costStruct, nil) +
 		// serial number, token tag
 		costStruct.VBFactorData.Multiply(serializer.UInt32ByteSize+TokenTagLength) +
-		f.TokenScheme.VByteCost(costStruct, nil) +
-		f.Conditions.VByteCost(costStruct, nil) +
-		f.Blocks.VByteCost(costStruct, nil) +
-		f.ImmutableBlocks.VByteCost(costStruct, nil)
+		f.TokenScheme.VByte(costStruct, nil) +
+		f.Conditions.VByte(costStruct, nil) +
+		f.Blocks.VByte(costStruct, nil) +
+		f.ImmutableBlocks.VByte(costStruct, nil)
 }
 
 func (f *FoundryOutput) Chain() ChainID {

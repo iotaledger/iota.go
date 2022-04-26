@@ -47,7 +47,7 @@ func (edAddr *Ed25519Address) Clone() Address {
 	return cpy
 }
 
-func (edAddr *Ed25519Address) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (edAddr *Ed25519Address) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(Ed25519AddressSerializedBytesSize)
 }
 

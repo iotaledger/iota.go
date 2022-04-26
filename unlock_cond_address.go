@@ -24,9 +24,9 @@ func (s *AddressUnlockCondition) Clone() UnlockCondition {
 	return &AddressUnlockCondition{Address: s.Address.Clone()}
 }
 
-func (s *AddressUnlockCondition) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
+func (s *AddressUnlockCondition) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
 	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) +
-		s.Address.VByteCost(costStruct, nil)
+		s.Address.VByte(costStruct, nil)
 }
 
 func (s *AddressUnlockCondition) Equal(other UnlockCondition) bool {
