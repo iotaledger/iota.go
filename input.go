@@ -103,7 +103,7 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 	return func(index int, input Input) error {
 		ref, is := input.(IndexedUTXOReferencer)
 		if !is {
-			return nil
+			return fmt.Errorf("%w: input %d, tx can only contain IndexedUTXOReferencer inputs", ErrUnsupportedInputType, index)
 		}
 		utxoRef := ref.Ref()
 		k := string(utxoRef[:])
