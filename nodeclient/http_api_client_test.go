@@ -60,8 +60,8 @@ func TestClient_Info(t *testing.T) {
 			},
 			PruningIndex: 142857,
 		},
-		Protocol: nodeclient.InfoResProtocol{
-			TokenSupply: iotago.EncodeUint64(tpkg.TestTokenSupply),
+		Protocol: iotago.ProtocolParameters{
+			TokenSupply: tpkg.TestTokenSupply,
 			Version:     2,
 			NetworkName: "alphanet",
 			Bech32HRP:   "atoi",
@@ -90,7 +90,7 @@ func TestClient_Info(t *testing.T) {
 	info, err := nodeAPI.Info(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
-	protoParas, err := originInfo.ProtocolParameters()
+	protoParas := originInfo.Protocol
 	require.NoError(t, err)
 	require.EqualValues(t, protoParas.TokenSupply, tpkg.TestTokenSupply)
 }
