@@ -12,15 +12,11 @@ import (
 const (
 	// TaggedPayloadTagMaxLength defines the max length of the tag within a TaggedData payload.
 	TaggedPayloadTagMaxLength = 64
-	// TaggedPayloadTagMinLength defines the min length of the tag within a TaggedData payload.
-	TaggedPayloadTagMinLength = 0
 )
 
 var (
 	// ErrTaggedDataTagExceedsMaxSize gets returned when a TaggedData payload's tag exceeds TaggedPayloadTagMaxLength.
 	ErrTaggedDataTagExceedsMaxSize = errors.New("tag exceeds max size")
-	// ErrTaggedDataTagUnderMinSize gets returned when an TaggedData payload's tag is under TaggedPayloadTagMinLength.
-	ErrTaggedDataTagUnderMinSize = errors.New("tag is below min size")
 )
 
 // TaggedData is a payload which holds a tag and associated data.
@@ -43,13 +39,6 @@ func (u *TaggedData) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 		ReadVariableByteSlice(&u.Tag, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize tagged data tag: %w", err)
 		}, TaggedPayloadTagMaxLength).
-		WithValidation(deSeriMode, func(_ []byte, err error) error {
-			switch {
-			case len(u.Tag) < TaggedPayloadTagMinLength:
-				return fmt.Errorf("unable to deserialize tagged data tag: %w", ErrTaggedDataTagUnderMinSize)
-			}
-			return nil
-		}).
 		ReadVariableByteSlice(&u.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize tagged data data: %w", err)
 		}, MessageBinSerializedMaxSize). // obviously can never be that size
@@ -63,8 +52,6 @@ func (u *TaggedData) Serialize(deSeriMode serializer.DeSerializationMode, deSeri
 				switch {
 				case len(u.Tag) > TaggedPayloadTagMaxLength:
 					return fmt.Errorf("unable to serialize tagged data tag: %w", ErrTaggedDataTagExceedsMaxSize)
-				case len(u.Tag) < TaggedPayloadTagMinLength:
-					return fmt.Errorf("unable to serialize tagged data tag: %w", ErrTaggedDataTagUnderMinSize)
 				}
 				// we do not check the length of the data field as in any circumstance
 				// the max size it can take up is dependent on how big the enclosing
