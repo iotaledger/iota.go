@@ -34,7 +34,7 @@ func TestUnlockBlock_DeSerialize(t *testing.T) {
 			target: &iotago.AliasUnlockBlock{},
 		},
 		{
-			name:   "ok - nft",
+			name:   "ok - NFT",
 			source: tpkg.RandNFTUnlockBlock(),
 			target: &iotago.NFTUnlockBlock{},
 		},

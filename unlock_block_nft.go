@@ -39,10 +39,10 @@ func (r *NFTUnlockBlock) Type() UnlockBlockType {
 func (r *NFTUnlockBlock) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(NFTUnlockBlockSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid nft unlock block bytes: %w", err)
+			return 0, fmt.Errorf("invalid NFT unlock block bytes: %w", err)
 		}
 		if err := serializer.CheckTypeByte(data, byte(UnlockBlockNFT)); err != nil {
-			return 0, fmt.Errorf("unable to deserialize nft unlock block: %w", err)
+			return 0, fmt.Errorf("unable to deserialize NFT unlock block: %w", err)
 		}
 	}
 	data = data[serializer.SmallTypeDenotationByteSize:]

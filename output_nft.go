@@ -60,7 +60,7 @@ var (
 				case uint32(FeatureBlockMetadata):
 				case uint32(FeatureBlockTag):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize nft output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
+					return nil, fmt.Errorf("%w: unable to deserialize NFT output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
 				}
 				return FeatureBlockSelector(ty)
 			},
@@ -70,7 +70,7 @@ var (
 				case *MetadataFeatureBlock:
 				case *TagFeatureBlock:
 				default:
-					return fmt.Errorf("%w: in nft output", ErrUnsupportedFeatureBlockType)
+					return fmt.Errorf("%w: in NFT output", ErrUnsupportedFeatureBlockType)
 				}
 				return nil
 			},
@@ -89,7 +89,7 @@ var (
 				case uint32(FeatureBlockIssuer):
 				case uint32(FeatureBlockMetadata):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize nft output, unsupported immutable feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
+					return nil, fmt.Errorf("%w: unable to deserialize NFT output, unsupported immutable feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
 				}
 				return FeatureBlockSelector(ty)
 			},
@@ -98,7 +98,7 @@ var (
 				case *IssuerFeatureBlock:
 				case *MetadataFeatureBlock:
 				default:
-					return fmt.Errorf("%w: in nft output", ErrUnsupportedFeatureBlockType)
+					return fmt.Errorf("%w: in NFT output", ErrUnsupportedFeatureBlockType)
 				}
 				return nil
 			},
@@ -228,7 +228,7 @@ func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next 
 		panic("unknown chain transition type in NFTOutput")
 	}
 	if err != nil {
-		return &ChainTransitionError{Inner: err, Msg: fmt.Sprintf("nft %s", n.NFTID)}
+		return &ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", n.NFTID)}
 	}
 	return nil
 }

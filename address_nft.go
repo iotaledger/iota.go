@@ -89,10 +89,10 @@ func (nftAddr *NFTAddress) String() string {
 func (nftAddr *NFTAddress) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 		if err := serializer.CheckMinByteLength(NFTAddressSerializedBytesSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid nft address bytes: %w", err)
+			return 0, fmt.Errorf("invalid NFT address bytes: %w", err)
 		}
 		if err := serializer.CheckTypeByte(data, byte(AddressNFT)); err != nil {
-			return 0, fmt.Errorf("unable to deserialize nft address: %w", err)
+			return 0, fmt.Errorf("unable to deserialize NFT address: %w", err)
 		}
 	}
 	copy(nftAddr[:], data[serializer.SmallTypeDenotationByteSize:])

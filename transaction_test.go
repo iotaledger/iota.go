@@ -949,7 +949,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:   "fail - should contain nft unlock block",
+				name:   "fail - should contain NFT unlock block",
 				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
 				inputs: inputs,
 				tx: &iotago.Transaction{

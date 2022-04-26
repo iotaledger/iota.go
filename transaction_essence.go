@@ -40,7 +40,7 @@ var (
 	// ErrAliasOutputCyclicAddress gets returned if an AliasOutput's AliasID results into the same address as the State/Governance controller.
 	ErrAliasOutputCyclicAddress = errors.New("alias output's AliasID corresponds to state and/or governance controller")
 	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
-	ErrNFTOutputCyclicAddress = errors.New("nft output's NFTID corresponds to address field")
+	ErrNFTOutputCyclicAddress = errors.New("NFT output's ID corresponds to address field")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
@@ -111,7 +111,7 @@ var (
 				case uint32(OutputFoundry):
 				case uint32(OutputNFT):
 				default:
-					return nil, fmt.Errorf("transaction essence can only contain basic/alias/foundry/nft outputs types but got type ID %d: %w", ty, ErrUnsupportedObjectType)
+					return nil, fmt.Errorf("transaction essence can only contain basic/alias/foundry/NFT outputs types but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 				}
 				return OutputSelector(ty)
 			},
