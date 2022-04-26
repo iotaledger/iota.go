@@ -299,7 +299,7 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	var data []byte
 	switch {
-	case len(dataLength) > 0:
+	case len(dataLength) >= 0:
 		data = RandBytes(dataLength[0])
 	default:
 		data = RandBytes(rand.Intn(200) + 1)
