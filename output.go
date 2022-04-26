@@ -26,10 +26,10 @@ var (
 )
 
 // defines the default offset virtual byte costs for an output.
-func outputOffsetVByteCost(costStruct *RentStructure) uint64 {
-	return costStruct.VBFactorKey.Multiply(OutputIDLength) +
+func outputOffsetVByteCost(rentStruct *RentStructure) uint64 {
+	return rentStruct.VBFactorKey.Multiply(OutputIDLength) +
 		// included msg id, conf ms index, conf ms ts
-		costStruct.VBFactorData.Multiply(MessageIDLength+serializer.UInt32ByteSize+serializer.UInt32ByteSize)
+		rentStruct.VBFactorData.Multiply(MessageIDLength+serializer.UInt32ByteSize+serializer.UInt32ByteSize)
 }
 
 // OutputID defines the identifier for an UTXO which consists

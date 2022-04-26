@@ -32,8 +32,8 @@ func (s *MetadataFeatureBlock) Clone() FeatureBlock {
 	return &MetadataFeatureBlock{Data: append([]byte(nil), s.Data...)}
 }
 
-func (s *MetadataFeatureBlock) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorData.Multiply(uint64(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
+func (s *MetadataFeatureBlock) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+	return rentStruct.VBFactorData.Multiply(uint64(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
 }
 
 func (s *MetadataFeatureBlock) Equal(other FeatureBlock) bool {

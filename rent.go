@@ -66,8 +66,8 @@ type NonEphemeralObject interface {
 	// virtual and physical space within the data set needed to implement the IOTA protocol.
 	// The override parameter acts as an escape hatch in case the cost needs to be adjusted
 	// according to some external properties outside the NonEphemeralObject.
-	VBytes(rentStruct *RentStructure, override VByteCostFunc) uint64
+	VBytes(rentStruct *RentStructure, override VBytesFunc) uint64
 }
 
-// VByteCostFunc is a function which computes the virtual byte cost of a NonEphemeralObject.
-type VByteCostFunc func(costStruct *RentStructure) uint64
+// VBytesFunc is a function which computes the virtual byte cost of a NonEphemeralObject.
+type VBytesFunc func(rentStruct *RentStructure) uint64

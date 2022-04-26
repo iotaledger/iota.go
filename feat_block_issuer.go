@@ -28,9 +28,9 @@ func (s *IssuerFeatureBlock) Clone() FeatureBlock {
 	return &IssuerFeatureBlock{Address: s.Address.Clone()}
 }
 
-func (s *IssuerFeatureBlock) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) +
-		s.Address.VByte(costStruct, nil)
+func (s *IssuerFeatureBlock) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) +
+		s.Address.VBytes(rentStruct, nil)
 }
 
 func (s *IssuerFeatureBlock) Equal(other FeatureBlock) bool {

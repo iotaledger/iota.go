@@ -38,10 +38,10 @@ func (s *SimpleTokenScheme) Clone() TokenScheme {
 	}
 }
 
-func (s *SimpleTokenScheme) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorData.Multiply(serializer.OneByte) +
+func (s *SimpleTokenScheme) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+	return rentStruct.VBFactorData.Multiply(serializer.OneByte) +
 		// minted/melted supply, max. supply
-		costStruct.VBFactorData.Multiply(Uint256ByteSize+Uint256ByteSize+Uint256ByteSize)
+		rentStruct.VBFactorData.Multiply(Uint256ByteSize+Uint256ByteSize+Uint256ByteSize)
 }
 
 func (s *SimpleTokenScheme) Type() TokenSchemeType {

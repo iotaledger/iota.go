@@ -281,17 +281,17 @@ func (a *AliasOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extP
 	return outputUnlockable(a, next, ident, extParas)
 }
 
-func (a *AliasOutput) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return outputOffsetVByteCost(costStruct) +
+func (a *AliasOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount
-		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
-		a.NativeTokens.VByte(costStruct, nil) +
-		costStruct.VBFactorData.Multiply(AliasIDLength) +
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		a.NativeTokens.VBytes(rentStruct, nil) +
+		rentStruct.VBFactorData.Multiply(AliasIDLength) +
 		// state index, state meta length, state meta, foundry counter
-		costStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
-		a.Conditions.VByte(costStruct, nil) +
-		a.Blocks.VByte(costStruct, nil) +
-		a.ImmutableBlocks.VByte(costStruct, nil)
+		rentStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
+		a.Conditions.VBytes(rentStruct, nil) +
+		a.Blocks.VBytes(rentStruct, nil) +
+		a.ImmutableBlocks.VBytes(rentStruct, nil)
 }
 
 //	- For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either

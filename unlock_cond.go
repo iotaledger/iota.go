@@ -76,14 +76,14 @@ type UnlockCondition interface {
 // UnlockConditions is a slice of UnlockCondition(s).
 type UnlockConditions []UnlockCondition
 
-func (f UnlockConditions) VBytes(costStruct *RentStructure, override VByteCostFunc) uint64 {
+func (f UnlockConditions) VBytes(rentStruct *RentStructure, override VBytesFunc) uint64 {
 	var sumCost uint64
 	for _, unlockCond := range f {
-		sumCost += unlockCond.VByte(costStruct, nil)
+		sumCost += unlockCond.VBytes(rentStruct, nil)
 	}
 
 	// length prefix + sum cost of conditions
-	return costStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
+	return rentStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
 }
 
 // Clone clones the UnlockConditions.

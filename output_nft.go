@@ -204,15 +204,15 @@ func (n *NFTOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParamete
 	return ok
 }
 
-func (n *NFTOutput) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return outputOffsetVByteCost(costStruct) +
+func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount
-		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
-		n.NativeTokens.VByte(costStruct, nil) +
-		costStruct.VBFactorData.Multiply(NFTIDLength) +
-		n.Conditions.VByte(costStruct, nil) +
-		n.Blocks.VByte(costStruct, nil) +
-		n.ImmutableBlocks.VByte(costStruct, nil)
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		n.NativeTokens.VBytes(rentStruct, nil) +
+		rentStruct.VBFactorData.Multiply(NFTIDLength) +
+		n.Conditions.VBytes(rentStruct, nil) +
+		n.Blocks.VBytes(rentStruct, nil) +
+		n.ImmutableBlocks.VBytes(rentStruct, nil)
 }
 
 func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {

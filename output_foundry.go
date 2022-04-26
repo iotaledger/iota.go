@@ -198,17 +198,17 @@ func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockPara
 	return ok
 }
 
-func (f *FoundryOutput) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return outputOffsetVByteCost(costStruct) +
+func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount
-		costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
-		f.NativeTokens.VBytes(costStruct, nil) +
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		f.NativeTokens.VBytes(rentStruct, nil) +
 		// serial number, token tag
-		costStruct.VBFactorData.Multiply(serializer.UInt32ByteSize+TokenTagLength) +
-		f.TokenScheme.VByte(costStruct, nil) +
-		f.Conditions.VByte(costStruct, nil) +
-		f.Blocks.VByte(costStruct, nil) +
-		f.ImmutableBlocks.VByte(costStruct, nil)
+		rentStruct.VBFactorData.Multiply(serializer.UInt32ByteSize+TokenTagLength) +
+		f.TokenScheme.VBytes(rentStruct, nil) +
+		f.Conditions.VBytes(rentStruct, nil) +
+		f.Blocks.VBytes(rentStruct, nil) +
+		f.ImmutableBlocks.VBytes(rentStruct, nil)
 }
 
 func (f *FoundryOutput) Chain() ChainID {

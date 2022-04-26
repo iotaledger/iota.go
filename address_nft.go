@@ -50,8 +50,8 @@ func (nftAddr *NFTAddress) Clone() Address {
 	return cpy
 }
 
-func (nftAddr *NFTAddress) VBytes(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorData.Multiply(NFTAddressSerializedBytesSize)
+func (nftAddr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+	return rentStruct.VBFactorData.Multiply(NFTAddressSerializedBytesSize)
 }
 
 func (nftAddr *NFTAddress) Key() string {

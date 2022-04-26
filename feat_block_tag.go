@@ -31,11 +31,11 @@ func (s *TagFeatureBlock) Clone() FeatureBlock {
 	return &TagFeatureBlock{Tag: append([]byte(nil), s.Tag...)}
 }
 
-func (s *TagFeatureBlock) VBytes(costStruct *RentStructure, f VByteCostFunc) uint64 {
+func (s *TagFeatureBlock) VBytes(rentStruct *RentStructure, f VBytesFunc) uint64 {
 	if f != nil {
-		return f(costStruct)
+		return f(rentStruct)
 	}
-	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.OneByte + uint64(len(s.Tag)))
+	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.OneByte + uint64(len(s.Tag)))
 }
 
 func (s *TagFeatureBlock) Equal(other FeatureBlock) bool {
