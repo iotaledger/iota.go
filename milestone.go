@@ -117,8 +117,8 @@ type (
 )
 
 // NewMilestone creates a new unsigned Milestone.
-func NewMilestone(index uint32, timestamp uint32, prevMsID MilestoneID, parents MilestoneParentMessageIDs, confMerkleRoot MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) (*Milestone, error) {
-	ms := &Milestone{
+func NewMilestone(index uint32, timestamp uint32, prevMsID MilestoneID, parents MilestoneParentMessageIDs, confMerkleRoot MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) *Milestone {
+	return &Milestone{
 		Index:               index,
 		Timestamp:           timestamp,
 		PreviousMilestoneID: prevMsID,
@@ -126,7 +126,6 @@ func NewMilestone(index uint32, timestamp uint32, prevMsID MilestoneID, parents 
 		ConfirmedMerkleRoot: confMerkleRoot,
 		AppliedMerkleRoot:   appliedMerkleRoot,
 	}
-	return ms, nil
 }
 
 // Milestone represents a special payload which defines the inclusion set of other messages in the Tangle.
