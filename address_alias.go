@@ -99,15 +99,15 @@ func (aliasAddr *AliasAddress) Deserialize(data []byte, deSeriMode serializer.De
 	return AliasAddressSerializedBytesSize, nil
 }
 
-func (aliasAddr *AliasAddress) Size() int {
-	return AliasAddressSerializedBytesSize
-}
-
 func (aliasAddr *AliasAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	var b [AliasAddressSerializedBytesSize]byte
 	b[0] = byte(AddressAlias)
 	copy(b[serializer.SmallTypeDenotationByteSize:], aliasAddr[:])
 	return b[:], nil
+}
+
+func (aliasAddr *AliasAddress) Size() int {
+	return AliasAddressSerializedBytesSize
 }
 
 func (aliasAddr *AliasAddress) MarshalJSON() ([]byte, error) {
