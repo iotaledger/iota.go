@@ -51,7 +51,7 @@ func (nftAddr *NFTAddress) Clone() Address {
 }
 
 func (nftAddr *NFTAddress) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + NFTAddressBytesLength)
+	return costStruct.VBFactorData.Multiply(NFTAddressSerializedBytesSize)
 }
 
 func (nftAddr *NFTAddress) Key() string {

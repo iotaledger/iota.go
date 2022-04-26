@@ -51,7 +51,7 @@ func (aliasAddr *AliasAddress) Clone() Address {
 }
 
 func (aliasAddr *AliasAddress) VByteCost(costStruct *RentStructure, _ VByteCostFunc) uint64 {
-	return costStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + AliasAddressBytesLength)
+	return costStruct.VBFactorData.Multiply(AliasAddressSerializedBytesSize)
 }
 
 func (aliasAddr *AliasAddress) Key() string {
