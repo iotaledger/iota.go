@@ -78,7 +78,7 @@ const (
 type StateTransitionValidationFunc func(current ChainConstrainedOutput, next ChainConstrainedOutput) error
 
 // IsIssuerOnOutputUnlocked checks whether the issuer in an IssuerFeatureBlock of this new ChainConstrainedOutput has been unlocked.
-// This function is a no-op if the chain is not new, or it does not contain an IssuerFeatureBlock.
+// This function is a no-op if the chain output does not contain an IssuerFeatureBlock.
 func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents UnlockedIdentities) error {
 	immFeatblocks := output.ImmutableFeatureBlocks()
 	if immFeatblocks == nil || len(immFeatblocks) == 0 {
