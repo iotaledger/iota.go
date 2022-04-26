@@ -49,11 +49,18 @@ func TestClient_Info(t *testing.T) {
 		Name:    "HORNET",
 		Version: "1.0.0",
 		Status: nodeclient.InfoResStatus{
-			IsHealthy:                true,
-			LatestMilestoneTimestamp: 1333337,
-			LatestMilestoneIndex:     1337,
-			ConfirmedMilestoneIndex:  666,
-			PruningIndex:             142857,
+			IsHealthy: true,
+			LatestMilestone: nodeclient.InfoResMilestone{
+				Index:       1337,
+				Timestamp:   1333337,
+				MilestoneID: iotago.EncodeHex(tpkg.RandBytes(32)),
+			},
+			ConfirmedMilestone: nodeclient.InfoResMilestone{
+				Index:       666,
+				Timestamp:   6666,
+				MilestoneID: iotago.EncodeHex(tpkg.RandBytes(32)),
+			},
+			PruningIndex: 142857,
 		},
 		Protocol: nodeclient.InfoResProtocol{
 			TokenSupply: iotago.EncodeUint64(tpkg.TestTokenSupply),

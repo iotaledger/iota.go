@@ -29,14 +29,22 @@ type (
 	InfoResStatus struct {
 		// Whether the node is healthy.
 		IsHealthy bool `json:"isHealthy"`
-		// The timestamp of the latest known milestone.
-		LatestMilestoneTimestamp uint32 `json:"latestMilestoneTimestamp"`
 		// The latest known milestone index.
-		LatestMilestoneIndex uint32 `json:"latestMilestoneIndex"`
+		LatestMilestone InfoResMilestone `json:"latestMilestone"`
 		// The current confirmed milestone's index.
-		ConfirmedMilestoneIndex uint32 `json:"confirmedMilestoneIndex"`
+		ConfirmedMilestone InfoResMilestone `json:"confirmedMilestone"`
 		// The milestone index at which the last pruning commenced.
 		PruningIndex uint32 `json:"pruningIndex"`
+	}
+
+	// InfoResMilestone defines the info res milestone information.
+	InfoResMilestone struct {
+		// The index of the milestone.
+		Index uint32 `json:"index"`
+		// The unix time of the milestone payload.
+		Timestamp uint32 `json:"timestamp"`
+		// The IO of the milestone.
+		MilestoneID string `json:"milestoneId"`
 	}
 
 	// InfoResProtocol defines info res protocol information.
