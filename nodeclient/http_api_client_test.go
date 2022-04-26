@@ -452,9 +452,9 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 	var milestoneIndex uint32 = 1337
 
 	originRes := &iotago.Milestone{
-		Index:           milestoneIndex,
-		Timestamp:       1337,
-		LastMilestoneID: tpkg.RandMilestoneID(),
+		Index:               milestoneIndex,
+		Timestamp:           1337,
+		PreviousMilestoneID: tpkg.RandMilestoneID(),
 		Parents: iotago.MilestoneParentMessageIDs{
 			tpkg.Rand32ByteArray(), tpkg.Rand32ByteArray(),
 		},
@@ -525,10 +525,10 @@ func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 
 	milestoneID := tpkg.RandMilestoneID()
 	req := &nodeclient.ComputeWhiteFlagMutationsRequest{
-		Index:           milestoneIndex,
-		Timestamp:       milestoneTimestamp,
-		Parents:         parentMessageIDs,
-		LastMilestoneID: iotago.EncodeHex(milestoneID[:]),
+		Index:               milestoneIndex,
+		Timestamp:           milestoneTimestamp,
+		Parents:             parentMessageIDs,
+		PreviousMilestoneID: iotago.EncodeHex(milestoneID[:]),
 	}
 
 	internalRes := &nodeclient.ComputeWhiteFlagMutationsResponseInternal{

@@ -493,7 +493,7 @@ func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uin
 
 // ComputeWhiteFlagMutations is the route to compute the white flag mutations for the cone of the given parents.
 // This function returns the merkle tree roots calculated by the node.
-func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index uint32, timestamp uint32, parents iotago.MessageIDs, lastMilestoneID iotago.MilestoneID) (*ComputeWhiteFlagMutationsResponse, error) {
+func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index uint32, timestamp uint32, parents iotago.MessageIDs, previousMilestoneID iotago.MilestoneID) (*ComputeWhiteFlagMutationsResponse, error) {
 
 	parentsHex := make([]string, len(parents))
 	for i, parent := range parents {
@@ -501,10 +501,10 @@ func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index uint3
 	}
 
 	req := &ComputeWhiteFlagMutationsRequest{
-		Index:           index,
-		Timestamp:       timestamp,
-		Parents:         parentsHex,
-		LastMilestoneID: iotago.EncodeHex(lastMilestoneID[:]),
+		Index:               index,
+		Timestamp:           timestamp,
+		Parents:             parentsHex,
+		PreviousMilestoneID: iotago.EncodeHex(previousMilestoneID[:]),
 	}
 
 	res := &ComputeWhiteFlagMutationsResponseInternal{}

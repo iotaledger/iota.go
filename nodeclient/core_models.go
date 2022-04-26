@@ -175,7 +175,7 @@ type (
 		// The hex encoded message IDs of the parents the milestone references.
 		Parents []string `json:"parentMessageIds"`
 		// The hex encoded milestone ID of the previous milestone.
-		LastMilestoneID string `json:"lastMilestoneId"`
+		PreviousMilestoneID string `json:"previousMilestoneId"`
 	}
 
 	// ComputeWhiteFlagMutationsResponseInternal defines the internal response for a POST ComputeWhiteFlagMutations REST API call.
