@@ -604,7 +604,7 @@ type jsonAliasOutput struct {
 	NativeTokens    []*json.RawMessage `json:"nativeTokens"`
 	AliasID         string             `json:"aliasId"`
 	StateIndex      int                `json:"stateIndex"`
-	StateMetadata   string             `json:"stateMetadata"`
+	StateMetadata   string             `json:"stateMetadata,omitempty"`
 	FoundryCounter  int                `json:"foundryCounter"`
 	Conditions      []*json.RawMessage `json:"unlockConditions"`
 	Blocks          []*json.RawMessage `json:"featureBlocks"`
