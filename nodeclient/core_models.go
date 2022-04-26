@@ -16,7 +16,7 @@ type (
 		// Status information.
 		Status InfoResStatus `json:"status"`
 		// Protocol information.
-		Protocol InfoResProtocol `json:"protocol"`
+		Protocol iotago.ProtocolParameters `json:"protocol"`
 		// Metrics information.
 		Metrics InfoResMetrics `json:"metrics"`
 		// The features this node exposes.
@@ -45,22 +45,6 @@ type (
 		Timestamp uint32 `json:"timestamp"`
 		// The IO of the milestone.
 		MilestoneID string `json:"milestoneId"`
-	}
-
-	// InfoResProtocol defines info res protocol information.
-	InfoResProtocol struct {
-		// The version of the protocol running.
-		Version byte `json:"version"`
-		// The human friendly name of the network.
-		NetworkName string `json:"networkName"`
-		// The HRP prefix used for Bech32 addresses in the network.
-		Bech32HRP iotago.NetworkPrefix `json:"bech32HRP"`
-		// The minimum pow score of the network.
-		MinPowScore float64 `json:"minPoWScore"`
-		// The rent structure used by given node/network.
-		RentStructure iotago.RentStructure `json:"rentStructure"`
-		// TokenSupply defines the current token supply on the network.
-		TokenSupply string `json:"tokenSupply"`
 	}
 
 	// InfoResMetrics defines info res metrics information.
@@ -272,21 +256,6 @@ type (
 		DroppedPackets uint32 `json:"droppedPackets"`
 	}
 )
-
-func (info *InfoResponse) ProtocolParameters() (*iotago.ProtocolParameters, error) {
-	tokenSupply, err := iotago.DecodeUint64(info.Protocol.TokenSupply)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decode token supply from info response: %w", err)
-	}
-	return &iotago.ProtocolParameters{
-		Version:       info.Protocol.Version,
-		NetworkName:   info.Protocol.NetworkName,
-		Bech32HRP:     info.Protocol.Bech32HRP,
-		MinPowScore:   info.Protocol.MinPowScore,
-		RentStructure: info.Protocol.RentStructure,
-		TokenSupply:   tokenSupply,
-	}, nil
-}
 
 // TxID returns the TransactionID.
 func (nor *OutputResponse) TxID() (*iotago.TransactionID, error) {
