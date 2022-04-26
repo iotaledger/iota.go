@@ -54,7 +54,7 @@ type (
 		// The human friendly name of the network.
 		NetworkName string `json:"networkName"`
 		// The HRP prefix used for Bech32 addresses in the network.
-		Bech32HRP string `json:"bech32HRP"`
+		Bech32HRP iotago.NetworkPrefix `json:"bech32HRP"`
 		// The minimum pow score of the network.
 		MinPowScore float64 `json:"minPoWScore"`
 		// The rent structure used by given node/network.
