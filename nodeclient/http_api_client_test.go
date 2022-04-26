@@ -5,12 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
-	"testing"
-	"time"
-
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
+	"math/rand"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
@@ -452,16 +450,30 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 	defer gock.Off()
 
 	var milestoneIndex uint32 = 1337
-	msgID := tpkg.Rand32ByteArray()
 
-	originRes := &nodeclient.MilestoneResponse{
-		Index:     milestoneIndex,
-		MessageID: iotago.EncodeHex(msgID[:]),
-		Time:      uint32(time.Now().Unix()),
+	originRes := &iotago.Milestone{
+		Index:           milestoneIndex,
+		Timestamp:       1337,
+		LastMilestoneID: tpkg.RandMilestoneID(),
+		Parents: iotago.MilestoneParentMessageIDs{
+			tpkg.Rand32ByteArray(), tpkg.Rand32ByteArray(),
+		},
+		ConfirmedMerkleRoot: tpkg.Rand32ByteArray(),
+		AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
+		Metadata:            tpkg.RandBytes(30),
+		Opts: iotago.MilestoneOpts{
+			&iotago.ProtocolParamsMilestoneOpt{
+				NextPoWScore:               500,
+				NextPoWScoreMilestoneIndex: 1000,
+			},
+		},
+		Signatures: iotago.Signatures{
+			tpkg.RandEd25519Signature(),
+		},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMilestone, milestoneIndex)).
+		Get(fmt.Sprintf(nodeclient.RouteMilestoneByIndex, milestoneIndex)).
 		Reply(200).
 		JSON(originRes)
 

@@ -58,9 +58,13 @@ const (
 	// MIMEVendorIOTASerializer => bytes
 	RouteTransactionsIncludedMessage = "/api/v2/transactions/%s/included-message"
 
-	// RouteMilestone is the route for getting a milestone by its milestoneIndex.
+	// RouteMilestoneByIndex is the route for getting a milestone by its milestoneIndex.
 	// GET returns the milestone.
-	RouteMilestone = "/api/v2/milestones/%d"
+	RouteMilestoneByIndex = "/api/v2/milestones/index/%d"
+
+	// RouteMilestone is the route for getting a milestone by its ID.
+	// GET returns the milestone.
+	RouteMilestone = "/api/v2/milestones/milestoneId/%s"
 
 	// RouteMilestoneUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
@@ -452,10 +456,22 @@ func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index uint3
 }
 
 // MilestoneByIndex gets a milestone by its index.
-func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*MilestoneResponse, error) {
-	query := fmt.Sprintf(RouteMilestone, index)
+func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*iotago.Milestone, error) {
+	query := fmt.Sprintf(RouteMilestoneByIndex, index)
 
-	res := &MilestoneResponse{}
+	res := &iotago.Milestone{}
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// MilestoneByID gets a milestone by its ID.
+func (client *Client) MilestoneByID(ctx context.Context, id iotago.MilestoneID) (*iotago.Milestone, error) {
+	query := fmt.Sprintf(RouteMilestone, iotago.EncodeHex(id[:]))
+
+	res := &iotago.Milestone{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}

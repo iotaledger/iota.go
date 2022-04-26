@@ -156,16 +156,6 @@ type (
 		MilestoneIndex uint32                      `json:"milestoneIndex"`
 	}
 
-	// MilestoneResponse defines the response of a GET milestones REST API call.
-	MilestoneResponse struct {
-		// The index of the milestone.
-		Index uint32 `json:"index"`
-		// The hex encoded message ID of the message.
-		MessageID string `json:"messageId"`
-		// The unix time of the milestone payload.
-		Time uint32 `json:"timestamp"`
-	}
-
 	// MilestoneUTXOChangesResponse defines the response of a GET milestone UTXO changes REST API call.
 	MilestoneUTXOChangesResponse struct {
 		// The index of the milestone.
