@@ -58,17 +58,21 @@ const (
 	// MIMEVendorIOTASerializer => bytes
 	RouteTransactionsIncludedMessage = "/api/v2/transactions/%s/included-message"
 
+	// RouteMilestoneByID is the route for getting a milestone by its ID.
+	// GET returns the milestone.
+	RouteMilestoneByID = "/api/v2/milestones/%s"
+
+	// RouteMilestoneByIDUTXOChanges is the route for getting all UTXO changes of a milestone by its ID.
+	// GET returns the output IDs of all UTXO changes.
+	RouteMilestoneByIDUTXOChanges = "/api/v2/milestones/%s/utxo-changes"
+
 	// RouteMilestoneByIndex is the route for getting a milestone by its milestoneIndex.
 	// GET returns the milestone.
-	RouteMilestoneByIndex = "/api/v2/milestones/index/%d"
+	RouteMilestoneByIndex = "/api/v2/milestones/by-index/%d"
 
-	// RouteMilestone is the route for getting a milestone by its ID.
-	// GET returns the milestone.
-	RouteMilestone = "/api/v2/milestones/milestoneId/%s"
-
-	// RouteMilestoneUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
+	// RouteMilestoneByIndexUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	RouteMilestoneUTXOChanges = "/api/v2/milestones/%d/utxo-changes"
+	RouteMilestoneByIndexUTXOChanges = "/api/v2/milestones/%d/utxo-changes"
 
 	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
 	// GET returns the output based on the given type in the request "Accept" header.
@@ -455,33 +459,55 @@ func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index uint3
 	return res.Receipts, nil
 }
 
+// MilestoneByID gets a milestone by its ID.
+func (client *Client) MilestoneByID(ctx context.Context, id iotago.MilestoneID) (*iotago.Milestone, error) {
+	query := fmt.Sprintf(RouteMilestoneByID, iotago.EncodeHex(id[:]))
+
+	res := &RawDataEnvelope{}
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
+		return nil, err
+	}
+
+	milestone := &iotago.Milestone{}
+	if _, err := milestone.Deserialize(res.Data, serializer.DeSeriModePerformValidation, nil); err != nil {
+		return nil, err
+	}
+
+	return milestone, nil
+}
+
+// MilestoneUTXOChangesByID returns all UTXO changes of a milestone by its ID.
+func (client *Client) MilestoneUTXOChangesByID(ctx context.Context, id iotago.MilestoneID) (*MilestoneUTXOChangesResponse, error) {
+	query := fmt.Sprintf(RouteMilestoneByIDUTXOChanges, iotago.EncodeHex(id[:]))
+
+	res := &MilestoneUTXOChangesResponse{}
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // MilestoneByIndex gets a milestone by its index.
 func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*iotago.Milestone, error) {
 	query := fmt.Sprintf(RouteMilestoneByIndex, index)
 
-	res := &iotago.Milestone{}
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	res := &RawDataEnvelope{}
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
 
-	return res, nil
-}
-
-// MilestoneByID gets a milestone by its ID.
-func (client *Client) MilestoneByID(ctx context.Context, id iotago.MilestoneID) (*iotago.Milestone, error) {
-	query := fmt.Sprintf(RouteMilestone, iotago.EncodeHex(id[:]))
-
-	res := &iotago.Milestone{}
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	milestone := &iotago.Milestone{}
+	if _, err := milestone.Deserialize(res.Data, serializer.DeSeriModePerformValidation, nil); err != nil {
 		return nil, err
 	}
 
-	return res, nil
+	return milestone, nil
 }
 
 // MilestoneUTXOChangesByIndex returns all UTXO changes of a milestone by its milestoneIndex.
 func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uint32) (*MilestoneUTXOChangesResponse, error) {
-	query := fmt.Sprintf(RouteMilestoneUTXOChanges, index)
+	query := fmt.Sprintf(RouteMilestoneByIndexUTXOChanges, index)
 
 	res := &MilestoneUTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
