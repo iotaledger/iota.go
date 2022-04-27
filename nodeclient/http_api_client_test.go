@@ -65,7 +65,7 @@ func TestClient_Info(t *testing.T) {
 			Version:     2,
 			NetworkName: "alphanet",
 			Bech32HRP:   "atoi",
-			MinPowScore: 40000.0,
+			MinPoWScore: 40000.0,
 			RentStructure: iotago.RentStructure{
 				VByteCost:    500,
 				VBFactorData: 1,

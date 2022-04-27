@@ -51,7 +51,7 @@
 //		msg, err := builder.NewMessageBuilder().
 //			Payload(taggedDataPayload).
 //			ParentsMessageIDs(tips).
-//			ProofOfWork(ctx, protoParas, info.Protocol.MinPowScore).
+//			ProofOfWork(ctx, protoParas, info.Protocol.MinPoWScore).
 //			Build()
 //
 //		// submit the message to the node
