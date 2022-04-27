@@ -446,17 +446,17 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 	require.EqualValues(t, originRes.Receipts, resp)
 }
 
-func TestClient_MilestoneByIndex(t *testing.T) {
+func TestClient_MilestoneByID(t *testing.T) {
 	defer gock.Off()
 
-	var milestoneIndex uint32 = 1337
+	milestoneID := tpkg.RandMilestoneID()
 
-	originRes := &iotago.Milestone{
-		Index:               milestoneIndex,
+	milestone := &iotago.Milestone{
+		Index:               1337,
 		Timestamp:           1337,
 		PreviousMilestoneID: tpkg.RandMilestoneID(),
 		Parents: iotago.MilestoneParentMessageIDs{
-			tpkg.Rand32ByteArray(), tpkg.Rand32ByteArray(),
+			tpkg.Rand32ByteArray(),
 		},
 		ConfirmedMerkleRoot: tpkg.Rand32ByteArray(),
 		AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
@@ -472,15 +472,85 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 		},
 	}
 
+	data, err := milestone.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+	require.NoError(t, err)
+
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMilestoneByIndex, milestoneIndex)).
+		Get(fmt.Sprintf(nodeclient.RouteMilestoneByID, iotago.EncodeHex(milestoneID[:]))).
+		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
+		Reply(200).
+		Body(bytes.NewReader(data))
+
+	nodeAPI := nodeclient.New(nodeAPIUrl)
+	resp, err := nodeAPI.MilestoneByID(context.Background(), milestoneID)
+	require.NoError(t, err)
+	require.EqualValues(t, milestone, resp)
+}
+
+func TestClient_MilestoneUTXOChangesByID(t *testing.T) {
+	defer gock.Off()
+
+	milestoneID := tpkg.RandMilestoneID()
+
+	randCreatedOutput := tpkg.RandUTXOInput()
+	randConsumedOutput := tpkg.RandUTXOInput()
+
+	originRes := &nodeclient.MilestoneUTXOChangesResponse{
+		Index:           1337,
+		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
+		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},
+	}
+
+	gock.New(nodeAPIUrl).
+		Get(fmt.Sprintf(nodeclient.RouteMilestoneByIDUTXOChanges, iotago.EncodeHex(milestoneID[:]))).
 		Reply(200).
 		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	resp, err := nodeAPI.MilestoneByIndex(context.Background(), milestoneIndex)
+	resp, err := nodeAPI.MilestoneUTXOChangesByID(context.Background(), milestoneID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
+}
+
+func TestClient_MilestoneByIndex(t *testing.T) {
+	defer gock.Off()
+
+	var milestoneIndex uint32 = 1337
+
+	milestone := &iotago.Milestone{
+		Index:               milestoneIndex,
+		Timestamp:           1337,
+		PreviousMilestoneID: tpkg.RandMilestoneID(),
+		Parents: iotago.MilestoneParentMessageIDs{
+			tpkg.Rand32ByteArray(),
+		},
+		ConfirmedMerkleRoot: tpkg.Rand32ByteArray(),
+		AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
+		Metadata:            tpkg.RandBytes(30),
+		Opts: iotago.MilestoneOpts{
+			&iotago.ProtocolParamsMilestoneOpt{
+				NextPoWScore:               500,
+				NextPoWScoreMilestoneIndex: 1000,
+			},
+		},
+		Signatures: iotago.Signatures{
+			tpkg.RandEd25519Signature(),
+		},
+	}
+
+	data, err := milestone.Serialize(serializer.DeSeriModeNoValidation, nil)
+	require.NoError(t, err)
+
+	gock.New(nodeAPIUrl).
+		Get(fmt.Sprintf(nodeclient.RouteMilestoneByIndex, milestoneIndex)).
+		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
+		Reply(200).
+		Body(bytes.NewReader(data))
+
+	nodeAPI := nodeclient.New(nodeAPIUrl)
+	resp, err := nodeAPI.MilestoneByIndex(context.Background(), milestoneIndex)
+	require.NoError(t, err)
+	require.EqualValues(t, milestone, resp)
 }
 
 func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
@@ -498,7 +568,7 @@ func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMilestoneUTXOChanges, milestoneIndex)).
+		Get(fmt.Sprintf(nodeclient.RouteMilestoneByIndexUTXOChanges, milestoneIndex)).
 		Reply(200).
 		JSON(originRes)
 
