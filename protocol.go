@@ -30,7 +30,7 @@ type ProtocolParameters struct {
 	// The HRP prefix used for Bech32 addresses in the network.
 	Bech32HRP NetworkPrefix
 	// The minimum pow score of the network.
-	MinPowScore float64
+	MinPoWScore float64
 	// The rent structure used by given node/network.
 	RentStructure RentStructure
 	// TokenSupply defines the current token supply on the network.
@@ -45,7 +45,7 @@ type jsonProtocolParameters struct {
 	Version       byte          `json:"version"`
 	NetworkName   string        `json:"networkName"`
 	Bech32HRP     NetworkPrefix `json:"bech32HRP"`
-	MinPowScore   float64       `json:"minPowScore"`
+	MinPoWScore   float64       `json:"minPoWScore"`
 	RentStructure RentStructure `json:"rentStructure"`
 	TokenSupply   string        `json:"tokenSupply"`
 }
@@ -55,7 +55,7 @@ func (p ProtocolParameters) MarshalJSON() ([]byte, error) {
 		Version:       p.Version,
 		NetworkName:   p.NetworkName,
 		Bech32HRP:     p.Bech32HRP,
-		MinPowScore:   p.MinPowScore,
+		MinPoWScore:   p.MinPoWScore,
 		RentStructure: p.RentStructure,
 		TokenSupply:   EncodeUint64(p.TokenSupply),
 	})
@@ -75,7 +75,7 @@ func (p *ProtocolParameters) UnmarshalJSON(data []byte) error {
 	p.Version = aux.Version
 	p.NetworkName = aux.NetworkName
 	p.Bech32HRP = aux.Bech32HRP
-	p.MinPowScore = aux.MinPowScore
+	p.MinPoWScore = aux.MinPoWScore
 	p.RentStructure = aux.RentStructure
 	p.TokenSupply = supply
 
