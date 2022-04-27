@@ -3,6 +3,7 @@ package nodeclient
 import (
 	"encoding/json"
 	"fmt"
+
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -17,6 +18,8 @@ type (
 		Status InfoResStatus `json:"status"`
 		// Protocol information.
 		Protocol iotago.ProtocolParameters `json:"protocol"`
+		// BaseToken information.
+		BaseToken *InfoResBaseToken `json:"baseToken"`
 		// Metrics information.
 		Metrics InfoResMetrics `json:"metrics"`
 		// The features this node exposes.
@@ -45,6 +48,22 @@ type (
 		Timestamp uint32 `json:"timestamp"`
 		// The IO of the milestone.
 		MilestoneID string `json:"milestoneId"`
+	}
+
+	// InfoResBaseToken defines the info res base token information.
+	InfoResBaseToken struct {
+		// The base token name.
+		Name string `json:"name"`
+		// The base token ticker symbol.
+		TickerSymbol string `json:"tickerSymbol"`
+		// The base token unit.
+		Unit string `json:"unit"`
+		// The base token subunit.
+		Subunit string `json:"subunit,omitempty"`
+		// The base token amount of decimals.
+		Decimals uint32 `json:"decimals"`
+		// The base token uses the metric prefix.
+		UseMetricPrefix bool `json:"useMetricPrefix"`
 	}
 
 	// InfoResMetrics defines info res metrics information.
