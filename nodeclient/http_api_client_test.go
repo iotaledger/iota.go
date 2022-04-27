@@ -5,10 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer/v2"
-	iotago "github.com/iotaledger/iota.go/v3"
 	"math/rand"
 	"testing"
+
+	"github.com/iotaledger/hive.go/serializer/v2"
+	iotago "github.com/iotaledger/iota.go/v3"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
@@ -71,6 +72,14 @@ func TestClient_Info(t *testing.T) {
 				VBFactorData: 1,
 				VBFactorKey:  10,
 			},
+		},
+		BaseToken: &nodeclient.InfoResBaseToken{
+			Name:            "TestCoin",
+			TickerSymbol:    "TEST",
+			Unit:            "TEST",
+			Subunit:         "testies",
+			Decimals:        6,
+			UseMetricPrefix: false,
 		},
 		Metrics: nodeclient.InfoResMetrics{
 			MessagesPerSecond:           20.0,
