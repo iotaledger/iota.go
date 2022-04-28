@@ -26,7 +26,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			MeltedTokens:  big.NewInt(0),
 			MaximumSupply: new(big.Int).SetInt64(10000),
 		},
-		Conditions: iotago.UnlockConditions{
+		Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 			&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasID.ToAddress().(*iotago.AliasAddress)},
 		},
 	}
@@ -48,11 +48,11 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			current: &iotago.AliasOutput{
 				Amount:  100,
 				AliasID: iotago.AliasID{},
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
-				ImmutableFeatures: iotago.Features{
+				ImmutableFeatures: iotago.Features[iotago.AliasImmFeature]{
 					&iotago.IssuerFeature{Address: exampleIssuer},
 				},
 			},
@@ -73,7 +73,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			current: &iotago.AliasOutput{
 				Amount:  100,
 				AliasID: tpkg.RandAliasAddress().AliasID(),
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
@@ -93,7 +93,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			current: &iotago.AliasOutput{
 				Amount:  100,
 				AliasID: exampleAliasID,
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
@@ -104,11 +104,11 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				AliasID:    exampleAliasID,
 				StateIndex: 10,
 				// mutating controllers
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
-				Features: iotago.Features{
+				Features: iotago.Features[iotago.AliasFeature]{
 					&iotago.MetadataFeature{Data: []byte("1337")},
 				},
 			},
@@ -126,7 +126,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			current: &iotago.AliasOutput{
 				Amount:  100,
 				AliasID: exampleAliasID,
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
@@ -137,7 +137,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				Amount:       200,
 				NativeTokens: tpkg.RandSortNativeTokens(50),
 				AliasID:      exampleAliasID,
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
@@ -157,12 +157,12 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
 							Inputs: nil,
-							Outputs: iotago.Outputs{
+							Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
 								&iotago.FoundryOutput{
 									Amount:       100,
 									SerialNumber: 6,
 									TokenScheme:  &iotago.SimpleTokenScheme{},
-									Conditions: iotago.UnlockConditions{
+									Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 										&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasID.ToAddress().(*iotago.AliasAddress)},
 									},
 								},
@@ -170,7 +170,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 									Amount:       100,
 									SerialNumber: 7,
 									TokenScheme:  &iotago.SimpleTokenScheme{},
-									Conditions: iotago.UnlockConditions{
+									Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 										&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasID.ToAddress().(*iotago.AliasAddress)},
 									},
 								},
@@ -187,7 +187,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				Amount:     100,
 				AliasID:    exampleAliasID,
 				StateIndex: 10,
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
@@ -222,25 +222,25 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				AliasID:        exampleAliasID,
 				StateIndex:     10,
 				FoundryCounter: 5,
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				ImmutableFeatures: iotago.Features{
+				ImmutableFeatures: iotago.Features[iotago.AliasImmFeature]{
 					&iotago.IssuerFeature{Address: exampleIssuer},
 				},
 			},
 			nextMut: map[string]fieldMutations{
 				"state_controller": {
 					"StateIndex": uint32(11),
-					"Conditions": iotago.UnlockConditions{
+					"Conditions": iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
 				},
 				"governance_controller": {
 					"StateIndex": uint32(11),
-					"Conditions": iotago.UnlockConditions{
+					"Conditions": iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -280,7 +280,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.current, muts, tpkg.TestProtoParas).(*iotago.AliasOutput)
+					cpy := copyObject(t, tt.current, muts).(*iotago.AliasOutput)
 					err := tt.current.ValidateStateTransition(tt.transType, cpy, tt.svCtx)
 					if tt.wantErr != nil {
 						require.ErrorIs(t, err, tt.wantErr)

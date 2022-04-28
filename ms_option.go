@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -24,9 +23,7 @@ const (
 )
 
 var (
-	// ErrTypeIsNotSupportedMilestoneOpt gets returned when a serializable was found to not be a supported MilestoneOpt.
-	ErrTypeIsNotSupportedMilestoneOpt = errors.New("serializable is not a supported milestone option")
-	msOptNames                        = [MilestoneOptProtocolParams + 1]string{"MilestoneOptReceipt", "MilestoneOptProtocolParams"}
+	msOptNames = [MilestoneOptProtocolParams + 1]string{"MilestoneOptReceipt", "MilestoneOptProtocolParams"}
 )
 
 func (msOptType MilestoneOptType) String() string {
@@ -38,7 +35,7 @@ func (msOptType MilestoneOptType) String() string {
 
 // MilestoneOpt is an object carried within a Milestone.
 type MilestoneOpt interface {
-	serializer.SerializableWithSize
+	Sizer
 
 	// Type returns the type of the MilestoneOpt.
 	Type() MilestoneOptType
@@ -47,61 +44,8 @@ type MilestoneOpt interface {
 	Clone() MilestoneOpt
 }
 
-// MilestoneOptSelector implements SerializableSelectorFunc for milestone options.
-func MilestoneOptSelector(msOptType uint32) (MilestoneOpt, error) {
-	var seri MilestoneOpt
-	switch MilestoneOptType(msOptType) {
-	case MilestoneOptReceipt:
-		seri = &ReceiptMilestoneOpt{}
-	case MilestoneOptProtocolParams:
-		seri = &ProtocolParamsMilestoneOpt{}
-	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownMilestoneOptType, msOptType)
-	}
-	return seri, nil
-}
-
-// selects the json object for the given type.
-func jsonMilestoneOptSelector(ty int) (JSONSerializable, error) {
-	var obj JSONSerializable
-	switch MilestoneOptType(ty) {
-	case MilestoneOptReceipt:
-		obj = &jsonReceiptMilestoneOpt{}
-	case MilestoneOptProtocolParams:
-		obj = &jsonProtocolParamsMilestoneOpt{}
-	default:
-		return nil, fmt.Errorf("unable to decode milestone option type from JSON: %w", ErrUnknownMilestoneOptType)
-	}
-	return obj, nil
-}
-
-func milestoneOptsFromJSONRawMsg(jMilestoneOpts []*json.RawMessage) (MilestoneOpts, error) {
-	opts, err := jsonRawMsgsToSerializables(jMilestoneOpts, jsonMilestoneOptSelector)
-	if err != nil {
-		return nil, err
-	}
-	var msOpts MilestoneOpts
-	msOpts.FromSerializables(opts)
-	return msOpts, nil
-}
-
 // MilestoneOpts is a slice of MilestoneOpt(s).
 type MilestoneOpts []MilestoneOpt
-
-func (m MilestoneOpts) ToSerializables() serializer.Serializables {
-	seris := make(serializer.Serializables, len(m))
-	for i, x := range m {
-		seris[i] = x.(serializer.Serializable)
-	}
-	return seris
-}
-
-func (m *MilestoneOpts) FromSerializables(seris serializer.Serializables) {
-	*m = make(MilestoneOpts, len(seris))
-	for i, seri := range seris {
-		(*m)[i] = seri.(MilestoneOpt)
-	}
-}
 
 func (m MilestoneOpts) Size() int {
 	sum := serializer.OneByte // 1 byte length prefix
@@ -137,35 +81,6 @@ func (m MilestoneOpts) MustSet() MilestoneOptSet {
 
 // MilestoneOptTypeSet is a set of MilestoneOptType.
 type MilestoneOptTypeSet map[MilestoneOptType]struct{}
-
-// checks whether the given Serializable is a MilestoneOpt and also supported MilestoneOptType.
-func msOptWriteGuard(supportedMsOpts MilestoneOptTypeSet) serializer.SerializableWriteGuardFunc {
-	return func(seri serializer.Serializable) error {
-		if seri == nil {
-			return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedMilestoneOpt)
-		}
-
-		obj, is := seri.(MilestoneOpt)
-		if !is {
-			return fmt.Errorf("%w: because not milestone option", ErrTypeIsNotSupportedMilestoneOpt)
-		}
-
-		if _, supported := supportedMsOpts[obj.Type()]; !supported {
-			return fmt.Errorf("%w: because not in set %v", ErrTypeIsNotSupportedMilestoneOpt, supported)
-		}
-
-		return nil
-	}
-}
-
-func msOptReadGuard(supportedMsOpts MilestoneOptTypeSet) serializer.SerializableReadGuardFunc {
-	return func(ty uint32) (serializer.Serializable, error) {
-		if _, supported := supportedMsOpts[MilestoneOptType(ty)]; !supported {
-			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedMilestoneOpt, supportedMsOpts, ty)
-		}
-		return MilestoneOptSelector(ty)
-	}
-}
 
 // MilestoneOptSet is a set of MilestoneOpt(s).
 type MilestoneOptSet map[MilestoneOptType]MilestoneOpt

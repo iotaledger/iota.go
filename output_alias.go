@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -27,104 +26,7 @@ var (
 	// ErrAliasMissing gets returned when an alias is missing.
 	ErrAliasMissing = errors.New("alias is missing")
 	emptyAliasID    = [AliasIDLength]byte{}
-
-	aliasOutputUnlockCondsArrayRules = &serializer.ArrayRules{
-		Min: 2, Max: 2,
-		MustOccur: serializer.TypePrefixes{
-			uint32(UnlockConditionStateControllerAddress): struct{}{},
-			uint32(UnlockConditionGovernorAddress):        struct{}{},
-		},
-		Guards: serializer.SerializableGuard{
-			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
-				switch ty {
-				case uint32(UnlockConditionStateControllerAddress):
-				case uint32(UnlockConditionGovernorAddress):
-				default:
-					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
-				}
-				return UnlockConditionSelector(ty)
-			},
-			WriteGuard: func(seri serializer.Serializable) error {
-				switch seri.(type) {
-				case *StateControllerAddressUnlockCondition:
-				case *GovernorAddressUnlockCondition:
-				default:
-					return fmt.Errorf("%w: in alias output", ErrUnsupportedUnlockConditionType)
-				}
-				return nil
-			},
-		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
-	}
-
-	aliasOutputFeatBlockArrayRules = &serializer.ArrayRules{
-		Min: 0,
-		Max: 3,
-		Guards: serializer.SerializableGuard{
-			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
-				switch ty {
-				case uint32(FeatureSender):
-				case uint32(FeatureMetadata):
-				default:
-					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
-				}
-				return FeatureSelector(ty)
-			},
-			WriteGuard: func(seri serializer.Serializable) error {
-				switch seri.(type) {
-				case *SenderFeature:
-				case *MetadataFeature:
-				default:
-					return fmt.Errorf("%w: in alias output", ErrUnsupportedFeatureType)
-				}
-				return nil
-			},
-		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
-	}
-
-	aliasOutputImmFeatBlockArrayRules = &serializer.ArrayRules{
-		Min: 0,
-		Max: 2,
-		Guards: serializer.SerializableGuard{
-			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
-				switch ty {
-				case uint32(FeatureIssuer):
-				case uint32(FeatureMetadata):
-				default:
-					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported immutable feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
-				}
-				return FeatureSelector(ty)
-			},
-			WriteGuard: func(seri serializer.Serializable) error {
-				switch seri.(type) {
-				case *IssuerFeature:
-				case *MetadataFeature:
-				default:
-					return fmt.Errorf("%w: in alias output", ErrUnsupportedFeatureType)
-				}
-				return nil
-			},
-		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
-	}
 )
-
-// AliasOutputFeaturesArrayRules returns array rules defining the constraints on Features within an AliasOutput.
-func AliasOutputFeaturesArrayRules() serializer.ArrayRules {
-	return *aliasOutputFeatBlockArrayRules
-}
-
-// AliasOutputImmutableFeaturesArrayRules returns array rules defining the constraints on immutable Features within an AliasOutput.
-func AliasOutputImmutableFeaturesArrayRules() serializer.ArrayRules {
-	return *aliasOutputImmFeatBlockArrayRules
-}
 
 // AliasID is the identifier for an alias account.
 // It is computed as the Blake2b-256 hash of the OutputID of the output which created the account.
@@ -230,26 +132,32 @@ func (set AliasOutputsSet) Merge(other AliasOutputsSet) (AliasOutputsSet, error)
 	return newSet, nil
 }
 
+type (
+	AliasUnlockCondition interface{ UnlockCondition }
+	AliasFeature         interface{ Feature }
+	AliasImmFeature      interface{ Feature }
+)
+
 // AliasOutput is an output type which represents an alias account.
 type AliasOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount uint64
+	Amount uint64 `serix:"0,mapKey=amount"`
 	// The native tokens held by the output.
-	NativeTokens NativeTokens
+	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
 	// The identifier for this alias account.
-	AliasID AliasID
+	AliasID AliasID `serix:"2,mapKey=aliasId"`
 	// The index of the state.
-	StateIndex uint32
+	StateIndex uint32 `serix:"3,mapKey=stateIndex"`
 	// The state of the alias account which can only be mutated by the state controller.
-	StateMetadata []byte
+	StateMetadata []byte `serix:"4,lengthPrefixType=uint16,mapKey=stateMetadata,omitempty,maxLen=8192"`
 	// The counter that denotes the number of foundries created by this alias account.
-	FoundryCounter uint32
+	FoundryCounter uint32 `serix:"5,mapKey=foundryCounter"`
 	// The unlock conditions on this output.
-	Conditions UnlockConditions
+	Conditions UnlockConditions[AliasUnlockCondition] `serix:"6,mapKey=unlockConditions,omitempty"`
 	// The features on the output.
-	Features Features
+	Features Features[AliasFeature] `serix:"7,mapKey=features,omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures Features
+	ImmutableFeatures Features[AliasImmFeature] `serix:"8,mapKey=immutableFeatures,omitempty"`
 }
 
 func (a *AliasOutput) GovernorAddress() Address {
@@ -362,7 +270,7 @@ func (a *AliasOutput) Chain() ChainID {
 
 // GovernanceSTVF checks whether the governance transition with other is valid.
 // Under a governance transition, only the StateController, GovernanceController and MetadataFeature can change.
-func (a *AliasOutput) GovernanceSTVF(nextAliasOutput *AliasOutput, semValCtx *SemanticValidationContext) error {
+func (a *AliasOutput) GovernanceSTVF(nextAliasOutput *AliasOutput, _ *SemanticValidationContext) error {
 	switch {
 	case a.Amount != nextAliasOutput.Amount:
 		return fmt.Errorf("%w: amount changed, in %d / out %d ", ErrInvalidAliasGovernanceTransition, a.Amount, nextAliasOutput.Amount)
@@ -451,7 +359,7 @@ func (a *AliasOutput) Deposit() uint64 {
 	return a.Amount
 }
 
-func (a *AliasOutput) Target() (serializer.Serializable, error) {
+func (a *AliasOutput) Target() (Address, error) {
 	addr := new(AliasAddress)
 	copy(addr[:], a.AliasID[:])
 	return addr, nil
@@ -459,76 +367,6 @@ func (a *AliasOutput) Target() (serializer.Serializable, error) {
 
 func (a *AliasOutput) Type() OutputType {
 	return OutputAlias
-}
-
-func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
-	return serializer.NewDeserializer(data).
-		CheckTypePrefix(uint32(OutputAlias), serializer.TypeDenotationByte, func(err error) error {
-			return fmt.Errorf("unable to deserialize alias output: %w", err)
-		}).
-		ReadNum(&a.Amount, func(err error) error {
-			return fmt.Errorf("unable to deserialize amount for alias output: %w", err)
-		}).
-		ReadSliceOfObjects(&a.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationNone, nativeTokensArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize native tokens for alias output: %w", err)
-		}).
-		ReadBytesInPlace(a.AliasID[:], func(err error) error {
-			return fmt.Errorf("unable to deserialize alias ID for alias output: %w", err)
-		}).
-		ReadNum(&a.StateIndex, func(err error) error {
-			return fmt.Errorf("unable to deserialize state index for alias output: %w", err)
-		}).
-		ReadVariableByteSlice(&a.StateMetadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
-			return fmt.Errorf("unable to deserialize state metadata for alias output: %w", err)
-		}, MaxMetadataLength).
-		ReadNum(&a.FoundryCounter, func(err error) error {
-			return fmt.Errorf("unable to deserialize foundry counter for alias output: %w", err)
-		}).
-		ReadSliceOfObjects(&a.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputUnlockCondsArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize unlock conditions for alias output: %w", err)
-		}).
-		ReadSliceOfObjects(&a.Features, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize features for alias output: %w", err)
-		}).
-		ReadSliceOfObjects(&a.ImmutableFeatures, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputImmFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize immutable features for alias output: %w", err)
-		}).
-		Done()
-}
-
-func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
-	return serializer.NewSerializer().
-		WriteNum(byte(OutputAlias), func(err error) error {
-			return fmt.Errorf("unable to serialize alias output type ID: %w", err)
-		}).
-		WriteNum(a.Amount, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output amount: %w", err)
-		}).
-		WriteSliceOfObjects(&a.NativeTokens, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nativeTokensArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output native tokens: %w", err)
-		}).
-		WriteBytes(a.AliasID[:], func(err error) error {
-			return fmt.Errorf("unable to serialize alias output alias ID: %w", err)
-		}).
-		WriteNum(a.StateIndex, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output state index: %w", err)
-		}).
-		WriteVariableByteSlice(a.StateMetadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output state metadata: %w", err)
-		}).
-		WriteNum(a.FoundryCounter, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output foundry counter: %w", err)
-		}).
-		WriteSliceOfObjects(&a.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, aliasOutputUnlockCondsArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output unlock conditions: %w", err)
-		}).
-		WriteSliceOfObjects(&a.Features, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, aliasOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output features: %w", err)
-		}).
-		WriteSliceOfObjects(&a.ImmutableFeatures, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, aliasOutputImmFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output immutable features: %w", err)
-		}).
-		Serialize()
 }
 
 func (a *AliasOutput) Size() int {
@@ -543,113 +381,4 @@ func (a *AliasOutput) Size() int {
 		a.Conditions.Size() +
 		a.Features.Size() +
 		a.ImmutableFeatures.Size()
-}
-
-func (a *AliasOutput) MarshalJSON() ([]byte, error) {
-	var err error
-	jAliasOutput := &jsonAliasOutput{
-		Type:           int(OutputAlias),
-		Amount:         EncodeUint64(a.Amount),
-		StateIndex:     int(a.StateIndex),
-		FoundryCounter: int(a.FoundryCounter),
-	}
-
-	jAliasOutput.NativeTokens, err = serializablesToJSONRawMsgs(a.NativeTokens.ToSerializables())
-	if err != nil {
-		return nil, err
-	}
-
-	jAliasOutput.AliasID = EncodeHex(a.AliasID[:])
-
-	jAliasOutput.StateMetadata = EncodeHex(a.StateMetadata)
-
-	jAliasOutput.Conditions, err = serializablesToJSONRawMsgs(a.Conditions.ToSerializables())
-	if err != nil {
-		return nil, err
-	}
-
-	jAliasOutput.Features, err = serializablesToJSONRawMsgs(a.Features.ToSerializables())
-	if err != nil {
-		return nil, err
-	}
-
-	jAliasOutput.ImmutableFeatures, err = serializablesToJSONRawMsgs(a.ImmutableFeatures.ToSerializables())
-	if err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(jAliasOutput)
-}
-
-func (a *AliasOutput) UnmarshalJSON(bytes []byte) error {
-	jAliasOutput := &jsonAliasOutput{}
-	if err := json.Unmarshal(bytes, jAliasOutput); err != nil {
-		return err
-	}
-	seri, err := jAliasOutput.ToSerializable()
-	if err != nil {
-		return err
-	}
-	*a = *seri.(*AliasOutput)
-	return nil
-}
-
-// jsonAliasOutput defines the json representation of an AliasOutput.
-type jsonAliasOutput struct {
-	Type              int                `json:"type"`
-	Amount            string             `json:"amount"`
-	NativeTokens      []*json.RawMessage `json:"nativeTokens,omitempty"`
-	AliasID           string             `json:"aliasId"`
-	StateIndex        int                `json:"stateIndex"`
-	StateMetadata     string             `json:"stateMetadata,omitempty"`
-	FoundryCounter    int                `json:"foundryCounter"`
-	Conditions        []*json.RawMessage `json:"unlockConditions,omitempty"`
-	Features          []*json.RawMessage `json:"features,omitempty"`
-	ImmutableFeatures []*json.RawMessage `json:"immutableFeatures,omitempty"`
-}
-
-func (j *jsonAliasOutput) ToSerializable() (serializer.Serializable, error) {
-	var err error
-	e := &AliasOutput{
-		StateIndex:     uint32(j.StateIndex),
-		FoundryCounter: uint32(j.FoundryCounter),
-	}
-
-	e.Amount, err = DecodeUint64(j.Amount)
-	if err != nil {
-		return nil, err
-	}
-
-	e.NativeTokens, err = nativeTokensFromJSONRawMsg(j.NativeTokens)
-	if err != nil {
-		return nil, err
-	}
-
-	aliasIDSlice, err := DecodeHex(j.AliasID)
-	if err != nil {
-		return nil, err
-	}
-	copy(e.AliasID[:], aliasIDSlice)
-
-	e.StateMetadata, err = DecodeHex(j.StateMetadata)
-	if err != nil {
-		return nil, err
-	}
-
-	e.Conditions, err = unlockConditionsFromJSONRawMsg(j.Conditions)
-	if err != nil {
-		return nil, err
-	}
-
-	e.Features, err = featuresFromJSONRawMsg(j.Features)
-	if err != nil {
-		return nil, err
-	}
-
-	e.ImmutableFeatures, err = featuresFromJSONRawMsg(j.ImmutableFeatures)
-	if err != nil {
-		return nil, err
-	}
-
-	return e, nil
 }

@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -34,36 +33,7 @@ var (
 	ErrIssuerFeatureNotUnlocked = errors.New("issuer feature is not unlocked")
 	// ErrReturnAmountNotFulFilled gets returned when a return amount in a transaction is not fulfilled by the output side.
 	ErrReturnAmountNotFulFilled = errors.New("return amount not fulfilled")
-	// ErrTypeIsNotSupportedEssence gets returned when a serializable was found to not be a supported essence.
-	ErrTypeIsNotSupportedEssence = errors.New("serializable is not a supported essence")
-
-	txEssenceGuard = serializer.SerializableGuard{
-		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
-			return TransactionEssenceSelector(ty)
-		},
-		WriteGuard: func(seri serializer.Serializable) error {
-			if seri == nil {
-				return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedEssence)
-			}
-			if _, is := seri.(*TransactionEssence); !is {
-				return fmt.Errorf("%w: because not *TransactionEssence", ErrTypeIsNotSupportedEssence)
-			}
-			return nil
-		},
-	}
-	txUnlocksArrayRules = serializer.ArrayRules{
-		// min/max filled out in serialize/deserialize
-		Guards: serializer.SerializableGuard{
-			ReadGuard:  UnlockSelector,
-			WriteGuard: unlockWriteGuard(),
-		},
-	}
 )
-
-// TransactionUnlocksArrayRules returns array rules defining the constraints on Unlocks within a Transaction.
-func TransactionUnlocksArrayRules() serializer.ArrayRules {
-	return txUnlocksArrayRules
-}
 
 // TransactionID is the ID of a Transaction.
 type TransactionID [TransactionIDLength]byte
@@ -79,9 +49,9 @@ type TransactionIDs []TransactionID
 // Transaction is a transaction with its inputs, outputs and unlocks.
 type Transaction struct {
 	// The transaction essence, respectively the transfer part of a Transaction.
-	Essence *TransactionEssence
+	Essence *TransactionEssence `serix:"0,mapKey=essence"`
 	// The unlocks defining the unlocking data for the inputs within the Essence.
-	Unlocks Unlocks
+	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
 }
 
 func (t *Transaction) PayloadType() PayloadType {
@@ -103,7 +73,7 @@ func (t *Transaction) OutputsSet() (OutputSet, error) {
 
 // ID computes the ID of the Transaction.
 func (t *Transaction) ID() (TransactionID, error) {
-	data, err := t.Serialize(serializer.DeSeriModeNoValidation, nil)
+	data, err := internalEncode(t)
 	if err != nil {
 		return TransactionID{}, fmt.Errorf("can't compute transaction ID: %w", err)
 	}
@@ -113,85 +83,10 @@ func (t *Transaction) ID() (TransactionID, error) {
 	return tID, nil
 }
 
-func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
-	unlocksArrayRulesCopy := txUnlocksArrayRules
-	return serializer.NewDeserializer(data).
-		CheckTypePrefix(uint32(PayloadTransaction), serializer.TypeDenotationUint32, func(err error) error {
-			return fmt.Errorf("unable to deserialize transaction: %w", err)
-		}).
-		ReadObject(&t.Essence, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, txEssenceGuard.ReadGuard, func(err error) error {
-			return fmt.Errorf("%w: unable to deserialize transaction essence within transaction", err)
-		}).
-		Do(func() {
-			inputCount := uint(len(t.Essence.Inputs))
-			unlocksArrayRulesCopy.Min = inputCount
-			unlocksArrayRulesCopy.Max = inputCount
-		}).
-		ReadSliceOfObjects(&t.Unlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, &unlocksArrayRulesCopy, func(err error) error {
-			return fmt.Errorf("%w: unable to deserialize unlocks", err)
-		}).
-		WithValidation(deSeriMode, txDeSeriValidation(t, deSeriCtx)).
-		Done()
-}
-
-func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
-	unlocksArrayRulesCopy := txUnlocksArrayRules
-	inputCount := uint(len(t.Essence.Inputs))
-	unlocksArrayRulesCopy.Min = inputCount
-	unlocksArrayRulesCopy.Max = inputCount
-	return serializer.NewSerializer().
-		WriteNum(PayloadTransaction, func(err error) error {
-			return fmt.Errorf("%w: unable to serialize transaction payload ID", err)
-		}).
-		WriteObject(t.Essence, deSeriMode, deSeriCtx, txEssenceGuard.WriteGuard, func(err error) error {
-			return fmt.Errorf("%w: unable to serialize transaction's essence", err)
-		}).
-		WriteSliceOfObjects(&t.Unlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, &unlocksArrayRulesCopy, func(err error) error {
-			return fmt.Errorf("%w: unable to serialize transaction's unlocks", err)
-		}).
-		WithValidation(deSeriMode, txDeSeriValidation(t, deSeriCtx)).
-		Serialize()
-}
-
 func (t *Transaction) Size() int {
 	return util.NumByteLen(uint32(PayloadTransaction)) +
 		t.Essence.Size() +
 		t.Unlocks.Size()
-}
-
-func (t *Transaction) MarshalJSON() ([]byte, error) {
-	jTransaction := &jsonTransaction{
-		Unlocks: make([]*json.RawMessage, len(t.Unlocks)),
-	}
-	jTransaction.Type = int(PayloadTransaction)
-	txJson, err := t.Essence.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	rawMsgTxJson := json.RawMessage(txJson)
-	jTransaction.Essence = &rawMsgTxJson
-	for i, ub := range t.Unlocks {
-		jsonUB, err := ub.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		rawMsgJsonUB := json.RawMessage(jsonUB)
-		jTransaction.Unlocks[i] = &rawMsgJsonUB
-	}
-	return json.Marshal(jTransaction)
-}
-
-func (t *Transaction) UnmarshalJSON(bytes []byte) error {
-	jTransaction := &jsonTransaction{}
-	if err := json.Unmarshal(bytes, jTransaction); err != nil {
-		return err
-	}
-	seri, err := jTransaction.ToSerializable()
-	if err != nil {
-		return err
-	}
-	*t = *seri.(*Transaction)
-	return nil
 }
 
 func txDeSeriValidation(tx *Transaction, deSeriCtx interface{}) serializer.ErrProducerWithRWBytes {
@@ -235,7 +130,7 @@ type SemValiContextWorkingSet struct {
 	// The mapping of OutputID to the actual Outputs.
 	InputSet OutputSet
 	// The inputs to the transaction.
-	Inputs Outputs
+	Inputs Outputs[Output]
 	// The mapping of inputs' OutputID to the index.
 	InputIDToIndex map[OutputID]uint16
 	// The transaction for which this semantic validation happens.
@@ -287,7 +182,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputsSet OutputSet) (*SemValiC
 	}
 
 	workingSet.InputsByType = func() OutputsByType {
-		slice := make(Outputs, len(inputsSet))
+		slice := make(Outputs[Output], len(inputsSet))
 		var i int
 		for _, output := range inputsSet {
 			slice[i] = output
@@ -671,7 +566,7 @@ func TxSemanticTimelock() TxSemanticValidationFunc {
 	}
 }
 
-// TxSemanticSTVFOnChains executes StateTransitionValidationFunc(s) on ChainConstrainedOutput(s).
+// TxSemanticSTVFOnChains executes state transition validation functions on ChainConstrainedOutput(s).
 func TxSemanticSTVFOnChains() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		for chainID, inputChain := range svCtx.WorkingSet.InChains {
@@ -756,30 +651,4 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 
 		return nil
 	}
-}
-
-// jsonTransaction defines the json representation of a Transaction.
-type jsonTransaction struct {
-	Type    int                `json:"type"`
-	Essence *json.RawMessage   `json:"essence"`
-	Unlocks []*json.RawMessage `json:"unlocks"`
-}
-
-func (jsontx *jsonTransaction) ToSerializable() (serializer.Serializable, error) {
-	jsonTxEssence, err := DeserializeObjectFromJSON(jsontx.Essence, jsonTransactionEssenceSelector)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decode transaction essence from JSON: %w", err)
-	}
-
-	txEssenceSeri, err := jsonTxEssence.ToSerializable()
-	if err != nil {
-		return nil, err
-	}
-
-	unlocks, err := unlocksFromJSONRawMsg(jsontx.Unlocks)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Transaction{Essence: txEssenceSeri.(*TransactionEssence), Unlocks: unlocks}, nil
 }

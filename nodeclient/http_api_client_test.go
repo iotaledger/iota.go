@@ -7,10 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/iotaledger/hive.go/serix"
 	"math/rand"
 	"testing"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 
 	"github.com/stretchr/testify/require"
@@ -24,6 +24,10 @@ import (
 const (
 	peerID     = "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
 	nodeAPIUrl = "http://127.0.0.1:14265"
+)
+
+var (
+	v2API = iotago.V2API(tpkg.TestProtoParas)
 )
 
 func TestClient_Health(t *testing.T) {
@@ -144,14 +148,14 @@ func TestClient_SubmitBlock(t *testing.T) {
 		Nonce:           3495721389537486,
 	}
 
-	serializedCompleteBlock, err := completeBlock.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+	serializedCompleteBlock, err := v2API.Encode(completeBlock)
 	require.NoError(t, err)
 
 	block2 := iotago.Block{}
-	_, err = block2.Deserialize(serializedCompleteBlock, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	_, err = v2API.Decode(serializedCompleteBlock, &block2, serix.WithValidation())
 	require.NoError(t, err)
 
-	serializedIncompleteBlock, err := incompleteBlock.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	serializedIncompleteBlock, err := v2API.Encode(incompleteBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -168,7 +172,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 		Body(bytes.NewReader(serializedCompleteBlock))
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	resp, err := nodeAPI.SubmitBlock(context.Background(), incompleteBlock, tpkg.TestProtoParas)
+	resp, err := nodeAPI.SubmitBlock(context.Background(), incompleteBlock)
 	require.NoError(t, err)
 	require.EqualValues(t, completeBlock, resp)
 }
@@ -177,7 +181,7 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
-	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
+	parents := tpkg.SortedRandMSParents(1 + rand.Intn(7))
 
 	queryHash := iotago.EncodeHex(identifier[:])
 
@@ -225,7 +229,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		Nonce:           16345984576234,
 	}
 
-	data, err := originBlock.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	data, err := v2API.Encode(originBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -235,7 +239,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		Body(bytes.NewReader(data))
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), identifier, tpkg.TestProtoParas)
+	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originBlock, responseBlock)
 }
@@ -285,7 +289,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		Nonce:           16345984576234,
 	}
 
-	data, err := originBlock.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	data, err := v2API.Encode(originBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -295,7 +299,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		Body(bytes.NewReader(data))
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), identifier, tpkg.TestProtoParas)
+	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originBlock, responseBlock)
 }
@@ -304,7 +308,9 @@ func TestClient_OutputByID(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	sigDepJson, err := originOutput.MarshalJSON()
+	sigDepMap, err := v2API.MapEncode(originOutput)
+	require.NoError(t, err)
+	sigDepJson, err := json.Marshal(sigDepMap)
 	require.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
 
@@ -391,25 +397,33 @@ func TestNodeHTTPAPIClient_Treasury(t *testing.T) {
 func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 	defer gock.Off()
 
+	receipt := &iotago.ReceiptMilestoneOpt{
+		MigratedAt: 1000,
+		Final:      false,
+		Funds: iotago.MigratedFundsEntries{
+			&iotago.MigratedFundsEntry{
+				TailTransactionHash: iotago.LegacyTailTransactionHash{},
+				Address:             &iotago.Ed25519Address{},
+				Deposit:             10000,
+			},
+		},
+		Transaction: &iotago.TreasuryTransaction{
+			Input:  &iotago.TreasuryInput{},
+			Output: &iotago.TreasuryOutput{Amount: 10000},
+		},
+	}
+
+	receiptMap, err := v2API.MapEncode(receipt)
+	require.NoError(t, err)
+	receiptJson, err := json.Marshal(receiptMap)
+	require.NoError(t, err)
+	rawMsgReceiptJson := json.RawMessage(receiptJson)
+
 	originRes := &nodeclient.ReceiptsResponse{
 		Receipts: []*nodeclient.ReceiptTuple{
 			{
 				MilestoneIndex: 1000,
-				Receipt: &iotago.ReceiptMilestoneOpt{
-					MigratedAt: 1000,
-					Final:      false,
-					Funds: iotago.MigratedFundsEntries{
-						&iotago.MigratedFundsEntry{
-							TailTransactionHash: iotago.LegacyTailTransactionHash{},
-							Address:             &iotago.Ed25519Address{},
-							Deposit:             10000,
-						},
-					},
-					Transaction: &iotago.TreasuryTransaction{
-						Input:  &iotago.TreasuryInput{},
-						Output: &iotago.TreasuryOutput{Amount: 10000},
-					},
-				},
+				Receipt:        &rawMsgReceiptJson,
 			},
 		},
 	}
@@ -430,25 +444,33 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 
 	var index iotago.MilestoneIndex = 1000
 
+	receipt := &iotago.ReceiptMilestoneOpt{
+		MigratedAt: 1000,
+		Final:      false,
+		Funds: iotago.MigratedFundsEntries{
+			&iotago.MigratedFundsEntry{
+				TailTransactionHash: iotago.LegacyTailTransactionHash{},
+				Address:             &iotago.Ed25519Address{},
+				Deposit:             10000,
+			},
+		},
+		Transaction: &iotago.TreasuryTransaction{
+			Input:  &iotago.TreasuryInput{},
+			Output: &iotago.TreasuryOutput{Amount: 10000},
+		},
+	}
+
+	receiptMap, err := v2API.MapEncode(receipt)
+	require.NoError(t, err)
+	receiptJson, err := json.Marshal(receiptMap)
+	require.NoError(t, err)
+	rawMsgReceiptJson := json.RawMessage(receiptJson)
+
 	originRes := &nodeclient.ReceiptsResponse{
 		Receipts: []*nodeclient.ReceiptTuple{
 			{
 				MilestoneIndex: 1000,
-				Receipt: &iotago.ReceiptMilestoneOpt{
-					MigratedAt: 1000,
-					Final:      false,
-					Funds: iotago.MigratedFundsEntries{
-						&iotago.MigratedFundsEntry{
-							TailTransactionHash: iotago.LegacyTailTransactionHash{},
-							Address:             &iotago.Ed25519Address{},
-							Deposit:             10000,
-						},
-					},
-					Transaction: &iotago.TreasuryTransaction{
-						Input:  &iotago.TreasuryInput{},
-						Output: &iotago.TreasuryOutput{Amount: 10000},
-					},
-				},
+				Receipt:        &rawMsgReceiptJson,
 			},
 		},
 	}
@@ -470,28 +492,30 @@ func TestClient_MilestoneByID(t *testing.T) {
 	milestoneID := tpkg.RandMilestoneID()
 
 	milestone := &iotago.Milestone{
-		Index:               1337,
-		Timestamp:           1337,
-		PreviousMilestoneID: tpkg.RandMilestoneID(),
-		Parents: iotago.BlockIDs{
-			tpkg.Rand32ByteArray(),
-		},
-		InclusionMerkleRoot: tpkg.Rand32ByteArray(),
-		AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
-		Metadata:            tpkg.RandBytes(30),
-		Opts: iotago.MilestoneOpts{
-			&iotago.ProtocolParamsMilestoneOpt{
-				TargetMilestoneIndex: 500,
-				ProtocolVersion:      2,
-				Params:               []byte{1, 2, 3, 4, 5, 6, 7},
+		MilestoneEssence: iotago.MilestoneEssence{
+			Index:               1337,
+			Timestamp:           1337,
+			PreviousMilestoneID: tpkg.RandMilestoneID(),
+			Parents: iotago.MilestoneParentIDs{
+				tpkg.RandBlockID(),
+			},
+			InclusionMerkleRoot: tpkg.Rand32ByteArray(),
+			AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
+			Metadata:            tpkg.RandBytes(30),
+			Opts: iotago.MilestoneOpts{
+				&iotago.ProtocolParamsMilestoneOpt{
+					TargetMilestoneIndex: 500,
+					ProtocolVersion:      2,
+					Params:               []byte{1, 2, 3, 4, 5, 6, 7},
+				},
 			},
 		},
-		Signatures: iotago.Signatures{
+		Signatures: iotago.Signatures[iotago.MilestoneSignature]{
 			tpkg.RandEd25519Signature(),
 		},
 	}
 
-	data, err := milestone.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+	data, err := v2API.Encode(milestone)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -537,28 +561,30 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 	var milestoneIndex iotago.MilestoneIndex = 1337
 
 	milestone := &iotago.Milestone{
-		Index:               milestoneIndex,
-		Timestamp:           1337,
-		PreviousMilestoneID: tpkg.RandMilestoneID(),
-		Parents: iotago.BlockIDs{
-			tpkg.Rand32ByteArray(),
-		},
-		InclusionMerkleRoot: tpkg.Rand32ByteArray(),
-		AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
-		Metadata:            tpkg.RandBytes(30),
-		Opts: iotago.MilestoneOpts{
-			&iotago.ProtocolParamsMilestoneOpt{
-				TargetMilestoneIndex: 500,
-				ProtocolVersion:      2,
-				Params:               []byte{1, 2, 3, 4, 5, 6, 7},
+		MilestoneEssence: iotago.MilestoneEssence{
+			Index:               milestoneIndex,
+			Timestamp:           1337,
+			PreviousMilestoneID: tpkg.RandMilestoneID(),
+			Parents: iotago.MilestoneParentIDs{
+				tpkg.Rand32ByteArray(),
+			},
+			InclusionMerkleRoot: tpkg.Rand32ByteArray(),
+			AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
+			Metadata:            tpkg.RandBytes(30),
+			Opts: iotago.MilestoneOpts{
+				&iotago.ProtocolParamsMilestoneOpt{
+					TargetMilestoneIndex: 500,
+					ProtocolVersion:      2,
+					Params:               []byte{1, 2, 3, 4, 5, 6, 7},
+				},
 			},
 		},
-		Signatures: iotago.Signatures{
+		Signatures: iotago.Signatures[iotago.MilestoneSignature]{
 			tpkg.RandEd25519Signature(),
 		},
 	}
 
-	data, err := milestone.Serialize(serializer.DeSeriModeNoValidation, nil)
+	data, err := v2API.Encode(milestone)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -604,7 +630,7 @@ func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 	var milestoneIndex iotago.MilestoneIndex = 1337
 	var milestoneTimestamp uint32 = 1333337
 
-	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
+	parents := tpkg.SortedRandMSParents(1 + rand.Intn(7))
 	parentBlockIDs := make([]string, len(parents))
 	for i, p := range parents {
 		parentBlockIDs[i] = iotago.EncodeHex(p[:])
@@ -638,7 +664,7 @@ func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 		JSON(internalRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	resp, err := nodeAPI.ComputeWhiteFlagMutations(context.Background(), milestoneIndex, milestoneTimestamp, parents, milestoneID)
+	resp, err := nodeAPI.ComputeWhiteFlagMutations(context.Background(), milestoneIndex, milestoneTimestamp, iotago.BlockIDs(parents), milestoneID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }

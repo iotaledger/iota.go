@@ -4,7 +4,6 @@ package iotago_test
 
 import (
 	"crypto/ed25519"
-	"encoding/json"
 	"errors"
 	"math/rand"
 	"sort"
@@ -16,10 +15,9 @@ import (
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestMilestone__DeSerialize(t *testing.T) {
+func TestMilestone_DeSerialize(t *testing.T) {
 
 	milestoneWithoutMetadata := tpkg.RandMilestone(nil)
 	milestoneWithoutMetadata.Metadata = nil
@@ -40,30 +38,6 @@ func TestMilestone__DeSerialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
 	}
-}
-
-func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
-	ms := &iotago.Milestone{
-		Index:             1337,
-		Timestamp:         13371337,
-		Parents:           tpkg.SortedRandBlockIDs(2),
-		AppliedMerkleRoot: tpkg.Rand32ByteArray(),
-		Metadata:          tpkg.RandBytes(10),
-		Opts:              iotago.MilestoneOpts{},
-		Signatures: iotago.Signatures{
-			tpkg.RandEd25519Signature(),
-			tpkg.RandEd25519Signature(),
-			tpkg.RandEd25519Signature(),
-		},
-	}
-
-	msJSON, err := json.Marshal(ms)
-	require.NoError(t, err)
-
-	desMs := &iotago.Milestone{}
-	require.NoError(t, json.Unmarshal(msJSON, desMs))
-
-	require.EqualValues(t, ms, desMs)
 }
 
 func TestMilestoneSigning(t *testing.T) {
@@ -92,10 +66,12 @@ func TestMilestoneSigning(t *testing.T) {
 			pubKeys := []iotago.MilestonePublicKey{pubKey1}
 
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-				Index:             1000,
-				Timestamp:         uint32(time.Now().Unix()),
-				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				MilestoneEssence: iotago.MilestoneEssence{
+					Parents:           tpkg.SortedRandMSParents(1 + rand.Intn(7)),
+					Index:             1000,
+					Timestamp:         uint32(time.Now().Unix()),
+					AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				},
 			}
 
 			return test{
@@ -125,10 +101,12 @@ func TestMilestoneSigning(t *testing.T) {
 			sort.Sort(pubKeys)
 
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-				Index:             1000,
-				Timestamp:         uint32(time.Now().Unix()),
-				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				MilestoneEssence: iotago.MilestoneEssence{
+					Parents:           tpkg.SortedRandMSParents(1 + rand.Intn(7)),
+					Index:             1000,
+					Timestamp:         uint32(time.Now().Unix()),
+					AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				},
 			}
 
 			return test{
@@ -140,7 +118,7 @@ func TestMilestoneSigning(t *testing.T) {
 					pubKey3: prvKey3,
 				}),
 				minSigThreshold: 2,
-				pubKeys:         pubKeys,
+				pubKeys:         []iotago.MilestonePublicKey{pubKeys[0], pubKeys[1]},
 				pubKeySet:       map[iotago.MilestonePublicKey]struct{}{pubKey1: {}, pubKey2: {}, pubKey3: {}},
 				signingErr:      nil,
 				verificationErr: nil,
@@ -153,11 +131,13 @@ func TestMilestoneSigning(t *testing.T) {
 			pubKeys := []iotago.MilestonePublicKey{pubKey1}
 
 			msPayload := &iotago.Milestone{
-				Parents:             tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-				Index:               1000,
-				Timestamp:           uint32(time.Now().Unix()),
-				InclusionMerkleRoot: tpkg.Rand32ByteArray(),
-				AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
+				MilestoneEssence: iotago.MilestoneEssence{
+					Parents:             tpkg.SortedRandMSParents(1 + rand.Intn(7)),
+					Index:               1000,
+					Timestamp:           uint32(time.Now().Unix()),
+					InclusionMerkleRoot: tpkg.Rand32ByteArray(),
+					AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
+				},
 			}
 
 			return test{
@@ -196,7 +176,7 @@ func TestMilestoneSigning(t *testing.T) {
 }
 
 func TestNewMilestone(t *testing.T) {
-	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
+	parents := tpkg.SortedRandMSParents(1 + rand.Intn(7))
 	prevMs := tpkg.Rand32ByteArray()
 	pastConeMerkleProof := tpkg.Rand32ByteArray()
 	inclusionMerkleProof := tpkg.Rand32ByteArray()
@@ -205,13 +185,15 @@ func TestNewMilestone(t *testing.T) {
 	ms := iotago.NewMilestone(msIndex, timestamp, tpkg.TestProtocolVersion, prevMs, parents, pastConeMerkleProof, inclusionMerkleProof)
 
 	assert.EqualValues(t, &iotago.Milestone{
-		Index:               msIndex,
-		Timestamp:           timestamp,
-		ProtocolVersion:     tpkg.TestProtocolVersion,
-		PreviousMilestoneID: prevMs,
-		Parents:             parents,
-		InclusionMerkleRoot: pastConeMerkleProof,
-		AppliedMerkleRoot:   inclusionMerkleProof,
-		Signatures:          nil,
+		MilestoneEssence: iotago.MilestoneEssence{
+			Index:               msIndex,
+			Timestamp:           timestamp,
+			ProtocolVersion:     tpkg.TestProtocolVersion,
+			PreviousMilestoneID: prevMs,
+			Parents:             parents,
+			InclusionMerkleRoot: pastConeMerkleProof,
+			AppliedMerkleRoot:   inclusionMerkleProof,
+		},
+		Signatures: nil,
 	}, ms)
 }

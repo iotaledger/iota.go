@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -31,30 +30,12 @@ var (
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
 	ErrRefUTXOIndexInvalid = fmt.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
-
-	// ErrTypeIsNotSupportedInput gets returned when a serializable was found to not be a supported Input.
-	ErrTypeIsNotSupportedInput = errors.New("serializable is not a supported input")
 )
 
 // Inputs a slice of Input.
-type Inputs []Input
+type Inputs[T Input] []T
 
-func (in Inputs) ToSerializables() serializer.Serializables {
-	seris := make(serializer.Serializables, len(in))
-	for i, x := range in {
-		seris[i] = x.(serializer.Serializable)
-	}
-	return seris
-}
-
-func (in *Inputs) FromSerializables(seris serializer.Serializables) {
-	*in = make(Inputs, len(seris))
-	for i, seri := range seris {
-		(*in)[i] = seri.(Input)
-	}
-}
-
-func (in Inputs) Size() int {
+func (in Inputs[T]) Size() int {
 	sum := serializer.UInt16ByteSize
 	for _, i := range in {
 		sum += i.Size()
@@ -64,7 +45,7 @@ func (in Inputs) Size() int {
 
 // Input references a UTXO.
 type Input interface {
-	serializer.SerializableWithSize
+	Sizer
 
 	// Type returns the type of Input.
 	Type() InputType
@@ -78,20 +59,6 @@ type IndexedUTXOReferencer interface {
 	Ref() OutputID
 	// Index returns the output index of the UTXO this Input references.
 	Index() uint16
-}
-
-// InputSelector implements SerializableSelectorFunc for input types.
-func InputSelector(inputType uint32) (Input, error) {
-	var seri Input
-	switch InputType(inputType) {
-	case InputUTXO:
-		seri = &UTXOInput{}
-	case InputTreasury:
-		seri = &TreasuryInput{}
-	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownInputType, inputType)
-	}
-	return seri, nil
 }
 
 // InputsSyntacticalValidationFunc which given the index of an input and the input itself, runs syntactical validations and returns an error if any should fail.
@@ -129,10 +96,8 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 	}
 }
 
-var inputsPredicateIndicesWithinBounds = InputsSyntacticalIndicesWithinBounds()
-
 // SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateInputs(inputs Inputs, funcs ...InputsSyntacticalValidationFunc) error {
+func SyntacticallyValidateInputs(inputs Inputs[TxEssenceInput], funcs ...InputsSyntacticalValidationFunc) error {
 	for i, input := range inputs {
 		dep, ok := input.(*UTXOInput)
 		if !ok {
@@ -145,18 +110,4 @@ func SyntacticallyValidateInputs(inputs Inputs, funcs ...InputsSyntacticalValida
 		}
 	}
 	return nil
-}
-
-// jsonInputSelector selects the json input implementation for the given type.
-func jsonInputSelector(ty int) (JSONSerializable, error) {
-	var obj JSONSerializable
-	switch InputType(ty) {
-	case InputUTXO:
-		obj = &jsonUTXOInput{}
-	case InputTreasury:
-		obj = &jsonTreasuryInput{}
-	default:
-		return nil, fmt.Errorf("unable to decode input type from JSON: %w", ErrUnknownInputType)
-	}
-	return obj, nil
 }

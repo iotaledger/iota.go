@@ -14,7 +14,6 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 )
@@ -65,7 +64,7 @@ func Test_EventAPIDisabled(t *testing.T) {
 func Test_NewEventAPIClient(t *testing.T) {
 
 	block := tpkg.RandBlock(iotago.PayloadTaggedData)
-	originBlockBytes, err := block.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+	originBlockBytes, err := v2API.Encode(block)
 	require.NoError(t, err)
 	mock := &mockMqttClient{payload: originBlockBytes}
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -77,12 +76,12 @@ func Test_NewEventAPIClient(t *testing.T) {
 	}
 	require.NoError(t, eventAPIClient.Connect(ctx))
 
-	blockChan, sub := eventAPIClient.Blocks(tpkg.TestProtoParas)
+	blockChan, sub := eventAPIClient.Blocks()
 	require.NoError(t, sub.Error())
 	require.Eventually(t, func() bool {
 		select {
 		case recBlock := <-blockChan:
-			gottenBlockBytes, err := recBlock.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+			gottenBlockBytes, err := v2API.Encode(recBlock)
 			require.NoError(t, err)
 			require.Equal(t, originBlockBytes, gottenBlockBytes)
 

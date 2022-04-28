@@ -9,12 +9,70 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/iotaledger/hive.go/serializer/v2"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/crypto/blake2b"
+)
 
-	"github.com/iotaledger/hive.go/serializer/v2"
+// Output defines a unit of output of a transaction.
+type Output interface {
+	Sizer
+	NonEphemeralObject
+
+	// Deposit returns the amount this Output deposits.
+	Deposit() uint64
+
+	// NativeTokenList returns the NativeToken this output defines.
+	NativeTokenList() NativeTokens
+
+	// UnlockConditionSet returns the UnlockConditionSet this output defines.
+	UnlockConditionSet() UnlockConditionSet
+
+	// FeatureSet returns the FeatureSet this output contains.
+	FeatureSet() FeatureSet
+
+	// Type returns the type of the output.
+	Type() OutputType
+
+	// Clone clones the Output.
+	Clone() Output
+}
+
+// OutputType defines the type of outputs.
+type OutputType byte
+
+const (
+	// OutputTreasury denotes the type of the TreasuryOutput.
+	OutputTreasury OutputType = 2
+	// OutputBasic denotes an BasicOutput.
+	OutputBasic OutputType = 3
+	// OutputAlias denotes an AliasOutput.
+	OutputAlias OutputType = 4
+	// OutputFoundry denotes a FoundryOutput.
+	OutputFoundry OutputType = 5
+	// OutputNFT denotes an NFTOutput.
+	OutputNFT OutputType = 6
+)
+
+func (outputType OutputType) String() string {
+	if int(outputType) >= len(outputNames) {
+		return fmt.Sprintf("unknown output type: %d", outputType)
+	}
+	return outputNames[outputType]
+}
+
+var (
+	outputNames = [OutputNFT + 1]string{
+		"SigLockedSingleOutput",
+		"SigLockedDustAllowanceOutput",
+		"TreasuryOutput",
+		"BasicOutput",
+		"AliasOutput",
+		"FoundryOutput",
+		"NFTOutput",
+	}
 )
 
 const (
@@ -164,8 +222,8 @@ func (outputIDs OutputIDs) RemoveDupsAndSort() OutputIDs {
 }
 
 // UTXOInputs converts the OutputIDs slice to Inputs.
-func (outputIDs OutputIDs) UTXOInputs() Inputs {
-	inputs := make(Inputs, 0)
+func (outputIDs OutputIDs) UTXOInputs() Inputs[TxEssenceInput] {
+	inputs := make(Inputs[TxEssenceInput], 0)
 	for _, outputID := range outputIDs {
 		inputs = append(inputs, outputID.UTXOInput())
 	}
@@ -173,48 +231,13 @@ func (outputIDs OutputIDs) UTXOInputs() Inputs {
 }
 
 // OrderedSet returns an Outputs slice ordered by this OutputIDs slice given a OutputSet.
-func (outputIDs OutputIDs) OrderedSet(set OutputSet) Outputs {
-	outputs := make(Outputs, len(outputIDs))
+func (outputIDs OutputIDs) OrderedSet(set OutputSet) Outputs[Output] {
+	outputs := make(Outputs[Output], len(outputIDs))
 	for i, outputID := range outputIDs {
 		outputs[i] = set[outputID]
 	}
 	return outputs
 }
-
-// OutputType defines the type of outputs.
-type OutputType byte
-
-const (
-	// OutputTreasury denotes the type of the TreasuryOutput.
-	OutputTreasury OutputType = 2
-	// OutputBasic denotes an BasicOutput.
-	OutputBasic OutputType = 3
-	// OutputAlias denotes an AliasOutput.
-	OutputAlias OutputType = 4
-	// OutputFoundry denotes a FoundryOutput.
-	OutputFoundry OutputType = 5
-	// OutputNFT denotes an NFTOutput.
-	OutputNFT OutputType = 6
-)
-
-func (outputType OutputType) String() string {
-	if int(outputType) >= len(outputNames) {
-		return fmt.Sprintf("unknown output type: %d", outputType)
-	}
-	return outputNames[outputType]
-}
-
-var (
-	outputNames = [OutputNFT + 1]string{
-		"SigLockedSingleOutput",
-		"SigLockedDustAllowanceOutput",
-		"TreasuryOutput",
-		"BasicOutput",
-		"AliasOutput",
-		"FoundryOutput",
-		"NFTOutput",
-	}
-)
 
 var (
 	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.
@@ -223,8 +246,6 @@ var (
 	ErrChainMissing = errors.New("chain missing")
 	// ErrNonUniqueChainConstrainedOutputs gets returned when multiple ChainConstrainedOutputs(s) with the same ChainID exist within sets.
 	ErrNonUniqueChainConstrainedOutputs = errors.New("non unique chain constrained outputs")
-	// ErrTypeIsNotSupportedOutput gets returned when a serializable was found to not be a supported Output.
-	ErrTypeIsNotSupportedOutput = errors.New("serializable is not a supported output")
 )
 
 // ChainTransitionError gets returned when a state transition validation fails for a ChainConstrainedOutput.
@@ -250,24 +271,9 @@ func (i *ChainTransitionError) Unwrap() error {
 }
 
 // Outputs is a slice of Output.
-type Outputs []Output
+type Outputs[T Output] []T
 
-func (outputs Outputs) ToSerializables() serializer.Serializables {
-	seris := make(serializer.Serializables, len(outputs))
-	for i, x := range outputs {
-		seris[i] = x.(serializer.Serializable)
-	}
-	return seris
-}
-
-func (outputs *Outputs) FromSerializables(seris serializer.Serializables) {
-	*outputs = make(Outputs, len(seris))
-	for i, seri := range seris {
-		(*outputs)[i] = seri.(Output)
-	}
-}
-
-func (outputs Outputs) Size() int {
+func (outputs Outputs[T]) Size() int {
 	sum := serializer.UInt16ByteSize
 	for _, output := range outputs {
 		sum += output.Size()
@@ -276,7 +282,7 @@ func (outputs Outputs) Size() int {
 }
 
 // MustCommitment works like Commitment but panics if there's an error.
-func (outputs Outputs) MustCommitment() []byte {
+func (outputs Outputs[T]) MustCommitment() []byte {
 	comm, err := outputs.Commitment()
 	if err != nil {
 		panic(err)
@@ -285,13 +291,13 @@ func (outputs Outputs) MustCommitment() []byte {
 }
 
 // Commitment computes a hash of the outputs slice to be used as a commitment.
-func (outputs Outputs) Commitment() ([]byte, error) {
+func (outputs Outputs[T]) Commitment() ([]byte, error) {
 	h, err := blake2b.New256(nil)
 	if err != nil {
 		return nil, err
 	}
 	for _, output := range outputs {
-		outputBytes, err := output.Serialize(serializer.DeSeriModeNoValidation, nil)
+		outputBytes, err := internalEncode(output)
 		if err != nil {
 			return nil, fmt.Errorf("unable to compute commitment hash: %w", err)
 		}
@@ -305,10 +311,10 @@ func (outputs Outputs) Commitment() ([]byte, error) {
 }
 
 // ChainConstrainedOutputSet returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs in Outputs.
-func (outputs Outputs) ChainConstrainedOutputSet(txID TransactionID) ChainConstrainedOutputsSet {
+func (outputs Outputs[T]) ChainConstrainedOutputSet(txID TransactionID) ChainConstrainedOutputsSet {
 	set := make(ChainConstrainedOutputsSet)
 	for outputIndex, output := range outputs {
-		chainConstrainedOutput, is := output.(ChainConstrainedOutput)
+		chainConstrainedOutput, is := Output(output).(ChainConstrainedOutput)
 		if !is {
 			continue
 		}
@@ -330,12 +336,12 @@ func (outputs Outputs) ChainConstrainedOutputSet(txID TransactionID) ChainConstr
 }
 
 // ToOutputsByType converts the Outputs slice to OutputsByType.
-func (outputs Outputs) ToOutputsByType() OutputsByType {
+func (outputs Outputs[T]) ToOutputsByType() OutputsByType {
 	outputsByType := make(OutputsByType)
 	for _, output := range outputs {
 		slice, has := outputsByType[output.Type()]
 		if !has {
-			slice = make(Outputs, 0)
+			slice = make([]Output, 0)
 		}
 		outputsByType[output.Type()] = append(slice, output)
 	}
@@ -351,8 +357,8 @@ func OutputsFilterByType(ty OutputType) OutputsFilterFunc {
 }
 
 // Filter returns Outputs (retained order) passing the given OutputsFilterFunc.
-func (outputs Outputs) Filter(f OutputsFilterFunc) Outputs {
-	filtered := make(Outputs, 0)
+func (outputs Outputs[T]) Filter(f OutputsFilterFunc) Outputs[T] {
+	filtered := make(Outputs[T], 0)
 	for _, output := range outputs {
 		if !f(output) {
 			continue
@@ -364,7 +370,7 @@ func (outputs Outputs) Filter(f OutputsFilterFunc) Outputs {
 
 // NativeTokenSum sums up the different NativeTokens occurring within the given outputs.
 // limit defines the max amount of native tokens which are allowed.
-func (outputs Outputs) NativeTokenSum() (NativeTokenSum, int, error) {
+func (outputs Outputs[T]) NativeTokenSum() (NativeTokenSum, int, error) {
 	sum := make(map[NativeTokenID]*big.Int)
 	var ntCount int
 	for _, output := range outputs {
@@ -577,30 +583,6 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 	return checkTargetIdentOfOutput()
 }
 
-// Output defines a unit of output of a transaction.
-type Output interface {
-	serializer.SerializableWithSize
-	NonEphemeralObject
-
-	// Deposit returns the amount this Output deposits.
-	Deposit() uint64
-
-	// NativeTokenList returns the NativeToken this output defines.
-	NativeTokenList() NativeTokens
-
-	// UnlockConditionSet returns the UnlockConditionSet this output defines.
-	UnlockConditionSet() UnlockConditionSet
-
-	// FeatureSet returns the FeatureSet this output contains.
-	FeatureSet() FeatureSet
-
-	// Type returns the type of the output.
-	Type() OutputType
-
-	// Clone clones the Output.
-	Clone() Output
-}
-
 // ExternalUnlockParameters defines a palette of external system parameters which are used to
 // determine whether an Output can be unlocked.
 type ExternalUnlockParameters struct {
@@ -632,26 +614,6 @@ type TransDepIdentOutput interface {
 	// and the next state of this TransDepIdentOutput. To indicate that this TransDepIdentOutput
 	// is to be destroyed, pass nil as next.
 	UnlockableBy(ident Address, next TransDepIdentOutput, extParas *ExternalUnlockParameters) (bool, error)
-}
-
-// OutputSelector implements SerializableSelectorFunc for output types.
-func OutputSelector(outputType uint32) (Output, error) {
-	var seri Output
-	switch OutputType(outputType) {
-	case OutputBasic:
-		seri = &BasicOutput{}
-	case OutputTreasury:
-		seri = &TreasuryOutput{}
-	case OutputAlias:
-		seri = &AliasOutput{}
-	case OutputFoundry:
-		seri = &FoundryOutput{}
-	case OutputNFT:
-		seri = &NFTOutput{}
-	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownOutputType, outputType)
-	}
-	return seri, nil
 }
 
 // OutputIDHex is the hex representation of an output ID.
@@ -863,7 +825,7 @@ func OutputsSyntacticalNFT() OutputsSyntacticalValidationFunc {
 }
 
 // SyntacticallyValidateOutputs validates the outputs by running them against the given OutputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalValidationFunc) error {
+func SyntacticallyValidateOutputs(outputs Outputs[TxEssenceOutput], funcs ...OutputsSyntacticalValidationFunc) error {
 	for i, output := range outputs {
 		for _, f := range funcs {
 			if err := f(i, output); err != nil {
@@ -872,24 +834,4 @@ func SyntacticallyValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalVa
 		}
 	}
 	return nil
-}
-
-// JsonOutputSelector selects the json output implementation for the given type.
-func JsonOutputSelector(ty int) (JSONSerializable, error) {
-	var obj JSONSerializable
-	switch OutputType(ty) {
-	case OutputBasic:
-		obj = &jsonExtendedOutput{}
-	case OutputTreasury:
-		obj = &jsonTreasuryOutput{}
-	case OutputAlias:
-		obj = &jsonAliasOutput{}
-	case OutputFoundry:
-		obj = &jsonFoundryOutput{}
-	case OutputNFT:
-		obj = &jsonNFTOutput{}
-	default:
-		return nil, fmt.Errorf("unable to decode output type from JSON: %w", ErrUnknownOutputType)
-	}
-	return obj, nil
 }

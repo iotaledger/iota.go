@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -14,6 +13,21 @@ var (
 	// ErrInvalidFeatureTransition gets returned when a Feature's transition within a ChainConstrainedOutput is invalid.
 	ErrInvalidFeatureTransition = errors.New("invalid feature transition")
 )
+
+// Feature is an abstract building block extending the features of an Output.
+type Feature interface {
+	Sizer
+	NonEphemeralObject
+
+	// Type returns the type of the Feature.
+	Type() FeatureType
+
+	// Equal tells whether this Feature is equal to other.
+	Equal(other Feature) bool
+
+	// Clone clones the Feature.
+	Clone() Feature
+}
 
 // FeatureType defines the type of features.
 type FeatureType byte
@@ -43,18 +57,18 @@ var (
 )
 
 // Features is a slice of Feature(s).
-type Features []Feature
+type Features[T Feature] []Feature
 
 // Clone clones the Features.
-func (f Features) Clone() Features {
-	cpy := make(Features, len(f))
+func (f Features[T]) Clone() Features[T] {
+	cpy := make(Features[T], len(f))
 	for i, v := range f {
 		cpy[i] = v.Clone()
 	}
 	return cpy
 }
 
-func (f Features) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (f Features[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 	var sumCost uint64
 	for _, feat := range f {
 		sumCost += feat.VBytes(rentStruct, nil)
@@ -64,22 +78,7 @@ func (f Features) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 	return rentStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
 }
 
-func (f Features) ToSerializables() serializer.Serializables {
-	seris := make(serializer.Serializables, len(f))
-	for i, x := range f {
-		seris[i] = x.(serializer.Serializable)
-	}
-	return seris
-}
-
-func (f *Features) FromSerializables(seris serializer.Serializables) {
-	*f = make(Features, len(seris))
-	for i, seri := range seris {
-		(*f)[i] = seri.(Feature)
-	}
-}
-
-func (f Features) Size() int {
+func (f Features[T]) Size() int {
 	sum := serializer.OneByte // 1 byte length prefix
 	for _, feat := range f {
 		sum += feat.Size()
@@ -89,7 +88,7 @@ func (f Features) Size() int {
 
 // Set converts the slice into a FeatureSet.
 // Returns an error if a FeatureType occurs multiple times.
-func (f Features) Set() (FeatureSet, error) {
+func (f Features[T]) Set() (FeatureSet, error) {
 	set := make(FeatureSet)
 	for _, feat := range f {
 		if _, has := set[feat.Type()]; has {
@@ -103,7 +102,7 @@ func (f Features) Set() (FeatureSet, error) {
 // MustSet works like Set but panics if an error occurs.
 // This function is therefore only safe to be called when it is given,
 // that a Features slice does not contain the same FeatureType multiple times.
-func (f Features) MustSet() FeatureSet {
+func (f Features[T]) MustSet() FeatureSet {
 	set, err := f.Set()
 	if err != nil {
 		panic(err)
@@ -112,7 +111,7 @@ func (f Features) MustSet() FeatureSet {
 }
 
 // Equal checks whether this slice is equal to other.
-func (f Features) Equal(other Features) bool {
+func (f Features[T]) Equal(other Features[T]) bool {
 	if len(f) != len(other) {
 		return false
 	}
@@ -189,63 +188,27 @@ func (f FeatureSet) EveryTuple(other FeatureSet, fun func(a Feature, b Feature) 
 	return hadAll, nil
 }
 
-// Feature is an abstract building block extending the features of an Output.
-type Feature interface {
-	serializer.SerializableWithSize
-	NonEphemeralObject
+// FeatureUnchanged checks whether the specified Feature type is unchanged between in and out.
+// Unchanged also means that the block's existence is unchanged between both sets.
+func FeatureUnchanged(featType FeatureType, inFeatSet FeatureSet, outFeatSet FeatureSet) error {
+	in, inHas := inFeatSet[featType]
+	out, outHas := outFeatSet[featType]
 
-	// Type returns the type of the Feature.
-	Type() FeatureType
-
-	// Equal tells whether this Feature is equal to other.
-	Equal(other Feature) bool
-
-	// Clone clones the Feature.
-	Clone() Feature
-}
-
-// FeatureSelector implements SerializableSelectorFunc for features.
-func FeatureSelector(featType uint32) (Feature, error) {
-	var seri Feature
-	switch FeatureType(featType) {
-	case FeatureSender:
-		seri = &SenderFeature{}
-	case FeatureIssuer:
-		seri = &IssuerFeature{}
-	case FeatureMetadata:
-		seri = &MetadataFeature{}
-	case FeatureTag:
-		seri = &TagFeature{}
-	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownFeatureType, featType)
+	switch {
+	case outHas && !inHas:
+		return fmt.Errorf("%w: %s in next state but not in previous", ErrInvalidFeatureTransition, featType)
+	case !outHas && inHas:
+		return fmt.Errorf("%w: %s in current state but not in next", ErrInvalidFeatureTransition, featType)
 	}
-	return seri, nil
-}
 
-// selects the json object for the given type.
-func jsonFeatureSelector(ty int) (JSONSerializable, error) {
-	var obj JSONSerializable
-	switch FeatureType(ty) {
-	case FeatureSender:
-		obj = &jsonSenderFeature{}
-	case FeatureIssuer:
-		obj = &jsonIssuerFeature{}
-	case FeatureMetadata:
-		obj = &jsonMetadataFeature{}
-	case FeatureTag:
-		obj = &jsonTagFeature{}
-	default:
-		return nil, fmt.Errorf("unable to decode feature type from JSON: %w", ErrUnknownFeatureType)
+	// not in both sets
+	if in == nil {
+		return nil
 	}
-	return obj, nil
-}
 
-func featuresFromJSONRawMsg(jFeatures []*json.RawMessage) (Features, error) {
-	feats, err := jsonRawMsgsToSerializables(jFeatures, jsonFeatureSelector)
-	if err != nil {
-		return nil, err
+	if !in.Equal(out) {
+		return fmt.Errorf("%w: %s changed, in %v / out %v", ErrInvalidFeatureTransition, featType, in, out)
 	}
-	var features Features
-	features.FromSerializables(feats)
-	return features, nil
+
+	return nil
 }

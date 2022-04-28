@@ -16,10 +16,10 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 	exampleCurrentNFTOutput := &iotago.NFTOutput{
 		Amount: 100,
 		NFTID:  iotago.NFTID{},
-		Conditions: iotago.UnlockConditions{
+		Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
 			&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 		},
-		ImmutableFeatures: iotago.Features{
+		ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
 			&iotago.IssuerFeature{Address: exampleIssuer},
 			&iotago.MetadataFeature{Data: []byte("some-ipfs-link")},
 		},
@@ -72,7 +72,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 					"Amount": uint64(1337),
 				},
 				"address": {
-					"Conditions": iotago.UnlockConditions{
+					"Conditions": iotago.UnlockConditions[iotago.NFTUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -94,12 +94,12 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleCurrentNFTOutput,
 			nextMut: map[string]fieldMutations{
 				"immutable_metadata": {
-					"ImmutableFeatures": iotago.Features{
+					"ImmutableFeatures": iotago.Features[iotago.NFTImmFeature]{
 						&iotago.MetadataFeature{Data: []byte("link-to-cat.gif")},
 					},
 				},
 				"issuer": {
-					"ImmutableFeatures": iotago.Features{
+					"ImmutableFeatures": iotago.Features[iotago.NFTImmFeature]{
 						&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -120,7 +120,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.current, muts, tpkg.TestProtoParas).(*iotago.NFTOutput)
+					cpy := copyObject(t, tt.current, muts).(*iotago.NFTOutput)
 					err := tt.current.ValidateStateTransition(tt.transType, cpy, tt.svCtx)
 					if tt.wantErr != nil {
 						require.ErrorAs(t, err, &tt.wantErr)

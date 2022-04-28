@@ -95,9 +95,9 @@ func (resultSet *IndexerResultSet) Next() bool {
 }
 
 // Outputs collects/fetches the outputs result from the query.
-func (resultSet *IndexerResultSet) Outputs() (iotago.Outputs, error) {
+func (resultSet *IndexerResultSet) Outputs() (iotago.Outputs[iotago.Output], error) {
 	outputIDs := resultSet.Response.Items.MustOutputIDs()
-	outputs := make(iotago.Outputs, len(outputIDs))
+	outputs := make(iotago.Outputs[iotago.Output], len(outputIDs))
 	for i, outputID := range outputIDs {
 		res, err := resultSet.client.OutputByID(resultSet.ctx, outputID)
 		if err != nil {

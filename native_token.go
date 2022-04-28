@@ -1,9 +1,7 @@
 package iotago
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"math/big"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -21,7 +19,7 @@ const (
 	// Uint256ByteSize defines the size of an uint256.
 	Uint256ByteSize = 32
 
-	// NativeTokenIDLength is the byte length of a NativeTokenID consisting out of the FoundryID plus TokenTag.
+	// NativeTokenIDLength is the byte length of a NativeTokenID which is the same thing as a FoundryID.
 	NativeTokenIDLength = FoundryIDLength
 
 	// NativeTokenVByteCost defines the static virtual byte cost of a NativeToken.
@@ -41,10 +39,6 @@ var (
 	nativeTokensArrayRules = &serializer.ArrayRules{
 		Min: MinNativeTokenCountPerOutput,
 		Max: MaxNativeTokenCountPerOutput,
-		Guards: serializer.SerializableGuard{
-			ReadGuard:  func(ty uint32) (serializer.Serializable, error) { return &NativeToken{}, nil },
-			WriteGuard: nil,
-		},
 		// uniqueness must be checked only by examining the actual NativeTokenID bytes
 		UniquenessSliceFunc: func(next []byte) []byte { return next[:NativeTokenIDLength] },
 		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
@@ -118,21 +112,6 @@ func (n NativeTokens) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 	return rentStruct.VBFactorData.Multiply(uint64(serializer.OneByte + len(n)*NativeTokenVByteCost))
 }
 
-func (n NativeTokens) ToSerializables() serializer.Serializables {
-	seris := make(serializer.Serializables, len(n))
-	for i, x := range n {
-		seris[i] = x
-	}
-	return seris
-}
-
-func (n *NativeTokens) FromSerializables(seris serializer.Serializables) {
-	*n = make(NativeTokens, len(seris))
-	for i, seri := range seris {
-		(*n)[i] = seri.(*NativeToken)
-	}
-}
-
 func (n NativeTokens) Size() int {
 	sum := serializer.OneByte // 1 byte length prefix
 	for _, token := range n {
@@ -156,8 +135,8 @@ func (n NativeTokens) Equal(other NativeTokens) bool {
 
 // NativeToken represents a token which resides natively on the ledger.
 type NativeToken struct {
-	ID     NativeTokenID
-	Amount *big.Int
+	ID     NativeTokenID `serix:"0,mapKey=id"`
+	Amount *big.Int      `serix:"1,mapKey=amount"`
 }
 
 // Clone clones the NativeToken.
@@ -180,84 +159,7 @@ func (n *NativeToken) Equal(other *NativeToken) bool {
 	return n.Amount.Cmp(other.Amount) == 0
 }
 
-func (n *NativeToken) Deserialize(data []byte, _ serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
-	return serializer.NewDeserializer(data).
-		ReadBytesInPlace(n.ID[:], func(err error) error {
-			return fmt.Errorf("unable to deserialize ID for native token: %w", err)
-		}).
-		ReadUint256(&n.Amount, func(err error) error {
-			return fmt.Errorf("unable to deserialize amount for native token: %w", err)
-		}).
-		Done()
-}
-
-func (n *NativeToken) Serialize(_ serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
-	return serializer.NewSerializer().
-		WriteBytes(n.ID[:], func(err error) error {
-			return fmt.Errorf("unable to serialize native token ID: %w", err)
-		}).
-		WriteUint256(n.Amount, func(err error) error {
-			return fmt.Errorf("unable to serialize native token amount: %w", err)
-		}).
-		Serialize()
-}
-
 func (n *NativeToken) Size() int {
 	// amount = 32 bytes(uint256)
 	return NativeTokenIDLength + serializer.UInt256ByteSize
-}
-
-func (n *NativeToken) MarshalJSON() ([]byte, error) {
-	jNativeToken := &jsonNativeToken{}
-	jNativeToken.ID = EncodeHex(n.ID[:])
-	jNativeToken.Amount = EncodeUint256(n.Amount)
-	return json.Marshal(jNativeToken)
-}
-
-func (n *NativeToken) UnmarshalJSON(bytes []byte) error {
-	jNativeToken := &jsonNativeToken{}
-	if err := json.Unmarshal(bytes, jNativeToken); err != nil {
-		return err
-	}
-	seri, err := jNativeToken.ToSerializable()
-	if err != nil {
-		return err
-	}
-	*n = *seri.(*NativeToken)
-	return nil
-}
-
-func nativeTokensFromJSONRawMsg(jNativeTokens []*json.RawMessage) (NativeTokens, error) {
-	tokens, err := jsonRawMsgsToSerializables(jNativeTokens, func(ty int) (JSONSerializable, error) {
-		return &jsonNativeToken{}, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	var nativeTokens NativeTokens
-	nativeTokens.FromSerializables(tokens)
-	return nativeTokens, nil
-}
-
-// jsonNativeToken defines the json representation of a NativeToken.
-type jsonNativeToken struct {
-	ID     string `json:"id"`
-	Amount string `json:"amount"`
-}
-
-func (j *jsonNativeToken) ToSerializable() (serializer.Serializable, error) {
-	n := &NativeToken{}
-
-	nftIDBytes, err := DecodeHex(j.ID)
-	if err != nil {
-		return nil, err
-	}
-	copy(n.ID[:], nftIDBytes)
-
-	n.Amount, err = DecodeUint256(j.Amount)
-	if err != nil {
-		return nil, fmt.Errorf("%w: amount field of native token '%s', inner err %s", ErrDecodeJSONUint256Str, j.Amount, err)
-	}
-
-	return n, nil
 }

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -18,8 +17,8 @@ func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 	return &TransactionBuilder{
 		essence: &iotago.TransactionEssence{
 			NetworkID: networkID,
-			Inputs:    iotago.Inputs{},
-			Outputs:   iotago.Outputs{},
+			Inputs:    iotago.Inputs[iotago.TxEssenceInput]{},
+			Outputs:   iotago.Outputs[iotago.TxEssenceOutput]{},
 			Payload:   nil,
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
@@ -148,10 +147,6 @@ func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer
 	}
 
 	sigTxPayload := &iotago.Transaction{Essence: b.essence, Unlocks: unlocks}
-	if _, err := sigTxPayload.Serialize(serializer.DeSeriModePerformValidation, protoParas); err != nil {
-		return nil, err
-	}
-
 	return sigTxPayload, nil
 }
 

@@ -23,7 +23,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			MeltedTokens:  big.NewInt(0),
 			MaximumSupply: new(big.Int).SetUint64(1000),
 		},
-		Conditions: iotago.UnlockConditions{
+		Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 			&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasIdent},
 		},
 	}
@@ -36,7 +36,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			MeltedTokens:  startingSupply,
 			MaximumSupply: new(big.Int).SetUint64(1000),
 		},
-		Conditions: iotago.UnlockConditions{
+		Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 			&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasIdent},
 		},
 	}
@@ -62,7 +62,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: iotago.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							Outputs: iotago.Outputs{exampleFoundry},
+							Outputs: iotago.Outputs[iotago.TxEssenceOutput]{exampleFoundry},
 						},
 						Unlocks: nil,
 					},
@@ -89,7 +89,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: iotago.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							Outputs: iotago.Outputs{exampleFoundry},
+							Outputs: iotago.Outputs[iotago.TxEssenceOutput]{exampleFoundry},
 						},
 						Unlocks: nil,
 					},
@@ -116,7 +116,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: iotago.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							Outputs: iotago.Outputs{exampleFoundry},
+							Outputs: iotago.Outputs[iotago.TxEssenceOutput]{exampleFoundry},
 						},
 						Unlocks: nil,
 					},
@@ -136,7 +136,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"change_metadata": {
-					"Features": iotago.Features{
+					"Features": iotago.Features[iotago.FoundryFeature]{
 						&iotago.MetadataFeature{Data: tpkg.RandBytes(20)},
 					},
 				},
@@ -361,7 +361,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.current, muts, tpkg.TestProtoParas).(*iotago.FoundryOutput)
+					cpy := copyObject(t, tt.current, muts).(*iotago.FoundryOutput)
 					err := tt.current.ValidateStateTransition(tt.transType, cpy, tt.svCtx)
 					if tt.wantErr != nil {
 						require.ErrorAs(t, err, &tt.wantErr)
