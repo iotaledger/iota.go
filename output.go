@@ -5,12 +5,16 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/iotaledger/hive.go/serializer/v2"
 	"math/big"
 	"sort"
 	"strings"
 
+<<<<<<< HEAD
 	"github.com/iotaledger/hive.go/serializer/v2"
 
+=======
+>>>>>>> c729c45 (use serix)
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/crypto/blake2b"

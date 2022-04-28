@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/hex"
-
 	"errors"
 	"fmt"
 	"sort"

@@ -7,9 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/iotaledger/hive.go/serix"
 	"math/rand"
 	"testing"
+
+	"github.com/iotaledger/hive.go/serix"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 

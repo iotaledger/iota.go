@@ -5,10 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/iotaledger/hive.go/serix"
-
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/serix"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 )
