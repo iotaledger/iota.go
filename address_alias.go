@@ -10,13 +10,13 @@ import (
 
 const (
 	// AliasAddressBytesLength is the length of an Alias address.
-	AliasAddressBytesLength = 20
+	AliasAddressBytesLength = blake2b.Size256
 	// AliasAddressSerializedBytesSize is the size of a serialized Alias address with its type denoting byte.
 	AliasAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + AliasAddressBytesLength
 )
 
 var (
-	emptyAliasAddress = [20]byte{}
+	emptyAliasAddress = [AliasAddressBytesLength]byte{}
 )
 
 // ParseAliasAddressFromHexString parses the given hex string into an AliasAddress.
@@ -41,7 +41,7 @@ func MustParseAliasAddressFromHexString(hexAddr string) *AliasAddress {
 }
 
 // AliasAddress defines an Alias address.
-// An AliasAddress is the Blake2b-160 hash of the OutputID which created it.
+// An AliasAddress is the Blake2b-256 hash of the OutputID which created it.
 type AliasAddress [AliasAddressBytesLength]byte
 
 func (aliasAddr *AliasAddress) Clone() Address {
@@ -132,14 +132,7 @@ func (aliasAddr *AliasAddress) UnmarshalJSON(bytes []byte) error {
 
 // AliasAddressFromOutputID returns the alias address computed from a given OutputID.
 func AliasAddressFromOutputID(outputID OutputID) AliasAddress {
-	// TODO: maybe use pkg with Sum160 exposed
-	blake2b160, _ := blake2b.New(20, nil)
-	var aliasAddress AliasAddress
-	if _, err := blake2b160.Write(outputID[:]); err != nil {
-		panic(err)
-	}
-	copy(aliasAddress[:], blake2b160.Sum(nil))
-	return aliasAddress
+	return blake2b.Sum256(outputID[:])
 }
 
 // jsonAliasAddress defines the json representation of an AliasAddress.

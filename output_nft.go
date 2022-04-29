@@ -3,14 +3,15 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/util"
 )
 
 const (
-	// 	NFTIDLength = 20 is the byte length of an NFTID.
-	NFTIDLength = 20
+	// 	NFTIDLength is the byte length of an NFTID.
+	NFTIDLength = blake2b.Size256
 )
 
 var (
@@ -120,7 +121,7 @@ func NFTOutputImmutableFeatureBlocksArrayRules() serializer.ArrayRules {
 }
 
 // NFTID is the identifier for an NFT.
-// It is computed as the Blake2b-160 hash of the OutputID of the output which created the NFT.
+// It is computed as the Blake2b-256 hash of the OutputID of the output which created the NFT.
 type NFTID [NFTIDLength]byte
 
 // NFTIDs are NFTID(s).

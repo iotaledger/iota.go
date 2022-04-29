@@ -211,8 +211,8 @@ func TestTransactionSemanticValidation(t *testing.T) {
 			)
 
 			var (
-				nft1ID = tpkg.Rand20ByteArray()
-				nft2ID = tpkg.Rand20ByteArray()
+				nft1ID = tpkg.Rand32ByteArray()
+				nft2ID = tpkg.Rand32ByteArray()
 			)
 
 			inputIDs := tpkg.RandOutputIDs(16)

@@ -88,7 +88,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 			source: &iotago.NFTOutput{
 				Amount:       1337,
 				NativeTokens: tpkg.RandSortNativeTokens(2),
-				NFTID:        tpkg.Rand20ByteArray(),
+				NFTID:        tpkg.Rand32ByteArray(),
 				Conditions: iotago.UnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.StorageDepositReturnUnlockCondition{
@@ -171,7 +171,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParas: nonZeroCostParas,
 			outputs: iotago.Outputs{
 				&iotago.BasicOutput{
-					Amount:     414, // min amount
+					Amount:     426, // min amount
 					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()}},
 				},
 			},
@@ -413,7 +413,7 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 			outputs: iotago.Outputs{
 				&iotago.AliasOutput{
 					Amount:         OneMi,
-					AliasID:        tpkg.Rand20ByteArray(),
+					AliasID:        tpkg.Rand32ByteArray(),
 					StateIndex:     10,
 					FoundryCounter: 1337,
 					Conditions: iotago.UnlockConditions{
@@ -460,7 +460,7 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 			name: "fail - cyclic state controller",
 			outputs: iotago.Outputs{
 				func() *iotago.AliasOutput {
-					aliasID := iotago.AliasID(tpkg.Rand20ByteArray())
+					aliasID := iotago.AliasID(tpkg.Rand32ByteArray())
 					return &iotago.AliasOutput{
 						Amount:         OneMi,
 						AliasID:        aliasID,
@@ -479,7 +479,7 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 			name: "fail - cyclic governance controller",
 			outputs: iotago.Outputs{
 				func() *iotago.AliasOutput {
-					aliasID := iotago.AliasID(tpkg.Rand20ByteArray())
+					aliasID := iotago.AliasID(tpkg.Rand32ByteArray())
 					return &iotago.AliasOutput{
 						Amount:         OneMi,
 						AliasID:        aliasID,
@@ -661,7 +661,7 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 			name: "fail - cyclic",
 			outputs: iotago.Outputs{
 				func() *iotago.NFTOutput {
-					nftID := iotago.NFTID(tpkg.Rand20ByteArray())
+					nftID := iotago.NFTID(tpkg.Rand32ByteArray())
 					return &iotago.NFTOutput{
 						Amount: OneMi,
 						NFTID:  nftID,
