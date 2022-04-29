@@ -212,7 +212,9 @@ func ReferenceUnlockBlock(index uint16) *iotago.ReferenceUnlockBlock {
 
 // RandTransactionEssence returns a random transaction essence.
 func RandTransactionEssence() *iotago.TransactionEssence {
-	tx := &iotago.TransactionEssence{}
+	tx := &iotago.TransactionEssence{
+		NetworkID: TestNetworkID,
+	}
 
 	inputCount := rand.Intn(10) + 1
 	for i := inputCount; i > 0; i-- {

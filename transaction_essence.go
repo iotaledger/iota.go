@@ -33,6 +33,8 @@ const (
 var (
 	// ErrInvalidInputsCommitment gets returned when the inputs commitment is invalid.
 	ErrInvalidInputsCommitment = errors.New("invalid inputs commitment")
+	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a TransactionEssence is invalid.
+	ErrTxEssenceNetworkIDInvalid = errors.New("invalid network ID")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
 	// ErrAliasOutputNonEmptyState gets returned if an AliasOutput with zeroed AliasID contains state (counters non-zero etc.).
@@ -324,6 +326,12 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
 func (u *TransactionEssence) syntacticallyValidate(protoParas *ProtocolParameters) error {
+
+	expectedNetworkID := protoParas.NetworkID()
+	if u.NetworkID != expectedNetworkID {
+		return fmt.Errorf("%w: got %v, want %v (%s)", ErrTxEssenceNetworkIDInvalid, u.NetworkID, expectedNetworkID, protoParas.NetworkName)
+	}
+
 	if err := SyntacticallyValidateInputs(u.Inputs,
 		InputsSyntacticalUnique(),
 		InputsSyntacticalIndicesWithinBounds(),

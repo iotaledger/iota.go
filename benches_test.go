@@ -31,6 +31,7 @@ func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {
 func BenchmarkDeserializeWithValidationLargeTxPayload(b *testing.B) {
 	origin := &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
+			NetworkID: tpkg.TestNetworkID,
 			Inputs: func() iotago.Inputs {
 				var inputs iotago.Inputs
 				for i := 0; i < iotago.MaxInputsCount; i++ {

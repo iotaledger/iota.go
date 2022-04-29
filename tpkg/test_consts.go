@@ -5,13 +5,20 @@ import "github.com/iotaledger/iota.go/v3"
 // TestProtoParas is an instance of iotago.ProtocolParameters for testing purposes. It contains a zero vbyte rent cost.
 // Only use this var in testing. Do not modify or use outside unit tests.
 var TestProtoParas = &iotago.ProtocolParameters{
-	TokenSupply: TestTokenSupply,
+	Version:     2,
+	NetworkName: "TestJungle",
+	Bech32HRP:   "tgl",
+	MinPoWScore: 0,
 	RentStructure: iotago.RentStructure{
 		VByteCost:    0,
 		VBFactorData: 0,
 		VBFactorKey:  0,
 	},
+	TokenSupply: TestTokenSupply,
 }
+
+// TestNetworkID is a test network ID.
+var TestNetworkID = TestProtoParas.NetworkID()
 
 const (
 	// TestTokenSupply is a test token supply constant.
