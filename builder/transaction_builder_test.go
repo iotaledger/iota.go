@@ -3,7 +3,6 @@ package builder_test
 import (
 	"crypto/ed25519"
 	"errors"
-	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,7 +29,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(rand.Uint64()).
+			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
 				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, OutputID: inputUTXO1.ID(), Output: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -48,7 +47,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(rand.Uint64()).
+			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
 				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, OutputID: inputUTXO1.ID(), Output: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -65,7 +64,7 @@ func TestTransactionBuilder(t *testing.T) {
 			}
 		}(),
 		func() test {
-			bdl := builder.NewTransactionBuilder(rand.Uint64())
+			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID)
 			return test{
 				name:       "err - no inputs",
 				addrSigner: iotago.NewInMemoryAddressSigner(),
@@ -75,7 +74,7 @@ func TestTransactionBuilder(t *testing.T) {
 		}(),
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
-			bdl := builder.NewTransactionBuilder(rand.Uint64()).
+			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
 				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, OutputID: inputUTXO1.ID(), Output: tpkg.RandBasicOutput(iotago.AddressEd25519)})
 			return test{
 				name:       "err - no outputs",
@@ -87,7 +86,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(rand.Uint64()).
+			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
 				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, OutputID: inputUTXO1.ID(), Output: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -111,7 +110,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(rand.Uint64()).
+			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
 				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, OutputID: inputUTXO1.ID(), Output: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
