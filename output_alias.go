@@ -14,7 +14,7 @@ import (
 
 const (
 	// AliasIDLength is the byte length of an AliasID.
-	AliasIDLength = 20
+	AliasIDLength = blake2b.Size256
 )
 
 var (
@@ -127,7 +127,7 @@ func AliasOutputImmutableFeatureBlocksArrayRules() serializer.ArrayRules {
 }
 
 // AliasID is the identifier for an alias account.
-// It is computed as the Blake2b-160 hash of the OutputID of the output which created the account.
+// It is computed as the Blake2b-256 hash of the OutputID of the output which created the account.
 type AliasID [AliasIDLength]byte
 
 func (id AliasID) Addressable() bool {
@@ -166,14 +166,7 @@ func (id AliasID) ToAddress() ChainConstrainedAddress {
 
 // AliasIDFromOutputID returns the AliasID computed from a given OutputID.
 func AliasIDFromOutputID(outputID OutputID) AliasID {
-	// TODO: maybe use pkg with Sum160 exposed
-	blake2b160, _ := blake2b.New(20, nil)
-	var aliasID AliasID
-	if _, err := blake2b160.Write(outputID[:]); err != nil {
-		panic(err)
-	}
-	copy(aliasID[:], blake2b160.Sum(nil))
-	return aliasID
+	return blake2b.Sum256(outputID[:])
 }
 
 // AliasOutputs is a slice of AliasOutput(s).

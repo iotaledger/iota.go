@@ -10,13 +10,13 @@ import (
 
 const (
 	// NFTAddressBytesLength is the length of an NFT address.
-	NFTAddressBytesLength = 20
+	NFTAddressBytesLength = blake2b.Size256
 	// NFTAddressSerializedBytesSize is the size of a serialized NFT address with its type denoting byte.
 	NFTAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + NFTAddressBytesLength
 )
 
 var (
-	emptyNFTAddress = [20]byte{}
+	emptyNFTAddress = [NFTAddressBytesLength]byte{}
 )
 
 // ParseNFTAddressFromHexString parses the given hex string into an NFTAddress.
@@ -41,7 +41,7 @@ func MustParseNFTAddressFromHexString(hexAddr string) *NFTAddress {
 }
 
 // NFTAddress defines an NFT address.
-// An NFTAddress is the Blake2b-160 hash of the OutputID which created it.
+// An NFTAddress is the Blake2b-256 hash of the OutputID which created it.
 type NFTAddress [NFTAddressBytesLength]byte
 
 func (nftAddr *NFTAddress) Clone() Address {
@@ -132,14 +132,7 @@ func (nftAddr *NFTAddress) UnmarshalJSON(bytes []byte) error {
 
 // NFTAddressFromOutputID returns the NFT address computed from a given OutputID.
 func NFTAddressFromOutputID(outputID OutputID) NFTAddress {
-	// TODO: maybe use pkg with Sum160 exposed
-	blake2b160, _ := blake2b.New(20, nil)
-	var nftAddress NFTAddress
-	if _, err := blake2b160.Write(outputID[:]); err != nil {
-		panic(err)
-	}
-	copy(nftAddress[:], blake2b160.Sum(nil))
-	return nftAddress
+	return blake2b.Sum256(outputID[:])
 }
 
 // jsonNFTAddress defines the json representation of an NFTAddress.

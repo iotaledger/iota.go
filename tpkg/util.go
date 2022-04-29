@@ -101,18 +101,18 @@ func Rand12ByteArray() [12]byte {
 	return h
 }
 
-// Rand20ByteArray returns an array with 20 random bytes.
-func Rand20ByteArray() [20]byte {
-	var h [20]byte
-	b := RandBytes(20)
-	copy(h[:], b)
-	return h
-}
-
 // Rand32ByteArray returns an array with 32 random bytes.
 func Rand32ByteArray() [32]byte {
 	var h [32]byte
 	b := RandBytes(32)
+	copy(h[:], b)
+	return h
+}
+
+// Rand50ByteArray returns an array with 38 random bytes.
+func Rand50ByteArray() [50]byte {
+	var h [50]byte
+	b := RandBytes(50)
 	copy(h[:], b)
 	return h
 }
