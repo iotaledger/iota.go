@@ -11,13 +11,13 @@ import (
 
 // Indexer plugin routes
 var (
-	IndexerAPIRouteBasicOutputs = "/api/plugins/" + IndexerPluginName + "/basic-outputs"
-	IndexerAPIRouteAliases      = "/api/plugins/" + IndexerPluginName + "/aliases"
-	IndexerAPIRouteAlias        = "/api/plugins/" + IndexerPluginName + "/aliases/%s"
-	IndexerAPIRouteFoundries    = "/api/plugins/" + IndexerPluginName + "/foundries"
-	IndexerAPIRouteFoundry      = "/api/plugins/" + IndexerPluginName + "/foundries/%s"
-	IndexerAPIRouteNFTs         = "/api/plugins/" + IndexerPluginName + "/nfts"
-	IndexerAPIRouteNFT          = "/api/plugins/" + IndexerPluginName + "/nfts/%s"
+	IndexerAPIRouteBasicOutputs = "/api/plugins/" + IndexerPluginName + "/outputs/basic"
+	IndexerAPIRouteAliases      = "/api/plugins/" + IndexerPluginName + "/outputs/alias"
+	IndexerAPIRouteAlias        = "/api/plugins/" + IndexerPluginName + "/outputs/alias/%s"
+	IndexerAPIRouteFoundries    = "/api/plugins/" + IndexerPluginName + "/outputs/foundry"
+	IndexerAPIRouteFoundry      = "/api/plugins/" + IndexerPluginName + "/outputs/foundry/%s"
+	IndexerAPIRouteNFTs         = "/api/plugins/" + IndexerPluginName + "/outputs/nft"
+	IndexerAPIRouteNFT          = "/api/plugins/" + IndexerPluginName + "/outputs/nft/%s"
 )
 
 var (
