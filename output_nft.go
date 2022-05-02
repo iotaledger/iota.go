@@ -391,11 +391,11 @@ func (n *NFTOutput) UnmarshalJSON(bytes []byte) error {
 type jsonNFTOutput struct {
 	Type            int                `json:"type"`
 	Amount          string             `json:"amount"`
-	NativeTokens    []*json.RawMessage `json:"nativeTokens"`
+	NativeTokens    []*json.RawMessage `json:"nativeTokens,omitempty"`
 	NFTID           string             `json:"nftId"`
-	Conditions      []*json.RawMessage `json:"unlockConditions"`
-	Blocks          []*json.RawMessage `json:"featureBlocks"`
-	ImmutableBlocks []*json.RawMessage `json:"immutableFeatureBlocks"`
+	Conditions      []*json.RawMessage `json:"unlockConditions,omitempty"`
+	Blocks          []*json.RawMessage `json:"featureBlocks,omitempty"`
+	ImmutableBlocks []*json.RawMessage `json:"immutableFeatureBlocks,omitempty"`
 }
 
 func (j *jsonNFTOutput) ToSerializable() (serializer.Serializable, error) {

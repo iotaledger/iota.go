@@ -236,9 +236,9 @@ func (e *BasicOutput) UnmarshalJSON(bytes []byte) error {
 type jsonExtendedOutput struct {
 	Type         int                `json:"type"`
 	Amount       string             `json:"amount"`
-	NativeTokens []*json.RawMessage `json:"nativeTokens"`
-	Conditions   []*json.RawMessage `json:"unlockConditions"`
-	Blocks       []*json.RawMessage `json:"featureBlocks"`
+	NativeTokens []*json.RawMessage `json:"nativeTokens,omitempty"`
+	Conditions   []*json.RawMessage `json:"unlockConditions,omitempty"`
+	Blocks       []*json.RawMessage `json:"featureBlocks,omitempty"`
 }
 
 func (j *jsonExtendedOutput) ToSerializable() (serializer.Serializable, error) {
