@@ -594,14 +594,14 @@ func (a *AliasOutput) UnmarshalJSON(bytes []byte) error {
 type jsonAliasOutput struct {
 	Type            int                `json:"type"`
 	Amount          string             `json:"amount"`
-	NativeTokens    []*json.RawMessage `json:"nativeTokens"`
+	NativeTokens    []*json.RawMessage `json:"nativeTokens,omitempty"`
 	AliasID         string             `json:"aliasId"`
 	StateIndex      int                `json:"stateIndex"`
 	StateMetadata   string             `json:"stateMetadata,omitempty"`
 	FoundryCounter  int                `json:"foundryCounter"`
-	Conditions      []*json.RawMessage `json:"unlockConditions"`
-	Blocks          []*json.RawMessage `json:"featureBlocks"`
-	ImmutableBlocks []*json.RawMessage `json:"immutableFeatureBlocks"`
+	Conditions      []*json.RawMessage `json:"unlockConditions,omitempty"`
+	Blocks          []*json.RawMessage `json:"featureBlocks,omitempty"`
+	ImmutableBlocks []*json.RawMessage `json:"immutableFeatureBlocks,omitempty"`
 }
 
 func (j *jsonAliasOutput) ToSerializable() (serializer.Serializable, error) {

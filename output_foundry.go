@@ -544,13 +544,13 @@ func (f *FoundryOutput) UnmarshalJSON(bytes []byte) error {
 type jsonFoundryOutput struct {
 	Type            int                `json:"type"`
 	Amount          string             `json:"amount"`
-	NativeTokens    []*json.RawMessage `json:"nativeTokens"`
+	NativeTokens    []*json.RawMessage `json:"nativeTokens,omitempty"`
 	SerialNumber    int                `json:"serialNumber"`
 	TokenTag        string             `json:"tokenTag"`
 	TokenScheme     *json.RawMessage   `json:"tokenScheme"`
-	Conditions      []*json.RawMessage `json:"unlockConditions"`
-	Blocks          []*json.RawMessage `json:"featureBlocks"`
-	ImmutableBlocks []*json.RawMessage `json:"immutableFeatureBlocks"`
+	Conditions      []*json.RawMessage `json:"unlockConditions,omitempty"`
+	Blocks          []*json.RawMessage `json:"featureBlocks,omitempty"`
+	ImmutableBlocks []*json.RawMessage `json:"immutableFeatureBlocks,omitempty"`
 }
 
 func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
