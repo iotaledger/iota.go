@@ -12,7 +12,7 @@ type IndexerResponse struct {
 	LedgerIndex uint32 `json:"ledgerIndex"`
 	// The maximum count of results that are returned by the node.
 	PageSize int `json:"pageSize"`
-// The output IDs (transaction hash + output index) of the found outputs.
+	// The output IDs (transaction hash + output index) of the found outputs.
 	Items iotago.HexOutputIDs `json:"items"`
 	// The cursor to use for getting the next results.
 	Cursor *string `json:"cursor"`
@@ -132,7 +132,7 @@ type FoundriesQuery struct {
 	IndexerCursorParas
 	IndexerCreationParas
 	// Bech32-encoded address that should be searched for.
-	AddressBech32 string `qs:"address,omitempty"`
+	AliasAddressBech32 string `qs:"aliasAddress,omitempty"`
 }
 
 func (query *FoundriesQuery) OutputType() iotago.OutputType {
