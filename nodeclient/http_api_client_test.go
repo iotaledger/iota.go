@@ -472,8 +472,9 @@ func TestClient_MilestoneByID(t *testing.T) {
 		Metadata:            tpkg.RandBytes(30),
 		Opts: iotago.MilestoneOpts{
 			&iotago.ProtocolParamsMilestoneOpt{
-				NextPoWScore:               500,
-				NextPoWScoreMilestoneIndex: 1000,
+				TargetMilestoneIndex: 500,
+				ProtocolVersion:      2,
+				Params:               []byte{1, 2, 3, 4, 5, 6, 7},
 			},
 		},
 		Signatures: iotago.Signatures{
@@ -538,8 +539,9 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 		Metadata:            tpkg.RandBytes(30),
 		Opts: iotago.MilestoneOpts{
 			&iotago.ProtocolParamsMilestoneOpt{
-				NextPoWScore:               500,
-				NextPoWScoreMilestoneIndex: 1000,
+				TargetMilestoneIndex: 500,
+				ProtocolVersion:      2,
+				Params:               []byte{1, 2, 3, 4, 5, 6, 7},
 			},
 		},
 		Signatures: iotago.Signatures{

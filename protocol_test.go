@@ -47,10 +47,11 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 
 func TestProtocolParametersJSONMarshalling(t *testing.T) {
 	protoParas := &iotago.ProtocolParameters{
-		Version:     6,
-		NetworkName: "xxxNetwork",
-		Bech32HRP:   "xxx",
-		MinPoWScore: 666,
+		Version:       6,
+		NetworkName:   "xxxNetwork",
+		Bech32HRP:     "xxx",
+		MinPoWScore:   666,
+		BelowMaxDepth: 15,
 		RentStructure: iotago.RentStructure{
 			VByteCost:    6,
 			VBFactorKey:  7,
@@ -58,7 +59,7 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 		},
 		TokenSupply: 1234567890987654321,
 	}
-	protoParasJSON := `{"version":6,"networkName":"xxxNetwork","bech32HRP":"xxx","minPoWScore":666,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321"}`
+	protoParasJSON := `{"version":6,"networkName":"xxxNetwork","bech32HRP":"xxx","minPoWScore":666,"belowMaxDepth":15,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321"}`
 
 	j, err := json.Marshal(protoParas)
 	require.NoError(t, err)
@@ -80,7 +81,7 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	expectedJSON := `{"protocol":{"version":6,"networkName":"xxxNetwork","bech32HRP":"xxx","minPoWScore":666,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321"}}`
+	expectedJSON := `{"protocol":{"version":6,"networkName":"xxxNetwork","bech32HRP":"xxx","minPoWScore":666,"belowMaxDepth":15,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321"}}`
 	require.Equal(t, expectedJSON, string(structBytes))
 
 	decodedStruct := &struct {

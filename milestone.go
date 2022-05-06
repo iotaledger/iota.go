@@ -134,6 +134,8 @@ type Milestone struct {
 	Index uint32
 	// The time at which this milestone was issued.
 	Timestamp uint32
+	// The protocol version under which this milestone operates.
+	ProtocolVersion byte
 	// The pointer to the previous milestone.
 	// Zeroed if there wasn't a previous milestone.
 	PreviousMilestoneID MilestoneID
@@ -175,6 +177,9 @@ func (m *Milestone) Essence() ([]byte, error) {
 		}).
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp for essence: %w", err)
+		}).
+		WriteNum(m.ProtocolVersion, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone protocol version for essence: %w", err)
 		}).
 		WriteBytes(m.PreviousMilestoneID[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone last milestone ID for essence: %w", err)
@@ -350,6 +355,9 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadNum(&m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone timestamp: %w", err)
 		}).
+		ReadNum(&m.ProtocolVersion, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone protocol version: %w", err)
+		}).
 		ReadArrayOf32Bytes(&m.PreviousMilestoneID, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone last milestone ID: %w", err)
 		}).
@@ -385,6 +393,9 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		WriteNum(m.Timestamp, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone timestamp: %w", err)
 		}).
+		WriteNum(m.ProtocolVersion, func(err error) error {
+			return fmt.Errorf("unable to serialize milestone protocol version: %w", err)
+		}).
 		WriteBytes(m.PreviousMilestoneID[:], func(err error) error {
 			return fmt.Errorf("unable to serialize milestone last milestone ID for essence: %w", err)
 		}).
@@ -416,8 +427,8 @@ func (m *Milestone) Size() int {
 	metadataLen := serializer.UInt16ByteSize + len(m.Metadata)
 
 	return util.NumByteLen(uint32(PayloadMilestone)) + util.NumByteLen(m.Index) + util.NumByteLen(m.Timestamp) +
-		MilestoneIDLength + parentMessagesByteLen + MilestoneMerkleProofLength + MilestoneMerkleProofLength +
-		metadataLen + m.Opts.Size() + signatureByteLen
+		util.NumByteLen(m.ProtocolVersion) + MilestoneIDLength + parentMessagesByteLen + MilestoneMerkleProofLength +
+		MilestoneMerkleProofLength + metadataLen + m.Opts.Size() + signatureByteLen
 }
 
 func (m *Milestone) MarshalJSON() ([]byte, error) {
@@ -425,6 +436,7 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 	jMilestone.Type = int(PayloadMilestone)
 	jMilestone.Index = int(m.Index)
 	jMilestone.Timestamp = int(m.Timestamp)
+	jMilestone.ProtocolVersion = int(m.ProtocolVersion)
 	jMilestone.PreviousMilestoneID = EncodeHex(m.PreviousMilestoneID[:])
 	jMilestone.Parents = make([]string, len(m.Parents))
 	for i, parent := range m.Parents {
@@ -476,6 +488,7 @@ type jsonMilestone struct {
 	Type                int                `json:"type"`
 	Index               int                `json:"index"`
 	Timestamp           int                `json:"timestamp"`
+	ProtocolVersion     int                `json:"protocolVersion"`
 	PreviousMilestoneID string             `json:"previousMilestoneId"`
 	Parents             []string           `json:"parentMessageIds"`
 	ConfirmedMerkleRoot string             `json:"confirmedMerkleRoot"`
@@ -491,6 +504,7 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 	payload := &Milestone{}
 	payload.Index = uint32(j.Index)
 	payload.Timestamp = uint32(j.Timestamp)
+	payload.ProtocolVersion = byte(j.ProtocolVersion)
 	prevMsID, err := DecodeHex(j.PreviousMilestoneID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode milestone last milestone ID from JSON: %w", err)

@@ -278,8 +278,9 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 		Metadata: RandBytes(10),
 		Opts: iotago.MilestoneOpts{
 			&iotago.ProtocolParamsMilestoneOpt{
-				NextPoWScore:               100,
-				NextPoWScoreMilestoneIndex: 1000,
+				TargetMilestoneIndex: 100,
+				ProtocolVersion:      2,
+				Params:               RandBytes(200),
 			},
 		},
 		Signatures: func() iotago.Signatures {
