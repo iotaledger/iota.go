@@ -104,11 +104,13 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	hexTxID := iotago.EncodeHex(txID[:])
 
 	outputRes := &nodeclient.OutputResponse{
-		TransactionID: hexTxID,
-		OutputIndex:   3,
-		Spent:         true,
-		LedgerIndex:   1337,
-		RawOutput:     &rawMsgSigDepJson,
+		Metadata: &nodeclient.OutputMetadataResponse{
+			TransactionID: hexTxID,
+			OutputIndex:   3,
+			Spent:         true,
+			LedgerIndex:   1337,
+		},
+		RawOutput: &rawMsgSigDepJson,
 	}
 
 	originInfo := &nodeclient.InfoResponse{

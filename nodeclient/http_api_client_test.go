@@ -304,11 +304,13 @@ func TestClient_OutputByID(t *testing.T) {
 	txID := tpkg.Rand32ByteArray()
 	hexTxID := iotago.EncodeHex(txID[:])
 	originRes := &nodeclient.OutputResponse{
-		TransactionID: hexTxID,
-		OutputIndex:   3,
-		Spent:         true,
-		LedgerIndex:   1337,
-		RawOutput:     &rawMsgSigDepJson,
+		Metadata: &nodeclient.OutputMetadataResponse{
+			TransactionID: hexTxID,
+			OutputIndex:   3,
+			Spent:         true,
+			LedgerIndex:   1337,
+		},
+		RawOutput: &rawMsgSigDepJson,
 	}
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
@@ -325,7 +327,7 @@ func TestClient_OutputByID(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 
-	resTxID, err := resp.TxID()
+	resTxID, err := resp.Metadata.TxID()
 	require.NoError(t, err)
 	require.EqualValues(t, txID, *resTxID)
 }
@@ -335,7 +337,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 
 	txID := tpkg.Rand32ByteArray()
 	hexTxID := iotago.EncodeHex(txID[:])
-	originRes := &nodeclient.OutputResponse{
+	originRes := &nodeclient.OutputMetadataResponse{
 		TransactionID: hexTxID,
 		OutputIndex:   3,
 		Spent:         true,
@@ -351,7 +353,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	resp, err := nodeAPI.OutputByID(context.Background(), utxoInputId)
+	resp, err := nodeAPI.OutputMetadataByID(context.Background(), utxoInputId)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 

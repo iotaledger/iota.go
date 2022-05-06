@@ -116,8 +116,8 @@ type (
 		Children []string `json:"childrenMessageIds"`
 	}
 
-	// OutputResponse defines the response of a GET outputs REST API call.
-	OutputResponse struct {
+	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
+	OutputMetadataResponse struct {
 		// The hex encoded message ID of the message.
 		MessageID string `json:"messageId"`
 		// The hex encoded transaction id from which this output originated.
@@ -138,8 +138,13 @@ type (
 		MilestoneTimestampBooked uint32 `json:"milestoneTimestampBooked"`
 		// The ledger index at which this output was available at.
 		LedgerIndex uint32 `json:"ledgerIndex"`
+	}
+
+	// OutputResponse defines the response of a GET outputs REST API call.
+	OutputResponse struct {
+		Metadata *OutputMetadataResponse `json:"metadata"`
 		// The output in its serialized form.
-		RawOutput *json.RawMessage `json:"output,omitempty"`
+		RawOutput *json.RawMessage `json:"output"`
 	}
 
 	// TreasuryResponse defines the response of a GET treasury REST API call.
@@ -277,7 +282,7 @@ type (
 )
 
 // TxID returns the TransactionID.
-func (nor *OutputResponse) TxID() (*iotago.TransactionID, error) {
+func (nor *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 	txIDBytes, err := iotago.DecodeHex(nor.TransactionID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
