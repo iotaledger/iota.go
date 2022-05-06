@@ -21,7 +21,6 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 	exampleExistingFoundryOutput := &iotago.FoundryOutput{
 		Amount:       100,
 		SerialNumber: 5,
-		TokenTag:     iotago.TokenTag{},
 		TokenScheme: &iotago.SimpleTokenScheme{
 			MintedTokens:  new(big.Int).SetInt64(1000),
 			MeltedTokens:  big.NewInt(0),
@@ -162,7 +161,6 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 								&iotago.FoundryOutput{
 									Amount:       100,
 									SerialNumber: 6,
-									TokenTag:     tpkg.Rand12ByteArray(),
 									TokenScheme:  &iotago.SimpleTokenScheme{},
 									Conditions: iotago.UnlockConditions{
 										&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasID.ToAddress().(*iotago.AliasAddress)},
@@ -171,7 +169,6 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 								&iotago.FoundryOutput{
 									Amount:       100,
 									SerialNumber: 7,
-									TokenTag:     tpkg.Rand12ByteArray(),
 									TokenScheme:  &iotago.SimpleTokenScheme{},
 									Conditions: iotago.UnlockConditions{
 										&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasID.ToAddress().(*iotago.AliasAddress)},

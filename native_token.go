@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,13 +18,11 @@ const (
 	// MaxNativeTokensCount is the max number of native tokens which can occur in a transaction (sum input/output side).
 	MaxNativeTokensCount = 64
 
-	TokenTagLength = 12
-
 	// Uint256ByteSize defines the size of an uint256.
 	Uint256ByteSize = 32
 
 	// NativeTokenIDLength is the byte length of a NativeTokenID consisting out of the FoundryID plus TokenTag.
-	NativeTokenIDLength = FoundryIDLength + TokenTagLength
+	NativeTokenIDLength = FoundryIDLength
 
 	// NativeTokenVByteCost defines the static virtual byte cost of a NativeToken.
 	NativeTokenVByteCost = NativeTokenIDLength + Uint256ByteSize
@@ -60,23 +57,7 @@ func NativeTokenArrayRules() serializer.ArrayRules {
 }
 
 // NativeTokenID is an identifier which uniquely identifies a NativeToken.
-type NativeTokenID [NativeTokenIDLength]byte
-
-func (ntID NativeTokenID) String() string {
-	return EncodeHex(ntID[:])
-}
-
-// FoundryID returns the FoundryID to which this NativeTokenID belongs to.
-func (ntID NativeTokenID) FoundryID() FoundryID {
-	var foundryID FoundryID
-	copy(foundryID[:], ntID[:])
-	return foundryID
-}
-
-// FoundrySerialNumber returns the serial number of the foundry which handles this token.
-func (ntID NativeTokenID) FoundrySerialNumber() uint32 {
-	return binary.LittleEndian.Uint32(ntID[AliasAddressSerializedBytesSize : AliasAddressSerializedBytesSize+serializer.UInt32ByteSize])
-}
+type NativeTokenID = FoundryID
 
 // NativeTokenSum is a mapping of NativeTokenID to a sum value.
 type NativeTokenSum map[NativeTokenID]*big.Int
