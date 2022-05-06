@@ -65,7 +65,7 @@ func (p *ProtocolParamsMilestoneOpt) Serialize(deSeriMode serializer.DeSerializa
 	return serializer.NewSerializer().
 		WithValidation(deSeriMode, func(_ []byte, err error) error {
 			switch {
-			case len(p.Params) == MaxParamsLength:
+			case len(p.Params) > MaxParamsLength:
 				return fmt.Errorf("%w: params bigger than %d", ErrProtocolParamsMilestoneOptInvalid, MaxParamsLength)
 			}
 			return nil
