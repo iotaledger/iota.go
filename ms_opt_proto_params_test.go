@@ -10,8 +10,9 @@ func TestProtocolParamsMilestoneOpt_DeSerialize(t *testing.T) {
 		{
 			name: "ok - protocol params milestone option",
 			source: &iotago.ProtocolParamsMilestoneOpt{
-				NextPoWScore:               666,
-				NextPoWScoreMilestoneIndex: 1337,
+				TargetMilestoneIndex: 1337,
+				ProtocolVersion:      3,
+				Params:               []byte{1, 2, 3, 4, 5, 6, 7, 8, 9},
 			},
 			target: &iotago.ProtocolParamsMilestoneOpt{},
 		},
