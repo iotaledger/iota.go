@@ -68,7 +68,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 				Amount:       1337,
 				NativeTokens: tpkg.RandSortNativeTokens(2),
 				SerialNumber: 0,
-				TokenTag:     tpkg.Rand12ByteArray(),
 				TokenScheme: &iotago.SimpleTokenScheme{
 					MintedTokens:  new(big.Int).SetUint64(100),
 					MeltedTokens:  big.NewInt(50),
@@ -524,7 +523,6 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 					Amount:       1337,
 					NativeTokens: nil,
 					SerialNumber: 5,
-					TokenTag:     tpkg.Rand12ByteArray(),
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetUint64(5),
 						MeltedTokens:  big.NewInt(2),
@@ -545,7 +543,6 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 					Amount:       1337,
 					NativeTokens: nil,
 					SerialNumber: 5,
-					TokenTag:     tpkg.Rand12ByteArray(),
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetUint64(10),
 						MeltedTokens:  big.NewInt(0),
@@ -566,7 +563,6 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 					Amount:       1337,
 					NativeTokens: nil,
 					SerialNumber: 5,
-					TokenTag:     tpkg.Rand12ByteArray(),
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetUint64(5),
 						MeltedTokens:  big.NewInt(0),
@@ -587,7 +583,6 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 					Amount:       1337,
 					NativeTokens: nil,
 					SerialNumber: 5,
-					TokenTag:     tpkg.Rand12ByteArray(),
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  big.NewInt(5),
 						MeltedTokens:  big.NewInt(10),
@@ -608,7 +603,6 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 					Amount:       1337,
 					NativeTokens: nil,
 					SerialNumber: 5,
-					TokenTag:     tpkg.Rand12ByteArray(),
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  big.NewInt(50),
 						MeltedTokens:  big.NewInt(20),

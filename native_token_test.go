@@ -12,7 +12,7 @@ import (
 
 func TestNativeTokenDeSerialization(t *testing.T) {
 	ntIn := iotago.NativeToken{
-		ID:     tpkg.Rand50ByteArray(),
+		ID:     tpkg.Rand38ByteArray(),
 		Amount: new(big.Int).SetUint64(1000),
 	}
 

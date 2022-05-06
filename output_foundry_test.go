@@ -18,7 +18,6 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 	exampleFoundry := &iotago.FoundryOutput{
 		Amount:       100,
 		SerialNumber: 6,
-		TokenTag:     tpkg.Rand12ByteArray(),
 		TokenScheme: &iotago.SimpleTokenScheme{
 			MintedTokens:  startingSupply,
 			MeltedTokens:  big.NewInt(0),
@@ -32,7 +31,6 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 	toBeDestoyedFoundry := &iotago.FoundryOutput{
 		Amount:       100,
 		SerialNumber: 6,
-		TokenTag:     tpkg.Rand12ByteArray(),
 		TokenScheme: &iotago.SimpleTokenScheme{
 			MintedTokens:  startingSupply,
 			MeltedTokens:  startingSupply,
@@ -320,9 +318,6 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						MeltedTokens:  big.NewInt(0),
 						MaximumSupply: big.NewInt(1337),
 					},
-				},
-				"token_tag": {
-					"TokenTag": tpkg.Rand12ByteArray(),
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,

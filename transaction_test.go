@@ -75,8 +75,6 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 	_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 	aliasIdent1 := tpkg.RandAliasAddress()
 
-	tokenTag := tpkg.Rand12ByteArray()
-
 	inputIDs := tpkg.RandOutputIDs(3)
 	inputs := iotago.OutputSet{
 		inputIDs[0]: &iotago.BasicOutput{
@@ -102,7 +100,6 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 			Amount:       OneMi,
 			NativeTokens: nil,
 			SerialNumber: 1,
-			TokenTag:     tokenTag,
 			TokenScheme: &iotago.SimpleTokenScheme{
 				MintedTokens:  big.NewInt(50),
 				MeltedTokens:  big.NewInt(0),
@@ -144,7 +141,6 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				Amount:       2 * OneMi,
 				NativeTokens: nil,
 				SerialNumber: 1,
-				TokenTag:     tokenTag,
 				TokenScheme: &iotago.SimpleTokenScheme{
 					MintedTokens:  big.NewInt(50),
 					MeltedTokens:  big.NewInt(50),
@@ -200,14 +196,6 @@ func TestTransactionSemanticValidation(t *testing.T) {
 				storageDepositReturn     uint64 = OneMi / 2
 				nativeTokenTransfer1            = tpkg.RandSortNativeTokens(10)
 				nativeTokenTransfer2            = tpkg.RandSortNativeTokens(10)
-			)
-
-			var (
-				foundry1Ident3TokenTag  = tpkg.Rand12ByteArray()
-				foundry2Ident3TokenTag  = tpkg.Rand12ByteArray()
-				foundry3Ident3TokenTag  = tpkg.Rand12ByteArray()
-				foundry4Ident3TokenTag  = tpkg.Rand12ByteArray()
-				newFoundryIdentTokenTag = tpkg.Rand12ByteArray()
 			)
 
 			var (
@@ -317,7 +305,6 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Amount:       defaultAmount,
 					NativeTokens: nil,
 					SerialNumber: 1,
-					TokenTag:     foundry1Ident3TokenTag,
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetUint64(100),
 						MeltedTokens:  big.NewInt(0),
@@ -332,7 +319,6 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Amount:       defaultAmount,
 					NativeTokens: nil, // filled out later
 					SerialNumber: 2,
-					TokenTag:     foundry2Ident3TokenTag,
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetUint64(100),
 						MeltedTokens:  big.NewInt(0),
@@ -347,7 +333,6 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Amount:       defaultAmount,
 					NativeTokens: nil,
 					SerialNumber: 3,
-					TokenTag:     foundry3Ident3TokenTag,
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetUint64(100),
 						MeltedTokens:  big.NewInt(0),
@@ -362,7 +347,6 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Amount:       defaultAmount,
 					NativeTokens: nil,
 					SerialNumber: 4,
-					TokenTag:     foundry4Ident3TokenTag,
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetUint64(100),
 						MeltedTokens:  big.NewInt(50),
@@ -417,7 +401,6 @@ func TestTransactionSemanticValidation(t *testing.T) {
 				Amount:       defaultAmount,
 				NativeTokens: nil,
 				SerialNumber: 6,
-				TokenTag:     newFoundryIdentTokenTag,
 				TokenScheme: &iotago.SimpleTokenScheme{
 					MintedTokens:  big.NewInt(100),
 					MeltedTokens:  big.NewInt(0),
@@ -543,7 +526,6 @@ func TestTransactionSemanticValidation(t *testing.T) {
 							},
 						},
 						SerialNumber: 1,
-						TokenTag:     foundry1Ident3TokenTag,
 						TokenScheme: &iotago.SimpleTokenScheme{
 							MintedTokens:  new(big.Int).SetInt64(200),
 							MeltedTokens:  big.NewInt(0),
@@ -563,7 +545,6 @@ func TestTransactionSemanticValidation(t *testing.T) {
 							},
 						},
 						SerialNumber: 2,
-						TokenTag:     foundry2Ident3TokenTag,
 						TokenScheme: &iotago.SimpleTokenScheme{
 							MintedTokens:  new(big.Int).SetInt64(100),
 							MeltedTokens:  big.NewInt(50),
@@ -578,7 +559,6 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						Amount:       defaultAmount,
 						NativeTokens: nil,
 						SerialNumber: 3,
-						TokenTag:     foundry3Ident3TokenTag,
 						TokenScheme: &iotago.SimpleTokenScheme{
 							MintedTokens:  new(big.Int).SetInt64(100),
 							MeltedTokens:  big.NewInt(0),
@@ -767,7 +747,6 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputIDs[7]: &iotago.FoundryOutput{
 					Amount:       100,
 					SerialNumber: 0,
-					TokenTag:     tpkg.Rand12ByteArray(),
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetInt64(100),
 						MeltedTokens:  big.NewInt(0),
@@ -1363,14 +1342,12 @@ func TestTxSemanticDeposit(t *testing.T) {
 func TestTxSemanticNativeTokens(t *testing.T) {
 
 	foundryAliasIdent := tpkg.RandAliasAddress()
-	foundryTokenTag := tpkg.Rand12ByteArray()
 	foundryMaxSupply := new(big.Int).SetInt64(1000)
 	foundryMintedSupply := new(big.Int).SetInt64(500)
 
 	inUnrelatedFoundryOutput := &iotago.FoundryOutput{
 		Amount:       100,
 		SerialNumber: 0,
-		TokenTag:     foundryTokenTag,
 		TokenScheme: &iotago.SimpleTokenScheme{
 			MintedTokens:  foundryMintedSupply,
 			MeltedTokens:  big.NewInt(0),
@@ -1384,7 +1361,6 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 	outUnrelatedFoundryOutput := &iotago.FoundryOutput{
 		Amount:       100,
 		SerialNumber: 0,
-		TokenTag:     foundryTokenTag,
 		TokenScheme: &iotago.SimpleTokenScheme{
 			MintedTokens:  foundryMintedSupply,
 			MeltedTokens:  big.NewInt(0),
