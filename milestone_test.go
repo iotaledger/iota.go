@@ -200,11 +200,12 @@ func TestNewMilestone(t *testing.T) {
 	inclusionMerkleProof := tpkg.Rand32ByteArray()
 	const msIndex, timestamp = 1000, 1333333337
 
-	ms := iotago.NewMilestone(msIndex, timestamp, prevMs, parents, pastConeMerkleProof, inclusionMerkleProof)
+	ms := iotago.NewMilestone(msIndex, timestamp, tpkg.TestProtocolVersion, prevMs, parents, pastConeMerkleProof, inclusionMerkleProof)
 
 	assert.EqualValues(t, &iotago.Milestone{
 		Index:               msIndex,
 		Timestamp:           timestamp,
+		ProtocolVersion:     tpkg.TestProtocolVersion,
 		PreviousMilestoneID: prevMs,
 		Parents:             parents,
 		ConfirmedMerkleRoot: pastConeMerkleProof,

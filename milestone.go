@@ -117,10 +117,11 @@ type (
 )
 
 // NewMilestone creates a new unsigned Milestone.
-func NewMilestone(index uint32, timestamp uint32, prevMsID MilestoneID, parents MilestoneParentMessageIDs, confMerkleRoot MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) *Milestone {
+func NewMilestone(index uint32, timestamp uint32, protocolVersion byte, prevMsID MilestoneID, parents MilestoneParentMessageIDs, confMerkleRoot MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) *Milestone {
 	return &Milestone{
 		Index:               index,
 		Timestamp:           timestamp,
+		ProtocolVersion:     protocolVersion,
 		PreviousMilestoneID: prevMsID,
 		Parents:             parents,
 		ConfirmedMerkleRoot: confMerkleRoot,
