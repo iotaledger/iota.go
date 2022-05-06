@@ -416,10 +416,10 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 }
 
 // OutputMetadataByID gets an output's metadata by its ID from the node without getting the output data again.
-func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*OutputResponse, error) {
+func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*OutputMetadataResponse, error) {
 	query := fmt.Sprintf(RouteOutputMetadata, outputID.ToHex())
 
-	res := &OutputResponse{}
+	res := &OutputMetadataResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
