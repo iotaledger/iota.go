@@ -4,13 +4,15 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"golang.org/x/crypto/blake2b"
+
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 const (
@@ -272,7 +274,9 @@ func (outputs Outputs) Commitment() ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to compute commitment hash: %w", err)
 		}
-		if _, err := h.Write(outputBytes); err != nil {
+
+		outputHash := blake2b.Sum256(outputBytes)
+		if _, err := h.Write(outputHash[:]); err != nil {
 			return nil, fmt.Errorf("unable to write output bytes for commitment hash: %w", err)
 		}
 	}
