@@ -19,7 +19,7 @@ var (
 	ErrTimelockConditionsZero = errors.New("timelock conditions are both zero")
 )
 
-// UnlockConditionType defines the type of feature blocks.
+// UnlockConditionType defines the type of UnlockCondition.
 type UnlockConditionType byte
 
 const (
@@ -342,11 +342,11 @@ func jsonUnlockConditionSelector(ty int) (JSONSerializable, error) {
 }
 
 func unlockConditionsFromJSONRawMsg(jUnlockConditions []*json.RawMessage) (UnlockConditions, error) {
-	blocks, err := jsonRawMsgsToSerializables(jUnlockConditions, jsonUnlockConditionSelector)
+	unlockConds, err := jsonRawMsgsToSerializables(jUnlockConditions, jsonUnlockConditionSelector)
 	if err != nil {
 		return nil, err
 	}
 	var unlockConditions UnlockConditions
-	unlockConditions.FromSerializables(blocks)
+	unlockConditions.FromSerializables(unlockConds)
 	return unlockConditions, nil
 }

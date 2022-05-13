@@ -132,12 +132,12 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: &iotago.ChainTransitionError{},
 		},
 		{
-			name:    "ok - state transition - metadata feature block",
+			name:    "ok - state transition - metadata feature",
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"change_metadata": {
-					"Blocks": iotago.FeatureBlocks{
-						&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(20)},
+					"Feats": iotago.Features{
+						&iotago.MetadataFeature{Data: tpkg.RandBytes(20)},
 					},
 				},
 			},

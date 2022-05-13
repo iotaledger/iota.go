@@ -169,7 +169,7 @@ func msOptReadGuard(supportedMsOpts MilestoneOptTypeSet) serializer.Serializable
 // MilestoneOptSet is a set of MilestoneOpt(s).
 type MilestoneOptSet map[MilestoneOptType]MilestoneOpt
 
-// Clone clones the FeatureBlockSet.
+// Clone clones the FeaturesSet.
 func (set MilestoneOptSet) Clone() MilestoneOptSet {
 	cpy := make(MilestoneOptSet, len(set))
 	for k, v := range set {

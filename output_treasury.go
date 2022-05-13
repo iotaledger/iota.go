@@ -22,7 +22,7 @@ func (t *TreasuryOutput) UnlockConditions() UnlockConditions {
 	return nil
 }
 
-func (t *TreasuryOutput) FeatureBlocks() FeatureBlocks {
+func (t *TreasuryOutput) Features() Features {
 	return nil
 }
 

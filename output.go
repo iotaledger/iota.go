@@ -566,8 +566,8 @@ type Output interface {
 	// UnlockConditions returns the UnlockConditions this output defines.
 	UnlockConditions() UnlockConditions
 
-	// FeatureBlocks returns the FeatureBlocks this output contains.
-	FeatureBlocks() FeatureBlocks
+	// Features returns the Features this output contains.
+	Features() Features
 
 	// Type returns the type of the output.
 	Type() OutputType
@@ -586,7 +586,7 @@ type ExternalUnlockParameters struct {
 }
 
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent
-// of any transition the output does (without considering FeatureBlock(s)).
+// of any transition the output does (without considering Feature(s)).
 type TransIndepIdentOutput interface {
 	Output
 	// Ident returns the default identity to which this output is locked to.
@@ -773,36 +773,6 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 		return nil
 	}
 }
-
-/*
-// OutputsSyntacticalSenderFeatureBlockRequirement returns an OutputsSyntacticalValidationFunc which checks that:
-//	- if an output contains a SenderFeatureBlock if another FeatureBlock (example StorageDepositReturnUnlockCondition) requires it
-func OutputsSyntacticalSenderFeatureBlockRequirement() OutputsSyntacticalValidationFunc {
-	return func(index int, output Output) error {
-		featureBlockOutput, is := output.(FeatureBlockOutput)
-		if !is {
-			return nil
-		}
-		var hasSenderFeatBlock, hasFeatBlockReqSenderFeatBlock bool
-		for _, featureBlock := range featureBlockOutput.FeatureBlocks() {
-			switch featureBlock.Type() {
-			case FeatureBlockStorageDepositReturn:
-				fallthrough
-			case FeatureBlockExpirationMilestoneIndex:
-				fallthrough
-			case FeatureBlockExpirationUnix:
-				hasFeatBlockReqSenderFeatBlock = true
-			case FeatureBlockSender:
-				hasSenderFeatBlock = true
-			}
-		}
-		if hasFeatBlockReqSenderFeatBlock && !hasSenderFeatBlock {
-			return fmt.Errorf("%w: output %d", ErrOutputRequiresSenderFeatureBlock, index)
-		}
-		return nil
-	}
-}
-*/
 
 // OutputsSyntacticalAlias returns an OutputsSyntacticalValidationFunc which checks that AliasOutput(s)':
 //	- StateIndex/FoundryCounter are zero if the AliasID is zeroed

@@ -49,21 +49,21 @@ var (
 		Guards: serializer.SerializableGuard{
 			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
 				switch ty {
-				case uint32(FeatureBlockSender):
-				case uint32(FeatureBlockMetadata):
-				case uint32(FeatureBlockTag):
+				case uint32(FeatureSender):
+				case uint32(FeatureMetadata):
+				case uint32(FeatureTag):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize basic output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
+					return nil, fmt.Errorf("%w: unable to deserialize basic output, unsupported feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
 				}
-				return FeatureBlockSelector(ty)
+				return FeatureSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
 				switch seri.(type) {
-				case *SenderFeatureBlock:
-				case *MetadataFeatureBlock:
-				case *TagFeatureBlock:
+				case *SenderFeature:
+				case *MetadataFeature:
+				case *TagFeature:
 				default:
-					return fmt.Errorf("%w: in basic output", ErrUnsupportedFeatureBlockType)
+					return fmt.Errorf("%w: in basic output", ErrUnsupportedFeatureType)
 				}
 				return nil
 			},
@@ -79,15 +79,15 @@ func BasicOutputUnlockConditionsArrayRules() serializer.ArrayRules {
 	return *basicOutputUnlockCondsArrayRules
 }
 
-// BasicOutputFeatureBlocksArrayRules returns array rules defining the constraints on FeatureBlocks within an BasicOutput.
-func BasicOutputFeatureBlocksArrayRules() serializer.ArrayRules {
+// BasicOutputFeaturesArrayRules returns array rules defining the constraints on Features within an BasicOutput.
+func BasicOutputFeaturesArrayRules() serializer.ArrayRules {
 	return *basicOutputFeatBlockArrayRules
 }
 
 // BasicOutputs is a slice of BasicOutput(s).
 type BasicOutputs []*BasicOutput
 
-// BasicOutput is an output type which can hold native tokens and feature blocks.
+// BasicOutput is an output type which can hold native tokens and features.
 type BasicOutput struct {
 	// The amount of IOTA tokens held by the output.
 	Amount uint64
@@ -95,8 +95,8 @@ type BasicOutput struct {
 	NativeTokens NativeTokens
 	// The unlock conditions on this output.
 	Conditions UnlockConditions
-	// The feature blocks which extending the output metadata.
-	Blocks FeatureBlocks
+	// The features on the output.
+	Feats Features
 }
 
 func (e *BasicOutput) Clone() Output {
@@ -104,7 +104,7 @@ func (e *BasicOutput) Clone() Output {
 		Amount:       e.Amount,
 		NativeTokens: e.NativeTokens.Clone(),
 		Conditions:   e.Conditions.Clone(),
-		Blocks:       e.Blocks.Clone(),
+		Feats:        e.Feats.Clone(),
 	}
 }
 
@@ -119,15 +119,15 @@ func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		e.NativeTokens.VBytes(rentStruct, nil) +
 		e.Conditions.VBytes(rentStruct, nil) +
-		e.Blocks.VBytes(rentStruct, nil)
+		e.Feats.VBytes(rentStruct, nil)
 }
 
 func (e *BasicOutput) NativeTokenSet() NativeTokens {
 	return e.NativeTokens
 }
 
-func (e *BasicOutput) FeatureBlocks() FeatureBlocks {
-	return e.Blocks
+func (e *BasicOutput) Features() Features {
+	return e.Feats
 }
 
 func (e *BasicOutput) UnlockConditions() UnlockConditions {
@@ -160,8 +160,8 @@ func (e *BasicOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadSliceOfObjects(&e.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, basicOutputUnlockCondsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize unlock conditions for basic output: %w", err)
 		}).
-		ReadSliceOfObjects(&e.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, basicOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize feature blocks for basic output: %w", err)
+		ReadSliceOfObjects(&e.Feats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, basicOutputFeatBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize features for basic output: %w", err)
 		}).
 		Done()
 }
@@ -180,8 +180,8 @@ func (e *BasicOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 		WriteSliceOfObjects(&e.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, basicOutputUnlockCondsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize basic output unlock conditions: %w", err)
 		}).
-		WriteSliceOfObjects(&e.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, basicOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize basic output feature blocks: %w", err)
+		WriteSliceOfObjects(&e.Feats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, basicOutputFeatBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize basic output features: %w", err)
 		}).
 		Serialize()
 }
@@ -191,7 +191,7 @@ func (e *BasicOutput) Size() int {
 		util.NumByteLen(e.Amount) +
 		e.NativeTokens.Size() +
 		e.Conditions.Size() +
-		e.Blocks.Size()
+		e.Feats.Size()
 }
 
 func (e *BasicOutput) MarshalJSON() ([]byte, error) {
@@ -211,7 +211,7 @@ func (e *BasicOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jExtendedOutput.Blocks, err = serializablesToJSONRawMsgs(e.Blocks.ToSerializables())
+	jExtendedOutput.Features, err = serializablesToJSONRawMsgs(e.Feats.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +238,7 @@ type jsonExtendedOutput struct {
 	Amount       string             `json:"amount"`
 	NativeTokens []*json.RawMessage `json:"nativeTokens,omitempty"`
 	Conditions   []*json.RawMessage `json:"unlockConditions,omitempty"`
-	Blocks       []*json.RawMessage `json:"featureBlocks,omitempty"`
+	Features     []*json.RawMessage `json:"features,omitempty"`
 }
 
 func (j *jsonExtendedOutput) ToSerializable() (serializer.Serializable, error) {
@@ -260,7 +260,7 @@ func (j *jsonExtendedOutput) ToSerializable() (serializer.Serializable, error) {
 		return nil, err
 	}
 
-	e.Blocks, err = featureBlocksFromJSONRawMsg(j.Blocks)
+	e.Feats, err = featuresFromJSONRawMsg(j.Features)
 	if err != nil {
 		return nil, err
 	}

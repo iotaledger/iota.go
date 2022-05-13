@@ -1,6 +1,6 @@
 // Package iotago provides IOTA data models, a node API client and builders to craft blocks and transactions.
 //
-// Creating Blocks:
+// Creating Feats:
 //
 //	import (
 //		"context"

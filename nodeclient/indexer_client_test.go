@@ -94,7 +94,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 	originOutput.NativeTokens = iotago.NativeTokens{}
-	originOutput.Blocks = iotago.FeatureBlocks{}
+	originOutput.Feats = iotago.Features{}
 	sigDepJson, err := originOutput.MarshalJSON()
 	require.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
