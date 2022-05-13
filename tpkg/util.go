@@ -252,8 +252,8 @@ func RandReceipt() *iotago.ReceiptMilestoneOpt {
 	return receipt
 }
 
-// RandMilestone returns a random milestone with the given parent messages.
-func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
+// RandMilestone returns a random milestone with the given parent blocks.
+func RandMilestone(parents iotago.BlockIDs) *iotago.Milestone {
 	const sigsCount = 3
 
 	if parents == nil {
@@ -310,8 +310,8 @@ func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	return &iotago.TaggedData{Tag: tag, Data: data}
 }
 
-// RandMessage returns a random message with the given inner payload.
-func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
+// RandBlock returns a random block with the given inner payload.
+func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 	var payload iotago.Payload
 
 	parents := SortedRand32BytArray(1 + rand.Intn(7))
@@ -325,7 +325,7 @@ func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
 		payload = RandMilestone(parents)
 	}
 
-	return &iotago.Message{
+	return &iotago.Block{
 		ProtocolVersion: TestProtocolVersion,
 		Parents:         parents,
 		Payload:         payload,

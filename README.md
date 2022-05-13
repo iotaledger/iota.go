@@ -4,8 +4,8 @@ Official Go library.
 
 This library allows you to do the following:
 
-- Create messages with tagged data and transaction payloads
-- Get messages and outputs
+- Create blocks with tagged data and transaction payloads
+- Get blocks and outputs
 - Sign transactions
 - Generate addresses
 - Interact with an IOTA node

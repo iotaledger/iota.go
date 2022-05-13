@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestMessageBuilder(t *testing.T) {
+func TestBlockBuilder(t *testing.T) {
 	const targetPoWScore float64 = 500
 
 	parents := tpkg.SortedRand32BytArray(4)
@@ -30,14 +30,14 @@ func TestMessageBuilder(t *testing.T) {
 		Tag:  []byte("hello world"),
 		Data: []byte{1, 2, 3, 4},
 	}
-	msg, err := builder.NewMessageBuilder(tpkg.TestProtoParas.Version).
+	block, err := builder.NewBlockBuilder(tpkg.TestProtoParas.Version).
 		Payload(taggedDataPayload).
-		ParentsMessageIDs(parents).
+		ParentsBlockIDs(parents).
 		ProofOfWork(context.Background(), tpkg.TestProtoParas, targetPoWScore).
 		Build()
 	require.NoError(t, err)
 
-	powScore, err := msg.POW()
+	powScore, err := block.POW()
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, powScore, targetPoWScore)
 }

@@ -68,58 +68,58 @@ type (
 
 	// InfoResMetrics defines info res metrics information.
 	InfoResMetrics struct {
-		// The current rate of new messages per second.
-		MessagesPerSecond float64 `json:"messagesPerSecond"`
-		// The current rate of referenced messages per second.
-		ReferencedMessagesPerSecond float64 `json:"referencedMessagesPerSecond"`
-		// The ratio of referenced messages in relation to new messages of the last confirmed milestone.
+		// The current rate of new blocks per second.
+		BlocksPerSecond float64 `json:"blocksPerSecond"`
+		// The current rate of referenced blocks per second.
+		ReferencedBlocksPerSecond float64 `json:"referencedBlocksPerSecond"`
+		// The ratio of referenced blocks in relation to new blocks of the last confirmed milestone.
 		ReferencedRate float64 `json:"referencedRate"`
 	}
 
 	// TipsResponse defines the response of a GET tips REST API call.
 	TipsResponse struct {
-		// The hex encoded message IDs of the tips.
-		TipsHex []string `json:"tipMessageIds"`
+		// The hex encoded block IDs of the tips.
+		TipsHex []string `json:"tipBlockIds"`
 	}
 
-	// MessageMetadataResponse defines the response of a GET message metadata REST API call.
-	MessageMetadataResponse struct {
-		// The hex encoded message ID of the message.
-		MessageID string `json:"messageId"`
-		// The hex encoded message IDs of the parents the message references.
-		Parents []string `json:"parentMessageIds"`
-		// Whether the message is solid.
+	// BlockMetadataResponse defines the response of a GET block metadata REST API call.
+	BlockMetadataResponse struct {
+		// The hex encoded ID of the block.
+		BlockID string `json:"blockId"`
+		// The hex encoded IDs of the parent block references.
+		Parents []string `json:"parentBlockIds"`
+		// Whether the block is solid.
 		Solid bool `json:"isSolid"`
-		// The milestone index that references this message.
+		// The milestone index that references this block.
 		ReferencedByMilestoneIndex *uint32 `json:"referencedByMilestoneIndex,omitempty"`
-		// If this message represents a milestone this is the milestone index
+		// If this block represents a milestone this is the milestone index
 		MilestoneIndex *uint32 `json:"milestoneIndex,omitempty"`
 		// The ledger inclusion state of the transaction payload.
 		LedgerInclusionState *string `json:"ledgerInclusionState,omitempty"`
-		// Whether the message should be promoted.
+		// Whether the block should be promoted.
 		ShouldPromote *bool `json:"shouldPromote,omitempty"`
-		// Whether the message should be reattached.
+		// Whether the block should be reattached.
 		ShouldReattach *bool `json:"shouldReattach,omitempty"`
-		// The reason why this message is marked as conflicting.
+		// The reason why this block is marked as conflicting.
 		ConflictReason uint8 `json:"conflictReason,omitempty"`
 	}
 
 	// ChildrenResponse defines the response of a GET children REST API call.
 	ChildrenResponse struct {
-		// The hex encoded message ID of the message.
-		MessageID string `json:"messageId"`
+		// The hex encoded block ID of the block.
+		BlockID string `json:"blockId"`
 		// The maximum count of results that are returned by the node.
 		MaxResults uint32 `json:"maxResults"`
 		// The actual count of results that are returned.
 		Count uint32 `json:"count"`
-		// The hex encoded message IDs of the children of this message.
-		Children []string `json:"childrenMessageIds"`
+		// The hex encoded IDs of the children of this block.
+		Children []string `json:"childrenBlockIds"`
 	}
 
 	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
 	OutputMetadataResponse struct {
-		// The hex encoded message ID of the message.
-		MessageID string `json:"messageId"`
+		// The hex encoded ID of the block.
+		BlockID string `json:"blockId"`
 		// The hex encoded transaction id from which this output originated.
 		TransactionID string `json:"transactionId"`
 		// The index of the output.
@@ -180,8 +180,8 @@ type (
 		Index uint32 `json:"index"`
 		// The timestamp of the milestone.
 		Timestamp uint32 `json:"timestamp"`
-		// The hex encoded message IDs of the parents the milestone references.
-		Parents []string `json:"parentMessageIds"`
+		// The hex encoded IDs of the parent blocks the milestone references.
+		Parents []string `json:"parentBlockIds"`
 		// The hex encoded milestone ID of the previous milestone.
 		PreviousMilestoneID string `json:"previousMilestoneId"`
 	}
@@ -256,22 +256,22 @@ type (
 
 	// PeerGossipMetrics defines the peer gossip metrics.
 	PeerGossipMetrics struct {
-		// The total amount of received new messages.
-		NewMessages uint32 `json:"newMessages"`
-		// The total amount of received known messages.
-		KnownMessages uint32 `json:"knownMessages"`
-		// The total amount of received messages.
-		ReceivedMessages uint32 `json:"receivedMessages"`
-		// The total amount of received message requests.
-		ReceivedMessageRequests uint32 `json:"receivedMessageRequests"`
+		// The total amount of received new blocks.
+		NewBlocks uint32 `json:"newBlocks"`
+		// The total amount of received known blocks.
+		KnownBlocks uint32 `json:"knownBlocks"`
+		// The total amount of received blocks.
+		ReceivedBlocks uint32 `json:"receivedBlocks"`
+		// The total amount of received block requests.
+		ReceivedBlockRequests uint32 `json:"receivedBlockRequests"`
 		// The total amount of received milestone requests.
 		ReceivedMilestoneRequests uint32 `json:"receivedMilestoneRequests"`
 		// The total amount of received heartbeats.
 		ReceivedHeartbeats uint32 `json:"receivedHeartbeats"`
-		// The total amount of sent messages.
-		SentMessages uint32 `json:"sentMessages"`
-		// The total amount of sent message request.
-		SentMessageRequests uint32 `json:"sentMessageRequests"`
+		// The total amount of sent blocks.
+		SentBlocks uint32 `json:"sentBlocks"`
+		// The total amount of sent block request.
+		SentBlockRequests uint32 `json:"sentBlockRequests"`
 		// The total amount of sent milestone request.
 		SentMilestoneRequests uint32 `json:"sentMilestoneRequests"`
 		// The total amount of sent heartbeats.

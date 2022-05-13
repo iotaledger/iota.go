@@ -64,10 +64,10 @@ func Test_EventAPIDisabled(t *testing.T) {
 
 func Test_NewEventAPIClient(t *testing.T) {
 
-	msg := tpkg.RandMessage(iotago.PayloadTaggedData)
-	originMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+	block := tpkg.RandBlock(iotago.PayloadTaggedData)
+	originBlockBytes, err := block.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
-	mock := &mockMqttClient{payload: originMsgBytes}
+	mock := &mockMqttClient{payload: originBlockBytes}
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 	eventAPIClient := &nodeclient.EventAPIClient{
@@ -77,14 +77,14 @@ func Test_NewEventAPIClient(t *testing.T) {
 	}
 	require.NoError(t, eventAPIClient.Connect(ctx))
 
-	msgChan, sub := eventAPIClient.Messages(tpkg.TestProtoParas)
+	blockChan, sub := eventAPIClient.Blocks(tpkg.TestProtoParas)
 	require.NoError(t, sub.Error())
 	require.Eventually(t, func() bool {
 		select {
-		case msg := <-msgChan:
-			gottenMsgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+		case recBlock := <-blockChan:
+			gottenBlockBytes, err := recBlock.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 			require.NoError(t, err)
-			require.Equal(t, originMsgBytes, gottenMsgBytes)
+			require.Equal(t, originBlockBytes, gottenBlockBytes)
 
 			require.NoError(t, sub.Close())
 			require.NoError(t, sub.Close())

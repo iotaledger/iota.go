@@ -153,10 +153,10 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	}
 }
 
-func BenchmarkSerializeAndHashMessageWithTransactionPayload(b *testing.B) {
+func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 
-	m := &iotago.Message{
+	m := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(2),
 		Payload:         txPayload,

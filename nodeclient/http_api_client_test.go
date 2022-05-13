@@ -82,9 +82,9 @@ func TestClient_Info(t *testing.T) {
 			UseMetricPrefix: false,
 		},
 		Metrics: nodeclient.InfoResMetrics{
-			MessagesPerSecond:           20.0,
-			ReferencedMessagesPerSecond: 10.0,
-			ReferencedRate:              50.0,
+			BlocksPerSecond:           20.0,
+			ReferencedBlocksPerSecond: 10.0,
+			ReferencedRate:            50.0,
 		},
 		Features: []string{"Lazers"},
 		Plugins:  []string{"indexer/v1"},
@@ -122,54 +122,54 @@ func TestClient_Tips(t *testing.T) {
 	require.EqualValues(t, originRes, tips)
 }
 
-func TestClient_SubmitMessage(t *testing.T) {
+func TestClient_SubmitBlock(t *testing.T) {
 	defer gock.Off()
 
-	msgHash := tpkg.Rand32ByteArray()
-	msgHashStr := iotago.EncodeHex(msgHash[:])
+	blockHash := tpkg.Rand32ByteArray()
+	blockHashStr := iotago.EncodeHex(blockHash[:])
 
-	incompleteMsg := &iotago.Message{
+	incompleteBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(1),
 	}
 
-	completeMsg := &iotago.Message{
+	completeBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(1),
 		Payload:         nil,
 		Nonce:           3495721389537486,
 	}
 
-	serializedCompleteMsg, err := completeMsg.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+	serializedCompleteBlock, err := completeBlock.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
-	msg2 := iotago.Message{}
-	_, err = msg2.Deserialize(serializedCompleteMsg, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	block2 := iotago.Block{}
+	_, err = block2.Deserialize(serializedCompleteBlock, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
-	serializedIncompleteMsg, err := incompleteMsg.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	serializedIncompleteBlock, err := incompleteBlock.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Post(nodeclient.RouteMessages).
+		Post(nodeclient.RouteBlocks).
 		MatchType(nodeclient.MIMEApplicationVendorIOTASerializerV1).
-		Body(bytes.NewReader(serializedIncompleteMsg)).
+		Body(bytes.NewReader(serializedIncompleteBlock)).
 		Reply(200).
-		AddHeader("Location", msgHashStr)
+		AddHeader("Location", blockHashStr)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMessage, msgHashStr)).
+		Get(fmt.Sprintf(nodeclient.RouteBlock, blockHashStr)).
 		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
-		Body(bytes.NewReader(serializedCompleteMsg))
+		Body(bytes.NewReader(serializedCompleteBlock))
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	resp, err := nodeAPI.SubmitMessage(context.Background(), incompleteMsg, tpkg.TestProtoParas)
+	resp, err := nodeAPI.SubmitBlock(context.Background(), incompleteBlock, tpkg.TestProtoParas)
 	require.NoError(t, err)
-	require.EqualValues(t, completeMsg, resp)
+	require.EqualValues(t, completeBlock, resp)
 }
 
-func TestClient_MessageMetadataByMessageID(t *testing.T) {
+func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
@@ -177,14 +177,14 @@ func TestClient_MessageMetadataByMessageID(t *testing.T) {
 
 	queryHash := iotago.EncodeHex(identifier[:])
 
-	parentMessageIDs := make([]string, len(parents))
+	parentBlockIDs := make([]string, len(parents))
 	for i, p := range parents {
-		parentMessageIDs[i] = iotago.EncodeHex(p[:])
+		parentBlockIDs[i] = iotago.EncodeHex(p[:])
 	}
 
-	originRes := &nodeclient.MessageMetadataResponse{
-		MessageID:                  queryHash,
-		Parents:                    parentMessageIDs,
+	originRes := &nodeclient.BlockMetadataResponse{
+		BlockID:                    queryHash,
+		Parents:                    parentBlockIDs,
 		Solid:                      true,
 		MilestoneIndex:             nil,
 		ReferencedByMilestoneIndex: nil,
@@ -195,56 +195,56 @@ func TestClient_MessageMetadataByMessageID(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMessageMetadata, queryHash)).
+		Get(fmt.Sprintf(nodeclient.RouteBlockMetadata, queryHash)).
 		Reply(200).
 		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	meta, err := nodeAPI.MessageMetadataByMessageID(context.Background(), identifier)
+	meta, err := nodeAPI.BlockMetadataByBlockID(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, meta)
 }
 
-func TestClient_MessageByMessageID(t *testing.T) {
+func TestClient_BlockByBlockID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
 	queryHash := iotago.EncodeHex(identifier[:])
 
-	originMsg := &iotago.Message{
+	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
 
-	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	data, err := originBlock.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMessage, queryHash)).
+		Get(fmt.Sprintf(nodeclient.RouteBlock, queryHash)).
 		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	responseMsg, err := nodeAPI.MessageByMessageID(context.Background(), identifier, tpkg.TestProtoParas)
+	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), identifier, tpkg.TestProtoParas)
 	require.NoError(t, err)
-	require.EqualValues(t, originMsg, responseMsg)
+	require.EqualValues(t, originBlock, responseBlock)
 }
 
-func TestClient_ChildrenByMessageID(t *testing.T) {
+func TestClient_ChildrenByBlockID(t *testing.T) {
 	defer gock.Off()
 
-	msgID := tpkg.Rand32ByteArray()
-	hexMsgID := iotago.EncodeHex(msgID[:])
+	blockID := tpkg.Rand32ByteArray()
+	hexBlockID := iotago.EncodeHex(blockID[:])
 
 	child1 := tpkg.Rand32ByteArray()
 	child2 := tpkg.Rand32ByteArray()
 	child3 := tpkg.Rand32ByteArray()
 
 	originRes := &nodeclient.ChildrenResponse{
-		MessageID:  hexMsgID,
+		BlockID:    hexBlockID,
 		MaxResults: 1000,
 		Count:      3,
 		Children: []string{
@@ -255,42 +255,42 @@ func TestClient_ChildrenByMessageID(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMessageChildren, hexMsgID)).
+		Get(fmt.Sprintf(nodeclient.RouteBlockChildren, hexBlockID)).
 		Reply(200).
 		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	res, err := nodeAPI.ChildrenByMessageID(context.Background(), msgID)
+	res, err := nodeAPI.ChildrenByBlockID(context.Background(), blockID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
 }
 
-func TestClient_TransactionIncludedMessage(t *testing.T) {
+func TestClient_TransactionIncludedBlock(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
 	queryHash := iotago.EncodeHex(identifier[:])
 
-	originMsg := &iotago.Message{
+	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
 
-	data, err := originMsg.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	data, err := originBlock.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteTransactionsIncludedMessage, queryHash)).
+		Get(fmt.Sprintf(nodeclient.RouteTransactionsIncludedBlock, queryHash)).
 		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	responseMsg, err := nodeAPI.TransactionIncludedMessage(context.Background(), identifier, tpkg.TestProtoParas)
+	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), identifier, tpkg.TestProtoParas)
 	require.NoError(t, err)
-	require.EqualValues(t, originMsg, responseMsg)
+	require.EqualValues(t, originBlock, responseBlock)
 }
 
 func TestClient_OutputByID(t *testing.T) {
@@ -466,7 +466,7 @@ func TestClient_MilestoneByID(t *testing.T) {
 		Index:               1337,
 		Timestamp:           1337,
 		PreviousMilestoneID: tpkg.RandMilestoneID(),
-		Parents: iotago.MilestoneParentMessageIDs{
+		Parents: iotago.MilestoneParentBlockIDs{
 			tpkg.Rand32ByteArray(),
 		},
 		ConfirmedMerkleRoot: tpkg.Rand32ByteArray(),
@@ -533,7 +533,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 		Index:               milestoneIndex,
 		Timestamp:           1337,
 		PreviousMilestoneID: tpkg.RandMilestoneID(),
-		Parents: iotago.MilestoneParentMessageIDs{
+		Parents: iotago.MilestoneParentBlockIDs{
 			tpkg.Rand32ByteArray(),
 		},
 		ConfirmedMerkleRoot: tpkg.Rand32ByteArray(),
@@ -598,9 +598,9 @@ func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 	var milestoneTimestamp uint32 = 1333337
 
 	parents := tpkg.SortedRand32BytArray(1 + rand.Intn(7))
-	parentMessageIDs := make([]string, len(parents))
+	parentBlockIDs := make([]string, len(parents))
 	for i, p := range parents {
-		parentMessageIDs[i] = iotago.EncodeHex(p[:])
+		parentBlockIDs[i] = iotago.EncodeHex(p[:])
 	}
 
 	randConfirmedMerkleRoot := tpkg.RandMilestoneMerkleProof()
@@ -610,7 +610,7 @@ func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 	req := &nodeclient.ComputeWhiteFlagMutationsRequest{
 		Index:               milestoneIndex,
 		Timestamp:           milestoneTimestamp,
-		Parents:             parentMessageIDs,
+		Parents:             parentBlockIDs,
 		PreviousMilestoneID: iotago.EncodeHex(milestoneID[:]),
 	}
 
@@ -645,14 +645,14 @@ var sampleGossipInfo = &nodeclient.GossipInfo{
 		SyncedNeighbors:      1234,
 	},
 	Metrics: nodeclient.PeerGossipMetrics{
-		NewMessages:               40,
-		KnownMessages:             60,
-		ReceivedMessages:          100,
-		ReceivedMessageRequests:   345,
+		NewBlocks:                 40,
+		KnownBlocks:               60,
+		ReceivedBlocks:            100,
+		ReceivedBlockRequests:     345,
 		ReceivedMilestoneRequests: 194,
 		ReceivedHeartbeats:        5,
-		SentMessages:              492,
-		SentMessageRequests:       2396,
+		SentBlocks:                492,
+		SentBlockRequests:         2396,
 		SentMilestoneRequests:     9837,
 		SentHeartbeats:            3,
 		DroppedPackets:            10,

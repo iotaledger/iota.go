@@ -54,7 +54,7 @@ func TestWorker_Mine(t *testing.T) {
 	nonce, err := testWorker.Mine(context.Background(), msg[:len(msg)-nonceBytes], targetScore)
 	require.NoError(t, err)
 
-	// add nonce to message and check the resulting PoW score
+	// add nonce to block and check the resulting PoW score
 	binary.LittleEndian.PutUint64(msg[len(msg)-nonceBytes:], nonce)
 	pow := Score(msg)
 	assert.GreaterOrEqual(t, pow, targetScore)

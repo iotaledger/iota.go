@@ -31,32 +31,32 @@ const (
 	// GET returns the tips.
 	RouteTips = "/api/v2/tips"
 
-	// RouteMessage is the route for getting a message by its messageID.
-	// GET returns the message based on the given type in the request "Accept" header.
+	// RouteBlock is the route for getting a block by its ID.
+	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes
-	RouteMessage = "/api/v2/messages/%s"
+	RouteBlock = "/api/v2/blocks/%s"
 
-	// RouteMessageMetadata is the route for getting message metadata by its messageID.
-	// GET returns message metadata (including info about "promotion/reattachment needed").
-	RouteMessageMetadata = "/api/v2/messages/%s/metadata"
+	// RouteBlockMetadata is the route for getting block metadata by its ID.
+	// GET returns block metadata (including info about "promotion/reattachment needed").
+	RouteBlockMetadata = "/api/v2/blocks/%s/metadata"
 
-	// RouteMessageChildren is the route for getting message IDs of the children of a message, identified by its messageID.
-	// GET returns the message IDs of all children.
-	RouteMessageChildren = "/api/v2/messages/%s/children"
+	// RouteBlockChildren is the route for getting block IDs of the children of a block, identified by its block ID.
+	// GET returns the block IDs of all children.
+	RouteBlockChildren = "/api/v2/blocks/%s/children"
 
-	// RouteMessages is the route for creating new messages.
-	// POST creates a single new message and returns the new message ID.
-	// The message is parsed based on the given type in the request "Content-Type" header.
+	// RouteBlocks is the route for creating new blocks.
+	// POST creates a single new block and returns the ID.
+	// The block is parsed based on the given type in the request "Content-Type" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes
-	RouteMessages = "/api/v2/messages"
+	RouteBlocks = "/api/v2/blocks"
 
-	// RouteTransactionsIncludedMessage is the route for getting the message that was included in the ledger for a given transaction ID.
-	// GET returns the message based on the given type in the request "Accept" header.
+	// RouteTransactionsIncludedBlock is the route for getting the block that was included in the ledger for a given transaction ID.
+	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes
-	RouteTransactionsIncludedMessage = "/api/v2/transactions/%s/included-message"
+	RouteTransactionsIncludedBlock = "/api/v2/transactions/%s/included-block"
 
 	// RouteMilestoneByID is the route for getting a milestone by its ID.
 	// GET returns the milestone.
@@ -291,17 +291,17 @@ func (client *Client) NodeSupportsPlugin(ctx context.Context, pluginName string)
 	return false, nil
 }
 
-// Tips returns the hex encoded tips as MessageIDs.
-func (ntr *TipsResponse) Tips() (iotago.MessageIDs, error) {
-	msgIDs := make(iotago.MessageIDs, len(ntr.TipsHex))
+// Tips returns the hex encoded tips as BlockIDs.
+func (ntr *TipsResponse) Tips() (iotago.BlockIDs, error) {
+	blockIDs := make(iotago.BlockIDs, len(ntr.TipsHex))
 	for i, tip := range ntr.TipsHex {
-		msgID, err := iotago.DecodeHex(tip)
+		blockID, err := iotago.DecodeHex(tip)
 		if err != nil {
 			return nil, err
 		}
-		copy(msgIDs[i][:], msgID)
+		copy(blockIDs[i][:], blockID)
 	}
-	return msgIDs, nil
+	return blockIDs, nil
 }
 
 // Tips gets the two tips from the node.
@@ -314,42 +314,42 @@ func (client *Client) Tips(ctx context.Context) (*TipsResponse, error) {
 	return res, nil
 }
 
-// SubmitMessage submits the given Message to the node.
+// SubmitBlock submits the given Block to the node.
 // The node will take care of filling missing information.
-// This function returns the finalized message created by the node.
-func (client *Client) SubmitMessage(ctx context.Context, m *iotago.Message, protoParas *iotago.ProtocolParameters) (*iotago.Message, error) {
-	// do not check the message because the validation would fail if
+// This function returns the finalized block created by the node.
+func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block, protoParas *iotago.ProtocolParameters) (*iotago.Block, error) {
+	// do not check the block because the validation would fail if
 	// no parents were given. The node will first add this missing information and
-	// validate the message afterwards.
+	// validate the block afterwards.
 	data, err := m.Serialize(serializer.DeSeriModeNoValidation, protoParas)
 	if err != nil {
 		return nil, err
 	}
 
 	req := &RawDataEnvelope{Data: data}
-	res, err := client.Do(ctx, http.MethodPost, RouteMessages, req, nil)
+	res, err := client.Do(ctx, http.MethodPost, RouteBlocks, req, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	messageID, err := iotago.MessageIDFromHexString(res.Header.Get(locationHeader))
+	blockID, err := iotago.BlockIDFromHexString(res.Header.Get(locationHeader))
 	if err != nil {
 		return nil, err
 	}
 
-	msg, err := client.MessageByMessageID(ctx, messageID, protoParas)
+	block, err := client.BlockByBlockID(ctx, blockID, protoParas)
 	if err != nil {
 		return nil, err
 	}
 
-	return msg, nil
+	return block, nil
 }
 
-// MessageMetadataByMessageID gets the metadata of a message by its message ID from the node.
-func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iotago.MessageID) (*MessageMetadataResponse, error) {
-	query := fmt.Sprintf(RouteMessageMetadata, iotago.EncodeHex(msgID[:]))
+// BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
+func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*BlockMetadataResponse, error) {
+	query := fmt.Sprintf(RouteBlockMetadata, iotago.EncodeHex(blockID[:]))
 
-	res := &MessageMetadataResponse{}
+	res := &BlockMetadataResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -357,26 +357,26 @@ func (client *Client) MessageMetadataByMessageID(ctx context.Context, msgID iota
 	return res, nil
 }
 
-// MessageByMessageID get a message by its message ID from the node.
-func (client *Client) MessageByMessageID(ctx context.Context, msgID iotago.MessageID, protoParas *iotago.ProtocolParameters) (*iotago.Message, error) {
-	query := fmt.Sprintf(RouteMessage, iotago.EncodeHex(msgID[:]))
+// BlockByBlockID get a block by its block ID from the node.
+func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID, protoParas *iotago.ProtocolParameters) (*iotago.Block, error) {
+	query := fmt.Sprintf(RouteBlock, iotago.EncodeHex(blockID[:]))
 
 	res := &RawDataEnvelope{}
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
 
-	msg := &iotago.Message{}
-	if _, err := msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, protoParas); err != nil {
+	block := &iotago.Block{}
+	if _, err := block.Deserialize(res.Data, serializer.DeSeriModePerformValidation, protoParas); err != nil {
 		return nil, err
 	}
 
-	return msg, nil
+	return block, nil
 }
 
-// ChildrenByMessageID gets the MessageIDs of the child messages of a given message.
-func (client *Client) ChildrenByMessageID(ctx context.Context, parentMsgID iotago.MessageID) (*ChildrenResponse, error) {
-	query := fmt.Sprintf(RouteMessageChildren, iotago.EncodeHex(parentMsgID[:]))
+// ChildrenByBlockID gets the BlockIDs of the child blocks of a given block.
+func (client *Client) ChildrenByBlockID(ctx context.Context, parentBlockID iotago.BlockID) (*ChildrenResponse, error) {
+	query := fmt.Sprintf(RouteBlockChildren, iotago.EncodeHex(parentBlockID[:]))
 
 	res := &ChildrenResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -386,21 +386,21 @@ func (client *Client) ChildrenByMessageID(ctx context.Context, parentMsgID iotag
 	return res, nil
 }
 
-// TransactionIncludedMessage get a message that included the given transaction ID in the ledger.
-func (client *Client) TransactionIncludedMessage(ctx context.Context, txID iotago.TransactionID, protoParas *iotago.ProtocolParameters) (*iotago.Message, error) {
-	query := fmt.Sprintf(RouteTransactionsIncludedMessage, iotago.EncodeHex(txID[:]))
+// TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
+func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID, protoParas *iotago.ProtocolParameters) (*iotago.Block, error) {
+	query := fmt.Sprintf(RouteTransactionsIncludedBlock, iotago.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
 
-	msg := &iotago.Message{}
-	if _, err := msg.Deserialize(res.Data, serializer.DeSeriModePerformValidation, protoParas); err != nil {
+	block := &iotago.Block{}
+	if _, err := block.Deserialize(res.Data, serializer.DeSeriModePerformValidation, protoParas); err != nil {
 		return nil, err
 	}
 
-	return msg, nil
+	return block, nil
 }
 
 // OutputByID gets an output by its ID from the node.
@@ -519,7 +519,7 @@ func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uin
 
 // ComputeWhiteFlagMutations is the route to compute the white flag mutations for the cone of the given parents.
 // This function returns the merkle tree roots calculated by the node.
-func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index uint32, timestamp uint32, parents iotago.MessageIDs, previousMilestoneID iotago.MilestoneID) (*ComputeWhiteFlagMutationsResponse, error) {
+func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index uint32, timestamp uint32, parents iotago.BlockIDs, previousMilestoneID iotago.MilestoneID) (*ComputeWhiteFlagMutationsResponse, error) {
 
 	parentsHex := make([]string, len(parents))
 	for i, parent := range parents {

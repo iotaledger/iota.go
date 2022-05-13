@@ -67,8 +67,8 @@ var (
 
 	// restrictions around parents within a Milestone.
 	milestoneParentArrayRules = serializer.ArrayRules{
-		Min:            MinParentsInAMessage,
-		Max:            MaxParentsInAMessage,
+		Min:            BlockMinParents,
+		Max:            BlockMaxParents,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 
@@ -108,16 +108,16 @@ type (
 	MilestoneSignature = [MilestoneSignatureLength]byte
 	// MilestonePublicKeyMapping is a mapping from a public key to a private key.
 	MilestonePublicKeyMapping = map[MilestonePublicKey]ed25519.PrivateKey
-	// MilestoneParentMessageID is a reference to a parent message.
-	MilestoneParentMessageID = MessageID
-	// MilestoneParentMessageIDs are references to parent messages.
-	MilestoneParentMessageIDs = []MilestoneParentMessageID
+	// MilestoneParentBlockID is a reference to a parent block.
+	MilestoneParentBlockID = BlockID
+	// MilestoneParentBlockIDs are references to parent blocks.
+	MilestoneParentBlockIDs = []MilestoneParentBlockID
 	// MilestoneMerkleProof is the merkle root within a milestone.
 	MilestoneMerkleProof = [MilestoneMerkleProofLength]byte
 )
 
 // NewMilestone creates a new unsigned Milestone.
-func NewMilestone(index uint32, timestamp uint32, protocolVersion byte, prevMsID MilestoneID, parents MilestoneParentMessageIDs, confMerkleRoot MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) *Milestone {
+func NewMilestone(index uint32, timestamp uint32, protocolVersion byte, prevMsID MilestoneID, parents MilestoneParentBlockIDs, confMerkleRoot MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) *Milestone {
 	return &Milestone{
 		Index:               index,
 		Timestamp:           timestamp,
@@ -129,7 +129,7 @@ func NewMilestone(index uint32, timestamp uint32, protocolVersion byte, prevMsID
 	}
 }
 
-// Milestone represents a special payload which defines the inclusion set of other messages in the Tangle.
+// Milestone represents a special payload which defines the inclusion set of other blocks in the Tangle.
 type Milestone struct {
 	// The index of this milestone.
 	Index uint32
@@ -141,11 +141,11 @@ type Milestone struct {
 	// Zeroed if there wasn't a previous milestone.
 	PreviousMilestoneID MilestoneID
 	// The parents where this milestone attaches to.
-	Parents MilestoneParentMessageIDs
-	// The merkle root of all directly/indirectly referenced messages (their IDs) which
+	Parents MilestoneParentBlockIDs
+	// The merkle root of all directly/indirectly referenced blocks (their IDs) which
 	// were newly confirmed by this milestone.
 	ConfirmedMerkleRoot MilestoneMerkleProof
-	// The merkle root of all messages (their IDs) carrying ledger state mutating transactions.
+	// The merkle root of all blocks (their IDs) carrying ledger state mutating transactions.
 	AppliedMerkleRoot MilestoneMerkleProof
 	// The metadata associated with this milestone.
 	Metadata []byte
@@ -306,7 +306,7 @@ func InsecureRemoteEd25519MilestoneSigner(remoteEndpoint string) MilestoneSignin
 	}
 }
 
-// Sign produces the signatures with the given envelope message and updates the Signatures field of the Milestone
+// Sign produces the signatures with the given envelope block and updates the Signatures field of the Milestone
 // with the resulting signatures of the given MilestoneSigningFunc. pubKeys are passed to the given MilestoneSigningFunc
 // so it can determine which signatures to produce.
 func (m *Milestone) Sign(pubKeys []MilestonePublicKey, signingFunc MilestoneSigningFunc) error {
@@ -423,12 +423,12 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 
 func (m *Milestone) Size() int {
 	// 1 byte for length prefixes
-	parentMessagesByteLen := serializer.OneByte + MessageIDLength*len(m.Parents)
+	parentBlocksByteLen := serializer.OneByte + BlockIDLength*len(m.Parents)
 	signatureByteLen := serializer.OneByte + ((&Ed25519Signature{}).Size())*len(m.Signatures)
 	metadataLen := serializer.UInt16ByteSize + len(m.Metadata)
 
 	return util.NumByteLen(uint32(PayloadMilestone)) + util.NumByteLen(m.Index) + util.NumByteLen(m.Timestamp) +
-		util.NumByteLen(m.ProtocolVersion) + MilestoneIDLength + parentMessagesByteLen + MilestoneMerkleProofLength +
+		util.NumByteLen(m.ProtocolVersion) + MilestoneIDLength + parentBlocksByteLen + MilestoneMerkleProofLength +
 		MilestoneMerkleProofLength + metadataLen + m.Opts.Size() + signatureByteLen
 }
 
@@ -491,7 +491,7 @@ type jsonMilestone struct {
 	Timestamp           int                `json:"timestamp"`
 	ProtocolVersion     int                `json:"protocolVersion"`
 	PreviousMilestoneID string             `json:"previousMilestoneId"`
-	Parents             []string           `json:"parentMessageIds"`
+	Parents             []string           `json:"parentBlockIds"`
 	ConfirmedMerkleRoot string             `json:"confirmedMerkleRoot"`
 	AppliedMerkleRoot   string             `json:"appliedMerkleRoot"`
 	Metadata            string             `json:"metadata,omitempty"`
@@ -512,7 +512,7 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 	}
 	copy(payload.PreviousMilestoneID[:], prevMsID)
 
-	payload.Parents = make(MilestoneParentMessageIDs, len(j.Parents))
+	payload.Parents = make(MilestoneParentBlockIDs, len(j.Parents))
 	for i, jParent := range j.Parents {
 		parentBytes, err := DecodeHex(jParent)
 		if err != nil {
