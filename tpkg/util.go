@@ -185,29 +185,29 @@ func RandEd25519Signature() *iotago.Ed25519Signature {
 	return edSig
 }
 
-// RandEd25519SignatureUnlockBlock returns a random Ed25519 signature unlock block.
-func RandEd25519SignatureUnlockBlock() *iotago.SignatureUnlockBlock {
-	return &iotago.SignatureUnlockBlock{Signature: RandEd25519Signature()}
+// RandEd25519SignatureUnlock returns a random Ed25519 signature unlock.
+func RandEd25519SignatureUnlock() *iotago.SignatureUnlock {
+	return &iotago.SignatureUnlock{Signature: RandEd25519Signature()}
 }
 
-// RandReferenceUnlockBlock returns a random reference unlock block.
-func RandReferenceUnlockBlock() *iotago.ReferenceUnlockBlock {
-	return ReferenceUnlockBlock(uint16(rand.Intn(1000)))
+// RandReferenceUnlock returns a random reference unlock.
+func RandReferenceUnlock() *iotago.ReferenceUnlock {
+	return ReferenceUnlock(uint16(rand.Intn(1000)))
 }
 
-// RandAliasUnlockBlock returns a random alias unlock block.
-func RandAliasUnlockBlock() *iotago.AliasUnlockBlock {
-	return &iotago.AliasUnlockBlock{Reference: uint16(rand.Intn(1000))}
+// RandAliasUnlock returns a random alias unlock.
+func RandAliasUnlock() *iotago.AliasUnlock {
+	return &iotago.AliasUnlock{Reference: uint16(rand.Intn(1000))}
 }
 
-// RandNFTUnlockBlock returns a random alias unlock block.
-func RandNFTUnlockBlock() *iotago.NFTUnlockBlock {
-	return &iotago.NFTUnlockBlock{Reference: uint16(rand.Intn(1000))}
+// RandNFTUnlock returns a random alias unlock.
+func RandNFTUnlock() *iotago.NFTUnlock {
+	return &iotago.NFTUnlock{Reference: uint16(rand.Intn(1000))}
 }
 
-// ReferenceUnlockBlock returns a reference unlock block with the given index.
-func ReferenceUnlockBlock(index uint16) *iotago.ReferenceUnlockBlock {
-	return &iotago.ReferenceUnlockBlock{Reference: index}
+// ReferenceUnlock returns a reference unlock with the given index.
+func ReferenceUnlock(index uint16) *iotago.ReferenceUnlock {
+	return &iotago.ReferenceUnlock{Reference: index}
 }
 
 // RandTransactionEssence returns a random transaction essence.
@@ -339,9 +339,9 @@ func RandTransaction() *iotago.Transaction {
 	essence := RandTransactionEssence()
 	sigTxPayload.Essence = essence
 
-	unlockBlocksCount := len(essence.Inputs)
-	for i := unlockBlocksCount; i > 0; i-- {
-		sigTxPayload.UnlockBlocks = append(sigTxPayload.UnlockBlocks, RandEd25519SignatureUnlockBlock())
+	unlocksCount := len(essence.Inputs)
+	for i := unlocksCount; i > 0; i-- {
+		sigTxPayload.Unlocks = append(sigTxPayload.Unlocks, RandEd25519SignatureUnlock())
 	}
 
 	return sigTxPayload
@@ -419,8 +419,8 @@ func OneInputOutputTransaction() *iotago.Transaction {
 			},
 			Payload: nil,
 		},
-		UnlockBlocks: iotago.UnlockBlocks{
-			&iotago.SignatureUnlockBlock{
+		Unlocks: iotago.Unlocks{
+			&iotago.SignatureUnlock{
 				Signature: RandEd25519Signature(),
 			},
 		},

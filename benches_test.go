@@ -56,14 +56,14 @@ func BenchmarkDeserializeWithValidationLargeTxPayload(b *testing.B) {
 			}(),
 			Payload: nil,
 		},
-		UnlockBlocks: func() iotago.UnlockBlocks {
-			var unlockBlocks iotago.UnlockBlocks
+		Unlocks: func() iotago.Unlocks {
+			var unlocks iotago.Unlocks
 			for i := 0; i < iotago.MaxInputsCount; i++ {
-				unlockBlocks = append(unlockBlocks, &iotago.SignatureUnlockBlock{
+				unlocks = append(unlocks, &iotago.SignatureUnlock{
 					Signature: tpkg.RandEd25519Signature(),
 				})
 			}
-			return unlockBlocks
+			return unlocks
 		}(),
 	}
 

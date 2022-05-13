@@ -60,8 +60,8 @@ func TestNFTTransition(t *testing.T) {
 
 	tx := &iotago.Transaction{
 		Essence: essence,
-		UnlockBlocks: iotago.UnlockBlocks{
-			&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+		Unlocks: iotago.Unlocks{
+			&iotago.SignatureUnlock{Signature: sigs[0]},
 		},
 	}
 
@@ -159,10 +159,10 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 
 	tx := &iotago.Transaction{
 		Essence: essence,
-		UnlockBlocks: iotago.UnlockBlocks{
-			&iotago.SignatureUnlockBlock{Signature: sigs[0]},
-			&iotago.ReferenceUnlockBlock{Reference: 0},
-			&iotago.AliasUnlockBlock{Reference: 1},
+		Unlocks: iotago.Unlocks{
+			&iotago.SignatureUnlock{Signature: sigs[0]},
+			&iotago.ReferenceUnlock{Reference: 0},
+			&iotago.AliasUnlock{Reference: 1},
 		},
 	}
 
@@ -632,27 +632,27 @@ func TestTransactionSemanticValidation(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
+					Unlocks: iotago.Unlocks{
 						// basic
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
-						&iotago.SignatureUnlockBlock{Signature: sigs[1]},
-						&iotago.ReferenceUnlockBlock{Reference: 1},
-						&iotago.ReferenceUnlockBlock{Reference: 0},
-						&iotago.ReferenceUnlockBlock{Reference: 1},
-						&iotago.ReferenceUnlockBlock{Reference: 1},
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.SignatureUnlock{Signature: sigs[1]},
+						&iotago.ReferenceUnlock{Reference: 1},
+						&iotago.ReferenceUnlock{Reference: 0},
+						&iotago.ReferenceUnlock{Reference: 1},
+						&iotago.ReferenceUnlock{Reference: 1},
 						// alias
-						&iotago.SignatureUnlockBlock{Signature: sigs[3]},
-						&iotago.SignatureUnlockBlock{Signature: sigs[2]},
-						&iotago.ReferenceUnlockBlock{Reference: 7},
+						&iotago.SignatureUnlock{Signature: sigs[3]},
+						&iotago.SignatureUnlock{Signature: sigs[2]},
+						&iotago.ReferenceUnlock{Reference: 7},
 						// foundries
-						&iotago.AliasUnlockBlock{Reference: 7},
-						&iotago.AliasUnlockBlock{Reference: 7},
-						&iotago.AliasUnlockBlock{Reference: 7},
-						&iotago.AliasUnlockBlock{Reference: 7},
+						&iotago.AliasUnlock{Reference: 7},
+						&iotago.AliasUnlock{Reference: 7},
+						&iotago.AliasUnlock{Reference: 7},
+						&iotago.AliasUnlock{Reference: 7},
 						// nfts
-						&iotago.ReferenceUnlockBlock{Reference: 7},
-						&iotago.ReferenceUnlockBlock{Reference: 6},
-						&iotago.NFTUnlockBlock{Reference: 13},
+						&iotago.ReferenceUnlock{Reference: 7},
+						&iotago.ReferenceUnlock{Reference: 6},
+						&iotago.NFTUnlock{Reference: 13},
 					},
 				},
 				wantErr: nil,
@@ -774,15 +774,15 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
-						&iotago.ReferenceUnlockBlock{Reference: 0},
-						&iotago.AliasUnlockBlock{Reference: 1},
-						&iotago.AliasUnlockBlock{Reference: 1},
-						&iotago.NFTUnlockBlock{Reference: 3},
-						&iotago.SignatureUnlockBlock{Signature: sigs[1]},
-						&iotago.ReferenceUnlockBlock{Reference: 0},
-						&iotago.AliasUnlockBlock{Reference: 1},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.ReferenceUnlock{Reference: 0},
+						&iotago.AliasUnlock{Reference: 1},
+						&iotago.AliasUnlock{Reference: 1},
+						&iotago.NFTUnlock{Reference: 3},
+						&iotago.SignatureUnlock{Signature: sigs[1]},
+						&iotago.ReferenceUnlock{Reference: 0},
+						&iotago.AliasUnlock{Reference: 1},
 					},
 				},
 				wantErr: nil,
@@ -815,8 +815,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: iotago.ErrEd25519SignatureInvalid,
@@ -847,14 +847,14 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:   "fail - should contain reference unlock block",
+				name:   "fail - should contain reference unlock",
 				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: iotago.ErrInvalidInputUnlock,
@@ -888,14 +888,14 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:   "fail - should contain alias unlock block",
+				name:   "fail - should contain alias unlock",
 				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
-						&iotago.ReferenceUnlockBlock{Reference: 0},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
 				wantErr: iotago.ErrInvalidInputUnlock,
@@ -928,14 +928,14 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:   "fail - should contain NFT unlock block",
+				name:   "fail - should contain NFT unlock",
 				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
-						&iotago.ReferenceUnlockBlock{Reference: 0},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
 				wantErr: iotago.ErrInvalidInputUnlock,
@@ -972,8 +972,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: iotago.ErrEd25519PubKeyAndAddrMismatch,
@@ -1010,8 +1010,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: iotago.ErrEd25519PubKeyAndAddrMismatch,
@@ -1068,11 +1068,11 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
-						&iotago.AliasUnlockBlock{Reference: 0},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.AliasUnlock{Reference: 0},
 						// error, should be 0, because alias3 is unlocked by alias1, not alias2
-						&iotago.AliasUnlockBlock{Reference: 1},
+						&iotago.AliasUnlock{Reference: 1},
 					},
 				},
 				wantErr: iotago.ErrInvalidInputUnlock,
@@ -1176,10 +1176,10 @@ func TestTxSemanticDeposit(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
-						&iotago.ReferenceUnlockBlock{Reference: 0},
-						&iotago.SignatureUnlockBlock{Signature: sigs[1]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.ReferenceUnlock{Reference: 0},
+						&iotago.SignatureUnlock{Signature: sigs[1]},
 					},
 				},
 				wantErr: nil,
@@ -1220,8 +1220,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: iotago.ErrInputOutputSumMismatch,
@@ -1262,8 +1262,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: iotago.ErrInputOutputSumMismatch,
@@ -1314,8 +1314,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: iotago.ErrReturnAmountNotFulFilled,
@@ -1420,8 +1420,8 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
-					Essence:      essence,
-					UnlockBlocks: iotago.UnlockBlocks{},
+					Essence: essence,
+					Unlocks: iotago.Unlocks{},
 				},
 				wantErr: nil,
 			}
@@ -1460,8 +1460,8 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
-					Essence:      essence,
-					UnlockBlocks: iotago.UnlockBlocks{},
+					Essence: essence,
+					Unlocks: iotago.Unlocks{},
 				},
 				wantErr: iotago.ErrMaxNativeTokensCountExceeded,
 			}
@@ -1505,8 +1505,8 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
-					Essence:      essence,
-					UnlockBlocks: iotago.UnlockBlocks{},
+					Essence: essence,
+					Unlocks: iotago.Unlocks{},
 				},
 				wantErr: iotago.ErrNativeTokenSumUnbalanced,
 			}
@@ -1565,8 +1565,8 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
-					Essence:      essence,
-					UnlockBlocks: iotago.UnlockBlocks{},
+					Essence: essence,
+					Unlocks: iotago.Unlocks{},
 				},
 				wantErr: iotago.ErrNativeTokenSumUnbalanced,
 			}
@@ -1631,8 +1631,8 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: nil,
@@ -1674,8 +1674,8 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: iotago.ErrSenderFeatureBlockNotUnlocked,
@@ -1736,8 +1736,8 @@ func TestTxSemanticTimelocks(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: nil,
@@ -1771,8 +1771,8 @@ func TestTxSemanticTimelocks(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: iotago.ErrTimelockNotExpired,
@@ -1806,8 +1806,8 @@ func TestTxSemanticTimelocks(t *testing.T) {
 				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
-					UnlockBlocks: iotago.UnlockBlocks{
-						&iotago.SignatureUnlockBlock{Signature: sigs[0]},
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
 				wantErr: iotago.ErrTimelockNotExpired,

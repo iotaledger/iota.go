@@ -111,7 +111,7 @@ func TestBlock_UnmarshalJSON(t *testing.T) {
 				"data": "0xa487f431d852b060b49427f513dca1d5288e697e8bd9eb062534d09e7cb337ac"
 			  }
 			},
-			"unlockBlocks": [
+			"unlocks": [
 			  {
 				"type": 0,
 				"signature": {

@@ -64,7 +64,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Essence: &iotago.TransactionEssence{
 							Outputs: iotago.Outputs{exampleFoundry},
 						},
-						UnlockBlocks: nil,
+						Unlocks: nil,
 					},
 					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
 						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 5},
@@ -91,7 +91,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Essence: &iotago.TransactionEssence{
 							Outputs: iotago.Outputs{exampleFoundry},
 						},
-						UnlockBlocks: nil,
+						Unlocks: nil,
 					},
 					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
 						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 5},
@@ -118,7 +118,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Essence: &iotago.TransactionEssence{
 							Outputs: iotago.Outputs{exampleFoundry},
 						},
-						UnlockBlocks: nil,
+						Unlocks: nil,
 					},
 					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
 						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 6},

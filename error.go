@@ -35,8 +35,8 @@ var (
 	ErrUnknownTokenSchemeType = errors.New("unknown token scheme type")
 	// ErrUnknownTransactionEssenceType gets returned for unknown transaction essence types.
 	ErrUnknownTransactionEssenceType = errors.New("unknown transaction essence type")
-	// ErrUnknownUnlockBlockType gets returned for unknown unlock blocks.
-	ErrUnknownUnlockBlockType = errors.New("unknown unlock block type")
+	// ErrUnknownUnlockType gets returned for unknown unlock.
+	ErrUnknownUnlockType = errors.New("unknown unlock type")
 	// ErrUnknownSignatureType gets returned for unknown signature types.
 	ErrUnknownSignatureType = errors.New("unknown signature type")
 	// ErrDecodeJSONUint256Str gets returned when an uint256 string could not be decoded to a big.int.
