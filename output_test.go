@@ -31,7 +31,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 						MilestoneIndex: 4000,
 					},
 				},
-				Feats: iotago.Features{
+				Features: iotago.Features{
 					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 					&iotago.TagFeature{Tag: tpkg.RandBytes(32)},
@@ -52,11 +52,11 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
-				Feats: iotago.Features{
+				Features: iotago.Features{
 					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 				},
-				ImmutableFeats: iotago.Features{
+				ImmutableFeatures: iotago.Features{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 				},
 			},
@@ -76,7 +76,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 				Conditions: iotago.UnlockConditions{
 					&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
 				},
-				Feats: iotago.Features{
+				Features: iotago.Features{
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 				},
 			},
@@ -100,12 +100,12 @@ func TestOutputsDeSerialize(t *testing.T) {
 						MilestoneIndex: 4000,
 					},
 				},
-				Feats: iotago.Features{
+				Features: iotago.Features{
 					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 					&iotago.TagFeature{Tag: tpkg.RandBytes(32)},
 				},
-				ImmutableFeats: iotago.Features{
+				ImmutableFeatures: iotago.Features{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(10)},
 				},
@@ -531,7 +531,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 			},
 			wantErr: nil,
@@ -551,7 +551,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 			},
 			wantErr: nil,
@@ -571,7 +571,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 			},
 			wantErr: iotago.ErrSimpleTokenSchemeInvalidMaximumSupply,
@@ -591,7 +591,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 			},
 			wantErr: iotago.ErrSimpleTokenSchemeInvalidMintedMeltedTokens,
@@ -611,7 +611,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 			},
 			wantErr: iotago.ErrSimpleTokenSchemeInvalidMintedMeltedTokens,

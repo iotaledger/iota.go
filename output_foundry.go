@@ -166,20 +166,20 @@ type FoundryOutput struct {
 	// The unlock conditions on this output.
 	Conditions UnlockConditions
 	// The feature on the output.
-	Feats Features
+	Features Features
 	// The immutable feature on the output.
-	ImmutableFeats Features
+	ImmutableFeatures Features
 }
 
 func (f *FoundryOutput) Clone() Output {
 	return &FoundryOutput{
-		Amount:         f.Amount,
-		NativeTokens:   f.NativeTokens.Clone(),
-		SerialNumber:   f.SerialNumber,
-		TokenScheme:    f.TokenScheme.Clone(),
-		Conditions:     f.Conditions.Clone(),
-		Feats:          f.Feats.Clone(),
-		ImmutableFeats: f.ImmutableFeats.Clone(),
+		Amount:            f.Amount,
+		NativeTokens:      f.NativeTokens.Clone(),
+		SerialNumber:      f.SerialNumber,
+		TokenScheme:       f.TokenScheme.Clone(),
+		Conditions:        f.Conditions.Clone(),
+		Features:          f.Features.Clone(),
+		ImmutableFeatures: f.ImmutableFeatures.Clone(),
 	}
 }
 
@@ -201,8 +201,8 @@ func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		rentStruct.VBFactorData.Multiply(serializer.UInt32ByteSize) +
 		f.TokenScheme.VBytes(rentStruct, nil) +
 		f.Conditions.VBytes(rentStruct, nil) +
-		f.Feats.VBytes(rentStruct, nil) +
-		f.ImmutableFeats.VBytes(rentStruct, nil)
+		f.Features.VBytes(rentStruct, nil) +
+		f.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
 func (f *FoundryOutput) Chain() ChainID {
@@ -307,8 +307,8 @@ func (f *FoundryOutput) stateChangeValid(next ChainConstrainedOutput, inSums Nat
 		return fmt.Errorf("foundry output can only state transition to another foundry output")
 	}
 
-	if !f.ImmutableFeats.Equal(nextState.ImmutableFeats) {
-		return fmt.Errorf("old state %s, next state %s", f.ImmutableFeats, nextState.ImmutableFeats)
+	if !f.ImmutableFeatures.Equal(nextState.ImmutableFeatures) {
+		return fmt.Errorf("old state %s, next state %s", f.ImmutableFeatures, nextState.ImmutableFeatures)
 	}
 
 	// the check for the serial number and token scheme not being mutated is implicit
@@ -376,16 +376,16 @@ func (f *FoundryOutput) NativeTokenSet() NativeTokens {
 	return f.NativeTokens
 }
 
-func (f *FoundryOutput) UnlockConditions() UnlockConditions {
-	return f.Conditions
+func (f *FoundryOutput) FeaturesSet() FeaturesSet {
+	return f.Features.MustSet()
 }
 
-func (f *FoundryOutput) Features() Features {
-	return f.Feats
+func (f *FoundryOutput) UnlockConditionsSet() UnlockConditionsSet {
+	return f.Conditions.MustSet()
 }
 
-func (f *FoundryOutput) ImmutableFeatures() Features {
-	return f.ImmutableFeats
+func (f *FoundryOutput) ImmutableFeaturesSet() FeaturesSet {
+	return f.ImmutableFeatures.MustSet()
 }
 
 func (f *FoundryOutput) Deposit() uint64 {
@@ -416,10 +416,10 @@ func (f *FoundryOutput) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		ReadSliceOfObjects(&f.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputUnlockCondsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize unlock conditions for foundry output: %w", err)
 		}).
-		ReadSliceOfObjects(&f.Feats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputFeatBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&f.Features, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize features for foundry output: %w", err)
 		}).
-		ReadSliceOfObjects(&f.ImmutableFeats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputImmFeatBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&f.ImmutableFeatures, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, foundryOutputImmFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize immutable features for foundry output: %w", err)
 		}).
 		Done()
@@ -445,10 +445,10 @@ func (f *FoundryOutput) Serialize(deSeriMode serializer.DeSerializationMode, deS
 		WriteSliceOfObjects(&f.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, foundryOutputUnlockCondsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output unlock conditions: %w", err)
 		}).
-		WriteSliceOfObjects(&f.Feats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, foundryOutputFeatBlockArrayRules, func(err error) error {
+		WriteSliceOfObjects(&f.Features, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, foundryOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output features: %w", err)
 		}).
-		WriteSliceOfObjects(&f.ImmutableFeats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, foundryOutputImmFeatBlockArrayRules, func(err error) error {
+		WriteSliceOfObjects(&f.ImmutableFeatures, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, foundryOutputImmFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize foundry output immutable features: %w", err)
 		}).
 		Serialize()
@@ -461,8 +461,8 @@ func (f *FoundryOutput) Size() int {
 		util.NumByteLen(f.SerialNumber) +
 		f.TokenScheme.Size() +
 		f.Conditions.Size() +
-		f.Feats.Size() +
-		f.ImmutableFeats.Size()
+		f.Features.Size() +
+		f.ImmutableFeatures.Size()
 }
 
 func (f *FoundryOutput) MarshalJSON() ([]byte, error) {
@@ -490,12 +490,12 @@ func (f *FoundryOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jFoundryOutput.Features, err = serializablesToJSONRawMsgs(f.Feats.ToSerializables())
+	jFoundryOutput.Features, err = serializablesToJSONRawMsgs(f.Features.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
 
-	jFoundryOutput.ImmutableFeatures, err = serializablesToJSONRawMsgs(f.ImmutableFeats.ToSerializables())
+	jFoundryOutput.ImmutableFeatures, err = serializablesToJSONRawMsgs(f.ImmutableFeatures.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
@@ -554,12 +554,12 @@ func (j *jsonFoundryOutput) ToSerializable() (serializer.Serializable, error) {
 		return nil, err
 	}
 
-	e.Feats, err = featuresFromJSONRawMsg(j.Features)
+	e.Features, err = featuresFromJSONRawMsg(j.Features)
 	if err != nil {
 		return nil, err
 	}
 
-	e.ImmutableFeats, err = featuresFromJSONRawMsg(j.ImmutableFeatures)
+	e.ImmutableFeatures, err = featuresFromJSONRawMsg(j.ImmutableFeatures)
 	if err != nil {
 		return nil, err
 	}

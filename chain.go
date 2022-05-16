@@ -57,8 +57,8 @@ type ChainConstrainedOutput interface {
 	// Next is nil if transType is ChainTransitionTypeGenesis or ChainTransitionTypeDestroy.
 	ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error
 
-	// ImmutableFeatures returns the immutable Features this output contains.
-	ImmutableFeatures() Features
+	// ImmutableFeaturesSet returns the immutable FeaturesSet this output contains.
+	ImmutableFeaturesSet() FeaturesSet
 }
 
 // ChainTransitionType defines the type of transition a ChainConstrainedOutput is doing.
@@ -80,12 +80,12 @@ type StateTransitionValidationFunc func(current ChainConstrainedOutput, next Cha
 // IsIssuerOnOutputUnlocked checks whether the issuer in an IssuerFeature of this new ChainConstrainedOutput has been unlocked.
 // This function is a no-op if the chain output does not contain an IssuerFeature.
 func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents UnlockedIdentities) error {
-	immFeats := output.ImmutableFeatures()
+	immFeats := output.ImmutableFeaturesSet()
 	if immFeats == nil || len(immFeats) == 0 {
 		return nil
 	}
 
-	issuerFeat := immFeats.MustSet().IssuerFeature()
+	issuerFeat := immFeats.IssuerFeature()
 	if issuerFeat == nil {
 		return nil
 	}

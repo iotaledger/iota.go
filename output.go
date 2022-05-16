@@ -518,7 +518,7 @@ func (outputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSe
 }
 
 func outputUnlockable(output Output, next TransDepIdentOutput, target Address, extParas *ExternalUnlockParameters) (bool, error) {
-	unlockConds := output.UnlockConditions()
+	unlockConds := output.UnlockConditionsSet()
 
 	checkTargetIdentOfOutput := func() (bool, error) {
 		switch x := output.(type) {
@@ -535,11 +535,11 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 		}
 	}
 
-	if unlockConds == nil {
+	if len(unlockConds) == 0 {
 		return checkTargetIdentOfOutput()
 	}
 
-	targetIdentCanUnlock, returnIdentCanUnlock := unlockConds.MustSet().unlockableBy(target, extParas)
+	targetIdentCanUnlock, returnIdentCanUnlock := unlockConds.unlockableBy(target, extParas)
 	if !targetIdentCanUnlock {
 		return false, nil
 	}
@@ -563,11 +563,11 @@ type Output interface {
 	// NativeTokenSet returns the NativeToken this output defines.
 	NativeTokenSet() NativeTokens
 
-	// UnlockConditions returns the UnlockConditions this output defines.
-	UnlockConditions() UnlockConditions
+	// UnlockConditionsSet returns the UnlockConditionsSet this output defines.
+	UnlockConditionsSet() UnlockConditionsSet
 
-	// Features returns the Features this output contains.
-	Features() Features
+	// FeaturesSet returns the FeaturesSet this output contains.
+	FeaturesSet() FeaturesSet
 
 	// Type returns the type of the output.
 	Type() OutputType
@@ -707,13 +707,8 @@ func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSynt
 			return fmt.Errorf("%w: output %d", err, index)
 		}
 
-		unlockConditionsSet, err := output.UnlockConditions().Set()
-		if err != nil {
-			return fmt.Errorf("unable to compute unlock conditions set in deposit syntactic checks for output %d: %w", index, err)
-		}
-
 		// check whether the amount in the return condition allows the receiver to fulfil the storage deposit for the return output
-		if storageDep := unlockConditionsSet.StorageDepositReturn(); storageDep != nil {
+		if storageDep := output.UnlockConditionsSet().StorageDepositReturn(); storageDep != nil {
 			minStorageDepositForReturnOutput := protoParas.RentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
@@ -753,10 +748,7 @@ func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
 // That ExpirationUnlockCondition and TimelockUnlockCondition does not have both of its milestone and unix criteria set to zero.
 func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
-		unlockConditionsSet, err := output.UnlockConditions().Set()
-		if err != nil {
-			return fmt.Errorf("unable to compute unlock conditions set in expiration/timelock syntactic checks for output %d: %w", index, err)
-		}
+		unlockConditionsSet := output.UnlockConditionsSet()
 
 		if expiration := unlockConditionsSet.Expiration(); expiration != nil {
 			if expiration.MilestoneIndex == 0 && expiration.UnixTime == 0 {

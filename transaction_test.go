@@ -34,7 +34,7 @@ func TestNFTTransition(t *testing.T) {
 			Conditions: iotago.UnlockConditions{
 				&iotago.AddressUnlockCondition{Address: ident1},
 			},
-			Feats: nil,
+			Features: nil,
 		},
 	}
 
@@ -50,7 +50,7 @@ func TestNFTTransition(t *testing.T) {
 				Conditions: iotago.UnlockConditions{
 					&iotago.AddressUnlockCondition{Address: ident1},
 				},
-				Feats: nil,
+				Features: nil,
 			},
 		},
 	}
@@ -94,7 +94,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 				&iotago.GovernorAddressUnlockCondition{Address: ident1},
 			},
-			Feats: nil,
+			Features: nil,
 		},
 		inputIDs[2]: &iotago.FoundryOutput{
 			Amount:       OneMi,
@@ -108,7 +108,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 			Conditions: iotago.UnlockConditions{
 				&iotago.ImmutableAliasUnlockCondition{Address: aliasIdent1},
 			},
-			Feats: nil,
+			Features: nil,
 		},
 	}
 
@@ -135,7 +135,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 					&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 					&iotago.GovernorAddressUnlockCondition{Address: ident1},
 				},
-				Feats: nil,
+				Features: nil,
 			},
 			&iotago.FoundryOutput{
 				Amount:       2 * OneMi,
@@ -149,7 +149,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				Conditions: iotago.UnlockConditions{
 					&iotago.ImmutableAliasUnlockCondition{Address: aliasIdent1},
 				},
-				Feats: nil,
+				Features: nil,
 			},
 		},
 	}
@@ -273,7 +273,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 						&iotago.GovernorAddressUnlockCondition{Address: ident4},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 				inputIDs[7]: &iotago.AliasOutput{
 					Amount:         defaultAmount + defaultAmount, // to fund also the new alias output
@@ -286,7 +286,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 						&iotago.GovernorAddressUnlockCondition{Address: ident4},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 				inputIDs[8]: &iotago.AliasOutput{
 					Amount:         defaultAmount,
@@ -299,7 +299,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 						&iotago.GovernorAddressUnlockCondition{Address: ident3},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 				inputIDs[9]: &iotago.FoundryOutput{
 					Amount:       defaultAmount,
@@ -313,7 +313,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 				inputIDs[10]: &iotago.FoundryOutput{
 					Amount:       defaultAmount,
@@ -327,7 +327,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 				inputIDs[11]: &iotago.FoundryOutput{
 					Amount:       defaultAmount,
@@ -341,7 +341,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 				inputIDs[12]: &iotago.FoundryOutput{
 					Amount:       defaultAmount,
@@ -355,7 +355,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
-					Feats: nil,
+					Features: nil,
 				},
 				inputIDs[13]: &iotago.NFTOutput{
 					Amount:       defaultAmount,
@@ -364,10 +364,10 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident3},
 					},
-					Feats: iotago.Features{
+					Features: iotago.Features{
 						&iotago.IssuerFeature{Address: ident3},
 					},
-					ImmutableFeats: iotago.Features{
+					ImmutableFeatures: iotago.Features{
 						&iotago.MetadataFeature{Data: []byte("transfer to 4")},
 					},
 				},
@@ -378,10 +378,10 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident4},
 					},
-					Feats: iotago.Features{
+					Features: iotago.Features{
 						&iotago.IssuerFeature{Address: ident3},
 					},
-					ImmutableFeats: iotago.Features{
+					ImmutableFeatures: iotago.Features{
 						&iotago.MetadataFeature{Data: []byte("going to be destroyed")},
 					},
 				},
@@ -409,7 +409,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 				Conditions: iotago.UnlockConditions{
 					&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 				},
-				Feats: nil,
+				Features: nil,
 			}
 			newFoundryNativeTokenID := newFoundryWithInitialSupply.MustNativeTokenID()
 			newFoundryWithInitialSupply.NativeTokens = iotago.NativeTokens{
@@ -485,7 +485,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 							&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
-						Feats: nil,
+						Features: nil,
 					},
 					&iotago.AliasOutput{
 						Amount:         defaultAmount,
@@ -498,7 +498,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 							&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
-						Feats: iotago.Features{
+						Features: iotago.Features{
 							&iotago.MetadataFeature{Data: []byte("the gov mutation on this output")},
 						},
 					},
@@ -513,7 +513,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 							&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
-						Feats: nil,
+						Features: nil,
 					},
 					// new foundry
 					newFoundryWithInitialSupply,
@@ -534,7 +534,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						Conditions: iotago.UnlockConditions{
 							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
-						Feats: nil,
+						Features: nil,
 					},
 					&iotago.FoundryOutput{
 						Amount: defaultAmount,
@@ -553,7 +553,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						Conditions: iotago.UnlockConditions{
 							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
-						Feats: nil,
+						Features: nil,
 					},
 					&iotago.FoundryOutput{
 						Amount:       defaultAmount,
@@ -567,7 +567,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						Conditions: iotago.UnlockConditions{
 							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
-						Feats: iotago.Features{
+						Features: iotago.Features{
 							&iotago.MetadataFeature{Data: []byte("interesting metadata")},
 						},
 					},
@@ -585,8 +585,8 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident4},
 						},
-						Feats: nil,
-						ImmutableFeats: iotago.Features{
+						Features: nil,
+						ImmutableFeatures: iotago.Features{
 							&iotago.MetadataFeature{Data: []byte("immutable metadata")},
 						},
 					},
@@ -597,10 +597,10 @@ func TestTransactionSemanticValidation(t *testing.T) {
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident4},
 						},
-						Feats: iotago.Features{
+						Features: iotago.Features{
 							&iotago.IssuerFeature{Address: ident3},
 						},
-						ImmutableFeats: iotago.Features{
+						ImmutableFeatures: iotago.Features{
 							&iotago.MetadataFeature{Data: []byte("transfer to 4")},
 						},
 					},
@@ -1616,7 +1616,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
-						Feats: iotago.Features{
+						Features: iotago.Features{
 							&iotago.SenderFeature{Address: ident1},
 						},
 					},
@@ -1659,7 +1659,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 						Conditions: iotago.UnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
-						Feats: iotago.Features{
+						Features: iotago.Features{
 							&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 						},
 					},

@@ -180,19 +180,19 @@ type NFTOutput struct {
 	// The unlock conditions on this output.
 	Conditions UnlockConditions
 	// The feature on the output.
-	Feats Features
+	Features Features
 	// The immutable feature on the output.
-	ImmutableFeats Features
+	ImmutableFeatures Features
 }
 
 func (n *NFTOutput) Clone() Output {
 	return &NFTOutput{
-		Amount:         n.Amount,
-		NativeTokens:   n.NativeTokens.Clone(),
-		NFTID:          n.NFTID,
-		Conditions:     n.Conditions.Clone(),
-		Feats:          n.Feats.Clone(),
-		ImmutableFeats: n.ImmutableFeats.Clone(),
+		Amount:            n.Amount,
+		NativeTokens:      n.NativeTokens.Clone(),
+		NFTID:             n.NFTID,
+		Conditions:        n.Conditions.Clone(),
+		Features:          n.Features.Clone(),
+		ImmutableFeatures: n.ImmutableFeatures.Clone(),
 	}
 }
 
@@ -212,8 +212,8 @@ func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		n.NativeTokens.VBytes(rentStruct, nil) +
 		rentStruct.VBFactorData.Multiply(NFTIDLength) +
 		n.Conditions.VBytes(rentStruct, nil) +
-		n.Feats.VBytes(rentStruct, nil) +
-		n.ImmutableFeats.VBytes(rentStruct, nil)
+		n.Features.VBytes(rentStruct, nil) +
+		n.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
 func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
@@ -246,8 +246,8 @@ func (n *NFTOutput) stateChangeValid(next ChainConstrainedOutput) error {
 	if !is {
 		return fmt.Errorf("NFTOutput can only state transition to another NFTOutput")
 	}
-	if !n.ImmutableFeats.Equal(nextState.ImmutableFeats) {
-		return fmt.Errorf("old state %s, next state %s", n.ImmutableFeats, nextState.ImmutableFeats)
+	if !n.ImmutableFeatures.Equal(nextState.ImmutableFeatures) {
+		return fmt.Errorf("old state %s, next state %s", n.ImmutableFeatures, nextState.ImmutableFeatures)
 	}
 	return nil
 }
@@ -260,16 +260,16 @@ func (n *NFTOutput) NativeTokenSet() NativeTokens {
 	return n.NativeTokens
 }
 
-func (n *NFTOutput) UnlockConditions() UnlockConditions {
-	return n.Conditions
+func (n *NFTOutput) FeaturesSet() FeaturesSet {
+	return n.Features.MustSet()
 }
 
-func (n *NFTOutput) Features() Features {
-	return n.Feats
+func (n *NFTOutput) UnlockConditionsSet() UnlockConditionsSet {
+	return n.Conditions.MustSet()
 }
 
-func (n *NFTOutput) ImmutableFeatures() Features {
-	return n.ImmutableFeats
+func (n *NFTOutput) ImmutableFeaturesSet() FeaturesSet {
+	return n.ImmutableFeatures.MustSet()
 }
 
 func (n *NFTOutput) Deposit() uint64 {
@@ -297,10 +297,10 @@ func (n *NFTOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadSliceOfObjects(&n.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, nftOutputUnlockCondsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize unlock conditions for NFT output: %w", err)
 		}).
-		ReadSliceOfObjects(&n.Feats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, nftOutputFeatBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&n.Features, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, nftOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize features for NFT output: %w", err)
 		}).
-		ReadSliceOfObjects(&n.ImmutableFeats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, nftOutputImmFeatBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&n.ImmutableFeatures, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, nftOutputImmFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize immutable features for NFT output: %w", err)
 		}).
 		Done()
@@ -323,10 +323,10 @@ func (n *NFTOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		WriteSliceOfObjects(&n.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nftOutputUnlockCondsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output unlock conditions: %w", err)
 		}).
-		WriteSliceOfObjects(&n.Feats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nftOutputFeatBlockArrayRules, func(err error) error {
+		WriteSliceOfObjects(&n.Features, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nftOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output features: %w", err)
 		}).
-		WriteSliceOfObjects(&n.ImmutableFeats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nftOutputImmFeatBlockArrayRules, func(err error) error {
+		WriteSliceOfObjects(&n.ImmutableFeatures, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, nftOutputImmFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize NFT output immutable features: %w", err)
 		}).
 		Serialize()
@@ -338,8 +338,8 @@ func (n *NFTOutput) Size() int {
 		n.NativeTokens.Size() +
 		NFTIDLength +
 		n.Conditions.Size() +
-		n.Feats.Size() +
-		n.ImmutableFeats.Size()
+		n.Features.Size() +
+		n.ImmutableFeatures.Size()
 }
 
 func (n *NFTOutput) MarshalJSON() ([]byte, error) {
@@ -361,12 +361,12 @@ func (n *NFTOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jNFTOutput.Features, err = serializablesToJSONRawMsgs(n.Feats.ToSerializables())
+	jNFTOutput.Features, err = serializablesToJSONRawMsgs(n.Features.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
 
-	jNFTOutput.ImmutableFeatures, err = serializablesToJSONRawMsgs(n.ImmutableFeats.ToSerializables())
+	jNFTOutput.ImmutableFeatures, err = serializablesToJSONRawMsgs(n.ImmutableFeatures.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
@@ -423,12 +423,12 @@ func (j *jsonNFTOutput) ToSerializable() (serializer.Serializable, error) {
 		return nil, err
 	}
 
-	e.Feats, err = featuresFromJSONRawMsg(j.Features)
+	e.Features, err = featuresFromJSONRawMsg(j.Features)
 	if err != nil {
 		return nil, err
 	}
 
-	e.ImmutableFeats, err = featuresFromJSONRawMsg(j.ImmutableFeatures)
+	e.ImmutableFeatures, err = featuresFromJSONRawMsg(j.ImmutableFeatures)
 	if err != nil {
 		return nil, err
 	}

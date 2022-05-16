@@ -96,7 +96,7 @@ type BasicOutput struct {
 	// The unlock conditions on this output.
 	Conditions UnlockConditions
 	// The features on the output.
-	Feats Features
+	Features Features
 }
 
 func (e *BasicOutput) Clone() Output {
@@ -104,7 +104,7 @@ func (e *BasicOutput) Clone() Output {
 		Amount:       e.Amount,
 		NativeTokens: e.NativeTokens.Clone(),
 		Conditions:   e.Conditions.Clone(),
-		Feats:        e.Feats.Clone(),
+		Features:     e.Features.Clone(),
 	}
 }
 
@@ -119,19 +119,19 @@ func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		e.NativeTokens.VBytes(rentStruct, nil) +
 		e.Conditions.VBytes(rentStruct, nil) +
-		e.Feats.VBytes(rentStruct, nil)
+		e.Features.VBytes(rentStruct, nil)
 }
 
 func (e *BasicOutput) NativeTokenSet() NativeTokens {
 	return e.NativeTokens
 }
 
-func (e *BasicOutput) Features() Features {
-	return e.Feats
+func (e *BasicOutput) FeaturesSet() FeaturesSet {
+	return e.Features.MustSet()
 }
 
-func (e *BasicOutput) UnlockConditions() UnlockConditions {
-	return e.Conditions
+func (e *BasicOutput) UnlockConditionsSet() UnlockConditionsSet {
+	return e.Conditions.MustSet()
 }
 
 func (e *BasicOutput) Deposit() uint64 {
@@ -160,7 +160,7 @@ func (e *BasicOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadSliceOfObjects(&e.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, basicOutputUnlockCondsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize unlock conditions for basic output: %w", err)
 		}).
-		ReadSliceOfObjects(&e.Feats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, basicOutputFeatBlockArrayRules, func(err error) error {
+		ReadSliceOfObjects(&e.Features, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, basicOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize features for basic output: %w", err)
 		}).
 		Done()
@@ -180,7 +180,7 @@ func (e *BasicOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 		WriteSliceOfObjects(&e.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, basicOutputUnlockCondsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize basic output unlock conditions: %w", err)
 		}).
-		WriteSliceOfObjects(&e.Feats, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, basicOutputFeatBlockArrayRules, func(err error) error {
+		WriteSliceOfObjects(&e.Features, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, basicOutputFeatBlockArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize basic output features: %w", err)
 		}).
 		Serialize()
@@ -191,7 +191,7 @@ func (e *BasicOutput) Size() int {
 		util.NumByteLen(e.Amount) +
 		e.NativeTokens.Size() +
 		e.Conditions.Size() +
-		e.Feats.Size()
+		e.Features.Size()
 }
 
 func (e *BasicOutput) MarshalJSON() ([]byte, error) {
@@ -211,7 +211,7 @@ func (e *BasicOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jExtendedOutput.Features, err = serializablesToJSONRawMsgs(e.Feats.ToSerializables())
+	jExtendedOutput.Features, err = serializablesToJSONRawMsgs(e.Features.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +260,7 @@ func (j *jsonExtendedOutput) ToSerializable() (serializer.Serializable, error) {
 		return nil, err
 	}
 
-	e.Feats, err = featuresFromJSONRawMsg(j.Features)
+	e.Features, err = featuresFromJSONRawMsg(j.Features)
 	if err != nil {
 		return nil, err
 	}

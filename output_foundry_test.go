@@ -136,7 +136,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"change_metadata": {
-					"Feats": iotago.Features{
+					"Features": iotago.Features{
 						&iotago.MetadataFeature{Data: tpkg.RandBytes(20)},
 					},
 				},
