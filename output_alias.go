@@ -65,19 +65,19 @@ var (
 		Guards: serializer.SerializableGuard{
 			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
 				switch ty {
-				case uint32(FeatureBlockSender):
-				case uint32(FeatureBlockMetadata):
+				case uint32(FeatureSender):
+				case uint32(FeatureMetadata):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
+					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
 				}
-				return FeatureBlockSelector(ty)
+				return FeatureSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
 				switch seri.(type) {
-				case *SenderFeatureBlock:
-				case *MetadataFeatureBlock:
+				case *SenderFeature:
+				case *MetadataFeature:
 				default:
-					return fmt.Errorf("%w: in alias output", ErrUnsupportedFeatureBlockType)
+					return fmt.Errorf("%w: in alias output", ErrUnsupportedFeatureType)
 				}
 				return nil
 			},
@@ -93,19 +93,19 @@ var (
 		Guards: serializer.SerializableGuard{
 			ReadGuard: func(ty uint32) (serializer.Serializable, error) {
 				switch ty {
-				case uint32(FeatureBlockIssuer):
-				case uint32(FeatureBlockMetadata):
+				case uint32(FeatureIssuer):
+				case uint32(FeatureMetadata):
 				default:
-					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported immutable feature block type %s", ErrUnsupportedFeatureBlockType, FeatureBlockType(ty))
+					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported immutable feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
 				}
-				return FeatureBlockSelector(ty)
+				return FeatureSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
 				switch seri.(type) {
-				case *IssuerFeatureBlock:
-				case *MetadataFeatureBlock:
+				case *IssuerFeature:
+				case *MetadataFeature:
 				default:
-					return fmt.Errorf("%w: in alias output", ErrUnsupportedFeatureBlockType)
+					return fmt.Errorf("%w: in alias output", ErrUnsupportedFeatureType)
 				}
 				return nil
 			},
@@ -116,13 +116,13 @@ var (
 	}
 )
 
-// AliasOutputFeatureBlocksArrayRules returns array rules defining the constraints on FeatureBlocks within an AliasOutput.
-func AliasOutputFeatureBlocksArrayRules() serializer.ArrayRules {
+// AliasOutputFeaturesArrayRules returns array rules defining the constraints on Features within an AliasOutput.
+func AliasOutputFeaturesArrayRules() serializer.ArrayRules {
 	return *aliasOutputFeatBlockArrayRules
 }
 
-// AliasOutputImmutableFeatureBlocksArrayRules returns array rules defining the constraints on immutable FeatureBlocks within an AliasOutput.
-func AliasOutputImmutableFeatureBlocksArrayRules() serializer.ArrayRules {
+// AliasOutputImmutableFeaturesArrayRules returns array rules defining the constraints on immutable Features within an AliasOutput.
+func AliasOutputImmutableFeaturesArrayRules() serializer.ArrayRules {
 	return *aliasOutputImmFeatBlockArrayRules
 }
 
@@ -242,10 +242,10 @@ type AliasOutput struct {
 	FoundryCounter uint32
 	// The unlock conditions on this output.
 	Conditions UnlockConditions
-	// The feature blocks on the output.
-	Blocks FeatureBlocks
-	// The immutable feature blocks on the output.
-	ImmutableBlocks FeatureBlocks
+	// The features on the output.
+	Features Features
+	// The immutable feature on the output.
+	ImmutableFeatures Features
 }
 
 func (a *AliasOutput) GovernorAddress() Address {
@@ -258,15 +258,15 @@ func (a *AliasOutput) StateController() Address {
 
 func (a *AliasOutput) Clone() Output {
 	return &AliasOutput{
-		Amount:          a.Amount,
-		AliasID:         a.AliasID,
-		NativeTokens:    a.NativeTokens.Clone(),
-		StateIndex:      a.StateIndex,
-		StateMetadata:   append([]byte(nil), a.StateMetadata...),
-		FoundryCounter:  a.FoundryCounter,
-		Conditions:      a.Conditions.Clone(),
-		Blocks:          a.Blocks.Clone(),
-		ImmutableBlocks: a.ImmutableBlocks.Clone(),
+		Amount:            a.Amount,
+		AliasID:           a.AliasID,
+		NativeTokens:      a.NativeTokens.Clone(),
+		StateIndex:        a.StateIndex,
+		StateMetadata:     append([]byte(nil), a.StateMetadata...),
+		FoundryCounter:    a.FoundryCounter,
+		Conditions:        a.Conditions.Clone(),
+		Features:          a.Features.Clone(),
+		ImmutableFeatures: a.ImmutableFeatures.Clone(),
 	}
 }
 
@@ -283,8 +283,8 @@ func (a *AliasOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		// state index, state meta length, state meta, foundry counter
 		rentStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
 		a.Conditions.VBytes(rentStruct, nil) +
-		a.Blocks.VBytes(rentStruct, nil) +
-		a.ImmutableBlocks.VBytes(rentStruct, nil)
+		a.Features.VBytes(rentStruct, nil) +
+		a.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
 //	- For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either
@@ -324,8 +324,8 @@ func (a *AliasOutput) stateChangeValid(semValCtx *SemanticValidationContext, nex
 	if !is {
 		return fmt.Errorf("can only state transition to another alias output")
 	}
-	if !a.ImmutableBlocks.Equal(nextState.ImmutableBlocks) {
-		return fmt.Errorf("old state %s, next state %s", a.ImmutableBlocks, nextState.ImmutableBlocks)
+	if !a.ImmutableFeatures.Equal(nextState.ImmutableFeatures) {
+		return fmt.Errorf("old state %s, next state %s", a.ImmutableFeatures, nextState.ImmutableFeatures)
 	}
 	if a.StateIndex == nextState.StateIndex {
 		return a.GovernanceSTVF(nextState, semValCtx)
@@ -357,7 +357,7 @@ func (a *AliasOutput) Chain() ChainID {
 }
 
 // GovernanceSTVF checks whether the governance transition with other is valid.
-// Under a governance transition, only the StateController, GovernanceController and MetadataFeatureBlock can change.
+// Under a governance transition, only the StateController, GovernanceController and MetadataFeature can change.
 func (a *AliasOutput) GovernanceSTVF(nextAliasOutput *AliasOutput, semValCtx *SemanticValidationContext) error {
 	switch {
 	case a.Amount != nextAliasOutput.Amount:
@@ -375,7 +375,7 @@ func (a *AliasOutput) GovernanceSTVF(nextAliasOutput *AliasOutput, semValCtx *Se
 }
 
 // StateSTVF checks whether the state transition with other is valid.
-// Under a state transition, only Amount, NativeTokens, StateIndex, StateMetadata, SenderFeatureBlock and FoundryCounter can change.
+// Under a state transition, only Amount, NativeTokens, StateIndex, StateMetadata, SenderFeature and FoundryCounter can change.
 func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *SemanticValidationContext) error {
 	switch {
 	case !a.StateController().Equal(nextAliasOutput.StateController()):
@@ -388,7 +388,7 @@ func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *Semanti
 		return fmt.Errorf("%w: state index %d on the input side but %d on the output side", ErrInvalidAliasStateTransition, a.StateIndex, nextAliasOutput.StateIndex)
 	}
 
-	if err := FeatureBlockUnchanged(FeatureBlockMetadata, a.Blocks.MustSet(), nextAliasOutput.Blocks.MustSet()); err != nil {
+	if err := FeatureUnchanged(FeatureMetadata, a.Features.MustSet(), nextAliasOutput.Features.MustSet()); err != nil {
 		return fmt.Errorf("%w: %s", ErrInvalidAliasStateTransition, err)
 	}
 
@@ -431,16 +431,16 @@ func (a *AliasOutput) NativeTokenSet() NativeTokens {
 	return a.NativeTokens
 }
 
-func (a *AliasOutput) FeatureBlocks() FeatureBlocks {
-	return a.Blocks
+func (a *AliasOutput) FeaturesSet() FeaturesSet {
+	return a.Features.MustSet()
 }
 
-func (a *AliasOutput) ImmutableFeatureBlocks() FeatureBlocks {
-	return a.ImmutableBlocks
+func (a *AliasOutput) UnlockConditionsSet() UnlockConditionsSet {
+	return a.Conditions.MustSet()
 }
 
-func (a *AliasOutput) UnlockConditions() UnlockConditions {
-	return a.Conditions
+func (a *AliasOutput) ImmutableFeaturesSet() FeaturesSet {
+	return a.ImmutableFeatures.MustSet()
 }
 
 func (a *AliasOutput) Deposit() uint64 {
@@ -483,11 +483,11 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		ReadSliceOfObjects(&a.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputUnlockCondsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize unlock conditions for alias output: %w", err)
 		}).
-		ReadSliceOfObjects(&a.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize feature blocks for alias output: %w", err)
+		ReadSliceOfObjects(&a.Features, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputFeatBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize features for alias output: %w", err)
 		}).
-		ReadSliceOfObjects(&a.ImmutableBlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputImmFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize immutable feature blocks for alias output: %w", err)
+		ReadSliceOfObjects(&a.ImmutableFeatures, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, aliasOutputImmFeatBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to deserialize immutable features for alias output: %w", err)
 		}).
 		Done()
 }
@@ -518,11 +518,11 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 		WriteSliceOfObjects(&a.Conditions, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, aliasOutputUnlockCondsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output unlock conditions: %w", err)
 		}).
-		WriteSliceOfObjects(&a.Blocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, aliasOutputFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output feature blocks: %w", err)
+		WriteSliceOfObjects(&a.Features, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, aliasOutputFeatBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize alias output features: %w", err)
 		}).
-		WriteSliceOfObjects(&a.ImmutableBlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, aliasOutputImmFeatBlockArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize alias output immutable feature blocks: %w", err)
+		WriteSliceOfObjects(&a.ImmutableFeatures, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, aliasOutputImmFeatBlockArrayRules, func(err error) error {
+			return fmt.Errorf("unable to serialize alias output immutable features: %w", err)
 		}).
 		Serialize()
 }
@@ -537,8 +537,8 @@ func (a *AliasOutput) Size() int {
 		len(a.StateMetadata) +
 		util.NumByteLen(a.FoundryCounter) +
 		a.Conditions.Size() +
-		a.Blocks.Size() +
-		a.ImmutableBlocks.Size()
+		a.Features.Size() +
+		a.ImmutableFeatures.Size()
 }
 
 func (a *AliasOutput) MarshalJSON() ([]byte, error) {
@@ -564,12 +564,12 @@ func (a *AliasOutput) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	jAliasOutput.Blocks, err = serializablesToJSONRawMsgs(a.Blocks.ToSerializables())
+	jAliasOutput.Features, err = serializablesToJSONRawMsgs(a.Features.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
 
-	jAliasOutput.ImmutableBlocks, err = serializablesToJSONRawMsgs(a.ImmutableBlocks.ToSerializables())
+	jAliasOutput.ImmutableFeatures, err = serializablesToJSONRawMsgs(a.ImmutableFeatures.ToSerializables())
 	if err != nil {
 		return nil, err
 	}
@@ -592,16 +592,16 @@ func (a *AliasOutput) UnmarshalJSON(bytes []byte) error {
 
 // jsonAliasOutput defines the json representation of an AliasOutput.
 type jsonAliasOutput struct {
-	Type            int                `json:"type"`
-	Amount          string             `json:"amount"`
-	NativeTokens    []*json.RawMessage `json:"nativeTokens,omitempty"`
-	AliasID         string             `json:"aliasId"`
-	StateIndex      int                `json:"stateIndex"`
-	StateMetadata   string             `json:"stateMetadata,omitempty"`
-	FoundryCounter  int                `json:"foundryCounter"`
-	Conditions      []*json.RawMessage `json:"unlockConditions,omitempty"`
-	Blocks          []*json.RawMessage `json:"featureBlocks,omitempty"`
-	ImmutableBlocks []*json.RawMessage `json:"immutableFeatureBlocks,omitempty"`
+	Type              int                `json:"type"`
+	Amount            string             `json:"amount"`
+	NativeTokens      []*json.RawMessage `json:"nativeTokens,omitempty"`
+	AliasID           string             `json:"aliasId"`
+	StateIndex        int                `json:"stateIndex"`
+	StateMetadata     string             `json:"stateMetadata,omitempty"`
+	FoundryCounter    int                `json:"foundryCounter"`
+	Conditions        []*json.RawMessage `json:"unlockConditions,omitempty"`
+	Features          []*json.RawMessage `json:"features,omitempty"`
+	ImmutableFeatures []*json.RawMessage `json:"immutableFeatures,omitempty"`
 }
 
 func (j *jsonAliasOutput) ToSerializable() (serializer.Serializable, error) {
@@ -637,12 +637,12 @@ func (j *jsonAliasOutput) ToSerializable() (serializer.Serializable, error) {
 		return nil, err
 	}
 
-	e.Blocks, err = featureBlocksFromJSONRawMsg(j.Blocks)
+	e.Features, err = featuresFromJSONRawMsg(j.Features)
 	if err != nil {
 		return nil, err
 	}
 
-	e.ImmutableBlocks, err = featureBlocksFromJSONRawMsg(j.ImmutableBlocks)
+	e.ImmutableFeatures, err = featuresFromJSONRawMsg(j.ImmutableFeatures)
 	if err != nil {
 		return nil, err
 	}

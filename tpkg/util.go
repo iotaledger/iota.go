@@ -379,7 +379,7 @@ func RandTreasuryTransaction() *iotago.TreasuryTransaction {
 	}
 }
 
-// RandBasicOutput returns a random basic output (with no feature blocks).
+// RandBasicOutput returns a random basic output (with no features).
 func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 	dep := &iotago.BasicOutput{}
 

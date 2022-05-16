@@ -26,10 +26,10 @@ var (
 	ErrSignatureAndAddrIncompatible = errors.New("address and signature type are not compatible")
 	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
 	ErrInvalidInputUnlock = errors.New("invalid input unlock")
-	// ErrSenderFeatureBlockNotUnlocked gets returned when an output contains a SenderFeatureBlock with an ident which is not unlocked.
-	ErrSenderFeatureBlockNotUnlocked = errors.New("sender feature block is not unlocked")
-	// ErrIssuerFeatureBlockNotUnlocked gets returned when an output contains a IssuerFeatureBlock with an ident which is not unlocked.
-	ErrIssuerFeatureBlockNotUnlocked = errors.New("issuer feature block is not unlocked")
+	// ErrSenderFeatureNotUnlocked gets returned when an output contains a SenderFeature with an ident which is not unlocked.
+	ErrSenderFeatureNotUnlocked = errors.New("sender feature is not unlocked")
+	// ErrIssuerFeatureNotUnlocked gets returned when an output contains a IssuerFeature with an ident which is not unlocked.
+	ErrIssuerFeatureNotUnlocked = errors.New("issuer feature is not unlocked")
 	// ErrReturnAmountNotFulFilled gets returned when a return amount in a transaction is not fulfilled by the output side.
 	ErrReturnAmountNotFulFilled = errors.New("return amount not fulfilled")
 	// ErrTypeIsNotSupportedEssence gets returned when a serializable was found to not be a supported essence.
@@ -521,8 +521,7 @@ func identToUnlock(svCtx *SemanticValidationContext, input Output, inputIndex ui
 }
 
 func checkExpiredForReceiver(svCtx *SemanticValidationContext, output Output) Address {
-	unlockCondSet := output.UnlockConditions().MustSet()
-	if ok, returnIdent := unlockCondSet.returnIdentCanUnlock(svCtx.ExtParas); ok {
+	if ok, returnIdent := output.UnlockConditionsSet().returnIdentCanUnlock(svCtx.ExtParas); ok {
 		return returnIdent
 	}
 
@@ -581,20 +580,20 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 	return nil
 }
 
-// TxSemanticOutputsSender validates that for SenderFeatureBlock occurring on the output side,
+// TxSemanticOutputsSender validates that for SenderFeature occurring on the output side,
 // the given identity is unlocked on the input side.
 func TxSemanticOutputsSender() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		for outputIndex, output := range svCtx.WorkingSet.Tx.Essence.Outputs {
-			senderFeatureBlock := output.FeatureBlocks().MustSet().SenderFeatureBlock()
-			if senderFeatureBlock == nil {
+			senderFeat := output.FeaturesSet().SenderFeature()
+			if senderFeat == nil {
 				continue
 			}
 
 			// check unlocked
-			sender := senderFeatureBlock.Address
+			sender := senderFeat.Address
 			if _, isUnlocked := svCtx.WorkingSet.UnlockedIdents[sender.Key()]; !isUnlocked {
-				return fmt.Errorf("%w: output %d", ErrSenderFeatureBlockNotUnlocked, outputIndex)
+				return fmt.Errorf("%w: output %d", ErrSenderFeatureNotUnlocked, outputIndex)
 			}
 		}
 		return nil
@@ -613,8 +612,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 		for inputID, input := range svCtx.WorkingSet.InputSet {
 			in += input.Deposit()
 
-			unlockCondSet := input.UnlockConditions().MustSet()
-			returnUnlockCond := unlockCondSet.StorageDepositReturn()
+			returnUnlockCond := input.UnlockConditionsSet().StorageDepositReturn()
 			if returnUnlockCond == nil {
 				continue
 			}
@@ -637,7 +635,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 
 			// accumulate simple transfers for StorageDepositReturnUnlockCondition checks
 			if basicOutput, is := output.(*BasicOutput); is {
-				if len(basicOutput.FeatureBlocks()) > 0 || len(basicOutput.UnlockConditions()) > 1 {
+				if len(basicOutput.FeaturesSet()) > 0 || len(basicOutput.UnlockConditionsSet()) > 1 {
 					continue
 				}
 				outputSimpleTransfersPerIdent[basicOutput.Ident().Key()] += outDeposit
@@ -666,7 +664,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 func TxSemanticTimelock() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		for inputIndex, input := range svCtx.WorkingSet.InputSet {
-			if err := input.UnlockConditions().MustSet().TimelocksExpired(svCtx.ExtParas); err != nil {
+			if err := input.UnlockConditionsSet().TimelocksExpired(svCtx.ExtParas); err != nil {
 				return fmt.Errorf("%w: input at index %d's timelocks are not expired", err, inputIndex)
 			}
 		}
