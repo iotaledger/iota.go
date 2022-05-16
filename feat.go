@@ -30,14 +30,14 @@ const (
 )
 
 func (featType FeatureType) String() string {
-	if int(featType) >= len(feaNames) {
+	if int(featType) >= len(featNames) {
 		return fmt.Sprintf("unknown feature type: %d", featType)
 	}
-	return feaNames[featType]
+	return featNames[featType]
 }
 
 var (
-	feaNames = [FeatureTag + 1]string{
+	featNames = [FeatureTag + 1]string{
 		"SenderFeature", "IssuerFeature", "MetadataFeature", "TagFeature",
 	}
 )
