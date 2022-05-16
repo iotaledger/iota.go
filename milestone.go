@@ -491,7 +491,7 @@ type jsonMilestone struct {
 	Timestamp           int                `json:"timestamp"`
 	ProtocolVersion     int                `json:"protocolVersion"`
 	PreviousMilestoneID string             `json:"previousMilestoneId"`
-	Parents             []string           `json:"parentBlockIds"`
+	Parents             []string           `json:"parents"`
 	ConfirmedMerkleRoot string             `json:"confirmedMerkleRoot"`
 	AppliedMerkleRoot   string             `json:"appliedMerkleRoot"`
 	Metadata            string             `json:"metadata,omitempty"`

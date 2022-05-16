@@ -228,7 +228,7 @@ func (m *Block) UnmarshalJSON(bytes []byte) error {
 type jsonBlock struct {
 	ProtocolVersion int `json:"protocolVersion"`
 	// The hex encoded IDs of the referenced parent blocks.
-	Parents []string `json:"parentBlockIds"`
+	Parents []string `json:"parents"`
 	// The payload within the block.
 	Payload *json.RawMessage `json:"payload,omitempty"`
 	// The nonce the block used to fulfill the PoW requirement.

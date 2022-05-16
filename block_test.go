@@ -82,7 +82,7 @@ func TestBlock_UnmarshalJSON(t *testing.T) {
 	data := `
 		{
 		  "protocolVersion": 1,
-		  "parentBlockIds": ["0xf532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d", "0x78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2"],
+		  "parents": ["0xf532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d", "0x78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2"],
 		  "payload": {
 			"type": 6,
 			"essence": {
@@ -143,7 +143,7 @@ func TestBlock_UnmarshalJSON(t *testing.T) {
 
 	minimal := `
 		{
-		  "parentBlockIds": ["0x0000000000000000000000000000000000000000000000000000000000000000"]
+		  "parents": ["0x0000000000000000000000000000000000000000000000000000000000000000"]
 		}`
 	blockMinimal := &iotago.Block{}
 	assert.NoError(t, json.Unmarshal([]byte(minimal), blockMinimal))
