@@ -1,6 +1,6 @@
-// Package iotago provides IOTA data models, a node API client and builders to craft messages and transactions.
+// Package iotago provides IOTA data models, a node API client and builders to craft blocks and transactions.
 //
-// Creating Messages:
+// Creating Blocks:
 //
 //	import (
 //		"context"
@@ -11,7 +11,7 @@
 //		"github.com/iotaledger/iota.go/v3/nodeclient"
 //	)
 //
-//	func sendMessageExample() error {
+//	func sendblockExample() error {
 //		// create a new node API client
 //		nodeHTTPAPIClient := nodeclient.New("https://example.com")
 //
@@ -47,15 +47,15 @@
 //			return err
 //		}
 //
-//		// build a message by adding the paylod and the tips and then do local Proof-of-Work
-//		msg, err := builder.NewMessageBuilder().
+//		// build a block by adding the paylod and the tips and then do local Proof-of-Work
+//		block, err := builder.NewBlockBuilder().
 //			Payload(taggedDataPayload).
-//			ParentsMessageIDs(tips).
+//			ParentsBlockIDs(tips).
 //			ProofOfWork(ctx, protoParas, info.Protocol.MinPoWScore).
 //			Build()
 //
-//		// submit the message to the node
-//		if _, err := nodeHTTPAPIClient.SubmitMessage(ctx, msg, protoParas); err != nil {
+//		// submit the block to the node
+//		if _, err := nodeHTTPAPIClient.SubmitBlock(ctx, block, protoParas); err != nil {
 //			return err
 //		}
 //

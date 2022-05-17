@@ -73,19 +73,19 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 // TransactionFunc is a function which receives a Transaction as its parameter.
 type TransactionFunc func(tx *iotago.Transaction)
 
-// BuildAndSwapToMessageBuilder builds the transaction and then swaps to a MessageBuilder with
+// BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
-func (b *TransactionBuilder) BuildAndSwapToMessageBuilder(protoParas *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *MessageBuilder {
-	msgBuilder := NewMessageBuilder(protoParas.Version)
+func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParas *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *BlockBuilder {
+	blockBuilder := NewBlockBuilder(protoParas.Version)
 	tx, err := b.Build(protoParas, signer)
 	if err != nil {
-		msgBuilder.err = err
-		return msgBuilder
+		blockBuilder.err = err
+		return blockBuilder
 	}
 	if txFunc != nil {
 		txFunc(tx)
 	}
-	return msgBuilder.Payload(tx)
+	return blockBuilder.Payload(tx)
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
@@ -116,17 +116,17 @@ func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer
 	}
 
 	sigBlockPos := map[string]int{}
-	unlockBlocks := iotago.UnlockBlocks{}
+	unlocks := iotago.Unlocks{}
 	for i, input := range b.essence.Inputs {
 		addr := b.inputToAddr[input.(*iotago.UTXOInput).ID()]
 		addrStr := addr.(fmt.Stringer).String()
 
-		// check whether a previous signature unlock block
+		// check whether a previous signature unlock
 		// already signs inputs for the given address
 		pos, alreadySigned := sigBlockPos[addrStr]
 		if alreadySigned {
-			// create a reference unlock block instead
-			unlockBlocks = append(unlockBlocks, &iotago.ReferenceUnlockBlock{Reference: uint16(pos)})
+			// create a reference unlock instead
+			unlocks = append(unlocks, &iotago.ReferenceUnlock{Reference: uint16(pos)})
 			continue
 		}
 
@@ -137,11 +137,11 @@ func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer
 			return nil, err
 		}
 
-		unlockBlocks = append(unlockBlocks, &iotago.SignatureUnlockBlock{Signature: signature})
+		unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: signature})
 		sigBlockPos[addrStr] = i
 	}
 
-	sigTxPayload := &iotago.Transaction{Essence: b.essence, UnlockBlocks: unlockBlocks}
+	sigTxPayload := &iotago.Transaction{Essence: b.essence, Unlocks: unlocks}
 
 	if _, err := sigTxPayload.Serialize(serializer.DeSeriModePerformValidation, protoParas); err != nil {
 		return nil, err

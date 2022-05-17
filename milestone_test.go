@@ -154,7 +154,7 @@ func TestMilestoneSigning(t *testing.T) {
 				Parents:             tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
 				Index:               1000,
 				Timestamp:           uint32(time.Now().Unix()),
-				ConfirmedMerkleRoot: tpkg.Rand32ByteArray(),
+				InclusionMerkleRoot: tpkg.Rand32ByteArray(),
 				AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
 			}
 
@@ -208,7 +208,7 @@ func TestNewMilestone(t *testing.T) {
 		ProtocolVersion:     tpkg.TestProtocolVersion,
 		PreviousMilestoneID: prevMs,
 		Parents:             parents,
-		ConfirmedMerkleRoot: pastConeMerkleProof,
+		InclusionMerkleRoot: pastConeMerkleProof,
 		AppliedMerkleRoot:   inclusionMerkleProof,
 		Signatures:          nil,
 	}, ms)

@@ -23,27 +23,27 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestMessage_DeSerialize(t *testing.T) {
+func TestBlock_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok - no payload",
-			source: tpkg.RandMessage(1337),
-			target: &iotago.Message{},
+			source: tpkg.RandBlock(1337),
+			target: &iotago.Block{},
 		},
 		{
 			name:   "ok - transaction",
-			source: tpkg.RandMessage(iotago.PayloadTransaction),
-			target: &iotago.Message{},
+			source: tpkg.RandBlock(iotago.PayloadTransaction),
+			target: &iotago.Block{},
 		},
 		{
 			name:   "ok - milestone",
-			source: tpkg.RandMessage(iotago.PayloadMilestone),
-			target: &iotago.Message{},
+			source: tpkg.RandBlock(iotago.PayloadMilestone),
+			target: &iotago.Block{},
 		},
 		{
 			name:   "ok - tagged data",
-			source: tpkg.RandMessage(iotago.PayloadTaggedData),
-			target: &iotago.Message{},
+			source: tpkg.RandBlock(iotago.PayloadTaggedData),
+			target: &iotago.Block{},
 		},
 	}
 
@@ -52,37 +52,37 @@ func TestMessage_DeSerialize(t *testing.T) {
 	}
 }
 
-func TestMessage_MinSize(t *testing.T) {
+func TestBlock_MinSize(t *testing.T) {
 
-	msg := &iotago.Message{
+	block := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		Parents:         tpkg.SortedRand32BytArray(1),
 		Payload:         nil,
 	}
 
-	msgBytes, err := msg.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+	blockBytes, err := block.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
 
-	msg2 := &iotago.Message{}
-	_, err = msg2.Deserialize(msgBytes, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	block2 := &iotago.Block{}
+	_, err = block2.Deserialize(blockBytes, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.NoError(t, err)
-	require.Equal(t, msg, msg2)
+	require.Equal(t, block, block2)
 }
 
-func TestMessage_DeserializationNotEnoughData(t *testing.T) {
+func TestBlock_DeserializationNotEnoughData(t *testing.T) {
 
-	msgBytes := []byte{tpkg.TestProtocolVersion, 1}
+	blockBytes := []byte{tpkg.TestProtocolVersion, 1}
 
-	msg := &iotago.Message{}
-	_, err := msg.Deserialize(msgBytes, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	block := &iotago.Block{}
+	_, err := block.Deserialize(blockBytes, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	require.ErrorIs(t, err, serializer.ErrDeserializationNotEnoughData)
 }
 
-func TestMessage_UnmarshalJSON(t *testing.T) {
+func TestBlock_UnmarshalJSON(t *testing.T) {
 	data := `
 		{
 		  "protocolVersion": 1,
-		  "parentMessageIds": ["0xf532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d", "0x78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2"],
+		  "parents": ["0xf532a53545103276b46876c473846d98648ee418468bce76df4868648dd73e5d", "0x78d546b46aec4557872139a48f66bc567687e8413578a14323548732358914a2"],
 		  "payload": {
 			"type": 6,
 			"essence": {
@@ -111,7 +111,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 				"data": "0xa487f431d852b060b49427f513dca1d5288e697e8bd9eb062534d09e7cb337ac"
 			  }
 			},
-			"unlockBlocks": [
+			"unlocks": [
 			  {
 				"type": 0,
 				"signature": {
@@ -125,34 +125,34 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 		  "nonce": "133945865838"
 		}`
 
-	msg := &iotago.Message{}
-	assert.NoError(t, json.Unmarshal([]byte(data), msg))
+	block := &iotago.Block{}
+	assert.NoError(t, json.Unmarshal([]byte(data), block))
 
 	var emptyID = [32]byte{}
-	for _, parent := range msg.Parents {
+	for _, parent := range block.Parents {
 		assert.False(t, bytes.Equal(parent[:], emptyID[:]))
 	}
 
-	msgJson, err := json.Marshal(msg)
+	blockJson, err := json.Marshal(block)
 	assert.NoError(t, err)
 
-	msg2 := &iotago.Message{}
-	assert.NoError(t, json.Unmarshal(msgJson, msg2))
+	block2 := &iotago.Block{}
+	assert.NoError(t, json.Unmarshal(blockJson, block2))
 
-	assert.EqualValues(t, msg, msg2)
+	assert.EqualValues(t, block, block2)
 
 	minimal := `
 		{
-		  "parentMessageIds": ["0x0000000000000000000000000000000000000000000000000000000000000000"]
+		  "parents": ["0x0000000000000000000000000000000000000000000000000000000000000000"]
 		}`
-	msgMinimal := &iotago.Message{}
-	assert.NoError(t, json.Unmarshal([]byte(minimal), msgMinimal))
+	blockMinimal := &iotago.Block{}
+	assert.NoError(t, json.Unmarshal([]byte(minimal), blockMinimal))
 
-	assert.Len(t, msgMinimal.Parents, 1)
-	for _, parent := range msgMinimal.Parents {
+	assert.Len(t, blockMinimal.Parents, 1)
+	for _, parent := range blockMinimal.Parents {
 		assert.True(t, bytes.Equal(parent[:], emptyID[:]))
 	}
 
-	assert.Nil(t, msgMinimal.Payload)
-	assert.Equal(t, msgMinimal.Nonce, uint64(0))
+	assert.Nil(t, blockMinimal.Payload)
+	assert.Equal(t, blockMinimal.Nonce, uint64(0))
 }

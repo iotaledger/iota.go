@@ -134,7 +134,7 @@ func jsonSignatureSelector(ty int) (JSONSerializable, error) {
 	case SignatureEd25519:
 		obj = &jsonEd25519Signature{}
 	default:
-		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", ErrUnknownUnlockBlockType)
+		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", ErrUnknownUnlockType)
 	}
 	return obj, nil
 }

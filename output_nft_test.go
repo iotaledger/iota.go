@@ -19,9 +19,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		Conditions: iotago.UnlockConditions{
 			&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 		},
-		ImmutableBlocks: iotago.FeatureBlocks{
-			&iotago.IssuerFeatureBlock{Address: exampleIssuer},
-			&iotago.MetadataFeatureBlock{Data: []byte("some-ipfs-link")},
+		ImmutableFeatures: iotago.Features{
+			&iotago.IssuerFeature{Address: exampleIssuer},
+			&iotago.MetadataFeature{Data: []byte("some-ipfs-link")},
 		},
 	}
 
@@ -94,13 +94,13 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			current: exampleCurrentNFTOutput,
 			nextMut: map[string]fieldMutations{
 				"immutable_metadata": {
-					"ImmutableBlocks": iotago.FeatureBlocks{
-						&iotago.MetadataFeatureBlock{Data: []byte("link-to-cat.gif")},
+					"ImmutableFeatures": iotago.Features{
+						&iotago.MetadataFeature{Data: []byte("link-to-cat.gif")},
 					},
 				},
 				"issuer": {
-					"ImmutableBlocks": iotago.FeatureBlocks{
-						&iotago.IssuerFeatureBlock{Address: tpkg.RandEd25519Address()},
+					"ImmutableFeatures": iotago.Features{
+						&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 					},
 				},
 			},

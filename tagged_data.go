@@ -41,7 +41,7 @@ func (u *TaggedData) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 		}, TaggedPayloadTagMaxLength).
 		ReadVariableByteSlice(&u.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize tagged data data: %w", err)
-		}, MessageBinSerializedMaxSize). // obviously can never be that size
+		}, BlockBinSerializedMaxSize). // obviously can never be that size
 		Done()
 }
 

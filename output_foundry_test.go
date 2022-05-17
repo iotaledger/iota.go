@@ -64,7 +64,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Essence: &iotago.TransactionEssence{
 							Outputs: iotago.Outputs{exampleFoundry},
 						},
-						UnlockBlocks: nil,
+						Unlocks: nil,
 					},
 					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
 						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 5},
@@ -91,7 +91,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Essence: &iotago.TransactionEssence{
 							Outputs: iotago.Outputs{exampleFoundry},
 						},
-						UnlockBlocks: nil,
+						Unlocks: nil,
 					},
 					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
 						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 5},
@@ -118,7 +118,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Essence: &iotago.TransactionEssence{
 							Outputs: iotago.Outputs{exampleFoundry},
 						},
-						UnlockBlocks: nil,
+						Unlocks: nil,
 					},
 					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
 						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 6},
@@ -132,12 +132,12 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: &iotago.ChainTransitionError{},
 		},
 		{
-			name:    "ok - state transition - metadata feature block",
+			name:    "ok - state transition - metadata feature",
 			current: exampleFoundry,
 			nextMut: map[string]fieldMutations{
 				"change_metadata": {
-					"Blocks": iotago.FeatureBlocks{
-						&iotago.MetadataFeatureBlock{Data: tpkg.RandBytes(20)},
+					"Features": iotago.Features{
+						&iotago.MetadataFeature{Data: tpkg.RandBytes(20)},
 					},
 				},
 			},

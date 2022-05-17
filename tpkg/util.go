@@ -185,29 +185,29 @@ func RandEd25519Signature() *iotago.Ed25519Signature {
 	return edSig
 }
 
-// RandEd25519SignatureUnlockBlock returns a random Ed25519 signature unlock block.
-func RandEd25519SignatureUnlockBlock() *iotago.SignatureUnlockBlock {
-	return &iotago.SignatureUnlockBlock{Signature: RandEd25519Signature()}
+// RandEd25519SignatureUnlock returns a random Ed25519 signature unlock.
+func RandEd25519SignatureUnlock() *iotago.SignatureUnlock {
+	return &iotago.SignatureUnlock{Signature: RandEd25519Signature()}
 }
 
-// RandReferenceUnlockBlock returns a random reference unlock block.
-func RandReferenceUnlockBlock() *iotago.ReferenceUnlockBlock {
-	return ReferenceUnlockBlock(uint16(rand.Intn(1000)))
+// RandReferenceUnlock returns a random reference unlock.
+func RandReferenceUnlock() *iotago.ReferenceUnlock {
+	return ReferenceUnlock(uint16(rand.Intn(1000)))
 }
 
-// RandAliasUnlockBlock returns a random alias unlock block.
-func RandAliasUnlockBlock() *iotago.AliasUnlockBlock {
-	return &iotago.AliasUnlockBlock{Reference: uint16(rand.Intn(1000))}
+// RandAliasUnlock returns a random alias unlock.
+func RandAliasUnlock() *iotago.AliasUnlock {
+	return &iotago.AliasUnlock{Reference: uint16(rand.Intn(1000))}
 }
 
-// RandNFTUnlockBlock returns a random alias unlock block.
-func RandNFTUnlockBlock() *iotago.NFTUnlockBlock {
-	return &iotago.NFTUnlockBlock{Reference: uint16(rand.Intn(1000))}
+// RandNFTUnlock returns a random alias unlock.
+func RandNFTUnlock() *iotago.NFTUnlock {
+	return &iotago.NFTUnlock{Reference: uint16(rand.Intn(1000))}
 }
 
-// ReferenceUnlockBlock returns a reference unlock block with the given index.
-func ReferenceUnlockBlock(index uint16) *iotago.ReferenceUnlockBlock {
-	return &iotago.ReferenceUnlockBlock{Reference: index}
+// ReferenceUnlock returns a reference unlock with the given index.
+func ReferenceUnlock(index uint16) *iotago.ReferenceUnlock {
+	return &iotago.ReferenceUnlock{Reference: index}
 }
 
 // RandTransactionEssence returns a random transaction essence.
@@ -252,8 +252,8 @@ func RandReceipt() *iotago.ReceiptMilestoneOpt {
 	return receipt
 }
 
-// RandMilestone returns a random milestone with the given parent messages.
-func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
+// RandMilestone returns a random milestone with the given parent blocks.
+func RandMilestone(parents iotago.BlockIDs) *iotago.Milestone {
 	const sigsCount = 3
 
 	if parents == nil {
@@ -265,7 +265,7 @@ func RandMilestone(parents iotago.MessageIDs) *iotago.Milestone {
 		Timestamp:           uint32(time.Now().Unix()),
 		PreviousMilestoneID: Rand32ByteArray(),
 		Parents:             parents,
-		ConfirmedMerkleRoot: func() iotago.MilestoneMerkleProof {
+		InclusionMerkleRoot: func() iotago.MilestoneMerkleProof {
 			var b iotago.MilestoneMerkleProof
 			copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
 			return b
@@ -310,8 +310,8 @@ func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	return &iotago.TaggedData{Tag: tag, Data: data}
 }
 
-// RandMessage returns a random message with the given inner payload.
-func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
+// RandBlock returns a random block with the given inner payload.
+func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 	var payload iotago.Payload
 
 	parents := SortedRand32BytArray(1 + rand.Intn(7))
@@ -325,7 +325,7 @@ func RandMessage(withPayloadType iotago.PayloadType) *iotago.Message {
 		payload = RandMilestone(parents)
 	}
 
-	return &iotago.Message{
+	return &iotago.Block{
 		ProtocolVersion: TestProtocolVersion,
 		Parents:         parents,
 		Payload:         payload,
@@ -339,9 +339,9 @@ func RandTransaction() *iotago.Transaction {
 	essence := RandTransactionEssence()
 	sigTxPayload.Essence = essence
 
-	unlockBlocksCount := len(essence.Inputs)
-	for i := unlockBlocksCount; i > 0; i-- {
-		sigTxPayload.UnlockBlocks = append(sigTxPayload.UnlockBlocks, RandEd25519SignatureUnlockBlock())
+	unlocksCount := len(essence.Inputs)
+	for i := unlocksCount; i > 0; i-- {
+		sigTxPayload.Unlocks = append(sigTxPayload.Unlocks, RandEd25519SignatureUnlock())
 	}
 
 	return sigTxPayload
@@ -379,7 +379,7 @@ func RandTreasuryTransaction() *iotago.TreasuryTransaction {
 	}
 }
 
-// RandBasicOutput returns a random basic output (with no feature blocks).
+// RandBasicOutput returns a random basic output (with no features).
 func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 	dep := &iotago.BasicOutput{}
 
@@ -419,8 +419,8 @@ func OneInputOutputTransaction() *iotago.Transaction {
 			},
 			Payload: nil,
 		},
-		UnlockBlocks: iotago.UnlockBlocks{
-			&iotago.SignatureUnlockBlock{
+		Unlocks: iotago.Unlocks{
+			&iotago.SignatureUnlock{
 				Signature: RandEd25519Signature(),
 			},
 		},

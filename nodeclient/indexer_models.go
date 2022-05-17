@@ -84,7 +84,7 @@ type BasicOutputsQuery struct {
 	AddressBech32 string `qs:"address,omitempty"`
 	// Filters outputs based on the presence of validated sender.
 	SenderBech32 string `qs:"sender,omitempty"`
-	// Filters outputs based on matching tag feature block.
+	// Filters outputs based on matching tag feature.
 	Tag string `qs:"tag,omitempty"`
 }
 
@@ -111,7 +111,7 @@ type AliasesQuery struct {
 	SenderBech32 string `qs:"sender,omitempty"`
 	// Filters outputs based on the presence of validated issuer.
 	IssuerBech32 string `qs:"issuer,omitempty"`
-	// Filters outputs based on matching tag feature block.
+	// Filters outputs based on matching tag feature.
 	Tag string `qs:"tag,omitempty"`
 }
 
@@ -161,7 +161,7 @@ type NFTsQuery struct {
 	SenderBech32 string `qs:"sender,omitempty"`
 	// Filters outputs based on the presence of validated issuer.
 	IssuerBech32 string `qs:"issuer,omitempty"`
-	// Filters outputs based on matching tag feature block.
+	// Filters outputs based on matching tag feature.
 	Tag string `qs:"tag,omitempty"`
 }
 

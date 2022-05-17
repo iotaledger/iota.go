@@ -22,14 +22,14 @@ var (
 	ErrMissingUTXO = errors.New("missing utxo")
 	// ErrInputOutputSumMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
 	ErrInputOutputSumMismatch = errors.New("inputs and outputs do not spend/deposit the same amount")
-	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock block with the wrong signature type.
+	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = errors.New("address and signature type are not compatible")
 	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
 	ErrInvalidInputUnlock = errors.New("invalid input unlock")
-	// ErrSenderFeatureBlockNotUnlocked gets returned when an output contains a SenderFeatureBlock with an ident which is not unlocked.
-	ErrSenderFeatureBlockNotUnlocked = errors.New("sender feature block is not unlocked")
-	// ErrIssuerFeatureBlockNotUnlocked gets returned when an output contains a IssuerFeatureBlock with an ident which is not unlocked.
-	ErrIssuerFeatureBlockNotUnlocked = errors.New("issuer feature block is not unlocked")
+	// ErrSenderFeatureNotUnlocked gets returned when an output contains a SenderFeature with an ident which is not unlocked.
+	ErrSenderFeatureNotUnlocked = errors.New("sender feature is not unlocked")
+	// ErrIssuerFeatureNotUnlocked gets returned when an output contains a IssuerFeature with an ident which is not unlocked.
+	ErrIssuerFeatureNotUnlocked = errors.New("issuer feature is not unlocked")
 	// ErrReturnAmountNotFulFilled gets returned when a return amount in a transaction is not fulfilled by the output side.
 	ErrReturnAmountNotFulFilled = errors.New("return amount not fulfilled")
 	// ErrTypeIsNotSupportedEssence gets returned when a serializable was found to not be a supported essence.
@@ -49,18 +49,18 @@ var (
 			return nil
 		},
 	}
-	txUnlockBlockArrayRules = serializer.ArrayRules{
+	txUnlocksArrayRules = serializer.ArrayRules{
 		// min/max filled out in serialize/deserialize
 		Guards: serializer.SerializableGuard{
-			ReadGuard:  UnlockBlockSelector,
-			WriteGuard: unlockBlockWriteGuard(),
+			ReadGuard:  UnlockSelector,
+			WriteGuard: unlockWriteGuard(),
 		},
 	}
 )
 
-// TransactionUnlockBlocksArrayRules returns array rules defining the constraints on UnlockBlocks within a Transaction.
-func TransactionUnlockBlocksArrayRules() serializer.ArrayRules {
-	return txUnlockBlockArrayRules
+// TransactionUnlocksArrayRules returns array rules defining the constraints on Unlocks within a Transaction.
+func TransactionUnlocksArrayRules() serializer.ArrayRules {
+	return txUnlocksArrayRules
 }
 
 // TransactionID is the ID of a Transaction.
@@ -69,12 +69,12 @@ type TransactionID [TransactionIDLength]byte
 // TransactionIDs are IDs of transactions.
 type TransactionIDs []TransactionID
 
-// Transaction is a transaction with its inputs, outputs and unlock blocks.
+// Transaction is a transaction with its inputs, outputs and unlocks.
 type Transaction struct {
 	// The transaction essence, respectively the transfer part of a Transaction.
 	Essence *TransactionEssence
-	// The unlock blocks defining the unlocking data for the inputs within the Essence.
-	UnlockBlocks UnlockBlocks
+	// The unlocks defining the unlocking data for the inputs within the Essence.
+	Unlocks Unlocks
 }
 
 // ToHex converts the TransactionID to its hex representation.
@@ -112,7 +112,7 @@ func (t *Transaction) ID() (*TransactionID, error) {
 }
 
 func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
-	unlockBlockArrayRulesCopy := txUnlockBlockArrayRules
+	unlocksArrayRulesCopy := txUnlocksArrayRules
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(PayloadTransaction), serializer.TypeDenotationUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize transaction: %w", err)
@@ -122,21 +122,21 @@ func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		}).
 		Do(func() {
 			inputCount := uint(len(t.Essence.Inputs))
-			unlockBlockArrayRulesCopy.Min = inputCount
-			unlockBlockArrayRulesCopy.Max = inputCount
+			unlocksArrayRulesCopy.Min = inputCount
+			unlocksArrayRulesCopy.Max = inputCount
 		}).
-		ReadSliceOfObjects(&t.UnlockBlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, &unlockBlockArrayRulesCopy, func(err error) error {
-			return fmt.Errorf("%w: unable to deserialize unlock blocks", err)
+		ReadSliceOfObjects(&t.Unlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, serializer.TypeDenotationByte, &unlocksArrayRulesCopy, func(err error) error {
+			return fmt.Errorf("%w: unable to deserialize unlocks", err)
 		}).
 		WithValidation(deSeriMode, txDeSeriValidation(t, deSeriCtx)).
 		Done()
 }
 
 func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
-	unlockBlockArrayRulesCopy := txUnlockBlockArrayRules
+	unlocksArrayRulesCopy := txUnlocksArrayRules
 	inputCount := uint(len(t.Essence.Inputs))
-	unlockBlockArrayRulesCopy.Min = inputCount
-	unlockBlockArrayRulesCopy.Max = inputCount
+	unlocksArrayRulesCopy.Min = inputCount
+	unlocksArrayRulesCopy.Max = inputCount
 	return serializer.NewSerializer().
 		WriteNum(PayloadTransaction, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction payload ID", err)
@@ -144,8 +144,8 @@ func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 		WriteObject(t.Essence, deSeriMode, deSeriCtx, txEssenceGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction's essence", err)
 		}).
-		WriteSliceOfObjects(&t.UnlockBlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, &unlockBlockArrayRulesCopy, func(err error) error {
-			return fmt.Errorf("%w: unable to serialize transaction's unlock blocks", err)
+		WriteSliceOfObjects(&t.Unlocks, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsUint16, &unlocksArrayRulesCopy, func(err error) error {
+			return fmt.Errorf("%w: unable to serialize transaction's unlocks", err)
 		}).
 		WithValidation(deSeriMode, txDeSeriValidation(t, deSeriCtx)).
 		Serialize()
@@ -154,12 +154,12 @@ func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 func (t *Transaction) Size() int {
 	return util.NumByteLen(uint32(PayloadTransaction)) +
 		t.Essence.Size() +
-		t.UnlockBlocks.Size()
+		t.Unlocks.Size()
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {
 	jTransaction := &jsonTransaction{
-		UnlockBlocks: make([]*json.RawMessage, len(t.UnlockBlocks)),
+		Unlocks: make([]*json.RawMessage, len(t.Unlocks)),
 	}
 	jTransaction.Type = int(PayloadTransaction)
 	txJson, err := t.Essence.MarshalJSON()
@@ -168,13 +168,13 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 	}
 	rawMsgTxJson := json.RawMessage(txJson)
 	jTransaction.Essence = &rawMsgTxJson
-	for i, ub := range t.UnlockBlocks {
+	for i, ub := range t.Unlocks {
 		jsonUB, err := ub.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
 		rawMsgJsonUB := json.RawMessage(jsonUB)
-		jTransaction.UnlockBlocks[i] = &rawMsgJsonUB
+		jTransaction.Unlocks[i] = &rawMsgJsonUB
 	}
 	return json.Marshal(jTransaction)
 }
@@ -208,10 +208,10 @@ func (t *Transaction) syntacticallyValidate(protoParas *ProtocolParameters) erro
 		return fmt.Errorf("transaction essence is invalid: %w", err)
 	}
 
-	if err := ValidateUnlockBlocks(t.UnlockBlocks,
-		UnlockBlocksSigUniqueAndRefValidator(),
+	if err := ValidateUnlocks(t.Unlocks,
+		UnlocksSigUniqueAndRefValidator(),
 	); err != nil {
-		return fmt.Errorf("invalid unlock blocks: %w", err)
+		return fmt.Errorf("invalid unlocks: %w", err)
 	}
 
 	return nil
@@ -252,8 +252,8 @@ type SemValiContextWorkingSet struct {
 	OutChains ChainConstrainedOutputsSet
 	// The sum of NativeTokens at the output side.
 	OutNativeTokens NativeTokenSum
-	// The UnlockBlocks carried by the transaction mapped by type.
-	UnlockBlocksByType UnlockBlocksByType
+	// The Unlocks carried by the transaction mapped by type.
+	UnlocksByType UnlocksByType
 }
 
 // UTXOInputAtIndex retrieves the UTXOInput at the given index.
@@ -303,7 +303,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputsSet OutputSet) (*SemValiC
 	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
 	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainConstrainedOutputSet(*txID)
 
-	workingSet.UnlockBlocksByType = t.UnlockBlocks.ToUnlockBlocksByType()
+	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
 	return workingSet, nil
 }
 
@@ -349,14 +349,14 @@ func runSemanticValidations(svCtx *SemanticValidationContext, checks ...TxSemant
 }
 
 // UnlockedIdentities defines a set of identities which are unlocked from the input side of a Transaction.
-// The value represent the index of the unlock block which unlocked the identity.
+// The value represent the index of the unlock which unlocked the identity.
 type UnlockedIdentities map[string]*UnlockedIdentity
 
 // SigUnlock performs a signature unlock check and adds the given ident to the set of unlocked identities if
 // the signature is valid, otherwise returns an error.
 func (unlockedIdents UnlockedIdentities) SigUnlock(ident DirectUnlockableAddress, essence []byte, sig Signature, inputIndex uint16) error {
 	if err := ident.Unlock(essence, sig); err != nil {
-		return fmt.Errorf("%w: input %d's address is not unlocked through its signature unlock block", err, inputIndex)
+		return fmt.Errorf("%w: input %d's address is not unlocked through its signature unlock", err, inputIndex)
 	}
 
 	unlockedIdents[ident.Key()] = &UnlockedIdentity{
@@ -371,7 +371,7 @@ func (unlockedIdents UnlockedIdentities) SigUnlock(ident DirectUnlockableAddress
 func (unlockedIdents UnlockedIdentities) RefUnlock(identKey string, ref uint16, inputIndex uint16) error {
 	ident, has := unlockedIdents[identKey]
 	if !has || ident.UnlockedAt != ref {
-		return fmt.Errorf("%w: input %d is not unlocked through input %d's unlock block", ErrInvalidInputUnlock, inputIndex, ref)
+		return fmt.Errorf("%w: input %d is not unlocked through input %d's unlock", ErrInvalidInputUnlock, inputIndex, ref)
 	}
 
 	ident.ReferencedBy[inputIndex] = struct{}{}
@@ -411,7 +411,7 @@ func (unlockedIdents UnlockedIdentities) String() string {
 }
 
 // UnlockedBy checks whether the given input was unlocked either directly by a signature or indirectly
-// through a ReferentialUnlockBlock by the given identity.
+// through a ReferentialUnlock by the given identity.
 func (unlockedIdents UnlockedIdentities) UnlockedBy(inputIndex uint16, identKey string) bool {
 	unlockedIdent, has := unlockedIdents[identKey]
 	if !has {
@@ -448,7 +448,7 @@ func (unlockedIdent *UnlockedIdentity) String() string {
 }
 
 // TxSemanticValidationFunc is a function which given the context, input, outputs and
-// unlock blocks runs a specific semantic validation. The function might also modify the SemanticValidationContext
+// unlocks runs a specific semantic validation. The function might also modify the SemanticValidationContext
 // in order to supply information to subsequent TxSemanticValidationFunc(s).
 type TxSemanticValidationFunc func(svCtx *SemanticValidationContext) error
 
@@ -521,8 +521,7 @@ func identToUnlock(svCtx *SemanticValidationContext, input Output, inputIndex ui
 }
 
 func checkExpiredForReceiver(svCtx *SemanticValidationContext, output Output) Address {
-	unlockCondSet := output.UnlockConditions().MustSet()
-	if ok, returnIdent := unlockCondSet.returnIdentCanUnlock(svCtx.ExtParas); ok {
+	if ok, returnIdent := output.UnlockConditionsSet().returnIdentCanUnlock(svCtx.ExtParas); ok {
 		return returnIdent
 	}
 
@@ -539,34 +538,34 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 		ownerIdent = actualIdentToUnlock
 	}
 
-	unlockBlock := svCtx.WorkingSet.Tx.UnlockBlocks[inputIndex]
+	unlock := svCtx.WorkingSet.Tx.Unlocks[inputIndex]
 
 	switch owner := ownerIdent.(type) {
 	case ChainConstrainedAddress:
-		refUnlockBlock, isReferentialUnlockBlock := unlockBlock.(ReferentialUnlockBlock)
-		if !isReferentialUnlockBlock || !refUnlockBlock.Chainable() || !refUnlockBlock.SourceAllowed(ownerIdent) {
-			return fmt.Errorf("%w: input %d has a chain constrained address (%T) but its corresponding unlock block is of type %T", ErrInvalidInputUnlock, inputIndex, owner, unlockBlock)
+		refUnlock, isReferentialUnlock := unlock.(ReferentialUnlock)
+		if !isReferentialUnlock || !refUnlock.Chainable() || !refUnlock.SourceAllowed(ownerIdent) {
+			return fmt.Errorf("%w: input %d has a chain constrained address (%T) but its corresponding unlock is of type %T", ErrInvalidInputUnlock, inputIndex, owner, unlock)
 		}
 
-		if err := svCtx.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), refUnlockBlock.Ref(), inputIndex); err != nil {
+		if err := svCtx.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), refUnlock.Ref(), inputIndex); err != nil {
 			return fmt.Errorf("%w: chain constrained address %s (%T)", err, owner, owner)
 		}
 
 	case DirectUnlockableAddress:
-		switch uBlock := unlockBlock.(type) {
-		case ReferentialUnlockBlock:
+		switch uBlock := unlock.(type) {
+		case ReferentialUnlock:
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
-				return fmt.Errorf("%w: input %d has none chain constrained address of %s but its corresponding unlock block is of type %s", ErrInvalidInputUnlock, inputIndex, owner.Type(), unlockBlock.Type())
+				return fmt.Errorf("%w: input %d has none chain constrained address of %s but its corresponding unlock is of type %s", ErrInvalidInputUnlock, inputIndex, owner.Type(), unlock.Type())
 			}
 
 			if err := svCtx.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex); err != nil {
 				return fmt.Errorf("%w: direct unlockable address %s (%T)", err, owner, owner)
 			}
 
-		case *SignatureUnlockBlock:
+		case *SignatureUnlock:
 			// owner must not be unlocked already
 			if unlockedAtIndex, wasAlreadyUnlocked := svCtx.WorkingSet.UnlockedIdents[owner.Key()]; wasAlreadyUnlocked {
-				return fmt.Errorf("%w: input %d's address is already unlocked through input %d's unlock block but the input uses a non referential unlock block", ErrInvalidInputUnlock, inputIndex, unlockedAtIndex)
+				return fmt.Errorf("%w: input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", ErrInvalidInputUnlock, inputIndex, unlockedAtIndex)
 			}
 
 			if err := svCtx.WorkingSet.UnlockedIdents.SigUnlock(owner, svCtx.WorkingSet.EssenceMsgToSign, uBlock.Signature, inputIndex); err != nil {
@@ -581,20 +580,20 @@ func unlockOutput(svCtx *SemanticValidationContext, output Output, inputIndex ui
 	return nil
 }
 
-// TxSemanticOutputsSender validates that for SenderFeatureBlock occurring on the output side,
+// TxSemanticOutputsSender validates that for SenderFeature occurring on the output side,
 // the given identity is unlocked on the input side.
 func TxSemanticOutputsSender() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		for outputIndex, output := range svCtx.WorkingSet.Tx.Essence.Outputs {
-			senderFeatureBlock := output.FeatureBlocks().MustSet().SenderFeatureBlock()
-			if senderFeatureBlock == nil {
+			senderFeat := output.FeaturesSet().SenderFeature()
+			if senderFeat == nil {
 				continue
 			}
 
 			// check unlocked
-			sender := senderFeatureBlock.Address
+			sender := senderFeat.Address
 			if _, isUnlocked := svCtx.WorkingSet.UnlockedIdents[sender.Key()]; !isUnlocked {
-				return fmt.Errorf("%w: output %d", ErrSenderFeatureBlockNotUnlocked, outputIndex)
+				return fmt.Errorf("%w: output %d", ErrSenderFeatureNotUnlocked, outputIndex)
 			}
 		}
 		return nil
@@ -613,8 +612,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 		for inputID, input := range svCtx.WorkingSet.InputSet {
 			in += input.Deposit()
 
-			unlockCondSet := input.UnlockConditions().MustSet()
-			returnUnlockCond := unlockCondSet.StorageDepositReturn()
+			returnUnlockCond := input.UnlockConditionsSet().StorageDepositReturn()
 			if returnUnlockCond == nil {
 				continue
 			}
@@ -637,7 +635,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 
 			// accumulate simple transfers for StorageDepositReturnUnlockCondition checks
 			if basicOutput, is := output.(*BasicOutput); is {
-				if len(basicOutput.FeatureBlocks()) > 0 || len(basicOutput.UnlockConditions()) > 1 {
+				if len(basicOutput.FeaturesSet()) > 0 || len(basicOutput.UnlockConditionsSet()) > 1 {
 					continue
 				}
 				outputSimpleTransfersPerIdent[basicOutput.Ident().Key()] += outDeposit
@@ -666,7 +664,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 func TxSemanticTimelock() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		for inputIndex, input := range svCtx.WorkingSet.InputSet {
-			if err := input.UnlockConditions().MustSet().TimelocksExpired(svCtx.ExtParas); err != nil {
+			if err := input.UnlockConditionsSet().TimelocksExpired(svCtx.ExtParas); err != nil {
 				return fmt.Errorf("%w: input at index %d's timelocks are not expired", err, inputIndex)
 			}
 		}
@@ -763,9 +761,9 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 
 // jsonTransaction defines the json representation of a Transaction.
 type jsonTransaction struct {
-	Type         int                `json:"type"`
-	Essence      *json.RawMessage   `json:"essence"`
-	UnlockBlocks []*json.RawMessage `json:"unlockBlocks"`
+	Type    int                `json:"type"`
+	Essence *json.RawMessage   `json:"essence"`
+	Unlocks []*json.RawMessage `json:"unlocks"`
 }
 
 func (jsontx *jsonTransaction) ToSerializable() (serializer.Serializable, error) {
@@ -779,10 +777,10 @@ func (jsontx *jsonTransaction) ToSerializable() (serializer.Serializable, error)
 		return nil, err
 	}
 
-	unlockBlocks, err := unlockBlocksFromJSONRawMsg(jsontx.UnlockBlocks)
+	unlocks, err := unlocksFromJSONRawMsg(jsontx.Unlocks)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Transaction{Essence: txEssenceSeri.(*TransactionEssence), UnlockBlocks: unlockBlocks}, nil
+	return &Transaction{Essence: txEssenceSeri.(*TransactionEssence), Unlocks: unlocks}, nil
 }

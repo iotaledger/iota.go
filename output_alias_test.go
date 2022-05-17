@@ -52,8 +52,8 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
-				ImmutableBlocks: iotago.FeatureBlocks{
-					&iotago.IssuerFeatureBlock{Address: exampleIssuer},
+				ImmutableFeatures: iotago.Features{
+					&iotago.IssuerFeature{Address: exampleIssuer},
 				},
 			},
 			next:      nil,
@@ -108,8 +108,8 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
-				Blocks: iotago.FeatureBlocks{
-					&iotago.MetadataFeatureBlock{Data: []byte("1337")},
+				Features: iotago.Features{
+					&iotago.MetadataFeature{Data: []byte("1337")},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -226,8 +226,8 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				ImmutableBlocks: iotago.FeatureBlocks{
-					&iotago.IssuerFeatureBlock{Address: exampleIssuer},
+				ImmutableFeatures: iotago.Features{
+					&iotago.IssuerFeature{Address: exampleIssuer},
 				},
 			},
 			nextMut: map[string]fieldMutations{
