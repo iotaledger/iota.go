@@ -57,8 +57,8 @@ type ChainConstrainedOutput interface {
 	// Next is nil if transType is ChainTransitionTypeGenesis or ChainTransitionTypeDestroy.
 	ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error
 
-	// ImmutableFeatureBlocks returns the immutable FeatureBlocks this output contains.
-	ImmutableFeatureBlocks() FeatureBlocks
+	// ImmutableFeaturesSet returns the immutable FeaturesSet this output contains.
+	ImmutableFeaturesSet() FeaturesSet
 }
 
 // ChainTransitionType defines the type of transition a ChainConstrainedOutput is doing.
@@ -77,38 +77,38 @@ const (
 // validates the state transition.
 type StateTransitionValidationFunc func(current ChainConstrainedOutput, next ChainConstrainedOutput) error
 
-// IsIssuerOnOutputUnlocked checks whether the issuer in an IssuerFeatureBlock of this new ChainConstrainedOutput has been unlocked.
-// This function is a no-op if the chain output does not contain an IssuerFeatureBlock.
+// IsIssuerOnOutputUnlocked checks whether the issuer in an IssuerFeature of this new ChainConstrainedOutput has been unlocked.
+// This function is a no-op if the chain output does not contain an IssuerFeature.
 func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents UnlockedIdentities) error {
-	immFeatblocks := output.ImmutableFeatureBlocks()
-	if immFeatblocks == nil || len(immFeatblocks) == 0 {
+	immFeats := output.ImmutableFeaturesSet()
+	if immFeats == nil || len(immFeats) == 0 {
 		return nil
 	}
 
-	issuerFeatureBlock := immFeatblocks.MustSet().IssuerFeatureBlock()
-	if issuerFeatureBlock == nil {
+	issuerFeat := immFeats.IssuerFeature()
+	if issuerFeat == nil {
 		return nil
 	}
-	if _, isUnlocked := unlockedIdents[issuerFeatureBlock.Address.Key()]; !isUnlocked {
-		return ErrIssuerFeatureBlockNotUnlocked
+	if _, isUnlocked := unlockedIdents[issuerFeat.Address.Key()]; !isUnlocked {
+		return ErrIssuerFeatureNotUnlocked
 	}
 	return nil
 }
 
-// FeatureBlockSetTransitionValidationFunc checks whether the FeatureBlocks transition from in to out is valid.
-type FeatureBlockSetTransitionValidationFunc func(inSet FeatureBlocksSet, outSet FeatureBlocksSet) error
+// FeatureSetTransitionValidationFunc checks whether the Features transition from in to out is valid.
+type FeatureSetTransitionValidationFunc func(inSet FeaturesSet, outSet FeaturesSet) error
 
-// FeatureBlockUnchanged checks whether the specified FeatureBlock type is unchanged between in and out.
+// FeatureUnchanged checks whether the specified Feature type is unchanged between in and out.
 // Unchanged also means that the block's existence is unchanged between both sets.
-func FeatureBlockUnchanged(featBlockType FeatureBlockType, inBlockSet FeatureBlocksSet, outBlockSet FeatureBlocksSet) error {
-	in, inHas := inBlockSet[featBlockType]
-	out, outHas := outBlockSet[featBlockType]
+func FeatureUnchanged(featType FeatureType, inFeatSet FeaturesSet, outFeatSet FeaturesSet) error {
+	in, inHas := inFeatSet[featType]
+	out, outHas := outFeatSet[featType]
 
 	switch {
 	case outHas && !inHas:
-		return fmt.Errorf("%w: %s in next state but not in previous", ErrInvalidFeatureBlockTransition, featBlockType)
+		return fmt.Errorf("%w: %s in next state but not in previous", ErrInvalidFeatureTransition, featType)
 	case !outHas && inHas:
-		return fmt.Errorf("%w: %s in current state but not in next", ErrInvalidFeatureBlockTransition, featBlockType)
+		return fmt.Errorf("%w: %s in current state but not in next", ErrInvalidFeatureTransition, featType)
 	}
 
 	// not in both sets
@@ -117,7 +117,7 @@ func FeatureBlockUnchanged(featBlockType FeatureBlockType, inBlockSet FeatureBlo
 	}
 
 	if !in.Equal(out) {
-		return fmt.Errorf("%w: %s changed, in %v / out %v", ErrInvalidFeatureBlockTransition, featBlockType, in, out)
+		return fmt.Errorf("%w: %s changed, in %v / out %v", ErrInvalidFeatureTransition, featType, in, out)
 	}
 
 	return nil
