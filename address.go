@@ -104,6 +104,8 @@ type ChainID interface {
 	Empty() bool
 	// Key returns a key to use to index this ChainID.
 	Key() interface{}
+	// ToHex returns the hex representation of the ChainID.
+	ToHex() string
 }
 
 // UTXOIDChainID is a ChainID which gets produced by taking an OutputID.

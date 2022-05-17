@@ -66,6 +66,11 @@ func TransactionUnlocksArrayRules() serializer.ArrayRules {
 // TransactionID is the ID of a Transaction.
 type TransactionID [TransactionIDLength]byte
 
+// ToHex converts the TransactionID to its hex representation.
+func (transactionID TransactionID) ToHex() string {
+	return EncodeHex(transactionID[:])
+}
+
 // TransactionIDs are IDs of transactions.
 type TransactionIDs []TransactionID
 
@@ -75,11 +80,6 @@ type Transaction struct {
 	Essence *TransactionEssence
 	// The unlocks defining the unlocking data for the inputs within the Essence.
 	Unlocks Unlocks
-}
-
-// ToHex converts the TransactionID to its hex representation.
-func (transactionID TransactionID) ToHex() string {
-	return EncodeHex(transactionID[:])
 }
 
 func (t *Transaction) PayloadType() PayloadType {

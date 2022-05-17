@@ -1,9 +1,11 @@
 package iotago
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -25,6 +27,9 @@ const (
 var (
 	// ErrBlockExceedsMaxSize gets returned when a serialized block exceeds BlockBinSerializedMaxSize.
 	ErrBlockExceedsMaxSize = errors.New("block exceeds max size")
+
+	// is an empty block ID
+	emptyBlockID = BlockID{}
 
 	blockPayloadGuard = serializer.SerializableGuard{
 		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
@@ -65,38 +70,103 @@ func BlockParentArrayRules() serializer.ArrayRules {
 	return blockParentArrayRules
 }
 
+// EmptyBlockID returns an empty BlockID.
+func EmptyBlockID() BlockID {
+	return emptyBlockID
+}
+
 // BlockID is the ID of a Block.
-type BlockID = [BlockIDLength]byte
+type BlockID [BlockIDLength]byte
 
-// BlockIDs are IDs of blocks.
-type BlockIDs = []BlockID
+func (b BlockID) MarshalBinary() (data []byte, err error) {
+	// copy
+	return b[:], nil
+}
 
-// BlockIDFromHexString converts the given block IDs from their hex to BlockID representation.
+// ToHex converts the given block ID to their hex representation.
+func (b *BlockID) ToHex() string {
+	return EncodeHex(b[:])
+}
+
+// Empty tells whether the BlockID is empty.
+func (b *BlockID) Empty() bool {
+	return *b == emptyBlockID
+}
+
+// BlockIDFromHexString converts the given block ID from its hex to BlockID representation.
 func BlockIDFromHexString(blockIDHex string) (BlockID, error) {
 	blockIDBytes, err := DecodeHex(blockIDHex)
 	if err != nil {
 		return BlockID{}, err
 	}
 
-	blockID := BlockID{}
+	var blockID BlockID
 	copy(blockID[:], blockIDBytes)
-
 	return blockID, nil
 }
 
-// BlockIDToHexString converts the given block ID to their hex representation.
-func BlockIDToHexString(blockID BlockID) string {
-	return EncodeHex(blockID[:])
-}
-
-// MustBlockIDFromHexString converts the given block IDs from their hex
-// to BlockID representation.
+// MustBlockIDFromHexString converts the given block ID from its hex to BlockID representation.
 func MustBlockIDFromHexString(blockIDHex string) BlockID {
 	blockID, err := BlockIDFromHexString(blockIDHex)
 	if err != nil {
 		panic(err)
 	}
 	return blockID
+}
+
+// BlockIDs are IDs of blocks.
+type BlockIDs []BlockID
+
+// ToHex converts the BlockIDs to their hex representation.
+func (ids BlockIDs) ToHex() []string {
+	hexIDs := make([]string, len(ids))
+	for i, id := range ids {
+		hexIDs[i] = EncodeHex(id[:])
+	}
+	return hexIDs
+}
+
+func (ids BlockIDs) ToSerializerType() serializer.SliceOfArraysOf32Bytes {
+	result := make(serializer.SliceOfArraysOf32Bytes, len(ids))
+	for i, ele := range ids {
+		result[i] = ele
+	}
+	return result
+}
+
+// RemoveDupsAndSort removes duplicated BlockIDs and sorts the slice by the lexical ordering.
+func (ids BlockIDs) RemoveDupsAndSort() BlockIDs {
+	sorted := make(serializer.LexicalOrdered32ByteArrays, len(ids))
+	for i, id := range ids {
+		sorted[i] = id
+	}
+	sort.Sort(sorted)
+
+	var result BlockIDs
+	var prev BlockID
+	for i, id := range sorted {
+		// only add to the result, if it its different from its predecessor
+		if i == 0 || !bytes.Equal(prev[:], id[:]) {
+			result = append(result, id)
+		}
+		prev = id
+	}
+	return result
+}
+
+// BlockIDsFromHexString converts the given block IDs from their hex to BlockID representation.
+func BlockIDsFromHexString(blockIDsHex []string) (BlockIDs, error) {
+	result := make(BlockIDs, len(blockIDsHex))
+
+	for i, hexString := range blockIDsHex {
+		blockID, err := BlockIDFromHexString(hexString)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = blockID
+	}
+
+	return result, nil
 }
 
 // Block represents a vertex in the Tangle.
@@ -112,13 +182,13 @@ type Block struct {
 }
 
 // ID computes the ID of the Block.
-func (m *Block) ID() (*BlockID, error) {
+func (m *Block) ID() (BlockID, error) {
 	data, err := m.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
-		return nil, fmt.Errorf("can't compute block ID: %w", err)
+		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
 	}
 	h := blake2b.Sum256(data)
-	return &h, nil
+	return h, nil
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
@@ -127,7 +197,7 @@ func (m *Block) MustID() BlockID {
 	if err != nil {
 		panic(err)
 	}
-	return *blockID
+	return blockID
 }
 
 // POW computes the PoW score of the Block.
@@ -143,12 +213,19 @@ func (m *Block) Deserialize(data []byte, deSeriMode serializer.DeSerializationMo
 	if len(data) > BlockBinSerializedMaxSize {
 		return 0, fmt.Errorf("%w: size %d bytes", ErrBlockExceedsMaxSize, len(data))
 	}
+	parentsSlice := serializer.SliceOfArraysOf32Bytes{}
 	return serializer.NewDeserializer(data).
 		ReadNum(&m.ProtocolVersion, func(err error) error {
 			return fmt.Errorf("unable to deserialize block protocol version: %w", err)
 		}).
-		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &blockParentArrayRules, func(err error) error {
+		ReadSliceOfArraysOf32Bytes(&parentsSlice, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &blockParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize block parents: %w", err)
+		}).
+		Do(func() {
+			m.Parents = make(BlockIDs, len(parentsSlice))
+			for i, ele := range parentsSlice {
+				m.Parents[i] = ele
+			}
 		}).
 		ReadPayload(&m.Payload, deSeriMode, deSeriCtx, blockPayloadGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize block's inner payload: %w", err)
@@ -166,13 +243,13 @@ func (m *Block) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx i
 	data, err := serializer.NewSerializer().
 		Do(func() {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
-				m.Parents = serializer.RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(m.Parents)
+				m.Parents = m.Parents.RemoveDupsAndSort()
 			}
 		}).
 		WriteNum(m.ProtocolVersion, func(err error) error {
 			return fmt.Errorf("unable to serialize block protocol version: %w", err)
 		}).
-		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &blockParentArrayRules, func(err error) error {
+		Write32BytesArraySlice(m.Parents.ToSerializerType(), deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &blockParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize block parents: %w", err)
 		}).
 		WritePayload(m.Payload, deSeriMode, deSeriCtx, blockPayloadGuard.WriteGuard, func(err error) error {

@@ -141,14 +141,23 @@ func Rand64ByteArray() [64]byte {
 	return h
 }
 
-// SortedRand32BytArray returns a count length slice of sorted 32 byte arrays.
-func SortedRand32BytArray(count int) [][32]byte {
+// SortedRand32ByteArray returns a count length slice of sorted 32 byte arrays.
+func SortedRand32ByteArray(count int) [][32]byte {
 	hashes := make(serializer.LexicalOrdered32ByteArrays, count)
 	for i := 0; i < count; i++ {
 		hashes[i] = Rand32ByteArray()
 	}
 	sort.Sort(hashes)
 	return hashes
+}
+
+// SortedRandBlockIDs returns random block IDs.
+func SortedRandBlockIDs(count int) iotago.BlockIDs {
+	slice := make(iotago.BlockIDs, count)
+	for i, ele := range SortedRand32ByteArray(count) {
+		slice[i] = ele
+	}
+	return slice
 }
 
 // RandEd25519Address returns a random Ed25519 address.
@@ -257,7 +266,7 @@ func RandMilestone(parents iotago.BlockIDs) *iotago.Milestone {
 	const sigsCount = 3
 
 	if parents == nil {
-		parents = SortedRand32BytArray(1 + rand.Intn(7))
+		parents = SortedRandBlockIDs(1 + rand.Intn(7))
 	}
 
 	msPayload := &iotago.Milestone{
@@ -314,7 +323,7 @@ func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 	var payload iotago.Payload
 
-	parents := SortedRand32BytArray(1 + rand.Intn(7))
+	parents := SortedRandBlockIDs(1 + rand.Intn(7))
 
 	switch withPayloadType {
 	case iotago.PayloadTransaction:

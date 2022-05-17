@@ -134,6 +134,10 @@ func (id AliasID) Addressable() bool {
 	return true
 }
 
+func (id AliasID) ToHex() string {
+	return EncodeHex(id[:])
+}
+
 func (id AliasID) Key() interface{} {
 	return id.String()
 }

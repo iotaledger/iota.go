@@ -44,7 +44,7 @@ func TestMilestone_MarshalUnmarshalJSON(t *testing.T) {
 	ms := &iotago.Milestone{
 		Index:             1337,
 		Timestamp:         13371337,
-		Parents:           tpkg.SortedRand32BytArray(2),
+		Parents:           tpkg.SortedRandBlockIDs(2),
 		AppliedMerkleRoot: tpkg.Rand32ByteArray(),
 		Metadata:          tpkg.RandBytes(10),
 		Opts:              iotago.MilestoneOpts{},
@@ -90,7 +90,7 @@ func TestMilestoneSigning(t *testing.T) {
 			pubKeys := []iotago.MilestonePublicKey{pubKey1}
 
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
+				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 				Index:             1000,
 				Timestamp:         uint32(time.Now().Unix()),
 				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
@@ -123,7 +123,7 @@ func TestMilestoneSigning(t *testing.T) {
 			sort.Sort(pubKeys)
 
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
+				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 				Index:             1000,
 				Timestamp:         uint32(time.Now().Unix()),
 				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
@@ -151,7 +151,7 @@ func TestMilestoneSigning(t *testing.T) {
 			pubKeys := []iotago.MilestonePublicKey{pubKey1}
 
 			msPayload := &iotago.Milestone{
-				Parents:             tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
+				Parents:             tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 				Index:               1000,
 				Timestamp:           uint32(time.Now().Unix()),
 				InclusionMerkleRoot: tpkg.Rand32ByteArray(),
@@ -194,7 +194,7 @@ func TestMilestoneSigning(t *testing.T) {
 }
 
 func TestNewMilestone(t *testing.T) {
-	parents := tpkg.SortedRand32BytArray(1 + rand.Intn(7))
+	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
 	prevMs := tpkg.Rand32ByteArray()
 	pastConeMerkleProof := tpkg.Rand32ByteArray()
 	inclusionMerkleProof := tpkg.Rand32ByteArray()

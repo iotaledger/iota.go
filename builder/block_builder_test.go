@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 func TestBlockBuilder(t *testing.T) {
 	const targetPoWScore float64 = 500
 
-	parents := tpkg.SortedRand32BytArray(4)
+	parents := tpkg.SortedRandBlockIDs(4)
 
 	taggedDataPayload := &iotago.TaggedData{
 		Tag:  []byte("hello world"),

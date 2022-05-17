@@ -114,6 +114,10 @@ func FoundryOutputImmutableFeaturesArrayRules() serializer.ArrayRules {
 // FoundryID defines the identifier for a foundry consisting out of the address, serial number and TokenScheme.
 type FoundryID [FoundryIDLength]byte
 
+func (fID FoundryID) ToHex() string {
+	return EncodeHex(fID[:])
+}
+
 func (fID FoundryID) Addressable() bool {
 	return false
 }

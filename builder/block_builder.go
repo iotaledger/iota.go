@@ -76,7 +76,7 @@ func (mb *BlockBuilder) Parents(parents [][]byte) *BlockBuilder {
 		copy(parent[:], parentBytes)
 		pars[i] = parent
 	}
-	mb.block.Parents = serializer.RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(pars)
+	mb.block.Parents = pars.RemoveDupsAndSort()
 	return mb
 }
 
@@ -86,7 +86,7 @@ func (mb *BlockBuilder) ParentsBlockIDs(parents iotago.BlockIDs) *BlockBuilder {
 		return mb
 	}
 
-	mb.block.Parents = serializer.RemoveDupsAndSortByLexicalOrderArrayOf32Bytes(parents)
+	mb.block.Parents = parents.RemoveDupsAndSort()
 	return mb
 }
 
