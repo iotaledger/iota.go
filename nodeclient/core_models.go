@@ -87,7 +87,7 @@ type (
 		// The hex encoded ID of the block.
 		BlockID string `json:"blockId"`
 		// The hex encoded IDs of the parent block references.
-		Parents []string `json:"parentBlockIds"`
+		Parents []string `json:"parents"`
 		// Whether the block is solid.
 		Solid bool `json:"isSolid"`
 		// The milestone index that references this block.
@@ -181,7 +181,7 @@ type (
 		// The timestamp of the milestone.
 		Timestamp uint32 `json:"timestamp"`
 		// The hex encoded IDs of the parent blocks the milestone references.
-		Parents []string `json:"parentBlockIds"`
+		Parents []string `json:"parents"`
 		// The hex encoded milestone ID of the previous milestone.
 		PreviousMilestoneID string `json:"previousMilestoneId"`
 	}
