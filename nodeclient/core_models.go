@@ -188,16 +188,16 @@ type (
 
 	// ComputeWhiteFlagMutationsResponseInternal defines the internal response for a POST ComputeWhiteFlagMutations REST API call.
 	ComputeWhiteFlagMutationsResponseInternal struct {
-		// The hex encoded confirmed merkle tree root as a result of the white flag computation.
-		ConfirmedMerkleRoot string `json:"confirmedMerkleRoot"`
+		// The hex encoded inclusion merkle tree root as a result of the white flag computation.
+		InclusionMerkleRoot string `json:"inclusionMerkleRoot"`
 		// The hex encoded applied merkle tree root as a result of the white flag computation.
 		AppliedMerkleRoot string `json:"appliedMerkleRoot"`
 	}
 
 	// ComputeWhiteFlagMutationsResponse defines the response for a POST ComputeWhiteFlagMutations REST API call.
 	ComputeWhiteFlagMutationsResponse struct {
-		// The confirmed merkle tree root as a result of the white flag computation.
-		ConfirmedMerkleRoot iotago.MilestoneMerkleProof
+		// The inclusion merkle tree root as a result of the white flag computation.
+		InclusionMerkleRoot iotago.MilestoneMerkleProof
 		// The applied merkle tree root as a result of the white flag computation.
 		AppliedMerkleRoot iotago.MilestoneMerkleProof
 	}

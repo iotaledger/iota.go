@@ -117,14 +117,14 @@ type (
 )
 
 // NewMilestone creates a new unsigned Milestone.
-func NewMilestone(index uint32, timestamp uint32, protocolVersion byte, prevMsID MilestoneID, parents MilestoneParentBlockIDs, confMerkleRoot MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) *Milestone {
+func NewMilestone(index uint32, timestamp uint32, protocolVersion byte, prevMsID MilestoneID, parents MilestoneParentBlockIDs, inclMerkleProof MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) *Milestone {
 	return &Milestone{
 		Index:               index,
 		Timestamp:           timestamp,
 		ProtocolVersion:     protocolVersion,
 		PreviousMilestoneID: prevMsID,
 		Parents:             parents,
-		ConfirmedMerkleRoot: confMerkleRoot,
+		InclusionMerkleRoot: inclMerkleProof,
 		AppliedMerkleRoot:   appliedMerkleRoot,
 	}
 }
@@ -143,8 +143,8 @@ type Milestone struct {
 	// The parents where this milestone attaches to.
 	Parents MilestoneParentBlockIDs
 	// The merkle root of all directly/indirectly referenced blocks (their IDs) which
-	// were newly confirmed by this milestone.
-	ConfirmedMerkleRoot MilestoneMerkleProof
+	// were newly included by this milestone.
+	InclusionMerkleRoot MilestoneMerkleProof
 	// The merkle root of all blocks (their IDs) carrying ledger state mutating transactions.
 	AppliedMerkleRoot MilestoneMerkleProof
 	// The metadata associated with this milestone.
@@ -188,11 +188,11 @@ func (m *Milestone) Essence() ([]byte, error) {
 		Write32BytesArraySlice(m.Parents, serializer.DeSeriModePerformValidation, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents for essence: %w", err)
 		}).
-		WriteBytes(m.ConfirmedMerkleRoot[:], func(err error) error {
-			return fmt.Errorf("unable to serialize milestone past cone merkle proof for essence: %w", err)
+		WriteBytes(m.InclusionMerkleRoot[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone inclusion merkle root for essence: %w", err)
 		}).
 		WriteBytes(m.AppliedMerkleRoot[:], func(err error) error {
-			return fmt.Errorf("unable to serialize milestone inclusion merkle proof for essence: %w", err)
+			return fmt.Errorf("unable to serialize milestone applied merkle root for essence: %w", err)
 		}).
 		WriteVariableByteSlice(m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone metadata for essence: %w", err)
@@ -365,11 +365,11 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		ReadSliceOfArraysOf32Bytes(&m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone parents: %w", err)
 		}).
-		ReadArrayOf32Bytes(&m.ConfirmedMerkleRoot, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone past cone merkle proof: %w", err)
+		ReadArrayOf32Bytes(&m.InclusionMerkleRoot, func(err error) error {
+			return fmt.Errorf("unable to deserialize milestone inclusion merkle root: %w", err)
 		}).
 		ReadArrayOf32Bytes(&m.AppliedMerkleRoot, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone inclusion merkle proof: %w", err)
+			return fmt.Errorf("unable to deserialize milestone applied merkle root: %w", err)
 		}).
 		ReadVariableByteSlice(&m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone metadata: %w", err)
@@ -403,11 +403,11 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		Write32BytesArraySlice(m.Parents, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &milestoneParentArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone parents: %w", err)
 		}).
-		WriteBytes(m.ConfirmedMerkleRoot[:], func(err error) error {
-			return fmt.Errorf("unable to serialize milestone past cone merkle proof: %w", err)
+		WriteBytes(m.InclusionMerkleRoot[:], func(err error) error {
+			return fmt.Errorf("unable to serialize milestone inclusion merkle root: %w", err)
 		}).
 		WriteBytes(m.AppliedMerkleRoot[:], func(err error) error {
-			return fmt.Errorf("unable to serialize milestone inclusion merkle proof: %w", err)
+			return fmt.Errorf("unable to serialize milestone applied merkle root: %w", err)
 		}).
 		WriteVariableByteSlice(m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone metadata: %w", err)
@@ -443,7 +443,7 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 	for i, parent := range m.Parents {
 		jMilestone.Parents[i] = EncodeHex(parent[:])
 	}
-	jMilestone.ConfirmedMerkleRoot = EncodeHex(m.ConfirmedMerkleRoot[:])
+	jMilestone.InclusionMerkleRoot = EncodeHex(m.InclusionMerkleRoot[:])
 	jMilestone.AppliedMerkleRoot = EncodeHex(m.AppliedMerkleRoot[:])
 
 	jMilestone.Opts = make([]*json.RawMessage, len(m.Opts))
@@ -492,7 +492,7 @@ type jsonMilestone struct {
 	ProtocolVersion     int                `json:"protocolVersion"`
 	PreviousMilestoneID string             `json:"previousMilestoneId"`
 	Parents             []string           `json:"parents"`
-	ConfirmedMerkleRoot string             `json:"confirmedMerkleRoot"`
+	InclusionMerkleRoot string             `json:"inclusionMerkleRoot"`
 	AppliedMerkleRoot   string             `json:"appliedMerkleRoot"`
 	Metadata            string             `json:"metadata,omitempty"`
 	Opts                []*json.RawMessage `json:"options,omitempty"`
@@ -521,11 +521,11 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 		copy(payload.Parents[i][:], parentBytes)
 	}
 
-	confirmedMerkleRoot, err := DecodeHex(j.ConfirmedMerkleRoot)
+	inclusionMerkleRoot, err := DecodeHex(j.InclusionMerkleRoot)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode confirmed merkle root from JSON: %w", err)
+		return nil, fmt.Errorf("unable to decode inclusion merkle root from JSON: %w", err)
 	}
-	copy(payload.ConfirmedMerkleRoot[:], confirmedMerkleRoot)
+	copy(payload.InclusionMerkleRoot[:], inclusionMerkleRoot)
 
 	appliedMerkleRoot, err := DecodeHex(j.AppliedMerkleRoot)
 	if err != nil {

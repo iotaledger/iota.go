@@ -538,13 +538,13 @@ func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index uint3
 		return nil, err
 	}
 
-	confirmedMerkleRootBytes, err := iotago.DecodeHex(res.ConfirmedMerkleRoot)
+	inclusionMerkleRootBytes, err := iotago.DecodeHex(res.InclusionMerkleRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(confirmedMerkleRootBytes) != iotago.MilestoneMerkleProofLength {
-		return nil, fmt.Errorf("unknown confirmed merkle tree hash length (%d)", len(confirmedMerkleRootBytes))
+	if len(inclusionMerkleRootBytes) != iotago.MilestoneMerkleProofLength {
+		return nil, fmt.Errorf("unknown inclusion merkle tree hash length (%d)", len(inclusionMerkleRootBytes))
 	}
 
 	appliedMerkleRootBytes, err := iotago.DecodeHex(res.AppliedMerkleRoot)
@@ -557,10 +557,10 @@ func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index uint3
 	}
 
 	result := &ComputeWhiteFlagMutationsResponse{
-		ConfirmedMerkleRoot: iotago.MilestoneMerkleProof{},
+		InclusionMerkleRoot: iotago.MilestoneMerkleProof{},
 		AppliedMerkleRoot:   iotago.MilestoneMerkleProof{},
 	}
-	copy(result.ConfirmedMerkleRoot[:], confirmedMerkleRootBytes)
+	copy(result.InclusionMerkleRoot[:], inclusionMerkleRootBytes)
 	copy(result.AppliedMerkleRoot[:], appliedMerkleRootBytes)
 
 	return result, nil

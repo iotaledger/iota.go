@@ -469,7 +469,7 @@ func TestClient_MilestoneByID(t *testing.T) {
 		Parents: iotago.MilestoneParentBlockIDs{
 			tpkg.Rand32ByteArray(),
 		},
-		ConfirmedMerkleRoot: tpkg.Rand32ByteArray(),
+		InclusionMerkleRoot: tpkg.Rand32ByteArray(),
 		AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
 		Metadata:            tpkg.RandBytes(30),
 		Opts: iotago.MilestoneOpts{
@@ -536,7 +536,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 		Parents: iotago.MilestoneParentBlockIDs{
 			tpkg.Rand32ByteArray(),
 		},
-		ConfirmedMerkleRoot: tpkg.Rand32ByteArray(),
+		InclusionMerkleRoot: tpkg.Rand32ByteArray(),
 		AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
 		Metadata:            tpkg.RandBytes(30),
 		Opts: iotago.MilestoneOpts{
@@ -603,7 +603,7 @@ func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 		parentBlockIDs[i] = iotago.EncodeHex(p[:])
 	}
 
-	randConfirmedMerkleRoot := tpkg.RandMilestoneMerkleProof()
+	randInclusionMerkleRoot := tpkg.RandMilestoneMerkleProof()
 	randAppliedMerkleRoot := tpkg.RandMilestoneMerkleProof()
 
 	milestoneID := tpkg.RandMilestoneID()
@@ -615,12 +615,12 @@ func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 	}
 
 	internalRes := &nodeclient.ComputeWhiteFlagMutationsResponseInternal{
-		ConfirmedMerkleRoot: iotago.EncodeHex(randConfirmedMerkleRoot[:]),
+		InclusionMerkleRoot: iotago.EncodeHex(randInclusionMerkleRoot[:]),
 		AppliedMerkleRoot:   iotago.EncodeHex(randAppliedMerkleRoot[:]),
 	}
 
 	originRes := &nodeclient.ComputeWhiteFlagMutationsResponse{
-		ConfirmedMerkleRoot: randConfirmedMerkleRoot,
+		InclusionMerkleRoot: randInclusionMerkleRoot,
 		AppliedMerkleRoot:   randAppliedMerkleRoot,
 	}
 
