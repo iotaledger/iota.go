@@ -113,7 +113,7 @@ type (
 		// The actual count of results that are returned.
 		Count uint32 `json:"count"`
 		// The hex encoded IDs of the children of this block.
-		Children []string `json:"childrenBlockIds"`
+		Children []string `json:"children"`
 	}
 
 	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
