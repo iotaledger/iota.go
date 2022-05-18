@@ -84,13 +84,13 @@ func (b BlockID) MarshalBinary() (data []byte, err error) {
 }
 
 // ToHex converts the given block ID to their hex representation.
-func (b *BlockID) ToHex() string {
+func (b BlockID) ToHex() string {
 	return EncodeHex(b[:])
 }
 
 // Empty tells whether the BlockID is empty.
-func (b *BlockID) Empty() bool {
-	return *b == emptyBlockID
+func (b BlockID) Empty() bool {
+	return b == emptyBlockID
 }
 
 // BlockIDFromHexString converts the given block ID from its hex to BlockID representation.
