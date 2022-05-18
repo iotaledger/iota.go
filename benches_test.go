@@ -158,7 +158,7 @@ func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 
 	m := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRand32BytArray(2),
+		Parents:         tpkg.SortedRandBlockIDs(2),
 		Payload:         txPayload,
 		Nonce:           0,
 	}

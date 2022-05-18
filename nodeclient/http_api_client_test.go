@@ -130,12 +130,12 @@ func TestClient_SubmitBlock(t *testing.T) {
 
 	incompleteBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRand32BytArray(1),
+		Parents:         tpkg.SortedRandBlockIDs(1),
 	}
 
 	completeBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRand32BytArray(1),
+		Parents:         tpkg.SortedRandBlockIDs(1),
 		Payload:         nil,
 		Nonce:           3495721389537486,
 	}
@@ -173,7 +173,7 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
-	parents := tpkg.SortedRand32BytArray(1 + rand.Intn(7))
+	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
 
 	queryHash := iotago.EncodeHex(identifier[:])
 
@@ -213,7 +213,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
+		Parents:         tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
@@ -273,7 +273,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRand32BytArray(1 + rand.Intn(7)),
+		Parents:         tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
@@ -466,7 +466,7 @@ func TestClient_MilestoneByID(t *testing.T) {
 		Index:               1337,
 		Timestamp:           1337,
 		PreviousMilestoneID: tpkg.RandMilestoneID(),
-		Parents: iotago.MilestoneParentBlockIDs{
+		Parents: iotago.BlockIDs{
 			tpkg.Rand32ByteArray(),
 		},
 		InclusionMerkleRoot: tpkg.Rand32ByteArray(),
@@ -533,7 +533,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 		Index:               milestoneIndex,
 		Timestamp:           1337,
 		PreviousMilestoneID: tpkg.RandMilestoneID(),
-		Parents: iotago.MilestoneParentBlockIDs{
+		Parents: iotago.BlockIDs{
 			tpkg.Rand32ByteArray(),
 		},
 		InclusionMerkleRoot: tpkg.Rand32ByteArray(),
@@ -597,7 +597,7 @@ func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 	var milestoneIndex uint32 = 1337
 	var milestoneTimestamp uint32 = 1333337
 
-	parents := tpkg.SortedRand32BytArray(1 + rand.Intn(7))
+	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
 	parentBlockIDs := make([]string, len(parents))
 	for i, p := range parents {
 		parentBlockIDs[i] = iotago.EncodeHex(p[:])

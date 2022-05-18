@@ -124,6 +124,10 @@ func NFTOutputImmutableFeaturesArrayRules() serializer.ArrayRules {
 // It is computed as the Blake2b-256 hash of the OutputID of the output which created the NFT.
 type NFTID [NFTIDLength]byte
 
+func (nftID NFTID) ToHex() string {
+	return EncodeHex(nftID[:])
+}
+
 // NFTIDs are NFTID(s).
 type NFTIDs []NFTID
 

@@ -56,7 +56,7 @@ func TestBlock_MinSize(t *testing.T) {
 
 	block := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRand32BytArray(1),
+		Parents:         tpkg.SortedRandBlockIDs(1),
 		Payload:         nil,
 	}
 

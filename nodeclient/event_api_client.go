@@ -304,7 +304,7 @@ func (eac *EventAPIClient) TaggedDataWithTagBlocks(tag []byte, protoParas *iotag
 
 // BlockMetadataChange returns a channel of BlockMetadataResponse each time the given block's state changes.
 func (eac *EventAPIClient) BlockMetadataChange(blockID iotago.BlockID) (<-chan *BlockMetadataResponse, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIBlockMetadata, "{blockId}", iotago.BlockIDToHexString(blockID), 1)
+	topic := strings.Replace(EventAPIBlockMetadata, "{blockId}", blockID.ToHex(), 1)
 	return eac.subscribeToBlockMetadataTopic(topic)
 }
 
@@ -342,7 +342,7 @@ func (eac *EventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.A
 
 // TransactionIncludedBlock returns a channel of the included block which carries the transaction with the given ID.
 func (eac *EventAPIClient) TransactionIncludedBlock(txID iotago.TransactionID, protoParas *iotago.ProtocolParameters) (<-chan *iotago.Block, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPITransactionsIncludedBlock, "{transactionId}", iotago.BlockIDToHexString(txID), 1)
+	topic := strings.Replace(EventAPITransactionsIncludedBlock, "{transactionId}", txID.ToHex(), 1)
 	return eac.subscribeToBlocksTopic(topic, protoParas)
 }
 
