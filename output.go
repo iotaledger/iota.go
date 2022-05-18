@@ -1,10 +1,12 @@
 package iotago
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"math/big"
+	"sort"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -141,6 +143,24 @@ func (outputIDs OutputIDs) ToHex() []string {
 		ids[i] = EncodeHex(outputIDs[i][:])
 	}
 	return ids
+}
+
+// RemoveDupsAndSort removes duplicated OutputIDs and sorts the slice by the lexical ordering.
+func (outputIDs OutputIDs) RemoveDupsAndSort() OutputIDs {
+	sorted := append(OutputIDs{}, outputIDs...)
+	sort.Slice(sorted, func(i, j int) bool {
+		return bytes.Compare(sorted[i][:], sorted[j][:]) == -1
+	})
+
+	var result OutputIDs
+	var prev OutputID
+	for i, id := range sorted {
+		if i == 0 || !bytes.Equal(prev[:], id[:]) {
+			result = append(result, id)
+		}
+		prev = id
+	}
+	return result
 }
 
 // UTXOInputs converts the OutputIDs slice to Inputs.

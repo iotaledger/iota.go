@@ -136,16 +136,14 @@ func (ids BlockIDs) ToSerializerType() serializer.SliceOfArraysOf32Bytes {
 
 // RemoveDupsAndSort removes duplicated BlockIDs and sorts the slice by the lexical ordering.
 func (ids BlockIDs) RemoveDupsAndSort() BlockIDs {
-	sorted := make(serializer.LexicalOrdered32ByteArrays, len(ids))
-	for i, id := range ids {
-		sorted[i] = id
-	}
-	sort.Sort(sorted)
+	sorted := append(BlockIDs{}, ids...)
+	sort.Slice(sorted, func(i, j int) bool {
+		return bytes.Compare(sorted[i][:], sorted[j][:]) == -1
+	})
 
 	var result BlockIDs
 	var prev BlockID
 	for i, id := range sorted {
-		// only add to the result, if it its different from its predecessor
 		if i == 0 || !bytes.Equal(prev[:], id[:]) {
 			result = append(result, id)
 		}
