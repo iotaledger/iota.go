@@ -94,19 +94,19 @@ func (t *Transaction) OutputsSet() (OutputSet, error) {
 	}
 	set := make(OutputSet)
 	for index, output := range t.Essence.Outputs {
-		set[OutputIDFromTransactionIDAndIndex(*txID, uint16(index))] = output
+		set[OutputIDFromTransactionIDAndIndex(txID, uint16(index))] = output
 	}
 	return set, nil
 }
 
 // ID computes the ID of the Transaction.
-func (t *Transaction) ID() (*TransactionID, error) {
+func (t *Transaction) ID() (TransactionID, error) {
 	data, err := t.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
-		return nil, fmt.Errorf("can't compute transaction ID: %w", err)
+		return TransactionID{}, fmt.Errorf("can't compute transaction ID: %w", err)
 	}
 	h := blake2b.Sum256(data)
-	tID := &TransactionID{}
+	tID := TransactionID{}
 	copy(tID[:], h[:])
 	return tID, nil
 }
@@ -301,7 +301,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputsSet OutputSet) (*SemValiC
 
 	workingSet.InChains = workingSet.InputSet.ChainConstrainedOutputSet()
 	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
-	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainConstrainedOutputSet(*txID)
+	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainConstrainedOutputSet(txID)
 
 	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
 	return workingSet, nil
