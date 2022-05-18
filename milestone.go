@@ -162,14 +162,14 @@ func (m *Milestone) PayloadType() PayloadType {
 }
 
 // ID computes the ID of the Milestone.
-func (m *Milestone) ID() (*MilestoneID, error) {
+func (m *Milestone) ID() (MilestoneID, error) {
 	var msID MilestoneID
 	data, err := m.Essence()
 	if err != nil {
-		return nil, err
+		return MilestoneID{}, err
 	}
 	copy(msID[:], data)
-	return &msID, nil
+	return msID, nil
 }
 
 // Essence returns the essence bytes (the bytes to be signed) of the Milestone.
