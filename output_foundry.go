@@ -380,15 +380,15 @@ func (f *FoundryOutput) NativeTokenSet() NativeTokens {
 	return f.NativeTokens
 }
 
-func (f *FoundryOutput) FeaturesSet() FeaturesSet {
+func (f *FoundryOutput) FeatureSet() FeatureSet {
 	return f.Features.MustSet()
 }
 
-func (f *FoundryOutput) UnlockConditionsSet() UnlockConditionsSet {
+func (f *FoundryOutput) UnlockConditionSet() UnlockConditionSet {
 	return f.Conditions.MustSet()
 }
 
-func (f *FoundryOutput) ImmutableFeaturesSet() FeaturesSet {
+func (f *FoundryOutput) ImmutableFeatureSet() FeatureSet {
 	return f.ImmutableFeatures.MustSet()
 }
 

@@ -435,15 +435,15 @@ func (a *AliasOutput) NativeTokenSet() NativeTokens {
 	return a.NativeTokens
 }
 
-func (a *AliasOutput) FeaturesSet() FeaturesSet {
+func (a *AliasOutput) FeatureSet() FeatureSet {
 	return a.Features.MustSet()
 }
 
-func (a *AliasOutput) UnlockConditionsSet() UnlockConditionsSet {
+func (a *AliasOutput) UnlockConditionSet() UnlockConditionSet {
 	return a.Conditions.MustSet()
 }
 
-func (a *AliasOutput) ImmutableFeaturesSet() FeaturesSet {
+func (a *AliasOutput) ImmutableFeatureSet() FeatureSet {
 	return a.ImmutableFeatures.MustSet()
 }
 

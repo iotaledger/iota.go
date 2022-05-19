@@ -87,10 +87,10 @@ func (f Features) Size() int {
 	return sum
 }
 
-// Set converts the slice into a FeaturesSet.
+// Set converts the slice into a FeatureSet.
 // Returns an error if a FeatureType occurs multiple times.
-func (f Features) Set() (FeaturesSet, error) {
-	set := make(FeaturesSet)
+func (f Features) Set() (FeatureSet, error) {
+	set := make(FeatureSet)
 	for _, feat := range f {
 		if _, has := set[feat.Type()]; has {
 			return nil, ErrNonUniqueFeatures
@@ -103,7 +103,7 @@ func (f Features) Set() (FeaturesSet, error) {
 // MustSet works like Set but panics if an error occurs.
 // This function is therefore only safe to be called when it is given,
 // that a Features slice does not contain the same FeatureType multiple times.
-func (f Features) MustSet() FeaturesSet {
+func (f Features) MustSet() FeatureSet {
 	set, err := f.Set()
 	if err != nil {
 		panic(err)
@@ -124,12 +124,12 @@ func (f Features) Equal(other Features) bool {
 	return true
 }
 
-// FeaturesSet is a set of Feature(s).
-type FeaturesSet map[FeatureType]Feature
+// FeatureSet is a set of Feature(s).
+type FeatureSet map[FeatureType]Feature
 
-// Clone clones the FeaturesSet.
-func (f FeaturesSet) Clone() FeaturesSet {
-	cpy := make(FeaturesSet, len(f))
+// Clone clones the FeatureSet.
+func (f FeatureSet) Clone() FeatureSet {
+	cpy := make(FeatureSet, len(f))
 	for k, v := range f {
 		cpy[k] = v.Clone()
 	}
@@ -137,7 +137,7 @@ func (f FeaturesSet) Clone() FeaturesSet {
 }
 
 // SenderFeature returns the SenderFeature in the set or nil.
-func (f FeaturesSet) SenderFeature() *SenderFeature {
+func (f FeatureSet) SenderFeature() *SenderFeature {
 	b, has := f[FeatureSender]
 	if !has {
 		return nil
@@ -146,7 +146,7 @@ func (f FeaturesSet) SenderFeature() *SenderFeature {
 }
 
 // IssuerFeature returns the IssuerFeature in the set or nil.
-func (f FeaturesSet) IssuerFeature() *IssuerFeature {
+func (f FeatureSet) IssuerFeature() *IssuerFeature {
 	b, has := f[FeatureIssuer]
 	if !has {
 		return nil
@@ -155,7 +155,7 @@ func (f FeaturesSet) IssuerFeature() *IssuerFeature {
 }
 
 // MetadataFeature returns the MetadataFeature in the set or nil.
-func (f FeaturesSet) MetadataFeature() *MetadataFeature {
+func (f FeatureSet) MetadataFeature() *MetadataFeature {
 	b, has := f[FeatureMetadata]
 	if !has {
 		return nil
@@ -164,7 +164,7 @@ func (f FeaturesSet) MetadataFeature() *MetadataFeature {
 }
 
 // TagFeature returns the TagFeature in the set or nil.
-func (f FeaturesSet) TagFeature() *TagFeature {
+func (f FeatureSet) TagFeature() *TagFeature {
 	b, has := f[FeatureTag]
 	if !has {
 		return nil
@@ -174,7 +174,7 @@ func (f FeaturesSet) TagFeature() *TagFeature {
 
 // EveryTuple runs f for every key which exists in both this set and other.
 // Returns a bool indicating whether all element of this set existed on the other set.
-func (f FeaturesSet) EveryTuple(other FeaturesSet, fun func(a Feature, b Feature) error) (bool, error) {
+func (f FeatureSet) EveryTuple(other FeatureSet, fun func(a Feature, b Feature) error) (bool, error) {
 	hadAll := true
 	for ty, featA := range f {
 		featB, has := other[ty]

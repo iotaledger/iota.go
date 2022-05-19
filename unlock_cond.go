@@ -11,7 +11,7 @@ import (
 var (
 	// ErrNonUniqueUnlockConditions gets returned when multiple UnlockCondition(s) with the same UnlockConditionType exist within sets.
 	ErrNonUniqueUnlockConditions = errors.New("non unique unlock conditions within outputs")
-	// ErrTimelockNotExpired gets returned when timelocks in a UnlockConditionsSet are not expired.
+	// ErrTimelockNotExpired gets returned when timelocks in a UnlockConditionSet are not expired.
 	ErrTimelockNotExpired = errors.New("timelock not expired")
 	// ErrExpirationConditionsZero gets returned when an ExpirationUnlockCondition has set the milestone index and timestamp to zero.
 	ErrExpirationConditionsZero = errors.New("expiration conditions are both zero")
@@ -118,10 +118,10 @@ func (f UnlockConditions) Size() int {
 	return sum
 }
 
-// Set converts the slice into an UnlockConditionsSet.
+// Set converts the slice into an UnlockConditionSet.
 // Returns an error if an UnlockConditionType occurs multiple times.
-func (f UnlockConditions) Set() (UnlockConditionsSet, error) {
-	set := make(UnlockConditionsSet)
+func (f UnlockConditions) Set() (UnlockConditionSet, error) {
+	set := make(UnlockConditionSet)
 	for _, block := range f {
 		if _, has := set[block.Type()]; has {
 			return nil, ErrNonUniqueUnlockConditions
@@ -134,7 +134,7 @@ func (f UnlockConditions) Set() (UnlockConditionsSet, error) {
 // MustSet works like Set but panics if an error occurs.
 // This function is therefore only safe to be called when it is given,
 // that an UnlockConditions slice does not contain the same UnlockConditionType multiple times.
-func (f UnlockConditions) MustSet() UnlockConditionsSet {
+func (f UnlockConditions) MustSet() UnlockConditionSet {
 	set, err := f.Set()
 	if err != nil {
 		panic(err)
@@ -142,21 +142,21 @@ func (f UnlockConditions) MustSet() UnlockConditionsSet {
 	return set
 }
 
-// UnlockConditionsSet is a set of UnlockCondition(s).
-type UnlockConditionsSet map[UnlockConditionType]UnlockCondition
+// UnlockConditionSet is a set of UnlockCondition(s).
+type UnlockConditionSet map[UnlockConditionType]UnlockCondition
 
 // HasStorageDepositReturnCondition tells whether this set has a StorageDepositReturnUnlockCondition.
-func (f UnlockConditionsSet) HasStorageDepositReturnCondition() bool {
+func (f UnlockConditionSet) HasStorageDepositReturnCondition() bool {
 	return f.StorageDepositReturn() != nil
 }
 
 // HasExpirationCondition tells whether this set has an ExpirationUnlockCondition.
-func (f UnlockConditionsSet) HasExpirationCondition() bool {
+func (f UnlockConditionSet) HasExpirationCondition() bool {
 	return f.Expiration() != nil
 }
 
 // HasTimelockCondition tells whether this set has a TimelockUnlockCondition.
-func (f UnlockConditionsSet) HasTimelockCondition() bool {
+func (f UnlockConditionSet) HasTimelockCondition() bool {
 	return f.Timelock() != nil
 }
 
@@ -165,7 +165,7 @@ func (f UnlockConditionsSet) HasTimelockCondition() bool {
 //	- If the timelocks are not expired, then nobody can unlock.
 //	- If the expiration blocks are expired, then only the return identity can unlock.
 // returns booleans indicating whether the given ident can unlock and whether the return identity can unlock.
-func (f UnlockConditionsSet) unlockableBy(ident Address, extParas *ExternalUnlockParameters) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
+func (f UnlockConditionSet) unlockableBy(ident Address, extParas *ExternalUnlockParameters) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
 	if err := f.TimelocksExpired(extParas); err != nil {
 		return false, false
 	}
@@ -183,8 +183,8 @@ func (f UnlockConditionsSet) unlockableBy(ident Address, extParas *ExternalUnloc
 }
 
 // tells whether a sender defined in an expiration unlock condition within this set is the actual
-// identity which could unlock an Output containing this UnlockConditionsSet given the ExternalUnlockParameters.
-func (f UnlockConditionsSet) returnIdentCanUnlock(extParas *ExternalUnlockParameters) (bool, Address) {
+// identity which could unlock an Output containing this UnlockConditionSet given the ExternalUnlockParameters.
+func (f UnlockConditionSet) returnIdentCanUnlock(extParas *ExternalUnlockParameters) (bool, Address) {
 	expUnlockCond := f.Expiration()
 
 	if expUnlockCond == nil {
@@ -213,7 +213,7 @@ func (f UnlockConditionsSet) returnIdentCanUnlock(extParas *ExternalUnlockParame
 
 // TimelocksExpired tells whether UnlockCondition(s) in this set which impose a timelock are expired
 // in relation to the given ExternalUnlockParameters.
-func (f UnlockConditionsSet) TimelocksExpired(extParas *ExternalUnlockParameters) error {
+func (f UnlockConditionSet) TimelocksExpired(extParas *ExternalUnlockParameters) error {
 	timelock := f.Timelock()
 
 	if timelock == nil {
@@ -231,7 +231,7 @@ func (f UnlockConditionsSet) TimelocksExpired(extParas *ExternalUnlockParameters
 }
 
 // StorageDepositReturn returns the StorageDepositReturnUnlockCondition in the set or nil.
-func (f UnlockConditionsSet) StorageDepositReturn() *StorageDepositReturnUnlockCondition {
+func (f UnlockConditionSet) StorageDepositReturn() *StorageDepositReturnUnlockCondition {
 	b, has := f[UnlockConditionStorageDepositReturn]
 	if !has {
 		return nil
@@ -240,7 +240,7 @@ func (f UnlockConditionsSet) StorageDepositReturn() *StorageDepositReturnUnlockC
 }
 
 // Address returns the AddressUnlockCondition in the set or nil.
-func (f UnlockConditionsSet) Address() *AddressUnlockCondition {
+func (f UnlockConditionSet) Address() *AddressUnlockCondition {
 	b, has := f[UnlockConditionAddress]
 	if !has {
 		return nil
@@ -249,7 +249,7 @@ func (f UnlockConditionsSet) Address() *AddressUnlockCondition {
 }
 
 // ImmutableAlias returns the ImmutableAliasUnlockCondition in the set or nil.
-func (f UnlockConditionsSet) ImmutableAlias() *ImmutableAliasUnlockCondition {
+func (f UnlockConditionSet) ImmutableAlias() *ImmutableAliasUnlockCondition {
 	b, has := f[UnlockConditionImmutableAlias]
 	if !has {
 		return nil
@@ -258,7 +258,7 @@ func (f UnlockConditionsSet) ImmutableAlias() *ImmutableAliasUnlockCondition {
 }
 
 // GovernorAddress returns the GovernorAddressUnlockCondition in the set or nil.
-func (f UnlockConditionsSet) GovernorAddress() *GovernorAddressUnlockCondition {
+func (f UnlockConditionSet) GovernorAddress() *GovernorAddressUnlockCondition {
 	b, has := f[UnlockConditionGovernorAddress]
 	if !has {
 		return nil
@@ -267,7 +267,7 @@ func (f UnlockConditionsSet) GovernorAddress() *GovernorAddressUnlockCondition {
 }
 
 // StateControllerAddress returns the StateControllerAddressUnlockCondition in the set or nil.
-func (f UnlockConditionsSet) StateControllerAddress() *StateControllerAddressUnlockCondition {
+func (f UnlockConditionSet) StateControllerAddress() *StateControllerAddressUnlockCondition {
 	b, has := f[UnlockConditionStateControllerAddress]
 	if !has {
 		return nil
@@ -276,7 +276,7 @@ func (f UnlockConditionsSet) StateControllerAddress() *StateControllerAddressUnl
 }
 
 // Timelock returns the TimelockUnlockCondition in the set or nil.
-func (f UnlockConditionsSet) Timelock() *TimelockUnlockCondition {
+func (f UnlockConditionSet) Timelock() *TimelockUnlockCondition {
 	b, has := f[UnlockConditionTimelock]
 	if !has {
 		return nil
@@ -285,7 +285,7 @@ func (f UnlockConditionsSet) Timelock() *TimelockUnlockCondition {
 }
 
 // Expiration returns the ExpirationUnlockCondition in the set or nil.
-func (f UnlockConditionsSet) Expiration() *ExpirationUnlockCondition {
+func (f UnlockConditionSet) Expiration() *ExpirationUnlockCondition {
 	b, has := f[UnlockConditionExpiration]
 	if !has {
 		return nil

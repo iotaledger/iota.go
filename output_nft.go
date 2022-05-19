@@ -264,15 +264,15 @@ func (n *NFTOutput) NativeTokenSet() NativeTokens {
 	return n.NativeTokens
 }
 
-func (n *NFTOutput) FeaturesSet() FeaturesSet {
+func (n *NFTOutput) FeatureSet() FeatureSet {
 	return n.Features.MustSet()
 }
 
-func (n *NFTOutput) UnlockConditionsSet() UnlockConditionsSet {
+func (n *NFTOutput) UnlockConditionSet() UnlockConditionSet {
 	return n.Conditions.MustSet()
 }
 
-func (n *NFTOutput) ImmutableFeaturesSet() FeaturesSet {
+func (n *NFTOutput) ImmutableFeatureSet() FeatureSet {
 	return n.ImmutableFeatures.MustSet()
 }
 

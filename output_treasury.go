@@ -18,11 +18,11 @@ func (t *TreasuryOutput) NativeTokenSet() NativeTokens {
 	return nil
 }
 
-func (t *TreasuryOutput) UnlockConditionsSet() UnlockConditionsSet {
+func (t *TreasuryOutput) UnlockConditionSet() UnlockConditionSet {
 	return nil
 }
 
-func (t *TreasuryOutput) FeaturesSet() FeaturesSet {
+func (t *TreasuryOutput) FeatureSet() FeatureSet {
 	return nil
 }
 

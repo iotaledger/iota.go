@@ -57,8 +57,8 @@ type ChainConstrainedOutput interface {
 	// Next is nil if transType is ChainTransitionTypeGenesis or ChainTransitionTypeDestroy.
 	ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error
 
-	// ImmutableFeaturesSet returns the immutable FeaturesSet this output contains.
-	ImmutableFeaturesSet() FeaturesSet
+	// ImmutableFeatureSet returns the immutable FeatureSet this output contains.
+	ImmutableFeatureSet() FeatureSet
 }
 
 // ChainTransitionType defines the type of transition a ChainConstrainedOutput is doing.
@@ -80,7 +80,7 @@ type StateTransitionValidationFunc func(current ChainConstrainedOutput, next Cha
 // IsIssuerOnOutputUnlocked checks whether the issuer in an IssuerFeature of this new ChainConstrainedOutput has been unlocked.
 // This function is a no-op if the chain output does not contain an IssuerFeature.
 func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents UnlockedIdentities) error {
-	immFeats := output.ImmutableFeaturesSet()
+	immFeats := output.ImmutableFeatureSet()
 	if immFeats == nil || len(immFeats) == 0 {
 		return nil
 	}
@@ -96,11 +96,11 @@ func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents Unlo
 }
 
 // FeatureSetTransitionValidationFunc checks whether the Features transition from in to out is valid.
-type FeatureSetTransitionValidationFunc func(inSet FeaturesSet, outSet FeaturesSet) error
+type FeatureSetTransitionValidationFunc func(inSet FeatureSet, outSet FeatureSet) error
 
 // FeatureUnchanged checks whether the specified Feature type is unchanged between in and out.
 // Unchanged also means that the block's existence is unchanged between both sets.
-func FeatureUnchanged(featType FeatureType, inFeatSet FeaturesSet, outFeatSet FeaturesSet) error {
+func FeatureUnchanged(featType FeatureType, inFeatSet FeatureSet, outFeatSet FeatureSet) error {
 	in, inHas := inFeatSet[featType]
 	out, outHas := outFeatSet[featType]
 
