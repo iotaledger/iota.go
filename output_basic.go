@@ -126,11 +126,11 @@ func (e *BasicOutput) NativeTokenSet() NativeTokens {
 	return e.NativeTokens
 }
 
-func (e *BasicOutput) FeaturesSet() FeaturesSet {
+func (e *BasicOutput) FeatureSet() FeatureSet {
 	return e.Features.MustSet()
 }
 
-func (e *BasicOutput) UnlockConditionsSet() UnlockConditionsSet {
+func (e *BasicOutput) UnlockConditionSet() UnlockConditionSet {
 	return e.Conditions.MustSet()
 }
 
