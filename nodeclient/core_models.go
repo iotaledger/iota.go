@@ -79,7 +79,7 @@ type (
 	// TipsResponse defines the response of a GET tips REST API call.
 	TipsResponse struct {
 		// The hex encoded block IDs of the tips.
-		TipsHex []string `json:"tipBlockIds"`
+		TipsHex []string `json:"tips"`
 	}
 
 	// BlockMetadataResponse defines the response of a GET block metadata REST API call.
