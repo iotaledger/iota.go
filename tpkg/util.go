@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"math/big"
 	"math/rand"
 	"sort"
@@ -24,6 +25,11 @@ func Must(err error) {
 	}
 }
 
+// RandByte returns a random byte.
+func RandByte() byte {
+	return byte(rand.Intn(256))
+}
+
 // RandBytes returns length amount random bytes.
 func RandBytes(length int) []byte {
 	var b []byte
@@ -31,6 +37,35 @@ func RandBytes(length int) []byte {
 		b = append(b, byte(rand.Intn(256)))
 	}
 	return b
+}
+
+func RandString(length int) string {
+	return string(RandBytes(length))
+}
+
+// RandUint8 returns a random uint8.
+func RandUint8(max uint8) uint8 {
+	return uint8(rand.Int31n(int32(max)))
+}
+
+// RandUint16 returns a random uint16.
+func RandUint16(max int16) uint16 {
+	return uint16(rand.Int31n(int32(max)))
+}
+
+// RandUint32 returns a random uint32.
+func RandUint32(max int32) uint32 {
+	return uint32(rand.Int63n(int64(max)))
+}
+
+// RandUint64 returns a random uint64.
+func RandUint64(max int64) uint64 {
+	return uint64(rand.Int63n(max))
+}
+
+// RandFloat64 returns a random float64.
+func RandFloat64(max float64) float64 {
+	return rand.Float64() * max
 }
 
 // RandTrytes returns length amount of random trytes.
@@ -471,4 +506,26 @@ func RandMilestoneID() iotago.MilestoneID {
 // RandMilestoneMerkleProof produces a random milestone merkle proof.
 func RandMilestoneMerkleProof() iotago.MilestoneMerkleProof {
 	return Rand32ByteArray()
+}
+
+// RandRentStructure produces random rent structure.
+func RandRentStructure() *iotago.RentStructure {
+	return &iotago.RentStructure{
+		VByteCost:    RandUint32(math.MaxInt32),
+		VBFactorData: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VBFactorKey:  iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+	}
+}
+
+// RandProtocolParameters produces random protocol parameters.
+func RandProtocolParameters() *iotago.ProtocolParameters {
+	return &iotago.ProtocolParameters{
+		Version:       RandByte(),
+		NetworkName:   RandString(255),
+		Bech32HRP:     iotago.NetworkPrefix(RandString(255)),
+		MinPoWScore:   RandUint32(50000),
+		BelowMaxDepth: RandUint8(math.MaxUint8),
+		RentStructure: *RandRentStructure(),
+		TokenSupply:   RandUint64(math.MaxInt64),
+	}
 }
