@@ -49,18 +49,18 @@ func RandUint8(max uint8) uint8 {
 }
 
 // RandUint16 returns a random uint16.
-func RandUint16(max int16) uint16 {
+func RandUint16(max uint16) uint16 {
 	return uint16(rand.Int31n(int32(max)))
 }
 
 // RandUint32 returns a random uint32.
-func RandUint32(max int32) uint32 {
+func RandUint32(max uint32) uint32 {
 	return uint32(rand.Int63n(int64(max)))
 }
 
 // RandUint64 returns a random uint64.
-func RandUint64(max int64) uint64 {
-	return uint64(rand.Int63n(max))
+func RandUint64(max uint64) uint64 {
+	return uint64(rand.Int63n(int64(uint32(max))))
 }
 
 // RandFloat64 returns a random float64.
@@ -511,7 +511,7 @@ func RandMilestoneMerkleProof() iotago.MilestoneMerkleProof {
 // RandRentStructure produces random rent structure.
 func RandRentStructure() *iotago.RentStructure {
 	return &iotago.RentStructure{
-		VByteCost:    RandUint32(math.MaxInt32),
+		VByteCost:    RandUint32(math.MaxUint32),
 		VBFactorData: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 		VBFactorKey:  iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 	}
@@ -526,6 +526,6 @@ func RandProtocolParameters() *iotago.ProtocolParameters {
 		MinPoWScore:   RandUint32(50000),
 		BelowMaxDepth: RandUint8(math.MaxUint8),
 		RentStructure: *RandRentStructure(),
-		TokenSupply:   RandUint64(math.MaxInt64),
+		TokenSupply:   RandUint64(math.MaxUint64),
 	}
 }
