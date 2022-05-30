@@ -48,11 +48,11 @@ const (
 	// EventAPIOutputs is the name of the outputs event channel.
 	EventAPIOutputs = "outputs/{outputId}"
 	// EventAPINFTOutputs is the name of the NFT output event channel to retrieve NFT mutations by their ID.
-	EventAPINFTOutputs = "outputs/nfts/{nftId}"
+	EventAPINFTOutputs = "outputs/nft/{nftId}"
 	// EventAPIAliasOutputs is the name of the Alias output event channel to retrieve Alias mutations by their ID.
-	EventAPIAliasOutputs = "outputs/aliases/{aliasId}"
+	EventAPIAliasOutputs = "outputs/alias/{aliasId}"
 	// EventAPIFoundryOutputs is the name of the Foundry output event channel to retrieve Foundry mutations by their ID.
-	EventAPIFoundryOutputs = "outputs/foundries/{foundryId}"
+	EventAPIFoundryOutputs = "outputs/foundry/{foundryId}"
 	// EventAPIOutputsByUnlockConditionAndAddress is the name of the outputs by unlock condition address event channel.
 	EventAPIOutputsByUnlockConditionAndAddress = "outputs/unlock/{condition}/{address}"
 	// EventAPISpentOutputsByUnlockConditionAndAddress is the name of the spent outputs by unlock condition address event channel.
