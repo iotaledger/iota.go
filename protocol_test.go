@@ -45,6 +45,20 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	assert.EqualValues(t, test.source, test.target)
 }
 
+func TestProtocolParameters_DeSerialize(t *testing.T) {
+	tests := []deSerializeTest{
+		{
+			name:   "ok",
+			source: tpkg.RandProtocolParameters(),
+			target: &iotago.ProtocolParameters{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, tt.deSerialize)
+	}
+}
+
 func TestProtocolParametersJSONMarshalling(t *testing.T) {
 	protoParas := &iotago.ProtocolParameters{
 		Version:       6,
