@@ -124,11 +124,16 @@ func (j *jsonRentStructure) ToSerializable() (serializer.Serializable, error) {
 // by examining the virtual bytes cost of the object.
 // Returns the minimum rent computed and an error if it is not covered by rent.
 func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint64) (uint64, error) {
-	minRent := uint64(r.VByteCost) * object.VBytes(r, nil)
+	minRent := r.MinRent(object)
 	if rent < minRent {
 		return 0, fmt.Errorf("%w: needed %d but only got %d", ErrVByteRentNotCovered, minRent, rent)
 	}
 	return minRent, nil
+}
+
+// MinRent returns the minimum rent to cover a given object
+func (r *RentStructure) MinRent(object NonEphemeralObject) uint64 {
+	return uint64(r.VByteCost) * object.VBytes(r, nil)
 }
 
 // MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
