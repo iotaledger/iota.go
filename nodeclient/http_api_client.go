@@ -216,6 +216,11 @@ type RawDataEnvelope struct {
 	Data []byte
 }
 
+// HTTPClient returns the underlying HTTP client.
+func (client *Client) HTTPClient() *http.Client {
+	return client.opts.httpClient
+}
+
 // Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *Client) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
