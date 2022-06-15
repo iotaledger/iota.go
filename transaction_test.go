@@ -5,9 +5,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/tpkg"
 	"github.com/stretchr/testify/require"
+
+	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 func TestTransactionDeSerialize(t *testing.T) {
@@ -191,11 +192,11 @@ func TestTransactionSemanticValidation(t *testing.T) {
 			)
 
 			var (
-				defaultAmount            uint64 = OneMi
-				confirmingMilestoneIndex uint32 = 750
-				storageDepositReturn     uint64 = OneMi / 2
-				nativeTokenTransfer1            = tpkg.RandSortNativeTokens(10)
-				nativeTokenTransfer2            = tpkg.RandSortNativeTokens(10)
+				defaultAmount        uint64 = OneMi
+				confirmingUnixTime   uint32 = 750
+				storageDepositReturn uint64 = OneMi / 2
+				nativeTokenTransfer1        = tpkg.RandSortNativeTokens(10)
+				nativeTokenTransfer2        = tpkg.RandSortNativeTokens(10)
 			)
 
 			var (
@@ -231,8 +232,8 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  ident1,
-							MilestoneIndex: 500,
+							ReturnAddress: ident1,
+							UnixTime:      500,
 						},
 					},
 				},
@@ -241,7 +242,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.TimelockUnlockCondition{
-							MilestoneIndex: 500,
+							UnixTime: 500,
 						},
 					},
 				},
@@ -254,11 +255,11 @@ func TestTransactionSemanticValidation(t *testing.T) {
 							Amount:        storageDepositReturn,
 						},
 						&iotago.TimelockUnlockCondition{
-							MilestoneIndex: 500,
+							UnixTime: 500,
 						},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  ident1,
-							MilestoneIndex: 900,
+							ReturnAddress: ident1,
+							UnixTime:      900,
 						},
 					},
 				},
@@ -627,7 +628,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 			return test{
 				name: "ok",
 				svCtx: &iotago.SemanticValidationContext{
-					ExtParas: &iotago.ExternalUnlockParameters{ConfMsIndex: confirmingMilestoneIndex},
+					ExtParas: &iotago.ExternalUnlockParameters{ConfUnix: confirmingUnixTime},
 				},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -728,8 +729,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  ident2,
-							MilestoneIndex: 5,
+							ReturnAddress: ident2,
+							UnixTime:      5,
 						},
 					},
 				},
@@ -739,8 +740,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  ident2,
-							MilestoneIndex: 20,
+							ReturnAddress: ident2,
+							UnixTime:      20,
 						},
 					},
 				},
@@ -767,8 +768,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				name: "ok",
 				svCtx: &iotago.SemanticValidationContext{
 					ExtParas: &iotago.ExternalUnlockParameters{
-						ConfMsIndex: 10,
-						ConfUnix:    1337,
+						ConfUnix: 10,
 					},
 				},
 				inputs: inputs,
@@ -952,8 +952,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  ident2,
-							MilestoneIndex: 10,
+							ReturnAddress: ident2,
+							UnixTime:      10,
 						},
 					},
 				},
@@ -967,7 +967,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			return test{
 				name: "fail - sender can not unlock yet",
 				svCtx: &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{
-					ConfMsIndex: 5,
+					ConfUnix: 5,
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -990,8 +990,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  ident2,
-							MilestoneIndex: 10,
+							ReturnAddress: ident2,
+							UnixTime:      10,
 						},
 					},
 				},
@@ -1005,7 +1005,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			return test{
 				name: "fail - receiver can not unlock anymore",
 				svCtx: &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{
-					ConfMsIndex: 5,
+					ConfUnix: 5,
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -1125,8 +1125,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 							Amount:        420,
 						},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  ident2,
-							MilestoneIndex: 10,
+							ReturnAddress: ident2,
+							UnixTime:      10,
 						},
 					},
 				},
@@ -1140,8 +1140,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 							Amount:        420,
 						},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  ident2,
-							MilestoneIndex: 2,
+							ReturnAddress: ident2,
+							UnixTime:      2,
 						},
 					},
 				},
@@ -1171,7 +1171,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			return test{
 				name: "ok",
 				svCtx: &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{
-					ConfMsIndex: 5,
+					ConfUnix: 5,
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -1215,7 +1215,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			return test{
 				name: "fail - unbalanced, more on output than input",
 				svCtx: &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{
-					ConfMsIndex: 5,
+					ConfUnix: 5,
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -1257,7 +1257,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			return test{
 				name: "fail - unbalanced, more on input than output",
 				svCtx: &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{
-					ConfMsIndex: 5,
+					ConfUnix: 5,
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -1285,8 +1285,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 						// not yet expired, so ident1 needs to unlock
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  ident2,
-							MilestoneIndex: 10,
+							ReturnAddress: ident2,
+							UnixTime:      10,
 						},
 					},
 				},
@@ -1309,7 +1309,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			return test{
 				name: "fail - return not fulfilled",
 				svCtx: &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{
-					ConfMsIndex: 5,
+					ConfUnix: 5,
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -1717,8 +1717,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							MilestoneIndex: 5,
-							UnixTime:       1337,
+							UnixTime: 5,
 						},
 					},
 				},
@@ -1731,7 +1730,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			return test{
 				name: "ok",
 				svCtx: &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{
-					ConfMsIndex: 10, ConfUnix: 6666,
+					ConfUnix: 10,
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -1753,7 +1752,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.UnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							MilestoneIndex: 15,
+							UnixTime: 15,
 						},
 					},
 				},
@@ -1766,7 +1765,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			return test{
 				name: "fail - ms index timelock not expired",
 				svCtx: &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{
-					ConfMsIndex: 10,
+					ConfUnix: 10,
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
