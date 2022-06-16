@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -78,19 +79,29 @@ func EmptyBlockID() BlockID {
 // BlockID is the ID of a Block.
 type BlockID [BlockIDLength]byte
 
-func (b BlockID) MarshalBinary() (data []byte, err error) {
-	// copy
-	return b[:], nil
+func (id BlockID) MarshalText() (text []byte, err error) {
+	dst := make([]byte, hex.EncodedLen(len(BlockID{})))
+	hex.Encode(dst, id[:])
+	return dst, nil
+}
+
+func (id *BlockID) UnmarshalText(text []byte) error {
+	_, err := hex.Decode(id[:], text)
+	return err
 }
 
 // ToHex converts the given block ID to their hex representation.
-func (b BlockID) ToHex() string {
-	return EncodeHex(b[:])
+func (id BlockID) ToHex() string {
+	return EncodeHex(id[:])
 }
 
 // Empty tells whether the BlockID is empty.
-func (b BlockID) Empty() bool {
-	return b == emptyBlockID
+func (id BlockID) Empty() bool {
+	return id == emptyBlockID
+}
+
+func (id *BlockID) String() string {
+	return id.ToHex()
 }
 
 // BlockIDFromHexString converts the given block ID from its hex to BlockID representation.

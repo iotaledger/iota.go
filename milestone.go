@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -113,9 +114,29 @@ type (
 // MilestoneID is the ID of a Milestone.
 type MilestoneID [MilestoneIDLength]byte
 
-// ToHex returns the hex representation of the MilestoneID.
+func (id MilestoneID) MarshalText() (text []byte, err error) {
+	dst := make([]byte, hex.EncodedLen(len(MilestoneID{})))
+	hex.Encode(dst, id[:])
+	return dst, nil
+}
+
+func (id *MilestoneID) UnmarshalText(text []byte) error {
+	_, err := hex.Decode(id[:], text)
+	return err
+}
+
+// ToHex converts the given milestone ID to their hex representation.
 func (id MilestoneID) ToHex() string {
 	return EncodeHex(id[:])
+}
+
+// Empty tells whether the MilestoneID is empty.
+func (id MilestoneID) Empty() bool {
+	return id == MilestoneID(emptyBlockID)
+}
+
+func (id *MilestoneID) String() string {
+	return id.ToHex()
 }
 
 // NewMilestone creates a new unsigned Milestone.
@@ -170,6 +191,15 @@ func (m *Milestone) ID() (MilestoneID, error) {
 	}
 	copy(msID[:], data)
 	return msID, nil
+}
+
+// MustID works like ID but panics if there is an error.
+func (m *Milestone) MustID() MilestoneID {
+	id, err := m.ID()
+	if err != nil {
+		panic(err)
+	}
+	return id
 }
 
 // Essence returns the essence bytes (the bytes to be signed) of the Milestone.
