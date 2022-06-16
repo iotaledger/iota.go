@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,6 +37,26 @@ var (
 
 // Signatures is a slice of Signature(s).
 type Signatures []Signature
+
+func (sigs Signatures) Len() int {
+	return len(sigs)
+}
+
+func (sigs Signatures) Less(i, j int) bool {
+	// change this once there are more signature types
+	a, b := sigs[i].(*Ed25519Signature), sigs[j].(*Ed25519Signature)
+
+	cmp := bytes.Compare(a.PublicKey[:], b.PublicKey[:])
+	if cmp == 0 {
+		return bytes.Compare(a.Signature[:], b.Signature[:]) == -1
+	}
+
+	return cmp == -1
+}
+
+func (sigs Signatures) Swap(i, j int) {
+	sigs[i], sigs[j] = sigs[j], sigs[i]
+}
 
 func (sigs Signatures) ToSerializables() serializer.Serializables {
 	seris := make(serializer.Serializables, len(sigs))
