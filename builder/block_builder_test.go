@@ -2,6 +2,7 @@ package builder_test
 
 import (
 	"context"
+	"github.com/stretchr/testify/require"
 	"math/rand"
 	"os"
 	"testing"
@@ -10,8 +11,6 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/builder"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -30,9 +29,9 @@ func TestBlockBuilder(t *testing.T) {
 		Tag:  []byte("hello world"),
 		Data: []byte{1, 2, 3, 4},
 	}
-	block, err := builder.NewBlockBuilder(tpkg.TestProtoParas.Version).
+	block, err := builder.NewBlockBuilder().
 		Payload(taggedDataPayload).
-		ParentsBlockIDs(parents).
+		Parents(parents).
 		ProofOfWork(context.Background(), tpkg.TestProtoParas, targetPoWScore).
 		Build()
 	require.NoError(t, err)

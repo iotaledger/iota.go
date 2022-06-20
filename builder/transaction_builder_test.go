@@ -30,7 +30,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, OutputID: inputUTXO1.ID(), Output: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
@@ -45,10 +45,63 @@ func TestTransactionBuilder(t *testing.T) {
 			}
 		}(),
 		func() test {
+			var (
+				inputID1 = &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
+				inputID2 = &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 1}
+				inputID3 = &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 4}
+				inputID4 = &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 8}
+			)
+
+			var (
+				basicOutput = &iotago.BasicOutput{
+					Amount:     1000,
+					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: &inputAddr}},
+				}
+
+				nftOutput = &iotago.NFTOutput{
+					Amount:            1000,
+					NativeTokens:      nil,
+					NFTID:             tpkg.Rand32ByteArray(),
+					Conditions:        iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: &inputAddr}},
+					Features:          nil,
+					ImmutableFeatures: nil,
+				}
+
+				aliasOwnedByNFT = &iotago.AliasOutput{
+					Amount:     1000,
+					AliasID:    tpkg.Rand32ByteArray(),
+					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: nftOutput.Chain().ToAddress()}},
+				}
+
+				basicOwnedByAlias = &iotago.BasicOutput{
+					Amount:     1000,
+					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: aliasOwnedByNFT.Chain().ToAddress()}},
+				}
+			)
+
+			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
+				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputID1.ID(), Input: basicOutput}).
+				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputID2.ID(), Input: nftOutput}).
+				AddInput(&builder.TxInput{UnlockTarget: nftOutput.Chain().ToAddress(), InputID: inputID3.ID(), Input: aliasOwnedByNFT}).
+				AddInput(&builder.TxInput{UnlockTarget: aliasOwnedByNFT.Chain().ToAddress(), InputID: inputID4.ID(), Input: basicOwnedByAlias}).
+				AddOutput(&iotago.BasicOutput{
+					Amount: 4000,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				})
+
+			return test{
+				name:       "ok - mix basic+chain outputs",
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
+				builder:    bdl,
+			}
+		}(),
+		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, OutputID: inputUTXO1.ID(), Output: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
@@ -75,7 +128,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, OutputID: inputUTXO1.ID(), Output: tpkg.RandBasicOutput(iotago.AddressEd25519)})
+				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)})
 			return test{
 				name:       "err - no outputs",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
@@ -87,7 +140,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, OutputID: inputUTXO1.ID(), Output: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
@@ -111,7 +164,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.ToBeSignedUTXOInput{Address: &inputAddr, OutputID: inputUTXO1.ID(), Output: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.UnlockConditions{
