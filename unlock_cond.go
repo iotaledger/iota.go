@@ -13,10 +13,10 @@ var (
 	ErrNonUniqueUnlockConditions = errors.New("non unique unlock conditions within outputs")
 	// ErrTimelockNotExpired gets returned when timelocks in a UnlockConditionSet are not expired.
 	ErrTimelockNotExpired = errors.New("timelock not expired")
-	// ErrExpirationConditionsZero gets returned when an ExpirationUnlockCondition has set the milestone index and timestamp to zero.
-	ErrExpirationConditionsZero = errors.New("expiration conditions are both zero")
-	// ErrTimelockConditionsZero gets returned when a TimelockUnlockCondition has set the milestone index and timestamp to zero.
-	ErrTimelockConditionsZero = errors.New("timelock conditions are both zero")
+	// ErrExpirationConditionZero gets returned when an ExpirationUnlockCondition has set the unix timestamp to zero.
+	ErrExpirationConditionZero = errors.New("expiration condition is zero")
+	// ErrTimelockConditionZero gets returned when a TimelockUnlockCondition has set the unix timestamp to zero.
+	ErrTimelockConditionZero = errors.New("timelock condition is zero")
 )
 
 // UnlockConditionType defines the type of UnlockCondition.

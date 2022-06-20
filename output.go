@@ -774,13 +774,13 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 
 		if expiration := unlockConditionSet.Expiration(); expiration != nil {
 			if expiration.UnixTime == 0 {
-				return ErrExpirationConditionsZero
+				return ErrExpirationConditionZero
 			}
 		}
 
 		if timelock := unlockConditionSet.Timelock(); timelock != nil {
 			if timelock.UnixTime == 0 {
-				return ErrTimelockConditionsZero
+				return ErrTimelockConditionZero
 			}
 		}
 
