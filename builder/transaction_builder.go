@@ -22,8 +22,8 @@ func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 			Outputs:   iotago.Outputs{},
 			Payload:   nil,
 		},
-		inputToAddr: map[iotago.OutputID]iotago.Address{},
-		inputs:      iotago.OutputSet{},
+		inputOwner: map[iotago.OutputID]iotago.Address{},
+		inputs:     iotago.OutputSet{},
 	}
 }
 
@@ -32,24 +32,24 @@ type TransactionBuilder struct {
 	occurredBuildErr error
 	essence          *iotago.TransactionEssence
 	inputs           iotago.OutputSet
-	inputToAddr      map[iotago.OutputID]iotago.Address
+	inputOwner       map[iotago.OutputID]iotago.Address
 }
 
-// ToBeSignedUTXOInput defines a UTXO input which needs to be signed.
-type ToBeSignedUTXOInput struct {
-	// The address to which this input belongs to.
-	Address iotago.Address `json:"address"`
-	// The actual UTXO input.
-	OutputID iotago.OutputID `json:"outputID"`
-	// The actual UTXO used as the input.
-	Output iotago.Output `json:"output"`
+// TxInput defines an input with the address to unlock.
+type TxInput struct {
+	// The address which needs to be unlocked to spend this input.
+	UnlockTarget iotago.Address `json:"address"`
+	// The ID of the referenced input.
+	InputID iotago.OutputID `json:"inputID"`
+	// The output which is used as an input.
+	Input iotago.Output `json:"input"`
 }
 
 // AddInput adds the given input to the builder.
-func (b *TransactionBuilder) AddInput(input *ToBeSignedUTXOInput) *TransactionBuilder {
-	b.inputToAddr[input.OutputID] = input.Address
-	b.essence.Inputs = append(b.essence.Inputs, input.OutputID.UTXOInput())
-	b.inputs[input.OutputID] = input.Output
+func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
+	b.inputOwner[input.InputID] = input.UnlockTarget
+	b.essence.Inputs = append(b.essence.Inputs, input.InputID.UTXOInput())
+	b.inputs[input.InputID] = input.Input
 	return b
 }
 
@@ -76,7 +76,7 @@ type TransactionFunc func(tx *iotago.Transaction)
 // BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
 func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParas *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *BlockBuilder {
-	blockBuilder := NewBlockBuilder(protoParas.Version)
+	blockBuilder := NewBlockBuilder()
 	tx, err := b.Build(protoParas, signer)
 	if err != nil {
 		blockBuilder.err = err
@@ -85,7 +85,7 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParas *iotago.Proto
 	if txFunc != nil {
 		txFunc(tx)
 	}
-	return blockBuilder.Payload(tx)
+	return blockBuilder.ProtocolVersion(protoParas.Version).Payload(tx)
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
@@ -104,7 +104,9 @@ func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer
 	for _, input := range b.essence.Inputs {
 		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).ID())
 	}
-	commitment, err := inputIDs.OrderedSet(b.inputs).Commitment()
+
+	inputs := inputIDs.OrderedSet(b.inputs)
+	commitment, err := inputs.Commitment()
 	if err != nil {
 		return nil, err
 	}
@@ -115,37 +117,57 @@ func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer
 		return nil, err
 	}
 
-	sigBlockPos := map[string]int{}
+	unlockPos := map[string]int{}
 	unlocks := iotago.Unlocks{}
-	for i, input := range b.essence.Inputs {
-		addr := b.inputToAddr[input.(*iotago.UTXOInput).ID()]
-		addrStr := addr.(fmt.Stringer).String()
+	for i, inputRef := range b.essence.Inputs {
+		addr := b.inputOwner[inputRef.(*iotago.UTXOInput).ID()]
+		addrKey := addr.Key()
 
-		// check whether a previous signature unlock
-		// already signs inputs for the given address
-		pos, alreadySigned := sigBlockPos[addrStr]
-		if alreadySigned {
-			// create a reference unlock instead
-			unlocks = append(unlocks, &iotago.ReferenceUnlock{Reference: uint16(pos)})
+		pos, unlocked := unlockPos[addrKey]
+		if !unlocked {
+			// the output's owning chain address must have been unlocked already
+			if _, is := addr.(iotago.ChainConstrainedAddress); is {
+				return nil, fmt.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", i, addr, addr.Type())
+			}
+
+			// produce signature
+			var signature iotago.Signature
+			signature, err = signer.Sign(addr, txEssenceData)
+			if err != nil {
+				return nil, err
+			}
+
+			unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: signature})
+			addChainAsUnlocked(inputs[i], i, unlockPos)
+			unlockPos[addrKey] = i
 			continue
 		}
 
-		// create a new signature for the given address
-		var signature iotago.Signature
-		signature, err = signer.Sign(addr, txEssenceData)
-		if err != nil {
-			return nil, err
-		}
-
-		unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: signature})
-		sigBlockPos[addrStr] = i
+		unlocks = addReferentialUnlock(addr, unlocks, pos)
+		addChainAsUnlocked(inputs[i], i, unlockPos)
 	}
 
 	sigTxPayload := &iotago.Transaction{Essence: b.essence, Unlocks: unlocks}
-
 	if _, err := sigTxPayload.Serialize(serializer.DeSeriModePerformValidation, protoParas); err != nil {
 		return nil, err
 	}
 
 	return sigTxPayload, nil
+}
+
+func addReferentialUnlock(addr iotago.Address, unlocks iotago.Unlocks, pos int) iotago.Unlocks {
+	switch addr.(type) {
+	case *iotago.AliasAddress:
+		return append(unlocks, &iotago.AliasUnlock{Reference: uint16(pos)})
+	case *iotago.NFTAddress:
+		return append(unlocks, &iotago.NFTUnlock{Reference: uint16(pos)})
+	default:
+		return append(unlocks, &iotago.ReferenceUnlock{Reference: uint16(pos)})
+	}
+}
+
+func addChainAsUnlocked(input iotago.Output, posUnlocked int, prevUnlocked map[string]int) {
+	if chainInput, is := input.(iotago.ChainConstrainedOutput); is {
+		prevUnlocked[chainInput.Chain().ToAddress().Key()] = posUnlocked
+	}
 }

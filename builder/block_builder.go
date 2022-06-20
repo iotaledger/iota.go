@@ -9,12 +9,14 @@ import (
 	"github.com/iotaledger/iota.go/v3/pow"
 )
 
+const (
+	defaultProtocolVersion = 2
+)
+
 // NewBlockBuilder creates a new BlockBuilder.
-func NewBlockBuilder(protoVersion byte) *BlockBuilder {
+func NewBlockBuilder() *BlockBuilder {
 	return &BlockBuilder{
-		block: &iotago.Block{
-			ProtocolVersion: protoVersion,
-		},
+		block: &iotago.Block{ProtocolVersion: defaultProtocolVersion},
 	}
 }
 
@@ -32,7 +34,7 @@ func (mb *BlockBuilder) Build() (*iotago.Block, error) {
 	return mb.block, nil
 }
 
-// Payload sets the payload to embed within the block.
+// Payload sets the payload.
 func (mb *BlockBuilder) Payload(payload iotago.Payload) *BlockBuilder {
 	if mb.err != nil {
 		return mb
@@ -41,7 +43,16 @@ func (mb *BlockBuilder) Payload(payload iotago.Payload) *BlockBuilder {
 	return mb
 }
 
-// Tips uses the given Client to query for parents to use.
+// ProtocolVersion sets the protocol version.
+func (mb *BlockBuilder) ProtocolVersion(version byte) *BlockBuilder {
+	if mb.err != nil {
+		return mb
+	}
+	mb.block.ProtocolVersion = version
+	return mb
+}
+
+// Tips queries the node API for tips/parents and sets them accordingly.
 func (mb *BlockBuilder) Tips(ctx context.Context, nodeAPI *nodeclient.Client) *BlockBuilder {
 	if mb.err != nil {
 		return mb
@@ -59,29 +70,11 @@ func (mb *BlockBuilder) Tips(ctx context.Context, nodeAPI *nodeclient.Client) *B
 		return mb
 	}
 
-	mb.ParentsBlockIDs(parents)
-
-	return mb
+	return mb.Parents(parents)
 }
 
-// Parents sets the parents of the block.
-func (mb *BlockBuilder) Parents(parents [][]byte) *BlockBuilder {
-	if mb.err != nil {
-		return mb
-	}
-
-	pars := make(iotago.BlockIDs, len(parents))
-	for i, parentBytes := range parents {
-		parent := iotago.BlockID{}
-		copy(parent[:], parentBytes)
-		pars[i] = parent
-	}
-	mb.block.Parents = pars.RemoveDupsAndSort()
-	return mb
-}
-
-// ParentsBlockIDs sets the parents of the block.
-func (mb *BlockBuilder) ParentsBlockIDs(parents iotago.BlockIDs) *BlockBuilder {
+// Parents sets the parents.
+func (mb *BlockBuilder) Parents(parents iotago.BlockIDs) *BlockBuilder {
 	if mb.err != nil {
 		return mb
 	}
@@ -91,8 +84,8 @@ func (mb *BlockBuilder) ParentsBlockIDs(parents iotago.BlockIDs) *BlockBuilder {
 }
 
 // ProofOfWork does the proof-of-work needed in order to satisfy the given target score.
-// It can be cancelled by cancelling the given context. This function should appear
-// as the last step before Build.
+// It can be cancelled by cancelling the given context.
+// This function should normally appear as the last step before Build.
 func (mb *BlockBuilder) ProofOfWork(ctx context.Context, protoParas *iotago.ProtocolParameters, targetScore float64, numWorkers ...int) *BlockBuilder {
 	if mb.err != nil {
 		return mb

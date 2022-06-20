@@ -50,7 +50,7 @@
 //		// build a block by adding the paylod and the tips and then do local Proof-of-Work
 //		block, err := builder.NewBlockBuilder().
 //			Payload(taggedDataPayload).
-//			ParentsBlockIDs(tips).
+//			Parents(tips).
 //			ProofOfWork(ctx, protoParas, info.Protocol.MinPoWScore).
 //			Build()
 //
