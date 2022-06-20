@@ -16,23 +16,20 @@ var (
 )
 
 // ExpirationUnlockCondition is an unlock condition which puts a time constraint on whether the receiver or return identity
-// can consume an output depending on the latest confirmed milestone's index and/or timestamp T:
+// can consume an output depending on the latest confirmed milestone's timestamp T:
 //	- only the receiver identity can consume the output, if T is before than the one defined in the condition.
 //	- only the return identity can consume the output, if T is at the same time or after the one defined in the condition.
 type ExpirationUnlockCondition struct {
 	// The identity who is allowed to use the output after the expiration has happened.
 	ReturnAddress Address
-	// The milestone index at which the expiration happens.
-	MilestoneIndex uint32
 	// The unix time in second resolution at which the expiration happens.
 	UnixTime uint32
 }
 
 func (s *ExpirationUnlockCondition) Clone() UnlockCondition {
 	return &ExpirationUnlockCondition{
-		ReturnAddress:  s.ReturnAddress.Clone(),
-		MilestoneIndex: s.MilestoneIndex,
-		UnixTime:       s.UnixTime,
+		ReturnAddress: s.ReturnAddress.Clone(),
+		UnixTime:      s.UnixTime,
 	}
 }
 
@@ -52,8 +49,6 @@ func (s *ExpirationUnlockCondition) Equal(other UnlockCondition) bool {
 		return false
 	case s.UnixTime != otherCond.UnixTime:
 		return false
-	case s.MilestoneIndex != otherCond.MilestoneIndex:
-		return false
 	}
 
 	return true
@@ -71,9 +66,6 @@ func (s *ExpirationUnlockCondition) Deserialize(data []byte, deSeriMode serializ
 		ReadObject(&s.ReturnAddress, deSeriMode, deSeriCtx, serializer.TypeDenotationByte, expUnlockCondAddrGuard.ReadGuard, func(err error) error {
 			return fmt.Errorf("unable to deserialize return address for expiration unlock condition: %w", err)
 		}).
-		ReadNum(&s.MilestoneIndex, func(err error) error {
-			return fmt.Errorf("unable to deserialize milestone for expiration unlock condition: %w", err)
-		}).
 		ReadNum(&s.UnixTime, func(err error) error {
 			return fmt.Errorf("unable to deserialize unix time for expiration unlock condition: %w", err)
 		}).
@@ -88,9 +80,6 @@ func (s *ExpirationUnlockCondition) Serialize(deSeriMode serializer.DeSerializat
 		WriteObject(s.ReturnAddress, deSeriMode, deSeriCtx, expUnlockCondAddrGuard.WriteGuard, func(err error) error {
 			return fmt.Errorf("unable to serialize expiration unlock condition return address: %w", err)
 		}).
-		WriteNum(s.MilestoneIndex, func(err error) error {
-			return fmt.Errorf("unable to serialize expiration unlock condition milestone index: %w", err)
-		}).
 		WriteNum(s.UnixTime, func(err error) error {
 			return fmt.Errorf("unable to serialize expiration unlock condition unix time: %w", err)
 		}).
@@ -99,13 +88,12 @@ func (s *ExpirationUnlockCondition) Serialize(deSeriMode serializer.DeSerializat
 
 func (s *ExpirationUnlockCondition) Size() int {
 	return util.NumByteLen(byte(UnlockConditionExpiration)) + s.ReturnAddress.Size() +
-		util.NumByteLen(s.MilestoneIndex) + util.NumByteLen(s.UnixTime)
+		+util.NumByteLen(s.UnixTime)
 }
 
 func (s *ExpirationUnlockCondition) MarshalJSON() ([]byte, error) {
 	jExpUnlockCond := &jsonExpirationUnlockCondition{
-		MilestoneIndex: int(s.MilestoneIndex),
-		UnixTime:       int(s.UnixTime),
+		UnixTime: int(s.UnixTime),
 	}
 	jExpUnlockCond.Type = int(UnlockConditionExpiration)
 	var err error
@@ -131,16 +119,14 @@ func (s *ExpirationUnlockCondition) UnmarshalJSON(bytes []byte) error {
 
 // jsonExpirationUnlockCondition defines the json representation of an ExpirationUnlockCondition.
 type jsonExpirationUnlockCondition struct {
-	Type           int              `json:"type"`
-	ReturnAddress  *json.RawMessage `json:"returnAddress"`
-	MilestoneIndex int              `json:"milestoneIndex,omitempty"`
-	UnixTime       int              `json:"unixTime,omitempty"`
+	Type          int              `json:"type"`
+	ReturnAddress *json.RawMessage `json:"returnAddress"`
+	UnixTime      int              `json:"unixTime"`
 }
 
 func (j *jsonExpirationUnlockCondition) ToSerializable() (serializer.Serializable, error) {
 	unlockCondExp := &ExpirationUnlockCondition{
-		MilestoneIndex: uint32(j.MilestoneIndex),
-		UnixTime:       uint32(j.UnixTime),
+		UnixTime: uint32(j.UnixTime),
 	}
 
 	var err error

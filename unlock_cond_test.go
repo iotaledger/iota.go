@@ -27,7 +27,7 @@ func TestUnlockConditionsDeSerialize(t *testing.T) {
 		{
 			name: "ok - TimelockUnlockCondition",
 			source: &iotago.TimelockUnlockCondition{
-				MilestoneIndex: 100,
+				UnixTime: 1000,
 			},
 			target: &iotago.TimelockUnlockCondition{},
 		},

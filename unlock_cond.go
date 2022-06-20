@@ -191,21 +191,8 @@ func (f UnlockConditionSet) returnIdentCanUnlock(extParas *ExternalUnlockParamet
 		return false, nil
 	}
 
-	switch {
-	case expUnlockCond.MilestoneIndex != 0 && expUnlockCond.UnixTime != 0:
-		if expUnlockCond.MilestoneIndex <= extParas.ConfMsIndex && expUnlockCond.UnixTime <= extParas.ConfUnix {
-			return true, expUnlockCond.ReturnAddress
-		}
-
-	case expUnlockCond.MilestoneIndex != 0:
-		if expUnlockCond.MilestoneIndex <= extParas.ConfMsIndex {
-			return true, expUnlockCond.ReturnAddress
-		}
-
-	case expUnlockCond.UnixTime != 0:
-		if expUnlockCond.UnixTime <= extParas.ConfUnix {
-			return true, expUnlockCond.ReturnAddress
-		}
+	if expUnlockCond.UnixTime <= extParas.ConfUnix {
+		return true, expUnlockCond.ReturnAddress
 	}
 
 	return false, nil
@@ -220,10 +207,7 @@ func (f UnlockConditionSet) TimelocksExpired(extParas *ExternalUnlockParameters)
 		return nil
 	}
 
-	switch {
-	case timelock.MilestoneIndex != 0 && extParas.ConfMsIndex < timelock.MilestoneIndex:
-		return fmt.Errorf("%w: (ms index) cond %d vs. ext %d", ErrTimelockNotExpired, timelock.MilestoneIndex, extParas.ConfMsIndex)
-	case timelock.UnixTime != 0 && extParas.ConfUnix < timelock.UnixTime:
+	if extParas.ConfUnix < timelock.UnixTime {
 		return fmt.Errorf("%w: (unix) cond %d vs. ext %d", ErrTimelockNotExpired, timelock.UnixTime, extParas.ConfUnix)
 	}
 

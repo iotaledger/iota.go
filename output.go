@@ -603,8 +603,6 @@ type Output interface {
 // ExternalUnlockParameters defines a palette of external system parameters which are used to
 // determine whether an Output can be unlocked.
 type ExternalUnlockParameters struct {
-	// The confirmed milestone index.
-	ConfMsIndex uint32
 	// The confirmed unix epoch time in seconds.
 	ConfUnix uint32
 }
@@ -769,19 +767,19 @@ func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
 }
 
 // OutputsSyntacticalExpirationAndTimelock returns an OutputsSyntacticalValidationFunc which checks that:
-// That ExpirationUnlockCondition and TimelockUnlockCondition does not have both of its milestone and unix criteria set to zero.
+// That ExpirationUnlockCondition and TimelockUnlockCondition does not have its unix criteria set to zero.
 func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		unlockConditionSet := output.UnlockConditionSet()
 
 		if expiration := unlockConditionSet.Expiration(); expiration != nil {
-			if expiration.MilestoneIndex == 0 && expiration.UnixTime == 0 {
+			if expiration.UnixTime == 0 {
 				return ErrExpirationConditionsZero
 			}
 		}
 
 		if timelock := unlockConditionSet.Timelock(); timelock != nil {
-			if timelock.MilestoneIndex == 0 && timelock.UnixTime == 0 {
+			if timelock.UnixTime == 0 {
 				return ErrTimelockConditionsZero
 			}
 		}

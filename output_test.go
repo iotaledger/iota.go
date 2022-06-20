@@ -5,9 +5,10 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -25,10 +26,10 @@ func TestOutputsDeSerialize(t *testing.T) {
 						ReturnAddress: tpkg.RandEd25519Address(),
 						Amount:        1000,
 					},
-					&iotago.TimelockUnlockCondition{MilestoneIndex: 1337, UnixTime: 1000},
+					&iotago.TimelockUnlockCondition{UnixTime: 1337},
 					&iotago.ExpirationUnlockCondition{
-						ReturnAddress:  tpkg.RandEd25519Address(),
-						MilestoneIndex: 4000,
+						ReturnAddress: tpkg.RandEd25519Address(),
+						UnixTime:      4000,
 					},
 				},
 				Features: iotago.Features{
@@ -94,10 +95,10 @@ func TestOutputsDeSerialize(t *testing.T) {
 						ReturnAddress: tpkg.RandEd25519Address(),
 						Amount:        1000,
 					},
-					&iotago.TimelockUnlockCondition{MilestoneIndex: 1337, UnixTime: 1000},
+					&iotago.TimelockUnlockCondition{UnixTime: 1337},
 					&iotago.ExpirationUnlockCondition{
-						ReturnAddress:  tpkg.RandEd25519Address(),
-						MilestoneIndex: 4000,
+						ReturnAddress: tpkg.RandEd25519Address(),
+						UnixTime:      4000,
 					},
 				},
 				Features: iotago.Features{
@@ -726,26 +727,6 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 		func() test {
 			sourceIdent := tpkg.RandEd25519Address()
 			return test{
-				name: "can unlock - output not expired for source ident (ms index expiration)",
-				output: &iotago.BasicOutput{
-					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: sourceIdent},
-						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  tpkg.RandEd25519Address(),
-							MilestoneIndex: 10,
-						},
-					},
-				},
-				targetIdent:           sourceIdent,
-				identCanUnlockInstead: nil,
-				extParas:              &iotago.ExternalUnlockParameters{ConfMsIndex: 5},
-				canUnlock:             true,
-			}
-		}(),
-		func() test {
-			sourceIdent := tpkg.RandEd25519Address()
-			return test{
 				name: "can unlock - output not expired for source ident (unix expiration)",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
@@ -767,27 +748,6 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			sourceIdent := tpkg.RandEd25519Address()
 			senderIdent := tpkg.RandEd25519Address()
 			return test{
-				name: "can not unlock - output expired for source ident (ms index expiration)",
-				output: &iotago.BasicOutput{
-					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: sourceIdent},
-						&iotago.ExpirationUnlockCondition{
-							ReturnAddress:  senderIdent,
-							MilestoneIndex: 5,
-						},
-					},
-				},
-				targetIdent:           sourceIdent,
-				identCanUnlockInstead: senderIdent,
-				extParas:              &iotago.ExternalUnlockParameters{ConfMsIndex: 10},
-				canUnlock:             false,
-			}
-		}(),
-		func() test {
-			sourceIdent := tpkg.RandEd25519Address()
-			senderIdent := tpkg.RandEd25519Address()
-			return test{
 				name: "can not unlock - output expired for source ident (unix expiration)",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
@@ -803,38 +763,6 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				identCanUnlockInstead: senderIdent,
 				extParas:              &iotago.ExternalUnlockParameters{ConfUnix: 10},
 				canUnlock:             false,
-			}
-		}(),
-		func() test {
-			sourceIdent := tpkg.RandEd25519Address()
-			return test{
-				name: "can unlock - expired ms index timelock unlock condition",
-				output: &iotago.BasicOutput{
-					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: sourceIdent},
-						&iotago.TimelockUnlockCondition{MilestoneIndex: 5},
-					},
-				},
-				targetIdent: sourceIdent,
-				extParas:    &iotago.ExternalUnlockParameters{ConfMsIndex: 10},
-				canUnlock:   true,
-			}
-		}(),
-		func() test {
-			sourceIdent := tpkg.RandEd25519Address()
-			return test{
-				name: "can not unlock - not expired ms index timelock unlock condition",
-				output: &iotago.BasicOutput{
-					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
-						&iotago.AddressUnlockCondition{Address: sourceIdent},
-						&iotago.TimelockUnlockCondition{MilestoneIndex: 10},
-					},
-				},
-				targetIdent: sourceIdent,
-				extParas:    &iotago.ExternalUnlockParameters{ConfMsIndex: 5},
-				canUnlock:   false,
 			}
 		}(),
 		func() test {
