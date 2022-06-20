@@ -1763,7 +1763,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name: "fail - ms index timelock not expired",
+				name: "fail - timelock not expired",
 				svCtx: &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{
 					ConfUnix: 10,
 				}},
