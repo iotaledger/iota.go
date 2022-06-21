@@ -37,7 +37,7 @@ func TestMerkleHasher(t *testing.T) {
 	require.True(t, bytes.Equal(hash, expectedHash))
 
 	for i := 0; i < len(includedBlocks); i++ {
-		path, err := hasher.ComputeInclusionProofForIndex(includedBlocks, i)
+		path, err := hasher.ComputeProofForIndex(includedBlocks, i)
 		require.NoError(t, err)
 
 		require.True(t, bytes.Equal(hash, path.Hash(hasher)))
@@ -48,7 +48,7 @@ func TestMerkleHasher(t *testing.T) {
 		jsonPath, err := json.Marshal(path)
 		require.NoError(t, err)
 
-		pathFromJSON := &merklehasher.InclusionProof{}
+		pathFromJSON := &merklehasher.Proof{}
 		err = json.Unmarshal(jsonPath, pathFromJSON)
 		require.NoError(t, err)
 		require.True(t, bytes.Equal(hash, pathFromJSON.Hash(hasher)))

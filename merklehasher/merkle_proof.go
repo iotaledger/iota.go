@@ -22,13 +22,13 @@ type hashValue struct {
 	Value []byte
 }
 
-type InclusionProof struct {
+type Proof struct {
 	Left  hashable
 	Right hashable
 }
 
-// ComputeInclusionProof computes the audit path given the blockIDs and the blockID we want to create the inclusion proof for
-func (t *Hasher) ComputeInclusionProof(blockIDs iotago.BlockIDs, blockID iotago.BlockID) (*InclusionProof, error) {
+// ComputeProof computes the audit path given the blockIDs and the blockID we want to create the inclusion proof for
+func (t *Hasher) ComputeProof(blockIDs iotago.BlockIDs, blockID iotago.BlockID) (*Proof, error) {
 	var found bool
 	var index int
 	for i := range blockIDs {
@@ -41,11 +41,11 @@ func (t *Hasher) ComputeInclusionProof(blockIDs iotago.BlockIDs, blockID iotago.
 	if !found {
 		return nil, fmt.Errorf("blockID %s is not contained in the given list", blockID.ToHex())
 	}
-	return t.ComputeInclusionProofForIndex(blockIDs, index)
+	return t.ComputeProofForIndex(blockIDs, index)
 }
 
-// ComputeInclusionProofForIndex computes the audit path given the blockIDs and the index of the blockID we want to create the inclusion proof for
-func (t *Hasher) ComputeInclusionProofForIndex(blockIDs iotago.BlockIDs, index int) (*InclusionProof, error) {
+// ComputeProofForIndex computes the audit path given the blockIDs and the index of the blockID we want to create the inclusion proof for
+func (t *Hasher) ComputeProofForIndex(blockIDs iotago.BlockIDs, index int) (*Proof, error) {
 	if len(blockIDs) < 2 {
 		return nil, errors.New("you need at lest 2 items to create an inclusion proof")
 	}
@@ -62,7 +62,7 @@ func (t *Hasher) ComputeInclusionProofForIndex(blockIDs iotago.BlockIDs, index i
 	if err != nil {
 		return nil, err
 	}
-	return p.(*InclusionProof), nil
+	return p.(*Proof), nil
 }
 
 func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
@@ -75,12 +75,12 @@ func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
 		left := data[0]
 		right := data[1]
 		if index == 0 {
-			return &InclusionProof{
+			return &Proof{
 				Left:  &leafValue{left},
 				Right: &hashValue{t.hashLeaf(right)},
 			}, nil
 		} else {
-			return &InclusionProof{
+			return &Proof{
 				Left:  &hashValue{t.hashLeaf(left)},
 				Right: &leafValue{right},
 			}, nil
@@ -95,7 +95,7 @@ func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
 			return nil, err
 		}
 		right := t.Hash(data[k:])
-		return &InclusionProof{
+		return &Proof{
 			Left:  left,
 			Right: &hashValue{right},
 		}, nil
@@ -106,7 +106,7 @@ func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &InclusionProof{
+		return &Proof{
 			Left:  &hashValue{left},
 			Right: right,
 		}, nil
@@ -173,7 +173,7 @@ func (h *hashValue) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (p *InclusionProof) Hash(hasher *Hasher) []byte {
+func (p *Proof) Hash(hasher *Hasher) []byte {
 	return hasher.hashNode(p.Left.Hash(hasher), p.Right.Hash(hasher))
 }
 
@@ -188,17 +188,17 @@ func containsLeafValue(hasheable hashable, value []byte) bool {
 		return false
 	case *leafValue:
 		return bytes.Equal(value, t.Value)
-	case *InclusionProof:
+	case *Proof:
 		return containsLeafValue(t.Right, value) || containsLeafValue(t.Left, value)
 	}
 	return false
 }
 
-func (p *InclusionProof) ContainsValue(value iotago.BlockID) (bool, error) {
+func (p *Proof) ContainsValue(value iotago.BlockID) (bool, error) {
 	return containsLeafValue(p, value[:]), nil
 }
 
-func (p *InclusionProof) MarshalJSON() ([]byte, error) {
+func (p *Proof) MarshalJSON() ([]byte, error) {
 	jsonLeft, err := json.Marshal(p.Left)
 	if err != nil {
 		return nil, err
@@ -227,7 +227,7 @@ func unmarshalHashable(raw *json.RawMessage, hasheable *hashable) error {
 		return nil
 	}
 
-	p := &InclusionProof{}
+	p := &Proof{}
 	err := json.Unmarshal(*raw, p)
 	if err != nil {
 		return err
@@ -236,7 +236,7 @@ func unmarshalHashable(raw *json.RawMessage, hasheable *hashable) error {
 	return nil
 }
 
-func (p *InclusionProof) UnmarshalJSON(bytes []byte) error {
+func (p *Proof) UnmarshalJSON(bytes []byte) error {
 	j := &jsonPath{}
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
