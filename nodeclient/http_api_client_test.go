@@ -640,8 +640,8 @@ var sampleGossipInfo = &nodeclient.GossipInfo{
 		SolidMilestoneIndex:  234,
 		PrunedMilestoneIndex: 5872,
 		LatestMilestoneIndex: 1294,
-		ConnectedNeighbors:   2392,
-		SyncedNeighbors:      1234,
+		ConnectedPeers:       2392,
+		SyncedPeers:          1234,
 	},
 	Metrics: nodeclient.PeerGossipMetrics{
 		NewBlocks:                 40,

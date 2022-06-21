@@ -250,11 +250,11 @@ type (
 		PrunedMilestoneIndex uint32 `json:"prunedMilestoneIndex"`
 		// The latest known milestone index by the node.
 		LatestMilestoneIndex uint32 `json:"latestMilestoneIndex"`
-		// The amount of currently connected neighbors.
-		ConnectedNeighbors int `json:"connectedNeighbors"`
-		// The amount of currently connected neighbors who also
+		// The amount of currently connected peers.
+		ConnectedPeers int `json:"connectedPeers"`
+		// The amount of currently connected peers who also
 		// are synchronized with the network.
-		SyncedNeighbors int `json:"syncedNeighbors"`
+		SyncedPeers int `json:"syncedPeers"`
 	}
 
 	// PeerGossipMetrics defines the peer gossip metrics.
