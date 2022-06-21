@@ -56,14 +56,14 @@ func TestOutputsQuery_Build(t *testing.T) {
 func Test_IndexerEnabled(t *testing.T) {
 	defer gock.Off()
 
-	originInfo := &nodeclient.InfoResponse{
-		Plugins: []string{"indexer/v1"},
+	originRoutes := &nodeclient.RoutesResponse{
+		Routes: []string{"indexer/v1"},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteInfo).
+		Get(nodeclient.RouteRoutes).
 		Reply(200).
-		JSON(originInfo)
+		JSON(originRoutes)
 
 	client := nodeclient.New(nodeAPIUrl)
 
@@ -74,14 +74,14 @@ func Test_IndexerEnabled(t *testing.T) {
 func Test_IndexerDisabled(t *testing.T) {
 	defer gock.Off()
 
-	originInfo := &nodeclient.InfoResponse{
-		Plugins: []string{"someplugin/v1"},
+	originRoutes := &nodeclient.RoutesResponse{
+		Routes: []string{"someplugin/v1"},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteInfo).
+		Get(nodeclient.RouteRoutes).
 		Reply(200).
-		JSON(originInfo)
+		JSON(originRoutes)
 
 	client := nodeclient.New(nodeAPIUrl)
 
@@ -113,14 +113,14 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 		RawOutput: &rawMsgSigDepJson,
 	}
 
-	originInfo := &nodeclient.InfoResponse{
-		Plugins: []string{"indexer/v1"},
+	originRoutes := &nodeclient.RoutesResponse{
+		Routes: []string{"indexer/v1"},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteInfo).
+		Get(nodeclient.RouteRoutes).
 		Reply(200).
-		JSON(originInfo)
+		JSON(originRoutes)
 
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.IndexerAPIRouteBasicOutputs).

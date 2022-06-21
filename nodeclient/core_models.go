@@ -8,6 +8,11 @@ import (
 )
 
 type (
+	// RoutesResponse defines the response of a GET routes REST API call.
+	RoutesResponse struct {
+		Routes []string `json:"routes"`
+	}
+
 	// InfoResponse defines the response of a GET info REST API call.
 	InfoResponse struct {
 		// The name of the node software.
@@ -24,8 +29,6 @@ type (
 		Metrics InfoResMetrics `json:"metrics"`
 		// The features this node exposes.
 		Features []string `json:"features"`
-		// The plugins this node exposes.
-		Plugins []string `json:"plugins"`
 	}
 
 	// InfoResStatus defines info res status information.
