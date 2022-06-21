@@ -29,14 +29,14 @@ func TestMain(m *testing.M) {
 func Test_EventAPIEnabled(t *testing.T) {
 	defer gock.Off()
 
-	originInfo := &nodeclient.InfoResponse{
-		Plugins: []string{"mqtt/v1"},
+	originRoutes := &nodeclient.RoutesResponse{
+		Routes: []string{"mqtt/v1"},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteInfo).
+		Get(nodeclient.RouteRoutes).
 		Reply(200).
-		JSON(originInfo)
+		JSON(originRoutes)
 
 	client := nodeclient.New(nodeAPIUrl)
 
@@ -47,14 +47,14 @@ func Test_EventAPIEnabled(t *testing.T) {
 func Test_EventAPIDisabled(t *testing.T) {
 	defer gock.Off()
 
-	originInfo := &nodeclient.InfoResponse{
-		Plugins: []string{"someplugin/v1"},
+	originRoutes := &nodeclient.RoutesResponse{
+		Routes: []string{"someplugin/v1"},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteInfo).
+		Get(nodeclient.RouteRoutes).
 		Reply(200).
-		JSON(originInfo)
+		JSON(originRoutes)
 
 	client := nodeclient.New(nodeAPIUrl)
 

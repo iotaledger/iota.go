@@ -87,7 +87,6 @@ func TestClient_Info(t *testing.T) {
 			ReferencedRate:            50.0,
 		},
 		Features: []string{"Lazers"},
-		Plugins:  []string{"indexer/v1"},
 	}
 
 	gock.New(nodeAPIUrl).

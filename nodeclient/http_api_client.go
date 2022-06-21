@@ -23,92 +23,96 @@ const (
 	// RouteHealth is the route for querying a node's health status.
 	RouteHealth = "/health"
 
+	// RouteRoutes is the route for getting the routes the node supports.
+	// GET returns the nodes routes.
+	RouteRoutes = "/api/routes"
+
 	// RouteInfo is the route for getting the node info.
 	// GET returns the node info.
-	RouteInfo = "/api/v2/info"
+	RouteInfo = "/api/core/v2/info"
 
 	// RouteTips is the route for getting tips.
 	// GET returns the tips.
-	RouteTips = "/api/v2/tips"
+	RouteTips = "/api/core/v2/tips"
 
 	// RouteBlock is the route for getting a block by its ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes
-	RouteBlock = "/api/v2/blocks/%s"
+	RouteBlock = "/api/core/v2/blocks/%s"
 
 	// RouteBlockMetadata is the route for getting block metadata by its ID.
 	// GET returns block metadata (including info about "promotion/reattachment needed").
-	RouteBlockMetadata = "/api/v2/blocks/%s/metadata"
+	RouteBlockMetadata = "/api/core/v2/blocks/%s/metadata"
 
 	// RouteBlockChildren is the route for getting block IDs of the children of a block, identified by its block ID.
 	// GET returns the block IDs of all children.
-	RouteBlockChildren = "/api/v2/blocks/%s/children"
+	RouteBlockChildren = "/api/core/v2/blocks/%s/children"
 
 	// RouteBlocks is the route for creating new blocks.
 	// POST creates a single new block and returns the ID.
 	// The block is parsed based on the given type in the request "Content-Type" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes
-	RouteBlocks = "/api/v2/blocks"
+	RouteBlocks = "/api/core/v2/blocks"
 
 	// RouteTransactionsIncludedBlock is the route for getting the block that was included in the ledger for a given transaction ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes
-	RouteTransactionsIncludedBlock = "/api/v2/transactions/%s/included-block"
+	RouteTransactionsIncludedBlock = "/api/core/v2/transactions/%s/included-block"
 
 	// RouteMilestoneByID is the route for getting a milestone by its ID.
 	// GET returns the milestone.
-	RouteMilestoneByID = "/api/v2/milestones/%s"
+	RouteMilestoneByID = "/api/core/v2/milestones/%s"
 
 	// RouteMilestoneByIDUTXOChanges is the route for getting all UTXO changes of a milestone by its ID.
 	// GET returns the output IDs of all UTXO changes.
-	RouteMilestoneByIDUTXOChanges = "/api/v2/milestones/%s/utxo-changes"
+	RouteMilestoneByIDUTXOChanges = "/api/core/v2/milestones/%s/utxo-changes"
 
 	// RouteMilestoneByIndex is the route for getting a milestone by its milestoneIndex.
 	// GET returns the milestone.
-	RouteMilestoneByIndex = "/api/v2/milestones/by-index/%d"
+	RouteMilestoneByIndex = "/api/core/v2/milestones/by-index/%d"
 
 	// RouteMilestoneByIndexUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	RouteMilestoneByIndexUTXOChanges = "/api/v2/milestones/%d/utxo-changes"
+	RouteMilestoneByIndexUTXOChanges = "/api/core/v2/milestones/%d/utxo-changes"
 
 	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
 	// GET returns the output based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes
-	RouteOutput = "/api/v2/outputs/%s"
+	RouteOutput = "/api/core/v2/outputs/%s"
 
 	// RouteOutputMetadata is the route for getting output metadata by its outputID (transactionHash + outputIndex) without getting the data again.
 	// GET returns the output metadata.
-	RouteOutputMetadata = "/api/v2/outputs/%s/metadata"
+	RouteOutputMetadata = "/api/core/v2/outputs/%s/metadata"
 
 	// RouteTreasury is the route for getting the current treasury output.
 	// GET returns the treasury.
-	RouteTreasury = "/api/v2/treasury"
+	RouteTreasury = "/api/core/v2/treasury"
 
 	// RouteReceipts is the route for getting all persisted receipts on a node.
 	// GET returns the receipts.
-	RouteReceipts = "/api/v2/receipts"
+	RouteReceipts = "/api/core/v2/receipts"
 
 	// RouteReceiptsMigratedAtIndex is the route for getting all persisted receipts for a given migrated at index on a node.
 	// GET returns the receipts for the given migrated at index.
-	RouteReceiptsMigratedAtIndex = "/api/v2/receipts/%d"
+	RouteReceiptsMigratedAtIndex = "/api/core/v2/receipts/%d"
 
 	// RouteComputeWhiteFlagMutations is the route to compute the white flag mutations for the cone of the given parents.
 	// POST computes the white flag mutations.
-	RouteComputeWhiteFlagMutations = "/api/v2/whiteflag"
+	RouteComputeWhiteFlagMutations = "/api/core/v2/whiteflag"
 
 	// RoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
-	RoutePeer = "/api/v2/peers/%s"
+	RoutePeer = "/api/core/v2/peers/%s"
 
 	// RoutePeers is the route for getting all peers of the node.
 	// GET returns a list of all peers.
 	// POST adds a new peer.
-	RoutePeers = "/api/v2/peers"
+	RoutePeers = "/api/core/v2/peers"
 )
 
 var (
@@ -236,7 +240,7 @@ func (client *Client) DoWithRequestHeaderHook(ctx context.Context, method string
 // Indexer returns the IndexerClient.
 // Returns ErrIndexerPluginNotAvailable if the current node does not support the plugin.
 func (client *Client) Indexer(ctx context.Context) (IndexerClient, error) {
-	hasPlugin, err := client.NodeSupportsPlugin(ctx, IndexerPluginName)
+	hasPlugin, err := client.NodeSupportsRoute(ctx, IndexerPluginName)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +253,7 @@ func (client *Client) Indexer(ctx context.Context) (IndexerClient, error) {
 // EventAPI returns the EventAPIClient if supported by the node.
 // Returns ErrMQTTPluginNotAvailable if the current node does not support the plugin.
 func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
-	hasPlugin, err := client.NodeSupportsPlugin(ctx, MQTTPluginName)
+	hasPlugin, err := client.NodeSupportsRoute(ctx, MQTTPluginName)
 	if err != nil {
 		return nil, err
 	}
@@ -272,6 +276,16 @@ func (client *Client) Health(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
+// Routes gets the routes the node supports.
+func (client *Client) Routes(ctx context.Context) (*RoutesResponse, error) {
+	res := &RoutesResponse{}
+	if _, err := client.Do(ctx, http.MethodGet, RouteRoutes, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // Info gets the info of the node.
 func (client *Client) Info(ctx context.Context) (*InfoResponse, error) {
 	res := &InfoResponse{}
@@ -282,14 +296,14 @@ func (client *Client) Info(ctx context.Context) (*InfoResponse, error) {
 	return res, nil
 }
 
-// NodeSupportsPlugin gets the info of the node and checks if the given plugin is enabled.
-func (client *Client) NodeSupportsPlugin(ctx context.Context, pluginName string) (bool, error) {
-	info, err := client.Info(ctx)
+// NodeSupportsRoute gets the routes of the node and checks if the given route is enabled.
+func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool, error) {
+	routes, err := client.Routes(ctx)
 	if err != nil {
 		return false, err
 	}
-	for _, p := range info.Plugins {
-		if p == pluginName {
+	for _, p := range routes.Routes {
+		if p == route {
 			return true, nil
 		}
 	}
