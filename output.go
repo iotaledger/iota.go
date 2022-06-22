@@ -206,7 +206,8 @@ func (outputType OutputType) String() string {
 
 var (
 	outputNames = [OutputNFT + 1]string{
-		"LegacyOutput",
+		"SigLockedSingleOutput",
+		"SigLockedDustAllowanceOutput",
 		"TreasuryOutput",
 		"BasicOutput",
 		"AliasOutput",
