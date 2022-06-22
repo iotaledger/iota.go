@@ -13,6 +13,22 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
+func TestOutputTypeString(t *testing.T) {
+	tests := []struct {
+		outputType       iotago.OutputType
+		outputTypeString string
+	}{
+		{iotago.OutputNFT, "NFTOutput"},
+		{iotago.OutputTreasury, "TreasuryOutput"},
+		{iotago.OutputBasic, "BasicOutput"},
+		{iotago.OutputAlias, "AliasOutput"},
+		{iotago.OutputFoundry, "FoundryOutput"},
+	}
+	for _, tt := range tests {
+		require.Equal(t, tt.outputType.String(), tt.outputTypeString)
+	}
+}
+
 func TestOutputsDeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
