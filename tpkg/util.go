@@ -305,7 +305,7 @@ func RandMilestone(parents iotago.BlockIDs) *iotago.Milestone {
 	}
 
 	msPayload := &iotago.Milestone{
-		Index:               uint32(rand.Intn(1000)),
+		Index:               iotago.MilestoneIndex(rand.Intn(1000)),
 		Timestamp:           uint32(time.Now().Unix()),
 		PreviousMilestoneID: Rand32ByteArray(),
 		Parents:             parents,
