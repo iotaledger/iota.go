@@ -420,7 +420,7 @@ func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 	defer gock.Off()
 
-	var index uint32 = 1000
+	var index iotago.MilestoneIndex = 1000
 
 	originRes := &nodeclient.ReceiptsResponse{
 		Receipts: []*nodeclient.ReceiptTuple{
@@ -526,7 +526,7 @@ func TestClient_MilestoneUTXOChangesByID(t *testing.T) {
 func TestClient_MilestoneByIndex(t *testing.T) {
 	defer gock.Off()
 
-	var milestoneIndex uint32 = 1337
+	var milestoneIndex iotago.MilestoneIndex = 1337
 
 	milestone := &iotago.Milestone{
 		Index:               milestoneIndex,
@@ -568,7 +568,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 	defer gock.Off()
 
-	var milestoneIndex uint32 = 1337
+	var milestoneIndex iotago.MilestoneIndex = 1337
 
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
@@ -593,7 +593,7 @@ func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 	defer gock.Off()
 
-	var milestoneIndex uint32 = 1337
+	var milestoneIndex iotago.MilestoneIndex = 1337
 	var milestoneTimestamp uint32 = 1333337
 
 	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))

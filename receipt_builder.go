@@ -7,7 +7,7 @@ import (
 )
 
 // NewReceiptBuilder creates a new ReceiptBuilder.
-func NewReceiptBuilder(migratedAt uint32) *ReceiptBuilder {
+func NewReceiptBuilder(migratedAt MilestoneIndex) *ReceiptBuilder {
 	return &ReceiptBuilder{
 		r: &ReceiptMilestoneOpt{
 			MigratedAt:  migratedAt,

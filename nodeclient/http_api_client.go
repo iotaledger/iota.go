@@ -467,7 +467,7 @@ func (client *Client) Receipts(ctx context.Context) ([]*ReceiptTuple, error) {
 }
 
 // ReceiptsByMigratedAtIndex gets all receipts for the given migrated at index persisted on the node.
-func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index uint32) ([]*ReceiptTuple, error) {
+func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index iotago.MilestoneIndex) ([]*ReceiptTuple, error) {
 	query := fmt.Sprintf(RouteReceiptsMigratedAtIndex, index)
 
 	res := &ReceiptsResponse{}
@@ -508,7 +508,7 @@ func (client *Client) MilestoneUTXOChangesByID(ctx context.Context, id iotago.Mi
 }
 
 // MilestoneByIndex gets a milestone by its index.
-func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*iotago.Milestone, error) {
+func (client *Client) MilestoneByIndex(ctx context.Context, index iotago.MilestoneIndex) (*iotago.Milestone, error) {
 	query := fmt.Sprintf(RouteMilestoneByIndex, index)
 
 	res := &RawDataEnvelope{}
@@ -525,7 +525,7 @@ func (client *Client) MilestoneByIndex(ctx context.Context, index uint32) (*iota
 }
 
 // MilestoneUTXOChangesByIndex returns all UTXO changes of a milestone by its milestoneIndex.
-func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uint32) (*MilestoneUTXOChangesResponse, error) {
+func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index iotago.MilestoneIndex) (*MilestoneUTXOChangesResponse, error) {
 	query := fmt.Sprintf(RouteMilestoneByIndexUTXOChanges, index)
 
 	res := &MilestoneUTXOChangesResponse{}
@@ -538,7 +538,7 @@ func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index uin
 
 // ComputeWhiteFlagMutations is the route to compute the white flag mutations for the cone of the given parents.
 // This function returns the merkle tree roots calculated by the node.
-func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index uint32, timestamp uint32, parents iotago.BlockIDs, previousMilestoneID iotago.MilestoneID) (*ComputeWhiteFlagMutationsResponse, error) {
+func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index iotago.MilestoneIndex, timestamp uint32, parents iotago.BlockIDs, previousMilestoneID iotago.MilestoneID) (*ComputeWhiteFlagMutationsResponse, error) {
 
 	parentsHex := make([]string, len(parents))
 	for i, parent := range parents {

@@ -62,7 +62,7 @@ func MigratedFundEntriesArrayRules() serializer.ArrayRules {
 // ReceiptMilestoneOpt is a listing of migrated funds.
 type ReceiptMilestoneOpt struct {
 	// The milestone index at which the funds were migrated in the legacy network.
-	MigratedAt uint32
+	MigratedAt MilestoneIndex
 	// Whether this ReceiptMilestoneOpt is the final one for a given migrated at index.
 	Final bool
 	// The funds which were migrated with this ReceiptMilestoneOpt.
@@ -219,7 +219,7 @@ type jsonReceiptMilestoneOpt struct {
 
 func (j *jsonReceiptMilestoneOpt) ToSerializable() (serializer.Serializable, error) {
 	payload := &ReceiptMilestoneOpt{}
-	payload.MigratedAt = uint32(j.MigratedAt)
+	payload.MigratedAt = MilestoneIndex(j.MigratedAt)
 
 	migratedFundsEntries := make(MigratedFundsEntries, len(j.Funds))
 	for i, ele := range j.Funds {

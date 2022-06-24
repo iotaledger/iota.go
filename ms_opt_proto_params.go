@@ -20,7 +20,7 @@ const (
 // ProtocolParamsMilestoneOpt is a MilestoneOpt defining changing protocol parameters.
 type ProtocolParamsMilestoneOpt struct {
 	// The milestone index at which these protocol parameters become active.
-	TargetMilestoneIndex uint32
+	TargetMilestoneIndex MilestoneIndex
 	// The protocol version.
 	ProtocolVersion byte
 	// The protocol parameters in binary form.
@@ -123,7 +123,7 @@ func (j *jsonProtocolParamsMilestoneOpt) ToSerializable() (serializer.Serializab
 		return nil, fmt.Errorf("unable to decode json milestone protocol params option: %w", err)
 	}
 	return &ProtocolParamsMilestoneOpt{
-		TargetMilestoneIndex: uint32(j.TargetMilestoneIndex),
+		TargetMilestoneIndex: MilestoneIndex(j.TargetMilestoneIndex),
 		ProtocolVersion:      byte(j.ProtocolVersion),
 		Params:               params,
 	}, nil

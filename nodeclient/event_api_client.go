@@ -359,9 +359,9 @@ func (eac *EventAPIClient) Receipts() (<-chan *iotago.ReceiptMilestoneOpt, *Even
 
 // MilestoneInfo is an informative struct holding a milestone index, milestone ID and timestamp.
 type MilestoneInfo struct {
-	Index       uint32 `json:"index"`
-	Timestamp   uint32 `json:"timestamp"`
-	MilestoneID string `json:"milestoneId"`
+	Index       iotago.MilestoneIndex `json:"index"`
+	Timestamp   uint32                `json:"timestamp"`
+	MilestoneID string                `json:"milestoneId"`
 }
 
 // LatestMilestones returns a channel of infos about newly seen latest milestones.

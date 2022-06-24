@@ -10,8 +10,8 @@ import (
 // KeyRange defines a public key of a milestone including the range it is valid.
 type KeyRange struct {
 	PublicKey  iotago.MilestonePublicKey
-	StartIndex uint32
-	EndIndex   uint32
+	StartIndex iotago.MilestoneIndex
+	EndIndex   iotago.MilestoneIndex
 }
 
 // KeyManager provides public and private keys for ranges of milestone indexes.
@@ -25,7 +25,7 @@ func New() *KeyManager {
 }
 
 // AddKeyRange adds a new public key to the MilestoneKeyManager including its valid range.
-func (k *KeyManager) AddKeyRange(publicKey ed25519.PublicKey, startIndex uint32, endIndex uint32) {
+func (k *KeyManager) AddKeyRange(publicKey ed25519.PublicKey, startIndex iotago.MilestoneIndex, endIndex iotago.MilestoneIndex) {
 
 	var msPubKey iotago.MilestonePublicKey
 	copy(msPubKey[:], publicKey)
@@ -51,7 +51,7 @@ func (k *KeyManager) KeyRanges() []*KeyRange {
 }
 
 // PublicKeysForMilestoneIndex returns the valid public keys for a certain milestone index.
-func (k *KeyManager) PublicKeysForMilestoneIndex(msIndex uint32) []iotago.MilestonePublicKey {
+func (k *KeyManager) PublicKeysForMilestoneIndex(msIndex iotago.MilestoneIndex) []iotago.MilestonePublicKey {
 	var pubKeys []iotago.MilestonePublicKey
 
 	for _, pubKeyRange := range k.keyRanges {
@@ -71,7 +71,7 @@ func (k *KeyManager) PublicKeysForMilestoneIndex(msIndex uint32) []iotago.Milest
 }
 
 // PublicKeysSetForMilestoneIndex returns a set of valid public keys for a certain milestone index.
-func (k *KeyManager) PublicKeysSetForMilestoneIndex(msIndex uint32) iotago.MilestonePublicKeySet {
+func (k *KeyManager) PublicKeysSetForMilestoneIndex(msIndex iotago.MilestoneIndex) iotago.MilestonePublicKeySet {
 	pubKeys := k.PublicKeysForMilestoneIndex(msIndex)
 
 	result := iotago.MilestonePublicKeySet{}
@@ -84,7 +84,7 @@ func (k *KeyManager) PublicKeysSetForMilestoneIndex(msIndex uint32) iotago.Miles
 }
 
 // MilestonePublicKeyMappingForMilestoneIndex returns a MilestonePublicKeyMapping for a certain milestone index.
-func (k *KeyManager) MilestonePublicKeyMappingForMilestoneIndex(msIndex uint32, privateKeys []ed25519.PrivateKey, milestonePublicKeysCount int) iotago.MilestonePublicKeyMapping {
+func (k *KeyManager) MilestonePublicKeyMappingForMilestoneIndex(msIndex iotago.MilestoneIndex, privateKeys []ed25519.PrivateKey, milestonePublicKeysCount int) iotago.MilestonePublicKeyMapping {
 	pubKeySet := k.PublicKeysSetForMilestoneIndex(msIndex)
 
 	result := iotago.MilestonePublicKeyMapping{}

@@ -111,6 +111,9 @@ type (
 	MilestoneMerkleProof = [MilestoneMerkleProofLength]byte
 )
 
+// MilestoneIndex is the index of a Milestone.
+type MilestoneIndex = uint32
+
 // MilestoneID is the ID of a Milestone.
 type MilestoneID [MilestoneIDLength]byte
 
@@ -140,7 +143,7 @@ func (id *MilestoneID) String() string {
 }
 
 // NewMilestone creates a new unsigned Milestone.
-func NewMilestone(index uint32, timestamp uint32, protocolVersion byte, prevMsID MilestoneID, parents BlockIDs, inclMerkleProof MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) *Milestone {
+func NewMilestone(index MilestoneIndex, timestamp uint32, protocolVersion byte, prevMsID MilestoneID, parents BlockIDs, inclMerkleProof MilestoneMerkleProof, appliedMerkleRoot MilestoneMerkleProof) *Milestone {
 	return &Milestone{
 		Index:               index,
 		Timestamp:           timestamp,
@@ -155,7 +158,7 @@ func NewMilestone(index uint32, timestamp uint32, protocolVersion byte, prevMsID
 // Milestone represents a special payload which defines the inclusion set of other blocks in the Tangle.
 type Milestone struct {
 	// The index of this milestone.
-	Index uint32
+	Index MilestoneIndex
 	// The time at which this milestone was issued.
 	Timestamp uint32
 	// The protocol version under which this milestone operates.
@@ -546,7 +549,7 @@ func (j *jsonMilestone) ToSerializable() (serializer.Serializable, error) {
 	var err error
 
 	payload := &Milestone{}
-	payload.Index = uint32(j.Index)
+	payload.Index = MilestoneIndex(j.Index)
 	payload.Timestamp = uint32(j.Timestamp)
 	payload.ProtocolVersion = byte(j.ProtocolVersion)
 	prevMsID, err := DecodeHex(j.PreviousMilestoneID)
