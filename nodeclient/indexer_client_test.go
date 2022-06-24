@@ -17,18 +17,14 @@ import (
 func TestOutputsQuery_Build(t *testing.T) {
 	query := &nodeclient.BasicOutputsQuery{
 		IndexerTimelockParas: nodeclient.IndexerTimelockParas{
-			HasTimelockCondition:      true,
-			TimelockedBefore:          1,
-			TimelockedAfter:           2,
-			TimelockedBeforeMilestone: 3,
-			TimelockedAfterMilestone:  4,
+			HasTimelockCondition: true,
+			TimelockedBefore:     1,
+			TimelockedAfter:      2,
 		},
 		IndexerExpirationParas: nodeclient.IndexerExpirationParas{
 			HasExpirationCondition: true,
 			ExpiresBefore:          5,
 			ExpiresAfter:           6,
-			ExpiresBeforeMilestone: 7,
-			ExpiresAfterMilestone:  8,
 		},
 		IndexerCreationParas: nodeclient.IndexerCreationParas{
 			CreatedBefore: 9,

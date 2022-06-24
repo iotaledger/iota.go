@@ -34,10 +34,6 @@ type IndexerTimelockParas struct {
 	TimelockedBefore uint32 `qs:"timelockedBefore,omitempty"`
 	// Return outputs that are timelocked after a certain Unix timestamp.
 	TimelockedAfter uint32 `qs:"timelockedAfter,omitempty"`
-	// Return outputs that are timelocked before a certain milestone index.
-	TimelockedBeforeMilestone uint32 `qs:"timelockedBeforeMilestone,omitempty"`
-	// Return outputs that are timelocked after a certain milestone index.
-	TimelockedAfterMilestone uint32 `qs:"timelockedAfterMilestone,omitempty"`
 }
 
 // IndexerExpirationParas define expiration query parameters.
@@ -48,10 +44,6 @@ type IndexerExpirationParas struct {
 	ExpiresBefore uint32 `qs:"expiresBefore,omitempty"`
 	// Return outputs that expire after a certain Unix timestamp.
 	ExpiresAfter uint32 `qs:"expiresAfter,omitempty"`
-	// Return outputs that expire before a certain milestone index.
-	ExpiresBeforeMilestone uint32 `qs:"expiresBeforeMilestone,omitempty"`
-	// Return outputs that expire after a certain milestone index.
-	ExpiresAfterMilestone uint32 `qs:"expiresAfterMilestone,omitempty"`
 	// Filter outputs based on the presence of a specific return address in the expiration unlock condition.
 	ExpirationReturnAddressBech32 string `qs:"expirationReturnAddress,omitempty"`
 }
