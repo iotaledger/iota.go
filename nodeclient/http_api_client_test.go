@@ -181,16 +181,19 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 		parentBlockIDs[i] = iotago.EncodeHex(p[:])
 	}
 
+	wfIndex := uint32(5)
+
 	originRes := &nodeclient.BlockMetadataResponse{
 		BlockID:                    queryHash,
 		Parents:                    parentBlockIDs,
 		Solid:                      true,
-		MilestoneIndex:             nil,
-		ReferencedByMilestoneIndex: nil,
-		LedgerInclusionState:       nil,
+		MilestoneIndex:             66,
+		ReferencedByMilestoneIndex: 67,
+		LedgerInclusionState:       "noTransaction",
 		ShouldPromote:              nil,
 		ShouldReattach:             nil,
 		ConflictReason:             0,
+		WhiteFlagIndex:             &wfIndex,
 	}
 
 	gock.New(nodeAPIUrl).
