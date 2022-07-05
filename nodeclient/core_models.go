@@ -94,17 +94,19 @@ type (
 		// Whether the block is solid.
 		Solid bool `json:"isSolid"`
 		// The milestone index that references this block.
-		ReferencedByMilestoneIndex *iotago.MilestoneIndex `json:"referencedByMilestoneIndex,omitempty"`
+		ReferencedByMilestoneIndex iotago.MilestoneIndex `json:"referencedByMilestoneIndex,omitempty"`
 		// If this block represents a milestone this is the milestone index
-		MilestoneIndex *iotago.MilestoneIndex `json:"milestoneIndex,omitempty"`
+		MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex,omitempty"`
 		// The ledger inclusion state of the transaction payload.
-		LedgerInclusionState *string `json:"ledgerInclusionState,omitempty"`
+		LedgerInclusionState string `json:"ledgerInclusionState,omitempty"`
 		// Whether the block should be promoted.
 		ShouldPromote *bool `json:"shouldPromote,omitempty"`
 		// Whether the block should be reattached.
 		ShouldReattach *bool `json:"shouldReattach,omitempty"`
 		// The reason why this block is marked as conflicting.
 		ConflictReason uint8 `json:"conflictReason,omitempty"`
+		// If this block is referenced by a milestone this returns the index of that block inside the milestone by whiteflag ordering.
+		WhiteFlagIndex *uint32 `json:"whiteFlagIndex,omitempty"`
 	}
 
 	// ChildrenResponse defines the response of a GET children REST API call.
