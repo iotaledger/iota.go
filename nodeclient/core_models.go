@@ -48,9 +48,9 @@ type (
 		// The index of the milestone.
 		Index iotago.MilestoneIndex `json:"index"`
 		// The unix time of the milestone payload.
-		Timestamp uint32 `json:"timestamp"`
+		Timestamp uint32 `json:"timestamp,omitempty"`
 		// The IO of the milestone.
-		MilestoneID string `json:"milestoneId"`
+		MilestoneID string `json:"milestoneId,omitempty"`
 	}
 
 	// InfoResBaseToken defines the info res base token information.
