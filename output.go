@@ -368,9 +368,9 @@ func (outputs Outputs) NativeTokenSum() (NativeTokenSum, int, error) {
 	sum := make(map[NativeTokenID]*big.Int)
 	var ntCount int
 	for _, output := range outputs {
-		set := output.NativeTokenSet()
-		ntCount += len(set)
-		for _, nativeToken := range set {
+		nativeTokens := output.NativeTokenList()
+		ntCount += len(nativeTokens)
+		for _, nativeToken := range nativeTokens {
 			if sign := nativeToken.Amount.Sign(); sign == -1 || sign == 0 {
 				return nil, 0, ErrNativeTokenAmountLessThanEqualZero
 			}
@@ -585,8 +585,8 @@ type Output interface {
 	// Deposit returns the amount this Output deposits.
 	Deposit() uint64
 
-	// NativeTokenSet returns the NativeToken this output defines.
-	NativeTokenSet() NativeTokens
+	// NativeTokenList returns the NativeToken this output defines.
+	NativeTokenList() NativeTokens
 
 	// UnlockConditionSet returns the UnlockConditionSet this output defines.
 	UnlockConditionSet() UnlockConditionSet
@@ -752,13 +752,13 @@ func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSynt
 func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
 	var nativeTokensCount int
 	return func(index int, output Output) error {
-		set := output.NativeTokenSet()
-		nativeTokensCount += len(set)
+		nativeTokens := output.NativeTokenList()
+		nativeTokensCount += len(nativeTokens)
 		if nativeTokensCount > MaxNativeTokensCount {
 			return ErrMaxNativeTokensCountExceeded
 		}
 
-		for i, nt := range set {
+		for i, nt := range nativeTokens {
 			if nt.Amount.Cmp(common.Big0) == 0 {
 				return fmt.Errorf("%w: output %d, native token index %d", ErrNativeTokenAmountLessThanEqualZero, index, i)
 			}

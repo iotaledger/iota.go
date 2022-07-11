@@ -431,7 +431,7 @@ func (a *AliasOutput) AliasEmpty() bool {
 	return a.AliasID == emptyAliasID
 }
 
-func (a *AliasOutput) NativeTokenSet() NativeTokens {
+func (a *AliasOutput) NativeTokenList() NativeTokens {
 	return a.NativeTokens
 }
 

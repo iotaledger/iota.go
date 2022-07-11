@@ -376,7 +376,7 @@ func (f *FoundryOutput) NativeTokenID() (NativeTokenID, error) {
 	return f.ID()
 }
 
-func (f *FoundryOutput) NativeTokenSet() NativeTokens {
+func (f *FoundryOutput) NativeTokenList() NativeTokens {
 	return f.NativeTokens
 }
 

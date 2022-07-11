@@ -260,7 +260,7 @@ func (n *NFTOutput) Chain() ChainID {
 	return n.NFTID
 }
 
-func (n *NFTOutput) NativeTokenSet() NativeTokens {
+func (n *NFTOutput) NativeTokenList() NativeTokens {
 	return n.NativeTokens
 }
 

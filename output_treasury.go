@@ -14,7 +14,7 @@ type TreasuryOutput struct {
 	Amount uint64
 }
 
-func (t *TreasuryOutput) NativeTokenSet() NativeTokens {
+func (t *TreasuryOutput) NativeTokenList() NativeTokens {
 	return nil
 }
 

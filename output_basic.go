@@ -122,7 +122,7 @@ func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		e.Features.VBytes(rentStruct, nil)
 }
 
-func (e *BasicOutput) NativeTokenSet() NativeTokens {
+func (e *BasicOutput) NativeTokenList() NativeTokens {
 	return e.NativeTokens
 }
 
