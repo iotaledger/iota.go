@@ -103,7 +103,7 @@ func (u *TaggedData) UnmarshalJSON(bytes []byte) error {
 type jsonTaggedData struct {
 	Type int    `json:"type"`
 	Tag  string `json:"tag,omitempty"`
-	Data string `json:"data"`
+	Data string `json:"data,omitempty"`
 }
 
 func (j *jsonTaggedData) ToSerializable() (serializer.Serializable, error) {
