@@ -29,7 +29,7 @@ type IndexerCursorParas struct {
 // IndexerTimelockParas define timelock query parameters.
 type IndexerTimelockParas struct {
 	// Filters outputs based on the presence of timelock unlock condition.
-	HasTimelockCondition bool `qs:"hasTimelockCondition,omitempty"`
+	HasTimelockCondition *bool `qs:"hasTimelockCondition,omitempty"`
 	// Return outputs that are timelocked before a certain Unix timestamp.
 	TimelockedBefore uint32 `qs:"timelockedBefore,omitempty"`
 	// Return outputs that are timelocked after a certain Unix timestamp.
@@ -39,7 +39,7 @@ type IndexerTimelockParas struct {
 // IndexerExpirationParas define expiration query parameters.
 type IndexerExpirationParas struct {
 	// Filters outputs based on the presence of expiration unlock condition.
-	HasExpirationCondition bool `qs:"hasExpirationCondition,omitempty"`
+	HasExpirationCondition *bool `qs:"hasExpirationCondition,omitempty"`
 	// Return outputs that expire before a certain Unix timestamp.
 	ExpiresBefore uint32 `qs:"expiresBefore,omitempty"`
 	// Return outputs that expire after a certain Unix timestamp.
@@ -59,7 +59,7 @@ type IndexerCreationParas struct {
 // IndexerStorageDepositParas define storage deposit based query parameters.
 type IndexerStorageDepositParas struct {
 	// Filters outputs based on the presence of storage deposit return unlock condition.
-	RequiresStorageDepositReturn bool `qs:"requiresStorageDepositReturn,omitempty"`
+	RequiresStorageDepositReturn *bool `qs:"requiresStorageDepositReturn,omitempty"`
 	// Filter outputs based on the presence of a specific return address in the storage deposit return unlock condition.
 	StorageDepositReturnAddressBech32 string `qs:"storageDepositAddress,omitempty"`
 }
