@@ -1,14 +1,14 @@
 package iotago
 
 import (
-	"encoding/binary"
+	"errors"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer"
-	"strings"
+
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // InputType defines the type of inputs.
-type InputType = byte
+type InputType byte
 
 const (
 	// InputUTXO is a type of input which references an unspent transaction output.
@@ -17,15 +17,73 @@ const (
 	InputTreasury
 )
 
+func (inputType InputType) String() string {
+	if int(inputType) >= len(inputNames) {
+		return fmt.Sprintf("unknown input type: %d", inputType)
+	}
+	return inputNames[inputType]
+}
+
+var (
+	inputNames = [InputTreasury + 1]string{"UTXOInput", "TreasuryInput"}
+)
+
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
 	ErrRefUTXOIndexInvalid = fmt.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
+
+	// ErrTypeIsNotSupportedInput gets returned when a serializable was found to not be a supported Input.
+	ErrTypeIsNotSupportedInput = errors.New("serializable is not a supported input")
 )
 
+// Inputs a slice of Input.
+type Inputs []Input
+
+func (in Inputs) ToSerializables() serializer.Serializables {
+	seris := make(serializer.Serializables, len(in))
+	for i, x := range in {
+		seris[i] = x.(serializer.Serializable)
+	}
+	return seris
+}
+
+func (in *Inputs) FromSerializables(seris serializer.Serializables) {
+	*in = make(Inputs, len(seris))
+	for i, seri := range seris {
+		(*in)[i] = seri.(Input)
+	}
+}
+
+func (in Inputs) Size() int {
+	sum := serializer.UInt16ByteSize
+	for _, i := range in {
+		sum += i.Size()
+	}
+	return sum
+}
+
+// Input references a UTXO.
+type Input interface {
+	serializer.SerializableWithSize
+
+	// Type returns the type of Input.
+	Type() InputType
+}
+
+// IndexedUTXOReferencer is a type of Input which references a UTXO by the transaction ID and output index.
+type IndexedUTXOReferencer interface {
+	Input
+
+	// Ref returns the UTXO this Input references.
+	Ref() OutputID
+	// Index returns the output index of the UTXO this Input references.
+	Index() uint16
+}
+
 // InputSelector implements SerializableSelectorFunc for input types.
-func InputSelector(inputType uint32) (serializer.Serializable, error) {
-	var seri serializer.Serializable
-	switch byte(inputType) {
+func InputSelector(inputType uint32) (Input, error) {
+	var seri Input
+	switch InputType(inputType) {
 	case InputUTXO:
 		seri = &UTXOInput{}
 	case InputTreasury:
@@ -36,21 +94,19 @@ func InputSelector(inputType uint32) (serializer.Serializable, error) {
 	return seri, nil
 }
 
-// InputsValidatorFunc which given the index of an input and the input itself, runs validations and returns an error if any should fail.
-type InputsValidatorFunc func(index int, input *UTXOInput) error
+// InputsSyntacticalValidationFunc which given the index of an input and the input itself, runs syntactical validations and returns an error if any should fail.
+type InputsSyntacticalValidationFunc func(index int, input Input) error
 
-// InputsUTXORefsUniqueValidator returns a validator which checks that every input has a unique UTXO ref.
-func InputsUTXORefsUniqueValidator() InputsValidatorFunc {
+// InputsSyntacticalUnique returns an InputsSyntacticalValidationFunc which checks that every input has a unique UTXO ref.
+func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 	set := map[string]int{}
-	return func(index int, input *UTXOInput) error {
-		var b strings.Builder
-		if _, err := b.Write(input.TransactionID[:]); err != nil {
-			return fmt.Errorf("%w: unable to write tx ID in ref validator", err)
+	return func(index int, input Input) error {
+		ref, is := input.(IndexedUTXOReferencer)
+		if !is {
+			return fmt.Errorf("%w: input %d, tx can only contain IndexedUTXOReferencer inputs", ErrUnsupportedInputType, index)
 		}
-		if err := binary.Write(&b, binary.LittleEndian, input.TransactionOutputIndex); err != nil {
-			return fmt.Errorf("%w: unable to write UTXO index in ref validator", err)
-		}
-		k := b.String()
+		utxoRef := ref.Ref()
+		k := string(utxoRef[:])
 		if j, has := set[k]; has {
 			return fmt.Errorf("%w: input %d and %d share the same UTXO ref", ErrInputUTXORefsNotUnique, j, index)
 		}
@@ -59,20 +115,24 @@ func InputsUTXORefsUniqueValidator() InputsValidatorFunc {
 	}
 }
 
-// InputsUTXORefIndexBoundsValidator returns a validator which checks that the UTXO ref index is within bounds.
-func InputsUTXORefIndexBoundsValidator() InputsValidatorFunc {
-	return func(index int, input *UTXOInput) error {
-		if input.TransactionOutputIndex < RefUTXOIndexMin || input.TransactionOutputIndex > RefUTXOIndexMax {
+// InputsSyntacticalIndicesWithinBounds returns an InputsSyntacticalValidationFunc which checks that the UTXO ref index is within bounds.
+func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
+	return func(index int, input Input) error {
+		ref, is := input.(IndexedUTXOReferencer)
+		if !is {
+			return fmt.Errorf("%w: input %d, tx can only contain IndexedUTXOReferencer inputs", ErrUnsupportedInputType, index)
+		}
+		if ref.Index() < RefUTXOIndexMin || ref.Index() > RefUTXOIndexMax {
 			return fmt.Errorf("%w: input %d", ErrRefUTXOIndexInvalid, index)
 		}
 		return nil
 	}
 }
 
-var utxoInputRefBoundsValidator = InputsUTXORefIndexBoundsValidator()
+var inputsPredicateIndicesWithinBounds = InputsSyntacticalIndicesWithinBounds()
 
-// ValidateInputs validates the inputs by running them against the given InputsValidatorFunc.
-func ValidateInputs(inputs serializer.Serializables, funcs ...InputsValidatorFunc) error {
+// SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
+func SyntacticallyValidateInputs(inputs Inputs, funcs ...InputsSyntacticalValidationFunc) error {
 	for i, input := range inputs {
 		dep, ok := input.(*UTXOInput)
 		if !ok {
@@ -90,7 +150,7 @@ func ValidateInputs(inputs serializer.Serializables, funcs ...InputsValidatorFun
 // jsonInputSelector selects the json input implementation for the given type.
 func jsonInputSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable
-	switch byte(ty) {
+	switch InputType(ty) {
 	case InputUTXO:
 		obj = &jsonUTXOInput{}
 	case InputTreasury:

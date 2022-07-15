@@ -1,197 +1,30 @@
-// Package ed25519 implements the Ed25519 signature algorithm.
-//
-// These functions are compatible with the particular validation rules around
+// Package ed25519 implements an Ed25519 Verify function for use in consensus-critical contexts.
+// The Verify function is compatible with the particular validation rules around
 // edge cases described in IOTA protocol RFC-0028.
-// This package is a drop-in replacement for "crypto/ed25519".
 package ed25519
 
 import (
-	"bytes"
-	"crypto"
-	cryptorand "crypto/rand"
+	"crypto/ed25519"
 	"crypto/sha512"
-	"errors"
-	"io"
-	"strconv"
 
+	// We need to use this package to have access to low-level edwards25519 operations.
+	//
+	// Excerpt from the docs:
+	// https://pkg.go.dev/crypto/ed25519/internal/edwards25519?utm_source=godoc
+	//
+	// However, developers who do need to interact with low-level edwards25519
+	// operations can use filippo.io/edwards25519,
+	// an extended version of this package repackaged as an importable module.
 	"filippo.io/edwards25519"
 )
 
-const (
-	// PublicKeySize is the size, in bytes, of public keys as used in this package.
-	PublicKeySize = 32
-	// PrivateKeySize is the size, in bytes, of private keys as used in this package.
-	PrivateKeySize = 64
-	// SignatureSize is the size, in bytes, of signatures generated and verified by this package.
-	SignatureSize = 64
-	// SeedSize is the size, in bytes, of private key seeds. These are the private key representations used by RFC 8032.
-	SeedSize = 32
-)
-
-// PublicKey is the type of Ed25519 public keys.
-type PublicKey []byte
-
-// Any methods implemented on PublicKey might need to also be implemented on
-// PrivateKey, as the latter embeds the former and will expose its methods.
-
-// Equal reports whether pub and x have the same value.
-func (pub PublicKey) Equal(x crypto.PublicKey) bool {
-	xx, ok := x.(PublicKey)
-	if !ok {
-		return false
-	}
-	return bytes.Equal(pub, xx)
-}
-
-// PrivateKey is the type of Ed25519 private keys. It implements crypto.Signer.
-type PrivateKey []byte
-
-// Public returns the PublicKey corresponding to priv.
-func (priv PrivateKey) Public() crypto.PublicKey {
-	publicKey := make([]byte, PublicKeySize)
-	copy(publicKey, priv[32:])
-	return PublicKey(publicKey)
-}
-
-// Equal reports whether priv and x have the same value.
-func (priv PrivateKey) Equal(x crypto.PrivateKey) bool {
-	xx, ok := x.(PrivateKey)
-	if !ok {
-		return false
-	}
-	return bytes.Equal(priv, xx)
-}
-
-// Seed returns the private key seed corresponding to priv. It is provided for
-// interoperability with RFC 8032. RFC 8032's private keys correspond to seeds
-// in this package.
-func (priv PrivateKey) Seed() []byte {
-	seed := make([]byte, SeedSize)
-	copy(seed, priv[:32])
-	return seed
-}
-
-// Sign signs the given message with priv.
-// Ed25519 performs two passes over messages to be signed and therefore cannot
-// handle pre-hashed messages. Thus opts.HashFunc() must return zero to
-// indicate the message hasn't been hashed. This can be achieved by passing
-// crypto.Hash(0) as the value for opts.
-func (priv PrivateKey) Sign(_ io.Reader, message []byte, opts crypto.SignerOpts) (signature []byte, err error) {
-	if opts.HashFunc() != crypto.Hash(0) {
-		return nil, errors.New("ed25519: cannot sign hashed message")
-	}
-
-	return Sign(priv, message), nil
-}
-
-// GenerateKey generates a public/private key pair using entropy from rand.
-// If rand is nil, crypto/rand.Reader will be used.
-func GenerateKey(rand io.Reader) (PublicKey, PrivateKey, error) {
-	if rand == nil {
-		rand = cryptorand.Reader
-	}
-
-	seed := make([]byte, SeedSize)
-	if _, err := io.ReadFull(rand, seed); err != nil {
-		return nil, nil, err
-	}
-
-	privateKey := NewKeyFromSeed(seed)
-	publicKey := make([]byte, PublicKeySize)
-	copy(publicKey, privateKey[32:])
-
-	return publicKey, privateKey, nil
-}
-
-// NewKeyFromSeed calculates a private key from a seed. It will panic if
-// len(seed) is not SeedSize. This function is provided for interoperability
-// with RFC 8032. RFC 8032's private keys correspond to seeds in this
-// package.
-func NewKeyFromSeed(seed []byte) PrivateKey {
-	// when NewKeyFromSeed is inlined, the returned signature can be stack-allocated
-	privateKey := make([]byte, PrivateKeySize)
-	newKeyFromSeed(privateKey, seed)
-	return privateKey
-}
-
-func newKeyFromSeed(privateKey, seed []byte) {
-	if l := len(seed); l != SeedSize {
-		panic("ed25519: bad seed length: " + strconv.Itoa(l))
-	}
-
-	digest := sha512.Sum512(seed)
-
-	s, err := new(edwards25519.Scalar).SetBytesWithClamping(digest[:32])
-	if err != nil {
-		panic(err)
-	}
-	A := new(edwards25519.Point).ScalarBaseMult(s)
-
-	copy(privateKey, seed)
-	copy(privateKey[32:], A.Bytes())
-}
-
-// Sign signs the message with privateKey and returns a signature. It will
-// panic if len(privateKey) is not PrivateKeySize.
-func Sign(privateKey PrivateKey, message []byte) []byte {
-	// when Sign is inlined, the returned signature can be stack-allocated
-	signature := make([]byte, SignatureSize)
-	sign(signature, privateKey, message)
-	return signature
-}
-
-func sign(signature, privateKey, message []byte) {
-	if l := len(privateKey); l != PrivateKeySize {
-		panic("ed25519: bad private key length: " + strconv.Itoa(l))
-	}
-
-	h := sha512.New()
-	h.Write(privateKey[:32])
-
-	var digest1, messageDigest, hramDigest [64]byte
-	h.Sum(digest1[:0])
-
-	s, err := new(edwards25519.Scalar).SetBytesWithClamping(digest1[:32])
-	if err != nil {
-		panic(err)
-	}
-
-	h.Reset()
-	h.Write(digest1[32:])
-	h.Write(message)
-	h.Sum(messageDigest[:0])
-
-	rReduced, err := new(edwards25519.Scalar).SetUniformBytes(messageDigest[:])
-	if err != nil {
-		panic(err)
-	}
-	R := new(edwards25519.Point).ScalarBaseMult(rReduced)
-
-	encodedR := R.Bytes()
-
-	h.Reset()
-	h.Write(encodedR[:])
-	h.Write(privateKey[32:])
-	h.Write(message)
-	h.Sum(hramDigest[:0])
-
-	kReduced, err := new(edwards25519.Scalar).SetUniformBytes(hramDigest[:])
-	if err != nil {
-		panic(err)
-	}
-	S := new(edwards25519.Scalar).MultiplyAdd(kReduced, s, rReduced)
-
-	copy(signature[:], encodedR[:])
-	copy(signature[32:], S.Bytes())
-}
-
 // Verify reports whether sig is a valid signature of message by publicKey.
 // It uses precisely-specified validation criteria (ZIP 215) suitable for use in consensus-critical contexts.
-func Verify(publicKey PublicKey, message, sig []byte) bool {
-	if len(publicKey) != PublicKeySize {
+func Verify(publicKey ed25519.PublicKey, message, sig []byte) bool {
+	if len(publicKey) != ed25519.PublicKeySize {
 		return false
 	}
-	if len(sig) != SignatureSize || sig[63]&224 != 0 {
+	if len(sig) != ed25519.SignatureSize || sig[63]&224 != 0 {
 		return false
 	}
 

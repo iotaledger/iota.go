@@ -1,47 +1,104 @@
 package iotago_test
 
 import (
-	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v2/tpkg"
+	"crypto/ed25519"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v2"
-	"github.com/iotaledger/iota.go/v2/ed25519"
+	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {
-	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation)
+	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	target := &iotago.Transaction{}
-	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation)
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModePerformValidation)
+		target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+	}
+}
+
+func BenchmarkDeserializeWithValidationLargeTxPayload(b *testing.B) {
+	origin := &iotago.Transaction{
+		Essence: &iotago.TransactionEssence{
+			NetworkID: tpkg.TestNetworkID,
+			Inputs: func() iotago.Inputs {
+				var inputs iotago.Inputs
+				for i := 0; i < iotago.MaxInputsCount; i++ {
+					inputs = append(inputs, &iotago.UTXOInput{
+						TransactionID:          tpkg.Rand32ByteArray(),
+						TransactionOutputIndex: 0,
+					})
+				}
+				return inputs
+			}(),
+			Outputs: func() iotago.Outputs {
+				var outputs iotago.Outputs
+				for i := 0; i < iotago.MaxOutputsCount; i++ {
+					outputs = append(outputs, &iotago.BasicOutput{
+						Amount: 100,
+						Conditions: iotago.UnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+					})
+				}
+				return outputs
+			}(),
+			Payload: nil,
+		},
+		Unlocks: func() iotago.Unlocks {
+			var unlocks iotago.Unlocks
+			for i := 0; i < iotago.MaxInputsCount; i++ {
+				unlocks = append(unlocks, &iotago.SignatureUnlock{
+					Signature: tpkg.RandEd25519Signature(),
+				})
+			}
+			return unlocks
+		}(),
+	}
+
+	data, err := origin.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, tpkg.TestProtoParas)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	target := &iotago.Transaction{}
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	}
 }
 
 func BenchmarkDeserializeWithoutValidationOneIOTxPayload(b *testing.B) {
-	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation)
+	data, err := tpkg.OneInputOutputTransaction().Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	target := &iotago.Transaction{}
-	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation)
+	_, err = target.Deserialize(data, serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	if err != nil {
 		b.Fatal(err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModeNoValidation)
+		target.Deserialize(data, serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -49,7 +106,7 @@ func BenchmarkSerializeWithValidationOneIOTxPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		txPayload.Serialize(serializer.DeSeriModePerformValidation)
+		txPayload.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -57,7 +114,7 @@ func BenchmarkSerializeWithoutValidationOneIOTxPayload(b *testing.B) {
 	sigTxPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		sigTxPayload.Serialize(serializer.DeSeriModeNoValidation)
+		sigTxPayload.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -65,7 +122,7 @@ func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Essence.(*iotago.TransactionEssence).SigningMessage()
+	txEssenceData, err := txPayload.Essence.SigningMessage()
 	tpkg.Must(err)
 
 	seed := tpkg.RandEd25519Seed()
@@ -81,7 +138,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Essence.(*iotago.TransactionEssence).SigningMessage()
+	txEssenceData, err := txPayload.Essence.SigningMessage()
 	tpkg.Must(err)
 
 	seed := tpkg.RandEd25519Seed()
@@ -92,17 +149,18 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	pubKey := prvKey.Public().(ed25519.PublicKey)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ed25519.Verify(pubKey, txEssenceData, sig)
+		iotagoEd25519.Verify(pubKey, txEssenceData, sig)
 	}
 }
 
-func BenchmarkSerializeAndHashMessageWithTransactionPayload(b *testing.B) {
+func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 
-	m := &iotago.Message{
-		Parents: tpkg.SortedRand32BytArray(2),
-		Payload: txPayload,
-		Nonce:   0,
+	m := &iotago.Block{
+		ProtocolVersion: tpkg.TestProtocolVersion,
+		Parents:         tpkg.SortedRandBlockIDs(2),
+		Payload:         txPayload,
+		Nonce:           0,
 	}
 	for i := 0; i < b.N; i++ {
 		_, _ = m.ID()

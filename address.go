@@ -1,22 +1,49 @@
 package iotago
 
 import (
-	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/serializer"
-	"github.com/iotaledger/iota.go/v2/bech32"
-	"github.com/iotaledger/iota.go/v2/ed25519"
-	"golang.org/x/crypto/blake2b"
+	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/bech32"
 )
 
 // AddressType defines the type of addresses.
-type AddressType = byte
+type AddressType byte
 
 const (
 	// AddressEd25519 denotes an Ed25519 address.
-	AddressEd25519 AddressType = iota
+	AddressEd25519 AddressType = 0
+	// AddressAlias denotes an Alias address.
+	AddressAlias AddressType = 8
+	// AddressNFT denotes an NFT address.
+	AddressNFT AddressType = 16
+)
+
+func (addrType AddressType) String() string {
+	if int(addrType) >= len(addressNames) {
+		return fmt.Sprintf("unknown address type: %d", addrType)
+	}
+	return addressNames[addrType]
+}
+
+// AddressTypeSet is a set of AddressType.
+type AddressTypeSet map[AddressType]struct{}
+
+var (
+	// ErrTypeIsNotSupportedAddress gets returned when a serializable was found to not be a supported Address.
+	ErrTypeIsNotSupportedAddress = errors.New("serializable is not a supported address")
+	addressNames                 = [AddressNFT + 1]string{
+		"Ed25519Address", "", "", "", "", "", "", "",
+		"AliasAddress", "", "", "", "", "", "", "",
+		"NFTAddress",
+	}
+	allAddressTypeSet = AddressTypeSet{
+		AddressEd25519: struct{}{},
+		AddressAlias:   struct{}{},
+		AddressNFT:     struct{}{},
+	}
 )
 
 // NetworkPrefix denotes the different network prefixes.
@@ -25,19 +52,15 @@ type NetworkPrefix string
 // Network prefixes.
 const (
 	PrefixMainnet NetworkPrefix = "iota"
-	PrefixTestnet NetworkPrefix = "atoi"
-)
-
-const (
-	// Ed25519AddressBytesLength is the length of an Ed25519 address.
-	Ed25519AddressBytesLength = blake2b.Size256
-	// Ed25519AddressSerializedBytesSize is the size of a serialized Ed25519 address with its type denoting byte.
-	Ed25519AddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + Ed25519AddressBytesLength
+	PrefixDevnet  NetworkPrefix = "atoi"
+	PrefixShimmer NetworkPrefix = "smr"
+	PrefixTestnet NetworkPrefix = "rms"
 )
 
 // Address describes a general address.
 type Address interface {
-	serializer.Serializable
+	serializer.SerializableWithSize
+	NonEphemeralObject
 	fmt.Stringer
 
 	// Type returns the type of the address.
@@ -45,24 +68,145 @@ type Address interface {
 
 	// Bech32 encodes the address as a bech32 string.
 	Bech32(hrp NetworkPrefix) string
+
+	// Equal checks whether other is equal to this Address.
+	Equal(other Address) bool
+
+	// Key returns a string which can be used to index the Address in a map.
+	Key() string
+
+	// Clone clones the Address.
+	Clone() Address
+}
+
+// DirectUnlockableAddress is a type of Address which can be directly unlocked.
+type DirectUnlockableAddress interface {
+	Address
+	// Unlock unlocks this DirectUnlockableAddress given the Signature.
+	Unlock(msg []byte, sig Signature) error
+}
+
+// ChainConstrainedAddress is a type of Address representing ownership of an output by a ChainConstrainedOutput.
+type ChainConstrainedAddress interface {
+	Address
+	Chain() ChainID
+}
+
+// ChainID represents the chain ID of a chain created by a ChainConstrainedOutput.
+type ChainID interface {
+	// Matches checks whether other matches this ChainID.
+	Matches(other ChainID) bool
+	// Addressable tells whether this ChainID can be converted into a ChainConstrainedAddress.
+	Addressable() bool
+	// ToAddress converts this ChainID into an ChainConstrainedAddress.
+	ToAddress() ChainConstrainedAddress
+	// Empty tells whether the ChainID is empty.
+	Empty() bool
+	// Key returns a key to use to index this ChainID.
+	Key() interface{}
+	// ToHex returns the hex representation of the ChainID.
+	ToHex() string
+}
+
+// UTXOIDChainID is a ChainID which gets produced by taking an OutputID.
+type UTXOIDChainID interface {
+	FromOutputID(id OutputID) ChainID
 }
 
 // AddressSelector implements SerializableSelectorFunc for address types.
-func AddressSelector(addressType uint32) (serializer.Serializable, error) {
+func AddressSelector(addressType uint32) (Address, error) {
 	return newAddress(byte(addressType))
 }
 
 func newAddress(addressType byte) (address Address, err error) {
-	switch addressType {
+	switch AddressType(addressType) {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
+	case AddressAlias:
+		return &AliasAddress{}, nil
+	case AddressNFT:
+		return &NFTAddress{}, nil
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownAddrType, addressType)
 	}
 }
 
+func jsonAddressToAddress(jAddr JSONSerializable) (Address, error) {
+	addr, err := jAddr.ToSerializable()
+	if err != nil {
+		return nil, err
+	}
+	return addr.(Address), nil
+}
+
+// checks whether the given Serializable is an Address and also supported AddressType.
+func addrWriteGuard(supportedAddr AddressTypeSet) serializer.SerializableWriteGuardFunc {
+	return func(seri serializer.Serializable) error {
+		if seri == nil {
+			return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedAddress)
+		}
+		addr, is := seri.(Address)
+		if !is {
+			return fmt.Errorf("%w: because not address", ErrTypeIsNotSupportedAddress)
+		}
+
+		if _, supported := supportedAddr[addr.Type()]; !supported {
+			return fmt.Errorf("%w: because not in set %v", ErrTypeIsNotSupportedAddress, supported)
+		}
+
+		return nil
+	}
+}
+
+func addrReadGuard(supportedAddr AddressTypeSet) serializer.SerializableReadGuardFunc {
+	return func(ty uint32) (serializer.Serializable, error) {
+		if _, supported := supportedAddr[AddressType(ty)]; !supported {
+			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedAddress, supportedAddr, ty)
+		}
+		return AddressSelector(ty)
+	}
+}
+
+func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (Address, error) {
+	jsonAddr, err := DeserializeObjectFromJSON(jRawMsg, jsonAddressSelector)
+	if err != nil {
+		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
+	}
+
+	addr, err := jsonAddr.ToSerializable()
+	if err != nil {
+		return nil, err
+	}
+	return addr.(Address), nil
+}
+
+func addressToJSONRawMsg(addr serializer.Serializable) (*json.RawMessage, error) {
+	addrJsonBytes, err := addr.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
+	return &jsonRawMsgAddr, nil
+}
+
+// selects the json object for the given type.
+func jsonAddressSelector(ty int) (JSONSerializable, error) {
+	var obj JSONSerializable
+	switch AddressType(ty) {
+	case AddressEd25519:
+		obj = &jsonEd25519Address{}
+	case AddressAlias:
+		obj = &jsonAliasAddress{}
+	case AddressNFT:
+		obj = &jsonNFTAddress{}
+	default:
+		return nil, fmt.Errorf("unable to decode address type from JSON: %w", ErrUnknownAddrType)
+	}
+	return obj, nil
+}
+
 func bech32String(hrp NetworkPrefix, addr Address) string {
-	bytes, _ := addr.Serialize(serializer.DeSeriModeNoValidation)
+	bytes, _ := addr.Serialize(serializer.DeSeriModeNoValidation, nil)
 	s, err := bech32.Encode(string(hrp), bytes)
 	if err != nil {
 		panic(err)
@@ -86,7 +230,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		return "", nil, err
 	}
 
-	n, err := addr.Deserialize(addrData, serializer.DeSeriModePerformValidation)
+	n, err := addr.Deserialize(addrData, serializer.DeSeriModePerformValidation, nil)
 	if err != nil {
 		return "", nil, err
 	}
@@ -96,117 +240,4 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	}
 
 	return NetworkPrefix(hrp), addr, nil
-}
-
-// ParseEd25519AddressFromHexString parses the given hex string into an Ed25519Address.
-func ParseEd25519AddressFromHexString(hexAddr string) (*Ed25519Address, error) {
-	addrBytes, err := hex.DecodeString(hexAddr)
-	if err != nil {
-		return nil, err
-	}
-	addr := &Ed25519Address{}
-	copy(addr[:], addrBytes)
-	return addr, nil
-}
-
-// MustParseEd25519AddressFromHexString parses the given hex string into an Ed25519Address.
-// It panics if the hex address is invalid.
-func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
-	addr, err := ParseEd25519AddressFromHexString(hexAddr)
-	if err != nil {
-		panic(err)
-	}
-	return addr
-}
-
-// Ed25519Address defines an Ed25519 address.
-// An Ed25519Address is the Blake2b-256 hash of a Ed25519 public key.
-type Ed25519Address [Ed25519AddressBytesLength]byte
-
-func (edAddr *Ed25519Address) Type() AddressType {
-	return AddressEd25519
-}
-
-func (edAddr *Ed25519Address) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, edAddr)
-}
-
-func (edAddr *Ed25519Address) String() string {
-	return hex.EncodeToString(edAddr[:])
-}
-
-func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode) (int, error) {
-	if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-		if err := serializer.CheckMinByteLength(Ed25519AddressSerializedBytesSize, len(data)); err != nil {
-			return 0, fmt.Errorf("invalid Ed25519 address bytes: %w", err)
-		}
-		if err := serializer.CheckTypeByte(data, AddressEd25519); err != nil {
-			return 0, fmt.Errorf("unable to deserialize Ed25519 address: %w", err)
-		}
-	}
-	copy(edAddr[:], data[serializer.SmallTypeDenotationByteSize:])
-	return Ed25519AddressSerializedBytesSize, nil
-}
-
-func (edAddr *Ed25519Address) Serialize(deSeriMode serializer.DeSerializationMode) (data []byte, err error) {
-	var b [Ed25519AddressSerializedBytesSize]byte
-	b[0] = AddressEd25519
-	copy(b[serializer.SmallTypeDenotationByteSize:], edAddr[:])
-	return b[:], nil
-}
-
-func (edAddr *Ed25519Address) MarshalJSON() ([]byte, error) {
-	jEd25519Address := &jsonEd25519Address{}
-	jEd25519Address.Address = hex.EncodeToString(edAddr[:])
-	jEd25519Address.Type = int(AddressEd25519)
-	return json.Marshal(jEd25519Address)
-}
-
-func (edAddr *Ed25519Address) UnmarshalJSON(bytes []byte) error {
-	jEd25519Address := &jsonEd25519Address{}
-	if err := json.Unmarshal(bytes, jEd25519Address); err != nil {
-		return err
-	}
-	seri, err := jEd25519Address.ToSerializable()
-	if err != nil {
-		return err
-	}
-	*edAddr = *seri.(*Ed25519Address)
-	return nil
-}
-
-// AddressFromEd25519PubKey returns the address belonging to the given Ed25519 public key.
-func AddressFromEd25519PubKey(pubKey ed25519.PublicKey) Ed25519Address {
-	return blake2b.Sum256(pubKey[:])
-}
-
-// selects the json object for the given type.
-func jsonAddressSelector(ty int) (JSONSerializable, error) {
-	var obj JSONSerializable
-	switch byte(ty) {
-	case AddressEd25519:
-		obj = &jsonEd25519Address{}
-	default:
-		return nil, fmt.Errorf("unable to decode address type from JSON: %w", ErrUnknownAddrType)
-	}
-	return obj, nil
-}
-
-// jsonEd25519Address defines the json representation of an Ed25519Address.
-type jsonEd25519Address struct {
-	Type    int    `json:"type"`
-	Address string `json:"address"`
-}
-
-func (j *jsonEd25519Address) ToSerializable() (serializer.Serializable, error) {
-	addrBytes, err := hex.DecodeString(j.Address)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
-	}
-	if err := serializer.CheckExactByteLength(len(addrBytes), Ed25519AddressBytesLength); err != nil {
-		return nil, fmt.Errorf("unable to decode address from JSON for Ed25519 address: %w", err)
-	}
-	addr := &Ed25519Address{}
-	copy(addr[:], addrBytes)
-	return addr, nil
 }

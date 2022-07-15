@@ -5,15 +5,17 @@ import (
 	"encoding/binary"
 	"math"
 	"math/rand"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/blake2b"
+
+	legacy "github.com/iotaledger/iota.go/consts"
 )
 
 const (
@@ -22,6 +24,13 @@ const (
 )
 
 var testWorker = New(workers)
+
+func TestMain(m *testing.M) {
+	rand.Seed(time.Now().UnixNano())
+
+	// call the tests
+	os.Exit(m.Run())
+}
 
 func TestScore(t *testing.T) {
 	tests := []*struct {
@@ -45,7 +54,7 @@ func TestWorker_Mine(t *testing.T) {
 	nonce, err := testWorker.Mine(context.Background(), msg[:len(msg)-nonceBytes], targetScore)
 	require.NoError(t, err)
 
-	// add nonce to message and check the resulting PoW score
+	// add nonce to block and check the resulting PoW score
 	binary.LittleEndian.PutUint64(msg[len(msg)-nonceBytes:], nonce)
 	pow := Score(msg)
 	assert.GreaterOrEqual(t, pow, targetScore)

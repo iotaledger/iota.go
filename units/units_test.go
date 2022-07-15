@@ -2,11 +2,22 @@ package units_test
 
 import (
 	"fmt"
+	"math/rand"
+	"os"
 	"testing"
+	"time"
 
-	"github.com/iotaledger/iota.go/v2/units"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/iotaledger/iota.go/v3/units"
 )
+
+func TestMain(m *testing.M) {
+	rand.Seed(time.Now().UnixNano())
+
+	// call the tests
+	os.Exit(m.Run())
+}
 
 func TestConvertUnits(t *testing.T) {
 	tests := []struct {

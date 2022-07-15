@@ -2,23 +2,24 @@ package iotago
 
 import (
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer"
+
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // NewReceiptBuilder creates a new ReceiptBuilder.
-func NewReceiptBuilder(migratedAt uint32) *ReceiptBuilder {
+func NewReceiptBuilder(migratedAt MilestoneIndex) *ReceiptBuilder {
 	return &ReceiptBuilder{
-		r: &Receipt{
+		r: &ReceiptMilestoneOpt{
 			MigratedAt:  migratedAt,
-			Funds:       serializer.Serializables{},
+			Funds:       MigratedFundsEntries{},
 			Transaction: nil,
 		},
 	}
 }
 
-// ReceiptBuilder is used to easily build up a Receipt.
+// ReceiptBuilder is used to easily build up a ReceiptMilestoneOpt.
 type ReceiptBuilder struct {
-	r *Receipt
+	r *ReceiptMilestoneOpt
 }
 
 // AddEntry adds the given MigratedFundsEntry to the receipt.
@@ -34,9 +35,9 @@ func (rb *ReceiptBuilder) AddTreasuryTransaction(tx *TreasuryTransaction) *Recei
 	return rb
 }
 
-// Build builds the Receipt.
-func (rb *ReceiptBuilder) Build() (*Receipt, error) {
-	if _, err := rb.r.Serialize(serializer.DeSeriModePerformValidation | serializer.DeSeriModePerformLexicalOrdering); err != nil {
+// Build builds the ReceiptMilestoneOpt.
+func (rb *ReceiptBuilder) Build(protoParas *ProtocolParameters) (*ReceiptMilestoneOpt, error) {
+	if _, err := rb.r.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, protoParas); err != nil {
 		return nil, fmt.Errorf("unable to build receipt: %w", err)
 	}
 	return rb.r, nil

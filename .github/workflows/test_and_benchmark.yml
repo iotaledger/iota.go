@@ -4,7 +4,7 @@ jobs:
   test_and_benchmark:
     strategy:
       matrix:
-        go-version: [ 1.15.x ]
+        go-version: [ 1.18.x ]
         platform: [ ubuntu-latest ]
     runs-on: ${{ matrix.platform }}
     steps:
@@ -16,6 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v1
       - name: Run tests
-        run: go test -tags="pow_avx pow_sse pow_c pow_c128" -v -covermode=count ./...
+        run: go test -v -covermode=count ./...
       - name: Run Benchmarks
         run: go test -bench=. ./...

@@ -1,34 +1,64 @@
-// Package iotago provides IOTA data models, a node API client and builders to craft messages and transactions.
+// Package iotago provides IOTA data models, a node API client and builders to craft blocks and transactions.
 //
-// Creating Messages
+// Creating Blocks:
 //
-//	// create a new node API client
-// 	nodeHTTPAPIClient := iotago.NewNodeHTTPAPIClient("https://example.com")
+//	import (
+//		"context"
+//		"time"
 //
-//	// fetch the node's info to know the min. required PoW score
-//	info, err := nodeHTTPAPIClient.Info()
-//	if err != nil {
-//		return err
-//	}
+//		iotago "github.com/iotaledger/iota.go/v3"
+//		"github.com/iotaledger/iota.go/v3/builder"
+//		"github.com/iotaledger/iota.go/v3/nodeclient"
+//	)
 //
-//	// craft an indexation payload
-//	indexationPayload := &iotago.Indexation{
-//		Index: []byte("hello world"),
-//		Data:  []byte{1, 2, 3, 4},
-//	}
+//	func sendblockExample() error {
+//		// create a new node API client
+//		nodeHTTPAPIClient := nodeclient.New("https://example.com")
 //
-//	ctx, cancelFunc := context.WithTimeout(context.Background(), 15*time.Second)
-//	defer cancelFunc()
+//		ctx, cancelFunc := context.WithTimeout(context.Background(), 15*time.Second)
+//		defer cancelFunc()
 //
-//	// build a message by fetching tips via the node API client and then do local Proof-of-Work
-//	msg, err := iotago.NewMessageBuilder().
-//		Payload(indexationPayload).
-//		Tips(nodeHTTPAPIClient).
-//		ProofOfWork(ctx, info.MinPowScore).
-//		Build()
+//		// fetch the node's info to know the min. required PoW score
+//		info, err := nodeHTTPAPIClient.Info(ctx)
+//		if err != nil {
+//			return err
+//		}
 //
-//	// submit the message to the node
-//	if _, err := nodeHTTPAPIClient.SubmitMessage(msg); err != nil {
-//		return err
+//		// craft a tagged data payload
+//		taggedDataPayload := &iotago.TaggedData{
+//			Tag:  []byte("hello world"),
+//			Data: []byte{1, 2, 3, 4},
+//		}
+//
+//		// get some tips from the node
+//		tipsResponse, err := nodeHTTPAPIClient.Tips(ctx)
+//		if err != nil {
+//			return err
+//		}
+//
+//		tips, err := tipsResponse.Tips()
+//		if err != nil {
+//			return err
+//		}
+//
+//		// get the current protocol parameters
+//		protoParas, err := info.ProtocolParameters()
+//		if err != nil {
+//			return err
+//		}
+//
+//		// build a block by adding the paylod and the tips and then do local Proof-of-Work
+//		block, err := builder.NewBlockBuilder().
+//			Payload(taggedDataPayload).
+//			Parents(tips).
+//			ProofOfWork(ctx, protoParas, info.Protocol.MinPoWScore).
+//			Build()
+//
+//		// submit the block to the node
+//		if _, err := nodeHTTPAPIClient.SubmitBlock(ctx, block, protoParas); err != nil {
+//			return err
+//		}
+//
+//		return nil
 //	}
 package iotago
