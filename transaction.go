@@ -634,10 +634,7 @@ func TxSemanticDeposit() TxSemanticValidationFunc {
 			out += outDeposit
 
 			// accumulate simple transfers for StorageDepositReturnUnlockCondition checks
-			if basicOutput, is := output.(*BasicOutput); is {
-				if len(basicOutput.FeatureSet()) > 0 || len(basicOutput.UnlockConditionSet()) > 1 {
-					continue
-				}
+			if basicOutput, is := output.(*BasicOutput); is && basicOutput.IsSimpleTransfer() {
 				outputSimpleTransfersPerIdent[basicOutput.Ident().Key()] += outDeposit
 			}
 		}
