@@ -99,6 +99,11 @@ type BasicOutput struct {
 	Features Features
 }
 
+// IsSimpleTransfer tells whether this BasicOutput fulfils the criteria of being a simple transfer.
+func (e *BasicOutput) IsSimpleTransfer() bool {
+	return len(e.FeatureSet()) == 0 && len(e.UnlockConditionSet()) == 1 && len(e.NativeTokens) == 0
+}
+
 func (e *BasicOutput) Clone() Output {
 	return &BasicOutput{
 		Amount:       e.Amount,
