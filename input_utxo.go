@@ -13,7 +13,7 @@ const (
 	// RefUTXOIndexMin is the minimum index of a referenced UTXO.
 	RefUTXOIndexMin = 0
 	// RefUTXOIndexMax is the maximum index of a referenced UTXO.
-	RefUTXOIndexMax = 126
+	RefUTXOIndexMax = MaxOutputsCount - 1
 
 	// UTXOInputSize is the size of a UTXO input: input type + tx id + index
 	UTXOInputSize = serializer.SmallTypeDenotationByteSize + TransactionIDLength + serializer.UInt16ByteSize

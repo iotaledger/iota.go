@@ -256,16 +256,45 @@ func ReferenceUnlock(index uint16) *iotago.ReferenceUnlock {
 
 // RandTransactionEssence returns a random transaction essence.
 func RandTransactionEssence() *iotago.TransactionEssence {
+	return RandTransactionEssenceWithInputOutputCount(rand.Intn(iotago.MaxInputsCount)+1, rand.Intn(iotago.MaxOutputsCount)+1)
+}
+
+// RandTransactionEssenceWithInputCount returns a random transaction essence with a specific amount of inputs..
+func RandTransactionEssenceWithInputCount(inputCount int) *iotago.TransactionEssence {
+	return RandTransactionEssenceWithInputOutputCount(inputCount, rand.Intn(iotago.MaxOutputsCount)+1)
+}
+
+// RandTransactionEssenceWithOutputCount returns a random transaction essence with a specific amount of outputs.
+func RandTransactionEssenceWithOutputCount(outputCount int) *iotago.TransactionEssence {
+	return RandTransactionEssenceWithInputOutputCount(rand.Intn(iotago.MaxInputsCount)+1, outputCount)
+}
+
+// RandTransactionEssenceWithInputOutputCount returns a random transaction essence with a specific amount of inputs and outputs.
+func RandTransactionEssenceWithInputOutputCount(inputCount int, outputCount int) *iotago.TransactionEssence {
 	tx := &iotago.TransactionEssence{
 		NetworkID: TestNetworkID,
 	}
 
-	inputCount := rand.Intn(10) + 1
 	for i := inputCount; i > 0; i-- {
 		tx.Inputs = append(tx.Inputs, RandUTXOInput())
 	}
 
-	outputCount := rand.Intn(10) + 1
+	for i := outputCount; i > 0; i-- {
+		tx.Outputs = append(tx.Outputs, RandBasicOutput(iotago.AddressEd25519))
+	}
+
+	return tx
+}
+
+// RandTransactionEssenceWithInputs returns a random transaction essence with a specific slice of inputs.
+func RandTransactionEssenceWithInputs(inputs iotago.Inputs) *iotago.TransactionEssence {
+	tx := &iotago.TransactionEssence{
+		NetworkID: TestNetworkID,
+	}
+
+	tx.Inputs = inputs
+
+	outputCount := rand.Intn(iotago.MaxOutputsCount) + 1
 	for i := outputCount; i > 0; i-- {
 		tx.Outputs = append(tx.Outputs, RandBasicOutput(iotago.AddressEd25519))
 	}
@@ -377,10 +406,9 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 	}
 }
 
-// RandTransaction returns a random transaction.
-func RandTransaction() *iotago.Transaction {
+// RandTransactionWithEssence returns a random transaction with a specific essence.
+func RandTransactionWithEssence(essence *iotago.TransactionEssence) *iotago.Transaction {
 	sigTxPayload := &iotago.Transaction{}
-	essence := RandTransactionEssence()
 	sigTxPayload.Essence = essence
 
 	unlocksCount := len(essence.Inputs)
@@ -389,6 +417,26 @@ func RandTransaction() *iotago.Transaction {
 	}
 
 	return sigTxPayload
+}
+
+// RandTransaction returns a random transaction.
+func RandTransaction() *iotago.Transaction {
+	return RandTransactionWithEssence(RandTransactionEssence())
+}
+
+// RandTransactionWithInputCount returns a random transaction with a specific amount of inputs.
+func RandTransactionWithInputCount(inputCount int) *iotago.Transaction {
+	return RandTransactionWithEssence(RandTransactionEssenceWithInputCount(inputCount))
+}
+
+// RandTransactionWithOutputCount returns a random transaction with a specific amount of outputs.
+func RandTransactionWithOutputCount(outputCount int) *iotago.Transaction {
+	return RandTransactionWithEssence(RandTransactionEssenceWithOutputCount(outputCount))
+}
+
+// RandTransactionWithInputOutputCount returns a random transaction with a specific amount of inputs and outputs.
+func RandTransactionWithInputOutputCount(inputCount int, outputCount int) *iotago.Transaction {
+	return RandTransactionWithEssence(RandTransactionEssenceWithInputOutputCount(inputCount, outputCount))
 }
 
 // RandTreasuryInput returns a random treasury input.
@@ -401,11 +449,15 @@ func RandTreasuryInput() *iotago.TreasuryInput {
 
 // RandUTXOInput returns a random UTXO input.
 func RandUTXOInput() *iotago.UTXOInput {
+	return RandUTXOInputWithIndex(uint16(rand.Intn(iotago.RefUTXOIndexMax)))
+}
+
+// RandUTXOInputWithIndex returns a random UTXO input with a specific index.
+func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 	utxoInput := &iotago.UTXOInput{}
 	txID := RandBytes(iotago.TransactionIDLength)
 	copy(utxoInput.TransactionID[:], txID)
 
-	index := uint16(rand.Intn(iotago.RefUTXOIndexMax))
 	utxoInput.TransactionOutputIndex = index
 	return utxoInput
 }
