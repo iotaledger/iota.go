@@ -7,7 +7,7 @@ import (
 
 // ImmutableAliasUnlockCondition is an UnlockCondition defining an alias which has to be unlocked.
 // Unlike the AddressUnlockCondition, this unlock condition is immutable for an output which contains it,
-// meaning it also only applies to ChainConstrainedOutput(s).
+// meaning it also only applies to ChainOutput(s).
 type ImmutableAliasUnlockCondition struct {
 	Address *AliasAddress `serix:"0,mapKey=address"`
 }

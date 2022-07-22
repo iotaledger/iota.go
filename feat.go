@@ -10,7 +10,7 @@ import (
 var (
 	// ErrNonUniqueFeatures gets returned when multiple Feature(s) with the same FeatureType exist within sets.
 	ErrNonUniqueFeatures = errors.New("non unique features within outputs")
-	// ErrInvalidFeatureTransition gets returned when a Feature's transition within a ChainConstrainedOutput is invalid.
+	// ErrInvalidFeatureTransition gets returned when a Feature's transition within a ChainOutput is invalid.
 	ErrInvalidFeatureTransition = errors.New("invalid feature transition")
 )
 

@@ -81,20 +81,20 @@ type DirectUnlockableAddress interface {
 	Unlock(msg []byte, sig Signature) error
 }
 
-// ChainConstrainedAddress is a type of Address representing ownership of an output by a ChainConstrainedOutput.
-type ChainConstrainedAddress interface {
+// ChainAddress is a type of Address representing ownership of an output by a ChainOutput.
+type ChainAddress interface {
 	Address
 	Chain() ChainID
 }
 
-// ChainID represents the chain ID of a chain created by a ChainConstrainedOutput.
+// ChainID represents the chain ID of a chain created by a ChainOutput.
 type ChainID interface {
 	// Matches checks whether other matches this ChainID.
 	Matches(other ChainID) bool
-	// Addressable tells whether this ChainID can be converted into a ChainConstrainedAddress.
+	// Addressable tells whether this ChainID can be converted into a ChainAddress.
 	Addressable() bool
-	// ToAddress converts this ChainID into an ChainConstrainedAddress.
-	ToAddress() ChainConstrainedAddress
+	// ToAddress converts this ChainID into an ChainAddress.
+	ToAddress() ChainAddress
 	// Empty tells whether the ChainID is empty.
 	Empty() bool
 	// Key returns a key to use to index this ChainID.

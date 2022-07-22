@@ -71,18 +71,6 @@ func TestClient_Info(t *testing.T) {
 			},
 			PruningIndex: 142857,
 		},
-		Protocol: iotago.ProtocolParameters{
-			TokenSupply: tpkg.TestTokenSupply,
-			Version:     2,
-			NetworkName: "alphanet",
-			Bech32HRP:   "atoi",
-			MinPoWScore: 40000.0,
-			RentStructure: iotago.RentStructure{
-				VByteCost:    500,
-				VBFactorData: 1,
-				VBFactorKey:  10,
-			},
-		},
 		BaseToken: &nodeclient.InfoResBaseToken{
 			Name:            "TestCoin",
 			TickerSymbol:    "TEST",
@@ -99,6 +87,26 @@ func TestClient_Info(t *testing.T) {
 		Features: []string{"Lazers"},
 	}
 
+	protoParas := &iotago.ProtocolParameters{
+		TokenSupply: tpkg.TestTokenSupply,
+		Version:     2,
+		NetworkName: "alphanet",
+		Bech32HRP:   "atoi",
+		MinPoWScore: 40000.0,
+		RentStructure: iotago.RentStructure{
+			VByteCost:    500,
+			VBFactorData: 1,
+			VBFactorKey:  10,
+		},
+	}
+
+	protoParasMap, err := v2API.MapEncode(protoParas)
+	require.NoError(t, err)
+	protoParasJson, err := json.Marshal(protoParasMap)
+	require.NoError(t, err)
+	protoParasJsonRawMsg := json.RawMessage(protoParasJson)
+	originInfo.Protocol = &protoParasJsonRawMsg
+
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.RouteInfo).
 		Reply(200).
@@ -108,7 +116,9 @@ func TestClient_Info(t *testing.T) {
 	info, err := nodeAPI.Info(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
-	protoParas := originInfo.Protocol
+	protoParas, err = originInfo.ProtocolParameters()
+	require.NoError(t, err)
+
 	require.NoError(t, err)
 	require.EqualValues(t, protoParas.TokenSupply, tpkg.TestTokenSupply)
 }

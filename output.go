@@ -5,19 +5,16 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer/v2"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"golang.org/x/crypto/blake2b"
+
 	"math/big"
 	"sort"
 	"strings"
 
-<<<<<<< HEAD
 	"github.com/iotaledger/hive.go/serializer/v2"
-
-=======
->>>>>>> c729c45 (use serix)
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-	"golang.org/x/crypto/blake2b"
 )
 
 // Output defines a unit of output of a transaction.
@@ -248,11 +245,11 @@ var (
 	ErrDepositAmountMustBeGreaterThanZero = errors.New("deposit amount must be greater than zero")
 	// ErrChainMissing gets returned when a chain is missing.
 	ErrChainMissing = errors.New("chain missing")
-	// ErrNonUniqueChainConstrainedOutputs gets returned when multiple ChainConstrainedOutputs(s) with the same ChainID exist within sets.
-	ErrNonUniqueChainConstrainedOutputs = errors.New("non unique chain constrained outputs")
+	// ErrNonUniqueChainOutputs gets returned when multiple ChainOutputs(s) with the same ChainID exist within sets.
+	ErrNonUniqueChainOutputs = errors.New("non unique chain outputs")
 )
 
-// ChainTransitionError gets returned when a state transition validation fails for a ChainConstrainedOutput.
+// ChainTransitionError gets returned when a state transition validation fails for a ChainOutput.
 type ChainTransitionError struct {
 	Inner error
 	Msg   string
@@ -314,18 +311,18 @@ func (outputs Outputs[T]) Commitment() ([]byte, error) {
 	return h.Sum(nil), nil
 }
 
-// ChainConstrainedOutputSet returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs in Outputs.
-func (outputs Outputs[T]) ChainConstrainedOutputSet(txID TransactionID) ChainConstrainedOutputsSet {
-	set := make(ChainConstrainedOutputsSet)
+// ChainOutputSet returns a ChainOutputSet for all ChainOutputs in Outputs.
+func (outputs Outputs[T]) ChainOutputSet(txID TransactionID) ChainOutputSet {
+	set := make(ChainOutputSet)
 	for outputIndex, output := range outputs {
-		chainConstrainedOutput, is := Output(output).(ChainConstrainedOutput)
+		chainOutput, is := Output(output).(ChainOutput)
 		if !is {
 			continue
 		}
 
-		chainID := chainConstrainedOutput.Chain()
+		chainID := chainOutput.Chain()
 		if chainID.Empty() {
-			if utxoIDChainID, is := chainConstrainedOutput.Chain().(UTXOIDChainID); is {
+			if utxoIDChainID, is := chainOutput.Chain().(UTXOIDChainID); is {
 				chainID = utxoIDChainID.FromOutputID(OutputIDFromTransactionIDAndIndex(txID, uint16(outputIndex)))
 			}
 		}
@@ -334,7 +331,7 @@ func (outputs Outputs[T]) ChainConstrainedOutputSet(txID TransactionID) ChainCon
 			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", output.Type()))
 		}
 
-		set[chainID] = chainConstrainedOutput
+		set[chainID] = chainOutput
 	}
 	return set
 }
@@ -480,38 +477,38 @@ func (outputs OutputsByType) NonNewAliasOutputsSet() (AliasOutputsSet, error) {
 	return aliasOutputsSet, nil
 }
 
-// ChainConstrainedOutputsSet returns a map of ChainID to ChainConstrainedOutput.
-// If multiple ChainConstrainedOutput(s) exist for a given ChainID, an error is returned.
-func (outputs OutputsByType) ChainConstrainedOutputsSet() (ChainConstrainedOutputsSet, error) {
-	chainConstrainedOutputs := make(ChainConstrainedOutputsSet)
+// ChainOutputSet returns a map of ChainID to ChainOutput.
+// If multiple ChainOutput(s) exist for a given ChainID, an error is returned.
+func (outputs OutputsByType) ChainOutputSet() (ChainOutputSet, error) {
+	chainOutputSet := make(ChainOutputSet)
 	for _, ty := range []OutputType{OutputAlias, OutputFoundry, OutputNFT} {
 		for _, output := range outputs[ty] {
-			chainConstrainedOutput, is := output.(ChainConstrainedOutput)
-			if !is || chainConstrainedOutput.Chain().Empty() {
+			chainOutput, is := output.(ChainOutput)
+			if !is || chainOutput.Chain().Empty() {
 				continue
 			}
-			if _, has := chainConstrainedOutputs[chainConstrainedOutput.Chain()]; has {
-				return nil, ErrNonUniqueChainConstrainedOutputs
+			if _, has := chainOutputSet[chainOutput.Chain()]; has {
+				return nil, ErrNonUniqueChainOutputs
 			}
-			chainConstrainedOutputs[chainConstrainedOutput.Chain()] = chainConstrainedOutput
+			chainOutputSet[chainOutput.Chain()] = chainOutput
 		}
 	}
-	return chainConstrainedOutputs, nil
+	return chainOutputSet, nil
 }
 
-// ChainConstrainedOutputs returns a slice of Outputs which are ChainConstrainedOutput.
-func (outputs OutputsByType) ChainConstrainedOutputs() ChainConstrainedOutputs {
-	chainConstrainedOutputs := make(ChainConstrainedOutputs, 0)
+// ChainOutputs returns a slice of Outputs which are ChainOutput.
+func (outputs OutputsByType) ChainOutputs() ChainOutputs {
+	chainOutputs := make(ChainOutputs, 0)
 	for _, ty := range []OutputType{OutputAlias, OutputFoundry, OutputNFT} {
 		for _, output := range outputs[ty] {
-			chainConstrainedOutput, is := output.(ChainConstrainedOutput)
+			chainOutput, is := output.(ChainOutput)
 			if !is {
 				continue
 			}
-			chainConstrainedOutputs = append(chainConstrainedOutputs, chainConstrainedOutput)
+			chainOutputs = append(chainOutputs, chainOutput)
 		}
 	}
-	return chainConstrainedOutputs
+	return chainOutputs
 }
 
 // NewAliases returns an AliasOutputsSet for all AliasOutputs which are new.
@@ -527,18 +524,18 @@ func (outputSet OutputSet) NewAliases() AliasOutputsSet {
 	return set
 }
 
-// ChainConstrainedOutputSet returns a ChainConstrainedOutputsSet for all ChainConstrainedOutputs in the OutputSet.
-func (outputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSet {
-	set := make(ChainConstrainedOutputsSet)
+// ChainOutputSet returns a ChainOutputSet for all ChainOutputs in the OutputSet.
+func (outputSet OutputSet) ChainOutputSet() ChainOutputSet {
+	set := make(ChainOutputSet)
 	for utxoInputID, output := range outputSet {
-		chainConstrainedOutput, is := output.(ChainConstrainedOutput)
+		chainOutput, is := output.(ChainOutput)
 		if !is {
 			continue
 		}
 
-		chainID := chainConstrainedOutput.Chain()
+		chainID := chainOutput.Chain()
 		if chainID.Empty() {
-			if utxoIDChainID, is := chainConstrainedOutput.Chain().(UTXOIDChainID); is {
+			if utxoIDChainID, is := chainOutput.Chain().(UTXOIDChainID); is {
 				chainID = utxoIDChainID.FromOutputID(utxoInputID)
 			}
 		}
@@ -547,7 +544,7 @@ func (outputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSe
 			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", output.Type()))
 		}
 
-		set[chainID] = chainConstrainedOutput
+		set[chainID] = chainOutput
 	}
 	return set
 }
@@ -608,7 +605,7 @@ type TransIndepIdentOutput interface {
 // TransDepIdentOutput is a type of Output where the identity to unlock is dependent
 // on the transition the output does (without considering UnlockConditions(s)).
 type TransDepIdentOutput interface {
-	ChainConstrainedOutput
+	ChainOutput
 	// Ident computes the identity to which this output is locked to by examining
 	// the transition to the next output state. If next is nil, then this TransDepIdentOutput
 	// treats the ident computation as being for ChainTransitionTypeDestroy.

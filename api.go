@@ -73,9 +73,9 @@ type ProtocolParameters struct {
 	// The human friendly name of the network.
 	NetworkName string `serix:"1,lengthPrefixType=uint8,mapKey=networkName"`
 	// The HRP prefix used for Bech32 addresses in the network.
-	Bech32HRP NetworkPrefix `serix:"2,lengthPrefixType=uint8,mapKey=bech32HRP"`
+	Bech32HRP NetworkPrefix `serix:"2,lengthPrefixType=uint8,mapKey=bech32Hrp"`
 	// The minimum pow score of the network.
-	MinPoWScore uint32 `serix:"3,mapKey=minPoWScore"`
+	MinPoWScore uint32 `serix:"3,mapKey=minPowScore"`
 	// The below max depth parameter of the network.
 	BelowMaxDepth uint8 `serix:"4,mapKey=belowMaxDepth"`
 	// The rent structure used by given node/network.

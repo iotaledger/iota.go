@@ -1,10 +1,8 @@
 package iotago
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -64,7 +62,7 @@ func (id AliasID) Matches(other ChainID) bool {
 	return id == otherAliasID
 }
 
-func (id AliasID) ToAddress() ChainConstrainedAddress {
+func (id AliasID) ToAddress() ChainAddress {
 	var addr AliasAddress
 	copy(addr[:], id[:])
 	return &addr
@@ -199,52 +197,6 @@ func (a *AliasOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		a.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
-//	- For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either
-//	  its AliasID is zeroed and StateIndex and FoundryCounter are zero or an input AliasOutput with the same AliasID.
-//	- On alias state transitions:
-//		- The StateIndex must be incremented by 1
-//		- Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated
-//	- On alias governance transition:
-//		- Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated
-func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
-	var err error
-	switch transType {
-	case ChainTransitionTypeGenesis:
-		err = a.genesisValid(semValCtx)
-	case ChainTransitionTypeStateChange:
-		err = a.stateChangeValid(semValCtx, next)
-	case ChainTransitionTypeDestroy:
-		return nil
-	default:
-		panic("unknown chain transition type in AliasOutput")
-	}
-	if err != nil {
-		return &ChainTransitionError{Inner: err, Msg: fmt.Sprintf("alias %s", a.AliasID)}
-	}
-	return nil
-}
-
-func (a *AliasOutput) genesisValid(semValCtx *SemanticValidationContext) error {
-	if !a.AliasID.Empty() {
-		return fmt.Errorf("AliasOutput's ID is not zeroed even though it is new")
-	}
-	return IsIssuerOnOutputUnlocked(a, semValCtx.WorkingSet.UnlockedIdents)
-}
-
-func (a *AliasOutput) stateChangeValid(semValCtx *SemanticValidationContext, next ChainConstrainedOutput) error {
-	nextState, is := next.(*AliasOutput)
-	if !is {
-		return fmt.Errorf("can only state transition to another alias output")
-	}
-	if !a.ImmutableFeatures.Equal(nextState.ImmutableFeatures) {
-		return fmt.Errorf("old state %s, next state %s", a.ImmutableFeatures, nextState.ImmutableFeatures)
-	}
-	if a.StateIndex == nextState.StateIndex {
-		return a.GovernanceSTVF(nextState, semValCtx)
-	}
-	return a.StateSTVF(nextState, semValCtx)
-}
-
 func (a *AliasOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 	// if there isn't a next state, then only the governance address can destroy the alias
 	if nextState == nil {
@@ -266,73 +218,6 @@ func (a *AliasOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 
 func (a *AliasOutput) Chain() ChainID {
 	return a.AliasID
-}
-
-// GovernanceSTVF checks whether the governance transition with other is valid.
-// Under a governance transition, only the StateController, GovernanceController and MetadataFeature can change.
-func (a *AliasOutput) GovernanceSTVF(nextAliasOutput *AliasOutput, _ *SemanticValidationContext) error {
-	switch {
-	case a.Amount != nextAliasOutput.Amount:
-		return fmt.Errorf("%w: amount changed, in %d / out %d ", ErrInvalidAliasGovernanceTransition, a.Amount, nextAliasOutput.Amount)
-	case !a.NativeTokens.Equal(nextAliasOutput.NativeTokens):
-		return fmt.Errorf("%w: native tokens changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.NativeTokens, nextAliasOutput.NativeTokens)
-	case a.StateIndex != nextAliasOutput.StateIndex:
-		return fmt.Errorf("%w: state index changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.StateIndex, nextAliasOutput.StateIndex)
-	case !bytes.Equal(a.StateMetadata, nextAliasOutput.StateMetadata):
-		return fmt.Errorf("%w: state metadata changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.StateMetadata, nextAliasOutput.StateMetadata)
-	case a.FoundryCounter != nextAliasOutput.FoundryCounter:
-		return fmt.Errorf("%w: foundry counter changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.FoundryCounter, nextAliasOutput.FoundryCounter)
-	}
-	return nil
-}
-
-// StateSTVF checks whether the state transition with other is valid.
-// Under a state transition, only Amount, NativeTokens, StateIndex, StateMetadata, SenderFeature and FoundryCounter can change.
-func (a *AliasOutput) StateSTVF(nextAliasOutput *AliasOutput, semValCtx *SemanticValidationContext) error {
-	switch {
-	case !a.StateController().Equal(nextAliasOutput.StateController()):
-		return fmt.Errorf("%w: state controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController(), nextAliasOutput.StateController())
-	case !a.GovernorAddress().Equal(nextAliasOutput.GovernorAddress()):
-		return fmt.Errorf("%w: governance controller changed, in %v / out %v", ErrInvalidAliasStateTransition, a.StateController(), nextAliasOutput.StateController())
-	case a.FoundryCounter > nextAliasOutput.FoundryCounter:
-		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", ErrInvalidAliasStateTransition, a.FoundryCounter, nextAliasOutput.FoundryCounter)
-	case a.StateIndex+1 != nextAliasOutput.StateIndex:
-		return fmt.Errorf("%w: state index %d on the input side but %d on the output side", ErrInvalidAliasStateTransition, a.StateIndex, nextAliasOutput.StateIndex)
-	}
-
-	if err := FeatureUnchanged(FeatureMetadata, a.Features.MustSet(), nextAliasOutput.Features.MustSet()); err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidAliasStateTransition, err)
-	}
-
-	// check that for a foundry counter change, X amount of foundries were actually created
-	if a.FoundryCounter == nextAliasOutput.FoundryCounter {
-		return nil
-	}
-
-	var seenNewFoundriesOfAlias uint32
-	for _, output := range semValCtx.WorkingSet.Tx.Essence.Outputs {
-		foundryOutput, is := output.(*FoundryOutput)
-		if !is {
-			continue
-		}
-
-		if _, notNew := semValCtx.WorkingSet.InChains[foundryOutput.MustID()]; notNew {
-			continue
-		}
-
-		foundryAliasID := foundryOutput.Ident().(*AliasAddress).Chain()
-		if !foundryAliasID.Matches(nextAliasOutput.AliasID) {
-			continue
-		}
-		seenNewFoundriesOfAlias++
-	}
-
-	expectedNewFoundriesCount := nextAliasOutput.FoundryCounter - a.FoundryCounter
-	if expectedNewFoundriesCount != seenNewFoundriesOfAlias {
-		return fmt.Errorf("%w: %d new foundries were created but the alias output's foundry counter changed by %d", ErrInvalidAliasStateTransition, seenNewFoundriesOfAlias, expectedNewFoundriesCount)
-	}
-
-	return nil
 }
 
 func (a *AliasOutput) AliasEmpty() bool {

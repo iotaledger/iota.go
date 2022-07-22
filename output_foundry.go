@@ -3,7 +3,6 @@ package iotago
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/util"
@@ -45,7 +44,7 @@ func (fID FoundryID) Matches(other ChainID) bool {
 	return fID == otherFID
 }
 
-func (fID FoundryID) ToAddress() ChainConstrainedAddress {
+func (fID FoundryID) ToAddress() ChainAddress {
 	panic("foundry ID is not addressable")
 }
 
@@ -131,129 +130,6 @@ func (f *FoundryOutput) Chain() ChainID {
 		panic(err)
 	}
 	return foundryID
-}
-
-func (f *FoundryOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
-	inSums := semValCtx.WorkingSet.InNativeTokens
-	outSums := semValCtx.WorkingSet.OutNativeTokens
-
-	var err error
-	switch transType {
-	case ChainTransitionTypeGenesis:
-		err = f.genesisValid(semValCtx, f.MustID(), outSums)
-	case ChainTransitionTypeStateChange:
-		err = f.stateChangeValid(next, inSums, outSums)
-	case ChainTransitionTypeDestroy:
-		err = f.destructionValid(inSums, outSums)
-	default:
-		panic("unknown chain transition type in FoundryOutput")
-	}
-	if err != nil {
-		return &ChainTransitionError{Inner: err, Msg: fmt.Sprintf("foundry %s, token %s", f.MustID(), f.MustNativeTokenID())}
-	}
-	return nil
-}
-
-func (f *FoundryOutput) genesisValid(semValCtx *SemanticValidationContext, thisFoundryID FoundryID, outSums NativeTokenSum) error {
-
-	nativeTokenID := f.MustNativeTokenID()
-	if err := f.TokenScheme.StateTransition(ChainTransitionTypeGenesis, nil, nil, outSums.ValueOrBigInt0(nativeTokenID)); err != nil {
-		return err
-	}
-
-	// grab foundry counter from transitioning AliasOutput
-	aliasID := f.Ident().(*AliasAddress).AliasID()
-	inAlias, ok := semValCtx.WorkingSet.InChains[aliasID]
-	if !ok {
-		return fmt.Errorf("missing input transitioning alias output %s for new foundry output %s", aliasID, thisFoundryID)
-	}
-
-	outAlias, ok := semValCtx.WorkingSet.OutChains[aliasID]
-	if !ok {
-		return fmt.Errorf("missing output transitioning alias output %s for new foundry output %s", aliasID, thisFoundryID)
-	}
-
-	if err := f.validSerialNumber(semValCtx, inAlias.(*AliasOutput), outAlias.(*AliasOutput), thisFoundryID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (f *FoundryOutput) validSerialNumber(semValCtx *SemanticValidationContext, inAlias *AliasOutput, outAlias *AliasOutput, thisFoundryID FoundryID) error {
-	// this new foundry's serial number must be between the given foundry counter interval
-	startSerial := inAlias.FoundryCounter
-	endIncSerial := outAlias.FoundryCounter
-	if startSerial >= f.SerialNumber || f.SerialNumber > endIncSerial {
-		return fmt.Errorf("new foundry output %s's serial number is not between the foundry counter interval of [%d,%d)", thisFoundryID, startSerial, endIncSerial)
-	}
-
-	// OPTIMIZE: this loop happens on every STVF of every new foundry output
-	// check order of serial number
-	for outputIndex, output := range semValCtx.WorkingSet.Tx.Essence.Outputs {
-		otherFoundryOutput, is := output.(*FoundryOutput)
-		if !is {
-			continue
-		}
-
-		if !otherFoundryOutput.Ident().Equal(f.Ident()) {
-			continue
-		}
-
-		otherFoundryID, err := otherFoundryOutput.ID()
-		if err != nil {
-			return err
-		}
-
-		if _, isNotNew := semValCtx.WorkingSet.InChains[otherFoundryID]; isNotNew {
-			continue
-		}
-
-		// only check up to own foundry whether it is ordered
-		if otherFoundryID == thisFoundryID {
-			break
-		}
-
-		if otherFoundryOutput.SerialNumber >= f.SerialNumber {
-			return fmt.Errorf("new foundry output %s at index %d has bigger equal serial number than this foundry %s", otherFoundryID, outputIndex, thisFoundryID)
-		}
-	}
-	return nil
-}
-
-func (f *FoundryOutput) stateChangeValid(next ChainConstrainedOutput, inSums NativeTokenSum, outSums NativeTokenSum) error {
-	nextState, is := next.(*FoundryOutput)
-	if !is {
-		return fmt.Errorf("foundry output can only state transition to another foundry output")
-	}
-
-	if !f.ImmutableFeatures.Equal(nextState.ImmutableFeatures) {
-		return fmt.Errorf("old state %s, next state %s", f.ImmutableFeatures, nextState.ImmutableFeatures)
-	}
-
-	// the check for the serial number and token scheme not being mutated is implicit
-	// as a change would cause the foundry ID to be different, which would result in
-	// no matching foundry to be found to validate the state transition against
-	switch {
-	case f.MustID() != nextState.MustID():
-		// impossible invariant as the STVF should be called via the matching next foundry output
-		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %v got %v", f.MustID(), nextState.MustID()))
-	}
-
-	nativeTokenID := f.MustNativeTokenID()
-	if err := f.TokenScheme.StateTransition(ChainTransitionTypeStateChange, nextState.TokenScheme, inSums.ValueOrBigInt0(nativeTokenID), outSums.ValueOrBigInt0(nativeTokenID)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (f *FoundryOutput) destructionValid(inSums NativeTokenSum, outSums NativeTokenSum) error {
-	nativeTokenID := f.MustNativeTokenID()
-	if err := f.TokenScheme.StateTransition(ChainTransitionTypeDestroy, nil, inSums.ValueOrBigInt0(nativeTokenID), outSums.ValueOrBigInt0(nativeTokenID)); err != nil {
-		return err
-	}
-	return nil
 }
 
 // ID returns the FoundryID of this FoundryOutput.

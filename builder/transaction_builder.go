@@ -125,7 +125,7 @@ func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer
 		pos, unlocked := unlockPos[addrKey]
 		if !unlocked {
 			// the output's owning chain address must have been unlocked already
-			if _, is := addr.(iotago.ChainConstrainedAddress); is {
+			if _, is := addr.(iotago.ChainAddress); is {
 				return nil, fmt.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", i, addr, addr.Type())
 			}
 
@@ -162,7 +162,7 @@ func addReferentialUnlock(addr iotago.Address, unlocks iotago.Unlocks, pos int) 
 }
 
 func addChainAsUnlocked(input iotago.Output, posUnlocked int, prevUnlocked map[string]int) {
-	if chainInput, is := input.(iotago.ChainConstrainedOutput); is && chainInput.Chain().Addressable() {
+	if chainInput, is := input.(iotago.ChainOutput); is && chainInput.Chain().Addressable() {
 		prevUnlocked[chainInput.Chain().ToAddress().Key()] = posUnlocked
 	}
 }

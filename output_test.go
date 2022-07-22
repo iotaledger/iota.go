@@ -2,7 +2,6 @@ package iotago_test
 
 import (
 	"math/big"
-	"reflect"
 	"testing"
 
 	"github.com/iotaledger/iota.go/v3/tpkg"
@@ -132,25 +131,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
 	}
-}
-
-type fieldMutations map[string]interface{}
-
-func copyObject(t *testing.T, source any, mutations fieldMutations) any {
-	srcBytes, err := v2API.Encode(source)
-	require.NoError(t, err)
-
-	ptrToCpyOfSrc := reflect.New(reflect.ValueOf(source).Elem().Type())
-
-	cpySeri := ptrToCpyOfSrc.Interface()
-	_, err = v2API.Decode(srcBytes, cpySeri)
-	require.NoError(t, err)
-
-	for fieldName, newVal := range mutations {
-		ptrToCpyOfSrc.Elem().FieldByName(fieldName).Set(reflect.ValueOf(newVal))
-	}
-
-	return cpySeri
 }
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {

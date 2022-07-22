@@ -7,7 +7,7 @@ import (
 
 // IssuerFeature is a feature which associates an output
 // with an issuer identity. Unlike the SenderFeature, the issuer identity
-// only has to be unlocked when the ChainConstrainedOutput is first created,
+// only has to be unlocked when the ChainOutput is first created,
 // afterwards, the issuer feature must not change, meaning that subsequent outputs
 // must always define the same issuer identity (the identity does not need to be unlocked anymore though).
 type IssuerFeature struct {

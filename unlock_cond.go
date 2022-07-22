@@ -156,7 +156,7 @@ func (f UnlockConditionSet) unlockableBy(ident Address, extParas *ExternalUnlock
 
 	// if the return ident can unlock, then ident must be the return ident
 	var returnIdent Address
-	if returnIdentCanUnlock, returnIdent = f.returnIdentCanUnlock(extParas); returnIdentCanUnlock {
+	if returnIdentCanUnlock, returnIdent = f.ReturnIdentCanUnlock(extParas); returnIdentCanUnlock {
 		if !ident.Equal(returnIdent) {
 			return false, true
 		}
@@ -166,9 +166,9 @@ func (f UnlockConditionSet) unlockableBy(ident Address, extParas *ExternalUnlock
 	return true, false
 }
 
-// tells whether a sender defined in an expiration unlock condition within this set is the actual
+// ReturnIdentCanUnlock tells whether a sender defined in an expiration unlock condition within this set is the actual
 // identity which could unlock an Output containing this UnlockConditionSet given the ExternalUnlockParameters.
-func (f UnlockConditionSet) returnIdentCanUnlock(extParas *ExternalUnlockParameters) (bool, Address) {
+func (f UnlockConditionSet) ReturnIdentCanUnlock(extParas *ExternalUnlockParameters) (bool, Address) {
 	expUnlockCond := f.Expiration()
 
 	if expUnlockCond == nil {
