@@ -340,7 +340,7 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block, protoPar
 	// do not check the block because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the block afterwards.
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, protoParas)
+	data, err := m.Serialize(serializer.DeSeriModePerformLexicalOrdering, protoParas)
 	if err != nil {
 		return nil, err
 	}
