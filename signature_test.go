@@ -3,15 +3,17 @@ package iotago_test
 import (
 	"encoding/json"
 	"errors"
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	"github.com/iotaledger/hive.go/serializer/v2"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 func TestSignatureSelector(t *testing.T) {

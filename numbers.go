@@ -1,9 +1,10 @@
 package iotago
 
 import (
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
 	"strconv"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // EncodeHex encodes the bytes string to a hex string. It always adds the 0x prefix if bytes are not empty.

@@ -1,0 +1,46 @@
+run:
+  tests: true
+  skip-dirs:
+    - bech32
+    - tpkg
+
+linters-settings:
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: github.com/iotaledger
+  golint:
+    min-confidence: 0.9
+  gocyclo:
+    min-complexity: 15
+  govet:
+    check-shadowing: false
+  misspell:
+    locale: US
+  staticcheck:
+    checks: ["all"]
+  stylecheck:
+    initialisms: ["ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON", "QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS"]
+
+linters:
+  enable:
+    - durationcheck
+    - errcheck
+    - errname
+    - goconst
+    - godot
+    - gofmt
+    - goimports
+    - gosec
+    - govet
+    - ifshort
+    - importas
+    - misspell
+    - nilnil
+    - prealloc
+    - predeclared
+    - promlinter
+    - staticcheck
+    - unconvert
+    - unparam
+#    - gomnd

@@ -30,9 +30,6 @@ var (
 	sigNames = [SignatureEd25519 + 1]string{"Ed25519Signature"}
 	// ErrTypeIsNotSupportedSignature gets returned when a serializable was found to not be a supported Signature.
 	ErrTypeIsNotSupportedSignature = errors.New("serializable is not a supported signature")
-	allSignatureTypeSet            = SignatureTypeSet{
-		SignatureEd25519: struct{}{},
-	}
 )
 
 // Signatures is a slice of Signature(s).

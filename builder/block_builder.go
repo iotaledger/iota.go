@@ -3,8 +3,9 @@ package builder
 import (
 	"context"
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/nodeclient"
 	"github.com/iotaledger/iota.go/v3/pow"
 )
@@ -84,7 +85,7 @@ func (mb *BlockBuilder) Parents(parents iotago.BlockIDs) *BlockBuilder {
 }
 
 // ProofOfWork does the proof-of-work needed in order to satisfy the given target score.
-// It can be cancelled by cancelling the given context.
+// It can be canceled by canceling the given context.
 // This function should normally appear as the last step before Build.
 func (mb *BlockBuilder) ProofOfWork(ctx context.Context, protoParas *iotago.ProtocolParameters, targetScore float64, numWorkers ...int) *BlockBuilder {
 	if mb.err != nil {

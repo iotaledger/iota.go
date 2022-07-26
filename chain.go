@@ -81,7 +81,7 @@ type StateTransitionValidationFunc func(current ChainConstrainedOutput, next Cha
 // This function is a no-op if the chain output does not contain an IssuerFeature.
 func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents UnlockedIdentities) error {
 	immFeats := output.ImmutableFeatureSet()
-	if immFeats == nil || len(immFeats) == 0 {
+	if len(immFeats) == 0 {
 		return nil
 	}
 

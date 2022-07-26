@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 

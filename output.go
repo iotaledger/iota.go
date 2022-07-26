@@ -363,7 +363,7 @@ func (outputs Outputs) Filter(f OutputsFilterFunc) Outputs {
 }
 
 // NativeTokenSum sums up the different NativeTokens occurring within the given outputs.
-// limit defines the max amount of native tokens which are allowed
+// limit defines the max amount of native tokens which are allowed.
 func (outputs Outputs) NativeTokenSum() (NativeTokenSum, int, error) {
 	sum := make(map[NativeTokenID]*big.Int)
 	var ntCount int
@@ -708,7 +708,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //	- every output deposits more than zero
 //	- every output deposits less than the total supply
 //	- the sum of deposits does not exceed the total supply
-//	- the deposit fulfils the minimum storage deposit as calculated from the virtual byte cost of the output
+//	- the deposit fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
 //	- if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //	  required for the sender to send back the tokens.
 func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSyntacticalValidationFunc {
@@ -725,12 +725,12 @@ func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSynt
 			return fmt.Errorf("%w: output %d", ErrOutputsSumExceedsTotalSupply, index)
 		}
 
-		// check whether deposit fulfils the storage deposit cost
+		// check whether deposit fulfills the storage deposit cost
 		if _, err := protoParas.RentStructure.CoversStateRent(output, deposit); err != nil {
 			return fmt.Errorf("%w: output %d", err, index)
 		}
 
-		// check whether the amount in the return condition allows the receiver to fulfil the storage deposit for the return output
+		// check whether the amount in the return condition allows the receiver to fulfill the storage deposit for the return output
 		if storageDep := output.UnlockConditionSet().StorageDepositReturn(); storageDep != nil {
 			minStorageDepositForReturnOutput := protoParas.RentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
 			switch {

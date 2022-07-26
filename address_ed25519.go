@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"golang.org/x/crypto/blake2b"
+
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 const (

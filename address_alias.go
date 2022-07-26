@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"golang.org/x/crypto/blake2b"
+
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 const (
@@ -13,10 +14,6 @@ const (
 	AliasAddressBytesLength = blake2b.Size256
 	// AliasAddressSerializedBytesSize is the size of a serialized Alias address with its type denoting byte.
 	AliasAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + AliasAddressBytesLength
-)
-
-var (
-	emptyAliasAddress = [AliasAddressBytesLength]byte{}
 )
 
 // ParseAliasAddressFromHexString parses the given hex string into an AliasAddress.

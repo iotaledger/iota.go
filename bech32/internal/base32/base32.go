@@ -1,6 +1,7 @@
 // Package base32 implements the conversion for bytes (base256) to base32.
 package base32
 
+//lint:gomnd
 import (
 	"errors"
 	"fmt"

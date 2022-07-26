@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/util"
-	"golang.org/x/crypto/blake2b"
 	"sort"
 	"strings"
+
+	"golang.org/x/crypto/blake2b"
+
+	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 const (
@@ -389,7 +391,7 @@ func (unlockedIdents UnlockedIdentities) AddUnlockedChain(chainAddr ChainConstra
 
 func (unlockedIdents UnlockedIdentities) String() string {
 	var b strings.Builder
-	var idents []*UnlockedIdentity
+	idents := make([]*UnlockedIdentity, 0, len(unlockedIdents))
 	for _, ident := range unlockedIdents {
 		idents = append(idents, ident)
 	}
@@ -437,7 +439,7 @@ type UnlockedIdentity struct {
 }
 
 func (unlockedIdent *UnlockedIdentity) String() string {
-	var refs []int
+	refs := make([]int, 0, len(unlockedIdent.ReferencedBy))
 	for ref := range unlockedIdent.ReferencedBy {
 		refs = append(refs, int(ref))
 	}

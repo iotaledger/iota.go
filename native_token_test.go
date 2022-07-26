@@ -4,10 +4,11 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNativeTokenDeSerialization(t *testing.T) {

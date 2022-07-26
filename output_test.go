@@ -400,9 +400,6 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 }
 
 func TestOutputsSyntacticalAlias(t *testing.T) {
-	type args struct {
-		txID *iotago.TransactionID
-	}
 	tests := []struct {
 		name    string
 		outputs iotago.Outputs

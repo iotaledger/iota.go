@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	"golang.org/x/crypto/blake2b"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/util"
-	"golang.org/x/crypto/blake2b"
 )
 
 // TransactionEssenceType defines the type of transaction.
@@ -237,7 +238,7 @@ func (u *TransactionEssence) Deserialize(data []byte, deSeriMode serializer.DeSe
 
 func (u *TransactionEssence) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (data []byte, err error) {
 	return serializer.NewSerializer().
-		WriteNum(byte(TransactionEssenceNormal), func(err error) error {
+		WriteNum(TransactionEssenceNormal, func(err error) error {
 			return fmt.Errorf("unable to serialize transaction essence type ID: %w", err)
 		}).
 		WriteNum(u.NetworkID, func(err error) error {
@@ -263,7 +264,7 @@ func (u *TransactionEssence) Size() int {
 	if u.Payload != nil {
 		payloadSize = u.Payload.Size()
 	}
-	return util.NumByteLen(byte(TransactionEssenceNormal)) +
+	return util.NumByteLen(TransactionEssenceNormal) +
 		util.NumByteLen(u.NetworkID) +
 		u.Inputs.Size() +
 		InputsCommitmentLength +

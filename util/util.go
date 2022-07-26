@@ -6,7 +6,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// NumByteLen returns the number of bytes a given number will occupy when serialized
+// NumByteLen returns the number of bytes a given number will occupy when serialized.
 func NumByteLen(n interface{}) int {
 	switch n.(type) {
 	case bool, int8, uint8, *bool, *int8, *uint8:

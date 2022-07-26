@@ -7,9 +7,10 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
-	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 func TestReceiptMilestoneOpt_DeSerialize(t *testing.T) {

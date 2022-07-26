@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 )
@@ -24,7 +24,7 @@ func BenchmarkDeserializeWithValidationOneIOTxPayload(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+		_, _ = target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -80,7 +80,7 @@ func BenchmarkDeserializeWithValidationLargeTxPayload(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+		_, _ = target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -98,7 +98,7 @@ func BenchmarkDeserializeWithoutValidationOneIOTxPayload(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		target.Deserialize(data, serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+		_, _ = target.Deserialize(data, serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -106,7 +106,7 @@ func BenchmarkSerializeWithValidationOneIOTxPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		txPayload.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
+		_, _ = txPayload.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	}
 }
 
@@ -114,7 +114,7 @@ func BenchmarkSerializeWithoutValidationOneIOTxPayload(b *testing.B) {
 	sigTxPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		sigTxPayload.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
+		_, _ = sigTxPayload.Serialize(serializer.DeSeriModeNoValidation, tpkg.TestProtoParas)
 	}
 }
 

@@ -9,7 +9,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
-// Indexer plugin routes
+// Indexer plugin routes.
 var (
 	IndexerAPIRouteBasicOutputs = "/api/" + IndexerPluginName + "/outputs/basic"
 	IndexerAPIRouteAliases      = "/api/" + IndexerPluginName + "/outputs/alias"
@@ -115,13 +115,13 @@ func (resultSet *IndexerResultSet) Outputs() (iotago.Outputs, error) {
 // Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *indexerClient) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(client.core.opts.httpClient, client.core.BaseURL, ctx, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, nil, reqObj, resObj)
+	return do(ctx, client.core.opts.httpClient, client.core.BaseURL, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, nil, reqObj, resObj)
 }
 
-// Do executes a request against the endpoint.
+// DoWithRequestHeaderHook executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *indexerClient) DoWithRequestHeaderHook(ctx context.Context, method string, route string, requestHeaderHook RequestHeaderHook, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(client.core.opts.httpClient, client.core.BaseURL, ctx, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
+	return do(ctx, client.core.opts.httpClient, client.core.BaseURL, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
 }
 
 func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*IndexerResultSet, error) {

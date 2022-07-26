@@ -95,9 +95,9 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 }
 
 func do(
+	ctx context.Context,
 	httpClient *http.Client,
 	baseURL string,
-	ctx context.Context,
 	userInfo *url.Userinfo,
 	method string,
 	route string,

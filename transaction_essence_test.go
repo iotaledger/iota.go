@@ -6,8 +6,9 @@ import (
 
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
-	"github.com/iotaledger/iota.go/v3"
 	"github.com/stretchr/testify/assert"
+
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 func TestTransactionEssenceSelector(t *testing.T) {

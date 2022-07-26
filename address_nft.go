@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"golang.org/x/crypto/blake2b"
+
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 const (
@@ -13,10 +14,6 @@ const (
 	NFTAddressBytesLength = blake2b.Size256
 	// NFTAddressSerializedBytesSize is the size of a serialized NFT address with its type denoting byte.
 	NFTAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + NFTAddressBytesLength
-)
-
-var (
-	emptyNFTAddress = [NFTAddressBytesLength]byte{}
 )
 
 // ParseNFTAddressFromHexString parses the given hex string into an NFTAddress.

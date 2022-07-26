@@ -99,7 +99,7 @@ type BasicOutput struct {
 	Features Features
 }
 
-// IsSimpleTransfer tells whether this BasicOutput fulfils the criteria of being a simple transfer.
+// IsSimpleTransfer tells whether this BasicOutput fulfills the criteria of being a simple transfer.
 func (e *BasicOutput) IsSimpleTransfer() bool {
 	return len(e.FeatureSet()) == 0 && len(e.UnlockConditionSet()) == 1 && len(e.NativeTokens) == 0
 }
