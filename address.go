@@ -25,6 +25,7 @@ func (addrType AddressType) String() string {
 	if int(addrType) >= len(addressNames) {
 		return fmt.Sprintf("unknown address type: %d", addrType)
 	}
+
 	return addressNames[addrType]
 }
 

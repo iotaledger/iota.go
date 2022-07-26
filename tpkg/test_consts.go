@@ -1,6 +1,6 @@
 package tpkg
 
-import "github.com/iotaledger/iota.go/v3"
+import iotago "github.com/iotaledger/iota.go/v3"
 
 // TestProtoParas is an instance of iotago.ProtocolParameters for testing purposes. It contains a zero vbyte rent cost.
 // Only use this var in testing. Do not modify or use outside unit tests.

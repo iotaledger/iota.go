@@ -14,7 +14,7 @@ import (
 	"github.com/iotaledger/iota.go/trinary"
 )
 
-// errors returned by the PoW
+// errors returned by the PoW.
 var (
 	ErrCancelled = errors.New("canceled")
 	ErrDone      = errors.New("done")

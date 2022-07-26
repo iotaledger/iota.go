@@ -98,7 +98,6 @@ func Test_NewEventAPIClient(t *testing.T) {
 
 type mockMqttClient struct {
 	payload []byte
-	f       func()
 }
 
 type mockToken struct{}
@@ -107,7 +106,7 @@ func (m *mockToken) Wait() bool {
 	return false
 }
 
-func (m *mockToken) WaitTimeout(duration time.Duration) bool { panic("implement me") }
+func (m *mockToken) WaitTimeout(_ time.Duration) bool { panic("implement me") }
 
 func (m *mockToken) Done() <-chan struct{} { panic("implement me") }
 

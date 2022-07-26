@@ -3,7 +3,7 @@ package iotago_test
 import (
 	"testing"
 
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 

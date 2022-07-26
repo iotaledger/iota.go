@@ -1,3 +1,5 @@
+//#nosec G404
+
 package pow
 
 import (

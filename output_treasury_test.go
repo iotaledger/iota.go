@@ -3,9 +3,8 @@ package iotago_test
 import (
 	"testing"
 
+	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
-
-	"github.com/iotaledger/iota.go/v3"
 )
 
 func TestTreasuryOutput_DeSerialize(t *testing.T) {

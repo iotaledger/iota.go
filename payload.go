@@ -16,7 +16,7 @@ const (
 	// PayloadTransactionTIP7 = 0
 	// PayloadMilestoneTIP8 = 1
 	// PayloadIndexationTIP6 = 2
-	// PayloadReceiptTIP17TIP8 = 3
+	// PayloadReceiptTIP17TIP8 = 3.
 
 	// PayloadTreasuryTransaction denotes a TreasuryTransaction.
 	PayloadTreasuryTransaction PayloadType = 4

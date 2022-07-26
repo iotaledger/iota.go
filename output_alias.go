@@ -24,7 +24,7 @@ var (
 	ErrInvalidAliasStateTransition = errors.New("invalid alias state transition")
 	// ErrInvalidAliasGovernanceTransition gets returned when an alias is doing an invalid governance transition.
 	ErrInvalidAliasGovernanceTransition = errors.New("invalid alias governance transition")
-	// ErrAliasMissing gets returned when an alias is missing
+	// ErrAliasMissing gets returned when an alias is missing.
 	ErrAliasMissing = errors.New("alias is missing")
 	emptyAliasID    = [AliasIDLength]byte{}
 
@@ -177,7 +177,7 @@ func AliasIDFromOutputID(outputID OutputID) AliasID {
 type AliasOutputs []*AliasOutput
 
 // Every checks whether every element passes f.
-// Returns either -1 if all elements passed f or the index of the first element which didn't
+// Returns either -1 if all elements passed f or the index of the first element which didn't.
 func (outputs AliasOutputs) Every(f func(output *AliasOutput) bool) int {
 	for i, output := range outputs {
 		if !f(output) {

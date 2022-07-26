@@ -1,11 +1,14 @@
 run:
   tests: true
+  skip-dirs:
+    - bech32
+    - tpkg
 
 linters-settings:
   gofmt:
     simplify: true
   goimports:
-    local-prefixes: github.com/gohornet,github.com/iotaledger
+    local-prefixes: github.com/iotaledger
   golint:
     min-confidence: 0.9
   gocyclo:
@@ -21,36 +24,23 @@ linters-settings:
 
 linters:
   enable:
-    - misspell
-    - gofmt
-    - goimports
-    - govet
-    - staticcheck
-    - stylecheck
-    - errcheck
-    - revive
-    - gochecknoglobals
-    - bodyclose
-    - contextcheck
     - durationcheck
+    - errcheck
     - errname
-    - forcetypeassert
     - goconst
     - godot
-    - gomnd
+    - gofmt
+    - goimports
     - gosec
+    - govet
     - ifshort
     - importas
-    - nilerr
+    - misspell
     - nilnil
-    - nlreturn
-    - noctx
     - prealloc
     - predeclared
     - promlinter
-    - tagliatelle
+    - staticcheck
     - unconvert
     - unparam
-    - wastedassign
-#        - wsl
-#        - nestif
+#    - gomnd

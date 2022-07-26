@@ -4,10 +4,10 @@ import (
 	"crypto"
 	"math/bits"
 
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
-// Domain separation prefixes
+// Domain separation prefixes.
 const (
 	LeafHashPrefix = 0
 	NodeHashPrefix = 1

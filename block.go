@@ -29,7 +29,7 @@ var (
 	// ErrBlockExceedsMaxSize gets returned when a serialized block exceeds BlockBinSerializedMaxSize.
 	ErrBlockExceedsMaxSize = errors.New("block exceeds max size")
 
-	// is an empty block ID
+	// is an empty block ID.
 	emptyBlockID = BlockID{}
 
 	blockPayloadGuard = serializer.SerializableGuard{

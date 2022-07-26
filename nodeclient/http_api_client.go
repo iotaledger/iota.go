@@ -38,7 +38,7 @@ const (
 	// RouteBlock is the route for getting a block by its ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
-	// MIMEVendorIOTASerializer => bytes
+	// MIMEVendorIOTASerializer => bytes.
 	RouteBlock = "/api/core/v2/blocks/%s"
 
 	// RouteBlockMetadata is the route for getting block metadata by its ID.
@@ -53,13 +53,13 @@ const (
 	// POST creates a single new block and returns the ID.
 	// The block is parsed based on the given type in the request "Content-Type" header.
 	// MIMEApplicationJSON => json
-	// MIMEVendorIOTASerializer => bytes
+	// MIMEVendorIOTASerializer => bytes.
 	RouteBlocks = "/api/core/v2/blocks"
 
 	// RouteTransactionsIncludedBlock is the route for getting the block that was included in the ledger for a given transaction ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
-	// MIMEVendorIOTASerializer => bytes
+	// MIMEVendorIOTASerializer => bytes.
 	RouteTransactionsIncludedBlock = "/api/core/v2/transactions/%s/included-block"
 
 	// RouteMilestoneByID is the route for getting a milestone by its ID.
@@ -81,7 +81,7 @@ const (
 	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
 	// GET returns the output based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
-	// MIMEVendorIOTASerializer => bytes
+	// MIMEVendorIOTASerializer => bytes.
 	RouteOutput = "/api/core/v2/outputs/%s"
 
 	// RouteOutputMetadata is the route for getting output metadata by its outputID (transactionHash + outputIndex) without getting the data again.
@@ -228,13 +228,13 @@ func (client *Client) HTTPClient() *http.Client {
 // Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *Client) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, method, route, client.opts.requestURLHook, nil, reqObj, resObj)
+	return do(ctx, client.opts.httpClient, client.BaseURL, client.opts.userInfo, method, route, client.opts.requestURLHook, nil, reqObj, resObj)
 }
 
 // DoWithRequestHeaderHook executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *Client) DoWithRequestHeaderHook(ctx context.Context, method string, route string, requestHeaderHook RequestHeaderHook, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(client.opts.httpClient, client.BaseURL, ctx, client.opts.userInfo, method, route, client.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
+	return do(ctx, client.opts.httpClient, client.BaseURL, client.opts.userInfo, method, route, client.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
 }
 
 // Indexer returns the IndexerClient.

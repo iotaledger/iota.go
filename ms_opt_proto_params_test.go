@@ -1,8 +1,9 @@
 package iotago_test
 
 import (
-	"github.com/iotaledger/iota.go/v3"
 	"testing"
+
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 func TestProtocolParamsMilestoneOpt_DeSerialize(t *testing.T) {

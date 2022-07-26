@@ -2,11 +2,13 @@ package builder_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"math/rand"
+
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/builder"

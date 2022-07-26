@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
@@ -313,7 +314,7 @@ func InsecureRemoteEd25519MilestoneSigner(remoteEndpoint string) MilestoneSignin
 		}
 
 		// insecure because this RPC remote should be local; in turns, it employs TLS mutual authentication to reach the actual signers.
-		conn, err := grpc.Dial(remoteEndpoint, grpc.WithInsecure())
+		conn, err := grpc.Dial(remoteEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return nil, err
 		}

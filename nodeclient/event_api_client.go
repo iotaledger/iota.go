@@ -159,7 +159,7 @@ func (s *EventAPIClientSubscription) Close() error {
 
 func panicIfEventAPIClientInactive(neac *EventAPIClient) {
 	if err := neac.Ctx.Err(); err != nil {
-		panic(fmt.Errorf("%w: context is cancelled/done", ErrEventAPIClientInactive))
+		panic(fmt.Errorf("%w: context is canceled/done", ErrEventAPIClientInactive))
 	}
 	if !neac.MQTTClient.IsConnected() {
 		panic(fmt.Errorf("%w: client is not connected", ErrEventAPIClientInactive))
@@ -174,7 +174,7 @@ func sendErrOrDrop(errChan chan error, err error) {
 }
 
 // Connect connects the EventAPIClient to the specified brokers.
-// The EventAPIClient remains active as long as the given context isn't done/cancelled.
+// The EventAPIClient remains active as long as the given context isn't done/canceled.
 func (eac *EventAPIClient) Connect(ctx context.Context) error {
 	eac.Ctx = ctx
 	if token := eac.MQTTClient.Connect(); token.Wait() && token.Error() != nil {

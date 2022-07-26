@@ -1,3 +1,5 @@
+//#nosec G404
+
 package nodeclient_test
 
 import (
@@ -19,7 +21,10 @@ import (
 	"github.com/iotaledger/iota.go/v3/nodeclient"
 )
 
-const nodeAPIUrl = "http://127.0.0.1:14265"
+const (
+	peerID     = "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
+	nodeAPIUrl = "http://127.0.0.1:14265"
+)
 
 func TestClient_Health(t *testing.T) {
 	defer gock.Off()
@@ -664,8 +669,6 @@ var sampleGossipInfo = &nodeclient.GossipInfo{
 func TestClient_PeerByID(t *testing.T) {
 	defer gock.Off()
 
-	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
-
 	originRes := &nodeclient.PeerResponse{
 		MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
 		ID:             peerID,
@@ -688,8 +691,6 @@ func TestClient_PeerByID(t *testing.T) {
 func TestClient_RemovePeerByID(t *testing.T) {
 	defer gock.Off()
 
-	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
-
 	gock.New(nodeAPIUrl).
 		Delete(fmt.Sprintf(nodeclient.RoutePeer, peerID)).
 		Reply(200).
@@ -703,13 +704,12 @@ func TestClient_RemovePeerByID(t *testing.T) {
 func TestClient_Peers(t *testing.T) {
 	defer gock.Off()
 
-	peerID1 := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
 	peerID2 := "12D3KooWFJ8Nq6gHLLvigTpPdddddsadsadscpJof8Y4y8yFAB32"
 
 	originRes := []*nodeclient.PeerResponse{
 		{
-			MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID1)},
-			ID:             peerID1,
+			MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
+			ID:             peerID,
 			Connected:      true,
 			Relation:       "autopeered",
 			Gossip:         sampleGossipInfo,
@@ -737,7 +737,6 @@ func TestClient_Peers(t *testing.T) {
 func TestClient_AddPeer(t *testing.T) {
 	defer gock.Off()
 
-	peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
 	multiAddr := fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)
 
 	originRes := &nodeclient.PeerResponse{

@@ -1,3 +1,5 @@
+//#nosec G404
+
 package ed25519_test
 
 import (

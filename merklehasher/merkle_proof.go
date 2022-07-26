@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 type hashable interface {
@@ -27,7 +27,7 @@ type Proof struct {
 	Right hashable
 }
 
-// ComputeProof computes the audit path given the blockIDs and the blockID we want to create the inclusion proof for
+// ComputeProof computes the audit path given the blockIDs and the blockID we want to create the inclusion proof for.
 func (t *Hasher) ComputeProof(blockIDs iotago.BlockIDs, blockID iotago.BlockID) (*Proof, error) {
 	var found bool
 	var index int
@@ -44,7 +44,7 @@ func (t *Hasher) ComputeProof(blockIDs iotago.BlockIDs, blockID iotago.BlockID) 
 	return t.ComputeProofForIndex(blockIDs, index)
 }
 
-// ComputeProofForIndex computes the audit path given the blockIDs and the index of the blockID we want to create the inclusion proof for
+// ComputeProofForIndex computes the audit path given the blockIDs and the index of the blockID we want to create the inclusion proof for.
 func (t *Hasher) ComputeProofForIndex(blockIDs iotago.BlockIDs, index int) (*Proof, error) {
 	if len(blockIDs) < 2 {
 		return nil, errors.New("you need at lest 2 items to create an inclusion proof")
@@ -228,8 +228,7 @@ func unmarshalHashable(raw *json.RawMessage, hasheable *hashable) error {
 	}
 
 	p := &Proof{}
-	err := json.Unmarshal(*raw, p)
-	if err != nil {
+	if err := json.Unmarshal(*raw, p); err != nil {
 		return err
 	}
 	*hasheable = p

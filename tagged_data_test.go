@@ -5,7 +5,7 @@ import (
 
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
-	"github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 func TestTaggedDataDeSerialize(t *testing.T) {
