@@ -125,8 +125,8 @@ func (p ProtocolParameters) NetworkID() NetworkID {
 type jsonProtocolParameters struct {
 	Version       byte          `json:"version"`
 	NetworkName   string        `json:"networkName"`
-	Bech32HRP     NetworkPrefix `json:"bech32HRP"`
-	MinPoWScore   uint32        `json:"minPoWScore"`
+	Bech32HRP     NetworkPrefix `json:"bech32Hrp"`
+	MinPoWScore   uint32        `json:"minPowScore"`
 	BelowMaxDepth uint8         `json:"belowMaxDepth"`
 	RentStructure RentStructure `json:"rentStructure"`
 	TokenSupply   string        `json:"tokenSupply"`
