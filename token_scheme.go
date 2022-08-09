@@ -32,7 +32,7 @@ var (
 
 var (
 	// ErrTypeIsNotSupportedTokenScheme gets returned when a serializable was found to not be a supported TokenScheme.
-	ErrTypeIsNotSupportedTokenScheme = errors.New("serializable is not an address")
+	ErrTypeIsNotSupportedTokenScheme = errors.New("serializable is not a token scheme")
 )
 
 // TokenScheme defines a scheme for to be used for an OutputFoundry.
