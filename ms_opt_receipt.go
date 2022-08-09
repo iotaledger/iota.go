@@ -253,11 +253,12 @@ func (j *jsonReceiptMilestoneOpt) ToSerializable() (serializer.Serializable, err
 }
 
 // ValidateReceipt validates whether given the following receipt:
-//	- None of the MigratedFundsEntry objects deposits more than the max supply and deposits at least
-//	  MinMigratedFundsEntryDeposit tokens.
-//	- The sum of all migrated fund entries is not bigger than the total supply.
-//	- The previous unspent TreasuryOutput minus the sum of all migrated funds
-//    equals the amount of the new TreasuryOutput.
+//   - None of the MigratedFundsEntry objects deposits more than the max supply and deposits at least
+//     MinMigratedFundsEntryDeposit tokens.
+//   - The sum of all migrated fund entries is not bigger than the total supply.
+//   - The previous unspent TreasuryOutput minus the sum of all migrated funds
+//     equals the amount of the new TreasuryOutput.
+//
 // This function panics if the receipt is nil, the receipt does not include any migrated fund entries or
 // the given treasury output is nil.
 func ValidateReceipt(receipt *ReceiptMilestoneOpt, prevTreasuryOutput *TreasuryOutput, totalSupply uint64) error {

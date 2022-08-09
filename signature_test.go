@@ -3,7 +3,7 @@ package iotago_test
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -45,7 +45,7 @@ func TestEd25519Signature_Valid(t *testing.T) {
 	}
 	var tests []test
 	// load the tests from file
-	b, err := ioutil.ReadFile(filepath.Join("testdata", t.Name()+".json"))
+	b, err := os.ReadFile(filepath.Join("testdata", t.Name()+".json"))
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(b, &tests))
 
