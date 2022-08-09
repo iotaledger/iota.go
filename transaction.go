@@ -701,9 +701,9 @@ func TxSemanticSTVFOnChains() TxSemanticValidationFunc {
 }
 
 // TxSemanticNativeTokens validates following rules regarding NativeTokens:
-//	- The NativeTokens between Inputs / Outputs must be balanced or have a deficit on the output side if
-//	  there is no foundry state transition for a given NativeToken.
-// 	- Max MaxNativeTokensCount native tokens within inputs + outputs
+//   - The NativeTokens between Inputs / Outputs must be balanced or have a deficit on the output side if
+//     there is no foundry state transition for a given NativeToken.
+//   - Max MaxNativeTokensCount native tokens within inputs + outputs
 func TxSemanticNativeTokens() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		// native token set creates handle overflows

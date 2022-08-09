@@ -10,7 +10,7 @@ import (
 
 // TimelockUnlockCondition is an unlock condition which puts a time constraint on an output depending
 // on the latest confirmed milestone's timestamp T:
-//	- the output can only be consumed, if T is bigger than the one defined in the condition.
+//   - the output can only be consumed, if T is bigger than the one defined in the condition.
 type TimelockUnlockCondition struct {
 	// The unix time in second resolution until which the timelock applies (inclusive).
 	UnixTime uint32

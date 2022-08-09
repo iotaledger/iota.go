@@ -17,8 +17,8 @@ var (
 
 // ExpirationUnlockCondition is an unlock condition which puts a time constraint on whether the receiver or return identity
 // can consume an output depending on the latest confirmed milestone's timestamp T:
-//	- only the receiver identity can consume the output, if T is before than the one defined in the condition.
-//	- only the return identity can consume the output, if T is at the same time or after the one defined in the condition.
+//   - only the receiver identity can consume the output, if T is before than the one defined in the condition.
+//   - only the return identity can consume the output, if T is at the same time or after the one defined in the condition.
 type ExpirationUnlockCondition struct {
 	// The identity who is allowed to use the output after the expiration has happened.
 	ReturnAddress Address

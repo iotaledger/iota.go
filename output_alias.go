@@ -291,13 +291,13 @@ func (a *AliasOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		a.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
-//	- For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either
-//	  its AliasID is zeroed and StateIndex and FoundryCounter are zero or an input AliasOutput with the same AliasID.
-//	- On alias state transitions:
-//		- The StateIndex must be incremented by 1
-//		- Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated
-//	- On alias governance transition:
-//		- Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated
+//   - For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either
+//     its AliasID is zeroed and StateIndex and FoundryCounter are zero or an input AliasOutput with the same AliasID.
+//   - On alias state transitions:
+//   - The StateIndex must be incremented by 1
+//   - Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated
+//   - On alias governance transition:
+//   - Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated
 func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
 	var err error
 	switch transType {

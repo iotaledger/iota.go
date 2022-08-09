@@ -9,9 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -705,12 +704,12 @@ func (oih OutputIDHex) AsUTXOInput() (*UTXOInput, error) {
 type OutputsSyntacticalValidationFunc func(index int, output Output) error
 
 // OutputsSyntacticalDepositAmount returns an OutputsSyntacticalValidationFunc which checks that:
-//	- every output deposits more than zero
-//	- every output deposits less than the total supply
-//	- the sum of deposits does not exceed the total supply
-//	- the deposit fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
-//	- if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
-//	  required for the sender to send back the tokens.
+//   - every output deposits more than zero
+//   - every output deposits less than the total supply
+//   - the sum of deposits does not exceed the total supply
+//   - the deposit fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
+//   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
+//     required for the sender to send back the tokens.
 func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSyntacticalValidationFunc {
 	var sum uint64
 	return func(index int, output Output) error {
@@ -747,8 +746,8 @@ func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSynt
 }
 
 // OutputsSyntacticalNativeTokens returns an OutputsSyntacticalValidationFunc which checks that:
-//	- the sum of native tokens count across all outputs does not exceed MaxNativeTokensCount
-//	- each native token holds an amount bigger than zero
+//   - the sum of native tokens count across all outputs does not exceed MaxNativeTokensCount
+//   - each native token holds an amount bigger than zero
 func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
 	var nativeTokensCount int
 	return func(index int, output Output) error {
@@ -790,8 +789,8 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 }
 
 // OutputsSyntacticalAlias returns an OutputsSyntacticalValidationFunc which checks that AliasOutput(s)':
-//	- StateIndex/FoundryCounter are zero if the AliasID is zeroed
-//	- StateController and GovernanceController must be different from AliasAddress derived from AliasID
+//   - StateIndex/FoundryCounter are zero if the AliasID is zeroed
+//   - StateController and GovernanceController must be different from AliasAddress derived from AliasID
 func OutputsSyntacticalAlias() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		aliasOutput, is := output.(*AliasOutput)
@@ -823,8 +822,8 @@ func OutputsSyntacticalAlias() OutputsSyntacticalValidationFunc {
 }
 
 // OutputsSyntacticalFoundry returns an OutputsSyntacticalValidationFunc which checks that FoundryOutput(s)':
-//	- Minted and melted supply is less equal MaximumSupply
-//	- MaximumSupply is not zero
+//   - Minted and melted supply is less equal MaximumSupply
+//   - MaximumSupply is not zero
 func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		foundryOutput, is := output.(*FoundryOutput)
@@ -841,7 +840,7 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 }
 
 // OutputsSyntacticalNFT returns an OutputsSyntacticalValidationFunc which checks that NFTOutput(s)':
-//	- Address must be different from NFTAddress derived from NFTID
+//   - Address must be different from NFTAddress derived from NFTID
 func OutputsSyntacticalNFT() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		nftOutput, is := output.(*NFTOutput)
