@@ -18,21 +18,21 @@ func TestOutputsQuery_Build(t *testing.T) {
 	trueCondition := true
 	query := &nodeclient.BasicOutputsQuery{
 		IndexerTimelockParas: nodeclient.IndexerTimelockParas{
-			HasTimelockCondition: &trueCondition,
-			TimelockedBefore:     1,
-			TimelockedAfter:      2,
+			HasTimelock:      &trueCondition,
+			TimelockedBefore: 1,
+			TimelockedAfter:  2,
 		},
 		IndexerExpirationParas: nodeclient.IndexerExpirationParas{
-			HasExpirationCondition: &trueCondition,
-			ExpiresBefore:          5,
-			ExpiresAfter:           6,
+			HasExpiration: &trueCondition,
+			ExpiresBefore: 5,
+			ExpiresAfter:  6,
 		},
 		IndexerCreationParas: nodeclient.IndexerCreationParas{
 			CreatedBefore: 9,
 			CreatedAfter:  10,
 		},
 		IndexerStorageDepositParas: nodeclient.IndexerStorageDepositParas{
-			RequiresStorageDepositReturn:      &trueCondition,
+			HasStorageDepositReturn:           &trueCondition,
 			StorageDepositReturnAddressBech32: "",
 		},
 		AddressBech32: "alice",
