@@ -177,8 +177,8 @@ type ReferentialUnlock interface {
 type UnlockValidatorFunc func(index int, unlock Unlock) error
 
 // UnlocksSigUniqueAndRefValidator returns a validator which checks that:
-//	1. SignatureUnlock(s) are unique
-//	2. ReferenceUnlock(s) reference a previous SignatureUnlock
+//  1. SignatureUnlock(s) are unique
+//  2. ReferenceUnlock(s) reference a previous SignatureUnlock
 //  3. Following through AliasUnlock(s), NFTUnlock(s) refs results to a SignatureUnlock
 func UnlocksSigUniqueAndRefValidator() UnlockValidatorFunc {
 	seenSigUnlocks := map[uint16]struct{}{}

@@ -162,8 +162,9 @@ func (f UnlockConditionSet) HasTimelockCondition() bool {
 
 // tells whether the given ident can unlock an output containing this set of UnlockCondition(s)
 // when taking into consideration the constraints enforced by them:
-//	- If the timelocks are not expired, then nobody can unlock.
-//	- If the expiration blocks are expired, then only the return identity can unlock.
+//   - If the timelocks are not expired, then nobody can unlock.
+//   - If the expiration blocks are expired, then only the return identity can unlock.
+//
 // returns booleans indicating whether the given ident can unlock and whether the return identity can unlock.
 func (f UnlockConditionSet) unlockableBy(ident Address, extParas *ExternalUnlockParameters) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
 	if err := f.TimelocksExpired(extParas); err != nil {
