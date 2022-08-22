@@ -64,6 +64,16 @@ type IndexerStorageDepositParas struct {
 	StorageDepositReturnAddressBech32 string `qs:"storageDepositReturnAddress,omitempty"`
 }
 
+// IndexerNativeTokenParas define native token based query parameters.
+type IndexerNativeTokenParas struct {
+	// Filters outputs based on the presence of native tokens in the output.
+	HasNativeTokens *bool `qs:"hasNativeTokens,omitempty"`
+	// Filter outputs that have at least an amount of native tokens.
+	MinNativeTokenCount *uint32 `qs:"minNativeTokenCount,omitempty"`
+	// Filter outputs that have at the most an amount of native tokens.
+	MaxNativeTokenCount *uint32 `qs:"maxNativeTokenCount,omitempty"`
+}
+
 // BasicOutputsQuery defines parameters for an basic outputs query.
 type BasicOutputsQuery struct {
 	IndexerCursorParas
@@ -71,6 +81,7 @@ type BasicOutputsQuery struct {
 	IndexerExpirationParas
 	IndexerCreationParas
 	IndexerStorageDepositParas
+	IndexerNativeTokenParas
 
 	// Bech32-encoded address that should be searched for.
 	AddressBech32 string `qs:"address,omitempty"`
@@ -95,6 +106,9 @@ func (query *BasicOutputsQuery) URLParas() (string, error) {
 // AliasesQuery defines parameters for an alias outputs query.
 type AliasesQuery struct {
 	IndexerCursorParas
+	IndexerCreationParas
+	IndexerNativeTokenParas
+
 	// Bech32-encoded state controller address that should be searched for.
 	StateControllerBech32 string `qs:"stateController,omitempty"`
 	// Bech32-encoded governor address that should be searched for.
@@ -103,8 +117,6 @@ type AliasesQuery struct {
 	SenderBech32 string `qs:"sender,omitempty"`
 	// Filters outputs based on the presence of validated issuer.
 	IssuerBech32 string `qs:"issuer,omitempty"`
-	// Filters outputs based on matching tag feature.
-	Tag string `qs:"tag,omitempty"`
 }
 
 func (query *AliasesQuery) OutputType() iotago.OutputType {
@@ -123,6 +135,8 @@ func (query *AliasesQuery) URLParas() (string, error) {
 type FoundriesQuery struct {
 	IndexerCursorParas
 	IndexerCreationParas
+	IndexerNativeTokenParas
+
 	// Bech32-encoded address that should be searched for.
 	AliasAddressBech32 string `qs:"aliasAddress,omitempty"`
 }
@@ -145,6 +159,7 @@ type NFTsQuery struct {
 	IndexerTimelockParas
 	IndexerExpirationParas
 	IndexerStorageDepositParas
+	IndexerNativeTokenParas
 	IndexerCreationParas
 
 	// Bech32-encoded address that should be searched for.
