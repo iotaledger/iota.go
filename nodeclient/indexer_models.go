@@ -106,6 +106,7 @@ func (query *BasicOutputsQuery) URLParas() (string, error) {
 // AliasesQuery defines parameters for an alias outputs query.
 type AliasesQuery struct {
 	IndexerCursorParas
+	IndexerCreationParas
 	IndexerNativeTokenParas
 
 	// Bech32-encoded state controller address that should be searched for.
@@ -116,8 +117,6 @@ type AliasesQuery struct {
 	SenderBech32 string `qs:"sender,omitempty"`
 	// Filters outputs based on the presence of validated issuer.
 	IssuerBech32 string `qs:"issuer,omitempty"`
-	// Filters outputs based on matching tag feature.
-	Tag string `qs:"tag,omitempty"`
 }
 
 func (query *AliasesQuery) OutputType() iotago.OutputType {
