@@ -20,17 +20,17 @@ import (
 var Hash = crypto.BLAKE2b_256
 
 const (
-	nonceBytes = 8 // len(uint64)
+	NonceBytes = 8 // len(uint64)
 )
 
 // Score returns the PoW score of msg.
 func Score(msg []byte) float64 {
-	if len(msg) < nonceBytes {
+	if len(msg) < NonceBytes {
 		panic("pow: invalid message length")
 	}
 
 	h := Hash.New()
-	dataLen := len(msg) - nonceBytes
+	dataLen := len(msg) - NonceBytes
 	// the PoW digest is the hash of msg without the nonce
 	h.Write(msg[:dataLen])
 	powDigest := h.Sum(nil)
@@ -61,7 +61,7 @@ func trailingZeros(powDigest []byte, nonce uint64) int {
 
 // encodeNonce encodes nonce as 48 trits using the b1t6 encoding.
 func encodeNonce(dst trinary.Trits, nonce uint64) {
-	var nonceBuf [nonceBytes]byte
+	var nonceBuf [NonceBytes]byte
 	binary.LittleEndian.PutUint64(nonceBuf[:], nonce)
 	b1t6.Encode(dst, nonceBuf[:])
 }

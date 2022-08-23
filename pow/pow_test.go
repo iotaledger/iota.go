@@ -1,4 +1,4 @@
-package pow
+package pow_test
 
 import (
 	"context"
@@ -17,6 +17,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	legacy "github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/v3/pow"
 )
 
 const (
@@ -24,7 +25,7 @@ const (
 	targetScore = 4000.
 )
 
-var testWorker = New(workers)
+var testWorker = pow.New(workers)
 
 func TestMain(m *testing.M) {
 	rand.Seed(time.Now().UnixNano())
@@ -45,19 +46,19 @@ func TestScore(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		pow := Score(tt.msg)
+		pow := pow.Score(tt.msg)
 		assert.Equal(t, tt.expPoW, pow)
 	}
 }
 
 func TestWorker_Mine(t *testing.T) {
-	msg := append([]byte("Hello, World!"), make([]byte, nonceBytes)...)
-	nonce, err := testWorker.Mine(context.Background(), msg[:len(msg)-nonceBytes], targetScore)
+	msg := append([]byte("Hello, World!"), make([]byte, pow.NonceBytes)...)
+	nonce, err := testWorker.Mine(context.Background(), msg[:len(msg)-pow.NonceBytes], targetScore)
 	require.NoError(t, err)
 
 	// add nonce to block and check the resulting PoW score
-	binary.LittleEndian.PutUint64(msg[len(msg)-nonceBytes:], nonce)
-	pow := Score(msg)
+	binary.LittleEndian.PutUint64(msg[len(msg)-pow.NonceBytes:], nonce)
+	pow := pow.Score(msg)
 	assert.GreaterOrEqual(t, pow, targetScore)
 }
 
@@ -72,7 +73,7 @@ func TestWorker_Cancel(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 	cancel()
 
-	assert.Eventually(t, func() bool { return errors.Is(err, ErrCancelled) }, time.Second, 10*time.Millisecond)
+	assert.Eventually(t, func() bool { return errors.Is(err, pow.ErrCancelled) }, time.Second, 10*time.Millisecond)
 }
 
 const benchBytesLen = 1600
@@ -89,14 +90,14 @@ func BenchmarkScore(b *testing.B) {
 	b.ResetTimer()
 
 	for i := range data {
-		_ = Score(data[i])
+		_ = pow.Score(data[i])
 	}
 }
 
 func BenchmarkWorker(b *testing.B) {
 	var (
 		wg      sync.WaitGroup
-		w       = New(1)
+		w       = pow.New(1)
 		digest  = blake2b.Sum256(nil)
 		done    uint32
 		counter uint64
@@ -104,7 +105,7 @@ func BenchmarkWorker(b *testing.B) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		_, _ = w.worker(digest[:], 0, legacy.HashTrinarySize, &done, &counter)
+		_, _ = w.Worker(digest[:], 0, legacy.HashTrinarySize, &done, &counter)
 	}()
 	b.ResetTimer()
 	for atomic.LoadUint64(&counter) < uint64(b.N) {
