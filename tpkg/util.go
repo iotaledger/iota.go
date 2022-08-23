@@ -412,6 +412,7 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 
 	parents := SortedRandBlockIDs(1 + rand.Intn(7))
 
+	//nolint:exhaustive // false positive
 	switch withPayloadType {
 	case iotago.PayloadTransaction:
 		payload = RandTransaction()
@@ -504,6 +505,7 @@ func RandTreasuryTransaction() *iotago.TreasuryTransaction {
 func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 	dep := &iotago.BasicOutput{}
 
+	//nolint:exhaustive // false positive
 	switch addrType {
 	case iotago.AddressEd25519:
 		dep.Conditions = iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: RandEd25519Address()}}

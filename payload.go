@@ -105,6 +105,8 @@ func jsonPayloadSelector(ty int) (JSONSerializable, error) {
 		obj = &jsonMilestone{}
 	case PayloadTaggedData:
 		obj = &jsonTaggedData{}
+	case PayloadTreasuryTransaction:
+		fallthrough
 	default:
 		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
 	}

@@ -38,6 +38,8 @@ var (
 			case PayloadTransaction:
 			case PayloadTaggedData:
 			case PayloadMilestone:
+			case PayloadTreasuryTransaction:
+				fallthrough
 			default:
 				return nil, fmt.Errorf("a block can only contain a transaction/tagged data/milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
 			}
