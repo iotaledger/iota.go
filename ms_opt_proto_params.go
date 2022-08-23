@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -10,7 +11,7 @@ import (
 
 var (
 	// ErrProtocolParamsMilestoneOptInvalid gets returned when a ProtocolParamsMilestoneOpt is invalid.
-	ErrProtocolParamsMilestoneOptInvalid = fmt.Errorf("invalid protocol params milestone option")
+	ErrProtocolParamsMilestoneOptInvalid = errors.New("invalid protocol params milestone option")
 )
 
 const (

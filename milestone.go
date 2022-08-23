@@ -46,15 +46,15 @@ var (
 	// ErrMilestoneTooManySignatures gets returned when a Milestone holds more than 255 signatures.
 	ErrMilestoneTooManySignatures = fmt.Errorf("a milestone can hold max %d signatures", MaxSignaturesInAMilestone)
 	// ErrMilestoneInvalidMinSignatureThreshold gets returned when an invalid min signatures threshold is given to the verification function.
-	ErrMilestoneInvalidMinSignatureThreshold = fmt.Errorf("min threshold must be at least 1")
+	ErrMilestoneInvalidMinSignatureThreshold = errors.New("min threshold must be at least 1")
 	// ErrMilestoneNonApplicablePublicKey gets returned when a Milestone contains a public key which isn't in the applicable public key set.
-	ErrMilestoneNonApplicablePublicKey = fmt.Errorf("non applicable public key found")
+	ErrMilestoneNonApplicablePublicKey = errors.New("non applicable public key found")
 	// ErrMilestoneSignatureThresholdGreaterThanApplicablePublicKeySet gets returned when a min. signature threshold is greater than a given applicable public key set.
-	ErrMilestoneSignatureThresholdGreaterThanApplicablePublicKeySet = fmt.Errorf("the min. signature threshold must be less or equal the applicable public key set")
+	ErrMilestoneSignatureThresholdGreaterThanApplicablePublicKeySet = errors.New("the min. signature threshold must be less or equal the applicable public key set")
 	// ErrMilestoneInvalidSignature gets returned when a Milestone's signature is invalid.
-	ErrMilestoneInvalidSignature = fmt.Errorf("invalid milestone signature")
+	ErrMilestoneInvalidSignature = errors.New("invalid milestone signature")
 	// ErrMilestoneInMemorySignerPrivateKeyMissing gets returned when an InMemoryEd25519MilestoneSigner is missing a private key.
-	ErrMilestoneInMemorySignerPrivateKeyMissing = fmt.Errorf("private key missing")
+	ErrMilestoneInMemorySignerPrivateKeyMissing = errors.New("private key missing")
 
 	milestoneSupportedMsOptTypes = MilestoneOptTypeSet{MilestoneOptReceipt: struct{}{}, MilestoneOptProtocolParams: struct{}{}}
 	milestoneOptsArrayRules      = serializer.ArrayRules{

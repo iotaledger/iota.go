@@ -194,7 +194,7 @@ type AliasOutputsSet map[AliasID]*AliasOutput
 func (set AliasOutputsSet) Includes(other AliasOutputsSet) error {
 	for aliasID := range other {
 		if _, has := set[aliasID]; !has {
-			return fmt.Errorf("%w: %s missing in source", ErrAliasMissing, aliasID)
+			return fmt.Errorf("%w: %s missing in source", ErrAliasMissing, aliasID.ToHex())
 		}
 	}
 	return nil
@@ -223,7 +223,7 @@ func (set AliasOutputsSet) Merge(other AliasOutputsSet) (AliasOutputsSet, error)
 	}
 	for k, v := range other {
 		if _, has := newSet[k]; has {
-			return nil, fmt.Errorf("%w: alias %s exists in both sets", ErrNonUniqueAliasOutputs, k)
+			return nil, fmt.Errorf("%w: alias %s exists in both sets", ErrNonUniqueAliasOutputs, k.ToHex())
 		}
 		newSet[k] = v
 	}
@@ -318,7 +318,7 @@ func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, nex
 
 func (a *AliasOutput) genesisValid(semValCtx *SemanticValidationContext) error {
 	if !a.AliasID.Empty() {
-		return fmt.Errorf("AliasOutput's ID is not zeroed even though it is new")
+		return errors.New("AliasOutput's ID is not zeroed even though it is new")
 	}
 	return IsIssuerOnOutputUnlocked(a, semValCtx.WorkingSet.UnlockedIdents)
 }
@@ -326,7 +326,7 @@ func (a *AliasOutput) genesisValid(semValCtx *SemanticValidationContext) error {
 func (a *AliasOutput) stateChangeValid(semValCtx *SemanticValidationContext, next ChainConstrainedOutput) error {
 	nextState, is := next.(*AliasOutput)
 	if !is {
-		return fmt.Errorf("can only state transition to another alias output")
+		return errors.New("can only state transition to another alias output")
 	}
 	if !a.ImmutableFeatures.Equal(nextState.ImmutableFeatures) {
 		return fmt.Errorf("old state %s, next state %s", a.ImmutableFeatures, nextState.ImmutableFeatures)
@@ -371,7 +371,7 @@ func (a *AliasOutput) GovernanceSTVF(nextAliasOutput *AliasOutput, semValCtx *Se
 	case a.StateIndex != nextAliasOutput.StateIndex:
 		return fmt.Errorf("%w: state index changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.StateIndex, nextAliasOutput.StateIndex)
 	case !bytes.Equal(a.StateMetadata, nextAliasOutput.StateMetadata):
-		return fmt.Errorf("%w: state metadata changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, a.StateMetadata, nextAliasOutput.StateMetadata)
+		return fmt.Errorf("%w: state metadata changed, in %v / out %v", ErrInvalidAliasGovernanceTransition, EncodeHex(a.StateMetadata), EncodeHex(nextAliasOutput.StateMetadata))
 	case a.FoundryCounter != nextAliasOutput.FoundryCounter:
 		return fmt.Errorf("%w: foundry counter changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.FoundryCounter, nextAliasOutput.FoundryCounter)
 	}

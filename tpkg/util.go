@@ -486,7 +486,7 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
 
-	amount := uint64(rand.Intn(10000))
+	amount := uint64(rand.Intn(10000) + 1)
 	dep.Amount = amount
 	return dep
 }

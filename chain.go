@@ -12,7 +12,7 @@ type ChainConstrainedOutputsSet map[ChainID]ChainConstrainedOutput
 func (set ChainConstrainedOutputsSet) Includes(other ChainConstrainedOutputsSet) error {
 	for chainID := range other {
 		if _, has := set[chainID]; !has {
-			return fmt.Errorf("%w: %s missing in source", ErrChainMissing, chainID)
+			return fmt.Errorf("%w: %s missing in source", ErrChainMissing, chainID.ToHex())
 		}
 	}
 	return nil
@@ -41,7 +41,7 @@ func (set ChainConstrainedOutputsSet) Merge(other ChainConstrainedOutputsSet) (C
 	}
 	for k, v := range other {
 		if _, has := newSet[k]; has {
-			return nil, fmt.Errorf("%w: chain %s exists in both sets", ErrNonUniqueChainConstrainedOutputs, k)
+			return nil, fmt.Errorf("%w: chain %s exists in both sets", ErrNonUniqueChainConstrainedOutputs, k.ToHex())
 		}
 		newSet[k] = v
 	}

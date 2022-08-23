@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"golang.org/x/crypto/blake2b"
@@ -241,7 +242,7 @@ func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next 
 
 func (n *NFTOutput) genesisValid(semValCtx *SemanticValidationContext) error {
 	if !n.NFTID.Empty() {
-		return fmt.Errorf("NFTOutput's ID is not zeroed even though it is new")
+		return errors.New("NFTOutput's ID is not zeroed even though it is new")
 	}
 	return IsIssuerOnOutputUnlocked(n, semValCtx.WorkingSet.UnlockedIdents)
 }
@@ -249,7 +250,7 @@ func (n *NFTOutput) genesisValid(semValCtx *SemanticValidationContext) error {
 func (n *NFTOutput) stateChangeValid(next ChainConstrainedOutput) error {
 	nextState, is := next.(*NFTOutput)
 	if !is {
-		return fmt.Errorf("NFTOutput can only state transition to another NFTOutput")
+		return errors.New("NFTOutput can only state transition to another NFTOutput")
 	}
 	if !n.ImmutableFeatures.Equal(nextState.ImmutableFeatures) {
 		return fmt.Errorf("old state %s, next state %s", n.ImmutableFeatures, nextState.ImmutableFeatures)

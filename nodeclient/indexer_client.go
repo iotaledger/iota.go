@@ -101,11 +101,11 @@ func (resultSet *IndexerResultSet) Outputs() (iotago.Outputs, error) {
 	for i, outputID := range outputIDs {
 		res, err := resultSet.client.OutputByID(resultSet.ctx, outputID)
 		if err != nil {
-			return nil, fmt.Errorf("unable to fetch output %s: %w", outputID, err)
+			return nil, fmt.Errorf("unable to fetch output %s: %w", outputID.ToHex(), err)
 		}
 		output, err := res.Output()
 		if err != nil {
-			return nil, fmt.Errorf("unable to build output %s: %w", outputID, err)
+			return nil, fmt.Errorf("unable to build output %s: %w", outputID.ToHex(), err)
 		}
 		outputs[i] = output
 	}

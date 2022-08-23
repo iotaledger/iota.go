@@ -36,7 +36,7 @@ func (e *Ed25519Signature) Type() SignatureType {
 }
 
 func (e *Ed25519Signature) String() string {
-	return fmt.Sprintf("publick key: %s, signature: %s", EncodeHex(e.PublicKey[:]), EncodeHex(e.Signature[:]))
+	return fmt.Sprintf("public key: %s, signature: %s", EncodeHex(e.PublicKey[:]), EncodeHex(e.Signature[:]))
 }
 
 // Valid verifies whether given the message and Ed25519 address, the signature is valid.
@@ -44,10 +44,10 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	// an address is the Blake2b 256 hash of the public key
 	addrFromPubKey := Ed25519AddressFromPubKey(e.PublicKey[:])
 	if !bytes.Equal(addr[:], addrFromPubKey[:]) {
-		return fmt.Errorf("%w: address %s, public key %v", ErrEd25519PubKeyAndAddrMismatch, addr[:], addrFromPubKey)
+		return fmt.Errorf("%w: address %s, address from public key %v", ErrEd25519PubKeyAndAddrMismatch, EncodeHex(addr[:]), addrFromPubKey)
 	}
 	if valid := iotagoEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
-		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrEd25519SignatureInvalid, addr[:], e.PublicKey, e.Signature)
+		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrEd25519SignatureInvalid, EncodeHex(addr[:]), EncodeHex(e.PublicKey[:]), EncodeHex(e.Signature[:]))
 	}
 	return nil
 }
