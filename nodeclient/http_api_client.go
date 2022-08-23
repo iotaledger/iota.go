@@ -1,3 +1,4 @@
+//nolint:bodyclose // false posives because our own client handles closing of the body
 package nodeclient
 
 import (
