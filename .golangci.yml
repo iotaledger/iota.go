@@ -1,8 +1,5 @@
 run:
   tests: true
-  skip-dirs:
-    - bech32
-    - tpkg
 
 linters-settings:
   gofmt:
@@ -24,23 +21,89 @@ linters-settings:
 
 linters:
   enable:
-    - durationcheck
-    - errcheck
-    - errname
-    - goconst
-    - godot
-    - gofmt
-    - goimports
-    - gosec
-    - govet
-    - ifshort
-    - importas
-    - misspell
-    - nilnil
-    - prealloc
-    - predeclared
-    - promlinter
-    - staticcheck
-    - unconvert
-    - unparam
-#    - gomnd
+      - deadcode
+      - errcheck
+      - gosimple
+      - govet
+      - ineffassign
+      - staticcheck
+      - typecheck
+      - unused
+      - varcheck
+      - asasalint
+      - asciicheck
+      - bidichk
+      - bodyclose
+      #- containedctx
+      - contextcheck
+      - decorder
+      - depguard
+      - dogsled
+      #- dupl
+      - durationcheck
+      - errchkjson
+      - errname
+      - errorlint
+      - execinquery
+      - exhaustive
+      #- exhaustruct
+      - exportloopref
+      #- forcetypeassert
+      - goconst
+      - gocritic
+      - godot
+      - godox
+      #- goerr113
+      - gofmt
+      - goheader
+      - goimports
+      - golint
+      #- gomnd
+      - gomoddirectives
+      - gomodguard
+      - goprintffuncname
+      - gosec
+      - grouper
+      - ifshort
+      - importas
+      #- interfacer
+      - makezero
+      #- maligned
+      - misspell
+      - nakedret
+      - nilerr
+      - nilnil
+      - nlreturn
+      - noctx
+      #- nonamedreturns
+      - nosnakecase
+      - nosprintfhostport
+      - prealloc
+      - predeclared
+      - promlinter
+      - revive
+      - rowserrcheck
+      - scopelint
+      - sqlclosecheck
+      - structcheck
+      - stylecheck
+      - tagliatelle
+      - tenv
+      - testpackage
+      #- thelper
+      - tparallel
+      - unconvert
+      - unparam
+      - usestdlibvars
+      #- varnamelen
+      - wastedassign
+
+issues:
+  # Maximum issues count per one linter.
+  # Set to 0 to disable.
+  # Default: 50
+  max-issues-per-linter: 0
+  # Maximum count of issues with the same text.
+  # Set to 0 to disable.
+  # Default: 3
+  max-same-issues: 0
