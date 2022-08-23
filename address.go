@@ -185,11 +185,11 @@ func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (Address, error) {
 }
 
 func addressToJSONRawMsg(addr serializer.Serializable) (*json.RawMessage, error) {
-	addrJsonBytes, err := addr.MarshalJSON()
+	addrJSONBytes, err := addr.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
-	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
+	jsonRawMsgAddr := json.RawMessage(addrJSONBytes)
 
 	return &jsonRawMsgAddr, nil
 }

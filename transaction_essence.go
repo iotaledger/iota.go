@@ -292,21 +292,21 @@ func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 	jTransactionEssence.Type = int(TransactionEssenceNormal)
 
 	for i, input := range u.Inputs {
-		inputJson, err := input.MarshalJSON()
+		inputJSON, err := input.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
-		rawMsgInputJson := json.RawMessage(inputJson)
-		jTransactionEssence.Inputs[i] = &rawMsgInputJson
+		rawMsgInputJSON := json.RawMessage(inputJSON)
+		jTransactionEssence.Inputs[i] = &rawMsgInputJSON
 	}
 
 	for i, output := range u.Outputs {
-		outputJson, err := output.MarshalJSON()
+		outputJSON, err := output.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
-		rawMsgOutputJson := json.RawMessage(outputJson)
-		jTransactionEssence.Outputs[i] = &rawMsgOutputJson
+		rawMsgOutputJSON := json.RawMessage(outputJSON)
+		jTransactionEssence.Outputs[i] = &rawMsgOutputJSON
 	}
 
 	if u.Payload != nil {
@@ -314,8 +314,8 @@ func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		rawMsgJsonPayload := json.RawMessage(jsonPayload)
-		jTransactionEssence.Payload = &rawMsgJsonPayload
+		rawMsgJSONPayload := json.RawMessage(jsonPayload)
+		jTransactionEssence.Payload = &rawMsgJSONPayload
 	}
 
 	return json.Marshal(jTransactionEssence)
@@ -420,7 +420,7 @@ func (j *jsonTransactionEssence) ToSerializable() (serializer.Serializable, erro
 	copy(unsigTx.InputsCommitment[:], inputsCommitmentSlice)
 
 	for i, jOutput := range j.Outputs {
-		jsonOutput, err := DeserializeObjectFromJSON(jOutput, JsonOutputSelector)
+		jsonOutput, err := DeserializeObjectFromJSON(jOutput, JSONOutputSelector)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode output type from JSON, pos %d: %w", i, err)
 		}

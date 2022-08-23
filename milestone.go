@@ -507,8 +507,8 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		rawJsonSig := json.RawMessage(jsonOpt)
-		jMilestone.Opts[i] = &rawJsonSig
+		rawJSONSig := json.RawMessage(jsonOpt)
+		jMilestone.Opts[i] = &rawJSONSig
 	}
 
 	jMilestone.Metadata = EncodeHex(m.Metadata)
@@ -519,8 +519,8 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		rawJsonSig := json.RawMessage(jsonSig)
-		jMilestone.Signatures[i] = &rawJsonSig
+		rawJSONSig := json.RawMessage(jsonSig)
+		jMilestone.Signatures[i] = &rawJSONSig
 	}
 
 	return json.Marshal(jMilestone)

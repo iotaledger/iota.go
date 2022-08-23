@@ -68,8 +68,8 @@ func (s *SignatureUnlock) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	rawMsgJsonSig := json.RawMessage(jSignature)
-	jSignatureUnlock.Signature = &rawMsgJsonSig
+	rawMsgJSONSig := json.RawMessage(jSignature)
+	jSignatureUnlock.Signature = &rawMsgJSONSig
 	jSignatureUnlock.Type = int(UnlockSignature)
 
 	return json.Marshal(jSignatureUnlock)

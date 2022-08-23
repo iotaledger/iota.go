@@ -169,19 +169,19 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 		Unlocks: make([]*json.RawMessage, len(t.Unlocks)),
 	}
 	jTransaction.Type = int(PayloadTransaction)
-	txJson, err := t.Essence.MarshalJSON()
+	txJSON, err := t.Essence.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
-	rawMsgTxJson := json.RawMessage(txJson)
-	jTransaction.Essence = &rawMsgTxJson
+	rawMsgTxJSON := json.RawMessage(txJSON)
+	jTransaction.Essence = &rawMsgTxJSON
 	for i, ub := range t.Unlocks {
-		jsonUB, err := ub.MarshalJSON()
+		jsonUnlockBlock, err := ub.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
-		rawMsgJsonUB := json.RawMessage(jsonUB)
-		jTransaction.Unlocks[i] = &rawMsgJsonUB
+		rawMsgJSONUnlockBlock := json.RawMessage(jsonUnlockBlock)
+		jTransaction.Unlocks[i] = &rawMsgJSONUnlockBlock
 	}
 
 	return json.Marshal(jTransaction)

@@ -133,11 +133,11 @@ func TestBlock_UnmarshalJSON(t *testing.T) {
 		assert.False(t, bytes.Equal(parent[:], emptyID[:]))
 	}
 
-	blockJson, err := json.Marshal(block)
+	blockJSON, err := json.Marshal(block)
 	assert.NoError(t, err)
 
 	block2 := &iotago.Block{}
-	assert.NoError(t, json.Unmarshal(blockJson, block2))
+	assert.NoError(t, json.Unmarshal(blockJSON, block2))
 
 	assert.EqualValues(t, block, block2)
 

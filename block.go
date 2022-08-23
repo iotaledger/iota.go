@@ -307,8 +307,8 @@ func (m *Block) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		rawMsgJsonPayload := json.RawMessage(jsonPayload)
-		jBlock.Payload = &rawMsgJsonPayload
+		rawMsgJSONPayload := json.RawMessage(jsonPayload)
+		jBlock.Payload = &rawMsgJSONPayload
 	}
 
 	return json.Marshal(jBlock)

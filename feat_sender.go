@@ -75,11 +75,11 @@ func (s *SenderFeature) Size() int {
 func (s *SenderFeature) MarshalJSON() ([]byte, error) {
 	jSenderFeat := &jsonSenderFeature{}
 
-	addrJsonBytes, err := s.Address.MarshalJSON()
+	addrJSONBytes, err := s.Address.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
-	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
+	jsonRawMsgAddr := json.RawMessage(addrJSONBytes)
 
 	jSenderFeat.Type = int(FeatureSender)
 	jSenderFeat.Address = &jsonRawMsgAddr

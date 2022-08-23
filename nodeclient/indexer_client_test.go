@@ -93,9 +93,9 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 	originOutput.NativeTokens = iotago.NativeTokens{}
 	originOutput.Features = iotago.Features{}
-	sigDepJson, err := originOutput.MarshalJSON()
+	sigDepJSON, err := originOutput.MarshalJSON()
 	require.NoError(t, err)
-	rawMsgSigDepJson := json.RawMessage(sigDepJson)
+	rawMsgSigDepJSON := json.RawMessage(sigDepJSON)
 
 	txID := tpkg.Rand32ByteArray()
 	fakeOutputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 1).ToHex()
@@ -108,7 +108,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 			Spent:         true,
 			LedgerIndex:   1337,
 		},
-		RawOutput: &rawMsgSigDepJson,
+		RawOutput: &rawMsgSigDepJSON,
 	}
 
 	originRoutes := &nodeclient.RoutesResponse{

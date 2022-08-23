@@ -31,10 +31,10 @@ func TestDynamicJSONArrayDeserialization(t *testing.T) {
 	assert.NoError(t, json.Unmarshal([]byte(jsonData), env))
 
 	for _, ele := range env.Array {
-		eleJson, err := ele.MarshalJSON()
+		eleJSON, err := ele.MarshalJSON()
 		assert.NoError(t, err)
 		envty := &typeenvelope{}
-		assert.NoError(t, json.Unmarshal(eleJson, envty))
+		assert.NoError(t, json.Unmarshal(eleJSON, envty))
 		var obj interface{}
 		switch envty.Type {
 		case 0:
@@ -42,7 +42,7 @@ func TestDynamicJSONArrayDeserialization(t *testing.T) {
 		case 1:
 			obj = &objwithcolor{}
 		}
-		assert.NoError(t, json.Unmarshal(eleJson, obj))
+		assert.NoError(t, json.Unmarshal(eleJSON, obj))
 		fmt.Printf("%v\n", obj)
 	}
 

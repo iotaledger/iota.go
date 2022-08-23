@@ -109,11 +109,11 @@ func (m *MigratedFundsEntry) Serialize(deSeriMode serializer.DeSerializationMode
 func (m *MigratedFundsEntry) MarshalJSON() ([]byte, error) {
 	jMigratedFundsEntry := &jsonMigratedFundsEntry{}
 	jMigratedFundsEntry.TailTransactionHash = EncodeHex(m.TailTransactionHash[:])
-	addrJsonBytes, err := m.Address.MarshalJSON()
+	addrJSONBytes, err := m.Address.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
-	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
+	jsonRawMsgAddr := json.RawMessage(addrJSONBytes)
 	jMigratedFundsEntry.Address = &jsonRawMsgAddr
 	jMigratedFundsEntry.Deposit = EncodeUint64(m.Deposit)
 

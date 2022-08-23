@@ -299,9 +299,9 @@ func TestClient_OutputByID(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	sigDepJson, err := originOutput.MarshalJSON()
+	sigDepJSON, err := originOutput.MarshalJSON()
 	require.NoError(t, err)
-	rawMsgSigDepJson := json.RawMessage(sigDepJson)
+	rawMsgSigDepJSON := json.RawMessage(sigDepJSON)
 
 	txID := tpkg.Rand32ByteArray()
 	hexTxID := iotago.EncodeHex(txID[:])
@@ -312,20 +312,20 @@ func TestClient_OutputByID(t *testing.T) {
 			Spent:         true,
 			LedgerIndex:   1337,
 		},
-		RawOutput: &rawMsgSigDepJson,
+		RawOutput: &rawMsgSigDepJSON,
 	}
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
-	utxoInputId := utxoInput.ID()
+	utxoInputID := utxoInput.ID()
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputId.ToHex())).
+		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputID.ToHex())).
 		MatchHeader("Accept", nodeclient.MIMEApplicationJSON).
 		Reply(200).
 		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	resp, err := nodeAPI.OutputByID(context.Background(), utxoInputId)
+	resp, err := nodeAPI.OutputByID(context.Background(), utxoInputID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 
@@ -347,15 +347,15 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	}
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
-	utxoInputId := utxoInput.ID()
+	utxoInputID := utxoInput.ID()
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputId.ToHex())).
+		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputID.ToHex())).
 		Reply(200).
 		JSON(originRes)
 
 	nodeAPI := nodeclient.New(nodeAPIUrl)
-	resp, err := nodeAPI.OutputMetadataByID(context.Background(), utxoInputId)
+	resp, err := nodeAPI.OutputMetadataByID(context.Background(), utxoInputID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 

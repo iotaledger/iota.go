@@ -104,15 +104,15 @@ func (t *TreasuryTransaction) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	rawJsonInput := json.RawMessage(jsonInput)
-	jTreasuryTransaction.Input = &rawJsonInput
+	rawJSONInput := json.RawMessage(jsonInput)
+	jTreasuryTransaction.Input = &rawJSONInput
 
 	jsonOutput, err := t.Output.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
-	rawJsonOutput := json.RawMessage(jsonOutput)
-	jTreasuryTransaction.Output = &rawJsonOutput
+	rawJSONOutput := json.RawMessage(jsonOutput)
+	jTreasuryTransaction.Output = &rawJSONOutput
 
 	return json.Marshal(jTreasuryTransaction)
 }

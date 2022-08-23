@@ -185,16 +185,16 @@ func (r *ReceiptMilestoneOpt) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		rawMsgJsonMigratedFundsEntry := json.RawMessage(jMigratedFundsEntry)
-		jReceipt.Funds[i] = &rawMsgJsonMigratedFundsEntry
+		rawMsgJSONMigratedFundsEntry := json.RawMessage(jMigratedFundsEntry)
+		jReceipt.Funds[i] = &rawMsgJSONMigratedFundsEntry
 	}
 
 	jTreasuryTransaction, err := r.Transaction.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
-	rawMsgJsonTreasuryTransaction := json.RawMessage(jTreasuryTransaction)
-	jReceipt.Transaction = &rawMsgJsonTreasuryTransaction
+	rawMsgJSONTreasuryTransaction := json.RawMessage(jTreasuryTransaction)
+	jReceipt.Transaction = &rawMsgJSONTreasuryTransaction
 
 	jReceipt.Final = r.Final
 

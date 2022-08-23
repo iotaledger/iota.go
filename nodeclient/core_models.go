@@ -300,7 +300,7 @@ func (nor *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 
 // Output deserializes the RawOutput to an Output.
 func (nor *OutputResponse) Output() (iotago.Output, error) {
-	jsonSeri, err := iotago.DeserializeObjectFromJSON(nor.RawOutput, iotago.JsonOutputSelector)
+	jsonSeri, err := iotago.DeserializeObjectFromJSON(nor.RawOutput, iotago.JSONOutputSelector)
 	if err != nil {
 		return nil, err
 	}
