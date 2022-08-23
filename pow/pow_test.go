@@ -5,6 +5,7 @@ package pow
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"math"
 	"math/rand"
 	"os"
@@ -73,7 +74,7 @@ func TestWorker_Cancel(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 	cancel()
 
-	assert.Eventually(t, func() bool { return err == ErrCancelled }, time.Second, 10*time.Millisecond)
+	assert.Eventually(t, func() bool { return errors.Is(err, ErrCancelled) }, time.Second, 10*time.Millisecond)
 }
 
 const benchBytesLen = 1600
