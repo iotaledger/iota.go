@@ -39,7 +39,7 @@ func TestEd25519Signature_Valid(t *testing.T) {
 	type test struct {
 		Address   tpkg.HexBytes `json:"address"`
 		Message   tpkg.HexBytes `json:"message"`
-		PublicKey tpkg.HexBytes `json:"pub_key"`
+		PublicKey tpkg.HexBytes `json:"pubKey"`
 		Signature tpkg.HexBytes `json:"signature"`
 		Valid     bool          `json:"valid"`
 	}

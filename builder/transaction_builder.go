@@ -40,7 +40,7 @@ type TxInput struct {
 	// The address which needs to be unlocked to spend this input.
 	UnlockTarget iotago.Address `json:"address"`
 	// The ID of the referenced input.
-	InputID iotago.OutputID `json:"inputID"`
+	InputID iotago.OutputID `json:"inputId"`
 	// The output which is used as an input.
 	Input iotago.Output `json:"input"`
 }
