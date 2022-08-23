@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	// import implementation.
 	_ "golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"

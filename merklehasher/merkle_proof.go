@@ -83,12 +83,12 @@ func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
 				Left:  &leafValue{left},
 				Right: &hashValue{t.hashLeaf(right)},
 			}, nil
-		} else {
-			return &Proof{
-				Left:  &hashValue{t.hashLeaf(left)},
-				Right: &leafValue{right},
-			}, nil
 		}
+
+		return &Proof{
+			Left:  &hashValue{t.hashLeaf(left)},
+			Right: &leafValue{right},
+		}, nil
 	}
 
 	k := largestPowerOfTwo(len(data))
@@ -104,19 +104,19 @@ func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
 			Left:  left,
 			Right: &hashValue{right},
 		}, nil
-	} else {
-		// Inside right half
-		left := t.Hash(data[:k])
-		right, err := t.computeProof(data[k:], index-k)
-		if err != nil {
-			return nil, err
-		}
-
-		return &Proof{
-			Left:  &hashValue{left},
-			Right: right,
-		}, nil
 	}
+
+	// Inside right half
+	left := t.Hash(data[:k])
+	right, err := t.computeProof(data[k:], index-k)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Proof{
+		Left:  &hashValue{left},
+		Right: right,
+	}, nil
 }
 
 func (l *leafValue) Hash(hasher *Hasher) []byte {
