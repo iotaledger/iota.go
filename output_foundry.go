@@ -250,12 +250,12 @@ func (f *FoundryOutput) genesisValid(semValCtx *SemanticValidationContext, thisF
 	aliasID := f.Ident().(*AliasAddress).AliasID()
 	inAlias, ok := semValCtx.WorkingSet.InChains[aliasID]
 	if !ok {
-		return fmt.Errorf("missing input transitioning alias output %s for new foundry output %s", aliasID, thisFoundryID)
+		return fmt.Errorf("missing input transitioning alias output %s for new foundry output %s", aliasID.ToHex(), thisFoundryID)
 	}
 
 	outAlias, ok := semValCtx.WorkingSet.OutChains[aliasID]
 	if !ok {
-		return fmt.Errorf("missing output transitioning alias output %s for new foundry output %s", aliasID, thisFoundryID)
+		return fmt.Errorf("missing output transitioning alias output %s for new foundry output %s", aliasID.ToHex(), thisFoundryID)
 	}
 
 	if err := f.validSerialNumber(semValCtx, inAlias.(*AliasOutput), outAlias.(*AliasOutput), thisFoundryID); err != nil {
@@ -270,7 +270,7 @@ func (f *FoundryOutput) validSerialNumber(semValCtx *SemanticValidationContext, 
 	startSerial := inAlias.FoundryCounter
 	endIncSerial := outAlias.FoundryCounter
 	if startSerial >= f.SerialNumber || f.SerialNumber > endIncSerial {
-		return fmt.Errorf("new foundry output %s's serial number is not between the foundry counter interval of [%d,%d)", thisFoundryID, startSerial, endIncSerial)
+		return fmt.Errorf("new foundry output %s's serial number is not between the foundry counter interval of [%d,%d)", thisFoundryID.ToHex(), startSerial, endIncSerial)
 	}
 
 	// OPTIMIZE: this loop happens on every STVF of every new foundry output
@@ -300,7 +300,7 @@ func (f *FoundryOutput) validSerialNumber(semValCtx *SemanticValidationContext, 
 		}
 
 		if otherFoundryOutput.SerialNumber >= f.SerialNumber {
-			return fmt.Errorf("new foundry output %s at index %d has bigger equal serial number than this foundry %s", otherFoundryID, outputIndex, thisFoundryID)
+			return fmt.Errorf("new foundry output %s at index %d has bigger equal serial number than this foundry %s", otherFoundryID.ToHex(), outputIndex, thisFoundryID.ToHex())
 		}
 	}
 	return nil
@@ -309,7 +309,7 @@ func (f *FoundryOutput) validSerialNumber(semValCtx *SemanticValidationContext, 
 func (f *FoundryOutput) stateChangeValid(next ChainConstrainedOutput, inSums NativeTokenSum, outSums NativeTokenSum) error {
 	nextState, is := next.(*FoundryOutput)
 	if !is {
-		return fmt.Errorf("foundry output can only state transition to another foundry output")
+		return errors.New("foundry output can only state transition to another foundry output")
 	}
 
 	if !f.ImmutableFeatures.Equal(nextState.ImmutableFeatures) {
