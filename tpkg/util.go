@@ -10,12 +10,19 @@ import (
 	"math/rand"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
 	iotago "github.com/iotaledger/iota.go/v3"
+)
+
+var (
+	//nolint:gosec // we do not care about weak random numbers here
+	seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	randLock   = &sync.Mutex{}
 )
 
 // Must panics if the given error is not nil.
@@ -25,16 +32,56 @@ func Must(err error) {
 	}
 }
 
+func RandomRead(p []byte) (n int, err error) {
+	// Rand needs to be locked: https://github.com/golang/go/issues/3611
+	randLock.Lock()
+	defer randLock.Unlock()
+
+	return seededRand.Read(p)
+}
+
+func RandomIntn(n int) int {
+	// Rand needs to be locked: https://github.com/golang/go/issues/3611
+	randLock.Lock()
+	defer randLock.Unlock()
+
+	return seededRand.Intn(n)
+}
+
+func RandomInt31n(n int32) int32 {
+	// Rand needs to be locked: https://github.com/golang/go/issues/3611
+	randLock.Lock()
+	defer randLock.Unlock()
+
+	return seededRand.Int31n(n)
+}
+
+func RandomInt63n(n int64) int64 {
+	// Rand needs to be locked: https://github.com/golang/go/issues/3611
+	randLock.Lock()
+	defer randLock.Unlock()
+
+	return seededRand.Int63n(n)
+}
+
+func RandomFloat64() float64 {
+	// Rand needs to be locked: https://github.com/golang/go/issues/3611
+	randLock.Lock()
+	defer randLock.Unlock()
+
+	return seededRand.Float64()
+}
+
 // RandByte returns a random byte.
 func RandByte() byte {
-	return byte(rand.Intn(256))
+	return byte(RandomIntn(256))
 }
 
 // RandBytes returns length amount random bytes.
 func RandBytes(length int) []byte {
 	var b []byte
 	for i := 0; i < length; i++ {
-		b = append(b, byte(rand.Intn(256)))
+		b = append(b, byte(RandomIntn(256)))
 	}
 
 	return b
@@ -46,34 +93,34 @@ func RandString(length int) string {
 
 // RandUint8 returns a random uint8.
 func RandUint8(max uint8) uint8 {
-	return uint8(rand.Int31n(int32(max)))
+	return uint8(RandomInt31n(int32(max)))
 }
 
 // RandUint16 returns a random uint16.
 func RandUint16(max uint16) uint16 {
-	return uint16(rand.Int31n(int32(max)))
+	return uint16(RandomInt31n(int32(max)))
 }
 
 // RandUint32 returns a random uint32.
 func RandUint32(max uint32) uint32 {
-	return uint32(rand.Int63n(int64(max)))
+	return uint32(RandomInt63n(int64(max)))
 }
 
 // RandUint64 returns a random uint64.
 func RandUint64(max uint64) uint64 {
-	return uint64(rand.Int63n(int64(uint32(max))))
+	return uint64(RandomInt63n(int64(uint32(max))))
 }
 
 // RandFloat64 returns a random float64.
 func RandFloat64(max float64) float64 {
-	return rand.Float64() * max
+	return RandomFloat64() * max
 }
 
 // RandTrytes returns length amount of random trytes.
 func RandTrytes(length int) trinary.Trytes {
 	var trytes strings.Builder
 	for i := 0; i < length; i++ {
-		trytes.WriteByte(legacy.TryteAlphabet[rand.Intn(len(legacy.TryteAlphabet))])
+		trytes.WriteByte(legacy.TryteAlphabet[RandomIntn(len(legacy.TryteAlphabet))])
 	}
 
 	return trytes.String()
@@ -81,7 +128,7 @@ func RandTrytes(length int) trinary.Trytes {
 
 func RandOutputID(index uint16) iotago.OutputID {
 	var outputID iotago.OutputID
-	_, err := rand.Read(outputID[:iotago.TransactionIDLength])
+	_, err := RandomRead(outputID[:iotago.TransactionIDLength])
 	if err != nil {
 		panic(err)
 	}
@@ -101,7 +148,7 @@ func RandOutputIDs(count uint16) iotago.OutputIDs {
 
 func RandTransactionID() iotago.TransactionID {
 	var transactionID iotago.TransactionID
-	_, err := rand.Read(transactionID[:iotago.TransactionIDLength])
+	_, err := RandomRead(transactionID[:iotago.TransactionIDLength])
 	if err != nil {
 		panic(err)
 	}
@@ -132,7 +179,7 @@ func RandSortNativeTokens(count int) iotago.NativeTokens {
 }
 
 func RandUint256() *big.Int {
-	return new(big.Int).SetUint64(rand.Uint64())
+	return new(big.Int).SetUint64(RandUint64(math.MaxUint64))
 }
 
 // Rand12ByteArray returns an array with 12 random bytes.
@@ -255,17 +302,17 @@ func RandEd25519SignatureUnlock() *iotago.SignatureUnlock {
 
 // RandReferenceUnlock returns a random reference unlock.
 func RandReferenceUnlock() *iotago.ReferenceUnlock {
-	return ReferenceUnlock(uint16(rand.Intn(1000)))
+	return ReferenceUnlock(RandUint16(1000))
 }
 
 // RandAliasUnlock returns a random alias unlock.
 func RandAliasUnlock() *iotago.AliasUnlock {
-	return &iotago.AliasUnlock{Reference: uint16(rand.Intn(1000))}
+	return &iotago.AliasUnlock{Reference: RandUint16(1000)}
 }
 
 // RandNFTUnlock returns a random alias unlock.
 func RandNFTUnlock() *iotago.NFTUnlock {
-	return &iotago.NFTUnlock{Reference: uint16(rand.Intn(1000))}
+	return &iotago.NFTUnlock{Reference: RandUint16(1000)}
 }
 
 // ReferenceUnlock returns a reference unlock with the given index.
@@ -275,17 +322,17 @@ func ReferenceUnlock(index uint16) *iotago.ReferenceUnlock {
 
 // RandTransactionEssence returns a random transaction essence.
 func RandTransactionEssence() *iotago.TransactionEssence {
-	return RandTransactionEssenceWithInputOutputCount(rand.Intn(iotago.MaxInputsCount)+1, rand.Intn(iotago.MaxOutputsCount)+1)
+	return RandTransactionEssenceWithInputOutputCount(RandomIntn(iotago.MaxInputsCount)+1, RandomIntn(iotago.MaxOutputsCount)+1)
 }
 
 // RandTransactionEssenceWithInputCount returns a random transaction essence with a specific amount of inputs..
 func RandTransactionEssenceWithInputCount(inputCount int) *iotago.TransactionEssence {
-	return RandTransactionEssenceWithInputOutputCount(inputCount, rand.Intn(iotago.MaxOutputsCount)+1)
+	return RandTransactionEssenceWithInputOutputCount(inputCount, RandomIntn(iotago.MaxOutputsCount)+1)
 }
 
 // RandTransactionEssenceWithOutputCount returns a random transaction essence with a specific amount of outputs.
 func RandTransactionEssenceWithOutputCount(outputCount int) *iotago.TransactionEssence {
-	return RandTransactionEssenceWithInputOutputCount(rand.Intn(iotago.MaxInputsCount)+1, outputCount)
+	return RandTransactionEssenceWithInputOutputCount(RandomIntn(iotago.MaxInputsCount)+1, outputCount)
 }
 
 // RandTransactionEssenceWithInputOutputCount returns a random transaction essence with a specific amount of inputs and outputs.
@@ -313,7 +360,7 @@ func RandTransactionEssenceWithInputs(inputs iotago.Inputs) *iotago.TransactionE
 
 	tx.Inputs = inputs
 
-	outputCount := rand.Intn(iotago.MaxOutputsCount) + 1
+	outputCount := RandomIntn(iotago.MaxOutputsCount) + 1
 	for i := outputCount; i > 0; i-- {
 		tx.Outputs = append(tx.Outputs, RandBasicOutput(iotago.AddressEd25519))
 	}
@@ -326,7 +373,7 @@ func RandMigratedFundsEntry() *iotago.MigratedFundsEntry {
 	return &iotago.MigratedFundsEntry{
 		TailTransactionHash: Rand49ByteArray(),
 		Address:             RandEd25519Address(),
-		Deposit:             rand.Uint64(),
+		Deposit:             RandUint64(math.MaxUint64),
 	}
 }
 
@@ -334,7 +381,7 @@ func RandMigratedFundsEntry() *iotago.MigratedFundsEntry {
 func RandReceipt() *iotago.ReceiptMilestoneOpt {
 	receipt := &iotago.ReceiptMilestoneOpt{MigratedAt: 1000, Final: true}
 
-	migFundsEntriesCount := rand.Intn(10) + 1
+	migFundsEntriesCount := RandomIntn(10) + 1
 	for i := migFundsEntriesCount; i > 0; i-- {
 		receipt.Funds = append(receipt.Funds, RandMigratedFundsEntry())
 	}
@@ -349,11 +396,11 @@ func RandMilestone(parents iotago.BlockIDs) *iotago.Milestone {
 	const sigsCount = 3
 
 	if parents == nil {
-		parents = SortedRandBlockIDs(1 + rand.Intn(7))
+		parents = SortedRandBlockIDs(1 + RandomIntn(7))
 	}
 
 	msPayload := &iotago.Milestone{
-		Index:               iotago.MilestoneIndex(rand.Intn(1000)),
+		Index:               iotago.MilestoneIndex(RandomIntn(1000)),
 		Timestamp:           uint32(time.Now().Unix()),
 		PreviousMilestoneID: Rand32ByteArray(),
 		Parents:             parents,
@@ -400,7 +447,7 @@ func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	case len(dataLength) > 0:
 		data = RandBytes(dataLength[0])
 	default:
-		data = RandBytes(rand.Intn(200) + 1)
+		data = RandBytes(RandomIntn(200) + 1)
 	}
 
 	return &iotago.TaggedData{Tag: tag, Data: data}
@@ -410,7 +457,7 @@ func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 	var payload iotago.Payload
 
-	parents := SortedRandBlockIDs(1 + rand.Intn(7))
+	parents := SortedRandBlockIDs(1 + RandomIntn(7))
 
 	//nolint:exhaustive // false positive
 	switch withPayloadType {
@@ -426,7 +473,7 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 		ProtocolVersion: TestProtocolVersion,
 		Parents:         parents,
 		Payload:         payload,
-		Nonce:           uint64(rand.Intn(1000)),
+		Nonce:           uint64(RandomIntn(1000)),
 	}
 }
 
@@ -474,7 +521,7 @@ func RandTreasuryInput() *iotago.TreasuryInput {
 
 // RandUTXOInput returns a random UTXO input.
 func RandUTXOInput() *iotago.UTXOInput {
-	return RandUTXOInputWithIndex(uint16(rand.Intn(iotago.RefUTXOIndexMax)))
+	return RandUTXOInputWithIndex(RandUint16(iotago.RefUTXOIndexMax))
 }
 
 // RandUTXOInputWithIndex returns a random UTXO input with a specific index.
@@ -490,7 +537,7 @@ func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 
 // RandTreasuryOutput returns a random treasury output.
 func RandTreasuryOutput() *iotago.TreasuryOutput {
-	return &iotago.TreasuryOutput{Amount: rand.Uint64()}
+	return &iotago.TreasuryOutput{Amount: RandUint64(math.MaxUint64)}
 }
 
 // RandTreasuryTransaction returns a random treasury transaction.
@@ -513,7 +560,7 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
 
-	amount := uint64(rand.Intn(10000) + 1)
+	amount := uint64(RandomIntn(10000) + 1)
 	dep.Amount = amount
 
 	return dep
@@ -562,7 +609,7 @@ func RandEd25519PrivateKey() ed25519.PrivateKey {
 // RandEd25519Seed returns a random Ed25519 seed.
 func RandEd25519Seed() [ed25519.SeedSize]byte {
 	var b [ed25519.SeedSize]byte
-	read, err := rand.Read(b[:])
+	read, err := RandomRead(b[:])
 	if read != ed25519.SeedSize {
 		panic(fmt.Sprintf("could not read %d required bytes from secure RNG", ed25519.SeedSize))
 	}
