@@ -33,6 +33,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
 				}
+
 				return UnlockConditionSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -41,6 +42,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in foundry output", ErrUnsupportedUnlockConditionType)
 				}
+
 				return nil
 			},
 		},
@@ -59,6 +61,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
 				}
+
 				return FeatureSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -67,6 +70,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in foundry output", ErrUnsupportedFeatureType)
 				}
+
 				return nil
 			},
 		},
@@ -85,6 +89,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize foundry output, unsupported immutable feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
 				}
+
 				return FeatureSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -93,6 +98,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in foundry output", ErrUnsupportedFeatureType)
 				}
+
 				return nil
 			},
 		},
@@ -133,6 +139,7 @@ func (fID FoundryID) Matches(other ChainID) bool {
 	if !is {
 		return false
 	}
+
 	return fID == otherFID
 }
 
@@ -194,6 +201,7 @@ func (f *FoundryOutput) Ident() Address {
 
 func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
 	ok, _ := outputUnlockable(f, nil, ident, extParas)
+
 	return ok
 }
 
@@ -215,6 +223,7 @@ func (f *FoundryOutput) Chain() ChainID {
 	if err != nil {
 		panic(err)
 	}
+
 	return foundryID
 }
 
@@ -236,6 +245,7 @@ func (f *FoundryOutput) ValidateStateTransition(transType ChainTransitionType, n
 	if err != nil {
 		return &ChainTransitionError{Inner: err, Msg: fmt.Sprintf("foundry %s, token %s", f.MustID(), f.MustNativeTokenID())}
 	}
+
 	return nil
 }
 
@@ -303,6 +313,7 @@ func (f *FoundryOutput) validSerialNumber(semValCtx *SemanticValidationContext, 
 			return fmt.Errorf("new foundry output %s at index %d has bigger equal serial number than this foundry %s", otherFoundryID.ToHex(), outputIndex, thisFoundryID.ToHex())
 		}
 	}
+
 	return nil
 }
 
@@ -338,6 +349,7 @@ func (f *FoundryOutput) destructionValid(inSums NativeTokenSum, outSums NativeTo
 	if err := f.TokenScheme.StateTransition(ChainTransitionTypeDestroy, nil, inSums.ValueOrBigInt0(nativeTokenID), outSums.ValueOrBigInt0(nativeTokenID)); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -351,6 +363,7 @@ func (f *FoundryOutput) ID() (FoundryID, error) {
 	copy(foundryID[:], addrBytes)
 	binary.LittleEndian.PutUint32(foundryID[len(addrBytes):], f.SerialNumber)
 	foundryID[len(foundryID)-1] = byte(f.TokenScheme.Type())
+
 	return foundryID, nil
 }
 
@@ -360,6 +373,7 @@ func (f *FoundryOutput) MustID() FoundryID {
 	if err != nil {
 		panic(err)
 	}
+
 	return id
 }
 
@@ -369,6 +383,7 @@ func (f *FoundryOutput) MustNativeTokenID() NativeTokenID {
 	if err != nil {
 		panic(err)
 	}
+
 	return nativeTokenID
 }
 
@@ -518,6 +533,7 @@ func (f *FoundryOutput) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*f = *seri.(*FoundryOutput)
+
 	return nil
 }
 

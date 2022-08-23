@@ -25,6 +25,7 @@ type ReceiptBuilder struct {
 // AddEntry adds the given MigratedFundsEntry to the receipt.
 func (rb *ReceiptBuilder) AddEntry(entry *MigratedFundsEntry) *ReceiptBuilder {
 	rb.r.Funds = append(rb.r.Funds, entry)
+
 	return rb
 }
 
@@ -32,6 +33,7 @@ func (rb *ReceiptBuilder) AddEntry(entry *MigratedFundsEntry) *ReceiptBuilder {
 // This function overrides the previously added TreasuryTransaction.
 func (rb *ReceiptBuilder) AddTreasuryTransaction(tx *TreasuryTransaction) *ReceiptBuilder {
 	rb.r.Transaction = tx
+
 	return rb
 }
 
@@ -40,5 +42,6 @@ func (rb *ReceiptBuilder) Build(protoParas *ProtocolParameters) (*ReceiptMilesto
 	if _, err := rb.r.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, protoParas); err != nil {
 		return nil, fmt.Errorf("unable to build receipt: %w", err)
 	}
+
 	return rb.r, nil
 }

@@ -78,6 +78,7 @@ func (s *ImmutableAliasUnlockCondition) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return json.Marshal(jUnlockCond)
 }
 
@@ -91,6 +92,7 @@ func (s *ImmutableAliasUnlockCondition) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*ImmutableAliasUnlockCondition)
+
 	return nil
 }
 
@@ -108,5 +110,6 @@ func (j *jsonImmutableAliasUnlockCondition) ToSerializable() (serializer.Seriali
 		return nil, err
 	}
 	unlockCond.Address = addr.(*AliasAddress)
+
 	return unlockCond, nil
 }

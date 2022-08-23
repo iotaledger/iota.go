@@ -21,6 +21,7 @@ type AliasUnlock struct {
 
 func (r *AliasUnlock) SourceAllowed(address Address) bool {
 	_, ok := address.(*AliasAddress)
+
 	return ok
 }
 
@@ -47,6 +48,7 @@ func (r *AliasUnlock) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 	}
 	data = data[serializer.SmallTypeDenotationByteSize:]
 	r.Reference = binary.LittleEndian.Uint16(data)
+
 	return AliasUnlockSize, nil
 }
 
@@ -54,6 +56,7 @@ func (r *AliasUnlock) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 	var b [AliasUnlockSize]byte
 	b[0] = byte(UnlockAlias)
 	binary.LittleEndian.PutUint16(b[serializer.SmallTypeDenotationByteSize:], r.Reference)
+
 	return b[:], nil
 }
 
@@ -65,6 +68,7 @@ func (r *AliasUnlock) MarshalJSON() ([]byte, error) {
 	jAliasUnlock := &jsonAliasUnlock{}
 	jAliasUnlock.Type = int(UnlockAlias)
 	jAliasUnlock.Reference = int(r.Reference)
+
 	return json.Marshal(jAliasUnlock)
 }
 
@@ -78,6 +82,7 @@ func (r *AliasUnlock) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*r = *seri.(*AliasUnlock)
+
 	return nil
 }
 
@@ -89,5 +94,6 @@ type jsonAliasUnlock struct {
 
 func (j *jsonAliasUnlock) ToSerializable() (serializer.Serializable, error) {
 	unlock := &AliasUnlock{Reference: uint16(j.Reference)}
+
 	return unlock, nil
 }

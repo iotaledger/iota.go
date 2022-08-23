@@ -25,6 +25,7 @@ func newEncoding(charset string) *encoding {
 	for i := 0; i < len(charset); i++ {
 		e.decMap[charset[i]] = uint8(i)
 	}
+
 	return e
 }
 
@@ -35,6 +36,7 @@ func (e *encoding) encode(src []uint8) string {
 	for i := range src {
 		dst.WriteByte(e.enc[src[i]])
 	}
+
 	return dst.String()
 }
 
@@ -48,5 +50,6 @@ func (e *encoding) decode(src string) ([]uint8, error) {
 		}
 		dst[i] = e.decMap[src[i]]
 	}
+
 	return dst, nil
 }

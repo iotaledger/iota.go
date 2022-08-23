@@ -21,6 +21,7 @@ var sigUnlockSigGuard = serializer.SerializableGuard{
 		default:
 			return ErrTypeIsNotSupportedSignature
 		}
+
 		return nil
 	},
 }
@@ -70,6 +71,7 @@ func (s *SignatureUnlock) MarshalJSON() ([]byte, error) {
 	rawMsgJsonSig := json.RawMessage(jSignature)
 	jSignatureUnlock.Signature = &rawMsgJsonSig
 	jSignatureUnlock.Type = int(UnlockSignature)
+
 	return json.Marshal(jSignatureUnlock)
 }
 
@@ -83,6 +85,7 @@ func (s *SignatureUnlock) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*SignatureUnlock)
+
 	return nil
 }
 

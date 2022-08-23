@@ -90,6 +90,7 @@ func (s *SimpleTokenScheme) genesisValid(outSum *big.Int) error {
 	case outSum.Cmp(s.MintedTokens) != 0:
 		return fmt.Errorf("%w: genesis requires that output tokens amount equal minted count: minted %s vs. output tokens %s", ErrSimpleTokenSchemeTransition, s.MintedTokens, outSum)
 	}
+
 	return nil
 }
 
@@ -99,6 +100,7 @@ func (s *SimpleTokenScheme) destructionValid(out *big.Int, in *big.Int) error {
 	if big.NewInt(0).Add(s.MintedTokens, tokenDiff).Cmp(s.MeltedTokens) != 0 {
 		return fmt.Errorf("%w: all minted tokens must have been melted up on destruction: minted (%s) + token diff (%d) != melted tokens (%s)", ErrNativeTokenSumUnbalanced, s.MintedTokens, tokenDiff, s.MeltedTokens)
 	}
+
 	return nil
 }
 
@@ -206,6 +208,7 @@ func (s *SimpleTokenScheme) MarshalJSON() ([]byte, error) {
 	jSimpleTokenScheme.MintedSupply = EncodeUint256(s.MintedTokens)
 	jSimpleTokenScheme.MeltedTokens = EncodeUint256(s.MeltedTokens)
 	jSimpleTokenScheme.MaximumSupply = EncodeUint256(s.MaximumSupply)
+
 	return json.Marshal(jSimpleTokenScheme)
 }
 
@@ -219,6 +222,7 @@ func (s *SimpleTokenScheme) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*SimpleTokenScheme)
+
 	return nil
 }
 

@@ -50,6 +50,7 @@ func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 	b.inputOwner[input.InputID] = input.UnlockTarget
 	b.essence.Inputs = append(b.essence.Inputs, input.InputID.UTXOInput())
 	b.inputs[input.InputID] = input.Input
+
 	return b
 }
 
@@ -61,12 +62,14 @@ type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.O
 // AddOutput adds the given output to the builder.
 func (b *TransactionBuilder) AddOutput(output iotago.Output) *TransactionBuilder {
 	b.essence.Outputs = append(b.essence.Outputs, output)
+
 	return b
 }
 
 // AddTaggedDataPayload adds the given TaggedData as the inner payload.
 func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *TransactionBuilder {
 	b.essence.Payload = payload
+
 	return b
 }
 
@@ -80,11 +83,13 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParas *iotago.Proto
 	tx, err := b.Build(protoParas, signer)
 	if err != nil {
 		blockBuilder.err = err
+
 		return blockBuilder
 	}
 	if txFunc != nil {
 		txFunc(tx)
 	}
+
 	return blockBuilder.ProtocolVersion(protoParas.Version).Payload(tx)
 }
 
@@ -140,6 +145,7 @@ func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer
 			unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: signature})
 			addChainAsUnlocked(inputs[i], i, unlockPos)
 			unlockPos[addrKey] = i
+
 			continue
 		}
 

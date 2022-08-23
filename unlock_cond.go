@@ -43,6 +43,7 @@ func (unlockCondType UnlockConditionType) String() string {
 	if int(unlockCondType) >= len(unlockCondNames) {
 		return fmt.Sprintf("unknown unlock condition type: %d", unlockCondType)
 	}
+
 	return unlockCondNames[unlockCondType]
 }
 
@@ -92,6 +93,7 @@ func (f UnlockConditions) Clone() UnlockConditions {
 	for i, v := range f {
 		cpy[i] = v.Clone()
 	}
+
 	return cpy
 }
 
@@ -100,6 +102,7 @@ func (f UnlockConditions) ToSerializables() serializer.Serializables {
 	for i, x := range f {
 		seris[i] = x.(serializer.Serializable)
 	}
+
 	return seris
 }
 
@@ -115,6 +118,7 @@ func (f UnlockConditions) Size() int {
 	for _, uc := range f {
 		sum += uc.Size()
 	}
+
 	return sum
 }
 
@@ -128,6 +132,7 @@ func (f UnlockConditions) Set() (UnlockConditionSet, error) {
 		}
 		set[block.Type()] = block
 	}
+
 	return set, nil
 }
 
@@ -139,6 +144,7 @@ func (f UnlockConditions) MustSet() UnlockConditionSet {
 	if err != nil {
 		panic(err)
 	}
+
 	return set
 }
 
@@ -177,6 +183,7 @@ func (f UnlockConditionSet) unlockableBy(ident Address, extParas *ExternalUnlock
 		if !ident.Equal(returnIdent) {
 			return false, true
 		}
+
 		return true, true
 	}
 
@@ -221,6 +228,7 @@ func (f UnlockConditionSet) StorageDepositReturn() *StorageDepositReturnUnlockCo
 	if !has {
 		return nil
 	}
+
 	return b.(*StorageDepositReturnUnlockCondition)
 }
 
@@ -230,6 +238,7 @@ func (f UnlockConditionSet) Address() *AddressUnlockCondition {
 	if !has {
 		return nil
 	}
+
 	return b.(*AddressUnlockCondition)
 }
 
@@ -239,6 +248,7 @@ func (f UnlockConditionSet) ImmutableAlias() *ImmutableAliasUnlockCondition {
 	if !has {
 		return nil
 	}
+
 	return b.(*ImmutableAliasUnlockCondition)
 }
 
@@ -248,6 +258,7 @@ func (f UnlockConditionSet) GovernorAddress() *GovernorAddressUnlockCondition {
 	if !has {
 		return nil
 	}
+
 	return b.(*GovernorAddressUnlockCondition)
 }
 
@@ -257,6 +268,7 @@ func (f UnlockConditionSet) StateControllerAddress() *StateControllerAddressUnlo
 	if !has {
 		return nil
 	}
+
 	return b.(*StateControllerAddressUnlockCondition)
 }
 
@@ -266,6 +278,7 @@ func (f UnlockConditionSet) Timelock() *TimelockUnlockCondition {
 	if !has {
 		return nil
 	}
+
 	return b.(*TimelockUnlockCondition)
 }
 
@@ -275,6 +288,7 @@ func (f UnlockConditionSet) Expiration() *ExpirationUnlockCondition {
 	if !has {
 		return nil
 	}
+
 	return b.(*ExpirationUnlockCondition)
 }
 
@@ -299,6 +313,7 @@ func UnlockConditionSelector(unlockCondType uint32) (UnlockCondition, error) {
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownUnlockConditionType, unlockCondType)
 	}
+
 	return seri, nil
 }
 
@@ -323,6 +338,7 @@ func jsonUnlockConditionSelector(ty int) (JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode unlock condition type from JSON: %w", ErrUnknownUnlockConditionType)
 	}
+
 	return obj, nil
 }
 
@@ -333,5 +349,6 @@ func unlockConditionsFromJSONRawMsg(jUnlockConditions []*json.RawMessage) (Unloc
 	}
 	var unlockConditions UnlockConditions
 	unlockConditions.FromSerializables(unlockConds)
+
 	return unlockConditions, nil
 }

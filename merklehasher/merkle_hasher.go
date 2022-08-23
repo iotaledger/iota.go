@@ -40,6 +40,7 @@ func (t *Hasher) HashBlockIDs(blockIDs iotago.BlockIDs) []byte {
 	for i := range blockIDs {
 		data[i] = blockIDs[i][:]
 	}
+
 	return t.Hash(data)
 }
 
@@ -50,12 +51,14 @@ func (t *Hasher) Hash(data [][]byte) []byte {
 	}
 	if len(data) == 1 {
 		l := data[0]
+
 		return t.hashLeaf(l)
 	}
 
 	k := largestPowerOfTwo(len(data))
 	l := t.Hash(data[:k])
 	r := t.Hash(data[k:])
+
 	return t.hashNode(l, r)
 }
 
@@ -64,6 +67,7 @@ func (t *Hasher) hashLeaf(l []byte) []byte {
 	h := t.hash.New()
 	h.Write([]byte{LeafHashPrefix})
 	h.Write(l)
+
 	return h.Sum(nil)
 }
 
@@ -73,6 +77,7 @@ func (t *Hasher) hashNode(l, r []byte) []byte {
 	h.Write([]byte{NodeHashPrefix})
 	h.Write(l)
 	h.Write(r)
+
 	return h.Sum(nil)
 }
 
@@ -81,5 +86,6 @@ func largestPowerOfTwo(x int) int {
 	if x < 2 {
 		panic("invalid value")
 	}
+
 	return 1 << (bits.Len(uint(x-1)) - 1)
 }

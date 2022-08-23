@@ -144,6 +144,7 @@ func (m *mockMqttClient) Publish(topic string, qos byte, retained bool, payload 
 
 func (m *mockMqttClient) Subscribe(topic string, qos byte, callback mqtt.MessageHandler) mqtt.Token {
 	go callback(m, &mockMsg{payload: m.payload})
+
 	return &mockToken{}
 }
 

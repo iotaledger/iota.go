@@ -294,6 +294,7 @@ func (nor *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 	}
 	var txID iotago.TransactionID
 	copy(txID[:], txIDBytes)
+
 	return &txID, nil
 }
 
@@ -311,5 +312,6 @@ func (nor *OutputResponse) Output() (iotago.Output, error) {
 	if !isOutput {
 		return nil, iotago.ErrUnknownOutputType
 	}
+
 	return output, nil
 }

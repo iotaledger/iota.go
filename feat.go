@@ -33,6 +33,7 @@ func (featType FeatureType) String() string {
 	if int(featType) >= len(featNames) {
 		return fmt.Sprintf("unknown feature type: %d", featType)
 	}
+
 	return featNames[featType]
 }
 
@@ -51,6 +52,7 @@ func (f Features) Clone() Features {
 	for i, v := range f {
 		cpy[i] = v.Clone()
 	}
+
 	return cpy
 }
 
@@ -69,6 +71,7 @@ func (f Features) ToSerializables() serializer.Serializables {
 	for i, x := range f {
 		seris[i] = x.(serializer.Serializable)
 	}
+
 	return seris
 }
 
@@ -84,6 +87,7 @@ func (f Features) Size() int {
 	for _, feat := range f {
 		sum += feat.Size()
 	}
+
 	return sum
 }
 
@@ -97,6 +101,7 @@ func (f Features) Set() (FeatureSet, error) {
 		}
 		set[feat.Type()] = feat
 	}
+
 	return set, nil
 }
 
@@ -108,6 +113,7 @@ func (f Features) MustSet() FeatureSet {
 	if err != nil {
 		panic(err)
 	}
+
 	return set
 }
 
@@ -121,6 +127,7 @@ func (f Features) Equal(other Features) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -133,6 +140,7 @@ func (f FeatureSet) Clone() FeatureSet {
 	for k, v := range f {
 		cpy[k] = v.Clone()
 	}
+
 	return cpy
 }
 
@@ -142,6 +150,7 @@ func (f FeatureSet) SenderFeature() *SenderFeature {
 	if !has {
 		return nil
 	}
+
 	return b.(*SenderFeature)
 }
 
@@ -151,6 +160,7 @@ func (f FeatureSet) IssuerFeature() *IssuerFeature {
 	if !has {
 		return nil
 	}
+
 	return b.(*IssuerFeature)
 }
 
@@ -160,6 +170,7 @@ func (f FeatureSet) MetadataFeature() *MetadataFeature {
 	if !has {
 		return nil
 	}
+
 	return b.(*MetadataFeature)
 }
 
@@ -169,6 +180,7 @@ func (f FeatureSet) TagFeature() *TagFeature {
 	if !has {
 		return nil
 	}
+
 	return b.(*TagFeature)
 }
 
@@ -180,12 +192,14 @@ func (f FeatureSet) EveryTuple(other FeatureSet, fun func(a Feature, b Feature) 
 		featB, has := other[ty]
 		if !has {
 			hadAll = false
+
 			continue
 		}
 		if err := fun(featA, featB); err != nil {
 			return false, err
 		}
 	}
+
 	return hadAll, nil
 }
 
@@ -219,6 +233,7 @@ func FeatureSelector(featType uint32) (Feature, error) {
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownFeatureType, featType)
 	}
+
 	return seri, nil
 }
 
@@ -237,6 +252,7 @@ func jsonFeatureSelector(ty int) (JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode feature type from JSON: %w", ErrUnknownFeatureType)
 	}
+
 	return obj, nil
 }
 
@@ -247,5 +263,6 @@ func featuresFromJSONRawMsg(jFeatures []*json.RawMessage) (Features, error) {
 	}
 	var features Features
 	features.FromSerializables(feats)
+
 	return features, nil
 }

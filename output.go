@@ -53,6 +53,7 @@ func (outputID OutputID) Index() uint16 {
 func (outputID OutputID) TransactionID() TransactionID {
 	var txID TransactionID
 	copy(txID[:], outputID[:TransactionIDLength])
+
 	return txID
 }
 
@@ -61,6 +62,7 @@ func (outputID OutputID) UTXOInput() *UTXOInput {
 	utxoInput := &UTXOInput{}
 	copy(utxoInput.TransactionID[:], outputID[:TransactionIDLength])
 	utxoInput.TransactionOutputIndex = binary.LittleEndian.Uint16(outputID[TransactionIDLength:])
+
 	return utxoInput
 }
 
@@ -73,6 +75,7 @@ func (ids HexOutputIDs) MustOutputIDs() OutputIDs {
 	if err != nil {
 		panic(err)
 	}
+
 	return vals
 }
 
@@ -86,6 +89,7 @@ func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 		}
 		copy(vals[i][:], val)
 	}
+
 	return vals, nil
 }
 
@@ -93,6 +97,7 @@ func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputID {
 	utxo := UTXOInput{TransactionOutputIndex: index}
 	copy(utxo.TransactionID[:], (txID)[:])
+
 	return utxo.ID()
 }
 
@@ -104,6 +109,7 @@ func OutputIDFromHex(hexStr string) (OutputID, error) {
 		return outputID, err
 	}
 	copy(outputID[:], outputIDData)
+
 	return outputID, nil
 }
 
@@ -115,6 +121,7 @@ func MustOutputIDFromHex(hexStr string) (OutputID, error) {
 		return outputID, err
 	}
 	copy(outputID[:], outputIDData)
+
 	return outputID, nil
 }
 
@@ -129,6 +136,7 @@ func (outputSet OutputSet) Filter(f func(outputID OutputID, output Output) bool)
 			m[id] = output
 		}
 	}
+
 	return m
 }
 
@@ -141,6 +149,7 @@ func (outputIDs OutputIDs) ToHex() []string {
 	for i := range outputIDs {
 		ids[i] = EncodeHex(outputIDs[i][:])
 	}
+
 	return ids
 }
 
@@ -159,6 +168,7 @@ func (outputIDs OutputIDs) RemoveDupsAndSort() OutputIDs {
 		}
 		prev = id
 	}
+
 	return result
 }
 
@@ -168,6 +178,7 @@ func (outputIDs OutputIDs) UTXOInputs() Inputs {
 	for _, outputID := range outputIDs {
 		inputs = append(inputs, outputID.UTXOInput())
 	}
+
 	return inputs
 }
 
@@ -177,6 +188,7 @@ func (outputIDs OutputIDs) OrderedSet(set OutputSet) Outputs {
 	for i, outputID := range outputIDs {
 		outputs[i] = set[outputID]
 	}
+
 	return outputs
 }
 
@@ -200,6 +212,7 @@ func (outputType OutputType) String() string {
 	if int(outputType) >= len(outputNames) {
 		return fmt.Sprintf("unknown output type: %d", outputType)
 	}
+
 	return outputNames[outputType]
 }
 
@@ -241,6 +254,7 @@ func (i *ChainTransitionError) Error() string {
 	if len(i.Msg) > 0 {
 		s.WriteString(fmt.Sprintf("; %s", i.Msg))
 	}
+
 	return s.String()
 }
 
@@ -256,6 +270,7 @@ func (outputs Outputs) ToSerializables() serializer.Serializables {
 	for i, x := range outputs {
 		seris[i] = x.(serializer.Serializable)
 	}
+
 	return seris
 }
 
@@ -271,6 +286,7 @@ func (outputs Outputs) Size() int {
 	for _, output := range outputs {
 		sum += output.Size()
 	}
+
 	return sum
 }
 
@@ -280,6 +296,7 @@ func (outputs Outputs) MustCommitment() []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return comm
 }
 
@@ -300,6 +317,7 @@ func (outputs Outputs) Commitment() ([]byte, error) {
 			return nil, fmt.Errorf("unable to write output bytes for commitment hash: %w", err)
 		}
 	}
+
 	return h.Sum(nil), nil
 }
 
@@ -325,6 +343,7 @@ func (outputs Outputs) ChainConstrainedOutputSet(txID TransactionID) ChainConstr
 
 		set[chainID] = chainConstrainedOutput
 	}
+
 	return set
 }
 
@@ -338,6 +357,7 @@ func (outputs Outputs) ToOutputsByType() OutputsByType {
 		}
 		outputsByType[output.Type()] = append(slice, output)
 	}
+
 	return outputsByType
 }
 
@@ -358,6 +378,7 @@ func (outputs Outputs) Filter(f OutputsFilterFunc) Outputs {
 		}
 		filtered = append(filtered, output)
 	}
+
 	return filtered
 }
 
@@ -385,6 +406,7 @@ func (outputs Outputs) NativeTokenSum() (NativeTokenSum, int, error) {
 			sum[nativeToken.ID] = val
 		}
 	}
+
 	return sum, ntCount, nil
 }
 
@@ -401,6 +423,7 @@ func (outputs OutputsByType) BasicOutputs() BasicOutputs {
 		}
 		extOutputs = append(extOutputs, extOutput)
 	}
+
 	return extOutputs
 }
 
@@ -414,6 +437,7 @@ func (outputs OutputsByType) FoundryOutputs() FoundryOutputs {
 		}
 		foundryOutputs = append(foundryOutputs, foundryOutput)
 	}
+
 	return foundryOutputs
 }
 
@@ -435,6 +459,7 @@ func (outputs OutputsByType) FoundryOutputsSet() (FoundryOutputsSet, error) {
 		}
 		foundryOutputsSet[foundryID] = foundryOutput
 	}
+
 	return foundryOutputsSet, nil
 }
 
@@ -448,6 +473,7 @@ func (outputs OutputsByType) AliasOutputs() AliasOutputs {
 		}
 		aliasOutputs = append(aliasOutputs, aliasOutput)
 	}
+
 	return aliasOutputs
 }
 
@@ -466,6 +492,7 @@ func (outputs OutputsByType) NonNewAliasOutputsSet() (AliasOutputsSet, error) {
 		}
 		aliasOutputsSet[aliasOutput.AliasID] = aliasOutput
 	}
+
 	return aliasOutputsSet, nil
 }
 
@@ -485,6 +512,7 @@ func (outputs OutputsByType) ChainConstrainedOutputsSet() (ChainConstrainedOutpu
 			chainConstrainedOutputs[chainConstrainedOutput.Chain()] = chainConstrainedOutput
 		}
 	}
+
 	return chainConstrainedOutputs, nil
 }
 
@@ -500,6 +528,7 @@ func (outputs OutputsByType) ChainConstrainedOutputs() ChainConstrainedOutputs {
 			chainConstrainedOutputs = append(chainConstrainedOutputs, chainConstrainedOutput)
 		}
 	}
+
 	return chainConstrainedOutputs
 }
 
@@ -513,6 +542,7 @@ func (outputSet OutputSet) NewAliases() AliasOutputsSet {
 		}
 		set[AliasIDFromOutputID(utxoInputID)] = aliasOutput
 	}
+
 	return set
 }
 
@@ -538,6 +568,7 @@ func (outputSet OutputSet) ChainConstrainedOutputSet() ChainConstrainedOutputsSe
 
 		set[chainID] = chainConstrainedOutput
 	}
+
 	return set
 }
 
@@ -553,6 +584,7 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 			if err != nil {
 				return false, err
 			}
+
 			return targetToUnlock.Equal(target), nil
 		default:
 			panic("invalid output type in outputUnlockable")
@@ -650,6 +682,7 @@ func OutputSelector(outputType uint32) (Output, error) {
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownOutputType, outputType)
 	}
+
 	return seri, nil
 }
 
@@ -663,6 +696,7 @@ func (oih OutputIDHex) MustSplitParts() (*TransactionID, uint16) {
 	if err != nil {
 		panic(err)
 	}
+
 	return txID, outputIndex
 }
 
@@ -675,6 +709,7 @@ func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
 	var txID TransactionID
 	copy(txID[:], outputIDBytes[:TransactionIDLength])
 	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[TransactionIDLength : TransactionIDLength+serializer.UInt16ByteSize])
+
 	return &txID, outputIndex, nil
 }
 
@@ -685,6 +720,7 @@ func (oih OutputIDHex) MustAsUTXOInput() *UTXOInput {
 	if err != nil {
 		panic(err)
 	}
+
 	return utxoInput
 }
 
@@ -697,6 +733,7 @@ func (oih OutputIDHex) AsUTXOInput() (*UTXOInput, error) {
 	}
 	copy(utxoInput.TransactionID[:], txID[:])
 	utxoInput.TransactionOutputIndex = outputIndex
+
 	return &utxoInput, nil
 }
 
@@ -712,6 +749,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //     required for the sender to send back the tokens.
 func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSyntacticalValidationFunc {
 	var sum uint64
+
 	return func(index int, output Output) error {
 		deposit := output.Deposit()
 
@@ -741,6 +779,7 @@ func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSynt
 		}
 
 		sum += deposit
+
 		return nil
 	}
 }
@@ -750,6 +789,7 @@ func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSynt
 //   - each native token holds an amount bigger than zero
 func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
 	var nativeTokensCount int
+
 	return func(index int, output Output) error {
 		nativeTokens := output.NativeTokenList()
 		nativeTokensCount += len(nativeTokens)
@@ -762,6 +802,7 @@ func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
 				return fmt.Errorf("%w: output %d, native token index %d", ErrNativeTokenAmountLessThanEqualZero, index, i)
 			}
 		}
+
 		return nil
 	}
 }
@@ -870,6 +911,7 @@ func SyntacticallyValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalVa
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -890,5 +932,6 @@ func JsonOutputSelector(ty int) (JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode output type from JSON: %w", ErrUnknownOutputType)
 	}
+
 	return obj, nil
 }

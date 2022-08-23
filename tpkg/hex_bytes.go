@@ -20,6 +20,7 @@ func (b *HexBytes) UnmarshalText(text []byte) (err error) {
 		return err
 	}
 	*b = dec
+
 	return
 }
 

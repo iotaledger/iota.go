@@ -84,6 +84,7 @@ func (t *TreasuryOutput) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*t = *seri.(*TreasuryOutput)
+
 	return nil
 }
 
@@ -100,5 +101,6 @@ func (j *jsonTreasuryOutput) ToSerializable() (serializer.Serializable, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return t, nil
 }

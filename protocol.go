@@ -37,6 +37,7 @@ type NetworkID = uint64
 // NetworkIDFromString returns the network ID string's numerical representation.
 func NetworkIDFromString(networkIDStr string) NetworkID {
 	networkIDBlakeHash := blake2b.Sum256([]byte(networkIDStr))
+
 	return binary.LittleEndian.Uint64(networkIDBlakeHash[:])
 }
 
@@ -61,6 +62,7 @@ type ProtocolParameters struct {
 func (p *ProtocolParameters) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	var bech32HRP string
 	var rentStructure *RentStructure
+
 	return serializer.NewDeserializer(data).
 		ReadByte(&p.Version, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize version within protocol parameters", err)

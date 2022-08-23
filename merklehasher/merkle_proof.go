@@ -35,12 +35,14 @@ func (t *Hasher) ComputeProof(blockIDs iotago.BlockIDs, blockID iotago.BlockID) 
 		if blockID == blockIDs[i] {
 			index = i
 			found = true
+
 			break
 		}
 	}
 	if !found {
 		return nil, fmt.Errorf("blockID %s is not contained in the given list", blockID.ToHex())
 	}
+
 	return t.ComputeProofForIndex(blockIDs, index)
 }
 
@@ -62,12 +64,14 @@ func (t *Hasher) ComputeProofForIndex(blockIDs iotago.BlockIDs, index int) (*Pro
 	if err != nil {
 		return nil, err
 	}
+
 	return p.(*Proof), nil
 }
 
 func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
 	if len(data) < 2 {
 		l := data[0]
+
 		return &leafValue{l}, nil
 	}
 
@@ -95,6 +99,7 @@ func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
 			return nil, err
 		}
 		right := t.Hash(data[k:])
+
 		return &Proof{
 			Left:  left,
 			Right: &hashValue{right},
@@ -106,6 +111,7 @@ func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return &Proof{
 			Left:  &hashValue{left},
 			Right: right,
@@ -140,6 +146,7 @@ func (l *leafValue) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	l.Value = value
+
 	return nil
 }
 
@@ -170,6 +177,7 @@ func (h *hashValue) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	h.Value = value
+
 	return nil
 }
 
@@ -191,6 +199,7 @@ func containsLeafValue(hasheable hashable, value []byte) bool {
 	case *Proof:
 		return containsLeafValue(t.Right, value) || containsLeafValue(t.Left, value)
 	}
+
 	return false
 }
 
@@ -209,6 +218,7 @@ func (p *Proof) MarshalJSON() ([]byte, error) {
 	}
 	rawLeft := json.RawMessage(jsonLeft)
 	rawRight := json.RawMessage(jsonRight)
+
 	return json.Marshal(&jsonPath{
 		Left:  &rawLeft,
 		Right: &rawRight,
@@ -219,11 +229,13 @@ func unmarshalHashable(raw *json.RawMessage, hasheable *hashable) error {
 	h := &hashValue{}
 	if err := json.Unmarshal(*raw, h); err == nil {
 		*hasheable = h
+
 		return nil
 	}
 	l := &leafValue{}
 	if err := json.Unmarshal(*raw, l); err == nil {
 		*hasheable = l
+
 		return nil
 	}
 
@@ -232,6 +244,7 @@ func unmarshalHashable(raw *json.RawMessage, hasheable *hashable) error {
 		return err
 	}
 	*hasheable = p
+
 	return nil
 }
 
@@ -250,5 +263,6 @@ func (p *Proof) UnmarshalJSON(bytes []byte) error {
 	}
 	p.Left = left
 	p.Right = right
+
 	return nil
 }

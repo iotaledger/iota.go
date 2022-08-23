@@ -25,6 +25,7 @@ func (ti *TreasuryInput) Type() InputType {
 
 func (ti *TreasuryInput) Clone() *TreasuryInput {
 	p := *ti
+
 	return &p
 }
 
@@ -38,6 +39,7 @@ func (ti *TreasuryInput) Deserialize(data []byte, deSeriMode serializer.DeSerial
 		}
 	}
 	copy(ti[:], data[serializer.SmallTypeDenotationByteSize:])
+
 	return TreasuryInputSerializedBytesSize, nil
 }
 
@@ -45,6 +47,7 @@ func (ti *TreasuryInput) Serialize(deSeriMode serializer.DeSerializationMode, de
 	var b [TreasuryInputSerializedBytesSize]byte
 	b[0] = byte(InputTreasury)
 	copy(b[serializer.SmallTypeDenotationByteSize:], ti[:])
+
 	return b[:], nil
 }
 
@@ -69,6 +72,7 @@ func (ti *TreasuryInput) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*ti = *seri.(*TreasuryInput)
+
 	return nil
 }
 
@@ -88,5 +92,6 @@ func (j *jsonTreasuryInput) ToSerializable() (serializer.Serializable, error) {
 	}
 	input := &TreasuryInput{}
 	copy(input[:], msHash)
+
 	return input, nil
 }

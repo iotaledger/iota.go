@@ -33,6 +33,7 @@ func (msOptType MilestoneOptType) String() string {
 	if int(msOptType) >= len(msOptNames) {
 		return fmt.Sprintf("unknown milestone option type: %d", msOptType)
 	}
+
 	return msOptNames[msOptType]
 }
 
@@ -58,6 +59,7 @@ func MilestoneOptSelector(msOptType uint32) (MilestoneOpt, error) {
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownMilestoneOptType, msOptType)
 	}
+
 	return seri, nil
 }
 
@@ -72,6 +74,7 @@ func jsonMilestoneOptSelector(ty int) (JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode milestone option type from JSON: %w", ErrUnknownMilestoneOptType)
 	}
+
 	return obj, nil
 }
 
@@ -82,6 +85,7 @@ func milestoneOptsFromJSONRawMsg(jMilestoneOpts []*json.RawMessage) (MilestoneOp
 	}
 	var msOpts MilestoneOpts
 	msOpts.FromSerializables(opts)
+
 	return msOpts, nil
 }
 
@@ -93,6 +97,7 @@ func (m MilestoneOpts) ToSerializables() serializer.Serializables {
 	for i, x := range m {
 		seris[i] = x.(serializer.Serializable)
 	}
+
 	return seris
 }
 
@@ -108,6 +113,7 @@ func (m MilestoneOpts) Size() int {
 	for _, opt := range m {
 		sum += opt.Size()
 	}
+
 	return sum
 }
 
@@ -121,6 +127,7 @@ func (m MilestoneOpts) Set() (MilestoneOptSet, error) {
 		}
 		set[opt.Type()] = opt
 	}
+
 	return set, nil
 }
 
@@ -132,6 +139,7 @@ func (m MilestoneOpts) MustSet() MilestoneOptSet {
 	if err != nil {
 		panic(err)
 	}
+
 	return set
 }
 
@@ -163,6 +171,7 @@ func msOptReadGuard(supportedMsOpts MilestoneOptTypeSet) serializer.Serializable
 		if _, supported := supportedMsOpts[MilestoneOptType(ty)]; !supported {
 			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedMilestoneOpt, supportedMsOpts, ty)
 		}
+
 		return MilestoneOptSelector(ty)
 	}
 }
@@ -176,6 +185,7 @@ func (set MilestoneOptSet) Clone() MilestoneOptSet {
 	for k, v := range set {
 		cpy[k] = v.Clone()
 	}
+
 	return cpy
 }
 
@@ -185,6 +195,7 @@ func (set MilestoneOptSet) Receipt() *ReceiptMilestoneOpt {
 	if !has {
 		return nil
 	}
+
 	return b.(*ReceiptMilestoneOpt)
 }
 
@@ -194,5 +205,6 @@ func (set MilestoneOptSet) ProtocolParams() *ProtocolParamsMilestoneOpt {
 	if !has {
 		return nil
 	}
+
 	return b.(*ProtocolParamsMilestoneOpt)
 }

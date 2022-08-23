@@ -34,6 +34,7 @@ func (o MigratedFundsEntries) Clone() MigratedFundsEntries {
 	for i, or := range o {
 		cpy[i] = or.Clone()
 	}
+
 	return cpy
 }
 
@@ -46,6 +47,7 @@ func (o MigratedFundsEntries) ToSerializables() serializer.Serializables {
 	for i, x := range o {
 		seris[i] = x
 	}
+
 	return seris
 }
 
@@ -72,6 +74,7 @@ func (m *MigratedFundsEntry) Clone() *MigratedFundsEntry {
 		Deposit: m.Deposit,
 	}
 	copy(cpy.TailTransactionHash[:], m.TailTransactionHash[:])
+
 	return cpy
 }
 
@@ -127,6 +130,7 @@ func (m *MigratedFundsEntry) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*m = *seri.(*MigratedFundsEntry)
+
 	return nil
 }
 
@@ -154,5 +158,6 @@ func (j *jsonMigratedFundsEntry) ToSerializable() (serializer.Serializable, erro
 	if err != nil {
 		return nil, err
 	}
+
 	return payload, nil
 }

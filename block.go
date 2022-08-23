@@ -41,6 +41,7 @@ var (
 			default:
 				return nil, fmt.Errorf("a block can only contain a transaction/tagged data/milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
 			}
+
 			return PayloadSelector(ty)
 		},
 		WriteGuard: func(seri serializer.Serializable) error {
@@ -54,6 +55,7 @@ var (
 			default:
 				return ErrUnsupportedPayloadType
 			}
+
 			return nil
 		},
 	}
@@ -82,11 +84,13 @@ type BlockID [BlockIDLength]byte
 func (id BlockID) MarshalText() (text []byte, err error) {
 	dst := make([]byte, hex.EncodedLen(len(BlockID{})))
 	hex.Encode(dst, id[:])
+
 	return dst, nil
 }
 
 func (id *BlockID) UnmarshalText(text []byte) error {
 	_, err := hex.Decode(id[:], text)
+
 	return err
 }
 
@@ -113,6 +117,7 @@ func BlockIDFromHexString(blockIDHex string) (BlockID, error) {
 
 	var blockID BlockID
 	copy(blockID[:], blockIDBytes)
+
 	return blockID, nil
 }
 
@@ -122,6 +127,7 @@ func MustBlockIDFromHexString(blockIDHex string) BlockID {
 	if err != nil {
 		panic(err)
 	}
+
 	return blockID
 }
 
@@ -134,6 +140,7 @@ func (ids BlockIDs) ToHex() []string {
 	for i, id := range ids {
 		hexIDs[i] = EncodeHex(id[:])
 	}
+
 	return hexIDs
 }
 
@@ -142,6 +149,7 @@ func (ids BlockIDs) ToSerializerType() serializer.SliceOfArraysOf32Bytes {
 	for i, ele := range ids {
 		result[i] = ele
 	}
+
 	return result
 }
 
@@ -160,6 +168,7 @@ func (ids BlockIDs) RemoveDupsAndSort() BlockIDs {
 		}
 		prev = id
 	}
+
 	return result
 }
 
@@ -197,6 +206,7 @@ func (m *Block) ID() (BlockID, error) {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
 	}
 	h := blake2b.Sum256(data)
+
 	return h, nil
 }
 
@@ -206,6 +216,7 @@ func (m *Block) MustID() BlockID {
 	if err != nil {
 		panic(err)
 	}
+
 	return blockID
 }
 
@@ -215,6 +226,7 @@ func (m *Block) POW() (float64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("can't compute block PoW score: %w", err)
 	}
+
 	return pow.Score(data), nil
 }
 
@@ -223,6 +235,7 @@ func (m *Block) Deserialize(data []byte, deSeriMode serializer.DeSerializationMo
 		return 0, fmt.Errorf("%w: size %d bytes", ErrBlockExceedsMaxSize, len(data))
 	}
 	parentsSlice := serializer.SliceOfArraysOf32Bytes{}
+
 	return serializer.NewDeserializer(data).
 		ReadNum(&m.ProtocolVersion, func(err error) error {
 			return fmt.Errorf("unable to deserialize block protocol version: %w", err)
@@ -274,6 +287,7 @@ func (m *Block) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx i
 	if len(data) > BlockBinSerializedMaxSize {
 		return nil, fmt.Errorf("%w: size %d bytes", ErrBlockExceedsMaxSize, len(data))
 	}
+
 	return data, nil
 }
 
@@ -294,6 +308,7 @@ func (m *Block) MarshalJSON() ([]byte, error) {
 		rawMsgJsonPayload := json.RawMessage(jsonPayload)
 		jBlock.Payload = &rawMsgJsonPayload
 	}
+
 	return json.Marshal(jBlock)
 }
 
@@ -307,6 +322,7 @@ func (m *Block) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*m = *seri.(*Block)
+
 	return nil
 }
 

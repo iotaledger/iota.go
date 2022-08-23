@@ -57,6 +57,7 @@ func (u *TaggedData) Serialize(deSeriMode serializer.DeSerializationMode, deSeri
 				// the max size it can take up is dependent on how big the enclosing
 				// parent object is
 			}
+
 			return nil
 		}).
 		WriteNum(PayloadTaggedData, func(err error) error {
@@ -83,6 +84,7 @@ func (u *TaggedData) MarshalJSON() ([]byte, error) {
 	jTaggedData.Type = int(PayloadTaggedData)
 	jTaggedData.Tag = EncodeHex(u.Tag)
 	jTaggedData.Data = EncodeHex(u.Data)
+
 	return json.Marshal(jTaggedData)
 }
 
@@ -96,6 +98,7 @@ func (u *TaggedData) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*u = *seri.(*TaggedData)
+
 	return nil
 }
 

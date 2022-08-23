@@ -89,6 +89,7 @@ func (r *RentStructure) MarshalJSON() ([]byte, error) {
 		VBFactorData: uint8(r.VBFactorData),
 		VBFactorKey:  uint8(r.VBFactorKey),
 	}
+
 	return json.Marshal(jRentStructure)
 }
 
@@ -102,6 +103,7 @@ func (r *RentStructure) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*r = *seri.(*RentStructure)
+
 	return nil
 }
 
@@ -128,6 +130,7 @@ func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint64) 
 	if rent < minRent {
 		return 0, fmt.Errorf("%w: needed %d but only got %d", ErrVByteRentNotCovered, minRent, rent)
 	}
+
 	return minRent, nil
 }
 

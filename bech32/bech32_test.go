@@ -211,5 +211,6 @@ func decodeHex(s string) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return dst
 }

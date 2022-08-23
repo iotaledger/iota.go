@@ -48,6 +48,7 @@ func readBody(res *http.Response) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to read response body: %w", err)
 	}
+
 	return resBody, nil
 }
 
@@ -67,6 +68,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 		if rawData, ok := decodeTo.(*RawDataEnvelope); ok {
 			rawData.Data = make([]byte, len(resBody))
 			copy(rawData.Data, resBody)
+
 			return nil
 		}
 
@@ -134,6 +136,7 @@ func do(
 		if data == nil {
 			return nil
 		}
+
 		return bytes.NewReader(data)
 	}())
 	if err != nil {
@@ -167,5 +170,6 @@ func do(
 	if err := interpretBody(res, resObj); err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }

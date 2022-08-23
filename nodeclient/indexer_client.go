@@ -84,6 +84,7 @@ func (resultSet *IndexerResultSet) Next() bool {
 
 	if err := resultSet.nextFunc(); err != nil {
 		resultSet.Error = err
+
 		return false
 	}
 
@@ -109,6 +110,7 @@ func (resultSet *IndexerResultSet) Outputs() (iotago.Outputs, error) {
 		}
 		outputs[i] = output
 	}
+
 	return outputs, nil
 }
 
@@ -144,6 +146,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 
 		routeWithParas := fmt.Sprintf("%s?%s", baseRoute, urlParas)
 		_, reqErr := client.Do(ctx, http.MethodGet, routeWithParas, nil, res.Response)
+
 		return reqErr
 	}
 	res.nextFunc = nextFunc
@@ -167,6 +170,7 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 		return nil, nil, err
 	}
 	out, err := outputRes.Output()
+
 	return &outputID, out, err
 }
 
@@ -175,6 +179,7 @@ func (client *indexerClient) Alias(ctx context.Context, aliasID iotago.AliasID) 
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return outputID, output.(*iotago.AliasOutput), nil
 }
 
@@ -183,6 +188,7 @@ func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.Found
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return outputID, output.(*iotago.FoundryOutput), nil
 }
 
@@ -191,5 +197,6 @@ func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iota
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return outputID, output.(*iotago.NFTOutput), nil
 }

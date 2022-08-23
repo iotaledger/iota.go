@@ -76,6 +76,7 @@ func (s *StateControllerAddressUnlockCondition) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return json.Marshal(jUnlockCond)
 }
 
@@ -89,6 +90,7 @@ func (s *StateControllerAddressUnlockCondition) UnmarshalJSON(bytes []byte) erro
 		return err
 	}
 	*s = *seri.(*StateControllerAddressUnlockCondition)
+
 	return nil
 }
 
@@ -106,5 +108,6 @@ func (j *jsonStateControllerAddressUnlockCondition) ToSerializable() (serializer
 	if err != nil {
 		return nil, err
 	}
+
 	return unlockCond, nil
 }

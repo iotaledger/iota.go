@@ -68,6 +68,7 @@ func (sum NativeTokenSum) ValueOrBigInt0(id NativeTokenID) *big.Int {
 	if !has {
 		return big.NewInt(0)
 	}
+
 	return v
 }
 
@@ -90,6 +91,7 @@ func (n NativeTokens) Set() (NativeTokensSet, error) {
 		}
 		set[token.ID] = token
 	}
+
 	return set, nil
 }
 
@@ -101,6 +103,7 @@ func (n NativeTokens) MustSet() NativeTokensSet {
 	if err != nil {
 		panic(err)
 	}
+
 	return set
 }
 
@@ -110,6 +113,7 @@ func (n NativeTokens) Clone() NativeTokens {
 	for i, ele := range n {
 		cpy[i] = ele.Clone()
 	}
+
 	return cpy
 }
 
@@ -123,6 +127,7 @@ func (n NativeTokens) ToSerializables() serializer.Serializables {
 	for i, x := range n {
 		seris[i] = x
 	}
+
 	return seris
 }
 
@@ -138,6 +143,7 @@ func (n NativeTokens) Size() int {
 	for _, token := range n {
 		sum += token.Size()
 	}
+
 	return sum
 }
 
@@ -151,6 +157,7 @@ func (n NativeTokens) Equal(other NativeTokens) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -165,6 +172,7 @@ func (n *NativeToken) Clone() *NativeToken {
 	cpy := &NativeToken{}
 	copy(cpy.ID[:], n.ID[:])
 	cpy.Amount = new(big.Int).Set(n.Amount)
+
 	return cpy
 }
 
@@ -177,6 +185,7 @@ func (n *NativeToken) Equal(other *NativeToken) bool {
 	if n.ID != other.ID {
 		return false
 	}
+
 	return n.Amount.Cmp(other.Amount) == 0
 }
 
@@ -211,6 +220,7 @@ func (n *NativeToken) MarshalJSON() ([]byte, error) {
 	jNativeToken := &jsonNativeToken{}
 	jNativeToken.ID = EncodeHex(n.ID[:])
 	jNativeToken.Amount = EncodeUint256(n.Amount)
+
 	return json.Marshal(jNativeToken)
 }
 
@@ -224,6 +234,7 @@ func (n *NativeToken) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*n = *seri.(*NativeToken)
+
 	return nil
 }
 
@@ -236,6 +247,7 @@ func nativeTokensFromJSONRawMsg(jNativeTokens []*json.RawMessage) (NativeTokens,
 	}
 	var nativeTokens NativeTokens
 	nativeTokens.FromSerializables(tokens)
+
 	return nativeTokens, nil
 }
 

@@ -69,6 +69,7 @@ func serializablesToJSONRawMsgs(seris serializer.Serializables) ([]*json.RawMess
 		rawSeriJson := json.RawMessage(jSeri)
 		msgs[i] = &rawSeriJson
 	}
+
 	return msgs, nil
 }
 
@@ -82,5 +83,6 @@ func jsonRawMsgsToSerializables(msgs []*json.RawMessage, selector JSONSerializab
 		}
 		seris[i] = seri
 	}
+
 	return seris, nil
 }

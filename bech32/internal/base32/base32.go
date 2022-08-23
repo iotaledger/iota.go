@@ -26,20 +26,24 @@ func Encode(dst []uint8, src []byte) int {
 		default:
 			dst[7] = src[4] & 0x1F
 			carry = src[4] >> 5
+
 			fallthrough
 		case 4:
 			dst[6] = carry | (src[3]<<3)&0x1F
 			dst[5] = (src[3] >> 2) & 0x1F
 			carry = src[3] >> 7
+
 			fallthrough
 		case 3:
 			dst[4] = carry | (src[2]<<1)&0x1F
 			carry = (src[2] >> 4) & 0x1F
+
 			fallthrough
 		case 2:
 			dst[3] = carry | (src[1]<<4)&0x1F
 			dst[2] = (src[1] >> 1) & 0x1F
 			carry = (src[1] >> 6) & 0x1F
+
 			fallthrough
 		case 1:
 			dst[1] = carry | (src[0]<<2)&0x1F
@@ -52,6 +56,7 @@ func Encode(dst []uint8, src []byte) int {
 		src = src[5:]
 		dst = dst[8:]
 	}
+
 	return n
 }
 
@@ -97,18 +102,22 @@ func Decode(dst []byte, src []uint8) (int, error) {
 		default:
 			dst[4] = src[6]<<5 | src[7]
 			written++
+
 			fallthrough
 		case 7:
 			dst[3] = src[4]<<7 | src[5]<<2 | src[6]>>3
 			written++
+
 			fallthrough
 		case 5:
 			dst[2] = src[3]<<4 | src[4]>>1
 			written++
+
 			fallthrough
 		case 4:
 			dst[1] = src[1]<<6 | src[2]<<1 | src[3]>>4
 			written++
+
 			fallthrough
 		case 2:
 			dst[0] = src[0]<<3 | src[1]>>2
@@ -127,11 +136,13 @@ func Decode(dst []byte, src []uint8) (int, error) {
 			case n == 7 && src[6]&(1<<3-1) != 0:
 				return written, &CorruptInputError{ErrNonZeroPadding, read + 6}
 			}
+
 			break
 		}
 		dst = dst[5:]
 		src = src[8:]
 		read += 8
 	}
+
 	return written, nil
 }

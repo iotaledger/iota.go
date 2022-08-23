@@ -247,6 +247,7 @@ func (client *Client) Indexer(ctx context.Context) (IndexerClient, error) {
 	if !hasPlugin {
 		return nil, ErrIndexerPluginNotAvailable
 	}
+
 	return &indexerClient{core: client}, nil
 }
 
@@ -260,6 +261,7 @@ func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
 	if !hasPlugin {
 		return nil, ErrMQTTPluginNotAvailable
 	}
+
 	return newEventAPIClient(client), nil
 }
 
@@ -307,6 +309,7 @@ func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
@@ -320,6 +323,7 @@ func (ntr *TipsResponse) Tips() (iotago.BlockIDs, error) {
 		}
 		copy(blockIDs[i][:], blockID)
 	}
+
 	return blockIDs, nil
 }
 

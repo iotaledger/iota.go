@@ -49,6 +49,7 @@ func NewInMemoryAddressSigner(addrKeys ...AddressKeys) AddressSigner {
 	for _, c := range addrKeys {
 		ss.addrKeys[c.Address.String()] = c.Keys
 	}
+
 	return ss
 }
 

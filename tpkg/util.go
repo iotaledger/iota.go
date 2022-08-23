@@ -36,6 +36,7 @@ func RandBytes(length int) []byte {
 	for i := 0; i < length; i++ {
 		b = append(b, byte(rand.Intn(256)))
 	}
+
 	return b
 }
 
@@ -74,6 +75,7 @@ func RandTrytes(length int) trinary.Trytes {
 	for i := 0; i < length; i++ {
 		trytes.WriteByte(legacy.TryteAlphabet[rand.Intn(len(legacy.TryteAlphabet))])
 	}
+
 	return trytes.String()
 }
 
@@ -84,6 +86,7 @@ func RandOutputID(index uint16) iotago.OutputID {
 		panic(err)
 	}
 	binary.LittleEndian.PutUint16(outputID[iotago.TransactionIDLength:], index)
+
 	return outputID
 }
 
@@ -92,6 +95,7 @@ func RandOutputIDs(count uint16) iotago.OutputIDs {
 	for i := 0; i < int(count); i++ {
 		outputIDs[i] = RandOutputID(count)
 	}
+
 	return outputIDs
 }
 
@@ -101,6 +105,7 @@ func RandTransactionID() iotago.TransactionID {
 	if err != nil {
 		panic(err)
 	}
+
 	return transactionID
 }
 
@@ -109,6 +114,7 @@ func RandNativeToken() *iotago.NativeToken {
 	b := RandBytes(iotago.NativeTokenIDLength)
 	nt := &iotago.NativeToken{Amount: RandUint256()}
 	copy(nt.ID[:], b)
+
 	return nt
 }
 
@@ -121,6 +127,7 @@ func RandSortNativeTokens(count int) iotago.NativeTokens {
 	seris := nativeTokens.ToSerializables()
 	sort.Sort(serializer.SortedSerializables(seris))
 	nativeTokens.FromSerializables(seris)
+
 	return nativeTokens
 }
 
@@ -133,6 +140,7 @@ func Rand12ByteArray() [12]byte {
 	var h [12]byte
 	b := RandBytes(12)
 	copy(h[:], b)
+
 	return h
 }
 
@@ -141,6 +149,7 @@ func Rand32ByteArray() [32]byte {
 	var h [32]byte
 	b := RandBytes(32)
 	copy(h[:], b)
+
 	return h
 }
 
@@ -149,6 +158,7 @@ func Rand50ByteArray() [50]byte {
 	var h [50]byte
 	b := RandBytes(50)
 	copy(h[:], b)
+
 	return h
 }
 
@@ -157,6 +167,7 @@ func Rand38ByteArray() [38]byte {
 	var h [38]byte
 	b := RandBytes(38)
 	copy(h[:], b)
+
 	return h
 }
 
@@ -165,6 +176,7 @@ func Rand49ByteArray() [49]byte {
 	var h [49]byte
 	b := RandBytes(49)
 	copy(h[:], b)
+
 	return h
 }
 
@@ -173,6 +185,7 @@ func Rand64ByteArray() [64]byte {
 	var h [64]byte
 	b := RandBytes(64)
 	copy(h[:], b)
+
 	return h
 }
 
@@ -183,6 +196,7 @@ func SortedRand32ByteArray(count int) [][32]byte {
 		hashes[i] = Rand32ByteArray()
 	}
 	sort.Sort(hashes)
+
 	return hashes
 }
 
@@ -192,6 +206,7 @@ func SortedRandBlockIDs(count int) iotago.BlockIDs {
 	for i, ele := range SortedRand32ByteArray(count) {
 		slice[i] = ele
 	}
+
 	return slice
 }
 
@@ -200,6 +215,7 @@ func RandEd25519Address() *iotago.Ed25519Address {
 	edAddr := &iotago.Ed25519Address{}
 	addr := RandBytes(iotago.Ed25519AddressBytesLength)
 	copy(edAddr[:], addr)
+
 	return edAddr
 }
 
@@ -208,6 +224,7 @@ func RandAliasAddress() *iotago.AliasAddress {
 	aliasAddr := &iotago.AliasAddress{}
 	addr := RandBytes(iotago.AliasAddressBytesLength)
 	copy(aliasAddr[:], addr)
+
 	return aliasAddr
 }
 
@@ -216,6 +233,7 @@ func RandNFTAddress() *iotago.NFTAddress {
 	nftAddr := &iotago.NFTAddress{}
 	addr := RandBytes(iotago.NFTAddressBytesLength)
 	copy(nftAddr[:], addr)
+
 	return nftAddr
 }
 
@@ -226,6 +244,7 @@ func RandEd25519Signature() *iotago.Ed25519Signature {
 	sig := RandBytes(ed25519.SignatureSize)
 	copy(edSig.PublicKey[:], pub)
 	copy(edSig.Signature[:], sig)
+
 	return edSig
 }
 
@@ -341,11 +360,13 @@ func RandMilestone(parents iotago.BlockIDs) *iotago.Milestone {
 		InclusionMerkleRoot: func() iotago.MilestoneMerkleProof {
 			var b iotago.MilestoneMerkleProof
 			copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
+
 			return b
 		}(),
 		AppliedMerkleRoot: func() iotago.MilestoneMerkleProof {
 			var b iotago.MilestoneMerkleProof
 			copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
+
 			return b
 		}(),
 		Metadata: RandBytes(10),
@@ -364,6 +385,7 @@ func RandMilestone(parents iotago.BlockIDs) *iotago.Milestone {
 			sort.Slice(msSigs, func(i, j int) bool {
 				return bytes.Compare(msSigs[i].(*iotago.Ed25519Signature).PublicKey[:], msSigs[j].(*iotago.Ed25519Signature).PublicKey[:]) == -1
 			})
+
 			return msSigs
 		}(),
 	}
@@ -380,6 +402,7 @@ func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	default:
 		data = RandBytes(rand.Intn(200) + 1)
 	}
+
 	return &iotago.TaggedData{Tag: tag, Data: data}
 }
 
@@ -444,6 +467,7 @@ func RandTreasuryInput() *iotago.TreasuryInput {
 	treasuryInput := &iotago.TreasuryInput{}
 	input := RandBytes(iotago.TreasuryInputBytesLength)
 	copy(treasuryInput[:], input)
+
 	return treasuryInput
 }
 
@@ -459,6 +483,7 @@ func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 	copy(utxoInput.TransactionID[:], txID)
 
 	utxoInput.TransactionOutputIndex = index
+
 	return utxoInput
 }
 
@@ -488,6 +513,7 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 
 	amount := uint64(rand.Intn(10000) + 1)
 	dep.Amount = amount
+
 	return dep
 }
 
@@ -500,6 +526,7 @@ func OneInputOutputTransaction() *iotago.Transaction {
 					TransactionID: func() [iotago.TransactionIDLength]byte {
 						var b [iotago.TransactionIDLength]byte
 						copy(b[:], RandBytes(iotago.TransactionIDLength))
+
 						return b
 					}(),
 					TransactionOutputIndex: 0,
@@ -526,6 +553,7 @@ func OneInputOutputTransaction() *iotago.Transaction {
 // RandEd25519PrivateKey returns a random Ed25519 private key.
 func RandEd25519PrivateKey() ed25519.PrivateKey {
 	seed := RandEd25519Seed()
+
 	return ed25519.NewKeyFromSeed(seed[:])
 }
 
@@ -539,6 +567,7 @@ func RandEd25519Seed() [ed25519.SeedSize]byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return b
 }
 
@@ -547,6 +576,7 @@ func RandEd25519Identity() (ed25519.PrivateKey, *iotago.Ed25519Address, iotago.A
 	edSk := RandEd25519PrivateKey()
 	edAddr := iotago.Ed25519AddressFromPubKey(edSk.Public().(ed25519.PublicKey))
 	addrKeys := iotago.NewAddressKeysForEd25519Address(&edAddr, edSk)
+
 	return edSk, &edAddr, addrKeys
 }
 

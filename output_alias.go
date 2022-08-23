@@ -42,6 +42,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
 				}
+
 				return UnlockConditionSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -51,6 +52,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in alias output", ErrUnsupportedUnlockConditionType)
 				}
+
 				return nil
 			},
 		},
@@ -70,6 +72,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
 				}
+
 				return FeatureSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -79,6 +82,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in alias output", ErrUnsupportedFeatureType)
 				}
+
 				return nil
 			},
 		},
@@ -98,6 +102,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize alias output, unsupported immutable feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
 				}
+
 				return FeatureSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -107,6 +112,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in alias output", ErrUnsupportedFeatureType)
 				}
+
 				return nil
 			},
 		},
@@ -159,12 +165,14 @@ func (id AliasID) Matches(other ChainID) bool {
 	if !isAliasID {
 		return false
 	}
+
 	return id == otherAliasID
 }
 
 func (id AliasID) ToAddress() ChainConstrainedAddress {
 	var addr AliasAddress
 	copy(addr[:], id[:])
+
 	return &addr
 }
 
@@ -184,6 +192,7 @@ func (outputs AliasOutputs) Every(f func(output *AliasOutput) bool) int {
 			return i
 		}
 	}
+
 	return -1
 }
 
@@ -197,6 +206,7 @@ func (set AliasOutputsSet) Includes(other AliasOutputsSet) error {
 			return fmt.Errorf("%w: %s missing in source", ErrAliasMissing, aliasID.ToHex())
 		}
 	}
+
 	return nil
 }
 
@@ -211,6 +221,7 @@ func (set AliasOutputsSet) EveryTuple(other AliasOutputsSet, f func(in *AliasOut
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -227,6 +238,7 @@ func (set AliasOutputsSet) Merge(other AliasOutputsSet) (AliasOutputsSet, error)
 		}
 		newSet[k] = v
 	}
+
 	return newSet, nil
 }
 
@@ -313,6 +325,7 @@ func (a *AliasOutput) ValidateStateTransition(transType ChainTransitionType, nex
 	if err != nil {
 		return &ChainTransitionError{Inner: err, Msg: fmt.Sprintf("alias %s", a.AliasID)}
 	}
+
 	return nil
 }
 
@@ -320,6 +333,7 @@ func (a *AliasOutput) genesisValid(semValCtx *SemanticValidationContext) error {
 	if !a.AliasID.Empty() {
 		return errors.New("AliasOutput's ID is not zeroed even though it is new")
 	}
+
 	return IsIssuerOnOutputUnlocked(a, semValCtx.WorkingSet.UnlockedIdents)
 }
 
@@ -334,6 +348,7 @@ func (a *AliasOutput) stateChangeValid(semValCtx *SemanticValidationContext, nex
 	if a.StateIndex == nextState.StateIndex {
 		return a.GovernanceSTVF(nextState, semValCtx)
 	}
+
 	return a.StateSTVF(nextState, semValCtx)
 }
 
@@ -375,6 +390,7 @@ func (a *AliasOutput) GovernanceSTVF(nextAliasOutput *AliasOutput, semValCtx *Se
 	case a.FoundryCounter != nextAliasOutput.FoundryCounter:
 		return fmt.Errorf("%w: foundry counter changed, in %d / out %d", ErrInvalidAliasGovernanceTransition, a.FoundryCounter, nextAliasOutput.FoundryCounter)
 	}
+
 	return nil
 }
 
@@ -454,6 +470,7 @@ func (a *AliasOutput) Deposit() uint64 {
 func (a *AliasOutput) Target() (serializer.Serializable, error) {
 	addr := new(AliasAddress)
 	copy(addr[:], a.AliasID[:])
+
 	return addr, nil
 }
 
@@ -591,6 +608,7 @@ func (a *AliasOutput) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*a = *seri.(*AliasOutput)
+
 	return nil
 }
 

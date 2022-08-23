@@ -21,6 +21,7 @@ type ReferenceUnlock struct {
 
 func (r *ReferenceUnlock) SourceAllowed(address Address) bool {
 	_, ok := address.(ChainConstrainedAddress)
+
 	return !ok
 }
 
@@ -47,6 +48,7 @@ func (r *ReferenceUnlock) Deserialize(data []byte, deSeriMode serializer.DeSeria
 	}
 	data = data[serializer.SmallTypeDenotationByteSize:]
 	r.Reference = binary.LittleEndian.Uint16(data)
+
 	return ReferenceUnlockSize, nil
 }
 
@@ -54,6 +56,7 @@ func (r *ReferenceUnlock) Serialize(deSeriMode serializer.DeSerializationMode, d
 	var b [ReferenceUnlockSize]byte
 	b[0] = byte(UnlockReference)
 	binary.LittleEndian.PutUint16(b[serializer.SmallTypeDenotationByteSize:], r.Reference)
+
 	return b[:], nil
 }
 
@@ -65,6 +68,7 @@ func (r *ReferenceUnlock) MarshalJSON() ([]byte, error) {
 	jReferenceUnlock := &jsonReferenceUnlock{}
 	jReferenceUnlock.Type = int(UnlockReference)
 	jReferenceUnlock.Reference = int(r.Reference)
+
 	return json.Marshal(jReferenceUnlock)
 }
 
@@ -78,6 +82,7 @@ func (r *ReferenceUnlock) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*r = *seri.(*ReferenceUnlock)
+
 	return nil
 }
 
@@ -89,5 +94,6 @@ type jsonReferenceUnlock struct {
 
 func (j *jsonReferenceUnlock) ToSerializable() (serializer.Serializable, error) {
 	unlock := &ReferenceUnlock{Reference: uint16(j.Reference)}
+
 	return unlock, nil
 }

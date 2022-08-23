@@ -25,6 +25,7 @@ func ParseEd25519AddressFromHexString(hexAddr string) (*Ed25519Address, error) {
 	}
 	addr := &Ed25519Address{}
 	copy(addr[:], addrBytes)
+
 	return addr, nil
 }
 
@@ -35,6 +36,7 @@ func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
 	if err != nil {
 		panic(err)
 	}
+
 	return addr
 }
 
@@ -45,6 +47,7 @@ type Ed25519Address [Ed25519AddressBytesLength]byte
 func (edAddr *Ed25519Address) Clone() Address {
 	cpy := &Ed25519Address{}
 	copy(cpy[:], edAddr[:])
+
 	return cpy
 }
 
@@ -61,6 +64,7 @@ func (edAddr *Ed25519Address) Unlock(msg []byte, sig Signature) error {
 	if !isEdSig {
 		return fmt.Errorf("%w: can not unlock Ed25519 address with signature of type %s", ErrSignatureAndAddrIncompatible, sig.Type())
 	}
+
 	return edSig.Valid(msg, edAddr)
 }
 
@@ -69,6 +73,7 @@ func (edAddr *Ed25519Address) Equal(other Address) bool {
 	if !is {
 		return false
 	}
+
 	return *edAddr == *otherAddr
 }
 
@@ -94,6 +99,7 @@ func (edAddr *Ed25519Address) Deserialize(data []byte, deSeriMode serializer.DeS
 		}
 	}
 	copy(edAddr[:], data[serializer.SmallTypeDenotationByteSize:])
+
 	return Ed25519AddressSerializedBytesSize, nil
 }
 
@@ -101,6 +107,7 @@ func (edAddr *Ed25519Address) Serialize(_ serializer.DeSerializationMode, deSeri
 	var b [Ed25519AddressSerializedBytesSize]byte
 	b[0] = byte(AddressEd25519)
 	copy(b[serializer.SmallTypeDenotationByteSize:], edAddr[:])
+
 	return b[:], nil
 }
 
@@ -112,6 +119,7 @@ func (edAddr *Ed25519Address) MarshalJSON() ([]byte, error) {
 	jEd25519Address := &jsonEd25519Address{}
 	jEd25519Address.PubKeyHash = EncodeHex(edAddr[:])
 	jEd25519Address.Type = int(AddressEd25519)
+
 	return json.Marshal(jEd25519Address)
 }
 
@@ -125,6 +133,7 @@ func (edAddr *Ed25519Address) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*edAddr = *seri.(*Ed25519Address)
+
 	return nil
 }
 
@@ -149,5 +158,6 @@ func (j *jsonEd25519Address) ToSerializable() (serializer.Serializable, error) {
 	}
 	addr := &Ed25519Address{}
 	copy(addr[:], addrBytes)
+
 	return addr, nil
 }

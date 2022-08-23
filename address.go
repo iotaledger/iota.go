@@ -137,6 +137,7 @@ func jsonAddressToAddress(jAddr JSONSerializable) (Address, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return addr.(Address), nil
 }
 
@@ -164,6 +165,7 @@ func addrReadGuard(supportedAddr AddressTypeSet) serializer.SerializableReadGuar
 		if _, supported := supportedAddr[AddressType(ty)]; !supported {
 			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedAddress, supportedAddr, ty)
 		}
+
 		return AddressSelector(ty)
 	}
 }
@@ -178,6 +180,7 @@ func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (Address, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return addr.(Address), nil
 }
 
@@ -187,6 +190,7 @@ func addressToJSONRawMsg(addr serializer.Serializable) (*json.RawMessage, error)
 		return nil, err
 	}
 	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
+
 	return &jsonRawMsgAddr, nil
 }
 
@@ -203,6 +207,7 @@ func jsonAddressSelector(ty int) (JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode address type from JSON: %w", ErrUnknownAddrType)
 	}
+
 	return obj, nil
 }
 
@@ -212,6 +217,7 @@ func bech32String(hrp NetworkPrefix, addr Address) string {
 	if err != nil {
 		panic(err)
 	}
+
 	return s
 }
 

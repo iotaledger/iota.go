@@ -32,6 +32,7 @@ func (payloadType PayloadType) String() string {
 	if int(payloadType) >= len(payloadNames) {
 		return fmt.Sprintf("unknown payload type: %d", payloadType)
 	}
+
 	return payloadNames[payloadType]
 }
 
@@ -76,6 +77,7 @@ func PayloadSelector(payloadType uint32) (serializer.Serializable, error) {
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownPayloadType, payloadType)
 	}
+
 	return seri, nil
 }
 
@@ -89,6 +91,7 @@ func payloadFromJSONRawMsg(jPayload *json.RawMessage) (Payload, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return payload.(Payload), nil
 }
 
@@ -105,5 +108,6 @@ func jsonPayloadSelector(ty int) (JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
 	}
+
 	return obj, nil
 }

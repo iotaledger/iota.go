@@ -49,6 +49,7 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	if valid := iotagoEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
 		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrEd25519SignatureInvalid, EncodeHex(addr[:]), EncodeHex(e.PublicKey[:]), EncodeHex(e.Signature[:]))
 	}
+
 	return nil
 }
 
@@ -65,6 +66,7 @@ func (e *Ed25519Signature) Deserialize(data []byte, deSeriMode serializer.DeSeri
 	data = data[serializer.SmallTypeDenotationByteSize:]
 	copy(e.PublicKey[:], data[:ed25519.PublicKeySize])
 	copy(e.Signature[:], data[ed25519.PublicKeySize:])
+
 	return Ed25519SignatureSerializedBytesSize, nil
 }
 
@@ -73,6 +75,7 @@ func (e *Ed25519Signature) Serialize(deSeriMode serializer.DeSerializationMode, 
 	b[0] = byte(SignatureEd25519)
 	copy(b[serializer.SmallTypeDenotationByteSize:], e.PublicKey[:])
 	copy(b[serializer.SmallTypeDenotationByteSize+ed25519.PublicKeySize:], e.Signature[:])
+
 	return b[:], nil
 }
 
@@ -85,6 +88,7 @@ func (e *Ed25519Signature) MarshalJSON() ([]byte, error) {
 	jEd25519Signature.Type = int(SignatureEd25519)
 	jEd25519Signature.PublicKey = EncodeHex(e.PublicKey[:])
 	jEd25519Signature.Signature = EncodeHex(e.Signature[:])
+
 	return json.Marshal(jEd25519Signature)
 }
 
@@ -98,6 +102,7 @@ func (e *Ed25519Signature) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*e = *seri.(*Ed25519Signature)
+
 	return nil
 }
 
@@ -123,5 +128,6 @@ func (j *jsonEd25519Signature) ToSerializable() (serializer.Serializable, error)
 
 	copy(sig.PublicKey[:], pubKeyBytes)
 	copy(sig.Signature[:], sigBytes)
+
 	return sig, nil
 }

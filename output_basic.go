@@ -24,6 +24,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize basic output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
 				}
+
 				return UnlockConditionSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -35,6 +36,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in basic output", ErrUnsupportedUnlockConditionType)
 				}
+
 				return nil
 			},
 		},
@@ -55,6 +57,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize basic output, unsupported feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
 				}
+
 				return FeatureSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -65,6 +68,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in basic output", ErrUnsupportedFeatureType)
 				}
+
 				return nil
 			},
 		},
@@ -115,6 +119,7 @@ func (e *BasicOutput) Clone() Output {
 
 func (e *BasicOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
 	ok, _ := outputUnlockable(e, nil, ident, extParas)
+
 	return ok
 }
 
@@ -234,6 +239,7 @@ func (e *BasicOutput) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*e = *seri.(*BasicOutput)
+
 	return nil
 }
 

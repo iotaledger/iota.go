@@ -40,6 +40,7 @@ func BenchmarkDeserializeWithValidationLargeTxPayload(b *testing.B) {
 						TransactionOutputIndex: 0,
 					})
 				}
+
 				return inputs
 			}(),
 			Outputs: func() iotago.Outputs {
@@ -52,6 +53,7 @@ func BenchmarkDeserializeWithValidationLargeTxPayload(b *testing.B) {
 						},
 					})
 				}
+
 				return outputs
 			}(),
 			Payload: nil,
@@ -63,6 +65,7 @@ func BenchmarkDeserializeWithValidationLargeTxPayload(b *testing.B) {
 					Signature: tpkg.RandEd25519Signature(),
 				})
 			}
+
 			return unlocks
 		}(),
 	}

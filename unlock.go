@@ -26,6 +26,7 @@ func (unlockType UnlockType) String() string {
 	if int(unlockType) >= len(unlockNames) {
 		return fmt.Sprintf("unknown unlock type: %d", unlockType)
 	}
+
 	return unlockNames[unlockType]
 }
 
@@ -64,6 +65,7 @@ func UnlockSelector(unlockType uint32) (serializer.Serializable, error) {
 	default:
 		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownUnlockType, unlockType)
 	}
+
 	return seri, nil
 }
 
@@ -74,6 +76,7 @@ func (o Unlocks) ToSerializables() serializer.Serializables {
 	for i, x := range o {
 		seris[i] = x.(serializer.Serializable)
 	}
+
 	return seris
 }
 
@@ -94,6 +97,7 @@ func (o Unlocks) ToUnlockByType() UnlocksByType {
 		}
 		unlocksByType[unlock.Type()] = append(slice, unlock)
 	}
+
 	return unlocksByType
 }
 
@@ -102,6 +106,7 @@ func (o Unlocks) Size() int {
 	for _, unlock := range o {
 		sum += unlock.Size()
 	}
+
 	return sum
 }
 
@@ -121,6 +126,7 @@ func unlockWriteGuard() serializer.SerializableWriteGuardFunc {
 		default:
 			return ErrTypeIsNotSupportedUnlock
 		}
+
 		return nil
 	}
 }
@@ -140,6 +146,7 @@ func jsonUnlockSelector(ty int) (JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode unlock type from JSON: %w", ErrUnknownUnlockType)
 	}
+
 	return obj, nil
 }
 
@@ -150,6 +157,7 @@ func unlocksFromJSONRawMsg(jUnlocks []*json.RawMessage) (Unlocks, error) {
 	}
 	var unlockB Unlocks
 	unlockB.FromSerializables(unlocks)
+
 	return unlockB, nil
 }
 
@@ -184,6 +192,7 @@ func UnlocksSigUniqueAndRefValidator() UnlockValidatorFunc {
 	seenSigUnlocks := map[uint16]struct{}{}
 	seenRefUnlocks := map[uint16]ReferentialUnlock{}
 	seenSigUnlockBytes := map[string]int{}
+
 	return func(index int, unlock Unlock) error {
 		switch x := unlock.(type) {
 		case *SignatureUnlock:
@@ -208,6 +217,7 @@ func UnlocksSigUniqueAndRefValidator() UnlockValidatorFunc {
 					return fmt.Errorf("%w: %d references existing referential unlock %d but it does not support chaining", ErrReferentialUnlockInvalid, index, x.Ref())
 				}
 				seenRefUnlocks[uint16(index)] = x
+
 				break
 			}
 			// must reference a sig unlock here
@@ -232,5 +242,6 @@ func ValidateUnlocks(unlocks Unlocks, funcs ...UnlockValidatorFunc) error {
 			}
 		}
 	}
+
 	return nil
 }

@@ -70,6 +70,7 @@ func (p *ProtocolParamsMilestoneOpt) Serialize(deSeriMode serializer.DeSerializa
 			case len(p.Params) > MaxParamsLength:
 				return fmt.Errorf("%w: params bigger than %d", ErrProtocolParamsMilestoneOptInvalid, MaxParamsLength)
 			}
+
 			return nil
 		}).
 		WriteNum(byte(MilestoneOptProtocolParams), func(err error) error {
@@ -108,6 +109,7 @@ func (p *ProtocolParamsMilestoneOpt) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*p = *seri.(*ProtocolParamsMilestoneOpt)
+
 	return nil
 }
 
@@ -124,6 +126,7 @@ func (j *jsonProtocolParamsMilestoneOpt) ToSerializable() (serializer.Serializab
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode json milestone protocol params option: %w", err)
 	}
+
 	return &ProtocolParamsMilestoneOpt{
 		TargetMilestoneIndex: MilestoneIndex(j.TargetMilestoneIndex),
 		ProtocolVersion:      byte(j.ProtocolVersion),

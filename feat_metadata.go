@@ -56,6 +56,7 @@ func (s *MetadataFeature) ValidDataSize() error {
 	case len(s.Data) > MaxMetadataLength:
 		return ErrMetadataFeatureDataExceedsMaxLength
 	}
+
 	return nil
 }
 
@@ -92,6 +93,7 @@ func (s *MetadataFeature) MarshalJSON() ([]byte, error) {
 	jMetadataFeat := &jsonMetadataFeature{}
 	jMetadataFeat.Type = int(FeatureMetadata)
 	jMetadataFeat.Data = EncodeHex(s.Data)
+
 	return json.Marshal(jMetadataFeat)
 }
 
@@ -105,6 +107,7 @@ func (s *MetadataFeature) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*MetadataFeature)
+
 	return nil
 }
 
@@ -119,5 +122,6 @@ func (j *jsonMetadataFeature) ToSerializable() (serializer.Serializable, error) 
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode data from JSON for metadata feature: %w", err)
 	}
+
 	return &MetadataFeature{Data: dataBytes}, nil
 }

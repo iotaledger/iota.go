@@ -76,6 +76,7 @@ func (s *TimelockUnlockCondition) MarshalJSON() ([]byte, error) {
 		UnixTime: int(s.UnixTime),
 	}
 	jTimelockUnlockCond.Type = int(UnlockConditionTimelock)
+
 	return json.Marshal(jTimelockUnlockCond)
 }
 
@@ -89,6 +90,7 @@ func (s *TimelockUnlockCondition) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*TimelockUnlockCondition)
+
 	return nil
 }
 

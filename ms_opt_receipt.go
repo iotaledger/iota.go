@@ -30,6 +30,7 @@ var (
 			if PayloadType(ty) != PayloadTreasuryTransaction {
 				return nil, ErrTypeIsNotSupportedPayload
 			}
+
 			return PayloadSelector(ty)
 		},
 		WriteGuard: func(seri serializer.Serializable) error {
@@ -39,6 +40,7 @@ var (
 			if _, is := seri.(*TreasuryTransaction); !is {
 				return ErrTypeIsNotSupportedPayload
 			}
+
 			return nil
 		},
 	}
@@ -103,6 +105,7 @@ func (r *ReceiptMilestoneOpt) Sum() uint64 {
 	for _, item := range r.Funds {
 		sum += item.Deposit
 	}
+
 	return sum
 }
 
@@ -134,6 +137,7 @@ func (r *ReceiptMilestoneOpt) Deserialize(data []byte, deSeriMode serializer.DeS
 			if r.Transaction == nil {
 				return ErrReceiptMustContainATreasuryTransaction
 			}
+
 			return nil
 		}).
 		Done()
@@ -143,6 +147,7 @@ func (r *ReceiptMilestoneOpt) Serialize(deSeriMode serializer.DeSerializationMod
 	if r.Transaction == nil {
 		return nil, ErrReceiptMustContainATreasuryTransaction
 	}
+
 	return serializer.NewSerializer().
 		WriteNum(byte(MilestoneOptReceipt), func(err error) error {
 			return fmt.Errorf("unable to serialize receipt milestone option type ID: %w", err)
@@ -160,6 +165,7 @@ func (r *ReceiptMilestoneOpt) Serialize(deSeriMode serializer.DeSerializationMod
 			if r.Transaction == nil {
 				return ErrReceiptMustContainATreasuryTransaction
 			}
+
 			return nil
 		}).
 		WritePayload(r.Transaction, deSeriMode, deSeriCtx, receiptPayloadGuard.WriteGuard, func(err error) error {
@@ -205,6 +211,7 @@ func (r *ReceiptMilestoneOpt) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*r = *seri.(*ReceiptMilestoneOpt)
+
 	return nil
 }
 

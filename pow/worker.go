@@ -34,6 +34,7 @@ func New(numWorkers ...int) *Worker {
 	if len(numWorkers) > 0 && numWorkers[0] > 0 {
 		w.numWorkers = numWorkers[0]
 	}
+
 	return w
 }
 
@@ -92,6 +93,7 @@ func (w *Worker) Mine(ctx context.Context, data []byte, targetScore float64) (ui
 	if !ok {
 		return 0, ErrCancelled
 	}
+
 	return nonce, nil
 }
 
@@ -133,6 +135,7 @@ func (w *Worker) worker(powDigest []byte, startNonce uint64, target uint, done *
 			return nonce + uint64(i), nil
 		}
 	}
+
 	return 0, ErrDone
 }
 

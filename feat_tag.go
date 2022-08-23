@@ -35,6 +35,7 @@ func (s *TagFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) uint64 {
 	if f != nil {
 		return f(rentStruct)
 	}
+
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.OneByte + uint64(len(s.Tag)))
 }
 
@@ -58,6 +59,7 @@ func (s *TagFeature) ValidTagSize() error {
 	case len(s.Tag) > MaxTagLength:
 		return ErrTagFeatureTagExceedsMaxLength
 	}
+
 	return nil
 }
 
@@ -94,6 +96,7 @@ func (s *TagFeature) MarshalJSON() ([]byte, error) {
 	jTagFeat := &jsonTagFeature{}
 	jTagFeat.Type = int(FeatureTag)
 	jTagFeat.Tag = EncodeHex(s.Tag)
+
 	return json.Marshal(jTagFeat)
 }
 
@@ -107,6 +110,7 @@ func (s *TagFeature) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*TagFeature)
+
 	return nil
 }
 
@@ -121,5 +125,6 @@ func (j *jsonTagFeature) ToSerializable() (serializer.Serializable, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode tag from JSON for tag feature: %w", err)
 	}
+
 	return &TagFeature{Tag: dataBytes}, nil
 }

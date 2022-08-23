@@ -21,6 +21,7 @@ type NFTUnlock struct {
 
 func (r *NFTUnlock) SourceAllowed(address Address) bool {
 	_, ok := address.(*NFTAddress)
+
 	return ok
 }
 
@@ -47,6 +48,7 @@ func (r *NFTUnlock) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 	}
 	data = data[serializer.SmallTypeDenotationByteSize:]
 	r.Reference = binary.LittleEndian.Uint16(data)
+
 	return NFTUnlockSize, nil
 }
 
@@ -54,6 +56,7 @@ func (r *NFTUnlock) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 	var b [NFTUnlockSize]byte
 	b[0] = byte(UnlockNFT)
 	binary.LittleEndian.PutUint16(b[serializer.SmallTypeDenotationByteSize:], r.Reference)
+
 	return b[:], nil
 }
 
@@ -65,6 +68,7 @@ func (r *NFTUnlock) MarshalJSON() ([]byte, error) {
 	jNFTUnlock := &jsonNFTUnlock{}
 	jNFTUnlock.Type = int(UnlockNFT)
 	jNFTUnlock.Reference = int(r.Reference)
+
 	return json.Marshal(jNFTUnlock)
 }
 
@@ -78,6 +82,7 @@ func (r *NFTUnlock) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*r = *seri.(*NFTUnlock)
+
 	return nil
 }
 
@@ -89,5 +94,6 @@ type jsonNFTUnlock struct {
 
 func (j *jsonNFTUnlock) ToSerializable() (serializer.Serializable, error) {
 	unlock := &NFTUnlock{Reference: uint16(j.Reference)}
+
 	return unlock, nil
 }

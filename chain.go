@@ -15,6 +15,7 @@ func (set ChainConstrainedOutputsSet) Includes(other ChainConstrainedOutputsSet)
 			return fmt.Errorf("%w: %s missing in source", ErrChainMissing, chainID.ToHex())
 		}
 	}
+
 	return nil
 }
 
@@ -29,6 +30,7 @@ func (set ChainConstrainedOutputsSet) EveryTuple(other ChainConstrainedOutputsSe
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -45,6 +47,7 @@ func (set ChainConstrainedOutputsSet) Merge(other ChainConstrainedOutputsSet) (C
 		}
 		newSet[k] = v
 	}
+
 	return newSet, nil
 }
 
@@ -92,6 +95,7 @@ func IsIssuerOnOutputUnlocked(output ChainConstrainedOutput, unlockedIdents Unlo
 	if _, isUnlocked := unlockedIdents[issuerFeat.Address.Key()]; !isUnlocked {
 		return ErrIssuerFeatureNotUnlocked
 	}
+
 	return nil
 }
 

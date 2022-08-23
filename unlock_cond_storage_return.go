@@ -96,6 +96,7 @@ func (s *StorageDepositReturnUnlockCondition) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return json.Marshal(jUnlockCond)
 }
 
@@ -109,6 +110,7 @@ func (s *StorageDepositReturnUnlockCondition) UnmarshalJSON(bytes []byte) error 
 		return err
 	}
 	*s = *seri.(*StorageDepositReturnUnlockCondition)
+
 	return nil
 }
 

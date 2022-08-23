@@ -41,6 +41,7 @@ func TestOutputsQuery_Build(t *testing.T) {
 		IndexerCursorParas: nodeclient.IndexerCursorParas{
 			Cursor: func() *string {
 				str := "dave"
+
 				return &str
 			}(),
 		},
@@ -129,6 +130,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 			Items:       iotago.HexOutputIDs{fakeOutputID},
 			Cursor: func() *string {
 				str := "some-offset-key"
+
 				return &str
 			}(),
 		})

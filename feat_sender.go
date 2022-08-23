@@ -30,6 +30,7 @@ func (s *SenderFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) uint64 {
 	if f != nil {
 		return f(rentStruct)
 	}
+
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) + s.Address.VBytes(rentStruct, nil)
 }
 
@@ -82,6 +83,7 @@ func (s *SenderFeature) MarshalJSON() ([]byte, error) {
 
 	jSenderFeat.Type = int(FeatureSender)
 	jSenderFeat.Address = &jsonRawMsgAddr
+
 	return json.Marshal(jSenderFeat)
 }
 
@@ -95,6 +97,7 @@ func (s *SenderFeature) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*SenderFeature)
+
 	return nil
 }
 
@@ -116,5 +119,6 @@ func (j *jsonSenderFeature) ToSerializable() (serializer.Serializable, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return dep, nil
 }

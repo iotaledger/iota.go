@@ -48,6 +48,7 @@ var (
 			if _, is := seri.(*TransactionEssence); !is {
 				return fmt.Errorf("%w: because not *TransactionEssence", ErrTypeIsNotSupportedEssence)
 			}
+
 			return nil
 		},
 	}
@@ -98,6 +99,7 @@ func (t *Transaction) OutputsSet() (OutputSet, error) {
 	for index, output := range t.Essence.Outputs {
 		set[OutputIDFromTransactionIDAndIndex(txID, uint16(index))] = output
 	}
+
 	return set, nil
 }
 
@@ -110,11 +112,13 @@ func (t *Transaction) ID() (TransactionID, error) {
 	h := blake2b.Sum256(data)
 	tID := TransactionID{}
 	copy(tID[:], h[:])
+
 	return tID, nil
 }
 
 func (t *Transaction) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	unlocksArrayRulesCopy := txUnlocksArrayRules
+
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(PayloadTransaction), serializer.TypeDenotationUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize transaction: %w", err)
@@ -139,6 +143,7 @@ func (t *Transaction) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 	inputCount := uint(len(t.Essence.Inputs))
 	unlocksArrayRulesCopy.Min = inputCount
 	unlocksArrayRulesCopy.Max = inputCount
+
 	return serializer.NewSerializer().
 		WriteNum(PayloadTransaction, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize transaction payload ID", err)
@@ -178,6 +183,7 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 		rawMsgJsonUB := json.RawMessage(jsonUB)
 		jTransaction.Unlocks[i] = &rawMsgJsonUB
 	}
+
 	return json.Marshal(jTransaction)
 }
 
@@ -191,6 +197,7 @@ func (t *Transaction) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*t = *seri.(*Transaction)
+
 	return nil
 }
 
@@ -200,6 +207,7 @@ func txDeSeriValidation(tx *Transaction, deSeriCtx interface{}) serializer.ErrPr
 		if !ok || protoParas == nil {
 			return fmt.Errorf("unable to validate transaction: %w", ErrMissingProtocolParas)
 		}
+
 		return tx.syntacticallyValidate(protoParas)
 	}
 }
@@ -293,6 +301,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputsSet OutputSet) (*SemValiC
 			slice[i] = output
 			i++
 		}
+
 		return slice.ToOutputsByType()
 	}()
 
@@ -306,6 +315,7 @@ func NewSemValiContextWorkingSet(t *Transaction, inputsSet OutputSet) (*SemValiC
 	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainConstrainedOutputSet(txID)
 
 	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
+
 	return workingSet, nil
 }
 
@@ -322,6 +332,7 @@ func (t *Transaction) SemanticallyValidate(svCtx *SemanticValidationContext, inp
 		if err := runSemanticValidations(svCtx, semValFuncs...); err != nil {
 			return err
 		}
+
 		return nil
 	}
 
@@ -347,6 +358,7 @@ func runSemanticValidations(svCtx *SemanticValidationContext, checks ...TxSemant
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -365,6 +377,7 @@ func (unlockedIdents UnlockedIdentities) SigUnlock(ident DirectUnlockableAddress
 		Ident:      ident,
 		UnlockedAt: inputIndex, ReferencedBy: map[uint16]struct{}{},
 	}
+
 	return nil
 }
 
@@ -377,6 +390,7 @@ func (unlockedIdents UnlockedIdentities) RefUnlock(identKey string, ref uint16, 
 	}
 
 	ident.ReferencedBy[inputIndex] = struct{}{}
+
 	return nil
 }
 
@@ -402,13 +416,16 @@ func (unlockedIdents UnlockedIdentities) String() string {
 			if _, is := idents[i].Ident.(ChainConstrainedAddress); is {
 				return false
 			}
+
 			return true
 		}
+
 		return x < y
 	})
 	for _, ident := range idents {
 		b.WriteString(ident.String() + "\n")
 	}
+
 	return b.String()
 }
 
@@ -425,6 +442,7 @@ func (unlockedIdents UnlockedIdentities) UnlockedBy(inputIndex uint16, identKey 
 	}
 
 	_, refUnlocked := unlockedIdent.ReferencedBy[inputIndex]
+
 	return refUnlocked
 }
 
@@ -598,6 +616,7 @@ func TxSemanticOutputsSender() TxSemanticValidationFunc {
 				return fmt.Errorf("%w: output %d", ErrSenderFeatureNotUnlocked, outputIndex)
 			}
 		}
+
 		return nil
 	}
 }
@@ -667,6 +686,7 @@ func TxSemanticTimelock() TxSemanticValidationFunc {
 				return fmt.Errorf("%w: input at index %d's timelocks are not expired", err, inputIndex)
 			}
 		}
+
 		return nil
 	}
 }
@@ -680,6 +700,7 @@ func TxSemanticSTVFOnChains() TxSemanticValidationFunc {
 				if err := inputChain.ValidateStateTransition(ChainTransitionTypeDestroy, nil, svCtx); err != nil {
 					return fmt.Errorf("input chain %s (%T) destruction transition failed: %w", chainID.ToHex(), inputChain, err)
 				}
+
 				continue
 			}
 			if err := inputChain.ValidateStateTransition(ChainTransitionTypeStateChange, nextState, svCtx); err != nil {

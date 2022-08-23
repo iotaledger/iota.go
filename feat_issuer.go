@@ -82,6 +82,7 @@ func (s *IssuerFeature) MarshalJSON() ([]byte, error) {
 
 	jIssuerFeat.Type = int(FeatureIssuer)
 	jIssuerFeat.Address = &jsonRawMsgAddr
+
 	return json.Marshal(jIssuerFeat)
 }
 
@@ -95,6 +96,7 @@ func (s *IssuerFeature) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*IssuerFeature)
+
 	return nil
 }
 
@@ -116,5 +118,6 @@ func (j *jsonIssuerFeature) ToSerializable() (serializer.Serializable, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return dep, nil
 }

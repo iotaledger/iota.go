@@ -137,6 +137,7 @@ func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {
 			err := tt.ms.Sign(indexSigner.PublicKeys(), indexSigner.SigningFunc())
 			if tt.signingErr != nil {
 				assert.True(t, errors.Is(err, tt.signingErr))
+
 				return
 			}
 			assert.NoError(t, err)
@@ -145,6 +146,7 @@ func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {
 			if tt.verificationErr != nil {
 				println(err.Error())
 				assert.True(t, errors.Is(err, tt.verificationErr))
+
 				return
 			}
 			assert.NoError(t, err)

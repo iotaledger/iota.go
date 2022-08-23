@@ -58,6 +58,7 @@ func Encode(hrp string, src []byte) (string, error) {
 	if hrp == hrpLower {
 		return res.String(), nil
 	}
+
 	return strings.ToUpper(res.String()), nil
 }
 
@@ -111,8 +112,10 @@ func Decode(s string) (string, []byte, error) {
 		if errors.As(err, &e) {
 			return "", nil, &SyntaxError{e.Unwrap(), hrpLen + 1 + e.Offset}
 		}
+
 		return "", nil, err
 	}
+
 	return hrp, dst, nil
 }
 
@@ -129,6 +132,7 @@ func validateCase(s string) error {
 	if lower < upper && lower >= 0 {
 		return &SyntaxError{ErrMixedCase, upper}
 	}
+
 	return nil
 }
 
@@ -139,6 +143,7 @@ func firstUpper(s string) int {
 			return i
 		}
 	}
+
 	return -1
 }
 
@@ -149,5 +154,6 @@ func firstLower(s string) int {
 			return i
 		}
 	}
+
 	return -1
 }

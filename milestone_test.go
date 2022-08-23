@@ -81,6 +81,7 @@ func TestMilestoneSigning(t *testing.T) {
 	pubKeyFromPrv := func(prvKey ed25519.PrivateKey) iotago.MilestonePublicKey {
 		var pubKey iotago.MilestonePublicKey
 		copy(pubKey[:], prvKey.Public().(ed25519.PublicKey))
+
 		return pubKey
 	}
 
@@ -181,6 +182,7 @@ func TestMilestoneSigning(t *testing.T) {
 			err := tt.ms.Sign(tt.pubKeys, tt.signer)
 			if tt.signingErr != nil {
 				assert.True(t, errors.Is(err, tt.signingErr))
+
 				return
 			}
 			assert.NoError(t, err)
@@ -188,6 +190,7 @@ func TestMilestoneSigning(t *testing.T) {
 			err = tt.ms.VerifySignatures(tt.minSigThreshold, tt.pubKeySet)
 			if tt.verificationErr != nil {
 				assert.True(t, errors.Is(err, tt.verificationErr))
+
 				return
 			}
 			assert.NoError(t, err)

@@ -23,6 +23,7 @@ func (sigType SignatureType) String() string {
 	if int(sigType) >= len(sigNames) {
 		return fmt.Sprintf("unknown signature type: %d", sigType)
 	}
+
 	return sigNames[sigType]
 }
 
@@ -60,6 +61,7 @@ func (sigs Signatures) ToSerializables() serializer.Serializables {
 	for i, x := range sigs {
 		seris[i] = x.(serializer.Serializable)
 	}
+
 	return seris
 }
 
@@ -77,6 +79,7 @@ func signaturesFromJSONRawMsg(jSignatures []*json.RawMessage) (Signatures, error
 	}
 	var signatures Signatures
 	signatures.FromSerializables(sigs)
+
 	return signatures, nil
 }
 
@@ -116,6 +119,7 @@ func sigReadGuard(supportedSigs SignatureTypeSet) serializer.SerializableReadGua
 		if _, supported := supportedSigs[SignatureType(ty)]; !supported {
 			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedSignature, supportedSigs, ty)
 		}
+
 		return SignatureSelector(ty)
 	}
 }
@@ -129,6 +133,7 @@ func SignatureSelector(sigType uint32) (Signature, error) {
 	default:
 		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownSignatureType, sigType)
 	}
+
 	return seri, nil
 }
 
@@ -142,6 +147,7 @@ func signatureFromJSONRawMsg(jRawMsg *json.RawMessage) (Signature, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return addr.(Signature), nil
 }
 
@@ -154,5 +160,6 @@ func jsonSignatureSelector(ty int) (JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode signature type from JSON: %w", ErrUnknownUnlockType)
 	}
+
 	return obj, nil
 }

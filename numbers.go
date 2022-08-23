@@ -12,6 +12,7 @@ func EncodeHex(b []byte) string {
 	if len(b) == 0 {
 		return ""
 	}
+
 	return hexutil.Encode(b)
 }
 
@@ -22,8 +23,10 @@ func DecodeHex(s string) ([]byte, error) {
 		if err == hexutil.ErrEmptyString {
 			return []byte{}, nil
 		}
+
 		return nil, err
 	}
+
 	return b, nil
 }
 

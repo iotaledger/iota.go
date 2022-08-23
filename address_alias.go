@@ -24,6 +24,7 @@ func ParseAliasAddressFromHexString(hexAddr string) (*AliasAddress, error) {
 	}
 	addr := &AliasAddress{}
 	copy(addr[:], addrBytes)
+
 	return addr, nil
 }
 
@@ -34,6 +35,7 @@ func MustParseAliasAddressFromHexString(hexAddr string) *AliasAddress {
 	if err != nil {
 		panic(err)
 	}
+
 	return addr
 }
 
@@ -44,6 +46,7 @@ type AliasAddress [AliasAddressBytesLength]byte
 func (aliasAddr *AliasAddress) Clone() Address {
 	cpy := &AliasAddress{}
 	copy(cpy[:], aliasAddr[:])
+
 	return cpy
 }
 
@@ -68,6 +71,7 @@ func (aliasAddr *AliasAddress) Equal(other Address) bool {
 	if !is {
 		return false
 	}
+
 	return *aliasAddr == *otherAddr
 }
 
@@ -93,6 +97,7 @@ func (aliasAddr *AliasAddress) Deserialize(data []byte, deSeriMode serializer.De
 		}
 	}
 	copy(aliasAddr[:], data[serializer.SmallTypeDenotationByteSize:])
+
 	return AliasAddressSerializedBytesSize, nil
 }
 
@@ -100,6 +105,7 @@ func (aliasAddr *AliasAddress) Serialize(_ serializer.DeSerializationMode, deSer
 	var b [AliasAddressSerializedBytesSize]byte
 	b[0] = byte(AddressAlias)
 	copy(b[serializer.SmallTypeDenotationByteSize:], aliasAddr[:])
+
 	return b[:], nil
 }
 
@@ -111,6 +117,7 @@ func (aliasAddr *AliasAddress) MarshalJSON() ([]byte, error) {
 	jAliasAddress := &jsonAliasAddress{}
 	jAliasAddress.AliasId = EncodeHex(aliasAddr[:])
 	jAliasAddress.Type = int(AddressAlias)
+
 	return json.Marshal(jAliasAddress)
 }
 
@@ -124,6 +131,7 @@ func (aliasAddr *AliasAddress) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*aliasAddr = *seri.(*AliasAddress)
+
 	return nil
 }
 
@@ -148,5 +156,6 @@ func (j *jsonAliasAddress) ToSerializable() (serializer.Serializable, error) {
 	}
 	addr := &AliasAddress{}
 	copy(addr[:], addrBytes)
+
 	return addr, nil
 }

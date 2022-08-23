@@ -120,11 +120,13 @@ type MilestoneID [MilestoneIDLength]byte
 func (id MilestoneID) MarshalText() (text []byte, err error) {
 	dst := make([]byte, hex.EncodedLen(len(MilestoneID{})))
 	hex.Encode(dst, id[:])
+
 	return dst, nil
 }
 
 func (id *MilestoneID) UnmarshalText(text []byte) error {
 	_, err := hex.Decode(id[:], text)
+
 	return err
 }
 
@@ -193,6 +195,7 @@ func (m *Milestone) ID() (MilestoneID, error) {
 		return MilestoneID{}, err
 	}
 	copy(msID[:], data)
+
 	return msID, nil
 }
 
@@ -202,6 +205,7 @@ func (m *Milestone) MustID() MilestoneID {
 	if err != nil {
 		panic(err)
 	}
+
 	return id
 }
 
@@ -240,6 +244,7 @@ func (m *Milestone) Essence() ([]byte, error) {
 		return nil, err
 	}
 	essenceHash := blake2b.Sum256(essenceBytes)
+
 	return essenceHash[:], nil
 }
 
@@ -297,6 +302,7 @@ func InMemoryEd25519MilestoneSigner(prvKeys MilestonePublicKeyMapping) Milestone
 			sig := ed25519.Sign(prvKey, msEssence)
 			copy(sigs[i][:], sig)
 		}
+
 		return sigs, nil
 	}
 }
@@ -337,6 +343,7 @@ func InsecureRemoteEd25519MilestoneSigner(remoteEndpoint string) MilestoneSignin
 		for i := range sigs {
 			copy(sigs64[i][:], sigs[i][:64])
 		}
+
 		return sigs64, nil
 	}
 }
@@ -377,12 +384,14 @@ func (m *Milestone) Sign(pubKeys []MilestonePublicKey, signingFunc MilestoneSign
 	})
 
 	m.Signatures = edSigs
+
 	return nil
 }
 
 func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	parentsSlice := serializer.SliceOfArraysOf32Bytes{}
 	prevMsID := serializer.ArrayOf32Bytes{}
+
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(PayloadMilestone), serializer.TypeDenotationUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone: %w", err)
@@ -527,6 +536,7 @@ func (m *Milestone) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*m = *seri.(*Milestone)
+
 	return nil
 }
 

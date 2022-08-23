@@ -118,6 +118,7 @@ func TestTransactionBuilder(t *testing.T) {
 		}(),
 		func() test {
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID)
+
 			return test{
 				name:       "err - no inputs",
 				addrSigner: iotago.NewInMemoryAddressSigner(),
@@ -129,6 +130,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
 				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)})
+
 			return test{
 				name:       "err - no outputs",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
@@ -186,6 +188,7 @@ func TestTransactionBuilder(t *testing.T) {
 			_, err := test.builder.Build(tpkg.TestProtoParas, test.addrSigner)
 			if test.buildErr != nil {
 				assert.True(t, errors.Is(err, test.buildErr), "wrong error : %s != %s", err, test.buildErr)
+
 				return
 			}
 			assert.NoError(t, err)

@@ -63,9 +63,10 @@ func Verify(publicKey ed25519.PublicKey, message, sig []byte) bool {
 	R := new(edwards25519.Point).VarTimeDoubleScalarBaseMult(hReduced, A, s)
 
 	// ZIP215: We want to check [8](R - checkR) == 0
-	p := new(edwards25519.Point).Subtract(R, checkR)     // p = R - checkR
-	p.Add(p, p)                                          // p = [2]p
-	p.Add(p, p)                                          // p = [4]p
-	p.Add(p, p)                                          // p = [8]p
+	p := new(edwards25519.Point).Subtract(R, checkR) // p = R - checkR
+	p.Add(p, p)                                      // p = [2]p
+	p.Add(p, p)                                      // p = [4]p
+	p.Add(p, p)                                      // p = [8]p
+
 	return p.Equal(edwards25519.NewIdentityPoint()) == 1 // p == 0
 }

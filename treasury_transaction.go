@@ -13,6 +13,7 @@ var (
 			if InputType(ty) != InputTreasury {
 				return nil, fmt.Errorf("%w: treasury tx only supports treasury input as input", ErrTypeIsNotSupportedInput)
 			}
+
 			return InputSelector(ty)
 		},
 		WriteGuard: func(seri serializer.Serializable) error {
@@ -22,6 +23,7 @@ var (
 			if _, is := seri.(*TreasuryInput); !is {
 				return fmt.Errorf("%w: treasury tx only supports treasury input as input", ErrTypeIsNotSupportedInput)
 			}
+
 			return nil
 		},
 	}
@@ -31,6 +33,7 @@ var (
 			if OutputType(ty) != OutputTreasury {
 				return nil, fmt.Errorf("%w: treasury tx only supports treasury output as output", ErrTypeIsNotSupportedInput)
 			}
+
 			return OutputSelector(ty)
 		},
 		WriteGuard: func(seri serializer.Serializable) error {
@@ -40,6 +43,7 @@ var (
 			if _, is := seri.(*TreasuryOutput); !is {
 				return fmt.Errorf("%w: treasury tx only supports treasury output as output", ErrTypeIsNotSupportedInput)
 			}
+
 			return nil
 		},
 	}
@@ -123,6 +127,7 @@ func (t *TreasuryTransaction) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*t = *seri.(*TreasuryTransaction)
+
 	return nil
 }
 

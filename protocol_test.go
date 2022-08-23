@@ -28,6 +28,7 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	data, err := test.source.Serialize(serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	if test.seriErr != nil {
 		require.Error(t, err, test.seriErr)
+
 		return
 	}
 	assert.NoError(t, err)
@@ -38,6 +39,7 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	bytesRead, err := test.target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
 	if test.deSeriErr != nil {
 		require.Error(t, err, test.deSeriErr)
+
 		return
 	}
 	assert.NoError(t, err)

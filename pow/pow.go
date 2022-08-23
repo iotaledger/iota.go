@@ -53,6 +53,7 @@ func trailingZeros(powDigest []byte, nonce uint64) int {
 		panic(err)
 	}
 	digest, _ := c.Squeeze(legacy.HashTrinarySize)
+
 	return trinary.TrailingZeros(digest)
 }
 

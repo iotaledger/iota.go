@@ -34,6 +34,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize NFT output, unsupported unlock condition type %s", ErrUnsupportedUnlockConditionType, UnlockConditionType(ty))
 				}
+
 				return UnlockConditionSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -45,6 +46,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in NFT output", ErrUnsupportedUnlockConditionType)
 				}
+
 				return nil
 			},
 		},
@@ -65,6 +67,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize NFT output, unsupported feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
 				}
+
 				return FeatureSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -75,6 +78,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in NFT output", ErrUnsupportedFeatureType)
 				}
+
 				return nil
 			},
 		},
@@ -94,6 +98,7 @@ var (
 				default:
 					return nil, fmt.Errorf("%w: unable to deserialize NFT output, unsupported immutable feature type %s", ErrUnsupportedFeatureType, FeatureType(ty))
 				}
+
 				return FeatureSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -103,6 +108,7 @@ var (
 				default:
 					return fmt.Errorf("%w: in NFT output", ErrUnsupportedFeatureType)
 				}
+
 				return nil
 			},
 		},
@@ -143,6 +149,7 @@ func (nftID NFTID) Key() interface{} {
 
 func (nftID NFTID) FromOutputID(id OutputID) ChainID {
 	addr := NFTAddressFromOutputID(id)
+
 	return addr.Chain()
 }
 
@@ -155,12 +162,14 @@ func (nftID NFTID) Matches(other ChainID) bool {
 	if !isNFTID {
 		return false
 	}
+
 	return nftID == otherNFTID
 }
 
 func (nftID NFTID) ToAddress() ChainConstrainedAddress {
 	var addr NFTAddress
 	copy(addr[:], nftID[:])
+
 	return &addr
 }
 
@@ -172,6 +181,7 @@ func NFTIDFromOutputID(o OutputID) NFTID {
 	ret := NFTID{}
 	addr := NFTAddressFromOutputID(o)
 	copy(ret[:], addr[:])
+
 	return ret
 }
 
@@ -208,6 +218,7 @@ func (n *NFTOutput) Ident() Address {
 
 func (n *NFTOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
 	ok, _ := outputUnlockable(n, nil, ident, extParas)
+
 	return ok
 }
 
@@ -237,6 +248,7 @@ func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next 
 	if err != nil {
 		return &ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", n.NFTID)}
 	}
+
 	return nil
 }
 
@@ -244,6 +256,7 @@ func (n *NFTOutput) genesisValid(semValCtx *SemanticValidationContext) error {
 	if !n.NFTID.Empty() {
 		return errors.New("NFTOutput's ID is not zeroed even though it is new")
 	}
+
 	return IsIssuerOnOutputUnlocked(n, semValCtx.WorkingSet.UnlockedIdents)
 }
 
@@ -255,6 +268,7 @@ func (n *NFTOutput) stateChangeValid(next ChainConstrainedOutput) error {
 	if !n.ImmutableFeatures.Equal(nextState.ImmutableFeatures) {
 		return fmt.Errorf("old state %s, next state %s", n.ImmutableFeatures, nextState.ImmutableFeatures)
 	}
+
 	return nil
 }
 
@@ -390,6 +404,7 @@ func (n *NFTOutput) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*n = *seri.(*NFTOutput)
+
 	return nil
 }
 

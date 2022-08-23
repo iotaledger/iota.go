@@ -21,6 +21,7 @@ func (inputType InputType) String() string {
 	if int(inputType) >= len(inputNames) {
 		return fmt.Sprintf("unknown input type: %d", inputType)
 	}
+
 	return inputNames[inputType]
 }
 
@@ -44,6 +45,7 @@ func (in Inputs) ToSerializables() serializer.Serializables {
 	for i, x := range in {
 		seris[i] = x.(serializer.Serializable)
 	}
+
 	return seris
 }
 
@@ -59,6 +61,7 @@ func (in Inputs) Size() int {
 	for _, i := range in {
 		sum += i.Size()
 	}
+
 	return sum
 }
 
@@ -91,6 +94,7 @@ func InputSelector(inputType uint32) (Input, error) {
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownInputType, inputType)
 	}
+
 	return seri, nil
 }
 
@@ -100,6 +104,7 @@ type InputsSyntacticalValidationFunc func(index int, input Input) error
 // InputsSyntacticalUnique returns an InputsSyntacticalValidationFunc which checks that every input has a unique UTXO ref.
 func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 	set := map[string]int{}
+
 	return func(index int, input Input) error {
 		ref, is := input.(IndexedUTXOReferencer)
 		if !is {
@@ -111,6 +116,7 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 			return fmt.Errorf("%w: input %d and %d share the same UTXO ref", ErrInputUTXORefsNotUnique, j, index)
 		}
 		set[k] = index
+
 		return nil
 	}
 }
@@ -125,6 +131,7 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 		if ref.Index() < RefUTXOIndexMin || ref.Index() > RefUTXOIndexMax {
 			return fmt.Errorf("%w: input %d", ErrRefUTXOIndexInvalid, index)
 		}
+
 		return nil
 	}
 }
@@ -144,6 +151,7 @@ func SyntacticallyValidateInputs(inputs Inputs, funcs ...InputsSyntacticalValida
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -158,5 +166,6 @@ func jsonInputSelector(ty int) (JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode input type from JSON: %w", ErrUnknownInputType)
 	}
+
 	return obj, nil
 }

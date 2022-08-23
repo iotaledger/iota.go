@@ -84,6 +84,7 @@ func TestValidateReceipts(t *testing.T) {
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             7_000_000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
+
 			return test{"ok", receipt, currentTreasury, nil}
 		}(),
 		func() test {
@@ -92,6 +93,7 @@ func TestValidateReceipts(t *testing.T) {
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             1000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
+
 			return test{"err - migrated less tha minimum", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 		func() test {
@@ -100,6 +102,7 @@ func TestValidateReceipts(t *testing.T) {
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             tpkg.TestTokenSupply + 1,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
+
 			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 		func() test {
@@ -108,6 +111,7 @@ func TestValidateReceipts(t *testing.T) {
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             6_000_000,
 			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
+
 			return test{"err - invalid new treasury amount", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 	}
@@ -116,6 +120,7 @@ func TestValidateReceipts(t *testing.T) {
 			err := iotago.ValidateReceipt(tt.source, tt.prevInput, tpkg.TestTokenSupply)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
+
 				return
 			}
 			assert.NoError(t, err)

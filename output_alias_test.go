@@ -284,11 +284,13 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 					err := tt.current.ValidateStateTransition(tt.transType, cpy, tt.svCtx)
 					if tt.wantErr != nil {
 						require.ErrorIs(t, err, tt.wantErr)
+
 						return
 					}
 					require.NoError(t, err)
 				})
 			}
+
 			continue
 		}
 
@@ -296,6 +298,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			err := tt.current.ValidateStateTransition(tt.transType, tt.next, tt.svCtx)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 			require.NoError(t, err)

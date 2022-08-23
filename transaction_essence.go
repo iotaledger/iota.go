@@ -60,6 +60,7 @@ var (
 			if PayloadType(ty) != PayloadTaggedData {
 				return nil, fmt.Errorf("transaction essence can only contain a tagged data payload: %w", ErrTypeIsNotSupportedPayload)
 			}
+
 			return PayloadSelector(ty)
 		},
 		WriteGuard: func(seri serializer.Serializable) error {
@@ -70,6 +71,7 @@ var (
 			if _, is := seri.(*TaggedData); !is {
 				return ErrTypeIsNotSupportedPayload
 			}
+
 			return nil
 		},
 	}
@@ -85,6 +87,7 @@ var (
 				default:
 					return nil, fmt.Errorf("transaction essence can only contain UTXO input as inputs but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 				}
+
 				return InputSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -96,6 +99,7 @@ var (
 				default:
 					return ErrTypeIsNotSupportedInput
 				}
+
 				return nil
 			},
 		},
@@ -116,6 +120,7 @@ var (
 				default:
 					return nil, fmt.Errorf("transaction essence can only contain basic/alias/foundry/NFT outputs types but got type ID %d: %w", ty, ErrUnsupportedObjectType)
 				}
+
 				return OutputSelector(ty)
 			},
 			WriteGuard: func(seri serializer.Serializable) error {
@@ -130,6 +135,7 @@ var (
 				default:
 					return ErrTypeIsNotSupportedOutput
 				}
+
 				return nil
 			},
 		},
@@ -156,6 +162,7 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 	default:
 		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownTransactionEssenceType, txType)
 	}
+
 	return seri, nil
 }
 
@@ -183,6 +190,7 @@ func (u *TransactionEssence) SigningMessage() ([]byte, error) {
 		return nil, err
 	}
 	essenceBytesHash := blake2b.Sum256(essenceBytes)
+
 	return essenceBytesHash[:], nil
 }
 
@@ -264,6 +272,7 @@ func (u *TransactionEssence) Size() int {
 	if u.Payload != nil {
 		payloadSize = u.Payload.Size()
 	}
+
 	return util.NumByteLen(TransactionEssenceNormal) +
 		util.NumByteLen(u.NetworkID) +
 		u.Inputs.Size() +
@@ -308,6 +317,7 @@ func (u *TransactionEssence) MarshalJSON() ([]byte, error) {
 		rawMsgJsonPayload := json.RawMessage(jsonPayload)
 		jTransactionEssence.Payload = &rawMsgJsonPayload
 	}
+
 	return json.Marshal(jTransactionEssence)
 }
 
@@ -321,6 +331,7 @@ func (u *TransactionEssence) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*u = *seri.(*TransactionEssence)
+
 	return nil
 }
 

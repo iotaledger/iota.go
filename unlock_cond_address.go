@@ -76,6 +76,7 @@ func (s *AddressUnlockCondition) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return json.Marshal(jUnlockCond)
 }
 
@@ -89,6 +90,7 @@ func (s *AddressUnlockCondition) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*AddressUnlockCondition)
+
 	return nil
 }
 
@@ -106,5 +108,6 @@ func (j *jsonAddressUnlockCondition) ToSerializable() (serializer.Serializable, 
 	if err != nil {
 		return nil, err
 	}
+
 	return unlockCond, nil
 }

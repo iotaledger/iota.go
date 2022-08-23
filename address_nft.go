@@ -24,6 +24,7 @@ func ParseNFTAddressFromHexString(hexAddr string) (*NFTAddress, error) {
 	}
 	addr := &NFTAddress{}
 	copy(addr[:], addrBytes)
+
 	return addr, nil
 }
 
@@ -34,6 +35,7 @@ func MustParseNFTAddressFromHexString(hexAddr string) *NFTAddress {
 	if err != nil {
 		panic(err)
 	}
+
 	return addr
 }
 
@@ -44,6 +46,7 @@ type NFTAddress [NFTAddressBytesLength]byte
 func (nftAddr *NFTAddress) Clone() Address {
 	cpy := &NFTAddress{}
 	copy(cpy[:], nftAddr[:])
+
 	return cpy
 }
 
@@ -68,6 +71,7 @@ func (nftAddr *NFTAddress) Equal(other Address) bool {
 	if !is {
 		return false
 	}
+
 	return *nftAddr == *otherAddr
 }
 
@@ -93,6 +97,7 @@ func (nftAddr *NFTAddress) Deserialize(data []byte, deSeriMode serializer.DeSeri
 		}
 	}
 	copy(nftAddr[:], data[serializer.SmallTypeDenotationByteSize:])
+
 	return NFTAddressSerializedBytesSize, nil
 }
 
@@ -100,6 +105,7 @@ func (nftAddr *NFTAddress) Serialize(_ serializer.DeSerializationMode, deSeriCtx
 	var b [NFTAddressSerializedBytesSize]byte
 	b[0] = byte(AddressNFT)
 	copy(b[serializer.SmallTypeDenotationByteSize:], nftAddr[:])
+
 	return b[:], nil
 }
 
@@ -111,6 +117,7 @@ func (nftAddr *NFTAddress) MarshalJSON() ([]byte, error) {
 	jNFTAddress := &jsonNFTAddress{}
 	jNFTAddress.NFTId = EncodeHex(nftAddr[:])
 	jNFTAddress.Type = int(AddressNFT)
+
 	return json.Marshal(jNFTAddress)
 }
 
@@ -124,6 +131,7 @@ func (nftAddr *NFTAddress) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*nftAddr = *seri.(*NFTAddress)
+
 	return nil
 }
 
@@ -148,5 +156,6 @@ func (j *jsonNFTAddress) ToSerializable() (serializer.Serializable, error) {
 	}
 	addr := &NFTAddress{}
 	copy(addr[:], addrBytes)
+
 	return addr, nil
 }

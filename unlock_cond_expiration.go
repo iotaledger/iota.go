@@ -101,6 +101,7 @@ func (s *ExpirationUnlockCondition) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return json.Marshal(jExpUnlockCond)
 }
 
@@ -114,6 +115,7 @@ func (s *ExpirationUnlockCondition) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*ExpirationUnlockCondition)
+
 	return nil
 }
 
@@ -134,5 +136,6 @@ func (j *jsonExpirationUnlockCondition) ToSerializable() (serializer.Serializabl
 	if err != nil {
 		return nil, err
 	}
+
 	return unlockCondExp, nil
 }

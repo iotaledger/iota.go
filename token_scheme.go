@@ -21,6 +21,7 @@ func (tokenSchemeType TokenSchemeType) String() string {
 	if int(tokenSchemeType) >= len(tokenSchemeNames) {
 		return fmt.Sprintf("unknown token scheme type: %d", tokenSchemeType)
 	}
+
 	return tokenSchemeNames[tokenSchemeType]
 }
 
@@ -63,6 +64,7 @@ func tokenSchemeWriteGuard(seri serializer.Serializable) error {
 	default:
 		return ErrTypeIsNotSupportedTokenScheme
 	}
+
 	return nil
 }
 
@@ -79,6 +81,7 @@ func TokenSchemeSelector(tokenSchemeType uint32) (TokenScheme, error) {
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownTokenSchemeType, tokenSchemeType)
 	}
+
 	return seri, nil
 }
 
@@ -91,6 +94,7 @@ func tokenSchemeFromJSONRawMsg(rawMsg *json.RawMessage) (TokenScheme, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return tokenScheme.(TokenScheme), nil
 }
 
@@ -103,5 +107,6 @@ func jsonTokenSchemeSelector(ty int) (JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode token scheme type from JSON: %w", ErrUnknownTokenSchemeType)
 	}
+
 	return obj, nil
 }

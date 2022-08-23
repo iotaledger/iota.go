@@ -44,6 +44,7 @@ func (u *UTXOInput) ID() OutputID {
 	var id OutputID
 	copy(id[:TransactionIDLength], u.TransactionID[:])
 	binary.LittleEndian.PutUint16(id[TransactionIDLength:], u.TransactionOutputIndex)
+
 	return id
 }
 
@@ -57,6 +58,7 @@ func (u *UTXOInput) Equals(other *UTXOInput) bool {
 	if u.TransactionID != other.TransactionID {
 		return false
 	}
+
 	return u.TransactionOutputIndex == other.TransactionOutputIndex
 }
 
@@ -75,6 +77,7 @@ func (u *UTXOInput) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 			if err := inputsPredicateIndicesWithinBounds(-1, u); err != nil {
 				return fmt.Errorf("%w: unable to deserialize UTXO input", err)
 			}
+
 			return nil
 		}).
 		Done()
@@ -86,6 +89,7 @@ func (u *UTXOInput) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 			if err := inputsPredicateIndicesWithinBounds(-1, u); err != nil {
 				return fmt.Errorf("%w: unable to serialize UTXO input", err)
 			}
+
 			return nil
 		}).
 		WriteNum(byte(InputUTXO), func(err error) error {
@@ -108,6 +112,7 @@ func (u *UTXOInput) MarshalJSON() ([]byte, error) {
 	jUTXOInput.TransactionID = u.TransactionID.ToHex()
 	jUTXOInput.TransactionOutputIndex = int(u.TransactionOutputIndex)
 	jUTXOInput.Type = int(InputUTXO)
+
 	return json.Marshal(jUTXOInput)
 }
 
@@ -121,6 +126,7 @@ func (u *UTXOInput) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*u = *seri.(*UTXOInput)
+
 	return nil
 }
 
@@ -141,5 +147,6 @@ func (j *jsonUTXOInput) ToSerializable() (serializer.Serializable, error) {
 		return nil, fmt.Errorf("unable to decode transaction ID from JSON for UTXO input: %w", err)
 	}
 	copy(utxoInput.TransactionID[:], transactionIDBytes)
+
 	return utxoInput, nil
 }

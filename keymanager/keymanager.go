@@ -47,6 +47,7 @@ func (k *KeyManager) KeyRanges() []*KeyRange {
 			EndIndex:   r.EndIndex,
 		})
 	}
+
 	return keyRanges
 }
 
@@ -60,6 +61,7 @@ func (k *KeyManager) PublicKeysForMilestoneIndex(msIndex iotago.MilestoneIndex) 
 				// EndIndex == 0 means the key is valid forever
 				pubKeys = append(pubKeys, pubKeyRange.PublicKey)
 			}
+
 			continue
 		}
 

@@ -742,6 +742,7 @@ func TestTransactionSemanticValidation(t *testing.T) {
 			err := tt.tx.SemanticallyValidate(tt.svCtx, tt.inputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 			require.NoError(t, err)
@@ -1163,6 +1164,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			err := tt.tx.SemanticallyValidate(tt.svCtx, tt.inputs, valFunc)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 
@@ -1408,6 +1410,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 
@@ -1655,6 +1658,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			err := tt.tx.SemanticallyValidate(tt.svCtx, tt.inputs, iotago.TxSemanticNativeTokens())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 
@@ -1768,6 +1772,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 
@@ -1897,6 +1902,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			err := tt.tx.SemanticallyValidate(tt.svCtx, tt.inputs, valFunc)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 
