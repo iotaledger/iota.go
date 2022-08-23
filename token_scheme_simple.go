@@ -150,8 +150,7 @@ func (s *SimpleTokenScheme) stateChangeValid(nextState TokenScheme, in *big.Int,
 		}
 
 	case tokenDiffType == 0:
-		switch {
-		case s.MintedTokens.Cmp(next.MintedTokens) != 0 || s.MeltedTokens.Cmp(next.MeltedTokens) != 0:
+		if s.MintedTokens.Cmp(next.MintedTokens) != 0 || s.MeltedTokens.Cmp(next.MeltedTokens) != 0 {
 			// no mutations to minted/melted fields while balance is kept
 			return fmt.Errorf("%w: zero token diff requires equal minted/melted supply between current/next state: current (minted/melted=%s/%s), next (minted/melted=%s/%s)", ErrNativeTokenSumUnbalanced, s.MintedTokens, s.MeltedTokens, next.MintedTokens, next.MeltedTokens)
 		}

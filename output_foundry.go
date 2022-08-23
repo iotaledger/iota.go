@@ -330,8 +330,7 @@ func (f *FoundryOutput) stateChangeValid(next ChainConstrainedOutput, inSums Nat
 	// the check for the serial number and token scheme not being mutated is implicit
 	// as a change would cause the foundry ID to be different, which would result in
 	// no matching foundry to be found to validate the state transition against
-	switch {
-	case f.MustID() != nextState.MustID():
+	if f.MustID() != nextState.MustID() {
 		// impossible invariant as the STVF should be called via the matching next foundry output
 		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %v got %v", f.MustID(), nextState.MustID()))
 	}

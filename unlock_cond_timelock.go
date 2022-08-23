@@ -32,8 +32,7 @@ func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {
 		return false
 	}
 
-	switch {
-	case s.UnixTime != otherCond.UnixTime:
+	if s.UnixTime != otherCond.UnixTime {
 		return false
 	}
 

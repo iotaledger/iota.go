@@ -1,3 +1,4 @@
+//nolint:gocritic // we don't care about these linters in test cases
 package iotago_test
 
 import (

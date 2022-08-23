@@ -269,8 +269,7 @@ func (j *jsonReceiptMilestoneOpt) ToSerializable() (serializer.Serializable, err
 // This function panics if the receipt is nil, the receipt does not include any migrated fund entries or
 // the given treasury output is nil.
 func ValidateReceipt(receipt *ReceiptMilestoneOpt, prevTreasuryOutput *TreasuryOutput, totalSupply uint64) error {
-	switch {
-	case prevTreasuryOutput == nil:
+	if prevTreasuryOutput == nil {
 		panic("given previous treasury output is nil")
 	}
 

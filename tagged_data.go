@@ -49,8 +49,7 @@ func (u *TaggedData) Serialize(deSeriMode serializer.DeSerializationMode, deSeri
 	return serializer.NewSerializer().
 		WithValidation(deSeriMode, func(_ []byte, err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				switch {
-				case len(u.Tag) > TaggedPayloadTagMaxLength:
+				if len(u.Tag) > TaggedPayloadTagMaxLength {
 					return fmt.Errorf("unable to serialize tagged data tag: %w", ErrTaggedDataTagExceedsMaxSize)
 				}
 				// we do not check the length of the data field as in any circumstance

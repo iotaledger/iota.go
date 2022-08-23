@@ -278,7 +278,7 @@ func (m *Milestone) VerifySignatures(minSigThreshold int, applicablePubKeys Mile
 			return fmt.Errorf("%w: public key %s is not applicable", ErrMilestoneNonApplicablePublicKey, EncodeHex(edSig.PublicKey[:]))
 		}
 
-		if ok := iotagoEd25519.Verify(edSig.PublicKey[:], msEssence[:], edSig.Signature[:]); !ok {
+		if ok := iotagoEd25519.Verify(edSig.PublicKey[:], msEssence, edSig.Signature[:]); !ok {
 			return fmt.Errorf("%w: at index %d, %s", ErrMilestoneInvalidSignature, msSigIndex, edSig)
 		}
 	}
@@ -315,7 +315,7 @@ func InsecureRemoteEd25519MilestoneSigner(remoteEndpoint string) MilestoneSignin
 		pubKeysUnbound := make([][]byte, len(pubKeys))
 		for i := range pubKeys {
 			pubKeysUnbound[i] = make([]byte, 32)
-			copy(pubKeysUnbound[i][:], pubKeys[i][:32])
+			copy(pubKeysUnbound[i], pubKeys[i][:32])
 		}
 
 		// insecure because this RPC remote should be local; in turns, it employs TLS mutual authentication to reach the actual signers.
@@ -511,7 +511,7 @@ func (m *Milestone) MarshalJSON() ([]byte, error) {
 		jMilestone.Opts[i] = &rawJsonSig
 	}
 
-	jMilestone.Metadata = EncodeHex(m.Metadata[:])
+	jMilestone.Metadata = EncodeHex(m.Metadata)
 
 	jMilestone.Signatures = make([]*json.RawMessage, len(m.Signatures))
 	for i, sig := range m.Signatures {
