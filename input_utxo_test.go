@@ -3,11 +3,10 @@ package iotago_test
 import (
 	"testing"
 
-	"github.com/iotaledger/iota.go/v3/tpkg"
-
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 func TestUTXOInput_DeSerialize(t *testing.T) {

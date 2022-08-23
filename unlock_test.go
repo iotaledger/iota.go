@@ -4,13 +4,11 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/iota.go/v3/tpkg"
-
-	"github.com/stretchr/testify/assert"
-
 	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 func TestUnlockSelector(t *testing.T) {

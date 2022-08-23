@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
-
 	_ "golang.org/x/crypto/blake2b"
+
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // SignatureType defines the type of signature.

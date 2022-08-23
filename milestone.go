@@ -16,9 +16,8 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
-	"github.com/iotaledger/iota.go/v3/util"
-
 	"github.com/iotaledger/iota.go/v3/remotesigner"
+	"github.com/iotaledger/iota.go/v3/util"
 )
 
 const (

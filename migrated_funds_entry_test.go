@@ -3,9 +3,8 @@ package iotago_test
 import (
 	"testing"
 
-	"github.com/iotaledger/iota.go/v3/tpkg"
-
 	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 func TestMigratedFundsEntry_DeSerialize(t *testing.T) {
