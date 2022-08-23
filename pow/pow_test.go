@@ -1,5 +1,3 @@
-//#nosec G404
-
 package pow
 
 import (
@@ -83,6 +81,7 @@ func BenchmarkScore(b *testing.B) {
 	data := make([][]byte, b.N)
 	for i := range data {
 		data[i] = make([]byte, benchBytesLen)
+		//nolint:gosec // we do not care about weak random numbers here
 		if _, err := rand.Read(data[i]); err != nil {
 			b.Fatal(err)
 		}

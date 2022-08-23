@@ -1,5 +1,3 @@
-//#nosec G404
-
 package ed25519_test
 
 import (
@@ -18,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 var nullSeed = make([]byte, std.SeedSize)
@@ -124,7 +123,8 @@ func TestSTDLib(t *testing.T) {
 	rand.Seed(1)
 	seed := make([]byte, std.SeedSize)
 	for i := 0; i < 1000; i++ {
-		rand.Read(seed)
+		_, err := tpkg.RandomRead(seed)
+		require.NoError(t, err)
 		pub, priv, _ := std.GenerateKey(bytes.NewReader(seed))
 		pubExpected, privExpected, _ := std.GenerateKey(bytes.NewReader(seed))
 		assert.EqualValuesf(t, privExpected, priv, "different private key")
@@ -141,7 +141,7 @@ func BenchmarkSign(b *testing.B) {
 	_, privateKey, _ := std.GenerateKey(nil)
 	data := make([][64]byte, b.N)
 	for i := range data {
-		if _, err := rand.Read(data[i][:]); err != nil {
+		if _, err := tpkg.RandomRead(data[i][:]); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -160,7 +160,7 @@ func BenchmarkVerify(b *testing.B) {
 	}, b.N)
 	for i := range data {
 		data[i].message = make([]byte, 64)
-		if _, err := rand.Read(data[i].message); err != nil {
+		if _, err := tpkg.RandomRead(data[i].message); err != nil {
 			b.Fatal(err)
 		}
 		data[i].sig = std.Sign(privateKey, data[i].message)

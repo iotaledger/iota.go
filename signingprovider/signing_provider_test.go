@@ -1,11 +1,9 @@
-//#nosec G404
-
+//nolint:scopelint // we don't care about these linters in test cases
 package signingprovider_test
 
 import (
 	"crypto/ed25519"
 	"errors"
-	"math/rand"
 	"testing"
 	"time"
 
@@ -69,7 +67,7 @@ func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {
 	tests := []test{
 		func() test {
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+				Parents:           tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7)),
 				Index:             4,
 				Timestamp:         uint32(time.Now().Unix()),
 				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
@@ -84,7 +82,7 @@ func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {
 		}(),
 		func() test {
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+				Parents:           tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7)),
 				Index:             8,
 				Timestamp:         uint32(time.Now().Unix()),
 				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
@@ -99,7 +97,7 @@ func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {
 		}(),
 		func() test {
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+				Parents:           tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7)),
 				Index:             20,
 				Timestamp:         uint32(time.Now().Unix()),
 				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
@@ -114,7 +112,7 @@ func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {
 		}(),
 		func() test {
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+				Parents:           tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7)),
 				Index:             17,
 				Timestamp:         uint32(time.Now().Unix()),
 				AppliedMerkleRoot: tpkg.Rand32ByteArray(),

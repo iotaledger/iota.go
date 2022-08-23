@@ -1,12 +1,10 @@
-//#nosec G404
-
+//nolint:scopelint // we don't care about these linters in test cases
 package iotago_test
 
 import (
 	"crypto/ed25519"
 	"encoding/json"
 	"errors"
-	"math/rand"
 	"sort"
 	"testing"
 	"time"
@@ -93,7 +91,7 @@ func TestMilestoneSigning(t *testing.T) {
 			pubKeys := []iotago.MilestonePublicKey{pubKey1}
 
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+				Parents:           tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7)),
 				Index:             1000,
 				Timestamp:         uint32(time.Now().Unix()),
 				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
@@ -126,7 +124,7 @@ func TestMilestoneSigning(t *testing.T) {
 			sort.Sort(pubKeys)
 
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+				Parents:           tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7)),
 				Index:             1000,
 				Timestamp:         uint32(time.Now().Unix()),
 				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
@@ -154,7 +152,7 @@ func TestMilestoneSigning(t *testing.T) {
 			pubKeys := []iotago.MilestonePublicKey{pubKey1}
 
 			msPayload := &iotago.Milestone{
-				Parents:             tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+				Parents:             tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7)),
 				Index:               1000,
 				Timestamp:           uint32(time.Now().Unix()),
 				InclusionMerkleRoot: tpkg.Rand32ByteArray(),
@@ -199,7 +197,7 @@ func TestMilestoneSigning(t *testing.T) {
 }
 
 func TestNewMilestone(t *testing.T) {
-	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
+	parents := tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7))
 	prevMs := tpkg.Rand32ByteArray()
 	pastConeMerkleProof := tpkg.Rand32ByteArray()
 	inclusionMerkleProof := tpkg.Rand32ByteArray()

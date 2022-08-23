@@ -1,5 +1,3 @@
-//#nosec G404
-
 package nodeclient_test
 
 import (
@@ -7,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -175,7 +172,7 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
-	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
+	parents := tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7))
 
 	queryHash := iotago.EncodeHex(identifier[:])
 
@@ -218,7 +215,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+		Parents:         tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7)),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
@@ -278,7 +275,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+		Parents:         tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7)),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
@@ -602,7 +599,7 @@ func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 	var milestoneIndex iotago.MilestoneIndex = 1337
 	var milestoneTimestamp uint32 = 1333337
 
-	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
+	parents := tpkg.SortedRandBlockIDs(1 + tpkg.RandomIntn(7))
 	parentBlockIDs := make([]string, len(parents))
 	for i, p := range parents {
 		parentBlockIDs[i] = iotago.EncodeHex(p[:])
