@@ -15,6 +15,8 @@ import (
 )
 
 // Hash defines the hash function that is used to compute the PoW digest.
+//
+//nolint:nosnakecase // crypto package uses underscore names for constants
 var Hash = crypto.BLAKE2b_256
 
 const (

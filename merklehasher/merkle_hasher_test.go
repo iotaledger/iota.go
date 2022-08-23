@@ -29,6 +29,7 @@ func TestMerkleHasher(t *testing.T) {
 	includedBlocks = append(includedBlocks, iotago.MustBlockIDFromHexString("0x0bf5059875921e668a5bdf2c7fc4844592d2572bcd0668d2d6c52f5054e2d083"))
 	includedBlocks = append(includedBlocks, iotago.MustBlockIDFromHexString("0x6bf84c7174cb7476364cc3dbd968b0f7172ed85794bb358b0c3b525da1786f9f"))
 
+	//nolint:nosnakecase // crypto package uses underscore names for constants
 	hasher := merklehasher.NewHasher(crypto.BLAKE2b_256)
 	hash := hasher.HashBlockIDs(includedBlocks)
 
