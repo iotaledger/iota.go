@@ -1168,6 +1168,63 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrInvalidInputUnlock,
 			}
 		}(),
+		func() test {
+			_, ident1, _ := tpkg.RandEd25519Identity()
+			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(2)
+
+			var (
+				aliasAddr1 = tpkg.RandAliasAddress()
+			)
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:  100,
+					AliasID: aliasAddr1.AliasID(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+						&iotago.GovernorAddressUnlockCondition{Address: ident2},
+					},
+				},
+				inputIDs[1]: &iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: aliasAddr1},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:  100,
+						AliasID: aliasAddr1.AliasID(),
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident2},
+						},
+					},
+				},
+			}
+
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident2AddressKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "fail - alias output not state transitioning",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.AliasUnlock{Reference: 0},
+					},
+				},
+				wantErr: iotago.ErrInvalidInputUnlock,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
