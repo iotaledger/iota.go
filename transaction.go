@@ -482,7 +482,30 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 				}
 				svCtx.WorkingSet.UnlockedIdents.AddUnlockedChain(chainID.ToAddress(), uint16(inputIndex))
 			}
+		}
 
+		// check whether any alias output which is referenced is not doing a state transition
+		for _, v := range svCtx.WorkingSet.UnlockedIdents {
+			if len(v.ReferencedBy) == 0 {
+				continue
+			}
+
+			input := svCtx.WorkingSet.Inputs[v.UnlockedAt]
+			current, ok := input.(*AliasOutput)
+			if !ok {
+				continue
+			}
+
+			// there can be multiple entries given a chain output
+			aliasAddr, ok := v.Ident.(*AliasAddress)
+			if !ok {
+				continue
+			}
+
+			next, hasNextState := svCtx.WorkingSet.OutChains[aliasAddr.Chain()]
+			if !hasNextState || (current.StateIndex+1 != next.(*AliasOutput).StateIndex) {
+				return fmt.Errorf("%w: input alias output at %d is referenced by %v, but the alias output is not state transitioning", ErrInvalidInputUnlock, v.UnlockedAt, v.ReferencedBy)
+			}
 		}
 
 		return nil

@@ -206,7 +206,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				Amount:         OneMi,
 				NativeTokens:   nil,
 				AliasID:        aliasIdent1.AliasID(),
-				StateIndex:     1,
+				StateIndex:     2,
 				StateMetadata:  nil,
 				FoundryCounter: 1,
 				Conditions: iotago.UnlockConditions{
@@ -836,7 +836,20 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:     100,
+						AliasID:    aliasIdent1.AliasID(),
+						StateIndex: 1,
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident1},
+						},
+					},
+				},
+			}
 
 			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
