@@ -480,9 +480,23 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 				if chainID.Empty() {
 					chainID = chainID.(UTXOIDChainID).FromOutputID(svCtx.WorkingSet.UTXOInputAtIndex(uint16(inputIndex)).Ref())
 				}
+
+				// for alias outputs which are not state transitioning, we do not add it to the set of unlocked chains
+				if currentAlias, ok := chainConstrOutput.(*AliasOutput); ok {
+					next, hasNextState := svCtx.WorkingSet.OutChains[chainID]
+					if !hasNextState {
+						continue
+					}
+					// note that isAlias should never be false in practice,
+					// but we add it anyway as an additional safeguard
+					nextAlias, isAlias := next.(*AliasOutput)
+					if !isAlias || (currentAlias.StateIndex+1 != nextAlias.StateIndex) {
+						continue
+					}
+				}
+
 				svCtx.WorkingSet.UnlockedIdents.AddUnlockedChain(chainID.ToAddress(), uint16(inputIndex))
 			}
-
 		}
 
 		return nil

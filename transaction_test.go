@@ -206,7 +206,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				Amount:         OneMi,
 				NativeTokens:   nil,
 				AliasID:        aliasIdent1.AliasID(),
-				StateIndex:     1,
+				StateIndex:     2,
 				StateMetadata:  nil,
 				FoundryCounter: 1,
 				Conditions: iotago.UnlockConditions{
@@ -836,7 +836,20 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:     100,
+						AliasID:    aliasIdent1.AliasID(),
+						StateIndex: 1,
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident1},
+						},
+					},
+				},
+			}
 
 			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
@@ -1150,6 +1163,63 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AliasUnlock{Reference: 0},
 						// error, should be 0, because alias3 is unlocked by alias1, not alias2
 						&iotago.AliasUnlock{Reference: 1},
+					},
+				},
+				wantErr: iotago.ErrInvalidInputUnlock,
+			}
+		}(),
+		func() test {
+			_, ident1, _ := tpkg.RandEd25519Identity()
+			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(2)
+
+			var (
+				aliasAddr1 = tpkg.RandAliasAddress()
+			)
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:  100,
+					AliasID: aliasAddr1.AliasID(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+						&iotago.GovernorAddressUnlockCondition{Address: ident2},
+					},
+				},
+				inputIDs[1]: &iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: aliasAddr1},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:  100,
+						AliasID: aliasAddr1.AliasID(),
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident2},
+						},
+					},
+				},
+			}
+
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident2AddressKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "fail - alias output not state transitioning",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.AliasUnlock{Reference: 0},
 					},
 				},
 				wantErr: iotago.ErrInvalidInputUnlock,
@@ -1758,6 +1828,159 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				wantErr: iotago.ErrSenderFeatureNotUnlocked,
 			}
 		}(),
+		func() test {
+			_, stateController, _ := tpkg.RandEd25519Identity()
+			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(1)
+			aliasAddr := tpkg.RandAliasAddress()
+			aliasId := aliasAddr.AliasID()
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:  100,
+					AliasID: aliasId,
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+						&iotago.GovernorAddressUnlockCondition{Address: governor},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:  100,
+						AliasID: aliasId,
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+							&iotago.GovernorAddressUnlockCondition{Address: governor},
+						},
+						Features: iotago.Features{
+							&iotago.SenderFeature{Address: aliasAddr},
+						},
+					},
+				},
+			}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), governorAddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "fail - sender not unlocked due to governance transition",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: iotago.ErrSenderFeatureNotUnlocked,
+			}
+		}(),
+		func() test {
+			_, stateController, stateControllerAddrKeys := tpkg.RandEd25519Identity()
+			_, governor, _ := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(1)
+			aliasAddr := tpkg.RandAliasAddress()
+			aliasId := aliasAddr.AliasID()
+			currentStateIndex := uint32(1)
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:     100,
+					AliasID:    aliasId,
+					StateIndex: currentStateIndex,
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+						&iotago.GovernorAddressUnlockCondition{Address: governor},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:     100,
+						AliasID:    aliasId,
+						StateIndex: currentStateIndex + 1,
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+							&iotago.GovernorAddressUnlockCondition{Address: governor},
+						},
+						Features: iotago.Features{
+							&iotago.SenderFeature{Address: aliasAddr},
+						},
+					},
+				},
+			}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), stateControllerAddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "ok - alias addr unlocked with state transition",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
+		func() test {
+			_, stateController, _ := tpkg.RandEd25519Identity()
+			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(1)
+			aliasAddr := tpkg.RandAliasAddress()
+			aliasId := aliasAddr.AliasID()
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:  100,
+					AliasID: aliasId,
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+						&iotago.GovernorAddressUnlockCondition{Address: governor},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:  100,
+						AliasID: aliasId,
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+							&iotago.GovernorAddressUnlockCondition{Address: governor},
+						},
+						Features: iotago.Features{
+							&iotago.SenderFeature{Address: governor},
+						},
+					},
+				},
+			}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), governorAddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "ok - sender is governor address",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1766,6 +1989,225 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				iotago.TxSemanticInputUnlocks(),
 				iotago.TxSemanticOutputsSender(),
 			)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestTxSemanticOutputsIssuer(t *testing.T) {
+	type test struct {
+		name    string
+		svCtx   *iotago.SemanticValidationContext
+		inputs  iotago.OutputSet
+		tx      *iotago.Transaction
+		wantErr error
+	}
+	tests := []test{
+		func() test {
+			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+			_, stateController, _ := tpkg.RandEd25519Identity()
+			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(2)
+			aliasAddr := tpkg.RandAliasAddress()
+			aliasId := aliasAddr.AliasID()
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:  100,
+					AliasID: aliasId,
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+						&iotago.GovernorAddressUnlockCondition{Address: governor},
+					},
+				},
+				inputIDs[1]: &iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ident1},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:  100,
+						AliasID: aliasId,
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+							&iotago.GovernorAddressUnlockCondition{Address: governor},
+						},
+					},
+					&iotago.NFTOutput{
+						Amount: 100,
+						Conditions: iotago.UnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+						ImmutableFeatures: iotago.Features{
+							&iotago.IssuerFeature{Address: aliasAddr},
+						},
+					},
+				},
+			}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), governorAddrKeys, ident1AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "fail - issuer not unlocked due to governance transition",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.SignatureUnlock{Signature: sigs[1]},
+					},
+				},
+				wantErr: iotago.ErrIssuerFeatureNotUnlocked,
+			}
+		}(),
+		func() test {
+			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+			_, stateController, stateControllerAddrKeys := tpkg.RandEd25519Identity()
+			_, governor, _ := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(2)
+			aliasAddr := tpkg.RandAliasAddress()
+			aliasId := aliasAddr.AliasID()
+			currentStateIndex := uint32(1)
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:     100,
+					AliasID:    aliasId,
+					StateIndex: currentStateIndex,
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+						&iotago.GovernorAddressUnlockCondition{Address: governor},
+					},
+				},
+				inputIDs[1]: &iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ident1},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:     100,
+						AliasID:    aliasId,
+						StateIndex: currentStateIndex + 1,
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+							&iotago.GovernorAddressUnlockCondition{Address: governor},
+						},
+					},
+					&iotago.NFTOutput{
+						Amount: 100,
+						Conditions: iotago.UnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+						ImmutableFeatures: iotago.Features{
+							&iotago.IssuerFeature{Address: aliasAddr},
+						},
+					},
+				},
+			}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), stateControllerAddrKeys, ident1AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "ok - issuer unlocked with state transition",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.SignatureUnlock{Signature: sigs[1]},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
+		func() test {
+			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+			_, stateController, _ := tpkg.RandEd25519Identity()
+			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(2)
+			aliasAddr := tpkg.RandAliasAddress()
+			aliasId := aliasAddr.AliasID()
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:  100,
+					AliasID: aliasId,
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+						&iotago.GovernorAddressUnlockCondition{Address: governor},
+					},
+				},
+				inputIDs[1]: &iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ident1},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:  100,
+						AliasID: aliasId,
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
+							&iotago.GovernorAddressUnlockCondition{Address: governor},
+						},
+					},
+					&iotago.NFTOutput{
+						Amount: 100,
+						Conditions: iotago.UnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+						ImmutableFeatures: iotago.Features{
+							&iotago.IssuerFeature{Address: governor},
+						},
+					},
+				},
+			}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), governorAddrKeys, ident1AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "ok - issuer is the governor",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.SignatureUnlock{Signature: sigs[1]},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			err := tt.tx.SemanticallyValidate(tt.svCtx, tt.inputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return

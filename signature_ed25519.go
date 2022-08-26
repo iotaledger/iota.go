@@ -44,7 +44,7 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	// an address is the Blake2b 256 hash of the public key
 	addrFromPubKey := Ed25519AddressFromPubKey(e.PublicKey[:])
 	if !bytes.Equal(addr[:], addrFromPubKey[:]) {
-		return fmt.Errorf("%w: address %s, address from public key %v", ErrEd25519PubKeyAndAddrMismatch, EncodeHex(addr[:]), addrFromPubKey)
+		return fmt.Errorf("%w: address %s, address from public key %v", ErrEd25519PubKeyAndAddrMismatch, EncodeHex(addr[:]), EncodeHex(addrFromPubKey[:]))
 	}
 	if valid := iotagoEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
 		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrEd25519SignatureInvalid, EncodeHex(addr[:]), EncodeHex(e.PublicKey[:]), EncodeHex(e.Signature[:]))
