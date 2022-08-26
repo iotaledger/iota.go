@@ -482,9 +482,15 @@ func TxSemanticInputUnlocks() TxSemanticValidationFunc {
 				}
 
 				// for alias outputs which are not state transitioning, we do not add it to the set of unlocked chains
-				if current, ok := chainConstrOutput.(*AliasOutput); ok {
+				if currentAlias, ok := chainConstrOutput.(*AliasOutput); ok {
 					next, hasNextState := svCtx.WorkingSet.OutChains[chainID]
-					if !hasNextState || (current.StateIndex+1 != next.(*AliasOutput).StateIndex) {
+					if !hasNextState {
+						continue
+					}
+					// note that isAlias should never be false in practice,
+					// but we add it anyway as an additional safeguard
+					nextAlias, isAlias := next.(*AliasOutput)
+					if !isAlias || (currentAlias.StateIndex+1 != nextAlias.StateIndex) {
 						continue
 					}
 				}
