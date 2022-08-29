@@ -67,10 +67,10 @@ func (p *ProtocolParameters) Deserialize(data []byte, deSeriMode serializer.DeSe
 		}).
 		ReadString(&p.NetworkName, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize network name within protocol parameters", err)
-		}).
+		}, 0, 0).
 		ReadString(&bech32HRP, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("%w: unable to deserialize Bech32HRP prefix within protocol parameters", err)
-		}).
+		}, 0, 0).
 		Do(func() {
 			p.Bech32HRP = NetworkPrefix(bech32HRP)
 		}).
@@ -99,10 +99,10 @@ func (p *ProtocolParameters) Serialize(deSeriMode serializer.DeSerializationMode
 		}).
 		WriteString(p.NetworkName, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize network name within protocol parameters", err)
-		}).
+		}, 0, 0).
 		WriteString(string(p.Bech32HRP), serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize Bech32HRP prefix within protocol parameters", err)
-		}).
+		}, 0, 0).
 		WriteNum(p.MinPoWScore, func(err error) error {
 			return fmt.Errorf("%w: unable to serialize minimum pow score within protocol parameters", err)
 		}).

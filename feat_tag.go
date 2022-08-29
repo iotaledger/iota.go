@@ -3,7 +3,6 @@ package iotago
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -11,15 +10,10 @@ import (
 )
 
 const (
-	// MaxTagLength defines the max. length of an tag feature tag.
+	// MinTagLength defines the min. length of a tag feature tag.
+	MinTagLength = 1
+	// MaxTagLength defines the max. length of a tag feature tag.
 	MaxTagLength = 64
-)
-
-var (
-	// ErrTagFeatureEmpty gets returned when an TagFeature is empty.
-	ErrTagFeatureEmpty = errors.New("tag feature data is empty")
-	// ErrTagFeatureTagExceedsMaxLength gets returned when an TagFeature tag exceeds MaxTagLength.
-	ErrTagFeatureTagExceedsMaxLength = errors.New("tag feature tag exceeds max length")
 )
 
 // TagFeature is a feature which allows to additionally tag an output by a user defined value.
@@ -51,16 +45,6 @@ func (s *TagFeature) Type() FeatureType {
 	return FeatureTag
 }
 
-func (s *TagFeature) ValidTagSize() error {
-	switch {
-	case len(s.Tag) == 0:
-		return ErrTagFeatureEmpty
-	case len(s.Tag) > MaxTagLength:
-		return ErrTagFeatureTagExceedsMaxLength
-	}
-	return nil
-}
-
 func (s *TagFeature) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(FeatureTag), serializer.TypeDenotationByte, func(err error) error {
@@ -68,20 +52,18 @@ func (s *TagFeature) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 		}).
 		ReadVariableByteSlice(&s.Tag, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize tag for tag feature: %w", err)
-		}, MaxTagLength).
-		WithValidation(deSeriMode, func(_ []byte, err error) error { return s.ValidTagSize() }).
+		}, MinTagLength, MaxTagLength).
 		Done()
 }
 
 func (s *TagFeature) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WithValidation(deSeriMode, func(_ []byte, err error) error { return s.ValidTagSize() }).
 		WriteNum(byte(FeatureTag), func(err error) error {
 			return fmt.Errorf("unable to serialize tag feature type ID: %w", err)
 		}).
 		WriteVariableByteSlice(s.Tag, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to serialize tag feature tag: %w", err)
-		}).
+		}, MinTagLength, MaxTagLength).
 		Serialize()
 }
 

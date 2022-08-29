@@ -480,7 +480,7 @@ func (a *AliasOutput) Deserialize(data []byte, deSeriMode serializer.DeSerializa
 		}).
 		ReadVariableByteSlice(&a.StateMetadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize state metadata for alias output: %w", err)
-		}, MaxMetadataLength).
+		}, 0, MaxMetadataLength).
 		ReadNum(&a.FoundryCounter, func(err error) error {
 			return fmt.Errorf("unable to deserialize foundry counter for alias output: %w", err)
 		}).
@@ -515,7 +515,7 @@ func (a *AliasOutput) Serialize(deSeriMode serializer.DeSerializationMode, deSer
 		}).
 		WriteVariableByteSlice(a.StateMetadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output state metadata: %w", err)
-		}).
+		}, 0, MaxMetadataLength).
 		WriteNum(a.FoundryCounter, func(err error) error {
 			return fmt.Errorf("unable to serialize alias output foundry counter: %w", err)
 		}).

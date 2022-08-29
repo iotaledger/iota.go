@@ -38,36 +38,27 @@ func (u *TaggedData) Deserialize(data []byte, deSeriMode serializer.DeSerializat
 		}).
 		ReadVariableByteSlice(&u.Tag, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize tagged data tag: %w", err)
-		}, TaggedPayloadTagMaxLength).
+		}, 0, TaggedPayloadTagMaxLength).
 		ReadVariableByteSlice(&u.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to deserialize tagged data data: %w", err)
-		}, BlockBinSerializedMaxSize). // obviously can never be that size
+		}, 0, BlockBinSerializedMaxSize). // obviously can never be that size
 		Done()
 }
 
 func (u *TaggedData) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WithValidation(deSeriMode, func(_ []byte, err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				switch {
-				case len(u.Tag) > TaggedPayloadTagMaxLength:
-					return fmt.Errorf("unable to serialize tagged data tag: %w", ErrTaggedDataTagExceedsMaxSize)
-				}
-				// we do not check the length of the data field as in any circumstance
-				// the max size it can take up is dependent on how big the enclosing
-				// parent object is
-			}
-			return nil
-		}).
 		WriteNum(PayloadTaggedData, func(err error) error {
 			return fmt.Errorf("unable to serialize tagged data payload ID: %w", err)
 		}).
 		WriteVariableByteSlice(u.Tag, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to serialize tagged data tag: %w", err)
-		}).
+		}, 0, TaggedPayloadTagMaxLength).
+		// we do not check the length of the data field as in any circumstance
+		// the max size it can take up is dependent on how big the enclosing
+		// parent object is
 		WriteVariableByteSlice(u.Data, serializer.SeriLengthPrefixTypeAsUint32, func(err error) error {
 			return fmt.Errorf("unable to serialize tagged data data: %w", err)
-		}).
+		}, 0, 0).
 		Serialize()
 }
 
