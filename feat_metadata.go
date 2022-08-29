@@ -3,7 +3,6 @@ package iotago
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -11,15 +10,10 @@ import (
 )
 
 const (
+	// MinMetadataLength defines the min length of the data within a MetadataFeature.
+	MinMetadataLength = 1
 	// MaxMetadataLength defines the max length of the data within a MetadataFeature.
 	MaxMetadataLength = 8192
-)
-
-var (
-	// ErrMetadataFeatureEmpty gets returned when a MetadataFeature is empty.
-	ErrMetadataFeatureEmpty = errors.New("metadata feature is empty")
-	// ErrMetadataFeatureDataExceedsMaxLength gets returned when a MetadataFeature's data exceeds MaxMetadataLength.
-	ErrMetadataFeatureDataExceedsMaxLength = errors.New("metadata feature data exceeds max length")
 )
 
 // MetadataFeature is a feature which simply holds binary data to be freely
@@ -49,16 +43,6 @@ func (s *MetadataFeature) Type() FeatureType {
 	return FeatureMetadata
 }
 
-func (s *MetadataFeature) ValidDataSize() error {
-	switch {
-	case len(s.Data) == 0:
-		return ErrMetadataFeatureEmpty
-	case len(s.Data) > MaxMetadataLength:
-		return ErrMetadataFeatureDataExceedsMaxLength
-	}
-	return nil
-}
-
 func (s *MetadataFeature) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		CheckTypePrefix(uint32(FeatureMetadata), serializer.TypeDenotationByte, func(err error) error {
@@ -66,20 +50,18 @@ func (s *MetadataFeature) Deserialize(data []byte, deSeriMode serializer.DeSeria
 		}).
 		ReadVariableByteSlice(&s.Data, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize data for metadata feature: %w", err)
-		}, MaxMetadataLength).
-		WithValidation(deSeriMode, func(_ []byte, err error) error { return s.ValidDataSize() }).
+		}, MinMetadataLength, MaxMetadataLength).
 		Done()
 }
 
 func (s *MetadataFeature) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WithValidation(deSeriMode, func(_ []byte, err error) error { return s.ValidDataSize() }).
 		WriteNum(byte(FeatureMetadata), func(err error) error {
 			return fmt.Errorf("unable to serialize metadata feature type ID: %w", err)
 		}).
 		WriteVariableByteSlice(s.Data, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize metadata feature data: %w", err)
-		}).
+		}, MinMetadataLength, MaxMetadataLength).
 		Serialize()
 }
 

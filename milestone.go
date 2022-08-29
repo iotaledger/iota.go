@@ -232,7 +232,7 @@ func (m *Milestone) Essence() ([]byte, error) {
 		}).
 		WriteVariableByteSlice(m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone metadata for essence: %w", err)
-		}).
+		}, 0, MaxMetadataLength).
 		WriteSliceOfObjects(&m.Opts, serializer.DeSeriModePerformValidation, nil, serializer.SeriLengthPrefixTypeAsByte, &milestoneOptsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone options for essence: %w", err)
 		}).
@@ -420,7 +420,7 @@ func (m *Milestone) Deserialize(data []byte, deSeriMode serializer.DeSerializati
 		}).
 		ReadVariableByteSlice(&m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone metadata: %w", err)
-		}, MaxMetadataLength).
+		}, 0, MaxMetadataLength).
 		ReadSliceOfObjects(&m.Opts, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationByte, &milestoneOptsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize milestone options: %w", err)
 		}).
@@ -458,7 +458,7 @@ func (m *Milestone) Serialize(deSeriMode serializer.DeSerializationMode, deSeriC
 		}).
 		WriteVariableByteSlice(m.Metadata, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone metadata: %w", err)
-		}).
+		}, 0, MaxMetadataLength).
 		WriteSliceOfObjects(&m.Opts, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, &milestoneOptsArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize milestone options: %w", err)
 		}).

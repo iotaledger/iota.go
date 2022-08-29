@@ -59,19 +59,12 @@ func (p *ProtocolParamsMilestoneOpt) Deserialize(data []byte, deSeriMode seriali
 		}).
 		ReadVariableByteSlice(&p.Params, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize protocol params milestone option parameters: %w", err)
-		}, MaxParamsLength).
+		}, 0, MaxParamsLength).
 		Done()
 }
 
 func (p *ProtocolParamsMilestoneOpt) Serialize(deSeriMode serializer.DeSerializationMode, _ interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		WithValidation(deSeriMode, func(_ []byte, err error) error {
-			switch {
-			case len(p.Params) > MaxParamsLength:
-				return fmt.Errorf("%w: params bigger than %d", ErrProtocolParamsMilestoneOptInvalid, MaxParamsLength)
-			}
-			return nil
-		}).
 		WriteNum(byte(MilestoneOptProtocolParams), func(err error) error {
 			return fmt.Errorf("unable to serialize protocol params milestone option type ID: %w", err)
 		}).
@@ -83,7 +76,7 @@ func (p *ProtocolParamsMilestoneOpt) Serialize(deSeriMode serializer.DeSerializa
 		}).
 		WriteVariableByteSlice(p.Params, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize protocol params milestone option parameters: %w", err)
-		}).
+		}, 0, MaxParamsLength).
 		Serialize()
 }
 
