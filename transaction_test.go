@@ -1070,8 +1070,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			}
 		}(),
 		func() test {
-			_, ident1, _ := tpkg.RandEd25519Identity()
-			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
+			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
+			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.OutputSet{
@@ -1089,13 +1089,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident2AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
 				name: "fail - receiver can not unlock anymore",
 				svCtx: &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{
-					ConfUnix: 5,
+					ConfUnix: 10,
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
