@@ -736,6 +736,83 @@ func TestTransactionSemanticValidation(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
+		func() test {
+			var (
+				aliasAddr1 = tpkg.RandAliasAddress()
+			)
+
+			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
+			_, ident2, _ := tpkg.RandEd25519Identity()
+
+			inputIDs := tpkg.RandOutputIDs(2)
+			inFoundry := &iotago.FoundryOutput{
+				Amount:       100,
+				SerialNumber: 5,
+				TokenScheme: &iotago.SimpleTokenScheme{
+					MintedTokens:  new(big.Int).SetInt64(1000),
+					MeltedTokens:  big.NewInt(0),
+					MaximumSupply: new(big.Int).SetInt64(10000),
+				},
+				Conditions: iotago.UnlockConditions{
+					&iotago.ImmutableAliasUnlockCondition{Address: aliasAddr1},
+				},
+			}
+			outFoundry := inFoundry.Clone().(*iotago.FoundryOutput)
+			// change the immutable alias address unlock
+			outFoundry.Conditions = iotago.UnlockConditions{
+				&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
+			}
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:     100,
+					StateIndex: 0,
+					AliasID:    aliasAddr1.AliasID(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+						&iotago.GovernorAddressUnlockCondition{Address: ident2},
+					},
+				},
+				inputIDs[1]: inFoundry,
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:     100,
+						StateIndex: 1,
+						AliasID:    aliasAddr1.AliasID(),
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident2},
+						},
+					},
+					outFoundry,
+				},
+			}
+
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "fail - changed immutable alias address unlock",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						// should be an AliasUnlock
+						&iotago.AliasUnlock{Reference: 0},
+					},
+				},
+				// changing the immutable alias address unlock changes foundryID, therefore the chain is broken.
+				// Next state of the foundry is empty, meaning it is interpreted as a destroy operation, and native tokens
+				// are not balanced.
+				wantErr: iotago.ErrNativeTokenSumUnbalanced,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1220,6 +1297,75 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					Unlocks: iotago.Unlocks{
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 						&iotago.AliasUnlock{Reference: 0},
+					},
+				},
+				wantErr: iotago.ErrInvalidInputUnlock,
+			}
+		}(),
+		func() test {
+			var (
+				aliasAddr1 = tpkg.RandAliasAddress()
+			)
+
+			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
+			_, ident2, _ := tpkg.RandEd25519Identity()
+
+			inputIDs := tpkg.RandOutputIDs(2)
+			foundryOutput := &iotago.FoundryOutput{
+				Amount:       100,
+				SerialNumber: 5,
+				TokenScheme: &iotago.SimpleTokenScheme{
+					MintedTokens:  new(big.Int).SetInt64(1000),
+					MeltedTokens:  big.NewInt(0),
+					MaximumSupply: new(big.Int).SetInt64(10000),
+				},
+				Conditions: iotago.UnlockConditions{
+					&iotago.ImmutableAliasUnlockCondition{Address: aliasAddr1},
+				},
+			}
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.AliasOutput{
+					Amount:     100,
+					StateIndex: 0,
+					AliasID:    aliasAddr1.AliasID(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+						&iotago.GovernorAddressUnlockCondition{Address: ident2},
+					},
+				},
+				inputIDs[1]: foundryOutput,
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:     100,
+						StateIndex: 1,
+						AliasID:    aliasAddr1.AliasID(),
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident2},
+						},
+					},
+					foundryOutput,
+				},
+			}
+
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:   "fail - wrong unlock for foundry",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						// should be an AliasUnlock
+						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
 				wantErr: iotago.ErrInvalidInputUnlock,
