@@ -1109,6 +1109,46 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			}
 		}(),
 		func() test {
+			inputIDs := tpkg.RandOutputIDs(2)
+
+			nftIdent1 := iotago.NFTAddressFromOutputID(inputIDs[0])
+			nftIdent2 := iotago.NFTAddressFromOutputID(inputIDs[1])
+
+			inputs := iotago.OutputSet{
+				inputIDs[0]: &iotago.NFTOutput{
+					Amount: 100,
+					NFTID:  nftIdent1.NFTID(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: &nftIdent2},
+					},
+				},
+				inputIDs[1]: &iotago.NFTOutput{
+					Amount: 100,
+					NFTID:  nftIdent2.NFTID(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: &nftIdent2},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
+			_, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment())
+			require.NoError(t, err)
+			return test{
+				name:   "fail - circular NFT unlock",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.NFTUnlock{Reference: 1},
+						&iotago.NFTUnlock{Reference: 0},
+					},
+				},
+				wantErr: iotago.ErrInvalidInputUnlock,
+			}
+		}(),
+		func() test {
 			_, ident1, _ := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
