@@ -126,11 +126,56 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					OutChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
 						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 7},
 					},
-					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						exampleFoundry.MustNativeTokenID(): startingSupply,
+					},
 				},
 			},
 			wantErr: &iotago.ChainTransitionError{},
 		},
+		{
+			name:      "fail - genesis transition - foundries unsorted",
+			current:   exampleFoundry,
+			next:      nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &iotago.SemanticValidationContext{
+				WorkingSet: &iotago.SemValiContextWorkingSet{
+					UnlockedIdents: iotago.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							Outputs: iotago.Outputs{
+								&iotago.FoundryOutput{
+									Amount: 100,
+									// exampleFoundry has serial number 6
+									SerialNumber: 7,
+									TokenScheme: &iotago.SimpleTokenScheme{
+										MintedTokens:  startingSupply,
+										MeltedTokens:  big.NewInt(0),
+										MaximumSupply: new(big.Int).SetUint64(1000),
+									},
+									Conditions: iotago.UnlockConditions{
+										&iotago.ImmutableAliasUnlockCondition{Address: exampleAliasIdent},
+									},
+								},
+								exampleFoundry,
+							},
+						},
+						Unlocks: nil,
+					},
+					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
+						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 5},
+					},
+					OutChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
+						exampleAliasIdent.AliasID(): &iotago.AliasOutput{FoundryCounter: 7},
+					},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						exampleFoundry.MustNativeTokenID(): startingSupply,
+					},
+				},
+			},
+			wantErr: &iotago.ChainTransitionError{},
+		},
+
 		{
 			name:    "ok - state transition - metadata feature",
 			current: exampleFoundry,
