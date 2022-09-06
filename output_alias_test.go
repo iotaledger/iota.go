@@ -109,6 +109,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.Features{
+					&iotago.SenderFeature{Address: exampleGovCtrl},
 					&iotago.MetadataFeature{Data: []byte("1337")},
 				},
 			},
@@ -116,7 +117,9 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: iotago.UnlockedIdentities{},
+					UnlockedIdents: iotago.UnlockedIdentities{
+						exampleGovCtrl.Key(): {UnlockedAt: 0},
+					},
 				},
 			},
 			wantErr: nil,
@@ -144,12 +147,17 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				StateIndex:     11,
 				StateMetadata:  []byte("1337"),
 				FoundryCounter: 7,
+				Features: iotago.Features{
+					&iotago.SenderFeature{Address: exampleStateCtrl},
+				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &iotago.SemanticValidationContext{
 				ExtParas: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &iotago.SemValiContextWorkingSet{
-					UnlockedIdents: iotago.UnlockedIdentities{},
+					UnlockedIdents: iotago.UnlockedIdentities{
+						exampleStateCtrl.Key(): {UnlockedAt: 0},
+					},
 					InChains: map[iotago.ChainID]iotago.ChainConstrainedOutput{
 						// serial number 5
 						exampleExistingFoundryOutputID: exampleExistingFoundryOutput,
@@ -258,6 +266,12 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				"foundries_not_created": {
 					"StateIndex":     uint32(11),
 					"FoundryCounter": uint32(7),
+				},
+				"metadata_feature_added": {
+					"StateIndex": uint32(11),
+					"Features": iotago.Features{
+						&iotago.MetadataFeature{Data: []byte("foo")},
+					},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,

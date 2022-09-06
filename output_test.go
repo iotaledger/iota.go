@@ -320,6 +320,84 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	}
 }
 
+func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
+	tests := []struct {
+		name    string
+		outputs iotago.Outputs
+		wantErr error
+	}{
+		{
+			name: "ok",
+			outputs: iotago.Outputs{
+				&iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						&iotago.ExpirationUnlockCondition{
+							ReturnAddress: tpkg.RandEd25519Address(),
+							UnixTime:      1337,
+						},
+					},
+				},
+				&iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						&iotago.TimelockUnlockCondition{
+							UnixTime: 1337,
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - zero expiration time",
+			outputs: iotago.Outputs{
+				&iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						&iotago.ExpirationUnlockCondition{
+							ReturnAddress: tpkg.RandEd25519Address(),
+							UnixTime:      0,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrExpirationConditionZero,
+		},
+		{
+			name: "fail - zero timelock time",
+			outputs: iotago.Outputs{
+				&iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						&iotago.TimelockUnlockCondition{
+							UnixTime: 0,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrTimelockConditionZero,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			valFunc := iotago.OutputsSyntacticalExpirationAndTimelock()
+			var runErr error
+			for index, output := range tt.outputs {
+				if err := valFunc(index, output); err != nil {
+					runErr = err
+				}
+			}
+			require.ErrorIs(t, runErr, tt.wantErr)
+		})
+	}
+}
+
 func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 	tests := []struct {
 		name    string
