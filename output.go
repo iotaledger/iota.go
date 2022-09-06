@@ -746,15 +746,15 @@ func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSynt
 //   - the sum of native tokens count across all outputs does not exceed MaxNativeTokensCount
 //   - each native token holds an amount bigger than zero
 func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
-	var nativeTokensCount int
+	distinctNativeTokens := make(map[NativeTokenID]struct{})
 	return func(index int, output Output) error {
 		nativeTokens := output.NativeTokenList()
-		nativeTokensCount += len(nativeTokens)
-		if nativeTokensCount > MaxNativeTokensCount {
-			return ErrMaxNativeTokensCountExceeded
-		}
 
 		for i, nt := range nativeTokens {
+			distinctNativeTokens[nt.ID] = struct{}{}
+			if len(distinctNativeTokens) > MaxNativeTokensCount {
+				return ErrMaxNativeTokensCountExceeded
+			}
 			if nt.Amount.Cmp(common.Big0) == 0 {
 				return fmt.Errorf("%w: output %d, native token index %d", ErrNativeTokenAmountLessThanEqualZero, index, i)
 			}
