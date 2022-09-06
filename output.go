@@ -362,16 +362,13 @@ func (outputs Outputs) Filter(f OutputsFilterFunc) Outputs {
 }
 
 // NativeTokenSum sums up the different NativeTokens occurring within the given outputs.
-// limit defines the max amount of native tokens which are allowed.
-func (outputs Outputs) NativeTokenSum() (NativeTokenSum, int, error) {
+func (outputs Outputs) NativeTokenSum() (NativeTokenSum, error) {
 	sum := make(map[NativeTokenID]*big.Int)
-	var ntCount int
 	for _, output := range outputs {
 		nativeTokens := output.NativeTokenList()
-		ntCount += len(nativeTokens)
 		for _, nativeToken := range nativeTokens {
 			if sign := nativeToken.Amount.Sign(); sign == -1 || sign == 0 {
-				return nil, 0, ErrNativeTokenAmountLessThanEqualZero
+				return nil, ErrNativeTokenAmountLessThanEqualZero
 			}
 
 			val := sum[nativeToken.ID]
@@ -380,12 +377,12 @@ func (outputs Outputs) NativeTokenSum() (NativeTokenSum, int, error) {
 			}
 
 			if val.Add(val, nativeToken.Amount).Cmp(abi.MaxUint256) == 1 {
-				return nil, 0, ErrNativeTokenSumExceedsUint256
+				return nil, ErrNativeTokenSumExceedsUint256
 			}
 			sum[nativeToken.ID] = val
 		}
 	}
-	return sum, ntCount, nil
+	return sum, nil
 }
 
 // OutputsByType is a map of OutputType(s) to slice of Output(s).
