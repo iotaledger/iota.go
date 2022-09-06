@@ -736,10 +736,17 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 		if err != nil {
 			return fmt.Errorf("invalid output native token set: %w", err)
 		}
-		outNTCount := len(svCtx.WorkingSet.OutNativeTokens)
 
-		if inNTCount+outNTCount > MaxNativeTokensCount {
-			return fmt.Errorf("%w: native token count (in %d + out %d) exceeds max of %d", ErrMaxNativeTokensCountExceeded, inNTCount, outNTCount, MaxNativeTokensCount)
+		distinctNTCount := make(map[NativeTokenID]struct{})
+		for nt := range svCtx.WorkingSet.InNativeTokens {
+			distinctNTCount[nt] = struct{}{}
+		}
+		for nt := range svCtx.WorkingSet.OutNativeTokens {
+			distinctNTCount[nt] = struct{}{}
+		}
+
+		if len(distinctNTCount) > MaxNativeTokensCount {
+			return fmt.Errorf("%w: native token count %d exceeds max of %d", ErrMaxNativeTokensCountExceeded, distinctNTCount, MaxNativeTokensCount)
 		}
 
 		// check invariants for when token foundry is absent
