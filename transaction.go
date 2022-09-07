@@ -722,23 +722,31 @@ func TxSemanticNativeTokens() TxSemanticValidationFunc {
 	return func(svCtx *SemanticValidationContext) error {
 		// native token set creates handle overflows
 		var err error
-		var inNTCount, outNTCount int
-		svCtx.WorkingSet.InNativeTokens, inNTCount, err = svCtx.WorkingSet.Inputs.NativeTokenSum()
+		svCtx.WorkingSet.InNativeTokens, err = svCtx.WorkingSet.Inputs.NativeTokenSum()
 		if err != nil {
 			return fmt.Errorf("invalid input native token set: %w", err)
 		}
+		inNTCount := len(svCtx.WorkingSet.InNativeTokens)
 
 		if inNTCount > MaxNativeTokensCount {
 			return fmt.Errorf("%w: inputs native token count %d exceeds max of %d", ErrMaxNativeTokensCountExceeded, inNTCount, MaxNativeTokensCount)
 		}
 
-		svCtx.WorkingSet.OutNativeTokens, outNTCount, err = svCtx.WorkingSet.Tx.Essence.Outputs.NativeTokenSum()
+		svCtx.WorkingSet.OutNativeTokens, err = svCtx.WorkingSet.Tx.Essence.Outputs.NativeTokenSum()
 		if err != nil {
 			return fmt.Errorf("invalid output native token set: %w", err)
 		}
 
-		if inNTCount+outNTCount > MaxNativeTokensCount {
-			return fmt.Errorf("%w: native token count (in %d + out %d) exceeds max of %d", ErrMaxNativeTokensCountExceeded, inNTCount, outNTCount, MaxNativeTokensCount)
+		distinctNTCount := make(map[NativeTokenID]struct{})
+		for nt := range svCtx.WorkingSet.InNativeTokens {
+			distinctNTCount[nt] = struct{}{}
+		}
+		for nt := range svCtx.WorkingSet.OutNativeTokens {
+			distinctNTCount[nt] = struct{}{}
+		}
+
+		if len(distinctNTCount) > MaxNativeTokensCount {
+			return fmt.Errorf("%w: native token count %d exceeds max of %d", ErrMaxNativeTokensCountExceeded, distinctNTCount, MaxNativeTokensCount)
 		}
 
 		// check invariants for when token foundry is absent

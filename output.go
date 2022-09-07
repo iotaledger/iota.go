@@ -362,16 +362,13 @@ func (outputs Outputs) Filter(f OutputsFilterFunc) Outputs {
 }
 
 // NativeTokenSum sums up the different NativeTokens occurring within the given outputs.
-// limit defines the max amount of native tokens which are allowed.
-func (outputs Outputs) NativeTokenSum() (NativeTokenSum, int, error) {
+func (outputs Outputs) NativeTokenSum() (NativeTokenSum, error) {
 	sum := make(map[NativeTokenID]*big.Int)
-	var ntCount int
 	for _, output := range outputs {
 		nativeTokens := output.NativeTokenList()
-		ntCount += len(nativeTokens)
 		for _, nativeToken := range nativeTokens {
 			if sign := nativeToken.Amount.Sign(); sign == -1 || sign == 0 {
-				return nil, 0, ErrNativeTokenAmountLessThanEqualZero
+				return nil, ErrNativeTokenAmountLessThanEqualZero
 			}
 
 			val := sum[nativeToken.ID]
@@ -380,12 +377,12 @@ func (outputs Outputs) NativeTokenSum() (NativeTokenSum, int, error) {
 			}
 
 			if val.Add(val, nativeToken.Amount).Cmp(abi.MaxUint256) == 1 {
-				return nil, 0, ErrNativeTokenSumExceedsUint256
+				return nil, ErrNativeTokenSumExceedsUint256
 			}
 			sum[nativeToken.ID] = val
 		}
 	}
-	return sum, ntCount, nil
+	return sum, nil
 }
 
 // OutputsByType is a map of OutputType(s) to slice of Output(s).
@@ -749,15 +746,15 @@ func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSynt
 //   - the sum of native tokens count across all outputs does not exceed MaxNativeTokensCount
 //   - each native token holds an amount bigger than zero
 func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
-	var nativeTokensCount int
+	distinctNativeTokens := make(map[NativeTokenID]struct{})
 	return func(index int, output Output) error {
 		nativeTokens := output.NativeTokenList()
-		nativeTokensCount += len(nativeTokens)
-		if nativeTokensCount > MaxNativeTokensCount {
-			return ErrMaxNativeTokensCountExceeded
-		}
 
 		for i, nt := range nativeTokens {
+			distinctNativeTokens[nt.ID] = struct{}{}
+			if len(distinctNativeTokens) > MaxNativeTokensCount {
+				return ErrMaxNativeTokensCountExceeded
+			}
 			if nt.Amount.Cmp(common.Big0) == 0 {
 				return fmt.Errorf("%w: output %d, native token index %d", ErrNativeTokenAmountLessThanEqualZero, index, i)
 			}
