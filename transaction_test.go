@@ -2186,7 +2186,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			outs := make(iotago.Outputs, numDistinctNTs)
-			for i, _ := range outs {
+			for i := range outs {
 				outs[i] = &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: iotago.NativeTokens{tokens[i]},
@@ -2229,7 +2229,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			outputs := make(iotago.Outputs, iotago.MaxOutputsCount)
-			for i, _ := range outputs {
+			for i := range outputs {
 				outputs[i] = &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: tokens,
@@ -2272,7 +2272,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			outputs := make(iotago.Outputs, iotago.MaxOutputsCount)
-			for i, _ := range outputs {
+			for i := range outputs {
 				outputs[i] = &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: tokens,
