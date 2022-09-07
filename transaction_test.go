@@ -2133,6 +2133,184 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 		}(),
 		func() test {
+			numDistinctNTs := iotago.MaxNativeTokensCount + 1
+			inputIDs := tpkg.RandOutputIDs(uint16(numDistinctNTs))
+
+			inputs := iotago.OutputSet{}
+			for i := 0; i < numDistinctNTs; i++ {
+				inputs[inputIDs[i]] = &iotago.BasicOutput{
+					Amount:       100,
+					NativeTokens: tpkg.RandSortNativeTokens(1),
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				}
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.BasicOutput{
+						Amount: 100 * uint64(numDistinctNTs),
+						Conditions: iotago.UnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+					},
+				},
+			}
+
+			return test{
+				name:   "fail - too many on input side already",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{},
+				},
+				wantErr: iotago.ErrMaxNativeTokensCountExceeded,
+			}
+		}(),
+		func() test {
+			numDistinctNTs := iotago.MaxNativeTokensCount + 1
+			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
+			inputIDs := tpkg.RandOutputIDs(uint16(numDistinctNTs))
+
+			inputs := iotago.OutputSet{}
+			for i := 0; i < numDistinctNTs; i++ {
+				inputs[inputIDs[i]] = &iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				}
+			}
+
+			outs := make(iotago.Outputs, numDistinctNTs)
+			for i, _ := range outs {
+				outs[i] = &iotago.BasicOutput{
+					Amount:       100,
+					NativeTokens: iotago.NativeTokens{tokens[i]},
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				}
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs:  inputIDs.UTXOInputs(),
+				Outputs: outs,
+			}
+
+			return test{
+				name:   "fail - too many on output side already",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{},
+				},
+				wantErr: iotago.ErrMaxNativeTokensCountExceeded,
+			}
+		}(),
+		func() test {
+			numDistinctNTs := iotago.MaxNativeTokensCount
+			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
+			inputIDs := tpkg.RandOutputIDs(iotago.MaxInputsCount)
+
+			inputs := iotago.OutputSet{}
+			for i := 0; i < iotago.MaxInputsCount; i++ {
+				inputs[inputIDs[i]] = &iotago.BasicOutput{
+					Amount:       100,
+					NativeTokens: tokens,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				}
+			}
+
+			outputs := make(iotago.Outputs, iotago.MaxOutputsCount)
+			for i, _ := range outputs {
+				outputs[i] = &iotago.BasicOutput{
+					Amount:       100,
+					NativeTokens: tokens,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				}
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs:  inputIDs.UTXOInputs(),
+				Outputs: outputs,
+			}
+
+			return test{
+				name:   "ok - most possible tokens in a tx",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{},
+				},
+				wantErr: nil,
+			}
+		}(),
+		func() test {
+			numDistinctNTs := iotago.MaxNativeTokensCount
+			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
+			inputIDs := tpkg.RandOutputIDs(iotago.MaxInputsCount)
+
+			inputs := iotago.OutputSet{}
+			for i := 0; i < iotago.MaxInputsCount; i++ {
+				inputs[inputIDs[i]] = &iotago.BasicOutput{
+					Amount:       100,
+					NativeTokens: tokens,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				}
+			}
+
+			outputs := make(iotago.Outputs, iotago.MaxOutputsCount)
+			for i, _ := range outputs {
+				outputs[i] = &iotago.BasicOutput{
+					Amount:       100,
+					NativeTokens: tokens,
+					Conditions: iotago.UnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				}
+			}
+
+			// add one more distinct native token to the last output
+			oneMore := tokens.Clone()
+			oneMore[len(oneMore)-1] = tpkg.RandNativeToken()
+
+			outputs[iotago.MaxOutputsCount-1] = &iotago.BasicOutput{
+				Amount:       100,
+				NativeTokens: oneMore,
+				Conditions: iotago.UnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs:  inputIDs.UTXOInputs(),
+				Outputs: outputs,
+			}
+
+			return test{
+				name:   "fail - max nt count just exceeded",
+				svCtx:  &iotago.SemanticValidationContext{ExtParas: &iotago.ExternalUnlockParameters{}},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{},
+				},
+				wantErr: iotago.ErrMaxNativeTokensCountExceeded,
+			}
+		}(),
+		func() test {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			ntCount := 10
