@@ -109,8 +109,8 @@ func (n *NFTOutput) Ident() Address {
 	return n.Conditions.MustSet().Address().Address
 }
 
-func (n *NFTOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
-	ok, _ := outputUnlockable(n, nil, ident, extParas)
+func (n *NFTOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParameters) bool {
+	ok, _ := outputUnlockable(n, nil, ident, extParams)
 	return ok
 }
 

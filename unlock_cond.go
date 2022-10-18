@@ -167,14 +167,14 @@ func (f UnlockConditionSet) HasTimelockCondition() bool {
 //   - If the expiration blocks are expired, then only the return identity can unlock.
 //
 // returns booleans indicating whether the given ident can unlock and whether the return identity can unlock.
-func (f UnlockConditionSet) unlockableBy(ident Address, extParas *ExternalUnlockParameters) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
-	if err := f.TimelocksExpired(extParas); err != nil {
+func (f UnlockConditionSet) unlockableBy(ident Address, extParams *ExternalUnlockParameters) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
+	if err := f.TimelocksExpired(extParams); err != nil {
 		return false, false
 	}
 
 	// if the return ident can unlock, then ident must be the return ident
 	var returnIdent Address
-	if returnIdentCanUnlock, returnIdent = f.ReturnIdentCanUnlock(extParas); returnIdentCanUnlock {
+	if returnIdentCanUnlock, returnIdent = f.ReturnIdentCanUnlock(extParams); returnIdentCanUnlock {
 		if !ident.Equal(returnIdent) {
 			return false, true
 		}
@@ -186,14 +186,14 @@ func (f UnlockConditionSet) unlockableBy(ident Address, extParas *ExternalUnlock
 
 // ReturnIdentCanUnlock tells whether a sender defined in an expiration unlock condition within this set is the actual
 // identity which could unlock an Output containing this UnlockConditionSet given the ExternalUnlockParameters.
-func (f UnlockConditionSet) ReturnIdentCanUnlock(extParas *ExternalUnlockParameters) (bool, Address) {
+func (f UnlockConditionSet) ReturnIdentCanUnlock(extParams *ExternalUnlockParameters) (bool, Address) {
 	expUnlockCond := f.Expiration()
 
 	if expUnlockCond == nil {
 		return false, nil
 	}
 
-	if expUnlockCond.UnixTime <= extParas.ConfUnix {
+	if expUnlockCond.UnixTime <= extParams.ConfUnix {
 		return true, expUnlockCond.ReturnAddress
 	}
 
@@ -202,15 +202,15 @@ func (f UnlockConditionSet) ReturnIdentCanUnlock(extParas *ExternalUnlockParamet
 
 // TimelocksExpired tells whether UnlockCondition(s) in this set which impose a timelock are expired
 // in relation to the given ExternalUnlockParameters.
-func (f UnlockConditionSet) TimelocksExpired(extParas *ExternalUnlockParameters) error {
+func (f UnlockConditionSet) TimelocksExpired(extParams *ExternalUnlockParameters) error {
 	timelock := f.Timelock()
 
 	if timelock == nil {
 		return nil
 	}
 
-	if extParas.ConfUnix < timelock.UnixTime {
-		return fmt.Errorf("%w: (unix) cond %d vs. ext %d", ErrTimelockNotExpired, timelock.UnixTime, extParas.ConfUnix)
+	if extParams.ConfUnix < timelock.UnixTime {
+		return fmt.Errorf("%w: (unix) cond %d vs. ext %d", ErrTimelockNotExpired, timelock.UnixTime, extParams.ConfUnix)
 	}
 
 	return nil

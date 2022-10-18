@@ -134,7 +134,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 }
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
-	nonZeroCostParas := &iotago.ProtocolParameters{
+	nonZeroCostParams := &iotago.ProtocolParameters{
 		RentStructure: iotago.RentStructure{
 			VByteCost:    1,
 			VBFactorData: iotago.VByteCostFactorData,
@@ -144,14 +144,14 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		protoParas *iotago.ProtocolParameters
-		outputs    iotago.Outputs[iotago.Output]
-		wantErr    error
+		name        string
+		protoParams *iotago.ProtocolParameters
+		outputs     iotago.Outputs[iotago.Output]
+		wantErr     error
 	}{
 		{
-			name:       "ok",
-			protoParas: tpkg.TestProtoParas,
+			name:        "ok",
+			protoParams: tpkg.TestProtoParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount:     tpkg.TestTokenSupply,
@@ -161,8 +161,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:       "ok - state rent covered",
-			protoParas: nonZeroCostParas,
+			name:        "ok - state rent covered",
+			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount:     426, // min amount
@@ -172,8 +172,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:       "ok - storage deposit return",
-			protoParas: nonZeroCostParas,
+			name:        "ok - storage deposit return",
+			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				// min 444
 				&iotago.BasicOutput{
@@ -190,8 +190,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:       "fail - storage deposit return less than min storage deposit",
-			protoParas: nonZeroCostParas,
+			name:        "fail - storage deposit return less than min storage deposit",
+			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 1000,
@@ -207,8 +207,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrStorageDepositLessThanMinReturnOutputStorageDeposit,
 		},
 		{
-			name:       "fail - storage deposit more than target output deposit",
-			protoParas: nonZeroCostParas,
+			name:        "fail - storage deposit more than target output deposit",
+			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: OneMi,
@@ -225,8 +225,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrStorageDepositExceedsTargetOutputDeposit,
 		},
 		{
-			name:       "fail - state rent not covered",
-			protoParas: nonZeroCostParas,
+			name:        "fail - state rent not covered",
+			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 100,
@@ -238,8 +238,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrVByteRentNotCovered,
 		},
 		{
-			name:       "fail - zero deposit",
-			protoParas: tpkg.TestProtoParas,
+			name:        "fail - zero deposit",
+			protoParams: tpkg.TestProtoParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 0,
@@ -251,8 +251,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrDepositAmountMustBeGreaterThanZero,
 		},
 		{
-			name:       "fail - more than total supply on single output",
-			protoParas: tpkg.TestProtoParas,
+			name:        "fail - more than total supply on single output",
+			protoParams: tpkg.TestProtoParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: tpkg.TestTokenSupply + 1,
@@ -264,8 +264,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrOutputDepositsMoreThanTotalSupply,
 		},
 		{
-			name:       "fail - sum more than total supply over multiple outputs",
-			protoParas: tpkg.TestProtoParas,
+			name:        "fail - sum more than total supply over multiple outputs",
+			protoParams: tpkg.TestProtoParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: tpkg.TestTokenSupply - 1,
@@ -286,7 +286,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.OutputsSyntacticalDepositAmount(tt.protoParas)
+			valFunc := iotago.OutputsSyntacticalDepositAmount(tt.protoParams)
 			var runErr error
 			for index, output := range tt.outputs {
 				if err := valFunc(index, output); err != nil {
@@ -760,7 +760,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 		output                iotago.TransIndepIdentOutput
 		targetIdent           iotago.Address
 		identCanUnlockInstead iotago.Address
-		extParas              *iotago.ExternalUnlockParameters
+		extParams             *iotago.ExternalUnlockParameters
 		canUnlock             bool
 	}
 	tests := []test{
@@ -775,7 +775,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 					},
 				},
 				targetIdent: sourceIdent,
-				extParas:    &iotago.ExternalUnlockParameters{},
+				extParams:   &iotago.ExternalUnlockParameters{},
 				canUnlock:   true,
 			}
 		}(),
@@ -789,7 +789,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 					},
 				},
 				targetIdent: tpkg.RandEd25519Address(),
-				extParas:    &iotago.ExternalUnlockParameters{},
+				extParams:   &iotago.ExternalUnlockParameters{},
 				canUnlock:   false,
 			}
 		}(),
@@ -809,7 +809,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				},
 				targetIdent:           sourceIdent,
 				identCanUnlockInstead: nil,
-				extParas:              &iotago.ExternalUnlockParameters{ConfUnix: 5},
+				extParams:             &iotago.ExternalUnlockParameters{ConfUnix: 5},
 				canUnlock:             true,
 			}
 		}(),
@@ -830,7 +830,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				},
 				targetIdent:           sourceIdent,
 				identCanUnlockInstead: senderIdent,
-				extParas:              &iotago.ExternalUnlockParameters{ConfUnix: 10},
+				extParams:             &iotago.ExternalUnlockParameters{ConfUnix: 10},
 				canUnlock:             false,
 			}
 		}(),
@@ -846,7 +846,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 					},
 				},
 				targetIdent: sourceIdent,
-				extParas:    &iotago.ExternalUnlockParameters{ConfUnix: 10},
+				extParams:   &iotago.ExternalUnlockParameters{ConfUnix: 10},
 				canUnlock:   true,
 			}
 		}(),
@@ -862,7 +862,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 					},
 				},
 				targetIdent: sourceIdent,
-				extParas:    &iotago.ExternalUnlockParameters{ConfUnix: 5},
+				extParams:   &iotago.ExternalUnlockParameters{ConfUnix: 5},
 				canUnlock:   false,
 			}
 		}(),
@@ -871,11 +871,11 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
-				require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetIdent, tt.extParas))
+				require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetIdent, tt.extParams))
 				if tt.identCanUnlockInstead == nil {
 					return
 				}
-				require.True(t, tt.output.UnlockableBy(tt.identCanUnlockInstead, tt.extParas))
+				require.True(t, tt.output.UnlockableBy(tt.identCanUnlockInstead, tt.extParams))
 			})
 		})
 	}
@@ -888,7 +888,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 		next                  iotago.TransDepIdentOutput
 		targetIdent           iotago.Address
 		identCanUnlockInstead iotago.Address
-		extParas              *iotago.ExternalUnlockParameters
+		extParams             *iotago.ExternalUnlockParameters
 		wantErr               error
 		canUnlock             bool
 	}
@@ -916,7 +916,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 					},
 				},
 				targetIdent: stateCtrl,
-				extParas:    &iotago.ExternalUnlockParameters{},
+				extParams:   &iotago.ExternalUnlockParameters{},
 				canUnlock:   true,
 			}
 		}(),
@@ -944,7 +944,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 				},
 				targetIdent:           stateCtrl,
 				identCanUnlockInstead: govCtrl,
-				extParas:              &iotago.ExternalUnlockParameters{},
+				extParams:             &iotago.ExternalUnlockParameters{},
 				canUnlock:             false,
 			}
 		}(),
@@ -965,7 +965,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 				next:                  nil,
 				targetIdent:           stateCtrl,
 				identCanUnlockInstead: govCtrl,
-				extParas:              &iotago.ExternalUnlockParameters{},
+				extParams:             &iotago.ExternalUnlockParameters{},
 				canUnlock:             false,
 			}
 		}(),
@@ -974,7 +974,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
-				canUnlock, err := tt.current.UnlockableBy(tt.targetIdent, tt.next, tt.extParas)
+				canUnlock, err := tt.current.UnlockableBy(tt.targetIdent, tt.next, tt.extParams)
 				if tt.wantErr != nil {
 					require.ErrorIs(t, err, tt.wantErr)
 					return
@@ -983,7 +983,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 				if tt.identCanUnlockInstead == nil {
 					return
 				}
-				canUnlockInstead, err := tt.current.UnlockableBy(tt.identCanUnlockInstead, tt.next, tt.extParas)
+				canUnlockInstead, err := tt.current.UnlockableBy(tt.identCanUnlockInstead, tt.next, tt.extParams)
 				require.NoError(t, err)
 				require.True(t, canUnlockInstead)
 			})

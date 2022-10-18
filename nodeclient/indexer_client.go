@@ -51,8 +51,8 @@ type (
 	IndexerQuery interface {
 		// SetOffset sets the offset for the query.
 		SetOffset(offset *string)
-		// URLParas returns the query parameters as URL encoded query parameters.
-		URLParas() (string, error)
+		// URLiotago.TxEssenceInputs returns the query parameters as URL encoded query parameters.
+		URLParams() (string, error)
 		// OutputType returns the output type for which the query is for.
 		OutputType() iotago.OutputType
 	}
@@ -137,13 +137,13 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 	nextFunc := func() error {
 		res.Response = &IndexerResponse{}
 
-		urlParas, err := query.URLParas()
+		urlParams, err := query.URLParams()
 		if err != nil {
 			return err
 		}
 
-		routeWithParas := fmt.Sprintf("%s?%s", baseRoute, urlParas)
-		_, reqErr := client.Do(ctx, http.MethodGet, routeWithParas, nil, res.Response)
+		routeWithParams := fmt.Sprintf("%s?%s", baseRoute, urlParams)
+		_, reqErr := client.Do(ctx, http.MethodGet, routeWithParams, nil, res.Response)
 		return reqErr
 	}
 	res.nextFunc = nextFunc

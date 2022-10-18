@@ -2,9 +2,9 @@ package tpkg
 
 import iotago "github.com/iotaledger/iota.go/v3"
 
-// TestProtoParas is an instance of iotago.ProtocolParameters for testing purposes. It contains a zero vbyte rent cost.
+// TestProtoParams is an instance of iotago.ProtocolParameters for testing purposes. It contains a zero vbyte rent cost.
 // Only use this var in testing. Do not modify or use outside unit tests.
-var TestProtoParas = &iotago.ProtocolParameters{
+var TestProtoParams = &iotago.ProtocolParameters{
 	Version:     2,
 	NetworkName: "TestJungle",
 	Bech32HRP:   "tgl",
@@ -18,7 +18,7 @@ var TestProtoParas = &iotago.ProtocolParameters{
 }
 
 // TestNetworkID is a test network ID.
-var TestNetworkID = TestProtoParas.NetworkID()
+var TestNetworkID = TestProtoParams.NetworkID()
 
 const (
 	// TestTokenSupply is a test token supply constant.

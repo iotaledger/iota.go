@@ -86,8 +86,8 @@ func (t *Transaction) Size() int {
 }
 
 // syntacticallyValidate syntactically validates the Transaction.
-func (t *Transaction) syntacticallyValidate(protoParas *ProtocolParameters) error {
-	if err := t.Essence.syntacticallyValidate(protoParas); err != nil {
+func (t *Transaction) syntacticallyValidate(protoParams *ProtocolParameters) error {
+	if err := t.Essence.syntacticallyValidate(protoParams); err != nil {
 		return fmt.Errorf("transaction essence is invalid: %w", err)
 	}
 

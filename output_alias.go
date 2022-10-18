@@ -184,8 +184,8 @@ func (a *AliasOutput) Clone() Output {
 	}
 }
 
-func (a *AliasOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extParas *ExternalUnlockParameters) (bool, error) {
-	return outputUnlockable(a, next, ident, extParas)
+func (a *AliasOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extParams *ExternalUnlockParameters) (bool, error) {
+	return outputUnlockable(a, next, ident, extParams)
 }
 
 func (a *AliasOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {

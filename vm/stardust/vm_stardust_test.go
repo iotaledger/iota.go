@@ -61,7 +61,7 @@ func TestNFTTransition(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, stardustVM.Execute(tx, &vm.Paras{}, inputs))
+	require.NoError(t, stardustVM.Execute(tx, &vm.Params{}, inputs))
 }
 
 func TestCirculatingSupplyMelting(t *testing.T) {
@@ -159,16 +159,16 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, stardustVM.Execute(tx, &vm.Paras{}, inputs))
+	require.NoError(t, stardustVM.Execute(tx, &vm.Params{}, inputs))
 }
 
 func TestStardustTransactionExecution(t *testing.T) {
 	type test struct {
-		name    string
-		vmParas *vm.Paras
-		inputs  iotago.OutputSet
-		tx      *iotago.Transaction
-		wantErr error
+		name     string
+		vmParams *vm.Params
+		inputs   iotago.OutputSet
+		tx       *iotago.Transaction
+		wantErr  error
 	}
 	tests := []test{
 		func() test {
@@ -616,7 +616,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			return test{
 				name: "ok",
-				vmParas: &vm.Paras{
+				vmParams: &vm.Params{
 					External: &iotago.ExternalUnlockParameters{ConfUnix: confirmingUnixTime},
 				},
 				inputs: inputs,
@@ -708,9 +708,9 @@ func TestStardustTransactionExecution(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - changed immutable alias address unlock",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - changed immutable alias address unlock",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -728,7 +728,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParas, tt.inputs)
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -740,11 +740,11 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 func TestTxSemanticInputUnlocks(t *testing.T) {
 	type test struct {
-		name    string
-		vmParas *vm.Paras
-		inputs  iotago.OutputSet
-		tx      *iotago.Transaction
-		wantErr error
+		name     string
+		vmParams *vm.Params
+		inputs   iotago.OutputSet
+		tx       *iotago.Transaction
+		wantErr  error
 	}
 	tests := []test{
 		func() test {
@@ -845,7 +845,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			return test{
 				name: "ok",
-				vmParas: &vm.Paras{
+				vmParams: &vm.Params{
 					External: &iotago.ExternalUnlockParameters{
 						ConfUnix: 10,
 					},
@@ -889,9 +889,9 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			copy(sigs[0].(*iotago.Ed25519Signature).PublicKey[:], ident1Sk.Public().(ed25519.PublicKey))
 
 			return test{
-				name:    "fail - invalid signature",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - invalid signature",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -926,9 +926,9 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - should contain reference unlock",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - should contain reference unlock",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -967,9 +967,9 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - should contain alias unlock",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - should contain alias unlock",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1007,9 +1007,9 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - should contain NFT unlock",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - should contain NFT unlock",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1047,9 +1047,9 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			_, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment())
 			require.NoError(t, err)
 			return test{
-				name:    "fail - circular NFT unlock",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - circular NFT unlock",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1085,7 +1085,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			return test{
 				name: "fail - sender can not unlock yet",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ConfUnix: 5,
 				}},
 				inputs: inputs,
@@ -1123,7 +1123,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			return test{
 				name: "fail - receiver can not unlock anymore",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ConfUnix: 10,
 				}},
 				inputs: inputs,
@@ -1182,9 +1182,9 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - referencing other alias unlocked by source alias",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - referencing other alias unlocked by source alias",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1241,9 +1241,9 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - alias output not state transitioning",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - alias output not state transitioning",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1309,9 +1309,9 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - wrong unlock for foundry",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - wrong unlock for foundry",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1326,7 +1326,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParas, tt.inputs, vm.ExecFuncInputUnlocks())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncInputUnlocks())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -1339,11 +1339,11 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 func TestTxSemanticDeposit(t *testing.T) {
 	type test struct {
-		name    string
-		vmParas *vm.Paras
-		inputs  iotago.OutputSet
-		tx      *iotago.Transaction
-		wantErr error
+		name     string
+		vmParams *vm.Params
+		inputs   iotago.OutputSet
+		tx       *iotago.Transaction
+		wantErr  error
 	}
 	tests := []test{
 		func() test {
@@ -1413,7 +1413,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			return test{
 				name: "ok",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ConfUnix: 5,
 				}},
 				inputs: inputs,
@@ -1476,9 +1476,9 @@ func TestTxSemanticDeposit(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "ok - more storage deposit returned via more outputs",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "ok - more storage deposit returned via more outputs",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1517,7 +1517,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			return test{
 				name: "fail - unbalanced, more on output than input",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ConfUnix: 5,
 				}},
 				inputs: inputs,
@@ -1559,7 +1559,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			return test{
 				name: "fail - unbalanced, more on input than output",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ConfUnix: 5,
 				}},
 				inputs: inputs,
@@ -1611,7 +1611,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			return test{
 				name: "fail - return not fulfilled",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ConfUnix: 5,
 				}},
 				inputs: inputs,
@@ -1663,9 +1663,9 @@ func TestTxSemanticDeposit(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - storage deposit return not basic output",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - storage deposit return not basic output",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1718,9 +1718,9 @@ func TestTxSemanticDeposit(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - storage deposit return has additional unlocks",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - storage deposit return has additional unlocks",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1772,9 +1772,9 @@ func TestTxSemanticDeposit(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - storage deposit return has feature",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - storage deposit return has feature",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1836,9 +1836,9 @@ func TestTxSemanticDeposit(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - storage deposit return has native tokens",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - storage deposit return has native tokens",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1852,7 +1852,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := stardustVM.Execute(tt.tx, tt.vmParas, tt.inputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedDeposit())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedDeposit())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -1896,11 +1896,11 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 	}
 
 	type test struct {
-		name    string
-		vmParas *vm.Paras
-		inputs  iotago.OutputSet
-		tx      *iotago.Transaction
-		wantErr error
+		name     string
+		vmParams *vm.Params
+		inputs   iotago.OutputSet
+		tx       *iotago.Transaction
+		wantErr  error
 	}
 	tests := []test{
 		func() test {
@@ -1940,9 +1940,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			return test{
-				name:    "ok",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "ok",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -1989,9 +1989,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			return test{
-				name:    "ok - exceeds limit (in+out) but same native token",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "ok - exceeds limit (in+out) but same native token",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2029,9 +2029,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			return test{
-				name:    "fail - exceeds limit (in+out)",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - exceeds limit (in+out)",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2067,9 +2067,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			return test{
-				name:    "fail - too many on input side already",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - too many on input side already",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2109,9 +2109,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			return test{
-				name:    "fail - too many on output side already",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - too many on output side already",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2152,9 +2152,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			return test{
-				name:    "ok - most possible tokens in a tx",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "ok - most possible tokens in a tx",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2207,9 +2207,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			return test{
-				name:    "fail - max nt count just exceeded",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - max nt count just exceeded",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2252,9 +2252,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			return test{
-				name:    "fail - unbalanced on output",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - unbalanced on output",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2312,9 +2312,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 
 			return test{
-				name:    "fail - unbalanced with unrelated foundry in term of new output tokens",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - unbalanced with unrelated foundry in term of new output tokens",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2326,7 +2326,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParas, tt.inputs, vm.ExecFuncBalancedNativeTokens())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncBalancedNativeTokens())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -2339,11 +2339,11 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 func TestTxSemanticOutputsSender(t *testing.T) {
 	type test struct {
-		name    string
-		vmParas *vm.Paras
-		inputs  iotago.OutputSet
-		tx      *iotago.Transaction
-		wantErr error
+		name     string
+		vmParams *vm.Params
+		inputs   iotago.OutputSet
+		tx       *iotago.Transaction
+		wantErr  error
 	}
 	tests := []test{
 		func() test {
@@ -2434,9 +2434,9 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "ok",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "ok",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2478,9 +2478,9 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - sender not unlocked",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - sender not unlocked",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2528,9 +2528,9 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - sender not unlocked due to governance transition",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - sender not unlocked due to governance transition",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2581,9 +2581,9 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "ok - alias addr unlocked with state transition",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "ok - alias addr unlocked with state transition",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2631,9 +2631,9 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "ok - sender is governor address",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "ok - sender is governor address",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2647,7 +2647,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := stardustVM.Execute(tt.tx, tt.vmParas, tt.inputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncSenderUnlocked())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncSenderUnlocked())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -2660,11 +2660,11 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 
 func TestTxSemanticOutputsIssuer(t *testing.T) {
 	type test struct {
-		name    string
-		vmParas *vm.Paras
-		inputs  iotago.OutputSet
-		tx      *iotago.Transaction
-		wantErr error
+		name     string
+		vmParams *vm.Params
+		inputs   iotago.OutputSet
+		tx       *iotago.Transaction
+		wantErr  error
 	}
 	tests := []test{
 		func() test {
@@ -2718,9 +2718,9 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "fail - issuer not unlocked due to governance transition",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "fail - issuer not unlocked due to governance transition",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2868,9 +2868,9 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "ok - issuer unlocked with state transition",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "ok - issuer unlocked with state transition",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2932,9 +2932,9 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:    "ok - issuer is the governor",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{}},
-				inputs:  inputs,
+				name:     "ok - issuer is the governor",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				inputs:   inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2949,7 +2949,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := stardustVM.Execute(tt.tx, tt.vmParas, tt.inputs)
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -2962,11 +2962,11 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 
 func TestTxSemanticTimelocks(t *testing.T) {
 	type test struct {
-		name    string
-		vmParas *vm.Paras
-		inputs  iotago.OutputSet
-		tx      *iotago.Transaction
-		wantErr error
+		name     string
+		vmParams *vm.Params
+		inputs   iotago.OutputSet
+		tx       *iotago.Transaction
+		wantErr  error
 	}
 	tests := []test{
 		func() test {
@@ -2990,7 +2990,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			return test{
 				name: "ok",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ConfUnix: 10,
 				}},
 				inputs: inputs,
@@ -3025,7 +3025,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			return test{
 				name: "fail - timelock not expired",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ConfUnix: 10,
 				}},
 				inputs: inputs,
@@ -3060,7 +3060,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			return test{
 				name: "fail - unix timelock not expired",
-				vmParas: &vm.Paras{External: &iotago.ExternalUnlockParameters{
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ConfUnix: 666,
 				}},
 				inputs: inputs,
@@ -3076,7 +3076,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParas, tt.inputs, vm.ExecFuncTimelocks())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncTimelocks())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return

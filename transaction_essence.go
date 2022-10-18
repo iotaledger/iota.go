@@ -143,11 +143,11 @@ func (u *TransactionEssence) Size() int {
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) syntacticallyValidate(protoParas *ProtocolParameters) error {
+func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParameters) error {
 
-	expectedNetworkID := protoParas.NetworkID()
+	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {
-		return fmt.Errorf("%w: got %v, want %v (%s)", ErrTxEssenceNetworkIDInvalid, u.NetworkID, expectedNetworkID, protoParas.NetworkName)
+		return fmt.Errorf("%w: got %v, want %v (%s)", ErrTxEssenceNetworkIDInvalid, u.NetworkID, expectedNetworkID, protoParams.NetworkName)
 	}
 
 	if err := SyntacticallyValidateInputs(u.Inputs,
@@ -158,7 +158,7 @@ func (u *TransactionEssence) syntacticallyValidate(protoParas *ProtocolParameter
 	}
 
 	if err := SyntacticallyValidateOutputs(u.Outputs,
-		OutputsSyntacticalDepositAmount(protoParas),
+		OutputsSyntacticalDepositAmount(protoParams),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
 		OutputsSyntacticalFoundry(),

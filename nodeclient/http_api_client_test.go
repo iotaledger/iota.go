@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	v2API = iotago.V2API(tpkg.TestProtoParas)
+	v2API = iotago.V2API(tpkg.TestProtoParams)
 )
 
 func TestClient_Health(t *testing.T) {
@@ -84,7 +84,7 @@ func TestClient_Info(t *testing.T) {
 		Features: []string{"Lazers"},
 	}
 
-	protoParas := &iotago.ProtocolParameters{
+	protoParams := &iotago.ProtocolParameters{
 		TokenSupply: tpkg.TestTokenSupply,
 		Version:     2,
 		NetworkName: "alphanet",
@@ -97,10 +97,10 @@ func TestClient_Info(t *testing.T) {
 		},
 	}
 
-	protoParasJson, err := v2API.JSONEncode(protoParas)
+	protoParamsJson, err := v2API.JSONEncode(protoParams)
 	require.NoError(t, err)
-	protoParasJsonRawMsg := json.RawMessage(protoParasJson)
-	originInfo.Protocol = &protoParasJsonRawMsg
+	protoParamsJsonRawMsg := json.RawMessage(protoParamsJson)
+	originInfo.Protocol = &protoParamsJsonRawMsg
 
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.RouteInfo).
@@ -111,11 +111,11 @@ func TestClient_Info(t *testing.T) {
 	info, err := nodeAPI.Info(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
-	protoParas, err = originInfo.ProtocolParameters()
+	protoParams, err = originInfo.ProtocolParameters()
 	require.NoError(t, err)
 
 	require.NoError(t, err)
-	require.EqualValues(t, protoParas.TokenSupply, tpkg.TestTokenSupply)
+	require.EqualValues(t, protoParams.TokenSupply, tpkg.TestTokenSupply)
 }
 
 func TestClient_Tips(t *testing.T) {

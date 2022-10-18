@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	// ErrMissingProtocolParas is returned when ProtocolParameters are missing for operations which require them.
-	ErrMissingProtocolParas = errors.New("missing protocol parameters")
+	// ErrMissingProtocolParams is returned when ProtocolParameters are missing for operations which require them.
+	ErrMissingProtocolParams = errors.New("missing protocol parameters")
 
 	// internal API instance used to encode/decode objects where protocol parameters don't matter.
 	_internalAPI   API

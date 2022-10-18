@@ -26,21 +26,21 @@ type virtualMachine struct {
 	execList []vm.ExecFunc
 }
 
-func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParas *vm.Paras, inputs iotago.OutputSet, overrideFuncs ...vm.ExecFunc) error {
+func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs iotago.OutputSet, overrideFuncs ...vm.ExecFunc) error {
 	var err error
-	vmParas.WorkingSet, err = vm.NewVMParasWorkingSet(t, inputs)
+	vmParams.WorkingSet, err = vm.NewVMParamsWorkingSet(t, inputs)
 	if err != nil {
 		return err
 	}
 
 	if len(overrideFuncs) > 0 {
-		return vm.RunVMFuncs(stardustVM, vmParas, overrideFuncs...)
+		return vm.RunVMFuncs(stardustVM, vmParams, overrideFuncs...)
 	}
 
-	return vm.RunVMFuncs(stardustVM, vmParas, stardustVM.execList...)
+	return vm.RunVMFuncs(stardustVM, vmParams, stardustVM.execList...)
 }
 
-func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, current iotago.ChainOutput, next iotago.ChainOutput, vmParas *vm.Paras) error {
+func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, current iotago.ChainOutput, next iotago.ChainOutput, vmParams *vm.Params) error {
 	var ok bool
 	switch current.(type) {
 	case *iotago.AliasOutput:
@@ -50,7 +50,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 				return fmt.Errorf("can only state transition to another alias output")
 			}
 		}
-		return aliasSTVF(current.(*iotago.AliasOutput), transType, nextAlias, vmParas)
+		return aliasSTVF(current.(*iotago.AliasOutput), transType, nextAlias, vmParams)
 	case *iotago.FoundryOutput:
 		var nextFoundry *iotago.FoundryOutput
 		if next != nil {
@@ -58,7 +58,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 				return fmt.Errorf("can only state transition to another foundry output")
 			}
 		}
-		return foundrySTVF(current.(*iotago.FoundryOutput), transType, nextFoundry, vmParas)
+		return foundrySTVF(current.(*iotago.FoundryOutput), transType, nextFoundry, vmParams)
 	case *iotago.NFTOutput:
 		var nextNFT *iotago.NFTOutput
 		if next != nil {
@@ -66,7 +66,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 				return fmt.Errorf("can only state transition to another NFT output")
 			}
 		}
-		return nftSTVF(current.(*iotago.NFTOutput), transType, nextNFT, vmParas)
+		return nftSTVF(current.(*iotago.NFTOutput), transType, nextNFT, vmParams)
 	default:
 		panic(fmt.Sprintf("invalid output type %s passed to Stardust virtual machine", current))
 	}
@@ -78,13 +78,13 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 // On alias state transitions: The StateIndex must be incremented by 1 and Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated.
 //
 // On alias governance transition: Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated.
-func aliasSTVF(a *iotago.AliasOutput, transType iotago.ChainTransitionType, next *iotago.AliasOutput, vmParas *vm.Paras) error {
+func aliasSTVF(a *iotago.AliasOutput, transType iotago.ChainTransitionType, next *iotago.AliasOutput, vmParams *vm.Params) error {
 	var err error
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
-		err = aliasGenesisValid(a, vmParas)
+		err = aliasGenesisValid(a, vmParams)
 	case iotago.ChainTransitionTypeStateChange:
-		err = aliasStateChangeValid(a, vmParas, next)
+		err = aliasStateChangeValid(a, vmParams, next)
 	case iotago.ChainTransitionTypeDestroy:
 		return nil
 	default:
@@ -96,21 +96,21 @@ func aliasSTVF(a *iotago.AliasOutput, transType iotago.ChainTransitionType, next
 	return nil
 }
 
-func aliasGenesisValid(current *iotago.AliasOutput, vmParas *vm.Paras) error {
+func aliasGenesisValid(current *iotago.AliasOutput, vmParams *vm.Params) error {
 	if !current.AliasID.Empty() {
 		return fmt.Errorf("AliasOutput's ID is not zeroed even though it is new")
 	}
-	return vm.IsIssuerOnOutputUnlocked(current, vmParas.WorkingSet.UnlockedIdents)
+	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
 }
 
-func aliasStateChangeValid(current *iotago.AliasOutput, vmParas *vm.Paras, next *iotago.AliasOutput) error {
+func aliasStateChangeValid(current *iotago.AliasOutput, vmParams *vm.Params, next *iotago.AliasOutput) error {
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
 		return fmt.Errorf("old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures)
 	}
 	if current.StateIndex == next.StateIndex {
 		return aliasGovernanceSTVF(current, next)
 	}
-	return aliasStateSTVF(current, next, vmParas)
+	return aliasStateSTVF(current, next, vmParams)
 }
 
 func aliasGovernanceSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput) error {
@@ -129,7 +129,7 @@ func aliasGovernanceSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput) 
 	return nil
 }
 
-func aliasStateSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmParas *vm.Paras) error {
+func aliasStateSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmParams *vm.Params) error {
 	switch {
 	case !current.StateController().Equal(next.StateController()):
 		return fmt.Errorf("%w: state controller changed, in %v / out %v", iotago.ErrInvalidAliasStateTransition, current.StateController(), next.StateController())
@@ -151,13 +151,13 @@ func aliasStateSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmPar
 	}
 
 	var seenNewFoundriesOfAlias uint32
-	for _, output := range vmParas.WorkingSet.Tx.Essence.Outputs {
+	for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
 		foundryOutput, is := output.(*iotago.FoundryOutput)
 		if !is {
 			continue
 		}
 
-		if _, notNew := vmParas.WorkingSet.InChains[foundryOutput.MustID()]; notNew {
+		if _, notNew := vmParams.WorkingSet.InChains[foundryOutput.MustID()]; notNew {
 			continue
 		}
 
@@ -176,11 +176,11 @@ func aliasStateSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmPar
 	return nil
 }
 
-func nftSTVF(current *iotago.NFTOutput, transType iotago.ChainTransitionType, next *iotago.NFTOutput, vmParas *vm.Paras) error {
+func nftSTVF(current *iotago.NFTOutput, transType iotago.ChainTransitionType, next *iotago.NFTOutput, vmParams *vm.Params) error {
 	var err error
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
-		err = nftGenesisValid(current, vmParas)
+		err = nftGenesisValid(current, vmParams)
 	case iotago.ChainTransitionTypeStateChange:
 		err = nftStateChangeValid(current, next)
 	case iotago.ChainTransitionTypeDestroy:
@@ -194,11 +194,11 @@ func nftSTVF(current *iotago.NFTOutput, transType iotago.ChainTransitionType, ne
 	return nil
 }
 
-func nftGenesisValid(current *iotago.NFTOutput, vmParas *vm.Paras) error {
+func nftGenesisValid(current *iotago.NFTOutput, vmParams *vm.Params) error {
 	if !current.NFTID.Empty() {
 		return fmt.Errorf("NFTOutput's ID is not zeroed even though it is new")
 	}
-	return vm.IsIssuerOnOutputUnlocked(current, vmParas.WorkingSet.UnlockedIdents)
+	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
 }
 
 func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) error {
@@ -208,14 +208,14 @@ func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) erro
 	return nil
 }
 
-func foundrySTVF(current *iotago.FoundryOutput, transType iotago.ChainTransitionType, next *iotago.FoundryOutput, vmParas *vm.Paras) error {
-	inSums := vmParas.WorkingSet.InNativeTokens
-	outSums := vmParas.WorkingSet.OutNativeTokens
+func foundrySTVF(current *iotago.FoundryOutput, transType iotago.ChainTransitionType, next *iotago.FoundryOutput, vmParams *vm.Params) error {
+	inSums := vmParams.WorkingSet.InNativeTokens
+	outSums := vmParams.WorkingSet.OutNativeTokens
 
 	var err error
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
-		err = foundryGenesisValid(current, vmParas, current.MustID(), outSums)
+		err = foundryGenesisValid(current, vmParams, current.MustID(), outSums)
 	case iotago.ChainTransitionTypeStateChange:
 		err = foundryStateChangeValid(current, next, inSums, outSums)
 	case iotago.ChainTransitionTypeDestroy:
@@ -229,7 +229,7 @@ func foundrySTVF(current *iotago.FoundryOutput, transType iotago.ChainTransition
 	return nil
 }
 
-func foundryGenesisValid(current *iotago.FoundryOutput, vmParas *vm.Paras, thisFoundryID iotago.FoundryID, outSums iotago.NativeTokenSum) error {
+func foundryGenesisValid(current *iotago.FoundryOutput, vmParams *vm.Params, thisFoundryID iotago.FoundryID, outSums iotago.NativeTokenSum) error {
 	nativeTokenID := current.MustNativeTokenID()
 	if err := current.TokenScheme.StateTransition(iotago.ChainTransitionTypeGenesis, nil, nil, outSums.ValueOrBigInt0(nativeTokenID)); err != nil {
 		return err
@@ -237,24 +237,24 @@ func foundryGenesisValid(current *iotago.FoundryOutput, vmParas *vm.Paras, thisF
 
 	// grab foundry counter from transitioning AliasOutput
 	aliasID := current.Ident().(*iotago.AliasAddress).AliasID()
-	inAlias, ok := vmParas.WorkingSet.InChains[aliasID]
+	inAlias, ok := vmParams.WorkingSet.InChains[aliasID]
 	if !ok {
 		return fmt.Errorf("missing input transitioning alias output %s for new foundry output %s", aliasID, thisFoundryID)
 	}
 
-	outAlias, ok := vmParas.WorkingSet.OutChains[aliasID]
+	outAlias, ok := vmParams.WorkingSet.OutChains[aliasID]
 	if !ok {
 		return fmt.Errorf("missing output transitioning alias output %s for new foundry output %s", aliasID, thisFoundryID)
 	}
 
-	if err := foundrySerialNumberValid(current, vmParas, inAlias.(*iotago.AliasOutput), outAlias.(*iotago.AliasOutput), thisFoundryID); err != nil {
+	if err := foundrySerialNumberValid(current, vmParams, inAlias.(*iotago.AliasOutput), outAlias.(*iotago.AliasOutput), thisFoundryID); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParas *vm.Paras, inAlias *iotago.AliasOutput, outAlias *iotago.AliasOutput, thisFoundryID iotago.FoundryID) error {
+func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParams *vm.Params, inAlias *iotago.AliasOutput, outAlias *iotago.AliasOutput, thisFoundryID iotago.FoundryID) error {
 	// this new foundry's serial number must be between the given foundry counter interval
 	startSerial := inAlias.FoundryCounter
 	endIncSerial := outAlias.FoundryCounter
@@ -264,7 +264,7 @@ func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParas *vm.Paras, 
 
 	// OPTIMIZE: this loop happens on every STVF of every new foundry output
 	// check order of serial number
-	for outputIndex, output := range vmParas.WorkingSet.Tx.Essence.Outputs {
+	for outputIndex, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
 		otherFoundryOutput, is := output.(*iotago.FoundryOutput)
 		if !is {
 			continue
@@ -279,7 +279,7 @@ func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParas *vm.Paras, 
 			return err
 		}
 
-		if _, isNotNew := vmParas.WorkingSet.InChains[otherFoundryID]; isNotNew {
+		if _, isNotNew := vmParams.WorkingSet.InChains[otherFoundryID]; isNotNew {
 			continue
 		}
 

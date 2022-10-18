@@ -74,9 +74,9 @@ type TransactionFunc func(tx *iotago.Transaction)
 
 // BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
-func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParas *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *BlockBuilder {
+func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParams *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *BlockBuilder {
 	blockBuilder := NewBlockBuilder()
-	tx, err := b.Build(protoParas, signer)
+	tx, err := b.Build(protoParams, signer)
 	if err != nil {
 		blockBuilder.err = err
 		return blockBuilder
@@ -84,15 +84,15 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParas *iotago.Proto
 	if txFunc != nil {
 		txFunc(tx)
 	}
-	return blockBuilder.ProtocolVersion(protoParas.Version).Payload(tx)
+	return blockBuilder.ProtocolVersion(protoParams.Version).Payload(tx)
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer iotago.AddressSigner) (*iotago.Transaction, error) {
+func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signer iotago.AddressSigner) (*iotago.Transaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
-	case protoParas == nil:
+	case protoParams == nil:
 		return nil, fmt.Errorf("%w: must supply protocol parameters", ErrTransactionBuilder)
 	case signer == nil:
 		return nil, fmt.Errorf("%w: must supply signer", ErrTransactionBuilder)

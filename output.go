@@ -545,7 +545,7 @@ func (outputSet OutputSet) ChainOutputSet() ChainOutputSet {
 	return set
 }
 
-func outputUnlockable(output Output, next TransDepIdentOutput, target Address, extParas *ExternalUnlockParameters) (bool, error) {
+func outputUnlockable(output Output, next TransDepIdentOutput, target Address, extParams *ExternalUnlockParameters) (bool, error) {
 	unlockConds := output.UnlockConditionSet()
 
 	checkTargetIdentOfOutput := func() (bool, error) {
@@ -567,7 +567,7 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 		return checkTargetIdentOfOutput()
 	}
 
-	targetIdentCanUnlock, returnIdentCanUnlock := unlockConds.unlockableBy(target, extParas)
+	targetIdentCanUnlock, returnIdentCanUnlock := unlockConds.unlockableBy(target, extParams)
 	if !targetIdentCanUnlock {
 		return false, nil
 	}
@@ -595,7 +595,7 @@ type TransIndepIdentOutput interface {
 	Ident() Address
 	// UnlockableBy tells whether the given ident can unlock this Output
 	// while also taking into consideration constraints enforced by UnlockConditions(s) within this Output (if any).
-	UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool
+	UnlockableBy(ident Address, extParams *ExternalUnlockParameters) bool
 }
 
 // TransDepIdentOutput is a type of Output where the identity to unlock is dependent
@@ -610,7 +610,7 @@ type TransDepIdentOutput interface {
 	// while also taking into consideration constraints enforced by UnlockConditions(s) within this Output
 	// and the next state of this TransDepIdentOutput. To indicate that this TransDepIdentOutput
 	// is to be destroyed, pass nil as next.
-	UnlockableBy(ident Address, next TransDepIdentOutput, extParas *ExternalUnlockParameters) (bool, error)
+	UnlockableBy(ident Address, next TransDepIdentOutput, extParams *ExternalUnlockParameters) (bool, error)
 }
 
 // OutputIDHex is the hex representation of an output ID.
@@ -670,7 +670,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //   - the deposit fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
-func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDepositAmount(protoParams *ProtocolParameters) OutputsSyntacticalValidationFunc {
 	var sum uint64
 	return func(index int, output Output) error {
 		deposit := output.Deposit()
@@ -678,20 +678,20 @@ func OutputsSyntacticalDepositAmount(protoParas *ProtocolParameters) OutputsSynt
 		switch {
 		case deposit == 0:
 			return fmt.Errorf("%w: output %d", ErrDepositAmountMustBeGreaterThanZero, index)
-		case deposit > protoParas.TokenSupply:
+		case deposit > protoParams.TokenSupply:
 			return fmt.Errorf("%w: output %d", ErrOutputDepositsMoreThanTotalSupply, index)
-		case sum+deposit > protoParas.TokenSupply:
+		case sum+deposit > protoParams.TokenSupply:
 			return fmt.Errorf("%w: output %d", ErrOutputsSumExceedsTotalSupply, index)
 		}
 
 		// check whether deposit fulfills the storage deposit cost
-		if _, err := protoParas.RentStructure.CoversStateRent(output, deposit); err != nil {
+		if _, err := protoParams.RentStructure.CoversStateRent(output, deposit); err != nil {
 			return fmt.Errorf("%w: output %d", err, index)
 		}
 
 		// check whether the amount in the return condition allows the receiver to fulfill the storage deposit for the return output
 		if storageDep := output.UnlockConditionSet().StorageDepositReturn(); storageDep != nil {
-			minStorageDepositForReturnOutput := protoParas.RentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
+			minStorageDepositForReturnOutput := protoParams.RentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
 				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrStorageDepositLessThanMinReturnOutputStorageDeposit, index, minStorageDepositForReturnOutput, storageDep.Amount)

@@ -189,7 +189,7 @@ func (v *v2api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, er
 }
 
 // V2API instantiates an API instance with types registered conforming to protocol version 2 (Stardust) of the IOTA protocol.
-func V2API(protoParas *ProtocolParameters) API {
+func V2API(protoParams *ProtocolParameters) API {
 	api := serix.NewAPI()
 
 	must(api.RegisterTypeSettings(ProtocolParameters{}, serix.TypeSettings{}))
@@ -393,11 +393,11 @@ func V2API(protoParas *ProtocolParameters) API {
 			if len(tx.Unlocks) != len(tx.Essence.Inputs) {
 				return fmt.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(tx.Unlocks), len(tx.Essence.Inputs))
 			}
-			protoParas := ctx.Value(ProtocolAPIContextKey)
-			if protoParas == nil {
-				return fmt.Errorf("unable to validate transaction: %w", ErrMissingProtocolParas)
+			protoParams := ctx.Value(ProtocolAPIContextKey)
+			if protoParams == nil {
+				return fmt.Errorf("unable to validate transaction: %w", ErrMissingProtocolParams)
 			}
-			return tx.syntacticallyValidate(protoParas.(*ProtocolParameters))
+			return tx.syntacticallyValidate(protoParams.(*ProtocolParameters))
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
 	}
@@ -444,7 +444,7 @@ func V2API(protoParas *ProtocolParameters) API {
 		}, func(ctx context.Context, block *Block) error {
 			val := ctx.Value(ProtocolAPIContextKey)
 			if val == nil {
-				return fmt.Errorf("unable to validate block: %w", ErrMissingProtocolParas)
+				return fmt.Errorf("unable to validate block: %w", ErrMissingProtocolParams)
 			}
 			protoParams := val.(*ProtocolParameters)
 			if protoParams.Version != block.ProtocolVersion {
@@ -458,7 +458,7 @@ func V2API(protoParas *ProtocolParameters) API {
 	}
 
 	return &v2api{
-		ctx:      protoParas.AsSerixContext(),
+		ctx:      protoParams.AsSerixContext(),
 		serixAPI: api,
 	}
 }

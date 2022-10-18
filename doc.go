@@ -42,7 +42,7 @@
 //		}
 //
 //		// get the current protocol parameters
-//		protoParas, err := info.ProtocolParameters()
+//		protoParams, err := info.ProtocolParameters()
 //		if err != nil {
 //			return err
 //		}
@@ -51,11 +51,11 @@
 //		block, err := builder.NewBlockBuilder().
 //			Payload(taggedDataPayload).
 //			Parents(tips).
-//			ProofOfWork(ctx, protoParas, info.Protocol.MinPoWScore).
+//			ProofOfWork(ctx, protoParams, info.Protocol.MinPoWScore).
 //			Build()
 //
 //		// submit the block to the node
-//		if _, err := nodeHTTPAPIClient.SubmitBlock(ctx, block, protoParas); err != nil {
+//		if _, err := nodeHTTPAPIClient.SubmitBlock(ctx, block, protoParams); err != nil {
 //			return err
 //		}
 //

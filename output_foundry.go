@@ -109,8 +109,8 @@ func (f *FoundryOutput) Ident() Address {
 	return f.Conditions.MustSet().ImmutableAlias().Address
 }
 
-func (f *FoundryOutput) UnlockableBy(ident Address, extParas *ExternalUnlockParameters) bool {
-	ok, _ := outputUnlockable(f, nil, ident, extParas)
+func (f *FoundryOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParameters) bool {
+	ok, _ := outputUnlockable(f, nil, ident, extParams)
 	return ok
 }
 

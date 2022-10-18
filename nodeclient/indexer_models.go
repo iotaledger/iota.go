@@ -18,16 +18,16 @@ type IndexerResponse struct {
 	Cursor *string `json:"cursor"`
 }
 
-// IndexerCursorParas define page size and cursor query parameters.
-type IndexerCursorParas struct {
+// IndexerCursorParams define page size and cursor query parameters.
+type IndexerCursorParams struct {
 	// The maximum amount of items returned in one call.
 	PageSize int `qs:"pageSize,omitempty"`
 	// The offset from which to query from.
 	Cursor *string `qs:"cursor,omitempty"`
 }
 
-// IndexerTimelockParas define timelock query parameters.
-type IndexerTimelockParas struct {
+// IndexerTimelockParams define timelock query parameters.
+type IndexerTimelockParams struct {
 	// Filters outputs based on the presence of timelock unlock condition.
 	HasTimelock *bool `qs:"hasTimelock,omitempty"`
 	// Return outputs that are timelocked before a certain Unix timestamp.
@@ -36,8 +36,8 @@ type IndexerTimelockParas struct {
 	TimelockedAfter uint32 `qs:"timelockedAfter,omitempty"`
 }
 
-// IndexerExpirationParas define expiration query parameters.
-type IndexerExpirationParas struct {
+// IndexerExpirationParams define expiration query parameters.
+type IndexerExpirationParams struct {
 	// Filters outputs based on the presence of expiration unlock condition.
 	HasExpiration *bool `qs:"hasExpiration,omitempty"`
 	// Return outputs that expire before a certain Unix timestamp.
@@ -48,24 +48,24 @@ type IndexerExpirationParas struct {
 	ExpirationReturnAddressBech32 string `qs:"expirationReturnAddress,omitempty"`
 }
 
-// IndexerCreationParas define creation time query parameters.
-type IndexerCreationParas struct {
+// IndexerCreationParams define creation time query parameters.
+type IndexerCreationParams struct {
 	// Return outputs that were created before a certain Unix timestamp.
 	CreatedBefore uint32 `qs:"createdBefore,omitempty"`
 	// Return outputs that were created after a certain Unix timestamp.
 	CreatedAfter uint32 `qs:"createdAfter,omitempty"`
 }
 
-// IndexerStorageDepositParas define storage deposit based query parameters.
-type IndexerStorageDepositParas struct {
+// IndexerStorageDepositParams define storage deposit based query parameters.
+type IndexerStorageDepositParams struct {
 	// Filters outputs based on the presence of storage deposit return unlock condition.
 	HasStorageDepositReturn *bool `qs:"hasStorageDepositReturn,omitempty"`
 	// Filter outputs based on the presence of a specific return address in the storage deposit return unlock condition.
 	StorageDepositReturnAddressBech32 string `qs:"storageDepositReturnAddress,omitempty"`
 }
 
-// IndexerNativeTokenParas define native token based query parameters.
-type IndexerNativeTokenParas struct {
+// IndexerNativeTokenParams define native token based query parameters.
+type IndexerNativeTokenParams struct {
 	// Filters outputs based on the presence of native tokens in the output.
 	HasNativeTokens *bool `qs:"hasNativeTokens,omitempty"`
 	// Filter outputs that have at least an amount of native tokens.
@@ -76,12 +76,12 @@ type IndexerNativeTokenParas struct {
 
 // BasicOutputsQuery defines parameters for an basic outputs query.
 type BasicOutputsQuery struct {
-	IndexerCursorParas
-	IndexerTimelockParas
-	IndexerExpirationParas
-	IndexerCreationParas
-	IndexerStorageDepositParas
-	IndexerNativeTokenParas
+	IndexerCursorParams
+	IndexerTimelockParams
+	IndexerExpirationParams
+	IndexerCreationParams
+	IndexerStorageDepositParams
+	IndexerNativeTokenParams
 
 	// Bech32-encoded address that should be searched for.
 	AddressBech32 string `qs:"address,omitempty"`
@@ -99,15 +99,15 @@ func (query *BasicOutputsQuery) SetOffset(cursor *string) {
 	query.Cursor = cursor
 }
 
-func (query *BasicOutputsQuery) URLParas() (string, error) {
+func (query *BasicOutputsQuery) URLParams() (string, error) {
 	return qs.Marshal(query)
 }
 
 // AliasesQuery defines parameters for an alias outputs query.
 type AliasesQuery struct {
-	IndexerCursorParas
-	IndexerCreationParas
-	IndexerNativeTokenParas
+	IndexerCursorParams
+	IndexerCreationParams
+	IndexerNativeTokenParams
 
 	// Bech32-encoded state controller address that should be searched for.
 	StateControllerBech32 string `qs:"stateController,omitempty"`
@@ -127,15 +127,15 @@ func (query *AliasesQuery) SetOffset(cursor *string) {
 	query.Cursor = cursor
 }
 
-func (query *AliasesQuery) URLParas() (string, error) {
+func (query *AliasesQuery) URLParams() (string, error) {
 	return qs.Marshal(query)
 }
 
 // FoundriesQuery defines parameters for a foundry outputs query.
 type FoundriesQuery struct {
-	IndexerCursorParas
-	IndexerCreationParas
-	IndexerNativeTokenParas
+	IndexerCursorParams
+	IndexerCreationParams
+	IndexerNativeTokenParams
 
 	// Bech32-encoded address that should be searched for.
 	AliasAddressBech32 string `qs:"aliasAddress,omitempty"`
@@ -149,18 +149,18 @@ func (query *FoundriesQuery) SetOffset(cursor *string) {
 	query.Cursor = cursor
 }
 
-func (query *FoundriesQuery) URLParas() (string, error) {
+func (query *FoundriesQuery) URLParams() (string, error) {
 	return qs.Marshal(query)
 }
 
 // NFTsQuery defines parameters for an NFT outputs query.
 type NFTsQuery struct {
-	IndexerCursorParas
-	IndexerTimelockParas
-	IndexerExpirationParas
-	IndexerStorageDepositParas
-	IndexerNativeTokenParas
-	IndexerCreationParas
+	IndexerCursorParams
+	IndexerTimelockParams
+	IndexerExpirationParams
+	IndexerStorageDepositParams
+	IndexerNativeTokenParams
+	IndexerCreationParams
 
 	// Bech32-encoded address that should be searched for.
 	AddressBech32 string `qs:"address,omitempty"`
@@ -180,6 +180,6 @@ func (query *NFTsQuery) SetOffset(cursor *string) {
 	query.Cursor = cursor
 }
 
-func (query *NFTsQuery) URLParas() (string, error) {
+func (query *NFTsQuery) URLParams() (string, error) {
 	return qs.Marshal(query)
 }

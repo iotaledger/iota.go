@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	v2API = iotago.V2API(tpkg.TestProtoParas)
+	v2API = iotago.V2API(tpkg.TestProtoParams)
 )
 
 type fieldMutations map[string]interface{}
@@ -63,7 +63,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 		next      *iotago.AliasOutput
 		nextMut   map[string]fieldMutations
 		transType iotago.ChainTransitionType
-		svCtx     *vm.Paras
+		svCtx     *vm.Params
 		wantErr   error
 	}
 
@@ -83,7 +83,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			},
 			next:      nil,
 			transType: iotago.ChainTransitionTypeGenesis,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -105,7 +105,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 			},
 			next:      nil,
 			transType: iotago.ChainTransitionTypeDestroy,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
@@ -139,7 +139,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -177,7 +177,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -240,7 +240,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
@@ -300,7 +300,7 @@ func TestAliasOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
@@ -378,7 +378,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		next      *iotago.FoundryOutput
 		nextMut   map[string]fieldMutations
 		transType iotago.ChainTransitionType
-		svCtx     *vm.Paras
+		svCtx     *vm.Params
 		wantErr   error
 	}
 
@@ -388,7 +388,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current:   exampleFoundry,
 			next:      nil,
 			transType: iotago.ChainTransitionTypeGenesis,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
@@ -415,7 +415,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current:   exampleFoundry,
 			next:      nil,
 			transType: iotago.ChainTransitionTypeGenesis,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
@@ -442,7 +442,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current:   exampleFoundry,
 			next:      nil,
 			transType: iotago.ChainTransitionTypeGenesis,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
@@ -467,7 +467,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current:   exampleFoundry,
 			next:      nil,
 			transType: iotago.ChainTransitionTypeGenesis,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
@@ -515,7 +515,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
 				},
@@ -535,7 +535,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): new(big.Int).SetUint64(300),
@@ -557,7 +557,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): startingSupply,
@@ -574,7 +574,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			current:   exampleFoundry,
 			nextMut:   map[string]fieldMutations{},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): startingSupply,
@@ -599,7 +599,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): startingSupply,
@@ -622,7 +622,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						// 100 excess
@@ -645,7 +645,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						// 50 deficit
@@ -668,7 +668,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): startingSupply,
@@ -694,7 +694,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{},
 			},
 			wantErr: &iotago.ChainTransitionError{},
@@ -703,7 +703,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			name:      "ok - destroy transition",
 			current:   toBeDestoyedFoundry,
 			transType: iotago.ChainTransitionTypeDestroy,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					InNativeTokens:  map[iotago.NativeTokenID]*big.Int{},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
@@ -715,7 +715,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			name:      "fail - destroy transition - foundry token unbalanced",
 			current:   exampleFoundry,
 			transType: iotago.ChainTransitionTypeDestroy,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					InNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): startingSupply,
@@ -778,7 +778,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		next      *iotago.NFTOutput
 		nextMut   map[string]fieldMutations
 		transType iotago.ChainTransitionType
-		svCtx     *vm.Paras
+		svCtx     *vm.Params
 		wantErr   error
 	}
 
@@ -788,7 +788,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			current:   exampleCurrentNFTOutput,
 			next:      nil,
 			transType: iotago.ChainTransitionTypeGenesis,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -803,7 +803,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			current:   exampleCurrentNFTOutput,
 			next:      nil,
 			transType: iotago.ChainTransitionTypeDestroy,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
@@ -828,7 +828,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
@@ -852,7 +852,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Paras{
+			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},

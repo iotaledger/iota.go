@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	v2API = iotago.V2API(tpkg.TestProtoParas)
+	v2API = iotago.V2API(tpkg.TestProtoParams)
 )
 
 type deSerializeTest struct {
@@ -73,7 +73,7 @@ func TestProtocolParameters_DeSerialize(t *testing.T) {
 }
 
 func TestProtocolParametersJSONMarshalling(t *testing.T) {
-	protoParas := &iotago.ProtocolParameters{
+	protoParams := &iotago.ProtocolParameters{
 		Version:       6,
 		NetworkName:   "xxxNetwork",
 		Bech32HRP:     "xxx",
@@ -86,15 +86,15 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 		},
 		TokenSupply: 1234567890987654321,
 	}
-	protoParasJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"belowMaxDepth":15,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321"}`
+	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"belowMaxDepth":15,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321"}`
 
-	jsonProtoParas, err := v2API.JSONEncode(protoParas)
+	jsonProtoParams, err := v2API.JSONEncode(protoParams)
 	require.NoError(t, err)
-	require.Equal(t, protoParasJSON, string(jsonProtoParas))
+	require.Equal(t, protoParamsJSON, string(jsonProtoParams))
 
-	decodedProtoParas := &iotago.ProtocolParameters{}
-	err = v2API.JSONDecode([]byte(protoParasJSON), decodedProtoParas)
+	decodedProtoParams := &iotago.ProtocolParameters{}
+	err = v2API.JSONDecode([]byte(protoParamsJSON), decodedProtoParams)
 	require.NoError(t, err)
 
-	require.Equal(t, protoParas, decodedProtoParas)
+	require.Equal(t, protoParams, decodedProtoParams)
 }

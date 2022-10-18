@@ -17,28 +17,28 @@ import (
 func TestOutputsQuery_Build(t *testing.T) {
 	trueCondition := true
 	query := &nodeclient.BasicOutputsQuery{
-		IndexerTimelockParas: nodeclient.IndexerTimelockParas{
+		IndexerTimelockParams: nodeclient.IndexerTimelockParams{
 			HasTimelock:      &trueCondition,
 			TimelockedBefore: 1,
 			TimelockedAfter:  2,
 		},
-		IndexerExpirationParas: nodeclient.IndexerExpirationParas{
+		IndexerExpirationParams: nodeclient.IndexerExpirationParams{
 			HasExpiration: &trueCondition,
 			ExpiresBefore: 5,
 			ExpiresAfter:  6,
 		},
-		IndexerCreationParas: nodeclient.IndexerCreationParas{
+		IndexerCreationParams: nodeclient.IndexerCreationParams{
 			CreatedBefore: 9,
 			CreatedAfter:  10,
 		},
-		IndexerStorageDepositParas: nodeclient.IndexerStorageDepositParas{
+		IndexerStorageDepositParams: nodeclient.IndexerStorageDepositParams{
 			HasStorageDepositReturn:           &trueCondition,
 			StorageDepositReturnAddressBech32: "",
 		},
 		AddressBech32: "alice",
 		SenderBech32:  "bob",
 		Tag:           "charlie",
-		IndexerCursorParas: nodeclient.IndexerCursorParas{
+		IndexerCursorParams: nodeclient.IndexerCursorParams{
 			Cursor: func() *string {
 				str := "dave"
 				return &str
@@ -46,7 +46,7 @@ func TestOutputsQuery_Build(t *testing.T) {
 		},
 	}
 
-	_, err := query.URLParas()
+	_, err := query.URLParams()
 	require.NoError(t, err)
 }
 
