@@ -2,12 +2,9 @@ package iotago_test
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/iotaledger/hive.go/serializer/v2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,11 +12,6 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/tpkg"
 )
-
-func TestSignatureSelector(t *testing.T) {
-	_, err := iotago.SignatureSelector(100)
-	assert.True(t, errors.Is(err, iotago.ErrUnknownSignatureType))
-}
 
 func TestEd25519Signature_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
@@ -53,7 +45,7 @@ func TestEd25519Signature_Valid(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			// deserialize the address from the test
 			addr := &iotago.Ed25519Address{}
-			_, err = addr.Deserialize(tt.Address, serializer.DeSeriModePerformValidation, nil)
+			_, err = v2API.Decode(tt.Address, addr)
 			require.NoError(t, err)
 			// create the signature type
 			sig := &iotago.Ed25519Signature{}

@@ -1,10 +1,9 @@
 package iotago
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/core/serix"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v3/bech32"
 )
@@ -33,17 +32,10 @@ func (addrType AddressType) String() string {
 type AddressTypeSet map[AddressType]struct{}
 
 var (
-	// ErrTypeIsNotSupportedAddress gets returned when a serializable was found to not be a supported Address.
-	ErrTypeIsNotSupportedAddress = errors.New("serializable is not a supported address")
-	addressNames                 = [AddressNFT + 1]string{
+	addressNames = [AddressNFT + 1]string{
 		"Ed25519Address", "", "", "", "", "", "", "",
 		"AliasAddress", "", "", "", "", "", "", "",
 		"NFTAddress",
-	}
-	allAddressTypeSet = AddressTypeSet{
-		AddressEd25519: struct{}{},
-		AddressAlias:   struct{}{},
-		AddressNFT:     struct{}{},
 	}
 )
 
@@ -60,7 +52,9 @@ const (
 
 // Address describes a general address.
 type Address interface {
-	serializer.SerializableWithSize
+	serix.Serializable
+	serix.Deserializable
+	Sizer
 	NonEphemeralObject
 	fmt.Stringer
 
@@ -87,20 +81,20 @@ type DirectUnlockableAddress interface {
 	Unlock(msg []byte, sig Signature) error
 }
 
-// ChainConstrainedAddress is a type of Address representing ownership of an output by a ChainConstrainedOutput.
-type ChainConstrainedAddress interface {
+// ChainAddress is a type of Address representing ownership of an output by a ChainOutput.
+type ChainAddress interface {
 	Address
 	Chain() ChainID
 }
 
-// ChainID represents the chain ID of a chain created by a ChainConstrainedOutput.
+// ChainID represents the chain ID of a chain created by a ChainOutput.
 type ChainID interface {
 	// Matches checks whether other matches this ChainID.
 	Matches(other ChainID) bool
-	// Addressable tells whether this ChainID can be converted into a ChainConstrainedAddress.
+	// Addressable tells whether this ChainID can be converted into a ChainAddress.
 	Addressable() bool
-	// ToAddress converts this ChainID into an ChainConstrainedAddress.
-	ToAddress() ChainConstrainedAddress
+	// ToAddress converts this ChainID into an ChainAddress.
+	ToAddress() ChainAddress
 	// Empty tells whether the ChainID is empty.
 	Empty() bool
 	// Key returns a key to use to index this ChainID.
@@ -112,11 +106,6 @@ type ChainID interface {
 // UTXOIDChainID is a ChainID which gets produced by taking an OutputID.
 type UTXOIDChainID interface {
 	FromOutputID(id OutputID) ChainID
-}
-
-// AddressSelector implements SerializableSelectorFunc for address types.
-func AddressSelector(addressType uint32) (Address, error) {
-	return newAddress(byte(addressType))
 }
 
 func newAddress(addressType byte) (address Address, err error) {
@@ -132,82 +121,11 @@ func newAddress(addressType byte) (address Address, err error) {
 	}
 }
 
-func jsonAddressToAddress(jAddr JSONSerializable) (Address, error) {
-	addr, err := jAddr.ToSerializable()
-	if err != nil {
-		return nil, err
-	}
-	return addr.(Address), nil
-}
-
-// checks whether the given Serializable is an Address and also supported AddressType.
-func addrWriteGuard(supportedAddr AddressTypeSet) serializer.SerializableWriteGuardFunc {
-	return func(seri serializer.Serializable) error {
-		if seri == nil {
-			return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedAddress)
-		}
-		addr, is := seri.(Address)
-		if !is {
-			return fmt.Errorf("%w: because not address", ErrTypeIsNotSupportedAddress)
-		}
-
-		if _, supported := supportedAddr[addr.Type()]; !supported {
-			return fmt.Errorf("%w: because not in set %v", ErrTypeIsNotSupportedAddress, supported)
-		}
-
-		return nil
-	}
-}
-
-func addrReadGuard(supportedAddr AddressTypeSet) serializer.SerializableReadGuardFunc {
-	return func(ty uint32) (serializer.Serializable, error) {
-		if _, supported := supportedAddr[AddressType(ty)]; !supported {
-			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedAddress, supportedAddr, ty)
-		}
-		return AddressSelector(ty)
-	}
-}
-
-func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (Address, error) {
-	jsonAddr, err := DeserializeObjectFromJSON(jRawMsg, jsonAddressSelector)
-	if err != nil {
-		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
-	}
-
-	addr, err := jsonAddr.ToSerializable()
-	if err != nil {
-		return nil, err
-	}
-	return addr.(Address), nil
-}
-
-func addressToJSONRawMsg(addr serializer.Serializable) (*json.RawMessage, error) {
-	addrJsonBytes, err := addr.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	jsonRawMsgAddr := json.RawMessage(addrJsonBytes)
-	return &jsonRawMsgAddr, nil
-}
-
-// selects the json object for the given type.
-func jsonAddressSelector(ty int) (JSONSerializable, error) {
-	var obj JSONSerializable
-	switch AddressType(ty) {
-	case AddressEd25519:
-		obj = &jsonEd25519Address{}
-	case AddressAlias:
-		obj = &jsonAliasAddress{}
-	case AddressNFT:
-		obj = &jsonNFTAddress{}
-	default:
-		return nil, fmt.Errorf("unable to decode address type from JSON: %w", ErrUnknownAddrType)
-	}
-	return obj, nil
-}
-
 func bech32String(hrp NetworkPrefix, addr Address) string {
-	bytes, _ := addr.Serialize(serializer.DeSeriModeNoValidation, nil)
+	bytes, err := _internalAPI.Encode(addr)
+	if err != nil {
+		panic(err)
+	}
 	s, err := bech32.Encode(string(hrp), bytes)
 	if err != nil {
 		panic(err)
@@ -231,7 +149,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		return "", nil, err
 	}
 
-	n, err := addr.Deserialize(addrData, serializer.DeSeriModePerformValidation, nil)
+	n, err := _internalAPI.Decode(addrData, addr)
 	if err != nil {
 		return "", nil, err
 	}

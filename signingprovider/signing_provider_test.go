@@ -69,10 +69,12 @@ func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {
 	tests := []test{
 		func() test {
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-				Index:             4,
-				Timestamp:         uint32(time.Now().Unix()),
-				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				MilestoneEssence: iotago.MilestoneEssence{
+					Parents:           tpkg.SortedRandMSParents(1 + rand.Intn(7)),
+					Index:             4,
+					Timestamp:         uint32(time.Now().Unix()),
+					AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				},
 			}
 
 			return test{
@@ -84,10 +86,12 @@ func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {
 		}(),
 		func() test {
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-				Index:             8,
-				Timestamp:         uint32(time.Now().Unix()),
-				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				MilestoneEssence: iotago.MilestoneEssence{
+					Parents:           tpkg.SortedRandMSParents(1 + rand.Intn(7)),
+					Index:             8,
+					Timestamp:         uint32(time.Now().Unix()),
+					AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				},
 			}
 
 			return test{
@@ -99,10 +103,12 @@ func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {
 		}(),
 		func() test {
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-				Index:             20,
-				Timestamp:         uint32(time.Now().Unix()),
-				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				MilestoneEssence: iotago.MilestoneEssence{
+					Parents:           tpkg.SortedRandMSParents(1 + rand.Intn(7)),
+					Index:             20,
+					Timestamp:         uint32(time.Now().Unix()),
+					AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				},
 			}
 
 			return test{
@@ -114,10 +120,12 @@ func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {
 		}(),
 		func() test {
 			msPayload := &iotago.Milestone{
-				Parents:           tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-				Index:             17,
-				Timestamp:         uint32(time.Now().Unix()),
-				AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				MilestoneEssence: iotago.MilestoneEssence{
+					Parents:           tpkg.SortedRandMSParents(1 + rand.Intn(7)),
+					Index:             17,
+					Timestamp:         uint32(time.Now().Unix()),
+					AppliedMerkleRoot: tpkg.Rand32ByteArray(),
+				},
 			}
 
 			return test{

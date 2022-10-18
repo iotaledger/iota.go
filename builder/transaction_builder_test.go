@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/builder"
 	"github.com/iotaledger/iota.go/v3/tpkg"
@@ -33,7 +32,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})
@@ -55,27 +54,30 @@ func TestTransactionBuilder(t *testing.T) {
 			var (
 				basicOutput = &iotago.BasicOutput{
 					Amount:     1000,
-					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: &inputAddr}},
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{&iotago.AddressUnlockCondition{Address: &inputAddr}},
 				}
 
 				nftOutput = &iotago.NFTOutput{
 					Amount:            1000,
 					NativeTokens:      nil,
 					NFTID:             tpkg.Rand32ByteArray(),
-					Conditions:        iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: &inputAddr}},
+					Conditions:        iotago.UnlockConditions[iotago.NFTUnlockCondition]{&iotago.AddressUnlockCondition{Address: &inputAddr}},
 					Features:          nil,
 					ImmutableFeatures: nil,
 				}
 
 				aliasOwnedByNFT = &iotago.AliasOutput{
-					Amount:     1000,
-					AliasID:    tpkg.Rand32ByteArray(),
-					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: nftOutput.Chain().ToAddress()}},
+					Amount:  1000,
+					AliasID: tpkg.Rand32ByteArray(),
+					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						&iotago.StateControllerAddressUnlockCondition{Address: nftOutput.Chain().ToAddress()},
+						&iotago.GovernorAddressUnlockCondition{Address: nftOutput.Chain().ToAddress()},
+					},
 				}
 
 				basicOwnedByAlias = &iotago.BasicOutput{
 					Amount:     1000,
-					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: aliasOwnedByNFT.Chain().ToAddress()}},
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{&iotago.AddressUnlockCondition{Address: aliasOwnedByNFT.Chain().ToAddress()}},
 				}
 			)
 
@@ -86,7 +88,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: aliasOwnedByNFT.Chain().ToAddress(), InputID: inputID4.ID(), Input: basicOwnedByAlias}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 4000,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})
@@ -104,7 +106,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}).
@@ -117,33 +119,13 @@ func TestTransactionBuilder(t *testing.T) {
 			}
 		}(),
 		func() test {
-			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID)
-			return test{
-				name:       "err - no inputs",
-				addrSigner: iotago.NewInMemoryAddressSigner(),
-				builder:    bdl,
-				buildErr:   serializer.ErrArrayValidationMinElementsNotReached,
-			}
-		}(),
-		func() test {
-			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
-			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)})
-			return test{
-				name:       "err - no outputs",
-				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
-				builder:    bdl,
-				buildErr:   serializer.ErrArrayValidationMinElementsNotReached,
-			}
-		}(),
-		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
 				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})
@@ -167,7 +149,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})

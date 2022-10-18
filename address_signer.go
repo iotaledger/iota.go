@@ -4,8 +4,6 @@ import (
 	"crypto/ed25519"
 	"errors"
 	"fmt"
-
-	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 var (
@@ -22,9 +20,9 @@ type AddressSigner interface {
 }
 
 // AddressSignerFunc implements the AddressSigner interface.
-type AddressSignerFunc func(addr Address, msg []byte) (signature serializer.Serializable, err error)
+type AddressSignerFunc func(addr Address, msg []byte) (signature Signature, err error)
 
-func (s AddressSignerFunc) Sign(addr Address, msg []byte) (signature serializer.Serializable, err error) {
+func (s AddressSignerFunc) Sign(addr Address, msg []byte) (signature Signature, err error) {
 	return s(addr, msg)
 }
 

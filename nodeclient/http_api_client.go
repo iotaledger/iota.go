@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/core/serix"
+
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -140,6 +141,15 @@ var defaultNodeAPIOptions = []ClientOption{
 	WithHTTPClient(http.DefaultClient),
 	WithUserInfo(nil),
 	WithRequestURLHook(nil),
+	WithIOTAGoAPI(iotago.LatestAPI(&iotago.ProtocolParameters{
+		Version:       0,
+		NetworkName:   "",
+		Bech32HRP:     "",
+		MinPoWScore:   0,
+		BelowMaxDepth: 0,
+		RentStructure: iotago.RentStructure{},
+		TokenSupply:   0,
+	})),
 }
 
 // ClientOptions define options for the Client.
@@ -150,6 +160,8 @@ type ClientOptions struct {
 	userInfo *url.Userinfo
 	// The hook to modify the URL before sending a request.
 	requestURLHook RequestURLHook
+	// the iotago API instance to use.
+	iotagoAPI iotago.API
 }
 
 // applies the given ClientOption.
@@ -177,6 +189,13 @@ func WithUserInfo(userInfo *url.Userinfo) ClientOption {
 func WithRequestURLHook(requestURLHook RequestURLHook) ClientOption {
 	return func(opts *ClientOptions) {
 		opts.requestURLHook = requestURLHook
+	}
+}
+
+// WithIOTAGoAPI is used to de/serialize objects.
+func WithIOTAGoAPI(api iotago.API) ClientOption {
+	return func(opts *ClientOptions) {
+		opts.iotagoAPI = api
 	}
 }
 
@@ -336,11 +355,11 @@ func (client *Client) Tips(ctx context.Context) (*TipsResponse, error) {
 // SubmitBlock submits the given Block to the node.
 // The node will take care of filling missing information.
 // This function returns the finalized block created by the node.
-func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block, protoParas *iotago.ProtocolParameters) (*iotago.Block, error) {
+func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (*iotago.Block, error) {
 	// do not check the block because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the block afterwards.
-	data, err := m.Serialize(serializer.DeSeriModePerformLexicalOrdering, protoParas)
+	data, err := client.opts.iotagoAPI.Encode(m)
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +375,7 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block, protoPar
 		return nil, err
 	}
 
-	block, err := client.BlockByBlockID(ctx, blockID, protoParas)
+	block, err := client.BlockByBlockID(ctx, blockID)
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +396,7 @@ func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago
 }
 
 // BlockByBlockID get a block by its block ID from the node.
-func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID, protoParas *iotago.ProtocolParameters) (*iotago.Block, error) {
+func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID) (*iotago.Block, error) {
 	query := fmt.Sprintf(RouteBlock, iotago.EncodeHex(blockID[:]))
 
 	res := &RawDataEnvelope{}
@@ -386,7 +405,7 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 	}
 
 	block := &iotago.Block{}
-	if _, err := block.Deserialize(res.Data, serializer.DeSeriModePerformValidation, protoParas); err != nil {
+	if _, err := client.opts.iotagoAPI.Decode(res.Data, block, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 
@@ -406,7 +425,7 @@ func (client *Client) ChildrenByBlockID(ctx context.Context, parentBlockID iotag
 }
 
 // TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
-func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID, protoParas *iotago.ProtocolParameters) (*iotago.Block, error) {
+func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.Block, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlock, iotago.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
@@ -415,7 +434,7 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 	}
 
 	block := &iotago.Block{}
-	if _, err := block.Deserialize(res.Data, serializer.DeSeriModePerformValidation, protoParas); err != nil {
+	if _, err := client.opts.iotagoAPI.Decode(res.Data, block, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 
@@ -488,7 +507,7 @@ func (client *Client) MilestoneByID(ctx context.Context, id iotago.MilestoneID) 
 	}
 
 	milestone := &iotago.Milestone{}
-	if _, err := milestone.Deserialize(res.Data, serializer.DeSeriModePerformValidation, nil); err != nil {
+	if _, err := client.opts.iotagoAPI.Decode(res.Data, milestone, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 
@@ -517,7 +536,7 @@ func (client *Client) MilestoneByIndex(ctx context.Context, index iotago.Milesto
 	}
 
 	milestone := &iotago.Milestone{}
-	if _, err := milestone.Deserialize(res.Data, serializer.DeSeriModePerformValidation, nil); err != nil {
+	if _, err := client.opts.iotagoAPI.Decode(res.Data, milestone, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 

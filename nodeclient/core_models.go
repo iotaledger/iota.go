@@ -7,6 +7,30 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
+// TODO: use the API instance from Client instead.
+var _internalAPI = iotago.V2API(&iotago.ProtocolParameters{})
+
+type (
+	httpOutput   interface{ iotago.Output }
+	outputResAux struct {
+		Output httpOutput `serix:"0,mapKey=output"`
+	}
+)
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func init() {
+	api := _internalAPI.Underlying()
+	must(api.RegisterInterfaceObjects((*httpOutput)(nil), (*iotago.BasicOutput)(nil)))
+	must(api.RegisterInterfaceObjects((*httpOutput)(nil), (*iotago.AliasOutput)(nil)))
+	must(api.RegisterInterfaceObjects((*httpOutput)(nil), (*iotago.FoundryOutput)(nil)))
+	must(api.RegisterInterfaceObjects((*httpOutput)(nil), (*iotago.NFTOutput)(nil)))
+}
+
 type (
 	// RoutesResponse defines the response of a GET routes REST API call.
 	RoutesResponse struct {
@@ -22,7 +46,7 @@ type (
 		// Status information.
 		Status InfoResStatus `json:"status"`
 		// Protocol information.
-		Protocol iotago.ProtocolParameters `json:"protocol"`
+		Protocol *json.RawMessage `json:"protocol"`
 		// BaseToken information.
 		BaseToken *InfoResBaseToken `json:"baseToken"`
 		// Metrics information.
@@ -165,8 +189,8 @@ type (
 
 	// ReceiptTuple represents a receipt and the milestone index in which it was contained.
 	ReceiptTuple struct {
-		Receipt        *iotago.ReceiptMilestoneOpt `json:"receipt"`
-		MilestoneIndex iotago.MilestoneIndex       `json:"milestoneIndex"`
+		Receipt        *json.RawMessage      `json:"receipt"`
+		MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex"`
 	}
 
 	// MilestoneUTXOChangesResponse defines the response of a GET milestone UTXO changes REST API call.
@@ -299,17 +323,30 @@ func (nor *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 
 // Output deserializes the RawOutput to an Output.
 func (nor *OutputResponse) Output() (iotago.Output, error) {
-	jsonSeri, err := iotago.DeserializeObjectFromJSON(nor.RawOutput, iotago.JsonOutputSelector)
+	outResJson, err := json.Marshal(nor)
 	if err != nil {
 		return nil, err
 	}
-	seri, err := jsonSeri.ToSerializable()
+
+	o := &outputResAux{}
+	if err := _internalAPI.JSONDecode(outResJson, o); err != nil {
+		return nil, err
+	}
+
+	return o.Output, nil
+}
+
+// ProtocolParameters returns the protocol parameters within the info response.
+func (info *InfoResponse) ProtocolParameters() (*iotago.ProtocolParameters, error) {
+	protoJson, err := json.Marshal(info.Protocol)
 	if err != nil {
 		return nil, err
 	}
-	output, isOutput := seri.(iotago.Output)
-	if !isOutput {
-		return nil, iotago.ErrUnknownOutputType
+
+	o := &iotago.ProtocolParameters{}
+	if err := _internalAPI.JSONDecode(protoJson, o); err != nil {
+		return nil, err
 	}
-	return output, nil
+
+	return o, nil
 }

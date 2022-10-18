@@ -1,22 +1,13 @@
 package iotago_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/iota.go/v3/tpkg"
-
-	"github.com/stretchr/testify/assert"
-
 	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
-
-func TestUnlockSelector(t *testing.T) {
-	_, err := iotago.UnlockSelector(100)
-	assert.True(t, errors.Is(err, iotago.ErrUnknownUnlockType))
-}
 
 func TestUnlock_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{

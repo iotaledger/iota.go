@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -18,8 +17,8 @@ func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 	return &TransactionBuilder{
 		essence: &iotago.TransactionEssence{
 			NetworkID: networkID,
-			Inputs:    iotago.Inputs{},
-			Outputs:   iotago.Outputs{},
+			Inputs:    iotago.Inputs[iotago.TxEssenceInput]{},
+			Outputs:   iotago.Outputs[iotago.TxEssenceOutput]{},
 			Payload:   nil,
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
@@ -126,7 +125,7 @@ func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer
 		pos, unlocked := unlockPos[addrKey]
 		if !unlocked {
 			// the output's owning chain address must have been unlocked already
-			if _, is := addr.(iotago.ChainConstrainedAddress); is {
+			if _, is := addr.(iotago.ChainAddress); is {
 				return nil, fmt.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", i, addr, addr.Type())
 			}
 
@@ -148,10 +147,6 @@ func (b *TransactionBuilder) Build(protoParas *iotago.ProtocolParameters, signer
 	}
 
 	sigTxPayload := &iotago.Transaction{Essence: b.essence, Unlocks: unlocks}
-	if _, err := sigTxPayload.Serialize(serializer.DeSeriModePerformValidation, protoParas); err != nil {
-		return nil, err
-	}
-
 	return sigTxPayload, nil
 }
 
@@ -167,7 +162,7 @@ func addReferentialUnlock(addr iotago.Address, unlocks iotago.Unlocks, pos int) 
 }
 
 func addChainAsUnlocked(input iotago.Output, posUnlocked int, prevUnlocked map[string]int) {
-	if chainInput, is := input.(iotago.ChainConstrainedOutput); is && chainInput.Chain().Addressable() {
+	if chainInput, is := input.(iotago.ChainOutput); is && chainInput.Chain().Addressable() {
 		prevUnlocked[chainInput.Chain().ToAddress().Key()] = posUnlocked
 	}
 }

@@ -85,20 +85,19 @@ func (mb *BlockBuilder) Parents(parents iotago.BlockIDs) *BlockBuilder {
 }
 
 // ProofOfWork does the proof-of-work needed in order to satisfy the given target score.
-// It can be canceled by canceling the given context.
-// This function should normally appear as the last step before Build.
-func (mb *BlockBuilder) ProofOfWork(ctx context.Context, protoParas *iotago.ProtocolParameters, targetScore float64, numWorkers ...int) *BlockBuilder {
+// It can be canceled by canceling the given context. This function should appear
+// as the last step before Build.
+func (mb *BlockBuilder) ProofOfWork(ctx context.Context, targetScore float64, numWorkers ...int) *BlockBuilder {
 	if mb.err != nil {
 		return mb
 	}
 
-	blockData, err := mb.block.Serialize(serializer.DeSeriModePerformValidation, protoParas)
+	// cut out the nonce
+	_, blockData, err := mb.block.POW()
 	if err != nil {
-		mb.err = err
+		mb.err = fmt.Errorf("unable to compute pow relevant data: %w", err)
 		return mb
 	}
-
-	// cut out the nonce
 	powRelevantData := blockData[:len(blockData)-serializer.UInt64ByteSize]
 	worker := pow.New(numWorkers...)
 	nonce, err := worker.Mine(ctx, powRelevantData, targetScore)

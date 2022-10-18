@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+
 	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -34,7 +35,7 @@ func RandByte() byte {
 func RandBytes(length int) []byte {
 	var b []byte
 	for i := 0; i < length; i++ {
-		b = append(b, byte(rand.Intn(256)))
+		b = append(b, byte(rand.Intn(127)))
 	}
 	return b
 }
@@ -118,9 +119,9 @@ func RandSortNativeTokens(count int) iotago.NativeTokens {
 	for i := 0; i < count; i++ {
 		nativeTokens = append(nativeTokens, RandNativeToken())
 	}
-	seris := nativeTokens.ToSerializables()
-	sort.Sort(serializer.SortedSerializables(seris))
-	nativeTokens.FromSerializables(seris)
+	sort.Slice(nativeTokens, func(i, j int) bool {
+		return bytes.Compare(nativeTokens[i].ID[:], nativeTokens[j].ID[:]) == -1
+	})
 	return nativeTokens
 }
 
@@ -186,9 +187,14 @@ func SortedRand32ByteArray(count int) [][32]byte {
 	return hashes
 }
 
-// SortedRandBlockIDs returns random block IDs.
+// SortedRandBlockIDs returned random block IDs.
 func SortedRandBlockIDs(count int) iotago.BlockIDs {
-	slice := make(iotago.BlockIDs, count)
+	return iotago.BlockIDs(SortedRandMSParents(count))
+}
+
+// SortedRandMSParents returns random milestone parents IDs.
+func SortedRandMSParents(count int) iotago.MilestoneParentIDs {
+	slice := make(iotago.MilestoneParentIDs, count)
 	for i, ele := range SortedRand32ByteArray(count) {
 		slice[i] = ele
 	}
@@ -287,7 +293,7 @@ func RandTransactionEssenceWithInputOutputCount(inputCount int, outputCount int)
 }
 
 // RandTransactionEssenceWithInputs returns a random transaction essence with a specific slice of inputs.
-func RandTransactionEssenceWithInputs(inputs iotago.Inputs) *iotago.TransactionEssence {
+func RandTransactionEssenceWithInputs(inputs iotago.Inputs[iotago.TxEssenceInput]) *iotago.TransactionEssence {
 	tx := &iotago.TransactionEssence{
 		NetworkID: TestNetworkID,
 	}
@@ -326,38 +332,40 @@ func RandReceipt() *iotago.ReceiptMilestoneOpt {
 }
 
 // RandMilestone returns a random milestone with the given parent blocks.
-func RandMilestone(parents iotago.BlockIDs) *iotago.Milestone {
+func RandMilestone(parents iotago.MilestoneParentIDs) *iotago.Milestone {
 	const sigsCount = 3
 
 	if parents == nil {
-		parents = SortedRandBlockIDs(1 + rand.Intn(7))
+		parents = SortedRandMSParents(1 + rand.Intn(7))
 	}
 
 	msPayload := &iotago.Milestone{
-		Index:               iotago.MilestoneIndex(rand.Intn(1000)),
-		Timestamp:           uint32(time.Now().Unix()),
-		PreviousMilestoneID: Rand32ByteArray(),
-		Parents:             parents,
-		InclusionMerkleRoot: func() iotago.MilestoneMerkleProof {
-			var b iotago.MilestoneMerkleProof
-			copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
-			return b
-		}(),
-		AppliedMerkleRoot: func() iotago.MilestoneMerkleProof {
-			var b iotago.MilestoneMerkleProof
-			copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
-			return b
-		}(),
-		Metadata: RandBytes(10),
-		Opts: iotago.MilestoneOpts{
-			&iotago.ProtocolParamsMilestoneOpt{
-				TargetMilestoneIndex: 100,
-				ProtocolVersion:      2,
-				Params:               RandBytes(200),
+		MilestoneEssence: iotago.MilestoneEssence{
+			Index:               iotago.MilestoneIndex(rand.Intn(1000)),
+			Timestamp:           uint32(time.Now().Unix()),
+			PreviousMilestoneID: Rand32ByteArray(),
+			Parents:             iotago.MilestoneParentIDs(parents),
+			InclusionMerkleRoot: func() iotago.MilestoneMerkleProof {
+				var b iotago.MilestoneMerkleProof
+				copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
+				return b
+			}(),
+			AppliedMerkleRoot: func() iotago.MilestoneMerkleProof {
+				var b iotago.MilestoneMerkleProof
+				copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
+				return b
+			}(),
+			Metadata: RandBytes(10),
+			Opts: iotago.MilestoneOpts{
+				&iotago.ProtocolParamsMilestoneOpt{
+					TargetMilestoneIndex: 100,
+					ProtocolVersion:      2,
+					Params:               RandBytes(200),
+				},
 			},
 		},
-		Signatures: func() iotago.Signatures {
-			msSigs := make(iotago.Signatures, sigsCount)
+		Signatures: func() iotago.Signatures[iotago.MilestoneSignature] {
+			msSigs := make(iotago.Signatures[iotago.MilestoneSignature], sigsCount)
 			for i := 0; i < sigsCount; i++ {
 				msSigs[i] = RandEd25519Signature()
 			}
@@ -383,11 +391,16 @@ func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	return &iotago.TaggedData{Tag: tag, Data: data}
 }
 
+// RandBlockID produces a random block ID.
+func RandBlockID() iotago.BlockID {
+	return Rand32ByteArray()
+}
+
 // RandBlock returns a random block with the given inner payload.
 func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 	var payload iotago.Payload
 
-	parents := SortedRandBlockIDs(1 + rand.Intn(7))
+	parents := SortedRandMSParents(1 + rand.Intn(7))
 
 	switch withPayloadType {
 	case iotago.PayloadTransaction:
@@ -400,7 +413,7 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 
 	return &iotago.Block{
 		ProtocolVersion: TestProtocolVersion,
-		Parents:         parents,
+		Parents:         iotago.BlockIDs(parents),
 		Payload:         payload,
 		Nonce:           uint64(rand.Intn(1000)),
 	}
@@ -477,11 +490,16 @@ func RandTreasuryTransaction() *iotago.TreasuryTransaction {
 
 // RandBasicOutput returns a random basic output (with no features).
 func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
-	dep := &iotago.BasicOutput{}
+	dep := &iotago.BasicOutput{
+		Amount:       0,
+		NativeTokens: nil,
+		Conditions:   nil,
+		Features:     nil,
+	}
 
 	switch addrType {
 	case iotago.AddressEd25519:
-		dep.Conditions = iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: RandEd25519Address()}}
+		dep.Conditions = iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{&iotago.AddressUnlockCondition{Address: RandEd25519Address()}}
 	default:
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
@@ -495,7 +513,8 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
-			Inputs: iotago.Inputs{
+			NetworkID: 14147312347886322761,
+			Inputs: iotago.Inputs[iotago.TxEssenceInput]{
 				&iotago.UTXOInput{
 					TransactionID: func() [iotago.TransactionIDLength]byte {
 						var b [iotago.TransactionIDLength]byte
@@ -505,10 +524,10 @@ func OneInputOutputTransaction() *iotago.Transaction {
 					TransactionOutputIndex: 0,
 				},
 			},
-			Outputs: iotago.Outputs{
+			Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
 				&iotago.BasicOutput{
 					Amount: 1337,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: RandEd25519Address()},
 					},
 				},

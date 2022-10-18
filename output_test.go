@@ -2,15 +2,12 @@ package iotago_test
 
 import (
 	"math/big"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/tpkg"
-
 	iotago "github.com/iotaledger/iota.go/v3"
+	"github.com/iotaledger/iota.go/v3/tpkg"
 )
 
 func TestOutputTypeString(t *testing.T) {
@@ -36,7 +33,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 			source: &iotago.BasicOutput{
 				Amount:       1337,
 				NativeTokens: tpkg.RandSortNativeTokens(2),
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.StorageDepositReturnUnlockCondition{
 						ReturnAddress: tpkg.RandEd25519Address(),
@@ -48,7 +45,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 						UnixTime:      4000,
 					},
 				},
-				Features: iotago.Features{
+				Features: iotago.Features[iotago.BasicOutputFeature]{
 					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 					&iotago.TagFeature{Tag: tpkg.RandBytes(32)},
@@ -65,15 +62,15 @@ func TestOutputsDeSerialize(t *testing.T) {
 				StateIndex:     10,
 				StateMetadata:  []byte("hello world"),
 				FoundryCounter: 1337,
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
-				Features: iotago.Features{
+				Features: iotago.Features[iotago.AliasFeature]{
 					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 				},
-				ImmutableFeatures: iotago.Features{
+				ImmutableFeatures: iotago.Features[iotago.AliasImmFeature]{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 				},
 			},
@@ -90,10 +87,10 @@ func TestOutputsDeSerialize(t *testing.T) {
 					MeltedTokens:  big.NewInt(50),
 					MaximumSupply: new(big.Int).SetUint64(1000),
 				},
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 					&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
 				},
-				Features: iotago.Features{
+				Features: iotago.Features[iotago.FoundryFeature]{
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 				},
 			},
@@ -105,7 +102,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 				Amount:       1337,
 				NativeTokens: tpkg.RandSortNativeTokens(2),
 				NFTID:        tpkg.Rand32ByteArray(),
-				Conditions: iotago.UnlockConditions{
+				Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.StorageDepositReturnUnlockCondition{
 						ReturnAddress: tpkg.RandEd25519Address(),
@@ -117,12 +114,12 @@ func TestOutputsDeSerialize(t *testing.T) {
 						UnixTime:      4000,
 					},
 				},
-				Features: iotago.Features{
+				Features: iotago.Features[iotago.NFTFeature]{
 					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 					&iotago.TagFeature{Tag: tpkg.RandBytes(32)},
 				},
-				ImmutableFeatures: iotago.Features{
+				ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(10)},
 				},
@@ -134,25 +131,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
 	}
-}
-
-type fieldMutations map[string]interface{}
-
-func copyObject(t *testing.T, source serializer.Serializable, mutations fieldMutations, deSeriCtx interface{}) serializer.Serializable {
-	srcBytes, err := source.Serialize(serializer.DeSeriModeNoValidation, deSeriCtx)
-	require.NoError(t, err)
-
-	ptrToCpyOfSrc := reflect.New(reflect.ValueOf(source).Elem().Type())
-
-	cpySeri := ptrToCpyOfSrc.Interface().(serializer.Serializable)
-	_, err = cpySeri.Deserialize(srcBytes, serializer.DeSeriModeNoValidation, deSeriCtx)
-	require.NoError(t, err)
-
-	for fieldName, newVal := range mutations {
-		ptrToCpyOfSrc.Elem().FieldByName(fieldName).Set(reflect.ValueOf(newVal))
-	}
-
-	return cpySeri
 }
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
@@ -168,16 +146,16 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	tests := []struct {
 		name       string
 		protoParas *iotago.ProtocolParameters
-		outputs    iotago.Outputs
+		outputs    iotago.Outputs[iotago.Output]
 		wantErr    error
 	}{
 		{
 			name:       "ok",
 			protoParas: tpkg.TestProtoParas,
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount:     tpkg.TestTokenSupply,
-					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()}},
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()}},
 				},
 			},
 			wantErr: nil,
@@ -185,10 +163,10 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		{
 			name:       "ok - state rent covered",
 			protoParas: nonZeroCostParas,
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount:     426, // min amount
-					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()}},
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()}},
 				},
 			},
 			wantErr: nil,
@@ -196,11 +174,11 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		{
 			name:       "ok - storage deposit return",
 			protoParas: nonZeroCostParas,
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				// min 444
 				&iotago.BasicOutput{
 					Amount: 1000,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAliasAddress(),
@@ -214,10 +192,10 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		{
 			name:       "fail - storage deposit return less than min storage deposit",
 			protoParas: nonZeroCostParas,
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 1000,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAliasAddress(),
@@ -231,10 +209,10 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		{
 			name:       "fail - storage deposit more than target output deposit",
 			protoParas: nonZeroCostParas,
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAliasAddress(),
@@ -249,10 +227,10 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		{
 			name:       "fail - state rent not covered",
 			protoParas: nonZeroCostParas,
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 				},
@@ -262,10 +240,10 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		{
 			name:       "fail - zero deposit",
 			protoParas: tpkg.TestProtoParas,
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 0,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -275,10 +253,10 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		{
 			name:       "fail - more than total supply on single output",
 			protoParas: tpkg.TestProtoParas,
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: tpkg.TestTokenSupply + 1,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -288,16 +266,16 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		{
 			name:       "fail - sum more than total supply over multiple outputs",
 			protoParas: tpkg.TestProtoParas,
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: tpkg.TestTokenSupply - 1,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 				&iotago.BasicOutput{
 					Amount: tpkg.TestTokenSupply - 1,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -323,15 +301,15 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 	tests := []struct {
 		name    string
-		outputs iotago.Outputs
+		outputs iotago.Outputs[iotago.TxEssenceOutput]
 		wantErr error
 	}{
 		{
 			name: "ok",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.TxEssenceOutput]{
 				&iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
@@ -341,7 +319,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 				},
 				&iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.TimelockUnlockCondition{
 							UnixTime: 1337,
@@ -353,10 +331,10 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 		},
 		{
 			name: "fail - zero expiration time",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.TxEssenceOutput]{
 				&iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
@@ -369,10 +347,10 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 		},
 		{
 			name: "fail - zero timelock time",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.TxEssenceOutput]{
 				&iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.TimelockUnlockCondition{
 							UnixTime: 0,
@@ -401,23 +379,23 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 	tests := []struct {
 		name    string
-		outputs iotago.Outputs
+		outputs iotago.Outputs[iotago.Output]
 		wantErr error
 	}{
 		{
 			name: "ok",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount:       1,
 					NativeTokens: tpkg.RandSortNativeTokens(5),
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 				&iotago.BasicOutput{
 					Amount:       1,
 					NativeTokens: tpkg.RandSortNativeTokens(10),
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -426,18 +404,18 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 		},
 		{
 			name: "fail - sum more than max native tokens count",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount:       1,
 					NativeTokens: tpkg.RandSortNativeTokens(50),
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 				&iotago.BasicOutput{
 					Amount:       1,
 					NativeTokens: tpkg.RandSortNativeTokens(50),
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -446,7 +424,7 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 		},
 		{
 			name: "fail - native token with zero amount",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 1,
 					NativeTokens: iotago.NativeTokens{
@@ -455,7 +433,7 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 							Amount: big.NewInt(0),
 						},
 					},
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -480,18 +458,18 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 func TestOutputsSyntacticalAlias(t *testing.T) {
 	tests := []struct {
 		name    string
-		outputs iotago.Outputs
+		outputs iotago.Outputs[iotago.Output]
 		wantErr error
 	}{
 		{
 			name: "ok - empty state",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.AliasOutput{
 					Amount:         OneMi,
 					AliasID:        iotago.AliasID{},
 					StateIndex:     0,
 					FoundryCounter: 0,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
@@ -501,13 +479,13 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 		},
 		{
 			name: "ok - non empty state",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.AliasOutput{
 					Amount:         OneMi,
 					AliasID:        tpkg.Rand32ByteArray(),
 					StateIndex:     10,
 					FoundryCounter: 1337,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
@@ -517,13 +495,13 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 		},
 		{
 			name: "fail - state index non zero on empty alias ID",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.AliasOutput{
 					Amount:         OneMi,
 					AliasID:        iotago.AliasID{},
 					StateIndex:     1,
 					FoundryCounter: 0,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
@@ -533,13 +511,13 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 		},
 		{
 			name: "fail - foundry counter non zero on empty alias ID",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.AliasOutput{
 					Amount:         OneMi,
 					AliasID:        iotago.AliasID{},
 					StateIndex:     0,
 					FoundryCounter: 1,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
@@ -549,7 +527,7 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 		},
 		{
 			name: "fail - cyclic state controller",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.AliasOutput {
 					aliasID := iotago.AliasID(tpkg.Rand32ByteArray())
 					return &iotago.AliasOutput{
@@ -557,7 +535,7 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 						AliasID:        aliasID,
 						StateIndex:     10,
 						FoundryCounter: 1337,
-						Conditions: iotago.UnlockConditions{
+						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 							&iotago.StateControllerAddressUnlockCondition{Address: aliasID.ToAddress()},
 							&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						},
@@ -568,7 +546,7 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 		},
 		{
 			name: "fail - cyclic governance controller",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.AliasOutput {
 					aliasID := iotago.AliasID(tpkg.Rand32ByteArray())
 					return &iotago.AliasOutput{
@@ -576,7 +554,7 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 						AliasID:        aliasID,
 						StateIndex:     10,
 						FoundryCounter: 1337,
-						Conditions: iotago.UnlockConditions{
+						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 							&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 							&iotago.GovernorAddressUnlockCondition{Address: aliasID.ToAddress()},
 						},
@@ -605,12 +583,12 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 func TestOutputsSyntacticalFoundry(t *testing.T) {
 	tests := []struct {
 		name    string
-		outputs iotago.Outputs
+		outputs iotago.Outputs[iotago.Output]
 		wantErr error
 	}{
 		{
 			name: "ok",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.FoundryOutput{
 					Amount:       1337,
 					NativeTokens: nil,
@@ -620,7 +598,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 						MeltedTokens:  big.NewInt(2),
 						MaximumSupply: new(big.Int).SetUint64(10),
 					},
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 					Features: nil,
@@ -630,7 +608,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 		},
 		{
 			name: "ok - minted and max supply same",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.FoundryOutput{
 					Amount:       1337,
 					NativeTokens: nil,
@@ -640,7 +618,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 						MeltedTokens:  big.NewInt(0),
 						MaximumSupply: new(big.Int).SetUint64(10),
 					},
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 					Features: nil,
@@ -650,7 +628,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 		},
 		{
 			name: "fail - invalid maximum supply",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.FoundryOutput{
 					Amount:       1337,
 					NativeTokens: nil,
@@ -660,7 +638,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 						MeltedTokens:  big.NewInt(0),
 						MaximumSupply: new(big.Int).SetUint64(0),
 					},
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 					Features: nil,
@@ -670,7 +648,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 		},
 		{
 			name: "fail - minted less than melted",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.FoundryOutput{
 					Amount:       1337,
 					NativeTokens: nil,
@@ -680,7 +658,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 						MeltedTokens:  big.NewInt(10),
 						MaximumSupply: new(big.Int).SetUint64(100),
 					},
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 					Features: nil,
@@ -690,7 +668,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 		},
 		{
 			name: "fail - minted melted delta is bigger than maximum supply",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.FoundryOutput{
 					Amount:       1337,
 					NativeTokens: nil,
@@ -700,7 +678,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 						MeltedTokens:  big.NewInt(20),
 						MaximumSupply: new(big.Int).SetUint64(10),
 					},
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
 					Features: nil,
@@ -728,16 +706,16 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 func TestOutputsSyntacticalNFT(t *testing.T) {
 	tests := []struct {
 		name    string
-		outputs iotago.Outputs
+		outputs iotago.Outputs[iotago.Output]
 		wantErr error
 	}{
 		{
 			name: "ok",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.NFTOutput{
 					Amount: OneMi,
 					NFTID:  iotago.NFTID{},
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -745,13 +723,13 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 		},
 		{
 			name: "fail - cyclic",
-			outputs: iotago.Outputs{
+			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.NFTOutput {
 					nftID := iotago.NFTID(tpkg.Rand32ByteArray())
 					return &iotago.NFTOutput{
 						Amount: OneMi,
 						NFTID:  nftID,
-						Conditions: iotago.UnlockConditions{
+						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
 							&iotago.AddressUnlockCondition{Address: nftID.ToAddress()},
 						},
 					}
@@ -792,7 +770,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				name: "can unlock - target is source (no unlock conditions)",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 					},
 				},
@@ -806,7 +784,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				name: "can not unlock - target is not source (no unlock conditions)",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -821,7 +799,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				name: "can unlock - output not expired for source ident (unix expiration)",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
@@ -842,7 +820,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				name: "can not unlock - output expired for source ident (unix expiration)",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: senderIdent,
@@ -862,7 +840,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				name: "can unlock - expired unix timelock unlock condition",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 						&iotago.TimelockUnlockCondition{UnixTime: 5},
 					},
@@ -878,7 +856,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				name: "can not unlock - not expired unix timelock unlock condition",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 						&iotago.TimelockUnlockCondition{UnixTime: 10},
 					},
@@ -924,7 +902,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 					Amount:       OneMi,
 					NativeTokens: nil,
 					StateIndex:   0,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
@@ -932,7 +910,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 				next: &iotago.AliasOutput{
 					Amount:     OneMi,
 					StateIndex: 1,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
@@ -951,7 +929,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 					Amount:       OneMi,
 					NativeTokens: nil,
 					StateIndex:   0,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
@@ -959,7 +937,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 				next: &iotago.AliasOutput{
 					Amount:     OneMi,
 					StateIndex: 0,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
@@ -979,7 +957,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 					Amount:       OneMi,
 					NativeTokens: nil,
 					StateIndex:   0,
-					Conditions: iotago.UnlockConditions{
+					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},

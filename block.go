@@ -2,10 +2,10 @@ package iotago
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
-	"encoding/json"
-	"errors"
 	"fmt"
+	"runtime"
 	"sort"
 
 	"golang.org/x/crypto/blake2b"
@@ -17,8 +17,8 @@ import (
 const (
 	// BlockIDLength defines the length of a block ID.
 	BlockIDLength = blake2b.Size256
-	// BlockBinSerializedMaxSize defines the maximum size of a block.
-	BlockBinSerializedMaxSize = 32768
+	// MaxBlockSize defines the maximum size of a block.
+	MaxBlockSize = 32768
 	// BlockMinParents defines the minimum amount of parents in a block.
 	BlockMinParents = 1
 	// BlockMaxParents defines the maximum amount of parents in a block.
@@ -26,37 +26,8 @@ const (
 )
 
 var (
-	// ErrBlockExceedsMaxSize gets returned when a serialized block exceeds BlockBinSerializedMaxSize.
-	ErrBlockExceedsMaxSize = errors.New("block exceeds max size")
-
 	// is an empty block ID.
 	emptyBlockID = BlockID{}
-
-	blockPayloadGuard = serializer.SerializableGuard{
-		ReadGuard: func(ty uint32) (serializer.Serializable, error) {
-			switch PayloadType(ty) {
-			case PayloadTransaction:
-			case PayloadTaggedData:
-			case PayloadMilestone:
-			default:
-				return nil, fmt.Errorf("a block can only contain a transaction/tagged data/milestone but got type ID %d: %w", ty, ErrUnsupportedPayloadType)
-			}
-			return PayloadSelector(ty)
-		},
-		WriteGuard: func(seri serializer.Serializable) error {
-			if seri == nil {
-				return nil
-			}
-			switch seri.(type) {
-			case *Transaction:
-			case *TaggedData:
-			case *Milestone:
-			default:
-				return ErrUnsupportedPayloadType
-			}
-			return nil
-		},
-	}
 
 	// restrictions around parents within a block.
 	blockParentArrayRules = serializer.ArrayRules{
@@ -137,14 +108,6 @@ func (ids BlockIDs) ToHex() []string {
 	return hexIDs
 }
 
-func (ids BlockIDs) ToSerializerType() serializer.SliceOfArraysOf32Bytes {
-	result := make(serializer.SliceOfArraysOf32Bytes, len(ids))
-	for i, ele := range ids {
-		result[i] = ele
-	}
-	return result
-}
-
 // RemoveDupsAndSort removes duplicated BlockIDs and sorts the slice by the lexical ordering.
 func (ids BlockIDs) RemoveDupsAndSort() BlockIDs {
 	sorted := append(BlockIDs{}, ids...)
@@ -178,21 +141,25 @@ func BlockIDsFromHexString(blockIDsHex []string) (BlockIDs, error) {
 	return result, nil
 }
 
+type BlockPayload interface {
+	Payload
+}
+
 // Block represents a vertex in the Tangle.
 type Block struct {
 	// The protocol version under which this block operates.
-	ProtocolVersion byte
+	ProtocolVersion byte `serix:"0,mapKey=protocolVersion"`
 	// The parents the block references.
-	Parents BlockIDs
+	Parents BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=parents"`
 	// The inner payload of the block. Can be nil.
-	Payload Payload
+	Payload BlockPayload `serix:"2,optional,mapKey=payload,omitempty"`
 	// The nonce which lets this block fulfill the PoW requirements.
-	Nonce uint64
+	Nonce uint64 `serix:"3,mapKey=nonce"`
 }
 
 // ID computes the ID of the Block.
-func (m *Block) ID() (BlockID, error) {
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, nil)
+func (b *Block) ID() (BlockID, error) {
+	data, err := internalEncode(b)
 	if err != nil {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
 	}
@@ -201,8 +168,8 @@ func (m *Block) ID() (BlockID, error) {
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
-func (m *Block) MustID() BlockID {
-	blockID, err := m.ID()
+func (b *Block) MustID() BlockID {
+	blockID, err := b.ID()
 	if err != nil {
 		panic(err)
 	}
@@ -210,149 +177,27 @@ func (m *Block) MustID() BlockID {
 }
 
 // POW computes the PoW score of the Block.
-func (m *Block) POW() (float64, error) {
-	data, err := m.Serialize(serializer.DeSeriModeNoValidation, nil)
+func (b *Block) POW() (float64, []byte, error) {
+	data, err := internalEncode(b)
 	if err != nil {
-		return 0, fmt.Errorf("can't compute block PoW score: %w", err)
+		return 0, nil, fmt.Errorf("can't compute block PoW score: %w", err)
 	}
-	return pow.Score(data), nil
+	return pow.Score(data), data, nil
 }
 
-func (m *Block) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
-	if len(data) > BlockBinSerializedMaxSize {
-		return 0, fmt.Errorf("%w: size %d bytes", ErrBlockExceedsMaxSize, len(data))
-	}
-	parentsSlice := serializer.SliceOfArraysOf32Bytes{}
-	return serializer.NewDeserializer(data).
-		ReadNum(&m.ProtocolVersion, func(err error) error {
-			return fmt.Errorf("unable to deserialize block protocol version: %w", err)
-		}).
-		ReadSliceOfArraysOf32Bytes(&parentsSlice, deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &blockParentArrayRules, func(err error) error {
-			return fmt.Errorf("unable to deserialize block parents: %w", err)
-		}).
-		Do(func() {
-			m.Parents = make(BlockIDs, len(parentsSlice))
-			for i, ele := range parentsSlice {
-				m.Parents[i] = ele
-			}
-		}).
-		ReadPayload(&m.Payload, deSeriMode, deSeriCtx, blockPayloadGuard.ReadGuard, func(err error) error {
-			return fmt.Errorf("unable to deserialize block's inner payload: %w", err)
-		}).
-		ReadNum(&m.Nonce, func(err error) error {
-			return fmt.Errorf("unable to deserialize block nonce: %w", err)
-		}).
-		ConsumedAll(func(leftOver int, err error) error {
-			return fmt.Errorf("%w: unable to deserialize block: %d bytes are still available", err, leftOver)
-		}).
-		Done()
-}
-
-func (m *Block) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
-	data, err := serializer.NewSerializer().
-		Do(func() {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformLexicalOrdering) {
-				m.Parents = m.Parents.RemoveDupsAndSort()
-			}
-		}).
-		WriteNum(m.ProtocolVersion, func(err error) error {
-			return fmt.Errorf("unable to serialize block protocol version: %w", err)
-		}).
-		Write32BytesArraySlice(m.Parents.ToSerializerType(), deSeriMode, serializer.SeriLengthPrefixTypeAsByte, &blockParentArrayRules, func(err error) error {
-			return fmt.Errorf("unable to serialize block parents: %w", err)
-		}).
-		WritePayload(m.Payload, deSeriMode, deSeriCtx, blockPayloadGuard.WriteGuard, func(err error) error {
-			return fmt.Errorf("unable to serialize block inner payload: %w", err)
-		}).
-		WriteNum(m.Nonce, func(err error) error {
-			return fmt.Errorf("unable to serialize block nonce: %w", err)
-		}).
-		Serialize()
+// DoPOW executes the proof-of-work required to fulfill the targetScore.
+// Use the given context to cancel proof-of-work.
+func (b *Block) DoPOW(ctx context.Context, targetScore float64) error {
+	data, err := internalEncode(b)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("can't compute block PoW score: %w", err)
 	}
-	if len(data) > BlockBinSerializedMaxSize {
-		return nil, fmt.Errorf("%w: size %d bytes", ErrBlockExceedsMaxSize, len(data))
-	}
-	return data, nil
-}
-
-func (m *Block) MarshalJSON() ([]byte, error) {
-	jBlock := &jsonBlock{
-		ProtocolVersion: int(m.ProtocolVersion),
-	}
-	jBlock.Parents = make([]string, len(m.Parents))
-	for i, parent := range m.Parents {
-		jBlock.Parents[i] = EncodeHex(parent[:])
-	}
-	jBlock.Nonce = EncodeUint64(m.Nonce)
-	if m.Payload != nil {
-		jsonPayload, err := m.Payload.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		rawMsgJsonPayload := json.RawMessage(jsonPayload)
-		jBlock.Payload = &rawMsgJsonPayload
-	}
-	return json.Marshal(jBlock)
-}
-
-func (m *Block) UnmarshalJSON(bytes []byte) error {
-	jBlock := &jsonBlock{}
-	if err := json.Unmarshal(bytes, jBlock); err != nil {
-		return err
-	}
-	seri, err := jBlock.ToSerializable()
+	powRelevantData := data[:len(data)-8]
+	worker := pow.New(runtime.NumCPU())
+	nonce, err := worker.Mine(ctx, powRelevantData, targetScore)
 	if err != nil {
 		return err
 	}
-	*m = *seri.(*Block)
+	b.Nonce = nonce
 	return nil
-}
-
-// jsonBlock defines the JSON representation of a Block.
-type jsonBlock struct {
-	ProtocolVersion int `json:"protocolVersion"`
-	// The hex encoded IDs of the referenced parent blocks.
-	Parents []string `json:"parents"`
-	// The payload within the block.
-	Payload *json.RawMessage `json:"payload,omitempty"`
-	// The nonce the block used to fulfill the PoW requirement.
-	Nonce string `json:"nonce"`
-}
-
-func (jm *jsonBlock) ToSerializable() (serializer.Serializable, error) {
-	var err error
-
-	m := &Block{
-		ProtocolVersion: byte(jm.ProtocolVersion),
-	}
-
-	var parsedNonce uint64
-	if len(jm.Nonce) != 0 {
-		parsedNonce, err = DecodeUint64(jm.Nonce)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse block nonce from JSON: %w", err)
-		}
-	}
-	m.Nonce = parsedNonce
-
-	m.Parents = make(BlockIDs, len(jm.Parents))
-	for i, jparent := range jm.Parents {
-		parentBytes, err := DecodeHex(jparent)
-		if err != nil {
-			return nil, fmt.Errorf("unable to decode hex parent %d from JSON: %w", i+1, err)
-		}
-
-		copy(m.Parents[i][:], parentBytes)
-	}
-
-	if jm.Payload != nil {
-		m.Payload, err = payloadFromJSONRawMsg(jm.Payload)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return m, nil
 }

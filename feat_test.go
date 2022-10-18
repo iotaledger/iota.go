@@ -15,7 +15,7 @@ func TestFeaturesDeSerialize(t *testing.T) {
 			target: &iotago.SenderFeature{},
 		},
 		{
-			name:   "ok - IssuerFeature",
+			name:   "ok - Issuer",
 			source: &iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 			target: &iotago.IssuerFeature{},
 		},

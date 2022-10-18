@@ -4,7 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/core/serix"
+
 	"github.com/iotaledger/iota.go/v3/tpkg"
 
 	"github.com/stretchr/testify/assert"
@@ -49,12 +50,12 @@ func TestReceiptFuzzingCrashers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.in), func(t *testing.T) {
 			m := &iotago.ReceiptMilestoneOpt{}
-			_, err := m.Deserialize(tt.in, serializer.DeSeriModePerformValidation, nil)
+			_, err := v2API.Decode(tt.in, m, serix.WithValidation())
 			if err != nil {
 				return
 			}
 
-			seriData, err := m.Serialize(serializer.DeSeriModePerformValidation, nil)
+			seriData, err := v2API.Encode(m, serix.WithValidation())
 			if err != nil {
 				return
 			}
@@ -84,7 +85,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             7_000_000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
 			return test{"ok", receipt, currentTreasury, nil}
 		}(),
 		func() test {
@@ -92,7 +93,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             1000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
 			return test{"err - migrated less tha minimum", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 		func() test {
@@ -100,7 +101,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             tpkg.TestTokenSupply + 1,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
 			return test{"err - total supply overflow", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 		func() test {
@@ -108,7 +109,7 @@ func TestValidateReceipts(t *testing.T) {
 				TailTransactionHash: tpkg.Rand49ByteArray(),
 				Address:             tpkg.RandEd25519Address(),
 				Deposit:             6_000_000,
-			}).AddTreasuryTransaction(sampleTreasuryTx).Build(tpkg.TestProtoParas)
+			}).AddTreasuryTransaction(sampleTreasuryTx).Build()
 			return test{"err - invalid new treasury amount", receipt, currentTreasury, iotago.ErrInvalidReceiptMilestoneOpt}
 		}(),
 	}

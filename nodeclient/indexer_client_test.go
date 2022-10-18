@@ -90,9 +90,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	originOutput.NativeTokens = iotago.NativeTokens{}
-	originOutput.Features = iotago.Features{}
-	sigDepJson, err := originOutput.MarshalJSON()
+	sigDepJson, err := v2API.JSONEncode(originOutput)
 	require.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
 

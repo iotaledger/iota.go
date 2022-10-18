@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -24,11 +23,11 @@ var (
 // SimpleTokenScheme is a TokenScheme which works with minted/melted/maximum supply counters.
 type SimpleTokenScheme struct {
 	// The amount of tokens which has been minted.
-	MintedTokens *big.Int
+	MintedTokens *big.Int `serix:"0,mapKey=mintedTokens"`
 	// The amount of tokens which has been melted.
-	MeltedTokens *big.Int
+	MeltedTokens *big.Int `serix:"1,mapKey=meltedTokens"`
 	// The maximum supply of tokens controlled.
-	MaximumSupply *big.Int
+	MaximumSupply *big.Int `serix:"2,mapKey=maximumSupply"`
 }
 
 func (s *SimpleTokenScheme) Clone() TokenScheme {
@@ -158,95 +157,9 @@ func (s *SimpleTokenScheme) stateChangeValid(nextState TokenScheme, in *big.Int,
 	return nil
 }
 
-func (s *SimpleTokenScheme) Deserialize(data []byte, _ serializer.DeSerializationMode, _ interface{}) (int, error) {
-	return serializer.NewDeserializer(data).
-		CheckTypePrefix(uint32(TokenSchemeSimple), serializer.TypeDenotationByte, func(err error) error {
-			return fmt.Errorf("unable to deserialize simple token scheme: %w", err)
-		}).
-		ReadUint256(&s.MintedTokens, func(err error) error {
-			return fmt.Errorf("unable to deserialize minted tokens for simple token scheme: %w", err)
-		}).
-		ReadUint256(&s.MeltedTokens, func(err error) error {
-			return fmt.Errorf("unable to deserialize melted tokens for simple token scheme: %w", err)
-		}).
-		ReadUint256(&s.MaximumSupply, func(err error) error {
-			return fmt.Errorf("unable to deserialize maximum supply for simple token scheme: %w", err)
-		}).
-		Done()
-}
-
-func (s *SimpleTokenScheme) Serialize(_ serializer.DeSerializationMode, _ interface{}) ([]byte, error) {
-	return serializer.NewSerializer().
-		WriteNum(byte(TokenSchemeSimple), func(err error) error {
-			return fmt.Errorf("unable to serialize simple token scheme type ID: %w", err)
-		}).
-		WriteUint256(s.MintedTokens, func(err error) error {
-			return fmt.Errorf("unable to serialize simple token scheme minted tokens: %w", err)
-		}).
-		WriteUint256(s.MeltedTokens, func(err error) error {
-			return fmt.Errorf("unable to serialize simple token scheme melted tokens: %w", err)
-		}).
-		WriteUint256(s.MaximumSupply, func(err error) error {
-			return fmt.Errorf("unable to serialize simple token scheme maximum supply: %w", err)
-		}).
-		Serialize()
-}
-
 func (s *SimpleTokenScheme) Size() int {
 	return util.NumByteLen(byte(TokenSchemeSimple)) +
 		util.NumByteLen(s.MintedTokens) +
 		util.NumByteLen(s.MeltedTokens) +
 		util.NumByteLen(s.MaximumSupply)
-}
-
-func (s *SimpleTokenScheme) MarshalJSON() ([]byte, error) {
-	jSimpleTokenScheme := &jsonSimpleTokenScheme{
-		Type: int(TokenSchemeSimple),
-	}
-	jSimpleTokenScheme.MintedSupply = EncodeUint256(s.MintedTokens)
-	jSimpleTokenScheme.MeltedTokens = EncodeUint256(s.MeltedTokens)
-	jSimpleTokenScheme.MaximumSupply = EncodeUint256(s.MaximumSupply)
-	return json.Marshal(jSimpleTokenScheme)
-}
-
-func (s *SimpleTokenScheme) UnmarshalJSON(bytes []byte) error {
-	jSimpleTokenScheme := &jsonSimpleTokenScheme{}
-	if err := json.Unmarshal(bytes, jSimpleTokenScheme); err != nil {
-		return err
-	}
-	seri, err := jSimpleTokenScheme.ToSerializable()
-	if err != nil {
-		return err
-	}
-	*s = *seri.(*SimpleTokenScheme)
-	return nil
-}
-
-// jsonSimpleTokenScheme defines the json representation of a SimpleTokenScheme.
-type jsonSimpleTokenScheme struct {
-	Type          int    `json:"type"`
-	MintedSupply  string `json:"mintedTokens"`
-	MeltedTokens  string `json:"meltedTokens"`
-	MaximumSupply string `json:"maximumSupply"`
-}
-
-func (j *jsonSimpleTokenScheme) ToSerializable() (serializer.Serializable, error) {
-	var err error
-	s := &SimpleTokenScheme{}
-	s.MintedTokens, err = DecodeUint256(j.MintedSupply)
-	if err != nil {
-		return nil, fmt.Errorf("%w: minted tokens field of simple token scheme '%s'", ErrDecodeJSONUint256Str, j.MintedSupply)
-	}
-
-	s.MeltedTokens, err = DecodeUint256(j.MeltedTokens)
-	if err != nil {
-		return nil, fmt.Errorf("%w: melted tokens field of simple token scheme '%s'", ErrDecodeJSONUint256Str, j.MintedSupply)
-	}
-
-	s.MaximumSupply, err = DecodeUint256(j.MaximumSupply)
-	if err != nil {
-		return nil, fmt.Errorf("%w: maximum supply field of simple token scheme '%s', inner err %s", ErrDecodeJSONUint256Str, j.MaximumSupply, err)
-	}
-
-	return s, nil
 }

@@ -1,9 +1,9 @@
 package iotago
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -60,7 +60,7 @@ var (
 
 // UnlockCondition is an abstract building block defining the unlock conditions of an Output.
 type UnlockCondition interface {
-	serializer.SerializableWithSize
+	Sizer
 	NonEphemeralObject
 
 	// Type returns the type of the UnlockCondition.
@@ -74,9 +74,9 @@ type UnlockCondition interface {
 }
 
 // UnlockConditions is a slice of UnlockCondition(s).
-type UnlockConditions []UnlockCondition
+type UnlockConditions[T UnlockCondition] []T
 
-func (f UnlockConditions) VBytes(rentStruct *RentStructure, override VBytesFunc) uint64 {
+func (f UnlockConditions[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 	var sumCost uint64
 	for _, unlockCond := range f {
 		sumCost += unlockCond.VBytes(rentStruct, nil)
@@ -87,30 +87,15 @@ func (f UnlockConditions) VBytes(rentStruct *RentStructure, override VBytesFunc)
 }
 
 // Clone clones the UnlockConditions.
-func (f UnlockConditions) Clone() UnlockConditions {
-	cpy := make(UnlockConditions, len(f))
+func (f UnlockConditions[T]) Clone() UnlockConditions[T] {
+	cpy := make(UnlockConditions[T], len(f))
 	for i, v := range f {
-		cpy[i] = v.Clone()
+		cpy[i] = v.Clone().(T)
 	}
 	return cpy
 }
 
-func (f UnlockConditions) ToSerializables() serializer.Serializables {
-	seris := make(serializer.Serializables, len(f))
-	for i, x := range f {
-		seris[i] = x.(serializer.Serializable)
-	}
-	return seris
-}
-
-func (f *UnlockConditions) FromSerializables(seris serializer.Serializables) {
-	*f = make(UnlockConditions, len(seris))
-	for i, seri := range seris {
-		(*f)[i] = seri.(UnlockCondition)
-	}
-}
-
-func (f UnlockConditions) Size() int {
+func (f UnlockConditions[T]) Size() int {
 	sum := serializer.OneByte // 1 byte length prefix
 	for _, uc := range f {
 		sum += uc.Size()
@@ -120,7 +105,7 @@ func (f UnlockConditions) Size() int {
 
 // Set converts the slice into an UnlockConditionSet.
 // Returns an error if an UnlockConditionType occurs multiple times.
-func (f UnlockConditions) Set() (UnlockConditionSet, error) {
+func (f UnlockConditions[T]) Set() (UnlockConditionSet, error) {
 	set := make(UnlockConditionSet)
 	for _, block := range f {
 		if _, has := set[block.Type()]; has {
@@ -134,12 +119,28 @@ func (f UnlockConditions) Set() (UnlockConditionSet, error) {
 // MustSet works like Set but panics if an error occurs.
 // This function is therefore only safe to be called when it is given,
 // that an UnlockConditions slice does not contain the same UnlockConditionType multiple times.
-func (f UnlockConditions) MustSet() UnlockConditionSet {
+func (f UnlockConditions[T]) MustSet() UnlockConditionSet {
 	set, err := f.Set()
 	if err != nil {
 		panic(err)
 	}
 	return set
+}
+
+// Upsert adds the given unlock condition or updates the previous one if existing.
+func (f *UnlockConditions[T]) Upsert(unlockCondition T) {
+	for i, ele := range *f {
+		if ele.Type() == unlockCondition.Type() {
+			(*f)[i] = unlockCondition
+			return
+		}
+	}
+	*f = append(*f, unlockCondition)
+}
+
+// Sort sorts the UnlockConditions in place by type.
+func (f UnlockConditions[T]) Sort() {
+	sort.Slice(f, func(i, j int) bool { return f[i].Type() < f[j].Type() })
 }
 
 // UnlockConditionSet is a set of UnlockCondition(s).
@@ -173,7 +174,7 @@ func (f UnlockConditionSet) unlockableBy(ident Address, extParas *ExternalUnlock
 
 	// if the return ident can unlock, then ident must be the return ident
 	var returnIdent Address
-	if returnIdentCanUnlock, returnIdent = f.returnIdentCanUnlock(extParas); returnIdentCanUnlock {
+	if returnIdentCanUnlock, returnIdent = f.ReturnIdentCanUnlock(extParas); returnIdentCanUnlock {
 		if !ident.Equal(returnIdent) {
 			return false, true
 		}
@@ -183,9 +184,9 @@ func (f UnlockConditionSet) unlockableBy(ident Address, extParas *ExternalUnlock
 	return true, false
 }
 
-// tells whether a sender defined in an expiration unlock condition within this set is the actual
+// ReturnIdentCanUnlock tells whether a sender defined in an expiration unlock condition within this set is the actual
 // identity which could unlock an Output containing this UnlockConditionSet given the ExternalUnlockParameters.
-func (f UnlockConditionSet) returnIdentCanUnlock(extParas *ExternalUnlockParameters) (bool, Address) {
+func (f UnlockConditionSet) ReturnIdentCanUnlock(extParas *ExternalUnlockParameters) (bool, Address) {
 	expUnlockCond := f.Expiration()
 
 	if expUnlockCond == nil {
@@ -276,62 +277,4 @@ func (f UnlockConditionSet) Expiration() *ExpirationUnlockCondition {
 		return nil
 	}
 	return b.(*ExpirationUnlockCondition)
-}
-
-// UnlockConditionSelector implements SerializableSelectorFunc for unlock conditions.
-func UnlockConditionSelector(unlockCondType uint32) (UnlockCondition, error) {
-	var seri UnlockCondition
-	switch UnlockConditionType(unlockCondType) {
-	case UnlockConditionAddress:
-		seri = &AddressUnlockCondition{}
-	case UnlockConditionStorageDepositReturn:
-		seri = &StorageDepositReturnUnlockCondition{}
-	case UnlockConditionTimelock:
-		seri = &TimelockUnlockCondition{}
-	case UnlockConditionExpiration:
-		seri = &ExpirationUnlockCondition{}
-	case UnlockConditionStateControllerAddress:
-		seri = &StateControllerAddressUnlockCondition{}
-	case UnlockConditionGovernorAddress:
-		seri = &GovernorAddressUnlockCondition{}
-	case UnlockConditionImmutableAlias:
-		seri = &ImmutableAliasUnlockCondition{}
-	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownUnlockConditionType, unlockCondType)
-	}
-	return seri, nil
-}
-
-// selects the json object for the given type.
-func jsonUnlockConditionSelector(ty int) (JSONSerializable, error) {
-	var obj JSONSerializable
-	switch UnlockConditionType(ty) {
-	case UnlockConditionAddress:
-		obj = &jsonAddressUnlockCondition{}
-	case UnlockConditionStorageDepositReturn:
-		obj = &jsonStorageDepositReturnUnlockCondition{}
-	case UnlockConditionTimelock:
-		obj = &jsonTimelockUnlockCondition{}
-	case UnlockConditionExpiration:
-		obj = &jsonExpirationUnlockCondition{}
-	case UnlockConditionStateControllerAddress:
-		obj = &jsonStateControllerAddressUnlockCondition{}
-	case UnlockConditionGovernorAddress:
-		obj = &jsonGovernorAddressUnlockCondition{}
-	case UnlockConditionImmutableAlias:
-		obj = &jsonImmutableAliasUnlockCondition{}
-	default:
-		return nil, fmt.Errorf("unable to decode unlock condition type from JSON: %w", ErrUnknownUnlockConditionType)
-	}
-	return obj, nil
-}
-
-func unlockConditionsFromJSONRawMsg(jUnlockConditions []*json.RawMessage) (UnlockConditions, error) {
-	unlockConds, err := jsonRawMsgsToSerializables(jUnlockConditions, jsonUnlockConditionSelector)
-	if err != nil {
-		return nil, err
-	}
-	var unlockConditions UnlockConditions
-	unlockConditions.FromSerializables(unlockConds)
-	return unlockConditions, nil
 }

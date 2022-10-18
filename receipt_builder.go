@@ -3,7 +3,7 @@ package iotago
 import (
 	"fmt"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/core/serix"
 )
 
 // NewReceiptBuilder creates a new ReceiptBuilder.
@@ -36,8 +36,8 @@ func (rb *ReceiptBuilder) AddTreasuryTransaction(tx *TreasuryTransaction) *Recei
 }
 
 // Build builds the ReceiptMilestoneOpt.
-func (rb *ReceiptBuilder) Build(protoParas *ProtocolParameters) (*ReceiptMilestoneOpt, error) {
-	if _, err := rb.r.Serialize(serializer.DeSeriModePerformValidation|serializer.DeSeriModePerformLexicalOrdering, protoParas); err != nil {
+func (rb *ReceiptBuilder) Build() (*ReceiptMilestoneOpt, error) {
+	if _, err := internalEncode(rb.r, serix.WithValidation()); err != nil {
 		return nil, fmt.Errorf("unable to build receipt: %w", err)
 	}
 	return rb.r, nil
