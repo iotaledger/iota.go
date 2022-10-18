@@ -132,9 +132,12 @@ func (set AliasOutputsSet) Merge(other AliasOutputsSet) (AliasOutputsSet, error)
 }
 
 type (
-	AliasUnlockCondition interface{ UnlockCondition }
-	AliasFeature         interface{ Feature }
-	AliasImmFeature      interface{ Feature }
+	aliasOutputUnlockCondition  interface{ UnlockCondition }
+	aliasOutputFeature          interface{ Feature }
+	aliasOutputImmFeature       interface{ Feature }
+	AliasOutputUnlockConditions = UnlockConditions[aliasOutputUnlockCondition]
+	AliasOutputFeatures         = Features[aliasOutputFeature]
+	AliasOutputImmFeatures      = Features[aliasOutputImmFeature]
 )
 
 // AliasOutput is an output type which represents an alias account.
@@ -152,11 +155,11 @@ type AliasOutput struct {
 	// The counter that denotes the number of foundries created by this alias account.
 	FoundryCounter uint32 `serix:"5,mapKey=foundryCounter"`
 	// The unlock conditions on this output.
-	Conditions UnlockConditions[AliasUnlockCondition] `serix:"6,mapKey=unlockConditions,omitempty"`
+	Conditions AliasOutputUnlockConditions `serix:"6,mapKey=unlockConditions,omitempty"`
 	// The features on the output.
-	Features Features[AliasFeature] `serix:"7,mapKey=features,omitempty"`
+	Features AliasOutputFeatures `serix:"7,mapKey=features,omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures Features[AliasImmFeature] `serix:"8,mapKey=immutableFeatures,omitempty"`
+	ImmutableFeatures AliasOutputImmFeatures `serix:"8,mapKey=immutableFeatures,omitempty"`
 }
 
 func (a *AliasOutput) GovernorAddress() Address {

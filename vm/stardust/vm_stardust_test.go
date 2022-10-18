@@ -27,7 +27,7 @@ func TestNFTTransition(t *testing.T) {
 		inputIDs[0]: &iotago.NFTOutput{
 			Amount: OneMi,
 			NFTID:  iotago.NFTID{},
-			Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+			Conditions: iotago.NFTOutputUnlockConditions{
 				&iotago.AddressUnlockCondition{Address: ident1},
 			},
 			Features: nil,
@@ -39,11 +39,11 @@ func TestNFTTransition(t *testing.T) {
 
 	essence := &iotago.TransactionEssence{
 		Inputs: inputIDs.UTXOInputs(),
-		Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+		Outputs: iotago.TxEssenceOutputs{
 			&iotago.NFTOutput{
 				Amount: OneMi,
 				NFTID:  nftID,
-				Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+				Conditions: iotago.NFTOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: ident1},
 				},
 				Features: nil,
@@ -72,7 +72,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 	inputs := iotago.OutputSet{
 		inputIDs[0]: &iotago.BasicOutput{
 			Amount: OneMi,
-			Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+			Conditions: iotago.BasicOutputUnlockConditions{
 				&iotago.AddressUnlockCondition{Address: ident1},
 			},
 		},
@@ -83,7 +83,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 			StateIndex:     1,
 			StateMetadata:  nil,
 			FoundryCounter: 1,
-			Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+			Conditions: iotago.AliasOutputUnlockConditions{
 				&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 				&iotago.GovernorAddressUnlockCondition{Address: ident1},
 			},
@@ -98,7 +98,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				MeltedTokens:  big.NewInt(0),
 				MaximumSupply: big.NewInt(50),
 			},
-			Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+			Conditions: iotago.FoundryOutputUnlockConditions{
 				&iotago.ImmutableAliasUnlockCondition{Address: aliasIdent1},
 			},
 			Features: nil,
@@ -116,7 +116,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 
 	essence := &iotago.TransactionEssence{
 		Inputs: inputIDs.UTXOInputs(),
-		Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+		Outputs: iotago.TxEssenceOutputs{
 			&iotago.AliasOutput{
 				Amount:         OneMi,
 				NativeTokens:   nil,
@@ -124,7 +124,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				StateIndex:     2,
 				StateMetadata:  nil,
 				FoundryCounter: 1,
-				Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+				Conditions: iotago.AliasOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 					&iotago.GovernorAddressUnlockCondition{Address: ident1},
 				},
@@ -139,7 +139,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 					MeltedTokens:  big.NewInt(50),
 					MaximumSupply: big.NewInt(50),
 				},
-				Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+				Conditions: iotago.FoundryOutputUnlockConditions{
 					&iotago.ImmutableAliasUnlockCondition{Address: aliasIdent1},
 				},
 				Features: nil,
@@ -198,27 +198,27 @@ func TestStardustTransactionExecution(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: defaultAmount,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
 				inputIDs[1]: &iotago.BasicOutput{
 					Amount:       defaultAmount,
 					NativeTokens: nativeTokenTransfer1,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 					},
 				},
 				inputIDs[2]: &iotago.BasicOutput{
 					Amount:       defaultAmount,
 					NativeTokens: nativeTokenTransfer2,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 					},
 				},
 				inputIDs[3]: &iotago.BasicOutput{
 					Amount: defaultAmount,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident1,
@@ -228,7 +228,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 				inputIDs[4]: &iotago.BasicOutput{
 					Amount: defaultAmount,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.TimelockUnlockCondition{
 							UnixTime: 500,
@@ -237,7 +237,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 				inputIDs[5]: &iotago.BasicOutput{
 					Amount: defaultAmount + storageDepositReturn,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident1,
@@ -259,7 +259,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 					StateIndex:     0,
 					StateMetadata:  []byte("gov transitioning"),
 					FoundryCounter: 0,
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 						&iotago.GovernorAddressUnlockCondition{Address: ident4},
 					},
@@ -272,7 +272,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 					StateIndex:     5,
 					StateMetadata:  []byte("current state"),
 					FoundryCounter: 5,
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 						&iotago.GovernorAddressUnlockCondition{Address: ident4},
 					},
@@ -285,7 +285,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 					StateIndex:     0,
 					StateMetadata:  []byte("going to be destroyed"),
 					FoundryCounter: 0,
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 						&iotago.GovernorAddressUnlockCondition{Address: ident3},
 					},
@@ -300,7 +300,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						MeltedTokens:  big.NewInt(0),
 						MaximumSupply: new(big.Int).SetUint64(1000),
 					},
-					Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+					Conditions: iotago.FoundryOutputUnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Features: nil,
@@ -314,7 +314,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						MeltedTokens:  big.NewInt(0),
 						MaximumSupply: new(big.Int).SetUint64(1000),
 					},
-					Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+					Conditions: iotago.FoundryOutputUnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Features: nil,
@@ -328,7 +328,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						MeltedTokens:  big.NewInt(0),
 						MaximumSupply: new(big.Int).SetUint64(1000),
 					},
-					Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+					Conditions: iotago.FoundryOutputUnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Features: nil,
@@ -342,7 +342,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						MeltedTokens:  big.NewInt(50),
 						MaximumSupply: new(big.Int).SetUint64(1000),
 					},
-					Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+					Conditions: iotago.FoundryOutputUnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 					},
 					Features: nil,
@@ -351,13 +351,13 @@ func TestStardustTransactionExecution(t *testing.T) {
 					Amount:       defaultAmount,
 					NativeTokens: nil,
 					NFTID:        nft1ID,
-					Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+					Conditions: iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident3},
 					},
-					Features: iotago.Features[iotago.NFTFeature]{
+					Features: iotago.NFTOutputFeatures{
 						&iotago.IssuerFeature{Address: ident3},
 					},
-					ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+					ImmutableFeatures: iotago.NFTOutputImmFeatures{
 						&iotago.MetadataFeature{Data: []byte("transfer to 4")},
 					},
 				},
@@ -365,19 +365,19 @@ func TestStardustTransactionExecution(t *testing.T) {
 					Amount:       defaultAmount,
 					NativeTokens: nil,
 					NFTID:        nft2ID,
-					Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+					Conditions: iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident4},
 					},
-					Features: iotago.Features[iotago.NFTFeature]{
+					Features: iotago.NFTOutputFeatures{
 						&iotago.IssuerFeature{Address: ident3},
 					},
-					ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+					ImmutableFeatures: iotago.NFTOutputImmFeatures{
 						&iotago.MetadataFeature{Data: []byte("going to be destroyed")},
 					},
 				},
 				inputIDs[15]: &iotago.BasicOutput{
 					Amount: defaultAmount,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: iotago.NFTID(nft1ID).ToAddress()},
 					},
 				},
@@ -396,7 +396,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 					MeltedTokens:  big.NewInt(0),
 					MaximumSupply: new(big.Int).SetInt64(1000),
 				},
-				Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+				Conditions: iotago.FoundryOutputUnlockConditions{
 					&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 				},
 				Features: nil,
@@ -425,42 +425,42 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: defaultAmount,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident5},
 						},
 					},
 					&iotago.BasicOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nativeTokenTransfer1,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident3},
 						},
 					},
 					&iotago.BasicOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nativeTokenTransfer2,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident4},
 						},
 					},
 					&iotago.BasicOutput{
 						Amount: defaultAmount,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
 					},
 					&iotago.BasicOutput{
 						Amount: defaultAmount,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
 					},
 					&iotago.BasicOutput{
 						Amount: storageDepositReturn,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
@@ -471,7 +471,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						StateIndex:     0,
 						StateMetadata:  []byte("a new alias output"),
 						FoundryCounter: 0,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
@@ -484,11 +484,11 @@ func TestStardustTransactionExecution(t *testing.T) {
 						StateIndex:     0,
 						StateMetadata:  []byte("gov transitioning"),
 						FoundryCounter: 0,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
-						Features: iotago.Features[iotago.AliasFeature]{
+						Features: iotago.AliasOutputFeatures{
 							&iotago.MetadataFeature{Data: []byte("the gov mutation on this output")},
 						},
 					},
@@ -499,7 +499,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						StateIndex:     6,
 						StateMetadata:  []byte("next state"),
 						FoundryCounter: 6,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
@@ -521,7 +521,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 							MeltedTokens:  big.NewInt(0),
 							MaximumSupply: new(big.Int).SetInt64(1000),
 						},
-						Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+						Conditions: iotago.FoundryOutputUnlockConditions{
 							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
 						Features: nil,
@@ -540,7 +540,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 							MeltedTokens:  big.NewInt(50),
 							MaximumSupply: new(big.Int).SetInt64(1000),
 						},
-						Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+						Conditions: iotago.FoundryOutputUnlockConditions{
 							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
 						Features: nil,
@@ -554,17 +554,17 @@ func TestStardustTransactionExecution(t *testing.T) {
 							MeltedTokens:  big.NewInt(0),
 							MaximumSupply: new(big.Int).SetInt64(1000),
 						},
-						Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+						Conditions: iotago.FoundryOutputUnlockConditions{
 							&iotago.ImmutableAliasUnlockCondition{Address: iotago.AliasIDFromOutputID(inputIDs[7]).ToAddress().(*iotago.AliasAddress)},
 						},
-						Features: iotago.Features[iotago.FoundryFeature]{
+						Features: iotago.FoundryOutputFeatures{
 							&iotago.MetadataFeature{Data: []byte("interesting metadata")},
 						},
 					},
 					// from foundry 4 ident 3 destruction remainder
 					&iotago.BasicOutput{
 						Amount: defaultAmount,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident3},
 						},
 					},
@@ -572,11 +572,11 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Amount:       defaultAmount,
 						NativeTokens: nil,
 						NFTID:        iotago.NFTID{},
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident4},
 						},
 						Features: nil,
-						ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+						ImmutableFeatures: iotago.NFTOutputImmFeatures{
 							&iotago.MetadataFeature{Data: []byte("immutable metadata")},
 						},
 					},
@@ -584,27 +584,27 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Amount:       defaultAmount,
 						NativeTokens: nil,
 						NFTID:        nft1ID,
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident4},
 						},
-						Features: iotago.Features[iotago.NFTFeature]{
+						Features: iotago.NFTOutputFeatures{
 							&iotago.IssuerFeature{Address: ident3},
 						},
-						ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+						ImmutableFeatures: iotago.NFTOutputImmFeatures{
 							&iotago.MetadataFeature{Data: []byte("transfer to 4")},
 						},
 					},
 					// from NFT ident 4 destruction remainder
 					&iotago.BasicOutput{
 						Amount: defaultAmount,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident3},
 						},
 					},
 					// from NFT 1 to ident 5
 					&iotago.BasicOutput{
 						Amount: defaultAmount,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident5},
 						},
 					},
@@ -665,13 +665,13 @@ func TestStardustTransactionExecution(t *testing.T) {
 					MeltedTokens:  big.NewInt(0),
 					MaximumSupply: new(big.Int).SetInt64(10000),
 				},
-				Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+				Conditions: iotago.FoundryOutputUnlockConditions{
 					&iotago.ImmutableAliasUnlockCondition{Address: aliasAddr1},
 				},
 			}
 			outFoundry := inFoundry.Clone().(*iotago.FoundryOutput)
 			// change the immutable alias address unlock
-			outFoundry.Conditions = iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+			outFoundry.Conditions = iotago.FoundryOutputUnlockConditions{
 				&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
 			}
 
@@ -680,7 +680,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 					Amount:     100,
 					StateIndex: 0,
 					AliasID:    aliasAddr1.AliasID(),
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 						&iotago.GovernorAddressUnlockCondition{Address: ident2},
 					},
@@ -690,12 +690,12 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AliasOutput{
 						Amount:     100,
 						StateIndex: 1,
 						AliasID:    aliasAddr1.AliasID(),
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 							&iotago.GovernorAddressUnlockCondition{Address: ident2},
 						},
@@ -758,41 +758,41 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
 				inputIDs[1]: &iotago.AliasOutput{
 					Amount:  100,
 					AliasID: iotago.AliasID{}, // empty on purpose as validation should resolve
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 						&iotago.GovernorAddressUnlockCondition{Address: ident1},
 					},
 				},
 				inputIDs[2]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: &aliasIdent1},
 					},
 				},
 				inputIDs[3]: &iotago.NFTOutput{
 					Amount: 100,
 					NFTID:  nftIdent1.NFTID(),
-					Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+					Conditions: iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: &aliasIdent1},
 					},
 				},
 				inputIDs[4]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: nftIdent1},
 					},
 				},
 				// unlockable by sender as expired
 				inputIDs[5]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
@@ -803,7 +803,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				// not unlockable by sender as not expired
 				inputIDs[6]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
@@ -819,7 +819,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						MeltedTokens:  big.NewInt(0),
 						MaximumSupply: new(big.Int).SetInt64(1000),
 					},
-					Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+					Conditions: iotago.FoundryOutputUnlockConditions{
 						&iotago.ImmutableAliasUnlockCondition{Address: &aliasIdent1},
 					},
 				},
@@ -827,12 +827,12 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AliasOutput{
 						Amount:     100,
 						AliasID:    aliasIdent1.AliasID(),
 						StateIndex: 1,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 							&iotago.GovernorAddressUnlockCondition{Address: ident1},
 						},
@@ -875,7 +875,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
@@ -908,13 +908,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
 				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
@@ -948,14 +948,14 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputIDs[0]: &iotago.AliasOutput{
 					Amount:  100,
 					AliasID: iotago.AliasID{},
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 						&iotago.GovernorAddressUnlockCondition{Address: ident1},
 					},
 				},
 				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: &aliasIdent1},
 					},
 				},
@@ -989,13 +989,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputIDs[0]: &iotago.NFTOutput{
 					Amount: 100,
 					NFTID:  iotago.NFTID{},
-					Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+					Conditions: iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
 				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: &nftIdent1},
 					},
 				},
@@ -1030,14 +1030,14 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputIDs[0]: &iotago.NFTOutput{
 					Amount: 100,
 					NFTID:  nftIdent1.NFTID(),
-					Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+					Conditions: iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: &nftIdent2},
 					},
 				},
 				inputIDs[1]: &iotago.NFTOutput{
 					Amount: 100,
 					NFTID:  nftIdent2.NFTID(),
-					Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+					Conditions: iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: &nftIdent2},
 					},
 				},
@@ -1068,7 +1068,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
@@ -1106,7 +1106,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
@@ -1151,7 +1151,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputIDs[0]: &iotago.AliasOutput{
 					Amount:  100,
 					AliasID: aliasAddr1.AliasID(),
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 						&iotago.GovernorAddressUnlockCondition{Address: ident1},
 					},
@@ -1160,7 +1160,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputIDs[1]: &iotago.AliasOutput{
 					Amount:  100,
 					AliasID: aliasAddr2.AliasID(),
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: aliasAddr1},
 						&iotago.GovernorAddressUnlockCondition{Address: aliasAddr1},
 					},
@@ -1169,7 +1169,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputIDs[2]: &iotago.AliasOutput{
 					Amount:  100,
 					AliasID: aliasAddr3.AliasID(),
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: aliasAddr1},
 						&iotago.GovernorAddressUnlockCondition{Address: aliasAddr1},
 					},
@@ -1210,14 +1210,14 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				inputIDs[0]: &iotago.AliasOutput{
 					Amount:  100,
 					AliasID: aliasAddr1.AliasID(),
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 						&iotago.GovernorAddressUnlockCondition{Address: ident2},
 					},
 				},
 				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: aliasAddr1},
 					},
 				},
@@ -1225,11 +1225,11 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AliasOutput{
 						Amount:  100,
 						AliasID: aliasAddr1.AliasID(),
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 							&iotago.GovernorAddressUnlockCondition{Address: ident2},
 						},
@@ -1271,7 +1271,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					MeltedTokens:  big.NewInt(0),
 					MaximumSupply: new(big.Int).SetInt64(10000),
 				},
-				Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+				Conditions: iotago.FoundryOutputUnlockConditions{
 					&iotago.ImmutableAliasUnlockCondition{Address: aliasAddr1},
 				},
 			}
@@ -1281,7 +1281,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					Amount:     100,
 					StateIndex: 0,
 					AliasID:    aliasAddr1.AliasID(),
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 						&iotago.GovernorAddressUnlockCondition{Address: ident2},
 					},
@@ -1291,12 +1291,12 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AliasOutput{
 						Amount:     100,
 						StateIndex: 1,
 						AliasID:    aliasAddr1.AliasID(),
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 							&iotago.GovernorAddressUnlockCondition{Address: ident2},
 						},
@@ -1354,14 +1354,14 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
 				// unlocked by ident1 as it is not expired
 				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 500,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
@@ -1376,7 +1376,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				// unlocked by ident2 as it is expired
 				inputIDs[2]: &iotago.BasicOutput{
 					Amount: 500,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
@@ -1392,17 +1392,17 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 180,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
 					&iotago.BasicOutput{
 						// return via ident1 + reclaim
 						Amount: 420 + 500,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
 					},
@@ -1436,7 +1436,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 1000,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
@@ -1448,25 +1448,25 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						// returns 200 to ident2
 						Amount: 200,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
 					},
 					&iotago.BasicOutput{
 						// returns 221 to ident2
 						Amount: 221,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
 					},
 					&iotago.BasicOutput{
 						// remainder to random address
 						Amount: 579,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
@@ -1495,7 +1495,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
@@ -1503,10 +1503,10 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
@@ -1537,7 +1537,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
@@ -1545,10 +1545,10 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 50,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
@@ -1580,7 +1580,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 500,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
@@ -1597,10 +1597,10 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 500,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
@@ -1632,7 +1632,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 500,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
@@ -1644,16 +1644,16 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 80,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
 					&iotago.NFTOutput{
 						Amount: 420,
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
 					},
@@ -1683,7 +1683,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 500,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
@@ -1695,16 +1695,16 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 80,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
 					&iotago.BasicOutput{
 						Amount: 420,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident1,
@@ -1738,7 +1738,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 500,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
@@ -1750,19 +1750,19 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 80,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
 					&iotago.BasicOutput{
 						Amount: 420,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
-						Features: iotago.Features[iotago.BasicOutputFeature]{
+						Features: iotago.BasicOutputFeatures{
 							&iotago.MetadataFeature{Data: []byte("foo")},
 						},
 					},
@@ -1799,7 +1799,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 							Amount: new(big.Int).SetUint64(1000),
 						},
 					},
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: ident2,
@@ -1811,10 +1811,10 @@ func TestTxSemanticDeposit(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 80,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
@@ -1826,7 +1826,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 								Amount: new(big.Int).SetUint64(1000),
 							},
 						},
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
 					},
@@ -1877,7 +1877,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			MeltedTokens:  big.NewInt(0),
 			MaximumSupply: foundryMaxSupply,
 		},
-		Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+		Conditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAliasUnlockCondition{Address: foundryAliasIdent},
 		},
 	}
@@ -1890,7 +1890,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			MeltedTokens:  big.NewInt(0),
 			MaximumSupply: foundryMaxSupply,
 		},
-		Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+		Conditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAliasUnlockCondition{Address: foundryAliasIdent},
 		},
 	}
@@ -1913,14 +1913,14 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[:ntCount/2],
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 				inputIDs[1]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[ntCount/2:],
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -1928,11 +1928,11 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount:       200,
 						NativeTokens: nativeTokens,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
@@ -1964,7 +1964,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 							Amount: big.NewInt(1),
 						},
 					},
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}
@@ -1972,7 +1972,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 200,
 						NativeTokens: []*iotago.NativeToken{
@@ -1981,7 +1981,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 								Amount: big.NewInt(iotago.MaxNativeTokensCount),
 							},
 						},
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
@@ -2009,7 +2009,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: tpkg.RandSortNativeTokens(inCount),
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -2017,11 +2017,11 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount:       200,
 						NativeTokens: tpkg.RandSortNativeTokens(outCount),
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
@@ -2048,7 +2048,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				inputs[inputIDs[i]] = &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: tpkg.RandSortNativeTokens(1),
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}
@@ -2056,10 +2056,10 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 100 * uint64(numDistinctNTs),
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
@@ -2086,18 +2086,18 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			for i := 0; i < numDistinctNTs; i++ {
 				inputs[inputIDs[i]] = &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}
 			}
 
-			outs := make(iotago.Outputs[iotago.TxEssenceOutput], numDistinctNTs)
+			outs := make(iotago.TxEssenceOutputs, numDistinctNTs)
 			for i := range outs {
 				outs[i] = &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: iotago.NativeTokens{tokens[i]},
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}
@@ -2129,18 +2129,18 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				inputs[inputIDs[i]] = &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: tokens,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}
 			}
 
-			outputs := make(iotago.Outputs[iotago.TxEssenceOutput], iotago.MaxOutputsCount)
+			outputs := make(iotago.TxEssenceOutputs, iotago.MaxOutputsCount)
 			for i := range outputs {
 				outputs[i] = &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: tokens,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}
@@ -2172,18 +2172,18 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				inputs[inputIDs[i]] = &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: tokens,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}
 			}
 
-			outputs := make(iotago.Outputs[iotago.TxEssenceOutput], iotago.MaxOutputsCount)
+			outputs := make(iotago.TxEssenceOutputs, iotago.MaxOutputsCount)
 			for i := range outputs {
 				outputs[i] = &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: tokens,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}
@@ -2196,7 +2196,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			outputs[iotago.MaxOutputsCount-1] = &iotago.BasicOutput{
 				Amount:       100,
 				NativeTokens: oneMore,
-				Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 			}
@@ -2227,7 +2227,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -2240,11 +2240,11 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: cpyNativeTokens,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
@@ -2272,14 +2272,14 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[:ntCount/2],
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 				inputIDs[1]: &iotago.BasicOutput{
 					Amount:       100,
 					NativeTokens: nativeTokens[ntCount/2:],
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -2292,18 +2292,18 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: cpyNativeTokens[:ntCount/2],
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
 					&iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: cpyNativeTokens[ntCount/2:],
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
@@ -2354,14 +2354,14 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
 				inputIDs[1]: &iotago.NFTOutput{
 					Amount: 100,
 					NFTID:  nftAddr.NFTID(),
-					Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+					Conditions: iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
@@ -2369,62 +2369,62 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					// sender is an Ed25519 address
 					&iotago.BasicOutput{
 						Amount: 1337,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
-						Features: iotago.Features[iotago.BasicOutputFeature]{
+						Features: iotago.BasicOutputFeatures{
 							&iotago.SenderFeature{Address: ident1},
 						},
 					},
 					&iotago.AliasOutput{
 						Amount: 1337,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 							&iotago.GovernorAddressUnlockCondition{Address: ident1},
 						},
-						Features: iotago.Features[iotago.AliasFeature]{
+						Features: iotago.AliasOutputFeatures{
 							&iotago.SenderFeature{Address: ident1},
 						},
 					},
 					&iotago.NFTOutput{
 						Amount: 1337,
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
-						Features: iotago.Features[iotago.NFTFeature]{
+						Features: iotago.NFTOutputFeatures{
 							&iotago.SenderFeature{Address: ident1},
 						},
 					},
 					// sender is an NFT address
 					&iotago.BasicOutput{
 						Amount: 1337,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
-						Features: iotago.Features[iotago.BasicOutputFeature]{
+						Features: iotago.BasicOutputFeatures{
 							&iotago.SenderFeature{Address: nftAddr},
 						},
 					},
 					&iotago.AliasOutput{
 						Amount: 1337,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 							&iotago.GovernorAddressUnlockCondition{Address: ident1},
 						},
-						Features: iotago.Features[iotago.AliasFeature]{
+						Features: iotago.AliasOutputFeatures{
 							&iotago.SenderFeature{Address: nftAddr},
 						},
 					},
 					&iotago.NFTOutput{
 						Amount: 1337,
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
-						Features: iotago.Features[iotago.NFTFeature]{
+						Features: iotago.NFTOutputFeatures{
 							&iotago.SenderFeature{Address: nftAddr},
 						},
 					},
@@ -2454,7 +2454,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
@@ -2462,13 +2462,13 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: 1337,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
-						Features: iotago.Features[iotago.BasicOutputFeature]{
+						Features: iotago.BasicOutputFeatures{
 							&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 						},
 					},
@@ -2501,7 +2501,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				inputIDs[0]: &iotago.AliasOutput{
 					Amount:  100,
 					AliasID: aliasId,
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 						&iotago.GovernorAddressUnlockCondition{Address: governor},
 					},
@@ -2510,15 +2510,15 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AliasOutput{
 						Amount:  100,
 						AliasID: aliasId,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
-						Features: iotago.Features[iotago.AliasFeature]{
+						Features: iotago.AliasOutputFeatures{
 							&iotago.SenderFeature{Address: aliasAddr},
 						},
 					},
@@ -2553,7 +2553,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					Amount:     100,
 					AliasID:    aliasId,
 					StateIndex: currentStateIndex,
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 						&iotago.GovernorAddressUnlockCondition{Address: governor},
 					},
@@ -2562,16 +2562,16 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AliasOutput{
 						Amount:     100,
 						AliasID:    aliasId,
 						StateIndex: currentStateIndex + 1,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
-						Features: iotago.Features[iotago.AliasFeature]{
+						Features: iotago.AliasOutputFeatures{
 							&iotago.SenderFeature{Address: aliasAddr},
 						},
 					},
@@ -2604,7 +2604,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				inputIDs[0]: &iotago.AliasOutput{
 					Amount:  100,
 					AliasID: aliasId,
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 						&iotago.GovernorAddressUnlockCondition{Address: governor},
 					},
@@ -2613,15 +2613,15 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AliasOutput{
 						Amount:  100,
 						AliasID: aliasId,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
-						Features: iotago.Features[iotago.AliasFeature]{
+						Features: iotago.AliasOutputFeatures{
 							&iotago.SenderFeature{Address: governor},
 						},
 					},
@@ -2679,14 +2679,14 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				inputIDs[0]: &iotago.AliasOutput{
 					Amount:  100,
 					AliasID: aliasId,
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 						&iotago.GovernorAddressUnlockCondition{Address: governor},
 					},
 				},
 				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
@@ -2694,21 +2694,21 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AliasOutput{
 						Amount:  100,
 						AliasID: aliasId,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
 					},
 					&iotago.NFTOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
-						ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+						ImmutableFeatures: iotago.NFTOutputImmFeatures{
 							&iotago.IssuerFeature{Address: aliasAddr},
 						},
 					},
@@ -2748,7 +2748,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					Amount:     100,
 					AliasID:    aliasId,
 					StateIndex: currentStateIndex,
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 						&iotago.GovernorAddressUnlockCondition{Address: governor},
 					},
@@ -2756,7 +2756,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				inputIDs[1]: &iotago.NFTOutput{
 					Amount: 900,
 					NFTID:  nftAddr.NFTID(),
-					Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+					Conditions: iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
@@ -2764,13 +2764,13 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					// transitioned alias + nft
 					&iotago.AliasOutput{
 						Amount:     100,
 						AliasID:    aliasId,
 						StateIndex: currentStateIndex + 1,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
@@ -2778,87 +2778,87 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					&iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  nftAddr.NFTID(),
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
 					// issuer is aliasAddr
 					&iotago.NFTOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
-						ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+						ImmutableFeatures: iotago.NFTOutputImmFeatures{
 							&iotago.IssuerFeature{Address: aliasAddr},
 						},
 					},
 					&iotago.AliasOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
-						ImmutableFeatures: iotago.Features[iotago.AliasImmFeature]{
+						ImmutableFeatures: iotago.AliasOutputImmFeatures{
 							&iotago.IssuerFeature{Address: aliasAddr},
 						},
 					},
 					// issuer is stateController
 					&iotago.NFTOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
-						ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+						ImmutableFeatures: iotago.NFTOutputImmFeatures{
 							&iotago.IssuerFeature{Address: stateController},
 						},
 					},
 					&iotago.AliasOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
-						ImmutableFeatures: iotago.Features[iotago.AliasImmFeature]{
+						ImmutableFeatures: iotago.AliasOutputImmFeatures{
 							&iotago.IssuerFeature{Address: stateController},
 						},
 					},
 					// issuer is nftAddr
 					&iotago.NFTOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
-						ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+						ImmutableFeatures: iotago.NFTOutputImmFeatures{
 							&iotago.IssuerFeature{Address: nftAddr},
 						},
 					},
 					&iotago.AliasOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
-						ImmutableFeatures: iotago.Features[iotago.AliasImmFeature]{
+						ImmutableFeatures: iotago.AliasOutputImmFeatures{
 							&iotago.IssuerFeature{Address: nftAddr},
 						},
 					},
 					// issuer is ident1
 					&iotago.NFTOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
-						ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+						ImmutableFeatures: iotago.NFTOutputImmFeatures{
 							&iotago.IssuerFeature{Address: ident1},
 						},
 					},
 					&iotago.AliasOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
-						ImmutableFeatures: iotago.Features[iotago.AliasImmFeature]{
+						ImmutableFeatures: iotago.AliasOutputImmFeatures{
 							&iotago.IssuerFeature{Address: ident1},
 						},
 					},
@@ -2893,14 +2893,14 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				inputIDs[0]: &iotago.AliasOutput{
 					Amount:  100,
 					AliasID: aliasId,
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 						&iotago.GovernorAddressUnlockCondition{Address: governor},
 					},
 				},
 				inputIDs[1]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 					},
 				},
@@ -2908,21 +2908,21 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
-				Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AliasOutput{
 						Amount:  100,
 						AliasID: aliasId,
-						Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+						Conditions: iotago.AliasOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
 					},
 					&iotago.NFTOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+						Conditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
-						ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+						ImmutableFeatures: iotago.NFTOutputImmFeatures{
 							&iotago.IssuerFeature{Address: governor},
 						},
 					},
@@ -2975,7 +2975,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
 							UnixTime: 5,
@@ -3010,7 +3010,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
 							UnixTime: 15,
@@ -3045,7 +3045,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			inputs := iotago.OutputSet{
 				inputIDs[0]: &iotago.BasicOutput{
 					Amount: 100,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
 							UnixTime: 1337,

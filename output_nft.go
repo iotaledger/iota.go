@@ -70,9 +70,12 @@ func NFTIDFromOutputID(o OutputID) NFTID {
 }
 
 type (
-	NFTUnlockCondition interface{ UnlockCondition }
-	NFTFeature         interface{ Feature }
-	NFTImmFeature      interface{ Feature }
+	nftOutputUnlockCondition  interface{ UnlockCondition }
+	nftOutputFeature          interface{ Feature }
+	nftOutputImmFeature       interface{ Feature }
+	NFTOutputUnlockConditions = UnlockConditions[nftOutputUnlockCondition]
+	NFTOutputFeatures         = Features[nftOutputFeature]
+	NFTOutputImmFeatures      = Features[nftOutputImmFeature]
 )
 
 // NFTOutput is an output type used to implement non-fungible tokens.
@@ -84,11 +87,11 @@ type NFTOutput struct {
 	// The identifier of this NFT.
 	NFTID NFTID `serix:"2,mapKey=nftId"`
 	// The unlock conditions on this output.
-	Conditions UnlockConditions[NFTUnlockCondition] `serix:"3,mapKey=unlockConditions,omitempty"`
+	Conditions NFTOutputUnlockConditions `serix:"3,mapKey=unlockConditions,omitempty"`
 	// The feature on the output.
-	Features Features[NFTFeature] `serix:"4,mapKey=features,omitempty"`
+	Features NFTOutputFeatures `serix:"4,mapKey=features,omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures Features[NFTImmFeature] `serix:"5,mapKey=immutableFeatures,omitempty"`
+	ImmutableFeatures NFTOutputImmFeatures `serix:"5,mapKey=immutableFeatures,omitempty"`
 }
 
 func (n *NFTOutput) Clone() Output {

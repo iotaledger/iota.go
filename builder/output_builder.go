@@ -11,10 +11,10 @@ func NewBasicOutputBuilder(targetAddr iotago.Address, deposit uint64) *BasicOutp
 	return &BasicOutputBuilder{output: &iotago.BasicOutput{
 		Amount:       deposit,
 		NativeTokens: iotago.NativeTokens{},
-		Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+		Conditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
-		Features: iotago.Features[iotago.BasicOutputFeature]{},
+		Features: iotago.BasicOutputFeatures{},
 	}}
 }
 
@@ -111,12 +111,12 @@ func NewAliasOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, dep
 	return &AliasOutputBuilder{output: &iotago.AliasOutput{
 		Amount:       deposit,
 		NativeTokens: iotago.NativeTokens{},
-		Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+		Conditions: iotago.AliasOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 			&iotago.GovernorAddressUnlockCondition{Address: govAddr},
 		},
-		Features:          iotago.Features[iotago.AliasFeature]{},
-		ImmutableFeatures: iotago.Features[iotago.AliasImmFeature]{},
+		Features:          iotago.AliasOutputFeatures{},
+		ImmutableFeatures: iotago.AliasOutputImmFeatures{},
 	}}
 }
 
@@ -337,11 +337,11 @@ func NewFoundryOutputBuilder(aliasAddr *iotago.AliasAddress, tokenScheme iotago.
 		Amount:       deposit,
 		TokenScheme:  tokenScheme,
 		NativeTokens: iotago.NativeTokens{},
-		Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+		Conditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAliasUnlockCondition{Address: aliasAddr},
 		},
-		Features:          iotago.Features[iotago.FoundryFeature]{},
-		ImmutableFeatures: iotago.Features[iotago.FoundryImmFeature]{},
+		Features:          iotago.FoundryOutputFeatures{},
+		ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
 	}}
 }
 
@@ -420,11 +420,11 @@ func NewNFTOutputBuilder(targetAddr iotago.Address, deposit uint64) *NFTOutputBu
 	return &NFTOutputBuilder{output: &iotago.NFTOutput{
 		Amount:       deposit,
 		NativeTokens: iotago.NativeTokens{},
-		Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+		Conditions: iotago.NFTOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
-		Features:          iotago.Features[iotago.NFTFeature]{},
-		ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{},
+		Features:          iotago.NFTOutputFeatures{},
+		ImmutableFeatures: iotago.NFTOutputImmFeatures{},
 	}}
 }
 

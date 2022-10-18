@@ -97,7 +97,7 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 }
 
 // SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateInputs(inputs Inputs[TxEssenceInput], funcs ...InputsSyntacticalValidationFunc) error {
+func SyntacticallyValidateInputs(inputs TxEssenceInputs, funcs ...InputsSyntacticalValidationFunc) error {
 	for i, input := range inputs {
 		dep, ok := input.(*UTXOInput)
 		if !ok {

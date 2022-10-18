@@ -222,8 +222,8 @@ func (outputIDs OutputIDs) RemoveDupsAndSort() OutputIDs {
 }
 
 // UTXOInputs converts the OutputIDs slice to Inputs.
-func (outputIDs OutputIDs) UTXOInputs() Inputs[TxEssenceInput] {
-	inputs := make(Inputs[TxEssenceInput], 0)
+func (outputIDs OutputIDs) UTXOInputs() TxEssenceInputs {
+	inputs := make(TxEssenceInputs, 0)
 	for _, outputID := range outputIDs {
 		inputs = append(inputs, outputID.UTXOInput())
 	}
@@ -822,7 +822,7 @@ func OutputsSyntacticalNFT() OutputsSyntacticalValidationFunc {
 }
 
 // SyntacticallyValidateOutputs validates the outputs by running them against the given OutputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateOutputs(outputs Outputs[TxEssenceOutput], funcs ...OutputsSyntacticalValidationFunc) error {
+func SyntacticallyValidateOutputs(outputs TxEssenceOutputs, funcs ...OutputsSyntacticalValidationFunc) error {
 	for i, output := range outputs {
 		for _, f := range funcs {
 			if err := f(i, output); err != nil {

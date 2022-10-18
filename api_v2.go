@@ -268,69 +268,69 @@ func V2API(protoParas *ProtocolParameters) API {
 	{
 		must(api.RegisterTypeSettings(BasicOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputBasic))))
 
-		must(api.RegisterTypeSettings(UnlockConditions[BasicOutputUnlockCondition]{},
+		must(api.RegisterTypeSettings(BasicOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(basicOutputV2UnlockCondArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*StorageDepositReturnUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*basicOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*basicOutputUnlockCondition)(nil), (*StorageDepositReturnUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*basicOutputUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*basicOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
 
-		must(api.RegisterTypeSettings(Features[BasicOutputFeature]{},
+		must(api.RegisterTypeSettings(BasicOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(basicOutputV2FeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*BasicOutputFeature)(nil), (*SenderFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*BasicOutputFeature)(nil), (*MetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*BasicOutputFeature)(nil), (*TagFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*SenderFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*TagFeature)(nil)))
 	}
 
 	{
 		must(api.RegisterTypeSettings(AliasOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputAlias))))
 
-		must(api.RegisterTypeSettings(UnlockConditions[AliasUnlockCondition]{},
+		must(api.RegisterTypeSettings(AliasOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(aliasOutputV2UnlockCondArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*AliasUnlockCondition)(nil), (*StateControllerAddressUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*AliasUnlockCondition)(nil), (*GovernorAddressUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*aliasOutputUnlockCondition)(nil), (*StateControllerAddressUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*aliasOutputUnlockCondition)(nil), (*GovernorAddressUnlockCondition)(nil)))
 
-		must(api.RegisterTypeSettings(Features[AliasFeature]{},
+		must(api.RegisterTypeSettings(AliasOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(aliasOutputV2FeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*AliasFeature)(nil), (*SenderFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*AliasFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*aliasOutputFeature)(nil), (*SenderFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*aliasOutputFeature)(nil), (*MetadataFeature)(nil)))
 
-		must(api.RegisterTypeSettings(Features[AliasImmFeature]{},
+		must(api.RegisterTypeSettings(AliasOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(aliasOutputV2ImmFeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*AliasImmFeature)(nil), (*IssuerFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*AliasImmFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*aliasOutputImmFeature)(nil), (*IssuerFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*aliasOutputImmFeature)(nil), (*MetadataFeature)(nil)))
 	}
 
 	{
 		must(api.RegisterTypeSettings(FoundryOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputFoundry))))
 
-		must(api.RegisterTypeSettings(UnlockConditions[FoundryUnlockCondition]{},
+		must(api.RegisterTypeSettings(FoundryOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV2UnlockCondArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*FoundryUnlockCondition)(nil), (*ImmutableAliasUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*foundryOutputUnlockCondition)(nil), (*ImmutableAliasUnlockCondition)(nil)))
 
-		must(api.RegisterTypeSettings(Features[FoundryFeature]{},
+		must(api.RegisterTypeSettings(FoundryOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV2FeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*FoundryFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*foundryOutputFeature)(nil), (*MetadataFeature)(nil)))
 
-		must(api.RegisterTypeSettings(Features[FoundryImmFeature]{},
+		must(api.RegisterTypeSettings(FoundryOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV2ImmFeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*FoundryImmFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*foundryOutputImmFeature)(nil), (*MetadataFeature)(nil)))
 
 		must(api.RegisterTypeSettings(SimpleTokenScheme{}, serix.TypeSettings{}.WithObjectType(uint8(TokenSchemeSimple))))
 		must(api.RegisterInterfaceObjects((*TokenScheme)(nil), (*SimpleTokenScheme)(nil)))
@@ -339,48 +339,48 @@ func V2API(protoParas *ProtocolParameters) API {
 	{
 		must(api.RegisterTypeSettings(NFTOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputNFT))))
 
-		must(api.RegisterTypeSettings(UnlockConditions[NFTUnlockCondition]{},
+		must(api.RegisterTypeSettings(NFTOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV2UnlockCondArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*NFTUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*NFTUnlockCondition)(nil), (*StorageDepositReturnUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*NFTUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*NFTUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*nftOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*nftOutputUnlockCondition)(nil), (*StorageDepositReturnUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*nftOutputUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*nftOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
 
-		must(api.RegisterTypeSettings(Features[NFTFeature]{},
+		must(api.RegisterTypeSettings(NFTOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV2FeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*NFTFeature)(nil), (*SenderFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*NFTFeature)(nil), (*MetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*NFTFeature)(nil), (*TagFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*nftOutputFeature)(nil), (*SenderFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*nftOutputFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*nftOutputFeature)(nil), (*TagFeature)(nil)))
 
-		must(api.RegisterTypeSettings(Features[NFTImmFeature]{},
+		must(api.RegisterTypeSettings(NFTOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV2ImmFeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*NFTImmFeature)(nil), (*IssuerFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*NFTImmFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*nftOutputImmFeature)(nil), (*IssuerFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*nftOutputImmFeature)(nil), (*MetadataFeature)(nil)))
 	}
 
 	{
 		must(api.RegisterTypeSettings(TransactionEssence{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
 
 		must(api.RegisterTypeSettings(UTXOInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputUTXO))))
-		must(api.RegisterTypeSettings(Inputs[TxEssenceInput]{},
+		must(api.RegisterTypeSettings(TxEssenceInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV2InputsArrRules),
 		))
-		must(api.RegisterInterfaceObjects((*TxEssenceInput)(nil), (*UTXOInput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceInput)(nil), (*UTXOInput)(nil)))
 
-		must(api.RegisterTypeSettings(Outputs[TxEssenceOutput]{},
+		must(api.RegisterTypeSettings(TxEssenceOutputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV2OutputsArrRules),
 		))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
-		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*BasicOutput)(nil)))
-		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*AliasOutput)(nil)))
-		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*FoundryOutput)(nil)))
-		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*NFTOutput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceOutput)(nil), (*BasicOutput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceOutput)(nil), (*AliasOutput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceOutput)(nil), (*FoundryOutput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceOutput)(nil), (*NFTOutput)(nil)))
 	}
 
 	{

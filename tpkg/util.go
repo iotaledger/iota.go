@@ -293,7 +293,7 @@ func RandTransactionEssenceWithInputOutputCount(inputCount int, outputCount int)
 }
 
 // RandTransactionEssenceWithInputs returns a random transaction essence with a specific slice of inputs.
-func RandTransactionEssenceWithInputs(inputs iotago.Inputs[iotago.TxEssenceInput]) *iotago.TransactionEssence {
+func RandTransactionEssenceWithInputs(inputs iotago.TxEssenceInputs) *iotago.TransactionEssence {
 	tx := &iotago.TransactionEssence{
 		NetworkID: TestNetworkID,
 	}
@@ -499,7 +499,7 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 
 	switch addrType {
 	case iotago.AddressEd25519:
-		dep.Conditions = iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{&iotago.AddressUnlockCondition{Address: RandEd25519Address()}}
+		dep.Conditions = iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: RandEd25519Address()}}
 	default:
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
@@ -514,7 +514,7 @@ func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
 			NetworkID: 14147312347886322761,
-			Inputs: iotago.Inputs[iotago.TxEssenceInput]{
+			Inputs: iotago.TxEssenceInputs{
 				&iotago.UTXOInput{
 					TransactionID: func() [iotago.TransactionIDLength]byte {
 						var b [iotago.TransactionIDLength]byte
@@ -524,10 +524,10 @@ func OneInputOutputTransaction() *iotago.Transaction {
 					TransactionOutputIndex: 0,
 				},
 			},
-			Outputs: iotago.Outputs[iotago.TxEssenceOutput]{
+			Outputs: iotago.TxEssenceOutputs{
 				&iotago.BasicOutput{
 					Amount: 1337,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: RandEd25519Address()},
 					},
 				},

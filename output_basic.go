@@ -6,8 +6,10 @@ import (
 )
 
 type (
-	BasicOutputUnlockCondition interface{ UnlockCondition }
-	BasicOutputFeature         interface{ Feature }
+	basicOutputUnlockCondition  interface{ UnlockCondition }
+	basicOutputFeature          interface{ Feature }
+	BasicOutputUnlockConditions = UnlockConditions[basicOutputUnlockCondition]
+	BasicOutputFeatures         = Features[basicOutputFeature]
 )
 
 // BasicOutputs is a slice of BasicOutput(s).
@@ -20,9 +22,9 @@ type BasicOutput struct {
 	// The native tokens held by the output.
 	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
 	// The unlock conditions on this output.
-	Conditions UnlockConditions[BasicOutputUnlockCondition] `serix:"2,mapKey=unlockConditions,omitempty"`
+	Conditions BasicOutputUnlockConditions `serix:"2,mapKey=unlockConditions,omitempty"`
 	// The features on the output.
-	Features Features[BasicOutputFeature] `serix:"3,mapKey=features,omitempty"`
+	Features BasicOutputFeatures `serix:"3,mapKey=features,omitempty"`
 }
 
 // IsSimpleTransfer tells whether this BasicOutput fulfills the criteria of being a simple transfer.

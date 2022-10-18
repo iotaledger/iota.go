@@ -69,20 +69,24 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 // InputsCommitment is a commitment to the inputs of a transaction.
 type InputsCommitment = [InputsCommitmentLength]byte
 
-type TxEssencePayload interface{ Payload }
-type TxEssenceInput interface{ Input }
-type TxEssenceOutput interface{ Output }
+type (
+	txEssenceInput   interface{ Input }
+	txEssenceOutput  interface{ Output }
+	TxEssencePayload interface{ Payload }
+	TxEssenceInputs  = Inputs[txEssenceInput]
+	TxEssenceOutputs = Outputs[txEssenceOutput]
+)
 
 // TransactionEssence is the essence part of a Transaction.
 type TransactionEssence struct {
 	// The network ID for which this essence is valid for.
 	NetworkID NetworkID `serix:"0,mapKey=networkId"`
 	// The inputs of this transaction.
-	Inputs Inputs[TxEssenceInput] `serix:"1,mapKey=inputs"`
+	Inputs TxEssenceInputs `serix:"1,mapKey=inputs"`
 	// The commitment to the referenced inputs.
 	InputsCommitment InputsCommitment `serix:"2,mapKey=inputsCommitment"`
 	// The outputs of this transaction.
-	Outputs Outputs[TxEssenceOutput] `serix:"3,mapKey=outputs"`
+	Outputs TxEssenceOutputs `serix:"3,mapKey=outputs"`
 	// The optional embedded payload.
 	Payload TxEssencePayload `serix:"4,optional,mapKey=payload"`
 }

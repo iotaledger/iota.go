@@ -32,7 +32,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})
@@ -54,14 +54,14 @@ func TestTransactionBuilder(t *testing.T) {
 			var (
 				basicOutput = &iotago.BasicOutput{
 					Amount:     1000,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{&iotago.AddressUnlockCondition{Address: &inputAddr}},
+					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: &inputAddr}},
 				}
 
 				nftOutput = &iotago.NFTOutput{
 					Amount:            1000,
 					NativeTokens:      nil,
 					NFTID:             tpkg.Rand32ByteArray(),
-					Conditions:        iotago.UnlockConditions[iotago.NFTUnlockCondition]{&iotago.AddressUnlockCondition{Address: &inputAddr}},
+					Conditions:        iotago.NFTOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: &inputAddr}},
 					Features:          nil,
 					ImmutableFeatures: nil,
 				}
@@ -69,7 +69,7 @@ func TestTransactionBuilder(t *testing.T) {
 				aliasOwnedByNFT = &iotago.AliasOutput{
 					Amount:  1000,
 					AliasID: tpkg.Rand32ByteArray(),
-					Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+					Conditions: iotago.AliasOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: nftOutput.Chain().ToAddress()},
 						&iotago.GovernorAddressUnlockCondition{Address: nftOutput.Chain().ToAddress()},
 					},
@@ -77,7 +77,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 				basicOwnedByAlias = &iotago.BasicOutput{
 					Amount:     1000,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{&iotago.AddressUnlockCondition{Address: aliasOwnedByNFT.Chain().ToAddress()}},
+					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: aliasOwnedByNFT.Chain().ToAddress()}},
 				}
 			)
 
@@ -88,7 +88,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: aliasOwnedByNFT.Chain().ToAddress(), InputID: inputID4.ID(), Input: basicOwnedByAlias}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 4000,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})
@@ -106,7 +106,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}).
@@ -125,7 +125,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})
@@ -149,7 +149,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})

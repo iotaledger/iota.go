@@ -14,8 +14,8 @@ var (
 	benchLargeTx = &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
 			NetworkID: tpkg.TestNetworkID,
-			Inputs: func() iotago.Inputs[iotago.TxEssenceInput] {
-				var inputs iotago.Inputs[iotago.TxEssenceInput]
+			Inputs: func() iotago.TxEssenceInputs {
+				var inputs iotago.TxEssenceInputs
 				for i := 0; i < iotago.MaxInputsCount; i++ {
 					inputs = append(inputs, &iotago.UTXOInput{
 						TransactionID:          tpkg.Rand32ByteArray(),
@@ -24,12 +24,12 @@ var (
 				}
 				return inputs
 			}(),
-			Outputs: func() iotago.Outputs[iotago.TxEssenceOutput] {
-				var outputs iotago.Outputs[iotago.TxEssenceOutput]
+			Outputs: func() iotago.TxEssenceOutputs {
+				var outputs iotago.TxEssenceOutputs
 				for i := 0; i < iotago.MaxOutputsCount; i++ {
 					outputs = append(outputs, &iotago.BasicOutput{
 						Amount: 100,
-						Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					})

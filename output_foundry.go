@@ -67,9 +67,12 @@ type FoundryOutputs []*FoundryOutput
 type FoundryOutputsSet map[FoundryID]*FoundryOutput
 
 type (
-	FoundryUnlockCondition interface{ UnlockCondition }
-	FoundryFeature         interface{ Feature }
-	FoundryImmFeature      interface{ Feature }
+	foundryOutputUnlockCondition  interface{ UnlockCondition }
+	foundryOutputFeature          interface{ Feature }
+	foundryOutputImmFeature       interface{ Feature }
+	FoundryOutputUnlockConditions = UnlockConditions[foundryOutputUnlockCondition]
+	FoundryOutputFeatures         = Features[foundryOutputFeature]
+	FoundryOutputImmFeatures      = Features[foundryOutputImmFeature]
 )
 
 // FoundryOutput is an output type which controls the supply of user defined native tokens.
@@ -83,11 +86,11 @@ type FoundryOutput struct {
 	// The token scheme this foundry uses.
 	TokenScheme TokenScheme `serix:"3,mapKey=tokenScheme"`
 	// The unlock conditions on this output.
-	Conditions UnlockConditions[FoundryUnlockCondition] `serix:"4,mapKey=unlockConditions,omitempty"`
+	Conditions FoundryOutputUnlockConditions `serix:"4,mapKey=unlockConditions,omitempty"`
 	// The feature on the output.
-	Features Features[FoundryFeature] `serix:"5,mapKey=features,omitempty"`
+	Features FoundryOutputFeatures `serix:"5,mapKey=features,omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures Features[FoundryImmFeature] `serix:"6,mapKey=immutableFeatures,omitempty"`
+	ImmutableFeatures FoundryOutputImmFeatures `serix:"6,mapKey=immutableFeatures,omitempty"`
 }
 
 func (f *FoundryOutput) Clone() Output {

@@ -69,7 +69,7 @@ func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name: "ok",
-			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.Inputs[iotago.TxEssenceInput]{
+			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
 				&iotago.UTXOInput{
 					TransactionID:          tpkg.RandTransactionID(),
 					TransactionOutputIndex: iotago.RefUTXOIndexMax,
@@ -81,7 +81,7 @@ func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
 		},
 		{
 			name: "wrong ref index",
-			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.Inputs[iotago.TxEssenceInput]{
+			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
 				&iotago.UTXOInput{
 					TransactionID:          tpkg.RandTransactionID(),
 					TransactionOutputIndex: iotago.RefUTXOIndexMax + 1,

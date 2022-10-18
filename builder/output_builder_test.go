@@ -34,12 +34,12 @@ func TestBasicOutputBuilder(t *testing.T) {
 	require.Equal(t, &iotago.BasicOutput{
 		Amount:       1337,
 		NativeTokens: iotago.NativeTokens{nt},
-		Conditions: iotago.UnlockConditions[iotago.BasicOutputUnlockCondition]{
+		Conditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 			&iotago.TimelockUnlockCondition{UnixTime: uint32(timelock)},
 			&iotago.ExpirationUnlockCondition{ReturnAddress: expirationTarget, UnixTime: uint32(expiration)},
 		},
-		Features: iotago.Features[iotago.BasicOutputFeature]{
+		Features: iotago.BasicOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
 		},
 	}, basicOutput)
@@ -72,14 +72,14 @@ func TestAliasOutputBuilder(t *testing.T) {
 		StateIndex:     1,
 		StateMetadata:  metadata,
 		FoundryCounter: 5,
-		Conditions: iotago.UnlockConditions[iotago.AliasUnlockCondition]{
+		Conditions: iotago.AliasOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 			&iotago.GovernorAddressUnlockCondition{Address: gov},
 		},
-		Features: iotago.Features[iotago.AliasFeature]{
+		Features: iotago.AliasOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
 		},
-		ImmutableFeatures: iotago.Features[iotago.AliasImmFeature]{
+		ImmutableFeatures: iotago.AliasOutputImmFeatures{
 			&iotago.SenderFeature{Address: immSender},
 			&iotago.MetadataFeature{Data: immMetadata},
 		},
@@ -121,13 +121,13 @@ func TestFoundryOutputBuilder(t *testing.T) {
 		Amount:       1337,
 		TokenScheme:  tokenScheme,
 		NativeTokens: iotago.NativeTokens{nt},
-		Conditions: iotago.UnlockConditions[iotago.FoundryUnlockCondition]{
+		Conditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAliasUnlockCondition{Address: aliasAddr},
 		},
-		Features: iotago.Features[iotago.FoundryFeature]{
+		Features: iotago.FoundryOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
 		},
-		ImmutableFeatures: iotago.Features[iotago.FoundryImmFeature]{
+		ImmutableFeatures: iotago.FoundryOutputImmFeatures{
 			&iotago.MetadataFeature{Data: immMetadata},
 		},
 	}, foundryOutput)
@@ -152,13 +152,13 @@ func TestNFTOutputBuilder(t *testing.T) {
 	require.Equal(t, &iotago.NFTOutput{
 		Amount:       1337,
 		NativeTokens: iotago.NativeTokens{nt},
-		Conditions: iotago.UnlockConditions[iotago.NFTUnlockCondition]{
+		Conditions: iotago.NFTOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
-		Features: iotago.Features[iotago.NFTFeature]{
+		Features: iotago.NFTOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
 		},
-		ImmutableFeatures: iotago.Features[iotago.NFTImmFeature]{
+		ImmutableFeatures: iotago.NFTOutputImmFeatures{
 			&iotago.MetadataFeature{Data: immMetadata},
 		},
 	}, nftOutput)
