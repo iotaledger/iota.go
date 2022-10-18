@@ -6,12 +6,12 @@ import (
 
 	"github.com/iotaledger/hive.go/core/serix"
 
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 func TestReceiptMilestoneOpt_DeSerialize(t *testing.T) {

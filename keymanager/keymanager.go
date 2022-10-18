@@ -4,7 +4,7 @@ import (
 	"crypto/ed25519"
 	"sort"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 // KeyRange defines a public key of a milestone including the range it is valid.

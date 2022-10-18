@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/core/serix"
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 const (

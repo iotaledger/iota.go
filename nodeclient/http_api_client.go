@@ -9,7 +9,7 @@ import (
 
 	"github.com/iotaledger/hive.go/core/serix"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 const (

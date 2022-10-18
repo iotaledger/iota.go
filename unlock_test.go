@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestUnlock_DeSerialize(t *testing.T) {

@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/builder"
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/builder"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestTransactionBuilder(t *testing.T) {

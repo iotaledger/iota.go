@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 type hashable interface {

@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/util"
+	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (

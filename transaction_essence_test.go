@@ -4,11 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 
 	"github.com/stretchr/testify/assert"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 func TestTransactionEssenceSelector(t *testing.T) {

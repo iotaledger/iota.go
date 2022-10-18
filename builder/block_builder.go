@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/nodeclient"
-	"github.com/iotaledger/iota.go/v3/pow"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/nodeclient"
+	"github.com/iotaledger/iota.go/v4/pow"
 )
 
 const (

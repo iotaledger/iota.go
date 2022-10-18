@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/iotaledger/hive.go/core/serix"
-	iotago "github.com/iotaledger/iota.go/v3"
-	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	iotago "github.com/iotaledger/iota.go/v4"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 var (

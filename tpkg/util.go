@@ -16,7 +16,7 @@ import (
 
 	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 // Must panics if the given error is not nil.

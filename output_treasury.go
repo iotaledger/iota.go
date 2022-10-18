@@ -1,7 +1,7 @@
 package iotago
 
 import (
-	"github.com/iotaledger/iota.go/v3/util"
+	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // TreasuryOutput is an output which holds the treasury of a network.

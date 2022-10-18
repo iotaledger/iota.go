@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
 )
 
 var nullSeed = make([]byte, std.SeedSize)

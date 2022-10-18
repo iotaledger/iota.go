@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/iotaledger/iota.go/v3/bech32/internal/base32"
+	"github.com/iotaledger/iota.go/v4/bech32/internal/base32"
 )
 
 func TestMain(m *testing.M) {

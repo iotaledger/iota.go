@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/iotaledger/iota.go/v3/math"
+	"github.com/iotaledger/iota.go/v4/math"
 )
 
 func TestMain(m *testing.M) {

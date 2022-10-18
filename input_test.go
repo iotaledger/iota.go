@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 func TestInputsSyntacticalUnique(t *testing.T) {

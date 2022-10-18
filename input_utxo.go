@@ -3,7 +3,7 @@ package iotago
 import (
 	"encoding/binary"
 
-	"github.com/iotaledger/iota.go/v3/util"
+	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (

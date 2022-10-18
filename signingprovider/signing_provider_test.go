@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/keymanager"
-	"github.com/iotaledger/iota.go/v3/signingprovider"
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/keymanager"
+	"github.com/iotaledger/iota.go/v4/signingprovider"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestInMemoryEd25519MilestoneSignerProvider(t *testing.T) {

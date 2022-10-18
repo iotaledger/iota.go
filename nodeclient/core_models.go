@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 // TODO: use the API instance from Client instead.

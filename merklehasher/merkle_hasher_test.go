@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/merklehasher"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/merklehasher"
 
 	// import implementation.
 	_ "golang.org/x/crypto/blake2b"

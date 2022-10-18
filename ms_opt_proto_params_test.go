@@ -3,7 +3,7 @@ package iotago_test
 import (
 	"testing"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 func TestProtocolParamsMilestoneOpt_DeSerialize(t *testing.T) {

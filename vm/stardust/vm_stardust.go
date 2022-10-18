@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/vm"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/vm"
 )
 
 // NewVirtualMachine returns an VirtualMachine adhering to the Stardust protocol.

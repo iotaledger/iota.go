@@ -5,7 +5,7 @@ import (
 
 	"github.com/iotaledger/hive.go/core/serix"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/bech32"
+	"github.com/iotaledger/iota.go/v4/bech32"
 )
 
 // AddressType defines the type of addresses.

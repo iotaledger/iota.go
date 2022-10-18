@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/nodeclient"
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/nodeclient"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestOutputsQuery_Build(t *testing.T) {

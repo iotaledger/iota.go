@@ -12,7 +12,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 const (

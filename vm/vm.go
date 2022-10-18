@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 // VirtualMachine executes and validates transactions.

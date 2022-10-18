@@ -2,7 +2,7 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/util"
+	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // TimelockUnlockCondition is an unlock condition which puts a time constraint on an output depending

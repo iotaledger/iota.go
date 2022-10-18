@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
 )
 
 var message = []byte("Zcash")

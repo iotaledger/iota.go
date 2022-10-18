@@ -1,7 +1,7 @@
 package iotago
 
 import (
-	"github.com/iotaledger/iota.go/v3/util"
+	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // SignatureUnlock holds a signature which unlocks inputs.

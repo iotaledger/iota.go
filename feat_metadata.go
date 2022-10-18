@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/util"
+	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // MetadataFeature is a feature which simply holds binary data to be freely

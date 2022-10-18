@@ -2,7 +2,7 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v3/util"
+	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // GovernorAddressUnlockCondition is an UnlockCondition defining the governor identity for an AliasOutput.

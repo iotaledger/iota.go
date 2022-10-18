@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	iotagoEd25519 "github.com/iotaledger/iota.go/v3/ed25519"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
 )
 
 const (

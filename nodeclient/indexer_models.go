@@ -3,7 +3,7 @@ package nodeclient
 import (
 	"github.com/pasztorpisti/qs"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 // IndexerResponse is the standard successful response by the indexer.

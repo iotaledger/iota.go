@@ -12,9 +12,9 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stretchr/testify/require"
 
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/nodeclient"
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/nodeclient"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestMain(m *testing.M) {

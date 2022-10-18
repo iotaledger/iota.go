@@ -6,7 +6,7 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/iota.go/v3/util"
+	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (

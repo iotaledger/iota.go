@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 var (

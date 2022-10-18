@@ -3,7 +3,7 @@ package builder
 import (
 	"fmt"
 
-	iotago "github.com/iotaledger/iota.go/v3"
+	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 // NewBasicOutputBuilder creates a new BasicOutputBuilder with the required target address and deposit amount.

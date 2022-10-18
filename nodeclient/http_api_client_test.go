@@ -14,9 +14,9 @@ import (
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/iotaledger/hive.go/core/serix"
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/nodeclient"
-	"github.com/iotaledger/iota.go/v3/tpkg"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/nodeclient"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 const (

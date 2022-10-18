@@ -3,8 +3,8 @@ package signingprovider
 import (
 	"crypto/ed25519"
 
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/keymanager"
+	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/keymanager"
 )
 
 // MilestoneSignerProvider provides milestone signers.
