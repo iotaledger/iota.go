@@ -72,7 +72,7 @@ func (s *StateControllerAddressUnlockCondition) MarshalJSON() ([]byte, error) {
 	jUnlockCond := &jsonStateControllerAddressUnlockCondition{}
 	jUnlockCond.Type = int(UnlockConditionStateControllerAddress)
 	var err error
-	jUnlockCond.Address, err = addressToJSONRawMsg(s.Address)
+	jUnlockCond.Address, err = AddressToJSONRawMsg(s.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (j *jsonStateControllerAddressUnlockCondition) ToSerializable() (serializer
 	unlockCond := &StateControllerAddressUnlockCondition{}
 
 	var err error
-	unlockCond.Address, err = addressFromJSONRawMsg(j.Address)
+	unlockCond.Address, err = AddressFromJSONRawMsg(j.Address)
 	if err != nil {
 		return nil, err
 	}

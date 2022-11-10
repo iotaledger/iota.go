@@ -92,7 +92,7 @@ func (s *StorageDepositReturnUnlockCondition) MarshalJSON() ([]byte, error) {
 	jUnlockCond := &jsonStorageDepositReturnUnlockCondition{Amount: EncodeUint64(s.Amount)}
 	jUnlockCond.Type = int(UnlockConditionStorageDepositReturn)
 	var err error
-	jUnlockCond.ReturnAddress, err = addressToJSONRawMsg(s.ReturnAddress)
+	jUnlockCond.ReturnAddress, err = AddressToJSONRawMsg(s.ReturnAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (j *jsonStorageDepositReturnUnlockCondition) ToSerializable() (serializer.S
 		return nil, err
 	}
 
-	unlockCond.ReturnAddress, err = addressFromJSONRawMsg(j.ReturnAddress)
+	unlockCond.ReturnAddress, err = AddressFromJSONRawMsg(j.ReturnAddress)
 	if err != nil {
 		return nil, err
 	}
