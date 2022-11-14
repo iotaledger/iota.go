@@ -74,7 +74,7 @@ func (s *ImmutableAliasUnlockCondition) MarshalJSON() ([]byte, error) {
 	jUnlockCond := &jsonImmutableAliasUnlockCondition{}
 	jUnlockCond.Type = int(UnlockConditionImmutableAlias)
 	var err error
-	jUnlockCond.Address, err = addressToJSONRawMsg(s.Address)
+	jUnlockCond.Address, err = AddressToJSONRawMsg(s.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ type jsonImmutableAliasUnlockCondition struct {
 func (j *jsonImmutableAliasUnlockCondition) ToSerializable() (serializer.Serializable, error) {
 	unlockCond := &ImmutableAliasUnlockCondition{}
 
-	addr, err := addressFromJSONRawMsg(j.Address)
+	addr, err := AddressFromJSONRawMsg(j.Address)
 	if err != nil {
 		return nil, err
 	}

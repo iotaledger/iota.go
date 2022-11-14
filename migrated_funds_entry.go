@@ -150,7 +150,7 @@ func (j *jsonMigratedFundsEntry) ToSerializable() (serializer.Serializable, erro
 		return nil, err
 	}
 
-	payload.Address, err = addressFromJSONRawMsg(j.Address)
+	payload.Address, err = AddressFromJSONRawMsg(j.Address)
 	if err != nil {
 		return nil, err
 	}

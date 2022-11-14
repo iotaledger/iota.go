@@ -97,7 +97,7 @@ func (s *ExpirationUnlockCondition) MarshalJSON() ([]byte, error) {
 	}
 	jExpUnlockCond.Type = int(UnlockConditionExpiration)
 	var err error
-	jExpUnlockCond.ReturnAddress, err = addressToJSONRawMsg(s.ReturnAddress)
+	jExpUnlockCond.ReturnAddress, err = AddressToJSONRawMsg(s.ReturnAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (j *jsonExpirationUnlockCondition) ToSerializable() (serializer.Serializabl
 	}
 
 	var err error
-	unlockCondExp.ReturnAddress, err = addressFromJSONRawMsg(j.ReturnAddress)
+	unlockCondExp.ReturnAddress, err = AddressFromJSONRawMsg(j.ReturnAddress)
 	if err != nil {
 		return nil, err
 	}

@@ -168,7 +168,7 @@ func addrReadGuard(supportedAddr AddressTypeSet) serializer.SerializableReadGuar
 	}
 }
 
-func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (Address, error) {
+func AddressFromJSONRawMsg(jRawMsg *json.RawMessage) (Address, error) {
 	jsonAddr, err := DeserializeObjectFromJSON(jRawMsg, jsonAddressSelector)
 	if err != nil {
 		return nil, fmt.Errorf("can't decode address type from JSON: %w", err)
@@ -181,7 +181,7 @@ func addressFromJSONRawMsg(jRawMsg *json.RawMessage) (Address, error) {
 	return addr.(Address), nil
 }
 
-func addressToJSONRawMsg(addr serializer.Serializable) (*json.RawMessage, error) {
+func AddressToJSONRawMsg(addr serializer.Serializable) (*json.RawMessage, error) {
 	addrJsonBytes, err := addr.MarshalJSON()
 	if err != nil {
 		return nil, err
