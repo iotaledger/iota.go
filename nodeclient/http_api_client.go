@@ -423,7 +423,28 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 }
 
 // OutputByID gets an output by its ID from the node.
-func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) (*OutputResponse, error) {
+func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) (iotago.Output, error) {
+	query := fmt.Sprintf(RouteOutput, outputID.ToHex())
+
+	res := &RawDataEnvelope{}
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
+		return nil, err
+	}
+
+	output, err := iotago.OutputSelector(uint32(res.Data[0]))
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := output.Deserialize(res.Data, serializer.DeSeriModeNoValidation, nil); err != nil {
+		return nil, err
+	}
+
+	return output, nil
+}
+
+// OutputWithMetadataByID gets an output with its metadata by its ID from the node.
+func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotago.OutputID) (*OutputResponse, error) {
 	query := fmt.Sprintf(RouteOutput, outputID.ToHex())
 
 	res := &OutputResponse{}
