@@ -300,6 +300,31 @@ func TestClient_OutputByID(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
+	data, err := v2API.Encode(originOutput)
+	require.NoError(t, err)
+
+	txID := tpkg.Rand32ByteArray()
+
+	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
+	utxoInputId := utxoInput.ID()
+
+	gock.New(nodeAPIUrl).
+		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputId.ToHex())).
+		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
+		Reply(200).
+		Body(bytes.NewReader(data))
+
+	nodeAPI := nodeClient(t)
+	responseOutput, err := nodeAPI.OutputByID(context.Background(), utxoInputId)
+	require.NoError(t, err)
+
+	require.EqualValues(t, originOutput, responseOutput)
+}
+
+func TestClient_OutputWithMetadataByID(t *testing.T) {
+	defer gock.Off()
+
+	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 	sigDepJson, err := v2API.JSONEncode(originOutput)
 	require.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
@@ -326,7 +351,7 @@ func TestClient_OutputByID(t *testing.T) {
 		JSON(originRes)
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.OutputByID(context.Background(), utxoInputId)
+	resp, err := nodeAPI.OutputWithMetadataByID(context.Background(), utxoInputId)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 

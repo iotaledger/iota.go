@@ -377,10 +377,10 @@ func V2API(protoParams *ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV2OutputsArrRules),
 		))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
-		must(api.RegisterInterfaceObjects((*txEssenceOutput)(nil), (*BasicOutput)(nil)))
-		must(api.RegisterInterfaceObjects((*txEssenceOutput)(nil), (*AliasOutput)(nil)))
-		must(api.RegisterInterfaceObjects((*txEssenceOutput)(nil), (*FoundryOutput)(nil)))
-		must(api.RegisterInterfaceObjects((*txEssenceOutput)(nil), (*NFTOutput)(nil)))
+		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*BasicOutput)(nil)))
+		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*AliasOutput)(nil)))
+		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*FoundryOutput)(nil)))
+		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*NFTOutput)(nil)))
 	}
 
 	{

@@ -71,10 +71,10 @@ type InputsCommitment = [InputsCommitmentLength]byte
 
 type (
 	txEssenceInput   interface{ Input }
-	txEssenceOutput  interface{ Output }
+	TxEssenceOutput  interface{ Output }
 	TxEssencePayload interface{ Payload }
 	TxEssenceInputs  = Inputs[txEssenceInput]
-	TxEssenceOutputs = Outputs[txEssenceOutput]
+	TxEssenceOutputs = Outputs[TxEssenceOutput]
 )
 
 // TransactionEssence is the essence part of a Transaction.

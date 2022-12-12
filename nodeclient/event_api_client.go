@@ -218,15 +218,15 @@ func subscribeToTopic[T any](eac *EventAPIClient, topic string, deseriFunc func(
 }
 
 func (eac *EventAPIClient) subscribeToOutputsTopic(topic string) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	return subscribeToTopic[OutputResponse](eac, topic, jsonDeserializer[OutputResponse])
+	return subscribeToTopic(eac, topic, jsonDeserializer[OutputResponse])
 }
 
 func (eac *EventAPIClient) subscribeToBlockMetadataTopic(topic string) (<-chan *BlockMetadataResponse, *EventAPIClientSubscription) {
-	return subscribeToTopic[BlockMetadataResponse](eac, topic, jsonDeserializer[BlockMetadataResponse])
+	return subscribeToTopic(eac, topic, jsonDeserializer[BlockMetadataResponse])
 }
 
 func (eac *EventAPIClient) subscribeToBlockMetadataBlockTopic(topic string) (<-chan *iotago.Block, *EventAPIClientSubscription) {
-	return subscribeToTopic[iotago.Block](eac, topic, func(payload []byte) (*iotago.Block, error) {
+	return subscribeToTopic(eac, topic, func(payload []byte) (*iotago.Block, error) {
 		metadataRes := &BlockMetadataResponse{}
 		if err := json.Unmarshal(payload, metadataRes); err != nil {
 			sendErrOrDrop(eac.Errors, err)
@@ -238,7 +238,7 @@ func (eac *EventAPIClient) subscribeToBlockMetadataBlockTopic(topic string) (<-c
 }
 
 func (eac *EventAPIClient) subscribeToBlocksTopic(topic string) (<-chan *iotago.Block, *EventAPIClientSubscription) {
-	return subscribeToTopic[iotago.Block](eac, topic, func(payload []byte) (*iotago.Block, error) {
+	return subscribeToTopic(eac, topic, func(payload []byte) (*iotago.Block, error) {
 		block := &iotago.Block{}
 		if _, err := eac.Client.opts.iotagoAPI.Decode(payload, block); err != nil {
 			return nil, err
@@ -248,15 +248,15 @@ func (eac *EventAPIClient) subscribeToBlocksTopic(topic string) (<-chan *iotago.
 }
 
 func (eac *EventAPIClient) subscribeToMilestoneInfoTopic(topic string) (<-chan *MilestoneInfo, *EventAPIClientSubscription) {
-	return subscribeToTopic[MilestoneInfo](eac, topic, jsonDeserializer[MilestoneInfo])
+	return subscribeToTopic(eac, topic, jsonDeserializer[MilestoneInfo])
 }
 
 func (eac *EventAPIClient) subscribeToMilestoneTopic(topic string) (<-chan *iotago.Milestone, *EventAPIClientSubscription) {
-	return subscribeToTopic[iotago.Milestone](eac, topic, jsonDeserializer[iotago.Milestone])
+	return subscribeToTopic(eac, topic, jsonDeserializer[iotago.Milestone])
 }
 
 func (eac *EventAPIClient) subscribeToReceiptsTopic(topic string) (<-chan *iotago.ReceiptMilestoneOpt, *EventAPIClientSubscription) {
-	return subscribeToTopic[iotago.ReceiptMilestoneOpt](eac, topic, jsonDeserializer[iotago.ReceiptMilestoneOpt])
+	return subscribeToTopic(eac, topic, jsonDeserializer[iotago.ReceiptMilestoneOpt])
 }
 
 // Blocks returns a channel of newly received blocks.

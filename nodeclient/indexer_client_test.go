@@ -1,8 +1,8 @@
 package nodeclient_test
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -90,23 +90,11 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	sigDepJson, err := v2API.JSONEncode(originOutput)
+	data, err := v2API.Encode(originOutput)
 	require.NoError(t, err)
-	rawMsgSigDepJson := json.RawMessage(sigDepJson)
 
 	txID := tpkg.Rand32ByteArray()
 	fakeOutputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 1).ToHex()
-	hexTxID := iotago.EncodeHex(txID[:])
-
-	outputRes := &nodeclient.OutputResponse{
-		Metadata: &nodeclient.OutputMetadataResponse{
-			TransactionID: hexTxID,
-			OutputIndex:   3,
-			Spent:         true,
-			LedgerIndex:   1337,
-		},
-		RawOutput: &rawMsgSigDepJson,
-	}
 
 	originRoutes := &nodeclient.RoutesResponse{
 		Routes: []string{"indexer/v1"},
@@ -149,8 +137,9 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Persist().
 		Get(outputRoute).
+		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
-		JSON(outputRes)
+		Body(bytes.NewReader(data))
 
 	client := nodeClient(t)
 
