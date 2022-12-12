@@ -99,13 +99,9 @@ func (resultSet *IndexerResultSet) Outputs() (iotago.Outputs, error) {
 	outputIDs := resultSet.Response.Items.MustOutputIDs()
 	outputs := make(iotago.Outputs, len(outputIDs))
 	for i, outputID := range outputIDs {
-		res, err := resultSet.client.OutputByID(resultSet.ctx, outputID)
+		output, err := resultSet.client.OutputByID(resultSet.ctx, outputID)
 		if err != nil {
 			return nil, fmt.Errorf("unable to fetch output %s: %w", outputID.ToHex(), err)
-		}
-		output, err := res.Output()
-		if err != nil {
-			return nil, fmt.Errorf("unable to build output %s: %w", outputID.ToHex(), err)
 		}
 		outputs[i] = output
 	}
@@ -162,12 +158,11 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 	}
 
 	outputID := res.Items.MustOutputIDs()[0]
-	outputRes, err := client.core.OutputByID(ctx, outputID)
+	output, err := client.core.OutputByID(ctx, outputID)
 	if err != nil {
 		return nil, nil, err
 	}
-	out, err := outputRes.Output()
-	return &outputID, out, err
+	return &outputID, output, err
 }
 
 func (client *indexerClient) Alias(ctx context.Context, aliasID iotago.AliasID) (*iotago.OutputID, *iotago.AliasOutput, error) {

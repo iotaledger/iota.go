@@ -1,14 +1,15 @@
 package nodeclient_test
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
+	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/nodeclient"
 	"github.com/iotaledger/iota.go/v3/tpkg"
@@ -90,25 +91,13 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	originOutput.NativeTokens = iotago.NativeTokens{}
-	originOutput.Features = iotago.Features{}
-	sigDepJson, err := originOutput.MarshalJSON()
+	originOutput.NativeTokens = iotago.NativeTokens(nil)
+	originOutput.Features = iotago.Features(nil)
+	data, err := originOutput.Serialize(serializer.DeSeriModeNoValidation, nil)
 	require.NoError(t, err)
-	rawMsgSigDepJson := json.RawMessage(sigDepJson)
 
 	txID := tpkg.Rand32ByteArray()
 	fakeOutputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 1).ToHex()
-	hexTxID := iotago.EncodeHex(txID[:])
-
-	outputRes := &nodeclient.OutputResponse{
-		Metadata: &nodeclient.OutputMetadataResponse{
-			TransactionID: hexTxID,
-			OutputIndex:   3,
-			Spent:         true,
-			LedgerIndex:   1337,
-		},
-		RawOutput: &rawMsgSigDepJson,
-	}
 
 	originRoutes := &nodeclient.RoutesResponse{
 		Routes: []string{"indexer/v1"},
@@ -151,8 +140,9 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	gock.New(nodeAPIUrl).
 		Persist().
 		Get(outputRoute).
+		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
-		JSON(outputRes)
+		Body(bytes.NewReader(data))
 
 	client := nodeclient.New(nodeAPIUrl)
 
