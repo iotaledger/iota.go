@@ -29,6 +29,15 @@ func (s *GovernorAddressUnlockCondition) VBytes(rentStruct *RentStructure, _ VBy
 		s.Address.VBytes(rentStruct, nil)
 }
 
+func (s *GovernorAddressUnlockCondition) ByteSizeKey() uint64 {
+	return 0 + s.Address.ByteSizeKey()
+}
+
+func (s *GovernorAddressUnlockCondition) ByteSizeData() uint64 {
+	return serializer.SmallTypeDenotationByteSize +
+		s.Address.ByteSizeData()
+}
+
 func (s *GovernorAddressUnlockCondition) Equal(other UnlockCondition) bool {
 	otherUnlockCond, is := other.(*GovernorAddressUnlockCondition)
 	if !is {

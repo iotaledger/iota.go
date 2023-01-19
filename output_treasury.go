@@ -34,6 +34,14 @@ func (t *TreasuryOutput) VBytes(_ *RentStructure, _ VBytesFunc) uint64 {
 	return 0
 }
 
+func (t *TreasuryOutput) ByteSizeKey() uint64 {
+	return 0
+}
+
+func (t *TreasuryOutput) ByteSizeData() uint64 {
+	return 0
+}
+
 func (t *TreasuryOutput) Deposit() uint64 {
 	return t.Amount
 }

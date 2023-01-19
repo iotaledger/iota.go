@@ -29,6 +29,15 @@ func (s *StateControllerAddressUnlockCondition) VBytes(rentStruct *RentStructure
 		s.Address.VBytes(rentStruct, nil)
 }
 
+func (s *StateControllerAddressUnlockCondition) ByteSizeKey() uint64 {
+	return 0 + s.Address.ByteSizeKey()
+}
+
+func (s *StateControllerAddressUnlockCondition) ByteSizeData() uint64 {
+	return serializer.SmallTypeDenotationByteSize +
+		s.Address.ByteSizeData()
+}
+
 func (s *StateControllerAddressUnlockCondition) Equal(other UnlockCondition) bool {
 	otherUnlockCond, is := other.(*StateControllerAddressUnlockCondition)
 	if !is {

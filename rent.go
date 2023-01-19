@@ -151,6 +151,10 @@ type NonEphemeralObject interface {
 	// The override parameter acts as an escape hatch in case the cost needs to be adjusted
 	// according to some external properties outside the NonEphemeralObject.
 	VBytes(rentStruct *RentStructure, override VBytesFunc) uint64
+	// ByteSizeKey returns the number of bytes needed to store the key.
+	ByteSizeKey() uint64
+	// ByteSizeData returns the number of bytes needed to store the data.
+	ByteSizeData() uint64
 }
 
 // VBytesFunc is a function which computes the virtual byte cost of a NonEphemeralObject.

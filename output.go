@@ -35,6 +35,15 @@ func outputOffsetVByteCost(rentStruct *RentStructure) uint64 {
 		rentStruct.VBFactorData.Multiply(BlockIDLength+serializer.UInt32ByteSize+serializer.UInt32ByteSize)
 }
 
+func outputOffsetByteSizeKey() uint64 {
+	return OutputIDLength
+}
+
+func outputOffsetByteSizeData() uint64 {
+	// included block id, conf ms index, conf ms ts
+	return BlockIDLength + serializer.UInt32ByteSize + serializer.UInt32ByteSize
+}
+
 // OutputID defines the identifier for an UTXO which consists
 // out of the referenced TransactionID and the output's index.
 type OutputID [OutputIDLength]byte

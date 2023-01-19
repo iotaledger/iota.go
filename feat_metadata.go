@@ -30,6 +30,14 @@ func (s *MetadataFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64
 	return rentStruct.VBFactorData.Multiply(uint64(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
 }
 
+func (s *MetadataFeature) ByteSizeKey() uint64 {
+	return 0
+}
+
+func (s *MetadataFeature) ByteSizeData() uint64 {
+	return uint64(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data))
+}
+
 func (s *MetadataFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*MetadataFeature)
 	if !is {

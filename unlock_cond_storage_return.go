@@ -36,6 +36,15 @@ func (s *StorageDepositReturnUnlockCondition) VBytes(rentStruct *RentStructure, 
 		s.ReturnAddress.VBytes(rentStruct, nil)
 }
 
+func (s *StorageDepositReturnUnlockCondition) ByteSizeKey() uint64 {
+	return 0 + s.ReturnAddress.ByteSizeKey()
+}
+
+func (s *StorageDepositReturnUnlockCondition) ByteSizeData() uint64 {
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize +
+		s.ReturnAddress.ByteSizeData()
+}
+
 func (s *StorageDepositReturnUnlockCondition) Equal(other UnlockCondition) bool {
 	otherBlock, is := other.(*StorageDepositReturnUnlockCondition)
 	if !is {

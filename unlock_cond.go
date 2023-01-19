@@ -86,6 +86,23 @@ func (f UnlockConditions) VBytes(rentStruct *RentStructure, override VBytesFunc)
 	return rentStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
 }
 
+func (f UnlockConditions) ByteSizeKey() uint64 {
+	var size uint64 = 0
+	for _, unlockCond := range f {
+		size += unlockCond.ByteSizeKey()
+	}
+	return size
+}
+
+func (f UnlockConditions) ByteSizeData() uint64 {
+	// length prefix
+	var size uint64 = serializer.OneByte
+	for _, unlockCond := range f {
+		size += unlockCond.ByteSizeData()
+	}
+	return size
+}
+
 // Clone clones the UnlockConditions.
 func (f UnlockConditions) Clone() UnlockConditions {
 	cpy := make(UnlockConditions, len(f))

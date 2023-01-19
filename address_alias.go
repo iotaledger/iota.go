@@ -51,6 +51,14 @@ func (aliasAddr *AliasAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) u
 	return rentStruct.VBFactorData.Multiply(AliasAddressSerializedBytesSize)
 }
 
+func (aliasAddr *AliasAddress) ByteSizeKey() uint64 {
+	return 0
+}
+
+func (aliasAddr *AliasAddress) ByteSizeData() uint64 {
+	return AliasAddressSerializedBytesSize
+}
+
 func (aliasAddr *AliasAddress) Key() string {
 	return string(append([]byte{byte(AddressAlias)}, (*aliasAddr)[:]...))
 }

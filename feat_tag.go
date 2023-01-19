@@ -32,6 +32,14 @@ func (s *TagFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) uint64 {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.OneByte + uint64(len(s.Tag)))
 }
 
+func (s *TagFeature) ByteSizeKey() uint64 {
+	return 0
+}
+
+func (s *TagFeature) ByteSizeData() uint64 {
+	return serializer.SmallTypeDenotationByteSize + serializer.OneByte + uint64(len(s.Tag))
+}
+
 func (s *TagFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*TagFeature)
 	if !is {

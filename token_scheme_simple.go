@@ -45,6 +45,16 @@ func (s *SimpleTokenScheme) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint
 		rentStruct.VBFactorData.Multiply(Uint256ByteSize+Uint256ByteSize+Uint256ByteSize)
 }
 
+func (s *SimpleTokenScheme) ByteSizeKey() uint64 {
+	return 0
+}
+
+func (s *SimpleTokenScheme) ByteSizeData() uint64 {
+	return serializer.OneByte +
+		// minted/melted supply, max. supply
+		Uint256ByteSize + Uint256ByteSize + Uint256ByteSize
+}
+
 func (s *SimpleTokenScheme) Type() TokenSchemeType {
 	return TokenSchemeSimple
 }

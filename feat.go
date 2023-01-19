@@ -64,6 +64,23 @@ func (f Features) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 	return rentStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
 }
 
+func (f Features) ByteSizeKey() uint64 {
+	var size uint64 = 0
+	for _, feat := range f {
+		size += feat.ByteSizeKey()
+	}
+	return size
+}
+
+func (f Features) ByteSizeData() uint64 {
+	// length prefix
+	var size uint64 = serializer.OneByte
+	for _, feat := range f {
+		size += feat.ByteSizeData()
+	}
+	return size
+}
+
 func (f Features) ToSerializables() serializer.Serializables {
 	seris := make(serializer.Serializables, len(f))
 	for i, x := range f {

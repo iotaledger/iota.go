@@ -118,6 +118,23 @@ func (n NativeTokens) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 	return rentStruct.VBFactorData.Multiply(uint64(serializer.OneByte + len(n)*NativeTokenVByteCost))
 }
 
+func (n NativeTokens) ByteSizeKey() uint64 {
+	var size uint64 = 0
+	for _, nativeToken := range n {
+		size += nativeToken.ByteSizeKey()
+	}
+	return size
+}
+
+func (n NativeTokens) ByteSizeData() uint64 {
+	// length prefix
+	var size uint64 = serializer.OneByte
+	for _, nativeToken := range n {
+		size += nativeToken.ByteSizeData()
+	}
+	return size
+}
+
 func (n NativeTokens) ToSerializables() serializer.Serializables {
 	seris := make(serializer.Serializables, len(n))
 	for i, x := range n {
@@ -170,6 +187,14 @@ func (n *NativeToken) Clone() *NativeToken {
 
 func (n *NativeToken) VBytes(_ *RentStructure, _ VBytesFunc) uint64 {
 	return NativeTokenVByteCost
+}
+
+func (n *NativeToken) ByteSizeKey() uint64 {
+	return 0
+}
+
+func (n *NativeToken) ByteSizeData() uint64 {
+	return NativeTokenIDLength + Uint256ByteSize
 }
 
 // Equal checks whether other is equal to this NativeToken.

@@ -222,6 +222,25 @@ func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		n.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
+func (n *NFTOutput) ByteSizeKey() uint64 {
+	return outputOffsetByteSizeKey() +
+		n.NativeTokens.ByteSizeKey() +
+		n.Conditions.ByteSizeKey() +
+		n.Features.ByteSizeKey() +
+		n.ImmutableFeatures.ByteSizeKey()
+}
+
+func (n *NFTOutput) ByteSizeData() uint64 {
+	return outputOffsetByteSizeData() +
+		// prefix + amount
+		serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize +
+		n.NativeTokens.ByteSizeData() +
+		NFTIDLength +
+		n.Conditions.ByteSizeData() +
+		n.Features.ByteSizeData() +
+		n.ImmutableFeatures.ByteSizeData()
+}
+
 func (n *NFTOutput) ValidateStateTransition(transType ChainTransitionType, next ChainConstrainedOutput, semValCtx *SemanticValidationContext) error {
 	var err error
 	switch transType {

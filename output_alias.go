@@ -291,6 +291,27 @@ func (a *AliasOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		a.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
+func (a *AliasOutput) ByteSizeKey() uint64 {
+	return outputOffsetByteSizeKey() +
+		a.NativeTokens.ByteSizeKey() +
+		a.Conditions.ByteSizeKey() +
+		a.Features.ByteSizeKey() +
+		a.ImmutableFeatures.ByteSizeKey()
+}
+
+func (a *AliasOutput) ByteSizeData() uint64 {
+	return outputOffsetByteSizeData() +
+		// prefix + amount
+		serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize +
+		a.NativeTokens.ByteSizeData() +
+		AliasIDLength +
+		// state index, state meta length, state meta, foundry counter
+		uint64(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize) +
+		a.Conditions.ByteSizeData() +
+		a.Features.ByteSizeData() +
+		a.ImmutableFeatures.ByteSizeData()
+}
+
 //   - For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either
 //     its AliasID is zeroed and StateIndex and FoundryCounter are zero or an input AliasOutput with the same AliasID.
 //   - On alias state transitions:

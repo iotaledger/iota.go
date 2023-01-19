@@ -51,6 +51,14 @@ func (nftAddr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint6
 	return rentStruct.VBFactorData.Multiply(NFTAddressSerializedBytesSize)
 }
 
+func (nftAddr *NFTAddress) ByteSizeKey() uint64 {
+	return 0
+}
+
+func (nftAddr *NFTAddress) ByteSizeData() uint64 {
+	return NFTAddressSerializedBytesSize
+}
+
 func (nftAddr *NFTAddress) Key() string {
 	return string(append([]byte{byte(AddressNFT)}, (*nftAddr)[:]...))
 }

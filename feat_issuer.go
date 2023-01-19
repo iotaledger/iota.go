@@ -33,6 +33,15 @@ func (s *IssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		s.Address.VBytes(rentStruct, nil)
 }
 
+func (s *IssuerFeature) ByteSizeKey() uint64 {
+	return 0 + s.Address.ByteSizeKey()
+}
+
+func (s *IssuerFeature) ByteSizeData() uint64 {
+	return serializer.SmallTypeDenotationByteSize +
+		s.Address.ByteSizeData()
+}
+
 func (s *IssuerFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*IssuerFeature)
 	if !is {

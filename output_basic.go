@@ -127,6 +127,22 @@ func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		e.Features.VBytes(rentStruct, nil)
 }
 
+func (e *BasicOutput) ByteSizeKey() uint64 {
+	return outputOffsetByteSizeKey() +
+		e.NativeTokens.ByteSizeKey() +
+		e.Conditions.ByteSizeKey() +
+		e.Features.ByteSizeKey()
+}
+
+func (e *BasicOutput) ByteSizeData() uint64 {
+	return outputOffsetByteSizeData() +
+		// prefix + amount
+		serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize +
+		e.NativeTokens.ByteSizeData() +
+		e.Conditions.ByteSizeData() +
+		e.Features.ByteSizeData()
+}
+
 func (e *BasicOutput) NativeTokenList() NativeTokens {
 	return e.NativeTokens
 }

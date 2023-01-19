@@ -38,6 +38,15 @@ func (s *ExpirationUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFu
 		s.ReturnAddress.VBytes(rentStruct, nil)
 }
 
+func (s *ExpirationUnlockCondition) ByteSizeKey() uint64 {
+	return 0 + s.ReturnAddress.ByteSizeKey()
+}
+
+func (s *ExpirationUnlockCondition) ByteSizeData() uint64 {
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize +
+		s.ReturnAddress.ByteSizeData()
+}
+
 func (s *ExpirationUnlockCondition) Equal(other UnlockCondition) bool {
 	otherCond, is := other.(*ExpirationUnlockCondition)
 	if !is {

@@ -26,6 +26,14 @@ func (s *TimelockUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize)
 }
 
+func (s *TimelockUnlockCondition) ByteSizeKey() uint64 {
+	return 0
+}
+
+func (s *TimelockUnlockCondition) ByteSizeData() uint64 {
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize
+}
+
 func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {
 	otherCond, is := other.(*TimelockUnlockCondition)
 	if !is {

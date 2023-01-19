@@ -52,6 +52,14 @@ func (edAddr *Ed25519Address) VBytes(rentStruct *RentStructure, _ VBytesFunc) ui
 	return rentStruct.VBFactorData.Multiply(Ed25519AddressSerializedBytesSize)
 }
 
+func (edAddr *Ed25519Address) ByteSizeKey() uint64 {
+	return 0
+}
+
+func (edAddr *Ed25519Address) ByteSizeData() uint64 {
+	return Ed25519AddressSerializedBytesSize
+}
+
 func (edAddr *Ed25519Address) Key() string {
 	return string(append([]byte{byte(AddressEd25519)}, (*edAddr)[:]...))
 }

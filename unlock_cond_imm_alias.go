@@ -31,6 +31,15 @@ func (s *ImmutableAliasUnlockCondition) VBytes(rentStruct *RentStructure, _ VByt
 		s.Address.VBytes(rentStruct, nil)
 }
 
+func (s *ImmutableAliasUnlockCondition) ByteSizeKey() uint64 {
+	return 0 + s.Address.ByteSizeKey()
+}
+
+func (s *ImmutableAliasUnlockCondition) ByteSizeData() uint64 {
+	return serializer.SmallTypeDenotationByteSize +
+		s.Address.ByteSizeData()
+}
+
 func (s *ImmutableAliasUnlockCondition) Equal(other UnlockCondition) bool {
 	otherUnlockCond, is := other.(*ImmutableAliasUnlockCondition)
 	if !is {

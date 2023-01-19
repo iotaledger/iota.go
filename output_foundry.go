@@ -210,6 +210,28 @@ func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		f.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
+func (f *FoundryOutput) ByteSizeKey() uint64 {
+	return outputOffsetByteSizeKey() +
+		f.NativeTokens.ByteSizeKey() +
+		f.TokenScheme.ByteSizeKey() +
+		f.Conditions.ByteSizeKey() +
+		f.Features.ByteSizeKey() +
+		f.ImmutableFeatures.ByteSizeKey()
+}
+
+func (f *FoundryOutput) ByteSizeData() uint64 {
+	return outputOffsetByteSizeData() +
+		// prefix + amount
+		serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize +
+		f.NativeTokens.ByteSizeData() +
+		// serial number
+		serializer.UInt32ByteSize +
+		f.TokenScheme.ByteSizeData() +
+		f.Conditions.ByteSizeData() +
+		f.Features.ByteSizeData() +
+		f.ImmutableFeatures.ByteSizeData()
+}
+
 func (f *FoundryOutput) Chain() ChainID {
 	foundryID, err := f.ID()
 	if err != nil {
