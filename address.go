@@ -141,7 +141,7 @@ func jsonAddressToAddress(jAddr JSONSerializable) (Address, error) {
 }
 
 // checks whether the given Serializable is an Address and also supported AddressType.
-func addrWriteGuard(supportedAddr AddressTypeSet) serializer.SerializableWriteGuardFunc {
+func AddressWriteGuard(supportedAddr AddressTypeSet) serializer.SerializableWriteGuardFunc {
 	return func(seri serializer.Serializable) error {
 		if seri == nil {
 			return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedAddress)
@@ -159,7 +159,7 @@ func addrWriteGuard(supportedAddr AddressTypeSet) serializer.SerializableWriteGu
 	}
 }
 
-func addrReadGuard(supportedAddr AddressTypeSet) serializer.SerializableReadGuardFunc {
+func AddressReadGuard(supportedAddr AddressTypeSet) serializer.SerializableReadGuardFunc {
 	return func(ty uint32) (serializer.Serializable, error) {
 		if _, supported := supportedAddr[AddressType(ty)]; !supported {
 			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedAddress, supportedAddr, ty)
