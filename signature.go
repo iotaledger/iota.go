@@ -132,7 +132,7 @@ func SignatureSelector(sigType uint32) (Signature, error) {
 	return seri, nil
 }
 
-func signatureFromJSONRawMsg(jRawMsg *json.RawMessage) (Signature, error) {
+func SignatureFromJSONRawMsg(jRawMsg *json.RawMessage) (Signature, error) {
 	jsonSignature, err := DeserializeObjectFromJSON(jRawMsg, jsonSignatureSelector)
 	if err != nil {
 		return nil, fmt.Errorf("can't decode signature type from JSON: %w", err)
