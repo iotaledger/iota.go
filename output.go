@@ -167,14 +167,14 @@ func OutputIDFromHex(hexStr string) (OutputID, error) {
 }
 
 // MustOutputIDFromHex works like OutputIDFromHex but panics if an error is encountered.
-func MustOutputIDFromHex(hexStr string) (OutputID, error) {
+func MustOutputIDFromHex(hexStr string) OutputID {
 	var outputID OutputID
 	outputIDData, err := DecodeHex(hexStr)
 	if err != nil {
-		return outputID, err
+		panic(err)
 	}
 	copy(outputID[:], outputIDData)
-	return outputID, nil
+	return outputID
 }
 
 // OutputSet is a map of the OutputID to Output.
