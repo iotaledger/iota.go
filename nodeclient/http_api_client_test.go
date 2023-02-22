@@ -28,13 +28,19 @@ var (
 	v2API = iotago.V2API(tpkg.TestProtoParams)
 )
 
+func nodeClient(t *testing.T) *nodeclient.Client {
+	client, err := nodeclient.New(nodeAPIUrl, nodeclient.WithIOTAGoAPI(emptyAPI))
+	require.NoError(t, err)
+	return client
+}
+
 func TestClient_Health(t *testing.T) {
 	defer gock.Off()
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.RouteHealth).
 		Reply(200)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	healthy, err := nodeAPI.Health(context.Background())
 	require.NoError(t, err)
 	require.True(t, healthy)
@@ -107,7 +113,7 @@ func TestClient_Info(t *testing.T) {
 		Reply(200).
 		JSON(originInfo)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	info, err := nodeAPI.Info(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
@@ -130,7 +136,7 @@ func TestClient_Tips(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	tips, err := nodeAPI.Tips(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, tips)
@@ -177,7 +183,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(serializedCompleteBlock))
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.SubmitBlock(context.Background(), incompleteBlock)
 	require.NoError(t, err)
 	require.EqualValues(t, completeBlock, resp)
@@ -216,7 +222,7 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	meta, err := nodeAPI.BlockMetadataByBlockID(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, meta)
@@ -244,7 +250,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(data))
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originBlock, responseBlock)
@@ -276,7 +282,7 @@ func TestClient_ChildrenByBlockID(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.ChildrenByBlockID(context.Background(), blockID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
@@ -304,7 +310,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(data))
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originBlock, responseBlock)
@@ -339,7 +345,7 @@ func TestClient_OutputByID(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.OutputByID(context.Background(), utxoInputId)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -369,7 +375,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.OutputMetadataByID(context.Background(), utxoInputId)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -392,7 +398,7 @@ func TestNodeHTTPAPIClient_Treasury(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.Treasury(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -435,7 +441,7 @@ func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.Receipts(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes.Receipts, resp)
@@ -480,7 +486,7 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.ReceiptsByMigratedAtIndex(context.Background(), index)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes.Receipts, resp)
@@ -524,7 +530,7 @@ func TestClient_MilestoneByID(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(data))
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.MilestoneByID(context.Background(), milestoneID)
 	require.NoError(t, err)
 	require.EqualValues(t, milestone, resp)
@@ -549,7 +555,7 @@ func TestClient_MilestoneUTXOChangesByID(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.MilestoneUTXOChangesByID(context.Background(), milestoneID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -593,7 +599,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 		Reply(200).
 		Body(bytes.NewReader(data))
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.MilestoneByIndex(context.Background(), milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, milestone, resp)
@@ -618,7 +624,7 @@ func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.MilestoneUTXOChangesByIndex(context.Background(), milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -663,7 +669,7 @@ func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 		Reply(200).
 		JSON(internalRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.ComputeWhiteFlagMutations(context.Background(), milestoneIndex, milestoneTimestamp, iotago.BlockIDs(parents), milestoneID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -708,7 +714,7 @@ func TestClient_PeerByID(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.PeerByID(context.Background(), peerID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -722,7 +728,7 @@ func TestClient_RemovePeerByID(t *testing.T) {
 		Reply(200).
 		Status(200)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	err := nodeAPI.RemovePeerByID(context.Background(), peerID)
 	require.NoError(t, err)
 }
@@ -754,7 +760,7 @@ func TestClient_Peers(t *testing.T) {
 		Reply(200).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.Peers(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
@@ -780,7 +786,7 @@ func TestClient_AddPeer(t *testing.T) {
 		Reply(201).
 		JSON(originRes)
 
-	nodeAPI := nodeclient.New(nodeAPIUrl)
+	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.AddPeer(context.Background(), multiAddr)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)

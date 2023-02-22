@@ -62,7 +62,7 @@ func Test_IndexerEnabled(t *testing.T) {
 		Reply(200).
 		JSON(originRoutes)
 
-	client := nodeclient.New(nodeAPIUrl)
+	client := nodeClient(t)
 
 	_, err := client.Indexer(context.TODO())
 	require.NoError(t, err)
@@ -80,7 +80,7 @@ func Test_IndexerDisabled(t *testing.T) {
 		Reply(200).
 		JSON(originRoutes)
 
-	client := nodeclient.New(nodeAPIUrl)
+	client := nodeClient(t)
 
 	_, err := client.Indexer(context.TODO())
 	require.ErrorIs(t, err, nodeclient.ErrIndexerPluginNotAvailable)
@@ -152,7 +152,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 		Reply(200).
 		JSON(outputRes)
 
-	client := nodeclient.New(nodeAPIUrl)
+	client := nodeClient(t)
 
 	indexer, err := client.Indexer(context.TODO())
 	require.NoError(t, err)

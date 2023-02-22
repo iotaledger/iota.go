@@ -17,6 +17,16 @@ import (
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
+var emptyAPI = iotago.LatestAPI(&iotago.ProtocolParameters{
+	Version:       0,
+	NetworkName:   "",
+	Bech32HRP:     "",
+	MinPoWScore:   0,
+	BelowMaxDepth: 0,
+	RentStructure: iotago.RentStructure{},
+	TokenSupply:   0,
+})
+
 func TestMain(m *testing.M) {
 	rand.Seed(time.Now().UnixNano())
 
@@ -36,9 +46,7 @@ func Test_EventAPIEnabled(t *testing.T) {
 		Reply(200).
 		JSON(originRoutes)
 
-	client := nodeclient.New(nodeAPIUrl)
-
-	_, err := client.EventAPI(context.TODO())
+	_, err := nodeClient(t).EventAPI(context.TODO())
 	require.NoError(t, err)
 }
 
@@ -54,9 +62,7 @@ func Test_EventAPIDisabled(t *testing.T) {
 		Reply(200).
 		JSON(originRoutes)
 
-	client := nodeclient.New(nodeAPIUrl)
-
-	_, err := client.EventAPI(context.TODO())
+	_, err := nodeClient(t).EventAPI(context.TODO())
 	require.ErrorIs(t, err, nodeclient.ErrMQTTPluginNotAvailable)
 }
 
@@ -69,7 +75,7 @@ func Test_NewEventAPIClient(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 	eventAPIClient := &nodeclient.EventAPIClient{
-		Client:     nodeclient.New(nodeAPIUrl),
+		Client:     nodeClient(t),
 		MQTTClient: mock,
 		Errors:     make(chan error),
 	}

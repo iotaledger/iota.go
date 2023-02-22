@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/iotaledger/hive.go/core/serix"
 
@@ -141,15 +142,6 @@ var defaultNodeAPIOptions = []ClientOption{
 	WithHTTPClient(http.DefaultClient),
 	WithUserInfo(nil),
 	WithRequestURLHook(nil),
-	WithIOTAGoAPI(iotago.LatestAPI(&iotago.ProtocolParameters{
-		Version:       0,
-		NetworkName:   "",
-		Bech32HRP:     "",
-		MinPoWScore:   0,
-		BelowMaxDepth: 0,
-		RentStructure: iotago.RentStructure{},
-		TokenSupply:   0,
-	})),
 }
 
 // ClientOptions define options for the Client.
@@ -202,8 +194,12 @@ func WithIOTAGoAPI(api iotago.API) ClientOption {
 // ClientOption is a function setting a Client option.
 type ClientOption func(opts *ClientOptions)
 
+const initInfoEndpointCallTimeout = 5 * time.Second
+
 // New returns a new Client using the given base URL.
-func New(baseURL string, opts ...ClientOption) *Client {
+// This constructor will automatically call Client.Info() in order to initialize the Client
+// with the appropriate protocol parameters and latest iotago.API version (use WithIOTAGoAPI() to override this behaviour)
+func New(baseURL string, opts ...ClientOption) (*Client, error) {
 
 	options := &ClientOptions{}
 	options.apply(defaultNodeAPIOptions...)
@@ -214,7 +210,21 @@ func New(baseURL string, opts ...ClientOption) *Client {
 		opts:    options,
 	}
 
-	return client
+	if client.opts.iotagoAPI == nil {
+		ctx, cancelFunc := context.WithTimeout(context.Background(), initInfoEndpointCallTimeout)
+		defer cancelFunc()
+		info, err := client.Info(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("unable to call info endpoint for protocol parameter init: %w", err)
+		}
+		protoParams, err := info.ProtocolParameters()
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse protocol parameters from info response: %w", err)
+		}
+		client.opts.iotagoAPI = iotago.LatestAPI(protoParams)
+	}
+
+	return client, nil
 }
 
 // Client is a client for node HTTP REST API endpoints.
