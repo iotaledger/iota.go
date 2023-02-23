@@ -335,33 +335,29 @@ func (client *Client) Tips(ctx context.Context) (*TipsResponse, error) {
 
 // SubmitBlock submits the given Block to the node.
 // The node will take care of filling missing information.
-// This function returns the finalized block created by the node.
-func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block, protoParas *iotago.ProtocolParameters) (*iotago.Block, error) {
+// This function returns the blockID of the finalized block.
+// To get the finalized block you need to call "BlockByBlockID".
+func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block, protoParas *iotago.ProtocolParameters) (iotago.BlockID, error) {
 	// do not check the block because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the block afterwards.
 	data, err := m.Serialize(serializer.DeSeriModePerformLexicalOrdering, protoParas)
 	if err != nil {
-		return nil, err
+		return iotago.EmptyBlockID(), err
 	}
 
 	req := &RawDataEnvelope{Data: data}
 	res, err := client.Do(ctx, http.MethodPost, RouteBlocks, req, nil)
 	if err != nil {
-		return nil, err
+		return iotago.EmptyBlockID(), err
 	}
 
 	blockID, err := iotago.BlockIDFromHexString(res.Header.Get(locationHeader))
 	if err != nil {
-		return nil, err
+		return iotago.EmptyBlockID(), err
 	}
 
-	block, err := client.BlockByBlockID(ctx, blockID, protoParas)
-	if err != nil {
-		return nil, err
-	}
-
-	return block, nil
+	return blockID, nil
 }
 
 // BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
