@@ -153,20 +153,6 @@ func TestClient_SubmitBlock(t *testing.T) {
 		Parents:         tpkg.SortedRandBlockIDs(1),
 	}
 
-	completeBlock := &iotago.Block{
-		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRandBlockIDs(1),
-		Payload:         nil,
-		Nonce:           3495721389537486,
-	}
-
-	serializedCompleteBlock, err := v2API.Encode(completeBlock)
-	require.NoError(t, err)
-
-	block2 := iotago.Block{}
-	_, err = v2API.Decode(serializedCompleteBlock, &block2, serix.WithValidation())
-	require.NoError(t, err)
-
 	serializedIncompleteBlock, err := v2API.Encode(incompleteBlock, serix.WithValidation())
 	require.NoError(t, err)
 
@@ -177,16 +163,10 @@ func TestClient_SubmitBlock(t *testing.T) {
 		Reply(200).
 		AddHeader("Location", blockHashStr)
 
-	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteBlock, blockHashStr)).
-		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
-		Reply(200).
-		Body(bytes.NewReader(serializedCompleteBlock))
-
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.SubmitBlock(context.Background(), incompleteBlock)
 	require.NoError(t, err)
-	require.EqualValues(t, completeBlock, resp)
+	require.EqualValues(t, blockHash, resp)
 }
 
 func TestClient_BlockMetadataByMessageID(t *testing.T) {
