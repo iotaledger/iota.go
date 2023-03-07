@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -30,9 +29,9 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 		require.Error(t, err, test.seriErr)
 		return
 	}
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	if src, ok := test.source.(serializer.SerializableWithSize); ok {
-		assert.Equal(t, len(data), src.Size())
+		require.Equal(t, len(data), src.Size())
 	}
 
 	bytesRead, err := test.target.Deserialize(data, serializer.DeSeriModePerformValidation, tpkg.TestProtoParas)
@@ -40,9 +39,9 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 		require.Error(t, err, test.deSeriErr)
 		return
 	}
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	require.Len(t, data, bytesRead)
-	assert.EqualValues(t, test.source, test.target)
+	require.EqualValues(t, test.source, test.target)
 }
 
 func TestProtocolParameters_DeSerialize(t *testing.T) {
