@@ -870,6 +870,30 @@ func SyntacticallyValidateOutputs(outputs Outputs, funcs ...OutputsSyntacticalVa
 	return nil
 }
 
+func OutputsSyntacticalChainConstrainedOutputUniqueness() OutputsSyntacticalValidationFunc {
+	chainConstrainedOutputs := make(ChainConstrainedOutputsSet)
+
+	return func(index int, output Output) error {
+		chainConstrainedOutput, is := output.(ChainConstrainedOutput)
+		if !is {
+			return nil
+		}
+
+		chainID := chainConstrainedOutput.Chain()
+		if chainID.Empty() {
+			// we can ignore newly minted chainConstrainedOutputs
+			return nil
+		}
+
+		if _, has := chainConstrainedOutputs[chainID]; has {
+			return fmt.Errorf("%w: output with chainID %s already exist on the output side", ErrNonUniqueChainConstrainedOutputs, chainID.ToHex())
+		}
+
+		chainConstrainedOutputs[chainID] = chainConstrainedOutput
+		return nil
+	}
+}
+
 // JsonOutputSelector selects the json output implementation for the given type.
 func JsonOutputSelector(ty int) (JSONSerializable, error) {
 	var obj JSONSerializable

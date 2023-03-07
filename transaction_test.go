@@ -149,6 +149,86 @@ func TestNFTTransition(t *testing.T) {
 	}, inputs))
 }
 
+func TestChainConstrainedOutputUniqueness(t *testing.T) {
+	ident1 := tpkg.RandEd25519Address()
+
+	inputIDs := tpkg.RandOutputIDs(1)
+
+	aliasAddress := iotago.AliasAddressFromOutputID(inputIDs[0])
+	aliasID := aliasAddress.AliasID()
+	nftAddress := iotago.NFTAddressFromOutputID(inputIDs[0])
+	nftID := nftAddress.NFTID()
+
+	// TODO: add a foundy testcase
+
+	tests := []deSerializeTest{
+		{
+			// we transition the same Alias twice
+			name: "transition the same Alias twice",
+			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
+				NetworkID: tpkg.TestNetworkID,
+				Inputs:    inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.AliasOutput{
+						Amount:  OneMi,
+						AliasID: aliasID,
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident1},
+						},
+						Features: nil,
+					},
+					&iotago.AliasOutput{
+						Amount:  OneMi,
+						AliasID: aliasID,
+						Conditions: iotago.UnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident1},
+						},
+						Features: nil,
+					},
+				},
+			}),
+			target:    &iotago.Transaction{},
+			seriErr:   iotago.ErrNonUniqueChainConstrainedOutputs,
+			deSeriErr: nil,
+		},
+		{
+			// we transition the same NFT twice
+			name: "transition the same NFT twice",
+			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
+				NetworkID: tpkg.TestNetworkID,
+				Inputs:    inputIDs.UTXOInputs(),
+				Outputs: iotago.Outputs{
+					&iotago.NFTOutput{
+						Amount: OneMi,
+						NFTID:  nftID,
+						Conditions: iotago.UnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+						Features: nil,
+					},
+					&iotago.NFTOutput{
+						Amount: OneMi,
+						NFTID:  nftID,
+						Conditions: iotago.UnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+						Features: nil,
+					},
+				},
+			}),
+			target:    &iotago.Transaction{},
+			seriErr:   iotago.ErrNonUniqueChainConstrainedOutputs,
+			deSeriErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, tt.deSerialize)
+	}
+}
+
 func TestCirculatingSupplyMelting(t *testing.T) {
 	_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 	aliasIdent1 := tpkg.RandAliasAddress()
