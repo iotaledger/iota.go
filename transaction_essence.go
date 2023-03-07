@@ -161,6 +161,7 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParamete
 		OutputsSyntacticalDepositAmount(protoParams),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
+		OutputsSyntacticalChainConstrainedOutputUniqueness(),
 		OutputsSyntacticalFoundry(),
 		OutputsSyntacticalAlias(),
 		OutputsSyntacticalNFT(),

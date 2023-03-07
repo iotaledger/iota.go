@@ -832,3 +832,27 @@ func SyntacticallyValidateOutputs(outputs TxEssenceOutputs, funcs ...OutputsSynt
 	}
 	return nil
 }
+
+func OutputsSyntacticalChainConstrainedOutputUniqueness() OutputsSyntacticalValidationFunc {
+	chainConstrainedOutputs := make(ChainOutputSet)
+
+	return func(index int, output Output) error {
+		chainConstrainedOutput, is := output.(ChainOutput)
+		if !is {
+			return nil
+		}
+
+		chainID := chainConstrainedOutput.Chain()
+		if chainID.Empty() {
+			// we can ignore newly minted chainConstrainedOutputs
+			return nil
+		}
+
+		if _, has := chainConstrainedOutputs[chainID]; has {
+			return fmt.Errorf("%w: output with chainID %s already exist on the output side", ErrNonUniqueChainOutputs, chainID.ToHex())
+		}
+
+		chainConstrainedOutputs[chainID] = chainConstrainedOutput
+		return nil
+	}
+}
