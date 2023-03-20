@@ -92,7 +92,7 @@ type Signature interface {
 type SignatureTypeSet map[SignatureType]struct{}
 
 // checks whether the given Serializable is a Signature and also supported SignatureType.
-func sigWriteGuard(supportedSigs SignatureTypeSet) serializer.SerializableWriteGuardFunc {
+func SignatureWriteGuard(supportedSigs SignatureTypeSet) serializer.SerializableWriteGuardFunc {
 	return func(seri serializer.Serializable) error {
 		if seri == nil {
 			return fmt.Errorf("%w: because nil", ErrTypeIsNotSupportedSignature)
@@ -111,7 +111,7 @@ func sigWriteGuard(supportedSigs SignatureTypeSet) serializer.SerializableWriteG
 	}
 }
 
-func sigReadGuard(supportedSigs SignatureTypeSet) serializer.SerializableReadGuardFunc {
+func SignatureReadGuard(supportedSigs SignatureTypeSet) serializer.SerializableReadGuardFunc {
 	return func(ty uint32) (serializer.Serializable, error) {
 		if _, supported := supportedSigs[SignatureType(ty)]; !supported {
 			return nil, fmt.Errorf("%w: because not in set %v (%d)", ErrTypeIsNotSupportedSignature, supportedSigs, ty)
@@ -132,7 +132,7 @@ func SignatureSelector(sigType uint32) (Signature, error) {
 	return seri, nil
 }
 
-func signatureFromJSONRawMsg(jRawMsg *json.RawMessage) (Signature, error) {
+func SignatureFromJSONRawMsg(jRawMsg *json.RawMessage) (Signature, error) {
 	jsonSignature, err := DeserializeObjectFromJSON(jRawMsg, jsonSignatureSelector)
 	if err != nil {
 		return nil, fmt.Errorf("can't decode signature type from JSON: %w", err)

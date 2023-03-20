@@ -10,8 +10,8 @@ import (
 
 var (
 	immAliasUnlockCondAddrGuard = &serializer.SerializableGuard{
-		ReadGuard:  addrReadGuard(AddressTypeSet{AddressAlias: struct{}{}}),
-		WriteGuard: addrWriteGuard(AddressTypeSet{AddressAlias: struct{}{}}),
+		ReadGuard:  AddressReadGuard(AddressTypeSet{AddressAlias: struct{}{}}),
+		WriteGuard: AddressWriteGuard(AddressTypeSet{AddressAlias: struct{}{}}),
 	}
 )
 

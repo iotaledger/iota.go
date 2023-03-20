@@ -81,8 +81,8 @@ var (
 		Min: MinSignaturesInAMilestone,
 		Max: MaxSignaturesInAMilestone,
 		Guards: serializer.SerializableGuard{
-			ReadGuard:  sigReadGuard(milestoneSupportedSigTypes),
-			WriteGuard: sigWriteGuard(milestoneSupportedSigTypes),
+			ReadGuard:  SignatureReadGuard(milestoneSupportedSigTypes),
+			WriteGuard: SignatureWriteGuard(milestoneSupportedSigTypes),
 		},
 		UniquenessSliceFunc: func(next []byte) []byte { return next[:ed25519.PublicKeySize] },
 		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,

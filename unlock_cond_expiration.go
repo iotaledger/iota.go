@@ -10,8 +10,8 @@ import (
 
 var (
 	expUnlockCondAddrGuard = &serializer.SerializableGuard{
-		ReadGuard:  addrReadGuard(allAddressTypeSet),
-		WriteGuard: addrWriteGuard(allAddressTypeSet),
+		ReadGuard:  AddressReadGuard(allAddressTypeSet),
+		WriteGuard: AddressWriteGuard(allAddressTypeSet),
 	}
 )
 

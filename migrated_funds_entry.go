@@ -9,8 +9,8 @@ import (
 
 var (
 	migratedFundEntryFeatBlockAddrGuard = serializer.SerializableGuard{
-		ReadGuard:  addrReadGuard(AddressTypeSet{AddressEd25519: struct{}{}}),
-		WriteGuard: addrWriteGuard(AddressTypeSet{AddressEd25519: struct{}{}}),
+		ReadGuard:  AddressReadGuard(AddressTypeSet{AddressEd25519: struct{}{}}),
+		WriteGuard: AddressWriteGuard(AddressTypeSet{AddressEd25519: struct{}{}}),
 	}
 )
 

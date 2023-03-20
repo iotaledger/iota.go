@@ -93,7 +93,7 @@ type jsonSignatureUnlock struct {
 }
 
 func (j *jsonSignatureUnlock) ToSerializable() (serializer.Serializable, error) {
-	sig, err := signatureFromJSONRawMsg(j.Signature)
+	sig, err := SignatureFromJSONRawMsg(j.Signature)
 	if err != nil {
 		return nil, err
 	}
