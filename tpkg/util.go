@@ -308,77 +308,6 @@ func RandTransactionEssenceWithInputs(inputs iotago.TxEssenceInputs) *iotago.Tra
 	return tx
 }
 
-// RandMigratedFundsEntry returns a random migrated funds entry.
-func RandMigratedFundsEntry() *iotago.MigratedFundsEntry {
-	return &iotago.MigratedFundsEntry{
-		TailTransactionHash: Rand49ByteArray(),
-		Address:             RandEd25519Address(),
-		Deposit:             rand.Uint64(),
-	}
-}
-
-// RandReceipt returns a random receipt.
-func RandReceipt() *iotago.ReceiptMilestoneOpt {
-	receipt := &iotago.ReceiptMilestoneOpt{MigratedAt: 1000, Final: true}
-
-	migFundsEntriesCount := rand.Intn(10) + 1
-	for i := migFundsEntriesCount; i > 0; i-- {
-		receipt.Funds = append(receipt.Funds, RandMigratedFundsEntry())
-	}
-	receipt.SortFunds()
-	receipt.Transaction = RandTreasuryTransaction()
-
-	return receipt
-}
-
-// RandMilestone returns a random milestone with the given parent blocks.
-func RandMilestone(parents iotago.MilestoneParentIDs) *iotago.Milestone {
-	const sigsCount = 3
-
-	if parents == nil {
-		parents = SortedRandMSParents(1 + rand.Intn(7))
-	}
-
-	msPayload := &iotago.Milestone{
-		MilestoneEssence: iotago.MilestoneEssence{
-			Index:               iotago.MilestoneIndex(rand.Intn(1000)),
-			Timestamp:           uint32(time.Now().Unix()),
-			PreviousMilestoneID: Rand32ByteArray(),
-			Parents:             iotago.MilestoneParentIDs(parents),
-			InclusionMerkleRoot: func() iotago.MilestoneMerkleProof {
-				var b iotago.MilestoneMerkleProof
-				copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
-				return b
-			}(),
-			AppliedMerkleRoot: func() iotago.MilestoneMerkleProof {
-				var b iotago.MilestoneMerkleProof
-				copy(b[:], RandBytes(iotago.MilestoneMerkleProofLength))
-				return b
-			}(),
-			Metadata: RandBytes(10),
-			Opts: iotago.MilestoneOpts{
-				&iotago.ProtocolParamsMilestoneOpt{
-					TargetMilestoneIndex: 100,
-					ProtocolVersion:      2,
-					Params:               RandBytes(200),
-				},
-			},
-		},
-		Signatures: func() iotago.Signatures[iotago.MilestoneSignature] {
-			msSigs := make(iotago.Signatures[iotago.MilestoneSignature], sigsCount)
-			for i := 0; i < sigsCount; i++ {
-				msSigs[i] = RandEd25519Signature()
-			}
-			sort.Slice(msSigs, func(i, j int) bool {
-				return bytes.Compare(msSigs[i].(*iotago.Ed25519Signature).PublicKey[:], msSigs[j].(*iotago.Ed25519Signature).PublicKey[:]) == -1
-			})
-			return msSigs
-		}(),
-	}
-
-	return msPayload
-}
-
 // RandTaggedData returns a random tagged data payload.
 func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	var data []byte
@@ -452,14 +381,6 @@ func RandTransactionWithInputOutputCount(inputCount int, outputCount int) *iotag
 	return RandTransactionWithEssence(RandTransactionEssenceWithInputOutputCount(inputCount, outputCount))
 }
 
-// RandTreasuryInput returns a random treasury input.
-func RandTreasuryInput() *iotago.TreasuryInput {
-	treasuryInput := &iotago.TreasuryInput{}
-	input := RandBytes(iotago.TreasuryInputBytesLength)
-	copy(treasuryInput[:], input)
-	return treasuryInput
-}
-
 // RandUTXOInput returns a random UTXO input.
 func RandUTXOInput() *iotago.UTXOInput {
 	return RandUTXOInputWithIndex(uint16(rand.Intn(iotago.RefUTXOIndexMax)))
@@ -473,19 +394,6 @@ func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 
 	utxoInput.TransactionOutputIndex = index
 	return utxoInput
-}
-
-// RandTreasuryOutput returns a random treasury output.
-func RandTreasuryOutput() *iotago.TreasuryOutput {
-	return &iotago.TreasuryOutput{Amount: rand.Uint64()}
-}
-
-// RandTreasuryTransaction returns a random treasury transaction.
-func RandTreasuryTransaction() *iotago.TreasuryTransaction {
-	return &iotago.TreasuryTransaction{
-		Input:  RandTreasuryInput(),
-		Output: RandTreasuryOutput(),
-	}
 }
 
 // RandBasicOutput returns a random basic output (with no features).
@@ -567,16 +475,6 @@ func RandEd25519Identity() (ed25519.PrivateKey, *iotago.Ed25519Address, iotago.A
 	edAddr := iotago.Ed25519AddressFromPubKey(edSk.Public().(ed25519.PublicKey))
 	addrKeys := iotago.NewAddressKeysForEd25519Address(&edAddr, edSk)
 	return edSk, &edAddr, addrKeys
-}
-
-// RandMilestoneID produces a random milestone ID.
-func RandMilestoneID() iotago.MilestoneID {
-	return Rand32ByteArray()
-}
-
-// RandMilestoneMerkleProof produces a random milestone merkle proof.
-func RandMilestoneMerkleProof() iotago.MilestoneMerkleProof {
-	return Rand32ByteArray()
 }
 
 // RandRentStructure produces random rent structure.
