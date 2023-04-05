@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-	_internalAPI = V2API(&ProtocolParameters{})
+	_internalAPI = V3API(&ProtocolParameters{})
 }
 
 // API handles en/decoding of IOTA protocol objects.
@@ -40,7 +40,7 @@ type API interface {
 
 // LatestAPI creates a new API instance conforming to the latest IOTA protocol version.
 func LatestAPI(protoPras *ProtocolParameters) API {
-	return V2API(protoPras)
+	return V3API(protoPras)
 }
 
 // calls the internally instantiated API to encode the given object.

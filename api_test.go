@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	v2API = iotago.V2API(tpkg.TestProtoParams)
+	v3API = iotago.V3API(tpkg.TestProtoParams)
 )
 
 type deSerializeTest struct {
@@ -28,7 +28,7 @@ type deSerializeTest struct {
 }
 
 func (test *deSerializeTest) deSerialize(t *testing.T) {
-	serixData, err := v2API.Encode(test.source, serix.WithValidation())
+	serixData, err := v3API.Encode(test.source, serix.WithValidation())
 	if test.seriErr != nil {
 		require.Error(t, err, test.seriErr)
 		return
@@ -40,7 +40,7 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	}
 
 	serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
-	bytesRead, err := v2API.Decode(serixData, serixTarget)
+	bytesRead, err := v3API.Decode(serixData, serixTarget)
 	if test.deSeriErr != nil {
 		require.Error(t, err, test.deSeriErr)
 		return
@@ -49,11 +49,11 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	require.Len(t, serixData, bytesRead)
 	require.EqualValues(t, test.source, serixTarget)
 
-	sourceJson, err := v2API.JSONEncode(test.source)
+	sourceJson, err := v3API.JSONEncode(test.source)
 	require.NoError(t, err)
 
 	jsonDest := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
-	require.NoError(t, v2API.JSONDecode(sourceJson, jsonDest))
+	require.NoError(t, v3API.JSONDecode(sourceJson, jsonDest))
 
 	require.EqualValues(t, test.source, jsonDest)
 }
@@ -88,12 +88,12 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 	}
 	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"belowMaxDepth":15,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321"}`
 
-	jsonProtoParams, err := v2API.JSONEncode(protoParams)
+	jsonProtoParams, err := v3API.JSONEncode(protoParams)
 	require.NoError(t, err)
 	require.Equal(t, protoParamsJSON, string(jsonProtoParams))
 
 	decodedProtoParams := &iotago.ProtocolParameters{}
-	err = v2API.JSONDecode([]byte(protoParamsJSON), decodedProtoParams)
+	err = v3API.JSONDecode([]byte(protoParamsJSON), decodedProtoParams)
 	require.NoError(t, err)
 
 	require.Equal(t, protoParams, decodedProtoParams)

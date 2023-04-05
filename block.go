@@ -3,20 +3,25 @@ package iotago
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"runtime"
 	"sort"
+	"time"
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ds/types"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/pow"
+	"github.com/iotaledger/iota.go/v4/slot"
 )
 
 const (
 	// BlockIDLength defines the length of a block ID.
-	BlockIDLength = blake2b.Size256
+	BlockIDLength = blake2b.Size256 + serializer.UInt64ByteSize
 	// MaxBlockSize defines the maximum size of a block.
 	MaxBlockSize = 32768
 	// BlockMinParents defines the minimum amount of parents in a block.
@@ -35,6 +40,13 @@ var (
 		Max:            BlockMaxParents,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
+
+	/*
+		non-strong min parents = 0
+		max = 8
+	*/
+
+	//TODO: weak parents must be disjunct to the rest of the parents
 )
 
 // BlockParentArrayRules returns array rules defining the constraints on a slice of block parent references.
@@ -73,6 +85,10 @@ func (id BlockID) Empty() bool {
 
 func (id *BlockID) String() string {
 	return id.ToHex()
+}
+
+func (id *BlockID) Slot() slot.Index {
+	return slot.Index(binary.LittleEndian.Uint64(id[32:]))
 }
 
 // BlockIDFromHexString converts the given block ID from its hex to BlockID representation.
@@ -149,27 +165,52 @@ type BlockPayload interface {
 type Block struct {
 	// The protocol version under which this block operates.
 	ProtocolVersion byte `serix:"0,mapKey=protocolVersion"`
+
+	NetworkID NetworkID `serix:"1,mapKey=networkId"`
+
 	// The parents the block references.
-	Parents BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=parents"`
+	StrongParents      BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=strongParents"`
+	WeakParents        BlockIDs `serix:"3,lengthPrefixType=uint8,mapKey=weakParents"`
+	ShallowLikeParents BlockIDs `serix:"4,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+
+	IssuerID        types.Identifier  `serix:"5,mapKey=issuerID"`
+	IssuerPublicKey ed25519.PublicKey `serix:"6,mapKey=issuerPublicKey"`
+	IssuingTime     time.Time         `serix:"7,mapKey=issuingTime"`
+
+	SlotCommitment      *Commitment `serix:"8,mapKey=slotCommitment"`
+	LatestConfirmedSlot slot.Index  `serix:"9,mapKey=LatestConfirmedSlot"`
+
 	// The inner payload of the block. Can be nil.
-	Payload BlockPayload `serix:"2,optional,mapKey=payload,omitempty"`
+	Payload BlockPayload `serix:"10,optional,mapKey=payload,omitempty"`
+
 	// The nonce which lets this block fulfill the PoW requirements.
-	Nonce uint64 `serix:"3,mapKey=nonce"`
+	Nonce uint64 `serix:"11,mapKey=nonce"`
+
+	Signature Ed25519Signature `serix:"12,mapKey=signature"`
 }
 
+//BLock id == 0x + hex(hash) + hex(slotIndex) // 40 bytes
+
 // ID computes the ID of the Block.
-func (b *Block) ID() (BlockID, error) {
+func (b *Block) ID(slotTimeProvider *slot.TimeProvider) (BlockID, error) {
 	data, err := internalEncode(b)
 	if err != nil {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
 	}
 	h := blake2b.Sum256(data)
-	return h, nil
+
+	slotIndex := slotTimeProvider.IndexFromTime(b.IssuingTime)
+
+	id := BlockID{}
+	copy(id[:], h[:])
+	binary.LittleEndian.PutUint64(id[32:], uint64(slotIndex))
+
+	return id, nil
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
-func (b *Block) MustID() BlockID {
-	blockID, err := b.ID()
+func (b *Block) MustID(slotTimeProvider *slot.TimeProvider) BlockID {
+	blockID, err := b.ID(slotTimeProvider)
 	if err != nil {
 		panic(err)
 	}

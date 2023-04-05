@@ -8,7 +8,7 @@ import (
 )
 
 // TODO: use the API instance from Client instead.
-var _internalAPI = iotago.V2API(&iotago.ProtocolParameters{})
+var _internalAPI = iotago.V3API(&iotago.ProtocolParameters{})
 
 type (
 	httpOutput   interface{ iotago.Output }

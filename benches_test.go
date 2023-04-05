@@ -3,10 +3,12 @@ package iotago_test
 import (
 	"crypto/ed25519"
 	"testing"
+	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
+	"github.com/iotaledger/iota.go/v4/slot"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -51,7 +53,7 @@ var (
 )
 
 func BenchmarkDeserializationLargeTxPayload(b *testing.B) {
-	data, err := v2API.Encode(benchLargeTx, serix.WithValidation())
+	data, err := v3API.Encode(benchLargeTx, serix.WithValidation())
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -60,7 +62,7 @@ func BenchmarkDeserializationLargeTxPayload(b *testing.B) {
 		target := &iotago.Transaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = v2API.Decode(data, target, serix.WithValidation())
+			_, _ = v3API.Decode(data, target, serix.WithValidation())
 		}
 	})
 
@@ -68,13 +70,13 @@ func BenchmarkDeserializationLargeTxPayload(b *testing.B) {
 		target := &iotago.Transaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = v2API.Decode(data, target)
+			_, _ = v3API.Decode(data, target)
 		}
 	})
 }
 
 func BenchmarkDeserializationOneIOTxPayload(b *testing.B) {
-	data, err := v2API.Encode(tpkg.OneInputOutputTransaction(), serix.WithValidation())
+	data, err := v3API.Encode(tpkg.OneInputOutputTransaction(), serix.WithValidation())
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -83,7 +85,7 @@ func BenchmarkDeserializationOneIOTxPayload(b *testing.B) {
 		target := &iotago.Transaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = v2API.Decode(data, target, serix.WithValidation())
+			_, _ = v3API.Decode(data, target, serix.WithValidation())
 		}
 	})
 
@@ -91,7 +93,7 @@ func BenchmarkDeserializationOneIOTxPayload(b *testing.B) {
 		target := &iotago.Transaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = v2API.Decode(data, target)
+			_, _ = v3API.Decode(data, target)
 		}
 	})
 }
@@ -102,7 +104,7 @@ func BenchmarkSerializationOneIOTxPayload(b *testing.B) {
 		txPayload := tpkg.OneInputOutputTransaction()
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = v2API.Encode(txPayload, serix.WithValidation())
+			_, _ = v3API.Encode(txPayload, serix.WithValidation())
 		}
 	})
 
@@ -110,7 +112,7 @@ func BenchmarkSerializationOneIOTxPayload(b *testing.B) {
 		txPayload := tpkg.OneInputOutputTransaction()
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = v2API.Encode(txPayload)
+			_, _ = v3API.Encode(txPayload)
 		}
 	})
 }
@@ -153,13 +155,15 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 
+	slotTimeProvider := slot.NewTimeProvider(time.Now().Unix(), 10)
+
 	m := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRandBlockIDs(2),
+		StrongParents:   tpkg.SortedRandBlockIDs(2),
 		Payload:         txPayload,
 		Nonce:           0,
 	}
 	for i := 0; i < b.N; i++ {
-		_, _ = m.ID()
+		_, _ = m.ID(slotTimeProvider)
 	}
 }

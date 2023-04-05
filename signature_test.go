@@ -45,7 +45,7 @@ func TestEd25519Signature_Valid(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			// deserialize the address from the test
 			addr := &iotago.Ed25519Address{}
-			_, err = v2API.Decode(tt.Address, addr)
+			_, err = v3API.Decode(tt.Address, addr)
 			require.NoError(t, err)
 			// create the signature type
 			sig := &iotago.Ed25519Signature{}

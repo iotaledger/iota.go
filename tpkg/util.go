@@ -10,7 +10,6 @@ import (
 	"math/rand"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 
@@ -145,6 +144,14 @@ func Rand32ByteArray() [32]byte {
 	return h
 }
 
+// Rand40ByteArray returns an array with 40 random bytes.
+func Rand40ByteArray() [40]byte {
+	var h [40]byte
+	b := RandBytes(40)
+	copy(h[:], b)
+	return h
+}
+
 // Rand50ByteArray returns an array with 38 random bytes.
 func Rand50ByteArray() [50]byte {
 	var h [50]byte
@@ -187,15 +194,20 @@ func SortedRand32ByteArray(count int) [][32]byte {
 	return hashes
 }
 
-// SortedRandBlockIDs returned random block IDs.
-func SortedRandBlockIDs(count int) iotago.BlockIDs {
-	return iotago.BlockIDs(SortedRandMSParents(count))
+// SortedRand40ByteArray returns a count length slice of sorted 32 byte arrays.
+func SortedRand40ByteArray(count int) [][40]byte {
+	hashes := make(serializer.LexicalOrdered40ByteArrays, count)
+	for i := 0; i < count; i++ {
+		hashes[i] = Rand40ByteArray()
+	}
+	sort.Sort(hashes)
+	return hashes
 }
 
-// SortedRandMSParents returns random milestone parents IDs.
-func SortedRandMSParents(count int) iotago.MilestoneParentIDs {
-	slice := make(iotago.MilestoneParentIDs, count)
-	for i, ele := range SortedRand32ByteArray(count) {
+// SortedRandBlockIDs returned random block IDs.
+func SortedRandBlockIDs(count int) iotago.BlockIDs {
+	slice := make([]iotago.BlockID, count)
+	for i, ele := range SortedRand40ByteArray(count) {
 		slice[i] = ele
 	}
 	return slice
@@ -322,27 +334,23 @@ func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 
 // RandBlockID produces a random block ID.
 func RandBlockID() iotago.BlockID {
-	return Rand32ByteArray()
+	return Rand40ByteArray()
 }
 
 // RandBlock returns a random block with the given inner payload.
 func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 	var payload iotago.Payload
 
-	parents := SortedRandMSParents(1 + rand.Intn(7))
-
 	switch withPayloadType {
 	case iotago.PayloadTransaction:
 		payload = RandTransaction()
 	case iotago.PayloadTaggedData:
 		payload = RandTaggedData([]byte("tag"))
-	case iotago.PayloadMilestone:
-		payload = RandMilestone(parents)
 	}
 
 	return &iotago.Block{
 		ProtocolVersion: TestProtocolVersion,
-		Parents:         iotago.BlockIDs(parents),
+		StrongParents:   SortedRandBlockIDs(1 + rand.Intn(7)),
 		Payload:         payload,
 		Nonce:           uint64(rand.Intn(1000)),
 	}

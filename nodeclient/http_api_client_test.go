@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	v2API = iotago.V2API(tpkg.TestProtoParams)
+	v3API = iotago.V3API(tpkg.TestProtoParams)
 )
 
 func nodeClient(t *testing.T) *nodeclient.Client {
@@ -103,7 +103,7 @@ func TestClient_Info(t *testing.T) {
 		},
 	}
 
-	protoParamsJson, err := v2API.JSONEncode(protoParams)
+	protoParamsJson, err := v3API.JSONEncode(protoParams)
 	require.NoError(t, err)
 	protoParamsJsonRawMsg := json.RawMessage(protoParamsJson)
 	originInfo.Protocol = &protoParamsJsonRawMsg
@@ -153,7 +153,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 		Parents:         tpkg.SortedRandBlockIDs(1),
 	}
 
-	serializedIncompleteBlock, err := v2API.Encode(incompleteBlock, serix.WithValidation())
+	serializedIncompleteBlock, err := v3API.Encode(incompleteBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -221,7 +221,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		Nonce:           16345984576234,
 	}
 
-	data, err := v2API.Encode(originBlock, serix.WithValidation())
+	data, err := v3API.Encode(originBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -281,7 +281,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		Nonce:           16345984576234,
 	}
 
-	data, err := v2API.Encode(originBlock, serix.WithValidation())
+	data, err := v3API.Encode(originBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -300,7 +300,7 @@ func TestClient_OutputByID(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	data, err := v2API.Encode(originOutput)
+	data, err := v3API.Encode(originOutput)
 	require.NoError(t, err)
 
 	txID := tpkg.Rand32ByteArray()
@@ -325,7 +325,7 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	sigDepJson, err := v2API.JSONEncode(originOutput)
+	sigDepJson, err := v3API.JSONEncode(originOutput)
 	require.NoError(t, err)
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
 
@@ -428,7 +428,7 @@ func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
 		},
 	}
 
-	receiptJson, err := v2API.JSONEncode(receipt)
+	receiptJson, err := v3API.JSONEncode(receipt)
 	require.NoError(t, err)
 	rawMsgReceiptJson := json.RawMessage(receiptJson)
 
@@ -473,7 +473,7 @@ func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
 		},
 	}
 
-	receiptJson, err := v2API.JSONEncode(receipt)
+	receiptJson, err := v3API.JSONEncode(receipt)
 	require.NoError(t, err)
 	rawMsgReceiptJson := json.RawMessage(receiptJson)
 
@@ -526,7 +526,7 @@ func TestClient_MilestoneByID(t *testing.T) {
 		},
 	}
 
-	data, err := v2API.Encode(milestone)
+	data, err := v3API.Encode(milestone)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -595,7 +595,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 		},
 	}
 
-	data, err := v2API.Encode(milestone)
+	data, err := v3API.Encode(milestone)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).

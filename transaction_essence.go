@@ -3,6 +3,7 @@ package iotago
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -81,14 +82,16 @@ type (
 type TransactionEssence struct {
 	// The network ID for which this essence is valid for.
 	NetworkID NetworkID `serix:"0,mapKey=networkId"`
+	// The time at which this transaction was created by the client.
+	CreationTime time.Time `serix:"1,mapKey=creationTime"`
 	// The inputs of this transaction.
-	Inputs TxEssenceInputs `serix:"1,mapKey=inputs"`
+	Inputs TxEssenceInputs `serix:"2,mapKey=inputs"`
 	// The commitment to the referenced inputs.
-	InputsCommitment InputsCommitment `serix:"2,mapKey=inputsCommitment"`
+	InputsCommitment InputsCommitment `serix:"3,mapKey=inputsCommitment"`
 	// The outputs of this transaction.
-	Outputs TxEssenceOutputs `serix:"3,mapKey=outputs"`
+	Outputs TxEssenceOutputs `serix:"4,mapKey=outputs"`
 	// The optional embedded payload.
-	Payload TxEssencePayload `serix:"4,optional,mapKey=payload"`
+	Payload TxEssencePayload `serix:"5,optional,mapKey=payload"`
 }
 
 // SigningMessage returns the to be signed message.

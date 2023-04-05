@@ -31,13 +31,13 @@ func TestRentStructureJSONMarshalling(t *testing.T) {
 	}
 	rentStructureJSON := `{"vByteCost":500,"vByteFactorData":1,"vByteFactorKey":10}`
 
-	j, err := v2API.JSONEncode(rentStructure)
+	j, err := v3API.JSONEncode(rentStructure)
 	require.NoError(t, err)
 
 	require.Equal(t, rentStructureJSON, string(j))
 
 	decodedRentStructure := &iotago.RentStructure{}
-	err = v2API.JSONDecode([]byte(rentStructureJSON), decodedRentStructure)
+	err = v3API.JSONDecode([]byte(rentStructureJSON), decodedRentStructure)
 	require.NoError(t, err)
 
 	require.Equal(t, rentStructure, decodedRentStructure)

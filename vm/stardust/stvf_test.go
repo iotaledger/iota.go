@@ -14,19 +14,19 @@ import (
 )
 
 var (
-	v2API = iotago.V2API(tpkg.TestProtoParams)
+	v3API = iotago.V3API(tpkg.TestProtoParams)
 )
 
 type fieldMutations map[string]interface{}
 
 func copyObject(t *testing.T, source any, mutations fieldMutations) any {
-	srcBytes, err := v2API.Encode(source)
+	srcBytes, err := v3API.Encode(source)
 	require.NoError(t, err)
 
 	ptrToCpyOfSrc := reflect.New(reflect.ValueOf(source).Elem().Type())
 
 	cpySeri := ptrToCpyOfSrc.Interface()
-	_, err = v2API.Decode(srcBytes, cpySeri)
+	_, err = v3API.Decode(srcBytes, cpySeri)
 	require.NoError(t, err)
 
 	for fieldName, newVal := range mutations {

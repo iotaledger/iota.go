@@ -1,10 +1,7 @@
 package iotago_test
 
 import (
-	"math/rand"
-	"os"
 	"testing"
-	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
@@ -14,13 +11,6 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
-
-func TestMain(m *testing.M) {
-	rand.Seed(time.Now().UnixNano())
-
-	// call the tests
-	os.Exit(m.Run())
-}
 
 func TestBlock_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
@@ -55,15 +45,15 @@ func TestBlock_MinSize(t *testing.T) {
 
 	block := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRandBlockIDs(1),
+		StrongParents:   tpkg.SortedRandBlockIDs(1),
 		Payload:         nil,
 	}
 
-	msgBytes, err := v2API.Encode(block)
+	msgBytes, err := v3API.Encode(block)
 	require.NoError(t, err)
 
 	block2 := &iotago.Block{}
-	_, err = v2API.Decode(msgBytes, block2, serix.WithValidation())
+	_, err = v3API.Decode(msgBytes, block2, serix.WithValidation())
 	require.NoError(t, err)
 	require.Equal(t, block, block2)
 }
@@ -72,11 +62,11 @@ func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
 
 	block := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion + 1,
-		Parents:         tpkg.SortedRandBlockIDs(1),
+		StrongParents:   tpkg.SortedRandBlockIDs(1),
 		Payload:         nil,
 	}
 
-	_, err := v2API.Encode(block, serix.WithValidation())
+	_, err := v3API.Encode(block, serix.WithValidation())
 	require.Error(t, err)
 }
 
@@ -85,6 +75,6 @@ func TestBlock_DeserializationNotEnoughData(t *testing.T) {
 	blockBytes := []byte{tpkg.TestProtocolVersion, 1}
 
 	block := &iotago.Block{}
-	_, err := v2API.Decode(blockBytes, block)
+	_, err := v3API.Decode(blockBytes, block)
 	require.ErrorIs(t, err, serializer.ErrDeserializationNotEnoughData)
 }
