@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/iotaledger/hive.go/core/serix"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 
 	iotago "github.com/iotaledger/iota.go/v4"
 )

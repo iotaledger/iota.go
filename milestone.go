@@ -13,8 +13,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/iotaledger/hive.go/core/serix"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
 	"github.com/iotaledger/iota.go/v4/remotesigner"
 	"github.com/iotaledger/iota.go/v4/util"
