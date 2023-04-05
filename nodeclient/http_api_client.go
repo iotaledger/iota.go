@@ -63,9 +63,9 @@ const (
 	// MIMEVendorIOTASerializer => bytes.
 	RouteTransactionsIncludedBlock = "/api/core/v2/transactions/%s/included-block"
 
-	// RouteMilestoneByID is the route for getting a milestone by its ID.
-	// GET returns the milestone.
-	RouteMilestoneByID = "/api/core/v2/milestones/%s"
+	// RouteCommitmentByID is the route for getting a commitment by its ID.
+	// GET returns the commitment.
+	RouteCommitmentByID = "/api/core/v3/commitments/%s"
 
 	// RouteMilestoneByIDUTXOChanges is the route for getting all UTXO changes of a milestone by its ID.
 	// GET returns the output IDs of all UTXO changes.
@@ -77,7 +77,7 @@ const (
 
 	// RouteMilestoneByIndexUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	RouteMilestoneByIndexUTXOChanges = "/api/core/v2/milestones/%d/utxo-changes"
+	RouteMilestoneByIndexUTXOChanges = "/api/core/v3/commitments/%d/utxo-changes"
 
 	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
 	// GET returns the output based on the given type in the request "Accept" header.
@@ -487,60 +487,28 @@ func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.Ou
 	return res, nil
 }
 
-// Treasury gets the current treasury.
-func (client *Client) Treasury(ctx context.Context) (*TreasuryResponse, error) {
-	res := &TreasuryResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, RouteTreasury, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-// Receipts gets all receipts persisted on the node.
-func (client *Client) Receipts(ctx context.Context) ([]*ReceiptTuple, error) {
-	res := &ReceiptsResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, RouteReceipts, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res.Receipts, nil
-}
-
-// ReceiptsByMigratedAtIndex gets all receipts for the given migrated at index persisted on the node.
-func (client *Client) ReceiptsByMigratedAtIndex(ctx context.Context, index iotago.MilestoneIndex) ([]*ReceiptTuple, error) {
-	query := fmt.Sprintf(RouteReceiptsMigratedAtIndex, index)
-
-	res := &ReceiptsResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res.Receipts, nil
-}
-
-// MilestoneByID gets a milestone by its ID.
-func (client *Client) MilestoneByID(ctx context.Context, id iotago.MilestoneID) (*iotago.Milestone, error) {
-	query := fmt.Sprintf(RouteMilestoneByID, iotago.EncodeHex(id[:]))
+// CommitmentByID gets a commitment by its ID.
+func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID) (*iotago.Commitment, error) {
+	query := fmt.Sprintf(RouteCommitmentByID, id.ToHex())
 
 	res := &RawDataEnvelope{}
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
 
-	milestone := &iotago.Milestone{}
-	if _, err := client.opts.iotagoAPI.Decode(res.Data, milestone, serix.WithValidation()); err != nil {
+	commitment := &iotago.Commitment{}
+	if _, err := client.opts.iotagoAPI.Decode(res.Data, commitment, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 
-	return milestone, nil
+	return commitment, nil
 }
 
-// MilestoneUTXOChangesByID returns all UTXO changes of a milestone by its ID.
-func (client *Client) MilestoneUTXOChangesByID(ctx context.Context, id iotago.MilestoneID) (*MilestoneUTXOChangesResponse, error) {
-	query := fmt.Sprintf(RouteMilestoneByIDUTXOChanges, iotago.EncodeHex(id[:]))
+// CommitmentUTXOChangesByID returns all UTXO changes of a commitment by its ID.
+func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*CommitmentUTXOChangesResponse, error) {
+	query := fmt.Sprintf(RouteMilestoneByIDUTXOChanges, id.ToHex())
 
-	res := &MilestoneUTXOChangesResponse{}
+	res := &CommitmentUTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -548,8 +516,8 @@ func (client *Client) MilestoneUTXOChangesByID(ctx context.Context, id iotago.Mi
 	return res, nil
 }
 
-// MilestoneByIndex gets a milestone by its index.
-func (client *Client) MilestoneByIndex(ctx context.Context, index iotago.MilestoneIndex) (*iotago.Milestone, error) {
+// CommitmentByIndex gets a milestone by its index.
+func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIndex) (*iotago.Commitment, error) {
 	query := fmt.Sprintf(RouteMilestoneByIndex, index)
 
 	res := &RawDataEnvelope{}
@@ -557,73 +525,24 @@ func (client *Client) MilestoneByIndex(ctx context.Context, index iotago.Milesto
 		return nil, err
 	}
 
-	milestone := &iotago.Milestone{}
-	if _, err := client.opts.iotagoAPI.Decode(res.Data, milestone, serix.WithValidation()); err != nil {
+	commitment := &iotago.Commitment{}
+	if _, err := client.opts.iotagoAPI.Decode(res.Data, commitment, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 
-	return milestone, nil
+	return commitment, nil
 }
 
-// MilestoneUTXOChangesByIndex returns all UTXO changes of a milestone by its milestoneIndex.
-func (client *Client) MilestoneUTXOChangesByIndex(ctx context.Context, index iotago.MilestoneIndex) (*MilestoneUTXOChangesResponse, error) {
+// CommitmentUTXOChangesByIndex returns all UTXO changes of a commitment by its index.
+func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*CommitmentUTXOChangesResponse, error) {
 	query := fmt.Sprintf(RouteMilestoneByIndexUTXOChanges, index)
 
-	res := &MilestoneUTXOChangesResponse{}
+	res := &CommitmentUTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
 	return res, nil
-}
-
-// ComputeWhiteFlagMutations is the route to compute the white flag mutations for the cone of the given parents.
-// This function returns the merkle tree roots calculated by the node.
-func (client *Client) ComputeWhiteFlagMutations(ctx context.Context, index iotago.MilestoneIndex, timestamp uint32, parents iotago.BlockIDs, previousMilestoneID iotago.MilestoneID) (*ComputeWhiteFlagMutationsResponse, error) {
-
-	parentsHex := make([]string, len(parents))
-	for i, parent := range parents {
-		parentsHex[i] = iotago.EncodeHex(parent[:])
-	}
-
-	req := &ComputeWhiteFlagMutationsRequest{
-		Index:               index,
-		Timestamp:           timestamp,
-		Parents:             parentsHex,
-		PreviousMilestoneID: iotago.EncodeHex(previousMilestoneID[:]),
-	}
-
-	res := &ComputeWhiteFlagMutationsResponseInternal{}
-	if _, err := client.Do(ctx, http.MethodPost, RouteComputeWhiteFlagMutations, req, res); err != nil {
-		return nil, err
-	}
-
-	inclusionMerkleRootBytes, err := iotago.DecodeHex(res.InclusionMerkleRoot)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(inclusionMerkleRootBytes) != iotago.MilestoneMerkleProofLength {
-		return nil, fmt.Errorf("unknown inclusion merkle tree hash length (%d)", len(inclusionMerkleRootBytes))
-	}
-
-	appliedMerkleRootBytes, err := iotago.DecodeHex(res.AppliedMerkleRoot)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(appliedMerkleRootBytes) != iotago.MilestoneMerkleProofLength {
-		return nil, fmt.Errorf("unknown applied merkle tree hash length (%d)", len(appliedMerkleRootBytes))
-	}
-
-	result := &ComputeWhiteFlagMutationsResponse{
-		InclusionMerkleRoot: iotago.MilestoneMerkleProof{},
-		AppliedMerkleRoot:   iotago.MilestoneMerkleProof{},
-	}
-	copy(result.InclusionMerkleRoot[:], inclusionMerkleRootBytes)
-	copy(result.AppliedMerkleRoot[:], appliedMerkleRootBytes)
-
-	return result, nil
 }
 
 // PeerByID gets a peer by its identifier.

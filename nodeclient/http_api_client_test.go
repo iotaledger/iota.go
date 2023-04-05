@@ -150,7 +150,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 
 	incompleteBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRandBlockIDs(1),
+		StrongParents:   tpkg.SortedRandBlockIDs(1),
 	}
 
 	serializedIncompleteBlock, err := v3API.Encode(incompleteBlock, serix.WithValidation())
@@ -173,7 +173,7 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
-	parents := tpkg.SortedRandMSParents(1 + rand.Intn(7))
+	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
 
 	queryHash := iotago.EncodeHex(identifier[:])
 
@@ -216,7 +216,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
@@ -276,7 +276,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		Parents:         tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
@@ -390,113 +390,6 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	require.EqualValues(t, txID, *resTxID)
 }
 
-func TestNodeHTTPAPIClient_Treasury(t *testing.T) {
-	defer gock.Off()
-
-	originRes := &nodeclient.TreasuryResponse{
-		MilestoneID: "0x733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d",
-		Amount:      "133713371337",
-	}
-
-	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteTreasury).
-		Reply(200).
-		JSON(originRes)
-
-	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.Treasury(context.Background())
-	require.NoError(t, err)
-	require.EqualValues(t, originRes, resp)
-}
-
-func TestNodeHTTPAPIClient_Receipts(t *testing.T) {
-	defer gock.Off()
-
-	receipt := &iotago.ReceiptMilestoneOpt{
-		MigratedAt: 1000,
-		Final:      false,
-		Funds: iotago.MigratedFundsEntries{
-			&iotago.MigratedFundsEntry{
-				TailTransactionHash: iotago.LegacyTailTransactionHash{},
-				Address:             &iotago.Ed25519Address{},
-				Deposit:             10000,
-			},
-		},
-		Transaction: &iotago.TreasuryTransaction{
-			Input:  &iotago.TreasuryInput{},
-			Output: &iotago.TreasuryOutput{Amount: 10000},
-		},
-	}
-
-	receiptJson, err := v3API.JSONEncode(receipt)
-	require.NoError(t, err)
-	rawMsgReceiptJson := json.RawMessage(receiptJson)
-
-	originRes := &nodeclient.ReceiptsResponse{
-		Receipts: []*nodeclient.ReceiptTuple{
-			{
-				MilestoneIndex: 1000,
-				Receipt:        &rawMsgReceiptJson,
-			},
-		},
-	}
-
-	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteReceipts).
-		Reply(200).
-		JSON(originRes)
-
-	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.Receipts(context.Background())
-	require.NoError(t, err)
-	require.EqualValues(t, originRes.Receipts, resp)
-}
-
-func TestNodeHTTPAPIClient_ReceiptsByMigratedAtIndex(t *testing.T) {
-	defer gock.Off()
-
-	var index iotago.MilestoneIndex = 1000
-
-	receipt := &iotago.ReceiptMilestoneOpt{
-		MigratedAt: 1000,
-		Final:      false,
-		Funds: iotago.MigratedFundsEntries{
-			&iotago.MigratedFundsEntry{
-				TailTransactionHash: iotago.LegacyTailTransactionHash{},
-				Address:             &iotago.Ed25519Address{},
-				Deposit:             10000,
-			},
-		},
-		Transaction: &iotago.TreasuryTransaction{
-			Input:  &iotago.TreasuryInput{},
-			Output: &iotago.TreasuryOutput{Amount: 10000},
-		},
-	}
-
-	receiptJson, err := v3API.JSONEncode(receipt)
-	require.NoError(t, err)
-	rawMsgReceiptJson := json.RawMessage(receiptJson)
-
-	originRes := &nodeclient.ReceiptsResponse{
-		Receipts: []*nodeclient.ReceiptTuple{
-			{
-				MilestoneIndex: 1000,
-				Receipt:        &rawMsgReceiptJson,
-			},
-		},
-	}
-
-	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteReceiptsMigratedAtIndex, index)).
-		Reply(200).
-		JSON(originRes)
-
-	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.ReceiptsByMigratedAtIndex(context.Background(), index)
-	require.NoError(t, err)
-	require.EqualValues(t, originRes.Receipts, resp)
-}
-
 func TestClient_MilestoneByID(t *testing.T) {
 	defer gock.Off()
 
@@ -530,7 +423,7 @@ func TestClient_MilestoneByID(t *testing.T) {
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMilestoneByID, iotago.EncodeHex(milestoneID[:]))).
+		Get(fmt.Sprintf(nodeclient.RouteCommitmentByID, iotago.EncodeHex(milestoneID[:]))).
 		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
 		Body(bytes.NewReader(data))
@@ -549,7 +442,7 @@ func TestClient_MilestoneUTXOChangesByID(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &nodeclient.MilestoneUTXOChangesResponse{
+	originRes := &nodeclient.CommitmentUTXOChangesResponse{
 		Index:           1337,
 		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
 		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},
@@ -561,7 +454,7 @@ func TestClient_MilestoneUTXOChangesByID(t *testing.T) {
 		JSON(originRes)
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.MilestoneUTXOChangesByID(context.Background(), milestoneID)
+	resp, err := nodeAPI.CommitmentUTXOChangesByID(context.Background(), milestoneID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
@@ -605,7 +498,7 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 		Body(bytes.NewReader(data))
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.MilestoneByIndex(context.Background(), milestoneIndex)
+	resp, err := nodeAPI.CommitmentByIndex(context.Background(), milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, milestone, resp)
 }
@@ -613,12 +506,12 @@ func TestClient_MilestoneByIndex(t *testing.T) {
 func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 	defer gock.Off()
 
-	var milestoneIndex iotago.MilestoneIndex = 1337
+	var milestoneIndex iotago.SlotIndex = 1337
 
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &nodeclient.MilestoneUTXOChangesResponse{
+	originRes := &nodeclient.CommitmentUTXOChangesResponse{
 		Index:           milestoneIndex,
 		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
 		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},
@@ -630,7 +523,7 @@ func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 		JSON(originRes)
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.MilestoneUTXOChangesByIndex(context.Background(), milestoneIndex)
+	resp, err := nodeAPI.CommitmentUTXOChangesByIndex(context.Background(), milestoneIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
@@ -638,10 +531,10 @@ func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
 func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
 	defer gock.Off()
 
-	var milestoneIndex iotago.MilestoneIndex = 1337
+	var milestoneIndex iotago.SlotIndex = 1337
 	var milestoneTimestamp uint32 = 1333337
 
-	parents := tpkg.SortedRandMSParents(1 + rand.Intn(7))
+	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
 	parentBlockIDs := make([]string, len(parents))
 	for i, p := range parents {
 		parentBlockIDs[i] = iotago.EncodeHex(p[:])

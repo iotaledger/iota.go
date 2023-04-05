@@ -247,18 +247,6 @@ func (eac *EventAPIClient) subscribeToBlocksTopic(topic string) (<-chan *iotago.
 	})
 }
 
-func (eac *EventAPIClient) subscribeToMilestoneInfoTopic(topic string) (<-chan *MilestoneInfo, *EventAPIClientSubscription) {
-	return subscribeToTopic(eac, topic, jsonDeserializer[MilestoneInfo])
-}
-
-func (eac *EventAPIClient) subscribeToMilestoneTopic(topic string) (<-chan *iotago.Milestone, *EventAPIClientSubscription) {
-	return subscribeToTopic(eac, topic, jsonDeserializer[iotago.Milestone])
-}
-
-func (eac *EventAPIClient) subscribeToReceiptsTopic(topic string) (<-chan *iotago.ReceiptMilestoneOpt, *EventAPIClientSubscription) {
-	return subscribeToTopic(eac, topic, jsonDeserializer[iotago.ReceiptMilestoneOpt])
-}
-
 // Blocks returns a channel of newly received blocks.
 func (eac *EventAPIClient) Blocks() (<-chan *iotago.Block, *EventAPIClientSubscription) {
 	return eac.subscribeToBlocksTopic(EventAPIBlocks)
@@ -349,31 +337,4 @@ func (eac *EventAPIClient) TransactionIncludedBlock(txID iotago.TransactionID) (
 func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIOutputs, "{outputId}", iotago.EncodeHex(outputID[:]), 1)
 	return eac.subscribeToOutputsTopic(topic)
-}
-
-// Receipts returns a channel which returns newly applied receipts.
-func (eac *EventAPIClient) Receipts() (<-chan *iotago.ReceiptMilestoneOpt, *EventAPIClientSubscription) {
-	return eac.subscribeToReceiptsTopic(EventAPIReceipts)
-}
-
-// MilestoneInfo is an informative struct holding a milestone index, milestone ID and timestamp.
-type MilestoneInfo struct {
-	Index       iotago.MilestoneIndex `json:"index"`
-	Timestamp   uint32                `json:"timestamp"`
-	MilestoneID string                `json:"milestoneId"`
-}
-
-// LatestMilestones returns a channel of infos about newly seen latest milestones.
-func (eac *EventAPIClient) LatestMilestones() (<-chan *MilestoneInfo, *EventAPIClientSubscription) {
-	return eac.subscribeToMilestoneInfoTopic(EventAPIMilestoneInfoLatest)
-}
-
-// ConfirmedMilestones returns a channel of infos about newly confirmed milestones.
-func (eac *EventAPIClient) ConfirmedMilestones() (<-chan *MilestoneInfo, *EventAPIClientSubscription) {
-	return eac.subscribeToMilestoneInfoTopic(EventAPIMilestoneInfoConfirmed)
-}
-
-// Milestones returns a channel of newly received milestones.
-func (eac *EventAPIClient) Milestones() (<-chan *iotago.Milestone, *EventAPIClientSubscription) {
-	return eac.subscribeToMilestoneTopic(EventAPIMilestones)
 }

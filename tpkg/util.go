@@ -352,6 +352,7 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 		ProtocolVersion: TestProtocolVersion,
 		StrongParents:   SortedRandBlockIDs(1 + rand.Intn(7)),
 		Payload:         payload,
+		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Nonce:           uint64(rand.Intn(1000)),
 	}
 }

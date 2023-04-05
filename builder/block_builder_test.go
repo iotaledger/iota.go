@@ -3,7 +3,6 @@ package builder_test
 import (
 	"context"
 	"math/rand"
-
 	"os"
 	"testing"
 	"time"
@@ -33,7 +32,7 @@ func TestBlockBuilder(t *testing.T) {
 	}
 	block, err := builder.NewBlockBuilder().
 		Payload(taggedDataPayload).
-		Parents(parents).
+		StrongParents(parents).
 		ProofOfWork(context.Background(), targetPoWScore).
 		Build()
 	require.NoError(t, err)

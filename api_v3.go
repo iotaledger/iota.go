@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
@@ -134,16 +135,17 @@ var (
 		Min: 1, Max: MaxInputsCount,
 	}
 
-	msV3ParentsArrRules = &serix.ArrayRules{
-		Min: BlockMinParents,
+	blockV3StrongParentsArrRules = &serix.ArrayRules{
+		Min: BlockMinStrongParents,
 		Max: BlockMaxParents,
 
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 
-	msV3OptsArrRules = &serix.ArrayRules{
-		Min:            0,
-		Max:            2,
+	blockV3NonStrongParentsArrRules = &serix.ArrayRules{
+		Min: BlockMinParents,
+		Max: BlockMaxParents,
+
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
@@ -404,8 +406,33 @@ func V3API(protoParams *ProtocolParameters) API {
 			if protoParams.Version != block.ProtocolVersion {
 				return fmt.Errorf("mismatched protocol version: wanted %d, got %d in block", protoParams.Version, block.ProtocolVersion)
 			}
+
+			if len(block.WeakParents) > 0 {
+				// weak parents must be disjunct to the rest of the parents
+				nonWeakParents := lo.KeyOnlyBy(append(block.StrongParents, block.ShallowLikeParents...), func(v BlockID) BlockID {
+					return v
+				})
+
+				for _, parent := range block.WeakParents {
+					if _, contains := nonWeakParents[parent]; contains {
+						return fmt.Errorf("weak parents must be disjunct to the rest of the parents")
+					}
+				}
+			}
+
 			return nil
 		}))
+
+		must(api.RegisterTypeSettings(StrongParentsIDs{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsArrRules),
+		))
+		must(api.RegisterTypeSettings(WeakParentsIDs{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsArrRules),
+		))
+		must(api.RegisterTypeSettings(ShallowLikeParentIDs{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsArrRules),
+		))
+
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*Transaction)(nil)))
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*TaggedData)(nil)))
 	}

@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"runtime"
 	"sort"
@@ -13,10 +14,8 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/ds/types"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/pow"
-	"github.com/iotaledger/iota.go/v4/slot"
 )
 
 const (
@@ -24,8 +23,10 @@ const (
 	BlockIDLength = blake2b.Size256 + serializer.UInt64ByteSize
 	// MaxBlockSize defines the maximum size of a block.
 	MaxBlockSize = 32768
-	// BlockMinParents defines the minimum amount of parents in a block.
-	BlockMinParents = 1
+	// BlockMinStrongParents defines the minimum amount of strong parents in a block.
+	BlockMinStrongParents = 1
+	// BlockMinParents defines the minimum amount of non-strong parents in a block.
+	BlockMinParents = 0
 	// BlockMaxParents defines the maximum amount of parents in a block.
 	BlockMaxParents = 8
 )
@@ -34,25 +35,8 @@ var (
 	// is an empty block ID.
 	emptyBlockID = BlockID{}
 
-	// restrictions around parents within a block.
-	blockParentArrayRules = serializer.ArrayRules{
-		Min:            BlockMinParents,
-		Max:            BlockMaxParents,
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
-	}
-
-	/*
-		non-strong min parents = 0
-		max = 8
-	*/
-
-	//TODO: weak parents must be disjunct to the rest of the parents
+	ErrInvalidBlockIDLength = errors.New("Invalid block id length")
 )
-
-// BlockParentArrayRules returns array rules defining the constraints on a slice of block parent references.
-func BlockParentArrayRules() serializer.ArrayRules {
-	return blockParentArrayRules
-}
 
 // EmptyBlockID returns an empty BlockID.
 func EmptyBlockID() BlockID {
@@ -87,8 +71,8 @@ func (id *BlockID) String() string {
 	return id.ToHex()
 }
 
-func (id *BlockID) Slot() slot.Index {
-	return slot.Index(binary.LittleEndian.Uint64(id[32:]))
+func (id *BlockID) Slot() SlotIndex {
+	return SlotIndex(binary.LittleEndian.Uint64(id[32:]))
 }
 
 // BlockIDFromHexString converts the given block ID from its hex to BlockID representation.
@@ -96,6 +80,10 @@ func BlockIDFromHexString(blockIDHex string) (BlockID, error) {
 	blockIDBytes, err := DecodeHex(blockIDHex)
 	if err != nil {
 		return BlockID{}, err
+	}
+
+	if len(blockIDBytes) != BlockIDLength {
+		return BlockID{}, ErrInvalidBlockIDLength
 	}
 
 	var blockID BlockID
@@ -161,6 +149,15 @@ type BlockPayload interface {
 	Payload
 }
 
+// StrongParentsIDs is a slice of BlockIDs the block strongly references.
+type StrongParentsIDs = BlockIDs
+
+// WeakParentsIDs is a slice of BlockIDs the block weakly references.
+type WeakParentsIDs = BlockIDs
+
+// ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
+type ShallowLikeParentIDs = BlockIDs
+
 // Block represents a vertex in the Tangle.
 type Block struct {
 	// The protocol version under which this block operates.
@@ -169,30 +166,30 @@ type Block struct {
 	NetworkID NetworkID `serix:"1,mapKey=networkId"`
 
 	// The parents the block references.
-	StrongParents      BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=strongParents"`
-	WeakParents        BlockIDs `serix:"3,lengthPrefixType=uint8,mapKey=weakParents"`
-	ShallowLikeParents BlockIDs `serix:"4,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+	StrongParents      StrongParentsIDs     `serix:"2,lengthPrefixType=uint8,mapKey=strongParents"`
+	WeakParents        WeakParentsIDs       `serix:"3,lengthPrefixType=uint8,mapKey=weakParents"`
+	ShallowLikeParents ShallowLikeParentIDs `serix:"4,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
 
-	IssuerID        types.Identifier  `serix:"5,mapKey=issuerID"`
-	IssuerPublicKey ed25519.PublicKey `serix:"6,mapKey=issuerPublicKey"`
-	IssuingTime     time.Time         `serix:"7,mapKey=issuingTime"`
+	IssuerID        Identifier                  `serix:"5,mapKey=issuerID"`
+	IssuerPublicKey [ed25519.PublicKeySize]byte `serix:"6,mapKey=issuerPublicKey"`
+	IssuingTime     time.Time                   `serix:"7,mapKey=issuingTime"`
 
 	SlotCommitment      *Commitment `serix:"8,mapKey=slotCommitment"`
-	LatestConfirmedSlot slot.Index  `serix:"9,mapKey=LatestConfirmedSlot"`
+	LatestConfirmedSlot SlotIndex   `serix:"9,mapKey=latestConfirmedSlot"`
 
 	// The inner payload of the block. Can be nil.
 	Payload BlockPayload `serix:"10,optional,mapKey=payload,omitempty"`
 
-	// The nonce which lets this block fulfill the PoW requirements.
-	Nonce uint64 `serix:"11,mapKey=nonce"`
+	Signature Ed25519Signature `serix:"11,mapKey=signature"`
 
-	Signature Ed25519Signature `serix:"12,mapKey=signature"`
+	// The nonce which lets this block fulfill the PoW requirements.
+	Nonce uint64 `serix:"12,mapKey=nonce"`
 }
 
 //BLock id == 0x + hex(hash) + hex(slotIndex) // 40 bytes
 
 // ID computes the ID of the Block.
-func (b *Block) ID(slotTimeProvider *slot.TimeProvider) (BlockID, error) {
+func (b *Block) ID(slotTimeProvider *SlotTimeProvider) (BlockID, error) {
 	data, err := internalEncode(b)
 	if err != nil {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
@@ -209,7 +206,7 @@ func (b *Block) ID(slotTimeProvider *slot.TimeProvider) (BlockID, error) {
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
-func (b *Block) MustID(slotTimeProvider *slot.TimeProvider) BlockID {
+func (b *Block) MustID(slotTimeProvider *SlotTimeProvider) BlockID {
 	blockID, err := b.ID(slotTimeProvider)
 	if err != nil {
 		panic(err)

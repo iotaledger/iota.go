@@ -40,11 +40,11 @@ type (
 		// Outputs returns a handle to query for outputs.
 		Outputs(ctx context.Context, query IndexerQuery) (*IndexerResultSet, error)
 		// Alias queries for a specific iotago.AliasOutput by its identifier and returns the ledger index at which this output where available at.
-		Alias(ctx context.Context, aliasID iotago.AliasID) (*iotago.OutputID, *iotago.AliasOutput, iotago.MilestoneIndex, error)
+		Alias(ctx context.Context, aliasID iotago.AliasID) (*iotago.OutputID, *iotago.AliasOutput, iotago.SlotIndex, error)
 		// Foundry queries for a specific iotago.FoundryOutput by its identifier and returns the ledger index at which this output where available at.
-		Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.MilestoneIndex, error)
+		Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.SlotIndex, error)
 		// NFT queries for a specific iotago.NFTOutput by its identifier and returns the ledger index at which this output where available at.
-		NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.OutputID, *iotago.NFTOutput, iotago.MilestoneIndex, error)
+		NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error)
 	}
 
 	// IndexerQuery is a query executed against the indexer.
@@ -147,7 +147,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 	return res, nil
 }
 
-func (client *indexerClient) singleOutputQuery(ctx context.Context, route string) (*iotago.OutputID, iotago.Output, iotago.MilestoneIndex, error) {
+func (client *indexerClient) singleOutputQuery(ctx context.Context, route string) (*iotago.OutputID, iotago.Output, iotago.SlotIndex, error) {
 	res := &IndexerResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, route, nil, res); err != nil {
 		return nil, nil, 0, err
@@ -165,7 +165,7 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 	return &outputID, output, res.LedgerIndex, err
 }
 
-func (client *indexerClient) Alias(ctx context.Context, aliasID iotago.AliasID) (*iotago.OutputID, *iotago.AliasOutput, iotago.MilestoneIndex, error) {
+func (client *indexerClient) Alias(ctx context.Context, aliasID iotago.AliasID) (*iotago.OutputID, *iotago.AliasOutput, iotago.SlotIndex, error) {
 	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteAlias, iotago.EncodeHex(aliasID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
@@ -173,7 +173,7 @@ func (client *indexerClient) Alias(ctx context.Context, aliasID iotago.AliasID) 
 	return outputID, output.(*iotago.AliasOutput), ledgerIndex, nil
 }
 
-func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.MilestoneIndex, error) {
+func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.SlotIndex, error) {
 	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteFoundry, iotago.EncodeHex(foundryID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
@@ -181,7 +181,7 @@ func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.Found
 	return outputID, output.(*iotago.FoundryOutput), ledgerIndex, nil
 }
 
-func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.OutputID, *iotago.NFTOutput, iotago.MilestoneIndex, error) {
+func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error) {
 	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteNFT, iotago.EncodeHex(nftID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err

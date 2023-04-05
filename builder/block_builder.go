@@ -17,7 +17,10 @@ const (
 // NewBlockBuilder creates a new BlockBuilder.
 func NewBlockBuilder() *BlockBuilder {
 	return &BlockBuilder{
-		block: &iotago.Block{ProtocolVersion: defaultProtocolVersion},
+		block: &iotago.Block{
+			ProtocolVersion: defaultProtocolVersion,
+			SlotCommitment:  iotago.NewEmptyCommitment(),
+		},
 	}
 }
 
@@ -71,16 +74,26 @@ func (mb *BlockBuilder) Tips(ctx context.Context, nodeAPI *nodeclient.Client) *B
 		return mb
 	}
 
-	return mb.Parents(parents)
+	return mb.StrongParents(parents)
 }
 
-// Parents sets the parents.
-func (mb *BlockBuilder) Parents(parents iotago.BlockIDs) *BlockBuilder {
+// StrongParents sets the parents.
+func (mb *BlockBuilder) StrongParents(parents iotago.BlockIDs) *BlockBuilder {
 	if mb.err != nil {
 		return mb
 	}
 
-	mb.block.Parents = parents.RemoveDupsAndSort()
+	mb.block.StrongParents = parents.RemoveDupsAndSort()
+	return mb
+}
+
+// SlotCommitment sets the slot commitment.
+func (mb *BlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BlockBuilder {
+	if mb.err != nil {
+		return mb
+	}
+
+	mb.block.SlotCommitment = commitment
 	return mb
 }
 

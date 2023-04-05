@@ -1,29 +1,19 @@
 package iotago
 
 import (
-	"context"
+	"fmt"
 
 	"golang.org/x/crypto/blake2b"
-
-	"github.com/iotaledger/hive.go/ds/types"
-	"github.com/iotaledger/hive.go/lo"
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
-	"github.com/iotaledger/hive.go/serializer/v2/serix"
-	"github.com/iotaledger/iota.go/v4/slot"
-)
-
-const (
-	CommitmentSize = marshalutil.Int64Size + CommitmentIDLength + 32 + marshalutil.Uint64Size
 )
 
 type Commitment struct {
-	Index            slot.Index `serix:"0"`
-	PrevID           ID         `serix:"1"`
-	RootsID          [32]byte   `serix:"2"`
-	CumulativeWeight int64      `serix:"3"`
+	Index            SlotIndex    `serix:"0,mapKey=index"`
+	PrevID           CommitmentID `serix:"1,mapKey=prevID"`
+	RootsID          Identifier   `serix:"2,mapKey=rootsID"`
+	CumulativeWeight int64        `serix:"3,mapKey=cumulativeWeight"`
 }
 
-func New(index slot.Index, prevID ID, rootsID types.Identifier, cumulativeWeight int64) *Commitment {
+func New(index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight int64) *Commitment {
 	return &Commitment{
 		Index:            index,
 		PrevID:           prevID,
@@ -36,27 +26,25 @@ func NewEmptyCommitment() *Commitment {
 	return &Commitment{}
 }
 
-// FromBytes deserializes a ID from a byte slice.
-func (c *Commitment) FromBytes(serialized []byte) (consumedBytes int, err error) {
-	return serix.DefaultAPI.Decode(context.Background(), serialized, c, serix.WithValidation())
+func (c *Commitment) ID() (CommitmentID, error) {
+	data, err := internalEncode(c)
+	if err != nil {
+		return CommitmentID{}, fmt.Errorf("can't compute commitment ID: %w", err)
+	}
+	return NewCommitmentID(c.Index, blake2b.Sum256(data)), nil
 }
 
-// Length returns the byte length of a serialized ID.
-func (c Commitment) Length() int {
-	return marshalutil.Int64Size + CommitmentIDLength
-}
+func (c *Commitment) MustID() CommitmentID {
+	id, err := c.ID()
+	if err != nil {
+		panic(err)
+	}
 
-// Bytes returns a serialized version of the ID.
-func (c Commitment) Bytes() (serialized []byte, err error) {
-	return serix.DefaultAPI.Encode(context.Background(), c, serix.WithValidation())
-}
-
-func (c *Commitment) ID() (id ID) {
-	return NewID(c.Index, blake2b.Sum256(lo.PanicOnErr(c.Bytes())))
+	return id
 }
 
 func (c *Commitment) Equals(other *Commitment) bool {
-	return c.ID() == other.ID() &&
+	return c.MustID() == other.MustID() &&
 		c.PrevID == other.PrevID &&
 		c.Index == other.Index &&
 		c.RootsID == other.RootsID &&

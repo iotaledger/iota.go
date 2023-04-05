@@ -9,7 +9,7 @@ import (
 // IndexerResponse is the standard successful response by the indexer.
 type IndexerResponse struct {
 	// The ledger index at which these outputs where available at.
-	LedgerIndex iotago.MilestoneIndex `json:"ledgerIndex"`
+	LedgerIndex iotago.SlotIndex `json:"ledgerIndex"`
 	// The maximum count of results that are returned by the node.
 	PageSize int `json:"pageSize"`
 	// The output IDs (transaction hash + output index) of the found outputs.

@@ -8,7 +8,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
-	"github.com/iotaledger/iota.go/v4/slot"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -155,7 +154,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 
-	slotTimeProvider := slot.NewTimeProvider(time.Now().Unix(), 10)
+	slotTimeProvider := iotago.NewSlotTimeProvider(time.Now().Unix(), 10)
 
 	m := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,

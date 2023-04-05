@@ -64,13 +64,13 @@ type (
 		// The current confirmed milestone's index.
 		ConfirmedMilestone InfoResMilestone `json:"confirmedMilestone"`
 		// The milestone index at which the last pruning commenced.
-		PruningIndex iotago.MilestoneIndex `json:"pruningIndex"`
+		PruningIndex iotago.SlotIndex `json:"pruningIndex"`
 	}
 
 	// InfoResMilestone defines the info res milestone information.
 	InfoResMilestone struct {
 		// The index of the milestone.
-		Index iotago.MilestoneIndex `json:"index"`
+		Index iotago.SlotIndex `json:"index"`
 		// The unix time of the milestone payload.
 		Timestamp uint32 `json:"timestamp,omitempty"`
 		// The IO of the milestone.
@@ -118,9 +118,9 @@ type (
 		// Whether the block is solid.
 		Solid bool `json:"isSolid"`
 		// The milestone index that references this block.
-		ReferencedByMilestoneIndex iotago.MilestoneIndex `json:"referencedByMilestoneIndex,omitempty"`
+		ReferencedByMilestoneIndex iotago.SlotIndex `json:"referencedByMilestoneIndex,omitempty"`
 		// If this block represents a milestone this is the milestone index
-		MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex,omitempty"`
+		MilestoneIndex iotago.SlotIndex `json:"milestoneIndex,omitempty"`
 		// The ledger inclusion state of the transaction payload.
 		LedgerInclusionState string `json:"ledgerInclusionState,omitempty"`
 		// Whether the block should be promoted.
@@ -156,17 +156,17 @@ type (
 		// Whether this output is spent.
 		Spent bool `json:"isSpent"`
 		// The milestone index at which this output was spent.
-		MilestoneIndexSpent iotago.MilestoneIndex `json:"milestoneIndexSpent,omitempty"`
+		MilestoneIndexSpent iotago.SlotIndex `json:"milestoneIndexSpent,omitempty"`
 		// The milestone timestamp this output was spent.
 		MilestoneTimestampSpent uint32 `json:"milestoneTimestampSpent,omitempty"`
 		// The transaction this output was spent with.
 		TransactionIDSpent string `json:"transactionIdSpent,omitempty"`
 		// The milestone index at which this output was booked into the ledger.
-		MilestoneIndexBooked iotago.MilestoneIndex `json:"milestoneIndexBooked"`
+		MilestoneIndexBooked iotago.SlotIndex `json:"milestoneIndexBooked"`
 		// The milestone timestamp this output was booked in the ledger.
 		MilestoneTimestampBooked uint32 `json:"milestoneTimestampBooked"`
 		// The ledger index at which this output was available at.
-		LedgerIndex iotago.MilestoneIndex `json:"ledgerIndex"`
+		LedgerIndex iotago.SlotIndex `json:"ledgerIndex"`
 	}
 
 	// OutputResponse defines the response of a GET outputs REST API call.
@@ -189,46 +189,18 @@ type (
 
 	// ReceiptTuple represents a receipt and the milestone index in which it was contained.
 	ReceiptTuple struct {
-		Receipt        *json.RawMessage      `json:"receipt"`
-		MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex"`
+		Receipt        *json.RawMessage `json:"receipt"`
+		MilestoneIndex iotago.SlotIndex `json:"milestoneIndex"`
 	}
 
-	// MilestoneUTXOChangesResponse defines the response of a GET milestone UTXO changes REST API call.
-	MilestoneUTXOChangesResponse struct {
+	// CommitmentUTXOChangesResponse defines the response of a GET milestone UTXO changes REST API call.
+	CommitmentUTXOChangesResponse struct {
 		// The index of the milestone.
-		Index iotago.MilestoneIndex `json:"index"`
+		Index iotago.SlotIndex `json:"index"`
 		// The output IDs (transaction hash + output index) of the newly created outputs.
 		CreatedOutputs []string `json:"createdOutputs"`
 		// The output IDs (transaction hash + output index) of the consumed (spent) outputs.
 		ConsumedOutputs []string `json:"consumedOutputs"`
-	}
-
-	// ComputeWhiteFlagMutationsRequest defines the request for a POST ComputeWhiteFlagMutations REST API call.
-	ComputeWhiteFlagMutationsRequest struct {
-		// The index of the milestone.
-		Index iotago.MilestoneIndex `json:"index"`
-		// The timestamp of the milestone.
-		Timestamp uint32 `json:"timestamp"`
-		// The hex encoded IDs of the parent blocks the milestone references.
-		Parents []string `json:"parents"`
-		// The hex encoded milestone ID of the previous milestone.
-		PreviousMilestoneID string `json:"previousMilestoneId"`
-	}
-
-	// ComputeWhiteFlagMutationsResponseInternal defines the internal response for a POST ComputeWhiteFlagMutations REST API call.
-	ComputeWhiteFlagMutationsResponseInternal struct {
-		// The hex encoded inclusion merkle tree root as a result of the white flag computation.
-		InclusionMerkleRoot string `json:"inclusionMerkleRoot"`
-		// The hex encoded applied merkle tree root as a result of the white flag computation.
-		AppliedMerkleRoot string `json:"appliedMerkleRoot"`
-	}
-
-	// ComputeWhiteFlagMutationsResponse defines the response for a POST ComputeWhiteFlagMutations REST API call.
-	ComputeWhiteFlagMutationsResponse struct {
-		// The inclusion merkle tree root as a result of the white flag computation.
-		InclusionMerkleRoot iotago.MilestoneMerkleProof
-		// The applied merkle tree root as a result of the white flag computation.
-		AppliedMerkleRoot iotago.MilestoneMerkleProof
 	}
 
 	// AddPeerRequest defines the request for a POST peer REST API call.
@@ -271,11 +243,11 @@ type (
 	//	- the node performed pruning of data
 	GossipHeartbeat struct {
 		// The solid milestone of the node.
-		SolidMilestoneIndex iotago.MilestoneIndex `json:"solidMilestoneIndex"`
+		SolidMilestoneIndex iotago.SlotIndex `json:"solidMilestoneIndex"`
 		// The milestone index at which the node pruned its data.
-		PrunedMilestoneIndex iotago.MilestoneIndex `json:"prunedMilestoneIndex"`
+		PrunedMilestoneIndex iotago.SlotIndex `json:"prunedMilestoneIndex"`
 		// The latest known milestone index by the node.
-		LatestMilestoneIndex iotago.MilestoneIndex `json:"latestMilestoneIndex"`
+		LatestMilestoneIndex iotago.SlotIndex `json:"latestMilestoneIndex"`
 		// The amount of currently connected peers.
 		ConnectedPeers int `json:"connectedPeers"`
 		// The amount of currently connected peers who also
