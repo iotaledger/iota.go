@@ -165,7 +165,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount:     426, // min amount
+					Amount:     434, // min amount
 					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()}},
 				},
 			},
@@ -175,14 +175,14 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			name:        "ok - storage deposit return",
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
-				// min 444
+				// min 434
 				&iotago.BasicOutput{
 					Amount: 1000,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAliasAddress(),
-							Amount:        566, // 1000 - 444
+							Amount:        566, // 1000 - 434
 						},
 					},
 				},
@@ -199,7 +199,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAliasAddress(),
-							Amount:        413, // off by 1
+							Amount:        433, // off by 1
 						},
 					},
 				},
