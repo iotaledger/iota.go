@@ -399,9 +399,9 @@ func TestClient_CommitmentByID(t *testing.T) {
 
 	var slotIndex iotago.SlotIndex = 5
 
-	commitmentID := iotago.NewCommitmentID(slotIndex, tpkg.Rand32ByteArray())
+	commitmentID := iotago.NewSlotIdentifier(slotIndex, tpkg.Rand32ByteArray())
 
-	commitment := iotago.NewCommitment(slotIndex, iotago.NewCommitmentID(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), int64(tpkg.RandUint64(math.MaxUint64)))
+	commitment := iotago.NewCommitment(slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), int64(tpkg.RandUint64(math.MaxUint64)))
 
 	data, err := v3API.Encode(commitment)
 	require.NoError(t, err)
@@ -421,7 +421,7 @@ func TestClient_CommitmentByID(t *testing.T) {
 func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	defer gock.Off()
 
-	commitmentID := iotago.NewCommitmentID(5, tpkg.Rand32ByteArray())
+	commitmentID := iotago.NewSlotIdentifier(5, tpkg.Rand32ByteArray())
 
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
@@ -448,7 +448,7 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 
 	var slotIndex iotago.SlotIndex = 1337
 
-	commitment := iotago.NewCommitment(slotIndex, iotago.NewCommitmentID(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), int64(tpkg.RandUint64(math.MaxUint64)))
+	commitment := iotago.NewCommitment(slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), int64(tpkg.RandUint64(math.MaxUint64)))
 
 	data, err := v3API.Encode(commitment)
 	require.NoError(t, err)

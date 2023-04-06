@@ -4,14 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	"golang.org/x/crypto/blake2b"
-
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
 	// TransactionIDLength defines the length of a Transaction ID.
-	TransactionIDLength = blake2b.Size256
+	TransactionIDLength = IdentifierLength
 )
 
 var (
@@ -32,12 +30,7 @@ var (
 )
 
 // TransactionID is the ID of a Transaction.
-type TransactionID [TransactionIDLength]byte
-
-// ToHex converts the TransactionID to its hex representation.
-func (transactionID TransactionID) ToHex() string {
-	return EncodeHex(transactionID[:])
-}
+type TransactionID = Identifier
 
 // TransactionIDs are IDs of transactions.
 type TransactionIDs []TransactionID
@@ -73,10 +66,7 @@ func (t *Transaction) ID() (TransactionID, error) {
 	if err != nil {
 		return TransactionID{}, fmt.Errorf("can't compute transaction ID: %w", err)
 	}
-	h := blake2b.Sum256(data)
-	tID := TransactionID{}
-	copy(tID[:], h[:])
-	return tID, nil
+	return IdentifierFromData(data), nil
 }
 
 func (t *Transaction) Size() int {

@@ -2,9 +2,9 @@ package iotago
 
 import (
 	"fmt"
-
-	"golang.org/x/crypto/blake2b"
 )
+
+type CommitmentID = SlotIdentifier
 
 type Commitment struct {
 	Index            SlotIndex    `serix:"0,mapKey=index"`
@@ -31,7 +31,7 @@ func (c *Commitment) ID() (CommitmentID, error) {
 	if err != nil {
 		return CommitmentID{}, fmt.Errorf("can't compute commitment ID: %w", err)
 	}
-	return NewCommitmentID(c.Index, blake2b.Sum256(data)), nil
+	return SlotIdentifierFromData(c.Index, data), nil
 }
 
 func (c *Commitment) MustID() CommitmentID {

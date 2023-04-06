@@ -364,7 +364,7 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (iotago.
 		return iotago.EmptyBlockID(), err
 	}
 
-	blockID, err := iotago.BlockIDFromHexString(res.Header.Get(locationHeader))
+	blockID, err := iotago.SlotIdentifierFromHexString(res.Header.Get(locationHeader))
 	if err != nil {
 		return iotago.EmptyBlockID(), err
 	}

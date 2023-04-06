@@ -233,7 +233,7 @@ func (eac *EventAPIClient) subscribeToBlockMetadataBlockTopic(topic string) (<-c
 			return nil, err
 		}
 
-		return eac.Client.BlockByBlockID(context.Background(), iotago.MustBlockIDFromHexString(metadataRes.BlockID))
+		return eac.Client.BlockByBlockID(context.Background(), iotago.MustSlotIdentifierFromHexString(metadataRes.BlockID))
 	})
 }
 

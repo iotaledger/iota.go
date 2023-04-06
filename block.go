@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
-	"encoding/binary"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"runtime"
 	"sort"
@@ -15,12 +12,13 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/pow"
 )
 
 const (
 	// BlockIDLength defines the length of a block ID.
-	BlockIDLength = blake2b.Size256 + serializer.UInt64ByteSize
+	BlockIDLength = SlotIdentifierLength
 	// MaxBlockSize defines the maximum size of a block.
 	MaxBlockSize = 32768
 	// BlockMinStrongParents defines the minimum amount of strong parents in a block.
@@ -31,74 +29,13 @@ const (
 	BlockMaxParents = 8
 )
 
-var (
-	// is an empty block ID.
-	emptyBlockID = BlockID{}
-
-	ErrInvalidBlockIDLength = errors.New("Invalid block id length")
-)
-
 // EmptyBlockID returns an empty BlockID.
 func EmptyBlockID() BlockID {
-	return emptyBlockID
+	return emptySlotIdentifier
 }
 
 // BlockID is the ID of a Block.
-type BlockID [BlockIDLength]byte
-
-func (id BlockID) MarshalText() (text []byte, err error) {
-	dst := make([]byte, hex.EncodedLen(len(BlockID{})))
-	hex.Encode(dst, id[:])
-	return dst, nil
-}
-
-func (id *BlockID) UnmarshalText(text []byte) error {
-	_, err := hex.Decode(id[:], text)
-	return err
-}
-
-// ToHex converts the given block ID to their hex representation.
-func (id BlockID) ToHex() string {
-	return EncodeHex(id[:])
-}
-
-// Empty tells whether the BlockID is empty.
-func (id BlockID) Empty() bool {
-	return id == emptyBlockID
-}
-
-func (id *BlockID) String() string {
-	return id.ToHex()
-}
-
-func (id *BlockID) Slot() SlotIndex {
-	return SlotIndex(binary.LittleEndian.Uint64(id[32:]))
-}
-
-// BlockIDFromHexString converts the given block ID from its hex to BlockID representation.
-func BlockIDFromHexString(blockIDHex string) (BlockID, error) {
-	blockIDBytes, err := DecodeHex(blockIDHex)
-	if err != nil {
-		return BlockID{}, err
-	}
-
-	if len(blockIDBytes) != BlockIDLength {
-		return BlockID{}, ErrInvalidBlockIDLength
-	}
-
-	var blockID BlockID
-	copy(blockID[:], blockIDBytes)
-	return blockID, nil
-}
-
-// MustBlockIDFromHexString converts the given block ID from its hex to BlockID representation.
-func MustBlockIDFromHexString(blockIDHex string) BlockID {
-	blockID, err := BlockIDFromHexString(blockIDHex)
-	if err != nil {
-		panic(err)
-	}
-	return blockID
-}
+type BlockID = SlotIdentifier
 
 // BlockIDs are IDs of blocks.
 type BlockIDs []BlockID
@@ -135,7 +72,7 @@ func BlockIDsFromHexString(blockIDsHex []string) (BlockIDs, error) {
 	result := make(BlockIDs, len(blockIDsHex))
 
 	for i, hexString := range blockIDsHex {
-		blockID, err := BlockIDFromHexString(hexString)
+		blockID, err := SlotIdentifierFromHexString(hexString)
 		if err != nil {
 			return nil, err
 		}
@@ -186,6 +123,49 @@ type Block struct {
 	Nonce uint64 `serix:"12,mapKey=nonce"`
 }
 
+func (b *Block) ContentHash() (Identifier, error) {
+	data, err := internalEncode(b)
+	if err != nil {
+		return Identifier{}, fmt.Errorf("failed to encode block: %w", err)
+	}
+
+	return blake2b.Sum256(data[:len(data)-serializer.UInt64ByteSize-ed25519.SignatureSize]), nil
+}
+
+// SigningMessage returns the to be signed message.
+// It is the ContentHash+encoded(IssuingTime)+encoded(SlotCommitment.ID())
+func (b *Block) SigningMessage() ([]byte, error) {
+	contentHash, err := b.ContentHash()
+	if err != nil {
+		return nil, err
+	}
+
+	issuingTimeBytes, err := internalEncode(b.IssuingTime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize block's issuing time: %w", err)
+	}
+
+	commitmentID, err := b.SlotCommitment.ID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize block's commitment ID: %w", err)
+	}
+
+	return byteutils.ConcatBytes(issuingTimeBytes, commitmentID[:], contentHash[:]), nil
+}
+
+// Sign produces signatures signing the essence for every given AddressKeys.
+// The produced signatures are in the same order as the AddressKeys.
+func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
+	signMsg, err := b.SigningMessage()
+	if err != nil {
+		return nil, err
+	}
+
+	signer := NewInMemoryAddressSigner(addrKey)
+
+	return signer.Sign(addrKey.Address, signMsg)
+}
+
 //BLock id == 0x + hex(hash) + hex(slotIndex) // 40 bytes
 
 // ID computes the ID of the Block.
@@ -194,15 +174,10 @@ func (b *Block) ID(slotTimeProvider *SlotTimeProvider) (BlockID, error) {
 	if err != nil {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
 	}
-	h := blake2b.Sum256(data)
 
 	slotIndex := slotTimeProvider.IndexFromTime(b.IssuingTime)
 
-	id := BlockID{}
-	copy(id[:], h[:])
-	binary.LittleEndian.PutUint64(id[32:], uint64(slotIndex))
-
-	return id, nil
+	return SlotIdentifierFromData(slotIndex, data), nil
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
