@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"testing"
 
@@ -145,12 +146,13 @@ func TestClient_Tips(t *testing.T) {
 func TestClient_SubmitBlock(t *testing.T) {
 	defer gock.Off()
 
-	blockHash := tpkg.Rand32ByteArray()
+	blockHash := tpkg.Rand40ByteArray()
 	blockHashStr := iotago.EncodeHex(blockHash[:])
 
 	incompleteBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		StrongParents:   tpkg.SortedRandBlockIDs(1),
+		SlotCommitment:  iotago.NewEmptyCommitment(),
 	}
 
 	serializedIncompleteBlock, err := v3API.Encode(incompleteBlock, serix.WithValidation())
@@ -172,7 +174,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
-	identifier := tpkg.Rand32ByteArray()
+	identifier := tpkg.Rand40ByteArray()
 	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
 
 	queryHash := iotago.EncodeHex(identifier[:])
@@ -211,12 +213,13 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 func TestClient_BlockByBlockID(t *testing.T) {
 	defer gock.Off()
 
-	identifier := tpkg.Rand32ByteArray()
+	identifier := tpkg.Rand40ByteArray()
 	queryHash := iotago.EncodeHex(identifier[:])
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
@@ -239,7 +242,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 func TestClient_ChildrenByBlockID(t *testing.T) {
 	defer gock.Off()
 
-	blockID := tpkg.Rand32ByteArray()
+	blockID := tpkg.Rand40ByteArray()
 	hexBlockID := iotago.EncodeHex(blockID[:])
 
 	child1 := tpkg.Rand32ByteArray()
@@ -277,6 +280,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Payload:         nil,
 		Nonce:           16345984576234,
 	}
@@ -390,54 +394,34 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	require.EqualValues(t, txID, *resTxID)
 }
 
-func TestClient_MilestoneByID(t *testing.T) {
+func TestClient_CommitmentByID(t *testing.T) {
 	defer gock.Off()
 
-	milestoneID := tpkg.RandMilestoneID()
+	var slotIndex iotago.SlotIndex = 5
 
-	milestone := &iotago.Milestone{
-		MilestoneEssence: iotago.MilestoneEssence{
-			Index:               1337,
-			Timestamp:           1337,
-			PreviousMilestoneID: tpkg.RandMilestoneID(),
-			Parents: iotago.MilestoneParentIDs{
-				tpkg.RandBlockID(),
-			},
-			InclusionMerkleRoot: tpkg.Rand32ByteArray(),
-			AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
-			Metadata:            tpkg.RandBytes(30),
-			Opts: iotago.MilestoneOpts{
-				&iotago.ProtocolParamsMilestoneOpt{
-					TargetMilestoneIndex: 500,
-					ProtocolVersion:      2,
-					Params:               []byte{1, 2, 3, 4, 5, 6, 7},
-				},
-			},
-		},
-		Signatures: iotago.Signatures[iotago.MilestoneSignature]{
-			tpkg.RandEd25519Signature(),
-		},
-	}
+	commitmentID := iotago.NewCommitmentID(slotIndex, tpkg.Rand32ByteArray())
 
-	data, err := v3API.Encode(milestone)
+	commitment := iotago.NewCommitment(slotIndex, iotago.NewCommitmentID(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), int64(tpkg.RandUint64(math.MaxUint64)))
+
+	data, err := v3API.Encode(commitment)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteCommitmentByID, iotago.EncodeHex(milestoneID[:]))).
+		Get(fmt.Sprintf(nodeclient.RouteCommitmentByID, commitmentID.ToHex())).
 		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.MilestoneByID(context.Background(), milestoneID)
+	resp, err := nodeAPI.CommitmentByID(context.Background(), commitmentID)
 	require.NoError(t, err)
-	require.EqualValues(t, milestone, resp)
+	require.EqualValues(t, commitment, resp)
 }
 
-func TestClient_MilestoneUTXOChangesByID(t *testing.T) {
+func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	defer gock.Off()
 
-	milestoneID := tpkg.RandMilestoneID()
+	commitmentID := iotago.NewCommitmentID(5, tpkg.Rand32ByteArray())
 
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
@@ -449,126 +433,59 @@ func TestClient_MilestoneUTXOChangesByID(t *testing.T) {
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMilestoneByIDUTXOChanges, iotago.EncodeHex(milestoneID[:]))).
+		Get(fmt.Sprintf(nodeclient.RouteCommitmentByIDUTXOChanges, commitmentID.ToHex())).
 		Reply(200).
 		JSON(originRes)
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.CommitmentUTXOChangesByID(context.Background(), milestoneID)
+	resp, err := nodeAPI.CommitmentUTXOChangesByID(context.Background(), commitmentID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
 
-func TestClient_MilestoneByIndex(t *testing.T) {
+func TestClient_CommitmentByIndex(t *testing.T) {
 	defer gock.Off()
 
-	var milestoneIndex iotago.MilestoneIndex = 1337
+	var slotIndex iotago.SlotIndex = 1337
 
-	milestone := &iotago.Milestone{
-		MilestoneEssence: iotago.MilestoneEssence{
-			Index:               milestoneIndex,
-			Timestamp:           1337,
-			PreviousMilestoneID: tpkg.RandMilestoneID(),
-			Parents: iotago.MilestoneParentIDs{
-				tpkg.Rand32ByteArray(),
-			},
-			InclusionMerkleRoot: tpkg.Rand32ByteArray(),
-			AppliedMerkleRoot:   tpkg.Rand32ByteArray(),
-			Metadata:            tpkg.RandBytes(30),
-			Opts: iotago.MilestoneOpts{
-				&iotago.ProtocolParamsMilestoneOpt{
-					TargetMilestoneIndex: 500,
-					ProtocolVersion:      2,
-					Params:               []byte{1, 2, 3, 4, 5, 6, 7},
-				},
-			},
-		},
-		Signatures: iotago.Signatures[iotago.MilestoneSignature]{
-			tpkg.RandEd25519Signature(),
-		},
-	}
+	commitment := iotago.NewCommitment(slotIndex, iotago.NewCommitmentID(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), int64(tpkg.RandUint64(math.MaxUint64)))
 
-	data, err := v3API.Encode(milestone)
+	data, err := v3API.Encode(commitment)
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMilestoneByIndex, milestoneIndex)).
+		Get(fmt.Sprintf(nodeclient.RouteCommitmentByIndex, slotIndex)).
 		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.CommitmentByIndex(context.Background(), milestoneIndex)
+	resp, err := nodeAPI.CommitmentByIndex(context.Background(), slotIndex)
 	require.NoError(t, err)
-	require.EqualValues(t, milestone, resp)
+	require.EqualValues(t, commitment, resp)
 }
 
-func TestClient_MilestoneUTXOChangesByIndex(t *testing.T) {
+func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	defer gock.Off()
 
-	var milestoneIndex iotago.SlotIndex = 1337
+	var slotIndex iotago.SlotIndex = 1337
 
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
 	originRes := &nodeclient.CommitmentUTXOChangesResponse{
-		Index:           milestoneIndex,
+		Index:           slotIndex,
 		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
 		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},
 	}
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteMilestoneByIndexUTXOChanges, milestoneIndex)).
+		Get(fmt.Sprintf(nodeclient.RouteCommitmentByIndexUTXOChanges, slotIndex)).
 		Reply(200).
 		JSON(originRes)
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.CommitmentUTXOChangesByIndex(context.Background(), milestoneIndex)
-	require.NoError(t, err)
-	require.EqualValues(t, originRes, resp)
-}
-
-func TestClient_ComputeWhiteFlagMutations(t *testing.T) {
-	defer gock.Off()
-
-	var milestoneIndex iotago.SlotIndex = 1337
-	var milestoneTimestamp uint32 = 1333337
-
-	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
-	parentBlockIDs := make([]string, len(parents))
-	for i, p := range parents {
-		parentBlockIDs[i] = iotago.EncodeHex(p[:])
-	}
-
-	randInclusionMerkleRoot := tpkg.RandMilestoneMerkleProof()
-	randAppliedMerkleRoot := tpkg.RandMilestoneMerkleProof()
-
-	milestoneID := tpkg.RandMilestoneID()
-	req := &nodeclient.ComputeWhiteFlagMutationsRequest{
-		Index:               milestoneIndex,
-		Timestamp:           milestoneTimestamp,
-		Parents:             parentBlockIDs,
-		PreviousMilestoneID: iotago.EncodeHex(milestoneID[:]),
-	}
-
-	internalRes := &nodeclient.ComputeWhiteFlagMutationsResponseInternal{
-		InclusionMerkleRoot: iotago.EncodeHex(randInclusionMerkleRoot[:]),
-		AppliedMerkleRoot:   iotago.EncodeHex(randAppliedMerkleRoot[:]),
-	}
-
-	originRes := &nodeclient.ComputeWhiteFlagMutationsResponse{
-		InclusionMerkleRoot: randInclusionMerkleRoot,
-		AppliedMerkleRoot:   randAppliedMerkleRoot,
-	}
-
-	gock.New(nodeAPIUrl).
-		Post(nodeclient.RouteComputeWhiteFlagMutations).
-		JSON(req).
-		Reply(200).
-		JSON(internalRes)
-
-	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.ComputeWhiteFlagMutations(context.Background(), milestoneIndex, milestoneTimestamp, iotago.BlockIDs(parents), milestoneID)
+	resp, err := nodeAPI.CommitmentUTXOChangesByIndex(context.Background(), slotIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }

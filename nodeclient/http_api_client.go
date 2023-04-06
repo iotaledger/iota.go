@@ -30,90 +30,74 @@ const (
 
 	// RouteInfo is the route for getting the node info.
 	// GET returns the node info.
-	RouteInfo = "/api/core/v2/info"
+	RouteInfo = "/api/core/v3/info"
 
 	// RouteTips is the route for getting tips.
 	// GET returns the tips.
-	RouteTips = "/api/core/v2/tips"
+	RouteTips = "/api/core/v3/tips"
 
 	// RouteBlock is the route for getting a block by its ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes.
-	RouteBlock = "/api/core/v2/blocks/%s"
+	RouteBlock = "/api/core/v3/blocks/%s"
 
 	// RouteBlockMetadata is the route for getting block metadata by its ID.
 	// GET returns block metadata (including info about "promotion/reattachment needed").
-	RouteBlockMetadata = "/api/core/v2/blocks/%s/metadata"
+	RouteBlockMetadata = "/api/core/v3/blocks/%s/metadata"
 
 	// RouteBlockChildren is the route for getting block IDs of the children of a block, identified by its block ID.
 	// GET returns the block IDs of all children.
-	RouteBlockChildren = "/api/core/v2/blocks/%s/children"
+	RouteBlockChildren = "/api/core/v3/blocks/%s/children"
 
 	// RouteBlocks is the route for creating new blocks.
 	// POST creates a single new block and returns the ID.
 	// The block is parsed based on the given type in the request "Content-Type" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes.
-	RouteBlocks = "/api/core/v2/blocks"
+	RouteBlocks = "/api/core/v3/blocks"
 
 	// RouteTransactionsIncludedBlock is the route for getting the block that was included in the ledger for a given transaction ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes.
-	RouteTransactionsIncludedBlock = "/api/core/v2/transactions/%s/included-block"
+	RouteTransactionsIncludedBlock = "/api/core/v3/transactions/%s/included-block"
 
 	// RouteCommitmentByID is the route for getting a commitment by its ID.
 	// GET returns the commitment.
 	RouteCommitmentByID = "/api/core/v3/commitments/%s"
 
-	// RouteMilestoneByIDUTXOChanges is the route for getting all UTXO changes of a milestone by its ID.
+	// RouteCommitmentByIDUTXOChanges is the route for getting all UTXO changes of a milestone by its ID.
 	// GET returns the output IDs of all UTXO changes.
-	RouteMilestoneByIDUTXOChanges = "/api/core/v2/milestones/%s/utxo-changes"
+	RouteCommitmentByIDUTXOChanges = "/api/core/v3/commitments/%s/utxo-changes"
 
-	// RouteMilestoneByIndex is the route for getting a milestone by its milestoneIndex.
+	// RouteCommitmentByIndex is the route for getting a milestone by its milestoneIndex.
 	// GET returns the milestone.
-	RouteMilestoneByIndex = "/api/core/v2/milestones/by-index/%d"
+	RouteCommitmentByIndex = "/api/core/v3/commitments/by-index/%d"
 
-	// RouteMilestoneByIndexUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
+	// RouteCommitmentByIndexUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	RouteMilestoneByIndexUTXOChanges = "/api/core/v3/commitments/%d/utxo-changes"
+	RouteCommitmentByIndexUTXOChanges = "/api/core/v3/commitments/%d/utxo-changes"
 
 	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
 	// GET returns the output based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes.
-	RouteOutput = "/api/core/v2/outputs/%s"
+	RouteOutput = "/api/core/v3/outputs/%s"
 
 	// RouteOutputMetadata is the route for getting output metadata by its outputID (transactionHash + outputIndex) without getting the data again.
 	// GET returns the output metadata.
-	RouteOutputMetadata = "/api/core/v2/outputs/%s/metadata"
-
-	// RouteTreasury is the route for getting the current treasury output.
-	// GET returns the treasury.
-	RouteTreasury = "/api/core/v2/treasury"
-
-	// RouteReceipts is the route for getting all persisted receipts on a node.
-	// GET returns the receipts.
-	RouteReceipts = "/api/core/v2/receipts"
-
-	// RouteReceiptsMigratedAtIndex is the route for getting all persisted receipts for a given migrated at index on a node.
-	// GET returns the receipts for the given migrated at index.
-	RouteReceiptsMigratedAtIndex = "/api/core/v2/receipts/%d"
-
-	// RouteComputeWhiteFlagMutations is the route to compute the white flag mutations for the cone of the given parents.
-	// POST computes the white flag mutations.
-	RouteComputeWhiteFlagMutations = "/api/core/v2/whiteflag"
+	RouteOutputMetadata = "/api/core/v3/outputs/%s/metadata"
 
 	// RoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
-	RoutePeer = "/api/core/v2/peers/%s"
+	RoutePeer = "/api/core/v3/peers/%s"
 
 	// RoutePeers is the route for getting all peers of the node.
 	// GET returns a list of all peers.
 	// POST adds a new peer.
-	RoutePeers = "/api/core/v2/peers"
+	RoutePeers = "/api/core/v3/peers"
 )
 
 var (
@@ -506,7 +490,7 @@ func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID
 
 // CommitmentUTXOChangesByID returns all UTXO changes of a commitment by its ID.
 func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*CommitmentUTXOChangesResponse, error) {
-	query := fmt.Sprintf(RouteMilestoneByIDUTXOChanges, id.ToHex())
+	query := fmt.Sprintf(RouteCommitmentByIDUTXOChanges, id.ToHex())
 
 	res := &CommitmentUTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -518,7 +502,7 @@ func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.C
 
 // CommitmentByIndex gets a milestone by its index.
 func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIndex) (*iotago.Commitment, error) {
-	query := fmt.Sprintf(RouteMilestoneByIndex, index)
+	query := fmt.Sprintf(RouteCommitmentByIndex, index)
 
 	res := &RawDataEnvelope{}
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
@@ -535,7 +519,7 @@ func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIn
 
 // CommitmentUTXOChangesByIndex returns all UTXO changes of a commitment by its index.
 func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*CommitmentUTXOChangesResponse, error) {
-	query := fmt.Sprintf(RouteMilestoneByIndexUTXOChanges, index)
+	query := fmt.Sprintf(RouteCommitmentByIndexUTXOChanges, index)
 
 	res := &CommitmentUTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {

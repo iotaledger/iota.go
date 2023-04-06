@@ -13,7 +13,7 @@ type Commitment struct {
 	CumulativeWeight int64        `serix:"3,mapKey=cumulativeWeight"`
 }
 
-func New(index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight int64) *Commitment {
+func NewCommitment(index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight int64) *Commitment {
 	return &Commitment{
 		Index:            index,
 		PrevID:           prevID,
