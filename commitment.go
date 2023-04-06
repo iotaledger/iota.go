@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+const (
+	CommitmentIDLength = SlotIdentifierLength
+)
+
 type CommitmentID = SlotIdentifier
 
 type Commitment struct {

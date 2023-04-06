@@ -8,6 +8,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -116,7 +117,7 @@ type Block struct {
 	// The inner payload of the block. Can be nil.
 	Payload BlockPayload `serix:"9,optional,mapKey=payload,omitempty"`
 
-	Signature Ed25519Signature `serix:"10,mapKey=signature"`
+	Signature Signature `serix:"10,mapKey=signature"`
 
 	// The nonce which lets this block fulfill the PoW requirements.
 	Nonce uint64 `serix:"11,mapKey=nonce"`
@@ -128,7 +129,35 @@ func (b *Block) ContentHash() (Identifier, error) {
 		return Identifier{}, fmt.Errorf("failed to encode block: %w", err)
 	}
 
-	return blake2b.Sum256(data[:len(data)-b.Signature.Size()-serializer.UInt64ByteSize]), nil
+	return contentHashFromBlockBytes(data)
+}
+
+func BlockIdentifierFromBlockBytes(blockBytes []byte) (Identifier, error) {
+	contentHash, err := contentHashFromBlockBytes(blockBytes)
+	if err != nil {
+		return emptyIdentifier, err
+	}
+
+	signatureBytes, err := signatureBytesFromBlockBytes(blockBytes)
+	if err != nil {
+		return emptyIdentifier, err
+	}
+
+	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:])), nil
+}
+
+func contentHashFromBlockBytes(blockBytes []byte) (Identifier, error) {
+	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
+		return Identifier{}, errors.New("not enough block bytes")
+	}
+	return blake2b.Sum256(blockBytes[:len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize]), nil
+}
+
+func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerializedBytesSize]byte, error) {
+	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
+		return [Ed25519SignatureSerializedBytesSize]byte{}, errors.New("not enough block bytes")
+	}
+	return [Ed25519SignatureSerializedBytesSize]byte(blockBytes[len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize : Ed25519SignatureSerializedBytesSize]), nil
 }
 
 // SigningMessage returns the to be signed message.
@@ -172,7 +201,12 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 		return false, err
 	}
 
-	return iotagoEd25519.Verify(b.Signature.PublicKey[:], signingMessage, b.Signature.Signature[:]), nil
+	edSig, isEdSig := b.Signature.(*Ed25519Signature)
+	if !isEdSig {
+		return false, fmt.Errorf("only ed2519 signatures supported, got %s", b.Signature.Type())
+	}
+
+	return iotagoEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
 }
 
 // ID computes the ID of the Block.
@@ -184,7 +218,12 @@ func (b *Block) ID(slotTimeProvider *SlotTimeProvider) (BlockID, error) {
 
 	slotIndex := slotTimeProvider.IndexFromTime(b.IssuingTime)
 
-	return SlotIdentifierFromData(slotIndex, data), nil
+	blockIdentifier, err := BlockIdentifierFromBlockBytes(data)
+	if err != nil {
+		return BlockID{}, err
+	}
+
+	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.

@@ -2,6 +2,7 @@ package builder
 
 import (
 	"context"
+	"crypto/ed25519"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -20,6 +21,7 @@ func NewBlockBuilder() *BlockBuilder {
 		block: &iotago.Block{
 			ProtocolVersion: defaultProtocolVersion,
 			SlotCommitment:  iotago.NewEmptyCommitment(),
+			Signature:       &iotago.Ed25519Signature{},
 		},
 	}
 }
@@ -35,6 +37,7 @@ func (mb *BlockBuilder) Build() (*iotago.Block, error) {
 	if mb.err != nil {
 		return nil, mb.err
 	}
+
 	return mb.block, nil
 }
 
@@ -44,6 +47,7 @@ func (mb *BlockBuilder) Payload(payload iotago.Payload) *BlockBuilder {
 		return mb
 	}
 	mb.block.Payload = payload
+
 	return mb
 }
 
@@ -53,6 +57,7 @@ func (mb *BlockBuilder) ProtocolVersion(version byte) *BlockBuilder {
 		return mb
 	}
 	mb.block.ProtocolVersion = version
+
 	return mb
 }
 
@@ -84,6 +89,7 @@ func (mb *BlockBuilder) StrongParents(parents iotago.BlockIDs) *BlockBuilder {
 	}
 
 	mb.block.StrongParents = parents.RemoveDupsAndSort()
+
 	return mb
 }
 
@@ -94,6 +100,7 @@ func (mb *BlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BlockBuil
 	}
 
 	mb.block.SlotCommitment = commitment
+
 	return mb
 }
 
@@ -119,5 +126,29 @@ func (mb *BlockBuilder) ProofOfWork(ctx context.Context, targetScore float64, nu
 		return mb
 	}
 	mb.block.Nonce = nonce
+
+	return mb
+}
+
+func (mb *BlockBuilder) Sign(addr *iotago.Ed25519Address, prvKey ed25519.PrivateKey) *BlockBuilder {
+	if mb.err != nil {
+		return mb
+	}
+
+	mb.block.IssuerID = iotago.Identifier(*addr)
+
+	signature, err := mb.block.Sign(iotago.NewAddressKeysForEd25519Address(addr, prvKey))
+	if err != nil {
+		mb.err = fmt.Errorf("error signing block: %w", err)
+		return mb
+	}
+
+	edSig, isEdSig := signature.(*iotago.Ed25519Signature)
+	if !isEdSig {
+		panic("unsupported signature type")
+	}
+
+	mb.block.Signature = edSig
+
 	return mb
 }

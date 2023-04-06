@@ -47,6 +47,7 @@ func TestBlock_MinSize(t *testing.T) {
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		StrongParents:   tpkg.SortedRandBlockIDs(1),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
+		Signature:       tpkg.RandEd25519Signature(),
 		Payload:         nil,
 	}
 

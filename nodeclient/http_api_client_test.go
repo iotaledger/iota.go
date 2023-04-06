@@ -153,6 +153,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 		ProtocolVersion: tpkg.TestProtocolVersion,
 		StrongParents:   tpkg.SortedRandBlockIDs(1),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
+		Signature:       &iotago.Ed25519Signature{},
 	}
 
 	serializedIncompleteBlock, err := v3API.Encode(incompleteBlock, serix.WithValidation())
@@ -221,6 +222,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Payload:         nil,
+		Signature:       tpkg.RandEd25519Signature(),
 		Nonce:           16345984576234,
 	}
 
@@ -282,6 +284,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Payload:         nil,
+		Signature:       tpkg.RandEd25519Signature(),
 		Nonce:           16345984576234,
 	}
 
