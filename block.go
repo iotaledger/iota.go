@@ -3,7 +3,6 @@ package iotago
 import (
 	"bytes"
 	"context"
-	"crypto/ed25519"
 	"fmt"
 	"runtime"
 	"sort"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
 	"github.com/iotaledger/iota.go/v4/pow"
 )
 
@@ -107,20 +107,19 @@ type Block struct {
 	WeakParents        WeakParentsIDs       `serix:"3,lengthPrefixType=uint8,mapKey=weakParents"`
 	ShallowLikeParents ShallowLikeParentIDs `serix:"4,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
 
-	IssuerID        Identifier                  `serix:"5,mapKey=issuerID"`
-	IssuerPublicKey [ed25519.PublicKeySize]byte `serix:"6,mapKey=issuerPublicKey"`
-	IssuingTime     time.Time                   `serix:"7,mapKey=issuingTime"`
+	IssuerID    Identifier `serix:"5,mapKey=issuerID"`
+	IssuingTime time.Time  `serix:"6,mapKey=issuingTime"`
 
-	SlotCommitment      *Commitment `serix:"8,mapKey=slotCommitment"`
-	LatestConfirmedSlot SlotIndex   `serix:"9,mapKey=latestConfirmedSlot"`
+	SlotCommitment      *Commitment `serix:"7,mapKey=slotCommitment"`
+	LatestConfirmedSlot SlotIndex   `serix:"8,mapKey=latestConfirmedSlot"`
 
 	// The inner payload of the block. Can be nil.
-	Payload BlockPayload `serix:"10,optional,mapKey=payload,omitempty"`
+	Payload BlockPayload `serix:"9,optional,mapKey=payload,omitempty"`
 
-	Signature Ed25519Signature `serix:"11,mapKey=signature"`
+	Signature Ed25519Signature `serix:"10,mapKey=signature"`
 
 	// The nonce which lets this block fulfill the PoW requirements.
-	Nonce uint64 `serix:"12,mapKey=nonce"`
+	Nonce uint64 `serix:"11,mapKey=nonce"`
 }
 
 func (b *Block) ContentHash() (Identifier, error) {
@@ -129,7 +128,7 @@ func (b *Block) ContentHash() (Identifier, error) {
 		return Identifier{}, fmt.Errorf("failed to encode block: %w", err)
 	}
 
-	return blake2b.Sum256(data[:len(data)-serializer.UInt64ByteSize-ed25519.SignatureSize]), nil
+	return blake2b.Sum256(data[:len(data)-b.Signature.Size()-serializer.UInt64ByteSize]), nil
 }
 
 // SigningMessage returns the to be signed message.
@@ -166,7 +165,15 @@ func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
 	return signer.Sign(addrKey.Address, signMsg)
 }
 
-//BLock id == 0x + hex(hash) + hex(slotIndex) // 40 bytes
+// VerifySignature verifies the Signature of the block.
+func (b *Block) VerifySignature() (valid bool, err error) {
+	signingMessage, err := b.SigningMessage()
+	if err != nil {
+		return false, err
+	}
+
+	return iotagoEd25519.Verify(b.Signature.PublicKey[:], signingMessage, b.Signature.Signature[:]), nil
+}
 
 // ID computes the ID of the Block.
 func (b *Block) ID(slotTimeProvider *SlotTimeProvider) (BlockID, error) {
