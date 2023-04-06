@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultProtocolVersion = 2
+	defaultProtocolVersion = 3
 )
 
 // NewBlockBuilder creates a new BlockBuilder.
