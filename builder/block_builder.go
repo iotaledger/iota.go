@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"fmt"
+	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -21,6 +22,7 @@ func NewBlockBuilder() *BlockBuilder {
 		block: &iotago.Block{
 			ProtocolVersion: defaultProtocolVersion,
 			SlotCommitment:  iotago.NewEmptyCommitment(),
+			IssuingTime:     time.Now(),
 			Signature:       &iotago.Ed25519Signature{},
 		},
 	}
@@ -46,6 +48,7 @@ func (mb *BlockBuilder) Payload(payload iotago.Payload) *BlockBuilder {
 	if mb.err != nil {
 		return mb
 	}
+
 	mb.block.Payload = payload
 
 	return mb
@@ -56,7 +59,18 @@ func (mb *BlockBuilder) ProtocolVersion(version byte) *BlockBuilder {
 	if mb.err != nil {
 		return mb
 	}
+
 	mb.block.ProtocolVersion = version
+
+	return mb
+}
+
+func (mb *BlockBuilder) IssuingTime(time time.Time) *BlockBuilder {
+	if mb.err != nil {
+		return mb
+	}
+
+	mb.block.IssuingTime = time
 
 	return mb
 }

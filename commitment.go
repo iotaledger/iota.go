@@ -35,7 +35,7 @@ func (c *Commitment) ID() (CommitmentID, error) {
 	if err != nil {
 		return CommitmentID{}, fmt.Errorf("can't compute commitment ID: %w", err)
 	}
-	return SlotIdentifierFromData(c.Index, data), nil
+	return SlotIdentifierRepresentingData(c.Index, data), nil
 }
 
 func (c *Commitment) MustID() CommitmentID {
@@ -53,4 +53,12 @@ func (c *Commitment) Equals(other *Commitment) bool {
 		c.Index == other.Index &&
 		c.RootsID == other.RootsID &&
 		c.CumulativeWeight == other.CumulativeWeight
+}
+
+func (c *Commitment) Bytes() ([]byte, error) {
+	return internalEncode(c)
+}
+
+func (c *Commitment) FromBytes(bytes []byte) (int, error) {
+	return internalDecode(bytes, c)
 }

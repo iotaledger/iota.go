@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"sync"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -20,8 +21,8 @@ var (
 // SlotIdentifier is a 32 byte hash value that can be used to uniquely identify some blob of data together with an 8 byte slot index.
 type SlotIdentifier [SlotIdentifierLength]byte
 
-// SlotIdentifierFromData returns a new SlotIdentifier for the given data by hashing it with blake2b and associating it with the given slot index.
-func SlotIdentifierFromData(index SlotIndex, data []byte) SlotIdentifier {
+// SlotIdentifierRepresentingData returns a new SlotIdentifier for the given data by hashing it with blake2b and associating it with the given slot index.
+func SlotIdentifierRepresentingData(index SlotIndex, data []byte) SlotIdentifier {
 	return NewSlotIdentifier(index, blake2b.Sum256(data))
 }
 
@@ -40,13 +41,16 @@ func SlotIdentifierFromHexString(hex string) (SlotIdentifier, error) {
 		return SlotIdentifier{}, err
 	}
 
+	return SlotIdentifierFromBytes(bytes)
+}
+
+// SlotIdentifierFromBytes returns a new SlotIdentifier represented by the passed bytes.
+func SlotIdentifierFromBytes(bytes []byte) (SlotIdentifier, error) {
 	if len(bytes) != SlotIdentifierLength {
 		return SlotIdentifier{}, ErrInvalidIdentifierLength
 	}
 
-	var id SlotIdentifier
-	copy(id[:], bytes)
-	return id, nil
+	return SlotIdentifier(bytes), nil
 }
 
 // MustSlotIdentifierFromHexString converts the hex to a SlotIdentifier representation.
@@ -81,7 +85,7 @@ func (id SlotIdentifier) ToHex() string {
 }
 
 func (id SlotIdentifier) String() string {
-	return id.ToHex()
+	return id.Alias()
 }
 
 func (id SlotIdentifier) Slot() SlotIndex {
@@ -90,4 +94,41 @@ func (id SlotIdentifier) Slot() SlotIndex {
 
 func (id SlotIdentifier) Identifier() Identifier {
 	return Identifier(id[:IdentifierLength])
+}
+
+var (
+	// slotIidentifierAliases contains a dictionary of identifiers associated to their human-readable alias.
+	slotIidentifierAliases = make(map[SlotIdentifier]string)
+
+	// slotIdentifierAliasesMutex is the mutex that is used to synchronize access to the previous map.
+	slotIdentifierAliasesMutex = sync.RWMutex{}
+)
+
+// RegisterAlias allows to register a human-readable alias for the Identifier which will be used as a replacement for
+// the String method.
+func (id SlotIdentifier) RegisterAlias(alias string) {
+	slotIdentifierAliasesMutex.Lock()
+	defer slotIdentifierAliasesMutex.Unlock()
+
+	slotIidentifierAliases[id] = alias
+}
+
+// Alias returns the human-readable alias of the Identifier (or the base58 encoded bytes of no alias was set).
+func (id SlotIdentifier) Alias() (alias string) {
+	slotIdentifierAliasesMutex.RLock()
+	defer slotIdentifierAliasesMutex.RUnlock()
+
+	if existingAlias, exists := slotIidentifierAliases[id]; exists {
+		return existingAlias
+	}
+
+	return id.ToHex()
+}
+
+// UnregisterAlias allows to unregister a previously registered alias.
+func (id SlotIdentifier) UnregisterAlias() {
+	slotIdentifierAliasesMutex.Lock()
+	defer slotIdentifierAliasesMutex.Unlock()
+
+	delete(slotIidentifierAliases, id)
 }

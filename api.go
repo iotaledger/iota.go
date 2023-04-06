@@ -50,6 +50,13 @@ func internalEncode(obj any, opts ...serix.Option) ([]byte, error) {
 	return _internalAPI.Encode(obj, opts...)
 }
 
+// calls the internally instantiated API to decode the given object.
+func internalDecode(b []byte, obj any, opts ...serix.Option) (int, error) {
+	_internalAPIMu.RLock()
+	defer _internalAPIMu.RUnlock()
+	return _internalAPI.Decode(b, obj, opts...)
+}
+
 // SwapInternalAPI swaps the internally used API of this lib with new.
 func SwapInternalAPI(newAPI API) {
 	_internalAPIMu.Lock()

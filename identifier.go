@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/hex"
 	"errors"
+	"sync"
 
 	"golang.org/x/crypto/blake2b"
 )
@@ -74,5 +75,42 @@ func (id Identifier) ToHex() string {
 }
 
 func (id Identifier) String() string {
+	return id.Alias()
+}
+
+var (
+	// identifierAliases contains a dictionary of identifiers associated to their human-readable alias.
+	identifierAliases = make(map[Identifier]string)
+
+	// identifierAliasesMutex is the mutex that is used to synchronize access to the previous map.
+	identifierAliasesMutex = sync.RWMutex{}
+)
+
+// RegisterAlias allows to register a human-readable alias for the Identifier which will be used as a replacement for
+// the String method.
+func (id Identifier) RegisterAlias(alias string) {
+	identifierAliasesMutex.Lock()
+	defer identifierAliasesMutex.Unlock()
+
+	identifierAliases[id] = alias
+}
+
+// Alias returns the human-readable alias of the Identifier (or the base58 encoded bytes of no alias was set).
+func (id Identifier) Alias() (alias string) {
+	identifierAliasesMutex.RLock()
+	defer identifierAliasesMutex.RUnlock()
+
+	if existingAlias, exists := identifierAliases[id]; exists {
+		return existingAlias
+	}
+
 	return id.ToHex()
+}
+
+// UnregisterAlias allows to unregister a previously registered alias.
+func (id Identifier) UnregisterAlias() {
+	identifierAliasesMutex.Lock()
+	defer identifierAliasesMutex.Unlock()
+
+	delete(identifierAliases, id)
 }
