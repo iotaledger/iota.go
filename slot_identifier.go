@@ -63,6 +63,19 @@ func MustSlotIdentifierFromHexString(hex string) SlotIdentifier {
 	return id
 }
 
+func (id BlockID) Bytes() ([]byte, error) {
+	return id[:], nil
+}
+
+func (id *BlockID) FromBytes(bytes []byte) (int, error) {
+	var err error
+	*id, err = SlotIdentifierFromBytes(bytes)
+	if err != nil {
+		return 0, err
+	}
+	return SlotIdentifierLength, nil
+}
+
 func (id SlotIdentifier) MarshalText() (text []byte, err error) {
 	dst := make([]byte, hex.EncodedLen(len(SlotIdentifier{})))
 	hex.Encode(dst, id[:])
@@ -88,7 +101,7 @@ func (id SlotIdentifier) String() string {
 	return id.Alias()
 }
 
-func (id SlotIdentifier) Slot() SlotIndex {
+func (id SlotIdentifier) Index() SlotIndex {
 	return SlotIndex(binary.LittleEndian.Uint64(id[IdentifierLength:]))
 }
 
