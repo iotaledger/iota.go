@@ -157,7 +157,7 @@ func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerialize
 	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
 		return [Ed25519SignatureSerializedBytesSize]byte{}, errors.New("not enough block bytes")
 	}
-	return [Ed25519SignatureSerializedBytesSize]byte(blockBytes[len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize : Ed25519SignatureSerializedBytesSize]), nil
+	return [Ed25519SignatureSerializedBytesSize]byte(blockBytes[len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize:]), nil
 }
 
 // SigningMessage returns the to be signed message.
