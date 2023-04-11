@@ -36,11 +36,13 @@ type API interface {
 	JSONDecode(jsonData []byte, obj any, opts ...serix.Option) error
 	// Underlying returns the underlying serix.API instance.
 	Underlying() *serix.API
+	// SlotTimeProvider returns the underlying time provider used.
+	SlotTimeProvider() *SlotTimeProvider
 }
 
 // LatestAPI creates a new API instance conforming to the latest IOTA protocol version.
-func LatestAPI(protoPras *ProtocolParameters) API {
-	return V3API(protoPras)
+func LatestAPI(protoParams *ProtocolParameters) API {
+	return V3API(protoParams)
 }
 
 // calls the internally instantiated API to encode the given object.

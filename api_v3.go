@@ -152,8 +152,9 @@ var (
 
 // v3api implements the iota-core 1.0 protocol core models.
 type v3api struct {
-	ctx      context.Context
-	serixAPI *serix.API
+	ctx          context.Context
+	serixAPI     *serix.API
+	timeProvider *SlotTimeProvider
 }
 
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
@@ -166,6 +167,10 @@ func (v *v3api) JSONDecode(jsonData []byte, obj any, opts ...serix.Option) error
 
 func (v *v3api) Underlying() *serix.API {
 	return v.serixAPI
+}
+
+func (v *v3api) SlotTimeProvider() *SlotTimeProvider {
+	return v.timeProvider
 }
 
 func (v *v3api) Encode(obj interface{}, opts ...serix.Option) ([]byte, error) {
@@ -438,7 +443,8 @@ func V3API(protoParams *ProtocolParameters) API {
 	}
 
 	return &v3api{
-		ctx:      protoParams.AsSerixContext(),
-		serixAPI: api,
+		ctx:          protoParams.AsSerixContext(),
+		serixAPI:     api,
+		timeProvider: protoParams.SlotTimeProvider(),
 	}
 }
