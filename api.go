@@ -88,12 +88,14 @@ type ProtocolParameters struct {
 	Bech32HRP NetworkPrefix `serix:"2,lengthPrefixType=uint8,mapKey=bech32Hrp"`
 	// The minimum pow score of the network.
 	MinPoWScore uint32 `serix:"3,mapKey=minPowScore"`
-	// The below max depth parameter of the network.
-	BelowMaxDepth uint8 `serix:"4,mapKey=belowMaxDepth"`
 	// The rent structure used by given node/network.
-	RentStructure RentStructure `serix:"5,mapKey=rentStructure"`
+	RentStructure RentStructure `serix:"4,mapKey=rentStructure"`
 	// TokenSupply defines the current token supply on the network.
-	TokenSupply uint64 `serix:"6,mapKey=tokenSupply"`
+	TokenSupply uint64 `serix:"5,mapKey=tokenSupply"`
+	// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
+	GenesisUnixTimestamp uint32 `serix:"6,mapKey=genesisUnixTimestamp"`
+	// SlotDurationInSeconds defines the duration of each slot in seconds.
+	SlotDurationInSeconds uint8 `serix:"7,mapKey=slotDurationInSeconds"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {
@@ -102,6 +104,10 @@ func (p ProtocolParameters) AsSerixContext() context.Context {
 
 func (p ProtocolParameters) NetworkID() NetworkID {
 	return NetworkIDFromString(p.NetworkName)
+}
+
+func (p ProtocolParameters) SlotTimeProvider() *SlotTimeProvider {
+	return NewSlotTimeProvider(int64(p.GenesisUnixTimestamp), int64(p.SlotDurationInSeconds))
 }
 
 // Sizer is an object knowing its own byte size.
