@@ -62,3 +62,8 @@ func (c *Commitment) Bytes() ([]byte, error) {
 func (c *Commitment) FromBytes(bytes []byte) (int, error) {
 	return internalDecode(bytes, c)
 }
+
+func (c *Commitment) String() string {
+	return fmt.Sprintf("Commitment{\n\tIndex: %d\n\tPrevID: %s\n\tRootsID: %s\n\tCumulativeWeight: %d\n}",
+		c.Index, c.PrevID, c.RootsID, c.CumulativeWeight)
+}

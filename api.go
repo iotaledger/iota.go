@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"sync"
 
 	"golang.org/x/crypto/blake2b"
@@ -110,6 +111,11 @@ func (p ProtocolParameters) NetworkID() NetworkID {
 
 func (p ProtocolParameters) SlotTimeProvider() *SlotTimeProvider {
 	return NewSlotTimeProvider(int64(p.GenesisUnixTimestamp), int64(p.SlotDurationInSeconds))
+}
+
+func (p ProtocolParameters) String() string {
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tMinimum PoW Score: %d\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n}",
+		p.Version, p.NetworkName, p.Bech32HRP, p.MinPoWScore, p.RentStructure, p.TokenSupply, p.GenesisUnixTimestamp, p.SlotDurationInSeconds)
 }
 
 // Sizer is an object knowing its own byte size.
