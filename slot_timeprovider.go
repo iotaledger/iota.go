@@ -51,12 +51,20 @@ func (t *SlotTimeProvider) IndexFromTime(time time.Time) SlotIndex {
 
 // StartTime calculates the start time of the given slot.
 func (t *SlotTimeProvider) StartTime(i SlotIndex) time.Time {
+	if i == 0 {
+		return time.Unix(t.genesisUnixTime, 0)
+	}
+
 	startUnix := t.genesisUnixTime + int64(i-1)*t.duration
 	return time.Unix(startUnix, 0)
 }
 
 // EndTime returns the latest possible timestamp for a slot. Anything with higher timestamp will belong to the next slot.
 func (t *SlotTimeProvider) EndTime(i SlotIndex) time.Time {
+	if i == 0 {
+		return time.Unix(t.genesisUnixTime, 0)
+	}
+
 	endUnix := t.genesisUnixTime + int64(i)*t.duration
 	// we subtract 1 nanosecond from the next slot to get the latest possible timestamp for slot i
 	return time.Unix(endUnix, 0).Add(-1)
