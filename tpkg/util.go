@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 
@@ -499,12 +500,13 @@ func RandRentStructure() *iotago.RentStructure {
 // RandProtocolParameters produces random protocol parameters.
 func RandProtocolParameters() *iotago.ProtocolParameters {
 	return &iotago.ProtocolParameters{
-		Version:       RandByte(),
-		NetworkName:   RandString(255),
-		Bech32HRP:     iotago.NetworkPrefix(RandString(255)),
-		MinPoWScore:   RandUint32(50000),
-		BelowMaxDepth: RandUint8(math.MaxUint8),
-		RentStructure: *RandRentStructure(),
-		TokenSupply:   RandUint64(math.MaxUint64),
+		Version:               RandByte(),
+		NetworkName:           RandString(255),
+		Bech32HRP:             iotago.NetworkPrefix(RandString(255)),
+		MinPoWScore:           RandUint32(50000),
+		RentStructure:         *RandRentStructure(),
+		TokenSupply:           RandUint64(math.MaxUint64),
+		GenesisUnixTimestamp:  uint32(time.Now().Unix()),
+		SlotDurationInSeconds: RandUint8(math.MaxUint8),
 	}
 }
