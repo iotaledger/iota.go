@@ -18,13 +18,14 @@ import (
 )
 
 var emptyAPI = iotago.LatestAPI(&iotago.ProtocolParameters{
-	Version:       0,
-	NetworkName:   "",
-	Bech32HRP:     "",
-	MinPoWScore:   0,
-	BelowMaxDepth: 0,
-	RentStructure: iotago.RentStructure{},
-	TokenSupply:   0,
+	Version:               0,
+	NetworkName:           "",
+	Bech32HRP:             "",
+	MinPoWScore:           0,
+	RentStructure:         iotago.RentStructure{},
+	TokenSupply:           0,
+	GenesisUnixTimestamp:  0,
+	SlotDurationInSeconds: 0,
 })
 
 func TestMain(m *testing.M) {

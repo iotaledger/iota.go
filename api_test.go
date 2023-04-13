@@ -74,19 +74,20 @@ func TestProtocolParameters_DeSerialize(t *testing.T) {
 
 func TestProtocolParametersJSONMarshalling(t *testing.T) {
 	protoParams := &iotago.ProtocolParameters{
-		Version:       6,
-		NetworkName:   "xxxNetwork",
-		Bech32HRP:     "xxx",
-		MinPoWScore:   666,
-		BelowMaxDepth: 15,
+		Version:     6,
+		NetworkName: "xxxNetwork",
+		Bech32HRP:   "xxx",
+		MinPoWScore: 666,
 		RentStructure: iotago.RentStructure{
 			VByteCost:    6,
 			VBFactorKey:  7,
 			VBFactorData: 8,
 		},
-		TokenSupply: 1234567890987654321,
+		TokenSupply:           1234567890987654321,
+		GenesisUnixTimestamp:  1681373293,
+		SlotDurationInSeconds: 10,
 	}
-	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"belowMaxDepth":15,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321"}`
+	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":1681373293,"slotDurationInSeconds":10}`
 
 	jsonProtoParams, err := v3API.JSONEncode(protoParams)
 	require.NoError(t, err)
