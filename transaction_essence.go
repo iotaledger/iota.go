@@ -15,7 +15,7 @@ type TransactionEssenceType = byte
 
 const (
 	// TransactionEssenceNormal denotes a standard transaction essence.
-	TransactionEssenceNormal TransactionEssenceType = 1
+	TransactionEssenceNormal TransactionEssenceType = 2
 
 	// MaxInputsCount defines the maximum amount of inputs within a TransactionEssence.
 	MaxInputsCount = 128
