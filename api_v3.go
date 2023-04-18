@@ -442,6 +442,10 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*TaggedData)(nil)))
 	}
 
+	{
+		must(api.RegisterTypeSettings(Attestation{}, serix.TypeSettings{}))
+	}
+
 	return &v3api{
 		ctx:          protoParams.AsSerixContext(),
 		serixAPI:     api,
