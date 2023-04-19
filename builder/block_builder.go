@@ -118,6 +118,17 @@ func (mb *BlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BlockBuil
 	return mb
 }
 
+// LatestConfirmedSlot sets the latest confirmed slot.
+func (mb *BlockBuilder) LatestConfirmedSlot(index iotago.SlotIndex) *BlockBuilder {
+	if mb.err != nil {
+		return mb
+	}
+
+	mb.block.LatestConfirmedSlot = index
+
+	return mb
+}
+
 // ProofOfWork does the proof-of-work needed in order to satisfy the given target score.
 // It can be canceled by canceling the given context. This function should appear
 // as the last step before Build.
