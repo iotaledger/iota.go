@@ -112,7 +112,7 @@ type Block struct {
 	IssuingTime time.Time  `serix:"6,mapKey=issuingTime"`
 
 	SlotCommitment      *Commitment `serix:"7,mapKey=slotCommitment"`
-	LatestConfirmedSlot SlotIndex   `serix:"8,mapKey=latestConfirmedSlot"`
+	LatestFinalizedSlot SlotIndex   `serix:"8,mapKey=latestFinalizedSlot"`
 
 	// The inner payload of the block. Can be nil.
 	Payload BlockPayload `serix:"9,optional,mapKey=payload,omitempty"`

@@ -118,13 +118,13 @@ func (mb *BlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BlockBuil
 	return mb
 }
 
-// LatestConfirmedSlot sets the latest confirmed slot.
-func (mb *BlockBuilder) LatestConfirmedSlot(index iotago.SlotIndex) *BlockBuilder {
+// LatestFinalizedSlot sets the latest finalized slot.
+func (mb *BlockBuilder) LatestFinalizedSlot(index iotago.SlotIndex) *BlockBuilder {
 	if mb.err != nil {
 		return mb
 	}
 
-	mb.block.LatestConfirmedSlot = index
+	mb.block.LatestFinalizedSlot = index
 
 	return mb
 }
