@@ -96,6 +96,8 @@ type WeakParentsIDs = BlockIDs
 // ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
 type ShallowLikeParentIDs = BlockIDs
 
+type AccountID = Identifier
+
 // Block represents a vertex in the Tangle.
 type Block struct {
 	// The protocol version under which this block operates.
@@ -108,8 +110,8 @@ type Block struct {
 	WeakParents        WeakParentsIDs       `serix:"3,lengthPrefixType=uint8,mapKey=weakParents"`
 	ShallowLikeParents ShallowLikeParentIDs `serix:"4,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
 
-	IssuerID    Identifier `serix:"5,mapKey=issuerID"`
-	IssuingTime time.Time  `serix:"6,mapKey=issuingTime"`
+	IssuerID    AccountID `serix:"5,mapKey=issuerID"`
+	IssuingTime time.Time `serix:"6,mapKey=issuingTime"`
 
 	SlotCommitment      *Commitment `serix:"7,mapKey=slotCommitment"`
 	LatestFinalizedSlot SlotIndex   `serix:"8,mapKey=latestFinalizedSlot"`

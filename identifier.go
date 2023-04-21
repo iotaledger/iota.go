@@ -53,6 +53,18 @@ func MustIdentifierFromHexString(hex string) Identifier {
 	return id
 }
 
+func (id Identifier) Bytes() ([]byte, error) {
+	return id[:], nil
+}
+
+func (id *Identifier) FromBytes(bytes []byte) (int, error) {
+	if len(bytes) != IdentifierLength {
+		return 0, ErrInvalidIdentifierLength
+	}
+	copy(id[:], bytes)
+	return len(bytes), nil
+}
+
 func (id Identifier) MarshalText() (text []byte, err error) {
 	dst := make([]byte, hex.EncodedLen(len(Identifier{})))
 	hex.Encode(dst, id[:])
