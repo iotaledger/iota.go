@@ -96,13 +96,35 @@ func (mb *BlockBuilder) Tips(ctx context.Context, nodeAPI *nodeclient.Client) *B
 	return mb.StrongParents(parents)
 }
 
-// StrongParents sets the parents.
+// StrongParents sets the strong parents.
 func (mb *BlockBuilder) StrongParents(parents iotago.BlockIDs) *BlockBuilder {
 	if mb.err != nil {
 		return mb
 	}
 
 	mb.block.StrongParents = parents.RemoveDupsAndSort()
+
+	return mb
+}
+
+// WeakParents sets the weak parents.
+func (mb *BlockBuilder) WeakParents(parents iotago.BlockIDs) *BlockBuilder {
+	if mb.err != nil {
+		return mb
+	}
+
+	mb.block.WeakParents = parents.RemoveDupsAndSort()
+
+	return mb
+}
+
+// ShallowLikeParents sets the shallow like parents.
+func (mb *BlockBuilder) ShallowLikeParents(parents iotago.BlockIDs) *BlockBuilder {
+	if mb.err != nil {
+		return mb
+	}
+
+	mb.block.ShallowLikeParents = parents.RemoveDupsAndSort()
 
 	return mb
 }
