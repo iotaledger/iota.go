@@ -15,7 +15,7 @@ import (
 func TestTransactionBuilder(t *testing.T) {
 	identityOne := tpkg.RandEd25519PrivateKey()
 	inputAddr := iotago.Ed25519AddressFromPubKey(identityOne.Public().(ed25519.PublicKey))
-	addrKeys := iotago.AddressKeys{Address: &inputAddr, Keys: identityOne}
+	addrKeys := iotago.AddressKeys{Address: inputAddr, Keys: identityOne}
 
 	type test struct {
 		name       string
@@ -29,7 +29,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.BasicOutputUnlockConditions{
@@ -54,14 +54,14 @@ func TestTransactionBuilder(t *testing.T) {
 			var (
 				basicOutput = &iotago.BasicOutput{
 					Amount:     1000,
-					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: &inputAddr}},
+					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: inputAddr}},
 				}
 
 				nftOutput = &iotago.NFTOutput{
 					Amount:            1000,
 					NativeTokens:      nil,
 					NFTID:             tpkg.Rand32ByteArray(),
-					Conditions:        iotago.NFTOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: &inputAddr}},
+					Conditions:        iotago.NFTOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: inputAddr}},
 					Features:          nil,
 					ImmutableFeatures: nil,
 				}
@@ -82,8 +82,8 @@ func TestTransactionBuilder(t *testing.T) {
 			)
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputID1.ID(), Input: basicOutput}).
-				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputID2.ID(), Input: nftOutput}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID1.ID(), Input: basicOutput}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID2.ID(), Input: nftOutput}).
 				AddInput(&builder.TxInput{UnlockTarget: nftOutput.Chain().ToAddress(), InputID: inputID3.ID(), Input: aliasOwnedByNFT}).
 				AddInput(&builder.TxInput{UnlockTarget: aliasOwnedByNFT.Chain().ToAddress(), InputID: inputID4.ID(), Input: basicOwnedByAlias}).
 				AddOutput(&iotago.BasicOutput{
@@ -103,7 +103,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.BasicOutputUnlockConditions{
@@ -122,7 +122,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.BasicOutputUnlockConditions{
@@ -133,7 +133,7 @@ func TestTransactionBuilder(t *testing.T) {
 			// wrong address/keys
 			wrongIdentity := tpkg.RandEd25519PrivateKey()
 			wrongAddr := iotago.Ed25519AddressFromPubKey(wrongIdentity.Public().(ed25519.PublicKey))
-			wrongAddrKeys := iotago.AddressKeys{Address: &wrongAddr, Keys: wrongIdentity}
+			wrongAddrKeys := iotago.AddressKeys{Address: wrongAddr, Keys: wrongIdentity}
 
 			return test{
 				name:       "err - missing address keys (wrong address)",
@@ -146,7 +146,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.BasicOutputUnlockConditions{

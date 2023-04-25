@@ -99,6 +99,7 @@ func (edAddr *Ed25519Address) Size() int {
 }
 
 // Ed25519AddressFromPubKey returns the address belonging to the given Ed25519 public key.
-func Ed25519AddressFromPubKey(pubKey ed25519.PublicKey) Ed25519Address {
-	return blake2b.Sum256(pubKey[:])
+func Ed25519AddressFromPubKey(pubKey ed25519.PublicKey) *Ed25519Address {
+	address := blake2b.Sum256(pubKey[:])
+	return (*Ed25519Address)(&address)
 }

@@ -484,8 +484,8 @@ func RandEd25519Seed() [ed25519.SeedSize]byte {
 func RandEd25519Identity() (ed25519.PrivateKey, *iotago.Ed25519Address, iotago.AddressKeys) {
 	edSk := RandEd25519PrivateKey()
 	edAddr := iotago.Ed25519AddressFromPubKey(edSk.Public().(ed25519.PublicKey))
-	addrKeys := iotago.NewAddressKeysForEd25519Address(&edAddr, edSk)
-	return edSk, &edAddr, addrKeys
+	addrKeys := iotago.NewAddressKeysForEd25519Address(edAddr, edSk)
+	return edSk, edAddr, addrKeys
 }
 
 // RandRentStructure produces random rent structure.
