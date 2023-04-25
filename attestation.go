@@ -12,7 +12,7 @@ import (
 
 type Attestation struct {
 	BlockID          BlockID      `serix:"0,mapKey=blockID"`
-	IssuerID         Identifier   `serix:"1,mapKey=issuerID"`
+	IssuerID         AccountID    `serix:"1,mapKey=issuerID"`
 	IssuingTime      time.Time    `serix:"2,mapKey=issuingTime"`
 	SlotCommitmentID CommitmentID `serix:"3,mapKey=slotCommitmentID"`
 	BlockContentHash Identifier   `serix:"4,mapKey=blockContentHash"`

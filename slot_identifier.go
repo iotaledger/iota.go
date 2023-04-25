@@ -63,11 +63,11 @@ func MustSlotIdentifierFromHexString(hex string) SlotIdentifier {
 	return id
 }
 
-func (id BlockID) Bytes() ([]byte, error) {
+func (id SlotIdentifier) Bytes() ([]byte, error) {
 	return id[:], nil
 }
 
-func (id *BlockID) FromBytes(bytes []byte) (int, error) {
+func (id *SlotIdentifier) FromBytes(bytes []byte) (int, error) {
 	var err error
 	*id, err = SlotIdentifierFromBytes(bytes)
 	if err != nil {
