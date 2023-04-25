@@ -3,6 +3,7 @@ package iotago
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"fmt"
 	"runtime"
 	"sort"
@@ -206,6 +207,10 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 	edSig, isEdSig := b.Signature.(*Ed25519Signature)
 	if !isEdSig {
 		return false, fmt.Errorf("only ed2519 signatures supported, got %s", b.Signature.Type())
+	}
+
+	if edSig.Signature == [ed25519.SignatureSize]byte{} {
+		return false, fmt.Errorf("empty signatures are invalid")
 	}
 
 	return iotagoEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
