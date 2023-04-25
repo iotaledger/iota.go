@@ -209,8 +209,8 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 		return false, fmt.Errorf("only ed2519 signatures supported, got %s", b.Signature.Type())
 	}
 
-	if edSig.Signature == [ed25519.SignatureSize]byte{} {
-		return false, fmt.Errorf("empty signatures are invalid")
+	if edSig.PublicKey == [ed25519.PublicKeySize]byte{} {
+		return false, fmt.Errorf("empty publicKeys are invalid")
 	}
 
 	return iotagoEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
