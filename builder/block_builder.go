@@ -177,14 +177,14 @@ func (mb *BlockBuilder) ProofOfWork(ctx context.Context, targetScore float64, nu
 	return mb
 }
 
-func (mb *BlockBuilder) Sign(addr *iotago.Ed25519Address, prvKey ed25519.PrivateKey) *BlockBuilder {
+func (mb *BlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKey) *BlockBuilder {
 	if mb.err != nil {
 		return mb
 	}
 
-	mb.block.IssuerID = iotago.Identifier(*addr)
+	mb.block.IssuerID = accountID
 
-	signature, err := mb.block.Sign(iotago.NewAddressKeysForEd25519Address(addr, prvKey))
+	signature, err := mb.block.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {
 		mb.err = fmt.Errorf("error signing block: %w", err)
 		return mb
