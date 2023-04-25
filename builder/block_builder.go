@@ -159,6 +159,10 @@ func (mb *BlockBuilder) ProofOfWork(ctx context.Context, targetScore float64, nu
 		return mb
 	}
 
+	if targetScore == 0 {
+		return mb
+	}
+
 	// cut out the nonce
 	_, blockData, err := mb.block.POW()
 	if err != nil {
