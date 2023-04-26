@@ -10,7 +10,7 @@ import (
 )
 
 // SlotIndex is the ID of a slot.
-type SlotIndex int64
+type SlotIndex uint64
 
 func SlotIndexFromBytes(b []byte) (SlotIndex, error) {
 	if len(b) != serializer.UInt64ByteSize {
