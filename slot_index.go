@@ -30,12 +30,3 @@ func (i SlotIndex) Bytes() []byte {
 func (i SlotIndex) String() string {
 	return fmt.Sprintf("SlotIndex(%d)", i)
 }
-
-// Abs returns the absolute value of the SlotIndex.
-func (i SlotIndex) Abs() (absolute SlotIndex) {
-	if i < 0 {
-		return -i
-	}
-
-	return i
-}
