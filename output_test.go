@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/lo"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -23,6 +24,18 @@ func TestOutputTypeString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		require.Equal(t, tt.outputType.String(), tt.outputTypeString)
+	}
+}
+
+func TestOutputIDString(t *testing.T) {
+	tests := []struct {
+		outputID         iotago.OutputID
+		outputTypeString string
+	}{
+		{outputID: iotago.OutputIDFromTransactionIDAndIndex(lo.PanicOnErr(iotago.IdentifierFromHexString("0xc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafcea639416")), 1), outputTypeString: "OutputID(0xc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafcea639416:1)"},
+	}
+	for _, tt := range tests {
+		require.Equal(t, tt.outputID.String(), tt.outputTypeString)
 	}
 }
 

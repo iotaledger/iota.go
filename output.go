@@ -103,6 +103,11 @@ func (outputID OutputID) ToHex() string {
 	return EncodeHex(outputID[:])
 }
 
+// String converts the OutputID to its human-readable string representation.
+func (outputID OutputID) String() string {
+	return fmt.Sprintf("OutputID(%s:%d)", outputID.TransactionID().String(), outputID.Index())
+}
+
 // Index returns the index of the Output this OutputID references.
 func (outputID OutputID) Index() uint16 {
 	return binary.LittleEndian.Uint16(outputID[TransactionIDLength:])
