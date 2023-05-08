@@ -81,6 +81,8 @@ const (
 )
 
 var (
+	ErrInvalidOutputIDLength = errors.New("Invalid outputID length")
+
 	// ErrTransDepIdentOutputNonUTXOChainID gets returned when a TransDepIdentOutput has a ChainID which is not a UTXOIDChainID.
 	ErrTransDepIdentOutputNonUTXOChainID = errors.New("transition dependable ident outputs must have UTXO chain IDs")
 	// ErrTransDepIdentOutputNextInvalid gets returned when a TransDepIdentOutput's next state is invalid.
@@ -128,6 +130,19 @@ func (outputID OutputID) UTXOInput() *UTXOInput {
 	return utxoInput
 }
 
+func (outputID OutputID) Bytes() ([]byte, error) {
+	return outputID[:], nil
+}
+
+func (outputID *OutputID) FromBytes(bytes []byte) (int, error) {
+	var err error
+	*outputID, err = OutputIDFromBytes(bytes)
+	if err != nil {
+		return 0, err
+	}
+	return OutputIDLength, nil
+}
+
 // HexOutputIDs is a slice of hex encoded OutputID strings.
 type HexOutputIDs []string
 
@@ -157,18 +172,27 @@ func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputID {
 	utxo := UTXOInput{TransactionOutputIndex: index}
 	copy(utxo.TransactionID[:], (txID)[:])
+
 	return utxo.ID()
+}
+
+// OutputIDFromBytes creates a OutputID from the given bytes.
+func OutputIDFromBytes(bytes []byte) (OutputID, error) {
+	if len(bytes) != OutputIDLength {
+		return OutputID{}, ErrInvalidOutputIDLength
+	}
+
+	return OutputID(bytes), nil
 }
 
 // OutputIDFromHex creates a OutputID from the given hex encoded OututID data.
 func OutputIDFromHex(hexStr string) (OutputID, error) {
-	var outputID OutputID
 	outputIDData, err := DecodeHex(hexStr)
 	if err != nil {
-		return outputID, err
+		return OutputID{}, err
 	}
-	copy(outputID[:], outputIDData)
-	return outputID, nil
+
+	return OutputIDFromBytes(outputIDData)
 }
 
 // MustOutputIDFromHex works like OutputIDFromHex but panics if an error is encountered.
