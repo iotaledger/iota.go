@@ -146,7 +146,9 @@ func BlockIdentifierFromBlockBytes(blockBytes []byte) (Identifier, error) {
 		return emptyIdentifier, err
 	}
 
-	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:])), nil
+	nonceBytes := blockBytes[len(blockBytes)-serializer.UInt64ByteSize:]
+
+	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:], nonceBytes[:])), nil
 }
 
 func contentHashFromBlockBytes(blockBytes []byte) (Identifier, error) {
