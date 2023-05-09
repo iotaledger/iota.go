@@ -134,7 +134,7 @@ func aliasStateSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmPar
 	case !current.StateController().Equal(next.StateController()):
 		return fmt.Errorf("%w: state controller changed, in %v / out %v", iotago.ErrInvalidAliasStateTransition, current.StateController(), next.StateController())
 	case !current.GovernorAddress().Equal(next.GovernorAddress()):
-		return fmt.Errorf("%w: governance controller changed, in %v / out %v", iotago.ErrInvalidAliasStateTransition, current.StateController(), next.StateController())
+		return fmt.Errorf("%w: governance controller changed, in %v / out %v", iotago.ErrInvalidAliasStateTransition, current.GovernorAddress(), next.GovernorAddress())
 	case current.FoundryCounter > next.FoundryCounter:
 		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", iotago.ErrInvalidAliasStateTransition, current.FoundryCounter, next.FoundryCounter)
 	case current.StateIndex+1 != next.StateIndex:
@@ -173,6 +173,25 @@ func aliasStateSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmPar
 		return fmt.Errorf("%w: %d new foundries were created but the alias output's foundry counter changed by %d", iotago.ErrInvalidAliasStateTransition, seenNewFoundriesOfAlias, expectedNewFoundriesCount)
 	}
 
+	return aliasBlockIssuerSTVF(current, next, vmParams)
+}
+
+// If an alias output has a block issuer feature, the following conditions for its transition must be checked.
+// The expiry time of the block issuer feature, if changed, must be set at least MaxCommitableAge greater than the TX time.
+// The block issuer address must not change - this functionality must be added later to allow block issuer key rotation.
+// TODO: add block issuer key rotation capability.
+func aliasBlockIssuerSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmParams *vm.Params) error {
+	currentBIFeat := current.FeatureSet().BlockIssuer()
+	nextBIFeat := next.FeatureSet().BlockIssuer()
+	if currentBIFeat.Equal(nextBIFeat) {
+		return nil
+	}
+	if nextBIFeat.ExpiryTime < uint32(vmParams.WorkingSet.Tx.Essence.CreationTime.Unix())+iotago.MaxCommitableAge {
+		return fmt.Errorf("%w: Block issuer expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
+	}
+	if currentBIFeat != nil && !currentBIFeat.Address.Equal(nextBIFeat.Address) {
+		return fmt.Errorf("%w: Block issuer address changed", iotago.ErrInvalidBlockIssuerTransition)
+	}
 	return nil
 }
 

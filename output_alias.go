@@ -22,6 +22,8 @@ var (
 	ErrInvalidAliasStateTransition = errors.New("invalid alias state transition")
 	// ErrInvalidAliasGovernanceTransition gets returned when an alias is doing an invalid governance transition.
 	ErrInvalidAliasGovernanceTransition = errors.New("invalid alias governance transition")
+	// ErrInvalidBlockIssuerTransition gets returned when an alias tries to transition block issuer expiry too soon.
+	ErrInvalidBlockIssuerTransition = errors.New("invalid block issuer transition")
 	// ErrAliasMissing gets returned when an alias is missing.
 	ErrAliasMissing = errors.New("alias is missing")
 	emptyAliasID    = [AliasIDLength]byte{}

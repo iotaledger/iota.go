@@ -65,6 +65,12 @@ func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) uint64 
 	return (&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil)
 }
 
+// BlockIssuerDeposit returns the minimum rendting cost for an alias output which operates a block issuer.
+// TODO: calculate what is required for block issuer deposit.
+func (r *RentStructure) BlockIssuerDeposit() uint64 {
+	return 0
+}
+
 // NonEphemeralObject is an object which can not be pruned by nodes as it
 // makes up an integral part to execute the IOTA protocol. This kind of objects are associated
 // with costs in terms of the resources they take up.
