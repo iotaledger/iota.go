@@ -126,3 +126,11 @@ func (id Identifier) UnregisterAlias() {
 
 	delete(identifierAliases, id)
 }
+
+// UnregisterIdentifierAliases allows to unregister all previously registered aliases.
+func UnregisterIdentifierAliases() {
+	identifierAliasesMutex.Lock()
+	defer identifierAliasesMutex.Unlock()
+
+	identifierAliases = make(map[Identifier]string)
+}
