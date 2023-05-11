@@ -678,7 +678,6 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //   - the deposit fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
-//   - if the output is an alias with a block issuer feature, check that it deposits enough to be a block issuer.
 func OutputsSyntacticalDepositAmount(protoParams *ProtocolParameters) OutputsSyntacticalValidationFunc {
 	var sum uint64
 	return func(index int, output Output) error {
@@ -706,14 +705,6 @@ func OutputsSyntacticalDepositAmount(protoParams *ProtocolParameters) OutputsSyn
 				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrStorageDepositLessThanMinReturnOutputStorageDeposit, index, minStorageDepositForReturnOutput, storageDep.Amount)
 			case storageDep.Amount > deposit:
 				return fmt.Errorf("%w: output %d, target output's deposit %d < storage deposit %d", ErrStorageDepositExceedsTargetOutputDeposit, index, deposit, storageDep.Amount)
-			}
-		}
-
-		// check whether the amount of an alias output with a block isser feature is sufficient to be a block issuer.
-		if blockIssuerFeat := output.FeatureSet().BlockIssuer(); blockIssuerFeat != nil {
-			minBlockIssuerDeposit := protoParams.RentStructure.BlockIssuerDeposit()
-			if deposit < minBlockIssuerDeposit {
-				return fmt.Errorf("%w: output %d, target output's deposit %d < block issuer deposit %d", ErrStorageDepositExceedsTargetOutputDeposit, index, deposit, minBlockIssuerDeposit)
 			}
 		}
 
