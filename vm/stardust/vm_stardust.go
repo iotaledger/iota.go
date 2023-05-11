@@ -177,20 +177,39 @@ func aliasStateSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmPar
 }
 
 // If an alias output has a block issuer feature, the following conditions for its transition must be checked.
-// The expiry time of the block issuer feature, if changed, must be set at least MaxCommitableAge greater than the TX time.
-// The block issuer address must not change - this functionality must be added later to allow block issuer key rotation.
-// TODO: add block issuer key rotation capability.
+// The expiry time of the block issuer feature, if changed, must be set at least MaxCommitableSlotAge greater than the TX slot index.
+// Check that at least one Block Issuer Key is present
+// TODO: add block issuer credit check for account destruction.
 func aliasBlockIssuerSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmParams *vm.Params) error {
 	currentBIFeat := current.FeatureSet().BlockIssuer()
 	nextBIFeat := next.FeatureSet().BlockIssuer()
-	if currentBIFeat.Equal(nextBIFeat) {
+	// if the account has no block issuer feature.
+	if currentBIFeat == nil && nextBIFeat == nil {
 		return nil
 	}
-	if nextBIFeat.ExpiryTime < uint32(vmParams.WorkingSet.Tx.Essence.CreationTime.Unix())+iotago.MaxCommitableAge {
-		return fmt.Errorf("%w: Block issuer expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
+	// else if the account has negative bic, this is invalid.
+	// new block issuers may not have a bic registered yet.
+	if bic, exists := vmParams.WorkingSet.BIC[current.AliasID]; exists {
+		if bic < 0 {
+			return fmt.Errorf("%w: Negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
+		}
 	}
-	if currentBIFeat != nil && !currentBIFeat.Address.Equal(nextBIFeat.Address) {
-		return fmt.Errorf("%w: Block issuer address changed", iotago.ErrInvalidBlockIssuerTransition)
+	txSlotIndex := vmParams.External.ProtocolParameters.SlotTimeProvider().IndexFromTime(vmParams.WorkingSet.Tx.Essence.CreationTime)
+
+	if currentBIFeat.ExpirySlot >= txSlotIndex {
+		// if the block issuer feature has not expired, it can not be removed.
+		if nextBIFeat == nil {
+			return fmt.Errorf("%w: Cannot remove block issuer feature until it expires", iotago.ErrInvalidBlockIssuerTransition)
+		}
+		if nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+iotago.MaxCommitableSlotAge {
+			return fmt.Errorf("%w: Block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
+		}
+
+	} else if nextBIFeat != nil {
+		// if the block issuer feature has expired, it must either be removed or expiry extended.
+		if nextBIFeat.ExpirySlot < txSlotIndex+iotago.MaxCommitableSlotAge {
+			return fmt.Errorf("%w: Block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
+		}
 	}
 	return nil
 }

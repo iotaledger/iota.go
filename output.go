@@ -590,6 +590,8 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 type ExternalUnlockParameters struct {
 	// The confirmed unix epoch time in seconds.
 	ConfUnix uint32
+	// protocol parameters
+	ProtocolParameters
 	//TODO: this is to be replaced with the transaction creationtime
 }
 

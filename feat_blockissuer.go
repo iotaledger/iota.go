@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"crypto/ed25519"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/util"
 )
@@ -8,17 +10,18 @@ import (
 // BlockIssuerFeature is a feature which indicates that this account can issue blocks.
 // The feature includes a block issuer address as well as an expiry slot.
 type BlockIssuerFeature struct {
-	Address    Address `serix:"0,mapKey=address"`
-	ExpiryTime uint32  `serix:"1,mapKey=expirytime"`
+	BlockIssuerKeys []ed25519.PublicKey `serix:"0,mapKey=blockIssuerKeys"`
+	ExpirySlot      SlotIndex           `serix:"1,mapKey=expirySlot"`
 }
 
 func (s *BlockIssuerFeature) Clone() Feature {
-	return &BlockIssuerFeature{Address: s.Address.Clone(), ExpiryTime: s.ExpiryTime}
+	return &BlockIssuerFeature{BlockIssuerKeys: s.BlockIssuerKeys, ExpirySlot: s.ExpirySlot}
 }
 
+// TODO: add factor for block issuer keys (higher than regular keys factor)
 func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt32ByteSize) +
-		s.Address.VBytes(rentStruct, nil)
+		rentStruct.VBFactorKey.Multiply(uint64(len(s.BlockIssuerKeys))*ed25519.PublicKeySize)
 }
 
 func (s *BlockIssuerFeature) Equal(other Feature) bool {
@@ -26,8 +29,15 @@ func (s *BlockIssuerFeature) Equal(other Feature) bool {
 	if !is {
 		return false
 	}
-
-	return s.Address.Equal(otherFeat.Address) && s.ExpiryTime == otherFeat.ExpiryTime
+	if len(s.BlockIssuerKeys) != len(otherFeat.BlockIssuerKeys) {
+		return false
+	}
+	for i := range s.BlockIssuerKeys {
+		if s.BlockIssuerKeys[i].Equal(otherFeat.BlockIssuerKeys[i]) {
+			return false
+		}
+	}
+	return s.ExpirySlot == otherFeat.ExpirySlot
 }
 
 func (s *BlockIssuerFeature) Type() FeatureType {
@@ -35,5 +45,5 @@ func (s *BlockIssuerFeature) Type() FeatureType {
 }
 
 func (s *BlockIssuerFeature) Size() int {
-	return util.NumByteLen(byte(FeatureBlockIssuer)) + s.Address.Size() + serializer.UInt32ByteSize
+	return util.NumByteLen(byte(FeatureBlockIssuer)) + len(s.BlockIssuerKeys)*ed25519.PublicKeySize + serializer.UInt32ByteSize
 }
