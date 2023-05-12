@@ -173,14 +173,14 @@ func accountStateSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput,
 		return fmt.Errorf("%w: %d new foundries were created but the account output's foundry counter changed by %d", iotago.ErrInvalidAccountStateTransition, seenNewFoundriesOfAccount, expectedNewFoundriesCount)
 	}
 
-	return aliasBlockIssuerSTVF(current, next, vmParams)
+	return accountBlockIssuerSTVF(current, next, vmParams)
 }
 
-// If an alias output has a block issuer feature, the following conditions for its transition must be checked.
+// If an account output has a block issuer feature, the following conditions for its transition must be checked.
 // The expiry time of the block issuer feature, if changed, must be set at least MaxCommitableSlotAge greater than the TX slot index.
 // Check that at least one Block Issuer Key is present
 // TODO: add block issuer credit check for account destruction.
-func aliasBlockIssuerSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmParams *vm.Params) error {
+func accountBlockIssuerSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	currentBIFeat := current.FeatureSet().BlockIssuer()
 	nextBIFeat := next.FeatureSet().BlockIssuer()
 	// if the account has no block issuer feature.
@@ -189,7 +189,7 @@ func aliasBlockIssuerSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput,
 	}
 	// else if the account has negative bic, this is invalid.
 	// new block issuers may not have a bic registered yet.
-	if bic, exists := vmParams.WorkingSet.BIC[current.AliasID]; exists {
+	if bic, exists := vmParams.WorkingSet.BIC[current.AccountID]; exists {
 		if bic < 0 {
 			return fmt.Errorf("%w: Negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
 		}

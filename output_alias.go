@@ -22,7 +22,7 @@ var (
 	ErrInvalidAccountStateTransition = errors.New("invalid account state transition")
 	// ErrInvalidAccountGovernanceTransition gets returned when an account is doing an invalid governance transition.
 	ErrInvalidAccountGovernanceTransition = errors.New("invalid account governance transition")
-	// ErrInvalidBlockIssuerTransition gets returned when an alias tries to transition block issuer expiry too soon.
+	// ErrInvalidBlockIssuerTransition gets returned when an account tries to transition block issuer expiry too soon.
 	ErrInvalidBlockIssuerTransition = errors.New("invalid block issuer transition")
 	// ErrAccountMissing gets returned when an account is missing.
 	ErrAccountMissing = errors.New("account is missing")

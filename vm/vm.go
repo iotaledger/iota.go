@@ -56,7 +56,7 @@ type WorkingSet struct {
 	// The Unlocks carried by the transaction mapped by type.
 	UnlocksByType iotago.UnlocksByType
 	// BIC is the block issuance credit as of MCA slots prior to the transaction's slot
-	BIC map[iotago.AliasID]int64
+	BIC map[iotago.AccountID]int64
 }
 
 // UTXOInputAtIndex retrieves the UTXOInput at the given index.
