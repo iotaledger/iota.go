@@ -48,8 +48,8 @@ const (
 	EventAPIOutputs = "outputs/{outputId}"
 	// EventAPINFTOutputs is the name of the NFT output event channel to retrieve NFT mutations by their ID.
 	EventAPINFTOutputs = "outputs/nft/{nftId}"
-	// EventAPIAliasOutputs is the name of the Alias output event channel to retrieve Alias mutations by their ID.
-	EventAPIAliasOutputs = "outputs/alias/{aliasId}"
+	// EventAPIAccountOutputs is the name of the Account output event channel to retrieve Account mutations by their ID.
+	EventAPIAccountOutputs = "outputs/account/{accountId}"
 	// EventAPIFoundryOutputs is the name of the Foundry output event channel to retrieve Foundry mutations by their ID.
 	EventAPIFoundryOutputs = "outputs/foundry/{foundryId}"
 	// EventAPIOutputsByUnlockConditionAndAddress is the name of the outputs by unlock condition address event channel.
@@ -77,7 +77,7 @@ const (
 	UnlockConditionExpirationReturn EventAPIUnlockCondition = "expiration"
 	UnlockConditionStateController  EventAPIUnlockCondition = "state-controller"
 	UnlockConditionGovernor         EventAPIUnlockCondition = "governor"
-	UnlockConditionImmutableAlias   EventAPIUnlockCondition = "immutable-alias"
+	UnlockConditionImmutableAccount EventAPIUnlockCondition = "immutable-account"
 )
 
 func randMQTTClientID() string {
@@ -301,9 +301,9 @@ func (eac *EventAPIClient) NFTOutputsByID(nftID iotago.NFTID) (<-chan *OutputRes
 	return eac.subscribeToOutputsTopic(topic)
 }
 
-// AliasOutputsByID returns a channel of newly created outputs to track the chain mutations of a given Alias.
-func (eac *EventAPIClient) AliasOutputsByID(aliasID iotago.AliasID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIAliasOutputs, "{aliasId}", aliasID.String(), 1)
+// AccountOutputsByID returns a channel of newly created outputs to track the chain mutations of a given Account.
+func (eac *EventAPIClient) AccountOutputsByID(accountID iotago.AccountID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
+	topic := strings.Replace(EventAPIAccountOutputs, "{accountId}", accountID.String(), 1)
 	return eac.subscribeToOutputsTopic(topic)
 }
 

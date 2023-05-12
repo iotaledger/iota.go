@@ -22,9 +22,9 @@ func TestUnlock_DeSerialize(t *testing.T) {
 			target: &iotago.ReferenceUnlock{},
 		},
 		{
-			name:   "ok - alias",
-			source: tpkg.RandAliasUnlock(),
-			target: &iotago.AliasUnlock{},
+			name:   "ok - account",
+			source: tpkg.RandAccountUnlock(),
+			target: &iotago.AccountUnlock{},
 		},
 		{
 			name:   "ok - NFT",
@@ -57,8 +57,8 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			name: "ok - chainable referential unlock",
 			unlocks: iotago.Unlocks{
 				tpkg.RandEd25519SignatureUnlock(),
-				&iotago.AliasUnlock{Reference: 0},
-				&iotago.AliasUnlock{Reference: 1},
+				&iotago.AccountUnlock{Reference: 0},
+				&iotago.AccountUnlock{Reference: 1},
 				&iotago.NFTUnlock{Reference: 2},
 			},
 			wantErr: nil,

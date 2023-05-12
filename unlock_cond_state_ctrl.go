@@ -5,7 +5,7 @@ import (
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
-// StateControllerAddressUnlockCondition is an UnlockCondition defining the state controller identity for an AliasOutput.
+// StateControllerAddressUnlockCondition is an UnlockCondition defining the state controller identity for an AccountOutput.
 type StateControllerAddressUnlockCondition struct {
 	Address Address `serix:"0,mapKey=address"`
 }

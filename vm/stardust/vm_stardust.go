@@ -43,14 +43,14 @@ func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Pa
 func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, current iotago.ChainOutput, next iotago.ChainOutput, vmParams *vm.Params) error {
 	var ok bool
 	switch current.(type) {
-	case *iotago.AliasOutput:
-		var nextAlias *iotago.AliasOutput
+	case *iotago.AccountOutput:
+		var nextAccount *iotago.AccountOutput
 		if next != nil {
-			if nextAlias, ok = next.(*iotago.AliasOutput); !ok {
-				return fmt.Errorf("can only state transition to another alias output")
+			if nextAccount, ok = next.(*iotago.AccountOutput); !ok {
+				return fmt.Errorf("can only state transition to another account output")
 			}
 		}
-		return aliasSTVF(current.(*iotago.AliasOutput), transType, nextAlias, vmParams)
+		return accountSTVF(current.(*iotago.AccountOutput), transType, nextAccount, vmParams)
 	case *iotago.FoundryOutput:
 		var nextFoundry *iotago.FoundryOutput
 		if next != nil {
@@ -72,77 +72,77 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 	}
 }
 
-// For output AliasOutput(s) with non-zeroed AliasID, there must be a corresponding input AliasOutput where either its
-// AliasID is zeroed and StateIndex and FoundryCounter are zero or an input AliasOutput with the same AliasID.
+// For output AccountOutput(s) with non-zeroed AccountID, there must be a corresponding input AccountOutput where either its
+// AccountID is zeroed and StateIndex and FoundryCounter are zero or an input AccountOutput with the same AccountID.
 //
-// On alias state transitions: The StateIndex must be incremented by 1 and Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated.
+// On account state transitions: The StateIndex must be incremented by 1 and Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated.
 //
-// On alias governance transition: Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated.
-func aliasSTVF(a *iotago.AliasOutput, transType iotago.ChainTransitionType, next *iotago.AliasOutput, vmParams *vm.Params) error {
+// On account governance transition: Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated.
+func accountSTVF(a *iotago.AccountOutput, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	var err error
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
-		err = aliasGenesisValid(a, vmParams)
+		err = accountGenesisValid(a, vmParams)
 	case iotago.ChainTransitionTypeStateChange:
-		err = aliasStateChangeValid(a, vmParams, next)
+		err = accountStateChangeValid(a, vmParams, next)
 	case iotago.ChainTransitionTypeDestroy:
 		return nil
 	default:
-		panic("unknown chain transition type in AliasOutput")
+		panic("unknown chain transition type in AccountOutput")
 	}
 	if err != nil {
-		return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("alias %s", a.AliasID)}
+		return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("account %s", a.AccountID)}
 	}
 	return nil
 }
 
-func aliasGenesisValid(current *iotago.AliasOutput, vmParams *vm.Params) error {
-	if !current.AliasID.Empty() {
-		return fmt.Errorf("AliasOutput's ID is not zeroed even though it is new")
+func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) error {
+	if !current.AccountID.Empty() {
+		return fmt.Errorf("AccountOutput's ID is not zeroed even though it is new")
 	}
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
 }
 
-func aliasStateChangeValid(current *iotago.AliasOutput, vmParams *vm.Params, next *iotago.AliasOutput) error {
+func accountStateChangeValid(current *iotago.AccountOutput, vmParams *vm.Params, next *iotago.AccountOutput) error {
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
 		return fmt.Errorf("old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures)
 	}
 	if current.StateIndex == next.StateIndex {
-		return aliasGovernanceSTVF(current, next)
+		return accountGovernanceSTVF(current, next)
 	}
-	return aliasStateSTVF(current, next, vmParams)
+	return accountStateSTVF(current, next, vmParams)
 }
 
-func aliasGovernanceSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput) error {
+func accountGovernanceSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput) error {
 	switch {
 	case current.Amount != next.Amount:
-		return fmt.Errorf("%w: amount changed, in %d / out %d ", iotago.ErrInvalidAliasGovernanceTransition, current.Amount, next.Amount)
+		return fmt.Errorf("%w: amount changed, in %d / out %d ", iotago.ErrInvalidAccountGovernanceTransition, current.Amount, next.Amount)
 	case !current.NativeTokens.Equal(next.NativeTokens):
-		return fmt.Errorf("%w: native tokens changed, in %v / out %v", iotago.ErrInvalidAliasGovernanceTransition, current.NativeTokens, next.NativeTokens)
+		return fmt.Errorf("%w: native tokens changed, in %v / out %v", iotago.ErrInvalidAccountGovernanceTransition, current.NativeTokens, next.NativeTokens)
 	case current.StateIndex != next.StateIndex:
-		return fmt.Errorf("%w: state index changed, in %d / out %d", iotago.ErrInvalidAliasGovernanceTransition, current.StateIndex, next.StateIndex)
+		return fmt.Errorf("%w: state index changed, in %d / out %d", iotago.ErrInvalidAccountGovernanceTransition, current.StateIndex, next.StateIndex)
 	case !bytes.Equal(current.StateMetadata, next.StateMetadata):
-		return fmt.Errorf("%w: state metadata changed, in %v / out %v", iotago.ErrInvalidAliasGovernanceTransition, current.StateMetadata, next.StateMetadata)
+		return fmt.Errorf("%w: state metadata changed, in %v / out %v", iotago.ErrInvalidAccountGovernanceTransition, current.StateMetadata, next.StateMetadata)
 	case current.FoundryCounter != next.FoundryCounter:
-		return fmt.Errorf("%w: foundry counter changed, in %d / out %d", iotago.ErrInvalidAliasGovernanceTransition, current.FoundryCounter, next.FoundryCounter)
+		return fmt.Errorf("%w: foundry counter changed, in %d / out %d", iotago.ErrInvalidAccountGovernanceTransition, current.FoundryCounter, next.FoundryCounter)
 	}
 	return nil
 }
 
-func aliasStateSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmParams *vm.Params) error {
+func accountStateSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	switch {
 	case !current.StateController().Equal(next.StateController()):
-		return fmt.Errorf("%w: state controller changed, in %v / out %v", iotago.ErrInvalidAliasStateTransition, current.StateController(), next.StateController())
+		return fmt.Errorf("%w: state controller changed, in %v / out %v", iotago.ErrInvalidAccountStateTransition, current.StateController(), next.StateController())
 	case !current.GovernorAddress().Equal(next.GovernorAddress()):
-		return fmt.Errorf("%w: governance controller changed, in %v / out %v", iotago.ErrInvalidAliasStateTransition, current.StateController(), next.StateController())
+		return fmt.Errorf("%w: governance controller changed, in %v / out %v", iotago.ErrInvalidAccountStateTransition, current.StateController(), next.StateController())
 	case current.FoundryCounter > next.FoundryCounter:
-		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", iotago.ErrInvalidAliasStateTransition, current.FoundryCounter, next.FoundryCounter)
+		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", iotago.ErrInvalidAccountStateTransition, current.FoundryCounter, next.FoundryCounter)
 	case current.StateIndex+1 != next.StateIndex:
-		return fmt.Errorf("%w: state index %d on the input side but %d on the output side", iotago.ErrInvalidAliasStateTransition, current.StateIndex, next.StateIndex)
+		return fmt.Errorf("%w: state index %d on the input side but %d on the output side", iotago.ErrInvalidAccountStateTransition, current.StateIndex, next.StateIndex)
 	}
 
 	if err := iotago.FeatureUnchanged(iotago.FeatureMetadata, current.Features.MustSet(), next.Features.MustSet()); err != nil {
-		return fmt.Errorf("%w: %s", iotago.ErrInvalidAliasStateTransition, err)
+		return fmt.Errorf("%w: %s", iotago.ErrInvalidAccountStateTransition, err)
 	}
 
 	// check that for a foundry counter change, X amount of foundries were actually created
@@ -150,7 +150,7 @@ func aliasStateSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmPar
 		return nil
 	}
 
-	var seenNewFoundriesOfAlias uint32
+	var seenNewFoundriesOfAccount uint32
 	for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
 		foundryOutput, is := output.(*iotago.FoundryOutput)
 		if !is {
@@ -161,16 +161,16 @@ func aliasStateSTVF(current *iotago.AliasOutput, next *iotago.AliasOutput, vmPar
 			continue
 		}
 
-		foundryAliasID := foundryOutput.Ident().(*iotago.AliasAddress).Chain()
-		if !foundryAliasID.Matches(next.AliasID) {
+		foundryAccountID := foundryOutput.Ident().(*iotago.AccountAddress).Chain()
+		if !foundryAccountID.Matches(next.AccountID) {
 			continue
 		}
-		seenNewFoundriesOfAlias++
+		seenNewFoundriesOfAccount++
 	}
 
 	expectedNewFoundriesCount := next.FoundryCounter - current.FoundryCounter
-	if expectedNewFoundriesCount != seenNewFoundriesOfAlias {
-		return fmt.Errorf("%w: %d new foundries were created but the alias output's foundry counter changed by %d", iotago.ErrInvalidAliasStateTransition, seenNewFoundriesOfAlias, expectedNewFoundriesCount)
+	if expectedNewFoundriesCount != seenNewFoundriesOfAccount {
+		return fmt.Errorf("%w: %d new foundries were created but the account output's foundry counter changed by %d", iotago.ErrInvalidAccountStateTransition, seenNewFoundriesOfAccount, expectedNewFoundriesCount)
 	}
 
 	return nil
@@ -235,29 +235,29 @@ func foundryGenesisValid(current *iotago.FoundryOutput, vmParams *vm.Params, thi
 		return err
 	}
 
-	// grab foundry counter from transitioning AliasOutput
-	aliasID := current.Ident().(*iotago.AliasAddress).AliasID()
-	inAlias, ok := vmParams.WorkingSet.InChains[aliasID]
+	// grab foundry counter from transitioning AccountOutput
+	accountID := current.Ident().(*iotago.AccountAddress).AccountID()
+	inAccount, ok := vmParams.WorkingSet.InChains[accountID]
 	if !ok {
-		return fmt.Errorf("missing input transitioning alias output %s for new foundry output %s", aliasID, thisFoundryID)
+		return fmt.Errorf("missing input transitioning account output %s for new foundry output %s", accountID, thisFoundryID)
 	}
 
-	outAlias, ok := vmParams.WorkingSet.OutChains[aliasID]
+	outAccount, ok := vmParams.WorkingSet.OutChains[accountID]
 	if !ok {
-		return fmt.Errorf("missing output transitioning alias output %s for new foundry output %s", aliasID, thisFoundryID)
+		return fmt.Errorf("missing output transitioning account output %s for new foundry output %s", accountID, thisFoundryID)
 	}
 
-	if err := foundrySerialNumberValid(current, vmParams, inAlias.(*iotago.AliasOutput), outAlias.(*iotago.AliasOutput), thisFoundryID); err != nil {
+	if err := foundrySerialNumberValid(current, vmParams, inAccount.(*iotago.AccountOutput), outAccount.(*iotago.AccountOutput), thisFoundryID); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParams *vm.Params, inAlias *iotago.AliasOutput, outAlias *iotago.AliasOutput, thisFoundryID iotago.FoundryID) error {
+func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParams *vm.Params, inAccount *iotago.AccountOutput, outAccount *iotago.AccountOutput, thisFoundryID iotago.FoundryID) error {
 	// this new foundry's serial number must be between the given foundry counter interval
-	startSerial := inAlias.FoundryCounter
-	endIncSerial := outAlias.FoundryCounter
+	startSerial := inAccount.FoundryCounter
+	endIncSerial := outAccount.FoundryCounter
 	if startSerial >= current.SerialNumber || current.SerialNumber > endIncSerial {
 		return fmt.Errorf("new foundry output %s's serial number is not between the foundry counter interval of [%d,%d)", thisFoundryID, startSerial, endIncSerial)
 	}

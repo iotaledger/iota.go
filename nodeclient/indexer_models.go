@@ -103,8 +103,8 @@ func (query *BasicOutputsQuery) URLParams() (string, error) {
 	return qs.Marshal(query)
 }
 
-// AliasesQuery defines parameters for an alias outputs query.
-type AliasesQuery struct {
+// AccountsQuery defines parameters for an account outputs query.
+type AccountsQuery struct {
 	IndexerCursorParams
 	IndexerCreationParams
 	IndexerNativeTokenParams
@@ -119,15 +119,15 @@ type AliasesQuery struct {
 	IssuerBech32 string `qs:"issuer,omitempty"`
 }
 
-func (query *AliasesQuery) OutputType() iotago.OutputType {
-	return iotago.OutputAlias
+func (query *AccountsQuery) OutputType() iotago.OutputType {
+	return iotago.OutputAccount
 }
 
-func (query *AliasesQuery) SetOffset(cursor *string) {
+func (query *AccountsQuery) SetOffset(cursor *string) {
 	query.Cursor = cursor
 }
 
-func (query *AliasesQuery) URLParams() (string, error) {
+func (query *AccountsQuery) URLParams() (string, error) {
 	return qs.Marshal(query)
 }
 
@@ -138,7 +138,7 @@ type FoundriesQuery struct {
 	IndexerNativeTokenParams
 
 	// Bech32-encoded address that should be searched for.
-	AliasAddressBech32 string `qs:"aliasAddress,omitempty"`
+	AccountAddressBech32 string `qs:"accountAddress,omitempty"`
 }
 
 func (query *FoundriesQuery) OutputType() iotago.OutputType {

@@ -12,8 +12,8 @@ import (
 // Indexer plugin routes.
 var (
 	IndexerAPIRouteBasicOutputs = "/api/" + IndexerPluginName + "/outputs/basic"
-	IndexerAPIRouteAliases      = "/api/" + IndexerPluginName + "/outputs/alias"
-	IndexerAPIRouteAlias        = "/api/" + IndexerPluginName + "/outputs/alias/%s"
+	IndexerAPIRouteAccounts     = "/api/" + IndexerPluginName + "/outputs/account"
+	IndexerAPIRouteAccount      = "/api/" + IndexerPluginName + "/outputs/account/%s"
 	IndexerAPIRouteFoundries    = "/api/" + IndexerPluginName + "/outputs/foundry"
 	IndexerAPIRouteFoundry      = "/api/" + IndexerPluginName + "/outputs/foundry/%s"
 	IndexerAPIRouteNFTs         = "/api/" + IndexerPluginName + "/outputs/nft"
@@ -27,7 +27,7 @@ var (
 
 	outputTypeToIndexerRoute = map[iotago.OutputType]string{
 		iotago.OutputBasic:   IndexerAPIRouteBasicOutputs,
-		iotago.OutputAlias:   IndexerAPIRouteAliases,
+		iotago.OutputAccount: IndexerAPIRouteAccounts,
 		iotago.OutputFoundry: IndexerAPIRouteFoundries,
 		iotago.OutputNFT:     IndexerAPIRouteNFTs,
 	}
@@ -39,8 +39,8 @@ type (
 	IndexerClient interface {
 		// Outputs returns a handle to query for outputs.
 		Outputs(ctx context.Context, query IndexerQuery) (*IndexerResultSet, error)
-		// Alias queries for a specific iotago.AliasOutput by its identifier and returns the ledger index at which this output where available at.
-		Alias(ctx context.Context, aliasID iotago.AliasID) (*iotago.OutputID, *iotago.AliasOutput, iotago.SlotIndex, error)
+		// Account queries for a specific iotago.AccountOutput by its identifier and returns the ledger index at which this output where available at.
+		Account(ctx context.Context, accountID iotago.AccountID) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error)
 		// Foundry queries for a specific iotago.FoundryOutput by its identifier and returns the ledger index at which this output where available at.
 		Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.SlotIndex, error)
 		// NFT queries for a specific iotago.NFTOutput by its identifier and returns the ledger index at which this output where available at.
@@ -165,12 +165,12 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 	return &outputID, output, res.LedgerIndex, err
 }
 
-func (client *indexerClient) Alias(ctx context.Context, aliasID iotago.AliasID) (*iotago.OutputID, *iotago.AliasOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteAlias, iotago.EncodeHex(aliasID[:])))
+func (client *indexerClient) Account(ctx context.Context, accountID iotago.AccountID) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error) {
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteAccount, iotago.EncodeHex(accountID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
-	return outputID, output.(*iotago.AliasOutput), ledgerIndex, nil
+	return outputID, output.(*iotago.AccountOutput), ledgerIndex, nil
 }
 
 func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.SlotIndex, error) {

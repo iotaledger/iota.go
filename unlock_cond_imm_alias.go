@@ -5,24 +5,24 @@ import (
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
-// ImmutableAliasUnlockCondition is an UnlockCondition defining an alias which has to be unlocked.
+// ImmutableAccountUnlockCondition is an UnlockCondition defining an account which has to be unlocked.
 // Unlike the AddressUnlockCondition, this unlock condition is immutable for an output which contains it,
 // meaning it also only applies to ChainOutput(s).
-type ImmutableAliasUnlockCondition struct {
-	Address *AliasAddress `serix:"0,mapKey=address"`
+type ImmutableAccountUnlockCondition struct {
+	Address *AccountAddress `serix:"0,mapKey=address"`
 }
 
-func (s *ImmutableAliasUnlockCondition) Clone() UnlockCondition {
-	return &ImmutableAliasUnlockCondition{Address: s.Address.Clone().(*AliasAddress)}
+func (s *ImmutableAccountUnlockCondition) Clone() UnlockCondition {
+	return &ImmutableAccountUnlockCondition{Address: s.Address.Clone().(*AccountAddress)}
 }
 
-func (s *ImmutableAliasUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (s *ImmutableAccountUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) +
 		s.Address.VBytes(rentStruct, nil)
 }
 
-func (s *ImmutableAliasUnlockCondition) Equal(other UnlockCondition) bool {
-	otherUnlockCond, is := other.(*ImmutableAliasUnlockCondition)
+func (s *ImmutableAccountUnlockCondition) Equal(other UnlockCondition) bool {
+	otherUnlockCond, is := other.(*ImmutableAccountUnlockCondition)
 	if !is {
 		return false
 	}
@@ -30,10 +30,10 @@ func (s *ImmutableAliasUnlockCondition) Equal(other UnlockCondition) bool {
 	return s.Address.Equal(otherUnlockCond.Address)
 }
 
-func (s *ImmutableAliasUnlockCondition) Type() UnlockConditionType {
-	return UnlockConditionImmutableAlias
+func (s *ImmutableAccountUnlockCondition) Type() UnlockConditionType {
+	return UnlockConditionImmutableAccount
 }
 
-func (s *ImmutableAliasUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionImmutableAlias)) + s.Address.Size()
+func (s *ImmutableAccountUnlockCondition) Size() int {
+	return util.NumByteLen(byte(UnlockConditionImmutableAccount)) + s.Address.Size()
 }

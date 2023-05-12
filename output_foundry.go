@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	// FoundryIDLength is the byte length of a FoundryID consisting out of the alias address, serial number and token scheme.
-	FoundryIDLength = AliasAddressSerializedBytesSize + serializer.UInt32ByteSize + serializer.OneByte
+	// FoundryIDLength is the byte length of a FoundryID consisting out of the account address, serial number and token scheme.
+	FoundryIDLength = AccountAddressSerializedBytesSize + serializer.UInt32ByteSize + serializer.OneByte
 )
 
 var (
@@ -33,7 +33,7 @@ func (fID FoundryID) Addressable() bool {
 
 // FoundrySerialNumber returns the serial number of the foundry.
 func (fID FoundryID) FoundrySerialNumber() uint32 {
-	return binary.LittleEndian.Uint32(fID[AliasAddressSerializedBytesSize : AliasAddressSerializedBytesSize+serializer.UInt32ByteSize])
+	return binary.LittleEndian.Uint32(fID[AccountAddressSerializedBytesSize : AccountAddressSerializedBytesSize+serializer.UInt32ByteSize])
 }
 
 func (fID FoundryID) Matches(other ChainID) bool {
@@ -106,7 +106,7 @@ func (f *FoundryOutput) Clone() Output {
 }
 
 func (f *FoundryOutput) Ident() Address {
-	return f.Conditions.MustSet().ImmutableAlias().Address
+	return f.Conditions.MustSet().ImmutableAccount().Address
 }
 
 func (f *FoundryOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParameters) bool {

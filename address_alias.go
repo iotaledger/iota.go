@@ -7,95 +7,95 @@ import (
 )
 
 const (
-	// AliasAddressBytesLength is the length of an Alias address.
-	AliasAddressBytesLength = blake2b.Size256
-	// AliasAddressSerializedBytesSize is the size of a serialized Alias address with its type denoting byte.
-	AliasAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + AliasAddressBytesLength
+	// AccountAddressBytesLength is the length of an Account address.
+	AccountAddressBytesLength = blake2b.Size256
+	// AccountAddressSerializedBytesSize is the size of a serialized Account address with its type denoting byte.
+	AccountAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + AccountAddressBytesLength
 )
 
-// ParseAliasAddressFromHexString parses the given hex string into an AliasAddress.
-func ParseAliasAddressFromHexString(hexAddr string) (*AliasAddress, error) {
+// ParseAccountAddressFromHexString parses the given hex string into an AccountAddress.
+func ParseAccountAddressFromHexString(hexAddr string) (*AccountAddress, error) {
 	addrBytes, err := DecodeHex(hexAddr)
 	if err != nil {
 		return nil, err
 	}
-	addr := &AliasAddress{}
+	addr := &AccountAddress{}
 	copy(addr[:], addrBytes)
 	return addr, nil
 }
 
-// MustParseAliasAddressFromHexString parses the given hex string into an AliasAddress.
+// MustParseAccountAddressFromHexString parses the given hex string into an AccountAddress.
 // It panics if the hex address is invalid.
-func MustParseAliasAddressFromHexString(hexAddr string) *AliasAddress {
-	addr, err := ParseAliasAddressFromHexString(hexAddr)
+func MustParseAccountAddressFromHexString(hexAddr string) *AccountAddress {
+	addr, err := ParseAccountAddressFromHexString(hexAddr)
 	if err != nil {
 		panic(err)
 	}
 	return addr
 }
 
-// AliasAddress defines an Alias address.
-// An AliasAddress is the Blake2b-256 hash of the OutputID which created it.
-type AliasAddress [AliasAddressBytesLength]byte
+// AccountAddress defines an Account address.
+// An AccountAddress is the Blake2b-256 hash of the OutputID which created it.
+type AccountAddress [AccountAddressBytesLength]byte
 
-func (aliasAddr *AliasAddress) Decode(b []byte) (int, error) {
-	copy(aliasAddr[:], b)
-	return AliasAddressSerializedBytesSize - 1, nil
+func (accountAddr *AccountAddress) Decode(b []byte) (int, error) {
+	copy(accountAddr[:], b)
+	return AccountAddressSerializedBytesSize - 1, nil
 }
 
-func (aliasAddr *AliasAddress) Encode() ([]byte, error) {
-	var b [AliasAddressSerializedBytesSize - 1]byte
-	copy(b[:], aliasAddr[:])
+func (accountAddr *AccountAddress) Encode() ([]byte, error) {
+	var b [AccountAddressSerializedBytesSize - 1]byte
+	copy(b[:], accountAddr[:])
 	return b[:], nil
 }
 
-func (aliasAddr *AliasAddress) Clone() Address {
-	cpy := &AliasAddress{}
-	copy(cpy[:], aliasAddr[:])
+func (accountAddr *AccountAddress) Clone() Address {
+	cpy := &AccountAddress{}
+	copy(cpy[:], accountAddr[:])
 	return cpy
 }
 
-func (aliasAddr *AliasAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(AliasAddressSerializedBytesSize)
+func (accountAddr *AccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	return rentStruct.VBFactorData.Multiply(AccountAddressSerializedBytesSize)
 }
 
-func (aliasAddr *AliasAddress) Key() string {
-	return string(append([]byte{byte(AddressAlias)}, (*aliasAddr)[:]...))
+func (accountAddr *AccountAddress) Key() string {
+	return string(append([]byte{byte(AddressAccount)}, (*accountAddr)[:]...))
 }
 
-func (aliasAddr *AliasAddress) Chain() ChainID {
-	return AliasID(*aliasAddr)
+func (accountAddr *AccountAddress) Chain() ChainID {
+	return AccountID(*accountAddr)
 }
 
-func (aliasAddr *AliasAddress) AliasID() AliasID {
-	return AliasID(*aliasAddr)
+func (accountAddr *AccountAddress) AccountID() AccountID {
+	return AccountID(*accountAddr)
 }
 
-func (aliasAddr *AliasAddress) Equal(other Address) bool {
-	otherAddr, is := other.(*AliasAddress)
+func (accountAddr *AccountAddress) Equal(other Address) bool {
+	otherAddr, is := other.(*AccountAddress)
 	if !is {
 		return false
 	}
-	return *aliasAddr == *otherAddr
+	return *accountAddr == *otherAddr
 }
 
-func (aliasAddr *AliasAddress) Type() AddressType {
-	return AddressAlias
+func (accountAddr *AccountAddress) Type() AddressType {
+	return AddressAccount
 }
 
-func (aliasAddr *AliasAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, aliasAddr)
+func (accountAddr *AccountAddress) Bech32(hrp NetworkPrefix) string {
+	return bech32String(hrp, accountAddr)
 }
 
-func (aliasAddr *AliasAddress) String() string {
-	return EncodeHex(aliasAddr[:])
+func (accountAddr *AccountAddress) String() string {
+	return EncodeHex(accountAddr[:])
 }
 
-func (aliasAddr *AliasAddress) Size() int {
-	return AliasAddressSerializedBytesSize
+func (accountAddr *AccountAddress) Size() int {
+	return AccountAddressSerializedBytesSize
 }
 
-// AliasAddressFromOutputID returns the alias address computed from a given OutputID.
-func AliasAddressFromOutputID(outputID OutputID) AliasAddress {
+// AccountAddressFromOutputID returns the account address computed from a given OutputID.
+func AccountAddressFromOutputID(outputID OutputID) AccountAddress {
 	return blake2b.Sum256(outputID[:])
 }
