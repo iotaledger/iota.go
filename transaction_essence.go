@@ -37,10 +37,10 @@ var (
 	ErrTxEssenceNetworkIDInvalid = errors.New("invalid network ID")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
-	// ErrAliasOutputNonEmptyState gets returned if an AliasOutput with zeroed AliasID contains state (counters non-zero etc.).
-	ErrAliasOutputNonEmptyState = errors.New("alias output is not empty state")
-	// ErrAliasOutputCyclicAddress gets returned if an AliasOutput's AliasID results into the same address as the State/Governance controller.
-	ErrAliasOutputCyclicAddress = errors.New("alias output's AliasID corresponds to state and/or governance controller")
+	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
+	ErrAccountOutputNonEmptyState = errors.New("account output is not empty state")
+	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the State/Governance controller.
+	ErrAccountOutputCyclicAddress = errors.New("account output's AccountID corresponds to state and/or governance controller")
 	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
 	ErrNFTOutputCyclicAddress = errors.New("NFT output's ID corresponds to address field")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
@@ -167,7 +167,7 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParamete
 		OutputsSyntacticalNativeTokens(),
 		OutputsSyntacticalChainConstrainedOutputUniqueness(),
 		OutputsSyntacticalFoundry(),
-		OutputsSyntacticalAlias(),
+		OutputsSyntacticalAccount(),
 		OutputsSyntacticalNFT(),
 	); err != nil {
 		return err

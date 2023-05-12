@@ -48,8 +48,8 @@ const (
 	OutputTreasury OutputType = 2
 	// OutputBasic denotes an BasicOutput.
 	OutputBasic OutputType = 3
-	// OutputAlias denotes an AliasOutput.
-	OutputAlias OutputType = 4
+	// OutputAccount denotes an AccountOutput.
+	OutputAccount OutputType = 4
 	// OutputFoundry denotes a FoundryOutput.
 	OutputFoundry OutputType = 5
 	// OutputNFT denotes an NFTOutput.
@@ -69,7 +69,7 @@ var (
 		"SigLockedDustAllowanceOutput",
 		"TreasuryOutput",
 		"BasicOutput",
-		"AliasOutput",
+		"AccountOutput",
 		"FoundryOutput",
 		"NFTOutput",
 	}
@@ -81,6 +81,8 @@ const (
 )
 
 var (
+	ErrInvalidOutputIDLength = errors.New("Invalid outputID length")
+
 	// ErrTransDepIdentOutputNonUTXOChainID gets returned when a TransDepIdentOutput has a ChainID which is not a UTXOIDChainID.
 	ErrTransDepIdentOutputNonUTXOChainID = errors.New("transition dependable ident outputs must have UTXO chain IDs")
 	// ErrTransDepIdentOutputNextInvalid gets returned when a TransDepIdentOutput's next state is invalid.
@@ -128,6 +130,19 @@ func (outputID OutputID) UTXOInput() *UTXOInput {
 	return utxoInput
 }
 
+func (outputID OutputID) Bytes() ([]byte, error) {
+	return outputID[:], nil
+}
+
+func (outputID *OutputID) FromBytes(bytes []byte) (int, error) {
+	var err error
+	*outputID, err = OutputIDFromBytes(bytes)
+	if err != nil {
+		return 0, err
+	}
+	return OutputIDLength, nil
+}
+
 // HexOutputIDs is a slice of hex encoded OutputID strings.
 type HexOutputIDs []string
 
@@ -157,18 +172,27 @@ func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputID {
 	utxo := UTXOInput{TransactionOutputIndex: index}
 	copy(utxo.TransactionID[:], (txID)[:])
+
 	return utxo.ID()
+}
+
+// OutputIDFromBytes creates a OutputID from the given bytes.
+func OutputIDFromBytes(bytes []byte) (OutputID, error) {
+	if len(bytes) != OutputIDLength {
+		return OutputID{}, ErrInvalidOutputIDLength
+	}
+
+	return OutputID(bytes), nil
 }
 
 // OutputIDFromHex creates a OutputID from the given hex encoded OututID data.
 func OutputIDFromHex(hexStr string) (OutputID, error) {
-	var outputID OutputID
 	outputIDData, err := DecodeHex(hexStr)
 	if err != nil {
-		return outputID, err
+		return OutputID{}, err
 	}
-	copy(outputID[:], outputIDData)
-	return outputID, nil
+
+	return OutputIDFromBytes(outputIDData)
 }
 
 // MustOutputIDFromHex works like OutputIDFromHex but panics if an error is encountered.
@@ -447,42 +471,42 @@ func (outputs OutputsByType) FoundryOutputsSet() (FoundryOutputsSet, error) {
 	return foundryOutputsSet, nil
 }
 
-// AliasOutputs returns a slice of Outputs which are AliasOutput.
-func (outputs OutputsByType) AliasOutputs() AliasOutputs {
-	aliasOutputs := make(AliasOutputs, 0)
-	for _, output := range outputs[OutputAlias] {
-		aliasOutput, is := output.(*AliasOutput)
+// AccountOutputs returns a slice of Outputs which are AccountOutput.
+func (outputs OutputsByType) AccountOutputs() AccountOutputs {
+	accountOutputs := make(AccountOutputs, 0)
+	for _, output := range outputs[OutputAccount] {
+		accountOutput, is := output.(*AccountOutput)
 		if !is {
 			continue
 		}
-		aliasOutputs = append(aliasOutputs, aliasOutput)
+		accountOutputs = append(accountOutputs, accountOutput)
 	}
-	return aliasOutputs
+	return accountOutputs
 }
 
-// NonNewAliasOutputsSet returns a map of AliasID to AliasOutput.
-// If multiple AliasOutput(s) exist for a given AliasID, an error is returned.
-// The produced set does not include AliasOutputs of which their AliasID are zeroed.
-func (outputs OutputsByType) NonNewAliasOutputsSet() (AliasOutputsSet, error) {
-	aliasOutputsSet := make(AliasOutputsSet)
-	for _, output := range outputs[OutputAlias] {
-		aliasOutput, is := output.(*AliasOutput)
-		if !is || aliasOutput.AliasEmpty() {
+// NonNewAccountOutputsSet returns a map of AccountID to AccountOutput.
+// If multiple AccountOutput(s) exist for a given AccountID, an error is returned.
+// The produced set does not include AccountOutputs of which their AccountID are zeroed.
+func (outputs OutputsByType) NonNewAccountOutputsSet() (AccountOutputsSet, error) {
+	accountOutputsSet := make(AccountOutputsSet)
+	for _, output := range outputs[OutputAccount] {
+		accountOutput, is := output.(*AccountOutput)
+		if !is || accountOutput.AccountEmpty() {
 			continue
 		}
-		if _, has := aliasOutputsSet[aliasOutput.AliasID]; has {
-			return nil, ErrNonUniqueAliasOutputs
+		if _, has := accountOutputsSet[accountOutput.AccountID]; has {
+			return nil, ErrNonUniqueAccountOutputs
 		}
-		aliasOutputsSet[aliasOutput.AliasID] = aliasOutput
+		accountOutputsSet[accountOutput.AccountID] = accountOutput
 	}
-	return aliasOutputsSet, nil
+	return accountOutputsSet, nil
 }
 
 // ChainOutputSet returns a map of ChainID to ChainOutput.
 // If multiple ChainOutput(s) exist for a given ChainID, an error is returned.
 func (outputs OutputsByType) ChainOutputSet() (ChainOutputSet, error) {
 	chainOutputSet := make(ChainOutputSet)
-	for _, ty := range []OutputType{OutputAlias, OutputFoundry, OutputNFT} {
+	for _, ty := range []OutputType{OutputAccount, OutputFoundry, OutputNFT} {
 		for _, output := range outputs[ty] {
 			chainOutput, is := output.(ChainOutput)
 			if !is || chainOutput.Chain().Empty() {
@@ -500,7 +524,7 @@ func (outputs OutputsByType) ChainOutputSet() (ChainOutputSet, error) {
 // ChainOutputs returns a slice of Outputs which are ChainOutput.
 func (outputs OutputsByType) ChainOutputs() ChainOutputs {
 	chainOutputs := make(ChainOutputs, 0)
-	for _, ty := range []OutputType{OutputAlias, OutputFoundry, OutputNFT} {
+	for _, ty := range []OutputType{OutputAccount, OutputFoundry, OutputNFT} {
 		for _, output := range outputs[ty] {
 			chainOutput, is := output.(ChainOutput)
 			if !is {
@@ -512,15 +536,15 @@ func (outputs OutputsByType) ChainOutputs() ChainOutputs {
 	return chainOutputs
 }
 
-// NewAliases returns an AliasOutputsSet for all AliasOutputs which are new.
-func (outputSet OutputSet) NewAliases() AliasOutputsSet {
-	set := make(AliasOutputsSet)
+// NewAccounts returns an AccountOutputsSet for all AccountOutputs which are new.
+func (outputSet OutputSet) NewAccounts() AccountOutputsSet {
+	set := make(AccountOutputsSet)
 	for utxoInputID, output := range outputSet {
-		aliasOutput, is := output.(*AliasOutput)
-		if !is || !aliasOutput.AliasEmpty() {
+		accountOutput, is := output.(*AccountOutput)
+		if !is || !accountOutput.AccountEmpty() {
 			continue
 		}
-		set[AliasIDFromOutputID(utxoInputID)] = aliasOutput
+		set[AccountIDFromOutputID(utxoInputID)] = accountOutput
 	}
 	return set
 }
@@ -756,33 +780,33 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 	}
 }
 
-// OutputsSyntacticalAlias returns an OutputsSyntacticalValidationFunc which checks that AliasOutput(s)':
-//   - StateIndex/FoundryCounter are zero if the AliasID is zeroed
-//   - StateController and GovernanceController must be different from AliasAddress derived from AliasID
-func OutputsSyntacticalAlias() OutputsSyntacticalValidationFunc {
+// OutputsSyntacticalAccount returns an OutputsSyntacticalValidationFunc which checks that AccountOutput(s)':
+//   - StateIndex/FoundryCounter are zero if the AccountID is zeroed
+//   - StateController and GovernanceController must be different from AccountAddress derived from AccountID
+func OutputsSyntacticalAccount() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
-		aliasOutput, is := output.(*AliasOutput)
+		accountOutput, is := output.(*AccountOutput)
 		if !is {
 			return nil
 		}
 
-		if aliasOutput.AliasEmpty() {
+		if accountOutput.AccountEmpty() {
 			switch {
-			case aliasOutput.StateIndex != 0:
-				return fmt.Errorf("%w: output %d, state index not zero", ErrAliasOutputNonEmptyState, index)
-			case aliasOutput.FoundryCounter != 0:
-				return fmt.Errorf("%w: output %d, foundry counter not zero", ErrAliasOutputNonEmptyState, index)
+			case accountOutput.StateIndex != 0:
+				return fmt.Errorf("%w: output %d, state index not zero", ErrAccountOutputNonEmptyState, index)
+			case accountOutput.FoundryCounter != 0:
+				return fmt.Errorf("%w: output %d, foundry counter not zero", ErrAccountOutputNonEmptyState, index)
 			}
-			// can not be cyclic when the AliasOutput is new
+			// can not be cyclic when the AccountOutput is new
 			return nil
 		}
 
-		outputAliasAddr := AliasAddress(aliasOutput.AliasID)
-		if stateCtrlAddr, ok := aliasOutput.StateController().(*AliasAddress); ok && outputAliasAddr == *stateCtrlAddr {
-			return fmt.Errorf("%w: output %d, AliasID=StateController", ErrAliasOutputCyclicAddress, index)
+		outputAccountAddr := AccountAddress(accountOutput.AccountID)
+		if stateCtrlAddr, ok := accountOutput.StateController().(*AccountAddress); ok && outputAccountAddr == *stateCtrlAddr {
+			return fmt.Errorf("%w: output %d, AccountID=StateController", ErrAccountOutputCyclicAddress, index)
 		}
-		if govCtrlAddr, ok := aliasOutput.GovernorAddress().(*AliasAddress); ok && outputAliasAddr == *govCtrlAddr {
-			return fmt.Errorf("%w: output %d, AliasID=GovernanceController", ErrAliasOutputCyclicAddress, index)
+		if govCtrlAddr, ok := accountOutput.GovernorAddress().(*AccountAddress); ok && outputAccountAddr == *govCtrlAddr {
+			return fmt.Errorf("%w: output %d, AccountID=GovernanceController", ErrAccountOutputCyclicAddress, index)
 		}
 
 		return nil

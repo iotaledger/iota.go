@@ -152,8 +152,8 @@ func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signe
 
 func addReferentialUnlock(addr iotago.Address, unlocks iotago.Unlocks, pos int) iotago.Unlocks {
 	switch addr.(type) {
-	case *iotago.AliasAddress:
-		return append(unlocks, &iotago.AliasUnlock{Reference: uint16(pos)})
+	case *iotago.AccountAddress:
+		return append(unlocks, &iotago.AccountUnlock{Reference: uint16(pos)})
 	case *iotago.NFTAddress:
 		return append(unlocks, &iotago.NFTUnlock{Reference: uint16(pos)})
 	default:

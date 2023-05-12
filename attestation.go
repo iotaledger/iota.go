@@ -11,22 +11,22 @@ import (
 )
 
 type Attestation struct {
-	BlockID          BlockID      `serix:"0,mapKey=blockID"`
-	IssuerID         AccountID    `serix:"1,mapKey=issuerID"`
-	IssuingTime      time.Time    `serix:"2,mapKey=issuingTime"`
-	SlotCommitmentID CommitmentID `serix:"3,mapKey=slotCommitmentID"`
-	BlockContentHash Identifier   `serix:"4,mapKey=blockContentHash"`
-	Signature        Signature    `serix:"5,mapKey=signature"`
+	IssuerID         AccountID    `serix:"0,mapKey=issuerID"`
+	IssuingTime      time.Time    `serix:"1,mapKey=issuingTime"`
+	SlotCommitmentID CommitmentID `serix:"2,mapKey=slotCommitmentID"`
+	BlockContentHash Identifier   `serix:"3,mapKey=blockContentHash"`
+	Signature        Signature    `serix:"4,mapKey=signature"`
+	Nonce            uint64       `serix:"5,mapKey=nonce"`
 }
 
-func NewAttestation(block *Block, slotTimeProvider *SlotTimeProvider) *Attestation {
+func NewAttestation(block *Block) *Attestation {
 	return &Attestation{
-		BlockID:          block.MustID(slotTimeProvider),
 		IssuerID:         block.IssuerID,
 		IssuingTime:      block.IssuingTime,
 		SlotCommitmentID: block.SlotCommitment.MustID(),
 		BlockContentHash: lo.PanicOnErr(block.ContentHash()),
 		Signature:        block.Signature,
+		Nonce:            block.Nonce,
 	}
 }
 
@@ -45,6 +45,27 @@ func (a *Attestation) Compare(other *Attestation) int {
 	default:
 		return bytes.Compare(a.BlockContentHash[:], other.BlockContentHash[:])
 	}
+}
+
+func (a Attestation) BlockID(slotTimeProvider *SlotTimeProvider) (BlockID, error) {
+	signatureBytes, err := internalEncode(a.Signature)
+	if err != nil {
+		return EmptyBlockID(), fmt.Errorf("failed to serialize block's signature: %w", err)
+	}
+
+	nonceBytes, err := internalEncode(a.Nonce)
+	if err != nil {
+		return EmptyBlockID(), fmt.Errorf("failed to serialize block's nonce: %w", err)
+	}
+
+	blockIdentifier, err := BlockIdentifierFromBlockBytes(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
+	if err != nil {
+		return EmptyBlockID(), err
+	}
+
+	slotIndex := slotTimeProvider.IndexFromTime(a.IssuingTime)
+
+	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
 }
 
 func (a Attestation) Bytes() (bytes []byte, err error) {

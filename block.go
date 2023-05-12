@@ -97,8 +97,6 @@ type WeakParentsIDs = BlockIDs
 // ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
 type ShallowLikeParentIDs = BlockIDs
 
-type AccountID = Identifier
-
 // Block represents a vertex in the Tangle.
 type Block struct {
 	// The protocol version under which this block operates.
@@ -146,7 +144,9 @@ func BlockIdentifierFromBlockBytes(blockBytes []byte) (Identifier, error) {
 		return emptyIdentifier, err
 	}
 
-	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:])), nil
+	nonceBytes := blockBytes[len(blockBytes)-serializer.UInt64ByteSize:]
+
+	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:], nonceBytes[:])), nil
 }
 
 func contentHashFromBlockBytes(blockBytes []byte) (Identifier, error) {

@@ -5,33 +5,33 @@ import (
 )
 
 const (
-	// AliasUnlockSize defines the size of an AliasUnlock.
-	AliasUnlockSize = serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
+	// AccountUnlockSize defines the size of an AccountUnlock.
+	AccountUnlockSize = serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 )
 
-// AliasUnlock is an Unlock which references a previous unlock.
-type AliasUnlock struct {
-	// The other unlock this AliasUnlock references to.
+// AccountUnlock is an Unlock which references a previous unlock.
+type AccountUnlock struct {
+	// The other unlock this AccountUnlock references to.
 	Reference uint16 `serix:"0,mapKey=reference"`
 }
 
-func (r *AliasUnlock) SourceAllowed(address Address) bool {
-	_, ok := address.(*AliasAddress)
+func (r *AccountUnlock) SourceAllowed(address Address) bool {
+	_, ok := address.(*AccountAddress)
 	return ok
 }
 
-func (r *AliasUnlock) Chainable() bool {
+func (r *AccountUnlock) Chainable() bool {
 	return true
 }
 
-func (r *AliasUnlock) Ref() uint16 {
+func (r *AccountUnlock) Ref() uint16 {
 	return r.Reference
 }
 
-func (r *AliasUnlock) Type() UnlockType {
-	return UnlockAlias
+func (r *AccountUnlock) Type() UnlockType {
+	return UnlockAccount
 }
 
-func (r *AliasUnlock) Size() int {
-	return AliasUnlockSize
+func (r *AccountUnlock) Size() int {
+	return AccountUnlockSize
 }

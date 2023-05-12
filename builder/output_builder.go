@@ -106,122 +106,122 @@ func (builder *BasicOutputBuilder) Build() (*iotago.BasicOutput, error) {
 	return builder.output, nil
 }
 
-// NewAliasOutputBuilder creates a new AliasOutputBuilder with the required state controller/governor addresses and deposit amount.
-func NewAliasOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, deposit uint64) *AliasOutputBuilder {
-	return &AliasOutputBuilder{output: &iotago.AliasOutput{
+// NewAccountOutputBuilder creates a new AccountOutputBuilder with the required state controller/governor addresses and deposit amount.
+func NewAccountOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, deposit uint64) *AccountOutputBuilder {
+	return &AccountOutputBuilder{output: &iotago.AccountOutput{
 		Amount:       deposit,
 		NativeTokens: iotago.NativeTokens{},
-		Conditions: iotago.AliasOutputUnlockConditions{
+		Conditions: iotago.AccountOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 			&iotago.GovernorAddressUnlockCondition{Address: govAddr},
 		},
-		Features:          iotago.AliasOutputFeatures{},
-		ImmutableFeatures: iotago.AliasOutputImmFeatures{},
+		Features:          iotago.AccountOutputFeatures{},
+		ImmutableFeatures: iotago.AccountOutputImmFeatures{},
 	}}
 }
 
-// NewAliasOutputBuilderFromPrevious creates a new AliasOutputBuilder starting from a copy of the previous iotago.AliasOutput.
-func NewAliasOutputBuilderFromPrevious(previous *iotago.AliasOutput) *AliasOutputBuilder {
-	return &AliasOutputBuilder{
+// NewAccountOutputBuilderFromPrevious creates a new AccountOutputBuilder starting from a copy of the previous iotago.AccountOutput.
+func NewAccountOutputBuilderFromPrevious(previous *iotago.AccountOutput) *AccountOutputBuilder {
+	return &AccountOutputBuilder{
 		prev:   previous,
-		output: previous.Clone().(*iotago.AliasOutput),
+		output: previous.Clone().(*iotago.AccountOutput),
 	}
 }
 
-// AliasOutputBuilder builds an iotago.AliasOutput.
-type AliasOutputBuilder struct {
-	prev         *iotago.AliasOutput
-	output       *iotago.AliasOutput
+// AccountOutputBuilder builds an iotago.AccountOutput.
+type AccountOutputBuilder struct {
+	prev         *iotago.AccountOutput
+	output       *iotago.AccountOutput
 	stateCtrlReq bool
 	govCtrlReq   bool
 }
 
 // Deposit sets the deposit of the output.
-func (builder *AliasOutputBuilder) Deposit(deposit uint64) *AliasOutputBuilder {
+func (builder *AccountOutputBuilder) Deposit(deposit uint64) *AccountOutputBuilder {
 	builder.output.Amount = deposit
 	builder.stateCtrlReq = true
 	return builder
 }
 
-// AliasID sets the iotago.AliasID of this output.
-// Do not call this function if the underlying iotago.AliasOutput is not new.
-func (builder *AliasOutputBuilder) AliasID(aliasID iotago.AliasID) *AliasOutputBuilder {
-	builder.output.AliasID = aliasID
+// AccountID sets the iotago.AccountID of this output.
+// Do not call this function if the underlying iotago.AccountOutput is not new.
+func (builder *AccountOutputBuilder) AccountID(accountID iotago.AccountID) *AccountOutputBuilder {
+	builder.output.AccountID = accountID
 	return builder
 }
 
 // StateMetadata sets the state metadata of the output.
-func (builder *AliasOutputBuilder) StateMetadata(data []byte) *AliasOutputBuilder {
+func (builder *AccountOutputBuilder) StateMetadata(data []byte) *AccountOutputBuilder {
 	builder.output.StateMetadata = data
 	builder.stateCtrlReq = true
 	return builder
 }
 
 // FoundriesToGenerate bumps the output's foundry counter by the amount of foundries to generate.
-func (builder *AliasOutputBuilder) FoundriesToGenerate(count uint32) *AliasOutputBuilder {
+func (builder *AccountOutputBuilder) FoundriesToGenerate(count uint32) *AccountOutputBuilder {
 	builder.output.FoundryCounter += count
 	builder.stateCtrlReq = true
 	return builder
 }
 
 // NativeToken adds/modifies a native token to/on the output.
-func (builder *AliasOutputBuilder) NativeToken(nt *iotago.NativeToken) *AliasOutputBuilder {
+func (builder *AccountOutputBuilder) NativeToken(nt *iotago.NativeToken) *AccountOutputBuilder {
 	builder.output.NativeTokens.Upsert(nt)
 	builder.stateCtrlReq = true
 	return builder
 }
 
 // NativeTokens sets the native tokens held by the output.
-func (builder *AliasOutputBuilder) NativeTokens(nts iotago.NativeTokens) *AliasOutputBuilder {
+func (builder *AccountOutputBuilder) NativeTokens(nts iotago.NativeTokens) *AccountOutputBuilder {
 	builder.output.NativeTokens = nts
 	builder.stateCtrlReq = true
 	return builder
 }
 
 // StateController sets the iotago.StateControllerAddressUnlockCondition of the output.
-func (builder *AliasOutputBuilder) StateController(stateCtrl iotago.Address) *AliasOutputBuilder {
+func (builder *AccountOutputBuilder) StateController(stateCtrl iotago.Address) *AccountOutputBuilder {
 	builder.output.Conditions.Upsert(&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl})
 	builder.govCtrlReq = true
 	return builder
 }
 
 // Governor sets the iotago.GovernorAddressUnlockCondition of the output.
-func (builder *AliasOutputBuilder) Governor(governor iotago.Address) *AliasOutputBuilder {
+func (builder *AccountOutputBuilder) Governor(governor iotago.Address) *AccountOutputBuilder {
 	builder.output.Conditions.Upsert(&iotago.GovernorAddressUnlockCondition{Address: governor})
 	builder.govCtrlReq = true
 	return builder
 }
 
 // Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
-func (builder *AliasOutputBuilder) Sender(senderAddr iotago.Address) *AliasOutputBuilder {
+func (builder *AccountOutputBuilder) Sender(senderAddr iotago.Address) *AccountOutputBuilder {
 	builder.output.Features.Upsert(&iotago.SenderFeature{Address: senderAddr})
 	builder.govCtrlReq = true
 	return builder
 }
 
 // ImmutableSender sets/modifies an iotago.SenderFeature as an immutable feature on the output.
-// Only call this function on a new iotago.AliasOutput.
-func (builder *AliasOutputBuilder) ImmutableSender(senderAddr iotago.Address) *AliasOutputBuilder {
+// Only call this function on a new iotago.AccountOutput.
+func (builder *AccountOutputBuilder) ImmutableSender(senderAddr iotago.Address) *AccountOutputBuilder {
 	builder.output.ImmutableFeatures.Upsert(&iotago.SenderFeature{Address: senderAddr})
 	return builder
 }
 
 // Metadata sets/modifies an iotago.MetadataFeature on the output.
-func (builder *AliasOutputBuilder) Metadata(data []byte) *AliasOutputBuilder {
+func (builder *AccountOutputBuilder) Metadata(data []byte) *AccountOutputBuilder {
 	builder.output.Features.Upsert(&iotago.MetadataFeature{Data: data})
 	builder.govCtrlReq = true
 	return builder
 }
 
 // ImmutableMetadata sets/modifies an iotago.MetadataFeature as an immutable feature on the output.
-// Only call this function on a new iotago.AliasOutput.
-func (builder *AliasOutputBuilder) ImmutableMetadata(data []byte) *AliasOutputBuilder {
+// Only call this function on a new iotago.AccountOutput.
+func (builder *AccountOutputBuilder) ImmutableMetadata(data []byte) *AccountOutputBuilder {
 	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Data: data})
 	return builder
 }
 
 // MustBuild works like Build() but panics if an error is encountered.
-func (builder *AliasOutputBuilder) MustBuild() *iotago.AliasOutput {
+func (builder *AccountOutputBuilder) MustBuild() *iotago.AccountOutput {
 	output, err := builder.Build()
 	if err != nil {
 		panic(err)
@@ -229,8 +229,8 @@ func (builder *AliasOutputBuilder) MustBuild() *iotago.AliasOutput {
 	return output
 }
 
-// Build builds the iotago.AliasOutput.
-func (builder *AliasOutputBuilder) Build() (*iotago.AliasOutput, error) {
+// Build builds the iotago.AccountOutput.
+func (builder *AccountOutputBuilder) Build() (*iotago.AccountOutput, error) {
 	if builder.prev != nil && builder.govCtrlReq && builder.stateCtrlReq {
 		return nil, fmt.Errorf("builder calls require both state and governor transitions which is not possible")
 	}
@@ -253,92 +253,92 @@ func (builder *AliasOutputBuilder) Build() (*iotago.AliasOutput, error) {
 	return builder.output, nil
 }
 
-type aliasStateTransition struct {
-	builder *AliasOutputBuilder
+type accountStateTransition struct {
+	builder *AccountOutputBuilder
 }
 
-// StateTransition narrows the builder functions to the ones available for an alias state transition.
-func (builder *AliasOutputBuilder) StateTransition() *aliasStateTransition {
-	return &aliasStateTransition{builder: builder}
+// StateTransition narrows the builder functions to the ones available for an account state transition.
+func (builder *AccountOutputBuilder) StateTransition() *accountStateTransition {
+	return &accountStateTransition{builder: builder}
 }
 
 // Deposit sets the deposit of the output.
-func (trans *aliasStateTransition) Deposit(deposit uint64) *aliasStateTransition {
+func (trans *accountStateTransition) Deposit(deposit uint64) *accountStateTransition {
 	return trans.builder.Deposit(deposit).StateTransition()
 }
 
 // StateMetadata sets the state metadata of the output.
-func (trans *aliasStateTransition) StateMetadata(data []byte) *aliasStateTransition {
+func (trans *accountStateTransition) StateMetadata(data []byte) *accountStateTransition {
 	return trans.builder.StateMetadata(data).StateTransition()
 }
 
 // FoundriesToGenerate bumps the output's foundry counter by the amount of foundries to generate.
-func (trans *aliasStateTransition) FoundriesToGenerate(count uint32) *aliasStateTransition {
+func (trans *accountStateTransition) FoundriesToGenerate(count uint32) *accountStateTransition {
 	return trans.builder.FoundriesToGenerate(count).StateTransition()
 }
 
 // NativeToken adds/modifies a native token to/on the output.
-func (trans *aliasStateTransition) NativeToken(nt *iotago.NativeToken) *aliasStateTransition {
+func (trans *accountStateTransition) NativeToken(nt *iotago.NativeToken) *accountStateTransition {
 	return trans.builder.NativeToken(nt).StateTransition()
 }
 
 // NativeTokens sets the native tokens held by the output.
-func (trans *aliasStateTransition) NativeTokens(nts iotago.NativeTokens) *aliasStateTransition {
+func (trans *accountStateTransition) NativeTokens(nts iotago.NativeTokens) *accountStateTransition {
 	return trans.builder.NativeTokens(nts).StateTransition()
 }
 
 // Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
-func (trans *aliasStateTransition) Sender(senderAddr iotago.Address) *aliasStateTransition {
+func (trans *accountStateTransition) Sender(senderAddr iotago.Address) *accountStateTransition {
 	return trans.builder.Sender(senderAddr).StateTransition()
 }
 
-// Builder returns the AliasOutputBuilder.
-func (trans *aliasStateTransition) Builder() *AliasOutputBuilder {
+// Builder returns the AccountOutputBuilder.
+func (trans *accountStateTransition) Builder() *AccountOutputBuilder {
 	return trans.builder
 }
 
-type aliasGovernanceTransition struct {
-	builder *AliasOutputBuilder
+type accountGovernanceTransition struct {
+	builder *AccountOutputBuilder
 }
 
-// GovernanceTransition narrows the builder functions to the ones available for an alias governance transition.
-func (builder *AliasOutputBuilder) GovernanceTransition() *aliasGovernanceTransition {
-	return &aliasGovernanceTransition{builder: builder}
+// GovernanceTransition narrows the builder functions to the ones available for an account governance transition.
+func (builder *AccountOutputBuilder) GovernanceTransition() *accountGovernanceTransition {
+	return &accountGovernanceTransition{builder: builder}
 }
 
 // StateController sets the iotago.StateControllerAddressUnlockCondition of the output.
-func (trans *aliasGovernanceTransition) StateController(stateCtrl iotago.Address) *aliasGovernanceTransition {
+func (trans *accountGovernanceTransition) StateController(stateCtrl iotago.Address) *accountGovernanceTransition {
 	return trans.builder.StateController(stateCtrl).GovernanceTransition()
 }
 
 // Governor sets the iotago.GovernorAddressUnlockCondition of the output.
-func (trans *aliasGovernanceTransition) Governor(governor iotago.Address) *aliasGovernanceTransition {
+func (trans *accountGovernanceTransition) Governor(governor iotago.Address) *accountGovernanceTransition {
 	return trans.builder.Governor(governor).GovernanceTransition()
 }
 
 // Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
-func (trans *aliasGovernanceTransition) Sender(senderAddr iotago.Address) *aliasGovernanceTransition {
+func (trans *accountGovernanceTransition) Sender(senderAddr iotago.Address) *accountGovernanceTransition {
 	return trans.builder.Sender(senderAddr).GovernanceTransition()
 }
 
 // Metadata sets/modifies an iotago.MetadataFeature as a mutable feature on the output.
-func (trans *aliasGovernanceTransition) Metadata(data []byte) *aliasGovernanceTransition {
+func (trans *accountGovernanceTransition) Metadata(data []byte) *accountGovernanceTransition {
 	return trans.builder.Metadata(data).GovernanceTransition()
 }
 
-// Builder returns the AliasOutputBuilder.
-func (trans *aliasGovernanceTransition) Builder() *AliasOutputBuilder {
+// Builder returns the AccountOutputBuilder.
+func (trans *accountGovernanceTransition) Builder() *AccountOutputBuilder {
 	return trans.builder
 }
 
-// NewFoundryOutputBuilder creates a new FoundryOutputBuilder with the alias address, serial number, token scheme and deposit amount.
-func NewFoundryOutputBuilder(aliasAddr *iotago.AliasAddress, tokenScheme iotago.TokenScheme, deposit uint64) *FoundryOutputBuilder {
+// NewFoundryOutputBuilder creates a new FoundryOutputBuilder with the account address, serial number, token scheme and deposit amount.
+func NewFoundryOutputBuilder(accountAddr *iotago.AccountAddress, tokenScheme iotago.TokenScheme, deposit uint64) *FoundryOutputBuilder {
 	return &FoundryOutputBuilder{output: &iotago.FoundryOutput{
 		Amount:       deposit,
 		TokenScheme:  tokenScheme,
 		NativeTokens: iotago.NativeTokens{},
 		Conditions: iotago.FoundryOutputUnlockConditions{
-			&iotago.ImmutableAliasUnlockCondition{Address: aliasAddr},
+			&iotago.ImmutableAccountUnlockCondition{Address: accountAddr},
 		},
 		Features:          iotago.FoundryOutputFeatures{},
 		ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
@@ -384,7 +384,7 @@ func (builder *FoundryOutputBuilder) Metadata(data []byte) *FoundryOutputBuilder
 }
 
 // ImmutableMetadata sets/modifies an iotago.MetadataFeature as an immutable feature on the output.
-// Only call this function on a new iotago.AliasOutput.
+// Only call this function on a new iotago.AccountOutput.
 func (builder *FoundryOutputBuilder) ImmutableMetadata(data []byte) *FoundryOutputBuilder {
 	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Data: data})
 	return builder

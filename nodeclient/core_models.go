@@ -26,7 +26,7 @@ func must(err error) {
 func init() {
 	api := _internalAPI.Underlying()
 	must(api.RegisterInterfaceObjects((*httpOutput)(nil), (*iotago.BasicOutput)(nil)))
-	must(api.RegisterInterfaceObjects((*httpOutput)(nil), (*iotago.AliasOutput)(nil)))
+	must(api.RegisterInterfaceObjects((*httpOutput)(nil), (*iotago.AccountOutput)(nil)))
 	must(api.RegisterInterfaceObjects((*httpOutput)(nil), (*iotago.FoundryOutput)(nil)))
 	must(api.RegisterInterfaceObjects((*httpOutput)(nil), (*iotago.NFTOutput)(nil)))
 }

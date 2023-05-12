@@ -222,12 +222,12 @@ func RandEd25519Address() *iotago.Ed25519Address {
 	return edAddr
 }
 
-// RandAliasAddress returns a random AliasAddress.
-func RandAliasAddress() *iotago.AliasAddress {
-	aliasAddr := &iotago.AliasAddress{}
-	addr := RandBytes(iotago.AliasAddressBytesLength)
-	copy(aliasAddr[:], addr)
-	return aliasAddr
+// RandAccountAddress returns a random AccountAddress.
+func RandAccountAddress() *iotago.AccountAddress {
+	accountAddr := &iotago.AccountAddress{}
+	addr := RandBytes(iotago.AccountAddressBytesLength)
+	copy(accountAddr[:], addr)
+	return accountAddr
 }
 
 // RandNFTAddress returns a random NFTAddress.
@@ -258,12 +258,12 @@ func RandReferenceUnlock() *iotago.ReferenceUnlock {
 	return ReferenceUnlock(uint16(rand.Intn(1000)))
 }
 
-// RandAliasUnlock returns a random alias unlock.
-func RandAliasUnlock() *iotago.AliasUnlock {
-	return &iotago.AliasUnlock{Reference: uint16(rand.Intn(1000))}
+// RandAccountUnlock returns a random account unlock.
+func RandAccountUnlock() *iotago.AccountUnlock {
+	return &iotago.AccountUnlock{Reference: uint16(rand.Intn(1000))}
 }
 
-// RandNFTUnlock returns a random alias unlock.
+// RandNFTUnlock returns a random account unlock.
 func RandNFTUnlock() *iotago.NFTUnlock {
 	return &iotago.NFTUnlock{Reference: uint16(rand.Intn(1000))}
 }

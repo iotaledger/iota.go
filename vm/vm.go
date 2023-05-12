@@ -269,16 +269,16 @@ func ExecFuncInputUnlocks() ExecFunc {
 					chainID = chainID.(iotago.UTXOIDChainID).FromOutputID(vmParams.WorkingSet.UTXOInputAtIndex(uint16(inputIndex)).Ref())
 				}
 
-				// for alias outputs which are not state transitioning, we do not add it to the set of unlocked chains
-				if currentAlias, ok := chainConstrOutput.(*iotago.AliasOutput); ok {
+				// for account outputs which are not state transitioning, we do not add it to the set of unlocked chains
+				if currentAccount, ok := chainConstrOutput.(*iotago.AccountOutput); ok {
 					next, hasNextState := vmParams.WorkingSet.OutChains[chainID]
 					if !hasNextState {
 						continue
 					}
-					// note that isAlias should never be false in practice,
+					// note that isAccount should never be false in practice,
 					// but we add it anyway as an additional safeguard
-					nextAlias, isAlias := next.(*iotago.AliasOutput)
-					if !isAlias || (currentAlias.StateIndex+1 != nextAlias.StateIndex) {
+					nextAccount, isAccount := next.(*iotago.AccountOutput)
+					if !isAccount || (currentAccount.StateIndex+1 != nextAccount.StateIndex) {
 						continue
 					}
 				}
