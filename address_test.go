@@ -17,9 +17,9 @@ func TestAddressDeSerialize(t *testing.T) {
 			target: &iotago.Ed25519Address{},
 		},
 		{
-			name:   "ok - AliasAddress",
-			source: tpkg.RandAliasAddress(),
-			target: &iotago.AliasAddress{},
+			name:   "ok - AccountAddress",
+			source: tpkg.RandAccountAddress(),
+			target: &iotago.AccountAddress{},
 		},
 		{
 			name:   "ok - NFTAddress",

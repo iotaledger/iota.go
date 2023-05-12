@@ -36,33 +36,33 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 
 	inputIDs := tpkg.RandOutputIDs(1)
 
-	aliasAddress := iotago.AliasAddressFromOutputID(inputIDs[0])
-	aliasID := aliasAddress.AliasID()
+	accountAddress := iotago.AccountAddressFromOutputID(inputIDs[0])
+	accountID := accountAddress.AccountID()
 
 	nftAddress := iotago.NFTAddressFromOutputID(inputIDs[0])
 	nftID := nftAddress.NFTID()
 
 	tests := []deSerializeTest{
 		{
-			// we transition the same Alias twice
-			name: "transition the same Alias twice",
+			// we transition the same Account twice
+			name: "transition the same Account twice",
 			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
 				NetworkID: tpkg.TestNetworkID,
 				Inputs:    inputIDs.UTXOInputs(),
 				Outputs: iotago.TxEssenceOutputs{
-					&iotago.AliasOutput{
-						Amount:  OneMi,
-						AliasID: aliasID,
-						Conditions: iotago.AliasOutputUnlockConditions{
+					&iotago.AccountOutput{
+						Amount:    OneMi,
+						AccountID: accountID,
+						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 							&iotago.GovernorAddressUnlockCondition{Address: ident1},
 						},
 						Features: nil,
 					},
-					&iotago.AliasOutput{
-						Amount:  OneMi,
-						AliasID: aliasID,
-						Conditions: iotago.AliasOutputUnlockConditions{
+					&iotago.AccountOutput{
+						Amount:    OneMi,
+						AccountID: accountID,
+						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 							&iotago.GovernorAddressUnlockCondition{Address: ident1},
 						},
@@ -110,10 +110,10 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 				NetworkID: tpkg.TestNetworkID,
 				Inputs:    inputIDs.UTXOInputs(),
 				Outputs: iotago.TxEssenceOutputs{
-					&iotago.AliasOutput{
-						Amount:  OneMi,
-						AliasID: aliasID,
-						Conditions: iotago.AliasOutputUnlockConditions{
+					&iotago.AccountOutput{
+						Amount:    OneMi,
+						AccountID: accountID,
+						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 							&iotago.GovernorAddressUnlockCondition{Address: ident1},
 						},
@@ -129,7 +129,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							MaximumSupply: big.NewInt(50),
 						},
 						Conditions: iotago.FoundryOutputUnlockConditions{
-							&iotago.ImmutableAliasUnlockCondition{Address: &aliasAddress},
+							&iotago.ImmutableAccountUnlockCondition{Address: &accountAddress},
 						},
 						Features: nil,
 					},
@@ -143,7 +143,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							MaximumSupply: big.NewInt(50),
 						},
 						Conditions: iotago.FoundryOutputUnlockConditions{
-							&iotago.ImmutableAliasUnlockCondition{Address: &aliasAddress},
+							&iotago.ImmutableAccountUnlockCondition{Address: &accountAddress},
 						},
 						Features: nil,
 					},

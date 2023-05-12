@@ -35,8 +35,8 @@ const (
 	UnlockConditionStateControllerAddress
 	// UnlockConditionGovernorAddress denotes a GovernorAddressUnlockCondition.
 	UnlockConditionGovernorAddress
-	// UnlockConditionImmutableAlias denotes an ImmutableAliasUnlockCondition.
-	UnlockConditionImmutableAlias
+	// UnlockConditionImmutableAccount denotes an ImmutableAccountUnlockCondition.
+	UnlockConditionImmutableAccount
 )
 
 func (unlockCondType UnlockConditionType) String() string {
@@ -47,14 +47,14 @@ func (unlockCondType UnlockConditionType) String() string {
 }
 
 var (
-	unlockCondNames = [UnlockConditionImmutableAlias + 1]string{
+	unlockCondNames = [UnlockConditionImmutableAccount + 1]string{
 		"AddressUnlockCondition",
 		"StorageDepositReturnUnlockCondition",
 		"TimelockUnlockCondition",
 		"ExpirationUnlockCondition",
 		"StateControllerAddressUnlockCondition",
 		"GovernorAddressUnlockCondition",
-		"ImmutableAliasUnlockCondition",
+		"ImmutableAccountUnlockCondition",
 	}
 )
 
@@ -234,13 +234,13 @@ func (f UnlockConditionSet) Address() *AddressUnlockCondition {
 	return b.(*AddressUnlockCondition)
 }
 
-// ImmutableAlias returns the ImmutableAliasUnlockCondition in the set or nil.
-func (f UnlockConditionSet) ImmutableAlias() *ImmutableAliasUnlockCondition {
-	b, has := f[UnlockConditionImmutableAlias]
+// ImmutableAccount returns the ImmutableAccountUnlockCondition in the set or nil.
+func (f UnlockConditionSet) ImmutableAccount() *ImmutableAccountUnlockCondition {
+	b, has := f[UnlockConditionImmutableAccount]
 	if !has {
 		return nil
 	}
-	return b.(*ImmutableAliasUnlockCondition)
+	return b.(*ImmutableAccountUnlockCondition)
 }
 
 // GovernorAddress returns the GovernorAddressUnlockCondition in the set or nil.

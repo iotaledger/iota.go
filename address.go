@@ -14,8 +14,8 @@ type AddressType byte
 const (
 	// AddressEd25519 denotes an Ed25519 address.
 	AddressEd25519 AddressType = 0
-	// AddressAlias denotes an Alias address.
-	AddressAlias AddressType = 8
+	// AddressAccount denotes an Account address.
+	AddressAccount AddressType = 8
 	// AddressNFT denotes an NFT address.
 	AddressNFT AddressType = 16
 )
@@ -34,7 +34,7 @@ type AddressTypeSet map[AddressType]struct{}
 var (
 	addressNames = [AddressNFT + 1]string{
 		"Ed25519Address", "", "", "", "", "", "", "",
-		"AliasAddress", "", "", "", "", "", "", "",
+		"AccountAddress", "", "", "", "", "", "", "",
 		"NFTAddress",
 	}
 )
@@ -112,8 +112,8 @@ func newAddress(addressType byte) (address Address, err error) {
 	switch AddressType(addressType) {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
-	case AddressAlias:
-		return &AliasAddress{}, nil
+	case AddressAccount:
+		return &AccountAddress{}, nil
 	case AddressNFT:
 		return &NFTAddress{}, nil
 	default:

@@ -11,75 +11,75 @@ import (
 )
 
 const (
-	// AliasIDLength is the byte length of an AliasID.
-	AliasIDLength = blake2b.Size256
+	// AccountIDLength is the byte length of an AccountID.
+	AccountIDLength = blake2b.Size256
 )
 
 var (
-	// ErrNonUniqueAliasOutputs gets returned when multiple AliasOutputs(s) with the same AliasID exist within sets.
-	ErrNonUniqueAliasOutputs = errors.New("non unique aliases within outputs")
-	// ErrInvalidAliasStateTransition gets returned when an alias is doing an invalid state transition.
-	ErrInvalidAliasStateTransition = errors.New("invalid alias state transition")
-	// ErrInvalidAliasGovernanceTransition gets returned when an alias is doing an invalid governance transition.
-	ErrInvalidAliasGovernanceTransition = errors.New("invalid alias governance transition")
-	// ErrAliasMissing gets returned when an alias is missing.
-	ErrAliasMissing = errors.New("alias is missing")
-	emptyAliasID    = [AliasIDLength]byte{}
+	// ErrNonUniqueAccountOutputs gets returned when multiple AccountOutputs(s) with the same AccountID exist within sets.
+	ErrNonUniqueAccountOutputs = errors.New("non unique accounts within outputs")
+	// ErrInvalidAccountStateTransition gets returned when an account is doing an invalid state transition.
+	ErrInvalidAccountStateTransition = errors.New("invalid account state transition")
+	// ErrInvalidAccountGovernanceTransition gets returned when an account is doing an invalid governance transition.
+	ErrInvalidAccountGovernanceTransition = errors.New("invalid account governance transition")
+	// ErrAccountMissing gets returned when an account is missing.
+	ErrAccountMissing = errors.New("account is missing")
+	emptyAccountID    = [AccountIDLength]byte{}
 )
 
-// AliasID is the identifier for an alias account.
+// AccountID is the identifier for an account.
 // It is computed as the Blake2b-256 hash of the OutputID of the output which created the account.
-type AliasID [AliasIDLength]byte
+type AccountID [AccountIDLength]byte
 
-func (id AliasID) Addressable() bool {
+func (id AccountID) Addressable() bool {
 	return true
 }
 
-func (id AliasID) ToHex() string {
+func (id AccountID) ToHex() string {
 	return EncodeHex(id[:])
 }
 
-func (id AliasID) Key() interface{} {
+func (id AccountID) Key() interface{} {
 	return id.String()
 }
 
-func (id AliasID) FromOutputID(in OutputID) ChainID {
-	return AliasIDFromOutputID(in)
+func (id AccountID) FromOutputID(in OutputID) ChainID {
+	return AccountIDFromOutputID(in)
 }
 
-func (id AliasID) Empty() bool {
-	return id == emptyAliasID
+func (id AccountID) Empty() bool {
+	return id == emptyAccountID
 }
 
-func (id AliasID) String() string {
+func (id AccountID) String() string {
 	return EncodeHex(id[:])
 }
 
-func (id AliasID) Matches(other ChainID) bool {
-	otherAliasID, isAliasID := other.(AliasID)
-	if !isAliasID {
+func (id AccountID) Matches(other ChainID) bool {
+	otherAccountID, isAccountID := other.(AccountID)
+	if !isAccountID {
 		return false
 	}
-	return id == otherAliasID
+	return id == otherAccountID
 }
 
-func (id AliasID) ToAddress() ChainAddress {
-	var addr AliasAddress
+func (id AccountID) ToAddress() ChainAddress {
+	var addr AccountAddress
 	copy(addr[:], id[:])
 	return &addr
 }
 
-// AliasIDFromOutputID returns the AliasID computed from a given OutputID.
-func AliasIDFromOutputID(outputID OutputID) AliasID {
+// AccountIDFromOutputID returns the AccountID computed from a given OutputID.
+func AccountIDFromOutputID(outputID OutputID) AccountID {
 	return blake2b.Sum256(outputID[:])
 }
 
-// AliasOutputs is a slice of AliasOutput(s).
-type AliasOutputs []*AliasOutput
+// AccountOutputs is a slice of AccountOutput(s).
+type AccountOutputs []*AccountOutput
 
 // Every checks whether every element passes f.
 // Returns either -1 if all elements passed f or the index of the first element which didn't.
-func (outputs AliasOutputs) Every(f func(output *AliasOutput) bool) int {
+func (outputs AccountOutputs) Every(f func(output *AccountOutput) bool) int {
 	for i, output := range outputs {
 		if !f(output) {
 			return i
@@ -88,21 +88,21 @@ func (outputs AliasOutputs) Every(f func(output *AliasOutput) bool) int {
 	return -1
 }
 
-// AliasOutputsSet is a set of AliasOutput(s).
-type AliasOutputsSet map[AliasID]*AliasOutput
+// AccountOutputsSet is a set of AccountOutput(s).
+type AccountOutputsSet map[AccountID]*AccountOutput
 
-// Includes checks whether all aliases included in other exist in this set.
-func (set AliasOutputsSet) Includes(other AliasOutputsSet) error {
-	for aliasID := range other {
-		if _, has := set[aliasID]; !has {
-			return fmt.Errorf("%w: %s missing in source", ErrAliasMissing, aliasID.ToHex())
+// Includes checks whether all accounts included in other exist in this set.
+func (set AccountOutputsSet) Includes(other AccountOutputsSet) error {
+	for accountID := range other {
+		if _, has := set[accountID]; !has {
+			return fmt.Errorf("%w: %s missing in source", ErrAccountMissing, accountID.ToHex())
 		}
 	}
 	return nil
 }
 
 // EveryTuple runs f for every key which exists in both this set and other.
-func (set AliasOutputsSet) EveryTuple(other AliasOutputsSet, f func(in *AliasOutput, out *AliasOutput) error) error {
+func (set AccountOutputsSet) EveryTuple(other AccountOutputsSet, f func(in *AccountOutput, out *AccountOutput) error) error {
 	for k, v := range set {
 		v2, has := other[k]
 		if !has {
@@ -116,15 +116,15 @@ func (set AliasOutputsSet) EveryTuple(other AliasOutputsSet, f func(in *AliasOut
 }
 
 // Merge merges other with this set in a new set.
-// Returns an error if an alias isn't unique across both sets.
-func (set AliasOutputsSet) Merge(other AliasOutputsSet) (AliasOutputsSet, error) {
-	newSet := make(AliasOutputsSet)
+// Returns an error if an account isn't unique across both sets.
+func (set AccountOutputsSet) Merge(other AccountOutputsSet) (AccountOutputsSet, error) {
+	newSet := make(AccountOutputsSet)
 	for k, v := range set {
 		newSet[k] = v
 	}
 	for k, v := range other {
 		if _, has := newSet[k]; has {
-			return nil, fmt.Errorf("%w: alias %s exists in both sets", ErrNonUniqueAliasOutputs, k.ToHex())
+			return nil, fmt.Errorf("%w: account %s exists in both sets", ErrNonUniqueAccountOutputs, k.ToHex())
 		}
 		newSet[k] = v
 	}
@@ -132,48 +132,48 @@ func (set AliasOutputsSet) Merge(other AliasOutputsSet) (AliasOutputsSet, error)
 }
 
 type (
-	aliasOutputUnlockCondition  interface{ UnlockCondition }
-	aliasOutputFeature          interface{ Feature }
-	aliasOutputImmFeature       interface{ Feature }
-	AliasOutputUnlockConditions = UnlockConditions[aliasOutputUnlockCondition]
-	AliasOutputFeatures         = Features[aliasOutputFeature]
-	AliasOutputImmFeatures      = Features[aliasOutputImmFeature]
+	accountOutputUnlockCondition  interface{ UnlockCondition }
+	accountOutputFeature          interface{ Feature }
+	accountOutputImmFeature       interface{ Feature }
+	AccountOutputUnlockConditions = UnlockConditions[accountOutputUnlockCondition]
+	AccountOutputFeatures         = Features[accountOutputFeature]
+	AccountOutputImmFeatures      = Features[accountOutputImmFeature]
 )
 
-// AliasOutput is an output type which represents an alias account.
-type AliasOutput struct {
+// AccountOutput is an output type which represents an account.
+type AccountOutput struct {
 	// The amount of IOTA tokens held by the output.
 	Amount uint64 `serix:"0,mapKey=amount"`
 	// The native tokens held by the output.
 	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
-	// The identifier for this alias account.
-	AliasID AliasID `serix:"2,mapKey=aliasId"`
+	// The identifier for this account.
+	AccountID AccountID `serix:"2,mapKey=accountId"`
 	// The index of the state.
 	StateIndex uint32 `serix:"3,mapKey=stateIndex"`
-	// The state of the alias account which can only be mutated by the state controller.
+	// The state of the account which can only be mutated by the state controller.
 	StateMetadata []byte `serix:"4,lengthPrefixType=uint16,mapKey=stateMetadata,omitempty,maxLen=8192"`
-	// The counter that denotes the number of foundries created by this alias account.
+	// The counter that denotes the number of foundries created by this account.
 	FoundryCounter uint32 `serix:"5,mapKey=foundryCounter"`
 	// The unlock conditions on this output.
-	Conditions AliasOutputUnlockConditions `serix:"6,mapKey=unlockConditions,omitempty"`
+	Conditions AccountOutputUnlockConditions `serix:"6,mapKey=unlockConditions,omitempty"`
 	// The features on the output.
-	Features AliasOutputFeatures `serix:"7,mapKey=features,omitempty"`
+	Features AccountOutputFeatures `serix:"7,mapKey=features,omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures AliasOutputImmFeatures `serix:"8,mapKey=immutableFeatures,omitempty"`
+	ImmutableFeatures AccountOutputImmFeatures `serix:"8,mapKey=immutableFeatures,omitempty"`
 }
 
-func (a *AliasOutput) GovernorAddress() Address {
+func (a *AccountOutput) GovernorAddress() Address {
 	return a.Conditions.MustSet().GovernorAddress().Address
 }
 
-func (a *AliasOutput) StateController() Address {
+func (a *AccountOutput) StateController() Address {
 	return a.Conditions.MustSet().StateControllerAddress().Address
 }
 
-func (a *AliasOutput) Clone() Output {
-	return &AliasOutput{
+func (a *AccountOutput) Clone() Output {
+	return &AccountOutput{
 		Amount:            a.Amount,
-		AliasID:           a.AliasID,
+		AccountID:         a.AccountID,
 		NativeTokens:      a.NativeTokens.Clone(),
 		StateIndex:        a.StateIndex,
 		StateMetadata:     append([]byte(nil), a.StateMetadata...),
@@ -184,16 +184,16 @@ func (a *AliasOutput) Clone() Output {
 	}
 }
 
-func (a *AliasOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extParams *ExternalUnlockParameters) (bool, error) {
+func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extParams *ExternalUnlockParameters) (bool, error) {
 	return outputUnlockable(a, next, ident, extParams)
 }
 
-func (a *AliasOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount
 		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		a.NativeTokens.VBytes(rentStruct, nil) +
-		rentStruct.VBFactorData.Multiply(AliasIDLength) +
+		rentStruct.VBFactorData.Multiply(AccountIDLength) +
 		// state index, state meta length, state meta, foundry counter
 		rentStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
 		a.Conditions.VBytes(rentStruct, nil) +
@@ -201,68 +201,68 @@ func (a *AliasOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
 		a.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
-func (a *AliasOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
-	// if there isn't a next state, then only the governance address can destroy the alias
+func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
+	// if there isn't a next state, then only the governance address can destroy the account
 	if nextState == nil {
 		return a.GovernorAddress(), nil
 	}
-	otherAliasOutput, isAliasOutput := nextState.(*AliasOutput)
-	if !isAliasOutput {
-		return nil, fmt.Errorf("%w: expected AliasOutput but got %s for ident computation", ErrTransDepIdentOutputNextInvalid, nextState.Type())
+	otherAccountOutput, isAccountOutput := nextState.(*AccountOutput)
+	if !isAccountOutput {
+		return nil, fmt.Errorf("%w: expected AccountOutput but got %s for ident computation", ErrTransDepIdentOutputNextInvalid, nextState.Type())
 	}
 	switch {
-	case a.StateIndex == otherAliasOutput.StateIndex:
+	case a.StateIndex == otherAccountOutput.StateIndex:
 		return a.GovernorAddress(), nil
-	case a.StateIndex+1 == otherAliasOutput.StateIndex:
+	case a.StateIndex+1 == otherAccountOutput.StateIndex:
 		return a.StateController(), nil
 	default:
-		return nil, fmt.Errorf("%w: can not compute right ident for alias output as state index delta is invalid", ErrTransDepIdentOutputNextInvalid)
+		return nil, fmt.Errorf("%w: can not compute right ident for account output as state index delta is invalid", ErrTransDepIdentOutputNextInvalid)
 	}
 }
 
-func (a *AliasOutput) Chain() ChainID {
-	return a.AliasID
+func (a *AccountOutput) Chain() ChainID {
+	return a.AccountID
 }
 
-func (a *AliasOutput) AliasEmpty() bool {
-	return a.AliasID == emptyAliasID
+func (a *AccountOutput) AccountEmpty() bool {
+	return a.AccountID == emptyAccountID
 }
 
-func (a *AliasOutput) NativeTokenList() NativeTokens {
+func (a *AccountOutput) NativeTokenList() NativeTokens {
 	return a.NativeTokens
 }
 
-func (a *AliasOutput) FeatureSet() FeatureSet {
+func (a *AccountOutput) FeatureSet() FeatureSet {
 	return a.Features.MustSet()
 }
 
-func (a *AliasOutput) UnlockConditionSet() UnlockConditionSet {
+func (a *AccountOutput) UnlockConditionSet() UnlockConditionSet {
 	return a.Conditions.MustSet()
 }
 
-func (a *AliasOutput) ImmutableFeatureSet() FeatureSet {
+func (a *AccountOutput) ImmutableFeatureSet() FeatureSet {
 	return a.ImmutableFeatures.MustSet()
 }
 
-func (a *AliasOutput) Deposit() uint64 {
+func (a *AccountOutput) Deposit() uint64 {
 	return a.Amount
 }
 
-func (a *AliasOutput) Target() (Address, error) {
-	addr := new(AliasAddress)
-	copy(addr[:], a.AliasID[:])
+func (a *AccountOutput) Target() (Address, error) {
+	addr := new(AccountAddress)
+	copy(addr[:], a.AccountID[:])
 	return addr, nil
 }
 
-func (a *AliasOutput) Type() OutputType {
-	return OutputAlias
+func (a *AccountOutput) Type() OutputType {
+	return OutputAccount
 }
 
-func (a *AliasOutput) Size() int {
-	return util.NumByteLen(byte(OutputAlias)) +
+func (a *AccountOutput) Size() int {
+	return util.NumByteLen(byte(OutputAccount)) +
 		util.NumByteLen(a.Amount) +
 		a.NativeTokens.Size() +
-		AliasIDLength +
+		AccountIDLength +
 		util.NumByteLen(a.StateIndex) +
 		serializer.UInt16ByteSize +
 		len(a.StateMetadata) +

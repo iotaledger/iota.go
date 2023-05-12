@@ -97,8 +97,6 @@ type WeakParentsIDs = BlockIDs
 // ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
 type ShallowLikeParentIDs = BlockIDs
 
-type AccountID = Identifier
-
 // Block represents a vertex in the Tangle.
 type Block struct {
 	// The protocol version under which this block operates.
