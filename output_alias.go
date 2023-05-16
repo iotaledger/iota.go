@@ -29,14 +29,10 @@ var (
 
 // AccountID is the identifier for an account.
 // It is computed as the Blake2b-256 hash of the OutputID of the output which created the account.
-type AccountID [AccountIDLength]byte
+type AccountID = Identifier
 
 func (id AccountID) Addressable() bool {
 	return true
-}
-
-func (id AccountID) ToHex() string {
-	return EncodeHex(id[:])
 }
 
 func (id AccountID) Key() interface{} {
@@ -45,14 +41,6 @@ func (id AccountID) Key() interface{} {
 
 func (id AccountID) FromOutputID(in OutputID) ChainID {
 	return AccountIDFromOutputID(in)
-}
-
-func (id AccountID) Empty() bool {
-	return id == emptyAccountID
-}
-
-func (id AccountID) String() string {
-	return EncodeHex(id[:])
 }
 
 func (id AccountID) Matches(other ChainID) bool {
