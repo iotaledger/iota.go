@@ -131,6 +131,14 @@ var (
 		ValidationMode: serializer.ArrayValidationModeNone,
 	}
 
+	txEssenceV3AllotmentsArrRules = &serix.ArrayRules{
+		Min: MinAllottmentCount,
+		Max: MaxAllottmentCount,
+		// TODO should we define another type to check for duplicates inside of the allotments,
+		// TODO maybe can use UniquenessSliceFunc?
+		ValidationMode: serializer.ArrayValidationModeLexicalOrdering,
+	}
+
 	txV3UnlocksArrRules = &serix.ArrayRules{
 		Min: 1, Max: MaxInputsCount,
 	}
@@ -369,6 +377,10 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterTypeSettings(TxEssenceOutputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3OutputsArrRules),
 		))
+
+		// TODO should we also register allotment itself, check how to prevent duplicates based on allotment ID
+		must(api.RegisterInterfaceObjects(TxEssenceAllotments{}, serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3AllotmentsArrRules)))
+
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*BasicOutput)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*AccountOutput)(nil)))

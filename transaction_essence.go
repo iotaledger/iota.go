@@ -25,6 +25,10 @@ const (
 	MaxOutputsCount = 128
 	// MinOutputsCount defines the minimum amount of inputs within a TransactionEssence.
 	MinOutputsCount = 1
+	// MinAllottmentCount defines the minimum amount of allottments within a TransactionEssence.
+	MinAllottmentCount = 0
+	// MaxAllottmentCount defines the maximum amount of allottments within a TransactionEssence.
+	MaxAllottmentCount = 128
 
 	// InputsCommitmentLength defines the length of the inputs commitment hash.
 	InputsCommitmentLength = blake2b.Size256
@@ -71,11 +75,12 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 type InputsCommitment = [InputsCommitmentLength]byte
 
 type (
-	txEssenceInput   interface{ Input }
-	TxEssenceOutput  interface{ Output }
-	TxEssencePayload interface{ Payload }
-	TxEssenceInputs  = Inputs[txEssenceInput]
-	TxEssenceOutputs = Outputs[TxEssenceOutput]
+	txEssenceInput      interface{ Input }
+	TxEssenceOutput     interface{ Output }
+	TxEssencePayload    interface{ Payload }
+	TxEssenceInputs     = Inputs[txEssenceInput]
+	TxEssenceOutputs    = Outputs[TxEssenceOutput]
+	TxEssenceAllotments = Allotments
 )
 
 // TransactionEssence is the essence part of a Transaction.
@@ -90,8 +95,10 @@ type TransactionEssence struct {
 	InputsCommitment InputsCommitment `serix:"3,mapKey=inputsCommitment"`
 	// The outputs of this transaction.
 	Outputs TxEssenceOutputs `serix:"4,mapKey=outputs"`
+	// The optional accounts map with corresponding allotment values.
+	Allotments TxEssenceAllotments `serix:"5,optional,mapKey=allotments"` // TODO what should be here as options?
 	// The optional embedded payload.
-	Payload TxEssencePayload `serix:"5,optional,mapKey=payload"`
+	Payload TxEssencePayload `serix:"6,optional,mapKey=payload"`
 }
 
 // SigningMessage returns the to be signed message.

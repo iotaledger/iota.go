@@ -31,6 +31,9 @@ var (
 // It is computed as the Blake2b-256 hash of the OutputID of the output which created the account.
 type AccountID = Identifier
 
+// AccountIDs are IDs of accounts.
+type AccountIDs []AccountID
+
 func (id AccountID) Addressable() bool {
 	return true
 }
