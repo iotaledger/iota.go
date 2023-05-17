@@ -17,4 +17,6 @@ var (
 	ErrUnknownTransactionEssenceType = errors.New("unknown transaction essence type")
 	// ErrUnknownUnlockType gets returned for unknown unlock.
 	ErrUnknownUnlockType = errors.New("unknown unlock type")
+	//ErrUnexpectedUnderlyingType gets returned for unknown input type of transaction.
+	ErrUnexpectedUnderlyingType = errors.New("unexpected underlying type provided by the interface")
 )
