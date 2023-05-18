@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -69,10 +70,28 @@ func (t *Transaction) ID() (TransactionID, error) {
 	return IdentifierFromData(data), nil
 }
 
+func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
+	references := make([]IndexedUTXOReferencer, len(t.Essence.Inputs))
+	for i, input := range t.Essence.Inputs {
+		inputReferencer, ok := input.(IndexedUTXOReferencer)
+		if !ok {
+			return nil, ErrUnexpectedUnderlyingType
+		}
+
+		references[i] = inputReferencer
+	}
+
+	return references, nil
+}
+
 func (t *Transaction) Size() int {
 	return util.NumByteLen(uint32(PayloadTransaction)) +
 		t.Essence.Size() +
 		t.Unlocks.Size()
+}
+
+func (t *Transaction) String() string {
+	return "iotago.Transaction(" + lo.PanicOnErr(t.ID()).ToHex() + ")"
 }
 
 // syntacticallyValidate syntactically validates the Transaction.
