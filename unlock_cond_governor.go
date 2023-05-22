@@ -24,7 +24,7 @@ func (s *GovernorAddressUnlockCondition) Clone() UnlockCondition {
 	return &GovernorAddressUnlockCondition{Address: s.Address.Clone()}
 }
 
-func (s *GovernorAddressUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (s *GovernorAddressUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) +
 		s.Address.VBytes(rentStruct, nil)
 }

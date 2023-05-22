@@ -33,7 +33,7 @@ func (s *ExpirationUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *ExpirationUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (s *ExpirationUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt32ByteSize) +
 		s.ReturnAddress.VBytes(rentStruct, nil)
 }

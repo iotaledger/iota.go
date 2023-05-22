@@ -28,7 +28,7 @@ func (s *IssuerFeature) Clone() Feature {
 	return &IssuerFeature{Address: s.Address.Clone()}
 }
 
-func (s *IssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (s *IssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) +
 		s.Address.VBytes(rentStruct, nil)
 }

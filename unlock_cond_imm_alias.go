@@ -26,7 +26,7 @@ func (s *ImmutableAliasUnlockCondition) Clone() UnlockCondition {
 	return &ImmutableAliasUnlockCondition{Address: s.Address.Clone().(*AliasAddress)}
 }
 
-func (s *ImmutableAliasUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (s *ImmutableAliasUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) +
 		s.Address.VBytes(rentStruct, nil)
 }
