@@ -5,6 +5,9 @@ import (
 	"fmt"
 )
 
+// VBytes defines the type of the virtual byte costs.
+type VBytes uint64
+
 // VByteCostFactor defines the type of the virtual byte cost factor.
 type VByteCostFactor byte
 
@@ -24,8 +27,8 @@ var (
 )
 
 // Multiply multiplies in with this factor.
-func (factor VByteCostFactor) Multiply(in uint64) uint64 {
-	return uint64(factor) * in
+func (factor VByteCostFactor) Multiply(in VBytes) VBytes {
+	return VBytes(factor) * in
 }
 
 // With joins two factors with each other.
@@ -56,7 +59,7 @@ func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint64) 
 
 // MinRent returns the minimum rent to cover a given object.
 func (r *RentStructure) MinRent(object NonEphemeralObject) uint64 {
-	return uint64(r.VByteCost) * object.VBytes(r, nil)
+	return uint64(r.VByteCost) * uint64(object.VBytes(r, nil))
 }
 
 // MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
@@ -73,8 +76,8 @@ type NonEphemeralObject interface {
 	// virtual and physical space within the data set needed to implement the IOTA protocol.
 	// The override parameter acts as an escape hatch in case the cost needs to be adjusted
 	// according to some external properties outside the NonEphemeralObject.
-	VBytes(rentStruct *RentStructure, override VBytesFunc) uint64
+	VBytes(rentStruct *RentStructure, override VBytesFunc) VBytes
 }
 
 // VBytesFunc is a function which computes the virtual byte cost of a NonEphemeralObject.
-type VBytesFunc func(rentStruct *RentStructure) uint64
+type VBytesFunc func(rentStruct *RentStructure) VBytes

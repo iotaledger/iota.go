@@ -26,7 +26,7 @@ func (t *TreasuryOutput) Clone() Output {
 	return &TreasuryOutput{Amount: t.Amount}
 }
 
-func (t *TreasuryOutput) VBytes(_ *RentStructure, _ VBytesFunc) uint64 {
+func (t *TreasuryOutput) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 	return 0
 }
 

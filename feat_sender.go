@@ -16,7 +16,7 @@ func (s *SenderFeature) Clone() Feature {
 	return &SenderFeature{Address: s.Address.Clone()}
 }
 
-func (s *SenderFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) uint64 {
+func (s *SenderFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 	if f != nil {
 		return f(rentStruct)
 	}

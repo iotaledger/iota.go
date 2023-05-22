@@ -58,7 +58,7 @@ func (edAddr *Ed25519Address) Clone() Address {
 	return cpy
 }
 
-func (edAddr *Ed25519Address) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (edAddr *Ed25519Address) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(Ed25519AddressSerializedBytesSize)
 }
 
