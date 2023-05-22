@@ -114,7 +114,7 @@ func (n *NFTOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParamet
 	return ok
 }
 
-func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount
 		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
