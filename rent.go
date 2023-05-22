@@ -62,7 +62,7 @@ func (r *RentStructure) MinRent(object NonEphemeralObject) uint64 {
 // MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
 func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) uint64 {
-	return (&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil)
+	return uint64(r.VByteCost) * uint64((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
 }
 
 // NonEphemeralObject is an object which can not be pruned by nodes as it
