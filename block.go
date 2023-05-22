@@ -120,8 +120,10 @@ type Block struct {
 
 	Signature Signature `serix:"10,mapKey=signature"`
 
+	BurnedMana uint64 `serix:"11,mapKey=burnedMana"`
+
 	// The nonce which lets this block fulfill the PoW requirements.
-	Nonce uint64 `serix:"11,mapKey=nonce"`
+	Nonce uint64 `serix:"12,mapKey=nonce"`
 }
 
 func (b *Block) ContentHash() (Identifier, error) {
