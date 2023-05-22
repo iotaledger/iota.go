@@ -26,8 +26,8 @@ func (s *MetadataFeature) Clone() Feature {
 	return &MetadataFeature{Data: append([]byte(nil), s.Data...)}
 }
 
-func (s *MetadataFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
-	return rentStruct.VBFactorData.Multiply(uint64(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
+func (s *MetadataFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	return rentStruct.VBFactorData.Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
 }
 
 func (s *MetadataFeature) Equal(other Feature) bool {

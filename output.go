@@ -29,7 +29,7 @@ var (
 )
 
 // defines the default offset virtual byte costs for an output.
-func outputOffsetVByteCost(rentStruct *RentStructure) uint64 {
+func outputOffsetVByteCost(rentStruct *RentStructure) VBytes {
 	return rentStruct.VBFactorKey.Multiply(OutputIDLength) +
 		// included block id, conf ms index, conf ms ts
 		rentStruct.VBFactorData.Multiply(BlockIDLength+serializer.UInt32ByteSize+serializer.UInt32ByteSize)

@@ -25,11 +25,11 @@ func (s *TagFeature) Clone() Feature {
 	return &TagFeature{Tag: append([]byte(nil), s.Tag...)}
 }
 
-func (s *TagFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) uint64 {
+func (s *TagFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 	if f != nil {
 		return f(rentStruct)
 	}
-	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.OneByte + uint64(len(s.Tag)))
+	return rentStruct.VBFactorData.Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.Tag)))
 }
 
 func (s *TagFeature) Equal(other Feature) bool {
