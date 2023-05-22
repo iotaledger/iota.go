@@ -136,7 +136,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	nonZeroCostParams := &iotago.ProtocolParameters{
 		RentStructure: iotago.RentStructure{
-			VByteCost:    1,
+			VByteCost:    100,
 			VBFactorData: iotago.VByteCostFactorData,
 			VBFactorKey:  iotago.VByteCostFactorKey,
 		},
@@ -165,7 +165,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount:     426, // min amount
+					Amount:     42600, // min amount
 					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()}},
 				},
 			},
@@ -175,14 +175,14 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			name:        "ok - storage deposit return",
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
-				// min 444
+				// min 46800
 				&iotago.BasicOutput{
-					Amount: 1000,
+					Amount: 100000,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAliasAddress(),
-							Amount:        566, // 1000 - 444
+							Amount:        42600,
 						},
 					},
 				},
@@ -194,12 +194,12 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount: 1000,
+					Amount: 100000,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAliasAddress(),
-							Amount:        413, // off by 1
+							Amount:        42600 - 1, // off by 1
 						},
 					},
 				},
@@ -229,7 +229,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount: 100,
+					Amount: 42600 - 1,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
 					},
@@ -293,7 +293,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					runErr = err
 				}
 			}
-			require.ErrorIs(t, runErr, tt.wantErr)
+			require.ErrorIs(t, runErr, tt.wantErr, tt.name)
 		})
 	}
 }
