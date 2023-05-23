@@ -177,9 +177,9 @@ func accountStateSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput,
 }
 
 // If an account output has a block issuer feature, the following conditions for its transition must be checked.
+// The block issuer credit must be non negative.
 // The expiry time of the block issuer feature, if changed, must be set at least MaxCommitableSlotAge greater than the TX slot index.
 // Check that at least one Block Issuer Key is present
-// TODO: add block issuer credit check for account destruction.
 func accountBlockIssuerSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	currentBIFeat := current.FeatureSet().BlockIssuer()
 	nextBIFeat := next.FeatureSet().BlockIssuer()
@@ -194,7 +194,7 @@ func accountBlockIssuerSTVF(current *iotago.AccountOutput, next *iotago.AccountO
 			return fmt.Errorf("%w: Negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
 		}
 	}
-	txSlotIndex := vmParams.External.ProtocolParameters.SlotTimeProvider().IndexFromTime(vmParams.WorkingSet.Tx.Essence.CreationTime)
+	txSlotIndex := vmParams.WorkingSet.Tx.Essence.CreationTime
 
 	if currentBIFeat.ExpirySlot >= txSlotIndex {
 		// if the block issuer feature has not expired, it can not be removed.

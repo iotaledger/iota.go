@@ -162,6 +162,8 @@ type AccountOutput struct {
 	Features AccountOutputFeatures `serix:"7,mapKey=features,omitempty"`
 	// The immutable feature on the output.
 	ImmutableFeatures AccountOutputImmFeatures `serix:"8,mapKey=immutableFeatures,omitempty"`
+	// The stored mana held by the output.
+	Mana uint64 `serix:"9,mapKey=mana"`
 }
 
 func (a *AccountOutput) GovernorAddress() Address {
@@ -183,6 +185,7 @@ func (a *AccountOutput) Clone() Output {
 		Conditions:        a.Conditions.Clone(),
 		Features:          a.Features.Clone(),
 		ImmutableFeatures: a.ImmutableFeatures.Clone(),
+		Mana:              a.Mana,
 	}
 }
 
@@ -248,6 +251,10 @@ func (a *AccountOutput) ImmutableFeatureSet() FeatureSet {
 
 func (a *AccountOutput) Deposit() uint64 {
 	return a.Amount
+}
+
+func (a *AccountOutput) StoredMana() uint64 {
+	return a.Mana
 }
 
 func (a *AccountOutput) Target() (Address, error) {

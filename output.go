@@ -24,6 +24,9 @@ type Output interface {
 	// Deposit returns the amount this Output deposits.
 	Deposit() uint64
 
+	// StoredMana returns the stored mana held by this output.
+	StoredMana() uint64
+
 	// NativeTokenList returns the NativeToken this output defines.
 	NativeTokenList() NativeTokens
 

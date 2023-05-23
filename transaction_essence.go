@@ -3,7 +3,6 @@ package iotago
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -83,7 +82,7 @@ type TransactionEssence struct {
 	// The network ID for which this essence is valid for.
 	NetworkID NetworkID `serix:"0,mapKey=networkId"`
 	// The time at which this transaction was created by the client.
-	CreationTime time.Time `serix:"1,mapKey=creationTime"`
+	CreationTime SlotIndex `serix:"1,mapKey=creationTime"`
 	// The inputs of this transaction.
 	Inputs TxEssenceInputs `serix:"2,mapKey=inputs"`
 	// The commitment to the referenced inputs.
@@ -92,6 +91,8 @@ type TransactionEssence struct {
 	Outputs TxEssenceOutputs `serix:"4,mapKey=outputs"`
 	// The optional embedded payload.
 	Payload TxEssencePayload `serix:"5,optional,mapKey=payload"`
+	// The allotments of this transaction.
+	Allotments `serix:"6,mapKey=allotments"`
 }
 
 // SigningMessage returns the to be signed message.
@@ -138,11 +139,12 @@ func (u *TransactionEssence) Size() int {
 	}
 	return util.NumByteLen(TransactionEssenceNormal) +
 		util.NumByteLen(u.NetworkID) +
-		util.NumByteLen(u.CreationTime.UnixNano()) +
+		util.NumByteLen(SlotIndex(0)) +
 		u.Inputs.Size() +
 		InputsCommitmentLength +
 		u.Outputs.Size() +
-		payloadSize
+		payloadSize +
+		u.Allotments.Size()
 }
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
