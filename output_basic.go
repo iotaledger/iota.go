@@ -25,6 +25,8 @@ type BasicOutput struct {
 	Conditions BasicOutputUnlockConditions `serix:"2,mapKey=unlockConditions,omitempty"`
 	// The features on the output.
 	Features BasicOutputFeatures `serix:"3,mapKey=features,omitempty"`
+	// The stored mana held by the output.
+	Mana uint64 `serix:"4,mapKey=mana"`
 }
 
 // IsSimpleTransfer tells whether this BasicOutput fulfills the criteria of being a simple transfer.
@@ -38,6 +40,7 @@ func (e *BasicOutput) Clone() Output {
 		NativeTokens: e.NativeTokens.Clone(),
 		Conditions:   e.Conditions.Clone(),
 		Features:     e.Features.Clone(),
+		Mana:         e.Mana,
 	}
 }
 
@@ -68,6 +71,10 @@ func (e *BasicOutput) UnlockConditionSet() UnlockConditionSet {
 }
 func (e *BasicOutput) Deposit() uint64 {
 	return e.Amount
+}
+
+func (a *BasicOutput) StoredMana() uint64 {
+	return a.Mana
 }
 
 func (e *BasicOutput) Ident() Address {

@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	CommitmentIDLength = SlotIdentifierLength
+	CommitmentIDLength   = SlotIdentifierLength
+	MaxCommitableSlotAge = 10 // max age of slot to which we can commit. TODO: set this parameter.
 )
 
 type CommitmentID = SlotIdentifier

@@ -92,6 +92,8 @@ type NFTOutput struct {
 	Features NFTOutputFeatures `serix:"4,mapKey=features,omitempty"`
 	// The immutable feature on the output.
 	ImmutableFeatures NFTOutputImmFeatures `serix:"5,mapKey=immutableFeatures,omitempty"`
+	// The stored mana held by the output.
+	Mana uint64 `serix:"6,mapKey=mana"`
 }
 
 func (n *NFTOutput) Clone() Output {
@@ -102,6 +104,7 @@ func (n *NFTOutput) Clone() Output {
 		Conditions:        n.Conditions.Clone(),
 		Features:          n.Features.Clone(),
 		ImmutableFeatures: n.ImmutableFeatures.Clone(),
+		Mana:              n.Mana,
 	}
 }
 
@@ -147,6 +150,10 @@ func (n *NFTOutput) ImmutableFeatureSet() FeatureSet {
 
 func (n *NFTOutput) Deposit() uint64 {
 	return n.Amount
+}
+
+func (a *NFTOutput) StoredMana() uint64 {
+	return a.Mana
 }
 
 func (n *NFTOutput) Type() OutputType {

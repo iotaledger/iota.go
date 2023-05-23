@@ -134,7 +134,7 @@ func accountStateSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput,
 	case !current.StateController().Equal(next.StateController()):
 		return fmt.Errorf("%w: state controller changed, in %v / out %v", iotago.ErrInvalidAccountStateTransition, current.StateController(), next.StateController())
 	case !current.GovernorAddress().Equal(next.GovernorAddress()):
-		return fmt.Errorf("%w: governance controller changed, in %v / out %v", iotago.ErrInvalidAccountStateTransition, current.StateController(), next.StateController())
+		return fmt.Errorf("%w: governance controller changed, in %v / out %v", iotago.ErrInvalidAccountStateTransition, current.GovernorAddress(), next.GovernorAddress())
 	case current.FoundryCounter > next.FoundryCounter:
 		return fmt.Errorf("%w: foundry counter of next state is less than previous, in %d / out %d", iotago.ErrInvalidAccountStateTransition, current.FoundryCounter, next.FoundryCounter)
 	case current.StateIndex+1 != next.StateIndex:
@@ -173,6 +173,44 @@ func accountStateSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput,
 		return fmt.Errorf("%w: %d new foundries were created but the account output's foundry counter changed by %d", iotago.ErrInvalidAccountStateTransition, seenNewFoundriesOfAccount, expectedNewFoundriesCount)
 	}
 
+	return accountBlockIssuerSTVF(current, next, vmParams)
+}
+
+// If an account output has a block issuer feature, the following conditions for its transition must be checked.
+// The block issuer credit must be non negative.
+// The expiry time of the block issuer feature, if changed, must be set at least MaxCommitableSlotAge greater than the TX slot index.
+// Check that at least one Block Issuer Key is present
+func accountBlockIssuerSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	currentBIFeat := current.FeatureSet().BlockIssuer()
+	nextBIFeat := next.FeatureSet().BlockIssuer()
+	// if the account has no block issuer feature.
+	if currentBIFeat == nil && nextBIFeat == nil {
+		return nil
+	}
+	// else if the account has negative bic, this is invalid.
+	// new block issuers may not have a bic registered yet.
+	if bic, exists := vmParams.WorkingSet.BIC[current.AccountID]; exists {
+		if bic < 0 {
+			return fmt.Errorf("%w: Negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
+		}
+	}
+	txSlotIndex := vmParams.WorkingSet.Tx.Essence.CreationTime
+
+	if currentBIFeat.ExpirySlot >= txSlotIndex {
+		// if the block issuer feature has not expired, it can not be removed.
+		if nextBIFeat == nil {
+			return fmt.Errorf("%w: Cannot remove block issuer feature until it expires", iotago.ErrInvalidBlockIssuerTransition)
+		}
+		if nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+iotago.MaxCommitableSlotAge {
+			return fmt.Errorf("%w: Block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
+		}
+
+	} else if nextBIFeat != nil {
+		// if the block issuer feature has expired, it must either be removed or expiry extended.
+		if nextBIFeat.ExpirySlot < txSlotIndex+iotago.MaxCommitableSlotAge {
+			return fmt.Errorf("%w: Block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
+		}
+	}
 	return nil
 }
 

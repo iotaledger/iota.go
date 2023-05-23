@@ -91,6 +91,8 @@ type FoundryOutput struct {
 	Features FoundryOutputFeatures `serix:"5,mapKey=features,omitempty"`
 	// The immutable feature on the output.
 	ImmutableFeatures FoundryOutputImmFeatures `serix:"6,mapKey=immutableFeatures,omitempty"`
+	// The stored mana held by the output.
+	Mana uint64 `serix:"7,mapKey=mana"`
 }
 
 func (f *FoundryOutput) Clone() Output {
@@ -102,6 +104,7 @@ func (f *FoundryOutput) Clone() Output {
 		Conditions:        f.Conditions.Clone(),
 		Features:          f.Features.Clone(),
 		ImmutableFeatures: f.ImmutableFeatures.Clone(),
+		Mana:              f.Mana,
 	}
 }
 
@@ -189,6 +192,10 @@ func (f *FoundryOutput) ImmutableFeatureSet() FeatureSet {
 
 func (f *FoundryOutput) Deposit() uint64 {
 	return f.Amount
+}
+
+func (a *FoundryOutput) StoredMana() uint64 {
+	return a.Mana
 }
 
 func (f *FoundryOutput) Type() OutputType {

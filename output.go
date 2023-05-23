@@ -24,6 +24,9 @@ type Output interface {
 	// Deposit returns the amount this Output deposits.
 	Deposit() uint64
 
+	// StoredMana returns the stored mana held by this output.
+	StoredMana() uint64
+
 	// NativeTokenList returns the NativeToken this output defines.
 	NativeTokenList() NativeTokens
 
@@ -614,6 +617,8 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 type ExternalUnlockParameters struct {
 	// The confirmed unix epoch time in seconds.
 	ConfUnix uint32
+	// protocol parameters
+	ProtocolParameters
 	//TODO: this is to be replaced with the transaction creationtime
 }
 

@@ -55,6 +55,8 @@ type WorkingSet struct {
 	OutNativeTokens iotago.NativeTokenSum
 	// The Unlocks carried by the transaction mapped by type.
 	UnlocksByType iotago.UnlocksByType
+	// BIC is the block issuance credit as of MCA slots prior to the transaction's slot
+	BIC iotago.BlockIssuerCredit
 }
 
 // UTXOInputAtIndex retrieves the UTXOInput at the given index.
