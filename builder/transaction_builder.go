@@ -22,7 +22,7 @@ func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 			Payload:   nil,
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
-		inputs:     iotago.OutputSet{},
+		inputs:     iotago.InputSet{},
 	}
 }
 
@@ -30,7 +30,7 @@ func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 type TransactionBuilder struct {
 	occurredBuildErr error
 	essence          *iotago.TransactionEssence
-	inputs           iotago.OutputSet
+	inputs           iotago.InputSet
 	inputOwner       map[iotago.OutputID]iotago.Address
 }
 
@@ -41,7 +41,7 @@ type TxInput struct {
 	// The ID of the referenced input.
 	InputID iotago.OutputID `json:"inputID"`
 	// The output which is used as an input.
-	Input iotago.Output `json:"input"`
+	Input iotago.OutputWithCreationTime `json:"input"`
 }
 
 // AddInput adds the given input to the builder.

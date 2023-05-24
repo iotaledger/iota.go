@@ -26,7 +26,7 @@ type virtualMachine struct {
 	execList []vm.ExecFunc
 }
 
-func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs iotago.OutputSet, overrideFuncs ...vm.ExecFunc) error {
+func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs iotago.InputSet, overrideFuncs ...vm.ExecFunc) error {
 	var err error
 	vmParams.WorkingSet, err = vm.NewVMParamsWorkingSet(t, inputs)
 	if err != nil {
@@ -40,9 +40,9 @@ func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Pa
 	return vm.RunVMFuncs(stardustVM, vmParams, stardustVM.execList...)
 }
 
-func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, current iotago.ChainOutput, next iotago.ChainOutput, vmParams *vm.Params) error {
+func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, input iotago.ChainOutputWithCreationTime, next iotago.ChainOutput, vmParams *vm.Params) error {
 	var ok bool
-	switch current.(type) {
+	switch input.ChainOutput.(type) {
 	case *iotago.AccountOutput:
 		var nextAccount *iotago.AccountOutput
 		if next != nil {
@@ -50,7 +50,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 				return fmt.Errorf("can only state transition to another account output")
 			}
 		}
-		return accountSTVF(current.(*iotago.AccountOutput), transType, nextAccount, vmParams)
+		return accountSTVF(input, transType, nextAccount, vmParams)
 	case *iotago.FoundryOutput:
 		var nextFoundry *iotago.FoundryOutput
 		if next != nil {
@@ -58,7 +58,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 				return fmt.Errorf("can only state transition to another foundry output")
 			}
 		}
-		return foundrySTVF(current.(*iotago.FoundryOutput), transType, nextFoundry, vmParams)
+		return foundrySTVF(input, transType, nextFoundry, vmParams)
 	case *iotago.NFTOutput:
 		var nextNFT *iotago.NFTOutput
 		if next != nil {
@@ -66,9 +66,9 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 				return fmt.Errorf("can only state transition to another NFT output")
 			}
 		}
-		return nftSTVF(current.(*iotago.NFTOutput), transType, nextNFT, vmParams)
+		return nftSTVF(input, transType, nextNFT, vmParams)
 	default:
-		panic(fmt.Sprintf("invalid output type %s passed to Stardust virtual machine", current))
+		panic(fmt.Sprintf("invalid output type %s passed to Stardust virtual machine", input.ChainOutput))
 	}
 }
 
@@ -78,15 +78,16 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 // On account state transitions: The StateIndex must be incremented by 1 and Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated.
 //
 // On account governance transition: Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated.
-func accountSTVF(a *iotago.AccountOutput, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountSTVF(input iotago.ChainOutputWithCreationTime, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	a := input.ChainOutput.(*iotago.AccountOutput)
 	var err error
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
-		err = accountGenesisValid(a, vmParams)
+		err = accountGenesisValid(next, vmParams)
 	case iotago.ChainTransitionTypeStateChange:
-		err = accountStateChangeValid(a, vmParams, next)
+		err = accountStateChangeValid(input, vmParams, next)
 	case iotago.ChainTransitionTypeDestroy:
-		return nil
+		err = accountDestructionValid(input, vmParams)
 	default:
 		panic("unknown chain transition type in AccountOutput")
 	}
@@ -103,14 +104,15 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
 }
 
-func accountStateChangeValid(current *iotago.AccountOutput, vmParams *vm.Params, next *iotago.AccountOutput) error {
+func accountStateChangeValid(input iotago.ChainOutputWithCreationTime, vmParams *vm.Params, next *iotago.AccountOutput) error {
+	current := input.ChainOutput.(*iotago.AccountOutput)
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
 		return fmt.Errorf("old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures)
 	}
 	if current.StateIndex == next.StateIndex {
 		return accountGovernanceSTVF(current, next)
 	}
-	return accountStateSTVF(current, next, vmParams)
+	return accountStateSTVF(input, next, vmParams)
 }
 
 func accountGovernanceSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput) error {
@@ -129,7 +131,8 @@ func accountGovernanceSTVF(current *iotago.AccountOutput, next *iotago.AccountOu
 	return nil
 }
 
-func accountStateSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountStateSTVF(input iotago.ChainOutputWithCreationTime, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	current := input.ChainOutput.(*iotago.AccountOutput)
 	switch {
 	case !current.StateController().Equal(next.StateController()):
 		return fmt.Errorf("%w: state controller changed, in %v / out %v", iotago.ErrInvalidAccountStateTransition, current.StateController(), next.StateController())
@@ -173,14 +176,15 @@ func accountStateSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput,
 		return fmt.Errorf("%w: %d new foundries were created but the account output's foundry counter changed by %d", iotago.ErrInvalidAccountStateTransition, seenNewFoundriesOfAccount, expectedNewFoundriesCount)
 	}
 
-	return accountBlockIssuerSTVF(current, next, vmParams)
+	return accountBlockIssuerSTVF(input, next, vmParams)
 }
 
 // If an account output has a block issuer feature, the following conditions for its transition must be checked.
 // The block issuer credit must be non negative.
 // The expiry time of the block issuer feature, if changed, must be set at least MaxCommitableSlotAge greater than the TX slot index.
 // Check that at least one Block Issuer Key is present
-func accountBlockIssuerSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountBlockIssuerSTVF(input iotago.ChainOutputWithCreationTime, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	current := input.ChainOutput.(*iotago.AccountOutput)
 	currentBIFeat := current.FeatureSet().BlockIssuer()
 	nextBIFeat := next.FeatureSet().BlockIssuer()
 	// if the account has no block issuer feature.
@@ -211,14 +215,45 @@ func accountBlockIssuerSTVF(current *iotago.AccountOutput, next *iotago.AccountO
 			return fmt.Errorf("%w: Block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 		}
 	}
+
+	// the Mana on the account on the input side must be less than or equal to the total on the output side.
+	// TODO: apply decay to input side
+	// TODO: include outputs with ManaLock Conditions in this check
+	timeHeld := uint64(vmParams.WorkingSet.Tx.Essence.CreationTime - input.CreationTime)
+	accountManaIn := current.Mana + current.Amount*uint64(vmParams.External.ProtocolParameters.ManaGenerationRate)*timeHeld
+	accountManaOut := next.Mana + vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
+	if accountManaIn < accountManaOut {
+		return fmt.Errorf("%w: Cannot move Mana off an account", iotago.ErrInvalidBlockIssuerTransition)
+	}
 	return nil
 }
 
-func nftSTVF(current *iotago.NFTOutput, transType iotago.ChainTransitionType, next *iotago.NFTOutput, vmParams *vm.Params) error {
+func accountDestructionValid(input iotago.ChainOutputWithCreationTime, vmParams *vm.Params) error {
+	outputToDestroy := input.ChainOutput.(*iotago.AccountOutput)
+	BIFeat := outputToDestroy.FeatureSet().BlockIssuer()
+	if BIFeat != nil {
+		if BIFeat.ExpirySlot >= vmParams.WorkingSet.Tx.Essence.CreationTime {
+			// TODO: better error
+			return fmt.Errorf("%w: Cannot destroy output until the block issuer feature expires", iotago.ErrInvalidBlockIssuerTransition)
+		}
+		if bic, exists := vmParams.WorkingSet.BIC[outputToDestroy.AccountID]; exists {
+			if bic < 0 {
+				return fmt.Errorf("%w: Negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
+			}
+		} else {
+			// TODO: better error
+			panic("No BIC provided for block issuer")
+		}
+	}
+	return nil
+}
+
+func nftSTVF(input iotago.ChainOutputWithCreationTime, transType iotago.ChainTransitionType, next *iotago.NFTOutput, vmParams *vm.Params) error {
+	current := input.ChainOutput.(*iotago.NFTOutput)
 	var err error
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
-		err = nftGenesisValid(current, vmParams)
+		err = nftGenesisValid(next, vmParams)
 	case iotago.ChainTransitionTypeStateChange:
 		err = nftStateChangeValid(current, next)
 	case iotago.ChainTransitionTypeDestroy:
@@ -246,14 +281,15 @@ func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) erro
 	return nil
 }
 
-func foundrySTVF(current *iotago.FoundryOutput, transType iotago.ChainTransitionType, next *iotago.FoundryOutput, vmParams *vm.Params) error {
+func foundrySTVF(input iotago.ChainOutputWithCreationTime, transType iotago.ChainTransitionType, next *iotago.FoundryOutput, vmParams *vm.Params) error {
+	current := input.ChainOutput.(*iotago.FoundryOutput)
 	inSums := vmParams.WorkingSet.InNativeTokens
 	outSums := vmParams.WorkingSet.OutNativeTokens
 
 	var err error
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
-		err = foundryGenesisValid(current, vmParams, current.MustID(), outSums)
+		err = foundryGenesisValid(next, vmParams, next.MustID(), outSums)
 	case iotago.ChainTransitionTypeStateChange:
 		err = foundryStateChangeValid(current, next, inSums, outSums)
 	case iotago.ChainTransitionTypeDestroy:
@@ -285,7 +321,7 @@ func foundryGenesisValid(current *iotago.FoundryOutput, vmParams *vm.Params, thi
 		return fmt.Errorf("missing output transitioning account output %s for new foundry output %s", accountID, thisFoundryID)
 	}
 
-	if err := foundrySerialNumberValid(current, vmParams, inAccount.(*iotago.AccountOutput), outAccount.(*iotago.AccountOutput), thisFoundryID); err != nil {
+	if err := foundrySerialNumberValid(current, vmParams, inAccount.ChainOutput.(*iotago.AccountOutput), outAccount.(*iotago.AccountOutput), thisFoundryID); err != nil {
 		return err
 	}
 

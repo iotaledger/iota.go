@@ -13,9 +13,9 @@ import (
 type VirtualMachine interface {
 	// Execute executes the given tx in the VM.
 	// Pass own ExecFunc(s) to override the VM's default execution function list.
-	Execute(t *iotago.Transaction, params *Params, inputs iotago.OutputSet, overrideFuncs ...ExecFunc) error
+	Execute(t *iotago.Transaction, params *Params, inputs iotago.InputSet, overrideFuncs ...ExecFunc) error
 	// ChainSTVF executes the chain state transition validation function.
-	ChainSTVF(transType iotago.ChainTransitionType, current iotago.ChainOutput, next iotago.ChainOutput, vmParams *Params) error
+	ChainSTVF(transType iotago.ChainTransitionType, input iotago.ChainOutputWithCreationTime, next iotago.ChainOutput, vmParams *Params) error
 }
 
 // Params defines the VirtualMachine parameters under which the VM operates.
@@ -31,8 +31,8 @@ type Params struct {
 type WorkingSet struct {
 	// The identities which are successfully unlocked from the input side.
 	UnlockedIdents UnlockedIdentities
-	// The mapping of OutputID to the actual Outputs.
-	InputSet iotago.OutputSet
+	// The mapping of OutputID to the actual Outputs and their creation times.
+	InputSet iotago.InputSet
 	// The inputs to the transaction.
 	Inputs iotago.Outputs[iotago.Output]
 	// The mapping of inputs' OutputID to the index.
@@ -44,7 +44,7 @@ type WorkingSet struct {
 	// The inputs of the transaction mapped by type.
 	InputsByType iotago.OutputsByType
 	// The ChainOutput(s) at the input side.
-	InChains iotago.ChainOutputSet
+	InChains iotago.ChainInputSet
 	// The sum of NativeTokens at the input side.
 	InNativeTokens iotago.NativeTokenSum
 	// The Outputs of the transaction mapped by type.
@@ -55,8 +55,9 @@ type WorkingSet struct {
 	OutNativeTokens iotago.NativeTokenSum
 	// The Unlocks carried by the transaction mapped by type.
 	UnlocksByType iotago.UnlocksByType
-	// BIC is the block issuance credit as of MCA slots prior to the transaction's slot
-	BIC iotago.BlockIssuerCredit
+	// BIC is the block issuance credit for MCA slots prior to the transaction's creation time (or for the slot to which the block commits)
+	// Contains one value for each account output touched in the transaction and empty if no acccount outputs touched.
+	BIC iotago.BlockIssuanceCredit
 }
 
 // UTXOInputAtIndex retrieves the UTXOInput at the given index.
@@ -65,7 +66,7 @@ func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOIn
 	return workingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
-func NewVMParamsWorkingSet(t *iotago.Transaction, inputsSet iotago.OutputSet) (*WorkingSet, error) {
+func NewVMParamsWorkingSet(t *iotago.Transaction, inputsSet iotago.InputSet) (*WorkingSet, error) {
 	var err error
 	workingSet := &WorkingSet{}
 	workingSet.Tx = t
@@ -102,7 +103,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputsSet iotago.OutputSet) (*
 		return nil, err
 	}
 
-	workingSet.InChains = workingSet.InputSet.ChainOutputSet()
+	workingSet.InChains = workingSet.InputSet.ChainInputSet()
 	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
 	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainOutputSet(txID)
 
@@ -491,10 +492,11 @@ func ExecFuncChainTransitions() ExecFunc {
 		}
 
 		for chainID, outputChain := range vmParams.WorkingSet.OutChains {
-			if previousState := vmParams.WorkingSet.InChains[chainID]; previousState != nil {
+			inputChain := vmParams.WorkingSet.InChains[chainID]
+			if previousState := inputChain.ChainOutput; previousState != nil {
 				continue
 			}
-			if err := vm.ChainSTVF(iotago.ChainTransitionTypeGenesis, outputChain, nil, vmParams); err != nil {
+			if err := vm.ChainSTVF(iotago.ChainTransitionTypeGenesis, inputChain, outputChain, vmParams); err != nil {
 				return fmt.Errorf("new chain %s (%T) state transition failed: %w", chainID, outputChain, err)
 			}
 		}
