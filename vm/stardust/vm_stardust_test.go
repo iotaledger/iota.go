@@ -3259,3 +3259,134 @@ func TestTxSemanticTimelocks(t *testing.T) {
 		})
 	}
 }
+
+func TestTxSemanticMana(t *testing.T) {
+	type test struct {
+		name     string
+		vmParams *vm.Params
+		inputs   iotago.InputSet
+		tx       *iotago.Transaction
+		wantErr  error
+	}
+	tests := []test{
+		func() test {
+			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(3)
+
+			inputs := iotago.InputSet{
+				inputIDs[0]: iotago.OutputWithCreationTime{
+					Output: &iotago.BasicOutput{
+						Amount: 5,
+						Mana:   10,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+					},
+					CreationTime: 10,
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.BasicOutput{
+						Amount: 5,
+						Mana:   35,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+					},
+				},
+				CreationTime: 15,
+			}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name: "ok - stored Mana only",
+				vmParams: &vm.Params{
+					External: &iotago.ExternalUnlockParameters{
+						ProtocolParameters: iotago.ProtocolParameters{
+							ManaGenerationRate: 1,
+						},
+					},
+				},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
+		func() test {
+			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(3)
+
+			inputs := iotago.InputSet{
+				inputIDs[0]: iotago.OutputWithCreationTime{
+					Output: &iotago.BasicOutput{
+						Amount: 10,
+						Mana:   0,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+					},
+					CreationTime: 100,
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.BasicOutput{
+						Amount: 5,
+						Mana:   150,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+					},
+				},
+				Allotments: iotago.Allotments{
+					iotago.Allotment{Mana: 50},
+				},
+				CreationTime: 120,
+			}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name: "ok - stored and allotted",
+				vmParams: &vm.Params{
+					External: &iotago.ExternalUnlockParameters{
+						ProtocolParameters: iotago.ProtocolParameters{
+							ManaGenerationRate: 1,
+						},
+					},
+				},
+				inputs: inputs,
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedMana())
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}

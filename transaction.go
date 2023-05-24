@@ -28,6 +28,8 @@ var (
 	ErrIssuerFeatureNotUnlocked = errors.New("issuer feature is not unlocked")
 	// ErrReturnAmountNotFulFilled gets returned when a return amount in a transaction is not fulfilled by the output side.
 	ErrReturnAmountNotFulFilled = errors.New("return amount not fulfilled")
+	// ErrInputOutputManaMismatch gets returned if Mana is not balanced accross inputs and outputs/allotments.
+	ErrInputOutputManaMismatch = errors.New("inputs and outputs do not contain the same amount of Mana")
 )
 
 // TransactionID is the ID of a Transaction.

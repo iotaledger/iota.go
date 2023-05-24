@@ -18,6 +18,7 @@ func NewVirtualMachine() vm.VirtualMachine {
 			vm.ExecFuncBalancedDeposit(),
 			vm.ExecFuncBalancedNativeTokens(),
 			vm.ExecFuncChainTransitions(),
+			vm.ExecFuncBalancedMana(),
 		},
 	}
 }

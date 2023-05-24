@@ -406,6 +406,34 @@ func ExecFuncSenderUnlocked() ExecFunc {
 	}
 }
 
+// ExecFuncBalancedMana validates that Mana is balanced from the input/output side.
+// TODO: Return Mana according to StorageDepositReturnUnlockCondition(s)?
+func ExecFuncBalancedMana() ExecFunc {
+	return func(vm VirtualMachine, vmParams *Params) error {
+		var inStored, inPotential, outStored, outAllotted uint64
+		txCreationTime := vmParams.WorkingSet.Tx.Essence.CreationTime
+		for _, input := range vmParams.WorkingSet.InputSet {
+			inStored += input.StoredMana()
+			inPotential += input.Deposit() * uint64(vmParams.External.ManaGenerationRate) * uint64(txCreationTime-input.CreationTime)
+		}
+
+		// TODO: apply decay to input side Mana here.
+
+		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+			outStored += output.StoredMana()
+		}
+		for _, allotment := range vmParams.WorkingSet.Tx.Essence.Allotments {
+			outAllotted += allotment.Mana
+		}
+
+		if inStored+inPotential != outStored+outAllotted {
+			return fmt.Errorf("%w: inStored %d, inPotential %d, outStored %d, outAllotted %d", iotago.ErrInputOutputSumMismatch, inStored, inPotential, outStored, outAllotted)
+		}
+
+		return nil
+	}
+}
+
 // ExecFuncBalancedDeposit validates that the IOTA tokens are balanced from the input/output side.
 // It additionally also incorporates the check whether return amounts via StorageDepositReturnUnlockCondition(s) for specified identities
 // are fulfilled from the output side.
