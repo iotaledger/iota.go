@@ -13,7 +13,7 @@ import (
 type VirtualMachine interface {
 	// Execute executes the given tx in the VM.
 	// Pass own ExecFunc(s) to override the VM's default execution function list.
-	Execute(t *iotago.Transaction, params *Params, inputs iotago.InputSet, overrideFuncs ...ExecFunc) error
+	Execute(t *iotago.Transaction, params *Params, inputs iotago.InputSet, bic iotago.BlockIssuanceCredit, overrideFuncs ...ExecFunc) error
 	// ChainSTVF executes the chain state transition validation function.
 	ChainSTVF(transType iotago.ChainTransitionType, input iotago.ChainOutputWithCreationTime, next iotago.ChainOutput, vmParams *Params) error
 }
@@ -66,7 +66,7 @@ func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOIn
 	return workingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
-func NewVMParamsWorkingSet(t *iotago.Transaction, inputsSet iotago.InputSet) (*WorkingSet, error) {
+func NewVMParamsWorkingSet(t *iotago.Transaction, inputsSet iotago.InputSet, bic iotago.BlockIssuanceCredit) (*WorkingSet, error) {
 	var err error
 	workingSet := &WorkingSet{}
 	workingSet.Tx = t
@@ -108,6 +108,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputsSet iotago.InputSet) (*W
 	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainOutputSet(txID)
 
 	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
+	workingSet.BIC = bic
 	return workingSet, nil
 }
 

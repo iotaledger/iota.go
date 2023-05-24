@@ -64,7 +64,7 @@ func TestNFTTransition(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, stardustVM.Execute(tx, &vm.Params{}, inputs))
+	require.NoError(t, stardustVM.Execute(tx, &vm.Params{}, inputs, iotago.BlockIssuanceCredit{}))
 }
 
 func TestCirculatingSupplyMelting(t *testing.T) {
@@ -168,7 +168,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, stardustVM.Execute(tx, &vm.Params{}, inputs))
+	require.NoError(t, stardustVM.Execute(tx, &vm.Params{}, inputs, iotago.BlockIssuanceCredit{}))
 }
 
 func TestStardustTransactionExecution(t *testing.T) {
@@ -773,7 +773,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs)
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, iotago.BlockIssuanceCredit{})
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -1423,7 +1423,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncInputUnlocks())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, iotago.BlockIssuanceCredit{}, vm.ExecFuncInputUnlocks())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -1971,7 +1971,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedDeposit())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, iotago.BlockIssuanceCredit{}, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedDeposit())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -2469,7 +2469,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncBalancedNativeTokens())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, iotago.BlockIssuanceCredit{}, vm.ExecFuncBalancedNativeTokens())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -2802,7 +2802,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncSenderUnlocked())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, iotago.BlockIssuanceCredit{}, vm.ExecFuncInputUnlocks(), vm.ExecFuncSenderUnlocked())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -3116,7 +3116,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs)
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, iotago.BlockIssuanceCredit{})
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -3249,7 +3249,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncTimelocks())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, iotago.BlockIssuanceCredit{}, vm.ExecFuncTimelocks())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -3380,7 +3380,7 @@ func TestTxSemanticMana(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedMana())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.inputs, iotago.BlockIssuanceCredit{}, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedMana())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return

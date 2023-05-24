@@ -27,9 +27,9 @@ type virtualMachine struct {
 	execList []vm.ExecFunc
 }
 
-func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs iotago.InputSet, overrideFuncs ...vm.ExecFunc) error {
+func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs iotago.InputSet, bic iotago.BlockIssuanceCredit, overrideFuncs ...vm.ExecFunc) error {
 	var err error
-	vmParams.WorkingSet, err = vm.NewVMParamsWorkingSet(t, inputs)
+	vmParams.WorkingSet, err = vm.NewVMParamsWorkingSet(t, inputs, bic)
 	if err != nil {
 		return err
 	}
