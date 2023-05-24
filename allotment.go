@@ -14,3 +14,12 @@ type Allotment struct {
 func (a Allotments) Size() int {
 	return len(a) * (AccountIDLength + serializer.UInt64ByteSize)
 }
+
+func (a Allotments) Get(id AccountID) uint64 {
+	for _, allotment := range a {
+		if allotment.AccountID == id {
+			return allotment.Amount
+		}
+	}
+	return 0
+}
