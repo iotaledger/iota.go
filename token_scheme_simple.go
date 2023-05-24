@@ -38,7 +38,7 @@ func (s *SimpleTokenScheme) Clone() TokenScheme {
 	}
 }
 
-func (s *SimpleTokenScheme) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (s *SimpleTokenScheme) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.OneByte) +
 		// minted/melted supply, max. supply
 		rentStruct.VBFactorData.Multiply(Uint256ByteSize+Uint256ByteSize+Uint256ByteSize)

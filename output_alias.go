@@ -188,14 +188,14 @@ func (a *AliasOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extP
 	return outputUnlockable(a, next, ident, extParams)
 }
 
-func (a *AliasOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (a *AliasOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount
 		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		a.NativeTokens.VBytes(rentStruct, nil) +
 		rentStruct.VBFactorData.Multiply(AliasIDLength) +
 		// state index, state meta length, state meta, foundry counter
-		rentStruct.VBFactorData.Multiply(uint64(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
+		rentStruct.VBFactorData.Multiply(VBytes(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
 		a.Conditions.VBytes(rentStruct, nil) +
 		a.Features.VBytes(rentStruct, nil) +
 		a.ImmutableFeatures.VBytes(rentStruct, nil)

@@ -69,8 +69,8 @@ func (f Features[T]) Clone() Features[T] {
 	return cpy
 }
 
-func (f Features[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
-	var sumCost uint64
+func (f Features[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	var sumCost VBytes
 	for _, feat := range f {
 		sumCost += feat.VBytes(rentStruct, nil)
 	}

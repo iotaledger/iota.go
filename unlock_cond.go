@@ -76,8 +76,8 @@ type UnlockCondition interface {
 // UnlockConditions is a slice of UnlockCondition(s).
 type UnlockConditions[T UnlockCondition] []T
 
-func (f UnlockConditions[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
-	var sumCost uint64
+func (f UnlockConditions[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	var sumCost VBytes
 	for _, unlockCond := range f {
 		sumCost += unlockCond.VBytes(rentStruct, nil)
 	}

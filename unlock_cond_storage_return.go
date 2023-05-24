@@ -21,7 +21,7 @@ func (s *StorageDepositReturnUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *StorageDepositReturnUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) uint64 {
+func (s *StorageDepositReturnUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		s.ReturnAddress.VBytes(rentStruct, nil)
 }
