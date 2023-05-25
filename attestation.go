@@ -42,9 +42,9 @@ func (a *Attestation) Compare(other *Attestation) int {
 		return 1
 	case a.SlotCommitmentID.Index() < other.SlotCommitmentID.Index():
 		return -1
-	case a.IssuingTime.Before(other.IssuingTime):
-		return 1
 	case a.IssuingTime.After(other.IssuingTime):
+		return 1
+	case a.IssuingTime.Before(other.IssuingTime):
 		return -1
 	default:
 		return bytes.Compare(a.BlockContentHash[:], other.BlockContentHash[:])
