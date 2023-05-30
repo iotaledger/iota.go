@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"sync"
 
 	"golang.org/x/crypto/blake2b"
@@ -135,7 +136,7 @@ func (id SlotIdentifier) Alias() (alias string) {
 		return existingAlias
 	}
 
-	return id.ToHex()
+	return fmt.Sprintf("%s:%d", id.ToHex(), id.Index())
 }
 
 // UnregisterAlias allows to unregister a previously registered alias.

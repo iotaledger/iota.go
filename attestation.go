@@ -62,11 +62,7 @@ func (a Attestation) BlockID(slotTimeProvider *SlotTimeProvider) (BlockID, error
 		return EmptyBlockID(), fmt.Errorf("failed to serialize block's nonce: %w", err)
 	}
 
-	blockIdentifier, err := BlockIdentifierFromBlockBytes(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
-	if err != nil {
-		return EmptyBlockID(), err
-	}
-
+	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
 	slotIndex := slotTimeProvider.IndexFromTime(a.IssuingTime)
 
 	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
