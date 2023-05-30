@@ -8,7 +8,7 @@ type Allotments []Allotment
 // Allotment is a struct that represents a list of account IDs and an allotted value.
 type Allotment struct {
 	AccountID AccountID `serix:"0"`
-	Mana      uint64    `serix:"1"`
+	Value     uint64    `serix:"1"`
 }
 
 func (a Allotments) Size() int {
@@ -18,7 +18,7 @@ func (a Allotments) Size() int {
 func (a Allotments) Get(id AccountID) uint64 {
 	for _, allotment := range a {
 		if allotment.AccountID == id {
-			return allotment.Mana
+			return allotment.Value
 		}
 	}
 	return 0

@@ -3350,7 +3350,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 				Allotments: iotago.Allotments{
-					iotago.Allotment{Mana: 50},
+					iotago.Allotment{Value: 50},
 				},
 				CreationTime: 120,
 			}

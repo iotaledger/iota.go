@@ -424,7 +424,7 @@ func ExecFuncBalancedMana() ExecFunc {
 			outStored += output.StoredMana()
 		}
 		for _, allotment := range vmParams.WorkingSet.Tx.Essence.Allotments {
-			outAllotted += allotment.Mana
+			outAllotted += allotment.Value
 		}
 
 		if inStored+inPotential != outStored+outAllotted {
