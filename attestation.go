@@ -10,6 +10,9 @@ import (
 	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
 )
 
+// Attestations is a slice of Attestation.
+type Attestations = []*Attestation
+
 type Attestation struct {
 	IssuerID         AccountID    `serix:"0,mapKey=issuerID"`
 	IssuingTime      time.Time    `serix:"1,mapKey=issuingTime"`
