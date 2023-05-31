@@ -22,7 +22,7 @@ func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 			Payload:   nil,
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
-		inputs:     iotago.InputSet{},
+		inputs:     iotago.OutputSet{},
 	}
 }
 
@@ -30,7 +30,7 @@ func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 type TransactionBuilder struct {
 	occurredBuildErr error
 	essence          *iotago.TransactionEssence
-	inputs           iotago.InputSet
+	inputs           iotago.OutputSet
 	inputOwner       map[iotago.OutputID]iotago.Address
 }
 
