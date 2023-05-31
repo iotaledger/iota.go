@@ -78,6 +78,8 @@ func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
 		switch castInput := input.(type) {
 		case *BICInput:
 			// ignore this type
+		case *CommitmentInput:
+			// ignore this type
 		case IndexedUTXOReferencer:
 			references[i] = castInput
 		default:
@@ -93,6 +95,26 @@ func (t *Transaction) BICInputs() ([]*BICInput, error) {
 	for i, input := range t.Essence.Inputs {
 		switch castInput := input.(type) {
 		case *BICInput:
+			references[i] = castInput
+		case *CommitmentInput:
+			// ignore this type
+		case IndexedUTXOReferencer:
+			// ignore this type
+		default:
+			return nil, ErrUnexpectedUnderlyingType
+		}
+	}
+
+	return references, nil
+}
+
+func (t *Transaction) CommitmentInputs() ([]*CommitmentInput, error) {
+	references := make([]*CommitmentInput, len(t.Essence.Inputs))
+	for i, input := range t.Essence.Inputs {
+		switch castInput := input.(type) {
+		case *BICInput:
+			// ignore this type
+		case *CommitmentInput:
 			references[i] = castInput
 		case IndexedUTXOReferencer:
 			// ignore this type

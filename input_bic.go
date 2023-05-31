@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -15,5 +14,5 @@ func (b *BICInput) Type() InputType {
 }
 
 func (b *BICInput) Size() int {
-	return util.NumByteLen(byte(InputBlockIssuanceCredit)) + AccountIDLength + util.NumByteLen(SlotIndex(0)) + serializer.Int64ByteSize
+	return util.NumByteLen(byte(InputBlockIssuanceCredit)) + AccountIDLength + SlotIdentifierLength
 }
