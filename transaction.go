@@ -75,12 +75,30 @@ func (t *Transaction) ID() (TransactionID, error) {
 func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
 	references := make([]IndexedUTXOReferencer, len(t.Essence.Inputs))
 	for i, input := range t.Essence.Inputs {
-		inputReferencer, ok := input.(IndexedUTXOReferencer)
-		if !ok {
+		switch castInput := input.(type) {
+		case *BICInput:
+			// ignore this type
+		case IndexedUTXOReferencer:
+			references[i] = castInput
+		default:
 			return nil, ErrUnexpectedUnderlyingType
 		}
+	}
 
-		references[i] = inputReferencer
+	return references, nil
+}
+
+func (t *Transaction) BICInputs() ([]*BICInput, error) {
+	references := make([]*BICInput, len(t.Essence.Inputs))
+	for i, input := range t.Essence.Inputs {
+		switch castInput := input.(type) {
+		case *BICInput:
+			references[i] = castInput
+		case IndexedUTXOReferencer:
+			// ignore this type
+		default:
+			return nil, ErrUnexpectedUnderlyingType
+		}
 	}
 
 	return references, nil

@@ -12,8 +12,10 @@ type InputType byte
 const (
 	// InputUTXO is a type of input which references an unspent transaction output.
 	InputUTXO InputType = iota
-	// InputTreasury is a type of input which references a milestone which generated a treasury output.
-	InputTreasury
+	// InputCommitment is a tupe of input which references a commitment.
+	InputCommitment
+	// InputBlockIssuanceCredit is a type of input which references the block issuance credit from a specific account and commitment.
+	InputBlockIssuanceCredit
 )
 
 func (inputType InputType) String() string {
@@ -24,7 +26,7 @@ func (inputType InputType) String() string {
 }
 
 var (
-	inputNames = [InputTreasury + 1]string{"UTXOInput", "TreasuryInput"}
+	inputNames = [InputBlockIssuanceCredit + 1]string{"UTXOInput", "CommitmentInput", "BICInput"}
 )
 
 var (
@@ -110,4 +112,10 @@ func SyntacticallyValidateInputs(inputs TxEssenceInputs, funcs ...InputsSyntacti
 		}
 	}
 	return nil
+}
+
+type ResolvedInputs struct {
+	InputSet
+	BICInputSet
+	CommitmentInputSet
 }

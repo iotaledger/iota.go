@@ -18,6 +18,8 @@ type Commitment struct {
 	CumulativeWeight uint64       `serix:"3,mapKey=cumulativeWeight"`
 }
 
+type CommitmentInputSet map[CommitmentID]Commitment
+
 func NewCommitment(index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64) *Commitment {
 	return &Commitment{
 		Index:            index,

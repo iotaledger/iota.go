@@ -1,4 +1,13 @@
 package iotago
 
-// TODO: make this a shrinking map
-type BlockIssuanceCredit map[AccountID]int64
+type BlockIssuanceCredit struct {
+	AccountID
+	CommitmentID
+	Value int64
+}
+
+type BICInputSet map[AccountID]BlockIssuanceCredit
+
+func (b BlockIssuanceCredit) Negative() bool {
+	return b.Value < 0
+}

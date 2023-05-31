@@ -210,8 +210,8 @@ func MustOutputIDFromHex(hexStr string) OutputID {
 }
 
 type OutputWithCreationTime struct {
-	Output       `serix:"0"`
-	CreationTime SlotIndex `serix:"1"`
+	Output
+	CreationTime SlotIndex
 }
 
 // OutputSet is a map of the OutputID to Output.
