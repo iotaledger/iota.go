@@ -27,9 +27,9 @@ type virtualMachine struct {
 	execList []vm.ExecFunc
 }
 
-func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs iotago.InputSet, bic iotago.BlockIssuanceCredit, overrideFuncs ...vm.ExecFunc) error {
+func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs iotago.ResolvedInputs, overrideFuncs ...vm.ExecFunc) error {
 	var err error
-	vmParams.WorkingSet, err = vm.NewVMParamsWorkingSet(t, inputs, bic)
+	vmParams.WorkingSet, err = vm.NewVMParamsWorkingSet(t, inputs)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func accountBlockIssuerSTVF(input iotago.ChainOutputWithCreationTime, next *iota
 	// else if the account has negative bic, this is invalid.
 	// new block issuers may not have a bic registered yet.
 	if bic, exists := vmParams.WorkingSet.BIC[current.AccountID]; exists {
-		if bic < 0 {
+		if bic.Negative() {
 			return fmt.Errorf("%w: Negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
 		}
 	}
@@ -217,13 +217,23 @@ func accountBlockIssuerSTVF(input iotago.ChainOutputWithCreationTime, next *iota
 		}
 	}
 
-	// the Mana on the account on the input side must be less than or equal to the total on the output side.
+	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
 	// TODO: apply decay to input side
 	// TODO: include outputs with ManaLock Conditions in this check
+	totalManaIn := vm.TotalManaIn(
+		vmParams.External.ProtocolParameters.ManaGenerationRate,
+		vmParams.WorkingSet.Tx.Essence.CreationTime,
+		vmParams.WorkingSet.UTXOInputsWithCreationTime,
+	)
+	totalManaOut := vm.TotalManaOut(
+		vmParams.WorkingSet.Tx.Essence.Outputs,
+		vmParams.WorkingSet.Tx.Essence.Allotments,
+	)
 	timeHeld := uint64(vmParams.WorkingSet.Tx.Essence.CreationTime - input.CreationTime)
 	accountManaIn := current.Mana + current.Amount*uint64(vmParams.External.ProtocolParameters.ManaGenerationRate)*timeHeld
 	accountManaOut := next.Mana + vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
-	if accountManaIn < accountManaOut {
+	if totalManaIn-accountManaIn > totalManaOut-accountManaOut {
+		//
 		return fmt.Errorf("%w: Cannot move Mana off an account", iotago.ErrInvalidBlockIssuerTransition)
 	}
 	return nil
@@ -238,12 +248,12 @@ func accountDestructionValid(input iotago.ChainOutputWithCreationTime, vmParams 
 			return fmt.Errorf("%w: Cannot destroy output until the block issuer feature expires", iotago.ErrInvalidBlockIssuerTransition)
 		}
 		if bic, exists := vmParams.WorkingSet.BIC[outputToDestroy.AccountID]; exists {
-			if bic < 0 {
+			if bic.Negative() {
 				return fmt.Errorf("%w: Negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
 			}
 		} else {
 			// TODO: better error
-			panic("No BIC provided for block issuer")
+			return fmt.Errorf("%w: No BIC provided for block issuer", iotago.ErrInvalidBlockIssuerTransition)
 		}
 	}
 	return nil
