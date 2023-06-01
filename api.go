@@ -120,6 +120,27 @@ func (p ProtocolParameters) String() string {
 		p.Version, p.NetworkName, p.Bech32HRP, p.MinPoWScore, p.RentStructure, p.TokenSupply, p.GenesisUnixTimestamp, p.SlotDurationInSeconds)
 }
 
+func (p ProtocolParameters) StoredManaDecayFactor(deltaT SlotIndex) uint64 {
+	// TODO: implement decay factor table
+	return 1
+}
+
+func (p ProtocolParameters) PotentialManaDecayFactor(deltaT SlotIndex) uint64 {
+	// This factor incorporates generation of Mana and the decay to be applied to IOTA token amount
+	// TODO: implement decay factor table for this
+	return uint64(p.ManaGenerationRate) * uint64(deltaT)
+}
+
+func (p ProtocolParameters) StoredManaWithDecay(storedMana uint64, deltaT SlotIndex) uint64 {
+	// TODO: implement fixed point arithmetic for applying decay factors
+	return storedMana * p.StoredManaDecayFactor(deltaT)
+}
+
+func (p ProtocolParameters) PotentialManaWithDecay(deposit uint64, deltaT SlotIndex) uint64 {
+	// TODO: implement fixed point arithmetic for applying decay factors
+	return deposit * p.PotentialManaDecayFactor(deltaT)
+}
+
 // Sizer is an object knowing its own byte size.
 type Sizer interface {
 	// Size returns the size of the object in terms of bytes.

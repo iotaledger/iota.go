@@ -218,22 +218,22 @@ func accountBlockIssuerSTVF(input iotago.ChainOutputWithCreationTime, next *iota
 	}
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
-	// TODO: apply decay to input side
 	// TODO: include outputs with ManaLock Conditions in this check
-	totalManaIn := vm.TotalManaIn(
-		vmParams.External.ProtocolParameters.ManaGenerationRate,
+	manaIn := vm.TotalManaIn(
+		vmParams.External.ProtocolParameters,
 		vmParams.WorkingSet.Tx.Essence.CreationTime,
 		vmParams.WorkingSet.UTXOInputsWithCreationTime,
 	)
-	totalManaOut := vm.TotalManaOut(
+	manaOut := vm.TotalManaOut(
 		vmParams.WorkingSet.Tx.Essence.Outputs,
 		vmParams.WorkingSet.Tx.Essence.Allotments,
 	)
-	timeHeld := uint64(vmParams.WorkingSet.Tx.Essence.CreationTime - input.CreationTime)
-	accountManaIn := current.Mana + current.Amount*uint64(vmParams.External.ProtocolParameters.ManaGenerationRate)*timeHeld
-	accountManaOut := next.Mana + vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
-	if totalManaIn-accountManaIn > totalManaOut-accountManaOut {
-		//
+	timeHeld := vmParams.WorkingSet.Tx.Essence.CreationTime - input.CreationTime
+	manaIn -= vmParams.External.ProtocolParameters.StoredManaWithDecay(current.Mana, timeHeld)
+	manaIn -= vmParams.External.ProtocolParameters.PotentialManaWithDecay(current.Amount, timeHeld)
+	manaOut -= next.Mana + vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
+
+	if manaIn > manaOut {
 		return fmt.Errorf("%w: Cannot move Mana off an account", iotago.ErrInvalidBlockIssuerTransition)
 	}
 	return nil

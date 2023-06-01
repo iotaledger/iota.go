@@ -115,14 +115,13 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs iotago.ResolvedInputs) 
 	return workingSet, nil
 }
 
-func TotalManaIn(manaGenRate uint8, txCreationTime iotago.SlotIndex, inputSet iotago.InputSet) (totalIn uint64) {
+func TotalManaIn(params iotago.ProtocolParameters, txCreationTime iotago.SlotIndex, inputSet iotago.InputSet) (totalIn uint64) {
 	for _, input := range inputSet {
 		// stored Mana
-		totalIn += input.StoredMana()
+		totalIn += params.StoredManaWithDecay(input.StoredMana(), txCreationTime-input.CreationTime)
 		// potential Mana
-		totalIn += input.Deposit() * uint64(manaGenRate) * uint64(txCreationTime-input.CreationTime)
+		totalIn += params.PotentialManaWithDecay(input.Deposit(), txCreationTime-input.CreationTime)
 	}
-	// TODO: apply decay to input side Mana here.
 	return
 }
 
@@ -435,9 +434,8 @@ func ExecFuncSenderUnlocked() ExecFunc {
 // TODO: Return Mana according to StorageDepositReturnUnlockCondition(s)?
 func ExecFuncBalancedMana() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		manaGenRate := vmParams.External.ManaGenerationRate
 		txCreationTime := vmParams.WorkingSet.Tx.Essence.CreationTime
-		manaIn := TotalManaIn(manaGenRate, txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn := TotalManaIn(vmParams.External.ProtocolParameters, txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 
 		if manaIn < manaOut {
