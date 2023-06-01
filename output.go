@@ -279,6 +279,15 @@ func (outputIDs OutputIDs) OrderedSet(set InputSet) Outputs[Output] {
 	return outputs
 }
 
+// OrderedSet returns an Outputs slice ordered by this OutputIDs slice given a InputSet.
+func (outputIDs OutputIDs) OrderedOutputSet(set OutputSet) Outputs[Output] {
+	outputs := make(Outputs[Output], len(outputIDs))
+	for i, outputID := range outputIDs {
+		outputs[i] = set[outputID]
+	}
+	return outputs
+}
+
 var (
 	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.
 	ErrDepositAmountMustBeGreaterThanZero = errors.New("deposit amount must be greater than zero")

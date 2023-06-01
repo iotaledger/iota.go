@@ -104,7 +104,7 @@ func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signe
 		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).ID())
 	}
 
-	inputs := inputIDs.OrderedSet(b.inputs)
+	inputs := inputIDs.OrderedOutputSet(b.inputs)
 	commitment, err := inputs.Commitment()
 	if err != nil {
 		return nil, err
