@@ -1,11 +1,14 @@
 package iotago_test
 
 import (
+	"math"
 	"testing"
+	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -79,4 +82,49 @@ func TestBlock_DeserializationNotEnoughData(t *testing.T) {
 	block := &iotago.Block{}
 	_, err := v3API.Decode(blockBytes, block)
 	require.ErrorIs(t, err, serializer.ErrDeserializationNotEnoughData)
+}
+
+func TestBlock_TimestampRoundtrip(t *testing.T) {
+	// Strip the monotonic clock value by rounding.
+	now := time.Now().Round(0)
+	block := &iotago.Block{}
+	block.SetIssuingTime(now)
+	issuanceTime := block.IssuingTime()
+
+	assert.Equal(t, now, issuanceTime)
+}
+
+func TestBlock_TimestampNegative(t *testing.T) {
+	unixTime := time.Unix(-1, -1000)
+	block := &iotago.Block{}
+	block.SetIssuingTime(unixTime)
+	issuanceTime := block.IssuingTime()
+
+	expected := time.Unix(0, 0)
+	assert.Equal(t, issuanceTime, expected)
+}
+
+const (
+	maxUnixInt64Sec  = math.MaxInt64 / 1_000_000_000
+	maxUnixInt64Nano = math.MaxInt64 % 1_000_000_000
+)
+
+func TestBlock_TimestampExceedsMaxRepresentableNanos(t *testing.T) {
+	// Maximum time value representable in nanoseconds in an int64 + 10 seconds.
+	unixTime := time.Unix(int64(maxUnixInt64Sec+10), int64(maxUnixInt64Nano))
+
+	block := &iotago.Block{}
+	block.SetIssuingTime(unixTime)
+	issuanceTime := block.IssuingTime()
+
+	expected := time.Unix(maxUnixInt64Sec, maxUnixInt64Nano)
+	assert.Equal(t, issuanceTime, expected)
+}
+
+func TestBlock_TimestampExceedsInt64Nanoseconds(t *testing.T) {
+	block := iotago.Block{IssuingTimestamp: math.MaxUint64}
+	issuanceTime := block.IssuingTime()
+
+	expected := time.Unix(maxUnixInt64Sec, maxUnixInt64Nano)
+	assert.Equal(t, issuanceTime, expected)
 }

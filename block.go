@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"fmt"
+	"math"
 	"runtime"
 	"sort"
 	"time"
@@ -111,8 +112,8 @@ type Block struct {
 	WeakParents        WeakParentsIDs       `serix:"3,lengthPrefixType=uint8,mapKey=weakParents"`
 	ShallowLikeParents ShallowLikeParentIDs `serix:"4,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
 
-	IssuerID    AccountID `serix:"5,mapKey=issuerID"`
-	IssuingTime time.Time `serix:"6,mapKey=issuingTime"`
+	IssuerID         AccountID `serix:"5,mapKey=issuerID"`
+	IssuingTimestamp uint64    `serix:"6,mapKey=issuingTime"`
 
 	SlotCommitment      *Commitment `serix:"7,mapKey=slotCommitment"`
 	LatestFinalizedSlot SlotIndex   `serix:"8,mapKey=latestFinalizedSlot"`
@@ -173,7 +174,7 @@ func (b *Block) SigningMessage() ([]byte, error) {
 		return nil, err
 	}
 
-	issuingTimeBytes, err := internalEncode(b.IssuingTime)
+	issuingTimeBytes, err := internalEncode(b.IssuingTimestamp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize block's issuing time: %w", err)
 	}
@@ -225,7 +226,7 @@ func (b *Block) ID(slotTimeProvider *SlotTimeProvider) (BlockID, error) {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
 	}
 
-	slotIndex := slotTimeProvider.IndexFromTime(b.IssuingTime)
+	slotIndex := slotTimeProvider.IndexFromTime(b.IssuingTime())
 
 	blockIdentifier, err := BlockIdentifierFromBlockBytes(data)
 	if err != nil {
@@ -268,4 +269,48 @@ func (b *Block) DoPOW(ctx context.Context, targetScore float64) error {
 	}
 	b.Nonce = nonce
 	return nil
+}
+
+// The maximum time value that can be represented in a Unix nanosecond timestamp
+// as the individual seconds and nanoseconds components.
+const (
+	maxUnixInt64Sec  = math.MaxInt64 / 1_000_000_000
+	maxUnixInt64Nano = math.MaxInt64 % 1_000_000_000
+)
+
+// Return the block's issuance timestamp as a time.Time instance.
+//
+// If the contained uint64 nanoseconds timestamp exceeds the maximum nanosecond timestamp
+// representable in an int64, it is truncated to the maximum value.
+func (block *Block) IssuingTime() time.Time {
+	sec := block.IssuingTimestamp / 1_000_000_000
+	nsec := block.IssuingTimestamp % 1_000_000_000
+
+	if sec > maxUnixInt64Sec {
+		sec = maxUnixInt64Sec
+		nsec = maxUnixInt64Nano
+	}
+
+	time := time.Unix(int64(sec), int64(nsec))
+
+	return time
+}
+
+// Set the given Time as the block's Issuing Time.
+//
+// Times before the Unix Epoch will be truncated to the Unix Epoch.
+// Times whose unix timestamp in nanoseconds would be larger than what fits into an int64
+// will be truncated to the max value.
+func (block *Block) SetIssuingTime(time time.Time) {
+	var unixNano int64 = 0
+	if time.Unix() > maxUnixInt64Sec {
+		unixNano = math.MaxInt64
+	} else {
+		unixNano = time.UnixNano()
+		if unixNano < 0 {
+			unixNano = 0
+		}
+	}
+
+	block.IssuingTimestamp = uint64(unixNano)
 }

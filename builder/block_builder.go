@@ -20,10 +20,10 @@ const (
 func NewBlockBuilder() *BlockBuilder {
 	return &BlockBuilder{
 		block: &iotago.Block{
-			ProtocolVersion: defaultProtocolVersion,
-			SlotCommitment:  iotago.NewEmptyCommitment(),
-			IssuingTime:     time.Now(),
-			Signature:       &iotago.Ed25519Signature{},
+			ProtocolVersion:  defaultProtocolVersion,
+			SlotCommitment:   iotago.NewEmptyCommitment(),
+			IssuingTimestamp: uint64(time.Now().UnixNano()),
+			Signature:        &iotago.Ed25519Signature{},
 		},
 	}
 }
@@ -70,7 +70,7 @@ func (mb *BlockBuilder) IssuingTime(time time.Time) *BlockBuilder {
 		return mb
 	}
 
-	mb.block.IssuingTime = time
+	mb.block.SetIssuingTime(time)
 
 	return mb
 }

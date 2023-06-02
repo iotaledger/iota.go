@@ -25,7 +25,7 @@ type Attestation struct {
 func NewAttestation(block *Block) *Attestation {
 	return &Attestation{
 		IssuerID:         block.IssuerID,
-		IssuingTime:      block.IssuingTime,
+		IssuingTime:      block.IssuingTime(),
 		SlotCommitmentID: block.SlotCommitment.MustID(),
 		BlockContentHash: lo.PanicOnErr(block.ContentHash()),
 		Signature:        block.Signature,
