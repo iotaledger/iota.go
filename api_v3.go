@@ -379,7 +379,7 @@ func V3API(protoParams *ProtocolParameters) API {
 		))
 
 		// TODO should we also register allotment itself, check how to prevent duplicates based on allotment ID
-		must(api.RegisterInterfaceObjects(TxEssenceAllotments{}, serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3AllotmentsArrRules)))
+		must(api.RegisterTypeSettings(TxEssenceAllotments{}, serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3AllotmentsArrRules)))
 
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*BasicOutput)(nil)))
