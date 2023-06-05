@@ -40,7 +40,7 @@ type (
 	InfoResponse struct {
 		// The name of the node software.
 		Name string `json:"name"`
-		// The server version of the node software.
+		// The semver version of the node software.
 		Version string `json:"version"`
 		// The ID of the node
 		IssuerID string `json:"issuerId"`
@@ -164,7 +164,7 @@ type (
 		LatestCommitmentID string `json:"latestCommitmentId"`
 	}
 
-	// CommitmentUTXOChangesResponse defines the response of a GET milestone UTXO changes REST API call.
+	// CommitmentInfoResponse defines the response of a GET milestone UTXO changes REST API call.
 	CommitmentInfoResponse struct {
 		// The index of the requested commitment.
 		Index iotago.SlotIndex `json:"index"`
@@ -177,8 +177,8 @@ type (
 		// TODO: decide what else to add here.
 	}
 
-	// SlotUTXOResponse defines the response for UTXO slot REST API call.
-	SlotUTXOResponse struct {
+	// UTXOChangesResponse defines the response for UTXO slot REST API call.
+	UTXOChangesResponse struct {
 		// The index of the requested commitment.
 		Index iotago.SlotIndex `json:"index"`
 		// The outputs that are created in this slot.

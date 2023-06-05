@@ -380,7 +380,7 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &nodeclient.SlotUTXOResponse{
+	originRes := &nodeclient.UTXOChangesResponse{
 		Index:           1337,
 		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
 		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},
@@ -430,7 +430,7 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &nodeclient.SlotUTXOResponse{
+	originRes := &nodeclient.UTXOChangesResponse{
 		Index:           slotIndex,
 		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
 		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},

@@ -459,10 +459,10 @@ func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID
 }
 
 // CommitmentUTXOChangesByID returns all UTXO changes of a commitment by its ID.
-func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*SlotUTXOResponse, error) {
+func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*UTXOChangesResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByIDUTXOChanges, id.ToHex())
 
-	res := &SlotUTXOResponse{}
+	res := &UTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -483,10 +483,10 @@ func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIn
 }
 
 // CommitmentUTXOChangesByIndex returns all UTXO changes of a commitment by its index.
-func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*SlotUTXOResponse, error) {
+func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*UTXOChangesResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByIndexUTXOChanges, index)
 
-	res := &SlotUTXOResponse{}
+	res := &UTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
