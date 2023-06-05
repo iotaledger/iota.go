@@ -115,12 +115,12 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs iotago.ResolvedInputs) 
 	return workingSet, nil
 }
 
-func TotalManaIn(params iotago.ProtocolParameters, txCreationTime iotago.SlotIndex, inputSet iotago.InputSet) (totalIn uint64) {
+func TotalManaIn(decayProvider *iotago.DecayProvider, txCreationTime iotago.SlotIndex, inputSet iotago.InputSet) (totalIn uint64) {
 	for _, input := range inputSet {
 		// stored Mana
-		totalIn += params.StoredManaWithDecay(input.StoredMana(), txCreationTime-input.CreationTime)
+		totalIn += decayProvider.StoredManaWithDecay(input.StoredMana(), txCreationTime-input.CreationTime)
 		// potential Mana
-		totalIn += params.PotentialManaWithDecay(input.Deposit(), txCreationTime-input.CreationTime)
+		totalIn += decayProvider.PotentialManaWithDecay(input.Deposit(), txCreationTime-input.CreationTime)
 	}
 	return
 }
