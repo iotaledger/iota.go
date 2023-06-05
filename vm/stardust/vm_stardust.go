@@ -219,8 +219,9 @@ func accountBlockIssuerSTVF(input iotago.ChainOutputWithCreationTime, next *iota
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
 	// TODO: include outputs with ManaLock Conditions in this check
+	decayProvider := vmParams.External.ProtocolParameters.DecayProvider()
 	manaIn := vm.TotalManaIn(
-		vmParams.External.ProtocolParameters,
+		decayProvider,
 		vmParams.WorkingSet.Tx.Essence.CreationTime,
 		vmParams.WorkingSet.UTXOInputsWithCreationTime,
 	)
@@ -229,8 +230,8 @@ func accountBlockIssuerSTVF(input iotago.ChainOutputWithCreationTime, next *iota
 		vmParams.WorkingSet.Tx.Essence.Allotments,
 	)
 	timeHeld := vmParams.WorkingSet.Tx.Essence.CreationTime - input.CreationTime
-	manaIn -= vmParams.External.ProtocolParameters.StoredManaWithDecay(current.Mana, timeHeld)
-	manaIn -= vmParams.External.ProtocolParameters.PotentialManaWithDecay(current.Amount, timeHeld)
+	manaIn -= decayProvider.StoredManaWithDecay(current.Mana, timeHeld)
+	manaIn -= decayProvider.PotentialManaWithDecay(current.Amount, timeHeld)
 	manaOut -= next.Mana + vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
 
 	if manaIn > manaOut {

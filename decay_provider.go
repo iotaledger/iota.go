@@ -1,14 +1,12 @@
 package iotago
 
-import "math"
-
 // TODO: fixed point arithmetic
 type DecayProvider struct {
-	storedManaDecayFactors    map[SlotIndex]float64
-	potentialManaDecayFactors map[SlotIndex]float64 // mana generation rate is built into these values
+	storedManaDecayFactors    []float64
+	potentialManaDecayFactors []float64 // mana generation rate is built into these values
 }
 
-func NewDecayProvider(stored map[SlotIndex]float64, potential map[SlotIndex]float64) *DecayProvider {
+func NewDecayProvider(stored []float64, potential []float64) *DecayProvider {
 	return &DecayProvider{
 		storedManaDecayFactors:    stored,
 		potentialManaDecayFactors: potential,
@@ -18,8 +16,9 @@ func NewDecayProvider(stored map[SlotIndex]float64, potential map[SlotIndex]floa
 func (d *DecayProvider) StoredManaDecayFactor(deltaT SlotIndex) float64 {
 	// TODO: implement decay factor table
 	totalDecay := 1.0
-	for i, factor := range d.storedManaDecayFactors {
-		totalDecay *= math.Floor(float64(deltaT)/float64(i)) * factor
+	for i := len(d.storedManaDecayFactors) - 1; i >= 0; i-- {
+		totalDecay *= float64(int(deltaT)/i) * d.storedManaDecayFactors[i]
+		deltaT -= SlotIndex(int(deltaT) / i)
 	}
 	return totalDecay
 }
@@ -28,8 +27,9 @@ func (d *DecayProvider) PotentialManaDecayFactor(deltaT SlotIndex) float64 {
 	// This factor incorporates generation of Mana and the decay to be applied to IOTA token amount
 	// TODO: implement decay factor table for this
 	totalDecay := 1.0
-	for i, factor := range d.potentialManaDecayFactors {
-		totalDecay *= math.Floor(float64(deltaT)/float64(i)) * factor
+	for i := len(d.potentialManaDecayFactors) - 1; i >= 0; i-- {
+		totalDecay *= float64(int(deltaT)/i) * d.potentialManaDecayFactors[i]
+		deltaT -= SlotIndex(int(deltaT) / i)
 	}
 	return totalDecay
 }

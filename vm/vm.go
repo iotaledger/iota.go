@@ -435,7 +435,7 @@ func ExecFuncSenderUnlocked() ExecFunc {
 func ExecFuncBalancedMana() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		txCreationTime := vmParams.WorkingSet.Tx.Essence.CreationTime
-		manaIn := TotalManaIn(vmParams.External.ProtocolParameters, txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn := TotalManaIn(vmParams.External.ProtocolParameters.DecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 
 		if manaIn < manaOut {
