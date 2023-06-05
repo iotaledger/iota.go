@@ -11,24 +11,24 @@ type Roots struct {
 	StateMutationRoot Identifier `serix:"1"`
 	ActivityRoot      Identifier `serix:"2"`
 	StateRoot         Identifier `serix:"3"`
-	BICRoot           Identifier `serix:"4"`
+	AccountRoot       Identifier `serix:"4"`
 }
 
-func NewRoots(tangleRoot, stateMutationRoot, activityRoot, stateRoot, manaRoot Identifier) *Roots {
+func NewRoots(tangleRoot, stateMutationRoot, activityRoot, stateRoot, accountRoot Identifier) *Roots {
 	return &Roots{
 		TangleRoot:        tangleRoot,
 		StateMutationRoot: stateMutationRoot,
 		ActivityRoot:      activityRoot,
 		StateRoot:         stateRoot,
-		BICRoot:           manaRoot,
+		AccountRoot:       accountRoot,
 	}
 }
 
 func (r *Roots) ID() (id Identifier) {
 	branch1Hashed := blake2b.Sum256(byteutils.ConcatBytes(r.TangleRoot[:], r.StateMutationRoot[:]))
-	branch2Hashed := blake2b.Sum256(byteutils.ConcatBytes(r.StateRoot[:], r.BICRoot[:]))
+	branch2Hashed := blake2b.Sum256(byteutils.ConcatBytes(r.StateRoot[:], r.AccountRoot[:]))
 	rootHashed := blake2b.Sum256(byteutils.ConcatBytes(branch1Hashed[:], branch2Hashed[:]))
 
-	//TODO: hash ActivityRoot?
+	// TODO: hash ActivityRoot?
 	return rootHashed
 }
