@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	SlotIdentifierLength = IdentifierLength + serializer.Int64ByteSize
+	SlotIdentifierLength = IdentifierLength + serializer.UInt64ByteSize
 )
 
 var (
