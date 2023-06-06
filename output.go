@@ -636,11 +636,8 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, t
 // ExternalUnlockParameters defines a palette of external system parameters which are used to
 // determine whether an Output can be unlocked.
 type ExternalUnlockParameters struct {
-	// The confirmed unix epoch time in seconds.
-	ConfUnix uint32
 	// protocol parameters
 	ProtocolParameters
-	// TODO: this is to be replaced with the transaction creationtime
 }
 
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent
