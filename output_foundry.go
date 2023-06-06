@@ -119,8 +119,8 @@ func (f *FoundryOutput) UnlockableBy(ident Address, extParams *ExternalUnlockPar
 
 func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		// prefix + amount + stored mana
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
 		f.NativeTokens.VBytes(rentStruct, nil) +
 		// serial number
 		rentStruct.VBFactorData.Multiply(serializer.UInt32ByteSize) +
@@ -194,8 +194,8 @@ func (f *FoundryOutput) Deposit() uint64 {
 	return f.Amount
 }
 
-func (a *FoundryOutput) StoredMana() uint64 {
-	return a.Mana
+func (f *FoundryOutput) StoredMana() uint64 {
+	return f.Mana
 }
 
 func (f *FoundryOutput) Type() OutputType {
@@ -210,5 +210,6 @@ func (f *FoundryOutput) Size() int {
 		f.TokenScheme.Size() +
 		f.Conditions.Size() +
 		f.Features.Size() +
-		f.ImmutableFeatures.Size()
+		f.ImmutableFeatures.Size() +
+		util.NumByteLen(f.Mana)
 }

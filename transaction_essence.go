@@ -95,7 +95,7 @@ type TransactionEssence struct {
 	// The outputs of this transaction.
 	Outputs TxEssenceOutputs `serix:"4,mapKey=outputs"`
 	// The optional accounts map with corresponding allotment values.
-	Allotments TxEssenceAllotments `serix:"5,optional,mapKey=allotments"` // TODO what should be here as options?
+	Allotments TxEssenceAllotments `serix:"5,mapKey=allotments"` // TODO what should be here as options?
 	// The optional embedded payload.
 	Payload TxEssencePayload `serix:"6,optional,mapKey=payload"`
 }
@@ -142,14 +142,15 @@ func (u *TransactionEssence) Size() int {
 	if u.Payload != nil {
 		payloadSize = u.Payload.Size()
 	}
+
 	return util.NumByteLen(TransactionEssenceNormal) +
 		util.NumByteLen(u.NetworkID) +
-		util.NumByteLen(SlotIndex(0)) +
+		len(SlotIndex(0).Bytes()) +
 		u.Inputs.Size() +
 		InputsCommitmentLength +
 		u.Outputs.Size() +
 		payloadSize +
-		u.Allotments.Size()
+		util.NumByteLen(uint16(0)) + u.Allotments.Size()
 }
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.

@@ -48,7 +48,7 @@ type TxInput struct {
 func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 	b.inputOwner[input.InputID] = input.UnlockTarget
 	b.essence.Inputs = append(b.essence.Inputs, input.InputID.UTXOInput())
-	b.inputs[input.InputID] = input.Input
+	b.inputs[input.InputID] = input.Input.Output
 	return b
 }
 

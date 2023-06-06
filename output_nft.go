@@ -119,8 +119,8 @@ func (n *NFTOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParamet
 
 func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		// prefix + amount + stored mana
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
 		n.NativeTokens.VBytes(rentStruct, nil) +
 		rentStruct.VBFactorData.Multiply(NFTIDLength) +
 		n.Conditions.VBytes(rentStruct, nil) +
@@ -152,8 +152,8 @@ func (n *NFTOutput) Deposit() uint64 {
 	return n.Amount
 }
 
-func (a *NFTOutput) StoredMana() uint64 {
-	return a.Mana
+func (n *NFTOutput) StoredMana() uint64 {
+	return n.Mana
 }
 
 func (n *NFTOutput) Type() OutputType {
@@ -167,5 +167,6 @@ func (n *NFTOutput) Size() int {
 		NFTIDLength +
 		n.Conditions.Size() +
 		n.Features.Size() +
-		n.ImmutableFeatures.Size()
+		n.ImmutableFeatures.Size() +
+		util.NumByteLen(n.Mana)
 }

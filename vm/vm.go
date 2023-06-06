@@ -83,7 +83,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs iotago.ResolvedInputs) 
 		if !ok {
 			return nil, fmt.Errorf("%w: utxo for input %d not supplied", iotago.ErrMissingUTXO, inputIndex)
 		}
-		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input)
+		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input.Output)
 	}
 
 	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage()
@@ -95,7 +95,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs iotago.ResolvedInputs) 
 		slice := make(iotago.Outputs[iotago.Output], len(utxoInputsSet))
 		var i int
 		for _, output := range utxoInputsSet {
-			slice[i] = output
+			slice[i] = output.Output
 			i++
 		}
 		return slice.ToOutputsByType()
@@ -118,9 +118,9 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs iotago.ResolvedInputs) 
 func TotalManaIn(decayProvider *iotago.DecayProvider, txCreationTime iotago.SlotIndex, inputSet iotago.InputSet) (totalIn uint64) {
 	for _, input := range inputSet {
 		// stored Mana
-		totalIn += decayProvider.StoredManaWithDecay(input.StoredMana(), txCreationTime-input.CreationTime)
+		totalIn += decayProvider.StoredManaWithDecay(input.Output.StoredMana(), txCreationTime-input.CreationTime)
 		// potential Mana
-		totalIn += decayProvider.PotentialManaWithDecay(input.Deposit(), txCreationTime-input.CreationTime)
+		totalIn += decayProvider.PotentialManaWithDecay(input.Output.Deposit(), txCreationTime-input.CreationTime)
 	}
 	return
 }
@@ -456,9 +456,9 @@ func ExecFuncBalancedDeposit() ExecFunc {
 		var in, out uint64
 		inputSumReturnAmountPerIdent := make(map[string]uint64)
 		for inputID, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
-			in += input.Deposit()
+			in += input.Output.Deposit()
 
-			returnUnlockCond := input.UnlockConditionSet().StorageDepositReturn()
+			returnUnlockCond := input.Output.UnlockConditionSet().StorageDepositReturn()
 			if returnUnlockCond == nil {
 				continue
 			}
@@ -507,7 +507,7 @@ func ExecFuncBalancedDeposit() ExecFunc {
 func ExecFuncTimelocks() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		for inputIndex, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
-			if err := input.UnlockConditionSet().TimelocksExpired(vmParams.External); err != nil {
+			if err := input.Output.UnlockConditionSet().TimelocksExpired(vmParams.External); err != nil {
 				return fmt.Errorf("%w: input at index %d's timelocks are not expired", err, inputIndex)
 			}
 		}
@@ -533,7 +533,7 @@ func ExecFuncChainTransitions() ExecFunc {
 
 		for chainID, outputChain := range vmParams.WorkingSet.OutChains {
 			inputChain := vmParams.WorkingSet.InChains[chainID]
-			if previousState := inputChain.ChainOutput; previousState != nil {
+			if previousState := inputChain.Output; previousState != nil {
 				continue
 			}
 			if err := vm.ChainSTVF(iotago.ChainTransitionTypeGenesis, inputChain, outputChain, vmParams); err != nil {

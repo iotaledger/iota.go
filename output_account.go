@@ -186,8 +186,8 @@ func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, ex
 
 func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		// prefix + amount + stored mana
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
 		a.NativeTokens.VBytes(rentStruct, nil) +
 		rentStruct.VBFactorData.Multiply(AccountIDLength) +
 		// state index, state meta length, state meta, foundry counter
@@ -269,5 +269,6 @@ func (a *AccountOutput) Size() int {
 		util.NumByteLen(a.FoundryCounter) +
 		a.Conditions.Size() +
 		a.Features.Size() +
-		a.ImmutableFeatures.Size()
+		a.ImmutableFeatures.Size() +
+		util.NumByteLen(a.Mana)
 }

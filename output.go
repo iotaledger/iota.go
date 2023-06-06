@@ -189,7 +189,7 @@ func OutputIDFromBytes(bytes []byte) (OutputID, error) {
 	return OutputID(bytes), nil
 }
 
-// OutputIDFromHex creates a OutputID from the given hex encoded OututID data.
+// OutputIDFromHex creates a OutputID from the given hex encoded OutputID data.
 func OutputIDFromHex(hexStr string) (OutputID, error) {
 	outputIDData, err := DecodeHex(hexStr)
 	if err != nil {
@@ -211,14 +211,14 @@ func MustOutputIDFromHex(hexStr string) OutputID {
 }
 
 type OutputWithCreationTime struct {
-	Output
+	Output       Output
 	CreationTime SlotIndex
 }
 
 // OutputSet is a map of the OutputID to Output.
 type OutputSet map[OutputID]Output
 
-// InputSet is a map of OutputID to OutputWithCreationTime
+// InputSet is a map of OutputID to OutputWithCreationTime.
 type InputSet map[OutputID]OutputWithCreationTime
 
 // Filter creates a new OutputSet with Outputs which pass the filter function f.
@@ -271,16 +271,16 @@ func (outputIDs OutputIDs) UTXOInputs() TxEssenceInputs {
 	return inputs
 }
 
-// OrderedSet returns an Outputs slice ordered by this OutputIDs slice given a InputSet.
+// OrderedSet returns an Outputs slice ordered by this OutputIDs slice given an InputSet.
 func (outputIDs OutputIDs) OrderedSet(set InputSet) Outputs[Output] {
 	outputs := make(Outputs[Output], len(outputIDs))
 	for i, outputID := range outputIDs {
-		outputs[i] = set[outputID]
+		outputs[i] = set[outputID].Output
 	}
 	return outputs
 }
 
-// OrderedSet returns an Outputs slice ordered by this OutputIDs slice given a InputSet.
+// OrderedOutputSet returns an Outputs slice ordered by this OutputIDs slice given an OutputSet.
 func (outputIDs OutputIDs) OrderedOutputSet(set OutputSet) Outputs[Output] {
 	outputs := make(Outputs[Output], len(outputIDs))
 	for i, outputID := range outputIDs {
@@ -346,12 +346,12 @@ func (outputs Outputs[T]) Commitment() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, output := range outputs {
+	for id, output := range outputs {
 		outputBytes, err := internalEncode(output)
 		if err != nil {
 			return nil, fmt.Errorf("unable to compute commitment hash: %w", err)
 		}
-
+		fmt.Println("serializing", id, "to ", outputBytes)
 		outputHash := blake2b.Sum256(outputBytes)
 		if _, err := h.Write(outputHash[:]); err != nil {
 			return nil, fmt.Errorf("unable to write output bytes for commitment hash: %w", err)
@@ -570,7 +570,7 @@ func (outputSet OutputSet) NewAccounts() AccountOutputsSet {
 	return set
 }
 
-// ChainInputSet returns a ChainIntputSet for all ChainOutputs in the InputSet.
+// ChainInputSet returns a ChainInputSet for all ChainOutputs in the InputSet.
 func (inputSet InputSet) ChainInputSet() ChainInputSet {
 	set := make(ChainInputSet)
 	for utxoInputID, input := range inputSet {
@@ -587,11 +587,11 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 		}
 
 		if chainID.Empty() {
-			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", input.Type()))
+			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", chainOutput.Type()))
 		}
 
 		set[chainID] = ChainOutputWithCreationTime{
-			ChainOutput:  chainOutput,
+			Output:       chainOutput,
 			CreationTime: input.CreationTime,
 		}
 	}

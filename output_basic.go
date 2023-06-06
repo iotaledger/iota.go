@@ -51,8 +51,8 @@ func (e *BasicOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParam
 
 func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		// prefix + amount + stored mana
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
 		e.NativeTokens.VBytes(rentStruct, nil) +
 		e.Conditions.VBytes(rentStruct, nil) +
 		e.Features.VBytes(rentStruct, nil)
@@ -73,8 +73,8 @@ func (e *BasicOutput) Deposit() uint64 {
 	return e.Amount
 }
 
-func (a *BasicOutput) StoredMana() uint64 {
-	return a.Mana
+func (e *BasicOutput) StoredMana() uint64 {
+	return e.Mana
 }
 
 func (e *BasicOutput) Ident() Address {
@@ -90,5 +90,6 @@ func (e *BasicOutput) Size() int {
 		util.NumByteLen(e.Amount) +
 		e.NativeTokens.Size() +
 		e.Conditions.Size() +
-		e.Features.Size()
+		e.Features.Size() +
+		util.NumByteLen(e.Mana)
 }

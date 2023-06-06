@@ -1,8 +1,6 @@
 package iotago
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // ChainOutput is a type of Output which represents a chain of state transitions.
 type ChainOutput interface {
@@ -29,8 +27,8 @@ const (
 type ChainOutputs []ChainOutput
 
 type ChainOutputWithCreationTime struct {
-	ChainOutput  `serix:"0"`
-	CreationTime SlotIndex `serix:"1"`
+	Output       ChainOutput
+	CreationTime SlotIndex
 }
 
 // ChainOutputSet is a map of ChainID to ChainOutput.
