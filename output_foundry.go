@@ -112,8 +112,8 @@ func (f *FoundryOutput) Ident() Address {
 	return f.Conditions.MustSet().ImmutableAccount().Address
 }
 
-func (f *FoundryOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParameters) bool {
-	ok, _ := outputUnlockable(f, nil, ident, extParams)
+func (f *FoundryOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {
+	ok, _ := outputUnlockable(f, nil, ident, txCreationTime)
 	return ok
 }
 

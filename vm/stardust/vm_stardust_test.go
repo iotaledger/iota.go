@@ -239,7 +239,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident2},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident1,
-								UnixTime:      500,
+								SlotIndex:     500,
 							},
 						},
 					},
@@ -250,7 +250,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident2},
 							&iotago.TimelockUnlockCondition{
-								UnixTime: 500,
+								SlotIndex: 500,
 							},
 						},
 					},
@@ -265,11 +265,11 @@ func TestStardustTransactionExecution(t *testing.T) {
 								Amount:        storageDepositReturn,
 							},
 							&iotago.TimelockUnlockCondition{
-								UnixTime: 500,
+								SlotIndex: 500,
 							},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident1,
-								UnixTime:      900,
+								SlotIndex:     900,
 							},
 						},
 					},
@@ -854,7 +854,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								UnixTime:      5,
+								SlotIndex:     5,
 							},
 						},
 					},
@@ -867,7 +867,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								UnixTime:      20,
+								SlotIndex:     20,
 							},
 						},
 					},
@@ -1154,7 +1154,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								UnixTime:      10,
+								SlotIndex:     10,
 							},
 						},
 					},
@@ -1194,7 +1194,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								UnixTime:      10,
+								SlotIndex:     10,
 							},
 						},
 					},
@@ -1472,7 +1472,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 							},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								UnixTime:      10,
+								SlotIndex:     10,
 							},
 						},
 					},
@@ -1489,7 +1489,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 							},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								UnixTime:      2,
+								SlotIndex:     2,
 							},
 						},
 					},
@@ -1702,7 +1702,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 							// not yet expired, so ident1 needs to unlock
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								UnixTime:      10,
+								SlotIndex:     10,
 							},
 						},
 					},
@@ -1826,7 +1826,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident2},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident1,
-								UnixTime:      10,
+								SlotIndex:     10,
 							},
 						},
 					},
@@ -3150,7 +3150,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 							&iotago.TimelockUnlockCondition{
-								UnixTime: 5,
+								SlotIndex: 5,
 							},
 						},
 					},
@@ -3187,7 +3187,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 							&iotago.TimelockUnlockCondition{
-								UnixTime: 15,
+								SlotIndex: 15,
 							},
 						},
 					},
@@ -3224,7 +3224,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 							&iotago.TimelockUnlockCondition{
-								UnixTime: 1337,
+								SlotIndex: 1337,
 							},
 						},
 					},

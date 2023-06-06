@@ -59,14 +59,14 @@ func (builder *BasicOutputBuilder) StorageDepositReturn(returnAddr iotago.Addres
 }
 
 // Timelock sets/modifies an iotago.TimelockUnlockCondition on the output.
-func (builder *BasicOutputBuilder) Timelock(untilUnixTimeSec int64) *BasicOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{UnixTime: uint32(untilUnixTimeSec)})
+func (builder *BasicOutputBuilder) Timelock(untilSlotIndex iotago.SlotIndex) *BasicOutputBuilder {
+	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{SlotIndex: untilSlotIndex})
 	return builder
 }
 
 // Expiration sets/modifies an iotago.ExpirationUnlockCondition on the output.
-func (builder *BasicOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterUnixTimeSec int64) *BasicOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, UnixTime: uint32(expiredAfterUnixTimeSec)})
+func (builder *BasicOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterSlotIndex iotago.SlotIndex) *BasicOutputBuilder {
+	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, SlotIndex: expiredAfterSlotIndex})
 	return builder
 }
 
@@ -480,14 +480,14 @@ func (builder *NFTOutputBuilder) StorageDepositReturn(returnAddr iotago.Address,
 }
 
 // Timelock sets/modifies an iotago.TimelockUnlockCondition on the output.
-func (builder *NFTOutputBuilder) Timelock(untilUnixTimeSec int64) *NFTOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{UnixTime: uint32(untilUnixTimeSec)})
+func (builder *NFTOutputBuilder) Timelock(untilSlotIndex iotago.SlotIndex) *NFTOutputBuilder {
+	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{SlotIndex: untilSlotIndex})
 	return builder
 }
 
 // Expiration sets/modifies an iotago.ExpirationUnlockCondition on the output.
-func (builder *NFTOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterUnixTimeSec int64) *NFTOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, UnixTime: uint32(expiredAfterUnixTimeSec)})
+func (builder *NFTOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterSlotIndex iotago.SlotIndex) *NFTOutputBuilder {
+	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, SlotIndex: expiredAfterSlotIndex})
 	return builder
 }
 

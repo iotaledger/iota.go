@@ -13,9 +13,9 @@ var (
 	ErrNonUniqueUnlockConditions = errors.New("non unique unlock conditions within outputs")
 	// ErrTimelockNotExpired gets returned when timelocks in a UnlockConditionSet are not expired.
 	ErrTimelockNotExpired = errors.New("timelock not expired")
-	// ErrExpirationConditionZero gets returned when an ExpirationUnlockCondition has set the unix timestamp to zero.
+	// ErrExpirationConditionZero gets returned when an ExpirationUnlockCondition has set the slot index to zero.
 	ErrExpirationConditionZero = errors.New("expiration condition is zero")
-	// ErrTimelockConditionZero gets returned when a TimelockUnlockCondition has set the unix timestamp to zero.
+	// ErrTimelockConditionZero gets returned when a TimelockUnlockCondition has set the slot index to zero.
 	ErrTimelockConditionZero = errors.New("timelock condition is zero")
 )
 
@@ -167,14 +167,14 @@ func (f UnlockConditionSet) HasTimelockCondition() bool {
 //   - If the expiration blocks are expired, then only the return identity can unlock.
 //
 // returns booleans indicating whether the given ident can unlock and whether the return identity can unlock.
-func (f UnlockConditionSet) unlockableBy(ident Address, extParams *ExternalUnlockParameters) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
-	if err := f.TimelocksExpired(extParams); err != nil {
+func (f UnlockConditionSet) unlockableBy(ident Address, txCreationTime SlotIndex) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
+	if err := f.TimelocksExpired(txCreationTime); err != nil {
 		return false, false
 	}
 
 	// if the return ident can unlock, then ident must be the return ident
 	var returnIdent Address
-	if returnIdentCanUnlock, returnIdent = f.ReturnIdentCanUnlock(extParams); returnIdentCanUnlock {
+	if returnIdentCanUnlock, returnIdent = f.ReturnIdentCanUnlock(txCreationTime); returnIdentCanUnlock {
 		if !ident.Equal(returnIdent) {
 			return false, true
 		}
@@ -185,15 +185,15 @@ func (f UnlockConditionSet) unlockableBy(ident Address, extParams *ExternalUnloc
 }
 
 // ReturnIdentCanUnlock tells whether a sender defined in an expiration unlock condition within this set is the actual
-// identity which could unlock an Output containing this UnlockConditionSet given the ExternalUnlockParameters.
-func (f UnlockConditionSet) ReturnIdentCanUnlock(extParams *ExternalUnlockParameters) (bool, Address) {
+// identity which could unlock an Output containing this UnlockConditionSet given the transaction creation time.
+func (f UnlockConditionSet) ReturnIdentCanUnlock(txCreationTime SlotIndex) (bool, Address) {
 	expUnlockCond := f.Expiration()
 
 	if expUnlockCond == nil {
 		return false, nil
 	}
 
-	if expUnlockCond.UnixTime <= extParams.ConfUnix {
+	if expUnlockCond.SlotIndex <= txCreationTime {
 		return true, expUnlockCond.ReturnAddress
 	}
 

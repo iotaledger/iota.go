@@ -1,7 +1,7 @@
 package iotago
 
 import (
-	serializer "github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -9,7 +9,7 @@ import (
 // on the latest confirmed milestone's timestamp T:
 //   - the output can only be consumed, if T is bigger than the one defined in the condition.
 type TimelockUnlockCondition struct {
-	// The unix time in second resolution until which the timelock applies (inclusive).
+	// The slot index until which the timelock applies (inclusive).
 	SlotIndex `serix:"0,mapKey=slotIndex,omitempty"`
 }
 

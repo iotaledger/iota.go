@@ -598,7 +598,7 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 	return set
 }
 
-func outputUnlockable(output Output, next TransDepIdentOutput, target Address, extParams *ExternalUnlockParameters) (bool, error) {
+func outputUnlockable(output Output, next TransDepIdentOutput, target Address, txCreationTime SlotIndex) (bool, error) {
 	unlockConds := output.UnlockConditionSet()
 
 	checkTargetIdentOfOutput := func() (bool, error) {
@@ -620,7 +620,7 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, e
 		return checkTargetIdentOfOutput()
 	}
 
-	targetIdentCanUnlock, returnIdentCanUnlock := unlockConds.unlockableBy(target, extParams)
+	targetIdentCanUnlock, returnIdentCanUnlock := unlockConds.unlockableBy(target, txCreationTime)
 	if !targetIdentCanUnlock {
 		return false, nil
 	}
@@ -651,7 +651,7 @@ type TransIndepIdentOutput interface {
 	Ident() Address
 	// UnlockableBy tells whether the given ident can unlock this Output
 	// while also taking into consideration constraints enforced by UnlockConditions(s) within this Output (if any).
-	UnlockableBy(ident Address, extParams *ExternalUnlockParameters) bool
+	UnlockableBy(ident Address, txCreationTime SlotIndex) bool
 }
 
 // TransDepIdentOutput is a type of Output where the identity to unlock is dependent
@@ -666,7 +666,7 @@ type TransDepIdentOutput interface {
 	// while also taking into consideration constraints enforced by UnlockConditions(s) within this Output
 	// and the next state of this TransDepIdentOutput. To indicate that this TransDepIdentOutput
 	// is to be destroyed, pass nil as next.
-	UnlockableBy(ident Address, next TransDepIdentOutput, extParams *ExternalUnlockParameters) (bool, error)
+	UnlockableBy(ident Address, next TransDepIdentOutput, txCreationTime SlotIndex) (bool, error)
 }
 
 // OutputIDHex is the hex representation of an output ID.
@@ -789,13 +789,13 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 		unlockConditionSet := output.UnlockConditionSet()
 
 		if expiration := unlockConditionSet.Expiration(); expiration != nil {
-			if expiration.UnixTime == 0 {
+			if expiration.SlotIndex == 0 {
 				return ErrExpirationConditionZero
 			}
 		}
 
 		if timelock := unlockConditionSet.Timelock(); timelock != nil {
-			if timelock.UnixTime == 0 {
+			if timelock.SlotIndex == 0 {
 				return ErrTimelockConditionZero
 			}
 		}

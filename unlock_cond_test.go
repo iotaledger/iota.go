@@ -27,7 +27,7 @@ func TestUnlockConditionsDeSerialize(t *testing.T) {
 		{
 			name: "ok - TimelockUnlockCondition",
 			source: &iotago.TimelockUnlockCondition{
-				UnixTime: 1000,
+				SlotIndex: 1000,
 			},
 			target: &iotago.TimelockUnlockCondition{},
 		},
@@ -35,7 +35,7 @@ func TestUnlockConditionsDeSerialize(t *testing.T) {
 			name: "ok - ExpirationUnlockCondition",
 			source: &iotago.ExpirationUnlockCondition{
 				ReturnAddress: tpkg.RandEd25519Address(),
-				UnixTime:      1000,
+				SlotIndex:     1000,
 			},
 			target: &iotago.ExpirationUnlockCondition{},
 		},

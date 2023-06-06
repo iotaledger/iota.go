@@ -351,7 +351,7 @@ func identToUnlock(vmParams *Params, input iotago.Output, inputIndex uint16) (io
 }
 
 func checkExpiredForReceiver(vmParams *Params, output iotago.Output) iotago.Address {
-	if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(vmParams.External); ok {
+	if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(vmParams.WorkingSet.Tx.Essence.CreationTime); ok {
 		return returnIdent
 	}
 

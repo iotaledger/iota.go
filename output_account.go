@@ -180,8 +180,8 @@ func (a *AccountOutput) Clone() Output {
 	}
 }
 
-func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, extParams *ExternalUnlockParameters) (bool, error) {
-	return outputUnlockable(a, next, ident, extParams)
+func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, txCreationTime SlotIndex) (bool, error) {
+	return outputUnlockable(a, next, ident, txCreationTime)
 }
 
 func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {

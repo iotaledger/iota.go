@@ -44,8 +44,8 @@ func (e *BasicOutput) Clone() Output {
 	}
 }
 
-func (e *BasicOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParameters) bool {
-	ok, _ := outputUnlockable(e, nil, ident, extParams)
+func (e *BasicOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {
+	ok, _ := outputUnlockable(e, nil, ident, txCreationTime)
 	return ok
 }
 

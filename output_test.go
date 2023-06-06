@@ -52,10 +52,10 @@ func TestOutputsDeSerialize(t *testing.T) {
 						ReturnAddress: tpkg.RandEd25519Address(),
 						Amount:        1000,
 					},
-					&iotago.TimelockUnlockCondition{UnixTime: 1337},
+					&iotago.TimelockUnlockCondition{SlotIndex: 1337},
 					&iotago.ExpirationUnlockCondition{
 						ReturnAddress: tpkg.RandEd25519Address(),
-						UnixTime:      4000,
+						SlotIndex:     4000,
 					},
 				},
 				Features: iotago.BasicOutputFeatures{
@@ -121,10 +121,10 @@ func TestOutputsDeSerialize(t *testing.T) {
 						ReturnAddress: tpkg.RandEd25519Address(),
 						Amount:        1000,
 					},
-					&iotago.TimelockUnlockCondition{UnixTime: 1337},
+					&iotago.TimelockUnlockCondition{SlotIndex: 1337},
 					&iotago.ExpirationUnlockCondition{
 						ReturnAddress: tpkg.RandEd25519Address(),
-						UnixTime:      4000,
+						SlotIndex:     4000,
 					},
 				},
 				Features: iotago.NFTOutputFeatures{
@@ -326,7 +326,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
-							UnixTime:      1337,
+							SlotIndex:     1337,
 						},
 					},
 				},
@@ -335,7 +335,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.TimelockUnlockCondition{
-							UnixTime: 1337,
+							SlotIndex: 1337,
 						},
 					},
 				},
@@ -351,7 +351,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
-							UnixTime:      0,
+							SlotIndex:     0,
 						},
 					},
 				},
@@ -366,7 +366,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.TimelockUnlockCondition{
-							UnixTime: 0,
+							SlotIndex: 0,
 						},
 					},
 				},
@@ -773,7 +773,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 		output                iotago.TransIndepIdentOutput
 		targetIdent           iotago.Address
 		identCanUnlockInstead iotago.Address
-		extParams             *iotago.ExternalUnlockParameters
+		txCreationTime        iotago.SlotIndex
 		canUnlock             bool
 	}
 	tests := []test{
@@ -787,9 +787,9 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 					},
 				},
-				targetIdent: sourceIdent,
-				extParams:   &iotago.ExternalUnlockParameters{},
-				canUnlock:   true,
+				targetIdent:    sourceIdent,
+				txCreationTime: iotago.SlotIndex(0),
+				canUnlock:      true,
 			}
 		}(),
 		func() test {
@@ -801,9 +801,9 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
-				targetIdent: tpkg.RandEd25519Address(),
-				extParams:   &iotago.ExternalUnlockParameters{},
-				canUnlock:   false,
+				targetIdent:    tpkg.RandEd25519Address(),
+				txCreationTime: iotago.SlotIndex(0),
+				canUnlock:      false,
 			}
 		}(),
 		func() test {
@@ -816,13 +816,13 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
-							UnixTime:      10,
+							SlotIndex:     10,
 						},
 					},
 				},
 				targetIdent:           sourceIdent,
 				identCanUnlockInstead: nil,
-				extParams:             &iotago.ExternalUnlockParameters{ConfUnix: 5},
+				txCreationTime:        iotago.SlotIndex(5),
 				canUnlock:             true,
 			}
 		}(),
@@ -837,13 +837,13 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: senderIdent,
-							UnixTime:      5,
+							SlotIndex:     5,
 						},
 					},
 				},
 				targetIdent:           sourceIdent,
 				identCanUnlockInstead: senderIdent,
-				extParams:             &iotago.ExternalUnlockParameters{ConfUnix: 10},
+				txCreationTime:        iotago.SlotIndex(10),
 				canUnlock:             false,
 			}
 		}(),
@@ -855,12 +855,12 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
-						&iotago.TimelockUnlockCondition{UnixTime: 5},
+						&iotago.TimelockUnlockCondition{SlotIndex: 5},
 					},
 				},
-				targetIdent: sourceIdent,
-				extParams:   &iotago.ExternalUnlockParameters{ConfUnix: 10},
-				canUnlock:   true,
+				targetIdent:    sourceIdent,
+				txCreationTime: iotago.SlotIndex(10),
+				canUnlock:      true,
 			}
 		}(),
 		func() test {
@@ -871,12 +871,12 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
-						&iotago.TimelockUnlockCondition{UnixTime: 10},
+						&iotago.TimelockUnlockCondition{SlotIndex: 10},
 					},
 				},
-				targetIdent: sourceIdent,
-				extParams:   &iotago.ExternalUnlockParameters{ConfUnix: 5},
-				canUnlock:   false,
+				targetIdent:    sourceIdent,
+				txCreationTime: iotago.SlotIndex(5),
+				canUnlock:      false,
 			}
 		}(),
 	}
@@ -884,11 +884,11 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
-				require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetIdent, tt.extParams))
+				require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetIdent, tt.txCreationTime))
 				if tt.identCanUnlockInstead == nil {
 					return
 				}
-				require.True(t, tt.output.UnlockableBy(tt.identCanUnlockInstead, tt.extParams))
+				require.True(t, tt.output.UnlockableBy(tt.identCanUnlockInstead, tt.txCreationTime))
 			})
 		})
 	}
@@ -901,7 +901,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 		next                  iotago.TransDepIdentOutput
 		targetIdent           iotago.Address
 		identCanUnlockInstead iotago.Address
-		extParams             *iotago.ExternalUnlockParameters
+		txCreationTime        iotago.SlotIndex
 		wantErr               error
 		canUnlock             bool
 	}
@@ -928,9 +928,9 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
 				},
-				targetIdent: stateCtrl,
-				extParams:   &iotago.ExternalUnlockParameters{},
-				canUnlock:   true,
+				targetIdent:    stateCtrl,
+				txCreationTime: iotago.SlotIndex(0),
+				canUnlock:      true,
 			}
 		}(),
 		func() test {
@@ -957,7 +957,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 				},
 				targetIdent:           stateCtrl,
 				identCanUnlockInstead: govCtrl,
-				extParams:             &iotago.ExternalUnlockParameters{},
+				txCreationTime:        iotago.SlotIndex(0),
 				canUnlock:             false,
 			}
 		}(),
@@ -978,7 +978,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 				next:                  nil,
 				targetIdent:           stateCtrl,
 				identCanUnlockInstead: govCtrl,
-				extParams:             &iotago.ExternalUnlockParameters{},
+				txCreationTime:        iotago.SlotIndex(0),
 				canUnlock:             false,
 			}
 		}(),
@@ -987,7 +987,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
-				canUnlock, err := tt.current.UnlockableBy(tt.targetIdent, tt.next, tt.extParams)
+				canUnlock, err := tt.current.UnlockableBy(tt.targetIdent, tt.next, tt.txCreationTime)
 				if tt.wantErr != nil {
 					require.ErrorIs(t, err, tt.wantErr)
 					return
@@ -996,7 +996,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 				if tt.identCanUnlockInstead == nil {
 					return
 				}
-				canUnlockInstead, err := tt.current.UnlockableBy(tt.identCanUnlockInstead, tt.next, tt.extParams)
+				canUnlockInstead, err := tt.current.UnlockableBy(tt.identCanUnlockInstead, tt.next, tt.txCreationTime)
 				require.NoError(t, err)
 				require.True(t, canUnlockInstead)
 			})
