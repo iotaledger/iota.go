@@ -66,17 +66,15 @@ func (outputType OutputType) String() string {
 	return outputNames[outputType]
 }
 
-var (
-	outputNames = [OutputNFT + 1]string{
-		"SigLockedSingleOutput",
-		"SigLockedDustAllowanceOutput",
-		"TreasuryOutput",
-		"BasicOutput",
-		"AccountOutput",
-		"FoundryOutput",
-		"NFTOutput",
-	}
-)
+var outputNames = [OutputNFT + 1]string{
+	"SigLockedSingleOutput",
+	"SigLockedDustAllowanceOutput",
+	"TreasuryOutput",
+	"BasicOutput",
+	"AccountOutput",
+	"FoundryOutput",
+	"NFTOutput",
+}
 
 const (
 	// OutputIDLength defines the length of an OutputID.
@@ -102,6 +100,9 @@ func outputOffsetVByteCost(rentStruct *RentStructure) VBytes {
 // OutputID defines the identifier for an UTXO which consists
 // out of the referenced TransactionID and the output's index.
 type OutputID [OutputIDLength]byte
+
+// EmptyOutputID is an empty OutputID.
+var EmptyOutputID = OutputID{}
 
 // ToHex converts the OutputID to its hex representation.
 func (outputID OutputID) ToHex() string {
@@ -639,7 +640,7 @@ type ExternalUnlockParameters struct {
 	ConfUnix uint32
 	// protocol parameters
 	ProtocolParameters
-	//TODO: this is to be replaced with the transaction creationtime
+	// TODO: this is to be replaced with the transaction creationtime
 }
 
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent
