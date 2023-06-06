@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-
 	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -333,6 +332,17 @@ func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	return &iotago.TaggedData{Tag: tag, Data: data}
 }
 
+func RandAccountID() iotago.AccountID {
+	alias := iotago.AccountID{}
+	copy(alias[:], RandBytes(iotago.AccountIDLength))
+
+	return alias
+}
+
+func RandSlotIndex() iotago.SlotIndex {
+	return iotago.SlotIndex(RandUint64(math.MaxUint64))
+}
+
 // RandBlockID produces a random block ID.
 func RandBlockID() iotago.BlockID {
 	return Rand40ByteArray()
@@ -355,8 +365,16 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 		Payload:         payload,
 		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Signature:       RandEd25519Signature(),
+		IssuerID:        RandAccountID(),
 		Nonce:           uint64(rand.Intn(1000)),
 	}
+}
+
+func RandBlockWithIssuerAndBurnedMana(issuerID iotago.AccountID, burnedAmount uint64) *iotago.Block {
+	block := RandBlock(iotago.PayloadTransaction)
+	block.IssuerID = issuerID
+	block.BurnedMana = burnedAmount
+	return block
 }
 
 // RandTransactionWithEssence returns a random transaction with a specific essence.
