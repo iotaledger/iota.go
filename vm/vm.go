@@ -507,7 +507,7 @@ func ExecFuncBalancedDeposit() ExecFunc {
 func ExecFuncTimelocks() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		for inputIndex, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
-			if err := input.Output.UnlockConditionSet().TimelocksExpired(vmParams.External); err != nil {
+			if err := input.Output.UnlockConditionSet().TimelocksExpired(vmParams.WorkingSet.Tx.Essence.CreationTime); err != nil {
 				return fmt.Errorf("%w: input at index %d's timelocks are not expired", err, inputIndex)
 			}
 		}

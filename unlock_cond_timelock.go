@@ -1,7 +1,7 @@
 package iotago
 
 import (
-	"github.com/iotaledger/hive.go/serializer/v2"
+	serializer "github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -10,12 +10,12 @@ import (
 //   - the output can only be consumed, if T is bigger than the one defined in the condition.
 type TimelockUnlockCondition struct {
 	// The unix time in second resolution until which the timelock applies (inclusive).
-	UnixTime uint32 `serix:"0,mapKey=unixTime,omitempty"`
+	SlotIndex `serix:"0,mapKey=slotIndex,omitempty"`
 }
 
 func (s *TimelockUnlockCondition) Clone() UnlockCondition {
 	return &TimelockUnlockCondition{
-		UnixTime: s.UnixTime,
+		SlotIndex: s.SlotIndex,
 	}
 }
 
@@ -30,7 +30,7 @@ func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {
 	}
 
 	switch {
-	case s.UnixTime != otherCond.UnixTime:
+	case s.SlotIndex != otherCond.SlotIndex:
 		return false
 	}
 
@@ -43,5 +43,5 @@ func (s *TimelockUnlockCondition) Type() UnlockConditionType {
 
 func (s *TimelockUnlockCondition) Size() int {
 	return util.NumByteLen(byte(UnlockConditionTimelock)) +
-		util.NumByteLen(s.UnixTime)
+		util.NumByteLen(s.SlotIndex)
 }

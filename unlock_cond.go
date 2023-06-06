@@ -202,15 +202,15 @@ func (f UnlockConditionSet) ReturnIdentCanUnlock(extParams *ExternalUnlockParame
 
 // TimelocksExpired tells whether UnlockCondition(s) in this set which impose a timelock are expired
 // in relation to the given ExternalUnlockParameters.
-func (f UnlockConditionSet) TimelocksExpired(extParams *ExternalUnlockParameters) error {
+func (f UnlockConditionSet) TimelocksExpired(txCreationTime SlotIndex) error {
 	timelock := f.Timelock()
 
 	if timelock == nil {
 		return nil
 	}
 
-	if extParams.ConfUnix < timelock.UnixTime {
-		return fmt.Errorf("%w: (unix) cond %d vs. ext %d", ErrTimelockNotExpired, timelock.UnixTime, extParams.ConfUnix)
+	if txCreationTime < timelock.SlotIndex {
+		return fmt.Errorf("%w: slotIndex cond %d vs. tx creation slot %d", ErrTimelockNotExpired, timelock.SlotIndex, txCreationTime)
 	}
 
 	return nil
