@@ -33,6 +33,7 @@ func TestBlockBuilder(t *testing.T) {
 	block, err := builder.NewBlockBuilder().
 		Payload(taggedDataPayload).
 		StrongParents(parents).
+		BurnedMana(100).
 		ProofOfWork(context.Background(), targetPoWScore).
 		Build()
 	require.NoError(t, err)
@@ -40,4 +41,6 @@ func TestBlockBuilder(t *testing.T) {
 	powScore, _, err := block.POW()
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, powScore, targetPoWScore)
+
+	require.EqualValues(t, 100, block.BurnedMana)
 }

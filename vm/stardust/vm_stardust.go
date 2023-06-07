@@ -111,6 +111,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 	if !current.AccountID.Empty() {
 		return fmt.Errorf("AccountOutput's ID is not zeroed even though it is new")
 	}
+
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
 }
 
@@ -119,9 +120,11 @@ func accountStateChangeValid(input *iotago.ChainOutputWithCreationTime, vmParams
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
 		return fmt.Errorf("old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures)
 	}
+
 	if current.StateIndex == next.StateIndex {
 		return accountGovernanceSTVF(current, next)
 	}
+
 	return accountStateSTVF(input, next, vmParams)
 }
 
@@ -160,6 +163,7 @@ func accountStateSTVF(input *iotago.ChainOutputWithCreationTime, next *iotago.Ac
 
 	// check that for a foundry counter change, X amount of foundries were actually created
 	if current.FoundryCounter == next.FoundryCounter {
+		// TODO: is it ok to exit early without any error without calling accountBlockIssuerSTVF first?
 		return nil
 	}
 
@@ -207,22 +211,25 @@ func accountBlockIssuerSTVF(input *iotago.ChainOutputWithCreationTime, next *iot
 		if bic.Negative() {
 			return fmt.Errorf("%w: Negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
 		}
+	} else {
+		return fmt.Errorf("%w: no BIC provided for block issuer", iotago.ErrInvalidBlockIssuerTransition)
 	}
+
 	txSlotIndex := vmParams.WorkingSet.Tx.Essence.CreationTime
 
 	if currentBIFeat.ExpirySlot >= txSlotIndex {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBIFeat == nil {
-			return fmt.Errorf("%w: Cannot remove block issuer feature until it expires", iotago.ErrInvalidBlockIssuerTransition)
+			return fmt.Errorf("%w: cannot remove block issuer feature until it expires", iotago.ErrInvalidBlockIssuerTransition)
 		}
 		if nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
-			return fmt.Errorf("%w: Block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
+			return fmt.Errorf("%w: block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 		}
 
 	} else if nextBIFeat != nil {
 		// if the block issuer feature has expired, it must either be removed or expiry extended.
 		if nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
-			return fmt.Errorf("%w: Block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
+			return fmt.Errorf("%w: block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 		}
 	}
 
@@ -265,7 +272,7 @@ func accountBlockIssuerSTVF(input *iotago.ChainOutputWithCreationTime, next *iot
 	}
 
 	if manaIn > manaOut {
-		return fmt.Errorf("%w: Cannot move Mana off an account", iotago.ErrInvalidBlockIssuerTransition)
+		return fmt.Errorf("%w: cannot move Mana off an account", iotago.ErrInvalidBlockIssuerTransition)
 	}
 	return nil
 }
@@ -276,15 +283,15 @@ func accountDestructionValid(input *iotago.ChainOutputWithCreationTime, vmParams
 	if BIFeat != nil {
 		if BIFeat.ExpirySlot >= vmParams.WorkingSet.Tx.Essence.CreationTime {
 			// TODO: better error
-			return fmt.Errorf("%w: Cannot destroy output until the block issuer feature expires", iotago.ErrInvalidBlockIssuerTransition)
+			return fmt.Errorf("%w: cannot destroy output until the block issuer feature expires", iotago.ErrInvalidBlockIssuerTransition)
 		}
 		if bic, exists := vmParams.WorkingSet.BIC[outputToDestroy.AccountID]; exists {
 			if bic.Negative() {
-				return fmt.Errorf("%w: Negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
+				return fmt.Errorf("%w: negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
 			}
 		} else {
 			// TODO: better error
-			return fmt.Errorf("%w: No BIC provided for block issuer", iotago.ErrInvalidBlockIssuerTransition)
+			return fmt.Errorf("%w: no BIC provided for block issuer", iotago.ErrInvalidBlockIssuerTransition)
 		}
 	}
 	return nil

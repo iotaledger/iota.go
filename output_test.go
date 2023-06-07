@@ -26,6 +26,40 @@ func TestOutputTypeString(t *testing.T) {
 		require.Equal(t, tt.outputType.String(), tt.outputTypeString)
 	}
 }
+func TestOutputsCommitment(t *testing.T) {
+	outputs1 := iotago.Outputs[iotago.Output]{
+		&iotago.BasicOutput{
+			Amount: 10,
+			Conditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+			},
+		},
+		&iotago.BasicOutput{
+			Amount: 10,
+			Conditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+			},
+		},
+	}
+
+	outputs2 := iotago.Outputs[iotago.Output]{
+		&iotago.BasicOutput{
+			Amount: 11,
+			Conditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+			},
+		},
+		&iotago.BasicOutput{
+			Amount: 11,
+			Conditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+			},
+		},
+	}
+
+	require.NotEqual(t, outputs1.MustCommitment(), outputs2.MustCommitment(), "commitment for different Outputs must be different")
+
+}
 
 func TestOutputIDString(t *testing.T) {
 	tests := []struct {
@@ -63,6 +97,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 					&iotago.TagFeature{Tag: tpkg.RandBytes(32)},
 				},
+				Mana: 500,
 			},
 			target: &iotago.BasicOutput{},
 		},
@@ -86,6 +121,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 				},
+				Mana: 500,
 			},
 			target: &iotago.AccountOutput{},
 		},
@@ -106,6 +142,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 				Features: iotago.FoundryOutputFeatures{
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 				},
+				Mana: 500,
 			},
 			target: &iotago.FoundryOutput{},
 		},
@@ -136,6 +173,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(10)},
 				},
+				Mana: 500,
 			},
 			target: &iotago.NFTOutput{},
 		},
@@ -169,6 +207,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 				&iotago.BasicOutput{
 					Amount:     tpkg.TestTokenSupply,
 					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()}},
+					Mana:       500,
 				},
 			},
 			wantErr: nil,
@@ -198,6 +237,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 							Amount:        44200,
 						},
 					},
+					Mana: 500,
 				},
 			},
 			wantErr: nil,
@@ -233,6 +273,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 							Amount: OneMi + 1,
 						},
 					},
+					Mana: 500,
 				},
 			},
 			wantErr: iotago.ErrStorageDepositExceedsTargetOutputDeposit,

@@ -56,7 +56,7 @@ type WorkingSet struct {
 	// The Unlocks carried by the transaction mapped by type.
 	UnlocksByType iotago.UnlocksByType
 	// BIC is the block issuance credit for MCA slots prior to the transaction's creation time (or for the slot to which the block commits)
-	// Contains one value for each account output touched in the transaction and empty if no acccount outputs touched.
+	// Contains one value for each account output touched in the transaction and empty if no account outputs touched.
 	BIC iotago.BICInputSet
 }
 

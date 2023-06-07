@@ -367,6 +367,7 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 		Signature:       RandEd25519Signature(),
 		IssuerID:        RandAccountID(),
 		Nonce:           uint64(rand.Intn(1000)),
+		BurnedMana:      RandUint64(1000),
 	}
 }
 

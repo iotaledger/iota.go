@@ -346,12 +346,12 @@ func (outputs Outputs[T]) Commitment() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	for id, output := range outputs {
+	for _, output := range outputs {
 		outputBytes, err := internalEncode(output)
 		if err != nil {
 			return nil, fmt.Errorf("unable to compute commitment hash: %w", err)
 		}
-		fmt.Println("serializing", id, "to ", outputBytes)
+
 		outputHash := blake2b.Sum256(outputBytes)
 		if _, err := h.Write(outputHash[:]); err != nil {
 			return nil, fmt.Errorf("unable to write output bytes for commitment hash: %w", err)
