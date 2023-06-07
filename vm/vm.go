@@ -437,7 +437,7 @@ func ExecFuncBalancedMana() ExecFunc {
 		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 
 		if manaIn < manaOut {
-			return fmt.Errorf("%w: Mana in %d, Mana out%d", iotago.ErrInputOutputSumMismatch, manaIn, manaOut)
+			return fmt.Errorf("%w: Mana in %d, Mana out %d", iotago.ErrInputOutputSumMismatch, manaIn, manaOut)
 		}
 
 		return nil
@@ -530,11 +530,11 @@ func ExecFuncChainTransitions() ExecFunc {
 		}
 
 		for chainID, outputChain := range vmParams.WorkingSet.OutChains {
-			inputChain := vmParams.WorkingSet.InChains[chainID]
-			if previousState := inputChain.Output; previousState != nil {
+			if _, chainPresentInInputs := vmParams.WorkingSet.InChains[chainID]; chainPresentInInputs {
 				continue
 			}
-			if err := vm.ChainSTVF(iotago.ChainTransitionTypeGenesis, inputChain, outputChain, vmParams); err != nil {
+
+			if err := vm.ChainSTVF(iotago.ChainTransitionTypeGenesis, nil, outputChain, vmParams); err != nil {
 				return fmt.Errorf("new chain %s (%T) state transition failed: %w", chainID, outputChain, err)
 			}
 		}

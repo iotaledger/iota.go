@@ -215,13 +215,13 @@ func accountBlockIssuerSTVF(input *iotago.ChainOutputWithCreationTime, next *iot
 		if nextBIFeat == nil {
 			return fmt.Errorf("%w: Cannot remove block issuer feature until it expires", iotago.ErrInvalidBlockIssuerTransition)
 		}
-		if nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.MaxCommitableAge) {
+		if nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
 			return fmt.Errorf("%w: Block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 		}
 
 	} else if nextBIFeat != nil {
 		// if the block issuer feature has expired, it must either be removed or expiry extended.
-		if nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.MaxCommitableAge) {
+		if nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
 			return fmt.Errorf("%w: Block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 		}
 	}

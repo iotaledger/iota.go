@@ -110,11 +110,22 @@ func (f *FoundryOutput) Clone() Output {
 }
 
 func (f *FoundryOutput) Ident() Address {
-	a := f.Conditions.MustSet().ImmutableAccount()
-	if a == nil {
-		fmt.Println("aaa")
+	if f == nil {
+		fmt.Println("fff")
 	}
-	return a.Address
+	a := f.Conditions
+	if a == nil {
+		fmt.Println("aaaa")
+	}
+	b := a.MustSet()
+	if b == nil {
+		fmt.Println("bbbb")
+	}
+	c := b.ImmutableAccount()
+	if c == nil {
+		fmt.Println("ccc")
+	}
+	return c.Address
 }
 
 func (f *FoundryOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {

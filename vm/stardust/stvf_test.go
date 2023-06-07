@@ -396,11 +396,9 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 
 	tests := []test{
 		{
-			name: "ok - genesis transition",
-			input: &iotago.ChainOutputWithCreationTime{
-				Output: exampleFoundry,
-			},
-			next:      nil,
+			name:      "ok - genesis transition",
+			next:      exampleFoundry,
+			input:     nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
@@ -427,11 +425,9 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "fail - genesis transition - mint supply not equal to out",
-			input: &iotago.ChainOutputWithCreationTime{
-				Output: exampleFoundry,
-			},
-			next:      nil,
+			name:      "fail - genesis transition - mint supply not equal to out",
+			next:      exampleFoundry,
+			input:     nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
@@ -458,11 +454,9 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: &iotago.ChainTransitionError{},
 		},
 		{
-			name: "fail - genesis transition - serial number not in interval",
-			input: &iotago.ChainOutputWithCreationTime{
-				Output: exampleFoundry,
-			},
-			next:      nil,
+			name:      "fail - genesis transition - serial number not in interval",
+			next:      exampleFoundry,
+			input:     nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
@@ -832,11 +826,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 
 	tests := []test{
 		{
-			name: "ok - genesis transition",
-			input: &iotago.ChainOutputWithCreationTime{
-				Output: exampleCurrentNFTOutput,
-			},
-			next:      nil,
+			name:      "ok - genesis transition",
+			next:      exampleCurrentNFTOutput,
+			input:     nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},

@@ -65,7 +65,7 @@ func TestNFTTransition(t *testing.T) {
 	}
 	resolvedInputs := iotago.ResolvedInputs{InputSet: inputs}
 	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{
-		DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+		DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 	}}, resolvedInputs))
 }
 
@@ -172,7 +172,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 
 	resolvedInputs := iotago.ResolvedInputs{InputSet: inputs}
 	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{
-		DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+		DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 	}}, resolvedInputs))
 }
 
@@ -663,7 +663,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			return test{
 				name: "ok",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -760,7 +760,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			return test{
 				name: "fail - changed immutable account address unlock",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -2878,7 +2878,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			return test{
 				name: "fail - issuer not unlocked due to governance transition",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -3034,7 +3034,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			return test{
 				name: "ok - issuer unlocked with state transition",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -3104,7 +3104,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			return test{
 				name: "ok - issuer is the governor",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
 				inputs: inputs,
 				tx: &iotago.Transaction{
@@ -3271,7 +3271,7 @@ func TestTxSemanticMana(t *testing.T) {
 	tests := []test{
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDs(3)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.InputSet{
 				inputIDs[0]: iotago.OutputWithCreationTime{
@@ -3306,7 +3306,7 @@ func TestTxSemanticMana(t *testing.T) {
 				name: "ok - stored Mana only",
 				vmParams: &vm.Params{
 					External: &iotago.ExternalUnlockParameters{
-						DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+						DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 					},
 				},
 				inputs: inputs,
@@ -3321,7 +3321,7 @@ func TestTxSemanticMana(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDs(3)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := iotago.InputSet{
 				inputIDs[0]: iotago.OutputWithCreationTime{
@@ -3359,7 +3359,7 @@ func TestTxSemanticMana(t *testing.T) {
 				name: "ok - stored and allotted",
 				vmParams: &vm.Params{
 					External: &iotago.ExternalUnlockParameters{
-						DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+						DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 					},
 				},
 				inputs: inputs,
