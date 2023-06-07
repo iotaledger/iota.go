@@ -26,6 +26,7 @@ var emptyAPI = iotago.LatestAPI(&iotago.ProtocolParameters{
 	TokenSupply:           0,
 	GenesisUnixTimestamp:  0,
 	SlotDurationInSeconds: 0,
+	MaxCommitableAge:      0,
 })
 
 func TestMain(m *testing.M) {

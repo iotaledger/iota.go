@@ -105,6 +105,8 @@ type ProtocolParameters struct {
 	StoredManaDecayFactors []float64 //`serix:"9,mapKey=storedManaDecayFactors"`
 	// PotentialManaDecayFactors is a map of slot index to decay factor.
 	PotentialManaDecayFactors []float64 //`serix:"10,mapKey=potentialManaDecayFactors"`
+	// MaxCommitableAge defines the maximum age of a slot to which a block can commit relative to the block timestamp.
+	MaxCommitableAge uint32 `serix:"11,mapKey=maxCommitableAge"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {
