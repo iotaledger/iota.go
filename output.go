@@ -590,7 +590,7 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", chainOutput.Type()))
 		}
 
-		set[chainID] = ChainOutputWithCreationTime{
+		set[chainID] = &ChainOutputWithCreationTime{
 			Output:       chainOutput,
 			CreationTime: input.CreationTime,
 		}
@@ -636,8 +636,7 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, t
 // ExternalUnlockParameters defines a palette of external system parameters which are used to
 // determine whether an Output can be unlocked.
 type ExternalUnlockParameters struct {
-	// protocol parameters
-	ProtocolParameters
+	DecayProvider *DecayProvider
 }
 
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent

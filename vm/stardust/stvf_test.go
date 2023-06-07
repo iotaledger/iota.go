@@ -59,7 +59,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 
 	type test struct {
 		name      string
-		input     iotago.ChainOutputWithCreationTime
+		input     *iotago.ChainOutputWithCreationTime
 		next      *iotago.AccountOutput
 		nextMut   map[string]fieldMutations
 		transType iotago.ChainTransitionType
@@ -70,20 +70,18 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	tests := []test{
 		{
 			name: "ok - genesis transition",
-			input: iotago.ChainOutputWithCreationTime{
-				Output: &iotago.AccountOutput{
-					Amount:    100,
-					AccountID: iotago.AccountID{},
-					Conditions: iotago.AccountOutputUnlockConditions{
-						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					},
-					ImmutableFeatures: iotago.AccountOutputImmFeatures{
-						&iotago.IssuerFeature{Address: exampleIssuer},
-					},
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				ImmutableFeatures: iotago.AccountOutputImmFeatures{
+					&iotago.IssuerFeature{Address: exampleIssuer},
 				},
 			},
-			next:      nil,
+			input:     nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{},
@@ -97,7 +95,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - destroy transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: tpkg.RandAccountAddress().AccountID(),
@@ -119,7 +117,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - gov transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -157,7 +155,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -191,9 +189,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					InChains: map[iotago.ChainID]iotago.ChainOutputWithCreationTime{
+					InChains: map[iotago.ChainID]*iotago.ChainOutputWithCreationTime{
 						// serial number 5
-						exampleExistingFoundryOutputID: iotago.ChainOutputWithCreationTime{
+						exampleExistingFoundryOutputID: {
 							Output: exampleExistingFoundryOutput,
 						},
 					},
@@ -226,7 +224,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - gov transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:     100,
 					AccountID:  exampleAccountID,
@@ -262,7 +260,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:         100,
 					AccountID:      exampleAccountID,
@@ -388,7 +386,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 
 	type test struct {
 		name      string
-		input     iotago.ChainOutputWithCreationTime
+		input     *iotago.ChainOutputWithCreationTime
 		next      *iotago.FoundryOutput
 		nextMut   map[string]fieldMutations
 		transType iotago.ChainTransitionType
@@ -399,7 +397,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 	tests := []test{
 		{
 			name: "ok - genesis transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			next:      nil,
@@ -414,7 +412,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Unlocks: nil,
 					},
 					InChains: iotago.ChainInputSet{
-						exampleAccountIdent.AccountID(): iotago.ChainOutputWithCreationTime{
+						exampleAccountIdent.AccountID(): &iotago.ChainOutputWithCreationTime{
 							Output: &iotago.AccountOutput{FoundryCounter: 5},
 						},
 					},
@@ -430,7 +428,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - genesis transition - mint supply not equal to out",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			next:      nil,
@@ -445,7 +443,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Unlocks: nil,
 					},
 					InChains: iotago.ChainInputSet{
-						exampleAccountIdent.AccountID(): iotago.ChainOutputWithCreationTime{
+						exampleAccountIdent.AccountID(): &iotago.ChainOutputWithCreationTime{
 							Output: &iotago.AccountOutput{FoundryCounter: 5},
 						},
 					},
@@ -461,7 +459,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - genesis transition - serial number not in interval",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			next:      nil,
@@ -476,7 +474,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Unlocks: nil,
 					},
 					InChains: iotago.ChainInputSet{
-						exampleAccountIdent.AccountID(): iotago.ChainOutputWithCreationTime{
+						exampleAccountIdent.AccountID(): &iotago.ChainOutputWithCreationTime{
 							Output: &iotago.AccountOutput{FoundryCounter: 6},
 						},
 					},
@@ -489,11 +487,9 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: &iotago.ChainTransitionError{},
 		},
 		{
-			name: "fail - genesis transition - foundries unsorted",
-			input: iotago.ChainOutputWithCreationTime{
-				Output: exampleFoundry,
-			},
-			next:      nil,
+			name:      "fail - genesis transition - foundries unsorted",
+			next:      exampleFoundry,
+			input:     nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
@@ -520,7 +516,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Unlocks: nil,
 					},
 					InChains: iotago.ChainInputSet{
-						exampleAccountIdent.AccountID(): iotago.ChainOutputWithCreationTime{
+						exampleAccountIdent.AccountID(): &iotago.ChainOutputWithCreationTime{
 							Output: &iotago.AccountOutput{FoundryCounter: 5},
 						},
 					},
@@ -536,7 +532,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition - metadata feature",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -556,7 +552,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition - mint",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -580,7 +576,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition - melt",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -607,7 +603,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition - burn",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut:   map[string]fieldMutations{},
@@ -626,7 +622,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition - melt complete supply",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -651,7 +647,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition - mint (out: excess)",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -676,7 +672,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition - mint (out: deficit)",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -701,7 +697,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition - melt (out: excess)",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -729,7 +725,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -749,7 +745,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - destroy transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: toBeDestoyedFoundry,
 			},
 			transType: iotago.ChainTransitionTypeDestroy,
@@ -763,7 +759,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - destroy transition - foundry token unbalanced",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			transType: iotago.ChainTransitionTypeDestroy,
@@ -826,7 +822,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 
 	type test struct {
 		name      string
-		input     iotago.ChainOutputWithCreationTime
+		input     *iotago.ChainOutputWithCreationTime
 		next      *iotago.NFTOutput
 		nextMut   map[string]fieldMutations
 		transType iotago.ChainTransitionType
@@ -837,7 +833,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 	tests := []test{
 		{
 			name: "ok - genesis transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleCurrentNFTOutput,
 			},
 			next:      nil,
@@ -854,7 +850,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - destroy transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleCurrentNFTOutput,
 			},
 			next:      nil,
@@ -869,7 +865,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleCurrentNFTOutput,
 			},
 			nextMut: map[string]fieldMutations{
@@ -896,7 +892,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition",
-			input: iotago.ChainOutputWithCreationTime{
+			input: &iotago.ChainOutputWithCreationTime{
 				Output: exampleCurrentNFTOutput,
 			},
 			nextMut: map[string]fieldMutations{

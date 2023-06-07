@@ -15,7 +15,7 @@ type VirtualMachine interface {
 	// Pass own ExecFunc(s) to override the VM's default execution function list.
 	Execute(t *iotago.Transaction, params *Params, inputs iotago.ResolvedInputs, overrideFuncs ...ExecFunc) error
 	// ChainSTVF executes the chain state transition validation function.
-	ChainSTVF(transType iotago.ChainTransitionType, input iotago.ChainOutputWithCreationTime, next iotago.ChainOutput, vmParams *Params) error
+	ChainSTVF(transType iotago.ChainTransitionType, input *iotago.ChainOutputWithCreationTime, next iotago.ChainOutput, vmParams *Params) error
 }
 
 // Params defines the VirtualMachine parameters under which the VM operates.
@@ -31,8 +31,6 @@ type Params struct {
 type WorkingSet struct {
 	// The identities which are successfully unlocked from the input side.
 	UnlockedIdents UnlockedIdentities
-	// The mapping of OutputID to the actual Outputs and their creation times.
-	InputSet iotago.InputSet
 	// The inputs to the transaction.
 	UTXOInputs iotago.Outputs[iotago.Output]
 	// The UTXO inputs to the transaction with their creation times.
@@ -106,7 +104,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs iotago.ResolvedInputs) 
 		return nil, err
 	}
 
-	workingSet.InChains = workingSet.InputSet.ChainInputSet()
+	workingSet.InChains = utxoInputsSet.ChainInputSet()
 	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
 	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainOutputSet(txID)
 
@@ -435,7 +433,7 @@ func ExecFuncSenderUnlocked() ExecFunc {
 func ExecFuncBalancedMana() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		txCreationTime := vmParams.WorkingSet.Tx.Essence.CreationTime
-		manaIn := TotalManaIn(vmParams.External.ProtocolParameters.DecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn := TotalManaIn(vmParams.External.DecayProvider, txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 
 		if manaIn < manaOut {

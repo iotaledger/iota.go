@@ -64,7 +64,9 @@ func TestNFTTransition(t *testing.T) {
 		},
 	}
 	resolvedInputs := iotago.ResolvedInputs{InputSet: inputs}
-	require.NoError(t, stardustVM.Execute(tx, &vm.Params{}, resolvedInputs))
+	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{
+		DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+	}}, resolvedInputs))
 }
 
 func TestCirculatingSupplyMelting(t *testing.T) {
@@ -169,7 +171,9 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 	}
 
 	resolvedInputs := iotago.ResolvedInputs{InputSet: inputs}
-	require.NoError(t, stardustVM.Execute(tx, &vm.Params{}, resolvedInputs))
+	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{
+		DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+	}}, resolvedInputs))
 }
 
 func TestStardustTransactionExecution(t *testing.T) {
@@ -465,7 +469,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{
-				Inputs: inputIDs.UTXOInputs(),
+				Inputs:       inputIDs.UTXOInputs(),
+				CreationTime: 750,
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: defaultAmount,
@@ -656,9 +661,11 @@ func TestStardustTransactionExecution(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:     "ok",
-				vmParams: &vm.Params{},
-				inputs:   inputs,
+				name: "ok",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+				}},
+				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -751,9 +758,11 @@ func TestStardustTransactionExecution(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:     "fail - changed immutable account address unlock",
-				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				inputs:   inputs,
+				name: "fail - changed immutable account address unlock",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+				}},
+				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2867,9 +2876,11 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:     "fail - issuer not unlocked due to governance transition",
-				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				inputs:   inputs,
+				name: "fail - issuer not unlocked due to governance transition",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+				}},
+				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3021,9 +3032,11 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:     "ok - issuer unlocked with state transition",
-				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				inputs:   inputs,
+				name: "ok - issuer unlocked with state transition",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+				}},
+				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3089,9 +3102,11 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:     "ok - issuer is the governor",
-				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				inputs:   inputs,
+				name: "ok - issuer is the governor",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
+				}},
+				inputs: inputs,
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3291,9 +3306,7 @@ func TestTxSemanticMana(t *testing.T) {
 				name: "ok - stored Mana only",
 				vmParams: &vm.Params{
 					External: &iotago.ExternalUnlockParameters{
-						ProtocolParameters: iotago.ProtocolParameters{
-							ManaGenerationRate: 1,
-						},
+						DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
 					},
 				},
 				inputs: inputs,
@@ -3346,9 +3359,7 @@ func TestTxSemanticMana(t *testing.T) {
 				name: "ok - stored and allotted",
 				vmParams: &vm.Params{
 					External: &iotago.ExternalUnlockParameters{
-						ProtocolParameters: iotago.ProtocolParameters{
-							ManaGenerationRate: 1,
-						},
+						DecayProvider: iotago.NewDecayProvider([]float64{}, []float64{}),
 					},
 				},
 				inputs: inputs,

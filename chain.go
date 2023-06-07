@@ -35,7 +35,7 @@ type ChainOutputWithCreationTime struct {
 type ChainOutputSet map[ChainID]ChainOutput
 
 // ChainInputSet is a map of ChainID to ChainOutputWithCreationTime
-type ChainInputSet map[ChainID]ChainOutputWithCreationTime
+type ChainInputSet map[ChainID]*ChainOutputWithCreationTime
 
 // Includes checks whether all chains included in other exist in this set.
 func (set ChainOutputSet) Includes(other ChainOutputSet) error {
