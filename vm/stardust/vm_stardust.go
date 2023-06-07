@@ -240,9 +240,29 @@ func accountBlockIssuerSTVF(input *iotago.ChainOutputWithCreationTime, next *iot
 	)
 
 	timeHeld := vmParams.WorkingSet.Tx.Essence.CreationTime - input.CreationTime
-	manaIn -= decayProvider.StoredManaWithDecay(current.Mana, timeHeld)
-	manaIn -= decayProvider.PotentialManaWithDecay(current.Amount, timeHeld)
-	manaOut -= next.Mana + vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
+	manaIn -= decayProvider.StoredManaWithDecay(current.Mana, timeHeld)         // AccountInStored
+	manaIn -= decayProvider.PotentialManaWithDecay(current.Amount, timeHeld)    // AccountInPotential
+	manaOut -= next.Mana                                                        // AccountOutStored
+	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID) // AccountOutAllotted
+	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
+	for _, output := range vmParams.WorkingSet.OutputsByType[iotago.OutputBasic] {
+		basicOutput, is := output.(*iotago.BasicOutput)
+		if !is {
+			continue
+		}
+		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge)) {
+			manaOut -= basicOutput.StoredMana()
+		}
+	}
+	for _, output := range vmParams.WorkingSet.OutputsByType[iotago.OutputNFT] {
+		nftOutput, is := output.(*iotago.NFTOutput)
+		if !is {
+			continue
+		}
+		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge)) {
+			manaOut -= nftOutput.StoredMana()
+		}
+	}
 
 	if manaIn > manaOut {
 		return fmt.Errorf("%w: Cannot move Mana off an account", iotago.ErrInvalidBlockIssuerTransition)
