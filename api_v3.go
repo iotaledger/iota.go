@@ -225,10 +225,12 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterTypeSettings(MetadataFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureMetadata))))
 		must(api.RegisterTypeSettings(SenderFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureSender))))
 		must(api.RegisterTypeSettings(TagFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureTag))))
+		must(api.RegisterTypeSettings(BlockIssuerFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureBlockIssuer))))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*IssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*SenderFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*TagFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*Feature)(nil), (*BlockIssuerFeature)(nil)))
 	}
 
 	{
@@ -310,6 +312,7 @@ func V3API(protoParams *ProtocolParameters) API {
 
 		must(api.RegisterInterfaceObjects((*accountOutputImmFeature)(nil), (*IssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*accountOutputImmFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*accountOutputImmFeature)(nil), (*BlockIssuerFeature)(nil)))
 	}
 
 	{

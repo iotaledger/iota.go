@@ -10,7 +10,7 @@ import (
 // BlockIssuerFeature is a feature which indicates that this account can issue blocks.
 // The feature includes a block issuer address as well as an expiry slot.
 type BlockIssuerFeature struct {
-	BlockIssuerKeys []ed25519.PublicKey `serix:"0,mapKey=blockIssuerKeys"`
+	BlockIssuerKeys []ed25519.PublicKey `serix:"0,mapKey=blockIssuerKeys,lengthPrefixType=uint8"`
 	ExpirySlot      SlotIndex           `serix:"1,mapKey=expirySlot"`
 }
 

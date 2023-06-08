@@ -53,11 +53,9 @@ func (featType FeatureType) String() string {
 	return featNames[featType]
 }
 
-var (
-	featNames = [FeatureTag + 1]string{
-		"SenderFeature", "Issuer", "MetadataFeature", "TagFeature",
-	}
-)
+var featNames = [FeatureBlockIssuer + 1]string{
+	"SenderFeature", "Issuer", "MetadataFeature", "TagFeature", "BlockIssuerFeature",
+}
 
 // Features is a slice of Feature(s).
 type Features[T Feature] []Feature
