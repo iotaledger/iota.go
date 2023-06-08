@@ -23,6 +23,7 @@ func NewBlockBuilder() *BlockBuilder {
 			ProtocolVersion: defaultProtocolVersion,
 			SlotCommitment:  iotago.NewEmptyCommitment(),
 			IssuingTime:     time.Now(),
+			BurnedMana:      0,
 			Signature:       &iotago.Ed25519Signature{},
 		},
 	}
@@ -211,6 +212,16 @@ func (mb *BlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateK
 	}
 
 	mb.block.Signature = edSig
+
+	return mb
+}
+
+func (mb *BlockBuilder) BurnedMana(mana uint64) *BlockBuilder {
+	if mb.err != nil {
+		return mb
+	}
+
+	mb.block.BurnedMana = mana
 
 	return mb
 }
