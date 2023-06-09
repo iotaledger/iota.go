@@ -17,6 +17,8 @@ const (
 var (
 	// ErrNonUniqueFoundryOutputs gets returned when multiple FoundryOutput(s) with the same FoundryID exist within an OutputsByType.
 	ErrNonUniqueFoundryOutputs = errors.New("non unique foundries within outputs")
+	// ErrInvalidFoundryStateTransition gets returned when a foundry is doing an invalid state transition.
+	ErrInvalidFoundryStateTransition = errors.New("invalid foundry state transition")
 
 	emptyFoundryID = [FoundryIDLength]byte{}
 )

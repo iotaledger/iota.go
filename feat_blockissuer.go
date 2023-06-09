@@ -47,6 +47,7 @@ func (s *BlockIssuerFeature) Equal(other Feature) bool {
 			return false
 		}
 	}
+
 	return s.ExpirySlot == otherFeat.ExpirySlot
 }
 
