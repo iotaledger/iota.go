@@ -447,10 +447,10 @@ func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.Ou
 }
 
 // CommitmentByID gets a commitment details by its ID.
-func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID) (*CommitmentInfoResponse, error) {
+func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID) (*CommitmentDetailsResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByID, id.ToHex())
 
-	res := &CommitmentInfoResponse{}
+	res := &CommitmentDetailsResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -471,10 +471,10 @@ func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.C
 }
 
 // CommitmentByIndex gets a commitment details by its index.
-func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIndex) (*CommitmentInfoResponse, error) {
+func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIndex) (*CommitmentDetailsResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByIndex, index)
 
-	res := &CommitmentInfoResponse{}
+	res := &CommitmentDetailsResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}

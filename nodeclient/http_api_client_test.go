@@ -354,7 +354,7 @@ func TestClient_CommitmentByID(t *testing.T) {
 	commitmentID := iotago.NewSlotIdentifier(slotIndex, tpkg.Rand32ByteArray())
 	commitment := iotago.NewCommitment(slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
 
-	originRes := &nodeclient.CommitmentInfoResponse{
+	originRes := &nodeclient.CommitmentDetailsResponse{
 		Index:            commitment.Index,
 		PrevID:           commitment.PrevID.ToHex(),
 		RootsID:          commitment.RootsID.ToHex(),
@@ -404,7 +404,7 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 
 	commitment := iotago.NewCommitment(slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
 
-	originRes := &nodeclient.CommitmentInfoResponse{
+	originRes := &nodeclient.CommitmentDetailsResponse{
 		Index:            commitment.Index,
 		PrevID:           commitment.PrevID.ToHex(),
 		RootsID:          commitment.RootsID.ToHex(),

@@ -164,8 +164,8 @@ type (
 		LatestCommitmentID string `json:"latestCommitmentId"`
 	}
 
-	// CommitmentInfoResponse defines the response of a GET milestone UTXO changes REST API call.
-	CommitmentInfoResponse struct {
+	// CommitmentDetailsResponse defines the response of a GET milestone UTXO changes REST API call.
+	CommitmentDetailsResponse struct {
 		// The index of the requested commitment.
 		Index iotago.SlotIndex `json:"index"`
 		// The commitment ID of previous commitment.
