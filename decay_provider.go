@@ -2,12 +2,14 @@ package iotago
 
 // TODO: fixed point arithmetic
 type DecayProvider struct {
+	manaGenerationRate        uint8
 	storedManaDecayFactors    []float64
 	potentialManaDecayFactors []float64 // mana generation rate is built into these values
 }
 
-func NewDecayProvider(stored []float64, potential []float64) *DecayProvider {
+func NewDecayProvider(manaGenerationRate uint8, stored []float64, potential []float64) *DecayProvider {
 	return &DecayProvider{
+		manaGenerationRate:        manaGenerationRate,
 		storedManaDecayFactors:    stored,
 		potentialManaDecayFactors: potential,
 	}
@@ -20,7 +22,7 @@ func (d *DecayProvider) StoredManaDecayFactor(deltaT SlotIndex) float64 {
 		totalDecay *= float64(int(deltaT)/i) * d.storedManaDecayFactors[i]
 		deltaT -= SlotIndex(int(deltaT) / i)
 	}
-	return totalDecay
+	return 1.0
 }
 
 func (d *DecayProvider) PotentialManaDecayFactor(deltaT SlotIndex) float64 {
@@ -31,7 +33,7 @@ func (d *DecayProvider) PotentialManaDecayFactor(deltaT SlotIndex) float64 {
 		totalDecay *= float64(int(deltaT)/i) * d.potentialManaDecayFactors[i]
 		deltaT -= SlotIndex(int(deltaT) / i)
 	}
-	return totalDecay
+	return float64(uint64(deltaT) * uint64(d.manaGenerationRate))
 }
 
 func (d *DecayProvider) StoredManaWithDecay(storedMana uint64, deltaT SlotIndex) uint64 {

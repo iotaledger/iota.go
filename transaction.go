@@ -73,15 +73,15 @@ func (t *Transaction) ID() (TransactionID, error) {
 }
 
 func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
-	references := make([]IndexedUTXOReferencer, len(t.Essence.Inputs))
-	for i, input := range t.Essence.Inputs {
+	references := make([]IndexedUTXOReferencer, 0, len(t.Essence.Inputs))
+	for _, input := range t.Essence.Inputs {
 		switch castInput := input.(type) {
 		case *BICInput:
 			// ignore this type
 		case *CommitmentInput:
 			// ignore this type
 		case IndexedUTXOReferencer:
-			references[i] = castInput
+			references = append(references, castInput)
 		default:
 			return nil, ErrUnexpectedUnderlyingType
 		}
@@ -91,11 +91,11 @@ func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
 }
 
 func (t *Transaction) BICInputs() ([]*BICInput, error) {
-	references := make([]*BICInput, len(t.Essence.Inputs))
-	for i, input := range t.Essence.Inputs {
+	references := make([]*BICInput, 0, len(t.Essence.Inputs))
+	for _, input := range t.Essence.Inputs {
 		switch castInput := input.(type) {
 		case *BICInput:
-			references[i] = castInput
+			references = append(references, castInput)
 		case *CommitmentInput:
 			// ignore this type
 		case IndexedUTXOReferencer:
@@ -109,13 +109,13 @@ func (t *Transaction) BICInputs() ([]*BICInput, error) {
 }
 
 func (t *Transaction) CommitmentInputs() ([]*CommitmentInput, error) {
-	references := make([]*CommitmentInput, len(t.Essence.Inputs))
-	for i, input := range t.Essence.Inputs {
+	references := make([]*CommitmentInput, 0, len(t.Essence.Inputs))
+	for _, input := range t.Essence.Inputs {
 		switch castInput := input.(type) {
 		case *BICInput:
 			// ignore this type
 		case *CommitmentInput:
-			references[i] = castInput
+			references = append(references, castInput)
 		case IndexedUTXOReferencer:
 			// ignore this type
 		default:

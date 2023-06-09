@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/util"
@@ -109,7 +110,22 @@ func (f *FoundryOutput) Clone() Output {
 }
 
 func (f *FoundryOutput) Ident() Address {
-	return f.Conditions.MustSet().ImmutableAccount().Address
+	if f == nil {
+		fmt.Println("fff")
+	}
+	a := f.Conditions
+	if a == nil {
+		fmt.Println("aaaa")
+	}
+	b := a.MustSet()
+	if b == nil {
+		fmt.Println("bbbb")
+	}
+	c := b.ImmutableAccount()
+	if c == nil {
+		fmt.Println("ccc")
+	}
+	return c.Address
 }
 
 func (f *FoundryOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {

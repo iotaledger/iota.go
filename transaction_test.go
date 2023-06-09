@@ -1,7 +1,10 @@
 package iotago_test
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -95,4 +98,66 @@ func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
 	}
+}
+
+func TestTransaction_InputTypes(t *testing.T) {
+	utxoInput1 := &iotago.UTXOInput{
+		TransactionID:          tpkg.RandTransactionID(),
+		TransactionOutputIndex: 13,
+	}
+
+	utxoInput2 := &iotago.UTXOInput{
+		TransactionID:          tpkg.RandTransactionID(),
+		TransactionOutputIndex: 11,
+	}
+
+	commitmentInput1 := &iotago.CommitmentInput{
+		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
+		AccountID:    tpkg.RandAccountID(),
+	}
+
+	commitmentInput2 := &iotago.CommitmentInput{
+		CommitmentID: iotago.SlotIdentifierRepresentingData(11, tpkg.RandBytes(32)),
+		AccountID:    tpkg.RandAccountID(),
+	}
+	bicInput1 := &iotago.BICInput{
+		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
+		AccountID:    tpkg.RandAccountID(),
+	}
+	bicInput2 := &iotago.BICInput{
+		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
+		AccountID:    tpkg.RandAccountID(),
+	}
+
+	transaction := tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
+		utxoInput1,
+		commitmentInput1,
+		bicInput1,
+		commitmentInput2,
+		utxoInput2,
+		bicInput2,
+	}))
+
+	utxoInputs, err := transaction.Inputs()
+	require.NoError(t, err)
+
+	commitmentInputs, err := transaction.CommitmentInputs()
+	require.NoError(t, err)
+
+	bicInputs, err := transaction.BICInputs()
+	require.NoError(t, err)
+
+	fmt.Println(utxoInputs)
+	require.Equal(t, 2, len(utxoInputs))
+	require.Equal(t, 2, len(commitmentInputs))
+	require.Equal(t, 2, len(bicInputs))
+
+	require.Contains(t, utxoInputs, utxoInput1)
+	require.Contains(t, utxoInputs, utxoInput2)
+
+	require.Contains(t, commitmentInputs, commitmentInput1)
+	require.Contains(t, commitmentInputs, commitmentInput2)
+
+	require.Contains(t, bicInputs, bicInput1)
+	require.Contains(t, bicInputs, bicInput2)
 }

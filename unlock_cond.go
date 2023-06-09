@@ -161,6 +161,37 @@ func (f UnlockConditionSet) HasTimelockCondition() bool {
 	return f.Timelock() != nil
 }
 
+// HasManalockCondition tells whether the set has both a timelock and account address unlock
+func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slotIndex SlotIndex) bool {
+	if !f.HasTimelockUntil(slotIndex) {
+		return false
+	}
+	unlockAddress := f.Address()
+	if unlockAddress == nil {
+		return false
+	}
+	if unlockAddress.Address.Type() != AddressAccount {
+		return false
+	}
+	if !unlockAddress.Address.Equal(accountID.ToAddress()) {
+		return false
+	}
+	return true
+}
+
+// HasTimelockUntil tells us whether the set has a timelock that that is still locked at slotIndex
+func (f UnlockConditionSet) HasTimelockUntil(slotIndex SlotIndex) bool {
+	timelock := f.Timelock()
+	if timelock == nil {
+		return false
+	}
+	if timelock.SlotIndex <= slotIndex {
+		return false
+	}
+	return true
+	// TODO: check for off by one error
+}
+
 // tells whether the given ident can unlock an output containing this set of UnlockCondition(s)
 // when taking into consideration the constraints enforced by them:
 //   - If the timelocks are not expired, then nobody can unlock.

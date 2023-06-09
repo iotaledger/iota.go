@@ -346,12 +346,12 @@ func (outputs Outputs[T]) Commitment() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	for id, output := range outputs {
+	for _, output := range outputs {
 		outputBytes, err := internalEncode(output)
 		if err != nil {
 			return nil, fmt.Errorf("unable to compute commitment hash: %w", err)
 		}
-		fmt.Println("serializing", id, "to ", outputBytes)
+
 		outputHash := blake2b.Sum256(outputBytes)
 		if _, err := h.Write(outputHash[:]); err != nil {
 			return nil, fmt.Errorf("unable to write output bytes for commitment hash: %w", err)
@@ -590,7 +590,7 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", chainOutput.Type()))
 		}
 
-		set[chainID] = ChainOutputWithCreationTime{
+		set[chainID] = &ChainOutputWithCreationTime{
 			Output:       chainOutput,
 			CreationTime: input.CreationTime,
 		}
@@ -636,8 +636,8 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, t
 // ExternalUnlockParameters defines a palette of external system parameters which are used to
 // determine whether an Output can be unlocked.
 type ExternalUnlockParameters struct {
-	// protocol parameters
-	ProtocolParameters
+	DecayProvider      *DecayProvider
+	ProtocolParameters *ProtocolParameters
 }
 
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent

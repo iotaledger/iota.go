@@ -127,7 +127,7 @@ func (p ProtocolParameters) String() string {
 }
 
 func (p ProtocolParameters) DecayProvider() *DecayProvider {
-	return NewDecayProvider(p.StoredManaDecayFactors, p.PotentialManaDecayFactors)
+	return NewDecayProvider(p.ManaGenerationRate, p.StoredManaDecayFactors, p.PotentialManaDecayFactors)
 }
 
 // Sizer is an object knowing its own byte size.
