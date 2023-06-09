@@ -5,8 +5,8 @@ import (
 )
 
 type BICInput struct {
-	AccountID
-	CommitmentID
+	AccountID    AccountID    `serix:"0,mapKey=accountId"`
+	CommitmentID CommitmentID `serix:"1,mapKey=commitmentId"`
 }
 
 func (b *BICInput) Type() InputType {

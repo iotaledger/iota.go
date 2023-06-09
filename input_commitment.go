@@ -5,8 +5,8 @@ import (
 )
 
 type CommitmentInput struct {
-	AccountID
-	CommitmentID
+	AccountID    AccountID    `serix:"0,mapKey=accountId"`
+	CommitmentID CommitmentID `serix:"1,mapKey=commitmentId"`
 }
 
 func (b *CommitmentInput) Type() InputType {
@@ -14,5 +14,5 @@ func (b *CommitmentInput) Type() InputType {
 }
 
 func (b *CommitmentInput) Size() int {
-	return util.NumByteLen(byte(InputCommitment)) + SlotIdentifierLength
+	return util.NumByteLen(byte(InputCommitment)) + AccountIDLength + SlotIdentifierLength
 }

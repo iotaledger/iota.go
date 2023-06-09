@@ -14,9 +14,69 @@ import (
 func TestTransactionDeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
-			name:   "ok",
+			name:   "ok - UTXO",
 			source: tpkg.RandTransaction(),
 			target: &iotago.Transaction{},
+		},
+		{
+			name: "ok -  Commitment",
+			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
+				&iotago.CommitmentInput{
+					AccountID:    tpkg.RandAccountID(),
+					CommitmentID: iotago.CommitmentID{},
+				},
+			})),
+			target:    &iotago.Transaction{},
+			seriErr:   nil,
+			deSeriErr: nil,
+		},
+		{
+			name: "ok - BIC",
+			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
+				&iotago.BICInput{
+					AccountID:    tpkg.RandAccountID(),
+					CommitmentID: iotago.CommitmentID{},
+				},
+			})),
+			target:    &iotago.Transaction{},
+			seriErr:   nil,
+			deSeriErr: nil,
+		},
+		{
+			name: "ok - UTXO + Commitment",
+			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
+				&iotago.UTXOInput{
+					TransactionID:          tpkg.RandTransactionID(),
+					TransactionOutputIndex: iotago.RefUTXOIndexMax,
+				},
+				&iotago.CommitmentInput{
+					AccountID:    tpkg.RandAccountID(),
+					CommitmentID: iotago.CommitmentID{},
+				},
+			})),
+			target:    &iotago.Transaction{},
+			seriErr:   nil,
+			deSeriErr: nil,
+		},
+		{
+			name: "ok - UTXO + Commitment + BIC",
+			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
+				&iotago.UTXOInput{
+					TransactionID:          tpkg.RandTransactionID(),
+					TransactionOutputIndex: iotago.RefUTXOIndexMax,
+				},
+				&iotago.CommitmentInput{
+					AccountID:    tpkg.RandAccountID(),
+					CommitmentID: iotago.CommitmentID{},
+				},
+				&iotago.BICInput{
+					AccountID:    tpkg.RandAccountID(),
+					CommitmentID: iotago.CommitmentID{},
+				},
+			})),
+			target:    &iotago.Transaction{},
+			seriErr:   nil,
+			deSeriErr: nil,
 		},
 	}
 	for _, tt := range tests {

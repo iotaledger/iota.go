@@ -141,11 +141,9 @@ var (
 	}
 
 	txEssenceV3AllotmentsArrRules = &serix.ArrayRules{
-		Min: MinAllottmentCount,
-		Max: MaxAllottmentCount,
-		// TODO should we define another type to check for duplicates inside of the allotments,
-		// TODO maybe can use UniquenessSliceFunc?
-		ValidationMode: serializer.ArrayValidationModeLexicalOrdering,
+		Min:            MinAllottmentCount,
+		Max:            MaxAllottmentCount,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates, // FIXME: it was LexicalOrdering - do we need it?
 	}
 
 	txV3UnlocksArrRules = &serix.ArrayRules{
@@ -381,16 +379,20 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterTypeSettings(TransactionEssence{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
 
 		must(api.RegisterTypeSettings(UTXOInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputUTXO))))
+		must(api.RegisterTypeSettings(CommitmentInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))))
+		must(api.RegisterTypeSettings(BICInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputBlockIssuanceCredit))))
+
 		must(api.RegisterTypeSettings(TxEssenceInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3InputsArrRules),
 		))
 		must(api.RegisterInterfaceObjects((*txEssenceInput)(nil), (*UTXOInput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceInput)(nil), (*CommitmentInput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceInput)(nil), (*BICInput)(nil)))
 
 		must(api.RegisterTypeSettings(TxEssenceOutputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3OutputsArrRules),
 		))
 
-		// TODO should we also register allotment itself, check how to prevent duplicates based on allotment ID
 		must(api.RegisterTypeSettings(TxEssenceAllotments{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3AllotmentsArrRules),
 		))

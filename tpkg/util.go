@@ -274,17 +274,22 @@ func ReferenceUnlock(index uint16) *iotago.ReferenceUnlock {
 
 // RandTransactionEssence returns a random transaction essence.
 func RandTransactionEssence() *iotago.TransactionEssence {
-	return RandTransactionEssenceWithInputOutputCount(rand.Intn(iotago.MaxInputsCount)+1, rand.Intn(iotago.MaxOutputsCount)+1)
+	return RandTransactionEssenceWithInputOutputAllotmentCount(rand.Intn(iotago.MaxInputsCount)+1, rand.Intn(iotago.MaxOutputsCount)+1, rand.Intn(iotago.MaxAllottmentCount)+1)
 }
 
 // RandTransactionEssenceWithInputCount returns a random transaction essence with a specific amount of inputs..
 func RandTransactionEssenceWithInputCount(inputCount int) *iotago.TransactionEssence {
-	return RandTransactionEssenceWithInputOutputCount(inputCount, rand.Intn(iotago.MaxOutputsCount)+1)
+	return RandTransactionEssenceWithInputOutputAllotmentCount(inputCount, rand.Intn(iotago.MaxOutputsCount)+1, rand.Intn(iotago.MaxAllottmentCount)+1)
 }
 
 // RandTransactionEssenceWithOutputCount returns a random transaction essence with a specific amount of outputs.
 func RandTransactionEssenceWithOutputCount(outputCount int) *iotago.TransactionEssence {
-	return RandTransactionEssenceWithInputOutputCount(rand.Intn(iotago.MaxInputsCount)+1, outputCount)
+	return RandTransactionEssenceWithInputOutputAllotmentCount(rand.Intn(iotago.MaxInputsCount)+1, outputCount, rand.Intn(iotago.MaxAllottmentCount)+1)
+}
+
+// RandTransactionEssenceWithAllotmentCount returns a random transaction essence with a specific amount of outputs.
+func RandTransactionEssenceWithAllotmentCount(allotmentCount int) *iotago.TransactionEssence {
+	return RandTransactionEssenceWithInputOutputAllotmentCount(rand.Intn(iotago.MaxInputsCount)+1, rand.Intn(iotago.MaxOutputsCount)+1, allotmentCount)
 }
 
 // RandTransactionEssenceWithInputOutputCount returns a random transaction essence with a specific amount of inputs and outputs.
@@ -304,6 +309,27 @@ func RandTransactionEssenceWithInputOutputCount(inputCount int, outputCount int)
 	return tx
 }
 
+// RandTransactionEssenceWithInputOutputAllotmentCount returns a random transaction essence with a specific amount of inputs, outputs and allotments.
+func RandTransactionEssenceWithInputOutputAllotmentCount(inputCount, outputCount, allotmentCount int) *iotago.TransactionEssence {
+	tx := &iotago.TransactionEssence{
+		NetworkID: TestNetworkID,
+	}
+
+	for i := inputCount; i > 0; i-- {
+		tx.Inputs = append(tx.Inputs, RandUTXOInput())
+	}
+
+	for i := outputCount; i > 0; i-- {
+		tx.Outputs = append(tx.Outputs, RandBasicOutput(iotago.AddressEd25519))
+	}
+
+	for i := allotmentCount; i > 0; i-- {
+		tx.Allotments = append(tx.Allotments, RandAllotment())
+	}
+
+	return tx
+}
+
 // RandTransactionEssenceWithInputs returns a random transaction essence with a specific slice of inputs.
 func RandTransactionEssenceWithInputs(inputs iotago.TxEssenceInputs) *iotago.TransactionEssence {
 	tx := &iotago.TransactionEssence{
@@ -312,7 +338,7 @@ func RandTransactionEssenceWithInputs(inputs iotago.TxEssenceInputs) *iotago.Tra
 
 	tx.Inputs = inputs
 
-	outputCount := rand.Intn(iotago.MaxOutputsCount) + 1
+	outputCount := 1
 	for i := outputCount; i > 0; i-- {
 		tx.Outputs = append(tx.Outputs, RandBasicOutput(iotago.AddressEd25519))
 	}
@@ -445,6 +471,14 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 	amount := uint64(rand.Intn(10000) + 1)
 	dep.Amount = amount
 	return dep
+}
+
+// RandAllotment returns a random Allotment.
+func RandAllotment() *iotago.Allotment {
+	return &iotago.Allotment{
+		AccountID: RandAccountID(),
+		Value:     RandUint64(10000),
+	}
 }
 
 // OneInputOutputTransaction generates a random transaction with one input and output.

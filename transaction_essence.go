@@ -38,8 +38,14 @@ var (
 	ErrInvalidInputsCommitment = errors.New("invalid inputs commitment")
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a TransactionEssence is invalid.
 	ErrTxEssenceNetworkIDInvalid = errors.New("invalid network ID")
+	// ErrAllotmentsNotUnique gets returned if multiple Allotments reference the same Account.
+	ErrAllotmentsNotUnique = errors.New("allotments must each reference a unique account")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
+	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
+	ErrInputBICNotUnique = errors.New("inputs must each reference a unique BIC")
+	// ErrInputCommitmentNotUnique gets returned if multiple inputs reference the same BIC.
+	ErrInputCommitmentNotUnique = errors.New("inputs must each reference a unique Commitment")
 	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
 	ErrAccountOutputNonEmptyState = errors.New("account output is not empty state")
 	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the State/Governance controller.
@@ -95,7 +101,7 @@ type TransactionEssence struct {
 	// The outputs of this transaction.
 	Outputs TxEssenceOutputs `serix:"4,mapKey=outputs"`
 	// The optional accounts map with corresponding allotment values.
-	Allotments TxEssenceAllotments `serix:"5,mapKey=allotments"` // TODO what should be here as options?
+	Allotments TxEssenceAllotments `serix:"5,mapKey=allotments"`
 	// The optional embedded payload.
 	Payload TxEssencePayload `serix:"6,optional,mapKey=payload"`
 }
@@ -156,6 +162,7 @@ func (u *TransactionEssence) Size() int {
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
 func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParameters) error {
+	// TODO: implement validation of Allotments
 
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {
@@ -177,6 +184,12 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParamete
 		OutputsSyntacticalFoundry(),
 		OutputsSyntacticalAccount(),
 		OutputsSyntacticalNFT(),
+	); err != nil {
+		return err
+	}
+
+	if err := SyntacticallyValidateAllotments(u.Allotments,
+		AllotmentsSyntacticalUnique(),
 	); err != nil {
 		return err
 	}
