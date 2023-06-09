@@ -10,6 +10,7 @@ import (
 	"math"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
@@ -58,22 +59,21 @@ func TestClient_Health(t *testing.T) {
 func TestClient_Info(t *testing.T) {
 	defer gock.Off()
 
+	ts := time.Now()
 	originInfo := &nodeclient.InfoResponse{
 		Name:    "HORNET",
 		Version: "1.0.0",
-		Status: nodeclient.InfoResStatus{
-			IsHealthy: true,
-			LatestMilestone: nodeclient.InfoResMilestone{
-				Index:       1337,
-				Timestamp:   1333337,
-				MilestoneID: iotago.EncodeHex(tpkg.RandBytes(32)),
-			},
-			ConfirmedMilestone: nodeclient.InfoResMilestone{
-				Index:       666,
-				Timestamp:   6666,
-				MilestoneID: iotago.EncodeHex(tpkg.RandBytes(32)),
-			},
-			PruningIndex: 142857,
+		Status: &nodeclient.InfoResNodeStatus{
+			IsHealthy:            true,
+			LastAcceptedBlockID:  iotago.EncodeHex(tpkg.RandBytes(40)),
+			LastConfirmedBlockID: iotago.EncodeHex(tpkg.RandBytes(40)),
+			FinalizedSlot:        iotago.SlotIndex(142857),
+			ATT:                  uint64(ts.UnixNano()),
+			RATT:                 uint64(ts.UnixNano()),
+			CTT:                  uint64(ts.UnixNano()),
+			RCTT:                 uint64(ts.UnixNano()),
+			LatestCommittedSlot:  iotago.SlotIndex(142860),
+			PruningSlot:          iotago.SlotIndex(142800),
 		},
 		BaseToken: &nodeclient.InfoResBaseToken{
 			Name:            "TestCoin",
@@ -83,10 +83,10 @@ func TestClient_Info(t *testing.T) {
 			Decimals:        6,
 			UseMetricPrefix: false,
 		},
-		Metrics: nodeclient.InfoResMetrics{
-			BlocksPerSecond:           20.0,
-			ReferencedBlocksPerSecond: 10.0,
-			ReferencedRate:            50.0,
+		Metrics: &nodeclient.InfoResNodeMetrics{
+			BlocksPerSecond:          20.0,
+			ConfirmedBlocksPerSecond: 10.0,
+			ConfirmedRate:            50.0,
 		},
 		Features: []string{"Lazers"},
 	}
@@ -107,7 +107,7 @@ func TestClient_Info(t *testing.T) {
 	protoParamsJson, err := v3API.JSONEncode(protoParams)
 	require.NoError(t, err)
 	protoParamsJsonRawMsg := json.RawMessage(protoParamsJson)
-	originInfo.Protocol = &protoParamsJsonRawMsg
+	originInfo.ProtocolParameters = &protoParamsJsonRawMsg
 
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.RouteInfo).
@@ -118,29 +118,50 @@ func TestClient_Info(t *testing.T) {
 	info, err := nodeAPI.Info(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
-	protoParams, err = originInfo.ProtocolParameters()
+	protoParams, err = originInfo.DecodeProtocolParameters()
 	require.NoError(t, err)
 
 	require.NoError(t, err)
 	require.EqualValues(t, protoParams.TokenSupply, tpkg.TestTokenSupply)
 }
 
-func TestClient_Tips(t *testing.T) {
+func TestClient_BlockIssuance(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &nodeclient.TipsResponse{
-		TipsHex: []string{"733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d", "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe"},
+	parents := []string{"733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d", "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe"}
+
+	originRes := &nodeclient.BlockIssuanceResponse{
+		StrongParents:       parents,
+		WeakParents:         parents,
+		ShallowLikeParents:  parents,
+		LatestFinalizedSlot: iotago.SlotIndex(20),
 	}
 
+	prevID, err := iotago.SlotIdentifierFromHexString(iotago.EncodeHex(tpkg.RandBytes(40)))
+	require.NoError(t, err)
+	rootsID, err := iotago.IdentifierFromHexString(iotago.EncodeHex(tpkg.RandBytes(32)))
+	require.NoError(t, err)
+
+	commitment := &iotago.Commitment{
+		Index:            iotago.SlotIndex(25),
+		PrevID:           prevID,
+		RootsID:          rootsID,
+		CumulativeWeight: 100_000,
+	}
+	protoCommitmentJson, err := v3API.JSONEncode(commitment)
+	require.NoError(t, err)
+	protoCommitmentJsonRawMsg := json.RawMessage(protoCommitmentJson)
+	originRes.Commitment = &protoCommitmentJsonRawMsg
+
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteTips).
+		Get(nodeclient.RouteBlockIssuance).
 		Reply(200).
 		JSON(originRes)
 
 	nodeAPI := nodeClient(t)
-	tips, err := nodeAPI.Tips(context.Background())
+	res, err := nodeAPI.BlockIssuance(context.Background())
 	require.NoError(t, err)
-	require.EqualValues(t, originRes, tips)
+	require.EqualValues(t, originRes, res)
 }
 
 func TestClient_SubmitBlock(t *testing.T) {
@@ -185,19 +206,14 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 		parentBlockIDs[i] = iotago.EncodeHex(p[:])
 	}
 
-	wfIndex := uint32(5)
-
 	originRes := &nodeclient.BlockMetadataResponse{
-		BlockID:                    queryHash,
-		Parents:                    parentBlockIDs,
-		Solid:                      true,
-		MilestoneIndex:             66,
-		ReferencedByMilestoneIndex: 67,
-		LedgerInclusionState:       "noTransaction",
-		ShouldPromote:              nil,
-		ShouldReattach:             nil,
-		ConflictReason:             0,
-		WhiteFlagIndex:             &wfIndex,
+		BlockID:            queryHash,
+		StrongParents:      parentBlockIDs,
+		WeakParents:        parentBlockIDs,
+		ShallowLikeParents: parentBlockIDs,
+		BlockState:         "confirmed",
+		TxState:            "confirmed",
+		ReissuePayload:     nil,
 	}
 
 	gock.New(nodeAPIUrl).
@@ -239,38 +255,6 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), identifier)
 	require.NoError(t, err)
 	require.EqualValues(t, originBlock, responseBlock)
-}
-
-func TestClient_ChildrenByBlockID(t *testing.T) {
-	defer gock.Off()
-
-	blockID := tpkg.Rand40ByteArray()
-	hexBlockID := iotago.EncodeHex(blockID[:])
-
-	child1 := tpkg.Rand32ByteArray()
-	child2 := tpkg.Rand32ByteArray()
-	child3 := tpkg.Rand32ByteArray()
-
-	originRes := &nodeclient.ChildrenResponse{
-		BlockID:    hexBlockID,
-		MaxResults: 1000,
-		Count:      3,
-		Children: []string{
-			iotago.EncodeHex(child1[:]),
-			iotago.EncodeHex(child2[:]),
-			iotago.EncodeHex(child3[:]),
-		},
-	}
-
-	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteBlockChildren, hexBlockID)).
-		Reply(200).
-		JSON(originRes)
-
-	nodeAPI := nodeClient(t)
-	res, err := nodeAPI.ChildrenByBlockID(context.Background(), blockID)
-	require.NoError(t, err)
-	require.EqualValues(t, originRes, res)
 }
 
 func TestClient_TransactionIncludedBlock(t *testing.T) {
@@ -328,62 +312,27 @@ func TestClient_OutputByID(t *testing.T) {
 	require.EqualValues(t, originOutput, responseOutput)
 }
 
-func TestClient_OutputWithMetadataByID(t *testing.T) {
-	defer gock.Off()
-
-	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	sigDepJson, err := v3API.JSONEncode(originOutput)
-	require.NoError(t, err)
-	rawMsgSigDepJson := json.RawMessage(sigDepJson)
-
-	txID := tpkg.Rand32ByteArray()
-	hexTxID := iotago.EncodeHex(txID[:])
-	originRes := &nodeclient.OutputResponse{
-		Metadata: &nodeclient.OutputMetadataResponse{
-			TransactionID: hexTxID,
-			OutputIndex:   3,
-			Spent:         true,
-			LedgerIndex:   1337,
-		},
-		RawOutput: &rawMsgSigDepJson,
-	}
-
-	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
-	utxoInputId := utxoInput.ID()
-
-	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputId.ToHex())).
-		MatchHeader("Accept", nodeclient.MIMEApplicationJSON).
-		Reply(200).
-		JSON(originRes)
-
-	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.OutputWithMetadataByID(context.Background(), utxoInputId)
-	require.NoError(t, err)
-	require.EqualValues(t, originRes, resp)
-
-	resTxID, err := resp.Metadata.TxID()
-	require.NoError(t, err)
-	require.EqualValues(t, txID, *resTxID)
-}
-
 func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
 	txID := tpkg.Rand32ByteArray()
 	hexTxID := iotago.EncodeHex(txID[:])
 	originRes := &nodeclient.OutputMetadataResponse{
-		TransactionID: hexTxID,
-		OutputIndex:   3,
-		Spent:         true,
-		LedgerIndex:   1337,
+		BlockID:              iotago.EncodeHex(tpkg.RandBytes(40)),
+		TransactionID:        hexTxID,
+		OutputIndex:          3,
+		IsSpent:              true,
+		CommitmentIDSpent:    iotago.EncodeHex(tpkg.RandBytes(40)),
+		TransactionIDSpent:   iotago.EncodeHex(tpkg.RandBytes(32)),
+		IncludedCommitmentID: iotago.EncodeHex(tpkg.RandBytes(40)),
+		LatestCommitmentID:   iotago.EncodeHex(tpkg.RandBytes(40)),
 	}
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
 	utxoInputId := utxoInput.ID()
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputId.ToHex())).
+		Get(fmt.Sprintf(nodeclient.RouteOutputMetadata, utxoInputId.ToHex())).
 		Reply(200).
 		JSON(originRes)
 
@@ -403,22 +352,24 @@ func TestClient_CommitmentByID(t *testing.T) {
 	var slotIndex iotago.SlotIndex = 5
 
 	commitmentID := iotago.NewSlotIdentifier(slotIndex, tpkg.Rand32ByteArray())
-
 	commitment := iotago.NewCommitment(slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
 
-	data, err := v3API.Encode(commitment)
-	require.NoError(t, err)
+	originRes := &nodeclient.CommitmentDetailsResponse{
+		Index:            commitment.Index,
+		PrevID:           commitment.PrevID.ToHex(),
+		RootsID:          commitment.RootsID.ToHex(),
+		CumulativeWeight: commitment.CumulativeWeight,
+	}
 
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.RouteCommitmentByID, commitmentID.ToHex())).
-		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
-		Body(bytes.NewReader(data))
+		JSON(originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentByID(context.Background(), commitmentID)
 	require.NoError(t, err)
-	require.EqualValues(t, commitment, resp)
+	require.EqualValues(t, originRes, resp)
 }
 
 func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
@@ -429,7 +380,7 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &nodeclient.CommitmentUTXOChangesResponse{
+	originRes := &nodeclient.UTXOChangesResponse{
 		Index:           1337,
 		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
 		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},
@@ -453,19 +404,22 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 
 	commitment := iotago.NewCommitment(slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
 
-	data, err := v3API.Encode(commitment)
-	require.NoError(t, err)
+	originRes := &nodeclient.CommitmentDetailsResponse{
+		Index:            commitment.Index,
+		PrevID:           commitment.PrevID.ToHex(),
+		RootsID:          commitment.RootsID.ToHex(),
+		CumulativeWeight: commitment.CumulativeWeight,
+	}
 
 	gock.New(nodeAPIUrl).
 		Get(fmt.Sprintf(nodeclient.RouteCommitmentByIndex, slotIndex)).
-		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
-		Body(bytes.NewReader(data))
+		JSON(originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentByIndex(context.Background(), slotIndex)
 	require.NoError(t, err)
-	require.EqualValues(t, commitment, resp)
+	require.EqualValues(t, originRes, resp)
 }
 
 func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
@@ -476,7 +430,7 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &nodeclient.CommitmentUTXOChangesResponse{
+	originRes := &nodeclient.UTXOChangesResponse{
 		Index:           slotIndex,
 		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
 		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},

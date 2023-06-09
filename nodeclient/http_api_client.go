@@ -14,10 +14,10 @@ import (
 
 const (
 	// IndexerPluginName is the name for the indexer plugin.
-	IndexerPluginName = "indexer/v1"
+	IndexerPluginName = "indexer/v2"
 
 	// MQTTPluginName is the name for the MQTT plugin.
-	MQTTPluginName = "mqtt/v1"
+	MQTTPluginName = "mqtt/v2"
 )
 
 const (
@@ -32,9 +32,9 @@ const (
 	// GET returns the node info.
 	RouteInfo = "/api/core/v3/info"
 
-	// RouteTips is the route for getting tips.
-	// GET returns the tips.
-	RouteTips = "/api/core/v3/tips"
+	// RouteBlockIssuance is the route for getting all needed information for block creation.
+	// GET returns the data needed toa attach block.
+	RouteBlockIssuance = "/api/core/v3/blocks/issuance"
 
 	// RouteBlock is the route for getting a block by its ID.
 	// GET returns the block based on the given type in the request "Accept" header.
@@ -45,10 +45,6 @@ const (
 	// RouteBlockMetadata is the route for getting block metadata by its ID.
 	// GET returns block metadata (including info about "promotion/reattachment needed").
 	RouteBlockMetadata = "/api/core/v3/blocks/%s/metadata"
-
-	// RouteBlockChildren is the route for getting block IDs of the children of a block, identified by its block ID.
-	// GET returns the block IDs of all children.
-	RouteBlockChildren = "/api/core/v3/blocks/%s/children"
 
 	// RouteBlocks is the route for creating new blocks.
 	// POST creates a single new block and returns the ID.
@@ -62,6 +58,10 @@ const (
 	// MIMEApplicationJSON => json
 	// MIMEVendorIOTASerializer => bytes.
 	RouteTransactionsIncludedBlock = "/api/core/v3/transactions/%s/included-block"
+
+	// RouteTransactionsIncludedBlockMetadata is the route for getting the block metadata that was first confirmed in the ledger for a given transaction ID.
+	// GET returns block metadata (including info about "promotion/reattachment needed").
+	RouteTransactionsIncludedBlockMetadata = "/api/core/v3/transactions/%s/included-block/metadata"
 
 	// RouteCommitmentByID is the route for getting a commitment by its ID.
 	// GET returns the commitment.
@@ -77,7 +77,7 @@ const (
 
 	// RouteCommitmentByIndexUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	RouteCommitmentByIndexUTXOChanges = "/api/core/v3/commitments/%d/utxo-changes"
+	RouteCommitmentByIndexUTXOChanges = "/api/core/v3/commitments/by-index/%d/utxo-changes"
 
 	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
 	// GET returns the output based on the given type in the request "Accept" header.
@@ -200,7 +200,7 @@ func New(baseURL string, opts ...ClientOption) (*Client, error) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to call info endpoint for protocol parameter init: %w", err)
 		}
-		protoParams, err := info.ProtocolParameters()
+		protoParams, err := info.DecodeProtocolParameters()
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse protocol parameters from info response: %w", err)
 		}
@@ -308,6 +308,16 @@ func (client *Client) Info(ctx context.Context) (*InfoResponse, error) {
 	return res, nil
 }
 
+// BlockIssuance gets the info to issue a block.
+func (client *Client) BlockIssuance(ctx context.Context) (*BlockIssuanceResponse, error) {
+	res := &BlockIssuanceResponse{}
+	if _, err := client.Do(ctx, http.MethodGet, RouteBlockIssuance, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // NodeSupportsRoute gets the routes of the node and checks if the given route is enabled.
 func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool, error) {
 	routes, err := client.Routes(ctx)
@@ -320,29 +330,6 @@ func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool
 		}
 	}
 	return false, nil
-}
-
-// Tips returns the hex encoded tips as BlockIDs.
-func (ntr *TipsResponse) Tips() (iotago.BlockIDs, error) {
-	blockIDs := make(iotago.BlockIDs, len(ntr.TipsHex))
-	for i, tip := range ntr.TipsHex {
-		blockID, err := iotago.DecodeHex(tip)
-		if err != nil {
-			return nil, err
-		}
-		copy(blockIDs[i][:], blockID)
-	}
-	return blockIDs, nil
-}
-
-// Tips gets the two tips from the node.
-func (client *Client) Tips(ctx context.Context) (*TipsResponse, error) {
-	res := &TipsResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, RouteTips, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 // SubmitBlock submits the given Block to the node.
@@ -401,18 +388,6 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 	return block, nil
 }
 
-// ChildrenByBlockID gets the BlockIDs of the child blocks of a given block.
-func (client *Client) ChildrenByBlockID(ctx context.Context, parentBlockID iotago.BlockID) (*ChildrenResponse, error) {
-	query := fmt.Sprintf(RouteBlockChildren, iotago.EncodeHex(parentBlockID[:]))
-
-	res := &ChildrenResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
 // TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
 func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.Block, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlock, iotago.EncodeHex(txID[:]))
@@ -428,6 +403,18 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 	}
 
 	return block, nil
+}
+
+// BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
+func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*BlockMetadataResponse, error) {
+	query := fmt.Sprintf(RouteTransactionsIncludedBlockMetadata, iotago.EncodeHex(txID[:]))
+
+	res := &BlockMetadataResponse{}
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 // OutputByID gets an output by its ID from the node.
@@ -447,18 +434,6 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 	return output, nil
 }
 
-// OutputWithMetadataByID gets an output with its metadata by its ID from the node.
-func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotago.OutputID) (*OutputResponse, error) {
-	query := fmt.Sprintf(RouteOutput, outputID.ToHex())
-
-	res := &OutputResponse{}
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
 // OutputMetadataByID gets an output's metadata by its ID from the node without getting the output data again.
 func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*OutputMetadataResponse, error) {
 	query := fmt.Sprintf(RouteOutputMetadata, outputID.ToHex())
@@ -471,28 +446,11 @@ func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.Ou
 	return res, nil
 }
 
-// CommitmentByID gets a commitment by its ID.
-func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID) (*iotago.Commitment, error) {
+// CommitmentByID gets a commitment details by its ID.
+func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID) (*CommitmentDetailsResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByID, id.ToHex())
 
-	res := &RawDataEnvelope{}
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
-		return nil, err
-	}
-
-	commitment := &iotago.Commitment{}
-	if _, err := client.opts.iotagoAPI.Decode(res.Data, commitment, serix.WithValidation()); err != nil {
-		return nil, err
-	}
-
-	return commitment, nil
-}
-
-// CommitmentUTXOChangesByID returns all UTXO changes of a commitment by its ID.
-func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*CommitmentUTXOChangesResponse, error) {
-	query := fmt.Sprintf(RouteCommitmentByIDUTXOChanges, id.ToHex())
-
-	res := &CommitmentUTXOChangesResponse{}
+	res := &CommitmentDetailsResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -500,28 +458,35 @@ func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.C
 	return res, nil
 }
 
-// CommitmentByIndex gets a milestone by its index.
-func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIndex) (*iotago.Commitment, error) {
+// CommitmentUTXOChangesByID returns all UTXO changes of a commitment by its ID.
+func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*UTXOChangesResponse, error) {
+	query := fmt.Sprintf(RouteCommitmentByIDUTXOChanges, id.ToHex())
+
+	res := &UTXOChangesResponse{}
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// CommitmentByIndex gets a commitment details by its index.
+func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIndex) (*CommitmentDetailsResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByIndex, index)
 
-	res := &RawDataEnvelope{}
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
+	res := &CommitmentDetailsResponse{}
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
-	commitment := &iotago.Commitment{}
-	if _, err := client.opts.iotagoAPI.Decode(res.Data, commitment, serix.WithValidation()); err != nil {
-		return nil, err
-	}
-
-	return commitment, nil
+	return res, nil
 }
 
 // CommitmentUTXOChangesByIndex returns all UTXO changes of a commitment by its index.
-func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*CommitmentUTXOChangesResponse, error) {
+func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*UTXOChangesResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByIndexUTXOChanges, index)
 
-	res := &CommitmentUTXOChangesResponse{}
+	res := &UTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
