@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"context"
+	"crypto/ed25519"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/lo"
@@ -56,6 +57,14 @@ var (
 	accountOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0,
 		Max: 3,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+	}
+
+	accountOutputV3BlockIssuerKeysArrRules = &serix.ArrayRules{
+		Min: MinBlockIssuerKeysCount,
+		Max: MaxBlockIssuerKeysCount,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
 			serializer.ArrayValidationModeLexicalOrdering |
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
@@ -461,6 +470,15 @@ func V3API(protoParams *ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(Attestation{}, serix.TypeSettings{}))
+	}
+
+	{
+		must(api.RegisterTypeSettings(BlockIssuerKeys{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3BlockIssuerKeysArrRules),
+		))
+		must(api.RegisterTypeSettings(ed25519.PublicKey{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte),
+		))
 	}
 
 	return &v3api{

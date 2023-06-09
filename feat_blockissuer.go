@@ -7,11 +7,21 @@ import (
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
+const (
+	// MinBlockIssuerKeysCount is the minimum amount of block issuer keys allowed for a BlockIssuerFeature.
+	MinBlockIssuerKeysCount = 1
+	// MaxBlockIssuerKeysCount is the maximum amount of block issuer keys allowed for a BlockIssuerFeature.
+	MaxBlockIssuerKeysCount = 128
+)
+
+// BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
+type BlockIssuerKeys []ed25519.PublicKey
+
 // BlockIssuerFeature is a feature which indicates that this account can issue blocks.
 // The feature includes a block issuer address as well as an expiry slot.
 type BlockIssuerFeature struct {
-	BlockIssuerKeys []ed25519.PublicKey `serix:"0,mapKey=blockIssuerKeys,lengthPrefixType=uint8"`
-	ExpirySlot      SlotIndex           `serix:"1,mapKey=expirySlot"`
+	BlockIssuerKeys BlockIssuerKeys `serix:"0,mapKey=blockIssuerKeys,lengthPrefixType=uint8"`
+	ExpirySlot      SlotIndex       `serix:"1,mapKey=expirySlot"`
 }
 
 func (s *BlockIssuerFeature) Clone() Feature {
