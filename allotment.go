@@ -44,7 +44,6 @@ func SyntacticallyValidateAllotments(allotments TxEssenceAllotments, funcs ...Al
 	return nil
 }
 
-// TODO: test this
 // AllotmentsSyntacticalUnique returns an AllotmentsSyntacticalValidationFunc which checks that every Allotment has a unique Account.
 func AllotmentsSyntacticalUnique() AllotmentsSyntacticalValidationFunc {
 	allotmentsSet := map[string]int{}

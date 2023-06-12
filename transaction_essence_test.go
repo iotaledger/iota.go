@@ -159,3 +159,42 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		t.Run(tt.name, tt.deSerialize)
 	}
 }
+
+func TestAllotmentUniqueness(t *testing.T) {
+	inputIDs := tpkg.RandOutputIDs(1)
+
+	accountAddress := iotago.AccountAddressFromOutputID(inputIDs[0])
+	accountID := accountAddress.AccountID()
+
+	tests := []deSerializeTest{
+		{
+			name: "allot to the same account twice",
+			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
+				NetworkID: tpkg.TestNetworkID,
+				Inputs:    inputIDs.UTXOInputs(),
+				Outputs:   iotago.TxEssenceOutputs{},
+				Allotments: iotago.Allotments{
+					&iotago.Allotment{
+						AccountID: accountID,
+						Value:     0,
+					},
+					&iotago.Allotment{
+						AccountID: tpkg.RandAccountID(),
+						Value:     12,
+					},
+					&iotago.Allotment{
+						AccountID: accountID,
+						Value:     12,
+					},
+				},
+			}),
+			target:    &iotago.Transaction{},
+			seriErr:   iotago.ErrAllotmentsNotUnique,
+			deSeriErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, tt.deSerialize)
+	}
+}

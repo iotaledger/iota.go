@@ -432,6 +432,11 @@ func RandTransactionWithOutputCount(outputCount int) *iotago.Transaction {
 	return RandTransactionWithEssence(RandTransactionEssenceWithOutputCount(outputCount))
 }
 
+// RandTransactionWithAllotmentCount returns a random transaction with a specific amount of allotments.
+func RandTransactionWithAllotmentCount(allotmentCount int) *iotago.Transaction {
+	return RandTransactionWithEssence(RandTransactionEssenceWithAllotmentCount(allotmentCount))
+}
+
 // RandTransactionWithInputOutputCount returns a random transaction with a specific amount of inputs and outputs.
 func RandTransactionWithInputOutputCount(inputCount int, outputCount int) *iotago.Transaction {
 	return RandTransactionWithEssence(RandTransactionEssenceWithInputOutputCount(inputCount, outputCount))

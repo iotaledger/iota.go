@@ -128,6 +128,28 @@ func TestTransactionDeSerialize_MaxOutputsCount(t *testing.T) {
 	}
 }
 
+func TestTransactionDeSerialize_MaxAllotmentsCount(t *testing.T) {
+	tests := []deSerializeTest{
+		{
+			name:      "ok",
+			source:    tpkg.RandTransactionWithAllotmentCount(1),
+			target:    &iotago.Transaction{},
+			seriErr:   nil,
+			deSeriErr: nil,
+		},
+		{
+			name:      "too many outputs",
+			source:    tpkg.RandTransactionWithAllotmentCount(iotago.MaxAllottmentCount + 1),
+			target:    &iotago.Transaction{},
+			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
+			deSeriErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, tt.deSerialize)
+	}
+}
+
 func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
 	tests := []deSerializeTest{
 		{
