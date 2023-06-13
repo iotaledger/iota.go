@@ -16,6 +16,10 @@ const (
 	// TransactionEssenceNormal denotes a standard transaction essence.
 	TransactionEssenceNormal TransactionEssenceType = 2
 
+	// MinCommitmentReferencesCount defines the minimum amount of commitment references within a TransactionEssence.
+	MinCommitmentReferencesCount = 0
+	// MaxCommitmentReferencesCount defines the maximum amount of commitment references within a TransactionEssence.
+	MaxCommitmentReferencesCount = 128
 	// MaxInputsCount defines the maximum amount of inputs within a TransactionEssence.
 	MaxInputsCount = 128
 	// MinInputsCount defines the minimum amount of inputs within a TransactionEssence.
@@ -24,10 +28,10 @@ const (
 	MaxOutputsCount = 128
 	// MinOutputsCount defines the minimum amount of inputs within a TransactionEssence.
 	MinOutputsCount = 1
-	// MinAllottmentCount defines the minimum amount of allottments within a TransactionEssence.
-	MinAllottmentCount = 0
-	// MaxAllottmentCount defines the maximum amount of allottments within a TransactionEssence.
-	MaxAllottmentCount = 128
+	// MinAllotmentCount defines the minimum amount of allotments within a TransactionEssence.
+	MinAllotmentCount = 0
+	// MaxAllotmentCount defines the maximum amount of allotments within a TransactionEssence.
+	MaxAllotmentCount = 128
 
 	// InputsCommitmentLength defines the length of the inputs commitment hash.
 	InputsCommitmentLength = blake2b.Size256
@@ -80,12 +84,14 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 type InputsCommitment = [InputsCommitmentLength]byte
 
 type (
-	txEssenceInput      interface{ Input }
-	TxEssenceOutput     interface{ Output }
-	TxEssencePayload    interface{ Payload }
-	TxEssenceInputs     = Inputs[txEssenceInput]
-	TxEssenceOutputs    = Outputs[TxEssenceOutput]
-	TxEssenceAllotments = Allotments
+	txEssenceCommitmentReference  interface{ Input }
+	txEssenceInput                interface{ Input }
+	TxEssenceOutput               interface{ Output }
+	TxEssencePayload              interface{ Payload }
+	TxEssenceCommitmentReferences = Inputs[txEssenceCommitmentReference]
+	TxEssenceInputs               = Inputs[txEssenceInput]
+	TxEssenceOutputs              = Outputs[TxEssenceOutput]
+	TxEssenceAllotments           = Allotments
 )
 
 // TransactionEssence is the essence part of a Transaction.
@@ -94,16 +100,18 @@ type TransactionEssence struct {
 	NetworkID NetworkID `serix:"0,mapKey=networkId"`
 	// The time at which this transaction was created by the client.
 	CreationTime SlotIndex `serix:"1,mapKey=creationTime"`
+	// The commitment references of this transaction.
+	CommitmentReference TxEssenceCommitmentReferences `serix:"2,mapKey=commitmentReferences"`
 	// The inputs of this transaction.
-	Inputs TxEssenceInputs `serix:"2,mapKey=inputs"`
+	Inputs TxEssenceInputs `serix:"3,mapKey=inputs"`
 	// The commitment to the referenced inputs.
-	InputsCommitment InputsCommitment `serix:"3,mapKey=inputsCommitment"`
+	InputsCommitment InputsCommitment `serix:"4,mapKey=inputsCommitment"`
 	// The outputs of this transaction.
-	Outputs TxEssenceOutputs `serix:"4,mapKey=outputs"`
+	Outputs TxEssenceOutputs `serix:"5,mapKey=outputs"`
 	// The optional accounts map with corresponding allotment values.
-	Allotments TxEssenceAllotments `serix:"5,mapKey=allotments"`
+	Allotments TxEssenceAllotments `serix:"6,mapKey=allotments"`
 	// The optional embedded payload.
-	Payload TxEssencePayload `serix:"6,optional,mapKey=payload"`
+	Payload TxEssencePayload `serix:"7,optional,mapKey=payload"`
 }
 
 // SigningMessage returns the to be signed message.
@@ -152,6 +160,7 @@ func (u *TransactionEssence) Size() int {
 	return util.NumByteLen(TransactionEssenceNormal) +
 		util.NumByteLen(u.NetworkID) +
 		len(SlotIndex(0).Bytes()) +
+		u.CommitmentReference.Size() +
 		u.Inputs.Size() +
 		InputsCommitmentLength +
 		u.Outputs.Size() +
@@ -162,7 +171,7 @@ func (u *TransactionEssence) Size() int {
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
 func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParameters) error {
-	// TODO: implement validation of Allotments
+	// TODO: implement validation of CommitmentReferences
 
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {

@@ -274,17 +274,17 @@ func ReferenceUnlock(index uint16) *iotago.ReferenceUnlock {
 
 // RandTransactionEssence returns a random transaction essence.
 func RandTransactionEssence() *iotago.TransactionEssence {
-	return RandTransactionEssenceWithInputOutputAllotmentCount(rand.Intn(iotago.MaxInputsCount)+1, rand.Intn(iotago.MaxOutputsCount)+1, rand.Intn(iotago.MaxAllottmentCount)+1)
+	return RandTransactionEssenceWithInputOutputAllotmentCount(rand.Intn(iotago.MaxInputsCount)+1, rand.Intn(iotago.MaxOutputsCount)+1, rand.Intn(iotago.MaxAllotmentCount)+1)
 }
 
 // RandTransactionEssenceWithInputCount returns a random transaction essence with a specific amount of inputs..
 func RandTransactionEssenceWithInputCount(inputCount int) *iotago.TransactionEssence {
-	return RandTransactionEssenceWithInputOutputAllotmentCount(inputCount, rand.Intn(iotago.MaxOutputsCount)+1, rand.Intn(iotago.MaxAllottmentCount)+1)
+	return RandTransactionEssenceWithInputOutputAllotmentCount(inputCount, rand.Intn(iotago.MaxOutputsCount)+1, rand.Intn(iotago.MaxAllotmentCount)+1)
 }
 
 // RandTransactionEssenceWithOutputCount returns a random transaction essence with a specific amount of outputs.
 func RandTransactionEssenceWithOutputCount(outputCount int) *iotago.TransactionEssence {
-	return RandTransactionEssenceWithInputOutputAllotmentCount(rand.Intn(iotago.MaxInputsCount)+1, outputCount, rand.Intn(iotago.MaxAllottmentCount)+1)
+	return RandTransactionEssenceWithInputOutputAllotmentCount(rand.Intn(iotago.MaxInputsCount)+1, outputCount, rand.Intn(iotago.MaxAllotmentCount)+1)
 }
 
 // RandTransactionEssenceWithAllotmentCount returns a random transaction essence with a specific amount of outputs.
@@ -337,6 +337,45 @@ func RandTransactionEssenceWithInputs(inputs iotago.TxEssenceInputs) *iotago.Tra
 	}
 
 	tx.Inputs = inputs
+
+	outputCount := 1
+	for i := outputCount; i > 0; i-- {
+		tx.Outputs = append(tx.Outputs, RandBasicOutput(iotago.AddressEd25519))
+	}
+
+	return tx
+}
+
+// RandTransactionEssenceWithInputsAndCommitmentReferences returns a random transaction essence with a specific slice of inputs and commitment references.
+func RandTransactionEssenceWithInputsAndCommitmentReferences(inputs iotago.TxEssenceInputs, commitmentReferences iotago.TxEssenceCommitmentReferences) *iotago.TransactionEssence {
+	tx := &iotago.TransactionEssence{
+		NetworkID: TestNetworkID,
+	}
+
+	tx.CommitmentReference = commitmentReferences
+
+	tx.Inputs = inputs
+
+	outputCount := 1
+	for i := outputCount; i > 0; i-- {
+		tx.Outputs = append(tx.Outputs, RandBasicOutput(iotago.AddressEd25519))
+	}
+
+	return tx
+}
+
+// RandTransactionEssenceWithCommitmentReferences returns a random transaction essence with a specific slice of commitment references.
+func RandTransactionEssenceWithCommitmentReferences(references iotago.TxEssenceCommitmentReferences) *iotago.TransactionEssence {
+	tx := &iotago.TransactionEssence{
+		NetworkID: TestNetworkID,
+	}
+
+	tx.CommitmentReference = references
+
+	inputCount := 1
+	for i := inputCount; i > 0; i-- {
+		tx.Inputs = append(tx.Inputs, RandUTXOInput())
+	}
 
 	outputCount := 1
 	for i := outputCount; i > 0; i-- {

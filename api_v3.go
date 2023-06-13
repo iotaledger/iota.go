@@ -128,6 +128,12 @@ var (
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
+	txEssenceV3CommitmentReferencesArrRules = &serix.ArrayRules{
+		Min:            MinCommitmentReferencesCount,
+		Max:            MaxCommitmentReferencesCount,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates,
+	}
+
 	txEssenceV3InputsArrRules = &serix.ArrayRules{
 		Min:            MinInputsCount,
 		Max:            MaxInputsCount,
@@ -141,8 +147,8 @@ var (
 	}
 
 	txEssenceV3AllotmentsArrRules = &serix.ArrayRules{
-		Min:            MinAllottmentCount,
-		Max:            MaxAllottmentCount,
+		Min:            MinAllotmentCount,
+		Max:            MaxAllotmentCount,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates, // FIXME: it was LexicalOrdering - do we need it?
 	}
 
@@ -378,16 +384,22 @@ func V3API(protoParams *ProtocolParameters) API {
 	{
 		must(api.RegisterTypeSettings(TransactionEssence{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
 
-		must(api.RegisterTypeSettings(UTXOInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputUTXO))))
 		must(api.RegisterTypeSettings(CommitmentInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))))
 		must(api.RegisterTypeSettings(BICInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputBlockIssuanceCredit))))
+
+		must(api.RegisterTypeSettings(TxEssenceCommitmentReferences{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3CommitmentReferencesArrRules),
+		))
+
+		must(api.RegisterInterfaceObjects((*txEssenceCommitmentReference)(nil), (*CommitmentInput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceCommitmentReference)(nil), (*BICInput)(nil)))
+
+		must(api.RegisterTypeSettings(UTXOInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputUTXO))))
 
 		must(api.RegisterTypeSettings(TxEssenceInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3InputsArrRules),
 		))
 		must(api.RegisterInterfaceObjects((*txEssenceInput)(nil), (*UTXOInput)(nil)))
-		must(api.RegisterInterfaceObjects((*txEssenceInput)(nil), (*CommitmentInput)(nil)))
-		must(api.RegisterInterfaceObjects((*txEssenceInput)(nil), (*BICInput)(nil)))
 
 		must(api.RegisterTypeSettings(TxEssenceOutputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3OutputsArrRules),

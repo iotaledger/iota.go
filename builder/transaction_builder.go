@@ -16,10 +16,11 @@ var (
 func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 	return &TransactionBuilder{
 		essence: &iotago.TransactionEssence{
-			NetworkID: networkID,
-			Inputs:    iotago.TxEssenceInputs{},
-			Outputs:   iotago.TxEssenceOutputs{},
-			Payload:   nil,
+			NetworkID:           networkID,
+			CommitmentReference: iotago.TxEssenceCommitmentReferences{},
+			Inputs:              iotago.TxEssenceInputs{},
+			Outputs:             iotago.TxEssenceOutputs{},
+			Payload:             nil,
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},
@@ -42,6 +43,15 @@ type TxInput struct {
 	InputID iotago.OutputID `json:"inputID"`
 	// The output which is used as an input.
 	Input iotago.OutputWithCreationTime `json:"input"`
+}
+
+// TODO: extend the builder with Allotments and CommitmentReferences
+// AddCommitmentReference adds the given reference to the builder.
+func (b *TransactionBuilder) AddCommitmentReference(input *TxInput) *TransactionBuilder {
+	b.inputOwner[input.InputID] = input.UnlockTarget
+	b.essence.Inputs = append(b.essence.Inputs, input.InputID.UTXOInput())
+	b.inputs[input.InputID] = input.Input.Output
+	return b
 }
 
 // AddInput adds the given input to the builder.

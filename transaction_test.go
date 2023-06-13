@@ -20,7 +20,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 		},
 		{
 			name: "ok -  Commitment",
-			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
+			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithCommitmentReferences(iotago.TxEssenceCommitmentReferences{
 				&iotago.CommitmentInput{
 					AccountID:    tpkg.RandAccountID(),
 					CommitmentID: iotago.CommitmentID{},
@@ -32,7 +32,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 		},
 		{
 			name: "ok - BIC",
-			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
+			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithCommitmentReferences(iotago.TxEssenceCommitmentReferences{
 				&iotago.BICInput{
 					AccountID:    tpkg.RandAccountID(),
 					CommitmentID: iotago.CommitmentID{},
@@ -43,28 +43,8 @@ func TestTransactionDeSerialize(t *testing.T) {
 			deSeriErr: nil,
 		},
 		{
-			name: "ok - UTXO + Commitment",
-			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
-				&iotago.UTXOInput{
-					TransactionID:          tpkg.RandTransactionID(),
-					TransactionOutputIndex: iotago.RefUTXOIndexMax,
-				},
-				&iotago.CommitmentInput{
-					AccountID:    tpkg.RandAccountID(),
-					CommitmentID: iotago.CommitmentID{},
-				},
-			})),
-			target:    &iotago.Transaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
-		},
-		{
-			name: "ok - UTXO + Commitment + BIC",
-			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
-				&iotago.UTXOInput{
-					TransactionID:          tpkg.RandTransactionID(),
-					TransactionOutputIndex: iotago.RefUTXOIndexMax,
-				},
+			name: "ok - Commitment + BIC",
+			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithCommitmentReferences(iotago.TxEssenceCommitmentReferences{
 				&iotago.CommitmentInput{
 					AccountID:    tpkg.RandAccountID(),
 					CommitmentID: iotago.CommitmentID{},
@@ -139,7 +119,7 @@ func TestTransactionDeSerialize_MaxAllotmentsCount(t *testing.T) {
 		},
 		{
 			name:      "too many outputs",
-			source:    tpkg.RandTransactionWithAllotmentCount(iotago.MaxAllottmentCount + 1),
+			source:    tpkg.RandTransactionWithAllotmentCount(iotago.MaxAllotmentCount + 1),
 			target:    &iotago.Transaction{},
 			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
 			deSeriErr: nil,
@@ -211,12 +191,13 @@ func TestTransaction_InputTypes(t *testing.T) {
 		AccountID:    tpkg.RandAccountID(),
 	}
 
-	transaction := tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputs(iotago.TxEssenceInputs{
+	transaction := tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithInputsAndCommitmentReferences(iotago.TxEssenceInputs{
 		utxoInput1,
+		utxoInput2,
+	}, iotago.TxEssenceCommitmentReferences{
 		commitmentInput1,
 		bicInput1,
 		commitmentInput2,
-		utxoInput2,
 		bicInput2,
 	}))
 
