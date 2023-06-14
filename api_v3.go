@@ -128,9 +128,9 @@ var (
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
-	txEssenceV3CommitmentReferencesArrRules = &serix.ArrayRules{
-		Min:            MinCommitmentReferencesCount,
-		Max:            MaxCommitmentReferencesCount,
+	txEssenceV3ContextInputsArrRules = &serix.ArrayRules{
+		Min:            MinContextInputsCount,
+		Max:            MaxContextInputsCount,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates,
 	}
 
@@ -387,12 +387,12 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterTypeSettings(CommitmentInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))))
 		must(api.RegisterTypeSettings(BICInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputBlockIssuanceCredit))))
 
-		must(api.RegisterTypeSettings(TxEssenceCommitmentReferences{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3CommitmentReferencesArrRules),
+		must(api.RegisterTypeSettings(TxEssenceContextInputs{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3ContextInputsArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*txEssenceCommitmentReference)(nil), (*CommitmentInput)(nil)))
-		must(api.RegisterInterfaceObjects((*txEssenceCommitmentReference)(nil), (*BICInput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*CommitmentInput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*BICInput)(nil)))
 
 		must(api.RegisterTypeSettings(UTXOInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputUTXO))))
 

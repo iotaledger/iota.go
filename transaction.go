@@ -87,8 +87,8 @@ func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
 }
 
 func (t *Transaction) BICInputs() ([]*BICInput, error) {
-	references := make([]*BICInput, 0, len(t.Essence.CommitmentReference))
-	for _, input := range t.Essence.CommitmentReference {
+	references := make([]*BICInput, 0, len(t.Essence.ContextInputs))
+	for _, input := range t.Essence.ContextInputs {
 		switch castInput := input.(type) {
 		case *BICInput:
 			references = append(references, castInput)
@@ -103,8 +103,8 @@ func (t *Transaction) BICInputs() ([]*BICInput, error) {
 }
 
 func (t *Transaction) CommitmentInputs() ([]*CommitmentInput, error) {
-	references := make([]*CommitmentInput, 0, len(t.Essence.CommitmentReference))
-	for _, input := range t.Essence.CommitmentReference {
+	references := make([]*CommitmentInput, 0, len(t.Essence.ContextInputs))
+	for _, input := range t.Essence.ContextInputs {
 		switch castInput := input.(type) {
 		case *BICInput:
 			// ignore this type

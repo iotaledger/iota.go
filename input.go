@@ -106,10 +106,6 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 	return func(index int, input Input) error {
 		switch castInput := input.(type) {
-		case *BICInput:
-			// TODO: any checks necessary?
-		case *CommitmentInput:
-			// TODO: any checks necessary?
 		case IndexedUTXOReferencer:
 			if castInput.Index() < RefUTXOIndexMin || castInput.Index() > RefUTXOIndexMax {
 				return fmt.Errorf("%w: input %d", ErrRefUTXOIndexInvalid, index)
@@ -119,6 +115,19 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 		}
 		return nil
 	}
+}
+
+// SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
+func SyntacticallyValidateContextInputs(inputs TxEssenceContextInputs, funcs ...InputsSyntacticalValidationFunc) error {
+	for i, input := range inputs {
+		for _, f := range funcs {
+			if err := f(i, input); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).

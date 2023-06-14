@@ -7,12 +7,13 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/ethereum/go-ethereum v1.11.6
 	github.com/iotaledger/hive.go/lo v0.0.0-20230531105818-97be4b1d3a36
+	github.com/iotaledger/hive.go/runtime v0.0.0-20230531105818-97be4b1d3a36
 	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230531105818-97be4b1d3a36
 	github.com/iotaledger/iota.go v1.0.0
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.2
-	golang.org/x/crypto v0.8.0
+	golang.org/x/crypto v0.9.0
 	gopkg.in/h2non/gock.v1 v1.1.2
 )
 
@@ -26,10 +27,8 @@ require (
 	github.com/iancoleman/orderedmap v0.2.0 // indirect
 	github.com/iotaledger/hive.go/constraints v0.0.0-20230509131601-fb70d1a6cc57 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/net v0.9.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

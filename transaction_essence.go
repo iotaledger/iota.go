@@ -16,10 +16,10 @@ const (
 	// TransactionEssenceNormal denotes a standard transaction essence.
 	TransactionEssenceNormal TransactionEssenceType = 2
 
-	// MinCommitmentReferencesCount defines the minimum amount of commitment references within a TransactionEssence.
-	MinCommitmentReferencesCount = 0
-	// MaxCommitmentReferencesCount defines the maximum amount of commitment references within a TransactionEssence.
-	MaxCommitmentReferencesCount = 128
+	// MinContextInputsCount defines the minimum amount of context inputs within a TransactionEssence.
+	MinContextInputsCount = 0
+	// MaxContextInputsCount defines the maximum amount of context inputs within a TransactionEssence.
+	MaxContextInputsCount = 128
 	// MaxInputsCount defines the maximum amount of inputs within a TransactionEssence.
 	MaxInputsCount = 128
 	// MinInputsCount defines the minimum amount of inputs within a TransactionEssence.
@@ -84,14 +84,14 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 type InputsCommitment = [InputsCommitmentLength]byte
 
 type (
-	txEssenceCommitmentReference  interface{ Input }
-	txEssenceInput                interface{ Input }
-	TxEssenceOutput               interface{ Output }
-	TxEssencePayload              interface{ Payload }
-	TxEssenceCommitmentReferences = Inputs[txEssenceCommitmentReference]
-	TxEssenceInputs               = Inputs[txEssenceInput]
-	TxEssenceOutputs              = Outputs[TxEssenceOutput]
-	TxEssenceAllotments           = Allotments
+	txEssenceContextInput  interface{ Input }
+	txEssenceInput         interface{ Input }
+	TxEssenceOutput        interface{ Output }
+	TxEssencePayload       interface{ Payload }
+	TxEssenceContextInputs = Inputs[txEssenceContextInput]
+	TxEssenceInputs        = Inputs[txEssenceInput]
+	TxEssenceOutputs       = Outputs[TxEssenceOutput]
+	TxEssenceAllotments    = Allotments
 )
 
 // TransactionEssence is the essence part of a Transaction.
@@ -101,7 +101,7 @@ type TransactionEssence struct {
 	// The time at which this transaction was created by the client.
 	CreationTime SlotIndex `serix:"1,mapKey=creationTime"`
 	// The commitment references of this transaction.
-	CommitmentReference TxEssenceCommitmentReferences `serix:"2,mapKey=commitmentReferences"`
+	ContextInputs TxEssenceContextInputs `serix:"2,mapKey=contextInputs"`
 	// The inputs of this transaction.
 	Inputs TxEssenceInputs `serix:"3,mapKey=inputs"`
 	// The commitment to the referenced inputs.
@@ -160,7 +160,7 @@ func (u *TransactionEssence) Size() int {
 	return util.NumByteLen(TransactionEssenceNormal) +
 		util.NumByteLen(u.NetworkID) +
 		len(SlotIndex(0).Bytes()) +
-		u.CommitmentReference.Size() +
+		u.ContextInputs.Size() +
 		u.Inputs.Size() +
 		InputsCommitmentLength +
 		u.Outputs.Size() +
@@ -171,11 +171,15 @@ func (u *TransactionEssence) Size() int {
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
 func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParameters) error {
-	// TODO: implement validation of CommitmentReferences
-
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {
 		return fmt.Errorf("%w: got %v, want %v (%s)", ErrTxEssenceNetworkIDInvalid, u.NetworkID, expectedNetworkID, protoParams.NetworkName)
+	}
+
+	if err := SyntacticallyValidateContextInputs(u.ContextInputs,
+		InputsSyntacticalUnique(),
+	); err != nil {
+		return err
 	}
 
 	if err := SyntacticallyValidateInputs(u.Inputs,
