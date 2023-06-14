@@ -2,10 +2,8 @@ package builder_test
 
 import (
 	"context"
-	"math/rand"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -15,8 +13,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	rand.Seed(time.Now().UnixNano())
-
 	// call the tests
 	os.Exit(m.Run())
 }
