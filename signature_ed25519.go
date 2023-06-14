@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
 )
 
 const (
@@ -58,7 +58,7 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	if !bytes.Equal(addr[:], addrFromPubKey[:]) {
 		return fmt.Errorf("%w: address %s, address from public key %v", ErrEd25519PubKeyAndAddrMismatch, EncodeHex(addr[:]), EncodeHex(addrFromPubKey[:]))
 	}
-	if valid := iotagoEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
+	if valid := hiveEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
 		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrEd25519SignatureInvalid, EncodeHex(addr[:]), EncodeHex(e.PublicKey[:]), EncodeHex(e.Signature[:]))
 	}
 	return nil

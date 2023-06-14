@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
-	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -147,7 +147,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	pubKey := prvKey.Public().(ed25519.PublicKey)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		iotagoEd25519.Verify(pubKey, txEssenceData, sig)
+		hiveEd25519.Verify(pubKey, txEssenceData, sig)
 	}
 }
 
