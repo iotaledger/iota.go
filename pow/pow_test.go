@@ -28,8 +28,6 @@ const (
 var testWorker = New(workers)
 
 func TestMain(m *testing.M) {
-	rand.Seed(time.Now().UnixNano())
-
 	// call the tests
 	os.Exit(m.Run())
 }
