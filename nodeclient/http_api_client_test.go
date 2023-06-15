@@ -16,6 +16,7 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -66,12 +67,12 @@ func TestClient_Info(t *testing.T) {
 			LatestMilestone: nodeclient.InfoResMilestone{
 				Index:       1337,
 				Timestamp:   1333337,
-				MilestoneID: iotago.EncodeHex(tpkg.RandBytes(32)),
+				MilestoneID: hexutil.EncodeHex(tpkg.RandBytes(32)),
 			},
 			ConfirmedMilestone: nodeclient.InfoResMilestone{
 				Index:       666,
 				Timestamp:   6666,
-				MilestoneID: iotago.EncodeHex(tpkg.RandBytes(32)),
+				MilestoneID: hexutil.EncodeHex(tpkg.RandBytes(32)),
 			},
 			PruningIndex: 142857,
 		},
@@ -147,7 +148,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 	defer gock.Off()
 
 	blockHash := tpkg.Rand40ByteArray()
-	blockHashStr := iotago.EncodeHex(blockHash[:])
+	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
 	incompleteBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
@@ -178,11 +179,11 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	identifier := tpkg.Rand40ByteArray()
 	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
 
-	queryHash := iotago.EncodeHex(identifier[:])
+	queryHash := hexutil.EncodeHex(identifier[:])
 
 	parentBlockIDs := make([]string, len(parents))
 	for i, p := range parents {
-		parentBlockIDs[i] = iotago.EncodeHex(p[:])
+		parentBlockIDs[i] = hexutil.EncodeHex(p[:])
 	}
 
 	wfIndex := uint32(5)
@@ -215,7 +216,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand40ByteArray()
-	queryHash := iotago.EncodeHex(identifier[:])
+	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
@@ -245,7 +246,7 @@ func TestClient_ChildrenByBlockID(t *testing.T) {
 	defer gock.Off()
 
 	blockID := tpkg.Rand40ByteArray()
-	hexBlockID := iotago.EncodeHex(blockID[:])
+	hexBlockID := hexutil.EncodeHex(blockID[:])
 
 	child1 := tpkg.Rand32ByteArray()
 	child2 := tpkg.Rand32ByteArray()
@@ -256,9 +257,9 @@ func TestClient_ChildrenByBlockID(t *testing.T) {
 		MaxResults: 1000,
 		Count:      3,
 		Children: []string{
-			iotago.EncodeHex(child1[:]),
-			iotago.EncodeHex(child2[:]),
-			iotago.EncodeHex(child3[:]),
+			hexutil.EncodeHex(child1[:]),
+			hexutil.EncodeHex(child2[:]),
+			hexutil.EncodeHex(child3[:]),
 		},
 	}
 
@@ -277,7 +278,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
-	queryHash := iotago.EncodeHex(identifier[:])
+	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
@@ -337,7 +338,7 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 	rawMsgSigDepJson := json.RawMessage(sigDepJson)
 
 	txID := tpkg.Rand32ByteArray()
-	hexTxID := iotago.EncodeHex(txID[:])
+	hexTxID := hexutil.EncodeHex(txID[:])
 	originRes := &nodeclient.OutputResponse{
 		Metadata: &nodeclient.OutputMetadataResponse{
 			TransactionID: hexTxID,
@@ -371,7 +372,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
 	txID := tpkg.Rand32ByteArray()
-	hexTxID := iotago.EncodeHex(txID[:])
+	hexTxID := hexutil.EncodeHex(txID[:])
 	originRes := &nodeclient.OutputMetadataResponse{
 		TransactionID: hexTxID,
 		OutputIndex:   3,

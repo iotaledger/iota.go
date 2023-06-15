@@ -13,6 +13,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
@@ -274,7 +275,7 @@ func (eac *EventAPIClient) TransactionTaggedDataBlocks() (<-chan *iotago.Block, 
 
 // TransactionTaggedDataWithTagBlocks returns a channel of blocks containing transactions with tagged data containing the given tag.
 func (eac *EventAPIClient) TransactionTaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.Block, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIBlocksTransactionTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
+	topic := strings.Replace(EventAPIBlocksTransactionTaggedDataTag, "{tag}", hexutil.EncodeHex(tag), 1)
 	return eac.subscribeToBlocksTopic(topic)
 }
 
@@ -285,7 +286,7 @@ func (eac *EventAPIClient) TaggedDataBlocks() (<-chan *iotago.Block, *EventAPICl
 
 // TaggedDataWithTagBlocks returns a channel of blocks containing tagged data.
 func (eac *EventAPIClient) TaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.Block, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIBlocksTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
+	topic := strings.Replace(EventAPIBlocksTaggedDataTag, "{tag}", hexutil.EncodeHex(tag), 1)
 	return eac.subscribeToBlocksTopic(topic)
 }
 
@@ -335,6 +336,6 @@ func (eac *EventAPIClient) TransactionIncludedBlock(txID iotago.TransactionID) (
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
 func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIOutputs, "{outputId}", iotago.EncodeHex(outputID[:]), 1)
+	topic := strings.Replace(EventAPIOutputs, "{outputId}", hexutil.EncodeHex(outputID[:]), 1)
 	return eac.subscribeToOutputsTopic(topic)
 }

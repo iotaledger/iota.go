@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
@@ -37,7 +38,7 @@ func NewSlotIdentifier(index SlotIndex, idBytes Identifier) SlotIdentifier {
 
 // SlotIdentifierFromHexString converts the hex to a SlotIdentifier representation.
 func SlotIdentifierFromHexString(hex string) (SlotIdentifier, error) {
-	bytes, err := DecodeHex(hex)
+	bytes, err := hexutil.DecodeHex(hex)
 	if err != nil {
 		return SlotIdentifier{}, err
 	}
@@ -95,7 +96,7 @@ func (id SlotIdentifier) Empty() bool {
 
 // ToHex converts the Identifier to its hex representation.
 func (id SlotIdentifier) ToHex() string {
-	return EncodeHex(id[:])
+	return hexutil.EncodeHex(id[:])
 }
 
 func (id SlotIdentifier) String() string {

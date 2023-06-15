@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 type hashable[V Value] interface {
@@ -48,7 +48,7 @@ func (t *Hasher[V]) ComputeProof(values []V, valueToProof V) (*Proof[V], error) 
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("value %s is not contained in the given list", iotago.EncodeHex(valueToProofBytes))
+		return nil, fmt.Errorf("value %s is not contained in the given list", hexutil.EncodeHex(valueToProofBytes))
 	}
 	return t.ComputeProofForIndex(values, index)
 }
@@ -136,7 +136,7 @@ type jsonValue struct {
 
 func (l *leafValue[V]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&jsonValue{
-		Value: iotago.EncodeHex(l.Value),
+		Value: hexutil.EncodeHex(l.Value),
 	})
 }
 
@@ -148,7 +148,7 @@ func (l *leafValue[V]) UnmarshalJSON(bytes []byte) error {
 	if len(j.Value) == 0 {
 		return errors.New("missing value")
 	}
-	value, err := iotago.DecodeHex(j.Value)
+	value, err := hexutil.DecodeHex(j.Value)
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ type jsonHash struct {
 
 func (h *hashValue[V]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&jsonHash{
-		Hash: iotago.EncodeHex(h.Value),
+		Hash: hexutil.EncodeHex(h.Value),
 	})
 }
 
@@ -178,7 +178,7 @@ func (h *hashValue[V]) UnmarshalJSON(bytes []byte) error {
 	if len(j.Hash) == 0 {
 		return errors.New("missing hash")
 	}
-	value, err := iotago.DecodeHex(j.Hash)
+	value, err := hexutil.DecodeHex(j.Hash)
 	if err != nil {
 		return err
 	}
@@ -207,8 +207,12 @@ func containsLeafValue[V Value](hasheable hashable[V], value []byte) bool {
 	return false
 }
 
-func (p *Proof[V]) ContainsValue(value iotago.BlockID) (bool, error) {
-	return containsLeafValue[V](p, value[:]), nil
+func (p *Proof[V]) ContainsValue(value V) (bool, error) {
+	valueBytes, err := value.Bytes()
+	if err != nil {
+		return false, err
+	}
+	return containsLeafValue[V](p, valueBytes), nil
 }
 
 func (p *Proof[V]) MarshalJSON() ([]byte, error) {

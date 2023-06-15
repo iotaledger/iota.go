@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 // TODO: use the API instance from Client instead.
@@ -284,7 +285,7 @@ type (
 
 // TxID returns the TransactionID.
 func (nor *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
-	txIDBytes, err := iotago.DecodeHex(nor.TransactionID)
+	txIDBytes, err := hexutil.DecodeHex(nor.TransactionID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
 	}

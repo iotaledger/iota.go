@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/merklehasher"
 
 	// import implementation.
@@ -32,7 +33,7 @@ func TestMerkleHasher(t *testing.T) {
 	hash, err := hasher.HashValues(includedBlocks)
 	require.NoError(t, err)
 
-	expectedHash, err := iotago.DecodeHex("0x1f943b38f71a984d154b7ffef0ff0481c644b3c796d3a451fbe7ebd909b1022c")
+	expectedHash, err := hexutil.DecodeHex("0x1f943b38f71a984d154b7ffef0ff0481c644b3c796d3a451fbe7ebd909b1022c")
 	require.NoError(t, err)
 	require.True(t, bytes.Equal(hash, expectedHash))
 

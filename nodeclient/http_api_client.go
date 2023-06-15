@@ -10,6 +10,7 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
@@ -326,7 +327,7 @@ func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool
 func (ntr *TipsResponse) Tips() (iotago.BlockIDs, error) {
 	blockIDs := make(iotago.BlockIDs, len(ntr.TipsHex))
 	for i, tip := range ntr.TipsHex {
-		blockID, err := iotago.DecodeHex(tip)
+		blockID, err := hexutil.DecodeHex(tip)
 		if err != nil {
 			return nil, err
 		}
@@ -374,7 +375,7 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (iotago.
 
 // BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
 func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*BlockMetadataResponse, error) {
-	query := fmt.Sprintf(RouteBlockMetadata, iotago.EncodeHex(blockID[:]))
+	query := fmt.Sprintf(RouteBlockMetadata, hexutil.EncodeHex(blockID[:]))
 
 	res := &BlockMetadataResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -386,7 +387,7 @@ func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago
 
 // BlockByBlockID get a block by its block ID from the node.
 func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID) (*iotago.Block, error) {
-	query := fmt.Sprintf(RouteBlock, iotago.EncodeHex(blockID[:]))
+	query := fmt.Sprintf(RouteBlock, hexutil.EncodeHex(blockID[:]))
 
 	res := &RawDataEnvelope{}
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
@@ -403,7 +404,7 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 
 // ChildrenByBlockID gets the BlockIDs of the child blocks of a given block.
 func (client *Client) ChildrenByBlockID(ctx context.Context, parentBlockID iotago.BlockID) (*ChildrenResponse, error) {
-	query := fmt.Sprintf(RouteBlockChildren, iotago.EncodeHex(parentBlockID[:]))
+	query := fmt.Sprintf(RouteBlockChildren, hexutil.EncodeHex(parentBlockID[:]))
 
 	res := &ChildrenResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -415,7 +416,7 @@ func (client *Client) ChildrenByBlockID(ctx context.Context, parentBlockID iotag
 
 // TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
 func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.Block, error) {
-	query := fmt.Sprintf(RouteTransactionsIncludedBlock, iotago.EncodeHex(txID[:]))
+	query := fmt.Sprintf(RouteTransactionsIncludedBlock, hexutil.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {

@@ -7,6 +7,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -36,7 +37,7 @@ func (id AliasID) Addressable() bool {
 }
 
 func (id AliasID) ToHex() string {
-	return EncodeHex(id[:])
+	return hexutil.EncodeHex(id[:])
 }
 
 func (id AliasID) Key() interface{} {
@@ -52,7 +53,7 @@ func (id AliasID) Empty() bool {
 }
 
 func (id AliasID) String() string {
-	return EncodeHex(id[:])
+	return hexutil.EncodeHex(id[:])
 }
 
 func (id AliasID) Matches(other ChainID) bool {
