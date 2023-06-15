@@ -4,6 +4,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
@@ -15,7 +16,7 @@ const (
 
 // ParseAliasAddressFromHexString parses the given hex string into an AliasAddress.
 func ParseAliasAddressFromHexString(hexAddr string) (*AliasAddress, error) {
-	addrBytes, err := DecodeHex(hexAddr)
+	addrBytes, err := hexutil.DecodeHex(hexAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +89,7 @@ func (aliasAddr *AliasAddress) Bech32(hrp NetworkPrefix) string {
 }
 
 func (aliasAddr *AliasAddress) String() string {
-	return EncodeHex(aliasAddr[:])
+	return hexutil.EncodeHex(aliasAddr[:])
 }
 
 func (aliasAddr *AliasAddress) Size() int {

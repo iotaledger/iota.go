@@ -4,7 +4,7 @@ import (
 	"crypto"
 	"math/bits"
 
-	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // Domain separation prefixes.
@@ -13,38 +13,46 @@ const (
 	NodeHashPrefix = 1
 )
 
+type Value interface {
+	serializer.Byter
+}
+
 // Hasher implements the hashing algorithm described in the IOTA protocol RFC-12.
-type Hasher struct {
+type Hasher[V Value] struct {
 	hash crypto.Hash
 }
 
 // NewHasher creates a new Hasher using the provided hash function.
-func NewHasher(h crypto.Hash) *Hasher {
-	return &Hasher{hash: h}
+func NewHasher[V Value](h crypto.Hash) *Hasher[V] {
+	return &Hasher[V]{hash: h}
 }
 
 // Size returns the length, in bytes, of a digest resulting from the given hash function.
-func (t *Hasher) Size() int {
+func (t *Hasher[V]) Size() int {
 	return t.hash.Size()
 }
 
 // EmptyRoot returns a special case for an empty tree.
 // This is equivalent to Hash(nil).
-func (t *Hasher) EmptyRoot() []byte {
+func (t *Hasher[V]) EmptyRoot() []byte {
 	return t.hash.New().Sum(nil)
 }
 
-// HashBlockIDs computes the Merkle tree hash of the provided BlockIDs.
-func (t *Hasher) HashBlockIDs(blockIDs iotago.BlockIDs) []byte {
-	data := make([][]byte, len(blockIDs))
-	for i := range blockIDs {
-		data[i] = blockIDs[i][:]
+// HashValues computes the Merkle tree hash of the provided BlockIDs.
+func (t *Hasher[V]) HashValues(values []V) ([]byte, error) {
+	data := make([][]byte, len(values))
+	for i := range values {
+		value, err := values[i].Bytes()
+		if err != nil {
+			panic(err)
+		}
+		data[i] = value
 	}
-	return t.Hash(data)
+	return t.Hash(data), nil
 }
 
 // Hash computes the Merkle tree hash of the provided data.
-func (t *Hasher) Hash(data [][]byte) []byte {
+func (t *Hasher[V]) Hash(data [][]byte) []byte {
 	if len(data) == 0 {
 		return t.EmptyRoot()
 	}
@@ -60,7 +68,7 @@ func (t *Hasher) Hash(data [][]byte) []byte {
 }
 
 // hashLeaf returns the Merkle tree leafValue hash of data.
-func (t *Hasher) hashLeaf(l []byte) []byte {
+func (t *Hasher[V]) hashLeaf(l []byte) []byte {
 	h := t.hash.New()
 	h.Write([]byte{LeafHashPrefix})
 	h.Write(l)
@@ -68,7 +76,7 @@ func (t *Hasher) hashLeaf(l []byte) []byte {
 }
 
 // hashNode returns the inner Merkle tree node hash of the two child nodes l and r.
-func (t *Hasher) hashNode(l, r []byte) []byte {
+func (t *Hasher[V]) hashNode(l, r []byte) []byte {
 	h := t.hash.New()
 	h.Write([]byte{NodeHashPrefix})
 	h.Write(l)

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 // Indexer plugin routes.
@@ -166,7 +167,7 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 }
 
 func (client *indexerClient) Alias(ctx context.Context, aliasID iotago.AliasID) (*iotago.OutputID, *iotago.AliasOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteAlias, iotago.EncodeHex(aliasID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteAlias, hexutil.EncodeHex(aliasID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -174,7 +175,7 @@ func (client *indexerClient) Alias(ctx context.Context, aliasID iotago.AliasID) 
 }
 
 func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteFoundry, iotago.EncodeHex(foundryID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteFoundry, hexutil.EncodeHex(foundryID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -182,7 +183,7 @@ func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.Found
 }
 
 func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteNFT, iotago.EncodeHex(nftID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteNFT, hexutil.EncodeHex(nftID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}

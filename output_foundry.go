@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -24,7 +25,7 @@ var (
 type FoundryID [FoundryIDLength]byte
 
 func (fID FoundryID) ToHex() string {
-	return EncodeHex(fID[:])
+	return hexutil.EncodeHex(fID[:])
 }
 
 func (fID FoundryID) Addressable() bool {
@@ -57,7 +58,7 @@ func (fID FoundryID) Key() interface{} {
 }
 
 func (fID FoundryID) String() string {
-	return EncodeHex(fID[:])
+	return hexutil.EncodeHex(fID[:])
 }
 
 // FoundryOutputs is a slice of FoundryOutput(s).

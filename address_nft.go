@@ -4,6 +4,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
@@ -15,7 +16,7 @@ const (
 
 // ParseNFTAddressFromHexString parses the given hex string into an NFTAddress.
 func ParseNFTAddressFromHexString(hexAddr string) (*NFTAddress, error) {
-	addrBytes, err := DecodeHex(hexAddr)
+	addrBytes, err := hexutil.DecodeHex(hexAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +89,7 @@ func (nftAddr *NFTAddress) Bech32(hrp NetworkPrefix) string {
 }
 
 func (nftAddr *NFTAddress) String() string {
-	return EncodeHex(nftAddr[:])
+	return hexutil.EncodeHex(nftAddr[:])
 }
 
 func (nftAddr *NFTAddress) Size() int {

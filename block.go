@@ -15,6 +15,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/pow"
 )
 
@@ -46,7 +47,7 @@ type BlockIDs []BlockID
 func (ids BlockIDs) ToHex() []string {
 	hexIDs := make([]string, len(ids))
 	for i, id := range ids {
-		hexIDs[i] = EncodeHex(id[:])
+		hexIDs[i] = hexutil.EncodeHex(id[:])
 	}
 	return hexIDs
 }

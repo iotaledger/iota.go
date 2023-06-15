@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	"golang.org/x/crypto/blake2b"
+
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
@@ -29,7 +31,7 @@ func IdentifierFromData(data []byte) Identifier {
 
 // IdentifierFromHexString converts the hex to an Identifier representation.
 func IdentifierFromHexString(hex string) (Identifier, error) {
-	bytes, err := DecodeHex(hex)
+	bytes, err := hexutil.DecodeHex(hex)
 	if err != nil {
 		return Identifier{}, err
 	}
@@ -83,7 +85,7 @@ func (id Identifier) Empty() bool {
 
 // ToHex converts the Identifier to its hex representation.
 func (id Identifier) ToHex() string {
-	return EncodeHex(id[:])
+	return hexutil.EncodeHex(id[:])
 }
 
 func (id Identifier) String() string {

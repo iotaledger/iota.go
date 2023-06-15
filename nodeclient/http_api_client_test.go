@@ -17,6 +17,7 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -65,8 +66,8 @@ func TestClient_Info(t *testing.T) {
 		Version: "1.0.0",
 		Status: &nodeclient.InfoResNodeStatus{
 			IsHealthy:            true,
-			LastAcceptedBlockID:  iotago.EncodeHex(tpkg.RandBytes(40)),
-			LastConfirmedBlockID: iotago.EncodeHex(tpkg.RandBytes(40)),
+			LastAcceptedBlockID:  hexutil.EncodeHex(tpkg.RandBytes(40)),
+			LastConfirmedBlockID: hexutil.EncodeHex(tpkg.RandBytes(40)),
 			FinalizedSlot:        iotago.SlotIndex(142857),
 			ATT:                  uint64(ts.UnixNano()),
 			RATT:                 uint64(ts.UnixNano()),
@@ -137,9 +138,9 @@ func TestClient_BlockIssuance(t *testing.T) {
 		LatestFinalizedSlot: iotago.SlotIndex(20),
 	}
 
-	prevID, err := iotago.SlotIdentifierFromHexString(iotago.EncodeHex(tpkg.RandBytes(40)))
+	prevID, err := iotago.SlotIdentifierFromHexString(hexutil.EncodeHex(tpkg.RandBytes(40)))
 	require.NoError(t, err)
-	rootsID, err := iotago.IdentifierFromHexString(iotago.EncodeHex(tpkg.RandBytes(32)))
+	rootsID, err := iotago.IdentifierFromHexString(hexutil.EncodeHex(tpkg.RandBytes(32)))
 	require.NoError(t, err)
 
 	commitment := &iotago.Commitment{
@@ -168,7 +169,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 	defer gock.Off()
 
 	blockHash := tpkg.Rand40ByteArray()
-	blockHashStr := iotago.EncodeHex(blockHash[:])
+	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
 	incompleteBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
@@ -199,11 +200,11 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	identifier := tpkg.Rand40ByteArray()
 	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
 
-	queryHash := iotago.EncodeHex(identifier[:])
+	queryHash := hexutil.EncodeHex(identifier[:])
 
 	parentBlockIDs := make([]string, len(parents))
 	for i, p := range parents {
-		parentBlockIDs[i] = iotago.EncodeHex(p[:])
+		parentBlockIDs[i] = hexutil.EncodeHex(p[:])
 	}
 
 	originRes := &nodeclient.BlockMetadataResponse{
@@ -231,7 +232,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand40ByteArray()
-	queryHash := iotago.EncodeHex(identifier[:])
+	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
@@ -261,7 +262,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand32ByteArray()
-	queryHash := iotago.EncodeHex(identifier[:])
+	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
@@ -316,16 +317,16 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
 	txID := tpkg.Rand32ByteArray()
-	hexTxID := iotago.EncodeHex(txID[:])
+	hexTxID := hexutil.EncodeHex(txID[:])
 	originRes := &nodeclient.OutputMetadataResponse{
-		BlockID:              iotago.EncodeHex(tpkg.RandBytes(40)),
+		BlockID:              hexutil.EncodeHex(tpkg.RandBytes(40)),
 		TransactionID:        hexTxID,
 		OutputIndex:          3,
 		IsSpent:              true,
-		CommitmentIDSpent:    iotago.EncodeHex(tpkg.RandBytes(40)),
-		TransactionIDSpent:   iotago.EncodeHex(tpkg.RandBytes(32)),
-		IncludedCommitmentID: iotago.EncodeHex(tpkg.RandBytes(40)),
-		LatestCommitmentID:   iotago.EncodeHex(tpkg.RandBytes(40)),
+		CommitmentIDSpent:    hexutil.EncodeHex(tpkg.RandBytes(40)),
+		TransactionIDSpent:   hexutil.EncodeHex(tpkg.RandBytes(32)),
+		IncludedCommitmentID: hexutil.EncodeHex(tpkg.RandBytes(40)),
+		LatestCommitmentID:   hexutil.EncodeHex(tpkg.RandBytes(40)),
 	}
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
