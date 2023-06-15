@@ -2,7 +2,6 @@ package nodeclient_test
 
 import (
 	"context"
-	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -28,10 +27,7 @@ var emptyAPI = iotago.LatestAPI(&iotago.ProtocolParameters{
 	SlotDurationInSeconds: 0,
 })
 
-func TestMain(m *testing.M) {
-	rand.Seed(time.Now().UnixNano())
-
-	// call the tests
+func TestMain(m *testing.M) { // call the tests
 	os.Exit(m.Run())
 }
 
@@ -39,7 +35,7 @@ func Test_EventAPIEnabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &nodeclient.RoutesResponse{
-		Routes: []string{"mqtt/v1"},
+		Routes: []string{"mqtt/v2"},
 	}
 
 	gock.New(nodeAPIUrl).

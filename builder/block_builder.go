@@ -8,7 +8,6 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
-	"github.com/iotaledger/iota.go/v4/nodeclient"
 	"github.com/iotaledger/iota.go/v4/pow"
 )
 
@@ -73,27 +72,6 @@ func (mb *BlockBuilder) IssuingTime(time time.Time) *BlockBuilder {
 	mb.block.IssuingTime = time
 
 	return mb
-}
-
-// Tips queries the node API for tips/parents and sets them accordingly.
-func (mb *BlockBuilder) Tips(ctx context.Context, nodeAPI *nodeclient.Client) *BlockBuilder {
-	if mb.err != nil {
-		return mb
-	}
-
-	res, err := nodeAPI.Tips(ctx)
-	if err != nil {
-		mb.err = fmt.Errorf("unable to fetch tips from node API: %w", err)
-		return mb
-	}
-
-	parents, err := res.Tips()
-	if err != nil {
-		mb.err = fmt.Errorf("unable to fetch tips: %w", err)
-		return mb
-	}
-
-	return mb.StrongParents(parents)
 }
 
 // StrongParents sets the strong parents.
