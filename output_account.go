@@ -29,6 +29,10 @@ var (
 	emptyAccountID    = [AccountIDLength]byte{}
 )
 
+func EmptyAccountID() AccountID {
+	return emptyAccountID
+}
+
 // AccountID is the identifier for an account.
 // It is computed as the Blake2b-256 hash of the OutputID of the output which created the account.
 type AccountID = Identifier
