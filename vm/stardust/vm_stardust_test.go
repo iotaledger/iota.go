@@ -869,6 +869,168 @@ func TestStardustTransactionExecution(t *testing.T) {
 			)
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
+			_, ident2, _ := tpkg.RandEd25519Identity()
+
+			inputIDs := tpkg.RandOutputIDs(1)
+
+			inputs := iotago.InputSet{
+				inputIDs[0]: iotago.OutputWithCreationTime{
+					Output: &iotago.AccountOutput{
+						Amount:     100,
+						StateIndex: 0,
+						AccountID:  accountAddr1.AccountID(),
+						Features: iotago.AccountOutputFeatures{
+							&iotago.BlockIssuerFeature{
+								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								ExpirySlot:      100,
+							},
+						},
+						Conditions: iotago.AccountOutputUnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident2},
+						},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				CreationTime: 110,
+				ContextInputs: iotago.TxEssenceContextInputs{
+					&iotago.BICInput{
+						AccountID:    accountAddr1.AccountID(),
+						CommitmentID: iotago.CommitmentID{},
+					},
+				},
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.AccountOutput{
+						Amount:     100,
+						StateIndex: 1,
+						AccountID:  accountAddr1.AccountID(),
+						Features: iotago.AccountOutputFeatures{
+							&iotago.BlockIssuerFeature{
+								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								ExpirySlot:      0,
+							},
+						},
+						Conditions: iotago.AccountOutputUnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident2},
+						},
+					},
+				},
+			}
+
+			bicInputs := iotago.BICInputSet{
+				accountAddr1.AccountID(): iotago.BlockIssuanceCredit{
+					AccountID:    accountAddr1.AccountID(),
+					CommitmentID: iotago.CommitmentID{},
+					Value:        0,
+				},
+			}
+
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			require.NoError(t, err)
+
+			return test{
+				name: "ok - set block issuer expiry to 0",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					DecayProvider:      iotago.NewDecayProvider(1, []float64{}, []float64{}),
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+				}},
+				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		func() test {
+			var (
+				accountAddr1 = tpkg.RandAccountAddress()
+			)
+
+			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
+
+			inputIDs := tpkg.RandOutputIDs(1)
+
+			inputs := iotago.InputSet{
+				inputIDs[0]: iotago.OutputWithCreationTime{
+					Output: &iotago.AccountOutput{
+						Amount:     100,
+						StateIndex: 0,
+						AccountID:  accountAddr1.AccountID(),
+						Features: iotago.AccountOutputFeatures{
+							&iotago.BlockIssuerFeature{
+								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+							},
+						},
+						Conditions: iotago.AccountOutputUnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+							&iotago.GovernorAddressUnlockCondition{Address: ident1},
+						},
+					},
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				CreationTime: 110,
+				ContextInputs: iotago.TxEssenceContextInputs{
+					&iotago.BICInput{
+						AccountID:    accountAddr1.AccountID(),
+						CommitmentID: iotago.CommitmentID{},
+					},
+				},
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.BasicOutput{
+						Amount: 100,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+					},
+				},
+			}
+
+			bicInputs := iotago.BICInputSet{
+				accountAddr1.AccountID(): iotago.BlockIssuanceCredit{
+					AccountID:    accountAddr1.AccountID(),
+					CommitmentID: iotago.CommitmentID{},
+					Value:        0,
+				},
+			}
+
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			require.NoError(t, err)
+
+			return test{
+				name: "fail - destroy block issuer account with expiry at slot 0",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					DecayProvider:      iotago.NewDecayProvider(1, []float64{}, []float64{}),
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+				}},
+				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+
+				wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			}
+		}(),
+
+		func() test {
+			var (
+				accountAddr1 = tpkg.RandAccountAddress()
+			)
+
+			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
 			inputIDs := tpkg.RandOutputIDs(1)
 

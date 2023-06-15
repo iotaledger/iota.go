@@ -117,7 +117,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 		return fmt.Errorf("%w: AccountOutput's ID is not zeroed even though it is new", iotago.ErrInvalidAccountStateTransition)
 	}
 
-	if nextBIFeat := current.FeatureSet().BlockIssuer(); nextBIFeat != nil && nextBIFeat.ExpirySlot < vmParams.WorkingSet.Tx.Essence.CreationTime+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
+	if nextBIFeat := current.FeatureSet().BlockIssuer(); nextBIFeat != nil && nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < vmParams.WorkingSet.Tx.Essence.CreationTime+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
 		return fmt.Errorf("%w: block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 	}
 
@@ -172,7 +172,6 @@ func accountStateSTVF(input *iotago.ChainOutputWithCreationTime, next *iotago.Ac
 
 	// check that for a foundry counter change, X amount of foundries were actually created
 	if current.FoundryCounter == next.FoundryCounter {
-		// TODO: is it ok to exit early without any error without calling accountBlockIssuerSTVF first?
 		return accountBlockIssuerSTVF(input, next, vmParams)
 	}
 
@@ -232,13 +231,13 @@ func accountBlockIssuerSTVF(input *iotago.ChainOutputWithCreationTime, next *iot
 			// FIXME: this code is never reached as this function is not called during Destroy transition
 			return fmt.Errorf("%w: cannot remove block issuer feature until it expires", iotago.ErrInvalidBlockIssuerTransition)
 		}
-		if nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
 			return fmt.Errorf("%w: block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 		}
 
 	} else if nextBIFeat != nil {
 		// if the block issuer feature has expired, it must either be removed or expiry extended.
-		if nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
 			return fmt.Errorf("%w: block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 		}
 	}
@@ -292,7 +291,7 @@ func accountDestructionValid(input *iotago.ChainOutputWithCreationTime, vmParams
 	outputToDestroy := input.Output.(*iotago.AccountOutput)
 	BIFeat := outputToDestroy.FeatureSet().BlockIssuer()
 	if BIFeat != nil {
-		if BIFeat.ExpirySlot >= vmParams.WorkingSet.Tx.Essence.CreationTime {
+		if BIFeat.ExpirySlot == 0 || BIFeat.ExpirySlot >= vmParams.WorkingSet.Tx.Essence.CreationTime {
 			// TODO: better error
 			return fmt.Errorf("%w: cannot destroy output until the block issuer feature expires", iotago.ErrInvalidBlockIssuerTransition)
 		}
