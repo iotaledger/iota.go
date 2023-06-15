@@ -10,79 +10,92 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
-type hashable interface {
-	Hash(hasher *Hasher) []byte
+type hashable[V Value] interface {
+	Hash(hasher *Hasher[V]) []byte
 }
 
-type leafValue struct {
+type leafValue[V Value] struct {
 	Value []byte
 }
 
-type hashValue struct {
+type hashValue[V Value] struct {
 	Value []byte
 }
 
-type Proof struct {
-	Left  hashable
-	Right hashable
+type Proof[V Value] struct {
+	Left  hashable[V]
+	Right hashable[V]
 }
 
-// ComputeProof computes the audit path given the blockIDs and the blockID we want to create the inclusion proof for.
-func (t *Hasher) ComputeProof(blockIDs iotago.BlockIDs, blockID iotago.BlockID) (*Proof, error) {
+// ComputeProof computes the audit path given the values and the value we want to create the inclusion proof for.
+func (t *Hasher[V]) ComputeProof(values []V, valueToProof V) (*Proof[V], error) {
 	var found bool
 	var index int
-	for i := range blockIDs {
-		if blockID == blockIDs[i] {
+	valueToProofBytes, err := valueToProof.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range values {
+		valueBytes, err := values[i].Bytes()
+		if err != nil {
+			return nil, err
+		}
+		if bytes.Equal(valueToProofBytes, valueBytes) {
 			index = i
 			found = true
 			break
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("blockID %s is not contained in the given list", blockID.ToHex())
+		return nil, fmt.Errorf("value %s is not contained in the given list", iotago.EncodeHex(valueToProofBytes))
 	}
-	return t.ComputeProofForIndex(blockIDs, index)
+	return t.ComputeProofForIndex(values, index)
 }
 
-// ComputeProofForIndex computes the audit path given the blockIDs and the index of the blockID we want to create the inclusion proof for.
-func (t *Hasher) ComputeProofForIndex(blockIDs iotago.BlockIDs, index int) (*Proof, error) {
-	if len(blockIDs) < 2 {
+// ComputeProofForIndex computes the audit path given the values and the index of the value we want to create the inclusion proof for.
+func (t *Hasher[V]) ComputeProofForIndex(values []V, index int) (*Proof[V], error) {
+	if len(values) < 2 {
 		return nil, errors.New("you need at lest 2 items to create an inclusion proof")
 	}
-	if index >= len(blockIDs) {
-		return nil, fmt.Errorf("index %d out of bounds len=%d", index, len(blockIDs))
+	if index >= len(values) {
+		return nil, fmt.Errorf("index %d out of bounds len=%d", index, len(values))
 	}
 
-	data := make([][]byte, len(blockIDs))
-	for i := range blockIDs {
-		data[i] = blockIDs[i][:]
+	data := make([][]byte, len(values))
+	for i := range values {
+		valueBytes, err := values[i].Bytes()
+		if err != nil {
+			return nil, err
+		}
+		data[i] = valueBytes
 	}
 
 	p, err := t.computeProof(data, index)
 	if err != nil {
 		return nil, err
 	}
-	return p.(*Proof), nil
+	return p.(*Proof[V]), nil
 }
 
-func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
+func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) {
 	if len(data) < 2 {
 		l := data[0]
-		return &leafValue{l}, nil
+		return &leafValue[V]{l}, nil
 	}
 
 	if len(data) == 2 {
 		left := data[0]
 		right := data[1]
 		if index == 0 {
-			return &Proof{
-				Left:  &leafValue{left},
-				Right: &hashValue{t.hashLeaf(right)},
+			return &Proof[V]{
+				Left:  &leafValue[V]{left},
+				Right: &hashValue[V]{t.hashLeaf(right)},
 			}, nil
 		} else {
-			return &Proof{
-				Left:  &hashValue{t.hashLeaf(left)},
-				Right: &leafValue{right},
+			return &Proof[V]{
+				Left:  &hashValue[V]{t.hashLeaf(left)},
+				Right: &leafValue[V]{right},
 			}, nil
 		}
 	}
@@ -95,9 +108,9 @@ func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
 			return nil, err
 		}
 		right := t.Hash(data[k:])
-		return &Proof{
+		return &Proof[V]{
 			Left:  left,
-			Right: &hashValue{right},
+			Right: &hashValue[V]{right},
 		}, nil
 	} else {
 		// Inside right half
@@ -106,14 +119,14 @@ func (t *Hasher) computeProof(data [][]byte, index int) (hashable, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &Proof{
-			Left:  &hashValue{left},
+		return &Proof[V]{
+			Left:  &hashValue[V]{left},
 			Right: right,
 		}, nil
 	}
 }
 
-func (l *leafValue) Hash(hasher *Hasher) []byte {
+func (l *leafValue[V]) Hash(hasher *Hasher[V]) []byte {
 	return hasher.hashLeaf(l.Value)
 }
 
@@ -121,13 +134,13 @@ type jsonValue struct {
 	Value string `json:"value"`
 }
 
-func (l *leafValue) MarshalJSON() ([]byte, error) {
+func (l *leafValue[V]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&jsonValue{
 		Value: iotago.EncodeHex(l.Value),
 	})
 }
 
-func (l *leafValue) UnmarshalJSON(bytes []byte) error {
+func (l *leafValue[V]) UnmarshalJSON(bytes []byte) error {
 	j := &jsonValue{}
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
@@ -143,7 +156,7 @@ func (l *leafValue) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (h *hashValue) Hash(_ *Hasher) []byte {
+func (h *hashValue[V]) Hash(_ *Hasher[V]) []byte {
 	return h.Value
 }
 
@@ -151,13 +164,13 @@ type jsonHash struct {
 	Hash string `json:"h"`
 }
 
-func (h *hashValue) MarshalJSON() ([]byte, error) {
+func (h *hashValue[V]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&jsonHash{
 		Hash: iotago.EncodeHex(h.Value),
 	})
 }
 
-func (h *hashValue) UnmarshalJSON(bytes []byte) error {
+func (h *hashValue[V]) UnmarshalJSON(bytes []byte) error {
 	j := &jsonHash{}
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
@@ -173,7 +186,7 @@ func (h *hashValue) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (p *Proof) Hash(hasher *Hasher) []byte {
+func (p *Proof[V]) Hash(hasher *Hasher[V]) []byte {
 	return hasher.hashNode(p.Left.Hash(hasher), p.Right.Hash(hasher))
 }
 
@@ -182,23 +195,23 @@ type jsonPath struct {
 	Right *json.RawMessage `json:"r"`
 }
 
-func containsLeafValue(hasheable hashable, value []byte) bool {
+func containsLeafValue[V Value](hasheable hashable[V], value []byte) bool {
 	switch t := hasheable.(type) {
-	case *hashValue:
+	case *hashValue[V]:
 		return false
-	case *leafValue:
+	case *leafValue[V]:
 		return bytes.Equal(value, t.Value)
-	case *Proof:
-		return containsLeafValue(t.Right, value) || containsLeafValue(t.Left, value)
+	case *Proof[V]:
+		return containsLeafValue[V](t.Right, value) || containsLeafValue[V](t.Left, value)
 	}
 	return false
 }
 
-func (p *Proof) ContainsValue(value iotago.BlockID) (bool, error) {
-	return containsLeafValue(p, value[:]), nil
+func (p *Proof[V]) ContainsValue(value iotago.BlockID) (bool, error) {
+	return containsLeafValue[V](p, value[:]), nil
 }
 
-func (p *Proof) MarshalJSON() ([]byte, error) {
+func (p *Proof[V]) MarshalJSON() ([]byte, error) {
 	jsonLeft, err := json.Marshal(p.Left)
 	if err != nil {
 		return nil, err
@@ -215,19 +228,19 @@ func (p *Proof) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func unmarshalHashable(raw *json.RawMessage, hasheable *hashable) error {
-	h := &hashValue{}
+func unmarshalHashable[V Value](raw *json.RawMessage, hasheable *hashable[V]) error {
+	h := new(hashValue[V])
 	if err := json.Unmarshal(*raw, h); err == nil {
 		*hasheable = h
 		return nil
 	}
-	l := &leafValue{}
+	l := new(leafValue[V])
 	if err := json.Unmarshal(*raw, l); err == nil {
 		*hasheable = l
 		return nil
 	}
 
-	p := &Proof{}
+	p := new(Proof[V])
 	if err := json.Unmarshal(*raw, p); err != nil {
 		return err
 	}
@@ -235,16 +248,16 @@ func unmarshalHashable(raw *json.RawMessage, hasheable *hashable) error {
 	return nil
 }
 
-func (p *Proof) UnmarshalJSON(bytes []byte) error {
+func (p *Proof[V]) UnmarshalJSON(bytes []byte) error {
 	j := &jsonPath{}
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
 	}
-	var left hashable
+	var left hashable[V]
 	if err := unmarshalHashable(j.Left, &left); err != nil {
 		return err
 	}
-	var right hashable
+	var right hashable[V]
 	if err := unmarshalHashable(j.Right, &right); err != nil {
 		return err
 	}

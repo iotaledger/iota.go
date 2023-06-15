@@ -16,7 +16,6 @@ import (
 )
 
 func TestMerkleHasher(t *testing.T) {
-
 	var includedBlocks iotago.BlockIDs
 
 	// https://github.com/Wollac/iota-crypto-demo/tree/master/examples/merkle
@@ -29,8 +28,9 @@ func TestMerkleHasher(t *testing.T) {
 	includedBlocks = append(includedBlocks, iotago.MustSlotIdentifierFromHexString("0x0bf5059875921e668a5bdf2c7fc4844592d2572bcd0668d2d6c52f5054e2d0830000000000000000"))
 	includedBlocks = append(includedBlocks, iotago.MustSlotIdentifierFromHexString("0x6bf84c7174cb7476364cc3dbd968b0f7172ed85794bb358b0c3b525da1786f9f0000000000000000"))
 
-	hasher := merklehasher.NewHasher(crypto.BLAKE2b_256)
-	hash := hasher.HashBlockIDs(includedBlocks)
+	hasher := merklehasher.NewHasher[iotago.BlockID](crypto.BLAKE2b_256)
+	hash, err := hasher.HashValues(includedBlocks)
+	require.NoError(t, err)
 
 	expectedHash, err := iotago.DecodeHex("0x1f943b38f71a984d154b7ffef0ff0481c644b3c796d3a451fbe7ebd909b1022c")
 	require.NoError(t, err)
@@ -48,7 +48,7 @@ func TestMerkleHasher(t *testing.T) {
 		jsonPath, err := json.Marshal(path)
 		require.NoError(t, err)
 
-		pathFromJSON := &merklehasher.Proof{}
+		pathFromJSON := new(merklehasher.Proof[iotago.BlockID])
 		err = json.Unmarshal(jsonPath, pathFromJSON)
 		require.NoError(t, err)
 		require.True(t, bytes.Equal(hash, pathFromJSON.Hash(hasher)))
