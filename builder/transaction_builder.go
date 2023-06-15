@@ -82,6 +82,12 @@ func (b *TransactionBuilder) AddOutput(output iotago.Output) *TransactionBuilder
 	return b
 }
 
+func (b *TransactionBuilder) SetCreationTime(creationTime iotago.SlotIndex) *TransactionBuilder {
+	b.essence.CreationTime = creationTime
+
+	return b
+}
+
 // AddTaggedDataPayload adds the given TaggedData as the inner payload.
 func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *TransactionBuilder {
 	b.essence.Payload = payload
