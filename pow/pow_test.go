@@ -77,10 +77,11 @@ func TestWorker_Cancel(t *testing.T) {
 const benchBytesLen = 1600
 
 func BenchmarkScore(b *testing.B) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	data := make([][]byte, b.N)
 	for i := range data {
 		data[i] = make([]byte, benchBytesLen)
-		if _, err := rand.Read(data[i]); err != nil {
+		if _, err := r.Read(data[i]); err != nil {
 			b.Fatal(err)
 		}
 	}

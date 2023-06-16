@@ -47,6 +47,8 @@ func LatestAPI(protoParams *ProtocolParameters) API {
 }
 
 // calls the internally instantiated API to encode the given object.
+//
+//nolint:unparam
 func internalEncode(obj any, opts ...serix.Option) ([]byte, error) {
 	_internalAPIMu.RLock()
 	defer _internalAPIMu.RUnlock()

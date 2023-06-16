@@ -34,7 +34,7 @@ type ChainOutputWithCreationTime struct {
 // ChainOutputSet is a map of ChainID to ChainOutput.
 type ChainOutputSet map[ChainID]ChainOutput
 
-// ChainInputSet is a map of ChainID to ChainOutputWithCreationTime
+// ChainInputSet is a map of ChainID to ChainOutputWithCreationTime.
 type ChainInputSet map[ChainID]*ChainOutputWithCreationTime
 
 // Includes checks whether all chains included in other exist in this set.

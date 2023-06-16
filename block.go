@@ -167,7 +167,7 @@ func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerialize
 }
 
 // SigningMessage returns the to be signed message.
-// It is the encoded(IssuingTime)+encoded(SlotCommitment.ID()+contentHash
+// It is the 'encoded(IssuingTime)+encoded(SlotCommitment.ID()+contentHash'.
 func (b *Block) SigningMessage() ([]byte, error) {
 	contentHash, err := b.ContentHash()
 	if err != nil {

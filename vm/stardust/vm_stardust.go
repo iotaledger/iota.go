@@ -204,7 +204,7 @@ func accountStateSTVF(input *iotago.ChainOutputWithCreationTime, next *iotago.Ac
 // If an account output has a block issuer feature, the following conditions for its transition must be checked.
 // The block issuer credit must be non-negative.
 // The expiry time of the block issuer feature, if creating new account or expired already, must be set at least MaxCommittableSlotAge greater than the TX slot index.
-// Check that at least one Block Issuer Key is present
+// Check that at least one Block Issuer Key is present.
 func accountBlockIssuerSTVF(input *iotago.ChainOutputWithCreationTime, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	current := input.Output.(*iotago.AccountOutput)
 	currentBIFeat := current.FeatureSet().BlockIssuer()
