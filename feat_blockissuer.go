@@ -28,8 +28,8 @@ func (s *BlockIssuerFeature) Clone() Feature {
 	return &BlockIssuerFeature{BlockIssuerKeys: s.BlockIssuerKeys, ExpirySlot: s.ExpirySlot}
 }
 
-// TODO: add factor for block issuer keys (higher than regular keys factor)
 func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	// TODO: add factor for block issuer keys (higher than regular keys factor).
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt32ByteSize) +
 		rentStruct.VBFactorKey.Multiply(VBytes(len(s.BlockIssuerKeys))*ed25519.PublicKeySize)
 }

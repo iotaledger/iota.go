@@ -161,7 +161,7 @@ func (f UnlockConditionSet) HasTimelockCondition() bool {
 	return f.Timelock() != nil
 }
 
-// HasManalockCondition tells whether the set has both a timelock and account address unlock
+// HasManalockCondition tells whether the set has both a timelock and account address unlock.
 func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slotIndex SlotIndex) bool {
 	if !f.HasTimelockUntil(slotIndex) {
 		return false
@@ -179,7 +179,7 @@ func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slotIndex 
 	return true
 }
 
-// HasTimelockUntil tells us whether the set has a timelock that that is still locked at slotIndex
+// HasTimelockUntil tells us whether the set has a timelock that that is still locked at slotIndex.
 func (f UnlockConditionSet) HasTimelockUntil(slotIndex SlotIndex) bool {
 	timelock := f.Timelock()
 	if timelock == nil {
