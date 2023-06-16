@@ -1,6 +1,6 @@
 package iotago
 
-// TODO: fixed point arithmetic
+// TODO: fixed point arithmetic.
 type DecayProvider struct {
 	manaGenerationRate        uint8
 	storedManaDecayFactors    []float64
