@@ -50,10 +50,16 @@ github.com/iotaledger/hive.go/crypto v0.0.0-20230614165147-2eaff0b87e05 h1:zBsrI
 github.com/iotaledger/hive.go/crypto v0.0.0-20230614165147-2eaff0b87e05/go.mod h1:i3F1QqfUgBVd9zBUbcdAj4ACyFbHDQBkj9I3/GAY4GE=
 github.com/iotaledger/hive.go/lo v0.0.0-20230531105818-97be4b1d3a36 h1:1w2YO89EOc2jBCpbAtSWr+a2+3L4zQx6cvEo2fcabS8=
 github.com/iotaledger/hive.go/lo v0.0.0-20230531105818-97be4b1d3a36/go.mod h1:m5Q+DIhWEy1Q+60Y9qJuZDxqRkltcKpsYgjfOTGpYhI=
+github.com/iotaledger/hive.go/lo v0.0.0-20230614165147-2eaff0b87e05 h1:olFVtAo1X8dF+uJdGxdl2cGuOuqlTuDfMIdmIbd0kGQ=
+github.com/iotaledger/hive.go/lo v0.0.0-20230614165147-2eaff0b87e05/go.mod h1:m5Q+DIhWEy1Q+60Y9qJuZDxqRkltcKpsYgjfOTGpYhI=
 github.com/iotaledger/hive.go/runtime v0.0.0-20230531105818-97be4b1d3a36 h1:5Crwd1mwgMHl/UVRhEou6AkgZRr64JjSgf426uNMxEQ=
 github.com/iotaledger/hive.go/runtime v0.0.0-20230531105818-97be4b1d3a36/go.mod h1:GpsQ1HlRg95tC0uyyO4BiNvnXP+MwkBrtDPcYafmyq8=
+github.com/iotaledger/hive.go/runtime v0.0.0-20230614165147-2eaff0b87e05 h1:m3euSrqlaUNyvdKeC2QorYGT1BvIPjS7vi3djbOHjA0=
+github.com/iotaledger/hive.go/runtime v0.0.0-20230614165147-2eaff0b87e05/go.mod h1:GpsQ1HlRg95tC0uyyO4BiNvnXP+MwkBrtDPcYafmyq8=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230531105818-97be4b1d3a36 h1:aamN0VNZm08wOKFiUboPp/Ck1z6Xq/RdVhjnDWiun8s=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230531105818-97be4b1d3a36/go.mod h1:i67PTGZTSrggnHUCp+IilSzBIP0X18WkVMDoQ6E3Q8A=
+github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230614165147-2eaff0b87e05 h1:Okq/qU+x+1CMfO8CcvoTQX/FHd1Szd69kOUCEqGQqBM=
+github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230614165147-2eaff0b87e05/go.mod h1:i67PTGZTSrggnHUCp+IilSzBIP0X18WkVMDoQ6E3Q8A=
 github.com/iotaledger/iota.go v1.0.0 h1:tqm1FxJ/zOdzbrAaQ5BQpVF8dUy2eeGlSeWlNG8GoXY=
 github.com/iotaledger/iota.go v1.0.0/go.mod h1:RiKYwDyY7aCD1L0YRzHSjOsJ5mUR9yvQpvhZncNcGQI=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
