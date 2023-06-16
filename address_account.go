@@ -4,6 +4,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
@@ -15,7 +16,7 @@ const (
 
 // ParseAccountAddressFromHexString parses the given hex string into an AccountAddress.
 func ParseAccountAddressFromHexString(hexAddr string) (*AccountAddress, error) {
-	addrBytes, err := DecodeHex(hexAddr)
+	addrBytes, err := hexutil.DecodeHex(hexAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +89,7 @@ func (accountAddr *AccountAddress) Bech32(hrp NetworkPrefix) string {
 }
 
 func (accountAddr *AccountAddress) String() string {
-	return EncodeHex(accountAddr[:])
+	return hexutil.EncodeHex(accountAddr[:])
 }
 
 func (accountAddr *AccountAddress) Size() int {
