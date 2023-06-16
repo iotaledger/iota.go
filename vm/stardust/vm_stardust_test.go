@@ -1242,7 +1242,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 	}
 }
 
-// TODO: add test case for transaction with context inputs
+// TODO: add test case for transaction with context inputs.
 func TestTxSemanticInputUnlocks(t *testing.T) {
 	type test struct {
 		name           string
@@ -1887,7 +1887,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 	}
 }
 
-// TODO: add test case for block issuer with keys (differently priced)
+// TODO: add test case for block issuer with keys (differently priced).
 func TestTxSemanticDeposit(t *testing.T) {
 	type test struct {
 		name           string
@@ -3706,7 +3706,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 	}
 }
 
-// TODO: add some failing test cases
+// TODO: add some failing test cases.
 func TestTxSemanticMana(t *testing.T) {
 	type test struct {
 		name           string
