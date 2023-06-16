@@ -12,7 +12,7 @@ type Roots struct {
 	StateMutationRoot Identifier `serix:"1"`
 	StateRoot         Identifier `serix:"2"`
 	AccountRoot       Identifier `serix:"4"`
-	AttestationsRoot  Identifier `serix:"4"`
+	AttestationsRoot  Identifier `serix:"5"`
 }
 
 func NewRoots(tangleRoot, stateMutationRoot, attestationsRoot, stateRoot, accountRoot Identifier) *Roots {
