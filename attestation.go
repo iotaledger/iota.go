@@ -10,6 +10,9 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 )
 
+// Attestations is a slice of Attestation.
+type Attestations = []*Attestation
+
 type Attestation struct {
 	IssuerID         AccountID    `serix:"0,mapKey=issuerID"`
 	IssuingTime      time.Time    `serix:"1,mapKey=issuingTime"`
@@ -38,9 +41,13 @@ func (a *Attestation) Compare(other *Attestation) int {
 		return -1
 	case other == nil:
 		return 1
+	case a.SlotCommitmentID.Index() > other.SlotCommitmentID.Index():
+		return 1
+	case a.SlotCommitmentID.Index() < other.SlotCommitmentID.Index():
+		return -1
 	case a.IssuingTime.After(other.IssuingTime):
 		return 1
-	case other.IssuingTime.After(a.IssuingTime):
+	case a.IssuingTime.Before(other.IssuingTime):
 		return -1
 	default:
 		return bytes.Compare(a.BlockContentHash[:], other.BlockContentHash[:])
@@ -58,11 +65,7 @@ func (a Attestation) BlockID(slotTimeProvider *SlotTimeProvider) (BlockID, error
 		return EmptyBlockID(), fmt.Errorf("failed to serialize block's nonce: %w", err)
 	}
 
-	blockIdentifier, err := BlockIdentifierFromBlockBytes(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
-	if err != nil {
-		return EmptyBlockID(), err
-	}
-
+	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
 	slotIndex := slotTimeProvider.IndexFromTime(a.IssuingTime)
 
 	return NewSlotIdentifier(slotIndex, blockIdentifier), nil

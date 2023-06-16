@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
@@ -48,7 +49,7 @@ func (e *Ed25519Signature) Type() SignatureType {
 }
 
 func (e *Ed25519Signature) String() string {
-	return fmt.Sprintf("public key: %s, signature: %s", EncodeHex(e.PublicKey[:]), EncodeHex(e.Signature[:]))
+	return fmt.Sprintf("public key: %s, signature: %s", hexutil.EncodeHex(e.PublicKey[:]), hexutil.EncodeHex(e.Signature[:]))
 }
 
 // Valid verifies whether given the message and Ed25519 address, the signature is valid.
@@ -56,10 +57,10 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	// an address is the Blake2b 256 hash of the public key
 	addrFromPubKey := Ed25519AddressFromPubKey(e.PublicKey[:])
 	if !bytes.Equal(addr[:], addrFromPubKey[:]) {
-		return fmt.Errorf("%w: address %s, address from public key %v", ErrEd25519PubKeyAndAddrMismatch, EncodeHex(addr[:]), EncodeHex(addrFromPubKey[:]))
+		return fmt.Errorf("%w: address %s, address from public key %v", ErrEd25519PubKeyAndAddrMismatch, hexutil.EncodeHex(addr[:]), hexutil.EncodeHex(addrFromPubKey[:]))
 	}
-	if valid := hiveEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
-		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrEd25519SignatureInvalid, EncodeHex(addr[:]), EncodeHex(e.PublicKey[:]), EncodeHex(e.Signature[:]))
+	if valid := iotagoEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
+		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrEd25519SignatureInvalid, hexutil.EncodeHex(addr[:]), hexutil.EncodeHex(e.PublicKey[:]), hexutil.EncodeHex(e.Signature[:]))
 	}
 	return nil
 }

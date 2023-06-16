@@ -7,6 +7,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 
 // ParseEd25519AddressFromHexString parses the given hex string into an Ed25519Address.
 func ParseEd25519AddressFromHexString(hexAddr string) (*Ed25519Address, error) {
-	addrBytes, err := DecodeHex(hexAddr)
+	addrBytes, err := hexutil.DecodeHex(hexAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ func (edAddr *Ed25519Address) Bech32(hrp NetworkPrefix) string {
 }
 
 func (edAddr *Ed25519Address) String() string {
-	return EncodeHex(edAddr[:])
+	return hexutil.EncodeHex(edAddr[:])
 }
 
 func (edAddr *Ed25519Address) Size() int {

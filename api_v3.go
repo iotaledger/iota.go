@@ -484,6 +484,9 @@ func V3API(protoParams *ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(Attestation{}, serix.TypeSettings{}))
+		must(api.RegisterTypeSettings(Attestations{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte),
+		))
 	}
 
 	{

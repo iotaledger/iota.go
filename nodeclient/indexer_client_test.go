@@ -54,7 +54,7 @@ func Test_IndexerEnabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &nodeclient.RoutesResponse{
-		Routes: []string{"indexer/v1"},
+		Routes: []string{"indexer/v2"},
 	}
 
 	gock.New(nodeAPIUrl).
@@ -97,7 +97,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	fakeOutputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 1).ToHex()
 
 	originRoutes := &nodeclient.RoutesResponse{
-		Routes: []string{"indexer/v1"},
+		Routes: []string{"indexer/v2"},
 	}
 
 	gock.New(nodeAPIUrl).

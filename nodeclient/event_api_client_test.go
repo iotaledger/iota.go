@@ -28,8 +28,7 @@ var emptyAPI = iotago.LatestAPI(&iotago.ProtocolParameters{
 	MaxCommitableAge:      0,
 })
 
-func TestMain(m *testing.M) {
-	// call the tests
+func TestMain(m *testing.M) { // call the tests
 	os.Exit(m.Run())
 }
 
@@ -37,7 +36,7 @@ func Test_EventAPIEnabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &nodeclient.RoutesResponse{
-		Routes: []string{"mqtt/v1"},
+		Routes: []string{"mqtt/v2"},
 	}
 
 	gock.New(nodeAPIUrl).

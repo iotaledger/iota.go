@@ -14,6 +14,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 // Output defines a unit of output of a transaction.
@@ -106,7 +107,7 @@ var EmptyOutputID = OutputID{}
 
 // ToHex converts the OutputID to its hex representation.
 func (outputID OutputID) ToHex() string {
-	return EncodeHex(outputID[:])
+	return hexutil.EncodeHex(outputID[:])
 }
 
 // String converts the OutputID to its human-readable string representation.
@@ -163,7 +164,7 @@ func (ids HexOutputIDs) MustOutputIDs() OutputIDs {
 func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 	vals := make(OutputIDs, len(ids))
 	for i, v := range ids {
-		val, err := DecodeHex(v)
+		val, err := hexutil.DecodeHex(v)
 		if err != nil {
 			return nil, err
 		}
@@ -191,7 +192,7 @@ func OutputIDFromBytes(bytes []byte) (OutputID, error) {
 
 // OutputIDFromHex creates a OutputID from the given hex encoded OutputID data.
 func OutputIDFromHex(hexStr string) (OutputID, error) {
-	outputIDData, err := DecodeHex(hexStr)
+	outputIDData, err := hexutil.DecodeHex(hexStr)
 	if err != nil {
 		return OutputID{}, err
 	}
@@ -202,7 +203,7 @@ func OutputIDFromHex(hexStr string) (OutputID, error) {
 // MustOutputIDFromHex works like OutputIDFromHex but panics if an error is encountered.
 func MustOutputIDFromHex(hexStr string) OutputID {
 	var outputID OutputID
-	outputIDData, err := DecodeHex(hexStr)
+	outputIDData, err := hexutil.DecodeHex(hexStr)
 	if err != nil {
 		panic(err)
 	}
@@ -239,7 +240,7 @@ type OutputIDs []OutputID
 func (outputIDs OutputIDs) ToHex() []string {
 	ids := make([]string, len(outputIDs))
 	for i := range outputIDs {
-		ids[i] = EncodeHex(outputIDs[i][:])
+		ids[i] = hexutil.EncodeHex(outputIDs[i][:])
 	}
 	return ids
 }
@@ -681,7 +682,7 @@ func (oih OutputIDHex) MustSplitParts() (*TransactionID, uint16) {
 
 // SplitParts returns the transaction ID and output index parts of the hex output ID.
 func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
-	outputIDBytes, err := DecodeHex(string(oih))
+	outputIDBytes, err := hexutil.DecodeHex(string(oih))
 	if err != nil {
 		return nil, 0, err
 	}

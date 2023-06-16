@@ -1,4 +1,4 @@
-package iotago
+package hexutil
 
 import (
 	"math/big"

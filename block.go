@@ -15,6 +15,7 @@ import (
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/pow"
 )
 
@@ -46,7 +47,7 @@ type BlockIDs []BlockID
 func (ids BlockIDs) ToHex() []string {
 	hexIDs := make([]string, len(ids))
 	for i, id := range ids {
-		hexIDs[i] = EncodeHex(id[:])
+		hexIDs[i] = hexutil.EncodeHex(id[:])
 	}
 	return hexIDs
 }
@@ -166,7 +167,7 @@ func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerialize
 }
 
 // SigningMessage returns the to be signed message.
-// It is the ContentHash+encoded(IssuingTime)+encoded(SlotCommitment.ID())
+// It is the encoded(IssuingTime)+encoded(SlotCommitment.ID()+contentHash
 func (b *Block) SigningMessage() ([]byte, error) {
 	contentHash, err := b.ContentHash()
 	if err != nil {

@@ -13,15 +13,16 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
-	// EventAPIMilestoneInfoLatest is the name of the latest milestone info event channel.
-	EventAPIMilestoneInfoLatest = "milestone-info/latest"
-	// EventAPIMilestoneInfoConfirmed is the name of the confirmed milestone info event channel.
-	EventAPIMilestoneInfoConfirmed = "milestone-info/confirmed"
-	// EventAPIMilestones is the name of the milestone event channel.
-	EventAPIMilestones = "milestones"
+	// EventAPICommitmentInfoLatest is the name of the latest commitment info event channel.
+	EventAPICommitmentInfoLatest = "commitment-info/latest"
+	// EventAPICommitmentInfoConfirmed is the name of the finalized commitment info event channel.
+	EventAPICommitmentInfoFinalized = "commitment-info/finalized"
+	// EventAPICommitments is the name of the commitment event channel.
+	EventAPICommitments = "commitments"
 
 	// EventAPIBlocks is the name of the received blocks event channel.
 	EventAPIBlocks = "blocks"
@@ -41,11 +42,15 @@ const (
 
 	// EventAPIBlockMetadata is the name of the block metadata event channel.
 	EventAPIBlockMetadata = "block-metadata/{blockId}"
-	// EventAPIBlockMetadataReferenced is the name of the referenced blocks metadata event channel.
-	EventAPIBlockMetadataReferenced = "block-metadata/referenced"
+	// EventAPIBlockMetadataConfirmed is the name of the confirmed blocks metadata event channel.
+	EventAPIBlockMetadataConfirmed = "block-metadata/confirmed"
+	// EventAPIBlockMetadataFinalized is the name of the confirmed blocks metadata event channel.
+	EventAPIBlockMetadataFinalized = "block-metadata/finalized"
 
 	// EventAPIOutputs is the name of the outputs event channel.
 	EventAPIOutputs = "outputs/{outputId}"
+	// EventAPIOutputMetadata is the name of the outputs event channel.
+	EventAPIOutputMetadata = "output-metadata/{outputId}"
 	// EventAPINFTOutputs is the name of the NFT output event channel to retrieve NFT mutations by their ID.
 	EventAPINFTOutputs = "outputs/nft/{nftId}"
 	// EventAPIAccountOutputs is the name of the Account output event channel to retrieve Account mutations by their ID.
@@ -56,9 +61,6 @@ const (
 	EventAPIOutputsByUnlockConditionAndAddress = "outputs/unlock/{condition}/{address}"
 	// EventAPISpentOutputsByUnlockConditionAndAddress is the name of the spent outputs by unlock condition address event channel.
 	EventAPISpentOutputsByUnlockConditionAndAddress = "outputs/unlock/{condition}/{address}/spent"
-
-	// EventAPIReceipts is the name of the receipts event channel.
-	EventAPIReceipts = "receipts"
 )
 
 var (
@@ -217,8 +219,8 @@ func subscribeToTopic[T any](eac *EventAPIClient, topic string, deseriFunc func(
 	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
-func (eac *EventAPIClient) subscribeToOutputsTopic(topic string) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	return subscribeToTopic(eac, topic, jsonDeserializer[OutputResponse])
+func (eac *EventAPIClient) subscribeToOutputsTopic(topic string) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
+	return subscribeToTopic(eac, topic, jsonDeserializer[iotago.TxEssenceOutput])
 }
 
 func (eac *EventAPIClient) subscribeToBlockMetadataTopic(topic string) (<-chan *BlockMetadataResponse, *EventAPIClientSubscription) {
@@ -252,14 +254,24 @@ func (eac *EventAPIClient) Blocks() (<-chan *iotago.Block, *EventAPIClientSubscr
 	return eac.subscribeToBlocksTopic(EventAPIBlocks)
 }
 
-// ReferencedBlocksMetadata returns a channel of block metadata of newly referenced blocks.
-func (eac *EventAPIClient) ReferencedBlocksMetadata() (<-chan *BlockMetadataResponse, *EventAPIClientSubscription) {
-	return eac.subscribeToBlockMetadataTopic(EventAPIBlockMetadataReferenced)
+// ConfirmedBlocksMetadata returns a channel of block metadata of newly confirmed blocks.
+func (eac *EventAPIClient) ConfirmedBlocksMetadata() (<-chan *BlockMetadataResponse, *EventAPIClientSubscription) {
+	return eac.subscribeToBlockMetadataTopic(EventAPIBlockMetadataConfirmed)
 }
 
-// ReferencedBlocks returns a channel of newly referenced blocks.
-func (eac *EventAPIClient) ReferencedBlocks() (<-chan *iotago.Block, *EventAPIClientSubscription) {
-	return eac.subscribeToBlockMetadataBlockTopic(EventAPIBlockMetadataReferenced)
+// ConfirmedBlocks returns a channel of block metadata of newly confirmed blocks.
+func (eac *EventAPIClient) ConfirmedBlocks() (<-chan *iotago.Block, *EventAPIClientSubscription) {
+	return eac.subscribeToBlockMetadataBlockTopic(EventAPIBlockMetadataConfirmed)
+}
+
+// FinalizedBlocksMetadata returns a channel of newly finalized blocks.
+func (eac *EventAPIClient) FinalizedBlocksMetadata() (<-chan *BlockMetadataResponse, *EventAPIClientSubscription) {
+	return eac.subscribeToBlockMetadataTopic(EventAPIBlockMetadataFinalized)
+}
+
+// FinalizedBlocks returns a channel of block metadata of newly confirmed blocks.
+func (eac *EventAPIClient) FinalizedBlocks() (<-chan *iotago.Block, *EventAPIClientSubscription) {
+	return eac.subscribeToBlockMetadataBlockTopic(EventAPIBlockMetadataFinalized)
 }
 
 // TransactionBlocks returns a channel of blocks containing transactions.
@@ -274,7 +286,7 @@ func (eac *EventAPIClient) TransactionTaggedDataBlocks() (<-chan *iotago.Block, 
 
 // TransactionTaggedDataWithTagBlocks returns a channel of blocks containing transactions with tagged data containing the given tag.
 func (eac *EventAPIClient) TransactionTaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.Block, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIBlocksTransactionTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
+	topic := strings.Replace(EventAPIBlocksTransactionTaggedDataTag, "{tag}", hexutil.EncodeHex(tag), 1)
 	return eac.subscribeToBlocksTopic(topic)
 }
 
@@ -285,7 +297,7 @@ func (eac *EventAPIClient) TaggedDataBlocks() (<-chan *iotago.Block, *EventAPICl
 
 // TaggedDataWithTagBlocks returns a channel of blocks containing tagged data.
 func (eac *EventAPIClient) TaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.Block, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIBlocksTaggedDataTag, "{tag}", iotago.EncodeHex(tag), 1)
+	topic := strings.Replace(EventAPIBlocksTaggedDataTag, "{tag}", hexutil.EncodeHex(tag), 1)
 	return eac.subscribeToBlocksTopic(topic)
 }
 
@@ -296,32 +308,32 @@ func (eac *EventAPIClient) BlockMetadataChange(blockID iotago.BlockID) (<-chan *
 }
 
 // NFTOutputsByID returns a channel of newly created outputs to track the chain mutations of a given NFT.
-func (eac *EventAPIClient) NFTOutputsByID(nftID iotago.NFTID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) NFTOutputsByID(nftID iotago.NFTID) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPINFTOutputs, "{nftId}", nftID.String(), 1)
 	return eac.subscribeToOutputsTopic(topic)
 }
 
 // AccountOutputsByID returns a channel of newly created outputs to track the chain mutations of a given Account.
-func (eac *EventAPIClient) AccountOutputsByID(accountID iotago.AccountID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) AccountOutputsByID(accountID iotago.AccountID) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIAccountOutputs, "{accountId}", accountID.String(), 1)
 	return eac.subscribeToOutputsTopic(topic)
 }
 
 // FoundryOutputsByID returns a channel of newly created outputs to track the chain mutations of a given Foundry.
-func (eac *EventAPIClient) FoundryOutputsByID(foundryID iotago.FoundryID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) FoundryOutputsByID(foundryID iotago.FoundryID) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIFoundryOutputs, "{foundryId}", foundryID.String(), 1)
 	return eac.subscribeToOutputsTopic(topic)
 }
 
 // OutputsByUnlockConditionAndAddress returns a channel of newly created outputs on the given unlock condition and address.
-func (eac *EventAPIClient) OutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition EventAPIUnlockCondition) (<-chan *OutputResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) OutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition EventAPIUnlockCondition) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIOutputsByUnlockConditionAndAddress, "{address}", addr.Bech32(netPrefix), 1)
 	topic = strings.Replace(topic, "{condition}", string(condition), 1)
 	return eac.subscribeToOutputsTopic(topic)
 }
 
 // SpentOutputsByUnlockConditionAndAddress returns a channel of newly spent outputs on the given unlock condition and address.
-func (eac *EventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition EventAPIUnlockCondition) (<-chan *OutputResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition EventAPIUnlockCondition) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPISpentOutputsByUnlockConditionAndAddress, "{address}", addr.Bech32(netPrefix), 1)
 	topic = strings.Replace(topic, "{condition}", string(condition), 1)
 	return eac.subscribeToOutputsTopic(topic)
@@ -334,7 +346,13 @@ func (eac *EventAPIClient) TransactionIncludedBlock(txID iotago.TransactionID) (
 }
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
-func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan *OutputResponse, *EventAPIClientSubscription) {
-	topic := strings.Replace(EventAPIOutputs, "{outputId}", iotago.EncodeHex(outputID[:]), 1)
+func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
+	topic := strings.Replace(EventAPIOutputs, "{outputId}", hexutil.EncodeHex(outputID[:]), 1)
 	return eac.subscribeToOutputsTopic(topic)
+}
+
+// Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
+func (eac *EventAPIClient) OutputMetadata(outputID iotago.OutputID) (<-chan *OutputMetadataResponse, *EventAPIClientSubscription) {
+	topic := strings.Replace(EventAPIOutputMetadata, "{outputId}", hexutil.EncodeHex(outputID[:]), 1)
+	return subscribeToTopic(eac, topic, jsonDeserializer[OutputMetadataResponse])
 }

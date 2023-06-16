@@ -5,16 +5,14 @@ import (
 	"fmt"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 // TODO: use the API instance from Client instead.
 var _internalAPI = iotago.V3API(&iotago.ProtocolParameters{})
 
 type (
-	httpOutput   interface{ iotago.Output }
-	outputResAux struct {
-		Output httpOutput `serix:"0,mapKey=output"`
-	}
+	httpOutput interface{ iotago.Output }
 )
 
 func must(err error) {
@@ -32,6 +30,8 @@ func init() {
 }
 
 type (
+	Versions []uint32
+
 	// RoutesResponse defines the response of a GET routes REST API call.
 	RoutesResponse struct {
 		Routes []string `json:"routes"`
@@ -43,38 +43,54 @@ type (
 		Name string `json:"name"`
 		// The semver version of the node software.
 		Version string `json:"version"`
-		// Status information.
-		Status InfoResStatus `json:"status"`
-		// Protocol information.
-		Protocol *json.RawMessage `json:"protocol"`
-		// BaseToken information.
+		// The ID of the node
+		IssuerID string `json:"issuerId"`
+		// The current status of this node.
+		Status *InfoResNodeStatus `json:"status"`
+		// The metrics of this node.
+		Metrics *InfoResNodeMetrics `json:"metrics"`
+		// The protocol versions this node supports.
+		SupportedProtocolVersions Versions `json:"supportedProtocolVersions"`
+		// The protocol parameters used by this node.
+		ProtocolParameters *json.RawMessage `json:"protocol"`
+		// The base token of the network.
 		BaseToken *InfoResBaseToken `json:"baseToken"`
-		// Metrics information.
-		Metrics InfoResMetrics `json:"metrics"`
 		// The features this node exposes.
 		Features []string `json:"features"`
 	}
 
-	// InfoResStatus defines info res status information.
-	InfoResStatus struct {
+	// InfoResNodeStatus defines the status of the node in info response.
+	InfoResNodeStatus struct {
 		// Whether the node is healthy.
 		IsHealthy bool `json:"isHealthy"`
-		// The latest known milestone index.
-		LatestMilestone InfoResMilestone `json:"latestMilestone"`
-		// The current confirmed milestone's index.
-		ConfirmedMilestone InfoResMilestone `json:"confirmedMilestone"`
-		// The milestone index at which the last pruning commenced.
-		PruningIndex iotago.SlotIndex `json:"pruningIndex"`
+		// The blockID of last accepted block.
+		LastAcceptedBlockID string `json:"lastAcceptedBlockId"`
+		// The blockID of the last confirmed block
+		LastConfirmedBlockID string `json:"lastConfirmedBlockId"`
+		// The latest finalized slot.
+		FinalizedSlot iotago.SlotIndex `json:"latestFinalizedSlot"`
+		// The Accepted Tangle Time
+		ATT uint64 `json:"ATT"`
+		// The Relative Accepted Tangle Time
+		RATT uint64 `json:"RATT"`
+		// The Confirmed Tangle Time
+		CTT uint64 `json:"CTT"`
+		// The Relative Confirmed Tangle Time
+		RCTT uint64 `json:"RCTT"`
+		// The latest known committed slot info.
+		LatestCommittedSlot iotago.SlotIndex `json:"latestCommittedSlot"`
+		// The slot index at which the last pruning commenced.
+		PruningSlot iotago.SlotIndex `json:"pruningSlot"`
 	}
 
-	// InfoResMilestone defines the info res milestone information.
-	InfoResMilestone struct {
-		// The index of the milestone.
-		Index iotago.SlotIndex `json:"index"`
-		// The unix time of the milestone payload.
-		Timestamp uint32 `json:"timestamp,omitempty"`
-		// The IO of the milestone.
-		MilestoneID string `json:"milestoneId,omitempty"`
+	// InfoResNodeMetrics defines the metrics of a node in info response.
+	InfoResNodeMetrics struct {
+		// The current rate of new blocks per second, it's updated when a commitment is committed.
+		BlocksPerSecond float64 `json:"blocksPerSecond"`
+		// The current rate of confirmed blocks per second, it's updated when a commitment is committed.
+		ConfirmedBlocksPerSecond float64 `json:"confirmedBlocksPerSecond"`
+		// The ratio of confirmed blocks in relation to new blocks up until the latest commitment is committed.
+		ConfirmedRate float64 `json:"confirmedRate"`
 	}
 
 	// InfoResBaseToken defines the info res base token information.
@@ -93,113 +109,82 @@ type (
 		UseMetricPrefix bool `json:"useMetricPrefix"`
 	}
 
-	// InfoResMetrics defines info res metrics information.
-	InfoResMetrics struct {
-		// The current rate of new blocks per second.
-		BlocksPerSecond float64 `json:"blocksPerSecond"`
-		// The current rate of referenced blocks per second.
-		ReferencedBlocksPerSecond float64 `json:"referencedBlocksPerSecond"`
-		// The ratio of referenced blocks in relation to new blocks of the last confirmed milestone.
-		ReferencedRate float64 `json:"referencedRate"`
-	}
-
-	// TipsResponse defines the response of a GET tips REST API call.
-	TipsResponse struct {
-		// The hex encoded block IDs of the tips.
-		TipsHex []string `json:"tips"`
+	// BlockIssuanceResponse defines the response of a GET block issuance REST API call.
+	BlockIssuanceResponse struct {
+		// StrongParents are the strong parents of the block.
+		StrongParents []string `json:"strongParents"`
+		// WeakParents are the weak parents of the block.
+		WeakParents []string `json:"weakParents"`
+		// ShallowLikeParents are the shallow like parents of the block.
+		ShallowLikeParents []string `json:"shallowLikeParents"`
+		// LatestFinalizedSlot is the lastest finalized slot index.
+		LatestFinalizedSlot iotago.SlotIndex `json:"latestFinalizedSlot"`
+		// Commitment is the commitment of the block.
+		Commitment *json.RawMessage `json:"commitment"`
 	}
 
 	// BlockMetadataResponse defines the response of a GET block metadata REST API call.
 	BlockMetadataResponse struct {
-		// The hex encoded ID of the block.
+		// BlockID The hex encoded block ID of the block.
 		BlockID string `json:"blockId"`
-		// The hex encoded IDs of the parent block references.
-		Parents []string `json:"parents"`
-		// Whether the block is solid.
-		Solid bool `json:"isSolid"`
-		// The milestone index that references this block.
-		ReferencedByMilestoneIndex iotago.SlotIndex `json:"referencedByMilestoneIndex,omitempty"`
-		// If this block represents a milestone this is the milestone index
-		MilestoneIndex iotago.SlotIndex `json:"milestoneIndex,omitempty"`
-		// The ledger inclusion state of the transaction payload.
-		LedgerInclusionState string `json:"ledgerInclusionState,omitempty"`
-		// Whether the block should be promoted.
-		ShouldPromote *bool `json:"shouldPromote,omitempty"`
-		// Whether the block should be reattached.
-		ShouldReattach *bool `json:"shouldReattach,omitempty"`
-		// The reason why this block is marked as conflicting.
-		ConflictReason uint8 `json:"conflictReason,omitempty"`
-		// If this block is referenced by a milestone this returns the index of that block inside the milestone by whiteflag ordering.
-		WhiteFlagIndex *uint32 `json:"whiteFlagIndex,omitempty"`
-	}
-
-	// ChildrenResponse defines the response of a GET children REST API call.
-	ChildrenResponse struct {
-		// The hex encoded block ID of the block.
-		BlockID string `json:"blockId"`
-		// The maximum count of results that are returned by the node.
-		MaxResults uint32 `json:"maxResults"`
-		// The actual count of results that are returned.
-		Count uint32 `json:"count"`
-		// The hex encoded IDs of the children of this block.
-		Children []string `json:"children"`
+		// StrongParents are the strong parents of the block.
+		StrongParents []string `json:"strongParents"`
+		// WeakParents are the weak parents of the block.
+		WeakParents []string `json:"weakParents"`
+		// ShallowLikeParents are the shallow like parents of the block.
+		ShallowLikeParents []string `json:"shallowLikeParents"`
+		// BlockState might be pending, confirmed, finalized.
+		BlockState string `json:"blockState"`
+		// TxState might be pending, conflicting, confirmed, finalized, rejected.
+		TxState string `json:"txState,omitempty"`
+		// BlockStateReason if applicable indicates the error that occurred during the block processing.
+		BlockStateReason string `json:"blockStateReason,omitempty"`
+		// TxStateReason if applicable indicates the error that occurred during the transaction processing.
+		TxStateReason string `json:"txStateReason,omitempty"`
+		// ReissuePayload whether the block should be reissued.
+		ReissuePayload *bool `json:"reissuePayload,omitempty"`
 	}
 
 	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
 	OutputMetadataResponse struct {
-		// The hex encoded ID of the block.
+		// BlockID is the block ID that contains the output.
 		BlockID string `json:"blockId"`
-		// The hex encoded transaction id from which this output originated.
+		// TransactionID is the transaction ID that creates the output.
 		TransactionID string `json:"transactionId"`
-		// The index of the output.
+		// OutputIndex is the index of the output.
 		OutputIndex uint16 `json:"outputIndex"`
-		// Whether this output is spent.
-		Spent bool `json:"isSpent"`
-		// The milestone index at which this output was spent.
-		MilestoneIndexSpent iotago.SlotIndex `json:"milestoneIndexSpent,omitempty"`
-		// The milestone timestamp this output was spent.
-		MilestoneTimestampSpent uint32 `json:"milestoneTimestampSpent,omitempty"`
-		// The transaction this output was spent with.
+		// IsSpent indicates whether the output is spent or not.
+		IsSpent bool `json:"isSpent"`
+		// CommitmentIDSpent is the commitment ID that includes the spent output.
+		CommitmentIDSpent string `json:"commitmentIdSpent,omitempty"`
+		// TransactionIDSpent is the transaction ID that spends the output.
 		TransactionIDSpent string `json:"transactionIdSpent,omitempty"`
-		// The milestone index at which this output was booked into the ledger.
-		MilestoneIndexBooked iotago.SlotIndex `json:"milestoneIndexBooked"`
-		// The milestone timestamp this output was booked in the ledger.
-		MilestoneTimestampBooked uint32 `json:"milestoneTimestampBooked"`
-		// The ledger index at which this output was available at.
-		LedgerIndex iotago.SlotIndex `json:"ledgerIndex"`
+		// IncludedCommitmentID is the commitment ID that includes the output.
+		IncludedCommitmentID string `json:"includedCommitmentId,omitempty"`
+		// LatestCommitmentID is the latest commitment ID of a node.
+		LatestCommitmentID string `json:"latestCommitmentId"`
 	}
 
-	// OutputResponse defines the response of a GET outputs REST API call.
-	OutputResponse struct {
-		Metadata *OutputMetadataResponse `json:"metadata"`
-		// The output in its serialized form.
-		RawOutput *json.RawMessage `json:"output"`
-	}
-
-	// TreasuryResponse defines the response of a GET treasury REST API call.
-	TreasuryResponse struct {
-		MilestoneID string `json:"milestoneId"`
-		Amount      string `json:"amount"`
-	}
-
-	// ReceiptsResponse defines the response for receipts GET related REST API calls.
-	ReceiptsResponse struct {
-		Receipts []*ReceiptTuple `json:"receipts"`
-	}
-
-	// ReceiptTuple represents a receipt and the milestone index in which it was contained.
-	ReceiptTuple struct {
-		Receipt        *json.RawMessage `json:"receipt"`
-		MilestoneIndex iotago.SlotIndex `json:"milestoneIndex"`
-	}
-
-	// CommitmentUTXOChangesResponse defines the response of a GET milestone UTXO changes REST API call.
-	CommitmentUTXOChangesResponse struct {
-		// The index of the milestone.
+	// CommitmentDetailsResponse defines the response of a GET milestone UTXO changes REST API call.
+	CommitmentDetailsResponse struct {
+		// The index of the requested commitment.
 		Index iotago.SlotIndex `json:"index"`
-		// The output IDs (transaction hash + output index) of the newly created outputs.
+		// The commitment ID of previous commitment.
+		PrevID string `json:"prevId"`
+		// The roots ID of merkle trees within the requested commitment.
+		RootsID string `json:"rootsId"`
+		// The cumulative weight of the requested slot.
+		CumulativeWeight uint64 `json:"cumulativeWeight"`
+		// TODO: decide what else to add here.
+	}
+
+	// UTXOChangesResponse defines the response for UTXO slot REST API call.
+	UTXOChangesResponse struct {
+		// The index of the requested commitment.
+		Index iotago.SlotIndex `json:"index"`
+		// The outputs that are created in this slot.
 		CreatedOutputs []string `json:"createdOutputs"`
-		// The output IDs (transaction hash + output index) of the consumed (spent) outputs.
+		// The outputs that are consumed in this slot.
 		ConsumedOutputs []string `json:"consumedOutputs"`
 	}
 
@@ -284,7 +269,7 @@ type (
 
 // TxID returns the TransactionID.
 func (nor *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
-	txIDBytes, err := iotago.DecodeHex(nor.TransactionID)
+	txIDBytes, err := hexutil.DecodeHex(nor.TransactionID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
 	}
@@ -293,24 +278,9 @@ func (nor *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 	return &txID, nil
 }
 
-// Output deserializes the RawOutput to an Output.
-func (nor *OutputResponse) Output() (iotago.Output, error) {
-	outResJson, err := json.Marshal(nor)
-	if err != nil {
-		return nil, err
-	}
-
-	o := &outputResAux{}
-	if err := _internalAPI.JSONDecode(outResJson, o); err != nil {
-		return nil, err
-	}
-
-	return o.Output, nil
-}
-
 // ProtocolParameters returns the protocol parameters within the info response.
-func (info *InfoResponse) ProtocolParameters() (*iotago.ProtocolParameters, error) {
-	protoJson, err := json.Marshal(info.Protocol)
+func (info *InfoResponse) DecodeProtocolParameters() (*iotago.ProtocolParameters, error) {
+	protoJson, err := json.Marshal(info.ProtocolParameters)
 	if err != nil {
 		return nil, err
 	}
@@ -321,4 +291,40 @@ func (info *InfoResponse) ProtocolParameters() (*iotago.ProtocolParameters, erro
 	}
 
 	return o, nil
+}
+
+// DecodeCommitment returns the commitment within the block issuance response.
+func (b *BlockIssuanceResponse) DecodeCommitment() (*iotago.Commitment, error) {
+	commitmentJson, err := json.Marshal(b.Commitment)
+	if err != nil {
+		return nil, err
+	}
+
+	o := &iotago.Commitment{}
+	if err := _internalAPI.JSONDecode(commitmentJson, o); err != nil {
+		return nil, err
+	}
+
+	return o, nil
+}
+
+// Highest returns the highest version.
+func (v Versions) Highest() byte {
+	return byte(v[len(v)-1])
+}
+
+// Lowest returns the lowest version.
+func (v Versions) Lowest() byte {
+	return byte(v[0])
+}
+
+// Supports tells whether the given version is supported.
+func (v Versions) Supports(ver byte) bool {
+	for _, value := range v {
+		if value == uint32(ver) {
+			return true
+		}
+	}
+
+	return false
 }

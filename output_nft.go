@@ -4,6 +4,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -21,7 +22,7 @@ var (
 type NFTID [NFTIDLength]byte
 
 func (nftID NFTID) ToHex() string {
-	return EncodeHex(nftID[:])
+	return hexutil.EncodeHex(nftID[:])
 }
 
 // NFTIDs are NFTID(s).
@@ -59,7 +60,7 @@ func (nftID NFTID) ToAddress() ChainAddress {
 }
 
 func (nftID NFTID) String() string {
-	return EncodeHex(nftID[:])
+	return hexutil.EncodeHex(nftID[:])
 }
 
 func NFTIDFromOutputID(o OutputID) NFTID {
