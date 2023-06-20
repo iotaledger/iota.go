@@ -121,6 +121,12 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 		return fmt.Errorf("%w: block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 	}
 
+	if stakingFeat := current.FeatureSet().Staking(); stakingFeat != nil {
+		if err := accountStakingGenesisValidation(current, stakingFeat, vmParams); err != nil {
+			return err
+		}
+	}
+
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
 }
 
@@ -170,9 +176,17 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.Accoun
 		return fmt.Errorf("%w: %s", iotago.ErrInvalidAccountStateTransition, err)
 	}
 
+	if err := accountBlockIssuerSTVF(input, next, vmParams); err != nil {
+		return err
+	}
+
+	if err := accountStakingSTVF(current, next, vmParams); err != nil {
+		return err
+	}
+
 	// check that for a foundry counter change, X amount of foundries were actually created
 	if current.FoundryCounter == next.FoundryCounter {
-		return accountBlockIssuerSTVF(input, next, vmParams)
+		return nil
 	}
 
 	var seenNewFoundriesOfAccount uint32
@@ -198,7 +212,7 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.Accoun
 		return fmt.Errorf("%w: %d new foundries were created but the account output's foundry counter changed by %d", iotago.ErrInvalidAccountStateTransition, seenNewFoundriesOfAccount, expectedNewFoundriesCount)
 	}
 
-	return accountBlockIssuerSTVF(input, next, vmParams)
+	return nil
 }
 
 // If an account output has a block issuer feature, the following conditions for its transition must be checked.
@@ -284,9 +298,8 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	return nil
 }
 
-func accountStakingSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.AccountOutput, vmParams *vm.Params) error {
-	account := input.Output.(*iotago.AccountOutput)
-	currentStakingFeat := account.FeatureSet().Staking()
+func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	currentStakingFeat := current.FeatureSet().Staking()
 	nextStakingFeat := next.FeatureSet().Staking()
 
 	// If the account has no staking feature.
@@ -294,25 +307,9 @@ func accountStakingSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.Acco
 		return nil
 	}
 
-	newFeatureValidation := func(acc *iotago.AccountOutput, stakingFeat *iotago.StakingFeature) error {
-		if acc.Amount < stakingFeat.StakedAmount {
-			return fmt.Errorf("%w: the account's amount is less than the staked smount in the staking feature", iotago.ErrInvalidStakingTransition)
-		}
-
-		if stakingFeat.StartEpoch != vmParams.External.EpochIndex {
-			return fmt.Errorf("%w: the start epoch must be set to the epoch index of the transaction", iotago.ErrInvalidStakingTransition)
-		}
-
-		if stakingFeat.EndEpoch < vmParams.External.EpochIndex+vmParams.External.ProtocolParameters.StakingUnbondingPeriod {
-			return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period", iotago.ErrInvalidStakingTransition)
-		}
-
-		return nil
-	}
-
 	// If the staking feature was newly added.
 	if currentStakingFeat == nil && nextStakingFeat != nil {
-		return newFeatureValidation(account, nextStakingFeat)
+		return accountStakingGenesisValidation(current, nextStakingFeat, vmParams)
 	}
 
 	if currentStakingFeat != nil {
@@ -340,7 +337,6 @@ func accountStakingSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.Acco
 		if nextStakingFeat != nil {
 			// TODO: mana rewards claiming
 		} else {
-
 			// No mana claiming and feature is untouched.
 			if !currentStakingFeat.Equal(nextStakingFeat) {
 				return fmt.Errorf("%w: all fields on the feature must match on the input and output", iotago.ErrInvalidStakingTransition)
@@ -348,8 +344,25 @@ func accountStakingSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.Acco
 
 			// Mana claiming and feature is transitioned to new state.
 			// TODO: mana rewards claiming
-			return newFeatureValidation(account, nextStakingFeat)
+			return accountStakingGenesisValidation(current, nextStakingFeat, vmParams)
 		}
+	}
+
+	return nil
+}
+
+// Validates the rules for a newly added Staking Feature in an account.
+func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iotago.StakingFeature, vmParams *vm.Params) error {
+	if acc.Amount < stakingFeat.StakedAmount {
+		return fmt.Errorf("%w: the account's amount is less than the staked smount in the staking feature", iotago.ErrInvalidStakingTransition)
+	}
+
+	if stakingFeat.StartEpoch != vmParams.External.EpochIndex {
+		return fmt.Errorf("%w: the start epoch must be set to the epoch index of the transaction", iotago.ErrInvalidStakingTransition)
+	}
+
+	if stakingFeat.EndEpoch < vmParams.External.EpochIndex+vmParams.External.ProtocolParameters.StakingUnbondingPeriod {
+		return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period", iotago.ErrInvalidStakingTransition)
 	}
 
 	return nil
@@ -371,6 +384,15 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 			// TODO: better error
 			return fmt.Errorf("%w: no BIC provided for block issuer", iotago.ErrInvalidBlockIssuerTransition)
 		}
+	}
+
+	stakingFeat := outputToDestroy.FeatureSet().Staking()
+	if stakingFeat != nil {
+		if vmParams.External.EpochIndex < stakingFeat.EndEpoch {
+			return fmt.Errorf("%w: cannot destroy output until the staking feature is unbonded", iotago.ErrInvalidAccountStateTransition)
+		}
+	} else {
+		// TODO: Mana Rewards Claiming.
 	}
 
 	return nil
