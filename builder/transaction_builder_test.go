@@ -111,17 +111,17 @@ func TestTransactionBuilder(t *testing.T) {
 				}
 
 				alias1 = &iotago.AliasOutput{
-					Amount:     1000,
-					AliasID:    tpkg.Rand32ByteArray(),
+					Amount:  1000,
+					AliasID: tpkg.Rand32ByteArray(),
 					Conditions: iotago.UnlockConditions{
-						&iotago.StateControllerAddressUnlockCondition{Address:  &inputAddr},
-						&iotago.GovernorAddressUnlockCondition{Address:  &inputAddr},
+						&iotago.StateControllerAddressUnlockCondition{Address: &inputAddr},
+						&iotago.GovernorAddressUnlockCondition{Address: &inputAddr},
 					},
 				}
 
 				aliasOwnedByAlias1 = &iotago.AliasOutput{
-					Amount:     1200,
-					AliasID:    tpkg.Rand32ByteArray(),
+					Amount:  1200,
+					AliasID: tpkg.Rand32ByteArray(),
 					Conditions: iotago.UnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: alias1.Chain().ToAddress()},
 						&iotago.GovernorAddressUnlockCondition{Address: alias1.Chain().ToAddress()},
@@ -137,7 +137,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: alias1.Chain().ToAddress(), InputID: inputID3.ID(), Input: aliasOwnedByAlias1}).
 				AddOutput(nextAlias1).
 				AddOutput(&iotago.AliasOutput{
-					Amount: 2200,
+					Amount:     2200,
 					AliasID:    aliasOwnedByAlias1.AliasID,
 					Conditions: aliasOwnedByAlias1.Conditions.Clone(),
 					StateIndex: aliasOwnedByAlias1.StateIndex + 1,
