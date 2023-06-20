@@ -378,6 +378,114 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "failed - remove non-expired block issuer feature transition",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:    100,
+					AccountID: exampleAccountID,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.BlockIssuerFeature{
+							BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
+							ExpirySlot:      1000,
+						},
+					},
+					StateIndex: 10,
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 11,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
+						exampleAccountID: {
+							AccountID:    exampleAccountID,
+							CommitmentID: iotago.CommitmentID{},
+							Value:        0,
+						},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							Inputs:       nil,
+							CreationTime: 999,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+		},
+		{
+			name: "ok - remove expired block issuer feature transition",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:    100,
+					AccountID: exampleAccountID,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.BlockIssuerFeature{
+							BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
+							ExpirySlot:      1000,
+						},
+					},
+					StateIndex: 10,
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 11,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
+						exampleAccountID: {
+							AccountID:    exampleAccountID,
+							CommitmentID: iotago.CommitmentID{},
+							Value:        0,
+						},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							Inputs:       nil,
+							CreationTime: 1001,
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
 			name: "ok - gov transition",
 			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{

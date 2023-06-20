@@ -224,11 +224,9 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	}
 
 	txSlotIndex := vmParams.WorkingSet.Tx.Essence.CreationTime
-
 	if currentBIFeat.ExpirySlot >= txSlotIndex {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBIFeat == nil {
-			// FIXME: this code is never reached as this function is not called during Destroy transition
 			return fmt.Errorf("%w: cannot remove block issuer feature until it expires", iotago.ErrInvalidBlockIssuerTransition)
 		}
 		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge) {
