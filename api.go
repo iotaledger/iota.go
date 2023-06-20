@@ -112,6 +112,7 @@ type ProtocolParameters struct {
 	// expressed in number of slots.
 	MaxCommittableAge SlotIndex `serix:"12,mapKey=maxCommittableAge"`
 	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
+	ProtocolVersions ProtocolVersions `serix:"12,mapKey=protocolVersion"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {
@@ -133,6 +134,35 @@ func (p ProtocolParameters) String() string {
 
 func (p ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
 	return NewManaDecayProvider(p.TimeProvider(), p.ManaGenerationRate, p.ManaDecayFactors, p.ManaDecayFactorsScaleFactor)
+}
+
+func (p ProtocolParameters) Bytes() ([]byte, error) {
+	return internalEncode(p)
+}
+
+func (p ProtocolParameters) Hash() ([32]byte, error) {
+	bytes, err := p.Bytes()
+	if err != nil {
+		return [32]byte{}, err
+	}
+	return blake2b.Sum256(bytes), nil
+}
+
+// TODO: add serix serialization for slice sorting by Version
+type ProtocolVersion struct {
+	Version        byte      `serix:"0"`
+	StartSlotIndex SlotIndex `serix:"1"`
+}
+
+type ProtocolVersions []ProtocolVersion
+
+func (p ProtocolVersions) VersionBySlotIndex(index SlotIndex) byte {
+	for i := len(p) - 1; i >= 0; i-- {
+		if p[i].StartSlotIndex <= index {
+			return p[i].Version
+		}
+	}
+	return 0
 }
 
 // Sizer is an object knowing its own byte size.
