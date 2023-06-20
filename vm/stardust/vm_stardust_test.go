@@ -23,8 +23,8 @@ func TestNFTTransition(t *testing.T) {
 	_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 
 	inputIDs := tpkg.RandOutputIDs(1)
-	inputs := iotago.InputSet{
-		inputIDs[0]: iotago.OutputWithCreationTime{
+	inputs := vm.InputSet{
+		inputIDs[0]: vm.OutputWithCreationTime{
 			Output: &iotago.NFTOutput{
 				Amount: OneMi,
 				NFTID:  iotago.NFTID{},
@@ -54,7 +54,7 @@ func TestNFTTransition(t *testing.T) {
 		},
 	}
 
-	sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+	sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 	require.NoError(t, err)
 
 	tx := &iotago.Transaction{
@@ -63,7 +63,7 @@ func TestNFTTransition(t *testing.T) {
 			&iotago.SignatureUnlock{Signature: sigs[0]},
 		},
 	}
-	resolvedInputs := iotago.ResolvedInputs{InputSet: inputs}
+	resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
 	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{
 		DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 	}}, resolvedInputs))
@@ -74,8 +74,8 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 	accountIdent1 := tpkg.RandAccountAddress()
 
 	inputIDs := tpkg.RandOutputIDs(3)
-	inputs := iotago.InputSet{
-		inputIDs[0]: iotago.OutputWithCreationTime{
+	inputs := vm.InputSet{
+		inputIDs[0]: vm.OutputWithCreationTime{
 			Output: &iotago.BasicOutput{
 				Amount: OneMi,
 				Conditions: iotago.BasicOutputUnlockConditions{
@@ -83,7 +83,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				},
 			},
 		},
-		inputIDs[1]: iotago.OutputWithCreationTime{
+		inputIDs[1]: vm.OutputWithCreationTime{
 			Output: &iotago.AccountOutput{
 				Amount:         OneMi,
 				NativeTokens:   nil,
@@ -98,7 +98,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				Features: nil,
 			},
 		},
-		inputIDs[2]: iotago.OutputWithCreationTime{
+		inputIDs[2]: vm.OutputWithCreationTime{
 			Output: &iotago.FoundryOutput{
 				Amount:       OneMi,
 				NativeTokens: nil,
@@ -158,7 +158,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 		},
 	}
 
-	sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+	sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 	require.NoError(t, err)
 
 	tx := &iotago.Transaction{
@@ -170,7 +170,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 		},
 	}
 
-	resolvedInputs := iotago.ResolvedInputs{InputSet: inputs}
+	resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
 	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{
 		DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 	}}, resolvedInputs))
@@ -180,7 +180,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 	type test struct {
 		name           string
 		vmParams       *vm.Params
-		resolvedInputs iotago.ResolvedInputs
+		resolvedInputs vm.ResolvedInputs
 		tx             *iotago.Transaction
 		wantErr        error
 	}
@@ -208,8 +208,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			inputIDs := tpkg.RandOutputIDs(16)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -217,7 +217,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nativeTokenTransfer1,
@@ -226,7 +226,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[2]: iotago.OutputWithCreationTime{
+				inputIDs[2]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nativeTokenTransfer2,
@@ -235,7 +235,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[3]: iotago.OutputWithCreationTime{
+				inputIDs[3]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -247,7 +247,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[4]: iotago.OutputWithCreationTime{
+				inputIDs[4]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -258,7 +258,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[5]: iotago.OutputWithCreationTime{
+				inputIDs[5]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: defaultAmount + storageDepositReturn,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -277,7 +277,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[6]: iotago.OutputWithCreationTime{
+				inputIDs[6]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:         defaultAmount,
 						NativeTokens:   nil,
@@ -292,7 +292,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[7]: iotago.OutputWithCreationTime{
+				inputIDs[7]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:         defaultAmount + defaultAmount, // to fund also the new account output
 						NativeTokens:   nil,
@@ -307,7 +307,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[8]: iotago.OutputWithCreationTime{
+				inputIDs[8]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:         defaultAmount,
 						NativeTokens:   nil,
@@ -322,7 +322,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[9]: iotago.OutputWithCreationTime{
+				inputIDs[9]: vm.OutputWithCreationTime{
 					Output: &iotago.FoundryOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil,
@@ -338,7 +338,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[10]: iotago.OutputWithCreationTime{
+				inputIDs[10]: vm.OutputWithCreationTime{
 					Output: &iotago.FoundryOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil, // filled out later
@@ -354,7 +354,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[11]: iotago.OutputWithCreationTime{
+				inputIDs[11]: vm.OutputWithCreationTime{
 					Output: &iotago.FoundryOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil,
@@ -370,7 +370,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[12]: iotago.OutputWithCreationTime{
+				inputIDs[12]: vm.OutputWithCreationTime{
 					Output: &iotago.FoundryOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil,
@@ -386,7 +386,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[13]: iotago.OutputWithCreationTime{
+				inputIDs[13]: vm.OutputWithCreationTime{
 					Output: &iotago.NFTOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil,
@@ -402,7 +402,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[14]: iotago.OutputWithCreationTime{
+				inputIDs[14]: vm.OutputWithCreationTime{
 					Output: &iotago.NFTOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil,
@@ -418,7 +418,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[15]: iotago.OutputWithCreationTime{
+				inputIDs[15]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -657,7 +657,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys, ident2AddrKeys, ident3AddrKeys, ident4AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys, ident2AddrKeys, ident3AddrKeys, ident4AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -665,7 +665,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -721,8 +721,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 				&iotago.ImmutableAccountUnlockCondition{Address: tpkg.RandAccountAddress()},
 			}
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -733,7 +733,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: inFoundry,
 				},
 			}
@@ -754,7 +754,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -762,7 +762,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -787,8 +787,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -835,15 +835,15 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := iotago.BICInputSet{
-				accountAddr1.AccountID(): iotago.BlockIssuanceCredit{
+			bicInputs := vm.BICInputSet{
+				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
 					AccountID:    accountAddr1.AccountID(),
 					CommitmentID: iotago.CommitmentID{},
 					Value:        0,
 				},
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -852,7 +852,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 					DecayProvider:      iotago.NewDecayProvider(1, []float64{}, []float64{}),
 					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -873,8 +873,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -921,15 +921,15 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := iotago.BICInputSet{
-				accountAddr1.AccountID(): iotago.BlockIssuanceCredit{
+			bicInputs := vm.BICInputSet{
+				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
 					AccountID:    accountAddr1.AccountID(),
 					CommitmentID: iotago.CommitmentID{},
 					Value:        0,
 				},
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -938,7 +938,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 					DecayProvider:      iotago.NewDecayProvider(1, []float64{}, []float64{}),
 					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -958,8 +958,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -996,15 +996,15 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := iotago.BICInputSet{
-				accountAddr1.AccountID(): iotago.BlockIssuanceCredit{
+			bicInputs := vm.BICInputSet{
+				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
 					AccountID:    accountAddr1.AccountID(),
 					CommitmentID: iotago.CommitmentID{},
 					Value:        0,
 				},
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1013,7 +1013,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 					DecayProvider:      iotago.NewDecayProvider(1, []float64{}, []float64{}),
 					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1034,8 +1034,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -1073,15 +1073,15 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := iotago.BICInputSet{
-				accountAddr1.AccountID(): iotago.BlockIssuanceCredit{
+			bicInputs := vm.BICInputSet{
+				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
 					AccountID:    accountAddr1.AccountID(),
 					CommitmentID: iotago.CommitmentID{},
 					Value:        0,
 				},
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1089,7 +1089,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1109,8 +1109,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -1142,7 +1142,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1150,7 +1150,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1169,8 +1169,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -1211,7 +1211,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1219,7 +1219,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1247,7 +1247,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 	type test struct {
 		name           string
 		vmParams       *vm.Params
-		resolvedInputs iotago.ResolvedInputs
+		resolvedInputs vm.ResolvedInputs
 		tx             *iotago.Transaction
 		wantErr        error
 	}
@@ -1260,8 +1260,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			accountIdent1 := iotago.AccountAddressFromOutputID(inputIDs[1])
 			nftIdent1 := tpkg.RandNFTAddress()
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1269,7 +1269,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: iotago.AccountID{}, // empty on purpose as validation should resolve
@@ -1279,7 +1279,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[2]: iotago.OutputWithCreationTime{
+				inputIDs[2]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1287,7 +1287,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[3]: iotago.OutputWithCreationTime{
+				inputIDs[3]: vm.OutputWithCreationTime{
 					Output: &iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  nftIdent1.NFTID(),
@@ -1296,7 +1296,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[4]: iotago.OutputWithCreationTime{
+				inputIDs[4]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1305,7 +1305,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					},
 				},
 				// unlockable by sender as expired
-				inputIDs[5]: iotago.OutputWithCreationTime{
+				inputIDs[5]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1318,7 +1318,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					},
 				},
 				// not unlockable by sender as not expired
-				inputIDs[6]: iotago.OutputWithCreationTime{
+				inputIDs[6]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1330,7 +1330,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[7]: iotago.OutputWithCreationTime{
+				inputIDs[7]: vm.OutputWithCreationTime{
 					Output: &iotago.FoundryOutput{
 						Amount:       100,
 						SerialNumber: 0,
@@ -1362,13 +1362,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				CreationTime: 10,
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys, ident2AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "ok",
 				vmParams:       &vm.Params{},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1390,8 +1390,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			_, _, ident2AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1403,7 +1403,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident2AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident2AddrKeys)
 			require.NoError(t, err)
 
 			copy(sigs[0].(*iotago.Ed25519Signature).PublicKey[:], ident1Sk.Public().(ed25519.PublicKey))
@@ -1411,7 +1411,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			return test{
 				name:           "fail - invalid signature",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1425,8 +1425,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1434,7 +1434,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1446,13 +1446,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - should contain reference unlock",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1468,8 +1468,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(2)
 
 			accountIdent1 := iotago.AccountAddressFromOutputID(inputIDs[0])
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: iotago.AccountID{},
@@ -1479,7 +1479,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1491,13 +1491,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - should contain account unlock",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1513,8 +1513,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(2)
 
 			nftIdent1 := iotago.NFTAddressFromOutputID(inputIDs[0])
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  iotago.NFTID{},
@@ -1523,7 +1523,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1535,13 +1535,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - should contain NFT unlock",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1558,8 +1558,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			nftIdent1 := iotago.NFTAddressFromOutputID(inputIDs[0])
 			nftIdent2 := iotago.NFTAddressFromOutputID(inputIDs[1])
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  nftIdent1.NFTID(),
@@ -1568,7 +1568,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  nftIdent2.NFTID(),
@@ -1580,12 +1580,12 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
-			_, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment())
+			_, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment())
 			require.NoError(t, err)
 			return test{
 				name:           "fail - circular NFT unlock",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1601,8 +1601,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1618,13 +1618,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: 5}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident2AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - sender can not unlock yet",
 				vmParams:       &vm.Params{},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1639,8 +1639,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1656,13 +1656,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: 10}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - receiver can not unlock anymore",
 				vmParams:       &vm.Params{},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1682,9 +1682,9 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				accountAddr3 = tpkg.RandAccountAddress()
 			)
 
-			inputs := iotago.InputSet{
+			inputs := vm.InputSet{
 				// owned by ident1
-				inputIDs[0]: iotago.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountAddr1.AccountID(),
@@ -1695,7 +1695,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					},
 				},
 				// owned by account1
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountAddr2.AccountID(),
@@ -1706,7 +1706,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					},
 				},
 				// owned by account1
-				inputIDs[2]: iotago.OutputWithCreationTime{
+				inputIDs[2]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountAddr3.AccountID(),
@@ -1720,13 +1720,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - referencing other account unlocked by source account",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1748,8 +1748,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				accountAddr1 = tpkg.RandAccountAddress()
 			)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountAddr1.AccountID(),
@@ -1759,7 +1759,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1783,13 +1783,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident2AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - account output not state transitioning",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1822,8 +1822,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -1834,7 +1834,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: foundryOutput,
 				},
 			}
@@ -1855,13 +1855,13 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddressKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - wrong unlock for foundry",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1892,7 +1892,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 	type test struct {
 		name           string
 		vmParams       *vm.Params
-		resolvedInputs iotago.ResolvedInputs
+		resolvedInputs vm.ResolvedInputs
 		tx             *iotago.Transaction
 		wantErr        error
 	}
@@ -1902,8 +1902,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			_, ident2, ident2AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(3)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1912,7 +1912,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 				// unlocked by ident1 as it is not expired
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1929,7 +1929,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 				// unlocked by ident2 as it is expired
-				inputIDs[2]: iotago.OutputWithCreationTime{
+				inputIDs[2]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1966,13 +1966,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 				},
 				CreationTime: 5,
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys, ident2AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "ok",
 				vmParams:       &vm.Params{},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1989,8 +1989,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 1000,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2030,13 +2030,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "ok - more storage deposit returned via more outputs",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2050,8 +2050,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 50,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2073,13 +2073,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 				},
 				CreationTime: 5,
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - unbalanced, more on output than input",
 				vmParams:       &vm.Params{},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2093,8 +2093,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2116,13 +2116,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 				},
 				CreationTime: 5,
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - unbalanced, more on input than output",
 				vmParams:       &vm.Params{},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2137,8 +2137,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2169,13 +2169,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 				},
 				CreationTime: 5,
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - return not fulfilled",
 				vmParams:       &vm.Params{},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2190,8 +2190,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2222,13 +2222,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - storage deposit return not basic output",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2243,8 +2243,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2279,13 +2279,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - storage deposit return has additional unlocks",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2300,8 +2300,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2335,13 +2335,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - storage deposit return has feature",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2357,8 +2357,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 			ntId := tpkg.Rand38ByteArray()
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						NativeTokens: iotago.NativeTokens{
@@ -2401,13 +2401,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - storage deposit return has native tokens",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -2465,7 +2465,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 	type test struct {
 		name           string
 		vmParams       *vm.Params
-		resolvedInputs iotago.ResolvedInputs
+		resolvedInputs vm.ResolvedInputs
 		tx             *iotago.Transaction
 		wantErr        error
 	}
@@ -2476,8 +2476,8 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			ntCount := 10
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: nativeTokens[:ntCount/2],
@@ -2486,7 +2486,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: nativeTokens[ntCount/2:],
@@ -2513,7 +2513,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			return test{
 				name:           "ok",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2525,9 +2525,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(iotago.MaxNativeTokensCount)
 			nativeToken := tpkg.RandNativeToken()
 
-			inputs := iotago.InputSet{}
+			inputs := vm.InputSet{}
 			for i := 0; i < iotago.MaxNativeTokensCount; i++ {
-				inputs[inputIDs[i]] = iotago.OutputWithCreationTime{
+				inputs[inputIDs[i]] = vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						NativeTokens: []*iotago.NativeToken{
@@ -2564,7 +2564,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			return test{
 				name:           "ok - exceeds limit (in+out) but same native token",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2578,8 +2578,8 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			inCount := 20
 			outCount := 250
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: tpkg.RandSortNativeTokens(inCount),
@@ -2606,7 +2606,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			return test{
 				name:           "fail - exceeds limit (in+out)",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2618,9 +2618,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			numDistinctNTs := iotago.MaxNativeTokensCount + 1
 			inputIDs := tpkg.RandOutputIDs(uint16(numDistinctNTs))
 
-			inputs := iotago.InputSet{}
+			inputs := vm.InputSet{}
 			for i := 0; i < numDistinctNTs; i++ {
-				inputs[inputIDs[i]] = iotago.OutputWithCreationTime{
+				inputs[inputIDs[i]] = vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: tpkg.RandSortNativeTokens(1),
@@ -2646,7 +2646,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			return test{
 				name:           "fail - too many on input side already",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2659,9 +2659,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
 			inputIDs := tpkg.RandOutputIDs(uint16(numDistinctNTs))
 
-			inputs := iotago.InputSet{}
+			inputs := vm.InputSet{}
 			for i := 0; i < numDistinctNTs; i++ {
-				inputs[inputIDs[i]] = iotago.OutputWithCreationTime{
+				inputs[inputIDs[i]] = vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2690,7 +2690,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			return test{
 				name:           "fail - too many on output side already",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2703,9 +2703,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
 			inputIDs := tpkg.RandOutputIDs(iotago.MaxInputsCount)
 
-			inputs := iotago.InputSet{}
+			inputs := vm.InputSet{}
 			for i := 0; i < iotago.MaxInputsCount; i++ {
-				inputs[inputIDs[i]] = iotago.OutputWithCreationTime{
+				inputs[inputIDs[i]] = vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: tokens,
@@ -2735,7 +2735,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			return test{
 				name:           "ok - most possible tokens in a tx",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2748,9 +2748,9 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
 			inputIDs := tpkg.RandOutputIDs(iotago.MaxInputsCount)
 
-			inputs := iotago.InputSet{}
+			inputs := vm.InputSet{}
 			for i := 0; i < iotago.MaxInputsCount; i++ {
-				inputs[inputIDs[i]] = iotago.OutputWithCreationTime{
+				inputs[inputIDs[i]] = vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: tokens,
@@ -2792,7 +2792,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			return test{
 				name:           "fail - max nt count just exceeded",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2806,8 +2806,8 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			ntCount := 10
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: nativeTokens,
@@ -2839,7 +2839,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			return test{
 				name:           "fail - unbalanced on output",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2853,8 +2853,8 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			ntCount := 20
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: nativeTokens[:ntCount/2],
@@ -2863,7 +2863,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: nativeTokens[ntCount/2:],
@@ -2872,7 +2872,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[2]: iotago.OutputWithCreationTime{
+				inputIDs[2]: vm.OutputWithCreationTime{
 					Output: inUnrelatedFoundryOutput,
 				},
 			}
@@ -2905,7 +2905,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			return test{
 				name:           "fail - unbalanced with unrelated foundry in term of new output tokens",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{},
@@ -2932,7 +2932,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 	type test struct {
 		name           string
 		vmParams       *vm.Params
-		resolvedInputs iotago.ResolvedInputs
+		resolvedInputs vm.ResolvedInputs
 		tx             *iotago.Transaction
 		wantErr        error
 	}
@@ -2942,8 +2942,8 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(2)
 			nftAddr := tpkg.RandNFTAddress()
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2951,7 +2951,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  nftAddr.NFTID(),
@@ -3025,13 +3025,13 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "ok",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3046,8 +3046,8 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3071,13 +3071,13 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - sender not unlocked",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3094,8 +3094,8 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			accountAddr := tpkg.RandAccountAddress()
 			accountId := accountAddr.AccountID()
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountId,
@@ -3123,13 +3123,13 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), governorAddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), governorAddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - sender not unlocked due to governance transition",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3147,8 +3147,8 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			accountId := accountAddr.AccountID()
 			currentStateIndex := uint32(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						AccountID:  accountId,
@@ -3178,13 +3178,13 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), stateControllerAddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), stateControllerAddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "ok - account addr unlocked with state transition",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3201,8 +3201,8 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			accountAddr := tpkg.RandAccountAddress()
 			accountId := accountAddr.AccountID()
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountId,
@@ -3230,13 +3230,13 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), governorAddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), governorAddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "ok - sender is governor address",
 				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3264,7 +3264,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 	type test struct {
 		name           string
 		vmParams       *vm.Params
-		resolvedInputs iotago.ResolvedInputs
+		resolvedInputs vm.ResolvedInputs
 		tx             *iotago.Transaction
 		wantErr        error
 	}
@@ -3277,8 +3277,8 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			accountAddr := tpkg.RandAccountAddress()
 			accountId := accountAddr.AccountID()
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountId,
@@ -3288,7 +3288,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3320,7 +3320,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), governorAddrKeys, ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), governorAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3328,7 +3328,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3350,9 +3350,9 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 
 			nftAddr := tpkg.RandNFTAddress()
 
-			inputs := iotago.InputSet{
+			inputs := vm.InputSet{
 				// possible issuers: accountAddr, stateController, nftAddr, ident1
-				inputIDs[0]: iotago.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						AccountID:  accountId,
@@ -3363,7 +3363,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.NFTOutput{
 						Amount: 900,
 						NFTID:  nftAddr.NFTID(),
@@ -3476,7 +3476,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), stateControllerAddrKeys, ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), stateControllerAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3484,7 +3484,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3503,8 +3503,8 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			accountAddr := tpkg.RandAccountAddress()
 			accountId := accountAddr.AccountID()
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountId,
@@ -3514,7 +3514,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: iotago.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3546,7 +3546,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), governorAddrKeys, ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), governorAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3554,7 +3554,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 				}},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3583,7 +3583,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 	type test struct {
 		name           string
 		vmParams       *vm.Params
-		resolvedInputs iotago.ResolvedInputs
+		resolvedInputs vm.ResolvedInputs
 		tx             *iotago.Transaction
 		wantErr        error
 	}
@@ -3592,8 +3592,8 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
@@ -3606,13 +3606,13 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: 10}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "ok",
 				vmParams:       &vm.Params{},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3626,8 +3626,8 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3641,13 +3641,13 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: 10}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - timelock not expired",
 				vmParams:       &vm.Params{},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3661,8 +3661,8 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3676,13 +3676,13 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: 666}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
 				name:           "fail - timelock not expired",
 				vmParams:       &vm.Params{},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3711,7 +3711,7 @@ func TestTxSemanticMana(t *testing.T) {
 	type test struct {
 		name           string
 		vmParams       *vm.Params
-		resolvedInputs iotago.ResolvedInputs
+		resolvedInputs vm.ResolvedInputs
 		tx             *iotago.Transaction
 		wantErr        error
 	}
@@ -3720,8 +3720,8 @@ func TestTxSemanticMana(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 5,
 						Mana:   10,
@@ -3746,7 +3746,7 @@ func TestTxSemanticMana(t *testing.T) {
 				},
 				CreationTime: 15,
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3756,7 +3756,7 @@ func TestTxSemanticMana(t *testing.T) {
 						DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 					},
 				},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -3770,8 +3770,8 @@ func TestTxSemanticMana(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
-			inputs := iotago.InputSet{
-				inputIDs[0]: iotago.OutputWithCreationTime{
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
 						Amount: 10,
 						Mana:   0,
@@ -3799,7 +3799,7 @@ func TestTxSemanticMana(t *testing.T) {
 				},
 				CreationTime: 120,
 			}
-			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs).MustCommitment(), ident1AddrKeys)
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3809,7 +3809,7 @@ func TestTxSemanticMana(t *testing.T) {
 						DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
 					},
 				},
-				resolvedInputs: iotago.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{

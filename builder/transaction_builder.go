@@ -42,7 +42,7 @@ type TxInput struct {
 	// The ID of the referenced input.
 	InputID iotago.OutputID `json:"inputID"`
 	// The output which is used as an input.
-	Input iotago.OutputWithCreationTime `json:"input"`
+	Input iotago.Output `json:"input"`
 }
 
 // TODO: extend the builder with Allotments and ContextInputs
@@ -51,7 +51,7 @@ type TxInput struct {
 func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 	b.inputOwner[input.InputID] = input.UnlockTarget
 	b.essence.Inputs = append(b.essence.Inputs, input.InputID.UTXOInput())
-	b.inputs[input.InputID] = input.Input.Output
+	b.inputs[input.InputID] = input.Input
 
 	return b
 }
@@ -131,7 +131,7 @@ func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signe
 		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).ID())
 	}
 
-	inputs := inputIDs.OrderedOutputSet(b.inputs)
+	inputs := inputIDs.OrderedSet(b.inputs)
 	commitment, err := inputs.Commitment()
 	if err != nil {
 		return nil, err

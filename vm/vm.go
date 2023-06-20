@@ -13,9 +13,9 @@ import (
 type VirtualMachine interface {
 	// Execute executes the given tx in the VM.
 	// Pass own ExecFunc(s) to override the VM's default execution function list.
-	Execute(t *iotago.Transaction, params *Params, inputs iotago.ResolvedInputs, overrideFuncs ...ExecFunc) error
+	Execute(t *iotago.Transaction, params *Params, inputs ResolvedInputs, overrideFuncs ...ExecFunc) error
 	// ChainSTVF executes the chain state transition validation function.
-	ChainSTVF(transType iotago.ChainTransitionType, input *iotago.ChainOutputWithCreationTime, next iotago.ChainOutput, vmParams *Params) error
+	ChainSTVF(transType iotago.ChainTransitionType, input *ChainOutputWithCreationTime, next iotago.ChainOutput, vmParams *Params) error
 }
 
 // Params defines the VirtualMachine parameters under which the VM operates.
@@ -34,7 +34,7 @@ type WorkingSet struct {
 	// The inputs to the transaction.
 	UTXOInputs iotago.Outputs[iotago.Output]
 	// The UTXO inputs to the transaction with their creation times.
-	UTXOInputsWithCreationTime iotago.InputSet
+	UTXOInputsWithCreationTime InputSet
 	// The mapping of inputs' OutputID to the index.
 	InputIDToIndex map[iotago.OutputID]uint16
 	// The transaction for which this semantic validation happens.
@@ -44,7 +44,7 @@ type WorkingSet struct {
 	// The inputs of the transaction mapped by type.
 	InputsByType iotago.OutputsByType
 	// The ChainOutput(s) at the input side.
-	InChains iotago.ChainInputSet
+	InChains ChainInputSet
 	// The sum of NativeTokens at the input side.
 	InNativeTokens iotago.NativeTokenSum
 	// The Outputs of the transaction mapped by type.
@@ -57,9 +57,9 @@ type WorkingSet struct {
 	UnlocksByType iotago.UnlocksByType
 	// BIC is the block issuance credit for MCA slots prior to the transaction's creation time (or for the slot to which the block commits)
 	// Contains one value for each account output touched in the transaction and empty if no account outputs touched.
-	BIC iotago.BICInputSet
+	BIC BICInputSet
 	// Commitments contains set of commitment inputs necessary for transaction execution. FIXME
-	Commitments iotago.CommitmentInputSet
+	Commitments CommitmentInputSet
 }
 
 // UTXOInputAtIndex retrieves the UTXOInput at the given index.
@@ -68,7 +68,7 @@ func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOIn
 	return workingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
-func NewVMParamsWorkingSet(t *iotago.Transaction, inputs iotago.ResolvedInputs) (*WorkingSet, error) {
+func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*WorkingSet, error) {
 	var err error
 	utxoInputsSet := inputs.InputSet
 	workingSet := &WorkingSet{}
@@ -117,7 +117,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs iotago.ResolvedInputs) 
 	return workingSet, nil
 }
 
-func TotalManaIn(decayProvider *iotago.DecayProvider, txCreationTime iotago.SlotIndex, inputSet iotago.InputSet) (totalIn uint64) {
+func TotalManaIn(decayProvider *iotago.DecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) (totalIn uint64) {
 	for _, input := range inputSet {
 		// stored Mana
 		totalIn += decayProvider.StoredManaWithDecay(input.Output.StoredMana(), txCreationTime-input.CreationTime)

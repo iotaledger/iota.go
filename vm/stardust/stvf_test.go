@@ -60,7 +60,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 
 	type test struct {
 		name      string
-		input     *iotago.ChainOutputWithCreationTime
+		input     *vm.ChainOutputWithCreationTime
 		next      *iotago.AccountOutput
 		nextMut   map[string]fieldMutations
 		transType iotago.ChainTransitionType
@@ -210,7 +210,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - destroy transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: tpkg.RandAccountAddress().AccountID(),
@@ -232,7 +232,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - destroy block issuer account with negative BIC",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -259,7 +259,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: 1001,
 						},
 					},
-					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredit{
+					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
 							AccountID:    exampleAccountID,
 							CommitmentID: iotago.CommitmentID{},
@@ -272,7 +272,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - destroy block issuer account no BIC provided",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -305,7 +305,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - non-expired block issuer destroy transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: tpkg.RandAccountAddress().AccountID(),
@@ -338,7 +338,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - expired block issuer destroy transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -360,7 +360,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
-					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredit{
+					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
 							AccountID:    exampleAccountID,
 							CommitmentID: iotago.CommitmentID{},
@@ -379,7 +379,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - gov transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -421,7 +421,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -455,7 +455,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					InChains: map[iotago.ChainID]*iotago.ChainOutputWithCreationTime{
+					InChains: map[iotago.ChainID]*vm.ChainOutputWithCreationTime{
 						// serial number 5
 						exampleExistingFoundryOutputID: {
 							Output: exampleExistingFoundryOutput,
@@ -490,7 +490,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - update expired account without extending expiration after MCA",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -534,7 +534,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredit{
+					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
 							AccountID:    exampleAccountID,
 							CommitmentID: iotago.CommitmentID{},
@@ -553,7 +553,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - update account immutable features",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -602,7 +602,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - update expired account with extending expiration before MCA",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -646,7 +646,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredit{
+					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
 							AccountID:    exampleAccountID,
 							CommitmentID: iotago.CommitmentID{},
@@ -665,7 +665,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - update expired account with extending expiration to the past before MCA",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -709,7 +709,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredit{
+					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
 							AccountID:    exampleAccountID,
 							CommitmentID: iotago.CommitmentID{},
@@ -728,7 +728,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - update block issuer account with negative BIC",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -772,7 +772,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredit{
+					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
 							AccountID:    exampleAccountID,
 							CommitmentID: iotago.CommitmentID{},
@@ -791,7 +791,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - update block issuer account without BIC provided",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -847,7 +847,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - update expiration to earlier slot",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -891,7 +891,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredit{
+					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
 							AccountID:    exampleAccountID,
 							CommitmentID: iotago.CommitmentID{},
@@ -909,7 +909,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - non-expired block issuer replace key",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -955,13 +955,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					InChains: map[iotago.ChainID]*iotago.ChainOutputWithCreationTime{
+					InChains: map[iotago.ChainID]*vm.ChainOutputWithCreationTime{
 						// serial number 5
 						exampleExistingFoundryOutputID: {
 							Output: exampleExistingFoundryOutput,
 						},
 					},
-					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredit{
+					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
 							AccountID:    exampleAccountID,
 							CommitmentID: iotago.CommitmentID{},
@@ -997,7 +997,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - gov transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:     100,
 					AccountID:  exampleAccountID,
@@ -1033,7 +1033,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:         100,
 					AccountID:      exampleAccountID,
@@ -1089,7 +1089,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				External: &iotago.ExternalUnlockParameters{},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
-					InChains:       iotago.ChainInputSet{},
+					InChains:       vm.ChainInputSet{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{},
 					},
@@ -1159,7 +1159,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 
 	type test struct {
 		name      string
-		input     *iotago.ChainOutputWithCreationTime
+		input     *vm.ChainOutputWithCreationTime
 		next      *iotago.FoundryOutput
 		nextMut   map[string]fieldMutations
 		transType iotago.ChainTransitionType
@@ -1182,8 +1182,8 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						},
 						Unlocks: nil,
 					},
-					InChains: iotago.ChainInputSet{
-						exampleAccountIdent.AccountID(): &iotago.ChainOutputWithCreationTime{
+					InChains: vm.ChainInputSet{
+						exampleAccountIdent.AccountID(): &vm.ChainOutputWithCreationTime{
 							Output: &iotago.AccountOutput{FoundryCounter: 5},
 						},
 					},
@@ -1211,8 +1211,8 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						},
 						Unlocks: nil,
 					},
-					InChains: iotago.ChainInputSet{
-						exampleAccountIdent.AccountID(): &iotago.ChainOutputWithCreationTime{
+					InChains: vm.ChainInputSet{
+						exampleAccountIdent.AccountID(): &vm.ChainOutputWithCreationTime{
 							Output: &iotago.AccountOutput{FoundryCounter: 5},
 						},
 					},
@@ -1240,8 +1240,8 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						},
 						Unlocks: nil,
 					},
-					InChains: iotago.ChainInputSet{
-						exampleAccountIdent.AccountID(): &iotago.ChainOutputWithCreationTime{
+					InChains: vm.ChainInputSet{
+						exampleAccountIdent.AccountID(): &vm.ChainOutputWithCreationTime{
 							Output: &iotago.AccountOutput{FoundryCounter: 6},
 						},
 					},
@@ -1282,8 +1282,8 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						},
 						Unlocks: nil,
 					},
-					InChains: iotago.ChainInputSet{
-						exampleAccountIdent.AccountID(): &iotago.ChainOutputWithCreationTime{
+					InChains: vm.ChainInputSet{
+						exampleAccountIdent.AccountID(): &vm.ChainOutputWithCreationTime{
 							Output: &iotago.AccountOutput{FoundryCounter: 5},
 						},
 					},
@@ -1299,7 +1299,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition - metadata feature",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -1319,7 +1319,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition - mint",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -1343,7 +1343,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition - melt",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -1370,7 +1370,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition - burn",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut:   map[string]fieldMutations{},
@@ -1389,7 +1389,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition - melt complete supply",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -1414,7 +1414,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition - mint (out: excess)",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -1439,7 +1439,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition - mint (out: deficit)",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -1464,7 +1464,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition - melt (out: excess)",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -1492,7 +1492,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			nextMut: map[string]fieldMutations{
@@ -1512,7 +1512,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - destroy transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: toBeDestoyedFoundry,
 			},
 			transType: iotago.ChainTransitionTypeDestroy,
@@ -1526,7 +1526,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - destroy transition - foundry token unbalanced",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleFoundry,
 			},
 			transType: iotago.ChainTransitionTypeDestroy,
@@ -1589,7 +1589,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 
 	type test struct {
 		name      string
-		input     *iotago.ChainOutputWithCreationTime
+		input     *vm.ChainOutputWithCreationTime
 		next      *iotago.NFTOutput
 		nextMut   map[string]fieldMutations
 		transType iotago.ChainTransitionType
@@ -1615,7 +1615,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - destroy transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleCurrentNFTOutput,
 			},
 			next:      nil,
@@ -1630,7 +1630,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "ok - state transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleCurrentNFTOutput,
 			},
 			nextMut: map[string]fieldMutations{
@@ -1657,7 +1657,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		},
 		{
 			name: "fail - state transition",
-			input: &iotago.ChainOutputWithCreationTime{
+			input: &vm.ChainOutputWithCreationTime{
 				Output: exampleCurrentNFTOutput,
 			},
 			nextMut: map[string]fieldMutations{

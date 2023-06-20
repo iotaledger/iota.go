@@ -142,10 +142,3 @@ func SyntacticallyValidateInputs(inputs TxEssenceInputs, funcs ...InputsSyntacti
 
 	return nil
 }
-
-// TODO: does this belong here?
-type ResolvedInputs struct {
-	InputSet
-	BICInputSet
-	CommitmentInputSet
-}

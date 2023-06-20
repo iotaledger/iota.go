@@ -211,16 +211,8 @@ func MustOutputIDFromHex(hexStr string) OutputID {
 	return outputID
 }
 
-type OutputWithCreationTime struct {
-	Output       Output
-	CreationTime SlotIndex
-}
-
 // OutputSet is a map of the OutputID to Output.
 type OutputSet map[OutputID]Output
-
-// InputSet is a map of OutputID to OutputWithCreationTime.
-type InputSet map[OutputID]OutputWithCreationTime
 
 // Filter creates a new OutputSet with Outputs which pass the filter function f.
 func (outputSet OutputSet) Filter(f func(outputID OutputID, output Output) bool) OutputSet {
@@ -272,17 +264,8 @@ func (outputIDs OutputIDs) UTXOInputs() TxEssenceInputs {
 	return inputs
 }
 
-// OrderedSet returns an Outputs slice ordered by this OutputIDs slice given an InputSet.
-func (outputIDs OutputIDs) OrderedSet(set InputSet) Outputs[Output] {
-	outputs := make(Outputs[Output], len(outputIDs))
-	for i, outputID := range outputIDs {
-		outputs[i] = set[outputID].Output
-	}
-	return outputs
-}
-
-// OrderedOutputSet returns an Outputs slice ordered by this OutputIDs slice given an OutputSet.
-func (outputIDs OutputIDs) OrderedOutputSet(set OutputSet) Outputs[Output] {
+// OrderedSet returns an Outputs slice ordered by this OutputIDs slice given an OutputSet.
+func (outputIDs OutputIDs) OrderedSet(set OutputSet) Outputs[Output] {
 	outputs := make(Outputs[Output], len(outputIDs))
 	for i, outputID := range outputIDs {
 		outputs[i] = set[outputID]
@@ -567,34 +550,6 @@ func (outputSet OutputSet) NewAccounts() AccountOutputsSet {
 			continue
 		}
 		set[AccountIDFromOutputID(utxoInputID)] = accountOutput
-	}
-	return set
-}
-
-// ChainInputSet returns a ChainInputSet for all ChainOutputs in the InputSet.
-func (inputSet InputSet) ChainInputSet() ChainInputSet {
-	set := make(ChainInputSet)
-	for utxoInputID, input := range inputSet {
-		chainOutput, is := input.Output.(ChainOutput)
-		if !is {
-			continue
-		}
-
-		chainID := chainOutput.Chain()
-		if chainID.Empty() {
-			if utxoIDChainID, is := chainOutput.Chain().(UTXOIDChainID); is {
-				chainID = utxoIDChainID.FromOutputID(utxoInputID)
-			}
-		}
-
-		if chainID.Empty() {
-			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", chainOutput.Type()))
-		}
-
-		set[chainID] = &ChainOutputWithCreationTime{
-			Output:       chainOutput,
-			CreationTime: input.CreationTime,
-		}
 	}
 	return set
 }
