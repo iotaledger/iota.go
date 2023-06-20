@@ -243,7 +243,6 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	}
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
-	// TODO: include outputs with ManaLock Conditions in this check
 	decayProvider := vmParams.External.DecayProvider
 	manaIn := vm.TotalManaIn(
 		decayProvider,
