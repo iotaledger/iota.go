@@ -109,6 +109,8 @@ type ProtocolParameters struct {
 	PotentialManaDecayFactors []float64 //`serix:"10,mapKey=potentialManaDecayFactors"`
 	// MaxCommitableAge defines the maximum age of a slot to which a block can commit relative to the block timestamp.
 	MaxCommitableAge uint32 `serix:"11,mapKey=maxCommitableAge"`
+	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
+	StakingUnbondingPeriod uint64 //`serix:"12,mapKey=stakingUnbondingPeriod"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {

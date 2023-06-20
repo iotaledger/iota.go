@@ -24,6 +24,8 @@ var (
 	ErrInvalidAccountGovernanceTransition = errors.New("invalid account governance transition")
 	// ErrInvalidBlockIssuerTransition gets returned when an account tries to transition block issuer expiry too soon.
 	ErrInvalidBlockIssuerTransition = errors.New("invalid block issuer transition")
+	// ErrInvalidStakingTransition gets returned when an account tries to do an invalid transition with a Staking Feature.
+	ErrInvalidStakingTransition = errors.New("invalid staking transition")
 	// ErrAccountMissing gets returned when an account is missing.
 	ErrAccountMissing = errors.New("account is missing")
 	emptyAccountID    = [AccountIDLength]byte{}
