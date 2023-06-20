@@ -17,11 +17,12 @@ func TestBasicOutputBuilder(t *testing.T) {
 		targetAddr              = tpkg.RandEd25519Address()
 		deposit          uint64 = 1337
 		nt                      = tpkg.RandNativeToken()
-		timelock                = time.Now().Add(5 * time.Minute).Unix()
-		expiration              = time.Now().Add(10 * time.Minute).Unix()
 		expirationTarget        = tpkg.RandEd25519Address()
 		metadata                = []byte("123456")
+		slotTimeProvider        = iotago.NewSlotTimeProvider(time.Now().Unix(), 10)
 	)
+	timelock := slotTimeProvider.IndexFromTime(time.Now().Add(5 * time.Minute))
+	expiration := slotTimeProvider.IndexFromTime(time.Now().Add(10 * time.Minute))
 
 	basicOutput, err := builder.NewBasicOutputBuilder(targetAddr, deposit).
 		NativeToken(nt).
@@ -36,8 +37,8 @@ func TestBasicOutputBuilder(t *testing.T) {
 		NativeTokens: iotago.NativeTokens{nt},
 		Conditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
-			&iotago.TimelockUnlockCondition{UnixTime: uint32(timelock)},
-			&iotago.ExpirationUnlockCondition{ReturnAddress: expirationTarget, UnixTime: uint32(expiration)},
+			&iotago.TimelockUnlockCondition{SlotIndex: timelock},
+			&iotago.ExpirationUnlockCondition{ReturnAddress: expirationTarget, SlotIndex: expiration},
 		},
 		Features: iotago.BasicOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
@@ -45,7 +46,7 @@ func TestBasicOutputBuilder(t *testing.T) {
 	}, basicOutput)
 }
 
-func TestAliasOutputBuilder(t *testing.T) {
+func TestAccountOutputBuilder(t *testing.T) {
 	var (
 		stateCtrl          = tpkg.RandEd25519Address()
 		gov                = tpkg.RandEd25519Address()
@@ -56,7 +57,7 @@ func TestAliasOutputBuilder(t *testing.T) {
 		immSender          = tpkg.RandEd25519Address()
 	)
 
-	aliasOutput, err := builder.NewAliasOutputBuilder(stateCtrl, gov, deposit).
+	accountOutput, err := builder.NewAccountOutputBuilder(stateCtrl, gov, deposit).
 		NativeToken(nt).
 		Metadata(metadata).
 		StateMetadata(metadata).
@@ -66,31 +67,31 @@ func TestAliasOutputBuilder(t *testing.T) {
 		Build()
 	require.NoError(t, err)
 
-	expected := &iotago.AliasOutput{
+	expected := &iotago.AccountOutput{
 		Amount:         1337,
 		NativeTokens:   iotago.NativeTokens{nt},
 		StateIndex:     1,
 		StateMetadata:  metadata,
 		FoundryCounter: 5,
-		Conditions: iotago.AliasOutputUnlockConditions{
+		Conditions: iotago.AccountOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 			&iotago.GovernorAddressUnlockCondition{Address: gov},
 		},
-		Features: iotago.AliasOutputFeatures{
+		Features: iotago.AccountOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
 		},
-		ImmutableFeatures: iotago.AliasOutputImmFeatures{
+		ImmutableFeatures: iotago.AccountOutputImmFeatures{
 			&iotago.SenderFeature{Address: immSender},
 			&iotago.MetadataFeature{Data: immMetadata},
 		},
 	}
-	require.Equal(t, expected, aliasOutput)
+	require.Equal(t, expected, accountOutput)
 
 	const newDeposit uint64 = 7331
-	expectedCpy := expected.Clone().(*iotago.AliasOutput)
+	expectedCpy := expected.Clone().(*iotago.AccountOutput)
 	expectedCpy.Amount = newDeposit
 	expectedCpy.StateIndex++
-	updatedOutput, err := builder.NewAliasOutputBuilderFromPrevious(aliasOutput).StateTransition().
+	updatedOutput, err := builder.NewAccountOutputBuilderFromPrevious(accountOutput).StateTransition().
 		Deposit(newDeposit).Builder().Build()
 	require.NoError(t, err)
 	require.Equal(t, expectedCpy, updatedOutput)
@@ -98,7 +99,7 @@ func TestAliasOutputBuilder(t *testing.T) {
 
 func TestFoundryOutputBuilder(t *testing.T) {
 	var (
-		aliasAddr          = tpkg.RandAliasAddress()
+		accountAddr        = tpkg.RandAccountAddress()
 		deposit     uint64 = 1337
 		tokenScheme        = &iotago.SimpleTokenScheme{
 			MintedTokens:  big.NewInt(0),
@@ -110,7 +111,7 @@ func TestFoundryOutputBuilder(t *testing.T) {
 		immMetadata = []byte("654321")
 	)
 
-	foundryOutput, err := builder.NewFoundryOutputBuilder(aliasAddr, tokenScheme, deposit).
+	foundryOutput, err := builder.NewFoundryOutputBuilder(accountAddr, tokenScheme, deposit).
 		NativeToken(nt).
 		Metadata(metadata).
 		ImmutableMetadata(immMetadata).
@@ -122,7 +123,7 @@ func TestFoundryOutputBuilder(t *testing.T) {
 		TokenScheme:  tokenScheme,
 		NativeTokens: iotago.NativeTokens{nt},
 		Conditions: iotago.FoundryOutputUnlockConditions{
-			&iotago.ImmutableAliasUnlockCondition{Address: aliasAddr},
+			&iotago.ImmutableAccountUnlockCondition{Address: accountAddr},
 		},
 		Features: iotago.FoundryOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
@@ -135,7 +136,7 @@ func TestFoundryOutputBuilder(t *testing.T) {
 
 func TestNFTOutputBuilder(t *testing.T) {
 	var (
-		targetAddr         = tpkg.RandAliasAddress()
+		targetAddr         = tpkg.RandAccountAddress()
 		deposit     uint64 = 1337
 		nt                 = tpkg.RandNativeToken()
 		metadata           = []byte("123456")

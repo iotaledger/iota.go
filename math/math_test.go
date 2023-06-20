@@ -1,10 +1,8 @@
 package math_test
 
 import (
-	"math/rand"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -12,8 +10,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	rand.Seed(time.Now().UnixNano())
-
 	// call the tests
 	os.Exit(m.Run())
 }

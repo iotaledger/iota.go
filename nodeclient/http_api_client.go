@@ -182,7 +182,7 @@ const initInfoEndpointCallTimeout = 5 * time.Second
 
 // New returns a new Client using the given base URL.
 // This constructor will automatically call Client.Info() in order to initialize the Client
-// with the appropriate protocol parameters and latest iotago.API version (use WithIOTAGoAPI() to override this behaviour)
+// with the appropriate protocol parameters and latest iotago.API version (use WithIOTAGoAPI() to override this behavior).
 func New(baseURL string, opts ...ClientOption) (*Client, error) {
 
 	options := &ClientOptions{}

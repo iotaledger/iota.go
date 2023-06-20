@@ -42,6 +42,8 @@ const (
 	FeatureMetadata
 	// FeatureTag denotes a TagFeature.
 	FeatureTag
+	// FeatureBlockIssuer denotes a BlockIssuerFeature.
+	FeatureBlockIssuer
 )
 
 func (featType FeatureType) String() string {
@@ -51,11 +53,9 @@ func (featType FeatureType) String() string {
 	return featNames[featType]
 }
 
-var (
-	featNames = [FeatureTag + 1]string{
-		"SenderFeature", "Issuer", "MetadataFeature", "TagFeature",
-	}
-)
+var featNames = [FeatureBlockIssuer + 1]string{
+	"SenderFeature", "Issuer", "MetadataFeature", "TagFeature", "BlockIssuerFeature",
+}
 
 // Features is a slice of Feature(s).
 type Features[T Feature] []Feature
@@ -168,6 +168,15 @@ func (f FeatureSet) Issuer() *IssuerFeature {
 		return nil
 	}
 	return b.(*IssuerFeature)
+}
+
+// BlockIssuer returns the BlockIssuerFeature in the set or nil.
+func (f FeatureSet) BlockIssuer() *BlockIssuerFeature {
+	b, has := f[FeatureBlockIssuer]
+	if !has {
+		return nil
+	}
+	return b.(*BlockIssuerFeature)
 }
 
 // Metadata returns the MetadataFeature in the set or nil.

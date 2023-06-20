@@ -12,14 +12,14 @@ import (
 type ExpirationUnlockCondition struct {
 	// The identity who is allowed to use the output after the expiration has happened.
 	ReturnAddress Address `serix:"0,mapKey=returnAddress"`
-	// The unix time in second resolution at which the expiration happens.
-	UnixTime uint32 `serix:"1,mapKey=unixTime,omitempty"`
+	// The slot index at which the expiration happens.
+	SlotIndex `serix:"1,mapKey=slotIndex,omitempty"`
 }
 
 func (s *ExpirationUnlockCondition) Clone() UnlockCondition {
 	return &ExpirationUnlockCondition{
 		ReturnAddress: s.ReturnAddress.Clone(),
-		UnixTime:      s.UnixTime,
+		SlotIndex:     s.SlotIndex,
 	}
 }
 
@@ -37,7 +37,7 @@ func (s *ExpirationUnlockCondition) Equal(other UnlockCondition) bool {
 	switch {
 	case !s.ReturnAddress.Equal(otherCond.ReturnAddress):
 		return false
-	case s.UnixTime != otherCond.UnixTime:
+	case s.SlotIndex != otherCond.SlotIndex:
 		return false
 	}
 
@@ -50,5 +50,5 @@ func (s *ExpirationUnlockCondition) Type() UnlockConditionType {
 
 func (s *ExpirationUnlockCondition) Size() int {
 	return util.NumByteLen(byte(UnlockConditionExpiration)) + s.ReturnAddress.Size() +
-		+util.NumByteLen(s.UnixTime)
+		len(s.SlotIndex.Bytes())
 }

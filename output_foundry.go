@@ -10,13 +10,15 @@ import (
 )
 
 const (
-	// FoundryIDLength is the byte length of a FoundryID consisting out of the alias address, serial number and token scheme.
-	FoundryIDLength = AliasAddressSerializedBytesSize + serializer.UInt32ByteSize + serializer.OneByte
+	// FoundryIDLength is the byte length of a FoundryID consisting out of the account address, serial number and token scheme.
+	FoundryIDLength = AccountAddressSerializedBytesSize + serializer.UInt32ByteSize + serializer.OneByte
 )
 
 var (
 	// ErrNonUniqueFoundryOutputs gets returned when multiple FoundryOutput(s) with the same FoundryID exist within an OutputsByType.
 	ErrNonUniqueFoundryOutputs = errors.New("non unique foundries within outputs")
+	// ErrInvalidFoundryStateTransition gets returned when a foundry is doing an invalid state transition.
+	ErrInvalidFoundryStateTransition = errors.New("invalid foundry state transition")
 
 	emptyFoundryID = [FoundryIDLength]byte{}
 )
@@ -34,7 +36,7 @@ func (fID FoundryID) Addressable() bool {
 
 // FoundrySerialNumber returns the serial number of the foundry.
 func (fID FoundryID) FoundrySerialNumber() uint32 {
-	return binary.LittleEndian.Uint32(fID[AliasAddressSerializedBytesSize : AliasAddressSerializedBytesSize+serializer.UInt32ByteSize])
+	return binary.LittleEndian.Uint32(fID[AccountAddressSerializedBytesSize : AccountAddressSerializedBytesSize+serializer.UInt32ByteSize])
 }
 
 func (fID FoundryID) Matches(other ChainID) bool {
@@ -92,6 +94,8 @@ type FoundryOutput struct {
 	Features FoundryOutputFeatures `serix:"5,mapKey=features,omitempty"`
 	// The immutable feature on the output.
 	ImmutableFeatures FoundryOutputImmFeatures `serix:"6,mapKey=immutableFeatures,omitempty"`
+	// The stored mana held by the output.
+	Mana uint64 `serix:"7,mapKey=mana"`
 }
 
 func (f *FoundryOutput) Clone() Output {
@@ -103,22 +107,23 @@ func (f *FoundryOutput) Clone() Output {
 		Conditions:        f.Conditions.Clone(),
 		Features:          f.Features.Clone(),
 		ImmutableFeatures: f.ImmutableFeatures.Clone(),
+		Mana:              f.Mana,
 	}
 }
 
 func (f *FoundryOutput) Ident() Address {
-	return f.Conditions.MustSet().ImmutableAlias().Address
+	return f.UnlockConditionSet().ImmutableAccount().Address
 }
 
-func (f *FoundryOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParameters) bool {
-	ok, _ := outputUnlockable(f, nil, ident, extParams)
+func (f *FoundryOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {
+	ok, _ := outputUnlockable(f, nil, ident, txCreationTime)
 	return ok
 }
 
 func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		// prefix + amount + stored mana
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
 		f.NativeTokens.VBytes(rentStruct, nil) +
 		// serial number
 		rentStruct.VBFactorData.Multiply(serializer.UInt32ByteSize) +
@@ -192,6 +197,10 @@ func (f *FoundryOutput) Deposit() uint64 {
 	return f.Amount
 }
 
+func (f *FoundryOutput) StoredMana() uint64 {
+	return f.Mana
+}
+
 func (f *FoundryOutput) Type() OutputType {
 	return OutputFoundry
 }
@@ -204,5 +213,6 @@ func (f *FoundryOutput) Size() int {
 		f.TokenScheme.Size() +
 		f.Conditions.Size() +
 		f.Features.Size() +
-		f.ImmutableFeatures.Size()
+		f.ImmutableFeatures.Size() +
+		util.NumByteLen(f.Mana)
 }

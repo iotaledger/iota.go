@@ -28,6 +28,10 @@ var (
 	ErrIssuerFeatureNotUnlocked = errors.New("issuer feature is not unlocked")
 	// ErrReturnAmountNotFulFilled gets returned when a return amount in a transaction is not fulfilled by the output side.
 	ErrReturnAmountNotFulFilled = errors.New("return amount not fulfilled")
+	// ErrInputOutputManaMismatch gets returned if Mana is not balanced across inputs and outputs/allotments.
+	ErrInputOutputManaMismatch = errors.New("inputs and outputs do not contain the same amount of Mana")
+	// ErrInputCreationAfterTxCreation gets returned if an input has creation time after the transaction creation time.
+	ErrInputCreationAfterTxCreation = errors.New("input creation time after tx creation time")
 )
 
 // TransactionID is the ID of a Transaction.
@@ -71,14 +75,46 @@ func (t *Transaction) ID() (TransactionID, error) {
 }
 
 func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
-	references := make([]IndexedUTXOReferencer, len(t.Essence.Inputs))
-	for i, input := range t.Essence.Inputs {
-		inputReferencer, ok := input.(IndexedUTXOReferencer)
-		if !ok {
+	references := make([]IndexedUTXOReferencer, 0, len(t.Essence.Inputs))
+	for _, input := range t.Essence.Inputs {
+		switch castInput := input.(type) {
+		case IndexedUTXOReferencer:
+			references = append(references, castInput)
+		default:
 			return nil, ErrUnexpectedUnderlyingType
 		}
+	}
 
-		references[i] = inputReferencer
+	return references, nil
+}
+
+func (t *Transaction) BICInputs() ([]*BICInput, error) {
+	references := make([]*BICInput, 0, len(t.Essence.ContextInputs))
+	for _, input := range t.Essence.ContextInputs {
+		switch castInput := input.(type) {
+		case *BICInput:
+			references = append(references, castInput)
+		case *CommitmentInput:
+			// ignore this type
+		default:
+			return nil, ErrUnexpectedUnderlyingType
+		}
+	}
+
+	return references, nil
+}
+
+func (t *Transaction) CommitmentInputs() ([]*CommitmentInput, error) {
+	references := make([]*CommitmentInput, 0, len(t.Essence.ContextInputs))
+	for _, input := range t.Essence.ContextInputs {
+		switch castInput := input.(type) {
+		case *BICInput:
+			// ignore this type
+		case *CommitmentInput:
+			references = append(references, castInput)
+		default:
+			return nil, ErrUnexpectedUnderlyingType
+		}
 	}
 
 	return references, nil

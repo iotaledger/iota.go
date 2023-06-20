@@ -25,6 +25,8 @@ type BasicOutput struct {
 	Conditions BasicOutputUnlockConditions `serix:"2,mapKey=unlockConditions,omitempty"`
 	// The features on the output.
 	Features BasicOutputFeatures `serix:"3,mapKey=features,omitempty"`
+	// The stored mana held by the output.
+	Mana uint64 `serix:"4,mapKey=mana"`
 }
 
 // IsSimpleTransfer tells whether this BasicOutput fulfills the criteria of being a simple transfer.
@@ -38,18 +40,19 @@ func (e *BasicOutput) Clone() Output {
 		NativeTokens: e.NativeTokens.Clone(),
 		Conditions:   e.Conditions.Clone(),
 		Features:     e.Features.Clone(),
+		Mana:         e.Mana,
 	}
 }
 
-func (e *BasicOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParameters) bool {
-	ok, _ := outputUnlockable(e, nil, ident, extParams)
+func (e *BasicOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {
+	ok, _ := outputUnlockable(e, nil, ident, txCreationTime)
 	return ok
 }
 
 func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		// prefix + amount + stored mana
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
 		e.NativeTokens.VBytes(rentStruct, nil) +
 		e.Conditions.VBytes(rentStruct, nil) +
 		e.Features.VBytes(rentStruct, nil)
@@ -70,6 +73,10 @@ func (e *BasicOutput) Deposit() uint64 {
 	return e.Amount
 }
 
+func (e *BasicOutput) StoredMana() uint64 {
+	return e.Mana
+}
+
 func (e *BasicOutput) Ident() Address {
 	return e.Conditions.MustSet().Address().Address
 }
@@ -83,5 +90,6 @@ func (e *BasicOutput) Size() int {
 		util.NumByteLen(e.Amount) +
 		e.NativeTokens.Size() +
 		e.Conditions.Size() +
-		e.Features.Size()
+		e.Features.Size() +
+		util.NumByteLen(e.Mana)
 }

@@ -12,8 +12,10 @@ type InputType byte
 const (
 	// InputUTXO is a type of input which references an unspent transaction output.
 	InputUTXO InputType = iota
-	// InputTreasury is a type of input which references a milestone which generated a treasury output.
-	InputTreasury
+	// InputCommitment is a tupe of input which references a commitment.
+	InputCommitment
+	// InputBlockIssuanceCredit is a type of input which references the block issuance credit from a specific account and commitment.
+	InputBlockIssuanceCredit
 )
 
 func (inputType InputType) String() string {
@@ -24,7 +26,7 @@ func (inputType InputType) String() string {
 }
 
 var (
-	inputNames = [InputTreasury + 1]string{"UTXOInput", "TreasuryInput"}
+	inputNames = [InputBlockIssuanceCredit + 1]string{"UTXOInput", "CommitmentInput", "BICInput"}
 )
 
 var (
@@ -66,18 +68,36 @@ type InputsSyntacticalValidationFunc func(index int, input Input) error
 
 // InputsSyntacticalUnique returns an InputsSyntacticalValidationFunc which checks that every input has a unique UTXO ref.
 func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
-	set := map[string]int{}
+	utxoSet := map[string]int{}
+	commitmentsSet := map[string]int{}
+	bicSet := map[string]int{}
 	return func(index int, input Input) error {
-		ref, is := input.(IndexedUTXOReferencer)
-		if !is {
-			return fmt.Errorf("%w: input %d, tx can only contain IndexedUTXOReferencer inputs", ErrUnsupportedInputType, index)
+		switch castInput := input.(type) {
+		case *BICInput:
+			accountID := castInput.AccountID
+			k := string(accountID[:])
+			if j, has := utxoSet[k]; has {
+				return fmt.Errorf("%w: input %d and %d share the same Account ref", ErrInputBICNotUnique, j, index)
+			}
+			utxoSet[k] = index
+		case *CommitmentInput:
+			commitmentID := castInput.CommitmentID
+			k := string(commitmentID[:])
+			if j, has := commitmentsSet[k]; has {
+				return fmt.Errorf("%w: input %d and %d share the same Commitment ref", ErrInputCommitmentNotUnique, j, index)
+			}
+			commitmentsSet[k] = index
+		case IndexedUTXOReferencer:
+			utxoRef := castInput.Ref()
+			k := string(utxoRef[:])
+			if j, has := bicSet[k]; has {
+				return fmt.Errorf("%w: input %d and %d share the same UTXO ref", ErrInputUTXORefsNotUnique, j, index)
+			}
+			bicSet[k] = index
+		default:
+			return fmt.Errorf("%w: input %d, tx can only contain IndexedUTXOReferencer, CommitmentInput or BICInput inputs", ErrUnsupportedInputType, index)
 		}
-		utxoRef := ref.Ref()
-		k := string(utxoRef[:])
-		if j, has := set[k]; has {
-			return fmt.Errorf("%w: input %d and %d share the same UTXO ref", ErrInputUTXORefsNotUnique, j, index)
-		}
-		set[k] = index
+
 		return nil
 	}
 }
@@ -85,29 +105,40 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 // InputsSyntacticalIndicesWithinBounds returns an InputsSyntacticalValidationFunc which checks that the UTXO ref index is within bounds.
 func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 	return func(index int, input Input) error {
-		ref, is := input.(IndexedUTXOReferencer)
-		if !is {
-			return fmt.Errorf("%w: input %d, tx can only contain IndexedUTXOReferencer inputs", ErrUnsupportedInputType, index)
-		}
-		if ref.Index() < RefUTXOIndexMin || ref.Index() > RefUTXOIndexMax {
-			return fmt.Errorf("%w: input %d", ErrRefUTXOIndexInvalid, index)
+		switch castInput := input.(type) {
+		case IndexedUTXOReferencer:
+			if castInput.Index() < RefUTXOIndexMin || castInput.Index() > RefUTXOIndexMax {
+				return fmt.Errorf("%w: input %d", ErrRefUTXOIndexInvalid, index)
+			}
+		default:
+			return fmt.Errorf("%w: input %d, tx can only contain IndexedUTXOReferencer, CommitmentInput or BICInput inputs", ErrUnsupportedInputType, index)
 		}
 		return nil
 	}
 }
 
 // SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateInputs(inputs TxEssenceInputs, funcs ...InputsSyntacticalValidationFunc) error {
+func SyntacticallyValidateContextInputs(inputs TxEssenceContextInputs, funcs ...InputsSyntacticalValidationFunc) error {
 	for i, input := range inputs {
-		dep, ok := input.(*UTXOInput)
-		if !ok {
-			return fmt.Errorf("%w: can only validate on UTXO inputs", ErrUnknownInputType)
-		}
 		for _, f := range funcs {
-			if err := f(i, dep); err != nil {
+			if err := f(i, input); err != nil {
 				return err
 			}
 		}
 	}
+
+	return nil
+}
+
+// SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
+func SyntacticallyValidateInputs(inputs TxEssenceInputs, funcs ...InputsSyntacticalValidationFunc) error {
+	for i, input := range inputs {
+		for _, f := range funcs {
+			if err := f(i, input); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }

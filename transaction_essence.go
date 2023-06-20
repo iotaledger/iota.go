@@ -3,7 +3,6 @@ package iotago
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -17,6 +16,10 @@ const (
 	// TransactionEssenceNormal denotes a standard transaction essence.
 	TransactionEssenceNormal TransactionEssenceType = 2
 
+	// MinContextInputsCount defines the minimum amount of context inputs within a TransactionEssence.
+	MinContextInputsCount = 0
+	// MaxContextInputsCount defines the maximum amount of context inputs within a TransactionEssence.
+	MaxContextInputsCount = 128
 	// MaxInputsCount defines the maximum amount of inputs within a TransactionEssence.
 	MaxInputsCount = 128
 	// MinInputsCount defines the minimum amount of inputs within a TransactionEssence.
@@ -25,6 +28,10 @@ const (
 	MaxOutputsCount = 128
 	// MinOutputsCount defines the minimum amount of inputs within a TransactionEssence.
 	MinOutputsCount = 1
+	// MinAllotmentCount defines the minimum amount of allotments within a TransactionEssence.
+	MinAllotmentCount = 0
+	// MaxAllotmentCount defines the maximum amount of allotments within a TransactionEssence.
+	MaxAllotmentCount = 128
 
 	// InputsCommitmentLength defines the length of the inputs commitment hash.
 	InputsCommitmentLength = blake2b.Size256
@@ -35,12 +42,18 @@ var (
 	ErrInvalidInputsCommitment = errors.New("invalid inputs commitment")
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a TransactionEssence is invalid.
 	ErrTxEssenceNetworkIDInvalid = errors.New("invalid network ID")
+	// ErrAllotmentsNotUnique gets returned if multiple Allotments reference the same Account.
+	ErrAllotmentsNotUnique = errors.New("allotments must each reference a unique account")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
-	// ErrAliasOutputNonEmptyState gets returned if an AliasOutput with zeroed AliasID contains state (counters non-zero etc.).
-	ErrAliasOutputNonEmptyState = errors.New("alias output is not empty state")
-	// ErrAliasOutputCyclicAddress gets returned if an AliasOutput's AliasID results into the same address as the State/Governance controller.
-	ErrAliasOutputCyclicAddress = errors.New("alias output's AliasID corresponds to state and/or governance controller")
+	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
+	ErrInputBICNotUnique = errors.New("inputs must each reference a unique BIC")
+	// ErrInputCommitmentNotUnique gets returned if multiple inputs reference the same BIC.
+	ErrInputCommitmentNotUnique = errors.New("inputs must each reference a unique Commitment")
+	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
+	ErrAccountOutputNonEmptyState = errors.New("account output is not empty state")
+	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the State/Governance controller.
+	ErrAccountOutputCyclicAddress = errors.New("account output's AccountID corresponds to state and/or governance controller")
 	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
 	ErrNFTOutputCyclicAddress = errors.New("NFT output's ID corresponds to address field")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
@@ -71,11 +84,14 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 type InputsCommitment = [InputsCommitmentLength]byte
 
 type (
-	txEssenceInput   interface{ Input }
-	TxEssenceOutput  interface{ Output }
-	TxEssencePayload interface{ Payload }
-	TxEssenceInputs  = Inputs[txEssenceInput]
-	TxEssenceOutputs = Outputs[TxEssenceOutput]
+	txEssenceContextInput  interface{ Input }
+	txEssenceInput         interface{ Input }
+	TxEssenceOutput        interface{ Output }
+	TxEssencePayload       interface{ Payload }
+	TxEssenceContextInputs = Inputs[txEssenceContextInput]
+	TxEssenceInputs        = Inputs[txEssenceInput]
+	TxEssenceOutputs       = Outputs[TxEssenceOutput]
+	TxEssenceAllotments    = Allotments
 )
 
 // TransactionEssence is the essence part of a Transaction.
@@ -83,15 +99,19 @@ type TransactionEssence struct {
 	// The network ID for which this essence is valid for.
 	NetworkID NetworkID `serix:"0,mapKey=networkId"`
 	// The time at which this transaction was created by the client.
-	CreationTime time.Time `serix:"1,mapKey=creationTime"`
+	CreationTime SlotIndex `serix:"1,mapKey=creationTime"`
+	// The commitment references of this transaction.
+	ContextInputs TxEssenceContextInputs `serix:"2,mapKey=contextInputs"`
 	// The inputs of this transaction.
-	Inputs TxEssenceInputs `serix:"2,mapKey=inputs"`
+	Inputs TxEssenceInputs `serix:"3,mapKey=inputs"`
 	// The commitment to the referenced inputs.
-	InputsCommitment InputsCommitment `serix:"3,mapKey=inputsCommitment"`
+	InputsCommitment InputsCommitment `serix:"4,mapKey=inputsCommitment"`
 	// The outputs of this transaction.
-	Outputs TxEssenceOutputs `serix:"4,mapKey=outputs"`
+	Outputs TxEssenceOutputs `serix:"5,mapKey=outputs"`
+	// The optional accounts map with corresponding allotment values.
+	Allotments TxEssenceAllotments `serix:"6,mapKey=allotments"`
 	// The optional embedded payload.
-	Payload TxEssencePayload `serix:"5,optional,mapKey=payload"`
+	Payload TxEssencePayload `serix:"7,optional,mapKey=payload"`
 }
 
 // SigningMessage returns the to be signed message.
@@ -136,22 +156,30 @@ func (u *TransactionEssence) Size() int {
 	if u.Payload != nil {
 		payloadSize = u.Payload.Size()
 	}
+
 	return util.NumByteLen(TransactionEssenceNormal) +
 		util.NumByteLen(u.NetworkID) +
-		util.NumByteLen(u.CreationTime.UnixNano()) +
+		len(SlotIndex(0).Bytes()) +
+		u.ContextInputs.Size() +
 		u.Inputs.Size() +
 		InputsCommitmentLength +
 		u.Outputs.Size() +
-		payloadSize
+		payloadSize +
+		util.NumByteLen(uint16(0)) + u.Allotments.Size()
 }
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
 func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParameters) error {
-
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {
 		return fmt.Errorf("%w: got %v, want %v (%s)", ErrTxEssenceNetworkIDInvalid, u.NetworkID, expectedNetworkID, protoParams.NetworkName)
+	}
+
+	if err := SyntacticallyValidateContextInputs(u.ContextInputs,
+		InputsSyntacticalUnique(),
+	); err != nil {
+		return err
 	}
 
 	if err := SyntacticallyValidateInputs(u.Inputs,
@@ -167,8 +195,14 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParamete
 		OutputsSyntacticalNativeTokens(),
 		OutputsSyntacticalChainConstrainedOutputUniqueness(),
 		OutputsSyntacticalFoundry(),
-		OutputsSyntacticalAlias(),
+		OutputsSyntacticalAccount(),
 		OutputsSyntacticalNFT(),
+	); err != nil {
+		return err
+	}
+
+	if err := SyntacticallyValidateAllotments(u.Allotments,
+		AllotmentsSyntacticalUnique(),
 	); err != nil {
 		return err
 	}

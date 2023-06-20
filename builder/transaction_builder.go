@@ -16,10 +16,11 @@ var (
 func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 	return &TransactionBuilder{
 		essence: &iotago.TransactionEssence{
-			NetworkID: networkID,
-			Inputs:    iotago.TxEssenceInputs{},
-			Outputs:   iotago.TxEssenceOutputs{},
-			Payload:   nil,
+			NetworkID:     networkID,
+			ContextInputs: iotago.TxEssenceContextInputs{},
+			Inputs:        iotago.TxEssenceInputs{},
+			Outputs:       iotago.TxEssenceOutputs{},
+			Payload:       nil,
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},
@@ -44,11 +45,14 @@ type TxInput struct {
 	Input iotago.Output `json:"input"`
 }
 
+// TODO: extend the builder with Allotments and ContextInputs
+
 // AddInput adds the given input to the builder.
 func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 	b.inputOwner[input.InputID] = input.UnlockTarget
 	b.essence.Inputs = append(b.essence.Inputs, input.InputID.UTXOInput())
 	b.inputs[input.InputID] = input.Input
+
 	return b
 }
 
@@ -57,15 +61,37 @@ func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 // be used to accumulate data over the set of inputs, i.e. the input sum etc.
 type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.Output) bool
 
+// AddContextInput adds the given context input to the builder.
+func (b *TransactionBuilder) AddContextInput(input iotago.Input) *TransactionBuilder {
+	b.essence.ContextInputs = append(b.essence.ContextInputs, input)
+
+	return b
+}
+
+// AddAllotment adds the given allotment to the builder.
+func (b *TransactionBuilder) AddAllotment(allotment *iotago.Allotment) *TransactionBuilder {
+	b.essence.Allotments = append(b.essence.Allotments, allotment)
+
+	return b
+}
+
 // AddOutput adds the given output to the builder.
 func (b *TransactionBuilder) AddOutput(output iotago.Output) *TransactionBuilder {
 	b.essence.Outputs = append(b.essence.Outputs, output)
+
+	return b
+}
+
+func (b *TransactionBuilder) SetCreationTime(creationTime iotago.SlotIndex) *TransactionBuilder {
+	b.essence.CreationTime = creationTime
+
 	return b
 }
 
 // AddTaggedDataPayload adds the given TaggedData as the inner payload.
 func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *TransactionBuilder {
 	b.essence.Payload = payload
+
 	return b
 }
 
@@ -84,6 +110,7 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParams *iotago.Prot
 	if txFunc != nil {
 		txFunc(tx)
 	}
+
 	return blockBuilder.ProtocolVersion(protoParams.Version).Payload(tx)
 }
 
@@ -147,13 +174,14 @@ func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signe
 	}
 
 	sigTxPayload := &iotago.Transaction{Essence: b.essence, Unlocks: unlocks}
+
 	return sigTxPayload, nil
 }
 
 func addReferentialUnlock(addr iotago.Address, unlocks iotago.Unlocks, pos int) iotago.Unlocks {
 	switch addr.(type) {
-	case *iotago.AliasAddress:
-		return append(unlocks, &iotago.AliasUnlock{Reference: uint16(pos)})
+	case *iotago.AccountAddress:
+		return append(unlocks, &iotago.AccountUnlock{Reference: uint16(pos)})
 	case *iotago.NFTAddress:
 		return append(unlocks, &iotago.NFTUnlock{Reference: uint16(pos)})
 	default:

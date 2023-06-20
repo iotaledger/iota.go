@@ -13,9 +13,9 @@ var (
 	ErrNonUniqueUnlockConditions = errors.New("non unique unlock conditions within outputs")
 	// ErrTimelockNotExpired gets returned when timelocks in a UnlockConditionSet are not expired.
 	ErrTimelockNotExpired = errors.New("timelock not expired")
-	// ErrExpirationConditionZero gets returned when an ExpirationUnlockCondition has set the unix timestamp to zero.
+	// ErrExpirationConditionZero gets returned when an ExpirationUnlockCondition has set the slot index to zero.
 	ErrExpirationConditionZero = errors.New("expiration condition is zero")
-	// ErrTimelockConditionZero gets returned when a TimelockUnlockCondition has set the unix timestamp to zero.
+	// ErrTimelockConditionZero gets returned when a TimelockUnlockCondition has set the slot index to zero.
 	ErrTimelockConditionZero = errors.New("timelock condition is zero")
 )
 
@@ -35,8 +35,8 @@ const (
 	UnlockConditionStateControllerAddress
 	// UnlockConditionGovernorAddress denotes a GovernorAddressUnlockCondition.
 	UnlockConditionGovernorAddress
-	// UnlockConditionImmutableAlias denotes an ImmutableAliasUnlockCondition.
-	UnlockConditionImmutableAlias
+	// UnlockConditionImmutableAccount denotes an ImmutableAccountUnlockCondition.
+	UnlockConditionImmutableAccount
 )
 
 func (unlockCondType UnlockConditionType) String() string {
@@ -47,14 +47,14 @@ func (unlockCondType UnlockConditionType) String() string {
 }
 
 var (
-	unlockCondNames = [UnlockConditionImmutableAlias + 1]string{
+	unlockCondNames = [UnlockConditionImmutableAccount + 1]string{
 		"AddressUnlockCondition",
 		"StorageDepositReturnUnlockCondition",
 		"TimelockUnlockCondition",
 		"ExpirationUnlockCondition",
 		"StateControllerAddressUnlockCondition",
 		"GovernorAddressUnlockCondition",
-		"ImmutableAliasUnlockCondition",
+		"ImmutableAccountUnlockCondition",
 	}
 )
 
@@ -161,20 +161,51 @@ func (f UnlockConditionSet) HasTimelockCondition() bool {
 	return f.Timelock() != nil
 }
 
+// HasManalockCondition tells whether the set has both a timelock and account address unlock.
+func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slotIndex SlotIndex) bool {
+	if !f.HasTimelockUntil(slotIndex) {
+		return false
+	}
+	unlockAddress := f.Address()
+	if unlockAddress == nil {
+		return false
+	}
+	if unlockAddress.Address.Type() != AddressAccount {
+		return false
+	}
+	if !unlockAddress.Address.Equal(accountID.ToAddress()) {
+		return false
+	}
+	return true
+}
+
+// HasTimelockUntil tells us whether the set has a timelock that that is still locked at slotIndex.
+func (f UnlockConditionSet) HasTimelockUntil(slotIndex SlotIndex) bool {
+	timelock := f.Timelock()
+	if timelock == nil {
+		return false
+	}
+	if timelock.SlotIndex <= slotIndex {
+		return false
+	}
+	return true
+	// TODO: check for off by one error
+}
+
 // tells whether the given ident can unlock an output containing this set of UnlockCondition(s)
 // when taking into consideration the constraints enforced by them:
 //   - If the timelocks are not expired, then nobody can unlock.
 //   - If the expiration blocks are expired, then only the return identity can unlock.
 //
 // returns booleans indicating whether the given ident can unlock and whether the return identity can unlock.
-func (f UnlockConditionSet) unlockableBy(ident Address, extParams *ExternalUnlockParameters) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
-	if err := f.TimelocksExpired(extParams); err != nil {
+func (f UnlockConditionSet) unlockableBy(ident Address, txCreationTime SlotIndex) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
+	if err := f.TimelocksExpired(txCreationTime); err != nil {
 		return false, false
 	}
 
 	// if the return ident can unlock, then ident must be the return ident
 	var returnIdent Address
-	if returnIdentCanUnlock, returnIdent = f.ReturnIdentCanUnlock(extParams); returnIdentCanUnlock {
+	if returnIdentCanUnlock, returnIdent = f.ReturnIdentCanUnlock(txCreationTime); returnIdentCanUnlock {
 		if !ident.Equal(returnIdent) {
 			return false, true
 		}
@@ -185,15 +216,15 @@ func (f UnlockConditionSet) unlockableBy(ident Address, extParams *ExternalUnloc
 }
 
 // ReturnIdentCanUnlock tells whether a sender defined in an expiration unlock condition within this set is the actual
-// identity which could unlock an Output containing this UnlockConditionSet given the ExternalUnlockParameters.
-func (f UnlockConditionSet) ReturnIdentCanUnlock(extParams *ExternalUnlockParameters) (bool, Address) {
+// identity which could unlock an Output containing this UnlockConditionSet given the transaction creation time.
+func (f UnlockConditionSet) ReturnIdentCanUnlock(txCreationTime SlotIndex) (bool, Address) {
 	expUnlockCond := f.Expiration()
 
 	if expUnlockCond == nil {
 		return false, nil
 	}
 
-	if expUnlockCond.UnixTime <= extParams.ConfUnix {
+	if expUnlockCond.SlotIndex <= txCreationTime {
 		return true, expUnlockCond.ReturnAddress
 	}
 
@@ -202,15 +233,15 @@ func (f UnlockConditionSet) ReturnIdentCanUnlock(extParams *ExternalUnlockParame
 
 // TimelocksExpired tells whether UnlockCondition(s) in this set which impose a timelock are expired
 // in relation to the given ExternalUnlockParameters.
-func (f UnlockConditionSet) TimelocksExpired(extParams *ExternalUnlockParameters) error {
+func (f UnlockConditionSet) TimelocksExpired(txCreationTime SlotIndex) error {
 	timelock := f.Timelock()
 
 	if timelock == nil {
 		return nil
 	}
 
-	if extParams.ConfUnix < timelock.UnixTime {
-		return fmt.Errorf("%w: (unix) cond %d vs. ext %d", ErrTimelockNotExpired, timelock.UnixTime, extParams.ConfUnix)
+	if txCreationTime < timelock.SlotIndex {
+		return fmt.Errorf("%w: slotIndex cond %d vs. tx creation slot %d", ErrTimelockNotExpired, timelock.SlotIndex, txCreationTime)
 	}
 
 	return nil
@@ -234,13 +265,13 @@ func (f UnlockConditionSet) Address() *AddressUnlockCondition {
 	return b.(*AddressUnlockCondition)
 }
 
-// ImmutableAlias returns the ImmutableAliasUnlockCondition in the set or nil.
-func (f UnlockConditionSet) ImmutableAlias() *ImmutableAliasUnlockCondition {
-	b, has := f[UnlockConditionImmutableAlias]
+// ImmutableAccount returns the ImmutableAccountUnlockCondition in the set or nil.
+func (f UnlockConditionSet) ImmutableAccount() *ImmutableAccountUnlockCondition {
+	b, has := f[UnlockConditionImmutableAccount]
 	if !has {
 		return nil
 	}
-	return b.(*ImmutableAliasUnlockCondition)
+	return b.(*ImmutableAccountUnlockCondition)
 }
 
 // GovernorAddress returns the GovernorAddressUnlockCondition in the set or nil.

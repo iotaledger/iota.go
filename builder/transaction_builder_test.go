@@ -27,9 +27,9 @@ func TestTransactionBuilder(t *testing.T) {
 	tests := []test{
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
-
+			input := tpkg.RandBasicOutput(iotago.AddressEd25519)
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
-				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: input}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.BasicOutputUnlockConditions{
@@ -66,26 +66,26 @@ func TestTransactionBuilder(t *testing.T) {
 					ImmutableFeatures: nil,
 				}
 
-				aliasOwnedByNFT = &iotago.AliasOutput{
-					Amount:  1000,
-					AliasID: tpkg.Rand32ByteArray(),
-					Conditions: iotago.AliasOutputUnlockConditions{
+				accountOwnedByNFT = &iotago.AccountOutput{
+					Amount:    1000,
+					AccountID: tpkg.Rand32ByteArray(),
+					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: nftOutput.Chain().ToAddress()},
 						&iotago.GovernorAddressUnlockCondition{Address: nftOutput.Chain().ToAddress()},
 					},
 				}
 
-				basicOwnedByAlias = &iotago.BasicOutput{
+				basicOwnedByAccount = &iotago.BasicOutput{
 					Amount:     1000,
-					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: aliasOwnedByNFT.Chain().ToAddress()}},
+					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: accountOwnedByNFT.Chain().ToAddress()}},
 				}
 			)
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID1.ID(), Input: basicOutput}).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID2.ID(), Input: nftOutput}).
-				AddInput(&builder.TxInput{UnlockTarget: nftOutput.Chain().ToAddress(), InputID: inputID3.ID(), Input: aliasOwnedByNFT}).
-				AddInput(&builder.TxInput{UnlockTarget: aliasOwnedByNFT.Chain().ToAddress(), InputID: inputID4.ID(), Input: basicOwnedByAlias}).
+				AddInput(&builder.TxInput{UnlockTarget: nftOutput.Chain().ToAddress(), InputID: inputID3.ID(), Input: accountOwnedByNFT}).
+				AddInput(&builder.TxInput{UnlockTarget: accountOwnedByNFT.Chain().ToAddress(), InputID: inputID4.ID(), Input: basicOwnedByAccount}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 4000,
 					Conditions: iotago.BasicOutputUnlockConditions{

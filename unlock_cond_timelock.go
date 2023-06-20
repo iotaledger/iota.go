@@ -9,18 +9,18 @@ import (
 // on the latest confirmed milestone's timestamp T:
 //   - the output can only be consumed, if T is bigger than the one defined in the condition.
 type TimelockUnlockCondition struct {
-	// The unix time in second resolution until which the timelock applies (inclusive).
-	UnixTime uint32 `serix:"0,mapKey=unixTime,omitempty"`
+	// The slot index until which the timelock applies (inclusive).
+	SlotIndex `serix:"0,mapKey=slotIndex,omitempty"`
 }
 
 func (s *TimelockUnlockCondition) Clone() UnlockCondition {
 	return &TimelockUnlockCondition{
-		UnixTime: s.UnixTime,
+		SlotIndex: s.SlotIndex,
 	}
 }
 
 func (s *TimelockUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt32ByteSize)
+	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
 }
 
 func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {
@@ -30,7 +30,7 @@ func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {
 	}
 
 	switch {
-	case s.UnixTime != otherCond.UnixTime:
+	case s.SlotIndex != otherCond.SlotIndex:
 		return false
 	}
 
@@ -43,5 +43,5 @@ func (s *TimelockUnlockCondition) Type() UnlockConditionType {
 
 func (s *TimelockUnlockCondition) Size() int {
 	return util.NumByteLen(byte(UnlockConditionTimelock)) +
-		util.NumByteLen(s.UnixTime)
+		len(s.SlotIndex.Bytes())
 }

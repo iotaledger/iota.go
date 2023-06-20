@@ -93,6 +93,8 @@ type NFTOutput struct {
 	Features NFTOutputFeatures `serix:"4,mapKey=features,omitempty"`
 	// The immutable feature on the output.
 	ImmutableFeatures NFTOutputImmFeatures `serix:"5,mapKey=immutableFeatures,omitempty"`
+	// The stored mana held by the output.
+	Mana uint64 `serix:"6,mapKey=mana"`
 }
 
 func (n *NFTOutput) Clone() Output {
@@ -103,6 +105,7 @@ func (n *NFTOutput) Clone() Output {
 		Conditions:        n.Conditions.Clone(),
 		Features:          n.Features.Clone(),
 		ImmutableFeatures: n.ImmutableFeatures.Clone(),
+		Mana:              n.Mana,
 	}
 }
 
@@ -110,15 +113,15 @@ func (n *NFTOutput) Ident() Address {
 	return n.Conditions.MustSet().Address().Address
 }
 
-func (n *NFTOutput) UnlockableBy(ident Address, extParams *ExternalUnlockParameters) bool {
-	ok, _ := outputUnlockable(n, nil, ident, extParams)
+func (n *NFTOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {
+	ok, _ := outputUnlockable(n, nil, ident, txCreationTime)
 	return ok
 }
 
 func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		// prefix + amount + stored mana
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
 		n.NativeTokens.VBytes(rentStruct, nil) +
 		rentStruct.VBFactorData.Multiply(NFTIDLength) +
 		n.Conditions.VBytes(rentStruct, nil) +
@@ -150,6 +153,10 @@ func (n *NFTOutput) Deposit() uint64 {
 	return n.Amount
 }
 
+func (n *NFTOutput) StoredMana() uint64 {
+	return n.Mana
+}
+
 func (n *NFTOutput) Type() OutputType {
 	return OutputNFT
 }
@@ -161,5 +168,6 @@ func (n *NFTOutput) Size() int {
 		NFTIDLength +
 		n.Conditions.Size() +
 		n.Features.Size() +
-		n.ImmutableFeatures.Size()
+		n.ImmutableFeatures.Size() +
+		util.NumByteLen(n.Mana)
 }

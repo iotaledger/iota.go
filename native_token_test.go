@@ -56,11 +56,11 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
-				&iotago.AliasOutput{
+				&iotago.AccountOutput{
 					Amount:       1,
 					NativeTokens: tpkg.RandSortNativeTokens(5),
-					AliasID:      iotago.AliasID{},
-					Conditions: iotago.AliasOutputUnlockConditions{
+					AccountID:    iotago.AccountID{},
+					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -74,7 +74,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 						MaximumSupply: tpkg.RandUint256(),
 					},
 					Conditions: iotago.FoundryOutputUnlockConditions{
-						&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.ImmutableAccountUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 				},
 				&iotago.NFTOutput{
@@ -97,11 +97,11 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
-				&iotago.AliasOutput{
+				&iotago.AccountOutput{
 					Amount:       1,
 					NativeTokens: notSortedNativeTokens(),
-					AliasID:      iotago.AliasID{},
-					Conditions: iotago.AliasOutputUnlockConditions{
+					AccountID:    iotago.AccountID{},
+					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -115,7 +115,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 						MaximumSupply: tpkg.RandUint256(),
 					},
 					Conditions: iotago.FoundryOutputUnlockConditions{
-						&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.ImmutableAccountUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 				},
 				&iotago.NFTOutput{
@@ -138,11 +138,11 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
-				&iotago.AliasOutput{
+				&iotago.AccountOutput{
 					Amount:       1,
 					NativeTokens: dupedNativeTokens(),
-					AliasID:      iotago.AliasID{},
-					Conditions: iotago.AliasOutputUnlockConditions{
+					AccountID:    iotago.AccountID{},
+					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -156,7 +156,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 						MaximumSupply: tpkg.RandUint256(),
 					},
 					Conditions: iotago.FoundryOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 				},
 				&iotago.NFTOutput{

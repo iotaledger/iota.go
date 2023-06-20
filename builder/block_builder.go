@@ -118,6 +118,17 @@ func (mb *BlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BlockBuil
 	return mb
 }
 
+// BurnedMana sets the amount of mana burned by the block.
+func (mb *BlockBuilder) BurnedMana(burnedMana uint64) *BlockBuilder {
+	if mb.err != nil {
+		return mb
+	}
+
+	mb.block.BurnedMana = burnedMana
+
+	return mb
+}
+
 // LatestFinalizedSlot sets the latest finalized slot.
 func (mb *BlockBuilder) LatestFinalizedSlot(index iotago.SlotIndex) *BlockBuilder {
 	if mb.err != nil {

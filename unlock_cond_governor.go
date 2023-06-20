@@ -5,7 +5,7 @@ import (
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
-// GovernorAddressUnlockCondition is an UnlockCondition defining the governor identity for an AliasOutput.
+// GovernorAddressUnlockCondition is an UnlockCondition defining the governor identity for an AccountOutput.
 type GovernorAddressUnlockCondition struct {
 	Address Address `serix:"0,mapKey=address"`
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestInputsSyntacticalUnique(t *testing.T) {
@@ -25,6 +26,22 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 1,
 				},
+				&iotago.CommitmentInput{
+					AccountID:    tpkg.RandAccountID(),
+					CommitmentID: tpkg.Rand40ByteArray(),
+				},
+				&iotago.BICInput{
+					AccountID:    tpkg.RandAccountID(),
+					CommitmentID: tpkg.Rand40ByteArray(),
+				},
+				&iotago.CommitmentInput{
+					AccountID:    tpkg.RandAccountID(),
+					CommitmentID: tpkg.Rand40ByteArray(),
+				},
+				&iotago.BICInput{
+					AccountID:    tpkg.RandAccountID(),
+					CommitmentID: tpkg.Rand40ByteArray(),
+				},
 			},
 			wantErr: nil,
 		},
@@ -41,6 +58,34 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 				},
 			},
 			wantErr: iotago.ErrInputUTXORefsNotUnique,
+		},
+		{
+			name: "fail - commitment not unique",
+			inputs: iotago.Inputs[iotago.Input]{
+				&iotago.CommitmentInput{
+					AccountID:    [32]byte{},
+					CommitmentID: iotago.CommitmentID{},
+				},
+				&iotago.CommitmentInput{
+					AccountID:    [32]byte{},
+					CommitmentID: iotago.CommitmentID{},
+				},
+			},
+			wantErr: iotago.ErrInputCommitmentNotUnique,
+		},
+		{
+			name: "fail - BIC not unique",
+			inputs: iotago.Inputs[iotago.Input]{
+				&iotago.BICInput{
+					AccountID:    [32]byte{},
+					CommitmentID: iotago.CommitmentID{},
+				},
+				&iotago.BICInput{
+					AccountID:    [32]byte{},
+					CommitmentID: iotago.CommitmentID{},
+				},
+			},
+			wantErr: iotago.ErrInputBICNotUnique,
 		},
 	}
 	for _, tt := range tests {
@@ -95,5 +140,43 @@ func TestInputsSyntacticalIndicesWithinBounds(t *testing.T) {
 			}
 			require.ErrorIs(t, runErr, tt.wantErr)
 		})
+	}
+}
+
+func TestInputDeSerialize(t *testing.T) {
+	tests := []deSerializeTest{
+		{
+			name: "ok - UTXO",
+			source: &iotago.UTXOInput{
+				TransactionID:          [32]byte{},
+				TransactionOutputIndex: 0,
+			},
+			target:    &iotago.UTXOInput{},
+			seriErr:   nil,
+			deSeriErr: nil,
+		},
+		{
+			name: "ok - Commitment",
+			source: &iotago.CommitmentInput{
+				AccountID:    tpkg.RandAccountID(),
+				CommitmentID: iotago.CommitmentID{},
+			},
+			target:    &iotago.CommitmentInput{},
+			seriErr:   nil,
+			deSeriErr: nil,
+		},
+		{
+			name: "ok - BIC",
+			source: &iotago.BICInput{
+				AccountID:    tpkg.RandAccountID(),
+				CommitmentID: iotago.CommitmentID{},
+			},
+			target:    &iotago.BICInput{},
+			seriErr:   nil,
+			deSeriErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, tt.deSerialize)
 	}
 }

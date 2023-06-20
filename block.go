@@ -12,9 +12,9 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
 
+	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
-	iotagoEd25519 "github.com/iotaledger/iota.go/v4/ed25519"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/pow"
 )
@@ -98,8 +98,6 @@ type WeakParentsIDs = BlockIDs
 // ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
 type ShallowLikeParentIDs = BlockIDs
 
-type AccountID = Identifier
-
 // Block represents a vertex in the Tangle.
 type Block struct {
 	// The protocol version under which this block operates.
@@ -121,10 +119,12 @@ type Block struct {
 	// The inner payload of the block. Can be nil.
 	Payload BlockPayload `serix:"9,optional,mapKey=payload,omitempty"`
 
-	Signature Signature `serix:"10,mapKey=signature"`
+	BurnedMana uint64 `serix:"10,mapKey=burnedMana"`
+
+	Signature Signature `serix:"11,mapKey=signature"`
 
 	// The nonce which lets this block fulfill the PoW requirements.
-	Nonce uint64 `serix:"11,mapKey=nonce"`
+	Nonce uint64 `serix:"12,mapKey=nonce"`
 }
 
 func (b *Block) ContentHash() (Identifier, error) {
@@ -167,7 +167,7 @@ func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerialize
 }
 
 // SigningMessage returns the to be signed message.
-// It is the encoded(IssuingTime)+encoded(SlotCommitment.ID()+contentHash
+// It is the 'encoded(IssuingTime)+encoded(SlotCommitment.ID()+contentHash'.
 func (b *Block) SigningMessage() ([]byte, error) {
 	contentHash, err := b.ContentHash()
 	if err != nil {
@@ -216,7 +216,7 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 		return false, fmt.Errorf("empty publicKeys are invalid")
 	}
 
-	return iotagoEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
+	return hiveEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
 }
 
 // ID computes the ID of the Block.

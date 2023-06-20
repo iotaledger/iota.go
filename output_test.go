@@ -19,12 +19,46 @@ func TestOutputTypeString(t *testing.T) {
 		{iotago.OutputNFT, "NFTOutput"},
 		{iotago.OutputTreasury, "TreasuryOutput"},
 		{iotago.OutputBasic, "BasicOutput"},
-		{iotago.OutputAlias, "AliasOutput"},
+		{iotago.OutputAccount, "AccountOutput"},
 		{iotago.OutputFoundry, "FoundryOutput"},
 	}
 	for _, tt := range tests {
 		require.Equal(t, tt.outputType.String(), tt.outputTypeString)
 	}
+}
+func TestOutputsCommitment(t *testing.T) {
+	outputs1 := iotago.Outputs[iotago.Output]{
+		&iotago.BasicOutput{
+			Amount: 10,
+			Conditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+			},
+		},
+		&iotago.BasicOutput{
+			Amount: 10,
+			Conditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+			},
+		},
+	}
+
+	outputs2 := iotago.Outputs[iotago.Output]{
+		&iotago.BasicOutput{
+			Amount: 11,
+			Conditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+			},
+		},
+		&iotago.BasicOutput{
+			Amount: 11,
+			Conditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+			},
+		},
+	}
+
+	require.NotEqual(t, outputs1.MustCommitment(), outputs2.MustCommitment(), "commitment for different Outputs must be different")
+
 }
 
 func TestOutputIDString(t *testing.T) {
@@ -52,10 +86,10 @@ func TestOutputsDeSerialize(t *testing.T) {
 						ReturnAddress: tpkg.RandEd25519Address(),
 						Amount:        1000,
 					},
-					&iotago.TimelockUnlockCondition{UnixTime: 1337},
+					&iotago.TimelockUnlockCondition{SlotIndex: 1337},
 					&iotago.ExpirationUnlockCondition{
 						ReturnAddress: tpkg.RandEd25519Address(),
-						UnixTime:      4000,
+						SlotIndex:     4000,
 					},
 				},
 				Features: iotago.BasicOutputFeatures{
@@ -63,31 +97,33 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 					&iotago.TagFeature{Tag: tpkg.RandBytes(32)},
 				},
+				Mana: 500,
 			},
 			target: &iotago.BasicOutput{},
 		},
 		{
-			name: "ok - AliasOutput",
-			source: &iotago.AliasOutput{
+			name: "ok - AccountOutput",
+			source: &iotago.AccountOutput{
 				Amount:         1337,
 				NativeTokens:   tpkg.RandSortNativeTokens(2),
-				AliasID:        tpkg.RandAliasAddress().AliasID(),
+				AccountID:      tpkg.RandAccountAddress().AccountID(),
 				StateIndex:     10,
 				StateMetadata:  []byte("hello world"),
 				FoundryCounter: 1337,
-				Conditions: iotago.AliasOutputUnlockConditions{
+				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
-				Features: iotago.AliasOutputFeatures{
+				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 				},
-				ImmutableFeatures: iotago.AliasOutputImmFeatures{
+				ImmutableFeatures: iotago.AccountOutputImmFeatures{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 				},
+				Mana: 500,
 			},
-			target: &iotago.AliasOutput{},
+			target: &iotago.AccountOutput{},
 		},
 		{
 			name: "ok - FoundryOutput",
@@ -101,11 +137,12 @@ func TestOutputsDeSerialize(t *testing.T) {
 					MaximumSupply: new(big.Int).SetUint64(1000),
 				},
 				Conditions: iotago.FoundryOutputUnlockConditions{
-					&iotago.ImmutableAliasUnlockCondition{Address: tpkg.RandAliasAddress()},
+					&iotago.ImmutableAccountUnlockCondition{Address: tpkg.RandAccountAddress()},
 				},
 				Features: iotago.FoundryOutputFeatures{
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 				},
+				Mana: 500,
 			},
 			target: &iotago.FoundryOutput{},
 		},
@@ -121,10 +158,10 @@ func TestOutputsDeSerialize(t *testing.T) {
 						ReturnAddress: tpkg.RandEd25519Address(),
 						Amount:        1000,
 					},
-					&iotago.TimelockUnlockCondition{UnixTime: 1337},
+					&iotago.TimelockUnlockCondition{SlotIndex: 1337},
 					&iotago.ExpirationUnlockCondition{
 						ReturnAddress: tpkg.RandEd25519Address(),
-						UnixTime:      4000,
+						SlotIndex:     4000,
 					},
 				},
 				Features: iotago.NFTOutputFeatures{
@@ -136,6 +173,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(10)},
 				},
+				Mana: 500,
 			},
 			target: &iotago.NFTOutput{},
 		},
@@ -169,6 +207,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 				&iotago.BasicOutput{
 					Amount:     tpkg.TestTokenSupply,
 					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()}},
+					Mana:       500,
 				},
 			},
 			wantErr: nil,
@@ -178,8 +217,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount:     43400, // min amount
-					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()}},
+					Amount:     44200, // min amount
+					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()}},
 				},
 			},
 			wantErr: nil,
@@ -192,12 +231,13 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 				&iotago.BasicOutput{
 					Amount: 100000,
 					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
-							ReturnAddress: tpkg.RandAliasAddress(),
-							Amount:        43400,
+							ReturnAddress: tpkg.RandAccountAddress(),
+							Amount:        44200,
 						},
 					},
+					Mana: 500,
 				},
 			},
 			wantErr: nil,
@@ -209,9 +249,9 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 				&iotago.BasicOutput{
 					Amount: 100000,
 					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
-							ReturnAddress: tpkg.RandAliasAddress(),
+							ReturnAddress: tpkg.RandAccountAddress(),
 							Amount:        43400 - 1, // off by 1
 						},
 					},
@@ -226,13 +266,14 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 				&iotago.BasicOutput{
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
-							ReturnAddress: tpkg.RandAliasAddress(),
+							ReturnAddress: tpkg.RandAccountAddress(),
 							// off by one from the deposit
 							Amount: OneMi + 1,
 						},
 					},
+					Mana: 500,
 				},
 			},
 			wantErr: iotago.ErrStorageDepositExceedsTargetOutputDeposit,
@@ -244,7 +285,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 				&iotago.BasicOutput{
 					Amount: 43400 - 1,
 					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 				},
 			},
@@ -326,7 +367,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
-							UnixTime:      1337,
+							SlotIndex:     1337,
 						},
 					},
 				},
@@ -335,7 +376,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.TimelockUnlockCondition{
-							UnixTime: 1337,
+							SlotIndex: 1337,
 						},
 					},
 				},
@@ -351,7 +392,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
-							UnixTime:      0,
+							SlotIndex:     0,
 						},
 					},
 				},
@@ -366,7 +407,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.TimelockUnlockCondition{
-							UnixTime: 0,
+							SlotIndex: 0,
 						},
 					},
 				},
@@ -468,7 +509,7 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 	}
 }
 
-func TestOutputsSyntacticalAlias(t *testing.T) {
+func TestOutputsSyntacticalAccount(t *testing.T) {
 	tests := []struct {
 		name    string
 		outputs iotago.Outputs[iotago.Output]
@@ -477,14 +518,14 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 		{
 			name: "ok - empty state",
 			outputs: iotago.Outputs[iotago.Output]{
-				&iotago.AliasOutput{
+				&iotago.AccountOutput{
 					Amount:         OneMi,
-					AliasID:        iotago.AliasID{},
+					AccountID:      iotago.AccountID{},
 					StateIndex:     0,
 					FoundryCounter: 0,
-					Conditions: iotago.AliasOutputUnlockConditions{
-						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
-						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 				},
 			},
@@ -493,91 +534,91 @@ func TestOutputsSyntacticalAlias(t *testing.T) {
 		{
 			name: "ok - non empty state",
 			outputs: iotago.Outputs[iotago.Output]{
-				&iotago.AliasOutput{
+				&iotago.AccountOutput{
 					Amount:         OneMi,
-					AliasID:        tpkg.Rand32ByteArray(),
+					AccountID:      tpkg.Rand32ByteArray(),
 					StateIndex:     10,
 					FoundryCounter: 1337,
-					Conditions: iotago.AliasOutputUnlockConditions{
-						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
-						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 				},
 			},
 			wantErr: nil,
 		},
 		{
-			name: "fail - state index non zero on empty alias ID",
+			name: "fail - state index non zero on empty account ID",
 			outputs: iotago.Outputs[iotago.Output]{
-				&iotago.AliasOutput{
+				&iotago.AccountOutput{
 					Amount:         OneMi,
-					AliasID:        iotago.AliasID{},
+					AccountID:      iotago.AccountID{},
 					StateIndex:     1,
 					FoundryCounter: 0,
-					Conditions: iotago.AliasOutputUnlockConditions{
-						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
-						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 				},
 			},
-			wantErr: iotago.ErrAliasOutputNonEmptyState,
+			wantErr: iotago.ErrAccountOutputNonEmptyState,
 		},
 		{
-			name: "fail - foundry counter non zero on empty alias ID",
+			name: "fail - foundry counter non zero on empty account ID",
 			outputs: iotago.Outputs[iotago.Output]{
-				&iotago.AliasOutput{
+				&iotago.AccountOutput{
 					Amount:         OneMi,
-					AliasID:        iotago.AliasID{},
+					AccountID:      iotago.AccountID{},
 					StateIndex:     0,
 					FoundryCounter: 1,
-					Conditions: iotago.AliasOutputUnlockConditions{
-						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
-						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 				},
 			},
-			wantErr: iotago.ErrAliasOutputNonEmptyState,
+			wantErr: iotago.ErrAccountOutputNonEmptyState,
 		},
 		{
 			name: "fail - cyclic state controller",
 			outputs: iotago.Outputs[iotago.Output]{
-				func() *iotago.AliasOutput {
-					aliasID := iotago.AliasID(tpkg.Rand32ByteArray())
-					return &iotago.AliasOutput{
+				func() *iotago.AccountOutput {
+					accountID := iotago.AccountID(tpkg.Rand32ByteArray())
+					return &iotago.AccountOutput{
 						Amount:         OneMi,
-						AliasID:        aliasID,
+						AccountID:      accountID,
 						StateIndex:     10,
 						FoundryCounter: 1337,
-						Conditions: iotago.AliasOutputUnlockConditions{
-							&iotago.StateControllerAddressUnlockCondition{Address: aliasID.ToAddress()},
-							&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						Conditions: iotago.AccountOutputUnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: accountID.ToAddress()},
+							&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 						},
 					}
 				}(),
 			},
-			wantErr: iotago.ErrAliasOutputCyclicAddress,
+			wantErr: iotago.ErrAccountOutputCyclicAddress,
 		},
 		{
 			name: "fail - cyclic governance controller",
 			outputs: iotago.Outputs[iotago.Output]{
-				func() *iotago.AliasOutput {
-					aliasID := iotago.AliasID(tpkg.Rand32ByteArray())
-					return &iotago.AliasOutput{
+				func() *iotago.AccountOutput {
+					accountID := iotago.AccountID(tpkg.Rand32ByteArray())
+					return &iotago.AccountOutput{
 						Amount:         OneMi,
-						AliasID:        aliasID,
+						AccountID:      accountID,
 						StateIndex:     10,
 						FoundryCounter: 1337,
-						Conditions: iotago.AliasOutputUnlockConditions{
-							&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAliasAddress()},
-							&iotago.GovernorAddressUnlockCondition{Address: aliasID.ToAddress()},
+						Conditions: iotago.AccountOutputUnlockConditions{
+							&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+							&iotago.GovernorAddressUnlockCondition{Address: accountID.ToAddress()},
 						},
 					}
 				}(),
 			},
-			wantErr: iotago.ErrAliasOutputCyclicAddress,
+			wantErr: iotago.ErrAccountOutputCyclicAddress,
 		},
 	}
-	valFunc := iotago.OutputsSyntacticalAlias()
+	valFunc := iotago.OutputsSyntacticalAccount()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
@@ -612,7 +653,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 						MaximumSupply: new(big.Int).SetUint64(10),
 					},
 					Conditions: iotago.FoundryOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: nil,
 				},
@@ -632,7 +673,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 						MaximumSupply: new(big.Int).SetUint64(10),
 					},
 					Conditions: iotago.FoundryOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: nil,
 				},
@@ -652,7 +693,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 						MaximumSupply: new(big.Int).SetUint64(0),
 					},
 					Conditions: iotago.FoundryOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: nil,
 				},
@@ -672,7 +713,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 						MaximumSupply: new(big.Int).SetUint64(100),
 					},
 					Conditions: iotago.FoundryOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: nil,
 				},
@@ -692,7 +733,7 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 						MaximumSupply: new(big.Int).SetUint64(10),
 					},
 					Conditions: iotago.FoundryOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandAliasAddress()},
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: nil,
 				},
@@ -773,7 +814,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 		output                iotago.TransIndepIdentOutput
 		targetIdent           iotago.Address
 		identCanUnlockInstead iotago.Address
-		extParams             *iotago.ExternalUnlockParameters
+		txCreationTime        iotago.SlotIndex
 		canUnlock             bool
 	}
 	tests := []test{
@@ -787,9 +828,9 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 					},
 				},
-				targetIdent: sourceIdent,
-				extParams:   &iotago.ExternalUnlockParameters{},
-				canUnlock:   true,
+				targetIdent:    sourceIdent,
+				txCreationTime: iotago.SlotIndex(0),
+				canUnlock:      true,
 			}
 		}(),
 		func() test {
@@ -801,9 +842,9 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
-				targetIdent: tpkg.RandEd25519Address(),
-				extParams:   &iotago.ExternalUnlockParameters{},
-				canUnlock:   false,
+				targetIdent:    tpkg.RandEd25519Address(),
+				txCreationTime: iotago.SlotIndex(0),
+				canUnlock:      false,
 			}
 		}(),
 		func() test {
@@ -816,13 +857,13 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
-							UnixTime:      10,
+							SlotIndex:     10,
 						},
 					},
 				},
 				targetIdent:           sourceIdent,
 				identCanUnlockInstead: nil,
-				extParams:             &iotago.ExternalUnlockParameters{ConfUnix: 5},
+				txCreationTime:        iotago.SlotIndex(5),
 				canUnlock:             true,
 			}
 		}(),
@@ -837,13 +878,13 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: senderIdent,
-							UnixTime:      5,
+							SlotIndex:     5,
 						},
 					},
 				},
 				targetIdent:           sourceIdent,
 				identCanUnlockInstead: senderIdent,
-				extParams:             &iotago.ExternalUnlockParameters{ConfUnix: 10},
+				txCreationTime:        iotago.SlotIndex(10),
 				canUnlock:             false,
 			}
 		}(),
@@ -855,12 +896,12 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
-						&iotago.TimelockUnlockCondition{UnixTime: 5},
+						&iotago.TimelockUnlockCondition{SlotIndex: 5},
 					},
 				},
-				targetIdent: sourceIdent,
-				extParams:   &iotago.ExternalUnlockParameters{ConfUnix: 10},
-				canUnlock:   true,
+				targetIdent:    sourceIdent,
+				txCreationTime: iotago.SlotIndex(10),
+				canUnlock:      true,
 			}
 		}(),
 		func() test {
@@ -871,12 +912,12 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: sourceIdent},
-						&iotago.TimelockUnlockCondition{UnixTime: 10},
+						&iotago.TimelockUnlockCondition{SlotIndex: 10},
 					},
 				},
-				targetIdent: sourceIdent,
-				extParams:   &iotago.ExternalUnlockParameters{ConfUnix: 5},
-				canUnlock:   false,
+				targetIdent:    sourceIdent,
+				txCreationTime: iotago.SlotIndex(5),
+				canUnlock:      false,
 			}
 		}(),
 	}
@@ -884,24 +925,24 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
-				require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetIdent, tt.extParams))
+				require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetIdent, tt.txCreationTime))
 				if tt.identCanUnlockInstead == nil {
 					return
 				}
-				require.True(t, tt.output.UnlockableBy(tt.identCanUnlockInstead, tt.extParams))
+				require.True(t, tt.output.UnlockableBy(tt.identCanUnlockInstead, tt.txCreationTime))
 			})
 		})
 	}
 }
 
-func TestAliasOutput_UnlockableBy(t *testing.T) {
+func TestAccountOutput_UnlockableBy(t *testing.T) {
 	type test struct {
 		name                  string
 		current               iotago.TransDepIdentOutput
 		next                  iotago.TransDepIdentOutput
 		targetIdent           iotago.Address
 		identCanUnlockInstead iotago.Address
-		extParams             *iotago.ExternalUnlockParameters
+		txCreationTime        iotago.SlotIndex
 		wantErr               error
 		canUnlock             bool
 	}
@@ -911,26 +952,26 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 			govCtrl := tpkg.RandEd25519Address()
 			return test{
 				name: "state ctrl can unlock - state index increase",
-				current: &iotago.AliasOutput{
+				current: &iotago.AccountOutput{
 					Amount:       OneMi,
 					NativeTokens: nil,
 					StateIndex:   0,
-					Conditions: iotago.AliasOutputUnlockConditions{
+					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
 				},
-				next: &iotago.AliasOutput{
+				next: &iotago.AccountOutput{
 					Amount:     OneMi,
 					StateIndex: 1,
-					Conditions: iotago.AliasOutputUnlockConditions{
+					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
 				},
-				targetIdent: stateCtrl,
-				extParams:   &iotago.ExternalUnlockParameters{},
-				canUnlock:   true,
+				targetIdent:    stateCtrl,
+				txCreationTime: iotago.SlotIndex(0),
+				canUnlock:      true,
 			}
 		}(),
 		func() test {
@@ -938,26 +979,26 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 			govCtrl := tpkg.RandEd25519Address()
 			return test{
 				name: "state ctrl can not unlock - state index same",
-				current: &iotago.AliasOutput{
+				current: &iotago.AccountOutput{
 					Amount:       OneMi,
 					NativeTokens: nil,
 					StateIndex:   0,
-					Conditions: iotago.AliasOutputUnlockConditions{
+					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
 				},
-				next: &iotago.AliasOutput{
+				next: &iotago.AccountOutput{
 					Amount:     OneMi,
 					StateIndex: 0,
-					Conditions: iotago.AliasOutputUnlockConditions{
+					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
 				},
 				targetIdent:           stateCtrl,
 				identCanUnlockInstead: govCtrl,
-				extParams:             &iotago.ExternalUnlockParameters{},
+				txCreationTime:        iotago.SlotIndex(0),
 				canUnlock:             false,
 			}
 		}(),
@@ -966,11 +1007,11 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 			govCtrl := tpkg.RandEd25519Address()
 			return test{
 				name: "state ctrl can not unlock - transition destroy",
-				current: &iotago.AliasOutput{
+				current: &iotago.AccountOutput{
 					Amount:       OneMi,
 					NativeTokens: nil,
 					StateIndex:   0,
-					Conditions: iotago.AliasOutputUnlockConditions{
+					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
@@ -978,7 +1019,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 				next:                  nil,
 				targetIdent:           stateCtrl,
 				identCanUnlockInstead: govCtrl,
-				extParams:             &iotago.ExternalUnlockParameters{},
+				txCreationTime:        iotago.SlotIndex(0),
 				canUnlock:             false,
 			}
 		}(),
@@ -987,7 +1028,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
-				canUnlock, err := tt.current.UnlockableBy(tt.targetIdent, tt.next, tt.extParams)
+				canUnlock, err := tt.current.UnlockableBy(tt.targetIdent, tt.next, tt.txCreationTime)
 				if tt.wantErr != nil {
 					require.ErrorIs(t, err, tt.wantErr)
 					return
@@ -996,7 +1037,7 @@ func TestAliasOutput_UnlockableBy(t *testing.T) {
 				if tt.identCanUnlockInstead == nil {
 					return
 				}
-				canUnlockInstead, err := tt.current.UnlockableBy(tt.identCanUnlockInstead, tt.next, tt.extParams)
+				canUnlockInstead, err := tt.current.UnlockableBy(tt.identCanUnlockInstead, tt.next, tt.txCreationTime)
 				require.NoError(t, err)
 				require.True(t, canUnlockInstead)
 			})

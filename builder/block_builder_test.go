@@ -2,10 +2,8 @@ package builder_test
 
 import (
 	"context"
-	"math/rand"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -15,8 +13,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	rand.Seed(time.Now().UnixNano())
-
 	// call the tests
 	os.Exit(m.Run())
 }
@@ -33,6 +29,7 @@ func TestBlockBuilder(t *testing.T) {
 	block, err := builder.NewBlockBuilder().
 		Payload(taggedDataPayload).
 		StrongParents(parents).
+		BurnedMana(100).
 		ProofOfWork(context.Background(), targetPoWScore).
 		Build()
 	require.NoError(t, err)
@@ -40,4 +37,6 @@ func TestBlockBuilder(t *testing.T) {
 	powScore, _, err := block.POW()
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, powScore, targetPoWScore)
+
+	require.EqualValues(t, 100, block.BurnedMana)
 }
