@@ -437,6 +437,11 @@ func ExecFuncSenderUnlocked() ExecFunc {
 func ExecFuncBalancedMana() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		txCreationTime := vmParams.WorkingSet.Tx.Essence.CreationTime
+		for outputID, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
+			if input.CreationTime > txCreationTime {
+				return fmt.Errorf("%w: input %s has creation time %d, tx creation time %d", iotago.ErrInputCreationAfterTxCreation, outputID, input.CreationTime, txCreationTime)
+			}
+		}
 		manaIn := TotalManaIn(vmParams.External.DecayProvider, txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 

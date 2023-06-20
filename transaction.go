@@ -30,6 +30,8 @@ var (
 	ErrReturnAmountNotFulFilled = errors.New("return amount not fulfilled")
 	// ErrInputOutputManaMismatch gets returned if Mana is not balanced across inputs and outputs/allotments.
 	ErrInputOutputManaMismatch = errors.New("inputs and outputs do not contain the same amount of Mana")
+	// ErrInputCreationAfterTxCreation gets returned if an input has creation time after the transaction creation time.
+	ErrInputCreationAfterTxCreation = errors.New("input creation time after tx creation time")
 )
 
 // TransactionID is the ID of a Transaction.

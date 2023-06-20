@@ -3706,7 +3706,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 	}
 }
 
-// TODO: add some failing test cases.
+// TODO: add some more failing test cases.
 func TestTxSemanticMana(t *testing.T) {
 	type test struct {
 		name           string
@@ -3804,6 +3804,106 @@ func TestTxSemanticMana(t *testing.T) {
 
 			return test{
 				name: "ok - stored and allotted",
+				vmParams: &vm.Params{
+					External: &iotago.ExternalUnlockParameters{
+						DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
+					},
+				},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
+		func() test {
+			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(1)
+
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
+					Output: &iotago.BasicOutput{
+						Amount: 5,
+						Mana:   10,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+					},
+					CreationTime: 20,
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.BasicOutput{
+						Amount: 5,
+						Mana:   35,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+					},
+				},
+				CreationTime: 15,
+			}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name: "fail - input created after tx",
+				vmParams: &vm.Params{
+					External: &iotago.ExternalUnlockParameters{
+						DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
+					},
+				},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: iotago.ErrInputCreationAfterTxCreation,
+			}
+		}(),
+		func() test {
+			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(1)
+
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
+					Output: &iotago.BasicOutput{
+						Amount: 5,
+						Mana:   10,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+					},
+					CreationTime: 15,
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.BasicOutput{
+						Amount: 5,
+						Mana:   10,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+					},
+				},
+				CreationTime: 15,
+			}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name: "ok - input created in same slot as tx",
 				vmParams: &vm.Params{
 					External: &iotago.ExternalUnlockParameters{
 						DecayProvider: iotago.NewDecayProvider(1, []float64{}, []float64{}),
