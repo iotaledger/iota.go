@@ -489,7 +489,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "fail - update expired account without extending expiration after MCA",
+			name: "ok - update expired account without extending expiration after MCA",
 			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
