@@ -22,6 +22,11 @@ var stardustVM = stardust.NewVirtualMachine()
 func TestNFTTransition(t *testing.T) {
 	_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 
+	protoParams := &iotago.ProtocolParameters{
+		EpochDurationInSlots: 1 << 13,
+		MaxCommittableAge:    10,
+	}
+
 	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
 		inputIDs[0]: vm.OutputWithCreationTime{
@@ -64,7 +69,11 @@ func TestNFTTransition(t *testing.T) {
 		},
 	}
 	resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
-	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{}}, resolvedInputs))
+	require.NoError(t, stardustVM.Execute(tx, &vm.Params{
+		External: &iotago.ExternalUnlockParameters{
+			ProtocolParameters: protoParams,
+		},
+	}, resolvedInputs))
 }
 
 func TestCirculatingSupplyMelting(t *testing.T) {
@@ -169,7 +178,12 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 	}
 
 	resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
-	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{}}, resolvedInputs))
+	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{
+		ProtocolParameters: &iotago.ProtocolParameters{
+			EpochDurationInSlots: 1 << 13,
+			MaxCommittableAge:    10,
+		},
+	}}, resolvedInputs))
 }
 
 func TestStardustTransactionExecution(t *testing.T) {
@@ -657,8 +671,13 @@ func TestStardustTransactionExecution(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "ok",
-				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				name: "ok",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
+				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
@@ -752,8 +771,13 @@ func TestStardustTransactionExecution(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "fail - changed immutable account address unlock",
-				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				name: "fail - changed immutable account address unlock",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
+				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
@@ -841,7 +865,10 @@ func TestStardustTransactionExecution(t *testing.T) {
 			return test{
 				name: "ok - modify block issuer account",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
@@ -926,7 +953,10 @@ func TestStardustTransactionExecution(t *testing.T) {
 			return test{
 				name: "ok - set block issuer expiry to 0",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
@@ -1000,7 +1030,10 @@ func TestStardustTransactionExecution(t *testing.T) {
 			return test{
 				name: "fail - destroy block issuer account with expiry at slot 0",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
@@ -1074,8 +1107,13 @@ func TestStardustTransactionExecution(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "ok - destroy block issuer account",
-				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				name: "ok - destroy block issuer account",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
+				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
@@ -1133,8 +1171,13 @@ func TestStardustTransactionExecution(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "fail - destroy block issuer account without supplying BIC",
-				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				name: "fail - destroy block issuer account without supplying BIC",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
+				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
@@ -1200,8 +1243,13 @@ func TestStardustTransactionExecution(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "fail - modify block issuer without supplying BIC",
-				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				name: "fail - modify block issuer without supplying BIC",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
+				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
@@ -3307,8 +3355,13 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "fail - issuer not unlocked due to governance transition",
-				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				name: "fail - issuer not unlocked due to governance transition",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
+				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
@@ -3461,8 +3514,13 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "ok - issuer unlocked with state transition",
-				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				name: "ok - issuer unlocked with state transition",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
+				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
@@ -3529,8 +3587,13 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "ok - issuer is the governor",
-				vmParams:       &vm.Params{External: &iotago.ExternalUnlockParameters{}},
+				name: "ok - issuer is the governor",
+				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						EpochDurationInSlots: 1 << 13,
+						MaxCommittableAge:    10,
+					},
+				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
@@ -3729,7 +3792,12 @@ func TestTxSemanticMana(t *testing.T) {
 			return test{
 				name: "ok - stored Mana only",
 				vmParams: &vm.Params{
-					External: &iotago.ExternalUnlockParameters{},
+					External: &iotago.ExternalUnlockParameters{
+						ProtocolParameters: &iotago.ProtocolParameters{
+							EpochDurationInSlots: 1 << 13,
+							MaxCommittableAge:    10,
+						},
+					},
 				},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
@@ -3780,7 +3848,12 @@ func TestTxSemanticMana(t *testing.T) {
 			return test{
 				name: "ok - stored and allotted",
 				vmParams: &vm.Params{
-					External: &iotago.ExternalUnlockParameters{},
+					External: &iotago.ExternalUnlockParameters{
+						ProtocolParameters: &iotago.ProtocolParameters{
+							EpochDurationInSlots: 1 << 13,
+							MaxCommittableAge:    10,
+						},
+					},
 				},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
@@ -3828,7 +3901,12 @@ func TestTxSemanticMana(t *testing.T) {
 			return test{
 				name: "fail - input created after tx",
 				vmParams: &vm.Params{
-					External: &iotago.ExternalUnlockParameters{},
+					External: &iotago.ExternalUnlockParameters{
+						ProtocolParameters: &iotago.ProtocolParameters{
+							EpochDurationInSlots: 1 << 13,
+							MaxCommittableAge:    10,
+						},
+					},
 				},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
@@ -3876,7 +3954,12 @@ func TestTxSemanticMana(t *testing.T) {
 			return test{
 				name: "ok - input created in same slot as tx",
 				vmParams: &vm.Params{
-					External: &iotago.ExternalUnlockParameters{},
+					External: &iotago.ExternalUnlockParameters{
+						ProtocolParameters: &iotago.ProtocolParameters{
+							EpochDurationInSlots: 1 << 13,
+							MaxCommittableAge:    10,
+						},
+					},
 				},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
 				tx: &iotago.Transaction{
