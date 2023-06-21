@@ -58,6 +58,8 @@ const (
 	OutputFoundry OutputType = 5
 	// OutputNFT denotes an NFTOutput.
 	OutputNFT OutputType = 6
+	// OutputDelegation denotes a DelegationOutput.
+	OutputDelegation OutputType = 7
 )
 
 func (outputType OutputType) String() string {
