@@ -841,7 +841,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			return test{
 				name: "ok - modify block issuer account",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
@@ -926,7 +926,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			return test{
 				name: "ok - set block issuer expiry to 0",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
@@ -1000,7 +1000,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			return test{
 				name: "fail - destroy block issuer account with expiry at slot 0",
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
 				tx: &iotago.Transaction{
