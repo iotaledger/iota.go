@@ -208,7 +208,7 @@ func (v *v3api) Underlying() *serix.API {
 	return v.serixAPI
 }
 
-func (v *v3api) SlotTimeProvider() *TimeProvider {
+func (v *v3api) TimeProvider() *TimeProvider {
 	return v.timeProvider
 }
 
