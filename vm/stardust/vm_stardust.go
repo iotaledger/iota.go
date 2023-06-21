@@ -323,7 +323,7 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 
 		if creationEpoch < currentStakingFeat.EndEpoch {
 			if nextStakingFeat == nil {
-				return fmt.Errorf("%w: the staking feature cannot be removed", iotago.ErrInvalidStakingTransition)
+				return fmt.Errorf("%w: the staking feature cannot be removed before the end epoch", iotago.ErrInvalidStakingTransition)
 			}
 
 			if currentStakingFeat.StakedAmount != nextStakingFeat.StakedAmount ||
@@ -359,7 +359,9 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 	return nil
 }
 
-// Validates the rules for a newly added Staking Feature in an account.
+// Validates the rules for a newly added Staking Feature in an account,
+// or one which was effectively removed and added within the same transaction.
+// This is allowed as long as the epoch range of the old and new feature are disjoint.
 func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iotago.StakingFeature, vmParams *vm.Params) error {
 	if acc.Amount < stakingFeat.StakedAmount {
 		return fmt.Errorf("%w: the account's amount is less than the staked amount in the staking feature", iotago.ErrInvalidStakingTransition)
@@ -374,7 +376,7 @@ func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iot
 
 	unbondingEpoch := creationEpoch + vmParams.External.ProtocolParameters.StakingUnbondingPeriod
 	if stakingFeat.EndEpoch < unbondingEpoch {
-		return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period (%d)", iotago.ErrInvalidStakingTransition, unbondingEpoch)
+		return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period (i.e. end epoch %d should be >= %d)", iotago.ErrInvalidStakingTransition, stakingFeat.EndEpoch, unbondingEpoch)
 	}
 
 	return nil
@@ -408,6 +410,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 		}
 	} else {
 		// TODO: Mana Rewards Claiming.
+		fmt.Println("todo")
 	}
 
 	return nil
