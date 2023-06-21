@@ -10,10 +10,10 @@ import (
 // as well as a range of epoch indices in which the feature is considered active and can claim rewards.
 // Removing the feature can only be done by going through an unbonding period.
 type StakingFeature struct {
-	StakedAmount uint64 `serix:"0,mapKey=stakedAmount"`
-	FixedCost    uint64 `serix:"1,mapKey=fixedCost"`
-	StartEpoch   uint64 `serix:"2,mapKey=startEpoch"`
-	EndEpoch     uint64 `serix:"3,mapKey=endEpoch"`
+	StakedAmount uint64     `serix:"0,mapKey=stakedAmount"`
+	FixedCost    uint64     `serix:"1,mapKey=fixedCost"`
+	StartEpoch   EpochIndex `serix:"2,mapKey=startEpoch"`
+	EndEpoch     EpochIndex `serix:"3,mapKey=endEpoch"`
 }
 
 func (s *StakingFeature) Clone() Feature {
