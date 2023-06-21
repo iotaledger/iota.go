@@ -76,6 +76,15 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 		}
 
 		return nftSTVF(input, transType, nextNFT, vmParams)
+	case *iotago.DelegationOutput:
+		var nextDelegationOutput *iotago.DelegationOutput
+		if next != nil {
+			if nextDelegationOutput, ok = next.(*iotago.DelegationOutput); !ok {
+				return fmt.Errorf("can only state transition to another Delegation output")
+			}
+		}
+
+		return delegationSTVF(input, transType, nextDelegationOutput, vmParams)
 	default:
 		panic(fmt.Sprintf("invalid output type %v passed to Stardust virtual machine", input.Output))
 	}
@@ -550,4 +559,102 @@ func foundryDestructionValid(current *iotago.FoundryOutput, inSums iotago.Native
 	nativeTokenID := current.MustNativeTokenID()
 
 	return current.TokenScheme.StateTransition(iotago.ChainTransitionTypeDestroy, nil, inSums.ValueOrBigInt0(nativeTokenID), outSums.ValueOrBigInt0(nativeTokenID))
+}
+
+func delegationSTVF(input *vm.ChainOutputWithCreationTime, transType iotago.ChainTransitionType, next *iotago.DelegationOutput, vmParams *vm.Params) error {
+	switch transType {
+	case iotago.ChainTransitionTypeGenesis:
+		if err := delegationGenesisValid(next, vmParams); err != nil {
+			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("Delegation %s", next.DelegationID)}
+		}
+	case iotago.ChainTransitionTypeStateChange:
+		current := input.Output.(*iotago.DelegationOutput)
+		if err := delegationStateChangeValid(current, next, vmParams); err != nil {
+			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("Delegation %s", current.DelegationID)}
+		}
+	case iotago.ChainTransitionTypeDestroy:
+		// TODO: Mana Rewards Claiming?
+		return nil
+	default:
+		panic("unknown chain transition type in DelegationOutput")
+	}
+
+	return nil
+}
+
+func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Params) error {
+	if !current.DelegationID.Empty() {
+		return fmt.Errorf("%w: DelegationOutput's ID is not zeroed even though it is new", iotago.ErrInvalidDelegationGenesis)
+	}
+
+	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+	creationSlot := vmParams.WorkingSet.Tx.Essence.CreationTime
+	creationEpoch := timeProvider.EpochsFromSlot(creationSlot)
+	votingPowerSlot := votingPowerCalculationSlot(creationSlot, timeProvider)
+
+	var expectedStartEpoch iotago.EpochIndex
+	if creationSlot <= votingPowerSlot {
+		expectedStartEpoch = creationEpoch + 1
+	} else {
+		expectedStartEpoch = creationEpoch + 2
+	}
+
+	if current.StartEpoch != uint64(expectedStartEpoch) {
+		return fmt.Errorf("%w: DelegationOutput's start epoch is expected to be %d", iotago.ErrInvalidDelegationGenesis, expectedStartEpoch)
+	}
+
+	if current.DelegatedAmount != current.Amount {
+		return fmt.Errorf("%w: DelegationOutput's delegated amount is not equal to amount", iotago.ErrInvalidDelegationGenesis)
+	}
+
+	if current.EndEpoch != 0 {
+		return fmt.Errorf("%w: DelegationOutput's end epoch is not set to zero", iotago.ErrInvalidDelegationGenesis)
+	}
+
+	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
+}
+
+func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.DelegationOutput, vmParams *vm.Params) error {
+	// State transitioning a Delegation Output is always a transition to the delayed claiming state.
+	// Since they can only be transitioned once, the input will always need to have a zeroed ID.
+	if !current.DelegationID.Empty() {
+		return fmt.Errorf("%w: consumed DelegationOutput's ID is not zeroed", iotago.ErrInvalidDelegationTransition)
+	}
+
+	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
+		return fmt.Errorf("immutable features mismatch: old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures)
+	}
+
+	if current.DelegatedAmount != next.DelegatedAmount ||
+		current.ValidatorID != next.ValidatorID ||
+		current.StartEpoch != next.StartEpoch {
+		return fmt.Errorf("%w: delegated amount, validator ID and start epoch must match on the input and output", iotago.ErrInvalidDelegationTransition)
+	}
+
+	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+	creationSlot := vmParams.WorkingSet.Tx.Essence.CreationTime
+	creationEpoch := timeProvider.EpochsFromSlot(creationSlot)
+	votingPowerSlot := votingPowerCalculationSlot(creationSlot, timeProvider)
+
+	var expectedEndEpoch iotago.EpochIndex
+	if creationSlot <= votingPowerSlot {
+		expectedEndEpoch = creationEpoch
+	} else {
+		expectedEndEpoch = creationEpoch + 1
+	}
+
+	if current.EndEpoch != uint64(expectedEndEpoch) {
+		return fmt.Errorf("%w: DelegationOutput's end epoch is expected to be %d", iotago.ErrInvalidDelegationGenesis, expectedEndEpoch)
+	}
+
+	return nil
+}
+
+// votingPowerCalculationSlot returns the slot at the end of which the voting power for the next epoch is calculated.
+func votingPowerCalculationSlot(currentSlotIndex iotago.SlotIndex, timeProvider *iotago.TimeProvider) iotago.SlotIndex {
+	// currentEpoch := timeProvider.EpochsFromSlot(currentSlotIndex)
+	// startSlotNextEpoch := timeProvider.EpochStart(currentEpoch)
+	// votingPowerCalcSlotNextEpoch := startSlotNextEpoch - iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge)
+	// TODO: Finalize when committee selection is finalized.
+	return currentSlotIndex
 }

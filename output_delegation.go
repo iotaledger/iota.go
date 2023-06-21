@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"errors"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/util"
@@ -13,7 +15,11 @@ const (
 )
 
 var (
-	emptyDelegationID = [DelegationIDLength]byte{}
+	// ErrInvalidDelegationTransition gets returned when a Delegation Output's initial state machine is invalid.
+	ErrInvalidDelegationGenesis = errors.New("invalid delegation output genesis")
+	// ErrInvalidDelegationTransition gets returned when a Delegation Output is doing an invalid state transition.
+	ErrInvalidDelegationTransition = errors.New("invalid delegation output transition")
+	emptyDelegationID              = [DelegationIDLength]byte{}
 )
 
 // DelegationID is the identifier for a Delegation Output.
@@ -112,6 +118,10 @@ func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByte
 		rentStruct.VBFactorData.Multiply(AccountIDLength) +
 		d.Conditions.VBytes(rentStruct, nil) +
 		d.ImmutableFeatures.VBytes(rentStruct, nil)
+}
+
+func (d *DelegationOutput) Chain() ChainID {
+	return d.DelegationID
 }
 
 func (d *DelegationOutput) NativeTokenList() NativeTokens {
