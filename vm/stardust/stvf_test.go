@@ -3,9 +3,11 @@ package stardust_test
 import (
 	"crypto/ed25519"
 	"fmt"
+	"math"
 	"math/big"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -207,6 +209,136 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+		},
+		{
+			name: "ok - staking genesis transition",
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						// Slot 1000 is part of Epoch 11.
+						StartEpoch: 11,
+						EndEpoch:   math.MaxUint64,
+					},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - staking genesis start epoch invalid",
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						// Slot 1000 is part of Epoch 11, but it is set incorrectly.
+						StartEpoch: 2,
+						EndEpoch:   math.MaxUint64,
+					},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
+			name: "fail - staking genesis end epoch too early",
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						// Slot 1000 is part of Epoch 11.
+						StartEpoch: 11,
+						// Should be 11+10 to be valid.
+						EndEpoch: 11 + 9,
+					},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
 		},
 		{
 			name: "ok - destroy transition",

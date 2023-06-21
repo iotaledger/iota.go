@@ -321,8 +321,10 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 		return accountStakingGenesisValidation(current, nextStakingFeat, vmParams)
 	}
 
+	creationEpoch := vmParams.External.ProtocolParameters.TimeProvider().EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
+
 	if currentStakingFeat != nil {
-		if vmParams.External.EpochIndex < currentStakingFeat.EndEpoch {
+		if creationEpoch < currentStakingFeat.EndEpoch {
 
 			if nextStakingFeat == nil {
 				return fmt.Errorf("%w: the staking feature cannot be removed", iotago.ErrInvalidStakingTransition)
@@ -335,28 +337,27 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 			}
 
 			if currentStakingFeat.EndEpoch != nextStakingFeat.EndEpoch ||
-				nextStakingFeat.EndEpoch < vmParams.External.EpochIndex+vmParams.External.ProtocolParameters.StakingUnbondingPeriod {
+				nextStakingFeat.EndEpoch < creationEpoch+vmParams.External.ProtocolParameters.StakingUnbondingPeriod {
 				return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period or the fields must match on input and output side", iotago.ErrInvalidStakingTransition)
 			}
-		}
-	} else {
-		// Current epoch index is past the end epoch.
-
-		// Mana Claiming by either removing the Feature or changing the feature's epoch range.
-		if nextStakingFeat != nil {
-			// TODO: mana rewards claiming
 		} else {
-			// No mana claiming and feature is untouched.
-			if !currentStakingFeat.Equal(nextStakingFeat) {
-				return fmt.Errorf("%w: all fields on the feature must match on the input and output", iotago.ErrInvalidStakingTransition)
-			}
+			// Current epoch index is past the end epoch.
 
-			// Mana claiming and feature is transitioned to new state.
-			// TODO: mana rewards claiming
-			return accountStakingGenesisValidation(current, nextStakingFeat, vmParams)
+			// Mana Claiming by either removing the Feature or changing the feature's epoch range.
+			if nextStakingFeat != nil {
+				// TODO: mana rewards claiming
+			} else {
+				// No mana claiming and feature is untouched.
+				if !currentStakingFeat.Equal(nextStakingFeat) {
+					return fmt.Errorf("%w: all fields on the feature must match on the input and output", iotago.ErrInvalidStakingTransition)
+				}
+
+				// Mana claiming and feature is transitioned to new state.
+				// TODO: mana rewards claiming
+				return accountStakingGenesisValidation(current, nextStakingFeat, vmParams)
+			}
 		}
 	}
-
 	return nil
 }
 
@@ -366,12 +367,16 @@ func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iot
 		return fmt.Errorf("%w: the account's amount is less than the staked smount in the staking feature", iotago.ErrInvalidStakingTransition)
 	}
 
-	if stakingFeat.StartEpoch != vmParams.External.EpochIndex {
-		return fmt.Errorf("%w: the start epoch must be set to the epoch index of the transaction", iotago.ErrInvalidStakingTransition)
+	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+	creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
+
+	if stakingFeat.StartEpoch != creationEpoch {
+		return fmt.Errorf("%w: the start epoch must be set to the epoch index of the transaction (%d)", iotago.ErrInvalidStakingTransition, creationEpoch)
 	}
 
-	if stakingFeat.EndEpoch < vmParams.External.EpochIndex+vmParams.External.ProtocolParameters.StakingUnbondingPeriod {
-		return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period", iotago.ErrInvalidStakingTransition)
+	unbondingEpoch := creationEpoch + vmParams.External.ProtocolParameters.StakingUnbondingPeriod
+	if stakingFeat.EndEpoch < unbondingEpoch {
+		return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period (%d)", iotago.ErrInvalidStakingTransition, unbondingEpoch)
 	}
 
 	return nil
@@ -397,7 +402,10 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 
 	stakingFeat := outputToDestroy.FeatureSet().Staking()
 	if stakingFeat != nil {
-		if vmParams.External.EpochIndex < stakingFeat.EndEpoch {
+		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+		creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
+
+		if creationEpoch < stakingFeat.EndEpoch {
 			return fmt.Errorf("%w: cannot destroy output until the staking feature is unbonded", iotago.ErrInvalidAccountStateTransition)
 		}
 	} else {

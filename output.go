@@ -597,8 +597,6 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, t
 type ExternalUnlockParameters struct {
 	DecayProvider      *DecayProvider
 	ProtocolParameters *ProtocolParameters
-	// The index of the epoch to which the current transaction belongs.
-	EpochIndex uint64
 }
 
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent
