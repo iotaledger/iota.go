@@ -117,24 +117,28 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*Worki
 	return workingSet, nil
 }
 
-func TotalManaIn(decayProvider *iotago.DecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) (totalIn uint64) {
+func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) uint64 {
+	var totalIn uint64
 	for _, input := range inputSet {
 		// stored Mana
-		totalIn += decayProvider.StoredManaWithDecay(input.Output.StoredMana(), txCreationTime-input.CreationTime)
+		totalIn += manaDecayProvider.StoredManaWithDecay(input.Output.StoredMana(), input.CreationTime, txCreationTime)
 		// potential Mana
-		totalIn += decayProvider.PotentialManaWithDecay(input.Output.Deposit(), txCreationTime-input.CreationTime)
+		totalIn += manaDecayProvider.PotentialManaWithDecay(input.Output.Deposit(), input.CreationTime, txCreationTime)
 	}
-	return
+
+	return totalIn
 }
 
-func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iotago.Allotments) (totalOut uint64) {
+func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iotago.Allotments) uint64 {
+	var totalOut uint64
 	for _, output := range outputs {
 		totalOut += output.StoredMana()
 	}
 	for _, allotment := range allotments {
 		totalOut += allotment.Value
 	}
-	return
+
+	return totalOut
 }
 
 // RunVMFuncs runs the given ExecFunc(s) in serial order.
@@ -442,7 +446,7 @@ func ExecFuncBalancedMana() ExecFunc {
 				return fmt.Errorf("%w: input %s has creation time %d, tx creation time %d", iotago.ErrInputCreationAfterTxCreation, outputID, input.CreationTime, txCreationTime)
 			}
 		}
-		manaIn := TotalManaIn(vmParams.External.DecayProvider, txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn := TotalManaIn(vmParams.External.ProtocolParameters.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 
 		if manaIn < manaOut {
