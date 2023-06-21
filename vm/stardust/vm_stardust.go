@@ -312,14 +312,16 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 	nextStakingFeat := next.FeatureSet().Staking()
 
 	// If the account has no staking feature.
-	if currentStakingFeat == nil && nextStakingFeat == nil {
-		return nil
-	}
+	if currentStakingFeat == nil {
+		if nextStakingFeat == nil {
+			return nil
+		}
+		// Staking Feature Genesis handled in accountGenesisValid
+	} else {
+		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+		creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
-	if currentStakingFeat != nil {
-		creationEpoch := vmParams.External.ProtocolParameters.TimeProvider().EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 		if creationEpoch < currentStakingFeat.EndEpoch {
-
 			if nextStakingFeat == nil {
 				return fmt.Errorf("%w: the staking feature cannot be removed", iotago.ErrInvalidStakingTransition)
 			}
@@ -352,6 +354,7 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 			}
 		}
 	}
+
 	return nil
 }
 

@@ -355,7 +355,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						FixedCost:    5,
 						// CreationTime (Slot 1000) is part of Epoch 11.
 						StartEpoch: 11,
-						EndEpoch: 11 + 10,
+						EndEpoch:   11 + 10,
 					},
 				},
 			},
@@ -382,6 +382,66 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
+			name: "ok - valid staking transition",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:    100,
+					AccountID: iotago.AccountID{},
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 100,
+							FixedCost:    50,
+							// CreationTime (Slot 1000) is part of Epoch 11.
+							StartEpoch: 11,
+							EndEpoch:   11 + 10000,
+						},
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 100,
+						FixedCost:    50,
+						// CreationTime (Slot 1000) is part of Epoch 11.
+						StartEpoch: 11,
+						EndEpoch:   11 + 10,
+					},
+				},
+			},
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "ok - destroy transition",
