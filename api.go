@@ -38,7 +38,7 @@ type API interface {
 	// Underlying returns the underlying serix.API instance.
 	Underlying() *serix.API
 	// TimeProvider returns the underlying time provider used.
-	SlotTimeProvider() *TimeProvider
+	TimeProvider() *TimeProvider
 }
 
 // LatestAPI creates a new API instance conforming to the latest IOTA protocol version.
