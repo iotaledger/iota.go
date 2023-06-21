@@ -117,7 +117,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -155,7 +155,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -193,7 +193,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -410,7 +410,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
@@ -464,7 +464,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
@@ -636,7 +636,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -698,7 +698,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -748,7 +748,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -811,7 +811,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -874,7 +874,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -937,7 +937,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -993,7 +993,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: &iotago.ProtocolParameters{MaxCommittableAge: 10},
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
