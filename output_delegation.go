@@ -22,6 +22,10 @@ var (
 	emptyDelegationID              = [DelegationIDLength]byte{}
 )
 
+func EmptyDelegationId() DelegationID {
+	return emptyDelegationID
+}
+
 // DelegationID is the identifier for a Delegation Output.
 // It is computed as the Blake2b-256 hash of the OutputID of the output which created the Delegation Output.
 type DelegationID [DelegationIDLength]byte
