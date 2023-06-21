@@ -128,6 +128,24 @@ var (
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
+	delegationOutputV3UnlockCondArrRules = &serix.ArrayRules{
+		Min: 1, Max: 1,
+		MustOccur: serializer.TypePrefixes{
+			uint32(UnlockConditionAddress): struct{}{},
+		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+	}
+
+	delegationOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
+		Min: 0,
+		Max: 1,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+	}
+
 	txEssenceV3ContextInputsArrRules = &serix.ArrayRules{
 		Min:            MinContextInputsCount,
 		Max:            MaxContextInputsCount,
@@ -379,6 +397,22 @@ func V3API(protoParams *ProtocolParameters) API {
 
 		must(api.RegisterInterfaceObjects((*nftOutputImmFeature)(nil), (*IssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*nftOutputImmFeature)(nil), (*MetadataFeature)(nil)))
+	}
+
+	{
+		must(api.RegisterTypeSettings(DelegationOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputDelegation))))
+
+		must(api.RegisterTypeSettings(DelegationOutputUnlockConditions{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3UnlockCondArrRules),
+		))
+
+		must(api.RegisterInterfaceObjects((*delegationOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
+
+		must(api.RegisterTypeSettings(DelegationOutputImmFeatures{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3ImmFeatBlocksArrRules),
+		))
+
+		must(api.RegisterInterfaceObjects((*delegationOutputImmFeature)(nil), (*IssuerFeature)(nil)))
 	}
 
 	{

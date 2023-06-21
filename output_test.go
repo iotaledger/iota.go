@@ -177,6 +177,24 @@ func TestOutputsDeSerialize(t *testing.T) {
 			},
 			target: &iotago.NFTOutput{},
 		},
+		{
+			name: "ok - DelegationOutput",
+			source: &iotago.DelegationOutput{
+				Amount:          1337,
+				DelegatedAmount: 1337,
+				DelegationID:    tpkg.Rand32ByteArray(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      32,
+				EndEpoch:        37,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				ImmutableFeatures: iotago.DelegationOutputImmFeatures{
+					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			target: &iotago.DelegationOutput{},
+		},
 	}
 
 	for _, tt := range tests {
