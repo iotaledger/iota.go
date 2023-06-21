@@ -316,14 +316,8 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 		return nil
 	}
 
-	// If the staking feature was newly added.
-	if currentStakingFeat == nil && nextStakingFeat != nil {
-		return accountStakingGenesisValidation(current, nextStakingFeat, vmParams)
-	}
-
-	creationEpoch := vmParams.External.ProtocolParameters.TimeProvider().EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
-
 	if currentStakingFeat != nil {
+		creationEpoch := vmParams.External.ProtocolParameters.TimeProvider().EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 		if creationEpoch < currentStakingFeat.EndEpoch {
 
 			if nextStakingFeat == nil {
@@ -364,7 +358,7 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 // Validates the rules for a newly added Staking Feature in an account.
 func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iotago.StakingFeature, vmParams *vm.Params) error {
 	if acc.Amount < stakingFeat.StakedAmount {
-		return fmt.Errorf("%w: the account's amount is less than the staked smount in the staking feature", iotago.ErrInvalidStakingTransition)
+		return fmt.Errorf("%w: the account's amount is less than the staked amount in the staking feature", iotago.ErrInvalidStakingTransition)
 	}
 
 	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
