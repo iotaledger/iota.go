@@ -56,6 +56,8 @@ var (
 	ErrAccountOutputCyclicAddress = errors.New("account output's AccountID corresponds to state and/or governance controller")
 	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
 	ErrNFTOutputCyclicAddress = errors.New("NFT output's ID corresponds to address field")
+	// ErrDelegationValidatorIdZeroed gets returned if a Delegation Output's Validator ID is zeroed out.
+	ErrDelegationValidatorIdZeroed = errors.New("delegation output's validator ID is zeroed")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
@@ -197,6 +199,7 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParamete
 		OutputsSyntacticalFoundry(),
 		OutputsSyntacticalAccount(),
 		OutputsSyntacticalNFT(),
+		OutputsSyntacticalDelegation(),
 	); err != nil {
 		return err
 	}

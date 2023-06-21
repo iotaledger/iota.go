@@ -69,7 +69,7 @@ func (outputType OutputType) String() string {
 	return outputNames[outputType]
 }
 
-var outputNames = [OutputNFT + 1]string{
+var outputNames = [OutputDelegation + 1]string{
 	"SigLockedSingleOutput",
 	"SigLockedDustAllowanceOutput",
 	"TreasuryOutput",
@@ -77,6 +77,7 @@ var outputNames = [OutputNFT + 1]string{
 	"AccountOutput",
 	"FoundryOutput",
 	"NFTOutput",
+	"DelegationOutput",
 }
 
 const (
@@ -828,6 +829,23 @@ func OutputsSyntacticalNFT() OutputsSyntacticalValidationFunc {
 
 		if addr, ok := nftOutput.Ident().(*NFTAddress); ok && NFTAddress(nftOutput.NFTID) == *addr {
 			return fmt.Errorf("%w: output %d", ErrNFTOutputCyclicAddress, index)
+		}
+
+		return nil
+	}
+}
+
+// OutputsSyntacticalDelegation returns an OutputsSyntacticalValidationFunc which checks that DelegationOutput(s)':
+//   - Validator ID is not zeroed out.
+func OutputsSyntacticalDelegation() OutputsSyntacticalValidationFunc {
+	return func(index int, output Output) error {
+		delegationOutput, is := output.(*DelegationOutput)
+		if !is {
+			return nil
+		}
+
+		if delegationOutput.ValidatorID.Empty() {
+			return fmt.Errorf("%w: output %d", ErrDelegationValidatorIdZeroed, index)
 		}
 
 		return nil
