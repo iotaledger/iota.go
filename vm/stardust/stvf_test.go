@@ -388,10 +388,11 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
-					AccountID: iotago.AccountID{},
+					AccountID: exampleAccountID,
+					StateIndex: 50,
 					Conditions: iotago.AccountOutputUnlockConditions{
-						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.StakingFeature{
@@ -406,10 +407,11 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			},
 			next: &iotago.AccountOutput{
 				Amount:    100,
-				AccountID: iotago.AccountID{},
+				AccountID: exampleAccountID,
+				StateIndex: 51,
 				Conditions: iotago.AccountOutputUnlockConditions{
-					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
 				Features: iotago.AccountOutputFeatures{
 					&iotago.StakingFeature{
@@ -421,7 +423,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			transType: iotago.ChainTransitionTypeGenesis,
+			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{

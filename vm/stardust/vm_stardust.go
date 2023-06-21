@@ -332,9 +332,10 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 				return fmt.Errorf("%w: staked amount, fixed cost and start epoch must match on the input and output", iotago.ErrInvalidStakingTransition)
 			}
 
-			if currentStakingFeat.EndEpoch != nextStakingFeat.EndEpoch ||
-				nextStakingFeat.EndEpoch < creationEpoch+vmParams.External.ProtocolParameters.StakingUnbondingPeriod {
-				return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period or the fields must match on input and output side", iotago.ErrInvalidStakingTransition)
+			unbondingEpoch := creationEpoch + vmParams.External.ProtocolParameters.StakingUnbondingPeriod
+			if currentStakingFeat.EndEpoch != nextStakingFeat.EndEpoch &&
+				nextStakingFeat.EndEpoch < unbondingEpoch {
+				return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period (i.e. end epoch %d should be >= %d) or the end epoch must match on input and output side", iotago.ErrInvalidStakingTransition, nextStakingFeat.EndEpoch, unbondingEpoch)
 			}
 		} else {
 			// Current epoch index is past the end epoch.
