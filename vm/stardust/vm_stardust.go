@@ -264,9 +264,9 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	}
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
-	decayProvider := vmParams.External.DecayProvider
+	manaDecayProvider := vmParams.External.ProtocolParameters.ManaDecayProvider()
 	manaIn := vm.TotalManaIn(
-		decayProvider,
+		manaDecayProvider,
 		vmParams.WorkingSet.Tx.Essence.CreationTime,
 		vmParams.WorkingSet.UTXOInputsWithCreationTime,
 	)
@@ -275,11 +275,11 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		vmParams.WorkingSet.Tx.Essence.Allotments,
 	)
 
-	timeHeld := vmParams.WorkingSet.Tx.Essence.CreationTime - input.CreationTime
-	manaIn -= decayProvider.StoredManaWithDecay(current.Mana, timeHeld)         // AccountInStored
-	manaIn -= decayProvider.PotentialManaWithDecay(current.Amount, timeHeld)    // AccountInPotential
-	manaOut -= next.Mana                                                        // AccountOutStored
-	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID) // AccountOutAllotted
+	manaIn -= manaDecayProvider.StoredManaWithDecay(current.Mana, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime)      // AccountInStored
+	manaIn -= manaDecayProvider.PotentialManaWithDecay(current.Amount, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInPotential
+	manaOut -= next.Mana                                                                                                                // AccountOutStored
+	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)                                                         // AccountOutAllotted
+
 	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
 	for _, output := range vmParams.WorkingSet.OutputsByType[iotago.OutputBasic] {
 		basicOutput, is := output.(*iotago.BasicOutput)
@@ -312,22 +312,18 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 	nextStakingFeat := next.FeatureSet().Staking()
 
 	// If the account has no staking feature.
-	if currentStakingFeat == nil && nextStakingFeat == nil {
-		return nil
-	}
+	if currentStakingFeat == nil {
+		if nextStakingFeat == nil {
+			return nil
+		}
+		// Staking Feature Genesis handled in accountGenesisValid
+	} else {
+		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+		creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
-	// If the staking feature was newly added.
-	if currentStakingFeat == nil && nextStakingFeat != nil {
-		return accountStakingGenesisValidation(current, nextStakingFeat, vmParams)
-	}
-
-	creationEpoch := vmParams.External.ProtocolParameters.TimeProvider().EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
-
-	if currentStakingFeat != nil {
 		if creationEpoch < currentStakingFeat.EndEpoch {
-
 			if nextStakingFeat == nil {
-				return fmt.Errorf("%w: the staking feature cannot be removed", iotago.ErrInvalidStakingTransition)
+				return fmt.Errorf("%w: the staking feature cannot be removed before the end epoch", iotago.ErrInvalidStakingTransition)
 			}
 
 			if currentStakingFeat.StakedAmount != nextStakingFeat.StakedAmount ||
@@ -336,9 +332,10 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 				return fmt.Errorf("%w: staked amount, fixed cost and start epoch must match on the input and output", iotago.ErrInvalidStakingTransition)
 			}
 
-			if currentStakingFeat.EndEpoch != nextStakingFeat.EndEpoch ||
-				nextStakingFeat.EndEpoch < creationEpoch+vmParams.External.ProtocolParameters.StakingUnbondingPeriod {
-				return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period or the fields must match on input and output side", iotago.ErrInvalidStakingTransition)
+			unbondingEpoch := creationEpoch + vmParams.External.ProtocolParameters.StakingUnbondingPeriod
+			if currentStakingFeat.EndEpoch != nextStakingFeat.EndEpoch &&
+				nextStakingFeat.EndEpoch < unbondingEpoch {
+				return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period (i.e. end epoch %d should be >= %d) or the end epoch must match on input and output side", iotago.ErrInvalidStakingTransition, nextStakingFeat.EndEpoch, unbondingEpoch)
 			}
 		} else {
 			// Current epoch index is past the end epoch.
@@ -358,13 +355,16 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 			}
 		}
 	}
+
 	return nil
 }
 
-// Validates the rules for a newly added Staking Feature in an account.
+// Validates the rules for a newly added Staking Feature in an account,
+// or one which was effectively removed and added within the same transaction.
+// This is allowed as long as the epoch range of the old and new feature are disjoint.
 func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iotago.StakingFeature, vmParams *vm.Params) error {
 	if acc.Amount < stakingFeat.StakedAmount {
-		return fmt.Errorf("%w: the account's amount is less than the staked smount in the staking feature", iotago.ErrInvalidStakingTransition)
+		return fmt.Errorf("%w: the account's amount is less than the staked amount in the staking feature", iotago.ErrInvalidStakingTransition)
 	}
 
 	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
@@ -376,7 +376,7 @@ func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iot
 
 	unbondingEpoch := creationEpoch + vmParams.External.ProtocolParameters.StakingUnbondingPeriod
 	if stakingFeat.EndEpoch < unbondingEpoch {
-		return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period (%d)", iotago.ErrInvalidStakingTransition, unbondingEpoch)
+		return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period (i.e. end epoch %d should be >= %d)", iotago.ErrInvalidStakingTransition, stakingFeat.EndEpoch, unbondingEpoch)
 	}
 
 	return nil
@@ -410,6 +410,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 		}
 	} else {
 		// TODO: Mana Rewards Claiming.
+		fmt.Println("todo")
 	}
 
 	return nil

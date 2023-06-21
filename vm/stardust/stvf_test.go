@@ -60,6 +60,11 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	}
 	exampleExistingFoundryOutputID := exampleExistingFoundryOutput.MustID()
 
+	protoParams := &iotago.ProtocolParameters{
+		EpochDurationInSlots: 1 << 13,
+		MaxCommitableAge:     10,
+	}
+
 	type test struct {
 		name      string
 		input     *vm.ChainOutputWithCreationTime
@@ -87,7 +92,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			input:     nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -119,7 +126,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -157,7 +164,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -195,7 +202,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -223,7 +230,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 50,
 						FixedCost:    5,
-						// Slot 1000 is part of Epoch 11.
+						// CreationTime (Slot 1000) is part of Epoch 11.
 						StartEpoch: 11,
 						EndEpoch:   math.MaxUint64,
 					},
@@ -266,9 +273,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 50,
 						FixedCost:    5,
-						// Slot 1000 is part of Epoch 11, but it is set incorrectly.
-						StartEpoch: 2,
-						EndEpoch:   math.MaxUint64,
+						StartEpoch:   2,
+						EndEpoch:     math.MaxUint64,
 					},
 				},
 			},
@@ -309,15 +315,292 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 50,
 						FixedCost:    5,
-						// Slot 1000 is part of Epoch 11.
-						StartEpoch: 11,
-						// Should be 11+10 to be valid.
+						StartEpoch:   11,
+						// Should be 11 + StakingUnbondingPeriod (= 10) to be valid.
 						EndEpoch: 11 + 9,
 					},
 				},
 			},
 			input:     nil,
 			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
+			name: "fail - staking genesis delegated amount higher than amount",
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 500,
+						FixedCost:    5,
+						StartEpoch:   11,
+						EndEpoch:     11 + 10,
+					},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
+			name: "ok - valid staking transition",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 100,
+							FixedCost:    50,
+							StartEpoch:   11,
+							EndEpoch:     11 + 10000,
+						},
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 100,
+						FixedCost:    50,
+						StartEpoch:   11,
+						EndEpoch:     11 + 10,
+					},
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "fail - removing staking feature before end epoch",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 100,
+							FixedCost:    50,
+							StartEpoch:   11,
+							EndEpoch:     11 + 10000,
+						},
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
+			name: "fail - changing staking feature's staked amount",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 100,
+							FixedCost:    50,
+							StartEpoch:   11,
+							EndEpoch:     11 + 10000,
+						},
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 90,
+						FixedCost:    50,
+						StartEpoch:   11,
+						EndEpoch:     11 + 10000,
+					},
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
+			name: "fail - reducing staking feature's end epoch by more than the unbonding period",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 100,
+							FixedCost:    50,
+							StartEpoch:   11,
+							EndEpoch:     11 + 10000,
+						},
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 100,
+						FixedCost:    50,
+						StartEpoch:   11,
+						EndEpoch:     11 + 5,
+					},
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
@@ -355,7 +638,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next:      nil,
 			transType: iotago.ChainTransitionTypeDestroy,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 				},
@@ -383,7 +668,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next:      nil,
 			transType: iotago.ChainTransitionTypeDestroy,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
@@ -423,7 +710,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next:      nil,
 			transType: iotago.ChainTransitionTypeDestroy,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
@@ -435,6 +724,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			},
 			wantErr: iotago.ErrInvalidBlockIssuerTransition,
 		},
+
 		{
 			name: "fail - non-expired block issuer destroy transition",
 			input: &vm.ChainOutputWithCreationTime{
@@ -456,7 +746,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next:      nil,
 			transType: iotago.ChainTransitionTypeDestroy,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
@@ -489,7 +781,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next:      nil,
 			transType: iotago.ChainTransitionTypeDestroy,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
@@ -541,8 +835,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
@@ -595,8 +888,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
@@ -650,7 +942,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleGovCtrl.Key(): {UnlockedAt: 0},
@@ -690,7 +984,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
@@ -767,8 +1063,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -829,8 +1124,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -879,8 +1173,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -942,8 +1235,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -1005,8 +1297,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -1068,8 +1359,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -1124,8 +1414,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					DecayProvider:      iotago.NewDecayProvider(0, []float64{}, []float64{}),
-					ProtocolParameters: &iotago.ProtocolParameters{MaxCommitableAge: 10},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -1189,7 +1478,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					DecayProvider: iotago.NewDecayProvider(0, []float64{}, []float64{}),
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -1264,7 +1553,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 				},
@@ -1326,7 +1617,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					InChains:       vm.ChainInputSet{},
@@ -1345,6 +1638,19 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
 					cpy := copyObject(t, tt.input.Output, muts).(*iotago.AccountOutput)
+
+					if tt.input != nil {
+						// create the working set for the test
+						if tt.svCtx.WorkingSet.UTXOInputsWithCreationTime == nil {
+							tt.svCtx.WorkingSet.UTXOInputsWithCreationTime = make(vm.InputSet)
+						}
+
+						tt.svCtx.WorkingSet.UTXOInputsWithCreationTime[tpkg.RandOutputID(0)] = vm.OutputWithCreationTime{
+							Output:       tt.input.Output,
+							CreationTime: tt.input.CreationTime,
+						}
+					}
+
 					err := stardustVM.ChainSTVF(tt.transType, tt.input, cpy, tt.svCtx)
 					if tt.wantErr != nil {
 						require.ErrorIs(t, err, tt.wantErr)
@@ -1357,6 +1663,18 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.input != nil {
+				// create the working set for the test
+				if tt.svCtx.WorkingSet.UTXOInputsWithCreationTime == nil {
+					tt.svCtx.WorkingSet.UTXOInputsWithCreationTime = make(vm.InputSet)
+				}
+
+				tt.svCtx.WorkingSet.UTXOInputsWithCreationTime[tpkg.RandOutputID(0)] = vm.OutputWithCreationTime{
+					Output:       tt.input.Output,
+					CreationTime: tt.input.CreationTime,
+				}
+			}
+
 			err := stardustVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
@@ -1827,6 +2145,11 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		},
 	}
 
+	protoParams := &iotago.ProtocolParameters{
+		EpochDurationInSlots: 1 << 13,
+		MaxCommitableAge:     10,
+	}
+
 	type test struct {
 		name      string
 		input     *vm.ChainOutputWithCreationTime
@@ -1844,7 +2167,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			input:     nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -1861,7 +2186,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			next:      nil,
 			transType: iotago.ChainTransitionTypeDestroy,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 				},
@@ -1888,7 +2215,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 				},
@@ -1914,7 +2243,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 				},
