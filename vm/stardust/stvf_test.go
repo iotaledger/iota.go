@@ -62,7 +62,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 
 	protoParams := &iotago.ProtocolParameters{
 		EpochDurationInSlots: 1 << 13,
-		MaxCommitableAge:     10,
+		MaxCommittableAge:    10,
 	}
 
 	type test struct {
@@ -2147,7 +2147,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 
 	protoParams := &iotago.ProtocolParameters{
 		EpochDurationInSlots: 1 << 13,
-		MaxCommitableAge:     10,
+		MaxCommittableAge:    10,
 	}
 
 	type test struct {

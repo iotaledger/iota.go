@@ -87,7 +87,7 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 		GenesisUnixTimestamp:  1681373293,
 		SlotDurationInSeconds: 10,
 		EpochDurationInSlots:  10,
-		MaxCommittableAge:      10,
+		MaxCommittableAge:     10,
 	}
 	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":1681373293,"slotDurationInSeconds":10,"epochDurationInSlots":10,"maxCommittableAge":"10"}`
 
