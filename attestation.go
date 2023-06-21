@@ -54,7 +54,7 @@ func (a *Attestation) Compare(other *Attestation) int {
 	}
 }
 
-func (a Attestation) BlockID(slotTimeProvider *SlotTimeProvider) (BlockID, error) {
+func (a Attestation) BlockID(slotTimeProvider *TimeProvider) (BlockID, error) {
 	signatureBytes, err := internalEncode(a.Signature)
 	if err != nil {
 		return EmptyBlockID(), fmt.Errorf("failed to serialize block's signature: %w", err)
@@ -66,7 +66,7 @@ func (a Attestation) BlockID(slotTimeProvider *SlotTimeProvider) (BlockID, error
 	}
 
 	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
-	slotIndex := slotTimeProvider.IndexFromTime(a.IssuingTime)
+	slotIndex := slotTimeProvider.SlotIndexFromTime(a.IssuingTime)
 
 	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
 }

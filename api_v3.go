@@ -175,7 +175,7 @@ var (
 type v3api struct {
 	ctx          context.Context
 	serixAPI     *serix.API
-	timeProvider *SlotTimeProvider
+	timeProvider *TimeProvider
 }
 
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
@@ -190,7 +190,7 @@ func (v *v3api) Underlying() *serix.API {
 	return v.serixAPI
 }
 
-func (v *v3api) SlotTimeProvider() *SlotTimeProvider {
+func (v *v3api) SlotTimeProvider() *TimeProvider {
 	return v.timeProvider
 }
 
@@ -501,6 +501,6 @@ func V3API(protoParams *ProtocolParameters) API {
 	return &v3api{
 		ctx:          protoParams.AsSerixContext(),
 		serixAPI:     api,
-		timeProvider: protoParams.SlotTimeProvider(),
+		timeProvider: protoParams.TimeProvider(),
 	}
 }
