@@ -73,11 +73,11 @@ func (b BlockIssuanceCredit) Negative() bool {
 	return b.Value < 0
 }
 
-type CommitmentInputSet map[iotago.CommitmentID]*iotago.Commitment
+type VmCommitmentInput *iotago.Commitment
 
 type ResolvedInputs struct {
 	InputSet
 	BICInputSet
-	CommitmentInputSet
+	CommitmentInput VmCommitmentInput
 	RewardsInputSet
 }
