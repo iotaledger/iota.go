@@ -120,20 +120,19 @@ func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
 	return references, nil
 }
 
-func (t *Transaction) CommitmentInputs() ([]*CommitmentInput, error) {
-	references := make([]*CommitmentInput, 0, len(t.Essence.ContextInputs))
+// Returns the first commitment input in the transaction if it exists or nil.
+func (t *Transaction) CommitmentInput() *CommitmentInput {
 	for _, input := range t.Essence.ContextInputs {
 		switch castInput := input.(type) {
 		case *BICInput, *RewardInput:
 			// ignore this type
 		case *CommitmentInput:
-			references = append(references, castInput)
+			return castInput
 		default:
-			return nil, ErrUnexpectedUnderlyingType
+			return nil
 		}
 	}
-
-	return references, nil
+	return nil
 }
 
 func (t *Transaction) Size() int {

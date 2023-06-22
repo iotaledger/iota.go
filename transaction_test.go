@@ -195,9 +195,6 @@ func TestTransaction_InputTypes(t *testing.T) {
 		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
 	}
 
-	commitmentInput2 := &iotago.CommitmentInput{
-		CommitmentID: iotago.SlotIdentifierRepresentingData(11, tpkg.RandBytes(32)),
-	}
 	bicInput1 := &iotago.BICInput{
 		AccountID: tpkg.RandAccountID(),
 	}
@@ -213,7 +210,6 @@ func TestTransaction_InputTypes(t *testing.T) {
 		tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 			commitmentInput1,
 			bicInput1,
-			commitmentInput2,
 			bicInput2,
 		}),
 	))
@@ -221,22 +217,20 @@ func TestTransaction_InputTypes(t *testing.T) {
 	utxoInputs, err := transaction.Inputs()
 	require.NoError(t, err)
 
-	commitmentInputs, err := transaction.CommitmentInputs()
-	require.NoError(t, err)
+	commitmentInput := transaction.CommitmentInput()
+	require.NotNil(t, commitmentInput)
 
 	bicInputs, err := transaction.BICInputs()
 	require.NoError(t, err)
 
 	fmt.Println(utxoInputs)
 	require.Equal(t, 2, len(utxoInputs))
-	require.Equal(t, 2, len(commitmentInputs))
 	require.Equal(t, 2, len(bicInputs))
 
 	require.Contains(t, utxoInputs, utxoInput1)
 	require.Contains(t, utxoInputs, utxoInput2)
 
-	require.Contains(t, commitmentInputs, commitmentInput1)
-	require.Contains(t, commitmentInputs, commitmentInput2)
+	require.Equal(t, commitmentInput, commitmentInput1)
 
 	require.Contains(t, bicInputs, bicInput1)
 	require.Contains(t, bicInputs, bicInput2)
