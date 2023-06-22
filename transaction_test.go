@@ -1,7 +1,6 @@
 package iotago_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -202,6 +201,13 @@ func TestTransaction_InputTypes(t *testing.T) {
 		AccountID: tpkg.RandAccountID(),
 	}
 
+	rewardInput1 := &iotago.RewardInput{
+		Index: 3,
+	}
+	rewardInput2 := &iotago.RewardInput{
+		Index: 2,
+	}
+
 	transaction := tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
 		tpkg.WithInputs(iotago.TxEssenceInputs{
 			utxoInput1,
@@ -211,6 +217,8 @@ func TestTransaction_InputTypes(t *testing.T) {
 			commitmentInput1,
 			bicInput1,
 			bicInput2,
+			rewardInput1,
+			rewardInput2,
 		}),
 	))
 
@@ -223,9 +231,12 @@ func TestTransaction_InputTypes(t *testing.T) {
 	bicInputs, err := transaction.BICInputs()
 	require.NoError(t, err)
 
-	fmt.Println(utxoInputs)
+	rewardInputs, err := transaction.RewardInputs()
+	require.NoError(t, err)
+
 	require.Equal(t, 2, len(utxoInputs))
 	require.Equal(t, 2, len(bicInputs))
+	require.Equal(t, 2, len(rewardInputs))
 
 	require.Contains(t, utxoInputs, utxoInput1)
 	require.Contains(t, utxoInputs, utxoInput2)
@@ -234,4 +245,7 @@ func TestTransaction_InputTypes(t *testing.T) {
 
 	require.Contains(t, bicInputs, bicInput1)
 	require.Contains(t, bicInputs, bicInput2)
+
+	require.Contains(t, rewardInputs, rewardInput1)
+	require.Contains(t, rewardInputs, rewardInput2)
 }
