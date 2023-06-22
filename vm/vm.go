@@ -450,7 +450,7 @@ func ExecFuncBalancedMana() ExecFunc {
 		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 
 		if manaIn < manaOut {
-			return fmt.Errorf("%w: Mana in %d, Mana out %d", iotago.ErrInputOutputSumMismatch, manaIn, manaOut)
+			return fmt.Errorf("%w: Mana in %d, Mana out %d", iotago.ErrInputOutputManaMismatch, manaIn, manaOut)
 		}
 
 		return nil
