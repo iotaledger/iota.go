@@ -494,7 +494,6 @@ func RandUTXOInput() *iotago.UTXOInput {
 // RandCommitmentInput returns a random Commitment input.
 func RandCommitmentInput() *iotago.CommitmentInput {
 	return &iotago.CommitmentInput{
-		AccountID:    RandAccountID(),
 		CommitmentID: Rand40ByteArray(),
 	}
 }

@@ -27,7 +27,6 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 					TransactionOutputIndex: 1,
 				},
 				&iotago.CommitmentInput{
-					AccountID:    tpkg.RandAccountID(),
 					CommitmentID: tpkg.Rand40ByteArray(),
 				},
 				&iotago.BICInput{
@@ -38,7 +37,6 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 					Index: 2,
 				},
 				&iotago.CommitmentInput{
-					AccountID:    tpkg.RandAccountID(),
 					CommitmentID: tpkg.Rand40ByteArray(),
 				},
 				&iotago.BICInput{
@@ -69,11 +67,9 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 			name: "fail - commitment not unique",
 			inputs: iotago.Inputs[iotago.Input]{
 				&iotago.CommitmentInput{
-					AccountID:    [32]byte{},
 					CommitmentID: iotago.CommitmentID{},
 				},
 				&iotago.CommitmentInput{
-					AccountID:    [32]byte{},
 					CommitmentID: iotago.CommitmentID{},
 				},
 			},
@@ -176,7 +172,6 @@ func TestInputDeSerialize(t *testing.T) {
 		{
 			name: "ok - Commitment",
 			source: &iotago.CommitmentInput{
-				AccountID:    tpkg.RandAccountID(),
 				CommitmentID: iotago.CommitmentID{},
 			},
 			target:    &iotago.CommitmentInput{},

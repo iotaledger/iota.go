@@ -23,7 +23,6 @@ func TestTransactionDeSerialize(t *testing.T) {
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
 				tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 					&iotago.CommitmentInput{
-						AccountID:    tpkg.RandAccountID(),
 						CommitmentID: iotago.CommitmentID{},
 					},
 				}),
@@ -51,7 +50,6 @@ func TestTransactionDeSerialize(t *testing.T) {
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
 				tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 					&iotago.CommitmentInput{
-						AccountID:    tpkg.RandAccountID(),
 						CommitmentID: iotago.CommitmentID{},
 					},
 					&iotago.BICInput{
@@ -197,12 +195,10 @@ func TestTransaction_InputTypes(t *testing.T) {
 
 	commitmentInput1 := &iotago.CommitmentInput{
 		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
-		AccountID:    tpkg.RandAccountID(),
 	}
 
 	commitmentInput2 := &iotago.CommitmentInput{
 		CommitmentID: iotago.SlotIdentifierRepresentingData(11, tpkg.RandBytes(32)),
-		AccountID:    tpkg.RandAccountID(),
 	}
 	bicInput1 := &iotago.BICInput{
 		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
