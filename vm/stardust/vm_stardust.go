@@ -311,13 +311,7 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 	currentStakingFeat := current.FeatureSet().Staking()
 	nextStakingFeat := next.FeatureSet().Staking()
 
-	// If the account has no staking feature.
-	if currentStakingFeat == nil {
-		if nextStakingFeat == nil {
-			return nil
-		}
-		// Staking Feature Genesis handled in accountGenesisValid
-	} else {
+	if currentStakingFeat != nil {
 		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
 		creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
@@ -339,19 +333,24 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 			}
 		} else {
 			// Current epoch index is past the end epoch.
+			_, isClaiming := vmParams.WorkingSet.Rewards[current.AccountID]
 
 			// Mana Claiming by either removing the Feature or changing the feature's epoch range.
-			if nextStakingFeat != nil {
-				// TODO: mana rewards claiming
-			} else {
-				// No mana claiming and feature is untouched.
-				if !currentStakingFeat.Equal(nextStakingFeat) {
-					return fmt.Errorf("%w: all fields on the feature must match on the input and output", iotago.ErrInvalidStakingTransition)
+			if nextStakingFeat == nil {
+				if !isClaiming {
+					return fmt.Errorf("%w: cannot remove the staking feature without claiming rewards", iotago.ErrInvalidStakingTransition)
 				}
-
-				// Mana claiming and feature is transitioned to new state.
-				// TODO: mana rewards claiming
-				return accountStakingGenesisValidation(current, nextStakingFeat, vmParams)
+			} else {
+				if isClaiming {
+					// When claiming with a feature on the output side, it must be transitioned as if it was newly added,
+					// so the new epoch range is different.
+					return accountStakingGenesisValidation(current, nextStakingFeat, vmParams)
+				} else {
+					// If not claiming, the feature must be unchanged.
+					if !currentStakingFeat.Equal(nextStakingFeat) {
+						return fmt.Errorf("%w: cannot change the staking feature without claiming rewards", iotago.ErrInvalidStakingTransition)
+					}
+				}
 			}
 		}
 	}

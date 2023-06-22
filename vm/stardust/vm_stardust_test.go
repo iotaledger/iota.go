@@ -3984,3 +3984,96 @@ func TestTxSemanticMana(t *testing.T) {
 		})
 	}
 }
+
+func TestManaRewardsClaiming(t *testing.T) {
+	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
+	accountIdent := tpkg.RandAccountAddress()
+	creationSlot := iotago.SlotIndex(1000)
+	var manaRewardAmount uint64 = 200
+
+	protoParams := &iotago.ProtocolParameters{
+		EpochDurationInSlots:   1 << 13,
+		MaxCommittableAge:      10,
+		GenesisUnixTimestamp:   1000,
+		StakingUnbondingPeriod: 10,
+		SlotDurationInSeconds:  10,
+	}
+	currentEpoch := protoParams.TimeProvider().EpochsFromSlot(creationSlot)
+
+	inputIDs := tpkg.RandOutputIDs(1)
+	inputs := vm.InputSet{
+		inputIDs[0]: vm.OutputWithCreationTime{
+			Output: &iotago.AccountOutput{
+				Amount:         OneMi * 10,
+				NativeTokens:   nil,
+				AccountID:      accountIdent.AccountID(),
+				StateIndex:     1,
+				StateMetadata:  nil,
+				Mana:           0,
+				FoundryCounter: 0,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: ident},
+					&iotago.GovernorAddressUnlockCondition{Address: ident},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 100,
+						FixedCost:    50,
+						StartEpoch:   currentEpoch - 10,
+						EndEpoch:     currentEpoch,
+					},
+				},
+			},
+		},
+	}
+
+	essence := &iotago.TransactionEssence{
+		Inputs: inputIDs.UTXOInputs(),
+		Outputs: iotago.TxEssenceOutputs{
+			&iotago.AccountOutput{
+				Amount:         OneMi * 5,
+				NativeTokens:   nil,
+				AccountID:      accountIdent.AccountID(),
+				StateIndex:     2,
+				StateMetadata:  nil,
+				FoundryCounter: 0,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: ident},
+					&iotago.GovernorAddressUnlockCondition{Address: ident},
+				},
+				Features: nil,
+			},
+			&iotago.BasicOutput{
+				Amount:       OneMi * 5,
+				NativeTokens: nil,
+				// TODO: Potential Mana is currently just the amount on the input.
+				Mana: OneMi*10 + manaRewardAmount,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: accountIdent},
+				},
+				Features: nil,
+			},
+		},
+		CreationTime: creationSlot,
+	}
+
+	sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), identAddrKeys)
+	require.NoError(t, err)
+
+	tx := &iotago.Transaction{
+		Essence: essence,
+		Unlocks: iotago.Unlocks{
+			&iotago.SignatureUnlock{Signature: sigs[0]},
+		},
+	}
+
+	resolvedInputs := vm.ResolvedInputs{
+		InputSet: inputs,
+		RewardsInputSet: map[iotago.ChainID]uint64{
+			accountIdent.AccountID(): manaRewardAmount,
+		},
+	}
+	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{
+		ProtocolParameters: protoParams,
+	}}, resolvedInputs))
+}

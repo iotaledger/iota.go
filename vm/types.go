@@ -60,6 +60,9 @@ type ChainInputSet map[iotago.ChainID]*ChainOutputWithCreationTime
 
 type BICInputSet map[iotago.AccountID]BlockIssuanceCredit
 
+// A map of either DelegationID or AccountID to their mana reward amount.
+type RewardsInputSet map[iotago.ChainID]uint64
+
 type BlockIssuanceCredit struct {
 	AccountID    iotago.AccountID
 	CommitmentID iotago.CommitmentID
@@ -76,4 +79,5 @@ type ResolvedInputs struct {
 	InputSet
 	BICInputSet
 	CommitmentInputSet
+	RewardsInputSet
 }

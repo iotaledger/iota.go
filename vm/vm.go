@@ -60,6 +60,8 @@ type WorkingSet struct {
 	BIC BICInputSet
 	// Commitments contains set of commitment inputs necessary for transaction execution. FIXME
 	Commitments CommitmentInputSet
+	// Rewards contains a set of account or delegation IDs mapped to their rewards amount.
+	Rewards RewardsInputSet
 }
 
 // UTXOInputAtIndex retrieves the UTXOInput at the given index.
@@ -113,6 +115,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*Worki
 	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
 	workingSet.BIC = inputs.BICInputSet
 	workingSet.Commitments = inputs.CommitmentInputSet
+	workingSet.Rewards = inputs.RewardsInputSet
 
 	return workingSet, nil
 }
@@ -448,6 +451,11 @@ func ExecFuncBalancedMana() ExecFunc {
 		}
 		manaIn := TotalManaIn(vmParams.External.ProtocolParameters.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
+
+		// Whether it's valid to claim rewards is checked in the delegation and staking STVFs.
+		for _, reward := range vmParams.WorkingSet.Rewards {
+			manaIn += reward
+		}
 
 		if manaIn < manaOut {
 			return fmt.Errorf("%w: Mana in %d, Mana out %d", iotago.ErrInputOutputManaMismatch, manaIn, manaOut)
