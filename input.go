@@ -12,10 +12,12 @@ type InputType byte
 const (
 	// InputUTXO is a type of input which references an unspent transaction output.
 	InputUTXO InputType = iota
-	// InputCommitment is a tupe of input which references a commitment.
+	// InputCommitment is a type of input which references a commitment.
 	InputCommitment
 	// InputBlockIssuanceCredit is a type of input which references the block issuance credit from a specific account and commitment.
 	InputBlockIssuanceCredit
+	// InputReward is a type of input which references an Account or Delegation Input for which to claim rewards.
+	InputReward
 )
 
 func (inputType InputType) String() string {
@@ -71,6 +73,8 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 	utxoSet := map[string]int{}
 	commitmentsSet := map[string]int{}
 	bicSet := map[string]int{}
+	rewardSet := map[uint16]int{}
+
 	return func(index int, input Input) error {
 		switch castInput := input.(type) {
 		case *BICInput:
@@ -80,6 +84,12 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 				return fmt.Errorf("%w: input %d and %d share the same Account ref", ErrInputBICNotUnique, j, index)
 			}
 			utxoSet[k] = index
+		case *RewardInput:
+			utxoIndex := castInput.Index
+			if j, has := rewardSet[utxoIndex]; has {
+				return fmt.Errorf("%w: input %d and %d share the same input index", ErrInputRewardNotUnique, j, index)
+			}
+			rewardSet[utxoIndex] = index
 		case *CommitmentInput:
 			commitmentID := castInput.CommitmentID
 			k := string(commitmentID[:])

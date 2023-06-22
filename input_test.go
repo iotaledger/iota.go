@@ -34,6 +34,9 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 					AccountID:    tpkg.RandAccountID(),
 					CommitmentID: tpkg.Rand40ByteArray(),
 				},
+				&iotago.RewardInput{
+					Index: 2,
+				},
 				&iotago.CommitmentInput{
 					AccountID:    tpkg.RandAccountID(),
 					CommitmentID: tpkg.Rand40ByteArray(),
@@ -41,6 +44,9 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 				&iotago.BICInput{
 					AccountID:    tpkg.RandAccountID(),
 					CommitmentID: tpkg.Rand40ByteArray(),
+				},
+				&iotago.RewardInput{
+					Index: 4,
 				},
 			},
 			wantErr: nil,
@@ -86,6 +92,18 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 				},
 			},
 			wantErr: iotago.ErrInputBICNotUnique,
+		},
+		{
+			name: "fail - Reward not unique",
+			inputs: iotago.Inputs[iotago.Input]{
+				&iotago.RewardInput{
+					Index: 1,
+				},
+				&iotago.RewardInput{
+					Index: 1,
+				},
+			},
+			wantErr: iotago.ErrInputRewardNotUnique,
 		},
 	}
 	for _, tt := range tests {
@@ -172,6 +190,15 @@ func TestInputDeSerialize(t *testing.T) {
 				CommitmentID: iotago.CommitmentID{},
 			},
 			target:    &iotago.BICInput{},
+			seriErr:   nil,
+			deSeriErr: nil,
+		},
+		{
+			name: "ok - Reward",
+			source: &iotago.RewardInput{
+				Index: 6,
+			},
+			target:    &iotago.RewardInput{},
 			seriErr:   nil,
 			deSeriErr: nil,
 		},

@@ -48,6 +48,8 @@ var (
 	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
 	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
 	ErrInputBICNotUnique = errors.New("inputs must each reference a unique BIC")
+	// ErrInputRewardNotUnique gets returned if multiple inputs reference the same input index.
+	ErrInputRewardNotUnique = errors.New("inputs must each reference a unique input index")
 	// ErrInputCommitmentNotUnique gets returned if multiple inputs reference the same BIC.
 	ErrInputCommitmentNotUnique = errors.New("inputs must each reference a unique Commitment")
 	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
