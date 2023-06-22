@@ -30,8 +30,7 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 					CommitmentID: tpkg.Rand40ByteArray(),
 				},
 				&iotago.BICInput{
-					AccountID:    tpkg.RandAccountID(),
-					CommitmentID: tpkg.Rand40ByteArray(),
+					AccountID: tpkg.RandAccountID(),
 				},
 				&iotago.RewardInput{
 					Index: 2,
@@ -40,8 +39,7 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 					CommitmentID: tpkg.Rand40ByteArray(),
 				},
 				&iotago.BICInput{
-					AccountID:    tpkg.RandAccountID(),
-					CommitmentID: tpkg.Rand40ByteArray(),
+					AccountID: tpkg.RandAccountID(),
 				},
 				&iotago.RewardInput{
 					Index: 4,
@@ -79,12 +77,10 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 			name: "fail - BIC not unique",
 			inputs: iotago.Inputs[iotago.Input]{
 				&iotago.BICInput{
-					AccountID:    [32]byte{},
-					CommitmentID: iotago.CommitmentID{},
+					AccountID: [32]byte{},
 				},
 				&iotago.BICInput{
-					AccountID:    [32]byte{},
-					CommitmentID: iotago.CommitmentID{},
+					AccountID: [32]byte{},
 				},
 			},
 			wantErr: iotago.ErrInputBICNotUnique,
@@ -181,8 +177,7 @@ func TestInputDeSerialize(t *testing.T) {
 		{
 			name: "ok - BIC",
 			source: &iotago.BICInput{
-				AccountID:    tpkg.RandAccountID(),
-				CommitmentID: iotago.CommitmentID{},
+				AccountID: tpkg.RandAccountID(),
 			},
 			target:    &iotago.BICInput{},
 			seriErr:   nil,

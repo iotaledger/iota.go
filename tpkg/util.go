@@ -501,8 +501,7 @@ func RandCommitmentInput() *iotago.CommitmentInput {
 // RandBICInput returns a random BIC input.
 func RandBICInput() *iotago.BICInput {
 	return &iotago.BICInput{
-		AccountID:    RandAccountID(),
-		CommitmentID: Rand40ByteArray(),
+		AccountID: RandAccountID(),
 	}
 }
 

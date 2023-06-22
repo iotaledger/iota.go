@@ -680,9 +680,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        -1,
+							Credits: -1,
 						},
 					},
 				},
@@ -788,9 +786,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        0,
+							Credits: 0,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -841,9 +837,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        0,
+							Credits: 0,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -894,9 +888,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        0,
+							Credits: 0,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -1071,9 +1063,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        10,
+							Credits: 10,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -1181,9 +1171,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        10,
+							Credits: 10,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -1243,9 +1231,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        10,
+							Credits: 10,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -1305,9 +1291,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        -1,
+							Credits: -1,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -1422,9 +1406,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        10,
+							Credits: 10,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -1492,9 +1474,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        10,
+							Credits: 10,
 						},
 					},
 					Tx: &iotago.Transaction{

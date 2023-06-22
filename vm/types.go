@@ -64,13 +64,11 @@ type BICInputSet map[iotago.AccountID]BlockIssuanceCredit
 type RewardsInputSet map[iotago.ChainID]uint64
 
 type BlockIssuanceCredit struct {
-	AccountID    iotago.AccountID
-	CommitmentID iotago.CommitmentID
-	Value        int64
+	Credits int64
 }
 
 func (b BlockIssuanceCredit) Negative() bool {
-	return b.Value < 0
+	return b.Credits < 0
 }
 
 type VmCommitmentInput *iotago.Commitment

@@ -827,8 +827,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
 					&iotago.BICInput{
-						AccountID:    accountAddr1.AccountID(),
-						CommitmentID: iotago.CommitmentID{},
+						AccountID: accountAddr1.AccountID(),
 					},
 				},
 				Inputs: inputIDs.UTXOInputs(),
@@ -853,9 +852,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			bicInputs := vm.BICInputSet{
 				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
-					AccountID:    accountAddr1.AccountID(),
-					CommitmentID: iotago.CommitmentID{},
-					Value:        0,
+					Credits: 0,
 				},
 			}
 
@@ -915,8 +912,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
 					&iotago.BICInput{
-						AccountID:    accountAddr1.AccountID(),
-						CommitmentID: iotago.CommitmentID{},
+						AccountID: accountAddr1.AccountID(),
 					},
 				},
 				Inputs: inputIDs.UTXOInputs(),
@@ -941,9 +937,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			bicInputs := vm.BICInputSet{
 				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
-					AccountID:    accountAddr1.AccountID(),
-					CommitmentID: iotago.CommitmentID{},
-					Value:        0,
+					Credits: 0,
 				},
 			}
 
@@ -1001,8 +995,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
 					&iotago.BICInput{
-						AccountID:    accountAddr1.AccountID(),
-						CommitmentID: iotago.CommitmentID{},
+						AccountID: accountAddr1.AccountID(),
 					},
 				},
 				Inputs: inputIDs.UTXOInputs(),
@@ -1018,9 +1011,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			bicInputs := vm.BICInputSet{
 				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
-					AccountID:    accountAddr1.AccountID(),
-					CommitmentID: iotago.CommitmentID{},
-					Value:        0,
+					Credits: 0,
 				},
 			}
 
@@ -1080,8 +1071,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
 					&iotago.BICInput{
-						AccountID:    accountAddr1.AccountID(),
-						CommitmentID: iotago.CommitmentID{},
+						AccountID: accountAddr1.AccountID(),
 					},
 				},
 				Inputs: inputIDs.UTXOInputs(),
@@ -1097,9 +1087,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			bicInputs := vm.BICInputSet{
 				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
-					AccountID:    accountAddr1.AccountID(),
-					CommitmentID: iotago.CommitmentID{},
-					Value:        0,
+					Credits: 0,
 				},
 			}
 
