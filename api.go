@@ -39,6 +39,8 @@ type API interface {
 	Underlying() *serix.API
 	// TimeProvider returns the underlying time provider used.
 	TimeProvider() *TimeProvider
+	// ManaDecayProvider returns the underlying mana decay provider used.
+	ManaDecayProvider() *ManaDecayProvider
 }
 
 // LatestAPI creates a new API instance conforming to the latest IOTA protocol version.
