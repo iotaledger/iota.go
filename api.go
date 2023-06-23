@@ -105,7 +105,8 @@ type ProtocolParameters struct {
 	SlotDurationInSeconds uint8 `serix:"7,mapKey=slotDurationInSeconds"`
 	// EpochDurationInSlots defines the amount of slots in an epoch.
 	EpochDurationInSlots uint32 `serix:"8,mapKey=epochDurationInSlots"`
-	ManaGenerationRate   uint8  // `serix:"9,mapKey=manaGenerationRate"`
+	// ManaGenerationRate is a rate at which mana is generated.
+	ManaGenerationRate uint8 // `serix:"9,mapKey=manaGenerationRate"`
 	// ManaDecayFactors is a slice of epoch index diff to decay factor (slice index 0 = 1 epoch).
 	ManaDecayFactors []uint32 // `serix:"10,mapKey=manaDecayFactors"`
 	// ManaDecayFactorsScaleFactor is the amount of bits that are used for the mana decay factors.
@@ -113,7 +114,9 @@ type ProtocolParameters struct {
 	// MaxCommittableAge defines the maximum age of a slot to which a block can commit relative to the block timestamp,
 	// expressed in number of slots.
 	MaxCommittableAge SlotIndex `serix:"12,mapKey=maxCommittableAge"`
-	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
+	// OrphanageThreshold denotes number of slots in the past in relation to Accepted Tangle Time (ATT) below
+	// which blocks cannot be attached to.
+	OrphanageThreshold SlotIndex `serix:"13,mapKey=orphanageThreshold"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {
