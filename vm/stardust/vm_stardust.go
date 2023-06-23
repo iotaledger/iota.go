@@ -669,7 +669,7 @@ func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Param
 		expectedStartEpoch = creationEpoch + 2
 	}
 
-	if current.StartEpoch != uint64(expectedStartEpoch) {
+	if current.StartEpoch != expectedStartEpoch {
 		return fmt.Errorf("%w: DelegationOutput's start epoch is expected to be %d", iotago.ErrInvalidDelegationGenesis, expectedStartEpoch)
 	}
 
@@ -713,7 +713,7 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 		expectedEndEpoch = creationEpoch + 1
 	}
 
-	if current.EndEpoch != uint64(expectedEndEpoch) {
+	if current.EndEpoch != expectedEndEpoch {
 		return fmt.Errorf("%w: DelegationOutput's end epoch is expected to be %d", iotago.ErrInvalidDelegationGenesis, expectedEndEpoch)
 	}
 

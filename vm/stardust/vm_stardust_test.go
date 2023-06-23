@@ -4090,8 +4090,8 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 				DelegatedAmount:   OneMi * 10,
 				DelegationID:      iotago.EmptyDelegationId(),
 				ValidatorID:       iotago.EmptyAccountID(),
-				StartEpoch:        uint64(currentEpoch),
-				EndEpoch:          uint64(currentEpoch) + 5,
+				StartEpoch:        currentEpoch,
+				EndEpoch:          currentEpoch + 5,
 				ImmutableFeatures: nil,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: ident},

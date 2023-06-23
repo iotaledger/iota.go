@@ -184,8 +184,8 @@ func TestOutputsDeSerialize(t *testing.T) {
 				DelegatedAmount: 1337,
 				DelegationID:    tpkg.Rand32ByteArray(),
 				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      32,
-				EndEpoch:        37,
+				StartEpoch:      iotago.EpochIndex(32),
+				EndEpoch:        iotago.EpochIndex(37),
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},

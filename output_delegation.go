@@ -94,9 +94,9 @@ type DelegationOutput struct {
 	// The Account ID of the validator to which this output is delegating.
 	ValidatorID AccountID `serix:"3,mapKey=validatorId"`
 	// The index of the first epoch for which this output delegates.
-	StartEpoch uint64 `serix:"4,mapKey=startEpoch"`
+	StartEpoch EpochIndex `serix:"4,mapKey=startEpoch"`
 	// The index of the last epoch for which this output delegates.
-	EndEpoch uint64 `serix:"5,mapKey=endEpoch"`
+	EndEpoch EpochIndex `serix:"5,mapKey=endEpoch"`
 	// The unlock conditions on this output.
 	Conditions DelegationOutputUnlockConditions `serix:"6,mapKey=unlockConditions,omitempty"`
 	// The immutable feature on the output.
@@ -173,8 +173,7 @@ func (d *DelegationOutput) Size() int {
 		util.NumByteLen(d.DelegatedAmount) +
 		DelegationIDLength +
 		AccountIDLength +
-		util.NumByteLen(d.StartEpoch) +
-		util.NumByteLen(d.EndEpoch) +
+		len(EpochIndex(0).Bytes())*2 +
 		d.Conditions.Size() +
 		d.ImmutableFeatures.Size()
 }
