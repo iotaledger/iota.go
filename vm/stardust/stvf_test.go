@@ -61,13 +61,19 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	exampleExistingFoundryOutputID := exampleExistingFoundryOutput.MustID()
 
 	protoParams := &iotago.ProtocolParameters{
-		EpochDurationInSlots: 1 << 13,
-		MaxCommittableAge:    10,
+		GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+		StakingUnbondingPeriod: 10,
+		SlotDurationInSeconds:  10,
+		EpochDurationInSlots:   1 << 13,
+		MaxCommittableAge:      10,
 	}
+
+	currentSlot := iotago.SlotIndex(20 * (1 << 13))
+	currentEpoch := protoParams.TimeProvider().EpochsFromSlot(currentSlot)
 
 	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
-		ExpirySlot:      1000,
+		ExpirySlot:      currentSlot + protoParams.MaxCommittableAge,
 	}
 
 	exampleBIC := map[iotago.AccountID]vm.BlockIssuanceCredit{
@@ -241,9 +247,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 50,
 						FixedCost:    5,
-						// CreationTime (Slot 1000) is part of Epoch 11.
-						StartEpoch: 11,
-						EndEpoch:   math.MaxUint64,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     math.MaxUint64,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -252,12 +257,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -265,7 +265,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -286,7 +286,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 50,
 						FixedCost:    5,
-						StartEpoch:   2,
+						StartEpoch:   currentEpoch - 2,
 						EndEpoch:     math.MaxUint64,
 					},
 					exampleBlockIssuerFeature,
@@ -296,12 +296,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -309,7 +304,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -330,9 +325,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 50,
 						FixedCost:    5,
-						StartEpoch:   11,
-						// Should be 11 + StakingUnbondingPeriod (= 10) to be valid.
-						EndEpoch: 11 + 9,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + protoParams.StakingUnbondingPeriod - 1,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -341,12 +335,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -354,7 +343,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -375,8 +364,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 500,
 						FixedCost:    5,
-						StartEpoch:   11,
-						EndEpoch:     11 + 10,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + protoParams.StakingUnbondingPeriod,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -385,12 +374,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -398,7 +382,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -419,9 +403,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 50,
 						FixedCost:    5,
-						// CreationTime (Slot 1000) is part of Epoch 11.
-						StartEpoch: 11,
-						EndEpoch:   math.MaxUint64,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     math.MaxUint64,
 					},
 				},
 			},
@@ -429,12 +412,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -442,7 +420,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -465,8 +443,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.StakingFeature{
 							StakedAmount: 100,
 							FixedCost:    50,
-							StartEpoch:   11,
-							EndEpoch:     11 + 10000,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     currentEpoch + 10000,
 						},
 						exampleBlockIssuerFeature,
 					},
@@ -484,8 +462,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 100,
 						FixedCost:    50,
-						StartEpoch:   11,
-						EndEpoch:     11 + 10,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + protoParams.StakingUnbondingPeriod,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -493,12 +471,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -506,7 +479,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -528,8 +501,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.StakingFeature{
 							StakedAmount: 100,
 							FixedCost:    50,
-							StartEpoch:   11,
-							EndEpoch:     11 + 10000,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     currentEpoch + 10000,
 						},
 						exampleBlockIssuerFeature,
 					},
@@ -550,12 +523,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -563,7 +531,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -586,8 +554,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.StakingFeature{
 							StakedAmount: 100,
 							FixedCost:    50,
-							StartEpoch:   11,
-							EndEpoch:     11 + 10000,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     currentEpoch + 10000,
 						},
 						exampleBlockIssuerFeature,
 					},
@@ -605,8 +573,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 90,
 						FixedCost:    50,
-						StartEpoch:   11,
-						EndEpoch:     11 + 10000,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + 10000,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -614,12 +582,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -627,7 +590,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -650,8 +613,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.StakingFeature{
 							StakedAmount: 100,
 							FixedCost:    50,
-							StartEpoch:   11,
-							EndEpoch:     11 + 10000,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     currentEpoch + 10000,
 						},
 						exampleBlockIssuerFeature,
 					},
@@ -669,8 +632,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 100,
 						FixedCost:    50,
-						StartEpoch:   11,
-						EndEpoch:     11 + 5,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + protoParams.StakingUnbondingPeriod - 5,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -678,12 +641,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -691,7 +649,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -715,7 +673,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							StakedAmount: 50,
 							FixedCost:    5,
 							// CreationTime (Slot 1000) is part of Epoch 11.
-							StartEpoch: 11,
+							StartEpoch: currentEpoch,
 							EndEpoch:   math.MaxUint64,
 						},
 						&iotago.BlockIssuerFeature{
@@ -739,7 +697,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StakedAmount: 50,
 						FixedCost:    5,
 						// CreationTime (Slot 1000) is part of Epoch 11.
-						StartEpoch: 11,
+						StartEpoch: currentEpoch,
 						EndEpoch:   math.MaxUint64,
 					},
 				},
@@ -747,12 +705,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -760,7 +713,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -769,7 +722,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: iotago.ErrInvalidStakingTransition,
 		},
 		{
-			name: "fail - staking feature removed without specifying reward input",
+			name: "fail - expired staking feature removed without specifying reward input",
 			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:     100,
@@ -784,8 +737,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							StakedAmount: 50,
 							FixedCost:    5,
 							// CreationTime (Slot 1000) is part of Epoch 11.
-							StartEpoch: 5,
-							EndEpoch:   10,
+							StartEpoch: currentEpoch - 10,
+							EndEpoch:   currentEpoch - 5,
 						},
 						exampleBlockIssuerFeature,
 					},
@@ -807,12 +760,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -820,7 +768,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -844,8 +792,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							StakedAmount: 50,
 							FixedCost:    5,
 							// CreationTime (Slot 1000) is part of Epoch 11.
-							StartEpoch: 5,
-							EndEpoch:   10,
+							StartEpoch: currentEpoch - 10,
+							EndEpoch:   currentEpoch - 5,
 						},
 						exampleBlockIssuerFeature,
 					},
@@ -865,8 +813,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StakedAmount: 80,
 						FixedCost:    5,
 						// CreationTime (Slot 1000) is part of Epoch 11.
-						StartEpoch: 5,
-						EndEpoch:   10,
+						StartEpoch: currentEpoch - 10,
+						EndEpoch:   currentEpoch - 5,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -874,12 +822,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -887,7 +830,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,
@@ -896,7 +839,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: iotago.ErrInvalidStakingTransition,
 		},
 		{
-			name: "fail - claiming rewards of an expired staking feature without setting start epoch anew",
+			name: "fail - claiming rewards of an expired staking feature without resetting start epoch",
 			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:     100,
@@ -911,8 +854,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							StakedAmount: 50,
 							FixedCost:    5,
 							// CreationTime (Slot 1000) is part of Epoch 11.
-							StartEpoch: 5,
-							EndEpoch:   10,
+							StartEpoch: currentEpoch - 10,
+							EndEpoch:   currentEpoch - 5,
 						},
 						exampleBlockIssuerFeature,
 					},
@@ -932,8 +875,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StakedAmount: 50,
 						FixedCost:    5,
 						// CreationTime (Slot 1000) is part of Epoch 11.
-						StartEpoch: 8,
-						EndEpoch:   100,
+						StartEpoch: currentEpoch - 10,
+						EndEpoch:   currentEpoch + 10,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -941,12 +884,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
 				External: &iotago.ExternalUnlockParameters{
-					ProtocolParameters: &iotago.ProtocolParameters{
-						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
-						StakingUnbondingPeriod: 10,
-						SlotDurationInSeconds:  10,
-						EpochDurationInSlots:   100,
-					},
+					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
@@ -954,7 +892,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
-							CreationTime: 1000,
+							CreationTime: currentSlot,
 						},
 					},
 					BIC: exampleBIC,

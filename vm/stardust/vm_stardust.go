@@ -347,7 +347,7 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 			} else {
 				if isClaiming {
 					// When claiming with a feature on the output side, it must be transitioned as if it was newly added,
-					// so the new epoch range is different.
+					// so that the new epoch range is different.
 					if err := accountStakingGenesisValidation(current, nextStakingFeat, vmParams); err != nil {
 						return fmt.Errorf("%w: rewards claiming without removing the feature requires updating the feature: %w", iotago.ErrInvalidStakingTransition, err)
 					}
