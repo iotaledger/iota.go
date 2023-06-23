@@ -311,6 +311,10 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 	currentStakingFeat := current.FeatureSet().Staking()
 	nextStakingFeat := next.FeatureSet().Staking()
 
+	if nextStakingFeat != nil && next.FeatureSet().BlockIssuer() == nil {
+		return fmt.Errorf("%w: a staking feature can only be present if a block issuer feature is present", iotago.ErrInvalidStakingTransition)
+	}
+
 	if currentStakingFeat != nil {
 		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
 		creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
@@ -318,6 +322,10 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 		if creationEpoch < currentStakingFeat.EndEpoch {
 			if nextStakingFeat == nil {
 				return fmt.Errorf("%w: the staking feature cannot be removed before the end epoch", iotago.ErrInvalidStakingTransition)
+			} else {
+				if next.FeatureSet().BlockIssuer() == nil {
+					return fmt.Errorf("%w: a staking feature can only be present if a block issuer feature is present", iotago.ErrInvalidStakingTransition)
+				}
 			}
 
 			if currentStakingFeat.StakedAmount != nextStakingFeat.StakedAmount ||
@@ -376,6 +384,10 @@ func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iot
 	unbondingEpoch := creationEpoch + vmParams.External.ProtocolParameters.StakingUnbondingPeriod
 	if stakingFeat.EndEpoch < unbondingEpoch {
 		return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period (i.e. end epoch %d should be >= %d)", iotago.ErrInvalidStakingTransition, stakingFeat.EndEpoch, unbondingEpoch)
+	}
+
+	if acc.FeatureSet().BlockIssuer() == nil {
+		return fmt.Errorf("%w: a staking feature can only be added if a block issuer feature is present", iotago.ErrInvalidStakingTransition)
 	}
 
 	return nil

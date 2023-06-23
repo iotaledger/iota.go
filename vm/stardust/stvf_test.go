@@ -65,6 +65,17 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		MaxCommittableAge:    10,
 	}
 
+	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
+		BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
+		ExpirySlot:      1000,
+	}
+
+	exampleBIC := map[iotago.AccountID]vm.BlockIssuanceCredit{
+		exampleAccountID: {
+			Credits: 100,
+		},
+	}
+
 	type test struct {
 		name      string
 		input     *vm.ChainOutputWithCreationTime
@@ -234,6 +245,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StartEpoch: 11,
 						EndEpoch:   math.MaxUint64,
 					},
+					exampleBlockIssuerFeature,
 				},
 			},
 			input:     nil,
@@ -256,6 +268,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: 1000,
 						},
 					},
+					BIC: exampleBIC,
 				},
 			},
 			wantErr: nil,
@@ -276,6 +289,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StartEpoch:   2,
 						EndEpoch:     math.MaxUint64,
 					},
+					exampleBlockIssuerFeature,
 				},
 			},
 			input:     nil,
@@ -298,6 +312,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: 1000,
 						},
 					},
+					BIC: exampleBIC,
 				},
 			},
 			wantErr: iotago.ErrInvalidStakingTransition,
@@ -319,6 +334,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						// Should be 11 + StakingUnbondingPeriod (= 10) to be valid.
 						EndEpoch: 11 + 9,
 					},
+					exampleBlockIssuerFeature,
 				},
 			},
 			input:     nil,
@@ -341,6 +357,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: 1000,
 						},
 					},
+					BIC: exampleBIC,
 				},
 			},
 			wantErr: iotago.ErrInvalidStakingTransition,
@@ -361,6 +378,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StartEpoch:   11,
 						EndEpoch:     11 + 10,
 					},
+					exampleBlockIssuerFeature,
 				},
 			},
 			input:     nil,
@@ -383,6 +401,51 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: 1000,
 						},
 					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
+			name: "fail - staking feature without block issuer feature",
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						// CreationTime (Slot 1000) is part of Epoch 11.
+						StartEpoch: 11,
+						EndEpoch:   math.MaxUint64,
+					},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+					BIC: exampleBIC,
 				},
 			},
 			wantErr: iotago.ErrInvalidStakingTransition,
@@ -405,6 +468,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							StartEpoch:   11,
 							EndEpoch:     11 + 10000,
 						},
+						exampleBlockIssuerFeature,
 					},
 				},
 			},
@@ -423,6 +487,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StartEpoch:   11,
 						EndEpoch:     11 + 10,
 					},
+					exampleBlockIssuerFeature,
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -444,6 +509,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: 1000,
 						},
 					},
+					BIC: exampleBIC,
 				},
 			},
 		},
@@ -465,6 +531,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							StartEpoch:   11,
 							EndEpoch:     11 + 10000,
 						},
+						exampleBlockIssuerFeature,
 					},
 				},
 			},
@@ -476,7 +543,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				Features: iotago.AccountOutputFeatures{},
+				Features: iotago.AccountOutputFeatures{
+					exampleBlockIssuerFeature,
+				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
@@ -497,6 +566,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: 1000,
 						},
 					},
+					BIC: exampleBIC,
 				},
 			},
 			wantErr: iotago.ErrInvalidStakingTransition,
@@ -519,6 +589,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							StartEpoch:   11,
 							EndEpoch:     11 + 10000,
 						},
+						exampleBlockIssuerFeature,
 					},
 				},
 			},
@@ -537,6 +608,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StartEpoch:   11,
 						EndEpoch:     11 + 10000,
 					},
+					exampleBlockIssuerFeature,
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -558,6 +630,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: 1000,
 						},
 					},
+					BIC: exampleBIC,
 				},
 			},
 			wantErr: iotago.ErrInvalidStakingTransition,
@@ -580,6 +653,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							StartEpoch:   11,
 							EndEpoch:     11 + 10000,
 						},
+						exampleBlockIssuerFeature,
 					},
 				},
 			},
@@ -597,6 +671,76 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						FixedCost:    50,
 						StartEpoch:   11,
 						EndEpoch:     11 + 5,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
+			name: "fail - account removes block issuer feature while having a staking feature",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							// CreationTime (Slot 1000) is part of Epoch 11.
+							StartEpoch: 11,
+							EndEpoch:   math.MaxUint64,
+						},
+						&iotago.BlockIssuerFeature{
+							BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
+							ExpirySlot:      990,
+						},
+					},
+				},
+				CreationTime: 1000,
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 2,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						// CreationTime (Slot 1000) is part of Epoch 11.
+						StartEpoch: 11,
+						EndEpoch:   math.MaxUint64,
 					},
 				},
 			},
@@ -619,6 +763,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: 1000,
 						},
 					},
+					BIC: exampleBIC,
 				},
 			},
 			wantErr: iotago.ErrInvalidStakingTransition,
@@ -648,7 +793,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "ok - destroy block issuer account with negative BIC",
+			name: "fail - destroy block issuer account with negative BIC",
 			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
