@@ -2535,3 +2535,111 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		})
 	}
 }
+
+func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
+	// exampleIssuer := tpkg.RandEd25519Address()
+
+	protoParams := &iotago.ProtocolParameters{
+		GenesisUnixTimestamp:  uint32(time.Now().Unix()),
+		SlotDurationInSeconds: 10,
+		EpochDurationInSlots:  1 << 13,
+		MaxCommittableAge:     10,
+	}
+
+	currentSlot := iotago.SlotIndex(20 * (1 << 13))
+	currentEpoch := protoParams.TimeProvider().EpochsFromSlot(currentSlot)
+
+	type test struct {
+		name      string
+		input     *vm.ChainOutputWithCreationTime
+		next      *iotago.DelegationOutput
+		nextMut   map[string]fieldMutations
+		transType iotago.ChainTransitionType
+		svCtx     *vm.Params
+		wantErr   error
+	}
+
+	tests := []test{
+		{
+			name: "ok - genesis transition",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 100,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch + 1,
+				EndEpoch:        0,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		if tt.nextMut != nil {
+			for mutName, muts := range tt.nextMut {
+				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
+					cpy := copyObject(t, tt.input.Output, muts).(*iotago.DelegationOutput)
+
+					if tt.input != nil {
+						// create the working set for the test
+						if tt.svCtx.WorkingSet.UTXOInputsWithCreationTime == nil {
+							tt.svCtx.WorkingSet.UTXOInputsWithCreationTime = make(vm.InputSet)
+						}
+
+						tt.svCtx.WorkingSet.UTXOInputsWithCreationTime[tpkg.RandOutputID(0)] = vm.OutputWithCreationTime{
+							Output:       tt.input.Output,
+							CreationTime: tt.input.CreationTime,
+						}
+					}
+
+					err := stardustVM.ChainSTVF(tt.transType, tt.input, cpy, tt.svCtx)
+					if tt.wantErr != nil {
+						require.ErrorIs(t, err, tt.wantErr)
+						return
+					}
+					require.NoError(t, err)
+				})
+			}
+			continue
+		}
+
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.input != nil {
+				// create the working set for the test
+				if tt.svCtx.WorkingSet.UTXOInputsWithCreationTime == nil {
+					tt.svCtx.WorkingSet.UTXOInputsWithCreationTime = make(vm.InputSet)
+				}
+
+				tt.svCtx.WorkingSet.UTXOInputsWithCreationTime[tpkg.RandOutputID(0)] = vm.OutputWithCreationTime{
+					Output:       tt.input.Output,
+					CreationTime: tt.input.CreationTime,
+				}
+			}
+
+			err := stardustVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
