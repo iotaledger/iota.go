@@ -16,11 +16,7 @@ var (
 func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 	return &TransactionBuilder{
 		essence: &iotago.TransactionEssence{
-			NetworkID:     networkID,
-			ContextInputs: iotago.TxEssenceContextInputs{},
-			Inputs:        iotago.TxEssenceInputs{},
-			Outputs:       iotago.TxEssenceOutputs{},
-			Payload:       nil,
+			NetworkID: networkID,
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},

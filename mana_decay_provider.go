@@ -62,7 +62,7 @@ func (p *ManaDecayProvider) decay(value uint64, epochDiff EpochIndex) uint64 {
 		decayFactor := p.decayFactors[diffsToDecay-1]
 
 		// apply the decay and scale the resulting value (fixed-point arithmetics)
-		value = (value * uint64(decayFactor)) >> ManaDecayScaleFactor
+		value = (value * decayFactor) >> ManaDecayScaleFactor
 	}
 
 	// scale the mana value back to the correct size

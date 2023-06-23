@@ -23,6 +23,7 @@ func (inputSet InputSet) OutputSet() iotago.OutputSet {
 }
 
 type ChainOutputWithCreationTime struct {
+	ChainID      iotago.ChainID
 	Output       iotago.ChainOutput
 	CreationTime iotago.SlotIndex
 }
@@ -48,6 +49,7 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 		}
 
 		set[chainID] = &ChainOutputWithCreationTime{
+			ChainID:      chainID,
 			Output:       chainOutput,
 			CreationTime: input.CreationTime,
 		}

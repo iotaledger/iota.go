@@ -1,8 +1,34 @@
 package iotago
 
 import (
+	"errors"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/util"
+)
+
+var (
+	// ErrInvalidStakingStartEpoch gets returned when a new Staking Feature's start epoch
+	// is not set to the epoch of the transaction.
+	ErrInvalidStakingStartEpoch = errors.New("staking start epoch must be the epoch index of the transaction")
+	// ErrInvalidStakingEndEpochTooEarly gets returned when a new Staking Feature's end epoch
+	// is not at least set to the transaction epoch plus the unbonding period.
+	ErrInvalidStakingEndEpochTooEarly = errors.New("staking end epoch must be set to the transaction epoch plus the unbonding period")
+	// ErrInvalidStakingAmountMismatch gets returned when a new Staking Feature's Staked Amount
+	// is not less or equal to the account's amount.
+	ErrInvalidStakingAmountMismatch = errors.New("staking amount must be less or equal to the amount on the account")
+	// ErrInvalidStakingBlockIssuerRequired gets returned when an account contains a Staking Feature
+	// but no Block Issuer Feature.
+	ErrInvalidStakingBlockIssuerRequired = errors.New("staking feature requires a block issuer feature")
+	// ErrInvalidStakingBondedRemoval gets returned when a staking feature is removed before the end of the unbonding period.
+	ErrInvalidStakingBondedRemoval = errors.New("staking feature can only be removed after the unbonding period")
+	// ErrInvalidStakingBondedRemoval gets returned when a staking feature's start epoch, fixed cost or
+	// staked amount are modified before the unboding period.
+	ErrInvalidStakingBondedModified = errors.New("staking start epoch, fixed cost and staked amount cannot be modified while bonded")
+	// ErrInvalidStakingRewardInputRequired get returned when a staking feature is removed or resetted without a reward input.
+	ErrInvalidStakingRewardInputRequired = errors.New("staking feature removal or resetting requires a reward input")
+	// ErrInvalidStakingRewardClaim gets returned when mana rewards are claimed before the end of the unbonding period.
+	ErrInvalidStakingRewardClaim = errors.New("staking rewards claiming can only be done after the unbonding period")
 )
 
 // StakingFeature is a feature which indicates that this account wants to register as a validator.
