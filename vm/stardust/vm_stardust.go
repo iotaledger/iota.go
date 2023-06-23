@@ -266,20 +266,34 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
 	manaDecayProvider := vmParams.External.ProtocolParameters.ManaDecayProvider()
-	manaIn := vm.TotalManaIn(
+	manaIn, err := vm.TotalManaIn(
 		manaDecayProvider,
 		vmParams.WorkingSet.Tx.Essence.CreationTime,
 		vmParams.WorkingSet.UTXOInputsWithCreationTime,
 	)
+	if err != nil {
+		return err
+	}
+
 	manaOut := vm.TotalManaOut(
 		vmParams.WorkingSet.Tx.Essence.Outputs,
 		vmParams.WorkingSet.Tx.Essence.Allotments,
 	)
 
-	manaIn -= manaDecayProvider.StoredManaWithDecay(current.Mana, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime)      // AccountInStored
-	manaIn -= manaDecayProvider.PotentialManaWithDecay(current.Amount, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInPotential
-	manaOut -= next.Mana                                                                                                                // AccountOutStored
-	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)                                                         // AccountOutAllotted
+	manaStoredAccount, err := manaDecayProvider.StoredManaWithDecay(iotago.Mana(current.Mana), input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInStored
+	if err != nil {
+		return fmt.Errorf("%w: account %s stored mana calculation failed", err, current.AccountID)
+	}
+	manaIn -= uint64(manaStoredAccount)
+
+	manaPotentialAccount, err := manaDecayProvider.PotentialManaWithDecay(iotago.BaseToken(current.Amount), input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInPotential
+	if err != nil {
+		return fmt.Errorf("%w: account %s potential mana calculation failed", err, current.AccountID)
+	}
+	manaIn -= uint64(manaPotentialAccount)
+
+	manaOut -= next.Mana                                                        // AccountOutStored
+	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID) // AccountOutAllotted
 
 	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
 	for _, output := range vmParams.WorkingSet.OutputsByType[iotago.OutputBasic] {

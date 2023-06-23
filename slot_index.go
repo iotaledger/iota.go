@@ -9,6 +9,11 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
+var (
+	// ErrWrongSlotIndex gets returned when a wrong slot index was passed.
+	ErrWrongSlotIndex = errors.New("wrong slot index")
+)
+
 // SlotIndex is the ID of a slot.
 type SlotIndex uint64
 

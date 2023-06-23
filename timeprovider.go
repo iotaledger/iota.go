@@ -97,3 +97,13 @@ func (t *TimeProvider) EpochEnd(epoch EpochIndex) SlotIndex {
 	}
 	return SlotIndex(epoch*EpochIndex(t.epochDuration) - 1)
 }
+
+// SlotsBeforeNextEpoch calculates the slots before the start of the next epoch.
+func (t *TimeProvider) SlotsBeforeNextEpoch(slot SlotIndex) SlotIndex {
+	return t.EpochStart(t.EpochsFromSlot(slot)+1) - slot
+}
+
+// SlotsSinceEpochStart calculates the slots since the start of the epoch.
+func (t *TimeProvider) SlotsSinceEpochStart(slot SlotIndex) SlotIndex {
+	return slot - t.EpochStart(t.EpochsFromSlot(slot))
+}

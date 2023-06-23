@@ -83,4 +83,11 @@ func TestSlot(t *testing.T) {
 		nextEpochStart := startSlot + SlotIndex(timeProvider.EpochDuration())
 		require.Equal(t, EpochIndex(3), timeProvider.EpochsFromSlot(nextEpochStart))
 	}
+
+	{
+		require.Equal(t, SlotIndex(5), timeProvider.SlotsBeforeNextEpoch(15))
+		require.Equal(t, SlotIndex(10), timeProvider.SlotsBeforeNextEpoch(20))
+		require.Equal(t, SlotIndex(0), timeProvider.SlotsSinceEpochStart(20))
+		require.Equal(t, SlotIndex(1), timeProvider.SlotsSinceEpochStart(21))
+	}
 }
