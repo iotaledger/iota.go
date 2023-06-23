@@ -19,10 +19,10 @@ func TestBasicOutputBuilder(t *testing.T) {
 		nt                      = tpkg.RandNativeToken()
 		expirationTarget        = tpkg.RandEd25519Address()
 		metadata                = []byte("123456")
-		slotTimeProvider        = iotago.NewSlotTimeProvider(time.Now().Unix(), 10)
+		slotTimeProvider        = iotago.NewTimeProvider(time.Now().Unix(), 10, 10)
 	)
-	timelock := slotTimeProvider.IndexFromTime(time.Now().Add(5 * time.Minute))
-	expiration := slotTimeProvider.IndexFromTime(time.Now().Add(10 * time.Minute))
+	timelock := slotTimeProvider.SlotIndexFromTime(time.Now().Add(5 * time.Minute))
+	expiration := slotTimeProvider.SlotIndexFromTime(time.Now().Add(10 * time.Minute))
 
 	basicOutput, err := builder.NewBasicOutputBuilder(targetAddr, deposit).
 		NativeToken(nt).
