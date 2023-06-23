@@ -132,7 +132,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 
 	if stakingFeat := current.FeatureSet().Staking(); stakingFeat != nil {
 		if err := accountStakingGenesisValidation(current, stakingFeat, vmParams); err != nil {
-			return err
+			return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, err)
 		}
 	}
 
@@ -322,10 +322,6 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 		if creationEpoch < currentStakingFeat.EndEpoch {
 			if nextStakingFeat == nil {
 				return fmt.Errorf("%w: the staking feature cannot be removed before the end epoch", iotago.ErrInvalidStakingTransition)
-			} else {
-				if next.FeatureSet().BlockIssuer() == nil {
-					return fmt.Errorf("%w: a staking feature can only be present if a block issuer feature is present", iotago.ErrInvalidStakingTransition)
-				}
 			}
 
 			if currentStakingFeat.StakedAmount != nextStakingFeat.StakedAmount ||
@@ -352,7 +348,9 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 				if isClaiming {
 					// When claiming with a feature on the output side, it must be transitioned as if it was newly added,
 					// so the new epoch range is different.
-					return accountStakingGenesisValidation(current, nextStakingFeat, vmParams)
+					if err := accountStakingGenesisValidation(current, nextStakingFeat, vmParams); err != nil {
+						return fmt.Errorf("%w: rewards claiming without removing the feature requires updating the feature: %w", iotago.ErrInvalidStakingTransition, err)
+					}
 				} else {
 					// If not claiming, the feature must be unchanged.
 					if !currentStakingFeat.Equal(nextStakingFeat) {
@@ -371,23 +369,23 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 // This is allowed as long as the epoch range of the old and new feature are disjoint.
 func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iotago.StakingFeature, vmParams *vm.Params) error {
 	if acc.Amount < stakingFeat.StakedAmount {
-		return fmt.Errorf("%w: the account's amount is less than the staked amount in the staking feature", iotago.ErrInvalidStakingTransition)
+		return fmt.Errorf("the account's amount is less than the staked amount in the staking feature")
 	}
 
 	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
 	creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
 	if stakingFeat.StartEpoch != creationEpoch {
-		return fmt.Errorf("%w: the start epoch must be set to the epoch index of the transaction (%d)", iotago.ErrInvalidStakingTransition, creationEpoch)
+		return fmt.Errorf("the start epoch must be set to the epoch index of the transaction (%d)", creationEpoch)
 	}
 
 	unbondingEpoch := creationEpoch + vmParams.External.ProtocolParameters.StakingUnbondingPeriod
 	if stakingFeat.EndEpoch < unbondingEpoch {
-		return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period (i.e. end epoch %d should be >= %d)", iotago.ErrInvalidStakingTransition, stakingFeat.EndEpoch, unbondingEpoch)
+		return fmt.Errorf("the end epoch must be in the future by at least the unbonding period (i.e. end epoch %d should be >= %d)", stakingFeat.EndEpoch, unbondingEpoch)
 	}
 
 	if acc.FeatureSet().BlockIssuer() == nil {
-		return fmt.Errorf("%w: a staking feature can only be added if a block issuer feature is present", iotago.ErrInvalidStakingTransition)
+		return fmt.Errorf("a staking feature can only be added if a block issuer feature is present")
 	}
 
 	return nil

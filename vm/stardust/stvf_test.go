@@ -769,6 +769,203 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: iotago.ErrInvalidStakingTransition,
 		},
 		{
+			name: "fail - staking feature removed without specifying reward input",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							// CreationTime (Slot 1000) is part of Epoch 11.
+							StartEpoch: 5,
+							EndEpoch:   10,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+				CreationTime: 1000,
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 2,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
+			name: "fail - changing an expired staking feature without claiming",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							// CreationTime (Slot 1000) is part of Epoch 11.
+							StartEpoch: 5,
+							EndEpoch:   10,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+				CreationTime: 1000,
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 2,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 80,
+						FixedCost:    5,
+						// CreationTime (Slot 1000) is part of Epoch 11.
+						StartEpoch: 5,
+						EndEpoch:   10,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
+			name: "fail - claiming rewards of an expired staking feature without setting start epoch anew",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							// CreationTime (Slot 1000) is part of Epoch 11.
+							StartEpoch: 5,
+							EndEpoch:   10,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+				CreationTime: 1000,
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 2,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						// CreationTime (Slot 1000) is part of Epoch 11.
+						StartEpoch: 8,
+						EndEpoch:   100,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: &iotago.ProtocolParameters{
+						GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+						StakingUnbondingPeriod: 10,
+						SlotDurationInSeconds:  10,
+						EpochDurationInSlots:   100,
+					},
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: 1000,
+						},
+					},
+					BIC: exampleBIC,
+					Rewards: map[iotago.ChainID]uint64{
+						exampleAccountID: 200,
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingTransition,
+		},
+		{
 			name: "ok - destroy transition",
 			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
