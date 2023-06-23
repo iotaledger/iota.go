@@ -241,9 +241,9 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	}
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
-	decayProvider := vmParams.External.DecayProvider
+	manaDecayProvider := vmParams.External.ProtocolParameters.ManaDecayProvider()
 	manaIn := vm.TotalManaIn(
-		decayProvider,
+		manaDecayProvider,
 		vmParams.WorkingSet.Tx.Essence.CreationTime,
 		vmParams.WorkingSet.UTXOInputsWithCreationTime,
 	)
@@ -252,11 +252,11 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		vmParams.WorkingSet.Tx.Essence.Allotments,
 	)
 
-	timeHeld := vmParams.WorkingSet.Tx.Essence.CreationTime - input.CreationTime
-	manaIn -= decayProvider.StoredManaWithDecay(current.Mana, timeHeld)         // AccountInStored
-	manaIn -= decayProvider.PotentialManaWithDecay(current.Amount, timeHeld)    // AccountInPotential
-	manaOut -= next.Mana                                                        // AccountOutStored
-	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID) // AccountOutAllotted
+	manaIn -= manaDecayProvider.StoredManaWithDecay(current.Mana, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime)      // AccountInStored
+	manaIn -= manaDecayProvider.PotentialManaWithDecay(current.Amount, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInPotential
+	manaOut -= next.Mana                                                                                                                // AccountOutStored
+	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)                                                         // AccountOutAllotted
+
 	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
 	for _, output := range vmParams.WorkingSet.OutputsByType[iotago.OutputBasic] {
 		basicOutput, is := output.(*iotago.BasicOutput)

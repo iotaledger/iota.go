@@ -592,7 +592,7 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, t
 // ExternalUnlockParameters defines a palette of external system parameters which are used to
 // determine whether an Output can be unlocked.
 type ExternalUnlockParameters struct {
-	DecayProvider      *DecayProvider
+	DecayProvider      *ManaDecayProvider
 	ProtocolParameters *ProtocolParameters
 }
 
