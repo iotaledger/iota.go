@@ -10,32 +10,31 @@ import (
 )
 
 const (
-	manaValue53Bit = 9007199254740991 // 0x1FFFFFFFFFFFFF, 53 bits set to 1 (maximum mana value)
+	betaPerYear float64 = 1 / 3.0
 )
 
 var (
-	testManaDecayFactors         = getTestManaDecayFactors(365, 32)
-	testManaDecayFactorEpochsSum = getTestManaDecayFactorEpochsSum(32)
+	testManaDecayFactors         = getTestManaDecayFactors(betaPerYear, 1<<13, 10, 32)
+	testManaDecayFactorEpochsSum = getTestManaDecayFactorEpochsSum(betaPerYear, 1<<13, 10, 20)
 )
 
-func getTestManaDecayFactors(decayIndexes int, decayFactorsScaleFactor uint64) []uint32 {
-	decayFactors := make([]uint32, decayIndexes)
+func getTestManaDecayFactors(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds int, decayFactorsShiftFactor uint64) []uint32 {
+	epochsPerYear := ((365.0 * 24.0 * 60.0 * 60.0) / float64(slotTimeSeconds)) / float64(slotsPerEpoch)
+	decayFactors := make([]uint32, int(epochsPerYear))
 
-	betaPerYear := 1 / 3.0
-	betaPerDecayIndex := betaPerYear / 365.0
+	betaPerDecayIndex := betaPerYear / epochsPerYear
 
-	for decayIndex := 1; decayIndex <= decayIndexes; decayIndex++ {
-		decayFactor := math.Exp(-betaPerDecayIndex*float64(decayIndex)) * (math.Pow(2, float64(decayFactorsScaleFactor)))
-		decayFactors[decayIndex-1] = uint32(decayFactor)
+	for epochIndex := 1; epochIndex <= int(epochsPerYear); epochIndex++ {
+		decayFactor := math.Exp(-betaPerDecayIndex*float64(epochIndex)) * (math.Pow(2, float64(decayFactorsShiftFactor)))
+		decayFactors[epochIndex-1] = uint32(decayFactor)
 	}
 
 	return decayFactors
 }
 
-func getTestManaDecayFactorEpochsSum(decayFactorsScaleFactor uint64) uint32 {
-	betaPerYear := 1 / 3.0
-	delta := float64(1<<13) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * 10.0
-	return uint32((math.Exp(-betaPerYear*delta) / (1 - math.Exp(-betaPerYear*delta)) * (math.Pow(2, float64(decayFactorsScaleFactor)))))
+func getTestManaDecayFactorEpochsSum(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds int, decayFactorEpochsSumShiftFactor uint64) uint32 {
+	delta := float64(slotsPerEpoch) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(slotTimeSeconds)
+	return uint32((math.Exp(-betaPerYear*delta) / (1 - math.Exp(-betaPerYear*delta)) * (math.Pow(2, float64(decayFactorEpochsSumShiftFactor)))))
 }
 
 func BenchmarkManaDecay_Single(b *testing.B) {
@@ -47,7 +46,7 @@ func BenchmarkManaDecay_Single(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = manaDecayProvider.StoredManaWithDecay(manaValue53Bit, 0, endIndex)
+		_, _ = manaDecayProvider.StoredManaWithDecay(math.MaxUint64, 0, endIndex)
 	}
 }
 
@@ -58,7 +57,7 @@ func BenchmarkManaDecay_Range(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		var value iotago.Mana = manaValue53Bit
+		var value iotago.Mana = (1 << 64) - 1
 		for decayIndex := 1; decayIndex <= 5*365; decayIndex++ {
 			value, _ = manaDecayProvider.StoredManaWithDecay(value, 0, iotago.SlotIndex(decayIndex)<<13)
 		}
@@ -71,7 +70,7 @@ func TestManaDecay_NoFactorsGiven(t *testing.T) {
 
 	value, err := manaDecayProvider.StoredManaWithDecay(100, 0, 100<<13)
 	require.NoError(t, err)
-	require.Equal(t, uint64(100), value)
+	require.Equal(t, iotago.Mana(100), value)
 }
 
 func TestManaDecay_DecayIndexDiff(t *testing.T) {
@@ -81,11 +80,7 @@ func TestManaDecay_DecayIndexDiff(t *testing.T) {
 	// no decay in the same decay index
 	value, err := manaDecayProvider.StoredManaWithDecay(100, 1, 200)
 	require.NoError(t, err)
-	require.Equal(t, uint64(100), value)
-
-	require.Panics(t, func() {
-		manaDecayProvider.StoredManaWithDecay(100, 2<<13, 1<<13)
-	})
+	require.Equal(t, iotago.Mana(100), value)
 }
 
 func TestManaDecay_Decay(t *testing.T) {
@@ -94,29 +89,29 @@ func TestManaDecay_Decay(t *testing.T) {
 
 	{
 		// check if mana decay works for multiples of the available decay indexes in the lookup table
-		value, err := manaDecayProvider.StoredManaWithDecay(manaValue53Bit, 0, iotago.SlotIndex(3*len(testManaDecayFactors))<<13)
+		value, err := manaDecayProvider.StoredManaWithDecay(math.MaxUint64, 0, iotago.SlotIndex(3*len(testManaDecayFactors))<<13)
 		require.NoError(t, err)
-		require.Equal(t, uint64(3310474560012284), value)
+		require.Equal(t, iotago.Mana(6803138682699798504), value)
 	}
 
 	{
-		// check if mana decay works for exactly the  amount of decay indexes in the lookup table
-		value, err := manaDecayProvider.StoredManaWithDecay(manaValue53Bit, 0, iotago.SlotIndex(len(testManaDecayFactors))<<13)
+		// check if mana decay works for exactly the amount of decay indexes in the lookup table
+		value, err := manaDecayProvider.StoredManaWithDecay(math.MaxUint64, 0, iotago.SlotIndex(len(testManaDecayFactors))<<13)
 		require.NoError(t, err)
-		require.Equal(t, uint64(6451934231789564), value)
+		require.Equal(t, iotago.Mana(13228672242897911807), value)
 	}
 
 	{
 		// check if mana decay works for 0 mana values
 		value, err := manaDecayProvider.StoredManaWithDecay(0, 0, 400<<13)
 		require.NoError(t, err)
-		require.Equal(t, uint64(0), value)
+		require.Equal(t, iotago.Mana(0), value)
 	}
 
 	{
 		// even with the highest possible int64 number, the calculation should not overflow because of the overflow protection
-		value, err := manaDecayProvider.StoredManaWithDecay(math.MaxInt64, 0, 400<<13)
+		value, err := manaDecayProvider.StoredManaWithDecay(math.MaxUint64, 0, 400<<13)
 		require.NoError(t, err)
-		require.Equal(t, uint64(6398705774377299968), value)
+		require.Equal(t, iotago.Mana(13046663022640287317), value)
 	}
 }
