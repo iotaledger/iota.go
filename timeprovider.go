@@ -84,10 +84,16 @@ func (t *TimeProvider) EpochsFromSlot(slot SlotIndex) EpochIndex {
 
 // EpochStart calculates the start slot of the given epoch.
 func (t *TimeProvider) EpochStart(epoch EpochIndex) SlotIndex {
+	if epoch == 0 || t.epochDuration == 0 {
+		return 0
+	}
 	return SlotIndex((epoch - 1) * EpochIndex(t.epochDuration))
 }
 
 // EpochEnd calculates the end included slot of the given epoch.
 func (t *TimeProvider) EpochEnd(epoch EpochIndex) SlotIndex {
+	if epoch == 0 || t.epochDuration == 0 {
+		return 0
+	}
 	return SlotIndex(epoch*EpochIndex(t.epochDuration) - 1)
 }
