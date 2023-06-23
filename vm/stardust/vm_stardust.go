@@ -132,7 +132,8 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 
 	if stakingFeat := current.FeatureSet().Staking(); stakingFeat != nil {
 		if err := accountStakingGenesisValidation(current, stakingFeat, vmParams); err != nil {
-			return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, err)
+			// TODO: Change back.
+			return fmt.Errorf("%w: %w", iotago.ErrAccountMissing, err)
 		}
 	}
 
@@ -312,7 +313,7 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 	nextStakingFeat := next.FeatureSet().Staking()
 
 	if nextStakingFeat != nil && next.FeatureSet().BlockIssuer() == nil {
-		return fmt.Errorf("%w: a staking feature can only be present if a block issuer feature is present", iotago.ErrInvalidStakingTransition)
+		return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingBlockIssuerRequired)
 	}
 
 	_, isClaiming := vmParams.WorkingSet.Rewards[chainID]
@@ -342,23 +343,23 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 // This is allowed as long as the epoch range of the old and new feature are disjoint.
 func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iotago.StakingFeature, vmParams *vm.Params) error {
 	if acc.Amount < stakingFeat.StakedAmount {
-		return fmt.Errorf("the account's amount is less than the staked amount in the staking feature")
+		return iotago.ErrInvalidStakingAmountMismatch
 	}
 
 	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
 	creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
 	if stakingFeat.StartEpoch != creationEpoch {
-		return fmt.Errorf("the start epoch must be set to the epoch index of the transaction (%d)", creationEpoch)
+		return iotago.ErrInvalidStakingStartEpoch
 	}
 
 	unbondingEpoch := creationEpoch + vmParams.External.ProtocolParameters.StakingUnbondingPeriod
 	if stakingFeat.EndEpoch < unbondingEpoch {
-		return fmt.Errorf("the end epoch must be in the future by at least the unbonding period (i.e. end epoch %d should be >= %d)", stakingFeat.EndEpoch, unbondingEpoch)
+		return fmt.Errorf("%w: (i.e. end epoch %d should be >= %d)", iotago.ErrInvalidStakingEndEpochTooEarly, stakingFeat.EndEpoch, unbondingEpoch)
 	}
 
 	if acc.FeatureSet().BlockIssuer() == nil {
-		return fmt.Errorf("a staking feature can only be added if a block issuer feature is present")
+		return iotago.ErrInvalidStakingBlockIssuerRequired
 	}
 
 	return nil
@@ -374,23 +375,23 @@ func accountStakingNonExpiredValidation(
 	isClaiming bool,
 ) error {
 	if nextStakingFeat == nil {
-		return fmt.Errorf("%w: the staking feature cannot be removed before end epoch", iotago.ErrInvalidStakingTransition)
+		return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingBondedRemoval)
 	}
 
 	if isClaiming {
-		return fmt.Errorf("%w: cannot claim rewards for staking before end epoch", iotago.ErrInvalidStakingTransition)
+		return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingRewardClaim)
 	}
 
 	if currentStakingFeat.StakedAmount != nextStakingFeat.StakedAmount ||
 		currentStakingFeat.FixedCost != nextStakingFeat.FixedCost ||
 		currentStakingFeat.StartEpoch != nextStakingFeat.StartEpoch {
-		return fmt.Errorf("%w: staked amount, fixed cost and start epoch must match on the input and output", iotago.ErrInvalidStakingTransition)
+		return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingBondedModified)
 	}
 
 	unbondingEpoch := creationEpoch + stakingUnbondingPeriod
 	if currentStakingFeat.EndEpoch != nextStakingFeat.EndEpoch &&
 		nextStakingFeat.EndEpoch < unbondingEpoch {
-		return fmt.Errorf("%w: the end epoch must be in the future by at least the unbonding period (i.e. end epoch %d should be >= %d) or the end epoch must match on input and output side", iotago.ErrInvalidStakingTransition, nextStakingFeat.EndEpoch, unbondingEpoch)
+		return fmt.Errorf("%w: %w (i.e. end epoch %d should be >= %d) or the end epoch must match on input and output side", iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingEndEpochTooEarly, nextStakingFeat.EndEpoch, unbondingEpoch)
 	}
 
 	return nil
@@ -409,19 +410,19 @@ func accountStakingExpiredValidation(
 	// Mana Claiming by either removing the Feature or changing the feature's epoch range.
 	if nextStakingFeat == nil {
 		if !isClaiming {
-			return fmt.Errorf("%w: cannot remove the staking feature without a rewards input", iotago.ErrInvalidStakingTransition)
+			return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingRewardInputRequired)
 		}
 	} else {
 		if isClaiming {
 			// When claiming with a feature on the output side, it must be transitioned as if it was newly added,
 			// so that the new epoch range is different.
 			if err := accountStakingGenesisValidation(current, nextStakingFeat, vmParams); err != nil {
-				return fmt.Errorf("%w: rewards claiming without removing the feature requires updating the feature: %w", iotago.ErrInvalidStakingTransition, err)
+				return fmt.Errorf("%w: %w: rewards claiming without removing the feature requires updating the feature", iotago.ErrInvalidStakingTransition, err)
 			}
 		} else {
 			// If not claiming, the feature must be unchanged.
 			if !currentStakingFeat.Equal(nextStakingFeat) {
-				return fmt.Errorf("%w: cannot change the staking feature without claiming rewards", iotago.ErrInvalidStakingTransition)
+				return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingRewardInputRequired)
 			}
 		}
 	}
@@ -455,11 +456,11 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 		creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
 		if creationEpoch < stakingFeat.EndEpoch {
-			return fmt.Errorf("%w: cannot destroy account until the staking feature is unbonded", iotago.ErrInvalidAccountStateTransition)
+			return fmt.Errorf("%w: %w: cannot destroy account until the staking feature is unbonded", iotago.ErrInvalidAccountStateTransition, iotago.ErrInvalidStakingBondedRemoval)
 		}
 
 		if !isClaiming {
-			return fmt.Errorf("%w: cannot destroy account with a staking feature without reward input", iotago.ErrInvalidAccountStateTransition)
+			return fmt.Errorf("%w: %w: cannot destroy account with a staking feature without reward input", iotago.ErrInvalidAccountStateTransition, iotago.ErrInvalidStakingRewardInputRequired)
 		}
 	}
 

@@ -310,7 +310,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingStartEpoch,
 		},
 		{
 			name: "fail - staking genesis end epoch too early",
@@ -349,10 +349,10 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingEndEpochTooEarly,
 		},
 		{
-			name: "fail - staking genesis delegated amount higher than amount",
+			name: "fail - staking genesis staked amount higher than amount",
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: iotago.AccountID{},
@@ -388,7 +388,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingAmountMismatch,
 		},
 		{
 			name: "fail - staking feature without block issuer feature",
@@ -426,7 +426,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingBlockIssuerRequired,
 		},
 		{
 			name: "ok - valid staking transition",
@@ -537,7 +537,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingBondedRemoval,
 		},
 		{
 			name: "fail - changing staking feature's staked amount",
@@ -596,7 +596,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingBondedModified,
 		},
 		{
 			name: "fail - reducing staking feature's end epoch by more than the unbonding period",
@@ -655,7 +655,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingEndEpochTooEarly,
 		},
 		{
 			name: "fail - account removes block issuer feature while having a staking feature",
@@ -672,9 +672,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.StakingFeature{
 							StakedAmount: 50,
 							FixedCost:    5,
-							// CreationTime (Slot 1000) is part of Epoch 11.
-							StartEpoch: currentEpoch,
-							EndEpoch:   math.MaxUint64,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     math.MaxUint64,
 						},
 						&iotago.BlockIssuerFeature{
 							BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
@@ -696,9 +695,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 50,
 						FixedCost:    5,
-						// CreationTime (Slot 1000) is part of Epoch 11.
-						StartEpoch: currentEpoch,
-						EndEpoch:   math.MaxUint64,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     math.MaxUint64,
 					},
 				},
 			},
@@ -719,7 +717,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingBlockIssuerRequired,
 		},
 		{
 			name: "fail - expired staking feature removed without specifying reward input",
@@ -736,9 +734,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.StakingFeature{
 							StakedAmount: 50,
 							FixedCost:    5,
-							// CreationTime (Slot 1000) is part of Epoch 11.
-							StartEpoch: currentEpoch - 10,
-							EndEpoch:   currentEpoch - 5,
+							StartEpoch:   currentEpoch - 10,
+							EndEpoch:     currentEpoch - 5,
 						},
 						exampleBlockIssuerFeature,
 					},
@@ -774,7 +771,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingRewardInputRequired,
 		},
 		{
 			name: "fail - changing an expired staking feature without claiming",
@@ -791,9 +788,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.StakingFeature{
 							StakedAmount: 50,
 							FixedCost:    5,
-							// CreationTime (Slot 1000) is part of Epoch 11.
-							StartEpoch: currentEpoch - 10,
-							EndEpoch:   currentEpoch - 5,
+							StartEpoch:   currentEpoch - 10,
+							EndEpoch:     currentEpoch - 5,
 						},
 						exampleBlockIssuerFeature,
 					},
@@ -812,9 +808,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 80,
 						FixedCost:    5,
-						// CreationTime (Slot 1000) is part of Epoch 11.
-						StartEpoch: currentEpoch - 10,
-						EndEpoch:   currentEpoch - 5,
+						StartEpoch:   currentEpoch - 10,
+						EndEpoch:     currentEpoch - 5,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -836,11 +831,12 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingRewardInputRequired,
 		},
 		{
 			name: "fail - claiming rewards of an expired staking feature without resetting start epoch",
 			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:     100,
 					AccountID:  exampleAccountID,
@@ -853,9 +849,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.StakingFeature{
 							StakedAmount: 50,
 							FixedCost:    5,
-							// CreationTime (Slot 1000) is part of Epoch 11.
-							StartEpoch: currentEpoch - 10,
-							EndEpoch:   currentEpoch - 5,
+							StartEpoch:   currentEpoch - 10,
+							EndEpoch:     currentEpoch - 5,
 						},
 						exampleBlockIssuerFeature,
 					},
@@ -874,9 +869,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 50,
 						FixedCost:    5,
-						// CreationTime (Slot 1000) is part of Epoch 11.
-						StartEpoch: currentEpoch - 10,
-						EndEpoch:   currentEpoch + 10,
+						StartEpoch:   currentEpoch - 10,
+						EndEpoch:     currentEpoch + 10,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -901,7 +895,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingTransition,
+			wantErr: iotago.ErrInvalidStakingStartEpoch,
 		},
 		{
 			name: "ok - destroy transition",
