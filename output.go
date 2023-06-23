@@ -17,6 +17,12 @@ import (
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
+// BaseToken defines the unit of the base token of the network.
+type BaseToken uint64
+
+// Mana defines the type of the consumable resource e.g. used in congestion control.
+type Mana uint64
+
 // Output defines a unit of output of a transaction.
 type Output interface {
 	Sizer

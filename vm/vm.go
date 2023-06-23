@@ -120,16 +120,25 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*Worki
 	return workingSet, nil
 }
 
-func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) uint64 {
+func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) (uint64, error) {
 	var totalIn uint64
-	for _, input := range inputSet {
+	for outputID, input := range inputSet {
 		// stored Mana
-		totalIn += manaDecayProvider.StoredManaWithDecay(input.Output.StoredMana(), input.CreationTime, txCreationTime)
+		manaStored, err := manaDecayProvider.StoredManaWithDecay(iotago.Mana(input.Output.StoredMana()), input.CreationTime, txCreationTime)
+		if err != nil {
+			return 0, fmt.Errorf("%w: input %s stored mana calculation failed", err, outputID)
+		}
+		totalIn += uint64(manaStored)
+
 		// potential Mana
-		totalIn += manaDecayProvider.PotentialManaWithDecay(input.Output.Deposit(), input.CreationTime, txCreationTime)
+		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(iotago.BaseToken(input.Output.Deposit()), input.CreationTime, txCreationTime)
+		if err != nil {
+			return 0, fmt.Errorf("%w: input %s potential mana calculation failed", err, outputID)
+		}
+		totalIn += uint64(manaPotential)
 	}
 
-	return totalIn
+	return totalIn, nil
 }
 
 func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iotago.Allotments) uint64 {
@@ -449,7 +458,10 @@ func ExecFuncBalancedMana() ExecFunc {
 				return fmt.Errorf("%w: input %s has creation time %d, tx creation time %d", iotago.ErrInputCreationAfterTxCreation, outputID, input.CreationTime, txCreationTime)
 			}
 		}
-		manaIn := TotalManaIn(vmParams.External.ProtocolParameters.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn, err := TotalManaIn(vmParams.External.ProtocolParameters.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		if err != nil {
+			return err
+		}
 		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 
 		// Whether it's valid to claim rewards is checked in the delegation and staking STVFs.
