@@ -220,13 +220,13 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 }
 
 // ID computes the ID of the Block.
-func (b *Block) ID(slotTimeProvider *SlotTimeProvider) (BlockID, error) {
+func (b *Block) ID(timeProvider *TimeProvider) (BlockID, error) {
 	data, err := internalEncode(b)
 	if err != nil {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
 	}
 
-	slotIndex := slotTimeProvider.IndexFromTime(b.IssuingTime)
+	slotIndex := timeProvider.SlotIndexFromTime(b.IssuingTime)
 
 	blockIdentifier, err := BlockIdentifierFromBlockBytes(data)
 	if err != nil {
@@ -237,8 +237,8 @@ func (b *Block) ID(slotTimeProvider *SlotTimeProvider) (BlockID, error) {
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
-func (b *Block) MustID(slotTimeProvider *SlotTimeProvider) BlockID {
-	blockID, err := b.ID(slotTimeProvider)
+func (b *Block) MustID(timeProvider *TimeProvider) BlockID {
+	blockID, err := b.ID(timeProvider)
 	if err != nil {
 		panic(err)
 	}

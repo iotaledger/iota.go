@@ -154,7 +154,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 
-	slotTimeProvider := iotago.NewSlotTimeProvider(time.Now().Unix(), 10)
+	slotTimeProvider := iotago.NewTimeProvider(time.Now().Unix(), 10, 10)
 
 	m := &iotago.Block{
 		ProtocolVersion: tpkg.TestProtocolVersion,
