@@ -101,7 +101,7 @@ type ShallowLikeParentIDs = BlockIDs
 // Block represents a vertex in the Tangle.
 type Block struct {
 	// The protocol version under which this block operates.
-	ProtocolVersion byte `serix:"0,mapKey=protocolVersion"`
+	ProtocolVersion Version `serix:"0,mapKey=protocolVersion"`
 
 	NetworkID NetworkID `serix:"1,mapKey=networkId"`
 

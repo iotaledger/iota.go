@@ -86,7 +86,7 @@ const ProtocolAPIContextKey protocolAPIContext = "protocolParameters"
 // ProtocolParameters defines the parameters of the protocol.
 type ProtocolParameters struct {
 	// The version of the protocol running.
-	Version byte `serix:"0,mapKey=version"`
+	Version Version `serix:"0,mapKey=version"`
 	// The human friendly name of the network.
 	NetworkName string `serix:"1,lengthPrefixType=uint8,mapKey=networkName"`
 	// The HRP prefix used for Bech32 addresses in the network.
@@ -112,7 +112,7 @@ type ProtocolParameters struct {
 	// expressed in number of slots.
 	MaxCommittableAge SlotIndex `serix:"12,mapKey=maxCommittableAge"`
 	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
-	ProtocolVersions ProtocolVersions `serix:"12,mapKey=protocolVersion"`
+	ProtocolVersions ProtocolVersions `serix:"13,mapKey=protocolVersion,lengthPrefixType=uint8"` // TODO: do we need to set the length prefix type here?
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {
@@ -148,21 +148,24 @@ func (p ProtocolParameters) Hash() ([32]byte, error) {
 	return blake2b.Sum256(bytes), nil
 }
 
-// TODO: add serix serialization for slice sorting by Version
+type Version = byte
+
 type ProtocolVersion struct {
-	Version        byte      `serix:"0"`
-	StartSlotIndex SlotIndex `serix:"1"`
+	Version    Version    `serix:"0"`
+	StartEpoch EpochIndex `serix:"1"`
 }
 
 type ProtocolVersions []ProtocolVersion
 
-func (p ProtocolVersions) VersionBySlotIndex(index SlotIndex) byte {
+func (p ProtocolVersions) VersionByEpoch(index EpochIndex) Version {
 	for i := len(p) - 1; i >= 0; i-- {
-		if p[i].StartSlotIndex <= index {
+		if p[i].StartEpoch <= index {
 			return p[i].Version
 		}
 	}
-	return 0
+
+	// This means that the protocol parameters are not properly configured.
+	panic(fmt.Sprintf("could not find a protocol version for epoch %d", index))
 }
 
 // Sizer is an object knowing its own byte size.

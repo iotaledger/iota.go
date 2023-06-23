@@ -169,6 +169,13 @@ var (
 
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
+
+	protocolVersionsV3 = &serix.ArrayRules{
+		Min: 1,
+		Max: 256,
+
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
+	}
 )
 
 // v3api implements the iota-core 1.0 protocol core models.
@@ -206,7 +213,14 @@ func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, er
 func V3API(protoParams *ProtocolParameters) API {
 	api := serix.NewAPI()
 
-	must(api.RegisterTypeSettings(ProtocolParameters{}, serix.TypeSettings{}))
+	{
+		must(api.RegisterTypeSettings(ProtocolParameters{}, serix.TypeSettings{}))
+		must(api.RegisterTypeSettings(ProtocolVersion{}, serix.TypeSettings{}))
+		must(api.RegisterTypeSettings(ProtocolVersions{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(protocolVersionsV3),
+		))
+	}
+
 	must(api.RegisterTypeSettings(RentStructure{}, serix.TypeSettings{}))
 
 	must(api.RegisterTypeSettings(TaggedData{}, serix.TypeSettings{}.WithObjectType(uint32(PayloadTaggedData))))
