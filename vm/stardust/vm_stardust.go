@@ -580,20 +580,27 @@ func foundryDestructionValid(current *iotago.FoundryOutput, inSums iotago.Native
 }
 
 func delegationSTVF(input *vm.ChainOutputWithCreationTime, transType iotago.ChainTransitionType, next *iotago.DelegationOutput, vmParams *vm.Params) error {
+	_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
+
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
+		if isClaiming {
+			return fmt.Errorf("%w: cannot claim rewards during delegation output creation", iotago.ErrInvalidDelegationRewardsClaiming)
+		}
 		if err := delegationGenesisValid(next, vmParams); err != nil {
 			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("Delegation %s", next.DelegationID)}
 		}
 	case iotago.ChainTransitionTypeStateChange:
+		if isClaiming {
+			return fmt.Errorf("%w: cannot claim rewards during delegation output transition", iotago.ErrInvalidDelegationRewardsClaiming)
+		}
 		current := input.Output.(*iotago.DelegationOutput)
 		if err := delegationStateChangeValid(current, next, vmParams); err != nil {
 			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("Delegation %s", current.DelegationID)}
 		}
 	case iotago.ChainTransitionTypeDestroy:
-		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if !isClaiming {
-			return fmt.Errorf("%w: cannot destroy delegation output without a rewards input", iotago.ErrInvalidDelegationGenesis)
+			return fmt.Errorf("%w: cannot destroy delegation output without a rewards input", iotago.ErrInvalidDelegationRewardsClaiming)
 		}
 		return nil
 	default:

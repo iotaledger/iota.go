@@ -19,7 +19,9 @@ var (
 	ErrInvalidDelegationGenesis = errors.New("invalid delegation output genesis")
 	// ErrInvalidDelegationTransition gets returned when a Delegation Output is doing an invalid state transition.
 	ErrInvalidDelegationTransition = errors.New("invalid delegation output transition")
-	emptyDelegationID              = [DelegationIDLength]byte{}
+	// ErrInvalidDelegationRewardsClaiming gets returned when a Delegation Output is doing an invalid state transition.
+	ErrInvalidDelegationRewardsClaiming = errors.New("invalid delegation mana rewards claiming")
+	emptyDelegationID                   = [DelegationIDLength]byte{}
 )
 
 func EmptyDelegationId() DelegationID {
