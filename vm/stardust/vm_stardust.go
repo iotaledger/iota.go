@@ -342,7 +342,7 @@ func accountStakingSTVF(current *iotago.AccountOutput, next *iotago.AccountOutpu
 			// Mana Claiming by either removing the Feature or changing the feature's epoch range.
 			if nextStakingFeat == nil {
 				if !isClaiming {
-					return fmt.Errorf("%w: cannot remove the staking feature without claiming rewards", iotago.ErrInvalidStakingTransition)
+					return fmt.Errorf("%w: cannot remove the staking feature without a rewards input", iotago.ErrInvalidStakingTransition)
 				}
 			} else {
 				if isClaiming {
@@ -591,7 +591,10 @@ func delegationSTVF(input *vm.ChainOutputWithCreationTime, transType iotago.Chai
 			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("Delegation %s", current.DelegationID)}
 		}
 	case iotago.ChainTransitionTypeDestroy:
-		// TODO: Mana Rewards Claiming?
+		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
+		if !isClaiming {
+			return fmt.Errorf("%w: cannot destroy delegation output without a rewards input", iotago.ErrInvalidDelegationGenesis)
+		}
 		return nil
 	default:
 		panic("unknown chain transition type in DelegationOutput")

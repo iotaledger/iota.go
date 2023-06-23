@@ -65,6 +65,15 @@ func (delegationId DelegationID) ToHex() string {
 	return hexutil.EncodeHex(delegationId[:])
 }
 
+func (id DelegationID) FromOutputID(outid OutputID) ChainID {
+	return DelegationIDFromOutputID(outid)
+}
+
+// DelegationIDFromOutputID returns the DelegationID computed from a given OutputID.
+func DelegationIDFromOutputID(outputID OutputID) DelegationID {
+	return blake2b.Sum256(outputID[:])
+}
+
 type (
 	delegationOutputUnlockCondition  interface{ UnlockCondition }
 	delegationOutputImmFeature       interface{ Feature }
