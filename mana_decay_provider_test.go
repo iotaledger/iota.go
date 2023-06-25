@@ -2,94 +2,132 @@ package iotago_test
 
 import (
 	"math"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 const (
-	manaValue53Bit = 9007199254740991 // 0x1FFFFFFFFFFFFF, 53 bits set to 1 (maximum mana value)
+	betaPerYear                  float64 = 1 / 3.0
+	slotsPerEpochExponent                = 13
+	slotDurationSeconds                  = 10
+	generationRate                       = 1
+	generationRateExponent               = 27
+	decayFactorsExponent                 = 32
+	decayFactorEpochsSumExponent         = 20
 )
 
 var (
-	testDecayFactors = getTestManaDecayFactors(365)
+	testManaDecayFactors         []uint32
+	testManaDecayFactorEpochsSum uint32
+
+	testTimeProvider      *iotago.TimeProvider
+	testManaDecayProvider *iotago.ManaDecayProvider
+
+	// These global variables are needed, otherwise the compiler will optimize away the actual tests.
+	benchmarkResult iotago.Mana
 )
 
-func getTestManaDecayFactors(decayIndexes int) []uint32 {
-	decayFactors := make([]uint32, decayIndexes)
+func TestMain(m *testing.M) {
+	testManaDecayFactors = tpkg.ManaDecayFactors(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorsExponent)
+	testManaDecayFactorEpochsSum = tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent)
 
-	betaPerYear := 1 / 3.0
-	betaPerDecayIndex := betaPerYear / 365.0
+	testTimeProvider = iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochExponent)
+	testManaDecayProvider = iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, generationRate, decayFactorEpochsSumExponent, testManaDecayFactors, decayFactorsExponent, testManaDecayFactorEpochsSum, decayFactorEpochsSumExponent)
 
-	for decayIndex := 1; decayIndex <= decayIndexes; decayIndex++ {
-		decayFactor := math.Exp(-betaPerDecayIndex*float64(decayIndex)) * (math.Pow(2, float64(iotago.ManaDecayScaleFactor)))
-		decayFactors[decayIndex-1] = uint32(decayFactor)
-	}
-
-	return decayFactors
+	// call the tests
+	os.Exit(m.Run())
 }
 
-func BenchmarkManaDecay_Single(b *testing.B) {
-	timeProvider := iotago.NewTimeProvider(0, 10, 1<<13)
-	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, 0, testDecayFactors, 10)
-
-	endIndex := iotago.SlotIndex(300 << 13)
+func BenchmarkStoredManaWithDecay_Single(b *testing.B) {
+	endIndex := iotago.SlotIndex(300 << slotsPerEpochExponent)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_ = manaDecayProvider.StoredManaWithDecay(manaValue53Bit, 0, endIndex)
+		benchmarkResult, _ = testManaDecayProvider.StoredManaWithDecay(math.MaxUint64, 0, endIndex)
 	}
 }
 
-func BenchmarkManaDecay_Range(b *testing.B) {
-	timeProvider := iotago.NewTimeProvider(0, 10, 1<<13)
-	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, 0, testDecayFactors, 10)
-
+func BenchmarkStoredManaWithDecay_Range(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		var v uint64 = manaValue53Bit
-		for decayIndex := 1; decayIndex <= 5*365; decayIndex++ {
-			v = manaDecayProvider.StoredManaWithDecay(v, 0, iotago.SlotIndex(decayIndex)<<13)
+		var value iotago.Mana = math.MaxUint64
+		for epochIndex := 1; epochIndex <= 5*len(testManaDecayFactors); epochIndex++ {
+			value, _ = testManaDecayProvider.StoredManaWithDecay(value, 0, iotago.SlotIndex(epochIndex)<<slotsPerEpochExponent)
 		}
+		benchmarkResult = value
+	}
+}
+
+func BenchmarkPotentialManaWithDecay_Single(b *testing.B) {
+	endIndex := iotago.SlotIndex(300 << slotsPerEpochExponent)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		benchmarkResult, _ = testManaDecayProvider.PotentialManaWithDecay(math.MaxUint64, 0, endIndex)
+	}
+}
+
+func BenchmarkPotentialManaWithDecay_Range(b *testing.B) {
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		var value iotago.Mana
+		for epochIndex := 1; epochIndex <= 5*len(testManaDecayFactors); epochIndex++ {
+			value, _ = testManaDecayProvider.PotentialManaWithDecay(math.MaxUint64, 0, iotago.SlotIndex(epochIndex)<<slotsPerEpochExponent)
+		}
+		benchmarkResult = value
 	}
 }
 
 func TestManaDecay_NoFactorsGiven(t *testing.T) {
-	timeProvider := iotago.NewTimeProvider(0, 10, 1<<13)
-	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, 0, []uint32{}, 10)
+	manaDecayProvider := iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, generationRate, decayFactorEpochsSumExponent, []uint32{}, decayFactorsExponent, testManaDecayFactorEpochsSum, decayFactorEpochsSumExponent)
 
-	require.Equal(t, uint64(100), manaDecayProvider.StoredManaWithDecay(100, 0, 100<<13))
+	value, err := manaDecayProvider.StoredManaWithDecay(100, 0, 100<<slotsPerEpochExponent)
+	require.NoError(t, err)
+	require.Equal(t, iotago.Mana(100), value)
 }
 
 func TestManaDecay_DecayIndexDiff(t *testing.T) {
-	timeProvider := iotago.NewTimeProvider(0, 10, 1<<13)
-	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, 0, testDecayFactors, 10)
-
 	// no decay in the same decay index
-	require.Equal(t, uint64(100), manaDecayProvider.StoredManaWithDecay(100, 1, 200))
-
-	require.Panics(t, func() {
-		manaDecayProvider.StoredManaWithDecay(100, 2<<13, 1<<13)
-	})
+	value, err := testManaDecayProvider.StoredManaWithDecay(100, 1, (1<<slotsPerEpochExponent)-1)
+	require.NoError(t, err)
+	require.Equal(t, iotago.Mana(100), value)
 }
 
 func TestManaDecay_Decay(t *testing.T) {
-	timeProvider := iotago.NewTimeProvider(0, 10, 1<<13)
-	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, 0, testDecayFactors, 10)
+	{
+		// check if mana decay works for multiples of the available decay indexes in the lookup table
+		value, err := testManaDecayProvider.StoredManaWithDecay(math.MaxUint64, 0, iotago.SlotIndex(3*len(testManaDecayFactors))<<slotsPerEpochExponent)
+		require.NoError(t, err)
+		require.Equal(t, iotago.Mana(6803138682699798504), value)
+	}
 
-	// check if mana decay works for multiples of the available decay indexes in the lookup table
-	require.Equal(t, uint64(3310474560012284), manaDecayProvider.StoredManaWithDecay(manaValue53Bit, 0, iotago.SlotIndex(3*len(testDecayFactors))<<13))
+	{
+		// check if mana decay works for exactly the amount of decay indexes in the lookup table
+		value, err := testManaDecayProvider.StoredManaWithDecay(math.MaxUint64, 0, iotago.SlotIndex(len(testManaDecayFactors))<<slotsPerEpochExponent)
+		require.NoError(t, err)
+		require.Equal(t, iotago.Mana(13228672242897911807), value)
+	}
 
-	// check if mana decay works for exactly the  amount of decay indexes in the lookup table
-	require.Equal(t, uint64(6451934231789564), manaDecayProvider.StoredManaWithDecay(manaValue53Bit, 0, iotago.SlotIndex(len(testDecayFactors))<<13))
+	{
+		// check if mana decay works for 0 mana values
+		value, err := testManaDecayProvider.StoredManaWithDecay(0, 0, 400<<slotsPerEpochExponent)
+		require.NoError(t, err)
+		require.Equal(t, iotago.Mana(0), value)
+	}
 
-	// check if mana decay works for 0 mana values
-	require.Equal(t, uint64(0), manaDecayProvider.StoredManaWithDecay(0, 0, 400<<13))
-
-	// even with the highest possible int64 number, the calculation should not overflow because of the overflow protection
-	require.Equal(t, uint64(6398705774377299968), manaDecayProvider.StoredManaWithDecay(math.MaxInt64, 0, 400<<13))
+	{
+		// even with the highest possible int64 number, the calculation should not overflow because of the overflow protection
+		value, err := testManaDecayProvider.StoredManaWithDecay(math.MaxUint64, 0, 400<<slotsPerEpochExponent)
+		require.NoError(t, err)
+		require.Equal(t, iotago.Mana(13046663022640287317), value)
+	}
 }

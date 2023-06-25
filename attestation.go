@@ -66,7 +66,7 @@ func (a Attestation) BlockID(timeProvider *TimeProvider) (BlockID, error) {
 	}
 
 	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
-	slotIndex := timeProvider.SlotIndexFromTime(a.IssuingTime)
+	slotIndex := timeProvider.SlotFromTime(a.IssuingTime)
 
 	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
 }

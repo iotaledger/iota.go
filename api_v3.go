@@ -128,6 +128,24 @@ var (
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
+	delegationOutputV3UnlockCondArrRules = &serix.ArrayRules{
+		Min: 1, Max: 1,
+		MustOccur: serializer.TypePrefixes{
+			uint32(UnlockConditionAddress): struct{}{},
+		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+	}
+
+	delegationOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
+		Min: 0,
+		Max: 1,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering |
+			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+	}
+
 	txEssenceV3ContextInputsArrRules = &serix.ArrayRules{
 		Min:            MinContextInputsCount,
 		Max:            MaxContextInputsCount,
@@ -244,11 +262,13 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterTypeSettings(SenderFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureSender))))
 		must(api.RegisterTypeSettings(TagFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureTag))))
 		must(api.RegisterTypeSettings(BlockIssuerFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureBlockIssuer))))
+		must(api.RegisterTypeSettings(StakingFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureStaking))))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*IssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*SenderFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*TagFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*BlockIssuerFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*Feature)(nil), (*StakingFeature)(nil)))
 	}
 
 	{
@@ -323,6 +343,8 @@ func V3API(protoParams *ProtocolParameters) API {
 
 		must(api.RegisterInterfaceObjects((*accountOutputFeature)(nil), (*SenderFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*accountOutputFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*accountOutputFeature)(nil), (*BlockIssuerFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*accountOutputFeature)(nil), (*StakingFeature)(nil)))
 
 		must(api.RegisterTypeSettings(AccountOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3ImmFeatBlocksArrRules),
@@ -330,7 +352,6 @@ func V3API(protoParams *ProtocolParameters) API {
 
 		must(api.RegisterInterfaceObjects((*accountOutputImmFeature)(nil), (*IssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*accountOutputImmFeature)(nil), (*MetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*accountOutputImmFeature)(nil), (*BlockIssuerFeature)(nil)))
 	}
 
 	{
@@ -387,10 +408,27 @@ func V3API(protoParams *ProtocolParameters) API {
 	}
 
 	{
+		must(api.RegisterTypeSettings(DelegationOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputDelegation))))
+
+		must(api.RegisterTypeSettings(DelegationOutputUnlockConditions{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3UnlockCondArrRules),
+		))
+
+		must(api.RegisterInterfaceObjects((*delegationOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
+
+		must(api.RegisterTypeSettings(DelegationOutputImmFeatures{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3ImmFeatBlocksArrRules),
+		))
+
+		must(api.RegisterInterfaceObjects((*delegationOutputImmFeature)(nil), (*IssuerFeature)(nil)))
+	}
+
+	{
 		must(api.RegisterTypeSettings(TransactionEssence{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
 
 		must(api.RegisterTypeSettings(CommitmentInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))))
 		must(api.RegisterTypeSettings(BICInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputBlockIssuanceCredit))))
+		must(api.RegisterTypeSettings(RewardInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputReward))))
 
 		must(api.RegisterTypeSettings(TxEssenceContextInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3ContextInputsArrRules),
@@ -398,6 +436,7 @@ func V3API(protoParams *ProtocolParameters) API {
 
 		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*CommitmentInput)(nil)))
 		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*BICInput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*RewardInput)(nil)))
 
 		must(api.RegisterTypeSettings(UTXOInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputUTXO))))
 

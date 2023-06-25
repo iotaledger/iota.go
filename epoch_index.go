@@ -9,6 +9,11 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
+var (
+	// ErrWrongEpochIndex gets returned when a wrong epoch index was passed.
+	ErrWrongEpochIndex = errors.New("wrong epoch index")
+)
+
 // EpochIndex is the index of an epoch.
 type EpochIndex uint64
 

@@ -23,6 +23,7 @@ func (inputSet InputSet) OutputSet() iotago.OutputSet {
 }
 
 type ChainOutputWithCreationTime struct {
+	ChainID      iotago.ChainID
 	Output       iotago.ChainOutput
 	CreationTime iotago.SlotIndex
 }
@@ -48,6 +49,7 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 		}
 
 		set[chainID] = &ChainOutputWithCreationTime{
+			ChainID:      chainID,
 			Output:       chainOutput,
 			CreationTime: input.CreationTime,
 		}
@@ -60,20 +62,22 @@ type ChainInputSet map[iotago.ChainID]*ChainOutputWithCreationTime
 
 type BICInputSet map[iotago.AccountID]BlockIssuanceCredit
 
+// A map of either DelegationID or AccountID to their mana reward amount.
+type RewardsInputSet map[iotago.ChainID]uint64
+
 type BlockIssuanceCredit struct {
-	AccountID    iotago.AccountID
-	CommitmentID iotago.CommitmentID
-	Value        int64
+	Credits int64
 }
 
 func (b BlockIssuanceCredit) Negative() bool {
-	return b.Value < 0
+	return b.Credits < 0
 }
 
-type CommitmentInputSet map[iotago.CommitmentID]*iotago.Commitment
+type VmCommitmentInput *iotago.Commitment
 
 type ResolvedInputs struct {
 	InputSet
 	BICInputSet
-	CommitmentInputSet
+	CommitmentInput VmCommitmentInput
+	RewardsInputSet
 }

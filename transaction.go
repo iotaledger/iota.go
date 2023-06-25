@@ -94,7 +94,7 @@ func (t *Transaction) BICInputs() ([]*BICInput, error) {
 		switch castInput := input.(type) {
 		case *BICInput:
 			references = append(references, castInput)
-		case *CommitmentInput:
+		case *CommitmentInput, *RewardInput:
 			// ignore this type
 		default:
 			return nil, ErrUnexpectedUnderlyingType
@@ -104,20 +104,35 @@ func (t *Transaction) BICInputs() ([]*BICInput, error) {
 	return references, nil
 }
 
-func (t *Transaction) CommitmentInputs() ([]*CommitmentInput, error) {
-	references := make([]*CommitmentInput, 0, len(t.Essence.ContextInputs))
+func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
+	references := make([]*RewardInput, 0, len(t.Essence.ContextInputs))
 	for _, input := range t.Essence.ContextInputs {
 		switch castInput := input.(type) {
-		case *BICInput:
-			// ignore this type
-		case *CommitmentInput:
+		case *RewardInput:
 			references = append(references, castInput)
+		case *CommitmentInput, *BICInput:
+			// ignore this type
 		default:
 			return nil, ErrUnexpectedUnderlyingType
 		}
 	}
 
 	return references, nil
+}
+
+// Returns the first commitment input in the transaction if it exists or nil.
+func (t *Transaction) CommitmentInput() *CommitmentInput {
+	for _, input := range t.Essence.ContextInputs {
+		switch castInput := input.(type) {
+		case *BICInput, *RewardInput:
+			// ignore this type
+		case *CommitmentInput:
+			return castInput
+		default:
+			return nil
+		}
+	}
+	return nil
 }
 
 func (t *Transaction) Size() int {

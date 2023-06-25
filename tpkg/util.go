@@ -409,6 +409,13 @@ func RandAccountID() iotago.AccountID {
 	return alias
 }
 
+func RandDelegationID() iotago.DelegationID {
+	delegation := iotago.DelegationID{}
+	copy(delegation[:], RandBytes(iotago.DelegationIDLength))
+
+	return delegation
+}
+
 func RandSlotIndex() iotago.SlotIndex {
 	return iotago.SlotIndex(RandUint64(math.MaxUint64))
 }
@@ -494,7 +501,6 @@ func RandUTXOInput() *iotago.UTXOInput {
 // RandCommitmentInput returns a random Commitment input.
 func RandCommitmentInput() *iotago.CommitmentInput {
 	return &iotago.CommitmentInput{
-		AccountID:    RandAccountID(),
 		CommitmentID: Rand40ByteArray(),
 	}
 }
@@ -502,8 +508,7 @@ func RandCommitmentInput() *iotago.CommitmentInput {
 // RandBICInput returns a random BIC input.
 func RandBICInput() *iotago.BICInput {
 	return &iotago.BICInput{
-		AccountID:    RandAccountID(),
-		CommitmentID: Rand40ByteArray(),
+		AccountID: RandAccountID(),
 	}
 }
 
@@ -627,4 +632,25 @@ func RandProtocolParameters() *iotago.ProtocolParameters {
 		GenesisUnixTimestamp:  time.Now().Unix(),
 		SlotDurationInSeconds: RandUint8(math.MaxUint8),
 	}
+}
+
+// ManaDecayFactors calculates mana decay factors that can be used in the tests.
+func ManaDecayFactors(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds int, decayFactorsExponent uint64) []uint32 {
+	epochsPerYear := ((365.0 * 24.0 * 60.0 * 60.0) / float64(slotTimeSeconds)) / float64(slotsPerEpoch)
+	decayFactors := make([]uint32, int(epochsPerYear))
+
+	betaPerDecayIndex := betaPerYear / epochsPerYear
+
+	for epochIndex := 1; epochIndex <= int(epochsPerYear); epochIndex++ {
+		decayFactor := math.Exp(-betaPerDecayIndex*float64(epochIndex)) * (math.Pow(2, float64(decayFactorsExponent)))
+		decayFactors[epochIndex-1] = uint32(decayFactor)
+	}
+
+	return decayFactors
+}
+
+// ManaDecayFactorEpochsSum calculates mana decay factor epochs sum parameter that can be used in the tests.
+func ManaDecayFactorEpochsSum(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds int, decayFactorEpochsSumExponent uint64) uint32 {
+	delta := float64(slotsPerEpoch) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(slotTimeSeconds)
+	return uint32((math.Exp(-betaPerYear*delta) / (1 - math.Exp(-betaPerYear*delta)) * (math.Pow(2, float64(decayFactorEpochsSumExponent)))))
 }

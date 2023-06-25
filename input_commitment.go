@@ -5,14 +5,13 @@ import (
 )
 
 type CommitmentInput struct {
-	AccountID    AccountID    `serix:"0,mapKey=accountId"`
-	CommitmentID CommitmentID `serix:"1,mapKey=commitmentId"`
+	CommitmentID CommitmentID `serix:"0,mapKey=commitmentId"`
 }
 
-func (b *CommitmentInput) Type() InputType {
+func (c *CommitmentInput) Type() InputType {
 	return InputCommitment
 }
 
-func (b *CommitmentInput) Size() int {
-	return util.NumByteLen(byte(InputCommitment)) + AccountIDLength + SlotIdentifierLength
+func (c *CommitmentInput) Size() int {
+	return util.NumByteLen(byte(InputCommitment)) + SlotIdentifierLength
 }

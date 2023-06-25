@@ -226,7 +226,7 @@ func (b *Block) ID(timeProvider *TimeProvider) (BlockID, error) {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
 	}
 
-	slotIndex := timeProvider.SlotIndexFromTime(b.IssuingTime)
+	slotIndex := timeProvider.SlotFromTime(b.IssuingTime)
 
 	blockIdentifier, err := BlockIdentifierFromBlockBytes(data)
 	if err != nil {

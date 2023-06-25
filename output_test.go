@@ -177,6 +177,24 @@ func TestOutputsDeSerialize(t *testing.T) {
 			},
 			target: &iotago.NFTOutput{},
 		},
+		{
+			name: "ok - DelegationOutput",
+			source: &iotago.DelegationOutput{
+				Amount:          1337,
+				DelegatedAmount: 1337,
+				DelegationID:    tpkg.Rand32ByteArray(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      iotago.EpochIndex(32),
+				EndEpoch:        iotago.EpochIndex(37),
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				ImmutableFeatures: iotago.DelegationOutputImmFeatures{
+					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			target: &iotago.DelegationOutput{},
+		},
 	}
 
 	for _, tt := range tests {
@@ -793,6 +811,57 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 		},
 	}
 	valFunc := iotago.OutputsSyntacticalNFT()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(t *testing.T) {
+				var runErr error
+				for index, output := range tt.outputs {
+					if err := valFunc(index, output); err != nil {
+						runErr = err
+					}
+				}
+				require.ErrorIs(t, runErr, tt.wantErr)
+			})
+		})
+	}
+}
+
+func TestOutputsSyntacticaDelegation(t *testing.T) {
+	tests := []struct {
+		name    string
+		outputs iotago.Outputs[iotago.Output]
+		wantErr error
+	}{
+		{
+			name: "ok",
+			outputs: iotago.Outputs[iotago.Output]{
+				&iotago.DelegationOutput{
+					Amount:          OneMi,
+					DelegatedAmount: OneMi,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+		},
+		{
+			name: "fail - validator id zeroed",
+			outputs: iotago.Outputs[iotago.Output]{
+				&iotago.DelegationOutput{
+					Amount:       OneMi,
+					DelegationID: iotago.EmptyDelegationId(),
+					ValidatorID:  iotago.EmptyAccountID(),
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			wantErr: iotago.ErrDelegationValidatorIdZeroed,
+		},
+	}
+	valFunc := iotago.OutputsSyntacticalDelegation()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {

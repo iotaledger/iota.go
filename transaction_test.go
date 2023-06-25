@@ -1,7 +1,6 @@
 package iotago_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -23,7 +22,6 @@ func TestTransactionDeSerialize(t *testing.T) {
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
 				tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 					&iotago.CommitmentInput{
-						AccountID:    tpkg.RandAccountID(),
 						CommitmentID: iotago.CommitmentID{},
 					},
 				}),
@@ -37,8 +35,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
 				tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 					&iotago.BICInput{
-						AccountID:    tpkg.RandAccountID(),
-						CommitmentID: iotago.CommitmentID{},
+						AccountID: tpkg.RandAccountID(),
 					},
 				}),
 			)),
@@ -51,12 +48,10 @@ func TestTransactionDeSerialize(t *testing.T) {
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
 				tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 					&iotago.CommitmentInput{
-						AccountID:    tpkg.RandAccountID(),
 						CommitmentID: iotago.CommitmentID{},
 					},
 					&iotago.BICInput{
-						AccountID:    tpkg.RandAccountID(),
-						CommitmentID: iotago.CommitmentID{},
+						AccountID: tpkg.RandAccountID(),
 					},
 				}),
 			)),
@@ -197,20 +192,20 @@ func TestTransaction_InputTypes(t *testing.T) {
 
 	commitmentInput1 := &iotago.CommitmentInput{
 		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
-		AccountID:    tpkg.RandAccountID(),
 	}
 
-	commitmentInput2 := &iotago.CommitmentInput{
-		CommitmentID: iotago.SlotIdentifierRepresentingData(11, tpkg.RandBytes(32)),
-		AccountID:    tpkg.RandAccountID(),
-	}
 	bicInput1 := &iotago.BICInput{
-		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
-		AccountID:    tpkg.RandAccountID(),
+		AccountID: tpkg.RandAccountID(),
 	}
 	bicInput2 := &iotago.BICInput{
-		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
-		AccountID:    tpkg.RandAccountID(),
+		AccountID: tpkg.RandAccountID(),
+	}
+
+	rewardInput1 := &iotago.RewardInput{
+		Index: 3,
+	}
+	rewardInput2 := &iotago.RewardInput{
+		Index: 2,
 	}
 
 	transaction := tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
@@ -221,31 +216,36 @@ func TestTransaction_InputTypes(t *testing.T) {
 		tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 			commitmentInput1,
 			bicInput1,
-			commitmentInput2,
 			bicInput2,
+			rewardInput1,
+			rewardInput2,
 		}),
 	))
 
 	utxoInputs, err := transaction.Inputs()
 	require.NoError(t, err)
 
-	commitmentInputs, err := transaction.CommitmentInputs()
-	require.NoError(t, err)
+	commitmentInput := transaction.CommitmentInput()
+	require.NotNil(t, commitmentInput)
 
 	bicInputs, err := transaction.BICInputs()
 	require.NoError(t, err)
 
-	fmt.Println(utxoInputs)
+	rewardInputs, err := transaction.RewardInputs()
+	require.NoError(t, err)
+
 	require.Equal(t, 2, len(utxoInputs))
-	require.Equal(t, 2, len(commitmentInputs))
 	require.Equal(t, 2, len(bicInputs))
+	require.Equal(t, 2, len(rewardInputs))
 
 	require.Contains(t, utxoInputs, utxoInput1)
 	require.Contains(t, utxoInputs, utxoInput2)
 
-	require.Contains(t, commitmentInputs, commitmentInput1)
-	require.Contains(t, commitmentInputs, commitmentInput2)
+	require.Equal(t, commitmentInput, commitmentInput1)
 
 	require.Contains(t, bicInputs, bicInput1)
 	require.Contains(t, bicInputs, bicInput2)
+
+	require.Contains(t, rewardInputs, rewardInput1)
+	require.Contains(t, rewardInputs, rewardInput2)
 }

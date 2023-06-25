@@ -58,8 +58,10 @@ type WorkingSet struct {
 	// BIC is the block issuance credit for MCA slots prior to the transaction's creation time (or for the slot to which the block commits)
 	// Contains one value for each account output touched in the transaction and empty if no account outputs touched.
 	BIC BICInputSet
-	// Commitments contains set of commitment inputs necessary for transaction execution. FIXME
-	Commitments CommitmentInputSet
+	// Commitment contains set of commitment inputs necessary for transaction execution. FIXME
+	Commitment VmCommitmentInput
+	// Rewards contains a set of account or delegation IDs mapped to their rewards amount.
+	Rewards RewardsInputSet
 }
 
 // UTXOInputAtIndex retrieves the UTXOInput at the given index.
@@ -112,21 +114,31 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*Worki
 
 	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
 	workingSet.BIC = inputs.BICInputSet
-	workingSet.Commitments = inputs.CommitmentInputSet
+	workingSet.Commitment = inputs.CommitmentInput
+	workingSet.Rewards = inputs.RewardsInputSet
 
 	return workingSet, nil
 }
 
-func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) uint64 {
+func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) (uint64, error) {
 	var totalIn uint64
-	for _, input := range inputSet {
+	for outputID, input := range inputSet {
 		// stored Mana
-		totalIn += manaDecayProvider.StoredManaWithDecay(input.Output.StoredMana(), input.CreationTime, txCreationTime)
+		manaStored, err := manaDecayProvider.StoredManaWithDecay(iotago.Mana(input.Output.StoredMana()), input.CreationTime, txCreationTime)
+		if err != nil {
+			return 0, fmt.Errorf("%w: input %s stored mana calculation failed", err, outputID)
+		}
+		totalIn += uint64(manaStored)
+
 		// potential Mana
-		totalIn += manaDecayProvider.PotentialManaWithDecay(input.Output.Deposit(), input.CreationTime, txCreationTime)
+		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(iotago.BaseToken(input.Output.Deposit()), input.CreationTime, txCreationTime)
+		if err != nil {
+			return 0, fmt.Errorf("%w: input %s potential mana calculation failed", err, outputID)
+		}
+		totalIn += uint64(manaPotential)
 	}
 
-	return totalIn
+	return totalIn, nil
 }
 
 func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iotago.Allotments) uint64 {
@@ -446,11 +458,19 @@ func ExecFuncBalancedMana() ExecFunc {
 				return fmt.Errorf("%w: input %s has creation time %d, tx creation time %d", iotago.ErrInputCreationAfterTxCreation, outputID, input.CreationTime, txCreationTime)
 			}
 		}
-		manaIn := TotalManaIn(vmParams.External.ProtocolParameters.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn, err := TotalManaIn(vmParams.External.ProtocolParameters.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		if err != nil {
+			return err
+		}
 		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 
+		// Whether it's valid to claim rewards is checked in the delegation and staking STVFs.
+		for _, reward := range vmParams.WorkingSet.Rewards {
+			manaIn += reward
+		}
+
 		if manaIn < manaOut {
-			return fmt.Errorf("%w: Mana in %d, Mana out %d", iotago.ErrInputOutputSumMismatch, manaIn, manaOut)
+			return fmt.Errorf("%w: Mana in %d, Mana out %d", iotago.ErrInputOutputManaMismatch, manaIn, manaOut)
 		}
 
 		return nil

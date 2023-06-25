@@ -3,9 +3,11 @@ package stardust_test
 import (
 	"crypto/ed25519"
 	"fmt"
+	"math"
 	"math/big"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -57,8 +59,25 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	exampleExistingFoundryOutputID := exampleExistingFoundryOutput.MustID()
 
 	protoParams := &iotago.ProtocolParameters{
-		EpochDurationInSlots: 1 << 13,
-		LivenessThreshold:    10,
+		GenesisUnixTimestamp:   time.Now().Unix(),
+		StakingUnbondingPeriod: 10,
+		SlotDurationInSeconds:  10,
+		SlotsPerEpochExponent:  13,
+		EvictionAge:            10,
+	}
+
+	currentSlot := iotago.SlotIndex(20 * (1 << 13))
+	currentEpoch := protoParams.TimeProvider().EpochFromSlot(currentSlot)
+
+	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
+		BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
+		ExpirySlot:      currentSlot + protoParams.EvictionAge,
+	}
+
+	exampleBIC := map[iotago.AccountID]vm.BlockIssuanceCredit{
+		exampleAccountID: {
+			Credits: 100,
+		},
 	}
 
 	type test struct {
@@ -125,6 +144,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 900,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -163,6 +185,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 10001,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -201,6 +226,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 991,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -212,6 +240,708 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+		},
+		{
+			name: "ok - staking genesis transition",
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     math.MaxUint64,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - staking genesis start epoch invalid",
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						StartEpoch:   currentEpoch - 2,
+						EndEpoch:     math.MaxUint64,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingStartEpoch,
+		},
+		{
+			name: "fail - staking genesis end epoch too early",
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + protoParams.StakingUnbondingPeriod - 1,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingEndEpochTooEarly,
+		},
+		{
+			name: "fail - staking genesis staked amount higher than amount",
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 500,
+						FixedCost:    5,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + protoParams.StakingUnbondingPeriod,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingAmountMismatch,
+		},
+		{
+			name: "fail - staking feature without block issuer feature",
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: iotago.AccountID{},
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     math.MaxUint64,
+					},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingBlockIssuerRequired,
+		},
+		{
+			name: "ok - valid staking transition",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 100,
+							FixedCost:    50,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     currentEpoch + 10000,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 100,
+						FixedCost:    50,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + protoParams.StakingUnbondingPeriod,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+		},
+		{
+			name: "fail - removing staking feature before end epoch",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 100,
+							FixedCost:    50,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     currentEpoch + 10000,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingBondedRemoval,
+		},
+		{
+			name: "fail - changing staking feature's staked amount",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 100,
+							FixedCost:    50,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     currentEpoch + 10000,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 90,
+						FixedCost:    50,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + 10000,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingBondedModified,
+		},
+		{
+			name: "fail - reducing staking feature's end epoch by more than the unbonding period",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 100,
+							FixedCost:    50,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     currentEpoch + 10000,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 100,
+						FixedCost:    50,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + protoParams.StakingUnbondingPeriod - 5,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingEndEpochTooEarly,
+		},
+		{
+			name: "fail - account removes block issuer feature while having a staking feature",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     math.MaxUint64,
+						},
+						&iotago.BlockIssuerFeature{
+							BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
+							ExpirySlot:      990,
+						},
+					},
+				},
+				CreationTime: 1000,
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 2,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     math.MaxUint64,
+					},
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingBlockIssuerRequired,
+		},
+		{
+			name: "fail - expired staking feature removed without specifying reward input",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							StartEpoch:   currentEpoch - 10,
+							EndEpoch:     currentEpoch - 5,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+				CreationTime: 1000,
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 2,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingRewardInputRequired,
+		},
+		{
+			name: "fail - changing an expired staking feature without claiming",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							StartEpoch:   currentEpoch - 10,
+							EndEpoch:     currentEpoch - 5,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+				CreationTime: 1000,
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 2,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 80,
+						FixedCost:    5,
+						StartEpoch:   currentEpoch - 10,
+						EndEpoch:     currentEpoch - 5,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingRewardInputRequired,
+		},
+		{
+			name: "fail - claiming rewards of an expired staking feature without resetting start epoch",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleAccountID,
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							StartEpoch:   currentEpoch - 10,
+							EndEpoch:     currentEpoch - 5,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+				CreationTime: 1000,
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 2,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						StartEpoch:   currentEpoch - 10,
+						EndEpoch:     currentEpoch + 10,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+					Rewards: map[iotago.ChainID]uint64{
+						exampleAccountID: 200,
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingStartEpoch,
 		},
 		{
 			name: "ok - destroy transition",
@@ -238,7 +968,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "ok - destroy block issuer account with negative BIC",
+			name: "fail - destroy block issuer account with negative BIC",
 			input: &vm.ChainOutputWithCreationTime{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
@@ -262,6 +992,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 1001,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -270,9 +1003,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        -1,
+							Credits: -1,
 						},
 					},
 				},
@@ -304,6 +1035,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 1001,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -314,6 +1048,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			},
 			wantErr: iotago.ErrInvalidBlockIssuerTransition,
 		},
+
 		{
 			name: "fail - non-expired block issuer destroy transition",
 			input: &vm.ChainOutputWithCreationTime{
@@ -339,6 +1074,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 1000,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -374,12 +1112,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 1001,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        0,
+							Credits: 0,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -427,12 +1166,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 999,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        0,
+							Credits: 0,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -480,12 +1220,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 1001,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        0,
+							Credits: 0,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -655,14 +1396,15 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 990,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        10,
+							Credits: 10,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -765,14 +1507,15 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 990,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        10,
+							Credits: 10,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -827,14 +1570,15 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 990,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        10,
+							Credits: 10,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -889,14 +1633,15 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 900,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        -1,
+							Credits: -1,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -951,6 +1696,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 900,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
@@ -1006,14 +1754,15 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 900,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        10,
+							Credits: 10,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -1070,6 +1819,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 0,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
@@ -1081,9 +1833,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
-							AccountID:    exampleAccountID,
-							CommitmentID: iotago.CommitmentID{},
-							Value:        10,
+							Credits: 10,
 						},
 					},
 					Tx: &iotago.Transaction{
@@ -1227,6 +1977,19 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
 					cpy := copyObject(t, tt.input.Output, muts).(*iotago.AccountOutput)
+
+					if tt.input != nil {
+						// create the working set for the test
+						if tt.svCtx.WorkingSet.UTXOInputsWithCreationTime == nil {
+							tt.svCtx.WorkingSet.UTXOInputsWithCreationTime = make(vm.InputSet)
+						}
+
+						tt.svCtx.WorkingSet.UTXOInputsWithCreationTime[tpkg.RandOutputID(0)] = vm.OutputWithCreationTime{
+							Output:       tt.input.Output,
+							CreationTime: tt.input.CreationTime,
+						}
+					}
+
 					err := stardustVM.ChainSTVF(tt.transType, tt.input, cpy, tt.svCtx)
 					if tt.wantErr != nil {
 						require.ErrorIs(t, err, tt.wantErr)
@@ -1239,6 +2002,18 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.input != nil {
+				// create the working set for the test
+				if tt.svCtx.WorkingSet.UTXOInputsWithCreationTime == nil {
+					tt.svCtx.WorkingSet.UTXOInputsWithCreationTime = make(vm.InputSet)
+				}
+
+				tt.svCtx.WorkingSet.UTXOInputsWithCreationTime[tpkg.RandOutputID(0)] = vm.OutputWithCreationTime{
+					Output:       tt.input.Output,
+					CreationTime: tt.input.CreationTime,
+				}
+			}
+
 			err := stardustVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
@@ -1709,6 +2484,11 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		},
 	}
 
+	protoParams := &iotago.ProtocolParameters{
+		SlotsPerEpochExponent: 13,
+		EvictionAge:           10,
+	}
+
 	type test struct {
 		name      string
 		input     *vm.ChainOutputWithCreationTime
@@ -1726,7 +2506,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			input:     nil,
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -1743,7 +2525,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			next:      nil,
 			transType: iotago.ChainTransitionTypeDestroy,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 				},
@@ -1770,7 +2554,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 				},
@@ -1796,7 +2582,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
-				External: &iotago.ExternalUnlockParameters{},
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 				},
@@ -1826,6 +2614,463 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			err := stardustVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
 			if tt.wantErr != nil {
 				require.ErrorAs(t, err, &tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
+	// exampleIssuer := tpkg.RandEd25519Address()
+
+	protoParams := &iotago.ProtocolParameters{
+		GenesisUnixTimestamp:  time.Now().Unix(),
+		SlotDurationInSeconds: 10,
+		SlotsPerEpochExponent: 13,
+		EvictionAge:           10,
+	}
+
+	currentSlot := iotago.SlotIndex(20 * (1 << 13))
+	currentEpoch := protoParams.TimeProvider().EpochFromSlot(currentSlot)
+	exampleDelegationID := iotago.DelegationIDFromOutputID(tpkg.RandOutputID(0))
+
+	type test struct {
+		name      string
+		input     *vm.ChainOutputWithCreationTime
+		next      *iotago.DelegationOutput
+		nextMut   map[string]fieldMutations
+		transType iotago.ChainTransitionType
+		svCtx     *vm.Params
+		wantErr   error
+	}
+
+	tests := []test{
+		{
+			name: "ok - valid genesis",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 100,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch + 1,
+				EndEpoch:        0,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - invalid genesis - non-zero delegation ID",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 100,
+				DelegationID:    exampleDelegationID,
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch + 1,
+				EndEpoch:        0,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationNonZeroedID,
+		},
+		{
+			name: "fail - invalid genesis - delegated amount does not match amount",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 120,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch + 1,
+				EndEpoch:        0,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationAmount,
+		},
+		{
+			name: "fail - invalid genesis - non-zero end epoch",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 100,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch + 1,
+				EndEpoch:        currentEpoch + 5,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationNonZeroEndEpoch,
+		},
+		{
+			name: "fail - invalid transition - start epoch not set to expected epoch",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 100,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch - 3,
+				EndEpoch:        0,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationStartEpoch,
+		},
+		{
+			name: "fail - invalid transition - non-zero delegation id on input",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    tpkg.RandDelegationID(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			next:      &iotago.DelegationOutput{},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationNonZeroedID,
+		},
+		{
+			name: "fail - invalid transition - modified delegated amount, start epoch and validator id",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			nextMut: map[string]fieldMutations{
+				"delegated_amount_modified": {
+					"DelegatedAmount": uint64(1337),
+					"Amount":          uint64(5),
+					"DelegationID":    exampleDelegationID,
+					"EndEpoch":        currentEpoch,
+				},
+				"start_epoch_modified": {
+					"StartEpoch":   iotago.EpochIndex(3),
+					"DelegationID": exampleDelegationID,
+					"EndEpoch":     currentEpoch,
+				},
+				"validator_id_modified": {
+					"ValidatorID":  tpkg.RandAccountID(),
+					"DelegationID": exampleDelegationID,
+					"EndEpoch":     currentEpoch,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationModified,
+		},
+		{
+			name: "fail - invalid transition - end epoch not set to expected epoch",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			nextMut: map[string]fieldMutations{
+				"end_epoch_-1": {
+					"DelegationID": exampleDelegationID,
+					"EndEpoch":     currentEpoch - 1,
+				},
+				"end_epoch_+1": {
+					"DelegationID": exampleDelegationID,
+					"EndEpoch":     currentEpoch + 1,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationEndEpoch,
+		},
+		{
+			name: "fail - invalid transition - cannot claim rewards during transition",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			next:      &iotago.DelegationOutput{},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					Rewards: map[iotago.ChainID]uint64{
+						exampleDelegationID: 1,
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationRewardsClaiming,
+		},
+		{
+			name: "ok - valid destruction",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			nextMut:   nil,
+			transType: iotago.ChainTransitionTypeDestroy,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					Rewards: map[iotago.ChainID]uint64{
+						exampleDelegationID: 0,
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - invalid destruction - missing reward input",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			nextMut:   nil,
+			transType: iotago.ChainTransitionTypeDestroy,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationRewardsClaiming,
+		},
+	}
+
+	for _, tt := range tests {
+		if tt.nextMut != nil {
+			for mutName, muts := range tt.nextMut {
+				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
+					cpy := copyObject(t, tt.input.Output, muts).(*iotago.DelegationOutput)
+
+					if tt.input != nil {
+						// create the working set for the test
+						if tt.svCtx.WorkingSet.UTXOInputsWithCreationTime == nil {
+							tt.svCtx.WorkingSet.UTXOInputsWithCreationTime = make(vm.InputSet)
+						}
+
+						tt.svCtx.WorkingSet.UTXOInputsWithCreationTime[tpkg.RandOutputID(0)] = vm.OutputWithCreationTime{
+							Output:       tt.input.Output,
+							CreationTime: tt.input.CreationTime,
+						}
+					}
+
+					err := stardustVM.ChainSTVF(tt.transType, tt.input, cpy, tt.svCtx)
+					if tt.wantErr != nil {
+						require.ErrorIs(t, err, tt.wantErr)
+						return
+					}
+					require.NoError(t, err)
+				})
+			}
+			continue
+		}
+
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.input != nil {
+				// create the working set for the test
+				if tt.svCtx.WorkingSet.UTXOInputsWithCreationTime == nil {
+					tt.svCtx.WorkingSet.UTXOInputsWithCreationTime = make(vm.InputSet)
+				}
+
+				tt.svCtx.WorkingSet.UTXOInputsWithCreationTime[tpkg.RandOutputID(0)] = vm.OutputWithCreationTime{
+					Output:       tt.input.Output,
+					CreationTime: tt.input.CreationTime,
+				}
+			}
+
+			err := stardustVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
 			require.NoError(t, err)

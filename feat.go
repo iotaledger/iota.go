@@ -44,6 +44,8 @@ const (
 	FeatureTag
 	// FeatureBlockIssuer denotes a BlockIssuerFeature.
 	FeatureBlockIssuer
+	// FeatureStaking denotes a StakingFeature.
+	FeatureStaking
 )
 
 func (featType FeatureType) String() string {
@@ -177,6 +179,15 @@ func (f FeatureSet) BlockIssuer() *BlockIssuerFeature {
 		return nil
 	}
 	return b.(*BlockIssuerFeature)
+}
+
+// Staking returns the StakingFeature in the set or nil.
+func (f FeatureSet) Staking() *StakingFeature {
+	b, has := f[FeatureStaking]
+	if !has {
+		return nil
+	}
+	return b.(*StakingFeature)
 }
 
 // Metadata returns the MetadataFeature in the set or nil.

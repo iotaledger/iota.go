@@ -5,8 +5,7 @@ import (
 )
 
 type BICInput struct {
-	AccountID    AccountID    `serix:"0,mapKey=accountId"`
-	CommitmentID CommitmentID `serix:"1,mapKey=commitmentId"`
+	AccountID AccountID `serix:"0,mapKey=accountId"`
 }
 
 func (b *BICInput) Type() InputType {
@@ -14,5 +13,5 @@ func (b *BICInput) Type() InputType {
 }
 
 func (b *BICInput) Size() int {
-	return util.NumByteLen(byte(InputBlockIssuanceCredit)) + AccountIDLength + SlotIdentifierLength
+	return util.NumByteLen(byte(InputBlockIssuanceCredit)) + AccountIDLength
 }

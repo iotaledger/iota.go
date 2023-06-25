@@ -17,6 +17,12 @@ import (
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
+// BaseToken defines the unit of the base token of the network.
+type BaseToken uint64
+
+// Mana defines the type of the consumable resource e.g. used in congestion control.
+type Mana uint64
+
 // Output defines a unit of output of a transaction.
 type Output interface {
 	Sizer
@@ -58,6 +64,8 @@ const (
 	OutputFoundry OutputType = 5
 	// OutputNFT denotes an NFTOutput.
 	OutputNFT OutputType = 6
+	// OutputDelegation denotes a DelegationOutput.
+	OutputDelegation OutputType = 7
 )
 
 func (outputType OutputType) String() string {
@@ -67,7 +75,7 @@ func (outputType OutputType) String() string {
 	return outputNames[outputType]
 }
 
-var outputNames = [OutputNFT + 1]string{
+var outputNames = [OutputDelegation + 1]string{
 	"SigLockedSingleOutput",
 	"SigLockedDustAllowanceOutput",
 	"TreasuryOutput",
@@ -75,6 +83,7 @@ var outputNames = [OutputNFT + 1]string{
 	"AccountOutput",
 	"FoundryOutput",
 	"NFTOutput",
+	"DelegationOutput",
 }
 
 const (
@@ -592,7 +601,6 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, t
 // ExternalUnlockParameters defines a palette of external system parameters which are used to
 // determine whether an Output can be unlocked.
 type ExternalUnlockParameters struct {
-	DecayProvider      *ManaDecayProvider
 	ProtocolParameters *ProtocolParameters
 }
 
@@ -824,6 +832,23 @@ func OutputsSyntacticalNFT() OutputsSyntacticalValidationFunc {
 
 		if addr, ok := nftOutput.Ident().(*NFTAddress); ok && NFTAddress(nftOutput.NFTID) == *addr {
 			return fmt.Errorf("%w: output %d", ErrNFTOutputCyclicAddress, index)
+		}
+
+		return nil
+	}
+}
+
+// OutputsSyntacticalDelegation returns an OutputsSyntacticalValidationFunc which checks that DelegationOutput(s)':
+//   - Validator ID is not zeroed out.
+func OutputsSyntacticalDelegation() OutputsSyntacticalValidationFunc {
+	return func(index int, output Output) error {
+		delegationOutput, is := output.(*DelegationOutput)
+		if !is {
+			return nil
+		}
+
+		if delegationOutput.ValidatorID.Empty() {
+			return fmt.Errorf("%w: output %d", ErrDelegationValidatorIdZeroed, index)
 		}
 
 		return nil
