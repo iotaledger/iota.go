@@ -16,9 +16,7 @@ import (
 	"github.com/iotaledger/iota.go/v4/vm"
 )
 
-var (
-	v3API = iotago.V3API(tpkg.TestProtoParams)
-)
+var v3API = iotago.V3API(tpkg.TestProtoParams)
 
 type fieldMutations map[string]interface{}
 

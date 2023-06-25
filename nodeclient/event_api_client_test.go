@@ -25,8 +25,8 @@ var emptyAPI = iotago.LatestAPI(&iotago.ProtocolParameters{
 	TokenSupply:           0,
 	GenesisUnixTimestamp:  0,
 	SlotDurationInSeconds: 0,
-	MaxCommittableAge:     0,
-	OrphanageThreshold:    0,
+	EvictionAge:           0,
+	LivenessThreshold:     0,
 })
 
 func TestMain(m *testing.M) { // call the tests
@@ -66,7 +66,6 @@ func Test_EventAPIDisabled(t *testing.T) {
 }
 
 func Test_NewEventAPIClient(t *testing.T) {
-
 	block := tpkg.RandBlock(iotago.PayloadTaggedData)
 	originBlockBytes, err := v3API.Encode(block)
 	require.NoError(t, err)

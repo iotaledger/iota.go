@@ -722,9 +722,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 		}(),
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
@@ -805,9 +803,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 		}(),
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
@@ -887,9 +883,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 		}(),
 
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
@@ -969,9 +963,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 		}(),
 
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
@@ -1041,9 +1033,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 		}(),
 
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
@@ -1113,9 +1103,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 		}(),
 
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
@@ -1173,9 +1161,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 		}(),
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
@@ -1768,9 +1754,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
 
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			inputs := vm.InputSet{
 				inputIDs[0]: vm.OutputWithCreationTime{
@@ -1827,9 +1811,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			}
 		}(),
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
