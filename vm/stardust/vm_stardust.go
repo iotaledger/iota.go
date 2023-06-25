@@ -128,7 +128,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 
 	if nextBIFeat := current.FeatureSet().BlockIssuer(); nextBIFeat != nil {
 		if vmParams.WorkingSet.Commitment == nil {
-			return fmt.Errorf("%w: no commitment provided", iotago.ErrInvalidBlockIssuerTransition)
+			return fmt.Errorf("%w: block issuer feature validation requires a commitment input", iotago.ErrInvalidBlockIssuerTransition)
 		}
 
 		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < vmParams.WorkingSet.Commitment.Index+vmParams.External.ProtocolParameters.EvictionAge {
@@ -253,7 +253,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	}
 
 	if vmParams.WorkingSet.Commitment == nil {
-		return fmt.Errorf("%w: no commitment provided", iotago.ErrInvalidBlockIssuerTransition)
+		return fmt.Errorf("%w: block issuer feature validation requires a commitment input", iotago.ErrInvalidBlockIssuerTransition)
 	}
 
 	txSlotIndex := vmParams.WorkingSet.Commitment.Index
@@ -460,6 +460,10 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 
 	BIFeat := outputToDestroy.FeatureSet().BlockIssuer()
 	if BIFeat != nil {
+		if vmParams.WorkingSet.Commitment == nil {
+			return fmt.Errorf("%w: block issuer feature validation requires a commitment input", iotago.ErrInvalidBlockIssuerTransition)
+		}
+
 		if BIFeat.ExpirySlot == 0 || BIFeat.ExpirySlot >= vmParams.WorkingSet.Tx.Essence.CreationTime {
 			// TODO: better error
 			return fmt.Errorf("%w: cannot destroy output until the block issuer feature expires", iotago.ErrInvalidBlockIssuerTransition)

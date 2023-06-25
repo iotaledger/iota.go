@@ -1106,6 +1106,10 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
+			commitment := &iotago.Commitment{
+				Index: 110,
+			}
+
 			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
@@ -1114,7 +1118,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: testProtoParams,
 				}},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs, CommitmentInput: commitment},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1165,6 +1169,10 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
+			commitment := &iotago.Commitment{
+				Index: 110,
+			}
+
 			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
 			require.NoError(t, err)
 
@@ -1173,7 +1181,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: testProtoParams,
 				}},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, CommitmentInput: commitment},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
