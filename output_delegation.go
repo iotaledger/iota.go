@@ -3,10 +3,11 @@ package iotago
 import (
 	"errors"
 
+	"golang.org/x/crypto/blake2b"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/util"
-	"golang.org/x/crypto/blake2b"
 )
 
 const (
