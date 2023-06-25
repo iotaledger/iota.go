@@ -30,6 +30,16 @@ var (
 	stardustVM = stardust.NewVirtualMachine()
 
 	testProtoParams = &iotago.ProtocolParameters{
+		Version:     tpkg.TestProtocolVersion,
+		NetworkName: "test",
+		Bech32HRP:   "test",
+		MinPoWScore: 0,
+		RentStructure: iotago.RentStructure{
+			VByteCost:    100,
+			VBFactorData: 1,
+			VBFactorKey:  10,
+		},
+		TokenSupply:                      tpkg.TestTokenSupply,
 		GenesisUnixTimestamp:             1000,
 		SlotDurationInSeconds:            slotDurationSeconds,
 		SlotsPerEpochExponent:            slotsPerEpochExponent,
@@ -39,8 +49,9 @@ var (
 		ManaDecayFactorsExponent:         decayFactorsExponent,
 		ManaDecayFactorEpochsSum:         tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent),
 		ManaDecayFactorEpochsSumExponent: decayFactorEpochsSumExponent,
-		MaxCommittableAge:                10,
 		StakingUnbondingPeriod:           10,
+		EvictionAge:                      10,
+		LivenessThreshold:                3,
 	}
 )
 

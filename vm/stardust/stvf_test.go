@@ -59,11 +59,11 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	exampleExistingFoundryOutputID := exampleExistingFoundryOutput.MustID()
 
 	protoParams := &iotago.ProtocolParameters{
-		GenesisUnixTimestamp:   uint32(time.Now().Unix()),
+		GenesisUnixTimestamp:   time.Now().Unix(),
 		StakingUnbondingPeriod: 10,
 		SlotDurationInSeconds:  10,
 		SlotsPerEpochExponent:  13,
-		MaxCommittableAge:      10,
+		EvictionAge:            10,
 	}
 
 	currentSlot := iotago.SlotIndex(20 * (1 << 13))
@@ -71,7 +71,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 
 	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
-		ExpirySlot:      currentSlot + protoParams.MaxCommittableAge,
+		ExpirySlot:      currentSlot + protoParams.EvictionAge,
 	}
 
 	exampleBIC := map[iotago.AccountID]vm.BlockIssuanceCredit{
@@ -2399,7 +2399,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 
 	protoParams := &iotago.ProtocolParameters{
 		SlotsPerEpochExponent: 13,
-		MaxCommittableAge:     10,
+		EvictionAge:           10,
 	}
 
 	type test struct {
@@ -2538,10 +2538,10 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 	// exampleIssuer := tpkg.RandEd25519Address()
 
 	protoParams := &iotago.ProtocolParameters{
-		GenesisUnixTimestamp:  uint32(time.Now().Unix()),
+		GenesisUnixTimestamp:  time.Now().Unix(),
 		SlotDurationInSeconds: 10,
 		SlotsPerEpochExponent: 13,
-		MaxCommittableAge:     10,
+		EvictionAge:           10,
 	}
 
 	currentSlot := iotago.SlotIndex(20 * (1 << 13))

@@ -118,11 +118,11 @@ type ProtocolParameters struct {
 	ManaDecayFactorEpochsSum uint32 `serix:"13,mapKey=manaDecayFactorEpochsSum"`
 	// ManaDecayFactorEpochsSumExponent is the scaling of ManaDecayFactorEpochsSum expressed as an exponent of 2.
 	ManaDecayFactorEpochsSumExponent uint8 `serix:"14,mapKey=manaDecayFactorEpochsSumExponent"`
+	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
+	StakingUnbondingPeriod EpochIndex `serix:"15,mapKey=stakingUnbondingPeriod"`
 	// EvictionAge defines the age in slots when you can evict blocks by committing them into a slot commitments and
 	// when slots stop being a consumable accounts' state relative to the latest committed slot.
-	EvictionAge SlotIndex `serix:"15,mapKey=evictionAge"`
-	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
-	StakingUnbondingPeriod EpochIndex `serix:"16,mapKey=stakingUnbondingPeriod"`
+	EvictionAge SlotIndex `serix:"16,mapKey=evictionAge"`
 	// LivenessThreshold is used by tipselection to determine the if a block is eligibile by evaluating issuingTimes
 	// and commitments in its pastcone to ATT and lastCommittedSlot respectively.
 	LivenessThreshold SlotIndex `serix:"17,mapKey=liveNessThreshold"`
@@ -146,8 +146,8 @@ func (p ProtocolParameters) EpochDurationInSlots() SlotIndex {
 }
 
 func (p ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tMinimum PoW Score: %d\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tMana Generation Rate: %d\n\tMana Decay Factors: %v\n\tMana Decay Factors Scale Factor: %d\n\tLiveness Threshold: %d\n\tLiveness Threshold: %d\n}",
-		p.Version, p.NetworkName, p.Bech32HRP, p.MinPoWScore, p.RentStructure, p.TokenSupply, p.GenesisUnixTimestamp, p.SlotDurationInSeconds, p.ManaGenerationRate, p.ManaDecayFactors, p.ManaDecayFactorsScaleFactor, p.LivenessThreshold, p.LivenessThreshold)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tMinimum PoW Score: %d\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n\tEviction Age: %d\n\tLiveness Threshold: %d\n}",
+		p.Version, p.NetworkName, p.Bech32HRP, p.MinPoWScore, p.RentStructure, p.TokenSupply, p.GenesisUnixTimestamp, p.SlotDurationInSeconds, p.SlotsPerEpochExponent, p.ManaGenerationRate, p.ManaGenerationRateExponent, p.ManaDecayFactors, p.ManaDecayFactorsExponent, p.ManaDecayFactorEpochsSum, p.ManaDecayFactorEpochsSumExponent, p.StakingUnbondingPeriod, p.EvictionAge, p.LivenessThreshold)
 }
 
 func (p ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
