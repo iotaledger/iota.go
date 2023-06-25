@@ -8,24 +8,24 @@ import (
 )
 
 func TestSlot(t *testing.T) {
-	timeProvider := NewTimeProvider(time.Now().Unix(), 10, 10)
+	timeProvider := NewTimeProvider(time.Now().Unix(), 10, 3)
 	genesisTime := timeProvider.GenesisTime()
 
 	{
-		endOfSlotTime := genesisTime.Add(time.Duration(timeProvider.SlotDuration()) * time.Second).Add(-1)
+		endOfSlotTime := genesisTime.Add(time.Duration(timeProvider.SlotDurationSeconds()) * time.Second).Add(-1)
 
-		require.Equal(t, SlotIndex(1), timeProvider.SlotIndexFromTime(endOfSlotTime))
+		require.Equal(t, SlotIndex(1), timeProvider.SlotFromTime(endOfSlotTime))
 		require.False(t, timeProvider.SlotEndTime(SlotIndex(1)).Before(endOfSlotTime))
 
-		startOfSlotTime := genesisTime.Add(time.Duration(timeProvider.SlotDuration()) * time.Second)
+		startOfSlotTime := genesisTime.Add(time.Duration(timeProvider.SlotDurationSeconds()) * time.Second)
 
-		require.Equal(t, SlotIndex(2), timeProvider.SlotIndexFromTime(startOfSlotTime))
+		require.Equal(t, SlotIndex(2), timeProvider.SlotFromTime(startOfSlotTime))
 		require.False(t, timeProvider.SlotStartTime(SlotIndex(2)).After(startOfSlotTime))
 	}
 
 	{
 		testTime := genesisTime.Add(5 * time.Second)
-		index := timeProvider.SlotIndexFromTime(testTime)
+		index := timeProvider.SlotFromTime(testTime)
 		require.Equal(t, index, SlotIndex(1))
 
 		startTime := timeProvider.SlotStartTime(index)
@@ -36,7 +36,7 @@ func TestSlot(t *testing.T) {
 
 	{
 		testTime := genesisTime.Add(10 * time.Second)
-		index := timeProvider.SlotIndexFromTime(testTime)
+		index := timeProvider.SlotFromTime(testTime)
 		require.Equal(t, index, SlotIndex(2))
 
 		startTime := timeProvider.SlotStartTime(index)
@@ -47,7 +47,7 @@ func TestSlot(t *testing.T) {
 
 	{
 		testTime := genesisTime.Add(35 * time.Second)
-		index := timeProvider.SlotIndexFromTime(testTime)
+		index := timeProvider.SlotFromTime(testTime)
 		require.Equal(t, index, SlotIndex(4))
 
 		startTime := timeProvider.SlotStartTime(index)
@@ -58,36 +58,36 @@ func TestSlot(t *testing.T) {
 
 	{
 		testTime := genesisTime.Add(49 * time.Second)
-		index := timeProvider.SlotIndexFromTime(testTime)
+		index := timeProvider.SlotFromTime(testTime)
 		require.Equal(t, index, SlotIndex(5))
 	}
 
 	{
 		// a time before genesis time, index = 0
 		testTime := genesisTime.Add(-10 * time.Second)
-		index := timeProvider.SlotIndexFromTime(testTime)
+		index := timeProvider.SlotFromTime(testTime)
 		require.Equal(t, index, SlotIndex(0))
 	}
 
 	{
-		endOfEpochTime := genesisTime.Add(time.Duration(timeProvider.EpochDuration()*timeProvider.SlotDuration()) * time.Second).Add(-1)
-		preEndSlot := timeProvider.SlotIndexFromTime(endOfEpochTime) - 1
-		require.Equal(t, EpochIndex(1), timeProvider.EpochsFromSlot(preEndSlot))
+		endOfEpochTime := genesisTime.Add(time.Duration(timeProvider.EpochDurationSeconds()) * time.Second).Add(-1)
+		preEndSlot := timeProvider.SlotFromTime(endOfEpochTime) - 1
+		require.Equal(t, EpochIndex(1), timeProvider.EpochFromSlot(preEndSlot))
 
-		endSlot := timeProvider.SlotIndexFromTime(endOfEpochTime)
-		require.Equal(t, EpochIndex(2), timeProvider.EpochsFromSlot(endSlot))
+		endSlot := timeProvider.SlotFromTime(endOfEpochTime)
+		require.Equal(t, EpochIndex(2), timeProvider.EpochFromSlot(endSlot))
 
-		startSlot := SlotIndex(timeProvider.EpochDuration())
-		require.Equal(t, EpochIndex(2), timeProvider.EpochsFromSlot(startSlot))
+		startSlot := timeProvider.EpochDurationSlots()
+		require.Equal(t, EpochIndex(2), timeProvider.EpochFromSlot(startSlot))
 
-		nextEpochStart := startSlot + SlotIndex(timeProvider.EpochDuration())
-		require.Equal(t, EpochIndex(3), timeProvider.EpochsFromSlot(nextEpochStart))
+		nextEpochStart := startSlot + timeProvider.EpochDurationSlots()
+		require.Equal(t, EpochIndex(3), timeProvider.EpochFromSlot(nextEpochStart))
 	}
 
 	{
-		require.Equal(t, SlotIndex(5), timeProvider.SlotsBeforeNextEpoch(15))
-		require.Equal(t, SlotIndex(10), timeProvider.SlotsBeforeNextEpoch(20))
-		require.Equal(t, SlotIndex(0), timeProvider.SlotsSinceEpochStart(20))
-		require.Equal(t, SlotIndex(1), timeProvider.SlotsSinceEpochStart(21))
+		require.Equal(t, SlotIndex(8), timeProvider.SlotsBeforeNextEpoch(16))
+		require.Equal(t, SlotIndex(4), timeProvider.SlotsBeforeNextEpoch(20))
+		require.Equal(t, SlotIndex(0), timeProvider.SlotsSinceEpochStart(24))
+		require.Equal(t, SlotIndex(5), timeProvider.SlotsSinceEpochStart(21))
 	}
 }

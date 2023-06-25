@@ -126,8 +126,8 @@ func (p *ManaDecayProvider) generateMana(value BaseToken, slotIndexDiff SlotInde
 
 // StoredManaWithDecay applies the decay to the given stored mana.
 func (p *ManaDecayProvider) StoredManaWithDecay(storedMana Mana, slotIndexCreated SlotIndex, slotIndexTarget SlotIndex) (Mana, error) {
-	epochIndexCreated := p.timeProvider.EpochsFromSlot(slotIndexCreated)
-	epochIndexTarget := p.timeProvider.EpochsFromSlot(slotIndexTarget)
+	epochIndexCreated := p.timeProvider.EpochFromSlot(slotIndexCreated)
+	epochIndexTarget := p.timeProvider.EpochFromSlot(slotIndexTarget)
 
 	if epochIndexCreated > epochIndexTarget {
 		return 0, errors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", epochIndexCreated, epochIndexTarget)
@@ -138,8 +138,8 @@ func (p *ManaDecayProvider) StoredManaWithDecay(storedMana Mana, slotIndexCreate
 
 // PotentialManaWithDecay calculates the generated potential mana and applies the decay to the result.
 func (p *ManaDecayProvider) PotentialManaWithDecay(deposit BaseToken, slotIndexCreated SlotIndex, slotIndexTarget SlotIndex) (Mana, error) {
-	epochIndexCreated := p.timeProvider.EpochsFromSlot(slotIndexCreated)
-	epochIndexTarget := p.timeProvider.EpochsFromSlot(slotIndexTarget)
+	epochIndexCreated := p.timeProvider.EpochFromSlot(slotIndexCreated)
+	epochIndexTarget := p.timeProvider.EpochFromSlot(slotIndexTarget)
 
 	if epochIndexCreated > epochIndexTarget {
 		return 0, errors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", epochIndexCreated, epochIndexTarget)

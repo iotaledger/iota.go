@@ -21,8 +21,8 @@ func TestBasicOutputBuilder(t *testing.T) {
 		metadata                = []byte("123456")
 		slotTimeProvider        = iotago.NewTimeProvider(time.Now().Unix(), 10, 10)
 	)
-	timelock := slotTimeProvider.SlotIndexFromTime(time.Now().Add(5 * time.Minute))
-	expiration := slotTimeProvider.SlotIndexFromTime(time.Now().Add(10 * time.Minute))
+	timelock := slotTimeProvider.SlotFromTime(time.Now().Add(5 * time.Minute))
+	expiration := slotTimeProvider.SlotFromTime(time.Now().Add(10 * time.Minute))
 
 	basicOutput, err := builder.NewBasicOutputBuilder(targetAddr, deposit).
 		NativeToken(nt).

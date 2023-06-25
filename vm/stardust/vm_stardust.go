@@ -335,7 +335,7 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 	if currentStakingFeat != nil {
 		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
 		// TODO: Use commitment input.
-		creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
+		creationEpoch := timeProvider.EpochFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
 		if creationEpoch < currentStakingFeat.EndEpoch {
 			return accountStakingNonExpiredValidation(
@@ -361,7 +361,7 @@ func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iot
 	}
 
 	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
-	creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
+	creationEpoch := timeProvider.EpochFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
 	if stakingFeat.StartEpoch != creationEpoch {
 		return iotago.ErrInvalidStakingStartEpoch
@@ -467,7 +467,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 	if stakingFeat != nil {
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
-		creationEpoch := timeProvider.EpochsFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
+		creationEpoch := timeProvider.EpochFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
 		if creationEpoch < stakingFeat.EndEpoch {
 			return fmt.Errorf("%w: %w: cannot destroy account until the staking feature is unbonded", iotago.ErrInvalidAccountStateTransition, iotago.ErrInvalidStakingBondedRemoval)
@@ -670,7 +670,7 @@ func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Param
 
 	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
 	creationSlot := vmParams.WorkingSet.Tx.Essence.CreationTime
-	creationEpoch := timeProvider.EpochsFromSlot(creationSlot)
+	creationEpoch := timeProvider.EpochFromSlot(creationSlot)
 	votingPowerSlot := votingPowerCalculationSlot(creationSlot, timeProvider)
 
 	var expectedStartEpoch iotago.EpochIndex
@@ -714,7 +714,7 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 
 	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
 	creationSlot := vmParams.WorkingSet.Tx.Essence.CreationTime
-	creationEpoch := timeProvider.EpochsFromSlot(creationSlot)
+	creationEpoch := timeProvider.EpochFromSlot(creationSlot)
 	votingPowerSlot := votingPowerCalculationSlot(creationSlot, timeProvider)
 
 	var expectedEndEpoch iotago.EpochIndex
@@ -733,7 +733,7 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 
 // votingPowerCalculationSlot returns the slot at the end of which the voting power for the next epoch is calculated.
 func votingPowerCalculationSlot(currentSlotIndex iotago.SlotIndex, timeProvider *iotago.TimeProvider) iotago.SlotIndex {
-	// currentEpoch := timeProvider.EpochsFromSlot(currentSlotIndex)
+	// currentEpoch := timeProvider.EpochFromSlot(currentSlotIndex)
 	// startSlotNextEpoch := timeProvider.EpochStart(currentEpoch)
 	// votingPowerCalcSlotNextEpoch := startSlotNextEpoch - iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge)
 	// TODO: Finalize when committee selection is finalized.

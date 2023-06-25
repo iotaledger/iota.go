@@ -3806,7 +3806,7 @@ func TestTxSemanticMana(t *testing.T) {
 						Amount: OneMi,
 						Mana: func() uint64 {
 							var slotIndexCreated iotago.SlotIndex = 10
-							slotIndexTarget := 10 + 100*iotago.SlotIndex(testProtoParams.EpochDurationInSlots)
+							slotIndexTarget := 10 + 100*testProtoParams.EpochDurationInSlots()
 
 							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(OneMi, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
@@ -3821,7 +3821,7 @@ func TestTxSemanticMana(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: 10 + 100*iotago.SlotIndex(testProtoParams.EpochDurationInSlots),
+				CreationTime: 10 + 100*testProtoParams.EpochDurationInSlots(),
 			}
 			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
@@ -3867,7 +3867,7 @@ func TestTxSemanticMana(t *testing.T) {
 						Amount: OneMi,
 						Mana: func() uint64 {
 							var slotIndexCreated iotago.SlotIndex = 10
-							slotIndexTarget := 10 + 100*iotago.SlotIndex(testProtoParams.EpochDurationInSlots)
+							slotIndexTarget := 10 + 100*testProtoParams.EpochDurationInSlots()
 
 							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(OneMi, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
@@ -3886,7 +3886,7 @@ func TestTxSemanticMana(t *testing.T) {
 				Allotments: iotago.Allotments{
 					&iotago.Allotment{Value: 50},
 				},
-				CreationTime: 10 + 100*iotago.SlotIndex(testProtoParams.EpochDurationInSlots),
+				CreationTime: 10 + 100*testProtoParams.EpochDurationInSlots(),
 			}
 			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
@@ -4027,8 +4027,8 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 	accountIdent := tpkg.RandAccountAddress()
 
 	var manaRewardAmount uint64 = 200
-	currentSlot := iotago.SlotIndex(20 * testProtoParams.EpochDurationInSlots)
-	currentEpoch := testProtoParams.TimeProvider().EpochsFromSlot(currentSlot)
+	currentSlot := 20 * testProtoParams.EpochDurationInSlots()
+	currentEpoch := testProtoParams.TimeProvider().EpochFromSlot(currentSlot)
 
 	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
@@ -4111,8 +4111,8 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
 
 	const manaRewardAmount uint64 = 200
-	currentSlot := iotago.SlotIndex(20 * testProtoParams.EpochDurationInSlots)
-	currentEpoch := testProtoParams.TimeProvider().EpochsFromSlot(currentSlot)
+	currentSlot := 20 * testProtoParams.EpochDurationInSlots()
+	currentEpoch := testProtoParams.TimeProvider().EpochFromSlot(currentSlot)
 
 	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
