@@ -633,3 +633,24 @@ func RandProtocolParameters() *iotago.ProtocolParameters {
 		SlotDurationInSeconds: RandUint8(math.MaxUint8),
 	}
 }
+
+// ManaDecayFactors calculates mana decay factors that can be used in the tests.
+func ManaDecayFactors(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds int, decayFactorsShiftFactor uint64) []uint32 {
+	epochsPerYear := ((365.0 * 24.0 * 60.0 * 60.0) / float64(slotTimeSeconds)) / float64(slotsPerEpoch)
+	decayFactors := make([]uint32, int(epochsPerYear))
+
+	betaPerDecayIndex := betaPerYear / epochsPerYear
+
+	for epochIndex := 1; epochIndex <= int(epochsPerYear); epochIndex++ {
+		decayFactor := math.Exp(-betaPerDecayIndex*float64(epochIndex)) * (math.Pow(2, float64(decayFactorsShiftFactor)))
+		decayFactors[epochIndex-1] = uint32(decayFactor)
+	}
+
+	return decayFactors
+}
+
+// ManaDecayFactorEpochsSum calculates mana decay factor epochs sum parameter that can be used in the tests.
+func ManaDecayFactorEpochsSum(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds int, decayFactorEpochsSumShiftFactor uint64) uint32 {
+	delta := float64(slotsPerEpoch) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(slotTimeSeconds)
+	return uint32((math.Exp(-betaPerYear*delta) / (1 - math.Exp(-betaPerYear*delta)) * (math.Pow(2, float64(decayFactorEpochsSumShiftFactor)))))
+}

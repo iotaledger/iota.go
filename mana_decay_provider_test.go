@@ -7,41 +7,29 @@ import (
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 const (
-	betaPerYear float64 = 1 / 3.0
+	betaPerYear                     float64 = 1 / 3.0
+	slotsPerEpochShiftFactor                = 13
+	slotDurationSeconds                     = 10
+	generationRate                          = 1
+	generationRateShiftFactor               = 27
+	decayFactorsShiftFactor                 = 32
+	decayFactorEpochsSumShiftFactor         = 20
 )
 
 var (
-	testManaDecayFactors         = getTestManaDecayFactors(betaPerYear, 1<<13, 10, 32)
-	testManaDecayFactorEpochsSum = getTestManaDecayFactorEpochsSum(betaPerYear, 1<<13, 10, 20)
+	testManaDecayFactors         = tpkg.ManaDecayFactors(betaPerYear, 1<<slotsPerEpochShiftFactor, slotDurationSeconds, decayFactorsShiftFactor)
+	testManaDecayFactorEpochsSum = tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochShiftFactor, slotDurationSeconds, decayFactorEpochsSumShiftFactor)
 )
 
-func getTestManaDecayFactors(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds int, decayFactorsShiftFactor uint64) []uint32 {
-	epochsPerYear := ((365.0 * 24.0 * 60.0 * 60.0) / float64(slotTimeSeconds)) / float64(slotsPerEpoch)
-	decayFactors := make([]uint32, int(epochsPerYear))
-
-	betaPerDecayIndex := betaPerYear / epochsPerYear
-
-	for epochIndex := 1; epochIndex <= int(epochsPerYear); epochIndex++ {
-		decayFactor := math.Exp(-betaPerDecayIndex*float64(epochIndex)) * (math.Pow(2, float64(decayFactorsShiftFactor)))
-		decayFactors[epochIndex-1] = uint32(decayFactor)
-	}
-
-	return decayFactors
-}
-
-func getTestManaDecayFactorEpochsSum(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds int, decayFactorEpochsSumShiftFactor uint64) uint32 {
-	delta := float64(slotsPerEpoch) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(slotTimeSeconds)
-	return uint32((math.Exp(-betaPerYear*delta) / (1 - math.Exp(-betaPerYear*delta)) * (math.Pow(2, float64(decayFactorEpochsSumShiftFactor)))))
-}
-
 func BenchmarkManaDecay_Single(b *testing.B) {
-	timeProvider := iotago.NewTimeProvider(0, 10, 1<<13)
-	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, 13, 0, 27, testManaDecayFactors, 32, testManaDecayFactorEpochsSum, 20)
+	timeProvider := iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochShiftFactor)
+	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, slotsPerEpochShiftFactor, generationRate, decayFactorEpochsSumShiftFactor, testManaDecayFactors, decayFactorsShiftFactor, testManaDecayFactorEpochsSum, decayFactorEpochsSumShiftFactor)
 
-	endIndex := iotago.SlotIndex(300 << 13)
+	endIndex := iotago.SlotIndex(300 << slotsPerEpochShiftFactor)
 
 	b.ResetTimer()
 
@@ -51,8 +39,8 @@ func BenchmarkManaDecay_Single(b *testing.B) {
 }
 
 func BenchmarkManaDecay_Range(b *testing.B) {
-	timeProvider := iotago.NewTimeProvider(0, 10, 1<<13)
-	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, 13, 0, 27, testManaDecayFactors, 32, testManaDecayFactorEpochsSum, 20)
+	timeProvider := iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochShiftFactor)
+	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, slotsPerEpochShiftFactor, generationRate, decayFactorEpochsSumShiftFactor, testManaDecayFactors, decayFactorsShiftFactor, testManaDecayFactorEpochsSum, decayFactorEpochsSumShiftFactor)
 
 	b.ResetTimer()
 
@@ -65,8 +53,8 @@ func BenchmarkManaDecay_Range(b *testing.B) {
 }
 
 func TestManaDecay_NoFactorsGiven(t *testing.T) {
-	timeProvider := iotago.NewTimeProvider(0, 10, 1<<13)
-	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, 13, 0, 27, []uint32{}, 0, 32, 20)
+	timeProvider := iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochShiftFactor)
+	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, slotsPerEpochShiftFactor, generationRate, decayFactorEpochsSumShiftFactor, []uint32{}, decayFactorsShiftFactor, testManaDecayFactorEpochsSum, decayFactorEpochsSumShiftFactor)
 
 	value, err := manaDecayProvider.StoredManaWithDecay(100, 0, 100<<13)
 	require.NoError(t, err)
@@ -74,8 +62,8 @@ func TestManaDecay_NoFactorsGiven(t *testing.T) {
 }
 
 func TestManaDecay_DecayIndexDiff(t *testing.T) {
-	timeProvider := iotago.NewTimeProvider(0, 10, 1<<13)
-	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, 13, 0, 27, testManaDecayFactors, 32, testManaDecayFactorEpochsSum, 20)
+	timeProvider := iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochShiftFactor)
+	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, slotsPerEpochShiftFactor, generationRate, decayFactorEpochsSumShiftFactor, testManaDecayFactors, decayFactorsShiftFactor, testManaDecayFactorEpochsSum, decayFactorEpochsSumShiftFactor)
 
 	// no decay in the same decay index
 	value, err := manaDecayProvider.StoredManaWithDecay(100, 1, 200)
@@ -84,8 +72,8 @@ func TestManaDecay_DecayIndexDiff(t *testing.T) {
 }
 
 func TestManaDecay_Decay(t *testing.T) {
-	timeProvider := iotago.NewTimeProvider(0, 10, 1<<13)
-	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, 13, 0, 27, testManaDecayFactors, 32, testManaDecayFactorEpochsSum, 20)
+	timeProvider := iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochShiftFactor)
+	manaDecayProvider := iotago.NewManaDecayProvider(timeProvider, slotsPerEpochShiftFactor, generationRate, decayFactorEpochsSumShiftFactor, testManaDecayFactors, decayFactorsShiftFactor, testManaDecayFactorEpochsSum, decayFactorEpochsSumShiftFactor)
 
 	{
 		// check if mana decay works for multiples of the available decay indexes in the lookup table
