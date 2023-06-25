@@ -624,7 +624,7 @@ func RandProtocolParameters() *iotago.ProtocolParameters {
 		MinPoWScore:           RandUint32(50000),
 		RentStructure:         *RandRentStructure(),
 		TokenSupply:           RandUint64(math.MaxUint64),
-		GenesisUnixTimestamp:  uint32(time.Now().Unix()),
+		GenesisUnixTimestamp:  time.Now().Unix(),
 		SlotDurationInSeconds: RandUint8(math.MaxUint8),
 	}
 }

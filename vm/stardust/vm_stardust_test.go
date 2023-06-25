@@ -24,7 +24,7 @@ func TestNFTTransition(t *testing.T) {
 
 	protoParams := &iotago.ProtocolParameters{
 		EpochDurationInSlots: 1 << 13,
-		MaxCommittableAge:    10,
+		LivenessThreshold:    10,
 	}
 
 	inputIDs := tpkg.RandOutputIDs(1)
@@ -181,7 +181,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{
 		ProtocolParameters: &iotago.ProtocolParameters{
 			EpochDurationInSlots: 1 << 13,
-			MaxCommittableAge:    10,
+			LivenessThreshold:    10,
 		},
 	}}, resolvedInputs))
 }
@@ -675,7 +675,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
@@ -708,9 +708,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 		}(),
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
@@ -775,7 +773,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
@@ -794,9 +792,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 		}(),
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
@@ -867,7 +863,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
@@ -882,9 +878,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 		}(),
 
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
@@ -955,7 +949,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
@@ -970,9 +964,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 		}(),
 
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
@@ -1032,7 +1024,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
@@ -1048,9 +1040,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 		}(),
 
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
@@ -1111,7 +1101,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
@@ -1126,9 +1116,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 		}(),
 
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
@@ -1175,7 +1163,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
@@ -1189,9 +1177,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 		}(),
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
@@ -1247,7 +1233,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
@@ -1775,9 +1761,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
 
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			inputs := vm.InputSet{
 				inputIDs[0]: vm.OutputWithCreationTime{
@@ -1832,9 +1816,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			}
 		}(),
 		func() test {
-			var (
-				accountAddr1 = tpkg.RandAccountAddress()
-			)
+			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
@@ -3359,7 +3341,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
@@ -3518,7 +3500,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
@@ -3591,7 +3573,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				vmParams: &vm.Params{External: &iotago.ExternalUnlockParameters{
 					ProtocolParameters: &iotago.ProtocolParameters{
 						EpochDurationInSlots: 1 << 13,
-						MaxCommittableAge:    10,
+						LivenessThreshold:    10,
 					},
 				}},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
@@ -3795,7 +3777,7 @@ func TestTxSemanticMana(t *testing.T) {
 					External: &iotago.ExternalUnlockParameters{
 						ProtocolParameters: &iotago.ProtocolParameters{
 							EpochDurationInSlots: 1 << 13,
-							MaxCommittableAge:    10,
+							LivenessThreshold:    10,
 						},
 					},
 				},
@@ -3851,7 +3833,7 @@ func TestTxSemanticMana(t *testing.T) {
 					External: &iotago.ExternalUnlockParameters{
 						ProtocolParameters: &iotago.ProtocolParameters{
 							EpochDurationInSlots: 1 << 13,
-							MaxCommittableAge:    10,
+							LivenessThreshold:    10,
 						},
 					},
 				},
@@ -3904,7 +3886,7 @@ func TestTxSemanticMana(t *testing.T) {
 					External: &iotago.ExternalUnlockParameters{
 						ProtocolParameters: &iotago.ProtocolParameters{
 							EpochDurationInSlots: 1 << 13,
-							MaxCommittableAge:    10,
+							LivenessThreshold:    10,
 						},
 					},
 				},
@@ -3957,7 +3939,7 @@ func TestTxSemanticMana(t *testing.T) {
 					External: &iotago.ExternalUnlockParameters{
 						ProtocolParameters: &iotago.ProtocolParameters{
 							EpochDurationInSlots: 1 << 13,
-							MaxCommittableAge:    10,
+							LivenessThreshold:    10,
 						},
 					},
 				},

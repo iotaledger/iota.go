@@ -11,16 +11,16 @@ type TimeProvider struct {
 
 	// duration is the default slot duration in seconds.
 	slotDuration int64
-	// epochDuration is the default epoch duration in seconds.
-	epochDuration int64
+	// epochDurationInSlots is the default epoch duration in slots.
+	epochDurationInSlots int64
 }
 
 // NewTimeProvider creates a new time provider.
-func NewTimeProvider(genesisUnixTime, slotDuration, epochDuration int64) *TimeProvider {
+func NewTimeProvider(genesisUnixTime, slotDuration, epochDurationInSlots int64) *TimeProvider {
 	return &TimeProvider{
-		genesisUnixTime: genesisUnixTime,
-		slotDuration:    slotDuration,
-		epochDuration:   epochDuration,
+		genesisUnixTime:      genesisUnixTime,
+		slotDuration:         slotDuration,
+		epochDurationInSlots: epochDurationInSlots,
 	}
 }
 
@@ -40,7 +40,7 @@ func (t *TimeProvider) SlotDuration() int64 {
 }
 
 func (t *TimeProvider) EpochDuration() int64 {
-	return t.epochDuration
+	return t.epochDurationInSlots
 }
 
 // SlotIndexFromTime calculates the SlotIndex from the given time.
@@ -79,15 +79,15 @@ func (t *TimeProvider) SlotEndTime(i SlotIndex) time.Time {
 
 // EpochsFromSlot calculates the EpochIndex from the given slot.
 func (t *TimeProvider) EpochsFromSlot(slot SlotIndex) EpochIndex {
-	return EpochIndex(slot/SlotIndex(t.epochDuration)) + 1
+	return EpochIndex(slot/SlotIndex(t.epochDurationInSlots)) + 1
 }
 
 // EpochStart calculates the start slot of the given epoch.
 func (t *TimeProvider) EpochStart(epoch EpochIndex) SlotIndex {
-	return SlotIndex((epoch - 1) * EpochIndex(t.epochDuration))
+	return SlotIndex((epoch - 1) * EpochIndex(t.epochDurationInSlots))
 }
 
 // EpochEnd calculates the end included slot of the given epoch.
 func (t *TimeProvider) EpochEnd(epoch EpochIndex) SlotIndex {
-	return SlotIndex(epoch*EpochIndex(t.epochDuration) - 1)
+	return SlotIndex(epoch*EpochIndex(t.epochDurationInSlots) - 1)
 }

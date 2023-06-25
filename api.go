@@ -100,20 +100,23 @@ type ProtocolParameters struct {
 	// TokenSupply defines the current token supply on the network.
 	TokenSupply uint64 `serix:"5,mapKey=tokenSupply"`
 	// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
-	GenesisUnixTimestamp uint32 `serix:"6,mapKey=genesisUnixTimestamp"`
+	GenesisUnixTimestamp int64 `serix:"6,mapKey=genesisUnixTimestamp"`
 	// SlotDurationInSeconds defines the duration of each slot in seconds.
 	SlotDurationInSeconds uint8 `serix:"7,mapKey=slotDurationInSeconds"`
 	// EpochDurationInSlots defines the amount of slots in an epoch.
 	EpochDurationInSlots uint32 `serix:"8,mapKey=epochDurationInSlots"`
-	ManaGenerationRate   uint8  // `serix:"9,mapKey=manaGenerationRate"`
+	// ManaGenerationRate is a rate at which mana is generated.
+	ManaGenerationRate uint8 // `serix:"9,mapKey=manaGenerationRate"`
 	// ManaDecayFactors is a slice of epoch index diff to decay factor (slice index 0 = 1 epoch).
 	ManaDecayFactors []uint32 // `serix:"10,mapKey=manaDecayFactors"`
 	// ManaDecayFactorsScaleFactor is the amount of bits that are used for the mana decay factors.
 	ManaDecayFactorsScaleFactor uint8 // `serix:"11,mapKey=manaDecayFactorsScaleFactor"`
-	// MaxCommittableAge defines the maximum age of a slot to which a block can commit relative to the block timestamp,
-	// expressed in number of slots.
-	MaxCommittableAge SlotIndex `serix:"12,mapKey=maxCommittableAge"`
-	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
+	// EvictionAge defines the age in slots when you can evict blocks by committing them into a slot commitments and
+	// when slots stop being a consumable accounts' state relative to the latest committed slot.
+	EvictionAge SlotIndex `serix:"12,mapKey=evictionAge"`
+	// LivenessThreshold is used by tipselection to determine the if a block is eligibile by evaluating issuingTimes
+	// and commitments in its pastcone to ATT and lastCommittedSlot respectively.
+	LivenessThreshold SlotIndex `serix:"13,mapKey=liveNessThreshold"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {
@@ -125,12 +128,12 @@ func (p ProtocolParameters) NetworkID() NetworkID {
 }
 
 func (p ProtocolParameters) TimeProvider() *TimeProvider {
-	return NewTimeProvider(int64(p.GenesisUnixTimestamp), int64(p.SlotDurationInSeconds), int64(p.EpochDurationInSlots))
+	return NewTimeProvider(p.GenesisUnixTimestamp, int64(p.SlotDurationInSeconds), int64(p.EpochDurationInSlots))
 }
 
 func (p ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tMinimum PoW Score: %d\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n}",
-		p.Version, p.NetworkName, p.Bech32HRP, p.MinPoWScore, p.RentStructure, p.TokenSupply, p.GenesisUnixTimestamp, p.SlotDurationInSeconds)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tMinimum PoW Score: %d\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tMana Generation Rate: %d\n\tMana Decay Factors: %v\n\tMana Decay Factors Scale Factor: %d\n\tLiveness Threshold: %d\n\tLiveness Threshold: %d\n}",
+		p.Version, p.NetworkName, p.Bech32HRP, p.MinPoWScore, p.RentStructure, p.TokenSupply, p.GenesisUnixTimestamp, p.SlotDurationInSeconds, p.ManaGenerationRate, p.ManaDecayFactors, p.ManaDecayFactorsScaleFactor, p.LivenessThreshold, p.LivenessThreshold)
 }
 
 func (p ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
