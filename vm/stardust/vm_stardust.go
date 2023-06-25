@@ -256,7 +256,8 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	if vmParams.WorkingSet.Commitment == nil {
 		return fmt.Errorf("%w: no commitment provided", iotago.ErrInvalidBlockIssuerTransition)
 	}
-	txSlotIndex := vmParams.WorkingSet.Commitment.Index + vmParams.External.ProtocolParameters.EvictionAge
+
+	txSlotIndex := vmParams.WorkingSet.Commitment.Index
 	if currentBIFeat.ExpirySlot >= txSlotIndex {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBIFeat == nil {
@@ -310,7 +311,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+vmParams.External.ProtocolParameters.LivenessThreshold) {
+		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+vmParams.External.ProtocolParameters.EvictionAge) {
 			manaOut -= basicOutput.StoredMana()
 		}
 	}
@@ -319,7 +320,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+vmParams.External.ProtocolParameters.LivenessThreshold) {
+		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+vmParams.External.ProtocolParameters.EvictionAge) {
 			manaOut -= nftOutput.StoredMana()
 		}
 	}

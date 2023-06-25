@@ -28,7 +28,7 @@ var (
 	testTimeProvider      *iotago.TimeProvider
 	testManaDecayProvider *iotago.ManaDecayProvider
 
-	// these global variables are needed, otherwise the compiler will optimize away the actual tests
+	// These global variables are needed, otherwise the compiler will optimize away the actual tests.
 	benchmarkResult iotago.Mana
 )
 
