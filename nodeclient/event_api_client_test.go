@@ -17,16 +17,16 @@ import (
 )
 
 var emptyAPI = iotago.LatestAPI(&iotago.ProtocolParameters{
-	Version:                      0,
-	NetworkName:                  "",
-	Bech32HRP:                    "",
-	MinPoWScore:                  0,
-	RentStructure:                iotago.RentStructure{},
-	TokenSupply:                  0,
-	GenesisUnixTimestamp:         0,
-	SlotDurationInSeconds:        0,
-	AllowedCommitmentsWindowSize: 0,
-	OrphanageThreshold:           0,
+	Version:               0,
+	NetworkName:           "",
+	Bech32HRP:             "",
+	MinPoWScore:           0,
+	RentStructure:         iotago.RentStructure{},
+	TokenSupply:           0,
+	GenesisUnixTimestamp:  0,
+	SlotDurationInSeconds: 0,
+	EvictionAge:           0,
+	LivenessThreshold:     0,
 })
 
 func TestMain(m *testing.M) { // call the tests

@@ -111,14 +111,12 @@ type ProtocolParameters struct {
 	ManaDecayFactors []uint32 // `serix:"10,mapKey=manaDecayFactors"`
 	// ManaDecayFactorsScaleFactor is the amount of bits that are used for the mana decay factors.
 	ManaDecayFactorsScaleFactor uint8 // `serix:"11,mapKey=manaDecayFactorsScaleFactor"`
-	// MinCommittableAge defines the latest slot age in relation to AcceptedTangleTime for which a commitment can be created.
-	MinCommittableAge SlotIndex `serix:"12,mapKey=minCommittableAge"`
-	// AllowedCommitmentsWindowSize defines the size of the window in which a commitment can be consumed
-	// as a source of state, expressed in number of slots.
-	AllowedCommitmentsWindowSize SlotIndex `serix:"13,mapKey=allowedCommitmentsWindowSize"`
-	// OrphanageThreshold denotes number of slots in the past in relation to Accepted Tangle Time (ATT) below
-	// which blocks cannot be attached to.
-	OrphanageThreshold SlotIndex `serix:"14,mapKey=orphanageThreshold"`
+	// EvictionAge defines the age in slots when you can evict blocks by committing them into a slot commitments and
+	// when slots stop being a consumable accounts' state relative to the latest committed slot.
+	EvictionAge SlotIndex `serix:"12,mapKey=evictionAge"`
+	// LivenessThreshold is used by tipselection to determine the if a block is eligibile by evaluating issuingTimes
+	// and commitments in its pastcone to ATT and lastCommittedSlot respectively.
+	LivenessThreshold SlotIndex `serix:"13,mapKey=liveNessThreshold"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {
@@ -134,8 +132,8 @@ func (p ProtocolParameters) TimeProvider() *TimeProvider {
 }
 
 func (p ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tMinimum PoW Score: %d\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tMana Generation Rate: %d\n\tMana Decay Factors: %v\n\tMana Decay Factors Scale Factor: %d\n\tAllowed Commitments Window Size: %d\n\tOrphanage Threshold: %d\n}",
-		p.Version, p.NetworkName, p.Bech32HRP, p.MinPoWScore, p.RentStructure, p.TokenSupply, p.GenesisUnixTimestamp, p.SlotDurationInSeconds, p.ManaGenerationRate, p.ManaDecayFactors, p.ManaDecayFactorsScaleFactor, p.AllowedCommitmentsWindowSize, p.OrphanageThreshold)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tMinimum PoW Score: %d\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tMana Generation Rate: %d\n\tMana Decay Factors: %v\n\tMana Decay Factors Scale Factor: %d\n\tLiveness Threshold: %d\n\tLiveness Threshold: %d\n}",
+		p.Version, p.NetworkName, p.Bech32HRP, p.MinPoWScore, p.RentStructure, p.TokenSupply, p.GenesisUnixTimestamp, p.SlotDurationInSeconds, p.ManaGenerationRate, p.ManaDecayFactors, p.ManaDecayFactorsScaleFactor, p.LivenessThreshold, p.LivenessThreshold)
 }
 
 func (p ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {

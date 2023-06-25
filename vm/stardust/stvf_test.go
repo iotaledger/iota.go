@@ -57,8 +57,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	exampleExistingFoundryOutputID := exampleExistingFoundryOutput.MustID()
 
 	protoParams := &iotago.ProtocolParameters{
-		EpochDurationInSlots:         1 << 13,
-		AllowedCommitmentsWindowSize: 10,
+		EpochDurationInSlots: 1 << 13,
+		LivenessThreshold:    10,
 	}
 
 	type test struct {

@@ -81,12 +81,12 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			VBFactorKey:  7,
 			VBFactorData: 8,
 		},
-		TokenSupply:                  1234567890987654321,
-		GenesisUnixTimestamp:         1681373293,
-		SlotDurationInSeconds:        10,
-		EpochDurationInSlots:         10,
-		AllowedCommitmentsWindowSize: 10,
-		OrphanageThreshold:           3,
+		TokenSupply:           1234567890987654321,
+		GenesisUnixTimestamp:  1681373293,
+		SlotDurationInSeconds: 10,
+		EpochDurationInSlots:  10,
+		EvictionAge:           10,
+		LivenessThreshold:     3,
 	}
 	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":1681373293,"slotDurationInSeconds":10,"epochDurationInSlots":10,"allowedCommitmentsWindowSize":"10","orphanageThreshold":"3"}`
 
