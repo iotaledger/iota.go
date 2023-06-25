@@ -110,9 +110,9 @@ type ProtocolParameters struct {
 	ManaDecayFactors []uint32 // `serix:"10,mapKey=manaDecayFactors"`
 	// ManaDecayFactorsScaleFactor is the amount of bits that are used for the mana decay factors.
 	ManaDecayFactorsScaleFactor uint8 // `serix:"11,mapKey=manaDecayFactorsScaleFactor"`
-	// MaxCommittableAge defines the maximum age of a slot to which a block can commit relative to the block timestamp,
-	// expressed in number of slots.
-	MaxCommittableAge SlotIndex `serix:"12,mapKey=maxCommittableAge"`
+	// AllowedCommitmentsWindowSize defines the size of the window in which a commitment can be consumed
+	// as a source of state, expressed in number of slots.
+	AllowedCommitmentsWindowSize SlotIndex `serix:"12,mapKey=maxCommittableAge"`
 	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
 }
 

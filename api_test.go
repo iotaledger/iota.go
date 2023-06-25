@@ -15,9 +15,7 @@ const (
 	OneMi = 1_000_000
 )
 
-var (
-	v3API = iotago.V3API(tpkg.TestProtoParams)
-)
+var v3API = iotago.V3API(tpkg.TestProtoParams)
 
 type deSerializeTest struct {
 	name      string
@@ -83,11 +81,11 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			VBFactorKey:  7,
 			VBFactorData: 8,
 		},
-		TokenSupply:           1234567890987654321,
-		GenesisUnixTimestamp:  1681373293,
-		SlotDurationInSeconds: 10,
-		EpochDurationInSlots:  10,
-		MaxCommittableAge:     10,
+		TokenSupply:                  1234567890987654321,
+		GenesisUnixTimestamp:         1681373293,
+		SlotDurationInSeconds:        10,
+		EpochDurationInSlots:         10,
+		AllowedCommitmentsWindowSize: 10,
 	}
 	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":1681373293,"slotDurationInSeconds":10,"epochDurationInSlots":10,"maxCommittableAge":"10"}`
 

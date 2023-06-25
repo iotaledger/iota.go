@@ -14,9 +14,7 @@ import (
 	"github.com/iotaledger/iota.go/v4/vm"
 )
 
-var (
-	v3API = iotago.V3API(tpkg.TestProtoParams)
-)
+var v3API = iotago.V3API(tpkg.TestProtoParams)
 
 type fieldMutations map[string]interface{}
 
@@ -59,8 +57,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	exampleExistingFoundryOutputID := exampleExistingFoundryOutput.MustID()
 
 	protoParams := &iotago.ProtocolParameters{
-		EpochDurationInSlots: 1 << 13,
-		MaxCommittableAge:    10,
+		EpochDurationInSlots:         1 << 13,
+		AllowedCommitmentsWindowSize: 10,
 	}
 
 	type test struct {
