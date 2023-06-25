@@ -100,7 +100,7 @@ type ProtocolParameters struct {
 	// TokenSupply defines the current token supply on the network.
 	TokenSupply uint64 `serix:"5,mapKey=tokenSupply"`
 	// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
-	GenesisUnixTimestamp uint32 `serix:"6,mapKey=genesisUnixTimestamp"`
+	GenesisUnixTimestamp int64 `serix:"6,mapKey=genesisUnixTimestamp"`
 	// SlotDurationInSeconds defines the duration of each slot in seconds.
 	SlotDurationInSeconds uint8 `serix:"7,mapKey=slotDurationInSeconds"`
 	// EpochDurationInSlots defines the amount of slots in an epoch.
