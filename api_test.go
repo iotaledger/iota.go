@@ -86,8 +86,9 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 		SlotDurationInSeconds:        10,
 		EpochDurationInSlots:         10,
 		AllowedCommitmentsWindowSize: 10,
+		OrphanageThreshold:           3,
 	}
-	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":1681373293,"slotDurationInSeconds":10,"epochDurationInSlots":10,"maxCommittableAge":"10"}`
+	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":1681373293,"slotDurationInSeconds":10,"epochDurationInSlots":10,"allowedCommitmentsWindowSize":"10","orphanageThreshold":"3"}`
 
 	jsonProtoParams, err := v3API.JSONEncode(protoParams)
 	require.NoError(t, err)
