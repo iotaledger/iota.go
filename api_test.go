@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	OneMi = 1_000_000
+	OneMi iotago.BaseToken = 1_000_000
 )
 
 var v3API = iotago.V3API(tpkg.TestProtoParams)

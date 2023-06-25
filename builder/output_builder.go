@@ -7,7 +7,7 @@ import (
 )
 
 // NewBasicOutputBuilder creates a new BasicOutputBuilder with the required target address and deposit amount.
-func NewBasicOutputBuilder(targetAddr iotago.Address, deposit uint64) *BasicOutputBuilder {
+func NewBasicOutputBuilder(targetAddr iotago.Address, deposit iotago.BaseToken) *BasicOutputBuilder {
 	return &BasicOutputBuilder{output: &iotago.BasicOutput{
 		Amount:       deposit,
 		NativeTokens: iotago.NativeTokens{},
@@ -29,7 +29,7 @@ type BasicOutputBuilder struct {
 }
 
 // Deposit sets the deposit of the output.
-func (builder *BasicOutputBuilder) Deposit(deposit uint64) *BasicOutputBuilder {
+func (builder *BasicOutputBuilder) Deposit(deposit iotago.BaseToken) *BasicOutputBuilder {
 	builder.output.Amount = deposit
 	return builder
 }
@@ -53,7 +53,7 @@ func (builder *BasicOutputBuilder) NativeTokens(nts iotago.NativeTokens) *BasicO
 }
 
 // StorageDepositReturn sets/modifies an iotago.StorageDepositReturnUnlockCondition on the output.
-func (builder *BasicOutputBuilder) StorageDepositReturn(returnAddr iotago.Address, amount uint64) *BasicOutputBuilder {
+func (builder *BasicOutputBuilder) StorageDepositReturn(returnAddr iotago.Address, amount iotago.BaseToken) *BasicOutputBuilder {
 	builder.output.Conditions.Upsert(&iotago.StorageDepositReturnUnlockCondition{ReturnAddress: returnAddr, Amount: amount})
 	return builder
 }
@@ -107,7 +107,7 @@ func (builder *BasicOutputBuilder) Build() (*iotago.BasicOutput, error) {
 }
 
 // NewAccountOutputBuilder creates a new AccountOutputBuilder with the required state controller/governor addresses and deposit amount.
-func NewAccountOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, deposit uint64) *AccountOutputBuilder {
+func NewAccountOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, deposit iotago.BaseToken) *AccountOutputBuilder {
 	return &AccountOutputBuilder{output: &iotago.AccountOutput{
 		Amount:       deposit,
 		NativeTokens: iotago.NativeTokens{},
@@ -137,7 +137,7 @@ type AccountOutputBuilder struct {
 }
 
 // Deposit sets the deposit of the output.
-func (builder *AccountOutputBuilder) Deposit(deposit uint64) *AccountOutputBuilder {
+func (builder *AccountOutputBuilder) Deposit(deposit iotago.BaseToken) *AccountOutputBuilder {
 	builder.output.Amount = deposit
 	builder.stateCtrlReq = true
 	return builder
@@ -263,7 +263,7 @@ func (builder *AccountOutputBuilder) StateTransition() *accountStateTransition {
 }
 
 // Deposit sets the deposit of the output.
-func (trans *accountStateTransition) Deposit(deposit uint64) *accountStateTransition {
+func (trans *accountStateTransition) Deposit(deposit iotago.BaseToken) *accountStateTransition {
 	return trans.builder.Deposit(deposit).StateTransition()
 }
 
@@ -332,7 +332,7 @@ func (trans *accountGovernanceTransition) Builder() *AccountOutputBuilder {
 }
 
 // NewFoundryOutputBuilder creates a new FoundryOutputBuilder with the account address, serial number, token scheme and deposit amount.
-func NewFoundryOutputBuilder(accountAddr *iotago.AccountAddress, tokenScheme iotago.TokenScheme, deposit uint64) *FoundryOutputBuilder {
+func NewFoundryOutputBuilder(accountAddr *iotago.AccountAddress, tokenScheme iotago.TokenScheme, deposit iotago.BaseToken) *FoundryOutputBuilder {
 	return &FoundryOutputBuilder{output: &iotago.FoundryOutput{
 		Amount:       deposit,
 		TokenScheme:  tokenScheme,
@@ -360,7 +360,7 @@ type FoundryOutputBuilder struct {
 }
 
 // Deposit sets the deposit of the output.
-func (builder *FoundryOutputBuilder) Deposit(deposit uint64) *FoundryOutputBuilder {
+func (builder *FoundryOutputBuilder) Deposit(deposit iotago.BaseToken) *FoundryOutputBuilder {
 	builder.output.Amount = deposit
 	return builder
 }
@@ -416,7 +416,7 @@ func (builder *FoundryOutputBuilder) Build() (*iotago.FoundryOutput, error) {
 }
 
 // NewNFTOutputBuilder creates a new NFTOutputBuilder with the address and deposit amount.
-func NewNFTOutputBuilder(targetAddr iotago.Address, deposit uint64) *NFTOutputBuilder {
+func NewNFTOutputBuilder(targetAddr iotago.Address, deposit iotago.BaseToken) *NFTOutputBuilder {
 	return &NFTOutputBuilder{output: &iotago.NFTOutput{
 		Amount:       deposit,
 		NativeTokens: iotago.NativeTokens{},
@@ -443,7 +443,7 @@ type NFTOutputBuilder struct {
 }
 
 // Deposit sets the deposit of the output.
-func (builder *NFTOutputBuilder) Deposit(deposit uint64) *NFTOutputBuilder {
+func (builder *NFTOutputBuilder) Deposit(deposit iotago.BaseToken) *NFTOutputBuilder {
 	builder.output.Amount = deposit
 	return builder
 }
@@ -474,7 +474,7 @@ func (builder *NFTOutputBuilder) NFTID(nftID iotago.NFTID) *NFTOutputBuilder {
 }
 
 // StorageDepositReturn sets/modifies an iotago.StorageDepositReturnUnlockCondition on the output.
-func (builder *NFTOutputBuilder) StorageDepositReturn(returnAddr iotago.Address, amount uint64) *NFTOutputBuilder {
+func (builder *NFTOutputBuilder) StorageDepositReturn(returnAddr iotago.Address, amount iotago.BaseToken) *NFTOutputBuilder {
 	builder.output.Conditions.Upsert(&iotago.StorageDepositReturnUnlockCondition{ReturnAddress: returnAddr, Amount: amount})
 	return builder
 }

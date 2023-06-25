@@ -20,8 +20,14 @@ import (
 // BaseToken defines the unit of the base token of the network.
 type BaseToken uint64
 
+// BaseTokenSize is the size in bytes that is used by BaseToken.
+const BaseTokenSize = 8
+
 // Mana defines the type of the consumable resource e.g. used in congestion control.
 type Mana uint64
+
+// ManaSize is the size in bytes that is used by Mana.
+const ManaSize = 8
 
 // Output defines a unit of output of a transaction.
 type Output interface {
@@ -29,10 +35,10 @@ type Output interface {
 	NonEphemeralObject
 
 	// Deposit returns the amount this Output deposits.
-	Deposit() uint64
+	Deposit() BaseToken
 
 	// StoredMana returns the stored mana held by this output.
-	StoredMana() uint64
+	StoredMana() Mana
 
 	// NativeTokenList returns the NativeToken this output defines.
 	NativeTokenList() NativeTokens
@@ -688,7 +694,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
 func OutputsSyntacticalDepositAmount(protoParams *ProtocolParameters) OutputsSyntacticalValidationFunc {
-	var sum uint64
+	var sum BaseToken
 	return func(index int, output Output) error {
 		deposit := output.Deposit()
 

@@ -74,10 +74,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		ExpirySlot:      currentSlot + protoParams.EvictionAge,
 	}
 
-	exampleBIC := map[iotago.AccountID]vm.BlockIssuanceCredit{
-		exampleAccountID: {
-			Credits: 100,
-		},
+	exampleBIC := map[iotago.AccountID]iotago.BlockIssuanceCredits{
+		exampleAccountID: 100,
 	}
 
 	type test struct {
@@ -936,7 +934,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						},
 					},
 					BIC: exampleBIC,
-					Rewards: map[iotago.ChainID]uint64{
+					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleAccountID: 200,
 					},
 				},
@@ -1001,10 +999,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: 1001,
 						},
 					},
-					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
-						exampleAccountID: {
-							Credits: -1,
-						},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: -1,
 					},
 				},
 			},
@@ -1116,10 +1112,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Index: 1001,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
-					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
-						exampleAccountID: {
-							Credits: 0,
-						},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: 0,
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1170,10 +1164,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Index: 999,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
-					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
-						exampleAccountID: {
-							Credits: 0,
-						},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: 0,
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1224,10 +1216,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Index: 1001,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
-					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
-						exampleAccountID: {
-							Credits: 0,
-						},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: 0,
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1402,10 +1392,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
-						exampleAccountID: {
-							Credits: 10,
-						},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: 10,
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1513,10 +1501,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
-						exampleAccountID: {
-							Credits: 10,
-						},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: 10,
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1576,10 +1562,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
-						exampleAccountID: {
-							Credits: 10,
-						},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: 10,
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1639,10 +1623,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
-						exampleAccountID: {
-							Credits: -1,
-						},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: -1,
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1760,10 +1742,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
-					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
-						exampleAccountID: {
-							Credits: 10,
-						},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: 10,
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1831,10 +1811,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							Output: exampleExistingFoundryOutput,
 						},
 					},
-					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
-						exampleAccountID: {
-							Credits: 10,
-						},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: 10,
 					},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1878,7 +1856,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			},
 			nextMut: map[string]fieldMutations{
 				"amount": {
-					"Amount": uint64(1337),
+					"Amount": iotago.BaseToken(1337),
 				},
 				"native_tokens": {
 					"NativeTokens": tpkg.RandSortNativeTokens(10),
@@ -2541,7 +2519,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			},
 			nextMut: map[string]fieldMutations{
 				"amount": {
-					"Amount": uint64(1337),
+					"Amount": iotago.BaseToken(1337),
 				},
 				"address": {
 					"Conditions": iotago.NFTOutputUnlockConditions{
@@ -2845,8 +2823,8 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			},
 			nextMut: map[string]fieldMutations{
 				"delegated_amount_modified": {
-					"DelegatedAmount": uint64(1337),
-					"Amount":          uint64(5),
+					"DelegatedAmount": iotago.BaseToken(1337),
+					"Amount":          iotago.BaseToken(5),
 					"DelegationID":    exampleDelegationID,
 					"EndEpoch":        currentEpoch,
 				},
@@ -2948,7 +2926,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: currentSlot,
 						},
 					},
-					Rewards: map[iotago.ChainID]uint64{
+					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleDelegationID: 1,
 					},
 				},
@@ -2984,7 +2962,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 							CreationTime: currentSlot,
 						},
 					},
-					Rewards: map[iotago.ChainID]uint64{
+					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleDelegationID: 0,
 					},
 				},

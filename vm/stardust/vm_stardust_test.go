@@ -233,10 +233,10 @@ func TestStardustTransactionExecution(t *testing.T) {
 			)
 
 			var (
-				defaultAmount        uint64 = OneMi
-				storageDepositReturn uint64 = OneMi / 2
-				nativeTokenTransfer1        = tpkg.RandSortNativeTokens(10)
-				nativeTokenTransfer2        = tpkg.RandSortNativeTokens(10)
+				defaultAmount        iotago.BaseToken = OneMi
+				storageDepositReturn iotago.BaseToken = OneMi / 2
+				nativeTokenTransfer1                  = tpkg.RandSortNativeTokens(10)
+				nativeTokenTransfer2                  = tpkg.RandSortNativeTokens(10)
 			)
 
 			var (
@@ -869,9 +869,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			bicInputs := vm.BICInputSet{
-				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
-					Credits: 0,
-				},
+				accountAddr1.AccountID(): 0,
 			}
 
 			commitmentInput := &iotago.Commitment{
@@ -953,9 +951,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			bicInputs := vm.BICInputSet{
-				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
-					Credits: 0,
-				},
+				accountAddr1.AccountID(): 0,
 			}
 
 			commitmentInput := &iotago.Commitment{
@@ -1026,9 +1022,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			bicInputs := vm.BICInputSet{
-				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
-					Credits: 0,
-				},
+				accountAddr1.AccountID(): 0,
 			}
 
 			commitmentInput := &iotago.Commitment{
@@ -1101,9 +1095,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			bicInputs := vm.BICInputSet{
-				accountAddr1.AccountID(): vm.BlockIssuanceCredit{
-					Credits: 0,
-				},
+				accountAddr1.AccountID(): 0,
 			}
 
 			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddressKeys)
@@ -2684,7 +2676,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
-						Amount: 100 * uint64(numDistinctNTs),
+						Amount: 100 * iotago.BaseToken(numDistinctNTs),
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
@@ -3809,7 +3801,7 @@ func TestTxSemanticMana(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: OneMi,
-						Mana: func() uint64 {
+						Mana: func() iotago.Mana {
 							var slotIndexCreated iotago.SlotIndex = 10
 							slotIndexTarget := 10 + 100*testProtoParams.EpochDurationInSlots()
 
@@ -3819,7 +3811,7 @@ func TestTxSemanticMana(t *testing.T) {
 							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							return uint64(potentialMana + storedMana)
+							return potentialMana + storedMana
 						}(),
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -3870,7 +3862,7 @@ func TestTxSemanticMana(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: OneMi,
-						Mana: func() uint64 {
+						Mana: func() iotago.Mana {
 							var slotIndexCreated iotago.SlotIndex = 10
 							slotIndexTarget := 10 + 100*testProtoParams.EpochDurationInSlots()
 
@@ -3881,7 +3873,7 @@ func TestTxSemanticMana(t *testing.T) {
 							require.NoError(t, err)
 
 							// generated mana + decay - allotment
-							return uint64(potentialMana+storedMana) - 50
+							return potentialMana + storedMana - 50
 						}(),
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -4031,7 +4023,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
 	accountIdent := tpkg.RandAccountAddress()
 
-	var manaRewardAmount uint64 = 200
+	var manaRewardAmount iotago.Mana = 200
 	currentSlot := 20 * testProtoParams.EpochDurationInSlots()
 	currentEpoch := testProtoParams.TimeProvider().EpochFromSlot(currentSlot)
 
@@ -4103,7 +4095,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 
 	resolvedInputs := vm.ResolvedInputs{
 		InputSet: inputs,
-		RewardsInputSet: map[iotago.ChainID]uint64{
+		RewardsInputSet: map[iotago.ChainID]iotago.Mana{
 			accountIdent.AccountID(): manaRewardAmount,
 		},
 	}
@@ -4115,7 +4107,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 func TestManaRewardsClaimingDelegation(t *testing.T) {
 	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
 
-	const manaRewardAmount uint64 = 200
+	const manaRewardAmount iotago.Mana = 200
 	currentSlot := 20 * testProtoParams.EpochDurationInSlots()
 	currentEpoch := testProtoParams.TimeProvider().EpochFromSlot(currentSlot)
 
@@ -4165,7 +4157,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 
 	resolvedInputs := vm.ResolvedInputs{
 		InputSet: inputs,
-		RewardsInputSet: map[iotago.ChainID]uint64{
+		RewardsInputSet: map[iotago.ChainID]iotago.Mana{
 			delegationID: manaRewardAmount,
 		},
 	}

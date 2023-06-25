@@ -142,7 +142,7 @@ type (
 // AccountOutput is an output type which represents an account.
 type AccountOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount uint64 `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:"0,mapKey=amount"`
 	// The native tokens held by the output.
 	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
 	// The identifier for this account.
@@ -160,7 +160,7 @@ type AccountOutput struct {
 	// The immutable feature on the output.
 	ImmutableFeatures AccountOutputImmFeatures `serix:"8,mapKey=immutableFeatures,omitempty"`
 	// The stored mana held by the output.
-	Mana uint64 `serix:"9,mapKey=mana"`
+	Mana Mana `serix:"9,mapKey=mana"`
 }
 
 func (a *AccountOutput) GovernorAddress() Address {
@@ -246,11 +246,11 @@ func (a *AccountOutput) ImmutableFeatureSet() FeatureSet {
 	return a.ImmutableFeatures.MustSet()
 }
 
-func (a *AccountOutput) Deposit() uint64 {
+func (a *AccountOutput) Deposit() BaseToken {
 	return a.Amount
 }
 
-func (a *AccountOutput) StoredMana() uint64 {
+func (a *AccountOutput) StoredMana() Mana {
 	return a.Mana
 }
 
@@ -266,7 +266,7 @@ func (a *AccountOutput) Type() OutputType {
 
 func (a *AccountOutput) Size() int {
 	return util.NumByteLen(byte(OutputAccount)) +
-		util.NumByteLen(a.Amount) +
+		BaseTokenSize +
 		a.NativeTokens.Size() +
 		AccountIDLength +
 		util.NumByteLen(a.StateIndex) +
@@ -276,5 +276,5 @@ func (a *AccountOutput) Size() int {
 		a.Conditions.Size() +
 		a.Features.Size() +
 		a.ImmutableFeatures.Size() +
-		util.NumByteLen(a.Mana)
+		ManaSize
 }

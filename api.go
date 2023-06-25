@@ -98,7 +98,7 @@ type ProtocolParameters struct {
 	// The rent structure used by given node/network.
 	RentStructure RentStructure `serix:"4,mapKey=rentStructure"`
 	// TokenSupply defines the current token supply on the network.
-	TokenSupply uint64 `serix:"5,mapKey=tokenSupply"`
+	TokenSupply BaseToken `serix:"5,mapKey=tokenSupply"`
 	// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
 	GenesisUnixTimestamp int64 `serix:"6,mapKey=genesisUnixTimestamp"`
 	// SlotDurationInSeconds defines the duration of each slot in seconds.

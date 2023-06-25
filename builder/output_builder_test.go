@@ -14,12 +14,12 @@ import (
 
 func TestBasicOutputBuilder(t *testing.T) {
 	var (
-		targetAddr              = tpkg.RandEd25519Address()
-		deposit          uint64 = 1337
-		nt                      = tpkg.RandNativeToken()
-		expirationTarget        = tpkg.RandEd25519Address()
-		metadata                = []byte("123456")
-		slotTimeProvider        = iotago.NewTimeProvider(time.Now().Unix(), 10, 10)
+		targetAddr                        = tpkg.RandEd25519Address()
+		deposit          iotago.BaseToken = 1337
+		nt                                = tpkg.RandNativeToken()
+		expirationTarget                  = tpkg.RandEd25519Address()
+		metadata                          = []byte("123456")
+		slotTimeProvider                  = iotago.NewTimeProvider(time.Now().Unix(), 10, 10)
 	)
 	timelock := slotTimeProvider.SlotFromTime(time.Now().Add(5 * time.Minute))
 	expiration := slotTimeProvider.SlotFromTime(time.Now().Add(10 * time.Minute))
@@ -48,13 +48,13 @@ func TestBasicOutputBuilder(t *testing.T) {
 
 func TestAccountOutputBuilder(t *testing.T) {
 	var (
-		stateCtrl          = tpkg.RandEd25519Address()
-		gov                = tpkg.RandEd25519Address()
-		deposit     uint64 = 1337
-		nt                 = tpkg.RandNativeToken()
-		metadata           = []byte("123456")
-		immMetadata        = []byte("654321")
-		immSender          = tpkg.RandEd25519Address()
+		stateCtrl                    = tpkg.RandEd25519Address()
+		gov                          = tpkg.RandEd25519Address()
+		deposit     iotago.BaseToken = 1337
+		nt                           = tpkg.RandNativeToken()
+		metadata                     = []byte("123456")
+		immMetadata                  = []byte("654321")
+		immSender                    = tpkg.RandEd25519Address()
 	)
 
 	accountOutput, err := builder.NewAccountOutputBuilder(stateCtrl, gov, deposit).
@@ -87,7 +87,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 	}
 	require.Equal(t, expected, accountOutput)
 
-	const newDeposit uint64 = 7331
+	const newDeposit iotago.BaseToken = 7331
 	expectedCpy := expected.Clone().(*iotago.AccountOutput)
 	expectedCpy.Amount = newDeposit
 	expectedCpy.StateIndex++
@@ -99,9 +99,9 @@ func TestAccountOutputBuilder(t *testing.T) {
 
 func TestFoundryOutputBuilder(t *testing.T) {
 	var (
-		accountAddr        = tpkg.RandAccountAddress()
-		deposit     uint64 = 1337
-		tokenScheme        = &iotago.SimpleTokenScheme{
+		accountAddr                  = tpkg.RandAccountAddress()
+		deposit     iotago.BaseToken = 1337
+		tokenScheme                  = &iotago.SimpleTokenScheme{
 			MintedTokens:  big.NewInt(0),
 			MeltedTokens:  big.NewInt(0),
 			MaximumSupply: big.NewInt(1000),
@@ -136,11 +136,11 @@ func TestFoundryOutputBuilder(t *testing.T) {
 
 func TestNFTOutputBuilder(t *testing.T) {
 	var (
-		targetAddr         = tpkg.RandAccountAddress()
-		deposit     uint64 = 1337
-		nt                 = tpkg.RandNativeToken()
-		metadata           = []byte("123456")
-		immMetadata        = []byte("654321")
+		targetAddr                   = tpkg.RandAccountAddress()
+		deposit     iotago.BaseToken = 1337
+		nt                           = tpkg.RandNativeToken()
+		metadata                     = []byte("123456")
+		immMetadata                  = []byte("654321")
 	)
 
 	nftOutput, err := builder.NewNFTOutputBuilder(targetAddr, deposit).

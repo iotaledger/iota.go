@@ -64,6 +64,16 @@ func RandUint64(max uint64) uint64 {
 	return uint64(rand.Int63n(int64(uint32(max))))
 }
 
+// RandBaseToken returns a random amount of base token.
+func RandBaseToken(max uint64) iotago.BaseToken {
+	return iotago.BaseToken(rand.Int63n(int64(uint32(max))))
+}
+
+// RandMana returns a random amount of mana.
+func RandMana(max uint64) iotago.Mana {
+	return iotago.Mana(rand.Int63n(int64(uint32(max))))
+}
+
 // RandFloat64 returns a random float64.
 func RandFloat64(max float64) float64 {
 	return rand.Float64() * max
@@ -444,11 +454,11 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 		Signature:       RandEd25519Signature(),
 		IssuerID:        RandAccountID(),
 		Nonce:           uint64(rand.Intn(1000)),
-		BurnedMana:      RandUint64(1000),
+		BurnedMana:      RandMana(1000),
 	}
 }
 
-func RandBlockWithIssuerAndBurnedMana(issuerID iotago.AccountID, burnedAmount uint64) *iotago.Block {
+func RandBlockWithIssuerAndBurnedMana(issuerID iotago.AccountID, burnedAmount iotago.Mana) *iotago.Block {
 	block := RandBlock(iotago.PayloadTransaction)
 	block.IssuerID = issuerID
 	block.BurnedMana = burnedAmount
@@ -538,8 +548,7 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
 
-	amount := uint64(rand.Intn(10000) + 1)
-	dep.Amount = amount
+	dep.Amount = RandBaseToken(10000)
 	return dep
 }
 
@@ -547,7 +556,7 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 func RandAllotment() *iotago.Allotment {
 	return &iotago.Allotment{
 		AccountID: RandAccountID(),
-		Value:     RandUint64(10000),
+		Value:     RandMana(10000),
 	}
 }
 
@@ -628,7 +637,7 @@ func RandProtocolParameters() *iotago.ProtocolParameters {
 		Bech32HRP:             iotago.NetworkPrefix(RandString(255)),
 		MinPoWScore:           RandUint32(50000),
 		RentStructure:         *RandRentStructure(),
-		TokenSupply:           RandUint64(math.MaxUint64),
+		TokenSupply:           RandBaseToken(math.MaxUint64),
 		GenesisUnixTimestamp:  time.Now().Unix(),
 		SlotDurationInSeconds: RandUint8(math.MaxUint8),
 	}
