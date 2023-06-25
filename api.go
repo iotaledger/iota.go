@@ -128,7 +128,7 @@ func (p ProtocolParameters) NetworkID() NetworkID {
 }
 
 func (p ProtocolParameters) TimeProvider() *TimeProvider {
-	return NewTimeProvider(int64(p.GenesisUnixTimestamp), int64(p.SlotDurationInSeconds), int64(p.EpochDurationInSlots))
+	return NewTimeProvider(p.GenesisUnixTimestamp, int64(p.SlotDurationInSeconds), int64(p.EpochDurationInSlots))
 }
 
 func (p ProtocolParameters) String() string {
