@@ -4035,8 +4035,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 			&iotago.BasicOutput{
 				Amount:       OneMi * 5,
 				NativeTokens: nil,
-				// TODO: Potential Mana is currently just the amount on the input.
-				Mana: OneMi*10 + manaRewardAmount,
+				Mana:         manaRewardAmount,
 				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: accountIdent},
 				},
@@ -4106,8 +4105,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 		Outputs: iotago.TxEssenceOutputs{
 			&iotago.BasicOutput{
 				Amount: OneMi * 10,
-				// TODO: Potential Mana is currently just the amount on the input.
-				Mana: OneMi*10 + manaRewardAmount,
+				Mana:   manaRewardAmount,
 				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: ident},
 				},
