@@ -144,6 +144,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 900,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -182,6 +185,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 10001,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -220,6 +226,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 991,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -258,6 +267,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -297,6 +309,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -336,6 +351,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -375,6 +393,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -413,6 +434,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -472,6 +496,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -524,6 +551,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -583,6 +613,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -642,6 +675,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -704,6 +740,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -758,6 +797,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -818,6 +860,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -879,6 +924,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
@@ -944,6 +992,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 1001,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -984,6 +1035,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 1001,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1020,6 +1074,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 1000,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
 						Essence: &iotago.TransactionEssence{
@@ -1055,6 +1112,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 1001,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
@@ -1106,6 +1166,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 999,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
@@ -1157,6 +1220,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 1001,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]vm.BlockIssuanceCredit{
 						exampleAccountID: {
@@ -1330,6 +1396,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 990,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
@@ -1438,6 +1507,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 990,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
@@ -1498,6 +1570,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 990,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
@@ -1558,6 +1633,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 900,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
@@ -1618,6 +1696,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 900,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
@@ -1673,6 +1754,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 900,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
@@ -1735,6 +1819,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					ProtocolParameters: protoParams,
 				},
 				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: 0,
+					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},

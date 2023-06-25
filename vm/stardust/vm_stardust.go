@@ -126,8 +126,14 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 		return fmt.Errorf("%w: AccountOutput's ID is not zeroed even though it is new", iotago.ErrInvalidAccountStateTransition)
 	}
 
-	if nextBIFeat := current.FeatureSet().BlockIssuer(); nextBIFeat != nil && nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < vmParams.WorkingSet.Tx.Essence.CreationTime+vmParams.External.ProtocolParameters.LivenessThreshold {
-		return fmt.Errorf("%w: block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
+	if nextBIFeat := current.FeatureSet().BlockIssuer(); nextBIFeat != nil {
+		if vmParams.WorkingSet.Commitment == nil {
+			return fmt.Errorf("%w: no commitment provided", iotago.ErrInvalidBlockIssuerTransition)
+		}
+
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < vmParams.WorkingSet.Commitment.Index+vmParams.External.ProtocolParameters.EvictionAge {
+			return fmt.Errorf("%w: block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
+		}
 	}
 
 	if stakingFeat := current.FeatureSet().Staking(); stakingFeat != nil {
@@ -247,19 +253,22 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		return fmt.Errorf("%w: no BIC provided for block issuer", iotago.ErrInvalidBlockIssuerTransition)
 	}
 
-	txSlotIndex := vmParams.WorkingSet.Tx.Essence.CreationTime
+	if vmParams.WorkingSet.Commitment == nil {
+		return fmt.Errorf("%w: no commitment provided", iotago.ErrInvalidBlockIssuerTransition)
+	}
+	txSlotIndex := vmParams.WorkingSet.Commitment.Index + vmParams.External.ProtocolParameters.EvictionAge
 	if currentBIFeat.ExpirySlot >= txSlotIndex {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBIFeat == nil {
 			return fmt.Errorf("%w: cannot remove block issuer feature until it expires", iotago.ErrInvalidBlockIssuerTransition)
 		}
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+vmParams.External.ProtocolParameters.LivenessThreshold {
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+vmParams.External.ProtocolParameters.EvictionAge {
 			return fmt.Errorf("%w: block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 		}
 
 	} else if nextBIFeat != nil {
 		// if the block issuer feature has expired, it must either be removed or expiry extended.
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < txSlotIndex+vmParams.External.ProtocolParameters.LivenessThreshold {
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < txSlotIndex+vmParams.External.ProtocolParameters.EvictionAge {
 			return fmt.Errorf("%w: block issuer feature expiry set too soon", iotago.ErrInvalidBlockIssuerTransition)
 		}
 	}
@@ -420,7 +429,6 @@ func accountStakingExpiredValidation(
 	vmParams *vm.Params,
 	isClaiming bool,
 ) error {
-
 	// Mana Claiming by either removing the Feature or changing the feature's epoch range.
 	if nextStakingFeat == nil {
 		if !isClaiming {
