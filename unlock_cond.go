@@ -17,6 +17,12 @@ var (
 	ErrExpirationConditionZero = errors.New("expiration condition is zero")
 	// ErrTimelockConditionZero gets returned when a TimelockUnlockCondition has set the slot index to zero.
 	ErrTimelockConditionZero = errors.New("timelock condition is zero")
+	// ErrTimelockConditionCommitmentInputRequired gets returned when a TX containing a TimelockUnlockCondition
+	// does not have a commitment input.
+	ErrTimelockConditionCommitmentInputRequired = errors.New("transaction's containing a timelock condition require a commitment input")
+	// ErrExpirationConditionCommitmentInputRequired gets returned when a TX containing an ExpirationUnlockCondition
+	// does not have a commitment input.
+	ErrExpirationConditionCommitmentInputRequired = errors.New("transaction's containing an expiration condition require a commitment input")
 )
 
 // UnlockConditionType defines the type of UnlockCondition.
@@ -161,7 +167,8 @@ func (f UnlockConditionSet) HasTimelockCondition() bool {
 	return f.Timelock() != nil
 }
 
-// HasManalockCondition tells whether the set has both a timelock and account address unlock.
+// HasManalockCondition tells whether the set has both an account address unlock
+// and a timelock that is still locked at slotIndex.
 func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slotIndex SlotIndex) bool {
 	if !f.HasTimelockUntil(slotIndex) {
 		return false
@@ -179,17 +186,15 @@ func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slotIndex 
 	return true
 }
 
-// HasTimelockUntil tells us whether the set has a timelock that that is still locked at slotIndex.
+// HasTimelockUntil tells us whether the set has a timelock that is still locked at slotIndex.
 func (f UnlockConditionSet) HasTimelockUntil(slotIndex SlotIndex) bool {
+	// TODO: Test this.
 	timelock := f.Timelock()
-	if timelock == nil {
-		return false
-	}
-	if timelock.SlotIndex <= slotIndex {
-		return false
-	}
-	return true
-	// TODO: check for off by one error
+	return timelock != nil && slotIndex < timelock.SlotIndex
+	// if timelock.SlotIndex <= slotIndex {
+	// 	return false
+	// }
+	// return true
 }
 
 // tells whether the given ident can unlock an output containing this set of UnlockCondition(s)
@@ -198,14 +203,14 @@ func (f UnlockConditionSet) HasTimelockUntil(slotIndex SlotIndex) bool {
 //   - If the expiration blocks are expired, then only the return identity can unlock.
 //
 // returns booleans indicating whether the given ident can unlock and whether the return identity can unlock.
-func (f UnlockConditionSet) unlockableBy(ident Address, txCreationTime SlotIndex) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
-	if err := f.TimelocksExpired(txCreationTime); err != nil {
+func (f UnlockConditionSet) unlockableBy(ident Address, slotIndex SlotIndex) (givenIdentCanUnlock bool, returnIdentCanUnlock bool) {
+	if err := f.TimelocksExpired(slotIndex); err != nil {
 		return false, false
 	}
 
 	// if the return ident can unlock, then ident must be the return ident
 	var returnIdent Address
-	if returnIdentCanUnlock, returnIdent = f.ReturnIdentCanUnlock(txCreationTime); returnIdentCanUnlock {
+	if returnIdentCanUnlock, returnIdent = f.ReturnIdentCanUnlock(slotIndex); returnIdentCanUnlock {
 		if !ident.Equal(returnIdent) {
 			return false, true
 		}
@@ -216,15 +221,15 @@ func (f UnlockConditionSet) unlockableBy(ident Address, txCreationTime SlotIndex
 }
 
 // ReturnIdentCanUnlock tells whether a sender defined in an expiration unlock condition within this set is the actual
-// identity which could unlock an Output containing this UnlockConditionSet given the transaction creation time.
-func (f UnlockConditionSet) ReturnIdentCanUnlock(txCreationTime SlotIndex) (bool, Address) {
+// identity which could unlock an Output containing this UnlockConditionSet given slot index of a commitment input.
+func (f UnlockConditionSet) ReturnIdentCanUnlock(slotIndex SlotIndex) (bool, Address) {
 	expUnlockCond := f.Expiration()
 
 	if expUnlockCond == nil {
 		return false, nil
 	}
 
-	if expUnlockCond.SlotIndex <= txCreationTime {
+	if expUnlockCond.SlotIndex <= slotIndex {
 		return true, expUnlockCond.ReturnAddress
 	}
 
@@ -232,16 +237,16 @@ func (f UnlockConditionSet) ReturnIdentCanUnlock(txCreationTime SlotIndex) (bool
 }
 
 // TimelocksExpired tells whether UnlockCondition(s) in this set which impose a timelock are expired
-// in relation to the given ExternalUnlockParameters.
-func (f UnlockConditionSet) TimelocksExpired(txCreationTime SlotIndex) error {
+// in relation to the given slot index.
+func (f UnlockConditionSet) TimelocksExpired(slotIndex SlotIndex) error {
 	timelock := f.Timelock()
 
 	if timelock == nil {
 		return nil
 	}
 
-	if txCreationTime < timelock.SlotIndex {
-		return fmt.Errorf("%w: slotIndex cond %d vs. tx creation slot %d", ErrTimelockNotExpired, timelock.SlotIndex, txCreationTime)
+	if slotIndex < timelock.SlotIndex {
+		return fmt.Errorf("%w: slotIndex cond %d vs. tx creation slot %d", ErrTimelockNotExpired, timelock.SlotIndex, slotIndex)
 	}
 
 	return nil

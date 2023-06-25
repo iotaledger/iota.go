@@ -128,6 +128,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iot
 		if err != nil {
 			return 0, fmt.Errorf("%w: input %s stored mana calculation failed", err, outputID)
 		}
+		// TODO: Check for overflows.
 		totalIn += uint64(manaStored)
 
 		// potential Mana
@@ -135,6 +136,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iot
 		if err != nil {
 			return 0, fmt.Errorf("%w: input %s potential mana calculation failed", err, outputID)
 		}
+		// TODO: Check for overflows.
 		totalIn += uint64(manaPotential)
 	}
 
@@ -144,9 +146,11 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iot
 func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iotago.Allotments) uint64 {
 	var totalOut uint64
 	for _, output := range outputs {
+		// TODO: Check for overflows.
 		totalOut += output.StoredMana()
 	}
 	for _, allotment := range allotments {
+		// TODO: Check for overflows.
 		totalOut += allotment.Value
 	}
 
@@ -368,12 +372,20 @@ func identToUnlock(vmParams *Params, input iotago.Output, inputIndex uint16) (io
 	}
 }
 
-func checkExpiredForReceiver(vmParams *Params, output iotago.Output) iotago.Address {
-	if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(vmParams.WorkingSet.Tx.Essence.CreationTime); ok {
-		return returnIdent
+func checkExpiredForReceiver(vmParams *Params, output iotago.Output) (iotago.Address, error) {
+	if output.UnlockConditionSet().HasExpirationCondition() {
+		commitment := vmParams.WorkingSet.Commitment
+
+		if commitment == nil {
+			return nil, iotago.ErrExpirationConditionCommitmentInputRequired
+		}
+
+		if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(vmParams.WorkingSet.Tx.Essence.CreationTime); ok {
+			return returnIdent, nil
+		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) error {
@@ -382,7 +394,9 @@ func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) err
 		return fmt.Errorf("unable to retrieve ident to unlock of input %d: %w", inputIndex, err)
 	}
 
-	if actualIdentToUnlock := checkExpiredForReceiver(vmParams, output); actualIdentToUnlock != nil {
+	if actualIdentToUnlock, err := checkExpiredForReceiver(vmParams, output); err != nil {
+		return err
+	} else if actualIdentToUnlock != nil {
 		ownerIdent = actualIdentToUnlock
 	}
 
@@ -538,8 +552,16 @@ func ExecFuncBalancedDeposit() ExecFunc {
 func ExecFuncTimelocks() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		for inputIndex, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
-			if err := input.Output.UnlockConditionSet().TimelocksExpired(vmParams.WorkingSet.Tx.Essence.CreationTime); err != nil {
-				return fmt.Errorf("%w: input at index %d's timelocks are not expired", err, inputIndex)
+			if input.Output.UnlockConditionSet().HasTimelockCondition() {
+				commitment := vmParams.WorkingSet.Commitment
+
+				if commitment == nil {
+					return iotago.ErrTimelockConditionCommitmentInputRequired
+				}
+
+				if err := input.Output.UnlockConditionSet().TimelocksExpired(commitment.Index); err != nil {
+					return fmt.Errorf("%w: input at index %d's timelocks are not expired", err, inputIndex)
+				}
 			}
 		}
 		return nil
