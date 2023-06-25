@@ -2548,6 +2548,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 
 	currentSlot := iotago.SlotIndex(20 * (1 << 13))
 	currentEpoch := protoParams.TimeProvider().EpochsFromSlot(currentSlot)
+	exampleDelegationID := iotago.DelegationIDFromOutputID(tpkg.RandOutputID(0))
 
 	type test struct {
 		name      string
@@ -2561,7 +2562,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 
 	tests := []test{
 		{
-			name: "ok - genesis transition",
+			name: "ok - valid genesis",
 			next: &iotago.DelegationOutput{
 				Amount:          100,
 				DelegatedAmount: 100,
@@ -2589,6 +2590,354 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+		},
+		{
+			name: "fail - invalid genesis - non-zero delegation ID",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 100,
+				DelegationID:    exampleDelegationID,
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch + 1,
+				EndEpoch:        0,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationNonZeroedID,
+		},
+		{
+			name: "fail - invalid genesis - delegated amount does not match amount",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 120,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch + 1,
+				EndEpoch:        0,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationAmount,
+		},
+		{
+			name: "fail - invalid genesis - non-zero end epoch",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 100,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch + 1,
+				EndEpoch:        currentEpoch + 5,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			input:     nil,
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationNonZeroEndEpoch,
+		},
+		{
+			name: "fail - invalid transition - start epoch not set to expected epoch",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 100,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch - 3,
+				EndEpoch:        0,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationStartEpoch,
+		},
+		{
+			name: "fail - invalid transition - non-zero delegation id on input",
+			input: &vm.ChainOutputWithCreationTime{
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    tpkg.RandDelegationID(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			next:      &iotago.DelegationOutput{},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationNonZeroedID,
+		},
+		{
+			name: "fail - invalid transition - modified delegated amount, start epoch and validator id",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			nextMut: map[string]fieldMutations{
+				"delegated_amount_modified": {
+					"DelegatedAmount": uint64(1337),
+					"Amount":          uint64(5),
+					"DelegationID":    exampleDelegationID,
+					"EndEpoch":        currentEpoch,
+				},
+				"start_epoch_modified": {
+					"StartEpoch":   iotago.EpochIndex(3),
+					"DelegationID": exampleDelegationID,
+					"EndEpoch":     currentEpoch,
+				},
+				"validator_id_modified": {
+					"ValidatorID":  tpkg.RandAccountID(),
+					"DelegationID": exampleDelegationID,
+					"EndEpoch":     currentEpoch,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationModified,
+		},
+		{
+			name: "fail - invalid transition - end epoch not set to expected epoch",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			nextMut: map[string]fieldMutations{
+				"end_epoch_-1": {
+					"DelegationID": exampleDelegationID,
+					"EndEpoch":     currentEpoch - 1,
+				},
+				"end_epoch_+1": {
+					"DelegationID": exampleDelegationID,
+					"EndEpoch":     currentEpoch + 1,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationEndEpoch,
+		},
+		{
+			name: "fail - invalid transition - cannot claim rewards during transition",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			next:      &iotago.DelegationOutput{},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					Rewards: map[iotago.ChainID]uint64{
+						exampleDelegationID: 1,
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationRewardsClaiming,
+		},
+		{
+			name: "ok - valid destruction",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			nextMut:   nil,
+			transType: iotago.ChainTransitionTypeDestroy,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+					Rewards: map[iotago.ChainID]uint64{
+						exampleDelegationID: 0,
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - invalid destruction - missing reward input",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			nextMut:   nil,
+			transType: iotago.ChainTransitionTypeDestroy,
+			svCtx: &vm.Params{
+				External: &iotago.ExternalUnlockParameters{
+					ProtocolParameters: protoParams,
+				},
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationTime: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationRewardsClaiming,
 		},
 	}
 

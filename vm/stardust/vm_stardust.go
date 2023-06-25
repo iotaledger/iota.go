@@ -644,7 +644,7 @@ func delegationSTVF(input *vm.ChainOutputWithCreationTime, transType iotago.Chai
 	case iotago.ChainTransitionTypeStateChange:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if isClaiming {
-			return fmt.Errorf("%w: cannot claim rewards during delegation output transition", iotago.ErrInvalidDelegationRewardsClaiming)
+			return fmt.Errorf("%w: %w: cannot claim rewards during delegation output transition", iotago.ErrInvalidDelegationTransition, iotago.ErrInvalidDelegationRewardsClaiming)
 		}
 		current := input.Output.(*iotago.DelegationOutput)
 		if err := delegationStateChangeValid(current, next, vmParams); err != nil {
@@ -653,7 +653,7 @@ func delegationSTVF(input *vm.ChainOutputWithCreationTime, transType iotago.Chai
 	case iotago.ChainTransitionTypeDestroy:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if !isClaiming {
-			return fmt.Errorf("%w: cannot destroy delegation output without a rewards input", iotago.ErrInvalidDelegationRewardsClaiming)
+			return fmt.Errorf("%w: %w: cannot destroy delegation output without a rewards input", iotago.ErrInvalidDelegationTransition, iotago.ErrInvalidDelegationRewardsClaiming)
 		}
 		return nil
 	default:
@@ -665,7 +665,7 @@ func delegationSTVF(input *vm.ChainOutputWithCreationTime, transType iotago.Chai
 
 func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Params) error {
 	if !current.DelegationID.Empty() {
-		return fmt.Errorf("%w: DelegationOutput's ID is not zeroed even though it is new", iotago.ErrInvalidDelegationGenesis)
+		return fmt.Errorf("%w: %w", iotago.ErrInvalidDelegationTransition, iotago.ErrInvalidDelegationNonZeroedID)
 	}
 
 	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
@@ -681,15 +681,15 @@ func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Param
 	}
 
 	if current.StartEpoch != expectedStartEpoch {
-		return fmt.Errorf("%w: DelegationOutput's start epoch is expected to be %d", iotago.ErrInvalidDelegationGenesis, expectedStartEpoch)
+		return fmt.Errorf("%w: %w (is %d, expected %d)", iotago.ErrInvalidDelegationTransition, iotago.ErrInvalidDelegationStartEpoch, current.StartEpoch, expectedStartEpoch)
 	}
 
 	if current.DelegatedAmount != current.Amount {
-		return fmt.Errorf("%w: DelegationOutput's delegated amount is not equal to amount", iotago.ErrInvalidDelegationGenesis)
+		return fmt.Errorf("%w: %w", iotago.ErrInvalidDelegationTransition, iotago.ErrInvalidDelegationAmount)
 	}
 
 	if current.EndEpoch != 0 {
-		return fmt.Errorf("%w: DelegationOutput's end epoch is not set to zero", iotago.ErrInvalidDelegationGenesis)
+		return fmt.Errorf("%w: %w", iotago.ErrInvalidDelegationTransition, iotago.ErrInvalidDelegationNonZeroEndEpoch)
 	}
 
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
@@ -699,17 +699,17 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 	// State transitioning a Delegation Output is always a transition to the delayed claiming state.
 	// Since they can only be transitioned once, the input will always need to have a zeroed ID.
 	if !current.DelegationID.Empty() {
-		return fmt.Errorf("%w: consumed DelegationOutput's ID is not zeroed", iotago.ErrInvalidDelegationTransition)
+		return fmt.Errorf("%w: %w: delegation output can only be transitioned if it has a zeroed ID", iotago.ErrInvalidDelegationTransition, iotago.ErrInvalidDelegationNonZeroedID)
 	}
 
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
-		return fmt.Errorf("immutable features mismatch: old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures)
+		return fmt.Errorf("%w: immutable features mismatch: old state %s, next state %s", iotago.ErrInvalidDelegationTransition, current.ImmutableFeatures, next.ImmutableFeatures)
 	}
 
 	if current.DelegatedAmount != next.DelegatedAmount ||
 		current.ValidatorID != next.ValidatorID ||
 		current.StartEpoch != next.StartEpoch {
-		return fmt.Errorf("%w: delegated amount, validator ID and start epoch must match on the input and output", iotago.ErrInvalidDelegationTransition)
+		return fmt.Errorf("%w: %w", iotago.ErrInvalidDelegationTransition, iotago.ErrInvalidDelegationModified)
 	}
 
 	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
@@ -725,7 +725,7 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 	}
 
 	if current.EndEpoch != expectedEndEpoch {
-		return fmt.Errorf("%w: DelegationOutput's end epoch is expected to be %d", iotago.ErrInvalidDelegationGenesis, expectedEndEpoch)
+		return fmt.Errorf("%w: %w (is %d, expected %d)", iotago.ErrInvalidDelegationTransition, iotago.ErrInvalidDelegationEndEpoch, current.EndEpoch, expectedEndEpoch)
 	}
 
 	return nil

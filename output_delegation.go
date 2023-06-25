@@ -16,13 +16,25 @@ const (
 )
 
 var (
-	// ErrInvalidDelegationTransition gets returned when a Delegation Output's initial state machine is invalid.
-	ErrInvalidDelegationGenesis = errors.New("invalid delegation output genesis")
 	// ErrInvalidDelegationTransition gets returned when a Delegation Output is doing an invalid state transition.
 	ErrInvalidDelegationTransition = errors.New("invalid delegation output transition")
-	// ErrInvalidDelegationRewardsClaiming gets returned when a Delegation Output is doing an invalid state transition.
+	// ErrInvalidDelegationRewardsClaiming gets returned when it is invalid to claim rewards from a delegation output.
 	ErrInvalidDelegationRewardsClaiming = errors.New("invalid delegation mana rewards claiming")
-	emptyDelegationID                   = [DelegationIDLength]byte{}
+	// ErrInvalidDelegationNonZeroedID gets returned when a delegation output's delegation ID is not zeroed initially.
+	ErrInvalidDelegationNonZeroedID = errors.New("delegation ID must be zeroed initially")
+	// ErrInvalidDelegationModified gets returned when a delegation output's immutable fields are modified.
+	ErrInvalidDelegationModified = errors.New("delegated amount, validator ID and start epoch cannot be modified")
+	// ErrInvalidDelegationStartEpoch gets returned when a delegation output's start epoch is not set correctly
+	// relative to the slot of the current epoch in which the voting power is calculated.
+	ErrInvalidDelegationStartEpoch = errors.New("invalid start epoch")
+	// ErrInvalidDelegationAmount gets returned when a delegation output's delegated amount is not equal to the amount.
+	ErrInvalidDelegationAmount = errors.New("delegated amount equal to the amount")
+	// ErrInvalidDelegationNonZeroEndEpoch gets returned when a delegation output's end epoch is not zero at genesis.
+	ErrInvalidDelegationNonZeroEndEpoch = errors.New("end epoch must be set to zero at output genesis")
+	// ErrInvalidDelegationEndEpoch gets returned when a delegation output's end epoch is not set correctly
+	// relative to the slot of the current epoch in which the voting power is calculated.
+	ErrInvalidDelegationEndEpoch = errors.New("invalid end epoch")
+	emptyDelegationID            = [DelegationIDLength]byte{}
 )
 
 func EmptyDelegationId() DelegationID {

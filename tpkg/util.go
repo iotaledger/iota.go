@@ -409,6 +409,13 @@ func RandAccountID() iotago.AccountID {
 	return alias
 }
 
+func RandDelegationID() iotago.DelegationID {
+	delegation := iotago.DelegationID{}
+	copy(delegation[:], RandBytes(iotago.DelegationIDLength))
+
+	return delegation
+}
+
 func RandSlotIndex() iotago.SlotIndex {
 	return iotago.SlotIndex(RandUint64(math.MaxUint64))
 }
