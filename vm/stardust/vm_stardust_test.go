@@ -2,6 +2,7 @@ package stardust_test
 
 import (
 	"crypto/ed25519"
+	"math"
 	"math/big"
 	"testing"
 
@@ -3788,8 +3789,8 @@ func TestTxSemanticMana(t *testing.T) {
 			inputs := vm.InputSet{
 				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
-						Amount: 5,
-						Mana:   10,
+						Amount: OneMi,
+						Mana:   math.MaxUint64,
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
@@ -3802,20 +3803,31 @@ func TestTxSemanticMana(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
-						Amount: 5,
-						Mana:   35,
+						Amount: OneMi,
+						Mana: func() uint64 {
+							var slotIndexCreated iotago.SlotIndex = 10
+							slotIndexTarget := 10 + 100*iotago.SlotIndex(testProtoParams.EpochDurationInSlots)
+
+							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(OneMi, slotIndexCreated, slotIndexTarget)
+							require.NoError(t, err)
+
+							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							require.NoError(t, err)
+
+							return uint64(potentialMana + storedMana)
+						}(),
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					},
 				},
-				CreationTime: 15,
+				CreationTime: 10 + 100*iotago.SlotIndex(testProtoParams.EpochDurationInSlots),
 			}
 			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
-				name: "ok - stored Mana only",
+				name: "ok - stored Mana only without allotment",
 				vmParams: &vm.Params{
 					External: &iotago.ExternalUnlockParameters{
 						ProtocolParameters: testProtoParams,
@@ -3838,13 +3850,13 @@ func TestTxSemanticMana(t *testing.T) {
 			inputs := vm.InputSet{
 				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.BasicOutput{
-						Amount: 10,
-						Mana:   0,
+						Amount: OneMi,
+						Mana:   math.MaxUint64,
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
-					CreationTime: 100,
+					CreationTime: 10,
 				},
 			}
 
@@ -3852,8 +3864,20 @@ func TestTxSemanticMana(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
-						Amount: 5,
-						Mana:   150,
+						Amount: OneMi,
+						Mana: func() uint64 {
+							var slotIndexCreated iotago.SlotIndex = 10
+							slotIndexTarget := 10 + 100*iotago.SlotIndex(testProtoParams.EpochDurationInSlots)
+
+							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(OneMi, slotIndexCreated, slotIndexTarget)
+							require.NoError(t, err)
+
+							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							require.NoError(t, err)
+
+							// generated mana + decay - allotment
+							return uint64(potentialMana+storedMana) - 50
+						}(),
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
@@ -3862,7 +3886,7 @@ func TestTxSemanticMana(t *testing.T) {
 				Allotments: iotago.Allotments{
 					&iotago.Allotment{Value: 50},
 				},
-				CreationTime: 120,
+				CreationTime: 10 + 100*iotago.SlotIndex(testProtoParams.EpochDurationInSlots),
 			}
 			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
 			require.NoError(t, err)
