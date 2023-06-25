@@ -181,10 +181,10 @@ func (p *ManaDecayProvider) PotentialManaWithDecay(deposit BaseToken, slotIndexC
 }
 
 // RewardsWithDecay applies the decay to the given stored mana.
-func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, rewardEpochIndex EpochIndex, epochIndexClaimed EpochIndex) (Mana, error) {
-	if rewardEpochIndex > epochIndexClaimed {
-		return 0, errors.Wrapf(ErrWrongEpochIndex, "the reward epoch index was bigger than the claiming epoch index: %d > %d", rewardEpochIndex, epochIndexClaimed)
+func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, epochIndexReward EpochIndex, epochIndexClaimed EpochIndex) (Mana, error) {
+	if epochIndexReward > epochIndexClaimed {
+		return 0, errors.Wrapf(ErrWrongEpochIndex, "the reward epoch index was bigger than the claiming epoch index: %d > %d", epochIndexReward, epochIndexClaimed)
 	}
 
-	return p.decay(rewards, epochIndexClaimed-rewardEpochIndex), nil
+	return p.decay(rewards, epochIndexClaimed-epochIndexReward), nil
 }
