@@ -111,12 +111,14 @@ type ProtocolParameters struct {
 	ManaDecayFactors []uint32 // `serix:"10,mapKey=manaDecayFactors"`
 	// ManaDecayFactorsScaleFactor is the amount of bits that are used for the mana decay factors.
 	ManaDecayFactorsScaleFactor uint8 // `serix:"11,mapKey=manaDecayFactorsScaleFactor"`
+	// MinCommittableAge defines the latest slot age in relation to AcceptedTangleTime for which a commitment can be created.
+	MinCommittableAge SlotIndex `serix:"12,mapKey=minCommittableAge"`
 	// AllowedCommitmentsWindowSize defines the size of the window in which a commitment can be consumed
 	// as a source of state, expressed in number of slots.
-	AllowedCommitmentsWindowSize SlotIndex `serix:"12,mapKey=allowedCommitmentsWindowSize"`
+	AllowedCommitmentsWindowSize SlotIndex `serix:"13,mapKey=allowedCommitmentsWindowSize"`
 	// OrphanageThreshold denotes number of slots in the past in relation to Accepted Tangle Time (ATT) below
 	// which blocks cannot be attached to.
-	OrphanageThreshold SlotIndex `serix:"13,mapKey=orphanageThreshold"`
+	OrphanageThreshold SlotIndex `serix:"14,mapKey=orphanageThreshold"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {
