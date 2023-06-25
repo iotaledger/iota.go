@@ -191,10 +191,6 @@ func (f UnlockConditionSet) HasTimelockUntil(slotIndex SlotIndex) bool {
 	// TODO: Test this.
 	timelock := f.Timelock()
 	return timelock != nil && slotIndex < timelock.SlotIndex
-	// if timelock.SlotIndex <= slotIndex {
-	// 	return false
-	// }
-	// return true
 }
 
 // tells whether the given ident can unlock an output containing this set of UnlockCondition(s)
