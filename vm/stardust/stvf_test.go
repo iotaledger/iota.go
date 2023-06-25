@@ -64,12 +64,12 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		GenesisUnixTimestamp:   uint32(time.Now().Unix()),
 		StakingUnbondingPeriod: 10,
 		SlotDurationInSeconds:  10,
-		EpochDurationInSlots:   1 << 13,
+		SlotsPerEpochExponent:  13,
 		MaxCommittableAge:      10,
 	}
 
 	currentSlot := iotago.SlotIndex(20 * (1 << 13))
-	currentEpoch := protoParams.TimeProvider().EpochsFromSlot(currentSlot)
+	currentEpoch := protoParams.TimeProvider().EpochFromSlot(currentSlot)
 
 	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
@@ -2400,8 +2400,8 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 	}
 
 	protoParams := &iotago.ProtocolParameters{
-		EpochDurationInSlots: 1 << 13,
-		MaxCommittableAge:    10,
+		SlotsPerEpochExponent: 13,
+		MaxCommittableAge:     10,
 	}
 
 	type test struct {
@@ -2542,12 +2542,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 	protoParams := &iotago.ProtocolParameters{
 		GenesisUnixTimestamp:  uint32(time.Now().Unix()),
 		SlotDurationInSeconds: 10,
-		EpochDurationInSlots:  1 << 13,
+		SlotsPerEpochExponent: 13,
 		MaxCommittableAge:     10,
 	}
 
 	currentSlot := iotago.SlotIndex(20 * (1 << 13))
-	currentEpoch := protoParams.TimeProvider().EpochsFromSlot(currentSlot)
+	currentEpoch := protoParams.TimeProvider().EpochFromSlot(currentSlot)
 	exampleDelegationID := iotago.DelegationIDFromOutputID(tpkg.RandOutputID(0))
 
 	type test struct {

@@ -17,30 +17,30 @@ import (
 const (
 	OneMi = 1_000_000
 
-	betaPerYear                     float64 = 1 / 3.0
-	slotsPerEpochShiftFactor                = 13
-	slotDurationSeconds                     = 10
-	generationRate                          = 1
-	generationRateShiftFactor               = 27
-	decayFactorsShiftFactor                 = 32
-	decayFactorEpochsSumShiftFactor         = 20
+	betaPerYear                  float64 = 1 / 3.0
+	slotsPerEpochExponent                = 13
+	slotDurationSeconds                  = 10
+	generationRate                       = 1
+	generationRateExponent               = 27
+	decayFactorsExponent                 = 32
+	decayFactorEpochsSumExponent         = 20
 )
 
 var (
 	stardustVM = stardust.NewVirtualMachine()
 
 	testProtoParams = &iotago.ProtocolParameters{
-		GenesisUnixTimestamp:                1000,
-		SlotDurationInSeconds:               slotDurationSeconds,
-		EpochDurationInSlots:                10 * (1 << slotsPerEpochShiftFactor),
-		ManaGenerationRate:                  generationRate,
-		ManaGenerationRateShiftFactor:       generationRateShiftFactor,
-		ManaDecayFactors:                    tpkg.ManaDecayFactors(betaPerYear, 1<<slotsPerEpochShiftFactor, slotDurationSeconds, decayFactorsShiftFactor),
-		ManaDecayFactorsShiftFactor:         decayFactorsShiftFactor,
-		ManaDecayFactorEpochsSum:            tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochShiftFactor, slotDurationSeconds, decayFactorEpochsSumShiftFactor),
-		ManaDecayFactorEpochsSumShiftFactor: decayFactorEpochsSumShiftFactor,
-		MaxCommittableAge:                   10,
-		StakingUnbondingPeriod:              10,
+		GenesisUnixTimestamp:             1000,
+		SlotDurationInSeconds:            slotDurationSeconds,
+		SlotsPerEpochExponent:            slotsPerEpochExponent,
+		ManaGenerationRate:               generationRate,
+		ManaGenerationRateExponent:       generationRateExponent,
+		ManaDecayFactors:                 tpkg.ManaDecayFactors(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorsExponent),
+		ManaDecayFactorsExponent:         decayFactorsExponent,
+		ManaDecayFactorEpochsSum:         tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent),
+		ManaDecayFactorEpochsSumExponent: decayFactorEpochsSumExponent,
+		MaxCommittableAge:                10,
+		StakingUnbondingPeriod:           10,
 	}
 )
 
