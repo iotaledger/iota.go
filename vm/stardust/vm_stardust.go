@@ -138,8 +138,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 
 	if stakingFeat := current.FeatureSet().Staking(); stakingFeat != nil {
 		if err := accountStakingGenesisValidation(current, stakingFeat, vmParams); err != nil {
-			// TODO: Change back.
-			return fmt.Errorf("%w: %w", iotago.ErrAccountMissing, err)
+			return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, err)
 		}
 	}
 
