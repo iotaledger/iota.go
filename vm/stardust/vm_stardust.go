@@ -342,9 +342,12 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 	_, isClaiming := vmParams.WorkingSet.Rewards[chainID]
 
 	if currentStakingFeat != nil {
+		if vmParams.WorkingSet.Commitment == nil {
+			return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInput)
+		}
+
 		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
-		// TODO: Use commitment input.
-		creationEpoch := timeProvider.EpochFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
+		creationEpoch := timeProvider.EpochFromSlot(vmParams.WorkingSet.Commitment.Index)
 
 		if creationEpoch < currentStakingFeat.EndEpoch {
 			return accountStakingNonExpiredValidation(

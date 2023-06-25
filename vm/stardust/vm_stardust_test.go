@@ -4088,7 +4088,6 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 				Features: nil,
 			},
 		},
-		CreationTime: currentSlot,
 	}
 
 	sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), identAddrKeys)
@@ -4105,6 +4104,9 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 		InputSet: inputs,
 		RewardsInputSet: map[iotago.ChainID]uint64{
 			accountIdent.AccountID(): manaRewardAmount,
+		},
+		CommitmentInput: &iotago.Commitment{
+			Index: currentSlot,
 		},
 	}
 	require.NoError(t, stardustVM.Execute(tx, &vm.Params{External: &iotago.ExternalUnlockParameters{
