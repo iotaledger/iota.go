@@ -128,7 +128,6 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iot
 		if err != nil {
 			return 0, fmt.Errorf("%w: input %s stored mana calculation failed", err, outputID)
 		}
-		// TODO: Check for overflows.
 		totalIn += uint64(manaStored)
 
 		// potential Mana
@@ -136,7 +135,6 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iot
 		if err != nil {
 			return 0, fmt.Errorf("%w: input %s potential mana calculation failed", err, outputID)
 		}
-		// TODO: Check for overflows.
 		totalIn += uint64(manaPotential)
 	}
 
@@ -146,11 +144,9 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iot
 func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iotago.Allotments) uint64 {
 	var totalOut uint64
 	for _, output := range outputs {
-		// TODO: Check for overflows.
 		totalOut += output.StoredMana()
 	}
 	for _, allotment := range allotments {
-		// TODO: Check for overflows.
 		totalOut += allotment.Value
 	}
 
