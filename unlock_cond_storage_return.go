@@ -10,8 +10,8 @@ import (
 // If a transaction consumes multiple outputs which have a StorageDepositReturnUnlockCondition, then on the output side at least
 // the sum of all occurring StorageDepositReturnUnlockCondition(s) on the input side must be deposited to the designated return identity.
 type StorageDepositReturnUnlockCondition struct {
-	ReturnAddress Address `serix:"0,mapKey=returnAddress"`
-	Amount        uint64  `serix:"1,mapKey=amount"`
+	ReturnAddress Address   `serix:"0,mapKey=returnAddress"`
+	Amount        BaseToken `serix:"1,mapKey=amount"`
 }
 
 func (s *StorageDepositReturnUnlockCondition) Clone() UnlockCondition {

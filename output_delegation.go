@@ -99,9 +99,9 @@ type (
 // DelegationOutput is an output type used to implement delegation.
 type DelegationOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount uint64 `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:"0,mapKey=amount"`
 	// The amount of IOTA tokens that were delegated when the output was created.
-	DelegatedAmount uint64 `serix:"1,mapKey=delegatedAmount"`
+	DelegatedAmount BaseToken `serix:"1,mapKey=delegatedAmount"`
 	// The identifier for this output.
 	DelegationID DelegationID `serix:"2,mapKey=delegationId"`
 	// The Account ID of the validator to which this output is delegating.
@@ -168,11 +168,11 @@ func (d *DelegationOutput) ImmutableFeatureSet() FeatureSet {
 	return d.ImmutableFeatures.MustSet()
 }
 
-func (d *DelegationOutput) Deposit() uint64 {
+func (d *DelegationOutput) Deposit() BaseToken {
 	return d.Amount
 }
 
-func (d *DelegationOutput) StoredMana() uint64 {
+func (d *DelegationOutput) StoredMana() Mana {
 	return 0
 }
 
@@ -182,8 +182,8 @@ func (d *DelegationOutput) Type() OutputType {
 
 func (d *DelegationOutput) Size() int {
 	return util.NumByteLen(byte(OutputDelegation)) +
-		util.NumByteLen(d.Amount) +
-		util.NumByteLen(d.DelegatedAmount) +
+		BaseTokenSize +
+		BaseTokenSize +
 		DelegationIDLength +
 		AccountIDLength +
 		len(EpochIndex(0).Bytes())*2 +

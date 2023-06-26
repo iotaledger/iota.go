@@ -246,7 +246,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	// else if the account has negative bic, this is invalid.
 	// new block issuers may not have a bic registered yet.
 	if bic, exists := vmParams.WorkingSet.BIC[current.AccountID]; exists {
-		if bic.Negative() {
+		if bic < 0 {
 			return fmt.Errorf("%w: negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
 		}
 	} else {
@@ -290,17 +290,17 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		vmParams.WorkingSet.Tx.Essence.Allotments,
 	)
 
-	manaStoredAccount, err := manaDecayProvider.StoredManaWithDecay(iotago.Mana(current.Mana), input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInStored
+	manaStoredAccount, err := manaDecayProvider.StoredManaWithDecay(current.Mana, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInStored
 	if err != nil {
 		return fmt.Errorf("%w: account %s stored mana calculation failed", err, current.AccountID)
 	}
-	manaIn -= uint64(manaStoredAccount)
+	manaIn -= manaStoredAccount
 
-	manaPotentialAccount, err := manaDecayProvider.PotentialManaWithDecay(iotago.BaseToken(current.Amount), input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInPotential
+	manaPotentialAccount, err := manaDecayProvider.PotentialManaWithDecay(current.Amount, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInPotential
 	if err != nil {
 		return fmt.Errorf("%w: account %s potential mana calculation failed", err, current.AccountID)
 	}
-	manaIn -= uint64(manaPotentialAccount)
+	manaIn -= manaPotentialAccount
 
 	manaOut -= next.Mana                                                        // AccountOutStored
 	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID) // AccountOutAllotted
@@ -463,7 +463,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 			return fmt.Errorf("%w: cannot destroy output until the block issuer feature expires", iotago.ErrInvalidBlockIssuerTransition)
 		}
 		if bic, exists := vmParams.WorkingSet.BIC[outputToDestroy.AccountID]; exists {
-			if bic.Negative() {
+			if bic < 0 {
 				return fmt.Errorf("%w: negative block issuer credit", iotago.ErrInvalidBlockIssuerTransition)
 			}
 		} else {

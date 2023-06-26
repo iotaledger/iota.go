@@ -120,29 +120,29 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*Worki
 	return workingSet, nil
 }
 
-func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) (uint64, error) {
-	var totalIn uint64
+func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
+	var totalIn iotago.Mana
 	for outputID, input := range inputSet {
 		// stored Mana
-		manaStored, err := manaDecayProvider.StoredManaWithDecay(iotago.Mana(input.Output.StoredMana()), input.CreationTime, txCreationTime)
+		manaStored, err := manaDecayProvider.StoredManaWithDecay(input.Output.StoredMana(), input.CreationTime, txCreationTime)
 		if err != nil {
 			return 0, fmt.Errorf("%w: input %s stored mana calculation failed", err, outputID)
 		}
-		totalIn += uint64(manaStored)
+		totalIn += manaStored
 
 		// potential Mana
-		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(iotago.BaseToken(input.Output.Deposit()), input.CreationTime, txCreationTime)
+		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(input.Output.Deposit(), input.CreationTime, txCreationTime)
 		if err != nil {
 			return 0, fmt.Errorf("%w: input %s potential mana calculation failed", err, outputID)
 		}
-		totalIn += uint64(manaPotential)
+		totalIn += manaPotential
 	}
 
 	return totalIn, nil
 }
 
-func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iotago.Allotments) uint64 {
-	var totalOut uint64
+func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iotago.Allotments) iotago.Mana {
+	var totalOut iotago.Mana
 	for _, output := range outputs {
 		totalOut += output.StoredMana()
 	}
@@ -484,8 +484,8 @@ func ExecFuncBalancedDeposit() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		// note that due to syntactic validation of outputs, input and output deposit sums
 		// are always within bounds of the total token supply
-		var in, out uint64
-		inputSumReturnAmountPerIdent := make(map[string]uint64)
+		var in, out iotago.BaseToken
+		inputSumReturnAmountPerIdent := make(map[string]iotago.BaseToken)
 		for inputID, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
 			in += input.Output.Deposit()
 
@@ -505,7 +505,7 @@ func ExecFuncBalancedDeposit() ExecFunc {
 			inputSumReturnAmountPerIdent[returnIdent] += returnUnlockCond.Amount
 		}
 
-		outputSimpleTransfersPerIdent := make(map[string]uint64)
+		outputSimpleTransfersPerIdent := make(map[string]iotago.BaseToken)
 		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
 			outDeposit := output.Deposit()
 			out += outDeposit

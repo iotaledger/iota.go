@@ -119,7 +119,7 @@ func (mb *BlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BlockBuil
 }
 
 // BurnedMana sets the amount of mana burned by the block.
-func (mb *BlockBuilder) BurnedMana(burnedMana uint64) *BlockBuilder {
+func (mb *BlockBuilder) BurnedMana(burnedMana iotago.Mana) *BlockBuilder {
 	if mb.err != nil {
 		return mb
 	}

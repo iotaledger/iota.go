@@ -18,7 +18,7 @@ type BasicOutputs []*BasicOutput
 // BasicOutput is an output type which can hold native tokens and features.
 type BasicOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount uint64 `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:"0,mapKey=amount"`
 	// The native tokens held by the output.
 	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
 	// The unlock conditions on this output.
@@ -26,7 +26,7 @@ type BasicOutput struct {
 	// The features on the output.
 	Features BasicOutputFeatures `serix:"3,mapKey=features,omitempty"`
 	// The stored mana held by the output.
-	Mana uint64 `serix:"4,mapKey=mana"`
+	Mana Mana `serix:"4,mapKey=mana"`
 }
 
 // IsSimpleTransfer tells whether this BasicOutput fulfills the criteria of being a simple transfer.
@@ -69,11 +69,11 @@ func (e *BasicOutput) FeatureSet() FeatureSet {
 func (e *BasicOutput) UnlockConditionSet() UnlockConditionSet {
 	return e.Conditions.MustSet()
 }
-func (e *BasicOutput) Deposit() uint64 {
+func (e *BasicOutput) Deposit() BaseToken {
 	return e.Amount
 }
 
-func (e *BasicOutput) StoredMana() uint64 {
+func (e *BasicOutput) StoredMana() Mana {
 	return e.Mana
 }
 
@@ -87,9 +87,9 @@ func (e *BasicOutput) Type() OutputType {
 
 func (e *BasicOutput) Size() int {
 	return util.NumByteLen(byte(OutputBasic)) +
-		util.NumByteLen(e.Amount) +
+		BaseTokenSize +
 		e.NativeTokens.Size() +
 		e.Conditions.Size() +
 		e.Features.Size() +
-		util.NumByteLen(e.Mana)
+		ManaSize
 }

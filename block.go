@@ -119,7 +119,7 @@ type Block struct {
 	// The inner payload of the block. Can be nil.
 	Payload BlockPayload `serix:"9,optional,mapKey=payload,omitempty"`
 
-	BurnedMana uint64 `serix:"10,mapKey=burnedMana"`
+	BurnedMana Mana `serix:"10,mapKey=burnedMana"`
 
 	Signature Signature `serix:"11,mapKey=signature"`
 

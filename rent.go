@@ -49,7 +49,7 @@ type RentStructure struct {
 // CoversStateRent tells whether given this NonEphemeralObject, the given rent fulfills the renting costs
 // by examining the virtual bytes cost of the object.
 // Returns the minimum rent computed and an error if it is not covered by rent.
-func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint64) (uint64, error) {
+func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent BaseToken) (BaseToken, error) {
 	minRent := r.MinRent(object)
 	if rent < minRent {
 		return 0, fmt.Errorf("%w: needed %d but only got %d", ErrVByteRentNotCovered, minRent, rent)
@@ -58,14 +58,14 @@ func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint64) 
 }
 
 // MinRent returns the minimum rent to cover a given object.
-func (r *RentStructure) MinRent(object NonEphemeralObject) uint64 {
-	return uint64(r.VByteCost) * uint64(object.VBytes(r, nil))
+func (r *RentStructure) MinRent(object NonEphemeralObject) BaseToken {
+	return BaseToken(r.VByteCost) * BaseToken(object.VBytes(r, nil))
 }
 
 // MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
-func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) uint64 {
-	return uint64(r.VByteCost) * uint64((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
+func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) BaseToken {
+	return BaseToken(r.VByteCost) * BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
 }
 
 // NonEphemeralObject is an object which can not be pruned by nodes as it
