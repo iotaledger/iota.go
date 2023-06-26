@@ -3827,6 +3827,44 @@ func TestTxSemanticTimelocks(t *testing.T) {
 				wantErr: iotago.ErrTimelockNotExpired,
 			}
 		}(),
+		func() test {
+			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(1)
+
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
+					Output: &iotago.BasicOutput{
+						Amount: 100,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+							&iotago.TimelockUnlockCondition{
+								SlotIndex: 1000,
+							},
+						},
+					},
+				},
+			}
+
+			creationSlot := iotago.SlotIndex(1005)
+			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: creationSlot}
+			sigs, err := essence.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(), ident1AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name:     "fail - no commitment input for timelock",
+				vmParams: &vm.Params{},
+				resolvedInputs: vm.ResolvedInputs{
+					InputSet: inputs,
+				},
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: iotago.ErrTimelockConditionCommitmentInputRequired,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
