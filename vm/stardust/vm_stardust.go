@@ -464,7 +464,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 			return fmt.Errorf("%w: block issuer feature validation requires a commitment input", iotago.ErrInvalidBlockIssuerTransition)
 		}
 
-		if BIFeat.ExpirySlot == 0 || BIFeat.ExpirySlot >= vmParams.WorkingSet.Tx.Essence.CreationTime {
+		if BIFeat.ExpirySlot == 0 || BIFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Index {
 			// TODO: better error
 			return fmt.Errorf("%w: cannot destroy output until the block issuer feature expires", iotago.ErrInvalidBlockIssuerTransition)
 		}
@@ -480,9 +480,15 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 
 	stakingFeat := outputToDestroy.FeatureSet().Staking()
 	if stakingFeat != nil {
+		// This case should never occur as the staking feature requires the presence of a block issuer feature,
+		// which also requires a commitment input.
+		if vmParams.WorkingSet.Commitment == nil {
+			return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInput)
+		}
+
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
-		creationEpoch := timeProvider.EpochFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
+		creationEpoch := timeProvider.EpochFromSlot(vmParams.WorkingSet.Commitment.Index)
 
 		if creationEpoch < stakingFeat.EndEpoch {
 			return fmt.Errorf("%w: %w: cannot destroy account until the staking feature is unbonded", iotago.ErrInvalidAccountStateTransition, iotago.ErrInvalidStakingBondedRemoval)

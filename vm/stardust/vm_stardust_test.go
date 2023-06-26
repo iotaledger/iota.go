@@ -1676,8 +1676,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "fail - sender can not unlock yet",
-				vmParams:       &vm.Params{},
+				name:     "fail - sender can not unlock yet",
+				vmParams: &vm.Params{},
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
@@ -1720,8 +1720,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "fail - receiver can not unlock anymore",
-				vmParams:       &vm.Params{},
+				name:     "fail - receiver can not unlock anymore",
+				vmParams: &vm.Params{},
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
@@ -2038,8 +2038,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "ok",
-				vmParams:       &vm.Params{},
+				name:     "ok",
+				vmParams: &vm.Params{},
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
@@ -2249,8 +2249,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "fail - return not fulfilled",
-				vmParams:       &vm.Params{},
+				name:     "fail - return not fulfilled",
+				vmParams: &vm.Params{},
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
@@ -3728,8 +3728,8 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "ok",
-				vmParams:       &vm.Params{},
+				name:     "ok",
+				vmParams: &vm.Params{},
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
@@ -3769,8 +3769,8 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "fail - timelock not expired",
-				vmParams:       &vm.Params{},
+				name:     "fail - timelock not expired",
+				vmParams: &vm.Params{},
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
@@ -3810,8 +3810,8 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:           "fail - timelock not expired",
-				vmParams:       &vm.Params{},
+				name:     "fail - timelock not expired",
+				vmParams: &vm.Params{},
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
