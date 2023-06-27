@@ -97,7 +97,7 @@ type TransactionFunc func(tx *iotago.Transaction)
 // BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
 func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParams *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *BlockBuilder {
-	blockBuilder := NewBlockBuilder()
+	blockBuilder := NewBlockBuilder(iotago.BlockTypeBasic)
 	tx, err := b.Build(protoParams, signer)
 	if err != nil {
 		blockBuilder.err = err

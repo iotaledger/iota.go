@@ -435,8 +435,18 @@ func RandBlockID() iotago.BlockID {
 	return Rand40ByteArray()
 }
 
-// RandBlock returns a random block with the given inner payload.
-func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
+// RandProtocolBlock returns a random block with the given inner payload.
+func RandProtocolBlock(block iotago.Block) *iotago.ProtocolBlock {
+	return &iotago.ProtocolBlock{
+		ProtocolVersion: TestProtocolVersion,
+		SlotCommitment:  iotago.NewEmptyCommitment(),
+		IssuerID:        RandAccountID(),
+		Block:           block,
+		Signature:       RandEd25519Signature(),
+	}
+}
+
+func RandBasicBlock(withPayloadType iotago.PayloadType) *iotago.BasicBlock {
 	var payload iotago.Payload
 
 	switch withPayloadType {
@@ -446,22 +456,23 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 		payload = RandTaggedData([]byte("tag"))
 	}
 
-	return &iotago.Block{
-		ProtocolVersion: TestProtocolVersion,
-		StrongParents:   SortedRandBlockIDs(1 + rand.Intn(7)),
-		Payload:         payload,
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Signature:       RandEd25519Signature(),
-		IssuerID:        RandAccountID(),
-		Nonce:           uint64(rand.Intn(1000)),
-		BurnedMana:      RandMana(1000),
+	return &iotago.BasicBlock{
+		StrongParents: SortedRandBlockIDs(1 + rand.Intn(7)),
+		Payload:       payload,
+		BurnedMana:    RandMana(1000),
 	}
 }
 
-func RandBlockWithIssuerAndBurnedMana(issuerID iotago.AccountID, burnedAmount iotago.Mana) *iotago.Block {
-	block := RandBlock(iotago.PayloadTransaction)
+// func RandValidatorBlock() *iotago.ValidatorBlock {
+//
+// }
+
+func RandBasicBlockWithIssuerAndBurnedMana(issuerID iotago.AccountID, burnedAmount iotago.Mana) *iotago.ProtocolBlock {
+	basicBlock := RandBasicBlock(iotago.PayloadTransaction)
+	basicBlock.BurnedMana = burnedAmount
+
+	block := RandProtocolBlock(basicBlock)
 	block.IssuerID = issuerID
-	block.BurnedMana = burnedAmount
 	return block
 }
 

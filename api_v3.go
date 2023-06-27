@@ -480,37 +480,22 @@ func V3API(protoParams *ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(Block{}, serix.TypeSettings{}))
-		must(api.RegisterValidators(&Block{}, func(ctx context.Context, bytes []byte) error {
-			if len(bytes) > MaxBlockSize {
-				return fmt.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, len(bytes))
-			}
-			return nil
-		}, func(ctx context.Context, block *Block) error {
-			val := ctx.Value(ProtocolAPIContextKey)
-			if val == nil {
-				return fmt.Errorf("unable to validate block: %w", ErrMissingProtocolParams)
-			}
-			protoParams := val.(*ProtocolParameters)
-			if protoParams.Version != block.ProtocolVersion {
-				return fmt.Errorf("mismatched protocol version: wanted %d, got %d in block", protoParams.Version, block.ProtocolVersion)
-			}
+		must(api.RegisterTypeSettings((*ValidatorBlock)(nil), serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidator))))
 
-			if len(block.WeakParents) > 0 {
-				// weak parents must be disjunct to the rest of the parents
-				nonWeakParents := lo.KeyOnlyBy(append(block.StrongParents, block.ShallowLikeParents...), func(v BlockID) BlockID {
-					return v
-				})
+		// TODO: register specific parent rules
+		must(api.RegisterTypeSettings(StrongParentsIDs{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsArrRules),
+		))
+		must(api.RegisterTypeSettings(WeakParentsIDs{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsArrRules),
+		))
+		must(api.RegisterTypeSettings(ShallowLikeParentIDs{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsArrRules),
+		))
+	}
 
-				for _, parent := range block.WeakParents {
-					if _, contains := nonWeakParents[parent]; contains {
-						return fmt.Errorf("weak parents must be disjunct to the rest of the parents")
-					}
-				}
-			}
-
-			return nil
-		}))
+	{
+		must(api.RegisterTypeSettings((*BasicBlock)(nil), serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))))
 
 		must(api.RegisterTypeSettings(StrongParentsIDs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsArrRules),
@@ -521,9 +506,55 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterTypeSettings(ShallowLikeParentIDs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsArrRules),
 		))
+	}
+
+	{
+		must(api.RegisterInterfaceObjects((*Block)(nil), (*BasicBlock)(nil)))
+		must(api.RegisterInterfaceObjects((*Block)(nil), (*ValidatorBlock)(nil)))
 
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*Transaction)(nil)))
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*TaggedData)(nil)))
+
+		// TODO: make sure to register type settings and validators on non-pointer types
+		must(api.RegisterTypeSettings(ProtocolBlock{}, serix.TypeSettings{}))
+		must(api.RegisterValidators(ProtocolBlock{}, func(ctx context.Context, bytes []byte) error {
+			if len(bytes) > MaxBlockSize {
+				return fmt.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, len(bytes))
+			}
+			return nil
+		}, func(ctx context.Context, protocolBlock ProtocolBlock) error {
+			val := ctx.Value(ProtocolAPIContextKey)
+			if val == nil {
+				return fmt.Errorf("unable to validate block: %w", ErrMissingProtocolParams)
+			}
+			protocolParameters := val.(*ProtocolParameters)
+			// TODO: do we need this protocol version check?
+			if protocolParameters.Version != protocolBlock.ProtocolVersion {
+				return fmt.Errorf("mismatched protocol version: wanted %d, got %d in block", protocolParameters.Version, protocolBlock.ProtocolVersion)
+			}
+
+			block := protocolBlock.Block
+			if len(block.WeakParentIDs()) > 0 {
+				// weak parents must be disjunct to the rest of the parents
+				nonWeakParents := lo.KeyOnlyBy(append(block.StrongParentIDs(), block.ShallowLikeParentIDs()...), func(v BlockID) BlockID {
+					return v
+				})
+
+				for _, parent := range block.WeakParentIDs() {
+					if _, contains := nonWeakParents[parent]; contains {
+						return fmt.Errorf("weak parents must be disjunct to the rest of the parents")
+					}
+				}
+			}
+
+			if validatorBlock, ok := block.(*ValidatorBlock); ok {
+				if validatorBlock.HighestSupportedVersion < protocolBlock.ProtocolVersion {
+					return fmt.Errorf("highest supported version %d must be greater equal protocol version %d", validatorBlock.HighestSupportedVersion, protocolBlock.ProtocolVersion)
+				}
+			}
+
+			return nil
+		}))
 	}
 
 	{

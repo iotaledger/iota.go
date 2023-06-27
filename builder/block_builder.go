@@ -1,14 +1,11 @@
 package builder
 
 import (
-	"context"
 	"crypto/ed25519"
 	"fmt"
 	"time"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
-	"github.com/iotaledger/iota.go/v4/pow"
 )
 
 const (
@@ -16,171 +13,166 @@ const (
 )
 
 // NewBlockBuilder creates a new BlockBuilder.
-func NewBlockBuilder() *BlockBuilder {
-	return &BlockBuilder{
-		block: &iotago.Block{
+func NewBlockBuilder(blockType iotago.BlockType) *BlockBuilder {
+	b := &BlockBuilder{
+		protocolBlock: &iotago.ProtocolBlock{
 			ProtocolVersion: defaultProtocolVersion,
 			SlotCommitment:  iotago.NewEmptyCommitment(),
 			IssuingTime:     time.Now(),
 			Signature:       &iotago.Ed25519Signature{},
 		},
 	}
+
+	var block iotago.Block
+	switch blockType {
+	case iotago.BlockTypeBasic:
+		b.basicBlock = &iotago.BasicBlock{}
+		block = b.basicBlock
+	case iotago.BlockTypeValidator:
+		b.validatorBlock = &iotago.ValidatorBlock{}
+		block = b.validatorBlock
+	default:
+		panic("unknown block type")
+	}
+
+	b.protocolBlock.Block = block
+
+	return b
 }
 
 // BlockBuilder is used to easily build up a Block.
 type BlockBuilder struct {
-	block *iotago.Block
-	err   error
+	basicBlock     *iotago.BasicBlock
+	validatorBlock *iotago.ValidatorBlock
+
+	protocolBlock *iotago.ProtocolBlock
+	err           error
 }
 
-// Build builds the Block or returns any error which occurred during the build steps.
-func (mb *BlockBuilder) Build() (*iotago.Block, error) {
-	if mb.err != nil {
-		return nil, mb.err
+// Build builds the ProtocolBlock or returns any error which occurred during the build steps.
+func (b *BlockBuilder) Build() (*iotago.ProtocolBlock, error) {
+	if b.err != nil {
+		return nil, b.err
 	}
 
-	return mb.block, nil
+	return b.protocolBlock, nil
 }
 
 // Payload sets the payload.
-func (mb *BlockBuilder) Payload(payload iotago.Payload) *BlockBuilder {
-	if mb.err != nil {
-		return mb
+func (b *BlockBuilder) Payload(payload iotago.Payload) *BlockBuilder {
+	if b.err != nil {
+		return b
 	}
 
-	mb.block.Payload = payload
+	if b.basicBlock == nil {
+		panic("can't set payload on non-basic block")
+	}
+	b.basicBlock.Payload = payload
 
-	return mb
+	return b
 }
 
 // ProtocolVersion sets the protocol version.
-func (mb *BlockBuilder) ProtocolVersion(version byte) *BlockBuilder {
-	if mb.err != nil {
-		return mb
+func (b *BlockBuilder) ProtocolVersion(version byte) *BlockBuilder {
+	if b.err != nil {
+		return b
 	}
 
-	mb.block.ProtocolVersion = version
+	b.protocolBlock.ProtocolVersion = version
 
-	return mb
+	return b
 }
 
-func (mb *BlockBuilder) IssuingTime(time time.Time) *BlockBuilder {
-	if mb.err != nil {
-		return mb
+func (b *BlockBuilder) IssuingTime(time time.Time) *BlockBuilder {
+	if b.err != nil {
+		return b
 	}
 
-	mb.block.IssuingTime = time
+	b.protocolBlock.IssuingTime = time
 
-	return mb
+	return b
 }
 
 // StrongParents sets the strong parents.
-func (mb *BlockBuilder) StrongParents(parents iotago.BlockIDs) *BlockBuilder {
-	if mb.err != nil {
-		return mb
+func (b *BlockBuilder) StrongParents(parents iotago.BlockIDs) *BlockBuilder {
+	if b.err != nil {
+		return b
 	}
 
-	mb.block.StrongParents = parents.RemoveDupsAndSort()
+	b.protocolBlock.Block.SetStrongParentIDs(parents.RemoveDupsAndSort())
 
-	return mb
+	return b
 }
 
 // WeakParents sets the weak parents.
-func (mb *BlockBuilder) WeakParents(parents iotago.BlockIDs) *BlockBuilder {
-	if mb.err != nil {
-		return mb
+func (b *BlockBuilder) WeakParents(parents iotago.BlockIDs) *BlockBuilder {
+	if b.err != nil {
+		return b
 	}
 
-	mb.block.WeakParents = parents.RemoveDupsAndSort()
+	b.protocolBlock.Block.SetWeakParentIDs(parents.RemoveDupsAndSort())
 
-	return mb
+	return b
 }
 
 // ShallowLikeParents sets the shallow like parents.
-func (mb *BlockBuilder) ShallowLikeParents(parents iotago.BlockIDs) *BlockBuilder {
-	if mb.err != nil {
-		return mb
+func (b *BlockBuilder) ShallowLikeParents(parents iotago.BlockIDs) *BlockBuilder {
+	if b.err != nil {
+		return b
 	}
 
-	mb.block.ShallowLikeParents = parents.RemoveDupsAndSort()
+	b.protocolBlock.Block.SetShallowLikeParentIDs(parents.RemoveDupsAndSort())
 
-	return mb
+	return b
 }
 
 // SlotCommitment sets the slot commitment.
-func (mb *BlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BlockBuilder {
-	if mb.err != nil {
-		return mb
+func (b *BlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BlockBuilder {
+	if b.err != nil {
+		return b
 	}
 
-	mb.block.SlotCommitment = commitment
+	b.protocolBlock.SlotCommitment = commitment
 
-	return mb
+	return b
 }
 
 // BurnedMana sets the amount of mana burned by the block.
-func (mb *BlockBuilder) BurnedMana(burnedMana iotago.Mana) *BlockBuilder {
-	if mb.err != nil {
-		return mb
+func (b *BlockBuilder) BurnedMana(burnedMana iotago.Mana) *BlockBuilder {
+	if b.err != nil {
+		return b
 	}
 
-	mb.block.BurnedMana = burnedMana
+	if b.basicBlock == nil {
+		panic("can't set burned mana on non-basic block")
+	}
+	b.basicBlock.BurnedMana = burnedMana
 
-	return mb
+	return b
 }
 
 // LatestFinalizedSlot sets the latest finalized slot.
-func (mb *BlockBuilder) LatestFinalizedSlot(index iotago.SlotIndex) *BlockBuilder {
-	if mb.err != nil {
-		return mb
+func (b *BlockBuilder) LatestFinalizedSlot(index iotago.SlotIndex) *BlockBuilder {
+	if b.err != nil {
+		return b
 	}
 
-	mb.block.LatestFinalizedSlot = index
+	b.protocolBlock.LatestFinalizedSlot = index
 
-	return mb
+	return b
 }
 
-// ProofOfWork does the proof-of-work needed in order to satisfy the given target score.
-// It can be canceled by canceling the given context. This function should appear
-// as the last step before Build.
-func (mb *BlockBuilder) ProofOfWork(ctx context.Context, targetScore float64, numWorkers ...int) *BlockBuilder {
-	if mb.err != nil {
-		return mb
+func (b *BlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKey) *BlockBuilder {
+	if b.err != nil {
+		return b
 	}
 
-	if targetScore == 0 {
-		return mb
-	}
+	b.protocolBlock.IssuerID = accountID
 
-	// cut out the nonce
-	_, blockData, err := mb.block.POW()
+	signature, err := b.protocolBlock.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {
-		mb.err = fmt.Errorf("unable to compute pow relevant data: %w", err)
-		return mb
-	}
-	powRelevantData := blockData[:len(blockData)-serializer.UInt64ByteSize]
-	worker := pow.New(numWorkers...)
-	nonce, err := worker.Mine(ctx, powRelevantData, targetScore)
-	if err != nil {
-		mb.err = fmt.Errorf("unable to complete proof-of-work: %w", err)
-		return mb
-	}
-	mb.block.Nonce = nonce
-
-	return mb
-}
-
-func (mb *BlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKey) *BlockBuilder {
-	if mb.err != nil {
-		return mb
-	}
-
-	mb.block.IssuerID = accountID
-
-	signature, err := mb.block.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
-	if err != nil {
-		mb.err = fmt.Errorf("error signing block: %w", err)
-		return mb
+		b.err = fmt.Errorf("error signing block: %w", err)
+		return b
 	}
 
 	edSig, isEdSig := signature.(*iotago.Ed25519Signature)
@@ -188,7 +180,7 @@ func (mb *BlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateK
 		panic("unsupported signature type")
 	}
 
-	mb.block.Signature = edSig
+	b.protocolBlock.Signature = edSig
 
-	return mb
+	return b
 }

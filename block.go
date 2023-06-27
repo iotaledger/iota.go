@@ -2,10 +2,8 @@ package iotago
 
 import (
 	"bytes"
-	"context"
 	"crypto/ed25519"
 	"fmt"
-	"runtime"
 	"sort"
 	"time"
 
@@ -16,7 +14,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/pow"
 )
 
 const (
@@ -30,6 +27,14 @@ const (
 	BlockMinParents = 0
 	// BlockMaxParents defines the maximum amount of parents in a block.
 	BlockMaxParents = 8
+)
+
+// BlockType denotes a type of Block.
+type BlockType byte
+
+const (
+	BlockTypeBasic     BlockType = 1
+	BlockTypeValidator BlockType = 2
 )
 
 // EmptyBlockID returns an empty BlockID.
@@ -98,36 +103,116 @@ type WeakParentsIDs = BlockIDs
 // ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
 type ShallowLikeParentIDs = BlockIDs
 
-// Block represents a vertex in the Tangle.
-type Block struct {
-	// The protocol version under which this block operates.
-	ProtocolVersion byte `serix:"0,mapKey=protocolVersion"`
+type Block interface {
+	Type() BlockType
 
-	NetworkID NetworkID `serix:"1,mapKey=networkId"`
+	StrongParentIDs() BlockIDs
+	SetStrongParentIDs(BlockIDs)
 
-	// The parents the block references.
-	StrongParents      StrongParentsIDs     `serix:"2,lengthPrefixType=uint8,mapKey=strongParents"`
-	WeakParents        WeakParentsIDs       `serix:"3,lengthPrefixType=uint8,mapKey=weakParents"`
-	ShallowLikeParents ShallowLikeParentIDs `serix:"4,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+	WeakParentIDs() BlockIDs
+	SetWeakParentIDs(BlockIDs)
 
-	IssuerID    AccountID `serix:"5,mapKey=issuerID"`
-	IssuingTime time.Time `serix:"6,mapKey=issuingTime"`
-
-	SlotCommitment      *Commitment `serix:"7,mapKey=slotCommitment"`
-	LatestFinalizedSlot SlotIndex   `serix:"8,mapKey=latestFinalizedSlot"`
-
-	// The inner payload of the block. Can be nil.
-	Payload BlockPayload `serix:"9,optional,mapKey=payload,omitempty"`
-
-	BurnedMana Mana `serix:"10,mapKey=burnedMana"`
-
-	Signature Signature `serix:"11,mapKey=signature"`
-
-	// The nonce which lets this block fulfill the PoW requirements.
-	Nonce uint64 `serix:"12,mapKey=nonce"`
+	ShallowLikeParentIDs() BlockIDs
+	SetShallowLikeParentIDs(BlockIDs)
 }
 
-func (b *Block) ContentHash() (Identifier, error) {
+type ProtocolBlock struct {
+	ProtocolVersion byte      `serix:"0,mapKey=protocolVersion"`
+	NetworkID       NetworkID `serix:"1,mapKey=networkId"`
+
+	IssuingTime         time.Time   `serix:"2,mapKey=issuingTime"`
+	SlotCommitment      *Commitment `serix:"3,mapKey=slotCommitment"`
+	LatestFinalizedSlot SlotIndex   `serix:"4,mapKey=latestFinalizedSlot"`
+
+	IssuerID AccountID `serix:"5,mapKey=issuerID"`
+
+	Block Block `serix:"6,mapKey=block"`
+
+	// TODO: check with attestations and contnet hash
+
+	Signature Signature `serix:"7,mapKey=signature"`
+}
+
+// BasicBlock represents a basic vertex in the Tangle/BlockDAG.
+type BasicBlock struct {
+	// The parents the block references.
+	StrongParents      StrongParentsIDs     `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
+	WeakParents        WeakParentsIDs       `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
+	ShallowLikeParents ShallowLikeParentIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+
+	// The inner payload of the block. Can be nil.
+	Payload BlockPayload `serix:"3,optional,mapKey=payload,omitempty"`
+
+	BurnedMana Mana `serix:"4,mapKey=burnedMana"`
+}
+
+func (b *BasicBlock) Type() BlockType {
+	return BlockTypeBasic
+}
+
+func (b *BasicBlock) StrongParentIDs() BlockIDs {
+	return b.StrongParents
+}
+
+func (b *BasicBlock) SetStrongParentIDs(blockIDs BlockIDs) {
+	b.StrongParents = blockIDs
+}
+
+func (b *BasicBlock) WeakParentIDs() BlockIDs {
+	return b.WeakParents
+}
+
+func (b *BasicBlock) SetWeakParentIDs(blockIDs BlockIDs) {
+	b.WeakParents = blockIDs
+}
+
+func (b *BasicBlock) ShallowLikeParentIDs() BlockIDs {
+	return b.ShallowLikeParents
+}
+
+func (b *BasicBlock) SetShallowLikeParentIDs(blockIDs BlockIDs) {
+	b.ShallowLikeParents = blockIDs
+}
+
+// ValidatorBlock represents a validator vertex in the Tangle/BlockDAG.
+type ValidatorBlock struct {
+	// The parents the block references.
+	StrongParents      StrongParentsIDs     `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
+	WeakParents        WeakParentsIDs       `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
+	ShallowLikeParents ShallowLikeParentIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+
+	HighestSupportedVersion byte `serix:"3,mapKey=latestFinalizedSlot"`
+}
+
+func (b *ValidatorBlock) Type() BlockType {
+	return BlockTypeValidator
+}
+
+func (b *ValidatorBlock) StrongParentIDs() BlockIDs {
+	return b.StrongParents
+}
+
+func (b *ValidatorBlock) SetStrongParentIDs(blockIDs BlockIDs) {
+	b.StrongParents = blockIDs
+}
+
+func (b *ValidatorBlock) WeakParentIDs() BlockIDs {
+	return b.WeakParents
+}
+
+func (b *ValidatorBlock) SetWeakParentIDs(blockIDs BlockIDs) {
+	b.WeakParents = blockIDs
+}
+
+func (b *ValidatorBlock) ShallowLikeParentIDs() BlockIDs {
+	return b.ShallowLikeParents
+}
+
+func (b *ValidatorBlock) SetShallowLikeParentIDs(blockIDs BlockIDs) {
+	b.ShallowLikeParents = blockIDs
+}
+
+func (b *ProtocolBlock) ContentHash() (Identifier, error) {
 	data, err := internalEncode(b)
 	if err != nil {
 		return Identifier{}, fmt.Errorf("failed to encode block: %w", err)
@@ -147,9 +232,7 @@ func BlockIdentifierFromBlockBytes(blockBytes []byte) (Identifier, error) {
 		return emptyIdentifier, err
 	}
 
-	nonceBytes := blockBytes[len(blockBytes)-serializer.UInt64ByteSize:]
-
-	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:], nonceBytes[:])), nil
+	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:])), nil
 }
 
 func contentHashFromBlockBytes(blockBytes []byte) (Identifier, error) {
@@ -168,7 +251,7 @@ func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerialize
 
 // SigningMessage returns the to be signed message.
 // It is the 'encoded(IssuingTime)+encoded(SlotCommitment.ID()+contentHash'.
-func (b *Block) SigningMessage() ([]byte, error) {
+func (b *ProtocolBlock) SigningMessage() ([]byte, error) {
 	contentHash, err := b.ContentHash()
 	if err != nil {
 		return nil, err
@@ -189,7 +272,7 @@ func (b *Block) SigningMessage() ([]byte, error) {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
+func (b *ProtocolBlock) Sign(addrKey AddressKeys) (Signature, error) {
 	signMsg, err := b.SigningMessage()
 	if err != nil {
 		return nil, err
@@ -201,7 +284,7 @@ func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
 }
 
 // VerifySignature verifies the Signature of the block.
-func (b *Block) VerifySignature() (valid bool, err error) {
+func (b *ProtocolBlock) VerifySignature() (valid bool, err error) {
 	signingMessage, err := b.SigningMessage()
 	if err != nil {
 		return false, err
@@ -220,7 +303,7 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 }
 
 // ID computes the ID of the Block.
-func (b *Block) ID(timeProvider *TimeProvider) (BlockID, error) {
+func (b *ProtocolBlock) ID(timeProvider *TimeProvider) (BlockID, error) {
 	data, err := internalEncode(b)
 	if err != nil {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
@@ -237,36 +320,10 @@ func (b *Block) ID(timeProvider *TimeProvider) (BlockID, error) {
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
-func (b *Block) MustID(timeProvider *TimeProvider) BlockID {
+func (b *ProtocolBlock) MustID(timeProvider *TimeProvider) BlockID {
 	blockID, err := b.ID(timeProvider)
 	if err != nil {
 		panic(err)
 	}
 	return blockID
-}
-
-// POW computes the PoW score of the Block.
-func (b *Block) POW() (float64, []byte, error) {
-	data, err := internalEncode(b)
-	if err != nil {
-		return 0, nil, fmt.Errorf("can't compute block PoW score: %w", err)
-	}
-	return pow.Score(data), data, nil
-}
-
-// DoPOW executes the proof-of-work required to fulfill the targetScore.
-// Use the given context to cancel proof-of-work.
-func (b *Block) DoPOW(ctx context.Context, targetScore float64) error {
-	data, err := internalEncode(b)
-	if err != nil {
-		return fmt.Errorf("can't compute block PoW score: %w", err)
-	}
-	powRelevantData := data[:len(data)-8]
-	worker := pow.New(runtime.NumCPU())
-	nonce, err := worker.Mine(ctx, powRelevantData, targetScore)
-	if err != nil {
-		return err
-	}
-	b.Nonce = nonce
-	return nil
 }

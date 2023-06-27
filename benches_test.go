@@ -156,11 +156,12 @@ func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 
 	slotTimeProvider := iotago.NewTimeProvider(time.Now().Unix(), 10, 10)
 
-	m := &iotago.Block{
+	m := &iotago.ProtocolBlock{
 		ProtocolVersion: tpkg.TestProtocolVersion,
-		StrongParents:   tpkg.SortedRandBlockIDs(2),
-		Payload:         txPayload,
-		Nonce:           0,
+		Block: &iotago.BasicBlock{
+			StrongParents: tpkg.SortedRandBlockIDs(2),
+			Payload:       txPayload,
+		},
 	}
 	for i := 0; i < b.N; i++ {
 		_, _ = m.ID(slotTimeProvider)

@@ -19,17 +19,15 @@ type Attestation struct {
 	SlotCommitmentID CommitmentID `serix:"2,mapKey=slotCommitmentID"`
 	BlockContentHash Identifier   `serix:"3,mapKey=blockContentHash"`
 	Signature        Signature    `serix:"4,mapKey=signature"`
-	Nonce            uint64       `serix:"5,mapKey=nonce"`
 }
 
-func NewAttestation(block *Block) *Attestation {
+func NewAttestation(block *ProtocolBlock) *Attestation {
 	return &Attestation{
 		IssuerID:         block.IssuerID,
 		IssuingTime:      block.IssuingTime,
 		SlotCommitmentID: block.SlotCommitment.MustID(),
 		BlockContentHash: lo.PanicOnErr(block.ContentHash()),
 		Signature:        block.Signature,
-		Nonce:            block.Nonce,
 	}
 }
 
@@ -60,12 +58,7 @@ func (a Attestation) BlockID(timeProvider *TimeProvider) (BlockID, error) {
 		return EmptyBlockID(), fmt.Errorf("failed to serialize block's signature: %w", err)
 	}
 
-	nonceBytes, err := internalEncode(a.Nonce)
-	if err != nil {
-		return EmptyBlockID(), fmt.Errorf("failed to serialize block's nonce: %w", err)
-	}
-
-	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
+	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:]))
 	slotIndex := timeProvider.SlotFromTime(a.IssuingTime)
 
 	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
