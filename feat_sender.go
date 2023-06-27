@@ -23,6 +23,10 @@ func (s *SenderFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) + s.Address.VBytes(rentStruct, nil)
 }
 
+func (s *SenderFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.FactorData.Multiply(s.Size())
+}
+
 func (s *SenderFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*SenderFeature)
 	if !is {

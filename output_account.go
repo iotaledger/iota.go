@@ -203,6 +203,20 @@ func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		a.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
+func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return a.Conditions.WorkScore(workScoreStructure) +
+		a.Features.WorkScore(workScoreStructure) +
+		a.ImmutableFeatures.WorkScore(workScoreStructure) +
+		// prefix + amount + stored mana
+		workScoreStructure.FactorData.Multiply(serializer.SmallTypeDenotationByteSize+
+			serializer.UInt64ByteSize+
+			serializer.UInt64ByteSize) +
+		workScoreStructure.FactorData.Multiply(AccountIDLength) +
+		a.NativeTokens.WorkScore(workScoreStructure) +
+		// state index, state meta length, state meta, foundry counter
+		workScoreStructure.FactorData.Multiply(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)
+}
+
 func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 	// if there isn't a next state, then only the governance address can destroy the account
 	if nextState == nil {

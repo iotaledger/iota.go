@@ -126,6 +126,8 @@ type ProtocolParameters struct {
 	// LivenessThreshold is used by tipselection to determine the if a block is eligibile by evaluating issuingTimes
 	// and commitments in its pastcone to ATT and lastCommittedSlot respectively.
 	LivenessThreshold SlotIndex `serix:"17,mapKey=liveNessThreshold"`
+	// WorkScoreStructure is a collection of work scores for different object types.
+	WorkScoreStructure WorkScoreStructure `serix:"18,mapKey=workScoreStructure"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {

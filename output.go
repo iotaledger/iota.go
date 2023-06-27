@@ -33,6 +33,7 @@ const ManaSize = 8
 type Output interface {
 	Sizer
 	NonEphemeralObject
+	ProcessableObject
 
 	// Deposit returns the amount this Output deposits.
 	Deposit() BaseToken
@@ -328,6 +329,14 @@ func (outputs Outputs[T]) Size() int {
 		sum += output.Size()
 	}
 	return sum
+}
+
+func (outputs Outputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	var sumCost WorkScore
+	for _, output := range outputs {
+		sumCost += output.WorkScore(workScoreStructure)
+	}
+	return sumCost
 }
 
 // MustCommitment works like Commitment but panics if there's an error.

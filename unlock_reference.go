@@ -35,3 +35,7 @@ func (r *ReferenceUnlock) Type() UnlockType {
 func (r *ReferenceUnlock) Size() int {
 	return ReferenceUnlockSize
 }
+
+func (r *ReferenceUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.WorkScoreEd25519Signature
+}

@@ -17,6 +17,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/pow"
+	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -269,4 +270,18 @@ func (b *Block) DoPOW(ctx context.Context, targetScore float64) error {
 	}
 	b.Nonce = nonce
 	return nil
+}
+
+func (b *Block) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	// ProtocolVersion and NetworkID
+	return workScoreStructure.FactorData.Multiply(serializer.OneByte+serializer.UInt64ByteSize) +
+		workScoreStructure.WorkScoreParents*WorkScore(len(b.StrongParents)+len(b.WeakParents)+len(b.ShallowLikeParents)) +
+		// IssuerID and IssuingTime
+		workScoreStructure.FactorData.Multiply(AccountIDLength+util.NumByteLen(b.IssuingTime)) +
+		// SlotCommitment and LatestFinalizedSlot
+		workScoreStructure.FactorData.Multiply(util.NumByteLen(b.SlotCommitment)+serializer.UInt64ByteSize) +
+		b.Payload.WorkScore(workScoreStructure) +
+		// BurnedMana and Nonce
+		workScoreStructure.FactorData.Multiply(ManaSize+serializer.UInt64ByteSize) +
+		workScoreStructure.WorkScoreEd25519Signature
 }

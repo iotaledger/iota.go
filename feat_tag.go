@@ -23,6 +23,10 @@ func (s *TagFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.Tag)))
 }
 
+func (s *TagFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.FactorData.Multiply(s.Size())
+}
+
 func (s *TagFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*TagFeature)
 	if !is {

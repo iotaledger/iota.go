@@ -23,6 +23,11 @@ func (s *TimelockUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
 }
 
+func (s *TimelockUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	// TimelockUnlockCondition requires a signature check, but on consumption, not creation.
+	return workScoreStructure.FactorData.Multiply(s.Size())
+}
+
 func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {
 	otherCond, is := other.(*TimelockUnlockCondition)
 	if !is {

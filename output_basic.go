@@ -58,6 +58,16 @@ func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		e.Features.VBytes(rentStruct, nil)
 }
 
+func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return e.Conditions.WorkScore(workScoreStructure) +
+		e.Features.WorkScore(workScoreStructure) +
+		// prefix + amount + stored mana
+		workScoreStructure.FactorData.Multiply(serializer.SmallTypeDenotationByteSize+
+			serializer.UInt64ByteSize+
+			serializer.UInt64ByteSize) +
+		e.NativeTokens.WorkScore(workScoreStructure)
+}
+
 func (e *BasicOutput) NativeTokenList() NativeTokens {
 	return e.NativeTokens
 }
@@ -69,6 +79,7 @@ func (e *BasicOutput) FeatureSet() FeatureSet {
 func (e *BasicOutput) UnlockConditionSet() UnlockConditionSet {
 	return e.Conditions.MustSet()
 }
+
 func (e *BasicOutput) Deposit() BaseToken {
 	return e.Amount
 }

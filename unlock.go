@@ -69,12 +69,21 @@ func (o Unlocks) Size() int {
 	return sum
 }
 
+func (o Unlocks) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	var sumCost WorkScore
+	for _, u := range o {
+		sumCost += u.WorkScore(workScoreStructure)
+	}
+	return sumCost
+}
+
 // UnlocksByType is a map of UnlockType(s) to slice of Unlock(s).
 type UnlocksByType map[UnlockType][]Unlock
 
 // Unlock unlocks inputs of a Transaction.
 type Unlock interface {
 	Sizer
+	ProcessableObject
 
 	// Type returns the type of the Unlock.
 	Type() UnlockType

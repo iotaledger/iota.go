@@ -114,6 +114,14 @@ func (n NativeTokens) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(VBytes(serializer.OneByte + len(n)*NativeTokenVByteCost))
 }
 
+func (n NativeTokens) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	var sumCost WorkScore
+	for _, nativeToken := range n {
+		sumCost += nativeToken.WorkScore(workScoreStructure)
+	}
+	return sumCost
+}
+
 func (n NativeTokens) Size() int {
 	sum := serializer.OneByte // 1 byte length prefix
 	for _, token := range n {
@@ -169,6 +177,11 @@ func (n *NativeToken) Clone() *NativeToken {
 
 func (n *NativeToken) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 	return NativeTokenVByteCost
+}
+
+func (n *NativeToken) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.FactorData.Multiply(n.Size()) +
+		workScoreStructure.WorkScoreNativeToken
 }
 
 // Equal checks whether other is equal to this NativeToken.

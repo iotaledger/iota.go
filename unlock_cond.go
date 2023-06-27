@@ -62,6 +62,7 @@ var (
 type UnlockCondition interface {
 	Sizer
 	NonEphemeralObject
+	ProcessableObject
 
 	// Type returns the type of the UnlockCondition.
 	Type() UnlockConditionType
@@ -84,6 +85,15 @@ func (f UnlockConditions[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBy
 
 	// length prefix + sum cost of conditions
 	return rentStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
+}
+
+func (f UnlockConditions[T]) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	var sumCost WorkScore
+	for _, unlockCond := range f {
+		sumCost += unlockCond.WorkScore(workScoreStructure)
+	}
+
+	return sumCost
 }
 
 // Clone clones the UnlockConditions.

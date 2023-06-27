@@ -35,3 +35,7 @@ func (r *NFTUnlock) Type() UnlockType {
 func (r *NFTUnlock) Size() int {
 	return NFTUnlockSize
 }
+
+func (r *NFTUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.WorkScoreEd25519Signature
+}

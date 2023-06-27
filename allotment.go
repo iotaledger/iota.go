@@ -22,6 +22,10 @@ func (a Allotments) Size() int {
 	return len(a) * (AccountIDLength + serializer.UInt64ByteSize)
 }
 
+func (a Allotments) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.FactorAllotment.Multiply(a.Size())
+}
+
 func (a Allotments) Get(id AccountID) Mana {
 	for _, allotment := range a {
 		if allotment.AccountID == id {

@@ -21,6 +21,11 @@ func (s *ImmutableAccountUnlockCondition) VBytes(rentStruct *RentStructure, _ VB
 		s.Address.VBytes(rentStruct, nil)
 }
 
+func (s *ImmutableAccountUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	// ImmutableAccountUnlockCondition requires a signature check, but on consumption, not creation.
+	return workScoreStructure.FactorData.Multiply(s.Size())
+}
+
 func (s *ImmutableAccountUnlockCondition) Equal(other UnlockCondition) bool {
 	otherUnlockCond, is := other.(*ImmutableAccountUnlockCondition)
 	if !is {

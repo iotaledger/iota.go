@@ -52,6 +52,12 @@ func (s *StakingFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes 
 	return rentStruct.VBFactorData.Multiply(VBytes(vbytes))
 }
 
+func (s *StakingFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	// Staking feature changes require invokation of staking managers so require extra work.
+	return workScoreStructure.FactorData.Multiply(s.Size()) +
+		workScoreStructure.WorkScoreStaking
+}
+
 func (s *StakingFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*StakingFeature)
 	if !is {

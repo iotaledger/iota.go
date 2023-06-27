@@ -23,6 +23,10 @@ func (s *IssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		s.Address.VBytes(rentStruct, nil)
 }
 
+func (s *IssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.FactorData.Multiply(s.Size())
+}
+
 func (s *IssuerFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*IssuerFeature)
 	if !is {

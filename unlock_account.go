@@ -35,3 +35,7 @@ func (r *AccountUnlock) Type() UnlockType {
 func (r *AccountUnlock) Size() int {
 	return AccountUnlockSize
 }
+
+func (r *AccountUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.WorkScoreEd25519Signature
+}

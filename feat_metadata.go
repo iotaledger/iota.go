@@ -21,6 +21,10 @@ func (s *MetadataFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes
 	return rentStruct.VBFactorData.Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
 }
 
+func (s *MetadataFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.FactorData.Multiply(s.Size())
+}
+
 func (s *MetadataFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*MetadataFeature)
 	if !is {

@@ -19,6 +19,7 @@ var (
 type Feature interface {
 	Sizer
 	NonEphemeralObject
+	ProcessableObject
 
 	// Type returns the type of the Feature.
 	Type() FeatureType
@@ -79,6 +80,14 @@ func (f Features[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 
 	// length prefix + sum cost of features
 	return rentStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
+}
+
+func (f Features[T]) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	var sumCost WorkScore
+	for _, feat := range f {
+		sumCost += feat.WorkScore(workScoreStructure)
+	}
+	return sumCost
 }
 
 func (f Features[T]) Size() int {

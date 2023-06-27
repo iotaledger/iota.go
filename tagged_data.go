@@ -22,3 +22,7 @@ func (u *TaggedData) Size() int {
 		serializer.OneByte + len(u.Tag) +
 		serializer.UInt32ByteSize + len(u.Data)
 }
+
+func (u *TaggedData) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.FactorData.Multiply(u.Size())
+}

@@ -6,6 +6,7 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -213,4 +214,15 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParamete
 	}
 
 	return nil
+}
+
+func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	// NetworkID, CreationTime
+	return workScoreStructure.FactorData.Multiply(2*serializer.UInt64ByteSize) +
+		u.ContextInputs.WorkScore(workScoreStructure) +
+		u.Inputs.WorkScore(workScoreStructure) +
+		workScoreStructure.FactorData.Multiply(InputsCommitmentLength) +
+		u.Outputs.WorkScore(workScoreStructure) +
+		u.Allotments.WorkScore(workScoreStructure) +
+		u.Payload.WorkScore(workScoreStructure)
 }

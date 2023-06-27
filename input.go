@@ -47,6 +47,15 @@ func (in Inputs[T]) Size() int {
 	return sum
 }
 
+func (in Inputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	// We don't have the actual Outputs to check their WorkScore, so simply use the inputs size for work score.
+	var sumCost WorkScore
+	for _, i := range in {
+		sumCost += workScoreStructure.FactorInput.Multiply(i.Size())
+	}
+	return sumCost
+}
+
 // Input references a UTXO.
 type Input interface {
 	Sizer

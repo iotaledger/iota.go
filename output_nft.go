@@ -129,6 +129,16 @@ func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		n.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
+func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	// prefix + amount + stored mana
+	return workScoreStructure.FactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
+		n.NativeTokens.WorkScore(workScoreStructure) +
+		workScoreStructure.FactorData.Multiply(NFTIDLength) +
+		n.Conditions.WorkScore(workScoreStructure) +
+		n.Features.WorkScore(workScoreStructure) +
+		n.ImmutableFeatures.WorkScore(workScoreStructure)
+}
+
 func (n *NFTOutput) Chain() ChainID {
 	return n.NFTID
 }

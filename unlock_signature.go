@@ -17,3 +17,7 @@ func (s *SignatureUnlock) Type() UnlockType {
 func (s *SignatureUnlock) Size() int {
 	return util.NumByteLen(byte(UnlockSignature)) + s.Signature.Size()
 }
+
+func (s *SignatureUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.WorkScoreEd25519Signature
+}

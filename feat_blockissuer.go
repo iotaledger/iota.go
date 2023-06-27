@@ -34,6 +34,12 @@ func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBy
 		rentStruct.VBFactorKey.Multiply(VBytes(len(s.BlockIssuerKeys))*ed25519.PublicKeySize)
 }
 
+func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	// Block issuer feature requires invocation of account and mana managers, so requires extra work.
+	return workScoreStructure.FactorData.Multiply(s.Size()) +
+		workScoreStructure.WorkScoreBlockIssuer
+}
+
 func (s *BlockIssuerFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*BlockIssuerFeature)
 	if !is {
