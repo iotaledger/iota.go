@@ -2,10 +2,8 @@ package iotago
 
 import (
 	"bytes"
-	"context"
 	"crypto/ed25519"
 	"fmt"
-	"runtime"
 	"sort"
 	"time"
 
@@ -16,7 +14,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/pow"
 )
 
 const (
@@ -122,13 +119,10 @@ type Block struct {
 	BurnedMana Mana `serix:"10,mapKey=burnedMana"`
 
 	Signature Signature `serix:"11,mapKey=signature"`
-
-	// The nonce which lets this block fulfill the PoW requirements.
-	Nonce uint64 `serix:"12,mapKey=nonce"`
 }
 
-func (b *Block) ContentHash() (Identifier, error) {
-	data, err := internalEncode(b)
+func (b *Block) ContentHash(api API) (Identifier, error) {
+	data, err := api.Encode(b)
 	if err != nil {
 		return Identifier{}, fmt.Errorf("failed to encode block: %w", err)
 	}
@@ -168,18 +162,18 @@ func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerialize
 
 // SigningMessage returns the to be signed message.
 // It is the 'encoded(IssuingTime)+encoded(SlotCommitment.ID()+contentHash'.
-func (b *Block) SigningMessage() ([]byte, error) {
-	contentHash, err := b.ContentHash()
+func (b *Block) SigningMessage(api API) ([]byte, error) {
+	contentHash, err := b.ContentHash(api)
 	if err != nil {
 		return nil, err
 	}
 
-	issuingTimeBytes, err := internalEncode(b.IssuingTime)
+	issuingTimeBytes, err := api.Encode(b.IssuingTime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize block's issuing time: %w", err)
 	}
 
-	commitmentID, err := b.SlotCommitment.ID()
+	commitmentID, err := b.SlotCommitment.ID(api)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize block's commitment ID: %w", err)
 	}
@@ -189,8 +183,8 @@ func (b *Block) SigningMessage() ([]byte, error) {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
-	signMsg, err := b.SigningMessage()
+func (b *Block) Sign(api API, addrKey AddressKeys) (Signature, error) {
+	signMsg, err := b.SigningMessage(api)
 	if err != nil {
 		return nil, err
 	}
@@ -201,8 +195,8 @@ func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
 }
 
 // VerifySignature verifies the Signature of the block.
-func (b *Block) VerifySignature() (valid bool, err error) {
-	signingMessage, err := b.SigningMessage()
+func (b *Block) VerifySignature(api API) (valid bool, err error) {
+	signingMessage, err := b.SigningMessage(api)
 	if err != nil {
 		return false, err
 	}
@@ -220,13 +214,13 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 }
 
 // ID computes the ID of the Block.
-func (b *Block) ID(timeProvider *TimeProvider) (BlockID, error) {
-	data, err := internalEncode(b)
+func (b *Block) ID(api API) (BlockID, error) {
+	data, err := api.Encode(b)
 	if err != nil {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
 	}
 
-	slotIndex := timeProvider.SlotFromTime(b.IssuingTime)
+	slotIndex := api.TimeProvider().SlotFromTime(b.IssuingTime)
 
 	blockIdentifier, err := BlockIdentifierFromBlockBytes(data)
 	if err != nil {
@@ -237,36 +231,10 @@ func (b *Block) ID(timeProvider *TimeProvider) (BlockID, error) {
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
-func (b *Block) MustID(timeProvider *TimeProvider) BlockID {
-	blockID, err := b.ID(timeProvider)
+func (b *Block) MustID(api API) BlockID {
+	blockID, err := b.ID(api)
 	if err != nil {
 		panic(err)
 	}
 	return blockID
-}
-
-// POW computes the PoW score of the Block.
-func (b *Block) POW() (float64, []byte, error) {
-	data, err := internalEncode(b)
-	if err != nil {
-		return 0, nil, fmt.Errorf("can't compute block PoW score: %w", err)
-	}
-	return pow.Score(data), data, nil
-}
-
-// DoPOW executes the proof-of-work required to fulfill the targetScore.
-// Use the given context to cancel proof-of-work.
-func (b *Block) DoPOW(ctx context.Context, targetScore float64) error {
-	data, err := internalEncode(b)
-	if err != nil {
-		return fmt.Errorf("can't compute block PoW score: %w", err)
-	}
-	powRelevantData := data[:len(data)-8]
-	worker := pow.New(runtime.NumCPU())
-	nonce, err := worker.Mine(ctx, powRelevantData, targetScore)
-	if err != nil {
-		return err
-	}
-	b.Nonce = nonce
-	return nil
 }

@@ -447,13 +447,12 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 	}
 
 	return &iotago.Block{
-		ProtocolVersion: TestProtocolVersion,
+		ProtocolVersion: TestAPI.ProtocolParameters().Version(),
 		StrongParents:   SortedRandBlockIDs(1 + rand.Intn(7)),
 		Payload:         payload,
 		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Signature:       RandEd25519Signature(),
 		IssuerID:        RandAccountID(),
-		Nonce:           uint64(rand.Intn(1000)),
 		BurnedMana:      RandMana(1000),
 	}
 }
@@ -630,17 +629,21 @@ func RandRentStructure() *iotago.RentStructure {
 }
 
 // RandProtocolParameters produces random protocol parameters.
-func RandProtocolParameters() *iotago.ProtocolParameters {
-	return &iotago.ProtocolParameters{
-		Version:               RandByte(),
-		NetworkName:           RandString(255),
-		Bech32HRP:             iotago.NetworkPrefix(RandString(255)),
-		MinPoWScore:           RandUint32(50000),
-		RentStructure:         *RandRentStructure(),
-		TokenSupply:           RandBaseToken(math.MaxUint64),
-		GenesisUnixTimestamp:  time.Now().Unix(),
-		SlotDurationInSeconds: RandUint8(math.MaxUint8),
-	}
+func RandProtocolParameters() iotago.ProtocolParameters {
+	return iotago.NewV3ProtocolParameters(
+		iotago.WithNetworkOptions(
+			RandString(255),
+			iotago.NetworkPrefix(RandString(255)),
+		),
+		iotago.WithSupplyOptions(
+			RandBaseToken(math.MaxUint64),
+			RandUint32(math.MaxUint32),
+			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		),
+		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
+		iotago.WithLivenessOptions(RandSlotIndex(), RandSlotIndex()),
+	)
 }
 
 // ManaDecayFactors calculates mana decay factors that can be used in the tests.

@@ -28,7 +28,8 @@ const (
 )
 
 var (
-	v3API = iotago.V3API(tpkg.TestProtoParams)
+	// TODO: remove this
+	v3API = iotago.V3API(iotago.NewV3ProtocolParameters())
 )
 
 func nodeClient(t *testing.T) *nodeclient.Client {
@@ -92,18 +93,10 @@ func TestClient_Info(t *testing.T) {
 		Features: []string{"Lazers"},
 	}
 
-	protoParams := &iotago.ProtocolParameters{
-		TokenSupply: tpkg.TestTokenSupply,
-		Version:     2,
-		NetworkName: "alphanet",
-		Bech32HRP:   "atoi",
-		MinPoWScore: 40000.0,
-		RentStructure: iotago.RentStructure{
-			VByteCost:    500,
-			VBFactorData: 1,
-			VBFactorKey:  10,
-		},
-	}
+	var protoParams iotago.ProtocolParameters = iotago.NewV3ProtocolParameters(
+		iotago.WithNetworkOptions("alphanet", "atoi"),
+		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10),
+	)
 
 	protoParamsJson, err := v3API.JSONEncode(protoParams)
 	require.NoError(t, err)
@@ -123,7 +116,7 @@ func TestClient_Info(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, err)
-	require.EqualValues(t, protoParams.TokenSupply, tpkg.TestTokenSupply)
+	require.EqualValues(t, protoParams.TokenSupply(), tpkg.TestTokenSupply)
 }
 
 func TestClient_BlockIssuance(t *testing.T) {
@@ -172,7 +165,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
 	incompleteBlock := &iotago.Block{
-		ProtocolVersion: tpkg.TestProtocolVersion,
+		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
 		StrongParents:   tpkg.SortedRandBlockIDs(1),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Signature:       &iotago.Ed25519Signature{},
@@ -235,12 +228,11 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.Block{
-		ProtocolVersion: tpkg.TestProtocolVersion,
+		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
 		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Payload:         nil,
 		Signature:       tpkg.RandEd25519Signature(),
-		Nonce:           16345984576234,
 	}
 
 	data, err := v3API.Encode(originBlock, serix.WithValidation())
@@ -265,12 +257,11 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.Block{
-		ProtocolVersion: tpkg.TestProtocolVersion,
+		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
 		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Payload:         nil,
 		Signature:       tpkg.RandEd25519Signature(),
-		Nonce:           16345984576234,
 	}
 
 	data, err := v3API.Encode(originBlock, serix.WithValidation())

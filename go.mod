@@ -8,7 +8,7 @@ require (
 	github.com/iotaledger/hive.go/crypto v0.0.0-20230614165147-2eaff0b87e05
 	github.com/iotaledger/hive.go/lo v0.0.0-20230614165147-2eaff0b87e05
 	github.com/iotaledger/hive.go/runtime v0.0.0-20230614165147-2eaff0b87e05
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230614165147-2eaff0b87e05
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230628091154-29302be5cfc6
 	github.com/iotaledger/iota.go v1.0.0
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
 	github.com/pkg/errors v0.9.1

@@ -99,7 +99,7 @@ type UnlockValidatorFunc func(index int, unlock Unlock) error
 //  1. SignatureUnlock(s) are unique
 //  2. ReferenceUnlock(s) reference a previous SignatureUnlock
 //  3. Following through AccountUnlock(s), NFTUnlock(s) refs results to a SignatureUnlock
-func UnlocksSigUniqueAndRefValidator() UnlockValidatorFunc {
+func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 	seenSigUnlocks := map[uint16]struct{}{}
 	seenRefUnlocks := map[uint16]ReferentialUnlock{}
 	seenSigUnlockBytes := map[string]int{}
@@ -110,7 +110,7 @@ func UnlocksSigUniqueAndRefValidator() UnlockValidatorFunc {
 				return fmt.Errorf("%w: at index %d is nil", ErrSigUnlockHasNilSig, index)
 			}
 
-			sigBlockBytes, err := _internalAPI.Encode(x.Signature)
+			sigBlockBytes, err := api.Encode(x.Signature)
 			if err != nil {
 				return fmt.Errorf("unable to serialize signature unlock block at index %d for dup check: %w", index, err)
 			}

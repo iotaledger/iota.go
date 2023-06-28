@@ -9,7 +9,7 @@ import (
 )
 
 // TODO: use the API instance from Client instead.
-var _internalAPI = iotago.V3API(&iotago.ProtocolParameters{})
+var _internalAPI = iotago.V3API(iotago.NewV3ProtocolParameters())
 
 type (
 	httpOutput interface{ iotago.Output }
@@ -278,15 +278,15 @@ func (nor *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 	return &txID, nil
 }
 
-// ProtocolParameters returns the protocol parameters within the info response.
-func (info *InfoResponse) DecodeProtocolParameters() (*iotago.ProtocolParameters, error) {
+// DecodeProtocolParameters returns the protocol parameters within the info response.
+func (info *InfoResponse) DecodeProtocolParameters() (iotago.ProtocolParameters, error) {
 	protoJson, err := json.Marshal(info.ProtocolParameters)
 	if err != nil {
 		return nil, err
 	}
 
-	o := &iotago.ProtocolParameters{}
-	if err := _internalAPI.JSONDecode(protoJson, o); err != nil {
+	var o iotago.ProtocolParameters
+	if err := _internalAPI.JSONDecode(protoJson, &o); err != nil {
 		return nil, err
 	}
 

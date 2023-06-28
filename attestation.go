@@ -19,17 +19,15 @@ type Attestation struct {
 	SlotCommitmentID CommitmentID `serix:"2,mapKey=slotCommitmentID"`
 	BlockContentHash Identifier   `serix:"3,mapKey=blockContentHash"`
 	Signature        Signature    `serix:"4,mapKey=signature"`
-	Nonce            uint64       `serix:"5,mapKey=nonce"`
 }
 
-func NewAttestation(block *Block) *Attestation {
+func NewAttestation(api API, block *Block) *Attestation {
 	return &Attestation{
 		IssuerID:         block.IssuerID,
 		IssuingTime:      block.IssuingTime,
-		SlotCommitmentID: block.SlotCommitment.MustID(),
-		BlockContentHash: lo.PanicOnErr(block.ContentHash()),
+		SlotCommitmentID: block.SlotCommitment.MustID(api),
+		BlockContentHash: lo.PanicOnErr(block.ContentHash(api)),
 		Signature:        block.Signature,
-		Nonce:            block.Nonce,
 	}
 }
 
@@ -54,33 +52,28 @@ func (a *Attestation) Compare(other *Attestation) int {
 	}
 }
 
-func (a Attestation) BlockID(timeProvider *TimeProvider) (BlockID, error) {
-	signatureBytes, err := internalEncode(a.Signature)
+func (a Attestation) BlockID(api API) (BlockID, error) {
+	signatureBytes, err := api.Encode(a.Signature)
 	if err != nil {
 		return EmptyBlockID(), fmt.Errorf("failed to serialize block's signature: %w", err)
 	}
 
-	nonceBytes, err := internalEncode(a.Nonce)
-	if err != nil {
-		return EmptyBlockID(), fmt.Errorf("failed to serialize block's nonce: %w", err)
-	}
-
-	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
-	slotIndex := timeProvider.SlotFromTime(a.IssuingTime)
+	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:]))
+	slotIndex := api.TimeProvider().SlotFromTime(a.IssuingTime)
 
 	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
 }
 
-func (a Attestation) Bytes() (bytes []byte, err error) {
-	return internalEncode(a)
+func (a Attestation) Bytes(api API) (bytes []byte, err error) {
+	return api.Encode(a)
 }
 
-func (a *Attestation) FromBytes(bytes []byte) (consumedBytes int, err error) {
-	return internalDecode(bytes, a)
+func (a *Attestation) FromBytes(api API, bytes []byte) (consumedBytes int, err error) {
+	return api.Decode(bytes, a)
 }
 
-func (a *Attestation) signingMessage() ([]byte, error) {
-	issuingTimeBytes, err := internalEncode(a.IssuingTime)
+func (a *Attestation) signingMessage(api API) ([]byte, error) {
+	issuingTimeBytes, err := api.Encode(a.IssuingTime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize block's issuing time: %w", err)
 	}
@@ -88,8 +81,8 @@ func (a *Attestation) signingMessage() ([]byte, error) {
 	return byteutils.ConcatBytes(issuingTimeBytes, a.SlotCommitmentID[:], a.BlockContentHash[:]), nil
 }
 
-func (a *Attestation) VerifySignature() (valid bool, err error) {
-	signingMessage, err := a.signingMessage()
+func (a *Attestation) VerifySignature(api API) (valid bool, err error) {
+	signingMessage, err := a.signingMessage(api)
 	if err != nil {
 		return false, err
 	}

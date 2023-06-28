@@ -16,18 +16,8 @@ import (
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
-var emptyAPI = iotago.LatestAPI(&iotago.ProtocolParameters{
-	Version:               0,
-	NetworkName:           "",
-	Bech32HRP:             "",
-	MinPoWScore:           0,
-	RentStructure:         iotago.RentStructure{},
-	TokenSupply:           0,
-	GenesisUnixTimestamp:  0,
-	SlotDurationInSeconds: 0,
-	EvictionAge:           0,
-	LivenessThreshold:     0,
-})
+// TODO: remove this
+var emptyAPI = iotago.LatestAPI(iotago.NewV3ProtocolParameters())
 
 func TestMain(m *testing.M) { // call the tests
 	os.Exit(m.Run())

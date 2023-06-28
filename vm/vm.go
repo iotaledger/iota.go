@@ -20,7 +20,7 @@ type VirtualMachine interface {
 
 // Params defines the VirtualMachine parameters under which the VM operates.
 type Params struct {
-	External *iotago.ExternalUnlockParameters
+	API iotago.API
 
 	// The working set which is auto. populated during the semantic validation.
 	WorkingSet *WorkingSet
@@ -70,7 +70,7 @@ func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOIn
 	return workingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
-func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*WorkingSet, error) {
+func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs ResolvedInputs) (*WorkingSet, error) {
 	var err error
 	utxoInputsSet := inputs.InputSet
 	workingSet := &WorkingSet{}
@@ -88,7 +88,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*Worki
 		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input.Output)
 	}
 
-	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage()
+	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage(api)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*Worki
 		return slice.ToOutputsByType()
 	}()
 
-	txID, err := workingSet.Tx.ID()
+	txID, err := workingSet.Tx.ID(api)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +289,7 @@ type ExecFunc func(vm VirtualMachine, svCtx *Params) error
 // and verifies that inputs are correctly unlocked and that the inputs commitment matches.
 func ExecFuncInputUnlocks() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		actualInputCommitment, err := vmParams.WorkingSet.UTXOInputs.Commitment()
+		actualInputCommitment, err := vmParams.WorkingSet.UTXOInputs.Commitment(vmParams.API)
 		if err != nil {
 			return fmt.Errorf("unable to compute hash of inputs: %w", err)
 		}
@@ -458,7 +458,7 @@ func ExecFuncBalancedMana() ExecFunc {
 				return fmt.Errorf("%w: input %s has creation time %d, tx creation time %d", iotago.ErrInputCreationAfterTxCreation, outputID, input.CreationTime, txCreationTime)
 			}
 		}
-		manaIn, err := TotalManaIn(vmParams.External.ProtocolParameters.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		if err != nil {
 			return err
 		}

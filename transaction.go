@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -53,8 +52,8 @@ func (t *Transaction) PayloadType() PayloadType {
 }
 
 // OutputsSet returns an OutputSet from the Transaction's outputs, mapped by their OutputID.
-func (t *Transaction) OutputsSet() (OutputSet, error) {
-	txID, err := t.ID()
+func (t *Transaction) OutputsSet(api API) (OutputSet, error) {
+	txID, err := t.ID(api)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +65,8 @@ func (t *Transaction) OutputsSet() (OutputSet, error) {
 }
 
 // ID computes the ID of the Transaction.
-func (t *Transaction) ID() (TransactionID, error) {
-	data, err := internalEncode(t)
+func (t *Transaction) ID(api API) (TransactionID, error) {
+	data, err := api.Encode(t)
 	if err != nil {
 		return TransactionID{}, fmt.Errorf("can't compute transaction ID: %w", err)
 	}
@@ -141,18 +140,14 @@ func (t *Transaction) Size() int {
 		t.Unlocks.Size()
 }
 
-func (t *Transaction) String() string {
-	return "iotago.Transaction(" + lo.PanicOnErr(t.ID()).ToHex() + ")"
-}
-
 // syntacticallyValidate syntactically validates the Transaction.
-func (t *Transaction) syntacticallyValidate(protoParams *ProtocolParameters) error {
-	if err := t.Essence.syntacticallyValidate(protoParams); err != nil {
+func (t *Transaction) syntacticallyValidate(api API) error {
+	if err := t.Essence.syntacticallyValidate(api.ProtocolParameters()); err != nil {
 		return fmt.Errorf("transaction essence is invalid: %w", err)
 	}
 
 	if err := ValidateUnlocks(t.Unlocks,
-		UnlocksSigUniqueAndRefValidator(),
+		UnlocksSigUniqueAndRefValidator(api),
 	); err != nil {
 		return fmt.Errorf("invalid unlocks: %w", err)
 	}

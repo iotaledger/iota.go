@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -122,7 +123,8 @@ func newAddress(addressType byte) (address Address, err error) {
 }
 
 func bech32String(hrp NetworkPrefix, addr Address) string {
-	bytes, err := _internalAPI.Encode(addr)
+	serixAPI := commonSerixAPI()
+	bytes, err := serixAPI.Encode(context.Background(), addr)
 	if err != nil {
 		panic(err)
 	}
@@ -149,7 +151,8 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		return "", nil, err
 	}
 
-	n, err := _internalAPI.Decode(addrData, addr)
+	serixAPI := commonSerixAPI()
+	n, err := serixAPI.Decode(context.Background(), addrData, addr)
 	if err != nil {
 		return "", nil, err
 	}

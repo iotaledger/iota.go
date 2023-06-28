@@ -10,6 +10,10 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
+const (
+	apiV3Version = 3
+)
+
 func must(err error) {
 	if err != nil {
 		panic(err)
@@ -191,22 +195,31 @@ var (
 
 // v3api implements the iota-core 1.0 protocol core models.
 type v3api struct {
-	ctx               context.Context
-	serixAPI          *serix.API
-	timeProvider      *TimeProvider
-	manaDecayProvider *ManaDecayProvider
+	serixAPI *serix.API
+
+	protocolParameters *V3ProtocolParameters
+	timeProvider       *TimeProvider
+	manaDecayProvider  *ManaDecayProvider
 }
 
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
-	return v.serixAPI.JSONEncode(v.ctx, obj, opts...)
+	return v.serixAPI.JSONEncode(context.TODO(), obj, opts...)
 }
 
 func (v *v3api) JSONDecode(jsonData []byte, obj any, opts ...serix.Option) error {
-	return v.serixAPI.JSONDecode(v.ctx, jsonData, obj, opts...)
+	return v.serixAPI.JSONDecode(context.TODO(), jsonData, obj, opts...)
 }
 
 func (v *v3api) Underlying() *serix.API {
 	return v.serixAPI
+}
+
+func (v *v3api) ProtocolVersion() byte {
+	return v.protocolParameters.Version()
+}
+
+func (v *v3api) ProtocolParameters() ProtocolParameters {
+	return v.protocolParameters
 }
 
 func (v *v3api) TimeProvider() *TimeProvider {
@@ -218,28 +231,15 @@ func (v *v3api) ManaDecayProvider() *ManaDecayProvider {
 }
 
 func (v *v3api) Encode(obj interface{}, opts ...serix.Option) ([]byte, error) {
-	return v.serixAPI.Encode(v.ctx, obj, opts...)
+	return v.serixAPI.Encode(context.TODO(), obj, opts...)
 }
 
 func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, error) {
-	return v.serixAPI.Decode(v.ctx, b, obj, opts...)
+	return v.serixAPI.Decode(context.TODO(), b, obj, opts...)
 }
 
-// V3API instantiates an API instance with types registered conforming to protocol version 3 (iota-core 1.0) of the IOTA protocol.
-func V3API(protoParams *ProtocolParameters) API {
+func commonSerixAPI() *serix.API {
 	api := serix.NewAPI()
-
-	must(api.RegisterTypeSettings(ProtocolParameters{}, serix.TypeSettings{}))
-	must(api.RegisterTypeSettings(RentStructure{}, serix.TypeSettings{}))
-
-	must(api.RegisterTypeSettings(TaggedData{}, serix.TypeSettings{}.WithObjectType(uint32(PayloadTaggedData))))
-
-	{
-		must(api.RegisterTypeSettings(Ed25519Signature{},
-			serix.TypeSettings{}.WithObjectType(uint8(SignatureEd25519))),
-		)
-		must(api.RegisterInterfaceObjects((*Signature)(nil), (*Ed25519Signature)(nil)))
-	}
 
 	{
 		must(api.RegisterTypeSettings(Ed25519Address{},
@@ -254,6 +254,38 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*Ed25519Address)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*AccountAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*NFTAddress)(nil)))
+	}
+
+	return api
+}
+
+// V3API instantiates an API instance with types registered conforming to protocol version 3 (iota-core 1.0) of the IOTA protocol.
+func V3API(protoParams *V3ProtocolParameters) API {
+	api := commonSerixAPI()
+
+	v3 := &v3api{
+		serixAPI:           api,
+		protocolParameters: protoParams,
+		timeProvider:       protoParams.TimeProvider(),
+		manaDecayProvider:  protoParams.ManaDecayProvider(),
+	}
+
+	{
+		must(api.RegisterTypeSettings(V3ProtocolParameters{},
+			serix.TypeSettings{}.WithObjectType(uint8(ProtocolParametersV3))),
+		)
+		must(api.RegisterInterfaceObjects((*ProtocolParameters)(nil), (*V3ProtocolParameters)(nil)))
+	}
+
+	must(api.RegisterTypeSettings(RentStructure{}, serix.TypeSettings{}))
+
+	must(api.RegisterTypeSettings(TaggedData{}, serix.TypeSettings{}.WithObjectType(uint32(PayloadTaggedData))))
+
+	{
+		must(api.RegisterTypeSettings(Ed25519Signature{},
+			serix.TypeSettings{}.WithObjectType(uint8(SignatureEd25519))),
+		)
+		must(api.RegisterInterfaceObjects((*Signature)(nil), (*Ed25519Signature)(nil)))
 	}
 
 	{
@@ -470,11 +502,7 @@ func V3API(protoParams *ProtocolParameters) API {
 			if len(tx.Unlocks) != len(tx.Essence.Inputs) {
 				return fmt.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(tx.Unlocks), len(tx.Essence.Inputs))
 			}
-			protoParams := ctx.Value(ProtocolAPIContextKey)
-			if protoParams == nil {
-				return fmt.Errorf("unable to validate transaction: %w", ErrMissingProtocolParams)
-			}
-			return tx.syntacticallyValidate(protoParams.(*ProtocolParameters))
+			return tx.syntacticallyValidate(v3)
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
 	}
@@ -487,13 +515,8 @@ func V3API(protoParams *ProtocolParameters) API {
 			}
 			return nil
 		}, func(ctx context.Context, block *Block) error {
-			val := ctx.Value(ProtocolAPIContextKey)
-			if val == nil {
-				return fmt.Errorf("unable to validate block: %w", ErrMissingProtocolParams)
-			}
-			protoParams := val.(*ProtocolParameters)
-			if protoParams.Version != block.ProtocolVersion {
-				return fmt.Errorf("mismatched protocol version: wanted %d, got %d in block", protoParams.Version, block.ProtocolVersion)
+			if protoParams.Version() != block.ProtocolVersion {
+				return fmt.Errorf("mismatched protocol version: wanted %d, got %d in block", protoParams.Version(), block.ProtocolVersion)
 			}
 
 			if len(block.WeakParents) > 0 {
@@ -542,10 +565,5 @@ func V3API(protoParams *ProtocolParameters) API {
 		))
 	}
 
-	return &v3api{
-		ctx:               protoParams.AsSerixContext(),
-		serixAPI:          api,
-		timeProvider:      protoParams.TimeProvider(),
-		manaDecayProvider: protoParams.ManaDecayProvider(),
-	}
+	return v3
 }

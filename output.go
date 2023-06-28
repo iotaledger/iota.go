@@ -331,8 +331,8 @@ func (outputs Outputs[T]) Size() int {
 }
 
 // MustCommitment works like Commitment but panics if there's an error.
-func (outputs Outputs[T]) MustCommitment() []byte {
-	comm, err := outputs.Commitment()
+func (outputs Outputs[T]) MustCommitment(api API) []byte {
+	comm, err := outputs.Commitment(api)
 	if err != nil {
 		panic(err)
 	}
@@ -340,13 +340,13 @@ func (outputs Outputs[T]) MustCommitment() []byte {
 }
 
 // Commitment computes a hash of the outputs slice to be used as a commitment.
-func (outputs Outputs[T]) Commitment() ([]byte, error) {
+func (outputs Outputs[T]) Commitment(api API) ([]byte, error) {
 	h, err := blake2b.New256(nil)
 	if err != nil {
 		return nil, err
 	}
 	for _, output := range outputs {
-		outputBytes, err := internalEncode(output)
+		outputBytes, err := api.Encode(output)
 		if err != nil {
 			return nil, fmt.Errorf("unable to compute commitment hash: %w", err)
 		}
@@ -604,12 +604,6 @@ func outputUnlockable(output Output, next TransDepIdentOutput, target Address, t
 	return checkTargetIdentOfOutput()
 }
 
-// ExternalUnlockParameters defines a palette of external system parameters which are used to
-// determine whether an Output can be unlocked.
-type ExternalUnlockParameters struct {
-	ProtocolParameters *ProtocolParameters
-}
-
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent
 // of any transition the output does (without considering Feature(s)).
 type TransIndepIdentOutput interface {
@@ -693,7 +687,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //   - the deposit fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
-func OutputsSyntacticalDepositAmount(protoParams *ProtocolParameters) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters) OutputsSyntacticalValidationFunc {
 	var sum BaseToken
 	return func(index int, output Output) error {
 		deposit := output.Deposit()
@@ -701,20 +695,20 @@ func OutputsSyntacticalDepositAmount(protoParams *ProtocolParameters) OutputsSyn
 		switch {
 		case deposit == 0:
 			return fmt.Errorf("%w: output %d", ErrDepositAmountMustBeGreaterThanZero, index)
-		case deposit > protoParams.TokenSupply:
+		case deposit > protoParams.TokenSupply():
 			return fmt.Errorf("%w: output %d", ErrOutputDepositsMoreThanTotalSupply, index)
-		case sum+deposit > protoParams.TokenSupply:
+		case sum+deposit > protoParams.TokenSupply():
 			return fmt.Errorf("%w: output %d", ErrOutputsSumExceedsTotalSupply, index)
 		}
 
 		// check whether deposit fulfills the storage deposit cost
-		if _, err := protoParams.RentStructure.CoversStateRent(output, deposit); err != nil {
+		if _, err := protoParams.RentStructure().CoversStateRent(output, deposit); err != nil {
 			return fmt.Errorf("%w: output %d", err, index)
 		}
 
 		// check whether the amount in the return condition allows the receiver to fulfill the storage deposit for the return output
 		if storageDep := output.UnlockConditionSet().StorageDepositReturn(); storageDep != nil {
-			minStorageDepositForReturnOutput := protoParams.RentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
+			minStorageDepositForReturnOutput := protoParams.RentStructure().MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
 				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrStorageDepositLessThanMinReturnOutputStorageDeposit, index, minStorageDepositForReturnOutput, storageDep.Amount)

@@ -30,16 +30,16 @@ func NewEmptyCommitment() *Commitment {
 	return &Commitment{}
 }
 
-func (c *Commitment) ID() (CommitmentID, error) {
-	data, err := internalEncode(c)
+func (c *Commitment) ID(api API) (CommitmentID, error) {
+	data, err := api.Encode(c)
 	if err != nil {
 		return CommitmentID{}, fmt.Errorf("can't compute commitment ID: %w", err)
 	}
 	return SlotIdentifierRepresentingData(c.Index, data), nil
 }
 
-func (c *Commitment) MustID() CommitmentID {
-	id, err := c.ID()
+func (c *Commitment) MustID(api API) CommitmentID {
+	id, err := c.ID(api)
 	if err != nil {
 		panic(err)
 	}
@@ -47,20 +47,20 @@ func (c *Commitment) MustID() CommitmentID {
 	return id
 }
 
-func (c *Commitment) Equals(other *Commitment) bool {
-	return c.MustID() == other.MustID() &&
+func (c *Commitment) Equals(api API, other *Commitment) bool {
+	return c.MustID(api) == other.MustID(api) &&
 		c.PrevID == other.PrevID &&
 		c.Index == other.Index &&
 		c.RootsID == other.RootsID &&
 		c.CumulativeWeight == other.CumulativeWeight
 }
 
-func (c *Commitment) Bytes() ([]byte, error) {
-	return internalEncode(c)
+func (c *Commitment) Bytes(api API) ([]byte, error) {
+	return api.Encode(c)
 }
 
-func (c *Commitment) FromBytes(bytes []byte) (int, error) {
-	return internalDecode(bytes, c)
+func (c *Commitment) FromBytes(api API, bytes []byte) (int, error) {
+	return api.Decode(bytes, c)
 }
 
 func (c *Commitment) String() string {

@@ -44,18 +44,18 @@ func TestBlock_DeSerialize(t *testing.T) {
 func TestBlock_MinSize(t *testing.T) {
 
 	block := &iotago.Block{
-		ProtocolVersion: tpkg.TestProtocolVersion,
+		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
 		StrongParents:   tpkg.SortedRandBlockIDs(1),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Signature:       tpkg.RandEd25519Signature(),
 		Payload:         nil,
 	}
 
-	msgBytes, err := v3API.Encode(block)
+	msgBytes, err := tpkg.TestAPI.Encode(block)
 	require.NoError(t, err)
 
 	block2 := &iotago.Block{}
-	_, err = v3API.Decode(msgBytes, block2, serix.WithValidation())
+	_, err = tpkg.TestAPI.Decode(msgBytes, block2, serix.WithValidation())
 	require.NoError(t, err)
 	require.Equal(t, block, block2)
 }
@@ -63,20 +63,20 @@ func TestBlock_MinSize(t *testing.T) {
 func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
 
 	block := &iotago.Block{
-		ProtocolVersion: tpkg.TestProtocolVersion + 1,
+		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version() + 1,
 		StrongParents:   tpkg.SortedRandBlockIDs(1),
 		Payload:         nil,
 	}
 
-	_, err := v3API.Encode(block, serix.WithValidation())
+	_, err := tpkg.TestAPI.Encode(block, serix.WithValidation())
 	require.Error(t, err)
 }
 
 func TestBlock_DeserializationNotEnoughData(t *testing.T) {
 
-	blockBytes := []byte{tpkg.TestProtocolVersion, 1}
+	blockBytes := []byte{tpkg.TestAPI.ProtocolParameters().Version(), 1}
 
 	block := &iotago.Block{}
-	_, err := v3API.Decode(blockBytes, block)
+	_, err := tpkg.TestAPI.Decode(blockBytes, block)
 	require.ErrorIs(t, err, serializer.ErrDeserializationNotEnoughData)
 }
