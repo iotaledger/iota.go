@@ -14,7 +14,9 @@ var TestProtoParams = &iotago.ProtocolParameters{
 		VBFactorData: 0,
 		VBFactorKey:  0,
 	},
-	TokenSupply: TestTokenSupply,
+	TokenSupply:           TestTokenSupply,
+	GenesisUnixTimestamp:  1609459200,
+	SlotDurationInSeconds: 10,
 }
 
 // TestNetworkID is a test network ID.

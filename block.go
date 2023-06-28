@@ -11,7 +11,6 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -236,17 +235,17 @@ func BlockIdentifierFromBlockBytes(blockBytes []byte) (Identifier, error) {
 }
 
 func contentHashFromBlockBytes(blockBytes []byte) (Identifier, error) {
-	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
+	if len(blockBytes) < Ed25519SignatureSerializedBytesSize {
 		return Identifier{}, errors.New("not enough block bytes")
 	}
-	return blake2b.Sum256(blockBytes[:len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize]), nil
+	return blake2b.Sum256(blockBytes[:len(blockBytes)-Ed25519SignatureSerializedBytesSize]), nil
 }
 
 func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerializedBytesSize]byte, error) {
-	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
+	if len(blockBytes) < Ed25519SignatureSerializedBytesSize {
 		return [Ed25519SignatureSerializedBytesSize]byte{}, errors.New("not enough block bytes")
 	}
-	return [Ed25519SignatureSerializedBytesSize]byte(blockBytes[len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize:]), nil
+	return [Ed25519SignatureSerializedBytesSize]byte(blockBytes[len(blockBytes)-Ed25519SignatureSerializedBytesSize:]), nil
 }
 
 // SigningMessage returns the to be signed message.
@@ -267,7 +266,7 @@ func (b *ProtocolBlock) SigningMessage() ([]byte, error) {
 		return nil, fmt.Errorf("failed to serialize block's commitment ID: %w", err)
 	}
 
-	return byteutils.ConcatBytes(issuingTimeBytes, commitmentID[:], contentHash[:]), nil
+	return byteutils.ConcatBytes([]byte{b.ProtocolVersion}, b.IssuerID[:], issuingTimeBytes, commitmentID[:], contentHash[:]), nil
 }
 
 // Sign produces signatures signing the essence for every given AddressKeys.

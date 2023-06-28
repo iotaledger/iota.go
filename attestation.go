@@ -14,6 +14,7 @@ import (
 type Attestations = []*Attestation
 
 type Attestation struct {
+	Version          byte         `serix:"0,mapKey=version"`
 	IssuerID         AccountID    `serix:"0,mapKey=issuerID"`
 	IssuingTime      time.Time    `serix:"1,mapKey=issuingTime"`
 	SlotCommitmentID CommitmentID `serix:"2,mapKey=slotCommitmentID"`
@@ -23,6 +24,7 @@ type Attestation struct {
 
 func NewAttestation(block *ProtocolBlock) *Attestation {
 	return &Attestation{
+		Version:          block.ProtocolVersion,
 		IssuerID:         block.IssuerID,
 		IssuingTime:      block.IssuingTime,
 		SlotCommitmentID: block.SlotCommitment.MustID(),
@@ -78,7 +80,7 @@ func (a *Attestation) signingMessage() ([]byte, error) {
 		return nil, fmt.Errorf("failed to serialize block's issuing time: %w", err)
 	}
 
-	return byteutils.ConcatBytes(issuingTimeBytes, a.SlotCommitmentID[:], a.BlockContentHash[:]), nil
+	return byteutils.ConcatBytes([]byte{a.Version}, a.IssuerID[:], issuingTimeBytes, a.SlotCommitmentID[:], a.BlockContentHash[:]), nil
 }
 
 func (a *Attestation) VerifySignature() (valid bool, err error) {
