@@ -17,11 +17,13 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 	basicBlock := &iotago.BasicBlock{}
 
 	protocolBlock := &iotago.ProtocolBlock{
-		ProtocolVersion: api.ProtocolParameters().Version(),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		IssuingTime:     time.Now(),
-		Signature:       &iotago.Ed25519Signature{},
-		Block:           basicBlock,
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  api.ProtocolParameters().Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(api),
+			IssuingTime:      time.Now(),
+		},
+		Signature: &iotago.Ed25519Signature{},
+		Block:     basicBlock,
 	}
 
 	return &BasicBlockBuilder{
@@ -71,13 +73,13 @@ func (b *BasicBlockBuilder) IssuingTime(time time.Time) *BasicBlockBuilder {
 	return b
 }
 
-// SlotCommitment sets the slot commitment.
-func (b *BasicBlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BasicBlockBuilder {
+// SlotCommitmentID sets the slot commitment.
+func (b *BasicBlockBuilder) SlotCommitmentID(commitment iotago.CommitmentID) *BasicBlockBuilder {
 	if b.err != nil {
 		return b
 	}
 
-	b.protocolBlock.SlotCommitment = commitment
+	b.protocolBlock.SlotCommitmentID = commitment
 
 	return b
 }
@@ -176,11 +178,13 @@ func NewValidatorBlockBuilder(api iotago.API) *ValidatorBlockBuilder {
 	validatorBlock := &iotago.ValidatorBlock{}
 
 	protocolBlock := &iotago.ProtocolBlock{
-		ProtocolVersion: api.ProtocolParameters().Version(),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		IssuingTime:     time.Now(),
-		Signature:       &iotago.Ed25519Signature{},
-		Block:           validatorBlock,
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  api.ProtocolParameters().Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(api),
+			IssuingTime:      time.Now(),
+		},
+		Signature: &iotago.Ed25519Signature{},
+		Block:     validatorBlock,
 	}
 
 	return &ValidatorBlockBuilder{
@@ -230,13 +234,13 @@ func (v *ValidatorBlockBuilder) IssuingTime(time time.Time) *ValidatorBlockBuild
 	return v
 }
 
-// SlotCommitment sets the slot commitment.
-func (v *ValidatorBlockBuilder) SlotCommitment(commitment *iotago.Commitment) *ValidatorBlockBuilder {
+// SlotCommitmentID sets the slot commitment.
+func (v *ValidatorBlockBuilder) SlotCommitmentID(commitmentID iotago.CommitmentID) *ValidatorBlockBuilder {
 	if v.err != nil {
 		return v
 	}
 
-	v.protocolBlock.SlotCommitment = commitment
+	v.protocolBlock.SlotCommitmentID = commitmentID
 
 	return v
 }

@@ -24,11 +24,8 @@ func TestAttestation(t *testing.T) {
 
 	// Compare fields of block and attestation.
 	{
-		require.Equal(t, block.ProtocolVersion, attestation.Version)
-		require.Equal(t, block.IssuerID, attestation.IssuerID)
-		require.Equal(t, block.IssuingTime, attestation.IssuingTime)
-		require.Equal(t, block.SlotCommitment.MustID(tpkg.TestAPI), attestation.SlotCommitmentID)
-		require.Equal(t, lo.PanicOnErr(block.ContentHash(tpkg.TestAPI)), attestation.BlockContentHash)
+		require.Equal(t, block.BlockHeader, attestation.BlockHeader)
+		require.Equal(t, lo.PanicOnErr(block.Block.Hash(tpkg.TestAPI)), attestation.BlockHash)
 		require.Equal(t, block.Signature, attestation.Signature)
 	}
 

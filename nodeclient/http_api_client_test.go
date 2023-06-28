@@ -165,9 +165,11 @@ func TestClient_SubmitBlock(t *testing.T) {
 	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
 	incompleteBlock := &iotago.ProtocolBlock{
-		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Signature:       &iotago.Ed25519Signature{},
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+		},
+		Signature: &iotago.Ed25519Signature{},
 		Block: &iotago.BasicBlock{
 			StrongParents: tpkg.SortedRandBlockIDs(1),
 		},
@@ -230,9 +232,11 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.ProtocolBlock{
-		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Signature:       tpkg.RandEd25519Signature(),
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+		},
+		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
 			StrongParents: tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			Payload:       nil,
@@ -261,9 +265,11 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.ProtocolBlock{
-		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Signature:       tpkg.RandEd25519Signature(),
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+		},
+		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
 			StrongParents: tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			Payload:       nil,

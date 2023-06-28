@@ -436,13 +436,15 @@ func RandBlockID() iotago.BlockID {
 }
 
 // RandProtocolBlock returns a random block with the given inner payload.
-func RandProtocolBlock(block iotago.Block) *iotago.ProtocolBlock {
+func RandProtocolBlock(block iotago.Block, api iotago.API) *iotago.ProtocolBlock {
 	return &iotago.ProtocolBlock{
-		ProtocolVersion: TestAPI.ProtocolParameters().Version(),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		IssuerID:        RandAccountID(),
-		Block:           block,
-		Signature:       RandEd25519Signature(),
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  TestAPI.ProtocolParameters().Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(api),
+			IssuerID:         RandAccountID(),
+		},
+		Block:     block,
+		Signature: RandEd25519Signature(),
 	}
 }
 
@@ -471,7 +473,7 @@ func RandBasicBlockWithIssuerAndBurnedMana(issuerID iotago.AccountID, burnedAmou
 	basicBlock := RandBasicBlock(iotago.PayloadTransaction)
 	basicBlock.BurnedMana = burnedAmount
 
-	block := RandProtocolBlock(basicBlock)
+	block := RandProtocolBlock(basicBlock, TestAPI)
 	block.IssuerID = issuerID
 	return block
 }

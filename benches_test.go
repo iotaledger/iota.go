@@ -154,7 +154,9 @@ func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 
 	m := &iotago.ProtocolBlock{
-		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
+		},
 		Block: &iotago.BasicBlock{
 			StrongParents: tpkg.SortedRandBlockIDs(2),
 			Payload:       txPayload,

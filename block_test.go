@@ -1,6 +1,7 @@
 package iotago_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,22 +17,22 @@ func TestBlock_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok - no payload",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(1337)),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(1337), tpkg.TestAPI),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - transaction",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTransaction)),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTransaction), tpkg.TestAPI),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - milestone",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadMilestone)),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadMilestone), tpkg.TestAPI),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - tagged data",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTaggedData)),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTaggedData), tpkg.TestAPI),
 			target: &iotago.ProtocolBlock{},
 		},
 	}
@@ -43,9 +44,11 @@ func TestBlock_DeSerialize(t *testing.T) {
 
 func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
 	block := &iotago.ProtocolBlock{
-		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version() + 1,
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Signature:       tpkg.RandEd25519Signature(),
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version() + 1,
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+		},
+		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
 			StrongParents: tpkg.SortedRandBlockIDs(1),
 			Payload:       nil,
@@ -66,9 +69,11 @@ func TestProtocolBlock_DeserializationNotEnoughData(t *testing.T) {
 
 func TestBasicBlock_MinSize(t *testing.T) {
 	minProtocolBlock := &iotago.ProtocolBlock{
-		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Signature:       tpkg.RandEd25519Signature(),
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+		},
+		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
 			StrongParents: tpkg.SortedRandBlockIDs(1),
 			Payload:       nil,
@@ -87,9 +92,11 @@ func TestBasicBlock_MinSize(t *testing.T) {
 
 func TestValidatorBlock_MinSize(t *testing.T) {
 	minProtocolBlock := &iotago.ProtocolBlock{
-		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Signature:       tpkg.RandEd25519Signature(),
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+		},
+		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.ValidatorBlock{
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			HighestSupportedVersion: tpkg.TestAPI.ProtocolParameters().Version(),
@@ -108,9 +115,11 @@ func TestValidatorBlock_MinSize(t *testing.T) {
 
 func TestValidatorBlock_HighestSupportedVersion(t *testing.T) {
 	protocolBlock := &iotago.ProtocolBlock{
-		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Signature:       tpkg.RandEd25519Signature(),
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+		},
+		Signature: tpkg.RandEd25519Signature(),
 	}
 
 	// Invalid HighestSupportedVersion.
@@ -142,6 +151,34 @@ func TestValidatorBlock_HighestSupportedVersion(t *testing.T) {
 		require.Equal(t, protocolBlock, block2)
 		require.Equal(t, len(blockBytes), consumedBytes)
 	}
+}
+
+func TestBlockJSONMarshalling(t *testing.T) {
+	// TODO: finish this test.
+	validatorBlock := &iotago.ProtocolBlock{
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+		},
+		Signature: tpkg.RandEd25519Signature(),
+		Block: &iotago.ValidatorBlock{
+			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			HighestSupportedVersion: tpkg.TestAPI.ProtocolParameters().Version(),
+		},
+	}
+
+	// protoParamsJSON := `{"type":0,"version":3,"networkName":"xxxNetwork","bech32Hrp":"xxx","rentStructure":{"vByteCost":6,"vByteFactorData":7,"vByteFactorKey":8},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"manaGenerationRate":1,"manaGenerationRateExponent":27,"manaDecayFactors":[10,20],"manaDecayFactorsExponent":32,"manaDecayFactorEpochsSum":1337,"manaDecayFactorEpochsSumExponent":20,"stakingUnbondingPeriod":"11","evictionAge":"10","livenessThreshold":"3"}`
+
+	jsonEncode, err := tpkg.TestAPI.JSONEncode(validatorBlock)
+	fmt.Println(string(jsonEncode))
+	require.NoError(t, err)
+	// require.Equal(t, protoParamsJSON, string(jsonEncode))
+	//
+	// var decodedProtoParams iotago.ProtocolParameters
+	// err = tpkg.TestAPI.JSONDecode([]byte(protoParamsJSON), &decodedProtoParams)
+	// require.NoError(t, err)
+	//
+	// require.Equal(t, protoParams, decodedProtoParams)
 }
 
 // TODO: add tests

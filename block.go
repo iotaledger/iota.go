@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
+	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -93,77 +94,73 @@ type BlockPayload interface {
 	Payload
 }
 
-type ProtocolBlock struct {
+const BlockHeaderLength = 1 + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + serializer.UInt64ByteSize + AccountIDLength
+
+type BlockHeader struct {
 	ProtocolVersion byte      `serix:"0,mapKey=protocolVersion"`
 	NetworkID       NetworkID `serix:"1,mapKey=networkId"`
 
-	IssuingTime         time.Time   `serix:"2,mapKey=issuingTime"`
-	SlotCommitment      *Commitment `serix:"3,mapKey=slotCommitment"`
-	LatestFinalizedSlot SlotIndex   `serix:"4,mapKey=latestFinalizedSlot"`
+	IssuingTime         time.Time    `serix:"2,mapKey=issuingTime"`
+	SlotCommitmentID    CommitmentID `serix:"3,mapKey=slotCommitment"`
+	LatestFinalizedSlot SlotIndex    `serix:"4,mapKey=latestFinalizedSlot"`
 
 	IssuerID AccountID `serix:"5,mapKey=issuerID"`
-
-	Block Block `serix:"6,mapKey=block"`
-
-	Signature Signature `serix:"7,mapKey=signature"`
 }
 
-func (b *ProtocolBlock) ContentHash(api API) (Identifier, error) {
-	data, err := api.Encode(b)
+func (b *BlockHeader) Hash(api API) (Identifier, error) {
+	headerBytes, err := api.Encode(b)
 	if err != nil {
-		return Identifier{}, fmt.Errorf("failed to encode block: %w", err)
+		return Identifier{}, fmt.Errorf("failed to serialize block header: %w", err)
 	}
 
-	return contentHashFromBlockBytes(data)
+	return blake2b.Sum256(headerBytes), nil
+}
+
+type ProtocolBlock struct {
+	BlockHeader `serix:"0"`
+
+	Block Block `serix:"1,mapKey=block"`
+
+	Signature Signature `serix:"2,mapKey=signature"`
 }
 
 func BlockIdentifierFromBlockBytes(blockBytes []byte) (Identifier, error) {
-	contentHash, err := contentHashFromBlockBytes(blockBytes)
-	if err != nil {
-		return emptyIdentifier, err
-	}
-
-	signatureBytes, err := signatureBytesFromBlockBytes(blockBytes)
-	if err != nil {
-		return emptyIdentifier, err
-	}
-
-	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:])), nil
-}
-
-func contentHashFromBlockBytes(blockBytes []byte) (Identifier, error) {
-	if len(blockBytes) < Ed25519SignatureSerializedBytesSize {
+	if len(blockBytes) < BlockHeaderLength+Ed25519SignatureSerializedBytesSize {
 		return Identifier{}, errors.New("not enough block bytes")
 	}
-	return blake2b.Sum256(blockBytes[:len(blockBytes)-Ed25519SignatureSerializedBytesSize]), nil
+
+	length := len(blockBytes)
+	// Separate into header hash, block hash and signature bytes so that we are able to recompute the BlockID from an Attestation.
+	headerHash := blake2b.Sum256(blockBytes[:BlockHeaderLength])
+	blockHash := blake2b.Sum256(blockBytes[BlockHeaderLength : length-Ed25519SignatureSerializedBytesSize])
+	signatureBytes := [Ed25519SignatureSerializedBytesSize]byte(blockBytes[length-Ed25519SignatureSerializedBytesSize:])
+
+	return blockIdentifier(headerHash, blockHash, signatureBytes[:]), nil
 }
 
-func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerializedBytesSize]byte, error) {
-	if len(blockBytes) < Ed25519SignatureSerializedBytesSize {
-		return [Ed25519SignatureSerializedBytesSize]byte{}, errors.New("not enough block bytes")
-	}
-	return [Ed25519SignatureSerializedBytesSize]byte(blockBytes[len(blockBytes)-Ed25519SignatureSerializedBytesSize:]), nil
+func blockIdentifier(headerHash Identifier, blockHash Identifier, signatureBytes []byte) Identifier {
+	return IdentifierFromData(byteutils.ConcatBytes(headerHash[:], blockHash[:], signatureBytes))
 }
 
 // SigningMessage returns the to be signed message.
-// It is the 'encoded(IssuingTime)+encoded(SlotCommitment.ID()+contentHash'.
+// The BlockHeader and Block are separately hashed and concatenated to enable the verification of the signature for
+// an Attestation where only the BlockHeader and the hash of Block is known.
 func (b *ProtocolBlock) SigningMessage(api API) ([]byte, error) {
-	contentHash, err := b.ContentHash(api)
+	headerHash, err := b.BlockHeader.Hash(api)
 	if err != nil {
 		return nil, err
 	}
 
-	issuingTimeBytes, err := api.Encode(b.IssuingTime)
+	blockHash, err := b.Block.Hash(api)
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize block's issuing time: %w", err)
+		return nil, err
 	}
 
-	commitmentID, err := b.SlotCommitment.ID(api)
-	if err != nil {
-		return nil, fmt.Errorf("failed to serialize block's commitment ID: %w", err)
-	}
+	return blockSigningMessage(headerHash, blockHash), nil
+}
 
-	return byteutils.ConcatBytes([]byte{b.ProtocolVersion}, b.IssuerID[:], issuingTimeBytes, commitmentID[:], contentHash[:]), nil
+func blockSigningMessage(headerHash Identifier, blockHash Identifier) []byte {
+	return byteutils.ConcatBytes(headerHash[:], blockHash[:])
 }
 
 // Sign produces signatures signing the essence for every given AddressKeys.
@@ -205,14 +202,14 @@ func (b *ProtocolBlock) ID(api API) (BlockID, error) {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
 	}
 
-	slotIndex := api.TimeProvider().SlotFromTime(b.IssuingTime)
-
-	blockIdentifier, err := BlockIdentifierFromBlockBytes(data)
+	id, err := BlockIdentifierFromBlockBytes(data)
 	if err != nil {
 		return BlockID{}, err
 	}
 
-	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
+	slotIndex := api.TimeProvider().SlotFromTime(b.IssuingTime)
+
+	return NewSlotIdentifier(slotIndex, id), nil
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
@@ -228,10 +225,10 @@ type Block interface {
 	Type() BlockType
 
 	StrongParentIDs() BlockIDs
-
 	WeakParentIDs() BlockIDs
-
 	ShallowLikeParentIDs() BlockIDs
+
+	Hash(api API) (Identifier, error)
 }
 
 // StrongParentsIDs is a slice of BlockIDs the block strongly references.
@@ -272,6 +269,15 @@ func (b *BasicBlock) ShallowLikeParentIDs() BlockIDs {
 	return b.ShallowLikeParents
 }
 
+func (b *BasicBlock) Hash(api API) (Identifier, error) {
+	blockBytes, err := api.Encode(b)
+	if err != nil {
+		return Identifier{}, fmt.Errorf("failed to serialize basic block: %w", err)
+	}
+
+	return blake2b.Sum256(blockBytes), nil
+}
+
 // ValidatorBlock represents a validator vertex in the Tangle/BlockDAG.
 type ValidatorBlock struct {
 	// The parents the block references.
@@ -296,4 +302,13 @@ func (b *ValidatorBlock) WeakParentIDs() BlockIDs {
 
 func (b *ValidatorBlock) ShallowLikeParentIDs() BlockIDs {
 	return b.ShallowLikeParents
+}
+
+func (b *ValidatorBlock) Hash(api API) (Identifier, error) {
+	blockBytes, err := api.Encode(b)
+	if err != nil {
+		return Identifier{}, fmt.Errorf("failed to serialize validator block: %w", err)
+	}
+
+	return blake2b.Sum256(blockBytes), nil
 }

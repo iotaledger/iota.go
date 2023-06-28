@@ -3,33 +3,25 @@ package iotago
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/lo"
-	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 )
 
 // Attestations is a slice of Attestation.
 type Attestations = []*Attestation
 
 type Attestation struct {
-	Version          byte         `serix:"0,mapKey=version"`
-	IssuerID         AccountID    `serix:"0,mapKey=issuerID"`
-	IssuingTime      time.Time    `serix:"1,mapKey=issuingTime"`
-	SlotCommitmentID CommitmentID `serix:"2,mapKey=slotCommitmentID"`
-	BlockContentHash Identifier   `serix:"3,mapKey=blockContentHash"`
-	Signature        Signature    `serix:"4,mapKey=signature"`
+	BlockHeader `serix:"0"`
+	BlockHash   Identifier `serix:"1,mapKey=blockHash"`
+	Signature   Signature  `serix:"2,mapKey=signature"`
 }
 
 func NewAttestation(api API, block *ProtocolBlock) *Attestation {
 	return &Attestation{
-		Version:          block.ProtocolVersion,
-		IssuerID:         block.IssuerID,
-		IssuingTime:      block.IssuingTime,
-		SlotCommitmentID: block.SlotCommitment.MustID(api),
-		BlockContentHash: lo.PanicOnErr(block.ContentHash(api)),
-		Signature:        block.Signature,
+		BlockHeader: block.BlockHeader,
+		BlockHash:   lo.PanicOnErr(block.Block.Hash(api)),
+		Signature:   block.Signature,
 	}
 }
 
@@ -50,20 +42,25 @@ func (a *Attestation) Compare(other *Attestation) int {
 	case a.IssuingTime.Before(other.IssuingTime):
 		return -1
 	default:
-		return bytes.Compare(a.BlockContentHash[:], other.BlockContentHash[:])
+		return bytes.Compare(a.BlockHash[:], other.BlockHash[:])
 	}
 }
 
 func (a Attestation) BlockID(api API) (BlockID, error) {
 	signatureBytes, err := api.Encode(a.Signature)
 	if err != nil {
-		return EmptyBlockID(), fmt.Errorf("failed to serialize block's signature: %w", err)
+		return EmptyBlockID(), fmt.Errorf("failed to create blockID: %w", err)
 	}
 
-	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:]))
+	headerHash, err := a.BlockHeader.Hash(api)
+	if err != nil {
+		return EmptyBlockID(), fmt.Errorf("failed to create blockID: %w", err)
+	}
+
+	id := blockIdentifier(headerHash, a.BlockHash, signatureBytes)
 	slotIndex := api.TimeProvider().SlotFromTime(a.IssuingTime)
 
-	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
+	return NewSlotIdentifier(slotIndex, id), nil
 }
 
 func (a Attestation) Bytes(api API) (bytes []byte, err error) {
@@ -75,12 +72,12 @@ func (a *Attestation) FromBytes(api API, bytes []byte) (consumedBytes int, err e
 }
 
 func (a *Attestation) signingMessage(api API) ([]byte, error) {
-	issuingTimeBytes, err := api.Encode(a.IssuingTime)
+	headerHash, err := a.BlockHeader.Hash(api)
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize block's issuing time: %w", err)
+		return nil, fmt.Errorf("failed to create signing message: %w", err)
 	}
 
-	return byteutils.ConcatBytes([]byte{a.Version}, a.IssuerID[:], issuingTimeBytes, a.SlotCommitmentID[:], a.BlockContentHash[:]), nil
+	return blockSigningMessage(headerHash, a.BlockHash), nil
 }
 
 func (a *Attestation) VerifySignature(api API) (valid bool, err error) {

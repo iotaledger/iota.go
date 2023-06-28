@@ -56,7 +56,7 @@ func Test_EventAPIDisabled(t *testing.T) {
 }
 
 func Test_NewEventAPIClient(t *testing.T) {
-	block := tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTaggedData))
+	block := tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTaggedData), tpkg.TestAPI)
 	originBlockBytes, err := v3API.Encode(block)
 	require.NoError(t, err)
 	mock := &mockMqttClient{payload: originBlockBytes}
