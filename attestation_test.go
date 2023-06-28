@@ -12,9 +12,7 @@ import (
 )
 
 func TestAttestation(t *testing.T) {
-	iotago.SwapInternalAPI(v3API)
-
-	block, err := builder.NewValidatorBlockBuilder().
+	block, err := builder.NewValidatorBlockBuilder(tpkg.TestAPI).
 		StrongParents(tpkg.SortedRandBlockIDs(2)).
 		Sign(tpkg.RandAccountID(), tpkg.RandEd25519PrivateKey()).
 		Build()
@@ -22,24 +20,24 @@ func TestAttestation(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, iotago.BlockTypeValidator, block.Block.Type())
 
-	attestation := iotago.NewAttestation(block)
+	attestation := iotago.NewAttestation(tpkg.TestAPI, block)
 
 	// Compare fields of block and attestation.
 	{
 		require.Equal(t, block.ProtocolVersion, attestation.Version)
 		require.Equal(t, block.IssuerID, attestation.IssuerID)
 		require.Equal(t, block.IssuingTime, attestation.IssuingTime)
-		require.Equal(t, block.SlotCommitment.MustID(), attestation.SlotCommitmentID)
-		require.Equal(t, lo.PanicOnErr(block.ContentHash()), attestation.BlockContentHash)
+		require.Equal(t, block.SlotCommitment.MustID(tpkg.TestAPI), attestation.SlotCommitmentID)
+		require.Equal(t, lo.PanicOnErr(block.ContentHash(tpkg.TestAPI)), attestation.BlockContentHash)
 		require.Equal(t, block.Signature, attestation.Signature)
 	}
 
 	// Compare block ID and attestation block ID.
 	{
-		blockID, err := block.ID(v3API.TimeProvider())
+		blockID, err := block.ID(tpkg.TestAPI)
 		require.NoError(t, err)
 
-		blockIDFromAttestation, err := attestation.BlockID(v3API.TimeProvider())
+		blockIDFromAttestation, err := attestation.BlockID(tpkg.TestAPI)
 		require.NoError(t, err)
 
 		require.Equal(t, blockID, blockIDFromAttestation)
@@ -47,7 +45,7 @@ func TestAttestation(t *testing.T) {
 
 	// Check validity of signature.
 	{
-		valid, err := attestation.VerifySignature()
+		valid, err := attestation.VerifySignature(tpkg.TestAPI)
 		require.NoError(t, err)
 		require.True(t, valid)
 	}
