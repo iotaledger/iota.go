@@ -14,7 +14,7 @@ import (
 func TestAttestation(t *testing.T) {
 	iotago.SwapInternalAPI(v3API)
 
-	block, err := builder.NewBlockBuilder(iotago.BlockTypeValidator).
+	block, err := builder.NewValidatorBlockBuilder().
 		StrongParents(tpkg.SortedRandBlockIDs(2)).
 		Sign(tpkg.RandAccountID(), tpkg.RandEd25519PrivateKey()).
 		Build()

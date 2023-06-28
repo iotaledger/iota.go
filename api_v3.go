@@ -483,7 +483,7 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterTypeSettings((*ValidatorBlock)(nil), serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidator))))
 
 		// TODO: register specific parent rules
-		must(api.RegisterTypeSettings(StrongParentsIDs{},
+		must(api.RegisterTypeSettings(strongParentsIDs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsArrRules),
 		))
 		must(api.RegisterTypeSettings(WeakParentsIDs{},
@@ -497,7 +497,7 @@ func V3API(protoParams *ProtocolParameters) API {
 	{
 		must(api.RegisterTypeSettings((*BasicBlock)(nil), serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))))
 
-		must(api.RegisterTypeSettings(StrongParentsIDs{},
+		must(api.RegisterTypeSettings(strongParentsIDs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsArrRules),
 		))
 		must(api.RegisterTypeSettings(WeakParentsIDs{},

@@ -12,45 +12,34 @@ const (
 	defaultProtocolVersion = 3
 )
 
-// NewBlockBuilder creates a new BlockBuilder.
-func NewBlockBuilder(blockType iotago.BlockType) *BlockBuilder {
-	b := &BlockBuilder{
-		protocolBlock: &iotago.ProtocolBlock{
-			ProtocolVersion: defaultProtocolVersion,
-			SlotCommitment:  iotago.NewEmptyCommitment(),
-			IssuingTime:     time.Now(),
-			Signature:       &iotago.Ed25519Signature{},
-		},
+// NewBasicBlockBuilder creates a new BasicBlockBuilder.
+func NewBasicBlockBuilder() *BasicBlockBuilder {
+	basicBlock := &iotago.BasicBlock{}
+
+	protocolBlock := &iotago.ProtocolBlock{
+		ProtocolVersion: defaultProtocolVersion,
+		SlotCommitment:  iotago.NewEmptyCommitment(),
+		IssuingTime:     time.Now(),
+		Signature:       &iotago.Ed25519Signature{},
+		Block:           basicBlock,
 	}
 
-	var block iotago.Block
-	switch blockType {
-	case iotago.BlockTypeBasic:
-		b.basicBlock = &iotago.BasicBlock{}
-		block = b.basicBlock
-	case iotago.BlockTypeValidator:
-		b.validatorBlock = &iotago.ValidatorBlock{}
-		block = b.validatorBlock
-	default:
-		panic("unknown block type")
+	return &BasicBlockBuilder{
+		protocolBlock: protocolBlock,
+		basicBlock:    basicBlock,
 	}
-
-	b.protocolBlock.Block = block
-
-	return b
 }
 
-// BlockBuilder is used to easily build up a Block.
-type BlockBuilder struct {
-	basicBlock     *iotago.BasicBlock
-	validatorBlock *iotago.ValidatorBlock
+// BasicBlockBuilder is used to easily build up a Basic Block.
+type BasicBlockBuilder struct {
+	basicBlock *iotago.BasicBlock
 
 	protocolBlock *iotago.ProtocolBlock
 	err           error
 }
 
 // Build builds the ProtocolBlock or returns any error which occurred during the build steps.
-func (b *BlockBuilder) Build() (*iotago.ProtocolBlock, error) {
+func (b *BasicBlockBuilder) Build() (*iotago.ProtocolBlock, error) {
 	if b.err != nil {
 		return nil, b.err
 	}
@@ -58,22 +47,8 @@ func (b *BlockBuilder) Build() (*iotago.ProtocolBlock, error) {
 	return b.protocolBlock, nil
 }
 
-// Payload sets the payload.
-func (b *BlockBuilder) Payload(payload iotago.Payload) *BlockBuilder {
-	if b.err != nil {
-		return b
-	}
-
-	if b.basicBlock == nil {
-		panic("can't set payload on non-basic block")
-	}
-	b.basicBlock.Payload = payload
-
-	return b
-}
-
 // ProtocolVersion sets the protocol version.
-func (b *BlockBuilder) ProtocolVersion(version byte) *BlockBuilder {
+func (b *BasicBlockBuilder) ProtocolVersion(version byte) *BasicBlockBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -83,7 +58,7 @@ func (b *BlockBuilder) ProtocolVersion(version byte) *BlockBuilder {
 	return b
 }
 
-func (b *BlockBuilder) IssuingTime(time time.Time) *BlockBuilder {
+func (b *BasicBlockBuilder) IssuingTime(time time.Time) *BasicBlockBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -93,41 +68,8 @@ func (b *BlockBuilder) IssuingTime(time time.Time) *BlockBuilder {
 	return b
 }
 
-// StrongParents sets the strong parents.
-func (b *BlockBuilder) StrongParents(parents iotago.BlockIDs) *BlockBuilder {
-	if b.err != nil {
-		return b
-	}
-
-	b.protocolBlock.Block.SetStrongParentIDs(parents.RemoveDupsAndSort())
-
-	return b
-}
-
-// WeakParents sets the weak parents.
-func (b *BlockBuilder) WeakParents(parents iotago.BlockIDs) *BlockBuilder {
-	if b.err != nil {
-		return b
-	}
-
-	b.protocolBlock.Block.SetWeakParentIDs(parents.RemoveDupsAndSort())
-
-	return b
-}
-
-// ShallowLikeParents sets the shallow like parents.
-func (b *BlockBuilder) ShallowLikeParents(parents iotago.BlockIDs) *BlockBuilder {
-	if b.err != nil {
-		return b
-	}
-
-	b.protocolBlock.Block.SetShallowLikeParentIDs(parents.RemoveDupsAndSort())
-
-	return b
-}
-
 // SlotCommitment sets the slot commitment.
-func (b *BlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BlockBuilder {
+func (b *BasicBlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BasicBlockBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -137,32 +79,18 @@ func (b *BlockBuilder) SlotCommitment(commitment *iotago.Commitment) *BlockBuild
 	return b
 }
 
-// BurnedMana sets the amount of mana burned by the block.
-func (b *BlockBuilder) BurnedMana(burnedMana iotago.Mana) *BlockBuilder {
-	if b.err != nil {
-		return b
-	}
-
-	if b.basicBlock == nil {
-		panic("can't set burned mana on non-basic block")
-	}
-	b.basicBlock.BurnedMana = burnedMana
-
-	return b
-}
-
 // LatestFinalizedSlot sets the latest finalized slot.
-func (b *BlockBuilder) LatestFinalizedSlot(index iotago.SlotIndex) *BlockBuilder {
+func (b *BasicBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *BasicBlockBuilder {
 	if b.err != nil {
 		return b
 	}
 
-	b.protocolBlock.LatestFinalizedSlot = index
+	b.protocolBlock.LatestFinalizedSlot = slot
 
 	return b
 }
 
-func (b *BlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKey) *BlockBuilder {
+func (b *BasicBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKey) *BasicBlockBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -183,4 +111,204 @@ func (b *BlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKe
 	b.protocolBlock.Signature = edSig
 
 	return b
+}
+
+// StrongParents sets the strong parents.
+func (b *BasicBlockBuilder) StrongParents(parents iotago.BlockIDs) *BasicBlockBuilder {
+	if b.err != nil {
+		return b
+	}
+
+	b.basicBlock.StrongParents = parents.RemoveDupsAndSort()
+
+	return b
+}
+
+// WeakParents sets the weak parents.
+func (b *BasicBlockBuilder) WeakParents(parents iotago.BlockIDs) *BasicBlockBuilder {
+	if b.err != nil {
+		return b
+	}
+
+	b.basicBlock.WeakParents = parents.RemoveDupsAndSort()
+
+	return b
+}
+
+// ShallowLikeParents sets the shallow like parents.
+func (b *BasicBlockBuilder) ShallowLikeParents(parents iotago.BlockIDs) *BasicBlockBuilder {
+	if b.err != nil {
+		return b
+	}
+
+	b.basicBlock.ShallowLikeParents = parents.RemoveDupsAndSort()
+
+	return b
+}
+
+// Payload sets the payload.
+func (b *BasicBlockBuilder) Payload(payload iotago.Payload) *BasicBlockBuilder {
+	if b.err != nil {
+		return b
+	}
+
+	b.basicBlock.Payload = payload
+
+	return b
+}
+
+// BurnedMana sets the amount of mana burned by the block.
+func (b *BasicBlockBuilder) BurnedMana(burnedMana iotago.Mana) *BasicBlockBuilder {
+	if b.err != nil {
+		return b
+	}
+
+	b.basicBlock.BurnedMana = burnedMana
+
+	return b
+}
+
+// NewValidatorBlockBuilder creates a new ValidatorBlockBuilder.
+func NewValidatorBlockBuilder() *ValidatorBlockBuilder {
+	validatorBlock := &iotago.ValidatorBlock{}
+
+	protocolBlock := &iotago.ProtocolBlock{
+		ProtocolVersion: defaultProtocolVersion,
+		SlotCommitment:  iotago.NewEmptyCommitment(),
+		IssuingTime:     time.Now(),
+		Signature:       &iotago.Ed25519Signature{},
+		Block:           validatorBlock,
+	}
+
+	return &ValidatorBlockBuilder{
+		protocolBlock:  protocolBlock,
+		validatorBlock: validatorBlock,
+	}
+}
+
+// ValidatorBlockBuilder is used to easily build up a Validator Block.
+type ValidatorBlockBuilder struct {
+	validatorBlock *iotago.ValidatorBlock
+
+	protocolBlock *iotago.ProtocolBlock
+	err           error
+}
+
+// Build builds the ProtocolBlock or returns any error which occurred during the build steps.
+func (v *ValidatorBlockBuilder) Build() (*iotago.ProtocolBlock, error) {
+	if v.err != nil {
+		return nil, v.err
+	}
+
+	return v.protocolBlock, nil
+}
+
+// ProtocolVersion sets the protocol version.
+func (v *ValidatorBlockBuilder) ProtocolVersion(version byte) *ValidatorBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.protocolBlock.ProtocolVersion = version
+
+	return v
+}
+
+func (v *ValidatorBlockBuilder) IssuingTime(time time.Time) *ValidatorBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.protocolBlock.IssuingTime = time
+
+	return v
+}
+
+// SlotCommitment sets the slot commitment.
+func (v *ValidatorBlockBuilder) SlotCommitment(commitment *iotago.Commitment) *ValidatorBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.protocolBlock.SlotCommitment = commitment
+
+	return v
+}
+
+// LatestFinalizedSlot sets the latest finalized slot.
+func (v *ValidatorBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *ValidatorBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.protocolBlock.LatestFinalizedSlot = slot
+
+	return v
+}
+
+func (v *ValidatorBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKey) *ValidatorBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.protocolBlock.IssuerID = accountID
+
+	signature, err := v.protocolBlock.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
+	if err != nil {
+		v.err = fmt.Errorf("error signing block: %w", err)
+		return v
+	}
+
+	edSig, isEdSig := signature.(*iotago.Ed25519Signature)
+	if !isEdSig {
+		panic("unsupported signature type")
+	}
+
+	v.protocolBlock.Signature = edSig
+
+	return v
+}
+
+// StrongParents sets the strong parents.
+func (v *ValidatorBlockBuilder) StrongParents(parents iotago.BlockIDs) *ValidatorBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.validatorBlock.StrongParents = parents.RemoveDupsAndSort()
+
+	return v
+}
+
+// WeakParents sets the weak parents.
+func (v *ValidatorBlockBuilder) WeakParents(parents iotago.BlockIDs) *ValidatorBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.validatorBlock.WeakParents = parents.RemoveDupsAndSort()
+
+	return v
+}
+
+// ShallowLikeParents sets the shallow like parents.
+func (v *ValidatorBlockBuilder) ShallowLikeParents(parents iotago.BlockIDs) *ValidatorBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.validatorBlock.ShallowLikeParents = parents.RemoveDupsAndSort()
+
+	return v
+}
+
+// HighestSupportedVersion sets the highest supported version.
+func (v *ValidatorBlockBuilder) HighestSupportedVersion(highestSupportedVersion byte) *ValidatorBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.validatorBlock.HighestSupportedVersion = highestSupportedVersion
+
+	return v
 }

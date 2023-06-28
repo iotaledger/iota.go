@@ -94,10 +94,10 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 // TransactionFunc is a function which receives a Transaction as its parameter.
 type TransactionFunc func(tx *iotago.Transaction)
 
-// BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BlockBuilder with
+// BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BasicBlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
-func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParams *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *BlockBuilder {
-	blockBuilder := NewBlockBuilder(iotago.BlockTypeBasic)
+func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParams *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *BasicBlockBuilder {
+	blockBuilder := NewBasicBlockBuilder()
 	tx, err := b.Build(protoParams, signer)
 	if err != nil {
 		blockBuilder.err = err

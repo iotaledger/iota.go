@@ -93,28 +93,6 @@ type BlockPayload interface {
 	Payload
 }
 
-// StrongParentsIDs is a slice of BlockIDs the block strongly references.
-type StrongParentsIDs = BlockIDs
-
-// WeakParentsIDs is a slice of BlockIDs the block weakly references.
-type WeakParentsIDs = BlockIDs
-
-// ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
-type ShallowLikeParentIDs = BlockIDs
-
-type Block interface {
-	Type() BlockType
-
-	StrongParentIDs() BlockIDs
-	SetStrongParentIDs(BlockIDs)
-
-	WeakParentIDs() BlockIDs
-	SetWeakParentIDs(BlockIDs)
-
-	ShallowLikeParentIDs() BlockIDs
-	SetShallowLikeParentIDs(BlockIDs)
-}
-
 type ProtocolBlock struct {
 	ProtocolVersion byte      `serix:"0,mapKey=protocolVersion"`
 	NetworkID       NetworkID `serix:"1,mapKey=networkId"`
@@ -127,88 +105,7 @@ type ProtocolBlock struct {
 
 	Block Block `serix:"6,mapKey=block"`
 
-	// TODO: check with attestations and contnet hash
-
 	Signature Signature `serix:"7,mapKey=signature"`
-}
-
-// BasicBlock represents a basic vertex in the Tangle/BlockDAG.
-type BasicBlock struct {
-	// The parents the block references.
-	StrongParents      StrongParentsIDs     `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
-	WeakParents        WeakParentsIDs       `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
-	ShallowLikeParents ShallowLikeParentIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
-
-	// The inner payload of the block. Can be nil.
-	Payload BlockPayload `serix:"3,optional,mapKey=payload,omitempty"`
-
-	BurnedMana Mana `serix:"4,mapKey=burnedMana"`
-}
-
-func (b *BasicBlock) Type() BlockType {
-	return BlockTypeBasic
-}
-
-func (b *BasicBlock) StrongParentIDs() BlockIDs {
-	return b.StrongParents
-}
-
-func (b *BasicBlock) SetStrongParentIDs(blockIDs BlockIDs) {
-	b.StrongParents = blockIDs
-}
-
-func (b *BasicBlock) WeakParentIDs() BlockIDs {
-	return b.WeakParents
-}
-
-func (b *BasicBlock) SetWeakParentIDs(blockIDs BlockIDs) {
-	b.WeakParents = blockIDs
-}
-
-func (b *BasicBlock) ShallowLikeParentIDs() BlockIDs {
-	return b.ShallowLikeParents
-}
-
-func (b *BasicBlock) SetShallowLikeParentIDs(blockIDs BlockIDs) {
-	b.ShallowLikeParents = blockIDs
-}
-
-// ValidatorBlock represents a validator vertex in the Tangle/BlockDAG.
-type ValidatorBlock struct {
-	// The parents the block references.
-	StrongParents      StrongParentsIDs     `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
-	WeakParents        WeakParentsIDs       `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
-	ShallowLikeParents ShallowLikeParentIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
-
-	HighestSupportedVersion byte `serix:"3,mapKey=latestFinalizedSlot"`
-}
-
-func (b *ValidatorBlock) Type() BlockType {
-	return BlockTypeValidator
-}
-
-func (b *ValidatorBlock) StrongParentIDs() BlockIDs {
-	return b.StrongParents
-}
-
-func (b *ValidatorBlock) SetStrongParentIDs(blockIDs BlockIDs) {
-	b.StrongParents = blockIDs
-}
-
-func (b *ValidatorBlock) WeakParentIDs() BlockIDs {
-	return b.WeakParents
-}
-
-func (b *ValidatorBlock) SetWeakParentIDs(blockIDs BlockIDs) {
-	b.WeakParents = blockIDs
-}
-
-func (b *ValidatorBlock) ShallowLikeParentIDs() BlockIDs {
-	return b.ShallowLikeParents
-}
-
-func (b *ValidatorBlock) SetShallowLikeParentIDs(blockIDs BlockIDs) {
-	b.ShallowLikeParents = blockIDs
 }
 
 func (b *ProtocolBlock) ContentHash() (Identifier, error) {
@@ -325,4 +222,78 @@ func (b *ProtocolBlock) MustID(timeProvider *TimeProvider) BlockID {
 		panic(err)
 	}
 	return blockID
+}
+
+type Block interface {
+	Type() BlockType
+
+	StrongParentIDs() BlockIDs
+
+	WeakParentIDs() BlockIDs
+
+	ShallowLikeParentIDs() BlockIDs
+}
+
+// StrongParentsIDs is a slice of BlockIDs the block strongly references.
+type strongParentsIDs = BlockIDs
+
+// WeakParentsIDs is a slice of BlockIDs the block weakly references.
+type WeakParentsIDs = BlockIDs
+
+// ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
+type ShallowLikeParentIDs = BlockIDs
+
+// BasicBlock represents a basic vertex in the Tangle/BlockDAG.
+type BasicBlock struct {
+	// The parents the block references.
+	StrongParents      strongParentsIDs     `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
+	WeakParents        WeakParentsIDs       `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
+	ShallowLikeParents ShallowLikeParentIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+
+	// The inner payload of the block. Can be nil.
+	Payload BlockPayload `serix:"3,optional,mapKey=payload,omitempty"`
+
+	BurnedMana Mana `serix:"4,mapKey=burnedMana"`
+}
+
+func (b *BasicBlock) Type() BlockType {
+	return BlockTypeBasic
+}
+
+func (b *BasicBlock) StrongParentIDs() BlockIDs {
+	return b.StrongParents
+}
+
+func (b *BasicBlock) WeakParentIDs() BlockIDs {
+	return b.WeakParents
+}
+
+func (b *BasicBlock) ShallowLikeParentIDs() BlockIDs {
+	return b.ShallowLikeParents
+}
+
+// ValidatorBlock represents a validator vertex in the Tangle/BlockDAG.
+type ValidatorBlock struct {
+	// The parents the block references.
+	StrongParents      strongParentsIDs     `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
+	WeakParents        WeakParentsIDs       `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
+	ShallowLikeParents ShallowLikeParentIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+
+	HighestSupportedVersion byte `serix:"3,mapKey=latestFinalizedSlot"`
+}
+
+func (b *ValidatorBlock) Type() BlockType {
+	return BlockTypeValidator
+}
+
+func (b *ValidatorBlock) StrongParentIDs() BlockIDs {
+	return b.StrongParents
+}
+
+func (b *ValidatorBlock) WeakParentIDs() BlockIDs {
+	return b.WeakParents
+}
+
+func (b *ValidatorBlock) ShallowLikeParentIDs() BlockIDs {
+	return b.ShallowLikeParents
 }
