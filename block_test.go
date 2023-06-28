@@ -3,36 +3,36 @@ package iotago_test
 import (
 	"testing"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hive.go/serializer/v2/serix"
-
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestBlock_DeSerialize(t *testing.T) {
+	// TODO: what does this test actually do?
 	tests := []deSerializeTest{
 		{
 			name:   "ok - no payload",
-			source: tpkg.RandBlock(1337),
-			target: &iotago.Block{},
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(1337)),
+			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - transaction",
-			source: tpkg.RandBlock(iotago.PayloadTransaction),
-			target: &iotago.Block{},
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTransaction)),
+			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - milestone",
-			source: tpkg.RandBlock(iotago.PayloadMilestone),
-			target: &iotago.Block{},
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadMilestone)),
+			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - tagged data",
-			source: tpkg.RandBlock(iotago.PayloadTaggedData),
-			target: &iotago.Block{},
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTaggedData)),
+			target: &iotago.ProtocolBlock{},
 		},
 	}
 
@@ -41,42 +41,110 @@ func TestBlock_DeSerialize(t *testing.T) {
 	}
 }
 
-func TestBlock_MinSize(t *testing.T) {
-
-	block := &iotago.Block{
-		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
-		StrongParents:   tpkg.SortedRandBlockIDs(1),
+func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
+	block := &iotago.ProtocolBlock{
+		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version() + 1,
 		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Signature:       tpkg.RandEd25519Signature(),
-		Payload:         nil,
-	}
-
-	msgBytes, err := tpkg.TestAPI.Encode(block)
-	require.NoError(t, err)
-
-	block2 := &iotago.Block{}
-	_, err = tpkg.TestAPI.Decode(msgBytes, block2, serix.WithValidation())
-	require.NoError(t, err)
-	require.Equal(t, block, block2)
-}
-
-func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
-
-	block := &iotago.Block{
-		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version() + 1,
-		StrongParents:   tpkg.SortedRandBlockIDs(1),
-		Payload:         nil,
+		Block: &iotago.BasicBlock{
+			StrongParents: tpkg.SortedRandBlockIDs(1),
+			Payload:       nil,
+		},
 	}
 
 	_, err := tpkg.TestAPI.Encode(block, serix.WithValidation())
-	require.Error(t, err)
+	require.ErrorContains(t, err, "mismatched protocol version")
 }
 
-func TestBlock_DeserializationNotEnoughData(t *testing.T) {
-
+func TestProtocolBlock_DeserializationNotEnoughData(t *testing.T) {
 	blockBytes := []byte{tpkg.TestAPI.ProtocolParameters().Version(), 1}
 
-	block := &iotago.Block{}
+	block := &iotago.ProtocolBlock{}
 	_, err := tpkg.TestAPI.Decode(blockBytes, block)
 	require.ErrorIs(t, err, serializer.ErrDeserializationNotEnoughData)
 }
+
+func TestBasicBlock_MinSize(t *testing.T) {
+	minProtocolBlock := &iotago.ProtocolBlock{
+		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
+		SlotCommitment:  iotago.NewEmptyCommitment(),
+		Signature:       tpkg.RandEd25519Signature(),
+		Block: &iotago.BasicBlock{
+			StrongParents: tpkg.SortedRandBlockIDs(1),
+			Payload:       nil,
+		},
+	}
+
+	blockBytes, err := tpkg.TestAPI.Encode(minProtocolBlock)
+	require.NoError(t, err)
+
+	block2 := &iotago.ProtocolBlock{}
+	consumedBytes, err := tpkg.TestAPI.Decode(blockBytes, block2, serix.WithValidation())
+	require.NoError(t, err)
+	require.Equal(t, minProtocolBlock, block2)
+	require.Equal(t, len(blockBytes), consumedBytes)
+}
+
+func TestValidatorBlock_MinSize(t *testing.T) {
+	minProtocolBlock := &iotago.ProtocolBlock{
+		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
+		SlotCommitment:  iotago.NewEmptyCommitment(),
+		Signature:       tpkg.RandEd25519Signature(),
+		Block: &iotago.ValidatorBlock{
+			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			HighestSupportedVersion: tpkg.TestAPI.ProtocolParameters().Version(),
+		},
+	}
+
+	blockBytes, err := tpkg.TestAPI.Encode(minProtocolBlock)
+	require.NoError(t, err)
+
+	block2 := &iotago.ProtocolBlock{}
+	consumedBytes, err := tpkg.TestAPI.Decode(blockBytes, block2, serix.WithValidation())
+	require.NoError(t, err)
+	require.Equal(t, minProtocolBlock, block2)
+	require.Equal(t, len(blockBytes), consumedBytes)
+}
+
+func TestValidatorBlock_HighestSupportedVersion(t *testing.T) {
+	protocolBlock := &iotago.ProtocolBlock{
+		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
+		SlotCommitment:  iotago.NewEmptyCommitment(),
+		Signature:       tpkg.RandEd25519Signature(),
+	}
+
+	// Invalid HighestSupportedVersion.
+	{
+		protocolBlock.Block = &iotago.ValidatorBlock{
+			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			HighestSupportedVersion: tpkg.TestAPI.ProtocolParameters().Version() - 1,
+		}
+		blockBytes, err := tpkg.TestAPI.Encode(protocolBlock)
+		require.NoError(t, err)
+
+		block2 := &iotago.ProtocolBlock{}
+		_, err = tpkg.TestAPI.Decode(blockBytes, block2, serix.WithValidation())
+		require.ErrorContains(t, err, "highest supported version")
+	}
+
+	// Valid HighestSupportedVersion.
+	{
+		protocolBlock.Block = &iotago.ValidatorBlock{
+			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			HighestSupportedVersion: tpkg.TestAPI.ProtocolParameters().Version(),
+		}
+		blockBytes, err := tpkg.TestAPI.Encode(protocolBlock)
+		require.NoError(t, err)
+
+		block2 := &iotago.ProtocolBlock{}
+		consumedBytes, err := tpkg.TestAPI.Decode(blockBytes, block2, serix.WithValidation())
+		require.NoError(t, err)
+		require.Equal(t, protocolBlock, block2)
+		require.Equal(t, len(blockBytes), consumedBytes)
+	}
+}
+
+// TODO: add tests
+//  - max size
+//  - parents parameters basic block
+//  - parents parameters validator block

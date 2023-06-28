@@ -11,7 +11,6 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -27,6 +26,14 @@ const (
 	BlockMinParents = 0
 	// BlockMaxParents defines the maximum amount of parents in a block.
 	BlockMaxParents = 8
+)
+
+// BlockType denotes a type of Block.
+type BlockType byte
+
+const (
+	BlockTypeBasic     BlockType = 1
+	BlockTypeValidator BlockType = 2
 )
 
 // EmptyBlockID returns an empty BlockID.
@@ -86,42 +93,22 @@ type BlockPayload interface {
 	Payload
 }
 
-// StrongParentsIDs is a slice of BlockIDs the block strongly references.
-type StrongParentsIDs = BlockIDs
+type ProtocolBlock struct {
+	ProtocolVersion byte      `serix:"0,mapKey=protocolVersion"`
+	NetworkID       NetworkID `serix:"1,mapKey=networkId"`
 
-// WeakParentsIDs is a slice of BlockIDs the block weakly references.
-type WeakParentsIDs = BlockIDs
+	IssuingTime         time.Time   `serix:"2,mapKey=issuingTime"`
+	SlotCommitment      *Commitment `serix:"3,mapKey=slotCommitment"`
+	LatestFinalizedSlot SlotIndex   `serix:"4,mapKey=latestFinalizedSlot"`
 
-// ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
-type ShallowLikeParentIDs = BlockIDs
+	IssuerID AccountID `serix:"5,mapKey=issuerID"`
 
-// Block represents a vertex in the Tangle.
-type Block struct {
-	// The protocol version under which this block operates.
-	ProtocolVersion byte `serix:"0,mapKey=protocolVersion"`
+	Block Block `serix:"6,mapKey=block"`
 
-	NetworkID NetworkID `serix:"1,mapKey=networkId"`
-
-	// The parents the block references.
-	StrongParents      StrongParentsIDs     `serix:"2,lengthPrefixType=uint8,mapKey=strongParents"`
-	WeakParents        WeakParentsIDs       `serix:"3,lengthPrefixType=uint8,mapKey=weakParents"`
-	ShallowLikeParents ShallowLikeParentIDs `serix:"4,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
-
-	IssuerID    AccountID `serix:"5,mapKey=issuerID"`
-	IssuingTime time.Time `serix:"6,mapKey=issuingTime"`
-
-	SlotCommitment      *Commitment `serix:"7,mapKey=slotCommitment"`
-	LatestFinalizedSlot SlotIndex   `serix:"8,mapKey=latestFinalizedSlot"`
-
-	// The inner payload of the block. Can be nil.
-	Payload BlockPayload `serix:"9,optional,mapKey=payload,omitempty"`
-
-	BurnedMana Mana `serix:"10,mapKey=burnedMana"`
-
-	Signature Signature `serix:"11,mapKey=signature"`
+	Signature Signature `serix:"7,mapKey=signature"`
 }
 
-func (b *Block) ContentHash(api API) (Identifier, error) {
+func (b *ProtocolBlock) ContentHash(api API) (Identifier, error) {
 	data, err := api.Encode(b)
 	if err != nil {
 		return Identifier{}, fmt.Errorf("failed to encode block: %w", err)
@@ -141,28 +128,26 @@ func BlockIdentifierFromBlockBytes(blockBytes []byte) (Identifier, error) {
 		return emptyIdentifier, err
 	}
 
-	nonceBytes := blockBytes[len(blockBytes)-serializer.UInt64ByteSize:]
-
-	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:], nonceBytes[:])), nil
+	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:])), nil
 }
 
 func contentHashFromBlockBytes(blockBytes []byte) (Identifier, error) {
-	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
+	if len(blockBytes) < Ed25519SignatureSerializedBytesSize {
 		return Identifier{}, errors.New("not enough block bytes")
 	}
-	return blake2b.Sum256(blockBytes[:len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize]), nil
+	return blake2b.Sum256(blockBytes[:len(blockBytes)-Ed25519SignatureSerializedBytesSize]), nil
 }
 
 func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerializedBytesSize]byte, error) {
-	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
+	if len(blockBytes) < Ed25519SignatureSerializedBytesSize {
 		return [Ed25519SignatureSerializedBytesSize]byte{}, errors.New("not enough block bytes")
 	}
-	return [Ed25519SignatureSerializedBytesSize]byte(blockBytes[len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize:]), nil
+	return [Ed25519SignatureSerializedBytesSize]byte(blockBytes[len(blockBytes)-Ed25519SignatureSerializedBytesSize:]), nil
 }
 
 // SigningMessage returns the to be signed message.
 // It is the 'encoded(IssuingTime)+encoded(SlotCommitment.ID()+contentHash'.
-func (b *Block) SigningMessage(api API) ([]byte, error) {
+func (b *ProtocolBlock) SigningMessage(api API) ([]byte, error) {
 	contentHash, err := b.ContentHash(api)
 	if err != nil {
 		return nil, err
@@ -178,12 +163,12 @@ func (b *Block) SigningMessage(api API) ([]byte, error) {
 		return nil, fmt.Errorf("failed to serialize block's commitment ID: %w", err)
 	}
 
-	return byteutils.ConcatBytes(issuingTimeBytes, commitmentID[:], contentHash[:]), nil
+	return byteutils.ConcatBytes([]byte{b.ProtocolVersion}, b.IssuerID[:], issuingTimeBytes, commitmentID[:], contentHash[:]), nil
 }
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (b *Block) Sign(api API, addrKey AddressKeys) (Signature, error) {
+func (b *ProtocolBlock) Sign(api API, addrKey AddressKeys) (Signature, error) {
 	signMsg, err := b.SigningMessage(api)
 	if err != nil {
 		return nil, err
@@ -195,7 +180,7 @@ func (b *Block) Sign(api API, addrKey AddressKeys) (Signature, error) {
 }
 
 // VerifySignature verifies the Signature of the block.
-func (b *Block) VerifySignature(api API) (valid bool, err error) {
+func (b *ProtocolBlock) VerifySignature(api API) (valid bool, err error) {
 	signingMessage, err := b.SigningMessage(api)
 	if err != nil {
 		return false, err
@@ -214,7 +199,7 @@ func (b *Block) VerifySignature(api API) (valid bool, err error) {
 }
 
 // ID computes the ID of the Block.
-func (b *Block) ID(api API) (BlockID, error) {
+func (b *ProtocolBlock) ID(api API) (BlockID, error) {
 	data, err := api.Encode(b)
 	if err != nil {
 		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
@@ -231,10 +216,84 @@ func (b *Block) ID(api API) (BlockID, error) {
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
-func (b *Block) MustID(api API) BlockID {
+func (b *ProtocolBlock) MustID(api API) BlockID {
 	blockID, err := b.ID(api)
 	if err != nil {
 		panic(err)
 	}
 	return blockID
+}
+
+type Block interface {
+	Type() BlockType
+
+	StrongParentIDs() BlockIDs
+
+	WeakParentIDs() BlockIDs
+
+	ShallowLikeParentIDs() BlockIDs
+}
+
+// StrongParentsIDs is a slice of BlockIDs the block strongly references.
+type strongParentsIDs = BlockIDs
+
+// WeakParentsIDs is a slice of BlockIDs the block weakly references.
+type WeakParentsIDs = BlockIDs
+
+// ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
+type ShallowLikeParentIDs = BlockIDs
+
+// BasicBlock represents a basic vertex in the Tangle/BlockDAG.
+type BasicBlock struct {
+	// The parents the block references.
+	StrongParents      strongParentsIDs     `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
+	WeakParents        WeakParentsIDs       `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
+	ShallowLikeParents ShallowLikeParentIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+
+	// The inner payload of the block. Can be nil.
+	Payload BlockPayload `serix:"3,optional,mapKey=payload,omitempty"`
+
+	BurnedMana Mana `serix:"4,mapKey=burnedMana"`
+}
+
+func (b *BasicBlock) Type() BlockType {
+	return BlockTypeBasic
+}
+
+func (b *BasicBlock) StrongParentIDs() BlockIDs {
+	return b.StrongParents
+}
+
+func (b *BasicBlock) WeakParentIDs() BlockIDs {
+	return b.WeakParents
+}
+
+func (b *BasicBlock) ShallowLikeParentIDs() BlockIDs {
+	return b.ShallowLikeParents
+}
+
+// ValidatorBlock represents a validator vertex in the Tangle/BlockDAG.
+type ValidatorBlock struct {
+	// The parents the block references.
+	StrongParents      strongParentsIDs     `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
+	WeakParents        WeakParentsIDs       `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
+	ShallowLikeParents ShallowLikeParentIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+
+	HighestSupportedVersion byte `serix:"3,mapKey=latestFinalizedSlot"`
+}
+
+func (b *ValidatorBlock) Type() BlockType {
+	return BlockTypeValidator
+}
+
+func (b *ValidatorBlock) StrongParentIDs() BlockIDs {
+	return b.StrongParents
+}
+
+func (b *ValidatorBlock) WeakParentIDs() BlockIDs {
+	return b.WeakParents
+}
+
+func (b *ValidatorBlock) ShallowLikeParentIDs() BlockIDs {
+	return b.ShallowLikeParents
 }

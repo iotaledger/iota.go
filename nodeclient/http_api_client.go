@@ -337,7 +337,7 @@ func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool
 // The node will take care of filling missing information.
 // This function returns the blockID of the finalized block.
 // To get the finalized block you need to call "BlockByBlockID".
-func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (iotago.BlockID, error) {
+func (client *Client) SubmitBlock(ctx context.Context, m *iotago.ProtocolBlock) (iotago.BlockID, error) {
 	// do not check the block because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the block afterwards.
@@ -373,7 +373,7 @@ func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago
 }
 
 // BlockByBlockID get a block by its block ID from the node.
-func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID) (*iotago.Block, error) {
+func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID) (*iotago.ProtocolBlock, error) {
 	query := fmt.Sprintf(RouteBlock, hexutil.EncodeHex(blockID[:]))
 
 	res := &RawDataEnvelope{}
@@ -381,7 +381,7 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 		return nil, err
 	}
 
-	block := &iotago.Block{}
+	block := &iotago.ProtocolBlock{}
 	if _, err := client.opts.iotagoAPI.Decode(res.Data, block, serix.WithValidation()); err != nil {
 		return nil, err
 	}
@@ -390,7 +390,7 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 }
 
 // TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
-func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.Block, error) {
+func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.ProtocolBlock, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlock, hexutil.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
@@ -398,7 +398,7 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 		return nil, err
 	}
 
-	block := &iotago.Block{}
+	block := &iotago.ProtocolBlock{}
 	if _, err := client.opts.iotagoAPI.Decode(res.Data, block, serix.WithValidation()); err != nil {
 		return nil, err
 	}

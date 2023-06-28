@@ -100,7 +100,7 @@ func (id SlotIdentifier) ToHex() string {
 }
 
 func (id SlotIdentifier) String() string {
-	return id.Alias()
+	return fmt.Sprintf("%s:%d", id.Alias(), id.Index())
 }
 
 func (id SlotIdentifier) Index() SlotIndex {
@@ -137,7 +137,7 @@ func (id SlotIdentifier) Alias() (alias string) {
 		return existingAlias
 	}
 
-	return fmt.Sprintf("%s:%d", id.ToHex(), id.Index())
+	return id.ToHex()
 }
 
 // UnregisterAlias allows to unregister a previously registered alias.

@@ -1,4 +1,4 @@
-//#nosec G404
+// #nosec G404
 
 package nodeclient_test
 
@@ -33,7 +33,7 @@ var (
 )
 
 func nodeClient(t *testing.T) *nodeclient.Client {
-	client, err := nodeclient.New(nodeAPIUrl, nodeclient.WithIOTAGoAPI(emptyAPI))
+	client, err := nodeclient.New(nodeAPIUrl, nodeclient.WithIOTAGoAPI(v3API))
 	require.NoError(t, err)
 	return client
 }
@@ -164,11 +164,13 @@ func TestClient_SubmitBlock(t *testing.T) {
 	blockHash := tpkg.Rand40ByteArray()
 	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
-	incompleteBlock := &iotago.Block{
+	incompleteBlock := &iotago.ProtocolBlock{
 		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
-		StrongParents:   tpkg.SortedRandBlockIDs(1),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
 		Signature:       &iotago.Ed25519Signature{},
+		Block: &iotago.BasicBlock{
+			StrongParents: tpkg.SortedRandBlockIDs(1),
+		},
 	}
 
 	serializedIncompleteBlock, err := v3API.Encode(incompleteBlock, serix.WithValidation())
@@ -227,12 +229,14 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	identifier := tpkg.Rand40ByteArray()
 	queryHash := hexutil.EncodeHex(identifier[:])
 
-	originBlock := &iotago.Block{
+	originBlock := &iotago.ProtocolBlock{
 		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
-		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Payload:         nil,
 		Signature:       tpkg.RandEd25519Signature(),
+		Block: &iotago.BasicBlock{
+			StrongParents: tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+			Payload:       nil,
+		},
 	}
 
 	data, err := v3API.Encode(originBlock, serix.WithValidation())
@@ -256,12 +260,14 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	identifier := tpkg.Rand32ByteArray()
 	queryHash := hexutil.EncodeHex(identifier[:])
 
-	originBlock := &iotago.Block{
+	originBlock := &iotago.ProtocolBlock{
 		ProtocolVersion: tpkg.TestAPI.ProtocolParameters().Version(),
-		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Payload:         nil,
 		Signature:       tpkg.RandEd25519Signature(),
+		Block: &iotago.BasicBlock{
+			StrongParents: tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+			Payload:       nil,
+		},
 	}
 
 	data, err := v3API.Encode(originBlock, serix.WithValidation())
