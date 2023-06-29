@@ -178,31 +178,7 @@ var (
 		Min: 1, Max: MaxInputsCount,
 	}
 
-	blockV3StrongParentsBasicBlockArrRules = &serix.ArrayRules{
-		Min: BlockMinStrongParents,
-		Max: BlockMaxParents,
-
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
-	}
-
-	blockV3NonStrongParentsBasicBlockArrRules = &serix.ArrayRules{
-		Min: BlockMinParents,
-		Max: BlockMaxParents,
-
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
-	}
-
-	blockV3StrongParentsValidatorBlockArrRules = &serix.ArrayRules{
-		Min: BlockMinStrongParents,
-		Max: BlockTypeValidatorMaxParents,
-
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
-	}
-
-	blockV3NonStrongParentsValidatorBlockArrRules = &serix.ArrayRules{
-		Min: BlockMinParents,
-		Max: BlockTypeValidatorMaxParents,
-
+	blockIDsArrRules = &serix.ArrayRules{
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
@@ -293,7 +269,9 @@ func V3API(protoParams *V3ProtocolParameters) API {
 
 	must(api.RegisterTypeSettings(RentStructure{}, serix.TypeSettings{}))
 
-	must(api.RegisterTypeSettings(TaggedData{}, serix.TypeSettings{}.WithObjectType(uint32(PayloadTaggedData))))
+	must(api.RegisterTypeSettings(TaggedData{},
+		serix.TypeSettings{}.WithObjectType(uint32(PayloadTaggedData))),
+	)
 
 	{
 		must(api.RegisterTypeSettings(Ed25519Signature{},
@@ -303,12 +281,24 @@ func V3API(protoParams *V3ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(IssuerFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureIssuer))))
-		must(api.RegisterTypeSettings(MetadataFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureMetadata))))
-		must(api.RegisterTypeSettings(SenderFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureSender))))
-		must(api.RegisterTypeSettings(TagFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureTag))))
-		must(api.RegisterTypeSettings(BlockIssuerFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureBlockIssuer))))
-		must(api.RegisterTypeSettings(StakingFeature{}, serix.TypeSettings{}.WithObjectType(uint8(FeatureStaking))))
+		must(api.RegisterTypeSettings(IssuerFeature{},
+			serix.TypeSettings{}.WithObjectType(uint8(FeatureIssuer))),
+		)
+		must(api.RegisterTypeSettings(MetadataFeature{},
+			serix.TypeSettings{}.WithObjectType(uint8(FeatureMetadata))),
+		)
+		must(api.RegisterTypeSettings(SenderFeature{},
+			serix.TypeSettings{}.WithObjectType(uint8(FeatureSender))),
+		)
+		must(api.RegisterTypeSettings(TagFeature{},
+			serix.TypeSettings{}.WithObjectType(uint8(FeatureTag))),
+		)
+		must(api.RegisterTypeSettings(BlockIssuerFeature{},
+			serix.TypeSettings{}.WithObjectType(uint8(FeatureBlockIssuer))),
+		)
+		must(api.RegisterTypeSettings(StakingFeature{},
+			serix.TypeSettings{}.WithObjectType(uint8(FeatureStaking))),
+		)
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*IssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*SenderFeature)(nil)))
@@ -318,13 +308,27 @@ func V3API(protoParams *V3ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(AddressUnlockCondition{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionAddress))))
-		must(api.RegisterTypeSettings(StorageDepositReturnUnlockCondition{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStorageDepositReturn))))
-		must(api.RegisterTypeSettings(TimelockUnlockCondition{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionTimelock))))
-		must(api.RegisterTypeSettings(ExpirationUnlockCondition{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionExpiration))))
-		must(api.RegisterTypeSettings(StateControllerAddressUnlockCondition{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStateControllerAddress))))
-		must(api.RegisterTypeSettings(GovernorAddressUnlockCondition{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionGovernorAddress))))
-		must(api.RegisterTypeSettings(ImmutableAccountUnlockCondition{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionImmutableAccount))))
+		must(api.RegisterTypeSettings(AddressUnlockCondition{},
+			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionAddress))),
+		)
+		must(api.RegisterTypeSettings(StorageDepositReturnUnlockCondition{},
+			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStorageDepositReturn))),
+		)
+		must(api.RegisterTypeSettings(TimelockUnlockCondition{},
+			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionTimelock))),
+		)
+		must(api.RegisterTypeSettings(ExpirationUnlockCondition{},
+			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionExpiration))),
+		)
+		must(api.RegisterTypeSettings(StateControllerAddressUnlockCondition{},
+			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStateControllerAddress))),
+		)
+		must(api.RegisterTypeSettings(GovernorAddressUnlockCondition{},
+			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionGovernorAddress))),
+		)
+		must(api.RegisterTypeSettings(ImmutableAccountUnlockCondition{},
+			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionImmutableAccount))),
+		)
 		must(api.RegisterInterfaceObjects((*UnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
 		must(api.RegisterInterfaceObjects((*UnlockCondition)(nil), (*StorageDepositReturnUnlockCondition)(nil)))
 		must(api.RegisterInterfaceObjects((*UnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
@@ -401,7 +405,9 @@ func V3API(protoParams *V3ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(FoundryOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputFoundry))))
+		must(api.RegisterTypeSettings(FoundryOutput{},
+			serix.TypeSettings{}.WithObjectType(uint8(OutputFoundry))),
+		)
 
 		must(api.RegisterTypeSettings(FoundryOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3UnlockCondArrRules),
@@ -426,7 +432,9 @@ func V3API(protoParams *V3ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(NFTOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputNFT))))
+		must(api.RegisterTypeSettings(NFTOutput{},
+			serix.TypeSettings{}.WithObjectType(uint8(OutputNFT))),
+		)
 
 		must(api.RegisterTypeSettings(NFTOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3UnlockCondArrRules),
@@ -472,9 +480,15 @@ func V3API(protoParams *V3ProtocolParameters) API {
 	{
 		must(api.RegisterTypeSettings(TransactionEssence{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
 
-		must(api.RegisterTypeSettings(CommitmentInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))))
-		must(api.RegisterTypeSettings(BICInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputBlockIssuanceCredit))))
-		must(api.RegisterTypeSettings(RewardInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputReward))))
+		must(api.RegisterTypeSettings(CommitmentInput{},
+			serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))),
+		)
+		must(api.RegisterTypeSettings(BICInput{},
+			serix.TypeSettings{}.WithObjectType(uint8(InputBlockIssuanceCredit))),
+		)
+		must(api.RegisterTypeSettings(RewardInput{},
+			serix.TypeSettings{}.WithObjectType(uint8(InputReward))),
+		)
 
 		must(api.RegisterTypeSettings(TxEssenceContextInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3ContextInputsArrRules),
@@ -484,7 +498,9 @@ func V3API(protoParams *V3ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*BICInput)(nil)))
 		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*RewardInput)(nil)))
 
-		must(api.RegisterTypeSettings(UTXOInput{}, serix.TypeSettings{}.WithObjectType(uint8(InputUTXO))))
+		must(api.RegisterTypeSettings(UTXOInput{},
+			serix.TypeSettings{}.WithObjectType(uint8(InputUTXO))),
+		)
 
 		must(api.RegisterTypeSettings(TxEssenceInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3InputsArrRules),
@@ -522,31 +538,21 @@ func V3API(protoParams *V3ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(ValidatorBlock{}, serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidator))))
-
-		must(api.RegisterTypeSettings(strongParentIDsValidatorBlock{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsValidatorBlockArrRules),
-		))
-		must(api.RegisterTypeSettings(weakParentIDsValidatorBlock{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsValidatorBlockArrRules),
-		))
-		must(api.RegisterTypeSettings(shallowLikeParentIDsValidatorBlock{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsValidatorBlockArrRules),
+		must(api.RegisterTypeSettings(BlockIDs{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockIDsArrRules),
 		))
 	}
 
 	{
-		must(api.RegisterTypeSettings(BasicBlock{}, serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))))
+		must(api.RegisterTypeSettings(ValidatorBlock{},
+			serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidator))),
+		)
+	}
 
-		must(api.RegisterTypeSettings(strongParentIDsBasicBlock{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsBasicBlockArrRules),
-		))
-		must(api.RegisterTypeSettings(weakParentIDsBasicBlock{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsBasicBlockArrRules),
-		))
-		must(api.RegisterTypeSettings(shallowLikeParentIDsBasicBlock{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsBasicBlockArrRules),
-		))
+	{
+		must(api.RegisterTypeSettings(BasicBlock{},
+			serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))),
+		)
 	}
 
 	{
