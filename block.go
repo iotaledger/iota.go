@@ -27,6 +27,8 @@ const (
 	BlockMinParents = 0
 	// BlockMaxParents defines the maximum amount of parents in a block.
 	BlockMaxParents = 8
+	// BlockTypeValidatorMaxParents defines the maximum amount of parents in a ValidatorBlock. TODO: replace number with committee size.
+	BlockTypeValidatorMaxParents = BlockMaxParents + 42
 )
 
 // BlockType denotes a type of Block.
@@ -231,21 +233,21 @@ type Block interface {
 	Hash(api API) (Identifier, error)
 }
 
-// StrongParentsIDs is a slice of BlockIDs the block strongly references.
-type strongParentsIDs = BlockIDs
+// strongParentIDsBasicBlock is a slice of BlockIDs the BasicBlock strongly references.
+type strongParentIDsBasicBlock = BlockIDs
 
-// WeakParentsIDs is a slice of BlockIDs the block weakly references.
-type WeakParentsIDs = BlockIDs
+// weakParentIDsBasicBlock is a slice of BlockIDs the block weakly references.
+type weakParentIDsBasicBlock = BlockIDs
 
-// ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
-type ShallowLikeParentIDs = BlockIDs
+// shallowLikeParentIDsBasicBlock is a slice of BlockIDs the block shallow like references.
+type shallowLikeParentIDsBasicBlock = BlockIDs
 
 // BasicBlock represents a basic vertex in the Tangle/BlockDAG.
 type BasicBlock struct {
 	// The parents the block references.
-	StrongParents      strongParentsIDs     `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
-	WeakParents        WeakParentsIDs       `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
-	ShallowLikeParents ShallowLikeParentIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+	StrongParents      strongParentIDsBasicBlock      `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
+	WeakParents        weakParentIDsBasicBlock        `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
+	ShallowLikeParents shallowLikeParentIDsBasicBlock `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
 
 	// The inner payload of the block. Can be nil.
 	Payload BlockPayload `serix:"3,optional,mapKey=payload,omitempty"`
@@ -278,12 +280,21 @@ func (b *BasicBlock) Hash(api API) (Identifier, error) {
 	return blake2b.Sum256(blockBytes), nil
 }
 
+// strongParentIDsValidatorBlock is a slice of BlockIDs the ValidatorBlock strongly references.
+type strongParentIDsValidatorBlock = BlockIDs
+
+// weakParentIDsValidatorBlock is a slice of BlockIDs the block weakly references.
+type weakParentIDsValidatorBlock = BlockIDs
+
+// shallowLikeParentIDsValidatorBlock is a slice of BlockIDs the block shallow like references.
+type shallowLikeParentIDsValidatorBlock = BlockIDs
+
 // ValidatorBlock represents a validator vertex in the Tangle/BlockDAG.
 type ValidatorBlock struct {
 	// The parents the block references.
-	StrongParents      strongParentsIDs     `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
-	WeakParents        WeakParentsIDs       `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
-	ShallowLikeParents ShallowLikeParentIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+	StrongParents      strongParentIDsValidatorBlock      `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
+	WeakParents        weakParentIDsValidatorBlock        `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
+	ShallowLikeParents shallowLikeParentIDsValidatorBlock `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
 
 	HighestSupportedVersion byte `serix:"3,mapKey=latestFinalizedSlot"`
 }

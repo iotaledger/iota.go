@@ -8,10 +8,6 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
-const (
-	defaultProtocolVersion = 3
-)
-
 // NewBasicBlockBuilder creates a new BasicBlockBuilder.
 func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 	basicBlock := &iotago.BasicBlock{}

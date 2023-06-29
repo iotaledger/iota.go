@@ -459,15 +459,18 @@ func RandBasicBlock(withPayloadType iotago.PayloadType) *iotago.BasicBlock {
 	}
 
 	return &iotago.BasicBlock{
-		StrongParents: SortedRandBlockIDs(1 + rand.Intn(7)),
+		StrongParents: SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
 		Payload:       payload,
 		BurnedMana:    RandMana(1000),
 	}
 }
 
-// func RandValidatorBlock() *iotago.ValidatorBlock {
-//
-// }
+func RandValidatorBlock() *iotago.ValidatorBlock {
+	return &iotago.ValidatorBlock{
+		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidatorMaxParents)),
+		HighestSupportedVersion: TestAPI.ProtocolParameters().Version() + 1,
+	}
+}
 
 func RandBasicBlockWithIssuerAndBurnedMana(issuerID iotago.AccountID, burnedAmount iotago.Mana) *iotago.ProtocolBlock {
 	basicBlock := RandBasicBlock(iotago.PayloadTransaction)

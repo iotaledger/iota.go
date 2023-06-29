@@ -35,6 +35,11 @@ func TestBlock_DeSerialize(t *testing.T) {
 			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTaggedData), tpkg.TestAPI),
 			target: &iotago.ProtocolBlock{},
 		},
+		{
+			name:   "ok - validator block",
+			source: tpkg.RandProtocolBlock(tpkg.RandValidatorBlock(), tpkg.TestAPI),
+			target: &iotago.ProtocolBlock{},
+		},
 	}
 
 	for _, tt := range tests {

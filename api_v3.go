@@ -178,16 +178,30 @@ var (
 		Min: 1, Max: MaxInputsCount,
 	}
 
-	blockV3StrongParentsArrRules = &serix.ArrayRules{
+	blockV3StrongParentsBasicBlockArrRules = &serix.ArrayRules{
 		Min: BlockMinStrongParents,
 		Max: BlockMaxParents,
 
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 
-	blockV3NonStrongParentsArrRules = &serix.ArrayRules{
+	blockV3NonStrongParentsBasicBlockArrRules = &serix.ArrayRules{
 		Min: BlockMinParents,
 		Max: BlockMaxParents,
+
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
+	}
+
+	blockV3StrongParentsValidatorBlockArrRules = &serix.ArrayRules{
+		Min: BlockMinStrongParents,
+		Max: BlockTypeValidatorMaxParents,
+
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
+	}
+
+	blockV3NonStrongParentsValidatorBlockArrRules = &serix.ArrayRules{
+		Min: BlockMinParents,
+		Max: BlockTypeValidatorMaxParents,
 
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
@@ -497,7 +511,7 @@ func V3API(protoParams *V3ProtocolParameters) API {
 		must(api.RegisterTypeSettings(Unlocks{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))
-		must(api.RegisterValidators(&Transaction{}, nil, func(ctx context.Context, tx *Transaction) error {
+		must(api.RegisterValidators(Transaction{}, nil, func(ctx context.Context, tx Transaction) error {
 			// limit unlock block count = input count
 			if len(tx.Unlocks) != len(tx.Essence.Inputs) {
 				return fmt.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(tx.Unlocks), len(tx.Essence.Inputs))
@@ -508,31 +522,30 @@ func V3API(protoParams *V3ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings((*ValidatorBlock)(nil), serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidator))))
+		must(api.RegisterTypeSettings(ValidatorBlock{}, serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidator))))
 
-		// TODO: register specific parent rules
-		must(api.RegisterTypeSettings(strongParentsIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsArrRules),
+		must(api.RegisterTypeSettings(strongParentIDsValidatorBlock{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsValidatorBlockArrRules),
 		))
-		must(api.RegisterTypeSettings(WeakParentsIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsArrRules),
+		must(api.RegisterTypeSettings(weakParentIDsValidatorBlock{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsValidatorBlockArrRules),
 		))
-		must(api.RegisterTypeSettings(ShallowLikeParentIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsArrRules),
+		must(api.RegisterTypeSettings(shallowLikeParentIDsValidatorBlock{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsValidatorBlockArrRules),
 		))
 	}
 
 	{
-		must(api.RegisterTypeSettings((*BasicBlock)(nil), serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))))
+		must(api.RegisterTypeSettings(BasicBlock{}, serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))))
 
-		must(api.RegisterTypeSettings(strongParentsIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsArrRules),
+		must(api.RegisterTypeSettings(strongParentIDsBasicBlock{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3StrongParentsBasicBlockArrRules),
 		))
-		must(api.RegisterTypeSettings(WeakParentsIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsArrRules),
+		must(api.RegisterTypeSettings(weakParentIDsBasicBlock{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsBasicBlockArrRules),
 		))
-		must(api.RegisterTypeSettings(ShallowLikeParentIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsArrRules),
+		must(api.RegisterTypeSettings(shallowLikeParentIDsBasicBlock{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockV3NonStrongParentsBasicBlockArrRules),
 		))
 	}
 
@@ -543,7 +556,6 @@ func V3API(protoParams *V3ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*Transaction)(nil)))
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*TaggedData)(nil)))
 
-		// TODO: make sure to register type settings and validators on non-pointer types
 		must(api.RegisterTypeSettings(ProtocolBlock{}, serix.TypeSettings{}))
 		must(api.RegisterValidators(ProtocolBlock{}, func(ctx context.Context, bytes []byte) error {
 			if len(bytes) > MaxBlockSize {
