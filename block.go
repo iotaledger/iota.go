@@ -219,6 +219,41 @@ func (b *ProtocolBlock) MustID(api API) BlockID {
 	return blockID
 }
 
+func (b *ProtocolBlock) Parents() (parents []BlockID) {
+	parents = make([]BlockID, 0)
+
+	parents = append(parents, b.Block.StrongParentIDs()...)
+	parents = append(parents, b.Block.WeakParentIDs()...)
+	parents = append(parents, b.Block.ShallowLikeParentIDs()...)
+
+	return parents
+}
+
+func (b *ProtocolBlock) ParentsWithType() (parents []Parent) {
+	parents = make([]Parent, 0)
+
+	for _, parentBlockID := range b.Block.StrongParentIDs() {
+		parents = append(parents, Parent{parentBlockID, StrongParentType})
+	}
+
+	for _, parentBlockID := range b.Block.WeakParentIDs() {
+		parents = append(parents, Parent{parentBlockID, WeakParentType})
+	}
+
+	for _, parentBlockID := range b.Block.ShallowLikeParentIDs() {
+		parents = append(parents, Parent{parentBlockID, ShallowLikeParentType})
+	}
+
+	return parents
+}
+
+// ForEachParent executes a consumer func for each parent.
+func (b *ProtocolBlock) ForEachParent(consumer func(parent Parent)) {
+	for _, parent := range b.ParentsWithType() {
+		consumer(parent)
+	}
+}
+
 type Block interface {
 	Type() BlockType
 
@@ -300,4 +335,29 @@ func (b *ValidatorBlock) Hash(api API) (Identifier, error) {
 	}
 
 	return blake2b.Sum256(blockBytes), nil
+}
+
+// ParentsType is a type that defines the type of the parent.
+type ParentsType uint8
+
+const (
+	// UndefinedParentType is the undefined parent.
+	UndefinedParentType ParentsType = iota
+	// StrongParentType is the ParentsType for a strong parent.
+	StrongParentType
+	// WeakParentType is the ParentsType for a weak parent.
+	WeakParentType
+	// ShallowLikeParentType is the ParentsType for the shallow like parent.
+	ShallowLikeParentType
+)
+
+// String returns string representation of ParentsType.
+func (p ParentsType) String() string {
+	return fmt.Sprintf("ParentType(%s)", []string{"Undefined", "Strong", "Weak", "Shallow Like"}[p])
+}
+
+// Parent is a parent that can be either strong or weak.
+type Parent struct {
+	ID   BlockID
+	Type ParentsType
 }
