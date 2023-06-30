@@ -154,15 +154,6 @@ func (outputID OutputID) Bytes() ([]byte, error) {
 	return outputID[:], nil
 }
 
-func (outputID *OutputID) FromBytes(bytes []byte) (int, error) {
-	var err error
-	*outputID, err = OutputIDFromBytes(bytes)
-	if err != nil {
-		return 0, err
-	}
-	return OutputIDLength, nil
-}
-
 // HexOutputIDs is a slice of hex encoded OutputID strings.
 type HexOutputIDs []string
 
@@ -197,12 +188,12 @@ func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputI
 }
 
 // OutputIDFromBytes creates a OutputID from the given bytes.
-func OutputIDFromBytes(bytes []byte) (OutputID, error) {
-	if len(bytes) != OutputIDLength {
-		return OutputID{}, ErrInvalidOutputIDLength
+func OutputIDFromBytes(bytes []byte) (OutputID, int, error) {
+	if len(bytes) < OutputIDLength {
+		return OutputID{}, 0, ErrInvalidOutputIDLength
 	}
 
-	return OutputID(bytes), nil
+	return OutputID(bytes), OutputIDLength, nil
 }
 
 // OutputIDFromHex creates a OutputID from the given hex encoded OutputID data.
@@ -212,7 +203,8 @@ func OutputIDFromHex(hexStr string) (OutputID, error) {
 		return OutputID{}, err
 	}
 
-	return OutputIDFromBytes(outputIDData)
+	o, _, err := OutputIDFromBytes(outputIDData)
+	return o, err
 }
 
 // MustOutputIDFromHex works like OutputIDFromHex but panics if an error is encountered.

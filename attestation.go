@@ -63,14 +63,6 @@ func (a Attestation) BlockID(api API) (BlockID, error) {
 	return NewSlotIdentifier(slotIndex, id), nil
 }
 
-func (a Attestation) Bytes(api API) (bytes []byte, err error) {
-	return api.Encode(a)
-}
-
-func (a *Attestation) FromBytes(api API, bytes []byte) (consumedBytes int, err error) {
-	return api.Decode(bytes, a)
-}
-
 func (a *Attestation) signingMessage(api API) ([]byte, error) {
 	headerHash, err := a.BlockHeader.Hash(api)
 	if err != nil {

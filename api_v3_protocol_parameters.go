@@ -127,6 +127,10 @@ func (p *V3ProtocolParameters) StakingUnbondingPeriod() EpochIndex {
 	return p.v3ProtocolParameters.StakingUnbondingPeriod
 }
 
+func (p *V3ProtocolParameters) LivenessThreshold() SlotIndex {
+	return p.v3ProtocolParameters.LivenessThreshold
+}
+
 func (p *V3ProtocolParameters) EvictionAge() SlotIndex {
 	return p.v3ProtocolParameters.EvictionAge
 }

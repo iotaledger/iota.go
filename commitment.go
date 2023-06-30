@@ -62,14 +62,6 @@ func (c *Commitment) Equals(other *Commitment) bool {
 		c.CumulativeWeight == other.CumulativeWeight
 }
 
-func (c *Commitment) Bytes(api API) ([]byte, error) {
-	return api.Encode(c)
-}
-
-func (c *Commitment) FromBytes(api API, bytes []byte) (int, error) {
-	return api.Decode(bytes, c)
-}
-
 func (c *Commitment) String() string {
 	return fmt.Sprintf("Commitment{\n\tIndex: %d\n\tPrevID: %s\n\tRootsID: %s\n\tCumulativeWeight: %d\n}",
 		c.Index, c.PrevID, c.RootsID, c.CumulativeWeight)

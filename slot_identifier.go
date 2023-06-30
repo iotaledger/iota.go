@@ -43,16 +43,18 @@ func SlotIdentifierFromHexString(hex string) (SlotIdentifier, error) {
 		return SlotIdentifier{}, err
 	}
 
-	return SlotIdentifierFromBytes(bytes)
+	s, _, err := SlotIdentifierFromBytes(bytes)
+
+	return s, err
 }
 
 // SlotIdentifierFromBytes returns a new SlotIdentifier represented by the passed bytes.
-func SlotIdentifierFromBytes(bytes []byte) (SlotIdentifier, error) {
-	if len(bytes) != SlotIdentifierLength {
-		return SlotIdentifier{}, ErrInvalidIdentifierLength
+func SlotIdentifierFromBytes(bytes []byte) (SlotIdentifier, int, error) {
+	if len(bytes) < SlotIdentifierLength {
+		return SlotIdentifier{}, 0, ErrInvalidIdentifierLength
 	}
 
-	return SlotIdentifier(bytes), nil
+	return SlotIdentifier(bytes), SlotIdentifierLength, nil
 }
 
 // MustSlotIdentifierFromHexString converts the hex to a SlotIdentifier representation.
@@ -67,15 +69,6 @@ func MustSlotIdentifierFromHexString(hex string) SlotIdentifier {
 
 func (id SlotIdentifier) Bytes() ([]byte, error) {
 	return id[:], nil
-}
-
-func (id *SlotIdentifier) FromBytes(bytes []byte) (int, error) {
-	var err error
-	*id, err = SlotIdentifierFromBytes(bytes)
-	if err != nil {
-		return 0, err
-	}
-	return SlotIdentifierLength, nil
 }
 
 func (id SlotIdentifier) MarshalText() (text []byte, err error) {

@@ -75,6 +75,8 @@ type ProtocolParameters interface {
 
 	StakingUnbondingPeriod() EpochIndex
 
+	LivenessThreshold() SlotIndex
+
 	EvictionAge() SlotIndex
 
 	Bytes() ([]byte, error)

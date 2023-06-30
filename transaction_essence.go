@@ -163,7 +163,7 @@ func (u *TransactionEssence) Size() int {
 
 	return util.NumByteLen(TransactionEssenceNormal) +
 		util.NumByteLen(u.NetworkID) +
-		len(SlotIndex(0).Bytes()) +
+		SlotIndexLength +
 		u.ContextInputs.Size() +
 		u.Inputs.Size() +
 		InputsCommitmentLength +

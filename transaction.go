@@ -3,7 +3,6 @@ package iotago
 import (
 	"errors"
 	"fmt"
-
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -138,6 +137,11 @@ func (t *Transaction) Size() int {
 	return util.NumByteLen(uint32(PayloadTransaction)) +
 		t.Essence.Size() +
 		t.Unlocks.Size()
+}
+
+func (t *Transaction) String() string {
+	//TODO: stringify for debugging purposes
+	return fmt.Sprintf("Transaction[%v, %v]", t.Essence, t.Unlocks)
 }
 
 // syntacticallyValidate syntactically validates the Transaction.
