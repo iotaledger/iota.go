@@ -440,7 +440,7 @@ func RandProtocolBlock(block iotago.Block, api iotago.API) *iotago.ProtocolBlock
 	return &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  TestAPI.ProtocolParameters().Version(),
-			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(api),
+			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
 			IssuerID:         RandAccountID(),
 		},
 		Block:     block,

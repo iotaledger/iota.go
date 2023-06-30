@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -10,15 +11,19 @@ const (
 
 type CommitmentID = SlotIdentifier
 
+var EmptyCommitmentID = CommitmentID{}
+
 type Commitment struct {
-	Index            SlotIndex    `serix:"0,mapKey=index"`
-	PrevID           CommitmentID `serix:"1,mapKey=prevID"`
-	RootsID          Identifier   `serix:"2,mapKey=rootsID"`
-	CumulativeWeight uint64       `serix:"3,mapKey=cumulativeWeight"`
+	Version          byte         `serix:"0,mapKey=version"`
+	Index            SlotIndex    `serix:"1,mapKey=index"`
+	PrevID           CommitmentID `serix:"2,mapKey=prevID"`
+	RootsID          Identifier   `serix:"3,mapKey=rootsID"`
+	CumulativeWeight uint64       `serix:"4,mapKey=cumulativeWeight"`
 }
 
-func NewCommitment(index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64) *Commitment {
+func NewCommitment(version byte, index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64) *Commitment {
 	return &Commitment{
+		Version:          version,
 		Index:            index,
 		PrevID:           prevID,
 		RootsID:          rootsID,
@@ -26,20 +31,22 @@ func NewCommitment(index SlotIndex, prevID CommitmentID, rootsID Identifier, cum
 	}
 }
 
-func NewEmptyCommitment() *Commitment {
-	return &Commitment{}
+func NewEmptyCommitment(version byte) *Commitment {
+	return &Commitment{
+		Version: version,
+	}
 }
 
-func (c *Commitment) ID(api API) (CommitmentID, error) {
-	data, err := api.Encode(c)
+func (c *Commitment) ID() (CommitmentID, error) {
+	data, err := commonSerixAPI().Encode(context.TODO(), c)
 	if err != nil {
 		return CommitmentID{}, fmt.Errorf("can't compute commitment ID: %w", err)
 	}
 	return SlotIdentifierRepresentingData(c.Index, data), nil
 }
 
-func (c *Commitment) MustID(api API) CommitmentID {
-	id, err := c.ID(api)
+func (c *Commitment) MustID() CommitmentID {
+	id, err := c.ID()
 	if err != nil {
 		panic(err)
 	}
@@ -47,8 +54,8 @@ func (c *Commitment) MustID(api API) CommitmentID {
 	return id
 }
 
-func (c *Commitment) Equals(api API, other *Commitment) bool {
-	return c.MustID(api) == other.MustID(api) &&
+func (c *Commitment) Equals(other *Commitment) bool {
+	return c.MustID() == other.MustID() &&
 		c.PrevID == other.PrevID &&
 		c.Index == other.Index &&
 		c.RootsID == other.RootsID &&

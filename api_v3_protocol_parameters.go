@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -128,6 +129,10 @@ func (p *V3ProtocolParameters) StakingUnbondingPeriod() EpochIndex {
 
 func (p *V3ProtocolParameters) EvictionAge() SlotIndex {
 	return p.v3ProtocolParameters.EvictionAge
+}
+
+func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
+	return commonSerixAPI().Encode(context.TODO(), p)
 }
 
 func (p *V3ProtocolParameters) String() string {

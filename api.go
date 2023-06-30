@@ -28,6 +28,10 @@ type API interface {
 	ManaDecayProvider() *ManaDecayProvider
 }
 
+func LatestProtocolVersion() byte {
+	return apiV3Version
+}
+
 // LatestAPI creates a new API instance conforming to the latest IOTA protocol version.
 func LatestAPI(protoParams ProtocolParameters) API {
 	return V3API(protoParams.(*V3ProtocolParameters))
@@ -72,6 +76,8 @@ type ProtocolParameters interface {
 	StakingUnbondingPeriod() EpochIndex
 
 	EvictionAge() SlotIndex
+
+	Bytes() ([]byte, error)
 }
 
 // Sizer is an object knowing its own byte size.

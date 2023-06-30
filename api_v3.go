@@ -228,46 +228,16 @@ func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, er
 	return v.serixAPI.Decode(context.TODO(), b, obj, opts...)
 }
 
-func commonSerixAPI() *serix.API {
-	api := serix.NewAPI()
-
-	{
-		must(api.RegisterTypeSettings(Ed25519Address{},
-			serix.TypeSettings{}.WithObjectType(uint8(AddressEd25519)).WithMapKey("pubKeyHash")),
-		)
-		must(api.RegisterTypeSettings(AccountAddress{},
-			serix.TypeSettings{}.WithObjectType(uint8(AddressAccount)).WithMapKey("accountId")),
-		)
-		must(api.RegisterTypeSettings(NFTAddress{},
-			serix.TypeSettings{}.WithObjectType(uint8(AddressNFT)).WithMapKey("nftId")),
-		)
-		must(api.RegisterInterfaceObjects((*Address)(nil), (*Ed25519Address)(nil)))
-		must(api.RegisterInterfaceObjects((*Address)(nil), (*AccountAddress)(nil)))
-		must(api.RegisterInterfaceObjects((*Address)(nil), (*NFTAddress)(nil)))
-	}
-
-	return api
-}
-
 // V3API instantiates an API instance with types registered conforming to protocol version 3 (iota-core 1.0) of the IOTA protocol.
-func V3API(protoParams *V3ProtocolParameters) API {
+func V3API(protoParams ProtocolParameters) API {
 	api := commonSerixAPI()
 
 	v3 := &v3api{
 		serixAPI:           api,
-		protocolParameters: protoParams,
+		protocolParameters: protoParams.(*V3ProtocolParameters),
 		timeProvider:       protoParams.TimeProvider(),
 		manaDecayProvider:  protoParams.ManaDecayProvider(),
 	}
-
-	{
-		must(api.RegisterTypeSettings(V3ProtocolParameters{},
-			serix.TypeSettings{}.WithObjectType(uint8(ProtocolParametersV3))),
-		)
-		must(api.RegisterInterfaceObjects((*ProtocolParameters)(nil), (*V3ProtocolParameters)(nil)))
-	}
-
-	must(api.RegisterTypeSettings(RentStructure{}, serix.TypeSettings{}))
 
 	must(api.RegisterTypeSettings(TaggedData{},
 		serix.TypeSettings{}.WithObjectType(uint32(PayloadTaggedData))),
