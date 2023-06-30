@@ -15,7 +15,7 @@ type V3ProtocolParameters struct {
 
 type v3ProtocolParameters struct {
 	// Version defines the version of the protocol this protocol parameters are for.
-	Version byte `serix:"0,mapKey=version"`
+	Version Version `serix:"0,mapKey=version"`
 
 	// NetworkName defines the human friendly name of the network.
 	NetworkName string `serix:"1,lengthPrefixType=uint8,mapKey=networkName"`
@@ -66,7 +66,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithNetworkOptions("testnet", PrefixTestnet),
 			WithSupplyOptions(1813620509061365, 100, 1, 10),
 			WithTimeProviderOptions(time.Now().Unix(), 10, 13),
-			//TODO: add sane default values
+			// TODO: add sane default values
 			WithManaOptions(1,
 				0,
 				[]uint32{
@@ -90,7 +90,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 
 var _ ProtocolParameters = &V3ProtocolParameters{}
 
-func (p *V3ProtocolParameters) Version() byte {
+func (p *V3ProtocolParameters) Version() Version {
 	return p.v3ProtocolParameters.Version
 }
 

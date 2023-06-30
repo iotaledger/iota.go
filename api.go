@@ -8,6 +8,8 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
+type Version = byte
+
 // API handles en/decoding of IOTA protocol objects.
 type API interface {
 	// Encode encodes the given object to bytes.
@@ -28,7 +30,7 @@ type API interface {
 	ManaDecayProvider() *ManaDecayProvider
 }
 
-func LatestProtocolVersion() byte {
+func LatestProtocolVersion() Version {
 	return apiV3Version
 }
 
@@ -56,17 +58,17 @@ const (
 
 // ProtocolParameters defines the parameters of the protocol.
 type ProtocolParameters interface {
-	// ParamVersion defines the version of the protocol running.
-	Version() byte
-	// ParamNetworkName defines the human friendly name of the network.
+	// Version defines the version of the protocol running.
+	Version() Version
+	// NetworkName defines the human friendly name of the network.
 	NetworkName() string
-	// ParamNetworkID defines the ID of the network which is derived from the network name.
+	// NetworkID defines the ID of the network which is derived from the network name.
 	NetworkID() NetworkID
-	// ParamBech32HRP defines the HRP prefix used for Bech32 addresses in the network.
+	// Bech32HRP defines the HRP prefix used for Bech32 addresses in the network.
 	Bech32HRP() NetworkPrefix
-	// ParamRentStructure defines the rent structure used by given node/network.
+	// RentStructure defines the rent structure used by given node/network.
 	RentStructure() *RentStructure
-	// ParamTokenSupply defines the current token supply on the network.
+	// TokenSupply defines the current token supply on the network.
 	TokenSupply() BaseToken
 
 	TimeProvider() *TimeProvider

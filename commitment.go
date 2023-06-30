@@ -21,7 +21,7 @@ type Commitment struct {
 	CumulativeWeight uint64       `serix:"4,mapKey=cumulativeWeight"`
 }
 
-func NewCommitment(version byte, index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64) *Commitment {
+func NewCommitment(version Version, index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64) *Commitment {
 	return &Commitment{
 		Version:          version,
 		Index:            index,
@@ -31,7 +31,7 @@ func NewCommitment(version byte, index SlotIndex, prevID CommitmentID, rootsID I
 	}
 }
 
-func NewEmptyCommitment(version byte) *Commitment {
+func NewEmptyCommitment(version Version) *Commitment {
 	return &Commitment{
 		Version: version,
 	}

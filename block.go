@@ -95,7 +95,7 @@ type BlockPayload interface {
 const BlockHeaderLength = 1 + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + serializer.UInt64ByteSize + AccountIDLength
 
 type BlockHeader struct {
-	ProtocolVersion byte      `serix:"0,mapKey=protocolVersion"`
+	ProtocolVersion Version   `serix:"0,mapKey=protocolVersion"`
 	NetworkID       NetworkID `serix:"1,mapKey=networkId"`
 
 	IssuingTime         time.Time    `serix:"2,mapKey=issuingTime"`
@@ -309,7 +309,7 @@ type ValidatorBlock struct {
 	WeakParents        BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents,minLen=0,maxLen=50"`
 	ShallowLikeParents BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents,minLen=0,maxLen=50"`
 
-	HighestSupportedVersion byte `serix:"3,mapKey=latestFinalizedSlot"`
+	HighestSupportedVersion Version `serix:"3,mapKey=latestFinalizedSlot"`
 }
 
 func (b *ValidatorBlock) Type() BlockType {

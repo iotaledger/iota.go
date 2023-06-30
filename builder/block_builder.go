@@ -49,7 +49,7 @@ func (b *BasicBlockBuilder) Build() (*iotago.ProtocolBlock, error) {
 }
 
 // ProtocolVersion sets the protocol version.
-func (b *BasicBlockBuilder) ProtocolVersion(version byte) *BasicBlockBuilder {
+func (b *BasicBlockBuilder) ProtocolVersion(version iotago.Version) *BasicBlockBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -210,7 +210,7 @@ func (v *ValidatorBlockBuilder) Build() (*iotago.ProtocolBlock, error) {
 }
 
 // ProtocolVersion sets the protocol version.
-func (v *ValidatorBlockBuilder) ProtocolVersion(version byte) *ValidatorBlockBuilder {
+func (v *ValidatorBlockBuilder) ProtocolVersion(version iotago.Version) *ValidatorBlockBuilder {
 	if v.err != nil {
 		return v
 	}
@@ -309,7 +309,7 @@ func (v *ValidatorBlockBuilder) ShallowLikeParents(parents iotago.BlockIDs) *Val
 }
 
 // HighestSupportedVersion sets the highest supported version.
-func (v *ValidatorBlockBuilder) HighestSupportedVersion(highestSupportedVersion byte) *ValidatorBlockBuilder {
+func (v *ValidatorBlockBuilder) HighestSupportedVersion(highestSupportedVersion iotago.Version) *ValidatorBlockBuilder {
 	if v.err != nil {
 		return v
 	}
