@@ -2,11 +2,11 @@ package iotago
 
 import (
 	"encoding/hex"
-	"errors"
 	"sync"
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -18,7 +18,7 @@ const (
 var (
 	emptyIdentifier = Identifier{}
 
-	ErrInvalidIdentifierLength = errors.New("Invalid identifier length")
+	ErrInvalidIdentifierLength = ierrors.New("Invalid identifier length")
 )
 
 // Identifier is a 32 byte hash value that can be used to uniquely identify some blob of data.

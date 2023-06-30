@@ -1,8 +1,7 @@
 package iotago
 
 import (
-	"errors"
-	"fmt"
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 // VBytes defines the type of the virtual byte costs.
@@ -21,9 +20,9 @@ const (
 var (
 	// ErrVByteRentNotCovered gets returned when a NonEphemeralObject does not cover the state rent
 	// cost which are calculated from its virtual byte costs.
-	ErrVByteRentNotCovered = errors.New("virtual byte rent costs not covered")
+	ErrVByteRentNotCovered = ierrors.New("virtual byte rent costs not covered")
 	// ErrTypeIsNotSupportedRentStructure gets returned when a serializable was found to not be a supported RentStructure.
-	ErrTypeIsNotSupportedRentStructure = errors.New("serializable is not a supported rent structure")
+	ErrTypeIsNotSupportedRentStructure = ierrors.New("serializable is not a supported rent structure")
 )
 
 // Multiply multiplies in with this factor.
@@ -52,7 +51,7 @@ type RentStructure struct {
 func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent BaseToken) (BaseToken, error) {
 	minRent := r.MinRent(object)
 	if rent < minRent {
-		return 0, fmt.Errorf("%w: needed %d but only got %d", ErrVByteRentNotCovered, minRent, rent)
+		return 0, ierrors.Wrapf(ErrVByteRentNotCovered, "needed %d but only got %d", minRent, rent)
 	}
 	return minRent, nil
 }

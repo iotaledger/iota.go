@@ -3,8 +3,9 @@ package base32
 
 //lint:gomnd
 import (
-	"errors"
 	"fmt"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 // EncodedLen returns the length of the base32 encoding of an input buffer of length n.
@@ -57,9 +58,9 @@ func Encode(dst []uint8, src []byte) int {
 
 var (
 	// ErrInvalidLength reports an attempt to decode an input of invalid length.
-	ErrInvalidLength = errors.New("invalid length")
+	ErrInvalidLength = ierrors.New("invalid length")
 	// ErrNonZeroPadding reports an attempt to decode an input without zero padding.
-	ErrNonZeroPadding = errors.New("non-zero padding")
+	ErrNonZeroPadding = ierrors.New("non-zero padding")
 )
 
 // A CorruptInputError is a description of a base32 syntax error.

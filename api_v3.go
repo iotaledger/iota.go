@@ -3,8 +3,8 @@ package iotago
 import (
 	"context"
 	"crypto/ed25519"
-	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
@@ -469,11 +469,11 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterValidators(&Transaction{}, nil, func(ctx context.Context, tx *Transaction) error {
 			// limit unlock block count = input count
 			if len(tx.Unlocks) != len(tx.Essence.Inputs) {
-				return fmt.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(tx.Unlocks), len(tx.Essence.Inputs))
+				return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(tx.Unlocks), len(tx.Essence.Inputs))
 			}
 			protoParams := ctx.Value(ProtocolAPIContextKey)
 			if protoParams == nil {
-				return fmt.Errorf("unable to validate transaction: %w", ErrMissingProtocolParams)
+				return ierrors.Errorf("unable to validate transaction: %w", ErrMissingProtocolParams)
 			}
 			return tx.syntacticallyValidate(protoParams.(*ProtocolParameters))
 		}))
@@ -484,17 +484,17 @@ func V3API(protoParams *ProtocolParameters) API {
 		must(api.RegisterTypeSettings(Block{}, serix.TypeSettings{}))
 		must(api.RegisterValidators(&Block{}, func(ctx context.Context, bytes []byte) error {
 			if len(bytes) > MaxBlockSize {
-				return fmt.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, len(bytes))
+				return ierrors.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, len(bytes))
 			}
 			return nil
 		}, func(ctx context.Context, block *Block) error {
 			val := ctx.Value(ProtocolAPIContextKey)
 			if val == nil {
-				return fmt.Errorf("unable to validate block: %w", ErrMissingProtocolParams)
+				return ierrors.Errorf("unable to validate block: %w", ErrMissingProtocolParams)
 			}
 			protoParams := val.(*ProtocolParameters)
 			if protoParams.Version != block.ProtocolVersion {
-				return fmt.Errorf("mismatched protocol version: wanted %d, got %d in block", protoParams.Version, block.ProtocolVersion)
+				return ierrors.Errorf("mismatched protocol version: wanted %d, got %d in block", protoParams.Version, block.ProtocolVersion)
 			}
 
 			if len(block.WeakParents) > 0 {
@@ -505,7 +505,7 @@ func V3API(protoParams *ProtocolParameters) API {
 
 				for _, parent := range block.WeakParents {
 					if _, contains := nonWeakParents[parent]; contains {
-						return fmt.Errorf("weak parents must be disjunct to the rest of the parents")
+						return ierrors.Errorf("weak parents must be disjunct to the rest of the parents")
 					}
 				}
 			}

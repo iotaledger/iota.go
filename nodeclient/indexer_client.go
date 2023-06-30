@@ -2,10 +2,10 @@ package nodeclient
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -24,7 +24,7 @@ var (
 var (
 	// ErrIndexerNotFound gets returned when the indexer doesn't find any result.
 	// Only applicable to single element queries.
-	ErrIndexerNotFound = errors.New("no result found")
+	ErrIndexerNotFound = ierrors.New("no result found")
 
 	outputTypeToIndexerRoute = map[iotago.OutputType]string{
 		iotago.OutputBasic:   IndexerAPIRouteBasicOutputs,
@@ -102,7 +102,7 @@ func (resultSet *IndexerResultSet) Outputs() (iotago.Outputs[iotago.Output], err
 	for i, outputID := range outputIDs {
 		output, err := resultSet.client.OutputByID(resultSet.ctx, outputID)
 		if err != nil {
-			return nil, fmt.Errorf("unable to fetch output %s: %w", outputID.ToHex(), err)
+			return nil, ierrors.Errorf("unable to fetch output %s: %w", outputID.ToHex(), err)
 		}
 		outputs[i] = output
 	}
@@ -155,7 +155,7 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 	}
 
 	if len(res.Items) == 0 {
-		return nil, nil, res.LedgerIndex, fmt.Errorf("%w for route %s", ErrIndexerNotFound, route)
+		return nil, nil, res.LedgerIndex, ierrors.Errorf("%w for route %s", ErrIndexerNotFound, route)
 	}
 
 	outputID := res.Items.MustOutputIDs()[0]

@@ -1,15 +1,13 @@
 package builder
 
 import (
-	"errors"
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 var (
 	// ErrTransactionBuilder defines a generic error occurring within the TransactionBuilder.
-	ErrTransactionBuilder = errors.New("transaction builder error")
+	ErrTransactionBuilder = ierrors.New("transaction builder error")
 )
 
 // NewTransactionBuilder creates a new TransactionBuilder.
@@ -116,9 +114,9 @@ func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signe
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
 	case protoParams == nil:
-		return nil, fmt.Errorf("%w: must supply protocol parameters", ErrTransactionBuilder)
+		return nil, ierrors.Wrap(ErrTransactionBuilder, "must supply protocol parameters")
 	case signer == nil:
-		return nil, fmt.Errorf("%w: must supply signer", ErrTransactionBuilder)
+		return nil, ierrors.Wrap(ErrTransactionBuilder, "must supply signer")
 	}
 
 	// prepare the inputs commitment in the same order as the inputs in the essence
@@ -149,7 +147,7 @@ func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signe
 		if !unlocked {
 			// the output's owning chain address must have been unlocked already
 			if _, is := addr.(iotago.ChainAddress); is {
-				return nil, fmt.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", i, addr, addr.Type())
+				return nil, ierrors.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", i, addr, addr.Type())
 			}
 
 			// produce signature

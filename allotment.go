@@ -1,8 +1,7 @@
 package iotago
 
 import (
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -53,7 +52,7 @@ func AllotmentsSyntacticalUnique() AllotmentsSyntacticalValidationFunc {
 	return func(index int, allotment *Allotment) error {
 		k := string(allotment.AccountID[:])
 		if j, has := allotmentsSet[k]; has {
-			return fmt.Errorf("%w: allotment %d and %d share the same Account", ErrAllotmentsNotUnique, j, index)
+			return ierrors.Wrapf(ErrAllotmentsNotUnique, "allotment %d and %d share the same Account", j, index)
 		}
 		allotmentsSet[k] = index
 

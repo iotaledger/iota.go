@@ -1,8 +1,7 @@
 package builder
 
 import (
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
@@ -232,7 +231,7 @@ func (builder *AccountOutputBuilder) MustBuild() *iotago.AccountOutput {
 // Build builds the iotago.AccountOutput.
 func (builder *AccountOutputBuilder) Build() (*iotago.AccountOutput, error) {
 	if builder.prev != nil && builder.govCtrlReq && builder.stateCtrlReq {
-		return nil, fmt.Errorf("builder calls require both state and governor transitions which is not possible")
+		return nil, ierrors.New("builder calls require both state and governor transitions which is not possible")
 	}
 
 	if builder.stateCtrlReq {
@@ -241,7 +240,7 @@ func (builder *AccountOutputBuilder) Build() (*iotago.AccountOutput, error) {
 
 	if builder.prev != nil {
 		if !builder.prev.ImmutableFeatures.Equal(builder.output.ImmutableFeatures) {
-			return nil, fmt.Errorf("immutable features are not allowed to be changed")
+			return nil, ierrors.New("immutable features are not allowed to be changed")
 		}
 	}
 
@@ -403,7 +402,7 @@ func (builder *FoundryOutputBuilder) MustBuild() *iotago.FoundryOutput {
 func (builder *FoundryOutputBuilder) Build() (*iotago.FoundryOutput, error) {
 	if builder.prev != nil {
 		if !builder.prev.ImmutableFeatures.Equal(builder.output.ImmutableFeatures) {
-			return nil, fmt.Errorf("immutable features are not allowed to be changed")
+			return nil, ierrors.New("immutable features are not allowed to be changed")
 		}
 	}
 
@@ -536,7 +535,7 @@ func (builder *NFTOutputBuilder) MustBuild() *iotago.NFTOutput {
 func (builder *NFTOutputBuilder) Build() (*iotago.NFTOutput, error) {
 	if builder.prev != nil {
 		if !builder.prev.ImmutableFeatures.Equal(builder.output.ImmutableFeatures) {
-			return nil, fmt.Errorf("immutable features are not allowed to be changed")
+			return nil, ierrors.New("immutable features are not allowed to be changed")
 		}
 	}
 

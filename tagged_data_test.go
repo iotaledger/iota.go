@@ -3,9 +3,8 @@ package iotago_test
 import (
 	"testing"
 
-	"github.com/iotaledger/iota.go/v4/tpkg"
-
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestTaggedDataDeSerialize(t *testing.T) {

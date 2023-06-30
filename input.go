@@ -3,6 +3,7 @@ package iotago
 import (
 	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -33,7 +34,7 @@ var (
 
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
-	ErrRefUTXOIndexInvalid = fmt.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
+	ErrRefUTXOIndexInvalid = ierrors.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
 )
 
 // Inputs a slice of Input.
@@ -81,31 +82,31 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 			accountID := castInput.AccountID
 			k := string(accountID[:])
 			if j, has := utxoSet[k]; has {
-				return fmt.Errorf("%w: input %d and %d share the same Account ref", ErrInputBICNotUnique, j, index)
+				return ierrors.Wrapf(ErrInputBICNotUnique, "input %d and %d share the same Account ref", j, index)
 			}
 			utxoSet[k] = index
 		case *RewardInput:
 			utxoIndex := castInput.Index
 			if j, has := rewardSet[utxoIndex]; has {
-				return fmt.Errorf("%w: input %d and %d share the same input index", ErrInputRewardNotUnique, j, index)
+				return ierrors.Wrapf(ErrInputRewardNotUnique, "input %d and %d share the same input index", j, index)
 			}
 			rewardSet[utxoIndex] = index
 		case *CommitmentInput:
 			commitmentID := castInput.CommitmentID
 			k := string(commitmentID[:])
 			if j, has := commitmentsSet[k]; has {
-				return fmt.Errorf("%w: input %d and %d share the same Commitment ref", ErrInputCommitmentNotUnique, j, index)
+				return ierrors.Wrapf(ErrInputCommitmentNotUnique, "input %d and %d share the same Commitment ref", j, index)
 			}
 			commitmentsSet[k] = index
 		case IndexedUTXOReferencer:
 			utxoRef := castInput.Ref()
 			k := string(utxoRef[:])
 			if j, has := bicSet[k]; has {
-				return fmt.Errorf("%w: input %d and %d share the same UTXO ref", ErrInputUTXORefsNotUnique, j, index)
+				return ierrors.Wrapf(ErrInputUTXORefsNotUnique, "input %d and %d share the same UTXO ref", j, index)
 			}
 			bicSet[k] = index
 		default:
-			return fmt.Errorf("%w: input %d, tx can only contain IndexedUTXOReferencer, CommitmentInput or BICInput inputs", ErrUnsupportedInputType, index)
+			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer, CommitmentInput or BICInput inputs", index)
 		}
 
 		return nil
@@ -118,10 +119,10 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 		switch castInput := input.(type) {
 		case IndexedUTXOReferencer:
 			if castInput.Index() < RefUTXOIndexMin || castInput.Index() > RefUTXOIndexMax {
-				return fmt.Errorf("%w: input %d", ErrRefUTXOIndexInvalid, index)
+				return ierrors.Wrapf(ErrRefUTXOIndexInvalid, "input %d", index)
 			}
 		default:
-			return fmt.Errorf("%w: input %d, tx can only contain IndexedUTXOReferencer, CommitmentInput or BICInput inputs", ErrUnsupportedInputType, index)
+			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer, CommitmentInput or BICInput inputs", index)
 		}
 		return nil
 	}
