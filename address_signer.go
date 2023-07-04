@@ -2,15 +2,15 @@ package iotago
 
 import (
 	"crypto/ed25519"
-	"errors"
-	"fmt"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 var (
 	// ErrAddressKeysNotMapped gets returned if the needed keys to sign a message are absent/not mapped.
-	ErrAddressKeysNotMapped = errors.New("key(s) for address not mapped")
+	ErrAddressKeysNotMapped = ierrors.New("key(s) for address not mapped")
 	// ErrAddressKeysWrongType gets returned if the specified keys to sign a message for a given address are of the wrong type.
-	ErrAddressKeysWrongType = errors.New("key(s) for address are of wrong type")
+	ErrAddressKeysWrongType = ierrors.New("key(s) for address are of wrong type")
 )
 
 // AddressSigner produces signatures for messages which get verified against a given address.
@@ -60,12 +60,12 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signat
 	case *Ed25519Address:
 		maybePrvKey, ok := s.addrKeys[addr.String()]
 		if !ok {
-			return nil, fmt.Errorf("can't sign message for Ed25519 address: %w", ErrAddressKeysNotMapped)
+			return nil, ierrors.Errorf("can't sign message for Ed25519 address: %w", ErrAddressKeysNotMapped)
 		}
 
 		prvKey, ok := maybePrvKey.(ed25519.PrivateKey)
 		if !ok {
-			return nil, fmt.Errorf("%w: Ed25519 address needs to have a %T private key mapped but got %T", ErrAddressKeysWrongType, ed25519.PrivateKey{}, maybePrvKey)
+			return nil, ierrors.Wrapf(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, maybePrvKey)
 		}
 
 		ed25519Sig := &Ed25519Signature{}
@@ -74,6 +74,6 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signat
 
 		return ed25519Sig, nil
 	default:
-		return nil, fmt.Errorf("%w: type %T", ErrUnknownAddrType, addr)
+		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)
 	}
 }

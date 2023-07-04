@@ -3,18 +3,18 @@ package iotago
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"sync"
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
 var (
 	// ErrMissingProtocolParams is returned when ProtocolParameters are missing for operations which require them.
-	ErrMissingProtocolParams = errors.New("missing protocol parameters")
+	ErrMissingProtocolParams = ierrors.New("missing protocol parameters")
 
 	// internal API instance used to encode/decode objects where protocol parameters don't matter.
 	_internalAPI   API

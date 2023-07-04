@@ -3,7 +3,6 @@ package iotago
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"math/big"
 	"sort"
@@ -13,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -99,12 +99,12 @@ const (
 )
 
 var (
-	ErrInvalidOutputIDLength = errors.New("Invalid outputID length")
+	ErrInvalidOutputIDLength = ierrors.New("Invalid outputID length")
 
 	// ErrTransDepIdentOutputNonUTXOChainID gets returned when a TransDepIdentOutput has a ChainID which is not a UTXOIDChainID.
-	ErrTransDepIdentOutputNonUTXOChainID = errors.New("transition dependable ident outputs must have UTXO chain IDs")
+	ErrTransDepIdentOutputNonUTXOChainID = ierrors.New("transition dependable ident outputs must have UTXO chain IDs")
 	// ErrTransDepIdentOutputNextInvalid gets returned when a TransDepIdentOutput's next state is invalid.
-	ErrTransDepIdentOutputNextInvalid = errors.New("transition dependable ident output's next output is invalid")
+	ErrTransDepIdentOutputNextInvalid = ierrors.New("transition dependable ident output's next output is invalid")
 )
 
 // defines the default offset virtual byte costs for an output.
@@ -291,11 +291,11 @@ func (outputIDs OutputIDs) OrderedSet(set OutputSet) Outputs[Output] {
 
 var (
 	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.
-	ErrDepositAmountMustBeGreaterThanZero = errors.New("deposit amount must be greater than zero")
+	ErrDepositAmountMustBeGreaterThanZero = ierrors.New("deposit amount must be greater than zero")
 	// ErrChainMissing gets returned when a chain is missing.
-	ErrChainMissing = errors.New("chain missing")
+	ErrChainMissing = ierrors.New("chain missing")
 	// ErrNonUniqueChainOutputs gets returned when multiple ChainOutputs(s) with the same ChainID exist within sets.
-	ErrNonUniqueChainOutputs = errors.New("non unique chain outputs")
+	ErrNonUniqueChainOutputs = ierrors.New("non unique chain outputs")
 )
 
 // ChainTransitionError gets returned when a state transition validation fails for a ChainOutput.
@@ -357,12 +357,12 @@ func (outputs Outputs[T]) Commitment() ([]byte, error) {
 	for _, output := range outputs {
 		outputBytes, err := internalEncode(output)
 		if err != nil {
-			return nil, fmt.Errorf("unable to compute commitment hash: %w", err)
+			return nil, ierrors.Errorf("unable to compute commitment hash: %w", err)
 		}
 
 		outputHash := blake2b.Sum256(outputBytes)
 		if _, err := h.Write(outputHash[:]); err != nil {
-			return nil, fmt.Errorf("unable to write output bytes for commitment hash: %w", err)
+			return nil, ierrors.Errorf("unable to write output bytes for commitment hash: %w", err)
 		}
 	}
 	return h.Sum(nil), nil
@@ -709,16 +709,16 @@ func OutputsSyntacticalDepositAmount(protoParams *ProtocolParameters) OutputsSyn
 
 		switch {
 		case deposit == 0:
-			return fmt.Errorf("%w: output %d", ErrDepositAmountMustBeGreaterThanZero, index)
+			return ierrors.Wrapf(ErrDepositAmountMustBeGreaterThanZero, "output %d", index)
 		case deposit > protoParams.TokenSupply:
-			return fmt.Errorf("%w: output %d", ErrOutputDepositsMoreThanTotalSupply, index)
+			return ierrors.Wrapf(ErrOutputDepositsMoreThanTotalSupply, "output %d", index)
 		case sum+deposit > protoParams.TokenSupply:
-			return fmt.Errorf("%w: output %d", ErrOutputsSumExceedsTotalSupply, index)
+			return ierrors.Wrapf(ErrOutputsSumExceedsTotalSupply, "output %d", index)
 		}
 
 		// check whether deposit fulfills the storage deposit cost
 		if _, err := protoParams.RentStructure.CoversStateRent(output, deposit); err != nil {
-			return fmt.Errorf("%w: output %d", err, index)
+			return ierrors.Wrapf(err, "output %d", index)
 		}
 
 		// check whether the amount in the return condition allows the receiver to fulfill the storage deposit for the return output
@@ -726,9 +726,9 @@ func OutputsSyntacticalDepositAmount(protoParams *ProtocolParameters) OutputsSyn
 			minStorageDepositForReturnOutput := protoParams.RentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
-				return fmt.Errorf("%w: output %d, needed %d, have %d", ErrStorageDepositLessThanMinReturnOutputStorageDeposit, index, minStorageDepositForReturnOutput, storageDep.Amount)
+				return ierrors.Wrapf(ErrStorageDepositLessThanMinReturnOutputStorageDeposit, "output %d, needed %d, have %d", index, minStorageDepositForReturnOutput, storageDep.Amount)
 			case storageDep.Amount > deposit:
-				return fmt.Errorf("%w: output %d, target output's deposit %d < storage deposit %d", ErrStorageDepositExceedsTargetOutputDeposit, index, deposit, storageDep.Amount)
+				return ierrors.Wrapf(ErrStorageDepositExceedsTargetOutputDeposit, "output %d, target output's deposit %d < storage deposit %d", index, deposit, storageDep.Amount)
 			}
 		}
 
@@ -751,7 +751,7 @@ func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
 				return ErrMaxNativeTokensCountExceeded
 			}
 			if nt.Amount.Cmp(common.Big0) == 0 {
-				return fmt.Errorf("%w: output %d, native token index %d", ErrNativeTokenAmountLessThanEqualZero, index, i)
+				return ierrors.Wrapf(ErrNativeTokenAmountLessThanEqualZero, "output %d, native token index %d", index, i)
 			}
 		}
 		return nil
@@ -793,9 +793,9 @@ func OutputsSyntacticalAccount() OutputsSyntacticalValidationFunc {
 		if accountOutput.AccountEmpty() {
 			switch {
 			case accountOutput.StateIndex != 0:
-				return fmt.Errorf("%w: output %d, state index not zero", ErrAccountOutputNonEmptyState, index)
+				return ierrors.Wrapf(ErrAccountOutputNonEmptyState, "output %d, state index not zero", index)
 			case accountOutput.FoundryCounter != 0:
-				return fmt.Errorf("%w: output %d, foundry counter not zero", ErrAccountOutputNonEmptyState, index)
+				return ierrors.Wrapf(ErrAccountOutputNonEmptyState, "output %d, foundry counter not zero", index)
 			}
 			// can not be cyclic when the AccountOutput is new
 			return nil
@@ -803,10 +803,10 @@ func OutputsSyntacticalAccount() OutputsSyntacticalValidationFunc {
 
 		outputAccountAddr := AccountAddress(accountOutput.AccountID)
 		if stateCtrlAddr, ok := accountOutput.StateController().(*AccountAddress); ok && outputAccountAddr == *stateCtrlAddr {
-			return fmt.Errorf("%w: output %d, AccountID=StateController", ErrAccountOutputCyclicAddress, index)
+			return ierrors.Wrapf(ErrAccountOutputCyclicAddress, "output %d, AccountID=StateController", index)
 		}
 		if govCtrlAddr, ok := accountOutput.GovernorAddress().(*AccountAddress); ok && outputAccountAddr == *govCtrlAddr {
-			return fmt.Errorf("%w: output %d, AccountID=GovernanceController", ErrAccountOutputCyclicAddress, index)
+			return ierrors.Wrapf(ErrAccountOutputCyclicAddress, "output %d, AccountID=GovernanceController", index)
 		}
 
 		return nil
@@ -824,7 +824,7 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 		}
 
 		if err := foundryOutput.TokenScheme.SyntacticalValidation(); err != nil {
-			return fmt.Errorf("%w: output %d", err, index)
+			return ierrors.Wrapf(err, "output %d", index)
 		}
 
 		return nil
@@ -846,7 +846,7 @@ func OutputsSyntacticalNFT() OutputsSyntacticalValidationFunc {
 		}
 
 		if addr, ok := nftOutput.Ident().(*NFTAddress); ok && NFTAddress(nftOutput.NFTID) == *addr {
-			return fmt.Errorf("%w: output %d", ErrNFTOutputCyclicAddress, index)
+			return ierrors.Wrapf(ErrNFTOutputCyclicAddress, "output %d", index)
 		}
 
 		return nil
@@ -863,7 +863,7 @@ func OutputsSyntacticalDelegation() OutputsSyntacticalValidationFunc {
 		}
 
 		if delegationOutput.ValidatorID.Empty() {
-			return fmt.Errorf("%w: output %d", ErrDelegationValidatorIdZeroed, index)
+			return ierrors.Wrapf(ErrDelegationValidatorIdZeroed, "output %d", index)
 		}
 
 		return nil
@@ -898,7 +898,7 @@ func OutputsSyntacticalChainConstrainedOutputUniqueness() OutputsSyntacticalVali
 		}
 
 		if _, has := chainConstrainedOutputs[chainID]; has {
-			return fmt.Errorf("%w: output with chainID %s already exist on the output side", ErrNonUniqueChainOutputs, chainID.ToHex())
+			return ierrors.Wrapf(ErrNonUniqueChainOutputs, "output with chainID %s already exist on the output side", chainID.ToHex())
 		}
 
 		chainConstrainedOutputs[chainID] = chainConstrainedOutput

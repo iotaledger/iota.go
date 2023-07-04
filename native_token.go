@@ -2,10 +2,10 @@ package iotago
 
 import (
 	"bytes"
-	"errors"
 	"math/big"
 	"sort"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -30,13 +30,13 @@ const (
 
 var (
 	// ErrNativeTokenAmountLessThanEqualZero gets returned when a NativeToken.Amount is not bigger than 0.
-	ErrNativeTokenAmountLessThanEqualZero = errors.New("native token must be a value bigger than zero")
+	ErrNativeTokenAmountLessThanEqualZero = ierrors.New("native token must be a value bigger than zero")
 	// ErrNativeTokenSumExceedsUint256 gets returned when a NativeToken.Amount addition results in a value bigger than the max value of a uint256.
-	ErrNativeTokenSumExceedsUint256 = errors.New("native token sum exceeds max value of a uint256")
+	ErrNativeTokenSumExceedsUint256 = ierrors.New("native token sum exceeds max value of a uint256")
 	// ErrNonUniqueNativeTokens gets returned when multiple NativeToken(s) with the same NativeTokenID exist within sets.
-	ErrNonUniqueNativeTokens = errors.New("non unique native tokens")
+	ErrNonUniqueNativeTokens = ierrors.New("non unique native tokens")
 	// ErrNativeTokenSumUnbalanced gets returned when two NativeTokenSum(s) are unbalanced.
-	ErrNativeTokenSumUnbalanced = errors.New("native token sums are unbalanced")
+	ErrNativeTokenSumUnbalanced = ierrors.New("native token sums are unbalanced")
 
 	nativeTokensArrayRules = &serializer.ArrayRules{
 		Min: MinNativeTokenCountPerOutput,

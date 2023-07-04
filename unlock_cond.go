@@ -1,22 +1,22 @@
 package iotago
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 var (
 	// ErrNonUniqueUnlockConditions gets returned when multiple UnlockCondition(s) with the same UnlockConditionType exist within sets.
-	ErrNonUniqueUnlockConditions = errors.New("non unique unlock conditions within outputs")
+	ErrNonUniqueUnlockConditions = ierrors.New("non unique unlock conditions within outputs")
 	// ErrTimelockNotExpired gets returned when timelocks in a UnlockConditionSet are not expired.
-	ErrTimelockNotExpired = errors.New("timelock not expired")
+	ErrTimelockNotExpired = ierrors.New("timelock not expired")
 	// ErrExpirationConditionZero gets returned when an ExpirationUnlockCondition has set the slot index to zero.
-	ErrExpirationConditionZero = errors.New("expiration condition is zero")
+	ErrExpirationConditionZero = ierrors.New("expiration condition is zero")
 	// ErrTimelockConditionZero gets returned when a TimelockUnlockCondition has set the slot index to zero.
-	ErrTimelockConditionZero = errors.New("timelock condition is zero")
+	ErrTimelockConditionZero = ierrors.New("timelock condition is zero")
 )
 
 // UnlockConditionType defines the type of UnlockCondition.
@@ -251,7 +251,7 @@ func (f UnlockConditionSet) TimelocksExpired(txCreationTime SlotIndex) error {
 	}
 
 	if txCreationTime < timelock.SlotIndex {
-		return fmt.Errorf("%w: slotIndex cond %d vs. tx creation slot %d", ErrTimelockNotExpired, timelock.SlotIndex, txCreationTime)
+		return ierrors.Wrapf(ErrTimelockNotExpired, "slotIndex cond %d vs. tx creation slot %d", timelock.SlotIndex, txCreationTime)
 	}
 
 	return nil

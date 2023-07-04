@@ -3,10 +3,8 @@ package merklehasher
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 
-	"github.com/pkg/errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -48,7 +46,7 @@ func (t *Hasher[V]) ComputeProof(values []V, valueToProof V) (*Proof[V], error) 
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("value %s is not contained in the given list", hexutil.EncodeHex(valueToProofBytes))
+		return nil, ierrors.Errorf("value %s is not contained in the given list", hexutil.EncodeHex(valueToProofBytes))
 	}
 	return t.ComputeProofForIndex(values, index)
 }
@@ -56,10 +54,10 @@ func (t *Hasher[V]) ComputeProof(values []V, valueToProof V) (*Proof[V], error) 
 // ComputeProofForIndex computes the audit path given the values and the index of the value we want to create the inclusion proof for.
 func (t *Hasher[V]) ComputeProofForIndex(values []V, index int) (*Proof[V], error) {
 	if len(values) < 2 {
-		return nil, errors.New("you need at lest 2 items to create an inclusion proof")
+		return nil, ierrors.New("you need at lest 2 items to create an inclusion proof")
 	}
 	if index >= len(values) {
-		return nil, fmt.Errorf("index %d out of bounds len=%d", index, len(values))
+		return nil, ierrors.Errorf("index %d out of bounds len=%d", index, len(values))
 	}
 
 	data := make([][]byte, len(values))
@@ -146,7 +144,7 @@ func (l *leafValue[V]) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	if len(j.Value) == 0 {
-		return errors.New("missing value")
+		return ierrors.New("missing value")
 	}
 	value, err := hexutil.DecodeHex(j.Value)
 	if err != nil {
@@ -176,7 +174,7 @@ func (h *hashValue[V]) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	if len(j.Hash) == 0 {
-		return errors.New("missing hash")
+		return ierrors.New("missing hash")
 	}
 	value, err := hexutil.DecodeHex(j.Hash)
 	if err != nil {
