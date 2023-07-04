@@ -130,7 +130,7 @@ type ProtocolParameters struct {
 	WorkScoreStructure WorkScoreStructure `serix:"18,mapKey=workScoreStructure"`
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
-	EpochNearingThreshold SlotIndex `serix:"18,mapKey=epochNearingThreshold"`
+	EpochNearingThreshold SlotIndex `serix:"19,mapKey=epochNearingThreshold"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {
