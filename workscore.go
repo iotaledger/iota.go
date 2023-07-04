@@ -6,16 +6,17 @@ type WorkScore uint64
 type WorkScoreFactor byte
 
 type WorkScoreStructure struct {
-	FactorData      WorkScoreFactor
-	FactorInput     WorkScoreFactor
-	FactorAllotment WorkScoreFactor
+	FactorData          WorkScoreFactor
+	FactorInput         WorkScoreFactor
+	FactorAllotment     WorkScoreFactor
+	FactorMissingParent WorkScoreFactor
 
 	WorkScoreOutput           WorkScore
 	WorkScoreStaking          WorkScore
 	WorkScoreBlockIssuer      WorkScore
 	WorkScoreEd25519Signature WorkScore
 	WorkScoreNativeToken      WorkScore
-	WorkScoreParents          WorkScore
+	WorkScoreMaxParents       WorkScore
 }
 
 type ProcessableObject interface {

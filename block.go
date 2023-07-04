@@ -273,9 +273,11 @@ func (b *Block) DoPOW(ctx context.Context, targetScore float64) error {
 }
 
 func (b *Block) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	// ProtocolVersion and NetworkID
-	return workScoreStructure.FactorData.Multiply(serializer.OneByte+serializer.UInt64ByteSize) +
-		workScoreStructure.WorkScoreParents*WorkScore(len(b.StrongParents)+len(b.WeakParents)+len(b.ShallowLikeParents)) +
+	// Work Score for parents is the score for max parents plus a penalty for any less than max parents
+	numMissingParents := BlockMaxParents - (len(b.StrongParents) + len(b.WeakParents) + len(b.ShallowLikeParents))
+	return workScoreStructure.WorkScoreMaxParents + workScoreStructure.FactorMissingParent.Multiply(numMissingParents) +
+		// ProtocolVersion and NetworkID
+		workScoreStructure.FactorData.Multiply(serializer.OneByte+serializer.UInt64ByteSize) +
 		// IssuerID and IssuingTime
 		workScoreStructure.FactorData.Multiply(AccountIDLength+util.NumByteLen(b.IssuingTime)) +
 		// SlotCommitment and LatestFinalizedSlot
