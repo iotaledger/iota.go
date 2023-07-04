@@ -109,9 +109,9 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			WorkScoreNativeToken:      9,
 			WorkScoreMaxParents:       10,
 		},
+		EpochNearingThreshold: 4,
 	}
-
-	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"manaGenerationRate":1,"manaGenerationRateExponent":27,"manaDecayFactors":[10,20],"manaDecayFactorsExponent":32,"manaDecayFactorEpochsSum":1337,"manaDecayFactorEpochsSumExponent":20,"stakingUnbondingPeriod":"11","evictionAge":"10","liveNessThreshold":"3","workScoreStructure":{"factorData":1,"factorInput":2,"factorAllotment":3,"factorMissingParent":4,"workScoreOutput":"5","workScoreStaking":"6","workScoreBlockIssuer":"7","workScoreEd25519Signature":"8","workScoreNativeToken":"9","workScoreMaxParents":"10"},"epochNearingThreshold":"0"}`
+	protoParamsJSON := `{"version":6,"networkName":"xxxNetwork","bech32Hrp":"xxx","minPowScore":666,"rentStructure":{"vByteCost":6,"vByteFactorData":8,"vByteFactorKey":7},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"manaGenerationRate":1,"manaGenerationRateExponent":27,"manaDecayFactors":[10,20],"manaDecayFactorsExponent":32,"manaDecayFactorEpochsSum":1337,"manaDecayFactorEpochsSumExponent":20,"stakingUnbondingPeriod":"11","evictionAge":"10","liveNessThreshold":"3","workScoreStructure":{"factorData":1,"factorInput":2,"factorAllotment":3,"factorMissingParent":4,"workScoreOutput":"5","workScoreStaking":"6","workScoreBlockIssuer":"7","workScoreEd25519Signature":"8","workScoreNativeToken":"9","workScoreMaxParents":"10"},"epochNearingThreshold":"0","epochNearingThreshold":"4"}`
 
 	jsonProtoParams, err := v3API.JSONEncode(protoParams)
 	require.NoError(t, err)
