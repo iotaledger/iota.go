@@ -128,6 +128,9 @@ type ProtocolParameters struct {
 	LivenessThreshold SlotIndex `serix:"17,mapKey=liveNessThreshold"`
 	// WorkScoreStructure is a collection of work scores for different object types.
 	WorkScoreStructure WorkScoreStructure `serix:"18,mapKey=workScoreStructure"`
+	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
+	// selection for the next and upcoming epoch.
+	EpochNearingThreshold SlotIndex `serix:"18,mapKey=epochNearingThreshold"`
 }
 
 func (p ProtocolParameters) AsSerixContext() context.Context {
@@ -148,8 +151,8 @@ func (p ProtocolParameters) EpochDurationInSlots() SlotIndex {
 }
 
 func (p ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tMinimum PoW Score: %d\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n\tEviction Age: %d\n\tLiveness Threshold: %d\n}",
-		p.Version, p.NetworkName, p.Bech32HRP, p.MinPoWScore, p.RentStructure, p.TokenSupply, p.GenesisUnixTimestamp, p.SlotDurationInSeconds, p.SlotsPerEpochExponent, p.ManaGenerationRate, p.ManaGenerationRateExponent, p.ManaDecayFactors, p.ManaDecayFactorsExponent, p.ManaDecayFactorEpochsSum, p.ManaDecayFactorEpochsSumExponent, p.StakingUnbondingPeriod, p.EvictionAge, p.LivenessThreshold)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tMinimum PoW Score: %d\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n\tEviction Age: %d\n\tLiveness Threshold: %d\n\tEpoch Nearing Threshold: %d\n}",
+		p.Version, p.NetworkName, p.Bech32HRP, p.MinPoWScore, p.RentStructure, p.TokenSupply, p.GenesisUnixTimestamp, p.SlotDurationInSeconds, p.SlotsPerEpochExponent, p.ManaGenerationRate, p.ManaGenerationRateExponent, p.ManaDecayFactors, p.ManaDecayFactorsExponent, p.ManaDecayFactorEpochsSum, p.ManaDecayFactorEpochsSumExponent, p.StakingUnbondingPeriod, p.EvictionAge, p.LivenessThreshold, p.EpochNearingThreshold)
 }
 
 func (p ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
