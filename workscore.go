@@ -6,17 +6,17 @@ type WorkScore uint64
 type WorkScoreFactor byte
 
 type WorkScoreStructure struct {
-	FactorData          WorkScoreFactor
-	FactorInput         WorkScoreFactor
-	FactorAllotment     WorkScoreFactor
-	FactorMissingParent WorkScoreFactor
+	FactorData          WorkScoreFactor `serix:"0,mapKey=factorData"`
+	FactorInput         WorkScoreFactor `serix:"1,mapKey=factorInput"`
+	FactorAllotment     WorkScoreFactor `serix:"2,mapKey=factorAllotment"`
+	FactorMissingParent WorkScoreFactor `serix:"3,mapKey=factorMissingParent"`
 
-	WorkScoreOutput           WorkScore
-	WorkScoreStaking          WorkScore
-	WorkScoreBlockIssuer      WorkScore
-	WorkScoreEd25519Signature WorkScore
-	WorkScoreNativeToken      WorkScore
-	WorkScoreMaxParents       WorkScore
+	WorkScoreOutput           WorkScore `serix:"4,mapKey=workScoreOutput"`
+	WorkScoreStaking          WorkScore `serix:"5,mapKey=workScoreStaking"`
+	WorkScoreBlockIssuer      WorkScore `serix:"6,mapKey=workScoreBlockIssuer"`
+	WorkScoreEd25519Signature WorkScore `serix:"7,mapKey=workScoreEd25519Signature"`
+	WorkScoreNativeToken      WorkScore `serix:"8,mapKey=workScoreNativeToken"`
+	WorkScoreMaxParents       WorkScore `serix:"9,mapKey=workScoreMaxParents"`
 }
 
 type ProcessableObject interface {
