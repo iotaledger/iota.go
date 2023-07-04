@@ -2,10 +2,10 @@ package iotago
 
 import (
 	"bytes"
-	"fmt"
 	"time"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 )
@@ -57,12 +57,12 @@ func (a *Attestation) Compare(other *Attestation) int {
 func (a Attestation) BlockID(timeProvider *TimeProvider) (BlockID, error) {
 	signatureBytes, err := internalEncode(a.Signature)
 	if err != nil {
-		return EmptyBlockID(), fmt.Errorf("failed to serialize block's signature: %w", err)
+		return EmptyBlockID(), ierrors.Errorf("failed to serialize block's signature: %w", err)
 	}
 
 	nonceBytes, err := internalEncode(a.Nonce)
 	if err != nil {
-		return EmptyBlockID(), fmt.Errorf("failed to serialize block's nonce: %w", err)
+		return EmptyBlockID(), ierrors.Errorf("failed to serialize block's nonce: %w", err)
 	}
 
 	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
@@ -82,7 +82,7 @@ func (a *Attestation) FromBytes(bytes []byte) (consumedBytes int, err error) {
 func (a *Attestation) signingMessage() ([]byte, error) {
 	issuingTimeBytes, err := internalEncode(a.IssuingTime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize block's issuing time: %w", err)
+		return nil, ierrors.Errorf("failed to serialize block's issuing time: %w", err)
 	}
 
 	return byteutils.ConcatBytes(issuingTimeBytes, a.SlotCommitmentID[:], a.BlockContentHash[:]), nil
@@ -96,7 +96,7 @@ func (a *Attestation) VerifySignature() (valid bool, err error) {
 
 	edSig, isEdSig := a.Signature.(*Ed25519Signature)
 	if !isEdSig {
-		return false, fmt.Errorf("only ed2519 signatures supported, got %s", a.Signature.Type())
+		return false, ierrors.Errorf("only ed2519 signatures supported, got %s", a.Signature.Type())
 	}
 
 	return hiveEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil

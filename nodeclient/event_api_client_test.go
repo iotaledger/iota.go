@@ -6,10 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/h2non/gock.v1"
-
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/nodeclient"

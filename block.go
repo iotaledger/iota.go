@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
-	"fmt"
 	"runtime"
 	"sort"
 	"time"
 
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
@@ -130,7 +129,7 @@ type Block struct {
 func (b *Block) ContentHash() (Identifier, error) {
 	data, err := internalEncode(b)
 	if err != nil {
-		return Identifier{}, fmt.Errorf("failed to encode block: %w", err)
+		return Identifier{}, ierrors.Errorf("failed to encode block: %w", err)
 	}
 
 	return contentHashFromBlockBytes(data)
@@ -154,14 +153,14 @@ func BlockIdentifierFromBlockBytes(blockBytes []byte) (Identifier, error) {
 
 func contentHashFromBlockBytes(blockBytes []byte) (Identifier, error) {
 	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
-		return Identifier{}, errors.New("not enough block bytes")
+		return Identifier{}, ierrors.New("not enough block bytes")
 	}
 	return blake2b.Sum256(blockBytes[:len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize]), nil
 }
 
 func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerializedBytesSize]byte, error) {
 	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
-		return [Ed25519SignatureSerializedBytesSize]byte{}, errors.New("not enough block bytes")
+		return [Ed25519SignatureSerializedBytesSize]byte{}, ierrors.New("not enough block bytes")
 	}
 	return [Ed25519SignatureSerializedBytesSize]byte(blockBytes[len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize:]), nil
 }
@@ -176,12 +175,12 @@ func (b *Block) SigningMessage() ([]byte, error) {
 
 	issuingTimeBytes, err := internalEncode(b.IssuingTime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize block's issuing time: %w", err)
+		return nil, ierrors.Errorf("failed to serialize block's issuing time: %w", err)
 	}
 
 	commitmentID, err := b.SlotCommitment.ID()
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize block's commitment ID: %w", err)
+		return nil, ierrors.Errorf("failed to serialize block's commitment ID: %w", err)
 	}
 
 	return byteutils.ConcatBytes(issuingTimeBytes, commitmentID[:], contentHash[:]), nil
@@ -209,11 +208,11 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 
 	edSig, isEdSig := b.Signature.(*Ed25519Signature)
 	if !isEdSig {
-		return false, fmt.Errorf("only ed2519 signatures supported, got %s", b.Signature.Type())
+		return false, ierrors.Errorf("only ed2519 signatures supported, got %s", b.Signature.Type())
 	}
 
 	if edSig.PublicKey == [ed25519.PublicKeySize]byte{} {
-		return false, fmt.Errorf("empty publicKeys are invalid")
+		return false, ierrors.New("empty publicKeys are invalid")
 	}
 
 	return hiveEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
@@ -223,7 +222,7 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 func (b *Block) ID(timeProvider *TimeProvider) (BlockID, error) {
 	data, err := internalEncode(b)
 	if err != nil {
-		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
+		return BlockID{}, ierrors.Errorf("can't compute block ID: %w", err)
 	}
 
 	slotIndex := timeProvider.SlotFromTime(b.IssuingTime)
@@ -249,7 +248,7 @@ func (b *Block) MustID(timeProvider *TimeProvider) BlockID {
 func (b *Block) POW() (float64, []byte, error) {
 	data, err := internalEncode(b)
 	if err != nil {
-		return 0, nil, fmt.Errorf("can't compute block PoW score: %w", err)
+		return 0, nil, ierrors.Errorf("can't compute block PoW score: %w", err)
 	}
 	return pow.Score(data), data, nil
 }
@@ -259,7 +258,7 @@ func (b *Block) POW() (float64, []byte, error) {
 func (b *Block) DoPOW(ctx context.Context, targetScore float64) error {
 	data, err := internalEncode(b)
 	if err != nil {
-		return fmt.Errorf("can't compute block PoW score: %w", err)
+		return ierrors.Errorf("can't compute block PoW score: %w", err)
 	}
 	powRelevantData := data[:len(data)-8]
 	worker := pow.New(runtime.NumCPU())

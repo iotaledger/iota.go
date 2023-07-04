@@ -3,9 +3,9 @@ package builder
 import (
 	"context"
 	"crypto/ed25519"
-	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/pow"
@@ -155,14 +155,14 @@ func (mb *BlockBuilder) ProofOfWork(ctx context.Context, targetScore float64, nu
 	// cut out the nonce
 	_, blockData, err := mb.block.POW()
 	if err != nil {
-		mb.err = fmt.Errorf("unable to compute pow relevant data: %w", err)
+		mb.err = ierrors.Errorf("unable to compute pow relevant data: %w", err)
 		return mb
 	}
 	powRelevantData := blockData[:len(blockData)-serializer.UInt64ByteSize]
 	worker := pow.New(numWorkers...)
 	nonce, err := worker.Mine(ctx, powRelevantData, targetScore)
 	if err != nil {
-		mb.err = fmt.Errorf("unable to complete proof-of-work: %w", err)
+		mb.err = ierrors.Errorf("unable to complete proof-of-work: %w", err)
 		return mb
 	}
 	mb.block.Nonce = nonce
@@ -179,7 +179,7 @@ func (mb *BlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateK
 
 	signature, err := mb.block.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {
-		mb.err = fmt.Errorf("error signing block: %w", err)
+		mb.err = ierrors.Errorf("error signing block: %w", err)
 		return mb
 	}
 

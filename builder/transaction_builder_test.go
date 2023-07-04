@@ -2,11 +2,11 @@ package builder_test
 
 import (
 	"crypto/ed25519"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -167,7 +167,7 @@ func TestTransactionBuilder(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			_, err := test.builder.Build(tpkg.TestProtoParams, test.addrSigner)
 			if test.buildErr != nil {
-				assert.True(t, errors.Is(err, test.buildErr), "wrong error : %s != %s", err, test.buildErr)
+				assert.True(t, ierrors.Is(err, test.buildErr), "wrong error : %s != %s", err, test.buildErr)
 				return
 			}
 			assert.NoError(t, err)

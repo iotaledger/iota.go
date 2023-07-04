@@ -2,13 +2,13 @@ package bech32
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/iota.go/v4/bech32/internal/base32"
 )
 
@@ -96,7 +96,7 @@ func TestEncode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(fmt.Sprint(tt.hrp, tt.src), func(t *testing.T) {
 			s, err := Encode(tt.hrp, tt.src)
-			if assert.Truef(t, errors.Is(err, tt.expErr), "unexpected error: %v", err) {
+			if assert.Truef(t, ierrors.Is(err, tt.expErr), "unexpected error: %v", err) {
 				assert.Equal(t, tt.expS, s)
 			}
 		})
@@ -194,7 +194,7 @@ func TestDecode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.s, func(t *testing.T) {
 			hrp, data, err := Decode(tt.s)
-			if assert.Truef(t, errors.Is(err, tt.expErr), "unexpected error: %v", err) {
+			if assert.Truef(t, ierrors.Is(err, tt.expErr), "unexpected error: %v", err) {
 				assert.Equal(t, tt.expHRP, hrp)
 				assert.Equal(t, tt.expData, data)
 			}
