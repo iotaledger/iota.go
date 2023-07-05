@@ -3,6 +3,8 @@ package iotago
 import (
 	"context"
 	"fmt"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 const (
@@ -40,7 +42,7 @@ func NewEmptyCommitment(version Version) *Commitment {
 func (c *Commitment) ID() (CommitmentID, error) {
 	data, err := commonSerixAPI().Encode(context.TODO(), c)
 	if err != nil {
-		return CommitmentID{}, fmt.Errorf("can't compute commitment ID: %w", err)
+		return CommitmentID{}, ierrors.Errorf("can't compute commitment ID: %w", err)
 	}
 	return SlotIdentifierRepresentingData(c.Index, data), nil
 }

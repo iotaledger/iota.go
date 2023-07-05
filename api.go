@@ -81,6 +81,10 @@ type ProtocolParameters interface {
 
 	EvictionAge() SlotIndex
 
+	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
+	// selection for the next and upcoming epoch.
+	EpochNearingThreshold() SlotIndex
+
 	Bytes() ([]byte, error)
 }
 

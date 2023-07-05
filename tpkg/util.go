@@ -659,7 +659,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 		),
 		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
-		iotago.WithLivenessOptions(RandSlotIndex(), RandSlotIndex()),
+		iotago.WithLivenessOptions(RandSlotIndex(), RandSlotIndex(), RandSlotIndex()),
 	)
 }
 

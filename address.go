@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	"github.com/iotaledger/iota.go/v4/bech32"
@@ -118,7 +119,7 @@ func newAddress(addressType byte) (address Address, err error) {
 	case AddressNFT:
 		return &NFTAddress{}, nil
 	default:
-		return nil, fmt.Errorf("%w: type %d", ErrUnknownAddrType, addressType)
+		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
 	}
 }
 
@@ -139,7 +140,7 @@ func bech32String(hrp NetworkPrefix, addr Address) string {
 func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	hrp, addrData, err := bech32.Decode(s)
 	if err != nil {
-		return "", nil, fmt.Errorf("invalid bech32 encoding: %w", err)
+		return "", nil, ierrors.Errorf("invalid bech32 encoding: %w", err)
 	}
 
 	if len(addrData) == 0 {

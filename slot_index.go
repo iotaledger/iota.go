@@ -4,8 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/pkg/errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -17,7 +16,7 @@ type SlotIndex uint64
 
 func SlotIndexFromBytes(b []byte) (SlotIndex, int, error) {
 	if len(b) <= SlotIndexLength {
-		return 0, 0, errors.New("invalid slot index size")
+		return 0, 0, ierrors.New("invalid slot index size")
 	}
 
 	return SlotIndex(binary.LittleEndian.Uint64(b)), SlotIndexLength, nil

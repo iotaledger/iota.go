@@ -51,7 +51,7 @@ func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
 	block := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version() + 1,
-			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.ProtocolParameters().Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
@@ -76,7 +76,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 	minProtocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
-			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.ProtocolParameters().Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
@@ -99,7 +99,7 @@ func TestValidatorBlock_MinSize(t *testing.T) {
 	minProtocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
-			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.ProtocolParameters().Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.ValidatorBlock{
@@ -122,7 +122,7 @@ func TestValidatorBlock_HighestSupportedVersion(t *testing.T) {
 	protocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
-			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.ProtocolParameters().Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 	}
@@ -163,7 +163,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 	validatorBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.ProtocolParameters().Version(),
-			SlotCommitmentID: iotago.NewEmptyCommitment().MustID(tpkg.TestAPI),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.ProtocolParameters().Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.ValidatorBlock{

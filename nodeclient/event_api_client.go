@@ -3,7 +3,6 @@ package nodeclient
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -65,7 +65,7 @@ const (
 
 var (
 	// ErrEventAPIClientInactive gets returned when an EventAPIClient is inactive.
-	ErrEventAPIClientInactive = errors.New("event api client is inactive")
+	ErrEventAPIClientInactive = ierrors.New("event api client is inactive")
 )
 
 // EventAPIUnlockCondition denotes the different unlock conditions.
@@ -160,10 +160,10 @@ func (s *EventAPIClientSubscription) Close() error {
 
 func panicIfEventAPIClientInactive(neac *EventAPIClient) {
 	if err := neac.Ctx.Err(); err != nil {
-		panic(fmt.Errorf("%w: context is canceled/done", ErrEventAPIClientInactive))
+		panic(ierrors.Wrap(ErrEventAPIClientInactive, "context is canceled/done"))
 	}
 	if !neac.MQTTClient.IsConnected() {
-		panic(fmt.Errorf("%w: client is not connected", ErrEventAPIClientInactive))
+		panic(ierrors.Wrap(ErrEventAPIClientInactive, "client is not connected"))
 	}
 }
 

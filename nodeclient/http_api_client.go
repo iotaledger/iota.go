@@ -2,12 +2,12 @@ package nodeclient
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
@@ -103,9 +103,9 @@ const (
 
 var (
 	// ErrIndexerPluginNotAvailable is returned when the indexer plugin is not available on the node.
-	ErrIndexerPluginNotAvailable = errors.New("indexer plugin not available on the current node")
+	ErrIndexerPluginNotAvailable = ierrors.New("indexer plugin not available on the current node")
 	// ErrMQTTPluginNotAvailable is returned when the MQTT plugin is not available on the node.
-	ErrMQTTPluginNotAvailable = errors.New("mqtt plugin not available on the current node")
+	ErrMQTTPluginNotAvailable = ierrors.New("mqtt plugin not available on the current node")
 )
 
 // RequestURLHook is a function to modify the URL before sending a request.
@@ -199,11 +199,11 @@ func New(baseURL string, opts ...ClientOption) (*Client, error) {
 		defer cancelFunc()
 		info, err := client.Info(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("unable to call info endpoint for protocol parameter init: %w", err)
+			return nil, ierrors.Errorf("unable to call info endpoint for protocol parameter init: %w", err)
 		}
 		protoParams, err := info.DecodeProtocolParameters()
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse protocol parameters from info response: %w", err)
+			return nil, ierrors.Errorf("unable to parse protocol parameters from info response: %w", err)
 		}
 		client.opts.iotagoAPI = iotago.LatestAPI(protoParams)
 	}
@@ -279,7 +279,7 @@ func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
 // Health returns whether the given node is healthy.
 func (client *Client) Health(ctx context.Context) (bool, error) {
 	if _, err := client.Do(ctx, http.MethodGet, RouteHealth, nil, nil); err != nil {
-		if errors.Is(err, ErrHTTPServiceUnavailable) {
+		if ierrors.Is(err, ErrHTTPServiceUnavailable) {
 			return false, nil
 		}
 

@@ -57,6 +57,9 @@ type v3ProtocolParameters struct {
 	// LivenessThreshold is used by tip-selection to determine the if a block is eligible by evaluating issuingTimes
 	// and commitments in its past-cone to ATT and lastCommittedSlot respectively.
 	LivenessThreshold SlotIndex `serix:"16,mapKey=livenessThreshold"`
+	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
+	// selection for the next and upcoming epoch.
+	EpochNearingThreshold SlotIndex `serix:"17,mapKey=epochNearingThreshold"`
 }
 
 func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3ProtocolParameters {
@@ -77,7 +80,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				0,
 				0,
 			),
-			WithLivenessOptions(10, 3),
+			WithLivenessOptions(10, 3, 4),
 			WithStakingOptions(10),
 		},
 			opts...,
@@ -135,6 +138,10 @@ func (p *V3ProtocolParameters) EvictionAge() SlotIndex {
 	return p.v3ProtocolParameters.EvictionAge
 }
 
+func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
+	return p.v3ProtocolParameters.EpochNearingThreshold
+}
+
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
 	return commonSerixAPI().Encode(context.TODO(), p)
 }
@@ -185,10 +192,11 @@ func WithManaOptions(manaGenerationRate uint8, manaGenerationRateExponent uint8,
 	}
 }
 
-func WithLivenessOptions(evictionAge SlotIndex, livenessThreshold SlotIndex) options.Option[V3ProtocolParameters] {
+func WithLivenessOptions(evictionAge SlotIndex, livenessThreshold SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.v3ProtocolParameters.EvictionAge = evictionAge
 		p.v3ProtocolParameters.LivenessThreshold = livenessThreshold
+		p.v3ProtocolParameters.EpochNearingThreshold = epochNearingThreshold
 	}
 }
 

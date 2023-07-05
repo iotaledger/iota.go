@@ -2,12 +2,12 @@ package pow
 
 import (
 	"context"
-	"errors"
 	"math"
 	"math/bits"
 	"sync"
 	"sync/atomic"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	legacy "github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/curl/bct"
 	"github.com/iotaledger/iota.go/encoding/b1t6"
@@ -16,8 +16,8 @@ import (
 
 // errors returned by the PoW.
 var (
-	ErrCancelled = errors.New("canceled")
-	ErrDone      = errors.New("done")
+	ErrCancelled = ierrors.New("canceled")
+	ErrDone      = ierrors.New("done")
 )
 
 // The Worker performs the PoW.

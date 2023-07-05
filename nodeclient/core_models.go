@@ -2,8 +2,8 @@ package nodeclient
 
 import (
 	"encoding/json"
-	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -271,7 +271,7 @@ type (
 func (nor *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 	txIDBytes, err := hexutil.DecodeHex(nor.TransactionID)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
+		return nil, ierrors.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
 	}
 	var txID iotago.TransactionID
 	copy(txID[:], txIDBytes)

@@ -4,15 +4,14 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/pkg/errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 var (
 	// ErrWrongEpochIndex gets returned when a wrong epoch index was passed.
-	ErrWrongEpochIndex = errors.New("wrong epoch index")
+	ErrWrongEpochIndex = ierrors.New("wrong epoch index")
 )
 
 const EpochIndexLength = serializer.UInt64ByteSize
@@ -22,7 +21,7 @@ type EpochIndex uint64
 
 func EpochIndexFromBytes(b []byte) (EpochIndex, int, error) {
 	if len(b) < EpochIndexLength {
-		return 0, 0, errors.New("invalid epoch index size")
+		return 0, 0, ierrors.New("invalid epoch index size")
 	}
 
 	return EpochIndex(binary.LittleEndian.Uint64(b)), EpochIndexLength, nil

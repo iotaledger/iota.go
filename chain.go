@@ -1,6 +1,6 @@
 package iotago
 
-import "fmt"
+import "github.com/iotaledger/hive.go/ierrors"
 
 // ChainOutput is a type of Output which represents a chain of state transitions.
 type ChainOutput interface {
@@ -33,7 +33,7 @@ type ChainOutputSet map[ChainID]ChainOutput
 func (set ChainOutputSet) Includes(other ChainOutputSet) error {
 	for chainID := range other {
 		if _, has := set[chainID]; !has {
-			return fmt.Errorf("%w: %s missing in source", ErrChainMissing, chainID)
+			return ierrors.Wrapf(ErrChainMissing, "%s missing in source", chainID)
 		}
 	}
 	return nil
@@ -48,7 +48,7 @@ func (set ChainOutputSet) Merge(other ChainOutputSet) (ChainOutputSet, error) {
 	}
 	for k, v := range other {
 		if _, has := newSet[k]; has {
-			return nil, fmt.Errorf("%w: chain %s exists in both sets", ErrNonUniqueChainOutputs, k)
+			return nil, ierrors.Wrapf(ErrNonUniqueChainOutputs, "chain %s exists in both sets", k)
 		}
 		newSet[k] = v
 	}

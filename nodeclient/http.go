@@ -4,28 +4,29 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 var (
 	// ErrHTTPBadRequest gets returned for 400 bad request HTTP responses.
-	ErrHTTPBadRequest = errors.New("bad request")
+	ErrHTTPBadRequest = ierrors.New("bad request")
 	// ErrHTTPInternalServerError gets returned for 500 internal server error HTTP responses.
-	ErrHTTPInternalServerError = errors.New("internal server error")
+	ErrHTTPInternalServerError = ierrors.New("internal server error")
 	// ErrHTTPNotFound gets returned for 404 not found error HTTP responses.
-	ErrHTTPNotFound = errors.New("not found")
+	ErrHTTPNotFound = ierrors.New("not found")
 	// ErrHTTPUnauthorized gets returned for 401 unauthorized error HTTP responses.
-	ErrHTTPUnauthorized = errors.New("unauthorized")
+	ErrHTTPUnauthorized = ierrors.New("unauthorized")
 	// ErrHTTPUnknownError gets returned for unknown error HTTP responses.
-	ErrHTTPUnknownError = errors.New("unknown error")
+	ErrHTTPUnknownError = ierrors.New("unknown error")
 	// ErrHTTPNotImplemented gets returned for 501 not implemented error HTTP responses.
-	ErrHTTPNotImplemented = errors.New("operation not implemented/supported/available")
+	ErrHTTPNotImplemented = ierrors.New("operation not implemented/supported/available")
 	// ErrHTTPServiceUnavailable gets returned for 503 service unavailable error HTTP responses.
-	ErrHTTPServiceUnavailable = errors.New("service unavailable")
+	ErrHTTPServiceUnavailable = ierrors.New("service unavailable")
 
 	httpCodeToErr = map[int]error{
 		http.StatusBadRequest:          ErrHTTPBadRequest,
@@ -46,7 +47,7 @@ const (
 func readBody(res *http.Response) ([]byte, error) {
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read response body: %w", err)
+		return nil, ierrors.Errorf("unable to read response body: %w", err)
 	}
 	return resBody, nil
 }
@@ -81,7 +82,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 	errRes := &HTTPErrorResponseEnvelope{}
 	if len(resBody) > 0 {
 		if err := json.Unmarshal(resBody, errRes); err != nil {
-			return fmt.Errorf("unable to read error from response body: %w", err)
+			return ierrors.Errorf("unable to read error from response body: %w", err)
 		}
 	}
 
@@ -90,7 +91,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 		err = ErrHTTPUnknownError
 	}
 
-	return fmt.Errorf("%w: url %s, error message: %s", err, res.Request.URL.String(), errRes.Error.Message)
+	return ierrors.Wrapf(err, "url %s, error message: %s", res.Request.URL.String(), errRes.Error.Message)
 }
 
 func do(
@@ -115,7 +116,7 @@ func do(
 		if rawData, ok := reqObj.(*RawDataEnvelope); !ok {
 			data, err = json.Marshal(reqObj)
 			if err != nil {
-				return nil, fmt.Errorf("unable to serialize request object to JSON: %w", err)
+				return nil, ierrors.Errorf("unable to serialize request object to JSON: %w", err)
 			}
 		} else {
 			data = rawData.Data
@@ -137,7 +138,7 @@ func do(
 		return bytes.NewReader(data)
 	}())
 	if err != nil {
-		return nil, fmt.Errorf("unable to build http request: %w", err)
+		return nil, ierrors.Errorf("unable to build http request: %w", err)
 	}
 
 	if userInfo != nil {

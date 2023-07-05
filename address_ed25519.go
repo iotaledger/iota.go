@@ -2,10 +2,10 @@ package iotago
 
 import (
 	"crypto/ed25519"
-	"fmt"
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -70,7 +70,7 @@ func (edAddr *Ed25519Address) Key() string {
 func (edAddr *Ed25519Address) Unlock(msg []byte, sig Signature) error {
 	edSig, isEdSig := sig.(*Ed25519Signature)
 	if !isEdSig {
-		return fmt.Errorf("%w: can not unlock Ed25519 address with signature of type %s", ErrSignatureAndAddrIncompatible, sig.Type())
+		return ierrors.Wrapf(ErrSignatureAndAddrIncompatible, "can not unlock Ed25519 address with signature of type %s", sig.Type())
 	}
 	return edSig.Valid(msg, edAddr)
 }

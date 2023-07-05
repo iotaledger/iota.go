@@ -1,11 +1,9 @@
 package iotago
 
 import (
-	"errors"
-	"fmt"
-
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -39,37 +37,37 @@ const (
 
 var (
 	// ErrInvalidInputsCommitment gets returned when the inputs commitment is invalid.
-	ErrInvalidInputsCommitment = errors.New("invalid inputs commitment")
+	ErrInvalidInputsCommitment = ierrors.New("invalid inputs commitment")
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a TransactionEssence is invalid.
-	ErrTxEssenceNetworkIDInvalid = errors.New("invalid network ID")
+	ErrTxEssenceNetworkIDInvalid = ierrors.New("invalid network ID")
 	// ErrAllotmentsNotUnique gets returned if multiple Allotments reference the same Account.
-	ErrAllotmentsNotUnique = errors.New("allotments must each reference a unique account")
+	ErrAllotmentsNotUnique = ierrors.New("allotments must each reference a unique account")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
-	ErrInputUTXORefsNotUnique = errors.New("inputs must each reference a unique UTXO")
+	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
 	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
-	ErrInputBICNotUnique = errors.New("inputs must each reference a unique BIC")
+	ErrInputBICNotUnique = ierrors.New("inputs must each reference a unique BIC")
 	// ErrInputRewardNotUnique gets returned if multiple inputs reference the same input index.
-	ErrInputRewardNotUnique = errors.New("inputs must each reference a unique input index")
+	ErrInputRewardNotUnique = ierrors.New("inputs must each reference a unique input index")
 	// ErrInputCommitmentNotUnique gets returned if multiple inputs reference the same BIC.
-	ErrInputCommitmentNotUnique = errors.New("inputs must each reference a unique Commitment")
+	ErrInputCommitmentNotUnique = ierrors.New("inputs must each reference a unique Commitment")
 	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
-	ErrAccountOutputNonEmptyState = errors.New("account output is not empty state")
+	ErrAccountOutputNonEmptyState = ierrors.New("account output is not empty state")
 	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the State/Governance controller.
-	ErrAccountOutputCyclicAddress = errors.New("account output's AccountID corresponds to state and/or governance controller")
+	ErrAccountOutputCyclicAddress = ierrors.New("account output's AccountID corresponds to state and/or governance controller")
 	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
-	ErrNFTOutputCyclicAddress = errors.New("NFT output's ID corresponds to address field")
+	ErrNFTOutputCyclicAddress = ierrors.New("NFT output's ID corresponds to address field")
 	// ErrDelegationValidatorIdZeroed gets returned if a Delegation Output's Validator ID is zeroed out.
-	ErrDelegationValidatorIdZeroed = errors.New("delegation output's validator ID is zeroed")
+	ErrDelegationValidatorIdZeroed = ierrors.New("delegation output's validator ID is zeroed")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
-	ErrOutputsSumExceedsTotalSupply = errors.New("accumulated output balance exceeds total supply")
+	ErrOutputsSumExceedsTotalSupply = ierrors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
-	ErrOutputDepositsMoreThanTotalSupply = errors.New("an output can not deposit more than the total supply")
+	ErrOutputDepositsMoreThanTotalSupply = ierrors.New("an output can not deposit more than the total supply")
 	// ErrStorageDepositLessThanMinReturnOutputStorageDeposit gets returned when the storage deposit condition's amount is less than the min storage deposit for the return output.
-	ErrStorageDepositLessThanMinReturnOutputStorageDeposit = errors.New("storage deposit return amount is less than the min storage deposit needed for the return output")
+	ErrStorageDepositLessThanMinReturnOutputStorageDeposit = ierrors.New("storage deposit return amount is less than the min storage deposit needed for the return output")
 	// ErrStorageDepositExceedsTargetOutputDeposit gets returned when the storage deposit condition's amount exceeds the target output's deposit.
-	ErrStorageDepositExceedsTargetOutputDeposit = errors.New("storage deposit return amount exceeds target output's deposit")
+	ErrStorageDepositExceedsTargetOutputDeposit = ierrors.New("storage deposit return amount exceeds target output's deposit")
 	// ErrMaxNativeTokensCountExceeded gets returned if outputs or transactions exceed the MaxNativeTokensCount.
-	ErrMaxNativeTokensCountExceeded = errors.New("max native tokens count exceeded")
+	ErrMaxNativeTokensCountExceeded = ierrors.New("max native tokens count exceeded")
 )
 
 // TransactionEssenceSelector implements SerializableSelectorFunc for transaction essence types.
@@ -79,7 +77,7 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 	case TransactionEssenceNormal:
 		seri = &TransactionEssence{}
 	default:
-		return nil, fmt.Errorf("%w: type byte %d", ErrUnknownTransactionEssenceType, txType)
+		return nil, ierrors.Wrapf(ErrUnknownTransactionEssenceType, "type byte %d", txType)
 	}
 	return seri, nil
 }
@@ -177,7 +175,7 @@ func (u *TransactionEssence) Size() int {
 func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameters) error {
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {
-		return fmt.Errorf("%w: got %v, want %v (%s)", ErrTxEssenceNetworkIDInvalid, u.NetworkID, expectedNetworkID, protoParams.NetworkName())
+		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName())
 	}
 
 	if err := SyntacticallyValidateContextInputs(u.ContextInputs,

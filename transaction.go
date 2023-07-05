@@ -1,8 +1,9 @@
 package iotago
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -13,23 +14,23 @@ const (
 
 var (
 	// ErrMissingUTXO gets returned if an UTXO is missing to commence a certain operation.
-	ErrMissingUTXO = errors.New("missing utxo")
+	ErrMissingUTXO = ierrors.New("missing utxo")
 	// ErrInputOutputSumMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
-	ErrInputOutputSumMismatch = errors.New("inputs and outputs do not spend/deposit the same amount")
+	ErrInputOutputSumMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
-	ErrSignatureAndAddrIncompatible = errors.New("address and signature type are not compatible")
+	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
 	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
-	ErrInvalidInputUnlock = errors.New("invalid input unlock")
+	ErrInvalidInputUnlock = ierrors.New("invalid input unlock")
 	// ErrSenderFeatureNotUnlocked gets returned when an output contains a SenderFeature with an ident which is not unlocked.
-	ErrSenderFeatureNotUnlocked = errors.New("sender feature is not unlocked")
+	ErrSenderFeatureNotUnlocked = ierrors.New("sender feature is not unlocked")
 	// ErrIssuerFeatureNotUnlocked gets returned when an output contains a IssuerFeature with an ident which is not unlocked.
-	ErrIssuerFeatureNotUnlocked = errors.New("issuer feature is not unlocked")
+	ErrIssuerFeatureNotUnlocked = ierrors.New("issuer feature is not unlocked")
 	// ErrReturnAmountNotFulFilled gets returned when a return amount in a transaction is not fulfilled by the output side.
-	ErrReturnAmountNotFulFilled = errors.New("return amount not fulfilled")
+	ErrReturnAmountNotFulFilled = ierrors.New("return amount not fulfilled")
 	// ErrInputOutputManaMismatch gets returned if Mana is not balanced across inputs and outputs/allotments.
-	ErrInputOutputManaMismatch = errors.New("inputs and outputs do not contain the same amount of Mana")
+	ErrInputOutputManaMismatch = ierrors.New("inputs and outputs do not contain the same amount of Mana")
 	// ErrInputCreationAfterTxCreation gets returned if an input has creation time after the transaction creation time.
-	ErrInputCreationAfterTxCreation = errors.New("input creation time after tx creation time")
+	ErrInputCreationAfterTxCreation = ierrors.New("input creation time after tx creation time")
 )
 
 // TransactionID is the ID of a Transaction.
@@ -67,7 +68,7 @@ func (t *Transaction) OutputsSet(api API) (OutputSet, error) {
 func (t *Transaction) ID(api API) (TransactionID, error) {
 	data, err := api.Encode(t)
 	if err != nil {
-		return TransactionID{}, fmt.Errorf("can't compute transaction ID: %w", err)
+		return TransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
 	}
 	return IdentifierFromData(data), nil
 }
@@ -147,13 +148,13 @@ func (t *Transaction) String() string {
 // syntacticallyValidate syntactically validates the Transaction.
 func (t *Transaction) syntacticallyValidate(api API) error {
 	if err := t.Essence.syntacticallyValidate(api.ProtocolParameters()); err != nil {
-		return fmt.Errorf("transaction essence is invalid: %w", err)
+		return ierrors.Errorf("transaction essence is invalid: %w", err)
 	}
 
 	if err := ValidateUnlocks(t.Unlocks,
 		UnlocksSigUniqueAndRefValidator(api),
 	); err != nil {
-		return fmt.Errorf("invalid unlocks: %w", err)
+		return ierrors.Errorf("invalid unlocks: %w", err)
 	}
 
 	return nil

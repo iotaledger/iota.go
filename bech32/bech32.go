@@ -2,10 +2,9 @@
 package bech32
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/iota.go/v4/bech32/internal/base32"
 )
 
@@ -22,15 +21,15 @@ var charset = newEncoding("qpzry9x8gf2tvdw0s3jn54khce6mua7l")
 func Encode(hrp string, src []byte) (string, error) {
 	dataLen := base32.EncodedLen(len(src))
 	if len(hrp)+dataLen+checksumLength+1 > maxStringLength {
-		return "", fmt.Errorf("%w: String length=%d, data length=%d", ErrInvalidLength, len(hrp), dataLen)
+		return "", ierrors.Wrapf(ErrInvalidLength, "String length=%d, data length=%d", len(hrp), dataLen)
 	}
 	// validate the human-readable part
 	if len(hrp) < 1 {
-		return "", fmt.Errorf("%w: String must not be empty", ErrInvalidLength)
+		return "", ierrors.Wrap(ErrInvalidLength, "String must not be empty")
 	}
 	for _, c := range hrp {
 		if !isValidHRPChar(c) {
-			return "", fmt.Errorf("%w: not US-ASCII character in human-readable part", ErrInvalidCharacter)
+			return "", ierrors.Wrap(ErrInvalidCharacter, "not US-ASCII character in human-readable part")
 		}
 	}
 	if err := validateCase(hrp); err != nil {
@@ -66,7 +65,7 @@ func Encode(hrp string, src []byte) (string, error) {
 // An SyntaxError is returned when the error can be matched to a certain position in s.
 func Decode(s string) (string, []byte, error) {
 	if len(s) > maxStringLength {
-		return "", nil, &SyntaxError{fmt.Errorf("%w: maximum length exceeded", ErrInvalidLength), maxStringLength}
+		return "", nil, &SyntaxError{ierrors.Wrap(ErrInvalidLength, "maximum length exceeded"), maxStringLength}
 	}
 	// validate the separator
 	hrpLen := strings.LastIndex(s, string(separator))
@@ -74,12 +73,12 @@ func Decode(s string) (string, []byte, error) {
 		return "", nil, ErrMissingSeparator
 	}
 	if hrpLen < 1 || hrpLen+checksumLength > len(s) {
-		return "", nil, &SyntaxError{fmt.Errorf("%w: invalid position", ErrInvalidSeparator), hrpLen}
+		return "", nil, &SyntaxError{ierrors.Wrap(ErrInvalidSeparator, "invalid position"), hrpLen}
 	}
 	// validate characters in human-readable part
 	for i, c := range s[:hrpLen] {
 		if !isValidHRPChar(c) {
-			return "", nil, &SyntaxError{fmt.Errorf("%w: not US-ASCII character in human-readable part", ErrInvalidCharacter), i}
+			return "", nil, &SyntaxError{ierrors.Wrap(ErrInvalidCharacter, "not US-ASCII character in human-readable part"), i}
 		}
 	}
 	// validate that the case of the entire string is consistent
@@ -95,7 +94,7 @@ func Decode(s string) (string, []byte, error) {
 	// decode the data part
 	data, err := charset.decode(chars)
 	if err != nil {
-		return "", nil, &SyntaxError{fmt.Errorf("%w: non-charset character in data part", ErrInvalidCharacter), hrpLen + 1 + len(data)}
+		return "", nil, &SyntaxError{ierrors.Wrap(ErrInvalidCharacter, "non-charset character in data part"), hrpLen + 1 + len(data)}
 	}
 
 	// validate the checksum
@@ -108,7 +107,7 @@ func Decode(s string) (string, []byte, error) {
 	dst := make([]byte, base32.DecodedLen(len(data)))
 	if _, err := base32.Decode(dst, data); err != nil {
 		var e *base32.CorruptInputError
-		if errors.As(err, &e) {
+		if ierrors.As(err, &e) {
 			return "", nil, &SyntaxError{e.Unwrap(), hrpLen + 1 + e.Offset}
 		}
 		return "", nil, err

@@ -3,8 +3,8 @@ package iotago
 import (
 	"context"
 	"crypto/ed25519"
-	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
@@ -488,6 +488,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*BasicOutput)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*AccountOutput)(nil)))
+		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*DelegationOutput)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*FoundryOutput)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*NFTOutput)(nil)))
 	}
@@ -500,7 +501,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterValidators(Transaction{}, nil, func(ctx context.Context, tx Transaction) error {
 			// limit unlock block count = input count
 			if len(tx.Unlocks) != len(tx.Essence.Inputs) {
-				return fmt.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(tx.Unlocks), len(tx.Essence.Inputs))
+				return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(tx.Unlocks), len(tx.Essence.Inputs))
 			}
 			return tx.syntacticallyValidate(v3)
 		}))
@@ -535,12 +536,12 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(ProtocolBlock{}, serix.TypeSettings{}))
 		must(api.RegisterValidators(ProtocolBlock{}, func(ctx context.Context, bytes []byte) error {
 			if len(bytes) > MaxBlockSize {
-				return fmt.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, len(bytes))
+				return ierrors.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, len(bytes))
 			}
 			return nil
 		}, func(ctx context.Context, protocolBlock ProtocolBlock) error {
 			if protoParams.Version() != protocolBlock.ProtocolVersion {
-				return fmt.Errorf("mismatched protocol version: wanted %d, got %d in block", protoParams.Version(), protocolBlock.ProtocolVersion)
+				return ierrors.Errorf("mismatched protocol version: wanted %d, got %d in block", protoParams.Version(), protocolBlock.ProtocolVersion)
 			}
 
 			block := protocolBlock.Block
@@ -552,14 +553,14 @@ func V3API(protoParams ProtocolParameters) API {
 
 				for _, parent := range block.WeakParentIDs() {
 					if _, contains := nonWeakParents[parent]; contains {
-						return fmt.Errorf("weak parents must be disjunct to the rest of the parents")
+						return ierrors.Errorf("weak parents must be disjunct to the rest of the parents")
 					}
 				}
 			}
 
 			if validatorBlock, ok := block.(*ValidatorBlock); ok {
 				if validatorBlock.HighestSupportedVersion < protocolBlock.ProtocolVersion {
-					return fmt.Errorf("highest supported version %d must be greater equal protocol version %d", validatorBlock.HighestSupportedVersion, protocolBlock.ProtocolVersion)
+					return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", validatorBlock.HighestSupportedVersion, protocolBlock.ProtocolVersion)
 				}
 			}
 

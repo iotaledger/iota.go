@@ -3,8 +3,8 @@ package iotago
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/util"
@@ -17,9 +17,9 @@ const (
 
 var (
 	// ErrNonUniqueFoundryOutputs gets returned when multiple FoundryOutput(s) with the same FoundryID exist within an OutputsByType.
-	ErrNonUniqueFoundryOutputs = errors.New("non unique foundries within outputs")
+	ErrNonUniqueFoundryOutputs = ierrors.New("non unique foundries within outputs")
 	// ErrInvalidFoundryStateTransition gets returned when a foundry is doing an invalid state transition.
-	ErrInvalidFoundryStateTransition = errors.New("invalid foundry state transition")
+	ErrInvalidFoundryStateTransition = ierrors.New("invalid foundry state transition")
 
 	emptyFoundryID = [FoundryIDLength]byte{}
 )

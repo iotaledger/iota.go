@@ -1,8 +1,7 @@
 package iotago
 
 import (
-	"github.com/pkg/errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 )
 
@@ -146,7 +145,7 @@ func (p *ManaDecayProvider) StoredManaWithDecay(storedMana Mana, slotIndexCreate
 	epochIndexTarget := p.timeProvider.EpochFromSlot(slotIndexTarget)
 
 	if epochIndexCreated > epochIndexTarget {
-		return 0, errors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", epochIndexCreated, epochIndexTarget)
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", epochIndexCreated, epochIndexTarget)
 	}
 
 	return p.decay(storedMana, epochIndexTarget-epochIndexCreated), nil
@@ -158,7 +157,7 @@ func (p *ManaDecayProvider) PotentialManaWithDecay(deposit BaseToken, slotIndexC
 	epochIndexTarget := p.timeProvider.EpochFromSlot(slotIndexTarget)
 
 	if epochIndexCreated > epochIndexTarget {
-		return 0, errors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", epochIndexCreated, epochIndexTarget)
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", epochIndexCreated, epochIndexTarget)
 	}
 
 	epochIndexDiff := epochIndexTarget - epochIndexCreated
@@ -183,7 +182,7 @@ func (p *ManaDecayProvider) PotentialManaWithDecay(deposit BaseToken, slotIndexC
 // RewardsWithDecay applies the decay to the given stored mana.
 func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, epochIndexReward EpochIndex, epochIndexClaimed EpochIndex) (Mana, error) {
 	if epochIndexReward > epochIndexClaimed {
-		return 0, errors.Wrapf(ErrWrongEpochIndex, "the reward epoch index was bigger than the claiming epoch index: %d > %d", epochIndexReward, epochIndexClaimed)
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the reward epoch index was bigger than the claiming epoch index: %d > %d", epochIndexReward, epochIndexClaimed)
 	}
 
 	return p.decay(rewards, epochIndexClaimed-epochIndexReward), nil
