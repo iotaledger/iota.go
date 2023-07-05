@@ -15,7 +15,7 @@ const SlotIndexLength = serializer.UInt64ByteSize
 type SlotIndex uint64
 
 func SlotIndexFromBytes(b []byte) (SlotIndex, int, error) {
-	if len(b) <= SlotIndexLength {
+	if len(b) < SlotIndexLength {
 		return 0, 0, ierrors.New("invalid slot index size")
 	}
 
