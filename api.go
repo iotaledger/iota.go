@@ -22,6 +22,8 @@ type API interface {
 	JSONDecode(jsonData []byte, obj any, opts ...serix.Option) error
 	// Underlying returns the underlying serix.API instance.
 	Underlying() *serix.API
+	// Version returns the version of the protocol this API is used with.
+	Version() Version
 	// ProtocolParameters returns the protocol parameters this API is used with.
 	ProtocolParameters() ProtocolParameters
 	// TimeProvider returns the underlying time provider used.

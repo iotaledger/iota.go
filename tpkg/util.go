@@ -439,7 +439,7 @@ func RandBlockID() iotago.BlockID {
 func RandProtocolBlock(block iotago.Block, api iotago.API) *iotago.ProtocolBlock {
 	return &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
-			ProtocolVersion:  TestAPI.ProtocolParameters().Version(),
+			ProtocolVersion:  TestAPI.Version(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
 			IssuerID:         RandAccountID(),
 		},
@@ -468,7 +468,7 @@ func RandBasicBlock(withPayloadType iotago.PayloadType) *iotago.BasicBlock {
 func RandValidatorBlock() *iotago.ValidatorBlock {
 	return &iotago.ValidatorBlock{
 		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidatorMaxParents)),
-		HighestSupportedVersion: TestAPI.ProtocolParameters().Version() + 1,
+		HighestSupportedVersion: TestAPI.Version() + 1,
 	}
 }
 

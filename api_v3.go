@@ -204,7 +204,7 @@ func (v *v3api) Underlying() *serix.API {
 	return v.serixAPI
 }
 
-func (v *v3api) ProtocolVersion() byte {
+func (v *v3api) Version() Version {
 	return v.protocolParameters.Version()
 }
 
