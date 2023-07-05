@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/runtime/options"
 )
 
@@ -60,6 +61,27 @@ type v3ProtocolParameters struct {
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold SlotIndex `serix:"17,mapKey=epochNearingThreshold"`
+}
+
+func (p v3ProtocolParameters) Equals(other v3ProtocolParameters) bool {
+	return p.Version == other.Version &&
+		p.NetworkName == other.NetworkName &&
+		p.Bech32HRP == other.Bech32HRP &&
+		p.RentStructure.Equals(other.RentStructure) &&
+		p.TokenSupply == other.TokenSupply &&
+		p.GenesisUnixTimestamp == other.GenesisUnixTimestamp &&
+		p.SlotDurationInSeconds == other.SlotDurationInSeconds &&
+		p.SlotsPerEpochExponent == other.SlotsPerEpochExponent &&
+		p.ManaGenerationRate == other.ManaGenerationRate &&
+		p.ManaGenerationRateExponent == other.ManaGenerationRateExponent &&
+		lo.Equal(p.ManaDecayFactors, other.ManaDecayFactors) &&
+		p.ManaDecayFactorsExponent == other.ManaDecayFactorsExponent &&
+		p.ManaDecayFactorEpochsSum == other.ManaDecayFactorEpochsSum &&
+		p.ManaDecayFactorEpochsSumExponent == other.ManaDecayFactorEpochsSumExponent &&
+		p.StakingUnbondingPeriod == other.StakingUnbondingPeriod &&
+		p.EvictionAge == other.EvictionAge &&
+		p.LivenessThreshold == other.LivenessThreshold &&
+		p.EpochNearingThreshold == other.EpochNearingThreshold
 }
 
 func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3ProtocolParameters {
@@ -153,6 +175,10 @@ func (p *V3ProtocolParameters) String() string {
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
 	return NewManaDecayProvider(p.TimeProvider(), p.v3ProtocolParameters.SlotsPerEpochExponent, p.v3ProtocolParameters.ManaGenerationRate, p.v3ProtocolParameters.ManaGenerationRateExponent, p.v3ProtocolParameters.ManaDecayFactors, p.v3ProtocolParameters.ManaDecayFactorsExponent, p.v3ProtocolParameters.ManaDecayFactorEpochsSum, p.v3ProtocolParameters.ManaDecayFactorEpochsSumExponent)
+}
+
+func (p *V3ProtocolParameters) Equals(other *V3ProtocolParameters) bool {
+	return p.v3ProtocolParameters.Equals(other.v3ProtocolParameters)
 }
 
 func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Option[V3ProtocolParameters] {
