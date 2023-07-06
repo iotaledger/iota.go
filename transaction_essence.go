@@ -117,8 +117,8 @@ type TransactionEssence struct {
 }
 
 // SigningMessage returns the to be signed message.
-func (u *TransactionEssence) SigningMessage() ([]byte, error) {
-	essenceBytes, err := internalEncode(u)
+func (u *TransactionEssence) SigningMessage(api API) ([]byte, error) {
+	essenceBytes, err := api.Encode(u)
 	if err != nil {
 		return nil, err
 	}
@@ -128,14 +128,14 @@ func (u *TransactionEssence) SigningMessage() ([]byte, error) {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (u *TransactionEssence) Sign(inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
+func (u *TransactionEssence) Sign(api API, inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
 	if inputsCommitment == nil || len(inputsCommitment) != InputsCommitmentLength {
 		return nil, ErrInvalidInputsCommitment
 	}
 
 	copy(u.InputsCommitment[:], inputsCommitment)
 
-	signMsg, err := u.SigningMessage()
+	signMsg, err := u.SigningMessage(api)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (u *TransactionEssence) Size() int {
 
 	return util.NumByteLen(TransactionEssenceNormal) +
 		util.NumByteLen(u.NetworkID) +
-		len(SlotIndex(0).Bytes()) +
+		SlotIndexLength +
 		u.ContextInputs.Size() +
 		u.Inputs.Size() +
 		InputsCommitmentLength +
@@ -172,10 +172,10 @@ func (u *TransactionEssence) Size() int {
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParameters) error {
+func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameters) error {
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {
-		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName)
+		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName())
 	}
 
 	if err := SyntacticallyValidateContextInputs(u.ContextInputs,

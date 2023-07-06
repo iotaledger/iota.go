@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"bytes"
 	"fmt"
 
 	_ "golang.org/x/crypto/blake2b"
@@ -40,24 +39,3 @@ func (sigType SignatureType) String() string {
 var (
 	sigNames = [SignatureEd25519 + 1]string{"Ed25519Signature"}
 )
-
-// Signatures is a slice of Signature(s).
-type Signatures[T Signature] []T
-
-func (sigs Signatures[T]) Len() int {
-	return len(sigs)
-}
-
-func (sigs Signatures[T]) Less(i, j int) bool {
-	// change this once there are more signature types
-	a, b := sigs[i], sigs[j]
-
-	aBytes, _ := _internalAPI.Encode(a)
-	bBytes, _ := _internalAPI.Encode(b)
-
-	return bytes.Compare(aBytes, bBytes) < 0
-}
-
-func (sigs Signatures[T]) Swap(i, j int) {
-	sigs[i], sigs[j] = sigs[j], sigs[i]
-}

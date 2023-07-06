@@ -36,13 +36,8 @@ func IdentifierFromHexString(hex string) (Identifier, error) {
 		return Identifier{}, err
 	}
 
-	if len(bytes) != IdentifierLength {
-		return Identifier{}, ErrInvalidIdentifierLength
-	}
-
-	var id Identifier
-	copy(id[:], bytes)
-	return id, nil
+	id, _, err := IdentifierFromBytes(bytes)
+	return id, err
 }
 
 // MustIdentifierFromHexString converts the hex to an Identifier representation.
@@ -55,16 +50,17 @@ func MustIdentifierFromHexString(hex string) Identifier {
 	return id
 }
 
-func (id Identifier) Bytes() ([]byte, error) {
-	return id[:], nil
-}
-
-func (id *Identifier) FromBytes(bytes []byte) (int, error) {
-	if len(bytes) != IdentifierLength {
-		return 0, ErrInvalidIdentifierLength
+func IdentifierFromBytes(bytes []byte) (Identifier, int, error) {
+	var id Identifier
+	if len(bytes) < IdentifierLength {
+		return id, 0, ErrInvalidIdentifierLength
 	}
 	copy(id[:], bytes)
-	return len(bytes), nil
+	return id, len(bytes), nil
+}
+
+func (id Identifier) Bytes() ([]byte, error) {
+	return id[:], nil
 }
 
 func (id Identifier) MarshalText() (text []byte, err error) {

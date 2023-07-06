@@ -29,8 +29,12 @@ type virtualMachine struct {
 }
 
 func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs vm.ResolvedInputs, overrideFuncs ...vm.ExecFunc) error {
+	if vmParams.API == nil {
+		return fmt.Errorf("no API provided")
+	}
+
 	var err error
-	vmParams.WorkingSet, err = vm.NewVMParamsWorkingSet(t, inputs)
+	vmParams.WorkingSet, err = vm.NewVMParamsWorkingSet(vmParams.API, t, inputs)
 	if err != nil {
 		return err
 	}
@@ -132,7 +136,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "no commitment provided")
 		}
 
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < vmParams.WorkingSet.Commitment.Index+vmParams.External.ProtocolParameters.EvictionAge {
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < vmParams.WorkingSet.Commitment.Index+vmParams.API.ProtocolParameters().EvictionAge() {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	}
@@ -264,19 +268,19 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if nextBIFeat == nil {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot remove block issuer feature until it expires")
 		}
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+vmParams.External.ProtocolParameters.EvictionAge {
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+vmParams.API.ProtocolParameters().EvictionAge() {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 
 	} else if nextBIFeat != nil {
 		// if the block issuer feature has expired, it must either be removed or expiry extended.
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < txSlotIndex+vmParams.External.ProtocolParameters.EvictionAge {
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < txSlotIndex+vmParams.API.ProtocolParameters().EvictionAge() {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	}
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
-	manaDecayProvider := vmParams.External.ProtocolParameters.ManaDecayProvider()
+	manaDecayProvider := vmParams.API.ProtocolParameters().ManaDecayProvider()
 	manaIn, err := vm.TotalManaIn(
 		manaDecayProvider,
 		vmParams.WorkingSet.Tx.Essence.CreationTime,
@@ -312,7 +316,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+vmParams.External.ProtocolParameters.EvictionAge) {
+		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+vmParams.API.ProtocolParameters().EvictionAge()) {
 			manaOut -= basicOutput.StoredMana()
 		}
 	}
@@ -321,7 +325,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+vmParams.External.ProtocolParameters.EvictionAge) {
+		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+vmParams.API.ProtocolParameters().EvictionAge()) {
 			manaOut -= nftOutput.StoredMana()
 		}
 	}
@@ -344,14 +348,14 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 	_, isClaiming := vmParams.WorkingSet.Rewards[chainID]
 
 	if currentStakingFeat != nil {
-		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+		timeProvider := vmParams.API.TimeProvider()
 		// TODO: Use commitment input.
 		creationEpoch := timeProvider.EpochFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
 		if creationEpoch < currentStakingFeat.EndEpoch {
 			return accountStakingNonExpiredValidation(
 				currentStakingFeat, nextStakingFeat, creationEpoch,
-				vmParams.External.ProtocolParameters.StakingUnbondingPeriod, isClaiming,
+				vmParams.API.ProtocolParameters().StakingUnbondingPeriod(), isClaiming,
 			)
 		} else {
 			return accountStakingExpiredValidation(
@@ -371,14 +375,14 @@ func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iot
 		return iotago.ErrInvalidStakingAmountMismatch
 	}
 
-	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+	timeProvider := vmParams.API.TimeProvider()
 	creationEpoch := timeProvider.EpochFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
 	if stakingFeat.StartEpoch != creationEpoch {
 		return iotago.ErrInvalidStakingStartEpoch
 	}
 
-	unbondingEpoch := creationEpoch + vmParams.External.ProtocolParameters.StakingUnbondingPeriod
+	unbondingEpoch := creationEpoch + vmParams.API.ProtocolParameters().StakingUnbondingPeriod()
 	if stakingFeat.EndEpoch < unbondingEpoch {
 		return ierrors.Wrapf(iotago.ErrInvalidStakingEndEpochTooEarly, "(i.e. end epoch %d should be >= %d)", stakingFeat.EndEpoch, unbondingEpoch)
 	}
@@ -476,7 +480,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 	stakingFeat := outputToDestroy.FeatureSet().Staking()
 	if stakingFeat != nil {
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
-		timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+		timeProvider := vmParams.API.TimeProvider()
 		creationEpoch := timeProvider.EpochFromSlot(vmParams.WorkingSet.Tx.Essence.CreationTime)
 
 		if creationEpoch < stakingFeat.EndEpoch {
@@ -678,7 +682,7 @@ func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Param
 		return ierrors.Wrapf(iotago.ErrInvalidDelegationNonZeroedID, "%w", iotago.ErrInvalidDelegationTransition)
 	}
 
-	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+	timeProvider := vmParams.API.TimeProvider()
 	creationSlot := vmParams.WorkingSet.Tx.Essence.CreationTime
 	creationEpoch := timeProvider.EpochFromSlot(creationSlot)
 	votingPowerSlot := votingPowerCalculationSlot(creationSlot, timeProvider)
@@ -722,7 +726,7 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w", iotago.ErrInvalidDelegationModified)
 	}
 
-	timeProvider := vmParams.External.ProtocolParameters.TimeProvider()
+	timeProvider := vmParams.API.TimeProvider()
 	creationSlot := vmParams.WorkingSet.Tx.Essence.CreationTime
 	creationEpoch := timeProvider.EpochFromSlot(creationSlot)
 	votingPowerSlot := votingPowerCalculationSlot(creationSlot, timeProvider)

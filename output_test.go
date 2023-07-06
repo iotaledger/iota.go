@@ -57,7 +57,7 @@ func TestOutputsCommitment(t *testing.T) {
 		},
 	}
 
-	require.NotEqual(t, outputs1.MustCommitment(), outputs2.MustCommitment(), "commitment for different Outputs must be different")
+	require.NotEqual(t, outputs1.MustCommitment(tpkg.TestAPI), outputs2.MustCommitment(tpkg.TestAPI), "commitment for different Outputs must be different")
 
 }
 
@@ -203,24 +203,19 @@ func TestOutputsDeSerialize(t *testing.T) {
 }
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
-	nonZeroCostParams := &iotago.ProtocolParameters{
-		RentStructure: iotago.RentStructure{
-			VByteCost:    100,
-			VBFactorData: iotago.VByteCostFactorData,
-			VBFactorKey:  iotago.VByteCostFactorKey,
-		},
-		TokenSupply: tpkg.TestTokenSupply,
-	}
+	nonZeroCostParams := iotago.NewV3ProtocolParameters(
+		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, iotago.VByteCostFactorData, iotago.VByteCostFactorKey),
+	)
 
 	tests := []struct {
 		name        string
-		protoParams *iotago.ProtocolParameters
+		protoParams iotago.ProtocolParameters
 		outputs     iotago.Outputs[iotago.Output]
 		wantErr     error
 	}{
 		{
 			name:        "ok",
-			protoParams: tpkg.TestProtoParams,
+			protoParams: tpkg.TestAPI.ProtocolParameters(),
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount:     tpkg.TestTokenSupply,
@@ -311,7 +306,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - zero deposit",
-			protoParams: tpkg.TestProtoParams,
+			protoParams: tpkg.TestAPI.ProtocolParameters(),
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 0,
@@ -324,7 +319,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - more than total supply on single output",
-			protoParams: tpkg.TestProtoParams,
+			protoParams: tpkg.TestAPI.ProtocolParameters(),
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: tpkg.TestTokenSupply + 1,
@@ -337,7 +332,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - sum more than total supply over multiple outputs",
-			protoParams: tpkg.TestProtoParams,
+			protoParams: tpkg.TestAPI.ProtocolParameters(),
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: tpkg.TestTokenSupply - 1,
