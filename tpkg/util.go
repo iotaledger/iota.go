@@ -9,13 +9,10 @@ import (
 	"math/big"
 	"math/rand"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/iotaledger/hive.go/runtime/options"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	legacy "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/trinary"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
@@ -77,15 +74,6 @@ func RandMana(max uint64) iotago.Mana {
 // RandFloat64 returns a random float64.
 func RandFloat64(max float64) float64 {
 	return rand.Float64() * max
-}
-
-// RandTrytes returns length amount of random trytes.
-func RandTrytes(length int) trinary.Trytes {
-	var trytes strings.Builder
-	for i := 0; i < length; i++ {
-		trytes.WriteByte(legacy.TryteAlphabet[rand.Intn(len(legacy.TryteAlphabet))])
-	}
-	return trytes.String()
 }
 
 func RandOutputID(index uint16) iotago.OutputID {
