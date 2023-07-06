@@ -27,13 +27,8 @@ const (
 	nodeAPIUrl = "http://127.0.0.1:14265"
 )
 
-var (
-	// TODO: remove this
-	v3API = iotago.V3API(iotago.NewV3ProtocolParameters())
-)
-
 func nodeClient(t *testing.T) *nodeclient.Client {
-	client, err := nodeclient.New(nodeAPIUrl, nodeclient.WithIOTAGoAPI(v3API))
+	client, err := nodeclient.New(nodeAPIUrl, nodeclient.WithIOTAGoAPI(tpkg.TestAPI))
 	require.NoError(t, err)
 	return client
 }
@@ -98,7 +93,7 @@ func TestClient_Info(t *testing.T) {
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10),
 	)
 
-	protoParamsJson, err := v3API.JSONEncode(protoParams)
+	protoParamsJson, err := tpkg.TestAPI.JSONEncode(protoParams)
 	require.NoError(t, err)
 	protoParamsJsonRawMsg := json.RawMessage(protoParamsJson)
 	originInfo.ProtocolParameters = &protoParamsJsonRawMsg
@@ -142,7 +137,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 		RootsID:          rootsID,
 		CumulativeWeight: 100_000,
 	}
-	protoCommitmentJson, err := v3API.JSONEncode(commitment)
+	protoCommitmentJson, err := tpkg.TestAPI.JSONEncode(commitment)
 	require.NoError(t, err)
 	protoCommitmentJsonRawMsg := json.RawMessage(protoCommitmentJson)
 	originRes.Commitment = &protoCommitmentJsonRawMsg
@@ -175,7 +170,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 		},
 	}
 
-	serializedIncompleteBlock, err := v3API.Encode(incompleteBlock, serix.WithValidation())
+	serializedIncompleteBlock, err := tpkg.TestAPI.Encode(incompleteBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -243,7 +238,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		},
 	}
 
-	data, err := v3API.Encode(originBlock, serix.WithValidation())
+	data, err := tpkg.TestAPI.Encode(originBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -276,7 +271,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		},
 	}
 
-	data, err := v3API.Encode(originBlock, serix.WithValidation())
+	data, err := tpkg.TestAPI.Encode(originBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -295,7 +290,7 @@ func TestClient_OutputByID(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	data, err := v3API.Encode(originOutput)
+	data, err := tpkg.TestAPI.Encode(originOutput)
 	require.NoError(t, err)
 
 	txID := tpkg.Rand32ByteArray()
