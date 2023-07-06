@@ -309,7 +309,7 @@ type ValidatorBlock struct {
 	WeakParents        BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents,minLen=0,maxLen=50"`
 	ShallowLikeParents BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents,minLen=0,maxLen=50"`
 
-	HighestSupportedVersion Version `serix:"3,mapKey=latestFinalizedSlot"`
+	HighestSupportedVersion Version `serix:"3,mapKey=highestSupportedVersion"`
 }
 
 func (b *ValidatorBlock) Type() BlockType {
