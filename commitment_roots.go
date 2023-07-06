@@ -13,15 +13,19 @@ type Roots struct {
 	StateRoot         Identifier `serix:"2"`
 	AccountRoot       Identifier `serix:"4"`
 	AttestationsRoot  Identifier `serix:"5"`
+	CommitteeRoot     Identifier `serix:"6"`
+	RewardsRoot       Identifier `serix:"7"`
 }
 
-func NewRoots(tangleRoot, stateMutationRoot, attestationsRoot, stateRoot, accountRoot Identifier) *Roots {
+func NewRoots(tangleRoot, stateMutationRoot, attestationsRoot, stateRoot, accountRoot, committeeRoot, rewardsRoot Identifier) *Roots {
 	return &Roots{
 		TangleRoot:        tangleRoot,
 		StateMutationRoot: stateMutationRoot,
 		StateRoot:         stateRoot,
 		AccountRoot:       accountRoot,
 		AttestationsRoot:  attestationsRoot,
+		CommitteeRoot:     committeeRoot,
+		RewardsRoot:       rewardsRoot,
 	}
 }
 
@@ -32,6 +36,8 @@ func (r *Roots) values() []Identifier {
 		r.StateRoot,
 		r.AccountRoot,
 		r.AttestationsRoot,
+		r.CommitteeRoot,
+		r.RewardsRoot,
 	}
 }
 
