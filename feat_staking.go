@@ -68,5 +68,5 @@ func (s *StakingFeature) Type() FeatureType {
 }
 
 func (s *StakingFeature) Size() int {
-	return util.NumByteLen(byte(FeatureStaking)) + serializer.UInt64ByteSize*2 + len(EpochIndex(0).Bytes())*2
+	return util.NumByteLen(byte(FeatureStaking)) + serializer.UInt64ByteSize*2 + EpochIndexLength*2
 }

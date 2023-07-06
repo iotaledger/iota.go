@@ -33,7 +33,7 @@ linters:
     - goimports
     - gosec
     - govet
-    - ifshort
+    #- ifshort
     - importas
     - misspell
     - nilnil

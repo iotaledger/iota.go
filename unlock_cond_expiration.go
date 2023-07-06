@@ -49,6 +49,5 @@ func (s *ExpirationUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *ExpirationUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionExpiration)) + s.ReturnAddress.Size() +
-		len(s.SlotIndex.Bytes())
+	return util.NumByteLen(byte(UnlockConditionExpiration)) + s.ReturnAddress.Size() + SlotIndexLength
 }

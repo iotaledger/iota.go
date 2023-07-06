@@ -2,34 +2,26 @@ package iotago
 
 import (
 	"bytes"
-	"time"
+	"fmt"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
-	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
-	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 )
 
 // Attestations is a slice of Attestation.
 type Attestations = []*Attestation
 
 type Attestation struct {
-	IssuerID         AccountID    `serix:"0,mapKey=issuerID"`
-	IssuingTime      time.Time    `serix:"1,mapKey=issuingTime"`
-	SlotCommitmentID CommitmentID `serix:"2,mapKey=slotCommitmentID"`
-	BlockContentHash Identifier   `serix:"3,mapKey=blockContentHash"`
-	Signature        Signature    `serix:"4,mapKey=signature"`
-	Nonce            uint64       `serix:"5,mapKey=nonce"`
+	BlockHeader `serix:"0"`
+	BlockHash   Identifier `serix:"1,mapKey=blockHash"`
+	Signature   Signature  `serix:"2,mapKey=signature"`
 }
 
-func NewAttestation(block *Block) *Attestation {
+func NewAttestation(api API, block *ProtocolBlock) *Attestation {
 	return &Attestation{
-		IssuerID:         block.IssuerID,
-		IssuingTime:      block.IssuingTime,
-		SlotCommitmentID: block.SlotCommitment.MustID(),
-		BlockContentHash: lo.PanicOnErr(block.ContentHash()),
-		Signature:        block.Signature,
-		Nonce:            block.Nonce,
+		BlockHeader: block.BlockHeader,
+		BlockHash:   lo.PanicOnErr(block.Block.Hash(api)),
+		Signature:   block.Signature,
 	}
 }
 
@@ -50,53 +42,45 @@ func (a *Attestation) Compare(other *Attestation) int {
 	case a.IssuingTime.Before(other.IssuingTime):
 		return -1
 	default:
-		return bytes.Compare(a.BlockContentHash[:], other.BlockContentHash[:])
+		return bytes.Compare(a.BlockHash[:], other.BlockHash[:])
 	}
 }
 
-func (a Attestation) BlockID(timeProvider *TimeProvider) (BlockID, error) {
-	signatureBytes, err := internalEncode(a.Signature)
+func (a Attestation) BlockID(api API) (BlockID, error) {
+	signatureBytes, err := api.Encode(a.Signature)
 	if err != nil {
-		return EmptyBlockID(), ierrors.Errorf("failed to serialize block's signature: %w", err)
+		return EmptyBlockID(), fmt.Errorf("failed to create blockID: %w", err)
 	}
 
-	nonceBytes, err := internalEncode(a.Nonce)
+	headerHash, err := a.BlockHeader.Hash(api)
 	if err != nil {
-		return EmptyBlockID(), ierrors.Errorf("failed to serialize block's nonce: %w", err)
+		return EmptyBlockID(), fmt.Errorf("failed to create blockID: %w", err)
 	}
 
-	blockIdentifier := IdentifierFromData(byteutils.ConcatBytes(a.BlockContentHash[:], signatureBytes[:], nonceBytes[:]))
-	slotIndex := timeProvider.SlotFromTime(a.IssuingTime)
+	id := blockIdentifier(headerHash, a.BlockHash, signatureBytes)
+	slotIndex := api.TimeProvider().SlotFromTime(a.IssuingTime)
 
-	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
+	return NewSlotIdentifier(slotIndex, id), nil
 }
 
-func (a Attestation) Bytes() (bytes []byte, err error) {
-	return internalEncode(a)
-}
-
-func (a *Attestation) FromBytes(bytes []byte) (consumedBytes int, err error) {
-	return internalDecode(bytes, a)
-}
-
-func (a *Attestation) signingMessage() ([]byte, error) {
-	issuingTimeBytes, err := internalEncode(a.IssuingTime)
+func (a *Attestation) signingMessage(api API) ([]byte, error) {
+	headerHash, err := a.BlockHeader.Hash(api)
 	if err != nil {
-		return nil, ierrors.Errorf("failed to serialize block's issuing time: %w", err)
+		return nil, fmt.Errorf("failed to create signing message: %w", err)
 	}
 
-	return byteutils.ConcatBytes(issuingTimeBytes, a.SlotCommitmentID[:], a.BlockContentHash[:]), nil
+	return blockSigningMessage(headerHash, a.BlockHash), nil
 }
 
-func (a *Attestation) VerifySignature() (valid bool, err error) {
-	signingMessage, err := a.signingMessage()
+func (a *Attestation) VerifySignature(api API) (valid bool, err error) {
+	signingMessage, err := a.signingMessage(api)
 	if err != nil {
 		return false, err
 	}
 
 	edSig, isEdSig := a.Signature.(*Ed25519Signature)
 	if !isEdSig {
-		return false, ierrors.Errorf("only ed2519 signatures supported, got %s", a.Signature.Type())
+		return false, fmt.Errorf("only ed2519 signatures supported, got %s", a.Signature.Type())
 	}
 
 	return hiveEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil

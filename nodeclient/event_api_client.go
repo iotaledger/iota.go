@@ -227,8 +227,8 @@ func (eac *EventAPIClient) subscribeToBlockMetadataTopic(topic string) (<-chan *
 	return subscribeToTopic(eac, topic, jsonDeserializer[BlockMetadataResponse])
 }
 
-func (eac *EventAPIClient) subscribeToBlockMetadataBlockTopic(topic string) (<-chan *iotago.Block, *EventAPIClientSubscription) {
-	return subscribeToTopic(eac, topic, func(payload []byte) (*iotago.Block, error) {
+func (eac *EventAPIClient) subscribeToBlockMetadataBlockTopic(topic string) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
+	return subscribeToTopic(eac, topic, func(payload []byte) (*iotago.ProtocolBlock, error) {
 		metadataRes := &BlockMetadataResponse{}
 		if err := json.Unmarshal(payload, metadataRes); err != nil {
 			sendErrOrDrop(eac.Errors, err)
@@ -239,9 +239,9 @@ func (eac *EventAPIClient) subscribeToBlockMetadataBlockTopic(topic string) (<-c
 	})
 }
 
-func (eac *EventAPIClient) subscribeToBlocksTopic(topic string) (<-chan *iotago.Block, *EventAPIClientSubscription) {
-	return subscribeToTopic(eac, topic, func(payload []byte) (*iotago.Block, error) {
-		block := &iotago.Block{}
+func (eac *EventAPIClient) subscribeToBlocksTopic(topic string) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
+	return subscribeToTopic(eac, topic, func(payload []byte) (*iotago.ProtocolBlock, error) {
+		block := &iotago.ProtocolBlock{}
 		if _, err := eac.Client.opts.iotagoAPI.Decode(payload, block); err != nil {
 			return nil, err
 		}
@@ -250,7 +250,7 @@ func (eac *EventAPIClient) subscribeToBlocksTopic(topic string) (<-chan *iotago.
 }
 
 // Blocks returns a channel of newly received blocks.
-func (eac *EventAPIClient) Blocks() (<-chan *iotago.Block, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) Blocks() (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	return eac.subscribeToBlocksTopic(EventAPIBlocks)
 }
 
@@ -260,7 +260,7 @@ func (eac *EventAPIClient) ConfirmedBlocksMetadata() (<-chan *BlockMetadataRespo
 }
 
 // ConfirmedBlocks returns a channel of block metadata of newly confirmed blocks.
-func (eac *EventAPIClient) ConfirmedBlocks() (<-chan *iotago.Block, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) ConfirmedBlocks() (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	return eac.subscribeToBlockMetadataBlockTopic(EventAPIBlockMetadataConfirmed)
 }
 
@@ -270,33 +270,33 @@ func (eac *EventAPIClient) FinalizedBlocksMetadata() (<-chan *BlockMetadataRespo
 }
 
 // FinalizedBlocks returns a channel of block metadata of newly confirmed blocks.
-func (eac *EventAPIClient) FinalizedBlocks() (<-chan *iotago.Block, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) FinalizedBlocks() (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	return eac.subscribeToBlockMetadataBlockTopic(EventAPIBlockMetadataFinalized)
 }
 
 // TransactionBlocks returns a channel of blocks containing transactions.
-func (eac *EventAPIClient) TransactionBlocks() (<-chan *iotago.Block, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) TransactionBlocks() (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	return eac.subscribeToBlocksTopic(EventAPIBlocksTransaction)
 }
 
 // TransactionTaggedDataBlocks returns a channel of blocks containing transactions with tagged data.
-func (eac *EventAPIClient) TransactionTaggedDataBlocks() (<-chan *iotago.Block, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) TransactionTaggedDataBlocks() (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	return eac.subscribeToBlocksTopic(EventAPIBlocksTransactionTaggedData)
 }
 
 // TransactionTaggedDataWithTagBlocks returns a channel of blocks containing transactions with tagged data containing the given tag.
-func (eac *EventAPIClient) TransactionTaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.Block, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) TransactionTaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIBlocksTransactionTaggedDataTag, "{tag}", hexutil.EncodeHex(tag), 1)
 	return eac.subscribeToBlocksTopic(topic)
 }
 
 // TaggedDataBlocks returns a channel of blocks containing tagged data containing the given tag.
-func (eac *EventAPIClient) TaggedDataBlocks() (<-chan *iotago.Block, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) TaggedDataBlocks() (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	return eac.subscribeToBlocksTopic(EventAPIBlocksTaggedData)
 }
 
 // TaggedDataWithTagBlocks returns a channel of blocks containing tagged data.
-func (eac *EventAPIClient) TaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.Block, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) TaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIBlocksTaggedDataTag, "{tag}", hexutil.EncodeHex(tag), 1)
 	return eac.subscribeToBlocksTopic(topic)
 }
@@ -340,7 +340,7 @@ func (eac *EventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.A
 }
 
 // TransactionIncludedBlock returns a channel of the included block which carries the transaction with the given ID.
-func (eac *EventAPIClient) TransactionIncludedBlock(txID iotago.TransactionID) (<-chan *iotago.Block, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) TransactionIncludedBlock(txID iotago.TransactionID) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPITransactionsIncludedBlock, "{transactionId}", txID.ToHex(), 1)
 	return eac.subscribeToBlocksTopic(topic)
 }

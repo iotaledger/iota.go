@@ -185,7 +185,7 @@ func (d *DelegationOutput) Size() int {
 		BaseTokenSize +
 		DelegationIDLength +
 		AccountIDLength +
-		len(EpochIndex(0).Bytes())*2 +
+		EpochIndexLength*2 +
 		d.Conditions.Size() +
 		d.ImmutableFeatures.Size()
 }
