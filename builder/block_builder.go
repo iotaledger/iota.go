@@ -2,9 +2,9 @@ package builder
 
 import (
 	"crypto/ed25519"
-	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
@@ -100,7 +100,7 @@ func (b *BasicBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.Priv
 
 	signature, err := b.protocolBlock.Sign(b.api, iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {
-		b.err = fmt.Errorf("error signing block: %w", err)
+		b.err = ierrors.Errorf("error signing block: %w", err)
 		return b
 	}
 
@@ -261,7 +261,7 @@ func (v *ValidatorBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.
 
 	signature, err := v.protocolBlock.Sign(v.api, iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {
-		v.err = fmt.Errorf("error signing block: %w", err)
+		v.err = ierrors.Errorf("error signing block: %w", err)
 		return v
 	}
 

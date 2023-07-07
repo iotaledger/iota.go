@@ -30,7 +30,7 @@ type virtualMachine struct {
 
 func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs vm.ResolvedInputs, overrideFuncs ...vm.ExecFunc) error {
 	if vmParams.API == nil {
-		return fmt.Errorf("no API provided")
+		return ierrors.New("no API provided")
 	}
 
 	var err error

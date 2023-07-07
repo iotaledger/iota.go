@@ -108,7 +108,7 @@ type BlockHeader struct {
 func (b *BlockHeader) Hash(api API) (Identifier, error) {
 	headerBytes, err := api.Encode(b)
 	if err != nil {
-		return Identifier{}, fmt.Errorf("failed to serialize block header: %w", err)
+		return Identifier{}, ierrors.Errorf("failed to serialize block header: %w", err)
 	}
 
 	return blake2b.Sum256(headerBytes), nil
@@ -183,11 +183,11 @@ func (b *ProtocolBlock) VerifySignature(api API) (valid bool, err error) {
 
 	edSig, isEdSig := b.Signature.(*Ed25519Signature)
 	if !isEdSig {
-		return false, fmt.Errorf("only ed2519 signatures supported, got %s", b.Signature.Type())
+		return false, ierrors.Errorf("only ed2519 signatures supported, got %s", b.Signature.Type())
 	}
 
 	if edSig.PublicKey == [ed25519.PublicKeySize]byte{} {
-		return false, fmt.Errorf("empty publicKeys are invalid")
+		return false, ierrors.New("empty publicKeys are invalid")
 	}
 
 	return hiveEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
@@ -197,7 +197,7 @@ func (b *ProtocolBlock) VerifySignature(api API) (valid bool, err error) {
 func (b *ProtocolBlock) ID(api API) (BlockID, error) {
 	data, err := api.Encode(b)
 	if err != nil {
-		return BlockID{}, fmt.Errorf("can't compute block ID: %w", err)
+		return BlockID{}, ierrors.Errorf("can't compute block ID: %w", err)
 	}
 
 	id, err := BlockIdentifierFromBlockBytes(data)
@@ -296,7 +296,7 @@ func (b *BasicBlock) ShallowLikeParentIDs() BlockIDs {
 func (b *BasicBlock) Hash(api API) (Identifier, error) {
 	blockBytes, err := api.Encode(b)
 	if err != nil {
-		return Identifier{}, fmt.Errorf("failed to serialize basic block: %w", err)
+		return Identifier{}, ierrors.Errorf("failed to serialize basic block: %w", err)
 	}
 
 	return blake2b.Sum256(blockBytes), nil
@@ -331,7 +331,7 @@ func (b *ValidatorBlock) ShallowLikeParentIDs() BlockIDs {
 func (b *ValidatorBlock) Hash(api API) (Identifier, error) {
 	blockBytes, err := api.Encode(b)
 	if err != nil {
-		return Identifier{}, fmt.Errorf("failed to serialize validator block: %w", err)
+		return Identifier{}, ierrors.Errorf("failed to serialize validator block: %w", err)
 	}
 
 	return blake2b.Sum256(blockBytes), nil

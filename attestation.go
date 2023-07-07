@@ -2,9 +2,9 @@ package iotago
 
 import (
 	"bytes"
-	"fmt"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 )
 
@@ -49,12 +49,12 @@ func (a *Attestation) Compare(other *Attestation) int {
 func (a Attestation) BlockID(api API) (BlockID, error) {
 	signatureBytes, err := api.Encode(a.Signature)
 	if err != nil {
-		return EmptyBlockID(), fmt.Errorf("failed to create blockID: %w", err)
+		return EmptyBlockID(), ierrors.Errorf("failed to create blockID: %w", err)
 	}
 
 	headerHash, err := a.BlockHeader.Hash(api)
 	if err != nil {
-		return EmptyBlockID(), fmt.Errorf("failed to create blockID: %w", err)
+		return EmptyBlockID(), ierrors.Errorf("failed to create blockID: %w", err)
 	}
 
 	id := blockIdentifier(headerHash, a.BlockHash, signatureBytes)
@@ -66,7 +66,7 @@ func (a Attestation) BlockID(api API) (BlockID, error) {
 func (a *Attestation) signingMessage(api API) ([]byte, error) {
 	headerHash, err := a.BlockHeader.Hash(api)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create signing message: %w", err)
+		return nil, ierrors.Errorf("failed to create signing message: %w", err)
 	}
 
 	return blockSigningMessage(headerHash, a.BlockHash), nil
@@ -80,7 +80,7 @@ func (a *Attestation) VerifySignature(api API) (valid bool, err error) {
 
 	edSig, isEdSig := a.Signature.(*Ed25519Signature)
 	if !isEdSig {
-		return false, fmt.Errorf("only ed2519 signatures supported, got %s", a.Signature.Type())
+		return false, ierrors.Errorf("only ed2519 signatures supported, got %s", a.Signature.Type())
 	}
 
 	return hiveEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
