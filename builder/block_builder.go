@@ -169,9 +169,9 @@ func (b *BasicBlockBuilder) BurnedMana(burnedMana iotago.Mana) *BasicBlockBuilde
 	return b
 }
 
-// NewValidatorBlockBuilder creates a new ValidatorBlockBuilder.
-func NewValidatorBlockBuilder(api iotago.API) *ValidatorBlockBuilder {
-	validatorBlock := &iotago.ValidatorBlock{}
+// NewValidationBlockBuilder creates a new ValidationBlockBuilder.
+func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
+	validationBlock := &iotago.ValidationBlock{}
 
 	protocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
@@ -180,28 +180,28 @@ func NewValidatorBlockBuilder(api iotago.API) *ValidatorBlockBuilder {
 			IssuingTime:      time.Now(),
 		},
 		Signature: &iotago.Ed25519Signature{},
-		Block:     validatorBlock,
+		Block:     validationBlock,
 	}
 
-	return &ValidatorBlockBuilder{
-		api:            api,
-		protocolBlock:  protocolBlock,
-		validatorBlock: validatorBlock,
+	return &ValidationBlockBuilder{
+		api:             api,
+		protocolBlock:   protocolBlock,
+		validationBlock: validationBlock,
 	}
 }
 
-// ValidatorBlockBuilder is used to easily build up a Validator Block.
-type ValidatorBlockBuilder struct {
+// ValidationBlockBuilder is used to easily build up a Validation Block.
+type ValidationBlockBuilder struct {
 	api iotago.API
 
-	validatorBlock *iotago.ValidatorBlock
+	validationBlock *iotago.ValidationBlock
 
 	protocolBlock *iotago.ProtocolBlock
 	err           error
 }
 
 // Build builds the ProtocolBlock or returns any error which occurred during the build steps.
-func (v *ValidatorBlockBuilder) Build() (*iotago.ProtocolBlock, error) {
+func (v *ValidationBlockBuilder) Build() (*iotago.ProtocolBlock, error) {
 	if v.err != nil {
 		return nil, v.err
 	}
@@ -210,7 +210,7 @@ func (v *ValidatorBlockBuilder) Build() (*iotago.ProtocolBlock, error) {
 }
 
 // ProtocolVersion sets the protocol version.
-func (v *ValidatorBlockBuilder) ProtocolVersion(version iotago.Version) *ValidatorBlockBuilder {
+func (v *ValidationBlockBuilder) ProtocolVersion(version iotago.Version) *ValidationBlockBuilder {
 	if v.err != nil {
 		return v
 	}
@@ -220,7 +220,7 @@ func (v *ValidatorBlockBuilder) ProtocolVersion(version iotago.Version) *Validat
 	return v
 }
 
-func (v *ValidatorBlockBuilder) IssuingTime(time time.Time) *ValidatorBlockBuilder {
+func (v *ValidationBlockBuilder) IssuingTime(time time.Time) *ValidationBlockBuilder {
 	if v.err != nil {
 		return v
 	}
@@ -231,7 +231,7 @@ func (v *ValidatorBlockBuilder) IssuingTime(time time.Time) *ValidatorBlockBuild
 }
 
 // SlotCommitmentID sets the slot commitment.
-func (v *ValidatorBlockBuilder) SlotCommitmentID(commitmentID iotago.CommitmentID) *ValidatorBlockBuilder {
+func (v *ValidationBlockBuilder) SlotCommitmentID(commitmentID iotago.CommitmentID) *ValidationBlockBuilder {
 	if v.err != nil {
 		return v
 	}
@@ -242,7 +242,7 @@ func (v *ValidatorBlockBuilder) SlotCommitmentID(commitmentID iotago.CommitmentI
 }
 
 // LatestFinalizedSlot sets the latest finalized slot.
-func (v *ValidatorBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *ValidatorBlockBuilder {
+func (v *ValidationBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *ValidationBlockBuilder {
 	if v.err != nil {
 		return v
 	}
@@ -252,7 +252,7 @@ func (v *ValidatorBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *Vali
 	return v
 }
 
-func (v *ValidatorBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKey) *ValidatorBlockBuilder {
+func (v *ValidationBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKey) *ValidationBlockBuilder {
 	if v.err != nil {
 		return v
 	}
@@ -276,45 +276,45 @@ func (v *ValidatorBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.
 }
 
 // StrongParents sets the strong parents.
-func (v *ValidatorBlockBuilder) StrongParents(parents iotago.BlockIDs) *ValidatorBlockBuilder {
+func (v *ValidationBlockBuilder) StrongParents(parents iotago.BlockIDs) *ValidationBlockBuilder {
 	if v.err != nil {
 		return v
 	}
 
-	v.validatorBlock.StrongParents = parents.RemoveDupsAndSort()
+	v.validationBlock.StrongParents = parents.RemoveDupsAndSort()
 
 	return v
 }
 
 // WeakParents sets the weak parents.
-func (v *ValidatorBlockBuilder) WeakParents(parents iotago.BlockIDs) *ValidatorBlockBuilder {
+func (v *ValidationBlockBuilder) WeakParents(parents iotago.BlockIDs) *ValidationBlockBuilder {
 	if v.err != nil {
 		return v
 	}
 
-	v.validatorBlock.WeakParents = parents.RemoveDupsAndSort()
+	v.validationBlock.WeakParents = parents.RemoveDupsAndSort()
 
 	return v
 }
 
 // ShallowLikeParents sets the shallow like parents.
-func (v *ValidatorBlockBuilder) ShallowLikeParents(parents iotago.BlockIDs) *ValidatorBlockBuilder {
+func (v *ValidationBlockBuilder) ShallowLikeParents(parents iotago.BlockIDs) *ValidationBlockBuilder {
 	if v.err != nil {
 		return v
 	}
 
-	v.validatorBlock.ShallowLikeParents = parents.RemoveDupsAndSort()
+	v.validationBlock.ShallowLikeParents = parents.RemoveDupsAndSort()
 
 	return v
 }
 
 // HighestSupportedVersion sets the highest supported version.
-func (v *ValidatorBlockBuilder) HighestSupportedVersion(highestSupportedVersion iotago.Version) *ValidatorBlockBuilder {
+func (v *ValidationBlockBuilder) HighestSupportedVersion(highestSupportedVersion iotago.Version) *ValidationBlockBuilder {
 	if v.err != nil {
 		return v
 	}
 
-	v.validatorBlock.HighestSupportedVersion = highestSupportedVersion
+	v.validationBlock.HighestSupportedVersion = highestSupportedVersion
 
 	return v
 }
