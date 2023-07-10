@@ -1,4 +1,4 @@
-package nodeclient
+package models
 
 import (
 	"github.com/pasztorpisti/qs"

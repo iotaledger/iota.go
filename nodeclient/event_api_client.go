@@ -14,6 +14,7 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
+	"github.com/iotaledger/iota.go/v4/nodeclient/models"
 )
 
 const (
@@ -223,13 +224,13 @@ func (eac *EventAPIClient) subscribeToOutputsTopic(topic string) (<-chan *iotago
 	return subscribeToTopic(eac, topic, jsonDeserializer[iotago.TxEssenceOutput])
 }
 
-func (eac *EventAPIClient) subscribeToBlockMetadataTopic(topic string) (<-chan *BlockMetadataResponse, *EventAPIClientSubscription) {
-	return subscribeToTopic(eac, topic, jsonDeserializer[BlockMetadataResponse])
+func (eac *EventAPIClient) subscribeToBlockMetadataTopic(topic string) (<-chan *models.BlockMetadataResponse, *EventAPIClientSubscription) {
+	return subscribeToTopic(eac, topic, jsonDeserializer[models.BlockMetadataResponse])
 }
 
 func (eac *EventAPIClient) subscribeToBlockMetadataBlockTopic(topic string) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	return subscribeToTopic(eac, topic, func(payload []byte) (*iotago.ProtocolBlock, error) {
-		metadataRes := &BlockMetadataResponse{}
+		metadataRes := &models.BlockMetadataResponse{}
 		if err := json.Unmarshal(payload, metadataRes); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return nil, err
@@ -255,7 +256,7 @@ func (eac *EventAPIClient) Blocks() (<-chan *iotago.ProtocolBlock, *EventAPIClie
 }
 
 // ConfirmedBlocksMetadata returns a channel of block metadata of newly confirmed blocks.
-func (eac *EventAPIClient) ConfirmedBlocksMetadata() (<-chan *BlockMetadataResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) ConfirmedBlocksMetadata() (<-chan *models.BlockMetadataResponse, *EventAPIClientSubscription) {
 	return eac.subscribeToBlockMetadataTopic(EventAPIBlockMetadataConfirmed)
 }
 
@@ -265,7 +266,7 @@ func (eac *EventAPIClient) ConfirmedBlocks() (<-chan *iotago.ProtocolBlock, *Eve
 }
 
 // FinalizedBlocksMetadata returns a channel of newly finalized blocks.
-func (eac *EventAPIClient) FinalizedBlocksMetadata() (<-chan *BlockMetadataResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) FinalizedBlocksMetadata() (<-chan *models.BlockMetadataResponse, *EventAPIClientSubscription) {
 	return eac.subscribeToBlockMetadataTopic(EventAPIBlockMetadataFinalized)
 }
 
@@ -302,7 +303,7 @@ func (eac *EventAPIClient) TaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.P
 }
 
 // BlockMetadataChange returns a channel of BlockMetadataResponse each time the given block's state changes.
-func (eac *EventAPIClient) BlockMetadataChange(blockID iotago.BlockID) (<-chan *BlockMetadataResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) BlockMetadataChange(blockID iotago.BlockID) (<-chan *models.BlockMetadataResponse, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIBlockMetadata, "{blockId}", blockID.ToHex(), 1)
 	return eac.subscribeToBlockMetadataTopic(topic)
 }
@@ -352,7 +353,7 @@ func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan *iotago.TxEs
 }
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
-func (eac *EventAPIClient) OutputMetadata(outputID iotago.OutputID) (<-chan *OutputMetadataResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) OutputMetadata(outputID iotago.OutputID) (<-chan *models.OutputMetadataResponse, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIOutputMetadata, "{outputId}", hexutil.EncodeHex(outputID[:]), 1)
-	return subscribeToTopic(eac, topic, jsonDeserializer[OutputMetadataResponse])
+	return subscribeToTopic(eac, topic, jsonDeserializer[models.OutputMetadataResponse])
 }
