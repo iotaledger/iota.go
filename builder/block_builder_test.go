@@ -30,17 +30,17 @@ func TestBasicBlockBuilder(t *testing.T) {
 	require.EqualValues(t, 100, basicBlock.BurnedMana)
 }
 
-func TestValidatorBlockBuilder(t *testing.T) {
+func TestValidationBlockBuilder(t *testing.T) {
 	parents := tpkg.SortedRandBlockIDs(4)
 
-	block, err := builder.NewValidatorBlockBuilder(tpkg.TestAPI).
+	block, err := builder.NewValidationBlockBuilder(tpkg.TestAPI).
 		StrongParents(parents).
 		HighestSupportedVersion(100).
 		Build()
 	require.NoError(t, err)
 
-	require.Equal(t, iotago.BlockTypeValidator, block.Block.Type())
+	require.Equal(t, iotago.BlockTypeValidation, block.Block.Type())
 
-	basicBlock := block.Block.(*iotago.ValidatorBlock)
+	basicBlock := block.Block.(*iotago.ValidationBlock)
 	require.EqualValues(t, 100, basicBlock.HighestSupportedVersion)
 }

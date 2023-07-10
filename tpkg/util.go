@@ -453,9 +453,9 @@ func RandBasicBlock(withPayloadType iotago.PayloadType) *iotago.BasicBlock {
 	}
 }
 
-func RandValidatorBlock() *iotago.ValidatorBlock {
-	return &iotago.ValidatorBlock{
-		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidatorMaxParents)),
+func ValidationBlock() *iotago.ValidationBlock {
+	return &iotago.ValidationBlock{
+		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidationMaxParents)),
 		HighestSupportedVersion: TestAPI.Version() + 1,
 	}
 }

@@ -12,13 +12,13 @@ import (
 )
 
 func TestAttestation(t *testing.T) {
-	block, err := builder.NewValidatorBlockBuilder(tpkg.TestAPI).
+	block, err := builder.NewValidationBlockBuilder(tpkg.TestAPI).
 		StrongParents(tpkg.SortedRandBlockIDs(2)).
 		Sign(tpkg.RandAccountID(), tpkg.RandEd25519PrivateKey()).
 		Build()
 
 	require.NoError(t, err)
-	require.Equal(t, iotago.BlockTypeValidator, block.Block.Type())
+	require.Equal(t, iotago.BlockTypeValidation, block.Block.Type())
 
 	attestation := iotago.NewAttestation(tpkg.TestAPI, block)
 
