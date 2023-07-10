@@ -16,7 +16,6 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
 			SlotCommitmentID: iotago.EmptyCommitmentID,
-			IssuingTime:      time.Now(),
 		},
 		Signature: &iotago.Ed25519Signature{},
 		Block:     basicBlock,
