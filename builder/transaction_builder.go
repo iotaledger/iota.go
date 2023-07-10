@@ -5,10 +5,8 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
-var (
-	// ErrTransactionBuilder defines a generic error occurring within the TransactionBuilder.
-	ErrTransactionBuilder = ierrors.New("transaction builder error")
-)
+// ErrTransactionBuilder defines a generic error occurring within the TransactionBuilder.
+var ErrTransactionBuilder = ierrors.New("transaction builder error")
 
 // NewTransactionBuilder creates a new TransactionBuilder.
 func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
@@ -128,13 +126,13 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 	inputs := inputIDs.OrderedSet(b.inputs)
 	commitment, err := inputs.Commitment(b.api)
 	if err != nil {
-		return nil, err
+		return nil, ierrors.Wrapf(err, "failed to calculate TX inputs commitment: %s, %s", inputIDs, b.inputs)
 	}
 	copy(b.essence.InputsCommitment[:], commitment)
 
 	txEssenceData, err := b.essence.SigningMessage(b.api)
 	if err != nil {
-		return nil, err
+		return nil, ierrors.Wrap(err, "failed to calculate tx essence for signing message")
 	}
 
 	unlockPos := map[string]int{}
@@ -154,7 +152,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 			var signature iotago.Signature
 			signature, err = signer.Sign(addr, txEssenceData)
 			if err != nil {
-				return nil, err
+				return nil, ierrors.Wrapf(err, "failed to sign tx essence: %s", txEssenceData)
 			}
 
 			unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: signature})
