@@ -377,7 +377,7 @@ func checkExpiredForReceiver(vmParams *Params, output iotago.Output) (iotago.Add
 			return nil, iotago.ErrExpirationConditionCommitmentInputRequired
 		}
 
-		if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(vmParams.WorkingSet.Tx.Essence.CreationTime); ok {
+		if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(commitment.Index); ok {
 			return returnIdent, nil
 		}
 	}
