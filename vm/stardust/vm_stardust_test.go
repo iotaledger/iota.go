@@ -3849,8 +3849,10 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name:     "fail - no commitment input for timelock",
-				vmParams: &vm.Params{},
+				name: "fail - no commitment input for timelock",
+				vmParams: &vm.Params{
+					API: testAPI,
+				},
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 				},
