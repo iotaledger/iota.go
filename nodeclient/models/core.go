@@ -151,12 +151,6 @@ type (
 	BlockMetadataResponse struct {
 		// BlockID The hex encoded block ID of the block.
 		BlockID string `json:"blockId"`
-		// StrongParents are the strong parents of the block.
-		StrongParents []string `json:"strongParents"`
-		// WeakParents are the weak parents of the block.
-		WeakParents []string `json:"weakParents"`
-		// ShallowLikeParents are the shallow like parents of the block.
-		ShallowLikeParents []string `json:"shallowLikeParents"`
 		// BlockState might be pending, confirmed, finalized.
 		BlockState BlockState `json:"blockState"`
 		// TxState might be pending, conflicting, confirmed, finalized, rejected.

@@ -187,23 +187,14 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	defer gock.Off()
 
 	identifier := tpkg.Rand40ByteArray()
-	parents := tpkg.SortedRandBlockIDs(1 + rand.Intn(7))
 
 	queryHash := hexutil.EncodeHex(identifier[:])
 
-	parentBlockIDs := make([]string, len(parents))
-	for i, p := range parents {
-		parentBlockIDs[i] = hexutil.EncodeHex(p[:])
-	}
-
 	originRes := &models.BlockMetadataResponse{
-		BlockID:            queryHash,
-		StrongParents:      parentBlockIDs,
-		WeakParents:        parentBlockIDs,
-		ShallowLikeParents: parentBlockIDs,
-		BlockState:         "confirmed",
-		TxState:            "confirmed",
-		ReissuePayload:     nil,
+		BlockID:        queryHash,
+		BlockState:     "confirmed",
+		TxState:        "confirmed",
+		ReissuePayload: nil,
 	}
 
 	gock.New(nodeAPIUrl).
