@@ -125,20 +125,7 @@ type (
 		// LatestFinalizedSlot is the index of the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `json:"latestFinalizedSlot"`
 		// Commitment is the commitment of the block.
-		Commitment *CommitmentDetailsResponse `json:"commitment"`
-	}
-
-	// CommitmentDetailsResponse defines the response of a GET commitment details REST API call.
-	CommitmentDetailsResponse struct {
-		// The index of the requested commitment.
-		Index iotago.SlotIndex `json:"index"`
-		// The commitment ID of previous commitment.
-		PrevID string `json:"prevId"`
-		// The roots ID of merkle trees within the requested commitment.
-		RootsID string `json:"rootsId"`
-		// The cumulative weight of the requested slot.
-		CumulativeWeight uint64 `json:"cumulativeWeight"`
-		// TODO: decide what else to add here.
+		Commitment iotago.Commitment `json:"commitment"`
 	}
 
 	// BlockCreatedResponse defines the response of a POST blocks REST API call.
