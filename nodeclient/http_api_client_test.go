@@ -132,10 +132,11 @@ func TestClient_BlockIssuance(t *testing.T) {
 	rootsID, err := iotago.IdentifierFromHexString(hexutil.EncodeHex(tpkg.RandBytes(32)))
 	require.NoError(t, err)
 
-	originRes.Commitment = &models.CommitmentDetailsResponse{
+	originRes.Commitment = iotago.Commitment{
+		Version:          1,
 		Index:            iotago.SlotIndex(25),
-		PrevID:           prevID.String(),
-		RootsID:          rootsID.String(),
+		PrevID:           prevID,
+		RootsID:          rootsID,
 		CumulativeWeight: 100_000,
 	}
 
@@ -341,10 +342,10 @@ func TestClient_CommitmentByID(t *testing.T) {
 	commitmentID := iotago.NewSlotIdentifier(slotIndex, tpkg.Rand32ByteArray())
 	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
 
-	originRes := &models.CommitmentDetailsResponse{
+	originRes := &iotago.Commitment{
 		Index:            commitment.Index,
-		PrevID:           commitment.PrevID.ToHex(),
-		RootsID:          commitment.RootsID.ToHex(),
+		PrevID:           commitment.PrevID,
+		RootsID:          commitment.RootsID,
 		CumulativeWeight: commitment.CumulativeWeight,
 	}
 
@@ -391,10 +392,10 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 
 	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
 
-	originRes := &models.CommitmentDetailsResponse{
+	originRes := &iotago.Commitment{
 		Index:            commitment.Index,
-		PrevID:           commitment.PrevID.ToHex(),
-		RootsID:          commitment.RootsID.ToHex(),
+		PrevID:           commitment.PrevID,
+		RootsID:          commitment.RootsID,
 		CumulativeWeight: commitment.CumulativeWeight,
 	}
 
