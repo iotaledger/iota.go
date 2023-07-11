@@ -1,8 +1,6 @@
 package builder_test
 
 import (
-	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,31 +10,37 @@ import (
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
-func TestMain(m *testing.M) {
-	// call the tests
-	os.Exit(m.Run())
-}
-
-func TestBlockBuilder(t *testing.T) {
-	const targetPoWScore float64 = 500
-
+func TestBasicBlockBuilder(t *testing.T) {
 	parents := tpkg.SortedRandBlockIDs(4)
 
 	taggedDataPayload := &iotago.TaggedData{
 		Tag:  []byte("hello world"),
 		Data: []byte{1, 2, 3, 4},
 	}
-	block, err := builder.NewBlockBuilder().
+	block, err := builder.NewBasicBlockBuilder(tpkg.TestAPI).
 		Payload(taggedDataPayload).
 		StrongParents(parents).
 		BurnedMana(100).
-		ProofOfWork(context.Background(), targetPoWScore).
 		Build()
 	require.NoError(t, err)
 
-	powScore, _, err := block.POW()
-	require.NoError(t, err)
-	require.GreaterOrEqual(t, powScore, targetPoWScore)
+	require.Equal(t, iotago.BlockTypeBasic, block.Block.Type())
 
-	require.EqualValues(t, 100, block.BurnedMana)
+	basicBlock := block.Block.(*iotago.BasicBlock)
+	require.EqualValues(t, 100, basicBlock.BurnedMana)
+}
+
+func TestValidationBlockBuilder(t *testing.T) {
+	parents := tpkg.SortedRandBlockIDs(4)
+
+	block, err := builder.NewValidationBlockBuilder(tpkg.TestAPI).
+		StrongParents(parents).
+		HighestSupportedVersion(100).
+		Build()
+	require.NoError(t, err)
+
+	require.Equal(t, iotago.BlockTypeValidation, block.Block.Type())
+
+	basicBlock := block.Block.(*iotago.ValidationBlock)
+	require.EqualValues(t, 100, basicBlock.HighestSupportedVersion)
 }

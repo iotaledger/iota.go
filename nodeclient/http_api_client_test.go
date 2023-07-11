@@ -1,4 +1,4 @@
-//#nosec G404
+// #nosec G404
 
 package nodeclient_test
 
@@ -27,12 +27,8 @@ const (
 	nodeAPIUrl = "http://127.0.0.1:14265"
 )
 
-var (
-	v3API = iotago.V3API(tpkg.TestProtoParams)
-)
-
 func nodeClient(t *testing.T) *nodeclient.Client {
-	client, err := nodeclient.New(nodeAPIUrl, nodeclient.WithIOTAGoAPI(emptyAPI))
+	client, err := nodeclient.New(nodeAPIUrl, nodeclient.WithIOTAGoAPI(tpkg.TestAPI))
 	require.NoError(t, err)
 	return client
 }
@@ -92,20 +88,12 @@ func TestClient_Info(t *testing.T) {
 		Features: []string{"Lazers"},
 	}
 
-	protoParams := &iotago.ProtocolParameters{
-		TokenSupply: tpkg.TestTokenSupply,
-		Version:     2,
-		NetworkName: "alphanet",
-		Bech32HRP:   "atoi",
-		MinPoWScore: 40000.0,
-		RentStructure: iotago.RentStructure{
-			VByteCost:    500,
-			VBFactorData: 1,
-			VBFactorKey:  10,
-		},
-	}
+	var protoParams iotago.ProtocolParameters = iotago.NewV3ProtocolParameters(
+		iotago.WithNetworkOptions("alphanet", "atoi"),
+		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10),
+	)
 
-	protoParamsJson, err := v3API.JSONEncode(protoParams)
+	protoParamsJson, err := tpkg.TestAPI.JSONEncode(protoParams)
 	require.NoError(t, err)
 	protoParamsJsonRawMsg := json.RawMessage(protoParamsJson)
 	originInfo.ProtocolParameters = &protoParamsJsonRawMsg
@@ -123,7 +111,7 @@ func TestClient_Info(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, err)
-	require.EqualValues(t, protoParams.TokenSupply, tpkg.TestTokenSupply)
+	require.EqualValues(t, protoParams.TokenSupply(), tpkg.TestTokenSupply)
 }
 
 func TestClient_BlockIssuance(t *testing.T) {
@@ -149,7 +137,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 		RootsID:          rootsID,
 		CumulativeWeight: 100_000,
 	}
-	protoCommitmentJson, err := v3API.JSONEncode(commitment)
+	protoCommitmentJson, err := tpkg.TestAPI.JSONEncode(commitment)
 	require.NoError(t, err)
 	protoCommitmentJsonRawMsg := json.RawMessage(protoCommitmentJson)
 	originRes.Commitment = &protoCommitmentJsonRawMsg
@@ -171,14 +159,18 @@ func TestClient_SubmitBlock(t *testing.T) {
 	blockHash := tpkg.Rand40ByteArray()
 	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
-	incompleteBlock := &iotago.Block{
-		ProtocolVersion: tpkg.TestProtocolVersion,
-		StrongParents:   tpkg.SortedRandBlockIDs(1),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Signature:       &iotago.Ed25519Signature{},
+	incompleteBlock := &iotago.ProtocolBlock{
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+		},
+		Signature: &iotago.Ed25519Signature{},
+		Block: &iotago.BasicBlock{
+			StrongParents: tpkg.SortedRandBlockIDs(1),
+		},
 	}
 
-	serializedIncompleteBlock, err := v3API.Encode(incompleteBlock, serix.WithValidation())
+	serializedIncompleteBlock, err := tpkg.TestAPI.Encode(incompleteBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -234,16 +226,19 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	identifier := tpkg.Rand40ByteArray()
 	queryHash := hexutil.EncodeHex(identifier[:])
 
-	originBlock := &iotago.Block{
-		ProtocolVersion: tpkg.TestProtocolVersion,
-		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Payload:         nil,
-		Signature:       tpkg.RandEd25519Signature(),
-		Nonce:           16345984576234,
+	originBlock := &iotago.ProtocolBlock{
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+		},
+		Signature: tpkg.RandEd25519Signature(),
+		Block: &iotago.BasicBlock{
+			StrongParents: tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+			Payload:       nil,
+		},
 	}
 
-	data, err := v3API.Encode(originBlock, serix.WithValidation())
+	data, err := tpkg.TestAPI.Encode(originBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -264,16 +259,19 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	identifier := tpkg.Rand32ByteArray()
 	queryHash := hexutil.EncodeHex(identifier[:])
 
-	originBlock := &iotago.Block{
-		ProtocolVersion: tpkg.TestProtocolVersion,
-		StrongParents:   tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Payload:         nil,
-		Signature:       tpkg.RandEd25519Signature(),
-		Nonce:           16345984576234,
+	originBlock := &iotago.ProtocolBlock{
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  tpkg.TestAPI.Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+		},
+		Signature: tpkg.RandEd25519Signature(),
+		Block: &iotago.BasicBlock{
+			StrongParents: tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+			Payload:       nil,
+		},
 	}
 
-	data, err := v3API.Encode(originBlock, serix.WithValidation())
+	data, err := tpkg.TestAPI.Encode(originBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -292,7 +290,7 @@ func TestClient_OutputByID(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	data, err := v3API.Encode(originOutput)
+	data, err := tpkg.TestAPI.Encode(originOutput)
 	require.NoError(t, err)
 
 	txID := tpkg.Rand32ByteArray()
@@ -353,7 +351,7 @@ func TestClient_CommitmentByID(t *testing.T) {
 	var slotIndex iotago.SlotIndex = 5
 
 	commitmentID := iotago.NewSlotIdentifier(slotIndex, tpkg.Rand32ByteArray())
-	commitment := iotago.NewCommitment(slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
+	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
 
 	originRes := &nodeclient.CommitmentDetailsResponse{
 		Index:            commitment.Index,
@@ -403,7 +401,7 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 
 	var slotIndex iotago.SlotIndex = 1337
 
-	commitment := iotago.NewCommitment(slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
+	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
 
 	originRes := &nodeclient.CommitmentDetailsResponse{
 		Index:            commitment.Index,

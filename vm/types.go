@@ -60,18 +60,10 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 // ChainInputSet is a map of ChainID to ChainOutputWithCreationTime.
 type ChainInputSet map[iotago.ChainID]*ChainOutputWithCreationTime
 
-type BICInputSet map[iotago.AccountID]BlockIssuanceCredit
+type BICInputSet map[iotago.AccountID]iotago.BlockIssuanceCredits
 
 // A map of either DelegationID or AccountID to their mana reward amount.
-type RewardsInputSet map[iotago.ChainID]uint64
-
-type BlockIssuanceCredit struct {
-	Credits int64
-}
-
-func (b BlockIssuanceCredit) Negative() bool {
-	return b.Credits < 0
-}
+type RewardsInputSet map[iotago.ChainID]iotago.Mana
 
 type VmCommitmentInput *iotago.Commitment
 

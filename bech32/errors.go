@@ -1,15 +1,15 @@
 package bech32
 
-import "errors"
+import "github.com/iotaledger/hive.go/ierrors"
 
 // Errors reported during bech32 decoding.
 var (
-	ErrInvalidLength    = errors.New("invalid length")
-	ErrMissingSeparator = errors.New("missing separator '" + string(separator) + "'")
-	ErrInvalidSeparator = errors.New("separator '" + string(separator) + "' at invalid position")
-	ErrMixedCase        = errors.New("mixed case")
-	ErrInvalidCharacter = errors.New("invalid character")
-	ErrInvalidChecksum  = errors.New("invalid checksum")
+	ErrInvalidLength    = ierrors.New("invalid length")
+	ErrMissingSeparator = ierrors.New("missing separator '" + string(separator) + "'")
+	ErrInvalidSeparator = ierrors.New("separator '" + string(separator) + "' at invalid position")
+	ErrMixedCase        = ierrors.New("mixed case")
+	ErrInvalidCharacter = ierrors.New("invalid character")
+	ErrInvalidChecksum  = ierrors.New("invalid checksum")
 )
 
 // A SyntaxError is a description of a Bech32 syntax error.

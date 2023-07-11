@@ -1,28 +1,28 @@
 package iotago
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 var (
 	// ErrNonUniqueUnlockConditions gets returned when multiple UnlockCondition(s) with the same UnlockConditionType exist within sets.
-	ErrNonUniqueUnlockConditions = errors.New("non unique unlock conditions within outputs")
+	ErrNonUniqueUnlockConditions = ierrors.New("non unique unlock conditions within outputs")
 	// ErrTimelockNotExpired gets returned when timelocks in a UnlockConditionSet are not expired.
-	ErrTimelockNotExpired = errors.New("timelock not expired")
+	ErrTimelockNotExpired = ierrors.New("timelock not expired")
 	// ErrExpirationConditionZero gets returned when an ExpirationUnlockCondition has set the slot index to zero.
-	ErrExpirationConditionZero = errors.New("expiration condition is zero")
+	ErrExpirationConditionZero = ierrors.New("expiration condition is zero")
 	// ErrTimelockConditionZero gets returned when a TimelockUnlockCondition has set the slot index to zero.
-	ErrTimelockConditionZero = errors.New("timelock condition is zero")
+	ErrTimelockConditionZero = ierrors.New("timelock condition is zero")
 	// ErrTimelockConditionCommitmentInputRequired gets returned when a TX containing a TimelockUnlockCondition
 	// does not have a commitment input.
-	ErrTimelockConditionCommitmentInputRequired = errors.New("transaction's containing a timelock condition require a commitment input")
+	ErrTimelockConditionCommitmentInputRequired = ierrors.New("transaction's containing a timelock condition require a commitment input")
 	// ErrExpirationConditionCommitmentInputRequired gets returned when a TX containing an ExpirationUnlockCondition
 	// does not have a commitment input.
-	ErrExpirationConditionCommitmentInputRequired = errors.New("transaction's containing an expiration condition require a commitment input")
+	ErrExpirationConditionCommitmentInputRequired = ierrors.New("transaction's containing an expiration condition require a commitment input")
 )
 
 // UnlockConditionType defines the type of UnlockCondition.
@@ -242,7 +242,7 @@ func (f UnlockConditionSet) TimelocksExpired(slotIndex SlotIndex) error {
 	}
 
 	if slotIndex < timelock.SlotIndex {
-		return fmt.Errorf("%w: slotIndex cond %d vs. tx creation slot %d", ErrTimelockNotExpired, timelock.SlotIndex, slotIndex)
+		return ierrors.Wrapf(ErrTimelockNotExpired, "slotIndex cond %d vs. tx creation slot %d", timelock.SlotIndex, slotIndex)
 	}
 
 	return nil

@@ -4,32 +4,33 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/pkg/errors"
-
+	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-var (
-	// ErrWrongSlotIndex gets returned when a wrong slot index was passed.
-	ErrWrongSlotIndex = errors.New("wrong slot index")
-)
+const SlotIndexLength = serializer.UInt64ByteSize
 
 // SlotIndex is the ID of a slot.
 type SlotIndex uint64
 
-func SlotIndexFromBytes(b []byte) (SlotIndex, error) {
-	if len(b) != serializer.UInt64ByteSize {
-		return 0, errors.New("invalid slot index size")
+func SlotIndexFromBytes(b []byte) (SlotIndex, int, error) {
+	if len(b) < SlotIndexLength {
+		return 0, 0, ierrors.New("invalid slot index size")
 	}
 
-	return SlotIndex(binary.LittleEndian.Uint64(b)), nil
+	return SlotIndex(binary.LittleEndian.Uint64(b)), SlotIndexLength, nil
 }
 
-func (i SlotIndex) Bytes() []byte {
+func (i SlotIndex) Bytes() ([]byte, error) {
 	bytes := make([]byte, serializer.UInt64ByteSize)
 	binary.LittleEndian.PutUint64(bytes[:], uint64(i))
 
-	return bytes
+	return bytes, nil
+}
+
+func (i SlotIndex) MustBytes() []byte {
+	return lo.PanicOnErr(i.Bytes())
 }
 
 func (i SlotIndex) String() string {

@@ -1,11 +1,9 @@
 package iotago
 
 import (
-	"errors"
-	"fmt"
-
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/util"
 )
@@ -17,17 +15,17 @@ const (
 
 var (
 	// ErrNonUniqueAccountOutputs gets returned when multiple AccountOutputs(s) with the same AccountID exist within sets.
-	ErrNonUniqueAccountOutputs = errors.New("non unique accounts within outputs")
+	ErrNonUniqueAccountOutputs = ierrors.New("non unique accounts within outputs")
 	// ErrInvalidAccountStateTransition gets returned when an account is doing an invalid state transition.
-	ErrInvalidAccountStateTransition = errors.New("invalid account state transition")
+	ErrInvalidAccountStateTransition = ierrors.New("invalid account state transition")
 	// ErrInvalidAccountGovernanceTransition gets returned when an account is doing an invalid governance transition.
-	ErrInvalidAccountGovernanceTransition = errors.New("invalid account governance transition")
+	ErrInvalidAccountGovernanceTransition = ierrors.New("invalid account governance transition")
 	// ErrInvalidBlockIssuerTransition gets returned when an account tries to transition block issuer expiry too soon.
-	ErrInvalidBlockIssuerTransition = errors.New("invalid block issuer transition")
+	ErrInvalidBlockIssuerTransition = ierrors.New("invalid block issuer transition")
 	// ErrInvalidStakingTransition gets returned when an account tries to do an invalid transition with a Staking Feature.
-	ErrInvalidStakingTransition = errors.New("invalid staking transition")
+	ErrInvalidStakingTransition = ierrors.New("invalid staking transition")
 	// ErrAccountMissing gets returned when an account is missing.
-	ErrAccountMissing = errors.New("account is missing")
+	ErrAccountMissing = ierrors.New("account is missing")
 	emptyAccountID    = [AccountIDLength]byte{}
 )
 
@@ -94,7 +92,7 @@ type AccountOutputsSet map[AccountID]*AccountOutput
 func (set AccountOutputsSet) Includes(other AccountOutputsSet) error {
 	for accountID := range other {
 		if _, has := set[accountID]; !has {
-			return fmt.Errorf("%w: %s missing in source", ErrAccountMissing, accountID.ToHex())
+			return ierrors.Wrapf(ErrAccountMissing, "%s missing in source", accountID.ToHex())
 		}
 	}
 	return nil
@@ -123,7 +121,7 @@ func (set AccountOutputsSet) Merge(other AccountOutputsSet) (AccountOutputsSet, 
 	}
 	for k, v := range other {
 		if _, has := newSet[k]; has {
-			return nil, fmt.Errorf("%w: account %s exists in both sets", ErrNonUniqueAccountOutputs, k.ToHex())
+			return nil, ierrors.Wrapf(ErrNonUniqueAccountOutputs, "account %s exists in both sets", k.ToHex())
 		}
 		newSet[k] = v
 	}
@@ -142,7 +140,7 @@ type (
 // AccountOutput is an output type which represents an account.
 type AccountOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount uint64 `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:"0,mapKey=amount"`
 	// The native tokens held by the output.
 	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
 	// The identifier for this account.
@@ -160,7 +158,7 @@ type AccountOutput struct {
 	// The immutable feature on the output.
 	ImmutableFeatures AccountOutputImmFeatures `serix:"8,mapKey=immutableFeatures,omitempty"`
 	// The stored mana held by the output.
-	Mana uint64 `serix:"9,mapKey=mana"`
+	Mana Mana `serix:"9,mapKey=mana"`
 }
 
 func (a *AccountOutput) GovernorAddress() Address {
@@ -210,7 +208,7 @@ func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 	}
 	otherAccountOutput, isAccountOutput := nextState.(*AccountOutput)
 	if !isAccountOutput {
-		return nil, fmt.Errorf("%w: expected AccountOutput but got %s for ident computation", ErrTransDepIdentOutputNextInvalid, nextState.Type())
+		return nil, ierrors.Wrapf(ErrTransDepIdentOutputNextInvalid, "expected AccountOutput but got %s for ident computation", nextState.Type())
 	}
 	switch {
 	case a.StateIndex == otherAccountOutput.StateIndex:
@@ -218,7 +216,7 @@ func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 	case a.StateIndex+1 == otherAccountOutput.StateIndex:
 		return a.StateController(), nil
 	default:
-		return nil, fmt.Errorf("%w: can not compute right ident for account output as state index delta is invalid", ErrTransDepIdentOutputNextInvalid)
+		return nil, ierrors.Wrap(ErrTransDepIdentOutputNextInvalid, "can not compute right ident for account output as state index delta is invalid")
 	}
 }
 
@@ -246,11 +244,11 @@ func (a *AccountOutput) ImmutableFeatureSet() FeatureSet {
 	return a.ImmutableFeatures.MustSet()
 }
 
-func (a *AccountOutput) Deposit() uint64 {
+func (a *AccountOutput) Deposit() BaseToken {
 	return a.Amount
 }
 
-func (a *AccountOutput) StoredMana() uint64 {
+func (a *AccountOutput) StoredMana() Mana {
 	return a.Mana
 }
 
@@ -266,7 +264,7 @@ func (a *AccountOutput) Type() OutputType {
 
 func (a *AccountOutput) Size() int {
 	return util.NumByteLen(byte(OutputAccount)) +
-		util.NumByteLen(a.Amount) +
+		BaseTokenSize +
 		a.NativeTokens.Size() +
 		AccountIDLength +
 		util.NumByteLen(a.StateIndex) +
@@ -276,5 +274,5 @@ func (a *AccountOutput) Size() int {
 		a.Conditions.Size() +
 		a.Features.Size() +
 		a.ImmutableFeatures.Size() +
-		util.NumByteLen(a.Mana)
+		ManaSize
 }

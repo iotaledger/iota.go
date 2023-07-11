@@ -1,18 +1,18 @@
 package iotago
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 var (
 	// ErrNonUniqueFeatures gets returned when multiple Feature(s) with the same FeatureType exist within sets.
-	ErrNonUniqueFeatures = errors.New("non unique features within outputs")
+	ErrNonUniqueFeatures = ierrors.New("non unique features within outputs")
 	// ErrInvalidFeatureTransition gets returned when a Feature's transition within a ChainOutput is invalid.
-	ErrInvalidFeatureTransition = errors.New("invalid feature transition")
+	ErrInvalidFeatureTransition = ierrors.New("invalid feature transition")
 )
 
 // Feature is an abstract building block extending the features of an Output.
@@ -233,9 +233,9 @@ func FeatureUnchanged(featType FeatureType, inFeatSet FeatureSet, outFeatSet Fea
 
 	switch {
 	case outHas && !inHas:
-		return fmt.Errorf("%w: %s in next state but not in previous", ErrInvalidFeatureTransition, featType)
+		return ierrors.Wrapf(ErrInvalidFeatureTransition, "%s in next state but not in previous", featType)
 	case !outHas && inHas:
-		return fmt.Errorf("%w: %s in current state but not in next", ErrInvalidFeatureTransition, featType)
+		return ierrors.Wrapf(ErrInvalidFeatureTransition, "%s in current state but not in next", featType)
 	}
 
 	// not in both sets
@@ -244,7 +244,7 @@ func FeatureUnchanged(featType FeatureType, inFeatSet FeatureSet, outFeatSet Fea
 	}
 
 	if !in.Equal(out) {
-		return fmt.Errorf("%w: %s changed, in %v / out %v", ErrInvalidFeatureTransition, featType, in, out)
+		return ierrors.Wrapf(ErrInvalidFeatureTransition, "%s changed, in %v / out %v", featType, in, out)
 	}
 
 	return nil

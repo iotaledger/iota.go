@@ -1,22 +1,21 @@
 package builder
 
 import (
-	"errors"
-	"fmt"
-
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 var (
 	// ErrTransactionBuilder defines a generic error occurring within the TransactionBuilder.
-	ErrTransactionBuilder = errors.New("transaction builder error")
+	ErrTransactionBuilder = ierrors.New("transaction builder error")
 )
 
 // NewTransactionBuilder creates a new TransactionBuilder.
-func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
+func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 	return &TransactionBuilder{
+		api: api,
 		essence: &iotago.TransactionEssence{
-			NetworkID: networkID,
+			NetworkID: api.ProtocolParameters().NetworkID(),
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},
@@ -25,6 +24,7 @@ func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 
 // TransactionBuilder is used to easily build up a Transaction.
 type TransactionBuilder struct {
+	api              iotago.API
 	occurredBuildErr error
 	essence          *iotago.TransactionEssence
 	inputs           iotago.OutputSet
@@ -94,11 +94,11 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 // TransactionFunc is a function which receives a Transaction as its parameter.
 type TransactionFunc func(tx *iotago.Transaction)
 
-// BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BlockBuilder with
+// BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BasicBlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
-func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParams *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *BlockBuilder {
-	blockBuilder := NewBlockBuilder()
-	tx, err := b.Build(protoParams, signer)
+func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSigner, txFunc TransactionFunc) *BasicBlockBuilder {
+	blockBuilder := NewBasicBlockBuilder(b.api)
+	tx, err := b.Build(signer)
 	if err != nil {
 		blockBuilder.err = err
 		return blockBuilder
@@ -107,18 +107,16 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParams *iotago.Prot
 		txFunc(tx)
 	}
 
-	return blockBuilder.ProtocolVersion(protoParams.Version).Payload(tx)
+	return blockBuilder.Payload(tx)
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signer iotago.AddressSigner) (*iotago.Transaction, error) {
+func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
-	case protoParams == nil:
-		return nil, fmt.Errorf("%w: must supply protocol parameters", ErrTransactionBuilder)
 	case signer == nil:
-		return nil, fmt.Errorf("%w: must supply signer", ErrTransactionBuilder)
+		return nil, ierrors.Wrap(ErrTransactionBuilder, "must supply signer")
 	}
 
 	// prepare the inputs commitment in the same order as the inputs in the essence
@@ -128,13 +126,13 @@ func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signe
 	}
 
 	inputs := inputIDs.OrderedSet(b.inputs)
-	commitment, err := inputs.Commitment()
+	commitment, err := inputs.Commitment(b.api)
 	if err != nil {
 		return nil, err
 	}
 	copy(b.essence.InputsCommitment[:], commitment)
 
-	txEssenceData, err := b.essence.SigningMessage()
+	txEssenceData, err := b.essence.SigningMessage(b.api)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +147,7 @@ func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signe
 		if !unlocked {
 			// the output's owning chain address must have been unlocked already
 			if _, is := addr.(iotago.ChainAddress); is {
-				return nil, fmt.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", i, addr, addr.Type())
+				return nil, ierrors.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", i, addr, addr.Type())
 			}
 
 			// produce signature

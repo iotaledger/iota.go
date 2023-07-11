@@ -6,28 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/h2non/gock.v1"
-
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
-
-var emptyAPI = iotago.LatestAPI(&iotago.ProtocolParameters{
-	Version:               0,
-	NetworkName:           "",
-	Bech32HRP:             "",
-	MinPoWScore:           0,
-	RentStructure:         iotago.RentStructure{},
-	TokenSupply:           0,
-	GenesisUnixTimestamp:  0,
-	SlotDurationInSeconds: 0,
-	EvictionAge:           0,
-	LivenessThreshold:     0,
-})
 
 func TestMain(m *testing.M) { // call the tests
 	os.Exit(m.Run())
@@ -66,8 +52,8 @@ func Test_EventAPIDisabled(t *testing.T) {
 }
 
 func Test_NewEventAPIClient(t *testing.T) {
-	block := tpkg.RandBlock(iotago.PayloadTaggedData)
-	originBlockBytes, err := v3API.Encode(block)
+	block := tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTaggedData), tpkg.TestAPI)
+	originBlockBytes, err := tpkg.TestAPI.Encode(block)
 	require.NoError(t, err)
 	mock := &mockMqttClient{payload: originBlockBytes}
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -84,7 +70,7 @@ func Test_NewEventAPIClient(t *testing.T) {
 	require.Eventually(t, func() bool {
 		select {
 		case recBlock := <-blockChan:
-			gottenBlockBytes, err := v3API.Encode(recBlock)
+			gottenBlockBytes, err := tpkg.TestAPI.Encode(recBlock)
 			require.NoError(t, err)
 			require.Equal(t, originBlockBytes, gottenBlockBytes)
 

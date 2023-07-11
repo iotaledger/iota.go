@@ -2,11 +2,11 @@ package builder_test
 
 import (
 	"crypto/ed25519"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -28,7 +28,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 			input := tpkg.RandBasicOutput(iotago.AddressEd25519)
-			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
+			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: input}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -81,7 +81,7 @@ func TestTransactionBuilder(t *testing.T) {
 				}
 			)
 
-			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
+			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID1.ID(), Input: basicOutput}).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID2.ID(), Input: nftOutput}).
 				AddInput(&builder.TxInput{UnlockTarget: nftOutput.Chain().ToAddress(), InputID: inputID3.ID(), Input: accountOwnedByNFT}).
@@ -102,7 +102,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
+			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -121,7 +121,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
+			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -145,7 +145,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
+			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -165,9 +165,9 @@ func TestTransactionBuilder(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := test.builder.Build(tpkg.TestProtoParams, test.addrSigner)
+			_, err := test.builder.Build(test.addrSigner)
 			if test.buildErr != nil {
-				assert.True(t, errors.Is(err, test.buildErr), "wrong error : %s != %s", err, test.buildErr)
+				assert.True(t, ierrors.Is(err, test.buildErr), "wrong error : %s != %s", err, test.buildErr)
 				return
 			}
 			assert.NoError(t, err)

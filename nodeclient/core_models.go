@@ -2,14 +2,14 @@ package nodeclient
 
 import (
 	"encoding/json"
-	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 // TODO: use the API instance from Client instead.
-var _internalAPI = iotago.V3API(&iotago.ProtocolParameters{})
+var _internalAPI = iotago.V3API(iotago.NewV3ProtocolParameters())
 
 type (
 	httpOutput interface{ iotago.Output }
@@ -271,22 +271,22 @@ type (
 func (nor *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 	txIDBytes, err := hexutil.DecodeHex(nor.TransactionID)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
+		return nil, ierrors.Errorf("unable to decode raw transaction ID from JSON to transaction ID: %w", err)
 	}
 	var txID iotago.TransactionID
 	copy(txID[:], txIDBytes)
 	return &txID, nil
 }
 
-// ProtocolParameters returns the protocol parameters within the info response.
-func (info *InfoResponse) DecodeProtocolParameters() (*iotago.ProtocolParameters, error) {
+// DecodeProtocolParameters returns the protocol parameters within the info response.
+func (info *InfoResponse) DecodeProtocolParameters() (iotago.ProtocolParameters, error) {
 	protoJson, err := json.Marshal(info.ProtocolParameters)
 	if err != nil {
 		return nil, err
 	}
 
-	o := &iotago.ProtocolParameters{}
-	if err := _internalAPI.JSONDecode(protoJson, o); err != nil {
+	var o iotago.ProtocolParameters
+	if err := _internalAPI.JSONDecode(protoJson, &o); err != nil {
 		return nil, err
 	}
 

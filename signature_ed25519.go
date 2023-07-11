@@ -3,10 +3,10 @@ package iotago
 import (
 	"bytes"
 	"crypto/ed25519"
-	"errors"
 	"fmt"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -18,9 +18,9 @@ const (
 
 var (
 	// ErrEd25519PubKeyAndAddrMismatch gets returned when an Ed25519Address and public key do not correspond to each other.
-	ErrEd25519PubKeyAndAddrMismatch = errors.New("public key and address do not correspond to each other (Ed25519)")
+	ErrEd25519PubKeyAndAddrMismatch = ierrors.New("public key and address do not correspond to each other (Ed25519)")
 	// ErrEd25519SignatureInvalid gets returned for invalid an Ed25519Signature.
-	ErrEd25519SignatureInvalid = errors.New("signature is invalid (Ed25519)")
+	ErrEd25519SignatureInvalid = ierrors.New("signature is invalid (Ed25519)")
 )
 
 // Ed25519Signature defines an Ed25519 signature.
@@ -57,10 +57,10 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	// an address is the Blake2b 256 hash of the public key
 	addrFromPubKey := Ed25519AddressFromPubKey(e.PublicKey[:])
 	if !bytes.Equal(addr[:], addrFromPubKey[:]) {
-		return fmt.Errorf("%w: address %s, address from public key %v", ErrEd25519PubKeyAndAddrMismatch, hexutil.EncodeHex(addr[:]), hexutil.EncodeHex(addrFromPubKey[:]))
+		return ierrors.Wrapf(ErrEd25519PubKeyAndAddrMismatch, "address %s, address from public key %v", hexutil.EncodeHex(addr[:]), hexutil.EncodeHex(addrFromPubKey[:]))
 	}
 	if valid := hiveEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
-		return fmt.Errorf("%w: address %s, public key %v, signature %v", ErrEd25519SignatureInvalid, hexutil.EncodeHex(addr[:]), hexutil.EncodeHex(e.PublicKey[:]), hexutil.EncodeHex(e.Signature[:]))
+		return ierrors.Wrapf(ErrEd25519SignatureInvalid, "address %s, public key %v, signature %v", hexutil.EncodeHex(addr[:]), hexutil.EncodeHex(e.PublicKey[:]), hexutil.EncodeHex(e.Signature[:]))
 	}
 	return nil
 }

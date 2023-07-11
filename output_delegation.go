@@ -1,10 +1,9 @@
 package iotago
 
 import (
-	"errors"
-
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/util"
@@ -17,23 +16,23 @@ const (
 
 var (
 	// ErrInvalidDelegationTransition gets returned when a Delegation Output is doing an invalid state transition.
-	ErrInvalidDelegationTransition = errors.New("invalid delegation output transition")
+	ErrInvalidDelegationTransition = ierrors.New("invalid delegation output transition")
 	// ErrInvalidDelegationRewardsClaiming gets returned when it is invalid to claim rewards from a delegation output.
-	ErrInvalidDelegationRewardsClaiming = errors.New("invalid delegation mana rewards claiming")
+	ErrInvalidDelegationRewardsClaiming = ierrors.New("invalid delegation mana rewards claiming")
 	// ErrInvalidDelegationNonZeroedID gets returned when a delegation output's delegation ID is not zeroed initially.
-	ErrInvalidDelegationNonZeroedID = errors.New("delegation ID must be zeroed initially")
+	ErrInvalidDelegationNonZeroedID = ierrors.New("delegation ID must be zeroed initially")
 	// ErrInvalidDelegationModified gets returned when a delegation output's immutable fields are modified.
-	ErrInvalidDelegationModified = errors.New("delegated amount, validator ID and start epoch cannot be modified")
+	ErrInvalidDelegationModified = ierrors.New("delegated amount, validator ID and start epoch cannot be modified")
 	// ErrInvalidDelegationStartEpoch gets returned when a delegation output's start epoch is not set correctly
 	// relative to the slot of the current epoch in which the voting power is calculated.
-	ErrInvalidDelegationStartEpoch = errors.New("invalid start epoch")
+	ErrInvalidDelegationStartEpoch = ierrors.New("invalid start epoch")
 	// ErrInvalidDelegationAmount gets returned when a delegation output's delegated amount is not equal to the amount.
-	ErrInvalidDelegationAmount = errors.New("delegated amount equal to the amount")
+	ErrInvalidDelegationAmount = ierrors.New("delegated amount equal to the amount")
 	// ErrInvalidDelegationNonZeroEndEpoch gets returned when a delegation output's end epoch is not zero at genesis.
-	ErrInvalidDelegationNonZeroEndEpoch = errors.New("end epoch must be set to zero at output genesis")
+	ErrInvalidDelegationNonZeroEndEpoch = ierrors.New("end epoch must be set to zero at output genesis")
 	// ErrInvalidDelegationEndEpoch gets returned when a delegation output's end epoch is not set correctly
 	// relative to the slot of the current epoch in which the voting power is calculated.
-	ErrInvalidDelegationEndEpoch = errors.New("invalid end epoch")
+	ErrInvalidDelegationEndEpoch = ierrors.New("invalid end epoch")
 	emptyDelegationID            = [DelegationIDLength]byte{}
 )
 
@@ -99,9 +98,9 @@ type (
 // DelegationOutput is an output type used to implement delegation.
 type DelegationOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount uint64 `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:"0,mapKey=amount"`
 	// The amount of IOTA tokens that were delegated when the output was created.
-	DelegatedAmount uint64 `serix:"1,mapKey=delegatedAmount"`
+	DelegatedAmount BaseToken `serix:"1,mapKey=delegatedAmount"`
 	// The identifier for this output.
 	DelegationID DelegationID `serix:"2,mapKey=delegationId"`
 	// The Account ID of the validator to which this output is delegating.
@@ -168,11 +167,11 @@ func (d *DelegationOutput) ImmutableFeatureSet() FeatureSet {
 	return d.ImmutableFeatures.MustSet()
 }
 
-func (d *DelegationOutput) Deposit() uint64 {
+func (d *DelegationOutput) Deposit() BaseToken {
 	return d.Amount
 }
 
-func (d *DelegationOutput) StoredMana() uint64 {
+func (d *DelegationOutput) StoredMana() Mana {
 	return 0
 }
 
@@ -182,11 +181,11 @@ func (d *DelegationOutput) Type() OutputType {
 
 func (d *DelegationOutput) Size() int {
 	return util.NumByteLen(byte(OutputDelegation)) +
-		util.NumByteLen(d.Amount) +
-		util.NumByteLen(d.DelegatedAmount) +
+		BaseTokenSize +
+		BaseTokenSize +
 		DelegationIDLength +
 		AccountIDLength +
-		len(EpochIndex(0).Bytes())*2 +
+		EpochIndexLength*2 +
 		d.Conditions.Size() +
 		d.ImmutableFeatures.Size()
 }

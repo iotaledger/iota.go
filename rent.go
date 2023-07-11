@@ -1,8 +1,7 @@
 package iotago
 
 import (
-	"errors"
-	"fmt"
+	"github.com/iotaledger/hive.go/ierrors"
 )
 
 // VBytes defines the type of the virtual byte costs.
@@ -21,9 +20,9 @@ const (
 var (
 	// ErrVByteRentNotCovered gets returned when a NonEphemeralObject does not cover the state rent
 	// cost which are calculated from its virtual byte costs.
-	ErrVByteRentNotCovered = errors.New("virtual byte rent costs not covered")
+	ErrVByteRentNotCovered = ierrors.New("virtual byte rent costs not covered")
 	// ErrTypeIsNotSupportedRentStructure gets returned when a serializable was found to not be a supported RentStructure.
-	ErrTypeIsNotSupportedRentStructure = errors.New("serializable is not a supported rent structure")
+	ErrTypeIsNotSupportedRentStructure = ierrors.New("serializable is not a supported rent structure")
 )
 
 // Multiply multiplies in with this factor.
@@ -49,23 +48,29 @@ type RentStructure struct {
 // CoversStateRent tells whether given this NonEphemeralObject, the given rent fulfills the renting costs
 // by examining the virtual bytes cost of the object.
 // Returns the minimum rent computed and an error if it is not covered by rent.
-func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent uint64) (uint64, error) {
+func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent BaseToken) (BaseToken, error) {
 	minRent := r.MinRent(object)
 	if rent < minRent {
-		return 0, fmt.Errorf("%w: needed %d but only got %d", ErrVByteRentNotCovered, minRent, rent)
+		return 0, ierrors.Wrapf(ErrVByteRentNotCovered, "needed %d but only got %d", minRent, rent)
 	}
 	return minRent, nil
 }
 
 // MinRent returns the minimum rent to cover a given object.
-func (r *RentStructure) MinRent(object NonEphemeralObject) uint64 {
-	return uint64(r.VByteCost) * uint64(object.VBytes(r, nil))
+func (r *RentStructure) MinRent(object NonEphemeralObject) BaseToken {
+	return BaseToken(r.VByteCost) * BaseToken(object.VBytes(r, nil))
 }
 
 // MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
-func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) uint64 {
-	return uint64(r.VByteCost) * uint64((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
+func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) BaseToken {
+	return BaseToken(r.VByteCost) * BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
+}
+
+func (r RentStructure) Equals(other RentStructure) bool {
+	return r.VByteCost == other.VByteCost &&
+		r.VBFactorData == other.VBFactorData &&
+		r.VBFactorKey == other.VBFactorKey
 }
 
 // NonEphemeralObject is an object which can not be pruned by nodes as it

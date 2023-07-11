@@ -1,9 +1,10 @@
 package iotago
 
 import (
+	"context"
 	"encoding/binary"
-	"errors"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/util"
@@ -16,9 +17,9 @@ const (
 
 var (
 	// ErrNonUniqueFoundryOutputs gets returned when multiple FoundryOutput(s) with the same FoundryID exist within an OutputsByType.
-	ErrNonUniqueFoundryOutputs = errors.New("non unique foundries within outputs")
+	ErrNonUniqueFoundryOutputs = ierrors.New("non unique foundries within outputs")
 	// ErrInvalidFoundryStateTransition gets returned when a foundry is doing an invalid state transition.
-	ErrInvalidFoundryStateTransition = errors.New("invalid foundry state transition")
+	ErrInvalidFoundryStateTransition = ierrors.New("invalid foundry state transition")
 
 	emptyFoundryID = [FoundryIDLength]byte{}
 )
@@ -81,7 +82,7 @@ type (
 // FoundryOutput is an output type which controls the supply of user defined native tokens.
 type FoundryOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount uint64 `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:"0,mapKey=amount"`
 	// The native tokens held by the output.
 	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
 	// The serial number of the foundry.
@@ -95,7 +96,7 @@ type FoundryOutput struct {
 	// The immutable feature on the output.
 	ImmutableFeatures FoundryOutputImmFeatures `serix:"6,mapKey=immutableFeatures,omitempty"`
 	// The stored mana held by the output.
-	Mana uint64 `serix:"7,mapKey=mana"`
+	Mana Mana `serix:"7,mapKey=mana"`
 }
 
 func (f *FoundryOutput) Clone() Output {
@@ -143,8 +144,9 @@ func (f *FoundryOutput) Chain() ChainID {
 
 // ID returns the FoundryID of this FoundryOutput.
 func (f *FoundryOutput) ID() (FoundryID, error) {
+	serixAPI := commonSerixAPI()
 	var foundryID FoundryID
-	addrBytes, err := _internalAPI.Encode(f.Ident())
+	addrBytes, err := serixAPI.Encode(context.Background(), f.Ident())
 	if err != nil {
 		return foundryID, err
 	}
@@ -193,11 +195,11 @@ func (f *FoundryOutput) ImmutableFeatureSet() FeatureSet {
 	return f.ImmutableFeatures.MustSet()
 }
 
-func (f *FoundryOutput) Deposit() uint64 {
+func (f *FoundryOutput) Deposit() BaseToken {
 	return f.Amount
 }
 
-func (f *FoundryOutput) StoredMana() uint64 {
+func (f *FoundryOutput) StoredMana() Mana {
 	return f.Mana
 }
 
@@ -207,12 +209,12 @@ func (f *FoundryOutput) Type() OutputType {
 
 func (f *FoundryOutput) Size() int {
 	return util.NumByteLen(byte(OutputFoundry)) +
-		util.NumByteLen(f.Amount) +
+		BaseTokenSize +
 		f.NativeTokens.Size() +
 		util.NumByteLen(f.SerialNumber) +
 		f.TokenScheme.Size() +
 		f.Conditions.Size() +
 		f.Features.Size() +
 		f.ImmutableFeatures.Size() +
-		util.NumByteLen(f.Mana)
+		ManaSize
 }

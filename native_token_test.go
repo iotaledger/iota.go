@@ -17,11 +17,11 @@ func TestNativeTokenDeSerialization(t *testing.T) {
 		Amount: new(big.Int).SetUint64(1000),
 	}
 
-	ntBytes, err := v3API.Encode(ntIn, serix.WithValidation())
+	ntBytes, err := tpkg.TestAPI.Encode(ntIn, serix.WithValidation())
 	require.NoError(t, err)
 
 	ntOut := &iotago.NativeToken{}
-	_, err = v3API.Decode(ntBytes, ntOut, serix.WithValidation())
+	_, err = tpkg.TestAPI.Decode(ntBytes, ntOut, serix.WithValidation())
 	require.NoError(t, err)
 
 	require.EqualValues(t, ntIn, ntOut)
@@ -172,7 +172,7 @@ func TestOutputsNativeTokenSet(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			for _, source := range test.sources {
-				if _, err := v3API.Encode(source, serix.WithValidation()); (err != nil) != test.wantErr {
+				if _, err := tpkg.TestAPI.Encode(source, serix.WithValidation()); (err != nil) != test.wantErr {
 					t.Errorf("error = %v, wantErr %v", err, test.wantErr)
 				}
 			}

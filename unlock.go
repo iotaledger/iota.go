@@ -1,9 +1,9 @@
 package iotago
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -39,11 +39,11 @@ var (
 
 var (
 	// ErrSigUnlockNotUnique gets returned if sig unlocks making part of a transaction aren't unique.
-	ErrSigUnlockNotUnique = errors.New("signature unlock must be unique")
+	ErrSigUnlockNotUnique = ierrors.New("signature unlock must be unique")
 	// ErrReferentialUnlockInvalid gets returned when a ReferentialUnlock is invalid.
-	ErrReferentialUnlockInvalid = errors.New("invalid referential unlock")
+	ErrReferentialUnlockInvalid = ierrors.New("invalid referential unlock")
 	// ErrSigUnlockHasNilSig gets returned if a signature unlock contains a nil signature.
-	ErrSigUnlockHasNilSig = errors.New("signature is nil")
+	ErrSigUnlockHasNilSig = ierrors.New("signature is nil")
 )
 
 type Unlocks []Unlock
@@ -99,7 +99,7 @@ type UnlockValidatorFunc func(index int, unlock Unlock) error
 //  1. SignatureUnlock(s) are unique
 //  2. ReferenceUnlock(s) reference a previous SignatureUnlock
 //  3. Following through AccountUnlock(s), NFTUnlock(s) refs results to a SignatureUnlock
-func UnlocksSigUniqueAndRefValidator() UnlockValidatorFunc {
+func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 	seenSigUnlocks := map[uint16]struct{}{}
 	seenRefUnlocks := map[uint16]ReferentialUnlock{}
 	seenSigUnlockBytes := map[string]int{}
@@ -107,16 +107,16 @@ func UnlocksSigUniqueAndRefValidator() UnlockValidatorFunc {
 		switch x := unlock.(type) {
 		case *SignatureUnlock:
 			if x.Signature == nil {
-				return fmt.Errorf("%w: at index %d is nil", ErrSigUnlockHasNilSig, index)
+				return ierrors.Wrapf(ErrSigUnlockHasNilSig, "at index %d is nil", index)
 			}
 
-			sigBlockBytes, err := _internalAPI.Encode(x.Signature)
+			sigBlockBytes, err := api.Encode(x.Signature)
 			if err != nil {
-				return fmt.Errorf("unable to serialize signature unlock block at index %d for dup check: %w", index, err)
+				return ierrors.Errorf("unable to serialize signature unlock block at index %d for dup check: %w", index, err)
 			}
 
 			if existingIndex, exists := seenSigUnlockBytes[string(sigBlockBytes)]; exists {
-				return fmt.Errorf("%w: signature unlock block at index %d is the same as %d", ErrSigUnlockNotUnique, index, existingIndex)
+				return ierrors.Wrapf(ErrSigUnlockNotUnique, "signature unlock block at index %d is the same as %d", index, existingIndex)
 			}
 
 			seenSigUnlockBytes[string(sigBlockBytes)] = index
@@ -124,18 +124,18 @@ func UnlocksSigUniqueAndRefValidator() UnlockValidatorFunc {
 		case ReferentialUnlock:
 			if prevRef := seenRefUnlocks[x.Ref()]; prevRef != nil {
 				if !x.Chainable() {
-					return fmt.Errorf("%w: %d references existing referential unlock %d but it does not support chaining", ErrReferentialUnlockInvalid, index, x.Ref())
+					return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d references existing referential unlock %d but it does not support chaining", index, x.Ref())
 				}
 				seenRefUnlocks[uint16(index)] = x
 				break
 			}
 			// must reference a sig unlock here
 			if _, has := seenSigUnlocks[x.Ref()]; !has {
-				return fmt.Errorf("%w: %d references non existent unlock %d", ErrReferentialUnlockInvalid, index, x.Ref())
+				return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d references non existent unlock %d", index, x.Ref())
 			}
 			seenRefUnlocks[uint16(index)] = x
 		default:
-			return fmt.Errorf("%w: unlock at index %d is of unknown type %T", ErrUnknownUnlockType, index, x)
+			return ierrors.Wrapf(ErrUnknownUnlockType, "unlock at index %d is of unknown type %T", index, x)
 		}
 
 		return nil

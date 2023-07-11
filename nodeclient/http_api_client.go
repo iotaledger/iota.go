@@ -2,12 +2,12 @@ package nodeclient
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
@@ -103,9 +103,9 @@ const (
 
 var (
 	// ErrIndexerPluginNotAvailable is returned when the indexer plugin is not available on the node.
-	ErrIndexerPluginNotAvailable = errors.New("indexer plugin not available on the current node")
+	ErrIndexerPluginNotAvailable = ierrors.New("indexer plugin not available on the current node")
 	// ErrMQTTPluginNotAvailable is returned when the MQTT plugin is not available on the node.
-	ErrMQTTPluginNotAvailable = errors.New("mqtt plugin not available on the current node")
+	ErrMQTTPluginNotAvailable = ierrors.New("mqtt plugin not available on the current node")
 )
 
 // RequestURLHook is a function to modify the URL before sending a request.
@@ -199,11 +199,11 @@ func New(baseURL string, opts ...ClientOption) (*Client, error) {
 		defer cancelFunc()
 		info, err := client.Info(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("unable to call info endpoint for protocol parameter init: %w", err)
+			return nil, ierrors.Errorf("unable to call info endpoint for protocol parameter init: %w", err)
 		}
 		protoParams, err := info.DecodeProtocolParameters()
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse protocol parameters from info response: %w", err)
+			return nil, ierrors.Errorf("unable to parse protocol parameters from info response: %w", err)
 		}
 		client.opts.iotagoAPI = iotago.LatestAPI(protoParams)
 	}
@@ -279,7 +279,7 @@ func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
 // Health returns whether the given node is healthy.
 func (client *Client) Health(ctx context.Context) (bool, error) {
 	if _, err := client.Do(ctx, http.MethodGet, RouteHealth, nil, nil); err != nil {
-		if errors.Is(err, ErrHTTPServiceUnavailable) {
+		if ierrors.Is(err, ErrHTTPServiceUnavailable) {
 			return false, nil
 		}
 
@@ -337,7 +337,7 @@ func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool
 // The node will take care of filling missing information.
 // This function returns the blockID of the finalized block.
 // To get the finalized block you need to call "BlockByBlockID".
-func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (iotago.BlockID, error) {
+func (client *Client) SubmitBlock(ctx context.Context, m *iotago.ProtocolBlock) (iotago.BlockID, error) {
 	// do not check the block because the validation would fail if
 	// no parents were given. The node will first add this missing information and
 	// validate the block afterwards.
@@ -373,7 +373,7 @@ func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago
 }
 
 // BlockByBlockID get a block by its block ID from the node.
-func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID) (*iotago.Block, error) {
+func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID) (*iotago.ProtocolBlock, error) {
 	query := fmt.Sprintf(RouteBlock, hexutil.EncodeHex(blockID[:]))
 
 	res := &RawDataEnvelope{}
@@ -381,7 +381,7 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 		return nil, err
 	}
 
-	block := &iotago.Block{}
+	block := &iotago.ProtocolBlock{}
 	if _, err := client.opts.iotagoAPI.Decode(res.Data, block, serix.WithValidation()); err != nil {
 		return nil, err
 	}
@@ -390,7 +390,7 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 }
 
 // TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
-func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.Block, error) {
+func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.ProtocolBlock, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlock, hexutil.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
@@ -398,7 +398,7 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 		return nil, err
 	}
 
-	block := &iotago.Block{}
+	block := &iotago.ProtocolBlock{}
 	if _, err := client.opts.iotagoAPI.Decode(res.Data, block, serix.WithValidation()); err != nil {
 		return nil, err
 	}

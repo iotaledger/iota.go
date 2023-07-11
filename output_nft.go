@@ -82,7 +82,7 @@ type (
 // NFTOutput is an output type used to implement non-fungible tokens.
 type NFTOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount uint64 `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:"0,mapKey=amount"`
 	// The native tokens held by the output.
 	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
 	// The identifier of this NFT.
@@ -94,7 +94,7 @@ type NFTOutput struct {
 	// The immutable feature on the output.
 	ImmutableFeatures NFTOutputImmFeatures `serix:"5,mapKey=immutableFeatures,omitempty"`
 	// The stored mana held by the output.
-	Mana uint64 `serix:"6,mapKey=mana"`
+	Mana Mana `serix:"6,mapKey=mana"`
 }
 
 func (n *NFTOutput) Clone() Output {
@@ -149,11 +149,11 @@ func (n *NFTOutput) ImmutableFeatureSet() FeatureSet {
 	return n.ImmutableFeatures.MustSet()
 }
 
-func (n *NFTOutput) Deposit() uint64 {
+func (n *NFTOutput) Deposit() BaseToken {
 	return n.Amount
 }
 
-func (n *NFTOutput) StoredMana() uint64 {
+func (n *NFTOutput) StoredMana() Mana {
 	return n.Mana
 }
 
@@ -163,11 +163,11 @@ func (n *NFTOutput) Type() OutputType {
 
 func (n *NFTOutput) Size() int {
 	return util.NumByteLen(byte(OutputNFT)) +
-		util.NumByteLen(n.Amount) +
+		BaseTokenSize +
 		n.NativeTokens.Size() +
 		NFTIDLength +
 		n.Conditions.Size() +
 		n.Features.Size() +
 		n.ImmutableFeatures.Size() +
-		util.NumByteLen(n.Mana)
+		ManaSize
 }
