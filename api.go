@@ -16,7 +16,7 @@ func (v Version) Bytes() ([]byte, error) {
 }
 
 func VersionFromBytes(b []byte) (Version, int, error) {
-	if len(b) != 1 {
+	if len(b) < 1 {
 		return 0, 0, ierrors.New("invalid version bytes length")
 	}
 
