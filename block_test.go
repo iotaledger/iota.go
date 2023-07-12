@@ -65,7 +65,7 @@ func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
 }
 
 func TestProtocolBlock_DeserializationNotEnoughData(t *testing.T) {
-	blockBytes := []byte{tpkg.TestAPI.Version(), 1}
+	blockBytes := []byte{byte(tpkg.TestAPI.Version()), 1}
 
 	block := &iotago.ProtocolBlock{}
 	_, err := tpkg.TestAPI.Decode(blockBytes, block)
