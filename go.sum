@@ -23,6 +23,10 @@ github.com/iancoleman/orderedmap v0.2.0 h1:sq1N/TFpYH++aViPcaKjys3bDClUEU7s5B+z6
 github.com/iancoleman/orderedmap v0.2.0/go.mod h1:N0Wam8K1arqPXNWjMo21EXnBPOPp36vB07FNRdD2geA=
 github.com/iotaledger/hive.go/constraints v0.0.0-20230705073627-cfe175cea4a6 h1:ZwIJS4ePAk3ki+OuhjSkCfdy17PpydWaSzmfWP0YrkU=
 github.com/iotaledger/hive.go/constraints v0.0.0-20230705073627-cfe175cea4a6/go.mod h1:bvXXc6quBdERMMKnirr2+iQU4WnTz4KDbdHcusW9Ats=
+github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20230707145818-c114638b5581 h1:+At3owl5Er6q8FSUS/COU1dqN5vyxp7XWulDrJb7XtQ=
+github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20230707145818-c114638b5581/go.mod h1:ALcO+4r6FMfENrMQ+jZZfHX7vDHQ42XLI8y7dt/IKxc=
+github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20230711121610-7d024f7b5eb5 h1:K4dWLTZwURU7xVF5uePUk0oDViBDQrsdZ7ZHBCrTYOs=
+github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20230711121610-7d024f7b5eb5/go.mod h1:ALcO+4r6FMfENrMQ+jZZfHX7vDHQ42XLI8y7dt/IKxc=
 github.com/iotaledger/hive.go/crypto v0.0.0-20230706083020-ef6c3248369d h1:6VVi5LZGAIXYFzb+/k3G6+T6dNkLi2beD0O6CccxdLg=
 github.com/iotaledger/hive.go/crypto v0.0.0-20230706083020-ef6c3248369d/go.mod h1:kkIoyWWDol9XTEuNy0wtUYQWx+Eb0Ak9XP8SS3g1/J8=
 github.com/iotaledger/hive.go/ierrors v0.0.0-20230706083020-ef6c3248369d h1:USj27KfaNTE4HD99HAv9heagQ6puR/iquHp/MQXXMbw=
