@@ -93,7 +93,7 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 				return ierrors.Wrapf(ErrRefUTXOIndexInvalid, "input %d", index)
 			}
 		default:
-			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer, CommitmentInput or BICInput inputs", index)
+			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer inputs", index)
 		}
 		return nil
 	}

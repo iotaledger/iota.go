@@ -71,7 +71,7 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 			name: "ok",
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
 				tpkg.WithUTXOInputCount(iotago.MaxInputsCount),
-				tpkg.WithBICInputCount(iotago.MaxContextInputsCount/2),
+				tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
 				tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2-1),
 				tpkg.WithCommitmentInput(),
 			)),
@@ -91,7 +91,7 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 		{
 			name: "too many context inputs",
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
-				tpkg.WithBICInputCount(iotago.MaxContextInputsCount/2),
+				tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
 				tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2),
 				tpkg.WithCommitmentInput(),
 			)),

@@ -59,7 +59,7 @@ type WorkingSet struct {
 	UnlocksByType iotago.UnlocksByType
 	// BIC is the block issuance credit for MCA slots prior to the transaction's creation time (or for the slot to which the block commits)
 	// Contains one value for each account output touched in the transaction and empty if no account outputs touched.
-	BIC BICInputSet
+	BIC BlockIssuanceCreditInputSet
 	// Commitment contains set of commitment inputs necessary for transaction execution. FIXME
 	Commitment VmCommitmentInput
 	// Rewards contains a set of account or delegation IDs mapped to their rewards amount.
@@ -115,7 +115,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs Resolve
 	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainOutputSet(txID)
 
 	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
-	workingSet.BIC = inputs.BICInputSet
+	workingSet.BIC = inputs.BlockIssuanceCreditInputSet
 	workingSet.Commitment = inputs.CommitmentInput
 	workingSet.Rewards = inputs.RewardsInputSet
 
