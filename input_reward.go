@@ -10,10 +10,10 @@ type RewardInput struct {
 	Index uint16 `serix:"0,mapKey=index"`
 }
 
-func (r *RewardInput) Type() InputType {
-	return InputReward
+func (r *RewardInput) Type() ContextInputType {
+	return ContextInputReward
 }
 
 func (r *RewardInput) Size() int {
-	return util.NumByteLen(byte(InputReward)) + serializer.UInt16ByteSize
+	return util.NumByteLen(byte(ContextInputReward)) + serializer.UInt16ByteSize
 }

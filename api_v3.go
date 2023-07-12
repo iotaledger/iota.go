@@ -451,13 +451,13 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(TransactionEssence{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
 
 		must(api.RegisterTypeSettings(CommitmentInput{},
-			serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))),
+			serix.TypeSettings{}.WithObjectType(uint8(ContextInputCommitment))),
 		)
-		must(api.RegisterTypeSettings(BICInput{},
-			serix.TypeSettings{}.WithObjectType(uint8(InputBlockIssuanceCredit))),
+		must(api.RegisterTypeSettings(BlockIssuanceCreditInput{},
+			serix.TypeSettings{}.WithObjectType(uint8(ContextInputBlockIssuanceCredit))),
 		)
 		must(api.RegisterTypeSettings(RewardInput{},
-			serix.TypeSettings{}.WithObjectType(uint8(InputReward))),
+			serix.TypeSettings{}.WithObjectType(uint8(ContextInputReward))),
 		)
 
 		must(api.RegisterTypeSettings(TxEssenceContextInputs{},
@@ -465,7 +465,7 @@ func V3API(protoParams ProtocolParameters) API {
 		))
 
 		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*CommitmentInput)(nil)))
-		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*BICInput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*BlockIssuanceCreditInput)(nil)))
 		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*RewardInput)(nil)))
 
 		must(api.RegisterTypeSettings(UTXOInput{},

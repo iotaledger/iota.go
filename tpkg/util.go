@@ -334,11 +334,20 @@ func WithBICInputCount(inputCount int) options.Option[iotago.TransactionEssence]
 	}
 }
 
-func WithCommitmentInputCount(inputCount int) options.Option[iotago.TransactionEssence] {
+func WithRewardInputCount(inputCount uint16) options.Option[iotago.TransactionEssence] {
 	return func(tx *iotago.TransactionEssence) {
 		for i := inputCount; i > 0; i-- {
-			tx.ContextInputs = append(tx.ContextInputs, RandCommitmentInput())
+			rewardInput := &iotago.RewardInput{
+				Index: i,
+			}
+			tx.ContextInputs = append(tx.ContextInputs, rewardInput)
 		}
+	}
+}
+
+func WithCommitmentInput() options.Option[iotago.TransactionEssence] {
+	return func(tx *iotago.TransactionEssence) {
+		tx.ContextInputs = append(tx.ContextInputs, RandCommitmentInput())
 	}
 }
 
@@ -520,8 +529,8 @@ func RandCommitmentInput() *iotago.CommitmentInput {
 }
 
 // RandBICInput returns a random BIC input.
-func RandBICInput() *iotago.BICInput {
-	return &iotago.BICInput{
+func RandBICInput() *iotago.BlockIssuanceCreditInput {
+	return &iotago.BlockIssuanceCreditInput{
 		AccountID: RandAccountID(),
 	}
 }

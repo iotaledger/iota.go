@@ -834,7 +834,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -916,7 +916,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -996,7 +996,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -1069,7 +1069,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
