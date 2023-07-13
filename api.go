@@ -5,10 +5,23 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
-type Version = byte
+type Version byte
+
+func (v Version) Bytes() ([]byte, error) {
+	return []byte{byte(v)}, nil
+}
+
+func VersionFromBytes(b []byte) (Version, int, error) {
+	if len(b) < 1 {
+		return 0, 0, ierrors.New("invalid version bytes length")
+	}
+
+	return Version(b[0]), 1, nil
+}
 
 // API handles en/decoding of IOTA protocol objects.
 type API interface {

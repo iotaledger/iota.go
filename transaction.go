@@ -17,6 +17,8 @@ var (
 	ErrMissingUTXO = ierrors.New("missing utxo")
 	// ErrInputOutputSumMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
 	ErrInputOutputSumMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount")
+	// ErrManaOverflow gets returned when there is an under- or overflow in Mana calculations.
+	ErrManaOverflow = ierrors.New("under- or overflow in Mana calculations")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
 	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
@@ -87,11 +89,11 @@ func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
 	return references, nil
 }
 
-func (t *Transaction) BICInputs() ([]*BICInput, error) {
-	references := make([]*BICInput, 0, len(t.Essence.ContextInputs))
+func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
+	references := make([]*BlockIssuanceCreditInput, 0, len(t.Essence.ContextInputs))
 	for _, input := range t.Essence.ContextInputs {
 		switch castInput := input.(type) {
-		case *BICInput:
+		case *BlockIssuanceCreditInput:
 			references = append(references, castInput)
 		case *CommitmentInput, *RewardInput:
 			// ignore this type
@@ -109,7 +111,7 @@ func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
 		switch castInput := input.(type) {
 		case *RewardInput:
 			references = append(references, castInput)
-		case *CommitmentInput, *BICInput:
+		case *CommitmentInput, *BlockIssuanceCreditInput:
 			// ignore this type
 		default:
 			return nil, ErrUnexpectedUnderlyingType
@@ -123,7 +125,7 @@ func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
 func (t *Transaction) CommitmentInput() *CommitmentInput {
 	for _, input := range t.Essence.ContextInputs {
 		switch castInput := input.(type) {
-		case *BICInput, *RewardInput:
+		case *BlockIssuanceCreditInput, *RewardInput:
 			// ignore this type
 		case *CommitmentInput:
 			return castInput
