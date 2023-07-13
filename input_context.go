@@ -13,7 +13,7 @@ type ContextInputType byte
 const (
 	// ContextInputCommitment is a type of input which references a commitment.
 	ContextInputCommitment ContextInputType = iota
-	// ContextInputBlockIssuanceCredit is a type of input which references the block issuance credit from a specific account and commitment.
+	// ContextInputBlockIssuanceCredit is a type of input which references the block issuance credit from a specific account and commitment, the latter being provided by a commitment input.
 	ContextInputBlockIssuanceCredit
 	// ContextInputReward is a type of input which references an Account or Delegation Input for which to claim rewards.
 	ContextInputReward

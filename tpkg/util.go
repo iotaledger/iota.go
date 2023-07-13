@@ -528,7 +528,7 @@ func RandCommitmentInput() *iotago.CommitmentInput {
 	}
 }
 
-// RandBlockIssuanceCreditInput returns a random BIC input.
+// RandBlockIssuanceCreditInput returns a random BlockIssuanceCreditInput.
 func RandBlockIssuanceCreditInput() *iotago.BlockIssuanceCreditInput {
 	return &iotago.BlockIssuanceCreditInput{
 		AccountID: RandAccountID(),
