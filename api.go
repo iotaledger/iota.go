@@ -101,6 +101,8 @@ type ProtocolParameters interface {
 	EpochNearingThreshold() SlotIndex
 
 	Bytes() ([]byte, error)
+
+	Hash() (Identifier, error)
 }
 
 // Sizer is an object knowing its own byte size.

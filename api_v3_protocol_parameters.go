@@ -168,6 +168,15 @@ func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
 	return commonSerixAPI().Encode(context.TODO(), p)
 }
 
+func (p *V3ProtocolParameters) Hash() (Identifier, error) {
+	bytes, err := p.Bytes()
+	if err != nil {
+		return Identifier{}, err
+	}
+
+	return IdentifierFromData(bytes), nil
+}
+
 func (p *V3ProtocolParameters) String() string {
 	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n\tEviction Age: %d\n\tLiveness Threshold: %d\n}",
 		p.v3ProtocolParameters.Version, p.v3ProtocolParameters.NetworkName, p.v3ProtocolParameters.Bech32HRP, p.v3ProtocolParameters.RentStructure, p.v3ProtocolParameters.TokenSupply, p.v3ProtocolParameters.GenesisUnixTimestamp, p.v3ProtocolParameters.SlotDurationInSeconds, p.v3ProtocolParameters.SlotsPerEpochExponent, p.v3ProtocolParameters.ManaGenerationRate, p.v3ProtocolParameters.ManaGenerationRateExponent, p.v3ProtocolParameters.ManaDecayFactors, p.v3ProtocolParameters.ManaDecayFactorsExponent, p.v3ProtocolParameters.ManaDecayFactorEpochsSum, p.v3ProtocolParameters.ManaDecayFactorEpochsSumExponent, p.v3ProtocolParameters.StakingUnbondingPeriod, p.v3ProtocolParameters.EvictionAge, p.v3ProtocolParameters.LivenessThreshold)
