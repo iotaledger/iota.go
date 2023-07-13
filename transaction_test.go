@@ -34,7 +34,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 			name: "ok - BIC",
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
 				tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: tpkg.RandAccountID(),
 					},
 				}),
@@ -50,7 +50,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 					&iotago.CommitmentInput{
 						CommitmentID: iotago.CommitmentID{},
 					},
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: tpkg.RandAccountID(),
 					},
 				}),
@@ -71,15 +71,16 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 			name: "ok",
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
 				tpkg.WithUTXOInputCount(iotago.MaxInputsCount),
-				tpkg.WithBICInputCount(iotago.MaxContextInputsCount/2-1),
-				tpkg.WithCommitmentInputCount(iotago.MaxContextInputsCount/2-1),
+				tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
+				tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2-1),
+				tpkg.WithCommitmentInput(),
 			)),
 			target:    &iotago.Transaction{},
 			seriErr:   nil,
 			deSeriErr: nil,
 		},
 		{
-			name: "too many Inputs",
+			name: "too many inputs",
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
 				tpkg.WithUTXOInputCount(iotago.MaxInputsCount + 1),
 			)),
@@ -90,8 +91,9 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 		{
 			name: "too many context inputs",
 			source: tpkg.RandTransactionWithEssence(tpkg.RandTransactionEssenceWithOptions(
-				tpkg.WithBICInputCount(iotago.MaxContextInputsCount),
-				tpkg.WithCommitmentInputCount(1),
+				tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
+				tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2),
+				tpkg.WithCommitmentInput(),
 			)),
 			target:    &iotago.Transaction{},
 			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
@@ -194,10 +196,10 @@ func TestTransaction_InputTypes(t *testing.T) {
 		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
 	}
 
-	bicInput1 := &iotago.BICInput{
+	bicInput1 := &iotago.BlockIssuanceCreditInput{
 		AccountID: tpkg.RandAccountID(),
 	}
-	bicInput2 := &iotago.BICInput{
+	bicInput2 := &iotago.BlockIssuanceCreditInput{
 		AccountID: tpkg.RandAccountID(),
 	}
 

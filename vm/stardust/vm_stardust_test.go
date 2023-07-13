@@ -834,7 +834,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -858,7 +858,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := vm.BICInputSet{
+			bicInputs := vm.BlockIssuanceCreditInputSet{
 				accountAddr1.AccountID(): 0,
 			}
 
@@ -874,7 +874,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs, CommitmentInput: commitmentInput},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BlockIssuanceCreditInputSet: bicInputs, CommitmentInput: commitmentInput},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -916,7 +916,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -940,7 +940,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := vm.BICInputSet{
+			bicInputs := vm.BlockIssuanceCreditInputSet{
 				accountAddr1.AccountID(): 0,
 			}
 
@@ -956,7 +956,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs, CommitmentInput: commitmentInput},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BlockIssuanceCreditInputSet: bicInputs, CommitmentInput: commitmentInput},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -996,7 +996,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -1011,7 +1011,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := vm.BICInputSet{
+			bicInputs := vm.BlockIssuanceCreditInputSet{
 				accountAddr1.AccountID(): 0,
 			}
 
@@ -1027,7 +1027,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs, CommitmentInput: commitmentInput},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BlockIssuanceCreditInputSet: bicInputs, CommitmentInput: commitmentInput},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1069,7 +1069,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -1084,7 +1084,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := vm.BICInputSet{
+			bicInputs := vm.BlockIssuanceCreditInputSet{
 				accountAddr1.AccountID(): 0,
 			}
 
@@ -1096,7 +1096,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BlockIssuanceCreditInputSet: bicInputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
