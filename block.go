@@ -281,11 +281,12 @@ func (b *Block) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 		// ProtocolVersion and NetworkID
 		workScoreStructure.Factors.Data.Multiply(serializer.OneByte+serializer.UInt64ByteSize) +
 		// IssuerID and IssuingTime
-		workScoreStructure.Factors.Data.Multiply(AccountIDLength+util.NumByteLen(b.IssuingTime)) +
+		workScoreStructure.Factors.Data.Multiply(AccountIDLength+serializer.UInt64ByteSize) +
 		// SlotCommitment and LatestFinalizedSlot
 		workScoreStructure.Factors.Data.Multiply(util.NumByteLen(b.SlotCommitment)+serializer.UInt64ByteSize) +
 		b.Payload.WorkScore(workScoreStructure) +
-		// BurnedMana and Nonce
-		workScoreStructure.Factors.Data.Multiply(ManaSize+serializer.UInt64ByteSize) +
-		workScoreStructure.WorkScores.Ed25519Signature
+		// BurnedMana
+		workScoreStructure.Factors.Data.Multiply(ManaSize) +
+		// Signature
+		b.Signature.WorkScore(workScoreStructure)
 }

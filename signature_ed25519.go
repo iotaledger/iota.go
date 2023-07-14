@@ -68,3 +68,7 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 func (e *Ed25519Signature) Size() int {
 	return serializer.SmallTypeDenotationByteSize + ed25519.PublicKeySize + ed25519.SignatureSize
 }
+
+func (e *Ed25519Signature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	return workScoreStructure.WorkScores.Ed25519Signature
+}

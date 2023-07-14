@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -37,5 +38,5 @@ func (r *NFTUnlock) Size() int {
 }
 
 func (r *NFTUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.WorkScores.Ed25519Signature
+	return workScoreStructure.Factors.Data.Multiply(util.NumByteLen(uint32(UnlockNFT)) + util.NumByteLen(r.Reference))
 }

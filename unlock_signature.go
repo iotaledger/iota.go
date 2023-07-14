@@ -19,5 +19,6 @@ func (s *SignatureUnlock) Size() int {
 }
 
 func (s *SignatureUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.WorkScores.Ed25519Signature
+	return workScoreStructure.Factors.Data.Multiply(util.NumByteLen(uint32(UnlockSignature))) +
+		s.Signature.WorkScore(workScoreStructure)
 }

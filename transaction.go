@@ -159,6 +159,7 @@ func (t *Transaction) syntacticallyValidate(protoParams *ProtocolParameters) err
 }
 
 func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return t.Unlocks.WorkScore(workScoreStructure) +
+	return workScoreStructure.Factors.Data.Multiply(util.NumByteLen(uint32(PayloadTransaction))) +
+		t.Unlocks.WorkScore(workScoreStructure) +
 		t.Essence.WorkScore(workScoreStructure)
 }

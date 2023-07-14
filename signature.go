@@ -14,6 +14,7 @@ type Signature interface {
 	serix.Serializable
 	serix.Deserializable
 	Sizer
+	ProcessableObject
 
 	// Type returns the type of the Signature.
 	Type() SignatureType
