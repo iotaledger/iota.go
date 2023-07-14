@@ -318,3 +318,14 @@ func (v *ValidationBlockBuilder) HighestSupportedVersion(highestSupportedVersion
 
 	return v
 }
+
+// ProtocolParametersHash sets the ProtocolParametersHash of the highest supported version.
+func (v *ValidationBlockBuilder) ProtocolParametersHash(hash iotago.Identifier) *ValidationBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.validationBlock.ProtocolParametersHash = hash
+
+	return v
+}
