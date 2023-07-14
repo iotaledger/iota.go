@@ -15,8 +15,9 @@ type WorkScoreStructure struct {
 type WorkScoreFactors struct {
 	Data          WorkScoreFactor `serix:"0,mapKey=data"`
 	Input         WorkScoreFactor `serix:"1,mapKey=input"`
-	Allotment     WorkScoreFactor `serix:"2,mapKey=allotment"`
-	MissingParent WorkScoreFactor `serix:"3,mapKey=missingParent"`
+	ContextInput  WorkScoreFactor `serix:"2,mapKey=contextInput"`
+	Allotment     WorkScoreFactor `serix:"3,mapKey=allotment"`
+	MissingParent WorkScoreFactor `serix:"4,mapKey=missingParent"`
 }
 
 type WorkScores struct {

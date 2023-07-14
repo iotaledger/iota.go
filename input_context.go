@@ -33,6 +33,15 @@ var (
 // ContextInputs is a slice of ContextInput.
 type ContextInputs[T ContextInput] []T
 
+func (in ContextInputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	// We don't have the actual Outputs to check their WorkScore, so simply use the inputs size for work score.
+	var sumCost WorkScore
+	for _, i := range in {
+		sumCost += workScoreStructure.Factors.ContextInput.Multiply(i.Size()) + workScoreStructure.Factors.Data.Multiply(i.Size())
+	}
+	return sumCost
+}
+
 func (in ContextInputs[T]) Size() int {
 	sum := serializer.UInt16ByteSize
 	for _, i := range in {
