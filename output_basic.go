@@ -19,14 +19,14 @@ type BasicOutputs []*BasicOutput
 type BasicOutput struct {
 	// The amount of IOTA tokens held by the output.
 	Amount BaseToken `serix:"0,mapKey=amount"`
-	// The native tokens held by the output.
-	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
-	// The unlock conditions on this output.
-	Conditions BasicOutputUnlockConditions `serix:"2,mapKey=unlockConditions,omitempty"`
-	// The features on the output.
-	Features BasicOutputFeatures `serix:"3,mapKey=features,omitempty"`
 	// The stored mana held by the output.
-	Mana Mana `serix:"4,mapKey=mana"`
+	Mana Mana `serix:"1,mapKey=mana"`
+	// The native tokens held by the output.
+	NativeTokens NativeTokens `serix:"2,mapKey=nativeTokens,omitempty"`
+	// The unlock conditions on this output.
+	Conditions BasicOutputUnlockConditions `serix:"3,mapKey=unlockConditions,omitempty"`
+	// The features on the output.
+	Features BasicOutputFeatures `serix:"4,mapKey=features,omitempty"`
 }
 
 // IsSimpleTransfer tells whether this BasicOutput fulfills the criteria of being a simple transfer.
@@ -37,10 +37,10 @@ func (e *BasicOutput) IsSimpleTransfer() bool {
 func (e *BasicOutput) Clone() Output {
 	return &BasicOutput{
 		Amount:       e.Amount,
+		Mana:         e.Mana,
 		NativeTokens: e.NativeTokens.Clone(),
 		Conditions:   e.Conditions.Clone(),
 		Features:     e.Features.Clone(),
-		Mana:         e.Mana,
 	}
 }
 
@@ -88,8 +88,8 @@ func (e *BasicOutput) Type() OutputType {
 func (e *BasicOutput) Size() int {
 	return util.NumByteLen(byte(OutputBasic)) +
 		BaseTokenSize +
+		ManaSize +
 		e.NativeTokens.Size() +
 		e.Conditions.Size() +
-		e.Features.Size() +
-		ManaSize
+		e.Features.Size()
 }

@@ -310,6 +310,8 @@ type ValidationBlock struct {
 	ShallowLikeParents BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents,minLen=0,maxLen=50"`
 
 	HighestSupportedVersion Version `serix:"3,mapKey=highestSupportedVersion"`
+	// ProtocolParametersHash is the hash of the protocol parameters for the HighestSupportedVersion.
+	ProtocolParametersHash Identifier `serix:"4,mapKey=protocolParametersHash"`
 }
 
 func (b *ValidationBlock) Type() BlockType {
@@ -334,7 +336,7 @@ func (b *ValidationBlock) Hash(api API) (Identifier, error) {
 		return Identifier{}, ierrors.Errorf("failed to serialize validation block: %w", err)
 	}
 
-	return blake2b.Sum256(blockBytes), nil
+	return IdentifierFromData(blockBytes), nil
 }
 
 // ParentsType is a type that defines the type of the parent.

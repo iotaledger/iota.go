@@ -142,7 +142,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 				Features: iotago.FoundryOutputFeatures{
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 				},
-				Mana: 500,
 			},
 			target: &iotago.FoundryOutput{},
 		},
