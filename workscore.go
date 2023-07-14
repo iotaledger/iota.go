@@ -12,6 +12,12 @@ type WorkScoreStructure struct {
 	MinStrongParentsThreshold byte `serix:"2,mapKey=missingParentsThreshold"`
 }
 
+func (w WorkScoreStructure) Equals(other WorkScoreStructure) bool {
+	return w.WorkScores.Equals(other.WorkScores) &&
+		w.Factors.Equals(other.Factors) &&
+		w.MinStrongParentsThreshold == other.MinStrongParentsThreshold
+}
+
 type WorkScoreFactors struct {
 	Data          WorkScoreFactor `serix:"0,mapKey=data"`
 	Input         WorkScoreFactor `serix:"1,mapKey=input"`
@@ -20,12 +26,28 @@ type WorkScoreFactors struct {
 	MissingParent WorkScoreFactor `serix:"4,mapKey=missingParent"`
 }
 
+func (w WorkScoreFactors) Equals(other WorkScoreFactors) bool {
+	return w.Data == other.Data &&
+		w.Input == other.Input &&
+		w.ContextInput == other.ContextInput &&
+		w.Allotment == other.Allotment &&
+		w.MissingParent == other.MissingParent
+}
+
 type WorkScores struct {
 	Output           WorkScore `serix:"0,mapKey=output"`
 	Staking          WorkScore `serix:"1,mapKey=staking"`
 	BlockIssuer      WorkScore `serix:"2,mapKey=blockIssuer"`
 	Ed25519Signature WorkScore `serix:"3,mapKey=ed25519Signature"`
 	NativeToken      WorkScore `serix:"4,mapKey=nativeToken"`
+}
+
+func (w WorkScores) Equals(other WorkScores) bool {
+	return w.Output == other.Output &&
+		w.Staking == other.Staking &&
+		w.BlockIssuer == other.BlockIssuer &&
+		w.Ed25519Signature == other.Ed25519Signature &&
+		w.NativeToken == other.NativeToken
 }
 
 type ProcessableObject interface {
