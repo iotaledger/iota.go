@@ -90,7 +90,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	data, err := v3API.Encode(originOutput)
+	data, err := tpkg.TestAPI.Encode(originOutput)
 	require.NoError(t, err)
 
 	txID := tpkg.Rand32ByteArray()

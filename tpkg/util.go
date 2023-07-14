@@ -9,13 +9,10 @@ import (
 	"math/big"
 	"math/rand"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/iotaledger/hive.go/runtime/options"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	legacy "github.com/iotaledger/iota.go/consts"
-	"github.com/iotaledger/iota.go/trinary"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
@@ -77,15 +74,6 @@ func RandMana(max uint64) iotago.Mana {
 // RandFloat64 returns a random float64.
 func RandFloat64(max float64) float64 {
 	return rand.Float64() * max
-}
-
-// RandTrytes returns length amount of random trytes.
-func RandTrytes(length int) trinary.Trytes {
-	var trytes strings.Builder
-	for i := 0; i < length; i++ {
-		trytes.WriteByte(legacy.TryteAlphabet[rand.Intn(len(legacy.TryteAlphabet))])
-	}
-	return trytes.String()
 }
 
 func RandOutputID(index uint16) iotago.OutputID {
@@ -338,19 +326,28 @@ func RandTransactionEssenceWithOptions(opts ...options.Option[iotago.Transaction
 	return options.Apply(tx, opts)
 }
 
-func WithBICInputCount(inputCount int) options.Option[iotago.TransactionEssence] {
+func WithBlockIssuanceCreditInputCount(inputCount int) options.Option[iotago.TransactionEssence] {
 	return func(tx *iotago.TransactionEssence) {
 		for i := inputCount; i > 0; i-- {
-			tx.ContextInputs = append(tx.ContextInputs, RandBICInput())
+			tx.ContextInputs = append(tx.ContextInputs, RandBlockIssuanceCreditInput())
 		}
 	}
 }
 
-func WithCommitmentInputCount(inputCount int) options.Option[iotago.TransactionEssence] {
+func WithRewardInputCount(inputCount uint16) options.Option[iotago.TransactionEssence] {
 	return func(tx *iotago.TransactionEssence) {
 		for i := inputCount; i > 0; i-- {
-			tx.ContextInputs = append(tx.ContextInputs, RandCommitmentInput())
+			rewardInput := &iotago.RewardInput{
+				Index: i,
+			}
+			tx.ContextInputs = append(tx.ContextInputs, rewardInput)
 		}
+	}
+}
+
+func WithCommitmentInput() options.Option[iotago.TransactionEssence] {
+	return func(tx *iotago.TransactionEssence) {
+		tx.ContextInputs = append(tx.ContextInputs, RandCommitmentInput())
 	}
 }
 
@@ -435,8 +432,20 @@ func RandBlockID() iotago.BlockID {
 	return Rand40ByteArray()
 }
 
-// RandBlock returns a random block with the given inner payload.
-func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
+// RandProtocolBlock returns a random block with the given inner payload.
+func RandProtocolBlock(block iotago.Block, api iotago.API) *iotago.ProtocolBlock {
+	return &iotago.ProtocolBlock{
+		BlockHeader: iotago.BlockHeader{
+			ProtocolVersion:  TestAPI.Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
+			IssuerID:         RandAccountID(),
+		},
+		Block:     block,
+		Signature: RandEd25519Signature(),
+	}
+}
+
+func RandBasicBlock(withPayloadType iotago.PayloadType) *iotago.BasicBlock {
 	var payload iotago.Payload
 
 	switch withPayloadType {
@@ -446,22 +455,26 @@ func RandBlock(withPayloadType iotago.PayloadType) *iotago.Block {
 		payload = RandTaggedData([]byte("tag"))
 	}
 
-	return &iotago.Block{
-		ProtocolVersion: TestProtocolVersion,
-		StrongParents:   SortedRandBlockIDs(1 + rand.Intn(7)),
-		Payload:         payload,
-		SlotCommitment:  iotago.NewEmptyCommitment(),
-		Signature:       RandEd25519Signature(),
-		IssuerID:        RandAccountID(),
-		Nonce:           uint64(rand.Intn(1000)),
-		BurnedMana:      RandMana(1000),
+	return &iotago.BasicBlock{
+		StrongParents: SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
+		Payload:       payload,
+		BurnedMana:    RandMana(1000),
 	}
 }
 
-func RandBlockWithIssuerAndBurnedMana(issuerID iotago.AccountID, burnedAmount iotago.Mana) *iotago.Block {
-	block := RandBlock(iotago.PayloadTransaction)
+func ValidationBlock() *iotago.ValidationBlock {
+	return &iotago.ValidationBlock{
+		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidationMaxParents)),
+		HighestSupportedVersion: TestAPI.Version() + 1,
+	}
+}
+
+func RandBasicBlockWithIssuerAndBurnedMana(issuerID iotago.AccountID, burnedAmount iotago.Mana) *iotago.ProtocolBlock {
+	basicBlock := RandBasicBlock(iotago.PayloadTransaction)
+	basicBlock.BurnedMana = burnedAmount
+
+	block := RandProtocolBlock(basicBlock, TestAPI)
 	block.IssuerID = issuerID
-	block.BurnedMana = burnedAmount
 	return block
 }
 
@@ -515,9 +528,9 @@ func RandCommitmentInput() *iotago.CommitmentInput {
 	}
 }
 
-// RandBICInput returns a random BIC input.
-func RandBICInput() *iotago.BICInput {
-	return &iotago.BICInput{
+// RandBlockIssuanceCreditInput returns a random BlockIssuanceCreditInput.
+func RandBlockIssuanceCreditInput() *iotago.BlockIssuanceCreditInput {
+	return &iotago.BlockIssuanceCreditInput{
 		AccountID: RandAccountID(),
 	}
 }
@@ -630,17 +643,21 @@ func RandRentStructure() *iotago.RentStructure {
 }
 
 // RandProtocolParameters produces random protocol parameters.
-func RandProtocolParameters() *iotago.ProtocolParameters {
-	return &iotago.ProtocolParameters{
-		Version:               RandByte(),
-		NetworkName:           RandString(255),
-		Bech32HRP:             iotago.NetworkPrefix(RandString(255)),
-		MinPoWScore:           RandUint32(50000),
-		RentStructure:         *RandRentStructure(),
-		TokenSupply:           RandBaseToken(math.MaxUint64),
-		GenesisUnixTimestamp:  time.Now().Unix(),
-		SlotDurationInSeconds: RandUint8(math.MaxUint8),
-	}
+func RandProtocolParameters() iotago.ProtocolParameters {
+	return iotago.NewV3ProtocolParameters(
+		iotago.WithNetworkOptions(
+			RandString(255),
+			iotago.NetworkPrefix(RandString(255)),
+		),
+		iotago.WithSupplyOptions(
+			RandBaseToken(math.MaxUint64),
+			RandUint32(math.MaxUint32),
+			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		),
+		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
+		iotago.WithLivenessOptions(RandSlotIndex(), RandSlotIndex(), RandSlotIndex()),
+	)
 }
 
 // ManaDecayFactors calculates mana decay factors that can be used in the tests.

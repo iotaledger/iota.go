@@ -13,12 +13,6 @@ type InputType byte
 const (
 	// InputUTXO is a type of input which references an unspent transaction output.
 	InputUTXO InputType = iota
-	// InputCommitment is a type of input which references a commitment.
-	InputCommitment
-	// InputBlockIssuanceCredit is a type of input which references the block issuance credit from a specific account and commitment.
-	InputBlockIssuanceCredit
-	// InputReward is a type of input which references an Account or Delegation Input for which to claim rewards.
-	InputReward
 )
 
 func (inputType InputType) String() string {
@@ -29,7 +23,7 @@ func (inputType InputType) String() string {
 }
 
 var (
-	inputNames = [InputBlockIssuanceCredit + 1]string{"UTXOInput", "CommitmentInput", "BICInput"}
+	inputNames = [InputUTXO + 1]string{"UTXOInput"}
 )
 
 var (
@@ -37,7 +31,7 @@ var (
 	ErrRefUTXOIndexInvalid = ierrors.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
 )
 
-// Inputs a slice of Input.
+// Inputs is a slice of Input.
 type Inputs[T Input] []T
 
 func (in Inputs[T]) Size() int {
@@ -81,41 +75,18 @@ type InputsSyntacticalValidationFunc func(index int, input Input) error
 // InputsSyntacticalUnique returns an InputsSyntacticalValidationFunc which checks that every input has a unique UTXO ref.
 func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 	utxoSet := map[string]int{}
-	commitmentsSet := map[string]int{}
-	bicSet := map[string]int{}
-	rewardSet := map[uint16]int{}
 
 	return func(index int, input Input) error {
 		switch castInput := input.(type) {
-		case *BICInput:
-			accountID := castInput.AccountID
-			k := string(accountID[:])
-			if j, has := utxoSet[k]; has {
-				return ierrors.Wrapf(ErrInputBICNotUnique, "input %d and %d share the same Account ref", j, index)
-			}
-			utxoSet[k] = index
-		case *RewardInput:
-			utxoIndex := castInput.Index
-			if j, has := rewardSet[utxoIndex]; has {
-				return ierrors.Wrapf(ErrInputRewardNotUnique, "input %d and %d share the same input index", j, index)
-			}
-			rewardSet[utxoIndex] = index
-		case *CommitmentInput:
-			commitmentID := castInput.CommitmentID
-			k := string(commitmentID[:])
-			if j, has := commitmentsSet[k]; has {
-				return ierrors.Wrapf(ErrInputCommitmentNotUnique, "input %d and %d share the same Commitment ref", j, index)
-			}
-			commitmentsSet[k] = index
 		case IndexedUTXOReferencer:
 			utxoRef := castInput.Ref()
 			k := string(utxoRef[:])
-			if j, has := bicSet[k]; has {
+			if j, has := utxoSet[k]; has {
 				return ierrors.Wrapf(ErrInputUTXORefsNotUnique, "input %d and %d share the same UTXO ref", j, index)
 			}
-			bicSet[k] = index
+			utxoSet[k] = index
 		default:
-			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer, CommitmentInput or BICInput inputs", index)
+			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer", index)
 		}
 
 		return nil
@@ -131,23 +102,10 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 				return ierrors.Wrapf(ErrRefUTXOIndexInvalid, "input %d", index)
 			}
 		default:
-			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer, CommitmentInput or BICInput inputs", index)
+			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer inputs", index)
 		}
 		return nil
 	}
-}
-
-// SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateContextInputs(inputs TxEssenceContextInputs, funcs ...InputsSyntacticalValidationFunc) error {
-	for i, input := range inputs {
-		for _, f := range funcs {
-			if err := f(i, input); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 // SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).

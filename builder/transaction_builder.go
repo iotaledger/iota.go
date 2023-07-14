@@ -11,10 +11,11 @@ var (
 )
 
 // NewTransactionBuilder creates a new TransactionBuilder.
-func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
+func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 	return &TransactionBuilder{
+		api: api,
 		essence: &iotago.TransactionEssence{
-			NetworkID: networkID,
+			NetworkID: api.ProtocolParameters().NetworkID(),
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},
@@ -23,6 +24,7 @@ func NewTransactionBuilder(networkID iotago.NetworkID) *TransactionBuilder {
 
 // TransactionBuilder is used to easily build up a Transaction.
 type TransactionBuilder struct {
+	api              iotago.API
 	occurredBuildErr error
 	essence          *iotago.TransactionEssence
 	inputs           iotago.OutputSet
@@ -39,8 +41,6 @@ type TxInput struct {
 	Input iotago.Output `json:"input"`
 }
 
-// TODO: extend the builder with Allotments and ContextInputs
-
 // AddInput adds the given input to the builder.
 func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 	b.inputOwner[input.InputID] = input.UnlockTarget
@@ -56,8 +56,8 @@ func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.Output) bool
 
 // AddContextInput adds the given context input to the builder.
-func (b *TransactionBuilder) AddContextInput(input iotago.Input) *TransactionBuilder {
-	b.essence.ContextInputs = append(b.essence.ContextInputs, input)
+func (b *TransactionBuilder) AddContextInput(contextInput iotago.ContextInput) *TransactionBuilder {
+	b.essence.ContextInputs = append(b.essence.ContextInputs, contextInput)
 
 	return b
 }
@@ -92,11 +92,11 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 // TransactionFunc is a function which receives a Transaction as its parameter.
 type TransactionFunc func(tx *iotago.Transaction)
 
-// BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BlockBuilder with
+// BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BasicBlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
-func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParams *iotago.ProtocolParameters, signer iotago.AddressSigner, txFunc TransactionFunc) *BlockBuilder {
-	blockBuilder := NewBlockBuilder()
-	tx, err := b.Build(protoParams, signer)
+func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSigner, txFunc TransactionFunc) *BasicBlockBuilder {
+	blockBuilder := NewBasicBlockBuilder(b.api)
+	tx, err := b.Build(signer)
 	if err != nil {
 		blockBuilder.err = err
 		return blockBuilder
@@ -105,16 +105,14 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(protoParams *iotago.Prot
 		txFunc(tx)
 	}
 
-	return blockBuilder.ProtocolVersion(protoParams.Version).Payload(tx)
+	return blockBuilder.Payload(tx)
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signer iotago.AddressSigner) (*iotago.Transaction, error) {
+func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
-	case protoParams == nil:
-		return nil, ierrors.Wrap(ErrTransactionBuilder, "must supply protocol parameters")
 	case signer == nil:
 		return nil, ierrors.Wrap(ErrTransactionBuilder, "must supply signer")
 	}
@@ -126,13 +124,13 @@ func (b *TransactionBuilder) Build(protoParams *iotago.ProtocolParameters, signe
 	}
 
 	inputs := inputIDs.OrderedSet(b.inputs)
-	commitment, err := inputs.Commitment()
+	commitment, err := inputs.Commitment(b.api)
 	if err != nil {
 		return nil, err
 	}
 	copy(b.essence.InputsCommitment[:], commitment)
 
-	txEssenceData, err := b.essence.SigningMessage()
+	txEssenceData, err := b.essence.SigningMessage(b.api)
 	if err != nil {
 		return nil, err
 	}

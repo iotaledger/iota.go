@@ -7,6 +7,8 @@ import (
 var (
 	// ErrUnsupportedInputType gets returned for unsupported input types.
 	ErrUnsupportedInputType = ierrors.New("unsupported input type")
+	// ErrUnsupportedContextInputType gets returned for unsupported context input types.
+	ErrUnsupportedContextInputType = ierrors.New("unsupported context input type")
 	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = ierrors.New("unknown address type")
 	// ErrUnknownInputType gets returned for unknown input types.

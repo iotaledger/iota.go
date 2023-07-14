@@ -2,9 +2,8 @@ package iotago
 
 import (
 	"bytes"
-	"context"
 	"crypto/ed25519"
-	"runtime"
+	"fmt"
 	"sort"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/pow"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -24,12 +22,18 @@ const (
 	BlockIDLength = SlotIdentifierLength
 	// MaxBlockSize defines the maximum size of a block.
 	MaxBlockSize = 32768
-	// BlockMinStrongParents defines the minimum amount of strong parents in a block.
-	BlockMinStrongParents = 1
-	// BlockMinParents defines the minimum amount of non-strong parents in a block.
-	BlockMinParents = 0
 	// BlockMaxParents defines the maximum amount of parents in a block.
 	BlockMaxParents = 8
+	// BlockTypeValidationMaxParents defines the maximum amount of parents in a ValidationBlock. TODO: replace number with committee size.
+	BlockTypeValidationMaxParents = BlockMaxParents + 42
+)
+
+// BlockType denotes a type of Block.
+type BlockType byte
+
+const (
+	BlockTypeBasic      BlockType = 1
+	BlockTypeValidation BlockType = 2
 )
 
 // EmptyBlockID returns an empty BlockID.
@@ -89,108 +93,79 @@ type BlockPayload interface {
 	Payload
 }
 
-// StrongParentsIDs is a slice of BlockIDs the block strongly references.
-type StrongParentsIDs = BlockIDs
+const BlockHeaderLength = 1 + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + serializer.UInt64ByteSize + AccountIDLength
 
-// WeakParentsIDs is a slice of BlockIDs the block weakly references.
-type WeakParentsIDs = BlockIDs
+type BlockHeader struct {
+	ProtocolVersion Version   `serix:"0,mapKey=protocolVersion"`
+	NetworkID       NetworkID `serix:"1,mapKey=networkId"`
 
-// ShallowLikeParentIDs is a slice of BlockIDs the block shallow like references.
-type ShallowLikeParentIDs = BlockIDs
+	IssuingTime         time.Time    `serix:"2,mapKey=issuingTime"`
+	SlotCommitmentID    CommitmentID `serix:"3,mapKey=slotCommitment"`
+	LatestFinalizedSlot SlotIndex    `serix:"4,mapKey=latestFinalizedSlot"`
 
-// Block represents a vertex in the Tangle.
-type Block struct {
-	// The protocol version under which this block operates.
-	ProtocolVersion byte `serix:"0,mapKey=protocolVersion"`
-
-	NetworkID NetworkID `serix:"1,mapKey=networkId"`
-
-	// The parents the block references.
-	StrongParents      StrongParentsIDs     `serix:"2,lengthPrefixType=uint8,mapKey=strongParents"`
-	WeakParents        WeakParentsIDs       `serix:"3,lengthPrefixType=uint8,mapKey=weakParents"`
-	ShallowLikeParents ShallowLikeParentIDs `serix:"4,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
-
-	IssuerID    AccountID `serix:"5,mapKey=issuerID"`
-	IssuingTime time.Time `serix:"6,mapKey=issuingTime"`
-
-	SlotCommitment      *Commitment `serix:"7,mapKey=slotCommitment"`
-	LatestFinalizedSlot SlotIndex   `serix:"8,mapKey=latestFinalizedSlot"`
-
-	// The inner payload of the block. Can be nil.
-	Payload BlockPayload `serix:"9,optional,mapKey=payload,omitempty"`
-
-	BurnedMana Mana `serix:"10,mapKey=burnedMana"`
-
-	Signature Signature `serix:"11,mapKey=signature"`
-
-	// The nonce which lets this block fulfill the PoW requirements.
-	Nonce uint64 `serix:"12,mapKey=nonce"`
+	IssuerID AccountID `serix:"5,mapKey=issuerID"`
 }
 
-func (b *Block) ContentHash() (Identifier, error) {
-	data, err := internalEncode(b)
+func (b *BlockHeader) Hash(api API) (Identifier, error) {
+	headerBytes, err := api.Encode(b)
 	if err != nil {
-		return Identifier{}, ierrors.Errorf("failed to encode block: %w", err)
+		return Identifier{}, ierrors.Errorf("failed to serialize block header: %w", err)
 	}
 
-	return contentHashFromBlockBytes(data)
+	return blake2b.Sum256(headerBytes), nil
+}
+
+type ProtocolBlock struct {
+	BlockHeader `serix:"0"`
+
+	Block Block `serix:"1,mapKey=block"`
+
+	Signature Signature `serix:"2,mapKey=signature"`
 }
 
 func BlockIdentifierFromBlockBytes(blockBytes []byte) (Identifier, error) {
-	contentHash, err := contentHashFromBlockBytes(blockBytes)
-	if err != nil {
-		return emptyIdentifier, err
-	}
-
-	signatureBytes, err := signatureBytesFromBlockBytes(blockBytes)
-	if err != nil {
-		return emptyIdentifier, err
-	}
-
-	nonceBytes := blockBytes[len(blockBytes)-serializer.UInt64ByteSize:]
-
-	return IdentifierFromData(byteutils.ConcatBytes(contentHash[:], signatureBytes[:], nonceBytes[:])), nil
-}
-
-func contentHashFromBlockBytes(blockBytes []byte) (Identifier, error) {
-	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
+	if len(blockBytes) < BlockHeaderLength+Ed25519SignatureSerializedBytesSize {
 		return Identifier{}, ierrors.New("not enough block bytes")
 	}
-	return blake2b.Sum256(blockBytes[:len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize]), nil
+
+	length := len(blockBytes)
+	// Separate into header hash, block hash and signature bytes so that we are able to recompute the BlockID from an Attestation.
+	headerHash := blake2b.Sum256(blockBytes[:BlockHeaderLength])
+	blockHash := blake2b.Sum256(blockBytes[BlockHeaderLength : length-Ed25519SignatureSerializedBytesSize])
+	signatureBytes := [Ed25519SignatureSerializedBytesSize]byte(blockBytes[length-Ed25519SignatureSerializedBytesSize:])
+
+	return blockIdentifier(headerHash, blockHash, signatureBytes[:]), nil
 }
 
-func signatureBytesFromBlockBytes(blockBytes []byte) ([Ed25519SignatureSerializedBytesSize]byte, error) {
-	if len(blockBytes) < Ed25519SignatureSerializedBytesSize+serializer.UInt64ByteSize {
-		return [Ed25519SignatureSerializedBytesSize]byte{}, ierrors.New("not enough block bytes")
-	}
-	return [Ed25519SignatureSerializedBytesSize]byte(blockBytes[len(blockBytes)-Ed25519SignatureSerializedBytesSize-serializer.UInt64ByteSize:]), nil
+func blockIdentifier(headerHash Identifier, blockHash Identifier, signatureBytes []byte) Identifier {
+	return IdentifierFromData(byteutils.ConcatBytes(headerHash[:], blockHash[:], signatureBytes))
 }
 
 // SigningMessage returns the to be signed message.
-// It is the 'encoded(IssuingTime)+encoded(SlotCommitment.ID()+contentHash'.
-func (b *Block) SigningMessage() ([]byte, error) {
-	contentHash, err := b.ContentHash()
+// The BlockHeader and Block are separately hashed and concatenated to enable the verification of the signature for
+// an Attestation where only the BlockHeader and the hash of Block is known.
+func (b *ProtocolBlock) SigningMessage(api API) ([]byte, error) {
+	headerHash, err := b.BlockHeader.Hash(api)
 	if err != nil {
 		return nil, err
 	}
 
-	issuingTimeBytes, err := internalEncode(b.IssuingTime)
+	blockHash, err := b.Block.Hash(api)
 	if err != nil {
-		return nil, ierrors.Errorf("failed to serialize block's issuing time: %w", err)
+		return nil, err
 	}
 
-	commitmentID, err := b.SlotCommitment.ID()
-	if err != nil {
-		return nil, ierrors.Errorf("failed to serialize block's commitment ID: %w", err)
-	}
+	return blockSigningMessage(headerHash, blockHash), nil
+}
 
-	return byteutils.ConcatBytes(issuingTimeBytes, commitmentID[:], contentHash[:]), nil
+func blockSigningMessage(headerHash Identifier, blockHash Identifier) []byte {
+	return byteutils.ConcatBytes(headerHash[:], blockHash[:])
 }
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
-	signMsg, err := b.SigningMessage()
+func (b *ProtocolBlock) Sign(api API, addrKey AddressKeys) (Signature, error) {
+	signMsg, err := b.SigningMessage(api)
 	if err != nil {
 		return nil, err
 	}
@@ -201,8 +176,8 @@ func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
 }
 
 // VerifySignature verifies the Signature of the block.
-func (b *Block) VerifySignature() (valid bool, err error) {
-	signingMessage, err := b.SigningMessage()
+func (b *ProtocolBlock) VerifySignature(api API) (valid bool, err error) {
+	signingMessage, err := b.SigningMessage(api)
 	if err != nil {
 		return false, err
 	}
@@ -220,55 +195,174 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 }
 
 // ID computes the ID of the Block.
-func (b *Block) ID(timeProvider *TimeProvider) (BlockID, error) {
-	data, err := internalEncode(b)
+func (b *ProtocolBlock) ID(api API) (BlockID, error) {
+	data, err := api.Encode(b)
 	if err != nil {
 		return BlockID{}, ierrors.Errorf("can't compute block ID: %w", err)
 	}
 
-	slotIndex := timeProvider.SlotFromTime(b.IssuingTime)
-
-	blockIdentifier, err := BlockIdentifierFromBlockBytes(data)
+	id, err := BlockIdentifierFromBlockBytes(data)
 	if err != nil {
 		return BlockID{}, err
 	}
 
-	return NewSlotIdentifier(slotIndex, blockIdentifier), nil
+	slotIndex := api.TimeProvider().SlotFromTime(b.IssuingTime)
+
+	return NewSlotIdentifier(slotIndex, id), nil
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
-func (b *Block) MustID(timeProvider *TimeProvider) BlockID {
-	blockID, err := b.ID(timeProvider)
+func (b *ProtocolBlock) MustID(api API) BlockID {
+	blockID, err := b.ID(api)
 	if err != nil {
 		panic(err)
 	}
 	return blockID
 }
 
-// POW computes the PoW score of the Block.
-func (b *Block) POW() (float64, []byte, error) {
-	data, err := internalEncode(b)
-	if err != nil {
-		return 0, nil, ierrors.Errorf("can't compute block PoW score: %w", err)
-	}
-	return pow.Score(data), data, nil
+func (b *ProtocolBlock) Parents() (parents []BlockID) {
+	parents = make([]BlockID, 0)
+
+	parents = append(parents, b.Block.StrongParentIDs()...)
+	parents = append(parents, b.Block.WeakParentIDs()...)
+	parents = append(parents, b.Block.ShallowLikeParentIDs()...)
+
+	return parents
 }
 
-// DoPOW executes the proof-of-work required to fulfill the targetScore.
-// Use the given context to cancel proof-of-work.
-func (b *Block) DoPOW(ctx context.Context, targetScore float64) error {
-	data, err := internalEncode(b)
-	if err != nil {
-		return ierrors.Errorf("can't compute block PoW score: %w", err)
+func (b *ProtocolBlock) ParentsWithType() (parents []Parent) {
+	parents = make([]Parent, 0)
+
+	for _, parentBlockID := range b.Block.StrongParentIDs() {
+		parents = append(parents, Parent{parentBlockID, StrongParentType})
 	}
-	powRelevantData := data[:len(data)-8]
-	worker := pow.New(runtime.NumCPU())
-	nonce, err := worker.Mine(ctx, powRelevantData, targetScore)
-	if err != nil {
-		return err
+
+	for _, parentBlockID := range b.Block.WeakParentIDs() {
+		parents = append(parents, Parent{parentBlockID, WeakParentType})
 	}
-	b.Nonce = nonce
-	return nil
+
+	for _, parentBlockID := range b.Block.ShallowLikeParentIDs() {
+		parents = append(parents, Parent{parentBlockID, ShallowLikeParentType})
+	}
+
+	return parents
+}
+
+// ForEachParent executes a consumer func for each parent.
+func (b *ProtocolBlock) ForEachParent(consumer func(parent Parent)) {
+	for _, parent := range b.ParentsWithType() {
+		consumer(parent)
+	}
+}
+
+type Block interface {
+	Type() BlockType
+
+	StrongParentIDs() BlockIDs
+	WeakParentIDs() BlockIDs
+	ShallowLikeParentIDs() BlockIDs
+
+	Hash(api API) (Identifier, error)
+}
+
+// BasicBlock represents a basic vertex in the Tangle/BlockDAG.
+type BasicBlock struct {
+	// The parents the block references.
+	StrongParents      BlockIDs `serix:"0,lengthPrefixType=uint8,mapKey=strongParents,minLen=1,maxLen=8"`
+	WeakParents        BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents,minLen=0,maxLen=8"`
+	ShallowLikeParents BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents,minLen=0,maxLen=8"`
+
+	// The inner payload of the block. Can be nil.
+	Payload BlockPayload `serix:"3,optional,mapKey=payload,omitempty"`
+
+	BurnedMana Mana `serix:"4,mapKey=burnedMana"`
+}
+
+func (b *BasicBlock) Type() BlockType {
+	return BlockTypeBasic
+}
+
+func (b *BasicBlock) StrongParentIDs() BlockIDs {
+	return b.StrongParents
+}
+
+func (b *BasicBlock) WeakParentIDs() BlockIDs {
+	return b.WeakParents
+}
+
+func (b *BasicBlock) ShallowLikeParentIDs() BlockIDs {
+	return b.ShallowLikeParents
+}
+
+func (b *BasicBlock) Hash(api API) (Identifier, error) {
+	blockBytes, err := api.Encode(b)
+	if err != nil {
+		return Identifier{}, ierrors.Errorf("failed to serialize basic block: %w", err)
+	}
+
+	return blake2b.Sum256(blockBytes), nil
+}
+
+// ValidationBlock represents a validation vertex in the Tangle/BlockDAG.
+type ValidationBlock struct {
+	// The parents the block references.
+	StrongParents      BlockIDs `serix:"0,lengthPrefixType=uint8,mapKey=strongParents,minLen=1,maxLen=50"`
+	WeakParents        BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents,minLen=0,maxLen=50"`
+	ShallowLikeParents BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents,minLen=0,maxLen=50"`
+
+	HighestSupportedVersion Version `serix:"3,mapKey=highestSupportedVersion"`
+	// ProtocolParametersHash is the hash of the protocol parameters for the HighestSupportedVersion.
+	ProtocolParametersHash Identifier `serix:"4,mapKey=protocolParametersHash"`
+}
+
+func (b *ValidationBlock) Type() BlockType {
+	return BlockTypeValidation
+}
+
+func (b *ValidationBlock) StrongParentIDs() BlockIDs {
+	return b.StrongParents
+}
+
+func (b *ValidationBlock) WeakParentIDs() BlockIDs {
+	return b.WeakParents
+}
+
+func (b *ValidationBlock) ShallowLikeParentIDs() BlockIDs {
+	return b.ShallowLikeParents
+}
+
+func (b *ValidationBlock) Hash(api API) (Identifier, error) {
+	blockBytes, err := api.Encode(b)
+	if err != nil {
+		return Identifier{}, ierrors.Errorf("failed to serialize validation block: %w", err)
+	}
+
+	return IdentifierFromData(blockBytes), nil
+}
+
+// ParentsType is a type that defines the type of the parent.
+type ParentsType uint8
+
+const (
+	// UndefinedParentType is the undefined parent.
+	UndefinedParentType ParentsType = iota
+	// StrongParentType is the ParentsType for a strong parent.
+	StrongParentType
+	// WeakParentType is the ParentsType for a weak parent.
+	WeakParentType
+	// ShallowLikeParentType is the ParentsType for the shallow like parent.
+	ShallowLikeParentType
+)
+
+// String returns string representation of ParentsType.
+func (p ParentsType) String() string {
+	return fmt.Sprintf("ParentType(%s)", []string{"Undefined", "Strong", "Weak", "Shallow Like"}[p])
+}
+
+// Parent is a parent that can be either strong or weak.
+type Parent struct {
+	ID   BlockID
+	Type ParentsType
 }
 
 func (b *Block) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {

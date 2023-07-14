@@ -98,7 +98,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.UnlocksSigUniqueAndRefValidator()
+			valFunc := iotago.UnlocksSigUniqueAndRefValidator(tpkg.TestAPI)
 			var runErr error
 			for index, unlock := range tt.unlocks {
 				if err := valFunc(index, unlock); err != nil {

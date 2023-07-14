@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
@@ -13,15 +14,19 @@ const (
 
 type CommitmentID = SlotIdentifier
 
+var EmptyCommitmentID = CommitmentID{}
+
 type Commitment struct {
-	Index            SlotIndex    `serix:"0,mapKey=index"`
-	PrevID           CommitmentID `serix:"1,mapKey=prevID"`
-	RootsID          Identifier   `serix:"2,mapKey=rootsID"`
-	CumulativeWeight uint64       `serix:"3,mapKey=cumulativeWeight"`
+	Version          Version      `serix:"0,mapKey=version"`
+	Index            SlotIndex    `serix:"1,mapKey=index"`
+	PrevID           CommitmentID `serix:"2,mapKey=prevID"`
+	RootsID          Identifier   `serix:"3,mapKey=rootsID"`
+	CumulativeWeight uint64       `serix:"4,mapKey=cumulativeWeight"`
 }
 
-func NewCommitment(index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64) *Commitment {
+func NewCommitment(version Version, index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64) *Commitment {
 	return &Commitment{
+		Version:          version,
 		Index:            index,
 		PrevID:           prevID,
 		RootsID:          rootsID,
@@ -29,12 +34,14 @@ func NewCommitment(index SlotIndex, prevID CommitmentID, rootsID Identifier, cum
 	}
 }
 
-func NewEmptyCommitment() *Commitment {
-	return &Commitment{}
+func NewEmptyCommitment(version Version) *Commitment {
+	return &Commitment{
+		Version: version,
+	}
 }
 
 func (c *Commitment) ID() (CommitmentID, error) {
-	data, err := internalEncode(c)
+	data, err := commonSerixAPI().Encode(context.TODO(), c)
 	if err != nil {
 		return CommitmentID{}, ierrors.Errorf("can't compute commitment ID: %w", err)
 	}
@@ -56,14 +63,6 @@ func (c *Commitment) Equals(other *Commitment) bool {
 		c.Index == other.Index &&
 		c.RootsID == other.RootsID &&
 		c.CumulativeWeight == other.CumulativeWeight
-}
-
-func (c *Commitment) Bytes() ([]byte, error) {
-	return internalEncode(c)
-}
-
-func (c *Commitment) FromBytes(bytes []byte) (int, error) {
-	return internalDecode(bytes, c)
 }
 
 func (c *Commitment) String() string {

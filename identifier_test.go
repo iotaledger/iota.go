@@ -12,8 +12,7 @@ func TestIdentifier_Bytes(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, bytes, IdentifierLength)
 
-	var decoded Identifier
-	i, err := decoded.FromBytes(bytes)
+	decoded, i, err := IdentifierFromBytes(bytes)
 	require.NoError(t, err)
 	require.Equal(t, i, IdentifierLength)
 	require.Equal(t, decoded, foo)

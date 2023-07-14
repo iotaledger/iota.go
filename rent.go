@@ -67,6 +67,12 @@ func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) BaseTok
 	return BaseToken(r.VByteCost) * BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
 }
 
+func (r RentStructure) Equals(other RentStructure) bool {
+	return r.VByteCost == other.VByteCost &&
+		r.VBFactorData == other.VBFactorData &&
+		r.VBFactorKey == other.VBFactorKey
+}
+
 // NonEphemeralObject is an object which can not be pruned by nodes as it
 // makes up an integral part to execute the IOTA protocol. This kind of objects are associated
 // with costs in terms of the resources they take up.

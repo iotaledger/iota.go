@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
@@ -21,7 +22,7 @@ type VirtualMachine interface {
 
 // Params defines the VirtualMachine parameters under which the VM operates.
 type Params struct {
-	External *iotago.ExternalUnlockParameters
+	API iotago.API
 
 	// The working set which is auto. populated during the semantic validation.
 	WorkingSet *WorkingSet
@@ -58,7 +59,7 @@ type WorkingSet struct {
 	UnlocksByType iotago.UnlocksByType
 	// BIC is the block issuance credit for MCA slots prior to the transaction's creation time (or for the slot to which the block commits)
 	// Contains one value for each account output touched in the transaction and empty if no account outputs touched.
-	BIC BICInputSet
+	BIC BlockIssuanceCreditInputSet
 	// Commitment contains set of commitment inputs necessary for transaction execution. FIXME
 	Commitment VmCommitmentInput
 	// Rewards contains a set of account or delegation IDs mapped to their rewards amount.
@@ -71,7 +72,7 @@ func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOIn
 	return workingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
-func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*WorkingSet, error) {
+func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs ResolvedInputs) (*WorkingSet, error) {
 	var err error
 	utxoInputsSet := inputs.InputSet
 	workingSet := &WorkingSet{}
@@ -89,7 +90,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*Worki
 		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input.Output)
 	}
 
-	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage()
+	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage(api)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +105,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*Worki
 		return slice.ToOutputsByType()
 	}()
 
-	txID, err := workingSet.Tx.ID()
+	txID, err := workingSet.Tx.ID(api)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +115,7 @@ func NewVMParamsWorkingSet(t *iotago.Transaction, inputs ResolvedInputs) (*Worki
 	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainOutputSet(txID)
 
 	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
-	workingSet.BIC = inputs.BICInputSet
+	workingSet.BIC = inputs.BlockIssuanceCreditInputSet
 	workingSet.Commitment = inputs.CommitmentInput
 	workingSet.Rewards = inputs.RewardsInputSet
 
@@ -129,29 +130,43 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iot
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s stored mana calculation failed", outputID)
 		}
-		totalIn += manaStored
+		totalIn, err = safemath.SafeAdd(totalIn, manaStored)
+		if err != nil {
+			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+		}
 
 		// potential Mana
 		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(input.Output.Deposit(), input.CreationTime, txCreationTime)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s potential mana calculation failed", outputID)
 		}
-		totalIn += manaPotential
+		totalIn, err = safemath.SafeAdd(totalIn, manaPotential)
+		if err != nil {
+			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+		}
 	}
 
 	return totalIn, nil
 }
 
-func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iotago.Allotments) iotago.Mana {
+func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iotago.Allotments) (iotago.Mana, error) {
 	var totalOut iotago.Mana
+	var err error
+
 	for _, output := range outputs {
-		totalOut += output.StoredMana()
+		totalOut, err = safemath.SafeAdd(totalOut, output.StoredMana())
+		if err != nil {
+			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+		}
 	}
 	for _, allotment := range allotments {
-		totalOut += allotment.Value
+		totalOut, err = safemath.SafeAdd(totalOut, allotment.Value)
+		if err != nil {
+			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+		}
 	}
 
-	return totalOut
+	return totalOut, nil
 }
 
 // RunVMFuncs runs the given ExecFunc(s) in serial order.
@@ -290,7 +305,7 @@ type ExecFunc func(vm VirtualMachine, svCtx *Params) error
 // and verifies that inputs are correctly unlocked and that the inputs commitment matches.
 func ExecFuncInputUnlocks() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		actualInputCommitment, err := vmParams.WorkingSet.UTXOInputs.Commitment()
+		actualInputCommitment, err := vmParams.WorkingSet.UTXOInputs.Commitment(vmParams.API)
 		if err != nil {
 			return ierrors.Errorf("unable to compute hash of inputs: %w", err)
 		}
@@ -459,11 +474,15 @@ func ExecFuncBalancedMana() ExecFunc {
 				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation time %d, tx creation time %d", outputID, input.CreationTime, txCreationTime)
 			}
 		}
-		manaIn, err := TotalManaIn(vmParams.External.ProtocolParameters.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		if err != nil {
 			return err
 		}
-		manaOut := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
+
+		manaOut, err := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
+		if err != nil {
+			return err
+		}
 
 		// Whether it's valid to claim rewards is checked in the delegation and staking STVFs.
 		for _, reward := range vmParams.WorkingSet.Rewards {

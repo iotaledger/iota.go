@@ -47,6 +47,5 @@ func (s *TimelockUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *TimelockUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionTimelock)) +
-		len(s.SlotIndex.Bytes())
+	return util.NumByteLen(byte(UnlockConditionTimelock)) + SlotIndexLength
 }

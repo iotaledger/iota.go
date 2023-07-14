@@ -47,10 +47,11 @@ var (
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
 	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
 	ErrInputBICNotUnique = ierrors.New("inputs must each reference a unique BIC")
-	// ErrInputRewardNotUnique gets returned if multiple inputs reference the same input index.
-	ErrInputRewardNotUnique = ierrors.New("inputs must each reference a unique input index")
-	// ErrInputCommitmentNotUnique gets returned if multiple inputs reference the same BIC.
-	ErrInputCommitmentNotUnique = ierrors.New("inputs must each reference a unique Commitment")
+	// ErrInputRewardInvalid gets returned if multiple reward inputs reference the same input index
+	// or if they reference an index greater than max inputs count.
+	ErrInputRewardInvalid = ierrors.New("invalid reward input")
+	// ErrMultipleInputCommitments gets returned if multiple commitment inputs are provided.
+	ErrMultipleInputCommitments = ierrors.New("there are multiple commitment inputs")
 	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
 	ErrAccountOutputNonEmptyState = ierrors.New("account output is not empty state")
 	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the State/Governance controller.
@@ -87,11 +88,11 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 type InputsCommitment = [InputsCommitmentLength]byte
 
 type (
-	txEssenceContextInput  interface{ Input }
+	txEssenceContextInput  interface{ ContextInput }
 	txEssenceInput         interface{ Input }
 	TxEssenceOutput        interface{ Output }
 	TxEssencePayload       interface{ Payload }
-	TxEssenceContextInputs = Inputs[txEssenceContextInput]
+	TxEssenceContextInputs = ContextInputs[txEssenceContextInput]
 	TxEssenceInputs        = Inputs[txEssenceInput]
 	TxEssenceOutputs       = Outputs[TxEssenceOutput]
 	TxEssenceAllotments    = Allotments
@@ -118,8 +119,8 @@ type TransactionEssence struct {
 }
 
 // SigningMessage returns the to be signed message.
-func (u *TransactionEssence) SigningMessage() ([]byte, error) {
-	essenceBytes, err := internalEncode(u)
+func (u *TransactionEssence) SigningMessage(api API) ([]byte, error) {
+	essenceBytes, err := api.Encode(u)
 	if err != nil {
 		return nil, err
 	}
@@ -129,14 +130,14 @@ func (u *TransactionEssence) SigningMessage() ([]byte, error) {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (u *TransactionEssence) Sign(inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
+func (u *TransactionEssence) Sign(api API, inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
 	if inputsCommitment == nil || len(inputsCommitment) != InputsCommitmentLength {
 		return nil, ErrInvalidInputsCommitment
 	}
 
 	copy(u.InputsCommitment[:], inputsCommitment)
 
-	signMsg, err := u.SigningMessage()
+	signMsg, err := u.SigningMessage(api)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +163,7 @@ func (u *TransactionEssence) Size() int {
 
 	return util.NumByteLen(TransactionEssenceNormal) +
 		util.NumByteLen(u.NetworkID) +
-		len(SlotIndex(0).Bytes()) +
+		SlotIndexLength +
 		u.ContextInputs.Size() +
 		u.Inputs.Size() +
 		InputsCommitmentLength +
@@ -173,14 +174,14 @@ func (u *TransactionEssence) Size() int {
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParameters) error {
+func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameters) error {
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {
-		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName)
+		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName())
 	}
 
 	if err := SyntacticallyValidateContextInputs(u.ContextInputs,
-		InputsSyntacticalUnique(),
+		ContextInputsSyntacticalUnique(),
 	); err != nil {
 		return err
 	}

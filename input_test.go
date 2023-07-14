@@ -26,24 +26,6 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 					TransactionID:          [32]byte{},
 					TransactionOutputIndex: 1,
 				},
-				&iotago.CommitmentInput{
-					CommitmentID: tpkg.Rand40ByteArray(),
-				},
-				&iotago.BICInput{
-					AccountID: tpkg.RandAccountID(),
-				},
-				&iotago.RewardInput{
-					Index: 2,
-				},
-				&iotago.CommitmentInput{
-					CommitmentID: tpkg.Rand40ByteArray(),
-				},
-				&iotago.BICInput{
-					AccountID: tpkg.RandAccountID(),
-				},
-				&iotago.RewardInput{
-					Index: 4,
-				},
 			},
 			wantErr: nil,
 		},
@@ -61,33 +43,75 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 			},
 			wantErr: iotago.ErrInputUTXORefsNotUnique,
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			valFunc := iotago.InputsSyntacticalUnique()
+			var runErr error
+			for index, input := range tt.inputs {
+				if err := valFunc(index, input); err != nil {
+					runErr = err
+				}
+			}
+			require.ErrorIs(t, runErr, tt.wantErr)
+		})
+	}
+}
+
+func TestContextInputsSyntacticalUnique(t *testing.T) {
+	tests := []struct {
+		name    string
+		inputs  iotago.ContextInputs[iotago.ContextInput]
+		wantErr error
+	}{
 		{
-			name: "fail - commitment not unique",
-			inputs: iotago.Inputs[iotago.Input]{
+			name: "ok",
+			inputs: iotago.ContextInputs[iotago.ContextInput]{
 				&iotago.CommitmentInput{
-					CommitmentID: iotago.CommitmentID{},
+					CommitmentID: tpkg.Rand40ByteArray(),
 				},
-				&iotago.CommitmentInput{
-					CommitmentID: iotago.CommitmentID{},
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: tpkg.RandAccountID(),
+				},
+				&iotago.RewardInput{
+					Index: 2,
+				},
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: tpkg.RandAccountID(),
+				},
+				&iotago.RewardInput{
+					Index: 4,
 				},
 			},
-			wantErr: iotago.ErrInputCommitmentNotUnique,
+			wantErr: nil,
 		},
 		{
-			name: "fail - BIC not unique",
-			inputs: iotago.Inputs[iotago.Input]{
-				&iotago.BICInput{
+			name: "fail - multiple commitment inputs",
+			inputs: iotago.ContextInputs[iotago.ContextInput]{
+				&iotago.CommitmentInput{
+					CommitmentID: tpkg.Rand40ByteArray(),
+				},
+				&iotago.CommitmentInput{
+					CommitmentID: tpkg.Rand40ByteArray(),
+				},
+			},
+			wantErr: iotago.ErrMultipleInputCommitments,
+		},
+		{
+			name: "fail - block issuance credit inputs not unique",
+			inputs: iotago.ContextInputs[iotago.ContextInput]{
+				&iotago.BlockIssuanceCreditInput{
 					AccountID: [32]byte{},
 				},
-				&iotago.BICInput{
+				&iotago.BlockIssuanceCreditInput{
 					AccountID: [32]byte{},
 				},
 			},
 			wantErr: iotago.ErrInputBICNotUnique,
 		},
 		{
-			name: "fail - Reward not unique",
-			inputs: iotago.Inputs[iotago.Input]{
+			name: "fail - reward input not unique",
+			inputs: iotago.ContextInputs[iotago.ContextInput]{
 				&iotago.RewardInput{
 					Index: 1,
 				},
@@ -95,12 +119,24 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 					Index: 1,
 				},
 			},
-			wantErr: iotago.ErrInputRewardNotUnique,
+			wantErr: iotago.ErrInputRewardInvalid,
+		},
+		{
+			name: "fail - reward input references index greater than max inputs count",
+			inputs: iotago.ContextInputs[iotago.ContextInput]{
+				&iotago.RewardInput{
+					Index: 1,
+				},
+				&iotago.RewardInput{
+					Index: iotago.MaxInputsCount + 1,
+				},
+			},
+			wantErr: iotago.ErrInputRewardInvalid,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.InputsSyntacticalUnique()
+			valFunc := iotago.ContextInputsSyntacticalUnique()
 			var runErr error
 			for index, input := range tt.inputs {
 				if err := valFunc(index, input); err != nil {
@@ -176,10 +212,10 @@ func TestInputDeSerialize(t *testing.T) {
 		},
 		{
 			name: "ok - BIC",
-			source: &iotago.BICInput{
+			source: &iotago.BlockIssuanceCreditInput{
 				AccountID: tpkg.RandAccountID(),
 			},
-			target:    &iotago.BICInput{},
+			target:    &iotago.BlockIssuanceCreditInput{},
 			seriErr:   nil,
 			deSeriErr: nil,
 		},

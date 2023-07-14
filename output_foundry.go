@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"context"
 	"encoding/binary"
 
 	"github.com/iotaledger/hive.go/ierrors"
@@ -155,8 +156,9 @@ func (f *FoundryOutput) Chain() ChainID {
 
 // ID returns the FoundryID of this FoundryOutput.
 func (f *FoundryOutput) ID() (FoundryID, error) {
+	serixAPI := commonSerixAPI()
 	var foundryID FoundryID
-	addrBytes, err := _internalAPI.Encode(f.Ident())
+	addrBytes, err := serixAPI.Encode(context.Background(), f.Ident())
 	if err != nil {
 		return foundryID, err
 	}

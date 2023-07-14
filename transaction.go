@@ -1,8 +1,9 @@
 package iotago
 
 import (
+	"fmt"
+
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/iota.go/v4/util"
 )
 
@@ -16,6 +17,8 @@ var (
 	ErrMissingUTXO = ierrors.New("missing utxo")
 	// ErrInputOutputSumMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
 	ErrInputOutputSumMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount")
+	// ErrManaOverflow gets returned when there is an under- or overflow in Mana calculations.
+	ErrManaOverflow = ierrors.New("under- or overflow in Mana calculations")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
 	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
@@ -51,8 +54,8 @@ func (t *Transaction) PayloadType() PayloadType {
 }
 
 // OutputsSet returns an OutputSet from the Transaction's outputs, mapped by their OutputID.
-func (t *Transaction) OutputsSet() (OutputSet, error) {
-	txID, err := t.ID()
+func (t *Transaction) OutputsSet(api API) (OutputSet, error) {
+	txID, err := t.ID(api)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +67,8 @@ func (t *Transaction) OutputsSet() (OutputSet, error) {
 }
 
 // ID computes the ID of the Transaction.
-func (t *Transaction) ID() (TransactionID, error) {
-	data, err := internalEncode(t)
+func (t *Transaction) ID(api API) (TransactionID, error) {
+	data, err := api.Encode(t)
 	if err != nil {
 		return TransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
 	}
@@ -86,11 +89,11 @@ func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
 	return references, nil
 }
 
-func (t *Transaction) BICInputs() ([]*BICInput, error) {
-	references := make([]*BICInput, 0, len(t.Essence.ContextInputs))
+func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
+	references := make([]*BlockIssuanceCreditInput, 0, len(t.Essence.ContextInputs))
 	for _, input := range t.Essence.ContextInputs {
 		switch castInput := input.(type) {
-		case *BICInput:
+		case *BlockIssuanceCreditInput:
 			references = append(references, castInput)
 		case *CommitmentInput, *RewardInput:
 			// ignore this type
@@ -108,7 +111,7 @@ func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
 		switch castInput := input.(type) {
 		case *RewardInput:
 			references = append(references, castInput)
-		case *CommitmentInput, *BICInput:
+		case *CommitmentInput, *BlockIssuanceCreditInput:
 			// ignore this type
 		default:
 			return nil, ErrUnexpectedUnderlyingType
@@ -122,7 +125,7 @@ func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
 func (t *Transaction) CommitmentInput() *CommitmentInput {
 	for _, input := range t.Essence.ContextInputs {
 		switch castInput := input.(type) {
-		case *BICInput, *RewardInput:
+		case *BlockIssuanceCreditInput, *RewardInput:
 			// ignore this type
 		case *CommitmentInput:
 			return castInput
@@ -140,17 +143,18 @@ func (t *Transaction) Size() int {
 }
 
 func (t *Transaction) String() string {
-	return "iotago.Transaction(" + lo.PanicOnErr(t.ID()).ToHex() + ")"
+	//TODO: stringify for debugging purposes
+	return fmt.Sprintf("Transaction[%v, %v]", t.Essence, t.Unlocks)
 }
 
 // syntacticallyValidate syntactically validates the Transaction.
-func (t *Transaction) syntacticallyValidate(protoParams *ProtocolParameters) error {
-	if err := t.Essence.syntacticallyValidate(protoParams); err != nil {
+func (t *Transaction) syntacticallyValidate(api API) error {
+	if err := t.Essence.syntacticallyValidate(api.ProtocolParameters()); err != nil {
 		return ierrors.Errorf("transaction essence is invalid: %w", err)
 	}
 
 	if err := ValidateUnlocks(t.Unlocks,
-		UnlocksSigUniqueAndRefValidator(),
+		UnlocksSigUniqueAndRefValidator(api),
 	); err != nil {
 		return ierrors.Errorf("invalid unlocks: %w", err)
 	}
