@@ -24,6 +24,7 @@ func (s *IssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 }
 
 func (s *IssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+	// we do not need to charge for a signature check here as this is covered by the unlock that must be provided.
 	return workScoreStructure.Factors.Data.Multiply(s.Size())
 }
 
