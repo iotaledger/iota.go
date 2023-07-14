@@ -23,6 +23,18 @@ func VersionFromBytes(b []byte) (Version, int, error) {
 	return Version(b[0]), 1, nil
 }
 
+type VersionSignaling struct {
+	WindowSize        uint8 `serix:"0,mapKey=windowSize"`
+	WindowTargetRatio uint8 `serix:"1,mapKey=windowTargetRatio"`
+	ActivationOffset  uint8 `serix:"2,mapKey=activationOffset"`
+}
+
+func (s VersionSignaling) Equals(signaling VersionSignaling) bool {
+	return s.WindowSize == signaling.WindowSize &&
+		s.WindowTargetRatio == signaling.WindowTargetRatio &&
+		s.ActivationOffset == signaling.ActivationOffset
+}
+
 // API handles en/decoding of IOTA protocol objects.
 type API interface {
 	// Encode encodes the given object to bytes.
@@ -99,6 +111,8 @@ type ProtocolParameters interface {
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold() SlotIndex
+
+	VersionSignaling() *VersionSignaling
 
 	Bytes() ([]byte, error)
 

@@ -61,6 +61,8 @@ type v3ProtocolParameters struct {
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold SlotIndex `serix:"17,mapKey=epochNearingThreshold"`
+
+	VersionSignaling VersionSignaling `serix:"18,mapKey=versionSignaling"`
 }
 
 func (p v3ProtocolParameters) Equals(other v3ProtocolParameters) bool {
@@ -81,7 +83,8 @@ func (p v3ProtocolParameters) Equals(other v3ProtocolParameters) bool {
 		p.StakingUnbondingPeriod == other.StakingUnbondingPeriod &&
 		p.EvictionAge == other.EvictionAge &&
 		p.LivenessThreshold == other.LivenessThreshold &&
-		p.EpochNearingThreshold == other.EpochNearingThreshold
+		p.EpochNearingThreshold == other.EpochNearingThreshold &&
+		p.VersionSignaling.Equals(other.VersionSignaling)
 }
 
 func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3ProtocolParameters {
@@ -104,6 +107,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			),
 			WithLivenessOptions(10, 3, 4),
 			WithStakingOptions(10),
+			WithVersionSignalingOptions(7, 5, 7),
 		},
 			opts...,
 		),
@@ -162,6 +166,10 @@ func (p *V3ProtocolParameters) EvictionAge() SlotIndex {
 
 func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
 	return p.v3ProtocolParameters.EpochNearingThreshold
+}
+
+func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
+	return &p.v3ProtocolParameters.VersionSignaling
 }
 
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
@@ -238,5 +246,15 @@ func WithLivenessOptions(evictionAge SlotIndex, livenessThreshold SlotIndex, epo
 func WithStakingOptions(unboundPeriod EpochIndex) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.v3ProtocolParameters.StakingUnbondingPeriod = unboundPeriod
+	}
+}
+
+func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, activationOffset uint8) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.v3ProtocolParameters.VersionSignaling = VersionSignaling{
+			WindowSize:        windowSize,
+			WindowTargetRatio: windowTargetRatio,
+			ActivationOffset:  activationOffset,
+		}
 	}
 }
