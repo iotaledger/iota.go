@@ -22,7 +22,7 @@ func (s *MetadataFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes
 }
 
 func (s *MetadataFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.FactorData.Multiply(s.Size())
+	return workScoreStructure.Factors.Data.Multiply(s.Size())
 }
 
 func (s *MetadataFeature) Equal(other Feature) bool {

@@ -272,17 +272,20 @@ func (b *Block) DoPOW(ctx context.Context, targetScore float64) error {
 }
 
 func (b *Block) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	// Work Score for parents is the score for max parents plus a penalty for any less than max parents
-	numMissingParents := BlockMaxParents - (len(b.StrongParents) + len(b.WeakParents) + len(b.ShallowLikeParents))
-	return workScoreStructure.WorkScoreMaxParents + workScoreStructure.FactorMissingParent.Multiply(numMissingParents) +
+	// Work Score for parents is a penalty for each missing strong parent below MinStrongParentsThreshold.
+	var parentWorkScore WorkScore
+	if byte(len(b.StrongParents)) < workScoreStructure.MinStrongParentsThreshold {
+		parentWorkScore += workScoreStructure.Factors.MissingParent.Multiply(int(workScoreStructure.MinStrongParentsThreshold - byte(len(b.StrongParents))))
+	}
+	return parentWorkScore +
 		// ProtocolVersion and NetworkID
-		workScoreStructure.FactorData.Multiply(serializer.OneByte+serializer.UInt64ByteSize) +
+		workScoreStructure.Factors.Data.Multiply(serializer.OneByte+serializer.UInt64ByteSize) +
 		// IssuerID and IssuingTime
-		workScoreStructure.FactorData.Multiply(AccountIDLength+util.NumByteLen(b.IssuingTime)) +
+		workScoreStructure.Factors.Data.Multiply(AccountIDLength+util.NumByteLen(b.IssuingTime)) +
 		// SlotCommitment and LatestFinalizedSlot
-		workScoreStructure.FactorData.Multiply(util.NumByteLen(b.SlotCommitment)+serializer.UInt64ByteSize) +
+		workScoreStructure.Factors.Data.Multiply(util.NumByteLen(b.SlotCommitment)+serializer.UInt64ByteSize) +
 		b.Payload.WorkScore(workScoreStructure) +
 		// BurnedMana and Nonce
-		workScoreStructure.FactorData.Multiply(ManaSize+serializer.UInt64ByteSize) +
-		workScoreStructure.WorkScoreEd25519Signature
+		workScoreStructure.Factors.Data.Multiply(ManaSize+serializer.UInt64ByteSize) +
+		workScoreStructure.WorkScores.Ed25519Signature
 }

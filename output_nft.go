@@ -131,9 +131,9 @@ func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 
 func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 	// prefix + amount + stored mana
-	return workScoreStructure.FactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
+	return workScoreStructure.Factors.Data.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
 		n.NativeTokens.WorkScore(workScoreStructure) +
-		workScoreStructure.FactorData.Multiply(NFTIDLength) +
+		workScoreStructure.Factors.Data.Multiply(NFTIDLength) +
 		n.Conditions.WorkScore(workScoreStructure) +
 		n.Features.WorkScore(workScoreStructure) +
 		n.ImmutableFeatures.WorkScore(workScoreStructure)

@@ -24,7 +24,7 @@ func (s *TagFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 }
 
 func (s *TagFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.FactorData.Multiply(s.Size())
+	return workScoreStructure.Factors.Data.Multiply(s.Size())
 }
 
 func (s *TagFeature) Equal(other Feature) bool {

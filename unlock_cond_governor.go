@@ -21,7 +21,7 @@ func (s *GovernorAddressUnlockCondition) VBytes(rentStruct *RentStructure, _ VBy
 
 func (s *GovernorAddressUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 	// GovernorAddressUnlockCondition requires a signature to unlock, but this is done when the output is consumed.
-	return workScoreStructure.FactorData.Multiply(s.Size())
+	return workScoreStructure.Factors.Data.Multiply(s.Size())
 }
 
 func (s *GovernorAddressUnlockCondition) Equal(other UnlockCondition) bool {

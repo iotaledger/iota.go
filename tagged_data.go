@@ -24,5 +24,5 @@ func (u *TaggedData) Size() int {
 }
 
 func (u *TaggedData) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.FactorData.Multiply(u.Size())
+	return workScoreStructure.Factors.Data.Multiply(u.Size())
 }

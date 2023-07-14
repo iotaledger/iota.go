@@ -136,10 +136,10 @@ func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 	return f.ImmutableFeatures.WorkScore(workScoreStructure) +
 		// prefix + amount + stored mana
-		workScoreStructure.FactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
+		workScoreStructure.Factors.Data.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
 		f.NativeTokens.WorkScore(workScoreStructure) +
 		// serial number
-		workScoreStructure.FactorData.Multiply(serializer.UInt32ByteSize) +
+		workScoreStructure.Factors.Data.Multiply(serializer.UInt32ByteSize) +
 		f.Conditions.WorkScore(workScoreStructure) +
 		f.Features.WorkScore(workScoreStructure) +
 		f.ImmutableFeatures.WorkScore(workScoreStructure)

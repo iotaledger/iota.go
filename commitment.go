@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 const (
@@ -68,4 +69,11 @@ func (c *Commitment) FromBytes(bytes []byte) (int, error) {
 func (c *Commitment) String() string {
 	return fmt.Sprintf("Commitment{\n\tIndex: %d\n\tPrevID: %s\n\tRootsID: %s\n\tCumulativeWeight: %d\n}",
 		c.Index, c.PrevID, c.RootsID, c.CumulativeWeight)
+}
+
+func (c *Commitment) Size() int {
+	return 2*serializer.UInt64ByteSize +
+		SlotIdentifierLength +
+		IdentifierLength
+
 }

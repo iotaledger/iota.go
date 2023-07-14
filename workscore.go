@@ -3,20 +3,28 @@ package iotago
 // WorkScore defines the type of work score used to denote the computation costs of processing an object.
 type WorkScore uint64
 
-type WorkScoreFactor byte
+type WorkScoreFactor uint16
 
 type WorkScoreStructure struct {
-	FactorData          WorkScoreFactor `serix:"0,mapKey=factorData"`
-	FactorInput         WorkScoreFactor `serix:"1,mapKey=factorInput"`
-	FactorAllotment     WorkScoreFactor `serix:"2,mapKey=factorAllotment"`
-	FactorMissingParent WorkScoreFactor `serix:"3,mapKey=factorMissingParent"`
+	WorkScores WorkScores       `serix:"0,mapKey=workScores"`
+	Factors    WorkScoreFactors `serix:"1,mapKey=factors"`
 
-	WorkScoreOutput           WorkScore `serix:"4,mapKey=workScoreOutput"`
-	WorkScoreStaking          WorkScore `serix:"5,mapKey=workScoreStaking"`
-	WorkScoreBlockIssuer      WorkScore `serix:"6,mapKey=workScoreBlockIssuer"`
-	WorkScoreEd25519Signature WorkScore `serix:"7,mapKey=workScoreEd25519Signature"`
-	WorkScoreNativeToken      WorkScore `serix:"8,mapKey=workScoreNativeToken"`
-	WorkScoreMaxParents       WorkScore `serix:"9,mapKey=workScoreMaxParents"`
+	MinStrongParentsThreshold byte `serix:"2,mapKey=missingParentsThreshold"`
+}
+
+type WorkScoreFactors struct {
+	Data          WorkScoreFactor `serix:"0,mapKey=data"`
+	Input         WorkScoreFactor `serix:"1,mapKey=input"`
+	Allotment     WorkScoreFactor `serix:"2,mapKey=allotment"`
+	MissingParent WorkScoreFactor `serix:"3,mapKey=missingParent"`
+}
+
+type WorkScores struct {
+	Output           WorkScore `serix:"0,mapKey=output"`
+	Staking          WorkScore `serix:"1,mapKey=staking"`
+	BlockIssuer      WorkScore `serix:"2,mapKey=blockIssuer"`
+	Ed25519Signature WorkScore `serix:"3,mapKey=ed25519Signature"`
+	NativeToken      WorkScore `serix:"4,mapKey=nativeToken"`
 }
 
 type ProcessableObject interface {

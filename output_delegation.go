@@ -150,10 +150,10 @@ func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByte
 func (d *DelegationOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 	return d.Conditions.WorkScore(workScoreStructure) +
 		d.ImmutableFeatures.WorkScore(workScoreStructure) +
-		workScoreStructure.FactorData.Multiply(DelegationIDLength) +
-		workScoreStructure.FactorData.Multiply(AccountIDLength) +
+		workScoreStructure.Factors.Data.Multiply(DelegationIDLength) +
+		workScoreStructure.Factors.Data.Multiply(AccountIDLength) +
 		// type prefix + amount + delegated amount + start epoch + end epoch
-		workScoreStructure.FactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize*4)
+		workScoreStructure.Factors.Data.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize*4)
 }
 
 func (d *DelegationOutput) Chain() ChainID {

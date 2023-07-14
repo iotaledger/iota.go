@@ -30,7 +30,7 @@ func (s *ExpirationUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFu
 
 func (s *ExpirationUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 	// Expiration condition requires Commitment inputs to be loaded and signature checks, but this is taken care of when the output is consumes, not created.
-	return workScoreStructure.FactorData.Multiply(s.Size())
+	return workScoreStructure.Factors.Data.Multiply(s.Size())
 }
 
 func (s *ExpirationUnlockCondition) Equal(other UnlockCondition) bool {

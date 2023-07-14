@@ -180,8 +180,8 @@ func (n *NativeToken) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 }
 
 func (n *NativeToken) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.FactorData.Multiply(n.Size()) +
-		workScoreStructure.WorkScoreNativeToken
+	return workScoreStructure.Factors.Data.Multiply(n.Size()) +
+		workScoreStructure.WorkScores.NativeToken
 }
 
 // Equal checks whether other is equal to this NativeToken.

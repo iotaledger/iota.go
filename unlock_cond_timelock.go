@@ -25,7 +25,7 @@ func (s *TimelockUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc
 
 func (s *TimelockUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 	// TimelockUnlockCondition requires a signature check, but on consumption, not creation.
-	return workScoreStructure.FactorData.Multiply(s.Size())
+	return workScoreStructure.Factors.Data.Multiply(s.Size())
 }
 
 func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {

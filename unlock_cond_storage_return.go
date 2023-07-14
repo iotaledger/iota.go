@@ -28,7 +28,7 @@ func (s *StorageDepositReturnUnlockCondition) VBytes(rentStruct *RentStructure, 
 
 func (s *StorageDepositReturnUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 	// StorageDepositReturnUnlockCondition requires a signature check, but on consumption, not creation.
-	return workScoreStructure.FactorData.Multiply(s.Size())
+	return workScoreStructure.Factors.Data.Multiply(s.Size())
 }
 
 func (s *StorageDepositReturnUnlockCondition) Equal(other UnlockCondition) bool {

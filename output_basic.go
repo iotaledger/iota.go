@@ -62,7 +62,7 @@ func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScor
 	return e.Conditions.WorkScore(workScoreStructure) +
 		e.Features.WorkScore(workScoreStructure) +
 		// prefix + amount + stored mana
-		workScoreStructure.FactorData.Multiply(serializer.SmallTypeDenotationByteSize+
+		workScoreStructure.Factors.Data.Multiply(serializer.SmallTypeDenotationByteSize+
 			serializer.UInt64ByteSize+
 			serializer.UInt64ByteSize) +
 		e.NativeTokens.WorkScore(workScoreStructure)

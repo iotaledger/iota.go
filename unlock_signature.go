@@ -19,5 +19,5 @@ func (s *SignatureUnlock) Size() int {
 }
 
 func (s *SignatureUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.WorkScoreEd25519Signature
+	return workScoreStructure.WorkScores.Ed25519Signature
 }

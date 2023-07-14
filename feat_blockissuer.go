@@ -36,8 +36,8 @@ func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBy
 
 func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 	// Block issuer feature requires invocation of account and mana managers, so requires extra work.
-	return workScoreStructure.FactorData.Multiply(s.Size()) +
-		workScoreStructure.WorkScoreBlockIssuer
+	return workScoreStructure.Factors.Data.Multiply(s.Size()) +
+		workScoreStructure.WorkScores.BlockIssuer
 }
 
 func (s *BlockIssuerFeature) Equal(other Feature) bool {

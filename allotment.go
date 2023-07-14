@@ -22,7 +22,7 @@ func (a Allotments) Size() int {
 }
 
 func (a Allotments) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.FactorAllotment.Multiply(a.Size())
+	return workScoreStructure.Factors.Data.Multiply(a.Size()) + workScoreStructure.Factors.Allotment.Multiply(a.Size())
 }
 
 func (a Allotments) Get(id AccountID) Mana {

@@ -216,10 +216,10 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams *ProtocolParamete
 
 func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 	// NetworkID, CreationTime
-	return workScoreStructure.FactorData.Multiply(2*serializer.UInt64ByteSize) +
+	return workScoreStructure.Factors.Data.Multiply(2*serializer.UInt64ByteSize) +
 		u.ContextInputs.WorkScore(workScoreStructure) +
 		u.Inputs.WorkScore(workScoreStructure) +
-		workScoreStructure.FactorData.Multiply(InputsCommitmentLength) +
+		workScoreStructure.Factors.Data.Multiply(InputsCommitmentLength) +
 		u.Outputs.WorkScore(workScoreStructure) +
 		u.Allotments.WorkScore(workScoreStructure) +
 		u.Payload.WorkScore(workScoreStructure)

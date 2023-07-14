@@ -206,13 +206,13 @@ func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkSc
 		a.Features.WorkScore(workScoreStructure) +
 		a.ImmutableFeatures.WorkScore(workScoreStructure) +
 		// prefix + amount + stored mana
-		workScoreStructure.FactorData.Multiply(serializer.SmallTypeDenotationByteSize+
+		workScoreStructure.Factors.Data.Multiply(serializer.SmallTypeDenotationByteSize+
 			serializer.UInt64ByteSize+
 			serializer.UInt64ByteSize) +
-		workScoreStructure.FactorData.Multiply(AccountIDLength) +
+		workScoreStructure.Factors.Data.Multiply(AccountIDLength) +
 		a.NativeTokens.WorkScore(workScoreStructure) +
 		// state index, state meta length, state meta, foundry counter
-		workScoreStructure.FactorData.Multiply(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)
+		workScoreStructure.Factors.Data.Multiply(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)
 }
 
 func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {

@@ -37,5 +37,5 @@ func (r *NFTUnlock) Size() int {
 }
 
 func (r *NFTUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.WorkScoreEd25519Signature
+	return workScoreStructure.WorkScores.Ed25519Signature
 }

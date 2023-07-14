@@ -21,7 +21,7 @@ func (s *AddressUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc)
 
 func (s *AddressUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
 	// Address require signature check but this is done on consumption of the output, not creation.
-	return workScoreStructure.FactorData.Multiply(s.Size())
+	return workScoreStructure.Factors.Data.Multiply(s.Size())
 }
 
 func (s *AddressUnlockCondition) Equal(other UnlockCondition) bool {
