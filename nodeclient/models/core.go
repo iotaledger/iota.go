@@ -247,6 +247,7 @@ type (
 		Committee           []CommitteeMemberResponse `json:"stakers"`
 		TotalStake          uint64                    `json:"totalStake"`
 		TotalValidatorStake uint64                    `json:"totalValidatorStake"`
+		EpochIndex          iotago.EpochIndex         `json:"epochIndex"`
 	}
 )
 
