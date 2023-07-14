@@ -20,7 +20,7 @@ func (s *StateControllerAddressUnlockCondition) VBytes(rentStruct *RentStructure
 }
 
 func (s *StateControllerAddressUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	// StateControllerAddressUnlockCondition requires a signature check, but on consumption, not creation.
+	// StateControllerAddressUnlockCondition does not require a signature check on creation, only consumption.
 	return workScoreStructure.Factors.Data.Multiply(s.Size())
 }
 

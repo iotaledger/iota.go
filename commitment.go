@@ -75,5 +75,4 @@ func (c *Commitment) Size() int {
 	return 2*serializer.UInt64ByteSize +
 		SlotIdentifierLength +
 		IdentifierLength
-
 }
