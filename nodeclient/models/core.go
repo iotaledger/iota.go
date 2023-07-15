@@ -11,14 +11,17 @@ import (
 type (
 	Versions []uint32
 
-	BlockState       string
+	BlockState       int
 	TransactionState string
 )
 
 const (
-	BlockStatePending   BlockState = "pending"
-	BlockStateConfirmed BlockState = "confirmed"
-	BlockStateFinalized BlockState = "finalized"
+	BlockStatePending BlockState = iota
+	BlockStateAccepted
+	BlockStateConfirmed
+	BlockStateFinalized
+	BlockStateOrphaned
+	BlockStateUnknown
 
 	ErrBlockInvalid                        = 1
 	ErrBlockOrphanedDueToCongestionControl = 2
@@ -139,7 +142,7 @@ type (
 		// BlockID The hex encoded block ID of the block.
 		BlockID string `json:"blockId"`
 		// BlockState might be pending, confirmed, finalized.
-		BlockState BlockState `json:"blockState"`
+		BlockState string `json:"blockState"`
 		// TxState might be pending, conflicting, confirmed, finalized, rejected.
 		TxState TransactionState `json:"txState,omitempty"`
 		// BlockStateReason if applicable indicates the error that occurred during the block processing.
@@ -311,4 +314,15 @@ func (v Versions) Supports(ver byte) bool {
 	}
 
 	return false
+}
+
+func (b BlockState) String() string {
+	return []string{
+		"pending",
+		"accepted",
+		"confirmed",
+		"finalized",
+		"orphaned",
+		"unknown",
+	}[b]
 }
