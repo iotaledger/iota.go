@@ -60,7 +60,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 
 	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
-		ExpirySlot:      currentSlot + tpkg.TestAPI.ProtocolParameters().EvictionAge(),
+		ExpirySlot:      currentSlot + tpkg.TestAPI.ProtocolParameters().MaxCommittableAge(),
 	}
 
 	exampleBIC := map[iotago.AccountID]iotago.BlockIssuanceCredits{

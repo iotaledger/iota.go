@@ -136,7 +136,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature validation requires a commitment input")
 		}
 
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < vmParams.WorkingSet.Commitment.Index+vmParams.API.ProtocolParameters().EvictionAge() {
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < vmParams.WorkingSet.Commitment.Index+vmParams.API.ProtocolParameters().MaxCommittableAge() {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	}
@@ -261,19 +261,19 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature validation requires a commitment input")
 	}
 
-	txSlotIndex := vmParams.WorkingSet.Commitment.Index
-	if currentBIFeat.ExpirySlot >= txSlotIndex {
+	commitmentInputIndex := vmParams.WorkingSet.Commitment.Index
+	if currentBIFeat.ExpirySlot >= commitmentInputIndex {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBIFeat == nil {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot remove block issuer feature until it expires")
 		}
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < txSlotIndex+vmParams.API.ProtocolParameters().EvictionAge() {
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < commitmentInputIndex+vmParams.API.ProtocolParameters().MaxCommittableAge() {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 
 	} else if nextBIFeat != nil {
 		// if the block issuer feature has expired, it must either be removed or expiry extended.
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < txSlotIndex+vmParams.API.ProtocolParameters().EvictionAge() {
+		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < commitmentInputIndex+vmParams.API.ProtocolParameters().MaxCommittableAge() {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	}
@@ -315,7 +315,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+vmParams.API.ProtocolParameters().EvictionAge()) {
+		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, commitmentInputIndex+vmParams.API.ProtocolParameters().MaxCommittableAge()) {
 			manaOut -= basicOutput.StoredMana()
 		}
 	}
@@ -324,7 +324,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, txSlotIndex+vmParams.API.ProtocolParameters().EvictionAge()) {
+		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, commitmentInputIndex+vmParams.API.ProtocolParameters().MaxCommittableAge()) {
 			manaOut -= nftOutput.StoredMana()
 		}
 	}
