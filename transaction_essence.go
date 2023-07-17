@@ -46,10 +46,11 @@ var (
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
 	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
 	ErrInputBICNotUnique = ierrors.New("inputs must each reference a unique BIC")
-	// ErrInputRewardNotUnique gets returned if multiple inputs reference the same input index.
-	ErrInputRewardNotUnique = ierrors.New("inputs must each reference a unique input index")
-	// ErrInputCommitmentNotUnique gets returned if multiple inputs reference the same BIC.
-	ErrInputCommitmentNotUnique = ierrors.New("inputs must each reference a unique Commitment")
+	// ErrInputRewardInvalid gets returned if multiple reward inputs reference the same input index
+	// or if they reference an index greater than max inputs count.
+	ErrInputRewardInvalid = ierrors.New("invalid reward input")
+	// ErrMultipleInputCommitments gets returned if multiple commitment inputs are provided.
+	ErrMultipleInputCommitments = ierrors.New("there are multiple commitment inputs")
 	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
 	ErrAccountOutputNonEmptyState = ierrors.New("account output is not empty state")
 	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the State/Governance controller.
@@ -86,11 +87,11 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 type InputsCommitment = [InputsCommitmentLength]byte
 
 type (
-	txEssenceContextInput  interface{ Input }
+	txEssenceContextInput  interface{ ContextInput }
 	txEssenceInput         interface{ Input }
 	TxEssenceOutput        interface{ Output }
 	TxEssencePayload       interface{ Payload }
-	TxEssenceContextInputs = Inputs[txEssenceContextInput]
+	TxEssenceContextInputs = ContextInputs[txEssenceContextInput]
 	TxEssenceInputs        = Inputs[txEssenceInput]
 	TxEssenceOutputs       = Outputs[TxEssenceOutput]
 	TxEssenceAllotments    = Allotments
@@ -179,7 +180,7 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 	}
 
 	if err := SyntacticallyValidateContextInputs(u.ContextInputs,
-		InputsSyntacticalUnique(),
+		ContextInputsSyntacticalUnique(),
 	); err != nil {
 		return err
 	}

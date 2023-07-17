@@ -39,8 +39,6 @@ type TxInput struct {
 	Input iotago.Output `json:"input"`
 }
 
-// TODO: extend the builder with Allotments and ContextInputs
-
 // AddInput adds the given input to the builder.
 func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 	b.inputOwner[input.InputID] = input.UnlockTarget
@@ -56,8 +54,8 @@ func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.Output) bool
 
 // AddContextInput adds the given context input to the builder.
-func (b *TransactionBuilder) AddContextInput(input iotago.Input) *TransactionBuilder {
-	b.essence.ContextInputs = append(b.essence.ContextInputs, input)
+func (b *TransactionBuilder) AddContextInput(contextInput iotago.ContextInput) *TransactionBuilder {
+	b.essence.ContextInputs = append(b.essence.ContextInputs, contextInput)
 
 	return b
 }

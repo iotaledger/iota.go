@@ -451,13 +451,13 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(TransactionEssence{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
 
 		must(api.RegisterTypeSettings(CommitmentInput{},
-			serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))),
+			serix.TypeSettings{}.WithObjectType(uint8(ContextInputCommitment))),
 		)
-		must(api.RegisterTypeSettings(BICInput{},
-			serix.TypeSettings{}.WithObjectType(uint8(InputBlockIssuanceCredit))),
+		must(api.RegisterTypeSettings(BlockIssuanceCreditInput{},
+			serix.TypeSettings{}.WithObjectType(uint8(ContextInputBlockIssuanceCredit))),
 		)
 		must(api.RegisterTypeSettings(RewardInput{},
-			serix.TypeSettings{}.WithObjectType(uint8(InputReward))),
+			serix.TypeSettings{}.WithObjectType(uint8(ContextInputReward))),
 		)
 
 		must(api.RegisterTypeSettings(TxEssenceContextInputs{},
@@ -465,7 +465,7 @@ func V3API(protoParams ProtocolParameters) API {
 		))
 
 		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*CommitmentInput)(nil)))
-		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*BICInput)(nil)))
+		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*BlockIssuanceCreditInput)(nil)))
 		must(api.RegisterInterfaceObjects((*txEssenceContextInput)(nil), (*RewardInput)(nil)))
 
 		must(api.RegisterTypeSettings(UTXOInput{},
@@ -515,8 +515,8 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(ValidatorBlock{},
-			serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidator))),
+		must(api.RegisterTypeSettings(ValidationBlock{},
+			serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidation))),
 		)
 	}
 
@@ -528,7 +528,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterInterfaceObjects((*Block)(nil), (*BasicBlock)(nil)))
-		must(api.RegisterInterfaceObjects((*Block)(nil), (*ValidatorBlock)(nil)))
+		must(api.RegisterInterfaceObjects((*Block)(nil), (*ValidationBlock)(nil)))
 
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*Transaction)(nil)))
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*TaggedData)(nil)))
@@ -558,9 +558,9 @@ func V3API(protoParams ProtocolParameters) API {
 				}
 			}
 
-			if validatorBlock, ok := block.(*ValidatorBlock); ok {
-				if validatorBlock.HighestSupportedVersion < protocolBlock.ProtocolVersion {
-					return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", validatorBlock.HighestSupportedVersion, protocolBlock.ProtocolVersion)
+			if validationBlock, ok := block.(*ValidationBlock); ok {
+				if validationBlock.HighestSupportedVersion < protocolBlock.ProtocolVersion {
+					return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", validationBlock.HighestSupportedVersion, protocolBlock.ProtocolVersion)
 				}
 			}
 

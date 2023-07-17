@@ -326,19 +326,28 @@ func RandTransactionEssenceWithOptions(opts ...options.Option[iotago.Transaction
 	return options.Apply(tx, opts)
 }
 
-func WithBICInputCount(inputCount int) options.Option[iotago.TransactionEssence] {
+func WithBlockIssuanceCreditInputCount(inputCount int) options.Option[iotago.TransactionEssence] {
 	return func(tx *iotago.TransactionEssence) {
 		for i := inputCount; i > 0; i-- {
-			tx.ContextInputs = append(tx.ContextInputs, RandBICInput())
+			tx.ContextInputs = append(tx.ContextInputs, RandBlockIssuanceCreditInput())
 		}
 	}
 }
 
-func WithCommitmentInputCount(inputCount int) options.Option[iotago.TransactionEssence] {
+func WithRewardInputCount(inputCount uint16) options.Option[iotago.TransactionEssence] {
 	return func(tx *iotago.TransactionEssence) {
 		for i := inputCount; i > 0; i-- {
-			tx.ContextInputs = append(tx.ContextInputs, RandCommitmentInput())
+			rewardInput := &iotago.RewardInput{
+				Index: i,
+			}
+			tx.ContextInputs = append(tx.ContextInputs, rewardInput)
 		}
+	}
+}
+
+func WithCommitmentInput() options.Option[iotago.TransactionEssence] {
+	return func(tx *iotago.TransactionEssence) {
+		tx.ContextInputs = append(tx.ContextInputs, RandCommitmentInput())
 	}
 }
 
@@ -453,9 +462,9 @@ func RandBasicBlock(withPayloadType iotago.PayloadType) *iotago.BasicBlock {
 	}
 }
 
-func RandValidatorBlock() *iotago.ValidatorBlock {
-	return &iotago.ValidatorBlock{
-		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidatorMaxParents)),
+func ValidationBlock() *iotago.ValidationBlock {
+	return &iotago.ValidationBlock{
+		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidationMaxParents)),
 		HighestSupportedVersion: TestAPI.Version() + 1,
 	}
 }
@@ -519,9 +528,9 @@ func RandCommitmentInput() *iotago.CommitmentInput {
 	}
 }
 
-// RandBICInput returns a random BIC input.
-func RandBICInput() *iotago.BICInput {
-	return &iotago.BICInput{
+// RandBlockIssuanceCreditInput returns a random BlockIssuanceCreditInput.
+func RandBlockIssuanceCreditInput() *iotago.BlockIssuanceCreditInput {
+	return &iotago.BlockIssuanceCreditInput{
 		AccountID: RandAccountID(),
 	}
 }

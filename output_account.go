@@ -141,24 +141,24 @@ type (
 type AccountOutput struct {
 	// The amount of IOTA tokens held by the output.
 	Amount BaseToken `serix:"0,mapKey=amount"`
-	// The native tokens held by the output.
-	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
-	// The identifier for this account.
-	AccountID AccountID `serix:"2,mapKey=accountId"`
-	// The index of the state.
-	StateIndex uint32 `serix:"3,mapKey=stateIndex"`
-	// The state of the account which can only be mutated by the state controller.
-	StateMetadata []byte `serix:"4,lengthPrefixType=uint16,mapKey=stateMetadata,omitempty,maxLen=8192"`
-	// The counter that denotes the number of foundries created by this account.
-	FoundryCounter uint32 `serix:"5,mapKey=foundryCounter"`
-	// The unlock conditions on this output.
-	Conditions AccountOutputUnlockConditions `serix:"6,mapKey=unlockConditions,omitempty"`
-	// The features on the output.
-	Features AccountOutputFeatures `serix:"7,mapKey=features,omitempty"`
-	// The immutable feature on the output.
-	ImmutableFeatures AccountOutputImmFeatures `serix:"8,mapKey=immutableFeatures,omitempty"`
 	// The stored mana held by the output.
-	Mana Mana `serix:"9,mapKey=mana"`
+	Mana Mana `serix:"1,mapKey=mana"`
+	// The native tokens held by the output.
+	NativeTokens NativeTokens `serix:"2,mapKey=nativeTokens,omitempty"`
+	// The identifier for this account.
+	AccountID AccountID `serix:"3,mapKey=accountId"`
+	// The index of the state.
+	StateIndex uint32 `serix:"4,mapKey=stateIndex"`
+	// The state of the account which can only be mutated by the state controller.
+	StateMetadata []byte `serix:"5,lengthPrefixType=uint16,mapKey=stateMetadata,omitempty,maxLen=8192"`
+	// The counter that denotes the number of foundries created by this account.
+	FoundryCounter uint32 `serix:"6,mapKey=foundryCounter"`
+	// The unlock conditions on this output.
+	Conditions AccountOutputUnlockConditions `serix:"7,mapKey=unlockConditions,omitempty"`
+	// The features on the output.
+	Features AccountOutputFeatures `serix:"8,mapKey=features,omitempty"`
+	// The immutable feature on the output.
+	ImmutableFeatures AccountOutputImmFeatures `serix:"9,mapKey=immutableFeatures,omitempty"`
 }
 
 func (a *AccountOutput) GovernorAddress() Address {
@@ -172,15 +172,15 @@ func (a *AccountOutput) StateController() Address {
 func (a *AccountOutput) Clone() Output {
 	return &AccountOutput{
 		Amount:            a.Amount,
-		AccountID:         a.AccountID,
+		Mana:              a.Mana,
 		NativeTokens:      a.NativeTokens.Clone(),
+		AccountID:         a.AccountID,
 		StateIndex:        a.StateIndex,
 		StateMetadata:     append([]byte(nil), a.StateMetadata...),
 		FoundryCounter:    a.FoundryCounter,
 		Conditions:        a.Conditions.Clone(),
 		Features:          a.Features.Clone(),
 		ImmutableFeatures: a.ImmutableFeatures.Clone(),
-		Mana:              a.Mana,
 	}
 }
 
@@ -265,6 +265,7 @@ func (a *AccountOutput) Type() OutputType {
 func (a *AccountOutput) Size() int {
 	return util.NumByteLen(byte(OutputAccount)) +
 		BaseTokenSize +
+		ManaSize +
 		a.NativeTokens.Size() +
 		AccountIDLength +
 		util.NumByteLen(a.StateIndex) +
@@ -273,6 +274,5 @@ func (a *AccountOutput) Size() int {
 		util.NumByteLen(a.FoundryCounter) +
 		a.Conditions.Size() +
 		a.Features.Size() +
-		a.ImmutableFeatures.Size() +
-		ManaSize
+		a.ImmutableFeatures.Size()
 }

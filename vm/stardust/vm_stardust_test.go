@@ -834,7 +834,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -858,7 +858,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := vm.BICInputSet{
+			bicInputs := vm.BlockIssuanceCreditInputSet{
 				accountAddr1.AccountID(): 0,
 			}
 
@@ -874,7 +874,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs, CommitmentInput: commitmentInput},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BlockIssuanceCreditInputSet: bicInputs, CommitmentInput: commitmentInput},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -916,7 +916,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -940,7 +940,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := vm.BICInputSet{
+			bicInputs := vm.BlockIssuanceCreditInputSet{
 				accountAddr1.AccountID(): 0,
 			}
 
@@ -956,7 +956,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs, CommitmentInput: commitmentInput},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BlockIssuanceCreditInputSet: bicInputs, CommitmentInput: commitmentInput},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -996,7 +996,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -1011,7 +1011,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := vm.BICInputSet{
+			bicInputs := vm.BlockIssuanceCreditInputSet{
 				accountAddr1.AccountID(): 0,
 			}
 
@@ -1027,7 +1027,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs, CommitmentInput: commitmentInput},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BlockIssuanceCreditInputSet: bicInputs, CommitmentInput: commitmentInput},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -1069,7 +1069,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			essence := &iotago.TransactionEssence{
 				CreationTime: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
-					&iotago.BICInput{
+					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
 					},
 				},
@@ -1084,7 +1084,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			bicInputs := vm.BICInputSet{
+			bicInputs := vm.BlockIssuanceCreditInputSet{
 				accountAddr1.AccountID(): 0,
 			}
 
@@ -1096,7 +1096,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BlockIssuanceCreditInputSet: bicInputs},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
@@ -4006,6 +4006,120 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 				wantErr: nil,
+			}
+		}(),
+		func() test {
+			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(2)
+
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
+					Output: &iotago.BasicOutput{
+						Amount: 5,
+						Mana:   math.MaxUint64,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+					},
+					CreationTime: 15,
+				},
+				inputIDs[1]: vm.OutputWithCreationTime{
+					Output: &iotago.BasicOutput{
+						Amount: 5,
+						Mana:   10,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+					},
+					CreationTime: 15,
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.BasicOutput{
+						Amount: 5,
+						Mana:   9,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+					},
+				},
+				CreationTime: 15,
+			}
+			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name: "fail - mana overflow on the input side sum",
+				vmParams: &vm.Params{
+					API: testAPI,
+				},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.ReferenceUnlock{Reference: 0},
+					},
+				},
+				wantErr: iotago.ErrManaOverflow,
+			}
+		}(),
+		func() test {
+			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(1)
+
+			inputs := vm.InputSet{
+				inputIDs[0]: vm.OutputWithCreationTime{
+					Output: &iotago.BasicOutput{
+						Amount: 5,
+						Mana:   10,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+					},
+					CreationTime: 15,
+				},
+			}
+
+			essence := &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.BasicOutput{
+						Amount: 5,
+						Mana:   1,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+					},
+					&iotago.BasicOutput{
+						Amount: 5,
+						Mana:   math.MaxUint64,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+					},
+				},
+				CreationTime: 15,
+			}
+			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			require.NoError(t, err)
+
+			return test{
+				name: "fail - mana overflow on the output side sum",
+				vmParams: &vm.Params{
+					API: testAPI,
+				},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
+				tx: &iotago.Transaction{
+					Essence: essence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: iotago.ErrManaOverflow,
 			}
 		}(),
 	}

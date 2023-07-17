@@ -23,16 +23,16 @@ const (
 	MaxBlockSize = 32768
 	// BlockMaxParents defines the maximum amount of parents in a block.
 	BlockMaxParents = 8
-	// BlockTypeValidatorMaxParents defines the maximum amount of parents in a ValidatorBlock. TODO: replace number with committee size.
-	BlockTypeValidatorMaxParents = BlockMaxParents + 42
+	// BlockTypeValidationMaxParents defines the maximum amount of parents in a ValidationBlock. TODO: replace number with committee size.
+	BlockTypeValidationMaxParents = BlockMaxParents + 42
 )
 
 // BlockType denotes a type of Block.
 type BlockType byte
 
 const (
-	BlockTypeBasic     BlockType = 1
-	BlockTypeValidator BlockType = 2
+	BlockTypeBasic      BlockType = 1
+	BlockTypeValidation BlockType = 2
 )
 
 // EmptyBlockID returns an empty BlockID.
@@ -302,39 +302,41 @@ func (b *BasicBlock) Hash(api API) (Identifier, error) {
 	return blake2b.Sum256(blockBytes), nil
 }
 
-// ValidatorBlock represents a validator vertex in the Tangle/BlockDAG.
-type ValidatorBlock struct {
+// ValidationBlock represents a validation vertex in the Tangle/BlockDAG.
+type ValidationBlock struct {
 	// The parents the block references.
 	StrongParents      BlockIDs `serix:"0,lengthPrefixType=uint8,mapKey=strongParents,minLen=1,maxLen=50"`
 	WeakParents        BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents,minLen=0,maxLen=50"`
 	ShallowLikeParents BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents,minLen=0,maxLen=50"`
 
 	HighestSupportedVersion Version `serix:"3,mapKey=highestSupportedVersion"`
+	// ProtocolParametersHash is the hash of the protocol parameters for the HighestSupportedVersion.
+	ProtocolParametersHash Identifier `serix:"4,mapKey=protocolParametersHash"`
 }
 
-func (b *ValidatorBlock) Type() BlockType {
-	return BlockTypeValidator
+func (b *ValidationBlock) Type() BlockType {
+	return BlockTypeValidation
 }
 
-func (b *ValidatorBlock) StrongParentIDs() BlockIDs {
+func (b *ValidationBlock) StrongParentIDs() BlockIDs {
 	return b.StrongParents
 }
 
-func (b *ValidatorBlock) WeakParentIDs() BlockIDs {
+func (b *ValidationBlock) WeakParentIDs() BlockIDs {
 	return b.WeakParents
 }
 
-func (b *ValidatorBlock) ShallowLikeParentIDs() BlockIDs {
+func (b *ValidationBlock) ShallowLikeParentIDs() BlockIDs {
 	return b.ShallowLikeParents
 }
 
-func (b *ValidatorBlock) Hash(api API) (Identifier, error) {
+func (b *ValidationBlock) Hash(api API) (Identifier, error) {
 	blockBytes, err := api.Encode(b)
 	if err != nil {
-		return Identifier{}, ierrors.Errorf("failed to serialize validator block: %w", err)
+		return Identifier{}, ierrors.Errorf("failed to serialize validation block: %w", err)
 	}
 
-	return blake2b.Sum256(blockBytes), nil
+	return IdentifierFromData(blockBytes), nil
 }
 
 // ParentsType is a type that defines the type of the parent.

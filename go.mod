@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/ethereum/go-ethereum v1.12.0
+	github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20230711121610-7d024f7b5eb5
 	github.com/iotaledger/hive.go/crypto v0.0.0-20230706083020-ef6c3248369d
 	github.com/iotaledger/hive.go/ierrors v0.0.0-20230706083020-ef6c3248369d
 	github.com/iotaledger/hive.go/lo v0.0.0-20230706083020-ef6c3248369d

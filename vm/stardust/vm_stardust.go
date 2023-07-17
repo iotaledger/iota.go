@@ -290,10 +290,13 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		return err
 	}
 
-	manaOut := vm.TotalManaOut(
+	manaOut, err := vm.TotalManaOut(
 		vmParams.WorkingSet.Tx.Essence.Outputs,
 		vmParams.WorkingSet.Tx.Essence.Allotments,
 	)
+	if err != nil {
+		return err
+	}
 
 	manaStoredAccount, err := manaDecayProvider.StoredManaWithDecay(current.Mana, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInStored
 	if err != nil {
