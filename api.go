@@ -89,6 +89,16 @@ type ProtocolParameters interface {
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold() SlotIndex
 
+	// PastBoundedSlotIndex calculates the past bounded slot for the given slot.
+	// Given any slot index of a commitment input, the result of this function is a slot index
+	// that is at least equal to the slot of the block in which it was issued, or higher.
+	PastBoundedSlotIndex(slot SlotIndex) SlotIndex
+
+	// FutureBoundedSlotIndex calculates the past bounded slot for the given slot.
+	// Given any slot index of a commitment input, the result of this function is a slot index
+	// that is at most equal to the slot of the block in which it was issued, or lower.
+	FutureBoundedSlotIndex(slot SlotIndex) SlotIndex
+
 	Bytes() ([]byte, error)
 }
 
