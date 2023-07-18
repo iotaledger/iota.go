@@ -194,7 +194,7 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	originRes := &models.BlockMetadataResponse{
 		BlockID:        queryHash,
 		BlockState:     models.BlockStateConfirmed.String(),
-		TxState:        "confirmed",
+		TxState:        models.TransactionStateConfirmed.String(),
 		ReissuePayload: nil,
 	}
 

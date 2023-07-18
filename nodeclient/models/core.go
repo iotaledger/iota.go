@@ -12,7 +12,7 @@ type (
 	Versions []uint32
 
 	BlockState       int
-	TransactionState string
+	TransactionState int
 )
 
 const (
@@ -22,14 +22,16 @@ const (
 	BlockStateFinalized
 	BlockStateOrphaned
 	BlockStateUnknown
+	BlockStateFailed
 
 	ErrBlockInvalid                        = 1
 	ErrBlockOrphanedDueToCongestionControl = 2
 	ErrBlockOrphanedDueToNegativeCredits   = 3
 
-	TransactionStatePending   TransactionState = "pending"
-	TransactionStateConfirmed TransactionState = "confirmed"
-	TransactionStateFinalized TransactionState = "finalized"
+	TransactionStatePending   TransactionState = 0
+	TransactionStateConfirmed TransactionState = 1
+	TransactionStateFinalized TransactionState = 2
+	TransactionStateFailed    TransactionState = 3
 
 	ErrTxStateReferencedUTXOAlreadySpent            = 1
 	ErrTxStateTxConflicting                         = 2
@@ -144,7 +146,7 @@ type (
 		// BlockState might be pending, confirmed, finalized.
 		BlockState string `json:"blockState"`
 		// TxState might be pending, conflicting, confirmed, finalized, rejected.
-		TxState TransactionState `json:"txState,omitempty"`
+		TxState string `json:"txState,omitempty"`
 		// BlockStateReason if applicable indicates the error that occurred during the block processing.
 		BlockStateReason int `json:"blockStateReason,omitempty"`
 		// TxStateReason if applicable indicates the error that occurred during the transaction processing.
@@ -324,5 +326,15 @@ func (b BlockState) String() string {
 		"finalized",
 		"orphaned",
 		"unknown",
+		"failed",
 	}[b]
+}
+
+func (t TransactionState) String() string {
+	return []string{
+		"pending",
+		"confirmed",
+		"finalized",
+		"failed",
+	}[t]
 }
