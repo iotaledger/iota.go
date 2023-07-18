@@ -55,8 +55,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	}
 	exampleExistingFoundryOutputID := exampleExistingFoundryOutput.MustID()
 
-	currentSlot := iotago.SlotIndex(20 * (1 << 13))
-	currentEpoch := tpkg.TestAPI.TimeProvider().EpochFromSlot(currentSlot)
+	currentEpoch := iotago.EpochIndex(20)
+	currentSlot := tpkg.TestAPI.TimeProvider().EpochStart(currentEpoch)
 
 	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: []ed25519.PublicKey{tpkg.RandEd25519PrivateKey().Public().(ed25519.PublicKey)},
