@@ -315,7 +315,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, vmParams.PastBoundedSlotIndex(commitmentInputIndex)) {
+		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, vmParams.PastBoundedSlotIndex(commitmentInputIndex)+vmParams.API.ProtocolParameters().MaxCommittableAge()) {
 			manaOut -= basicOutput.StoredMana()
 		}
 	}
@@ -324,7 +324,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, vmParams.PastBoundedSlotIndex(commitmentInputIndex)) {
+		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, vmParams.PastBoundedSlotIndex(commitmentInputIndex)+vmParams.API.ProtocolParameters().MaxCommittableAge()) {
 			manaOut -= nftOutput.StoredMana()
 		}
 	}
