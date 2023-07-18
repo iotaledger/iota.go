@@ -192,10 +192,9 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originRes := &models.BlockMetadataResponse{
-		BlockID:        queryHash,
-		BlockState:     models.BlockStateConfirmed.String(),
-		TxState:        models.TransactionStateConfirmed.String(),
-		ReissuePayload: nil,
+		BlockID:    queryHash,
+		BlockState: models.BlockStateConfirmed.String(),
+		TxState:    models.TransactionStateConfirmed.String(),
 	}
 
 	gock.New(nodeAPIUrl).
