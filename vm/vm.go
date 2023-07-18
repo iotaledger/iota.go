@@ -59,7 +59,7 @@ type WorkingSet struct {
 	// BIC is the block issuance credit for MCA slots prior to the transaction's creation time (or for the slot to which the block commits)
 	// Contains one value for each account output touched in the transaction and empty if no account outputs touched.
 	BIC BICInputSet
-	// Commitment contains set of commitment inputs necessary for transaction execution. FIXME
+	// Commitment contains the resolved commitment if a commitment input was present.
 	Commitment VmCommitmentInput
 	// Rewards contains a set of account or delegation IDs mapped to their rewards amount.
 	Rewards RewardsInputSet
@@ -152,6 +152,20 @@ func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iot
 	}
 
 	return totalOut
+}
+
+// PastBoundedSlotIndex calculates the past bounded slot for the given slot.
+// Given any slot index of a commitment input, the result of this function is a slot index
+// that is at least equal to the slot of the block in which it was issued, or higher.
+func (params *Params) PastBoundedSlotIndex(slot iotago.SlotIndex) iotago.SlotIndex {
+	return slot + params.API.ProtocolParameters().MaxCommittableAge()
+}
+
+// FutureBoundedSlotIndex calculates the past bounded slot for the given slot.
+// Given any slot index of a commitment input, the result of this function is a slot index
+// that is at most equal to the slot of the block in which it was issued, or lower.
+func (params *Params) FutureBoundedSlotIndex(slot iotago.SlotIndex) iotago.SlotIndex {
+	return slot + params.API.ProtocolParameters().MinCommittableAge()
 }
 
 // RunVMFuncs runs the given ExecFunc(s) in serial order.

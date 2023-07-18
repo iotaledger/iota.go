@@ -170,14 +170,6 @@ func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
 	return p.v3ProtocolParameters.EpochNearingThreshold
 }
 
-func (p *V3ProtocolParameters) PastBoundedSlotIndex(slot SlotIndex) SlotIndex {
-	return slot + p.MaxCommittableAge()
-}
-
-func (p *V3ProtocolParameters) FutureBoundedSlotIndex(slot SlotIndex) SlotIndex {
-	return slot + p.MinCommittableAge()
-}
-
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
 	return commonSerixAPI().Encode(context.TODO(), p)
 }
