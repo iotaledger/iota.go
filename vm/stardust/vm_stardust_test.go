@@ -1340,7 +1340,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								SlotIndex:     20,
+								SlotIndex:     30,
 							},
 						},
 					},
@@ -1389,7 +1389,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
-						Index: creationSlot,
+						Index: iotago.SlotIndex(0),
 					},
 				},
 				tx: &iotago.Transaction{
@@ -1642,7 +1642,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								SlotIndex:     10,
+								SlotIndex:     20,
 							},
 						},
 					},
@@ -1663,7 +1663,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
-						Index: creationSlot,
+						Index: iotago.SlotIndex(0),
 					},
 				},
 				tx: &iotago.Transaction{
@@ -1672,7 +1672,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrEd25519PubKeyAndAddrMismatch,
+				wantErr: iotago.ErrExpirationConditionUnlockFailed,
 			}
 		}(),
 		func() test {
@@ -1974,7 +1974,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 							},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								SlotIndex:     10,
+								SlotIndex:     30,
 							},
 						},
 					},
@@ -2215,7 +2215,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 							// not yet expired, so ident1 needs to unlock
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident2,
-								SlotIndex:     10,
+								SlotIndex:     30,
 							},
 						},
 					},
@@ -3750,7 +3750,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 							&iotago.TimelockUnlockCondition{
-								SlotIndex: 15,
+								SlotIndex: 25,
 							},
 						},
 					},
