@@ -695,15 +695,23 @@ func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Param
 	}
 
 	timeProvider := vmParams.API.TimeProvider()
-	creationSlot := vmParams.WorkingSet.Tx.Essence.CreationTime
-	creationEpoch := timeProvider.EpochFromSlot(creationSlot)
-	votingPowerSlot := votingPowerCalculationSlot(creationSlot, timeProvider)
+	commitment := vmParams.WorkingSet.Commitment
+	if commitment == nil {
+		return iotago.ErrDelegationCommitmentInputRequired
+	}
+	pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Index)
+	pastBoundedEpochIndex := timeProvider.EpochFromSlot(pastBoundedSlotIndex)
+	votingPowerSlot, err := votingPowerSlot(pastBoundedEpochIndex, vmParams)
+
+	if err != nil {
+		return err
+	}
 
 	var expectedStartEpoch iotago.EpochIndex
-	if creationSlot <= votingPowerSlot {
-		expectedStartEpoch = creationEpoch + 1
+	if pastBoundedSlotIndex <= votingPowerSlot {
+		expectedStartEpoch = pastBoundedEpochIndex + 1
 	} else {
-		expectedStartEpoch = creationEpoch + 2
+		expectedStartEpoch = pastBoundedEpochIndex + 2
 	}
 
 	if current.StartEpoch != expectedStartEpoch {
@@ -739,15 +747,23 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 	}
 
 	timeProvider := vmParams.API.TimeProvider()
-	creationSlot := vmParams.WorkingSet.Tx.Essence.CreationTime
-	creationEpoch := timeProvider.EpochFromSlot(creationSlot)
-	votingPowerSlot := votingPowerCalculationSlot(creationSlot, timeProvider)
+	commitment := vmParams.WorkingSet.Commitment
+	if commitment == nil {
+		return iotago.ErrDelegationCommitmentInputRequired
+	}
+	futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
+	futureBoundedEpochIndex := timeProvider.EpochFromSlot(futureBoundedSlotIndex)
+	votingPowerSlot, err := votingPowerSlot(futureBoundedEpochIndex, vmParams)
+
+	if err != nil {
+		return err
+	}
 
 	var expectedEndEpoch iotago.EpochIndex
-	if creationSlot <= votingPowerSlot {
-		expectedEndEpoch = creationEpoch
+	if futureBoundedSlotIndex <= votingPowerSlot {
+		expectedEndEpoch = futureBoundedEpochIndex
 	} else {
-		expectedEndEpoch = creationEpoch + 1
+		expectedEndEpoch = futureBoundedEpochIndex + 1
 	}
 
 	if current.EndEpoch != expectedEndEpoch {
@@ -757,11 +773,12 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 	return nil
 }
 
-// votingPowerCalculationSlot returns the slot at the end of which the voting power for the next epoch is calculated.
-func votingPowerCalculationSlot(currentSlotIndex iotago.SlotIndex, timeProvider *iotago.TimeProvider) iotago.SlotIndex {
-	// currentEpoch := timeProvider.EpochFromSlot(currentSlotIndex)
-	// startSlotNextEpoch := timeProvider.EpochStart(currentEpoch)
-	// votingPowerCalcSlotNextEpoch := startSlotNextEpoch - iotago.SlotIndex(vmParams.External.ProtocolParameters.MaxCommitableAge)
-	// TODO: Finalize when committee selection is finalized.
-	return currentSlotIndex
+// votingPowerSlot returns the slot at the end of which the voting power
+// for the epoch with index epochIndex is calculated.
+func votingPowerSlot(epochIndex iotago.EpochIndex, vmParams *vm.Params) (iotago.SlotIndex, error) {
+	timeProvider := vmParams.API.TimeProvider()
+	startSlotNextEpoch := timeProvider.EpochStart(epochIndex + 1)
+	// TODO: Activity Window Duration missing.
+	votingPowerCalcSlotNextEpoch := startSlotNextEpoch - vmParams.API.ProtocolParameters().EpochNearingThreshold() - 1
+	return votingPowerCalcSlotNextEpoch, nil
 }
