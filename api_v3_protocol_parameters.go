@@ -233,8 +233,8 @@ func WithLivenessOptions(minCommittableAge SlotIndex, maxCommittableAge SlotInde
 	}
 }
 
-func WithStakingOptions(unboundPeriod EpochIndex) options.Option[V3ProtocolParameters] {
+func WithStakingOptions(unbondingPeriod EpochIndex) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.v3ProtocolParameters.StakingUnbondingPeriod = unboundPeriod
+		p.v3ProtocolParameters.StakingUnbondingPeriod = unbondingPeriod
 	}
 }
