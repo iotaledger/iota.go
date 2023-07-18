@@ -52,7 +52,7 @@ type v3ProtocolParameters struct {
 	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
 	StakingUnbondingPeriod EpochIndex `serix:"14,mapKey=stakingUnbondingPeriod"`
 
-	// MinCommittableAge is the minumum age relative to the accepted tangle time slot index that a slot can be commited.
+	// MinCommittableAge is the minimum age relative to the accepted tangle time slot index that a slot can be committed.
 	MinCommittableAge SlotIndex `serix:"15,mapKey=minCommittableAge"`
 	// MaxCommittableAge is the maximum age for a slot commitment to be included in a block relative to the slot index of the block issuing time.
 	MaxCommittableAge SlotIndex `serix:"16,mapKey=maxCommittableAge"`
@@ -61,9 +61,9 @@ type v3ProtocolParameters struct {
 	LivenessThreshold SlotIndex `serix:"17,mapKey=livenessThreshold"`
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
-	EpochNearingThreshold SlotIndex `serix:"17,mapKey=epochNearingThreshold"`
+	EpochNearingThreshold SlotIndex `serix:"18,mapKey=epochNearingThreshold"`
 
-	VersionSignaling VersionSignaling `serix:"18,mapKey=versionSignaling"`
+	VersionSignaling VersionSignaling `serix:"19,mapKey=versionSignaling"`
 }
 
 func (p v3ProtocolParameters) Equals(other v3ProtocolParameters) bool {
