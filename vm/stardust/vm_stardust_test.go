@@ -1104,7 +1104,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
-				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BICInputSet: bicInputs, CommitmentInput: commitment},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs, BlockIssuanceCreditInputSet: bicInputs, CommitmentInput: commitment},
 				tx: &iotago.Transaction{
 					Essence: essence,
 					Unlocks: iotago.Unlocks{
