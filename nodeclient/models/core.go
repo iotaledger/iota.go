@@ -10,24 +10,37 @@ import (
 
 type (
 	Versions []uint32
-
-	BlockState       int
-	TransactionState int
 )
 
+type BlockState int
+
 const (
-	BlockStatePending BlockState = iota
-	BlockStateAccepted
+	BlockStateUnknown BlockState = iota
+	BlockStatePending
 	BlockStateConfirmed
 	BlockStateFinalized
 	BlockStateOrphaned
-	BlockStateUnknown
 	BlockStateFailed
 
 	ErrBlockInvalid                        = 1
 	ErrBlockOrphanedDueToCongestionControl = 2
 	ErrBlockOrphanedDueToNegativeCredits   = 3
+)
 
+func (b BlockState) String() string {
+	return []string{
+		"unknown",
+		"pending",
+		"confirmed",
+		"finalized",
+		"rejected",
+		"failed",
+	}[b]
+}
+
+type TransactionState int
+
+const (
 	TransactionStatePending   TransactionState = 0
 	TransactionStateConfirmed TransactionState = 1
 	TransactionStateFinalized TransactionState = 2
@@ -47,6 +60,15 @@ const (
 	ErrTxStateChainStateTransitionInvalid           = 12
 	ErrTxStateSemanticValidationFailed              = 255
 )
+
+func (t TransactionState) String() string {
+	return []string{
+		"pending",
+		"confirmed",
+		"finalized",
+		"failed",
+	}[t]
+}
 
 type (
 	// InfoResponse defines the response of a GET info REST API call.
@@ -143,7 +165,7 @@ type (
 	BlockMetadataResponse struct {
 		// BlockID The hex encoded block ID of the block.
 		BlockID string `json:"blockId"`
-		// BlockState might be pending, confirmed, finalized.
+		// BlockState might be pending, rejected, failed, confirmed, finalized.
 		BlockState string `json:"blockState"`
 		// TxState might be pending, conflicting, confirmed, finalized, rejected.
 		TxState string `json:"txState,omitempty"`
@@ -151,8 +173,6 @@ type (
 		BlockStateReason int `json:"blockStateReason,omitempty"`
 		// TxStateReason if applicable indicates the error that occurred during the transaction processing.
 		TxStateReason int `json:"txStateReason,omitempty"`
-		// ReissuePayload whether the block should be reissued.
-		ReissuePayload *bool `json:"reissuePayload,omitempty"`
 	}
 
 	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
@@ -316,25 +336,4 @@ func (v Versions) Supports(ver byte) bool {
 	}
 
 	return false
-}
-
-func (b BlockState) String() string {
-	return []string{
-		"pending",
-		"accepted",
-		"confirmed",
-		"finalized",
-		"orphaned",
-		"unknown",
-		"failed",
-	}[b]
-}
-
-func (t TransactionState) String() string {
-	return []string{
-		"pending",
-		"confirmed",
-		"finalized",
-		"failed",
-	}[t]
 }
