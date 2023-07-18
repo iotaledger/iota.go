@@ -383,7 +383,7 @@ func identToUnlock(vmParams *Params, input iotago.Output, inputIndex uint16) (io
 	}
 }
 
-func checkExpiredForReceiver(vmParams *Params, output iotago.Output) (iotago.Address, error) {
+func checkExpiration(vmParams *Params, output iotago.Output) (iotago.Address, error) {
 	if output.UnlockConditionSet().HasExpirationCondition() {
 		commitment := vmParams.WorkingSet.Commitment
 
@@ -391,9 +391,17 @@ func checkExpiredForReceiver(vmParams *Params, output iotago.Output) (iotago.Add
 			return nil, iotago.ErrExpirationConditionCommitmentInputRequired
 		}
 
-		if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(commitment.Index); ok {
+		futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
+		if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(futureBoundedSlotIndex); ok {
 			return returnIdent, nil
 		}
+
+		pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Index)
+		if output.UnlockConditionSet().OwnerIdentCanUnlock(pastBoundedSlotIndex) {
+			return nil, nil
+		}
+
+		return nil, iotago.ErrExpirationConditionUnlockFailed
 	}
 
 	return nil, nil
@@ -405,7 +413,7 @@ func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) err
 		return ierrors.Errorf("unable to retrieve ident to unlock of input %d: %w", inputIndex, err)
 	}
 
-	if actualIdentToUnlock, err := checkExpiredForReceiver(vmParams, output); err != nil {
+	if actualIdentToUnlock, err := checkExpiration(vmParams, output); err != nil {
 		return err
 	} else if actualIdentToUnlock != nil {
 		ownerIdent = actualIdentToUnlock
@@ -569,8 +577,8 @@ func ExecFuncTimelocks() ExecFunc {
 				if commitment == nil {
 					return iotago.ErrTimelockConditionCommitmentInputRequired
 				}
-
-				if err := input.Output.UnlockConditionSet().TimelocksExpired(commitment.Index); err != nil {
+				futureBoundedIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
+				if err := input.Output.UnlockConditionSet().TimelocksExpired(futureBoundedIndex); err != nil {
 					return ierrors.Wrapf(err, "input at index %d's timelocks are not expired", inputIndex)
 				}
 			}
