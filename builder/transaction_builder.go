@@ -5,10 +5,8 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
-var (
-	// ErrTransactionBuilder defines a generic error occurring within the TransactionBuilder.
-	ErrTransactionBuilder = ierrors.New("transaction builder error")
-)
+// ErrTransactionBuilder defines a generic error occurring within the TransactionBuilder.
+var ErrTransactionBuilder = ierrors.New("transaction builder error")
 
 // NewTransactionBuilder creates a new TransactionBuilder.
 func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
@@ -41,8 +39,6 @@ type TxInput struct {
 	Input iotago.Output `json:"input"`
 }
 
-// TODO: extend the builder with Allotments and ContextInputs
-
 // AddInput adds the given input to the builder.
 func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 	b.inputOwner[input.InputID] = input.UnlockTarget
@@ -58,8 +54,8 @@ func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.Output) bool
 
 // AddContextInput adds the given context input to the builder.
-func (b *TransactionBuilder) AddContextInput(input iotago.Input) *TransactionBuilder {
-	b.essence.ContextInputs = append(b.essence.ContextInputs, input)
+func (b *TransactionBuilder) AddContextInput(contextInput iotago.ContextInput) *TransactionBuilder {
+	b.essence.ContextInputs = append(b.essence.ContextInputs, contextInput)
 
 	return b
 }
@@ -128,13 +124,13 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 	inputs := inputIDs.OrderedSet(b.inputs)
 	commitment, err := inputs.Commitment(b.api)
 	if err != nil {
-		return nil, err
+		return nil, ierrors.Wrapf(err, "failed to calculate TX inputs commitment: %s, %s", inputIDs, b.inputs)
 	}
 	copy(b.essence.InputsCommitment[:], commitment)
 
 	txEssenceData, err := b.essence.SigningMessage(b.api)
 	if err != nil {
-		return nil, err
+		return nil, ierrors.Wrap(err, "failed to calculate tx essence for signing message")
 	}
 
 	unlockPos := map[string]int{}
@@ -154,7 +150,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 			var signature iotago.Signature
 			signature, err = signer.Sign(addr, txEssenceData)
 			if err != nil {
-				return nil, err
+				return nil, ierrors.Wrapf(err, "failed to sign tx essence: %s", txEssenceData)
 			}
 
 			unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: signature})

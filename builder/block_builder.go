@@ -15,8 +15,7 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 	protocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
-			IssuingTime:      time.Now(),
+			SlotCommitmentID: iotago.EmptyCommitmentID,
 		},
 		Signature: &iotago.Ed25519Signature{},
 		Block:     basicBlock,
@@ -315,6 +314,17 @@ func (v *ValidationBlockBuilder) HighestSupportedVersion(highestSupportedVersion
 	}
 
 	v.validationBlock.HighestSupportedVersion = highestSupportedVersion
+
+	return v
+}
+
+// ProtocolParametersHash sets the ProtocolParametersHash of the highest supported version.
+func (v *ValidationBlockBuilder) ProtocolParametersHash(hash iotago.Identifier) *ValidationBlockBuilder {
+	if v.err != nil {
+		return v
+	}
+
+	v.validationBlock.ProtocolParametersHash = hash
 
 	return v
 }
