@@ -170,6 +170,20 @@ func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
 	return p.v3ProtocolParameters.EpochNearingThreshold
 }
 
+// PastBoundedSlotIndex calculates the past bounded slot for the given slot.
+// Given any slot index of a commitment input, the result of this function is a slot index
+// that is at least equal to the slot of the block in which it was issued, or higher.
+func (p *V3ProtocolParameters) PastBoundedSlotIndex(slot SlotIndex) SlotIndex {
+	return slot + p.MaxCommittableAge()
+}
+
+// FutureBoundedSlotIndex calculates the past bounded slot for the given slot.
+// Given any slot index of a commitment input, the result of this function is a slot index
+// that is at most equal to the slot of the block in which it was issued, or lower.
+func (p *V3ProtocolParameters) FutureBoundedSlotIndex(slot SlotIndex) SlotIndex {
+	return slot + p.MinCommittableAge()
+}
+
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
 	return commonSerixAPI().Encode(context.TODO(), p)
 }
