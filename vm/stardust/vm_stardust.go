@@ -131,12 +131,12 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 		return ierrors.Wrap(iotago.ErrInvalidAccountStateTransition, "AccountOutput's ID is not zeroed even though it is new")
 	}
 
-	if nextBIFeat := current.FeatureSet().BlockIssuer(); nextBIFeat != nil {
+	if nextBlockIssuerFeat := current.FeatureSet().BlockIssuer(); nextBlockIssuerFeat != nil {
 		if vmParams.WorkingSet.Commitment == nil {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature validation requires a commitment input")
 		}
 
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(vmParams.WorkingSet.Commitment.Index) {
+		if nextBlockIssuerFeat.ExpirySlot != 0 && nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(vmParams.WorkingSet.Commitment.Index) {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	}
@@ -241,10 +241,10 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.Accoun
 // Check that at least one Block Issuer Key is present.
 func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	current := input.Output.(*iotago.AccountOutput)
-	currentBIFeat := current.FeatureSet().BlockIssuer()
-	nextBIFeat := next.FeatureSet().BlockIssuer()
+	currentBlockIssuerFeat := current.FeatureSet().BlockIssuer()
+	nextBlockIssuerFeat := next.FeatureSet().BlockIssuer()
 	// if the account has no block issuer feature.
-	if currentBIFeat == nil && nextBIFeat == nil {
+	if currentBlockIssuerFeat == nil && nextBlockIssuerFeat == nil {
 		return nil
 	}
 	// else if the account has negative bic, this is invalid.
@@ -262,18 +262,18 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	}
 
 	commitmentInputIndex := vmParams.WorkingSet.Commitment.Index
-	if currentBIFeat.ExpirySlot >= commitmentInputIndex {
+	if currentBlockIssuerFeat.ExpirySlot >= commitmentInputIndex {
 		// if the block issuer feature has not expired, it can not be removed.
-		if nextBIFeat == nil {
+		if nextBlockIssuerFeat == nil {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot remove block issuer feature until it expires")
 		}
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot != currentBIFeat.ExpirySlot && nextBIFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(commitmentInputIndex) {
+		if nextBlockIssuerFeat.ExpirySlot != 0 && nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(commitmentInputIndex) {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 
-	} else if nextBIFeat != nil {
+	} else if nextBlockIssuerFeat != nil {
 		// if the block issuer feature has expired, it must either be removed or expiry extended.
-		if nextBIFeat.ExpirySlot != 0 && nextBIFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(commitmentInputIndex) {
+		if nextBlockIssuerFeat.ExpirySlot != 0 && nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(commitmentInputIndex) {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	}
@@ -476,13 +476,13 @@ func accountStakingExpiredValidation(
 func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm.Params) error {
 	outputToDestroy := input.Output.(*iotago.AccountOutput)
 
-	BIFeat := outputToDestroy.FeatureSet().BlockIssuer()
-	if BIFeat != nil {
+	blockIssuerFeat := outputToDestroy.FeatureSet().BlockIssuer()
+	if blockIssuerFeat != nil {
 		if vmParams.WorkingSet.Commitment == nil {
 			return fmt.Errorf("%w: block issuer feature validation requires a commitment input", iotago.ErrInvalidBlockIssuerTransition)
 		}
 
-		if BIFeat.ExpirySlot == 0 || BIFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Index {
+		if blockIssuerFeat.ExpirySlot == 0 || blockIssuerFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Index {
 			// TODO: better error
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot destroy output until the block issuer feature expires")
 		}
