@@ -704,11 +704,7 @@ func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Param
 	}
 	pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Index)
 	pastBoundedEpochIndex := timeProvider.EpochFromSlot(pastBoundedSlotIndex)
-	votingPowerSlot, err := votingPowerSlot(pastBoundedEpochIndex, vmParams)
-
-	if err != nil {
-		return err
-	}
+	votingPowerSlot := votingPowerSlot(pastBoundedEpochIndex, vmParams)
 
 	var expectedStartEpoch iotago.EpochIndex
 	if pastBoundedSlotIndex <= votingPowerSlot {
@@ -756,11 +752,7 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 	}
 	futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
 	futureBoundedEpochIndex := timeProvider.EpochFromSlot(futureBoundedSlotIndex)
-	votingPowerSlot, err := votingPowerSlot(futureBoundedEpochIndex, vmParams)
-
-	if err != nil {
-		return err
-	}
+	votingPowerSlot := votingPowerSlot(futureBoundedEpochIndex, vmParams)
 
 	var expectedEndEpoch iotago.EpochIndex
 	if futureBoundedSlotIndex <= votingPowerSlot {
@@ -769,8 +761,8 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 		expectedEndEpoch = futureBoundedEpochIndex + 1
 	}
 
-	if current.EndEpoch != expectedEndEpoch {
-		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w (is %d, expected %d)", iotago.ErrInvalidDelegationEndEpoch, current.EndEpoch, expectedEndEpoch)
+	if next.EndEpoch != expectedEndEpoch {
+		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w (is %d, expected %d)", iotago.ErrInvalidDelegationEndEpoch, next.EndEpoch, expectedEndEpoch)
 	}
 
 	return nil
@@ -778,10 +770,10 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 
 // votingPowerSlot returns the slot at the end of which the voting power
 // for the epoch with index epochIndex is calculated.
-func votingPowerSlot(epochIndex iotago.EpochIndex, vmParams *vm.Params) (iotago.SlotIndex, error) {
+func votingPowerSlot(epochIndex iotago.EpochIndex, vmParams *vm.Params) iotago.SlotIndex {
 	timeProvider := vmParams.API.TimeProvider()
 	startSlotNextEpoch := timeProvider.EpochStart(epochIndex + 1)
 	// TODO: Activity Window Duration missing.
 	votingPowerCalcSlotNextEpoch := startSlotNextEpoch - vmParams.API.ProtocolParameters().EpochNearingThreshold() - 1
-	return votingPowerCalcSlotNextEpoch, nil
+	return votingPowerCalcSlotNextEpoch
 }

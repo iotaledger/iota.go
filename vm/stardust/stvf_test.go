@@ -2505,12 +2505,15 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 
 func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 	currentEpoch := iotago.EpochIndex(20)
-	currentSlot := tpkg.TestAPI.TimeProvider().EpochStart(currentEpoch)
+	epochStartSlot := tpkg.TestAPI.TimeProvider().EpochStart(currentEpoch)
+	epochEndSlot := tpkg.TestAPI.TimeProvider().EpochEnd(currentEpoch)
 	minCommittableAge := tpkg.TestAPI.ProtocolParameters().MinCommittableAge()
 	maxCommittableAge := tpkg.TestAPI.ProtocolParameters().MaxCommittableAge()
 
-	// Pick a commitment index in the middle of the valid range, as a realistic example.
-	commitmentIndex := currentSlot - minCommittableAge - ((maxCommittableAge - minCommittableAge) / 2)
+	// Commitment indices that will always end up being in current epoch, no matter if
+	// future or past bounded.
+	epochStartCommitmentIndex := epochStartSlot - minCommittableAge
+	epochEndCommitmentIndex := epochEndSlot - maxCommittableAge
 
 	exampleDelegationID := iotago.DelegationIDFromOutputID(tpkg.RandOutputID(0))
 
@@ -2545,7 +2548,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2571,7 +2574,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2597,7 +2600,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2623,7 +2626,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2648,7 +2651,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2676,7 +2679,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2722,14 +2725,14 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
 					},
 				},
 			},
 			wantErr: iotago.ErrInvalidDelegationModified,
 		},
 		{
-			name: "fail - invalid transition - end epoch not set to expected epoch",
+			name: "fail - invalid pre-registration slot transition - end epoch not set to expected epoch",
 			input: &vm.ChainOutputWithCreationTime{
 				ChainID: exampleDelegationID,
 				Output: &iotago.DelegationOutput{
@@ -2760,7 +2763,45 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidDelegationEndEpoch,
+		},
+		{
+			name: "fail - invalid post-registration slot transition - end epoch not set to expected epoch",
+			input: &vm.ChainOutputWithCreationTime{
+				ChainID: exampleDelegationID,
+				Output: &iotago.DelegationOutput{
+					Amount:          100,
+					DelegatedAmount: 100,
+					DelegationID:    iotago.EmptyDelegationId(),
+					ValidatorID:     tpkg.RandAccountID(),
+					StartEpoch:      currentEpoch + 1,
+					EndEpoch:        0,
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			},
+			nextMut: map[string]fieldMutations{
+				"end_epoch_current": {
+					"DelegationID": exampleDelegationID,
+					"EndEpoch":     currentEpoch,
+				},
+				"end_epoch_+2": {
+					"DelegationID": exampleDelegationID,
+					"EndEpoch":     currentEpoch + 2,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				API: tpkg.TestAPI,
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Commitment: &iotago.Commitment{
+						Index: epochEndCommitmentIndex,
 					},
 				},
 			},
@@ -2789,7 +2830,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
 					},
 					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleDelegationID: 1,
@@ -2821,7 +2862,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
 					},
 					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleDelegationID: 0,
@@ -2853,11 +2894,36 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: commitmentIndex,
+						Index: epochStartCommitmentIndex,
 					},
 				},
 			},
 			wantErr: iotago.ErrInvalidDelegationRewardsClaiming,
+		},
+		{
+			name: "fail - invalid genesis - missing commitment input",
+			next: &iotago.DelegationOutput{
+				Amount:          100,
+				DelegatedAmount: 100,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      currentEpoch + 1,
+				EndEpoch:        0,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			transType: iotago.ChainTransitionTypeGenesis,
+			svCtx: &vm.Params{
+				API: tpkg.TestAPI,
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{},
+					Rewards: map[iotago.ChainID]iotago.Mana{
+						exampleDelegationID: 0,
+					},
+				},
+			},
+			wantErr: iotago.ErrDelegationCommitmentInputRequired,
 		},
 	}
 
