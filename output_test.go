@@ -883,16 +883,16 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			sourceIdent := tpkg.RandEd25519Address()
+			receiverIdent := tpkg.RandEd25519Address()
 			return test{
 				name: "can unlock - target is source (no unlock conditions)",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: sourceIdent},
+						&iotago.AddressUnlockCondition{Address: receiverIdent},
 					},
 				},
-				targetIdent:         sourceIdent,
+				targetIdent:         receiverIdent,
 				commitmentInputTime: iotago.SlotIndex(0),
 				minCommittableAge:   iotago.SlotIndex(0),
 				maxCommittableAge:   iotago.SlotIndex(0),
@@ -916,20 +916,20 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() test {
-			sourceIdent := tpkg.RandEd25519Address()
+			receiverIdent := tpkg.RandEd25519Address()
 			return test{
-				name: "can unlock - output not expired for source ident",
+				name: "expiration - receiver ident can unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: sourceIdent},
+						&iotago.AddressUnlockCondition{Address: receiverIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
-							SlotIndex:     30,
+							SlotIndex:     26,
 						},
 					},
 				},
-				targetIdent:         sourceIdent,
+				targetIdent:         receiverIdent,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
@@ -937,21 +937,21 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() test {
-			sourceIdent := tpkg.RandEd25519Address()
-			senderIdent := tpkg.RandEd25519Address()
+			receiverIdent := tpkg.RandEd25519Address()
+			returnIdent := tpkg.RandEd25519Address()
 			return test{
-				name: "can not unlock - output expired for source ident",
+				name: "expiration - receiver ident can not unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: sourceIdent},
+						&iotago.AddressUnlockCondition{Address: receiverIdent},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress: senderIdent,
-							SlotIndex:     20,
+							ReturnAddress: returnIdent,
+							SlotIndex:     25,
 						},
 					},
 				},
-				targetIdent:         sourceIdent,
+				targetIdent:         receiverIdent,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
@@ -959,21 +959,21 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() test {
-			sourceIdent := tpkg.RandEd25519Address()
-			senderIdent := tpkg.RandEd25519Address()
+			receiverIdent := tpkg.RandEd25519Address()
+			returnIdent := tpkg.RandEd25519Address()
 			return test{
-				name: "can unlock - output expired for return ident",
+				name: "expiration - return ident can unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: sourceIdent},
+						&iotago.AddressUnlockCondition{Address: receiverIdent},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress: senderIdent,
-							SlotIndex:     12,
+							ReturnAddress: returnIdent,
+							SlotIndex:     15,
 						},
 					},
 				},
-				targetIdent:         senderIdent,
+				targetIdent:         returnIdent,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
@@ -981,17 +981,39 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() test {
-			sourceIdent := tpkg.RandEd25519Address()
+			receiverIdent := tpkg.RandEd25519Address()
+			returnIdent := tpkg.RandEd25519Address()
 			return test{
-				name: "can unlock - expired timelock unlock condition",
+				name: "expiration - return ident can not unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: sourceIdent},
+						&iotago.AddressUnlockCondition{Address: receiverIdent},
+						&iotago.ExpirationUnlockCondition{
+							ReturnAddress: returnIdent,
+							SlotIndex:     16,
+						},
+					},
+				},
+				targetIdent:         returnIdent,
+				commitmentInputTime: iotago.SlotIndex(5),
+				minCommittableAge:   iotago.SlotIndex(10),
+				maxCommittableAge:   iotago.SlotIndex(20),
+				canUnlock:           false,
+			}
+		}(),
+		func() test {
+			receiverIdent := tpkg.RandEd25519Address()
+			return test{
+				name: "timelock - expired timelock is unlockable",
+				output: &iotago.BasicOutput{
+					Amount: OneMi,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: receiverIdent},
 						&iotago.TimelockUnlockCondition{SlotIndex: 15},
 					},
 				},
-				targetIdent:         sourceIdent,
+				targetIdent:         receiverIdent,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
@@ -999,17 +1021,17 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() test {
-			sourceIdent := tpkg.RandEd25519Address()
+			receiverIdent := tpkg.RandEd25519Address()
 			return test{
-				name: "can not unlock - not expired timelock unlock condition",
+				name: "timelock - non-expired timelock is not unlockable",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: sourceIdent},
-						&iotago.TimelockUnlockCondition{SlotIndex: 30},
+						&iotago.AddressUnlockCondition{Address: receiverIdent},
+						&iotago.TimelockUnlockCondition{SlotIndex: 16},
 					},
 				},
-				targetIdent:         sourceIdent,
+				targetIdent:         receiverIdent,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
