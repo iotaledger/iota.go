@@ -107,7 +107,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				0,
 				0,
 			),
-			WithLivenessOptions(10, 20, 3, 4),
+			WithLivenessOptions(10, 20, 3, 24),
 			WithStakingOptions(10),
 			WithVersionSignalingOptions(7, 5, 7),
 		},
