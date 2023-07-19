@@ -215,7 +215,7 @@ func (f UnlockConditionSet) unlockableBy(ident Address, owner Address, pastBound
 
 // OwnerIdentCanUnlock tells whether the target address defined in an expiration unlock condition within this set is
 // allowed to unlock an Output containing this UnlockConditionSet given the past bounded slot index of the tx defined as
-// the slot index of the commitment input plus the min committable age.
+// the slot index of the commitment input plus the max committable age.
 func (f UnlockConditionSet) OwnerIdentCanUnlock(pastBoundedSlotIndex SlotIndex) bool {
 	expUnlockCond := f.Expiration()
 
@@ -233,7 +233,7 @@ func (f UnlockConditionSet) OwnerIdentCanUnlock(pastBoundedSlotIndex SlotIndex) 
 
 // ReturnIdentCanUnlock tells whether a sender defined in an expiration unlock condition within this set is the actual
 // identity which could unlock an Output containing this UnlockConditionSet given the future bounded slot index of the tx
-// defined as the slot index of the commitment input plus the max committable age.
+// defined as the slot index of the commitment input plus the min committable age.
 func (f UnlockConditionSet) ReturnIdentCanUnlock(futureBoundedSlotIndex SlotIndex) (bool, Address) {
 	expUnlockCond := f.Expiration()
 
@@ -250,7 +250,7 @@ func (f UnlockConditionSet) ReturnIdentCanUnlock(futureBoundedSlotIndex SlotInde
 
 // TimelocksExpired tells whether UnlockCondition(s) in this set which impose a timelock are expired
 // in relation to the given future bounded slot index. The provided slot index is the slot index of the commitment
-// input which is being spent by the transaction + the max committable age.
+// input which is being spent by the transaction plus the min committable age.
 func (f UnlockConditionSet) TimelocksExpired(futureBoundedIndex SlotIndex) error {
 	timelock := f.Timelock()
 
