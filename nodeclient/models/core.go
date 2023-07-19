@@ -252,7 +252,7 @@ type (
 		// EpochIndex is the epoch index for which the mana rewards are returned.
 		EpochIndex iotago.EpochIndex `json:"epochIndex"`
 		// The amount of totally available rewards the requested output may claim.
-		TotalReward uint64 `json:"totalReward"`
+		Rewards uint64 `json:"rewards"`
 	}
 
 	// CommitteeMemberResponse defines the response used in committee and staking response REST API calls.
@@ -269,7 +269,7 @@ type (
 
 	// CommitteeResponse defines the response for the staking REST API call.
 	CommitteeResponse struct {
-		Committee           []CommitteeMemberResponse `json:"stakers"`
+		Committee           []CommitteeMemberResponse `json:"committee"`
 		TotalStake          uint64                    `json:"totalStake"`
 		TotalValidatorStake uint64                    `json:"totalValidatorStake"`
 		EpochIndex          iotago.EpochIndex         `json:"epochIndex"`
