@@ -212,10 +212,10 @@ type (
 		// Ready indicates if a node is ready to issue a block in a current congestion or should wait.
 		Ready bool `json:"ready"`
 		// ReferenceManaCost (RMC) is the mana cost a user needs to burn to issue a block in SlotIndex slot.
-		ReferenceManaCost uint64 `json:"referenceManaCost"`
+		ReferenceManaCost iotago.Mana `json:"referenceManaCost"`
 		// BlockIssuanceCredits (BIC) is the mana a user has on its BIC account exactly slotIndex - MaxCommittableASge in the past.
 		// This balance needs to be > 0 zero, otherwise account is locked
-		BlockIssuanceCredits uint64 `json:"blockIssuanceCredits"`
+		BlockIssuanceCredits iotago.BlockIssuanceCredits `json:"blockIssuanceCredits"`
 	}
 
 	// BlockIssuanceCreditsResponse defines the response for the block issuance credits REST API call.
@@ -223,7 +223,7 @@ type (
 		// SlotIndex is the index of the slot corresponding to the block issuance credits value returned.
 		SlotIndex iotago.SlotIndex `json:"slotIndex"`
 		// BlockIssuanceCredits is the block issuance credits value for the slot. Node is able to provide values only of already committed slots.
-		BlockIssuanceCredits uint64 `json:"blockIssuanceCredits"`
+		BlockIssuanceCredits iotago.BlockIssuanceCredits `json:"blockIssuanceCredits"`
 	}
 
 	// ValidatorResponse defines the response used in stakers response REST API calls.
@@ -233,11 +233,11 @@ type (
 		// StakingEpochEnd is the epoch until which the validator registered to stake.
 		StakingEpochEnd iotago.EpochIndex `json:"stakingEpochEnd"`
 		// PoolStake is the sum of tokens delegated to the pooland the validator stake.
-		PoolStake uint64 `json:"poolStake"`
+		PoolStake iotago.BaseToken `json:"poolStake"`
 		// ValidatorStake is the stake of the validator.
-		ValidatorStake uint64 `json:"validatorStake"`
+		ValidatorStake iotago.BaseToken `json:"validatorStake"`
 		// FixedCost is the fixed cost that the validator reciews from the total pool reward.
-		FixedCost uint64 `json:"fixedCost"`
+		FixedCost iotago.Mana `json:"fixedCost"`
 		// LatestSuccessfulReward is the latest successful reward of the validator.
 		LatestSupportedProtocolVersion uint64 `json:"latestSupportedProtocolVersion"`
 	}
@@ -252,7 +252,7 @@ type (
 		// EpochIndex is the epoch index for which the mana rewards are returned.
 		EpochIndex iotago.EpochIndex `json:"epochIndex"`
 		// The amount of totally available rewards the requested output may claim.
-		Rewards uint64 `json:"rewards"`
+		Rewards iotago.Mana `json:"rewards"`
 	}
 
 	// CommitteeMemberResponse defines the response used in committee and staking response REST API calls.
@@ -260,18 +260,18 @@ type (
 		// AccountID is the hex encoded account ID of the validator.
 		AccountID string `json:"accountId"`
 		// PoolStake is the sum of tokens delegated to the pooland the validator stake.
-		PoolStake uint64 `json:"poolStake"`
+		PoolStake iotago.BaseToken `json:"poolStake"`
 		// ValidatorStake is the stake of the validator.
-		ValidatorStake uint64 `json:"validatorStake"`
+		ValidatorStake iotago.BaseToken `json:"validatorStake"`
 		// FixedCost is the fixed cost that the validator reciews from the total pool reward.
-		FixedCost uint64 `json:"fixedCost"`
+		FixedCost iotago.Mana `json:"fixedCost"`
 	}
 
 	// CommitteeResponse defines the response for the staking REST API call.
 	CommitteeResponse struct {
 		Committee           []CommitteeMemberResponse `json:"committee"`
-		TotalStake          uint64                    `json:"totalStake"`
-		TotalValidatorStake uint64                    `json:"totalValidatorStake"`
+		TotalStake          iotago.BaseToken          `json:"totalStake"`
+		TotalValidatorStake iotago.BaseToken          `json:"totalValidatorStake"`
 		EpochIndex          iotago.EpochIndex         `json:"epochIndex"`
 	}
 )
