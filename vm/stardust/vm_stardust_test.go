@@ -4241,8 +4241,8 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 	accountIdent := tpkg.RandAccountAddress()
 
 	var manaRewardAmount iotago.Mana = 200
-	currentSlot := 20 * testProtoParams.ParamEpochDurationInSlots()
-	currentEpoch := testProtoParams.TimeProvider().EpochFromSlot(currentSlot)
+	currentEpoch := iotago.EpochIndex(20)
+	currentSlot := testProtoParams.TimeProvider().EpochStart(currentEpoch)
 
 	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
@@ -4264,7 +4264,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 						StakedAmount: 100,
 						FixedCost:    50,
 						StartEpoch:   currentEpoch - 10,
-						EndEpoch:     currentEpoch,
+						EndEpoch:     currentEpoch - 1,
 					},
 				},
 			},

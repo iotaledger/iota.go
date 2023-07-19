@@ -361,7 +361,7 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 		futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
 		futureBoundedEpochIndex := timeProvider.EpochFromSlot(futureBoundedSlotIndex)
 
-		if futureBoundedEpochIndex < currentStakingFeat.EndEpoch {
+		if futureBoundedEpochIndex <= currentStakingFeat.EndEpoch {
 			earliestUnbondingEpoch := pastBoundedEpochIndex + vmParams.API.ProtocolParameters().StakingUnbondingPeriod()
 
 			return accountStakingNonExpiredValidation(
@@ -509,7 +509,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 		futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
 		futureBoundedEpochIndex := timeProvider.EpochFromSlot(futureBoundedSlotIndex)
 
-		if futureBoundedEpochIndex < stakingFeat.EndEpoch {
+		if futureBoundedEpochIndex <= stakingFeat.EndEpoch {
 			return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "%w: cannot destroy account until the staking feature is unbonded", iotago.ErrInvalidStakingBondedRemoval)
 		}
 
