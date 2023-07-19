@@ -41,7 +41,7 @@ var (
 			decayFactorEpochsSumExponent,
 		),
 		iotago.WithStakingOptions(10),
-		iotago.WithLivenessOptions(10, 20, 3, 4),
+		iotago.WithLivenessOptions(10, 20, 3, 24),
 	)
 
 	testAPI = iotago.V3API(testProtoParams)
