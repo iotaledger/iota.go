@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"encoding/binary"
+	"time"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -105,6 +106,8 @@ type ProtocolParameters interface {
 	StakingUnbondingPeriod() EpochIndex
 
 	LivenessThreshold() SlotIndex
+
+	LivenessThresholdDuration() time.Duration
 
 	EvictionAge() SlotIndex
 
