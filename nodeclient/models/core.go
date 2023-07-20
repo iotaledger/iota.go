@@ -13,6 +13,7 @@ type (
 )
 
 type BlockState int
+type BlockFailureReason int
 
 const (
 	BlockStateUnknown BlockState = iota
@@ -22,9 +23,8 @@ const (
 	BlockStateOrphaned
 	BlockStateFailed
 
-	ErrBlockInvalid                        = 1
-	ErrBlockOrphanedDueToCongestionControl = 2
-	ErrBlockOrphanedDueToNegativeCredits   = 3
+	ErrBlockOrphanedDueToCongestionControl BlockFailureReason = 1
+	ErrBlockOrphanedDueToNegativeCredits   BlockFailureReason = 2
 )
 
 func (b BlockState) String() string {
@@ -39,6 +39,7 @@ func (b BlockState) String() string {
 }
 
 type TransactionState int
+type TransactionFailureReason int
 
 const (
 	TransactionStatePending   TransactionState = 0
@@ -46,19 +47,19 @@ const (
 	TransactionStateFinalized TransactionState = 2
 	TransactionStateFailed    TransactionState = 3
 
-	ErrTxStateReferencedUTXOAlreadySpent            = 1
-	ErrTxStateTxConflicting                         = 2
-	ErrTxStateReferencedUTXONotFound                = 3
-	ErrTxStateSumOfInputAndOutputValuesDoesNotMatch = 4
-	ErrTxStateUnlockBlockSignatureInvalid           = 5
-	ErrTxStateConfiguredTimelockNotYetExpired       = 6
-	ErrTxStateGivenNativeTokensInvalid              = 7
-	ErrTxStateReturnAmountNotFulfilled              = 8
-	ErrTxStateInputUnlockInvalid                    = 9
-	ErrTxStateInputsCommitmentInvalid               = 10
-	ErrTxStateSenderNotUnlocked                     = 11
-	ErrTxStateChainStateTransitionInvalid           = 12
-	ErrTxStateSemanticValidationFailed              = 255
+	ErrTxStateReferencedUTXOAlreadySpent            TransactionFailureReason = 1
+	ErrTxStateTxConflicting                         TransactionFailureReason = 2
+	ErrTxStateReferencedUTXONotFound                TransactionFailureReason = 3
+	ErrTxStateSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 4
+	ErrTxStateUnlockBlockSignatureInvalid           TransactionFailureReason = 5
+	ErrTxStateConfiguredTimelockNotYetExpired       TransactionFailureReason = 6
+	ErrTxStateGivenNativeTokensInvalid              TransactionFailureReason = 7
+	ErrTxStateReturnAmountNotFulfilled              TransactionFailureReason = 8
+	ErrTxStateInputUnlockInvalid                    TransactionFailureReason = 9
+	ErrTxStateInputsCommitmentInvalid               TransactionFailureReason = 10
+	ErrTxStateSenderNotUnlocked                     TransactionFailureReason = 11
+	ErrTxStateChainStateTransitionInvalid           TransactionFailureReason = 12
+	ErrTxStateSemanticValidationFailed              TransactionFailureReason = 255
 )
 
 func (t TransactionState) String() string {
