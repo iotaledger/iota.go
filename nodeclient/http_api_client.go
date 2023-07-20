@@ -11,7 +11,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/nodeclient/models"
+	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 )
 
 const (
@@ -291,8 +291,8 @@ func (client *Client) Health(ctx context.Context) (bool, error) {
 }
 
 // Routes gets the routes the node supports.
-func (client *Client) Routes(ctx context.Context) (*models.RoutesResponse, error) {
-	res := &models.RoutesResponse{}
+func (client *Client) Routes(ctx context.Context) (*apimodels.RoutesResponse, error) {
+	res := &apimodels.RoutesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, RouteRoutes, nil, res); err != nil {
 		return nil, err
 	}
@@ -301,8 +301,8 @@ func (client *Client) Routes(ctx context.Context) (*models.RoutesResponse, error
 }
 
 // Info gets the info of the node.
-func (client *Client) Info(ctx context.Context) (*models.InfoResponse, error) {
-	res := &models.InfoResponse{}
+func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error) {
+	res := &apimodels.InfoResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, RouteInfo, nil, res); err != nil {
 		return nil, err
 	}
@@ -311,8 +311,8 @@ func (client *Client) Info(ctx context.Context) (*models.InfoResponse, error) {
 }
 
 // BlockIssuance gets the info to issue a block.
-func (client *Client) BlockIssuance(ctx context.Context) (*models.IssuanceBlockHeaderResponse, error) {
-	res := &models.IssuanceBlockHeaderResponse{}
+func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlockHeaderResponse, error) {
+	res := &apimodels.IssuanceBlockHeaderResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, RouteBlockIssuance, nil, res); err != nil {
 		return nil, err
 	}
@@ -362,10 +362,10 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.ProtocolBlock) 
 }
 
 // BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
-func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*models.BlockMetadataResponse, error) {
+func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*apimodels.BlockMetadataResponse, error) {
 	query := fmt.Sprintf(RouteBlockMetadata, hexutil.EncodeHex(blockID[:]))
 
-	res := &models.BlockMetadataResponse{}
+	res := &apimodels.BlockMetadataResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -408,10 +408,10 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 }
 
 // BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
-func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*models.BlockMetadataResponse, error) {
+func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*apimodels.BlockMetadataResponse, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlockMetadata, hexutil.EncodeHex(txID[:]))
 
-	res := &models.BlockMetadataResponse{}
+	res := &apimodels.BlockMetadataResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -437,10 +437,10 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 }
 
 // OutputMetadataByID gets an output's metadata by its ID from the node without getting the output data again.
-func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*models.OutputMetadataResponse, error) {
+func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*apimodels.OutputMetadataResponse, error) {
 	query := fmt.Sprintf(RouteOutputMetadata, outputID.ToHex())
 
-	res := &models.OutputMetadataResponse{}
+	res := &apimodels.OutputMetadataResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -461,10 +461,10 @@ func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID
 }
 
 // CommitmentUTXOChangesByID returns all UTXO changes of a commitment by its ID.
-func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*models.UTXOChangesResponse, error) {
+func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*apimodels.UTXOChangesResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByIDUTXOChanges, id.ToHex())
 
-	res := &models.UTXOChangesResponse{}
+	res := &apimodels.UTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -485,10 +485,10 @@ func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIn
 }
 
 // CommitmentUTXOChangesByIndex returns all UTXO changes of a commitment by its index.
-func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*models.UTXOChangesResponse, error) {
+func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*apimodels.UTXOChangesResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByIndexUTXOChanges, index)
 
-	res := &models.UTXOChangesResponse{}
+	res := &apimodels.UTXOChangesResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -497,10 +497,10 @@ func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index io
 }
 
 // PeerByID gets a peer by its identifier.
-func (client *Client) PeerByID(ctx context.Context, id string) (*models.PeerResponse, error) {
+func (client *Client) PeerByID(ctx context.Context, id string) (*apimodels.PeerResponse, error) {
 	query := fmt.Sprintf(RoutePeer, id)
 
-	res := &models.PeerResponse{}
+	res := &apimodels.PeerResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -520,8 +520,8 @@ func (client *Client) RemovePeerByID(ctx context.Context, id string) error {
 }
 
 // Peers returns a list of all peers.
-func (client *Client) Peers(ctx context.Context) ([]*models.PeerResponse, error) {
-	res := []*models.PeerResponse{}
+func (client *Client) Peers(ctx context.Context) ([]*apimodels.PeerResponse, error) {
+	res := []*apimodels.PeerResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, RoutePeers, nil, &res); err != nil {
 		return nil, err
 	}
@@ -530,8 +530,8 @@ func (client *Client) Peers(ctx context.Context) ([]*models.PeerResponse, error)
 }
 
 // AddPeer adds a new peer by libp2p multi address with optional alias.
-func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ...string) (*models.PeerResponse, error) {
-	req := &models.AddPeerRequest{
+func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ...string) (*apimodels.PeerResponse, error) {
+	req := &apimodels.AddPeerRequest{
 		MultiAddress: multiAddress,
 	}
 
@@ -539,7 +539,7 @@ func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ..
 		req.Alias = &alias[0]
 	}
 
-	res := &models.PeerResponse{}
+	res := &apimodels.PeerResponse{}
 	if _, err := client.Do(ctx, http.MethodPost, RoutePeers, req, res); err != nil {
 		return nil, err
 	}

@@ -19,7 +19,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
-	"github.com/iotaledger/iota.go/v4/nodeclient/models"
+	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -58,10 +58,10 @@ func TestClient_Info(t *testing.T) {
 	defer gock.Off()
 
 	ts := time.Now()
-	originInfo := &models.InfoResponse{
+	originInfo := &apimodels.InfoResponse{
 		Name:    "HORNET",
 		Version: "1.0.0",
-		Status: &models.InfoResNodeStatus{
+		Status: &apimodels.InfoResNodeStatus{
 			IsHealthy:                   true,
 			LatestAcceptedBlockID:       hexutil.EncodeHex(tpkg.RandBytes(40)),
 			LatestConfirmedBlockID:      hexutil.EncodeHex(tpkg.RandBytes(40)),
@@ -73,7 +73,7 @@ func TestClient_Info(t *testing.T) {
 			LatestCommittedSlot:         iotago.SlotIndex(142860),
 			PruningSlot:                 iotago.SlotIndex(142800),
 		},
-		BaseToken: &models.InfoResBaseToken{
+		BaseToken: &apimodels.InfoResBaseToken{
 			Name:            "TestCoin",
 			TickerSymbol:    "TEST",
 			Unit:            "TEST",
@@ -81,7 +81,7 @@ func TestClient_Info(t *testing.T) {
 			Decimals:        6,
 			UseMetricPrefix: false,
 		},
-		Metrics: &models.InfoResNodeMetrics{
+		Metrics: &apimodels.InfoResNodeMetrics{
 			BlocksPerSecond:          20.0,
 			ConfirmedBlocksPerSecond: 10.0,
 			ConfirmationRate:         50.0,
@@ -120,7 +120,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 
 	parents := []string{"733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d", "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe"}
 
-	originRes := &models.IssuanceBlockHeaderResponse{
+	originRes := &apimodels.IssuanceBlockHeaderResponse{
 		StrongParents:       parents,
 		WeakParents:         parents,
 		ShallowLikeParents:  parents,
@@ -191,10 +191,10 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 
 	queryHash := hexutil.EncodeHex(identifier[:])
 
-	originRes := &models.BlockMetadataResponse{
+	originRes := &apimodels.BlockMetadataResponse{
 		BlockID:    queryHash,
-		BlockState: models.BlockStateConfirmed.String(),
-		TxState:    models.TransactionStateConfirmed.String(),
+		BlockState: apimodels.BlockStateConfirmed.String(),
+		TxState:    apimodels.TransactionStateConfirmed.String(),
 	}
 
 	gock.New(nodeAPIUrl).
@@ -304,7 +304,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 
 	txID := tpkg.Rand32ByteArray()
 	hexTxID := hexutil.EncodeHex(txID[:])
-	originRes := &models.OutputMetadataResponse{
+	originRes := &apimodels.OutputMetadataResponse{
 		BlockID:              hexutil.EncodeHex(tpkg.RandBytes(40)),
 		TransactionID:        hexTxID,
 		OutputIndex:          3,
@@ -367,7 +367,7 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &models.UTXOChangesResponse{
+	originRes := &apimodels.UTXOChangesResponse{
 		Index:           1337,
 		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
 		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},
@@ -417,7 +417,7 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &models.UTXOChangesResponse{
+	originRes := &apimodels.UTXOChangesResponse{
 		Index:           slotIndex,
 		CreatedOutputs:  []string{randCreatedOutput.ID().ToHex()},
 		ConsumedOutputs: []string{randConsumedOutput.ID().ToHex()},
@@ -434,15 +434,15 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	require.EqualValues(t, originRes, resp)
 }
 
-var sampleGossipInfo = &models.GossipInfo{
-	Heartbeat: &models.GossipHeartbeat{
+var sampleGossipInfo = &apimodels.GossipInfo{
+	Heartbeat: &apimodels.GossipHeartbeat{
 		SolidSlotIndex:  234,
 		PrunedSlotIndex: 5872,
 		LatestSlotIndex: 1294,
 		ConnectedPeers:  2392,
 		SyncedPeers:     1234,
 	},
-	Metrics: models.PeerGossipMetrics{
+	Metrics: apimodels.PeerGossipMetrics{
 		NewBlocks:             40,
 		KnownBlocks:           60,
 		ReceivedBlocks:        100,
@@ -460,7 +460,7 @@ var sampleGossipInfo = &models.GossipInfo{
 func TestClient_PeerByID(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &models.PeerResponse{
+	originRes := &apimodels.PeerResponse{
 		MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
 		ID:             peerID,
 		Connected:      true,
@@ -497,7 +497,7 @@ func TestClient_Peers(t *testing.T) {
 
 	peerID2 := "12D3KooWFJ8Nq6gHLLvigTpPdddddsadsadscpJof8Y4y8yFAB32"
 
-	originRes := []*models.PeerResponse{
+	originRes := []*apimodels.PeerResponse{
 		{
 			MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
 			ID:             peerID,
@@ -530,7 +530,7 @@ func TestClient_AddPeer(t *testing.T) {
 
 	multiAddr := fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)
 
-	originRes := &models.PeerResponse{
+	originRes := &apimodels.PeerResponse{
 		MultiAddresses: []string{multiAddr},
 		ID:             peerID,
 		Connected:      true,
@@ -538,7 +538,7 @@ func TestClient_AddPeer(t *testing.T) {
 		Gossip:         sampleGossipInfo,
 	}
 
-	req := &models.AddPeerRequest{MultiAddress: multiAddr}
+	req := &apimodels.AddPeerRequest{MultiAddress: multiAddr}
 	gock.New(nodeAPIUrl).
 		Post(nodeclient.RoutePeers).
 		JSON(req).

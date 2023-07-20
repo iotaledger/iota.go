@@ -12,7 +12,7 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
-	"github.com/iotaledger/iota.go/v4/nodeclient/models"
+	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -23,7 +23,7 @@ func TestMain(m *testing.M) { // call the tests
 func Test_EventAPIEnabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &models.RoutesResponse{
+	originRoutes := &apimodels.RoutesResponse{
 		Routes: []string{"mqtt/v2"},
 	}
 
@@ -39,7 +39,7 @@ func Test_EventAPIEnabled(t *testing.T) {
 func Test_EventAPIDisabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &models.RoutesResponse{
+	originRoutes := &apimodels.RoutesResponse{
 		Routes: []string{"someplugin/v1"},
 	}
 
