@@ -83,29 +83,29 @@ type (
 type NFTOutput struct {
 	// The amount of IOTA tokens held by the output.
 	Amount BaseToken `serix:"0,mapKey=amount"`
-	// The native tokens held by the output.
-	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
-	// The identifier of this NFT.
-	NFTID NFTID `serix:"2,mapKey=nftId"`
-	// The unlock conditions on this output.
-	Conditions NFTOutputUnlockConditions `serix:"3,mapKey=unlockConditions,omitempty"`
-	// The feature on the output.
-	Features NFTOutputFeatures `serix:"4,mapKey=features,omitempty"`
-	// The immutable feature on the output.
-	ImmutableFeatures NFTOutputImmFeatures `serix:"5,mapKey=immutableFeatures,omitempty"`
 	// The stored mana held by the output.
-	Mana Mana `serix:"6,mapKey=mana"`
+	Mana Mana `serix:"1,mapKey=mana"`
+	// The native tokens held by the output.
+	NativeTokens NativeTokens `serix:"2,mapKey=nativeTokens,omitempty"`
+	// The identifier of this NFT.
+	NFTID NFTID `serix:"3,mapKey=nftId"`
+	// The unlock conditions on this output.
+	Conditions NFTOutputUnlockConditions `serix:"4,mapKey=unlockConditions,omitempty"`
+	// The feature on the output.
+	Features NFTOutputFeatures `serix:"5,mapKey=features,omitempty"`
+	// The immutable feature on the output.
+	ImmutableFeatures NFTOutputImmFeatures `serix:"6,mapKey=immutableFeatures,omitempty"`
 }
 
 func (n *NFTOutput) Clone() Output {
 	return &NFTOutput{
 		Amount:            n.Amount,
+		Mana:              n.Mana,
 		NativeTokens:      n.NativeTokens.Clone(),
 		NFTID:             n.NFTID,
 		Conditions:        n.Conditions.Clone(),
 		Features:          n.Features.Clone(),
 		ImmutableFeatures: n.ImmutableFeatures.Clone(),
-		Mana:              n.Mana,
 	}
 }
 
@@ -174,10 +174,10 @@ func (n *NFTOutput) Type() OutputType {
 func (n *NFTOutput) Size() int {
 	return util.NumByteLen(byte(OutputNFT)) +
 		BaseTokenSize +
+		ManaSize +
 		n.NativeTokens.Size() +
 		NFTIDLength +
 		n.Conditions.Size() +
 		n.Features.Size() +
-		n.ImmutableFeatures.Size() +
-		ManaSize
+		n.ImmutableFeatures.Size()
 }

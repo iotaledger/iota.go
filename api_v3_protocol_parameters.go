@@ -65,6 +65,9 @@ type v3ProtocolParameters struct {
 	EpochNearingThreshold SlotIndex `serix:"18,mapKey=epochNearingThreshold"`
 
 	VersionSignaling VersionSignaling `serix:"19,mapKey=versionSignaling"`
+
+	// LivenessThresholdDuration is a derived field and should not be serialized.
+	LivenessThresholdDuration time.Duration
 }
 
 func (p v3ProtocolParameters) Equals(other v3ProtocolParameters) bool {
@@ -155,7 +158,7 @@ func (p *V3ProtocolParameters) TimeProvider() *TimeProvider {
 	return NewTimeProvider(p.v3ProtocolParameters.GenesisUnixTimestamp, int64(p.v3ProtocolParameters.SlotDurationInSeconds), p.v3ProtocolParameters.SlotsPerEpochExponent)
 }
 
-// EpochDurationInSlots defines the amount of slots in an epoch.
+// ParamEpochDurationInSlots defines the amount of slots in an epoch.
 func (p *V3ProtocolParameters) ParamEpochDurationInSlots() SlotIndex {
 	return 1 << p.v3ProtocolParameters.SlotsPerEpochExponent
 }
@@ -166,6 +169,13 @@ func (p *V3ProtocolParameters) StakingUnbondingPeriod() EpochIndex {
 
 func (p *V3ProtocolParameters) LivenessThreshold() SlotIndex {
 	return p.v3ProtocolParameters.LivenessThreshold
+}
+
+func (p *V3ProtocolParameters) LivenessThresholdDuration() time.Duration {
+	if p.v3ProtocolParameters.LivenessThresholdDuration == 0 {
+		p.v3ProtocolParameters.LivenessThresholdDuration = time.Duration(uint64(p.v3ProtocolParameters.LivenessThreshold)*uint64(p.v3ProtocolParameters.SlotDurationInSeconds)) * time.Second
+	}
+	return p.v3ProtocolParameters.LivenessThresholdDuration
 }
 
 func (p *V3ProtocolParameters) EvictionAge() SlotIndex {
