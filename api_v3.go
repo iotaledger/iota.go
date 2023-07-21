@@ -70,8 +70,7 @@ var (
 		Min: MinBlockIssuerKeysCount,
 		Max: MaxBlockIssuerKeysCount,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+			serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	accountOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
