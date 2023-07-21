@@ -2,6 +2,7 @@ package apimodels
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -23,8 +24,12 @@ const (
 	BlockStateOrphaned
 	BlockStateFailed
 
-	ErrBlockOrphanedDueToCongestionControl BlockFailureReason = 1
-	ErrBlockOrphanedDueToNegativeCredits   BlockFailureReason = 2
+	ErrBlockIsTooOld               BlockFailureReason = 1
+	ErrBlockParentIsTooOld         BlockFailureReason = 2
+	ErrBlockBookingFailure         BlockFailureReason = 3
+	ErrBlockDroppedDueToCongestion BlockFailureReason = 4
+	// TODO: see if needed after congestion PR is done
+	ErrBlockOrphanedDueNegativeCreditsBalance BlockFailureReason = 5
 )
 
 func (b BlockState) String() string {
@@ -337,4 +342,8 @@ func (v Versions) Supports(ver byte) bool {
 	}
 
 	return false
+}
+
+func FailureMessage[R TransactionFailureReason | BlockFailureReason](failureCode R) string {
+	return fmt.Sprintf("error reason code: %d", failureCode)
 }
