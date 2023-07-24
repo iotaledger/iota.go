@@ -13,8 +13,8 @@ type (
 	Versions []uint32
 )
 
-type BlockState int
-type BlockFailureReason int
+type BlockState byte
+type BlockFailureReason byte
 
 const (
 	BlockStateUnknown BlockState = iota
@@ -43,8 +43,8 @@ func (b BlockState) String() string {
 	}[b]
 }
 
-type TransactionState int
-type TransactionFailureReason int
+type TransactionState byte
+type TransactionFailureReason byte
 
 const (
 	TransactionStatePending   TransactionState = 0
