@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -17,8 +18,14 @@ type BlockState byte
 type BlockFailureReason byte
 
 const (
+	BlockStateLength         = serializer.OneByte
+	BlockFailureReasonLength = serializer.OneByte
+)
+
+const (
 	BlockStateUnknown BlockState = iota
 	BlockStatePending
+	BlockStateAccepted
 	BlockStateConfirmed
 	BlockStateFinalized
 	BlockStateOrphaned
@@ -30,6 +37,7 @@ const (
 	ErrBlockDroppedDueToCongestion BlockFailureReason = 4
 	// TODO: see if needed after congestion PR is done
 	ErrBlockOrphanedDueNegativeCreditsBalance BlockFailureReason = 5
+	NoBlockFailureReason                      BlockFailureReason = 0
 )
 
 func (b BlockState) String() string {
@@ -46,12 +54,32 @@ func (b BlockState) String() string {
 type TransactionState byte
 type TransactionFailureReason byte
 
-const (
-	TransactionStatePending   TransactionState = 0
-	TransactionStateConfirmed TransactionState = 1
-	TransactionStateFinalized TransactionState = 2
-	TransactionStateFailed    TransactionState = 3
+func (b BlockState) Bytes() ([]byte, error) {
+	return []byte{byte(b)}, nil
+}
 
+func BlockStateFromBytes(b []byte) (BlockState, int, error) {
+	if len(b) < BlockStateLength {
+		return 0, 0, ierrors.New("invalid block state size")
+	}
+
+	return BlockState(b[0]), BlockStateLength, nil
+}
+
+const (
+	TransactionStateLength         = serializer.OneByte
+	TransactionFailureReasonLength = serializer.OneByte
+)
+
+const (
+	TransactionStateUnknown TransactionState = iota
+	TransactionStatePending
+	TransactionStateAccepted
+	TransactionStateConfirmed
+	TransactionStateFinalized
+	TransactionStateFailed
+
+	NoTransactionFailureReason                      TransactionFailureReason = 0
 	ErrTxStateReferencedUTXOAlreadySpent            TransactionFailureReason = 1
 	ErrTxStateTxConflicting                         TransactionFailureReason = 2
 	ErrTxStateReferencedUTXONotFound                TransactionFailureReason = 3
@@ -74,6 +102,18 @@ func (t TransactionState) String() string {
 		"finalized",
 		"failed",
 	}[t]
+}
+
+func (t TransactionState) Bytes() ([]byte, error) {
+	return []byte{byte(t)}, nil
+}
+
+func TransactionStateFromBytes(b []byte) (TransactionState, int, error) {
+	if len(b) < TransactionStateLength {
+		return 0, 0, ierrors.New("invalid transaction state size")
+	}
+
+	return TransactionState(b[0]), TransactionStateLength, nil
 }
 
 type (
