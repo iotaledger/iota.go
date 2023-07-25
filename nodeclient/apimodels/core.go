@@ -105,15 +105,15 @@ type (
 		// The relative confirmed tangle time.
 		RelativeConfirmedTangleTime uint64 `json:"relativeConfirmedTangleTime"`
 		// The index of the latest known committed slot.
-		LatestCommittedSlot iotago.SlotIndex `json:"latestCommittedSlot"`
+		LatestCommitmentId iotago.CommitmentID `json:"latestCommitmentId"`
 		// The index of the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `json:"latestFinalizedSlot"`
 		// The index of the slot at which the tangle data was pruned.
 		PruningSlot iotago.SlotIndex `json:"pruningSlot"`
 		// The blockID of the latest accepted block.
-		LatestAcceptedBlockID string `json:"latestAcceptedBlockId"`
+		LatestAcceptedBlockSlot iotago.SlotIndex `json:"latestAcceptedBlockSlot"`
 		// The blockID of the latest confirmed block.
-		LatestConfirmedBlockID string `json:"latestConfirmedBlockId"`
+		LatestConfirmedBlockSlot iotago.SlotIndex `json:"latestConfirmedBlockSlot"`
 	}
 
 	// InfoResNodeMetrics defines the metrics of a node in info response.
