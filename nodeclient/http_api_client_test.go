@@ -63,14 +63,14 @@ func TestClient_Info(t *testing.T) {
 		Version: "1.0.0",
 		Status: &apimodels.InfoResNodeStatus{
 			IsHealthy:                   true,
-			LatestAcceptedBlockID:       hexutil.EncodeHex(tpkg.RandBytes(40)),
-			LatestConfirmedBlockID:      hexutil.EncodeHex(tpkg.RandBytes(40)),
+			LatestAcceptedBlockSlot:     tpkg.RandSlotIndex(),
+			LatestConfirmedBlockSlot:    tpkg.RandSlotIndex(),
 			LatestFinalizedSlot:         iotago.SlotIndex(142857),
 			AcceptedTangleTime:          uint64(ts.UnixNano()),
 			RelativeAcceptedTangleTime:  uint64(ts.UnixNano()),
 			ConfirmedTangleTime:         uint64(ts.UnixNano()),
 			RelativeConfirmedTangleTime: uint64(ts.UnixNano()),
-			LatestCommittedSlot:         iotago.SlotIndex(142860),
+			LatestCommitmentId:          tpkg.Rand40ByteArray(),
 			PruningSlot:                 iotago.SlotIndex(142800),
 		},
 		BaseToken: &apimodels.InfoResBaseToken{
