@@ -31,13 +31,13 @@ const (
 	BlockStateOrphaned
 	BlockStateFailed
 
+	NoBlockFailureReason           BlockFailureReason = 0
 	ErrBlockIsTooOld               BlockFailureReason = 1
 	ErrBlockParentIsTooOld         BlockFailureReason = 2
 	ErrBlockBookingFailure         BlockFailureReason = 3
 	ErrBlockDroppedDueToCongestion BlockFailureReason = 4
 	// TODO: see if needed after congestion PR is done
 	ErrBlockOrphanedDueNegativeCreditsBalance BlockFailureReason = 5
-	NoBlockFailureReason                      BlockFailureReason = 0
 )
 
 func (b BlockState) String() string {
@@ -215,10 +215,10 @@ type (
 		BlockState string `json:"blockState"`
 		// TxState might be pending, conflicting, confirmed, finalized, rejected.
 		TxState string `json:"txState,omitempty"`
-		// BlockStateReason if applicable indicates the error that occurred during the block processing.
-		BlockStateReason int `json:"blockStateReason,omitempty"`
-		// TxStateReason if applicable indicates the error that occurred during the transaction processing.
-		TxStateReason int `json:"txStateReason,omitempty"`
+		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
+		BlockFailureReason BlockFailureReason `json:"blockFailureReason,omitempty"`
+		// TxFailureReason if applicable indicates the error that occurred during the transaction processing.
+		TxFailureReason TransactionFailureReason `json:"txFailureReason,omitempty"`
 	}
 
 	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
