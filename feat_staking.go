@@ -46,7 +46,7 @@ func (s *StakingFeature) Clone() Feature {
 }
 
 func (s *StakingFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	vbytes := serializer.SmallTypeDenotationByteSize + (serializer.UInt64ByteSize * 4)
+	vbytes := serializer.SmallTypeDenotationByteSize + (serializer.UInt64ByteSize*2 + EpochIndexLength*2)
 	// TODO: Introduce another vbyte factor for the staking feature.
 	return rentStruct.VBFactorData.Multiply(VBytes(vbytes))
 }
