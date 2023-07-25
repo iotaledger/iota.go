@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	emptyIdentifier = Identifier{}
+	EmptyIdentifier = Identifier{}
 
 	ErrInvalidIdentifierLength = ierrors.New("Invalid identifier length")
 )
@@ -76,7 +76,7 @@ func (id *Identifier) UnmarshalText(text []byte) error {
 
 // Empty tells whether the Identifier is empty.
 func (id Identifier) Empty() bool {
-	return id == emptyIdentifier
+	return id == EmptyIdentifier
 }
 
 // ToHex converts the Identifier to its hex representation.
