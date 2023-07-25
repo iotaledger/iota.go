@@ -59,8 +59,9 @@ func (c *Commitment) MustID() CommitmentID {
 
 func (c *Commitment) Equals(other *Commitment) bool {
 	return c.MustID() == other.MustID() &&
-		c.PrevID == other.PrevID &&
+		c.Version == other.Version &&
 		c.Index == other.Index &&
+		c.PrevID == other.PrevID &&
 		c.RootsID == other.RootsID &&
 		c.CumulativeWeight == other.CumulativeWeight
 }
@@ -71,7 +72,9 @@ func (c *Commitment) String() string {
 }
 
 func (c *Commitment) Size() int {
-	return 2*serializer.UInt64ByteSize +
-		SlotIdentifierLength +
-		IdentifierLength
+	return serializer.OneByte +
+		SlotIndexLength +
+		CommitmentIDLength +
+		IdentifierLength +
+		serializer.UInt64ByteSize
 }

@@ -114,12 +114,26 @@ func (n NativeTokens) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(VBytes(serializer.OneByte + len(n)*NativeTokenVByteCost))
 }
 
-func (n NativeTokens) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	var sumCost WorkScore
-	for _, nativeToken := range n {
-		sumCost += nativeToken.WorkScore(workScoreStructure)
+func (n NativeTokens) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// LengthPrefixType
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte)
+	if err != nil {
+		return 0, err
 	}
-	return sumCost
+
+	for _, nativeToken := range n {
+		workScoreNativeToken, err := nativeToken.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
+
+		workScoreBytes, err = workScoreBytes.Add(workScoreNativeToken)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return workScoreBytes, nil
 }
 
 func (n NativeTokens) Size() int {
@@ -179,9 +193,13 @@ func (n *NativeToken) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 	return NativeTokenVByteCost
 }
 
-func (n *NativeToken) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.Factors.Data.Multiply(n.Size()) +
-		workScoreStructure.WorkScores.NativeToken
+func (n *NativeToken) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(n.Size())
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreStructure.NativeToken)
 }
 
 // Equal checks whether other is equal to this NativeToken.

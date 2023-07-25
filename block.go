@@ -92,7 +92,7 @@ type BlockPayload interface {
 	Payload
 }
 
-const BlockHeaderLength = 1 + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + serializer.UInt64ByteSize + AccountIDLength
+const BlockHeaderLength = serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + SlotIndexLength + AccountIDLength
 
 type BlockHeader struct {
 	ProtocolVersion Version   `serix:"0,mapKey=protocolVersion"`
@@ -114,15 +114,14 @@ func (b *BlockHeader) Hash(api API) (Identifier, error) {
 	return blake2b.Sum256(headerBytes), nil
 }
 
-func (b *BlockHeader) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+func (b *BlockHeader) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	// Version, NetworkID, IssuingTime, SlotCommitmentID, LatestFinalisedSlot and IssuerID
-	return workScoreStructure.Factors.Data.Multiply(serializer.OneByte +
+	return workScoreStructure.DataByte.Multiply(serializer.OneByte +
 		serializer.UInt64ByteSize +
 		serializer.UInt64ByteSize +
-		SlotIdentifierLength +
+		CommitmentIDLength +
 		SlotIndexLength +
-		IdentifierLength)
-
+		AccountIDLength)
 }
 
 type ProtocolBlock struct {
@@ -265,10 +264,23 @@ func (b *ProtocolBlock) ForEachParent(consumer func(parent Parent)) {
 	}
 }
 
-func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return b.BlockHeader.WorkScore(workScoreStructure) +
-		b.Block.WorkScore(workScoreStructure) +
-		b.Signature.WorkScore(workScoreStructure)
+func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreHeader, err := b.BlockHeader.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreBlock, err := b.Block.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreSignature, err := b.Signature.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreHeader.Add(workScoreBlock, workScoreSignature)
 }
 
 type Block interface {
@@ -321,17 +333,29 @@ func (b *BasicBlock) Hash(api API) (Identifier, error) {
 	return blake2b.Sum256(blockBytes), nil
 }
 
-func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	// Work Score for parents is a penalty for each missing strong parent below MinStrongParentsThreshold.
-	var parentWorkScore WorkScore
-	if byte(len(b.StrongParents)) < workScoreStructure.MinStrongParentsThreshold {
-		parentWorkScore += workScoreStructure.Factors.MissingParent.Multiply(int(workScoreStructure.MinStrongParentsThreshold - byte(len(b.StrongParents))))
+func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// BlockType + BurnedMana
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte + ManaSize)
+	if err != nil {
+		return 0, err
 	}
-	return parentWorkScore +
-		// Payload
-		b.Payload.WorkScore(workScoreStructure) +
-		// BurnedMana
-		workScoreStructure.Factors.Data.Multiply(ManaSize)
+
+	// work score for parents is a penalty for each missing strong parent below MinStrongParentsThreshold
+	var workScoreMissingParents WorkScore
+	if len(b.StrongParents) < int(workScoreStructure.MinStrongParentsThreshold) {
+		var err error
+		workScoreMissingParents, err = workScoreStructure.MissingParent.Multiply(int(workScoreStructure.MinStrongParentsThreshold) - len(b.StrongParents))
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	workScorePayload, err := b.Payload.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreMissingParents, workScorePayload)
 }
 
 // ValidationBlock represents a validation vertex in the Tangle/BlockDAG.
@@ -371,9 +395,9 @@ func (b *ValidationBlock) Hash(api API) (Identifier, error) {
 	return IdentifierFromData(blockBytes), nil
 }
 
-func (b *ValidationBlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+func (b *ValidationBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	// Validator blocks do not incur any work score as they do not burn mana
-	return 0
+	return 0, nil
 }
 
 // ParentsType is a type that defines the type of the parent.

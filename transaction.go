@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/iota.go/v4/util"
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 const (
@@ -137,7 +137,8 @@ func (t *Transaction) CommitmentInput() *CommitmentInput {
 }
 
 func (t *Transaction) Size() int {
-	return util.NumByteLen(uint32(PayloadTransaction)) +
+	// PayloadType
+	return serializer.UInt32ByteSize +
 		t.Essence.Size() +
 		t.Unlocks.Size()
 }
@@ -162,8 +163,22 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 	return nil
 }
 
-func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.Factors.Data.Multiply(util.NumByteLen(uint32(PayloadTransaction))) +
-		t.Unlocks.WorkScore(workScoreStructure) +
-		t.Essence.WorkScore(workScoreStructure)
+func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// PayloadType
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.UInt32ByteSize)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreEssence, err := t.Essence.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreUnlocks, err := t.Unlocks.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreEssence, workScoreUnlocks)
 }

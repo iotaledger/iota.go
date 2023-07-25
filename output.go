@@ -323,12 +323,26 @@ func (outputs Outputs[T]) Size() int {
 	return sum
 }
 
-func (outputs Outputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	var sumCost WorkScore
-	for _, output := range outputs {
-		sumCost += output.WorkScore(workScoreStructure)
+func (outputs Outputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// LengthPrefixType
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.UInt16ByteSize)
+	if err != nil {
+		return 0, err
 	}
-	return sumCost
+
+	for _, output := range outputs {
+		workScoreOutput, err := output.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
+
+		workScoreBytes, err = workScoreBytes.Add(workScoreOutput)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return workScoreBytes, nil
 }
 
 // MustCommitment works like Commitment but panics if there's an error.

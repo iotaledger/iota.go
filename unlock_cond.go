@@ -87,13 +87,26 @@ func (f UnlockConditions[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBy
 	return rentStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
 }
 
-func (f UnlockConditions[T]) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	var sumCost WorkScore
-	for _, unlockCond := range f {
-		sumCost += unlockCond.WorkScore(workScoreStructure)
+func (f UnlockConditions[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// LengthPrefixType
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte)
+	if err != nil {
+		return 0, err
 	}
 
-	return sumCost
+	for _, unlockCond := range f {
+		workScoreUnlockCond, err := unlockCond.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
+
+		workScoreBytes, err = workScoreBytes.Add(workScoreUnlockCond)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return workScoreBytes, nil
 }
 
 // Clone clones the UnlockConditions.

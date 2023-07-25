@@ -2,12 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
-)
-
-const (
-	// ReferenceUnlockSize defines the size of a ReferenceUnlock.
-	ReferenceUnlockSize = serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 )
 
 // ReferenceUnlock is an Unlock which references a previous unlock.
@@ -34,9 +28,10 @@ func (r *ReferenceUnlock) Type() UnlockType {
 }
 
 func (r *ReferenceUnlock) Size() int {
-	return ReferenceUnlockSize
+	// UnlockType + Reference
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 }
 
-func (r *ReferenceUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.Factors.Data.Multiply(util.NumByteLen(uint32(UnlockReference)) + util.NumByteLen(r.Reference))
+func (r *ReferenceUnlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	return workScoreStructure.DataByte.Multiply(r.Size())
 }

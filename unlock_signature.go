@@ -1,7 +1,7 @@
 package iotago
 
 import (
-	"github.com/iotaledger/iota.go/v4/util"
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // SignatureUnlock holds a signature which unlocks inputs.
@@ -15,10 +15,21 @@ func (s *SignatureUnlock) Type() UnlockType {
 }
 
 func (s *SignatureUnlock) Size() int {
-	return util.NumByteLen(byte(UnlockSignature)) + s.Signature.Size()
+	// UnlockType + Signature
+	return serializer.OneByte + s.Signature.Size()
 }
 
-func (s *SignatureUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.Factors.Data.Multiply(util.NumByteLen(uint32(UnlockSignature))) +
-		s.Signature.WorkScore(workScoreStructure)
+func (s *SignatureUnlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// UnlockType
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreSignature, err := s.Signature.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreSignature)
 }

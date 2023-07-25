@@ -163,3 +163,14 @@ func (s *SimpleTokenScheme) Size() int {
 		util.NumByteLen(s.MeltedTokens) +
 		util.NumByteLen(s.MaximumSupply)
 }
+
+func (s *SimpleTokenScheme) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// TokenSchemeType + MintedTokens + MeltedTokens + MaximumSupply
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte + serializer.UInt256ByteSize + serializer.UInt256ByteSize + serializer.UInt256ByteSize)
+	if err != nil {
+		return 0, err
+	}
+
+	// we add the offset for a native token here, since the simple token scheme requires extra work for big.Int calculations
+	return workScoreBytes.Add(workScoreStructure.NativeToken)
+}

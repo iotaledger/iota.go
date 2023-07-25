@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // StateControllerAddressUnlockCondition is an UnlockCondition defining the state controller identity for an AccountOutput.
@@ -19,9 +18,9 @@ func (s *StateControllerAddressUnlockCondition) VBytes(rentStruct *RentStructure
 		s.Address.VBytes(rentStruct, nil)
 }
 
-func (s *StateControllerAddressUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+func (s *StateControllerAddressUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	// StateControllerAddressUnlockCondition does not require a signature check on creation, only consumption.
-	return workScoreStructure.Factors.Data.Multiply(s.Size())
+	return workScoreStructure.DataByte.Multiply(s.Size())
 }
 
 func (s *StateControllerAddressUnlockCondition) Equal(other UnlockCondition) bool {
@@ -38,5 +37,6 @@ func (s *StateControllerAddressUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *StateControllerAddressUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionStateControllerAddress)) + s.Address.Size()
+	// UnlockType + Address
+	return serializer.SmallTypeDenotationByteSize + s.Address.Size()
 }

@@ -201,18 +201,34 @@ func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		a.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
-func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return a.Conditions.WorkScore(workScoreStructure) +
-		a.Features.WorkScore(workScoreStructure) +
-		a.ImmutableFeatures.WorkScore(workScoreStructure) +
-		// prefix + amount + stored mana
-		workScoreStructure.Factors.Data.Multiply(serializer.SmallTypeDenotationByteSize+
-			serializer.UInt64ByteSize+
-			serializer.UInt64ByteSize) +
-		workScoreStructure.Factors.Data.Multiply(AccountIDLength) +
-		a.NativeTokens.WorkScore(workScoreStructure) +
-		// state index, state meta length, state meta, foundry counter
-		workScoreStructure.Factors.Data.Multiply(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)
+func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// OutputType + Amount + Mana + AccountID + StateIndex + StateMetadata + FoundryCounter
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + ManaSize + AccountIDLength + serializer.UInt32ByteSize + serializer.UInt16ByteSize + len(a.StateMetadata) + serializer.UInt32ByteSize)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreNativeTokens, err := a.NativeTokens.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreConditions, err := a.Conditions.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreFeatures, err := a.Features.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreImmutableFeatures, err := a.ImmutableFeatures.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreNativeTokens, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {

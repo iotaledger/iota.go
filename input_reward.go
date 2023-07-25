@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 type RewardInput struct {
@@ -15,5 +14,16 @@ func (r *RewardInput) Type() ContextInputType {
 }
 
 func (r *RewardInput) Size() int {
-	return util.NumByteLen(byte(ContextInputReward)) + serializer.UInt16ByteSize
+	// ContextInputType + Index
+	return serializer.OneByte + serializer.UInt16ByteSize
+}
+
+func (r *RewardInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(r.Size())
+	if err != nil {
+		return 0, err
+	}
+
+	// context inputs require invocation of informations in the node, so requires extra work.
+	return workScoreBytes.Add(workScoreStructure.ContextInput)
 }

@@ -69,6 +69,12 @@ func (e *Ed25519Signature) Size() int {
 	return serializer.SmallTypeDenotationByteSize + ed25519.PublicKeySize + ed25519.SignatureSize
 }
 
-func (e *Ed25519Signature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.WorkScores.Ed25519Signature
+func (e *Ed25519Signature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(e.Size())
+	if err != nil {
+		return 0, err
+	}
+
+	// signature verification requires extra work
+	return workScoreBytes.Add(workScoreStructure.SignatureEd25519)
 }

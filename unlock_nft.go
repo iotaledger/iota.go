@@ -2,12 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
-)
-
-const (
-	// NFTUnlockSize defines the size of an NFTUnlock.
-	NFTUnlockSize = serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 )
 
 // NFTUnlock is an Unlock which references a previous unlock.
@@ -34,9 +28,10 @@ func (r *NFTUnlock) Type() UnlockType {
 }
 
 func (r *NFTUnlock) Size() int {
-	return NFTUnlockSize
+	// UnlockType + Reference
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 }
 
-func (r *NFTUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.Factors.Data.Multiply(util.NumByteLen(uint32(UnlockNFT)) + util.NumByteLen(r.Reference))
+func (r *NFTUnlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	return workScoreStructure.DataByte.Multiply(r.Size())
 }

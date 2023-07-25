@@ -121,7 +121,7 @@ func (n *NFTOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {
 func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount + stored mana
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+ManaSize) +
 		n.NativeTokens.VBytes(rentStruct, nil) +
 		rentStruct.VBFactorData.Multiply(NFTIDLength) +
 		n.Conditions.VBytes(rentStruct, nil) +
@@ -129,14 +129,34 @@ func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		n.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
-func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	// prefix + amount + stored mana
-	return workScoreStructure.Factors.Data.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
-		n.NativeTokens.WorkScore(workScoreStructure) +
-		workScoreStructure.Factors.Data.Multiply(NFTIDLength) +
-		n.Conditions.WorkScore(workScoreStructure) +
-		n.Features.WorkScore(workScoreStructure) +
-		n.ImmutableFeatures.WorkScore(workScoreStructure)
+func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// OutputType + Amount + Mana + NFTID
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + ManaSize + NFTIDLength)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreNativeTokens, err := n.NativeTokens.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreConditions, err := n.Conditions.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreFeatures, err := n.Features.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreImmutableFeatures, err := n.ImmutableFeatures.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreNativeTokens, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (n *NFTOutput) Chain() ChainID {

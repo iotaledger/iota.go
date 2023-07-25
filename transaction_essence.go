@@ -215,13 +215,37 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 	return nil
 }
 
-func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	// NetworkID, CreationTime
-	return workScoreStructure.Factors.Data.Multiply(util.NumByteLen(TransactionEssenceNormal)+2*serializer.UInt64ByteSize) +
-		u.ContextInputs.WorkScore(workScoreStructure) +
-		u.Inputs.WorkScore(workScoreStructure) +
-		workScoreStructure.Factors.Data.Multiply(InputsCommitmentLength) +
-		u.Outputs.WorkScore(workScoreStructure) +
-		u.Allotments.WorkScore(workScoreStructure) +
-		u.Payload.WorkScore(workScoreStructure)
+func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// TransactionEssenceType + NetworkID + CreationTime + InputsCommitment
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + InputsCommitmentLength)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreContextInputs, err := u.ContextInputs.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreInputs, err := u.Inputs.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreOutputs, err := u.Outputs.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreAllotments, err := u.Allotments.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScorePayload, err := u.Payload.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreContextInputs, workScoreInputs, workScoreOutputs, workScoreAllotments, workScorePayload)
 }

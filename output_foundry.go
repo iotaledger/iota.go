@@ -131,16 +131,39 @@ func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		f.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
-func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return f.ImmutableFeatures.WorkScore(workScoreStructure) +
-		// prefix + amount + stored mana
-		workScoreStructure.Factors.Data.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
-		f.NativeTokens.WorkScore(workScoreStructure) +
-		// serial number
-		workScoreStructure.Factors.Data.Multiply(serializer.UInt32ByteSize) +
-		f.Conditions.WorkScore(workScoreStructure) +
-		f.Features.WorkScore(workScoreStructure) +
-		f.ImmutableFeatures.WorkScore(workScoreStructure)
+func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// OutputType + Amount + SerialNumber
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + serializer.UInt32ByteSize)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreNativeTokens, err := f.NativeTokens.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreTokenScheme, err := f.TokenScheme.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreConditions, err := f.Conditions.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreFeatures, err := f.Features.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreImmutableFeatures, err := f.ImmutableFeatures.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreNativeTokens, workScoreTokenScheme, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (f *FoundryOutput) Chain() ChainID {

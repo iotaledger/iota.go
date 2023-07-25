@@ -69,12 +69,26 @@ func (o Unlocks) Size() int {
 	return sum
 }
 
-func (o Unlocks) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	var sumCost WorkScore
-	for _, u := range o {
-		sumCost += u.WorkScore(workScoreStructure)
+func (o Unlocks) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// LengthPrefixType
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.UInt16ByteSize)
+	if err != nil {
+		return 0, err
 	}
-	return sumCost
+
+	for _, unlock := range o {
+		workScoreUnlock, err := unlock.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
+
+		workScoreBytes, err = workScoreBytes.Add(workScoreUnlock)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return workScoreBytes, nil
 }
 
 // UnlocksByType is a map of UnlockType(s) to slice of Unlock(s).

@@ -642,6 +642,29 @@ func RandRentStructure() *iotago.RentStructure {
 	}
 }
 
+// RandWorkScore returns a random workscore.
+func RandWorkScore(max uint32) iotago.WorkScore {
+	return iotago.WorkScore(RandUint32(max))
+}
+
+// RandWorkscoreStructure produces random workscore structure.
+func RandWorkscoreStructure() *iotago.WorkScoreStructure {
+	return &iotago.WorkScoreStructure{
+		DataByte:                  RandWorkScore(math.MaxUint32),
+		Block:                     RandWorkScore(math.MaxUint32),
+		MissingParent:             RandWorkScore(math.MaxUint32),
+		Input:                     RandWorkScore(math.MaxUint32),
+		ContextInput:              RandWorkScore(math.MaxUint32),
+		Output:                    RandWorkScore(math.MaxUint32),
+		NativeToken:               RandWorkScore(math.MaxUint32),
+		Staking:                   RandWorkScore(math.MaxUint32),
+		BlockIssuer:               RandWorkScore(math.MaxUint32),
+		Allotment:                 RandWorkScore(math.MaxUint32),
+		SignatureEd25519:          RandWorkScore(math.MaxUint32),
+		MinStrongParentsThreshold: RandUint8(math.MaxUint8),
+	}
+}
+
 // RandProtocolParameters produces random protocol parameters.
 func RandProtocolParameters() iotago.ProtocolParameters {
 	return iotago.NewV3ProtocolParameters(
@@ -656,16 +679,17 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 		),
 		iotago.WithWorkScoreOptions(
-			iotago.WorkScore(RandUint32(math.MaxUint32)),
-			iotago.WorkScore(RandUint32(math.MaxUint32)),
-			iotago.WorkScore(RandUint32(math.MaxUint32)),
-			iotago.WorkScore(RandUint32(math.MaxUint32)),
-			iotago.WorkScore(RandUint32(math.MaxUint32)),
-			iotago.WorkScoreFactor(RandUint16(math.MaxUint16)),
-			iotago.WorkScoreFactor(RandUint16(math.MaxUint16)),
-			iotago.WorkScoreFactor(RandUint16(math.MaxUint16)),
-			iotago.WorkScoreFactor(RandUint16(math.MaxUint16)),
-			iotago.WorkScoreFactor(RandUint16(math.MaxUint16)),
+			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
 			RandByte(),
 		),
 		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),

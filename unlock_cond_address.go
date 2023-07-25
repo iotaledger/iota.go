@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // AddressUnlockCondition is an UnlockCondition defining an identity which has to be unlocked.
@@ -19,9 +18,9 @@ func (s *AddressUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc)
 		s.Address.VBytes(rentStruct, nil)
 }
 
-func (s *AddressUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+func (s *AddressUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	// AddressUnlockCondition does not require a signature check on creation, only consumption.
-	return workScoreStructure.Factors.Data.Multiply(s.Size())
+	return workScoreStructure.DataByte.Multiply(s.Size())
 }
 
 func (s *AddressUnlockCondition) Equal(other UnlockCondition) bool {
@@ -38,5 +37,6 @@ func (s *AddressUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *AddressUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionAddress)) + s.Address.Size()
+	// UnlockType + Address
+	return serializer.SmallTypeDenotationByteSize + s.Address.Size()
 }

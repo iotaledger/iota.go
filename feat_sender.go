@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // SenderFeature is a feature which associates an output
@@ -23,8 +22,9 @@ func (s *SenderFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) + s.Address.VBytes(rentStruct, nil)
 }
 
-func (s *SenderFeature) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.Factors.Data.Multiply(s.Size())
+func (s *SenderFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// we do not need to charge for a signature check here as this is covered by the unlock that must be provided.
+	return workScoreStructure.DataByte.Multiply(s.Size())
 }
 
 func (s *SenderFeature) Equal(other Feature) bool {
@@ -41,5 +41,6 @@ func (s *SenderFeature) Type() FeatureType {
 }
 
 func (s *SenderFeature) Size() int {
-	return util.NumByteLen(byte(FeatureSender)) + s.Address.Size()
+	// FeatureType + Address
+	return serializer.SmallTypeDenotationByteSize + s.Address.Size()
 }

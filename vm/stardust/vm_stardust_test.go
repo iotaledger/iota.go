@@ -32,7 +32,7 @@ var (
 	testProtoParams = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("test", "test"),
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10),
-		iotago.WithWorkScoreOptions(1, 1, 1, 10, 5, 1, 2, 2, 2, 10, 4),
+		iotago.WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
 		iotago.WithTimeProviderOptions(100, slotDurationSeconds, slotsPerEpochExponent),
 		iotago.WithManaOptions(generationRate,
 			generationRateExponent,

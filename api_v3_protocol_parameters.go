@@ -25,7 +25,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithVersion(apiV3Version),
 			WithNetworkOptions("testnet", PrefixTestnet),
 			WithSupplyOptions(1813620509061365, 100, 1, 10),
-			WithWorkScoreOptions(1, 1, 1, 10, 5, 1, 2, 2, 2, 10, 4),
+			WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
 			WithTimeProviderOptions(time.Now().Unix(), 10, 13),
 			// TODO: add sane default values
 			WithManaOptions(1,
@@ -165,23 +165,32 @@ func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData VBy
 	}
 }
 
-func WithWorkScoreOptions(output WorkScore, staking WorkScore, blockIssuer WorkScore, ed25519Signature WorkScore, nativeToken WorkScore, data WorkScoreFactor, input WorkScoreFactor, contextInput WorkScoreFactor, allotment WorkScoreFactor, missingParent WorkScoreFactor, minStrongParentsThreshold byte) options.Option[V3ProtocolParameters] {
+func WithWorkScoreOptions(
+	dataByte WorkScore,
+	block WorkScore,
+	missingParent WorkScore,
+	input WorkScore,
+	contextInput WorkScore,
+	output WorkScore,
+	nativeToken WorkScore,
+	staking WorkScore,
+	blockIssuer WorkScore,
+	allotment WorkScore,
+	signatureEd25519 WorkScore,
+	minStrongParentsThreshold byte) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.defaultProtocolParameters.WorkScoreStructure = WorkScoreStructure{
-			WorkScores: WorkScores{
-				Output:           output,
-				Staking:          staking,
-				BlockIssuer:      blockIssuer,
-				Ed25519Signature: ed25519Signature,
-				NativeToken:      nativeToken,
-			},
-			Factors: WorkScoreFactors{
-				Data:          data,
-				Input:         input,
-				ContextInput:  contextInput,
-				Allotment:     allotment,
-				MissingParent: missingParent,
-			},
+			DataByte:                  dataByte,
+			Block:                     block,
+			MissingParent:             missingParent,
+			Input:                     input,
+			ContextInput:              contextInput,
+			Output:                    output,
+			NativeToken:               nativeToken,
+			Staking:                   staking,
+			BlockIssuer:               blockIssuer,
+			Allotment:                 allotment,
+			SignatureEd25519:          signatureEd25519,
 			MinStrongParentsThreshold: minStrongParentsThreshold,
 		}
 	}

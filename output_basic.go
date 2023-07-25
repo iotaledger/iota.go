@@ -52,20 +52,35 @@ func (e *BasicOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool
 func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount + stored mana
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+ManaSize) +
 		e.NativeTokens.VBytes(rentStruct, nil) +
 		e.Conditions.VBytes(rentStruct, nil) +
 		e.Features.VBytes(rentStruct, nil)
 }
 
-func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return e.Conditions.WorkScore(workScoreStructure) +
-		e.Features.WorkScore(workScoreStructure) +
-		// prefix + amount + stored mana
-		workScoreStructure.Factors.Data.Multiply(serializer.SmallTypeDenotationByteSize+
-			serializer.UInt64ByteSize+
-			serializer.UInt64ByteSize) +
-		e.NativeTokens.WorkScore(workScoreStructure)
+func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// OutputType + Amount + Mana
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + ManaSize)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreNativeTokens, err := e.NativeTokens.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreConditions, err := e.Conditions.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreFeatures, err := e.Features.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreNativeTokens, workScoreConditions, workScoreFeatures)
 }
 
 func (e *BasicOutput) NativeTokenList() NativeTokens {

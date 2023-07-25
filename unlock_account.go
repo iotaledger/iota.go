@@ -2,12 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
-)
-
-const (
-	// AccountUnlockSize defines the size of an AccountUnlock.
-	AccountUnlockSize = serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 )
 
 // AccountUnlock is an Unlock which references a previous unlock.
@@ -34,9 +28,10 @@ func (r *AccountUnlock) Type() UnlockType {
 }
 
 func (r *AccountUnlock) Size() int {
-	return AccountUnlockSize
+	// UnlockType + Reference
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 }
 
-func (r *AccountUnlock) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	return workScoreStructure.Factors.Data.Multiply(util.NumByteLen(uint32(UnlockAccount)) + util.NumByteLen(r.Reference))
+func (r *AccountUnlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	return workScoreStructure.DataByte.Multiply(r.Size())
 }

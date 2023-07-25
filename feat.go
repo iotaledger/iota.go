@@ -82,12 +82,26 @@ func (f Features[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.OneByte) + sumCost
 }
 
-func (f Features[T]) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
-	var sumCost WorkScore
-	for _, feat := range f {
-		sumCost += feat.WorkScore(workScoreStructure)
+func (f Features[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// LengthPrefixType
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte)
+	if err != nil {
+		return 0, err
 	}
-	return sumCost
+
+	for _, feat := range f {
+		workScoreFeat, err := feat.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
+
+		workScoreBytes, err = workScoreBytes.Add(workScoreFeat)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return workScoreBytes, nil
 }
 
 func (f Features[T]) Size() int {

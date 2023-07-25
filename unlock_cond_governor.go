@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // GovernorAddressUnlockCondition is an UnlockCondition defining the governor identity for an AccountOutput.
@@ -19,9 +18,9 @@ func (s *GovernorAddressUnlockCondition) VBytes(rentStruct *RentStructure, _ VBy
 		s.Address.VBytes(rentStruct, nil)
 }
 
-func (s *GovernorAddressUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) WorkScore {
+func (s *GovernorAddressUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	// GovernorAddressUnlockCondition does not require a signature check on creation, only consumption.
-	return workScoreStructure.Factors.Data.Multiply(s.Size())
+	return workScoreStructure.DataByte.Multiply(s.Size())
 }
 
 func (s *GovernorAddressUnlockCondition) Equal(other UnlockCondition) bool {
@@ -38,5 +37,6 @@ func (s *GovernorAddressUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *GovernorAddressUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionGovernorAddress)) + s.Address.Size()
+	// UnlockType + Address
+	return serializer.SmallTypeDenotationByteSize + s.Address.Size()
 }
