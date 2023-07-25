@@ -2,7 +2,6 @@ package apimodels
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -382,8 +381,4 @@ func (v Versions) Supports(ver byte) bool {
 	}
 
 	return false
-}
-
-func FailureMessage[R TransactionFailureReason | BlockFailureReason](failureCode R) string {
-	return fmt.Sprintf("error reason code: %d", failureCode)
 }
