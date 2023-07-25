@@ -3,6 +3,7 @@ package iotago
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/iotaledger/hive.go/runtime/options"
@@ -13,7 +14,8 @@ type V3ProtocolParameters struct {
 	defaultProtocolParameters `serix:"0"`
 
 	// Derived fields
-	livenessThresholdDuration time.Duration
+	livenessThresholdDurationOnce sync.Once
+	livenessThresholdDuration     time.Duration
 }
 
 func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3ProtocolParameters {
@@ -40,9 +42,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithVersionSignalingOptions(7, 5, 7),
 		},
 			opts...,
-		), func(p *V3ProtocolParameters) {
-			p.livenessThresholdDuration = time.Duration(uint64(p.defaultProtocolParameters.LivenessThreshold)*uint64(p.defaultProtocolParameters.SlotDurationInSeconds)) * time.Second
-		},
+		),
 	)
 }
 
@@ -90,6 +90,10 @@ func (p *V3ProtocolParameters) LivenessThreshold() SlotIndex {
 }
 
 func (p *V3ProtocolParameters) LivenessThresholdDuration() time.Duration {
+	p.livenessThresholdDurationOnce.Do(func() {
+		p.livenessThresholdDuration = time.Duration(uint64(p.defaultProtocolParameters.LivenessThreshold)*uint64(p.defaultProtocolParameters.SlotDurationInSeconds)) * time.Second
+	})
+
 	return p.livenessThresholdDuration
 }
 
@@ -128,7 +132,8 @@ func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
 }
 
 func (p *V3ProtocolParameters) Equals(other *V3ProtocolParameters) bool {
-	return p.defaultProtocolParameters.Equals(other.defaultProtocolParameters)
+	return p.defaultProtocolParameters.Equals(other.defaultProtocolParameters) &&
+		p.LivenessThresholdDuration() == other.LivenessThresholdDuration()
 }
 
 func WithVersion(version Version) options.Option[V3ProtocolParameters] {
