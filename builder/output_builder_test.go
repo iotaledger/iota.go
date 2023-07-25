@@ -127,6 +127,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 		StakingTransition().
 		EndEpoch(2000).
 		Builder().Build()
+	require.NoError(t, err)
 
 	expectedUpdatedBlockIssuerKeys := iotago.BlockIssuerKeys{blockIssuerKey2, newBlockIssuerKey1, newBlockIssuerKey2}
 	expectedUpdatedBlockIssuerKeys.Sort()
@@ -199,6 +200,7 @@ func TestDelegationOutputBuilder(t *testing.T) {
 		EndEpoch(1500).
 		Address(updatedAddress).
 		Build()
+	require.NoError(t, err)
 
 	expectedOutput := &iotago.DelegationOutput{
 		Amount:          127,
