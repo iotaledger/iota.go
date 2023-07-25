@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // BlockIssuanceCredits defines the type of block issuance credits.
@@ -17,7 +18,8 @@ type Allotment struct {
 }
 
 func (a Allotments) Size() int {
-	return len(a) * (AccountIDLength + ManaSize)
+	// LengthPrefixType
+	return serializer.UInt16ByteSize + len(a)*(AccountIDLength+ManaSize)
 }
 
 func (a Allotments) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
