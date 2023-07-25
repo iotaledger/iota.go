@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/iota-core/pkg/utils"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -57,11 +56,11 @@ func TestAccountOutputBuilder(t *testing.T) {
 		immMetadata                  = []byte("654321")
 		immSender                    = tpkg.RandEd25519Address()
 
-		blockIssuerKey1    = utils.RandPubKey()
-		blockIssuerKey2    = utils.RandPubKey()
-		blockIssuerKey3    = utils.RandPubKey()
-		newBlockIssuerKey1 = utils.RandPubKey()
-		newBlockIssuerKey2 = utils.RandPubKey()
+		blockIssuerKey1    = tpkg.Rand32ByteArray()
+		blockIssuerKey2    = tpkg.Rand32ByteArray()
+		blockIssuerKey3    = tpkg.Rand32ByteArray()
+		newBlockIssuerKey1 = tpkg.Rand32ByteArray()
+		newBlockIssuerKey2 = tpkg.Rand32ByteArray()
 	)
 
 	accountOutput, err := builder.NewAccountOutputBuilder(stateCtrl, gov, deposit).
