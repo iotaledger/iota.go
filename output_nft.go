@@ -5,7 +5,6 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -192,7 +191,8 @@ func (n *NFTOutput) Type() OutputType {
 }
 
 func (n *NFTOutput) Size() int {
-	return util.NumByteLen(byte(OutputNFT)) +
+	// OutputType
+	return serializer.OneByte +
 		BaseTokenSize +
 		ManaSize +
 		n.NativeTokens.Size() +

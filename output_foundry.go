@@ -7,7 +7,6 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -240,10 +239,12 @@ func (f *FoundryOutput) Type() OutputType {
 }
 
 func (f *FoundryOutput) Size() int {
-	return util.NumByteLen(byte(OutputFoundry)) +
+	// OutputType
+	return serializer.OneByte +
 		BaseTokenSize +
 		f.NativeTokens.Size() +
-		util.NumByteLen(f.SerialNumber) +
+		// SerialNumber
+		serializer.UInt32ByteSize +
 		f.TokenScheme.Size() +
 		f.Conditions.Size() +
 		f.Features.Size() +

@@ -6,7 +6,6 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -200,7 +199,8 @@ func (d *DelegationOutput) Type() OutputType {
 }
 
 func (d *DelegationOutput) Size() int {
-	return util.NumByteLen(byte(OutputDelegation)) +
+	// OutputType
+	return serializer.OneByte +
 		BaseTokenSize +
 		BaseTokenSize +
 		DelegationIDLength +

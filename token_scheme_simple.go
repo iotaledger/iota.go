@@ -8,7 +8,6 @@ import (
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 var (
@@ -158,15 +157,13 @@ func (s *SimpleTokenScheme) stateChangeValid(nextState TokenScheme, in *big.Int,
 }
 
 func (s *SimpleTokenScheme) Size() int {
-	return util.NumByteLen(byte(TokenSchemeSimple)) +
-		util.NumByteLen(s.MintedTokens) +
-		util.NumByteLen(s.MeltedTokens) +
-		util.NumByteLen(s.MaximumSupply)
+	// TokenSchemeType + MintedTokens + MeltedTokens + MaximumSupply
+	return serializer.OneByte + serializer.UInt256ByteSize + serializer.UInt256ByteSize + serializer.UInt256ByteSize
 }
 
 func (s *SimpleTokenScheme) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	// TokenSchemeType + MintedTokens + MeltedTokens + MaximumSupply
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte + serializer.UInt256ByteSize + serializer.UInt256ByteSize + serializer.UInt256ByteSize)
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(s.Size())
 	if err != nil {
 		return 0, err
 	}

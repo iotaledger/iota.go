@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 type (
@@ -112,7 +111,8 @@ func (e *BasicOutput) Type() OutputType {
 }
 
 func (e *BasicOutput) Size() int {
-	return util.NumByteLen(byte(OutputBasic)) +
+	// OutputType
+	return serializer.OneByte +
 		BaseTokenSize +
 		ManaSize +
 		e.NativeTokens.Size() +

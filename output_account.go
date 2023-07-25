@@ -5,7 +5,6 @@ import (
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -293,15 +292,18 @@ func (a *AccountOutput) Type() OutputType {
 }
 
 func (a *AccountOutput) Size() int {
-	return util.NumByteLen(byte(OutputAccount)) +
+	// OutputType
+	return serializer.OneByte +
 		BaseTokenSize +
 		ManaSize +
 		a.NativeTokens.Size() +
 		AccountIDLength +
-		util.NumByteLen(a.StateIndex) +
+		// StateIndex
+		serializer.UInt32ByteSize +
 		serializer.UInt16ByteSize +
 		len(a.StateMetadata) +
-		util.NumByteLen(a.FoundryCounter) +
+		// FoundryCounter
+		serializer.UInt32ByteSize +
 		a.Conditions.Size() +
 		a.Features.Size() +
 		a.ImmutableFeatures.Size()

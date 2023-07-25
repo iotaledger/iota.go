@@ -5,7 +5,6 @@ import (
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // TransactionEssenceType defines the type of transaction.
@@ -156,20 +155,24 @@ func (u *TransactionEssence) Sign(api API, inputsCommitment []byte, addrKeys ...
 }
 
 func (u *TransactionEssence) Size() int {
-	payloadSize := util.NumByteLen(uint32(0))
+	payloadSize := serializer.UInt32ByteSize
 	if u.Payload != nil {
 		payloadSize = u.Payload.Size()
 	}
 
-	return util.NumByteLen(TransactionEssenceNormal) +
-		util.NumByteLen(u.NetworkID) +
+	// TransactionEssenceType
+	return serializer.OneByte +
+		// NetworkID
+		serializer.UInt64ByteSize +
+		// CreationTime
 		SlotIndexLength +
 		u.ContextInputs.Size() +
 		u.Inputs.Size() +
+		// InputsCommitment
 		InputsCommitmentLength +
 		u.Outputs.Size() +
-		payloadSize +
-		util.NumByteLen(uint16(0)) + u.Allotments.Size()
+		u.Allotments.Size() +
+		payloadSize
 }
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
