@@ -4,7 +4,7 @@ import (
 	"github.com/iotaledger/hive.go/lo"
 )
 
-type defaultProtocolParameters struct {
+type basicProtocolParameters struct {
 	// Version defines the version of the protocol this protocol parameters are for.
 	Version Version `serix:"0,mapKey=version"`
 
@@ -55,24 +55,24 @@ type defaultProtocolParameters struct {
 	VersionSignaling VersionSignaling `serix:"18,mapKey=versionSignaling"`
 }
 
-func (p defaultProtocolParameters) Equals(other defaultProtocolParameters) bool {
-	return p.Version == other.Version &&
-		p.NetworkName == other.NetworkName &&
-		p.Bech32HRP == other.Bech32HRP &&
-		p.RentStructure.Equals(other.RentStructure) &&
-		p.TokenSupply == other.TokenSupply &&
-		p.GenesisUnixTimestamp == other.GenesisUnixTimestamp &&
-		p.SlotDurationInSeconds == other.SlotDurationInSeconds &&
-		p.SlotsPerEpochExponent == other.SlotsPerEpochExponent &&
-		p.ManaGenerationRate == other.ManaGenerationRate &&
-		p.ManaGenerationRateExponent == other.ManaGenerationRateExponent &&
-		lo.Equal(p.ManaDecayFactors, other.ManaDecayFactors) &&
-		p.ManaDecayFactorsExponent == other.ManaDecayFactorsExponent &&
-		p.ManaDecayFactorEpochsSum == other.ManaDecayFactorEpochsSum &&
-		p.ManaDecayFactorEpochsSumExponent == other.ManaDecayFactorEpochsSumExponent &&
-		p.StakingUnbondingPeriod == other.StakingUnbondingPeriod &&
-		p.EvictionAge == other.EvictionAge &&
-		p.LivenessThreshold == other.LivenessThreshold &&
-		p.EpochNearingThreshold == other.EpochNearingThreshold &&
-		p.VersionSignaling.Equals(other.VersionSignaling)
+func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
+	return b.Version == other.Version &&
+		b.NetworkName == other.NetworkName &&
+		b.Bech32HRP == other.Bech32HRP &&
+		b.RentStructure.Equals(other.RentStructure) &&
+		b.TokenSupply == other.TokenSupply &&
+		b.GenesisUnixTimestamp == other.GenesisUnixTimestamp &&
+		b.SlotDurationInSeconds == other.SlotDurationInSeconds &&
+		b.SlotsPerEpochExponent == other.SlotsPerEpochExponent &&
+		b.ManaGenerationRate == other.ManaGenerationRate &&
+		b.ManaGenerationRateExponent == other.ManaGenerationRateExponent &&
+		lo.Equal(b.ManaDecayFactors, other.ManaDecayFactors) &&
+		b.ManaDecayFactorsExponent == other.ManaDecayFactorsExponent &&
+		b.ManaDecayFactorEpochsSum == other.ManaDecayFactorEpochsSum &&
+		b.ManaDecayFactorEpochsSumExponent == other.ManaDecayFactorEpochsSumExponent &&
+		b.StakingUnbondingPeriod == other.StakingUnbondingPeriod &&
+		b.EvictionAge == other.EvictionAge &&
+		b.LivenessThreshold == other.LivenessThreshold &&
+		b.EpochNearingThreshold == other.EpochNearingThreshold &&
+		b.VersionSignaling.Equals(other.VersionSignaling)
 }
