@@ -44,17 +44,18 @@ type basicProtocolParameters struct {
 	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
 	StakingUnbondingPeriod EpochIndex `serix:"15,mapKey=stakingUnbondingPeriod"`
 
-	// EvictionAge defines the age in slots when you can evict blocks by committing them into a slot commitments and
-	// when slots stop being a consumable accounts' state relative to the latest committed slot.
-	EvictionAge SlotIndex `serix:"16,mapKey=evictionAge"`
+	// MinCommittableAge is the minimum age relative to the accepted tangle time slot index that a slot can be committed.
+	MinCommittableAge SlotIndex `serix:"16,mapKey=minCommittableAge"`
+	// MaxCommittableAge is the maximum age for a slot commitment to be included in a block relative to the slot index of the block issuing time.
+	MaxCommittableAge SlotIndex `serix:"17,mapKey=maxCommittableAge"`
 	// LivenessThreshold is used by tip-selection to determine the if a block is eligible by evaluating issuingTimes
 	// and commitments in its past-cone to ATT and lastCommittedSlot respectively.
-	LivenessThreshold SlotIndex `serix:"17,mapKey=livenessThreshold"`
+	LivenessThreshold SlotIndex `serix:"18,mapKey=livenessThreshold"`
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
-	EpochNearingThreshold SlotIndex `serix:"18,mapKey=epochNearingThreshold"`
+	EpochNearingThreshold SlotIndex `serix:"19,mapKey=epochNearingThreshold"`
 
-	VersionSignaling VersionSignaling `serix:"19,mapKey=versionSignaling"`
+	VersionSignaling VersionSignaling `serix:"20,mapKey=versionSignaling"`
 }
 
 func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
@@ -74,7 +75,8 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.ManaDecayFactorEpochsSum == other.ManaDecayFactorEpochsSum &&
 		b.ManaDecayFactorEpochsSumExponent == other.ManaDecayFactorEpochsSumExponent &&
 		b.StakingUnbondingPeriod == other.StakingUnbondingPeriod &&
-		b.EvictionAge == other.EvictionAge &&
+		b.MinCommittableAge == other.MinCommittableAge &&
+		b.MaxCommittableAge == other.MaxCommittableAge &&
 		b.LivenessThreshold == other.LivenessThreshold &&
 		b.EpochNearingThreshold == other.EpochNearingThreshold &&
 		b.VersionSignaling.Equals(other.VersionSignaling)
