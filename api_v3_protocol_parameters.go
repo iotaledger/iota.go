@@ -66,7 +66,7 @@ func (p *V3ProtocolParameters) RentStructure() *RentStructure {
 }
 
 func (p *V3ProtocolParameters) WorkScoreStructure() *WorkScoreStructure {
-	return &p.defaultProtocolParameters.WorkScoreStructure
+	return &p.basicProtocolParameters.WorkScoreStructure
 }
 
 func (p *V3ProtocolParameters) TokenSupply() BaseToken {
@@ -184,7 +184,7 @@ func WithWorkScoreOptions(
 	signatureEd25519 WorkScore,
 	minStrongParentsThreshold byte) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.defaultProtocolParameters.WorkScoreStructure = WorkScoreStructure{
+		p.basicProtocolParameters.WorkScoreStructure = WorkScoreStructure{
 			DataByte:                  dataByte,
 			Block:                     block,
 			MissingParent:             missingParent,
