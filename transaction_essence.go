@@ -4,7 +4,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/iota.go/v4/util"
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // TransactionEssenceType defines the type of transaction.
@@ -155,20 +155,24 @@ func (u *TransactionEssence) Sign(api API, inputsCommitment []byte, addrKeys ...
 }
 
 func (u *TransactionEssence) Size() int {
-	payloadSize := util.NumByteLen(uint32(0))
+	payloadSize := serializer.UInt32ByteSize
 	if u.Payload != nil {
 		payloadSize = u.Payload.Size()
 	}
 
-	return util.NumByteLen(TransactionEssenceNormal) +
-		util.NumByteLen(u.NetworkID) +
+	// TransactionEssenceType
+	return serializer.OneByte +
+		// NetworkID
+		serializer.UInt64ByteSize +
+		// CreationTime
 		SlotIndexLength +
 		u.ContextInputs.Size() +
 		u.Inputs.Size() +
+		// InputsCommitment
 		InputsCommitmentLength +
 		u.Outputs.Size() +
-		payloadSize +
-		util.NumByteLen(uint16(0)) + u.Allotments.Size()
+		u.Allotments.Size() +
+		payloadSize
 }
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
@@ -212,4 +216,39 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 	}
 
 	return nil
+}
+
+func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// TransactionEssenceType + NetworkID + CreationTime + InputsCommitment
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + InputsCommitmentLength)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreContextInputs, err := u.ContextInputs.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreInputs, err := u.Inputs.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreOutputs, err := u.Outputs.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreAllotments, err := u.Allotments.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScorePayload, err := u.Payload.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreContextInputs, workScoreInputs, workScoreOutputs, workScoreAllotments, workScorePayload)
 }

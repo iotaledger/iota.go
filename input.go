@@ -42,9 +42,32 @@ func (in Inputs[T]) Size() int {
 	return sum
 }
 
+func (in Inputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// LengthPrefixType
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.UInt16ByteSize)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, input := range in {
+		workScoreInput, err := input.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
+
+		workScoreBytes, err = workScoreBytes.Add(workScoreInput)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return workScoreBytes, nil
+}
+
 // Input references a UTXO.
 type Input interface {
 	Sizer
+	ProcessableObject
 
 	// Type returns the type of Input.
 	Type() InputType

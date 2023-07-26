@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"encoding/binary"
+	"time"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -95,6 +96,8 @@ type ProtocolParameters interface {
 	Bech32HRP() NetworkPrefix
 	// RentStructure defines the rent structure used by given node/network.
 	RentStructure() *RentStructure
+	// WorkScoreStructure defines the work score structure used by the given network.
+	WorkScoreStructure() *WorkScoreStructure
 	// TokenSupply defines the current token supply on the network.
 	TokenSupply() BaseToken
 
@@ -110,6 +113,8 @@ type ProtocolParameters interface {
 
 	MaxCommittableAge() SlotIndex
 
+	LivenessThresholdDuration() time.Duration
+
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold() SlotIndex
@@ -119,6 +124,8 @@ type ProtocolParameters interface {
 	Bytes() ([]byte, error)
 
 	Hash() (Identifier, error)
+
+	Equals(other ProtocolParameters) bool
 }
 
 // Sizer is an object knowing its own byte size.

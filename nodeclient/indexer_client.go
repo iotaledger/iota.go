@@ -8,6 +8,7 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
+	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 )
 
 // Indexer plugin routes.
@@ -73,7 +74,7 @@ type IndexerResultSet struct {
 	// The error which has occurred during querying.
 	Error error
 	// The response from the indexer after calling Next().
-	Response *IndexerResponse
+	Response *apimodels.IndexerResponse
 }
 
 // Next runs the next query against the indexer.
@@ -132,7 +133,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 
 	// this gets executed on every Next()
 	nextFunc := func() error {
-		res.Response = &IndexerResponse{}
+		res.Response = &apimodels.IndexerResponse{}
 
 		urlParams, err := query.URLParams()
 		if err != nil {
@@ -149,7 +150,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 }
 
 func (client *indexerClient) singleOutputQuery(ctx context.Context, route string) (*iotago.OutputID, iotago.Output, iotago.SlotIndex, error) {
-	res := &IndexerResponse{}
+	res := &apimodels.IndexerResponse{}
 	if _, err := client.Do(ctx, http.MethodGet, route, nil, res); err != nil {
 		return nil, nil, 0, err
 	}

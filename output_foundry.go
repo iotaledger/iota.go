@@ -7,7 +7,6 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -131,6 +130,41 @@ func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		f.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
+func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// OutputType + Amount + SerialNumber
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + serializer.UInt32ByteSize)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreNativeTokens, err := f.NativeTokens.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreTokenScheme, err := f.TokenScheme.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreConditions, err := f.Conditions.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreFeatures, err := f.Features.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreImmutableFeatures, err := f.ImmutableFeatures.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreNativeTokens, workScoreTokenScheme, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
+}
+
 func (f *FoundryOutput) Chain() ChainID {
 	foundryID, err := f.ID()
 	if err != nil {
@@ -205,10 +239,12 @@ func (f *FoundryOutput) Type() OutputType {
 }
 
 func (f *FoundryOutput) Size() int {
-	return util.NumByteLen(byte(OutputFoundry)) +
+	// OutputType
+	return serializer.OneByte +
 		BaseTokenSize +
 		f.NativeTokens.Size() +
-		util.NumByteLen(f.SerialNumber) +
+		// SerialNumber
+		serializer.UInt32ByteSize +
 		f.TokenScheme.Size() +
 		f.Conditions.Size() +
 		f.Features.Size() +

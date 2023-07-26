@@ -3,7 +3,7 @@ package iotago
 import (
 	"encoding/binary"
 
-	"github.com/iotaledger/iota.go/v4/util"
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 const (
@@ -55,5 +55,16 @@ func (u *UTXOInput) Equals(other *UTXOInput) bool {
 }
 
 func (u *UTXOInput) Size() int {
-	return util.NumByteLen(byte(InputUTXO)) + TransactionIDLength + util.NumByteLen(u.TransactionOutputIndex)
+	// InputType + TransactionID + TransactionOutputIndex
+	return serializer.SmallTypeDenotationByteSize + TransactionIDLength + serializer.UInt16ByteSize
+}
+
+func (u *UTXOInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(u.Size())
+	if err != nil {
+		return 0, err
+	}
+
+	// inputs require lookup of the UTXO, so requires extra work.
+	return workScoreBytes.Add(workScoreStructure.Input)
 }

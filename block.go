@@ -92,7 +92,7 @@ type BlockPayload interface {
 	Payload
 }
 
-const BlockHeaderLength = 1 + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + serializer.UInt64ByteSize + AccountIDLength
+const BlockHeaderLength = serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + SlotIndexLength + AccountIDLength
 
 type BlockHeader struct {
 	ProtocolVersion Version   `serix:"0,mapKey=protocolVersion"`
@@ -102,7 +102,7 @@ type BlockHeader struct {
 	SlotCommitmentID    CommitmentID `serix:"3,mapKey=slotCommitment"`
 	LatestFinalizedSlot SlotIndex    `serix:"4,mapKey=latestFinalizedSlot"`
 
-	IssuerID AccountID `serix:"5,mapKey=issuerID"`
+	IssuerID AccountID `serix:"5,mapKey=issuerId"`
 }
 
 func (b *BlockHeader) Hash(api API) (Identifier, error) {
@@ -112,6 +112,16 @@ func (b *BlockHeader) Hash(api API) (Identifier, error) {
 	}
 
 	return blake2b.Sum256(headerBytes), nil
+}
+
+func (b *BlockHeader) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// Version, NetworkID, IssuingTime, SlotCommitmentID, LatestFinalisedSlot and IssuerID
+	return workScoreStructure.DataByte.Multiply(serializer.OneByte +
+		serializer.UInt64ByteSize +
+		serializer.UInt64ByteSize +
+		CommitmentIDLength +
+		SlotIndexLength +
+		AccountIDLength)
 }
 
 type ProtocolBlock struct {
@@ -254,6 +264,25 @@ func (b *ProtocolBlock) ForEachParent(consumer func(parent Parent)) {
 	}
 }
 
+func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreHeader, err := b.BlockHeader.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreBlock, err := b.Block.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreSignature, err := b.Signature.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreHeader.Add(workScoreBlock, workScoreSignature)
+}
+
 type Block interface {
 	Type() BlockType
 
@@ -262,6 +291,8 @@ type Block interface {
 	ShallowLikeParentIDs() BlockIDs
 
 	Hash(api API) (Identifier, error)
+
+	ProcessableObject
 }
 
 // BasicBlock represents a basic vertex in the Tangle/BlockDAG.
@@ -302,6 +333,31 @@ func (b *BasicBlock) Hash(api API) (Identifier, error) {
 	return blake2b.Sum256(blockBytes), nil
 }
 
+func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// BlockType + BurnedMana
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte + ManaSize)
+	if err != nil {
+		return 0, err
+	}
+
+	// work score for parents is a penalty for each missing strong parent below MinStrongParentsThreshold
+	var workScoreMissingParents WorkScore
+	if len(b.StrongParents) < int(workScoreStructure.MinStrongParentsThreshold) {
+		var err error
+		workScoreMissingParents, err = workScoreStructure.MissingParent.Multiply(int(workScoreStructure.MinStrongParentsThreshold) - len(b.StrongParents))
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	workScorePayload, err := b.Payload.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreMissingParents, workScorePayload)
+}
+
 // ValidationBlock represents a validation vertex in the Tangle/BlockDAG.
 type ValidationBlock struct {
 	// The parents the block references.
@@ -337,6 +393,11 @@ func (b *ValidationBlock) Hash(api API) (Identifier, error) {
 	}
 
 	return IdentifierFromData(blockBytes), nil
+}
+
+func (b *ValidationBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// Validator blocks do not incur any work score as they do not burn mana
+	return 0, nil
 }
 
 // ParentsType is a type that defines the type of the parent.

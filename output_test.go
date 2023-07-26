@@ -188,9 +188,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
-				ImmutableFeatures: iotago.DelegationOutputImmFeatures{
-					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
-				},
 			},
 			target: &iotago.DelegationOutput{},
 		},

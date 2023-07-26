@@ -3,7 +3,6 @@ package iotago
 import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 var (
@@ -48,9 +47,20 @@ func (s *StakingFeature) Clone() Feature {
 }
 
 func (s *StakingFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	vbytes := serializer.SmallTypeDenotationByteSize + (serializer.UInt64ByteSize * 4)
+	vbytes := s.Size()
+
 	// TODO: Introduce another vbyte factor for the staking feature.
 	return rentStruct.VBFactorData.Multiply(VBytes(vbytes))
+}
+
+func (s *StakingFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(s.Size())
+	if err != nil {
+		return 0, err
+	}
+
+	// staking feature changes require invokation of staking managers so require extra work.
+	return workScoreBytes.Add(workScoreStructure.Staking)
 }
 
 func (s *StakingFeature) Equal(other Feature) bool {
@@ -70,5 +80,6 @@ func (s *StakingFeature) Type() FeatureType {
 }
 
 func (s *StakingFeature) Size() int {
-	return util.NumByteLen(byte(FeatureStaking)) + serializer.UInt64ByteSize*2 + EpochIndexLength*2
+	// FeatureType + StakedAmount + FixedCost + StartEpoch + EndEpoch
+	return serializer.SmallTypeDenotationByteSize + BaseTokenSize + ManaSize + EpochIndexLength + EpochIndexLength
 }

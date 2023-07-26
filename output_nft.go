@@ -5,7 +5,6 @@ import (
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -121,12 +120,42 @@ func (n *NFTOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, 
 func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount + stored mana
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+ManaSize) +
 		n.NativeTokens.VBytes(rentStruct, nil) +
 		rentStruct.VBFactorData.Multiply(NFTIDLength) +
 		n.Conditions.VBytes(rentStruct, nil) +
 		n.Features.VBytes(rentStruct, nil) +
 		n.ImmutableFeatures.VBytes(rentStruct, nil)
+}
+
+func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// OutputType + Amount + Mana + NFTID
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + ManaSize + NFTIDLength)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreNativeTokens, err := n.NativeTokens.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreConditions, err := n.Conditions.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreFeatures, err := n.Features.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreImmutableFeatures, err := n.ImmutableFeatures.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreNativeTokens, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (n *NFTOutput) Chain() ChainID {
@@ -162,7 +191,8 @@ func (n *NFTOutput) Type() OutputType {
 }
 
 func (n *NFTOutput) Size() int {
-	return util.NumByteLen(byte(OutputNFT)) +
+	// OutputType
+	return serializer.OneByte +
 		BaseTokenSize +
 		ManaSize +
 		n.NativeTokens.Size() +

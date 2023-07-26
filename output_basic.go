@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 type (
@@ -52,10 +51,35 @@ func (e *BasicOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex
 func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount + stored mana
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+ManaSize) +
 		e.NativeTokens.VBytes(rentStruct, nil) +
 		e.Conditions.VBytes(rentStruct, nil) +
 		e.Features.VBytes(rentStruct, nil)
+}
+
+func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// OutputType + Amount + Mana
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + ManaSize)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreNativeTokens, err := e.NativeTokens.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreConditions, err := e.Conditions.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreFeatures, err := e.Features.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreNativeTokens, workScoreConditions, workScoreFeatures)
 }
 
 func (e *BasicOutput) NativeTokenList() NativeTokens {
@@ -69,6 +93,7 @@ func (e *BasicOutput) FeatureSet() FeatureSet {
 func (e *BasicOutput) UnlockConditionSet() UnlockConditionSet {
 	return e.Conditions.MustSet()
 }
+
 func (e *BasicOutput) Deposit() BaseToken {
 	return e.Amount
 }
@@ -86,7 +111,8 @@ func (e *BasicOutput) Type() OutputType {
 }
 
 func (e *BasicOutput) Size() int {
-	return util.NumByteLen(byte(OutputBasic)) +
+	// OutputType
+	return serializer.OneByte +
 		BaseTokenSize +
 		ManaSize +
 		e.NativeTokens.Size() +

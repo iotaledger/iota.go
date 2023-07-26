@@ -7,6 +7,11 @@ type ChainOutput interface {
 	Output
 	// Chain returns the ChainID to which this Output belongs to.
 	Chain() ChainID
+}
+
+// ChainOutputImmutable is a type of Output which represents a chain of state transitions with immutable features.
+type ChainOutputImmutable interface {
+	ChainOutput
 	// ImmutableFeatureSet returns the immutable FeatureSet this output contains.
 	ImmutableFeatureSet() FeatureSet
 }

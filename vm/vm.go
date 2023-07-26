@@ -294,7 +294,7 @@ func (unlockedIdent *UnlockedIdentity) String() string {
 
 // IsIssuerOnOutputUnlocked checks whether the issuer in an IssuerFeature of this new ChainOutput has been unlocked.
 // This function is a no-op if the chain output does not contain an IssuerFeature.
-func IsIssuerOnOutputUnlocked(output iotago.ChainOutput, unlockedIdents UnlockedIdentities) error {
+func IsIssuerOnOutputUnlocked(output iotago.ChainOutputImmutable, unlockedIdents UnlockedIdentities) error {
 	immFeats := output.ImmutableFeatureSet()
 	if len(immFeats) == 0 {
 		return nil

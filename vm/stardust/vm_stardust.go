@@ -737,7 +737,7 @@ func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Param
 		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w", iotago.ErrInvalidDelegationNonZeroEndEpoch)
 	}
 
-	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
+	return nil
 }
 
 func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.DelegationOutput, vmParams *vm.Params) error {
@@ -745,10 +745,6 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 	// Since they can only be transitioned once, the input will always need to have a zeroed ID.
 	if !current.DelegationID.Empty() {
 		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w: delegation output can only be transitioned if it has a zeroed ID", iotago.ErrInvalidDelegationNonZeroedID)
-	}
-
-	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
-		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "immutable features mismatch: old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures)
 	}
 
 	if current.DelegatedAmount != next.DelegatedAmount ||

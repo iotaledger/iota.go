@@ -70,8 +70,7 @@ var (
 		Min: MinBlockIssuerKeysCount,
 		Max: MaxBlockIssuerKeysCount,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
+			serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	accountOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
@@ -137,14 +136,6 @@ var (
 		MustOccur: serializer.TypePrefixes{
 			uint32(UnlockConditionAddress): struct{}{},
 		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
-	}
-
-	delegationOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
-		Min: 0,
-		Max: 1,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
 			serializer.ArrayValidationModeLexicalOrdering |
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
@@ -439,12 +430,6 @@ func V3API(protoParams ProtocolParameters) API {
 		))
 
 		must(api.RegisterInterfaceObjects((*delegationOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
-
-		must(api.RegisterTypeSettings(DelegationOutputImmFeatures{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3ImmFeatBlocksArrRules),
-		))
-
-		must(api.RegisterInterfaceObjects((*delegationOutputImmFeature)(nil), (*IssuerFeature)(nil)))
 	}
 
 	{
@@ -515,14 +500,14 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(ValidationBlock{},
-			serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidation))),
+		must(api.RegisterTypeSettings(BasicBlock{},
+			serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))),
 		)
 	}
 
 	{
-		must(api.RegisterTypeSettings(BasicBlock{},
-			serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))),
+		must(api.RegisterTypeSettings(ValidationBlock{},
+			serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidation))),
 		)
 	}
 
