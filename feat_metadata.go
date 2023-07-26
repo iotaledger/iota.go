@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // MetadataFeature is a feature which simply holds binary data to be freely
@@ -21,6 +20,10 @@ func (s *MetadataFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes
 	return rentStruct.VBFactorData.Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
 }
 
+func (s *MetadataFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	return workScoreStructure.DataByte.Multiply(s.Size())
+}
+
 func (s *MetadataFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*MetadataFeature)
 	if !is {
@@ -35,6 +38,6 @@ func (s *MetadataFeature) Type() FeatureType {
 }
 
 func (s *MetadataFeature) Size() int {
-	// data length prefix as uint16 = 2 bytes
-	return util.NumByteLen(byte(FeatureMetadata)) + serializer.UInt16ByteSize + len(s.Data)
+	// FeatureType + Data
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)
 }

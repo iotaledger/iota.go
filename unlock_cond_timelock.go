@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // TimelockUnlockCondition is an unlock condition which puts a time constraint on an output depending
@@ -21,6 +20,10 @@ func (s *TimelockUnlockCondition) Clone() UnlockCondition {
 
 func (s *TimelockUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
+}
+
+func (s *TimelockUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	return workScoreStructure.DataByte.Multiply(s.Size())
 }
 
 func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {
@@ -42,5 +45,6 @@ func (s *TimelockUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *TimelockUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionTimelock)) + SlotIndexLength
+	// UnlockType + SlotIndex
+	return serializer.SmallTypeDenotationByteSize + SlotIndexLength
 }

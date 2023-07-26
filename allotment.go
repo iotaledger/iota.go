@@ -18,7 +18,23 @@ type Allotment struct {
 }
 
 func (a Allotments) Size() int {
-	return len(a) * (AccountIDLength + serializer.UInt64ByteSize)
+	// LengthPrefixType
+	return serializer.UInt16ByteSize + len(a)*(AccountIDLength+ManaSize)
+}
+
+func (a Allotments) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(a.Size())
+	if err != nil {
+		return 0, err
+	}
+
+	// Allotments requires invocation of account managers, so requires extra work.
+	workScoreAllotments, err := workScoreStructure.Allotment.Multiply(len(a))
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreAllotments)
 }
 
 func (a Allotments) Get(id AccountID) Mana {

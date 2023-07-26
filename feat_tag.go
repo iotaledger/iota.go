@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // TagFeature is a feature which allows to additionally tag an output by a user defined value.
@@ -23,6 +22,10 @@ func (s *TagFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.Tag)))
 }
 
+func (s *TagFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	return workScoreStructure.DataByte.Multiply(s.Size())
+}
+
 func (s *TagFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*TagFeature)
 	if !is {
@@ -37,6 +40,6 @@ func (s *TagFeature) Type() FeatureType {
 }
 
 func (s *TagFeature) Size() int {
-	// tag length prefix = 1 byte
-	return util.NumByteLen(byte(FeatureSender)) + serializer.OneByte + len(s.Tag)
+	// FeatureType + Tag
+	return serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.Tag)
 }
