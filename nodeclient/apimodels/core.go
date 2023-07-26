@@ -105,7 +105,7 @@ type (
 		// The relative confirmed tangle time.
 		RelativeConfirmedTangleTime uint64 `json:"relativeConfirmedTangleTime"`
 		// The id of the latest known commitment.
-		LatestCommitmentId iotago.CommitmentID `json:"latestCommitmentId"`
+		LatestCommitmentID iotago.CommitmentID `json:"latestCommitmentId"`
 		// The index of the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `json:"latestFinalizedSlot"`
 		// The slot index of the latest accepted block.

@@ -70,7 +70,7 @@ func TestClient_Info(t *testing.T) {
 			RelativeAcceptedTangleTime:  uint64(ts.UnixNano()),
 			ConfirmedTangleTime:         uint64(ts.UnixNano()),
 			RelativeConfirmedTangleTime: uint64(ts.UnixNano()),
-			LatestCommitmentId:          tpkg.Rand40ByteArray(),
+			LatestCommitmentID:          tpkg.Rand40ByteArray(),
 			PruningSlot:                 iotago.SlotIndex(142800),
 		},
 		BaseToken: &apimodels.InfoResBaseToken{
