@@ -14,6 +14,7 @@ require (
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/crypto v0.10.0
+	golang.org/x/exp v0.0.0-20230206171751-46f607a40771
 	gopkg.in/h2non/gock.v1 v1.1.2
 )
 

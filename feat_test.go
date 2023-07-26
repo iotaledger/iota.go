@@ -3,12 +3,31 @@ package iotago_test
 import (
 	"testing"
 
+	"github.com/iotaledger/hive.go/crypto/ed25519"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestFeaturesDeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
+		{
+			name: "ok - StakingFeature",
+			source: &iotago.StakingFeature{
+				StakedAmount: 100,
+				FixedCost:    12,
+				StartEpoch:   100,
+				EndEpoch:     1236,
+			},
+			target: &iotago.StakingFeature{},
+		},
+		{
+			name: "ok - BlockIssuerFeature",
+			source: &iotago.BlockIssuerFeature{
+				BlockIssuerKeys: iotago.BlockIssuerKeys{ed25519.PublicKey(tpkg.RandBytes(32))},
+				ExpirySlot:      10,
+			},
+			target: &iotago.BlockIssuerFeature{},
+		},
 		{
 			name:   "ok - SenderFeature",
 			source: &iotago.SenderFeature{Address: tpkg.RandEd25519Address()},

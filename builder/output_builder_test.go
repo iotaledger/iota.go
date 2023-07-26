@@ -55,17 +55,28 @@ func TestAccountOutputBuilder(t *testing.T) {
 		metadata                     = []byte("123456")
 		immMetadata                  = []byte("654321")
 		immSender                    = tpkg.RandEd25519Address()
+
+		blockIssuerKey1    = tpkg.Rand32ByteArray()
+		blockIssuerKey2    = tpkg.Rand32ByteArray()
+		blockIssuerKey3    = tpkg.Rand32ByteArray()
+		newBlockIssuerKey1 = tpkg.Rand32ByteArray()
+		newBlockIssuerKey2 = tpkg.Rand32ByteArray()
 	)
 
 	accountOutput, err := builder.NewAccountOutputBuilder(stateCtrl, gov, deposit).
 		NativeToken(nt).
 		Metadata(metadata).
 		StateMetadata(metadata).
+		Staking(deposit, 1, 1000).
+		BlockIssuer(iotago.BlockIssuerKeys{blockIssuerKey1, blockIssuerKey2, blockIssuerKey3}, 100000).
 		ImmutableMetadata(immMetadata).
 		ImmutableSender(immSender).
 		FoundriesToGenerate(5).
 		Build()
 	require.NoError(t, err)
+
+	expectedBlockIssuerKeys := iotago.BlockIssuerKeys{blockIssuerKey1, blockIssuerKey2, blockIssuerKey3}
+	expectedBlockIssuerKeys.Sort()
 
 	expected := &iotago.AccountOutput{
 		Amount:         1337,
@@ -79,6 +90,16 @@ func TestAccountOutputBuilder(t *testing.T) {
 		},
 		Features: iotago.AccountOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
+			&iotago.BlockIssuerFeature{
+				BlockIssuerKeys: expectedBlockIssuerKeys,
+				ExpirySlot:      100000,
+			},
+			&iotago.StakingFeature{
+				StakedAmount: deposit,
+				FixedCost:    1,
+				StartEpoch:   1000,
+				EndEpoch:     0,
+			},
 		},
 		ImmutableFeatures: iotago.AccountOutputImmFeatures{
 			&iotago.SenderFeature{Address: immSender},
@@ -95,6 +116,103 @@ func TestAccountOutputBuilder(t *testing.T) {
 		Deposit(newDeposit).Builder().Build()
 	require.NoError(t, err)
 	require.Equal(t, expectedCpy, updatedOutput)
+
+	updatedFeatures, err := builder.NewAccountOutputBuilderFromPrevious(accountOutput).GovernanceTransition().
+		BlockIssuerTransition().
+		AddKeys(newBlockIssuerKey2, newBlockIssuerKey1).
+		RemoveKey(blockIssuerKey3).
+		RemoveKey(blockIssuerKey1).
+		ExpirySlot(1500).
+		GovernanceTransition().
+		StakingTransition().
+		EndEpoch(2000).
+		Builder().Build()
+	require.NoError(t, err)
+
+	expectedUpdatedBlockIssuerKeys := iotago.BlockIssuerKeys{blockIssuerKey2, newBlockIssuerKey1, newBlockIssuerKey2}
+	expectedUpdatedBlockIssuerKeys.Sort()
+
+	expectedFeatures := &iotago.AccountOutput{
+		Amount:         1337,
+		NativeTokens:   iotago.NativeTokens{nt},
+		StateIndex:     1,
+		StateMetadata:  metadata,
+		FoundryCounter: 5,
+		Conditions: iotago.AccountOutputUnlockConditions{
+			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
+			&iotago.GovernorAddressUnlockCondition{Address: gov},
+		},
+		Features: iotago.AccountOutputFeatures{
+			&iotago.MetadataFeature{Data: metadata},
+			&iotago.BlockIssuerFeature{
+				BlockIssuerKeys: expectedUpdatedBlockIssuerKeys,
+				ExpirySlot:      1500,
+			},
+			&iotago.StakingFeature{
+				StakedAmount: deposit,
+				FixedCost:    1,
+				StartEpoch:   1000,
+				EndEpoch:     2000,
+			},
+		},
+		ImmutableFeatures: iotago.AccountOutputImmFeatures{
+			&iotago.SenderFeature{Address: immSender},
+			&iotago.MetadataFeature{Data: immMetadata},
+		},
+	}
+	require.Equal(t, expectedFeatures, updatedFeatures)
+}
+
+func TestDelegationOutputBuilder(t *testing.T) {
+	var (
+		address                         = tpkg.RandEd25519Address()
+		updatedAddress                  = tpkg.RandEd25519Address()
+		deposit        iotago.BaseToken = 1337
+		updatedDeposit iotago.BaseToken = 127
+		validatorID                     = tpkg.RandAccountID()
+		delegationID                    = tpkg.RandDelegationID()
+	)
+
+	delegationOutput, err := builder.NewDelegationOutputBuilder(validatorID, address, deposit).
+		DelegatedAmount(deposit).
+		StartEpoch(1000).
+		Build()
+	require.NoError(t, err)
+
+	expected := &iotago.DelegationOutput{
+		Amount:          1337,
+		DelegatedAmount: 1337,
+		DelegationID:    iotago.EmptyDelegationId(),
+		ValidatorID:     validatorID,
+		StartEpoch:      1000,
+		EndEpoch:        0,
+		Conditions: iotago.DelegationOutputUnlockConditions{
+			&iotago.AddressUnlockCondition{Address: address},
+		},
+	}
+	require.Equal(t, expected, delegationOutput)
+
+	updatedOutput, err := builder.NewDelegationOutputBuilderFromPrevious(delegationOutput).
+		DelegationID(delegationID).
+		DelegatedAmount(updatedDeposit).
+		Deposit(updatedDeposit).
+		EndEpoch(1500).
+		Address(updatedAddress).
+		Build()
+	require.NoError(t, err)
+
+	expectedOutput := &iotago.DelegationOutput{
+		Amount:          127,
+		DelegatedAmount: 127,
+		ValidatorID:     validatorID,
+		DelegationID:    delegationID,
+		StartEpoch:      1000,
+		EndEpoch:        1500,
+		Conditions: iotago.DelegationOutputUnlockConditions{
+			&iotago.AddressUnlockCondition{Address: updatedAddress},
+		},
+	}
+	require.Equal(t, expectedOutput, updatedOutput)
 }
 
 func TestFoundryOutputBuilder(t *testing.T) {

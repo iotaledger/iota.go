@@ -561,7 +561,7 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
 
-	dep.Amount = RandBaseToken(10000)
+	dep.Amount = RandBaseToken(10000) + 1
 	return dep
 }
 
@@ -569,7 +569,7 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 func RandAllotment() *iotago.Allotment {
 	return &iotago.Allotment{
 		AccountID: RandAccountID(),
-		Value:     RandMana(10000),
+		Value:     RandMana(10000) + 1,
 	}
 }
 

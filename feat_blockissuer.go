@@ -1,8 +1,11 @@
 package iotago
 
 import (
-	"crypto/ed25519"
+	"bytes"
 
+	"golang.org/x/exp/slices"
+
+	"github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -15,6 +18,12 @@ const (
 
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
 type BlockIssuerKeys []ed25519.PublicKey
+
+func (s BlockIssuerKeys) Sort() {
+	slices.SortFunc(s, func(a, b ed25519.PublicKey) bool {
+		return bytes.Compare(a[:], b[:]) < 0
+	})
+}
 
 // BlockIssuerFeature is a feature which indicates that this account can issue blocks.
 // The feature includes a block issuer address as well as an expiry slot.
@@ -29,8 +38,10 @@ func (s *BlockIssuerFeature) Clone() Feature {
 
 func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	// TODO: add factor for block issuer keys (higher than regular keys factor).
-	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt32ByteSize) +
-		rentStruct.VBFactorKey.Multiply(VBytes(len(s.BlockIssuerKeys))*ed25519.PublicKeySize)
+	// VBFactorData: type prefix + expiry slot + keys length
+	// VBFactorKey: numKeys * pubKeyLength
+	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.OneByte) +
+		rentStruct.VBFactorKey.Multiply(VBytes(len(s.BlockIssuerKeys))*(ed25519.PublicKeySize))
 }
 
 func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
@@ -52,7 +63,7 @@ func (s *BlockIssuerFeature) Equal(other Feature) bool {
 		return false
 	}
 	for i := range s.BlockIssuerKeys {
-		if s.BlockIssuerKeys[i].Equal(otherFeat.BlockIssuerKeys[i]) {
+		if !bytes.Equal(s.BlockIssuerKeys[i][:], otherFeat.BlockIssuerKeys[i][:]) {
 			return false
 		}
 	}
