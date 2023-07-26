@@ -152,12 +152,7 @@ func (d *DelegationOutput) WorkScore(workScoreStructure *WorkScoreStructure) (Wo
 		return 0, err
 	}
 
-	workScoreImmutableFeatures, err := d.ImmutableFeatures.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
-	}
-
-	return workScoreBytes.Add(workScoreConditions, workScoreImmutableFeatures)
+	return workScoreBytes.Add(workScoreConditions)
 }
 
 func (d *DelegationOutput) Chain() ChainID {
