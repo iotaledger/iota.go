@@ -35,8 +35,9 @@ const (
 	ErrBlockParentIsTooOld         BlockFailureReason = 2
 	ErrBlockBookingFailure         BlockFailureReason = 3
 	ErrBlockDroppedDueToCongestion BlockFailureReason = 4
+	ErrBlockPayloadInvalid         BlockFailureReason = 5
 	// TODO: see if needed after congestion PR is done
-	ErrBlockOrphanedDueNegativeCreditsBalance BlockFailureReason = 5
+	ErrBlockOrphanedDueNegativeCreditsBalance BlockFailureReason = 6
 )
 
 func (b BlockState) String() string {
@@ -78,10 +79,11 @@ const (
 	TransactionStateFinalized
 	TransactionStateFailed
 
-	NoTransactionFailureReason                      TransactionFailureReason = 0
-	ErrTxStateReferencedUTXOAlreadySpent            TransactionFailureReason = 1
-	ErrTxStateTxConflicting                         TransactionFailureReason = 2
-	ErrTxStateReferencedUTXONotFound                TransactionFailureReason = 3
+	NoTransactionFailureReason           TransactionFailureReason = 0
+	ErrTxStateReferencedUTXOAlreadySpent TransactionFailureReason = 1
+	ErrTxStateTxConflicting              TransactionFailureReason = 2
+	ErrTxStateUnderlyingUTXOInputInvalid TransactionFailureReason = 3
+	ErrTxUnderlyingTxTypeInvalid
 	ErrTxStateSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 4
 	ErrTxStateUnlockBlockSignatureInvalid           TransactionFailureReason = 5
 	ErrTxStateConfiguredTimelockNotYetExpired       TransactionFailureReason = 6
@@ -91,6 +93,14 @@ const (
 	ErrTxStateInputsCommitmentInvalid               TransactionFailureReason = 10
 	ErrTxStateSenderNotUnlocked                     TransactionFailureReason = 11
 	ErrTxStateChainStateTransitionInvalid           TransactionFailureReason = 12
+	ErrTxStateInputCreationAfterTxCreation          TransactionFailureReason = 13
+	ErrTxStateManaAmount                            TransactionFailureReason = 14
+	ErrTxFailedToResolveBICInput                    TransactionFailureReason = 15
+	ErrTxFailedToResolveRewardInput                 TransactionFailureReason = 16
+	ErrTxFailedToResolveCommitment                  TransactionFailureReason = 17
+	ErrTxStateNoStakingFeature                      TransactionFailureReason = 18
+	ErrTxStateFailedToClaimValidatorReward          TransactionFailureReason = 19
+	ErrTxStateFailedToClaimDelegatorReward          TransactionFailureReason = 20
 	ErrTxStateSemanticValidationFailed              TransactionFailureReason = 255
 )
 

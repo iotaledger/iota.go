@@ -2,6 +2,7 @@ package vm
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -202,7 +203,7 @@ func (unlockedIdents UnlockedIdentities) SigUnlock(ident iotago.DirectUnlockable
 func (unlockedIdents UnlockedIdentities) RefUnlock(identKey string, ref uint16, inputIndex uint16) error {
 	ident, has := unlockedIdents[identKey]
 	if !has || ident.UnlockedAt != ref {
-		return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d is not unlocked through input %d's unlock", inputIndex, ref)
+		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, ref)
 	}
 
 	ident.ReferencedBy[inputIndex] = struct{}{}
@@ -307,7 +308,7 @@ func ExecFuncInputUnlocks() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		actualInputCommitment, err := vmParams.WorkingSet.UTXOInputs.Commitment(vmParams.API)
 		if err != nil {
-			return ierrors.Errorf("unable to compute hash of inputs: %w", err)
+			return ierrors.Join(err, iotago.ErrInvalidInputsCommitment)
 		}
 
 		expectedInputCommitment := vmParams.WorkingSet.Tx.Essence.InputsCommitment[:]
@@ -316,8 +317,8 @@ func ExecFuncInputUnlocks() ExecFunc {
 		}
 
 		for inputIndex, input := range vmParams.WorkingSet.UTXOInputs {
-			if err := unlockOutput(vmParams, input, uint16(inputIndex)); err != nil {
-				return err
+			if err = unlockOutput(vmParams, input, uint16(inputIndex)); err != nil {
+				return ierrors.Join(iotago.ErrFailedToUnlockInput, err)
 			}
 
 			// since this input is now unlocked, and it is a ChainOutput, the chain's address becomes automatically unlocked
@@ -411,8 +412,8 @@ func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) err
 			return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a chain address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
 		}
 
-		if err := vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), refUnlock.Ref(), inputIndex); err != nil {
-			return ierrors.Wrapf(err, "chain address %s (%T)", owner, owner)
+		if err = vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), refUnlock.Ref(), inputIndex); err != nil {
+			return ierrors.Join(iotago.ErrInvalidInputUnlock, ierrors.Wrapf(err, "chain address %s (%T)", owner, owner))
 		}
 
 	case iotago.DirectUnlockableAddress:
@@ -422,8 +423,8 @@ func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) err
 				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has none chain address of %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type())
 			}
 
-			if err := vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex); err != nil {
-				return ierrors.Wrapf(err, "direct unlockable address %s (%T)", owner, owner)
+			if err = vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex); err != nil {
+				return ierrors.Join(iotago.ErrInvalidInputUnlock, ierrors.Wrapf(err, "direct unlockable address %s (%T)", owner, owner))
 			}
 
 		case *iotago.SignatureUnlock:
@@ -432,8 +433,8 @@ func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) err
 				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedAtIndex)
 			}
 
-			if err := vmParams.WorkingSet.UnlockedIdents.SigUnlock(owner, vmParams.WorkingSet.EssenceMsgToSign, uBlock.Signature, inputIndex); err != nil {
-				return err
+			if err = vmParams.WorkingSet.UnlockedIdents.SigUnlock(owner, vmParams.WorkingSet.EssenceMsgToSign, uBlock.Signature, inputIndex); err != nil {
+				return ierrors.Join(iotago.ErrUnlockBlockSignatureInvalid, err)
 			}
 
 		}
@@ -476,12 +477,12 @@ func ExecFuncBalancedMana() ExecFunc {
 		}
 		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		if err != nil {
-			return err
+			return ierrors.Join(iotago.ErrInvalidManaAmount, err)
 		}
 
 		manaOut, err := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 		if err != nil {
-			return err
+			return errors.Join(iotago.ErrInvalidManaAmount, err)
 		}
 
 		// Whether it's valid to claim rewards is checked in the delegation and staking STVFs.
@@ -573,12 +574,12 @@ func ExecFuncChainTransitions() ExecFunc {
 			next := vmParams.WorkingSet.OutChains[chainID]
 			if next == nil {
 				if err := vm.ChainSTVF(iotago.ChainTransitionTypeDestroy, inputChain, nil, vmParams); err != nil {
-					return ierrors.Errorf("input chain %s (%T) destruction transition failed: %w", chainID, inputChain, err)
+					return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "input chain %s (%T) destruction transition failed", chainID, inputChain))
 				}
 				continue
 			}
 			if err := vm.ChainSTVF(iotago.ChainTransitionTypeStateChange, inputChain, next, vmParams); err != nil {
-				return ierrors.Errorf("chain %s (%T) state transition failed: %w", chainID, inputChain, err)
+				return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "chain %s (%T) state transition failed", chainID, inputChain))
 			}
 		}
 
@@ -588,7 +589,7 @@ func ExecFuncChainTransitions() ExecFunc {
 			}
 
 			if err := vm.ChainSTVF(iotago.ChainTransitionTypeGenesis, nil, outputChain, vmParams); err != nil {
-				return ierrors.Errorf("new chain %s (%T) state transition failed: %w", chainID, outputChain, err)
+				return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "new chain %s (%T) state transition failed", chainID, outputChain))
 			}
 		}
 
@@ -605,7 +606,7 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 		var err error
 		vmParams.WorkingSet.InNativeTokens, err = vmParams.WorkingSet.UTXOInputs.NativeTokenSum()
 		if err != nil {
-			return ierrors.Errorf("invalid input native token set: %w", err)
+			return ierrors.Join(iotago.ErrInvalidNativeTokenSet, ierrors.Errorf("invalid input native token set: %w", err))
 		}
 		inNTCount := len(vmParams.WorkingSet.InNativeTokens)
 
@@ -615,7 +616,7 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 
 		vmParams.WorkingSet.OutNativeTokens, err = vmParams.WorkingSet.Tx.Essence.Outputs.NativeTokenSum()
 		if err != nil {
-			return ierrors.Errorf("invalid output native token set: %w", err)
+			return ierrors.Join(iotago.ErrInvalidNativeTokenSet, err)
 		}
 
 		distinctNTCount := make(map[iotago.NativeTokenID]struct{})
