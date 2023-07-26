@@ -2,8 +2,7 @@ package iotago
 
 import (
 	"bytes"
-
-	"golang.org/x/exp/slices"
+	"sort"
 
 	"github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -20,8 +19,8 @@ const (
 type BlockIssuerKeys []ed25519.PublicKey
 
 func (s BlockIssuerKeys) Sort() {
-	slices.SortFunc(s, func(a, b ed25519.PublicKey) bool {
-		return bytes.Compare(a[:], b[:]) < 0
+	sort.Slice(s, func(i, j int) bool {
+		return bytes.Compare(s[i][:], s[j][:]) < 0
 	})
 }
 
