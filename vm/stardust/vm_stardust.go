@@ -719,10 +719,6 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w: delegation output can only be transitioned if it has a zeroed ID", iotago.ErrInvalidDelegationNonZeroedID)
 	}
 
-	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
-		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "immutable features mismatch: old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures)
-	}
-
 	if current.DelegatedAmount != next.DelegatedAmount ||
 		current.ValidatorID != next.ValidatorID ||
 		current.StartEpoch != next.StartEpoch {
