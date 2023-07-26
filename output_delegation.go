@@ -157,10 +157,6 @@ func (d *DelegationOutput) UnlockConditionSet() UnlockConditionSet {
 	return d.Conditions.MustSet()
 }
 
-func (d *DelegationOutput) ImmutableFeatureSet() FeatureSet {
-	return make(FeatureSet, 0)
-}
-
 func (d *DelegationOutput) Deposit() BaseToken {
 	return d.Amount
 }

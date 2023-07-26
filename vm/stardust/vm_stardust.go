@@ -709,7 +709,7 @@ func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Param
 		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w", iotago.ErrInvalidDelegationNonZeroEndEpoch)
 	}
 
-	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
+	return nil
 }
 
 func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.DelegationOutput, vmParams *vm.Params) error {
