@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // StorageDepositReturnUnlockCondition is an unlock condition which defines
@@ -26,6 +25,11 @@ func (s *StorageDepositReturnUnlockCondition) VBytes(rentStruct *RentStructure, 
 		s.ReturnAddress.VBytes(rentStruct, nil)
 }
 
+func (s *StorageDepositReturnUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// StorageDepositReturnUnlockCondition does not require a signature check on creation, only consumption.
+	return workScoreStructure.DataByte.Multiply(s.Size())
+}
+
 func (s *StorageDepositReturnUnlockCondition) Equal(other UnlockCondition) bool {
 	otherBlock, is := other.(*StorageDepositReturnUnlockCondition)
 	if !is {
@@ -47,5 +51,6 @@ func (s *StorageDepositReturnUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *StorageDepositReturnUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionStorageDepositReturn)) + s.ReturnAddress.Size() + serializer.UInt64ByteSize
+	// UnlockType + ReturnAddress + BaseToken
+	return serializer.SmallTypeDenotationByteSize + s.ReturnAddress.Size() + BaseTokenSize
 }

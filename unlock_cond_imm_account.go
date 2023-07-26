@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // ImmutableAccountUnlockCondition is an UnlockCondition defining an account which has to be unlocked.
@@ -21,6 +20,11 @@ func (s *ImmutableAccountUnlockCondition) VBytes(rentStruct *RentStructure, _ VB
 		s.Address.VBytes(rentStruct, nil)
 }
 
+func (s *ImmutableAccountUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// ImmutableAccountUnlockCondition does not require a signature check on creation, only consumption.
+	return workScoreStructure.DataByte.Multiply(s.Size())
+}
+
 func (s *ImmutableAccountUnlockCondition) Equal(other UnlockCondition) bool {
 	otherUnlockCond, is := other.(*ImmutableAccountUnlockCondition)
 	if !is {
@@ -35,5 +39,6 @@ func (s *ImmutableAccountUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *ImmutableAccountUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionImmutableAccount)) + s.Address.Size()
+	// UnlockType + Address
+	return serializer.SmallTypeDenotationByteSize + s.Address.Size()
 }

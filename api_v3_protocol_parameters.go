@@ -25,6 +25,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithVersion(apiV3Version),
 			WithNetworkOptions("testnet", PrefixTestnet),
 			WithSupplyOptions(1813620509061365, 100, 1, 10),
+			WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
 			WithTimeProviderOptions(time.Now().Unix(), 10, 13),
 			// TODO: add sane default values
 			WithManaOptions(1,
@@ -62,6 +63,10 @@ func (p *V3ProtocolParameters) NetworkName() string {
 
 func (p *V3ProtocolParameters) RentStructure() *RentStructure {
 	return &p.basicProtocolParameters.RentStructure
+}
+
+func (p *V3ProtocolParameters) WorkScoreStructure() *WorkScoreStructure {
+	return &p.basicProtocolParameters.WorkScoreStructure
 }
 
 func (p *V3ProtocolParameters) TokenSupply() BaseToken {
@@ -123,8 +128,8 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 }
 
 func (p *V3ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n\tEviction Age: %d\n\tLiveness Threshold: %d\n}",
-		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate, p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent, p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.EvictionAge, p.basicProtocolParameters.LivenessThreshold)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n\tEviction Age: %d\n\tLiveness Threshold: %d\n}",
+		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate, p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent, p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.EvictionAge, p.basicProtocolParameters.LivenessThreshold)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
@@ -161,6 +166,37 @@ func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData VBy
 			VByteCost:    vByteCost,
 			VBFactorData: vBFactorData,
 			VBFactorKey:  vBFactorKey,
+		}
+	}
+}
+
+func WithWorkScoreOptions(
+	dataByte WorkScore,
+	block WorkScore,
+	missingParent WorkScore,
+	input WorkScore,
+	contextInput WorkScore,
+	output WorkScore,
+	nativeToken WorkScore,
+	staking WorkScore,
+	blockIssuer WorkScore,
+	allotment WorkScore,
+	signatureEd25519 WorkScore,
+	minStrongParentsThreshold byte) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.WorkScoreStructure = WorkScoreStructure{
+			DataByte:                  dataByte,
+			Block:                     block,
+			MissingParent:             missingParent,
+			Input:                     input,
+			ContextInput:              contextInput,
+			Output:                    output,
+			NativeToken:               nativeToken,
+			Staking:                   staking,
+			BlockIssuer:               blockIssuer,
+			Allotment:                 allotment,
+			SignatureEd25519:          signatureEd25519,
+			MinStrongParentsThreshold: minStrongParentsThreshold,
 		}
 	}
 }

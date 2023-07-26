@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // IssuerFeature is a feature which associates an output
@@ -23,6 +22,11 @@ func (s *IssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		s.Address.VBytes(rentStruct, nil)
 }
 
+func (s *IssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// we do not need to charge for a signature check here as this is covered by the unlock that must be provided.
+	return workScoreStructure.DataByte.Multiply(s.Size())
+}
+
 func (s *IssuerFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*IssuerFeature)
 	if !is {
@@ -37,5 +41,6 @@ func (s *IssuerFeature) Type() FeatureType {
 }
 
 func (s *IssuerFeature) Size() int {
-	return util.NumByteLen(byte(FeatureIssuer)) + s.Address.Size()
+	// FeatureType + Address
+	return serializer.SmallTypeDenotationByteSize + s.Address.Size()
 }
