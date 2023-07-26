@@ -102,7 +102,7 @@ type BlockHeader struct {
 	SlotCommitmentID    CommitmentID `serix:"3,mapKey=slotCommitment"`
 	LatestFinalizedSlot SlotIndex    `serix:"4,mapKey=latestFinalizedSlot"`
 
-	IssuerID AccountID `serix:"5,mapKey=issuerID"`
+	IssuerID AccountID `serix:"5,mapKey=issuerId"`
 }
 
 func (b *BlockHeader) Hash(api API) (Identifier, error) {

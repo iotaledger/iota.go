@@ -11,7 +11,7 @@ import (
 
 // V3ProtocolParameters defines the parameters of the protocol.
 type V3ProtocolParameters struct {
-	defaultProtocolParameters `serix:"0"`
+	basicProtocolParameters `serix:"0"`
 
 	// Derived fields
 	livenessThresholdDurationOnce sync.Once
@@ -50,19 +50,19 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 var _ ProtocolParameters = &V3ProtocolParameters{}
 
 func (p *V3ProtocolParameters) Version() Version {
-	return p.defaultProtocolParameters.Version
+	return p.basicProtocolParameters.Version
 }
 
 func (p *V3ProtocolParameters) Bech32HRP() NetworkPrefix {
-	return p.defaultProtocolParameters.Bech32HRP
+	return p.basicProtocolParameters.Bech32HRP
 }
 
 func (p *V3ProtocolParameters) NetworkName() string {
-	return p.defaultProtocolParameters.NetworkName
+	return p.basicProtocolParameters.NetworkName
 }
 
 func (p *V3ProtocolParameters) RentStructure() *RentStructure {
-	return &p.defaultProtocolParameters.RentStructure
+	return &p.basicProtocolParameters.RentStructure
 }
 
 func (p *V3ProtocolParameters) WorkScoreStructure() *WorkScoreStructure {
@@ -70,48 +70,48 @@ func (p *V3ProtocolParameters) WorkScoreStructure() *WorkScoreStructure {
 }
 
 func (p *V3ProtocolParameters) TokenSupply() BaseToken {
-	return p.defaultProtocolParameters.TokenSupply
+	return p.basicProtocolParameters.TokenSupply
 }
 
 func (p *V3ProtocolParameters) NetworkID() NetworkID {
-	return NetworkIDFromString(p.defaultProtocolParameters.NetworkName)
+	return NetworkIDFromString(p.basicProtocolParameters.NetworkName)
 }
 
 func (p *V3ProtocolParameters) TimeProvider() *TimeProvider {
-	return NewTimeProvider(p.defaultProtocolParameters.GenesisUnixTimestamp, int64(p.defaultProtocolParameters.SlotDurationInSeconds), p.defaultProtocolParameters.SlotsPerEpochExponent)
+	return NewTimeProvider(p.basicProtocolParameters.GenesisUnixTimestamp, int64(p.basicProtocolParameters.SlotDurationInSeconds), p.basicProtocolParameters.SlotsPerEpochExponent)
 }
 
 // ParamEpochDurationInSlots defines the amount of slots in an epoch.
 func (p *V3ProtocolParameters) ParamEpochDurationInSlots() SlotIndex {
-	return 1 << p.defaultProtocolParameters.SlotsPerEpochExponent
+	return 1 << p.basicProtocolParameters.SlotsPerEpochExponent
 }
 
 func (p *V3ProtocolParameters) StakingUnbondingPeriod() EpochIndex {
-	return p.defaultProtocolParameters.StakingUnbondingPeriod
+	return p.basicProtocolParameters.StakingUnbondingPeriod
 }
 
 func (p *V3ProtocolParameters) LivenessThreshold() SlotIndex {
-	return p.defaultProtocolParameters.LivenessThreshold
+	return p.basicProtocolParameters.LivenessThreshold
 }
 
 func (p *V3ProtocolParameters) LivenessThresholdDuration() time.Duration {
 	p.livenessThresholdDurationOnce.Do(func() {
-		p.livenessThresholdDuration = time.Duration(uint64(p.defaultProtocolParameters.LivenessThreshold)*uint64(p.defaultProtocolParameters.SlotDurationInSeconds)) * time.Second
+		p.livenessThresholdDuration = time.Duration(uint64(p.basicProtocolParameters.LivenessThreshold)*uint64(p.basicProtocolParameters.SlotDurationInSeconds)) * time.Second
 	})
 
 	return p.livenessThresholdDuration
 }
 
 func (p *V3ProtocolParameters) EvictionAge() SlotIndex {
-	return p.defaultProtocolParameters.EvictionAge
+	return p.basicProtocolParameters.EvictionAge
 }
 
 func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
-	return p.defaultProtocolParameters.EpochNearingThreshold
+	return p.basicProtocolParameters.EpochNearingThreshold
 }
 
 func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
-	return &p.defaultProtocolParameters.VersionSignaling
+	return &p.basicProtocolParameters.VersionSignaling
 }
 
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
@@ -129,35 +129,40 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 
 func (p *V3ProtocolParameters) String() string {
 	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n\tEviction Age: %d\n\tLiveness Threshold: %d\n}",
-		p.defaultProtocolParameters.Version, p.defaultProtocolParameters.NetworkName, p.defaultProtocolParameters.Bech32HRP, p.defaultProtocolParameters.RentStructure, p.defaultProtocolParameters.WorkScoreStructure, p.defaultProtocolParameters.TokenSupply, p.defaultProtocolParameters.GenesisUnixTimestamp, p.defaultProtocolParameters.SlotDurationInSeconds, p.defaultProtocolParameters.SlotsPerEpochExponent, p.defaultProtocolParameters.ManaGenerationRate, p.defaultProtocolParameters.ManaGenerationRateExponent, p.defaultProtocolParameters.ManaDecayFactors, p.defaultProtocolParameters.ManaDecayFactorsExponent, p.defaultProtocolParameters.ManaDecayFactorEpochsSum, p.defaultProtocolParameters.ManaDecayFactorEpochsSumExponent, p.defaultProtocolParameters.StakingUnbondingPeriod, p.defaultProtocolParameters.EvictionAge, p.defaultProtocolParameters.LivenessThreshold)
+		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate, p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent, p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.EvictionAge, p.basicProtocolParameters.LivenessThreshold)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
-	return NewManaDecayProvider(p.TimeProvider(), p.defaultProtocolParameters.SlotsPerEpochExponent, p.defaultProtocolParameters.ManaGenerationRate, p.defaultProtocolParameters.ManaGenerationRateExponent, p.defaultProtocolParameters.ManaDecayFactors, p.defaultProtocolParameters.ManaDecayFactorsExponent, p.defaultProtocolParameters.ManaDecayFactorEpochsSum, p.defaultProtocolParameters.ManaDecayFactorEpochsSumExponent)
+	return NewManaDecayProvider(p.TimeProvider(), p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate, p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent, p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent)
 }
 
-func (p *V3ProtocolParameters) Equals(other *V3ProtocolParameters) bool {
-	return p.defaultProtocolParameters.Equals(other.defaultProtocolParameters) &&
+func (p *V3ProtocolParameters) Equals(other ProtocolParameters) bool {
+	otherV3Params, matches := other.(*V3ProtocolParameters)
+	if !matches {
+		return false
+	}
+
+	return p.basicProtocolParameters.Equals(otherV3Params.basicProtocolParameters) &&
 		p.LivenessThresholdDuration() == other.LivenessThresholdDuration()
 }
 
 func WithVersion(version Version) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.defaultProtocolParameters.Version = version
+		p.basicProtocolParameters.Version = version
 	}
 }
 
 func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.defaultProtocolParameters.NetworkName = networkName
-		p.defaultProtocolParameters.Bech32HRP = bech32HRP
+		p.basicProtocolParameters.NetworkName = networkName
+		p.basicProtocolParameters.Bech32HRP = bech32HRP
 	}
 }
 
 func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData VByteCostFactor, vBFactorKey VByteCostFactor) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.defaultProtocolParameters.TokenSupply = totalSupply
-		p.defaultProtocolParameters.RentStructure = RentStructure{
+		p.basicProtocolParameters.TokenSupply = totalSupply
+		p.basicProtocolParameters.RentStructure = RentStructure{
 			VByteCost:    vByteCost,
 			VBFactorData: vBFactorData,
 			VBFactorKey:  vBFactorKey,
@@ -198,40 +203,40 @@ func WithWorkScoreOptions(
 
 func WithTimeProviderOptions(genesisTimestamp int64, slotDuration uint8, slotsPerEpochExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.defaultProtocolParameters.GenesisUnixTimestamp = genesisTimestamp
-		p.defaultProtocolParameters.SlotDurationInSeconds = slotDuration
-		p.defaultProtocolParameters.SlotsPerEpochExponent = slotsPerEpochExponent
+		p.basicProtocolParameters.GenesisUnixTimestamp = genesisTimestamp
+		p.basicProtocolParameters.SlotDurationInSeconds = slotDuration
+		p.basicProtocolParameters.SlotsPerEpochExponent = slotsPerEpochExponent
 	}
 }
 
 func WithManaOptions(manaGenerationRate uint8, manaGenerationRateExponent uint8, manaDecayFactors []uint32, manaDecayFactorsExponent uint8, manaDecayFactorEpochsSum uint32, manaDecayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.defaultProtocolParameters.ManaGenerationRate = manaGenerationRate
-		p.defaultProtocolParameters.ManaGenerationRateExponent = manaGenerationRateExponent
-		p.defaultProtocolParameters.ManaDecayFactors = manaDecayFactors
-		p.defaultProtocolParameters.ManaDecayFactorsExponent = manaDecayFactorsExponent
-		p.defaultProtocolParameters.ManaDecayFactorEpochsSum = manaDecayFactorEpochsSum
-		p.defaultProtocolParameters.ManaDecayFactorEpochsSumExponent = manaDecayFactorEpochsSumExponent
+		p.basicProtocolParameters.ManaGenerationRate = manaGenerationRate
+		p.basicProtocolParameters.ManaGenerationRateExponent = manaGenerationRateExponent
+		p.basicProtocolParameters.ManaDecayFactors = manaDecayFactors
+		p.basicProtocolParameters.ManaDecayFactorsExponent = manaDecayFactorsExponent
+		p.basicProtocolParameters.ManaDecayFactorEpochsSum = manaDecayFactorEpochsSum
+		p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent = manaDecayFactorEpochsSumExponent
 	}
 }
 
 func WithLivenessOptions(evictionAge SlotIndex, livenessThreshold SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.defaultProtocolParameters.EvictionAge = evictionAge
-		p.defaultProtocolParameters.LivenessThreshold = livenessThreshold
-		p.defaultProtocolParameters.EpochNearingThreshold = epochNearingThreshold
+		p.basicProtocolParameters.EvictionAge = evictionAge
+		p.basicProtocolParameters.LivenessThreshold = livenessThreshold
+		p.basicProtocolParameters.EpochNearingThreshold = epochNearingThreshold
 	}
 }
 
 func WithStakingOptions(unboundPeriod EpochIndex) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.defaultProtocolParameters.StakingUnbondingPeriod = unboundPeriod
+		p.basicProtocolParameters.StakingUnbondingPeriod = unboundPeriod
 	}
 }
 
 func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, activationOffset uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.defaultProtocolParameters.VersionSignaling = VersionSignaling{
+		p.basicProtocolParameters.VersionSignaling = VersionSignaling{
 			WindowSize:        windowSize,
 			WindowTargetRatio: windowTargetRatio,
 			ActivationOffset:  activationOffset,

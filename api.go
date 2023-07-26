@@ -122,6 +122,8 @@ type ProtocolParameters interface {
 	Bytes() ([]byte, error)
 
 	Hash() (Identifier, error)
+
+	Equals(other ProtocolParameters) bool
 }
 
 // Sizer is an object knowing its own byte size.
