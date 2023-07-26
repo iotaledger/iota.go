@@ -4,11 +4,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-const (
-	// NFTUnlockSize defines the size of an NFTUnlock.
-	NFTUnlockSize = serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
-)
-
 // NFTUnlock is an Unlock which references a previous unlock.
 type NFTUnlock struct {
 	// The other unlock this NFTUnlock references to.
@@ -33,5 +28,10 @@ func (r *NFTUnlock) Type() UnlockType {
 }
 
 func (r *NFTUnlock) Size() int {
-	return NFTUnlockSize
+	// UnlockType + Reference
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
+}
+
+func (r *NFTUnlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	return workScoreStructure.DataByte.Multiply(r.Size())
 }

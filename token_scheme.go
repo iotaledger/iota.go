@@ -30,6 +30,7 @@ var (
 type TokenScheme interface {
 	Sizer
 	NonEphemeralObject
+	ProcessableObject
 
 	// Type returns the type of the TokenScheme.
 	Type() TokenSchemeType

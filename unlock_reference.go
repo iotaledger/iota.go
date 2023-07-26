@@ -4,11 +4,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-const (
-	// ReferenceUnlockSize defines the size of a ReferenceUnlock.
-	ReferenceUnlockSize = serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
-)
-
 // ReferenceUnlock is an Unlock which references a previous unlock.
 type ReferenceUnlock struct {
 	// The other unlock this ReferenceUnlock references to.
@@ -33,5 +28,10 @@ func (r *ReferenceUnlock) Type() UnlockType {
 }
 
 func (r *ReferenceUnlock) Size() int {
-	return ReferenceUnlockSize
+	// UnlockType + Reference
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
+}
+
+func (r *ReferenceUnlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	return workScoreStructure.DataByte.Multiply(r.Size())
 }

@@ -4,7 +4,6 @@ import (
 	"crypto/ed25519"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -34,6 +33,16 @@ func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBy
 		rentStruct.VBFactorKey.Multiply(VBytes(len(s.BlockIssuerKeys))*ed25519.PublicKeySize)
 }
 
+func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(s.Size())
+	if err != nil {
+		return 0, err
+	}
+
+	// block issuer feature requires invocation of account and mana managers, so requires extra work.
+	return workScoreBytes.Add(workScoreStructure.BlockIssuer)
+}
+
 func (s *BlockIssuerFeature) Equal(other Feature) bool {
 	otherFeat, is := other.(*BlockIssuerFeature)
 	if !is {
@@ -56,5 +65,6 @@ func (s *BlockIssuerFeature) Type() FeatureType {
 }
 
 func (s *BlockIssuerFeature) Size() int {
-	return util.NumByteLen(byte(FeatureBlockIssuer)) + len(s.BlockIssuerKeys)*ed25519.PublicKeySize + serializer.UInt32ByteSize
+	// FeatureType + BlockIssuerKeys + ExpirySlot
+	return serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.BlockIssuerKeys)*ed25519.PublicKeySize + SlotIndexLength
 }

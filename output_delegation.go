@@ -6,7 +6,6 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -141,6 +140,26 @@ func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByte
 		d.Conditions.VBytes(rentStruct, nil)
 }
 
+func (d *DelegationOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// OutputType + Amount + DelegatedAmount + DelegationID + ValidatorID + StartEpoch + EndEpoch
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + BaseTokenSize + DelegationIDLength + AccountIDLength + EpochIndexLength + EpochIndexLength)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreConditions, err := d.Conditions.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	workScoreImmutableFeatures, err := d.ImmutableFeatures.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreBytes.Add(workScoreConditions, workScoreImmutableFeatures)
+}
+
 func (d *DelegationOutput) Chain() ChainID {
 	return d.DelegationID
 }
@@ -170,7 +189,8 @@ func (d *DelegationOutput) Type() OutputType {
 }
 
 func (d *DelegationOutput) Size() int {
-	return util.NumByteLen(byte(OutputDelegation)) +
+	// OutputType
+	return serializer.OneByte +
 		BaseTokenSize +
 		BaseTokenSize +
 		DelegationIDLength +

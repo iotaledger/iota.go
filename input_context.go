@@ -33,6 +33,28 @@ var (
 // ContextInputs is a slice of ContextInput.
 type ContextInputs[T ContextInput] []T
 
+func (in ContextInputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// LengthPrefixType
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.UInt16ByteSize)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, input := range in {
+		workScoreInput, err := input.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
+
+		workScoreBytes, err = workScoreBytes.Add(workScoreInput)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return workScoreBytes, nil
+}
+
 func (in ContextInputs[T]) Size() int {
 	sum := serializer.UInt16ByteSize
 	for _, i := range in {
@@ -44,6 +66,7 @@ func (in ContextInputs[T]) Size() int {
 // ContextInput provides an additional contextual input for transaction validation.
 type ContextInput interface {
 	Sizer
+	ProcessableObject
 
 	// Type returns the type of ContextInput.
 	Type() ContextInputType

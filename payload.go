@@ -47,6 +47,7 @@ var (
 // Payload is an object which can be embedded into other objects.
 type Payload interface {
 	Sizer
+	ProcessableObject
 
 	// PayloadType returns the type of the payload.
 	PayloadType() PayloadType

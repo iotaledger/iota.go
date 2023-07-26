@@ -500,14 +500,14 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(ValidationBlock{},
-			serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidation))),
+		must(api.RegisterTypeSettings(BasicBlock{},
+			serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))),
 		)
 	}
 
 	{
-		must(api.RegisterTypeSettings(BasicBlock{},
-			serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))),
+		must(api.RegisterTypeSettings(ValidationBlock{},
+			serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidation))),
 		)
 	}
 
