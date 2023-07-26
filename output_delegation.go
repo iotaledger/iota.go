@@ -89,9 +89,7 @@ func DelegationIDFromOutputID(outputID OutputID) DelegationID {
 
 type (
 	delegationOutputUnlockCondition  interface{ UnlockCondition }
-	delegationOutputImmFeature       interface{ Feature }
 	DelegationOutputUnlockConditions = UnlockConditions[delegationOutputUnlockCondition]
-	DelegationOutputImmFeatures      = Features[delegationOutputImmFeature]
 )
 
 // DelegationOutput is an output type used to implement delegation.
@@ -110,20 +108,17 @@ type DelegationOutput struct {
 	EndEpoch EpochIndex `serix:"5,mapKey=endEpoch"`
 	// The unlock conditions on this output.
 	Conditions DelegationOutputUnlockConditions `serix:"6,mapKey=unlockConditions,omitempty"`
-	// The immutable feature on the output.
-	ImmutableFeatures DelegationOutputImmFeatures `serix:"7,mapKey=immutableFeatures,omitempty"`
 }
 
 func (d *DelegationOutput) Clone() Output {
 	return &DelegationOutput{
-		Amount:            d.Amount,
-		DelegatedAmount:   d.DelegatedAmount,
-		DelegationID:      d.DelegationID,
-		ValidatorID:       d.ValidatorID,
-		StartEpoch:        d.StartEpoch,
-		EndEpoch:          d.EndEpoch,
-		Conditions:        d.Conditions.Clone(),
-		ImmutableFeatures: d.ImmutableFeatures.Clone(),
+		Amount:          d.Amount,
+		DelegatedAmount: d.DelegatedAmount,
+		DelegationID:    d.DelegationID,
+		ValidatorID:     d.ValidatorID,
+		StartEpoch:      d.StartEpoch,
+		EndEpoch:        d.EndEpoch,
+		Conditions:      d.Conditions.Clone(),
 	}
 }
 
@@ -142,8 +137,7 @@ func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByte
 		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize*4) +
 		rentStruct.VBFactorData.Multiply(DelegationIDLength) +
 		rentStruct.VBFactorData.Multiply(AccountIDLength) +
-		d.Conditions.VBytes(rentStruct, nil) +
-		d.ImmutableFeatures.VBytes(rentStruct, nil)
+		d.Conditions.VBytes(rentStruct, nil)
 }
 
 func (d *DelegationOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
@@ -158,12 +152,7 @@ func (d *DelegationOutput) WorkScore(workScoreStructure *WorkScoreStructure) (Wo
 		return 0, err
 	}
 
-	workScoreImmutableFeatures, err := d.ImmutableFeatures.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
-	}
-
-	return workScoreBytes.Add(workScoreConditions, workScoreImmutableFeatures)
+	return workScoreBytes.Add(workScoreConditions)
 }
 
 func (d *DelegationOutput) Chain() ChainID {
@@ -180,10 +169,6 @@ func (d *DelegationOutput) FeatureSet() FeatureSet {
 
 func (d *DelegationOutput) UnlockConditionSet() UnlockConditionSet {
 	return d.Conditions.MustSet()
-}
-
-func (d *DelegationOutput) ImmutableFeatureSet() FeatureSet {
-	return d.ImmutableFeatures.MustSet()
 }
 
 func (d *DelegationOutput) Deposit() BaseToken {
@@ -206,6 +191,5 @@ func (d *DelegationOutput) Size() int {
 		DelegationIDLength +
 		AccountIDLength +
 		EpochIndexLength*2 +
-		d.Conditions.Size() +
-		d.ImmutableFeatures.Size()
+		d.Conditions.Size()
 }
