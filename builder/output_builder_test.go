@@ -189,7 +189,6 @@ func TestDelegationOutputBuilder(t *testing.T) {
 		Conditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: address},
 		},
-		ImmutableFeatures: iotago.DelegationOutputImmFeatures{},
 	}
 	require.Equal(t, expected, delegationOutput)
 
@@ -212,7 +211,6 @@ func TestDelegationOutputBuilder(t *testing.T) {
 		Conditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: updatedAddress},
 		},
-		ImmutableFeatures: iotago.DelegationOutputImmFeatures{},
 	}
 	require.Equal(t, expectedOutput, updatedOutput)
 }

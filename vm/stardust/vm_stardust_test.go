@@ -4233,13 +4233,12 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 	inputs := vm.InputSet{
 		inputIDs[0]: vm.OutputWithCreationTime{
 			Output: &iotago.DelegationOutput{
-				Amount:            OneMi * 10,
-				DelegatedAmount:   OneMi * 10,
-				DelegationID:      iotago.EmptyDelegationId(),
-				ValidatorID:       iotago.EmptyAccountID(),
-				StartEpoch:        currentEpoch,
-				EndEpoch:          currentEpoch + 5,
-				ImmutableFeatures: nil,
+				Amount:          OneMi * 10,
+				DelegatedAmount: OneMi * 10,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     iotago.EmptyAccountID(),
+				StartEpoch:      currentEpoch,
+				EndEpoch:        currentEpoch + 5,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: ident},
 				},

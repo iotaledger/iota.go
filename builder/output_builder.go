@@ -772,7 +772,6 @@ func NewDelegationOutputBuilder(validatorID iotago.AccountID, addr iotago.Addres
 		Conditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: addr},
 		},
-		ImmutableFeatures: iotago.DelegationOutputImmFeatures{},
 	}}
 }
 
@@ -844,7 +843,6 @@ func (builder *DelegationOutputBuilder) MustBuild() *iotago.DelegationOutput {
 func (builder *DelegationOutputBuilder) Build() (*iotago.DelegationOutput, error) {
 
 	builder.output.Conditions.Sort()
-	builder.output.ImmutableFeatures.Sort()
 
 	return builder.output, nil
 }
