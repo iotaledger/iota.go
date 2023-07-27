@@ -128,8 +128,8 @@ const (
 	TxFailureRewardInputInvalid                    TransactionFailureReason = 17
 	TxFailureCommitmentInputInvalid                TransactionFailureReason = 18
 	TxFailureNoStakingFeature                      TransactionFailureReason = 19
-	TxFailureFailedToClaimValidatorReward          TransactionFailureReason = 20
-	TxFailureFailedToClaimDelegatorReward          TransactionFailureReason = 21
+	TxFailureFailedToClaimStakingReward            TransactionFailureReason = 20
+	TxFailureFailedToClaimDelegationReward         TransactionFailureReason = 21
 	TxFailureSemanticValidationFailed              TransactionFailureReason = 255
 )
 
