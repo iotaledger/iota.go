@@ -111,8 +111,8 @@ const (
 	TxFailureNone                                  TransactionFailureReason = 0
 	TxFailureReferencedUTXOAlreadySpent            TransactionFailureReason = 1
 	TxFailureConflicting                           TransactionFailureReason = 2
-	TxFailureUnderlyingUTXOInputInvalid            TransactionFailureReason = 3
-	TxFailureUnderlyingTxTypeInvalid               TransactionFailureReason = 4
+	TxFailureUTXOInputInvalid                      TransactionFailureReason = 3
+	TxFailureTxTypeInvalid                         TransactionFailureReason = 4
 	TxFailureSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 5
 	TxFailureUnlockBlockSignatureInvalid           TransactionFailureReason = 6
 	TxFailureConfiguredTimelockNotYetExpired       TransactionFailureReason = 7
@@ -124,9 +124,9 @@ const (
 	TxFailureChainStateTransitionInvalid           TransactionFailureReason = 13
 	TxFailureInputCreationAfterTxCreation          TransactionFailureReason = 14
 	TxFailureManaAmountInvalid                     TransactionFailureReason = 15
-	TxFailureUnderlyingBICInputInvalid             TransactionFailureReason = 16
-	TxFailureUnderlyingRewardInputInvalid          TransactionFailureReason = 17
-	TxFailureUnderlyingCommitmentInputInvalid      TransactionFailureReason = 18
+	TxFailureBICInputInvalid                       TransactionFailureReason = 16
+	TxFailureRewardInputInvalid                    TransactionFailureReason = 17
+	TxFailureCommitmentInputInvalid                TransactionFailureReason = 18
 	TxFailureNoStakingFeature                      TransactionFailureReason = 19
 	TxFailureFailedToClaimValidatorReward          TransactionFailureReason = 20
 	TxFailureFailedToClaimDelegatorReward          TransactionFailureReason = 21

@@ -477,12 +477,12 @@ func ExecFuncBalancedMana() ExecFunc {
 		}
 		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		if err != nil {
-			return ierrors.Join(iotago.ErrInvalidManaAmount, err)
+			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
 		}
 
 		manaOut, err := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 		if err != nil {
-			return errors.Join(iotago.ErrInvalidManaAmount, err)
+			return errors.Join(iotago.ErrManaAmountInvalid, err)
 		}
 
 		// Whether it's valid to claim rewards is checked in the delegation and staking STVFs.
@@ -606,7 +606,7 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 		var err error
 		vmParams.WorkingSet.InNativeTokens, err = vmParams.WorkingSet.UTXOInputs.NativeTokenSum()
 		if err != nil {
-			return ierrors.Join(iotago.ErrInvalidNativeTokenSet, ierrors.Errorf("invalid input native token set: %w", err))
+			return ierrors.Join(iotago.ErrNativeTokenSetInvalid, ierrors.Errorf("invalid input native token set: %w", err))
 		}
 		inNTCount := len(vmParams.WorkingSet.InNativeTokens)
 
@@ -616,7 +616,7 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 
 		vmParams.WorkingSet.OutNativeTokens, err = vmParams.WorkingSet.Tx.Essence.Outputs.NativeTokenSum()
 		if err != nil {
-			return ierrors.Join(iotago.ErrInvalidNativeTokenSet, err)
+			return ierrors.Join(iotago.ErrNativeTokenSetInvalid, err)
 		}
 
 		distinctNTCount := make(map[iotago.NativeTokenID]struct{})

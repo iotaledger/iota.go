@@ -29,6 +29,8 @@ var (
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
 	ErrRefUTXOIndexInvalid = ierrors.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
+	// ErrUnknownContextInputType gets returned for unsupported context input types.
+	ErrUnknownContextInputType = ierrors.New("unsupported context input type")
 )
 
 // Inputs is a slice of Input.
