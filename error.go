@@ -7,9 +7,9 @@ import (
 var (
 	ErrFailedToRetrieveInput = ierrors.New("failed to retrieve input references")
 	// ErrUnsupportedInputType gets returned for unsupported input types.
-	ErrUnsupportedInputType = ierrors.New("unsupported input type")
+	ErrUnknownInputType = ierrors.New("unsupported input type")
 	// ErrUnsupportedContextInputType gets returned for unsupported context input types.
-	ErrUnsupportedContextInputType = ierrors.New("unsupported context input type")
+	ErrUnknownContextInputType = ierrors.New("unsupported context input type")
 	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = ierrors.New("unknown address type")
 	// ErrUnknownOutputType gets returned for unknown output types.
