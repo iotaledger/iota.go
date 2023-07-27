@@ -28,8 +28,8 @@ var (
 	ErrCouldNotResolveRewardInput = ierrors.New("could not retrieve reward input")
 	// ErrCouldNorRetrieveCommitment gets returned when the commitment could not be retrieved.
 	ErrCouldNorRetrieveCommitment = ierrors.New("could not retrieve commitment")
-	// ErrCommittmentInputMissing gets returned when the commitment has not been provided when needed.
-	ErrCommittmentInputMissing = ierrors.New("commitment input required with reward or BIC input")
+	// ErrCommitmentInputMissing gets returned when the commitment has not been provided when needed.
+	ErrCommitmentInputMissing = ierrors.New("commitment input required with reward or BIC input")
 	// ErrNoStakingFeature gets returned when the validator reward could not be claimed.
 	ErrNoStakingFeature = ierrors.New("validator reward claim failed due to no staking feature provided")
 	// ErrFailedToClaimValidatorReward gets returned when the validator reward could not be claimed.

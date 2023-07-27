@@ -27,23 +27,15 @@ const (
 	BlockStateAccepted
 	BlockStateConfirmed
 	BlockStateFinalized
-	BlockStateOrphaned
+	BlockStateRejected
 	BlockStateFailed
-
-	NoBlockFailureReason           BlockFailureReason = 0
-	ErrBlockIsTooOld               BlockFailureReason = 1
-	ErrBlockParentIsTooOld         BlockFailureReason = 2
-	ErrBlockBookingFailure         BlockFailureReason = 3
-	ErrBlockDroppedDueToCongestion BlockFailureReason = 4
-	ErrBlockPayloadInvalid         BlockFailureReason = 5
-	// TODO: see if needed after congestion PR is done.
-	ErrBlockOrphanedDueNegativeCreditsBalance BlockFailureReason = 6
 )
 
 func (b BlockState) String() string {
 	return []string{
 		"unknown",
 		"pending",
+		"accepted",
 		"confirmed",
 		"finalized",
 		"rejected",
@@ -67,6 +59,18 @@ func BlockStateFromBytes(b []byte) (BlockState, int, error) {
 }
 
 const (
+	BlockFailureNone                   BlockFailureReason = 0
+	BlockFailureIsTooOld               BlockFailureReason = 1
+	BlockFailureParentIsTooOld         BlockFailureReason = 2
+	BlockFailureBookingFailure         BlockFailureReason = 3
+	BlockFailureDroppedDueToCongestion BlockFailureReason = 4
+	BlockFailurePayloadInvalid         BlockFailureReason = 5
+
+	// TODO: see if needed after congestion PR is done.
+	BlockFailureOrphanedDueNegativeCreditsBalance BlockFailureReason = 6
+)
+
+const (
 	TransactionStateLength         = serializer.OneByte
 	TransactionFailureReasonLength = serializer.OneByte
 )
@@ -78,35 +82,13 @@ const (
 	TransactionStateConfirmed
 	TransactionStateFinalized
 	TransactionStateFailed
-
-	NoTransactionFailureReason                      TransactionFailureReason = 0
-	ErrTxStateReferencedUTXOAlreadySpent            TransactionFailureReason = 1
-	ErrTxStateTxConflicting                         TransactionFailureReason = 2
-	ErrTxStateUnderlyingUTXOInputInvalid            TransactionFailureReason = 3
-	ErrTxStateUnderlyingTxTypeInvalid               TransactionFailureReason = 4
-	ErrTxStateSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 5
-	ErrTxStateUnlockBlockSignatureInvalid           TransactionFailureReason = 6
-	ErrTxStateConfiguredTimelockNotYetExpired       TransactionFailureReason = 7
-	ErrTxStateGivenNativeTokensInvalid              TransactionFailureReason = 8
-	ErrTxStateReturnAmountNotFulfilled              TransactionFailureReason = 9
-	ErrTxStateInputUnlockInvalid                    TransactionFailureReason = 10
-	ErrTxStateInputsCommitmentInvalid               TransactionFailureReason = 11
-	ErrTxStateSenderNotUnlocked                     TransactionFailureReason = 12
-	ErrTxStateChainStateTransitionInvalid           TransactionFailureReason = 13
-	ErrTxStateInputCreationAfterTxCreation          TransactionFailureReason = 14
-	ErrTxStateManaAmount                            TransactionFailureReason = 15
-	ErrTxStateUnderlyingBICInputInvalid             TransactionFailureReason = 16
-	ErrTxStateUnderlyingRewardInputInvalid          TransactionFailureReason = 17
-	ErrTxStateUnderlyingCommitmentInputInvalid      TransactionFailureReason = 18
-	ErrTxStateNoStakingFeature                      TransactionFailureReason = 19
-	ErrTxStateFailedToClaimValidatorReward          TransactionFailureReason = 20
-	ErrTxStateFailedToClaimDelegatorReward          TransactionFailureReason = 21
-	ErrTxStateSemanticValidationFailed              TransactionFailureReason = 255
 )
 
 func (t TransactionState) String() string {
 	return []string{
+		"unknown",
 		"pending",
+		"acccepted",
 		"confirmed",
 		"finalized",
 		"failed",
@@ -124,6 +106,32 @@ func TransactionStateFromBytes(b []byte) (TransactionState, int, error) {
 
 	return TransactionState(b[0]), TransactionStateLength, nil
 }
+
+const (
+	TxFailureNone                                  TransactionFailureReason = 0
+	TxFailureReferencedUTXOAlreadySpent            TransactionFailureReason = 1
+	TxFailureConflicting                           TransactionFailureReason = 2
+	TxFailureUnderlyingUTXOInputInvalid            TransactionFailureReason = 3
+	TxFailureUnderlyingTxTypeInvalid               TransactionFailureReason = 4
+	TxFailureSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 5
+	TxFailureUnlockBlockSignatureInvalid           TransactionFailureReason = 6
+	TxFailureConfiguredTimelockNotYetExpired       TransactionFailureReason = 7
+	TxFailureGivenNativeTokensInvalid              TransactionFailureReason = 8
+	TxFailureReturnAmountNotFulfilled              TransactionFailureReason = 9
+	TxFailureInputUnlockInvalid                    TransactionFailureReason = 10
+	TxFailureInputsCommitmentInvalid               TransactionFailureReason = 11
+	TxFailureSenderNotUnlocked                     TransactionFailureReason = 12
+	TxFailureChainStateTransitionInvalid           TransactionFailureReason = 13
+	TxFailureInputCreationAfterTxCreation          TransactionFailureReason = 14
+	TxFailureManaAmountInvalid                     TransactionFailureReason = 15
+	TxFailureUnderlyingBICInputInvalid             TransactionFailureReason = 16
+	TxFailureUnderlyingRewardInputInvalid          TransactionFailureReason = 17
+	TxFailureUnderlyingCommitmentInputInvalid      TransactionFailureReason = 18
+	TxFailureNoStakingFeature                      TransactionFailureReason = 19
+	TxFailureFailedToClaimValidatorReward          TransactionFailureReason = 20
+	TxFailureFailedToClaimDelegatorReward          TransactionFailureReason = 21
+	TxFailureSemanticValidationFailed              TransactionFailureReason = 255
+)
 
 type (
 	// InfoResponse defines the response of a GET info REST API call.
@@ -222,10 +230,10 @@ type (
 		BlockID string `json:"blockId"`
 		// BlockState might be pending, rejected, failed, confirmed, finalized.
 		BlockState string `json:"blockState"`
-		// TxState might be pending, conflicting, confirmed, finalized, rejected.
-		TxState string `json:"txState,omitempty"`
 		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
 		BlockFailureReason BlockFailureReason `json:"blockFailureReason,omitempty"`
+		// TxState might be pending, conflicting, confirmed, finalized, rejected.
+		TxState string `json:"txState,omitempty"`
 		// TxFailureReason if applicable indicates the error that occurred during the transaction processing.
 		TxFailureReason TransactionFailureReason `json:"txFailureReason,omitempty"`
 	}
