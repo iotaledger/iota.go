@@ -36,7 +36,7 @@ const (
 	ErrBlockBookingFailure         BlockFailureReason = 3
 	ErrBlockDroppedDueToCongestion BlockFailureReason = 4
 	ErrBlockPayloadInvalid         BlockFailureReason = 5
-	// TODO: see if needed after congestion PR is done
+	// TODO: see if needed after congestion PR is done.
 	ErrBlockOrphanedDueNegativeCreditsBalance BlockFailureReason = 6
 )
 
