@@ -33,6 +33,8 @@ var (
 	ErrInputOutputManaMismatch = ierrors.New("inputs and outputs do not contain the same amount of Mana")
 	// ErrInputCreationAfterTxCreation gets returned if an input has creation time after the transaction creation time.
 	ErrInputCreationAfterTxCreation = ierrors.New("input creation time after tx creation time")
+	// ErrUnknownTransactionEssenceType gets returned for unknown transaction essence types.
+	ErrUnknownTransactionEssenceType = ierrors.New("unknown transaction essence type")
 )
 
 // TransactionID is the ID of a Transaction.
@@ -82,7 +84,7 @@ func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
 		case IndexedUTXOReferencer:
 			references = append(references, castInput)
 		default:
-			return nil, ErrUnexpectedUnderlyingType
+			return nil, ErrUnknownInputType
 		}
 	}
 
@@ -98,7 +100,7 @@ func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
 		case *CommitmentInput, *RewardInput:
 			// ignore this type
 		default:
-			return nil, ErrUnexpectedUnderlyingType
+			return nil, ErrUnknownContextInputType
 		}
 	}
 
@@ -114,7 +116,7 @@ func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
 		case *CommitmentInput, *BlockIssuanceCreditInput:
 			// ignore this type
 		default:
-			return nil, ErrUnexpectedUnderlyingType
+			return nil, ErrUnknownContextInputType
 		}
 	}
 

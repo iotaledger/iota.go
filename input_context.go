@@ -110,7 +110,7 @@ func ContextInputsSyntacticalUnique() ContextInputsSyntacticalValidationFunc {
 			}
 			hasCommitment = true
 		default:
-			return ierrors.Wrapf(ErrUnsupportedContextInputType, "context input %d, tx can only contain CommitmentInputs, BlockIssuanceCreditInputs or RewardInputs", index)
+			return ierrors.Wrapf(ErrUnknownContextInputType, "context input %d, tx can only contain CommitmentInputs, BlockIssuanceCreditInputs or RewardInputs", index)
 		}
 
 		return nil
