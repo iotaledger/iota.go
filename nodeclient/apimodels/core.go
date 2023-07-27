@@ -79,28 +79,28 @@ const (
 	TransactionStateFinalized
 	TransactionStateFailed
 
-	NoTransactionFailureReason           TransactionFailureReason = 0
-	ErrTxStateReferencedUTXOAlreadySpent TransactionFailureReason = 1
-	ErrTxStateTxConflicting              TransactionFailureReason = 2
-	ErrTxStateUnderlyingUTXOInputInvalid TransactionFailureReason = 3
-	ErrTxUnderlyingTxTypeInvalid
-	ErrTxStateSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 4
-	ErrTxStateUnlockBlockSignatureInvalid           TransactionFailureReason = 5
-	ErrTxStateConfiguredTimelockNotYetExpired       TransactionFailureReason = 6
-	ErrTxStateGivenNativeTokensInvalid              TransactionFailureReason = 7
-	ErrTxStateReturnAmountNotFulfilled              TransactionFailureReason = 8
-	ErrTxStateInputUnlockInvalid                    TransactionFailureReason = 9
-	ErrTxStateInputsCommitmentInvalid               TransactionFailureReason = 10
-	ErrTxStateSenderNotUnlocked                     TransactionFailureReason = 11
-	ErrTxStateChainStateTransitionInvalid           TransactionFailureReason = 12
-	ErrTxStateInputCreationAfterTxCreation          TransactionFailureReason = 13
-	ErrTxStateManaAmount                            TransactionFailureReason = 14
-	ErrTxFailedToResolveBICInput                    TransactionFailureReason = 15
-	ErrTxFailedToResolveRewardInput                 TransactionFailureReason = 16
-	ErrTxFailedToResolveCommitment                  TransactionFailureReason = 17
-	ErrTxStateNoStakingFeature                      TransactionFailureReason = 18
-	ErrTxStateFailedToClaimValidatorReward          TransactionFailureReason = 19
-	ErrTxStateFailedToClaimDelegatorReward          TransactionFailureReason = 20
+	NoTransactionFailureReason                      TransactionFailureReason = 0
+	ErrTxStateReferencedUTXOAlreadySpent            TransactionFailureReason = 1
+	ErrTxStateTxConflicting                         TransactionFailureReason = 2
+	ErrTxStateUnderlyingUTXOInputInvalid            TransactionFailureReason = 3
+	ErrTxStateUnderlyingTxTypeInvalid               TransactionFailureReason = 4
+	ErrTxStateSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 5
+	ErrTxStateUnlockBlockSignatureInvalid           TransactionFailureReason = 6
+	ErrTxStateConfiguredTimelockNotYetExpired       TransactionFailureReason = 7
+	ErrTxStateGivenNativeTokensInvalid              TransactionFailureReason = 8
+	ErrTxStateReturnAmountNotFulfilled              TransactionFailureReason = 9
+	ErrTxStateInputUnlockInvalid                    TransactionFailureReason = 10
+	ErrTxStateInputsCommitmentInvalid               TransactionFailureReason = 11
+	ErrTxStateSenderNotUnlocked                     TransactionFailureReason = 12
+	ErrTxStateChainStateTransitionInvalid           TransactionFailureReason = 13
+	ErrTxStateInputCreationAfterTxCreation          TransactionFailureReason = 14
+	ErrTxStateManaAmount                            TransactionFailureReason = 15
+	ErrTxStateUnderlyingBICInputInvalid             TransactionFailureReason = 16
+	ErrTxStateUnderlyingRewardInputInvalid          TransactionFailureReason = 17
+	ErrTxStateUnderlyingCommitmentInputInvalid      TransactionFailureReason = 18
+	ErrTxStateNoStakingFeature                      TransactionFailureReason = 19
+	ErrTxStateFailedToClaimValidatorReward          TransactionFailureReason = 20
+	ErrTxStateFailedToClaimDelegatorReward          TransactionFailureReason = 21
 	ErrTxStateSemanticValidationFailed              TransactionFailureReason = 255
 )
 

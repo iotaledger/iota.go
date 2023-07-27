@@ -318,7 +318,7 @@ func ExecFuncInputUnlocks() ExecFunc {
 
 		for inputIndex, input := range vmParams.WorkingSet.UTXOInputs {
 			if err = unlockOutput(vmParams, input, uint16(inputIndex)); err != nil {
-				return ierrors.Join(iotago.ErrFailedToUnlockInput, err)
+				return err
 			}
 
 			// since this input is now unlocked, and it is a ChainOutput, the chain's address becomes automatically unlocked

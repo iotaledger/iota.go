@@ -31,13 +31,11 @@ var (
 	// ErrCommittmentInputMissing gets returned when the commitment has not been provided when needed.
 	ErrCommittmentInputMissing = ierrors.New("commitment input required with reward or BIC input")
 	// ErrNoStakingFeature gets returned when the validator reward could not be claimed.
-	ErrNoStakingFeature = ierrors.New("validator staking claim failed due to no staking feature provided")
+	ErrNoStakingFeature = ierrors.New("validator reward claim failed due to no staking feature provided")
 	// ErrFailedToClaimValidatorReward gets returned when the validator reward could not be claimed.
 	ErrFailedToClaimValidatorReward = ierrors.New("validator staking claim failed")
 	// ErrFailedToClaimDelegatorReward gets returned when the delegator reward could not be claimed.
 	ErrFailedToClaimDelegatorReward = ierrors.New("delegator staking claim failed")
-	// ErrFailedToUnlockInput gets returned when the input could not be unlocked.
-	ErrFailedToUnlockInput = ierrors.New("failed to unlock input")
 	// ErrUnlockBlockSignatureInvalid gets returned when the block signature unlock block signature is invalid.
 	ErrUnlockBlockSignatureInvalid = ierrors.New("block signature unlock block signature invalid")
 	// ErrInvalidNativeTokenSet gets returned when the provided native tokens are invalid.
