@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 )
@@ -167,20 +168,34 @@ func (p *ManaDecayProvider) PotentialManaWithDecay(deposit BaseToken, slotIndexC
 		return p.generateMana(deposit, slotIndexTarget-slotIndexCreated), nil
 
 	case 1:
-		return p.decay(p.generateMana(deposit, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), 1) + p.generateMana(deposit, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget)), nil
+		manaDecayed := p.decay(p.generateMana(deposit, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), 1)
+		manaGenerated := p.generateMana(deposit, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget))
+		return safemath.SafeAdd(manaDecayed, manaGenerated)
 
 	default:
 		c := Mana(fixedPointMultiplication32(uint64(deposit), p.decayFactorEpochsSum, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent))
 
 		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
 		potentialMana_n := p.decay(p.generateMana(deposit, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), epochIndexDiff)
-		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_n_1 := p.decay(c, epochIndexDiff-1)
-		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_0 := p.generateMana(deposit, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget)) + c
 
 		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		return potentialMana_n - potentialMana_n_1 + potentialMana_0, nil
+		potentialMana_n_1 := p.decay(c, epochIndexDiff-1)
+
+		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
+		potentialMana_0, err := safemath.SafeAdd(c, p.generateMana(deposit, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget)))
+		if err != nil {
+			return 0, err
+		}
+
+		// result = potentialMana_0 - potentialMana_n_1 + potentialMana_n
+		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
+		result, err := safemath.SafeSub(potentialMana_0, potentialMana_n_1)
+		if err != nil {
+			return 0, err
+		}
+
+		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
+		return safemath.SafeAdd(result, potentialMana_n)
 	}
 }
 
