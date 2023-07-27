@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // ExpirationUnlockCondition is an unlock condition which puts a time constraint on whether the receiver or return identity
@@ -28,6 +27,11 @@ func (s *ExpirationUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFu
 		s.ReturnAddress.VBytes(rentStruct, nil)
 }
 
+func (s *ExpirationUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// ExpirationUnlockCondition does not require a signature check on creation, only consumption.
+	return workScoreStructure.DataByte.Multiply(s.Size())
+}
+
 func (s *ExpirationUnlockCondition) Equal(other UnlockCondition) bool {
 	otherCond, is := other.(*ExpirationUnlockCondition)
 	if !is {
@@ -49,5 +53,6 @@ func (s *ExpirationUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *ExpirationUnlockCondition) Size() int {
-	return util.NumByteLen(byte(UnlockConditionExpiration)) + s.ReturnAddress.Size() + SlotIndexLength
+	// UnlockType + ReturnAddress + SlotIndex
+	return serializer.SmallTypeDenotationByteSize + s.ReturnAddress.Size() + SlotIndexLength
 }

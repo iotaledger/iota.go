@@ -32,6 +32,7 @@ var (
 	testProtoParams = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("test", "test"),
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10),
+		iotago.WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
 		iotago.WithTimeProviderOptions(100, slotDurationSeconds, slotsPerEpochExponent),
 		iotago.WithManaOptions(generationRate,
 			generationRateExponent,
@@ -4232,13 +4233,12 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 	inputs := vm.InputSet{
 		inputIDs[0]: vm.OutputWithCreationTime{
 			Output: &iotago.DelegationOutput{
-				Amount:            OneMi * 10,
-				DelegatedAmount:   OneMi * 10,
-				DelegationID:      iotago.EmptyDelegationId(),
-				ValidatorID:       iotago.EmptyAccountID(),
-				StartEpoch:        currentEpoch,
-				EndEpoch:          currentEpoch + 5,
-				ImmutableFeatures: nil,
+				Amount:          OneMi * 10,
+				DelegatedAmount: OneMi * 10,
+				DelegationID:    iotago.EmptyDelegationId(),
+				ValidatorID:     iotago.EmptyAccountID(),
+				StartEpoch:      currentEpoch,
+				EndEpoch:        currentEpoch + 5,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: ident},
 				},

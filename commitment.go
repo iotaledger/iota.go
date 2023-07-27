@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 const (
@@ -18,8 +19,8 @@ var EmptyCommitmentID = CommitmentID{}
 type Commitment struct {
 	Version          Version      `serix:"0,mapKey=version"`
 	Index            SlotIndex    `serix:"1,mapKey=index"`
-	PrevID           CommitmentID `serix:"2,mapKey=prevID"`
-	RootsID          Identifier   `serix:"3,mapKey=rootsID"`
+	PrevID           CommitmentID `serix:"2,mapKey=prevId"`
+	RootsID          Identifier   `serix:"3,mapKey=rootsId"`
 	CumulativeWeight uint64       `serix:"4,mapKey=cumulativeWeight"`
 }
 
@@ -58,8 +59,9 @@ func (c *Commitment) MustID() CommitmentID {
 
 func (c *Commitment) Equals(other *Commitment) bool {
 	return c.MustID() == other.MustID() &&
-		c.PrevID == other.PrevID &&
+		c.Version == other.Version &&
 		c.Index == other.Index &&
+		c.PrevID == other.PrevID &&
 		c.RootsID == other.RootsID &&
 		c.CumulativeWeight == other.CumulativeWeight
 }
@@ -67,4 +69,12 @@ func (c *Commitment) Equals(other *Commitment) bool {
 func (c *Commitment) String() string {
 	return fmt.Sprintf("Commitment{\n\tIndex: %d\n\tPrevID: %s\n\tRootsID: %s\n\tCumulativeWeight: %d\n}",
 		c.Index, c.PrevID, c.RootsID, c.CumulativeWeight)
+}
+
+func (c *Commitment) Size() int {
+	return serializer.OneByte +
+		SlotIndexLength +
+		CommitmentIDLength +
+		IdentifierLength +
+		serializer.UInt64ByteSize
 }

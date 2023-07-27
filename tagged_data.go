@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 // TaggedData is a payload which holds a tag and associated data.
@@ -18,7 +17,12 @@ func (u *TaggedData) PayloadType() PayloadType {
 }
 
 func (u *TaggedData) Size() int {
-	return util.NumByteLen(uint32(PayloadTaggedData)) +
+	// PayloadType
+	return serializer.UInt32ByteSize +
 		serializer.OneByte + len(u.Tag) +
 		serializer.UInt32ByteSize + len(u.Data)
+}
+
+func (u *TaggedData) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	return workScoreStructure.DataByte.Multiply(u.Size())
 }

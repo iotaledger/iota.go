@@ -1,7 +1,7 @@
 package iotago
 
 import (
-	"github.com/iotaledger/iota.go/v4/util"
+	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 type CommitmentInput struct {
@@ -13,5 +13,16 @@ func (c *CommitmentInput) Type() ContextInputType {
 }
 
 func (c *CommitmentInput) Size() int {
-	return util.NumByteLen(byte(ContextInputCommitment)) + SlotIdentifierLength
+	// ContextInputType + CommitmentID
+	return serializer.OneByte + CommitmentIDLength
+}
+
+func (c *CommitmentInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(c.Size())
+	if err != nil {
+		return 0, err
+	}
+
+	// context inputs require invocation of informations in the node, so requires extra work.
+	return workScoreBytes.Add(workScoreStructure.ContextInput)
 }

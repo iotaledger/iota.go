@@ -1,10 +1,11 @@
 package iotago
 
 import (
-	"crypto/ed25519"
+	"bytes"
+	"sort"
 
+	"github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/util"
 )
 
 const (
@@ -16,6 +17,12 @@ const (
 
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
 type BlockIssuerKeys []ed25519.PublicKey
+
+func (s BlockIssuerKeys) Sort() {
+	sort.Slice(s, func(i, j int) bool {
+		return bytes.Compare(s[i][:], s[j][:]) < 0
+	})
+}
 
 // BlockIssuerFeature is a feature which indicates that this account can issue blocks.
 // The feature includes a block issuer address as well as an expiry slot.
@@ -30,8 +37,20 @@ func (s *BlockIssuerFeature) Clone() Feature {
 
 func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	// TODO: add factor for block issuer keys (higher than regular keys factor).
-	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt32ByteSize) +
-		rentStruct.VBFactorKey.Multiply(VBytes(len(s.BlockIssuerKeys))*ed25519.PublicKeySize)
+	// VBFactorData: type prefix + expiry slot + keys length
+	// VBFactorKey: numKeys * pubKeyLength
+	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.OneByte) +
+		rentStruct.VBFactorKey.Multiply(VBytes(len(s.BlockIssuerKeys))*(ed25519.PublicKeySize))
+}
+
+func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreBytes, err := workScoreStructure.DataByte.Multiply(s.Size())
+	if err != nil {
+		return 0, err
+	}
+
+	// block issuer feature requires invocation of account and mana managers, so requires extra work.
+	return workScoreBytes.Add(workScoreStructure.BlockIssuer)
 }
 
 func (s *BlockIssuerFeature) Equal(other Feature) bool {
@@ -43,7 +62,7 @@ func (s *BlockIssuerFeature) Equal(other Feature) bool {
 		return false
 	}
 	for i := range s.BlockIssuerKeys {
-		if s.BlockIssuerKeys[i].Equal(otherFeat.BlockIssuerKeys[i]) {
+		if !bytes.Equal(s.BlockIssuerKeys[i][:], otherFeat.BlockIssuerKeys[i][:]) {
 			return false
 		}
 	}
@@ -56,5 +75,6 @@ func (s *BlockIssuerFeature) Type() FeatureType {
 }
 
 func (s *BlockIssuerFeature) Size() int {
-	return util.NumByteLen(byte(FeatureBlockIssuer)) + len(s.BlockIssuerKeys)*ed25519.PublicKeySize + serializer.UInt32ByteSize
+	// FeatureType + BlockIssuerKeys + ExpirySlot
+	return serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.BlockIssuerKeys)*ed25519.PublicKeySize + SlotIndexLength
 }
