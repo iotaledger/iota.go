@@ -136,7 +136,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature validation requires a commitment input")
 		}
 
-		if nextBlockIssuerFeat.ExpirySlot != 0 && nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(vmParams.WorkingSet.Commitment.Index) {
+		if nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(vmParams.WorkingSet.Commitment.Index) {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	}
@@ -267,13 +267,12 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if nextBlockIssuerFeat == nil {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot remove block issuer feature until it expires")
 		}
-		if nextBlockIssuerFeat.ExpirySlot != 0 && nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(commitmentInputIndex) {
+		if nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(commitmentInputIndex) {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
-
 	} else if nextBlockIssuerFeat != nil {
 		// if the block issuer feature has expired, it must either be removed or expiry extended.
-		if nextBlockIssuerFeat.ExpirySlot != 0 && nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(commitmentInputIndex) {
+		if nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(commitmentInputIndex) {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	}
@@ -482,8 +481,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 			return fmt.Errorf("%w: block issuer feature validation requires a commitment input", iotago.ErrInvalidBlockIssuerTransition)
 		}
 
-		if blockIssuerFeat.ExpirySlot == 0 || blockIssuerFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Index {
-			// TODO: better error
+		if blockIssuerFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Index {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot destroy output until the block issuer feature expires")
 		}
 		if bic, exists := vmParams.WorkingSet.BIC[outputToDestroy.AccountID]; exists {
@@ -491,7 +489,6 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 				return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "negative block issuer credit")
 			}
 		} else {
-			// TODO: better error
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "no BIC provided for block issuer")
 		}
 	}

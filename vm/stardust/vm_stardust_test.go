@@ -934,7 +934,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
 								BlockIssuerKeys: iotago.BlockIssuerKeys{},
-								ExpirySlot:      0,
+								ExpirySlot:      iotago.SlotIndex(math.MaxUint64),
 							},
 						},
 						Conditions: iotago.AccountOutputUnlockConditions{
@@ -957,7 +957,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name: "ok - set block issuer expiry to 0",
+				name: "ok - set block issuer expiry to max value",
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
@@ -988,6 +988,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
 								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								ExpirySlot:      iotago.SlotIndex(math.MaxUint64),
 							},
 						},
 						Conditions: iotago.AccountOutputUnlockConditions{
@@ -1028,7 +1029,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			require.NoError(t, err)
 
 			return test{
-				name: "fail - destroy block issuer account with expiry at slot 0",
+				name: "fail - destroy block issuer account with expiry at slot with max value",
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
