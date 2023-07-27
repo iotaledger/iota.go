@@ -34,6 +34,7 @@ func ConvertUnits(val float64, from Unit, to Unit) float64 {
 		return math.Round(float64(value))
 	}
 	value /= to
+
 	return float64(value)
 }
 
@@ -43,5 +44,6 @@ func ConvertUnitsString(val string, from Unit, to Unit) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return ConvertUnits(floatValue, from, to), nil
 }

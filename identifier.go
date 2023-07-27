@@ -37,6 +37,7 @@ func IdentifierFromHexString(hex string) (Identifier, error) {
 	}
 
 	id, _, err := IdentifierFromBytes(bytes)
+
 	return id, err
 }
 
@@ -56,6 +57,7 @@ func IdentifierFromBytes(bytes []byte) (Identifier, int, error) {
 		return id, 0, ErrInvalidIdentifierLength
 	}
 	copy(id[:], bytes)
+
 	return id, len(bytes), nil
 }
 
@@ -66,11 +68,13 @@ func (id Identifier) Bytes() ([]byte, error) {
 func (id Identifier) MarshalText() (text []byte, err error) {
 	dst := make([]byte, hex.EncodedLen(len(Identifier{})))
 	hex.Encode(dst, id[:])
+
 	return dst, nil
 }
 
 func (id *Identifier) UnmarshalText(text []byte) error {
 	_, err := hex.Decode(id[:], text)
+
 	return err
 }
 

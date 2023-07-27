@@ -67,7 +67,6 @@ type (
 // IndexerResultSet is a handle for indexer queries.
 type IndexerResultSet struct {
 	client         *Client
-	ctx            context.Context
 	query          IndexerQuery
 	firstQueryDone bool
 	nextFunc       func() error
@@ -86,6 +85,7 @@ func (resultSet *IndexerResultSet) Next() bool {
 
 	if err := resultSet.nextFunc(); err != nil {
 		resultSet.Error = err
+
 		return false
 	}
 
@@ -97,16 +97,17 @@ func (resultSet *IndexerResultSet) Next() bool {
 }
 
 // Outputs collects/fetches the outputs result from the query.
-func (resultSet *IndexerResultSet) Outputs() (iotago.Outputs[iotago.Output], error) {
+func (resultSet *IndexerResultSet) Outputs(ctx context.Context) (iotago.Outputs[iotago.Output], error) {
 	outputIDs := resultSet.Response.Items.MustOutputIDs()
 	outputs := make(iotago.Outputs[iotago.Output], len(outputIDs))
 	for i, outputID := range outputIDs {
-		output, err := resultSet.client.OutputByID(resultSet.ctx, outputID)
+		output, err := resultSet.client.OutputByID(ctx, outputID)
 		if err != nil {
 			return nil, ierrors.Errorf("unable to fetch output %s: %w", outputID.ToHex(), err)
 		}
 		outputs[i] = output
 	}
+
 	return outputs, nil
 }
 
@@ -124,7 +125,6 @@ func (client *indexerClient) DoWithRequestHeaderHook(ctx context.Context, method
 
 func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*IndexerResultSet, error) {
 	res := &IndexerResultSet{
-		ctx:    ctx,
 		client: client.core,
 		query:  query,
 	}
@@ -141,7 +141,9 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 		}
 
 		routeWithParams := fmt.Sprintf("%s?%s", baseRoute, urlParams)
+		//nolint:bodyclose
 		_, reqErr := client.Do(ctx, http.MethodGet, routeWithParams, nil, res.Response)
+
 		return reqErr
 	}
 	res.nextFunc = nextFunc
@@ -151,6 +153,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 
 func (client *indexerClient) singleOutputQuery(ctx context.Context, route string) (*iotago.OutputID, iotago.Output, iotago.SlotIndex, error) {
 	res := &apimodels.IndexerResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, route, nil, res); err != nil {
 		return nil, nil, 0, err
 	}
@@ -164,6 +167,7 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 	if err != nil {
 		return nil, nil, res.LedgerIndex, err
 	}
+
 	return &outputID, output, res.LedgerIndex, err
 }
 
@@ -172,6 +176,8 @@ func (client *indexerClient) Account(ctx context.Context, accountID iotago.Accou
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	return outputID, output.(*iotago.AccountOutput), ledgerIndex, nil
 }
 
@@ -180,6 +186,8 @@ func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.Found
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an FoundryOutput
 	return outputID, output.(*iotago.FoundryOutput), ledgerIndex, nil
 }
 
@@ -188,5 +196,7 @@ func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iota
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
 	return outputID, output.(*iotago.NFTOutput), ledgerIndex, nil
 }

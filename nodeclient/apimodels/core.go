@@ -42,28 +42,17 @@ type TransactionState int
 type TransactionFailureReason int
 
 const (
-	TransactionStatePending   TransactionState = 0
-	TransactionStateConfirmed TransactionState = 1
-	TransactionStateFinalized TransactionState = 2
-	TransactionStateFailed    TransactionState = 3
-
-	ErrTxStateReferencedUTXOAlreadySpent            TransactionFailureReason = 1
-	ErrTxStateTxConflicting                         TransactionFailureReason = 2
-	ErrTxStateReferencedUTXONotFound                TransactionFailureReason = 3
-	ErrTxStateSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 4
-	ErrTxStateUnlockBlockSignatureInvalid           TransactionFailureReason = 5
-	ErrTxStateConfiguredTimelockNotYetExpired       TransactionFailureReason = 6
-	ErrTxStateGivenNativeTokensInvalid              TransactionFailureReason = 7
-	ErrTxStateReturnAmountNotFulfilled              TransactionFailureReason = 8
-	ErrTxStateInputUnlockInvalid                    TransactionFailureReason = 9
-	ErrTxStateInputsCommitmentInvalid               TransactionFailureReason = 10
-	ErrTxStateSenderNotUnlocked                     TransactionFailureReason = 11
-	ErrTxStateChainStateTransitionInvalid           TransactionFailureReason = 12
-	ErrTxStateSemanticValidationFailed              TransactionFailureReason = 255
+	TransactionStateNoTransaction TransactionState = iota
+	TransactionStatePending
+	TransactionStateAccepted
+	TransactionStateConfirmed
+	TransactionStateFinalized
+	TransactionStateFailed
 )
 
 func (t TransactionState) String() string {
 	return []string{
+		"noTransaction",
 		"pending",
 		"confirmed",
 		"finalized",
@@ -206,7 +195,7 @@ type (
 		ConsumedOutputs iotago.HexOutputIDs `json:"consumedOutputs"`
 	}
 
-	//CongestionResponse defines the response for the congestion REST API call.
+	// CongestionResponse defines the response for the congestion REST API call.
 	CongestionResponse struct {
 		// SlotIndex is the index of the slot for which the estimate is provided
 		SlotIndex iotago.SlotIndex `json:"slotIndex"`
@@ -285,18 +274,20 @@ func (o *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 	}
 	var txID iotago.TransactionID
 	copy(txID[:], txIDBytes)
+
 	return &txID, nil
 }
 
 // DecodeProtocolParameters returns the protocol parameters within the info response.
 func (i *InfoResponse) DecodeProtocolParameters() (iotago.ProtocolParameters, error) {
-	protoJson, err := json.Marshal(i.ProtocolParameters)
+	protoJSON, err := json.Marshal(i.ProtocolParameters)
 	if err != nil {
 		return nil, err
 	}
 
 	var o iotago.ProtocolParameters
-	if err := _internalAPI.JSONDecode(protoJson, &o); err != nil {
+	//nolint:nosnakecase
+	if err := _internalAPI.JSONDecode(protoJSON, &o); err != nil {
 		return nil, err
 	}
 
@@ -305,13 +296,14 @@ func (i *InfoResponse) DecodeProtocolParameters() (iotago.ProtocolParameters, er
 
 // DecodeCommitment returns the commitment within the block issuance response.
 func (i *IssuanceBlockHeaderResponse) DecodeCommitment() (*iotago.Commitment, error) {
-	commitmentJson, err := json.Marshal(i.Commitment)
+	commitmentJSON, err := json.Marshal(i.Commitment)
 	if err != nil {
 		return nil, err
 	}
 
 	o := &iotago.Commitment{}
-	if err := _internalAPI.JSONDecode(commitmentJson, o); err != nil {
+	//nolint:nosnakecase
+	if err := _internalAPI.JSONDecode(commitmentJSON, o); err != nil {
 		return nil, err
 	}
 

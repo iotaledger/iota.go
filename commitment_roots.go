@@ -48,6 +48,7 @@ func (r *Roots) ID() (id Identifier) {
 	// We can ignore the error because Identifier.Bytes() will never return an error
 	return Identifier(
 		lo.PanicOnErr(
+			//nolint:nosnakecase // false positive
 			merklehasher.NewHasher[Identifier](crypto.BLAKE2b_256).HashValues(r.values()),
 		),
 	)
@@ -55,6 +56,7 @@ func (r *Roots) ID() (id Identifier) {
 
 func (r *Roots) AttestationsProof() *merklehasher.Proof[Identifier] {
 	// We can ignore the error because Identifier.Bytes() will never return an error
+	//nolint:nosnakecase // false positive
 	return lo.PanicOnErr(merklehasher.NewHasher[Identifier](crypto.BLAKE2b_256).ComputeProofForIndex(r.values(), 4))
 }
 
@@ -64,5 +66,6 @@ func VerifyProof(proof *merklehasher.Proof[Identifier], proofedRoot Identifier, 
 		return false
 	}
 
+	//nolint:nosnakecase // false positive
 	return treeRoot == Identifier(proof.Hash(merklehasher.NewHasher[Identifier](crypto.BLAKE2b_256)))
 }

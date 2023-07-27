@@ -42,6 +42,7 @@ func TestOutputsQuery_Build(t *testing.T) {
 		IndexerCursorParams: apimodels.IndexerCursorParams{
 			Cursor: func() *string {
 				str := "dave"
+
 				return &str
 			}(),
 		},
@@ -116,6 +117,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 			Items:       iotago.HexOutputIDs{fakeOutputID},
 			Cursor: func() *string {
 				str := "some-offset-key"
+
 				return &str
 			}(),
 		})
@@ -153,7 +155,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	var runs int
 	for resultSet.Next() {
 		runs++
-		outputs, err := resultSet.Outputs()
+		outputs, err := resultSet.Outputs(context.TODO())
 		require.NoError(t, err)
 
 		require.Equal(t, originOutput, outputs[0])

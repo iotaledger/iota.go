@@ -34,7 +34,7 @@ type TxInput struct {
 	// The address which needs to be unlocked to spend this input.
 	UnlockTarget iotago.Address `json:"address"`
 	// The ID of the referenced input.
-	InputID iotago.OutputID `json:"inputID"`
+	InputID iotago.OutputID `json:"inputId"`
 	// The output which is used as an input.
 	Input iotago.Output `json:"input"`
 }
@@ -97,6 +97,7 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSig
 	tx, err := b.Build(signer)
 	if err != nil {
 		blockBuilder.err = err
+
 		return blockBuilder
 	}
 	if txFunc != nil {
@@ -118,6 +119,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 	// prepare the inputs commitment in the same order as the inputs in the essence
 	var inputIDs iotago.OutputIDs
 	for _, input := range b.essence.Inputs {
+		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).ID())
 	}
 
@@ -136,6 +138,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 	unlockPos := map[string]int{}
 	unlocks := iotago.Unlocks{}
 	for i, inputRef := range b.essence.Inputs {
+		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		addr := b.inputOwner[inputRef.(*iotago.UTXOInput).ID()]
 		addrKey := addr.Key()
 
@@ -156,6 +159,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 			unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: signature})
 			addChainAsUnlocked(inputs[i], i, unlockPos)
 			unlockPos[addrKey] = i
+
 			continue
 		}
 

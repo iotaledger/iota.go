@@ -12,6 +12,7 @@ type AccountUnlock struct {
 
 func (r *AccountUnlock) SourceAllowed(address Address) bool {
 	_, ok := address.(*AccountAddress)
+
 	return ok
 }
 

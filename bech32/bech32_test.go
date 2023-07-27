@@ -1,4 +1,5 @@
-package bech32
+//nolint:scopelint
+package bech32_test
 
 import (
 	"encoding/hex"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/iota.go/v4/bech32"
 	"github.com/iotaledger/iota.go/v4/bech32/internal/base32"
 )
 
@@ -84,18 +86,18 @@ func TestEncode(t *testing.T) {
 			src:  decodeHex("030102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"),
 			expS: "ca1qvqsyqcyq5rqwzqfpg9scrgwpugpzysnzs23v9ccrydpk8qarc0jqxuzx4s",
 		},
-		{hrp: "\x20", src: []byte{}, expErr: ErrInvalidCharacter},
-		{hrp: "\x7F", src: []byte{}, expErr: ErrInvalidCharacter},
-		{hrp: "\x80", src: []byte{}, expErr: ErrInvalidCharacter},
-		{hrp: "an84characterslonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio", src: []byte{}, expErr: ErrInvalidLength},
-		{hrp: "", src: decodeHex("ff"), expErr: ErrInvalidLength},
-		{hrp: "bC", src: []byte{}, expErr: ErrMixedCase},
-		{hrp: "Cb", src: []byte{}, expErr: ErrMixedCase},
+		{hrp: "\x20", src: []byte{}, expErr: bech32.ErrInvalidCharacter},
+		{hrp: "\x7F", src: []byte{}, expErr: bech32.ErrInvalidCharacter},
+		{hrp: "\x80", src: []byte{}, expErr: bech32.ErrInvalidCharacter},
+		{hrp: "an84characterslonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio", src: []byte{}, expErr: bech32.ErrInvalidLength},
+		{hrp: "", src: decodeHex("ff"), expErr: bech32.ErrInvalidLength},
+		{hrp: "bC", src: []byte{}, expErr: bech32.ErrMixedCase},
+		{hrp: "Cb", src: []byte{}, expErr: bech32.ErrMixedCase},
 	}
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprint(tt.hrp, tt.src), func(t *testing.T) {
-			s, err := Encode(tt.hrp, tt.src)
+			s, err := bech32.Encode(tt.hrp, tt.src)
 			if assert.Truef(t, ierrors.Is(err, tt.expErr), "unexpected error: %v", err) {
 				assert.Equal(t, tt.expS, s)
 			}
@@ -170,21 +172,21 @@ func TestDecode(t *testing.T) {
 			expHRP:  "ca",
 			expData: decodeHex("030102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"),
 		},
-		{s: "\x201nwldj5", expErr: ErrInvalidCharacter},
-		{s: "\x7F1axkwrx", expErr: ErrInvalidCharacter},
-		{s: "\x801eym55h", expErr: ErrInvalidCharacter},
-		{s: "an84characterslonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio1569pvx", expErr: ErrInvalidLength},
-		{s: "pzry9x0s0muk", expErr: ErrMissingSeparator},
-		{s: "1pzry9x0s0muk", expErr: ErrInvalidSeparator},
-		{s: "x1b4n0q5v", expErr: ErrInvalidCharacter},
-		{s: "li1dgmt3", expErr: ErrInvalidChecksum},
-		{s: "A1G7SGD8", expErr: ErrInvalidChecksum},
-		{s: "10a06t8", expErr: ErrInvalidSeparator},
-		{s: "1qzzfhee", expErr: ErrInvalidSeparator},
-		{s: "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7", expErr: ErrMixedCase},
+		{s: "\x201nwldj5", expErr: bech32.ErrInvalidCharacter},
+		{s: "\x7F1axkwrx", expErr: bech32.ErrInvalidCharacter},
+		{s: "\x801eym55h", expErr: bech32.ErrInvalidCharacter},
+		{s: "an84characterslonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio1569pvx", expErr: bech32.ErrInvalidLength},
+		{s: "pzry9x0s0muk", expErr: bech32.ErrMissingSeparator},
+		{s: "1pzry9x0s0muk", expErr: bech32.ErrInvalidSeparator},
+		{s: "x1b4n0q5v", expErr: bech32.ErrInvalidCharacter},
+		{s: "li1dgmt3", expErr: bech32.ErrInvalidChecksum},
+		{s: "A1G7SGD8", expErr: bech32.ErrInvalidChecksum},
+		{s: "10a06t8", expErr: bech32.ErrInvalidSeparator},
+		{s: "1qzzfhee", expErr: bech32.ErrInvalidSeparator},
+		{s: "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7", expErr: bech32.ErrMixedCase},
 		{s: "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv", expErr: base32.ErrNonZeroPadding},
-		{s: "bC1gmk9yu", expErr: ErrMixedCase},
-		{s: "Cb1gmk9yu", expErr: ErrMixedCase},
+		{s: "bC1gmk9yu", expErr: bech32.ErrMixedCase},
+		{s: "Cb1gmk9yu", expErr: bech32.ErrMixedCase},
 		{s: "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4", expErr: base32.ErrInvalidLength},
 		{s: "test1ls7uz56", expErr: base32.ErrInvalidLength},
 		{s: "test1lllxt840c", expErr: base32.ErrInvalidLength},
@@ -193,7 +195,7 @@ func TestDecode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.s, func(t *testing.T) {
-			hrp, data, err := Decode(tt.s)
+			hrp, data, err := bech32.Decode(tt.s)
 			if assert.Truef(t, ierrors.Is(err, tt.expErr), "unexpected error: %v", err) {
 				assert.Equal(t, tt.expHRP, hrp)
 				assert.Equal(t, tt.expData, data)
@@ -207,5 +209,6 @@ func decodeHex(s string) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return dst
 }

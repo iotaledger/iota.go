@@ -32,8 +32,7 @@ func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {
 		return false
 	}
 
-	switch {
-	case s.SlotIndex != otherCond.SlotIndex:
+	if s.SlotIndex != otherCond.SlotIndex {
 		return false
 	}
 

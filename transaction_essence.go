@@ -57,8 +57,8 @@ var (
 	ErrAccountOutputCyclicAddress = ierrors.New("account output's AccountID corresponds to state and/or governance controller")
 	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
 	ErrNFTOutputCyclicAddress = ierrors.New("NFT output's ID corresponds to address field")
-	// ErrDelegationValidatorIdZeroed gets returned if a Delegation Output's Validator ID is zeroed out.
-	ErrDelegationValidatorIdZeroed = ierrors.New("delegation output's validator ID is zeroed")
+	// ErrDelegationValidatorIDZeroed gets returned if a Delegation Output's Validator ID is zeroed out.
+	ErrDelegationValidatorIDZeroed = ierrors.New("delegation output's validator ID is zeroed")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = ierrors.New("accumulated output balance exceeds total supply")
 	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
@@ -80,6 +80,7 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownTransactionEssenceType, "type byte %d", txType)
 	}
+
 	return seri, nil
 }
 
@@ -124,6 +125,7 @@ func (u *TransactionEssence) SigningMessage(api API) ([]byte, error) {
 		return nil, err
 	}
 	essenceBytesHash := blake2b.Sum256(essenceBytes)
+
 	return essenceBytesHash[:], nil
 }
 
@@ -209,13 +211,9 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 		return err
 	}
 
-	if err := SyntacticallyValidateAllotments(u.Allotments,
+	return SyntacticallyValidateAllotments(u.Allotments,
 		AllotmentsSyntacticalUnique(),
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
 }
 
 func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

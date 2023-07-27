@@ -64,6 +64,7 @@ func (sum NativeTokenSum) ValueOrBigInt0(id NativeTokenID) *big.Int {
 	if !has {
 		return big.NewInt(0)
 	}
+
 	return v
 }
 
@@ -86,6 +87,7 @@ func (n NativeTokens) Set() (NativeTokensSet, error) {
 		}
 		set[token.ID] = token
 	}
+
 	return set, nil
 }
 
@@ -97,6 +99,7 @@ func (n NativeTokens) MustSet() NativeTokensSet {
 	if err != nil {
 		panic(err)
 	}
+
 	return set
 }
 
@@ -106,6 +109,7 @@ func (n NativeTokens) Clone() NativeTokens {
 	for i, ele := range n {
 		cpy[i] = ele.Clone()
 	}
+
 	return cpy
 }
 
@@ -141,6 +145,7 @@ func (n NativeTokens) Size() int {
 	for _, token := range n {
 		sum += token.Size()
 	}
+
 	return sum
 }
 
@@ -154,6 +159,7 @@ func (n NativeTokens) Equal(other NativeTokens) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -162,6 +168,7 @@ func (n *NativeTokens) Upsert(nt *NativeToken) {
 	for i, ele := range *n {
 		if ele.ID == nt.ID {
 			(*n)[i] = nt
+
 			return
 		}
 	}
@@ -186,6 +193,7 @@ func (n *NativeToken) Clone() *NativeToken {
 	cpy := &NativeToken{}
 	copy(cpy.ID[:], n.ID[:])
 	cpy.Amount = new(big.Int).Set(n.Amount)
+
 	return cpy
 }
 
@@ -207,6 +215,7 @@ func (n *NativeToken) Equal(other *NativeToken) bool {
 	if n.ID != other.ID {
 		return false
 	}
+
 	return n.Amount.Cmp(other.Amount) == 0
 }
 

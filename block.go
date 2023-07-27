@@ -52,6 +52,7 @@ func (ids BlockIDs) ToHex() []string {
 	for i, id := range ids {
 		hexIDs[i] = hexutil.EncodeHex(id[:])
 	}
+
 	return hexIDs
 }
 
@@ -70,6 +71,7 @@ func (ids BlockIDs) RemoveDupsAndSort() BlockIDs {
 		}
 		prev = id
 	}
+
 	return result
 }
 
@@ -226,6 +228,7 @@ func (b *ProtocolBlock) MustID(api API) BlockID {
 	if err != nil {
 		panic(err)
 	}
+
 	return blockID
 }
 
@@ -395,7 +398,7 @@ func (b *ValidationBlock) Hash(api API) (Identifier, error) {
 	return IdentifierFromData(blockBytes), nil
 }
 
-func (b *ValidationBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (b *ValidationBlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
 	// Validator blocks do not incur any work score as they do not burn mana
 	return 0, nil
 }

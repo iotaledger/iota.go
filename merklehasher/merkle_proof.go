@@ -1,3 +1,4 @@
+//nolint:golint // false positives
 package merklehasher
 
 import (
@@ -42,12 +43,14 @@ func (t *Hasher[V]) ComputeProof(values []V, valueToProof V) (*Proof[V], error) 
 		if bytes.Equal(valueToProofBytes, valueBytes) {
 			index = i
 			found = true
+
 			break
 		}
 	}
 	if !found {
 		return nil, ierrors.Errorf("value %s is not contained in the given list", hexutil.EncodeHex(valueToProofBytes))
 	}
+
 	return t.ComputeProofForIndex(values, index)
 }
 
@@ -73,12 +76,15 @@ func (t *Hasher[V]) ComputeProofForIndex(values []V, index int) (*Proof[V], erro
 	if err != nil {
 		return nil, err
 	}
+
+	//nolint:forcetypeassert
 	return p.(*Proof[V]), nil
 }
 
 func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) {
 	if len(data) < 2 {
 		l := data[0]
+
 		return &leafValue[V]{l}, nil
 	}
 
@@ -90,12 +96,13 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) 
 				Left:  &leafValue[V]{left},
 				Right: &hashValue[V]{t.hashLeaf(right)},
 			}, nil
-		} else {
-			return &Proof[V]{
-				Left:  &hashValue[V]{t.hashLeaf(left)},
-				Right: &leafValue[V]{right},
-			}, nil
 		}
+
+		return &Proof[V]{
+			Left:  &hashValue[V]{t.hashLeaf(left)},
+			Right: &leafValue[V]{right},
+		}, nil
+
 	}
 
 	k := largestPowerOfTwo(len(data))
@@ -106,22 +113,24 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) 
 			return nil, err
 		}
 		right := t.Hash(data[k:])
+
 		return &Proof[V]{
 			Left:  left,
 			Right: &hashValue[V]{right},
 		}, nil
-	} else {
-		// Inside right half
-		left := t.Hash(data[:k])
-		right, err := t.computeProof(data[k:], index-k)
-		if err != nil {
-			return nil, err
-		}
-		return &Proof[V]{
-			Left:  &hashValue[V]{left},
-			Right: right,
-		}, nil
 	}
+
+	// Inside right half
+	left := t.Hash(data[:k])
+	right, err := t.computeProof(data[k:], index-k)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Proof[V]{
+		Left:  &hashValue[V]{left},
+		Right: right,
+	}, nil
 }
 
 func (l *leafValue[V]) Hash(hasher *Hasher[V]) []byte {
@@ -151,6 +160,7 @@ func (l *leafValue[V]) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	l.Value = value
+
 	return nil
 }
 
@@ -181,6 +191,7 @@ func (h *hashValue[V]) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	h.Value = value
+
 	return nil
 }
 
@@ -202,6 +213,7 @@ func containsLeafValue[V Value](hasheable hashable[V], value []byte) bool {
 	case *Proof[V]:
 		return containsLeafValue[V](t.Right, value) || containsLeafValue[V](t.Left, value)
 	}
+
 	return false
 }
 
@@ -210,6 +222,7 @@ func (p *Proof[V]) ContainsValue(value V) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	return containsLeafValue[V](p, valueBytes), nil
 }
 
@@ -224,6 +237,7 @@ func (p *Proof[V]) MarshalJSON() ([]byte, error) {
 	}
 	rawLeft := json.RawMessage(jsonLeft)
 	rawRight := json.RawMessage(jsonRight)
+
 	return json.Marshal(&jsonPath{
 		Left:  &rawLeft,
 		Right: &rawRight,
@@ -234,11 +248,13 @@ func unmarshalHashable[V Value](raw *json.RawMessage, hasheable *hashable[V]) er
 	h := new(hashValue[V])
 	if err := json.Unmarshal(*raw, h); err == nil {
 		*hasheable = h
+
 		return nil
 	}
 	l := new(leafValue[V])
 	if err := json.Unmarshal(*raw, l); err == nil {
 		*hasheable = l
+
 		return nil
 	}
 
@@ -247,6 +263,7 @@ func unmarshalHashable[V Value](raw *json.RawMessage, hasheable *hashable[V]) er
 		return err
 	}
 	*hasheable = p
+
 	return nil
 }
 
@@ -265,5 +282,6 @@ func (p *Proof[V]) UnmarshalJSON(bytes []byte) error {
 	}
 	p.Left = left
 	p.Right = right
+
 	return nil
 }

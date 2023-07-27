@@ -12,6 +12,7 @@ type ImmutableAccountUnlockCondition struct {
 }
 
 func (s *ImmutableAccountUnlockCondition) Clone() UnlockCondition {
+	//nolint:forcetypeassert // we can safely assume that this is an AccountAddress
 	return &ImmutableAccountUnlockCondition{Address: s.Address.Clone().(*AccountAddress)}
 }
 

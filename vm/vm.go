@@ -61,7 +61,7 @@ type WorkingSet struct {
 	// Contains one value for each account output touched in the transaction and empty if no account outputs touched.
 	BIC BlockIssuanceCreditInputSet
 	// Commitment contains set of commitment inputs necessary for transaction execution. FIXME
-	Commitment VmCommitmentInput
+	Commitment VMCommitmentInput
 	// Rewards contains a set of account or delegation IDs mapped to their rewards amount.
 	Rewards RewardsInputSet
 }
@@ -69,6 +69,7 @@ type WorkingSet struct {
 // UTXOInputAtIndex retrieves the UTXOInput at the given index.
 // Caller must ensure that the index is valid.
 func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOInput {
+	//nolint:forcetypeassert // we can safely assume that this is a UTXOInput
 	return workingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
@@ -81,6 +82,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs Resolve
 	workingSet.UTXOInputsWithCreationTime = utxoInputsSet
 	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
 	for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
+		//nolint:forcetypeassert // we can safely assume that this is an IndexedUTXOReferencer
 		ref := inputRef.(iotago.IndexedUTXOReferencer).Ref()
 		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
 		input, ok := workingSet.UTXOInputsWithCreationTime[ref]
@@ -102,6 +104,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs Resolve
 			slice[i] = output.Output
 			i++
 		}
+
 		return slice.ToOutputsByType()
 	}()
 
@@ -176,6 +179,7 @@ func RunVMFuncs(vm VirtualMachine, vmParams *Params, execFuncs ...ExecFunc) erro
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -194,6 +198,7 @@ func (unlockedIdents UnlockedIdentities) SigUnlock(ident iotago.DirectUnlockable
 		Ident:      ident,
 		UnlockedAt: inputIndex, ReferencedBy: map[uint16]struct{}{},
 	}
+
 	return nil
 }
 
@@ -206,6 +211,7 @@ func (unlockedIdents UnlockedIdentities) RefUnlock(identKey string, ref uint16, 
 	}
 
 	ident.ReferencedBy[inputIndex] = struct{}{}
+
 	return nil
 }
 
@@ -231,13 +237,16 @@ func (unlockedIdents UnlockedIdentities) String() string {
 			if _, is := idents[i].Ident.(iotago.ChainAddress); is {
 				return false
 			}
+
 			return true
 		}
+
 		return x < y
 	})
 	for _, ident := range idents {
 		b.WriteString(ident.String() + "\n")
 	}
+
 	return b.String()
 }
 
@@ -254,6 +263,7 @@ func (unlockedIdents UnlockedIdentities) UnlockedBy(inputIndex uint16, identKey 
 	}
 
 	_, refUnlocked := unlockedIdent.ReferencedBy[inputIndex]
+
 	return refUnlocked
 }
 
@@ -293,6 +303,7 @@ func IsIssuerOnOutputUnlocked(output iotago.ChainOutputImmutable, unlockedIdents
 	if _, isUnlocked := unlockedIdents[issuerFeat.Address.Key()]; !isUnlocked {
 		return iotago.ErrIssuerFeatureNotUnlocked
 	}
+
 	return nil
 }
 
@@ -325,6 +336,7 @@ func ExecFuncInputUnlocks() ExecFunc {
 				// mark this ChainOutput's identity as unlocked by this input
 				chainID := chainConstrOutput.Chain()
 				if chainID.Empty() {
+					//nolint:forcetypeassert // we can safely assume that this is an UTXOIDChainID
 					chainID = chainID.(iotago.UTXOIDChainID).FromOutputID(vmParams.WorkingSet.UTXOInputAtIndex(uint16(inputIndex)).Ref())
 				}
 
@@ -364,6 +376,7 @@ func identToUnlock(vmParams *Params, input iotago.Output, inputIndex uint16) (io
 			if !is {
 				return nil, iotago.ErrTransDepIdentOutputNonUTXOChainID
 			}
+			//nolint:forcetypeassert // we can safely assume that this is an IndexedUTXOReferencer
 			chainID = utxoChainID.FromOutputID(vmParams.WorkingSet.Tx.Essence.Inputs[inputIndex].(iotago.IndexedUTXOReferencer).Ref())
 		}
 
@@ -460,6 +473,7 @@ func ExecFuncSenderUnlocked() ExecFunc {
 				return ierrors.Wrapf(iotago.ErrSenderFeatureNotUnlocked, "output %d", outputIndex)
 			}
 		}
+
 		return nil
 	}
 }
@@ -562,6 +576,7 @@ func ExecFuncTimelocks() ExecFunc {
 				return ierrors.Wrapf(err, "input at index %d's timelocks are not expired", inputIndex)
 			}
 		}
+
 		return nil
 	}
 }
@@ -575,6 +590,7 @@ func ExecFuncChainTransitions() ExecFunc {
 				if err := vm.ChainSTVF(iotago.ChainTransitionTypeDestroy, inputChain, nil, vmParams); err != nil {
 					return ierrors.Errorf("input chain %s (%T) destruction transition failed: %w", chainID, inputChain, err)
 				}
+
 				continue
 			}
 			if err := vm.ChainSTVF(iotago.ChainTransitionTypeStateChange, inputChain, next, vmParams); err != nil {

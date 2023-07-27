@@ -53,6 +53,7 @@ func (featType FeatureType) String() string {
 	if int(featType) >= len(featNames) {
 		return fmt.Sprintf("unknown feature type: %d", featType)
 	}
+
 	return featNames[featType]
 }
 
@@ -69,6 +70,7 @@ func (f Features[T]) Clone() Features[T] {
 	for i, v := range f {
 		cpy[i] = v.Clone()
 	}
+
 	return cpy
 }
 
@@ -109,6 +111,7 @@ func (f Features[T]) Size() int {
 	for _, feat := range f {
 		sum += feat.Size()
 	}
+
 	return sum
 }
 
@@ -122,6 +125,7 @@ func (f Features[T]) Set() (FeatureSet, error) {
 		}
 		set[feat.Type()] = feat
 	}
+
 	return set, nil
 }
 
@@ -133,6 +137,7 @@ func (f Features[T]) MustSet() FeatureSet {
 	if err != nil {
 		panic(err)
 	}
+
 	return set
 }
 
@@ -146,6 +151,7 @@ func (f Features[T]) Equal(other Features[T]) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -154,6 +160,7 @@ func (f *Features[T]) Upsert(feature T) {
 	for i, ele := range *f {
 		if ele.Type() == feature.Type() {
 			(*f)[i] = feature
+
 			return
 		}
 	}
@@ -174,6 +181,7 @@ func (f FeatureSet) Clone() FeatureSet {
 	for k, v := range f {
 		cpy[k] = v.Clone()
 	}
+
 	return cpy
 }
 
@@ -183,6 +191,8 @@ func (f FeatureSet) SenderFeature() *SenderFeature {
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a SenderFeature
 	return b.(*SenderFeature)
 }
 
@@ -192,6 +202,8 @@ func (f FeatureSet) Issuer() *IssuerFeature {
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a IssuerFeature
 	return b.(*IssuerFeature)
 }
 
@@ -201,6 +213,8 @@ func (f FeatureSet) BlockIssuer() *BlockIssuerFeature {
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a BlockIssuerFeature
 	return b.(*BlockIssuerFeature)
 }
 
@@ -210,6 +224,8 @@ func (f FeatureSet) Staking() *StakingFeature {
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a StakingFeature
 	return b.(*StakingFeature)
 }
 
@@ -219,6 +235,8 @@ func (f FeatureSet) Metadata() *MetadataFeature {
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a MetadataFeature
 	return b.(*MetadataFeature)
 }
 
@@ -228,6 +246,8 @@ func (f FeatureSet) Tag() *TagFeature {
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a TagFeature
 	return b.(*TagFeature)
 }
 
@@ -239,12 +259,14 @@ func (f FeatureSet) EveryTuple(other FeatureSet, fun func(a Feature, b Feature) 
 		featB, has := other[ty]
 		if !has {
 			hadAll = false
+
 			continue
 		}
 		if err := fun(featA, featB); err != nil {
 			return false, err
 		}
 	}
+
 	return hadAll, nil
 }
 

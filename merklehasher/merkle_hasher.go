@@ -19,6 +19,7 @@ type Value interface {
 
 // Hasher implements the hashing algorithm described in the IOTA protocol RFC-12.
 type Hasher[V Value] struct {
+	//nolint:structcheck // false positive
 	hash crypto.Hash
 }
 
@@ -48,6 +49,7 @@ func (t *Hasher[V]) HashValues(values []V) ([]byte, error) {
 		}
 		data[i] = value
 	}
+
 	return t.Hash(data), nil
 }
 
@@ -58,12 +60,14 @@ func (t *Hasher[V]) Hash(data [][]byte) []byte {
 	}
 	if len(data) == 1 {
 		l := data[0]
+
 		return t.hashLeaf(l)
 	}
 
 	k := largestPowerOfTwo(len(data))
 	l := t.Hash(data[:k])
 	r := t.Hash(data[k:])
+
 	return t.hashNode(l, r)
 }
 
@@ -72,6 +76,7 @@ func (t *Hasher[V]) hashLeaf(l []byte) []byte {
 	h := t.hash.New()
 	h.Write([]byte{LeafHashPrefix})
 	h.Write(l)
+
 	return h.Sum(nil)
 }
 
@@ -81,6 +86,7 @@ func (t *Hasher[V]) hashNode(l, r []byte) []byte {
 	h.Write([]byte{NodeHashPrefix})
 	h.Write(l)
 	h.Write(r)
+
 	return h.Sum(nil)
 }
 
@@ -89,5 +95,6 @@ func largestPowerOfTwo(x int) int {
 	if x < 2 {
 		panic("invalid value")
 	}
+
 	return 1 << (bits.Len(uint(x-1)) - 1)
 }

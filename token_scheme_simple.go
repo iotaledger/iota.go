@@ -88,6 +88,7 @@ func (s *SimpleTokenScheme) genesisValid(outSum *big.Int) error {
 	case outSum.Cmp(s.MintedTokens) != 0:
 		return ierrors.Wrapf(ErrSimpleTokenSchemeTransition, "genesis requires that output tokens amount equal minted count: minted %s vs. output tokens %s", s.MintedTokens, outSum)
 	}
+
 	return nil
 }
 
@@ -97,6 +98,7 @@ func (s *SimpleTokenScheme) destructionValid(out *big.Int, in *big.Int) error {
 	if big.NewInt(0).Add(s.MintedTokens, tokenDiff).Cmp(s.MeltedTokens) != 0 {
 		return ierrors.Wrapf(ErrNativeTokenSumUnbalanced, "all minted tokens must have been melted up on destruction: minted (%s) + token diff (%d) != melted tokens (%s)", s.MintedTokens, tokenDiff, s.MeltedTokens)
 	}
+
 	return nil
 }
 
@@ -146,8 +148,7 @@ func (s *SimpleTokenScheme) stateChangeValid(nextState TokenScheme, in *big.Int,
 		}
 
 	case tokenDiffType == 0:
-		switch {
-		case s.MintedTokens.Cmp(next.MintedTokens) != 0 || s.MeltedTokens.Cmp(next.MeltedTokens) != 0:
+		if s.MintedTokens.Cmp(next.MintedTokens) != 0 || s.MeltedTokens.Cmp(next.MeltedTokens) != 0 {
 			// no mutations to minted/melted fields while balance is kept
 			return ierrors.Wrapf(ErrNativeTokenSumUnbalanced, "zero token diff requires equal minted/melted supply between current/next state: current (minted/melted=%s/%s), next (minted/melted=%s/%s)", s.MintedTokens, s.MeltedTokens, next.MintedTokens, next.MeltedTokens)
 		}

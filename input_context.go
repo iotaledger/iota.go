@@ -23,6 +23,7 @@ func (inputType ContextInputType) String() string {
 	if int(inputType) >= len(contextInputNames) {
 		return fmt.Sprintf("unknown input type: %d", inputType)
 	}
+
 	return contextInputNames[inputType]
 }
 
@@ -60,6 +61,7 @@ func (in ContextInputs[T]) Size() int {
 	for _, i := range in {
 		sum += i.Size()
 	}
+
 	return sum
 }
 

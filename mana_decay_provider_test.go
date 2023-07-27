@@ -1,3 +1,4 @@
+//nolint:scopelint
 package iotago_test
 
 import (
@@ -37,7 +38,7 @@ func TestMain(m *testing.M) {
 	testManaDecayFactorEpochsSum = tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent)
 
 	testTimeProvider = iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochExponent)
-	testManaDecayProvider = iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, generationRate, decayFactorEpochsSumExponent, testManaDecayFactors, decayFactorsExponent, testManaDecayFactorEpochsSum, decayFactorEpochsSumExponent)
+	testManaDecayProvider = iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, generationRate, generationRateExponent, testManaDecayFactors, decayFactorsExponent, testManaDecayFactorEpochsSum, decayFactorEpochsSumExponent)
 
 	// call the tests
 	os.Exit(m.Run())
@@ -169,6 +170,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 			result, err := testManaDecayProvider.StoredManaWithDecay(tt.storedMana, tt.slotIndexCreated, tt.slotIndexTarget)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 			require.Equal(t, tt.result, result)
@@ -266,6 +268,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			result, err := testManaDecayProvider.PotentialManaWithDecay(tt.deposit, tt.slotIndexCreated, tt.slotIndexTarget)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 			require.Equal(t, tt.result, result)
@@ -339,6 +342,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 			result, err := testManaDecayProvider.RewardsWithDecay(tt.rewards, tt.epochIndexReward, tt.epochIndexClaimed)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 			require.Equal(t, tt.result, result)

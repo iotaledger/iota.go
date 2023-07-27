@@ -43,6 +43,7 @@ func (a Allotments) Get(id AccountID) Mana {
 			return allotment.Value
 		}
 	}
+
 	return 0
 }
 
@@ -65,6 +66,7 @@ func SyntacticallyValidateAllotments(allotments TxEssenceAllotments, funcs ...Al
 // AllotmentsSyntacticalUnique returns an AllotmentsSyntacticalValidationFunc which checks that every Allotment has a unique Account.
 func AllotmentsSyntacticalUnique() AllotmentsSyntacticalValidationFunc {
 	allotmentsSet := map[string]int{}
+
 	return func(index int, allotment *Allotment) error {
 		k := string(allotment.AccountID[:])
 		if j, has := allotmentsSet[k]; has {

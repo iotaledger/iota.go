@@ -223,6 +223,7 @@ func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, er
 func V3API(protoParams ProtocolParameters) API {
 	api := commonSerixAPI()
 
+	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{
 		serixAPI:           api,
 		protocolParameters: protoParams.(*V3ProtocolParameters),
@@ -488,6 +489,7 @@ func V3API(protoParams ProtocolParameters) API {
 			if len(tx.Unlocks) != len(tx.Essence.Inputs) {
 				return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(tx.Unlocks), len(tx.Essence.Inputs))
 			}
+
 			return tx.syntacticallyValidate(v3)
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
@@ -523,6 +525,7 @@ func V3API(protoParams ProtocolParameters) API {
 			if len(bytes) > MaxBlockSize {
 				return ierrors.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, len(bytes))
 			}
+
 			return nil
 		}, func(ctx context.Context, protocolBlock ProtocolBlock) error {
 			if protoParams.Version() != protocolBlock.ProtocolVersion {

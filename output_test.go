@@ -1,3 +1,4 @@
+//nolint:scopelint
 package iotago_test
 
 import (
@@ -593,6 +594,7 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.AccountOutput {
 					accountID := iotago.AccountID(tpkg.Rand32ByteArray())
+
 					return &iotago.AccountOutput{
 						Amount:         OneMi,
 						AccountID:      accountID,
@@ -612,6 +614,7 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.AccountOutput {
 					accountID := iotago.AccountID(tpkg.Rand32ByteArray())
+
 					return &iotago.AccountOutput{
 						Amount:         OneMi,
 						AccountID:      accountID,
@@ -789,6 +792,7 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.NFTOutput {
 					nftID := iotago.NFTID(tpkg.Rand32ByteArray())
+
 					return &iotago.NFTOutput{
 						Amount: OneMi,
 						NFTID:  nftID,
@@ -829,7 +833,7 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 				&iotago.DelegationOutput{
 					Amount:          OneMi,
 					DelegatedAmount: OneMi,
-					DelegationID:    iotago.EmptyDelegationId(),
+					DelegationID:    iotago.EmptyDelegationID(),
 					ValidatorID:     tpkg.RandAccountID(),
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -842,14 +846,14 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.DelegationOutput{
 					Amount:       OneMi,
-					DelegationID: iotago.EmptyDelegationId(),
+					DelegationID: iotago.EmptyDelegationID(),
 					ValidatorID:  iotago.EmptyAccountID(),
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 			},
-			wantErr: iotago.ErrDelegationValidatorIdZeroed,
+			wantErr: iotago.ErrDelegationValidatorIDZeroed,
 		},
 	}
 	valFunc := iotago.OutputsSyntacticalDelegation()
@@ -880,6 +884,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 	tests := []test{
 		func() test {
 			sourceIdent := tpkg.RandEd25519Address()
+
 			return test{
 				name: "can unlock - target is source (no unlock conditions)",
 				output: &iotago.BasicOutput{
@@ -909,6 +914,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 		}(),
 		func() test {
 			sourceIdent := tpkg.RandEd25519Address()
+
 			return test{
 				name: "can unlock - output not expired for source ident (unix expiration)",
 				output: &iotago.BasicOutput{
@@ -930,6 +936,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 		func() test {
 			sourceIdent := tpkg.RandEd25519Address()
 			senderIdent := tpkg.RandEd25519Address()
+
 			return test{
 				name: "can not unlock - output expired for source ident (unix expiration)",
 				output: &iotago.BasicOutput{
@@ -950,6 +957,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 		}(),
 		func() test {
 			sourceIdent := tpkg.RandEd25519Address()
+
 			return test{
 				name: "can unlock - expired unix timelock unlock condition",
 				output: &iotago.BasicOutput{
@@ -966,6 +974,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 		}(),
 		func() test {
 			sourceIdent := tpkg.RandEd25519Address()
+
 			return test{
 				name: "can not unlock - not expired unix timelock unlock condition",
 				output: &iotago.BasicOutput{
@@ -1010,6 +1019,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 		func() test {
 			stateCtrl := tpkg.RandEd25519Address()
 			govCtrl := tpkg.RandEd25519Address()
+
 			return test{
 				name: "state ctrl can unlock - state index increase",
 				current: &iotago.AccountOutput{
@@ -1037,6 +1047,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 		func() test {
 			stateCtrl := tpkg.RandEd25519Address()
 			govCtrl := tpkg.RandEd25519Address()
+
 			return test{
 				name: "state ctrl can not unlock - state index same",
 				current: &iotago.AccountOutput{
@@ -1065,6 +1076,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 		func() test {
 			stateCtrl := tpkg.RandEd25519Address()
 			govCtrl := tpkg.RandEd25519Address()
+
 			return test{
 				name: "state ctrl can not unlock - transition destroy",
 				current: &iotago.AccountOutput{
@@ -1091,6 +1103,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 				canUnlock, err := tt.current.UnlockableBy(tt.targetIdent, tt.next, tt.txCreationTime)
 				if tt.wantErr != nil {
 					require.ErrorIs(t, err, tt.wantErr)
+
 					return
 				}
 				require.Equal(t, tt.canUnlock, canUnlock)
