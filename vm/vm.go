@@ -2,7 +2,6 @@ package vm
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -482,7 +481,7 @@ func ExecFuncBalancedMana() ExecFunc {
 
 		manaOut, err := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
 		if err != nil {
-			return errors.Join(iotago.ErrManaAmountInvalid, err)
+			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
 		}
 
 		// Whether it's valid to claim rewards is checked in the delegation and staking STVFs.
