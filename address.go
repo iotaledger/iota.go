@@ -10,6 +10,11 @@ import (
 	"github.com/iotaledger/iota.go/v4/bech32"
 )
 
+var (
+	// ErrUnknownAddrType gets returned for unknown address types.
+	ErrUnknownAddrType = ierrors.New("unknown address type")
+)
+
 // AddressType defines the type of addresses.
 type AddressType byte
 

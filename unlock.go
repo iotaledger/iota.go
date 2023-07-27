@@ -45,6 +45,8 @@ var (
 	ErrReferentialUnlockInvalid = ierrors.New("invalid referential unlock")
 	// ErrSigUnlockHasNilSig gets returned if a signature unlock contains a nil signature.
 	ErrSigUnlockHasNilSig = ierrors.New("signature is nil")
+	// ErrUnknownUnlockType gets returned for unknown unlock.
+	ErrUnknownUnlockType = ierrors.New("unknown unlock type")
 )
 
 type Unlocks []Unlock
