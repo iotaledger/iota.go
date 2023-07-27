@@ -36,9 +36,9 @@ var (
 	ErrNoStakingFeature = ierrors.New("staking reward claim failed due to no staking feature provided")
 
 	// ErrFailedToClaimStakingReward gets returned when the validator reward could not be claimed.
-	ErrFailedToClaimStakingReward = ierrors.New("staking claim failed")
+	ErrFailedToClaimStakingReward = ierrors.New("staking rewards claim failed")
 	// ErrFailedToClaimDelegationReward gets returned when the delegation reward could not be claimed.
-	ErrFailedToClaimDelegationReward = ierrors.New("delegation claim failed")
+	ErrFailedToClaimDelegationReward = ierrors.New("delegation rewards claim failed")
 
 	// ErrTxConflicting gets returned when the transaction is conflicting.
 	ErrTxConflicting = ierrors.New("transaction is conflicting")
