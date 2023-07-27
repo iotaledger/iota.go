@@ -218,7 +218,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
-			result:           2703444537357063933,
+			result:           183827294847826527,
 			wantErr:          nil,
 		},
 		{
@@ -226,7 +226,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
-			result:           5953756261780594087,
+			result:           410192222442040018,
 			wantErr:          nil,
 		},
 		{
@@ -234,7 +234,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(1),
-			result:           72048797944905727,
+			result:           562881233944575,
 			wantErr:          nil,
 		},
 		{
@@ -242,7 +242,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(2),
-			result:           144044025115049982,
+			result:           1125343946211326,
 			wantErr:          nil,
 		},
 		{
@@ -250,7 +250,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(3),
-			result:           152113284342402446,
+			result:           1687319975062367,
 			wantErr:          nil,
 		},
 		{
@@ -258,7 +258,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(401),
-			result:           2795512642852595570,
+			result:           190239292158065300,
 			wantErr:          nil,
 		},
 	}
