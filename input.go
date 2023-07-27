@@ -100,7 +100,7 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 			}
 			utxoSet[k] = index
 		default:
-			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer", index)
+			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain IndexedUTXOReferencer", index)
 		}
 
 		return nil
@@ -116,7 +116,7 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 				return ierrors.Wrapf(ErrRefUTXOIndexInvalid, "input %d", index)
 			}
 		default:
-			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer inputs", index)
+			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain IndexedUTXOReferencer inputs", index)
 		}
 		return nil
 	}

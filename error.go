@@ -7,9 +7,9 @@ import (
 var (
 	ErrFailedToRetrieveInput = ierrors.New("failed to retrieve input references")
 	// ErrUnsupportedInputType gets returned for unsupported input types.
-	ErrUnsupportedInputType = ierrors.New("unsupported input type")
+	ErrUnknownInputType = ierrors.New("unsupported input type")
 	// ErrUnsupportedContextInputType gets returned for unsupported context input types.
-	ErrUnsupportedContextInputType = ierrors.New("unsupported context input type")
+	ErrUnknownContextInputType = ierrors.New("unsupported context input type")
 	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = ierrors.New("unknown address type")
 	// ErrUnknownOutputType gets returned for unknown output types.
@@ -26,18 +26,16 @@ var (
 	ErrCouldNotResolveBICInput = ierrors.New("could not retrieve BIC input")
 	// ErrCouldNotResolveRewardInput gets returned when the reward input could not be retrieved.
 	ErrCouldNotResolveRewardInput = ierrors.New("could not retrieve reward input")
-	// ErrCouldNorRetrieveCommittment gets returned when the commitment could not be retrieved.
-	ErrCouldNorRetrieveCommittment = ierrors.New("could not retrieve committment")
+	// ErrCouldNorRetrieveCommitment gets returned when the commitment could not be retrieved.
+	ErrCouldNorRetrieveCommitment = ierrors.New("could not retrieve commitment")
 	// ErrCommittmentInputMissing gets returned when the commitment has not been provided when needed.
 	ErrCommittmentInputMissing = ierrors.New("commitment input required with reward or BIC input")
 	// ErrNoStakingFeature gets returned when the validator reward could not be claimed.
-	ErrNoStakingFeature = ierrors.New("validator staking claim failed due to no staking feature provided")
+	ErrNoStakingFeature = ierrors.New("validator reward claim failed due to no staking feature provided")
 	// ErrFailedToClaimValidatorReward gets returned when the validator reward could not be claimed.
 	ErrFailedToClaimValidatorReward = ierrors.New("validator staking claim failed")
 	// ErrFailedToClaimDelegatorReward gets returned when the delegator reward could not be claimed.
 	ErrFailedToClaimDelegatorReward = ierrors.New("delegator staking claim failed")
-	// ErrFailedToUnlockInput gets returned when the input could not be unlocked.
-	ErrFailedToUnlockInput = ierrors.New("failed to unlock input")
 	// ErrUnlockBlockSignatureInvalid gets returned when the block signature unlock block signature is invalid.
 	ErrUnlockBlockSignatureInvalid = ierrors.New("block signature unlock block signature invalid")
 	// ErrInvalidNativeTokenSet gets returned when the provided native tokens are invalid.
