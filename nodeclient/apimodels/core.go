@@ -109,7 +109,7 @@ func TransactionStateFromBytes(b []byte) (TransactionState, int, error) {
 
 const (
 	TxFailureNone                                  TransactionFailureReason = 0
-	TxFailureReferencedUTXOAlreadySpent            TransactionFailureReason = 1
+	TxFailureUTXOInputAlreadySpent                 TransactionFailureReason = 1
 	TxFailureConflicting                           TransactionFailureReason = 2
 	TxFailureUTXOInputInvalid                      TransactionFailureReason = 3
 	TxFailureTxTypeInvalid                         TransactionFailureReason = 4

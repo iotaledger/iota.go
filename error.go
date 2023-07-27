@@ -39,4 +39,9 @@ var (
 	ErrFailedToClaimValidatorReward = ierrors.New("validator staking claim failed")
 	// ErrFailedToClaimDelegatorReward gets returned when the delegator reward could not be claimed.
 	ErrFailedToClaimDelegatorReward = ierrors.New("delegator staking claim failed")
+
+	// ErrTxConflicting gets returned when the transaction is conflicting.
+	ErrTxConflicting = ierrors.New("transaction is conflicting")
+	// ErrInputAlreadySpent gets returned when the input is already spent.
+	ErrInputAlreadySpent = ierrors.New("input already spent")
 )
