@@ -68,9 +68,9 @@ func RandInt64(max uint64) int64 {
 	return rand.Int63n(int64(uint32(max)))
 }
 
-// RandLocalTime returns a random time in the local timezone.
-func RandLocalTime() time.Time {
-	return time.Unix(0, RandInt64(math.MaxInt64)).Local()
+// RandUTCTime returns a random time in UTC.
+func RandUTCTime() time.Time {
+	return time.Unix(0, RandInt64(math.MaxInt64)).UTC()
 }
 
 // RandBaseToken returns a random amount of base token.
@@ -471,7 +471,7 @@ func RandProtocolBlock(block iotago.Block, api iotago.API) *iotago.ProtocolBlock
 	return &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  TestAPI.Version(),
-			IssuingTime:      RandLocalTime(),
+			IssuingTime:      RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
 			IssuerID:         RandAccountID(),
 		},

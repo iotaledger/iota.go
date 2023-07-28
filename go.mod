@@ -10,7 +10,7 @@ require (
 	github.com/iotaledger/hive.go/ierrors v0.0.0-20230728082521-74f3f2957f0c
 	github.com/iotaledger/hive.go/lo v0.0.0-20230728082521-74f3f2957f0c
 	github.com/iotaledger/hive.go/runtime v0.0.0-20230728082521-74f3f2957f0c
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230728093357-b1a8f5595de5
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230728095014-9600d578f03b
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/crypto v0.11.0
