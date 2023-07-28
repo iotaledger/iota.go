@@ -220,7 +220,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	originBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
-			IssuingTime:      time.Now().Round(0),
+			IssuingTime:      time.Unix(0, tpkg.RandInt64(math.MaxInt64)),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
@@ -254,7 +254,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	originBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
-			IssuingTime:      time.Now().Round(0),
+			IssuingTime:      time.Unix(0, tpkg.RandInt64(math.MaxInt64)),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
