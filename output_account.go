@@ -56,12 +56,14 @@ func (id AccountID) Matches(other ChainID) bool {
 	if !isAccountID {
 		return false
 	}
+
 	return id == otherAccountID
 }
 
 func (id AccountID) ToAddress() ChainAddress {
 	var addr AccountAddress
 	copy(addr[:], id[:])
+
 	return &addr
 }
 
@@ -81,6 +83,7 @@ func (outputs AccountOutputs) Every(f func(output *AccountOutput) bool) int {
 			return i
 		}
 	}
+
 	return -1
 }
 
@@ -94,6 +97,7 @@ func (set AccountOutputsSet) Includes(other AccountOutputsSet) error {
 			return ierrors.Wrapf(ErrAccountMissing, "%s missing in source", accountID.ToHex())
 		}
 	}
+
 	return nil
 }
 
@@ -108,6 +112,7 @@ func (set AccountOutputsSet) EveryTuple(other AccountOutputsSet, f func(in *Acco
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -124,6 +129,7 @@ func (set AccountOutputsSet) Merge(other AccountOutputsSet) (AccountOutputsSet, 
 		}
 		newSet[k] = v
 	}
+
 	return newSet, nil
 }
 
@@ -284,6 +290,7 @@ func (a *AccountOutput) StoredMana() Mana {
 func (a *AccountOutput) Target() (Address, error) {
 	addr := new(AccountAddress)
 	copy(addr[:], a.AccountID[:])
+
 	return addr, nil
 }
 

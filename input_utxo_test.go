@@ -27,6 +27,7 @@ func TestUTXOInput_Equals(t *testing.T) {
 	input2 := &iotago.UTXOInput{[iotago.TransactionIDLength]byte{1, 2, 3, 4, 5, 6, 7}, 10}
 	input3 := &iotago.UTXOInput{[iotago.TransactionIDLength]byte{1, 2, 3, 4, 5, 6, 8}, 10}
 	input4 := &iotago.UTXOInput{[iotago.TransactionIDLength]byte{1, 2, 3, 4, 5, 6, 7}, 12}
+	//nolint:gocritic // false positive
 	require.True(t, input1.Equals(input1))
 	require.True(t, input1.Equals(input2))
 	require.False(t, input1.Equals(input3))

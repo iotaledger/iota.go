@@ -100,6 +100,7 @@ func (b *BasicBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.Priv
 	signature, err := b.protocolBlock.Sign(b.api, iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {
 		b.err = ierrors.Errorf("error signing block: %w", err)
+
 		return b
 	}
 
@@ -261,6 +262,7 @@ func (v *ValidationBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519
 	signature, err := v.protocolBlock.Sign(v.api, iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {
 		v.err = ierrors.Errorf("error signing block: %w", err)
+
 		return v
 	}
 

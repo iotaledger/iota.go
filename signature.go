@@ -3,8 +3,6 @@ package iotago
 import (
 	"fmt"
 
-	_ "golang.org/x/crypto/blake2b"
-
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
@@ -34,6 +32,7 @@ func (sigType SignatureType) String() string {
 	if int(sigType) >= len(sigNames) {
 		return fmt.Sprintf("unknown signature type: %d", sigType)
 	}
+
 	return sigNames[sigType]
 }
 

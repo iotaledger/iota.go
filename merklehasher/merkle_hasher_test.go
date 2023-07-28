@@ -1,3 +1,4 @@
+//nolint:nosnakecase
 package merklehasher_test
 
 import (

@@ -25,6 +25,7 @@ func (unlockType UnlockType) String() string {
 	if int(unlockType) >= len(unlockNames) {
 		return fmt.Sprintf("unknown unlock type: %d", unlockType)
 	}
+
 	return unlockNames[unlockType]
 }
 
@@ -60,6 +61,7 @@ func (o Unlocks) ToUnlockByType() UnlocksByType {
 		}
 		unlocksByType[unlock.Type()] = append(slice, unlock)
 	}
+
 	return unlocksByType
 }
 
@@ -68,6 +70,7 @@ func (o Unlocks) Size() int {
 	for _, unlock := range o {
 		sum += unlock.Size()
 	}
+
 	return sum
 }
 
@@ -128,6 +131,7 @@ func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 	seenSigUnlocks := map[uint16]struct{}{}
 	seenRefUnlocks := map[uint16]ReferentialUnlock{}
 	seenSigUnlockBytes := map[string]int{}
+
 	return func(index int, unlock Unlock) error {
 		switch x := unlock.(type) {
 		case *SignatureUnlock:
@@ -152,6 +156,7 @@ func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 					return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d references existing referential unlock %d but it does not support chaining", index, x.Ref())
 				}
 				seenRefUnlocks[uint16(index)] = x
+
 				break
 			}
 			// must reference a sig unlock here
@@ -176,5 +181,6 @@ func ValidateUnlocks(unlocks Unlocks, funcs ...UnlockValidatorFunc) error {
 			}
 		}
 	}
+
 	return nil
 }

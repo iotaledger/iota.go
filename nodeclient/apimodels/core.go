@@ -76,7 +76,7 @@ const (
 )
 
 const (
-	TransactionStateUnknown TransactionState = iota
+	TransactionStateNoTransaction TransactionState = iota
 	TransactionStatePending
 	TransactionStateAccepted
 	TransactionStateConfirmed
@@ -86,7 +86,7 @@ const (
 
 func (t TransactionState) String() string {
 	return []string{
-		"unknown",
+		"noTransaction",
 		"pending",
 		"acccepted",
 		"confirmed",
@@ -268,7 +268,7 @@ type (
 		ConsumedOutputs iotago.HexOutputIDs `json:"consumedOutputs"`
 	}
 
-	//CongestionResponse defines the response for the congestion REST API call.
+	// CongestionResponse defines the response for the congestion REST API call.
 	CongestionResponse struct {
 		// SlotIndex is the index of the slot for which the estimate is provided
 		SlotIndex iotago.SlotIndex `json:"slotIndex"`
@@ -347,18 +347,20 @@ func (o *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 	}
 	var txID iotago.TransactionID
 	copy(txID[:], txIDBytes)
+
 	return &txID, nil
 }
 
 // DecodeProtocolParameters returns the protocol parameters within the info response.
 func (i *InfoResponse) DecodeProtocolParameters() (iotago.ProtocolParameters, error) {
-	protoJson, err := json.Marshal(i.ProtocolParameters)
+	protoJSON, err := json.Marshal(i.ProtocolParameters)
 	if err != nil {
 		return nil, err
 	}
 
 	var o iotago.ProtocolParameters
-	if err := _internalAPI.JSONDecode(protoJson, &o); err != nil {
+	//nolint:nosnakecase
+	if err := _internalAPI.JSONDecode(protoJSON, &o); err != nil {
 		return nil, err
 	}
 
@@ -367,13 +369,14 @@ func (i *InfoResponse) DecodeProtocolParameters() (iotago.ProtocolParameters, er
 
 // DecodeCommitment returns the commitment within the block issuance response.
 func (i *IssuanceBlockHeaderResponse) DecodeCommitment() (*iotago.Commitment, error) {
-	commitmentJson, err := json.Marshal(i.Commitment)
+	commitmentJSON, err := json.Marshal(i.Commitment)
 	if err != nil {
 		return nil, err
 	}
 
 	o := &iotago.Commitment{}
-	if err := _internalAPI.JSONDecode(commitmentJson, o); err != nil {
+	//nolint:nosnakecase
+	if err := _internalAPI.JSONDecode(commitmentJSON, o); err != nil {
 		return nil, err
 	}
 

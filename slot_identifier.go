@@ -74,11 +74,13 @@ func (id SlotIdentifier) Bytes() ([]byte, error) {
 func (id SlotIdentifier) MarshalText() (text []byte, err error) {
 	dst := make([]byte, hex.EncodedLen(len(SlotIdentifier{})))
 	hex.Encode(dst, id[:])
+
 	return dst, nil
 }
 
 func (id *SlotIdentifier) UnmarshalText(text []byte) error {
 	_, err := hex.Decode(id[:], text)
+
 	return err
 }
 

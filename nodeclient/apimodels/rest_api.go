@@ -5,6 +5,8 @@ import (
 )
 
 // TODO: use the API instance from Client instead.
+//
+//nolint:nosnakecase
 var _internalAPI = iotago.V3API(iotago.NewV3ProtocolParameters())
 
 type (

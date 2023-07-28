@@ -19,6 +19,7 @@ func (inputType InputType) String() string {
 	if int(inputType) >= len(inputNames) {
 		return fmt.Sprintf("unknown input type: %d", inputType)
 	}
+
 	return inputNames[inputType]
 }
 
@@ -41,6 +42,7 @@ func (in Inputs[T]) Size() int {
 	for _, i := range in {
 		sum += i.Size()
 	}
+
 	return sum
 }
 
@@ -120,6 +122,7 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 		default:
 			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain IndexedUTXOReferencer inputs", index)
 		}
+
 		return nil
 	}
 }

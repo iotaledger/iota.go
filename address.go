@@ -138,6 +138,7 @@ func bech32String(hrp NetworkPrefix, addr Address) string {
 	if err != nil {
 		panic(err)
 	}
+
 	return s
 }
 

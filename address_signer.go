@@ -47,6 +47,7 @@ func NewInMemoryAddressSigner(addrKeys ...AddressKeys) AddressSigner {
 	for _, c := range addrKeys {
 		ss.addrKeys[c.Address.String()] = c.Keys
 	}
+
 	return ss
 }
 
@@ -70,6 +71,7 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signat
 
 		ed25519Sig := &Ed25519Signature{}
 		copy(ed25519Sig.Signature[:], ed25519.Sign(prvKey, msg))
+		//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
 		copy(ed25519Sig.PublicKey[:], prvKey.Public().(ed25519.PublicKey))
 
 		return ed25519Sig, nil

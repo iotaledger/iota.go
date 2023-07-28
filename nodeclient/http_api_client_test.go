@@ -1,5 +1,6 @@
 // #nosec G404
-
+//
+//nolint:dupl
 package nodeclient_test
 
 import (
@@ -28,9 +29,11 @@ const (
 	nodeAPIUrl = "http://127.0.0.1:14265"
 )
 
+//nolint:thelper
 func nodeClient(t *testing.T) *nodeclient.Client {
 	client, err := nodeclient.New(nodeAPIUrl, nodeclient.WithIOTAGoAPI(tpkg.TestAPI))
 	require.NoError(t, err)
+
 	return client
 }
 
@@ -94,10 +97,10 @@ func TestClient_Info(t *testing.T) {
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10),
 	)
 
-	protoParamsJson, err := tpkg.TestAPI.JSONEncode(protoParams)
+	protoParamsJSON, err := tpkg.TestAPI.JSONEncode(protoParams)
 	require.NoError(t, err)
-	protoParamsJsonRawMsg := json.RawMessage(protoParamsJson)
-	originInfo.ProtocolParameters = &protoParamsJsonRawMsg
+	protoParamsJSONRawMsg := json.RawMessage(protoParamsJSON)
+	originInfo.ProtocolParameters = &protoParamsJSONRawMsg
 
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.RouteInfo).
@@ -284,16 +287,16 @@ func TestClient_OutputByID(t *testing.T) {
 	txID := tpkg.Rand32ByteArray()
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
-	utxoInputId := utxoInput.ID()
+	utxoInputID := utxoInput.ID()
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputId.ToHex())).
+		Get(fmt.Sprintf(nodeclient.RouteOutput, utxoInputID.ToHex())).
 		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
 		Reply(200).
 		Body(bytes.NewReader(data))
 
 	nodeAPI := nodeClient(t)
-	responseOutput, err := nodeAPI.OutputByID(context.Background(), utxoInputId)
+	responseOutput, err := nodeAPI.OutputByID(context.Background(), utxoInputID)
 	require.NoError(t, err)
 
 	require.EqualValues(t, originOutput, responseOutput)
@@ -316,15 +319,15 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	}
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
-	utxoInputId := utxoInput.ID()
+	utxoInputID := utxoInput.ID()
 
 	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteOutputMetadata, utxoInputId.ToHex())).
+		Get(fmt.Sprintf(nodeclient.RouteOutputMetadata, utxoInputID.ToHex())).
 		Reply(200).
 		JSON(originRes)
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.OutputMetadataByID(context.Background(), utxoInputId)
+	resp, err := nodeAPI.OutputMetadataByID(context.Background(), utxoInputID)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 

@@ -1,3 +1,4 @@
+//nolint:forcetypeassert
 package builder_test
 
 import (

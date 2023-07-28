@@ -91,6 +91,7 @@ func brokerURLFromClient(nc *Client) string {
 	baseURL := nc.BaseURL
 	baseURL = strings.Replace(baseURL, "https://", "wss://", 1)
 	baseURL = strings.Replace(baseURL, "http://", "ws://", 1)
+
 	return fmt.Sprintf("%s/api/%s", baseURL, MQTTPluginName)
 }
 
@@ -101,6 +102,7 @@ func newEventAPIClient(nc *Client) *EventAPIClient {
 	clientOpts.AddBroker(brokerURLFromClient(nc))
 	errChan := make(chan error)
 	clientOpts.OnConnectionLost = func(client mqtt.Client, err error) { sendErrOrDrop(errChan, err) }
+
 	return &EventAPIClient{
 		Client:     nc,
 		MQTTClient: mqtt.NewClient(clientOpts),
@@ -116,7 +118,8 @@ type EventAPIClient struct {
 
 	MQTTClient mqtt.Client
 	// The context over the EventChannelsHandle.
-	Ctx context.Context
+	//nolint:containedctx
+	ctx context.Context
 	// A channel up on which errors are returned from within subscriptions or when the connection is lost.
 	// Errors are dropped silently if no receiver is listening for them or can consume them fast enough.
 	Errors chan error
@@ -156,11 +159,12 @@ func (s *EventAPIClientSubscription) Close() error {
 	if token := s.mqttClient.Unsubscribe(s.topic); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
+
 	return nil
 }
 
 func panicIfEventAPIClientInactive(neac *EventAPIClient) {
-	if err := neac.Ctx.Err(); err != nil {
+	if err := neac.ctx.Err(); err != nil {
 		panic(ierrors.Wrap(ErrEventAPIClientInactive, "context is canceled/done"))
 	}
 	if !neac.MQTTClient.IsConnected() {
@@ -178,10 +182,11 @@ func sendErrOrDrop(errChan chan error, err error) {
 // Connect connects the EventAPIClient to the specified brokers.
 // The EventAPIClient remains active as long as the given context isn't done/canceled.
 func (eac *EventAPIClient) Connect(ctx context.Context) error {
-	eac.Ctx = ctx
+	eac.ctx = ctx
 	if token := eac.MQTTClient.Connect(); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
+
 	return nil
 }
 
@@ -196,6 +201,7 @@ func jsonDeserializer[T any](payload []byte) (*T, error) {
 	if err := json.Unmarshal(payload, &inst); err != nil {
 		return nil, err
 	}
+
 	return &inst, nil
 }
 
@@ -206,17 +212,19 @@ func subscribeToTopic[T any](eac *EventAPIClient, topic string, deseriFunc func(
 		obj, err := deseriFunc(mqttMsg.Payload())
 		if err != nil {
 			sendErrOrDrop(eac.Errors, err)
+
 			return
 		}
 
 		select {
-		case <-eac.Ctx.Done():
+		case <-eac.ctx.Done():
 			return
 		case channel <- obj:
 		}
 	}); token.Wait() && token.Error() != nil {
 		return nil, newSubscriptionWithError(token.Error())
 	}
+
 	return channel, newSubscription(eac.MQTTClient, topic)
 }
 
@@ -233,6 +241,7 @@ func (eac *EventAPIClient) subscribeToBlockMetadataBlockTopic(topic string) (<-c
 		metadataRes := &apimodels.BlockMetadataResponse{}
 		if err := json.Unmarshal(payload, metadataRes); err != nil {
 			sendErrOrDrop(eac.Errors, err)
+
 			return nil, err
 		}
 
@@ -246,6 +255,7 @@ func (eac *EventAPIClient) subscribeToBlocksTopic(topic string) (<-chan *iotago.
 		if _, err := eac.Client.opts.iotagoAPI.Decode(payload, block); err != nil {
 			return nil, err
 		}
+
 		return block, nil
 	})
 }
@@ -288,6 +298,7 @@ func (eac *EventAPIClient) TransactionTaggedDataBlocks() (<-chan *iotago.Protoco
 // TransactionTaggedDataWithTagBlocks returns a channel of blocks containing transactions with tagged data containing the given tag.
 func (eac *EventAPIClient) TransactionTaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIBlocksTransactionTaggedDataTag, "{tag}", hexutil.EncodeHex(tag), 1)
+
 	return eac.subscribeToBlocksTopic(topic)
 }
 
@@ -299,30 +310,35 @@ func (eac *EventAPIClient) TaggedDataBlocks() (<-chan *iotago.ProtocolBlock, *Ev
 // TaggedDataWithTagBlocks returns a channel of blocks containing tagged data.
 func (eac *EventAPIClient) TaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIBlocksTaggedDataTag, "{tag}", hexutil.EncodeHex(tag), 1)
+
 	return eac.subscribeToBlocksTopic(topic)
 }
 
 // BlockMetadataChange returns a channel of BlockMetadataResponse each time the given block's state changes.
 func (eac *EventAPIClient) BlockMetadataChange(blockID iotago.BlockID) (<-chan *apimodels.BlockMetadataResponse, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIBlockMetadata, "{blockId}", blockID.ToHex(), 1)
+
 	return eac.subscribeToBlockMetadataTopic(topic)
 }
 
 // NFTOutputsByID returns a channel of newly created outputs to track the chain mutations of a given NFT.
 func (eac *EventAPIClient) NFTOutputsByID(nftID iotago.NFTID) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPINFTOutputs, "{nftId}", nftID.String(), 1)
+
 	return eac.subscribeToOutputsTopic(topic)
 }
 
 // AccountOutputsByID returns a channel of newly created outputs to track the chain mutations of a given Account.
 func (eac *EventAPIClient) AccountOutputsByID(accountID iotago.AccountID) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIAccountOutputs, "{accountId}", accountID.String(), 1)
+
 	return eac.subscribeToOutputsTopic(topic)
 }
 
 // FoundryOutputsByID returns a channel of newly created outputs to track the chain mutations of a given Foundry.
 func (eac *EventAPIClient) FoundryOutputsByID(foundryID iotago.FoundryID) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIFoundryOutputs, "{foundryId}", foundryID.String(), 1)
+
 	return eac.subscribeToOutputsTopic(topic)
 }
 
@@ -330,6 +346,7 @@ func (eac *EventAPIClient) FoundryOutputsByID(foundryID iotago.FoundryID) (<-cha
 func (eac *EventAPIClient) OutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition EventAPIUnlockCondition) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIOutputsByUnlockConditionAndAddress, "{address}", addr.Bech32(netPrefix), 1)
 	topic = strings.Replace(topic, "{condition}", string(condition), 1)
+
 	return eac.subscribeToOutputsTopic(topic)
 }
 
@@ -337,23 +354,27 @@ func (eac *EventAPIClient) OutputsByUnlockConditionAndAddress(addr iotago.Addres
 func (eac *EventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.Address, netPrefix iotago.NetworkPrefix, condition EventAPIUnlockCondition) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPISpentOutputsByUnlockConditionAndAddress, "{address}", addr.Bech32(netPrefix), 1)
 	topic = strings.Replace(topic, "{condition}", string(condition), 1)
+
 	return eac.subscribeToOutputsTopic(topic)
 }
 
 // TransactionIncludedBlock returns a channel of the included block which carries the transaction with the given ID.
 func (eac *EventAPIClient) TransactionIncludedBlock(txID iotago.TransactionID) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPITransactionsIncludedBlock, "{transactionId}", txID.ToHex(), 1)
+
 	return eac.subscribeToBlocksTopic(topic)
 }
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
 func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan *iotago.TxEssenceOutput, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIOutputs, "{outputId}", hexutil.EncodeHex(outputID[:]), 1)
+
 	return eac.subscribeToOutputsTopic(topic)
 }
 
 // Output returns a channel which immediately returns the output with the given ID and afterwards when its state changes.
 func (eac *EventAPIClient) OutputMetadata(outputID iotago.OutputID) (<-chan *apimodels.OutputMetadataResponse, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIOutputMetadata, "{outputId}", hexutil.EncodeHex(outputID[:]), 1)
+
 	return subscribeToTopic(eac, topic, jsonDeserializer[apimodels.OutputMetadataResponse])
 }

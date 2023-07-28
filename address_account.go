@@ -1,3 +1,4 @@
+//nolint:dupl
 package iotago
 
 import (
@@ -22,6 +23,7 @@ func ParseAccountAddressFromHexString(hexAddr string) (*AccountAddress, error) {
 	}
 	addr := &AccountAddress{}
 	copy(addr[:], addrBytes)
+
 	return addr, nil
 }
 
@@ -32,6 +34,7 @@ func MustParseAccountAddressFromHexString(hexAddr string) *AccountAddress {
 	if err != nil {
 		panic(err)
 	}
+
 	return addr
 }
 
@@ -41,18 +44,21 @@ type AccountAddress [AccountAddressBytesLength]byte
 
 func (accountAddr *AccountAddress) Decode(b []byte) (int, error) {
 	copy(accountAddr[:], b)
+
 	return AccountAddressSerializedBytesSize - 1, nil
 }
 
 func (accountAddr *AccountAddress) Encode() ([]byte, error) {
 	var b [AccountAddressSerializedBytesSize - 1]byte
 	copy(b[:], accountAddr[:])
+
 	return b[:], nil
 }
 
 func (accountAddr *AccountAddress) Clone() Address {
 	cpy := &AccountAddress{}
 	copy(cpy[:], accountAddr[:])
+
 	return cpy
 }
 
@@ -77,6 +83,7 @@ func (accountAddr *AccountAddress) Equal(other Address) bool {
 	if !is {
 		return false
 	}
+
 	return *accountAddr == *otherAddr
 }
 

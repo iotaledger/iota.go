@@ -12,6 +12,7 @@ type NFTUnlock struct {
 
 func (r *NFTUnlock) SourceAllowed(address Address) bool {
 	_, ok := address.(*NFTAddress)
+
 	return ok
 }
 

@@ -25,6 +25,7 @@ func ParseEd25519AddressFromHexString(hexAddr string) (*Ed25519Address, error) {
 	}
 	addr := &Ed25519Address{}
 	copy(addr[:], addrBytes)
+
 	return addr, nil
 }
 
@@ -35,6 +36,7 @@ func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
 	if err != nil {
 		panic(err)
 	}
+
 	return addr
 }
 
@@ -44,18 +46,21 @@ type Ed25519Address [Ed25519AddressBytesLength]byte
 
 func (edAddr *Ed25519Address) Decode(b []byte) (int, error) {
 	copy(edAddr[:], b)
+
 	return Ed25519AddressSerializedBytesSize - 1, nil
 }
 
 func (edAddr *Ed25519Address) Encode() ([]byte, error) {
 	var b [Ed25519AddressSerializedBytesSize - 1]byte
 	copy(b[:], edAddr[:])
+
 	return b[:], nil
 }
 
 func (edAddr *Ed25519Address) Clone() Address {
 	cpy := &Ed25519Address{}
 	copy(cpy[:], edAddr[:])
+
 	return cpy
 }
 
@@ -72,6 +77,7 @@ func (edAddr *Ed25519Address) Unlock(msg []byte, sig Signature) error {
 	if !isEdSig {
 		return ierrors.Wrapf(ErrSignatureAndAddrIncompatible, "can not unlock Ed25519 address with signature of type %s", sig.Type())
 	}
+
 	return edSig.Valid(msg, edAddr)
 }
 
@@ -80,6 +86,7 @@ func (edAddr *Ed25519Address) Equal(other Address) bool {
 	if !is {
 		return false
 	}
+
 	return *edAddr == *otherAddr
 }
 
@@ -102,5 +109,6 @@ func (edAddr *Ed25519Address) Size() int {
 // Ed25519AddressFromPubKey returns the address belonging to the given Ed25519 public key.
 func Ed25519AddressFromPubKey(pubKey ed25519.PublicKey) *Ed25519Address {
 	address := blake2b.Sum256(pubKey[:])
+
 	return (*Ed25519Address)(&address)
 }

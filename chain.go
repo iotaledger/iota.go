@@ -41,6 +41,7 @@ func (set ChainOutputSet) Includes(other ChainOutputSet) error {
 			return ierrors.Wrapf(ErrChainMissing, "%s missing in source", chainID)
 		}
 	}
+
 	return nil
 }
 
@@ -57,5 +58,6 @@ func (set ChainOutputSet) Merge(other ChainOutputSet) (ChainOutputSet, error) {
 		}
 		newSet[k] = v
 	}
+
 	return newSet, nil
 }

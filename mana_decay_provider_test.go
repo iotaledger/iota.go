@@ -1,3 +1,4 @@
+//nolint:scopelint
 package iotago_test
 
 import (
@@ -37,7 +38,7 @@ func TestMain(m *testing.M) {
 	testManaDecayFactorEpochsSum = tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent)
 
 	testTimeProvider = iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochExponent)
-	testManaDecayProvider = iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, generationRate, decayFactorEpochsSumExponent, testManaDecayFactors, decayFactorsExponent, testManaDecayFactorEpochsSum, decayFactorEpochsSumExponent)
+	testManaDecayProvider = iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, generationRate, generationRateExponent, testManaDecayFactors, decayFactorsExponent, testManaDecayFactorEpochsSum, decayFactorEpochsSumExponent)
 
 	// call the tests
 	os.Exit(m.Run())
@@ -169,6 +170,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 			result, err := testManaDecayProvider.StoredManaWithDecay(tt.storedMana, tt.slotIndexCreated, tt.slotIndexTarget)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 			require.Equal(t, tt.result, result)
@@ -216,7 +218,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
-			result:           2703444537357063933,
+			result:           183827294847826527,
 			wantErr:          nil,
 		},
 		{
@@ -224,7 +226,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
-			result:           5953756261780594087,
+			result:           410192222442040018,
 			wantErr:          nil,
 		},
 		{
@@ -232,7 +234,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(1),
-			result:           72048797944905727,
+			result:           562881233944575,
 			wantErr:          nil,
 		},
 		{
@@ -240,7 +242,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(2),
-			result:           144044025115049982,
+			result:           1125343946211326,
 			wantErr:          nil,
 		},
 		{
@@ -248,7 +250,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(3),
-			result:           152113284342402446,
+			result:           1687319975062367,
 			wantErr:          nil,
 		},
 		{
@@ -256,7 +258,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			deposit:          math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(401),
-			result:           2795512642852595570,
+			result:           190239292158065300,
 			wantErr:          nil,
 		},
 	}
@@ -266,6 +268,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			result, err := testManaDecayProvider.PotentialManaWithDecay(tt.deposit, tt.slotIndexCreated, tt.slotIndexTarget)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 			require.Equal(t, tt.result, result)
@@ -339,6 +342,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 			result, err := testManaDecayProvider.RewardsWithDecay(tt.rewards, tt.epochIndexReward, tt.epochIndexClaimed)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 			require.Equal(t, tt.result, result)

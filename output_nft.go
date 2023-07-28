@@ -37,6 +37,7 @@ func (nftID NFTID) Key() interface{} {
 
 func (nftID NFTID) FromOutputID(id OutputID) ChainID {
 	addr := NFTAddressFromOutputID(id)
+
 	return addr.Chain()
 }
 
@@ -49,12 +50,14 @@ func (nftID NFTID) Matches(other ChainID) bool {
 	if !isNFTID {
 		return false
 	}
+
 	return nftID == otherNFTID
 }
 
 func (nftID NFTID) ToAddress() ChainAddress {
 	var addr NFTAddress
 	copy(addr[:], nftID[:])
+
 	return &addr
 }
 
@@ -66,6 +69,7 @@ func NFTIDFromOutputID(o OutputID) NFTID {
 	ret := NFTID{}
 	addr := NFTAddressFromOutputID(o)
 	copy(ret[:], addr[:])
+
 	return ret
 }
 
@@ -114,6 +118,7 @@ func (n *NFTOutput) Ident() Address {
 
 func (n *NFTOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {
 	ok, _ := outputUnlockable(n, nil, ident, txCreationTime)
+
 	return ok
 }
 

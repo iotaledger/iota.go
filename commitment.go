@@ -45,6 +45,7 @@ func (c *Commitment) ID() (CommitmentID, error) {
 	if err != nil {
 		return CommitmentID{}, ierrors.Errorf("can't compute commitment ID: %w", err)
 	}
+
 	return SlotIdentifierRepresentingData(c.Index, data), nil
 }
 

@@ -38,6 +38,7 @@ func (u *UTXOInput) ID() OutputID {
 	var id OutputID
 	copy(id[:TransactionIDLength], u.TransactionID[:])
 	binary.LittleEndian.PutUint16(id[TransactionIDLength:], u.TransactionOutputIndex)
+
 	return id
 }
 
@@ -51,6 +52,7 @@ func (u *UTXOInput) Equals(other *UTXOInput) bool {
 	if u.TransactionID != other.TransactionID {
 		return false
 	}
+
 	return u.TransactionOutputIndex == other.TransactionOutputIndex
 }
 

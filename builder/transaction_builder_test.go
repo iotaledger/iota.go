@@ -1,3 +1,4 @@
+//nolint:scopelint
 package builder_test
 
 import (
@@ -14,6 +15,7 @@ import (
 
 func TestTransactionBuilder(t *testing.T) {
 	identityOne := tpkg.RandEd25519PrivateKey()
+	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
 	inputAddr := iotago.Ed25519AddressFromPubKey(identityOne.Public().(ed25519.PublicKey))
 	addrKeys := iotago.AddressKeys{Address: inputAddr, Keys: identityOne}
 
@@ -132,6 +134,7 @@ func TestTransactionBuilder(t *testing.T) {
 
 			// wrong address/keys
 			wrongIdentity := tpkg.RandEd25519PrivateKey()
+			//nolint:forcetypeassert // we can safely assume that this is a ed25519.PublicKey
 			wrongAddr := iotago.Ed25519AddressFromPubKey(wrongIdentity.Public().(ed25519.PublicKey))
 			wrongAddrKeys := iotago.AddressKeys{Address: wrongAddr, Keys: wrongIdentity}
 
@@ -168,6 +171,7 @@ func TestTransactionBuilder(t *testing.T) {
 			_, err := test.builder.Build(test.addrSigner)
 			if test.buildErr != nil {
 				assert.True(t, ierrors.Is(err, test.buildErr), "wrong error : %s != %s", err, test.buildErr)
+
 				return
 			}
 			assert.NoError(t, err)

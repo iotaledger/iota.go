@@ -1,3 +1,4 @@
+//nolint:forcetypeassert,dupl,nlreturn,scopelint
 package stardust_test
 
 import (
@@ -2393,7 +2394,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
-			ntId := tpkg.Rand38ByteArray()
+			ntID := tpkg.Rand38ByteArray()
 
 			inputs := vm.InputSet{
 				inputIDs[0]: vm.OutputWithCreationTime{
@@ -2401,7 +2402,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						Amount: 500,
 						NativeTokens: iotago.NativeTokens{
 							&iotago.NativeToken{
-								ID:     ntId,
+								ID:     ntID,
 								Amount: new(big.Int).SetUint64(1000),
 							},
 						},
@@ -2429,7 +2430,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						Amount: 420,
 						NativeTokens: iotago.NativeTokens{
 							&iotago.NativeToken{
-								ID:     ntId,
+								ID:     ntID,
 								Amount: new(big.Int).SetUint64(1000),
 							},
 						},
@@ -3154,13 +3155,13 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 			accountAddr := tpkg.RandAccountAddress()
-			accountId := accountAddr.AccountID()
+			accountID := accountAddr.AccountID()
 
 			inputs := vm.InputSet{
 				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
-						AccountID: accountId,
+						AccountID: accountID,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
@@ -3174,7 +3175,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:    100,
-						AccountID: accountId,
+						AccountID: accountID,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
@@ -3208,14 +3209,14 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			_, governor, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 			accountAddr := tpkg.RandAccountAddress()
-			accountId := accountAddr.AccountID()
+			accountID := accountAddr.AccountID()
 			currentStateIndex := uint32(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
-						AccountID:  accountId,
+						AccountID:  accountID,
 						StateIndex: currentStateIndex,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
@@ -3230,7 +3231,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:     100,
-						AccountID:  accountId,
+						AccountID:  accountID,
 						StateIndex: currentStateIndex + 1,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
@@ -3265,13 +3266,13 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 			accountAddr := tpkg.RandAccountAddress()
-			accountId := accountAddr.AccountID()
+			accountID := accountAddr.AccountID()
 
 			inputs := vm.InputSet{
 				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
-						AccountID: accountId,
+						AccountID: accountID,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
@@ -3285,7 +3286,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:    100,
-						AccountID: accountId,
+						AccountID: accountID,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
@@ -3343,13 +3344,13 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
 			accountAddr := tpkg.RandAccountAddress()
-			accountId := accountAddr.AccountID()
+			accountID := accountAddr.AccountID()
 
 			inputs := vm.InputSet{
 				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
-						AccountID: accountId,
+						AccountID: accountID,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
@@ -3371,7 +3372,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:    100,
-						AccountID: accountId,
+						AccountID: accountID,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
@@ -3413,7 +3414,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			_, governor, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
 			accountAddr := tpkg.RandAccountAddress()
-			accountId := accountAddr.AccountID()
+			accountID := accountAddr.AccountID()
 			currentStateIndex := uint32(1)
 
 			nftAddr := tpkg.RandNFTAddress()
@@ -3423,7 +3424,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
-						AccountID:  accountId,
+						AccountID:  accountID,
 						StateIndex: currentStateIndex,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
@@ -3448,7 +3449,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					// transitioned account + nft
 					&iotago.AccountOutput{
 						Amount:     100,
-						AccountID:  accountId,
+						AccountID:  accountID,
 						StateIndex: currentStateIndex + 1,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
@@ -3569,13 +3570,13 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
 			accountAddr := tpkg.RandAccountAddress()
-			accountId := accountAddr.AccountID()
+			accountID := accountAddr.AccountID()
 
 			inputs := vm.InputSet{
 				inputIDs[0]: vm.OutputWithCreationTime{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
-						AccountID: accountId,
+						AccountID: accountID,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
@@ -3597,7 +3598,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:    100,
-						AccountID: accountId,
+						AccountID: accountID,
 						Conditions: iotago.AccountOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
@@ -4235,7 +4236,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 			Output: &iotago.DelegationOutput{
 				Amount:          OneMi * 10,
 				DelegatedAmount: OneMi * 10,
-				DelegationID:    iotago.EmptyDelegationId(),
+				DelegationID:    iotago.EmptyDelegationID(),
 				ValidatorID:     iotago.EmptyAccountID(),
 				StartEpoch:      currentEpoch,
 				EndEpoch:        currentEpoch + 5,

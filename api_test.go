@@ -1,3 +1,4 @@
+//nolint:scopelint
 package iotago_test
 
 import (
@@ -27,6 +28,7 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	serixData, err := tpkg.TestAPI.Encode(test.source, serix.WithValidation())
 	if test.seriErr != nil {
 		require.Error(t, err, test.seriErr)
+
 		return
 	}
 	require.NoError(t, err)
@@ -39,17 +41,18 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	bytesRead, err := tpkg.TestAPI.Decode(serixData, serixTarget)
 	if test.deSeriErr != nil {
 		require.Error(t, err, test.deSeriErr)
+
 		return
 	}
 	require.NoError(t, err)
 	require.Len(t, serixData, bytesRead)
 	require.EqualValues(t, test.source, serixTarget)
 
-	sourceJson, err := tpkg.TestAPI.JSONEncode(test.source)
+	sourceJSON, err := tpkg.TestAPI.JSONEncode(test.source)
 	require.NoError(t, err)
 
 	jsonDest := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
-	require.NoError(t, tpkg.TestAPI.JSONDecode(sourceJson, jsonDest))
+	require.NoError(t, tpkg.TestAPI.JSONDecode(sourceJSON, jsonDest))
 
 	require.EqualValues(t, test.source, jsonDest)
 }

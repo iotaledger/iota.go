@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 )
@@ -20,7 +21,7 @@ func mergeUint64(valueHi uint64, valueLo uint64) (value uint64) {
 // ATTENTION: do not pass factor that use more than 32bits, otherwise this function overflows.
 func fixedPointMultiplication32Splitted(valueHi uint64, valueLo uint64, factor uint64, scale uint64) (uint64, uint64) {
 	// multiply the integer part of the fixed-point number by the factor
-	valueHi = valueHi * factor
+	valueHi *= factor
 
 	// the lower 'scale' bits of the result are extracted and shifted left to form the lower part of the new fraction.
 	// the fractional part of the fixed-point number is multiplied by the factor and right-shifted by 'scale' bits.
@@ -31,7 +32,7 @@ func fixedPointMultiplication32Splitted(valueHi uint64, valueLo uint64, factor u
 	valueHi = (valueHi >> scale) + (valueLo >> 32)
 
 	// the lower 32 bits of valueLo form the new lower part of the result.
-	valueLo = valueLo & 0x00000000FFFFFFFF
+	valueLo &= 0x00000000FFFFFFFF
 
 	// return the result as a fixed-point number composed of two 64-bit integers
 	return valueHi, valueLo
@@ -41,6 +42,7 @@ func fixedPointMultiplication32Splitted(valueHi uint64, valueLo uint64, factor u
 // ATTENTION: do not pass factor that use more than 32bits, otherwise this function overflows.
 func fixedPointMultiplication32(value uint64, factor uint64, scale uint64) uint64 {
 	valueHi, valueLo := splitUint64(value)
+
 	return mergeUint64(fixedPointMultiplication32Splitted(valueHi, valueLo, factor, scale))
 }
 
@@ -166,16 +168,34 @@ func (p *ManaDecayProvider) PotentialManaWithDecay(deposit BaseToken, slotIndexC
 		return p.generateMana(deposit, slotIndexTarget-slotIndexCreated), nil
 
 	case 1:
-		return p.decay(p.generateMana(deposit, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), 1) + p.generateMana(deposit, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget)), nil
+		manaDecayed := p.decay(p.generateMana(deposit, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), 1)
+		manaGenerated := p.generateMana(deposit, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget))
+		return safemath.SafeAdd(manaDecayed, manaGenerated)
 
 	default:
 		c := Mana(fixedPointMultiplication32(uint64(deposit), p.decayFactorEpochsSum, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent))
 
+		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
 		potentialMana_n := p.decay(p.generateMana(deposit, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), epochIndexDiff)
-		potentialMana_n_1 := p.decay(c, epochIndexDiff-1)
-		potentialMana_0 := p.generateMana(deposit, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget)) + c
 
-		return potentialMana_n - potentialMana_n_1 + potentialMana_0, nil
+		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
+		potentialMana_n_1 := p.decay(c, epochIndexDiff-1)
+
+		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
+		potentialMana_0, err := safemath.SafeAdd(c, p.generateMana(deposit, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget)))
+		if err != nil {
+			return 0, err
+		}
+
+		// result = potentialMana_0 - potentialMana_n_1 + potentialMana_n
+		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
+		result, err := safemath.SafeSub(potentialMana_0, potentialMana_n_1)
+		if err != nil {
+			return 0, err
+		}
+
+		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
+		return safemath.SafeAdd(result, potentialMana_n)
 	}
 }
 

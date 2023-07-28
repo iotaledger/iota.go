@@ -12,5 +12,6 @@ func AbsInt64(v int64) uint64 {
 	if v < 0 {
 		return uint64(-v)
 	}
+
 	return uint64(v)
 }

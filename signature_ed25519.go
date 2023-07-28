@@ -34,6 +34,7 @@ type Ed25519Signature struct {
 func (e *Ed25519Signature) Decode(b []byte) (int, error) {
 	copy(e.PublicKey[:], b[:ed25519.PublicKeySize])
 	copy(e.Signature[:], b[ed25519.PublicKeySize:])
+
 	return Ed25519SignatureSerializedBytesSize - 1, nil
 }
 
@@ -41,6 +42,7 @@ func (e *Ed25519Signature) Encode() ([]byte, error) {
 	var b [Ed25519SignatureSerializedBytesSize - 1]byte
 	copy(b[:], e.PublicKey[:])
 	copy(b[ed25519.PublicKeySize:], e.Signature[:])
+
 	return b[:], nil
 }
 
@@ -62,6 +64,7 @@ func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	if valid := hiveEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
 		return ierrors.Wrapf(ErrEd25519SignatureInvalid, "address %s, public key %v, signature %v", hexutil.EncodeHex(addr[:]), hexutil.EncodeHex(e.PublicKey[:]), hexutil.EncodeHex(e.Signature[:]))
 	}
+
 	return nil
 }
 

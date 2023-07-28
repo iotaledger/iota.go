@@ -44,6 +44,7 @@ func (fID FoundryID) Matches(other ChainID) bool {
 	if !is {
 		return false
 	}
+
 	return fID == otherFID
 }
 
@@ -114,6 +115,7 @@ func (f *FoundryOutput) Ident() Address {
 
 func (f *FoundryOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {
 	ok, _ := outputUnlockable(f, nil, ident, txCreationTime)
+
 	return ok
 }
 
@@ -170,6 +172,7 @@ func (f *FoundryOutput) Chain() ChainID {
 	if err != nil {
 		panic(err)
 	}
+
 	return foundryID
 }
 
@@ -184,6 +187,7 @@ func (f *FoundryOutput) ID() (FoundryID, error) {
 	copy(foundryID[:], addrBytes)
 	binary.LittleEndian.PutUint32(foundryID[len(addrBytes):], f.SerialNumber)
 	foundryID[len(foundryID)-1] = byte(f.TokenScheme.Type())
+
 	return foundryID, nil
 }
 
@@ -193,6 +197,7 @@ func (f *FoundryOutput) MustID() FoundryID {
 	if err != nil {
 		panic(err)
 	}
+
 	return id
 }
 
@@ -202,6 +207,7 @@ func (f *FoundryOutput) MustNativeTokenID() NativeTokenID {
 	if err != nil {
 		panic(err)
 	}
+
 	return nativeTokenID
 }
 

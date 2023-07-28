@@ -1,3 +1,4 @@
+//nolint:forcetypeassert
 package iotago_test
 
 import (
@@ -22,6 +23,7 @@ var (
 						TransactionOutputIndex: 0,
 					})
 				}
+
 				return inputs
 			}(),
 			Outputs: func() iotago.TxEssenceOutputs {
@@ -34,6 +36,7 @@ var (
 						},
 					})
 				}
+
 				return outputs
 			}(),
 			Payload: nil,
@@ -45,6 +48,7 @@ var (
 					Signature: tpkg.RandEd25519Signature(),
 				})
 			}
+
 			return unlocks
 		}(),
 	}

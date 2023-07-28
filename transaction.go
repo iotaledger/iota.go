@@ -65,6 +65,7 @@ func (t *Transaction) OutputsSet(api API) (OutputSet, error) {
 	for index, output := range t.Essence.Outputs {
 		set[OutputIDFromTransactionIDAndIndex(txID, uint16(index))] = output
 	}
+
 	return set, nil
 }
 
@@ -74,6 +75,7 @@ func (t *Transaction) ID(api API) (TransactionID, error) {
 	if err != nil {
 		return TransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
 	}
+
 	return IdentifierFromData(data), nil
 }
 
@@ -135,6 +137,7 @@ func (t *Transaction) CommitmentInput() *CommitmentInput {
 			return nil
 		}
 	}
+
 	return nil
 }
 

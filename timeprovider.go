@@ -25,7 +25,7 @@ type TimeProvider struct {
 
 // NewTimeProvider creates a new time provider.
 func NewTimeProvider(genesisUnixTime int64, slotDurationSeconds int64, slotsPerEpochExponent uint8) *TimeProvider {
-	//if slotDurationSeconds == 0 {
+	// if slotDurationSeconds == 0 {
 	//	panic("slot duration can't be zero")
 	//}
 
@@ -81,6 +81,7 @@ func (t *TimeProvider) SlotStartTime(i SlotIndex) time.Time {
 	}
 
 	startUnix := t.genesisUnixTime + int64(i-1)*t.slotDurationSeconds
+
 	return time.Unix(startUnix, 0)
 }
 

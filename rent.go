@@ -53,6 +53,7 @@ func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent BaseToke
 	if rent < minRent {
 		return 0, ierrors.Wrapf(ErrVByteRentNotCovered, "needed %d but only got %d", minRent, rent)
 	}
+
 	return minRent, nil
 }
 

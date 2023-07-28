@@ -23,6 +23,7 @@ func NewBasicOutputBuilder(targetAddr iotago.Address, deposit iotago.BaseToken) 
 
 // NewBasicOutputBuilderFromPrevious creates a new BasicOutputBuilder starting from a copy of the previous iotago.BasicOutput.
 func NewBasicOutputBuilderFromPrevious(previous *iotago.BasicOutput) *BasicOutputBuilder {
+	//nolint:forcetypeassert // we can safely assume that this is a BasicOutput
 	return &BasicOutputBuilder{output: previous.Clone().(*iotago.BasicOutput)}
 }
 
@@ -137,7 +138,8 @@ func NewAccountOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, d
 // NewAccountOutputBuilderFromPrevious creates a new AccountOutputBuilder starting from a copy of the previous iotago.AccountOutput.
 func NewAccountOutputBuilderFromPrevious(previous *iotago.AccountOutput) *AccountOutputBuilder {
 	return &AccountOutputBuilder{
-		prev:   previous,
+		prev: previous,
+		//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 		output: previous.Clone().(*iotago.AccountOutput),
 	}
 }
@@ -316,6 +318,8 @@ type accountStateTransition struct {
 }
 
 // StateTransition narrows the builder functions to the ones available for an account state transition.
+//
+//nolint:revive
 func (builder *AccountOutputBuilder) StateTransition() *accountStateTransition {
 	return &accountStateTransition{builder: builder}
 }
@@ -360,6 +364,8 @@ type accountGovernanceTransition struct {
 }
 
 // GovernanceTransition narrows the builder functions to the ones available for an account governance transition.
+//
+//nolint:revive
 func (builder *AccountOutputBuilder) GovernanceTransition() *accountGovernanceTransition {
 	return &accountGovernanceTransition{builder: builder}
 }
@@ -457,6 +463,7 @@ func (trans *blockIssuerTransition) RemoveKey(keyToDelete ed25519.PublicKey) *bl
 			trans.feature.BlockIssuerKeys[i] = trans.feature.BlockIssuerKeys[len(trans.feature.BlockIssuerKeys)-1]
 			// Then we reduce the slice length by one to effectively remove the last element.
 			trans.feature.BlockIssuerKeys = trans.feature.BlockIssuerKeys[:len(trans.feature.BlockIssuerKeys)-1]
+
 			break // No need to continue once the element is found and removed.
 		}
 	}
@@ -550,7 +557,8 @@ func NewFoundryOutputBuilder(accountAddr *iotago.AccountAddress, tokenScheme iot
 // NewFoundryOutputBuilderFromPrevious creates a new FoundryOutputBuilder starting from a copy of the previous iotago.FoundryOutput.
 func NewFoundryOutputBuilderFromPrevious(previous *iotago.FoundryOutput) *FoundryOutputBuilder {
 	return &FoundryOutputBuilder{
-		prev:   previous,
+		prev: previous,
+		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		output: previous.Clone().(*iotago.FoundryOutput),
 	}
 }
@@ -604,6 +612,7 @@ func (builder *FoundryOutputBuilder) MustBuild() *iotago.FoundryOutput {
 	if err != nil {
 		panic(err)
 	}
+
 	return output
 }
 
@@ -639,7 +648,8 @@ func NewNFTOutputBuilder(targetAddr iotago.Address, deposit iotago.BaseToken) *N
 // NewNFTOutputBuilderFromPrevious creates a new NFTOutputBuilder starting from a copy of the previous iotago.NFTOutput.
 func NewNFTOutputBuilderFromPrevious(previous *iotago.NFTOutput) *NFTOutputBuilder {
 	return &NFTOutputBuilder{
-		prev:   previous,
+		prev: previous,
+		//nolint:forcetypeassert // we can safely assume that this is a NFTOutput
 		output: previous.Clone().(*iotago.NFTOutput),
 	}
 }
@@ -674,6 +684,7 @@ func (builder *NFTOutputBuilder) NativeToken(nt *iotago.NativeToken) *NFTOutputB
 // NativeTokens sets the native tokens held by the output.
 func (builder *NFTOutputBuilder) NativeTokens(nts iotago.NativeTokens) *NFTOutputBuilder {
 	builder.output.NativeTokens = nts
+
 	return builder
 }
 
@@ -681,6 +692,7 @@ func (builder *NFTOutputBuilder) NativeTokens(nts iotago.NativeTokens) *NFTOutpu
 // Do not call this function if the underlying iotago.NFTID is not new.
 func (builder *NFTOutputBuilder) NFTID(nftID iotago.NFTID) *NFTOutputBuilder {
 	builder.output.NFTID = nftID
+
 	return builder
 }
 
@@ -701,18 +713,21 @@ func (builder *NFTOutputBuilder) Timelock(untilSlotIndex iotago.SlotIndex) *NFTO
 // Expiration sets/modifies an iotago.ExpirationUnlockCondition on the output.
 func (builder *NFTOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterSlotIndex iotago.SlotIndex) *NFTOutputBuilder {
 	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, SlotIndex: expiredAfterSlotIndex})
+
 	return builder
 }
 
 // Sender sets/modifies an iotago.SenderFeature on the output.
 func (builder *NFTOutputBuilder) Sender(senderAddr iotago.Address) *NFTOutputBuilder {
 	builder.output.Features.Upsert(&iotago.SenderFeature{Address: senderAddr})
+
 	return builder
 }
 
 // Metadata sets/modifies an iotago.MetadataFeature on the output.
 func (builder *NFTOutputBuilder) Metadata(data []byte) *NFTOutputBuilder {
 	builder.output.Features.Upsert(&iotago.MetadataFeature{Data: data})
+
 	return builder
 }
 
@@ -720,12 +735,14 @@ func (builder *NFTOutputBuilder) Metadata(data []byte) *NFTOutputBuilder {
 // Only call this function on a new iotago.NFTOutput.
 func (builder *NFTOutputBuilder) ImmutableMetadata(data []byte) *NFTOutputBuilder {
 	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Data: data})
+
 	return builder
 }
 
 // Tag sets/modifies an iotago.TagFeature on the output.
 func (builder *NFTOutputBuilder) Tag(tag []byte) *NFTOutputBuilder {
 	builder.output.Features.Upsert(&iotago.TagFeature{Tag: tag})
+
 	return builder
 }
 
@@ -733,6 +750,7 @@ func (builder *NFTOutputBuilder) Tag(tag []byte) *NFTOutputBuilder {
 // Only call this function on a new iotago.NFTOutput.
 func (builder *NFTOutputBuilder) ImmutableIssuer(issuer iotago.Address) *NFTOutputBuilder {
 	builder.output.ImmutableFeatures.Upsert(&iotago.IssuerFeature{Address: issuer})
+
 	return builder
 }
 
@@ -742,6 +760,7 @@ func (builder *NFTOutputBuilder) MustBuild() *iotago.NFTOutput {
 	if err != nil {
 		panic(err)
 	}
+
 	return output
 }
 
@@ -779,6 +798,7 @@ func NewDelegationOutputBuilder(validatorID iotago.AccountID, addr iotago.Addres
 // NewDelegationOutputBuilderFromPrevious creates a new DelegationOutputBuilder starting from a copy of the previous iotago.DelegationOutput.
 func NewDelegationOutputBuilderFromPrevious(previous *iotago.DelegationOutput) *DelegationOutputBuilder {
 	return &DelegationOutputBuilder{
+		//nolint:forcetypeassert // we can safely assume that this is a DelegationOutput
 		output: previous.Clone().(*iotago.DelegationOutput),
 	}
 }

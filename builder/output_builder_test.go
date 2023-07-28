@@ -110,6 +110,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 	require.Equal(t, expected, accountOutput)
 
 	const newDeposit iotago.BaseToken = 7331
+	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	expectedCpy := expected.Clone().(*iotago.AccountOutput)
 	expectedCpy.Amount = newDeposit
 	expectedCpy.StateIndex++
@@ -183,7 +184,7 @@ func TestDelegationOutputBuilder(t *testing.T) {
 	expected := &iotago.DelegationOutput{
 		Amount:          1337,
 		DelegatedAmount: 1337,
-		DelegationID:    iotago.EmptyDelegationId(),
+		DelegationID:    iotago.EmptyDelegationID(),
 		ValidatorID:     validatorID,
 		StartEpoch:      1000,
 		EndEpoch:        0,
