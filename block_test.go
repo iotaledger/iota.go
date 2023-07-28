@@ -2,9 +2,7 @@ package iotago_test
 
 import (
 	"fmt"
-	"math"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -78,7 +76,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 	minProtocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
-			IssuingTime:      time.Unix(0, tpkg.RandInt64(math.MaxInt64)),
+			IssuingTime:      tpkg.RandLocalTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
@@ -102,7 +100,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 	minProtocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
-			IssuingTime:      time.Unix(0, tpkg.RandInt64(math.MaxInt64)),
+			IssuingTime:      tpkg.RandLocalTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
@@ -126,7 +124,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	protocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
-			IssuingTime:      time.Unix(0, tpkg.RandInt64(math.MaxInt64)),
+			IssuingTime:      tpkg.RandLocalTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
