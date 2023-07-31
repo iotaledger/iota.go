@@ -321,12 +321,13 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID) // AccountOutAllotted
 
 	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
+	minManalockedSlotIndex := pastBoundedSlotIndex + vmParams.API.ProtocolParameters().MaxCommittableAge()
 	for _, output := range vmParams.WorkingSet.OutputsByType[iotago.OutputBasic] {
 		basicOutput, is := output.(*iotago.BasicOutput)
 		if !is {
 			continue
 		}
-		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, pastBoundedSlotIndex+vmParams.API.ProtocolParameters().MaxCommittableAge()) {
+		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, minManalockedSlotIndex) {
 			manaOut -= basicOutput.StoredMana()
 		}
 	}
@@ -335,7 +336,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, pastBoundedSlotIndex+vmParams.API.ProtocolParameters().MaxCommittableAge()) {
+		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, minManalockedSlotIndex) {
 			manaOut -= nftOutput.StoredMana()
 		}
 	}
