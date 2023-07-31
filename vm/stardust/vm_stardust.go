@@ -145,7 +145,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 
 	if stakingFeat := current.FeatureSet().Staking(); stakingFeat != nil {
 		if err := accountStakingGenesisValidation(current, stakingFeat, vmParams); err != nil {
-			return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", err)
+			return ierrors.Join(iotago.ErrInvalidStakingTransition, err)
 		}
 	}
 
@@ -269,17 +269,19 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	}
 
 	commitmentInputIndex := vmParams.WorkingSet.Commitment.Index
+	pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitmentInputIndex)
+
 	if currentBlockIssuerFeat.ExpirySlot >= commitmentInputIndex {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBlockIssuerFeat == nil {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot remove block issuer feature until it expires")
 		}
-		if nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(commitmentInputIndex) {
+		if nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < pastBoundedSlotIndex {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	} else if nextBlockIssuerFeat != nil {
 		// if the block issuer feature has expired, it must either be removed or expiry extended.
-		if nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(commitmentInputIndex) {
+		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlotIndex {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	}
@@ -324,7 +326,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, vmParams.PastBoundedSlotIndex(commitmentInputIndex)+vmParams.API.ProtocolParameters().MaxCommittableAge()) {
+		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, pastBoundedSlotIndex+vmParams.API.ProtocolParameters().MaxCommittableAge()) {
 			manaOut -= basicOutput.StoredMana()
 		}
 	}
@@ -333,7 +335,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		if !is {
 			continue
 		}
-		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, vmParams.PastBoundedSlotIndex(commitmentInputIndex)+vmParams.API.ProtocolParameters().MaxCommittableAge()) {
+		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, pastBoundedSlotIndex+vmParams.API.ProtocolParameters().MaxCommittableAge()) {
 			manaOut -= nftOutput.StoredMana()
 		}
 	}
@@ -350,7 +352,7 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 	nextStakingFeat := next.FeatureSet().Staking()
 
 	if nextStakingFeat != nil && next.FeatureSet().BlockIssuer() == nil {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingBlockIssuerRequired)
+		return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingBlockIssuerRequired)
 	}
 
 	_, isClaiming := vmParams.WorkingSet.Rewards[chainID]
@@ -358,7 +360,7 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 	if currentStakingFeat != nil {
 		commitment := vmParams.WorkingSet.Commitment
 		if commitment == nil {
-			return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingCommitmentInput)
+			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInput)
 		}
 
 		timeProvider := vmParams.API.TimeProvider()
@@ -486,7 +488,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 	blockIssuerFeat := outputToDestroy.FeatureSet().BlockIssuer()
 	if blockIssuerFeat != nil {
 		if vmParams.WorkingSet.Commitment == nil {
-			return fmt.Errorf("%w: block issuer feature validation requires a commitment input", iotago.ErrInvalidBlockIssuerTransition)
+			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature validation requires a commitment input")
 		}
 
 		if blockIssuerFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Index {
@@ -507,7 +509,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationTime, vmParams *vm
 		// which also requires a commitment input.
 		commitment := vmParams.WorkingSet.Commitment
 		if commitment == nil {
-			return fmt.Errorf("%w: %w", iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInput)
+			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInput)
 		}
 
 		timeProvider := vmParams.API.TimeProvider()

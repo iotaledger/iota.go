@@ -175,15 +175,19 @@ func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iot
 // PastBoundedSlotIndex calculates the past bounded slot for the given slot.
 // Given any slot index of a commitment input, the result of this function is a slot index
 // that is at least equal to the slot of the block in which it was issued, or higher.
-func (params *Params) PastBoundedSlotIndex(slot iotago.SlotIndex) iotago.SlotIndex {
-	return slot + params.API.ProtocolParameters().MaxCommittableAge()
+// That means no commitment input can be chosen such that the index lies behind the slot index of the block,
+// hence the past is bounded.
+func (params *Params) PastBoundedSlotIndex(commitmentInputSlot iotago.SlotIndex) iotago.SlotIndex {
+	return commitmentInputSlot + params.API.ProtocolParameters().MaxCommittableAge()
 }
 
-// FutureBoundedSlotIndex calculates the past bounded slot for the given slot.
+// FutureBoundedSlotIndex calculates the future bounded slot for the given slot.
 // Given any slot index of a commitment input, the result of this function is a slot index
 // that is at most equal to the slot of the block in which it was issued, or lower.
-func (params *Params) FutureBoundedSlotIndex(slot iotago.SlotIndex) iotago.SlotIndex {
-	return slot + params.API.ProtocolParameters().MinCommittableAge()
+// That means no commitment input can be chosen such that the index lies ahead of the slot index of the block,
+// hence the future is bounded.
+func (params *Params) FutureBoundedSlotIndex(commitmentInputSlot iotago.SlotIndex) iotago.SlotIndex {
+	return commitmentInputSlot + params.API.ProtocolParameters().MinCommittableAge()
 }
 
 // RunVMFuncs runs the given ExecFunc(s) in serial order.
