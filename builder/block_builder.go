@@ -63,7 +63,7 @@ func (b *BasicBlockBuilder) IssuingTime(time time.Time) *BasicBlockBuilder {
 		return b
 	}
 
-	b.protocolBlock.IssuingTime = time
+	b.protocolBlock.IssuingTime = time.UTC()
 
 	return b
 }
@@ -225,7 +225,7 @@ func (v *ValidationBlockBuilder) IssuingTime(time time.Time) *ValidationBlockBui
 		return v
 	}
 
-	v.protocolBlock.IssuingTime = time
+	v.protocolBlock.IssuingTime = time.UTC()
 
 	return v
 }
