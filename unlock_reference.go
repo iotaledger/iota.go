@@ -12,6 +12,7 @@ type ReferenceUnlock struct {
 
 func (r *ReferenceUnlock) SourceAllowed(address Address) bool {
 	_, ok := address.(ChainAddress)
+
 	return !ok
 }
 

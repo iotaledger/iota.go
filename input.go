@@ -19,6 +19,7 @@ func (inputType InputType) String() string {
 	if int(inputType) >= len(inputNames) {
 		return fmt.Sprintf("unknown input type: %d", inputType)
 	}
+
 	return inputNames[inputType]
 }
 
@@ -29,6 +30,8 @@ var (
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
 	ErrRefUTXOIndexInvalid = ierrors.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
+	// ErrUnknownContextInputType gets returned for unknown context input types.
+	ErrUnknownContextInputType = ierrors.New("unknown context input type")
 )
 
 // Inputs is a slice of Input.
@@ -39,6 +42,7 @@ func (in Inputs[T]) Size() int {
 	for _, i := range in {
 		sum += i.Size()
 	}
+
 	return sum
 }
 
@@ -100,7 +104,7 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 			}
 			utxoSet[k] = index
 		default:
-			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer", index)
+			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain IndexedUTXOReferencer", index)
 		}
 
 		return nil
@@ -116,8 +120,9 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 				return ierrors.Wrapf(ErrRefUTXOIndexInvalid, "input %d", index)
 			}
 		default:
-			return ierrors.Wrapf(ErrUnsupportedInputType, "input %d, tx can only contain IndexedUTXOReferencer inputs", index)
+			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain IndexedUTXOReferencer inputs", index)
 		}
+
 		return nil
 	}
 }

@@ -23,7 +23,7 @@ var (
 	// ErrExpirationConditionCommitmentInputRequired gets returned when a TX containing an ExpirationUnlockCondition
 	// does not have a commitment input.
 	ErrExpirationConditionCommitmentInputRequired = ierrors.New("transaction's containing an expiration condition require a commitment input")
-	// ErrTimelockConditionUnlockFailed gets returned when a ExpirationUnlockCondition could not be unlocked.
+	// ErrExpirationConditionUnlockFailed gets returned when a ExpirationUnlockCondition could not be unlocked.
 	ErrExpirationConditionUnlockFailed = ierrors.New("expiration condition unlock failed")
 )
 
@@ -51,6 +51,7 @@ func (unlockCondType UnlockConditionType) String() string {
 	if int(unlockCondType) >= len(unlockCondNames) {
 		return fmt.Sprintf("unknown unlock condition type: %d", unlockCondType)
 	}
+
 	return unlockCondNames[unlockCondType]
 }
 
@@ -121,8 +122,10 @@ func (f UnlockConditions[T]) WorkScore(workScoreStructure *WorkScoreStructure) (
 func (f UnlockConditions[T]) Clone() UnlockConditions[T] {
 	cpy := make(UnlockConditions[T], len(f))
 	for i, v := range f {
+		//nolint:forcetypeassert // we can safely assume that this is of type T
 		cpy[i] = v.Clone().(T)
 	}
+
 	return cpy
 }
 
@@ -131,6 +134,7 @@ func (f UnlockConditions[T]) Size() int {
 	for _, uc := range f {
 		sum += uc.Size()
 	}
+
 	return sum
 }
 
@@ -144,6 +148,7 @@ func (f UnlockConditions[T]) Set() (UnlockConditionSet, error) {
 		}
 		set[block.Type()] = block
 	}
+
 	return set, nil
 }
 
@@ -155,6 +160,7 @@ func (f UnlockConditions[T]) MustSet() UnlockConditionSet {
 	if err != nil {
 		panic(err)
 	}
+
 	return set
 }
 
@@ -163,6 +169,7 @@ func (f *UnlockConditions[T]) Upsert(unlockCondition T) {
 	for i, ele := range *f {
 		if ele.Type() == unlockCondition.Type() {
 			(*f)[i] = unlockCondition
+
 			return
 		}
 	}
@@ -208,6 +215,7 @@ func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slotIndex 
 	if !unlockAddress.Address.Equal(accountID.ToAddress()) {
 		return false
 	}
+
 	return true
 }
 
@@ -229,10 +237,12 @@ func (f UnlockConditionSet) unlockableBy(ident Address, owner Address, pastBound
 	if returnIdentCanUnlock, returnIdent := f.ReturnIdentCanUnlock(futureBoundedSlotIndex); returnIdentCanUnlock {
 		return ident.Equal(returnIdent)
 	}
+
 	// if the past bounded index is less than the expiration slot index, then owner can unlock
 	if f.OwnerIdentCanUnlock(pastBoundedSlotIndex) {
 		return ident.Equal(owner)
 	}
+
 	return false
 }
 
@@ -294,6 +304,8 @@ func (f UnlockConditionSet) StorageDepositReturn() *StorageDepositReturnUnlockCo
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a StorageDepositReturnUnlockCondition
 	return b.(*StorageDepositReturnUnlockCondition)
 }
 
@@ -303,6 +315,8 @@ func (f UnlockConditionSet) Address() *AddressUnlockCondition {
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an AddressUnlockCondition
 	return b.(*AddressUnlockCondition)
 }
 
@@ -312,6 +326,8 @@ func (f UnlockConditionSet) ImmutableAccount() *ImmutableAccountUnlockCondition 
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an ImmutableAccountUnlockCondition
 	return b.(*ImmutableAccountUnlockCondition)
 }
 
@@ -321,6 +337,8 @@ func (f UnlockConditionSet) GovernorAddress() *GovernorAddressUnlockCondition {
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an GovernorAddressUnlockCondition
 	return b.(*GovernorAddressUnlockCondition)
 }
 
@@ -330,6 +348,8 @@ func (f UnlockConditionSet) StateControllerAddress() *StateControllerAddressUnlo
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an StateControllerAddressUnlockCondition
 	return b.(*StateControllerAddressUnlockCondition)
 }
 
@@ -339,6 +359,8 @@ func (f UnlockConditionSet) Timelock() *TimelockUnlockCondition {
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an TimelockUnlockCondition
 	return b.(*TimelockUnlockCondition)
 }
 
@@ -348,5 +370,7 @@ func (f UnlockConditionSet) Expiration() *ExpirationUnlockCondition {
 	if !has {
 		return nil
 	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an ExpirationUnlockCondition
 	return b.(*ExpirationUnlockCondition)
 }

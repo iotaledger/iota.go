@@ -1,3 +1,4 @@
+//nolint:scopelint
 package iotago_test
 
 import (
@@ -593,6 +594,7 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.AccountOutput {
 					accountID := iotago.AccountID(tpkg.Rand32ByteArray())
+
 					return &iotago.AccountOutput{
 						Amount:         OneMi,
 						AccountID:      accountID,
@@ -612,6 +614,7 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.AccountOutput {
 					accountID := iotago.AccountID(tpkg.Rand32ByteArray())
+
 					return &iotago.AccountOutput{
 						Amount:         OneMi,
 						AccountID:      accountID,
@@ -789,6 +792,7 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.NFTOutput {
 					nftID := iotago.NFTID(tpkg.Rand32ByteArray())
+
 					return &iotago.NFTOutput{
 						Amount: OneMi,
 						NFTID:  nftID,
@@ -829,7 +833,7 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 				&iotago.DelegationOutput{
 					Amount:          OneMi,
 					DelegatedAmount: OneMi,
-					DelegationID:    iotago.EmptyDelegationId(),
+					DelegationID:    iotago.EmptyDelegationID(),
 					ValidatorID:     tpkg.RandAccountID(),
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -842,14 +846,14 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.DelegationOutput{
 					Amount:       OneMi,
-					DelegationID: iotago.EmptyDelegationId(),
+					DelegationID: iotago.EmptyDelegationID(),
 					ValidatorID:  iotago.EmptyAccountID(),
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 			},
-			wantErr: iotago.ErrDelegationValidatorIdZeroed,
+			wantErr: iotago.ErrDelegationValidatorIDZeroed,
 		},
 	}
 	valFunc := iotago.OutputsSyntacticalDelegation()
@@ -1063,6 +1067,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 		func() test {
 			stateCtrl := tpkg.RandEd25519Address()
 			govCtrl := tpkg.RandEd25519Address()
+
 			return test{
 				name: "state ctrl can unlock - state index increase",
 				current: &iotago.AccountOutput{
@@ -1092,6 +1097,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 		func() test {
 			stateCtrl := tpkg.RandEd25519Address()
 			govCtrl := tpkg.RandEd25519Address()
+
 			return test{
 				name: "state ctrl can not unlock - state index same",
 				current: &iotago.AccountOutput{
@@ -1122,6 +1128,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 		func() test {
 			stateCtrl := tpkg.RandEd25519Address()
 			govCtrl := tpkg.RandEd25519Address()
+
 			return test{
 				name: "state ctrl can not unlock - transition destroy",
 				current: &iotago.AccountOutput{
@@ -1150,6 +1157,7 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 				canUnlock, err := tt.current.UnlockableBy(tt.targetIdent, tt.next, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge)
 				if tt.wantErr != nil {
 					require.ErrorIs(t, err, tt.wantErr)
+
 					return
 				}
 				require.Equal(t, tt.canUnlock, canUnlock)

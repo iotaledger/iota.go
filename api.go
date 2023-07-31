@@ -64,6 +64,7 @@ func LatestProtocolVersion() Version {
 
 // LatestAPI creates a new API instance conforming to the latest IOTA protocol version.
 func LatestAPI(protoParams ProtocolParameters) API {
+	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	return V3API(protoParams.(*V3ProtocolParameters))
 }
 
@@ -73,6 +74,7 @@ type NetworkID = uint64
 // NetworkIDFromString returns the network ID string's numerical representation.
 func NetworkIDFromString(networkIDStr string) NetworkID {
 	networkIDBlakeHash := blake2b.Sum256([]byte(networkIDStr))
+
 	return binary.LittleEndian.Uint64(networkIDBlakeHash[:])
 }
 

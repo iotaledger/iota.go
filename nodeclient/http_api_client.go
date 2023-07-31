@@ -261,6 +261,7 @@ func (client *Client) Indexer(ctx context.Context) (IndexerClient, error) {
 	if !hasPlugin {
 		return nil, ErrIndexerPluginNotAvailable
 	}
+
 	return &indexerClient{core: client}, nil
 }
 
@@ -274,11 +275,13 @@ func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
 	if !hasPlugin {
 		return nil, ErrMQTTPluginNotAvailable
 	}
+
 	return newEventAPIClient(client), nil
 }
 
 // Health returns whether the given node is healthy.
 func (client *Client) Health(ctx context.Context) (bool, error) {
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteHealth, nil, nil); err != nil {
 		if ierrors.Is(err, ErrHTTPServiceUnavailable) {
 			return false, nil
@@ -292,7 +295,9 @@ func (client *Client) Health(ctx context.Context) (bool, error) {
 
 // Routes gets the routes the node supports.
 func (client *Client) Routes(ctx context.Context) (*apimodels.RoutesResponse, error) {
+	//nolint:bodyclose
 	res := &apimodels.RoutesResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteRoutes, nil, res); err != nil {
 		return nil, err
 	}
@@ -303,6 +308,7 @@ func (client *Client) Routes(ctx context.Context) (*apimodels.RoutesResponse, er
 // Info gets the info of the node.
 func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error) {
 	res := &apimodels.InfoResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteInfo, nil, res); err != nil {
 		return nil, err
 	}
@@ -313,6 +319,7 @@ func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error)
 // BlockIssuance gets the info to issue a block.
 func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlockHeaderResponse, error) {
 	res := &apimodels.IssuanceBlockHeaderResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteBlockIssuance, nil, res); err != nil {
 		return nil, err
 	}
@@ -331,6 +338,7 @@ func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
@@ -348,6 +356,7 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.ProtocolBlock) 
 	}
 
 	req := &RawDataEnvelope{Data: data}
+	//nolint:bodyclose
 	res, err := client.Do(ctx, http.MethodPost, RouteBlocks, req, nil)
 	if err != nil {
 		return iotago.EmptyBlockID(), err
@@ -366,6 +375,7 @@ func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago
 	query := fmt.Sprintf(RouteBlockMetadata, hexutil.EncodeHex(blockID[:]))
 
 	res := &apimodels.BlockMetadataResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -378,6 +388,7 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 	query := fmt.Sprintf(RouteBlock, hexutil.EncodeHex(blockID[:]))
 
 	res := &RawDataEnvelope{}
+	//nolint:bodyclose
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
@@ -395,6 +406,7 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 	query := fmt.Sprintf(RouteTransactionsIncludedBlock, hexutil.EncodeHex(txID[:]))
 
 	res := &RawDataEnvelope{}
+	//nolint:bodyclose
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
@@ -412,6 +424,7 @@ func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID
 	query := fmt.Sprintf(RouteTransactionsIncludedBlockMetadata, hexutil.EncodeHex(txID[:]))
 
 	res := &apimodels.BlockMetadataResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -424,6 +437,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 	query := fmt.Sprintf(RouteOutput, outputID.ToHex())
 
 	res := &RawDataEnvelope{}
+	//nolint:bodyclose
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
@@ -441,6 +455,7 @@ func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.Ou
 	query := fmt.Sprintf(RouteOutputMetadata, outputID.ToHex())
 
 	res := &apimodels.OutputMetadataResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -453,6 +468,7 @@ func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID
 	query := fmt.Sprintf(RouteCommitmentByID, id.ToHex())
 
 	res := &iotago.Commitment{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -465,6 +481,7 @@ func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.C
 	query := fmt.Sprintf(RouteCommitmentByIDUTXOChanges, id.ToHex())
 
 	res := &apimodels.UTXOChangesResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -477,6 +494,7 @@ func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIn
 	query := fmt.Sprintf(RouteCommitmentByIndex, index)
 
 	res := &iotago.Commitment{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -489,6 +507,7 @@ func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index io
 	query := fmt.Sprintf(RouteCommitmentByIndexUTXOChanges, index)
 
 	res := &apimodels.UTXOChangesResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -501,6 +520,7 @@ func (client *Client) PeerByID(ctx context.Context, id string) (*apimodels.PeerR
 	query := fmt.Sprintf(RoutePeer, id)
 
 	res := &apimodels.PeerResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -512,6 +532,7 @@ func (client *Client) PeerByID(ctx context.Context, id string) (*apimodels.PeerR
 func (client *Client) RemovePeerByID(ctx context.Context, id string) error {
 	query := fmt.Sprintf(RoutePeer, id)
 
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodDelete, query, nil, nil); err != nil {
 		return err
 	}
@@ -522,6 +543,7 @@ func (client *Client) RemovePeerByID(ctx context.Context, id string) error {
 // Peers returns a list of all peers.
 func (client *Client) Peers(ctx context.Context) ([]*apimodels.PeerResponse, error) {
 	res := []*apimodels.PeerResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RoutePeers, nil, &res); err != nil {
 		return nil, err
 	}
@@ -540,6 +562,7 @@ func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ..
 	}
 
 	res := &apimodels.PeerResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodPost, RoutePeers, req, res); err != nil {
 		return nil, err
 	}

@@ -1,3 +1,4 @@
+//nolint:dupl
 package iotago
 
 import (
@@ -22,6 +23,7 @@ func ParseNFTAddressFromHexString(hexAddr string) (*NFTAddress, error) {
 	}
 	addr := &NFTAddress{}
 	copy(addr[:], addrBytes)
+
 	return addr, nil
 }
 
@@ -32,6 +34,7 @@ func MustParseNFTAddressFromHexString(hexAddr string) *NFTAddress {
 	if err != nil {
 		panic(err)
 	}
+
 	return addr
 }
 
@@ -41,18 +44,21 @@ type NFTAddress [NFTAddressBytesLength]byte
 
 func (nftAddr *NFTAddress) Decode(b []byte) (int, error) {
 	copy(nftAddr[:], b)
+
 	return NFTAddressSerializedBytesSize - 1, nil
 }
 
 func (nftAddr *NFTAddress) Encode() ([]byte, error) {
 	var b [NFTAddressSerializedBytesSize - 1]byte
 	copy(b[:], nftAddr[:])
+
 	return b[:], nil
 }
 
 func (nftAddr *NFTAddress) Clone() Address {
 	cpy := &NFTAddress{}
 	copy(cpy[:], nftAddr[:])
+
 	return cpy
 }
 
@@ -77,6 +83,7 @@ func (nftAddr *NFTAddress) Equal(other Address) bool {
 	if !is {
 		return false
 	}
+
 	return *nftAddr == *otherAddr
 }
 

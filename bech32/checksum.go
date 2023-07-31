@@ -10,6 +10,7 @@ func bech32CreateChecksum(hrp string, blocks []byte) []byte {
 	for i := range res {
 		res[i] = byte((polymod >> (5 * (5 - i))) & 31)
 	}
+
 	return res
 }
 
@@ -25,6 +26,7 @@ func bech32Polymod(values []byte) int {
 			}
 		}
 	}
+
 	return chk
 }
 
@@ -38,6 +40,7 @@ func bech32HrpExpand(s string) []byte {
 	for _, x := range []byte(s) {
 		res = append(res, x&31)
 	}
+
 	return res
 }
 

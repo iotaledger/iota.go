@@ -127,25 +127,26 @@ func (m *mockMqttClient) IsConnectionOpen() bool { panic("implement me") }
 
 func (m *mockMqttClient) Connect() mqtt.Token { return &mockToken{} }
 
-func (m *mockMqttClient) Disconnect(quiesce uint) { panic("implement me") }
+func (m *mockMqttClient) Disconnect(_ uint) { panic("implement me") }
 
-func (m *mockMqttClient) Publish(topic string, qos byte, retained bool, payload interface{}) mqtt.Token {
+func (m *mockMqttClient) Publish(_ string, _ byte, _ bool, _ interface{}) mqtt.Token {
 	panic("implement me")
 }
 
-func (m *mockMqttClient) Subscribe(topic string, qos byte, callback mqtt.MessageHandler) mqtt.Token {
+func (m *mockMqttClient) Subscribe(_ string, _ byte, callback mqtt.MessageHandler) mqtt.Token {
 	go callback(m, &mockMsg{payload: m.payload})
+
 	return &mockToken{}
 }
 
-func (m *mockMqttClient) SubscribeMultiple(filters map[string]byte, callback mqtt.MessageHandler) mqtt.Token {
+func (m *mockMqttClient) SubscribeMultiple(_ map[string]byte, _ mqtt.MessageHandler) mqtt.Token {
 	panic("implement me")
 }
 
-func (m *mockMqttClient) Unsubscribe(topics ...string) mqtt.Token {
+func (m *mockMqttClient) Unsubscribe(...string) mqtt.Token {
 	return &mockToken{}
 }
 
-func (m *mockMqttClient) AddRoute(topic string, callback mqtt.MessageHandler) { panic("implement me") }
+func (m *mockMqttClient) AddRoute(_ string, _ mqtt.MessageHandler) { panic("implement me") }
 
 func (m *mockMqttClient) OptionsReader() mqtt.ClientOptionsReader { panic("implement me") }

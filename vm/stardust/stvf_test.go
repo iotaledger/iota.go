@@ -1,3 +1,4 @@
+//nolint:forcetypeassert,dupl,nlreturn,scopelint
 package stardust_test
 
 import (
@@ -17,6 +18,7 @@ import (
 
 type fieldMutations map[string]interface{}
 
+//nolint:thelper
 func copyObject(t *testing.T, source any, mutations fieldMutations) any {
 	srcBytes, err := tpkg.TestAPI.Encode(source)
 	require.NoError(t, err)
@@ -2533,7 +2535,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.DelegationOutput{
 				Amount:          100,
 				DelegatedAmount: 100,
-				DelegationID:    iotago.EmptyDelegationId(),
+				DelegationID:    iotago.EmptyDelegationID(),
 				ValidatorID:     tpkg.RandAccountID(),
 				StartEpoch:      currentEpoch + 1,
 				EndEpoch:        0,
@@ -2585,7 +2587,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.DelegationOutput{
 				Amount:          100,
 				DelegatedAmount: 120,
-				DelegationID:    iotago.EmptyDelegationId(),
+				DelegationID:    iotago.EmptyDelegationID(),
 				ValidatorID:     tpkg.RandAccountID(),
 				StartEpoch:      currentEpoch + 1,
 				EndEpoch:        0,
@@ -2611,7 +2613,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.DelegationOutput{
 				Amount:          100,
 				DelegatedAmount: 100,
-				DelegationID:    iotago.EmptyDelegationId(),
+				DelegationID:    iotago.EmptyDelegationID(),
 				ValidatorID:     tpkg.RandAccountID(),
 				StartEpoch:      currentEpoch + 1,
 				EndEpoch:        currentEpoch + 5,
@@ -2637,7 +2639,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.DelegationOutput{
 				Amount:          100,
 				DelegatedAmount: 100,
-				DelegationID:    iotago.EmptyDelegationId(),
+				DelegationID:    iotago.EmptyDelegationID(),
 				ValidatorID:     tpkg.RandAccountID(),
 				StartEpoch:      currentEpoch - 3,
 				EndEpoch:        0,
@@ -2692,7 +2694,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.DelegationOutput{
 					Amount:          100,
 					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationId(),
+					DelegationID:    iotago.EmptyDelegationID(),
 					ValidatorID:     tpkg.RandAccountID(),
 					StartEpoch:      currentEpoch + 1,
 					EndEpoch:        0,
@@ -2738,7 +2740,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.DelegationOutput{
 					Amount:          100,
 					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationId(),
+					DelegationID:    iotago.EmptyDelegationID(),
 					ValidatorID:     tpkg.RandAccountID(),
 					StartEpoch:      currentEpoch + 1,
 					EndEpoch:        0,
@@ -2776,7 +2778,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.DelegationOutput{
 					Amount:          100,
 					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationId(),
+					DelegationID:    iotago.EmptyDelegationID(),
 					ValidatorID:     tpkg.RandAccountID(),
 					StartEpoch:      currentEpoch + 1,
 					EndEpoch:        0,
@@ -2814,7 +2816,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.DelegationOutput{
 					Amount:          100,
 					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationId(),
+					DelegationID:    iotago.EmptyDelegationID(),
 					ValidatorID:     tpkg.RandAccountID(),
 					StartEpoch:      currentEpoch + 1,
 					EndEpoch:        0,
@@ -2846,7 +2848,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.DelegationOutput{
 					Amount:          100,
 					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationId(),
+					DelegationID:    iotago.EmptyDelegationID(),
 					ValidatorID:     tpkg.RandAccountID(),
 					StartEpoch:      currentEpoch + 1,
 					EndEpoch:        0,
@@ -2878,7 +2880,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.DelegationOutput{
 					Amount:          100,
 					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationId(),
+					DelegationID:    iotago.EmptyDelegationID(),
 					ValidatorID:     tpkg.RandAccountID(),
 					StartEpoch:      currentEpoch + 1,
 					EndEpoch:        0,
@@ -2905,7 +2907,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.DelegationOutput{
 				Amount:          100,
 				DelegatedAmount: 100,
-				DelegationID:    iotago.EmptyDelegationId(),
+				DelegationID:    iotago.EmptyDelegationID(),
 				ValidatorID:     tpkg.RandAccountID(),
 				StartEpoch:      currentEpoch + 1,
 				EndEpoch:        0,

@@ -19,6 +19,7 @@ func (inputSet InputSet) OutputSet() iotago.OutputSet {
 	for outputID := range inputSet {
 		outputs[outputID] = inputSet[outputID].Output
 	}
+
 	return outputs
 }
 
@@ -54,6 +55,7 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 			CreationTime: input.CreationTime,
 		}
 	}
+
 	return set
 }
 
@@ -65,11 +67,12 @@ type BlockIssuanceCreditInputSet map[iotago.AccountID]iotago.BlockIssuanceCredit
 // A map of either DelegationID or AccountID to their mana reward amount.
 type RewardsInputSet map[iotago.ChainID]iotago.Mana
 
-type VmCommitmentInput *iotago.Commitment
+//nolint:revive // the VM at the beginning makes it more clear
+type VMCommitmentInput *iotago.Commitment
 
 type ResolvedInputs struct {
 	InputSet
 	BlockIssuanceCreditInputSet
-	CommitmentInput VmCommitmentInput
+	CommitmentInput VMCommitmentInput
 	RewardsInputSet
 }

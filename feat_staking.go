@@ -20,7 +20,7 @@ var (
 	ErrInvalidStakingBlockIssuerRequired = ierrors.New("staking feature requires a block issuer feature")
 	// ErrInvalidStakingBondedRemoval gets returned when a staking feature is removed before the end of the unbonding period.
 	ErrInvalidStakingBondedRemoval = ierrors.New("staking feature can only be removed after the unbonding period")
-	// ErrInvalidStakingBondedRemoval gets returned when a staking feature's start epoch, fixed cost or
+	// ErrInvalidStakingBondedModified gets returned when a staking feature's start epoch, fixed cost or
 	// staked amount are modified before the unboding period.
 	ErrInvalidStakingBondedModified = ierrors.New("staking start epoch, fixed cost and staked amount cannot be modified while bonded")
 	// ErrInvalidStakingRewardInputRequired get returned when a staking feature is removed or resetted without a reward input.

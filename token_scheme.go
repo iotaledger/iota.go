@@ -17,6 +17,7 @@ func (tokenSchemeType TokenSchemeType) String() string {
 	if int(tokenSchemeType) >= len(tokenSchemeNames) {
 		return fmt.Sprintf("unknown token scheme type: %d", tokenSchemeType)
 	}
+
 	return tokenSchemeNames[tokenSchemeType]
 }
 

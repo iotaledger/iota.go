@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -12,25 +13,29 @@ type (
 	Versions []uint32
 )
 
-type BlockState int
-type BlockFailureReason int
+type BlockState byte
+type BlockFailureReason byte
+
+const (
+	BlockStateLength         = serializer.OneByte
+	BlockFailureReasonLength = serializer.OneByte
+)
 
 const (
 	BlockStateUnknown BlockState = iota
 	BlockStatePending
+	BlockStateAccepted
 	BlockStateConfirmed
 	BlockStateFinalized
-	BlockStateOrphaned
+	BlockStateRejected
 	BlockStateFailed
-
-	ErrBlockOrphanedDueToCongestionControl BlockFailureReason = 1
-	ErrBlockOrphanedDueToNegativeCredits   BlockFailureReason = 2
 )
 
 func (b BlockState) String() string {
 	return []string{
 		"unknown",
 		"pending",
+		"accepted",
 		"confirmed",
 		"finalized",
 		"rejected",
@@ -38,38 +43,95 @@ func (b BlockState) String() string {
 	}[b]
 }
 
-type TransactionState int
-type TransactionFailureReason int
+type TransactionState byte
+type TransactionFailureReason byte
+
+func (b BlockState) Bytes() ([]byte, error) {
+	return []byte{byte(b)}, nil
+}
+
+func BlockStateFromBytes(b []byte) (BlockState, int, error) {
+	if len(b) < BlockStateLength {
+		return 0, 0, ierrors.New("invalid block state size")
+	}
+
+	return BlockState(b[0]), BlockStateLength, nil
+}
 
 const (
-	TransactionStatePending   TransactionState = 0
-	TransactionStateConfirmed TransactionState = 1
-	TransactionStateFinalized TransactionState = 2
-	TransactionStateFailed    TransactionState = 3
+	BlockFailureNone                   BlockFailureReason = 0
+	BlockFailureIsTooOld               BlockFailureReason = 1
+	BlockFailureParentIsTooOld         BlockFailureReason = 2
+	BlockFailureBookingFailure         BlockFailureReason = 3
+	BlockFailureDroppedDueToCongestion BlockFailureReason = 4
+	BlockFailurePayloadInvalid         BlockFailureReason = 5
 
-	ErrTxStateReferencedUTXOAlreadySpent            TransactionFailureReason = 1
-	ErrTxStateTxConflicting                         TransactionFailureReason = 2
-	ErrTxStateReferencedUTXONotFound                TransactionFailureReason = 3
-	ErrTxStateSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 4
-	ErrTxStateUnlockBlockSignatureInvalid           TransactionFailureReason = 5
-	ErrTxStateConfiguredTimelockNotYetExpired       TransactionFailureReason = 6
-	ErrTxStateGivenNativeTokensInvalid              TransactionFailureReason = 7
-	ErrTxStateReturnAmountNotFulfilled              TransactionFailureReason = 8
-	ErrTxStateInputUnlockInvalid                    TransactionFailureReason = 9
-	ErrTxStateInputsCommitmentInvalid               TransactionFailureReason = 10
-	ErrTxStateSenderNotUnlocked                     TransactionFailureReason = 11
-	ErrTxStateChainStateTransitionInvalid           TransactionFailureReason = 12
-	ErrTxStateSemanticValidationFailed              TransactionFailureReason = 255
+	// TODO: see if needed after congestion PR is done.
+	BlockFailureOrphanedDueNegativeCreditsBalance BlockFailureReason = 6
+)
+
+const (
+	TransactionStateLength         = serializer.OneByte
+	TransactionFailureReasonLength = serializer.OneByte
+)
+
+const (
+	TransactionStateNoTransaction TransactionState = iota
+	TransactionStatePending
+	TransactionStateAccepted
+	TransactionStateConfirmed
+	TransactionStateFinalized
+	TransactionStateFailed
 )
 
 func (t TransactionState) String() string {
 	return []string{
+		"noTransaction",
 		"pending",
+		"acccepted",
 		"confirmed",
 		"finalized",
 		"failed",
 	}[t]
 }
+
+func (t TransactionState) Bytes() ([]byte, error) {
+	return []byte{byte(t)}, nil
+}
+
+func TransactionStateFromBytes(b []byte) (TransactionState, int, error) {
+	if len(b) < TransactionStateLength {
+		return 0, 0, ierrors.New("invalid transaction state size")
+	}
+
+	return TransactionState(b[0]), TransactionStateLength, nil
+}
+
+const (
+	TxFailureNone                                  TransactionFailureReason = 0
+	TxFailureUTXOInputAlreadySpent                 TransactionFailureReason = 1
+	TxFailureConflicting                           TransactionFailureReason = 2
+	TxFailureUTXOInputInvalid                      TransactionFailureReason = 3
+	TxFailureTxTypeInvalid                         TransactionFailureReason = 4
+	TxFailureSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 5
+	TxFailureUnlockBlockSignatureInvalid           TransactionFailureReason = 6
+	TxFailureConfiguredTimelockNotYetExpired       TransactionFailureReason = 7
+	TxFailureGivenNativeTokensInvalid              TransactionFailureReason = 8
+	TxFailureReturnAmountNotFulfilled              TransactionFailureReason = 9
+	TxFailureInputUnlockInvalid                    TransactionFailureReason = 10
+	TxFailureInputsCommitmentInvalid               TransactionFailureReason = 11
+	TxFailureSenderNotUnlocked                     TransactionFailureReason = 12
+	TxFailureChainStateTransitionInvalid           TransactionFailureReason = 13
+	TxFailureInputCreationAfterTxCreation          TransactionFailureReason = 14
+	TxFailureManaAmountInvalid                     TransactionFailureReason = 15
+	TxFailureBICInputInvalid                       TransactionFailureReason = 16
+	TxFailureRewardInputInvalid                    TransactionFailureReason = 17
+	TxFailureCommitmentInputInvalid                TransactionFailureReason = 18
+	TxFailureNoStakingFeature                      TransactionFailureReason = 19
+	TxFailureFailedToClaimStakingReward            TransactionFailureReason = 20
+	TxFailureFailedToClaimDelegationReward         TransactionFailureReason = 21
+	TxFailureSemanticValidationFailed              TransactionFailureReason = 255
+)
 
 type (
 	// InfoResponse defines the response of a GET info REST API call.
@@ -168,12 +230,12 @@ type (
 		BlockID string `json:"blockId"`
 		// BlockState might be pending, rejected, failed, confirmed, finalized.
 		BlockState string `json:"blockState"`
+		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
+		BlockFailureReason BlockFailureReason `json:"blockFailureReason,omitempty"`
 		// TxState might be pending, conflicting, confirmed, finalized, rejected.
 		TxState string `json:"txState,omitempty"`
-		// BlockStateReason if applicable indicates the error that occurred during the block processing.
-		BlockStateReason int `json:"blockStateReason,omitempty"`
-		// TxStateReason if applicable indicates the error that occurred during the transaction processing.
-		TxStateReason int `json:"txStateReason,omitempty"`
+		// TxFailureReason if applicable indicates the error that occurred during the transaction processing.
+		TxFailureReason TransactionFailureReason `json:"txFailureReason,omitempty"`
 	}
 
 	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
@@ -206,7 +268,7 @@ type (
 		ConsumedOutputs iotago.HexOutputIDs `json:"consumedOutputs"`
 	}
 
-	//CongestionResponse defines the response for the congestion REST API call.
+	// CongestionResponse defines the response for the congestion REST API call.
 	CongestionResponse struct {
 		// SlotIndex is the index of the slot for which the estimate is provided
 		SlotIndex iotago.SlotIndex `json:"slotIndex"`
@@ -285,18 +347,20 @@ func (o *OutputMetadataResponse) TxID() (*iotago.TransactionID, error) {
 	}
 	var txID iotago.TransactionID
 	copy(txID[:], txIDBytes)
+
 	return &txID, nil
 }
 
 // DecodeProtocolParameters returns the protocol parameters within the info response.
 func (i *InfoResponse) DecodeProtocolParameters() (iotago.ProtocolParameters, error) {
-	protoJson, err := json.Marshal(i.ProtocolParameters)
+	protoJSON, err := json.Marshal(i.ProtocolParameters)
 	if err != nil {
 		return nil, err
 	}
 
 	var o iotago.ProtocolParameters
-	if err := _internalAPI.JSONDecode(protoJson, &o); err != nil {
+	//nolint:nosnakecase
+	if err := _internalAPI.JSONDecode(protoJSON, &o); err != nil {
 		return nil, err
 	}
 
@@ -305,13 +369,14 @@ func (i *InfoResponse) DecodeProtocolParameters() (iotago.ProtocolParameters, er
 
 // DecodeCommitment returns the commitment within the block issuance response.
 func (i *IssuanceBlockHeaderResponse) DecodeCommitment() (*iotago.Commitment, error) {
-	commitmentJson, err := json.Marshal(i.Commitment)
+	commitmentJSON, err := json.Marshal(i.Commitment)
 	if err != nil {
 		return nil, err
 	}
 
 	o := &iotago.Commitment{}
-	if err := _internalAPI.JSONDecode(commitmentJson, o); err != nil {
+	//nolint:nosnakecase
+	if err := _internalAPI.JSONDecode(commitmentJSON, o); err != nil {
 		return nil, err
 	}
 

@@ -10,6 +10,11 @@ import (
 	"github.com/iotaledger/iota.go/v4/bech32"
 )
 
+var (
+	// ErrUnknownAddrType gets returned for unknown address types.
+	ErrUnknownAddrType = ierrors.New("unknown address type")
+)
+
 // AddressType defines the type of addresses.
 type AddressType byte
 
@@ -133,6 +138,7 @@ func bech32String(hrp NetworkPrefix, addr Address) string {
 	if err != nil {
 		panic(err)
 	}
+
 	return s
 }
 

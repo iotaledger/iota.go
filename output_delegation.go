@@ -37,7 +37,7 @@ var (
 	emptyDelegationID                    = [DelegationIDLength]byte{}
 )
 
-func EmptyDelegationId() DelegationID {
+func EmptyDelegationID() DelegationID {
 	return emptyDelegationID
 }
 
@@ -48,39 +48,40 @@ type DelegationID [DelegationIDLength]byte
 // DelegationIDs are DelegationID(s).
 type DelegationIDs []DelegationID
 
-func (delegationId DelegationID) Addressable() bool {
+func (delegationID DelegationID) Addressable() bool {
 	return false
 }
 
-func (delegationId DelegationID) Key() interface{} {
-	return delegationId.String()
+func (delegationID DelegationID) Key() interface{} {
+	return delegationID.String()
 }
 
-func (delegationId DelegationID) Empty() bool {
-	return delegationId == emptyDelegationID
+func (delegationID DelegationID) Empty() bool {
+	return delegationID == emptyDelegationID
 }
 
-func (delegationId DelegationID) ToAddress() ChainAddress {
+func (delegationID DelegationID) ToAddress() ChainAddress {
 	panic("Delegation ID is not addressable")
 }
 
-func (delegationId DelegationID) Matches(other ChainID) bool {
-	otherDelegationId, isDelegationId := other.(DelegationID)
-	if !isDelegationId {
+func (delegationID DelegationID) Matches(other ChainID) bool {
+	otherDelegationID, isDelegationID := other.(DelegationID)
+	if !isDelegationID {
 		return false
 	}
-	return delegationId == otherDelegationId
+
+	return delegationID == otherDelegationID
 }
 
-func (delegationId DelegationID) String() string {
-	return hexutil.EncodeHex(delegationId[:])
+func (delegationID DelegationID) String() string {
+	return hexutil.EncodeHex(delegationID[:])
 }
 
-func (delegationId DelegationID) ToHex() string {
-	return hexutil.EncodeHex(delegationId[:])
+func (delegationID DelegationID) ToHex() string {
+	return hexutil.EncodeHex(delegationID[:])
 }
 
-func (id DelegationID) FromOutputID(outid OutputID) ChainID {
+func (delegationID DelegationID) FromOutputID(outid OutputID) ChainID {
 	return DelegationIDFromOutputID(outid)
 }
 

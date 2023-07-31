@@ -28,6 +28,7 @@ func (payloadType PayloadType) String() string {
 	if int(payloadType) >= len(payloadNames) {
 		return fmt.Sprintf("unknown payload type: %d", payloadType)
 	}
+
 	return payloadNames[payloadType]
 }
 
