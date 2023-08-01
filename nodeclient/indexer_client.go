@@ -79,7 +79,7 @@ type IndexerResultSet struct {
 // Next runs the next query against the indexer.
 // Returns false if there are no more results to collect.
 func (resultSet *IndexerResultSet) Next() bool {
-	if resultSet.firstQueryDone && resultSet.Response.Cursor == nil {
+	if resultSet.firstQueryDone && resultSet.Response.Cursor == "" {
 		return false
 	}
 
@@ -90,7 +90,7 @@ func (resultSet *IndexerResultSet) Next() bool {
 	}
 
 	// set offset for next query
-	resultSet.query.SetOffset(resultSet.Response.Cursor)
+	resultSet.query.SetOffset(&resultSet.Response.Cursor)
 	resultSet.firstQueryDone = true
 
 	return len(resultSet.Response.Items) > 0
@@ -114,13 +114,13 @@ func (resultSet *IndexerResultSet) Outputs(ctx context.Context) (iotago.Outputs[
 // Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *indexerClient) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(ctx, client.core.opts.httpClient, client.core.BaseURL, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, nil, reqObj, resObj)
+	return do(ctx, client.core.CurrentAPI().Underlying(), client.core.opts.httpClient, client.core.BaseURL, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, nil, reqObj, resObj)
 }
 
 // DoWithRequestHeaderHook executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *indexerClient) DoWithRequestHeaderHook(ctx context.Context, method string, route string, requestHeaderHook RequestHeaderHook, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(ctx, client.core.opts.httpClient, client.core.BaseURL, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
+	return do(ctx, client.core.CurrentAPI().Underlying(), client.core.opts.httpClient, client.core.BaseURL, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
 }
 
 func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*IndexerResultSet, error) {
