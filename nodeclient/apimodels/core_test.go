@@ -12,7 +12,7 @@ import (
 
 func testAPI() iotago.API {
 	params := iotago.NewV3ProtocolParameters(
-		iotago.WithTimeProviderOptions(time.Unix(1690879505, 0).Unix(), 10, 13),
+		iotago.WithTimeProviderOptions(time.Unix(1690879505, 0).UTC().Unix(), 10, 13),
 	)
 
 	return iotago.V3API(params)
@@ -26,10 +26,10 @@ func Test_InfoResponse(t *testing.T) {
 			Version: "2.0.0",
 			Status: &apimodels.InfoResNodeStatus{
 				IsHealthy:                   false,
-				AcceptedTangleTime:          time.Unix(1690879505, 0),
-				RelativeAcceptedTangleTime:  time.Unix(1690879505, 0),
-				ConfirmedTangleTime:         time.Unix(1690879505, 0),
-				RelativeConfirmedTangleTime: time.Unix(1690879505, 0),
+				AcceptedTangleTime:          time.Unix(1690879505, 0).UTC(),
+				RelativeAcceptedTangleTime:  time.Unix(1690879505, 0).UTC(),
+				ConfirmedTangleTime:         time.Unix(1690879505, 0).UTC(),
+				RelativeConfirmedTangleTime: time.Unix(1690879505, 0).UTC(),
 				LatestCommitmentID:          iotago.CommitmentID{},
 				LatestFinalizedSlot:         1,
 				LatestAcceptedBlockSlot:     2,
@@ -61,7 +61,7 @@ func Test_InfoResponse(t *testing.T) {
 		jsonResponse, err := api.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"name\":\"test\",\"version\":\"2.0.0\",\"status\":{\"isHealthy\":false,\"acceptedTangleTime\":\"2023-08-01T10:45:05+02:00\",\"relativeAcceptedTangleTime\":\"2023-08-01T10:45:05+02:00\",\"confirmedTangleTime\":\"2023-08-01T10:45:05+02:00\",\"relativeConfirmedTangleTime\":\"2023-08-01T10:45:05+02:00\",\"latestCommitmentId\":\"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000\",\"latestFinalizedSlot\":\"1\",\"latestAcceptedBlockSlot\":\"2\",\"latestConfirmedBlockSlot\":\"3\",\"pruningSlot\":\"4\"},\"metrics\":{\"blocksPerSecond\":\"1.1E+00\",\"confirmedBlocksPerSecond\":\"2.2E+00\",\"confirmationRate\":\"3.3E+00\"},\"protocolParameters\":[{\"startEpoch\":\"0\",\"parameters\":{\"type\":0,\"version\":3,\"networkName\":\"testnet\",\"bech32Hrp\":\"rms\",\"rentStructure\":{\"vByteCost\":100,\"vByteFactorData\":1,\"vByteFactorKey\":10},\"workScoreStructure\":{\"dataByte\":1,\"block\":100,\"missingParent\":500,\"input\":20,\"contextInput\":20,\"output\":20,\"nativeToken\":20,\"staking\":100,\"blockIssuer\":100,\"allotment\":100,\"signatureEd25519\":200,\"minStrongParentsThreshold\":4},\"tokenSupply\":\"1813620509061365\",\"genesisUnixTimestamp\":\"1690879505\",\"slotDurationInSeconds\":10,\"slotsPerEpochExponent\":13,\"manaGenerationRate\":1,\"manaGenerationRateExponent\":0,\"manaDecayFactors\":[10,20],\"manaDecayFactorsExponent\":0,\"manaDecayFactorEpochsSum\":0,\"manaDecayFactorEpochsSumExponent\":0,\"stakingUnbondingPeriod\":\"10\",\"evictionAge\":\"10\",\"livenessThreshold\":\"3\",\"epochNearingThreshold\":\"4\",\"versionSignaling\":{\"windowSize\":7,\"windowTargetRatio\":5,\"activationOffset\":7}}}],\"baseToken\":{\"name\":\"Shimmer\",\"tickerSymbol\":\"SMR\",\"unit\":\"SMR\",\"subunit\":\"glow\",\"decimals\":6,\"useMetricPrefix\":false},\"features\":[\"test\"]}"
+		expected := "{\"name\":\"test\",\"version\":\"2.0.0\",\"status\":{\"isHealthy\":false,\"acceptedTangleTime\":\"2023-08-01T08:45:05Z\",\"relativeAcceptedTangleTime\":\"2023-08-01T08:45:05Z\",\"confirmedTangleTime\":\"2023-08-01T08:45:05Z\",\"relativeConfirmedTangleTime\":\"2023-08-01T08:45:05Z\",\"latestCommitmentId\":\"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000\",\"latestFinalizedSlot\":\"1\",\"latestAcceptedBlockSlot\":\"2\",\"latestConfirmedBlockSlot\":\"3\",\"pruningSlot\":\"4\"},\"metrics\":{\"blocksPerSecond\":\"1.1E+00\",\"confirmedBlocksPerSecond\":\"2.2E+00\",\"confirmationRate\":\"3.3E+00\"},\"protocolParameters\":[{\"startEpoch\":\"0\",\"parameters\":{\"type\":0,\"version\":3,\"networkName\":\"testnet\",\"bech32Hrp\":\"rms\",\"rentStructure\":{\"vByteCost\":100,\"vByteFactorData\":1,\"vByteFactorKey\":10},\"workScoreStructure\":{\"dataByte\":1,\"block\":100,\"missingParent\":500,\"input\":20,\"contextInput\":20,\"output\":20,\"nativeToken\":20,\"staking\":100,\"blockIssuer\":100,\"allotment\":100,\"signatureEd25519\":200,\"minStrongParentsThreshold\":4},\"tokenSupply\":\"1813620509061365\",\"genesisUnixTimestamp\":\"1690879505\",\"slotDurationInSeconds\":10,\"slotsPerEpochExponent\":13,\"manaGenerationRate\":1,\"manaGenerationRateExponent\":0,\"manaDecayFactors\":[10,20],\"manaDecayFactorsExponent\":0,\"manaDecayFactorEpochsSum\":0,\"manaDecayFactorEpochsSumExponent\":0,\"stakingUnbondingPeriod\":\"10\",\"livenessThreshold\":\"3\",\"minCommittableAge\":\"10\",\"maxCommittableAge\":\"20\",\"epochNearingThreshold\":\"24\",\"versionSignaling\":{\"windowSize\":7,\"windowTargetRatio\":5,\"activationOffset\":7}}}],\"baseToken\":{\"name\":\"Shimmer\",\"tickerSymbol\":\"SMR\",\"unit\":\"SMR\",\"subunit\":\"glow\",\"decimals\":6,\"useMetricPrefix\":false},\"features\":[\"test\"]}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(apimodels.InfoResponse)
