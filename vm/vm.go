@@ -172,6 +172,24 @@ func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iot
 	return totalOut, nil
 }
 
+// PastBoundedSlotIndex calculates the past bounded slot for the given slot.
+// Given any slot index of a commitment input, the result of this function is a slot index
+// that is at least equal to the slot of the block in which it was issued, or higher.
+// That means no commitment input can be chosen such that the index lies behind the slot index of the block,
+// hence the past is bounded.
+func (params *Params) PastBoundedSlotIndex(commitmentInputSlot iotago.SlotIndex) iotago.SlotIndex {
+	return commitmentInputSlot + params.API.ProtocolParameters().MaxCommittableAge()
+}
+
+// FutureBoundedSlotIndex calculates the future bounded slot for the given slot.
+// Given any slot index of a commitment input, the result of this function is a slot index
+// that is at most equal to the slot of the block in which it was issued, or lower.
+// That means no commitment input can be chosen such that the index lies ahead of the slot index of the block,
+// hence the future is bounded.
+func (params *Params) FutureBoundedSlotIndex(commitmentInputSlot iotago.SlotIndex) iotago.SlotIndex {
+	return commitmentInputSlot + params.API.ProtocolParameters().MinCommittableAge()
+}
+
 // RunVMFuncs runs the given ExecFunc(s) in serial order.
 func RunVMFuncs(vm VirtualMachine, vmParams *Params, execFuncs ...ExecFunc) error {
 	for _, execFunc := range execFuncs {
@@ -397,12 +415,28 @@ func identToUnlock(vmParams *Params, input iotago.Output, inputIndex uint16) (io
 	}
 }
 
-func checkExpiredForReceiver(vmParams *Params, output iotago.Output) iotago.Address {
-	if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(vmParams.WorkingSet.Tx.Essence.CreationTime); ok {
-		return returnIdent
+func checkExpiration(vmParams *Params, output iotago.Output) (iotago.Address, error) {
+	if output.UnlockConditionSet().HasExpirationCondition() {
+		commitment := vmParams.WorkingSet.Commitment
+
+		if commitment == nil {
+			return nil, iotago.ErrExpirationConditionCommitmentInputRequired
+		}
+
+		futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
+		if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(futureBoundedSlotIndex); ok {
+			return returnIdent, nil
+		}
+
+		pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Index)
+		if output.UnlockConditionSet().OwnerIdentCanUnlock(pastBoundedSlotIndex) {
+			return nil, nil
+		}
+
+		return nil, iotago.ErrExpirationConditionUnlockFailed
 	}
 
-	return nil
+	return nil, nil
 }
 
 func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) error {
@@ -411,7 +445,9 @@ func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) err
 		return ierrors.Errorf("unable to retrieve ident to unlock of input %d: %w", inputIndex, err)
 	}
 
-	if actualIdentToUnlock := checkExpiredForReceiver(vmParams, output); actualIdentToUnlock != nil {
+	if actualIdentToUnlock, err := checkExpiration(vmParams, output); err != nil {
+		return err
+	} else if actualIdentToUnlock != nil {
 		ownerIdent = actualIdentToUnlock
 	}
 
@@ -572,8 +608,16 @@ func ExecFuncBalancedDeposit() ExecFunc {
 func ExecFuncTimelocks() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		for inputIndex, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
-			if err := input.Output.UnlockConditionSet().TimelocksExpired(vmParams.WorkingSet.Tx.Essence.CreationTime); err != nil {
-				return ierrors.Wrapf(err, "input at index %d's timelocks are not expired", inputIndex)
+			if input.Output.UnlockConditionSet().HasTimelockCondition() {
+				commitment := vmParams.WorkingSet.Commitment
+
+				if commitment == nil {
+					return iotago.ErrTimelockConditionCommitmentInputRequired
+				}
+				futureBoundedIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
+				if err := input.Output.UnlockConditionSet().TimelocksExpired(futureBoundedIndex); err != nil {
+					return ierrors.Wrapf(err, "input at index %d's timelocks are not expired", inputIndex)
+				}
 			}
 		}
 

@@ -612,40 +612,29 @@ func (outputSet OutputSet) NewAccounts() AccountOutputsSet {
 	return set
 }
 
-func outputUnlockable(output Output, next TransDepIdentOutput, target Address, txCreationTime SlotIndex) (bool, error) {
+// This is a helper function to check if an output is unlockable by a given target.
+func outputUnlockableBy(output Output, next TransDepIdentOutput, target Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error) {
 	unlockConds := output.UnlockConditionSet()
-
-	checkTargetIdentOfOutput := func() (bool, error) {
-		switch x := output.(type) {
-		case TransIndepIdentOutput:
-			return x.Ident().Equal(target), nil
-		case TransDepIdentOutput:
-			targetToUnlock, err := x.Ident(next)
-			if err != nil {
-				return false, err
-			}
-
-			return targetToUnlock.Equal(target), nil
-		default:
-			panic("invalid output type in outputUnlockable")
+	var ownerIdent Address
+	switch x := output.(type) {
+	case TransIndepIdentOutput:
+		ownerIdent = x.Ident()
+	case TransDepIdentOutput:
+		targetToUnlock, err := x.Ident(next)
+		if err != nil {
+			return false, err
 		}
+		ownerIdent = targetToUnlock
+	default:
+		panic("invalid output type in outputUnlockableBy")
 	}
 
-	if len(unlockConds) == 0 {
-		return checkTargetIdentOfOutput()
-	}
-
-	targetIdentCanUnlock, returnIdentCanUnlock := unlockConds.unlockableBy(target, txCreationTime)
+	targetIdentCanUnlock := unlockConds.unlockableBy(target, ownerIdent, pastBoundedSlotIndex, futureBoundedSlotIndex)
 	if !targetIdentCanUnlock {
 		return false, nil
 	}
 
-	// the target ident is the return ident which can unlock
-	if returnIdentCanUnlock {
-		return true, nil
-	}
-
-	return checkTargetIdentOfOutput()
+	return true, nil
 }
 
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent
@@ -656,7 +645,7 @@ type TransIndepIdentOutput interface {
 	Ident() Address
 	// UnlockableBy tells whether the given ident can unlock this Output
 	// while also taking into consideration constraints enforced by UnlockConditions(s) within this Output (if any).
-	UnlockableBy(ident Address, txCreationTime SlotIndex) bool
+	UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool
 }
 
 // TransDepIdentOutput is a type of Output where the identity to unlock is dependent
@@ -671,7 +660,7 @@ type TransDepIdentOutput interface {
 	// while also taking into consideration constraints enforced by UnlockConditions(s) within this Output
 	// and the next state of this TransDepIdentOutput. To indicate that this TransDepIdentOutput
 	// is to be destroyed, pass nil as next.
-	UnlockableBy(ident Address, next TransDepIdentOutput, txCreationTime SlotIndex) (bool, error)
+	UnlockableBy(ident Address, next TransDepIdentOutput, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error)
 }
 
 // OutputIDHex is the hex representation of an output ID.

@@ -32,7 +32,9 @@ var (
 	// ErrInvalidDelegationEndEpoch gets returned when a delegation output's end epoch is not set correctly
 	// relative to the slot of the current epoch in which the voting power is calculated.
 	ErrInvalidDelegationEndEpoch = ierrors.New("invalid end epoch")
-	emptyDelegationID            = [DelegationIDLength]byte{}
+	// ErrDelegationCommitmentInputRequired gets returned when no commitment input was passed in a TX containing a Delegation Output.
+	ErrDelegationCommitmentInputRequired = ierrors.New("delegation output validation requires a commitment input")
+	emptyDelegationID                    = [DelegationIDLength]byte{}
 )
 
 func EmptyDelegationID() DelegationID {
@@ -127,9 +129,8 @@ func (d *DelegationOutput) Ident() Address {
 	return d.Conditions.MustSet().Address().Address
 }
 
-func (d *DelegationOutput) UnlockableBy(ident Address, txCreationTime SlotIndex) bool {
-	ok, _ := outputUnlockable(d, nil, ident, txCreationTime)
-
+func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
+	ok, _ := outputUnlockableBy(d, nil, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
 	return ok
 }
 
