@@ -2504,7 +2504,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedDeposit())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedBaseTokens())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return

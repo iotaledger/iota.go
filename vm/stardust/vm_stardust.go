@@ -16,7 +16,7 @@ func NewVirtualMachine() vm.VirtualMachine {
 			vm.ExecFuncTimelocks(),
 			vm.ExecFuncInputUnlocks(),
 			vm.ExecFuncSenderUnlocked(),
-			vm.ExecFuncBalancedDeposit(),
+			vm.ExecFuncBalancedBaseTokens(),
 			vm.ExecFuncBalancedNativeTokens(),
 			vm.ExecFuncChainTransitions(),
 			vm.ExecFuncBalancedMana(),

@@ -35,8 +35,8 @@ type Output interface {
 	NonEphemeralObject
 	ProcessableObject
 
-	// Deposit returns the amount this Output deposits.
-	Deposit() BaseToken
+	// BaseTokenAmount the amount of base tokens held by this Output.
+	BaseTokenAmount() BaseToken
 
 	// StoredMana returns the stored mana held by this output.
 	StoredMana() Mana
@@ -294,8 +294,8 @@ func (outputIDs OutputIDs) OrderedSet(set OutputSet) Outputs[Output] {
 }
 
 var (
-	// ErrDepositAmountMustBeGreaterThanZero returned if the deposit amount of an output is less or equal zero.
-	ErrDepositAmountMustBeGreaterThanZero = ierrors.New("deposit amount must be greater than zero")
+	// ErrAmountMustBeGreaterThanZero returned if the base token amount of an output is less or equal zero.
+	ErrAmountMustBeGreaterThanZero = ierrors.New("base token amount must be greater than zero")
 	// ErrChainMissing gets returned when a chain is missing.
 	ErrChainMissing = ierrors.New("chain missing")
 	// ErrNonUniqueChainOutputs gets returned when multiple ChainOutputs(s) with the same ChainID exist within sets.
@@ -718,29 +718,29 @@ func (oih OutputIDHex) AsUTXOInput() (*UTXOInput, error) {
 type OutputsSyntacticalValidationFunc func(index int, output Output) error
 
 // OutputsSyntacticalDepositAmount returns an OutputsSyntacticalValidationFunc which checks that:
-//   - every output deposits more than zero
-//   - every output deposits less than the total supply
-//   - the sum of deposits does not exceed the total supply
-//   - the deposit fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
+//   - every output has base token amount more than zero
+//   - every output has base token amount less than the total supply
+//   - the sum of base token amounts does not exceed the total supply
+//   - the base token amount fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
 func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters) OutputsSyntacticalValidationFunc {
 	var sum BaseToken
 
 	return func(index int, output Output) error {
-		deposit := output.Deposit()
+		amount := output.BaseTokenAmount()
 
 		switch {
-		case deposit == 0:
-			return ierrors.Wrapf(ErrDepositAmountMustBeGreaterThanZero, "output %d", index)
-		case deposit > protoParams.TokenSupply():
-			return ierrors.Wrapf(ErrOutputDepositsMoreThanTotalSupply, "output %d", index)
-		case sum+deposit > protoParams.TokenSupply():
+		case amount == 0:
+			return ierrors.Wrapf(ErrAmountMustBeGreaterThanZero, "output %d", index)
+		case amount > protoParams.TokenSupply():
+			return ierrors.Wrapf(ErrOutputAmountMoreThanTotalSupply, "output %d", index)
+		case sum+amount > protoParams.TokenSupply():
 			return ierrors.Wrapf(ErrOutputsSumExceedsTotalSupply, "output %d", index)
 		}
 
-		// check whether deposit fulfills the storage deposit cost
-		if _, err := protoParams.RentStructure().CoversStateRent(output, deposit); err != nil {
+		// check whether base token amount fulfills the storage deposit cost
+		if _, err := protoParams.RentStructure().CoversStateRent(output, amount); err != nil {
 			return ierrors.Wrapf(err, "output %d", index)
 		}
 
@@ -750,12 +750,12 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters) OutputsSynt
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
 				return ierrors.Wrapf(ErrStorageDepositLessThanMinReturnOutputStorageDeposit, "output %d, needed %d, have %d", index, minStorageDepositForReturnOutput, storageDep.Amount)
-			case storageDep.Amount > deposit:
-				return ierrors.Wrapf(ErrStorageDepositExceedsTargetOutputDeposit, "output %d, target output's deposit %d < storage deposit %d", index, deposit, storageDep.Amount)
+			case storageDep.Amount > amount:
+				return ierrors.Wrapf(ErrStorageDepositExceedsTargetOutputAmount, "output %d, target output's amount %d < storage deposit %d", index, amount, storageDep.Amount)
 			}
 		}
 
-		sum += deposit
+		sum += amount
 
 		return nil
 	}

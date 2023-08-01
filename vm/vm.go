@@ -139,7 +139,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iot
 		}
 
 		// potential Mana
-		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(input.Output.Deposit(), input.CreationTime, txCreationTime)
+		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(input.Output.BaseTokenAmount(), input.CreationTime, txCreationTime)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s potential mana calculation failed", outputID)
 		}
@@ -547,17 +547,17 @@ func ExecFuncBalancedMana() ExecFunc {
 	}
 }
 
-// ExecFuncBalancedDeposit validates that the IOTA tokens are balanced from the input/output side.
+// ExecFuncBalancedBaseTokens validates that the base tokens are balanced from the input/output side.
 // It additionally also incorporates the check whether return amounts via StorageDepositReturnUnlockCondition(s) for specified identities
 // are fulfilled from the output side.
-func ExecFuncBalancedDeposit() ExecFunc {
+func ExecFuncBalancedBaseTokens() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		// note that due to syntactic validation of outputs, input and output deposit sums
+		// note that due to syntactic validation of outputs, input and output base token amount sums
 		// are always within bounds of the total token supply
 		var in, out iotago.BaseToken
 		inputSumReturnAmountPerIdent := make(map[string]iotago.BaseToken)
 		for inputID, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
-			in += input.Output.Deposit()
+			in += input.Output.BaseTokenAmount()
 
 			returnUnlockCond := input.Output.UnlockConditionSet().StorageDepositReturn()
 			if returnUnlockCond == nil {
@@ -577,12 +577,12 @@ func ExecFuncBalancedDeposit() ExecFunc {
 
 		outputSimpleTransfersPerIdent := make(map[string]iotago.BaseToken)
 		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
-			outDeposit := output.Deposit()
-			out += outDeposit
+			outAmount := output.BaseTokenAmount()
+			out += outAmount
 
 			// accumulate simple transfers for StorageDepositReturnUnlockCondition checks
 			if basicOutput, is := output.(*iotago.BasicOutput); is && basicOutput.IsSimpleTransfer() {
-				outputSimpleTransfersPerIdent[basicOutput.Ident().Key()] += outDeposit
+				outputSimpleTransfersPerIdent[basicOutput.Ident().Key()] += outAmount
 			}
 		}
 

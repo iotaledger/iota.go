@@ -231,7 +231,7 @@ func (f *FoundryOutput) ImmutableFeatureSet() FeatureSet {
 	return f.ImmutableFeatures.MustSet()
 }
 
-func (f *FoundryOutput) Deposit() BaseToken {
+func (f *FoundryOutput) BaseTokenAmount() BaseToken {
 	return f.Amount
 }
 
