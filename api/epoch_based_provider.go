@@ -25,6 +25,12 @@ type EpochBasedProvider struct {
 	optsAPIForMissingVersionCallback func(version iotago.Version) (iotago.API, error)
 }
 
+func WithAPIForMissingVersionCallback(callback func(version iotago.Version) (iotago.API, error)) options.Option[EpochBasedProvider] {
+	return func(provider *EpochBasedProvider) {
+		provider.optsAPIForMissingVersionCallback = callback
+	}
+}
+
 func NewEpochBasedProvider(opts ...options.Option[EpochBasedProvider]) *EpochBasedProvider {
 	return options.Apply(&EpochBasedProvider{
 		protocolParametersByVersion:       make(map[iotago.Version]iotago.ProtocolParameters),
@@ -194,10 +200,4 @@ func (e *EpochBasedProvider) VersionForEpoch(epoch iotago.EpochIndex) iotago.Ver
 	defer e.mutex.RUnlock()
 
 	return e.protocolVersions.VersionForEpoch(epoch)
-}
-
-func WithAPIForMissingVersionCallback(callback func(version iotago.Version) (iotago.API, error)) options.Option[EpochBasedProvider] {
-	return func(provider *EpochBasedProvider) {
-		provider.optsAPIForMissingVersionCallback = callback
-	}
 }
