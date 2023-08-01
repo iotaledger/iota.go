@@ -15,8 +15,7 @@ func testAPI() iotago.API {
 		iotago.WithTimeProviderOptions(time.Unix(1690879505, 0).Unix(), 10, 13),
 	)
 
-	api := iotago.V3API(params)
-	return api
+	return iotago.V3API(params)
 }
 
 func Test_InfoResponse(t *testing.T) {

@@ -38,6 +38,7 @@ var (
 	mockAPI = iotago.V3API(protoParams)
 )
 
+//nolint:unparam // false positive
 func mockGetJSON(route string, status int, body interface{}, persist ...bool) {
 	m := gock.New(nodeAPIUrl).
 		Get(route)
@@ -50,6 +51,7 @@ func mockGetJSON(route string, status int, body interface{}, persist ...bool) {
 		BodyString(string(lo.PanicOnErr(mockAPI.JSONEncode(body))))
 }
 
+//nolint:unparam // false positive
 func mockGetJSONWithParams(route string, status int, body interface{}, params map[string]string, persist ...bool) {
 	m := gock.New(nodeAPIUrl).
 		Get(route).
@@ -64,6 +66,7 @@ func mockGetJSONWithParams(route string, status int, body interface{}, params ma
 		BodyString(string(lo.PanicOnErr(mockAPI.JSONEncode(body))))
 }
 
+//nolint:unparam // false positive
 func mockPostJSON(route string, status int, req interface{}, resp interface{}) {
 	gock.New(nodeAPIUrl).
 		Post(route).
@@ -74,6 +77,7 @@ func mockPostJSON(route string, status int, req interface{}, resp interface{}) {
 		BodyString(string(lo.PanicOnErr(mockAPI.JSONEncode(resp))))
 }
 
+//nolint:unparam // false positive
 func mockGetBinary(route string, status int, body interface{}, persist ...bool) {
 	m := gock.New(nodeAPIUrl).
 		Get(route).
