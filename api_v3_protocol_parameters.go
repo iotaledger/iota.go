@@ -115,7 +115,7 @@ func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
 }
 
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
-	return commonSerixAPI().Encode(context.TODO(), p)
+	return CommonSerixAPI().Encode(context.TODO(), p)
 }
 
 func (p *V3ProtocolParameters) Hash() (Identifier, error) {
