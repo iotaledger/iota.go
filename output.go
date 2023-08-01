@@ -740,7 +740,7 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters) OutputsSynt
 		}
 
 		// check whether base token amount fulfills the storage deposit cost
-		if _, err := protoParams.RentStructure().CoversStateRent(output, amount); err != nil {
+		if _, err := protoParams.RentStructure().CoversMinDeposit(output, amount); err != nil {
 			return ierrors.Wrapf(err, "output %d", index)
 		}
 

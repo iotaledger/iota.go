@@ -125,7 +125,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs Resolve
 	return workingSet, nil
 }
 
-func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
+func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iotago.RentStructure, txCreationTime iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
 	var totalIn iotago.Mana
 	for outputID, input := range inputSet {
 		// stored Mana
@@ -139,7 +139,10 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iot
 		}
 
 		// potential Mana
-		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(input.Output.BaseTokenAmount(), input.CreationTime, txCreationTime)
+		// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
+		// don't need to check for underflow because we already checked that the output amount is greater than the min deposit
+		excessBaseTokens := input.Output.BaseTokenAmount() - rentStructure.MinDeposit(input.Output)
+		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(excessBaseTokens, input.CreationTime, txCreationTime)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s potential mana calculation failed", outputID)
 		}
@@ -524,7 +527,7 @@ func ExecFuncBalancedMana() ExecFunc {
 				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation time %d, tx creation time %d", outputID, input.CreationTime, txCreationTime)
 			}
 		}
-		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.ProtocolParameters().RentStructure(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		if err != nil {
 			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
 		}

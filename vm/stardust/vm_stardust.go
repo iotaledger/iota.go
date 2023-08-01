@@ -288,8 +288,10 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
 	manaDecayProvider := vmParams.API.ProtocolParameters().ManaDecayProvider()
+	rentStructure := vmParams.API.ProtocolParameters().RentStructure()
 	manaIn, err := vm.TotalManaIn(
 		manaDecayProvider,
+		rentStructure,
 		vmParams.WorkingSet.Tx.Essence.CreationTime,
 		vmParams.WorkingSet.UTXOInputsWithCreationTime,
 	)
@@ -305,20 +307,27 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 		return err
 	}
 
-	manaStoredAccount, err := manaDecayProvider.StoredManaWithDecay(current.Mana, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInStored
+	// AccountInStored
+	manaStoredAccount, err := manaDecayProvider.StoredManaWithDecay(current.Mana, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s stored mana calculation failed", current.AccountID)
 	}
 	manaIn -= manaStoredAccount
 
-	manaPotentialAccount, err := manaDecayProvider.PotentialManaWithDecay(current.Amount, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime) // AccountInPotential
+	// AccountInPotential
+	// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
+	// don't need to check for underflow because we already checked that the output amount is greater than the min deposit
+	excessBaseTokensAccount := current.Amount - rentStructure.MinDeposit(current)
+	manaPotentialAccount, err := manaDecayProvider.PotentialManaWithDecay(excessBaseTokensAccount, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", current.AccountID)
 	}
 	manaIn -= manaPotentialAccount
 
-	manaOut -= next.Mana                                                        // AccountOutStored
-	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID) // AccountOutAllotted
+	// AccountOutStored
+	manaOut -= next.Mana
+	// AccountOutAllotted
+	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
 
 	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
 	minManalockedSlotIndex := pastBoundedSlotIndex + vmParams.API.ProtocolParameters().MaxCommittableAge()

@@ -3918,7 +3918,9 @@ func TestTxSemanticMana(t *testing.T) {
 							var slotIndexCreated iotago.SlotIndex = 10
 							slotIndexTarget := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
-							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(OneMi, slotIndexCreated, slotIndexTarget)
+							input := inputs[inputIDs[0]]
+							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
+							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
@@ -3977,7 +3979,9 @@ func TestTxSemanticMana(t *testing.T) {
 							var slotIndexCreated iotago.SlotIndex = 10
 							slotIndexTarget := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
-							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(OneMi, slotIndexCreated, slotIndexTarget)
+							input := inputs[inputIDs[0]]
+							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
+							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
