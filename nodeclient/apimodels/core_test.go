@@ -76,6 +76,7 @@ func Test_InfoResponse(t *testing.T) {
 			TickerSymbol:    "IOTA",
 			Unit:            "MIOTA",
 			UseMetricPrefix: true,
+			// No Subunit
 		}
 
 		jsonResponse, err := api.JSONEncode(response)

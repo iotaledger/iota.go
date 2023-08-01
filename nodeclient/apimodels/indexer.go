@@ -13,7 +13,7 @@ type IndexerResponse struct {
 	// The maximum count of results that are returned by the node.
 	PageSize uint32 `serix:"1,mapKey=pageSize"`
 	// The output IDs (transaction hash + output index) of the found outputs.
-	Items iotago.HexOutputIDs `serix:"2,mapKey=items,lengthPrefixType=uint8"`
+	Items iotago.HexOutputIDs `serix:"2,mapKey=items,lengthPrefixType=uint16"`
 	// The cursor to use for getting the next results.
 	Cursor string `serix:"3,mapKey=cursor,omitempty"`
 }
