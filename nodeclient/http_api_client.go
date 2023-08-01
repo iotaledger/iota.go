@@ -202,11 +202,7 @@ func New(baseURL string, opts ...ClientOption) (*Client, error) {
 		if err != nil {
 			return nil, ierrors.Errorf("unable to call info endpoint for protocol parameter init: %w", err)
 		}
-		protoParams, err := info.DecodeProtocolParameters()
-		if err != nil {
-			return nil, ierrors.Errorf("unable to parse protocol parameters from info response: %w", err)
-		}
-		client.opts.iotagoAPI = iotago.LatestAPI(protoParams)
+		client.opts.iotagoAPI = iotago.LatestAPI(info.ProtocolParameters)
 	}
 
 	return client, nil
@@ -307,13 +303,18 @@ func (client *Client) Routes(ctx context.Context) (*apimodels.RoutesResponse, er
 
 // Info gets the info of the node.
 func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error) {
-	res := &apimodels.InfoResponse{}
+	res := &RawDataEnvelope{}
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteInfo, nil, res); err != nil {
 		return nil, err
 	}
 
-	return res, nil
+	info := &apimodels.InfoResponse{}
+	if err := client.opts.iotagoAPI.JSONDecode(res.Data, info); err != nil {
+		return nil, err
+	}
+
+	return info, nil
 }
 
 // BlockIssuance gets the info to issue a block.

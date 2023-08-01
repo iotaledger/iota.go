@@ -239,13 +239,13 @@ func (eac *EventAPIClient) subscribeToBlockMetadataTopic(topic string) (<-chan *
 func (eac *EventAPIClient) subscribeToBlockMetadataBlockTopic(topic string) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	return subscribeToTopic(eac, topic, func(payload []byte) (*iotago.ProtocolBlock, error) {
 		metadataRes := &apimodels.BlockMetadataResponse{}
-		if err := json.Unmarshal(payload, metadataRes); err != nil {
+		if err := eac.Client.opts.iotagoAPI.JSONDecode(payload, metadataRes); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 
 			return nil, err
 		}
 
-		return eac.Client.BlockByBlockID(context.Background(), iotago.MustSlotIdentifierFromHexString(metadataRes.BlockID))
+		return eac.Client.BlockByBlockID(context.Background(), metadataRes.BlockID)
 	})
 }
 

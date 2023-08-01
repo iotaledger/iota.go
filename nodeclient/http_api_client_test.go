@@ -97,22 +97,20 @@ func TestClient_Info(t *testing.T) {
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10),
 	)
 
-	protoParamsJSON, err := tpkg.TestAPI.JSONEncode(protoParams)
+	originInfo.ProtocolParameters = protoParams
+
+	originInfoJSON, err := tpkg.TestAPI.JSONEncode(originInfo)
 	require.NoError(t, err)
-	protoParamsJSONRawMsg := json.RawMessage(protoParamsJSON)
-	originInfo.ProtocolParameters = &protoParamsJSONRawMsg
 
 	gock.New(nodeAPIUrl).
 		Get(nodeclient.RouteInfo).
 		Reply(200).
-		JSON(originInfo)
+		JSON(json.RawMessage(originInfoJSON))
 
 	nodeAPI := nodeClient(t)
 	info, err := nodeAPI.Info(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originInfo, info)
-	protoParams, err = originInfo.DecodeProtocolParameters()
-	require.NoError(t, err)
 
 	require.NoError(t, err)
 	require.EqualValues(t, protoParams.TokenSupply(), tpkg.TestTokenSupply)
@@ -121,12 +119,12 @@ func TestClient_Info(t *testing.T) {
 func TestClient_BlockIssuance(t *testing.T) {
 	defer gock.Off()
 
-	parents := []string{"733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d", "5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe"}
+	identifier := tpkg.Rand40ByteArray()
 
 	originRes := &apimodels.IssuanceBlockHeaderResponse{
-		StrongParents:       parents,
-		WeakParents:         parents,
-		ShallowLikeParents:  parents,
+		StrongParents:       iotago.BlockIDs{identifier},
+		WeakParents:         iotago.BlockIDs{identifier},
+		ShallowLikeParents:  iotago.BlockIDs{identifier},
 		LatestFinalizedSlot: iotago.SlotIndex(20),
 	}
 
@@ -195,7 +193,7 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originRes := &apimodels.BlockMetadataResponse{
-		BlockID:    queryHash,
+		BlockID:    identifier,
 		BlockState: apimodels.BlockStateConfirmed.String(),
 		TxState:    apimodels.TransactionStateConfirmed.String(),
 	}
@@ -308,16 +306,16 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
 	txID := tpkg.Rand32ByteArray()
-	hexTxID := hexutil.EncodeHex(txID[:])
+
 	originRes := &apimodels.OutputMetadataResponse{
-		BlockID:              hexutil.EncodeHex(tpkg.RandBytes(40)),
-		TransactionID:        hexTxID,
+		BlockID:              tpkg.Rand40ByteArray(),
+		TransactionID:        txID,
 		OutputIndex:          3,
 		IsSpent:              true,
-		CommitmentIDSpent:    hexutil.EncodeHex(tpkg.RandBytes(40)),
-		TransactionIDSpent:   hexutil.EncodeHex(tpkg.RandBytes(32)),
-		IncludedCommitmentID: hexutil.EncodeHex(tpkg.RandBytes(40)),
-		LatestCommitmentID:   hexutil.EncodeHex(tpkg.RandBytes(40)),
+		CommitmentIDSpent:    tpkg.Rand40ByteArray(),
+		TransactionIDSpent:   tpkg.Rand32ByteArray(),
+		IncludedCommitmentID: tpkg.Rand40ByteArray(),
+		LatestCommitmentID:   tpkg.Rand40ByteArray(),
 	}
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
@@ -333,9 +331,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 
-	resTxID, err := resp.TxID()
-	require.NoError(t, err)
-	require.EqualValues(t, txID, *resTxID)
+	require.EqualValues(t, txID, resp.TransactionID)
 }
 
 func TestClient_CommitmentByID(t *testing.T) {
