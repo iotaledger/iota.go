@@ -38,9 +38,6 @@ func (b BlockState) String() string {
 	}[b]
 }
 
-type TransactionState byte
-type TransactionFailureReason byte
-
 func (b BlockState) Bytes() ([]byte, error) {
 	return []byte{byte(b)}, nil
 }
@@ -64,6 +61,21 @@ const (
 	// TODO: see if needed after congestion PR is done.
 	BlockFailureOrphanedDueNegativeCreditsBalance BlockFailureReason = 6
 )
+
+func (t BlockFailureReason) Bytes() ([]byte, error) {
+	return []byte{byte(t)}, nil
+}
+
+func BlockFailureReasonFromBytes(b []byte) (BlockFailureReason, int, error) {
+	if len(b) < BlockFailureReasonLength {
+		return 0, 0, ierrors.New("invalid block failure reason size")
+	}
+
+	return BlockFailureReason(b[0]), BlockFailureReasonLength, nil
+}
+
+type TransactionState byte
+type TransactionFailureReason byte
 
 const (
 	TransactionStateLength         = serializer.OneByte
@@ -128,13 +140,25 @@ const (
 	TxFailureSemanticValidationFailed              TransactionFailureReason = 255
 )
 
+func (t TransactionFailureReason) Bytes() ([]byte, error) {
+	return []byte{byte(t)}, nil
+}
+
+func TransactionFailureReasonFromBytes(b []byte) (TransactionFailureReason, int, error) {
+	if len(b) < TransactionFailureReasonLength {
+		return 0, 0, ierrors.New("invalid transaction failure reason size")
+	}
+
+	return TransactionFailureReason(b[0]), TransactionFailureReasonLength, nil
+}
+
 type (
 	// InfoResponse defines the response of a GET info REST API call.
 	InfoResponse struct {
 		// The name of the node software.
 		Name string `serix:"0,mapKey=name"`
 		// The semver version of the node software.
-		Version iotago.Version `serix:"1,mapKey=version"`
+		Version string `serix:"1,mapKey=version"`
 		// The current status of this node.
 		Status *InfoResNodeStatus `serix:"2,mapKey=status"`
 		// The metrics of this node.
@@ -148,8 +172,8 @@ type (
 	}
 
 	InfoResProtocolParameters struct {
-		StartEpoch         iotago.EpochIndex         `serix:"0,mapKey=startEpoch"`
-		ProtocolParameters iotago.ProtocolParameters `serix:"1,mapKey=protocolParameters"`
+		StartEpoch iotago.EpochIndex         `serix:"0,mapKey=startEpoch"`
+		Parameters iotago.ProtocolParameters `serix:"1,mapKey=parameters"`
 	}
 
 	// InfoResNodeStatus defines the status of the node in info response.

@@ -9,13 +9,13 @@ import (
 // IndexerResponse is the standard successful response by the indexer.
 type IndexerResponse struct {
 	// The ledger index at which these outputs where available at.
-	LedgerIndex iotago.SlotIndex `json:"ledgerIndex"`
+	LedgerIndex iotago.SlotIndex `serix:"0,mapKey=ledgerIndex"`
 	// The maximum count of results that are returned by the node.
-	PageSize int `json:"pageSize"`
+	PageSize uint32 `serix:"1,mapKey=pageSize"`
 	// The output IDs (transaction hash + output index) of the found outputs.
-	Items iotago.HexOutputIDs `json:"items"`
+	Items iotago.HexOutputIDs `serix:"2,mapKey=items"`
 	// The cursor to use for getting the next results.
-	Cursor *string `json:"cursor"`
+	Cursor string `serix:"3,mapKey=cursor,omitempty"`
 }
 
 // IndexerCursorParams define page size and cursor query parameters.
