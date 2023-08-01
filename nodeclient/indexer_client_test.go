@@ -1,7 +1,6 @@
 package nodeclient_test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"testing"
@@ -59,10 +58,7 @@ func Test_IndexerEnabled(t *testing.T) {
 		Routes: []string{"indexer/v2"},
 	}
 
-	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteRoutes).
-		Reply(200).
-		JSON(originRoutes)
+	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -77,10 +73,7 @@ func Test_IndexerDisabled(t *testing.T) {
 		Routes: []string{"someplugin/v1"},
 	}
 
-	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteRoutes).
-		Reply(200).
-		JSON(originRoutes)
+	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -92,8 +85,6 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	data, err := tpkg.TestAPI.Encode(originOutput)
-	require.NoError(t, err)
 
 	txID := tpkg.Rand32ByteArray()
 	fakeOutputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 1).ToHex()
@@ -102,47 +93,28 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 		Routes: []string{"indexer/v2"},
 	}
 
-	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteRoutes).
-		Reply(200).
-		JSON(originRoutes)
+	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
 
-	gock.New(nodeAPIUrl).
-		Get(nodeclient.IndexerAPIRouteBasicOutputs).
-		MatchParam("tag", "some-tag").
-		Reply(200).
-		JSON(apimodels.IndexerResponse{
-			LedgerIndex: 1337,
-			PageSize:    1,
-			Items:       iotago.HexOutputIDs{fakeOutputID},
-			Cursor: func() *string {
-				str := "some-offset-key"
+	mockGetJSONWithParams(nodeclient.IndexerAPIRouteBasicOutputs, 200, &apimodels.IndexerResponse{
+		LedgerIndex: 1337,
+		PageSize:    1,
+		Items:       iotago.HexOutputIDs{fakeOutputID},
+		Cursor:      "some-offset-key",
+	}, map[string]string{
+		"tag": "some-tag",
+	})
 
-				return &str
-			}(),
-		})
-
-	gock.New(nodeAPIUrl).
-		Get(nodeclient.IndexerAPIRouteBasicOutputs).
-		MatchParams(map[string]string{
-			"cursor": "some-offset-key",
-			"tag":    "some-tag",
-		}).
-		Reply(200).
-		JSON(apimodels.IndexerResponse{
-			LedgerIndex: 1338,
-			PageSize:    1,
-			Items:       iotago.HexOutputIDs{fakeOutputID},
-			Cursor:      nil,
-		})
+	mockGetJSONWithParams(nodeclient.IndexerAPIRouteBasicOutputs, 200, &apimodels.IndexerResponse{
+		LedgerIndex: 1338,
+		PageSize:    1,
+		Items:       iotago.HexOutputIDs{fakeOutputID},
+	}, map[string]string{
+		"cursor": "some-offset-key",
+		"tag":    "some-tag",
+	})
 
 	outputRoute := fmt.Sprintf(nodeclient.RouteOutput, fakeOutputID)
-	gock.New(nodeAPIUrl).
-		Persist().
-		Get(outputRoute).
-		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1).
-		Reply(200).
-		Body(bytes.NewReader(data))
+	mockGetBinary(outputRoute, 200, originOutput, true)
 
 	client := nodeClient(t)
 

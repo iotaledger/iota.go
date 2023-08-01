@@ -177,7 +177,7 @@ func (f *FoundryOutput) Chain() ChainID {
 
 // ID returns the FoundryID of this FoundryOutput.
 func (f *FoundryOutput) ID() (FoundryID, error) {
-	serixAPI := commonSerixAPI()
+	serixAPI := CommonSerixAPI()
 	var foundryID FoundryID
 	addrBytes, err := serixAPI.Encode(context.Background(), f.Ident())
 	if err != nil {

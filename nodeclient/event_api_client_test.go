@@ -26,11 +26,7 @@ func Test_EventAPIEnabled(t *testing.T) {
 	originRoutes := &apimodels.RoutesResponse{
 		Routes: []string{"mqtt/v2"},
 	}
-
-	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteRoutes).
-		Reply(200).
-		JSON(originRoutes)
+	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
 
 	_, err := nodeClient(t).EventAPI(context.TODO())
 	require.NoError(t, err)
@@ -43,10 +39,7 @@ func Test_EventAPIDisabled(t *testing.T) {
 		Routes: []string{"someplugin/v1"},
 	}
 
-	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteRoutes).
-		Reply(200).
-		JSON(originRoutes)
+	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
 
 	_, err := nodeClient(t).EventAPI(context.TODO())
 	require.ErrorIs(t, err, nodeclient.ErrMQTTPluginNotAvailable)

@@ -6,7 +6,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
-func commonSerixAPI() *serix.API {
+func CommonSerixAPI() *serix.API {
 	api := serix.NewAPI()
 
 	{
@@ -39,7 +39,7 @@ func commonSerixAPI() *serix.API {
 
 func ProtocolParametersFromBytes(bytes []byte) (params ProtocolParameters, bytesRead int, err error) {
 	var protocolParameters ProtocolParameters
-	n, err := commonSerixAPI().Decode(context.TODO(), bytes, &protocolParameters, serix.WithValidation())
+	n, err := CommonSerixAPI().Decode(context.TODO(), bytes, &protocolParameters, serix.WithValidation())
 	if err != nil {
 		return nil, 0, err
 	}

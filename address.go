@@ -129,7 +129,7 @@ func newAddress(addressType byte) (address Address, err error) {
 }
 
 func bech32String(hrp NetworkPrefix, addr Address) string {
-	serixAPI := commonSerixAPI()
+	serixAPI := CommonSerixAPI()
 	bytes, err := serixAPI.Encode(context.Background(), addr)
 	if err != nil {
 		panic(err)
@@ -158,7 +158,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		return "", nil, err
 	}
 
-	serixAPI := commonSerixAPI()
+	serixAPI := CommonSerixAPI()
 	n, err := serixAPI.Decode(context.Background(), addrData, addr)
 	if err != nil {
 		return "", nil, err
