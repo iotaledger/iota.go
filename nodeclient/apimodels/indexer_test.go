@@ -27,6 +27,10 @@ func Test_IndexerResponse(t *testing.T) {
 
 		expected := "{\"ledgerIndex\":\"281\",\"pageSize\":1000,\"items\":[\"0xff000000000000000000000000000000000000000000000000000000000000000000\",\"0xfa000000000000000000000000000000000000000000000000000000000000000000\"],\"cursor\":\"cursor-value\"}"
 		require.Equal(t, expected, string(jsonResponse))
+
+		decoded := new(apimodels.IndexerResponse)
+		require.NoError(t, api.JSONDecode(jsonResponse, decoded))
+		require.EqualValues(t, response, decoded)
 	}
 
 	// Test omitempty
@@ -45,5 +49,9 @@ func Test_IndexerResponse(t *testing.T) {
 
 		expected := "{\"ledgerIndex\":\"281\",\"pageSize\":1000,\"items\":[\"0xff000000000000000000000000000000000000000000000000000000000000000000\",\"0xfa000000000000000000000000000000000000000000000000000000000000000000\"]}"
 		require.Equal(t, expected, string(jsonResponse))
+
+		decoded := new(apimodels.IndexerResponse)
+		require.NoError(t, api.JSONDecode(jsonResponse, decoded))
+		require.EqualValues(t, response, decoded)
 	}
 }

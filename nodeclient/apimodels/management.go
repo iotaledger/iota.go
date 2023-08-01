@@ -13,12 +13,12 @@ type (
 		Alias string `serix:"1,mapKey=alias,omitempty"`
 	}
 
-	// PeerResponse defines the response of a GET peer REST API call.
-	PeerResponse struct {
+	// PeerInfo defines the response of a GET peer REST API call.
+	PeerInfo struct {
 		// The libp2p identifier of the peer.
 		ID string `serix:"0,mapKey=id"`
 		// The libp2p multi addresses of the peer.
-		MultiAddresses []string `serix:"1,mapKey=multiAddresses"`
+		MultiAddresses []string `serix:"1,mapKey=multiAddresses,lengthPrefixType=uint8"`
 		// The alias to identify the peer.
 		Alias string `serix:"2,mapKey=alias,omitempty"`
 		// The relation (static, autopeered) of the peer.
@@ -27,6 +27,10 @@ type (
 		Connected bool `serix:"4,mapKey=connected"`
 		// The gossip related information about this peer.
 		Gossip *GossipInfo `serix:"5,mapKey=gossip,omitempty"`
+	}
+
+	PeersResponse struct {
+		Peers []*PeerInfo `serix:"0,mapKey=peers,lengthPrefixType=uint8"`
 	}
 
 	// GossipInfo represents information about an ongoing gossip protocol.
@@ -51,10 +55,10 @@ type (
 		// The latest known slot index by the node.
 		LatestSlotIndex iotago.SlotIndex `serix:"2,mapKey=latestSlotIndex"`
 		// The amount of currently connected peers.
-		ConnectedPeers int `serix:"3,mapKey=connectedPeers"`
+		ConnectedPeers uint32 `serix:"3,mapKey=connectedPeers"`
 		// The amount of currently connected peers who also
 		// are synchronized with the network.
-		SyncedPeers int `serix:"4,mapKey=syncedPeers"`
+		SyncedPeers uint32 `serix:"4,mapKey=syncedPeers"`
 	}
 
 	// PeerGossipMetrics defines the peer gossip metrics.

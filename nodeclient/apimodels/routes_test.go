@@ -20,5 +20,9 @@ func Test_RoutesResponse(t *testing.T) {
 
 		expected := "{\"routes\":[\"route1\",\"route2\"]}"
 		require.Equal(t, expected, string(jsonResponse))
+
+		decoded := new(apimodels.RoutesResponse)
+		require.NoError(t, api.JSONDecode(jsonResponse, decoded))
+		require.EqualValues(t, response, decoded)
 	}
 }
