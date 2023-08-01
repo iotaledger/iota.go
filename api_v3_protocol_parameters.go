@@ -38,7 +38,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				0,
 				0,
 			),
-			WithLivenessOptions(10, 3, 4),
+			WithLivenessOptions(3, 10, 20, 24),
 			WithStakingOptions(10),
 			WithVersionSignalingOptions(7, 5, 7),
 		},
@@ -102,8 +102,12 @@ func (p *V3ProtocolParameters) LivenessThresholdDuration() time.Duration {
 	return p.livenessThresholdDuration
 }
 
-func (p *V3ProtocolParameters) EvictionAge() SlotIndex {
-	return p.basicProtocolParameters.EvictionAge
+func (p *V3ProtocolParameters) MinCommittableAge() SlotIndex {
+	return p.basicProtocolParameters.MinCommittableAge
+}
+
+func (p *V3ProtocolParameters) MaxCommittableAge() SlotIndex {
+	return p.basicProtocolParameters.MaxCommittableAge
 }
 
 func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
@@ -128,8 +132,8 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 }
 
 func (p *V3ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n\tEviction Age: %d\n\tLiveness Threshold: %d\n}",
-		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate, p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent, p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.EvictionAge, p.basicProtocolParameters.LivenessThreshold)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n}",
+		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate, p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent, p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
@@ -220,17 +224,18 @@ func WithManaOptions(manaGenerationRate uint8, manaGenerationRateExponent uint8,
 	}
 }
 
-func WithLivenessOptions(evictionAge SlotIndex, livenessThreshold SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
+func WithLivenessOptions(livenessThreshold SlotIndex, minCommittableAge SlotIndex, maxCommittableAge SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.EvictionAge = evictionAge
 		p.basicProtocolParameters.LivenessThreshold = livenessThreshold
+		p.basicProtocolParameters.MinCommittableAge = minCommittableAge
+		p.basicProtocolParameters.MaxCommittableAge = maxCommittableAge
 		p.basicProtocolParameters.EpochNearingThreshold = epochNearingThreshold
 	}
 }
 
-func WithStakingOptions(unboundPeriod EpochIndex) options.Option[V3ProtocolParameters] {
+func WithStakingOptions(unbondingPeriod EpochIndex) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.StakingUnbondingPeriod = unboundPeriod
+		p.basicProtocolParameters.StakingUnbondingPeriod = unbondingPeriod
 	}
 }
 

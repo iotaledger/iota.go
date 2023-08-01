@@ -111,9 +111,11 @@ type ProtocolParameters interface {
 
 	LivenessThreshold() SlotIndex
 
-	LivenessThresholdDuration() time.Duration
+	MinCommittableAge() SlotIndex
 
-	EvictionAge() SlotIndex
+	MaxCommittableAge() SlotIndex
+
+	LivenessThresholdDuration() time.Duration
 
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.

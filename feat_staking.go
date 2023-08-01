@@ -27,6 +27,8 @@ var (
 	ErrInvalidStakingRewardInputRequired = ierrors.New("staking feature removal or resetting requires a reward input")
 	// ErrInvalidStakingRewardClaim gets returned when mana rewards are claimed before the end of the unbonding period.
 	ErrInvalidStakingRewardClaim = ierrors.New("staking rewards claiming can only be done after the unbonding period")
+	// ErrInvalidStakingCommitmentInput gets returned when no commitment input was passed in a TX containing a staking feature.
+	ErrInvalidStakingCommitmentInput = ierrors.New("staking feature validation requires a commitment input")
 )
 
 // StakingFeature is a feature which indicates that this account wants to register as a validator.
