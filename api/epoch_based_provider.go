@@ -47,10 +47,9 @@ func (e *EpochBasedProvider) AddProtocolParametersAtEpoch(protocolParameters iot
 
 func (e *EpochBasedProvider) AddProtocolParameters(protocolParameters iotago.ProtocolParameters) {
 	e.mutex.Lock()
-	defer e.mutex.Unlock()
-
 	e.protocolParametersByVersion[protocolParameters.Version()] = protocolParameters
 	delete(e.futureProtocolParametersByVersion, protocolParameters.Version())
+	e.mutex.Unlock()
 
 	e.latestVersionMutex.Lock()
 	defer e.latestVersionMutex.Unlock()

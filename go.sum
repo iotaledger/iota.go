@@ -35,8 +35,8 @@ github.com/iotaledger/hive.go/runtime v0.0.0-20230728082521-74f3f2957f0c h1:Qtll
 github.com/iotaledger/hive.go/runtime v0.0.0-20230728082521-74f3f2957f0c/go.mod h1:WiKFI1b5dj/Pa4wyPkVLUTnrId16tI3oxV1HJXGXxVw=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230728100039-3d97aada979b h1:V2nXtvPYEFsmMCnrjCP2TcHovAWVwM3JdoFGbcSBowc=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230728100039-3d97aada979b/go.mod h1:iR3F+ht9D2cgcheNDRtva4jENlW5Vjw2mCLhVSolGak=
-github.com/iotaledger/hive.go/stringify v0.0.0-20230728082147-9fbb11f3eab5 h1:v8ZyIetflz0Q0pFCHZk6QWWlXeoLi6wYZ7GwrH0UuJE=
-github.com/iotaledger/hive.go/stringify v0.0.0-20230728082147-9fbb11f3eab5/go.mod h1:l/F3cA/+67QdNj+sohv2v4HhmsdOcWScoA+sVYoAE4c=
+github.com/iotaledger/hive.go/stringify v0.0.0-20230728082521-74f3f2957f0c h1:Z1Pd3JUL6QyaZLUIf3+SXJnIFIxgmce4FoyKqM8ZaCk=
+github.com/iotaledger/hive.go/stringify v0.0.0-20230728082521-74f3f2957f0c/go.mod h1:l/F3cA/+67QdNj+sohv2v4HhmsdOcWScoA+sVYoAE4c=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
