@@ -279,7 +279,7 @@ func (a *AccountOutput) ImmutableFeatureSet() FeatureSet {
 	return a.ImmutableFeatures.MustSet()
 }
 
-func (a *AccountOutput) Deposit() BaseToken {
+func (a *AccountOutput) BaseTokenAmount() BaseToken {
 	return a.Amount
 }
 

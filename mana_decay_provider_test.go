@@ -181,7 +181,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 func TestManaDecay_PotentialMana(t *testing.T) {
 	type test struct {
 		name             string
-		deposit          iotago.BaseToken
+		amount           iotago.BaseToken
 		slotIndexCreated iotago.SlotIndex
 		slotIndexTarget  iotago.SlotIndex
 		result           iotago.Mana
@@ -191,7 +191,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 	tests := []test{
 		{
 			name:             "check if mana decay works for 0 base token values",
-			deposit:          0,
+			amount:           0,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(400),
 			result:           0,
@@ -199,7 +199,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for 0 slot index diffs",
-			deposit:          math.MaxInt64,
+			amount:           math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(1),
 			result:           0,
@@ -207,7 +207,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check for error if target index is lower than created index",
-			deposit:          0,
+			amount:           0,
 			slotIndexCreated: testTimeProvider.EpochStart(2),
 			slotIndexTarget:  testTimeProvider.EpochStart(1),
 			result:           0,
@@ -215,7 +215,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
-			deposit:          math.MaxInt64,
+			amount:           math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
 			result:           183827294847826527,
@@ -223,7 +223,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for multiples of the available epoch indexes in the lookup table",
-			deposit:          math.MaxInt64,
+			amount:           math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
 			result:           410192222442040018,
@@ -231,7 +231,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana generation works for 0 epoch index diffs",
-			deposit:          math.MaxInt64,
+			amount:           math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(1),
 			result:           562881233944575,
@@ -239,7 +239,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana generation works for 1 epoch index diffs",
-			deposit:          math.MaxInt64,
+			amount:           math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(2),
 			result:           1125343946211326,
@@ -247,7 +247,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana generation works for >=2 epoch index diffs",
-			deposit:          math.MaxInt64,
+			amount:           math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(3),
 			result:           1687319975062367,
@@ -255,7 +255,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "even with the highest possible int64 number, the calculation should not overflow",
-			deposit:          math.MaxInt64,
+			amount:           math.MaxInt64,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(401),
 			result:           190239292158065300,
@@ -265,7 +265,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := testManaDecayProvider.PotentialManaWithDecay(tt.deposit, tt.slotIndexCreated, tt.slotIndexTarget)
+			result, err := testManaDecayProvider.PotentialManaWithDecay(tt.amount, tt.slotIndexCreated, tt.slotIndexTarget)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 

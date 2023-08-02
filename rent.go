@@ -18,9 +18,9 @@ const (
 )
 
 var (
-	// ErrVByteRentNotCovered gets returned when a NonEphemeralObject does not cover the state rent
-	// cost which are calculated from its virtual byte costs.
-	ErrVByteRentNotCovered = ierrors.New("virtual byte rent costs not covered")
+	// ErrVByteDepositNotCovered gets returned when a NonEphemeralObject does not cover the minimum deposit
+	// which is calculated from its virtual byte costs.
+	ErrVByteDepositNotCovered = ierrors.New("virtual byte minimum deposit not covered")
 	// ErrTypeIsNotSupportedRentStructure gets returned when a serializable was found to not be a supported RentStructure.
 	ErrTypeIsNotSupportedRentStructure = ierrors.New("serializable is not a supported rent structure")
 )
@@ -36,6 +36,8 @@ func (factor VByteCostFactor) With(other VByteCostFactor) VByteCostFactor {
 }
 
 // RentStructure defines the parameters of rent cost calculations on objects which take node resources.
+// This structure defines the minimum base token deposit required on an object. This deposit does not
+// generate Mana, which serves as a rent payment in Mana for storing the object.
 type RentStructure struct {
 	// Defines the rent of a single virtual byte denoted in IOTA tokens.
 	VByteCost uint32 `serix:"0,mapKey=vByteCost"`
@@ -45,20 +47,20 @@ type RentStructure struct {
 	VBFactorKey VByteCostFactor `serix:"2,mapKey=vByteFactorKey"`
 }
 
-// CoversStateRent tells whether given this NonEphemeralObject, the given rent fulfills the renting costs
+// CoversMinDeposit tells whether given this NonEphemeralObject, the base token amount fulfills the deposit requirements
 // by examining the virtual bytes cost of the object.
-// Returns the minimum rent computed and an error if it is not covered by rent.
-func (r *RentStructure) CoversStateRent(object NonEphemeralObject, rent BaseToken) (BaseToken, error) {
-	minRent := r.MinRent(object)
-	if rent < minRent {
-		return 0, ierrors.Wrapf(ErrVByteRentNotCovered, "needed %d but only got %d", minRent, rent)
+// Returns the minimum deposit computed and an error if it is not covered by the base token amount of the object.
+func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseToken) (BaseToken, error) {
+	minDeposit := r.MinDeposit(object)
+	if amount < minDeposit {
+		return 0, ierrors.Wrapf(ErrVByteDepositNotCovered, "needed %d but only got %d", minDeposit, amount)
 	}
 
-	return minRent, nil
+	return minDeposit, nil
 }
 
-// MinRent returns the minimum rent to cover a given object.
-func (r *RentStructure) MinRent(object NonEphemeralObject) BaseToken {
+// MinDeposit returns the minimum deposit to cover a given object.
+func (r *RentStructure) MinDeposit(object NonEphemeralObject) BaseToken {
 	return BaseToken(r.VByteCost) * BaseToken(object.VBytes(r, nil))
 }
 

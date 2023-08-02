@@ -61,12 +61,12 @@ var (
 	ErrDelegationValidatorIDZeroed = ierrors.New("delegation output's validator ID is zeroed")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = ierrors.New("accumulated output balance exceeds total supply")
-	// ErrOutputDepositsMoreThanTotalSupply gets returned if an output deposits more than the total supply.
-	ErrOutputDepositsMoreThanTotalSupply = ierrors.New("an output can not deposit more than the total supply")
+	// ErrOutputAmountMoreThanTotalSupply gets returned if an output base token amount is more than the total supply.
+	ErrOutputAmountMoreThanTotalSupply = ierrors.New("an output's base token amount cannot exceed the total supply")
 	// ErrStorageDepositLessThanMinReturnOutputStorageDeposit gets returned when the storage deposit condition's amount is less than the min storage deposit for the return output.
 	ErrStorageDepositLessThanMinReturnOutputStorageDeposit = ierrors.New("storage deposit return amount is less than the min storage deposit needed for the return output")
-	// ErrStorageDepositExceedsTargetOutputDeposit gets returned when the storage deposit condition's amount exceeds the target output's deposit.
-	ErrStorageDepositExceedsTargetOutputDeposit = ierrors.New("storage deposit return amount exceeds target output's deposit")
+	// ErrStorageDepositExceedsTargetOutputAmount gets returned when the storage deposit condition's amount exceeds the target output's base token amount.
+	ErrStorageDepositExceedsTargetOutputAmount = ierrors.New("storage deposit return amount exceeds target output's base token amount")
 	// ErrMaxNativeTokensCountExceeded gets returned if outputs or transactions exceed the MaxNativeTokensCount.
 	ErrMaxNativeTokensCountExceeded = ierrors.New("max native tokens count exceeded")
 )

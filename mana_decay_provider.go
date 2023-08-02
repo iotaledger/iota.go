@@ -154,7 +154,7 @@ func (p *ManaDecayProvider) StoredManaWithDecay(storedMana Mana, slotIndexCreate
 }
 
 // PotentialManaWithDecay calculates the generated potential mana and applies the decay to the result.
-func (p *ManaDecayProvider) PotentialManaWithDecay(deposit BaseToken, slotIndexCreated SlotIndex, slotIndexTarget SlotIndex) (Mana, error) {
+func (p *ManaDecayProvider) PotentialManaWithDecay(amount BaseToken, slotIndexCreated SlotIndex, slotIndexTarget SlotIndex) (Mana, error) {
 	epochIndexCreated := p.timeProvider.EpochFromSlot(slotIndexCreated)
 	epochIndexTarget := p.timeProvider.EpochFromSlot(slotIndexTarget)
 
@@ -165,24 +165,24 @@ func (p *ManaDecayProvider) PotentialManaWithDecay(deposit BaseToken, slotIndexC
 	epochIndexDiff := epochIndexTarget - epochIndexCreated
 	switch epochIndexDiff {
 	case 0:
-		return p.generateMana(deposit, slotIndexTarget-slotIndexCreated), nil
+		return p.generateMana(amount, slotIndexTarget-slotIndexCreated), nil
 
 	case 1:
-		manaDecayed := p.decay(p.generateMana(deposit, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), 1)
-		manaGenerated := p.generateMana(deposit, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget))
+		manaDecayed := p.decay(p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), 1)
+		manaGenerated := p.generateMana(amount, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget))
 		return safemath.SafeAdd(manaDecayed, manaGenerated)
 
 	default:
-		c := Mana(fixedPointMultiplication32(uint64(deposit), p.decayFactorEpochsSum, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent))
+		c := Mana(fixedPointMultiplication32(uint64(amount), p.decayFactorEpochsSum, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent))
 
 		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_n := p.decay(p.generateMana(deposit, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), epochIndexDiff)
+		potentialMana_n := p.decay(p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), epochIndexDiff)
 
 		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
 		potentialMana_n_1 := p.decay(c, epochIndexDiff-1)
 
 		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_0, err := safemath.SafeAdd(c, p.generateMana(deposit, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget)))
+		potentialMana_0, err := safemath.SafeAdd(c, p.generateMana(amount, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget)))
 		if err != nil {
 			return 0, err
 		}
