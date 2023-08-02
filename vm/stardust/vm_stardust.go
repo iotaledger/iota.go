@@ -316,8 +316,12 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 
 	// AccountInPotential
 	// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
-	// don't need to check for underflow because we already checked that the output amount is greater than the min deposit
-	excessBaseTokensAccount := current.Amount - rentStructure.MinDeposit(current)
+	var excessBaseTokensAccount iotago.BaseToken
+	if current.Amount <= rentStructure.MinDeposit(current) {
+		excessBaseTokensAccount = 0
+	} else {
+		excessBaseTokensAccount = current.Amount - rentStructure.MinDeposit(current)
+	}
 	manaPotentialAccount, err := manaDecayProvider.PotentialManaWithDecay(excessBaseTokensAccount, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", current.AccountID)
