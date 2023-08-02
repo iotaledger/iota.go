@@ -50,7 +50,7 @@ type RentStructure struct {
 	// Defines the factor to be used for block issuer feature public keys.
 	VBFactorIssuerKeys VByteCostFactor `serix:"3,mapKey=vByteFactorIssuerKeys"`
 	// Defines the factor to be used for staking feature.
-	VBFactorStakingFeature VByteCostFactor `serix:"4,mapKey=vByteFactorIssuerKeys"`
+	VBFactorStakingFeature VByteCostFactor `serix:"4,mapKey=vByteFactorStakingFeature"`
 }
 
 // CoversStateRent tells whether given this NonEphemeralObject, the given rent fulfills the renting costs

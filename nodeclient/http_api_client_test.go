@@ -32,7 +32,7 @@ const (
 var (
 	protoParams = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("alphanet", "atoi"),
-		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10),
+		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10, 100, 100),
 	)
 
 	mockAPI = iotago.V3API(protoParams)
