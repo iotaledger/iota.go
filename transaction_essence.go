@@ -88,7 +88,7 @@ func TransactionEssenceSelector(txType uint32) (*TransactionEssence, error) {
 type InputsCommitment = [InputsCommitmentLength]byte
 
 type (
-	txEssenceContextInput  interface{ ContextInput }
+	txEssenceContextInput  interface{ Input }
 	txEssenceInput         interface{ Input }
 	TxEssenceOutput        interface{ Output }
 	TxEssencePayload       interface{ Payload }

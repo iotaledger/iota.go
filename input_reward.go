@@ -9,8 +9,8 @@ type RewardInput struct {
 	Index uint16 `serix:"0,mapKey=index"`
 }
 
-func (r *RewardInput) Type() ContextInputType {
-	return ContextInputReward
+func (r *RewardInput) Type() InputType {
+	return InputReward
 }
 
 func (r *RewardInput) Size() int {

@@ -54,7 +54,7 @@ func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.Output) bool
 
 // AddContextInput adds the given context input to the builder.
-func (b *TransactionBuilder) AddContextInput(contextInput iotago.ContextInput) *TransactionBuilder {
+func (b *TransactionBuilder) AddContextInput(contextInput iotago.Input) *TransactionBuilder {
 	b.essence.ContextInputs = append(b.essence.ContextInputs, contextInput)
 
 	return b

@@ -8,8 +8,8 @@ type CommitmentInput struct {
 	CommitmentID CommitmentID `serix:"0,mapKey=commitmentId"`
 }
 
-func (c *CommitmentInput) Type() ContextInputType {
-	return ContextInputCommitment
+func (c *CommitmentInput) Type() InputType {
+	return InputCommitment
 }
 
 func (c *CommitmentInput) Size() int {

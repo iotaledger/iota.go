@@ -8,8 +8,8 @@ type BlockIssuanceCreditInput struct {
 	AccountID AccountID `serix:"0,mapKey=accountId"`
 }
 
-func (b *BlockIssuanceCreditInput) Type() ContextInputType {
-	return ContextInputBlockIssuanceCredit
+func (b *BlockIssuanceCreditInput) Type() InputType {
+	return InputBlockIssuanceCredit
 }
 
 func (b *BlockIssuanceCreditInput) Size() int {

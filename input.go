@@ -13,6 +13,12 @@ type InputType byte
 const (
 	// InputUTXO is a type of input which references an unspent transaction output.
 	InputUTXO InputType = iota
+	// InputCommitment is a type of input which references a commitment.
+	InputCommitment
+	// InputBlockIssuanceCredit is a type of input which references the block issuance credit from a specific account and commitment, the latter being provided by a commitment input.
+	InputBlockIssuanceCredit
+	// InputReward is a type of input which references an Account or Delegation Input for which to claim rewards.
+	InputReward
 )
 
 func (inputType InputType) String() string {
@@ -23,9 +29,7 @@ func (inputType InputType) String() string {
 	return inputNames[inputType]
 }
 
-var (
-	inputNames = [InputUTXO + 1]string{"UTXOInput"}
-)
+var inputNames = [InputUTXO + 1]string{"UTXOInput"}
 
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
