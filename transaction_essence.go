@@ -62,7 +62,7 @@ var (
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = ierrors.New("accumulated output balance exceeds total supply")
 	// ErrOutputAmountMoreThanTotalSupply gets returned if an output base token amount is more than the total supply.
-	ErrOutputAmountMoreThanTotalSupply = ierrors.New("an output can not have base token amount more than the total supply")
+	ErrOutputAmountMoreThanTotalSupply = ierrors.New("an output's base token amount cannot exceed the total supply")
 	// ErrStorageDepositLessThanMinReturnOutputStorageDeposit gets returned when the storage deposit condition's amount is less than the min storage deposit for the return output.
 	ErrStorageDepositLessThanMinReturnOutputStorageDeposit = ierrors.New("storage deposit return amount is less than the min storage deposit needed for the return output")
 	// ErrStorageDepositExceedsTargetOutputAmount gets returned when the storage deposit condition's amount exceeds the target output's base token amount.

@@ -35,7 +35,7 @@ type Output interface {
 	NonEphemeralObject
 	ProcessableObject
 
-	// BaseTokenAmount the amount of base tokens held by this Output.
+	// BaseTokenAmount returns the amount of base tokens held by this Output.
 	BaseTokenAmount() BaseToken
 
 	// StoredMana returns the stored mana held by this output.
@@ -294,7 +294,7 @@ func (outputIDs OutputIDs) OrderedSet(set OutputSet) Outputs[Output] {
 }
 
 var (
-	// ErrAmountMustBeGreaterThanZero returned if the base token amount of an output is less or equal zero.
+	// ErrAmountMustBeGreaterThanZero gets returned if the base token amount of an output is less or equal zero.
 	ErrAmountMustBeGreaterThanZero = ierrors.New("base token amount must be greater than zero")
 	// ErrChainMissing gets returned when a chain is missing.
 	ErrChainMissing = ierrors.New("chain missing")
@@ -751,7 +751,7 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters) OutputsSynt
 			case storageDep.Amount < minStorageDepositForReturnOutput:
 				return ierrors.Wrapf(ErrStorageDepositLessThanMinReturnOutputStorageDeposit, "output %d, needed %d, have %d", index, minStorageDepositForReturnOutput, storageDep.Amount)
 			case storageDep.Amount > amount:
-				return ierrors.Wrapf(ErrStorageDepositExceedsTargetOutputAmount, "output %d, target output's amount %d < storage deposit %d", index, amount, storageDep.Amount)
+				return ierrors.Wrapf(ErrStorageDepositExceedsTargetOutputAmount, "output %d, target output's base token amount %d < storage deposit %d", index, amount, storageDep.Amount)
 			}
 		}
 
