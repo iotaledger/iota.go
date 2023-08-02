@@ -317,10 +317,11 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationTime, next *iotago.
 	// AccountInPotential
 	// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
 	var excessBaseTokensAccount iotago.BaseToken
-	if current.Amount <= rentStructure.MinDeposit(current) {
+	minDeposit := rentStructure.MinDeposit(current)
+	if current.Amount <= minDeposit {
 		excessBaseTokensAccount = 0
 	} else {
-		excessBaseTokensAccount = current.Amount - rentStructure.MinDeposit(current)
+		excessBaseTokensAccount = current.Amount - minDeposit
 	}
 	manaPotentialAccount, err := manaDecayProvider.PotentialManaWithDecay(excessBaseTokensAccount, input.CreationTime, vmParams.WorkingSet.Tx.Essence.CreationTime)
 	if err != nil {

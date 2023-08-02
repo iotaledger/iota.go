@@ -59,7 +59,7 @@ func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseT
 	return minDeposit, nil
 }
 
-// MinDeposit returns the minimum rent to cover a given object.
+// MinDeposit returns the minimum deposit to cover a given object.
 func (r *RentStructure) MinDeposit(object NonEphemeralObject) BaseToken {
 	return BaseToken(r.VByteCost) * BaseToken(object.VBytes(r, nil))
 }
