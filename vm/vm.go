@@ -125,7 +125,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs Resolve
 	return workingSet, nil
 }
 
-func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
+func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iotago.RentStructure, txCreationTime iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
 	var totalIn iotago.Mana
 	for outputID, input := range inputSet {
 		// stored Mana
@@ -139,7 +139,13 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, txCreationTime iot
 		}
 
 		// potential Mana
-		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(input.Output.Deposit(), input.CreationTime, txCreationTime)
+		// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
+		minDeposit := rentStructure.MinDeposit(input.Output)
+		if input.Output.BaseTokenAmount() <= minDeposit {
+			continue
+		}
+		excessBaseTokens := input.Output.BaseTokenAmount() - minDeposit
+		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(excessBaseTokens, input.CreationTime, txCreationTime)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s potential mana calculation failed", outputID)
 		}
@@ -524,7 +530,7 @@ func ExecFuncBalancedMana() ExecFunc {
 				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation time %d, tx creation time %d", outputID, input.CreationTime, txCreationTime)
 			}
 		}
-		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.ProtocolParameters().RentStructure(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
 		if err != nil {
 			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
 		}
@@ -547,17 +553,17 @@ func ExecFuncBalancedMana() ExecFunc {
 	}
 }
 
-// ExecFuncBalancedDeposit validates that the IOTA tokens are balanced from the input/output side.
+// ExecFuncBalancedBaseTokens validates that the base tokens are balanced from the input/output side.
 // It additionally also incorporates the check whether return amounts via StorageDepositReturnUnlockCondition(s) for specified identities
 // are fulfilled from the output side.
-func ExecFuncBalancedDeposit() ExecFunc {
+func ExecFuncBalancedBaseTokens() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		// note that due to syntactic validation of outputs, input and output deposit sums
+		// note that due to syntactic validation of outputs, input and output base token amount sums
 		// are always within bounds of the total token supply
 		var in, out iotago.BaseToken
 		inputSumReturnAmountPerIdent := make(map[string]iotago.BaseToken)
 		for inputID, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
-			in += input.Output.Deposit()
+			in += input.Output.BaseTokenAmount()
 
 			returnUnlockCond := input.Output.UnlockConditionSet().StorageDepositReturn()
 			if returnUnlockCond == nil {
@@ -577,12 +583,12 @@ func ExecFuncBalancedDeposit() ExecFunc {
 
 		outputSimpleTransfersPerIdent := make(map[string]iotago.BaseToken)
 		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
-			outDeposit := output.Deposit()
-			out += outDeposit
+			outAmount := output.BaseTokenAmount()
+			out += outAmount
 
 			// accumulate simple transfers for StorageDepositReturnUnlockCondition checks
 			if basicOutput, is := output.(*iotago.BasicOutput); is && basicOutput.IsSimpleTransfer() {
-				outputSimpleTransfersPerIdent[basicOutput.Ident().Key()] += outDeposit
+				outputSimpleTransfersPerIdent[basicOutput.Ident().Key()] += outAmount
 			}
 		}
 

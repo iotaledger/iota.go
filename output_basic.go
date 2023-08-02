@@ -94,7 +94,7 @@ func (e *BasicOutput) UnlockConditionSet() UnlockConditionSet {
 	return e.Conditions.MustSet()
 }
 
-func (e *BasicOutput) Deposit() BaseToken {
+func (e *BasicOutput) BaseTokenAmount() BaseToken {
 	return e.Amount
 }
 

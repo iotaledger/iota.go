@@ -10,6 +10,7 @@ import (
 	"net/url"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
 var (
@@ -53,7 +54,7 @@ func readBody(res *http.Response) ([]byte, error) {
 	return resBody, nil
 }
 
-func interpretBody(res *http.Response, decodeTo interface{}) error {
+func interpretBody(ctx context.Context, serixAPI *serix.API, res *http.Response, decodeTo interface{}) error {
 	defer res.Body.Close()
 
 	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusCreated {
@@ -73,7 +74,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 			return nil
 		}
 
-		return json.Unmarshal(resBody, decodeTo)
+		return serixAPI.JSONDecode(ctx, resBody, decodeTo)
 	}
 
 	resBody, err := readBody(res)
@@ -98,6 +99,7 @@ func interpretBody(res *http.Response, decodeTo interface{}) error {
 
 func do(
 	ctx context.Context,
+	serixAPI *serix.API,
 	httpClient *http.Client,
 	baseURL string,
 	userInfo *url.Userinfo,
@@ -116,7 +118,7 @@ func do(
 		var err error
 
 		if rawData, ok := reqObj.(*RawDataEnvelope); !ok {
-			data, err = json.Marshal(reqObj)
+			data, err = serixAPI.JSONEncode(ctx, reqObj)
 			if err != nil {
 				return nil, ierrors.Errorf("unable to serialize request object to JSON: %w", err)
 			}
@@ -168,7 +170,7 @@ func do(
 	}
 
 	// write response into response object
-	if err := interpretBody(res, resObj); err != nil {
+	if err := interpretBody(ctx, serixAPI, res, resObj); err != nil {
 		return nil, err
 	}
 
