@@ -10,6 +10,7 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 )
@@ -137,8 +138,6 @@ type ClientOptions struct {
 	userInfo *url.Userinfo
 	// The hook to modify the URL before sending a request.
 	requestURLHook RequestURLHook
-	// the iotago API instance to use.
-	iotagoAPI iotago.API
 }
 
 // applies the given ClientOption.
@@ -169,13 +168,6 @@ func WithRequestURLHook(requestURLHook RequestURLHook) ClientOption {
 	}
 }
 
-// WithIOTAGoAPI is used to de/serialize objects.
-func WithIOTAGoAPI(api iotago.API) ClientOption {
-	return func(opts *ClientOptions) {
-		opts.iotagoAPI = api
-	}
-}
-
 // ClientOption is a function setting a Client option.
 type ClientOption func(opts *ClientOptions)
 
@@ -191,22 +183,19 @@ func New(baseURL string, opts ...ClientOption) (*Client, error) {
 	options.apply(opts...)
 
 	client := &Client{
-		BaseURL: baseURL,
-		opts:    options,
+		BaseURL:     baseURL,
+		apiProvider: api.NewEpochBasedProvider(),
+		opts:        options,
 	}
 
-	if client.opts.iotagoAPI == nil {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), initInfoEndpointCallTimeout)
-		defer cancelFunc()
-		info, err := client.Info(ctx)
-		if err != nil {
-			return nil, ierrors.Errorf("unable to call info endpoint for protocol parameter init: %w", err)
-		}
-		protoParams, err := info.DecodeProtocolParameters()
-		if err != nil {
-			return nil, ierrors.Errorf("unable to parse protocol parameters from info response: %w", err)
-		}
-		client.opts.iotagoAPI = iotago.LatestAPI(protoParams)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), initInfoEndpointCallTimeout)
+	defer cancelFunc()
+	info, err := client.Info(ctx)
+	if err != nil {
+		return nil, ierrors.Errorf("unable to call info endpoint for protocol parameter init: %w", err)
+	}
+	for _, params := range info.ProtocolParameters {
+		client.apiProvider.AddProtocolParametersAtEpoch(params.Parameters, params.StartEpoch)
 	}
 
 	return client, nil
@@ -216,6 +205,9 @@ func New(baseURL string, opts ...ClientOption) (*Client, error) {
 type Client struct {
 	// The base URL for all API calls.
 	BaseURL string
+
+	apiProvider *api.EpochBasedProvider
+
 	// holds the Client options.
 	opts *ClientOptions
 }
@@ -242,13 +234,13 @@ func (client *Client) HTTPClient() *http.Client {
 // Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *Client) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(ctx, client.opts.httpClient, client.BaseURL, client.opts.userInfo, method, route, client.opts.requestURLHook, nil, reqObj, resObj)
+	return do(ctx, client.CurrentAPI().Underlying(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, method, route, client.opts.requestURLHook, nil, reqObj, resObj)
 }
 
 // DoWithRequestHeaderHook executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *Client) DoWithRequestHeaderHook(ctx context.Context, method string, route string, requestHeaderHook RequestHeaderHook, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(ctx, client.opts.httpClient, client.BaseURL, client.opts.userInfo, method, route, client.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
+	return do(ctx, client.CurrentAPI().Underlying(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, method, route, client.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
 }
 
 // Indexer returns the IndexerClient.
@@ -296,7 +288,7 @@ func (client *Client) Health(ctx context.Context) (bool, error) {
 // Routes gets the routes the node supports.
 func (client *Client) Routes(ctx context.Context) (*apimodels.RoutesResponse, error) {
 	//nolint:bodyclose
-	res := &apimodels.RoutesResponse{}
+	res := new(apimodels.RoutesResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteRoutes, nil, res); err != nil {
 		return nil, err
@@ -307,18 +299,20 @@ func (client *Client) Routes(ctx context.Context) (*apimodels.RoutesResponse, er
 
 // Info gets the info of the node.
 func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error) {
-	res := &apimodels.InfoResponse{}
+	res := new(apimodels.InfoResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, RouteInfo, nil, res); err != nil {
+	if _, err := do(ctx, iotago.CommonSerixAPI(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, http.MethodGet, RouteInfo, client.opts.requestURLHook, nil, nil, res); err != nil {
 		return nil, err
 	}
+
+	client.apiProvider.SetCurrentSlot(res.Status.LatestCommitmentID.Index())
 
 	return res, nil
 }
 
 // BlockIssuance gets the info to issue a block.
 func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlockHeaderResponse, error) {
-	res := &apimodels.IssuanceBlockHeaderResponse{}
+	res := new(apimodels.IssuanceBlockHeaderResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteBlockIssuance, nil, res); err != nil {
 		return nil, err
@@ -349,8 +343,14 @@ func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool
 func (client *Client) SubmitBlock(ctx context.Context, m *iotago.ProtocolBlock) (iotago.BlockID, error) {
 	// do not check the block because the validation would fail if
 	// no parents were given. The node will first add this missing information and
-	// validate the block afterwards.
-	data, err := client.opts.iotagoAPI.Encode(m)
+	// validate the block afterward.
+
+	apiForVersion, err := client.APIForVersion(m.ProtocolVersion)
+	if err != nil {
+		return iotago.EmptyBlockID(), err
+	}
+
+	data, err := apiForVersion.Encode(m)
 	if err != nil {
 		return iotago.EmptyBlockID(), err
 	}
@@ -374,7 +374,7 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.ProtocolBlock) 
 func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*apimodels.BlockMetadataResponse, error) {
 	query := fmt.Sprintf(RouteBlockMetadata, hexutil.EncodeHex(blockID[:]))
 
-	res := &apimodels.BlockMetadataResponse{}
+	res := new(apimodels.BlockMetadataResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -387,14 +387,14 @@ func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago
 func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID) (*iotago.ProtocolBlock, error) {
 	query := fmt.Sprintf(RouteBlock, hexutil.EncodeHex(blockID[:]))
 
-	res := &RawDataEnvelope{}
+	res := new(RawDataEnvelope)
 	//nolint:bodyclose
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
 
-	block := &iotago.ProtocolBlock{}
-	if _, err := client.opts.iotagoAPI.Decode(res.Data, block, serix.WithValidation()); err != nil {
+	block := new(iotago.ProtocolBlock)
+	if _, err := client.APIForSlot(blockID.Index()).Decode(res.Data, block, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 
@@ -405,14 +405,23 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.ProtocolBlock, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlock, hexutil.EncodeHex(txID[:]))
 
-	res := &RawDataEnvelope{}
+	res := new(RawDataEnvelope)
 	//nolint:bodyclose
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
 
-	block := &iotago.ProtocolBlock{}
-	if _, err := client.opts.iotagoAPI.Decode(res.Data, block, serix.WithValidation()); err != nil {
+	block := new(iotago.ProtocolBlock)
+	version, _, err := iotago.VersionFromBytes(res.Data)
+	if err != nil {
+		return nil, err
+	}
+	apiForVersion, err := client.APIForVersion(version)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := apiForVersion.Decode(res.Data, block, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 
@@ -423,7 +432,7 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*apimodels.BlockMetadataResponse, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlockMetadata, hexutil.EncodeHex(txID[:]))
 
-	res := &apimodels.BlockMetadataResponse{}
+	res := new(apimodels.BlockMetadataResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -436,14 +445,14 @@ func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID
 func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) (iotago.Output, error) {
 	query := fmt.Sprintf(RouteOutput, outputID.ToHex())
 
-	res := &RawDataEnvelope{}
+	res := new(RawDataEnvelope)
 	//nolint:bodyclose
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
 		return nil, err
 	}
 
 	var output iotago.TxEssenceOutput
-	if _, err := client.opts.iotagoAPI.Decode(res.Data, &output, serix.WithValidation()); err != nil {
+	if _, err := client.CurrentAPI().Decode(res.Data, &output, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 
@@ -454,7 +463,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*apimodels.OutputMetadataResponse, error) {
 	query := fmt.Sprintf(RouteOutputMetadata, outputID.ToHex())
 
-	res := &apimodels.OutputMetadataResponse{}
+	res := new(apimodels.OutputMetadataResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -467,7 +476,7 @@ func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.Ou
 func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID) (*iotago.Commitment, error) {
 	query := fmt.Sprintf(RouteCommitmentByID, id.ToHex())
 
-	res := &iotago.Commitment{}
+	res := new(iotago.Commitment)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -480,7 +489,7 @@ func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID
 func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*apimodels.UTXOChangesResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByIDUTXOChanges, id.ToHex())
 
-	res := &apimodels.UTXOChangesResponse{}
+	res := new(apimodels.UTXOChangesResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -493,7 +502,7 @@ func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.C
 func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIndex) (*iotago.Commitment, error) {
 	query := fmt.Sprintf(RouteCommitmentByIndex, index)
 
-	res := &iotago.Commitment{}
+	res := new(iotago.Commitment)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -506,7 +515,7 @@ func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIn
 func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*apimodels.UTXOChangesResponse, error) {
 	query := fmt.Sprintf(RouteCommitmentByIndexUTXOChanges, index)
 
-	res := &apimodels.UTXOChangesResponse{}
+	res := new(apimodels.UTXOChangesResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -516,10 +525,10 @@ func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index io
 }
 
 // PeerByID gets a peer by its identifier.
-func (client *Client) PeerByID(ctx context.Context, id string) (*apimodels.PeerResponse, error) {
+func (client *Client) PeerByID(ctx context.Context, id string) (*apimodels.PeerInfo, error) {
 	query := fmt.Sprintf(RoutePeer, id)
 
-	res := &apimodels.PeerResponse{}
+	res := new(apimodels.PeerInfo)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -541,10 +550,10 @@ func (client *Client) RemovePeerByID(ctx context.Context, id string) error {
 }
 
 // Peers returns a list of all peers.
-func (client *Client) Peers(ctx context.Context) ([]*apimodels.PeerResponse, error) {
-	res := []*apimodels.PeerResponse{}
+func (client *Client) Peers(ctx context.Context) (*apimodels.PeersResponse, error) {
+	res := new(apimodels.PeersResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, RoutePeers, nil, &res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, RoutePeers, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -552,16 +561,16 @@ func (client *Client) Peers(ctx context.Context) ([]*apimodels.PeerResponse, err
 }
 
 // AddPeer adds a new peer by libp2p multi address with optional alias.
-func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ...string) (*apimodels.PeerResponse, error) {
+func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ...string) (*apimodels.PeerInfo, error) {
 	req := &apimodels.AddPeerRequest{
 		MultiAddress: multiAddress,
 	}
 
 	if len(alias) > 0 {
-		req.Alias = &alias[0]
+		req.Alias = alias[0]
 	}
 
-	res := &apimodels.PeerResponse{}
+	res := new(apimodels.PeerInfo)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodPost, RoutePeers, req, res); err != nil {
 		return nil, err
@@ -569,3 +578,25 @@ func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ..
 
 	return res, nil
 }
+
+func (client *Client) APIForVersion(version iotago.Version) (iotago.API, error) {
+	return client.apiProvider.APIForVersion(version)
+}
+
+func (client *Client) APIForEpoch(epoch iotago.EpochIndex) iotago.API {
+	return client.apiProvider.APIForEpoch(epoch)
+}
+
+func (client *Client) APIForSlot(slot iotago.SlotIndex) iotago.API {
+	return client.apiProvider.APIForSlot(slot)
+}
+
+func (client *Client) CurrentAPI() iotago.API {
+	return client.apiProvider.CurrentAPI()
+}
+
+func (client *Client) LatestAPI() iotago.API {
+	return client.apiProvider.LatestAPI()
+}
+
+var _ api.Provider = new(Client)

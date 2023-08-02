@@ -221,7 +221,7 @@ func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, er
 
 // V3API instantiates an API instance with types registered conforming to protocol version 3 (iota-core 1.0) of the IOTA protocol.
 func V3API(protoParams ProtocolParameters) API {
-	api := commonSerixAPI()
+	api := CommonSerixAPI()
 
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{

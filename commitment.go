@@ -41,7 +41,7 @@ func NewEmptyCommitment(version Version) *Commitment {
 }
 
 func (c *Commitment) ID() (CommitmentID, error) {
-	data, err := commonSerixAPI().Encode(context.TODO(), c)
+	data, err := CommonSerixAPI().Encode(context.TODO(), c)
 	if err != nil {
 		return CommitmentID{}, ierrors.Errorf("can't compute commitment ID: %w", err)
 	}
