@@ -201,7 +201,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	nonZeroCostParams := iotago.NewV3ProtocolParameters(
-		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, iotago.VByteCostFactorData, iotago.VByteCostFactorKey),
+		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, iotago.VByteCostFactorData, iotago.VByteCostFactorKey, iotago.VByteCostFactorBlockIssuerKeys, iotago.VByteCostFactorStakingFeature),
 	)
 
 	tests := []struct {

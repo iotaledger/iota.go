@@ -24,7 +24,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 		append([]options.Option[V3ProtocolParameters]{
 			WithVersion(apiV3Version),
 			WithNetworkOptions("testnet", PrefixTestnet),
-			WithSupplyOptions(1813620509061365, 100, 1, 10),
+			WithSupplyOptions(1813620509061365, 100, 1, 10, 100, 100),
 			WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
 			WithTimeProviderOptions(time.Now().Unix(), 10, 13),
 			// TODO: add sane default values
@@ -163,13 +163,15 @@ func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Opt
 	}
 }
 
-func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData VByteCostFactor, vBFactorKey VByteCostFactor) options.Option[V3ProtocolParameters] {
+func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData, vBFactorKey, vBFactorIssuerKeys, vBFactorStakingFeature VByteCostFactor) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TokenSupply = totalSupply
 		p.basicProtocolParameters.RentStructure = RentStructure{
-			VByteCost:    vByteCost,
-			VBFactorData: vBFactorData,
-			VBFactorKey:  vBFactorKey,
+			VByteCost:              vByteCost,
+			VBFactorData:           vBFactorData,
+			VBFactorKey:            vBFactorKey,
+			VBFactorIssuerKeys:     vBFactorIssuerKeys,
+			VBFactorStakingFeature: vBFactorStakingFeature,
 		}
 	}
 }

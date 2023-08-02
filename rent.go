@@ -15,6 +15,10 @@ const (
 	VByteCostFactorData VByteCostFactor = 1
 	// VByteCostFactorKey defines the multiplier for fields which can act as keys for lookups.
 	VByteCostFactorKey VByteCostFactor = 10
+	// VByteCostFactorBlockIssuerKeys defines the multiplier for block issuer public keys.
+	VByteCostFactorBlockIssuerKeys VByteCostFactor = 10
+	// VByteCostFactorStakingFeature defines the multiplier for account output's staking feature.
+	VByteCostFactorStakingFeature
 )
 
 var (
@@ -41,8 +45,12 @@ type RentStructure struct {
 	VByteCost uint32 `serix:"0,mapKey=vByteCost"`
 	// Defines the factor to be used for data only fields.
 	VBFactorData VByteCostFactor `serix:"1,mapKey=vByteFactorData"`
-	// defines the factor to be used for key/lookup generating fields.
+	// Defines the factor to be used for key/lookup generating fields.
 	VBFactorKey VByteCostFactor `serix:"2,mapKey=vByteFactorKey"`
+	// Defines the factor to be used for block issuer feature public keys.
+	VBFactorIssuerKeys VByteCostFactor `serix:"3,mapKey=vByteFactorIssuerKeys"`
+	// Defines the factor to be used for staking feature.
+	VBFactorStakingFeature VByteCostFactor `serix:"4,mapKey=vByteFactorIssuerKeys"`
 }
 
 // CoversStateRent tells whether given this NonEphemeralObject, the given rent fulfills the renting costs

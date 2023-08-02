@@ -82,6 +82,8 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			6,
 			7,
 			8,
+			9,
+			10,
 		),
 		iotago.WithWorkScoreOptions(
 			1,
