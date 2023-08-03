@@ -39,6 +39,8 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				0,
 			),
 			WithLivenessOptions(3, 10, 20, 24),
+			// TODO: add Scheduler Rate parameter and include in this expression for increase and decrease thresholds. Issue #473
+			WithRMCOptions(500, 500, 500, 0.8*10, 0.5*10),
 			WithStakingOptions(10),
 			WithVersionSignalingOptions(7, 5, 7),
 		},
@@ -112,6 +114,26 @@ func (p *V3ProtocolParameters) MaxCommittableAge() SlotIndex {
 
 func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
 	return p.basicProtocolParameters.EpochNearingThreshold
+}
+
+func (p *V3ProtocolParameters) RMCMin() Mana {
+	return p.basicProtocolParameters.RMCMin
+}
+
+func (p *V3ProtocolParameters) RMCIncrease() Mana {
+	return p.basicProtocolParameters.RMCIncrease
+}
+
+func (p *V3ProtocolParameters) RMCDecrease() Mana {
+	return p.basicProtocolParameters.RMCDecrease
+}
+
+func (p *V3ProtocolParameters) RMCIncreaseThreshold() WorkScore {
+	return p.basicProtocolParameters.RMCIncreaseThreshold
+}
+
+func (p *V3ProtocolParameters) RMCDecreaseThreshold() WorkScore {
+	return p.basicProtocolParameters.RMCDecreaseThreshold
 }
 
 func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
@@ -230,6 +252,16 @@ func WithLivenessOptions(livenessThreshold SlotIndex, minCommittableAge SlotInde
 		p.basicProtocolParameters.MinCommittableAge = minCommittableAge
 		p.basicProtocolParameters.MaxCommittableAge = maxCommittableAge
 		p.basicProtocolParameters.EpochNearingThreshold = epochNearingThreshold
+	}
+}
+
+func WithRMCOptions(rmcMin Mana, rmcIncrease Mana, rmcDecrease Mana, rmcIncreaseThreshold WorkScore, rmcDecreaseThreshold WorkScore) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.RMCMin = rmcMin
+		p.basicProtocolParameters.RMCIncrease = rmcIncrease
+		p.basicProtocolParameters.RMCDecrease = rmcDecrease
+		p.basicProtocolParameters.RMCIncreaseThreshold = rmcIncreaseThreshold
+		p.basicProtocolParameters.RMCDecreaseThreshold = rmcDecreaseThreshold
 	}
 }
 

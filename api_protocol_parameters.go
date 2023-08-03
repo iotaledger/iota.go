@@ -55,7 +55,20 @@ type basicProtocolParameters struct {
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold SlotIndex `serix:"19,mapKey=epochNearingThreshold"`
 
-	VersionSignaling VersionSignaling `serix:"20,mapKey=versionSignaling"`
+	// RMCMin is the minimum value of the reference Mana cost.
+	RMCMin Mana `serix:"20,mapKey=rmcMin"`
+	// RMCIncrease is the increase step size of the reference Mana cost.
+	RMCIncrease Mana `serix:"21,mapKey=rmcIncrease"`
+	// RMCDecrease is the decrease step size of the reference Mana cost.
+	RMCDecrease Mana `serix:"22,mapKey=rmcDecrease"`
+	// RMCIncreaseThreshold is the threshold for increasing the reference Mana cost.
+	// This value should be between 0 and SchedulerRate*SlotDurationInSeconds.
+	RMCIncreaseThreshold WorkScore `serix:"23,mapKey=rmcIncreaseThreshold"`
+	// RMCDecreaseThreshold is the threshold for decreasing the reference Mana cost.
+	// This value should be between 0 and SchedulerRate*SlotDurationInSeconds and must be less than or equal to RMCIncreaseThreshold.
+	RMCDecreaseThreshold WorkScore `serix:"24,mapKey=rmcDecreaseThreshold"`
+
+	VersionSignaling VersionSignaling `serix:"25,mapKey=versionSignaling"`
 }
 
 func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
@@ -79,5 +92,10 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.MinCommittableAge == other.MinCommittableAge &&
 		b.MaxCommittableAge == other.MaxCommittableAge &&
 		b.EpochNearingThreshold == other.EpochNearingThreshold &&
+		b.RMCMin == other.RMCMin &&
+		b.RMCIncrease == other.RMCIncrease &&
+		b.RMCDecrease == other.RMCDecrease &&
+		b.RMCIncreaseThreshold == other.RMCIncreaseThreshold &&
+		b.RMCDecreaseThreshold == other.RMCDecreaseThreshold &&
 		b.VersionSignaling.Equals(other.VersionSignaling)
 }

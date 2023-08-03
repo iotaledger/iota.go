@@ -44,6 +44,8 @@ var (
 		),
 		iotago.WithStakingOptions(10),
 		iotago.WithLivenessOptions(3, 10, 20, 24),
+		// TODO: add Scheduler Rate parameter and include in this expression for increase and decrease thresholds. Issue #473
+		iotago.WithRMCOptions(500, 500, 500, 0.8*slotDurationSeconds, 0.5*slotDurationSeconds),
 	)
 
 	testAPI = iotago.V3API(testProtoParams)
