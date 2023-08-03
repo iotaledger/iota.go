@@ -174,7 +174,7 @@ func (d *DelegationOutput) UnlockConditionSet() UnlockConditionSet {
 	return d.Conditions.MustSet()
 }
 
-func (d *DelegationOutput) Deposit() BaseToken {
+func (d *DelegationOutput) BaseTokenAmount() BaseToken {
 	return d.Amount
 }
 
