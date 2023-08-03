@@ -315,8 +315,10 @@ type (
 		ValidatorStake iotago.BaseToken `serix:"3,mapKey=validatorStake"`
 		// FixedCost is the fixed cost that the validator receives from the total pool reward.
 		FixedCost iotago.Mana `serix:"4,mapKey=fixedCost"`
+		// Active indicates whether the validator was active recently, and would be considered during committee selection.
+		Active bool `serix:"5,mapKey=active"`
 		// LatestSupportedProtocolVersion is the latest supported protocol version of the validator.
-		LatestSupportedProtocolVersion iotago.Version `serix:"5,mapKey=latestSupportedProtocolVersion"`
+		LatestSupportedProtocolVersion iotago.Version `serix:"6,mapKey=latestSupportedProtocolVersion"`
 	}
 
 	// AccountStakingListResponse defines the response for the staking REST API call.

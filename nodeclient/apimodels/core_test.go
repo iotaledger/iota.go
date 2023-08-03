@@ -289,6 +289,7 @@ func Test_AccountStakingListResponse(t *testing.T) {
 				PoolStake:                      123,
 				ValidatorStake:                 456,
 				FixedCost:                      69,
+				Active:                         true,
 				LatestSupportedProtocolVersion: 9,
 			},
 		},
@@ -297,7 +298,7 @@ func Test_AccountStakingListResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"stakers\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"stakingEpochEnd\":\"0\",\"poolStake\":\"123\",\"validatorStake\":\"456\",\"fixedCost\":\"69\",\"latestSupportedProtocolVersion\":9}]}"
+	expected := "{\"stakers\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"stakingEpochEnd\":\"0\",\"poolStake\":\"123\",\"validatorStake\":\"456\",\"fixedCost\":\"69\",\"active\":true,\"latestSupportedProtocolVersion\":9}]}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.AccountStakingListResponse)
