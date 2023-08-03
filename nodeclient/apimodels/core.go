@@ -328,10 +328,12 @@ type (
 
 	// ManaRewardsResponse defines the response for the mana rewards REST API call.
 	ManaRewardsResponse struct {
-		// EpochIndex is the epoch index for which the mana rewards are returned.
-		EpochIndex iotago.EpochIndex `serix:"0,mapKey=epochIndex"`
+		// EpochIndexStart is the starting epoch for range for which the mana rewards are returned.
+		EpochIndexStart iotago.EpochIndex `serix:"0,mapKey=epochIndexStart"`
+		// EpochIndexEnd is the ending epoch for range for which the mana rewards are returned.
+		EpochIndexEnd iotago.EpochIndex `serix:"1,mapKey=epochIndexEnd"`
 		// The amount of totally available rewards the requested output may claim.
-		Rewards iotago.Mana `serix:"1,mapKey=rewards"`
+		Rewards iotago.Mana `serix:"2,mapKey=rewards"`
 	}
 
 	// CommitteeMemberResponse defines the response used in committee and staking response REST API calls.

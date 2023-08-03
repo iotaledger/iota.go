@@ -310,14 +310,15 @@ func Test_ManaRewardsResponse(t *testing.T) {
 	api := testAPI()
 
 	response := &apimodels.ManaRewardsResponse{
-		EpochIndex: 123,
-		Rewards:    456,
+		EpochIndexStart: 123,
+		EpochIndexEnd:   133,
+		Rewards:         456,
 	}
 
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"epochIndex\":\"123\",\"rewards\":\"456\"}"
+	expected := "{\"epochIndexStart\":\"123\",\"epochIndexEnd\":\"133\",\"rewards\":\"456\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.ManaRewardsResponse)
