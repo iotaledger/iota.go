@@ -8,7 +8,11 @@ type CommitmentInput struct {
 	CommitmentID CommitmentID `serix:"0,mapKey=commitmentId"`
 }
 
-func (c *CommitmentInput) Type() InputType {
+func (c *CommitmentInput) StateID() Identifier {
+	return IdentifierFromData(c.CommitmentID[:])
+}
+
+func (c *CommitmentInput) Type() StateType {
 	return InputCommitment
 }
 

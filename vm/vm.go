@@ -82,8 +82,8 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs Resolve
 	workingSet.UTXOInputsWithCreationTime = utxoInputsSet
 	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
 	for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
-		//nolint:forcetypeassert // we can safely assume that this is an IndexedUTXOReferencer
-		ref := inputRef.(iotago.IndexedUTXOReferencer).Ref()
+		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
+		ref := inputRef.(*iotago.UTXOInput).OutputID()
 		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
 		input, ok := workingSet.UTXOInputsWithCreationTime[ref]
 		if !ok {
@@ -355,7 +355,7 @@ func ExecFuncInputUnlocks() ExecFunc {
 				chainID := chainConstrOutput.Chain()
 				if chainID.Empty() {
 					//nolint:forcetypeassert // we can safely assume that this is an UTXOIDChainID
-					chainID = chainID.(iotago.UTXOIDChainID).FromOutputID(vmParams.WorkingSet.UTXOInputAtIndex(uint16(inputIndex)).Ref())
+					chainID = chainID.(iotago.UTXOIDChainID).FromOutputID(vmParams.WorkingSet.UTXOInputAtIndex(uint16(inputIndex)).OutputID())
 				}
 
 				// for account outputs which are not state transitioning, we do not add it to the set of unlocked chains
@@ -394,8 +394,8 @@ func identToUnlock(vmParams *Params, input iotago.Output, inputIndex uint16) (io
 			if !is {
 				return nil, iotago.ErrTransDepIdentOutputNonUTXOChainID
 			}
-			//nolint:forcetypeassert // we can safely assume that this is an IndexedUTXOReferencer
-			chainID = utxoChainID.FromOutputID(vmParams.WorkingSet.Tx.Essence.Inputs[inputIndex].(iotago.IndexedUTXOReferencer).Ref())
+			//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
+			chainID = utxoChainID.FromOutputID(vmParams.WorkingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput).OutputID())
 		}
 
 		next := vmParams.WorkingSet.OutChains[chainID]

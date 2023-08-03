@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/binary"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -21,25 +22,24 @@ type UTXOInput struct {
 	TransactionOutputIndex uint16 `serix:"1,mapKey=transactionOutputIndex"`
 }
 
-func (u *UTXOInput) Type() InputType {
+func (u *UTXOInput) StateID() Identifier {
+	return IdentifierFromData(lo.PanicOnErr(u.OutputID().Bytes()))
+}
+
+func (u *UTXOInput) Type() StateType {
 	return InputUTXO
 }
 
-func (u *UTXOInput) Ref() OutputID {
-	return u.ID()
-}
-
-func (u *UTXOInput) Index() uint16 {
-	return u.TransactionOutputIndex
-}
-
-// ID returns the OutputID.
-func (u *UTXOInput) ID() OutputID {
+func (u *UTXOInput) OutputID() OutputID {
 	var id OutputID
 	copy(id[:TransactionIDLength], u.TransactionID[:])
 	binary.LittleEndian.PutUint16(id[TransactionIDLength:], u.TransactionOutputIndex)
 
 	return id
+}
+
+func (u *UTXOInput) Index() uint16 {
+	return u.TransactionOutputIndex
 }
 
 func (u *UTXOInput) Equals(other *UTXOInput) bool {

@@ -8,7 +8,11 @@ type BlockIssuanceCreditInput struct {
 	AccountID AccountID `serix:"0,mapKey=accountId"`
 }
 
-func (b *BlockIssuanceCreditInput) Type() InputType {
+func (b *BlockIssuanceCreditInput) StateID() Identifier {
+	return IdentifierFromData(b.AccountID[:])
+}
+
+func (b *BlockIssuanceCreditInput) Type() StateType {
 	return InputBlockIssuanceCredit
 }
 

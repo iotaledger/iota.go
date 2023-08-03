@@ -120,7 +120,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 	var inputIDs iotago.OutputIDs
 	for _, input := range b.essence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
-		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).ID())
+		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).OutputID())
 	}
 
 	inputs := inputIDs.OrderedSet(b.inputs)
@@ -139,7 +139,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 	unlocks := iotago.Unlocks{}
 	for i, inputRef := range b.essence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
-		addr := b.inputOwner[inputRef.(*iotago.UTXOInput).ID()]
+		addr := b.inputOwner[inputRef.(*iotago.UTXOInput).OutputID()]
 		addrKey := addr.Key()
 
 		pos, unlocked := unlockPos[addrKey]
