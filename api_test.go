@@ -117,7 +117,7 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			20,
 			24,
 		),
-		// TODO: add scheduler rate to increase and decrease threshold expressions. Issue #473
+		// TODO: add scheduler rate to increase and decrease threshold expressions. Issue #264
 		iotago.WithRMCOptions(
 			500,
 			500,
