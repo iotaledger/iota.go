@@ -121,18 +121,8 @@ type ProtocolParameters interface {
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold() SlotIndex
 
-	// RMCMin is the minimum value of the reference Mana cost.
-	RMCMin() Mana
-	// RMCIncrease is the increase step size of the reference Mana cost.
-	RMCIncrease() Mana
-	// RMCDecrease is the decrease step size of the reference Mana cost.
-	RMCDecrease() Mana
-	// RMCIncreaseThreshold is the threshold for increasing the reference Mana cost.
-	// This value should be between 0 and SchedulerRate*SlotDurationInSeconds.
-	RMCIncreaseThreshold() WorkScore
-	// RMCDecreaseThreshold is the threshold for decreasing the reference Mana cost.
-	// This value should be between 0 and SchedulerRate*SlotDurationInSeconds and must be less than or equal to RMCIncreaseThreshold.
-	RMCDecreaseThreshold() WorkScore
+	// RMCParameters returns the parameters used to calculate reference Mana cost.
+	RMCParameters() *RMCParameters
 
 	VersionSignaling() *VersionSignaling
 

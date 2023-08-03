@@ -116,24 +116,8 @@ func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
 	return p.basicProtocolParameters.EpochNearingThreshold
 }
 
-func (p *V3ProtocolParameters) RMCMin() Mana {
-	return p.basicProtocolParameters.RMCMin
-}
-
-func (p *V3ProtocolParameters) RMCIncrease() Mana {
-	return p.basicProtocolParameters.RMCIncrease
-}
-
-func (p *V3ProtocolParameters) RMCDecrease() Mana {
-	return p.basicProtocolParameters.RMCDecrease
-}
-
-func (p *V3ProtocolParameters) RMCIncreaseThreshold() WorkScore {
-	return p.basicProtocolParameters.RMCIncreaseThreshold
-}
-
-func (p *V3ProtocolParameters) RMCDecreaseThreshold() WorkScore {
-	return p.basicProtocolParameters.RMCDecreaseThreshold
+func (p *V3ProtocolParameters) RMCParameters() *RMCParameters {
+	return &p.basicProtocolParameters.RMCParameters
 }
 
 func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
@@ -257,11 +241,11 @@ func WithLivenessOptions(livenessThreshold SlotIndex, minCommittableAge SlotInde
 
 func WithRMCOptions(rmcMin Mana, rmcIncrease Mana, rmcDecrease Mana, rmcIncreaseThreshold WorkScore, rmcDecreaseThreshold WorkScore) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.RMCMin = rmcMin
-		p.basicProtocolParameters.RMCIncrease = rmcIncrease
-		p.basicProtocolParameters.RMCDecrease = rmcDecrease
-		p.basicProtocolParameters.RMCIncreaseThreshold = rmcIncreaseThreshold
-		p.basicProtocolParameters.RMCDecreaseThreshold = rmcDecreaseThreshold
+		p.basicProtocolParameters.RMCParameters.RMCMin = rmcMin
+		p.basicProtocolParameters.RMCParameters.Increase = rmcIncrease
+		p.basicProtocolParameters.RMCParameters.Decrease = rmcDecrease
+		p.basicProtocolParameters.RMCParameters.IncreaseThreshold = rmcIncreaseThreshold
+		p.basicProtocolParameters.RMCParameters.DecreaseThreshold = rmcDecreaseThreshold
 	}
 }
 
