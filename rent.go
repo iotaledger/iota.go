@@ -10,17 +10,6 @@ type VBytes uint64
 // VByteCostFactor defines the type of the virtual byte cost factor.
 type VByteCostFactor byte
 
-const (
-	// VByteCostFactorData defines the multiplier for data fields.
-	VByteCostFactorData VByteCostFactor = 1
-	// VByteCostFactorKey defines the multiplier for fields which can act as keys for lookups.
-	VByteCostFactorKey VByteCostFactor = 10
-	// VByteCostFactorBlockIssuerKeys defines the multiplier for block issuer public keys.
-	VByteCostFactorBlockIssuerKeys VByteCostFactor = 10
-	// VByteCostFactorStakingFeature defines the multiplier for account output's staking feature.
-	VByteCostFactorStakingFeature
-)
-
 var (
 	// ErrVByteDepositNotCovered gets returned when a NonEphemeralObject does not cover the minimum deposit
 	// which is calculated from its virtual byte costs.
