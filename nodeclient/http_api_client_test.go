@@ -197,6 +197,123 @@ func TestClient_BlockIssuance(t *testing.T) {
 	require.EqualValues(t, originRes, res)
 }
 
+func TestClient_Congestion(t *testing.T) {
+	defer gock.Off()
+
+	accID := tpkg.RandAccountID()
+
+	originRes := &apimodels.CongestionResponse{
+		SlotIndex:            iotago.SlotIndex(20),
+		Ready:                true,
+		ReferenceManaCost:    iotago.Mana(1000),
+		BlockIssuanceCredits: iotago.BlockIssuanceCredits(1000),
+	}
+
+	mockGetJSON(fmt.Sprintf(nodeclient.RouteCongestion, accID.ToHex()), 200, originRes)
+
+	nodeAPI := nodeClient(t)
+	res, err := nodeAPI.Congestion(context.Background(), accID)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, res)
+}
+
+func TestClient_Rewards(t *testing.T) {
+	defer gock.Off()
+
+	outID := tpkg.RandOutputID(1)
+
+	originRes := &apimodels.ManaRewardsResponse{
+		EpochIndexStart: iotago.EpochIndex(20),
+		EpochIndexEnd:   iotago.EpochIndex(30),
+		Rewards:         iotago.Mana(1000),
+	}
+
+	mockGetJSON(fmt.Sprintf(nodeclient.RouteRewards, outID.ToHex()), 200, originRes)
+
+	nodeAPI := nodeClient(t)
+	res, err := nodeAPI.Rewards(context.Background(), outID)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, res)
+}
+
+func TestClient_Staking(t *testing.T) {
+	defer gock.Off()
+
+	originRes := &apimodels.AccountStakingListResponse{Stakers: []*apimodels.ValidatorResponse{
+		{
+			AccountID:                      tpkg.RandAccountID(),
+			StakingEpochEnd:                iotago.EpochIndex(123),
+			PoolStake:                      iotago.BaseToken(100),
+			ValidatorStake:                 iotago.BaseToken(10),
+			FixedCost:                      iotago.Mana(10),
+			Active:                         true,
+			LatestSupportedProtocolVersion: 1,
+		},
+		{
+			AccountID:                      tpkg.RandAccountID(),
+			StakingEpochEnd:                iotago.EpochIndex(124),
+			PoolStake:                      iotago.BaseToken(1000),
+			ValidatorStake:                 iotago.BaseToken(100),
+			FixedCost:                      iotago.Mana(20),
+			Active:                         true,
+			LatestSupportedProtocolVersion: 1,
+		},
+	}}
+
+	mockGetJSON(nodeclient.RouteStaking, 200, originRes)
+
+	nodeAPI := nodeClient(t)
+	res, err := nodeAPI.Staking(context.Background())
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, res)
+}
+
+func TestClient_StakingByAccountID(t *testing.T) {
+	defer gock.Off()
+
+	accID := tpkg.RandAccountID()
+	originRes := &apimodels.ValidatorResponse{
+		AccountID:                      accID,
+		StakingEpochEnd:                iotago.EpochIndex(123),
+		PoolStake:                      iotago.BaseToken(100),
+		ValidatorStake:                 iotago.BaseToken(10),
+		FixedCost:                      iotago.Mana(10),
+		Active:                         true,
+		LatestSupportedProtocolVersion: 1,
+	}
+
+	mockGetJSON(fmt.Sprintf(nodeclient.RouteStakingAccount, accID.ToHex()), 200, originRes)
+
+	nodeAPI := nodeClient(t)
+	res, err := nodeAPI.StakingAccount(context.Background(), accID)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, res)
+}
+
+func TestClient_Committee(t *testing.T) {
+	defer gock.Off()
+
+	originRes := &apimodels.CommitteeResponse{
+		EpochIndex:          iotago.EpochIndex(123),
+		TotalStake:          1000_1000,
+		TotalValidatorStake: 100_000,
+		Committee: []*apimodels.CommitteeMemberResponse{
+			{
+				AccountID:      tpkg.RandAccountID(),
+				PoolStake:      1000_000,
+				ValidatorStake: 100_000,
+				FixedCost:      iotago.Mana(100),
+			},
+		},
+	}
+
+	mockGetJSON(nodeclient.RouteCommittee, 200, originRes)
+	nodeAPI := nodeClient(t)
+	res, err := nodeAPI.Committee(context.Background())
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, res)
+}
+
 func TestClient_SubmitBlock(t *testing.T) {
 	defer gock.Off()
 

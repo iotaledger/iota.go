@@ -35,8 +35,40 @@ const (
 	// GET returns the node info.
 	RouteInfo = "/api/core/v3/info"
 
+	// RouteCongestion is the route for getting congestion details for the account.
+	// GET returns the congestion details for the account.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
+	RouteCongestion = "/api/core/v3/accounts/%s/congestion"
+
+	// RouteRewards is the route for getting the rewards for staking or delegation based on provieded output.
+	// GET returns the rewards for the output.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
+	RouteRewards = "/api/core/v3/rewards/%s"
+
+	// RouteStaking is the route for getting the information about current validators.
+	// GET returns the information about current validators.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
+	RouteStaking = "/api/core/v3/staking"
+
+	// RouteStakingAccount is the route for getting an account by its accountID.
+	// GET returns the account details.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
+	RouteStakingAccount = "/api/core/v3/staking/%s"
+
+	// RouteCommittee is the route for getting the information about current committee.
+	// GET returns the information about current committee.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
+	RouteCommittee = "/api/core/v3/committee"
+
 	// RouteBlockIssuance is the route for getting all needed information for block creation.
 	// GET returns the data needed toa attach block.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
 	RouteBlockIssuance = "/api/core/v3/blocks/issuance"
 
 	// RouteBlock is the route for getting a block by its ID.
@@ -64,6 +96,8 @@ const (
 
 	// RouteTransactionsIncludedBlockMetadata is the route for getting the block metadata that was first confirmed in the ledger for a given transaction ID.
 	// GET returns block metadata (including info about "promotion/reattachment needed").
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
 	RouteTransactionsIncludedBlockMetadata = "/api/core/v3/transactions/%s/included-block/metadata"
 
 	// RouteCommitmentByID is the route for getting a commitment by its ID.
@@ -318,6 +352,60 @@ func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlo
 		return nil, err
 	}
 
+	return res, nil
+}
+
+func (client *Client) Congestion(ctx context.Context, accountID iotago.AccountID) (*apimodels.CongestionResponse, error) {
+	res := new(apimodels.CongestionResponse)
+	query := fmt.Sprintf(RouteCongestion, hexutil.EncodeHex(accountID[:]))
+
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*apimodels.ManaRewardsResponse, error) {
+	res := &apimodels.ManaRewardsResponse{}
+	query := fmt.Sprintf(RouteRewards, hexutil.EncodeHex(outputID[:]))
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (client *Client) Staking(ctx context.Context) (*apimodels.AccountStakingListResponse, error) {
+	res := &apimodels.AccountStakingListResponse{}
+	if _, err := client.Do(ctx, http.MethodGet, RouteStaking, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (client *Client) StakingAccount(ctx context.Context, accountID iotago.AccountID) (*apimodels.ValidatorResponse, error) {
+	res := &apimodels.ValidatorResponse{}
+	query := fmt.Sprintf(RouteStakingAccount, hexutil.EncodeHex(accountID[:]))
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.EpochIndex) (*apimodels.CommitteeResponse, error) {
+	query := RouteCommittee
+	if len(optEpochIndex) > 0 {
+		query += fmt.Sprintf("?epochIndex=%d", optEpochIndex[0])
+	}
+	fmt.Printf("query: %s\n", query)
+
+	res := &apimodels.CommitteeResponse{}
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
 	return res, nil
 }
 
