@@ -6,9 +6,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
+	"github.com/iotaledger/iota-core/pkg/model"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
+	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -47,21 +51,53 @@ func TestBlock_DeSerialize(t *testing.T) {
 	}
 }
 
-func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
-	block := &iotago.ProtocolBlock{
-		BlockHeader: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version() + 1,
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
-		},
-		Signature: tpkg.RandEd25519Signature(),
-		Block: &iotago.BasicBlock{
-			StrongParents: tpkg.SortedRandBlockIDs(1),
-			Payload:       nil,
-		},
-	}
+func createBlockAtSlotWithVersion(t *testing.T, index iotago.SlotIndex, version iotago.Version, apiProvider *api.EpochBasedProvider) error {
+	api := apiProvider.APIForSlot(index)
+	block, err := builder.NewBasicBlockBuilder(api).
+		ProtocolVersion(version).
+		StrongParents(iotago.BlockIDs{iotago.BlockID{}}).
+		IssuingTime(api.TimeProvider().SlotStartTime(index)).
+		SlotCommitmentID(iotago.NewCommitment(api.Version(), index-api.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
+		Build()
+	require.NoError(t, err)
 
-	_, err := tpkg.TestAPI.Encode(block, serix.WithValidation())
-	require.ErrorContains(t, err, "mismatched protocol version")
+	return lo.Return2(model.BlockFromBlock(block, api, serix.WithValidation()))
+}
+
+func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
+	apiProvider := api.NewEpochBasedProvider(
+		api.WithAPIForMissingVersionCallback(
+			func(version iotago.Version) (iotago.API, error) {
+				return iotago.V3API(iotago.NewV3ProtocolParameters(iotago.WithVersion(version))), nil
+			},
+		),
+	)
+	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(), 0)
+	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(iotago.WithVersion(4)), 3)
+
+	timeProvider := apiProvider.CurrentAPI().TimeProvider()
+
+	require.ErrorIs(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(1), 2, apiProvider), iotago.ErrInvalidBlockVersion)
+
+	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochEnd(1), 3, apiProvider))
+
+	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochEnd(2), 3, apiProvider))
+
+	require.ErrorIs(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(3), 3, apiProvider), iotago.ErrInvalidBlockVersion)
+
+	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(3), 4, apiProvider))
+
+	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochEnd(3), 4, apiProvider))
+
+	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(5), 4, apiProvider))
+
+	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(iotago.WithVersion(5)), 10)
+
+	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochEnd(9), 4, apiProvider))
+
+	require.ErrorIs(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(10), 4, apiProvider), iotago.ErrInvalidBlockVersion)
+
+	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(10), 5, apiProvider))
 }
 
 func TestProtocolBlock_DeserializationNotEnoughData(t *testing.T) {

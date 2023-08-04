@@ -155,6 +155,11 @@ func (t *Transaction) String() string {
 
 // syntacticallyValidate syntactically validates the Transaction.
 func (t *Transaction) syntacticallyValidate(api API) error {
+	// limit unlock block count = input count
+	if len(t.Unlocks) != len(t.Essence.Inputs) {
+		return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(t.Unlocks), len(t.Essence.Inputs))
+	}
+
 	if err := t.Essence.syntacticallyValidate(api.ProtocolParameters()); err != nil {
 		return ierrors.Errorf("transaction essence is invalid: %w", err)
 	}
