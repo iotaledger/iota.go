@@ -9,7 +9,6 @@ import (
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
-	"github.com/iotaledger/iota-core/pkg/model"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/builder"
@@ -52,16 +51,16 @@ func TestBlock_DeSerialize(t *testing.T) {
 }
 
 func createBlockAtSlotWithVersion(t *testing.T, index iotago.SlotIndex, version iotago.Version, apiProvider *api.EpochBasedProvider) error {
-	api := apiProvider.APIForSlot(index)
-	block, err := builder.NewBasicBlockBuilder(api).
+	apiForSlot := apiProvider.APIForSlot(index)
+	block, err := builder.NewBasicBlockBuilder(apiForSlot).
 		ProtocolVersion(version).
 		StrongParents(iotago.BlockIDs{iotago.BlockID{}}).
-		IssuingTime(api.TimeProvider().SlotStartTime(index)).
-		SlotCommitmentID(iotago.NewCommitment(api.Version(), index-api.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
+		IssuingTime(apiForSlot.TimeProvider().SlotStartTime(index)).
+		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), index-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
 		Build()
 	require.NoError(t, err)
 
-	return lo.Return2(model.BlockFromBlock(block, api, serix.WithValidation()))
+	return lo.Return2(apiForSlot.Encode(block, serix.WithValidation()))
 }
 
 func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
