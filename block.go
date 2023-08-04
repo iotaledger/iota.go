@@ -499,7 +499,7 @@ func (b *ValidationBlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
 }
 
 // syntacticallyValidate syntactically validates the ValidationBlock.
-func (b *ValidationBlock) syntacticallyValidate(api API, protocolBlock *ProtocolBlock) error {
+func (b *ValidationBlock) syntacticallyValidate(_ API, protocolBlock *ProtocolBlock) error {
 	if b.HighestSupportedVersion < protocolBlock.ProtocolVersion {
 		return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", b.HighestSupportedVersion, protocolBlock.ProtocolVersion)
 	}

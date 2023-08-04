@@ -51,6 +51,8 @@ func TestBlock_DeSerialize(t *testing.T) {
 }
 
 func createBlockAtSlotWithVersion(t *testing.T, index iotago.SlotIndex, version iotago.Version, apiProvider *api.EpochBasedProvider) error {
+	t.Helper()
+
 	apiForSlot := apiProvider.APIForSlot(index)
 	block, err := builder.NewBasicBlockBuilder(apiForSlot).
 		ProtocolVersion(version).
