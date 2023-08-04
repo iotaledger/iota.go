@@ -10,13 +10,6 @@ type VBytes uint64
 // VByteCostFactor defines the type of the virtual byte cost factor.
 type VByteCostFactor byte
 
-const (
-	// VByteCostFactorData defines the multiplier for data fields.
-	VByteCostFactorData VByteCostFactor = 1
-	// VByteCostFactorKey defines the multiplier for fields which can act as keys for lookups.
-	VByteCostFactorKey VByteCostFactor = 10
-)
-
 var (
 	// ErrVByteDepositNotCovered gets returned when a NonEphemeralObject does not cover the minimum deposit
 	// which is calculated from its virtual byte costs.
@@ -43,8 +36,12 @@ type RentStructure struct {
 	VByteCost uint32 `serix:"0,mapKey=vByteCost"`
 	// Defines the factor to be used for data only fields.
 	VBFactorData VByteCostFactor `serix:"1,mapKey=vByteFactorData"`
-	// defines the factor to be used for key/lookup generating fields.
+	// Defines the factor to be used for key/lookup generating fields.
 	VBFactorKey VByteCostFactor `serix:"2,mapKey=vByteFactorKey"`
+	// Defines the factor to be used for block issuer feature public keys.
+	VBFactorIssuerKeys VByteCostFactor `serix:"3,mapKey=vByteFactorIssuerKeys"`
+	// Defines the factor to be used for staking feature.
+	VBFactorStakingFeature VByteCostFactor `serix:"4,mapKey=vByteFactorStakingFeature"`
 }
 
 // CoversMinDeposit tells whether given this NonEphemeralObject, the base token amount fulfills the deposit requirements

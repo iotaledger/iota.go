@@ -723,6 +723,8 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandUint32(math.MaxUint32),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 		),
 		iotago.WithWorkScoreOptions(
 			RandWorkScore(math.MaxUint32),
