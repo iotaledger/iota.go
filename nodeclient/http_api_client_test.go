@@ -260,7 +260,7 @@ func TestClient_Staking(t *testing.T) {
 		},
 	}}
 
-	mockGetJSON(nodeclient.RouteStaking, 200, originRes)
+	mockGetJSON(nodeclient.RouteValidators, 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.Staking(context.Background())
@@ -282,7 +282,7 @@ func TestClient_StakingByAccountID(t *testing.T) {
 		LatestSupportedProtocolVersion: 1,
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteStakingAccount, accID.ToHex()), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.RouteValidatorsAccount, accID.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.StakingAccount(context.Background(), accID)

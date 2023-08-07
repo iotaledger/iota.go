@@ -41,26 +41,26 @@ const (
 	// MIMEVendorIOTASerializer => bytes.
 	RouteCongestion = "/api/core/v3/accounts/%s/congestion"
 
-	// RouteRewards is the route for getting the rewards for staking or delegation based on provieded output.
+	// RouteRewards is the route for getting the rewards for staking or delegation based on the provided output.
 	// GET returns the rewards for the output.
 	// MIMEApplicationJSON => json.
 	// MIMEVendorIOTASerializer => bytes.
 	RouteRewards = "/api/core/v3/rewards/%s"
 
-	// RouteStaking is the route for getting the information about current validators.
-	// GET returns the information about current validators.
+	// RouteValidators is the route for getting the information about current registered validators.
+	// GET returns the paginated information about about registered validators.
 	// MIMEApplicationJSON => json.
 	// MIMEVendorIOTASerializer => bytes.
-	RouteStaking = "/api/core/v3/staking"
+	RouteValidators = "/api/core/v3/validators"
 
-	// RouteStakingAccount is the route for getting an account by its accountID.
+	// RouteValidatorsAccount is the route for getting validator by its accountID.
 	// GET returns the account details.
 	// MIMEApplicationJSON => json.
 	// MIMEVendorIOTASerializer => bytes.
-	RouteStakingAccount = "/api/core/v3/staking/%s"
+	RouteValidatorsAccount = "/api/core/v3/validators/%s"
 
-	// RouteCommittee is the route for getting the information about current committee.
-	// GET returns the information about current committee.
+	// RouteCommittee is the route for getting the information about the current committee.
+	// GET returns the information about the current committee.
 	// MIMEApplicationJSON => json.
 	// MIMEVendorIOTASerializer => bytes.
 	RouteCommittee = "/api/core/v3/committee"
@@ -380,7 +380,7 @@ func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*a
 func (client *Client) Staking(ctx context.Context) (*apimodels.AccountStakingListResponse, error) {
 	res := &apimodels.AccountStakingListResponse{}
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, RouteStaking, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, RouteValidators, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -389,7 +389,7 @@ func (client *Client) Staking(ctx context.Context) (*apimodels.AccountStakingLis
 
 func (client *Client) StakingAccount(ctx context.Context, accountID iotago.AccountID) (*apimodels.ValidatorResponse, error) {
 	res := &apimodels.ValidatorResponse{}
-	query := fmt.Sprintf(RouteStakingAccount, hexutil.EncodeHex(accountID[:]))
+	query := fmt.Sprintf(RouteValidatorsAccount, hexutil.EncodeHex(accountID[:]))
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
