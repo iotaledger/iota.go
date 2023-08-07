@@ -358,7 +358,7 @@ func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlo
 func (client *Client) Congestion(ctx context.Context, accountID iotago.AccountID) (*apimodels.CongestionResponse, error) {
 	res := new(apimodels.CongestionResponse)
 	query := fmt.Sprintf(RouteCongestion, hexutil.EncodeHex(accountID[:]))
-
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -369,6 +369,7 @@ func (client *Client) Congestion(ctx context.Context, accountID iotago.AccountID
 func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*apimodels.ManaRewardsResponse, error) {
 	res := &apimodels.ManaRewardsResponse{}
 	query := fmt.Sprintf(RouteRewards, hexutil.EncodeHex(outputID[:]))
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -378,6 +379,7 @@ func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*a
 
 func (client *Client) Staking(ctx context.Context) (*apimodels.AccountStakingListResponse, error) {
 	res := &apimodels.AccountStakingListResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteStaking, nil, res); err != nil {
 		return nil, err
 	}
@@ -388,6 +390,7 @@ func (client *Client) Staking(ctx context.Context) (*apimodels.AccountStakingLis
 func (client *Client) StakingAccount(ctx context.Context, accountID iotago.AccountID) (*apimodels.ValidatorResponse, error) {
 	res := &apimodels.ValidatorResponse{}
 	query := fmt.Sprintf(RouteStakingAccount, hexutil.EncodeHex(accountID[:]))
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
@@ -403,6 +406,7 @@ func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.Epo
 	fmt.Printf("query: %s\n", query)
 
 	res := &apimodels.CommitteeResponse{}
+	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
