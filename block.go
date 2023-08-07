@@ -29,6 +29,7 @@ const (
 )
 
 var (
+	ErrWeakParentsInvalid                 = ierrors.New("weak parents must be disjunct to the rest of the parents")
 	ErrCommitmentTooOld                   = ierrors.New("a block cannot commit to a slot that is older than the block's slot minus maxCommittableAge")
 	ErrCommitmentTooRecent                = ierrors.New("a block cannot commit to a slot that is more recent than the block's slot minus minCommittableAge")
 	ErrCommitmentInputTooOld              = ierrors.New("a block cannot contain a commitment input with index older than the block's slot minus maxCommittableAge")
@@ -311,7 +312,7 @@ func (b *ProtocolBlock) syntacticallyValidate(api API) error {
 
 		for _, parent := range block.WeakParentIDs() {
 			if _, contains := nonWeakParents[parent]; contains {
-				return ierrors.Errorf("weak parents must be disjunct to the rest of the parents")
+				return ierrors.Wrapf(ErrWeakParentsInvalid, "weak parents (%s) cannot have common elements with strong parents (%s) or shallow likes (%s)", block.WeakParentIDs(), block.StrongParentIDs(), block.ShallowLikeParentIDs())
 			}
 		}
 	}
@@ -321,8 +322,7 @@ func (b *ProtocolBlock) syntacticallyValidate(api API) error {
 	commitmentIndex := b.SlotCommitmentID.Index()
 	blockID, err := b.ID(api)
 	if err != nil {
-		// TODO: wrap error
-		return err
+		return ierrors.Wrapf(err, "failed to syntactically validate block")
 	}
 	blockIndex := blockID.Index()
 
@@ -333,7 +333,6 @@ func (b *ProtocolBlock) syntacticallyValidate(api API) error {
 		return ierrors.Wrapf(ErrCommitmentTooRecent, "block at slot %d committing to slot %d", blockIndex, b.SlotCommitmentID.Index())
 	}
 
-	// TODO: move to syntactical check
 	// check that commitment is not too old.
 	if blockIndex > commitmentIndex+maxCommittableAge {
 		return ierrors.Wrapf(ErrCommitmentTooOld, "block at slot %d committing to slot %d, max committable age %d", blockIndex, b.SlotCommitmentID.Index(), maxCommittableAge)
@@ -446,7 +445,7 @@ func (b *BasicBlock) syntacticallyValidate(api API, protocolBlock *ProtocolBlock
 				return ierrors.Wrapf(ErrCommitmentInputTooOld, "block at slot %d committing to slot %d, max committable age %d", blockIndex, cInput.CommitmentID.Index(), maxCommittableAge)
 			}
 
-			if cInput.CommitmentID.Index() > protocolBlock.SlotCommitmentID.Index() {
+			if cInputIndex > protocolBlock.SlotCommitmentID.Index() {
 				return ierrors.Wrapf(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Index(), protocolBlock.SlotCommitmentID.Index())
 			}
 
