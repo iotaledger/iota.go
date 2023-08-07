@@ -410,6 +410,7 @@ func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.Epo
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }
 
