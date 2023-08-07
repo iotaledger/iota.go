@@ -54,6 +54,8 @@ func TestBlock_DeSerialize(t *testing.T) {
 }
 
 func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLikeParent iotago.BlockIDs, apiProvider *api.EpochBasedProvider) error {
+	t.Helper()
+
 	apiForSlot := apiProvider.LatestAPI()
 
 	block, err := builder.NewBasicBlockBuilder(apiForSlot).
@@ -69,6 +71,8 @@ func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLik
 }
 
 func createBlockAtSlot(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, apiProvider *api.EpochBasedProvider) error {
+	t.Helper()
+
 	apiForSlot := apiProvider.APIForSlot(blockIndex)
 
 	block, err := builder.NewBasicBlockBuilder(apiForSlot).
@@ -96,7 +100,10 @@ func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, ver
 	return lo.Return2(apiForSlot.Encode(block, serix.WithValidation()))
 }
 
+//nolint:unparam // in the test we always issue at blockIndex=100, but let's keep this flexibility.
 func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, payload iotago.Payload, apiProvider *api.EpochBasedProvider) error {
+	t.Helper()
+
 	apiForSlot := apiProvider.APIForSlot(blockIndex)
 
 	block, err := builder.NewBasicBlockBuilder(apiForSlot).
