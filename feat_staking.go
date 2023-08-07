@@ -46,11 +46,12 @@ func (s *StakingFeature) Clone() Feature {
 	return &StakingFeature{StakedAmount: s.StakedAmount, FixedCost: s.FixedCost, StartEpoch: s.StartEpoch, EndEpoch: s.EndEpoch}
 }
 
-func (s *StakingFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	vbytes := s.Size()
+func (s *StakingFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
+	if f != nil {
+		return f(rentStruct)
+	}
 
-	// TODO: Introduce another vbyte factor for the staking feature.
-	return rentStruct.VBFactorData.Multiply(VBytes(vbytes))
+	return rentStruct.VBFactorStakingFeature.Multiply(VBytes(s.Size()))
 }
 
 func (s *StakingFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

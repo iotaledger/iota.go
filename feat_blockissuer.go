@@ -36,11 +36,10 @@ func (s *BlockIssuerFeature) Clone() Feature {
 }
 
 func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	// TODO: add factor for block issuer keys (higher than regular keys factor).
 	// VBFactorData: type prefix + expiry slot + keys length
-	// VBFactorKey: numKeys * pubKeyLength
+	// VBFactorIssuerKeys: numKeys * pubKeyLength
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.OneByte) +
-		rentStruct.VBFactorKey.Multiply(VBytes(len(s.BlockIssuerKeys))*(ed25519.PublicKeySize))
+		rentStruct.VBFactorIssuerKeys.Multiply(VBytes(len(s.BlockIssuerKeys))*(ed25519.PublicKeySize))
 }
 
 func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
