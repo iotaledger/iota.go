@@ -61,7 +61,7 @@ func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLik
 		WeakParents(weakParents).
 		ShallowLikeParents(shallowLikeParent).
 		IssuingTime(time.Now()).
-		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), apiForSlot.TimeProvider().SlotFromTime(time.Now())-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
+		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), apiForSlot.TimeProvider().SlotFromTime(time.Now())-1-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
 		Build()
 	require.NoError(t, err)
 
@@ -89,7 +89,7 @@ func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, ver
 		ProtocolVersion(version).
 		StrongParents(iotago.BlockIDs{iotago.BlockID{}}).
 		IssuingTime(apiForSlot.TimeProvider().SlotStartTime(blockIndex)).
-		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), blockIndex-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
+		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), blockIndex-1-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
 		Build()
 	require.NoError(t, err)
 
@@ -155,15 +155,28 @@ func TestProtocolBlock_Commitments(t *testing.T) {
 			iotago.WithLivenessOptions(3, 10, 20, 4),
 		), 0)
 
-	require.ErrorIs(t, createBlockAtSlot(t, 100, 79, apiProvider), iotago.ErrCommitmentTooOld)
+	require.ErrorIs(t, createBlockAtSlot(t, 100, 78, apiProvider), iotago.ErrCommitmentTooOld)
 
-	require.ErrorIs(t, createBlockAtSlot(t, 100, 91, apiProvider), iotago.ErrCommitmentTooRecent)
+	require.ErrorIs(t, createBlockAtSlot(t, 100, 90, apiProvider), iotago.ErrCommitmentTooRecent)
 
-	require.NoError(t, createBlockAtSlot(t, 100, 90, apiProvider))
+	require.NoError(t, createBlockAtSlot(t, 100, 89, apiProvider))
 
 	require.NoError(t, createBlockAtSlot(t, 100, 80, apiProvider))
 
 	require.NoError(t, createBlockAtSlot(t, 100, 85, apiProvider))
+}
+
+func TestProtocolBlock_Commitments1(t *testing.T) {
+	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
+	apiProvider := api.NewEpochBasedProvider()
+	apiProvider.AddProtocolParametersAtEpoch(
+		iotago.NewV3ProtocolParameters(
+			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
+			iotago.WithLivenessOptions(3, 6, 20, 4),
+		), 0)
+
+	require.ErrorIs(t, createBlockAtSlot(t, 10, 4, apiProvider), iotago.ErrCommitmentTooRecent)
+
 }
 
 func TestProtocolBlock_WeakParents(t *testing.T) {
@@ -218,7 +231,7 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 	// We derive a dummy account from addr.
 	addr := iotago.Ed25519AddressFromPubKey(keyPair.PublicKey[:])
 	output := &iotago.BasicOutput{
-		Amount: 1,
+		Amount: 100000,
 		Conditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{
 				Address: addr,
@@ -241,12 +254,12 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(79, tpkg.Rand32ByteArray())}).
+		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(78, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
 
-	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 80, commitmentInputTooOld, apiProvider), iotago.ErrCommitmentInputTooOld)
+	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 79, commitmentInputTooOld, apiProvider), iotago.ErrCommitmentInputTooOld)
 
 	commitmentInputTooRecent, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
 		AddInput(&builder.TxInput{
@@ -255,12 +268,12 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(91, tpkg.Rand32ByteArray())}).
+		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(90, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
 
-	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 90, commitmentInputTooRecent, apiProvider), iotago.ErrCommitmentInputTooRecent)
+	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 89, commitmentInputTooRecent, apiProvider), iotago.ErrCommitmentInputTooRecent)
 
 	commitmentInputNewerThanBlockCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
 		AddInput(&builder.TxInput{
@@ -274,7 +287,7 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 
 	require.NoError(t, err)
 
-	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 80, commitmentInputNewerThanBlockCommitment, apiProvider), iotago.ErrCommitmentInputNewerThanCommitment)
+	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 79, commitmentInputNewerThanBlockCommitment, apiProvider), iotago.ErrCommitmentInputNewerThanCommitment)
 
 	commitmentCorrect, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
 		AddInput(&builder.TxInput{
@@ -283,12 +296,12 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(80, tpkg.Rand32ByteArray())}).
+		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(79, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
 
-	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 90, commitmentCorrect, apiProvider))
+	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, commitmentCorrect, apiProvider))
 
 	commitmentCorrectOldest, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
 		AddInput(&builder.TxInput{
@@ -297,12 +310,12 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(80, tpkg.Rand32ByteArray())}).
+		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(79, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
 
-	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 80, commitmentCorrectOldest, apiProvider))
+	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 79, commitmentCorrectOldest, apiProvider))
 
 	commitmentCorrectNewest, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
 		AddInput(&builder.TxInput{
@@ -311,12 +324,12 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(90, tpkg.Rand32ByteArray())}).
+		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(89, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
 
-	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 90, commitmentCorrectNewest, apiProvider))
+	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, commitmentCorrectNewest, apiProvider))
 
 	commitmentCorrectMiddle, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
 		AddInput(&builder.TxInput{
@@ -330,7 +343,7 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 
 	require.NoError(t, err)
 
-	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 90, commitmentCorrectMiddle, apiProvider))
+	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, commitmentCorrectMiddle, apiProvider))
 }
 
 func TestProtocolBlock_DeserializationNotEnoughData(t *testing.T) {
