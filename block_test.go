@@ -12,7 +12,6 @@ import (
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
-	"github.com/iotaledger/iota-core/pkg/utils"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/builder"
@@ -218,7 +217,14 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 	keyPair := hiveEd25519.GenerateKeyPair()
 	// We derive a dummy account from addr.
 	addr := iotago.Ed25519AddressFromPubKey(keyPair.PublicKey[:])
-
+	output := &iotago.BasicOutput{
+		Amount: 1,
+		Conditions: iotago.BasicOutputUnlockConditions{
+			&iotago.AddressUnlockCondition{
+				Address: addr,
+			},
+		},
+	}
 	// with the following parameters, block issued in slot 110 can contain a transaction with commitment input referencing
 	// commitments between 90 and slot that the block commits to (100 at most)
 	apiProvider := api.NewEpochBasedProvider()
@@ -232,9 +238,9 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
-			Input:        utils.RandOutput(iotago.OutputBasic),
+			Input:        output,
 		}).
-		AddOutput(utils.RandOutput(iotago.OutputBasic)).
+		AddOutput(output).
 		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(79, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
@@ -246,9 +252,9 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
-			Input:        utils.RandOutput(iotago.OutputBasic),
+			Input:        output,
 		}).
-		AddOutput(utils.RandOutput(iotago.OutputBasic)).
+		AddOutput(output).
 		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(91, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
@@ -260,9 +266,9 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
-			Input:        utils.RandOutput(iotago.OutputBasic),
+			Input:        output,
 		}).
-		AddOutput(utils.RandOutput(iotago.OutputBasic)).
+		AddOutput(output).
 		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(85, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
@@ -274,9 +280,9 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
-			Input:        utils.RandOutput(iotago.OutputBasic),
+			Input:        output,
 		}).
-		AddOutput(utils.RandOutput(iotago.OutputBasic)).
+		AddOutput(output).
 		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(80, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
@@ -288,9 +294,9 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
-			Input:        utils.RandOutput(iotago.OutputBasic),
+			Input:        output,
 		}).
-		AddOutput(utils.RandOutput(iotago.OutputBasic)).
+		AddOutput(output).
 		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(80, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
@@ -302,9 +308,9 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
-			Input:        utils.RandOutput(iotago.OutputBasic),
+			Input:        output,
 		}).
-		AddOutput(utils.RandOutput(iotago.OutputBasic)).
+		AddOutput(output).
 		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(90, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
@@ -316,9 +322,9 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
-			Input:        utils.RandOutput(iotago.OutputBasic),
+			Input:        output,
 		}).
-		AddOutput(utils.RandOutput(iotago.OutputBasic)).
+		AddOutput(output).
 		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(85, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
