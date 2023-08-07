@@ -323,7 +323,10 @@ type (
 
 	// AccountStakingListResponse defines the response for the staking REST API call.
 	AccountStakingListResponse struct {
-		Stakers []*ValidatorResponse `serix:"0,mapKey=stakers"`
+		Stakers     []*ValidatorResponse `serix:"0,mapKey=stakers"`
+		PageSize    uint32               `serix:"1,mapKey=pageSize"`
+		Coursor     uint32               `serix:"2,mapKey=coursor"`
+		RequestedAt iotago.SlotIndex     `serix:"3,mapKey=requestedAt"`
 	}
 
 	// ManaRewardsResponse defines the response for the mana rewards REST API call.
