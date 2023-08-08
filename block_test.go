@@ -63,7 +63,7 @@ func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLik
 		WeakParents(weakParents).
 		ShallowLikeParents(shallowLikeParent).
 		IssuingTime(time.Now()).
-		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), apiForSlot.TimeProvider().SlotFromTime(time.Now())-1-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
+		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), apiForSlot.TimeProvider().SlotFromTime(time.Now())-apiForSlot.ProtocolParameters().MinCommittableAge()-1, iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
 		Build()
 	require.NoError(t, err)
 
@@ -93,7 +93,7 @@ func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, ver
 		ProtocolVersion(version).
 		StrongParents(iotago.BlockIDs{iotago.BlockID{}}).
 		IssuingTime(apiForSlot.TimeProvider().SlotStartTime(blockIndex)).
-		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), blockIndex-1-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
+		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), blockIndex-apiForSlot.ProtocolParameters().MinCommittableAge()-1, iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
 		Build()
 	require.NoError(t, err)
 

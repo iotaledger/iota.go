@@ -317,8 +317,11 @@ func (b *ProtocolBlock) syntacticallyValidate(api API) error {
 		}
 	}
 
-	minCommittableAge := api.ProtocolParameters().MinCommittableAge()
-	maxCommittableAge := api.ProtocolParameters().MaxCommittableAge()
+	// The "+1" element is there because we're comparing against 'blockIndex' which is in the middle of a slot
+	// and the oldest possible committed slot is 'minCommittableAge' full slots in the past.
+	// So we need to subtract 1 to account for the blockIndex slot that is not finished yet.
+	minCommittableAge := api.ProtocolParameters().MinCommittableAge() + 1
+	maxCommittableAge := api.ProtocolParameters().MaxCommittableAge() + 1
 	commitmentIndex := b.SlotCommitmentID.Index()
 	blockID, err := b.ID(api)
 	if err != nil {
@@ -327,20 +330,13 @@ func (b *ProtocolBlock) syntacticallyValidate(api API) error {
 	blockIndex := blockID.Index()
 
 	// check that commitment is not too recent.
-	if minCommittableAge > 0 && // don't filter anything for being too recent if minCommittableAge is 0
-		commitmentIndex > 0 && // Don't filter commitments to genesis based on being too recent.
-		// The "+1" element is there because we're comparing against 'blockIndex' which is in the middle of a slot
-		// and the oldest possible committed slot is 'minCommittableAge' full slots in the past.
-		// So we need to subtract 1 to account for the blockIndex slot that is not finished yet.
-		blockIndex < commitmentIndex+minCommittableAge+1 {
+	if commitmentIndex > 0 && // Don't filter commitments to genesis based on being too recent.
+		blockIndex < commitmentIndex+minCommittableAge {
 		return ierrors.Wrapf(ErrCommitmentTooRecent, "block at slot %d committing to slot %d", blockIndex, b.SlotCommitmentID.Index())
 	}
 
 	// Check that commitment is not too old.
-	// The "+1" element is there because we're comparing against 'blockIndex' which is in the middle of a slot
-	// and the oldest possible committed slot is 'maxCommittableAge' full slots in the past.
-	// So we need to subtract 1 to account for the blockIndex slot that is not finished yet.
-	if blockIndex > commitmentIndex+maxCommittableAge+1 {
+	if blockIndex > commitmentIndex+maxCommittableAge {
 		return ierrors.Wrapf(ErrCommitmentTooOld, "block at slot %d committing to slot %d, max committable age %d", blockIndex, b.SlotCommitmentID.Index(), maxCommittableAge)
 	}
 
@@ -434,27 +430,22 @@ func (b *BasicBlock) syntacticallyValidate(api API, protocolBlock *ProtocolBlock
 		}
 		blockIndex := blockID.Index()
 
-		minCommittableAge := api.ProtocolParameters().MinCommittableAge()
-		maxCommittableAge := api.ProtocolParameters().MaxCommittableAge()
+		// The "+1" element is there because we're comparing against 'blockIndex' which is in the middle of a slot
+		// and the latest possible committed slot is 'min/maxCommittableAge' full slots in the past.
+		// So we need to add 1 to an account for the blockIndex slot that is not finished yet.
+		minCommittableAge := api.ProtocolParameters().MinCommittableAge() + 1
+		maxCommittableAge := api.ProtocolParameters().MaxCommittableAge() + 1
 
 		tx, _ := b.Payload.(*Transaction)
 		if cInput := tx.CommitmentInput(); cInput != nil {
 			cInputIndex := cInput.CommitmentID.Index()
 			// check that commitment input is not too recent.
-			if minCommittableAge > 0 && // don't filter anything for being too recent if minCommittableAge is 0
-				cInputIndex > 0 && // Don't filter commitments to genesis based on being too recent.
-				// The "+1" element is there because we're comparing against 'blockIndex' which is in the middle of a slot
-				// and the latest possible committed slot is 'minCommittableAge' full slots in the past.
-				// So we need to subtract 1 to account for the blockIndex slot that is not finished yet.
-				blockIndex < cInputIndex+minCommittableAge+1 { // filter commitments to future slots.
-
+			if cInputIndex > 0 && // Don't filter commitments to genesis based on being too recent.
+				blockIndex < cInputIndex+minCommittableAge { // filter commitments to future slots.
 				return ierrors.Wrapf(ErrCommitmentInputTooRecent, "block at slot %d with commitment input to slot %d", blockIndex, cInput.CommitmentID.Index())
 			}
 			// Check that commitment input is not too old.
-			// The "+1" element is there because we're comparing against 'blockIndex' which is in the middle of a slot
-			// and the oldest possible committed slot is 'maxCommittableAge' full slots in the past.
-			// So we need to subtract 1 to account for the blockIndex slot that is not finished yet.
-			if blockIndex > cInputIndex+maxCommittableAge+1 {
+			if blockIndex > cInputIndex+maxCommittableAge {
 				return ierrors.Wrapf(ErrCommitmentInputTooOld, "block at slot %d committing to slot %d, max committable age %d", blockIndex, cInput.CommitmentID.Index(), maxCommittableAge)
 			}
 
