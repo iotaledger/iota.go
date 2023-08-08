@@ -31,8 +31,8 @@ const (
 type BlockType byte
 
 const (
-	BlockTypeBasic      BlockType = 1
-	BlockTypeValidation BlockType = 2
+	BlockTypeBasic      BlockType = 0
+	BlockTypeValidation BlockType = 1
 )
 
 // EmptyBlockID returns an empty BlockID.
