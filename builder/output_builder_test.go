@@ -16,7 +16,7 @@ import (
 func TestBasicOutputBuilder(t *testing.T) {
 	var (
 		targetAddr                        = tpkg.RandEd25519Address()
-		deposit          iotago.BaseToken = 1337
+		amount           iotago.BaseToken = 1337
 		nt                                = tpkg.RandNativeToken()
 		expirationTarget                  = tpkg.RandEd25519Address()
 		metadata                          = []byte("123456")
@@ -25,7 +25,7 @@ func TestBasicOutputBuilder(t *testing.T) {
 	timelock := slotTimeProvider.SlotFromTime(time.Now().Add(5 * time.Minute))
 	expiration := slotTimeProvider.SlotFromTime(time.Now().Add(10 * time.Minute))
 
-	basicOutput, err := builder.NewBasicOutputBuilder(targetAddr, deposit).
+	basicOutput, err := builder.NewBasicOutputBuilder(targetAddr, amount).
 		NativeToken(nt).
 		Timelock(timelock).
 		Expiration(expirationTarget, expiration).
@@ -51,7 +51,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 	var (
 		stateCtrl                    = tpkg.RandEd25519Address()
 		gov                          = tpkg.RandEd25519Address()
-		deposit     iotago.BaseToken = 1337
+		amount      iotago.BaseToken = 1337
 		nt                           = tpkg.RandNativeToken()
 		metadata                     = []byte("123456")
 		immMetadata                  = []byte("654321")
@@ -64,11 +64,11 @@ func TestAccountOutputBuilder(t *testing.T) {
 		newBlockIssuerKey2 = tpkg.Rand32ByteArray()
 	)
 
-	accountOutput, err := builder.NewAccountOutputBuilder(stateCtrl, gov, deposit).
+	accountOutput, err := builder.NewAccountOutputBuilder(stateCtrl, gov, amount).
 		NativeToken(nt).
 		Metadata(metadata).
 		StateMetadata(metadata).
-		Staking(deposit, 1, 1000).
+		Staking(amount, 1, 1000).
 		BlockIssuer(iotago.BlockIssuerKeys{blockIssuerKey1, blockIssuerKey2, blockIssuerKey3}, 100000).
 		ImmutableMetadata(immMetadata).
 		ImmutableSender(immSender).
@@ -96,7 +96,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 				ExpirySlot:      100000,
 			},
 			&iotago.StakingFeature{
-				StakedAmount: deposit,
+				StakedAmount: amount,
 				FixedCost:    1,
 				StartEpoch:   1000,
 				EndEpoch:     math.MaxUint64,
@@ -109,13 +109,13 @@ func TestAccountOutputBuilder(t *testing.T) {
 	}
 	require.Equal(t, expected, accountOutput)
 
-	const newDeposit iotago.BaseToken = 7331
+	const newAmount iotago.BaseToken = 7331
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	expectedCpy := expected.Clone().(*iotago.AccountOutput)
-	expectedCpy.Amount = newDeposit
+	expectedCpy.Amount = newAmount
 	expectedCpy.StateIndex++
 	updatedOutput, err := builder.NewAccountOutputBuilderFromPrevious(accountOutput).StateTransition().
-		Deposit(newDeposit).Builder().Build()
+		Amount(newAmount).Builder().Build()
 	require.NoError(t, err)
 	require.Equal(t, expectedCpy, updatedOutput)
 
@@ -151,7 +151,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 				ExpirySlot:      1500,
 			},
 			&iotago.StakingFeature{
-				StakedAmount: deposit,
+				StakedAmount: amount,
 				FixedCost:    1,
 				StartEpoch:   1000,
 				EndEpoch:     2000,
@@ -169,14 +169,14 @@ func TestDelegationOutputBuilder(t *testing.T) {
 	var (
 		address                         = tpkg.RandEd25519Address()
 		updatedAddress                  = tpkg.RandEd25519Address()
-		deposit        iotago.BaseToken = 1337
-		updatedDeposit iotago.BaseToken = 127
+		amount         iotago.BaseToken = 1337
+		updatedAmount  iotago.BaseToken = 127
 		validatorID                     = tpkg.RandAccountID()
 		delegationID                    = tpkg.RandDelegationID()
 	)
 
-	delegationOutput, err := builder.NewDelegationOutputBuilder(validatorID, address, deposit).
-		DelegatedAmount(deposit).
+	delegationOutput, err := builder.NewDelegationOutputBuilder(validatorID, address, amount).
+		DelegatedAmount(amount).
 		StartEpoch(1000).
 		Build()
 	require.NoError(t, err)
@@ -196,8 +196,8 @@ func TestDelegationOutputBuilder(t *testing.T) {
 
 	updatedOutput, err := builder.NewDelegationOutputBuilderFromPrevious(delegationOutput).
 		DelegationID(delegationID).
-		DelegatedAmount(updatedDeposit).
-		Deposit(updatedDeposit).
+		DelegatedAmount(updatedAmount).
+		Amount(updatedAmount).
 		EndEpoch(1500).
 		Address(updatedAddress).
 		Build()
@@ -220,7 +220,7 @@ func TestDelegationOutputBuilder(t *testing.T) {
 func TestFoundryOutputBuilder(t *testing.T) {
 	var (
 		accountAddr                  = tpkg.RandAccountAddress()
-		deposit     iotago.BaseToken = 1337
+		amount      iotago.BaseToken = 1337
 		tokenScheme                  = &iotago.SimpleTokenScheme{
 			MintedTokens:  big.NewInt(0),
 			MeltedTokens:  big.NewInt(0),
@@ -231,7 +231,7 @@ func TestFoundryOutputBuilder(t *testing.T) {
 		immMetadata = []byte("654321")
 	)
 
-	foundryOutput, err := builder.NewFoundryOutputBuilder(accountAddr, tokenScheme, deposit).
+	foundryOutput, err := builder.NewFoundryOutputBuilder(accountAddr, tokenScheme, amount).
 		NativeToken(nt).
 		Metadata(metadata).
 		ImmutableMetadata(immMetadata).
@@ -257,13 +257,13 @@ func TestFoundryOutputBuilder(t *testing.T) {
 func TestNFTOutputBuilder(t *testing.T) {
 	var (
 		targetAddr                   = tpkg.RandAccountAddress()
-		deposit     iotago.BaseToken = 1337
+		amount      iotago.BaseToken = 1337
 		nt                           = tpkg.RandNativeToken()
 		metadata                     = []byte("123456")
 		immMetadata                  = []byte("654321")
 	)
 
-	nftOutput, err := builder.NewNFTOutputBuilder(targetAddr, deposit).
+	nftOutput, err := builder.NewNFTOutputBuilder(targetAddr, amount).
 		NativeToken(nt).
 		Metadata(metadata).
 		ImmutableMetadata(immMetadata).

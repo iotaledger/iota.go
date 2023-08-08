@@ -201,7 +201,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	nonZeroCostParams := iotago.NewV3ProtocolParameters(
-		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, iotago.VByteCostFactorData, iotago.VByteCostFactorKey),
+		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 10, 10),
 	)
 
 	tests := []struct {
@@ -286,7 +286,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					Mana: 500,
 				},
 			},
-			wantErr: iotago.ErrStorageDepositExceedsTargetOutputDeposit,
+			wantErr: iotago.ErrStorageDepositExceedsTargetOutputAmount,
 		},
 		{
 			name:        "fail - state rent not covered",
@@ -299,7 +299,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrVByteRentNotCovered,
+			wantErr: iotago.ErrVByteDepositNotCovered,
 		},
 		{
 			name:        "fail - zero deposit",
@@ -312,7 +312,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrDepositAmountMustBeGreaterThanZero,
+			wantErr: iotago.ErrAmountMustBeGreaterThanZero,
 		},
 		{
 			name:        "fail - more than total supply on single output",
@@ -325,7 +325,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrOutputDepositsMoreThanTotalSupply,
+			wantErr: iotago.ErrOutputAmountMoreThanTotalSupply,
 		},
 		{
 			name:        "fail - sum more than total supply over multiple outputs",

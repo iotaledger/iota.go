@@ -182,7 +182,7 @@ func (n *NFTOutput) ImmutableFeatureSet() FeatureSet {
 	return n.ImmutableFeatures.MustSet()
 }
 
-func (n *NFTOutput) Deposit() BaseToken {
+func (n *NFTOutput) BaseTokenAmount() BaseToken {
 	return n.Amount
 }
 

@@ -32,7 +32,7 @@ var (
 
 	testProtoParams = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("test", "test"),
-		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10),
+		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 100, 100),
 		iotago.WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
 		iotago.WithTimeProviderOptions(100, slotDurationSeconds, slotsPerEpochExponent),
 		iotago.WithManaOptions(generationRate,
@@ -2504,7 +2504,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedDeposit())
+			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedBaseTokens())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -3918,7 +3918,9 @@ func TestTxSemanticMana(t *testing.T) {
 							var slotIndexCreated iotago.SlotIndex = 10
 							slotIndexTarget := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
-							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(OneMi, slotIndexCreated, slotIndexTarget)
+							input := inputs[inputIDs[0]]
+							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
+							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
@@ -3977,7 +3979,9 @@ func TestTxSemanticMana(t *testing.T) {
 							var slotIndexCreated iotago.SlotIndex = 10
 							slotIndexTarget := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
-							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(OneMi, slotIndexCreated, slotIndexTarget)
+							input := inputs[inputIDs[0]]
+							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
+							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)

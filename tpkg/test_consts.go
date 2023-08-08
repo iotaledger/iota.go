@@ -7,7 +7,7 @@ import (
 var TestAPI = iotago.V3API(
 	iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("TestJungle", "tgl"),
-		iotago.WithSupplyOptions(TestTokenSupply, 0, 0, 0),
+		iotago.WithSupplyOptions(TestTokenSupply, 0, 0, 0, 0, 0),
 	),
 )
 
