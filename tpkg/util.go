@@ -68,9 +68,13 @@ func RandInt64(max uint64) int64 {
 	return rand.Int63n(int64(uint32(max)))
 }
 
-// RandUTCTime returns a random time in UTC.
+// RandUTCTime returns a random time from current year until now in UTC.
 func RandUTCTime() time.Time {
-	return time.Unix(0, RandInt64(math.MaxInt64)).UTC()
+	now := time.Now()
+	beginnigOfYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+	secTillNow := now.Unix() - beginnigOfYear.Unix()
+
+	return time.Unix(beginnigOfYear.Unix()+RandInt64(uint64(secTillNow)), RandInt64(1e9)).UTC()
 }
 
 // RandBaseToken returns a random amount of base token.

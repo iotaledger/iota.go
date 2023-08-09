@@ -3,6 +3,7 @@ package iotago
 import (
 	"context"
 	"crypto/ed25519"
+	"time"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -177,9 +178,10 @@ var (
 type v3api struct {
 	serixAPI *serix.API
 
-	protocolParameters *V3ProtocolParameters
-	timeProvider       *TimeProvider
-	manaDecayProvider  *ManaDecayProvider
+	protocolParameters        *V3ProtocolParameters
+	timeProvider              *TimeProvider
+	manaDecayProvider         *ManaDecayProvider
+	livenessThresholdDuration time.Duration
 }
 
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
@@ -210,6 +212,10 @@ func (v *v3api) ManaDecayProvider() *ManaDecayProvider {
 	return v.manaDecayProvider
 }
 
+func (v *v3api) LivenessThresholdDuration() time.Duration {
+	return v.livenessThresholdDuration
+}
+
 func (v *v3api) Encode(obj interface{}, opts ...serix.Option) ([]byte, error) {
 	return v.serixAPI.Encode(context.TODO(), obj, opts...)
 }
@@ -222,12 +228,15 @@ func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, er
 func V3API(protoParams ProtocolParameters) API {
 	api := CommonSerixAPI()
 
+	timeProvider := protoParams.TimeProvider()
+
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{
-		serixAPI:           api,
-		protocolParameters: protoParams.(*V3ProtocolParameters),
-		timeProvider:       protoParams.TimeProvider(),
-		manaDecayProvider:  protoParams.ManaDecayProvider(),
+		serixAPI:                  api,
+		protocolParameters:        protoParams.(*V3ProtocolParameters),
+		timeProvider:              timeProvider,
+		manaDecayProvider:         protoParams.ManaDecayProvider(),
+		livenessThresholdDuration: time.Duration(uint64(protoParams.LivenessThreshold())*uint64(timeProvider.SlotDurationSeconds())) * time.Second,
 	}
 
 	must(api.RegisterTypeSettings(TaggedData{},
