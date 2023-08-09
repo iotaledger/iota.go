@@ -42,6 +42,7 @@ const (
 	RouteCongestion = "/api/core/v3/accounts/%s/congestion"
 
 	// RouteRewards is the route for getting the rewards for staking or delegation based on the provided output.
+	// Rewards are decayed up to returned epochEnd index.
 	// GET returns the rewards for the output.
 	// MIMEApplicationJSON => json.
 	// MIMEVendorIOTASerializer => bytes.
@@ -377,8 +378,8 @@ func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*a
 	return res, nil
 }
 
-func (client *Client) Staking(ctx context.Context) (*apimodels.AccountStakingListResponse, error) {
-	res := &apimodels.AccountStakingListResponse{}
+func (client *Client) Validators(ctx context.Context) (*apimodels.ValidatorsResponse, error) {
+	res := &apimodels.ValidatorsResponse{}
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteValidators, nil, res); err != nil {
 		return nil, err

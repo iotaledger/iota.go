@@ -223,9 +223,9 @@ func TestClient_Rewards(t *testing.T) {
 	outID := tpkg.RandOutputID(1)
 
 	originRes := &apimodels.ManaRewardsResponse{
-		EpochIndexStart: iotago.EpochIndex(20),
-		EpochIndexEnd:   iotago.EpochIndex(30),
-		Rewards:         iotago.Mana(1000),
+		EpochStart: iotago.EpochIndex(20),
+		EpochEnd:   iotago.EpochIndex(30),
+		Rewards:    iotago.Mana(1000),
 	}
 
 	mockGetJSON(fmt.Sprintf(nodeclient.RouteRewards, outID.ToHex()), 200, originRes)
@@ -236,10 +236,10 @@ func TestClient_Rewards(t *testing.T) {
 	require.EqualValues(t, originRes, res)
 }
 
-func TestClient_Staking(t *testing.T) {
+func TestClient_Validators(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &apimodels.AccountStakingListResponse{Stakers: []*apimodels.ValidatorResponse{
+	originRes := &apimodels.ValidatorsResponse{Validators: []*apimodels.ValidatorResponse{
 		{
 			AccountID:                      tpkg.RandAccountID(),
 			StakingEpochEnd:                iotago.EpochIndex(123),
@@ -263,7 +263,7 @@ func TestClient_Staking(t *testing.T) {
 	mockGetJSON(nodeclient.RouteValidators, 200, originRes)
 
 	nodeAPI := nodeClient(t)
-	res, err := nodeAPI.Staking(context.Background())
+	res, err := nodeAPI.Validators(context.Background())
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
 }

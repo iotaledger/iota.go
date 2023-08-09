@@ -281,8 +281,8 @@ func Test_CongestionResponse(t *testing.T) {
 func Test_AccountStakingListResponse(t *testing.T) {
 	api := testAPI()
 
-	response := &apimodels.AccountStakingListResponse{
-		Stakers: []*apimodels.ValidatorResponse{
+	response := &apimodels.ValidatorsResponse{
+		Validators: []*apimodels.ValidatorResponse{
 			{
 				AccountID:                      iotago.AccountID{0xFF},
 				StakingEpochEnd:                0,
@@ -302,7 +302,7 @@ func Test_AccountStakingListResponse(t *testing.T) {
 	expected := "{\"stakers\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"stakingEpochEnd\":\"0\",\"poolStake\":\"123\",\"validatorStake\":\"456\",\"fixedCost\":\"69\",\"active\":true,\"latestSupportedProtocolVersion\":9}],\"pageSize\":50,\"cursor\":\"0,1\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
-	decoded := new(apimodels.AccountStakingListResponse)
+	decoded := new(apimodels.ValidatorsResponse)
 	require.NoError(t, api.JSONDecode(jsonResponse, decoded))
 	require.EqualValues(t, response, decoded)
 }
@@ -311,9 +311,9 @@ func Test_ManaRewardsResponse(t *testing.T) {
 	api := testAPI()
 
 	response := &apimodels.ManaRewardsResponse{
-		EpochIndexStart: 123,
-		EpochIndexEnd:   133,
-		Rewards:         456,
+		EpochStart: 123,
+		EpochEnd:   133,
+		Rewards:    456,
 	}
 
 	jsonResponse, err := api.JSONEncode(response)

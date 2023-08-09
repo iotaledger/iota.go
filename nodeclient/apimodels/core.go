@@ -321,20 +321,20 @@ type (
 		LatestSupportedProtocolVersion iotago.Version `serix:"6,mapKey=latestSupportedProtocolVersion"`
 	}
 
-	// AccountStakingListResponse defines the response for the staking REST API call.
-	AccountStakingListResponse struct {
-		Stakers  []*ValidatorResponse `serix:"0,mapKey=stakers"`
-		PageSize uint32               `serix:"1,mapKey=pageSize"`
-		Cursor   string               `serix:"2,mapKey=cursor,omitempty"`
+	// ValidatorsResponse defines the response for the staking REST API call.
+	ValidatorsResponse struct {
+		Validators []*ValidatorResponse `serix:"0,mapKey=stakers"`
+		PageSize   uint32               `serix:"1,mapKey=pageSize"`
+		Cursor     string               `serix:"2,mapKey=cursor,omitempty"`
 	}
 
 	// ManaRewardsResponse defines the response for the mana rewards REST API call.
 	ManaRewardsResponse struct {
-		// EpochIndexStart is the starting epoch for the range for which the mana rewards are returned.
-		EpochIndexStart iotago.EpochIndex `serix:"0,mapKey=epochIndexStart"`
-		// EpochIndexEnd is the ending epoch for the range for which the mana rewards are returned.
-		EpochIndexEnd iotago.EpochIndex `serix:"1,mapKey=epochIndexEnd"`
-		// The amount of totally available rewards the requested output may claim.
+		// EpochStart is the starting epoch for the range for which the mana rewards are returned.
+		EpochStart iotago.EpochIndex `serix:"0,mapKey=epochIndexStart"`
+		// EpochEnd is the ending epoch for the range for which the mana rewards are returned, also the decay is only applied up to this point.
+		EpochEnd iotago.EpochIndex `serix:"1,mapKey=epochIndexEnd"`
+		// The amount of totally available rewards the requested output may claim, decayed up to EpochEnd (including).
 		Rewards iotago.Mana `serix:"2,mapKey=rewards"`
 	}
 
