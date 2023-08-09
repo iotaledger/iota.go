@@ -184,7 +184,7 @@ func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iot
 // That means no commitment input can be chosen such that the index lies behind the slot index of the block,
 // hence the past is bounded.
 func (params *Params) PastBoundedSlotIndex(commitmentInputSlot iotago.SlotIndex) iotago.SlotIndex {
-	return commitmentInputSlot + params.API.ProtocolParameters().MaxCommittableAge()
+	return commitmentInputSlot + params.API.ProtocolParameters().MaxCommittableAge() + 1
 }
 
 // FutureBoundedSlotIndex calculates the future bounded slot for the given slot.
@@ -193,7 +193,7 @@ func (params *Params) PastBoundedSlotIndex(commitmentInputSlot iotago.SlotIndex)
 // That means no commitment input can be chosen such that the index lies ahead of the slot index of the block,
 // hence the future is bounded.
 func (params *Params) FutureBoundedSlotIndex(commitmentInputSlot iotago.SlotIndex) iotago.SlotIndex {
-	return commitmentInputSlot + params.API.ProtocolParameters().MinCommittableAge()
+	return commitmentInputSlot + params.API.ProtocolParameters().MinCommittableAge() + 1
 }
 
 // RunVMFuncs runs the given ExecFunc(s) in serial order.

@@ -62,7 +62,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 
 	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: []ed25519.PublicKey{tpkg.Rand32ByteArray()},
-		ExpirySlot:      currentSlot + tpkg.TestAPI.ProtocolParameters().MaxCommittableAge(),
+		ExpirySlot:      currentSlot + tpkg.TestAPI.ProtocolParameters().MaxCommittableAge() + 1,
 	}
 
 	exampleBIC := map[iotago.AccountID]iotago.BlockIssuanceCredits{
@@ -2509,10 +2509,10 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 	currentEpoch := iotago.EpochIndex(20)
 	epochStartSlot := tpkg.TestAPI.TimeProvider().EpochStart(currentEpoch)
 	epochEndSlot := tpkg.TestAPI.TimeProvider().EpochEnd(currentEpoch)
-	minCommittableAge := tpkg.TestAPI.ProtocolParameters().MinCommittableAge()
-	maxCommittableAge := tpkg.TestAPI.ProtocolParameters().MaxCommittableAge()
+	minCommittableAge := tpkg.TestAPI.ProtocolParameters().MinCommittableAge() + 1
+	maxCommittableAge := tpkg.TestAPI.ProtocolParameters().MaxCommittableAge() + 1
 
-	// Commitment indices that will always end up being in current epoch, no matter if
+	// Commitment indices that will always end up being in the current epoch no matter if
 	// future or past bounded.
 	epochStartCommitmentIndex := epochStartSlot - minCommittableAge
 	epochEndCommitmentIndex := epochEndSlot - maxCommittableAge
