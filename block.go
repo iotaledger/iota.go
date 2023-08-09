@@ -320,8 +320,8 @@ func (b *ProtocolBlock) syntacticallyValidate(api API) error {
 	// The "+1" element is there because we're comparing against 'blockIndex' which is in the middle of a slot
 	// and the oldest possible committed slot is 'minCommittableAge' full slots in the past.
 	// So we need to subtract 1 to account for the blockIndex slot that is not finished yet.
-	minCommittableAge := api.ProtocolParameters().MinCommittableAge() + 1
-	maxCommittableAge := api.ProtocolParameters().MaxCommittableAge() + 1
+	minCommittableAge := api.ProtocolParameters().MinCommittableAge()
+	maxCommittableAge := api.ProtocolParameters().MaxCommittableAge()
 	commitmentIndex := b.SlotCommitmentID.Index()
 	blockID, err := b.ID(api)
 	if err != nil {
@@ -433,8 +433,8 @@ func (b *BasicBlock) syntacticallyValidate(api API, protocolBlock *ProtocolBlock
 		// The "+1" element is there because we're comparing against 'blockIndex' which is in the middle of a slot
 		// and the latest possible committed slot is 'min/maxCommittableAge' full slots in the past.
 		// So we need to add 1 to an account for the blockIndex slot that is not finished yet.
-		minCommittableAge := api.ProtocolParameters().MinCommittableAge() + 1
-		maxCommittableAge := api.ProtocolParameters().MaxCommittableAge() + 1
+		minCommittableAge := api.ProtocolParameters().MinCommittableAge()
+		maxCommittableAge := api.ProtocolParameters().MaxCommittableAge()
 
 		tx, _ := b.Payload.(*Transaction)
 		if cInput := tx.CommitmentInput(); cInput != nil {

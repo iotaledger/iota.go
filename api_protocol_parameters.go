@@ -48,8 +48,10 @@ type basicProtocolParameters struct {
 	// and commitments in its past-cone to ATT and lastCommittedSlot respectively.
 	LivenessThreshold SlotIndex `serix:"16,mapKey=livenessThreshold"`
 	// MinCommittableAge is the minimum age relative to the accepted tangle time slot index that a slot can be committed.
+	// For example, if the last accepted slot is in slot 100, and minCommittableAge=10, then the latest committed slot can be at most 100-10=90.
 	MinCommittableAge SlotIndex `serix:"17,mapKey=minCommittableAge"`
 	// MaxCommittableAge is the maximum age for a slot commitment to be included in a block relative to the slot index of the block issuing time.
+	// For example, if the last accepted slot is in slot 100, and maxCommittableAge=20, then the oldest referencable commitment is 100-20=80.
 	MaxCommittableAge SlotIndex `serix:"18,mapKey=maxCommittableAge"`
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
