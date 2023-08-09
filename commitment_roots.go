@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"crypto"
+	"fmt"
 
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/iota.go/v4/merklehasher"
@@ -68,4 +69,9 @@ func VerifyProof(proof *merklehasher.Proof[Identifier], proofedRoot Identifier, 
 
 	//nolint:nosnakecase // false positive
 	return treeRoot == Identifier(proof.Hash(merklehasher.NewHasher[Identifier](crypto.BLAKE2b_256)))
+}
+
+func (r *Roots) String() string {
+	return fmt.Sprintf(
+		"Roots(%s): TangleRoot: %s, StateMutationRoot: %s, StateRoot: %s, AccountRoot: %s, AttestationsRoot: %s, CommitteeRoot: %s, RewardsRoot: %s, ProtocolParametersHash: %s", r.ID(), r.TangleRoot, r.StateMutationRoot, r.StateRoot, r.AccountRoot, r.AttestationsRoot, r.CommitteeRoot, r.RewardsRoot, r.ProtocolParametersHash)
 }
