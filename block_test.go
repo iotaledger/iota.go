@@ -3,12 +3,14 @@ package iotago_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -162,34 +164,51 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 }
 
 func TestBlockJSONMarshalling(t *testing.T) {
-	// TODO: finish this test.
+	networkID := iotago.NetworkIDFromString("xxxNetwork")
+	issuingTime := tpkg.RandUTCTime()
+	commitmentID := iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID()
+	issuerID := tpkg.RandAccountID()
+	signature := tpkg.RandEd25519Signature()
+	strongParents := tpkg.SortedRandBlockIDs(1)
 	validationBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			IssuingTime:      issuingTime,
+			IssuerID:         issuerID,
+			NetworkID:        networkID,
+			SlotCommitmentID: commitmentID,
 		},
-		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.ValidationBlock{
-			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			StrongParents:           strongParents,
 			HighestSupportedVersion: tpkg.TestAPI.Version(),
 		},
+		Signature: signature,
 	}
 
-	// protoParamsJSON := `{"type":0,"version":3,"networkName":"xxxNetwork","bech32Hrp":"xxx","rentStructure":{"vByteCost":6,"vByteFactorData":7,"vByteFactorKey":8},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"manaGenerationRate":1,"manaGenerationRateExponent":27,"manaDecayFactors":[10,20],"manaDecayFactorsExponent":32,"manaDecayFactorEpochsSum":1337,"manaDecayFactorEpochsSumExponent":20,"stakingUnbondingPeriod":"11","evictionAge":"10","livenessThreshold":"3"}`
+	blockJSON := fmt.Sprintf(`{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitment":"%s","latestFinalizedSlot":"0","issuerId":"%s","block":{"type":%d,"strongParents":["%s"],"weakParents":[],"shallowLikeParents":[],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
+		tpkg.TestAPI.Version(),
+		networkID,
+		issuingTime.Format(time.RFC3339Nano),
+		commitmentID.ToHex(),
+		issuerID.ToHex(),
+		iotago.BlockTypeValidation,
+		strongParents[0].ToHex(),
+		tpkg.TestAPI.Version(),
+		iotago.SignatureEd25519,
+		hexutil.EncodeHex(signature.PublicKey[:]),
+		hexutil.EncodeHex(signature.Signature[:]),
+	)
 
 	jsonEncode, err := tpkg.TestAPI.JSONEncode(validationBlock)
+
 	fmt.Println(string(jsonEncode))
+
 	require.NoError(t, err)
-	// require.Equal(t, protoParamsJSON, string(jsonEncode))
-	//
-	// var decodedProtoParams iotago.ProtocolParameters
-	// err = tpkg.TestAPI.JSONDecode([]byte(protoParamsJSON), &decodedProtoParams)
-	// require.NoError(t, err)
-	//
-	// require.Equal(t, protoParams, decodedProtoParams)
+	require.Equal(t, blockJSON, string(jsonEncode))
 }
 
 // TODO: add tests
 //  - max size
 //  - parents parameters basic block
 //  - parents parameters validator block
+//  - decode/encode protocol parameters

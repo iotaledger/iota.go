@@ -56,6 +56,8 @@ type API interface {
 	TimeProvider() *TimeProvider
 	// ManaDecayProvider returns the underlying mana decay provider used.
 	ManaDecayProvider() *ManaDecayProvider
+	// LivenessThresholdDuration returns the liveness threshold duration.
+	LivenessThresholdDuration() time.Duration
 }
 
 func LatestProtocolVersion() Version {
@@ -114,8 +116,6 @@ type ProtocolParameters interface {
 	MinCommittableAge() SlotIndex
 
 	MaxCommittableAge() SlotIndex
-
-	LivenessThresholdDuration() time.Duration
 
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
