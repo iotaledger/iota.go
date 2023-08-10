@@ -361,6 +361,18 @@ func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScor
 	return workScoreBytes.Add(workScoreMissingParents, workScorePayload)
 }
 
+func (b *BasicBlock) ManaCost(rmc Mana) (Mana, error) {
+	// workScore, err := blk.protocolBlock.Block.WorkScore(blk.api.ProtocolParameters().WorkScoreStructure())
+	// if err != nil {
+	// 	return 0, err
+	// }
+
+	// return Mana(workScore) * rmc, nil
+
+	// TODO: add implement workscore properly with issue #264
+	return rmc, nil
+}
+
 // ValidationBlock represents a validation vertex in the Tangle/BlockDAG.
 type ValidationBlock struct {
 	// The parents the block references.
