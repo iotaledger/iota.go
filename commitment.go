@@ -23,15 +23,17 @@ type Commitment struct {
 	PrevID           CommitmentID `serix:"2,mapKey=prevId"`
 	RootsID          Identifier   `serix:"3,mapKey=rootsId"`
 	CumulativeWeight uint64       `serix:"4,mapKey=cumulativeWeight"`
+	RMC              Mana         `serix:"5,mapKey=rmc"`
 }
 
-func NewCommitment(version Version, index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64) *Commitment {
+func NewCommitment(version Version, index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64, rmc Mana) *Commitment {
 	return &Commitment{
 		Version:          version,
 		Index:            index,
 		PrevID:           prevID,
 		RootsID:          rootsID,
 		CumulativeWeight: cumulativeWeight,
+		RMC:              rmc,
 	}
 }
 
@@ -73,12 +75,13 @@ func (c *Commitment) Equals(other *Commitment) bool {
 		c.Index == other.Index &&
 		c.PrevID == other.PrevID &&
 		c.RootsID == other.RootsID &&
-		c.CumulativeWeight == other.CumulativeWeight
+		c.CumulativeWeight == other.CumulativeWeight &&
+		c.RMC == other.RMC
 }
 
 func (c *Commitment) String() string {
-	return fmt.Sprintf("Commitment{\n\tIndex: %d\n\tPrevID: %s\n\tRootsID: %s\n\tCumulativeWeight: %d\n}",
-		c.Index, c.PrevID, c.RootsID, c.CumulativeWeight)
+	return fmt.Sprintf("Commitment{\n\tIndex: %d\n\tPrevID: %s\n\tRootsID: %s\n\tCumulativeWeight: %d\n\tRMC: %d\n}",
+		c.Index, c.PrevID, c.RootsID, c.CumulativeWeight, c.RMC)
 }
 
 func (c *Commitment) Size() int {
@@ -86,5 +89,6 @@ func (c *Commitment) Size() int {
 		SlotIndexLength +
 		CommitmentIDLength +
 		IdentifierLength +
-		serializer.UInt64ByteSize
+		serializer.UInt64ByteSize +
+		ManaSize
 }

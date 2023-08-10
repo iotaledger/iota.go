@@ -56,8 +56,10 @@ type basicProtocolParameters struct {
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold SlotIndex `serix:"19,mapKey=epochNearingThreshold"`
+	// RMCParameters defines the parameters used by to calculate the Reference Mana Cost (RMC).
+	RMCParameters RMCParameters `serix:"20,mapKey=rmcParameters"`
 
-	VersionSignaling VersionSignaling `serix:"20,mapKey=versionSignaling"`
+	VersionSignaling VersionSignaling `serix:"21,mapKey=versionSignaling"`
 }
 
 func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
@@ -81,5 +83,6 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.MinCommittableAge == other.MinCommittableAge &&
 		b.MaxCommittableAge == other.MaxCommittableAge &&
 		b.EpochNearingThreshold == other.EpochNearingThreshold &&
+		b.RMCParameters.Equals(other.RMCParameters) &&
 		b.VersionSignaling.Equals(other.VersionSignaling)
 }
