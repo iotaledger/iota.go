@@ -229,11 +229,11 @@ type (
 	// IssuanceBlockHeaderResponse defines the response of a GET block issuance REST API call.
 	IssuanceBlockHeaderResponse struct {
 		// StrongParents are the strong parents of the block.
-		StrongParents iotago.BlockIDs `serix:"0,mapKey=strongParents"`
+		StrongParents iotago.BlockIDs `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
 		// WeakParents are the weak parents of the block.
-		WeakParents iotago.BlockIDs `serix:"1,mapKey=weakParents"`
+		WeakParents iotago.BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
 		// ShallowLikeParents are the shallow like parents of the block.
-		ShallowLikeParents iotago.BlockIDs `serix:"2,mapKey=shallowLikeParents"`
+		ShallowLikeParents iotago.BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
 		// LatestFinalizedSlot is the index of the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `serix:"3,mapKey=latestFinalizedSlot"`
 		// Commitment is the commitment of the block.
