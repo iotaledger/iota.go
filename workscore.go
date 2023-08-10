@@ -8,6 +8,75 @@ import (
 // WorkScore defines the type of work score used to denote the computation costs of processing an object.
 type WorkScore uint32
 
+// MaxBlockWork is the maximum work score a block can have.
+func (w WorkScoreStructure) MaxBlockWorkScore() (WorkScore, error) {
+	var maxBlockWork WorkScore
+	// max block size data factor
+	dataFactor, err := w.DataByte.Multiply(MaxBlockSize)
+	if err != nil {
+		return 0, err
+	}
+	maxBlockWork += dataFactor
+	// block factor
+	maxBlockWork += w.Block
+	// missing parents factor for zero parents
+	missingParentsFactor, err := w.MissingParent.Multiply(int(w.MinStrongParentsThreshold))
+	if err != nil {
+		return 0, err
+	}
+	maxBlockWork += missingParentsFactor
+	// inputs factor for max number of inputs
+	inputsFactor, err := w.Input.Multiply(MaxInputsCount)
+	if err != nil {
+		return 0, err
+	}
+	maxBlockWork += inputsFactor
+	// context inputs factor for max number of inputs
+	contextInputsFactor, err := w.ContextInput.Multiply(MaxContextInputsCount)
+	if err != nil {
+		return 0, err
+	}
+	maxBlockWork += contextInputsFactor
+	// outputs factor for max number of outputs
+	outputsFactor, err := w.Output.Multiply(MaxOutputsCount)
+	if err != nil {
+		return 0, err
+	}
+	maxBlockWork += outputsFactor
+	// native tokens factor for max number of outputs
+	nativeTokensFactor, err := w.NativeToken.Multiply(MaxNativeTokenCountPerOutput * MaxOutputsCount)
+	if err != nil {
+		return 0, err
+	}
+	maxBlockWork += nativeTokensFactor
+	// staking factor for max number of outputs each with a staking feature
+	stakingFactor, err := w.Staking.Multiply(MaxOutputsCount)
+	if err != nil {
+		return 0, err
+	}
+	maxBlockWork += stakingFactor
+	// block issuer factor for max number of outputs each with a block issuer feature
+	blockIssuerFactor, err := w.BlockIssuer.Multiply(MaxOutputsCount)
+	if err != nil {
+		return 0, err
+	}
+	maxBlockWork += blockIssuerFactor
+	// allotments factor for max number of allotments
+	allotmentsFactor, err := w.Allotment.Multiply(MaxAllotmentCount)
+	if err != nil {
+		return 0, err
+	}
+	maxBlockWork += allotmentsFactor
+	// signature for block and max number of inputs
+	signatureFactor, err := w.SignatureEd25519.Multiply(1 + MaxInputsCount)
+	if err != nil {
+		return 0, err
+	}
+	maxBlockWork += signatureFactor
+
+	return maxBlockWork, nil
+}
+
 // Add adds in to this workscore.
 func (w WorkScore) Add(in ...WorkScore) (WorkScore, error) {
 	var err error
@@ -59,7 +128,7 @@ type WorkScoreStructure struct {
 	// SignatureEd25519 accounts for an Ed25519 signature check.
 	SignatureEd25519 WorkScore `serix:"10,mapKey=signatureEd25519"`
 
-	// MinStrongParentsThreshold is the minimum amount of strong parents in a basic block, otherwise the issuer gets slashed.
+	// MinStrongParentsThreshold is the minimum amount of strong parents in a basic block, otherwise the block work increases.
 	MinStrongParentsThreshold byte `serix:"11,mapKey=minStrongParentsThreshold"`
 }
 

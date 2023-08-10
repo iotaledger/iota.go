@@ -358,7 +358,8 @@ func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScor
 		return 0, err
 	}
 
-	return workScoreBytes.Add(workScoreMissingParents, workScorePayload)
+	// data bytes, plus missing parents, plus payload, plus block offset.
+	return workScoreBytes.Add(workScoreMissingParents, workScorePayload, workScoreStructure.Block)
 }
 
 // ValidationBlock represents a validation vertex in the Tangle/BlockDAG.
