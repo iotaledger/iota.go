@@ -11,6 +11,7 @@ import (
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
@@ -25,6 +26,16 @@ const (
 	BlockMaxParents = 8
 	// BlockTypeValidationMaxParents defines the maximum amount of parents in a ValidationBlock. TODO: replace number with committee size.
 	BlockTypeValidationMaxParents = BlockMaxParents + 42
+)
+
+var (
+	ErrWeakParentsInvalid                 = ierrors.New("weak parents must be disjunct to the rest of the parents")
+	ErrCommitmentTooOld                   = ierrors.New("a block cannot commit to a slot that is older than the block's slot minus maxCommittableAge")
+	ErrCommitmentTooRecent                = ierrors.New("a block cannot commit to a slot that is more recent than the block's slot minus minCommittableAge")
+	ErrCommitmentInputTooOld              = ierrors.New("a block cannot contain a commitment input with index older than the block's slot minus maxCommittableAge")
+	ErrCommitmentInputTooRecent           = ierrors.New("a block cannot contain a commitment input with index more recent than the block's slot minus minCommittableAge")
+	ErrInvalidBlockVersion                = ierrors.New("block has invalid protocol version")
+	ErrCommitmentInputNewerThanCommitment = ierrors.New("a block cannot contain a commitment input with index newer than the commitment index")
 )
 
 // BlockType denotes a type of Block.
@@ -286,6 +297,49 @@ func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 	return workScoreHeader.Add(workScoreBlock, workScoreSignature)
 }
 
+// syntacticallyValidate syntactically validates the ProtocolBlock.
+func (b *ProtocolBlock) syntacticallyValidate(api API) error {
+	if api.ProtocolParameters().Version() != b.ProtocolVersion {
+		return ierrors.Wrapf(ErrInvalidBlockVersion, "mismatched protocol version: wanted %d, got %d in block", api.ProtocolParameters().Version(), b.ProtocolVersion)
+	}
+
+	block := b.Block
+	if len(block.WeakParentIDs()) > 0 {
+		// weak parents must be disjunct to the rest of the parents
+		nonWeakParents := lo.KeyOnlyBy(append(block.StrongParentIDs(), block.ShallowLikeParentIDs()...), func(v BlockID) BlockID {
+			return v
+		})
+
+		for _, parent := range block.WeakParentIDs() {
+			if _, contains := nonWeakParents[parent]; contains {
+				return ierrors.Wrapf(ErrWeakParentsInvalid, "weak parents (%s) cannot have common elements with strong parents (%s) or shallow likes (%s)", block.WeakParentIDs(), block.StrongParentIDs(), block.ShallowLikeParentIDs())
+			}
+		}
+	}
+
+	minCommittableAge := api.ProtocolParameters().MinCommittableAge()
+	maxCommittableAge := api.ProtocolParameters().MaxCommittableAge()
+	commitmentIndex := b.SlotCommitmentID.Index()
+	blockID, err := b.ID(api)
+	if err != nil {
+		return ierrors.Wrapf(err, "failed to syntactically validate block")
+	}
+	blockIndex := blockID.Index()
+
+	// check that commitment is not too recent.
+	if commitmentIndex > 0 && // Don't filter commitments to genesis based on being too recent.
+		blockIndex < commitmentIndex+minCommittableAge {
+		return ierrors.Wrapf(ErrCommitmentTooRecent, "block at slot %d committing to slot %d", blockIndex, b.SlotCommitmentID.Index())
+	}
+
+	// Check that commitment is not too old.
+	if blockIndex > commitmentIndex+maxCommittableAge {
+		return ierrors.Wrapf(ErrCommitmentTooOld, "block at slot %d committing to slot %d, max committable age %d", blockIndex, b.SlotCommitmentID.Index(), maxCommittableAge)
+	}
+
+	return b.Block.syntacticallyValidate(api, b)
+}
+
 type Block interface {
 	Type() BlockType
 
@@ -294,6 +348,8 @@ type Block interface {
 	ShallowLikeParentIDs() BlockIDs
 
 	Hash(api API) (Identifier, error)
+
+	syntacticallyValidate(api API, protocolBlock *ProtocolBlock) error
 
 	ProcessableObject
 }
@@ -362,6 +418,54 @@ func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScor
 	return workScoreBytes.Add(workScoreMissingParents, workScorePayload, workScoreStructure.Block)
 }
 
+func (b *BasicBlock) ManaCost(rmc Mana) (Mana, error) {
+	// workScore, err := blk.protocolBlock.Block.WorkScore(blk.api.ProtocolParameters().WorkScoreStructure())
+	// if err != nil {
+	// 	return 0, err
+	// }
+
+	// return Mana(workScore) * rmc, nil
+
+	// TODO: add implement workscore properly with issue #264
+	return rmc, nil
+}
+
+// syntacticallyValidate syntactically validates the BasicBlock.
+func (b *BasicBlock) syntacticallyValidate(api API, protocolBlock *ProtocolBlock) error {
+	if b.Payload != nil && b.Payload.PayloadType() == PayloadTransaction {
+		blockID, err := protocolBlock.ID(api)
+		if err != nil {
+			// TODO: wrap error
+			return err
+		}
+		blockIndex := blockID.Index()
+
+		minCommittableAge := api.ProtocolParameters().MinCommittableAge()
+		maxCommittableAge := api.ProtocolParameters().MaxCommittableAge()
+
+		tx, _ := b.Payload.(*Transaction)
+		if cInput := tx.CommitmentInput(); cInput != nil {
+			cInputIndex := cInput.CommitmentID.Index()
+			// check that commitment input is not too recent.
+			if cInputIndex > 0 && // Don't filter commitments to genesis based on being too recent.
+				blockIndex < cInputIndex+minCommittableAge { // filter commitments to future slots.
+				return ierrors.Wrapf(ErrCommitmentInputTooRecent, "block at slot %d with commitment input to slot %d", blockIndex, cInput.CommitmentID.Index())
+			}
+			// Check that commitment input is not too old.
+			if blockIndex > cInputIndex+maxCommittableAge {
+				return ierrors.Wrapf(ErrCommitmentInputTooOld, "block at slot %d committing to slot %d, max committable age %d", blockIndex, cInput.CommitmentID.Index(), maxCommittableAge)
+			}
+
+			if cInputIndex > protocolBlock.SlotCommitmentID.Index() {
+				return ierrors.Wrapf(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Index(), protocolBlock.SlotCommitmentID.Index())
+			}
+
+		}
+	}
+
+	return nil
+}
+
 // ValidationBlock represents a validation vertex in the Tangle/BlockDAG.
 type ValidationBlock struct {
 	// The parents the block references.
@@ -402,6 +506,15 @@ func (b *ValidationBlock) Hash(api API) (Identifier, error) {
 func (b *ValidationBlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
 	// Validator blocks do not incur any work score as they do not burn mana
 	return 0, nil
+}
+
+// syntacticallyValidate syntactically validates the ValidationBlock.
+func (b *ValidationBlock) syntacticallyValidate(_ API, protocolBlock *ProtocolBlock) error {
+	if b.HighestSupportedVersion < protocolBlock.ProtocolVersion {
+		return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", b.HighestSupportedVersion, protocolBlock.ProtocolVersion)
+	}
+
+	return nil
 }
 
 // ParentsType is a type that defines the type of the parent.

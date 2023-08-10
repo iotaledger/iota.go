@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"encoding/binary"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -9,8 +11,14 @@ type RewardInput struct {
 	Index uint16 `serix:"0,mapKey=index"`
 }
 
-func (r *RewardInput) Type() ContextInputType {
-	return ContextInputReward
+func (r *RewardInput) StateID() Identifier {
+	buf := make([]byte, 2)
+	binary.LittleEndian.PutUint16(buf, r.Index)
+	return IdentifierFromData(buf)
+}
+
+func (r *RewardInput) Type() StateType {
+	return InputReward
 }
 
 func (r *RewardInput) Size() int {

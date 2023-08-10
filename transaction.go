@@ -43,6 +43,8 @@ type TransactionID = Identifier
 // TransactionIDs are IDs of transactions.
 type TransactionIDs []TransactionID
 
+type TransactionContextInputs ContextInputs[Input]
+
 // Transaction is a transaction with its inputs, outputs and unlocks.
 type Transaction struct {
 	// The transaction essence, respectively the transfer part of a Transaction.
@@ -79,14 +81,28 @@ func (t *Transaction) ID(api API) (TransactionID, error) {
 	return IdentifierFromData(data), nil
 }
 
-func (t *Transaction) Inputs() ([]IndexedUTXOReferencer, error) {
-	references := make([]IndexedUTXOReferencer, 0, len(t.Essence.Inputs))
+func (t *Transaction) Inputs() ([]*UTXOInput, error) {
+	references := make([]*UTXOInput, 0, len(t.Essence.Inputs))
 	for _, input := range t.Essence.Inputs {
 		switch castInput := input.(type) {
-		case IndexedUTXOReferencer:
+		case *UTXOInput:
 			references = append(references, castInput)
 		default:
 			return nil, ErrUnknownInputType
+		}
+	}
+
+	return references, nil
+}
+
+func (t *Transaction) ContextInputs() (TransactionContextInputs, error) {
+	references := make(TransactionContextInputs, 0, len(t.Essence.ContextInputs))
+	for _, input := range t.Essence.ContextInputs {
+		switch castInput := input.(type) {
+		case *CommitmentInput, *BlockIssuanceCreditInput, *RewardInput:
+			references = append(references, castInput)
+		default:
+			return nil, ErrUnknownContextInputType
 		}
 	}
 
@@ -149,12 +165,17 @@ func (t *Transaction) Size() int {
 }
 
 func (t *Transaction) String() string {
-	//TODO: stringify for debugging purposes
+	// TODO: stringify for debugging purposes
 	return fmt.Sprintf("Transaction[%v, %v]", t.Essence, t.Unlocks)
 }
 
 // syntacticallyValidate syntactically validates the Transaction.
 func (t *Transaction) syntacticallyValidate(api API) error {
+	// limit unlock block count = input count
+	if len(t.Unlocks) != len(t.Essence.Inputs) {
+		return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(t.Unlocks), len(t.Essence.Inputs))
+	}
+
 	if err := t.Essence.syntacticallyValidate(api.ProtocolParameters()); err != nil {
 		return ierrors.Errorf("transaction essence is invalid: %w", err)
 	}

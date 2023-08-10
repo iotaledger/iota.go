@@ -7,15 +7,21 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// InputType defines the type of inputs.
-type InputType byte
+// StateType defines the type of inputs.
+type StateType byte
 
 const (
 	// InputUTXO is a type of input which references an unspent transaction output.
-	InputUTXO InputType = iota
+	InputUTXO StateType = iota
+	// InputCommitment is a type of input which references a commitment.
+	InputCommitment
+	// InputBlockIssuanceCredit is a type of input which references the block issuance credit from a specific account and commitment, the latter being provided by a commitment input.
+	InputBlockIssuanceCredit
+	// InputReward is a type of input which references an Account or Delegation Input for which to claim rewards.
+	InputReward
 )
 
-func (inputType InputType) String() string {
+func (inputType StateType) String() string {
 	if int(inputType) >= len(inputNames) {
 		return fmt.Sprintf("unknown input type: %d", inputType)
 	}
@@ -23,9 +29,7 @@ func (inputType InputType) String() string {
 	return inputNames[inputType]
 }
 
-var (
-	inputNames = [InputUTXO + 1]string{"UTXOInput"}
-)
+var inputNames = [InputUTXO + 1]string{"UTXOInput"}
 
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
@@ -68,23 +72,15 @@ func (in Inputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore
 	return workScoreBytes, nil
 }
 
-// Input references a UTXO.
+// Input references a generic input.
 type Input interface {
 	Sizer
 	ProcessableObject
 
+	StateID() Identifier
+
 	// Type returns the type of Input.
-	Type() InputType
-}
-
-// IndexedUTXOReferencer is a type of Input which references a UTXO by the transaction ID and output index.
-type IndexedUTXOReferencer interface {
-	Input
-
-	// Ref returns the UTXO this Input references.
-	Ref() OutputID
-	// Index returns the output index of the UTXO this Input references.
-	Index() uint16
+	Type() StateType
 }
 
 // InputsSyntacticalValidationFunc which given the index of an input and the input itself, runs syntactical validations and returns an error if any should fail.
@@ -96,15 +92,15 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 
 	return func(index int, input Input) error {
 		switch castInput := input.(type) {
-		case IndexedUTXOReferencer:
-			utxoRef := castInput.Ref()
+		case *UTXOInput:
+			utxoRef := castInput.OutputID()
 			k := string(utxoRef[:])
 			if j, has := utxoSet[k]; has {
 				return ierrors.Wrapf(ErrInputUTXORefsNotUnique, "input %d and %d share the same UTXO ref", j, index)
 			}
 			utxoSet[k] = index
 		default:
-			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain IndexedUTXOReferencer", index)
+			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain UTXO inputs", index)
 		}
 
 		return nil
@@ -115,12 +111,12 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 	return func(index int, input Input) error {
 		switch castInput := input.(type) {
-		case IndexedUTXOReferencer:
+		case *UTXOInput:
 			if castInput.Index() < RefUTXOIndexMin || castInput.Index() > RefUTXOIndexMax {
 				return ierrors.Wrapf(ErrRefUTXOIndexInvalid, "input %d", index)
 			}
 		default:
-			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain IndexedUTXOReferencer inputs", index)
+			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain UTXInput inputs", index)
 		}
 
 		return nil

@@ -311,7 +311,7 @@ func TestClient_OutputByID(t *testing.T) {
 	txID := tpkg.Rand32ByteArray()
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
-	utxoInputID := utxoInput.ID()
+	utxoInputID := utxoInput.OutputID()
 
 	mockGetBinary(fmt.Sprintf(nodeclient.RouteOutput, utxoInputID.ToHex()), 200, originOutput)
 
@@ -338,7 +338,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	}
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
-	utxoInputID := utxoInput.ID()
+	utxoInputID := utxoInput.OutputID()
 
 	mockGetJSON(fmt.Sprintf(nodeclient.RouteOutputMetadata, utxoInputID.ToHex()), 200, originRes)
 
@@ -384,10 +384,10 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	originRes := &apimodels.UTXOChangesResponse{
 		Index: 1337,
 		CreatedOutputs: iotago.OutputIDs{
-			randCreatedOutput.ID(),
+			randCreatedOutput.OutputID(),
 		},
 		ConsumedOutputs: iotago.OutputIDs{
-			randConsumedOutput.ID(),
+			randConsumedOutput.OutputID(),
 		},
 	}
 
@@ -432,10 +432,10 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	originRes := &apimodels.UTXOChangesResponse{
 		Index: slotIndex,
 		CreatedOutputs: iotago.OutputIDs{
-			randCreatedOutput.ID(),
+			randCreatedOutput.OutputID(),
 		},
 		ConsumedOutputs: iotago.OutputIDs{
-			randConsumedOutput.ID(),
+			randConsumedOutput.OutputID(),
 		},
 	}
 

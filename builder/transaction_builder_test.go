@@ -31,7 +31,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 			input := tpkg.RandBasicOutput(iotago.AddressEd25519)
 			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
-				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: input}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: input}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.BasicOutputUnlockConditions{
@@ -84,10 +84,10 @@ func TestTransactionBuilder(t *testing.T) {
 			)
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
-				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID1.ID(), Input: basicOutput}).
-				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID2.ID(), Input: nftOutput}).
-				AddInput(&builder.TxInput{UnlockTarget: nftOutput.Chain().ToAddress(), InputID: inputID3.ID(), Input: accountOwnedByNFT}).
-				AddInput(&builder.TxInput{UnlockTarget: accountOwnedByNFT.Chain().ToAddress(), InputID: inputID4.ID(), Input: basicOwnedByAccount}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID1.OutputID(), Input: basicOutput}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID2.OutputID(), Input: nftOutput}).
+				AddInput(&builder.TxInput{UnlockTarget: nftOutput.Chain().ToAddress(), InputID: inputID3.OutputID(), Input: accountOwnedByNFT}).
+				AddInput(&builder.TxInput{UnlockTarget: accountOwnedByNFT.Chain().ToAddress(), InputID: inputID4.OutputID(), Input: basicOwnedByAccount}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 4000,
 					Conditions: iotago.BasicOutputUnlockConditions{
@@ -105,7 +105,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
-				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.BasicOutputUnlockConditions{
@@ -124,7 +124,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
-				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.BasicOutputUnlockConditions{
@@ -149,7 +149,7 @@ func TestTransactionBuilder(t *testing.T) {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
-				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.ID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
 					Conditions: iotago.BasicOutputUnlockConditions{

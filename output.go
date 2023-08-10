@@ -190,7 +190,7 @@ func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputI
 	utxo := UTXOInput{TransactionOutputIndex: index}
 	copy(utxo.TransactionID[:], (txID)[:])
 
-	return utxo.ID()
+	return utxo.OutputID()
 }
 
 // OutputIDFromBytes creates a OutputID from the given bytes.
