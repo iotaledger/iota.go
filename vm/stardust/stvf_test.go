@@ -2512,7 +2512,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 	minCommittableAge := tpkg.TestAPI.ProtocolParameters().MinCommittableAge()
 	maxCommittableAge := tpkg.TestAPI.ProtocolParameters().MaxCommittableAge()
 
-	// Commitment indices that will always end up being in current epoch, no matter if
+	// Commitment indices that will always end up being in the current epoch no matter if
 	// future or past bounded.
 	epochStartCommitmentIndex := epochStartSlot - minCommittableAge
 	epochEndCommitmentIndex := epochEndSlot - maxCommittableAge
