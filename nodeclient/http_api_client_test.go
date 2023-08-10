@@ -109,7 +109,7 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 			ConfirmedTangleTime:         ts,
 			RelativeConfirmedTangleTime: ts,
 			LatestCommitmentID:          tpkg.Rand40ByteArray(),
-			PruningSlot:                 iotago.SlotIndex(142800),
+			PruningEpoch:                iotago.EpochIndex(142800),
 		},
 		ProtocolParameters: []*apimodels.InfoResProtocolParameters{
 			{
