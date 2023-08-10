@@ -121,6 +121,9 @@ type ProtocolParameters interface {
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold() SlotIndex
 
+	// RMCParameters returns the parameters used to calculate reference Mana cost.
+	RMCParameters() *RMCParameters
+
 	VersionSignaling() *VersionSignaling
 
 	Bytes() ([]byte, error)
