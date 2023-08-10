@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
@@ -494,11 +493,6 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))
 		must(api.RegisterValidators(Transaction{}, nil, func(ctx context.Context, tx Transaction) error {
-			// limit unlock block count = input count
-			if len(tx.Unlocks) != len(tx.Essence.Inputs) {
-				return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(tx.Unlocks), len(tx.Essence.Inputs))
-			}
-
 			return tx.syntacticallyValidate(v3)
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
@@ -537,31 +531,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 			return nil
 		}, func(ctx context.Context, protocolBlock ProtocolBlock) error {
-			if protoParams.Version() != protocolBlock.ProtocolVersion {
-				return ierrors.Errorf("mismatched protocol version: wanted %d, got %d in block", protoParams.Version(), protocolBlock.ProtocolVersion)
-			}
-
-			block := protocolBlock.Block
-			if len(block.WeakParentIDs()) > 0 {
-				// weak parents must be disjunct to the rest of the parents
-				nonWeakParents := lo.KeyOnlyBy(append(block.StrongParentIDs(), block.ShallowLikeParentIDs()...), func(v BlockID) BlockID {
-					return v
-				})
-
-				for _, parent := range block.WeakParentIDs() {
-					if _, contains := nonWeakParents[parent]; contains {
-						return ierrors.Errorf("weak parents must be disjunct to the rest of the parents")
-					}
-				}
-			}
-
-			if validationBlock, ok := block.(*ValidationBlock); ok {
-				if validationBlock.HighestSupportedVersion < protocolBlock.ProtocolVersion {
-					return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", validationBlock.HighestSupportedVersion, protocolBlock.ProtocolVersion)
-				}
-			}
-
-			return nil
+			return protocolBlock.syntacticallyValidate(v3)
 		}))
 	}
 
