@@ -62,12 +62,12 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 func TestContextInputsSyntacticalUnique(t *testing.T) {
 	tests := []struct {
 		name    string
-		inputs  iotago.ContextInputs[iotago.ContextInput]
+		inputs  iotago.ContextInputs[iotago.Input]
 		wantErr error
 	}{
 		{
 			name: "ok",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
+			inputs: iotago.ContextInputs[iotago.Input]{
 				&iotago.CommitmentInput{
 					CommitmentID: tpkg.Rand40ByteArray(),
 				},
@@ -88,7 +88,7 @@ func TestContextInputsSyntacticalUnique(t *testing.T) {
 		},
 		{
 			name: "fail - multiple commitment inputs",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
+			inputs: iotago.ContextInputs[iotago.Input]{
 				&iotago.CommitmentInput{
 					CommitmentID: tpkg.Rand40ByteArray(),
 				},
@@ -100,7 +100,7 @@ func TestContextInputsSyntacticalUnique(t *testing.T) {
 		},
 		{
 			name: "fail - block issuance credit inputs not unique",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
+			inputs: iotago.ContextInputs[iotago.Input]{
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: [32]byte{},
 				},
@@ -112,7 +112,7 @@ func TestContextInputsSyntacticalUnique(t *testing.T) {
 		},
 		{
 			name: "fail - reward input not unique",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
+			inputs: iotago.ContextInputs[iotago.Input]{
 				&iotago.RewardInput{
 					Index: 1,
 				},
@@ -124,7 +124,7 @@ func TestContextInputsSyntacticalUnique(t *testing.T) {
 		},
 		{
 			name: "fail - reward input references index greater than max inputs count",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
+			inputs: iotago.ContextInputs[iotago.Input]{
 				&iotago.RewardInput{
 					Index: 1,
 				},

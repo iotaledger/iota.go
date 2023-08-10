@@ -54,7 +54,7 @@ func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.Output) bool
 
 // AddContextInput adds the given context input to the builder.
-func (b *TransactionBuilder) AddContextInput(contextInput iotago.ContextInput) *TransactionBuilder {
+func (b *TransactionBuilder) AddContextInput(contextInput iotago.Input) *TransactionBuilder {
 	b.essence.ContextInputs = append(b.essence.ContextInputs, contextInput)
 
 	return b
@@ -120,7 +120,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 	var inputIDs iotago.OutputIDs
 	for _, input := range b.essence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
-		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).ID())
+		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).OutputID())
 	}
 
 	inputs := inputIDs.OrderedSet(b.inputs)
@@ -139,7 +139,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 	unlocks := iotago.Unlocks{}
 	for i, inputRef := range b.essence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
-		addr := b.inputOwner[inputRef.(*iotago.UTXOInput).ID()]
+		addr := b.inputOwner[inputRef.(*iotago.UTXOInput).OutputID()]
 		addrKey := addr.Key()
 
 		pos, unlocked := unlockPos[addrKey]

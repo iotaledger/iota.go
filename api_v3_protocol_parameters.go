@@ -3,7 +3,6 @@ package iotago
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/iotaledger/hive.go/runtime/options"
@@ -12,10 +11,6 @@ import (
 // V3ProtocolParameters defines the parameters of the protocol.
 type V3ProtocolParameters struct {
 	basicProtocolParameters `serix:"0"`
-
-	// Derived fields
-	livenessThresholdDurationOnce sync.Once
-	livenessThresholdDuration     time.Duration
 }
 
 func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3ProtocolParameters {
@@ -96,14 +91,6 @@ func (p *V3ProtocolParameters) LivenessThreshold() SlotIndex {
 	return p.basicProtocolParameters.LivenessThreshold
 }
 
-func (p *V3ProtocolParameters) LivenessThresholdDuration() time.Duration {
-	p.livenessThresholdDurationOnce.Do(func() {
-		p.livenessThresholdDuration = time.Duration(uint64(p.basicProtocolParameters.LivenessThreshold)*uint64(p.basicProtocolParameters.SlotDurationInSeconds)) * time.Second
-	})
-
-	return p.livenessThresholdDuration
-}
-
 func (p *V3ProtocolParameters) MinCommittableAge() SlotIndex {
 	return p.basicProtocolParameters.MinCommittableAge
 }
@@ -152,8 +139,7 @@ func (p *V3ProtocolParameters) Equals(other ProtocolParameters) bool {
 		return false
 	}
 
-	return p.basicProtocolParameters.Equals(otherV3Params.basicProtocolParameters) &&
-		p.LivenessThresholdDuration() == other.LivenessThresholdDuration()
+	return p.basicProtocolParameters.Equals(otherV3Params.basicProtocolParameters)
 }
 
 func WithVersion(version Version) options.Option[V3ProtocolParameters] {

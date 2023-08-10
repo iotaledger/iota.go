@@ -3,9 +3,9 @@ package iotago
 import (
 	"context"
 	"crypto/ed25519"
+	"time"
 
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
@@ -178,9 +178,10 @@ var (
 type v3api struct {
 	serixAPI *serix.API
 
-	protocolParameters *V3ProtocolParameters
-	timeProvider       *TimeProvider
-	manaDecayProvider  *ManaDecayProvider
+	protocolParameters        *V3ProtocolParameters
+	timeProvider              *TimeProvider
+	manaDecayProvider         *ManaDecayProvider
+	livenessThresholdDuration time.Duration
 }
 
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
@@ -211,6 +212,10 @@ func (v *v3api) ManaDecayProvider() *ManaDecayProvider {
 	return v.manaDecayProvider
 }
 
+func (v *v3api) LivenessThresholdDuration() time.Duration {
+	return v.livenessThresholdDuration
+}
+
 func (v *v3api) Encode(obj interface{}, opts ...serix.Option) ([]byte, error) {
 	return v.serixAPI.Encode(context.TODO(), obj, opts...)
 }
@@ -223,12 +228,15 @@ func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, er
 func V3API(protoParams ProtocolParameters) API {
 	api := CommonSerixAPI()
 
+	timeProvider := protoParams.TimeProvider()
+
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{
-		serixAPI:           api,
-		protocolParameters: protoParams.(*V3ProtocolParameters),
-		timeProvider:       protoParams.TimeProvider(),
-		manaDecayProvider:  protoParams.ManaDecayProvider(),
+		serixAPI:                  api,
+		protocolParameters:        protoParams.(*V3ProtocolParameters),
+		timeProvider:              timeProvider,
+		manaDecayProvider:         protoParams.ManaDecayProvider(),
+		livenessThresholdDuration: time.Duration(uint64(protoParams.LivenessThreshold())*uint64(timeProvider.SlotDurationSeconds())) * time.Second,
 	}
 
 	must(api.RegisterTypeSettings(TaggedData{},
@@ -437,13 +445,13 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(TransactionEssence{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
 
 		must(api.RegisterTypeSettings(CommitmentInput{},
-			serix.TypeSettings{}.WithObjectType(uint8(ContextInputCommitment))),
+			serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))),
 		)
 		must(api.RegisterTypeSettings(BlockIssuanceCreditInput{},
-			serix.TypeSettings{}.WithObjectType(uint8(ContextInputBlockIssuanceCredit))),
+			serix.TypeSettings{}.WithObjectType(uint8(InputBlockIssuanceCredit))),
 		)
 		must(api.RegisterTypeSettings(RewardInput{},
-			serix.TypeSettings{}.WithObjectType(uint8(ContextInputReward))),
+			serix.TypeSettings{}.WithObjectType(uint8(InputReward))),
 		)
 
 		must(api.RegisterTypeSettings(TxEssenceContextInputs{},
@@ -485,11 +493,6 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))
 		must(api.RegisterValidators(Transaction{}, nil, func(ctx context.Context, tx Transaction) error {
-			// limit unlock block count = input count
-			if len(tx.Unlocks) != len(tx.Essence.Inputs) {
-				return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(tx.Unlocks), len(tx.Essence.Inputs))
-			}
-
 			return tx.syntacticallyValidate(v3)
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
@@ -528,31 +531,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 			return nil
 		}, func(ctx context.Context, protocolBlock ProtocolBlock) error {
-			if protoParams.Version() != protocolBlock.ProtocolVersion {
-				return ierrors.Errorf("mismatched protocol version: wanted %d, got %d in block", protoParams.Version(), protocolBlock.ProtocolVersion)
-			}
-
-			block := protocolBlock.Block
-			if len(block.WeakParentIDs()) > 0 {
-				// weak parents must be disjunct to the rest of the parents
-				nonWeakParents := lo.KeyOnlyBy(append(block.StrongParentIDs(), block.ShallowLikeParentIDs()...), func(v BlockID) BlockID {
-					return v
-				})
-
-				for _, parent := range block.WeakParentIDs() {
-					if _, contains := nonWeakParents[parent]; contains {
-						return ierrors.Errorf("weak parents must be disjunct to the rest of the parents")
-					}
-				}
-			}
-
-			if validationBlock, ok := block.(*ValidationBlock); ok {
-				if validationBlock.HighestSupportedVersion < protocolBlock.ProtocolVersion {
-					return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", validationBlock.HighestSupportedVersion, protocolBlock.ProtocolVersion)
-				}
-			}
-
-			return nil
+			return protocolBlock.syntacticallyValidate(v3)
 		}))
 	}
 
