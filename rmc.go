@@ -15,7 +15,7 @@ type CongestionControlParameters struct {
 	DecreaseThreshold WorkScore `serix:"4,mapKey=decreaseThreshold"`
 	// SchedulerRate is the rate at which the scheduler runs in workscore units per second.
 	SchedulerRate WorkScore `serix:"5,mapKey=schedulerRate"`
-	// MinMana is the minumum amount of Mana that an account must have to have a block scheduled.
+	// MinMana is the minimum amount of Mana that an account must have to have a block scheduled.
 	MinMana Mana `serix:"6,mapKey=minMana"`
 	// MaxBufferSize is the maximum size of the buffer.
 	MaxBufferSize uint32 `serix:"7,mapKey=maxBufferSize"`
