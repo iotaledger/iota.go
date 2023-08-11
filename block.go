@@ -418,16 +418,13 @@ func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScor
 	return workScoreBytes.Add(workScoreMissingParents, workScorePayload, workScoreStructure.Block)
 }
 
-func (b *BasicBlock) ManaCost(rmc Mana) (Mana, error) {
-	// workScore, err := blk.protocolBlock.Block.WorkScore(blk.api.ProtocolParameters().WorkScoreStructure())
-	// if err != nil {
-	// 	return 0, err
-	// }
+func (b *BasicBlock) ManaCost(rmc Mana, workScoreStructure *WorkScoreStructure) (Mana, error) {
+	workScore, err := b.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, err
+	}
 
-	// return Mana(workScore) * rmc, nil
-
-	// TODO: add implement workscore properly with issue #264
-	return rmc, nil
+	return Mana(workScore) * rmc, nil
 }
 
 // syntacticallyValidate syntactically validates the BasicBlock.

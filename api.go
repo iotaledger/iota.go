@@ -124,7 +124,7 @@ type ProtocolParameters interface {
 	EpochNearingThreshold() SlotIndex
 
 	// RMCParameters returns the parameters used to calculate reference Mana cost.
-	RMCParameters() *RMCParameters
+	CongestionControlParameters() *CongestionControlParameters
 
 	VersionSignaling() *VersionSignaling
 

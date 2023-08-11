@@ -1,6 +1,6 @@
 package iotago
 
-type RMCParameters struct {
+type CongestionControlParameters struct {
 	// RMCMin is the minimum value of the reference Mana cost.
 	RMCMin Mana `serix:"0,mapKey=rmcMin"`
 	// Increase is the increase step size of the reference Mana cost.
@@ -13,12 +13,21 @@ type RMCParameters struct {
 	// DecreaseThreshold is the threshold for decreasing the reference Mana cost.
 	// This value should be between 0 and SchedulerRate*SlotDurationInSeconds and must be less than or equal to IncreaseThreshold.
 	DecreaseThreshold WorkScore `serix:"4,mapKey=decreaseThreshold"`
+	// SchedulerRate is the rate at which the scheduler runs in workscore units per second.
+	SchedulerRate WorkScore `serix:"5,mapKey=schedulerRate"`
+	// MinMana is the minumum amount of Mana that an account must have to have a block scheduled.
+	MinMana Mana `serix:"6,mapKey=minMana"`
+	// MaxBufferSize is the maximum size of the buffer.
+	MaxBufferSize uint32 `serix:"7,mapKey=maxBufferSize"`
 }
 
-func (r *RMCParameters) Equals(other RMCParameters) bool {
-	return r.RMCMin == other.RMCMin &&
-		r.Increase == other.Increase &&
-		r.Decrease == other.Decrease &&
-		r.IncreaseThreshold == other.IncreaseThreshold &&
-		r.DecreaseThreshold == other.DecreaseThreshold
+func (c *CongestionControlParameters) Equals(other CongestionControlParameters) bool {
+	return c.RMCMin == other.RMCMin &&
+		c.Increase == other.Increase &&
+		c.Decrease == other.Decrease &&
+		c.IncreaseThreshold == other.IncreaseThreshold &&
+		c.DecreaseThreshold == other.DecreaseThreshold &&
+		c.SchedulerRate == other.SchedulerRate &&
+		c.MinMana == other.MinMana &&
+		c.MaxBufferSize == other.MaxBufferSize
 }

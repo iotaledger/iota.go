@@ -14,6 +14,7 @@ type V3ProtocolParameters struct {
 }
 
 func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3ProtocolParameters {
+	var schedulerRate WorkScore = 100000
 	return options.Apply(
 		new(V3ProtocolParameters),
 		append([]options.Option[V3ProtocolParameters]{
@@ -34,8 +35,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				0,
 			),
 			WithLivenessOptions(3, 10, 20, 24),
-			// TODO: add Scheduler Rate parameter and include in this expression for increase and decrease thresholds. Issue #264
-			WithRMCOptions(500, 500, 500, 0.8*10, 0.5*10),
+			WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*MaxBlockSize),
 			WithStakingOptions(10),
 			WithVersionSignalingOptions(7, 5, 7),
 		},
@@ -103,8 +103,8 @@ func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
 	return p.basicProtocolParameters.EpochNearingThreshold
 }
 
-func (p *V3ProtocolParameters) RMCParameters() *RMCParameters {
-	return &p.basicProtocolParameters.RMCParameters
+func (p *V3ProtocolParameters) CongestionControlParameters() *CongestionControlParameters {
+	return &p.basicProtocolParameters.CongestionControlParameters
 }
 
 func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
@@ -227,13 +227,16 @@ func WithLivenessOptions(livenessThreshold SlotIndex, minCommittableAge SlotInde
 	}
 }
 
-func WithRMCOptions(rmcMin Mana, rmcIncrease Mana, rmcDecrease Mana, rmcIncreaseThreshold WorkScore, rmcDecreaseThreshold WorkScore) options.Option[V3ProtocolParameters] {
+func WithCongestionControlOptions(rmcMin Mana, rmcIncrease Mana, rmcDecrease Mana, rmcIncreaseThreshold WorkScore, rmcDecreaseThreshold WorkScore, schedulerRate WorkScore, minMana Mana, maxBufferSize uint32) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.RMCParameters.RMCMin = rmcMin
-		p.basicProtocolParameters.RMCParameters.Increase = rmcIncrease
-		p.basicProtocolParameters.RMCParameters.Decrease = rmcDecrease
-		p.basicProtocolParameters.RMCParameters.IncreaseThreshold = rmcIncreaseThreshold
-		p.basicProtocolParameters.RMCParameters.DecreaseThreshold = rmcDecreaseThreshold
+		p.basicProtocolParameters.CongestionControlParameters.RMCMin = rmcMin
+		p.basicProtocolParameters.CongestionControlParameters.Increase = rmcIncrease
+		p.basicProtocolParameters.CongestionControlParameters.Decrease = rmcDecrease
+		p.basicProtocolParameters.CongestionControlParameters.IncreaseThreshold = rmcIncreaseThreshold
+		p.basicProtocolParameters.CongestionControlParameters.DecreaseThreshold = rmcDecreaseThreshold
+		p.basicProtocolParameters.CongestionControlParameters.SchedulerRate = schedulerRate
+		p.basicProtocolParameters.CongestionControlParameters.MinMana = minMana
+		p.basicProtocolParameters.CongestionControlParameters.MaxBufferSize = maxBufferSize
 	}
 }
 

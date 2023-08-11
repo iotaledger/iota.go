@@ -30,7 +30,8 @@ const (
 var (
 	stardustVM = stardust.NewVirtualMachine()
 
-	testProtoParams = iotago.NewV3ProtocolParameters(
+	schedulerRate   iotago.WorkScore = 100000
+	testProtoParams                  = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("test", "test"),
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 100, 100),
 		iotago.WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
@@ -44,8 +45,7 @@ var (
 		),
 		iotago.WithStakingOptions(10),
 		iotago.WithLivenessOptions(3, 10, 20, 24),
-		// TODO: add Scheduler Rate parameter and include in this expression for increase and decrease thresholds. Issue #264
-		iotago.WithRMCOptions(500, 500, 500, 0.8*slotDurationSeconds, 0.5*slotDurationSeconds),
+		iotago.WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*iotago.MaxBlockSize),
 	)
 
 	testAPI = iotago.V3API(testProtoParams)
