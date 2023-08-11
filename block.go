@@ -408,16 +408,17 @@ func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScor
 			return 0, err
 		}
 	}
-
-	workScorePayload, err := b.Payload.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
+	var workScorePayload WorkScore
+	if b.Payload != nil {
+		workScorePayload, err = b.Payload.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	// data bytes, plus missing parents, plus payload, plus block offset.
 	return workScoreBytes.Add(workScoreMissingParents, workScorePayload, workScoreStructure.Block)
 }
-
 func (b *BasicBlock) ManaCost(rmc Mana, workScoreStructure *WorkScoreStructure) (Mana, error) {
 	workScore, err := b.WorkScore(workScoreStructure)
 	if err != nil {
