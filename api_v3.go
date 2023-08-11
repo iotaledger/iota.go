@@ -182,6 +182,7 @@ type v3api struct {
 	timeProvider              *TimeProvider
 	manaDecayProvider         *ManaDecayProvider
 	livenessThresholdDuration time.Duration
+	maxBlockWork              WorkScore
 }
 
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
@@ -216,6 +217,10 @@ func (v *v3api) LivenessThresholdDuration() time.Duration {
 	return v.livenessThresholdDuration
 }
 
+func (v *v3api) MaxBlockWork() WorkScore {
+	return v.maxBlockWork
+}
+
 func (v *v3api) Encode(obj interface{}, opts ...serix.Option) ([]byte, error) {
 	return v.serixAPI.Encode(context.TODO(), obj, opts...)
 }
@@ -230,6 +235,9 @@ func V3API(protoParams ProtocolParameters) API {
 
 	timeProvider := protoParams.TimeProvider()
 
+	maxBlockWork, err := protoParams.WorkScoreStructure().MaxBlockWork()
+	must(err)
+
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{
 		serixAPI:                  api,
@@ -237,6 +245,7 @@ func V3API(protoParams ProtocolParameters) API {
 		timeProvider:              timeProvider,
 		manaDecayProvider:         protoParams.ManaDecayProvider(),
 		livenessThresholdDuration: time.Duration(uint64(protoParams.LivenessThreshold())*uint64(timeProvider.SlotDurationSeconds())) * time.Second,
+		maxBlockWork:              maxBlockWork,
 	}
 
 	must(api.RegisterTypeSettings(TaggedData{},
