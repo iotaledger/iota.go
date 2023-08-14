@@ -43,13 +43,8 @@ func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBy
 }
 
 func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(s.Size())
-	if err != nil {
-		return 0, err
-	}
-
 	// block issuer feature requires invocation of account and mana managers, so requires extra work.
-	return workScoreBytes.Add(workScoreStructure.BlockIssuer)
+	return workScoreStructure.BlockIssuer, nil
 }
 
 func (s *BlockIssuerFeature) Equal(other Feature) bool {

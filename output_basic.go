@@ -58,12 +58,6 @@ func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 }
 
 func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// OutputType + Amount + Mana
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + ManaSize)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreNativeTokens, err := e.NativeTokens.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -79,7 +73,7 @@ func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 		return 0, err
 	}
 
-	return workScoreBytes.Add(workScoreNativeTokens, workScoreConditions, workScoreFeatures)
+	return workScoreNativeTokens.Add(workScoreConditions, workScoreFeatures)
 }
 
 func (e *BasicOutput) NativeTokenList() NativeTokens {

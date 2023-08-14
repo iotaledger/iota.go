@@ -190,12 +190,6 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 }
 
 func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// PayloadType
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.UInt32ByteSize)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreEssence, err := t.Essence.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -206,5 +200,5 @@ func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 		return 0, err
 	}
 
-	return workScoreBytes.Add(workScoreEssence, workScoreUnlocks)
+	return workScoreEssence.Add(workScoreUnlocks)
 }

@@ -169,7 +169,7 @@ func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData, vB
 }
 
 func WithWorkScoreOptions(
-	dataByte WorkScore,
+	dataKilobyte WorkScore,
 	block WorkScore,
 	missingParent WorkScore,
 	input WorkScore,
@@ -183,7 +183,7 @@ func WithWorkScoreOptions(
 	minStrongParentsThreshold byte) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.WorkScoreStructure = WorkScoreStructure{
-			DataByte:                  dataByte,
+			DataKilobyte:              dataKilobyte,
 			Block:                     block,
 			MissingParent:             missingParent,
 			Input:                     input,

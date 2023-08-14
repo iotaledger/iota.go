@@ -22,8 +22,8 @@ func (s *TimelockUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + serializer.UInt64ByteSize)
 }
 
-func (s *TimelockUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	return workScoreStructure.DataByte.Multiply(s.Size())
+func (s *TimelockUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+	return 0, nil
 }
 
 func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {

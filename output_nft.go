@@ -133,12 +133,6 @@ func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 }
 
 func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// OutputType + Amount + Mana + NFTID
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + ManaSize + NFTIDLength)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreNativeTokens, err := n.NativeTokens.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -159,7 +153,7 @@ func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore
 		return 0, err
 	}
 
-	return workScoreBytes.Add(workScoreNativeTokens, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
+	return workScoreNativeTokens.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (n *NFTOutput) Chain() ChainID {

@@ -62,11 +62,6 @@ func (u *UTXOInput) Size() int {
 }
 
 func (u *UTXOInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(u.Size())
-	if err != nil {
-		return 0, err
-	}
-
 	// inputs require lookup of the UTXO, so requires extra work.
-	return workScoreBytes.Add(workScoreStructure.Input)
+	return workScoreStructure.Input, nil
 }

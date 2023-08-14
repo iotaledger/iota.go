@@ -20,16 +20,5 @@ func (s *SignatureUnlock) Size() int {
 }
 
 func (s *SignatureUnlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// UnlockType
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte)
-	if err != nil {
-		return 0, err
-	}
-
-	workScoreSignature, err := s.Signature.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
-	}
-
-	return workScoreBytes.Add(workScoreSignature)
+	return s.Signature.WorkScore(workScoreStructure)
 }

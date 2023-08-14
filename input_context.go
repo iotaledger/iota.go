@@ -24,25 +24,20 @@ var contextInputNames = [InputReward + 1]string{"CommitmentInput", "BlockIssuanc
 type ContextInputs[T Input] []T
 
 func (in ContextInputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// LengthPrefixType
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.UInt16ByteSize)
-	if err != nil {
-		return 0, err
-	}
-
+	var workScoreContextInputs WorkScore
 	for _, input := range in {
 		workScoreInput, err := input.WorkScore(workScoreStructure)
 		if err != nil {
 			return 0, err
 		}
 
-		workScoreBytes, err = workScoreBytes.Add(workScoreInput)
+		workScoreContextInputs, err = workScoreContextInputs.Add(workScoreInput)
 		if err != nil {
 			return 0, err
 		}
 	}
 
-	return workScoreBytes, nil
+	return workScoreContextInputs, nil
 }
 
 func (in ContextInputs[T]) Size() int {

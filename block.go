@@ -127,14 +127,12 @@ func (b *BlockHeader) Hash(api API) (Identifier, error) {
 	return blake2b.Sum256(headerBytes), nil
 }
 
-func (b *BlockHeader) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// Version, NetworkID, IssuingTime, SlotCommitmentID, LatestFinalisedSlot and IssuerID
-	return workScoreStructure.DataByte.Multiply(serializer.OneByte +
-		serializer.UInt64ByteSize +
-		serializer.UInt64ByteSize +
-		CommitmentIDLength +
-		SlotIndexLength +
-		AccountIDLength)
+func (b *BlockHeader) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+	return 0, nil
+}
+
+func (b *BlockHeader) Size() int {
+	return BlockHeaderLength
 }
 
 type ProtocolBlock struct {
@@ -279,6 +277,12 @@ func (b *ProtocolBlock) ForEachParent(consumer func(parent Parent)) {
 }
 
 func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workScoreBytes, err := workScoreStructure.DataKilobyte.Multiply(b.Size())
+	if err != nil {
+		return 0, err
+	}
+	workScoreKilobytes := workScoreBytes/1024 + 1 // add 1 to round up
+
 	workScoreHeader, err := b.BlockHeader.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -294,7 +298,12 @@ func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 		return 0, err
 	}
 
-	return workScoreHeader.Add(workScoreBlock, workScoreSignature)
+	return workScoreKilobytes.Add(workScoreHeader, workScoreBlock, workScoreSignature)
+}
+
+// Size returns the size of the block in bytes.
+func (b *ProtocolBlock) Size() int {
+	return b.BlockHeader.Size() + b.Block.Size() + b.Signature.Size()
 }
 
 // syntacticallyValidate syntactically validates the ProtocolBlock.
@@ -352,6 +361,7 @@ type Block interface {
 	syntacticallyValidate(api API, protocolBlock *ProtocolBlock) error
 
 	ProcessableObject
+	Sizer
 }
 
 // BasicBlock represents a basic vertex in the Tangle/BlockDAG.
@@ -393,16 +403,10 @@ func (b *BasicBlock) Hash(api API) (Identifier, error) {
 }
 
 func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// BlockType + BurnedMana
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte + ManaSize)
-	if err != nil {
-		return 0, err
-	}
-
 	// work score for parents is a penalty for each missing strong parent below MinStrongParentsThreshold
 	var workScoreMissingParents WorkScore
+	var err error
 	if len(b.StrongParents) < int(workScoreStructure.MinStrongParentsThreshold) {
-		var err error
 		workScoreMissingParents, err = workScoreStructure.MissingParent.Multiply(int(workScoreStructure.MinStrongParentsThreshold) - len(b.StrongParents))
 		if err != nil {
 			return 0, err
@@ -416,9 +420,10 @@ func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScor
 		}
 	}
 
-	// data bytes, plus missing parents, plus payload, plus block offset.
-	return workScoreBytes.Add(workScoreMissingParents, workScorePayload, workScoreStructure.Block)
+	// offset for block, plus missing parents, plus payload.
+	return workScoreStructure.Block.Add(workScoreMissingParents, workScorePayload)
 }
+
 func (b *BasicBlock) ManaCost(rmc Mana, workScoreStructure *WorkScoreStructure) (Mana, error) {
 	workScore, err := b.WorkScore(workScoreStructure)
 	if err != nil {
@@ -426,6 +431,20 @@ func (b *BasicBlock) ManaCost(rmc Mana, workScoreStructure *WorkScoreStructure) 
 	}
 
 	return Mana(workScore) * rmc, nil
+}
+
+func (b *BasicBlock) Size() int {
+	var payloadSize int
+	if b.Payload != nil {
+		payloadSize = b.Payload.Size()
+	}
+
+	return serializer.OneByte + // block type
+		len(b.StrongParents)*SlotIdentifierLength +
+		len(b.WeakParents)*SlotIdentifierLength +
+		len(b.ShallowLikeParents)*SlotIdentifierLength +
+		payloadSize +
+		ManaSize
 }
 
 // syntacticallyValidate syntactically validates the BasicBlock.
@@ -504,6 +523,15 @@ func (b *ValidationBlock) Hash(api API) (Identifier, error) {
 func (b *ValidationBlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
 	// Validator blocks do not incur any work score as they do not burn mana
 	return 0, nil
+}
+
+func (b *ValidationBlock) Size() int {
+	return serializer.OneByte + // block type
+		len(b.StrongParents)*SlotIdentifierLength +
+		len(b.WeakParents)*SlotIdentifierLength +
+		len(b.ShallowLikeParents)*SlotIdentifierLength +
+		serializer.OneByte + // highest supported version
+		IdentifierLength // protocol parameters hash
 }
 
 // syntacticallyValidate syntactically validates the ValidationBlock.

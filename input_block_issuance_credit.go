@@ -22,11 +22,6 @@ func (b *BlockIssuanceCreditInput) Size() int {
 }
 
 func (b *BlockIssuanceCreditInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(b.Size())
-	if err != nil {
-		return 0, err
-	}
-
 	// context inputs require invocation of informations in the node, so requires extra work.
-	return workScoreBytes.Add(workScoreStructure.ContextInput)
+	return workScoreStructure.ContextInput, nil
 }
