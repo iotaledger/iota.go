@@ -243,9 +243,12 @@ func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (
 		return 0, err
 	}
 
-	workScorePayload, err := u.Payload.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
+	var workScorePayload WorkScore
+	if u.Payload != nil {
+		workScorePayload, err = u.Payload.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	return workScoreBytes.Add(workScoreContextInputs, workScoreInputs, workScoreOutputs, workScoreAllotments, workScorePayload)
