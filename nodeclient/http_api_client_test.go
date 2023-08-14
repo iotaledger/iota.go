@@ -356,7 +356,7 @@ func TestClient_CommitmentByID(t *testing.T) {
 	var slotIndex iotago.SlotIndex = 5
 
 	commitmentID := iotago.NewSlotIdentifier(slotIndex, tpkg.Rand32ByteArray())
-	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
+	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(math.MaxUint64))
 
 	originRes := &iotago.Commitment{
 		Index:            commitment.Index,
@@ -404,7 +404,7 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 
 	var slotIndex iotago.SlotIndex = 1337
 
-	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64))
+	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(math.MaxUint64))
 
 	originRes := &iotago.Commitment{
 		Index:            commitment.Index,

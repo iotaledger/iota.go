@@ -64,7 +64,7 @@ func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLik
 		WeakParents(weakParents).
 		ShallowLikeParents(shallowLikeParent).
 		IssuingTime(time.Now()).
-		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), apiForSlot.TimeProvider().SlotFromTime(time.Now())-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
+		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), apiForSlot.TimeProvider().SlotFromTime(time.Now())-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0, 0).MustID()).
 		Build()
 	require.NoError(t, err)
 
@@ -79,7 +79,7 @@ func createBlockAtSlot(t *testing.T, blockIndex, commitmentIndex iotago.SlotInde
 	block, err := builder.NewBasicBlockBuilder(apiForSlot).
 		StrongParents(iotago.BlockIDs{tpkg.RandBlockID()}).
 		IssuingTime(apiForSlot.TimeProvider().SlotStartTime(blockIndex)).
-		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), commitmentIndex, iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
+		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), commitmentIndex, iotago.CommitmentID{}, iotago.Identifier{}, 0, 0).MustID()).
 		Build()
 	require.NoError(t, err)
 
@@ -94,7 +94,7 @@ func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, ver
 		ProtocolVersion(version).
 		StrongParents(iotago.BlockIDs{iotago.BlockID{}}).
 		IssuingTime(apiForSlot.TimeProvider().SlotStartTime(blockIndex)).
-		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), blockIndex-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
+		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), blockIndex-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0, 0).MustID()).
 		Build()
 	require.NoError(t, err)
 
@@ -110,7 +110,7 @@ func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iota
 	block, err := builder.NewBasicBlockBuilder(apiForSlot).
 		StrongParents(iotago.BlockIDs{tpkg.RandBlockID()}).
 		IssuingTime(apiForSlot.TimeProvider().SlotStartTime(blockIndex)).
-		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), commitmentIndex, iotago.CommitmentID{}, iotago.Identifier{}, 0).MustID()).
+		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), commitmentIndex, iotago.CommitmentID{}, iotago.Identifier{}, 0, 0).MustID()).
 		Payload(payload).
 		Build()
 	require.NoError(t, err)
