@@ -126,6 +126,10 @@ type ProtocolParameters interface {
 
 	VersionSignaling() *VersionSignaling
 
+	ValidatorBlocksPerSlot() uint8
+
+	// TODO add rest of mana rewards params, in String in WithRewards, ...
+
 	Bytes() ([]byte, error)
 
 	Hash() (Identifier, error)

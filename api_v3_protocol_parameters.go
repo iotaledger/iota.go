@@ -38,6 +38,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithRMCOptions(500, 500, 500, 0.8*10, 0.5*10),
 			WithStakingOptions(10),
 			WithVersionSignalingOptions(7, 5, 7),
+			WithRewardsOptions(10),
 		},
 			opts...,
 		),
@@ -111,6 +112,10 @@ func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
 	return &p.basicProtocolParameters.VersionSignaling
 }
 
+func (p *V3ProtocolParameters) ValidatorBlocksPerSlot() uint8 {
+	return p.basicProtocolParameters.ValidatorBlocksPerSlot
+}
+
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
 	return CommonSerixAPI().Encode(context.TODO(), p)
 }
@@ -125,8 +130,20 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 }
 
 func (p *V3ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n}",
-		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate, p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent, p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n"+
+		"\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n"+
+		"\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Generation Rate: %d\n"+
+		"\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n"+
+		"\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n"+
+		"\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n}"+
+		"\tEpoch Nearing Threshold: %d\n\tRMC parameters: %v\n\tVersion Signaling: %v\n\tValidator Blocks Per Slot: %d\n",
+		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP,
+		p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp,
+		p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate,
+		p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent,
+		p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent, p.basicProtocolParameters.StakingUnbondingPeriod,
+		p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge,
+		p.basicProtocolParameters.EpochNearingThreshold, p.basicProtocolParameters.RMCParameters, p.basicProtocolParameters.VersionSignaling, p.basicProtocolParameters.ValidatorBlocksPerSlot)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
@@ -250,5 +267,11 @@ func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, acti
 			WindowTargetRatio: windowTargetRatio,
 			ActivationOffset:  activationOffset,
 		}
+	}
+}
+
+func WithRewardsOptions(validatorBlocksPerSlot uint8) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.ValidatorBlocksPerSlot = validatorBlocksPerSlot
 	}
 }
