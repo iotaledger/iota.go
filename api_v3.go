@@ -500,7 +500,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(BlockIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockIDsArrRules),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32).WithArrayRules(blockIDsArrRules),
 		))
 	}
 
