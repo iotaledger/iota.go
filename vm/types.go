@@ -6,13 +6,13 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
-type OutputWithCreationTime struct {
+type OutputWithCreationSlot struct {
 	Output       iotago.Output
-	CreationTime iotago.SlotIndex
+	CreationSlot iotago.SlotIndex
 }
 
-// InputSet is a map of OutputID to OutputWithCreationTime.
-type InputSet map[iotago.OutputID]OutputWithCreationTime
+// InputSet is a map of OutputID to OutputWithCreationSlot.
+type InputSet map[iotago.OutputID]OutputWithCreationSlot
 
 func (inputSet InputSet) OutputSet() iotago.OutputSet {
 	outputs := make(iotago.OutputSet, len(inputSet))
@@ -23,10 +23,10 @@ func (inputSet InputSet) OutputSet() iotago.OutputSet {
 	return outputs
 }
 
-type ChainOutputWithCreationTime struct {
+type ChainOutputWithCreationSlot struct {
 	ChainID      iotago.ChainID
 	Output       iotago.ChainOutput
-	CreationTime iotago.SlotIndex
+	CreationSlot iotago.SlotIndex
 }
 
 // ChainInputSet returns a ChainInputSet for all ChainOutputs in the InputSet.
@@ -49,18 +49,18 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", chainOutput.Type()))
 		}
 
-		set[chainID] = &ChainOutputWithCreationTime{
+		set[chainID] = &ChainOutputWithCreationSlot{
 			ChainID:      chainID,
 			Output:       chainOutput,
-			CreationTime: input.CreationTime,
+			CreationSlot: input.CreationSlot,
 		}
 	}
 
 	return set
 }
 
-// ChainInputSet is a map of ChainID to ChainOutputWithCreationTime.
-type ChainInputSet map[iotago.ChainID]*ChainOutputWithCreationTime
+// ChainInputSet is a map of ChainID to ChainOutputWithCreationSlot.
+type ChainInputSet map[iotago.ChainID]*ChainOutputWithCreationSlot
 
 type BlockIssuanceCreditInputSet map[iotago.AccountID]iotago.BlockIssuanceCredits
 
