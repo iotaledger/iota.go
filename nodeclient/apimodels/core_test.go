@@ -282,26 +282,28 @@ func Test_CongestionResponse(t *testing.T) {
 func Test_AccountStakingListResponse(t *testing.T) {
 	api := testAPI()
 
-	response := &apimodels.AccountStakingListResponse{
-		Stakers: []*apimodels.ValidatorResponse{
+	response := &apimodels.ValidatorsResponse{
+		Validators: []*apimodels.ValidatorResponse{
 			{
 				AccountID:                      iotago.AccountID{0xFF},
 				StakingEpochEnd:                0,
 				PoolStake:                      123,
 				ValidatorStake:                 456,
 				FixedCost:                      69,
+				Active:                         true,
 				LatestSupportedProtocolVersion: 9,
 			},
 		},
+		Cursor:   "0,1",
+		PageSize: 50,
 	}
 
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
-
-	expected := "{\"stakers\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"stakingEpochEnd\":\"0\",\"poolStake\":\"123\",\"validatorStake\":\"456\",\"fixedCost\":\"69\",\"latestSupportedProtocolVersion\":9}]}"
+	expected := "{\"stakers\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"stakingEpochEnd\":\"0\",\"poolStake\":\"123\",\"validatorStake\":\"456\",\"fixedCost\":\"69\",\"active\":true,\"latestSupportedProtocolVersion\":9}],\"pageSize\":50,\"cursor\":\"0,1\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
-	decoded := new(apimodels.AccountStakingListResponse)
+	decoded := new(apimodels.ValidatorsResponse)
 	require.NoError(t, api.JSONDecode(jsonResponse, decoded))
 	require.EqualValues(t, response, decoded)
 }
@@ -310,14 +312,15 @@ func Test_ManaRewardsResponse(t *testing.T) {
 	api := testAPI()
 
 	response := &apimodels.ManaRewardsResponse{
-		EpochIndex: 123,
+		EpochStart: 123,
+		EpochEnd:   133,
 		Rewards:    456,
 	}
 
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"epochIndex\":\"123\",\"rewards\":\"456\"}"
+	expected := "{\"epochIndexStart\":\"123\",\"epochIndexEnd\":\"133\",\"rewards\":\"456\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.ManaRewardsResponse)
