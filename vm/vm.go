@@ -35,7 +35,7 @@ type WorkingSet struct {
 	UnlockedIdents UnlockedIdentities
 	// The inputs to the transaction.
 	UTXOInputs iotago.Outputs[iotago.Output]
-	// The UTXO inputs to the transaction with their creation times.
+	// The UTXO inputs to the transaction with their creation slots.
 	UTXOInputsWithCreationSlot InputSet
 	// The mapping of inputs' OutputID to the index.
 	InputIDToIndex map[iotago.OutputID]uint16
@@ -57,7 +57,7 @@ type WorkingSet struct {
 	OutNativeTokens iotago.NativeTokenSum
 	// The Unlocks carried by the transaction mapped by type.
 	UnlocksByType iotago.UnlocksByType
-	// BIC is the block issuance credit for MCA slots prior to the transaction's creation time (or for the slot to which the block commits)
+	// BIC is the block issuance credit for MCA slots prior to the transaction's creation slot (or for the slot to which the block commits)
 	// Contains one value for each account output touched in the transaction and empty if no account outputs touched.
 	BIC BlockIssuanceCreditInputSet
 	// Commitment contains set of commitment inputs necessary for transaction execution. FIXME
@@ -527,7 +527,7 @@ func ExecFuncBalancedMana() ExecFunc {
 		txCreationSlot := vmParams.WorkingSet.Tx.Essence.CreationSlot
 		for outputID, input := range vmParams.WorkingSet.UTXOInputsWithCreationSlot {
 			if input.CreationSlot > txCreationSlot {
-				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation time %d, tx creation time %d", outputID, input.CreationSlot, txCreationSlot)
+				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation slot %d, tx creation slot %d", outputID, input.CreationSlot, txCreationSlot)
 			}
 		}
 		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.ProtocolParameters().RentStructure(), txCreationSlot, vmParams.WorkingSet.UTXOInputsWithCreationSlot)
