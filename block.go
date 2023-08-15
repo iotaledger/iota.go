@@ -440,10 +440,10 @@ func (b *BasicBlock) Size() int {
 	}
 
 	return serializer.OneByte + // block type
-		len(b.StrongParents)*SlotIdentifierLength +
-		len(b.WeakParents)*SlotIdentifierLength +
-		len(b.ShallowLikeParents)*SlotIdentifierLength +
-		payloadSize +
+		serializer.OneByte + len(b.StrongParents)*SlotIdentifierLength +
+		serializer.OneByte + len(b.WeakParents)*SlotIdentifierLength +
+		serializer.OneByte + len(b.ShallowLikeParents)*SlotIdentifierLength +
+		serializer.UInt32ByteSize + payloadSize + // payload size in serialization + actual payload
 		ManaSize
 }
 
@@ -527,9 +527,9 @@ func (b *ValidationBlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
 
 func (b *ValidationBlock) Size() int {
 	return serializer.OneByte + // block type
-		len(b.StrongParents)*SlotIdentifierLength +
-		len(b.WeakParents)*SlotIdentifierLength +
-		len(b.ShallowLikeParents)*SlotIdentifierLength +
+		serializer.OneByte + len(b.StrongParents)*SlotIdentifierLength +
+		serializer.OneByte + len(b.WeakParents)*SlotIdentifierLength +
+		serializer.OneByte + len(b.ShallowLikeParents)*SlotIdentifierLength +
 		serializer.OneByte + // highest supported version
 		IdentifierLength // protocol parameters hash
 }

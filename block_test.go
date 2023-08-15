@@ -20,7 +20,6 @@ import (
 )
 
 func TestBlock_DeSerialize(t *testing.T) {
-	// TODO: what does this test actually do?
 	tests := []deSerializeTest{
 		{
 			name:   "ok - no payload",
