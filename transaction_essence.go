@@ -102,8 +102,8 @@ type (
 type TransactionEssence struct {
 	// The network ID for which this essence is valid for.
 	NetworkID NetworkID `serix:"0,mapKey=networkId"`
-	// The time at which this transaction was created by the client.
-	CreationTime SlotIndex `serix:"1,mapKey=creationTime"`
+	// The slot index in which the transaction was created by the client.
+	CreationSlot SlotIndex `serix:"1,mapKey=creationSlot"`
 	// The commitment references of this transaction.
 	ContextInputs TxEssenceContextInputs `serix:"2,mapKey=contextInputs"`
 	// The inputs of this transaction.
@@ -166,7 +166,7 @@ func (u *TransactionEssence) Size() int {
 	return serializer.OneByte +
 		// NetworkID
 		serializer.UInt64ByteSize +
-		// CreationTime
+		// CreationSlot
 		SlotIndexLength +
 		u.ContextInputs.Size() +
 		u.Inputs.Size() +
@@ -217,7 +217,7 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 }
 
 func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// TransactionEssenceType + NetworkID + CreationTime + InputsCommitment
+	// TransactionEssenceType + NetworkID + CreationSlot + InputsCommitment
 	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + InputsCommitmentLength)
 	if err != nil {
 		return 0, err

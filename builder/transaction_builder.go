@@ -74,8 +74,8 @@ func (b *TransactionBuilder) AddOutput(output iotago.Output) *TransactionBuilder
 	return b
 }
 
-func (b *TransactionBuilder) SetCreationTime(creationTime iotago.SlotIndex) *TransactionBuilder {
-	b.essence.CreationTime = creationTime
+func (b *TransactionBuilder) SetCreationSlot(creationSlot iotago.SlotIndex) *TransactionBuilder {
+	b.essence.CreationSlot = creationSlot
 
 	return b
 }
