@@ -35,8 +35,41 @@ const (
 	// GET returns the node info.
 	RouteInfo = "/api/core/v3/info"
 
+	// RouteCongestion is the route for getting congestion details for the account.
+	// GET returns the congestion details for the account.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
+	RouteCongestion = "/api/core/v3/accounts/%s/congestion"
+
+	// RouteRewards is the route for getting the rewards for staking or delegation based on the provided output.
+	// Rewards are decayed up to returned epochEnd index.
+	// GET returns the rewards for the output.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
+	RouteRewards = "/api/core/v3/rewards/%s"
+
+	// RouteValidators is the route for getting the information about current registered validators.
+	// GET returns the paginated information about about registered validators.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
+	RouteValidators = "/api/core/v3/validators"
+
+	// RouteValidatorsAccount is the route for getting validator by its accountID.
+	// GET returns the account details.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
+	RouteValidatorsAccount = "/api/core/v3/validators/%s"
+
+	// RouteCommittee is the route for getting the information about the current committee.
+	// GET returns the information about the current committee.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
+	RouteCommittee = "/api/core/v3/committee"
+
 	// RouteBlockIssuance is the route for getting all needed information for block creation.
 	// GET returns the data needed toa attach block.
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
 	RouteBlockIssuance = "/api/core/v3/blocks/issuance"
 
 	// RouteBlock is the route for getting a block by its ID.
@@ -64,6 +97,8 @@ const (
 
 	// RouteTransactionsIncludedBlockMetadata is the route for getting the block metadata that was first confirmed in the ledger for a given transaction ID.
 	// GET returns block metadata (including info about "promotion/reattachment needed").
+	// MIMEApplicationJSON => json.
+	// MIMEVendorIOTASerializer => bytes.
 	RouteTransactionsIncludedBlockMetadata = "/api/core/v3/transactions/%s/included-block/metadata"
 
 	// RouteCommitmentByID is the route for getting a commitment by its ID.
@@ -315,6 +350,65 @@ func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlo
 	res := new(apimodels.IssuanceBlockHeaderResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteBlockIssuance, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (client *Client) Congestion(ctx context.Context, accountID iotago.AccountID) (*apimodels.CongestionResponse, error) {
+	res := new(apimodels.CongestionResponse)
+	query := fmt.Sprintf(RouteCongestion, hexutil.EncodeHex(accountID[:]))
+	//nolint:bodyclose
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*apimodels.ManaRewardsResponse, error) {
+	res := &apimodels.ManaRewardsResponse{}
+	query := fmt.Sprintf(RouteRewards, hexutil.EncodeHex(outputID[:]))
+	//nolint:bodyclose
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (client *Client) Validators(ctx context.Context) (*apimodels.ValidatorsResponse, error) {
+	res := &apimodels.ValidatorsResponse{}
+	//nolint:bodyclose
+	if _, err := client.Do(ctx, http.MethodGet, RouteValidators, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (client *Client) StakingAccount(ctx context.Context, accountID iotago.AccountID) (*apimodels.ValidatorResponse, error) {
+	res := &apimodels.ValidatorResponse{}
+	query := fmt.Sprintf(RouteValidatorsAccount, hexutil.EncodeHex(accountID[:]))
+	//nolint:bodyclose
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.EpochIndex) (*apimodels.CommitteeResponse, error) {
+	query := RouteCommittee
+	if len(optEpochIndex) > 0 {
+		query += fmt.Sprintf("?epochIndex=%d", optEpochIndex[0])
+	}
+	fmt.Printf("query: %s\n", query)
+
+	res := &apimodels.CommitteeResponse{}
+	//nolint:bodyclose
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 

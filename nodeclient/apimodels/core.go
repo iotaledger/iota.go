@@ -229,11 +229,11 @@ type (
 	// IssuanceBlockHeaderResponse defines the response of a GET block issuance REST API call.
 	IssuanceBlockHeaderResponse struct {
 		// StrongParents are the strong parents of the block.
-		StrongParents iotago.BlockIDs `serix:"0,mapKey=strongParents"`
+		StrongParents iotago.BlockIDs `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
 		// WeakParents are the weak parents of the block.
-		WeakParents iotago.BlockIDs `serix:"1,mapKey=weakParents"`
+		WeakParents iotago.BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
 		// ShallowLikeParents are the shallow like parents of the block.
-		ShallowLikeParents iotago.BlockIDs `serix:"2,mapKey=shallowLikeParents"`
+		ShallowLikeParents iotago.BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
 		// LatestFinalizedSlot is the index of the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `serix:"3,mapKey=latestFinalizedSlot"`
 		// Commitment is the commitment of the block.
@@ -315,21 +315,27 @@ type (
 		ValidatorStake iotago.BaseToken `serix:"3,mapKey=validatorStake"`
 		// FixedCost is the fixed cost that the validator receives from the total pool reward.
 		FixedCost iotago.Mana `serix:"4,mapKey=fixedCost"`
+		// Active indicates whether the validator was active recently, and would be considered during committee selection.
+		Active bool `serix:"5,mapKey=active"`
 		// LatestSupportedProtocolVersion is the latest supported protocol version of the validator.
-		LatestSupportedProtocolVersion iotago.Version `serix:"5,mapKey=latestSupportedProtocolVersion"`
+		LatestSupportedProtocolVersion iotago.Version `serix:"6,mapKey=latestSupportedProtocolVersion"`
 	}
 
-	// AccountStakingListResponse defines the response for the staking REST API call.
-	AccountStakingListResponse struct {
-		Stakers []*ValidatorResponse `serix:"0,mapKey=stakers"`
+	// ValidatorsResponse defines the response for the staking REST API call.
+	ValidatorsResponse struct {
+		Validators []*ValidatorResponse `serix:"0,mapKey=stakers"`
+		PageSize   uint32               `serix:"1,mapKey=pageSize"`
+		Cursor     string               `serix:"2,mapKey=cursor,omitempty"`
 	}
 
 	// ManaRewardsResponse defines the response for the mana rewards REST API call.
 	ManaRewardsResponse struct {
-		// EpochIndex is the epoch index for which the mana rewards are returned.
-		EpochIndex iotago.EpochIndex `serix:"0,mapKey=epochIndex"`
-		// The amount of totally available rewards the requested output may claim.
-		Rewards iotago.Mana `serix:"1,mapKey=rewards"`
+		// EpochStart is the starting epoch for the range for which the mana rewards are returned.
+		EpochStart iotago.EpochIndex `serix:"0,mapKey=epochIndexStart"`
+		// EpochEnd is the ending epoch for the range for which the mana rewards are returned, also the decay is only applied up to this point.
+		EpochEnd iotago.EpochIndex `serix:"1,mapKey=epochIndexEnd"`
+		// The amount of totally available rewards the requested output may claim, decayed up to EpochEnd (including).
+		Rewards iotago.Mana `serix:"2,mapKey=rewards"`
 	}
 
 	// CommitteeMemberResponse defines the response used in committee and staking response REST API calls.
