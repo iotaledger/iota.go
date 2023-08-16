@@ -3922,10 +3922,10 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
-							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
+							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							return potentialMana + storedMana
@@ -3983,10 +3983,10 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
-							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
+							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							// generated mana + decay - allotment
@@ -4056,7 +4056,6 @@ func TestTxSemanticMana(t *testing.T) {
 			return test{
 				name: "fail - input created after tx",
 				vmParams: &vm.Params{
-
 					API: testAPI,
 				},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
