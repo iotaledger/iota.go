@@ -21,7 +21,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithVersion(apiV3Version),
 			WithNetworkOptions("testnet", PrefixTestnet),
 			WithSupplyOptions(1813620509061365, 100, 1, 10, 100, 100),
-			WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
+			WithWorkScoreOptions(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
 			WithTimeProviderOptions(time.Now().Unix(), 10, 13),
 			// TODO: add sane default values
 			WithManaOptions(1,
@@ -35,7 +35,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				0,
 			),
 			WithLivenessOptions(3, 10, 20, 24),
-			WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*MaxBlockSize),
+			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*MaxBlockSize),
 			WithStakingOptions(10),
 			WithVersionSignalingOptions(7, 5, 7),
 		},
