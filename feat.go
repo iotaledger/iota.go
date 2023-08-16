@@ -57,8 +57,8 @@ func (featType FeatureType) String() string {
 	return featNames[featType]
 }
 
-var featNames = [FeatureBlockIssuer + 1]string{
-	"SenderFeature", "Issuer", "MetadataFeature", "TagFeature", "BlockIssuerFeature",
+var featNames = [FeatureStaking + 1]string{
+	"SenderFeature", "Issuer", "MetadataFeature", "TagFeature", "BlockIssuerFeature", "StakingFeature",
 }
 
 // Features is a slice of Feature(s).

@@ -481,6 +481,154 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			},
 		},
 		{
+			name: "ok - adding staking feature in account state transition",
+			input: &vm.ChainOutputWithCreationSlot{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 100,
+						FixedCost:    50,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + tpkg.TestAPI.ProtocolParameters().StakingUnbondingPeriod(),
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				API: tpkg.TestAPI,
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					BIC: exampleBIC,
+				},
+			},
+		},
+		{
+			name: "fail - adding staking feature in account state transition with start epoch set too early",
+			input: &vm.ChainOutputWithCreationSlot{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 100,
+						FixedCost:    50,
+						StartEpoch:   currentEpoch - 5,
+						EndEpoch:     currentEpoch + tpkg.TestAPI.ProtocolParameters().StakingUnbondingPeriod(),
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				API: tpkg.TestAPI,
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingStartEpoch,
+		},
+		{
+			name: "fail - negative BIC during account state transition",
+			input: &vm.ChainOutputWithCreationSlot{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 50,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 51,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				StateMetadata: []byte("1337"),
+				Features: iotago.AccountOutputFeatures{
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				API: tpkg.TestAPI,
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationSlot: currentSlot,
+						},
+					},
+					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
+						exampleAccountID: -100,
+					},
+				},
+			},
+			wantErr: iotago.ErrAccountLocked,
+		},
+		{
 			name: "fail - removing staking feature before end epoch",
 			input: &vm.ChainOutputWithCreationSlot{
 				Output: &iotago.AccountOutput{
@@ -683,7 +831,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:     100,
 				AccountID:  exampleAccountID,
-				StateIndex: 2,
+				StateIndex: 1,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
@@ -716,6 +864,112 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			wantErr: iotago.ErrInvalidStakingBlockIssuerRequired,
+		},
+		{
+			name: "fail - account removes staking feature in governance transition",
+			input: &vm.ChainOutputWithCreationSlot{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							StartEpoch:   currentEpoch,
+							EndEpoch:     math.MaxUint64,
+						},
+						&iotago.BlockIssuerFeature{
+							BlockIssuerKeys: []ed25519.PublicKey{tpkg.Rand32ByteArray()},
+							ExpirySlot:      990,
+						},
+					},
+				},
+				CreationSlot: 1000,
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 1,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				API: tpkg.TestAPI,
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationSlot: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidAccountGovernanceTransition,
+		},
+		{
+			name: "fail - account removes block issuer feature in staking transition",
+			input: &vm.ChainOutputWithCreationSlot{
+				Output: &iotago.AccountOutput{
+					Amount:     100,
+					AccountID:  exampleAccountID,
+					StateIndex: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.BlockIssuerFeature{
+							BlockIssuerKeys: []ed25519.PublicKey{tpkg.Rand32ByteArray()},
+							ExpirySlot:      990,
+						},
+					},
+				},
+				CreationSlot: 1000,
+			},
+			next: &iotago.AccountOutput{
+				Amount:     100,
+				AccountID:  exampleAccountID,
+				StateIndex: 2,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
+					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
+				},
+				Features: iotago.AccountOutputFeatures{},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				API: tpkg.TestAPI,
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Index: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationSlot: currentSlot,
+						},
+					},
+					BIC: exampleBIC,
+				},
+			},
+			wantErr: iotago.ErrInvalidAccountStateTransition,
 		},
 		{
 			name: "fail - expired staking feature removed without specifying reward input",
@@ -957,7 +1211,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrAccountLocked,
 		},
 		{
 			name: "fail - destroy block issuer account no BIC provided",
@@ -993,7 +1247,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
 		},
 
 		{
@@ -1094,7 +1348,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:     100,
 				AccountID:  exampleAccountID,
-				StateIndex: 11,
+				StateIndex: 10,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
@@ -1144,7 +1398,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:     100,
 				AccountID:  exampleAccountID,
-				StateIndex: 11,
+				StateIndex: 10,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
@@ -1199,7 +1453,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.MetadataFeature{Data: []byte("1337")},
 					&iotago.BlockIssuerFeature{
 						BlockIssuerKeys: []ed25519.PublicKey{tpkg.Rand32ByteArray()},
-						ExpirySlot:      1000,
+						ExpirySlot:      1015,
 					},
 				},
 			},
@@ -1209,6 +1463,15 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleGovCtrl.Key(): {UnlockedAt: 0},
+					},
+					Commitment: &iotago.Commitment{
+						Index: 990,
+					},
+					BIC: exampleBIC,
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationSlot: 900,
+						},
 					},
 				},
 			},
@@ -1284,7 +1547,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "ok - update expired account without extending expiration after MCA",
+			name: "ok - update expired block issuer feature without extending expiration after MCA",
 			input: &vm.ChainOutputWithCreationSlot{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
@@ -1303,14 +1566,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			next: &iotago.AccountOutput{
-				Amount:    200,
+				Amount:    100,
 				AccountID: exampleAccountID,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				StateIndex:    11,
-				StateMetadata: []byte("1337"),
+				StateIndex: 10,
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleStateCtrl},
 					&iotago.BlockIssuerFeature{
@@ -1389,7 +1651,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: iotago.ErrInvalidAccountStateTransition,
 		},
 		{
-			name: "fail - update expired account with extending expiration before MCA",
+			name: "fail - update expired block issuer feature with extending expiration before MCA",
 			input: &vm.ChainOutputWithCreationSlot{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
@@ -1408,14 +1670,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			next: &iotago.AccountOutput{
-				Amount:    200,
+				Amount:    100,
 				AccountID: exampleAccountID,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				StateIndex:    11,
-				StateMetadata: []byte("1337"),
+				StateIndex: 10,
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleStateCtrl},
 					&iotago.BlockIssuerFeature{
@@ -1448,7 +1709,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: iotago.ErrInvalidBlockIssuerTransition,
 		},
 		{
-			name: "fail - update expired account with extending expiration to the past before MCA",
+			name: "fail - update expired block issuer feature with extending expiration to the past before MCA",
 			input: &vm.ChainOutputWithCreationSlot{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
@@ -1467,14 +1728,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			next: &iotago.AccountOutput{
-				Amount:    200,
+				Amount:    100,
 				AccountID: exampleAccountID,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				StateIndex:    11,
-				StateMetadata: []byte("1337"),
+				StateIndex: 10,
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleStateCtrl},
 					&iotago.BlockIssuerFeature{
@@ -1526,15 +1786,15 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			next: &iotago.AccountOutput{
-				Amount:    200,
+				Amount:    100,
 				AccountID: exampleAccountID,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				StateIndex:    11,
-				StateMetadata: []byte("1337"),
+				StateIndex: 10,
 				Features: iotago.AccountOutputFeatures{
+					&iotago.MetadataFeature{Data: []byte("1337")},
 					&iotago.SenderFeature{Address: exampleStateCtrl},
 					&iotago.BlockIssuerFeature{
 						BlockIssuerKeys: []ed25519.PublicKey{tpkg.Rand32ByteArray()},
@@ -1563,7 +1823,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrAccountLocked,
 		},
 		{
 			name: "fail - update block issuer account without BIC provided",
@@ -1585,14 +1845,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			next: &iotago.AccountOutput{
-				Amount:    200,
+				Amount:    100,
 				AccountID: exampleAccountID,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				StateIndex:    11,
-				StateMetadata: []byte("1337"),
+				StateIndex: 10,
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleStateCtrl},
 					&iotago.BlockIssuerFeature{
@@ -1619,10 +1878,10 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
 		},
 		{
-			name: "ok - update expiration to earlier slot",
+			name: "ok - update block issuer feature expiration to earlier slot",
 			input: &vm.ChainOutputWithCreationSlot{
 				Output: &iotago.AccountOutput{
 					Amount:    100,
@@ -1641,15 +1900,15 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			next: &iotago.AccountOutput{
-				Amount:    200,
+				Amount:    100,
 				AccountID: exampleAccountID,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				StateIndex:    11,
-				StateMetadata: []byte("1337"),
+				StateIndex: 10,
 				Features: iotago.AccountOutputFeatures{
+					&iotago.MetadataFeature{Data: []byte("1337")},
 					&iotago.SenderFeature{Address: exampleStateCtrl},
 					&iotago.BlockIssuerFeature{
 						BlockIssuerKeys: []ed25519.PublicKey{tpkg.Rand32ByteArray()},
@@ -1700,16 +1959,14 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			next: &iotago.AccountOutput{
-				Amount:       200,
-				NativeTokens: tpkg.RandSortNativeTokens(50),
-				AccountID:    exampleAccountID,
+				Amount:    100,
+				AccountID: exampleAccountID,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				StateIndex:     11,
-				StateMetadata:  []byte("1337"),
-				FoundryCounter: 7,
+				StateIndex:     10,
+				FoundryCounter: 5,
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleStateCtrl},
 					&iotago.BlockIssuerFeature{

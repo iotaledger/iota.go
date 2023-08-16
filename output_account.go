@@ -21,6 +21,11 @@ var (
 	ErrInvalidAccountGovernanceTransition = ierrors.New("invalid account governance transition")
 	// ErrInvalidBlockIssuerTransition gets returned when an account tries to transition block issuer expiry too soon.
 	ErrInvalidBlockIssuerTransition = ierrors.New("invalid block issuer transition")
+	// ErrAccountLocked gets returned when an account has negative block issuance credits.
+	ErrAccountLocked = ierrors.New("account is locked due to negative block issuance credits")
+	// ErrBlockIssuanceCreditInputRequired gets returned when a transaction containing an account with a block issuer feature
+	// does not have a Block Issuance Credit Input.
+	ErrBlockIssuanceCreditInputRequired = ierrors.New("account with block issuer feature requires a block issuance credit input")
 	// ErrInvalidStakingTransition gets returned when an account tries to do an invalid transition with a Staking Feature.
 	ErrInvalidStakingTransition = ierrors.New("invalid staking transition")
 	// ErrAccountMissing gets returned when an account is missing.
