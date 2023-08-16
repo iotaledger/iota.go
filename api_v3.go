@@ -21,10 +21,12 @@ func must(err error) {
 }
 
 var (
+	// Note that when UniquenessSliceFunc is set and the mode is no dups and lexical order, then both will use
+	// the return value of UniquenessSliceFunc for those checks.
 	nativeTokensV3ArrRules = &serix.ArrayRules{
 		Min: MinNativeTokenCountPerOutput,
 		Max: MaxNativeTokenCountPerOutput,
-		// uniqueness must be checked only by examining the actual NativeTokenID bytes
+		// Uniqueness and lexical order is checked based on the Token ID.
 		UniquenessSliceFunc: func(next []byte) []byte { return next[:NativeTokenIDLength] },
 		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
@@ -160,9 +162,11 @@ var (
 	}
 
 	txEssenceV3AllotmentsArrRules = &serix.ArrayRules{
-		Min:            MinAllotmentCount,
-		Max:            MaxAllotmentCount,
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates, // FIXME: it was LexicalOrdering - do we need it?
+		Min: MinAllotmentCount,
+		Max: MaxAllotmentCount,
+		// Uniqueness and lexical order is checked based on the Account ID.
+		UniquenessSliceFunc: func(next []byte) []byte { return next[:AccountIDLength] },
+		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	txV3UnlocksArrRules = &serix.ArrayRules{

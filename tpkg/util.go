@@ -408,11 +408,9 @@ func WithOutputCount(outputCount int) options.Option[iotago.TransactionEssence] 
 	}
 }
 
-func WithAllotmentCount(outputCount int) options.Option[iotago.TransactionEssence] {
+func WithAllotmentCount(allotmentCount int) options.Option[iotago.TransactionEssence] {
 	return func(tx *iotago.TransactionEssence) {
-		for i := outputCount; i > 0; i-- {
-			tx.Allotments = append(tx.Allotments, RandAllotment())
-		}
+		tx.Allotments = RandSortAllotment(allotmentCount)
 	}
 }
 
@@ -615,6 +613,17 @@ func RandAllotment() *iotago.Allotment {
 		AccountID: RandAccountID(),
 		Value:     RandMana(10000) + 1,
 	}
+}
+
+// RandSortAllotment returns count sorted Allotments.
+func RandSortAllotment(count int) iotago.Allotments {
+	var allotments iotago.Allotments
+	for i := 0; i < count; i++ {
+		allotments = append(allotments, RandAllotment())
+	}
+	allotments.Sort()
+
+	return allotments
 }
 
 // OneInputOutputTransaction generates a random transaction with one input and output.

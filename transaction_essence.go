@@ -40,8 +40,6 @@ var (
 	ErrInvalidInputsCommitment = ierrors.New("invalid inputs commitment")
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a TransactionEssence is invalid.
 	ErrTxEssenceNetworkIDInvalid = ierrors.New("invalid network ID")
-	// ErrAllotmentsNotUnique gets returned if multiple Allotments reference the same Account.
-	ErrAllotmentsNotUnique = ierrors.New("allotments must each reference a unique account")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
 	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
@@ -198,7 +196,7 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 		return err
 	}
 
-	if err := SyntacticallyValidateOutputs(u.Outputs,
+	return SyntacticallyValidateOutputs(u.Outputs,
 		OutputsSyntacticalDepositAmount(protoParams),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
@@ -207,12 +205,6 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 		OutputsSyntacticalAccount(),
 		OutputsSyntacticalNFT(),
 		OutputsSyntacticalDelegation(),
-	); err != nil {
-		return err
-	}
-
-	return SyntacticallyValidateAllotments(u.Allotments,
-		AllotmentsSyntacticalUnique(),
 	)
 }
 
