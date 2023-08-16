@@ -42,7 +42,9 @@ var (
 const (
 	MIMEApplicationJSON                   = "application/json"
 	MIMEApplicationVendorIOTASerializerV1 = "application/vnd.iota.serializer-v1"
-	locationHeader                        = "Location"
+	MIMEApplicationVendorIOTASerializerV2 = "application/vnd.iota.serializer-v2"
+
+	locationHeader = "Location"
 )
 
 func readBody(res *http.Response) ([]byte, error) {
@@ -155,7 +157,7 @@ func do(
 		if !raw {
 			req.Header.Set("Content-Type", MIMEApplicationJSON)
 		} else {
-			req.Header.Set("Content-Type", MIMEApplicationVendorIOTASerializerV1)
+			req.Header.Set("Content-Type", MIMEApplicationVendorIOTASerializerV2)
 		}
 	}
 
