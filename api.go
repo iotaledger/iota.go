@@ -7,6 +7,8 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
+	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
@@ -141,4 +143,28 @@ type ProtocolParameters interface {
 type Sizer interface {
 	// Size returns the size of the object in terms of bytes.
 	Size() int
+}
+
+type VersionAndHash struct {
+	Version Version
+	Hash    Identifier
+}
+
+func (v VersionAndHash) Bytes() ([]byte, error) {
+	// iotago.Version and iotago.Identifier can't panic on .Bytes() call.
+	return byteutils.ConcatBytes(lo.PanicOnErr(v.Version.Bytes()), lo.PanicOnErr(v.Hash.Bytes())), nil
+}
+
+func VersionAndHashFromBytes(bytes []byte) (VersionAndHash, int, error) {
+	version, versionBytesConsumed, err := VersionFromBytes(bytes)
+	if err != nil {
+		return VersionAndHash{}, 0, ierrors.Wrap(err, "failed to parse version")
+	}
+
+	hash, hashBytesConsumed, err := IdentifierFromBytes(bytes[versionBytesConsumed:])
+	if err != nil {
+		return VersionAndHash{}, 0, ierrors.Wrap(err, "failed to parse hash")
+	}
+
+	return VersionAndHash{version, hash}, versionBytesConsumed + hashBytesConsumed, nil
 }
