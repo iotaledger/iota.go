@@ -27,7 +27,7 @@ type deSerializeTest struct {
 func (test *deSerializeTest) deSerialize(t *testing.T) {
 	serixData, err := tpkg.TestAPI.Encode(test.source, serix.WithValidation())
 	if test.seriErr != nil {
-		require.Error(t, err, test.seriErr)
+		require.ErrorIs(t, err, test.seriErr)
 
 		return
 	}
@@ -40,7 +40,7 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
 	bytesRead, err := tpkg.TestAPI.Decode(serixData, serixTarget)
 	if test.deSeriErr != nil {
-		require.Error(t, err, test.deSeriErr)
+		require.ErrorIs(t, err, test.deSeriErr)
 
 		return
 	}

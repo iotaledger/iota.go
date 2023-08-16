@@ -2,7 +2,6 @@
 package tpkg
 
 import (
-	"bytes"
 	"crypto/ed25519"
 	"encoding/binary"
 	"fmt"
@@ -139,9 +138,7 @@ func RandSortNativeTokens(count int) iotago.NativeTokens {
 	for i := 0; i < count; i++ {
 		nativeTokens = append(nativeTokens, RandNativeToken())
 	}
-	sort.Slice(nativeTokens, func(i, j int) bool {
-		return bytes.Compare(nativeTokens[i].ID[:], nativeTokens[j].ID[:]) == -1
-	})
+	nativeTokens.Sort()
 
 	return nativeTokens
 }
@@ -408,11 +405,9 @@ func WithOutputCount(outputCount int) options.Option[iotago.TransactionEssence] 
 	}
 }
 
-func WithAllotmentCount(outputCount int) options.Option[iotago.TransactionEssence] {
+func WithAllotmentCount(allotmentCount int) options.Option[iotago.TransactionEssence] {
 	return func(tx *iotago.TransactionEssence) {
-		for i := outputCount; i > 0; i-- {
-			tx.Allotments = append(tx.Allotments, RandAllotment())
-		}
+		tx.Allotments = RandSortAllotment(allotmentCount)
 	}
 }
 
@@ -615,6 +610,17 @@ func RandAllotment() *iotago.Allotment {
 		AccountID: RandAccountID(),
 		Value:     RandMana(10000) + 1,
 	}
+}
+
+// RandSortAllotment returns count sorted Allotments.
+func RandSortAllotment(count int) iotago.Allotments {
+	var allotments iotago.Allotments
+	for i := 0; i < count; i++ {
+		allotments = append(allotments, RandAllotment())
+	}
+	allotments.Sort()
+
+	return allotments
 }
 
 // OneInputOutputTransaction generates a random transaction with one input and output.
