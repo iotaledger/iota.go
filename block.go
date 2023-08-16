@@ -281,7 +281,7 @@ func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 	if err != nil {
 		return 0, err
 	}
-	workScoreKilobytes := workScoreBytes/1024 + 1 // add 1 to round up
+	workScoreKilobytes := workScoreBytes / 1024
 
 	workScoreHeader, err := b.BlockHeader.WorkScore(workScoreStructure)
 	if err != nil {

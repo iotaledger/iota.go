@@ -83,11 +83,11 @@ func (w WorkScoreStructure) Equals(other WorkScoreStructure) bool {
 func (w WorkScoreStructure) MaxBlockWork() (WorkScore, error) {
 	var maxBlockWork WorkScore
 	// max block size data factor
-	dataFactor, err := w.DataKilobyte.Multiply(MaxBlockSize)
+	dataFactorBytes, err := w.DataKilobyte.Multiply(MaxBlockSize)
 	if err != nil {
 		return 0, err
 	}
-	maxBlockWork += dataFactor
+	maxBlockWork += dataFactorBytes / 1024
 	// block factor
 	maxBlockWork += w.Block
 	// missing parents factor for zero parents
