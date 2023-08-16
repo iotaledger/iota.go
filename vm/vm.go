@@ -17,7 +17,7 @@ type VirtualMachine interface {
 	// Pass own ExecFunc(s) to override the VM's default execution function list.
 	Execute(t *iotago.Transaction, params *Params, inputs ResolvedInputs, overrideFuncs ...ExecFunc) error
 	// ChainSTVF executes the chain state transition validation function.
-	ChainSTVF(transType iotago.ChainTransitionType, input *ChainOutputWithCreationTime, next iotago.ChainOutput, vmParams *Params) error
+	ChainSTVF(transType iotago.ChainTransitionType, input *ChainOutputWithCreationSlot, next iotago.ChainOutput, vmParams *Params) error
 }
 
 // Params defines the VirtualMachine parameters under which the VM operates.
@@ -35,8 +35,8 @@ type WorkingSet struct {
 	UnlockedIdents UnlockedIdentities
 	// The inputs to the transaction.
 	UTXOInputs iotago.Outputs[iotago.Output]
-	// The UTXO inputs to the transaction with their creation times.
-	UTXOInputsWithCreationTime InputSet
+	// The UTXO inputs to the transaction with their creation slots.
+	UTXOInputsWithCreationSlot InputSet
 	// The mapping of inputs' OutputID to the index.
 	InputIDToIndex map[iotago.OutputID]uint16
 	// The transaction for which this semantic validation happens.
@@ -57,7 +57,7 @@ type WorkingSet struct {
 	OutNativeTokens iotago.NativeTokenSum
 	// The Unlocks carried by the transaction mapped by type.
 	UnlocksByType iotago.UnlocksByType
-	// BIC is the block issuance credit for MCA slots prior to the transaction's creation time (or for the slot to which the block commits)
+	// BIC is the block issuance credit for MCA slots prior to the transaction's creation slot (or for the slot to which the block commits)
 	// Contains one value for each account output touched in the transaction and empty if no account outputs touched.
 	BIC BlockIssuanceCreditInputSet
 	// Commitment contains set of commitment inputs necessary for transaction execution. FIXME
@@ -79,13 +79,13 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs Resolve
 	workingSet := &WorkingSet{}
 	workingSet.Tx = t
 	workingSet.UnlockedIdents = make(UnlockedIdentities)
-	workingSet.UTXOInputsWithCreationTime = utxoInputsSet
+	workingSet.UTXOInputsWithCreationSlot = utxoInputsSet
 	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
 	for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		ref := inputRef.(*iotago.UTXOInput).OutputID()
 		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
-		input, ok := workingSet.UTXOInputsWithCreationTime[ref]
+		input, ok := workingSet.UTXOInputsWithCreationSlot[ref]
 		if !ok {
 			return nil, ierrors.Wrapf(iotago.ErrMissingUTXO, "utxo for input %d not supplied", inputIndex)
 		}
@@ -125,11 +125,11 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs Resolve
 	return workingSet, nil
 }
 
-func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iotago.RentStructure, txCreationTime iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
+func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iotago.RentStructure, txCreationSlot iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
 	var totalIn iotago.Mana
 	for outputID, input := range inputSet {
 		// stored Mana
-		manaStored, err := manaDecayProvider.StoredManaWithDecay(input.Output.StoredMana(), input.CreationTime, txCreationTime)
+		manaStored, err := manaDecayProvider.StoredManaWithDecay(input.Output.StoredMana(), input.CreationSlot, txCreationSlot)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s stored mana calculation failed", outputID)
 		}
@@ -145,7 +145,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iot
 			continue
 		}
 		excessBaseTokens := input.Output.BaseTokenAmount() - minDeposit
-		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(excessBaseTokens, input.CreationTime, txCreationTime)
+		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(excessBaseTokens, input.CreationSlot, txCreationSlot)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s potential mana calculation failed", outputID)
 		}
@@ -524,13 +524,13 @@ func ExecFuncSenderUnlocked() ExecFunc {
 // TODO: Return Mana according to StorageDepositReturnUnlockCondition(s)?
 func ExecFuncBalancedMana() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		txCreationTime := vmParams.WorkingSet.Tx.Essence.CreationTime
-		for outputID, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
-			if input.CreationTime > txCreationTime {
-				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation time %d, tx creation time %d", outputID, input.CreationTime, txCreationTime)
+		txCreationSlot := vmParams.WorkingSet.Tx.Essence.CreationSlot
+		for outputID, input := range vmParams.WorkingSet.UTXOInputsWithCreationSlot {
+			if input.CreationSlot > txCreationSlot {
+				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation slot %d, tx creation slot %d", outputID, input.CreationSlot, txCreationSlot)
 			}
 		}
-		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.ProtocolParameters().RentStructure(), txCreationTime, vmParams.WorkingSet.UTXOInputsWithCreationTime)
+		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.ProtocolParameters().RentStructure(), txCreationSlot, vmParams.WorkingSet.UTXOInputsWithCreationSlot)
 		if err != nil {
 			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
 		}
@@ -562,7 +562,7 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 		// are always within bounds of the total token supply
 		var in, out iotago.BaseToken
 		inputSumReturnAmountPerIdent := make(map[string]iotago.BaseToken)
-		for inputID, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
+		for inputID, input := range vmParams.WorkingSet.UTXOInputsWithCreationSlot {
 			in += input.Output.BaseTokenAmount()
 
 			returnUnlockCond := input.Output.UnlockConditionSet().StorageDepositReturn()
@@ -613,7 +613,7 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 // ExecFuncTimelocks validates that the inputs' timelocks are expired.
 func ExecFuncTimelocks() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		for inputIndex, input := range vmParams.WorkingSet.UTXOInputsWithCreationTime {
+		for inputIndex, input := range vmParams.WorkingSet.UTXOInputsWithCreationSlot {
 			if input.Output.UnlockConditionSet().HasTimelockCondition() {
 				commitment := vmParams.WorkingSet.Commitment
 
