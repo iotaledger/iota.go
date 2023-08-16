@@ -509,7 +509,7 @@ func accountStakingExpiredValidation(
 	} else {
 		if isClaiming {
 			// When claiming with a feature on the output side, it must be transitioned as if it was newly added,
-			// so that the new epoch range is different.
+			// so that the new epoch range is disjoint from the current staking feature.
 			if err := accountStakingGenesisValidation(next, nextStakingFeat, vmParams); err != nil {
 				return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w: rewards claiming without removing the feature requires updating the feature", err)
 			}
