@@ -203,11 +203,7 @@ func accountGovernanceSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.A
 		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "%w", iotago.ErrInvalidStakingBlockIssuerRequired)
 	}
 
-	if err := accountBlockIssuerSTVF(input, next, vmParams); err != nil {
-		return err
-	}
-
-	return nil
+	return accountBlockIssuerSTVF(input, next, vmParams)
 }
 
 func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.AccountOutput, vmParams *vm.Params) error {
