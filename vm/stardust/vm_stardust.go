@@ -179,6 +179,7 @@ func accountStateChangeValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm
 }
 
 func accountGovernanceSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	current := input.Output.(*iotago.AccountOutput)
 
 	switch {
@@ -311,7 +312,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 		// or the current feature has expired but it was not removed.
 		// In both cases the expiry slot must be set sufficiently far in the future.
 		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlotIndex {
-			return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon %d, %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlotIndex)
+			return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon (is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlotIndex)
 		}
 	}
 
