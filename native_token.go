@@ -37,20 +37,7 @@ var (
 	ErrNonUniqueNativeTokens = ierrors.New("non unique native tokens")
 	// ErrNativeTokenSumUnbalanced gets returned when two NativeTokenSum(s) are unbalanced.
 	ErrNativeTokenSumUnbalanced = ierrors.New("native token sums are unbalanced")
-
-	nativeTokensArrayRules = &serializer.ArrayRules{
-		Min: MinNativeTokenCountPerOutput,
-		Max: MaxNativeTokenCountPerOutput,
-		// uniqueness must be checked only by examining the actual NativeTokenID bytes
-		UniquenessSliceFunc: func(next []byte) []byte { return next[:NativeTokenIDLength] },
-		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
-	}
 )
-
-// NativeTokenArrayRules returns array rules defining the constraints on a slice of NativeTokens.
-func NativeTokenArrayRules() serializer.ArrayRules {
-	return *nativeTokensArrayRules
-}
 
 // NativeTokenID is an identifier which uniquely identifies a NativeToken.
 type NativeTokenID = FoundryID
