@@ -11,7 +11,7 @@ import (
 // NewBasicBlockBuilder creates a new BasicBlockBuilder.
 func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 	// TODO: burn the correct amount of Mana in all cases according to block work and RMC with issue #285
-	basicBlock := &iotago.BasicBlock{BurnedMana: 1}
+	basicBlock := &iotago.BasicBlock{}
 
 	protocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
