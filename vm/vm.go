@@ -129,7 +129,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iot
 	var totalIn iotago.Mana
 	for outputID, input := range inputSet {
 		// stored Mana
-		manaStored, err := manaDecayProvider.StoredManaWithDecay(input.Output.StoredMana(), input.CreationSlot, txCreationSlot)
+		manaStored, err := manaDecayProvider.ManaWithDecay(input.Output.StoredMana(), input.CreationSlot, txCreationSlot)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s stored mana calculation failed", outputID)
 		}
@@ -145,7 +145,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iot
 			continue
 		}
 		excessBaseTokens := input.Output.BaseTokenAmount() - minDeposit
-		manaPotential, err := manaDecayProvider.PotentialManaWithDecay(excessBaseTokens, input.CreationSlot, txCreationSlot)
+		manaPotential, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokens, input.CreationSlot, txCreationSlot)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s potential mana calculation failed", outputID)
 		}
