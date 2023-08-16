@@ -159,14 +159,28 @@ func accountStateChangeValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm
 		return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures)
 	}
 
+	// If a Block Issuer Feature is present on the input side of the transaction,
+	// and the BIC is negative, the account is locked.
+	if current.FeatureSet().BlockIssuer() != nil {
+		if bic, exists := vmParams.WorkingSet.BIC[current.AccountID]; exists {
+			if bic < 0 {
+				return ierrors.Wrap(iotago.ErrAccountLocked, "negative block issuer credit")
+			}
+		} else {
+			return iotago.ErrBlockIssuanceCreditInputRequired
+		}
+	}
+
 	if current.StateIndex == next.StateIndex {
-		return accountGovernanceSTVF(current, next)
+		return accountGovernanceSTVF(input, next, vmParams)
 	}
 
 	return accountStateSTVF(input, next, vmParams)
 }
 
-func accountGovernanceSTVF(current *iotago.AccountOutput, next *iotago.AccountOutput) error {
+func accountGovernanceSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	current := input.Output.(*iotago.AccountOutput)
+
 	switch {
 	case current.Amount != next.Amount:
 		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "amount changed, in %d / out %d ", current.Amount, next.Amount)
@@ -178,6 +192,18 @@ func accountGovernanceSTVF(current *iotago.AccountOutput, next *iotago.AccountOu
 		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "state metadata changed, in %v / out %v", current.StateMetadata, next.StateMetadata)
 	case current.FoundryCounter != next.FoundryCounter:
 		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "foundry counter changed, in %d / out %d", current.FoundryCounter, next.FoundryCounter)
+	}
+
+	if err := iotago.FeatureUnchanged(iotago.FeatureStaking, current.Features.MustSet(), next.Features.MustSet()); err != nil {
+		return ierrors.Join(iotago.ErrInvalidAccountGovernanceTransition, err)
+	}
+
+	if current.FeatureSet().Staking() != nil && next.FeatureSet().BlockIssuer() == nil {
+		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "%w", iotago.ErrInvalidStakingBlockIssuerRequired)
+	}
+
+	if err := accountBlockIssuerSTVF(input, next, vmParams); err != nil {
+		return err
 	}
 
 	return nil
@@ -201,8 +227,8 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.Accoun
 		return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "%w", err)
 	}
 
-	if err := accountBlockIssuerSTVF(input, next, vmParams); err != nil {
-		return err
+	if err := iotago.FeatureUnchanged(iotago.FeatureBlockIssuer, current.Features.MustSet(), next.Features.MustSet()); err != nil {
+		return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "%w", err)
 	}
 
 	if err := accountStakingSTVF(input.ChainID, current, next, vmParams); err != nil {
@@ -254,6 +280,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	if currentBlockIssuerFeat == nil && nextBlockIssuerFeat == nil {
 		return nil
 	}
+
 	// else if the account has negative bic, this is invalid.
 	// new block issuers may not have a bic registered yet.
 	if bic, exists := vmParams.WorkingSet.BIC[current.AccountID]; exists {
@@ -271,7 +298,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	commitmentInputIndex := vmParams.WorkingSet.Commitment.Index
 	pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitmentInputIndex)
 
-	if currentBlockIssuerFeat.ExpirySlot >= commitmentInputIndex {
+	if currentBlockIssuerFeat != nil && currentBlockIssuerFeat.ExpirySlot >= commitmentInputIndex {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBlockIssuerFeat == nil {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot remove block issuer feature until it expires")
@@ -280,9 +307,11 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	} else if nextBlockIssuerFeat != nil {
-		// if the block issuer feature has expired, it must either be removed or expiry extended.
+		// The block issuer feature was newly added,
+		// or the current feature has expired but it was not removed.
+		// In both cases the expiry slot must be set sufficiently far in the future.
 		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlotIndex {
-			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
+			return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon %d, %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlotIndex)
 		}
 	}
 
@@ -366,10 +395,6 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 	currentStakingFeat := current.FeatureSet().Staking()
 	nextStakingFeat := next.FeatureSet().Staking()
 
-	if nextStakingFeat != nil && next.FeatureSet().BlockIssuer() == nil {
-		return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingBlockIssuerRequired)
-	}
-
 	_, isClaiming := vmParams.WorkingSet.Rewards[chainID]
 
 	if currentStakingFeat != nil {
@@ -395,6 +420,8 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 		return accountStakingExpiredValidation(
 			next, currentStakingFeat, nextStakingFeat, vmParams, isClaiming,
 		)
+	} else if nextStakingFeat != nil {
+		return accountStakingGenesisValidation(next, nextStakingFeat, vmParams)
 	}
 
 	return nil
@@ -467,7 +494,7 @@ func accountStakingNonExpiredValidation(
 // Validates a staking feature's transition if the feature is expired,
 // i.e. the current epoch is equal or after the end epoch.
 func accountStakingExpiredValidation(
-	current *iotago.AccountOutput,
+	next *iotago.AccountOutput,
 	currentStakingFeat *iotago.StakingFeature,
 	nextStakingFeat *iotago.StakingFeature,
 	vmParams *vm.Params,
@@ -482,7 +509,7 @@ func accountStakingExpiredValidation(
 		if isClaiming {
 			// When claiming with a feature on the output side, it must be transitioned as if it was newly added,
 			// so that the new epoch range is different.
-			if err := accountStakingGenesisValidation(current, nextStakingFeat, vmParams); err != nil {
+			if err := accountStakingGenesisValidation(next, nextStakingFeat, vmParams); err != nil {
 				return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w: rewards claiming without removing the feature requires updating the feature", err)
 			}
 		} else {
@@ -511,10 +538,10 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm
 		}
 		if bic, exists := vmParams.WorkingSet.BIC[outputToDestroy.AccountID]; exists {
 			if bic < 0 {
-				return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "negative block issuer credit")
+				return ierrors.Wrap(iotago.ErrAccountLocked, "cannot destroy locked account")
 			}
 		} else {
-			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "no BIC provided for block issuer")
+			return iotago.ErrBlockIssuanceCreditInputRequired
 		}
 	}
 

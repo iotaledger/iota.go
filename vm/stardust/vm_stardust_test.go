@@ -814,8 +814,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 		func() test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
-			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
-			_, ident2, _ := tpkg.RandEd25519Identity()
+			_, ident1, _ := tpkg.RandEd25519Identity()
+			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -850,7 +850,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:     100,
-						StateIndex: 1,
+						StateIndex: 0,
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
@@ -874,7 +874,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Index: 110,
 			}
 
-			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -896,8 +896,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 		func() test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
-			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
-			_, ident2, _ := tpkg.RandEd25519Identity()
+			_, ident1, _ := tpkg.RandEd25519Identity()
+			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -932,7 +932,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:     100,
-						StateIndex: 1,
+						StateIndex: 0,
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
@@ -956,7 +956,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Index: 110,
 			}
 
-			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1179,7 +1179,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrInvalidBlockIssuerTransition,
+				wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
 			}
 		}(),
 		func() test {
@@ -1215,7 +1215,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:     100,
-						StateIndex: 1,
+						StateIndex: 0,
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
@@ -1246,7 +1246,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrInvalidBlockIssuerTransition,
+				wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
 			}
 		}(),
 	}
