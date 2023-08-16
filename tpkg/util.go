@@ -2,7 +2,6 @@
 package tpkg
 
 import (
-	"bytes"
 	"crypto/ed25519"
 	"encoding/binary"
 	"fmt"
@@ -139,9 +138,7 @@ func RandSortNativeTokens(count int) iotago.NativeTokens {
 	for i := 0; i < count; i++ {
 		nativeTokens = append(nativeTokens, RandNativeToken())
 	}
-	sort.Slice(nativeTokens, func(i, j int) bool {
-		return bytes.Compare(nativeTokens[i].ID[:], nativeTokens[j].ID[:]) == -1
-	})
+	nativeTokens.Sort()
 
 	return nativeTokens
 }
