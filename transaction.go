@@ -31,8 +31,8 @@ var (
 	ErrReturnAmountNotFulFilled = ierrors.New("return amount not fulfilled")
 	// ErrInputOutputManaMismatch gets returned if Mana is not balanced across inputs and outputs/allotments.
 	ErrInputOutputManaMismatch = ierrors.New("inputs and outputs do not contain the same amount of Mana")
-	// ErrInputCreationAfterTxCreation gets returned if an input has creation time after the transaction creation time.
-	ErrInputCreationAfterTxCreation = ierrors.New("input creation time after tx creation time")
+	// ErrInputCreationAfterTxCreation gets returned if an input has creation slot after the transaction creation slot.
+	ErrInputCreationAfterTxCreation = ierrors.New("input creation slot after tx creation slot")
 	// ErrUnknownTransactionEssenceType gets returned for unknown transaction essence types.
 	ErrUnknownTransactionEssenceType = ierrors.New("unknown transaction essence type")
 )
