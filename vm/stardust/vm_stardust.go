@@ -195,6 +195,7 @@ func accountGovernanceSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.A
 		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "foundry counter changed, in %d / out %d", current.FoundryCounter, next.FoundryCounter)
 	}
 
+	// staking feature cannot change during account governance transition
 	if err := iotago.FeatureUnchanged(iotago.FeatureStaking, current.Features.MustSet(), next.Features.MustSet()); err != nil {
 		return ierrors.Join(iotago.ErrInvalidAccountGovernanceTransition, err)
 	}
@@ -224,6 +225,7 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.Accoun
 		return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "%w", err)
 	}
 
+	// block issuer feature cannot change during account state transition
 	if err := iotago.FeatureUnchanged(iotago.FeatureBlockIssuer, current.Features.MustSet(), next.Features.MustSet()); err != nil {
 		return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "%w", err)
 	}
