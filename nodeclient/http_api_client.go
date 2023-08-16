@@ -156,6 +156,8 @@ var (
 	RequestHeaderHookAcceptJSON = func(header http.Header) { header.Set("Accept", MIMEApplicationJSON) }
 	// RequestHeaderHookAcceptIOTASerializerV1 is used to set the request "Accept" header to MIMEApplicationVendorIOTASerializerV1.
 	RequestHeaderHookAcceptIOTASerializerV1 = func(header http.Header) { header.Set("Accept", MIMEApplicationVendorIOTASerializerV1) }
+	// RequestHeaderHookAcceptIOTASerializerV2 is used to set the request "Accept" header to MIMEApplicationVendorIOTASerializerV2.
+	RequestHeaderHookAcceptIOTASerializerV2 = func(header http.Header) { header.Set("Accept", MIMEApplicationVendorIOTASerializerV2) }
 )
 
 // the default options applied to the Client.
@@ -483,7 +485,7 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 
 	res := new(RawDataEnvelope)
 	//nolint:bodyclose
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV2, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -501,7 +503,7 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 
 	res := new(RawDataEnvelope)
 	//nolint:bodyclose
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV2, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -541,7 +543,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 
 	res := new(RawDataEnvelope)
 	//nolint:bodyclose
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV1, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV2, nil, res); err != nil {
 		return nil, err
 	}
 
