@@ -308,7 +308,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	}
 
 	// AccountInStored
-	manaStoredAccount, err := manaDecayProvider.StoredManaWithDecay(current.Mana, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.Mana, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s stored mana calculation failed", current.AccountID)
 	}
@@ -323,7 +323,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	} else {
 		excessBaseTokensAccount = current.Amount - minDeposit
 	}
-	manaPotentialAccount, err := manaDecayProvider.PotentialManaWithDecay(excessBaseTokensAccount, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", current.AccountID)
 	}

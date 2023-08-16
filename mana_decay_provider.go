@@ -85,8 +85,8 @@ func NewManaDecayProvider(
 	decayFactors []uint32,
 	decayFactorsExponent uint8,
 	decayFactorEpochsSum uint32,
-	decayFactorEpochsSumExponent uint8) *ManaDecayProvider {
-
+	decayFactorEpochsSumExponent uint8,
+) *ManaDecayProvider {
 	return &ManaDecayProvider{
 		timeProvider:                 timeProvider,
 		slotsPerEpochExponent:        uint64(slotsPerEpochExponent),
@@ -142,7 +142,7 @@ func (p *ManaDecayProvider) generateMana(value BaseToken, slotIndexDiff SlotInde
 }
 
 // StoredManaWithDecay applies the decay to the given stored mana.
-func (p *ManaDecayProvider) StoredManaWithDecay(storedMana Mana, slotIndexCreated SlotIndex, slotIndexTarget SlotIndex) (Mana, error) {
+func (p *ManaDecayProvider) ManaWithDecay(storedMana Mana, slotIndexCreated SlotIndex, slotIndexTarget SlotIndex) (Mana, error) {
 	epochIndexCreated := p.timeProvider.EpochFromSlot(slotIndexCreated)
 	epochIndexTarget := p.timeProvider.EpochFromSlot(slotIndexTarget)
 
@@ -154,7 +154,7 @@ func (p *ManaDecayProvider) StoredManaWithDecay(storedMana Mana, slotIndexCreate
 }
 
 // PotentialManaWithDecay calculates the generated potential mana and applies the decay to the result.
-func (p *ManaDecayProvider) PotentialManaWithDecay(amount BaseToken, slotIndexCreated SlotIndex, slotIndexTarget SlotIndex) (Mana, error) {
+func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, slotIndexCreated SlotIndex, slotIndexTarget SlotIndex) (Mana, error) {
 	epochIndexCreated := p.timeProvider.EpochFromSlot(slotIndexCreated)
 	epochIndexTarget := p.timeProvider.EpochFromSlot(slotIndexTarget)
 
