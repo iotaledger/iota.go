@@ -128,9 +128,7 @@ type ProtocolParameters interface {
 
 	VersionSignaling() *VersionSignaling
 
-	ValidatorBlocksPerSlot() uint8
-
-	// TODO add rest of mana rewards params, in String in WithRewards, ...
+	RewardsParameters() *RewardsParameters
 
 	Bytes() ([]byte, error)
 

@@ -112,8 +112,8 @@ func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
 	return &p.basicProtocolParameters.VersionSignaling
 }
 
-func (p *V3ProtocolParameters) ValidatorBlocksPerSlot() uint8 {
-	return p.basicProtocolParameters.ValidatorBlocksPerSlot
+func (p *V3ProtocolParameters) RewardsParameters() *RewardsParameters {
+	return &p.basicProtocolParameters.RewardsParameters
 }
 
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
@@ -136,14 +136,14 @@ func (p *V3ProtocolParameters) String() string {
 		"\tMana Generation Rate Exponent: %d\t\nMana Decay Factors: %v\n\tMana Decay Factors Exponent: %d\n"+
 		"\tMana Decay Factor Epochs Sum: %d\n\tMana Decay Factor Epochs Sum Exponent: %d\n\tStaking Unbonding Period: %d\n"+
 		"\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n}"+
-		"\tEpoch Nearing Threshold: %d\n\tRMC parameters: %v\n\tVersion Signaling: %v\n\tValidator Blocks Per Slot: %d\n",
+		"\tEpoch Nearing Threshold: %d\n\tRMC parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
 		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP,
 		p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp,
 		p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate,
 		p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent,
 		p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent, p.basicProtocolParameters.StakingUnbondingPeriod,
 		p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge,
-		p.basicProtocolParameters.EpochNearingThreshold, p.basicProtocolParameters.RMCParameters, p.basicProtocolParameters.VersionSignaling, p.basicProtocolParameters.ValidatorBlocksPerSlot)
+		p.basicProtocolParameters.EpochNearingThreshold, p.basicProtocolParameters.RMCParameters, p.basicProtocolParameters.VersionSignaling, p.basicProtocolParameters.RewardsParameters)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {

@@ -61,7 +61,7 @@ type basicProtocolParameters struct {
 	// VersionSignaling defines the parameters set for protocol upgrades.
 	VersionSignaling VersionSignaling `serix:"21,mapKey=versionSignaling"`
 	// ValidatorBlocksPerSlot is the number of blocks that should be issued by a validator in a single slot.
-	ValidatorBlocksPerSlot uint8 `serix:"22,mapKey=validatorBlocksPerSlot"`
+	RewardsParameters RewardsParameters `serix:"22,mapKey=rewardsParameters"`
 }
 
 func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
@@ -87,5 +87,5 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.EpochNearingThreshold == other.EpochNearingThreshold &&
 		b.RMCParameters.Equals(other.RMCParameters) &&
 		b.VersionSignaling.Equals(other.VersionSignaling) &&
-		b.ValidatorBlocksPerSlot == other.ValidatorBlocksPerSlot
+		b.RewardsParameters.Equals(other.RewardsParameters)
 }
