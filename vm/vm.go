@@ -521,7 +521,6 @@ func ExecFuncSenderUnlocked() ExecFunc {
 }
 
 // ExecFuncBalancedMana validates that Mana is balanced from the input/output side.
-// TODO: Return Mana according to StorageDepositReturnUnlockCondition(s)?
 func ExecFuncBalancedMana() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		txCreationSlot := vmParams.WorkingSet.Tx.Essence.CreationSlot

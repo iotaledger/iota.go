@@ -10,6 +10,7 @@ import (
 
 // NewBasicBlockBuilder creates a new BasicBlockBuilder.
 func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
+	// TODO: burn the correct amount of Mana in all cases according to block work and RMC with issue #285
 	basicBlock := &iotago.BasicBlock{}
 
 	protocolBlock := &iotago.ProtocolBlock{
@@ -158,9 +159,15 @@ func (b *BasicBlockBuilder) Payload(payload iotago.Payload) *BasicBlockBuilder {
 	return b
 }
 
-// BurnedMana sets the amount of mana burned by the block.
-func (b *BasicBlockBuilder) BurnedMana(burnedMana iotago.Mana) *BasicBlockBuilder {
+// BurnedMana sets the amount of mana burned by the block based on the provided reference mana cost.
+func (b *BasicBlockBuilder) BurnedMana(rmc iotago.Mana) *BasicBlockBuilder {
 	if b.err != nil {
+		return b
+	}
+
+	burnedMana, err := b.basicBlock.ManaCost(rmc, b.api.ProtocolParameters().WorkScoreStructure())
+	if err != nil {
+		b.err = ierrors.Errorf("error calculating mana cost: %w", err)
 		return b
 	}
 

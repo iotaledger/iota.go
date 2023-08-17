@@ -23,9 +23,9 @@ func (s *SenderFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize) + s.Address.VBytes(rentStruct, nil)
 }
 
-func (s *SenderFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (s *SenderFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
 	// we do not need to charge for a signature check here as this is covered by the unlock that must be provided.
-	return workScoreStructure.DataByte.Multiply(s.Size())
+	return 0, nil
 }
 
 func (s *SenderFeature) Equal(other Feature) bool {

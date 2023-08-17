@@ -209,12 +209,6 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 }
 
 func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// TransactionEssenceType + NetworkID + CreationSlot + InputsCommitment
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + InputsCommitmentLength)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreContextInputs, err := u.ContextInputs.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -235,10 +229,13 @@ func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (
 		return 0, err
 	}
 
-	workScorePayload, err := u.Payload.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
+	var workScorePayload WorkScore
+	if u.Payload != nil {
+		workScorePayload, err = u.Payload.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
 	}
 
-	return workScoreBytes.Add(workScoreContextInputs, workScoreInputs, workScoreOutputs, workScoreAllotments, workScorePayload)
+	return workScoreContextInputs.Add(workScoreInputs, workScoreOutputs, workScoreAllotments, workScorePayload)
 }

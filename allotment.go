@@ -32,18 +32,13 @@ func (a Allotments) Size() int {
 }
 
 func (a Allotments) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(a.Size())
-	if err != nil {
-		return 0, err
-	}
-
 	// Allotments requires invocation of account managers, so requires extra work.
 	workScoreAllotments, err := workScoreStructure.Allotment.Multiply(len(a))
 	if err != nil {
 		return 0, err
 	}
 
-	return workScoreBytes.Add(workScoreAllotments)
+	return workScoreAllotments, nil
 }
 
 func (a Allotments) Get(id AccountID) Mana {

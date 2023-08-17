@@ -212,12 +212,6 @@ func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 }
 
 func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// OutputType + Amount + Mana + AccountID + StateIndex + StateMetadata + FoundryCounter
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + ManaSize + AccountIDLength + serializer.UInt32ByteSize + serializer.UInt16ByteSize + len(a.StateMetadata) + serializer.UInt32ByteSize)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreNativeTokens, err := a.NativeTokens.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -238,7 +232,7 @@ func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 		return 0, err
 	}
 
-	return workScoreBytes.Add(workScoreNativeTokens, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
+	return workScoreNativeTokens.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
