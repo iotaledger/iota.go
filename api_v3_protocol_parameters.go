@@ -38,7 +38,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithRMCOptions(500, 500, 500, 0.8*10, 0.5*10),
 			WithStakingOptions(10),
 			WithVersionSignalingOptions(7, 5, 7),
-			WithRewardsOptions(10),
+			WithRewardsOptions(10, 8),
 		},
 			opts...,
 		),
@@ -274,8 +274,9 @@ func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, acti
 	}
 }
 
-func WithRewardsOptions(validatorBlocksPerSlot uint8) options.Option[V3ProtocolParameters] {
+func WithRewardsOptions(validatorBlocksPerSlot, profitMarginExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.ValidatorBlocksPerSlot = validatorBlocksPerSlot
+		p.basicProtocolParameters.RewardsParameters.ValidatorBlocksPerSlot = validatorBlocksPerSlot
+		p.basicProtocolParameters.RewardsParameters.ProfitMarginExponent = profitMarginExponent
 	}
 }
