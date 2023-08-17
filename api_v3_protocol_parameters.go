@@ -104,6 +104,10 @@ func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
 	return p.basicProtocolParameters.EpochNearingThreshold
 }
 
+func (p *V3ProtocolParameters) ManaParameters() *ManaParameters {
+	return &p.basicProtocolParameters.ManaParameters
+}
+
 func (p *V3ProtocolParameters) RMCParameters() *RMCParameters {
 	return &p.basicProtocolParameters.RMCParameters
 }
@@ -139,15 +143,15 @@ func (p *V3ProtocolParameters) String() string {
 		"\tEpoch Nearing Threshold: %d\n\tRMC parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
 		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP,
 		p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp,
-		p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate,
-		p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent,
-		p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent, p.basicProtocolParameters.StakingUnbondingPeriod,
+		p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaParameters.ManaGenerationRate,
+		p.basicProtocolParameters.ManaParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaParameters.ManaDecayFactors, p.basicProtocolParameters.ManaParameters.ManaDecayFactorsExponent,
+		p.basicProtocolParameters.ManaParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaParameters.ManaDecayFactorEpochsSumExponent, p.basicProtocolParameters.StakingUnbondingPeriod,
 		p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge,
 		p.basicProtocolParameters.EpochNearingThreshold, p.basicProtocolParameters.RMCParameters, p.basicProtocolParameters.VersionSignaling, p.basicProtocolParameters.RewardsParameters)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
-	return NewManaDecayProvider(p.TimeProvider(), p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaGenerationRate, p.basicProtocolParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaDecayFactors, p.basicProtocolParameters.ManaDecayFactorsExponent, p.basicProtocolParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent)
+	return NewManaDecayProvider(p.TimeProvider(), p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaParameters.ManaGenerationRate, p.basicProtocolParameters.ManaParameters.ManaGenerationRateExponent, p.basicProtocolParameters.ManaParameters.ManaDecayFactors, p.basicProtocolParameters.ManaParameters.ManaDecayFactorsExponent, p.basicProtocolParameters.ManaParameters.ManaDecayFactorEpochsSum, p.basicProtocolParameters.ManaParameters.ManaDecayFactorEpochsSumExponent)
 }
 
 func (p *V3ProtocolParameters) Equals(other ProtocolParameters) bool {
@@ -226,12 +230,12 @@ func WithTimeProviderOptions(genesisTimestamp int64, slotDuration uint8, slotsPe
 
 func WithManaOptions(manaGenerationRate uint8, manaGenerationRateExponent uint8, manaDecayFactors []uint32, manaDecayFactorsExponent uint8, manaDecayFactorEpochsSum uint32, manaDecayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.ManaGenerationRate = manaGenerationRate
-		p.basicProtocolParameters.ManaGenerationRateExponent = manaGenerationRateExponent
-		p.basicProtocolParameters.ManaDecayFactors = manaDecayFactors
-		p.basicProtocolParameters.ManaDecayFactorsExponent = manaDecayFactorsExponent
-		p.basicProtocolParameters.ManaDecayFactorEpochsSum = manaDecayFactorEpochsSum
-		p.basicProtocolParameters.ManaDecayFactorEpochsSumExponent = manaDecayFactorEpochsSumExponent
+		p.basicProtocolParameters.ManaParameters.ManaGenerationRate = manaGenerationRate
+		p.basicProtocolParameters.ManaParameters.ManaGenerationRateExponent = manaGenerationRateExponent
+		p.basicProtocolParameters.ManaParameters.ManaDecayFactors = manaDecayFactors
+		p.basicProtocolParameters.ManaParameters.ManaDecayFactorsExponent = manaDecayFactorsExponent
+		p.basicProtocolParameters.ManaParameters.ManaDecayFactorEpochsSum = manaDecayFactorEpochsSum
+		p.basicProtocolParameters.ManaParameters.ManaDecayFactorEpochsSumExponent = manaDecayFactorEpochsSumExponent
 	}
 }
 
