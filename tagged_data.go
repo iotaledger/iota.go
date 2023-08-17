@@ -23,6 +23,6 @@ func (u *TaggedData) Size() int {
 		serializer.UInt32ByteSize + len(u.Data)
 }
 
-func (u *TaggedData) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	return workScoreStructure.DataByte.Multiply(u.Size())
+func (u *TaggedData) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+	return 0, nil
 }

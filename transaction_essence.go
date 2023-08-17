@@ -40,8 +40,6 @@ var (
 	ErrInvalidInputsCommitment = ierrors.New("invalid inputs commitment")
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a TransactionEssence is invalid.
 	ErrTxEssenceNetworkIDInvalid = ierrors.New("invalid network ID")
-	// ErrAllotmentsNotUnique gets returned if multiple Allotments reference the same Account.
-	ErrAllotmentsNotUnique = ierrors.New("allotments must each reference a unique account")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
 	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
@@ -102,8 +100,8 @@ type (
 type TransactionEssence struct {
 	// The network ID for which this essence is valid for.
 	NetworkID NetworkID `serix:"0,mapKey=networkId"`
-	// The time at which this transaction was created by the client.
-	CreationTime SlotIndex `serix:"1,mapKey=creationTime"`
+	// The slot index in which the transaction was created by the client.
+	CreationSlot SlotIndex `serix:"1,mapKey=creationSlot"`
 	// The commitment references of this transaction.
 	ContextInputs TxEssenceContextInputs `serix:"2,mapKey=contextInputs"`
 	// The inputs of this transaction.
@@ -166,7 +164,7 @@ func (u *TransactionEssence) Size() int {
 	return serializer.OneByte +
 		// NetworkID
 		serializer.UInt64ByteSize +
-		// CreationTime
+		// CreationSlot
 		SlotIndexLength +
 		u.ContextInputs.Size() +
 		u.Inputs.Size() +
@@ -198,7 +196,7 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 		return err
 	}
 
-	if err := SyntacticallyValidateOutputs(u.Outputs,
+	return SyntacticallyValidateOutputs(u.Outputs,
 		OutputsSyntacticalDepositAmount(protoParams),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
@@ -207,22 +205,10 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 		OutputsSyntacticalAccount(),
 		OutputsSyntacticalNFT(),
 		OutputsSyntacticalDelegation(),
-	); err != nil {
-		return err
-	}
-
-	return SyntacticallyValidateAllotments(u.Allotments,
-		AllotmentsSyntacticalUnique(),
 	)
 }
 
 func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// TransactionEssenceType + NetworkID + CreationTime + InputsCommitment
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + InputsCommitmentLength)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreContextInputs, err := u.ContextInputs.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -243,10 +229,13 @@ func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (
 		return 0, err
 	}
 
-	workScorePayload, err := u.Payload.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
+	var workScorePayload WorkScore
+	if u.Payload != nil {
+		workScorePayload, err = u.Payload.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
 	}
 
-	return workScoreBytes.Add(workScoreContextInputs, workScoreInputs, workScoreOutputs, workScoreAllotments, workScorePayload)
+	return workScoreContextInputs.Add(workScoreInputs, workScoreOutputs, workScoreAllotments, workScorePayload)
 }

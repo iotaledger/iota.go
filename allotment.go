@@ -1,7 +1,9 @@
 package iotago
 
 import (
-	"github.com/iotaledger/hive.go/ierrors"
+	"bytes"
+	"sort"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -17,24 +19,26 @@ type Allotment struct {
 	Value     Mana      `serix:"1"`
 }
 
+// Sort sorts the allotments in lexical order.
+func (a Allotments) Sort() {
+	sort.Slice(a, func(i, j int) bool {
+		return bytes.Compare(a[i].AccountID[:], a[j].AccountID[:]) < 0
+	})
+}
+
 func (a Allotments) Size() int {
 	// LengthPrefixType
 	return serializer.UInt16ByteSize + len(a)*(AccountIDLength+ManaSize)
 }
 
 func (a Allotments) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(a.Size())
-	if err != nil {
-		return 0, err
-	}
-
 	// Allotments requires invocation of account managers, so requires extra work.
 	workScoreAllotments, err := workScoreStructure.Allotment.Multiply(len(a))
 	if err != nil {
 		return 0, err
 	}
 
-	return workScoreBytes.Add(workScoreAllotments)
+	return workScoreAllotments, nil
 }
 
 func (a Allotments) Get(id AccountID) Mana {
@@ -45,35 +49,4 @@ func (a Allotments) Get(id AccountID) Mana {
 	}
 
 	return 0
-}
-
-// AllotmentsSyntacticalValidationFunc which given the index of an Allotment and the Allotment itself, runs syntactical validations and returns an error if any should fail.
-type AllotmentsSyntacticalValidationFunc func(index int, input *Allotment) error
-
-// SyntacticallyValidateAllotments validates the allotments by running them against the given AllotmentsSyntacticalValidationFunc(s).
-func SyntacticallyValidateAllotments(allotments TxEssenceAllotments, funcs ...AllotmentsSyntacticalValidationFunc) error {
-	for i, allotment := range allotments {
-		for _, f := range funcs {
-			if err := f(i, allotment); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// AllotmentsSyntacticalUnique returns an AllotmentsSyntacticalValidationFunc which checks that every Allotment has a unique Account.
-func AllotmentsSyntacticalUnique() AllotmentsSyntacticalValidationFunc {
-	allotmentsSet := map[string]int{}
-
-	return func(index int, allotment *Allotment) error {
-		k := string(allotment.AccountID[:])
-		if j, has := allotmentsSet[k]; has {
-			return ierrors.Wrapf(ErrAllotmentsNotUnique, "allotment %d and %d share the same Account", j, index)
-		}
-		allotmentsSet[k] = index
-
-		return nil
-	}
 }

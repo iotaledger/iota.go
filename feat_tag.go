@@ -23,8 +23,8 @@ func (s *TagFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.Tag)))
 }
 
-func (s *TagFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	return workScoreStructure.DataByte.Multiply(s.Size())
+func (s *TagFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+	return 0, nil
 }
 
 func (s *TagFeature) Equal(other Feature) bool {

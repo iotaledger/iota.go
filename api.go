@@ -58,6 +58,8 @@ type API interface {
 	ManaDecayProvider() *ManaDecayProvider
 	// LivenessThresholdDuration returns the liveness threshold duration.
 	LivenessThresholdDuration() time.Duration
+	// MaxBlockWork returns the maximum block work score.
+	MaxBlockWork() WorkScore
 }
 
 func LatestProtocolVersion() Version {
@@ -122,7 +124,7 @@ type ProtocolParameters interface {
 	EpochNearingThreshold() SlotIndex
 
 	// RMCParameters returns the parameters used to calculate reference Mana cost.
-	RMCParameters() *RMCParameters
+	CongestionControlParameters() *CongestionControlParameters
 
 	VersionSignaling() *VersionSignaling
 

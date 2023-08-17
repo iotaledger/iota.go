@@ -21,10 +21,12 @@ func must(err error) {
 }
 
 var (
+	// Note that when UniquenessSliceFunc is set and the mode is no dups and lexical order, then both will use
+	// the return value of UniquenessSliceFunc for those checks.
 	nativeTokensV3ArrRules = &serix.ArrayRules{
 		Min: MinNativeTokenCountPerOutput,
 		Max: MaxNativeTokenCountPerOutput,
-		// uniqueness must be checked only by examining the actual NativeTokenID bytes
+		// Uniqueness and lexical order is checked based on the Token ID.
 		UniquenessSliceFunc: func(next []byte) []byte { return next[:NativeTokenIDLength] },
 		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
@@ -160,9 +162,11 @@ var (
 	}
 
 	txEssenceV3AllotmentsArrRules = &serix.ArrayRules{
-		Min:            MinAllotmentCount,
-		Max:            MaxAllotmentCount,
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates, // FIXME: it was LexicalOrdering - do we need it?
+		Min: MinAllotmentCount,
+		Max: MaxAllotmentCount,
+		// Uniqueness and lexical order is checked based on the Account ID.
+		UniquenessSliceFunc: func(next []byte) []byte { return next[:AccountIDLength] },
+		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	txV3UnlocksArrRules = &serix.ArrayRules{
@@ -182,6 +186,7 @@ type v3api struct {
 	timeProvider              *TimeProvider
 	manaDecayProvider         *ManaDecayProvider
 	livenessThresholdDuration time.Duration
+	maxBlockWork              WorkScore
 }
 
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
@@ -216,6 +221,10 @@ func (v *v3api) LivenessThresholdDuration() time.Duration {
 	return v.livenessThresholdDuration
 }
 
+func (v *v3api) MaxBlockWork() WorkScore {
+	return v.maxBlockWork
+}
+
 func (v *v3api) Encode(obj interface{}, opts ...serix.Option) ([]byte, error) {
 	return v.serixAPI.Encode(context.TODO(), obj, opts...)
 }
@@ -230,6 +239,9 @@ func V3API(protoParams ProtocolParameters) API {
 
 	timeProvider := protoParams.TimeProvider()
 
+	maxBlockWork, err := protoParams.WorkScoreStructure().MaxBlockWork()
+	must(err)
+
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{
 		serixAPI:                  api,
@@ -237,6 +249,7 @@ func V3API(protoParams ProtocolParameters) API {
 		timeProvider:              timeProvider,
 		manaDecayProvider:         protoParams.ManaDecayProvider(),
 		livenessThresholdDuration: time.Duration(uint64(protoParams.LivenessThreshold())*uint64(timeProvider.SlotDurationSeconds())) * time.Second,
+		maxBlockWork:              maxBlockWork,
 	}
 
 	must(api.RegisterTypeSettings(TaggedData{},
@@ -500,7 +513,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(BlockIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockIDsArrRules),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32).WithArrayRules(blockIDsArrRules),
 		))
 	}
 

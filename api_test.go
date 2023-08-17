@@ -27,7 +27,7 @@ type deSerializeTest struct {
 func (test *deSerializeTest) deSerialize(t *testing.T) {
 	serixData, err := tpkg.TestAPI.Encode(test.source, serix.WithValidation())
 	if test.seriErr != nil {
-		require.Error(t, err, test.seriErr)
+		require.ErrorIs(t, err, test.seriErr)
 
 		return
 	}
@@ -40,7 +40,7 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
 	bytesRead, err := tpkg.TestAPI.Decode(serixData, serixTarget)
 	if test.deSeriErr != nil {
-		require.Error(t, err, test.deSeriErr)
+		require.ErrorIs(t, err, test.deSeriErr)
 
 		return
 	}
@@ -72,6 +72,7 @@ func TestProtocolParameters_DeSerialize(t *testing.T) {
 }
 
 func TestProtocolParametersJSONMarshalling(t *testing.T) {
+	var schedulerRate iotago.WorkScore = 100000
 	var protoParams iotago.ProtocolParameters = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions(
 			"xxxNetwork",
@@ -119,18 +120,20 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			20,
 			24,
 		),
-		// TODO: add scheduler rate to increase and decrease threshold expressions. Issue #264
-		iotago.WithRMCOptions(
+		iotago.WithCongestionControlOptions(
 			500,
 			500,
 			500,
-			0.8*10,
-			0.5*10,
+			8*schedulerRate, // 0.8*slotDurationInSeconds*schedulerRate
+			5*schedulerRate, // 0.5*slotDurationInSeconds*schedulerRate
+			schedulerRate,
+			1,
+			100*iotago.MaxBlockSize,
 		),
 		iotago.WithVersionSignalingOptions(3, 4, 1),
 	)
 
-	protoParamsJSON := `{"type":0,"version":3,"networkName":"xxxNetwork","bech32Hrp":"xxx","rentStructure":{"vByteCost":6,"vByteFactorData":7,"vByteFactorKey":8,"vByteFactorIssuerKeys":9,"vByteFactorStakingFeature":10},"workScoreStructure":{"dataByte":1,"block":2,"missingParent":3,"input":4,"contextInput":5,"output":6,"nativeToken":7,"staking":8,"blockIssuer":9,"allotment":10,"signatureEd25519":11,"minStrongParentsThreshold":12},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"manaGenerationRate":1,"manaGenerationRateExponent":27,"manaDecayFactors":[10,20],"manaDecayFactorsExponent":32,"manaDecayFactorEpochsSum":1337,"manaDecayFactorEpochsSumExponent":20,"stakingUnbondingPeriod":"11","livenessThreshold":"3","minCommittableAge":"10","maxCommittableAge":"20","epochNearingThreshold":"24","rmcParameters":{"rmcMin":"500","increase":"500","decrease":"500","increaseThreshold":8,"decreaseThreshold":5},"versionSignaling":{"windowSize":3,"windowTargetRatio":4,"activationOffset":1}}`
+	protoParamsJSON := `{"type":0,"version":3,"networkName":"xxxNetwork","bech32Hrp":"xxx","rentStructure":{"vByteCost":6,"vByteFactorData":7,"vByteFactorKey":8,"vByteFactorIssuerKeys":9,"vByteFactorStakingFeature":10},"workScoreStructure":{"dataKilobyte":1,"block":2,"missingParent":3,"input":4,"contextInput":5,"output":6,"nativeToken":7,"staking":8,"blockIssuer":9,"allotment":10,"signatureEd25519":11,"minStrongParentsThreshold":12},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"manaGenerationRate":1,"manaGenerationRateExponent":27,"manaDecayFactors":[10,20],"manaDecayFactorsExponent":32,"manaDecayFactorEpochsSum":1337,"manaDecayFactorEpochsSumExponent":20,"stakingUnbondingPeriod":"11","livenessThreshold":"3","minCommittableAge":"10","maxCommittableAge":"20","epochNearingThreshold":"24","congestionControlParameters":{"rmcMin":"500","increase":"500","decrease":"500","increaseThreshold":800000,"decreaseThreshold":500000,"schedulerRate":100000,"minMana":"1","maxBufferSize":3276800},"versionSignaling":{"windowSize":3,"windowTargetRatio":4,"activationOffset":1}}`
 
 	jsonProtoParams, err := tpkg.TestAPI.JSONEncode(protoParams)
 	require.NoError(t, err)

@@ -33,6 +33,6 @@ func (r *NFTUnlock) Size() int {
 	return serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 }
 
-func (r *NFTUnlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	return workScoreStructure.DataByte.Multiply(r.Size())
+func (r *NFTUnlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+	return 0, nil
 }

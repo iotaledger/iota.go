@@ -30,7 +30,8 @@ const (
 var (
 	stardustVM = stardust.NewVirtualMachine()
 
-	testProtoParams = iotago.NewV3ProtocolParameters(
+	schedulerRate   iotago.WorkScore = 100000
+	testProtoParams                  = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("test", "test"),
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 100, 100),
 		iotago.WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
@@ -44,8 +45,7 @@ var (
 		),
 		iotago.WithStakingOptions(10),
 		iotago.WithLivenessOptions(3, 10, 20, 24),
-		// TODO: add Scheduler Rate parameter and include in this expression for increase and decrease thresholds. Issue #264
-		iotago.WithRMCOptions(500, 500, 500, 0.8*slotDurationSeconds, 0.5*slotDurationSeconds),
+		iotago.WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*iotago.MaxBlockSize),
 	)
 
 	testAPI = iotago.V3API(testProtoParams)
@@ -56,7 +56,7 @@ func TestNFTTransition(t *testing.T) {
 
 	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
-		inputIDs[0]: vm.OutputWithCreationTime{
+		inputIDs[0]: vm.OutputWithCreationSlot{
 			Output: &iotago.NFTOutput{
 				Amount: OneMi,
 				NFTID:  iotago.NFTID{},
@@ -65,7 +65,7 @@ func TestNFTTransition(t *testing.T) {
 				},
 				Features: nil,
 			},
-			CreationTime: iotago.SlotIndex(0),
+			CreationSlot: iotago.SlotIndex(0),
 		},
 	}
 
@@ -107,7 +107,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 
 	inputIDs := tpkg.RandOutputIDs(3)
 	inputs := vm.InputSet{
-		inputIDs[0]: vm.OutputWithCreationTime{
+		inputIDs[0]: vm.OutputWithCreationSlot{
 			Output: &iotago.BasicOutput{
 				Amount: OneMi,
 				Conditions: iotago.BasicOutputUnlockConditions{
@@ -115,7 +115,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				},
 			},
 		},
-		inputIDs[1]: vm.OutputWithCreationTime{
+		inputIDs[1]: vm.OutputWithCreationSlot{
 			Output: &iotago.AccountOutput{
 				Amount:         OneMi,
 				NativeTokens:   nil,
@@ -130,7 +130,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 				Features: nil,
 			},
 		},
-		inputIDs[2]: vm.OutputWithCreationTime{
+		inputIDs[2]: vm.OutputWithCreationSlot{
 			Output: &iotago.FoundryOutput{
 				Amount:       OneMi,
 				NativeTokens: nil,
@@ -241,7 +241,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(16)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -249,7 +249,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nativeTokenTransfer1,
@@ -258,7 +258,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[2]: vm.OutputWithCreationTime{
+				inputIDs[2]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nativeTokenTransfer2,
@@ -267,7 +267,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[3]: vm.OutputWithCreationTime{
+				inputIDs[3]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -279,7 +279,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[4]: vm.OutputWithCreationTime{
+				inputIDs[4]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -290,7 +290,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[5]: vm.OutputWithCreationTime{
+				inputIDs[5]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: defaultAmount + storageDepositReturn,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -309,7 +309,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[6]: vm.OutputWithCreationTime{
+				inputIDs[6]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:         defaultAmount,
 						NativeTokens:   nil,
@@ -324,7 +324,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[7]: vm.OutputWithCreationTime{
+				inputIDs[7]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:         defaultAmount + defaultAmount, // to fund also the new account output
 						NativeTokens:   nil,
@@ -339,7 +339,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[8]: vm.OutputWithCreationTime{
+				inputIDs[8]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:         defaultAmount,
 						NativeTokens:   nil,
@@ -354,7 +354,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[9]: vm.OutputWithCreationTime{
+				inputIDs[9]: vm.OutputWithCreationSlot{
 					Output: &iotago.FoundryOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil,
@@ -370,7 +370,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[10]: vm.OutputWithCreationTime{
+				inputIDs[10]: vm.OutputWithCreationSlot{
 					Output: &iotago.FoundryOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil, // filled out later
@@ -386,7 +386,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[11]: vm.OutputWithCreationTime{
+				inputIDs[11]: vm.OutputWithCreationSlot{
 					Output: &iotago.FoundryOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil,
@@ -402,7 +402,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[12]: vm.OutputWithCreationTime{
+				inputIDs[12]: vm.OutputWithCreationSlot{
 					Output: &iotago.FoundryOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil,
@@ -418,7 +418,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: nil,
 					},
 				},
-				inputIDs[13]: vm.OutputWithCreationTime{
+				inputIDs[13]: vm.OutputWithCreationSlot{
 					Output: &iotago.NFTOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil,
@@ -434,7 +434,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[14]: vm.OutputWithCreationTime{
+				inputIDs[14]: vm.OutputWithCreationSlot{
 					Output: &iotago.NFTOutput{
 						Amount:       defaultAmount,
 						NativeTokens: nil,
@@ -450,7 +450,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[15]: vm.OutputWithCreationTime{
+				inputIDs[15]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: defaultAmount,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -503,7 +503,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			creationSlot := iotago.SlotIndex(750)
 			essence := &iotago.TransactionEssence{
 				Inputs:       inputIDs.UTXOInputs(),
-				CreationTime: creationSlot,
+				CreationSlot: creationSlot,
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
 						Amount: defaultAmount,
@@ -756,7 +756,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -767,7 +767,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: inFoundry,
 				},
 			}
@@ -814,13 +814,13 @@ func TestStardustTransactionExecution(t *testing.T) {
 		func() test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
-			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
-			_, ident2, _ := tpkg.RandEd25519Identity()
+			_, ident1, _ := tpkg.RandEd25519Identity()
+			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -840,7 +840,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{
-				CreationTime: 110,
+				CreationSlot: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
 					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
@@ -850,7 +850,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:     100,
-						StateIndex: 1,
+						StateIndex: 0,
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
@@ -874,7 +874,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Index: 110,
 			}
 
-			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -896,13 +896,13 @@ func TestStardustTransactionExecution(t *testing.T) {
 		func() test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
-			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
-			_, ident2, _ := tpkg.RandEd25519Identity()
+			_, ident1, _ := tpkg.RandEd25519Identity()
+			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -922,7 +922,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{
-				CreationTime: 110,
+				CreationSlot: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
 					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
@@ -932,7 +932,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:     100,
-						StateIndex: 1,
+						StateIndex: 0,
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
@@ -956,7 +956,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Index: 110,
 			}
 
-			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -983,7 +983,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -1003,7 +1003,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{
-				CreationTime: 110,
+				CreationSlot: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
 					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
@@ -1056,7 +1056,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -1076,7 +1076,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{
-				CreationTime: 110,
+				CreationSlot: 110,
 				ContextInputs: iotago.TxEssenceContextInputs{
 					&iotago.BlockIssuanceCreditInput{
 						AccountID: accountAddr1.AccountID(),
@@ -1128,7 +1128,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -1148,7 +1148,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{
-				CreationTime: 110,
+				CreationSlot: 110,
 				Inputs:       inputIDs.UTXOInputs(),
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
@@ -1179,7 +1179,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrInvalidBlockIssuerTransition,
+				wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
 			}
 		}(),
 		func() test {
@@ -1190,7 +1190,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -1210,12 +1210,12 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			essence := &iotago.TransactionEssence{
-				CreationTime: 110,
+				CreationSlot: 110,
 				Inputs:       inputIDs.UTXOInputs(),
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:     100,
-						StateIndex: 1,
+						StateIndex: 0,
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
@@ -1246,7 +1246,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrInvalidBlockIssuerTransition,
+				wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
 			}
 		}(),
 	}
@@ -1281,7 +1281,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			nftIdent1 := tpkg.RandNFTAddress()
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1289,7 +1289,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: iotago.AccountID{}, // empty on purpose as validation should resolve
@@ -1299,7 +1299,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[2]: vm.OutputWithCreationTime{
+				inputIDs[2]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1307,7 +1307,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[3]: vm.OutputWithCreationTime{
+				inputIDs[3]: vm.OutputWithCreationSlot{
 					Output: &iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  nftIdent1.NFTID(),
@@ -1316,7 +1316,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[4]: vm.OutputWithCreationTime{
+				inputIDs[4]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1325,7 +1325,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					},
 				},
 				// unlockable by sender as expired
-				inputIDs[5]: vm.OutputWithCreationTime{
+				inputIDs[5]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1338,7 +1338,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					},
 				},
 				// not unlockable by sender as not expired
-				inputIDs[6]: vm.OutputWithCreationTime{
+				inputIDs[6]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1350,7 +1350,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[7]: vm.OutputWithCreationTime{
+				inputIDs[7]: vm.OutputWithCreationSlot{
 					Output: &iotago.FoundryOutput{
 						Amount:       100,
 						SerialNumber: 0,
@@ -1380,7 +1380,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: creationSlot,
+				CreationSlot: creationSlot,
 			}
 
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys)
@@ -1419,7 +1419,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1456,7 +1456,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(2)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1464,7 +1464,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1501,7 +1501,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			accountIdent1 := iotago.AccountAddressFromOutputID(inputIDs[0])
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: iotago.AccountID{},
@@ -1511,7 +1511,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1548,7 +1548,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			nftIdent1 := iotago.NFTAddressFromOutputID(inputIDs[0])
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  iotago.NFTID{},
@@ -1557,7 +1557,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1595,7 +1595,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			nftIdent2 := iotago.NFTAddressFromOutputID(inputIDs[1])
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  nftIdent1.NFTID(),
@@ -1604,7 +1604,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  nftIdent2.NFTID(),
@@ -1640,7 +1640,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1655,7 +1655,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			}
 
 			creationSlot := iotago.SlotIndex(5)
-			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: creationSlot}
+			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}
 
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
@@ -1686,7 +1686,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1701,7 +1701,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			}
 
 			creationSlot := iotago.SlotIndex(10)
-			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: creationSlot}
+			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}
 
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
@@ -1738,7 +1738,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			inputs := vm.InputSet{
 				// owned by ident1
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountAddr1.AccountID(),
@@ -1749,7 +1749,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					},
 				},
 				// owned by account1
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountAddr2.AccountID(),
@@ -1760,7 +1760,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					},
 				},
 				// owned by account1
-				inputIDs[2]: vm.OutputWithCreationTime{
+				inputIDs[2]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountAddr3.AccountID(),
@@ -1803,7 +1803,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			accountAddr1 := tpkg.RandAccountAddress()
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountAddr1.AccountID(),
@@ -1813,7 +1813,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1877,7 +1877,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			}
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						StateIndex: 0,
@@ -1888,7 +1888,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: foundryOutput,
 				},
 			}
@@ -1959,7 +1959,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(3)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1968,7 +1968,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 				// unlocked by ident1 as it is not expired
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -1985,7 +1985,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 				// unlocked by ident2 as it is expired
-				inputIDs[2]: vm.OutputWithCreationTime{
+				inputIDs[2]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2021,7 +2021,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: creationSlot,
+				CreationSlot: creationSlot,
 			}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
@@ -2054,7 +2054,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 1000,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2117,7 +2117,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 50,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2137,7 +2137,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: 5,
+				CreationSlot: 5,
 			}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
@@ -2162,7 +2162,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2182,7 +2182,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: 5,
+				CreationSlot: 5,
 			}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
@@ -2208,7 +2208,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2238,7 +2238,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: creationSlot,
+				CreationSlot: creationSlot,
 			}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
@@ -2269,7 +2269,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2324,7 +2324,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2383,7 +2383,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2442,7 +2442,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			ntID := tpkg.Rand38ByteArray()
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 500,
 						NativeTokens: iotago.NativeTokens{
@@ -2563,7 +2563,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: nativeTokens[:ntCount/2],
@@ -2572,7 +2572,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: nativeTokens[ntCount/2:],
@@ -2615,7 +2615,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			inputs := vm.InputSet{}
 			for i := 0; i < iotago.MaxNativeTokensCount; i++ {
-				inputs[inputIDs[i]] = vm.OutputWithCreationTime{
+				inputs[inputIDs[i]] = vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						NativeTokens: []*iotago.NativeToken{
@@ -2669,7 +2669,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			outCount := 250
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: tpkg.RandSortNativeTokens(inCount),
@@ -2712,7 +2712,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			inputs := vm.InputSet{}
 			for i := 0; i < numDistinctNTs; i++ {
-				inputs[inputIDs[i]] = vm.OutputWithCreationTime{
+				inputs[inputIDs[i]] = vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: tpkg.RandSortNativeTokens(1),
@@ -2755,7 +2755,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			inputs := vm.InputSet{}
 			for i := 0; i < numDistinctNTs; i++ {
-				inputs[inputIDs[i]] = vm.OutputWithCreationTime{
+				inputs[inputIDs[i]] = vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -2801,7 +2801,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			inputs := vm.InputSet{}
 			for i := 0; i < iotago.MaxInputsCount; i++ {
-				inputs[inputIDs[i]] = vm.OutputWithCreationTime{
+				inputs[inputIDs[i]] = vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: tokens,
@@ -2848,7 +2848,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 			inputs := vm.InputSet{}
 			for i := 0; i < iotago.MaxInputsCount; i++ {
-				inputs[inputIDs[i]] = vm.OutputWithCreationTime{
+				inputs[inputIDs[i]] = vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: tokens,
@@ -2907,7 +2907,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: nativeTokens,
@@ -2956,7 +2956,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: nativeTokens[:ntCount/2],
@@ -2965,7 +2965,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount:       100,
 						NativeTokens: nativeTokens[ntCount/2:],
@@ -2974,7 +2974,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[2]: vm.OutputWithCreationTime{
+				inputIDs[2]: vm.OutputWithCreationSlot{
 					Output: inUnrelatedFoundryOutput,
 				},
 			}
@@ -3047,7 +3047,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			nftAddr := tpkg.RandNFTAddress()
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3055,7 +3055,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.NFTOutput{
 						Amount: 100,
 						NFTID:  nftAddr.NFTID(),
@@ -3153,7 +3153,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3203,7 +3203,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			accountID := accountAddr.AccountID()
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountID,
@@ -3258,7 +3258,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			currentStateIndex := uint32(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						AccountID:  accountID,
@@ -3314,7 +3314,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			accountID := accountAddr.AccountID()
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountID,
@@ -3392,7 +3392,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			accountID := accountAddr.AccountID()
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountID,
@@ -3402,7 +3402,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3466,7 +3466,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 
 			inputs := vm.InputSet{
 				// possible issuers: accountAddr, stateController, nftAddr, ident1
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:     100,
 						AccountID:  accountID,
@@ -3477,7 +3477,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.NFTOutput{
 						Amount: 900,
 						NFTID:  nftAddr.NFTID(),
@@ -3618,7 +3618,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			accountID := accountAddr.AccountID()
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.AccountOutput{
 						Amount:    100,
 						AccountID: accountID,
@@ -3628,7 +3628,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 						},
 					},
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3707,7 +3707,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
@@ -3720,7 +3720,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			}
 
 			creationSlot := iotago.SlotIndex(10)
-			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: creationSlot}
+			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
@@ -3749,7 +3749,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3763,7 +3763,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			}
 
 			creationSlot := iotago.SlotIndex(10)
-			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: 10}
+			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: 10}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
@@ -3792,7 +3792,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3806,7 +3806,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			}
 
 			creationSlot := iotago.SlotIndex(666)
-			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: creationSlot}
+			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
@@ -3835,7 +3835,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
@@ -3849,7 +3849,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			}
 
 			creationSlot := iotago.SlotIndex(1005)
-			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationTime: creationSlot}
+			essence := &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
@@ -3899,7 +3899,7 @@ func TestTxSemanticMana(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: OneMi,
 						Mana:   math.MaxUint64,
@@ -3907,7 +3907,7 @@ func TestTxSemanticMana(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
-					CreationTime: 10,
+					CreationSlot: 10,
 				},
 			}
 
@@ -3922,10 +3922,10 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
-							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
+							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							return potentialMana + storedMana
@@ -3935,7 +3935,7 @@ func TestTxSemanticMana(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: 10 + 100*testProtoParams.ParamEpochDurationInSlots(),
+				CreationSlot: 10 + 100*testProtoParams.ParamEpochDurationInSlots(),
 			}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
@@ -3960,7 +3960,7 @@ func TestTxSemanticMana(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: OneMi,
 						Mana:   math.MaxUint64,
@@ -3968,7 +3968,7 @@ func TestTxSemanticMana(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
-					CreationTime: 10,
+					CreationSlot: 10,
 				},
 			}
 
@@ -3983,10 +3983,10 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
-							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
+							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							// generated mana + decay - allotment
@@ -4000,7 +4000,7 @@ func TestTxSemanticMana(t *testing.T) {
 				Allotments: iotago.Allotments{
 					&iotago.Allotment{Value: 50},
 				},
-				CreationTime: 10 + 100*testProtoParams.ParamEpochDurationInSlots(),
+				CreationSlot: 10 + 100*testProtoParams.ParamEpochDurationInSlots(),
 			}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
@@ -4025,7 +4025,7 @@ func TestTxSemanticMana(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 5,
 						Mana:   10,
@@ -4033,7 +4033,7 @@ func TestTxSemanticMana(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
-					CreationTime: 20,
+					CreationSlot: 20,
 				},
 			}
 
@@ -4048,7 +4048,7 @@ func TestTxSemanticMana(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: 15,
+				CreationSlot: 15,
 			}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
@@ -4056,7 +4056,6 @@ func TestTxSemanticMana(t *testing.T) {
 			return test{
 				name: "fail - input created after tx",
 				vmParams: &vm.Params{
-
 					API: testAPI,
 				},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
@@ -4074,7 +4073,7 @@ func TestTxSemanticMana(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 5,
 						Mana:   10,
@@ -4082,7 +4081,7 @@ func TestTxSemanticMana(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
-					CreationTime: 15,
+					CreationSlot: 15,
 				},
 			}
 
@@ -4097,7 +4096,7 @@ func TestTxSemanticMana(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: 15,
+				CreationSlot: 15,
 			}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
@@ -4122,7 +4121,7 @@ func TestTxSemanticMana(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(2)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 5,
 						Mana:   math.MaxUint64,
@@ -4130,9 +4129,9 @@ func TestTxSemanticMana(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
-					CreationTime: 15,
+					CreationSlot: 15,
 				},
-				inputIDs[1]: vm.OutputWithCreationTime{
+				inputIDs[1]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 5,
 						Mana:   10,
@@ -4140,7 +4139,7 @@ func TestTxSemanticMana(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
-					CreationTime: 15,
+					CreationSlot: 15,
 				},
 			}
 
@@ -4155,7 +4154,7 @@ func TestTxSemanticMana(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: 15,
+				CreationSlot: 15,
 			}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
@@ -4181,7 +4180,7 @@ func TestTxSemanticMana(t *testing.T) {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
-				inputIDs[0]: vm.OutputWithCreationTime{
+				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 5,
 						Mana:   10,
@@ -4189,7 +4188,7 @@ func TestTxSemanticMana(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					},
-					CreationTime: 15,
+					CreationSlot: 15,
 				},
 			}
 
@@ -4211,7 +4210,7 @@ func TestTxSemanticMana(t *testing.T) {
 						},
 					},
 				},
-				CreationTime: 15,
+				CreationSlot: 15,
 			}
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
@@ -4255,7 +4254,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 
 	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
-		inputIDs[0]: vm.OutputWithCreationTime{
+		inputIDs[0]: vm.OutputWithCreationSlot{
 			Output: &iotago.AccountOutput{
 				Amount:         OneMi * 10,
 				NativeTokens:   nil,
@@ -4341,7 +4340,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 
 	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
-		inputIDs[0]: vm.OutputWithCreationTime{
+		inputIDs[0]: vm.OutputWithCreationSlot{
 			Output: &iotago.DelegationOutput{
 				Amount:          OneMi * 10,
 				DelegatedAmount: OneMi * 10,
@@ -4369,7 +4368,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 				Features: nil,
 			},
 		},
-		CreationTime: currentSlot,
+		CreationSlot: currentSlot,
 	}
 
 	sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
