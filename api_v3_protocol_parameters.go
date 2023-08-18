@@ -38,7 +38,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithRMCOptions(500, 500, 500, 0.8*10, 0.5*10),
 			WithStakingOptions(10),
 			WithVersionSignalingOptions(7, 5, 7),
-			WithRewardsOptions(10, 8),
+			WithRewardsOptions(10, 8, 8, 1154, 2, 1, 31),
 		},
 			opts...,
 		),
@@ -73,6 +73,10 @@ func (p *V3ProtocolParameters) TokenSupply() BaseToken {
 
 func (p *V3ProtocolParameters) NetworkID() NetworkID {
 	return NetworkIDFromString(p.basicProtocolParameters.NetworkName)
+}
+
+func (p *V3ProtocolParameters) SlotsPerEpochExponent() uint8 {
+	return p.basicProtocolParameters.SlotsPerEpochExponent
 }
 
 func (p *V3ProtocolParameters) TimeProvider() *TimeProvider {
@@ -274,9 +278,14 @@ func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, acti
 	}
 }
 
-func WithRewardsOptions(validatorBlocksPerSlot, profitMarginExponent uint8) options.Option[V3ProtocolParameters] {
+func WithRewardsOptions(validatorBlocksPerSlot, profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, bootstrappingDuration EpochIndex, rewardsManaShareCoefficient, decayBalancingConstant uint64) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.RewardsParameters.ValidatorBlocksPerSlot = validatorBlocksPerSlot
 		p.basicProtocolParameters.RewardsParameters.ProfitMarginExponent = profitMarginExponent
+		p.basicProtocolParameters.RewardsParameters.BootstrappingDuration = bootstrappingDuration
+		p.basicProtocolParameters.RewardsParameters.RewardsManaShareCoefficient = rewardsManaShareCoefficient
+		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent = decayBalancingConstantExponent
+		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant = decayBalancingConstant
+		p.basicProtocolParameters.RewardsParameters.PoolCoefficientExponent = poolCoefficientExponent
 	}
 }

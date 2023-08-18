@@ -31,9 +31,34 @@ type RewardsParameters struct {
 	ValidatorBlocksPerSlot uint8 `serix:"0,mapKey=validatorBlocksPerSlot"`
 	// ProfitMarginExponent is used for shift operation for calculation of profit margin.
 	ProfitMarginExponent uint8 `serix:"1,mapKey=profitMarginExponent"`
+	// BootstrappinDuration is the length in epochs of the bootstrapping phase, (approx 3 years).
+	BootstrappingDuration EpochIndex `serix:"2,mapKey=bootstrappinDuration"`
+	// RewardsManaShareCoefficient is the coefficient used for calculation of initial rewards, relative to the term theta/(1-theta) from the Whitepaper, with theta = 2/3.
+	RewardsManaShareCoefficient uint64 `serix:"3,mapKey=rewardsManaShareCoefficient"`
+	// DecayBalancingConstantExponent is the exponent used for calculation of the initial reward.
+	DecayBalancingConstantExponent uint8 `serix:"4,mapKey=decayBalancingConstantExponent"`
+	// DecayBalancingConstant needs to be an integer approc  calculated based on chosen DecayBalancingConstantExponent.
+	DecayBalancingConstant uint64 `serix:"5,mapKey=decayBalancingConstant"`
+	// PoolCoefficientExponent is the exponent used for shifting operation in the pool rewards calculations.
+	PoolCoefficientExponent uint8 `serix:"6,mapKey=poolCoefficientExponent"`
 }
 
 func (r RewardsParameters) Equals(other RewardsParameters) bool {
 	return r.ValidatorBlocksPerSlot == other.ValidatorBlocksPerSlot &&
-		r.ProfitMarginExponent == other.ProfitMarginExponent
+		r.ProfitMarginExponent == other.ProfitMarginExponent && r.BootstrappingDuration == other.BootstrappingDuration &&
+		r.RewardsManaShareCoefficient == other.RewardsManaShareCoefficient &&
+		r.DecayBalancingConstantExponent == other.DecayBalancingConstantExponent &&
+		r.DecayBalancingConstant == other.DecayBalancingConstant &&
+		r.PoolCoefficientExponent == other.PoolCoefficientExponent
+}
+
+func (r RewardsParameters) TargetReward(index EpochIndex, tokenSupply uint64, generationRate, generationRateExponent, slotsPerEpochExponent uint8) uint64 {
+	// final reward, after bootstrapping phase
+	finalReward := (tokenSupply * r.RewardsManaShareCoefficient * uint64(generationRate)) >>
+		(generationRateExponent - slotsPerEpochExponent)
+	if index > r.BootstrappingDuration {
+		return finalReward
+	}
+	// initial reward for bootstrapping phase
+	return finalReward * r.DecayBalancingConstant >> r.DecayBalancingConstantExponent
 }
