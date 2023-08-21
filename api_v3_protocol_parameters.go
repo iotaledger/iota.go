@@ -38,7 +38,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithRMCOptions(500, 500, 500, 0.8*10, 0.5*10),
 			WithStakingOptions(10),
 			WithVersionSignalingOptions(7, 5, 7),
-			WithRewardsOptions(10, 8, 8, 1154, 2, 1, 31),
+			WithRewardsOptions(10, 8, 8, 31, 1154, 2, 1),
 		},
 			opts...,
 		),
