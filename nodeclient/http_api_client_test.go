@@ -81,14 +81,14 @@ func mockPostJSON(route string, status int, req interface{}, resp interface{}) {
 func mockGetBinary(route string, status int, body interface{}, persist ...bool) {
 	m := gock.New(nodeAPIUrl).
 		Get(route).
-		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV1)
+		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV2)
 
 	if len(persist) > 0 && persist[0] {
 		m.Persist()
 	}
 
 	m.Reply(status).
-		SetHeader("Content-Type", nodeclient.MIMEApplicationVendorIOTASerializerV1).
+		SetHeader("Content-Type", nodeclient.MIMEApplicationVendorIOTASerializerV2).
 		BodyString(string(lo.PanicOnErr(mockAPI.Encode(body))))
 }
 
@@ -336,7 +336,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 
 	gock.New(nodeAPIUrl).
 		Post(nodeclient.RouteBlocks).
-		MatchType(nodeclient.MIMEApplicationVendorIOTASerializerV1).
+		MatchType(nodeclient.MIMEApplicationVendorIOTASerializerV2).
 		Body(bytes.NewReader(serializedIncompleteBlock)).
 		Reply(200).
 		AddHeader("Location", blockHashStr)

@@ -338,25 +338,20 @@ func (outputs Outputs[T]) Size() int {
 }
 
 func (outputs Outputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// LengthPrefixType
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.UInt16ByteSize)
-	if err != nil {
-		return 0, err
-	}
-
+	var workScoreOutputs WorkScore
 	for _, output := range outputs {
 		workScoreOutput, err := output.WorkScore(workScoreStructure)
 		if err != nil {
 			return 0, err
 		}
 
-		workScoreBytes, err = workScoreBytes.Add(workScoreOutput)
+		workScoreOutputs, err = workScoreOutputs.Add(workScoreOutput)
 		if err != nil {
 			return 0, err
 		}
 	}
 
-	return workScoreBytes, nil
+	return workScoreOutputs, nil
 }
 
 // MustCommitment works like Commitment but panics if there's an error.

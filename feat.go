@@ -57,8 +57,8 @@ func (featType FeatureType) String() string {
 	return featNames[featType]
 }
 
-var featNames = [FeatureBlockIssuer + 1]string{
-	"SenderFeature", "Issuer", "MetadataFeature", "TagFeature", "BlockIssuerFeature",
+var featNames = [FeatureStaking + 1]string{
+	"SenderFeature", "Issuer", "MetadataFeature", "TagFeature", "BlockIssuerFeature", "StakingFeature",
 }
 
 // Features is a slice of Feature(s).
@@ -85,25 +85,20 @@ func (f Features[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 }
 
 func (f Features[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// LengthPrefixType
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte)
-	if err != nil {
-		return 0, err
-	}
-
+	var workScoreFeats WorkScore
 	for _, feat := range f {
 		workScoreFeat, err := feat.WorkScore(workScoreStructure)
 		if err != nil {
 			return 0, err
 		}
 
-		workScoreBytes, err = workScoreBytes.Add(workScoreFeat)
+		workScoreFeats, err = workScoreFeats.Add(workScoreFeat)
 		if err != nil {
 			return 0, err
 		}
 	}
 
-	return workScoreBytes, nil
+	return workScoreFeats, nil
 }
 
 func (f Features[T]) Size() int {

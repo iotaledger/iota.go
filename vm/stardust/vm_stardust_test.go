@@ -30,7 +30,8 @@ const (
 var (
 	stardustVM = stardust.NewVirtualMachine()
 
-	testProtoParams = iotago.NewV3ProtocolParameters(
+	schedulerRate   iotago.WorkScore = 100000
+	testProtoParams                  = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("test", "test"),
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 100, 100),
 		iotago.WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
@@ -44,8 +45,7 @@ var (
 		),
 		iotago.WithStakingOptions(10),
 		iotago.WithLivenessOptions(3, 10, 20, 24),
-		// TODO: add Scheduler Rate parameter and include in this expression for increase and decrease thresholds. Issue #264
-		iotago.WithRMCOptions(500, 500, 500, 0.8*slotDurationSeconds, 0.5*slotDurationSeconds),
+		iotago.WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*iotago.MaxBlockSize),
 	)
 
 	testAPI = iotago.V3API(testProtoParams)
@@ -814,8 +814,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 		func() test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
-			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
-			_, ident2, _ := tpkg.RandEd25519Identity()
+			_, ident1, _ := tpkg.RandEd25519Identity()
+			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -850,7 +850,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:     100,
-						StateIndex: 1,
+						StateIndex: 0,
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
@@ -874,7 +874,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Index: 110,
 			}
 
-			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -896,8 +896,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 		func() test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
-			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
-			_, ident2, _ := tpkg.RandEd25519Identity()
+			_, ident1, _ := tpkg.RandEd25519Identity()
+			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -932,7 +932,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:     100,
-						StateIndex: 1,
+						StateIndex: 0,
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
@@ -956,7 +956,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Index: 110,
 			}
 
-			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1179,7 +1179,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrInvalidBlockIssuerTransition,
+				wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
 			}
 		}(),
 		func() test {
@@ -1215,7 +1215,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:     100,
-						StateIndex: 1,
+						StateIndex: 0,
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
@@ -1246,7 +1246,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrInvalidBlockIssuerTransition,
+				wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
 			}
 		}(),
 	}
@@ -3922,10 +3922,10 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
-							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
+							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							return potentialMana + storedMana
@@ -3983,10 +3983,10 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
-							potentialMana, err := testProtoParams.ManaDecayProvider().PotentialManaWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
+							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().StoredManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							// generated mana + decay - allotment
@@ -4056,7 +4056,6 @@ func TestTxSemanticMana(t *testing.T) {
 			return test{
 				name: "fail - input created after tx",
 				vmParams: &vm.Params{
-
 					API: testAPI,
 				},
 				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},

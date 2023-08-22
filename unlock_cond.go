@@ -97,25 +97,20 @@ func (f UnlockConditions[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBy
 }
 
 func (f UnlockConditions[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// LengthPrefixType
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte)
-	if err != nil {
-		return 0, err
-	}
-
+	var workScoreUnlockConds WorkScore
 	for _, unlockCond := range f {
 		workScoreUnlockCond, err := unlockCond.WorkScore(workScoreStructure)
 		if err != nil {
 			return 0, err
 		}
 
-		workScoreBytes, err = workScoreBytes.Add(workScoreUnlockCond)
+		workScoreUnlockConds, err = workScoreUnlockConds.Add(workScoreUnlockCond)
 		if err != nil {
 			return 0, err
 		}
 	}
 
-	return workScoreBytes, nil
+	return workScoreUnlockConds, nil
 }
 
 // Clone clones the UnlockConditions.

@@ -27,9 +27,9 @@ func (s *ExpirationUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFu
 		s.ReturnAddress.VBytes(rentStruct, nil)
 }
 
-func (s *ExpirationUnlockCondition) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (s *ExpirationUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
 	// ExpirationUnlockCondition does not require a signature check on creation, only consumption.
-	return workScoreStructure.DataByte.Multiply(s.Size())
+	return 0, nil
 }
 
 func (s *ExpirationUnlockCondition) Equal(other UnlockCondition) bool {

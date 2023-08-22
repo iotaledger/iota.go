@@ -37,20 +37,7 @@ var (
 	ErrNonUniqueNativeTokens = ierrors.New("non unique native tokens")
 	// ErrNativeTokenSumUnbalanced gets returned when two NativeTokenSum(s) are unbalanced.
 	ErrNativeTokenSumUnbalanced = ierrors.New("native token sums are unbalanced")
-
-	nativeTokensArrayRules = &serializer.ArrayRules{
-		Min: MinNativeTokenCountPerOutput,
-		Max: MaxNativeTokenCountPerOutput,
-		// uniqueness must be checked only by examining the actual NativeTokenID bytes
-		UniquenessSliceFunc: func(next []byte) []byte { return next[:NativeTokenIDLength] },
-		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
-	}
 )
-
-// NativeTokenArrayRules returns array rules defining the constraints on a slice of NativeTokens.
-func NativeTokenArrayRules() serializer.ArrayRules {
-	return *nativeTokensArrayRules
-}
 
 // NativeTokenID is an identifier which uniquely identifies a NativeToken.
 type NativeTokenID = FoundryID
@@ -119,25 +106,20 @@ func (n NativeTokens) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 }
 
 func (n NativeTokens) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// LengthPrefixType
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.OneByte)
-	if err != nil {
-		return 0, err
-	}
-
+	var workScoreNativeTokens WorkScore
 	for _, nativeToken := range n {
 		workScoreNativeToken, err := nativeToken.WorkScore(workScoreStructure)
 		if err != nil {
 			return 0, err
 		}
 
-		workScoreBytes, err = workScoreBytes.Add(workScoreNativeToken)
+		workScoreNativeTokens, err = workScoreNativeTokens.Add(workScoreNativeToken)
 		if err != nil {
 			return 0, err
 		}
 	}
 
-	return workScoreBytes, nil
+	return workScoreNativeTokens, nil
 }
 
 func (n NativeTokens) Size() int {
@@ -202,12 +184,7 @@ func (n *NativeToken) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 }
 
 func (n *NativeToken) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(n.Size())
-	if err != nil {
-		return 0, err
-	}
-
-	return workScoreBytes.Add(workScoreStructure.NativeToken)
+	return workScoreStructure.NativeToken, nil
 }
 
 // Equal checks whether other is equal to this NativeToken.

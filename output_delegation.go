@@ -144,18 +144,7 @@ func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByte
 }
 
 func (d *DelegationOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// OutputType + Amount + DelegatedAmount + DelegationID + ValidatorID + StartEpoch + EndEpoch
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + BaseTokenSize + DelegationIDLength + AccountIDLength + EpochIndexLength + EpochIndexLength)
-	if err != nil {
-		return 0, err
-	}
-
-	workScoreConditions, err := d.Conditions.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
-	}
-
-	return workScoreBytes.Add(workScoreConditions)
+	return d.Conditions.WorkScore(workScoreStructure)
 }
 
 func (d *DelegationOutput) Chain() ChainID {

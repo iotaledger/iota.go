@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -171,7 +172,9 @@ func TestAllotmentUniqueness(t *testing.T) {
 			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
 				NetworkID: tpkg.TestNetworkID,
 				Inputs:    inputIDs.UTXOInputs(),
-				Outputs:   iotago.TxEssenceOutputs{},
+				Outputs: iotago.TxEssenceOutputs{
+					tpkg.RandBasicOutput(iotago.AddressEd25519),
+				},
 				Allotments: iotago.Allotments{
 					&iotago.Allotment{
 						AccountID: accountID,
@@ -188,7 +191,7 @@ func TestAllotmentUniqueness(t *testing.T) {
 				},
 			}),
 			target:    &iotago.Transaction{},
-			seriErr:   iotago.ErrAllotmentsNotUnique,
+			seriErr:   serializer.ErrArrayValidationOrderViolatesLexicalOrder,
 			deSeriErr: nil,
 		},
 	}

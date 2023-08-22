@@ -2,7 +2,6 @@
 package tpkg
 
 import (
-	"bytes"
 	"crypto/ed25519"
 	"encoding/binary"
 	"fmt"
@@ -139,9 +138,7 @@ func RandSortNativeTokens(count int) iotago.NativeTokens {
 	for i := 0; i < count; i++ {
 		nativeTokens = append(nativeTokens, RandNativeToken())
 	}
-	sort.Slice(nativeTokens, func(i, j int) bool {
-		return bytes.Compare(nativeTokens[i].ID[:], nativeTokens[j].ID[:]) == -1
-	})
+	nativeTokens.Sort()
 
 	return nativeTokens
 }
@@ -408,11 +405,9 @@ func WithOutputCount(outputCount int) options.Option[iotago.TransactionEssence] 
 	}
 }
 
-func WithAllotmentCount(outputCount int) options.Option[iotago.TransactionEssence] {
+func WithAllotmentCount(allotmentCount int) options.Option[iotago.TransactionEssence] {
 	return func(tx *iotago.TransactionEssence) {
-		for i := outputCount; i > 0; i-- {
-			tx.Allotments = append(tx.Allotments, RandAllotment())
-		}
+		tx.Allotments = RandSortAllotment(allotmentCount)
 	}
 }
 
@@ -471,7 +466,26 @@ func RandBlockID() iotago.BlockID {
 }
 
 // RandProtocolBlock returns a random block with the given inner payload.
-func RandProtocolBlock(block iotago.Block, api iotago.API) *iotago.ProtocolBlock {
+func RandProtocolBlock(block iotago.Block, api iotago.API, rmc iotago.Mana) *iotago.ProtocolBlock {
+	if basicBlock, isBasic := block.(*iotago.BasicBlock); isBasic {
+		burnedMana, err := basicBlock.ManaCost(rmc, api.ProtocolParameters().WorkScoreStructure())
+		if err != nil {
+			panic(err)
+		}
+		basicBlock.BurnedMana = burnedMana
+
+		return &iotago.ProtocolBlock{
+			BlockHeader: iotago.BlockHeader{
+				ProtocolVersion:  TestAPI.Version(),
+				IssuingTime:      RandUTCTime(),
+				SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
+				IssuerID:         RandAccountID(),
+			},
+			Block:     basicBlock,
+			Signature: RandEd25519Signature(),
+		}
+	}
+
 	return &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  TestAPI.Version(),
@@ -509,11 +523,10 @@ func ValidationBlock() *iotago.ValidationBlock {
 	}
 }
 
-func RandBasicBlockWithIssuerAndBurnedMana(issuerID iotago.AccountID, burnedAmount iotago.Mana) *iotago.ProtocolBlock {
+func RandBasicBlockWithIssuerAndRMC(issuerID iotago.AccountID, rmc iotago.Mana) *iotago.ProtocolBlock {
 	basicBlock := RandBasicBlock(iotago.PayloadTransaction)
-	basicBlock.BurnedMana = burnedAmount
 
-	block := RandProtocolBlock(basicBlock, TestAPI)
+	block := RandProtocolBlock(basicBlock, TestAPI, rmc)
 	block.IssuerID = issuerID
 
 	return block
@@ -617,6 +630,17 @@ func RandAllotment() *iotago.Allotment {
 	}
 }
 
+// RandSortAllotment returns count sorted Allotments.
+func RandSortAllotment(count int) iotago.Allotments {
+	var allotments iotago.Allotments
+	for i := 0; i < count; i++ {
+		allotments = append(allotments, RandAllotment())
+	}
+	allotments.Sort()
+
+	return allotments
+}
+
 // OneInputOutputTransaction generates a random transaction with one input and output.
 func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
@@ -700,7 +724,7 @@ func RandWorkScore(max uint32) iotago.WorkScore {
 // RandWorkscoreStructure produces random workscore structure.
 func RandWorkscoreStructure() *iotago.WorkScoreStructure {
 	return &iotago.WorkScoreStructure{
-		DataByte:                  RandWorkScore(math.MaxUint32),
+		DataKilobyte:              RandWorkScore(math.MaxUint32),
 		Block:                     RandWorkScore(math.MaxUint32),
 		MissingParent:             RandWorkScore(math.MaxUint32),
 		Input:                     RandWorkScore(math.MaxUint32),
@@ -746,12 +770,15 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 		),
 		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
 		iotago.WithLivenessOptions(RandSlotIndex(), RandSlotIndex(), RandSlotIndex(), RandSlotIndex()),
-		iotago.WithRMCOptions(
+		iotago.WithCongestionControlOptions(
 			RandMana(math.MaxUint64),
 			RandMana(math.MaxUint64),
 			RandMana(math.MaxUint64),
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
+			RandWorkScore(math.MaxUint32),
+			RandMana(math.MaxUint64),
+			RandUint32(math.MaxUint32),
 		),
 	)
 }

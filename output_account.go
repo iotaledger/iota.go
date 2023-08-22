@@ -21,6 +21,11 @@ var (
 	ErrInvalidAccountGovernanceTransition = ierrors.New("invalid account governance transition")
 	// ErrInvalidBlockIssuerTransition gets returned when an account tries to transition block issuer expiry too soon.
 	ErrInvalidBlockIssuerTransition = ierrors.New("invalid block issuer transition")
+	// ErrAccountLocked gets returned when an account has negative block issuance credits.
+	ErrAccountLocked = ierrors.New("account is locked due to negative block issuance credits")
+	// ErrBlockIssuanceCreditInputRequired gets returned when a transaction containing an account with a block issuer feature
+	// does not have a Block Issuance Credit Input.
+	ErrBlockIssuanceCreditInputRequired = ierrors.New("account with block issuer feature requires a block issuance credit input")
 	// ErrInvalidStakingTransition gets returned when an account tries to do an invalid transition with a Staking Feature.
 	ErrInvalidStakingTransition = ierrors.New("invalid staking transition")
 	// ErrAccountMissing gets returned when an account is missing.
@@ -207,12 +212,6 @@ func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 }
 
 func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// OutputType + Amount + Mana + AccountID + StateIndex + StateMetadata + FoundryCounter
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + ManaSize + AccountIDLength + serializer.UInt32ByteSize + serializer.UInt16ByteSize + len(a.StateMetadata) + serializer.UInt32ByteSize)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreNativeTokens, err := a.NativeTokens.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -233,7 +232,7 @@ func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 		return 0, err
 	}
 
-	return workScoreBytes.Add(workScoreNativeTokens, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
+	return workScoreNativeTokens.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {

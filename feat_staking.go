@@ -55,13 +55,8 @@ func (s *StakingFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes 
 }
 
 func (s *StakingFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(s.Size())
-	if err != nil {
-		return 0, err
-	}
-
 	// staking feature changes require invokation of staking managers so require extra work.
-	return workScoreBytes.Add(workScoreStructure.Staking)
+	return workScoreStructure.Staking, nil
 }
 
 func (s *StakingFeature) Equal(other Feature) bool {

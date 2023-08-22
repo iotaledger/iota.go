@@ -132,12 +132,6 @@ func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 }
 
 func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// OutputType + Amount + SerialNumber
-	workScoreBytes, err := workScoreStructure.DataByte.Multiply(serializer.SmallTypeDenotationByteSize + BaseTokenSize + serializer.UInt32ByteSize)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreNativeTokens, err := f.NativeTokens.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -163,7 +157,7 @@ func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 		return 0, err
 	}
 
-	return workScoreBytes.Add(workScoreNativeTokens, workScoreTokenScheme, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
+	return workScoreNativeTokens.Add(workScoreTokenScheme, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (f *FoundryOutput) Chain() ChainID {
