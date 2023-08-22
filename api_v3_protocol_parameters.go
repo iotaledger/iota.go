@@ -32,7 +32,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				2420916375,
 				21,
 			),
-			WithLivenessOptions(3, 10, 20, 24),
+			WithLivenessOptions(3, 10, 20, 24, 6),
 			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*MaxBlockSize),
 			WithStakingOptions(10),
 			WithVersionSignalingOptions(7, 5, 7),
@@ -242,12 +242,13 @@ func WithManaOptions(manaGenerationRate uint8, manaGenerationRateExponent uint8,
 	}
 }
 
-func WithLivenessOptions(livenessThreshold SlotIndex, minCommittableAge SlotIndex, maxCommittableAge SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
+func WithLivenessOptions(livenessThreshold, minCommittableAge, maxCommittableAge, epochNearingThreshold, ActivityWindowDuration SlotIndex) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.LivenessThreshold = livenessThreshold
 		p.basicProtocolParameters.MinCommittableAge = minCommittableAge
 		p.basicProtocolParameters.MaxCommittableAge = maxCommittableAge
 		p.basicProtocolParameters.EpochNearingThreshold = epochNearingThreshold
+		p.basicProtocolParameters.ActivityWindowDuration = ActivityWindowDuration
 	}
 }
 
@@ -277,5 +278,17 @@ func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, acti
 			WindowTargetRatio: windowTargetRatio,
 			ActivationOffset:  activationOffset,
 		}
+	}
+}
+
+func WithRewardsOptions(validatorBlocksPerSlot, profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, bootstrappingDuration EpochIndex, rewardsManaShareCoefficient, decayBalancingConstant uint64) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.RewardsParameters.ValidatorBlocksPerSlot = validatorBlocksPerSlot
+		p.basicProtocolParameters.RewardsParameters.ProfitMarginExponent = profitMarginExponent
+		p.basicProtocolParameters.RewardsParameters.BootstrappingDuration = bootstrappingDuration
+		p.basicProtocolParameters.RewardsParameters.RewardsManaShareCoefficient = rewardsManaShareCoefficient
+		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent = decayBalancingConstantExponent
+		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant = decayBalancingConstant
+		p.basicProtocolParameters.RewardsParameters.PoolCoefficientExponent = poolCoefficientExponent
 	}
 }

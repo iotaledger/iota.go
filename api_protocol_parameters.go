@@ -42,11 +42,15 @@ type basicProtocolParameters struct {
 	// EpochNearingThreshold is used by the epoch orchestrator to detect the slot that should trigger a new committee
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold SlotIndex `serix:"19,mapKey=epochNearingThreshold"`
+	// ActivityWindowDuration is the range of slots right before committee selection that are used to check the activity of a registered
+	// validator. The beginning of this period indicates the end of registration time for the next epoch committee selection.
+	ActivityWindowDuration SlotIndex `serix:"20,mapKey=activityWindowDuration"`
 	// RMCParameters defines the parameters used by to calculate the Reference Mana Cost (RMC).
-	CongestionControlParameters CongestionControlParameters `serix:"20,mapKey=congestionControlParameters"`
-	VersionSignaling VersionSignaling `serix:"21,mapKey=versionSignaling"`
+	CongestionControlParameters CongestionControlParameters `serix:"21,mapKey=congestionControlParameters"`
+	// VersionSignaling defines the parameters used for version upgrades.
+	VersionSignaling VersionSignaling `serix:"22,mapKey=versionSignaling"`
 	// ValidatorBlocksPerSlot is the number of blocks that should be issued by a validator in a single slot.
-	RewardsParameters RewardsParameters `serix:"22,mapKey=rewardsParameters"`
+	RewardsParameters RewardsParameters `serix:"23,mapKey=rewardsParameters"`
 }
 
 func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
@@ -65,6 +69,7 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.MinCommittableAge == other.MinCommittableAge &&
 		b.MaxCommittableAge == other.MaxCommittableAge &&
 		b.EpochNearingThreshold == other.EpochNearingThreshold &&
+		b.ActivityWindowDuration == other.ActivityWindowDuration &&
 		b.CongestionControlParameters.Equals(other.CongestionControlParameters) &&
 		b.VersionSignaling.Equals(other.VersionSignaling) &&
 		b.RewardsParameters.Equals(other.RewardsParameters)
