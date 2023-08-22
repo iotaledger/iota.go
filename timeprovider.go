@@ -27,7 +27,7 @@ type TimeProvider struct {
 func NewTimeProvider(genesisUnixTime int64, slotDurationSeconds int64, slotsPerEpochExponent uint8) *TimeProvider {
 	// if slotDurationSeconds == 0 {
 	//	panic("slot duration can't be zero")
-	//}
+	// }
 
 	return &TimeProvider{
 		genesisUnixTime:       genesisUnixTime,
@@ -98,6 +98,10 @@ func (t *TimeProvider) SlotEndTime(i SlotIndex) time.Time {
 
 // EpochFromSlot calculates the EpochIndex from the given slot.
 func (t *TimeProvider) EpochFromSlot(slot SlotIndex) EpochIndex {
+	if slot == 0 {
+		return 0
+	}
+
 	return EpochIndex(slot>>SlotIndex(t.slotsPerEpochExponent) + 1)
 }
 
