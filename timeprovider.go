@@ -109,9 +109,11 @@ func (t *TimeProvider) EpochFromSlot(slot SlotIndex) EpochIndex {
 func (t *TimeProvider) EpochStart(epoch EpochIndex) SlotIndex {
 	if epoch == 0 {
 		return 0
+	} else if epoch == 1 {
+		return 1
 	}
 
-	return SlotIndex((epoch - 1) << EpochIndex(t.slotsPerEpochExponent))
+	return SlotIndex((epoch - 1) << t.slotsPerEpochExponent)
 }
 
 // EpochEnd calculates the end included slot of the given epoch.
@@ -120,7 +122,7 @@ func (t *TimeProvider) EpochEnd(epoch EpochIndex) SlotIndex {
 		return 0
 	}
 
-	return SlotIndex((epoch<<EpochIndex(t.slotsPerEpochExponent) - 1))
+	return SlotIndex(epoch<<EpochIndex(t.slotsPerEpochExponent) - 1)
 }
 
 // SlotsBeforeNextEpoch calculates the slots before the start of the next epoch.
