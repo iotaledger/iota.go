@@ -106,6 +106,10 @@ func (p *V3ProtocolParameters) EpochNearingThreshold() SlotIndex {
 	return p.basicProtocolParameters.EpochNearingThreshold
 }
 
+func (p *V3ProtocolParameters) ActivityWindowDuration() SlotIndex {
+	return p.basicProtocolParameters.ActivityWindowDuration
+}
+
 func (p *V3ProtocolParameters) CongestionControlParameters() *CongestionControlParameters {
 	return &p.basicProtocolParameters.CongestionControlParameters
 }
