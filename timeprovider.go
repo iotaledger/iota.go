@@ -4,10 +4,26 @@ import (
 	"time"
 )
 
-// TimeProvider defines the genesis time of slot 0 and allows to convert index to and from time.
+// TimeProvider defines the perception of time, slots and epochs.
+// It allows to convert slots to and from time, and epochs to and from slots.
+// Slots are counted starting from 1 because 0 is reserved for the genesis which has to be addressable as its own slot.
+// Epochs are counted starting from 0.
+//
+// Example: with slotDurationSeconds = 10 and slotsPerEpochExponent = 3
+// <> inclusive range boundary, () exclusive range boundary
+// slot 0: <-inf; genesis)
+// slot 1: <genesis; genesis+10)
+// slot 2: <genesis+10; genesis+20)
+// ...
+// epoch 0: <slot 0; slot 8)
+// epoch 1: <slot 8; slot 16)
+// epoch 2: <slot 16; slot 24)
+// ...
 type TimeProvider struct {
 	// genesisUnixTime is the time (Unix in seconds) of the genesis.
 	genesisUnixTime int64
+
+	genesisTime time.Time
 
 	// slotDurationSeconds is the slot duration in seconds.
 	slotDurationSeconds int64
@@ -31,6 +47,7 @@ func NewTimeProvider(genesisUnixTime int64, slotDurationSeconds int64, slotsPerE
 
 	return &TimeProvider{
 		genesisUnixTime:       genesisUnixTime,
+		genesisTime:           time.Unix(genesisUnixTime, 0),
 		slotDurationSeconds:   slotDurationSeconds,
 		slotsPerEpochExponent: slotsPerEpochExponent,
 		epochDurationSeconds:  (1 << slotsPerEpochExponent) * slotDurationSeconds,
@@ -45,10 +62,10 @@ func (t *TimeProvider) GenesisUnixTime() int64 {
 
 // GenesisTime is the time  of the genesis.
 func (t *TimeProvider) GenesisTime() time.Time {
-	return time.Unix(t.genesisUnixTime, 0)
+	return t.genesisTime
 }
 
-// SlotDuration is the slot duration in seconds.
+// SlotDurationSeconds is the slot duration in seconds.
 func (t *TimeProvider) SlotDurationSeconds() int64 {
 	return t.slotDurationSeconds
 }
@@ -66,63 +83,49 @@ func (t *TimeProvider) EpochDurationSeconds() int64 {
 // Note: slots are counted starting from 1 because 0 is reserved for the genesis which has to be addressable as its own
 // slot as part of the commitment chains.
 func (t *TimeProvider) SlotFromTime(targetTime time.Time) SlotIndex {
-	elapsedSeconds := targetTime.Unix() - t.genesisUnixTime
-	if elapsedSeconds < 0 {
+	elapsed := targetTime.Sub(t.genesisTime)
+	if elapsed < 0 {
 		return 0
 	}
 
-	return SlotIndex((elapsedSeconds / t.slotDurationSeconds) + 1)
+	return SlotIndex(int64(elapsed/time.Second)/t.slotDurationSeconds) + 1
 }
 
 // SlotStartTime calculates the start time of the given slot.
-func (t *TimeProvider) SlotStartTime(i SlotIndex) time.Time {
-	if i == 0 {
-		return time.Unix(t.genesisUnixTime, 0)
+func (t *TimeProvider) SlotStartTime(slot SlotIndex) time.Time {
+	if slot == 0 {
+		return t.genesisTime.Add(-time.Nanosecond)
 	}
 
-	startUnix := t.genesisUnixTime + int64(i-1)*t.slotDurationSeconds
+	startUnix := t.genesisUnixTime + int64(slot-1)*t.slotDurationSeconds
 
 	return time.Unix(startUnix, 0)
 }
 
 // SlotEndTime returns the latest possible timestamp for a slot. Anything with higher timestamp will belong to the next slot.
-func (t *TimeProvider) SlotEndTime(i SlotIndex) time.Time {
-	if i == 0 {
-		return time.Unix(t.genesisUnixTime, 0)
+func (t *TimeProvider) SlotEndTime(slot SlotIndex) time.Time {
+	if slot == 0 {
+		return t.genesisTime.Add(-time.Nanosecond)
 	}
 
-	endUnix := t.genesisUnixTime + int64(i)*t.slotDurationSeconds
+	endUnix := t.genesisUnixTime + int64(slot)*t.slotDurationSeconds
 	// we subtract 1 nanosecond from the next slot to get the latest possible timestamp for slot i
-	return time.Unix(endUnix, 0).Add(-1)
+	return time.Unix(endUnix, 0).Add(-time.Nanosecond)
 }
 
 // EpochFromSlot calculates the EpochIndex from the given slot.
 func (t *TimeProvider) EpochFromSlot(slot SlotIndex) EpochIndex {
-	if slot == 0 {
-		return 0
-	}
-
-	return EpochIndex(slot>>SlotIndex(t.slotsPerEpochExponent) + 1)
+	return EpochIndex(slot >> t.slotsPerEpochExponent)
 }
 
 // EpochStart calculates the start slot of the given epoch.
 func (t *TimeProvider) EpochStart(epoch EpochIndex) SlotIndex {
-	if epoch == 0 {
-		return 0
-	} else if epoch == 1 {
-		return 1
-	}
-
-	return SlotIndex((epoch - 1) << t.slotsPerEpochExponent)
+	return SlotIndex(epoch << t.slotsPerEpochExponent)
 }
 
 // EpochEnd calculates the end included slot of the given epoch.
 func (t *TimeProvider) EpochEnd(epoch EpochIndex) SlotIndex {
-	if epoch == 0 {
-		return 0
-	}
-
-	return SlotIndex(epoch<<EpochIndex(t.slotsPerEpochExponent) - 1)
+	return SlotIndex((epoch+1)<<t.slotsPerEpochExponent - 1)
 }
 
 // SlotsBeforeNextEpoch calculates the slots before the start of the next epoch.
