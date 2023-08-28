@@ -2603,7 +2603,8 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					cpy := copyObject(t, tt.input.Output, muts).(*iotago.FoundryOutput)
 					err := stardustVM.ChainSTVF(tt.transType, tt.input, cpy, tt.svCtx)
 					if tt.wantErr != nil {
-						require.ErrorAs(t, err, &tt.wantErr)
+						require.ErrorAs(t, err, &tt.wantErr) //nolint:gosec
+
 						return
 					}
 					require.NoError(t, err)
@@ -2615,7 +2616,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := stardustVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
 			if tt.wantErr != nil {
-				require.ErrorAs(t, err, &tt.wantErr)
+				require.ErrorAs(t, err, &tt.wantErr) //nolint:gosec
 				return
 			}
 			require.NoError(t, err)
@@ -2742,7 +2743,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 					cpy := copyObject(t, tt.input.Output, muts).(*iotago.NFTOutput)
 					err := stardustVM.ChainSTVF(tt.transType, tt.input, cpy, tt.svCtx)
 					if tt.wantErr != nil {
-						require.ErrorAs(t, err, &tt.wantErr)
+						require.ErrorAs(t, err, &tt.wantErr) //nolint:gosec
 						return
 					}
 					require.NoError(t, err)
@@ -2754,7 +2755,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := stardustVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
 			if tt.wantErr != nil {
-				require.ErrorAs(t, err, &tt.wantErr)
+				require.ErrorAs(t, err, &tt.wantErr) //nolint:gosec
 				return
 			}
 			require.NoError(t, err)
