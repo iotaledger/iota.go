@@ -3,6 +3,17 @@ package iotago
 import (
 	"bytes"
 	"sort"
+
+	"github.com/iotaledger/hive.go/crypto/ed25519"
+	"github.com/iotaledger/hive.go/serializer/v2"
+)
+
+// BlockIssuerKeyType defines the type of block issuer key.
+type BlockIssuerKeyType byte
+
+const (
+	// Ed25519BlockIssuerKey denotes a BlockIssuerKeyEd25519.
+	Ed25519BlockIssuerKey BlockIssuerKeyType = iota
 )
 
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
@@ -24,7 +35,10 @@ func (keys BlockIssuerKeys) Size() int {
 	return size
 }
 
-// TODO: Impl WorkScore func on BlockIssuerKeys.
+func (keys BlockIssuerKeys) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	// VBFactorIssuerKeys: numKeys * (type prefix + pubKeyLength)
+	return rentStruct.VBFactorIssuerKeys.Multiply(VBytes(len(keys)) * (serializer.TypeDenotationByteSize + ed25519.PublicKeySize))
+}
 
 // BlockIssuerKey is a key that is allowed to issue blocks from an account with a BlockIssuerFeature.
 type BlockIssuerKey interface {
@@ -35,11 +49,3 @@ type BlockIssuerKey interface {
 	// Type returns the type of the Block Issuer Key.
 	Type() BlockIssuerKeyType
 }
-
-// BlockIssuerKeyType defines the type of block issuer key.
-type BlockIssuerKeyType byte
-
-const (
-	// Ed25519BlockIssuerKey denotes a BlockIssuerKeyEd25519.
-	Ed25519BlockIssuerKey BlockIssuerKeyType = iota
-)

@@ -3,7 +3,6 @@ package iotago
 import (
 	"bytes"
 
-	"github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -27,9 +26,9 @@ func (s *BlockIssuerFeature) Clone() Feature {
 
 func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	// VBFactorData: type prefix + expiry slot + keys length
-	// VBFactorIssuerKeys: numKeys * pubKeyLength
+	// + block issuer keys
 	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.OneByte) +
-		rentStruct.VBFactorIssuerKeys.Multiply(VBytes(len(s.BlockIssuerKeys))*(ed25519.PublicKeySize))
+		s.BlockIssuerKeys.VBytes(rentStruct, nil)
 }
 
 func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
