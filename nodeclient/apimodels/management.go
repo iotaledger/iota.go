@@ -89,18 +89,18 @@ type (
 
 	// PruneDatabaseRequest defines the request of a prune database REST API call.
 	PruneDatabaseRequest struct {
-		// The pruning target slot index.
-		Index iotago.SlotIndex `serix:"0,mapKey=index,omitempty"`
+		// The pruning target epoch index.
+		Index iotago.EpochIndex `serix:"0,mapKey=index,omitempty"`
 		// The pruning depth.
-		Depth iotago.SlotIndex `serix:"1,mapKey=depth,omitempty"`
+		Depth iotago.EpochIndex `serix:"1,mapKey=depth,omitempty"`
 		// The target size of the database.
 		TargetDatabaseSize string `serix:"2,mapKey=targetDatabaseSize,omitempty"`
 	}
 
 	// PruneDatabaseResponse defines the response of a prune database REST API call.
 	PruneDatabaseResponse struct {
-		// The index of the current oldest slot in the database.
-		Index iotago.SlotIndex `serix:"0,mapKey=index"`
+		// The index of the current oldest epoch in the database.
+		Index iotago.EpochIndex `serix:"0,mapKey=index"`
 	}
 
 	// CreateSnapshotsRequest defines the request of a create snapshots REST API call.
