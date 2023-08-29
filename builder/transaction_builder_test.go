@@ -98,6 +98,58 @@ func TestTransactionBuilder(t *testing.T) {
 			}
 		}(),
 		func() test {
+			var (
+				inputID1 = &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
+				inputID2 = &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 1}
+				inputID3 = &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 4}
+			)
+
+			var (
+				basicOutput = &iotago.BasicOutput{
+					Amount:     1000,
+					Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: &inputAddr}},
+				}
+
+				alias1 = &iotago.AliasOutput{
+					Amount:  1000,
+					AliasID: tpkg.Rand32ByteArray(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: &inputAddr},
+						&iotago.GovernorAddressUnlockCondition{Address: &inputAddr},
+					},
+				}
+
+				aliasOwnedByAlias1 = &iotago.AliasOutput{
+					Amount:  1200,
+					AliasID: tpkg.Rand32ByteArray(),
+					Conditions: iotago.UnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: alias1.Chain().ToAddress()},
+						&iotago.GovernorAddressUnlockCondition{Address: alias1.Chain().ToAddress()},
+					},
+				}
+			)
+
+			nextAlias1 := alias1.Clone()
+			nextAlias1.(*iotago.AliasOutput).StateIndex = alias1.StateIndex + 1
+			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
+				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputID1.ID(), Input: basicOutput}).
+				AddInput(&builder.TxInput{UnlockTarget: &inputAddr, InputID: inputID2.ID(), Input: alias1}).
+				AddInput(&builder.TxInput{UnlockTarget: alias1.Chain().ToAddress(), InputID: inputID3.ID(), Input: aliasOwnedByAlias1}).
+				AddOutput(nextAlias1).
+				AddOutput(&iotago.AliasOutput{
+					Amount:     2200,
+					AliasID:    aliasOwnedByAlias1.AliasID,
+					Conditions: aliasOwnedByAlias1.Conditions.Clone(),
+					StateIndex: aliasOwnedByAlias1.StateIndex + 1,
+				})
+
+			return test{
+				name:       "ok - mix basic+two alias outputs",
+				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
+				builder:    bdl,
+			}
+		}(),
+		func() test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand32ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestNetworkID).
