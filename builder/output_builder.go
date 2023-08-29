@@ -457,7 +457,7 @@ func (trans *blockIssuerTransition) AddKeys(keys ...iotago.BlockIssuerKey) *bloc
 // RemoveKey deletes the key of the iotago.BlockIssuerFeature.
 func (trans *blockIssuerTransition) RemoveKey(keyToDelete iotago.BlockIssuerKey) *blockIssuerTransition {
 	for i, blockIssuerKey := range trans.feature.BlockIssuerKeys {
-		if bytes.Equal(keyToDelete.PublicKeyBytes(), blockIssuerKey.PublicKeyBytes()) {
+		if bytes.Equal(keyToDelete.BlockIssuerKeyBytes(), blockIssuerKey.BlockIssuerKeyBytes()) {
 			// To remove the element at index i, we move the last element to this index.
 			trans.feature.BlockIssuerKeys[i] = trans.feature.BlockIssuerKeys[len(trans.feature.BlockIssuerKeys)-1]
 			// Then we reduce the slice length by one to effectively remove the last element.

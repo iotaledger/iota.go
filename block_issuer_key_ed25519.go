@@ -20,9 +20,11 @@ func (key BlockIssuerKeyEd25519) ToEd25519PublicKey() ed25519.PublicKey {
 	return key.PublicKey
 }
 
-// PublicKeyBytes returns the public key as a byte slice.
-func (key BlockIssuerKeyEd25519) PublicKeyBytes() []byte {
-	return key.PublicKey[:]
+// BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the public key bytes.
+func (key BlockIssuerKeyEd25519) BlockIssuerKeyBytes() []byte {
+	blockIssuerKeyBytes := make([]byte, 0, key.Size())
+	blockIssuerKeyBytes = append(blockIssuerKeyBytes, byte(Ed25519BlockIssuerKey))
+	return append(blockIssuerKeyBytes, key.PublicKey[:]...)
 }
 
 // Type returns the BlockIssuerKeyType.
@@ -30,7 +32,12 @@ func (key BlockIssuerKeyEd25519) Type() BlockIssuerKeyType {
 	return Ed25519BlockIssuerKey
 }
 
-// Size returns the size of the public key when serialized.
+// Size returns the size of the block issuer key when serialized.
 func (key BlockIssuerKeyEd25519) Size() int {
+	return serializer.SmallTypeDenotationByteSize + ed25519.PublicKeySize
+}
+
+func (key BlockIssuerKeyEd25519) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
+	// type prefix + public key size
 	return serializer.SmallTypeDenotationByteSize + ed25519.PublicKeySize
 }

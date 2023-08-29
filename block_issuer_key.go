@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"sort"
 
-	"github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -21,13 +20,14 @@ type BlockIssuerKeys []BlockIssuerKey
 
 func (keys BlockIssuerKeys) Sort() {
 	sort.Slice(keys, func(i, j int) bool {
-		return bytes.Compare(keys[i].PublicKeyBytes(), keys[j].PublicKeyBytes()) < 0
+		return bytes.Compare(keys[i].BlockIssuerKeyBytes(), keys[j].BlockIssuerKeyBytes()) < 0
 	})
 }
 
-// Size returns the size of the public key when serialized.
+// Size returns the size of the block issuer key when serialized.
 func (keys BlockIssuerKeys) Size() int {
-	size := 0
+	// keys length prefix + size of each key
+	size := serializer.OneByte
 	for _, key := range keys {
 		size += key.Size()
 	}
@@ -36,16 +36,22 @@ func (keys BlockIssuerKeys) Size() int {
 }
 
 func (keys BlockIssuerKeys) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	// VBFactorIssuerKeys: numKeys * (type prefix + pubKeyLength)
-	return rentStruct.VBFactorIssuerKeys.Multiply(VBytes(len(keys)) * (serializer.TypeDenotationByteSize + ed25519.PublicKeySize))
+	// VBFactorIssuerKeys: keys length prefix + each key's vbytes
+	vbytes := VBytes(serializer.OneByte)
+	for _, key := range keys {
+		vbytes += key.VBytes(rentStruct, nil)
+	}
+
+	return rentStruct.VBFactorIssuerKeys.Multiply(vbytes)
 }
 
 // BlockIssuerKey is a key that is allowed to issue blocks from an account with a BlockIssuerFeature.
 type BlockIssuerKey interface {
 	Sizer
+	NonEphemeralObject
 
-	// PublicKeyBytes returns the Block Issuer Key as a byte slice.
-	PublicKeyBytes() []byte
-	// Type returns the type of the Block Issuer Key.
+	// BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the public key bytes.
+	BlockIssuerKeyBytes() []byte
+	// Type returns the BlockIssuerKeyType.
 	Type() BlockIssuerKeyType
 }

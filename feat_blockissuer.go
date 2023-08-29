@@ -25,9 +25,9 @@ func (s *BlockIssuerFeature) Clone() Feature {
 }
 
 func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	// VBFactorData: type prefix + expiry slot + keys length
-	// + block issuer keys
-	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.OneByte) +
+	// VBFactorData: type prefix + expiry slot
+	// + block issuer keys vbytes
+	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
 		s.BlockIssuerKeys.VBytes(rentStruct, nil)
 }
 
@@ -45,7 +45,7 @@ func (s *BlockIssuerFeature) Equal(other Feature) bool {
 		return false
 	}
 	for i := range s.BlockIssuerKeys {
-		if !bytes.Equal(s.BlockIssuerKeys[i].PublicKeyBytes(), s.BlockIssuerKeys[i].PublicKeyBytes()) {
+		if !bytes.Equal(s.BlockIssuerKeys[i].BlockIssuerKeyBytes(), otherFeat.BlockIssuerKeys[i].BlockIssuerKeyBytes()) {
 			return false
 		}
 	}
@@ -58,6 +58,6 @@ func (s *BlockIssuerFeature) Type() FeatureType {
 }
 
 func (s *BlockIssuerFeature) Size() int {
-	// FeatureType + BlockIssuerKeysLengthPrefix + BlockIssuerKeys + ExpirySlot
-	return serializer.SmallTypeDenotationByteSize + serializer.OneByte + s.BlockIssuerKeys.Size() + SlotIndexLength
+	// FeatureType + BlockIssuerKeys + ExpirySlot
+	return serializer.SmallTypeDenotationByteSize + s.BlockIssuerKeys.Size() + SlotIndexLength
 }
