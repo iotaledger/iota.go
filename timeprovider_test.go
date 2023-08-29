@@ -9,87 +9,102 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
-func TestSlot(t *testing.T) {
-	timeProvider := iotago.NewTimeProvider(time.Now().Unix(), 10, 3)
-	genesisTime := timeProvider.GenesisTime()
+func TestTimeProvider(t *testing.T) {
+	genesisUnixTime := int64(1630000000) // Replace with an appropriate Unix timestamp
+	genesisTime := time.Unix(genesisUnixTime, 0)
+	slotDurationSeconds := int64(10)
+	slotsPerEpochExponent := uint8(3) // 2^3 = 8 slots per epoch
+	slotsPerEpoch := 1 << slotsPerEpochExponent
 
-	{
-		endOfSlotTime := genesisTime.Add(time.Duration(timeProvider.SlotDurationSeconds()) * time.Second).Add(-1)
+	tp := iotago.NewTimeProvider(genesisUnixTime, slotDurationSeconds, slotsPerEpochExponent)
 
-		require.Equal(t, iotago.SlotIndex(1), timeProvider.SlotFromTime(endOfSlotTime))
-		require.False(t, timeProvider.SlotEndTime(iotago.SlotIndex(1)).Before(endOfSlotTime))
+	t.Run("Test Getters", func(t *testing.T) {
+		require.EqualValues(t, genesisUnixTime, tp.GenesisUnixTime())
+		require.EqualValues(t, genesisTime, tp.GenesisTime())
+		require.EqualValues(t, slotDurationSeconds, tp.SlotDurationSeconds())
+		require.EqualValues(t, slotsPerEpoch, tp.EpochDurationSlots())
+		require.EqualValues(t, slotDurationSeconds*int64(slotsPerEpoch), tp.EpochDurationSeconds())
+	})
 
-		startOfSlotTime := genesisTime.Add(time.Duration(timeProvider.SlotDurationSeconds()) * time.Second)
+	t.Run("Test SlotFromTime", func(t *testing.T) {
+		slot0StartTime := genesisTime.Add(-time.Nanosecond)
+		require.EqualValues(t, 0, tp.SlotFromTime(slot0StartTime))
 
-		require.Equal(t, iotago.SlotIndex(2), timeProvider.SlotFromTime(startOfSlotTime))
-		require.False(t, timeProvider.SlotStartTime(iotago.SlotIndex(2)).After(startOfSlotTime))
-	}
+		slot1StartTime := genesisTime
+		require.EqualValues(t, 1, tp.SlotFromTime(slot1StartTime))
 
-	{
-		testTime := genesisTime.Add(5 * time.Second)
-		index := timeProvider.SlotFromTime(testTime)
-		require.Equal(t, index, iotago.SlotIndex(1))
+		slot2StartTime := genesisTime.Add(time.Duration(slotDurationSeconds) * time.Second)
+		require.EqualValues(t, 2, tp.SlotFromTime(slot2StartTime))
 
-		startTime := timeProvider.SlotStartTime(index)
-		require.Equal(t, startTime, time.Unix(genesisTime.Unix(), 0))
-		endTime := timeProvider.SlotEndTime(index)
-		require.Equal(t, endTime, timeProvider.SlotStartTime(index+1).Add(-1))
-	}
+		arbitraryTime := genesisTime.Add(time.Duration(slotDurationSeconds*3)*time.Second + 5*time.Second + 300*time.Millisecond)
+		require.EqualValues(t, 4, tp.SlotFromTime(arbitraryTime))
+	})
 
-	{
-		testTime := genesisTime.Add(10 * time.Second)
-		index := timeProvider.SlotFromTime(testTime)
-		require.Equal(t, index, iotago.SlotIndex(2))
+	t.Run("Test SlotStartTime", func(t *testing.T) {
+		slot0StartTime := genesisTime.Add(-time.Nanosecond)
+		require.EqualValues(t, slot0StartTime, tp.SlotStartTime(0))
 
-		startTime := timeProvider.SlotStartTime(index)
-		require.Equal(t, startTime, time.Unix(genesisTime.Add(10*time.Second).Unix(), 0))
-		endTime := timeProvider.SlotEndTime(index)
-		require.Equal(t, endTime, timeProvider.SlotStartTime(index+1).Add(-1))
-	}
+		slot1StartTime := genesisTime
+		require.EqualValues(t, slot1StartTime, tp.SlotStartTime(1))
 
-	{
-		testTime := genesisTime.Add(35 * time.Second)
-		index := timeProvider.SlotFromTime(testTime)
-		require.Equal(t, index, iotago.SlotIndex(4))
+		slot2StartTime := genesisTime.Add(time.Duration(slotDurationSeconds) * time.Second)
+		require.EqualValues(t, slot2StartTime, tp.SlotStartTime(2))
 
-		startTime := timeProvider.SlotStartTime(index)
-		require.Equal(t, startTime, time.Unix(genesisTime.Add(30*time.Second).Unix(), 0))
-		endTime := timeProvider.SlotEndTime(index)
-		require.Equal(t, endTime, timeProvider.SlotStartTime(index+1).Add(-1))
-	}
+		slot4000StartTime := genesisTime.Add(time.Duration(slotDurationSeconds*3999) * time.Second)
+		require.EqualValues(t, slot4000StartTime, tp.SlotStartTime(4000))
+	})
 
-	{
-		testTime := genesisTime.Add(49 * time.Second)
-		index := timeProvider.SlotFromTime(testTime)
-		require.Equal(t, index, iotago.SlotIndex(5))
-	}
+	t.Run("Test SlotEndTime", func(t *testing.T) {
+		slot0EndTime := genesisTime.Add(-time.Nanosecond)
+		require.EqualValues(t, slot0EndTime, tp.SlotEndTime(0))
 
-	{
-		// a time before genesis time, index = 0
-		testTime := genesisTime.Add(-10 * time.Second)
-		index := timeProvider.SlotFromTime(testTime)
-		require.Equal(t, index, iotago.SlotIndex(0))
-	}
+		slot1EndTime := genesisTime.Add(time.Duration(slotDurationSeconds) * time.Second).Add(-time.Nanosecond)
+		require.EqualValues(t, slot1EndTime, tp.SlotEndTime(1))
 
-	{
-		endOfEpochTime := genesisTime.Add(time.Duration(timeProvider.EpochDurationSeconds()) * time.Second).Add(-1)
-		preEndSlot := timeProvider.SlotFromTime(endOfEpochTime) - 1
-		require.Equal(t, iotago.EpochIndex(1), timeProvider.EpochFromSlot(preEndSlot))
+		slot2EndTime := genesisTime.Add(time.Duration(slotDurationSeconds*2) * time.Second).Add(-time.Nanosecond)
+		require.EqualValues(t, slot2EndTime, tp.SlotEndTime(2))
 
-		endSlot := timeProvider.SlotFromTime(endOfEpochTime)
-		require.Equal(t, iotago.EpochIndex(2), timeProvider.EpochFromSlot(endSlot))
+		slot4000EndTime := genesisTime.Add(time.Duration(slotDurationSeconds*4000) * time.Second).Add(-time.Nanosecond)
+		require.EqualValues(t, slot4000EndTime, tp.SlotEndTime(4000))
+	})
 
-		startSlot := timeProvider.EpochDurationSlots()
-		require.Equal(t, iotago.EpochIndex(2), timeProvider.EpochFromSlot(startSlot))
+	t.Run("Test EpochFromSlot", func(t *testing.T) {
+		require.EqualValues(t, 0, tp.EpochFromSlot(0))
+		require.EqualValues(t, 0, tp.EpochFromSlot(7))
+		require.EqualValues(t, 1, tp.EpochFromSlot(8))
+		require.EqualValues(t, 1, tp.EpochFromSlot(15))
+		require.EqualValues(t, 4000, tp.EpochFromSlot(32000))
+		require.EqualValues(t, 4000, tp.EpochFromSlot(32007))
+	})
 
-		nextEpochStart := startSlot + timeProvider.EpochDurationSlots()
-		require.Equal(t, iotago.EpochIndex(3), timeProvider.EpochFromSlot(nextEpochStart))
-	}
+	t.Run("Test EpochStart", func(t *testing.T) {
+		require.EqualValues(t, 0, tp.EpochStart(0))
+		require.EqualValues(t, 8, tp.EpochStart(1))
+		require.EqualValues(t, 16, tp.EpochStart(2))
+		require.EqualValues(t, 32000, tp.EpochStart(4000))
+	})
 
-	{
-		require.Equal(t, iotago.SlotIndex(8), timeProvider.SlotsBeforeNextEpoch(16))
-		require.Equal(t, iotago.SlotIndex(4), timeProvider.SlotsBeforeNextEpoch(20))
-		require.Equal(t, iotago.SlotIndex(0), timeProvider.SlotsSinceEpochStart(24))
-		require.Equal(t, iotago.SlotIndex(5), timeProvider.SlotsSinceEpochStart(21))
-	}
+	t.Run("Test EpochEnd", func(t *testing.T) {
+		require.EqualValues(t, 7, tp.EpochEnd(0))
+		require.EqualValues(t, 15, tp.EpochEnd(1))
+		require.EqualValues(t, 23, tp.EpochEnd(2))
+		require.EqualValues(t, 32007, tp.EpochEnd(4000))
+	})
+
+	t.Run("Test SlotsBeforeNextEpoch", func(t *testing.T) {
+		require.EqualValues(t, 8, tp.SlotsBeforeNextEpoch(0))
+		require.EqualValues(t, 1, tp.SlotsBeforeNextEpoch(7))
+		require.EqualValues(t, 1, tp.SlotsBeforeNextEpoch(15))
+		require.EqualValues(t, 8, tp.SlotsBeforeNextEpoch(32000))
+		require.EqualValues(t, 1, tp.SlotsBeforeNextEpoch(32007))
+	})
+
+	t.Run("Test SlotsSinceEpochStart", func(t *testing.T) {
+		require.EqualValues(t, 0, tp.SlotsSinceEpochStart(0))
+		require.EqualValues(t, 7, tp.SlotsSinceEpochStart(7))
+		require.EqualValues(t, 0, tp.SlotsSinceEpochStart(8))
+		require.EqualValues(t, 7, tp.SlotsSinceEpochStart(15))
+		require.EqualValues(t, 0, tp.SlotsSinceEpochStart(32000))
+		require.EqualValues(t, 7, tp.SlotsSinceEpochStart(32007))
+	})
 }
