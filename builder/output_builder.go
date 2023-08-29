@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"math"
 
-	"github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
@@ -448,7 +447,7 @@ type blockIssuerTransition struct {
 }
 
 // AddKeys adds the keys of the BlockIssuerFeature.
-func (trans *blockIssuerTransition) AddKeys(keys ...ed25519.PublicKey) *blockIssuerTransition {
+func (trans *blockIssuerTransition) AddKeys(keys ...iotago.BlockIssuerKey) *blockIssuerTransition {
 	trans.feature.BlockIssuerKeys = append(trans.feature.BlockIssuerKeys, keys...)
 	trans.feature.BlockIssuerKeys.Sort()
 
@@ -456,9 +455,9 @@ func (trans *blockIssuerTransition) AddKeys(keys ...ed25519.PublicKey) *blockIss
 }
 
 // RemoveKey deletes the key of the iotago.BlockIssuerFeature.
-func (trans *blockIssuerTransition) RemoveKey(keyToDelete ed25519.PublicKey) *blockIssuerTransition {
+func (trans *blockIssuerTransition) RemoveKey(keyToDelete iotago.BlockIssuerKey) *blockIssuerTransition {
 	for i, blockIssuerKey := range trans.feature.BlockIssuerKeys {
-		if bytes.Equal(keyToDelete[:], blockIssuerKey[:]) {
+		if bytes.Equal(keyToDelete.PublicKeyBytes(), blockIssuerKey.PublicKeyBytes()) {
 			// To remove the element at index i, we move the last element to this index.
 			trans.feature.BlockIssuerKeys[i] = trans.feature.BlockIssuerKeys[len(trans.feature.BlockIssuerKeys)-1]
 			// Then we reduce the slice length by one to effectively remove the last element.

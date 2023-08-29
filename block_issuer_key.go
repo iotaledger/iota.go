@@ -8,9 +8,9 @@ import (
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
 type BlockIssuerKeys []BlockIssuerKey
 
-func (s BlockIssuerKeys) Sort() {
-	sort.Slice(s, func(i, j int) bool {
-		return bytes.Compare(s[i].PublicKeyBytes(), s[j].PublicKeyBytes()) < 0
+func (keys BlockIssuerKeys) Sort() {
+	sort.Slice(keys, func(i, j int) bool {
+		return bytes.Compare(keys[i].PublicKeyBytes(), keys[j].PublicKeyBytes()) < 0
 	})
 }
 
@@ -20,6 +20,7 @@ func (keys BlockIssuerKeys) Size() int {
 	for _, key := range keys {
 		size += key.Size()
 	}
+
 	return size
 }
 
