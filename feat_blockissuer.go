@@ -2,9 +2,7 @@ package iotago
 
 import (
 	"bytes"
-	"sort"
 
-	"github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -14,15 +12,6 @@ const (
 	// MaxBlockIssuerKeysCount is the maximum amount of block issuer keys allowed for a BlockIssuerFeature.
 	MaxBlockIssuerKeysCount = 128
 )
-
-// BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
-type BlockIssuerKeys []ed25519.PublicKey
-
-func (s BlockIssuerKeys) Sort() {
-	sort.Slice(s, func(i, j int) bool {
-		return bytes.Compare(s[i][:], s[j][:]) < 0
-	})
-}
 
 // BlockIssuerFeature is a feature which indicates that this account can issue blocks.
 // The feature includes a block issuer address as well as an expiry slot.
@@ -36,10 +25,10 @@ func (s *BlockIssuerFeature) Clone() Feature {
 }
 
 func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	// VBFactorData: type prefix + expiry slot + keys length
-	// VBFactorIssuerKeys: numKeys * pubKeyLength
-	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.OneByte) +
-		rentStruct.VBFactorIssuerKeys.Multiply(VBytes(len(s.BlockIssuerKeys))*(ed25519.PublicKeySize))
+	// VBFactorData: type prefix + expiry slot
+	// + block issuer keys vbytes
+	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+		s.BlockIssuerKeys.VBytes(rentStruct, nil)
 }
 
 func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
@@ -56,7 +45,7 @@ func (s *BlockIssuerFeature) Equal(other Feature) bool {
 		return false
 	}
 	for i := range s.BlockIssuerKeys {
-		if !bytes.Equal(s.BlockIssuerKeys[i][:], otherFeat.BlockIssuerKeys[i][:]) {
+		if !bytes.Equal(s.BlockIssuerKeys[i].BlockIssuerKeyBytes(), otherFeat.BlockIssuerKeys[i].BlockIssuerKeyBytes()) {
 			return false
 		}
 	}
@@ -70,5 +59,5 @@ func (s *BlockIssuerFeature) Type() FeatureType {
 
 func (s *BlockIssuerFeature) Size() int {
 	// FeatureType + BlockIssuerKeys + ExpirySlot
-	return serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.BlockIssuerKeys)*ed25519.PublicKeySize + SlotIndexLength
+	return serializer.SmallTypeDenotationByteSize + s.BlockIssuerKeys.Size() + SlotIndexLength
 }

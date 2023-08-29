@@ -2,7 +2,6 @@ package iotago
 
 import (
 	"context"
-	"crypto/ed25519"
 	"time"
 
 	"github.com/iotaledger/hive.go/ierrors"
@@ -556,12 +555,15 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
+		must(api.RegisterTypeSettings(BlockIssuerKeyEd25519{},
+			serix.TypeSettings{}.WithObjectType(byte(Ed25519BlockIssuerKey)),
+		))
+		must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), BlockIssuerKeyEd25519{}))
+
 		must(api.RegisterTypeSettings(BlockIssuerKeys{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3BlockIssuerKeysArrRules),
 		))
-		must(api.RegisterTypeSettings(ed25519.PublicKey{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte),
-		))
+
 	}
 
 	return v3

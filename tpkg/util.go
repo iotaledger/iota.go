@@ -682,6 +682,16 @@ func RandEd25519PrivateKey() ed25519.PrivateKey {
 	return ed25519.NewKeyFromSeed(seed[:])
 }
 
+// RandomBlockIsssuerKeysEd25519 returns count random block issuer keys.
+func RandomBlockIsssuerKeysEd25519(count int) iotago.BlockIssuerKeys {
+	blockIssuerKeys := make(iotago.BlockIssuerKeys, 0, count)
+	for i := 0; i < count; i++ {
+		blockIssuerKeys = append(blockIssuerKeys, iotago.BlockIssuerKeyEd25519FromPublicKey(Rand32ByteArray()))
+	}
+
+	return blockIssuerKeys
+}
+
 // RandEd25519Seed returns a random Ed25519 seed.
 func RandEd25519Seed() [ed25519.SeedSize]byte {
 	var b [ed25519.SeedSize]byte
