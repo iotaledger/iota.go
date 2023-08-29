@@ -6,18 +6,18 @@ import (
 
 // TimeProvider defines the perception of time, slots and epochs.
 // It allows to convert slots to and from time, and epochs to and from slots.
-// Slots are counted starting from 1 because 0 is reserved for the genesis which has to be addressable as its own slot.
+// Slots are counted starting from 1 with 0 being reserved for times before the genesis, which has to be addressable as its own slot.
 // Epochs are counted starting from 0.
 //
 // Example: with slotDurationSeconds = 10 and slotsPerEpochExponent = 3
-// <> inclusive range boundary, () exclusive range boundary
-// slot 0: <-inf; genesis)
-// slot 1: <genesis; genesis+10)
-// slot 2: <genesis+10; genesis+20)
+// [] inclusive range boundary, () exclusive range boundary
+// slot 0: [-inf; genesis)
+// slot 1: [genesis; genesis+10)
+// slot 2: [genesis+10; genesis+20)
 // ...
-// epoch 0: <slot 0; slot 8)
-// epoch 1: <slot 8; slot 16)
-// epoch 2: <slot 16; slot 24)
+// epoch 0: [slot 0; slot 8)
+// epoch 1: [slot 8; slot 16)
+// epoch 2: [slot 16; slot 24)
 // ...
 type TimeProvider struct {
 	// genesisUnixTime is the time (Unix in seconds) of the genesis.
@@ -41,10 +41,6 @@ type TimeProvider struct {
 
 // NewTimeProvider creates a new time provider.
 func NewTimeProvider(genesisUnixTime int64, slotDurationSeconds int64, slotsPerEpochExponent uint8) *TimeProvider {
-	// if slotDurationSeconds == 0 {
-	//	panic("slot duration can't be zero")
-	// }
-
 	return &TimeProvider{
 		genesisUnixTime:       genesisUnixTime,
 		genesisTime:           time.Unix(genesisUnixTime, 0),
@@ -80,8 +76,8 @@ func (t *TimeProvider) EpochDurationSeconds() int64 {
 
 // SlotFromTime calculates the SlotIndex from the given time.
 //
-// Note: slots are counted starting from 1 because 0 is reserved for the genesis which has to be addressable as its own
-// slot as part of the commitment chains.
+// Note: The + 1 is required because slots are counted starting from 1 with 0 being reserved for times before the genesis,
+// which has to be addressable as its own slot.
 func (t *TimeProvider) SlotFromTime(targetTime time.Time) SlotIndex {
 	elapsed := targetTime.Sub(t.genesisTime)
 	if elapsed < 0 {
