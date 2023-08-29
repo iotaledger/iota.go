@@ -14,6 +14,10 @@ import (
 
 type Version byte
 
+const VersionLength = 1
+
+const VersionAndHashSize = IdentifierLength + VersionLength
+
 func (v Version) Bytes() ([]byte, error) {
 	return []byte{byte(v)}, nil
 }
