@@ -318,7 +318,8 @@ type (
 		// Active indicates whether the validator was active recently, and would be considered during committee selection.
 		Active bool `serix:"5,mapKey=active"`
 		// LatestSupportedProtocolVersion is the latest supported protocol version of the validator.
-		LatestSupportedProtocolVersion iotago.Version `serix:"6,mapKey=latestSupportedProtocolVersion"`
+		LatestSupportedProtocolVersion iotago.Version    `serix:"6,mapKey=latestSupportedProtocolVersion"`
+		LatestSupportedProtocolHash    iotago.Identifier `serix:"7,mapKey=latestSupportedProtocolHash"`
 	}
 
 	// ValidatorsResponse defines the response for the staking REST API call.
