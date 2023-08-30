@@ -55,8 +55,8 @@ var (
 	ErrAccountOutputCyclicAddress = ierrors.New("account output's AccountID corresponds to state and/or governance controller")
 	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
 	ErrNFTOutputCyclicAddress = ierrors.New("NFT output's ID corresponds to address field")
-	// ErrDelegationValidatorIDZeroed gets returned if a Delegation Output's Validator ID is zeroed out.
-	ErrDelegationValidatorIDZeroed = ierrors.New("delegation output's validator ID is zeroed")
+	// ErrDelegationValidatorAddressZeroed gets returned if a Delegation Output's Validator address is zeroed out.
+	ErrDelegationValidatorAddressZeroed = ierrors.New("delegation output's validator address is zeroed")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = ierrors.New("accumulated output balance exceeds total supply")
 	// ErrOutputAmountMoreThanTotalSupply gets returned if an output base token amount is more than the total supply.

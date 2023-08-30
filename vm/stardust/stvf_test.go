@@ -2794,12 +2794,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "ok - valid genesis",
 			next: &iotago.DelegationOutput{
-				Amount:          100,
-				DelegatedAmount: 100,
-				DelegationID:    iotago.EmptyDelegationID(),
-				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      currentEpoch + 1,
-				EndEpoch:        0,
+				Amount:           100,
+				DelegatedAmount:  100,
+				DelegationID:     iotago.EmptyDelegationID(),
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       currentEpoch + 1,
+				EndEpoch:         0,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
@@ -2820,12 +2820,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "fail - invalid genesis - non-zero delegation ID",
 			next: &iotago.DelegationOutput{
-				Amount:          100,
-				DelegatedAmount: 100,
-				DelegationID:    exampleDelegationID,
-				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      currentEpoch + 1,
-				EndEpoch:        0,
+				Amount:           100,
+				DelegatedAmount:  100,
+				DelegationID:     exampleDelegationID,
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       currentEpoch + 1,
+				EndEpoch:         0,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
@@ -2846,12 +2846,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "fail - invalid genesis - delegated amount does not match amount",
 			next: &iotago.DelegationOutput{
-				Amount:          100,
-				DelegatedAmount: 120,
-				DelegationID:    iotago.EmptyDelegationID(),
-				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      currentEpoch + 1,
-				EndEpoch:        0,
+				Amount:           100,
+				DelegatedAmount:  120,
+				DelegationID:     iotago.EmptyDelegationID(),
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       currentEpoch + 1,
+				EndEpoch:         0,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
@@ -2872,12 +2872,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "fail - invalid genesis - non-zero end epoch",
 			next: &iotago.DelegationOutput{
-				Amount:          100,
-				DelegatedAmount: 100,
-				DelegationID:    iotago.EmptyDelegationID(),
-				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      currentEpoch + 1,
-				EndEpoch:        currentEpoch + 5,
+				Amount:           100,
+				DelegatedAmount:  100,
+				DelegationID:     iotago.EmptyDelegationID(),
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       currentEpoch + 1,
+				EndEpoch:         currentEpoch + 5,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
@@ -2898,12 +2898,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "fail - invalid transition - start epoch not set to expected epoch",
 			next: &iotago.DelegationOutput{
-				Amount:          100,
-				DelegatedAmount: 100,
-				DelegationID:    iotago.EmptyDelegationID(),
-				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      currentEpoch - 3,
-				EndEpoch:        0,
+				Amount:           100,
+				DelegatedAmount:  100,
+				DelegationID:     iotago.EmptyDelegationID(),
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       currentEpoch - 3,
+				EndEpoch:         0,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
@@ -2924,12 +2924,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - invalid transition - non-zero delegation id on input",
 			input: &vm.ChainOutputWithCreationSlot{
 				Output: &iotago.DelegationOutput{
-					Amount:          100,
-					DelegatedAmount: 100,
-					DelegationID:    tpkg.RandDelegationID(),
-					ValidatorID:     tpkg.RandAccountID(),
-					StartEpoch:      currentEpoch + 1,
-					EndEpoch:        0,
+					Amount:           100,
+					DelegatedAmount:  100,
+					DelegationID:     tpkg.RandDelegationID(),
+					ValidatorAddress: tpkg.RandAccountAddress(),
+					StartEpoch:       currentEpoch + 1,
+					EndEpoch:         0,
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -2953,12 +2953,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			input: &vm.ChainOutputWithCreationSlot{
 				ChainID: exampleDelegationID,
 				Output: &iotago.DelegationOutput{
-					Amount:          100,
-					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationID(),
-					ValidatorID:     tpkg.RandAccountID(),
-					StartEpoch:      currentEpoch + 1,
-					EndEpoch:        0,
+					Amount:           100,
+					DelegatedAmount:  100,
+					DelegationID:     iotago.EmptyDelegationID(),
+					ValidatorAddress: tpkg.RandAccountAddress(),
+					StartEpoch:       currentEpoch + 1,
+					EndEpoch:         0,
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -2999,12 +2999,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			input: &vm.ChainOutputWithCreationSlot{
 				ChainID: exampleDelegationID,
 				Output: &iotago.DelegationOutput{
-					Amount:          100,
-					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationID(),
-					ValidatorID:     tpkg.RandAccountID(),
-					StartEpoch:      currentEpoch + 1,
-					EndEpoch:        0,
+					Amount:           100,
+					DelegatedAmount:  100,
+					DelegationID:     iotago.EmptyDelegationID(),
+					ValidatorAddress: tpkg.RandAccountAddress(),
+					StartEpoch:       currentEpoch + 1,
+					EndEpoch:         0,
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -3037,12 +3037,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			input: &vm.ChainOutputWithCreationSlot{
 				ChainID: exampleDelegationID,
 				Output: &iotago.DelegationOutput{
-					Amount:          100,
-					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationID(),
-					ValidatorID:     tpkg.RandAccountID(),
-					StartEpoch:      currentEpoch + 1,
-					EndEpoch:        0,
+					Amount:           100,
+					DelegatedAmount:  100,
+					DelegationID:     iotago.EmptyDelegationID(),
+					ValidatorAddress: tpkg.RandAccountAddress(),
+					StartEpoch:       currentEpoch + 1,
+					EndEpoch:         0,
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -3075,12 +3075,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			input: &vm.ChainOutputWithCreationSlot{
 				ChainID: exampleDelegationID,
 				Output: &iotago.DelegationOutput{
-					Amount:          100,
-					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationID(),
-					ValidatorID:     tpkg.RandAccountID(),
-					StartEpoch:      currentEpoch + 1,
-					EndEpoch:        0,
+					Amount:           100,
+					DelegatedAmount:  100,
+					DelegationID:     iotago.EmptyDelegationID(),
+					ValidatorAddress: tpkg.RandAccountAddress(),
+					StartEpoch:       currentEpoch + 1,
+					EndEpoch:         0,
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -3107,12 +3107,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			input: &vm.ChainOutputWithCreationSlot{
 				ChainID: exampleDelegationID,
 				Output: &iotago.DelegationOutput{
-					Amount:          100,
-					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationID(),
-					ValidatorID:     tpkg.RandAccountID(),
-					StartEpoch:      currentEpoch + 1,
-					EndEpoch:        0,
+					Amount:           100,
+					DelegatedAmount:  100,
+					DelegationID:     iotago.EmptyDelegationID(),
+					ValidatorAddress: tpkg.RandAccountAddress(),
+					StartEpoch:       currentEpoch + 1,
+					EndEpoch:         0,
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -3139,12 +3139,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			input: &vm.ChainOutputWithCreationSlot{
 				ChainID: exampleDelegationID,
 				Output: &iotago.DelegationOutput{
-					Amount:          100,
-					DelegatedAmount: 100,
-					DelegationID:    iotago.EmptyDelegationID(),
-					ValidatorID:     tpkg.RandAccountID(),
-					StartEpoch:      currentEpoch + 1,
-					EndEpoch:        0,
+					Amount:           100,
+					DelegatedAmount:  100,
+					DelegationID:     iotago.EmptyDelegationID(),
+					ValidatorAddress: tpkg.RandAccountAddress(),
+					StartEpoch:       currentEpoch + 1,
+					EndEpoch:         0,
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -3166,12 +3166,12 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 		{
 			name: "fail - invalid genesis - missing commitment input",
 			next: &iotago.DelegationOutput{
-				Amount:          100,
-				DelegatedAmount: 100,
-				DelegationID:    iotago.EmptyDelegationID(),
-				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      currentEpoch + 1,
-				EndEpoch:        0,
+				Amount:           100,
+				DelegatedAmount:  100,
+				DelegationID:     iotago.EmptyDelegationID(),
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       currentEpoch + 1,
+				EndEpoch:         0,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},

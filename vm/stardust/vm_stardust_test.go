@@ -4333,6 +4333,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 
 func TestManaRewardsClaimingDelegation(t *testing.T) {
 	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
+	emptyAccountAddress := iotago.AccountAddress(iotago.EmptyAccountID())
 
 	const manaRewardAmount iotago.Mana = 200
 	currentSlot := 20 * testProtoParams.ParamEpochDurationInSlots()
@@ -4342,12 +4343,12 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 	inputs := vm.InputSet{
 		inputIDs[0]: vm.OutputWithCreationSlot{
 			Output: &iotago.DelegationOutput{
-				Amount:          OneMi * 10,
-				DelegatedAmount: OneMi * 10,
-				DelegationID:    iotago.EmptyDelegationID(),
-				ValidatorID:     iotago.EmptyAccountID(),
-				StartEpoch:      currentEpoch,
-				EndEpoch:        currentEpoch + 5,
+				Amount:           OneMi * 10,
+				DelegatedAmount:  OneMi * 10,
+				DelegationID:     iotago.EmptyDelegationID(),
+				ValidatorAddress: &emptyAccountAddress,
+				StartEpoch:       currentEpoch,
+				EndEpoch:         currentEpoch + 5,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: ident},
 				},

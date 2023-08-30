@@ -180,12 +180,12 @@ func TestOutputsDeSerialize(t *testing.T) {
 		{
 			name: "ok - DelegationOutput",
 			source: &iotago.DelegationOutput{
-				Amount:          1337,
-				DelegatedAmount: 1337,
-				DelegationID:    tpkg.Rand32ByteArray(),
-				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      iotago.EpochIndex(32),
-				EndEpoch:        iotago.EpochIndex(37),
+				Amount:           1337,
+				DelegatedAmount:  1337,
+				DelegationID:     tpkg.Rand32ByteArray(),
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       iotago.EpochIndex(32),
+				EndEpoch:         iotago.EpochIndex(37),
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
@@ -822,6 +822,8 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 }
 
 func TestOutputsSyntacticaDelegation(t *testing.T) {
+	emptyAccountAddress := iotago.AccountAddress(iotago.EmptyAccountID())
+
 	tests := []struct {
 		name    string
 		outputs iotago.Outputs[iotago.Output]
@@ -831,10 +833,10 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 			name: "ok",
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.DelegationOutput{
-					Amount:          OneMi,
-					DelegatedAmount: OneMi,
-					DelegationID:    iotago.EmptyDelegationID(),
-					ValidatorID:     tpkg.RandAccountID(),
+					Amount:           OneMi,
+					DelegatedAmount:  OneMi,
+					DelegationID:     iotago.EmptyDelegationID(),
+					ValidatorAddress: tpkg.RandAccountAddress(),
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -845,15 +847,15 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 			name: "fail - validator id zeroed",
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.DelegationOutput{
-					Amount:       OneMi,
-					DelegationID: iotago.EmptyDelegationID(),
-					ValidatorID:  iotago.EmptyAccountID(),
+					Amount:           OneMi,
+					DelegationID:     iotago.EmptyDelegationID(),
+					ValidatorAddress: &emptyAccountAddress,
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 			},
-			wantErr: iotago.ErrDelegationValidatorIDZeroed,
+			wantErr: iotago.ErrDelegationValidatorAddressZeroed,
 		},
 	}
 	valFunc := iotago.OutputsSyntacticalDelegation()

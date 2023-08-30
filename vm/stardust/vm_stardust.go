@@ -798,7 +798,7 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 	}
 
 	if current.DelegatedAmount != next.DelegatedAmount ||
-		current.ValidatorID != next.ValidatorID ||
+		!current.ValidatorAddress.Equal(next.ValidatorAddress) ||
 		current.StartEpoch != next.StartEpoch {
 		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w", iotago.ErrInvalidDelegationModified)
 	}
