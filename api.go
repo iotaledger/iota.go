@@ -127,11 +127,9 @@ type ProtocolParameters interface {
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold() SlotIndex
 
-	ActivityWindowDuration() SlotIndex
-
 	ManaParameters() *ManaParameters
 
-	// RMCParameters returns the parameters used to calculate reference Mana cost.
+	// CongestionControlParameters returns the parameters used to calculate reference Mana cost.
 	CongestionControlParameters() *CongestionControlParameters
 
 	VersionSignaling() *VersionSignaling

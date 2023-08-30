@@ -43,9 +43,9 @@ type basicProtocolParameters struct {
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold SlotIndex `serix:"19,mapKey=epochNearingThreshold"`
 	// RMCParameters defines the parameters used by to calculate the Reference Mana Cost (RMC).
-	CongestionControlParameters CongestionControlParameters `serix:"21,mapKey=congestionControlParameters"`
+	CongestionControlParameters CongestionControlParameters `serix:"20,mapKey=congestionControlParameters"`
 	// VersionSignaling defines the parameters used for version upgrades.
-	VersionSignaling VersionSignaling `serix:"22,mapKey=versionSignaling"`
+	VersionSignaling VersionSignaling `serix:"21,mapKey=versionSignaling"`
 	// ValidatorBlocksPerSlot is the number of blocks that should be issued by a validator in a single slot.
 	RewardsParameters RewardsParameters `serix:"22,mapKey=rewardsParameters"`
 }
