@@ -196,8 +196,8 @@ type (
 		LatestAcceptedBlockSlot iotago.SlotIndex `serix:"7,mapKey=latestAcceptedBlockSlot"`
 		// The slot index of the latest confirmed block.
 		LatestConfirmedBlockSlot iotago.SlotIndex `serix:"8,mapKey=latestConfirmedBlockSlot"`
-		// The index of the slot at which the tangle data was pruned.
-		PruningSlot iotago.SlotIndex `serix:"9,mapKey=pruningSlot"`
+		// The index of the epoch at which the tangle data was pruned.
+		PruningEpoch iotago.EpochIndex `serix:"9,mapKey=pruningEpoch"`
 	}
 
 	// InfoResNodeMetrics defines the metrics of a node in info response.
@@ -318,7 +318,8 @@ type (
 		// Active indicates whether the validator was active recently, and would be considered during committee selection.
 		Active bool `serix:"5,mapKey=active"`
 		// LatestSupportedProtocolVersion is the latest supported protocol version of the validator.
-		LatestSupportedProtocolVersion iotago.Version `serix:"6,mapKey=latestSupportedProtocolVersion"`
+		LatestSupportedProtocolVersion iotago.Version    `serix:"6,mapKey=latestSupportedProtocolVersion"`
+		LatestSupportedProtocolHash    iotago.Identifier `serix:"7,mapKey=latestSupportedProtocolHash"`
 	}
 
 	// ValidatorsResponse defines the response for the staking REST API call.

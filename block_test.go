@@ -3,6 +3,7 @@ package iotago_test
 import (
 	"crypto/ed25519"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -475,7 +476,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 	blockJSON := fmt.Sprintf(`{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitment":"%s","latestFinalizedSlot":"0","issuerId":"%s","block":{"type":%d,"strongParents":["%s"],"weakParents":[],"shallowLikeParents":[],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
 		tpkg.TestAPI.Version(),
 		networkID,
-		issuingTime.Format(time.RFC3339Nano),
+		strconv.FormatUint(serializer.TimeToUint64(issuingTime), 10),
 		commitmentID.ToHex(),
 		issuerID.ToHex(),
 		iotago.BlockTypeValidation,

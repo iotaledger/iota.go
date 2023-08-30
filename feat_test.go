@@ -3,7 +3,6 @@ package iotago_test
 import (
 	"testing"
 
-	"github.com/iotaledger/hive.go/crypto/ed25519"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -23,8 +22,10 @@ func TestFeaturesDeSerialize(t *testing.T) {
 		{
 			name: "ok - BlockIssuerFeature",
 			source: &iotago.BlockIssuerFeature{
-				BlockIssuerKeys: iotago.BlockIssuerKeys{ed25519.PublicKey(tpkg.RandBytes(32))},
-				ExpirySlot:      10,
+				BlockIssuerKeys: iotago.BlockIssuerKeys{
+					iotago.BlockIssuerKeyEd25519FromPublicKey(tpkg.Rand32ByteArray()),
+				},
+				ExpirySlot: 10,
 			},
 			target: &iotago.BlockIssuerFeature{},
 		},
