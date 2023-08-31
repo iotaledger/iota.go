@@ -58,8 +58,6 @@ type API interface {
 	TimeProvider() *TimeProvider
 	// ManaDecayProvider returns the underlying mana decay provider used.
 	ManaDecayProvider() *ManaDecayProvider
-	// LivenessThresholdDuration returns the liveness threshold duration.
-	LivenessThresholdDuration() time.Duration
 	// MaxBlockWork returns the maximum block work score.
 	MaxBlockWork() WorkScore
 }
@@ -115,7 +113,9 @@ type ProtocolParameters interface {
 
 	StakingUnbondingPeriod() EpochIndex
 
-	LivenessThreshold() SlotIndex
+	LivenessThresholdLowerBound() time.Duration
+
+	LivenessThresholdUpperBound() time.Duration
 
 	MinCommittableAge() SlotIndex
 

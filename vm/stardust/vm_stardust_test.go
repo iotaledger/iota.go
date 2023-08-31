@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -44,7 +45,7 @@ var (
 			decayFactorEpochsSumExponent,
 		),
 		iotago.WithStakingOptions(10),
-		iotago.WithLivenessOptions(3, 10, 20, 24),
+		iotago.WithLivenessOptions(15*time.Second, 30*time.Second, 10, 20, 24),
 		iotago.WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*iotago.MaxBlockSize),
 	)
 

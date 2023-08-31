@@ -4,6 +4,7 @@ package iotago_test
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -115,7 +116,8 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 		),
 		iotago.WithStakingOptions(11),
 		iotago.WithLivenessOptions(
-			3,
+			15*time.Second,
+			30*time.Second,
 			10,
 			20,
 			24,
@@ -133,7 +135,7 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 		iotago.WithVersionSignalingOptions(3, 4, 1),
 	)
 
-	protoParamsJSON := `{"type":0,"version":3,"networkName":"xxxNetwork","bech32Hrp":"xxx","rentStructure":{"vByteCost":6,"vByteFactorData":7,"vByteFactorKey":8,"vByteFactorIssuerKeys":9,"vByteFactorStakingFeature":10},"workScoreStructure":{"dataKilobyte":1,"block":2,"missingParent":3,"input":4,"contextInput":5,"output":6,"nativeToken":7,"staking":8,"blockIssuer":9,"allotment":10,"signatureEd25519":11,"minStrongParentsThreshold":12},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"manaGenerationRate":1,"manaGenerationRateExponent":27,"manaDecayFactors":[10,20],"manaDecayFactorsExponent":32,"manaDecayFactorEpochsSum":1337,"manaDecayFactorEpochsSumExponent":20,"stakingUnbondingPeriod":"11","livenessThreshold":"3","minCommittableAge":"10","maxCommittableAge":"20","epochNearingThreshold":"24","congestionControlParameters":{"rmcMin":"500","increase":"500","decrease":"500","increaseThreshold":800000,"decreaseThreshold":500000,"schedulerRate":100000,"minMana":"1","maxBufferSize":3276800},"versionSignaling":{"windowSize":3,"windowTargetRatio":4,"activationOffset":1}}`
+	protoParamsJSON := `{"type":0,"version":3,"networkName":"xxxNetwork","bech32Hrp":"xxx","rentStructure":{"vByteCost":6,"vByteFactorData":7,"vByteFactorKey":8,"vByteFactorIssuerKeys":9,"vByteFactorStakingFeature":10},"workScoreStructure":{"dataKilobyte":1,"block":2,"missingParent":3,"input":4,"contextInput":5,"output":6,"nativeToken":7,"staking":8,"blockIssuer":9,"allotment":10,"signatureEd25519":11,"minStrongParentsThreshold":12},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"manaGenerationRate":1,"manaGenerationRateExponent":27,"manaDecayFactors":[10,20],"manaDecayFactorsExponent":32,"manaDecayFactorEpochsSum":1337,"manaDecayFactorEpochsSumExponent":20,"stakingUnbondingPeriod":"11","livenessThresholdLowerBound":"15000000000","livenessThresholdUpperBound":"30000000000","minCommittableAge":"10","maxCommittableAge":"20","epochNearingThreshold":"24","congestionControlParameters":{"rmcMin":"500","increase":"500","decrease":"500","increaseThreshold":800000,"decreaseThreshold":500000,"schedulerRate":100000,"minMana":"1","maxBufferSize":3276800},"versionSignaling":{"windowSize":3,"windowTargetRatio":4,"activationOffset":1}}`
 
 	jsonProtoParams, err := tpkg.TestAPI.JSONEncode(protoParams)
 	require.NoError(t, err)

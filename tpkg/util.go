@@ -460,6 +460,10 @@ func RandSlotIndex() iotago.SlotIndex {
 	return iotago.SlotIndex(RandUint64(math.MaxUint64))
 }
 
+func RandDuration() time.Duration {
+	return time.Duration(RandInt64(math.MaxInt64))
+}
+
 // RandBlockID produces a random block ID.
 func RandBlockID() iotago.BlockID {
 	return Rand40ByteArray()
@@ -779,7 +783,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandByte(),
 		),
 		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
-		iotago.WithLivenessOptions(RandSlotIndex(), RandSlotIndex(), RandSlotIndex(), RandSlotIndex()),
+		iotago.WithLivenessOptions(RandDuration(), RandDuration(), RandSlotIndex(), RandSlotIndex(), RandSlotIndex()),
 		iotago.WithCongestionControlOptions(
 			RandMana(math.MaxUint64),
 			RandMana(math.MaxUint64),

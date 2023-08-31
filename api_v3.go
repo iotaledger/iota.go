@@ -243,12 +243,11 @@ func V3API(protoParams ProtocolParameters) API {
 
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{
-		serixAPI:                  api,
-		protocolParameters:        protoParams.(*V3ProtocolParameters),
-		timeProvider:              timeProvider,
-		manaDecayProvider:         protoParams.ManaDecayProvider(),
-		livenessThresholdDuration: time.Duration(uint64(protoParams.LivenessThreshold())*uint64(timeProvider.SlotDurationSeconds())) * time.Second,
-		maxBlockWork:              maxBlockWork,
+		serixAPI:           api,
+		protocolParameters: protoParams.(*V3ProtocolParameters),
+		timeProvider:       timeProvider,
+		manaDecayProvider:  protoParams.ManaDecayProvider(),
+		maxBlockWork:       maxBlockWork,
 	}
 
 	must(api.RegisterTypeSettings(TaggedData{},

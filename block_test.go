@@ -160,7 +160,7 @@ func TestProtocolBlock_Commitments(t *testing.T) {
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
-			iotago.WithLivenessOptions(3, 11, 21, 4),
+			iotago.WithLivenessOptions(15*time.Second, 30*time.Second, 11, 21, 4),
 		), 0)
 
 	require.ErrorIs(t, createBlockAtSlot(t, 100, 78, apiProvider), iotago.ErrCommitmentTooOld)
@@ -180,7 +180,7 @@ func TestProtocolBlock_Commitments1(t *testing.T) {
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
-			iotago.WithLivenessOptions(3, 7, 21, 4),
+			iotago.WithLivenessOptions(15*time.Second, 30*time.Second, 7, 21, 4),
 		), 0)
 
 	require.ErrorIs(t, createBlockAtSlot(t, 10, 4, apiProvider), iotago.ErrCommitmentTooRecent)
@@ -193,7 +193,7 @@ func TestProtocolBlock_WeakParents(t *testing.T) {
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
-			iotago.WithLivenessOptions(3, 10, 20, 4),
+			iotago.WithLivenessOptions(15*time.Second, 30*time.Second, 10, 20, 4),
 		), 0)
 	strongParent1 := tpkg.RandBlockID()
 	strongParent2 := tpkg.RandBlockID()
@@ -252,7 +252,7 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
-			iotago.WithLivenessOptions(3, 11, 21, 4),
+			iotago.WithLivenessOptions(15*time.Second, 30*time.Second, 11, 21, 4),
 		), 0)
 
 	commitmentInputTooOld, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
