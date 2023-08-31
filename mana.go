@@ -75,10 +75,11 @@ func (r RewardsParameters) TargetReward(index EpochIndex, tokenSupply uint64, ge
 		return Mana(finalReward), nil
 	}
 	// initial reward for bootstrapping phase
-	initialReward, err := safemath.SafeMul(finalReward, r.DecayBalancingConstant>>r.DecayBalancingConstantExponent)
+	initialReward, err := safemath.SafeMul(finalReward, r.DecayBalancingConstant)
 	if err != nil {
 		return 0, ierrors.Wrap(err, "failed to calculate initial reward due to finalReward and DecayBalancingConstant multiplication overflow")
 	}
+	initialReward = initialReward >> r.DecayBalancingConstantExponent
 	decayedInitialReward, err := api.ManaDecayProvider().RewardsWithDecay(Mana(initialReward), index, index)
 	if err != nil {
 		return 0, ierrors.Errorf("failed to calculate decayed initial reward: %w", err)
