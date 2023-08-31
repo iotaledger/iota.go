@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 )
@@ -57,16 +58,31 @@ func (r RewardsParameters) Equals(other RewardsParameters) bool {
 
 func (r RewardsParameters) TargetReward(index EpochIndex, tokenSupply uint64, generationRate, generationRateExponent, slotsPerEpochExponent uint8, api API) (Mana, error) {
 	// final reward, after bootstrapping phase
-	finalReward := (tokenSupply * r.RewardsManaShareCoefficient * uint64(generationRate)) >>
-		(generationRateExponent - slotsPerEpochExponent)
+	result, err := safemath.SafeMul(tokenSupply, r.RewardsManaShareCoefficient)
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to calculate target reward due to tokenSupply and RewardsManaShareCoefficient multiplication overflow")
+	}
+	result, err = safemath.SafeMul(result, uint64(generationRate))
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to calculate target reward due to multiplication with generationRate overflow")
+	}
+	subExponent, err := safemath.SafeSub(generationRateExponent, slotsPerEpochExponent)
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow")
+	}
+	finalReward := result >> subExponent
 	if index > r.BootstrappingDuration {
 		return Mana(finalReward), nil
 	}
 	// initial reward for bootstrapping phase
-	initialReward := finalReward * (r.DecayBalancingConstant >> r.DecayBalancingConstantExponent)
+	initialReward, err := safemath.SafeMul(finalReward, r.DecayBalancingConstant>>r.DecayBalancingConstantExponent)
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to calculate initial reward due to finalReward and DecayBalancingConstant multiplication overflow")
+	}
 	decayedInitialReward, err := api.ManaDecayProvider().RewardsWithDecay(Mana(initialReward), index, index)
 	if err != nil {
 		return 0, ierrors.Errorf("failed to calculate decayed initial reward: %w", err)
 	}
+
 	return decayedInitialReward, nil
 }
