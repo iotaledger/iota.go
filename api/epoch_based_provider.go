@@ -19,8 +19,8 @@ type EpochBasedProvider struct {
 	latestVersionMutex sync.RWMutex
 	latestVersion      iotago.Version
 
-	currentSlotMutex sync.RWMutex
-	currentSlot      iotago.SlotIndex
+	currentAPIMutex sync.RWMutex
+	currentAPI      iotago.API
 
 	optsAPIForMissingVersionCallback func(version iotago.Version) (iotago.API, error)
 }
@@ -39,11 +39,45 @@ func NewEpochBasedProvider(opts ...options.Option[EpochBasedProvider]) *EpochBas
 	}, opts)
 }
 
-func (e *EpochBasedProvider) SetCurrentSlot(slot iotago.SlotIndex) {
-	e.currentSlotMutex.Lock()
-	defer e.currentSlotMutex.Unlock()
+func (e *EpochBasedProvider) Initialize(slot iotago.SlotIndex) {
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
 
-	e.currentSlot = slot
+	var epoch *iotago.EpochIndex
+	for _, protocolParams := range e.protocolParametersByVersion {
+		if epoch == nil {
+			temp := protocolParams.TimeProvider().EpochFromSlot(slot)
+			epoch = &temp
+
+			continue
+		}
+
+		if *epoch != protocolParams.TimeProvider().EpochFromSlot(slot) {
+			panic(ierrors.Errorf("protocol parameters with version %d have a different epoch than the other protocol parameters", protocolParams.Version()))
+		}
+	}
+
+	e.currentAPIMutex.Lock()
+	defer e.currentAPIMutex.Unlock()
+
+	api, err := e.apiForVersion(e.protocolVersions.VersionForEpoch(*epoch))
+	if err != nil {
+		panic(err)
+	}
+
+	e.currentAPI = api
+}
+
+func (e *EpochBasedProvider) SetCurrentSlot(slot iotago.SlotIndex) {
+	e.currentAPIMutex.Lock()
+	defer e.currentAPIMutex.Unlock()
+
+	epoch := e.currentAPI.TimeProvider().EpochFromSlot(slot)
+	version := e.VersionForEpoch(epoch)
+
+	if version > e.currentAPI.ProtocolParameters().Version() {
+		e.currentAPI = lo.PanicOnErr(e.apiForVersion(version))
+	}
 }
 
 func (e *EpochBasedProvider) AddProtocolParametersAtEpoch(protocolParameters iotago.ProtocolParameters, epoch iotago.EpochIndex) {
@@ -80,10 +114,7 @@ func (e *EpochBasedProvider) AddFutureVersion(version iotago.Version, protocolPa
 	e.futureProtocolParametersByVersion[version] = protocolParamsHash
 }
 
-func (e *EpochBasedProvider) APIForVersion(version iotago.Version) (iotago.API, error) {
-	e.mutex.RLock()
-	defer e.mutex.RUnlock()
-
+func (e *EpochBasedProvider) apiForVersion(version iotago.Version) (iotago.API, error) {
 	protocolParams, exists := e.protocolParametersByVersion[version]
 	if !exists {
 		return nil, ierrors.Errorf("protocol parameters for version %d are not set", version)
@@ -102,13 +133,27 @@ func (e *EpochBasedProvider) APIForVersion(version iotago.Version) (iotago.API, 
 	return nil, ierrors.Errorf("no api available for parameters with version %d", protocolParams.Version())
 }
 
+func (e *EpochBasedProvider) APIForVersion(version iotago.Version) (iotago.API, error) {
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
+
+	return e.apiForVersion(version)
+}
+
 func (e *EpochBasedProvider) APIForSlot(slot iotago.SlotIndex) iotago.API {
-	epoch := e.LatestAPI().TimeProvider().EpochFromSlot(slot)
-	return lo.PanicOnErr(e.APIForVersion(e.VersionForEpoch(epoch)))
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
+
+	epoch := e.currentAPI.TimeProvider().EpochFromSlot(slot)
+
+	return lo.PanicOnErr(e.apiForVersion(e.protocolVersions.VersionForEpoch(epoch)))
 }
 
 func (e *EpochBasedProvider) APIForEpoch(epoch iotago.EpochIndex) iotago.API {
-	return lo.PanicOnErr(e.APIForVersion(e.VersionForEpoch(epoch)))
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
+
+	return lo.PanicOnErr(e.apiForVersion(e.protocolVersions.VersionForEpoch(epoch)))
 }
 
 func (e *EpochBasedProvider) LatestAPI() iotago.API {
@@ -124,10 +169,10 @@ func (e *EpochBasedProvider) LatestAPI() iotago.API {
 }
 
 func (e *EpochBasedProvider) CurrentAPI() iotago.API {
-	e.currentSlotMutex.RLock()
-	defer e.currentSlotMutex.RUnlock()
+	e.currentAPIMutex.RLock()
+	defer e.currentAPIMutex.RUnlock()
 
-	return e.APIForSlot(e.currentSlot)
+	return e.currentAPI
 }
 
 func (e *EpochBasedProvider) VersionsAndProtocolParametersHash() (iotago.Identifier, error) {
@@ -142,16 +187,13 @@ func (e *EpochBasedProvider) VersionsAndProtocolParametersHash() (iotago.Identif
 		var paramsHash iotago.Identifier
 		params, paramsExist := e.protocolParametersByVersion[version.Version]
 		if paramsExist {
-			paramsBytes, err := params.Bytes()
-			if err != nil {
-				return iotago.Identifier{}, ierrors.Wrap(err, "failed to get protocol parameters bytes")
+			var err error
+			if paramsHash, err = params.Hash(); err != nil {
+				return iotago.Identifier{}, ierrors.Wrap(err, "failed to get protocol parameters hash")
 			}
-
-			paramsHash = iotago.IdentifierFromData(paramsBytes)
 		} else {
 			var hashExists bool
-			paramsHash, hashExists = e.futureProtocolParametersByVersion[version.Version]
-			if !hashExists {
+			if paramsHash, hashExists = e.futureProtocolParametersByVersion[version.Version]; !hashExists {
 				return iotago.Identifier{}, ierrors.Errorf("protocol parameters for version %d are not set", version.Version)
 			}
 		}
