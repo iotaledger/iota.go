@@ -21,6 +21,7 @@ const (
 	betaPerYear                  float64 = 1 / 3.0
 	slotsPerEpochExponent                = 13
 	slotDurationSeconds                  = 10
+	bitsExponent                         = 63
 	generationRate                       = 1
 	generationRateExponent               = 27
 	decayFactorsExponent                 = 32
@@ -36,7 +37,8 @@ var (
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 100, 100, 100),
 		iotago.WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
 		iotago.WithTimeProviderOptions(100, slotDurationSeconds, slotsPerEpochExponent),
-		iotago.WithManaOptions(generationRate,
+		iotago.WithManaOptions(bitsExponent,
+			generationRate,
 			generationRateExponent,
 			tpkg.ManaDecayFactors(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorsExponent),
 			decayFactorsExponent,
