@@ -115,6 +115,10 @@ type ProtocolParameters interface {
 
 	StakingUnbondingPeriod() EpochIndex
 
+	CommitteeSize() uint16
+
+	ValidationBlocksPerSlot() uint16
+
 	LivenessThreshold() SlotIndex
 
 	MinCommittableAge() SlotIndex

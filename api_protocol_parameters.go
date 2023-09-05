@@ -46,7 +46,7 @@ type basicProtocolParameters struct {
 	// CommitteeSize is the number of validators in the validator committee.
 	CommitteeSize uint16 `serix:"16,mapKey=committeeSize"`
 	// ValidationBlocksPerSlot is the number of validation blocks that each validator should issue each slot.
-	ValidationBlocksPerSlot uint8 `serix:"17,mapKey=validationBlocksPerSlot"`
+	ValidationBlocksPerSlot uint16 `serix:"17,mapKey=validationBlocksPerSlot"`
 
 	// LivenessThreshold is used by tip-selection to determine the if a block is eligible by evaluating issuingTimes
 	// and commitments in its past-cone to ATT and lastCommittedSlot respectively.

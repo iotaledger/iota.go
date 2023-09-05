@@ -89,7 +89,7 @@ func (p *V3ProtocolParameters) CommitteeSize() uint16 {
 	return p.basicProtocolParameters.CommitteeSize
 }
 
-func (p *V3ProtocolParameters) ValidationBlocksPerSlot() uint8 {
+func (p *V3ProtocolParameters) ValidationBlocksPerSlot() uint16 {
 	return p.basicProtocolParameters.ValidationBlocksPerSlot
 }
 
@@ -247,7 +247,7 @@ func WithCongestionControlOptions(rmcMin Mana, rmcIncrease Mana, rmcDecrease Man
 	}
 }
 
-func WithStakingOptions(unbondingPeriod EpochIndex, committeeSize uint16, validationBlocksPerSlot uint8) options.Option[V3ProtocolParameters] {
+func WithStakingOptions(unbondingPeriod EpochIndex, committeeSize uint16, validationBlocksPerSlot uint16) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.StakingUnbondingPeriod = unbondingPeriod
 		p.basicProtocolParameters.CommitteeSize = committeeSize
