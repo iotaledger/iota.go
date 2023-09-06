@@ -88,7 +88,7 @@ func NewManaDecayProvider(
 	return &ManaDecayProvider{
 		timeProvider:                 timeProvider,
 		slotsPerEpochExponent:        uint64(slotsPerEpochExponent),
-		bitsExponent:                 uint64(manaStructure.ManaBitsExponent),
+		bitsExponent:                 uint64(manaStructure.ManaBitsCount),
 		generationRate:               uint64(manaStructure.ManaGenerationRate),
 		generationRateExponent:       uint64(manaStructure.ManaGenerationRateExponent),
 		decayFactors:                 lo.Map(manaStructure.ManaDecayFactors, func(factor uint32) uint64 { return uint64(factor) }),

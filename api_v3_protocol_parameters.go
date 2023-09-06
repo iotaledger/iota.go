@@ -208,9 +208,9 @@ func WithTimeProviderOptions(genesisTimestamp int64, slotDuration uint8, slotsPe
 	}
 }
 
-func WithManaOptions(manaBitsExponent uint8, manaGenerationRate uint8, manaGenerationRateExponent uint8, manaDecayFactors []uint32, manaDecayFactorsExponent uint8, manaDecayFactorEpochsSum uint32, manaDecayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
+func WithManaOptions(manaBitsCount uint8, manaGenerationRate uint8, manaGenerationRateExponent uint8, manaDecayFactors []uint32, manaDecayFactorsExponent uint8, manaDecayFactorEpochsSum uint32, manaDecayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.ManaStructure.ManaBitsExponent = manaBitsExponent
+		p.basicProtocolParameters.ManaStructure.ManaBitsCount = manaBitsCount
 		p.basicProtocolParameters.ManaStructure.ManaGenerationRate = manaGenerationRate
 		p.basicProtocolParameters.ManaStructure.ManaGenerationRateExponent = manaGenerationRateExponent
 		p.basicProtocolParameters.ManaStructure.ManaDecayFactors = manaDecayFactors
