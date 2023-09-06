@@ -23,6 +23,11 @@ func ParseEd25519AddressFromHexString(hexAddr string) (*Ed25519Address, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if len(addrBytes) < Ed25519AddressBytesLength {
+		return nil, ierrors.New("invalid Ed25519Address length")
+	}
+
 	addr := &Ed25519Address{}
 	copy(addr[:], addrBytes)
 

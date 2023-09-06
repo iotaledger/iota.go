@@ -4,6 +4,7 @@ package iotago
 import (
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -21,6 +22,11 @@ func ParseNFTAddressFromHexString(hexAddr string) (*NFTAddress, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if len(addrBytes) < NFTAddressBytesLength {
+		return nil, ierrors.New("invalid NFTAddress length")
+	}
+
 	addr := &NFTAddress{}
 	copy(addr[:], addrBytes)
 
