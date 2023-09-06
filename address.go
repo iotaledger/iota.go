@@ -72,6 +72,7 @@ type Address interface {
 	Sizer
 	NonEphemeralObject
 	fmt.Stringer
+	AddressCapabilities
 
 	// Type returns the type of the address.
 	Type() AddressType
@@ -87,6 +88,17 @@ type Address interface {
 
 	// Clone clones the Address.
 	Clone() Address
+}
+
+type AddressCapabilities interface {
+	CanReceiveNativeTokens() bool
+	CanReceiveMana() bool
+	CanReceiveOutputsWithTimelockUnlockCondition() bool
+	CanReceiveOutputsWithExpirationUnlockCondition() bool
+	CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool
+	CanReceiveAccountOutputs() bool
+	CanReceiveNFTOutputs() bool
+	CanReceiveDelegationOutputs() bool
 }
 
 // DirectUnlockableAddress is a type of Address which can be directly unlocked.

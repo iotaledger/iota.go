@@ -101,6 +101,38 @@ func (iacAddr *ImplicitAccountCreationAddress) Size() int {
 	return Ed25519AddressSerializedBytesSize
 }
 
+func (iacAddr *ImplicitAccountCreationAddress) CanReceiveNativeTokens() bool {
+	return false
+}
+
+func (iacAddr *ImplicitAccountCreationAddress) CanReceiveMana() bool {
+	return true
+}
+
+func (iacAddr *ImplicitAccountCreationAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+	return false
+}
+
+func (iacAddr *ImplicitAccountCreationAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
+	return false
+}
+
+func (iacAddr *ImplicitAccountCreationAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return false
+}
+
+func (iacAddr *ImplicitAccountCreationAddress) CanReceiveAccountOutputs() bool {
+	return false
+}
+
+func (iacAddr *ImplicitAccountCreationAddress) CanReceiveNFTOutputs() bool {
+	return false
+}
+
+func (iacAddr *ImplicitAccountCreationAddress) CanReceiveDelegationOutputs() bool {
+	return false
+}
+
 // ImplicitAccountCreationAddressFromPubKey returns the address belonging to the given Ed25519 public key.
 func ImplicitAccountCreationAddressFromPubKey(pubKey ed25519.PublicKey) *ImplicitAccountCreationAddress {
 	address := blake2b.Sum256(pubKey[:])

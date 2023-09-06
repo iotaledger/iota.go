@@ -109,6 +109,38 @@ func (accountAddr *AccountAddress) Size() int {
 	return AccountAddressSerializedBytesSize
 }
 
+func (accountAddr *AccountAddress) CanReceiveNativeTokens() bool {
+	return true
+}
+
+func (accountAddr *AccountAddress) CanReceiveMana() bool {
+	return true
+}
+
+func (accountAddr *AccountAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+	return true
+}
+
+func (accountAddr *AccountAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
+	return true
+}
+
+func (accountAddr *AccountAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return true
+}
+
+func (accountAddr *AccountAddress) CanReceiveAccountOutputs() bool {
+	return true
+}
+
+func (accountAddr *AccountAddress) CanReceiveNFTOutputs() bool {
+	return true
+}
+
+func (accountAddr *AccountAddress) CanReceiveDelegationOutputs() bool {
+	return true
+}
+
 // AccountAddressFromOutputID returns the account address computed from a given OutputID.
 func AccountAddressFromOutputID(outputID OutputID) AccountAddress {
 	return blake2b.Sum256(outputID[:])

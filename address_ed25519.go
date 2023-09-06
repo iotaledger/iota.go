@@ -111,6 +111,38 @@ func (edAddr *Ed25519Address) Size() int {
 	return Ed25519AddressSerializedBytesSize
 }
 
+func (edAddr *Ed25519Address) CanReceiveNativeTokens() bool {
+	return true
+}
+
+func (edAddr *Ed25519Address) CanReceiveMana() bool {
+	return true
+}
+
+func (edAddr *Ed25519Address) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+	return true
+}
+
+func (edAddr *Ed25519Address) CanReceiveOutputsWithExpirationUnlockCondition() bool {
+	return true
+}
+
+func (edAddr *Ed25519Address) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return true
+}
+
+func (edAddr *Ed25519Address) CanReceiveAccountOutputs() bool {
+	return true
+}
+
+func (edAddr *Ed25519Address) CanReceiveNFTOutputs() bool {
+	return true
+}
+
+func (edAddr *Ed25519Address) CanReceiveDelegationOutputs() bool {
+	return true
+}
+
 // Ed25519AddressFromPubKey returns the address belonging to the given Ed25519 public key.
 func Ed25519AddressFromPubKey(pubKey ed25519.PublicKey) *Ed25519Address {
 	address := blake2b.Sum256(pubKey[:])

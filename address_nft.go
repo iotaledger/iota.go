@@ -109,6 +109,38 @@ func (nftAddr *NFTAddress) Size() int {
 	return NFTAddressSerializedBytesSize
 }
 
+func (nftAddr *NFTAddress) CanReceiveNativeTokens() bool {
+	return true
+}
+
+func (nftAddr *NFTAddress) CanReceiveMana() bool {
+	return true
+}
+
+func (nftAddr *NFTAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+	return true
+}
+
+func (nftAddr *NFTAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
+	return true
+}
+
+func (nftAddr *NFTAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return true
+}
+
+func (nftAddr *NFTAddress) CanReceiveAccountOutputs() bool {
+	return true
+}
+
+func (nftAddr *NFTAddress) CanReceiveNFTOutputs() bool {
+	return true
+}
+
+func (nftAddr *NFTAddress) CanReceiveDelegationOutputs() bool {
+	return true
+}
+
 // NFTAddressFromOutputID returns the NFT address computed from a given OutputID.
 func NFTAddressFromOutputID(outputID OutputID) NFTAddress {
 	return blake2b.Sum256(outputID[:])
