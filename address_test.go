@@ -2,10 +2,14 @@
 package iotago_test
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/crypto/ed25519"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -18,6 +22,16 @@ func TestAddressDeSerialize(t *testing.T) {
 			target: &iotago.Ed25519Address{},
 		},
 		{
+			name:   "ok - RestrictedEd25519Address with capabilities",
+			source: tpkg.RandRestrictedEd25519Address([]byte{0xff}),
+			target: &iotago.RestrictedEd25519Address{Capabilities: []byte{0xff}},
+		},
+		{
+			name:   "ok - RestrictedEd25519Address without capabilities",
+			source: tpkg.RandRestrictedEd25519Address([]byte{0x0}),
+			target: &iotago.RestrictedEd25519Address{},
+		},
+		{
 			name:   "ok - AccountAddress",
 			source: tpkg.RandAccountAddress(),
 			target: &iotago.AccountAddress{},
@@ -26,6 +40,11 @@ func TestAddressDeSerialize(t *testing.T) {
 			name:   "ok - NFTAddress",
 			source: tpkg.RandNFTAddress(),
 			target: &iotago.NFTAddress{},
+		},
+		{
+			name:   "ok - ImplicitAccountCreationAddress",
+			source: tpkg.RandImplicitAccountCreationAddress(),
+			target: &iotago.ImplicitAccountCreationAddress{},
 		},
 	}
 
@@ -70,5 +89,67 @@ func TestParseBech32(t *testing.T) {
 			assert.Equal(t, tt.network, network)
 			assert.Equal(t, tt.addr, addr)
 		})
+	}
+}
+
+func TestRestrictedEd25519AddressCapabilities(t *testing.T) {
+	pubKey := ed25519.PublicKey(tpkg.Rand32ByteArray())
+	addresses := []*iotago.RestrictedEd25519Address{
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), true, false, false, false, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, true, false, false, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, true, false, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, true, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, false, true, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, false, false, true, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, false, false, false, true, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, false, false, false, false, true),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), true, true, true, true, true, true, true, true),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, false, false, false, false, false),
+	}
+
+	for i, addr := range addresses {
+		fmt.Println(addr.Bech32(iotago.PrefixMainnet))
+
+		j, err := tpkg.TestAPI.JSONEncode(addr)
+		require.NoError(t, err)
+		fmt.Println(string(j))
+
+		b, err := tpkg.TestAPI.Encode(addr)
+		require.NoError(t, err)
+		fmt.Println(hexutil.Encode(b))
+
+		addrChecks := []func() bool{
+			addr.CanReceiveNativeTokens,
+			addr.CanReceiveMana,
+			addr.CanReceiveOutputsWithTimelockUnlockCondition,
+			addr.CanReceiveOutputsWithExpirationUnlockCondition,
+			addr.CanReceiveOutputsWithStorageDepositReturnUnlockCondition,
+			addr.CanReceiveAccountOutputs,
+			addr.CanReceiveNFTOutputs,
+			addr.CanReceiveDelegationOutputs,
+		}
+
+		require.Equal(t, addr.Size(), len(b))
+
+		switch i {
+		default:
+			for checkIndex, check := range addrChecks {
+				require.Equal(t, check(), i == checkIndex)
+			}
+			require.Equal(t, addr.Capabilities, []byte{0 | 1<<i})
+			require.Equal(t, addr.Size(), 35)
+		case 8:
+			for _, check := range addrChecks {
+				require.True(t, check())
+			}
+			require.Equal(t, addr.Capabilities, []byte{0xFF})
+			require.Equal(t, addr.Size(), 35)
+		case 9:
+			for _, check := range addrChecks {
+				require.False(t, check())
+			}
+			require.Equal(t, addr.Capabilities, []byte(nil))
+			require.Equal(t, addr.Size(), 34)
+		}
 	}
 }

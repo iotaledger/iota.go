@@ -142,7 +142,7 @@ func (redAddr *RestrictedEd25519Address) Size() int {
 
 func (redAddr *RestrictedEd25519Address) hasBit(bit int) bool {
 	byteIndex := bit / 8
-	if len(redAddr.Capabilities) < byteIndex {
+	if len(redAddr.Capabilities) <= byteIndex {
 		return false
 	}
 	bitIndex := bit % 8
