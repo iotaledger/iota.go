@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 )
@@ -45,6 +44,10 @@ type RewardsParameters struct {
 	DecayBalancingConstant uint64 `serix:"5,mapKey=decayBalancingConstant"`
 	// PoolCoefficientExponent is the exponent used for shifting operation in the pool rewards calculations.
 	PoolCoefficientExponent uint8 `serix:"6,mapKey=poolCoefficientExponent"`
+	// ComputedInitialReward is the initial reward calculated from the parameters.
+	ComputedInitialReward uint64
+	// ComputedFinalReward is the final reward calculated from ComputedInitialReward and the DecayBalancingConstant.
+	ComputedFinalReward uint64
 }
 
 func (r RewardsParameters) Equals(other RewardsParameters) bool {
@@ -56,31 +59,12 @@ func (r RewardsParameters) Equals(other RewardsParameters) bool {
 		r.PoolCoefficientExponent == other.PoolCoefficientExponent
 }
 
-func (r RewardsParameters) TargetReward(index EpochIndex, tokenSupply uint64, generationRate, generationRateExponent, slotsPerEpochExponent uint8, api API) (Mana, error) {
-	// final reward, after bootstrapping phase
-	result, err := safemath.SafeMul(tokenSupply, r.RewardsManaShareCoefficient)
-	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to calculate target reward due to tokenSupply and RewardsManaShareCoefficient multiplication overflow")
-	}
-	result, err = safemath.SafeMul(result, uint64(generationRate))
-	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to calculate target reward due to multiplication with generationRate overflow")
-	}
-	subExponent, err := safemath.SafeSub(generationRateExponent, slotsPerEpochExponent)
-	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow")
-	}
-	finalReward := result >> subExponent
+func (r RewardsParameters) TargetReward(index EpochIndex, api API) (Mana, error) {
 	if index > r.BootstrappingDuration {
-		return Mana(finalReward), nil
+		return Mana(r.ComputedFinalReward), nil
 	}
-	// initial reward for bootstrapping phase
-	initialReward, err := safemath.SafeMul(finalReward, r.DecayBalancingConstant)
-	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to calculate initial reward due to finalReward and DecayBalancingConstant multiplication overflow")
-	}
-	initialReward = initialReward >> r.DecayBalancingConstantExponent
-	decayedInitialReward, err := api.ManaDecayProvider().RewardsWithDecay(Mana(initialReward), index, index)
+
+	decayedInitialReward, err := api.ManaDecayProvider().RewardsWithDecay(Mana(r.ComputedInitialReward), index, index)
 	if err != nil {
 		return 0, ierrors.Errorf("failed to calculate decayed initial reward: %w", err)
 	}

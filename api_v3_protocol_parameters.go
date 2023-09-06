@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/iotaledger/hive.go/core/safemath"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/runtime/options"
 )
 
@@ -289,5 +291,31 @@ func WithRewardsOptions(validatorBlocksPerSlot, profitMarginExponent, decayBalan
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent = decayBalancingConstantExponent
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant = decayBalancingConstant
 		p.basicProtocolParameters.RewardsParameters.PoolCoefficientExponent = poolCoefficientExponent
+
+		// final reward, after bootstrapping phase
+		result, err := safemath.SafeMul(uint64(p.basicProtocolParameters.TokenSupply), p.basicProtocolParameters.RewardsParameters.RewardsManaShareCoefficient)
+		if err != nil {
+			panic(ierrors.Wrap(err, "failed to calculate target reward due to tokenSupply and RewardsManaShareCoefficient multiplication overflow"))
+		}
+
+		result, err = safemath.SafeMul(result, uint64(p.basicProtocolParameters.ManaParameters.ManaGenerationRate))
+		if err != nil {
+			panic(ierrors.Wrap(err, "failed to calculate target reward due to multiplication with generationRate overflow"))
+		}
+
+		subExponent, err := safemath.SafeSub(p.basicProtocolParameters.ManaParameters.ManaGenerationRateExponent, p.basicProtocolParameters.SlotsPerEpochExponent)
+		if err != nil {
+			panic(ierrors.Wrap(err, "failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow"))
+		}
+
+		p.basicProtocolParameters.RewardsParameters.ComputedFinalReward = result >> subExponent
+
+		// initial reward for bootstrapping phase
+		initialReward, err := safemath.SafeMul(p.basicProtocolParameters.RewardsParameters.ComputedFinalReward, p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant)
+		if err != nil {
+			panic(ierrors.Wrap(err, "failed to calculate initial reward due to finalReward and DecayBalancingConstant multiplication overflow"))
+		}
+
+		p.basicProtocolParameters.RewardsParameters.ComputedInitialReward = initialReward >> uint64(p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent)
 	}
 }
