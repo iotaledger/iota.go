@@ -25,6 +25,8 @@ const (
 	AddressAccount AddressType = 8
 	// AddressNFT denotes an NFT address.
 	AddressNFT AddressType = 16
+	// AddressImplicitAccountCreation denotes an Ed25519 address that can only be used to create an implicit account.
+	AddressImplicitAccountCreation AddressType = 24
 )
 
 func (addrType AddressType) String() string {
@@ -32,17 +34,23 @@ func (addrType AddressType) String() string {
 		return fmt.Sprintf("unknown address type: %d", addrType)
 	}
 
-	return addressNames[addrType]
+	addressName := addressNames[addrType]
+	if addressName == "" {
+		return fmt.Sprintf("unknown address type: %d", addrType)
+	}
+
+	return addressName
 }
 
 // AddressTypeSet is a set of AddressType.
 type AddressTypeSet map[AddressType]struct{}
 
 var (
-	addressNames = [AddressNFT + 1]string{
+	addressNames = [AddressImplicitAccountCreation + 1]string{
 		"Ed25519Address", "", "", "", "", "", "", "",
 		"AccountAddress", "", "", "", "", "", "", "",
-		"NFTAddress",
+		"NFTAddress", "", "", "", "", "", "", "",
+		"ImplicitAccountCreationAddress",
 	}
 )
 
@@ -123,6 +131,8 @@ func newAddress(addressType byte) (address Address, err error) {
 		return &AccountAddress{}, nil
 	case AddressNFT:
 		return &NFTAddress{}, nil
+	case AddressImplicitAccountCreation:
+		return &ImplicitAccountCreationAddress{}, nil
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
 	}
