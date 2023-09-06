@@ -229,3 +229,16 @@ func (e *EpochBasedProvider) VersionForEpoch(epoch iotago.EpochIndex) iotago.Ver
 
 	return e.protocolVersions.VersionForEpoch(epoch)
 }
+
+func (e *EpochBasedProvider) VersionForSlot(slot iotago.SlotIndex) iotago.Version {
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
+
+	epoch := e.latestAPI.TimeProvider().EpochFromSlot(slot)
+
+	return e.protocolVersions.VersionForEpoch(epoch)
+}
+
+func (e *EpochBasedProvider) IsFutureVersion(version iotago.Version) bool {
+	return e.CurrentAPI().Version() < version
+}
