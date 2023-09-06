@@ -6,7 +6,6 @@ import (
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	"github.com/iotaledger/iota.go/v4/bech32"
 )
 
@@ -21,6 +20,8 @@ type AddressType byte
 const (
 	// AddressEd25519 denotes an Ed25519 address.
 	AddressEd25519 AddressType = 0
+	// AddressRestrictedEd25519 denotes an Ed25519 address that can only receive basic outputs without native tokens or timelocks.
+	AddressRestrictedEd25519 AddressType = 1
 	// AddressAccount denotes an Account address.
 	AddressAccount AddressType = 8
 	// AddressNFT denotes an NFT address.
@@ -47,7 +48,8 @@ type AddressTypeSet map[AddressType]struct{}
 
 var (
 	addressNames = [AddressImplicitAccountCreation + 1]string{
-		"Ed25519Address", "", "", "", "", "", "", "",
+		"Ed25519Address",
+		"RestrictedEd25519Address", "", "", "", "", "", "",
 		"AccountAddress", "", "", "", "", "", "", "",
 		"NFTAddress", "", "", "", "", "", "", "",
 		"ImplicitAccountCreationAddress",
@@ -67,8 +69,6 @@ const (
 
 // Address describes a general address.
 type Address interface {
-	serix.Serializable
-	serix.Deserializable
 	Sizer
 	NonEphemeralObject
 	fmt.Stringer
@@ -127,6 +127,8 @@ func newAddress(addressType byte) (address Address, err error) {
 	switch AddressType(addressType) {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
+	case AddressRestrictedEd25519:
+		return &RestrictedEd25519Address{}, nil
 	case AddressAccount:
 		return &AccountAddress{}, nil
 	case AddressNFT:
