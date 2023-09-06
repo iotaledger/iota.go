@@ -2,6 +2,7 @@ package iotago
 
 import "github.com/iotaledger/hive.go/lo"
 
+// Mana Structure defines the parameters used in mana calculations.
 type ManaStructure struct {
 	// ManaBitsExponent is the number of bits used to represent Mana expressed as an exponent of 2.
 	ManaBitsExponent uint8 `serix:"0,mapKey=manaBitsExponent"`
