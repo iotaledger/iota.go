@@ -128,7 +128,6 @@ func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
 	)
 	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(), 0)
 	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(iotago.WithVersion(4)), 3)
-	apiProvider.Initialize(0)
 
 	timeProvider := apiProvider.CurrentAPI().TimeProvider()
 
@@ -163,7 +162,6 @@ func TestProtocolBlock_Commitments(t *testing.T) {
 			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(3, 11, 21, 4),
 		), 0)
-	apiProvider.Initialize(0)
 
 	require.ErrorIs(t, createBlockAtSlot(t, 100, 78, apiProvider), iotago.ErrCommitmentTooOld)
 
@@ -184,7 +182,6 @@ func TestProtocolBlock_Commitments1(t *testing.T) {
 			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(3, 7, 21, 4),
 		), 0)
-	apiProvider.Initialize(0)
 
 	require.ErrorIs(t, createBlockAtSlot(t, 10, 4, apiProvider), iotago.ErrCommitmentTooRecent)
 
@@ -257,7 +254,6 @@ func TestProtocolBlock_TransactionCommitmentInput(t *testing.T) {
 			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(3, 11, 21, 4),
 		), 0)
-	apiProvider.Initialize(0)
 
 	commitmentInputTooOld, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
 		AddInput(&builder.TxInput{

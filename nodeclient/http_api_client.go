@@ -234,7 +234,6 @@ func New(baseURL string, opts ...ClientOption) (*Client, error) {
 	for _, params := range info.ProtocolParameters {
 		client.apiProvider.AddProtocolParametersAtEpoch(params.Parameters, params.StartEpoch)
 	}
-	client.apiProvider.Initialize(info.Status.LatestCommitmentID.Index())
 
 	return client, nil
 }
@@ -343,8 +342,7 @@ func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error)
 		return nil, err
 	}
 
-	// TODO: do we need to set this?
-	// client.apiProvider.SetCurrentSlot(res.Status.LatestCommitmentID.Index())
+	client.apiProvider.SetCurrentSlot(res.Status.LatestCommitmentID.Index())
 
 	return res, nil
 }
