@@ -2,9 +2,11 @@
 package iotago
 
 import (
+	"context"
+
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -15,34 +17,6 @@ const (
 	// AccountAddressSerializedBytesSize is the size of a serialized Account address with its type denoting byte.
 	AccountAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + AccountAddressBytesLength
 )
-
-// ParseAccountAddressFromHexString parses the given hex string into an AccountAddress.
-func ParseAccountAddressFromHexString(hexAddr string) (*AccountAddress, error) {
-	addrBytes, err := hexutil.DecodeHex(hexAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(addrBytes) < AccountAddressBytesLength {
-		return nil, ierrors.New("invalid AccountAddress length")
-	}
-
-	addr := &AccountAddress{}
-	copy(addr[:], addrBytes)
-
-	return addr, nil
-}
-
-// MustParseAccountAddressFromHexString parses the given hex string into an AccountAddress.
-// It panics if the hex address is invalid.
-func MustParseAccountAddressFromHexString(hexAddr string) *AccountAddress {
-	addr, err := ParseAccountAddressFromHexString(hexAddr)
-	if err != nil {
-		panic(err)
-	}
-
-	return addr
-}
 
 // AccountAddress defines an Account address.
 // An AccountAddress is the Blake2b-256 hash of the OutputID which created it.
@@ -69,11 +43,11 @@ func (accountAddr *AccountAddress) Clone() Address {
 }
 
 func (accountAddr *AccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(AccountAddressSerializedBytesSize)
+	return rentStruct.VBFactorData.Multiply(VBytes(accountAddr.Size()))
 }
 
 func (accountAddr *AccountAddress) Key() string {
-	return string(append([]byte{byte(AddressAccount)}, (*accountAddr)[:]...))
+	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), accountAddr)))
 }
 
 func (accountAddr *AccountAddress) Chain() ChainID {
@@ -102,7 +76,7 @@ func (accountAddr *AccountAddress) Bech32(hrp NetworkPrefix) string {
 }
 
 func (accountAddr *AccountAddress) String() string {
-	return hexutil.EncodeHex(accountAddr[:])
+	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), accountAddr)))
 }
 
 func (accountAddr *AccountAddress) Size() int {

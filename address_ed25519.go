@@ -1,11 +1,13 @@
 package iotago
 
 import (
+	"context"
 	"crypto/ed25519"
 
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -16,34 +18,6 @@ const (
 	// Ed25519AddressSerializedBytesSize is the size of a serialized Ed25519 address with its type denoting byte.
 	Ed25519AddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + Ed25519AddressBytesLength
 )
-
-// ParseEd25519AddressFromHexString parses the given hex string into an Ed25519Address.
-func ParseEd25519AddressFromHexString(hexAddr string) (*Ed25519Address, error) {
-	addrBytes, err := hexutil.DecodeHex(hexAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(addrBytes) < Ed25519AddressBytesLength {
-		return nil, ierrors.New("invalid Ed25519Address length")
-	}
-
-	addr := &Ed25519Address{}
-	copy(addr[:], addrBytes)
-
-	return addr, nil
-}
-
-// MustParseEd25519AddressFromHexString parses the given hex string into an Ed25519Address.
-// It panics if the hex address is invalid.
-func MustParseEd25519AddressFromHexString(hexAddr string) *Ed25519Address {
-	addr, err := ParseEd25519AddressFromHexString(hexAddr)
-	if err != nil {
-		panic(err)
-	}
-
-	return addr
-}
 
 // Ed25519Address defines an Ed25519 address.
 // An Ed25519Address is the Blake2b-256 hash of an Ed25519 public key.
@@ -70,11 +44,11 @@ func (edAddr *Ed25519Address) Clone() Address {
 }
 
 func (edAddr *Ed25519Address) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(Ed25519AddressSerializedBytesSize)
+	return rentStruct.VBFactorData.Multiply(VBytes(edAddr.Size()))
 }
 
 func (edAddr *Ed25519Address) Key() string {
-	return string(append([]byte{byte(AddressEd25519)}, (*edAddr)[:]...))
+	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), edAddr)))
 }
 
 func (edAddr *Ed25519Address) Unlock(msg []byte, sig Signature) error {

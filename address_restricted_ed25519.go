@@ -2,13 +2,14 @@ package iotago
 
 import (
 	"bytes"
+	"context"
 	"crypto/ed25519"
 
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -21,45 +22,6 @@ const (
 type RestrictedEd25519Address struct {
 	PubKeyHash   [Ed25519AddressBytesLength]byte `serix:"0"`
 	Capabilities AddressCapabilitiesBitMask      `serix:"1,lengthPrefixType=uint8,maxLen=1"`
-}
-
-// ParseRestrictedEd25519AddressFromHexString parses the given hex string into an RestrictedEd25519Address.
-func ParseRestrictedEd25519AddressFromHexString(hexAddr string) (*RestrictedEd25519Address, error) {
-	addrBytes, err := hexutil.DecodeHex(hexAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(addrBytes) < RestrictedEd25519AddressMinBytesLength {
-		return nil, ierrors.New("invalid RestrictedEd25519Address length")
-	}
-
-	addr := &RestrictedEd25519Address{}
-	copy(addr.PubKeyHash[:], addrBytes[:Ed25519AddressBytesLength])
-
-	capabilitiesLength := int(addrBytes[Ed25519AddressBytesLength])
-	if capabilitiesLength > RestrictedEd25519AddressMaxCapabilitiesLength {
-		return nil, ierrors.New("invalid RestrictedEd25519Address capabilities length")
-	}
-
-	if len(addrBytes) < RestrictedEd25519AddressMinBytesLength+capabilitiesLength {
-		return nil, ierrors.New("invalid RestrictedEd25519Address length")
-	}
-
-	copy(addr.Capabilities[:], addrBytes[Ed25519AddressBytesLength:capabilitiesLength])
-
-	return addr, nil
-}
-
-// MustParseRestrictedEd25519AddressFromHexString parses the given hex string into an RestrictedEd25519Address.
-// It panics if the hex address is invalid.
-func MustParseRestrictedEd25519AddressFromHexString(hexAddr string) *RestrictedEd25519Address {
-	addr, err := ParseRestrictedEd25519AddressFromHexString(hexAddr)
-	if err != nil {
-		panic(err)
-	}
-
-	return addr
 }
 
 func (redAddr *RestrictedEd25519Address) Clone() Address {
@@ -75,14 +37,7 @@ func (redAddr *RestrictedEd25519Address) VBytes(rentStruct *RentStructure, _ VBy
 }
 
 func (redAddr *RestrictedEd25519Address) Key() string {
-	return string(
-		byteutils.ConcatBytes(
-			[]byte{byte(AddressRestrictedEd25519)},
-			redAddr.PubKeyHash[:],
-			[]byte{byte(len(redAddr.Capabilities))},
-			redAddr.Capabilities,
-		),
-	)
+	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), redAddr)))
 }
 
 func (redAddr *RestrictedEd25519Address) Unlock(msg []byte, sig Signature) error {
@@ -114,19 +69,12 @@ func (redAddr *RestrictedEd25519Address) Bech32(hrp NetworkPrefix) string {
 }
 
 func (redAddr *RestrictedEd25519Address) String() string {
-	return hexutil.EncodeHex(
-		byteutils.ConcatBytes(
-			redAddr.PubKeyHash[:],
-			[]byte{byte(len(redAddr.Capabilities))},
-			redAddr.Capabilities,
-		),
-	)
+	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), redAddr)))
 }
 
 func (redAddr *RestrictedEd25519Address) Size() int {
 	return Ed25519AddressSerializedBytesSize +
-		serializer.SmallTypeDenotationByteSize +
-		len(redAddr.Capabilities)
+		redAddr.Capabilities.Size()
 }
 
 func (redAddr *RestrictedEd25519Address) CanReceiveNativeTokens() bool {

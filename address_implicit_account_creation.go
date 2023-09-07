@@ -1,11 +1,13 @@
 package iotago
 
 import (
+	"context"
 	"crypto/ed25519"
 
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -60,11 +62,11 @@ func (iacAddr *ImplicitAccountCreationAddress) Clone() Address {
 }
 
 func (iacAddr *ImplicitAccountCreationAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(Ed25519AddressSerializedBytesSize)
+	return rentStruct.VBFactorData.Multiply(VBytes(iacAddr.Size()))
 }
 
 func (iacAddr *ImplicitAccountCreationAddress) Key() string {
-	return string(append([]byte{byte(AddressImplicitAccountCreation)}, (*iacAddr)[:]...))
+	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), iacAddr)))
 }
 
 func (iacAddr *ImplicitAccountCreationAddress) Unlock(msg []byte, sig Signature) error {
@@ -94,7 +96,7 @@ func (iacAddr *ImplicitAccountCreationAddress) Bech32(hrp NetworkPrefix) string 
 }
 
 func (iacAddr *ImplicitAccountCreationAddress) String() string {
-	return hexutil.EncodeHex(iacAddr[:])
+	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), iacAddr)))
 }
 
 func (iacAddr *ImplicitAccountCreationAddress) Size() int {

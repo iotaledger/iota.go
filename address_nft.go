@@ -2,9 +2,11 @@
 package iotago
 
 import (
+	"context"
+
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -15,34 +17,6 @@ const (
 	// NFTAddressSerializedBytesSize is the size of a serialized NFT address with its type denoting byte.
 	NFTAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + NFTAddressBytesLength
 )
-
-// ParseNFTAddressFromHexString parses the given hex string into an NFTAddress.
-func ParseNFTAddressFromHexString(hexAddr string) (*NFTAddress, error) {
-	addrBytes, err := hexutil.DecodeHex(hexAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(addrBytes) < NFTAddressBytesLength {
-		return nil, ierrors.New("invalid NFTAddress length")
-	}
-
-	addr := &NFTAddress{}
-	copy(addr[:], addrBytes)
-
-	return addr, nil
-}
-
-// MustParseNFTAddressFromHexString parses the given hex string into an NFTAddress.
-// It panics if the hex address is invalid.
-func MustParseNFTAddressFromHexString(hexAddr string) *NFTAddress {
-	addr, err := ParseNFTAddressFromHexString(hexAddr)
-	if err != nil {
-		panic(err)
-	}
-
-	return addr
-}
 
 // NFTAddress defines an NFT address.
 // An NFTAddress is the Blake2b-256 hash of the OutputID which created it.
@@ -69,11 +43,11 @@ func (nftAddr *NFTAddress) Clone() Address {
 }
 
 func (nftAddr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(NFTAddressSerializedBytesSize)
+	return rentStruct.VBFactorData.Multiply(VBytes(nftAddr.Size()))
 }
 
 func (nftAddr *NFTAddress) Key() string {
-	return string(append([]byte{byte(AddressNFT)}, (*nftAddr)[:]...))
+	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), nftAddr)))
 }
 
 func (nftAddr *NFTAddress) Chain() ChainID {
@@ -102,7 +76,7 @@ func (nftAddr *NFTAddress) Bech32(hrp NetworkPrefix) string {
 }
 
 func (nftAddr *NFTAddress) String() string {
-	return hexutil.EncodeHex(nftAddr[:])
+	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), nftAddr)))
 }
 
 func (nftAddr *NFTAddress) Size() int {

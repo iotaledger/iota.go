@@ -1,5 +1,7 @@
 package iotago
 
+import "github.com/iotaledger/hive.go/serializer/v2"
+
 const (
 	canReceiveNativeTokensBitIndex = iota
 	canReceiveManaBitIndex
@@ -64,4 +66,8 @@ func (bm AddressCapabilitiesBitMask) CanReceiveNFTOutputs() bool {
 
 func (bm AddressCapabilitiesBitMask) CanReceiveDelegationOutputs() bool {
 	return bm.hasBit(canReceiveDelegationOutputsBitIndex)
+}
+
+func (bm AddressCapabilitiesBitMask) Size() int {
+	return serializer.SmallTypeDenotationByteSize + len(bm)
 }
