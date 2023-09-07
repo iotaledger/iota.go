@@ -40,6 +40,7 @@ func (addr *RestrictedEd25519Address) Unlock(msg []byte, sig Signature) error {
 	}
 
 	ed25519Addr := Ed25519Address(addr.PubKeyHash)
+
 	return edSig.Valid(msg, &ed25519Addr)
 }
 

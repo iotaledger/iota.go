@@ -124,6 +124,7 @@ func TestNonRestrictedAddressCapabilities(t *testing.T) {
 	}
 
 	for _, addr := range addresses {
+		//nolint:exhaustive // we have a default case that fails
 		switch addr.Type() {
 		case iotago.AddressEd25519:
 			require.False(t, addr.CannotReceiveNativeTokens())

@@ -67,6 +67,7 @@ func (bm AddressCapabilitiesBitMask) hasBit(bit uint) bool {
 		return false
 	}
 	bitIndex := bit % 8
+
 	return bm[byteIndex]&(1<<bitIndex) > 0
 }
 
