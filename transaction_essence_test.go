@@ -129,7 +129,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							MaximumSupply: big.NewInt(50),
 						},
 						Conditions: iotago.FoundryOutputUnlockConditions{
-							&iotago.ImmutableAccountUnlockCondition{Address: &accountAddress},
+							&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
 						},
 						Features: nil,
 					},
@@ -143,7 +143,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							MaximumSupply: big.NewInt(50),
 						},
 						Conditions: iotago.FoundryOutputUnlockConditions{
-							&iotago.ImmutableAccountUnlockCondition{Address: &accountAddress},
+							&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
 						},
 						Features: nil,
 					},

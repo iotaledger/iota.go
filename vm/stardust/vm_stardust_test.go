@@ -1303,7 +1303,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: &accountIdent1},
+							&iotago.AddressUnlockCondition{Address: accountIdent1},
 						},
 					},
 				},
@@ -1312,7 +1312,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						Amount: 100,
 						NFTID:  nftIdent1.NFTID(),
 						Conditions: iotago.NFTOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: &accountIdent1},
+							&iotago.AddressUnlockCondition{Address: accountIdent1},
 						},
 					},
 				},
@@ -1360,7 +1360,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 							MaximumSupply: new(big.Int).SetInt64(1000),
 						},
 						Conditions: iotago.FoundryOutputUnlockConditions{
-							&iotago.ImmutableAccountUnlockCondition{Address: &accountIdent1},
+							&iotago.ImmutableAccountUnlockCondition{Address: accountIdent1},
 						},
 					},
 				},
@@ -1515,7 +1515,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: &accountIdent1},
+							&iotago.AddressUnlockCondition{Address: accountIdent1},
 						},
 					},
 				},
@@ -1561,7 +1561,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 					Output: &iotago.BasicOutput{
 						Amount: 100,
 						Conditions: iotago.BasicOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: &nftIdent1},
+							&iotago.AddressUnlockCondition{Address: nftIdent1},
 						},
 					},
 				},
@@ -1600,7 +1600,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						Amount: 100,
 						NFTID:  nftIdent1.NFTID(),
 						Conditions: iotago.NFTOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: &nftIdent2},
+							&iotago.AddressUnlockCondition{Address: nftIdent2},
 						},
 					},
 				},
@@ -1609,7 +1609,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						Amount: 100,
 						NFTID:  nftIdent2.NFTID(),
 						Conditions: iotago.NFTOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: &nftIdent2},
+							&iotago.AddressUnlockCondition{Address: nftIdent2},
 						},
 					},
 				},

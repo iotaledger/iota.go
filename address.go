@@ -97,14 +97,14 @@ type Address interface {
 }
 
 type AddressCapabilities interface {
-	CanReceiveNativeTokens() bool
-	CanReceiveMana() bool
-	CanReceiveOutputsWithTimelockUnlockCondition() bool
-	CanReceiveOutputsWithExpirationUnlockCondition() bool
-	CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool
-	CanReceiveAccountOutputs() bool
-	CanReceiveNFTOutputs() bool
-	CanReceiveDelegationOutputs() bool
+	CannotReceiveNativeTokens() bool
+	CannotReceiveMana() bool
+	CannotReceiveOutputsWithTimelockUnlockCondition() bool
+	CannotReceiveOutputsWithExpirationUnlockCondition() bool
+	CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool
+	CannotReceiveAccountOutputs() bool
+	CannotReceiveNFTOutputs() bool
+	CannotReceiveDelegationOutputs() bool
 }
 
 type RestrictedAddress interface {

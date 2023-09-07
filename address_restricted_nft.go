@@ -58,36 +58,36 @@ func (addr *RestrictedNFTAddress) Size() int {
 		addr.Capabilities.Size()
 }
 
-func (addr *RestrictedNFTAddress) CanReceiveNativeTokens() bool {
-	return addr.Capabilities.CanReceiveNativeTokens()
+func (addr *RestrictedNFTAddress) CannotReceiveNativeTokens() bool {
+	return addr.Capabilities.CannotReceiveNativeTokens()
 }
 
-func (addr *RestrictedNFTAddress) CanReceiveMana() bool {
-	return addr.Capabilities.CanReceiveMana()
+func (addr *RestrictedNFTAddress) CannotReceiveMana() bool {
+	return addr.Capabilities.CannotReceiveMana()
 }
 
-func (addr *RestrictedNFTAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
-	return addr.Capabilities.CanReceiveOutputsWithTimelockUnlockCondition()
+func (addr *RestrictedNFTAddress) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
+	return addr.Capabilities.CannotReceiveOutputsWithTimelockUnlockCondition()
 }
 
-func (addr *RestrictedNFTAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
-	return addr.Capabilities.CanReceiveOutputsWithExpirationUnlockCondition()
+func (addr *RestrictedNFTAddress) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
+	return addr.Capabilities.CannotReceiveOutputsWithExpirationUnlockCondition()
 }
 
-func (addr *RestrictedNFTAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return addr.Capabilities.CanReceiveOutputsWithStorageDepositReturnUnlockCondition()
+func (addr *RestrictedNFTAddress) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return addr.Capabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition()
 }
 
-func (addr *RestrictedNFTAddress) CanReceiveAccountOutputs() bool {
-	return addr.Capabilities.CanReceiveAccountOutputs()
+func (addr *RestrictedNFTAddress) CannotReceiveAccountOutputs() bool {
+	return addr.Capabilities.CannotReceiveAccountOutputs()
 }
 
-func (addr *RestrictedNFTAddress) CanReceiveNFTOutputs() bool {
-	return addr.Capabilities.CanReceiveNFTOutputs()
+func (addr *RestrictedNFTAddress) CannotReceiveNFTOutputs() bool {
+	return addr.Capabilities.CannotReceiveNFTOutputs()
 }
 
-func (addr *RestrictedNFTAddress) CanReceiveDelegationOutputs() bool {
-	return addr.Capabilities.CanReceiveDelegationOutputs()
+func (addr *RestrictedNFTAddress) CannotReceiveDelegationOutputs() bool {
+	return addr.Capabilities.CannotReceiveDelegationOutputs()
 }
 
 func (addr *RestrictedNFTAddress) CapabilitiesBitMask() AddressCapabilitiesBitMask {

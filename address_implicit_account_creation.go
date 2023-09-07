@@ -103,36 +103,36 @@ func (addr *ImplicitAccountCreationAddress) Size() int {
 	return Ed25519AddressSerializedBytesSize
 }
 
-func (addr *ImplicitAccountCreationAddress) CanReceiveNativeTokens() bool {
-	return false
-}
-
-func (addr *ImplicitAccountCreationAddress) CanReceiveMana() bool {
+func (addr *ImplicitAccountCreationAddress) CannotReceiveNativeTokens() bool {
 	return true
 }
 
-func (addr *ImplicitAccountCreationAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+func (addr *ImplicitAccountCreationAddress) CannotReceiveMana() bool {
 	return false
 }
 
-func (addr *ImplicitAccountCreationAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
-	return false
+func (addr *ImplicitAccountCreationAddress) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
+	return true
 }
 
-func (addr *ImplicitAccountCreationAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return false
+func (addr *ImplicitAccountCreationAddress) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
+	return true
 }
 
-func (addr *ImplicitAccountCreationAddress) CanReceiveAccountOutputs() bool {
-	return false
+func (addr *ImplicitAccountCreationAddress) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return true
 }
 
-func (addr *ImplicitAccountCreationAddress) CanReceiveNFTOutputs() bool {
-	return false
+func (addr *ImplicitAccountCreationAddress) CannotReceiveAccountOutputs() bool {
+	return true
 }
 
-func (addr *ImplicitAccountCreationAddress) CanReceiveDelegationOutputs() bool {
-	return false
+func (addr *ImplicitAccountCreationAddress) CannotReceiveNFTOutputs() bool {
+	return true
+}
+
+func (addr *ImplicitAccountCreationAddress) CannotReceiveDelegationOutputs() bool {
+	return true
 }
 
 // ImplicitAccountCreationAddressFromPubKey returns the address belonging to the given Ed25519 public key.

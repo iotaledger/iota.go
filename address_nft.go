@@ -83,39 +83,41 @@ func (addr *NFTAddress) Size() int {
 	return NFTAddressSerializedBytesSize
 }
 
-func (addr *NFTAddress) CanReceiveNativeTokens() bool {
-	return true
+func (addr *NFTAddress) CannotReceiveNativeTokens() bool {
+	return false
 }
 
-func (addr *NFTAddress) CanReceiveMana() bool {
-	return true
+func (addr *NFTAddress) CannotReceiveMana() bool {
+	return false
 }
 
-func (addr *NFTAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
-	return true
+func (addr *NFTAddress) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
+	return false
 }
 
-func (addr *NFTAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
-	return true
+func (addr *NFTAddress) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
+	return false
 }
 
-func (addr *NFTAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return true
+func (addr *NFTAddress) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return false
 }
 
-func (addr *NFTAddress) CanReceiveAccountOutputs() bool {
-	return true
+func (addr *NFTAddress) CannotReceiveAccountOutputs() bool {
+	return false
 }
 
-func (addr *NFTAddress) CanReceiveNFTOutputs() bool {
-	return true
+func (addr *NFTAddress) CannotReceiveNFTOutputs() bool {
+	return false
 }
 
-func (addr *NFTAddress) CanReceiveDelegationOutputs() bool {
-	return true
+func (addr *NFTAddress) CannotReceiveDelegationOutputs() bool {
+	return false
 }
 
 // NFTAddressFromOutputID returns the NFT address computed from a given OutputID.
-func NFTAddressFromOutputID(outputID OutputID) NFTAddress {
-	return blake2b.Sum256(outputID[:])
+func NFTAddressFromOutputID(outputID OutputID) *NFTAddress {
+	address := blake2b.Sum256(outputID[:])
+
+	return (*NFTAddress)(&address)
 }

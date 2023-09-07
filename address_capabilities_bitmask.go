@@ -36,36 +36,36 @@ func (bm AddressCapabilitiesBitMask) setBit(bit int) AddressCapabilitiesBitMask 
 	return newBitmask
 }
 
-func (bm AddressCapabilitiesBitMask) CanReceiveNativeTokens() bool {
-	return bm.hasBit(canReceiveNativeTokensBitIndex)
+func (bm AddressCapabilitiesBitMask) CannotReceiveNativeTokens() bool {
+	return !bm.hasBit(canReceiveNativeTokensBitIndex)
 }
 
-func (bm AddressCapabilitiesBitMask) CanReceiveMana() bool {
-	return bm.hasBit(canReceiveManaBitIndex)
+func (bm AddressCapabilitiesBitMask) CannotReceiveMana() bool {
+	return !bm.hasBit(canReceiveManaBitIndex)
 }
 
-func (bm AddressCapabilitiesBitMask) CanReceiveOutputsWithTimelockUnlockCondition() bool {
-	return bm.hasBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
+func (bm AddressCapabilitiesBitMask) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
+	return !bm.hasBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
 }
 
-func (bm AddressCapabilitiesBitMask) CanReceiveOutputsWithExpirationUnlockCondition() bool {
-	return bm.hasBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
+func (bm AddressCapabilitiesBitMask) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
+	return !bm.hasBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
 }
 
-func (bm AddressCapabilitiesBitMask) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return bm.hasBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
+func (bm AddressCapabilitiesBitMask) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return !bm.hasBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
 }
 
-func (bm AddressCapabilitiesBitMask) CanReceiveAccountOutputs() bool {
-	return bm.hasBit(canReceiveAccountOutputsBitIndex)
+func (bm AddressCapabilitiesBitMask) CannotReceiveAccountOutputs() bool {
+	return !bm.hasBit(canReceiveAccountOutputsBitIndex)
 }
 
-func (bm AddressCapabilitiesBitMask) CanReceiveNFTOutputs() bool {
-	return bm.hasBit(canReceiveNFTOutputsBitIndex)
+func (bm AddressCapabilitiesBitMask) CannotReceiveNFTOutputs() bool {
+	return !bm.hasBit(canReceiveNFTOutputsBitIndex)
 }
 
-func (bm AddressCapabilitiesBitMask) CanReceiveDelegationOutputs() bool {
-	return bm.hasBit(canReceiveDelegationOutputsBitIndex)
+func (bm AddressCapabilitiesBitMask) CannotReceiveDelegationOutputs() bool {
+	return !bm.hasBit(canReceiveDelegationOutputsBitIndex)
 }
 
 func (bm AddressCapabilitiesBitMask) Size() int {

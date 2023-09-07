@@ -70,36 +70,36 @@ func (addr *RestrictedEd25519Address) Size() int {
 		addr.Capabilities.Size()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveNativeTokens() bool {
-	return addr.Capabilities.CanReceiveNativeTokens()
+func (addr *RestrictedEd25519Address) CannotReceiveNativeTokens() bool {
+	return addr.Capabilities.CannotReceiveNativeTokens()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveMana() bool {
-	return addr.Capabilities.CanReceiveMana()
+func (addr *RestrictedEd25519Address) CannotReceiveMana() bool {
+	return addr.Capabilities.CannotReceiveMana()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveOutputsWithTimelockUnlockCondition() bool {
-	return addr.Capabilities.CanReceiveOutputsWithTimelockUnlockCondition()
+func (addr *RestrictedEd25519Address) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
+	return addr.Capabilities.CannotReceiveOutputsWithTimelockUnlockCondition()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveOutputsWithExpirationUnlockCondition() bool {
-	return addr.Capabilities.CanReceiveOutputsWithExpirationUnlockCondition()
+func (addr *RestrictedEd25519Address) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
+	return addr.Capabilities.CannotReceiveOutputsWithExpirationUnlockCondition()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return addr.Capabilities.CanReceiveOutputsWithStorageDepositReturnUnlockCondition()
+func (addr *RestrictedEd25519Address) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return addr.Capabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveAccountOutputs() bool {
-	return addr.Capabilities.CanReceiveAccountOutputs()
+func (addr *RestrictedEd25519Address) CannotReceiveAccountOutputs() bool {
+	return addr.Capabilities.CannotReceiveAccountOutputs()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveNFTOutputs() bool {
-	return addr.Capabilities.CanReceiveNFTOutputs()
+func (addr *RestrictedEd25519Address) CannotReceiveNFTOutputs() bool {
+	return addr.Capabilities.CannotReceiveNFTOutputs()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveDelegationOutputs() bool {
-	return addr.Capabilities.CanReceiveDelegationOutputs()
+func (addr *RestrictedEd25519Address) CannotReceiveDelegationOutputs() bool {
+	return addr.Capabilities.CannotReceiveDelegationOutputs()
 }
 
 func (addr *RestrictedEd25519Address) CapabilitiesBitMask() AddressCapabilitiesBitMask {

@@ -112,6 +112,62 @@ func TestParseBech32(t *testing.T) {
 	}
 }
 
+func TestNonRestrictedAddressCapabilities(t *testing.T) {
+	pubKey := ed25519.PublicKey(tpkg.Rand32ByteArray()).ToEd25519()
+	outputID := tpkg.RandOutputID(1)
+
+	addresses := []iotago.Address{
+		iotago.Ed25519AddressFromPubKey(pubKey),
+		iotago.AccountAddressFromOutputID(outputID),
+		iotago.NFTAddressFromOutputID(outputID),
+		iotago.ImplicitAccountCreationAddressFromPubKey(pubKey),
+	}
+
+	for _, addr := range addresses {
+		switch addr.Type() {
+		case iotago.AddressEd25519:
+			require.False(t, addr.CannotReceiveNativeTokens())
+			require.False(t, addr.CannotReceiveMana())
+			require.False(t, addr.CannotReceiveOutputsWithTimelockUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithExpirationUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition())
+			require.False(t, addr.CannotReceiveAccountOutputs())
+			require.False(t, addr.CannotReceiveNFTOutputs())
+			require.False(t, addr.CannotReceiveDelegationOutputs())
+		case iotago.AddressAccount:
+			require.False(t, addr.CannotReceiveNativeTokens())
+			require.False(t, addr.CannotReceiveMana())
+			require.False(t, addr.CannotReceiveOutputsWithTimelockUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithExpirationUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition())
+			require.False(t, addr.CannotReceiveAccountOutputs())
+			require.False(t, addr.CannotReceiveNFTOutputs())
+			require.False(t, addr.CannotReceiveDelegationOutputs())
+		case iotago.AddressNFT:
+			require.False(t, addr.CannotReceiveNativeTokens())
+			require.False(t, addr.CannotReceiveMana())
+			require.False(t, addr.CannotReceiveOutputsWithTimelockUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithExpirationUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition())
+			require.False(t, addr.CannotReceiveAccountOutputs())
+			require.False(t, addr.CannotReceiveNFTOutputs())
+			require.False(t, addr.CannotReceiveDelegationOutputs())
+		case iotago.AddressImplicitAccountCreation:
+			require.True(t, addr.CannotReceiveNativeTokens())
+			require.False(t, addr.CannotReceiveMana())
+			require.True(t, addr.CannotReceiveOutputsWithTimelockUnlockCondition())
+			require.True(t, addr.CannotReceiveOutputsWithExpirationUnlockCondition())
+			require.True(t, addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition())
+			require.True(t, addr.CannotReceiveAccountOutputs())
+			require.True(t, addr.CannotReceiveNFTOutputs())
+			require.True(t, addr.CannotReceiveDelegationOutputs())
+		default:
+			t.Fail()
+		}
+	}
+
+}
+
 func assertRestrictedAddresses(t *testing.T, addresses []iotago.RestrictedAddress) {
 	for i, addr := range addresses {
 		fmt.Println(addr.Bech32(iotago.PrefixMainnet))
@@ -125,14 +181,14 @@ func assertRestrictedAddresses(t *testing.T, addresses []iotago.RestrictedAddres
 		fmt.Println(hexutil.Encode(b))
 
 		addrChecks := []func() bool{
-			addr.CanReceiveNativeTokens,
-			addr.CanReceiveMana,
-			addr.CanReceiveOutputsWithTimelockUnlockCondition,
-			addr.CanReceiveOutputsWithExpirationUnlockCondition,
-			addr.CanReceiveOutputsWithStorageDepositReturnUnlockCondition,
-			addr.CanReceiveAccountOutputs,
-			addr.CanReceiveNFTOutputs,
-			addr.CanReceiveDelegationOutputs,
+			addr.CannotReceiveNativeTokens,
+			addr.CannotReceiveMana,
+			addr.CannotReceiveOutputsWithTimelockUnlockCondition,
+			addr.CannotReceiveOutputsWithExpirationUnlockCondition,
+			addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition,
+			addr.CannotReceiveAccountOutputs,
+			addr.CannotReceiveNFTOutputs,
+			addr.CannotReceiveDelegationOutputs,
 		}
 
 		require.Equal(t, addr.Size(), len(b))
@@ -140,19 +196,19 @@ func assertRestrictedAddresses(t *testing.T, addresses []iotago.RestrictedAddres
 		switch i {
 		default:
 			for checkIndex, check := range addrChecks {
-				require.Equal(t, check(), i == checkIndex)
+				require.Equal(t, check(), i != checkIndex)
 			}
 			require.Equal(t, addr.CapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask{0 | 1<<i})
 			require.Equal(t, addr.Size(), 35)
 		case 8:
 			for _, check := range addrChecks {
-				require.True(t, check())
+				require.False(t, check())
 			}
 			require.Equal(t, addr.CapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask{0xFF})
 			require.Equal(t, addr.Size(), 35)
 		case 9:
 			for _, check := range addrChecks {
-				require.False(t, check())
+				require.True(t, check())
 			}
 			require.Equal(t, addr.CapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask(nil))
 			require.Equal(t, addr.Size(), 34)

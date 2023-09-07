@@ -85,36 +85,36 @@ func (addr *Ed25519Address) Size() int {
 	return Ed25519AddressSerializedBytesSize
 }
 
-func (addr *Ed25519Address) CanReceiveNativeTokens() bool {
-	return true
+func (addr *Ed25519Address) CannotReceiveNativeTokens() bool {
+	return false
 }
 
-func (addr *Ed25519Address) CanReceiveMana() bool {
-	return true
+func (addr *Ed25519Address) CannotReceiveMana() bool {
+	return false
 }
 
-func (addr *Ed25519Address) CanReceiveOutputsWithTimelockUnlockCondition() bool {
-	return true
+func (addr *Ed25519Address) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
+	return false
 }
 
-func (addr *Ed25519Address) CanReceiveOutputsWithExpirationUnlockCondition() bool {
-	return true
+func (addr *Ed25519Address) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
+	return false
 }
 
-func (addr *Ed25519Address) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return true
+func (addr *Ed25519Address) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return false
 }
 
-func (addr *Ed25519Address) CanReceiveAccountOutputs() bool {
-	return true
+func (addr *Ed25519Address) CannotReceiveAccountOutputs() bool {
+	return false
 }
 
-func (addr *Ed25519Address) CanReceiveNFTOutputs() bool {
-	return true
+func (addr *Ed25519Address) CannotReceiveNFTOutputs() bool {
+	return false
 }
 
-func (addr *Ed25519Address) CanReceiveDelegationOutputs() bool {
-	return true
+func (addr *Ed25519Address) CannotReceiveDelegationOutputs() bool {
+	return false
 }
 
 // Ed25519AddressFromPubKey returns the address belonging to the given Ed25519 public key.

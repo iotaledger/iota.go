@@ -83,39 +83,41 @@ func (addr *AccountAddress) Size() int {
 	return AccountAddressSerializedBytesSize
 }
 
-func (addr *AccountAddress) CanReceiveNativeTokens() bool {
-	return true
+func (addr *AccountAddress) CannotReceiveNativeTokens() bool {
+	return false
 }
 
-func (addr *AccountAddress) CanReceiveMana() bool {
-	return true
+func (addr *AccountAddress) CannotReceiveMana() bool {
+	return false
 }
 
-func (addr *AccountAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
-	return true
+func (addr *AccountAddress) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
+	return false
 }
 
-func (addr *AccountAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
-	return true
+func (addr *AccountAddress) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
+	return false
 }
 
-func (addr *AccountAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return true
+func (addr *AccountAddress) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return false
 }
 
-func (addr *AccountAddress) CanReceiveAccountOutputs() bool {
-	return true
+func (addr *AccountAddress) CannotReceiveAccountOutputs() bool {
+	return false
 }
 
-func (addr *AccountAddress) CanReceiveNFTOutputs() bool {
-	return true
+func (addr *AccountAddress) CannotReceiveNFTOutputs() bool {
+	return false
 }
 
-func (addr *AccountAddress) CanReceiveDelegationOutputs() bool {
-	return true
+func (addr *AccountAddress) CannotReceiveDelegationOutputs() bool {
+	return false
 }
 
 // AccountAddressFromOutputID returns the account address computed from a given OutputID.
-func AccountAddressFromOutputID(outputID OutputID) AccountAddress {
-	return blake2b.Sum256(outputID[:])
+func AccountAddressFromOutputID(outputID OutputID) *AccountAddress {
+	address := blake2b.Sum256(outputID[:])
+
+	return (*AccountAddress)(&address)
 }
