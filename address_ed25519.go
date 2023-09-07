@@ -23,97 +23,97 @@ const (
 // An Ed25519Address is the Blake2b-256 hash of an Ed25519 public key.
 type Ed25519Address [Ed25519AddressBytesLength]byte
 
-func (edAddr *Ed25519Address) Decode(b []byte) (int, error) {
-	copy(edAddr[:], b)
+func (addr *Ed25519Address) Decode(b []byte) (int, error) {
+	copy(addr[:], b)
 
 	return Ed25519AddressSerializedBytesSize - 1, nil
 }
 
-func (edAddr *Ed25519Address) Encode() ([]byte, error) {
+func (addr *Ed25519Address) Encode() ([]byte, error) {
 	var b [Ed25519AddressSerializedBytesSize - 1]byte
-	copy(b[:], edAddr[:])
+	copy(b[:], addr[:])
 
 	return b[:], nil
 }
 
-func (edAddr *Ed25519Address) Clone() Address {
+func (addr *Ed25519Address) Clone() Address {
 	cpy := &Ed25519Address{}
-	copy(cpy[:], edAddr[:])
+	copy(cpy[:], addr[:])
 
 	return cpy
 }
 
-func (edAddr *Ed25519Address) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(VBytes(edAddr.Size()))
+func (addr *Ed25519Address) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
-func (edAddr *Ed25519Address) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), edAddr)))
+func (addr *Ed25519Address) Key() string {
+	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (edAddr *Ed25519Address) Unlock(msg []byte, sig Signature) error {
+func (addr *Ed25519Address) Unlock(msg []byte, sig Signature) error {
 	edSig, isEdSig := sig.(*Ed25519Signature)
 	if !isEdSig {
 		return ierrors.Wrapf(ErrSignatureAndAddrIncompatible, "can not unlock Ed25519 address with signature of type %s", sig.Type())
 	}
 
-	return edSig.Valid(msg, edAddr)
+	return edSig.Valid(msg, addr)
 }
 
-func (edAddr *Ed25519Address) Equal(other Address) bool {
+func (addr *Ed25519Address) Equal(other Address) bool {
 	otherAddr, is := other.(*Ed25519Address)
 	if !is {
 		return false
 	}
 
-	return *edAddr == *otherAddr
+	return *addr == *otherAddr
 }
 
-func (edAddr *Ed25519Address) Type() AddressType {
+func (addr *Ed25519Address) Type() AddressType {
 	return AddressEd25519
 }
 
-func (edAddr *Ed25519Address) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, edAddr)
+func (addr *Ed25519Address) Bech32(hrp NetworkPrefix) string {
+	return bech32String(hrp, addr)
 }
 
-func (edAddr *Ed25519Address) String() string {
-	return hexutil.EncodeHex(edAddr[:])
+func (addr *Ed25519Address) String() string {
+	return hexutil.EncodeHex(addr[:])
 }
 
-func (edAddr *Ed25519Address) Size() int {
+func (addr *Ed25519Address) Size() int {
 	return Ed25519AddressSerializedBytesSize
 }
 
-func (edAddr *Ed25519Address) CanReceiveNativeTokens() bool {
+func (addr *Ed25519Address) CanReceiveNativeTokens() bool {
 	return true
 }
 
-func (edAddr *Ed25519Address) CanReceiveMana() bool {
+func (addr *Ed25519Address) CanReceiveMana() bool {
 	return true
 }
 
-func (edAddr *Ed25519Address) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+func (addr *Ed25519Address) CanReceiveOutputsWithTimelockUnlockCondition() bool {
 	return true
 }
 
-func (edAddr *Ed25519Address) CanReceiveOutputsWithExpirationUnlockCondition() bool {
+func (addr *Ed25519Address) CanReceiveOutputsWithExpirationUnlockCondition() bool {
 	return true
 }
 
-func (edAddr *Ed25519Address) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+func (addr *Ed25519Address) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
 	return true
 }
 
-func (edAddr *Ed25519Address) CanReceiveAccountOutputs() bool {
+func (addr *Ed25519Address) CanReceiveAccountOutputs() bool {
 	return true
 }
 
-func (edAddr *Ed25519Address) CanReceiveNFTOutputs() bool {
+func (addr *Ed25519Address) CanReceiveNFTOutputs() bool {
 	return true
 }
 
-func (edAddr *Ed25519Address) CanReceiveDelegationOutputs() bool {
+func (addr *Ed25519Address) CanReceiveDelegationOutputs() bool {
 	return true
 }
 

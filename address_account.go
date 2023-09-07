@@ -22,96 +22,96 @@ const (
 // An AccountAddress is the Blake2b-256 hash of the OutputID which created it.
 type AccountAddress [AccountAddressBytesLength]byte
 
-func (accountAddr *AccountAddress) Decode(b []byte) (int, error) {
-	copy(accountAddr[:], b)
+func (addr *AccountAddress) Decode(b []byte) (int, error) {
+	copy(addr[:], b)
 
 	return AccountAddressSerializedBytesSize - 1, nil
 }
 
-func (accountAddr *AccountAddress) Encode() ([]byte, error) {
+func (addr *AccountAddress) Encode() ([]byte, error) {
 	var b [AccountAddressSerializedBytesSize - 1]byte
-	copy(b[:], accountAddr[:])
+	copy(b[:], addr[:])
 
 	return b[:], nil
 }
 
-func (accountAddr *AccountAddress) Clone() Address {
+func (addr *AccountAddress) Clone() Address {
 	cpy := &AccountAddress{}
-	copy(cpy[:], accountAddr[:])
+	copy(cpy[:], addr[:])
 
 	return cpy
 }
 
-func (accountAddr *AccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(VBytes(accountAddr.Size()))
+func (addr *AccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
-func (accountAddr *AccountAddress) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), accountAddr)))
+func (addr *AccountAddress) Key() string {
+	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (accountAddr *AccountAddress) Chain() ChainID {
-	return AccountID(*accountAddr)
+func (addr *AccountAddress) Chain() ChainID {
+	return AccountID(*addr)
 }
 
-func (accountAddr *AccountAddress) AccountID() AccountID {
-	return AccountID(*accountAddr)
+func (addr *AccountAddress) AccountID() AccountID {
+	return AccountID(*addr)
 }
 
-func (accountAddr *AccountAddress) Equal(other Address) bool {
+func (addr *AccountAddress) Equal(other Address) bool {
 	otherAddr, is := other.(*AccountAddress)
 	if !is {
 		return false
 	}
 
-	return *accountAddr == *otherAddr
+	return *addr == *otherAddr
 }
 
-func (accountAddr *AccountAddress) Type() AddressType {
+func (addr *AccountAddress) Type() AddressType {
 	return AddressAccount
 }
 
-func (accountAddr *AccountAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, accountAddr)
+func (addr *AccountAddress) Bech32(hrp NetworkPrefix) string {
+	return bech32String(hrp, addr)
 }
 
-func (accountAddr *AccountAddress) String() string {
-	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), accountAddr)))
+func (addr *AccountAddress) String() string {
+	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (accountAddr *AccountAddress) Size() int {
+func (addr *AccountAddress) Size() int {
 	return AccountAddressSerializedBytesSize
 }
 
-func (accountAddr *AccountAddress) CanReceiveNativeTokens() bool {
+func (addr *AccountAddress) CanReceiveNativeTokens() bool {
 	return true
 }
 
-func (accountAddr *AccountAddress) CanReceiveMana() bool {
+func (addr *AccountAddress) CanReceiveMana() bool {
 	return true
 }
 
-func (accountAddr *AccountAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+func (addr *AccountAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
 	return true
 }
 
-func (accountAddr *AccountAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
+func (addr *AccountAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
 	return true
 }
 
-func (accountAddr *AccountAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+func (addr *AccountAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
 	return true
 }
 
-func (accountAddr *AccountAddress) CanReceiveAccountOutputs() bool {
+func (addr *AccountAddress) CanReceiveAccountOutputs() bool {
 	return true
 }
 
-func (accountAddr *AccountAddress) CanReceiveNFTOutputs() bool {
+func (addr *AccountAddress) CanReceiveNFTOutputs() bool {
 	return true
 }
 
-func (accountAddr *AccountAddress) CanReceiveDelegationOutputs() bool {
+func (addr *AccountAddress) CanReceiveDelegationOutputs() bool {
 	return true
 }
 

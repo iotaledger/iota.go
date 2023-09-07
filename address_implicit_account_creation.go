@@ -41,97 +41,97 @@ func MustParseImplicitAccountCreationAddressFromHexString(hexAddr string) *Impli
 	return addr
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) Decode(b []byte) (int, error) {
-	copy(iacAddr[:], b)
+func (addr *ImplicitAccountCreationAddress) Decode(b []byte) (int, error) {
+	copy(addr[:], b)
 
 	return Ed25519AddressSerializedBytesSize - 1, nil
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) Encode() ([]byte, error) {
+func (addr *ImplicitAccountCreationAddress) Encode() ([]byte, error) {
 	var b [Ed25519AddressSerializedBytesSize - 1]byte
-	copy(b[:], iacAddr[:])
+	copy(b[:], addr[:])
 
 	return b[:], nil
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) Clone() Address {
+func (addr *ImplicitAccountCreationAddress) Clone() Address {
 	cpy := &ImplicitAccountCreationAddress{}
-	copy(cpy[:], iacAddr[:])
+	copy(cpy[:], addr[:])
 
 	return cpy
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(VBytes(iacAddr.Size()))
+func (addr *ImplicitAccountCreationAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), iacAddr)))
+func (addr *ImplicitAccountCreationAddress) Key() string {
+	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) Unlock(msg []byte, sig Signature) error {
+func (addr *ImplicitAccountCreationAddress) Unlock(msg []byte, sig Signature) error {
 	edSig, isEdSig := sig.(*Ed25519Signature)
 	if !isEdSig {
 		return ierrors.Wrapf(ErrSignatureAndAddrIncompatible, "can not unlock ImplicitAccountCreationAddress address with signature of type %s", sig.Type())
 	}
 
-	return edSig.Valid(msg, (*Ed25519Address)(iacAddr))
+	return edSig.Valid(msg, (*Ed25519Address)(addr))
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) Equal(other Address) bool {
+func (addr *ImplicitAccountCreationAddress) Equal(other Address) bool {
 	otherAddr, is := other.(*ImplicitAccountCreationAddress)
 	if !is {
 		return false
 	}
 
-	return *iacAddr == *otherAddr
+	return *addr == *otherAddr
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) Type() AddressType {
+func (addr *ImplicitAccountCreationAddress) Type() AddressType {
 	return AddressImplicitAccountCreation
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, iacAddr)
+func (addr *ImplicitAccountCreationAddress) Bech32(hrp NetworkPrefix) string {
+	return bech32String(hrp, addr)
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) String() string {
-	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), iacAddr)))
+func (addr *ImplicitAccountCreationAddress) String() string {
+	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) Size() int {
+func (addr *ImplicitAccountCreationAddress) Size() int {
 	return Ed25519AddressSerializedBytesSize
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) CanReceiveNativeTokens() bool {
+func (addr *ImplicitAccountCreationAddress) CanReceiveNativeTokens() bool {
 	return false
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) CanReceiveMana() bool {
+func (addr *ImplicitAccountCreationAddress) CanReceiveMana() bool {
 	return true
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+func (addr *ImplicitAccountCreationAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
 	return false
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
+func (addr *ImplicitAccountCreationAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
 	return false
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+func (addr *ImplicitAccountCreationAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
 	return false
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) CanReceiveAccountOutputs() bool {
+func (addr *ImplicitAccountCreationAddress) CanReceiveAccountOutputs() bool {
 	return false
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) CanReceiveNFTOutputs() bool {
+func (addr *ImplicitAccountCreationAddress) CanReceiveNFTOutputs() bool {
 	return false
 }
 
-func (iacAddr *ImplicitAccountCreationAddress) CanReceiveDelegationOutputs() bool {
+func (addr *ImplicitAccountCreationAddress) CanReceiveDelegationOutputs() bool {
 	return false
 }
 

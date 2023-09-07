@@ -22,96 +22,96 @@ const (
 // An NFTAddress is the Blake2b-256 hash of the OutputID which created it.
 type NFTAddress [NFTAddressBytesLength]byte
 
-func (nftAddr *NFTAddress) Decode(b []byte) (int, error) {
-	copy(nftAddr[:], b)
+func (addr *NFTAddress) Decode(b []byte) (int, error) {
+	copy(addr[:], b)
 
 	return NFTAddressSerializedBytesSize - 1, nil
 }
 
-func (nftAddr *NFTAddress) Encode() ([]byte, error) {
+func (addr *NFTAddress) Encode() ([]byte, error) {
 	var b [NFTAddressSerializedBytesSize - 1]byte
-	copy(b[:], nftAddr[:])
+	copy(b[:], addr[:])
 
 	return b[:], nil
 }
 
-func (nftAddr *NFTAddress) Clone() Address {
+func (addr *NFTAddress) Clone() Address {
 	cpy := &NFTAddress{}
-	copy(cpy[:], nftAddr[:])
+	copy(cpy[:], addr[:])
 
 	return cpy
 }
 
-func (nftAddr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(VBytes(nftAddr.Size()))
+func (addr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
-func (nftAddr *NFTAddress) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), nftAddr)))
+func (addr *NFTAddress) Key() string {
+	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (nftAddr *NFTAddress) Chain() ChainID {
-	return NFTID(*nftAddr)
+func (addr *NFTAddress) Chain() ChainID {
+	return NFTID(*addr)
 }
 
-func (nftAddr *NFTAddress) NFTID() NFTID {
-	return NFTID(*nftAddr)
+func (addr *NFTAddress) NFTID() NFTID {
+	return NFTID(*addr)
 }
 
-func (nftAddr *NFTAddress) Equal(other Address) bool {
+func (addr *NFTAddress) Equal(other Address) bool {
 	otherAddr, is := other.(*NFTAddress)
 	if !is {
 		return false
 	}
 
-	return *nftAddr == *otherAddr
+	return *addr == *otherAddr
 }
 
-func (nftAddr *NFTAddress) Type() AddressType {
+func (addr *NFTAddress) Type() AddressType {
 	return AddressNFT
 }
 
-func (nftAddr *NFTAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, nftAddr)
+func (addr *NFTAddress) Bech32(hrp NetworkPrefix) string {
+	return bech32String(hrp, addr)
 }
 
-func (nftAddr *NFTAddress) String() string {
-	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), nftAddr)))
+func (addr *NFTAddress) String() string {
+	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (nftAddr *NFTAddress) Size() int {
+func (addr *NFTAddress) Size() int {
 	return NFTAddressSerializedBytesSize
 }
 
-func (nftAddr *NFTAddress) CanReceiveNativeTokens() bool {
+func (addr *NFTAddress) CanReceiveNativeTokens() bool {
 	return true
 }
 
-func (nftAddr *NFTAddress) CanReceiveMana() bool {
+func (addr *NFTAddress) CanReceiveMana() bool {
 	return true
 }
 
-func (nftAddr *NFTAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+func (addr *NFTAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
 	return true
 }
 
-func (nftAddr *NFTAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
+func (addr *NFTAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
 	return true
 }
 
-func (nftAddr *NFTAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+func (addr *NFTAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
 	return true
 }
 
-func (nftAddr *NFTAddress) CanReceiveAccountOutputs() bool {
+func (addr *NFTAddress) CanReceiveAccountOutputs() bool {
 	return true
 }
 
-func (nftAddr *NFTAddress) CanReceiveNFTOutputs() bool {
+func (addr *NFTAddress) CanReceiveNFTOutputs() bool {
 	return true
 }
 
-func (nftAddr *NFTAddress) CanReceiveDelegationOutputs() bool {
+func (addr *NFTAddress) CanReceiveDelegationOutputs() bool {
 	return true
 }
 
