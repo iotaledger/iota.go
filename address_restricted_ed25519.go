@@ -18,20 +18,9 @@ const (
 	RestrictedEd25519AddressMaxCapabilitiesLength = 1
 )
 
-const (
-	canReceiveNativeTokensBitIndex = iota
-	canReceiveManaBitIndex
-	canReceiveOutputsWithTimelockUnlockConditionBitIndex
-	canReceiveOutputsWithExpirationUnlockConditionBitIndex
-	canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex
-	canReceiveAccountOutputsBitIndex
-	canReceiveNFTOutputsBitIndex
-	canReceiveDelegationOutputsBitIndex
-)
-
 type RestrictedEd25519Address struct {
 	PubKeyHash   [Ed25519AddressBytesLength]byte `serix:"0"`
-	Capabilities []byte                          `serix:"1,lengthPrefixType=uint8,maxLen=1"`
+	Capabilities AddressCapabilitiesBitMask      `serix:"1,lengthPrefixType=uint8,maxLen=1"`
 }
 
 // ParseRestrictedEd25519AddressFromHexString parses the given hex string into an RestrictedEd25519Address.
@@ -140,54 +129,36 @@ func (redAddr *RestrictedEd25519Address) Size() int {
 		len(redAddr.Capabilities)
 }
 
-func (redAddr *RestrictedEd25519Address) hasBit(bit int) bool {
-	byteIndex := bit / 8
-	if len(redAddr.Capabilities) <= byteIndex {
-		return false
-	}
-	bitIndex := bit % 8
-	return redAddr.Capabilities[byteIndex]&(1<<bitIndex) > 0
-}
-
-func (redAddr *RestrictedEd25519Address) setBit(bit int) {
-	byteIndex := bit / 8
-	for len(redAddr.Capabilities) <= byteIndex {
-		redAddr.Capabilities = append(redAddr.Capabilities, 0)
-	}
-	bitIndex := bit % 8
-	redAddr.Capabilities[byteIndex] |= 1 << bitIndex
-}
-
 func (redAddr *RestrictedEd25519Address) CanReceiveNativeTokens() bool {
-	return redAddr.hasBit(canReceiveNativeTokensBitIndex)
+	return redAddr.Capabilities.CanReceiveNativeTokens()
 }
 
 func (redAddr *RestrictedEd25519Address) CanReceiveMana() bool {
-	return redAddr.hasBit(canReceiveManaBitIndex)
+	return redAddr.Capabilities.CanReceiveMana()
 }
 
 func (redAddr *RestrictedEd25519Address) CanReceiveOutputsWithTimelockUnlockCondition() bool {
-	return redAddr.hasBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
+	return redAddr.Capabilities.CanReceiveOutputsWithTimelockUnlockCondition()
 }
 
 func (redAddr *RestrictedEd25519Address) CanReceiveOutputsWithExpirationUnlockCondition() bool {
-	return redAddr.hasBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
+	return redAddr.Capabilities.CanReceiveOutputsWithExpirationUnlockCondition()
 }
 
 func (redAddr *RestrictedEd25519Address) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return redAddr.hasBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
+	return redAddr.Capabilities.CanReceiveOutputsWithStorageDepositReturnUnlockCondition()
 }
 
 func (redAddr *RestrictedEd25519Address) CanReceiveAccountOutputs() bool {
-	return redAddr.hasBit(canReceiveAccountOutputsBitIndex)
+	return redAddr.Capabilities.CanReceiveAccountOutputs()
 }
 
 func (redAddr *RestrictedEd25519Address) CanReceiveNFTOutputs() bool {
-	return redAddr.hasBit(canReceiveNFTOutputsBitIndex)
+	return redAddr.Capabilities.CanReceiveNFTOutputs()
 }
 
 func (redAddr *RestrictedEd25519Address) CanReceiveDelegationOutputs() bool {
-	return redAddr.hasBit(canReceiveDelegationOutputsBitIndex)
+	return redAddr.Capabilities.CanReceiveDelegationOutputs()
 }
 
 // RestrictedEd25519AddressFromPubKey returns the address belonging to the given Ed25519 public key.
@@ -206,35 +177,35 @@ func RestrictedEd25519AddressFromPubKey(pubKey ed25519.PublicKey,
 	copy(redAddr.PubKeyHash[:], address[:])
 
 	if canReceiveNativeTokens {
-		redAddr.setBit(canReceiveNativeTokensBitIndex)
+		redAddr.Capabilities = redAddr.Capabilities.setBit(canReceiveNativeTokensBitIndex)
 	}
 
 	if canReceiveMana {
-		redAddr.setBit(canReceiveManaBitIndex)
+		redAddr.Capabilities = redAddr.Capabilities.setBit(canReceiveManaBitIndex)
 	}
 
 	if canReceiveOutputsWithTimelockUnlockCondition {
-		redAddr.setBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
+		redAddr.Capabilities = redAddr.Capabilities.setBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
 	}
 
 	if canReceiveOutputsWithExpirationUnlockCondition {
-		redAddr.setBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
+		redAddr.Capabilities = redAddr.Capabilities.setBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
 	}
 
 	if canReceiveOutputsWithStorageDepositReturnUnlockCondition {
-		redAddr.setBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
+		redAddr.Capabilities = redAddr.Capabilities.setBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
 	}
 
 	if canReceiveAccountOutputs {
-		redAddr.setBit(canReceiveAccountOutputsBitIndex)
+		redAddr.Capabilities = redAddr.Capabilities.setBit(canReceiveAccountOutputsBitIndex)
 	}
 
 	if canReceiveNFTOutputs {
-		redAddr.setBit(canReceiveNFTOutputsBitIndex)
+		redAddr.Capabilities = redAddr.Capabilities.setBit(canReceiveNFTOutputsBitIndex)
 	}
 
 	if canReceiveDelegationOutputs {
-		redAddr.setBit(canReceiveDelegationOutputsBitIndex)
+		redAddr.Capabilities = redAddr.Capabilities.setBit(canReceiveDelegationOutputsBitIndex)
 	}
 
 	return redAddr

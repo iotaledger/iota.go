@@ -252,7 +252,7 @@ func RandEd25519Address() *iotago.Ed25519Address {
 }
 
 // RandRestrictedEd25519Address returns a random restricted Ed25519 address.
-func RandRestrictedEd25519Address(capabilities []byte) *iotago.RestrictedEd25519Address {
+func RandRestrictedEd25519Address(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedEd25519Address {
 	edAddr := &iotago.RestrictedEd25519Address{}
 	addr := RandBytes(iotago.Ed25519AddressBytesLength)
 	copy(edAddr.PubKeyHash[:], addr)

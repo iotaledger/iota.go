@@ -23,12 +23,12 @@ func TestAddressDeSerialize(t *testing.T) {
 		},
 		{
 			name:   "ok - RestrictedEd25519Address with capabilities",
-			source: tpkg.RandRestrictedEd25519Address([]byte{0xff}),
-			target: &iotago.RestrictedEd25519Address{Capabilities: []byte{0xff}},
+			source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{0xff}),
+			target: &iotago.RestrictedEd25519Address{Capabilities: iotago.AddressCapabilitiesBitMask{0xff}},
 		},
 		{
 			name:   "ok - RestrictedEd25519Address without capabilities",
-			source: tpkg.RandRestrictedEd25519Address([]byte{0x0}),
+			source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{0x0}),
 			target: &iotago.RestrictedEd25519Address{},
 		},
 		{
@@ -93,18 +93,18 @@ func TestParseBech32(t *testing.T) {
 }
 
 func TestRestrictedEd25519AddressCapabilities(t *testing.T) {
-	pubKey := ed25519.PublicKey(tpkg.Rand32ByteArray())
+	pubKey := ed25519.PublicKey(tpkg.Rand32ByteArray()).ToEd25519()
 	addresses := []*iotago.RestrictedEd25519Address{
-		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), true, false, false, false, false, false, false, false),
-		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, true, false, false, false, false, false, false),
-		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, true, false, false, false, false, false),
-		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, true, false, false, false, false),
-		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, false, true, false, false, false),
-		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, false, false, true, false, false),
-		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, false, false, false, true, false),
-		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, false, false, false, false, true),
-		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), true, true, true, true, true, true, true, true),
-		iotago.RestrictedEd25519AddressFromPubKey(pubKey.ToEd25519(), false, false, false, false, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey, true, false, false, false, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey, false, true, false, false, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey, false, false, true, false, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey, false, false, false, true, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey, false, false, false, false, true, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey, false, false, false, false, false, true, false, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey, false, false, false, false, false, false, true, false),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey, false, false, false, false, false, false, false, true),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey, true, true, true, true, true, true, true, true),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey, false, false, false, false, false, false, false, false),
 	}
 
 	for i, addr := range addresses {
@@ -136,19 +136,19 @@ func TestRestrictedEd25519AddressCapabilities(t *testing.T) {
 			for checkIndex, check := range addrChecks {
 				require.Equal(t, check(), i == checkIndex)
 			}
-			require.Equal(t, addr.Capabilities, []byte{0 | 1<<i})
+			require.Equal(t, addr.Capabilities, iotago.AddressCapabilitiesBitMask{0 | 1<<i})
 			require.Equal(t, addr.Size(), 35)
 		case 8:
 			for _, check := range addrChecks {
 				require.True(t, check())
 			}
-			require.Equal(t, addr.Capabilities, []byte{0xFF})
+			require.Equal(t, addr.Capabilities, iotago.AddressCapabilitiesBitMask{0xFF})
 			require.Equal(t, addr.Size(), 35)
 		case 9:
 			for _, check := range addrChecks {
 				require.False(t, check())
 			}
-			require.Equal(t, addr.Capabilities, []byte(nil))
+			require.Equal(t, addr.Capabilities, iotago.AddressCapabilitiesBitMask(nil))
 			require.Equal(t, addr.Size(), 34)
 		}
 	}
