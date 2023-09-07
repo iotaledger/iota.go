@@ -16,7 +16,7 @@ const (
 	betaPerYear                  float64 = 1 / 3.0
 	slotsPerEpochExponent                = 13
 	slotDurationSeconds                  = 10
-	bitsExponent                         = 63
+	bitsCount                            = 63
 	generationRate                       = 1
 	generationRateExponent               = 27
 	decayFactorsExponent                 = 32
@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 
 	testTimeProvider = iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochExponent)
 	manaStruct := &iotago.ManaStructure{
-		ManaBitsCount:                    bitsExponent,
+		ManaBitsCount:                    bitsCount,
 		ManaGenerationRate:               generationRate,
 		ManaGenerationRateExponent:       generationRateExponent,
 		ManaDecayFactors:                 testManaDecayFactors,
@@ -100,7 +100,7 @@ func BenchmarkManaGenerationWithDecay_Range(b *testing.B) {
 
 func TestManaDecay_NoFactorsGiven(t *testing.T) {
 	manaStruct := &iotago.ManaStructure{
-		ManaBitsCount:                    bitsExponent,
+		ManaBitsCount:                    bitsCount,
 		ManaGenerationRate:               generationRate,
 		ManaGenerationRateExponent:       decayFactorEpochsSumExponent,
 		ManaDecayFactors:                 []uint32{},
