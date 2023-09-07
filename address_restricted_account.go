@@ -1,3 +1,4 @@
+//nolint:dupl // restricted addresses have similar code
 package iotago
 
 import (

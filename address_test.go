@@ -170,6 +170,8 @@ func TestNonRestrictedAddressCapabilities(t *testing.T) {
 }
 
 func assertRestrictedAddresses(t *testing.T, addresses []iotago.RestrictedAddress) {
+	t.Helper()
+
 	for i, addr := range addresses {
 		fmt.Println(addr.Bech32(iotago.PrefixMainnet))
 
@@ -217,6 +219,7 @@ func assertRestrictedAddresses(t *testing.T, addresses []iotago.RestrictedAddres
 	}
 }
 
+//nolint:dupl // we have a lot of similar tests
 func TestRestrictedEd25519AddressCapabilities(t *testing.T) {
 	pubKey := ed25519.PublicKey(tpkg.Rand32ByteArray()).ToEd25519()
 	addresses := []iotago.RestrictedAddress{
@@ -235,6 +238,7 @@ func TestRestrictedEd25519AddressCapabilities(t *testing.T) {
 	assertRestrictedAddresses(t, addresses)
 }
 
+//nolint:dupl // we have a lot of similar tests
 func TestRestrictedNFTAddressCapabilities(t *testing.T) {
 	outputID := tpkg.RandOutputID(1)
 	addresses := []iotago.RestrictedAddress{
@@ -253,6 +257,7 @@ func TestRestrictedNFTAddressCapabilities(t *testing.T) {
 	assertRestrictedAddresses(t, addresses)
 }
 
+//nolint:dupl // we have a lot of similar tests
 func TestRestrictedAccountAddressCapabilities(t *testing.T) {
 	outputID := tpkg.RandOutputID(1)
 	addresses := []iotago.RestrictedAddress{
