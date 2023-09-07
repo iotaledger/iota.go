@@ -43,7 +43,7 @@ var (
 			tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent),
 			decayFactorEpochsSumExponent,
 		),
-		iotago.WithStakingOptions(10, 32, 10),
+		iotago.WithStakingOptions(10, 10),
 		iotago.WithLivenessOptions(3, 10, 20, 24),
 		iotago.WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*iotago.MaxBlockSize),
 	)

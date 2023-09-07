@@ -43,8 +43,6 @@ type basicProtocolParameters struct {
 
 	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
 	StakingUnbondingPeriod EpochIndex `serix:"15,mapKey=stakingUnbondingPeriod"`
-	// CommitteeSize is the number of validators in the validator committee.
-	CommitteeSize uint16 `serix:"16,mapKey=committeeSize"`
 	// ValidationBlocksPerSlot is the number of validation blocks that each validator should issue each slot.
 	ValidationBlocksPerSlot uint16 `serix:"17,mapKey=validationBlocksPerSlot"`
 
@@ -83,7 +81,6 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.ManaDecayFactorEpochsSum == other.ManaDecayFactorEpochsSum &&
 		b.ManaDecayFactorEpochsSumExponent == other.ManaDecayFactorEpochsSumExponent &&
 		b.StakingUnbondingPeriod == other.StakingUnbondingPeriod &&
-		b.CommitteeSize == other.CommitteeSize &&
 		b.ValidationBlocksPerSlot == other.ValidationBlocksPerSlot &&
 		b.LivenessThreshold == other.LivenessThreshold &&
 		b.MinCommittableAge == other.MinCommittableAge &&
