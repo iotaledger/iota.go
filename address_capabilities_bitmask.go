@@ -15,19 +15,65 @@ const (
 
 type AddressCapabilitiesBitMask []byte
 
-func (bm AddressCapabilitiesBitMask) hasBit(bit int) bool {
+func AddressCapabilitiesBitMaskWithCapabilities(canReceiveNativeTokens bool,
+	canReceiveMana bool,
+	canReceiveOutputsWithTimelockUnlockCondition bool,
+	canReceiveOutputsWithExpirationUnlockCondition bool,
+	canReceiveOutputsWithStorageDepositReturnUnlockCondition bool,
+	canReceiveAccountOutputs bool,
+	canReceiveNFTOutputs bool,
+	canReceiveDelegationOutputs bool) AddressCapabilitiesBitMask {
+
+	bm := AddressCapabilitiesBitMask{}
+
+	if canReceiveNativeTokens {
+		bm = bm.setBit(canReceiveNativeTokensBitIndex)
+	}
+
+	if canReceiveMana {
+		bm = bm.setBit(canReceiveManaBitIndex)
+	}
+
+	if canReceiveOutputsWithTimelockUnlockCondition {
+		bm = bm.setBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
+	}
+
+	if canReceiveOutputsWithExpirationUnlockCondition {
+		bm = bm.setBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
+	}
+
+	if canReceiveOutputsWithStorageDepositReturnUnlockCondition {
+		bm = bm.setBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
+	}
+
+	if canReceiveAccountOutputs {
+		bm = bm.setBit(canReceiveAccountOutputsBitIndex)
+	}
+
+	if canReceiveNFTOutputs {
+		bm = bm.setBit(canReceiveNFTOutputsBitIndex)
+	}
+
+	if canReceiveDelegationOutputs {
+		bm = bm.setBit(canReceiveDelegationOutputsBitIndex)
+	}
+
+	return bm
+}
+
+func (bm AddressCapabilitiesBitMask) hasBit(bit uint) bool {
 	byteIndex := bit / 8
-	if len(bm) <= byteIndex {
+	if uint(len(bm)) <= byteIndex {
 		return false
 	}
 	bitIndex := bit % 8
 	return bm[byteIndex]&(1<<bitIndex) > 0
 }
 
-func (bm AddressCapabilitiesBitMask) setBit(bit int) AddressCapabilitiesBitMask {
+func (bm AddressCapabilitiesBitMask) setBit(bit uint) AddressCapabilitiesBitMask {
 	newBitmask := bm
 	byteIndex := bit / 8
-	for len(newBitmask) <= byteIndex {
+	for uint(len(newBitmask)) <= byteIndex {
 		newBitmask = append(newBitmask, 0)
 	}
 	bitIndex := bit % 8

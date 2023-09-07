@@ -13,14 +13,14 @@ import (
 )
 
 type RestrictedEd25519Address struct {
-	PubKeyHash   [Ed25519AddressBytesLength]byte `serix:"0,mapKey=pubKeyHash"`
-	Capabilities AddressCapabilitiesBitMask      `serix:"1,mapKey=capabilities,lengthPrefixType=uint8,maxLen=1"`
+	PubKeyHash          [Ed25519AddressBytesLength]byte `serix:"0,mapKey=pubKeyHash"`
+	AllowedCapabilities AddressCapabilitiesBitMask      `serix:"1,mapKey=allowedCapabilities,lengthPrefixType=uint8,maxLen=1"`
 }
 
 func (addr *RestrictedEd25519Address) Clone() Address {
 	cpy := &RestrictedEd25519Address{}
 	copy(cpy.PubKeyHash[:], addr.PubKeyHash[:])
-	copy(cpy.Capabilities[:], addr.Capabilities[:])
+	copy(cpy.AllowedCapabilities[:], addr.AllowedCapabilities[:])
 
 	return cpy
 }
@@ -50,7 +50,7 @@ func (addr *RestrictedEd25519Address) Equal(other Address) bool {
 	}
 
 	return addr.PubKeyHash == otherAddr.PubKeyHash &&
-		bytes.Equal(addr.Capabilities, otherAddr.Capabilities)
+		bytes.Equal(addr.AllowedCapabilities, otherAddr.AllowedCapabilities)
 }
 
 func (addr *RestrictedEd25519Address) Type() AddressType {
@@ -67,47 +67,56 @@ func (addr *RestrictedEd25519Address) String() string {
 
 func (addr *RestrictedEd25519Address) Size() int {
 	return Ed25519AddressSerializedBytesSize +
-		addr.Capabilities.Size()
+		addr.AllowedCapabilities.Size()
 }
 
 func (addr *RestrictedEd25519Address) CannotReceiveNativeTokens() bool {
-	return addr.Capabilities.CannotReceiveNativeTokens()
+	return addr.AllowedCapabilities.CannotReceiveNativeTokens()
 }
 
 func (addr *RestrictedEd25519Address) CannotReceiveMana() bool {
-	return addr.Capabilities.CannotReceiveMana()
+	return addr.AllowedCapabilities.CannotReceiveMana()
 }
 
 func (addr *RestrictedEd25519Address) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
-	return addr.Capabilities.CannotReceiveOutputsWithTimelockUnlockCondition()
+	return addr.AllowedCapabilities.CannotReceiveOutputsWithTimelockUnlockCondition()
 }
 
 func (addr *RestrictedEd25519Address) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
-	return addr.Capabilities.CannotReceiveOutputsWithExpirationUnlockCondition()
+	return addr.AllowedCapabilities.CannotReceiveOutputsWithExpirationUnlockCondition()
 }
 
 func (addr *RestrictedEd25519Address) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return addr.Capabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition()
+	return addr.AllowedCapabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition()
 }
 
 func (addr *RestrictedEd25519Address) CannotReceiveAccountOutputs() bool {
-	return addr.Capabilities.CannotReceiveAccountOutputs()
+	return addr.AllowedCapabilities.CannotReceiveAccountOutputs()
 }
 
 func (addr *RestrictedEd25519Address) CannotReceiveNFTOutputs() bool {
-	return addr.Capabilities.CannotReceiveNFTOutputs()
+	return addr.AllowedCapabilities.CannotReceiveNFTOutputs()
 }
 
 func (addr *RestrictedEd25519Address) CannotReceiveDelegationOutputs() bool {
-	return addr.Capabilities.CannotReceiveDelegationOutputs()
+	return addr.AllowedCapabilities.CannotReceiveDelegationOutputs()
 }
 
-func (addr *RestrictedEd25519Address) CapabilitiesBitMask() AddressCapabilitiesBitMask {
-	return addr.Capabilities
+func (addr *RestrictedEd25519Address) AllowedCapabilitiesBitMask() AddressCapabilitiesBitMask {
+	return addr.AllowedCapabilities
 }
 
 // RestrictedEd25519AddressFromPubKey returns the address belonging to the given Ed25519 public key.
-func RestrictedEd25519AddressFromPubKey(pubKey ed25519.PublicKey,
+func RestrictedEd25519AddressFromPubKey(pubKey ed25519.PublicKey) *RestrictedEd25519Address {
+	address := blake2b.Sum256(pubKey[:])
+	addr := &RestrictedEd25519Address{}
+	copy(addr.PubKeyHash[:], address[:])
+
+	return addr
+}
+
+// RestrictedEd25519AddressFromPubKeyWithCapabilities returns the address belonging to the given Ed25519 public key.
+func RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey ed25519.PublicKey,
 	canReceiveNativeTokens bool,
 	canReceiveMana bool,
 	canReceiveOutputsWithTimelockUnlockCondition bool,
@@ -116,42 +125,17 @@ func RestrictedEd25519AddressFromPubKey(pubKey ed25519.PublicKey,
 	canReceiveAccountOutputs bool,
 	canReceiveNFTOutputs bool,
 	canReceiveDelegationOutputs bool) *RestrictedEd25519Address {
-
-	address := blake2b.Sum256(pubKey[:])
-	addr := &RestrictedEd25519Address{}
-	copy(addr.PubKeyHash[:], address[:])
-
-	if canReceiveNativeTokens {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveNativeTokensBitIndex)
-	}
-
-	if canReceiveMana {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveManaBitIndex)
-	}
-
-	if canReceiveOutputsWithTimelockUnlockCondition {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
-	}
-
-	if canReceiveOutputsWithExpirationUnlockCondition {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
-	}
-
-	if canReceiveOutputsWithStorageDepositReturnUnlockCondition {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
-	}
-
-	if canReceiveAccountOutputs {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveAccountOutputsBitIndex)
-	}
-
-	if canReceiveNFTOutputs {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveNFTOutputsBitIndex)
-	}
-
-	if canReceiveDelegationOutputs {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveDelegationOutputsBitIndex)
-	}
+	addr := RestrictedEd25519AddressFromPubKey(pubKey)
+	addr.AllowedCapabilities = AddressCapabilitiesBitMaskWithCapabilities(
+		canReceiveNativeTokens,
+		canReceiveMana,
+		canReceiveOutputsWithTimelockUnlockCondition,
+		canReceiveOutputsWithExpirationUnlockCondition,
+		canReceiveOutputsWithStorageDepositReturnUnlockCondition,
+		canReceiveAccountOutputs,
+		canReceiveNFTOutputs,
+		canReceiveDelegationOutputs,
+	)
 
 	return addr
 }

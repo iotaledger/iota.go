@@ -109,7 +109,7 @@ type AddressCapabilities interface {
 
 type RestrictedAddress interface {
 	Address
-	CapabilitiesBitMask() AddressCapabilitiesBitMask
+	AllowedCapabilitiesBitMask() AddressCapabilitiesBitMask
 }
 
 // DirectUnlockableAddress is a type of Address which can be directly unlocked.

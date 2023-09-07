@@ -11,14 +11,14 @@ import (
 )
 
 type RestrictedNFTAddress struct {
-	NFTID        [NFTAddressBytesLength]byte `serix:"0,mapKey=nftId"`
-	Capabilities AddressCapabilitiesBitMask  `serix:"1,mapKey=capabilities,lengthPrefixType=uint8,maxLen=1"`
+	NFTID               [NFTAddressBytesLength]byte `serix:"0,mapKey=nftId"`
+	AllowedCapabilities AddressCapabilitiesBitMask  `serix:"1,mapKey=allowedCapabilities,lengthPrefixType=uint8,maxLen=1"`
 }
 
 func (addr *RestrictedNFTAddress) Clone() Address {
 	cpy := &RestrictedNFTAddress{}
 	copy(cpy.NFTID[:], addr.NFTID[:])
-	copy(cpy.Capabilities[:], addr.Capabilities[:])
+	copy(cpy.AllowedCapabilities[:], addr.AllowedCapabilities[:])
 
 	return cpy
 }
@@ -38,7 +38,7 @@ func (addr *RestrictedNFTAddress) Equal(other Address) bool {
 	}
 
 	return addr.NFTID == otherAddr.NFTID &&
-		bytes.Equal(addr.Capabilities, otherAddr.Capabilities)
+		bytes.Equal(addr.AllowedCapabilities, otherAddr.AllowedCapabilities)
 }
 
 func (addr *RestrictedNFTAddress) Type() AddressType {
@@ -55,47 +55,55 @@ func (addr *RestrictedNFTAddress) String() string {
 
 func (addr *RestrictedNFTAddress) Size() int {
 	return NFTAddressSerializedBytesSize +
-		addr.Capabilities.Size()
+		addr.AllowedCapabilities.Size()
 }
 
 func (addr *RestrictedNFTAddress) CannotReceiveNativeTokens() bool {
-	return addr.Capabilities.CannotReceiveNativeTokens()
+	return addr.AllowedCapabilities.CannotReceiveNativeTokens()
 }
 
 func (addr *RestrictedNFTAddress) CannotReceiveMana() bool {
-	return addr.Capabilities.CannotReceiveMana()
+	return addr.AllowedCapabilities.CannotReceiveMana()
 }
 
 func (addr *RestrictedNFTAddress) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
-	return addr.Capabilities.CannotReceiveOutputsWithTimelockUnlockCondition()
+	return addr.AllowedCapabilities.CannotReceiveOutputsWithTimelockUnlockCondition()
 }
 
 func (addr *RestrictedNFTAddress) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
-	return addr.Capabilities.CannotReceiveOutputsWithExpirationUnlockCondition()
+	return addr.AllowedCapabilities.CannotReceiveOutputsWithExpirationUnlockCondition()
 }
 
 func (addr *RestrictedNFTAddress) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return addr.Capabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition()
+	return addr.AllowedCapabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition()
 }
 
 func (addr *RestrictedNFTAddress) CannotReceiveAccountOutputs() bool {
-	return addr.Capabilities.CannotReceiveAccountOutputs()
+	return addr.AllowedCapabilities.CannotReceiveAccountOutputs()
 }
 
 func (addr *RestrictedNFTAddress) CannotReceiveNFTOutputs() bool {
-	return addr.Capabilities.CannotReceiveNFTOutputs()
+	return addr.AllowedCapabilities.CannotReceiveNFTOutputs()
 }
 
 func (addr *RestrictedNFTAddress) CannotReceiveDelegationOutputs() bool {
-	return addr.Capabilities.CannotReceiveDelegationOutputs()
+	return addr.AllowedCapabilities.CannotReceiveDelegationOutputs()
 }
 
-func (addr *RestrictedNFTAddress) CapabilitiesBitMask() AddressCapabilitiesBitMask {
-	return addr.Capabilities
+func (addr *RestrictedNFTAddress) AllowedCapabilitiesBitMask() AddressCapabilitiesBitMask {
+	return addr.AllowedCapabilities
 }
 
-// RestrictedNFTAddressFromOutputID returns the NFT address computed from a given OutputID.
-func RestrictedNFTAddressFromOutputID(outputID OutputID,
+func RestrictedNFTAddressFromOutputID(outputID OutputID) *RestrictedNFTAddress {
+	nftID := blake2b.Sum256(outputID[:])
+	addr := &RestrictedNFTAddress{}
+	copy(addr.NFTID[:], nftID[:])
+
+	return addr
+}
+
+// RestrictedNFTAddressFromOutputIDWithCapabilities returns the NFT address computed from a given OutputID.
+func RestrictedNFTAddressFromOutputIDWithCapabilities(outputID OutputID,
 	canReceiveNativeTokens bool,
 	canReceiveMana bool,
 	canReceiveOutputsWithTimelockUnlockCondition bool,
@@ -104,42 +112,17 @@ func RestrictedNFTAddressFromOutputID(outputID OutputID,
 	canReceiveAccountOutputs bool,
 	canReceiveNFTOutputs bool,
 	canReceiveDelegationOutputs bool) *RestrictedNFTAddress {
-
-	nftID := blake2b.Sum256(outputID[:])
-	addr := &RestrictedNFTAddress{}
-	copy(addr.NFTID[:], nftID[:])
-
-	if canReceiveNativeTokens {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveNativeTokensBitIndex)
-	}
-
-	if canReceiveMana {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveManaBitIndex)
-	}
-
-	if canReceiveOutputsWithTimelockUnlockCondition {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
-	}
-
-	if canReceiveOutputsWithExpirationUnlockCondition {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
-	}
-
-	if canReceiveOutputsWithStorageDepositReturnUnlockCondition {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
-	}
-
-	if canReceiveAccountOutputs {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveAccountOutputsBitIndex)
-	}
-
-	if canReceiveNFTOutputs {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveNFTOutputsBitIndex)
-	}
-
-	if canReceiveDelegationOutputs {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveDelegationOutputsBitIndex)
-	}
+	addr := RestrictedNFTAddressFromOutputID(outputID)
+	addr.AllowedCapabilities = AddressCapabilitiesBitMaskWithCapabilities(
+		canReceiveNativeTokens,
+		canReceiveMana,
+		canReceiveOutputsWithTimelockUnlockCondition,
+		canReceiveOutputsWithExpirationUnlockCondition,
+		canReceiveOutputsWithStorageDepositReturnUnlockCondition,
+		canReceiveAccountOutputs,
+		canReceiveNFTOutputs,
+		canReceiveDelegationOutputs,
+	)
 
 	return addr
 }

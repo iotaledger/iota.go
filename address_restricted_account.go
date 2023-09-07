@@ -11,14 +11,14 @@ import (
 )
 
 type RestrictedAccountAddress struct {
-	AccountID    [AccountAddressBytesLength]byte `serix:"0,mapKey=accountId"`
-	Capabilities AddressCapabilitiesBitMask      `serix:"1,mapKey=capabilities,lengthPrefixType=uint8,maxLen=1"`
+	AccountID           [AccountAddressBytesLength]byte `serix:"0,mapKey=accountId"`
+	AllowedCapabilities AddressCapabilitiesBitMask      `serix:"1,mapKey=allowedCapabilities,lengthPrefixType=uint8,maxLen=1"`
 }
 
 func (addr *RestrictedAccountAddress) Clone() Address {
 	cpy := &RestrictedAccountAddress{}
 	copy(cpy.AccountID[:], addr.AccountID[:])
-	copy(cpy.Capabilities[:], addr.Capabilities[:])
+	copy(cpy.AllowedCapabilities[:], addr.AllowedCapabilities[:])
 
 	return cpy
 }
@@ -38,7 +38,7 @@ func (addr *RestrictedAccountAddress) Equal(other Address) bool {
 	}
 
 	return addr.AccountID == otherAddr.AccountID &&
-		bytes.Equal(addr.Capabilities, otherAddr.Capabilities)
+		bytes.Equal(addr.AllowedCapabilities, otherAddr.AllowedCapabilities)
 }
 
 func (addr *RestrictedAccountAddress) Type() AddressType {
@@ -55,47 +55,56 @@ func (addr *RestrictedAccountAddress) String() string {
 
 func (addr *RestrictedAccountAddress) Size() int {
 	return AccountAddressSerializedBytesSize +
-		addr.Capabilities.Size()
+		addr.AllowedCapabilities.Size()
 }
 
 func (addr *RestrictedAccountAddress) CannotReceiveNativeTokens() bool {
-	return addr.Capabilities.CannotReceiveNativeTokens()
+	return addr.AllowedCapabilities.CannotReceiveNativeTokens()
 }
 
 func (addr *RestrictedAccountAddress) CannotReceiveMana() bool {
-	return addr.Capabilities.CannotReceiveMana()
+	return addr.AllowedCapabilities.CannotReceiveMana()
 }
 
 func (addr *RestrictedAccountAddress) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
-	return addr.Capabilities.CannotReceiveOutputsWithTimelockUnlockCondition()
+	return addr.AllowedCapabilities.CannotReceiveOutputsWithTimelockUnlockCondition()
 }
 
 func (addr *RestrictedAccountAddress) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
-	return addr.Capabilities.CannotReceiveOutputsWithExpirationUnlockCondition()
+	return addr.AllowedCapabilities.CannotReceiveOutputsWithExpirationUnlockCondition()
 }
 
 func (addr *RestrictedAccountAddress) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return addr.Capabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition()
+	return addr.AllowedCapabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition()
 }
 
 func (addr *RestrictedAccountAddress) CannotReceiveAccountOutputs() bool {
-	return addr.Capabilities.CannotReceiveAccountOutputs()
+	return addr.AllowedCapabilities.CannotReceiveAccountOutputs()
 }
 
 func (addr *RestrictedAccountAddress) CannotReceiveNFTOutputs() bool {
-	return addr.Capabilities.CannotReceiveNFTOutputs()
+	return addr.AllowedCapabilities.CannotReceiveNFTOutputs()
 }
 
 func (addr *RestrictedAccountAddress) CannotReceiveDelegationOutputs() bool {
-	return addr.Capabilities.CannotReceiveDelegationOutputs()
+	return addr.AllowedCapabilities.CannotReceiveDelegationOutputs()
 }
 
-func (addr *RestrictedAccountAddress) CapabilitiesBitMask() AddressCapabilitiesBitMask {
-	return addr.Capabilities
+func (addr *RestrictedAccountAddress) AllowedCapabilitiesBitMask() AddressCapabilitiesBitMask {
+	return addr.AllowedCapabilities
 }
 
 // RestrictedAccountAddressFromOutputID returns the account address computed from a given OutputID.
-func RestrictedAccountAddressFromOutputID(outputID OutputID,
+func RestrictedAccountAddressFromOutputID(outputID OutputID) *RestrictedAccountAddress {
+	accountID := blake2b.Sum256(outputID[:])
+	addr := &RestrictedAccountAddress{}
+	copy(addr.AccountID[:], accountID[:])
+
+	return addr
+}
+
+// RestrictedAccountAddressFromOutputIDWithCapabilities returns the account address computed from a given OutputID.
+func RestrictedAccountAddressFromOutputIDWithCapabilities(outputID OutputID,
 	canReceiveNativeTokens bool,
 	canReceiveMana bool,
 	canReceiveOutputsWithTimelockUnlockCondition bool,
@@ -104,42 +113,17 @@ func RestrictedAccountAddressFromOutputID(outputID OutputID,
 	canReceiveAccountOutputs bool,
 	canReceiveNFTOutputs bool,
 	canReceiveDelegationOutputs bool) *RestrictedAccountAddress {
-
-	accountID := blake2b.Sum256(outputID[:])
-	addr := &RestrictedAccountAddress{}
-	copy(addr.AccountID[:], accountID[:])
-
-	if canReceiveNativeTokens {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveNativeTokensBitIndex)
-	}
-
-	if canReceiveMana {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveManaBitIndex)
-	}
-
-	if canReceiveOutputsWithTimelockUnlockCondition {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
-	}
-
-	if canReceiveOutputsWithExpirationUnlockCondition {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
-	}
-
-	if canReceiveOutputsWithStorageDepositReturnUnlockCondition {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
-	}
-
-	if canReceiveAccountOutputs {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveAccountOutputsBitIndex)
-	}
-
-	if canReceiveNFTOutputs {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveNFTOutputsBitIndex)
-	}
-
-	if canReceiveDelegationOutputs {
-		addr.Capabilities = addr.Capabilities.setBit(canReceiveDelegationOutputsBitIndex)
-	}
+	addr := RestrictedAccountAddressFromOutputID(outputID)
+	addr.AllowedCapabilities = AddressCapabilitiesBitMaskWithCapabilities(
+		canReceiveNativeTokens,
+		canReceiveMana,
+		canReceiveOutputsWithTimelockUnlockCondition,
+		canReceiveOutputsWithExpirationUnlockCondition,
+		canReceiveOutputsWithStorageDepositReturnUnlockCondition,
+		canReceiveAccountOutputs,
+		canReceiveNFTOutputs,
+		canReceiveDelegationOutputs,
+	)
 
 	return addr
 }

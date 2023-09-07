@@ -256,7 +256,7 @@ func RandRestrictedEd25519Address(capabilities iotago.AddressCapabilitiesBitMask
 	edAddr := &iotago.RestrictedEd25519Address{}
 	addr := RandBytes(iotago.Ed25519AddressBytesLength)
 	copy(edAddr.PubKeyHash[:], addr)
-	edAddr.Capabilities = capabilities
+	edAddr.AllowedCapabilities = capabilities
 
 	return edAddr
 }
@@ -275,7 +275,7 @@ func RandRestrictedAccountAddress(capabilities iotago.AddressCapabilitiesBitMask
 	addr := &iotago.RestrictedAccountAddress{}
 	accountID := RandBytes(iotago.AccountIDLength)
 	copy(addr.AccountID[:], accountID)
-	addr.Capabilities = capabilities
+	addr.AllowedCapabilities = capabilities
 
 	return addr
 }
@@ -294,7 +294,7 @@ func RandRestrictedNFTAddress(capabilities iotago.AddressCapabilitiesBitMask) *i
 	addr := &iotago.RestrictedNFTAddress{}
 	nftID := RandBytes(iotago.NFTIDLength)
 	copy(addr.NFTID[:], nftID)
-	addr.Capabilities = capabilities
+	addr.AllowedCapabilities = capabilities
 
 	return addr
 }

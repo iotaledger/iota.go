@@ -11,6 +11,11 @@ import (
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
+const (
+	ImplicitAccountCreationAddressBytesLength         = Ed25519AddressBytesLength
+	ImplicitAccountCreationAddressSerializedBytesSize = Ed25519AddressSerializedBytesSize
+)
+
 type ImplicitAccountCreationAddress Ed25519Address
 
 // ParseImplicitAccountCreationAddressFromHexString parses the given hex string into an ImplicitAccountCreationAddress.
@@ -20,7 +25,7 @@ func ParseImplicitAccountCreationAddressFromHexString(hexAddr string) (*Implicit
 		return nil, err
 	}
 
-	if len(addrBytes) < Ed25519AddressBytesLength {
+	if len(addrBytes) < ImplicitAccountCreationAddressBytesLength {
 		return nil, ierrors.New("invalid ImplicitAccountCreationAddress length")
 	}
 
@@ -44,11 +49,11 @@ func MustParseImplicitAccountCreationAddressFromHexString(hexAddr string) *Impli
 func (addr *ImplicitAccountCreationAddress) Decode(b []byte) (int, error) {
 	copy(addr[:], b)
 
-	return Ed25519AddressSerializedBytesSize - 1, nil
+	return ImplicitAccountCreationAddressSerializedBytesSize - 1, nil
 }
 
 func (addr *ImplicitAccountCreationAddress) Encode() ([]byte, error) {
-	var b [Ed25519AddressSerializedBytesSize - 1]byte
+	var b [ImplicitAccountCreationAddressSerializedBytesSize - 1]byte
 	copy(b[:], addr[:])
 
 	return b[:], nil
@@ -100,7 +105,7 @@ func (addr *ImplicitAccountCreationAddress) String() string {
 }
 
 func (addr *ImplicitAccountCreationAddress) Size() int {
-	return Ed25519AddressSerializedBytesSize
+	return ImplicitAccountCreationAddressSerializedBytesSize
 }
 
 func (addr *ImplicitAccountCreationAddress) CannotReceiveNativeTokens() bool {
