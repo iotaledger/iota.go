@@ -19,8 +19,14 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterTypeSettings(AccountAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressAccount)).WithMapKey("accountId")),
 		)
+		must(api.RegisterTypeSettings(RestrictedAccountAddress{},
+			serix.TypeSettings{}.WithObjectType(uint8(AddressRestrictedAccount))),
+		)
 		must(api.RegisterTypeSettings(NFTAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressNFT)).WithMapKey("nftId")),
+		)
+		must(api.RegisterTypeSettings(RestrictedNFTAddress{},
+			serix.TypeSettings{}.WithObjectType(uint8(AddressRestrictedNFT))),
 		)
 		must(api.RegisterTypeSettings(ImplicitAccountCreationAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressImplicitAccountCreation)).WithMapKey("pubKeyHash")),

@@ -20,12 +20,16 @@ type AddressType byte
 const (
 	// AddressEd25519 denotes an Ed25519 address.
 	AddressEd25519 AddressType = 0
-	// AddressRestrictedEd25519 denotes an Ed25519 address that can only receive basic outputs without native tokens or timelocks.
+	// AddressRestrictedEd25519 denotes an Ed25519 address that has a capability bitmask.
 	AddressRestrictedEd25519 AddressType = 1
 	// AddressAccount denotes an Account address.
 	AddressAccount AddressType = 8
+	// AddressRestrictedAccount denotes an Account address that has a capability bitmask.
+	AddressRestrictedAccount AddressType = 9
 	// AddressNFT denotes an NFT address.
 	AddressNFT AddressType = 16
+	// AddressRestrictedNFT denotes an NFT address that has a capability bitmask.
+	AddressRestrictedNFT AddressType = 17
 	// AddressImplicitAccountCreation denotes an Ed25519 address that can only be used to create an implicit account.
 	AddressImplicitAccountCreation AddressType = 24
 )
@@ -50,8 +54,10 @@ var (
 	addressNames = [AddressImplicitAccountCreation + 1]string{
 		"Ed25519Address",
 		"RestrictedEd25519Address", "", "", "", "", "", "",
-		"AccountAddress", "", "", "", "", "", "", "",
-		"NFTAddress", "", "", "", "", "", "", "",
+		"AccountAddress",
+		"RestrictedAccountAddress", "", "", "", "", "", "",
+		"NFTAddress",
+		"RestrictedNFTAddress", "", "", "", "", "", "",
 		"ImplicitAccountCreationAddress",
 	}
 )
@@ -101,6 +107,11 @@ type AddressCapabilities interface {
 	CanReceiveDelegationOutputs() bool
 }
 
+type RestrictedAddress interface {
+	Address
+	CapabilitiesBitMask() AddressCapabilitiesBitMask
+}
+
 // DirectUnlockableAddress is a type of Address which can be directly unlocked.
 type DirectUnlockableAddress interface {
 	Address
@@ -143,8 +154,12 @@ func newAddress(addressType byte) (address Address, err error) {
 		return &RestrictedEd25519Address{}, nil
 	case AddressAccount:
 		return &AccountAddress{}, nil
+	case AddressRestrictedAccount:
+		return &RestrictedAccountAddress{}, nil
 	case AddressNFT:
 		return &NFTAddress{}, nil
+	case AddressRestrictedNFT:
+		return &RestrictedNFTAddress{}, nil
 	case AddressImplicitAccountCreation:
 		return &ImplicitAccountCreationAddress{}, nil
 	default:

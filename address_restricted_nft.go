@@ -3,111 +3,99 @@ package iotago
 import (
 	"bytes"
 	"context"
-	"crypto/ed25519"
 
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
-type RestrictedEd25519Address struct {
-	PubKeyHash   [Ed25519AddressBytesLength]byte `serix:"0,mapKey=pubKeyHash"`
-	Capabilities AddressCapabilitiesBitMask      `serix:"1,mapKey=capabilities,lengthPrefixType=uint8,maxLen=1"`
+type RestrictedNFTAddress struct {
+	NFTID        [NFTAddressBytesLength]byte `serix:"0,mapKey=nftId"`
+	Capabilities AddressCapabilitiesBitMask  `serix:"1,mapKey=capabilities,lengthPrefixType=uint8,maxLen=1"`
 }
 
-func (addr *RestrictedEd25519Address) Clone() Address {
-	cpy := &RestrictedEd25519Address{}
-	copy(cpy.PubKeyHash[:], addr.PubKeyHash[:])
+func (addr *RestrictedNFTAddress) Clone() Address {
+	cpy := &RestrictedNFTAddress{}
+	copy(cpy.NFTID[:], addr.NFTID[:])
 	copy(cpy.Capabilities[:], addr.Capabilities[:])
 
 	return cpy
 }
 
-func (addr *RestrictedEd25519Address) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (addr *RestrictedNFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
-func (addr *RestrictedEd25519Address) Key() string {
+func (addr *RestrictedNFTAddress) Key() string {
 	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (addr *RestrictedEd25519Address) Unlock(msg []byte, sig Signature) error {
-	edSig, isEdSig := sig.(*Ed25519Signature)
-	if !isEdSig {
-		return ierrors.Wrapf(ErrSignatureAndAddrIncompatible, "can not unlock RestrictedEd25519Address address with signature of type %s", sig.Type())
-	}
-
-	ed25519Addr := Ed25519Address(addr.PubKeyHash)
-	return edSig.Valid(msg, &ed25519Addr)
-}
-
-func (addr *RestrictedEd25519Address) Equal(other Address) bool {
-	otherAddr, is := other.(*RestrictedEd25519Address)
+func (addr *RestrictedNFTAddress) Equal(other Address) bool {
+	otherAddr, is := other.(*RestrictedNFTAddress)
 	if !is {
 		return false
 	}
 
-	return addr.PubKeyHash == otherAddr.PubKeyHash &&
+	return addr.NFTID == otherAddr.NFTID &&
 		bytes.Equal(addr.Capabilities, otherAddr.Capabilities)
 }
 
-func (addr *RestrictedEd25519Address) Type() AddressType {
-	return AddressRestrictedEd25519
+func (addr *RestrictedNFTAddress) Type() AddressType {
+	return AddressRestrictedNFT
 }
 
-func (addr *RestrictedEd25519Address) Bech32(hrp NetworkPrefix) string {
+func (addr *RestrictedNFTAddress) Bech32(hrp NetworkPrefix) string {
 	return bech32String(hrp, addr)
 }
 
-func (addr *RestrictedEd25519Address) String() string {
+func (addr *RestrictedNFTAddress) String() string {
 	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (addr *RestrictedEd25519Address) Size() int {
-	return Ed25519AddressSerializedBytesSize +
+func (addr *RestrictedNFTAddress) Size() int {
+	return NFTAddressSerializedBytesSize +
 		addr.Capabilities.Size()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveNativeTokens() bool {
+func (addr *RestrictedNFTAddress) CanReceiveNativeTokens() bool {
 	return addr.Capabilities.CanReceiveNativeTokens()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveMana() bool {
+func (addr *RestrictedNFTAddress) CanReceiveMana() bool {
 	return addr.Capabilities.CanReceiveMana()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+func (addr *RestrictedNFTAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
 	return addr.Capabilities.CanReceiveOutputsWithTimelockUnlockCondition()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveOutputsWithExpirationUnlockCondition() bool {
+func (addr *RestrictedNFTAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
 	return addr.Capabilities.CanReceiveOutputsWithExpirationUnlockCondition()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+func (addr *RestrictedNFTAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
 	return addr.Capabilities.CanReceiveOutputsWithStorageDepositReturnUnlockCondition()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveAccountOutputs() bool {
+func (addr *RestrictedNFTAddress) CanReceiveAccountOutputs() bool {
 	return addr.Capabilities.CanReceiveAccountOutputs()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveNFTOutputs() bool {
+func (addr *RestrictedNFTAddress) CanReceiveNFTOutputs() bool {
 	return addr.Capabilities.CanReceiveNFTOutputs()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveDelegationOutputs() bool {
+func (addr *RestrictedNFTAddress) CanReceiveDelegationOutputs() bool {
 	return addr.Capabilities.CanReceiveDelegationOutputs()
 }
 
-func (addr *RestrictedEd25519Address) CapabilitiesBitMask() AddressCapabilitiesBitMask {
+func (addr *RestrictedNFTAddress) CapabilitiesBitMask() AddressCapabilitiesBitMask {
 	return addr.Capabilities
 }
 
-// RestrictedEd25519AddressFromPubKey returns the address belonging to the given Ed25519 public key.
-func RestrictedEd25519AddressFromPubKey(pubKey ed25519.PublicKey,
+// RestrictedNFTAddressFromOutputID returns the NFT address computed from a given OutputID.
+func RestrictedNFTAddressFromOutputID(outputID OutputID,
 	canReceiveNativeTokens bool,
 	canReceiveMana bool,
 	canReceiveOutputsWithTimelockUnlockCondition bool,
@@ -115,11 +103,11 @@ func RestrictedEd25519AddressFromPubKey(pubKey ed25519.PublicKey,
 	canReceiveOutputsWithStorageDepositReturnUnlockCondition bool,
 	canReceiveAccountOutputs bool,
 	canReceiveNFTOutputs bool,
-	canReceiveDelegationOutputs bool) *RestrictedEd25519Address {
+	canReceiveDelegationOutputs bool) *RestrictedNFTAddress {
 
-	address := blake2b.Sum256(pubKey[:])
-	addr := &RestrictedEd25519Address{}
-	copy(addr.PubKeyHash[:], address[:])
+	nftID := blake2b.Sum256(outputID[:])
+	addr := &RestrictedNFTAddress{}
+	copy(addr.NFTID[:], nftID[:])
 
 	if canReceiveNativeTokens {
 		addr.Capabilities = addr.Capabilities.setBit(canReceiveNativeTokensBitIndex)

@@ -3,111 +3,99 @@ package iotago
 import (
 	"bytes"
 	"context"
-	"crypto/ed25519"
 
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
-type RestrictedEd25519Address struct {
-	PubKeyHash   [Ed25519AddressBytesLength]byte `serix:"0,mapKey=pubKeyHash"`
+type RestrictedAccountAddress struct {
+	AccountID    [AccountAddressBytesLength]byte `serix:"0,mapKey=accountId"`
 	Capabilities AddressCapabilitiesBitMask      `serix:"1,mapKey=capabilities,lengthPrefixType=uint8,maxLen=1"`
 }
 
-func (addr *RestrictedEd25519Address) Clone() Address {
-	cpy := &RestrictedEd25519Address{}
-	copy(cpy.PubKeyHash[:], addr.PubKeyHash[:])
+func (addr *RestrictedAccountAddress) Clone() Address {
+	cpy := &RestrictedAccountAddress{}
+	copy(cpy.AccountID[:], addr.AccountID[:])
 	copy(cpy.Capabilities[:], addr.Capabilities[:])
 
 	return cpy
 }
 
-func (addr *RestrictedEd25519Address) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (addr *RestrictedAccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
-func (addr *RestrictedEd25519Address) Key() string {
+func (addr *RestrictedAccountAddress) Key() string {
 	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (addr *RestrictedEd25519Address) Unlock(msg []byte, sig Signature) error {
-	edSig, isEdSig := sig.(*Ed25519Signature)
-	if !isEdSig {
-		return ierrors.Wrapf(ErrSignatureAndAddrIncompatible, "can not unlock RestrictedEd25519Address address with signature of type %s", sig.Type())
-	}
-
-	ed25519Addr := Ed25519Address(addr.PubKeyHash)
-	return edSig.Valid(msg, &ed25519Addr)
-}
-
-func (addr *RestrictedEd25519Address) Equal(other Address) bool {
-	otherAddr, is := other.(*RestrictedEd25519Address)
+func (addr *RestrictedAccountAddress) Equal(other Address) bool {
+	otherAddr, is := other.(*RestrictedAccountAddress)
 	if !is {
 		return false
 	}
 
-	return addr.PubKeyHash == otherAddr.PubKeyHash &&
+	return addr.AccountID == otherAddr.AccountID &&
 		bytes.Equal(addr.Capabilities, otherAddr.Capabilities)
 }
 
-func (addr *RestrictedEd25519Address) Type() AddressType {
-	return AddressRestrictedEd25519
+func (addr *RestrictedAccountAddress) Type() AddressType {
+	return AddressRestrictedAccount
 }
 
-func (addr *RestrictedEd25519Address) Bech32(hrp NetworkPrefix) string {
+func (addr *RestrictedAccountAddress) Bech32(hrp NetworkPrefix) string {
 	return bech32String(hrp, addr)
 }
 
-func (addr *RestrictedEd25519Address) String() string {
+func (addr *RestrictedAccountAddress) String() string {
 	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (addr *RestrictedEd25519Address) Size() int {
-	return Ed25519AddressSerializedBytesSize +
+func (addr *RestrictedAccountAddress) Size() int {
+	return AccountAddressSerializedBytesSize +
 		addr.Capabilities.Size()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveNativeTokens() bool {
+func (addr *RestrictedAccountAddress) CanReceiveNativeTokens() bool {
 	return addr.Capabilities.CanReceiveNativeTokens()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveMana() bool {
+func (addr *RestrictedAccountAddress) CanReceiveMana() bool {
 	return addr.Capabilities.CanReceiveMana()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveOutputsWithTimelockUnlockCondition() bool {
+func (addr *RestrictedAccountAddress) CanReceiveOutputsWithTimelockUnlockCondition() bool {
 	return addr.Capabilities.CanReceiveOutputsWithTimelockUnlockCondition()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveOutputsWithExpirationUnlockCondition() bool {
+func (addr *RestrictedAccountAddress) CanReceiveOutputsWithExpirationUnlockCondition() bool {
 	return addr.Capabilities.CanReceiveOutputsWithExpirationUnlockCondition()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+func (addr *RestrictedAccountAddress) CanReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
 	return addr.Capabilities.CanReceiveOutputsWithStorageDepositReturnUnlockCondition()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveAccountOutputs() bool {
+func (addr *RestrictedAccountAddress) CanReceiveAccountOutputs() bool {
 	return addr.Capabilities.CanReceiveAccountOutputs()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveNFTOutputs() bool {
+func (addr *RestrictedAccountAddress) CanReceiveNFTOutputs() bool {
 	return addr.Capabilities.CanReceiveNFTOutputs()
 }
 
-func (addr *RestrictedEd25519Address) CanReceiveDelegationOutputs() bool {
+func (addr *RestrictedAccountAddress) CanReceiveDelegationOutputs() bool {
 	return addr.Capabilities.CanReceiveDelegationOutputs()
 }
 
-func (addr *RestrictedEd25519Address) CapabilitiesBitMask() AddressCapabilitiesBitMask {
+func (addr *RestrictedAccountAddress) CapabilitiesBitMask() AddressCapabilitiesBitMask {
 	return addr.Capabilities
 }
 
-// RestrictedEd25519AddressFromPubKey returns the address belonging to the given Ed25519 public key.
-func RestrictedEd25519AddressFromPubKey(pubKey ed25519.PublicKey,
+// RestrictedAccountAddressFromOutputID returns the account address computed from a given OutputID.
+func RestrictedAccountAddressFromOutputID(outputID OutputID,
 	canReceiveNativeTokens bool,
 	canReceiveMana bool,
 	canReceiveOutputsWithTimelockUnlockCondition bool,
@@ -115,11 +103,11 @@ func RestrictedEd25519AddressFromPubKey(pubKey ed25519.PublicKey,
 	canReceiveOutputsWithStorageDepositReturnUnlockCondition bool,
 	canReceiveAccountOutputs bool,
 	canReceiveNFTOutputs bool,
-	canReceiveDelegationOutputs bool) *RestrictedEd25519Address {
+	canReceiveDelegationOutputs bool) *RestrictedAccountAddress {
 
-	address := blake2b.Sum256(pubKey[:])
-	addr := &RestrictedEd25519Address{}
-	copy(addr.PubKeyHash[:], address[:])
+	accountID := blake2b.Sum256(outputID[:])
+	addr := &RestrictedAccountAddress{}
+	copy(addr.AccountID[:], accountID[:])
 
 	if canReceiveNativeTokens {
 		addr.Capabilities = addr.Capabilities.setBit(canReceiveNativeTokensBitIndex)
