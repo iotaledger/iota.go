@@ -2,8 +2,11 @@
 package iotago
 
 import (
+	"context"
+
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -15,95 +18,106 @@ const (
 	AccountAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + AccountAddressBytesLength
 )
 
-// ParseAccountAddressFromHexString parses the given hex string into an AccountAddress.
-func ParseAccountAddressFromHexString(hexAddr string) (*AccountAddress, error) {
-	addrBytes, err := hexutil.DecodeHex(hexAddr)
-	if err != nil {
-		return nil, err
-	}
-	addr := &AccountAddress{}
-	copy(addr[:], addrBytes)
-
-	return addr, nil
-}
-
-// MustParseAccountAddressFromHexString parses the given hex string into an AccountAddress.
-// It panics if the hex address is invalid.
-func MustParseAccountAddressFromHexString(hexAddr string) *AccountAddress {
-	addr, err := ParseAccountAddressFromHexString(hexAddr)
-	if err != nil {
-		panic(err)
-	}
-
-	return addr
-}
-
 // AccountAddress defines an Account address.
 // An AccountAddress is the Blake2b-256 hash of the OutputID which created it.
 type AccountAddress [AccountAddressBytesLength]byte
 
-func (accountAddr *AccountAddress) Decode(b []byte) (int, error) {
-	copy(accountAddr[:], b)
+func (addr *AccountAddress) Decode(b []byte) (int, error) {
+	copy(addr[:], b)
 
 	return AccountAddressSerializedBytesSize - 1, nil
 }
 
-func (accountAddr *AccountAddress) Encode() ([]byte, error) {
+func (addr *AccountAddress) Encode() ([]byte, error) {
 	var b [AccountAddressSerializedBytesSize - 1]byte
-	copy(b[:], accountAddr[:])
+	copy(b[:], addr[:])
 
 	return b[:], nil
 }
 
-func (accountAddr *AccountAddress) Clone() Address {
+func (addr *AccountAddress) Clone() Address {
 	cpy := &AccountAddress{}
-	copy(cpy[:], accountAddr[:])
+	copy(cpy[:], addr[:])
 
 	return cpy
 }
 
-func (accountAddr *AccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(AccountAddressSerializedBytesSize)
+func (addr *AccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
-func (accountAddr *AccountAddress) Key() string {
-	return string(append([]byte{byte(AddressAccount)}, (*accountAddr)[:]...))
+func (addr *AccountAddress) Key() string {
+	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (accountAddr *AccountAddress) Chain() ChainID {
-	return AccountID(*accountAddr)
+func (addr *AccountAddress) Chain() ChainID {
+	return AccountID(*addr)
 }
 
-func (accountAddr *AccountAddress) AccountID() AccountID {
-	return AccountID(*accountAddr)
+func (addr *AccountAddress) AccountID() AccountID {
+	return AccountID(*addr)
 }
 
-func (accountAddr *AccountAddress) Equal(other Address) bool {
+func (addr *AccountAddress) Equal(other Address) bool {
 	otherAddr, is := other.(*AccountAddress)
 	if !is {
 		return false
 	}
 
-	return *accountAddr == *otherAddr
+	return *addr == *otherAddr
 }
 
-func (accountAddr *AccountAddress) Type() AddressType {
+func (addr *AccountAddress) Type() AddressType {
 	return AddressAccount
 }
 
-func (accountAddr *AccountAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, accountAddr)
+func (addr *AccountAddress) Bech32(hrp NetworkPrefix) string {
+	return bech32String(hrp, addr)
 }
 
-func (accountAddr *AccountAddress) String() string {
-	return hexutil.EncodeHex(accountAddr[:])
+func (addr *AccountAddress) String() string {
+	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 }
 
-func (accountAddr *AccountAddress) Size() int {
+func (addr *AccountAddress) Size() int {
 	return AccountAddressSerializedBytesSize
 }
 
+func (addr *AccountAddress) CannotReceiveNativeTokens() bool {
+	return false
+}
+
+func (addr *AccountAddress) CannotReceiveMana() bool {
+	return false
+}
+
+func (addr *AccountAddress) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
+	return false
+}
+
+func (addr *AccountAddress) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
+	return false
+}
+
+func (addr *AccountAddress) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return false
+}
+
+func (addr *AccountAddress) CannotReceiveAccountOutputs() bool {
+	return false
+}
+
+func (addr *AccountAddress) CannotReceiveNFTOutputs() bool {
+	return false
+}
+
+func (addr *AccountAddress) CannotReceiveDelegationOutputs() bool {
+	return false
+}
+
 // AccountAddressFromOutputID returns the account address computed from a given OutputID.
-func AccountAddressFromOutputID(outputID OutputID) AccountAddress {
-	return blake2b.Sum256(outputID[:])
+func AccountAddressFromOutputID(outputID OutputID) *AccountAddress {
+	address := blake2b.Sum256(outputID[:])
+
+	return (*AccountAddress)(&address)
 }
