@@ -263,20 +263,40 @@ func RandRestrictedEd25519Address(capabilities iotago.AddressCapabilitiesBitMask
 
 // RandAccountAddress returns a random AccountAddress.
 func RandAccountAddress() *iotago.AccountAddress {
-	accountAddr := &iotago.AccountAddress{}
-	addr := RandBytes(iotago.AccountAddressBytesLength)
-	copy(accountAddr[:], addr)
+	addr := &iotago.AccountAddress{}
+	accountID := RandBytes(iotago.AccountAddressBytesLength)
+	copy(addr[:], accountID)
 
-	return accountAddr
+	return addr
+}
+
+// RandRestrictedAccountAddress returns a random restricted account address.
+func RandRestrictedAccountAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAccountAddress {
+	addr := &iotago.RestrictedAccountAddress{}
+	accountID := RandBytes(iotago.AccountIDLength)
+	copy(addr.AccountID[:], accountID)
+	addr.Capabilities = capabilities
+
+	return addr
 }
 
 // RandNFTAddress returns a random NFTAddress.
 func RandNFTAddress() *iotago.NFTAddress {
-	nftAddr := &iotago.NFTAddress{}
-	addr := RandBytes(iotago.NFTAddressBytesLength)
-	copy(nftAddr[:], addr)
+	addr := &iotago.NFTAddress{}
+	nftID := RandBytes(iotago.NFTAddressBytesLength)
+	copy(addr[:], nftID)
 
-	return nftAddr
+	return addr
+}
+
+// RandRestrictedNFTAddress returns a random restricted nft address.
+func RandRestrictedNFTAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedNFTAddress {
+	addr := &iotago.RestrictedNFTAddress{}
+	nftID := RandBytes(iotago.NFTIDLength)
+	copy(addr.NFTID[:], nftID)
+	addr.Capabilities = capabilities
+
+	return addr
 }
 
 // RandImplicitAccountCreationAddress returns a random ImplicitAccountCreationAddress.

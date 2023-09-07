@@ -24,7 +24,7 @@ func TestAddressDeSerialize(t *testing.T) {
 		{
 			name:   "ok - RestrictedEd25519Address with capabilities",
 			source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{0xff}),
-			target: &iotago.RestrictedEd25519Address{Capabilities: iotago.AddressCapabilitiesBitMask{0xff}},
+			target: &iotago.RestrictedEd25519Address{},
 		},
 		{
 			name:   "ok - RestrictedEd25519Address without capabilities",
@@ -37,9 +37,29 @@ func TestAddressDeSerialize(t *testing.T) {
 			target: &iotago.AccountAddress{},
 		},
 		{
+			name:   "ok - RestrictedAccountAddress with capabilities",
+			source: tpkg.RandRestrictedAccountAddress(iotago.AddressCapabilitiesBitMask{0xff}),
+			target: &iotago.RestrictedAccountAddress{},
+		},
+		{
+			name:   "ok - RestrictedAccountAddress without capabilities",
+			source: tpkg.RandRestrictedAccountAddress(iotago.AddressCapabilitiesBitMask{0x0}),
+			target: &iotago.RestrictedAccountAddress{},
+		},
+		{
 			name:   "ok - NFTAddress",
 			source: tpkg.RandNFTAddress(),
 			target: &iotago.NFTAddress{},
+		},
+		{
+			name:   "ok - RestrictedNFTAddress with capabilities",
+			source: tpkg.RandRestrictedNFTAddress(iotago.AddressCapabilitiesBitMask{0xff}),
+			target: &iotago.RestrictedNFTAddress{},
+		},
+		{
+			name:   "ok - RestrictedNFTAddress without capabilities",
+			source: tpkg.RandRestrictedNFTAddress(iotago.AddressCapabilitiesBitMask{0x0}),
+			target: &iotago.RestrictedNFTAddress{},
 		},
 		{
 			name:   "ok - ImplicitAccountCreationAddress",

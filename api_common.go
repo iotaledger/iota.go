@@ -34,7 +34,9 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*Ed25519Address)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedEd25519Address)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*AccountAddress)(nil)))
+		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedAccountAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*NFTAddress)(nil)))
+		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedNFTAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*ImplicitAccountCreationAddress)(nil)))
 
 		// All versions of the protocol need to be able to parse older protocol parameter versions.
