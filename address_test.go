@@ -2,10 +2,14 @@
 package iotago_test
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/crypto/ed25519"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -18,14 +22,49 @@ func TestAddressDeSerialize(t *testing.T) {
 			target: &iotago.Ed25519Address{},
 		},
 		{
+			name:   "ok - RestrictedEd25519Address with capabilities",
+			source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{0xff}),
+			target: &iotago.RestrictedEd25519Address{},
+		},
+		{
+			name:   "ok - RestrictedEd25519Address without capabilities",
+			source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{0x0}),
+			target: &iotago.RestrictedEd25519Address{},
+		},
+		{
 			name:   "ok - AccountAddress",
 			source: tpkg.RandAccountAddress(),
 			target: &iotago.AccountAddress{},
 		},
 		{
+			name:   "ok - RestrictedAccountAddress with capabilities",
+			source: tpkg.RandRestrictedAccountAddress(iotago.AddressCapabilitiesBitMask{0xff}),
+			target: &iotago.RestrictedAccountAddress{},
+		},
+		{
+			name:   "ok - RestrictedAccountAddress without capabilities",
+			source: tpkg.RandRestrictedAccountAddress(iotago.AddressCapabilitiesBitMask{0x0}),
+			target: &iotago.RestrictedAccountAddress{},
+		},
+		{
 			name:   "ok - NFTAddress",
 			source: tpkg.RandNFTAddress(),
 			target: &iotago.NFTAddress{},
+		},
+		{
+			name:   "ok - RestrictedNFTAddress with capabilities",
+			source: tpkg.RandRestrictedNFTAddress(iotago.AddressCapabilitiesBitMask{0xff}),
+			target: &iotago.RestrictedNFTAddress{},
+		},
+		{
+			name:   "ok - RestrictedNFTAddress without capabilities",
+			source: tpkg.RandRestrictedNFTAddress(iotago.AddressCapabilitiesBitMask{0x0}),
+			target: &iotago.RestrictedNFTAddress{},
+		},
+		{
+			name:   "ok - ImplicitAccountCreationAddress",
+			source: tpkg.RandImplicitAccountCreationAddress(),
+			target: &iotago.ImplicitAccountCreationAddress{},
 		},
 	}
 
@@ -71,4 +110,168 @@ func TestParseBech32(t *testing.T) {
 			assert.Equal(t, tt.addr, addr)
 		})
 	}
+}
+
+func TestNonRestrictedAddressCapabilities(t *testing.T) {
+	pubKey := ed25519.PublicKey(tpkg.Rand32ByteArray()).ToEd25519()
+	outputID := tpkg.RandOutputID(1)
+
+	addresses := []iotago.Address{
+		iotago.Ed25519AddressFromPubKey(pubKey),
+		iotago.AccountAddressFromOutputID(outputID),
+		iotago.NFTAddressFromOutputID(outputID),
+		iotago.ImplicitAccountCreationAddressFromPubKey(pubKey),
+	}
+
+	for _, addr := range addresses {
+		//nolint:exhaustive // we have a default case that fails
+		switch addr.Type() {
+		case iotago.AddressEd25519:
+			require.False(t, addr.CannotReceiveNativeTokens())
+			require.False(t, addr.CannotReceiveMana())
+			require.False(t, addr.CannotReceiveOutputsWithTimelockUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithExpirationUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition())
+			require.False(t, addr.CannotReceiveAccountOutputs())
+			require.False(t, addr.CannotReceiveNFTOutputs())
+			require.False(t, addr.CannotReceiveDelegationOutputs())
+		case iotago.AddressAccount:
+			require.False(t, addr.CannotReceiveNativeTokens())
+			require.False(t, addr.CannotReceiveMana())
+			require.False(t, addr.CannotReceiveOutputsWithTimelockUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithExpirationUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition())
+			require.False(t, addr.CannotReceiveAccountOutputs())
+			require.False(t, addr.CannotReceiveNFTOutputs())
+			require.False(t, addr.CannotReceiveDelegationOutputs())
+		case iotago.AddressNFT:
+			require.False(t, addr.CannotReceiveNativeTokens())
+			require.False(t, addr.CannotReceiveMana())
+			require.False(t, addr.CannotReceiveOutputsWithTimelockUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithExpirationUnlockCondition())
+			require.False(t, addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition())
+			require.False(t, addr.CannotReceiveAccountOutputs())
+			require.False(t, addr.CannotReceiveNFTOutputs())
+			require.False(t, addr.CannotReceiveDelegationOutputs())
+		case iotago.AddressImplicitAccountCreation:
+			require.True(t, addr.CannotReceiveNativeTokens())
+			require.False(t, addr.CannotReceiveMana())
+			require.True(t, addr.CannotReceiveOutputsWithTimelockUnlockCondition())
+			require.True(t, addr.CannotReceiveOutputsWithExpirationUnlockCondition())
+			require.True(t, addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition())
+			require.True(t, addr.CannotReceiveAccountOutputs())
+			require.True(t, addr.CannotReceiveNFTOutputs())
+			require.True(t, addr.CannotReceiveDelegationOutputs())
+		default:
+			t.Fail()
+		}
+	}
+
+}
+
+func assertRestrictedAddresses(t *testing.T, addresses []iotago.RestrictedAddress) {
+	t.Helper()
+
+	for i, addr := range addresses {
+		fmt.Println(addr.Bech32(iotago.PrefixMainnet))
+
+		j, err := tpkg.TestAPI.JSONEncode(addr)
+		require.NoError(t, err)
+		fmt.Println(string(j))
+
+		b, err := tpkg.TestAPI.Encode(addr)
+		require.NoError(t, err)
+		fmt.Println(hexutil.Encode(b))
+
+		addrChecks := []func() bool{
+			addr.CannotReceiveNativeTokens,
+			addr.CannotReceiveMana,
+			addr.CannotReceiveOutputsWithTimelockUnlockCondition,
+			addr.CannotReceiveOutputsWithExpirationUnlockCondition,
+			addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition,
+			addr.CannotReceiveAccountOutputs,
+			addr.CannotReceiveNFTOutputs,
+			addr.CannotReceiveDelegationOutputs,
+		}
+
+		require.Equal(t, addr.Size(), len(b))
+
+		switch i {
+		default:
+			for checkIndex, check := range addrChecks {
+				require.Equal(t, check(), i != checkIndex)
+			}
+			require.Equal(t, addr.AllowedCapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask{0 | 1<<i})
+			require.Equal(t, addr.Size(), 35)
+		case 8:
+			for _, check := range addrChecks {
+				require.False(t, check())
+			}
+			require.Equal(t, addr.AllowedCapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask{0xFF})
+			require.Equal(t, addr.Size(), 35)
+		case 9:
+			for _, check := range addrChecks {
+				require.True(t, check())
+			}
+			require.Equal(t, addr.AllowedCapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask(nil))
+			require.Equal(t, addr.Size(), 34)
+		}
+	}
+}
+
+//nolint:dupl // we have a lot of similar tests
+func TestRestrictedEd25519AddressCapabilities(t *testing.T) {
+	pubKey := ed25519.PublicKey(tpkg.Rand32ByteArray()).ToEd25519()
+	addresses := []iotago.RestrictedAddress{
+		iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey, true, false, false, false, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey, false, true, false, false, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey, false, false, true, false, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey, false, false, false, true, false, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey, false, false, false, false, true, false, false, false),
+		iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey, false, false, false, false, false, true, false, false),
+		iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey, false, false, false, false, false, false, true, false),
+		iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey, false, false, false, false, false, false, false, true),
+		iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey, true, true, true, true, true, true, true, true),
+		iotago.RestrictedEd25519AddressFromPubKey(pubKey),
+	}
+
+	assertRestrictedAddresses(t, addresses)
+}
+
+//nolint:dupl // we have a lot of similar tests
+func TestRestrictedNFTAddressCapabilities(t *testing.T) {
+	outputID := tpkg.RandOutputID(1)
+	addresses := []iotago.RestrictedAddress{
+		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, true, false, false, false, false, false, false, false),
+		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, true, false, false, false, false, false, false),
+		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, true, false, false, false, false, false),
+		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, false, true, false, false, false, false),
+		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, true, false, false, false),
+		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, true, false, false),
+		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, false, true, false),
+		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, false, false, true),
+		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, true, true, true, true, true, true, true, true),
+		iotago.RestrictedNFTAddressFromOutputID(outputID),
+	}
+
+	assertRestrictedAddresses(t, addresses)
+}
+
+//nolint:dupl // we have a lot of similar tests
+func TestRestrictedAccountAddressCapabilities(t *testing.T) {
+	outputID := tpkg.RandOutputID(1)
+	addresses := []iotago.RestrictedAddress{
+		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, true, false, false, false, false, false, false, false),
+		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, true, false, false, false, false, false, false),
+		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, true, false, false, false, false, false),
+		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, false, true, false, false, false, false),
+		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, true, false, false, false),
+		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, true, false, false),
+		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, false, true, false),
+		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, false, false, true),
+		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, true, true, true, true, true, true, true, true),
+		iotago.RestrictedAccountAddressFromOutputID(outputID),
+	}
+
+	assertRestrictedAddresses(t, addresses)
 }

@@ -6,7 +6,6 @@ import (
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	"github.com/iotaledger/iota.go/v4/bech32"
 )
 
@@ -21,10 +20,18 @@ type AddressType byte
 const (
 	// AddressEd25519 denotes an Ed25519 address.
 	AddressEd25519 AddressType = 0
+	// AddressRestrictedEd25519 denotes an Ed25519 address that has a capability bitmask.
+	AddressRestrictedEd25519 AddressType = 1
 	// AddressAccount denotes an Account address.
 	AddressAccount AddressType = 8
+	// AddressRestrictedAccount denotes an Account address that has a capability bitmask.
+	AddressRestrictedAccount AddressType = 9
 	// AddressNFT denotes an NFT address.
 	AddressNFT AddressType = 16
+	// AddressRestrictedNFT denotes an NFT address that has a capability bitmask.
+	AddressRestrictedNFT AddressType = 17
+	// AddressImplicitAccountCreation denotes an Ed25519 address that can only be used to create an implicit account.
+	AddressImplicitAccountCreation AddressType = 24
 )
 
 func (addrType AddressType) String() string {
@@ -32,17 +39,26 @@ func (addrType AddressType) String() string {
 		return fmt.Sprintf("unknown address type: %d", addrType)
 	}
 
-	return addressNames[addrType]
+	addressName := addressNames[addrType]
+	if addressName == "" {
+		return fmt.Sprintf("unknown address type: %d", addrType)
+	}
+
+	return addressName
 }
 
 // AddressTypeSet is a set of AddressType.
 type AddressTypeSet map[AddressType]struct{}
 
 var (
-	addressNames = [AddressNFT + 1]string{
-		"Ed25519Address", "", "", "", "", "", "", "",
-		"AccountAddress", "", "", "", "", "", "", "",
+	addressNames = [AddressImplicitAccountCreation + 1]string{
+		"Ed25519Address",
+		"RestrictedEd25519Address", "", "", "", "", "", "",
+		"AccountAddress",
+		"RestrictedAccountAddress", "", "", "", "", "", "",
 		"NFTAddress",
+		"RestrictedNFTAddress", "", "", "", "", "", "",
+		"ImplicitAccountCreationAddress",
 	}
 )
 
@@ -59,11 +75,10 @@ const (
 
 // Address describes a general address.
 type Address interface {
-	serix.Serializable
-	serix.Deserializable
 	Sizer
 	NonEphemeralObject
 	fmt.Stringer
+	AddressCapabilities
 
 	// Type returns the type of the address.
 	Type() AddressType
@@ -79,6 +94,22 @@ type Address interface {
 
 	// Clone clones the Address.
 	Clone() Address
+}
+
+type AddressCapabilities interface {
+	CannotReceiveNativeTokens() bool
+	CannotReceiveMana() bool
+	CannotReceiveOutputsWithTimelockUnlockCondition() bool
+	CannotReceiveOutputsWithExpirationUnlockCondition() bool
+	CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool
+	CannotReceiveAccountOutputs() bool
+	CannotReceiveNFTOutputs() bool
+	CannotReceiveDelegationOutputs() bool
+}
+
+type RestrictedAddress interface {
+	Address
+	AllowedCapabilitiesBitMask() AddressCapabilitiesBitMask
 }
 
 // DirectUnlockableAddress is a type of Address which can be directly unlocked.
@@ -119,10 +150,18 @@ func newAddress(addressType byte) (address Address, err error) {
 	switch AddressType(addressType) {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
+	case AddressRestrictedEd25519:
+		return &RestrictedEd25519Address{}, nil
 	case AddressAccount:
 		return &AccountAddress{}, nil
+	case AddressRestrictedAccount:
+		return &RestrictedAccountAddress{}, nil
 	case AddressNFT:
 		return &NFTAddress{}, nil
+	case AddressRestrictedNFT:
+		return &RestrictedNFTAddress{}, nil
+	case AddressImplicitAccountCreation:
+		return &ImplicitAccountCreationAddress{}, nil
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
 	}
