@@ -50,7 +50,7 @@ type basicProtocolParameters struct {
 	// and commitments in its past-cone to ATT and lastCommittedSlot respectively.
 	LivenessThresholdLowerBound time.Duration `serix:"16,mapKey=livenessThresholdLowerBound"`
 
-	// LivenessThresholdUpperBound is used by tip-selection to determine the if a block is eligible by evaluating issuingTimes
+	// LivenessThresholdUpperBound is used by tip-selection to determine if a block is eligible by evaluating issuingTimes
 	// and commitments in its past-cone to ATT and lastCommittedSlot respectively.
 	LivenessThresholdUpperBound time.Duration `serix:"17,mapKey=livenessThresholdUpperBound"`
 
