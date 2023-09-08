@@ -251,22 +251,61 @@ func RandEd25519Address() *iotago.Ed25519Address {
 	return edAddr
 }
 
+// RandRestrictedEd25519Address returns a random restricted Ed25519 address.
+func RandRestrictedEd25519Address(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedEd25519Address {
+	edAddr := &iotago.RestrictedEd25519Address{}
+	addr := RandBytes(iotago.Ed25519AddressBytesLength)
+	copy(edAddr.PubKeyHash[:], addr)
+	edAddr.AllowedCapabilities = capabilities
+
+	return edAddr
+}
+
 // RandAccountAddress returns a random AccountAddress.
 func RandAccountAddress() *iotago.AccountAddress {
-	accountAddr := &iotago.AccountAddress{}
-	addr := RandBytes(iotago.AccountAddressBytesLength)
-	copy(accountAddr[:], addr)
+	addr := &iotago.AccountAddress{}
+	accountID := RandBytes(iotago.AccountAddressBytesLength)
+	copy(addr[:], accountID)
 
-	return accountAddr
+	return addr
+}
+
+// RandRestrictedAccountAddress returns a random restricted account address.
+func RandRestrictedAccountAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAccountAddress {
+	addr := &iotago.RestrictedAccountAddress{}
+	accountID := RandBytes(iotago.AccountIDLength)
+	copy(addr.AccountID[:], accountID)
+	addr.AllowedCapabilities = capabilities
+
+	return addr
 }
 
 // RandNFTAddress returns a random NFTAddress.
 func RandNFTAddress() *iotago.NFTAddress {
-	nftAddr := &iotago.NFTAddress{}
-	addr := RandBytes(iotago.NFTAddressBytesLength)
-	copy(nftAddr[:], addr)
+	addr := &iotago.NFTAddress{}
+	nftID := RandBytes(iotago.NFTAddressBytesLength)
+	copy(addr[:], nftID)
 
-	return nftAddr
+	return addr
+}
+
+// RandRestrictedNFTAddress returns a random restricted nft address.
+func RandRestrictedNFTAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedNFTAddress {
+	addr := &iotago.RestrictedNFTAddress{}
+	nftID := RandBytes(iotago.NFTIDLength)
+	copy(addr.NFTID[:], nftID)
+	addr.AllowedCapabilities = capabilities
+
+	return addr
+}
+
+// RandImplicitAccountCreationAddress returns a random ImplicitAccountCreationAddress.
+func RandImplicitAccountCreationAddress() *iotago.ImplicitAccountCreationAddress {
+	iacAddr := &iotago.ImplicitAccountCreationAddress{}
+	addr := RandBytes(iotago.Ed25519AddressBytesLength)
+	copy(iacAddr[:], addr)
+
+	return iacAddr
 }
 
 // RandEd25519Signature returns a random Ed25519 signature.

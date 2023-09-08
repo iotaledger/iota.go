@@ -13,15 +13,31 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterTypeSettings(Ed25519Address{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressEd25519)).WithMapKey("pubKeyHash")),
 		)
+		must(api.RegisterTypeSettings(RestrictedEd25519Address{},
+			serix.TypeSettings{}.WithObjectType(uint8(AddressRestrictedEd25519))),
+		)
 		must(api.RegisterTypeSettings(AccountAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressAccount)).WithMapKey("accountId")),
+		)
+		must(api.RegisterTypeSettings(RestrictedAccountAddress{},
+			serix.TypeSettings{}.WithObjectType(uint8(AddressRestrictedAccount))),
 		)
 		must(api.RegisterTypeSettings(NFTAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressNFT)).WithMapKey("nftId")),
 		)
+		must(api.RegisterTypeSettings(RestrictedNFTAddress{},
+			serix.TypeSettings{}.WithObjectType(uint8(AddressRestrictedNFT))),
+		)
+		must(api.RegisterTypeSettings(ImplicitAccountCreationAddress{},
+			serix.TypeSettings{}.WithObjectType(uint8(AddressImplicitAccountCreation)).WithMapKey("pubKeyHash")),
+		)
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*Ed25519Address)(nil)))
+		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedEd25519Address)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*AccountAddress)(nil)))
+		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedAccountAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*NFTAddress)(nil)))
+		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedNFTAddress)(nil)))
+		must(api.RegisterInterfaceObjects((*Address)(nil), (*ImplicitAccountCreationAddress)(nil)))
 
 		// All versions of the protocol need to be able to parse older protocol parameter versions.
 		{
