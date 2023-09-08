@@ -35,7 +35,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			),
 			WithLivenessOptions(3, 10, 20, 24),
 			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*MaxBlockSize),
-			WithStakingOptions(10),
+			WithStakingOptions(10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
 		},
 			opts...,
@@ -86,6 +86,10 @@ func (p *V3ProtocolParameters) StakingUnbondingPeriod() EpochIndex {
 	return p.basicProtocolParameters.StakingUnbondingPeriod
 }
 
+func (p *V3ProtocolParameters) ValidationBlocksPerSlot() uint16 {
+	return p.basicProtocolParameters.ValidationBlocksPerSlot
+}
+
 func (p *V3ProtocolParameters) LivenessThreshold() SlotIndex {
 	return p.basicProtocolParameters.LivenessThreshold
 }
@@ -124,8 +128,8 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 }
 
 func (p *V3ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n}",
-		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaStructure, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n}",
+		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaStructure, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.ValidationBlocksPerSlot, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
@@ -242,9 +246,10 @@ func WithCongestionControlOptions(rmcMin Mana, rmcIncrease Mana, rmcDecrease Man
 	}
 }
 
-func WithStakingOptions(unbondingPeriod EpochIndex) options.Option[V3ProtocolParameters] {
+func WithStakingOptions(unbondingPeriod EpochIndex, validationBlocksPerSlot uint16) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.StakingUnbondingPeriod = unbondingPeriod
+		p.basicProtocolParameters.ValidationBlocksPerSlot = validationBlocksPerSlot
 	}
 }
 

@@ -34,6 +34,10 @@ func (p *ProtocolEpochVersions) VersionForEpoch(epoch iotago.EpochIndex) iotago.
 }
 
 func (p *ProtocolEpochVersions) Add(version iotago.Version, epoch iotago.EpochIndex) {
+	if _, exists := p.knownVersions[version]; exists {
+		return
+	}
+
 	p.versionsPerEpoch = append(p.versionsPerEpoch, ProtocolEpochVersion{
 		Version:    version,
 		StartEpoch: epoch,
