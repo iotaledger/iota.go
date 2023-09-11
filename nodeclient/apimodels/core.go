@@ -54,9 +54,10 @@ const (
 	BlockFailureNone                   BlockFailureReason = 0
 	BlockFailureIsTooOld               BlockFailureReason = 1
 	BlockFailureParentIsTooOld         BlockFailureReason = 2
-	BlockFailureBookingFailure         BlockFailureReason = 3
-	BlockFailureDroppedDueToCongestion BlockFailureReason = 4
-	BlockFailurePayloadInvalid         BlockFailureReason = 5
+	BlockFailureParentNotFound         BlockFailureReason = 3
+	BlockFailureParentInvalid          BlockFailureReason = 4
+	BlockFailureDroppedDueToCongestion BlockFailureReason = 5
+	BlockFailurePayloadInvalid         BlockFailureReason = 6
 
 	// TODO: see if needed after congestion PR is done.
 	BlockFailureOrphanedDueNegativeCreditsBalance BlockFailureReason = 6
