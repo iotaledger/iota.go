@@ -121,6 +121,8 @@ type ProtocolParameters interface {
 
 	ValidationBlocksPerSlot() uint16
 
+	PunishmentEpochs() EpochIndex
+
 	LivenessThreshold() SlotIndex
 
 	MinCommittableAge() SlotIndex
