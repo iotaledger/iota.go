@@ -151,7 +151,7 @@ func Test_BlockMetadataResponse(t *testing.T) {
 		response := &apimodels.BlockMetadataResponse{
 			BlockID:            iotago.BlockID{0x9},
 			BlockState:         apimodels.BlockStateFailed.String(),
-			BlockFailureReason: apimodels.BlockFailureBookingFailure,
+			BlockFailureReason: apimodels.BlockFailureParentNotFound,
 			TxState:            apimodels.TransactionStateFailed.String(),
 			TxFailureReason:    apimodels.TxFailureFailedToClaimDelegationReward,
 		}
