@@ -162,8 +162,10 @@ func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 			ProtocolVersion: tpkg.TestAPI.Version(),
 		},
 		Block: &iotago.BasicBlock{
-			StrongParents: tpkg.SortedRandBlockIDs(2),
-			Payload:       txPayload,
+			StrongParents:      tpkg.SortedRandBlockIDs(2),
+			WeakParents:        iotago.BlockIDs{},
+			ShallowLikeParents: iotago.BlockIDs{},
+			Payload:            txPayload,
 		},
 	}
 	for i := 0; i < b.N; i++ {
