@@ -14,7 +14,8 @@ import (
 var (
 	benchLargeTx = &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
-			NetworkID: tpkg.TestNetworkID,
+			NetworkID:     tpkg.TestNetworkID,
+			ContextInputs: iotago.TxEssenceContextInputs{},
 			Inputs: func() iotago.TxEssenceInputs {
 				var inputs iotago.TxEssenceInputs
 				for i := 0; i < iotago.MaxInputsCount; i++ {
@@ -39,7 +40,8 @@ var (
 
 				return outputs
 			}(),
-			Payload: nil,
+			Allotments: iotago.Allotments{},
+			Payload:    nil,
 		},
 		Unlocks: func() iotago.Unlocks {
 			var unlocks iotago.Unlocks
