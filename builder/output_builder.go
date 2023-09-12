@@ -543,8 +543,8 @@ func (trans *stakingTransition) Builder() *AccountOutputBuilder {
 func NewFoundryOutputBuilder(accountAddr *iotago.AccountAddress, tokenScheme iotago.TokenScheme, amount iotago.BaseToken) *FoundryOutputBuilder {
 	return &FoundryOutputBuilder{output: &iotago.FoundryOutput{
 		Amount:       amount,
-		TokenScheme:  tokenScheme,
 		NativeTokens: iotago.NativeTokens{},
+		TokenScheme:  tokenScheme,
 		Conditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAccountUnlockCondition{Address: accountAddr},
 		},

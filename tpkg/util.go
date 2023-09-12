@@ -692,7 +692,8 @@ func RandSortAllotment(count int) iotago.Allotments {
 func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
-			NetworkID: 14147312347886322761,
+			NetworkID:     14147312347886322761,
+			ContextInputs: iotago.TxEssenceContextInputs{},
 			Inputs: iotago.TxEssenceInputs{
 				&iotago.UTXOInput{
 					TransactionID: func() [iotago.TransactionIDLength]byte {
@@ -712,7 +713,8 @@ func OneInputOutputTransaction() *iotago.Transaction {
 					},
 				},
 			},
-			Payload: nil,
+			Allotments: iotago.Allotments{},
+			Payload:    nil,
 		},
 		Unlocks: iotago.Unlocks{
 			&iotago.SignatureUnlock{
