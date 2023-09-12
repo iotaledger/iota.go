@@ -80,6 +80,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 			name: "ok - BasicOutput",
 			source: &iotago.BasicOutput{
 				Amount:       1337,
+				Mana:         500,
 				NativeTokens: tpkg.RandSortNativeTokens(2),
 				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
@@ -98,7 +99,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 					&iotago.TagFeature{Tag: tpkg.RandBytes(32)},
 				},
-				Mana: 500,
 			},
 			target: &iotago.BasicOutput{},
 		},
@@ -106,6 +106,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 			name: "ok - AccountOutput",
 			source: &iotago.AccountOutput{
 				Amount:         1337,
+				Mana:           500,
 				NativeTokens:   tpkg.RandSortNativeTokens(2),
 				AccountID:      tpkg.RandAccountAddress().AccountID(),
 				StateIndex:     10,
@@ -122,7 +123,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 				},
-				Mana: 500,
 			},
 			target: &iotago.AccountOutput{},
 		},
@@ -143,6 +143,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 				Features: iotago.FoundryOutputFeatures{
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 				},
+				ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
 			},
 			target: &iotago.FoundryOutput{},
 		},
@@ -150,6 +151,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 			name: "ok - NFTOutput",
 			source: &iotago.NFTOutput{
 				Amount:       1337,
+				Mana:         500,
 				NativeTokens: tpkg.RandSortNativeTokens(2),
 				NFTID:        tpkg.Rand32ByteArray(),
 				Conditions: iotago.NFTOutputUnlockConditions{
@@ -173,7 +175,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(10)},
 				},
-				Mana: 500,
 			},
 			target: &iotago.NFTOutput{},
 		},
