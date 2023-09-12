@@ -23,19 +23,6 @@ const (
 // An Ed25519Address is the Blake2b-256 hash of an Ed25519 public key.
 type Ed25519Address [Ed25519AddressBytesLength]byte
 
-func (addr *Ed25519Address) Decode(b []byte) (int, error) {
-	copy(addr[:], b)
-
-	return Ed25519AddressSerializedBytesSize - 1, nil
-}
-
-func (addr *Ed25519Address) Encode() ([]byte, error) {
-	var b [Ed25519AddressSerializedBytesSize - 1]byte
-	copy(b[:], addr[:])
-
-	return b[:], nil
-}
-
 func (addr *Ed25519Address) Clone() Address {
 	cpy := &Ed25519Address{}
 	copy(cpy[:], addr[:])
