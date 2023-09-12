@@ -22,19 +22,6 @@ const (
 // An NFTAddress is the Blake2b-256 hash of the OutputID which created it.
 type NFTAddress [NFTAddressBytesLength]byte
 
-func (addr *NFTAddress) Decode(b []byte) (int, error) {
-	copy(addr[:], b)
-
-	return NFTAddressSerializedBytesSize - 1, nil
-}
-
-func (addr *NFTAddress) Encode() ([]byte, error) {
-	var b [NFTAddressSerializedBytesSize - 1]byte
-	copy(b[:], addr[:])
-
-	return b[:], nil
-}
-
 func (addr *NFTAddress) Clone() Address {
 	cpy := &NFTAddress{}
 	copy(cpy[:], addr[:])
