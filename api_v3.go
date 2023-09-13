@@ -13,9 +13,21 @@ const (
 	apiV3Version = 3
 )
 
+var (
+	ErrImplicitAccountCreationAddressUnlockCondition = ierrors.New("implicit account creation address in unlock condition where disallowed")
+)
+
 func must(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func implicitAccountCreationAddressValidator(address Address) error {
+	if address.Type() == AddressImplicitAccountCreation {
+		return ErrImplicitAccountCreationAddressUnlockCondition
+	} else {
+		return nil
 	}
 }
 
@@ -296,18 +308,38 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StorageDepositReturnUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStorageDepositReturn))),
 		)
+		must(api.RegisterValidators(StorageDepositReturnUnlockCondition{}, nil,
+			func(ctx context.Context, sdruc StorageDepositReturnUnlockCondition) error {
+				return implicitAccountCreationAddressValidator(sdruc.ReturnAddress)
+			},
+		))
 		must(api.RegisterTypeSettings(TimelockUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionTimelock))),
 		)
 		must(api.RegisterTypeSettings(ExpirationUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionExpiration))),
 		)
+		must(api.RegisterValidators(ExpirationUnlockCondition{}, nil,
+			func(ctx context.Context, exp ExpirationUnlockCondition) error {
+				return implicitAccountCreationAddressValidator(exp.ReturnAddress)
+			},
+		))
 		must(api.RegisterTypeSettings(StateControllerAddressUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStateControllerAddress))),
 		)
+		must(api.RegisterValidators(StateControllerAddressUnlockCondition{}, nil,
+			func(ctx context.Context, stateController StateControllerAddressUnlockCondition) error {
+				return implicitAccountCreationAddressValidator(stateController.Address)
+			},
+		))
 		must(api.RegisterTypeSettings(GovernorAddressUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionGovernorAddress))),
 		)
+		must(api.RegisterValidators(GovernorAddressUnlockCondition{}, nil,
+			func(ctx context.Context, gov GovernorAddressUnlockCondition) error {
+				return implicitAccountCreationAddressValidator(gov.Address)
+			},
+		))
 		must(api.RegisterTypeSettings(ImmutableAccountUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionImmutableAccount))),
 		)
