@@ -30,8 +30,12 @@ func (addr *RestrictedEd25519Address) VBytes(rentStruct *RentStructure, _ VBytes
 	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
+func (addr *RestrictedEd25519Address) ID() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
+}
+
 func (addr *RestrictedEd25519Address) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return string(addr.ID())
 }
 
 func (addr *RestrictedEd25519Address) Unlock(msg []byte, sig Signature) error {
@@ -60,11 +64,11 @@ func (addr *RestrictedEd25519Address) Type() AddressType {
 }
 
 func (addr *RestrictedEd25519Address) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, addr)
+	return bech32StringAddress(hrp, addr)
 }
 
 func (addr *RestrictedEd25519Address) String() string {
-	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return hexutil.EncodeHex(addr.ID())
 }
 
 func (addr *RestrictedEd25519Address) Size() int {

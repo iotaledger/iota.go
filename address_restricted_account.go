@@ -28,8 +28,12 @@ func (addr *RestrictedAccountAddress) VBytes(rentStruct *RentStructure, _ VBytes
 	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
+func (addr *RestrictedAccountAddress) ID() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
+}
+
 func (addr *RestrictedAccountAddress) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return string(addr.ID())
 }
 
 func (addr *RestrictedAccountAddress) Equal(other Address) bool {
@@ -47,11 +51,11 @@ func (addr *RestrictedAccountAddress) Type() AddressType {
 }
 
 func (addr *RestrictedAccountAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, addr)
+	return bech32StringAddress(hrp, addr)
 }
 
 func (addr *RestrictedAccountAddress) String() string {
-	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return hexutil.EncodeHex(addr.ID())
 }
 
 func (addr *RestrictedAccountAddress) Size() int {

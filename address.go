@@ -83,6 +83,9 @@ type Address interface {
 	// Type returns the type of the address.
 	Type() AddressType
 
+	// ID returns the address ID.
+	ID() []byte
+
 	// Bech32 encodes the address as a bech32 string.
 	Bech32(hrp NetworkPrefix) string
 
@@ -167,18 +170,23 @@ func newAddress(addressType byte) (address Address, err error) {
 	}
 }
 
-func bech32String(hrp NetworkPrefix, addr Address) string {
-	serixAPI := CommonSerixAPI()
-	bytes, err := serixAPI.Encode(context.Background(), addr)
-	if err != nil {
-		panic(err)
-	}
+func bech32StringBytes(hrp NetworkPrefix, bytes []byte) string {
 	s, err := bech32.Encode(string(hrp), bytes)
 	if err != nil {
 		panic(err)
 	}
 
 	return s
+}
+
+func bech32StringAddress(hrp NetworkPrefix, addr Address) string {
+	serixAPI := CommonSerixAPI()
+	bytes, err := serixAPI.Encode(context.Background(), addr)
+	if err != nil {
+		panic(err)
+	}
+
+	return bech32StringBytes(hrp, bytes)
 }
 
 // ParseBech32 decodes a bech32 encoded string.

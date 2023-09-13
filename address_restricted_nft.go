@@ -28,8 +28,12 @@ func (addr *RestrictedNFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc
 	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
+func (addr *RestrictedNFTAddress) ID() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
+}
+
 func (addr *RestrictedNFTAddress) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return string(addr.ID())
 }
 
 func (addr *RestrictedNFTAddress) Equal(other Address) bool {
@@ -47,11 +51,11 @@ func (addr *RestrictedNFTAddress) Type() AddressType {
 }
 
 func (addr *RestrictedNFTAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, addr)
+	return bech32StringAddress(hrp, addr)
 }
 
 func (addr *RestrictedNFTAddress) String() string {
-	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return hexutil.EncodeHex(addr.ID())
 }
 
 func (addr *RestrictedNFTAddress) Size() int {
