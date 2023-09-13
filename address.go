@@ -32,6 +32,10 @@ const (
 	AddressRestrictedNFT AddressType = 17
 	// AddressImplicitAccountCreation denotes an Ed25519 address that can only be used to create an implicit account.
 	AddressImplicitAccountCreation AddressType = 24
+	// AddressMulti denotes a multi address.
+	AddressMulti AddressType = 32
+	// AddressRestrictedMulti denotes a multi address that has a capability bitmask.
+	AddressRestrictedMulti AddressType = 33
 )
 
 func (addrType AddressType) String() string {
@@ -51,14 +55,16 @@ func (addrType AddressType) String() string {
 type AddressTypeSet map[AddressType]struct{}
 
 var (
-	addressNames = [AddressImplicitAccountCreation + 1]string{
+	addressNames = [AddressRestrictedMulti + 1]string{
 		"Ed25519Address",
 		"RestrictedEd25519Address", "", "", "", "", "", "",
 		"AccountAddress",
 		"RestrictedAccountAddress", "", "", "", "", "", "",
 		"NFTAddress",
 		"RestrictedNFTAddress", "", "", "", "", "", "",
-		"ImplicitAccountCreationAddress",
+		"ImplicitAccountCreationAddress", "", "", "", "", "", "", "",
+		"MultiAddress",
+		"RestrictedMultiAddress",
 	}
 )
 
@@ -165,6 +171,10 @@ func newAddress(addressType byte) (address Address, err error) {
 		return &RestrictedNFTAddress{}, nil
 	case AddressImplicitAccountCreation:
 		return &ImplicitAccountCreationAddress{}, nil
+	case AddressMulti:
+		return nil, ErrMultiAddrCannotBeReconstructedViaBech32
+	case AddressRestrictedMulti:
+		return nil, ErrMultiAddrCannotBeReconstructedViaBech32
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
 	}

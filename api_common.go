@@ -2,8 +2,23 @@ package iotago
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
+)
+
+var (
+	// the addresses need to be unique and lexically ordered to calculate a deterministic bech32 address for a MultiAddress.
+	addressesWithWeightV3ArrRules = &serix.ArrayRules{
+		Min: 1,
+		Max: 10,
+		UniquenessSliceFunc: func(next []byte) []byte {
+			// we need to ignore the Weight of the AddressWithWeight to compare for address uniqueness
+			return next[:len(next)-AddressWeightSerializedBytesSize]
+		},
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
+	}
 )
 
 func CommonSerixAPI() *serix.API {
@@ -31,6 +46,16 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterTypeSettings(ImplicitAccountCreationAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressImplicitAccountCreation)).WithMapKey("pubKeyHash")),
 		)
+		must(api.RegisterTypeSettings(MultiAddress{},
+			serix.TypeSettings{}.WithObjectType(uint8(AddressMulti))),
+		)
+		must(api.RegisterTypeSettings(RestrictedMultiAddress{},
+			serix.TypeSettings{}.WithObjectType(uint8(AddressRestrictedMulti))),
+		)
+		must(api.RegisterTypeSettings(AddressesWithWeight{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(addressesWithWeightV3ArrRules),
+		))
+
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*Ed25519Address)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedEd25519Address)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*AccountAddress)(nil)))
@@ -38,6 +63,39 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*NFTAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedNFTAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*ImplicitAccountCreationAddress)(nil)))
+		must(api.RegisterInterfaceObjects((*Address)(nil), (*MultiAddress)(nil)))
+		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedMultiAddress)(nil)))
+
+		must(api.RegisterValidators(MultiAddress{}, nil, func(ctx context.Context, addr MultiAddress) error {
+			var cumulativeWeight uint16
+			for i, address := range addr.Addresses {
+				if address.Weight < 1 {
+					return fmt.Errorf("%w: address with index %d needs to have at least weight=1", ErrMultiAddressThresholdInvalid, i)
+				}
+				cumulativeWeight += uint16(address.Weight)
+			}
+
+			if addr.Threshold > cumulativeWeight {
+				return fmt.Errorf("%w: the threshold value exceeds the cumulative weight of all addresses (%d>%d)", ErrMultiAddressThresholdInvalid, addr.Threshold, cumulativeWeight)
+			}
+
+			return nil
+		}))
+		must(api.RegisterValidators(RestrictedMultiAddress{}, nil, func(ctx context.Context, addr RestrictedMultiAddress) error {
+			var cumulativeWeight uint16
+			for i, address := range addr.Addresses {
+				if address.Weight < 1 {
+					return fmt.Errorf("%w: address with index %d needs to have at least weight=1", ErrMultiAddressThresholdInvalid, i)
+				}
+				cumulativeWeight += uint16(address.Weight)
+			}
+
+			if addr.Threshold > cumulativeWeight {
+				return fmt.Errorf("%w: the threshold value exceeds the cumulative weight of all addresses (%d>%d)", ErrMultiAddressThresholdInvalid, addr.Threshold, cumulativeWeight)
+			}
+
+			return nil
+		}))
 
 		// All versions of the protocol need to be able to parse older protocol parameter versions.
 		{

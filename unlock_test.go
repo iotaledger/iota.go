@@ -32,6 +32,11 @@ func TestUnlock_DeSerialize(t *testing.T) {
 			source: tpkg.RandNFTUnlock(),
 			target: &iotago.NFTUnlock{},
 		},
+		{
+			name:   "ok - Mutli",
+			source: tpkg.RandMultiUnlock(),
+			target: &iotago.MultiUnlock{},
+		},
 	}
 
 	for _, tt := range tests {
@@ -65,6 +70,36 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "ok - multi unlock",
+			unlocks: iotago.Unlocks{
+				tpkg.RandEd25519SignatureUnlock(),
+				tpkg.RandEd25519SignatureUnlock(),
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.ReferenceUnlock{Reference: 0},
+						&iotago.ReferenceUnlock{Reference: 1},
+						&iotago.EmptyUnlock{},
+						tpkg.RandEd25519SignatureUnlock(),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ok - chainable referential unlock in multi unlock",
+			unlocks: iotago.Unlocks{
+				tpkg.RandEd25519SignatureUnlock(),
+				&iotago.AccountUnlock{Reference: 0},
+				&iotago.AccountUnlock{Reference: 1},
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.NFTUnlock{Reference: 2},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
 			name: "fail - duplicate ed25519 sig block",
 			unlocks: iotago.Unlocks{
 				&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
@@ -79,6 +114,66 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			wantErr: iotago.ErrSigUnlockNotUnique,
 		},
 		{
+			name: "fail - duplicate ed25519 sig block in multi unlock",
+			unlocks: iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
+					PublicKey: [32]byte{},
+					Signature: [64]byte{},
+				}},
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
+							PublicKey: [32]byte{},
+							Signature: [64]byte{},
+						}},
+					},
+				},
+			},
+			wantErr: iotago.ErrSigUnlockNotUnique,
+		},
+		{
+			name: "fail - duplicate ed25519 sig block in multi unlock - 2",
+			unlocks: iotago.Unlocks{
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
+							PublicKey: [32]byte{},
+							Signature: [64]byte{},
+						}},
+						&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
+							PublicKey: [32]byte{0x01},
+							Signature: [64]byte{0x01},
+						}},
+					},
+				},
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
+							PublicKey: [32]byte{},
+							Signature: [64]byte{},
+						}},
+					},
+				},
+			},
+			wantErr: iotago.ErrSigUnlockNotUnique,
+		},
+		{
+			name: "fail - duplicate multi unlock",
+			unlocks: iotago.Unlocks{
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.EmptyUnlock{},
+					},
+				},
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.EmptyUnlock{},
+					},
+				},
+			},
+			wantErr: iotago.ErrMultiUnlockNotUnique,
+		},
+		{
 			name: "fail - reference unlock invalid ref",
 			unlocks: iotago.Unlocks{
 				tpkg.RandEd25519SignatureUnlock(),
@@ -88,11 +183,88 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			wantErr: iotago.ErrReferentialUnlockInvalid,
 		},
 		{
+			name: "fail - reference unlock invalid ref in multi unlock",
+			unlocks: iotago.Unlocks{
+				tpkg.RandEd25519SignatureUnlock(),
+				tpkg.RandEd25519SignatureUnlock(),
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.ReferenceUnlock{Reference: 1337},
+					},
+				},
+			},
+			wantErr: iotago.ErrReferentialUnlockInvalid,
+		},
+		{
 			name: "fail - reference unlock refs non sig unlock",
 			unlocks: iotago.Unlocks{
 				tpkg.RandEd25519SignatureUnlock(),
 				&iotago.ReferenceUnlock{Reference: 0},
 				&iotago.ReferenceUnlock{Reference: 1},
+			},
+			wantErr: iotago.ErrReferentialUnlockInvalid,
+		},
+		{
+			name: "fail - reference unlock refs non sig unlock in multi unlock",
+			unlocks: iotago.Unlocks{
+				tpkg.RandEd25519SignatureUnlock(),
+				&iotago.ReferenceUnlock{Reference: 0},
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.ReferenceUnlock{Reference: 1},
+					},
+				},
+			},
+			wantErr: iotago.ErrReferentialUnlockInvalid,
+		},
+		{
+			name: "fail - empty unlock outside multi unlock",
+			unlocks: iotago.Unlocks{
+				tpkg.RandEd25519SignatureUnlock(),
+				&iotago.EmptyUnlock{},
+			},
+			wantErr: iotago.ErrEmptyUnlockOutsideMultiUnlock,
+		},
+		{
+			name: "fail - nested multi unlock",
+			unlocks: iotago.Unlocks{
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								tpkg.RandEd25519SignatureUnlock(),
+							},
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrNestedMultiUnlock,
+		},
+		{
+			name: "ok - referenced a multi unlock",
+			unlocks: iotago.Unlocks{
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						tpkg.RandEd25519SignatureUnlock(),
+					},
+				},
+				&iotago.ReferenceUnlock{Reference: 0},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - referenced a multi unlock in a multi unlock",
+			unlocks: iotago.Unlocks{
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						tpkg.RandEd25519SignatureUnlock(),
+					},
+				},
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.ReferenceUnlock{Reference: 0},
+					},
+				},
 			},
 			wantErr: iotago.ErrReferentialUnlockInvalid,
 		},

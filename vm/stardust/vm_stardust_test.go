@@ -2,13 +2,17 @@
 package stardust_test
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"math"
 	"math/big"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 	"github.com/iotaledger/iota.go/v4/vm"
@@ -894,7 +898,6 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-
 		func() test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
@@ -976,7 +979,6 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-
 		func() test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
@@ -1049,7 +1051,6 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: iotago.ErrInvalidBlockIssuerTransition,
 			}
 		}(),
-
 		func() test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
@@ -1121,7 +1122,6 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-
 		func() test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
@@ -1257,6 +1257,1171 @@ func TestStardustTransactionExecution(t *testing.T) {
 			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
+
+	var defaultAmount iotago.BaseToken = OneMi
+
+	type test struct {
+		// the name of the testcase
+		name string
+		// the amount of randomly created ed25519 addresses with private keys
+		ed25519AddrCnt int
+		// used to created own addresses for the test
+		addressesFunc func(ed25519Addresses []iotago.Address) []iotago.Address
+		// used to create inputs for the test
+		inputsFunc func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output
+		// used to create outputs for the test (optional)
+		outputsFunc func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs
+		// used to create unlocks for the test
+		unlocksFunc func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks
+		// expected error during serialization of the transaction
+		wantEncodeErr error
+		// expected error during execution of the transaction
+		wantExecuteErr error
+	}
+
+	tests := []test{
+		//
+		// Unlock tests
+		//
+
+		// ok - threshold == cumulativeWeight (threshold reached)
+		func() test {
+			return test{
+				name:           "ok - threshold == cumulativeWeight (threshold reached)",
+				ed25519AddrCnt: 2,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						// only 2 mandatory addresses
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+							},
+							Threshold: 2,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.SignatureUnlock{Signature: sigs[1]},
+							},
+						},
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// ok - threshold < cumulativeWeight (threshold reached)
+		func() test {
+			return test{
+				name:           "ok - threshold < cumulativeWeight (threshold reached)",
+				ed25519AddrCnt: 2,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						// only 2 mandatory addresses
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+							},
+							Threshold: 1,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.SignatureUnlock{Signature: sigs[1]},
+							},
+						},
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// fail - threshold == cumulativeWeight (threshold not reached)
+		func() test {
+			return test{
+				name:           "fail - threshold == cumulativeWeight (threshold not reached)",
+				ed25519AddrCnt: 2,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						// only 2 mandatory addresses
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+							},
+							Threshold: 2,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								// we only unlock one of the addresses
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.EmptyUnlock{},
+							},
+						},
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: iotago.ErrMultiAddressUnlockThresholdNotReached,
+			}
+		}(),
+
+		// fail - threshold < cumulativeWeight (threshold not reached)
+		func() test {
+			return test{
+				name:           "fail - threshold < cumulativeWeight (threshold not reached)",
+				ed25519AddrCnt: 2,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						// only 2 mandatory addresses
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[0],
+									Weight:  2,
+								},
+								{
+									Address: ed25519Addresses[1],
+									Weight:  2,
+								},
+							},
+							Threshold: 3,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								// we only unlock one of the addresses
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.EmptyUnlock{},
+							},
+						},
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: iotago.ErrMultiAddressUnlockThresholdNotReached,
+			}
+		}(),
+
+		// fail - len(multiAddr) != len(multiUnlock)
+		func() test {
+			return test{
+				name:           "fail - len(multiAddr) != len(multiUnlock)",
+				ed25519AddrCnt: 3,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+								{
+									Address: ed25519Addresses[2],
+									Weight:  1,
+								},
+							},
+							Threshold: 2,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.SignatureUnlock{Signature: sigs[1]},
+								// Empty unlock missing here
+							},
+						},
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: iotago.ErrMultiAddressAndUnlockLengthDoesNotMatch,
+			}
+		}(),
+
+		// ok - Reference unlock
+		func() test {
+			return test{
+				name:           "ok - Reference unlock",
+				ed25519AddrCnt: 2,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						// only 2 mandatory addresses
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+							},
+							Threshold: 2,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						// we add a basic output with a Ed25519 address to be able to check the RefUnlock in the MultiAddress
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[1]},
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.ReferenceUnlock{Reference: 0},
+							},
+						},
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// ok - MultiAddress Reference unlock
+		func() test {
+			return test{
+				name:           "ok - MultiAddress Reference unlock",
+				ed25519AddrCnt: 2,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+							},
+							Threshold: 2,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.SignatureUnlock{Signature: sigs[1]},
+							},
+						},
+						&iotago.ReferenceUnlock{Reference: 0},
+						&iotago.ReferenceUnlock{Reference: 0},
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// ok - Account unlock
+		func() test {
+			return test{
+				name:           "ok - Account unlock",
+				ed25519AddrCnt: 2,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					accountAddress := tpkg.RandAccountAddress()
+					return []iotago.Address{
+						accountAddress,
+						// ed25519 address + account address
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+								{
+									Address: accountAddress,
+									Weight:  1,
+								},
+							},
+							Threshold: 2,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						// we add an output with a Ed25519 address to be able to check the AccountUnlock in the MultiAddress
+						&iotago.AccountOutput{
+							Amount:         defaultAmount,
+							NativeTokens:   nil,
+							AccountID:      testAddresses[0].(*iotago.AccountAddress).AccountID(),
+							StateIndex:     1,
+							StateMetadata:  []byte("current state"),
+							FoundryCounter: 0,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+								&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+							Features: nil,
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+						},
+						// owned by ed25519 address + account address
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						// the account unlock needs to be a state transition (governor doesn't work for account reference unlocks)
+						&iotago.AccountOutput{
+							Amount:         defaultAmount,
+							NativeTokens:   nil,
+							AccountID:      testAddresses[0].(*iotago.AccountAddress).AccountID(),
+							StateIndex:     2,
+							StateMetadata:  []byte("next state"),
+							FoundryCounter: 0,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+								&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+							Features: nil,
+						},
+						&iotago.BasicOutput{
+							Amount: totalInputAmount - defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					// this is a bit complicated in the test, because the addresses are generated randomly,
+					// but the MutliAddresses get sorted lexically, so we have to find out the correct order in the MultiUnlock.
+
+					accountAddress := testAddresses[0]
+					multiAddress := testAddresses[1].(*iotago.MultiAddress)
+
+					// sort the addresses in the multi like the serializer will do
+					slices.SortFunc(multiAddress.Addresses, func(a *iotago.AddressWithWeight, b *iotago.AddressWithWeight) int {
+						return bytes.Compare(a.Address.ID(), b.Address.ID())
+					})
+
+					// search the index of the account address in the multi address
+					foundAccountAddressIndex := -1
+					for idx, address := range multiAddress.Addresses {
+						if address.Address.Equal(accountAddress) {
+							foundAccountAddressIndex = idx
+							break
+						}
+					}
+
+					var multiUnlock *iotago.MultiUnlock
+
+					switch foundAccountAddressIndex {
+					case -1:
+						require.FailNow(t, "account address not found in multi address")
+
+					case 0:
+						multiUnlock = &iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.AccountUnlock{Reference: 0},
+								&iotago.ReferenceUnlock{Reference: 1},
+							},
+						}
+
+					case 1:
+						multiUnlock = &iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.ReferenceUnlock{Reference: 1},
+								&iotago.AccountUnlock{Reference: 0},
+							},
+						}
+
+					default:
+						require.FailNow(t, "unknown account address index found in multi address")
+					}
+
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]}, // account state controller unlock
+						&iotago.SignatureUnlock{Signature: sigs[1]}, // basic output unlock
+						multiUnlock,
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// ok - NFT unlock
+		func() test {
+			return test{
+				name:           "ok - NFT unlock",
+				ed25519AddrCnt: 2,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					nftAddress := tpkg.RandNFTAddress()
+					return []iotago.Address{
+						nftAddress,
+						// ed25519 address + NFT address
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+								{
+									Address: nftAddress,
+									Weight:  1,
+								},
+							},
+							Threshold: 2,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						// we add an output with a Ed25519 address to be able to check the NFT Unlock in the MultiAddress
+						&iotago.NFTOutput{
+							Amount:       defaultAmount,
+							NativeTokens: nil,
+							NFTID:        testAddresses[0].(*iotago.NFTAddress).NFTID(),
+							Conditions: iotago.NFTOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+							Features: iotago.NFTOutputFeatures{
+								&iotago.IssuerFeature{Address: ed25519Addresses[1]},
+							},
+							ImmutableFeatures: iotago.NFTOutputImmFeatures{
+								&iotago.MetadataFeature{Data: []byte("immutable")},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+						},
+						// owned by ed25519 address + NFT address
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.NFTOutput{
+							Amount:       defaultAmount,
+							NativeTokens: nil,
+							NFTID:        testAddresses[0].(*iotago.NFTAddress).NFTID(),
+							Conditions: iotago.NFTOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+							Features: iotago.NFTOutputFeatures{
+								&iotago.IssuerFeature{Address: ed25519Addresses[1]},
+								&iotago.MetadataFeature{Data: []byte("some new metadata")},
+							},
+							ImmutableFeatures: iotago.NFTOutputImmFeatures{
+								&iotago.MetadataFeature{Data: []byte("immutable")},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: totalInputAmount - defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					// this is a bit complicated in the test, because the addresses are generated randomly,
+					// but the MutliAddresses get sorted lexically, so we have to find out the correct order in the MultiUnlock.
+
+					nftAddress := testAddresses[0]
+					multiAddress := testAddresses[1].(*iotago.MultiAddress)
+
+					// sort the addresses in the multi like the serializer will do
+					slices.SortFunc(multiAddress.Addresses, func(a *iotago.AddressWithWeight, b *iotago.AddressWithWeight) int {
+						return bytes.Compare(a.Address.ID(), b.Address.ID())
+					})
+
+					// search the index of the NFT address in the multi address
+					foundNFTAddressIndex := -1
+					for idx, address := range multiAddress.Addresses {
+						if address.Address.Equal(nftAddress) {
+							foundNFTAddressIndex = idx
+							break
+						}
+					}
+
+					var multiUnlock *iotago.MultiUnlock
+
+					switch foundNFTAddressIndex {
+					case -1:
+						require.FailNow(t, "NFT address not found in multi address")
+
+					case 0:
+						multiUnlock = &iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.NFTUnlock{Reference: 0},
+								&iotago.ReferenceUnlock{Reference: 1},
+							},
+						}
+
+					case 1:
+						multiUnlock = &iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.ReferenceUnlock{Reference: 1},
+								&iotago.NFTUnlock{Reference: 0},
+							},
+						}
+
+					default:
+						require.FailNow(t, "unknown NFT address index found in multi address")
+					}
+
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]}, // NFT unlock
+						&iotago.SignatureUnlock{Signature: sigs[1]}, // basic output unlock
+						multiUnlock,
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// ok - multiple MultiAddresses in one TX - no signature reuse
+		func() test {
+			return test{
+				name:           "ok - multiple MultiAddresses in one TX - no signature reuse",
+				ed25519AddrCnt: 4,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+							},
+							Threshold: 2,
+						},
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									// optional
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									// optional
+									Address: ed25519Addresses[2],
+									Weight:  1,
+								},
+								{
+									// mandatory
+									Address: ed25519Addresses[3],
+									Weight:  2,
+								},
+							},
+							Threshold: 3,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.SignatureUnlock{Signature: sigs[1]},
+							},
+						},
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.EmptyUnlock{},
+								&iotago.SignatureUnlock{Signature: sigs[2]},
+								&iotago.SignatureUnlock{Signature: sigs[3]},
+							},
+						},
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		//
+		// Syntactical checks tests
+		//
+
+		// fail - threshold > cumulativeWeight (needs to be checked on output side)
+		func() test {
+			return test{
+				name:           "fail - threshold > cumulativeWeight (needs to be checked on output side)",
+				ed25519AddrCnt: 2,
+				addressesFunc:  nil,
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: totalInputAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{
+											Address: ed25519Addresses[0],
+											Weight:  1,
+										},
+										{
+											Address: ed25519Addresses[1],
+											Weight:  1,
+										},
+									},
+									Threshold: 3,
+								}},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.SignatureUnlock{Signature: sigs[1]},
+					}
+				},
+				wantEncodeErr:  iotago.ErrMultiAddressThresholdInvalid,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// fail - address weight == 0 (needs to be checked on output side)
+		func() test {
+			return test{
+				name:           "fail - address weight == 0 (needs to be checked on output side)",
+				ed25519AddrCnt: 2,
+				addressesFunc:  nil,
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: totalInputAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{
+											Address: ed25519Addresses[0],
+											Weight:  0,
+										},
+										{
+											Address: ed25519Addresses[1],
+											Weight:  1,
+										},
+									},
+									Threshold: 1,
+								}},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.SignatureUnlock{Signature: sigs[1]},
+					}
+				},
+				wantEncodeErr:  iotago.ErrMultiAddressThresholdInvalid,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// fail - empty MultiAddress (needs to be checked on output side)
+		func() test {
+			return test{
+				name:           "fail - empty MultiAddress (needs to be checked on output side)",
+				ed25519AddrCnt: 2,
+				addressesFunc:  nil,
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: totalInputAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{},
+									Threshold: 0,
+								}},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.SignatureUnlock{Signature: sigs[1]},
+					}
+				},
+				wantEncodeErr:  serializer.ErrArrayValidationMinElementsNotReached,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// fail - MultiAddress limit exceeded (needs to be checked on output side)
+		func() test {
+			return test{
+				name:           "fail - MultiAddress limit exceeded (needs to be checked on output side)",
+				ed25519AddrCnt: 13,
+				addressesFunc:  nil,
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: totalInputAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{Address: ed25519Addresses[2], Weight: 1},
+										{Address: ed25519Addresses[3], Weight: 1},
+										{Address: ed25519Addresses[4], Weight: 1},
+										{Address: ed25519Addresses[5], Weight: 1},
+										{Address: ed25519Addresses[6], Weight: 1},
+										{Address: ed25519Addresses[7], Weight: 1},
+										{Address: ed25519Addresses[8], Weight: 1},
+										{Address: ed25519Addresses[9], Weight: 1},
+										{Address: ed25519Addresses[10], Weight: 1},
+										{Address: ed25519Addresses[11], Weight: 1},
+										{Address: ed25519Addresses[12], Weight: 1},
+									},
+									Threshold: 11,
+								}},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+						&iotago.SignatureUnlock{Signature: sigs[1]},
+					}
+				},
+				wantEncodeErr:  serializer.ErrArrayValidationMaxElementsExceeded,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// fail - multiple MultiAddresses in one TX - signature reuse
+		func() test {
+			return test{
+				name:           "fail - multiple MultiAddresses in one TX - signature reuse",
+				ed25519AddrCnt: 4,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+							},
+							Threshold: 2,
+						},
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									// optional
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									// optional
+									Address: ed25519Addresses[2],
+									Weight:  1,
+								},
+								{
+									// mandatory
+									Address: ed25519Addresses[3],
+									Weight:  2,
+								},
+							},
+							Threshold: 3,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.SignatureUnlock{Signature: sigs[1]},
+							},
+						},
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.EmptyUnlock{},
+								&iotago.SignatureUnlock{Signature: sigs[3]},
+							},
+						},
+					}
+				},
+				wantEncodeErr:  iotago.ErrSigUnlockNotUnique,
+				wantExecuteErr: nil,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			getEd25519Identities := func(count int) ([]iotago.Address, []iotago.AddressKeys) {
+				addresses := make([]iotago.Address, count)
+				addressKeys := make([]iotago.AddressKeys, count)
+				for i := 0; i < count; i++ {
+					_, addresses[i], addressKeys[i] = tpkg.RandEd25519Identity()
+				}
+
+				// addressses need to be lexically ordered in the MultiAddress
+				slices.SortFunc(addresses, func(a iotago.Address, b iotago.Address) int {
+					return bytes.Compare(a.ID(), b.ID())
+				})
+
+				// addressses need to be lexically ordered in the MultiAddress
+				slices.SortFunc(addressKeys, func(a iotago.AddressKeys, b iotago.AddressKeys) int {
+					return bytes.Compare(a.Address.ID(), b.Address.ID())
+				})
+
+				return addresses, addressKeys
+			}
+
+			// generate random ed25519 addresses
+			ed25519Addresses, ed25519AddressesWithKeys := getEd25519Identities(tt.ed25519AddrCnt)
+
+			// pass the ed25519 testAddresses and get the complete list of testAddresses
+			testAddresses := make([]iotago.Address, 0)
+			if tt.addressesFunc != nil {
+				testAddresses = tt.addressesFunc(ed25519Addresses)
+			}
+
+			inputs := tt.inputsFunc(ed25519Addresses, testAddresses)
+			if len(inputs) == 0 {
+				require.FailNow(t, "no outputs given")
+			}
+
+			// create the input set
+			inputIDs := tpkg.RandOutputIDs(uint16(len(inputs)))
+			inputSet := vm.InputSet{}
+			var totalInputAmount iotago.BaseToken
+			for idx, output := range inputs {
+				inputSet[inputIDs[idx]] = vm.OutputWithCreationSlot{
+					Output: output,
+				}
+				totalInputAmount += output.BaseTokenAmount()
+			}
+
+			outputs := iotago.TxEssenceOutputs{
+				// collect everything on a basic output with a random ed25519 address
+				&iotago.BasicOutput{
+					Amount: totalInputAmount,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+				},
+			}
+			if tt.outputsFunc != nil {
+				outputs = tt.outputsFunc(ed25519Addresses, testAddresses, inputIDs, totalInputAmount)
+			}
+
+			// create the transaction essence
+			txEssence := &iotago.TransactionEssence{
+				NetworkID:     testProtoParams.NetworkID(),
+				CreationSlot:  100,
+				ContextInputs: iotago.TxEssenceContextInputs{},
+				Inputs:        inputIDs.UTXOInputs(),
+				Outputs:       outputs,
+				Allotments:    iotago.Allotments{},
+			}
+
+			// sign the transaction essence
+			sigs, err := txEssence.Sign(testAPI, inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), ed25519AddressesWithKeys...)
+			require.NoError(t, err)
+
+			// pass the signatures and get the unlock conditions
+			unlocks := tt.unlocksFunc(sigs, testAddresses)
+
+			tx := &iotago.Transaction{
+				Essence: txEssence,
+				Unlocks: unlocks,
+			}
+
+			txBytes, err := testAPI.Encode(tx, serix.WithValidation())
+			if tt.wantEncodeErr != nil {
+				require.ErrorIs(t, err, tt.wantEncodeErr)
+				return
+			}
+			require.NoError(t, err)
+
+			// we deserialize to be sure that all serix rules are applied (like lexically ordering or multi addresses)
+			tx = &iotago.Transaction{}
+			_, err = testAPI.Decode(txBytes, tx, serix.WithValidation())
+			require.NoError(t, err)
+
+			// execute the transaction
+			err = stardustVM.Execute(
+				tx,
+				&vm.Params{API: testAPI},
+				vm.ResolvedInputs{InputSet: inputSet},
+			)
+			if tt.wantExecuteErr != nil {
+				require.ErrorIs(t, err, tt.wantExecuteErr)
 				return
 			}
 			require.NoError(t, err)
