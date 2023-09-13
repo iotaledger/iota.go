@@ -318,7 +318,7 @@ func RandImplicitAccountCreationAddress() *iotago.ImplicitAccountCreationAddress
 
 // RandMultiAddress returns a random MultiAddress.
 func RandMultiAddress() *iotago.MultiAddress {
-	addrCnt := RandInt(8)
+	addrCnt := RandInt(8) + 1
 
 	cumulativeWeight := 0
 	addresses := make([]*iotago.AddressWithWeight, 0, addrCnt)
@@ -422,7 +422,7 @@ func RandNFTUnlock() *iotago.NFTUnlock {
 
 // RandMultiUnlock returns a random multi unlock.
 func RandMultiUnlock() *iotago.MultiUnlock {
-	unlockCnt := RandInt(8)
+	unlockCnt := RandInt(8) + 1
 	unlocks := make([]iotago.Unlock, 0, unlockCnt)
 
 	for i := 0; i < unlockCnt; i++ {
