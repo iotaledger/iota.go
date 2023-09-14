@@ -725,3 +725,65 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 		return nil
 	}
 }
+
+func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Address) error {
+	if address.CannotReceiveNativeTokens() && len(output.NativeTokenList()) != 0 {
+		return iotago.ErrAddressCannotReceiveNativeTokens
+	}
+
+	if address.CannotReceiveMana() && output.StoredMana() != 0 {
+		return ierrors.Errorf("todo")
+	}
+
+	if address.CannotReceiveAccountOutputs() && output.Type() == iotago.OutputAccount {
+		return ierrors.Errorf("todo")
+	}
+
+	if address.CannotReceiveDelegationOutputs() && output.Type() == iotago.OutputDelegation {
+		return ierrors.Errorf("todo")
+	}
+
+	if address.CannotReceiveNFTOutputs() && output.Type() == iotago.OutputNFT {
+		return ierrors.Errorf("todo")
+	}
+
+	if address.CannotReceiveOutputsWithExpirationUnlockCondition() && output.UnlockConditionSet().HasExpirationCondition() {
+		return ierrors.Errorf("todo")
+	}
+
+	if address.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() && output.UnlockConditionSet().HasStorageDepositReturnCondition() {
+		return ierrors.Errorf("todo")
+	}
+
+	if address.CannotReceiveOutputsWithTimelockUnlockCondition() && output.UnlockConditionSet().HasTimelockCondition() {
+		return ierrors.Errorf("todo")
+	}
+
+	return nil
+}
+
+// Returns a func that validates that an address' restrictions are adhered to.
+// Does not validate the Return Address in Storage Deposit Return and Expiration UC.
+func ExecFuncAddressRestrictions() ExecFunc {
+	return func(vm VirtualMachine, vmParams *Params) error {
+		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+			if addressUnlockCondition := output.UnlockConditionSet().Address(); addressUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, addressUnlockCondition.Address); err != nil {
+					return err
+				}
+			}
+			if stateControllerUnlockCondition := output.UnlockConditionSet().StateControllerAddress(); stateControllerUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, stateControllerUnlockCondition.Address); err != nil {
+					return err
+				}
+			}
+			if governorUnlockCondition := output.UnlockConditionSet().GovernorAddress(); governorUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, governorUnlockCondition.Address); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	}
+}

@@ -4391,3 +4391,83 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 		API: testAPI,
 	}, resolvedInputs))
 }
+
+func TestTxSemanticAddressRestrictions(t *testing.T) {
+	type test struct {
+		name    string
+		output  iotago.Output
+		wantErr error
+	}
+
+	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
+
+	tests := []test{
+		{
+			name: "fail - Non-Native-Token-Address in Output with Native Tokens",
+			output: &iotago.BasicOutput{
+				NativeTokens: tpkg.RandSortNativeTokens(3),
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: ident},
+				},
+			},
+			wantErr: iotago.ErrAddressCannotReceiveNativeTokens,
+		},
+	}
+
+	make_transaction := func(output iotago.Output) (vm.InputSet, iotago.Signature, *iotago.TransactionEssence) {
+		inputIDs := tpkg.RandOutputIDs(1)
+
+		inputs := vm.InputSet{
+			inputIDs[0]: vm.OutputWithCreationSlot{
+				Output: &iotago.BasicOutput{
+					Amount: iotago.BaseToken(1_000_000),
+					Conditions: iotago.BasicOutputUnlockConditions{
+						// TODO: Must be changed to an address with native token flag unset.
+						&iotago.AddressUnlockCondition{Address: ident},
+					},
+				},
+				CreationSlot: 10,
+			},
+		}
+
+		essence := &iotago.TransactionEssence{
+			Inputs: inputIDs.UTXOInputs(),
+			Outputs: iotago.TxEssenceOutputs{
+				output,
+			},
+			CreationSlot: 10,
+		}
+		sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
+		require.NoError(t, err)
+
+		return inputs, sigs[0], essence
+	}
+
+	for _, tt := range tests {
+
+		inputs, sig, transaction_essence := make_transaction(tt.output)
+
+		vmParams := &vm.Params{
+			API: testAPI,
+		}
+
+		resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
+		tx := &iotago.Transaction{
+			Essence: transaction_essence,
+			Unlocks: iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: sig},
+			},
+		}
+
+		t.Run(tt.name, func(t *testing.T) {
+			err := stardustVM.Execute(tx, vmParams, resolvedInputs, vm.ExecFuncAddressRestrictions())
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+
+}
