@@ -315,7 +315,7 @@ func RandMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.Mu
 		return bytes.Compare(a.Address.ID(), b.Address.ID())
 	})
 
-	threshold := RandInt(cumulativeWeight)
+	threshold := RandInt(cumulativeWeight) + 1
 
 	return &iotago.MultiAddress{
 		Addresses:           addresses,
@@ -403,7 +403,7 @@ func RandNFTUnlock() *iotago.NFTUnlock {
 
 // RandMultiUnlock returns a random multi unlock.
 func RandMultiUnlock() *iotago.MultiUnlock {
-	unlockCnt := RandInt(8) + 1
+	unlockCnt := RandInt(10) + 1
 	unlocks := make([]iotago.Unlock, 0, unlockCnt)
 
 	for i := 0; i < unlockCnt; i++ {
