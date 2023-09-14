@@ -2299,6 +2299,50 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 			}
 		}(),
 
+		// fail - threshold < 1 (needs to be checked on output side)
+		func() test {
+			return test{
+				name:           "fail - threshold < 1 (needs to be checked on output side)",
+				ed25519AddrCnt: 1,
+				addressesFunc:  nil,
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: totalInputAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{
+											Address: ed25519Addresses[0],
+											Weight:  1,
+										},
+									},
+									Threshold: 0,
+								}},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					}
+				},
+				wantEncodeErr:  iotago.ErrMultiAddressThresholdInvalid,
+				wantExecuteErr: nil,
+			}
+		}(),
+
 		// fail - address weight == 0 (needs to be checked on output side)
 		func() test {
 			return test{
@@ -2383,7 +2427,7 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 							Conditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
 									Addresses: []*iotago.AddressWithWeight{},
-									Threshold: 0,
+									Threshold: 1,
 								}},
 							},
 						},
@@ -2395,7 +2439,7 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[1]},
 					}
 				},
-				wantEncodeErr:  serializer.ErrArrayValidationMinElementsNotReached,
+				wantEncodeErr:  iotago.ErrMultiAddressThresholdInvalid,
 				wantExecuteErr: nil,
 			}
 		}(),
@@ -2509,6 +2553,110 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 					}
 				},
 				wantEncodeErr:  iotago.ErrSigUnlockNotUnique,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// fail - MultiAddress nested inside of a MultiAddress (needs to be checked on output side)
+		func() test {
+			return test{
+				name:           "fail - MultiAddress nested inside of a MultiAddress (needs to be checked on output side)",
+				ed25519AddrCnt: 2,
+				addressesFunc:  nil,
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: totalInputAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{
+											Address: &iotago.MultiAddress{
+												Addresses: iotago.AddressesWithWeight{
+													{
+														Address: ed25519Addresses[1],
+														Weight:  1,
+													},
+												},
+												Threshold: 1,
+											},
+											Weight: 1,
+										},
+									},
+									Threshold: 1,
+								}},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					}
+				},
+				wantEncodeErr:  iotago.ErrNestedMultiAddress,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// fail - PubKeyHash of all addresses inside MultiAddress need to be unique (needs to be checked on output side)
+		func() test {
+			return test{
+				name:           "fail - PubKeyHash of all addresses inside MultiAddress need to be unique (needs to be checked on output side)",
+				ed25519AddrCnt: 1,
+				addressesFunc:  nil,
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: totalInputAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										// both should have the same pubKeyHash
+										{
+											Address: &iotago.Ed25519Address{},
+											Weight:  1,
+										},
+										{
+											Address: &iotago.RestrictedEd25519Address{
+												PubKeyHash:          [32]byte{},
+												AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x55},
+											},
+											Weight: 2,
+										},
+									},
+									Threshold: 1,
+								}},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					}
+				},
+				wantEncodeErr:  serializer.ErrArrayValidationViolatesUniqueness,
 				wantExecuteErr: nil,
 			}
 		}(),

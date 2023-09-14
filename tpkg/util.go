@@ -298,7 +298,7 @@ func RandImplicitAccountCreationAddress() *iotago.ImplicitAccountCreationAddress
 
 // RandMultiAddress returns a random MultiAddress.
 func RandMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.MultiAddress {
-	addrCnt := RandInt(8) + 1
+	addrCnt := RandInt(10) + 1
 
 	cumulativeWeight := 0
 	addresses := make([]*iotago.AddressWithWeight, 0, addrCnt)

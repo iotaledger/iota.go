@@ -2,22 +2,61 @@ package iotago
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
 var (
 	// the addresses need to be unique and lexically ordered to calculate a deterministic bech32 address for a MultiAddress.
+	// HINT: the uniqueness is checked within a custom validator function, which is on MultiAddress level.
 	addressesWithWeightV3ArrRules = &serix.ArrayRules{
-		Min: 1,
-		Max: 10,
-		UniquenessSliceFunc: func(next []byte) []byte {
-			// we need to ignore the Weight of the AddressWithWeight to compare for address uniqueness
-			return next[:len(next)-AddressWeightSerializedBytesSize]
-		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
+		Min:            1,
+		Max:            10,
+		ValidationMode: serializer.ArrayValidationModeLexicalOrdering,
+	}
+
+	// multiAddressValidatorFunc is a validator which checks that:
+	//  1. MultiAddresses are not nested inside the MultiAddress.
+	//  2. PubKeyHashes of all addresses are unique.
+	//  3. The weight of each address is at least 1.
+	//  4. The threshold is smaller or equal to the cumulative weight of all addresses.
+	multiAddressValidatorFunc = func(ctx context.Context, addr MultiAddress) error {
+		pubKeyHashSet := map[string]int{}
+
+		var cumulativeWeight uint16
+		for idx, address := range addr.Addresses {
+			// check for nested multi addresses
+			if _, isMultiAddress := address.Address.(*MultiAddress); isMultiAddress {
+				return ierrors.Wrapf(ErrNestedMultiAddress, "address with index %d is a multi address inside a multi address", idx)
+			}
+
+			// we need to check for uniqueness of the PubKeyHash instead of the whole serialized address to ignore
+			// different address types or capabilities, that might result in the same signature.
+			pubKeyHash := string(address.Address.PublicKeyHash())
+			if j, has := pubKeyHashSet[pubKeyHash]; has {
+				return ierrors.Wrapf(serializer.ErrArrayValidationViolatesUniqueness, "element %d and %d are duplicates", j, idx)
+			}
+			pubKeyHashSet[pubKeyHash] = idx
+
+			// check for minimum address weight
+			if address.Weight < 1 {
+				return ierrors.Wrapf(ErrMultiAddressThresholdInvalid, "address with index %d needs to have at least weight=1", idx)
+			}
+
+			cumulativeWeight += uint16(address.Weight)
+		}
+
+		// check for valid threshold
+		if addr.Threshold > cumulativeWeight {
+			return ierrors.Wrapf(ErrMultiAddressThresholdInvalid, "the threshold value exceeds the cumulative weight of all addresses (%d>%d)", addr.Threshold, cumulativeWeight)
+		}
+		if addr.Threshold < 1 {
+			return ierrors.Wrap(ErrMultiAddressThresholdInvalid, "multi addresses need to have at least threshold=1")
+		}
+
+		return nil
 	}
 )
 
@@ -43,6 +82,7 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterTypeSettings(MultiAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressMulti))),
 		)
+		must(api.RegisterValidators(MultiAddress{}, nil, multiAddressValidatorFunc))
 		must(api.RegisterTypeSettings(AddressesWithWeight{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(addressesWithWeightV3ArrRules),
 		))
@@ -53,22 +93,6 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*NFTAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*ImplicitAccountCreationAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*MultiAddress)(nil)))
-
-		must(api.RegisterValidators(MultiAddress{}, nil, func(ctx context.Context, addr MultiAddress) error {
-			var cumulativeWeight uint16
-			for i, address := range addr.Addresses {
-				if address.Weight < 1 {
-					return fmt.Errorf("%w: address with index %d needs to have at least weight=1", ErrMultiAddressThresholdInvalid, i)
-				}
-				cumulativeWeight += uint16(address.Weight)
-			}
-
-			if addr.Threshold > cumulativeWeight {
-				return fmt.Errorf("%w: the threshold value exceeds the cumulative weight of all addresses (%d>%d)", ErrMultiAddressThresholdInvalid, addr.Threshold, cumulativeWeight)
-			}
-
-			return nil
-		}))
 
 		// All versions of the protocol need to be able to parse older protocol parameter versions.
 		{
