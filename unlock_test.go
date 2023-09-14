@@ -140,6 +140,24 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 							PublicKey: [32]byte{},
 							Signature: [64]byte{},
 						}},
+					},
+				},
+				&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
+					PublicKey: [32]byte{},
+					Signature: [64]byte{},
+				}},
+			},
+			wantErr: iotago.ErrSigUnlockNotUnique,
+		},
+		{
+			name: "ok - duplicate ed25519 sig block in multi unlock - 3",
+			unlocks: iotago.Unlocks{
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
+							PublicKey: [32]byte{},
+							Signature: [64]byte{},
+						}},
 						&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
 							PublicKey: [32]byte{0x01},
 							Signature: [64]byte{0x01},
@@ -155,19 +173,25 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrSigUnlockNotUnique,
+			wantErr: nil,
 		},
 		{
 			name: "fail - duplicate multi unlock",
 			unlocks: iotago.Unlocks{
 				&iotago.MultiUnlock{
 					Unlocks: []iotago.Unlock{
-						&iotago.EmptyUnlock{},
+						&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
+							PublicKey: [32]byte{},
+							Signature: [64]byte{},
+						}},
 					},
 				},
 				&iotago.MultiUnlock{
 					Unlocks: []iotago.Unlock{
-						&iotago.EmptyUnlock{},
+						&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
+							PublicKey: [32]byte{},
+							Signature: [64]byte{},
+						}},
 					},
 				},
 			},
@@ -260,6 +284,17 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 						tpkg.RandEd25519SignatureUnlock(),
 					},
 				},
+				&iotago.MultiUnlock{
+					Unlocks: []iotago.Unlock{
+						&iotago.ReferenceUnlock{Reference: 0},
+					},
+				},
+			},
+			wantErr: iotago.ErrReferentialUnlockInvalid,
+		},
+		{
+			name: "fail - referenced a multi unlock in in itself",
+			unlocks: iotago.Unlocks{
 				&iotago.MultiUnlock{
 					Unlocks: []iotago.Unlock{
 						&iotago.ReferenceUnlock{Reference: 0},

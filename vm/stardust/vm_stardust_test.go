@@ -2159,6 +2159,87 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 			}
 		}(),
 
+		// ok - multiple MultiAddresses in one TX - signature reuse in different multi unlocks
+		func() test {
+			return test{
+				name:           "ok - multiple MultiAddresses in one TX - signature reuse in different multi unlocks",
+				ed25519AddrCnt: 4,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									Address: ed25519Addresses[1],
+									Weight:  1,
+								},
+							},
+							Threshold: 2,
+						},
+						&iotago.MultiAddress{
+							Addresses: []*iotago.AddressWithWeight{
+								{
+									// optional
+									Address: ed25519Addresses[0],
+									Weight:  1,
+								},
+								{
+									// optional
+									Address: ed25519Addresses[2],
+									Weight:  1,
+								},
+								{
+									// mandatory
+									Address: ed25519Addresses[3],
+									Weight:  2,
+								},
+							},
+							Threshold: 3,
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.SignatureUnlock{Signature: sigs[1]},
+							},
+						},
+						&iotago.MultiUnlock{
+							Unlocks: []iotago.Unlock{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.EmptyUnlock{},
+								&iotago.SignatureUnlock{Signature: sigs[3]},
+							},
+						},
+					}
+				},
+				wantEncodeErr:  nil,
+				wantExecuteErr: nil,
+			}
+		}(),
+
 		//
 		// Syntactical checks tests
 		//
@@ -2377,11 +2458,11 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 			}
 		}(),
 
-		// fail - multiple MultiAddresses in one TX - signature reuse
+		// fail - signature reuse outside and inside the multi unlocks
 		func() test {
 			return test{
-				name:           "fail - multiple MultiAddresses in one TX - signature reuse",
-				ed25519AddrCnt: 4,
+				name:           "fail - signature reuse outside and inside the multi unlocks",
+				ed25519AddrCnt: 2,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
 					return []iotago.Address{
 						&iotago.MultiAddress{
@@ -2397,26 +2478,6 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 							},
 							Threshold: 2,
 						},
-						&iotago.MultiAddress{
-							Addresses: []*iotago.AddressWithWeight{
-								{
-									// optional
-									Address: ed25519Addresses[0],
-									Weight:  1,
-								},
-								{
-									// optional
-									Address: ed25519Addresses[2],
-									Weight:  1,
-								},
-								{
-									// mandatory
-									Address: ed25519Addresses[3],
-									Weight:  2,
-								},
-							},
-							Threshold: 3,
-						},
 					}
 				},
 				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
@@ -2430,7 +2491,7 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
 							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: testAddresses[1]},
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
 							},
 						},
 					}
@@ -2444,13 +2505,7 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 								&iotago.SignatureUnlock{Signature: sigs[1]},
 							},
 						},
-						&iotago.MultiUnlock{
-							Unlocks: []iotago.Unlock{
-								&iotago.SignatureUnlock{Signature: sigs[0]},
-								&iotago.EmptyUnlock{},
-								&iotago.SignatureUnlock{Signature: sigs[3]},
-							},
-						},
+						&iotago.SignatureUnlock{Signature: sigs[0]},
 					}
 				},
 				wantEncodeErr:  iotago.ErrSigUnlockNotUnique,

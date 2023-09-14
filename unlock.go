@@ -136,6 +136,8 @@ type UnlockValidatorFunc func(index int, unlock Unlock) error
 
 // UnlocksSigUniqueAndRefValidator returns a validator which checks that:
 //  1. SignatureUnlock(s) are unique
+//     - SignatureUnlock(s) inside different MultiUnlock(s) don't need to be unique,
+//     as long as there is no equal SignatureUnlock(s) outside of a MultiUnlock(s).
 //  2. ReferenceUnlock(s) reference a previous SignatureUnlock or MultiUnlock
 //  3. Following through AccountUnlock(s), NFTUnlock(s) refs results to a SignatureUnlock
 //  4. EmptyUnlock(s) are only used inside of MultiUnlock(s)
@@ -145,6 +147,7 @@ type UnlockValidatorFunc func(index int, unlock Unlock) error
 func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 	seenSigUnlocks := map[uint16]struct{}{}
 	seenSigUnlockBytes := map[string]int{}
+	seenSigUnlockInMultiUnlocksBytes := map[string]int{}
 	seenRefUnlocks := map[uint16]ReferentialUnlock{}
 	seenMultiUnlocks := map[uint16]struct{}{}
 	seenMultiUnlockBytes := map[string]int{}
@@ -161,8 +164,14 @@ func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 				return ierrors.Errorf("unable to serialize signature unlock block at index %d for dup check: %w", index, err)
 			}
 
+			// we check for duplicated signatures in SignatureUnlock(s)
 			if existingIndex, exists := seenSigUnlockBytes[string(sigBlockBytes)]; exists {
 				return ierrors.Wrapf(ErrSigUnlockNotUnique, "signature unlock block at index %d is the same as %d", index, existingIndex)
+			}
+
+			// we also need to check for duplicated signatures in MultiUnlock(s)
+			if existingIndex, exists := seenSigUnlockInMultiUnlocksBytes[string(sigBlockBytes)]; exists {
+				return ierrors.Wrapf(ErrSigUnlockNotUnique, "signature unlock block at index %d is the same as in multi unlock at index %d", index, existingIndex)
 			}
 
 			seenSigUnlocks[uint16(index)] = struct{}{}
@@ -208,12 +217,15 @@ func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 						return ierrors.Errorf("unable to serialize signature unlock block at index %d.%d for dup check: %w", index, subIndex, err)
 					}
 
+					// we check for duplicated signatures in SignatureUnlock(s)
 					if existingIndex, exists := seenSigUnlockBytes[string(sigBlockBytes)]; exists {
 						return ierrors.Wrapf(ErrSigUnlockNotUnique, "signature unlock block at index %d.%d is the same as %d", index, subIndex, existingIndex)
 					}
 
 					// we don't set the index here in "seenSigUnlocks" because there is no concept of reference unlocks inside of multi unlocks
-					seenSigUnlockBytes[string(sigBlockBytes)] = index
+
+					// add the signature to "seenSigUnlockInMultiUnlocksBytes", so we can check that signatures from a multi unlock are not reused in a normal SignatureUnlock
+					seenSigUnlockInMultiUnlocksBytes[string(sigBlockBytes)] = index
 
 				case ReferentialUnlock:
 					if prevRef := seenRefUnlocks[subUnlock.Ref()]; prevRef != nil {
