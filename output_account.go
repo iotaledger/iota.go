@@ -211,6 +211,19 @@ func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		a.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
+func (a *AccountOutput) syntacticallyValidate(api API) error {
+	// Address should never be nil.
+	stateControllerAddress := a.Conditions.MustSet().StateControllerAddress().Address
+	governorAddress := a.Conditions.MustSet().GovernorAddress().Address
+
+	if stateControllerAddress.Type() == AddressImplicitAccountCreation ||
+		governorAddress.Type() == AddressImplicitAccountCreation {
+		return ErrImplicitAccountCreationAddressInInvalidOutput
+	}
+
+	return nil
+}
+
 func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	workScoreNativeTokens, err := a.NativeTokens.WorkScore(workScoreStructure)
 	if err != nil {

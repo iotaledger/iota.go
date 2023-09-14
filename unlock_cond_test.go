@@ -59,7 +59,7 @@ func TestUnlockConditionsDeSerialize(t *testing.T) {
 				Address: tpkg.RandImplicitAccountCreationAddress(),
 			},
 			target:  &iotago.GovernorAddressUnlockCondition{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressUnlockCondition,
+			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
 		},
 		{
 			name: "fail - ImplicitAccountCreationAddress in StateControllerAddressUnlockCondition",
@@ -67,7 +67,7 @@ func TestUnlockConditionsDeSerialize(t *testing.T) {
 				Address: tpkg.RandImplicitAccountCreationAddress(),
 			},
 			target:  &iotago.StateControllerAddressUnlockCondition{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressUnlockCondition,
+			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
 		},
 		{
 			name: "fail - ImplicitAccountCreationAddress in ExpirationUnlockCondition",
@@ -76,7 +76,7 @@ func TestUnlockConditionsDeSerialize(t *testing.T) {
 				ReturnAddress: tpkg.RandImplicitAccountCreationAddress(),
 			},
 			target:  &iotago.ExpirationUnlockCondition{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressUnlockCondition,
+			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
 		},
 		{
 			name: "fail - ImplicitAccountCreationAddress in StorageDepositReturnUnlockCondition",
@@ -84,7 +84,7 @@ func TestUnlockConditionsDeSerialize(t *testing.T) {
 				ReturnAddress: tpkg.RandImplicitAccountCreationAddress(),
 			},
 			target:  &iotago.StorageDepositReturnUnlockCondition{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressUnlockCondition,
+			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
 		},
 	}
 

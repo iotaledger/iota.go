@@ -12,6 +12,13 @@ import (
 var (
 	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = ierrors.New("unknown address type")
+	// ErrImplicitAccountCreationAddressInInvalidUnlockCondition gets returned when a Implicit Account Creation Address
+	// is placed in an unlock condition where it is disallowed.
+	ErrImplicitAccountCreationAddressInInvalidUnlockCondition = ierrors.New("implicit account creation address in unlock condition where it is disallowed")
+	// ErrImplicitAccountCreationAddressInInvalidOutput gets returned when a Implicit Account Creation Address
+	// is placed in an output where it is disallowed.
+	ErrImplicitAccountCreationAddressInInvalidOutput = ierrors.New("implicit account creation address in output where it is disallowed")
+	ErrAddressCannotReceiveNativeTokens              = ierrors.New("address cannot receive native tokens")
 )
 
 // AddressType defines the type of addresses.

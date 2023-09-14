@@ -13,10 +13,6 @@ const (
 	apiV3Version = 3
 )
 
-var (
-	ErrImplicitAccountCreationAddressUnlockCondition = ierrors.New("implicit account creation address in unlock condition where disallowed")
-)
-
 func must(err error) {
 	if err != nil {
 		panic(err)
@@ -25,7 +21,7 @@ func must(err error) {
 
 func implicitAccountCreationAddressValidator(address Address) error {
 	if address.Type() == AddressImplicitAccountCreation {
-		return ErrImplicitAccountCreationAddressUnlockCondition
+		return ErrImplicitAccountCreationAddressInInvalidUnlockCondition
 	} else {
 		return nil
 	}
@@ -393,6 +389,9 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(AccountOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputAccount))))
+		must(api.RegisterValidators(AccountOutput{}, nil, func(ctx context.Context, account AccountOutput) error {
+			return account.syntacticallyValidate(v3)
+		}))
 
 		must(api.RegisterTypeSettings(AccountOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3UnlockCondArrRules),
@@ -449,6 +448,9 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(NFTOutput{},
 			serix.TypeSettings{}.WithObjectType(uint8(OutputNFT))),
 		)
+		must(api.RegisterValidators(NFTOutput{}, nil, func(ctx context.Context, nft NFTOutput) error {
+			return nft.syntacticallyValidate(v3)
+		}))
 
 		must(api.RegisterTypeSettings(NFTOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3UnlockCondArrRules),
@@ -477,6 +479,9 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(DelegationOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputDelegation))))
+		must(api.RegisterValidators(DelegationOutput{}, nil, func(ctx context.Context, delegation DelegationOutput) error {
+			return delegation.syntacticallyValidate(v3)
+		}))
 
 		must(api.RegisterTypeSettings(DelegationOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3UnlockCondArrRules),
