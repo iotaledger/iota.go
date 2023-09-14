@@ -1744,7 +1744,7 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 				},
 				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
 					// this is a bit complicated in the test, because the addresses are generated randomly,
-					// but the MutliAddresses get sorted lexically, so we have to find out the correct order in the MultiUnlock.
+					// but the MultiAddresses get sorted lexically, so we have to find out the correct order in the MultiUnlock.
 
 					accountAddress := testAddresses[0]
 					multiAddress := testAddresses[1].(*iotago.MultiAddress)
@@ -1882,7 +1882,7 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 				},
 				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
 					// this is a bit complicated in the test, because the addresses are generated randomly,
-					// but the MutliAddresses get sorted lexically, so we have to find out the correct order in the MultiUnlock.
+					// but the MultiAddresses get sorted lexically, so we have to find out the correct order in the MultiUnlock.
 
 					accountAddress := testAddresses[0]
 					multiAddress := testAddresses[1].(*iotago.MultiAddress)
@@ -2022,7 +2022,7 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 				},
 				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
 					// this is a bit complicated in the test, because the addresses are generated randomly,
-					// but the MutliAddresses get sorted lexically, so we have to find out the correct order in the MultiUnlock.
+					// but the MultiAddresses get sorted lexically, so we have to find out the correct order in the MultiUnlock.
 
 					nftAddress := testAddresses[0]
 					multiAddress := testAddresses[1].(*iotago.MultiAddress)

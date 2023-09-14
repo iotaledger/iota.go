@@ -115,7 +115,9 @@ func (addr *RestrictedEd25519Address) AllowedCapabilitiesBitMask() AddressCapabi
 // RestrictedEd25519AddressFromPubKey returns the address belonging to the given Ed25519 public key.
 func RestrictedEd25519AddressFromPubKey(pubKey ed25519.PublicKey) *RestrictedEd25519Address {
 	address := blake2b.Sum256(pubKey[:])
-	addr := &RestrictedEd25519Address{}
+	addr := &RestrictedEd25519Address{
+		AllowedCapabilities: AddressCapabilitiesBitMask{},
+	}
 	copy(addr.PubKeyHash[:], address[:])
 
 	return addr

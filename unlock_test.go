@@ -33,7 +33,7 @@ func TestUnlock_DeSerialize(t *testing.T) {
 			target: &iotago.NFTUnlock{},
 		},
 		{
-			name:   "ok - Mutli",
+			name:   "ok - Multi",
 			source: tpkg.RandMultiUnlock(),
 			target: &iotago.MultiUnlock{},
 		},

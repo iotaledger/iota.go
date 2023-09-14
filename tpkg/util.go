@@ -278,31 +278,11 @@ func RandAccountAddress() *iotago.AccountAddress {
 	return addr
 }
 
-// RandRestrictedAccountAddress returns a random restricted account address.
-func RandRestrictedAccountAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAccountAddress {
-	addr := &iotago.RestrictedAccountAddress{}
-	accountID := RandBytes(iotago.AccountIDLength)
-	copy(addr.AccountID[:], accountID)
-	addr.AllowedCapabilities = capabilities
-
-	return addr
-}
-
 // RandNFTAddress returns a random NFTAddress.
 func RandNFTAddress() *iotago.NFTAddress {
 	addr := &iotago.NFTAddress{}
 	nftID := RandBytes(iotago.NFTAddressBytesLength)
 	copy(addr[:], nftID)
-
-	return addr
-}
-
-// RandRestrictedNFTAddress returns a random restricted nft address.
-func RandRestrictedNFTAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedNFTAddress {
-	addr := &iotago.RestrictedNFTAddress{}
-	nftID := RandBytes(iotago.NFTIDLength)
-	copy(addr.NFTID[:], nftID)
-	addr.AllowedCapabilities = capabilities
 
 	return addr
 }
@@ -317,7 +297,7 @@ func RandImplicitAccountCreationAddress() *iotago.ImplicitAccountCreationAddress
 }
 
 // RandMultiAddress returns a random MultiAddress.
-func RandMultiAddress() *iotago.MultiAddress {
+func RandMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.MultiAddress {
 	addrCnt := RandInt(8) + 1
 
 	cumulativeWeight := 0
@@ -338,8 +318,9 @@ func RandMultiAddress() *iotago.MultiAddress {
 	threshold := RandInt(cumulativeWeight)
 
 	return &iotago.MultiAddress{
-		Addresses: addresses,
-		Threshold: uint16(threshold),
+		Addresses:           addresses,
+		Threshold:           uint16(threshold),
+		AllowedCapabilities: capabilities,
 	}
 }
 
