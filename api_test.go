@@ -60,11 +60,8 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 func TestProtocolParameters_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
-			name: "ok",
-			source: func() iotago.ProtocolParameters {
-				params := tpkg.RandProtocolParameters()
-				return params
-			}(),
+			name:   "ok",
+			source: tpkg.RandProtocolParameters(),
 			target: &iotago.V3ProtocolParameters{},
 		},
 	}
@@ -150,8 +147,5 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 	err = tpkg.TestAPI.JSONDecode([]byte(protoParamsJSON), &decodedProtoParams)
 	require.NoError(t, err)
 
-	// ignore computed values
-	protoParams.RewardsParameters().ComputedInitialReward = 0
-	protoParams.RewardsParameters().ComputedFinalReward = 0
 	require.Equal(t, protoParams, decodedProtoParams)
 }

@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/iotaledger/hive.go/core/safemath"
@@ -253,6 +254,7 @@ func V3API(protoParams ProtocolParameters) API {
 	must(err)
 
 	initialReward, finalReward, err := calculateRewards(protoParams)
+	fmt.Println(err)
 	must(err)
 
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
