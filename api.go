@@ -66,6 +66,10 @@ type API interface {
 	LivenessThresholdDuration() time.Duration
 	// MaxBlockWork returns the maximum block work score.
 	MaxBlockWork() WorkScore
+	// ComputedInitialReward returns the initial reward calculated from the parameters.
+	ComputedInitialReward() uint64
+	// ComputedFinalReward returns the final reward calculated from the parameters.
+	ComputedFinalReward() uint64
 }
 
 func LatestProtocolVersion() Version {

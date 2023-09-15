@@ -63,9 +63,6 @@ func TestProtocolParameters_DeSerialize(t *testing.T) {
 			name: "ok",
 			source: func() iotago.ProtocolParameters {
 				params := tpkg.RandProtocolParameters()
-				// ignore computed values
-				params.RewardsParameters().ComputedFinalReward = 0
-				params.RewardsParameters().ComputedInitialReward = 0
 				return params
 			}(),
 			target: &iotago.V3ProtocolParameters{},

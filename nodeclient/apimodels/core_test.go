@@ -68,8 +68,6 @@ func Test_InfoResponse(t *testing.T) {
 		require.NoError(t, api.JSONDecode(jsonResponse, decoded))
 
 		// ignore computed values
-		response.ProtocolParameters[0].Parameters.RewardsParameters().ComputedInitialReward = 0
-		response.ProtocolParameters[0].Parameters.RewardsParameters().ComputedFinalReward = 0
 		require.EqualValues(t, response, decoded)
 	}
 
