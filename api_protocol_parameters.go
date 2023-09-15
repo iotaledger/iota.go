@@ -50,7 +50,7 @@ type basicProtocolParameters struct {
 	CongestionControlParameters CongestionControlParameters `serix:"17,mapKey=congestionControlParameters"`
 	// VersionSignaling defines the parameters used for version upgrades.
 	VersionSignaling VersionSignaling `serix:"18,mapKey=versionSignaling"`
-	// ValidatorBlocksPerSlot is the number of blocks that should be issued by a validator in a single slot.
+	// RewardsParameters defines the parameters used for reward calculation.
 	RewardsParameters RewardsParameters `serix:"19,mapKey=rewardsParameters"`
 }
 

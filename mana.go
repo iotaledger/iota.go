@@ -48,10 +48,6 @@ type RewardsParameters struct {
 	DecayBalancingConstant uint64 `serix:"5,mapKey=decayBalancingConstant"`
 	// PoolCoefficientExponent is the exponent used for shifting operation in the pool rewards calculations.
 	PoolCoefficientExponent uint8 `serix:"6,mapKey=poolCoefficientExponent"`
-	// ComputedInitialReward is the initial reward calculated from the parameters.
-	ComputedInitialReward uint64
-	// ComputedFinalReward is the final reward calculated from ComputedInitialReward and the DecayBalancingConstant.
-	ComputedFinalReward uint64
 }
 
 func (r RewardsParameters) Equals(other RewardsParameters) bool {
@@ -65,10 +61,10 @@ func (r RewardsParameters) Equals(other RewardsParameters) bool {
 
 func (r RewardsParameters) TargetReward(index EpochIndex, api API) (Mana, error) {
 	if index > r.BootstrappingDuration {
-		return Mana(r.ComputedFinalReward), nil
+		return Mana(api.ComputedFinalReward()), nil
 	}
 
-	decayedInitialReward, err := api.ManaDecayProvider().RewardsWithDecay(Mana(r.ComputedInitialReward), index, index)
+	decayedInitialReward, err := api.ManaDecayProvider().RewardsWithDecay(Mana(api.ComputedInitialReward()), index, index)
 	if err != nil {
 		return 0, ierrors.Errorf("failed to calculate decayed initial reward: %w", err)
 	}
