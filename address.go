@@ -84,10 +84,6 @@ type Address interface {
 	// ID returns the address ID.
 	ID() []byte
 
-	// PublicKeyHash returns the plain PubKeyHash part of the address, without type nor optional capabilities.
-	// This can be used to check for uniqueness of PubKeys in a list of addresses.
-	PublicKeyHash() []byte
-
 	// Bech32 encodes the address as a bech32 string.
 	Bech32(hrp NetworkPrefix) string
 

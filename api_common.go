@@ -19,26 +19,39 @@ var (
 
 	// multiAddressValidatorFunc is a validator which checks that:
 	//  1. MultiAddresses are not nested inside the MultiAddress.
-	//  2. PubKeyHashes of all addresses are unique.
+	//  2. "raw address part" of all addresses are unique (without type byte and capabilities).
 	//  3. The weight of each address is at least 1.
 	//  4. The threshold is smaller or equal to the cumulative weight of all addresses.
 	multiAddressValidatorFunc = func(ctx context.Context, addr MultiAddress) error {
-		pubKeyHashSet := map[string]int{}
+		addrSet := map[string]int{}
 
 		var cumulativeWeight uint16
 		for idx, address := range addr.Addresses {
-			// check for nested multi addresses
-			if _, isMultiAddress := address.Address.(*MultiAddress); isMultiAddress {
+			var addrWithoutTypeAndCapabilities []byte
+			switch addr := address.Address.(type) {
+			case *AccountAddress:
+				addrWithoutTypeAndCapabilities = addr[:]
+			case *Ed25519Address:
+				addrWithoutTypeAndCapabilities = addr[:]
+			case *ImplicitAccountCreationAddress:
+				addrWithoutTypeAndCapabilities = addr[:]
+			case *MultiAddress:
 				return ierrors.Wrapf(ErrNestedMultiAddress, "address with index %d is a multi address inside a multi address", idx)
+			case *NFTAddress:
+				addrWithoutTypeAndCapabilities = addr[:]
+			case *RestrictedEd25519Address:
+				addrWithoutTypeAndCapabilities = addr.PubKeyHash[:]
+			default:
+				return ierrors.Wrapf(ErrUnknownAddrType, "address with index %d has an unknown address type (%T) inside a multi address", idx, addr)
 			}
 
-			// we need to check for uniqueness of the PubKeyHash instead of the whole serialized address to ignore
+			// we need to check for uniqueness of the address, but instead of the whole serialized address, we need to ignore
 			// different address types or capabilities, that might result in the same signature.
-			pubKeyHash := string(address.Address.PublicKeyHash())
-			if j, has := pubKeyHashSet[pubKeyHash]; has {
+			addrString := string(addrWithoutTypeAndCapabilities)
+			if j, has := addrSet[addrString]; has {
 				return ierrors.Wrapf(serializer.ErrArrayValidationViolatesUniqueness, "element %d and %d are duplicates", j, idx)
 			}
-			pubKeyHashSet[pubKeyHash] = idx
+			addrSet[addrString] = idx
 
 			// check for minimum address weight
 			if address.Weight < 1 {

@@ -2609,10 +2609,10 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 			}
 		}(),
 
-		// fail - PubKeyHash of all addresses inside MultiAddress need to be unique (needs to be checked on output side)
+		// fail - Raw address part of all addresses inside MultiAddress need to be unique (needs to be checked on output side)
 		func() test {
 			return test{
-				name:           "fail - PubKeyHash of all addresses inside MultiAddress need to be unique (needs to be checked on output side)",
+				name:           "fail - Raw address part of all addresses inside MultiAddress need to be unique (needs to be checked on output side)",
 				ed25519AddrCnt: 1,
 				addressesFunc:  nil,
 				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
