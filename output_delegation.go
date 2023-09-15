@@ -143,7 +143,7 @@ func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByte
 		d.Conditions.VBytes(rentStruct, nil)
 }
 
-func (d *DelegationOutput) syntacticallyValidate(api API) error {
+func (d *DelegationOutput) syntacticallyValidate() error {
 	// Address should never be nil.
 	address := d.Conditions.MustSet().Address().Address
 

@@ -156,7 +156,7 @@ func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore
 	return workScoreNativeTokens.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
-func (n *NFTOutput) syntacticallyValidate(api API) error {
+func (n *NFTOutput) syntacticallyValidate() error {
 	// Address should never be nil.
 	address := n.Conditions.MustSet().Address().Address
 

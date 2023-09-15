@@ -4650,7 +4650,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 		},
 	}
 
-	make_transaction := func(output iotago.Output) (vm.InputSet, iotago.Signature, *iotago.TransactionEssence) {
+	makeTransaction := func(output iotago.Output) (vm.InputSet, iotago.Signature, *iotago.TransactionEssence) {
 		inputIDs := tpkg.RandOutputIDs(1)
 
 		inputs := vm.InputSet{
@@ -4683,7 +4683,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 			testInput := makeTestInput()
 			testOutput := tt.createTestOutput(testInput.address)
 
-			inputs, sig, transaction_essence := make_transaction(testOutput)
+			inputs, sig, transactionEssence := makeTransaction(testOutput)
 
 			vmParams := &vm.Params{
 				API: testAPI,
@@ -4691,7 +4691,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 
 			resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
 			tx := &iotago.Transaction{
-				Essence: transaction_essence,
+				Essence: transactionEssence,
 				Unlocks: iotago.Unlocks{
 					&iotago.SignatureUnlock{Signature: sig},
 				},

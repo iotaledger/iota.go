@@ -22,9 +22,9 @@ func must(err error) {
 func implicitAccountCreationAddressValidator(address Address) error {
 	if address.Type() == AddressImplicitAccountCreation {
 		return ErrImplicitAccountCreationAddressInInvalidUnlockCondition
-	} else {
-		return nil
 	}
+
+	return nil
 }
 
 var (
@@ -390,7 +390,7 @@ func V3API(protoParams ProtocolParameters) API {
 	{
 		must(api.RegisterTypeSettings(AccountOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputAccount))))
 		must(api.RegisterValidators(AccountOutput{}, nil, func(ctx context.Context, account AccountOutput) error {
-			return account.syntacticallyValidate(v3)
+			return account.syntacticallyValidate()
 		}))
 
 		must(api.RegisterTypeSettings(AccountOutputUnlockConditions{},
@@ -449,7 +449,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithObjectType(uint8(OutputNFT))),
 		)
 		must(api.RegisterValidators(NFTOutput{}, nil, func(ctx context.Context, nft NFTOutput) error {
-			return nft.syntacticallyValidate(v3)
+			return nft.syntacticallyValidate()
 		}))
 
 		must(api.RegisterTypeSettings(NFTOutputUnlockConditions{},
@@ -480,7 +480,7 @@ func V3API(protoParams ProtocolParameters) API {
 	{
 		must(api.RegisterTypeSettings(DelegationOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputDelegation))))
 		must(api.RegisterValidators(DelegationOutput{}, nil, func(ctx context.Context, delegation DelegationOutput) error {
-			return delegation.syntacticallyValidate(v3)
+			return delegation.syntacticallyValidate()
 		}))
 
 		must(api.RegisterTypeSettings(DelegationOutputUnlockConditions{},

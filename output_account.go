@@ -211,7 +211,7 @@ func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		a.ImmutableFeatures.VBytes(rentStruct, nil)
 }
 
-func (a *AccountOutput) syntacticallyValidate(api API) error {
+func (a *AccountOutput) syntacticallyValidate() error {
 	// Address should never be nil.
 	stateControllerAddress := a.Conditions.MustSet().StateControllerAddress().Address
 	governorAddress := a.Conditions.MustSet().GovernorAddress().Address
