@@ -46,19 +46,6 @@ func MustParseImplicitAccountCreationAddressFromHexString(hexAddr string) *Impli
 	return addr
 }
 
-func (addr *ImplicitAccountCreationAddress) Decode(b []byte) (int, error) {
-	copy(addr[:], b)
-
-	return ImplicitAccountCreationAddressSerializedBytesSize - 1, nil
-}
-
-func (addr *ImplicitAccountCreationAddress) Encode() ([]byte, error) {
-	var b [ImplicitAccountCreationAddressSerializedBytesSize - 1]byte
-	copy(b[:], addr[:])
-
-	return b[:], nil
-}
-
 func (addr *ImplicitAccountCreationAddress) Clone() Address {
 	cpy := &ImplicitAccountCreationAddress{}
 	copy(cpy[:], addr[:])

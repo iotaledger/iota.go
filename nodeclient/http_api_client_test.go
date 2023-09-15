@@ -32,7 +32,7 @@ const (
 var (
 	protoParams = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("alphanet", "atoi"),
-		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10, 100, 100),
+		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10, 100, 100, 100),
 	)
 
 	mockAPI = iotago.V3API(protoParams)
@@ -327,7 +327,9 @@ func TestClient_SubmitBlock(t *testing.T) {
 		},
 		Signature: &iotago.Ed25519Signature{},
 		Block: &iotago.BasicBlock{
-			StrongParents: tpkg.SortedRandBlockIDs(1),
+			StrongParents:      tpkg.SortedRandBlockIDs(1),
+			WeakParents:        iotago.BlockIDs{},
+			ShallowLikeParents: iotago.BlockIDs{},
 		},
 	}
 
@@ -380,8 +382,10 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
-			StrongParents: tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-			Payload:       nil,
+			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+			WeakParents:        iotago.BlockIDs{},
+			ShallowLikeParents: iotago.BlockIDs{},
+			Payload:            nil,
 		},
 	}
 
@@ -407,8 +411,10 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
-			StrongParents: tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-			Payload:       nil,
+			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+			WeakParents:        iotago.BlockIDs{},
+			ShallowLikeParents: iotago.BlockIDs{},
+			Payload:            nil,
 		},
 	}
 
