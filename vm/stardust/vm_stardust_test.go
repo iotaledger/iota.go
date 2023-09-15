@@ -4400,17 +4400,131 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 	}
 
 	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
+	pubKey := tpkg.RandEd25519Signature().PublicKey
 
 	tests := []test{
 		{
-			name: "fail - Non-Native-Token-Address in Output with Native Tokens",
+			name: "ok - Native Token Address in Output with Native Tokens",
 			output: &iotago.BasicOutput{
 				NativeTokens: tpkg.RandSortNativeTokens(3),
 				Conditions: iotago.BasicOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{Address: ident},
+					&iotago.AddressUnlockCondition{Address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(
+						pubKey[:],
+						true, false, false, false, false, false, false, false)},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - Non Native Token Address in Output with Native Tokens",
+			output: &iotago.BasicOutput{
+				NativeTokens: tpkg.RandSortNativeTokens(3),
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(
+						pubKey[:],
+						false, true, true, true, true, true, true, true)},
 				},
 			},
 			wantErr: iotago.ErrAddressCannotReceiveNativeTokens,
+		},
+		{
+			name: "fail - Non Mana Address in Output with Mana",
+			output: &iotago.BasicOutput{
+				Mana: iotago.Mana(4),
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(
+						pubKey[:],
+						true, false, true, true, true, true, true, true)},
+				},
+			},
+			wantErr: iotago.ErrAddressCannotReceiveMana,
+		},
+		{
+			name: "fail - Non Timelock Unlock Condition Address in Output with Timelock Unlock Condition",
+			output: &iotago.BasicOutput{
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(
+						pubKey[:],
+						true, true, false, true, true, true, true, true)},
+					&iotago.TimelockUnlockCondition{
+						SlotIndex: 500,
+					},
+				},
+			},
+			wantErr: iotago.ErrAddressCannotReceiveTimelockUnlockCondition,
+		},
+		{
+			name: "fail - Non Expiration Unlock Condition Address in Output with Expiration Unlock Condition",
+			output: &iotago.BasicOutput{
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(
+						pubKey[:],
+						true, true, true, false, true, true, true, true)},
+					&iotago.ExpirationUnlockCondition{
+						SlotIndex:     500,
+						ReturnAddress: ident,
+					},
+				},
+			},
+			wantErr: iotago.ErrAddressCannotReceiveExpirationUnlockCondition,
+		},
+		{
+			name: "fail - Non Storage Deposit Return Unlock Condition Address in Output with Storage Deposit Return Unlock Condition",
+			output: &iotago.BasicOutput{
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(
+						pubKey[:],
+						true, true, true, true, false, true, true, true)},
+					&iotago.StorageDepositReturnUnlockCondition{
+						ReturnAddress: ident,
+					},
+				},
+			},
+			wantErr: iotago.ErrAddressCannotReceiveStorageDepositReturnUnlockCondition,
+		},
+		{
+			name: "fail - Non Account Output Address in State Controller UC in Account Output",
+			output: &iotago.AccountOutput{
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(
+						pubKey[:],
+						true, true, true, true, true, false, true, true)},
+				},
+			},
+			wantErr: iotago.ErrAddressCannotReceiveAccountOutput,
+		},
+		{
+			name: "fail - Non Account Output Address in Governor UC in Account Output",
+			output: &iotago.AccountOutput{
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.GovernorAddressUnlockCondition{Address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(
+						pubKey[:],
+						true, true, true, true, true, false, true, true)},
+				},
+			},
+			wantErr: iotago.ErrAddressCannotReceiveAccountOutput,
+		},
+		{
+			name: "fail - Non NFT Output Address in NFT Output",
+			output: &iotago.NFTOutput{
+				Conditions: iotago.NFTOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(
+						pubKey[:],
+						true, true, true, true, true, true, false, true)},
+				},
+			},
+			wantErr: iotago.ErrAddressCannotReceiveNFTOutput,
+		},
+		{
+			name: "fail - Non Delegation Output Address in Delegation Output",
+			output: &iotago.DelegationOutput{
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(
+						pubKey[:],
+						true, true, true, true, true, true, true, false)},
+				},
+			},
+			wantErr: iotago.ErrAddressCannotReceiveDelegationOutput,
 		},
 	}
 
@@ -4422,7 +4536,6 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				Output: &iotago.BasicOutput{
 					Amount: iotago.BaseToken(1_000_000),
 					Conditions: iotago.BasicOutputUnlockConditions{
-						// TODO: Must be changed to an address with native token flag unset.
 						&iotago.AddressUnlockCondition{Address: ident},
 					},
 				},

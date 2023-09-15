@@ -732,31 +732,31 @@ func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Addr
 	}
 
 	if address.CannotReceiveMana() && output.StoredMana() != 0 {
-		return ierrors.Errorf("todo")
-	}
-
-	if address.CannotReceiveAccountOutputs() && output.Type() == iotago.OutputAccount {
-		return ierrors.Errorf("todo")
-	}
-
-	if address.CannotReceiveDelegationOutputs() && output.Type() == iotago.OutputDelegation {
-		return ierrors.Errorf("todo")
-	}
-
-	if address.CannotReceiveNFTOutputs() && output.Type() == iotago.OutputNFT {
-		return ierrors.Errorf("todo")
-	}
-
-	if address.CannotReceiveOutputsWithExpirationUnlockCondition() && output.UnlockConditionSet().HasExpirationCondition() {
-		return ierrors.Errorf("todo")
-	}
-
-	if address.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() && output.UnlockConditionSet().HasStorageDepositReturnCondition() {
-		return ierrors.Errorf("todo")
+		return iotago.ErrAddressCannotReceiveMana
 	}
 
 	if address.CannotReceiveOutputsWithTimelockUnlockCondition() && output.UnlockConditionSet().HasTimelockCondition() {
-		return ierrors.Errorf("todo")
+		return iotago.ErrAddressCannotReceiveTimelockUnlockCondition
+	}
+
+	if address.CannotReceiveOutputsWithExpirationUnlockCondition() && output.UnlockConditionSet().HasExpirationCondition() {
+		return iotago.ErrAddressCannotReceiveExpirationUnlockCondition
+	}
+
+	if address.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() && output.UnlockConditionSet().HasStorageDepositReturnCondition() {
+		return iotago.ErrAddressCannotReceiveStorageDepositReturnUnlockCondition
+	}
+
+	if address.CannotReceiveAccountOutputs() && output.Type() == iotago.OutputAccount {
+		return iotago.ErrAddressCannotReceiveAccountOutput
+	}
+
+	if address.CannotReceiveNFTOutputs() && output.Type() == iotago.OutputNFT {
+		return iotago.ErrAddressCannotReceiveNFTOutput
+	}
+
+	if address.CannotReceiveDelegationOutputs() && output.Type() == iotago.OutputDelegation {
+		return iotago.ErrAddressCannotReceiveDelegationOutput
 	}
 
 	return nil
