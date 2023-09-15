@@ -13,7 +13,11 @@ func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 	return &TransactionBuilder{
 		api: api,
 		essence: &iotago.TransactionEssence{
-			NetworkID: api.ProtocolParameters().NetworkID(),
+			NetworkID:     api.ProtocolParameters().NetworkID(),
+			ContextInputs: iotago.TxEssenceContextInputs{},
+			Inputs:        iotago.TxEssenceInputs{},
+			Outputs:       iotago.TxEssenceOutputs{},
+			Allotments:    iotago.Allotments{},
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},

@@ -42,6 +42,8 @@ type RentStructure struct {
 	VBFactorIssuerKeys VByteCostFactor `serix:"3,mapKey=vByteFactorIssuerKeys"`
 	// Defines the factor to be used for staking feature.
 	VBFactorStakingFeature VByteCostFactor `serix:"4,mapKey=vByteFactorStakingFeature"`
+	// Defines the factor to be used for delegation output.
+	VBFactorDelegation VByteCostFactor `serix:"5,mapKey=vByteFactorDelegation"`
 }
 
 // CoversMinDeposit tells whether given this NonEphemeralObject, the base token amount fulfills the deposit requirements

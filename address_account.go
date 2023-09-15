@@ -22,19 +22,6 @@ const (
 // An AccountAddress is the Blake2b-256 hash of the OutputID which created it.
 type AccountAddress [AccountAddressBytesLength]byte
 
-func (addr *AccountAddress) Decode(b []byte) (int, error) {
-	copy(addr[:], b)
-
-	return AccountAddressSerializedBytesSize - 1, nil
-}
-
-func (addr *AccountAddress) Encode() ([]byte, error) {
-	var b [AccountAddressSerializedBytesSize - 1]byte
-	copy(b[:], addr[:])
-
-	return b[:], nil
-}
-
 func (addr *AccountAddress) Clone() Address {
 	cpy := &AccountAddress{}
 	copy(cpy[:], addr[:])
