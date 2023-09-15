@@ -11,7 +11,11 @@ import (
 // NewBasicBlockBuilder creates a new BasicBlockBuilder.
 func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 	// TODO: burn the correct amount of Mana in all cases according to block work and RMC with issue #285
-	basicBlock := &iotago.BasicBlock{}
+	basicBlock := &iotago.BasicBlock{
+		StrongParents:      iotago.BlockIDs{},
+		WeakParents:        iotago.BlockIDs{},
+		ShallowLikeParents: iotago.BlockIDs{},
+	}
 
 	protocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
@@ -178,7 +182,11 @@ func (b *BasicBlockBuilder) BurnedMana(rmc iotago.Mana) *BasicBlockBuilder {
 
 // NewValidationBlockBuilder creates a new ValidationBlockBuilder.
 func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
-	validationBlock := &iotago.ValidationBlock{}
+	validationBlock := &iotago.ValidationBlock{
+		StrongParents:      iotago.BlockIDs{},
+		WeakParents:        iotago.BlockIDs{},
+		ShallowLikeParents: iotago.BlockIDs{},
+	}
 
 	protocolBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{

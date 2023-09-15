@@ -371,8 +371,10 @@ func TestBasicBlock_MinSize(t *testing.T) {
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
-			StrongParents: tpkg.SortedRandBlockIDs(1),
-			Payload:       nil,
+			StrongParents:      tpkg.SortedRandBlockIDs(1),
+			WeakParents:        iotago.BlockIDs{},
+			ShallowLikeParents: iotago.BlockIDs{},
+			Payload:            nil,
 		},
 	}
 
@@ -396,6 +398,8 @@ func TestValidationBlock_MinSize(t *testing.T) {
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.ValidationBlock{
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			WeakParents:             iotago.BlockIDs{},
+			ShallowLikeParents:      iotago.BlockIDs{},
 			HighestSupportedVersion: tpkg.TestAPI.Version(),
 		},
 	}
@@ -424,6 +428,8 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	{
 		protocolBlock.Block = &iotago.ValidationBlock{
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			WeakParents:             iotago.BlockIDs{},
+			ShallowLikeParents:      iotago.BlockIDs{},
 			HighestSupportedVersion: tpkg.TestAPI.Version() - 1,
 		}
 		blockBytes, err := tpkg.TestAPI.Encode(protocolBlock)
@@ -438,6 +444,8 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	{
 		protocolBlock.Block = &iotago.ValidationBlock{
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			WeakParents:             iotago.BlockIDs{},
+			ShallowLikeParents:      iotago.BlockIDs{},
 			HighestSupportedVersion: tpkg.TestAPI.Version(),
 		}
 		blockBytes, err := tpkg.TestAPI.Encode(protocolBlock)

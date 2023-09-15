@@ -26,10 +26,14 @@ func VersionFromBytes(b []byte) (Version, int, error) {
 	return Version(b[0]), 1, nil
 }
 
+// VersionSignaling defines the parameters used by signaling protocol parameters upgrade.
 type VersionSignaling struct {
-	WindowSize        uint8 `serix:"0,mapKey=windowSize"`
+	// WindowSize is the size of the window in epochs to find which version of protocol parameters was most signaled, from currentEpoch - windowSize to currentEpoch.
+	WindowSize uint8 `serix:"0,mapKey=windowSize"`
+	// WindowTargetRatio is the target number of supporters for a version to win in a windowSize.
 	WindowTargetRatio uint8 `serix:"1,mapKey=windowTargetRatio"`
-	ActivationOffset  uint8 `serix:"2,mapKey=activationOffset"`
+	// ActivationOffset is the offset in epochs to activate the new version of protocol parameters.
+	ActivationOffset uint8 `serix:"2,mapKey=activationOffset"`
 }
 
 func (s VersionSignaling) Equals(signaling VersionSignaling) bool {
@@ -112,6 +116,10 @@ type ProtocolParameters interface {
 	ManaDecayProvider() *ManaDecayProvider
 
 	StakingUnbondingPeriod() EpochIndex
+
+	ValidationBlocksPerSlot() uint16
+
+	PunishmentEpochs() EpochIndex
 
 	LivenessThresholdLowerBound() time.Duration
 

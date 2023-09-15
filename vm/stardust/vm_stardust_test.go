@@ -22,6 +22,7 @@ const (
 	betaPerYear                  float64 = 1 / 3.0
 	slotsPerEpochExponent                = 13
 	slotDurationSeconds                  = 10
+	bitsCount                            = 63
 	generationRate                       = 1
 	generationRateExponent               = 27
 	decayFactorsExponent                 = 32
@@ -34,19 +35,20 @@ var (
 	schedulerRate   iotago.WorkScore = 100000
 	testProtoParams                  = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("test", "test"),
-		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 100, 100),
+		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 100, 100, 100),
 		iotago.WithWorkScoreOptions(1, 100, 500, 20, 20, 20, 20, 100, 100, 100, 200, 4),
 		iotago.WithTimeProviderOptions(100, slotDurationSeconds, slotsPerEpochExponent),
-		iotago.WithManaOptions(generationRate,
+		iotago.WithManaOptions(bitsCount,
+			generationRate,
 			generationRateExponent,
 			tpkg.ManaDecayFactors(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorsExponent),
 			decayFactorsExponent,
 			tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent),
 			decayFactorEpochsSumExponent,
 		),
-		iotago.WithStakingOptions(10),
+		iotago.WithStakingOptions(10, 10, 10),
 		iotago.WithLivenessOptions(15*time.Second, 30*time.Second, 10, 20, 24),
-		iotago.WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 100*iotago.MaxBlockSize),
+		iotago.WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 1000, 100),
 	)
 
 	testAPI = iotago.V3API(testProtoParams)
