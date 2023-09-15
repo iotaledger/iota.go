@@ -2,8 +2,6 @@ package iotago
 
 import (
 	"time"
-
-	"github.com/iotaledger/hive.go/lo"
 )
 
 type basicProtocolParameters struct {
@@ -43,10 +41,10 @@ type basicProtocolParameters struct {
 	// LivenessThresholdLowerBound is used by tip-selection to determine if a block is eligible by evaluating issuingTimes.
 	// and commitments in its past-cone to ATT and lastCommittedSlot respectively.
 	LivenessThresholdLowerBound time.Duration `serix:"13,mapKey=livenessThresholdLowerBound"`
-
 	// LivenessThresholdUpperBound is used by tip-selection to determine if a block is eligible by evaluating issuingTimes
 	// and commitments in its past-cone to ATT and lastCommittedSlot respectively.
 	LivenessThresholdUpperBound time.Duration `serix:"14,mapKey=livenessThresholdUpperBound"`
+
 	// MinCommittableAge is the minimum age relative to the accepted tangle time slot index that a slot can be committed.
 	// For example, if the last accepted slot is in slot 100, and minCommittableAge=10, then the latest committed slot can be at most 100-10=90.
 	MinCommittableAge SlotIndex `serix:"15,mapKey=minCommittableAge"`
