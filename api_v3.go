@@ -594,7 +594,7 @@ func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewa
 		return 0, 0, ierrors.Wrap(err, "failed to calculate target reward due to tokenSupply and RewardsManaShareCoefficient multiplication overflow")
 	}
 
-	result, err = safemath.SafeMul(result, uint64(manaStructure.generationRate))
+	result, err = safemath.SafeMul(result, manaStructure.generationRate)
 	if err != nil {
 		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to multiplication with generationRate overflow")
 	}
