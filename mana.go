@@ -49,9 +49,9 @@ type RewardsParameters struct {
 	// PoolCoefficientExponent is the exponent used for shifting operation in the pool rewards calculations.
 	PoolCoefficientExponent uint8 `serix:"6,mapKey=poolCoefficientExponent"`
 	// ComputedInitialReward is the initial reward calculated from the parameters.
-	ComputedInitialReward uint64 `serix:"7,mapKey=computedInitialReward"`
+	ComputedInitialReward uint64
 	// ComputedFinalReward is the final reward calculated from ComputedInitialReward and the DecayBalancingConstant.
-	ComputedFinalReward uint64 `serix:"8,mapKey=computedFinalReward"`
+	ComputedFinalReward uint64
 }
 
 func (r RewardsParameters) Equals(other RewardsParameters) bool {
