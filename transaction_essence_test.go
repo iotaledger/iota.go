@@ -47,8 +47,9 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 			// we transition the same Account twice
 			name: "transition the same Account twice",
 			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
-				NetworkID: tpkg.TestNetworkID,
-				Inputs:    inputIDs.UTXOInputs(),
+				NetworkID:     tpkg.TestNetworkID,
+				ContextInputs: iotago.TxEssenceContextInputs{},
+				Inputs:        inputIDs.UTXOInputs(),
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
 						Amount:    OneMi,
@@ -69,6 +70,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						Features: nil,
 					},
 				},
+				Allotments: iotago.Allotments{},
 			}),
 			target:    &iotago.Transaction{},
 			seriErr:   iotago.ErrNonUniqueChainOutputs,
@@ -170,8 +172,9 @@ func TestAllotmentUniqueness(t *testing.T) {
 		{
 			name: "allot to the same account twice",
 			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
-				NetworkID: tpkg.TestNetworkID,
-				Inputs:    inputIDs.UTXOInputs(),
+				NetworkID:     tpkg.TestNetworkID,
+				ContextInputs: iotago.TxEssenceContextInputs{},
+				Inputs:        inputIDs.UTXOInputs(),
 				Outputs: iotago.TxEssenceOutputs{
 					tpkg.RandBasicOutput(iotago.AddressEd25519),
 				},

@@ -17,8 +17,10 @@ type CongestionControlParameters struct {
 	SchedulerRate WorkScore `serix:"5,mapKey=schedulerRate"`
 	// MinMana is the minimum amount of Mana that an account must have to have a block scheduled.
 	MinMana Mana `serix:"6,mapKey=minMana"`
-	// MaxBufferSize is the maximum size of the buffer.
+	// MaxBufferSize is the maximum number of blocks in the DRR buffer.
 	MaxBufferSize uint32 `serix:"7,mapKey=maxBufferSize"`
+	// MaxValidaitonBufferSize is the maximum number of blocks in the validation buffer.
+	MaxValidationBufferSize uint32 `serix:"8,mapKey=maxValidationBufferSize"`
 }
 
 func (c *CongestionControlParameters) Equals(other CongestionControlParameters) bool {
@@ -29,5 +31,6 @@ func (c *CongestionControlParameters) Equals(other CongestionControlParameters) 
 		c.DecreaseThreshold == other.DecreaseThreshold &&
 		c.SchedulerRate == other.SchedulerRate &&
 		c.MinMana == other.MinMana &&
-		c.MaxBufferSize == other.MaxBufferSize
+		c.MaxBufferSize == other.MaxBufferSize &&
+		c.MaxValidationBufferSize == other.MaxValidationBufferSize
 }

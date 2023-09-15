@@ -383,7 +383,11 @@ func RandTransactionEssenceWithAllotmentCount(allotmentCount int) *iotago.Transa
 // RandTransactionEssenceWithOptions returns a random transaction essence with options applied.
 func RandTransactionEssenceWithOptions(opts ...options.Option[iotago.TransactionEssence]) *iotago.TransactionEssence {
 	tx := &iotago.TransactionEssence{
-		NetworkID: TestNetworkID,
+		NetworkID:     TestNetworkID,
+		ContextInputs: iotago.TxEssenceContextInputs{},
+		Inputs:        iotago.TxEssenceInputs{},
+		Outputs:       iotago.TxEssenceOutputs{},
+		Allotments:    iotago.Allotments{},
 	}
 
 	inputCount := 1
@@ -549,15 +553,19 @@ func RandBasicBlock(withPayloadType iotago.PayloadType) *iotago.BasicBlock {
 	}
 
 	return &iotago.BasicBlock{
-		StrongParents: SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
-		Payload:       payload,
-		BurnedMana:    RandMana(1000),
+		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
+		WeakParents:        iotago.BlockIDs{},
+		ShallowLikeParents: iotago.BlockIDs{},
+		Payload:            payload,
+		BurnedMana:         RandMana(1000),
 	}
 }
 
 func ValidationBlock() *iotago.ValidationBlock {
 	return &iotago.ValidationBlock{
 		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidationMaxParents)),
+		WeakParents:             iotago.BlockIDs{},
+		ShallowLikeParents:      iotago.BlockIDs{},
 		HighestSupportedVersion: TestAPI.Version() + 1,
 	}
 }
@@ -643,9 +651,9 @@ func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 	dep := &iotago.BasicOutput{
 		Amount:       0,
-		NativeTokens: nil,
-		Conditions:   nil,
-		Features:     nil,
+		NativeTokens: iotago.NativeTokens{},
+		Conditions:   iotago.BasicOutputUnlockConditions{},
+		Features:     iotago.BasicOutputFeatures{},
 	}
 
 	//nolint:exhaustive
@@ -684,7 +692,8 @@ func RandSortAllotment(count int) iotago.Allotments {
 func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
-			NetworkID: 14147312347886322761,
+			NetworkID:     14147312347886322761,
+			ContextInputs: iotago.TxEssenceContextInputs{},
 			Inputs: iotago.TxEssenceInputs{
 				&iotago.UTXOInput{
 					TransactionID: func() [iotago.TransactionIDLength]byte {
@@ -704,7 +713,8 @@ func OneInputOutputTransaction() *iotago.Transaction {
 					},
 				},
 			},
-			Payload: nil,
+			Allotments: iotago.Allotments{},
+			Payload:    nil,
 		},
 		Unlocks: iotago.Unlocks{
 			&iotago.SignatureUnlock{
@@ -759,9 +769,11 @@ func RandEd25519Identity() (ed25519.PrivateKey, *iotago.Ed25519Address, iotago.A
 // RandRentStructure produces random rent structure.
 func RandRentStructure() *iotago.RentStructure {
 	return &iotago.RentStructure{
-		VByteCost:    RandUint32(math.MaxUint32),
-		VBFactorData: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
-		VBFactorKey:  iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VByteCost:              RandUint32(math.MaxUint32),
+		VBFactorData:           iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VBFactorKey:            iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VBFactorIssuerKeys:     iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VBFactorStakingFeature: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 	}
 }
 
@@ -802,6 +814,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 		),
 		iotago.WithWorkScoreOptions(
 			RandWorkScore(math.MaxUint32),
@@ -827,6 +840,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
 			RandMana(math.MaxUint64),
+			RandUint32(math.MaxUint32),
 			RandUint32(math.MaxUint32),
 		),
 	)
