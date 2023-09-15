@@ -6,11 +6,11 @@ import (
 
 // A Ed25519 Block Issuer Key.
 type BlockIssuerKeyEd25519Address struct {
-	Address Ed25519Address `serix:"0"`
+	Address *Ed25519Address `serix:"0"`
 }
 
 // BlockIssuerKeyEd25519FromPublicKey creates a block issuer key from an Ed25519 public key.
-func BlockIssuerKeyEd25519AddressFromAddress(address Ed25519Address) BlockIssuerKeyEd25519Address {
+func BlockIssuerKeyEd25519AddressFromAddress(address *Ed25519Address) BlockIssuerKeyEd25519Address {
 	return BlockIssuerKeyEd25519Address{Address: address}
 }
 
