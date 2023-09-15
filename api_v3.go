@@ -19,7 +19,7 @@ func must(err error) {
 	}
 }
 
-func implicitAccountCreationAddressValidator(address Address) error {
+func disallowImplicitAccountCreationAddress(address Address) error {
 	if address.Type() == AddressImplicitAccountCreation {
 		return ErrImplicitAccountCreationAddressInInvalidUnlockCondition
 	}
@@ -306,7 +306,7 @@ func V3API(protoParams ProtocolParameters) API {
 		)
 		must(api.RegisterValidators(StorageDepositReturnUnlockCondition{}, nil,
 			func(ctx context.Context, sdruc StorageDepositReturnUnlockCondition) error {
-				return implicitAccountCreationAddressValidator(sdruc.ReturnAddress)
+				return disallowImplicitAccountCreationAddress(sdruc.ReturnAddress)
 			},
 		))
 		must(api.RegisterTypeSettings(TimelockUnlockCondition{},
@@ -317,7 +317,7 @@ func V3API(protoParams ProtocolParameters) API {
 		)
 		must(api.RegisterValidators(ExpirationUnlockCondition{}, nil,
 			func(ctx context.Context, exp ExpirationUnlockCondition) error {
-				return implicitAccountCreationAddressValidator(exp.ReturnAddress)
+				return disallowImplicitAccountCreationAddress(exp.ReturnAddress)
 			},
 		))
 		must(api.RegisterTypeSettings(StateControllerAddressUnlockCondition{},
@@ -325,7 +325,7 @@ func V3API(protoParams ProtocolParameters) API {
 		)
 		must(api.RegisterValidators(StateControllerAddressUnlockCondition{}, nil,
 			func(ctx context.Context, stateController StateControllerAddressUnlockCondition) error {
-				return implicitAccountCreationAddressValidator(stateController.Address)
+				return disallowImplicitAccountCreationAddress(stateController.Address)
 			},
 		))
 		must(api.RegisterTypeSettings(GovernorAddressUnlockCondition{},
@@ -333,7 +333,7 @@ func V3API(protoParams ProtocolParameters) API {
 		)
 		must(api.RegisterValidators(GovernorAddressUnlockCondition{}, nil,
 			func(ctx context.Context, gov GovernorAddressUnlockCondition) error {
-				return implicitAccountCreationAddressValidator(gov.Address)
+				return disallowImplicitAccountCreationAddress(gov.Address)
 			},
 		))
 		must(api.RegisterTypeSettings(ImmutableAccountUnlockCondition{},
