@@ -61,10 +61,6 @@ func (addr *ImplicitAccountCreationAddress) ID() []byte {
 	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
 }
 
-func (addr *ImplicitAccountCreationAddress) PublicKeyHash() []byte {
-	return addr[:]
-}
-
 func (addr *ImplicitAccountCreationAddress) Key() string {
 	return string(addr.ID())
 }

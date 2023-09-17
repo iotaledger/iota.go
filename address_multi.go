@@ -65,15 +65,10 @@ func (addr *MultiAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes
 }
 
 func (addr *MultiAddress) ID() []byte {
-	// prefix the hash of the multi address bytes with the AddressType
-	return append([]byte{byte(AddressMulti)}, addr.PublicKeyHash()...)
-}
+	hash := blake2b.Sum256(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 
-func (addr *MultiAddress) PublicKeyHash() []byte {
-	// for the MultiAddress it doesn't matter if the AllowedCapabilities are part of the pubKeyHash,
-	// because this is never used to check for uniqueness of pubKeys anyways.
-	pubKeyHash := blake2b.Sum256(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
-	return pubKeyHash[:]
+	// prefix the hash of the multi address bytes with the AddressType
+	return append([]byte{byte(AddressMulti)}, hash[:]...)
 }
 
 func (addr *MultiAddress) Key() string {

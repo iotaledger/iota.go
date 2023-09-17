@@ -37,10 +37,6 @@ func (addr *NFTAddress) ID() []byte {
 	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
 }
 
-func (addr *NFTAddress) PublicKeyHash() []byte {
-	return addr[:]
-}
-
 func (addr *NFTAddress) Key() string {
 	return string(addr.ID())
 }

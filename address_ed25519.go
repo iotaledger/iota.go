@@ -38,10 +38,6 @@ func (addr *Ed25519Address) ID() []byte {
 	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
 }
 
-func (addr *Ed25519Address) PublicKeyHash() []byte {
-	return addr[:]
-}
-
 func (addr *Ed25519Address) Key() string {
 	return string(addr.ID())
 }
