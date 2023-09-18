@@ -69,7 +69,7 @@ func (addr *Ed25519Address) Bech32(hrp NetworkPrefix) string {
 }
 
 func (addr *Ed25519Address) String() string {
-	return hexutil.EncodeHex(addr[:])
+	return hexutil.EncodeHex(addr.ID())
 }
 
 func (addr *Ed25519Address) Size() int {
