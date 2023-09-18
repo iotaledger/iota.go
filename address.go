@@ -12,6 +12,8 @@ import (
 var (
 	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = ierrors.New("unknown address type")
+	// ErrNestedMultiAddress gets returned when a MultiAddress is nested inside a MultiAddress.
+	ErrNestedMultiAddress = ierrors.New("multi addresses can't be nested")
 	// ErrImplicitAccountCreationAddressInInvalidUnlockCondition gets returned when a Implicit Account Creation Address
 	// is placed in an unlock condition where it is disallowed.
 	ErrImplicitAccountCreationAddressInInvalidUnlockCondition = ierrors.New("implicit account creation address in unlock condition where it is disallowed")
@@ -49,14 +51,12 @@ const (
 	AddressRestrictedEd25519 AddressType = 1
 	// AddressAccount denotes an Account address.
 	AddressAccount AddressType = 8
-	// AddressRestrictedAccount denotes an Account address that has a capability bitmask.
-	AddressRestrictedAccount AddressType = 9
 	// AddressNFT denotes an NFT address.
 	AddressNFT AddressType = 16
-	// AddressRestrictedNFT denotes an NFT address that has a capability bitmask.
-	AddressRestrictedNFT AddressType = 17
 	// AddressImplicitAccountCreation denotes an Ed25519 address that can only be used to create an implicit account.
 	AddressImplicitAccountCreation AddressType = 24
+	// AddressMulti denotes a multi address.
+	AddressMulti AddressType = 32
 )
 
 func (addrType AddressType) String() string {
@@ -76,14 +76,12 @@ func (addrType AddressType) String() string {
 type AddressTypeSet map[AddressType]struct{}
 
 var (
-	addressNames = [AddressImplicitAccountCreation + 1]string{
-		"Ed25519Address",
-		"RestrictedEd25519Address", "", "", "", "", "", "",
-		"AccountAddress",
-		"RestrictedAccountAddress", "", "", "", "", "", "",
-		"NFTAddress",
-		"RestrictedNFTAddress", "", "", "", "", "", "",
-		"ImplicitAccountCreationAddress",
+	addressNames = [AddressMulti + 1]string{
+		"Ed25519Address", "RestrictedEd25519Address", "", "", "", "", "", "",
+		"AccountAddress", "", "", "", "", "", "", "",
+		"NFTAddress", "", "", "", "", "", "", "",
+		"ImplicitAccountCreationAddress", "", "", "", "", "", "", "",
+		"MultiAddress",
 	}
 )
 
@@ -107,6 +105,10 @@ type Address interface {
 
 	// Type returns the type of the address.
 	Type() AddressType
+
+	// ID returns the address ID, which is the concatenation of type prefix
+	// and the unique identifier of the address.
+	ID() []byte
 
 	// Bech32 encodes the address as a bech32 string.
 	Bech32(hrp NetworkPrefix) string
@@ -179,31 +181,34 @@ func newAddress(addressType byte) (address Address, err error) {
 		return &RestrictedEd25519Address{}, nil
 	case AddressAccount:
 		return &AccountAddress{}, nil
-	case AddressRestrictedAccount:
-		return &RestrictedAccountAddress{}, nil
 	case AddressNFT:
 		return &NFTAddress{}, nil
-	case AddressRestrictedNFT:
-		return &RestrictedNFTAddress{}, nil
 	case AddressImplicitAccountCreation:
 		return &ImplicitAccountCreationAddress{}, nil
+	case AddressMulti:
+		return nil, ErrMultiAddrCannotBeReconstructedViaBech32
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
 	}
 }
 
-func bech32String(hrp NetworkPrefix, addr Address) string {
-	serixAPI := CommonSerixAPI()
-	bytes, err := serixAPI.Encode(context.Background(), addr)
-	if err != nil {
-		panic(err)
-	}
+func bech32StringBytes(hrp NetworkPrefix, bytes []byte) string {
 	s, err := bech32.Encode(string(hrp), bytes)
 	if err != nil {
 		panic(err)
 	}
 
 	return s
+}
+
+func bech32StringAddress(hrp NetworkPrefix, addr Address) string {
+	serixAPI := CommonSerixAPI()
+	bytes, err := serixAPI.Encode(context.Background(), addr)
+	if err != nil {
+		panic(err)
+	}
+
+	return bech32StringBytes(hrp, bytes)
 }
 
 // ParseBech32 decodes a bech32 encoded string.

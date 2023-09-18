@@ -33,8 +33,12 @@ func (addr *AccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByt
 	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
+func (addr *AccountAddress) ID() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
+}
+
 func (addr *AccountAddress) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return string(addr.ID())
 }
 
 func (addr *AccountAddress) Chain() ChainID {
@@ -59,11 +63,11 @@ func (addr *AccountAddress) Type() AddressType {
 }
 
 func (addr *AccountAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, addr)
+	return bech32StringAddress(hrp, addr)
 }
 
 func (addr *AccountAddress) String() string {
-	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return hexutil.EncodeHex(addr.ID())
 }
 
 func (addr *AccountAddress) Size() int {

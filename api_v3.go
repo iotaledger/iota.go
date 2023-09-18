@@ -1,3 +1,4 @@
+//nolint:dupl
 package iotago
 
 import (
@@ -353,10 +354,14 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(ReferenceUnlock{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockReference))))
 		must(api.RegisterTypeSettings(AccountUnlock{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockAccount))))
 		must(api.RegisterTypeSettings(NFTUnlock{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockNFT))))
+		must(api.RegisterTypeSettings(MultiUnlock{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockMulti))))
+		must(api.RegisterTypeSettings(EmptyUnlock{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockEmpty))))
 		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*SignatureUnlock)(nil)))
 		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*ReferenceUnlock)(nil)))
 		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*AccountUnlock)(nil)))
 		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*NFTUnlock)(nil)))
+		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*MultiUnlock)(nil)))
+		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*EmptyUnlock)(nil)))
 	}
 
 	{

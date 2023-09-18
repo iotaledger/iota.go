@@ -61,6 +61,12 @@ func AddressCapabilitiesBitMaskWithCapabilities(canReceiveNativeTokens bool,
 	return bm
 }
 
+func (bm AddressCapabilitiesBitMask) Clone() AddressCapabilitiesBitMask {
+	cpy := make(AddressCapabilitiesBitMask, 0, len(bm))
+	copy(cpy, bm)
+	return cpy
+}
+
 func (bm AddressCapabilitiesBitMask) hasBit(bit uint) bool {
 	byteIndex := bit / 8
 	if uint(len(bm)) <= byteIndex {

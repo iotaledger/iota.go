@@ -19,6 +19,8 @@ var (
 	ErrInputOutputSumMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount")
 	// ErrManaOverflow gets returned when there is an under- or overflow in Mana calculations.
 	ErrManaOverflow = ierrors.New("under- or overflow in Mana calculations")
+	// ErrUnknownSignatureType gets returned for unknown signature types.
+	ErrUnknownSignatureType = ierrors.New("unknown signature type")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
 	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.

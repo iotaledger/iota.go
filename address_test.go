@@ -2,10 +2,8 @@
 package iotago_test
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -37,34 +35,24 @@ func TestAddressDeSerialize(t *testing.T) {
 			target: &iotago.AccountAddress{},
 		},
 		{
-			name:   "ok - RestrictedAccountAddress with capabilities",
-			source: tpkg.RandRestrictedAccountAddress(iotago.AddressCapabilitiesBitMask{0xff}),
-			target: &iotago.RestrictedAccountAddress{},
-		},
-		{
-			name:   "ok - RestrictedAccountAddress without capabilities",
-			source: tpkg.RandRestrictedAccountAddress(iotago.AddressCapabilitiesBitMask{0x0}),
-			target: &iotago.RestrictedAccountAddress{},
-		},
-		{
 			name:   "ok - NFTAddress",
 			source: tpkg.RandNFTAddress(),
 			target: &iotago.NFTAddress{},
 		},
 		{
-			name:   "ok - RestrictedNFTAddress with capabilities",
-			source: tpkg.RandRestrictedNFTAddress(iotago.AddressCapabilitiesBitMask{0xff}),
-			target: &iotago.RestrictedNFTAddress{},
-		},
-		{
-			name:   "ok - RestrictedNFTAddress without capabilities",
-			source: tpkg.RandRestrictedNFTAddress(iotago.AddressCapabilitiesBitMask{0x0}),
-			target: &iotago.RestrictedNFTAddress{},
-		},
-		{
 			name:   "ok - ImplicitAccountCreationAddress",
 			source: tpkg.RandImplicitAccountCreationAddress(),
 			target: &iotago.ImplicitAccountCreationAddress{},
+		},
+		{
+			name:   "ok - MultiAddress without capabilities",
+			source: tpkg.RandMultiAddress(iotago.AddressCapabilitiesBitMask{0x00}),
+			target: &iotago.MultiAddress{},
+		},
+		{
+			name:   "ok - MultiAddress with capabilities",
+			source: tpkg.RandMultiAddress(iotago.AddressCapabilitiesBitMask{0xFF}),
+			target: &iotago.MultiAddress{},
 		},
 	}
 
@@ -74,22 +62,57 @@ func TestAddressDeSerialize(t *testing.T) {
 }
 
 var bech32Tests = []struct {
-	name    string
-	network iotago.NetworkPrefix
-	addr    iotago.Address
-	bech32  string
+	name     string
+	network  iotago.NetworkPrefix
+	addr     iotago.Address
+	bech32   string
+	parseErr error
 }{
 	{
 		"RFC example: Ed25519 mainnet",
 		iotago.PrefixMainnet,
 		&iotago.Ed25519Address{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
 		"iota1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryj430ldu",
+		nil,
 	},
 	{
 		"RFC example: Ed25519 testnet",
 		iotago.PrefixDevnet,
 		&iotago.Ed25519Address{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
 		"atoi1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryjjl77h3",
+		nil,
+	},
+	{
+		"Multi Address",
+		iotago.PrefixDevnet,
+		&iotago.MultiAddress{
+			Addresses: []*iotago.AddressWithWeight{
+				{
+					Address: &iotago.Ed25519Address{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
+					Weight:  1,
+				},
+				{
+					Address: &iotago.Ed25519Address{0x53, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
+					Weight:  1,
+				},
+				{
+					Address: &iotago.Ed25519Address{0x54, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
+					Weight:  1,
+				},
+				{
+					Address: &iotago.AccountAddress{0x55, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
+					Weight:  2,
+				},
+				{
+					Address: &iotago.NFTAddress{0x56, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
+					Weight:  3,
+				},
+			},
+			Threshold:           2,
+			AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0xFF},
+		},
+		"atoi1yzzjpzydgkcv7fvf3twv5fkr68tc9hk9g2q8pekflnae4np3m5jfzhdx3t2",
+		iotago.ErrMultiAddrCannotBeReconstructedViaBech32,
 	},
 }
 
@@ -105,6 +128,10 @@ func TestParseBech32(t *testing.T) {
 	for _, tt := range bech32Tests {
 		t.Run(tt.name, func(t *testing.T) {
 			network, addr, err := iotago.ParseBech32(tt.bech32)
+			if tt.parseErr != nil {
+				assert.ErrorIs(t, err, tt.parseErr)
+				return
+			}
 			assert.NoError(t, err)
 			assert.Equal(t, tt.network, network)
 			assert.Equal(t, tt.addr, addr)
@@ -173,15 +200,16 @@ func assertRestrictedAddresses(t *testing.T, addresses []iotago.RestrictedAddres
 	t.Helper()
 
 	for i, addr := range addresses {
-		fmt.Println(addr.Bech32(iotago.PrefixMainnet))
+		// fmt.Println(addr.Bech32(iotago.PrefixMainnet))
 
 		j, err := tpkg.TestAPI.JSONEncode(addr)
+		_ = j
 		require.NoError(t, err)
-		fmt.Println(string(j))
+		// fmt.Println(string(j))
 
 		b, err := tpkg.TestAPI.Encode(addr)
 		require.NoError(t, err)
-		fmt.Println(hexutil.Encode(b))
+		// fmt.Println(hexutil.Encode(b))
 
 		addrChecks := []func() bool{
 			addr.CannotReceiveNativeTokens,
@@ -202,19 +230,19 @@ func assertRestrictedAddresses(t *testing.T, addresses []iotago.RestrictedAddres
 				require.Equal(t, check(), i != checkIndex)
 			}
 			require.Equal(t, addr.AllowedCapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask{0 | 1<<i})
-			require.Equal(t, addr.Size(), 35)
+			require.Equal(t, addr.AllowedCapabilitiesBitMask().Size(), 2)
 		case 8:
 			for _, check := range addrChecks {
 				require.False(t, check())
 			}
 			require.Equal(t, addr.AllowedCapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask{0xFF})
-			require.Equal(t, addr.Size(), 35)
+			require.Equal(t, addr.AllowedCapabilitiesBitMask().Size(), 2)
 		case 9:
 			for _, check := range addrChecks {
 				require.True(t, check())
 			}
-			require.Equal(t, addr.AllowedCapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask(nil))
-			require.Equal(t, addr.Size(), 34)
+			require.Equal(t, addr.AllowedCapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask{})
+			require.Equal(t, addr.AllowedCapabilitiesBitMask().Size(), 1)
 		}
 	}
 }
@@ -239,38 +267,19 @@ func TestRestrictedEd25519AddressCapabilities(t *testing.T) {
 }
 
 //nolint:dupl // we have a lot of similar tests
-func TestRestrictedNFTAddressCapabilities(t *testing.T) {
-	outputID := tpkg.RandOutputID(1)
+func TestMultiAddressCapabilities(t *testing.T) {
+	multiAddress := tpkg.RandMultiAddress(iotago.AddressCapabilitiesBitMask{})
 	addresses := []iotago.RestrictedAddress{
-		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, true, false, false, false, false, false, false, false),
-		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, true, false, false, false, false, false, false),
-		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, true, false, false, false, false, false),
-		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, false, true, false, false, false, false),
-		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, true, false, false, false),
-		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, true, false, false),
-		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, false, true, false),
-		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, false, false, true),
-		iotago.RestrictedNFTAddressFromOutputIDWithCapabilities(outputID, true, true, true, true, true, true, true, true),
-		iotago.RestrictedNFTAddressFromOutputID(outputID),
-	}
-
-	assertRestrictedAddresses(t, addresses)
-}
-
-//nolint:dupl // we have a lot of similar tests
-func TestRestrictedAccountAddressCapabilities(t *testing.T) {
-	outputID := tpkg.RandOutputID(1)
-	addresses := []iotago.RestrictedAddress{
-		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, true, false, false, false, false, false, false, false),
-		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, true, false, false, false, false, false, false),
-		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, true, false, false, false, false, false),
-		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, false, true, false, false, false, false),
-		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, true, false, false, false),
-		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, true, false, false),
-		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, false, true, false),
-		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, false, false, false, false, false, false, false, true),
-		iotago.RestrictedAccountAddressFromOutputIDWithCapabilities(outputID, true, true, true, true, true, true, true, true),
-		iotago.RestrictedAccountAddressFromOutputID(outputID),
+		iotago.NewMultiAddressWithCapabilities(multiAddress.Addresses, multiAddress.Threshold, true, false, false, false, false, false, false, false),
+		iotago.NewMultiAddressWithCapabilities(multiAddress.Addresses, multiAddress.Threshold, false, true, false, false, false, false, false, false),
+		iotago.NewMultiAddressWithCapabilities(multiAddress.Addresses, multiAddress.Threshold, false, false, true, false, false, false, false, false),
+		iotago.NewMultiAddressWithCapabilities(multiAddress.Addresses, multiAddress.Threshold, false, false, false, true, false, false, false, false),
+		iotago.NewMultiAddressWithCapabilities(multiAddress.Addresses, multiAddress.Threshold, false, false, false, false, true, false, false, false),
+		iotago.NewMultiAddressWithCapabilities(multiAddress.Addresses, multiAddress.Threshold, false, false, false, false, false, true, false, false),
+		iotago.NewMultiAddressWithCapabilities(multiAddress.Addresses, multiAddress.Threshold, false, false, false, false, false, false, true, false),
+		iotago.NewMultiAddressWithCapabilities(multiAddress.Addresses, multiAddress.Threshold, false, false, false, false, false, false, false, true),
+		iotago.NewMultiAddressWithCapabilities(multiAddress.Addresses, multiAddress.Threshold, true, true, true, true, true, true, true, true),
+		multiAddress,
 	}
 
 	assertRestrictedAddresses(t, addresses)

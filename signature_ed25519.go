@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"bytes"
 	"crypto/ed25519"
 	"fmt"
 
@@ -58,11 +57,11 @@ func (e *Ed25519Signature) String() string {
 func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	// an address is the Blake2b 256 hash of the public key
 	addrFromPubKey := Ed25519AddressFromPubKey(e.PublicKey[:])
-	if !bytes.Equal(addr[:], addrFromPubKey[:]) {
-		return ierrors.Wrapf(ErrEd25519PubKeyAndAddrMismatch, "address %s, address from public key %v", hexutil.EncodeHex(addr[:]), hexutil.EncodeHex(addrFromPubKey[:]))
+	if !addr.Equal(addrFromPubKey) {
+		return ierrors.Wrapf(ErrEd25519PubKeyAndAddrMismatch, "address %s, address from public key %v", addr, addrFromPubKey)
 	}
 	if valid := hiveEd25519.Verify(e.PublicKey[:], msg, e.Signature[:]); !valid {
-		return ierrors.Wrapf(ErrEd25519SignatureInvalid, "address %s, public key %v, signature %v", hexutil.EncodeHex(addr[:]), hexutil.EncodeHex(e.PublicKey[:]), hexutil.EncodeHex(e.Signature[:]))
+		return ierrors.Wrapf(ErrEd25519SignatureInvalid, "address %s, public key %v, signature %v", addr, hexutil.EncodeHex(e.PublicKey[:]), hexutil.EncodeHex(e.Signature[:]))
 	}
 
 	return nil

@@ -33,8 +33,12 @@ func (addr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
+func (addr *NFTAddress) ID() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
+}
+
 func (addr *NFTAddress) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return string(addr.ID())
 }
 
 func (addr *NFTAddress) Chain() ChainID {
@@ -59,11 +63,11 @@ func (addr *NFTAddress) Type() AddressType {
 }
 
 func (addr *NFTAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, addr)
+	return bech32StringAddress(hrp, addr)
 }
 
 func (addr *NFTAddress) String() string {
-	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return hexutil.EncodeHex(addr.ID())
 }
 
 func (addr *NFTAddress) Size() int {
