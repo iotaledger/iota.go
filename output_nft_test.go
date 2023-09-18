@@ -122,8 +122,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
 					cpy := copyObject(t, tt.current, muts, tpkg.TestProtoParas).(*iotago.NFTOutput)
 					err := tt.current.ValidateStateTransition(tt.transType, cpy, tt.svCtx)
-					if tt.wantErr != nil {
-						require.ErrorAs(t, err, &tt.wantErr)
+					wantErr := tt.wantErr
+					if wantErr != nil {
+						require.ErrorAs(t, err, &wantErr)
 						return
 					}
 					require.NoError(t, err)
@@ -134,8 +135,9 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.current.ValidateStateTransition(tt.transType, tt.next, tt.svCtx)
-			if tt.wantErr != nil {
-				require.ErrorAs(t, err, &tt.wantErr)
+			wantErr := tt.wantErr
+			if wantErr != nil {
+				require.ErrorAs(t, err, &wantErr)
 				return
 			}
 			require.NoError(t, err)

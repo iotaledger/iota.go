@@ -11,6 +11,7 @@ import (
 
 // Indexer plugin routes.
 var (
+	IndexerAPIRouteOutputs      = "/api/" + IndexerPluginName + "/outputs"
 	IndexerAPIRouteBasicOutputs = "/api/" + IndexerPluginName + "/outputs/basic"
 	IndexerAPIRouteAliases      = "/api/" + IndexerPluginName + "/outputs/alias"
 	IndexerAPIRouteAlias        = "/api/" + IndexerPluginName + "/outputs/alias/%s"
@@ -24,13 +25,6 @@ var (
 	// ErrIndexerNotFound gets returned when the indexer doesn't find any result.
 	// Only applicable to single element queries.
 	ErrIndexerNotFound = errors.New("no result found")
-
-	outputTypeToIndexerRoute = map[iotago.OutputType]string{
-		iotago.OutputBasic:   IndexerAPIRouteBasicOutputs,
-		iotago.OutputAlias:   IndexerAPIRouteAliases,
-		iotago.OutputFoundry: IndexerAPIRouteFoundries,
-		iotago.OutputNFT:     IndexerAPIRouteNFTs,
-	}
 )
 
 type (
@@ -53,8 +47,8 @@ type (
 		SetOffset(offset *string)
 		// URLParas returns the query parameters as URL encoded query parameters.
 		URLParas() (string, error)
-		// OutputType returns the output type for which the query is for.
-		OutputType() iotago.OutputType
+		// BaseRoute returns the base route for this query.
+		BaseRoute() string
 	}
 
 	indexerClient struct {
@@ -127,7 +121,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 		query:  query,
 	}
 
-	baseRoute := outputTypeToIndexerRoute[query.OutputType()]
+	baseRoute := query.BaseRoute()
 
 	// this gets executed on every Next()
 	nextFunc := func() error {
