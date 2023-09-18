@@ -52,7 +52,7 @@ type BlockIssuerKey interface {
 	Sizer
 	NonEphemeralObject
 
-	// BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the public key bytes.
+	// BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the unique identifier of the key.
 	BlockIssuerKeyBytes() []byte
 	// Type returns the BlockIssuerKeyType.
 	Type() BlockIssuerKeyType
