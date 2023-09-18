@@ -81,7 +81,8 @@ type Address interface {
 	// Type returns the type of the address.
 	Type() AddressType
 
-	// ID returns the address ID.
+	// ID returns the address ID, which is the concatenation of type prefix
+	// and the unique identifier of the address.
 	ID() []byte
 
 	// Bech32 encodes the address as a bech32 string.

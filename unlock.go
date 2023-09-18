@@ -242,7 +242,7 @@ func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 						if !subUnlock.Chainable() {
 							return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d.%d references existing referential unlock %d but it does not support chaining", index, subIndex, subUnlock.Ref())
 						}
-						// we don't set the index here in "seenRefUnlocks" because there is no concept of reference unlocks inside of multi unlocks
+						// we don't set the index here in "seenRefUnlocks" because it's not allowed to reference an unlock within a multi unlock
 
 						continue
 					}
@@ -251,7 +251,7 @@ func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 					if _, has := seenSigUnlocks[subUnlock.Ref()]; !has {
 						return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d.%d references non existent unlock %d", index, subIndex, subUnlock.Ref())
 					}
-					// we don't set the index here in "seenRefUnlocks" because there is no concept of reference unlocks inside of multi unlocks
+					// we don't set the index here in "seenRefUnlocks" because it's not allowed to reference an unlock within a multi unlock
 
 				case *MultiUnlock:
 					return ierrors.Wrapf(ErrNestedMultiUnlock, "unlock at index %d.%d is invalid", index, subIndex)

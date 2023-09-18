@@ -49,13 +49,13 @@ var (
 			// different address types or capabilities, that might result in the same signature.
 			addrString := string(addrWithoutTypeAndCapabilities)
 			if j, has := addrSet[addrString]; has {
-				return ierrors.Wrapf(serializer.ErrArrayValidationViolatesUniqueness, "element %d and %d are duplicates", j, idx)
+				return ierrors.Wrapf(serializer.ErrArrayValidationViolatesUniqueness, "addresses with indices %d and %d in multi address are duplicates", j, idx)
 			}
 			addrSet[addrString] = idx
 
 			// check for minimum address weight
-			if address.Weight < 1 {
-				return ierrors.Wrapf(ErrMultiAddressThresholdInvalid, "address with index %d needs to have at least weight=1", idx)
+			if address.Weight == 0 {
+				return ierrors.Wrapf(ErrMultiAddressWeightInvalid, "address with index %d needs to have at least weight=1", idx)
 			}
 
 			cumulativeWeight += uint16(address.Weight)

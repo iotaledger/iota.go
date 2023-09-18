@@ -2393,7 +2393,7 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[1]},
 					}
 				},
-				wantEncodeErr:  iotago.ErrMultiAddressThresholdInvalid,
+				wantEncodeErr:  iotago.ErrMultiAddressWeightInvalid,
 				wantExecuteErr: nil,
 			}
 		}(),

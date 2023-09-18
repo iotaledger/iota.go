@@ -18,6 +18,7 @@ const (
 
 var (
 	ErrMultiAddrCannotBeReconstructedViaBech32 = ierrors.New("multi address cannot be reconstructed via bech32")
+	ErrMultiAddressWeightInvalid               = ierrors.New("multi address weight invalid")
 	ErrMultiAddressThresholdInvalid            = ierrors.New("multi address treshold invalid")
 )
 

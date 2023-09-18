@@ -259,8 +259,8 @@ func (unlockedIdents UnlockedIdentities) MultiUnlock(vmParams *Params, ident *io
 	for subIndex, unlock := range multiUnlock.Unlocks {
 		switch unlock.(type) {
 		case *iotago.EmptyUnlock:
-			// empty unlocks are simply skipped. they are used to maintain correct relationship between
-			// addresses and signatures if the signer doesn't know the particular signature.
+			// EmptyUnlocks are simply skipped. They are used to maintain correct index relationship between
+			// addresses and signatures if the signer doesn't know the signature of another signer.
 			continue
 
 		case *iotago.MultiUnlock:
@@ -512,8 +512,9 @@ func unlockIdent(vmParams *Params, ownerIdent iotago.Address, unlock iotago.Unlo
 	case iotago.DirectUnlockableAddress:
 		switch uBlock := unlock.(type) {
 		case iotago.ReferentialUnlock:
+			// ReferentialUnlock for DirectUnlockableAddress are only allowed if the unlock is not chainable, and the owner ident is not a ChainAddress.
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
-				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has none chain address of %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type())
+				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a non-chain address of %s but its corresponding unlock of type %s is chainable or not allowed", inputIndex, owner.Type(), unlock.Type())
 			}
 
 			if err := vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
@@ -538,7 +539,7 @@ func unlockIdent(vmParams *Params, ownerIdent iotago.Address, unlock iotago.Unlo
 		switch uBlock := unlock.(type) {
 		case iotago.ReferentialUnlock:
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
-				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has none chain address of %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type())
+				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a non-chain address of %s but its corresponding unlock of type %s is chainable or not allowed", inputIndex, owner.Type(), unlock.Type())
 			}
 
 			if err := vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
