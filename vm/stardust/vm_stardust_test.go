@@ -1284,6 +1284,7 @@ type txExecTest struct {
 }
 
 func runStardustTransactionExecution(t *testing.T, test txExecTest) {
+	t.Helper()
 
 	t.Run(test.name, func(t *testing.T) {
 		getEd25519Identities := func(count int) ([]iotago.Address, []iotago.AddressKeys) {
