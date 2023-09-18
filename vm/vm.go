@@ -762,8 +762,10 @@ func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Addr
 	return nil
 }
 
-// Returns a func that validates that an address' restrictions are adhered to.
-// Does not validate the Return Address in Storage Deposit Return and Expiration UC.
+// Returns a func that validates that the restrictions on an address are adhered to.
+//
+// Does not validate the Return Address in StorageDepositReturnUnlockCondition because one cannot
+// restrict returning a Basic Output with base tokens.
 func ExecFuncAddressRestrictions() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
@@ -779,6 +781,11 @@ func ExecFuncAddressRestrictions() ExecFunc {
 			}
 			if governorUnlockCondition := output.UnlockConditionSet().GovernorAddress(); governorUnlockCondition != nil {
 				if err := checkAddressRestrictions(output, governorUnlockCondition.Address); err != nil {
+					return err
+				}
+			}
+			if expirationUnlockCondition := output.UnlockConditionSet().Expiration(); expirationUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, expirationUnlockCondition.ReturnAddress); err != nil {
 					return err
 				}
 			}

@@ -4650,6 +4650,37 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				},
 			},
 		},
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.BasicOutput{
+					Mana: 42,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						&iotago.ExpirationUnlockCondition{
+							// only the return address is restricted here
+							ReturnAddress: address,
+						},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - Mana Return Address in Output with Mana",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, true, false, true, false, false, false, false),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name: "fail - Non Mana Return Address in Output with Mana",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
+							true, false, true, true, true, true, true, true),
+						wantErr: iotago.ErrAddressCannotReceiveMana,
+					}
+				},
+			},
+		},
 	}
 
 	makeTransaction := func(output iotago.Output) (vm.InputSet, iotago.Signature, *iotago.TransactionEssence) {
