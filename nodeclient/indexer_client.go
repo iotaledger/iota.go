@@ -217,6 +217,6 @@ func (client *indexerClient) Delegation(ctx context.Context, delegationID iotago
 		return nil, nil, ledgerIndex, err
 	}
 
-	//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
+	//nolint:forcetypeassert // we can safely assume that this is a DelegationOutput
 	return outputID, output.(*iotago.DelegationOutput), ledgerIndex, nil
 }
