@@ -74,6 +74,12 @@ type IndexerNativeTokenParas struct {
 	MaxNativeTokenCount *uint32 `qs:"maxNativeTokenCount,omitempty"`
 }
 
+// IndexerUnlockableByAddressParas define address unlock related query parameters.
+type IndexerUnlockableByAddressParas struct {
+	// Bech32-encoded address that should be searched for.
+	UnlockableByAddressBech32 string `qs:"unlockableByAddress,omitempty"`
+}
+
 // BasicOutputsQuery defines parameters for an basic outputs query.
 type BasicOutputsQuery struct {
 	IndexerCursorParas
@@ -82,6 +88,7 @@ type BasicOutputsQuery struct {
 	IndexerCreationParas
 	IndexerStorageDepositParas
 	IndexerNativeTokenParas
+	IndexerUnlockableByAddressParas
 
 	// Bech32-encoded address that should be searched for.
 	AddressBech32 string `qs:"address,omitempty"`
@@ -91,8 +98,8 @@ type BasicOutputsQuery struct {
 	Tag string `qs:"tag,omitempty"`
 }
 
-func (query *BasicOutputsQuery) OutputType() iotago.OutputType {
-	return iotago.OutputBasic
+func (query *BasicOutputsQuery) BaseRoute() string {
+	return IndexerAPIRouteBasicOutputs
 }
 
 func (query *BasicOutputsQuery) SetOffset(cursor *string) {
@@ -108,6 +115,7 @@ type AliasesQuery struct {
 	IndexerCursorParas
 	IndexerCreationParas
 	IndexerNativeTokenParas
+	IndexerUnlockableByAddressParas
 
 	// Bech32-encoded state controller address that should be searched for.
 	StateControllerBech32 string `qs:"stateController,omitempty"`
@@ -119,8 +127,8 @@ type AliasesQuery struct {
 	IssuerBech32 string `qs:"issuer,omitempty"`
 }
 
-func (query *AliasesQuery) OutputType() iotago.OutputType {
-	return iotago.OutputAlias
+func (query *AliasesQuery) BaseRoute() string {
+	return IndexerAPIRouteAliases
 }
 
 func (query *AliasesQuery) SetOffset(cursor *string) {
@@ -141,8 +149,8 @@ type FoundriesQuery struct {
 	AliasAddressBech32 string `qs:"aliasAddress,omitempty"`
 }
 
-func (query *FoundriesQuery) OutputType() iotago.OutputType {
-	return iotago.OutputFoundry
+func (query *FoundriesQuery) BaseRoute() string {
+	return IndexerAPIRouteFoundries
 }
 
 func (query *FoundriesQuery) SetOffset(cursor *string) {
@@ -161,6 +169,7 @@ type NFTsQuery struct {
 	IndexerStorageDepositParas
 	IndexerNativeTokenParas
 	IndexerCreationParas
+	IndexerUnlockableByAddressParas
 
 	// Bech32-encoded address that should be searched for.
 	AddressBech32 string `qs:"address,omitempty"`
@@ -172,8 +181,8 @@ type NFTsQuery struct {
 	Tag string `qs:"tag,omitempty"`
 }
 
-func (query *NFTsQuery) OutputType() iotago.OutputType {
-	return iotago.OutputNFT
+func (query *NFTsQuery) BaseRoute() string {
+	return IndexerAPIRouteNFTs
 }
 
 func (query *NFTsQuery) SetOffset(cursor *string) {
@@ -181,5 +190,24 @@ func (query *NFTsQuery) SetOffset(cursor *string) {
 }
 
 func (query *NFTsQuery) URLParas() (string, error) {
+	return qs.Marshal(query)
+}
+
+type OutputsQuery struct {
+	IndexerCursorParas
+	IndexerNativeTokenParas
+	IndexerCreationParas
+	IndexerUnlockableByAddressParas
+}
+
+func (query *OutputsQuery) BaseRoute() string {
+	return IndexerAPIRouteOutputs
+}
+
+func (query *OutputsQuery) SetOffset(cursor *string) {
+	query.Cursor = cursor
+}
+
+func (query *OutputsQuery) URLParas() (string, error) {
 	return qs.Marshal(query)
 }
