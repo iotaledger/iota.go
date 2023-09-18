@@ -27,6 +27,6 @@ func (key BlockIssuerKeyEd25519Address) Size() int {
 	return key.Address.Size()
 }
 
-func (key BlockIssuerKeyEd25519Address) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
-	return VBytes(key.Size())
+func (key BlockIssuerKeyEd25519Address) VBytes(rentStructure *RentStructure, vbyteFunc VBytesFunc) VBytes {
+	return key.Address.VBytes(rentStructure, vbyteFunc)
 }
