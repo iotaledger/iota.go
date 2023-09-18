@@ -5899,3 +5899,352 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 		API: testAPI,
 	}, resolvedInputs))
 }
+
+func TestTxSemanticAddressRestrictions(t *testing.T) {
+	type testParameters struct {
+		name    string
+		address iotago.Address
+		wantErr error
+	}
+	type test struct {
+		createTestOutput     func(address iotago.Address) iotago.Output
+		createTestParameters []func() testParameters
+	}
+
+	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
+	pubKey := tpkg.RandEd25519Signature().PublicKey
+
+	tests := []test{
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.BasicOutput{
+					NativeTokens: tpkg.RandSortNativeTokens(3),
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: address},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - Native Token Address in Output with Native Tokens",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], true, false, false, false, false, false, false, false),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name:    "fail - Non Native Token Address in Output with Native Tokens",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, true, true, true, true, true, true, true),
+						wantErr: iotago.ErrAddressCannotReceiveNativeTokens,
+					}
+				},
+			},
+		},
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.BasicOutput{
+					Mana: iotago.Mana(4),
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: address},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - Mana Address in Output with Mana",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, true, false, false, false, false, false, false),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name:    "fail - Non Mana Address in Output with Mana",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], true, false, true, true, true, true, true, true),
+						wantErr: iotago.ErrAddressCannotReceiveMana,
+					}
+				},
+			},
+		},
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.BasicOutput{
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: address},
+						&iotago.TimelockUnlockCondition{
+							SlotIndex: 500,
+						},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - Timelock Unlock Condition Address in Output with Timelock Unlock Condition",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, true, false, false, false, false, false),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name:    "fail - Non Timelock Unlock Condition Address in Output with Timelock Unlock Condition",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], true, true, false, true, true, true, true, true),
+						wantErr: iotago.ErrAddressCannotReceiveTimelockUnlockCondition,
+					}
+				},
+			},
+		},
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.BasicOutput{
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: address},
+						&iotago.ExpirationUnlockCondition{
+							SlotIndex:     500,
+							ReturnAddress: ident,
+						},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - Expiration Unlock Condition Address in Output with Expiration Unlock Condition",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, true, false, false, false, false),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name:    "fail - Non Expiration Unlock Condition Address in Output with Expiration Unlock Condition",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], true, true, true, false, true, true, true, true),
+						wantErr: iotago.ErrAddressCannotReceiveExpirationUnlockCondition,
+					}
+				},
+			},
+		},
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.BasicOutput{
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: address},
+						&iotago.StorageDepositReturnUnlockCondition{
+							ReturnAddress: ident,
+						},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - Storage Deposit Return Unlock Condition Address in Output with Storage Deposit Return Unlock Condition",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, false, true, false, false, false),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name:    "fail - Non Storage Deposit Return Unlock Condition Address in Output with Storage Deposit Return Unlock Condition",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], true, true, true, true, false, true, true, true),
+						wantErr: iotago.ErrAddressCannotReceiveStorageDepositReturnUnlockCondition,
+					}
+				},
+			},
+		},
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.AccountOutput{
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: address},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - Account Output Address in State Controller UC in Account Output",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, false, false, true, false, false),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name: "fail - Non Account Output Address in State Controller UC in Account Output",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
+							true, true, true, true, true, false, true, true),
+						wantErr: iotago.ErrAddressCannotReceiveAccountOutput,
+					}
+				},
+			},
+		},
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.AccountOutput{
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.GovernorAddressUnlockCondition{Address: address},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - Account Output Address in Governor UC in Account Output",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, false, false, true, false, false),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name: "fail - Non Account Output Address in Governor UC in Account Output",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
+							true, true, true, true, true, false, true, true),
+						wantErr: iotago.ErrAddressCannotReceiveAccountOutput,
+					}
+				},
+			},
+		},
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.NFTOutput{
+					Conditions: iotago.NFTOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: address},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - NFT Output Address in NFT Output",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, false, false, false, true, false),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name: "fail - Non NFT Output Address in NFT Output",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
+							true, true, true, true, true, true, false, true),
+						wantErr: iotago.ErrAddressCannotReceiveNFTOutput,
+					}
+				},
+			},
+		},
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.DelegationOutput{
+					Conditions: iotago.DelegationOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: address},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - Delegation Output Address in Delegation Output",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, false, false, false, false, true),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name: "fail - Non Delegation Output Address in Delegation Output",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
+							true, true, true, true, true, true, true, false),
+						wantErr: iotago.ErrAddressCannotReceiveDelegationOutput,
+					}
+				},
+			},
+		},
+		{
+			createTestOutput: func(address iotago.Address) iotago.Output {
+				return &iotago.BasicOutput{
+					Mana: 42,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						&iotago.ExpirationUnlockCondition{
+							// only the return address is restricted here
+							ReturnAddress: address,
+						},
+					},
+				}
+			},
+			createTestParameters: []func() testParameters{
+				func() testParameters {
+					return testParameters{
+						name:    "ok - Mana Return Address in Output with Mana",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, true, false, true, false, false, false, false),
+						wantErr: nil,
+					}
+				},
+				func() testParameters {
+					return testParameters{
+						name: "fail - Non Mana Return Address in Output with Mana",
+						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
+							true, false, true, true, true, true, true, true),
+						wantErr: iotago.ErrAddressCannotReceiveMana,
+					}
+				},
+			},
+		},
+	}
+
+	makeTransaction := func(output iotago.Output) (vm.InputSet, iotago.Signature, *iotago.TransactionEssence) {
+		inputIDs := tpkg.RandOutputIDs(1)
+
+		inputs := vm.InputSet{
+			inputIDs[0]: vm.OutputWithCreationSlot{
+				Output: &iotago.BasicOutput{
+					Amount: iotago.BaseToken(1_000_000),
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ident},
+					},
+				},
+				CreationSlot: 10,
+			},
+		}
+
+		essence := &iotago.TransactionEssence{
+			Inputs: inputIDs.UTXOInputs(),
+			Outputs: iotago.TxEssenceOutputs{
+				output,
+			},
+			CreationSlot: 10,
+		}
+		sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
+		require.NoError(t, err)
+
+		return inputs, sigs[0], essence
+	}
+
+	for _, tt := range tests {
+		for _, makeTestInput := range tt.createTestParameters {
+			testInput := makeTestInput()
+			testOutput := tt.createTestOutput(testInput.address)
+
+			inputs, sig, transactionEssence := makeTransaction(testOutput)
+
+			vmParams := &vm.Params{
+				API: testAPI,
+			}
+
+			resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
+			tx := &iotago.Transaction{
+				Essence: transactionEssence,
+				Unlocks: iotago.Unlocks{
+					&iotago.SignatureUnlock{Signature: sig},
+				},
+			}
+
+			t.Run(testInput.name, func(t *testing.T) {
+				err := stardustVM.Execute(tx, vmParams, resolvedInputs, vm.ExecFuncAddressRestrictions())
+				if testInput.wantErr != nil {
+					require.ErrorIs(t, err, testInput.wantErr)
+					return
+				}
+
+				require.NoError(t, err)
+			})
+		}
+	}
+}
