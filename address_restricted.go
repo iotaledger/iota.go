@@ -7,6 +7,7 @@ import (
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/runtime/options"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -31,7 +32,7 @@ func (addr *RestrictedAddress) ID() []byte {
 	capabilities := lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr.AllowedCapabilities))
 
 	// prefix the ID of the underlying address with the AddressType, and append the capabilties
-	return append(append([]byte{byte(AddressRestricted)}, addressID...), capabilities...)
+	return byteutils.ConcatBytes([]byte{byte(AddressRestricted)}, addressID, capabilities)
 }
 
 func (addr *RestrictedAddress) Key() string {
