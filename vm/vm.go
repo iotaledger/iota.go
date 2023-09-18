@@ -568,7 +568,7 @@ func unlockIdent(vmParams *Params, ownerIdent iotago.Address, unlock iotago.Unlo
 }
 
 // resolveUnderlyingIdent returns the underlying address in case of a restricted address.
-// this way we handle restricted addresses directly in the unlock logic.
+// this way we handle restricted addresses like normal addresses in the unlock logic.
 func resolveUnderlyingIdent(ident iotago.Address) iotago.Address {
 	switch addr := ident.(type) {
 	case *iotago.RestrictedAddress:
