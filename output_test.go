@@ -193,6 +193,22 @@ func TestOutputsDeSerialize(t *testing.T) {
 			},
 			target: &iotago.DelegationOutput{},
 		},
+		{
+			name: "fail - Delegation Output contains Implicit Account Creation Address",
+			source: &iotago.DelegationOutput{
+				Amount:          1337,
+				DelegatedAmount: 1337,
+				DelegationID:    tpkg.Rand32ByteArray(),
+				ValidatorID:     tpkg.RandAccountID(),
+				StartEpoch:      iotago.EpochIndex(32),
+				EndEpoch:        iotago.EpochIndex(37),
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
+				},
+			},
+			target:  &iotago.DelegationOutput{},
+			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
+		},
 	}
 
 	for _, tt := range tests {

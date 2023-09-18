@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	// 	NFTIDLength is the byte length of an NFTID.
+	// NFTIDLength is the byte length of an NFTID.
 	NFTIDLength = blake2b.Size256
 )
 
@@ -154,6 +154,17 @@ func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore
 	}
 
 	return workScoreNativeTokens.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
+}
+
+func (n *NFTOutput) syntacticallyValidate() error {
+	// Address should never be nil.
+	address := n.Conditions.MustSet().Address().Address
+
+	if address.Type() == AddressImplicitAccountCreation {
+		return ErrImplicitAccountCreationAddressInInvalidOutput
+	}
+
+	return nil
 }
 
 func (n *NFTOutput) Chain() ChainID {

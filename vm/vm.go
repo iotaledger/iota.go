@@ -725,3 +725,72 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 		return nil
 	}
 }
+
+func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Address) error {
+	if address.CannotReceiveNativeTokens() && len(output.NativeTokenList()) != 0 {
+		return iotago.ErrAddressCannotReceiveNativeTokens
+	}
+
+	if address.CannotReceiveMana() && output.StoredMana() != 0 {
+		return iotago.ErrAddressCannotReceiveMana
+	}
+
+	if address.CannotReceiveOutputsWithTimelockUnlockCondition() && output.UnlockConditionSet().HasTimelockCondition() {
+		return iotago.ErrAddressCannotReceiveTimelockUnlockCondition
+	}
+
+	if address.CannotReceiveOutputsWithExpirationUnlockCondition() && output.UnlockConditionSet().HasExpirationCondition() {
+		return iotago.ErrAddressCannotReceiveExpirationUnlockCondition
+	}
+
+	if address.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() && output.UnlockConditionSet().HasStorageDepositReturnCondition() {
+		return iotago.ErrAddressCannotReceiveStorageDepositReturnUnlockCondition
+	}
+
+	if address.CannotReceiveAccountOutputs() && output.Type() == iotago.OutputAccount {
+		return iotago.ErrAddressCannotReceiveAccountOutput
+	}
+
+	if address.CannotReceiveNFTOutputs() && output.Type() == iotago.OutputNFT {
+		return iotago.ErrAddressCannotReceiveNFTOutput
+	}
+
+	if address.CannotReceiveDelegationOutputs() && output.Type() == iotago.OutputDelegation {
+		return iotago.ErrAddressCannotReceiveDelegationOutput
+	}
+
+	return nil
+}
+
+// Returns a func that validates that the restrictions on an address are adhered to.
+//
+// Does not validate the Return Address in StorageDepositReturnUnlockCondition because one cannot
+// restrict returning a Basic Output with base tokens.
+func ExecFuncAddressRestrictions() ExecFunc {
+	return func(vm VirtualMachine, vmParams *Params) error {
+		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+			if addressUnlockCondition := output.UnlockConditionSet().Address(); addressUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, addressUnlockCondition.Address); err != nil {
+					return err
+				}
+			}
+			if stateControllerUnlockCondition := output.UnlockConditionSet().StateControllerAddress(); stateControllerUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, stateControllerUnlockCondition.Address); err != nil {
+					return err
+				}
+			}
+			if governorUnlockCondition := output.UnlockConditionSet().GovernorAddress(); governorUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, governorUnlockCondition.Address); err != nil {
+					return err
+				}
+			}
+			if expirationUnlockCondition := output.UnlockConditionSet().Expiration(); expirationUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, expirationUnlockCondition.ReturnAddress); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	}
+}

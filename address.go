@@ -12,6 +12,31 @@ import (
 var (
 	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = ierrors.New("unknown address type")
+	// ErrImplicitAccountCreationAddressInInvalidUnlockCondition gets returned when a Implicit Account Creation Address
+	// is placed in an unlock condition where it is disallowed.
+	ErrImplicitAccountCreationAddressInInvalidUnlockCondition = ierrors.New("implicit account creation address in unlock condition where it is disallowed")
+	// ErrImplicitAccountCreationAddressInInvalidOutput gets returned when a ImplicitAccountCreationAddress
+	// is placed in an output where it is disallowed.
+	ErrImplicitAccountCreationAddressInInvalidOutput = ierrors.New("implicit account creation address in output where it is disallowed")
+	// ErrAddressCannotReceiveNativeTokens gets returned if Native Tokens are sent to an address without that capability.
+	ErrAddressCannotReceiveNativeTokens = ierrors.New("address cannot receive native tokens")
+	// ErrAddressCannotReceiveMana gets returned if Mana is sent to an address without that capability.
+	ErrAddressCannotReceiveMana = ierrors.New("address cannot receive mana")
+	// ErrAddressCannotReceiveTimelockUnlockCondition gets returned if an output with a
+	// TimelockUnlockCondition is sent to an address without that capability.
+	ErrAddressCannotReceiveTimelockUnlockCondition = ierrors.New("address cannot receive outputs with timelock unlock condition")
+	// ErrAddressCannotReceiveExpirationUnlockCondition gets returned if an output with a
+	// ExpirationUnlockCondition is sent to an address without that capability.
+	ErrAddressCannotReceiveExpirationUnlockCondition = ierrors.New("address cannot receive outputs with expiration unlock condition")
+	// ErrAddressCannotReceiveStorageDepositReturnUnlockCondition gets returned if an output with a
+	// StorageDepositReturnUnlockCondition is sent to an address without that capability.
+	ErrAddressCannotReceiveStorageDepositReturnUnlockCondition = ierrors.New("address cannot receive outputs with storage deposit return unlock condition")
+	// ErrAddressCannotReceiveAccountOutput gets returned if an AccountOutput is sent to an address without that capability.
+	ErrAddressCannotReceiveAccountOutput = ierrors.New("address cannot receive account outputs")
+	// ErrAddressCannotReceiveNFTOutput gets returned if an NFTOutput is sent to an address without that capability.
+	ErrAddressCannotReceiveNFTOutput = ierrors.New("address cannot receive nft outputs")
+	// ErrAddressCannotReceiveDelegationOutput gets returned if a DelegationOutput is sent to an address without that capability.
+	ErrAddressCannotReceiveDelegationOutput = ierrors.New("address cannot receive delegation outputs")
 )
 
 // AddressType defines the type of addresses.

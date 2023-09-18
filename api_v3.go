@@ -19,6 +19,14 @@ func must(err error) {
 	}
 }
 
+func disallowImplicitAccountCreationAddress(address Address) error {
+	if address.Type() == AddressImplicitAccountCreation {
+		return ErrImplicitAccountCreationAddressInInvalidUnlockCondition
+	}
+
+	return nil
+}
+
 var (
 	// Note that when UniquenessSliceFunc is set and the mode is no dups and lexical order, then both will use
 	// the return value of UniquenessSliceFunc for those checks.
@@ -296,18 +304,38 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StorageDepositReturnUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStorageDepositReturn))),
 		)
+		must(api.RegisterValidators(StorageDepositReturnUnlockCondition{}, nil,
+			func(ctx context.Context, sdruc StorageDepositReturnUnlockCondition) error {
+				return disallowImplicitAccountCreationAddress(sdruc.ReturnAddress)
+			},
+		))
 		must(api.RegisterTypeSettings(TimelockUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionTimelock))),
 		)
 		must(api.RegisterTypeSettings(ExpirationUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionExpiration))),
 		)
+		must(api.RegisterValidators(ExpirationUnlockCondition{}, nil,
+			func(ctx context.Context, exp ExpirationUnlockCondition) error {
+				return disallowImplicitAccountCreationAddress(exp.ReturnAddress)
+			},
+		))
 		must(api.RegisterTypeSettings(StateControllerAddressUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStateControllerAddress))),
 		)
+		must(api.RegisterValidators(StateControllerAddressUnlockCondition{}, nil,
+			func(ctx context.Context, stateController StateControllerAddressUnlockCondition) error {
+				return disallowImplicitAccountCreationAddress(stateController.Address)
+			},
+		))
 		must(api.RegisterTypeSettings(GovernorAddressUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionGovernorAddress))),
 		)
+		must(api.RegisterValidators(GovernorAddressUnlockCondition{}, nil,
+			func(ctx context.Context, gov GovernorAddressUnlockCondition) error {
+				return disallowImplicitAccountCreationAddress(gov.Address)
+			},
+		))
 		must(api.RegisterTypeSettings(ImmutableAccountUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionImmutableAccount))),
 		)
@@ -361,6 +389,9 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(AccountOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputAccount))))
+		must(api.RegisterValidators(AccountOutput{}, nil, func(ctx context.Context, account AccountOutput) error {
+			return account.syntacticallyValidate()
+		}))
 
 		must(api.RegisterTypeSettings(AccountOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3UnlockCondArrRules),
@@ -417,6 +448,9 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(NFTOutput{},
 			serix.TypeSettings{}.WithObjectType(uint8(OutputNFT))),
 		)
+		must(api.RegisterValidators(NFTOutput{}, nil, func(ctx context.Context, nft NFTOutput) error {
+			return nft.syntacticallyValidate()
+		}))
 
 		must(api.RegisterTypeSettings(NFTOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3UnlockCondArrRules),
@@ -445,6 +479,9 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(DelegationOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputDelegation))))
+		must(api.RegisterValidators(DelegationOutput{}, nil, func(ctx context.Context, delegation DelegationOutput) error {
+			return delegation.syntacticallyValidate()
+		}))
 
 		must(api.RegisterTypeSettings(DelegationOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3UnlockCondArrRules),
