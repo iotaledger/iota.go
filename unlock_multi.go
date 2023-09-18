@@ -25,6 +25,19 @@ func (u *MultiUnlock) Size() int {
 	return sum
 }
 
-func (u *MultiUnlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
-	return 0, nil
+func (u *MultiUnlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	var sum WorkScore
+	for _, unlock := range u.Unlocks {
+		unlockWorkScore, err := unlock.WorkScore(workScoreStructure)
+		if err != nil {
+			return 0, err
+		}
+
+		sum, err = sum.Add(unlockWorkScore)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return sum, nil
 }
