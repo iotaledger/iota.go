@@ -46,8 +46,9 @@ type MultiAddress struct {
 
 func (addr *MultiAddress) Clone() Address {
 	cpy := &MultiAddress{
-		Addresses: make(AddressesWithWeight, 0, len(addr.Addresses)),
-		Threshold: addr.Threshold,
+		Addresses:           make(AddressesWithWeight, 0, len(addr.Addresses)),
+		Threshold:           addr.Threshold,
+		AllowedCapabilities: addr.AllowedCapabilities.Clone(),
 	}
 
 	for i, address := range addr.Addresses {
