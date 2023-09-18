@@ -13,26 +13,22 @@ import (
 
 // Indexer plugin routes.
 var (
-	IndexerAPIRouteBasicOutputs = "/api/" + IndexerPluginName + "/outputs/basic"
-	IndexerAPIRouteAccounts     = "/api/" + IndexerPluginName + "/outputs/account"
-	IndexerAPIRouteAccount      = "/api/" + IndexerPluginName + "/outputs/account/%s"
-	IndexerAPIRouteFoundries    = "/api/" + IndexerPluginName + "/outputs/foundry"
-	IndexerAPIRouteFoundry      = "/api/" + IndexerPluginName + "/outputs/foundry/%s"
-	IndexerAPIRouteNFTs         = "/api/" + IndexerPluginName + "/outputs/nft"
-	IndexerAPIRouteNFT          = "/api/" + IndexerPluginName + "/outputs/nft/%s"
+	IndexerAPIRouteOutputs           = "/api/" + IndexerPluginName + "/outputs"
+	IndexerAPIRouteBasicOutputs      = "/api/" + IndexerPluginName + "/outputs/basic"
+	IndexerAPIRouteAccounts          = "/api/" + IndexerPluginName + "/outputs/account"
+	IndexerAPIRouteAccount           = "/api/" + IndexerPluginName + "/outputs/account/%s"
+	IndexerAPIRouteFoundries         = "/api/" + IndexerPluginName + "/outputs/foundry"
+	IndexerAPIRouteFoundry           = "/api/" + IndexerPluginName + "/outputs/foundry/%s"
+	IndexerAPIRouteNFTs              = "/api/" + IndexerPluginName + "/outputs/nft"
+	IndexerAPIRouteNFT               = "/api/" + IndexerPluginName + "/outputs/nft/%s"
+	IndexerAPIRouteDelegationOutputs = "/api/" + IndexerPluginName + "/outputs/delegation"
+	IndexerAPIRouteDelegationOutput  = "/api/" + IndexerPluginName + "/outputs/delegation/%s"
 )
 
 var (
 	// ErrIndexerNotFound gets returned when the indexer doesn't find any result.
 	// Only applicable to single element queries.
 	ErrIndexerNotFound = ierrors.New("no result found")
-
-	outputTypeToIndexerRoute = map[iotago.OutputType]string{
-		iotago.OutputBasic:   IndexerAPIRouteBasicOutputs,
-		iotago.OutputAccount: IndexerAPIRouteAccounts,
-		iotago.OutputFoundry: IndexerAPIRouteFoundries,
-		iotago.OutputNFT:     IndexerAPIRouteNFTs,
-	}
 )
 
 type (
@@ -53,10 +49,8 @@ type (
 	IndexerQuery interface {
 		// SetOffset sets the offset for the query.
 		SetOffset(offset *string)
-		// URLiotago.TxEssenceInputs returns the query parameters as URL encoded query parameters.
+		// URLParams returns the query parameters as URL encoded query parameters.
 		URLParams() (string, error)
-		// OutputType returns the output type for which the query is for.
-		OutputType() iotago.OutputType
 	}
 
 	indexerClient struct {
@@ -129,7 +123,23 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 		query:  query,
 	}
 
-	baseRoute := outputTypeToIndexerRoute[query.OutputType()]
+	var baseRoute string
+	switch query.(type) {
+	case *apimodels.OutputsQuery:
+		baseRoute = IndexerAPIRouteOutputs
+	case *apimodels.BasicOutputsQuery:
+		baseRoute = IndexerAPIRouteBasicOutputs
+	case *apimodels.AccountsQuery:
+		baseRoute = IndexerAPIRouteAccounts
+	case *apimodels.FoundriesQuery:
+		baseRoute = IndexerAPIRouteFoundries
+	case *apimodels.NFTsQuery:
+		baseRoute = IndexerAPIRouteNFTs
+	case *apimodels.DelegationOutputsQuery:
+		baseRoute = IndexerAPIRouteDelegationOutputs
+	default:
+		return nil, ierrors.Errorf("unsupported query type: %T", query)
+	}
 
 	// this gets executed on every Next()
 	nextFunc := func() error {
@@ -199,4 +209,14 @@ func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iota
 
 	//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
 	return outputID, output.(*iotago.NFTOutput), ledgerIndex, nil
+}
+
+func (client *indexerClient) Delegation(ctx context.Context, delegationID iotago.DelegationID) (*iotago.OutputID, *iotago.DelegationOutput, iotago.SlotIndex, error) {
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteDelegationOutput, hexutil.EncodeHex(delegationID[:])))
+	if err != nil {
+		return nil, nil, ledgerIndex, err
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
+	return outputID, output.(*iotago.DelegationOutput), ledgerIndex, nil
 }
