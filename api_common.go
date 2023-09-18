@@ -11,7 +11,7 @@ import (
 var (
 	// the addresses need to be unique and lexically ordered to calculate a deterministic bech32 address for a MultiAddress.
 	// HINT: the uniqueness is checked within a custom validator function, which is on MultiAddress level.
-	addressesWithWeightV3ArrRules = &serix.ArrayRules{
+	addressesWithWeightArrRules = &serix.ArrayRules{
 		Min:            1,
 		Max:            10,
 		ValidationMode: serializer.ArrayValidationModeLexicalOrdering,
@@ -97,7 +97,7 @@ func CommonSerixAPI() *serix.API {
 		)
 		must(api.RegisterValidators(MultiAddress{}, nil, multiAddressValidatorFunc))
 		must(api.RegisterTypeSettings(AddressesWithWeight{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(addressesWithWeightV3ArrRules),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(addressesWithWeightArrRules),
 		))
 
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*Ed25519Address)(nil)))
