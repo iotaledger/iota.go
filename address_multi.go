@@ -38,18 +38,15 @@ type AddressesWithWeight []*AddressWithWeight
 
 // MultiAddress defines a multi address that consists of addresses with weights and
 // a threshold value that needs to be reached to unlock the multi address.
-// It has a capability bitmask that enables additional features.
 type MultiAddress struct {
-	Addresses           AddressesWithWeight        `serix:"0,mapKey=addresses"`
-	Threshold           uint16                     `serix:"1,mapKey=threshold"`
-	AllowedCapabilities AddressCapabilitiesBitMask `serix:"2,mapKey=allowedCapabilities,lengthPrefixType=uint8,maxLen=1"`
+	Addresses AddressesWithWeight `serix:"0,mapKey=addresses"`
+	Threshold uint16              `serix:"1,mapKey=threshold"`
 }
 
 func (addr *MultiAddress) Clone() Address {
 	cpy := &MultiAddress{
-		Addresses:           make(AddressesWithWeight, 0, len(addr.Addresses)),
-		Threshold:           addr.Threshold,
-		AllowedCapabilities: addr.AllowedCapabilities.Clone(),
+		Addresses: make(AddressesWithWeight, 0, len(addr.Addresses)),
+		Threshold: addr.Threshold,
 	}
 
 	for i, address := range addr.Addresses {
@@ -99,7 +96,7 @@ func (addr *MultiAddress) Equal(other Address) bool {
 		}
 	}
 
-	return bytes.Equal(addr.AllowedCapabilities, otherAddr.AllowedCapabilities)
+	return true
 }
 
 func (addr *MultiAddress) Type() AddressType {
@@ -114,42 +111,6 @@ func (addr *MultiAddress) String() string {
 	return hexutil.EncodeHex(addr.ID())
 }
 
-func (addr *MultiAddress) CannotReceiveNativeTokens() bool {
-	return addr.AllowedCapabilities.CannotReceiveNativeTokens()
-}
-
-func (addr *MultiAddress) CannotReceiveMana() bool {
-	return addr.AllowedCapabilities.CannotReceiveMana()
-}
-
-func (addr *MultiAddress) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
-	return addr.AllowedCapabilities.CannotReceiveOutputsWithTimelockUnlockCondition()
-}
-
-func (addr *MultiAddress) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
-	return addr.AllowedCapabilities.CannotReceiveOutputsWithExpirationUnlockCondition()
-}
-
-func (addr *MultiAddress) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return addr.AllowedCapabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition()
-}
-
-func (addr *MultiAddress) CannotReceiveAccountOutputs() bool {
-	return addr.AllowedCapabilities.CannotReceiveAccountOutputs()
-}
-
-func (addr *MultiAddress) CannotReceiveNFTOutputs() bool {
-	return addr.AllowedCapabilities.CannotReceiveNFTOutputs()
-}
-
-func (addr *MultiAddress) CannotReceiveDelegationOutputs() bool {
-	return addr.AllowedCapabilities.CannotReceiveDelegationOutputs()
-}
-
-func (addr *MultiAddress) AllowedCapabilitiesBitMask() AddressCapabilitiesBitMask {
-	return addr.AllowedCapabilities
-}
-
 func (addr *MultiAddress) Size() int {
 	// Address Type + Addresses Length + Threshold
 	sum := serializer.SmallTypeDenotationByteSize + serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
@@ -157,9 +118,6 @@ func (addr *MultiAddress) Size() int {
 	for _, address := range addr.Addresses {
 		sum += address.Size()
 	}
-
-	// AllowedCapabilities
-	sum += addr.AllowedCapabilities.Size()
 
 	return sum
 }
@@ -169,29 +127,4 @@ func NewMultiAddress(addresses AddressesWithWeight, threshold uint16) *MultiAddr
 		Addresses: addresses,
 		Threshold: threshold,
 	}
-}
-
-// NewMultiAddressWithCapabilities returns the MultiAddress with the given capabilities.
-func NewMultiAddressWithCapabilities(addresses AddressesWithWeight, threshold uint16,
-	canReceiveNativeTokens bool,
-	canReceiveMana bool,
-	canReceiveOutputsWithTimelockUnlockCondition bool,
-	canReceiveOutputsWithExpirationUnlockCondition bool,
-	canReceiveOutputsWithStorageDepositReturnUnlockCondition bool,
-	canReceiveAccountOutputs bool,
-	canReceiveNFTOutputs bool,
-	canReceiveDelegationOutputs bool) *MultiAddress {
-	addr := NewMultiAddress(addresses, threshold)
-	addr.AllowedCapabilities = AddressCapabilitiesBitMaskWithCapabilities(
-		canReceiveNativeTokens,
-		canReceiveMana,
-		canReceiveOutputsWithTimelockUnlockCondition,
-		canReceiveOutputsWithExpirationUnlockCondition,
-		canReceiveOutputsWithStorageDepositReturnUnlockCondition,
-		canReceiveAccountOutputs,
-		canReceiveNFTOutputs,
-		canReceiveDelegationOutputs,
-	)
-
-	return addr
 }

@@ -259,16 +259,6 @@ func RandEd25519Address() *iotago.Ed25519Address {
 	return edAddr
 }
 
-// RandRestrictedEd25519Address returns a random restricted Ed25519 address.
-func RandRestrictedEd25519Address(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedEd25519Address {
-	edAddr := &iotago.RestrictedEd25519Address{}
-	addr := RandBytes(iotago.Ed25519AddressBytesLength)
-	copy(edAddr.PubKeyHash[:], addr)
-	edAddr.AllowedCapabilities = capabilities
-
-	return edAddr
-}
-
 // RandAccountAddress returns a random AccountAddress.
 func RandAccountAddress() *iotago.AccountAddress {
 	addr := &iotago.AccountAddress{}
@@ -297,7 +287,7 @@ func RandImplicitAccountCreationAddress() *iotago.ImplicitAccountCreationAddress
 }
 
 // RandMultiAddress returns a random MultiAddress.
-func RandMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.MultiAddress {
+func RandMultiAddress() *iotago.MultiAddress {
 	addrCnt := RandInt(10) + 1
 
 	cumulativeWeight := 0
@@ -318,13 +308,44 @@ func RandMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.Mu
 	threshold := RandInt(cumulativeWeight) + 1
 
 	return &iotago.MultiAddress{
-		Addresses:           addresses,
-		Threshold:           uint16(threshold),
+		Addresses: addresses,
+		Threshold: uint16(threshold),
+	}
+}
+
+// RandRestrictedEd25519Address returns a random restricted Ed25519 address.
+func RandRestrictedEd25519Address(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAddress {
+	return &iotago.RestrictedAddress{
+		Address:             RandEd25519Address(),
 		AllowedCapabilities: capabilities,
 	}
 }
 
-// RandAddress returns a random address (except MultiAddress).
+// RandRestrictedAccountAddress returns a random restricted account address.
+func RandRestrictedAccountAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAddress {
+	return &iotago.RestrictedAddress{
+		Address:             RandAccountAddress(),
+		AllowedCapabilities: capabilities,
+	}
+}
+
+// RandRestrictedNFTAddress returns a random restricted NFT address.
+func RandRestrictedNFTAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAddress {
+	return &iotago.RestrictedAddress{
+		Address:             RandNFTAddress(),
+		AllowedCapabilities: capabilities,
+	}
+}
+
+// RandRestrictedMultiAddress returns a random restricted multi address.
+func RandRestrictedMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAddress {
+	return &iotago.RestrictedAddress{
+		Address:             RandMultiAddress(),
+		AllowedCapabilities: capabilities,
+	}
+}
+
+// RandAddress returns a random address (Ed25519, Acount, NFT).
 func RandAddress() iotago.Address {
 	addressTypes := []iotago.AddressType{iotago.AddressEd25519, iotago.AddressAccount, iotago.AddressNFT}
 
@@ -354,7 +375,7 @@ func RandEd25519Signature() *iotago.Ed25519Signature {
 	return edSig
 }
 
-// RandUnlock returns a random unlock (except MultiUnlock).
+// RandUnlock returns a random unlock (except Signature, Reference, Account, NFT).
 func RandUnlock(allowEmptyUnlock bool) iotago.Unlock {
 	unlockTypes := []iotago.UnlockType{iotago.UnlockSignature, iotago.UnlockReference, iotago.UnlockAccount, iotago.UnlockNFT}
 

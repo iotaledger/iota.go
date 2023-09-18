@@ -88,7 +88,7 @@ func (addr *ImplicitAccountCreationAddress) Type() AddressType {
 }
 
 func (addr *ImplicitAccountCreationAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32StringAddress(hrp, addr)
+	return bech32StringBytes(hrp, addr.ID())
 }
 
 func (addr *ImplicitAccountCreationAddress) String() string {
