@@ -75,6 +75,23 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signat
 		copy(ed25519Sig.PublicKey[:], prvKey.Public().(ed25519.PublicKey))
 
 		return ed25519Sig, nil
+	case *ImplicitAccountCreationAddress:
+		maybePrvKey, ok := s.addrKeys[addr.String()]
+		if !ok {
+			return nil, ierrors.Errorf("can't sign message for ImplicitAccountCreation address: %w", ErrAddressKeysNotMapped)
+		}
+
+		prvKey, ok := maybePrvKey.(ed25519.PrivateKey)
+		if !ok {
+			return nil, ierrors.Wrapf(ErrAddressKeysWrongType, "ImplicitAccountCreation address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, maybePrvKey)
+		}
+
+		ed25519Sig := &Ed25519Signature{}
+		copy(ed25519Sig.Signature[:], ed25519.Sign(prvKey, msg))
+		//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
+		copy(ed25519Sig.PublicKey[:], prvKey.Public().(ed25519.PublicKey))
+
+		return ed25519Sig, nil
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)
 	}
