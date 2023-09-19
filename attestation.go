@@ -7,7 +7,6 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
-	"github.com/iotaledger/iota.go/v4/api"
 )
 
 // Attestations is a slice of Attestation.
@@ -29,14 +28,24 @@ func NewAttestation(api API, block *ProtocolBlock) *Attestation {
 	}
 }
 
-func (a *Attestation) FromBytes(apiProvider api.Provider, bytes []byte) (int, error) {
-	if version, _, err := VersionFromBytes(bytes); err != nil {
-		return 0, ierrors.Wrap(err, "failed to determine version")
-	} else if a.API, err = apiProvider.APIForVersion(version); err != nil {
-		return 0, ierrors.Wrapf(err, "failed to get API for version %d", version)
+func AttestationFromBytes(apiProvider APIProvider, bytes []byte) (attestation *Attestation, consumedBytes int, err error) {
+	attestation = new(Attestation)
+
+	version, consumedVersionBytes, err := VersionFromBytes(bytes)
+	if err != nil {
+		return attestation, consumedBytes, ierrors.Wrap(err, "failed to determine version")
 	}
 
-	return a.API.Decode(bytes, a, serix.WithValidation())
+	if attestation.API, err = apiProvider.APIForVersion(version); err != nil {
+		return attestation, consumedBytes, ierrors.Wrapf(err, "failed to get API for version %d", version)
+	}
+
+	consumedAttestationBytes, err := attestation.API.Decode(bytes[consumedVersionBytes:], attestation, serix.WithValidation())
+	if err != nil {
+		return attestation, consumedVersionBytes + consumedAttestationBytes, ierrors.Wrap(err, "failed to deserialize attestation")
+	}
+
+	return attestation, consumedVersionBytes + consumedAttestationBytes, nil
 }
 
 func (a *Attestation) Compare(other *Attestation) int {
