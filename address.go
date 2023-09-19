@@ -214,14 +214,16 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	//nolint:exhaustive
 	switch addrType {
 	case AddressMulti:
-		return "", nil, ErrMultiAddrCannotBeReconstructedViaBech32
+		// return the HRP so we can at least check for correct network
+		return NetworkPrefix(hrp), nil, ErrMultiAddrCannotBeReconstructedViaBech32
 	case AddressRestricted:
 		if len(addrData) == 1 {
 			return "", nil, serializer.ErrDeserializationNotEnoughData
 		}
 		underlyingAddrType := AddressType(addrData[1])
 		if underlyingAddrType == AddressMulti {
-			return "", nil, ErrMultiAddrCannotBeReconstructedViaBech32
+			// return the HRP so we can at least check for correct network
+			return NetworkPrefix(hrp), nil, ErrMultiAddrCannotBeReconstructedViaBech32
 		}
 	}
 
