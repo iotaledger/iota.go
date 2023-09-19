@@ -293,7 +293,7 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveAccountOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveNFTOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveDelegationOutputs(true)),
-		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressHasNoLimitations()),
+		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveAnything()),
 		iotago.RestrictedAddressWithCapabilities(edAddr),
 
 		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveNativeTokens(true)),
@@ -304,7 +304,7 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveAccountOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveNFTOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveDelegationOutputs(true)),
-		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressHasNoLimitations()),
+		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveAnything()),
 		iotago.RestrictedAddressWithCapabilities(accountAddr),
 
 		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveNativeTokens(true)),
@@ -315,7 +315,7 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveAccountOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveNFTOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveDelegationOutputs(true)),
-		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressHasNoLimitations()),
+		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveAnything()),
 		iotago.RestrictedAddressWithCapabilities(nftAddr),
 
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveNativeTokens(true)),
@@ -326,7 +326,7 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveAccountOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveNFTOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveDelegationOutputs(true)),
-		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressHasNoLimitations()),
+		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveAnything()),
 		iotago.RestrictedAddressWithCapabilities(multiAddress),
 	}
 

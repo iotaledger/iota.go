@@ -28,7 +28,7 @@ type AddressCapabilitiesOptions struct {
 	canReceiveDelegationOutputs                              bool
 }
 
-func WithAddressHasNoLimitations() options.Option[AddressCapabilitiesOptions] {
+func WithAddressCanReceiveAnything() options.Option[AddressCapabilitiesOptions] {
 	return func(o *AddressCapabilitiesOptions) {
 		o.canReceiveNativeTokens = true
 		o.canReceiveMana = true

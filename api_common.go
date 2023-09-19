@@ -18,7 +18,7 @@ var (
 	}
 
 	// multiAddressValidatorFunc is a validator which checks that:
-	//  1. MultiAddresses are not nested inside the MultiAddress.
+	//  1. ImplicitAccountCreationAddress, MultiAddresses, RestrictedAddress are not nested inside the MultiAddress.
 	//  2. "raw address part" of all addresses are unique (without type byte and capabilities).
 	//  3. The weight of each address is at least 1.
 	//  4. The threshold is smaller or equal to the cumulative weight of all addresses.
@@ -41,23 +41,7 @@ var (
 			case *MultiAddress:
 				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is a multi address inside a multi address", idx)
 			case *RestrictedAddress:
-				// a restricted address contains an underlying address which we need to check
-				switch underlyingAddr := addr.Address.(type) {
-				case *Ed25519Address:
-					addrWithoutTypeAndCapabilities = underlyingAddr[:]
-				case *AccountAddress:
-					addrWithoutTypeAndCapabilities = underlyingAddr[:]
-				case *NFTAddress:
-					addrWithoutTypeAndCapabilities = underlyingAddr[:]
-				case *ImplicitAccountCreationAddress:
-					return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is an underlying implicit account creation address inside a restricted address inside a multi address", idx)
-				case *MultiAddress:
-					return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is an underlying multi address inside a restricted address inside a multi address", idx)
-				case *RestrictedAddress:
-					return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is an underlying restricted address inside a restricted address inside a multi address", idx)
-				default:
-					return ierrors.Wrapf(ErrUnknownAddrType, "address with index %d is a restricted address with an unknown underlying address type (%T) inside a multi address", idx, addr)
-				}
+				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is a restricted address inside a multi address", idx)
 			default:
 				return ierrors.Wrapf(ErrUnknownAddrType, "address with index %d has an unknown address type (%T) inside a multi address", idx, addr)
 			}

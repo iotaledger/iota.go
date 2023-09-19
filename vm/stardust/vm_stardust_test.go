@@ -1749,7 +1749,7 @@ func TestStardustTransactionExecution_RestrictedAddress(t *testing.T) {
 	}
 }
 
-func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
+func TestStardustTransactionExecution_MultiAddress(t *testing.T) {
 
 	var defaultAmount iotago.BaseToken = OneMi
 
@@ -3023,6 +3023,101 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 			}
 		}(),
 
+		// fail - raw address part of all addresses inside MultiAddress need to be unique (needs to be checked on output side)
+		func() txExecTest {
+			return txExecTest{
+				name:           "fail - raw address part of all addresses inside MultiAddress need to be unique (needs to be checked on output side)",
+				ed25519AddrCnt: 1,
+				addressesFunc:  nil,
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: totalInputAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										// both have the same pubKeyHash
+										{
+											Address: &iotago.Ed25519Address{},
+											Weight:  1,
+										},
+										{
+											Address: &iotago.Ed25519Address{},
+											Weight:  1,
+										},
+									},
+									Threshold: 1,
+								}},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					}
+				},
+				wantEncodeErr:  serializer.ErrArrayValidationViolatesUniqueness,
+				wantExecuteErr: nil,
+			}
+		}(),
+
+		// fail - ImplicitAccountCreationAddress nested inside of a MultiAddress (needs to be checked on output side)
+		func() txExecTest {
+			return txExecTest{
+				name:           "fail - ImplicitAccountCreationAddress nested inside of a MultiAddress (needs to be checked on output side)",
+				ed25519AddrCnt: 1,
+				addressesFunc:  nil,
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: totalInputAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
+									Address: &iotago.MultiAddress{
+										Addresses: []*iotago.AddressWithWeight{
+											{
+												Address: &iotago.ImplicitAccountCreationAddress{},
+												Weight:  1,
+											},
+										},
+										Threshold: 1,
+									},
+								}},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					}
+				},
+				wantEncodeErr:  iotago.ErrInvalidNestedAddressType,
+				wantExecuteErr: nil,
+			}
+		}(),
+
 		// fail - MultiAddress nested inside of a MultiAddress (needs to be checked on output side)
 		func() txExecTest {
 			return txExecTest{
@@ -3075,10 +3170,10 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 			}
 		}(),
 
-		// fail - Raw address part of all addresses inside MultiAddress need to be unique (needs to be checked on output side)
+		// fail - RestrictedAddress nested inside of a MultiAddress (needs to be checked on output side)
 		func() txExecTest {
 			return txExecTest{
-				name:           "fail - Raw address part of all addresses inside MultiAddress need to be unique (needs to be checked on output side)",
+				name:           "fail - RestrictedAddress nested inside of a MultiAddress (needs to be checked on output side)",
 				ed25519AddrCnt: 1,
 				addressesFunc:  nil,
 				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
@@ -3098,17 +3193,12 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 							Conditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
 									Addresses: []*iotago.AddressWithWeight{
-										// both should have the same pubKeyHash
-										{
-											Address: &iotago.Ed25519Address{},
-											Weight:  1,
-										},
 										{
 											Address: &iotago.RestrictedAddress{
-												Address:             &iotago.Ed25519Address{},
-												AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x55},
+												Address:             ed25519Addresses[0],
+												AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
 											},
-											Weight: 2,
+											Weight: 1,
 										},
 									},
 									Threshold: 1,
@@ -3116,13 +3206,14 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 							},
 						},
 					}
+
 				},
 				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
 					return iotago.Unlocks{
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					}
 				},
-				wantEncodeErr:  serializer.ErrArrayValidationViolatesUniqueness,
+				wantEncodeErr:  iotago.ErrInvalidNestedAddressType,
 				wantExecuteErr: nil,
 			}
 		}(),
