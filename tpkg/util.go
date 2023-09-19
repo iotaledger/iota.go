@@ -863,6 +863,27 @@ func RandEd25519Identity() (ed25519.PrivateKey, *iotago.Ed25519Address, iotago.A
 	return edSk, edAddr, addrKeys
 }
 
+// RandEd25519IdentitiesSortedByAddress returns random Ed25519 identities and keys lexically sorted by the address.
+func RandEd25519IdentitiesSortedByAddress(count int) ([]iotago.Address, []iotago.AddressKeys) {
+	addresses := make([]iotago.Address, count)
+	addressKeys := make([]iotago.AddressKeys, count)
+	for i := 0; i < count; i++ {
+		_, addresses[i], addressKeys[i] = RandEd25519Identity()
+	}
+
+	// addressses need to be lexically ordered in the MultiAddress
+	slices.SortFunc(addresses, func(a iotago.Address, b iotago.Address) int {
+		return bytes.Compare(a.ID(), b.ID())
+	})
+
+	// addressses need to be lexically ordered in the MultiAddress
+	slices.SortFunc(addressKeys, func(a iotago.AddressKeys, b iotago.AddressKeys) int {
+		return bytes.Compare(a.Address.ID(), b.Address.ID())
+	})
+
+	return addresses, addressKeys
+}
+
 // RandRentStructure produces random rent structure.
 func RandRentStructure() *iotago.RentStructure {
 	return &iotago.RentStructure{

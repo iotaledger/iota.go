@@ -114,7 +114,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			wantErr: iotago.ErrSigUnlockNotUnique,
 		},
 		{
-			name: "fail - duplicate ed25519 sig block in multi unlock",
+			name: "fail - signature reuse outside and inside the multi unlocks - 1",
 			unlocks: iotago.Unlocks{
 				&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
 					PublicKey: [32]byte{},
@@ -132,13 +132,17 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			wantErr: iotago.ErrSigUnlockNotUnique,
 		},
 		{
-			name: "fail - duplicate ed25519 sig block in multi unlock - 2",
+			name: "fail - signature reuse outside and inside the multi unlocks - 2",
 			unlocks: iotago.Unlocks{
 				&iotago.MultiUnlock{
 					Unlocks: []iotago.Unlock{
 						&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
 							PublicKey: [32]byte{},
 							Signature: [64]byte{},
+						}},
+						&iotago.SignatureUnlock{Signature: &iotago.Ed25519Signature{
+							PublicKey: [32]byte{0x01},
+							Signature: [64]byte{0x01},
 						}},
 					},
 				},
@@ -150,7 +154,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			wantErr: iotago.ErrSigUnlockNotUnique,
 		},
 		{
-			name: "ok - duplicate ed25519 sig block in multi unlock - 3",
+			name: "ok - duplicate ed25519 sig block in different multi unlocks",
 			unlocks: iotago.Unlocks{
 				&iotago.MultiUnlock{
 					Unlocks: []iotago.Unlock{

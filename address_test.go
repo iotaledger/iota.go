@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/crypto/ed25519"
+	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -331,4 +333,434 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 	}
 
 	assertRestrictedAddresses(t, addresses)
+}
+
+type outputsSyntacticalValidationTest struct {
+	// the name of the testcase
+	name string
+	// the amount of randomly created ed25519 addresses with private keys
+	ed25519AddrCnt int
+	// used to create outputs for the test
+	outputsFunc func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs
+	// expected error during serialization of the transaction
+	wantErr error
+}
+
+func runOutputsSyntacticalValidationTest(t *testing.T, testAPI iotago.API, test *outputsSyntacticalValidationTest) {
+	t.Helper()
+
+	t.Run(test.name, func(t *testing.T) {
+		// generate random ed25519 addresses
+		ed25519Addresses, _ := tpkg.RandEd25519IdentitiesSortedByAddress(test.ed25519AddrCnt)
+
+		_, err := testAPI.Encode(test.outputsFunc(ed25519Addresses), serix.WithValidation())
+		if test.wantErr != nil {
+			require.ErrorIs(t, err, test.wantErr)
+			return
+		}
+		require.NoError(t, err)
+	})
+}
+
+func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
+
+	defaultAmount := OneMi
+
+	tests := []*outputsSyntacticalValidationTest{
+		// ok - Valid address types nested inside of a RestrictedAddress
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "ok - Valid address types nested inside of a RestrictedAddress",
+				ed25519AddrCnt: 2,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
+									Address:             ed25519Addresses[0],
+									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+								}},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
+									Address:             &iotago.AccountAddress{},
+									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+								}},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
+									Address:             &iotago.NFTAddress{},
+									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+								}},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
+									Address: &iotago.MultiAddress{
+										Addresses: []*iotago.AddressWithWeight{
+											{
+												Address: ed25519Addresses[1],
+												Weight:  1,
+											},
+										},
+										Threshold: 1,
+									},
+									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+								}},
+							},
+						},
+					}
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		// fail - ImplicitAccountCreationAddress nested inside of a RestrictedAddress
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - ImplicitAccountCreationAddress nested inside of a RestrictedAddress",
+				ed25519AddrCnt: 0,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
+									Address: &iotago.ImplicitAccountCreationAddress{},
+								}},
+							},
+						},
+					}
+				},
+				wantErr: iotago.ErrInvalidNestedAddressType,
+			}
+		}(),
+
+		// fail - RestrictedAddress nested inside of a RestrictedAddress
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - RestrictedAddress nested inside of a RestrictedAddress",
+				ed25519AddrCnt: 1,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
+									Address: &iotago.RestrictedAddress{
+										Address:             ed25519Addresses[0],
+										AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+									},
+								}},
+							},
+						},
+					}
+				},
+				wantErr: iotago.ErrInvalidNestedAddressType,
+			}
+		}(),
+	}
+
+	testAPI := iotago.V3API(iotago.NewV3ProtocolParameters(
+		iotago.WithNetworkOptions("test", "test"),
+	))
+
+	for _, tt := range tests {
+		runOutputsSyntacticalValidationTest(t, testAPI, tt)
+	}
+}
+
+func TestMultiAddressSyntacticalValidation(t *testing.T) {
+
+	defaultAmount := OneMi
+
+	tests := []*outputsSyntacticalValidationTest{
+		// fail - threshold > cumulativeWeight
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - threshold > cumulativeWeight",
+				ed25519AddrCnt: 2,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{
+											Address: ed25519Addresses[0],
+											Weight:  1,
+										},
+										{
+											Address: ed25519Addresses[1],
+											Weight:  1,
+										},
+									},
+									Threshold: 3,
+								}},
+							},
+						},
+					}
+				},
+				wantErr: iotago.ErrMultiAddressThresholdInvalid,
+			}
+		}(),
+
+		// fail - threshold < 1
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - threshold < 1",
+				ed25519AddrCnt: 1,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{
+											Address: ed25519Addresses[0],
+											Weight:  1,
+										},
+									},
+									Threshold: 0,
+								}},
+							},
+						},
+					}
+				},
+				wantErr: iotago.ErrMultiAddressThresholdInvalid,
+			}
+		}(),
+
+		// fail - address weight == 0
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - address weight == 0",
+				ed25519AddrCnt: 2,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{
+											Address: ed25519Addresses[0],
+											Weight:  0,
+										},
+										{
+											Address: ed25519Addresses[1],
+											Weight:  1,
+										},
+									},
+									Threshold: 1,
+								}},
+							},
+						},
+					}
+				},
+				wantErr: iotago.ErrMultiAddressWeightInvalid,
+			}
+		}(),
+
+		// fail - empty MultiAddress
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - empty MultiAddress",
+				ed25519AddrCnt: 2,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{},
+									Threshold: 1,
+								}},
+							},
+						},
+					}
+				},
+				wantErr: iotago.ErrMultiAddressThresholdInvalid,
+			}
+		}(),
+
+		// fail - MultiAddress limit exceeded
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - MultiAddress limit exceeded",
+				ed25519AddrCnt: 13,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{Address: ed25519Addresses[2], Weight: 1},
+										{Address: ed25519Addresses[3], Weight: 1},
+										{Address: ed25519Addresses[4], Weight: 1},
+										{Address: ed25519Addresses[5], Weight: 1},
+										{Address: ed25519Addresses[6], Weight: 1},
+										{Address: ed25519Addresses[7], Weight: 1},
+										{Address: ed25519Addresses[8], Weight: 1},
+										{Address: ed25519Addresses[9], Weight: 1},
+										{Address: ed25519Addresses[10], Weight: 1},
+										{Address: ed25519Addresses[11], Weight: 1},
+										{Address: ed25519Addresses[12], Weight: 1},
+									},
+									Threshold: 11,
+								}},
+							},
+						},
+					}
+				},
+				wantErr: serializer.ErrArrayValidationMaxElementsExceeded,
+			}
+		}(),
+
+		// fail - raw address part of all addresses inside MultiAddress need to be unique
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - raw address part of all addresses inside MultiAddress need to be unique",
+				ed25519AddrCnt: 1,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										// both have the same pubKeyHash
+										{
+											Address: &iotago.Ed25519Address{},
+											Weight:  1,
+										},
+										{
+											Address: &iotago.Ed25519Address{},
+											Weight:  1,
+										},
+									},
+									Threshold: 1,
+								}},
+							},
+						},
+					}
+				},
+				wantErr: serializer.ErrArrayValidationViolatesUniqueness,
+			}
+		}(),
+
+		// fail - ImplicitAccountCreationAddress nested inside of a MultiAddress
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - ImplicitAccountCreationAddress nested inside of a MultiAddress",
+				ed25519AddrCnt: 1,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
+									Address: &iotago.MultiAddress{
+										Addresses: []*iotago.AddressWithWeight{
+											{
+												Address: &iotago.ImplicitAccountCreationAddress{},
+												Weight:  1,
+											},
+										},
+										Threshold: 1,
+									},
+								}},
+							},
+						},
+					}
+				},
+				wantErr: iotago.ErrInvalidNestedAddressType,
+			}
+		}(),
+
+		// fail - MultiAddress nested inside of a MultiAddress
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - MultiAddress nested inside of a MultiAddress",
+				ed25519AddrCnt: 2,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{
+											Address: &iotago.MultiAddress{
+												Addresses: iotago.AddressesWithWeight{
+													{
+														Address: ed25519Addresses[1],
+														Weight:  1,
+													},
+												},
+												Threshold: 1,
+											},
+											Weight: 1,
+										},
+									},
+									Threshold: 1,
+								}},
+							},
+						},
+					}
+				},
+				wantErr: iotago.ErrInvalidNestedAddressType,
+			}
+		}(),
+
+		// fail - RestrictedAddress nested inside of a MultiAddress
+		func() *outputsSyntacticalValidationTest {
+			return &outputsSyntacticalValidationTest{
+				name:           "fail - RestrictedAddress nested inside of a MultiAddress",
+				ed25519AddrCnt: 1,
+				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
+									Addresses: []*iotago.AddressWithWeight{
+										{
+											Address: &iotago.RestrictedAddress{
+												Address:             ed25519Addresses[0],
+												AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+											},
+											Weight: 1,
+										},
+									},
+									Threshold: 1,
+								}},
+							},
+						},
+					}
+				},
+				wantErr: iotago.ErrInvalidNestedAddressType,
+			}
+		}(),
+	}
+
+	testAPI := iotago.V3API(iotago.NewV3ProtocolParameters(
+		iotago.WithNetworkOptions("test", "test"),
+	))
+
+	for _, tt := range tests {
+		runOutputsSyntacticalValidationTest(t, testAPI, tt)
+	}
 }
