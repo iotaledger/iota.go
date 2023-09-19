@@ -6,6 +6,8 @@ import (
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
+	"github.com/iotaledger/iota.go/v4/api"
 )
 
 // Attestations is a slice of Attestation.
@@ -25,6 +27,16 @@ func NewAttestation(api API, block *ProtocolBlock) *Attestation {
 		BlockHash:   lo.PanicOnErr(block.Block.Hash(api)),
 		Signature:   block.Signature,
 	}
+}
+
+func (a *Attestation) FromBytes(apiProvider api.Provider, bytes []byte) (int, error) {
+	if version, _, err := VersionFromBytes(bytes); err != nil {
+		return 0, ierrors.Wrap(err, "failed to determine version")
+	} else if a.API, err = apiProvider.APIForVersion(version); err != nil {
+		return 0, ierrors.Wrapf(err, "failed to get API for version %d", version)
+	}
+
+	return a.API.Decode(bytes, a, serix.WithValidation())
 }
 
 func (a *Attestation) Compare(other *Attestation) int {
