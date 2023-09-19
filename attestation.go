@@ -33,11 +33,11 @@ func AttestationFromBytes(apiProvider APIProvider, bytes []byte) (attestation *A
 
 	version, consumedVersionBytes, err := VersionFromBytes(bytes)
 	if err != nil {
-		return attestation, consumedBytes, ierrors.Wrap(err, "failed to determine version")
+		return attestation, consumedVersionBytes, ierrors.Wrap(err, "failed to determine version")
 	}
 
 	if attestation.API, err = apiProvider.APIForVersion(version); err != nil {
-		return attestation, consumedBytes, ierrors.Wrapf(err, "failed to get API for version %d", version)
+		return attestation, consumedVersionBytes, ierrors.Wrapf(err, "failed to get API for version %d", version)
 	}
 
 	consumedAttestationBytes, err := attestation.API.Decode(bytes[consumedVersionBytes:], attestation, serix.WithValidation())
