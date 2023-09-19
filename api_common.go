@@ -18,7 +18,7 @@ var (
 	}
 
 	// multiAddressValidatorFunc is a validator which checks that:
-	//  1. MultiAddresses are not nested inside the MultiAddress.
+	//  1. ImplicitAccountCreationAddress, MultiAddresses, RestrictedAddress are not nested inside the MultiAddress.
 	//  2. "raw address part" of all addresses are unique (without type byte and capabilities).
 	//  3. The weight of each address is at least 1.
 	//  4. The threshold is smaller or equal to the cumulative weight of all addresses.
@@ -28,19 +28,20 @@ var (
 		var cumulativeWeight uint16
 		for idx, address := range addr.Addresses {
 			var addrWithoutTypeAndCapabilities []byte
+
 			switch addr := address.Address.(type) {
-			case *AccountAddress:
-				addrWithoutTypeAndCapabilities = addr[:]
 			case *Ed25519Address:
 				addrWithoutTypeAndCapabilities = addr[:]
-			case *ImplicitAccountCreationAddress:
+			case *AccountAddress:
 				addrWithoutTypeAndCapabilities = addr[:]
-			case *MultiAddress:
-				return ierrors.Wrapf(ErrNestedMultiAddress, "address with index %d is a multi address inside a multi address", idx)
 			case *NFTAddress:
 				addrWithoutTypeAndCapabilities = addr[:]
-			case *RestrictedEd25519Address:
-				addrWithoutTypeAndCapabilities = addr.PubKeyHash[:]
+			case *ImplicitAccountCreationAddress:
+				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is an implicit account creation address inside a multi address", idx)
+			case *MultiAddress:
+				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is a multi address inside a multi address", idx)
+			case *RestrictedAddress:
+				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is a restricted address inside a multi address", idx)
 			default:
 				return ierrors.Wrapf(ErrUnknownAddrType, "address with index %d has an unknown address type (%T) inside a multi address", idx, addr)
 			}
@@ -71,6 +72,24 @@ var (
 
 		return nil
 	}
+
+	// restrictedAddressValidatorFunc is a validator which checks that:
+	//  1. ImplicitAccountCreationAddress are not nested inside the RestrictedAddress.
+	//  2. RestrictedAddresses are not nested inside the RestrictedAddress.
+	restrictedAddressValidatorFunc = func(ctx context.Context, addr RestrictedAddress) error {
+		switch addr.Address.(type) {
+		case *Ed25519Address, *AccountAddress, *NFTAddress, *MultiAddress:
+			// allowed address types
+		case *ImplicitAccountCreationAddress:
+			return ierrors.Wrap(ErrInvalidNestedAddressType, "underlying address is an implicit account creation address inside a restricted address")
+		case *RestrictedAddress:
+			return ierrors.Wrap(ErrInvalidNestedAddressType, "underlying address is a restricted address inside a restricted address")
+		default:
+			return ierrors.Wrapf(ErrUnknownAddrType, "underlying address has an unknown address type (%T) inside a restricted address", addr)
+		}
+
+		return nil
+	}
 )
 
 func CommonSerixAPI() *serix.API {
@@ -79,9 +98,6 @@ func CommonSerixAPI() *serix.API {
 	{
 		must(api.RegisterTypeSettings(Ed25519Address{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressEd25519)).WithMapKey("pubKeyHash")),
-		)
-		must(api.RegisterTypeSettings(RestrictedEd25519Address{},
-			serix.TypeSettings{}.WithObjectType(uint8(AddressRestrictedEd25519))),
 		)
 		must(api.RegisterTypeSettings(AccountAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressAccount)).WithMapKey("accountId")),
@@ -99,13 +115,20 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterTypeSettings(AddressesWithWeight{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(addressesWithWeightArrRules),
 		))
+		must(api.RegisterTypeSettings(RestrictedAddress{},
+			serix.TypeSettings{}.WithObjectType(uint8(AddressRestricted))),
+		)
+		must(api.RegisterValidators(RestrictedAddress{}, nil, restrictedAddressValidatorFunc))
+		must(api.RegisterTypeSettings(AddressCapabilitiesBitMask{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMaxLen(1),
+		))
 
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*Ed25519Address)(nil)))
-		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedEd25519Address)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*AccountAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*NFTAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*ImplicitAccountCreationAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*MultiAddress)(nil)))
+		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedAddress)(nil)))
 
 		// All versions of the protocol need to be able to parse older protocol parameter versions.
 		{
