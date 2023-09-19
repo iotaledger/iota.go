@@ -216,8 +216,7 @@ func (a *AccountOutput) syntacticallyValidate() error {
 	stateControllerAddress := a.Conditions.MustSet().StateControllerAddress().Address
 	governorAddress := a.Conditions.MustSet().GovernorAddress().Address
 
-	if stateControllerAddress.Type() == AddressImplicitAccountCreation ||
-		governorAddress.Type() == AddressImplicitAccountCreation {
+	if (stateControllerAddress.Type() == AddressImplicitAccountCreation) || (governorAddress.Type() == AddressImplicitAccountCreation) {
 		return ErrImplicitAccountCreationAddressInInvalidOutput
 	}
 

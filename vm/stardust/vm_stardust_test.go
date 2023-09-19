@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -1264,37 +1263,310 @@ func TestStardustTransactionExecution(t *testing.T) {
 	}
 }
 
-func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
+type txExecTest struct {
+	// the name of the testcase
+	name string
+	// the amount of randomly created ed25519 addresses with private keys
+	ed25519AddrCnt int
+	// used to created own addresses for the test
+	addressesFunc func(ed25519Addresses []iotago.Address) []iotago.Address
+	// used to create inputs for the test
+	inputsFunc func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output
+	// used to create outputs for the test (optional)
+	outputsFunc func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs
+	// used to create unlocks for the test
+	unlocksFunc func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks
+	// expected error during execution of the transaction
+	wantErr error
+}
+
+func runStardustTransactionExecutionTest(t *testing.T, test *txExecTest) {
+	t.Helper()
+
+	t.Run(test.name, func(t *testing.T) {
+		// generate random ed25519 addresses
+		ed25519Addresses, ed25519AddressesWithKeys := tpkg.RandEd25519IdentitiesSortedByAddress(test.ed25519AddrCnt)
+
+		// pass the ed25519 testAddresses and get the complete list of testAddresses
+		testAddresses := make([]iotago.Address, 0)
+		if test.addressesFunc != nil {
+			testAddresses = test.addressesFunc(ed25519Addresses)
+		}
+
+		inputs := test.inputsFunc(ed25519Addresses, testAddresses)
+		if len(inputs) == 0 {
+			require.FailNow(t, "no outputs given")
+		}
+
+		// create the input set
+		inputIDs := tpkg.RandOutputIDs(uint16(len(inputs)))
+		inputSet := vm.InputSet{}
+		var totalInputAmount iotago.BaseToken
+		for idx, output := range inputs {
+			inputSet[inputIDs[idx]] = vm.OutputWithCreationSlot{
+				Output: output,
+			}
+			totalInputAmount += output.BaseTokenAmount()
+		}
+
+		outputs := iotago.TxEssenceOutputs{
+			// collect everything on a basic output with a random ed25519 address
+			&iotago.BasicOutput{
+				Amount: totalInputAmount,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+		}
+		if test.outputsFunc != nil {
+			outputs = test.outputsFunc(ed25519Addresses, testAddresses, inputIDs, totalInputAmount)
+		}
+
+		// create the transaction essence
+		txEssence := &iotago.TransactionEssence{
+			NetworkID:     testProtoParams.NetworkID(),
+			CreationSlot:  100,
+			ContextInputs: iotago.TxEssenceContextInputs{},
+			Inputs:        inputIDs.UTXOInputs(),
+			Outputs:       outputs,
+			Allotments:    iotago.Allotments{},
+		}
+
+		// sign the transaction essence
+		sigs, err := txEssence.Sign(testAPI, inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), ed25519AddressesWithKeys...)
+		require.NoError(t, err)
+
+		// pass the signatures and get the unlock conditions
+		unlocks := test.unlocksFunc(sigs, testAddresses)
+
+		tx := &iotago.Transaction{
+			Essence: txEssence,
+			Unlocks: unlocks,
+		}
+
+		txBytes, err := testAPI.Encode(tx, serix.WithValidation())
+		require.NoError(t, err)
+
+		// we deserialize to be sure that all serix rules are applied (like lexically ordering or multi addresses)
+		tx = &iotago.Transaction{}
+		_, err = testAPI.Decode(txBytes, tx, serix.WithValidation())
+		require.NoError(t, err)
+
+		// execute the transaction
+		err = stardustVM.Execute(
+			tx,
+			&vm.Params{API: testAPI},
+			vm.ResolvedInputs{InputSet: inputSet},
+		)
+		if test.wantErr != nil {
+			require.ErrorIs(t, err, test.wantErr)
+			return
+		}
+		require.NoError(t, err)
+	})
+}
+
+func TestStardustTransactionExecution_RestrictedAddress(t *testing.T) {
 
 	var defaultAmount iotago.BaseToken = OneMi
 
-	type test struct {
-		// the name of the testcase
-		name string
-		// the amount of randomly created ed25519 addresses with private keys
-		ed25519AddrCnt int
-		// used to created own addresses for the test
-		addressesFunc func(ed25519Addresses []iotago.Address) []iotago.Address
-		// used to create inputs for the test
-		inputsFunc func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output
-		// used to create outputs for the test (optional)
-		outputsFunc func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs
-		// used to create unlocks for the test
-		unlocksFunc func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks
-		// expected error during serialization of the transaction
-		wantEncodeErr error
-		// expected error during execution of the transaction
-		wantExecuteErr error
+	execTests := []*txExecTest{
+		// ok - restricted ed25519 address unlock
+		func() *txExecTest {
+			return &txExecTest{
+				name:           "ok - restricted ed25519 address unlock",
+				ed25519AddrCnt: 1,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					return []iotago.Address{
+						&iotago.RestrictedAddress{
+							Address:             ed25519Addresses[0],
+							AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
+							},
+						},
+					}
+				},
+				outputsFunc: nil,
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					}
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		// ok - restricted account address unlock
+		func() *txExecTest {
+			return &txExecTest{
+				name:           "ok - restricted account address unlock",
+				ed25519AddrCnt: 2,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					accountAddress := tpkg.RandAccountAddress()
+					return []iotago.Address{
+						accountAddress,
+						&iotago.RestrictedAddress{
+							Address:             accountAddress,
+							AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						// we add an output with a Ed25519 address to be able to check the AccountUnlock in the RestrictedAddress
+						&iotago.AccountOutput{
+							Amount:         defaultAmount,
+							NativeTokens:   nil,
+							AccountID:      testAddresses[0].(*iotago.AccountAddress).AccountID(),
+							StateIndex:     1,
+							StateMetadata:  []byte("current state"),
+							FoundryCounter: 0,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+								&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+							Features: nil,
+						},
+						// owned by restricted account address
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						// the account unlock needs to be a state transition (governor doesn't work for account reference unlocks)
+						&iotago.AccountOutput{
+							Amount:         defaultAmount,
+							NativeTokens:   nil,
+							AccountID:      testAddresses[0].(*iotago.AccountAddress).AccountID(),
+							StateIndex:     2,
+							StateMetadata:  []byte("next state"),
+							FoundryCounter: 0,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+								&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
+							},
+							Features: nil,
+						},
+						&iotago.BasicOutput{
+							Amount: totalInputAmount - defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]}, // account state controller unlock
+						&iotago.AccountUnlock{Reference: 0},
+					}
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		// ok - restricted NFT unlock
+		func() *txExecTest {
+			return &txExecTest{
+				name:           "ok - restricted NFT unlock",
+				ed25519AddrCnt: 2,
+				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+					nftAddress := tpkg.RandNFTAddress()
+					return []iotago.Address{
+						nftAddress,
+						&iotago.RestrictedAddress{
+							Address:             nftAddress,
+							AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+						},
+					}
+				},
+				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+					return []iotago.Output{
+						// we add an output with a Ed25519 address to be able to check the NFT Unlock in the RestrictedAddress
+						&iotago.NFTOutput{
+							Amount:       defaultAmount,
+							NativeTokens: nil,
+							NFTID:        testAddresses[0].(*iotago.NFTAddress).NFTID(),
+							Conditions: iotago.NFTOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+							Features: iotago.NFTOutputFeatures{
+								&iotago.IssuerFeature{Address: ed25519Addresses[1]},
+							},
+							ImmutableFeatures: iotago.NFTOutputImmFeatures{
+								&iotago.MetadataFeature{Data: []byte("immutable")},
+							},
+						},
+						// owned by restricted NFT address
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: testAddresses[1]},
+							},
+						},
+					}
+				},
+				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
+					return iotago.TxEssenceOutputs{
+						&iotago.NFTOutput{
+							Amount:       defaultAmount,
+							NativeTokens: nil,
+							NFTID:        testAddresses[0].(*iotago.NFTAddress).NFTID(),
+							Conditions: iotago.NFTOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+							Features: iotago.NFTOutputFeatures{
+								&iotago.IssuerFeature{Address: ed25519Addresses[1]},
+								&iotago.MetadataFeature{Data: []byte("some new metadata")},
+							},
+							ImmutableFeatures: iotago.NFTOutputImmFeatures{
+								&iotago.MetadataFeature{Data: []byte("immutable")},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: totalInputAmount - defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+							},
+						},
+					}
+				},
+				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+					return iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]}, // NFT unlock
+						&iotago.NFTUnlock{Reference: 0},
+					}
+				},
+				wantErr: nil,
+			}
+		}(),
 	}
+	for _, tt := range execTests {
+		runStardustTransactionExecutionTest(t, tt)
+	}
+}
 
-	tests := []test{
-		//
-		// Unlock tests
-		//
+func TestStardustTransactionExecution_MultiAddress(t *testing.T) {
 
+	var defaultAmount iotago.BaseToken = OneMi
+
+	tests := []*txExecTest{
 		// ok - threshold == cumulativeWeight (threshold reached)
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "ok - threshold == cumulativeWeight (threshold reached)",
 				ed25519AddrCnt: 2,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -1336,14 +1608,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						},
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: nil,
+				wantErr: nil,
 			}
 		}(),
 
 		// ok - threshold < cumulativeWeight (threshold reached)
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "ok - threshold < cumulativeWeight (threshold reached)",
 				ed25519AddrCnt: 2,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -1385,14 +1656,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						},
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: nil,
+				wantErr: nil,
 			}
 		}(),
 
 		// fail - threshold == cumulativeWeight (threshold not reached)
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "fail - threshold == cumulativeWeight (threshold not reached)",
 				ed25519AddrCnt: 2,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -1435,14 +1705,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						},
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: iotago.ErrMultiAddressUnlockThresholdNotReached,
+				wantErr: iotago.ErrMultiAddressUnlockThresholdNotReached,
 			}
 		}(),
 
 		// fail - threshold < cumulativeWeight (threshold not reached)
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "fail - threshold < cumulativeWeight (threshold not reached)",
 				ed25519AddrCnt: 2,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -1485,14 +1754,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						},
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: iotago.ErrMultiAddressUnlockThresholdNotReached,
+				wantErr: iotago.ErrMultiAddressUnlockThresholdNotReached,
 			}
 		}(),
 
 		// fail - len(multiAddr) != len(multiUnlock)
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "fail - len(multiAddr) != len(multiUnlock)",
 				ed25519AddrCnt: 3,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -1538,14 +1806,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						},
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: iotago.ErrMultiAddressAndUnlockLengthDoesNotMatch,
+				wantErr: iotago.ErrMultiAddressAndUnlockLengthDoesNotMatch,
 			}
 		}(),
 
 		// ok - Reference unlock
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "ok - Reference unlock",
 				ed25519AddrCnt: 2,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -1595,14 +1862,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						},
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: nil,
+				wantErr: nil,
 			}
 		}(),
 
 		// ok - MultiAddress Reference unlock
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "ok - MultiAddress Reference unlock",
 				ed25519AddrCnt: 2,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -1657,14 +1923,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						&iotago.ReferenceUnlock{Reference: 0},
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: nil,
+				wantErr: nil,
 			}
 		}(),
 
 		// ok - Account unlock (state transition)
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "ok - Account unlock (state transition)",
 				ed25519AddrCnt: 2,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -1795,14 +2060,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						multiUnlock,
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: nil,
+				wantErr: nil,
 			}
 		}(),
 
 		// fail - Account unlock (governance transition)
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "fail - Account unlock (governance transition)",
 				ed25519AddrCnt: 2,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -1933,14 +2197,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						multiUnlock,
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidInputUnlock,
 			}
 		}(),
 
 		// ok - NFT unlock
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "ok - NFT unlock",
 				ed25519AddrCnt: 2,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -2073,14 +2336,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						multiUnlock,
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: nil,
+				wantErr: nil,
 			}
 		}(),
 
 		// ok - multiple MultiAddresses in one TX - no signature reuse
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "ok - multiple MultiAddresses in one TX - no signature reuse",
 				ed25519AddrCnt: 4,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -2154,14 +2416,13 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						},
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: nil,
+				wantErr: nil,
 			}
 		}(),
 
 		// ok - multiple MultiAddresses in one TX - signature reuse in different multi unlocks
-		func() test {
-			return test{
+		func() *txExecTest {
+			return &txExecTest{
 				name:           "ok - multiple MultiAddresses in one TX - signature reuse in different multi unlocks",
 				ed25519AddrCnt: 4,
 				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
@@ -2235,538 +2496,12 @@ func TestStardustTransactionExecution_MultiUnlock(t *testing.T) {
 						},
 					}
 				},
-				wantEncodeErr:  nil,
-				wantExecuteErr: nil,
-			}
-		}(),
-
-		//
-		// Syntactical checks tests
-		//
-
-		// fail - threshold > cumulativeWeight (needs to be checked on output side)
-		func() test {
-			return test{
-				name:           "fail - threshold > cumulativeWeight (needs to be checked on output side)",
-				ed25519AddrCnt: 2,
-				addressesFunc:  nil,
-				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
-					return []iotago.Output{
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
-							},
-						},
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
-							},
-						},
-					}
-				},
-				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
-					return iotago.TxEssenceOutputs{
-						&iotago.BasicOutput{
-							Amount: totalInputAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
-									Addresses: []*iotago.AddressWithWeight{
-										{
-											Address: ed25519Addresses[0],
-											Weight:  1,
-										},
-										{
-											Address: ed25519Addresses[1],
-											Weight:  1,
-										},
-									},
-									Threshold: 3,
-								}},
-							},
-						},
-					}
-				},
-				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
-					return iotago.Unlocks{
-						&iotago.SignatureUnlock{Signature: sigs[0]},
-						&iotago.SignatureUnlock{Signature: sigs[1]},
-					}
-				},
-				wantEncodeErr:  iotago.ErrMultiAddressThresholdInvalid,
-				wantExecuteErr: nil,
-			}
-		}(),
-
-		// fail - threshold < 1 (needs to be checked on output side)
-		func() test {
-			return test{
-				name:           "fail - threshold < 1 (needs to be checked on output side)",
-				ed25519AddrCnt: 1,
-				addressesFunc:  nil,
-				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
-					return []iotago.Output{
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
-							},
-						},
-					}
-				},
-				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
-					return iotago.TxEssenceOutputs{
-						&iotago.BasicOutput{
-							Amount: totalInputAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
-									Addresses: []*iotago.AddressWithWeight{
-										{
-											Address: ed25519Addresses[0],
-											Weight:  1,
-										},
-									},
-									Threshold: 0,
-								}},
-							},
-						},
-					}
-				},
-				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
-					return iotago.Unlocks{
-						&iotago.SignatureUnlock{Signature: sigs[0]},
-					}
-				},
-				wantEncodeErr:  iotago.ErrMultiAddressThresholdInvalid,
-				wantExecuteErr: nil,
-			}
-		}(),
-
-		// fail - address weight == 0 (needs to be checked on output side)
-		func() test {
-			return test{
-				name:           "fail - address weight == 0 (needs to be checked on output side)",
-				ed25519AddrCnt: 2,
-				addressesFunc:  nil,
-				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
-					return []iotago.Output{
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
-							},
-						},
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
-							},
-						},
-					}
-				},
-				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
-					return iotago.TxEssenceOutputs{
-						&iotago.BasicOutput{
-							Amount: totalInputAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
-									Addresses: []*iotago.AddressWithWeight{
-										{
-											Address: ed25519Addresses[0],
-											Weight:  0,
-										},
-										{
-											Address: ed25519Addresses[1],
-											Weight:  1,
-										},
-									},
-									Threshold: 1,
-								}},
-							},
-						},
-					}
-				},
-				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
-					return iotago.Unlocks{
-						&iotago.SignatureUnlock{Signature: sigs[0]},
-						&iotago.SignatureUnlock{Signature: sigs[1]},
-					}
-				},
-				wantEncodeErr:  iotago.ErrMultiAddressWeightInvalid,
-				wantExecuteErr: nil,
-			}
-		}(),
-
-		// fail - empty MultiAddress (needs to be checked on output side)
-		func() test {
-			return test{
-				name:           "fail - empty MultiAddress (needs to be checked on output side)",
-				ed25519AddrCnt: 2,
-				addressesFunc:  nil,
-				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
-					return []iotago.Output{
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
-							},
-						},
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
-							},
-						},
-					}
-				},
-				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
-					return iotago.TxEssenceOutputs{
-						&iotago.BasicOutput{
-							Amount: totalInputAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
-									Addresses: []*iotago.AddressWithWeight{},
-									Threshold: 1,
-								}},
-							},
-						},
-					}
-				},
-				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
-					return iotago.Unlocks{
-						&iotago.SignatureUnlock{Signature: sigs[0]},
-						&iotago.SignatureUnlock{Signature: sigs[1]},
-					}
-				},
-				wantEncodeErr:  iotago.ErrMultiAddressThresholdInvalid,
-				wantExecuteErr: nil,
-			}
-		}(),
-
-		// fail - MultiAddress limit exceeded (needs to be checked on output side)
-		func() test {
-			return test{
-				name:           "fail - MultiAddress limit exceeded (needs to be checked on output side)",
-				ed25519AddrCnt: 13,
-				addressesFunc:  nil,
-				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
-					return []iotago.Output{
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
-							},
-						},
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[1]},
-							},
-						},
-					}
-				},
-				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
-					return iotago.TxEssenceOutputs{
-						&iotago.BasicOutput{
-							Amount: totalInputAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
-									Addresses: []*iotago.AddressWithWeight{
-										{Address: ed25519Addresses[2], Weight: 1},
-										{Address: ed25519Addresses[3], Weight: 1},
-										{Address: ed25519Addresses[4], Weight: 1},
-										{Address: ed25519Addresses[5], Weight: 1},
-										{Address: ed25519Addresses[6], Weight: 1},
-										{Address: ed25519Addresses[7], Weight: 1},
-										{Address: ed25519Addresses[8], Weight: 1},
-										{Address: ed25519Addresses[9], Weight: 1},
-										{Address: ed25519Addresses[10], Weight: 1},
-										{Address: ed25519Addresses[11], Weight: 1},
-										{Address: ed25519Addresses[12], Weight: 1},
-									},
-									Threshold: 11,
-								}},
-							},
-						},
-					}
-				},
-				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
-					return iotago.Unlocks{
-						&iotago.SignatureUnlock{Signature: sigs[0]},
-						&iotago.SignatureUnlock{Signature: sigs[1]},
-					}
-				},
-				wantEncodeErr:  serializer.ErrArrayValidationMaxElementsExceeded,
-				wantExecuteErr: nil,
-			}
-		}(),
-
-		// fail - signature reuse outside and inside the multi unlocks
-		func() test {
-			return test{
-				name:           "fail - signature reuse outside and inside the multi unlocks",
-				ed25519AddrCnt: 2,
-				addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
-					return []iotago.Address{
-						&iotago.MultiAddress{
-							Addresses: []*iotago.AddressWithWeight{
-								{
-									Address: ed25519Addresses[0],
-									Weight:  1,
-								},
-								{
-									Address: ed25519Addresses[1],
-									Weight:  1,
-								},
-							},
-							Threshold: 2,
-						},
-					}
-				},
-				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
-					return []iotago.Output{
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: testAddresses[0]},
-							},
-						},
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
-							},
-						},
-					}
-				},
-				outputsFunc: nil,
-				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
-					return iotago.Unlocks{
-						&iotago.MultiUnlock{
-							Unlocks: []iotago.Unlock{
-								&iotago.SignatureUnlock{Signature: sigs[0]},
-								&iotago.SignatureUnlock{Signature: sigs[1]},
-							},
-						},
-						&iotago.SignatureUnlock{Signature: sigs[0]},
-					}
-				},
-				wantEncodeErr:  iotago.ErrSigUnlockNotUnique,
-				wantExecuteErr: nil,
-			}
-		}(),
-
-		// fail - MultiAddress nested inside of a MultiAddress (needs to be checked on output side)
-		func() test {
-			return test{
-				name:           "fail - MultiAddress nested inside of a MultiAddress (needs to be checked on output side)",
-				ed25519AddrCnt: 2,
-				addressesFunc:  nil,
-				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
-					return []iotago.Output{
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
-							},
-						},
-					}
-				},
-				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
-					return iotago.TxEssenceOutputs{
-						&iotago.BasicOutput{
-							Amount: totalInputAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
-									Addresses: []*iotago.AddressWithWeight{
-										{
-											Address: &iotago.MultiAddress{
-												Addresses: iotago.AddressesWithWeight{
-													{
-														Address: ed25519Addresses[1],
-														Weight:  1,
-													},
-												},
-												Threshold: 1,
-											},
-											Weight: 1,
-										},
-									},
-									Threshold: 1,
-								}},
-							},
-						},
-					}
-				},
-				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
-					return iotago.Unlocks{
-						&iotago.SignatureUnlock{Signature: sigs[0]},
-					}
-				},
-				wantEncodeErr:  iotago.ErrNestedMultiAddress,
-				wantExecuteErr: nil,
-			}
-		}(),
-
-		// fail - Raw address part of all addresses inside MultiAddress need to be unique (needs to be checked on output side)
-		func() test {
-			return test{
-				name:           "fail - Raw address part of all addresses inside MultiAddress need to be unique (needs to be checked on output side)",
-				ed25519AddrCnt: 1,
-				addressesFunc:  nil,
-				inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
-					return []iotago.Output{
-						&iotago.BasicOutput{
-							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
-							},
-						},
-					}
-				},
-				outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, inputIDs iotago.OutputIDs, totalInputAmount iotago.BaseToken) iotago.TxEssenceOutputs {
-					return iotago.TxEssenceOutputs{
-						&iotago.BasicOutput{
-							Amount: totalInputAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
-									Addresses: []*iotago.AddressWithWeight{
-										// both should have the same pubKeyHash
-										{
-											Address: &iotago.Ed25519Address{},
-											Weight:  1,
-										},
-										{
-											Address: &iotago.RestrictedEd25519Address{
-												PubKeyHash:          [32]byte{},
-												AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x55},
-											},
-											Weight: 2,
-										},
-									},
-									Threshold: 1,
-								}},
-							},
-						},
-					}
-				},
-				unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
-					return iotago.Unlocks{
-						&iotago.SignatureUnlock{Signature: sigs[0]},
-					}
-				},
-				wantEncodeErr:  serializer.ErrArrayValidationViolatesUniqueness,
-				wantExecuteErr: nil,
+				wantErr: nil,
 			}
 		}(),
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			getEd25519Identities := func(count int) ([]iotago.Address, []iotago.AddressKeys) {
-				addresses := make([]iotago.Address, count)
-				addressKeys := make([]iotago.AddressKeys, count)
-				for i := 0; i < count; i++ {
-					_, addresses[i], addressKeys[i] = tpkg.RandEd25519Identity()
-				}
-
-				// addressses need to be lexically ordered in the MultiAddress
-				slices.SortFunc(addresses, func(a iotago.Address, b iotago.Address) int {
-					return bytes.Compare(a.ID(), b.ID())
-				})
-
-				// addressses need to be lexically ordered in the MultiAddress
-				slices.SortFunc(addressKeys, func(a iotago.AddressKeys, b iotago.AddressKeys) int {
-					return bytes.Compare(a.Address.ID(), b.Address.ID())
-				})
-
-				return addresses, addressKeys
-			}
-
-			// generate random ed25519 addresses
-			ed25519Addresses, ed25519AddressesWithKeys := getEd25519Identities(tt.ed25519AddrCnt)
-
-			// pass the ed25519 testAddresses and get the complete list of testAddresses
-			testAddresses := make([]iotago.Address, 0)
-			if tt.addressesFunc != nil {
-				testAddresses = tt.addressesFunc(ed25519Addresses)
-			}
-
-			inputs := tt.inputsFunc(ed25519Addresses, testAddresses)
-			if len(inputs) == 0 {
-				require.FailNow(t, "no outputs given")
-			}
-
-			// create the input set
-			inputIDs := tpkg.RandOutputIDs(uint16(len(inputs)))
-			inputSet := vm.InputSet{}
-			var totalInputAmount iotago.BaseToken
-			for idx, output := range inputs {
-				inputSet[inputIDs[idx]] = vm.OutputWithCreationSlot{
-					Output: output,
-				}
-				totalInputAmount += output.BaseTokenAmount()
-			}
-
-			outputs := iotago.TxEssenceOutputs{
-				// collect everything on a basic output with a random ed25519 address
-				&iotago.BasicOutput{
-					Amount: totalInputAmount,
-					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					},
-				},
-			}
-			if tt.outputsFunc != nil {
-				outputs = tt.outputsFunc(ed25519Addresses, testAddresses, inputIDs, totalInputAmount)
-			}
-
-			// create the transaction essence
-			txEssence := &iotago.TransactionEssence{
-				NetworkID:     testProtoParams.NetworkID(),
-				CreationSlot:  100,
-				ContextInputs: iotago.TxEssenceContextInputs{},
-				Inputs:        inputIDs.UTXOInputs(),
-				Outputs:       outputs,
-				Allotments:    iotago.Allotments{},
-			}
-
-			// sign the transaction essence
-			sigs, err := txEssence.Sign(testAPI, inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), ed25519AddressesWithKeys...)
-			require.NoError(t, err)
-
-			// pass the signatures and get the unlock conditions
-			unlocks := tt.unlocksFunc(sigs, testAddresses)
-
-			tx := &iotago.Transaction{
-				Essence: txEssence,
-				Unlocks: unlocks,
-			}
-
-			txBytes, err := testAPI.Encode(tx, serix.WithValidation())
-			if tt.wantEncodeErr != nil {
-				require.ErrorIs(t, err, tt.wantEncodeErr)
-				return
-			}
-			require.NoError(t, err)
-
-			// we deserialize to be sure that all serix rules are applied (like lexically ordering or multi addresses)
-			tx = &iotago.Transaction{}
-			_, err = testAPI.Decode(txBytes, tx, serix.WithValidation())
-			require.NoError(t, err)
-
-			// execute the transaction
-			err = stardustVM.Execute(
-				tx,
-				&vm.Params{API: testAPI},
-				vm.ResolvedInputs{InputSet: inputSet},
-			)
-			if tt.wantExecuteErr != nil {
-				require.ErrorIs(t, err, tt.wantExecuteErr)
-				return
-			}
-			require.NoError(t, err)
-		})
+		runStardustTransactionExecutionTest(t, tt)
 	}
 }
 
@@ -5912,7 +5647,9 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 	}
 
 	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
-	pubKey := tpkg.RandEd25519Signature().PublicKey
+	addr := tpkg.RandEd25519Address()
+
+	iotago.RestrictedAddressWithCapabilities(addr)
 
 	tests := []test{
 		{
@@ -5928,14 +5665,14 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				func() testParameters {
 					return testParameters{
 						name:    "ok - Native Token Address in Output with Native Tokens",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], true, false, false, false, false, false, false, false),
+						address: iotago.RestrictedAddressWithCapabilities(addr, iotago.WithAddressCanReceiveNativeTokens(true)),
 						wantErr: nil,
 					}
 				},
 				func() testParameters {
 					return testParameters{
 						name:    "fail - Non Native Token Address in Output with Native Tokens",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, true, true, true, true, true, true, true),
+						address: iotago.RestrictedAddressWithCapabilities(addr),
 						wantErr: iotago.ErrAddressCannotReceiveNativeTokens,
 					}
 				},
@@ -5954,14 +5691,14 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				func() testParameters {
 					return testParameters{
 						name:    "ok - Mana Address in Output with Mana",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, true, false, false, false, false, false, false),
+						address: iotago.RestrictedAddressWithCapabilities(addr, iotago.WithAddressCanReceiveMana(true)),
 						wantErr: nil,
 					}
 				},
 				func() testParameters {
 					return testParameters{
 						name:    "fail - Non Mana Address in Output with Mana",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], true, false, true, true, true, true, true, true),
+						address: iotago.RestrictedAddressWithCapabilities(addr),
 						wantErr: iotago.ErrAddressCannotReceiveMana,
 					}
 				},
@@ -5982,14 +5719,14 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				func() testParameters {
 					return testParameters{
 						name:    "ok - Timelock Unlock Condition Address in Output with Timelock Unlock Condition",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, true, false, false, false, false, false),
+						address: iotago.RestrictedAddressWithCapabilities(addr, iotago.WithAddressCanReceiveOutputsWithTimelockUnlockCondition(true)),
 						wantErr: nil,
 					}
 				},
 				func() testParameters {
 					return testParameters{
 						name:    "fail - Non Timelock Unlock Condition Address in Output with Timelock Unlock Condition",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], true, true, false, true, true, true, true, true),
+						address: iotago.RestrictedAddressWithCapabilities(addr),
 						wantErr: iotago.ErrAddressCannotReceiveTimelockUnlockCondition,
 					}
 				},
@@ -6011,14 +5748,14 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				func() testParameters {
 					return testParameters{
 						name:    "ok - Expiration Unlock Condition Address in Output with Expiration Unlock Condition",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, true, false, false, false, false),
+						address: iotago.RestrictedAddressWithCapabilities(addr, iotago.WithAddressCanReceiveOutputsWithExpirationUnlockCondition(true)),
 						wantErr: nil,
 					}
 				},
 				func() testParameters {
 					return testParameters{
 						name:    "fail - Non Expiration Unlock Condition Address in Output with Expiration Unlock Condition",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], true, true, true, false, true, true, true, true),
+						address: iotago.RestrictedAddressWithCapabilities(addr),
 						wantErr: iotago.ErrAddressCannotReceiveExpirationUnlockCondition,
 					}
 				},
@@ -6039,14 +5776,14 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				func() testParameters {
 					return testParameters{
 						name:    "ok - Storage Deposit Return Unlock Condition Address in Output with Storage Deposit Return Unlock Condition",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, false, true, false, false, false),
+						address: iotago.RestrictedAddressWithCapabilities(addr, iotago.WithAddressCanReceiveOutputsWithStorageDepositReturnUnlockCondition(true)),
 						wantErr: nil,
 					}
 				},
 				func() testParameters {
 					return testParameters{
 						name:    "fail - Non Storage Deposit Return Unlock Condition Address in Output with Storage Deposit Return Unlock Condition",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], true, true, true, true, false, true, true, true),
+						address: iotago.RestrictedAddressWithCapabilities(addr),
 						wantErr: iotago.ErrAddressCannotReceiveStorageDepositReturnUnlockCondition,
 					}
 				},
@@ -6064,15 +5801,14 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				func() testParameters {
 					return testParameters{
 						name:    "ok - Account Output Address in State Controller UC in Account Output",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, false, false, true, false, false),
+						address: iotago.RestrictedAddressWithCapabilities(addr, iotago.WithAddressCanReceiveAccountOutputs(true)),
 						wantErr: nil,
 					}
 				},
 				func() testParameters {
 					return testParameters{
-						name: "fail - Non Account Output Address in State Controller UC in Account Output",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
-							true, true, true, true, true, false, true, true),
+						name:    "fail - Non Account Output Address in State Controller UC in Account Output",
+						address: iotago.RestrictedAddressWithCapabilities(addr),
 						wantErr: iotago.ErrAddressCannotReceiveAccountOutput,
 					}
 				},
@@ -6090,15 +5826,14 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				func() testParameters {
 					return testParameters{
 						name:    "ok - Account Output Address in Governor UC in Account Output",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, false, false, true, false, false),
+						address: iotago.RestrictedAddressWithCapabilities(addr, iotago.WithAddressCanReceiveAccountOutputs(true)),
 						wantErr: nil,
 					}
 				},
 				func() testParameters {
 					return testParameters{
-						name: "fail - Non Account Output Address in Governor UC in Account Output",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
-							true, true, true, true, true, false, true, true),
+						name:    "fail - Non Account Output Address in Governor UC in Account Output",
+						address: iotago.RestrictedAddressWithCapabilities(addr),
 						wantErr: iotago.ErrAddressCannotReceiveAccountOutput,
 					}
 				},
@@ -6116,15 +5851,14 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				func() testParameters {
 					return testParameters{
 						name:    "ok - NFT Output Address in NFT Output",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, false, false, false, true, false),
+						address: iotago.RestrictedAddressWithCapabilities(addr, iotago.WithAddressCanReceiveNFTOutputs(true)),
 						wantErr: nil,
 					}
 				},
 				func() testParameters {
 					return testParameters{
-						name: "fail - Non NFT Output Address in NFT Output",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
-							true, true, true, true, true, true, false, true),
+						name:    "fail - Non NFT Output Address in NFT Output",
+						address: iotago.RestrictedAddressWithCapabilities(addr),
 						wantErr: iotago.ErrAddressCannotReceiveNFTOutput,
 					}
 				},
@@ -6142,15 +5876,14 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				func() testParameters {
 					return testParameters{
 						name:    "ok - Delegation Output Address in Delegation Output",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, false, false, false, false, false, false, true),
+						address: iotago.RestrictedAddressWithCapabilities(addr, iotago.WithAddressCanReceiveDelegationOutputs(true)),
 						wantErr: nil,
 					}
 				},
 				func() testParameters {
 					return testParameters{
-						name: "fail - Non Delegation Output Address in Delegation Output",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
-							true, true, true, true, true, true, true, false),
+						name:    "fail - Non Delegation Output Address in Delegation Output",
+						address: iotago.RestrictedAddressWithCapabilities(addr),
 						wantErr: iotago.ErrAddressCannotReceiveDelegationOutput,
 					}
 				},
@@ -6173,15 +5906,14 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				func() testParameters {
 					return testParameters{
 						name:    "ok - Mana Return Address in Output with Mana",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:], false, true, false, true, false, false, false, false),
+						address: iotago.RestrictedAddressWithCapabilities(addr, iotago.WithAddressCanReceiveMana(true), iotago.WithAddressCanReceiveOutputsWithExpirationUnlockCondition(true)),
 						wantErr: nil,
 					}
 				},
 				func() testParameters {
 					return testParameters{
-						name: "fail - Non Mana Return Address in Output with Mana",
-						address: iotago.RestrictedEd25519AddressFromPubKeyWithCapabilities(pubKey[:],
-							true, false, true, true, true, true, true, true),
+						name:    "fail - Non Mana Return Address in Output with Mana",
+						address: iotago.RestrictedAddressWithCapabilities(addr),
 						wantErr: iotago.ErrAddressCannotReceiveMana,
 					}
 				},
