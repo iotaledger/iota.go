@@ -28,19 +28,21 @@ func NewAttestation(api API, block *ProtocolBlock) *Attestation {
 	}
 }
 
-func AttestationFromBytes(apiProvider APIProvider, bytes []byte) (attestation *Attestation, consumedBytes int, err error) {
-	attestation = new(Attestation)
+func AttestationFromBytes(apiProvider APIProvider) func(bytes []byte) (attestation *Attestation, consumedBytes int, err error) {
+	return func(bytes []byte) (attestation *Attestation, consumedBytes int, err error) {
+		attestation = new(Attestation)
 
-	var version Version
-	if version, consumedBytes, err = VersionFromBytes(bytes); err != nil {
-		err = ierrors.Wrap(err, "failed to parse version")
-	} else if attestation.API, err = apiProvider.APIForVersion(version); err != nil {
-		err = ierrors.Wrapf(err, "failed to retrieve API for version %d", version)
-	} else if consumedBytes, err = attestation.API.Decode(bytes, attestation, serix.WithValidation()); err != nil {
-		err = ierrors.Wrap(err, "failed to deserialize attestation")
+		var version Version
+		if version, consumedBytes, err = VersionFromBytes(bytes); err != nil {
+			err = ierrors.Wrap(err, "failed to parse version")
+		} else if attestation.API, err = apiProvider.APIForVersion(version); err != nil {
+			err = ierrors.Wrapf(err, "failed to retrieve API for version %d", version)
+		} else if consumedBytes, err = attestation.API.Decode(bytes, attestation, serix.WithValidation()); err != nil {
+			err = ierrors.Wrap(err, "failed to deserialize attestation")
+		}
+
+		return attestation, consumedBytes, err
 	}
-
-	return attestation, consumedBytes, err
 }
 
 func (a *Attestation) Compare(other *Attestation) int {
