@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 )
@@ -70,4 +71,8 @@ func (r RewardsParameters) TargetReward(index EpochIndex, api API) (Mana, error)
 	}
 
 	return decayedInitialReward, nil
+}
+
+func ManaCost(rmc Mana, workScore WorkScore) (Mana, error) {
+	return safemath.SafeMul(rmc, Mana(workScore))
 }

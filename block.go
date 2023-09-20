@@ -428,7 +428,7 @@ func (b *BasicBlock) ManaCost(rmc Mana, workScoreStructure *WorkScoreStructure) 
 		return 0, err
 	}
 
-	return Mana(workScore) * rmc, nil
+	return ManaCost(rmc, workScore)
 }
 
 func (b *BasicBlock) Size() int {
