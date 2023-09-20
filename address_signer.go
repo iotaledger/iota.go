@@ -39,6 +39,11 @@ func NewAddressKeysForEd25519Address(addr *Ed25519Address, prvKey ed25519.Privat
 	return AddressKeys{Address: addr, Keys: prvKey}
 }
 
+// NewAddressKeysForImplicitAccountCreationAddress returns new AddressKeys for ImplicitAccountCreationAddress.
+func NewAddressKeysForImplicitAccountCreationAddress(addr *ImplicitAccountCreationAddress, prvKey ed25519.PrivateKey) AddressKeys {
+	return AddressKeys{Address: addr, Keys: prvKey}
+}
+
 // NewAddressKeysForRestrictedEd25519Address returns new AddressKeys for a restricted Ed25519Address.
 func NewAddressKeysForRestrictedEd25519Address(addr *RestrictedAddress, prvKey ed25519.PrivateKey) (AddressKeys, error) {
 	switch addr.Address.(type) {
@@ -60,7 +65,7 @@ func NewInMemoryAddressSigner(addrKeys ...AddressKeys) AddressSigner {
 		addrKeys: map[string]interface{}{},
 	}
 	for _, c := range addrKeys {
-		ss.addrKeys[c.Address.String()] = c.Keys
+		ss.addrKeys[c.Address.Key()] = c.Keys
 	}
 
 	return ss
@@ -73,8 +78,8 @@ type InMemoryAddressSigner struct {
 
 func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signature, err error) {
 
-	signatureForEd25519Address := func(edAddr *Ed25519Address, msg []byte) (signature Signature, err error) {
-		maybePrvKey, ok := s.addrKeys[edAddr.String()]
+	signatureForEd25519Address := func(edAddr DirectUnlockableAddress, msg []byte) (signature Signature, err error) {
+		maybePrvKey, ok := s.addrKeys[edAddr.Key()]
 		if !ok {
 			return nil, ierrors.Errorf("can't sign message for Ed25519 address: %w", ErrAddressKeysNotMapped)
 		}
@@ -104,22 +109,8 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signat
 			return nil, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
 		}
 	case *ImplicitAccountCreationAddress:
-		maybePrvKey, ok := s.addrKeys[addr.String()]
-		if !ok {
-			return nil, ierrors.Errorf("can't sign message for ImplicitAccountCreation address: %w", ErrAddressKeysNotMapped)
-		}
+		return signatureForEd25519Address(address, msg)
 
-		prvKey, ok := maybePrvKey.(ed25519.PrivateKey)
-		if !ok {
-			return nil, ierrors.Wrapf(ErrAddressKeysWrongType, "ImplicitAccountCreation address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, maybePrvKey)
-		}
-
-		ed25519Sig := &Ed25519Signature{}
-		copy(ed25519Sig.Signature[:], ed25519.Sign(prvKey, msg))
-		//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
-		copy(ed25519Sig.PublicKey[:], prvKey.Public().(ed25519.PublicKey))
-
-		return ed25519Sig, nil
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)
 	}
