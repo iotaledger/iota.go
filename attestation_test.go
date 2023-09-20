@@ -34,7 +34,7 @@ func TestAttestation(t *testing.T) {
 		blockID, err := block.ID(tpkg.TestAPI)
 		require.NoError(t, err)
 
-		blockIDFromAttestation, err := attestation.BlockID(tpkg.TestAPI)
+		blockIDFromAttestation, err := attestation.BlockID()
 		require.NoError(t, err)
 
 		require.Equal(t, blockID, blockIDFromAttestation)
@@ -42,7 +42,7 @@ func TestAttestation(t *testing.T) {
 
 	// Check validity of signature.
 	{
-		valid, err := attestation.VerifySignature(tpkg.TestAPI)
+		valid, err := attestation.VerifySignature()
 		require.NoError(t, err)
 		require.True(t, valid)
 	}

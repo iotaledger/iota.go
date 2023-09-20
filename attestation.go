@@ -69,25 +69,25 @@ func (a *Attestation) Compare(other *Attestation) int {
 	}
 }
 
-func (a Attestation) BlockID(api API) (BlockID, error) {
-	signatureBytes, err := api.Encode(a.Signature)
+func (a Attestation) BlockID() (BlockID, error) {
+	signatureBytes, err := a.API.Encode(a.Signature)
 	if err != nil {
 		return EmptyBlockID(), ierrors.Errorf("failed to create blockID: %w", err)
 	}
 
-	headerHash, err := a.BlockHeader.Hash(api)
+	headerHash, err := a.BlockHeader.Hash(a.API)
 	if err != nil {
 		return EmptyBlockID(), ierrors.Errorf("failed to create blockID: %w", err)
 	}
 
 	id := blockIdentifier(headerHash, a.BlockHash, signatureBytes)
-	slotIndex := api.TimeProvider().SlotFromTime(a.IssuingTime)
+	slotIndex := a.API.TimeProvider().SlotFromTime(a.IssuingTime)
 
 	return NewSlotIdentifier(slotIndex, id), nil
 }
 
-func (a *Attestation) signingMessage(api API) ([]byte, error) {
-	headerHash, err := a.BlockHeader.Hash(api)
+func (a *Attestation) signingMessage() ([]byte, error) {
+	headerHash, err := a.BlockHeader.Hash(a.API)
 	if err != nil {
 		return nil, ierrors.Errorf("failed to create signing message: %w", err)
 	}
@@ -95,8 +95,8 @@ func (a *Attestation) signingMessage(api API) ([]byte, error) {
 	return blockSigningMessage(headerHash, a.BlockHash), nil
 }
 
-func (a *Attestation) VerifySignature(api API) (valid bool, err error) {
-	signingMessage, err := a.signingMessage(api)
+func (a *Attestation) VerifySignature() (valid bool, err error) {
+	signingMessage, err := a.signingMessage()
 	if err != nil {
 		return false, err
 	}
