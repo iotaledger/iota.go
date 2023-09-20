@@ -896,3 +896,48 @@ func ExecFuncAddressRestrictions() ExecFunc {
 		return nil
 	}
 }
+
+// TODO: Should these be protocol parameters or be moved somewhere else?
+// TODO: Calculate correct values.
+const (
+	ImplicitAccountMinMana   = iotago.Mana(1000)
+	ImplicitAccountMinAmount = iotago.BaseToken(1000)
+)
+
+func implicitAccountCreationValidator(implicitAccount *iotago.BasicOutput, vmParams *Params) error {
+	if implicitAccount.Mana < ImplicitAccountMinMana {
+		return iotago.ErrImplicitAccountMinManaNotReached
+	}
+
+	if implicitAccount.Amount < ImplicitAccountMinAmount {
+		return iotago.ErrImplicitAccountMinAmountNotReached
+	}
+
+	// Implicit accounts may only contain an Address Unlock Condition.
+	if len(implicitAccount.UnlockConditionSet()) != 1 {
+		return iotago.ErrImplicitAccountDisallowedUnlockCondition
+	}
+
+	if len(implicitAccount.NativeTokens) != 0 {
+		return iotago.ErrImplicitAccountContainsNativeTokens
+	}
+
+	return nil
+}
+
+// Returns a func that validates *newly created* implicit accounts.
+func ExecFuncImplicitAccounts() ExecFunc {
+	return func(vm VirtualMachine, vmParams *Params) error {
+		for _, basicOutput := range vmParams.WorkingSet.Tx.Essence.Outputs.ToOutputsByType().BasicOutputs() {
+			if addressUnlockCondition := basicOutput.UnlockConditionSet().Address(); addressUnlockCondition != nil {
+				if addressUnlockCondition.Address.Type() == iotago.AddressImplicitAccountCreation {
+					if err := implicitAccountCreationValidator(basicOutput, vmParams); err != nil {
+						return err
+					}
+				}
+			}
+		}
+
+		return nil
+	}
+}

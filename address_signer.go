@@ -49,6 +49,11 @@ func NewAddressKeysForRestrictedEd25519Address(addr *RestrictedAddress, prvKey e
 	}
 }
 
+// NewAddressKeysForImplicitAccountAddress returns new AddressKeys for Implicit Account Creation Address.
+func NewAddressKeysForImplicitAccountAddress(addr *ImplicitAccountCreationAddress, prvKey ed25519.PrivateKey) AddressKeys {
+	return AddressKeys{Address: addr, Keys: prvKey}
+}
+
 // NewInMemoryAddressSigner creates a new InMemoryAddressSigner holding the given AddressKeys.
 func NewInMemoryAddressSigner(addrKeys ...AddressKeys) AddressSigner {
 	ss := &InMemoryAddressSigner{

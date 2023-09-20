@@ -5980,3 +5980,128 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 		}
 	}
 }
+
+func TestTxSemanticImplicitAccountCreation(t *testing.T) {
+	type test struct {
+		name    string
+		output  iotago.BasicOutput
+		wantErr error
+	}
+
+	_, edIdent, edIdentAddrKeys := tpkg.RandEd25519Identity()
+	_, implicitAccountIdent, _ := tpkg.RandImplicitAccountIdentity()
+
+	tests := []test{
+		{
+			name: "ok - implicit account creation",
+			output: iotago.BasicOutput{
+				Amount: vm.ImplicitAccountMinAmount,
+				Mana:   vm.ImplicitAccountMinMana,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - implicit account min amount not reached",
+			output: iotago.BasicOutput{
+				Amount: vm.ImplicitAccountMinAmount - 1,
+				Mana:   vm.ImplicitAccountMinMana,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+				},
+			},
+			wantErr: iotago.ErrImplicitAccountMinAmountNotReached,
+		},
+		{
+			name: "fail - implicit account min Mana not reached",
+			output: iotago.BasicOutput{
+				Amount: vm.ImplicitAccountMinAmount,
+				Mana:   vm.ImplicitAccountMinMana - 1,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+				},
+			},
+			wantErr: iotago.ErrImplicitAccountMinManaNotReached,
+		},
+		{
+			name: "fail - implicit account contains native tokens",
+			output: iotago.BasicOutput{
+				Amount:       vm.ImplicitAccountMinAmount,
+				Mana:         vm.ImplicitAccountMinMana,
+				NativeTokens: tpkg.RandSortNativeTokens(5),
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+				},
+			},
+			wantErr: iotago.ErrImplicitAccountContainsNativeTokens,
+		},
+		{
+			name: "fail - implicit account contains additional unlock conditions",
+			output: iotago.BasicOutput{
+				Amount: vm.ImplicitAccountMinAmount,
+				Mana:   vm.ImplicitAccountMinMana,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+					&iotago.TimelockUnlockCondition{SlotIndex: 500},
+				},
+			},
+			wantErr: iotago.ErrImplicitAccountDisallowedUnlockCondition,
+		},
+	}
+
+	makeTransaction := func(output iotago.Output) (vm.InputSet, iotago.Signature, *iotago.TransactionEssence) {
+		inputIDs := tpkg.RandOutputIDs(1)
+
+		inputs := vm.InputSet{
+			inputIDs[0]: vm.OutputWithCreationSlot{
+				Output: &iotago.BasicOutput{
+					Amount: iotago.BaseToken(1_000_000),
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: edIdent},
+					},
+				},
+				CreationSlot: 10,
+			},
+		}
+
+		essence := &iotago.TransactionEssence{
+			Inputs: inputIDs.UTXOInputs(),
+			Outputs: iotago.TxEssenceOutputs{
+				output,
+			},
+			CreationSlot: 10,
+		}
+		sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), edIdentAddrKeys)
+		require.NoError(t, err)
+
+		return inputs, sigs[0], essence
+	}
+
+	for _, tt := range tests {
+		inputs, sig, transactionEssence := makeTransaction(&tt.output)
+
+		vmParams := &vm.Params{
+			API: testAPI,
+		}
+
+		resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
+		tx := &iotago.Transaction{
+			Essence: transactionEssence,
+			Unlocks: iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: sig},
+			},
+		}
+
+		t.Run(tt.name, func(t *testing.T) {
+			err := stardustVM.Execute(tx, vmParams, resolvedInputs, vm.ExecFuncImplicitAccounts())
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
