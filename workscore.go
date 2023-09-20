@@ -34,8 +34,8 @@ func (w WorkScore) Multiply(in int) (WorkScore, error) {
 }
 
 type WorkScoreStructure struct {
-	// DataKilobyte accounts for the network traffic per kilobyte.
-	DataKilobyte WorkScore `serix:"0,mapKey=dataKilobyte"`
+	// DataByte accounts for the network traffic per byte.
+	DataByte WorkScore `serix:"0,mapKey=dataByte"`
 	// Block accounts for work done to process a block in the node software.
 	Block WorkScore `serix:"1,mapKey=block"`
 	// MissingParent is used for slashing if there are not enough strong tips.
@@ -64,7 +64,7 @@ type WorkScoreStructure struct {
 }
 
 func (w WorkScoreStructure) Equals(other WorkScoreStructure) bool {
-	return w.DataKilobyte == other.DataKilobyte &&
+	return w.DataByte == other.DataByte &&
 		w.Block == other.Block &&
 		w.MissingParent == other.MissingParent &&
 		w.Input == other.Input &&
@@ -82,12 +82,12 @@ func (w WorkScoreStructure) Equals(other WorkScoreStructure) bool {
 // MaxBlockWork is the maximum work score a block can have.
 func (w WorkScoreStructure) MaxBlockWork() (WorkScore, error) {
 	var maxBlockWork WorkScore
-	// max block size data factor
-	dataFactorBytes, err := w.DataKilobyte.Multiply(MaxBlockSize)
+	// max basic block payload size data factor
+	dataFactorBytes, err := w.DataByte.Multiply(MaxPayloadSize)
 	if err != nil {
 		return 0, err
 	}
-	maxBlockWork += dataFactorBytes / 1024
+	maxBlockWork += dataFactorBytes
 	// block factor
 	maxBlockWork += w.Block
 	// missing parents factor for zero parents
