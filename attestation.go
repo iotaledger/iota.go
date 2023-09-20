@@ -31,21 +31,16 @@ func NewAttestation(api API, block *ProtocolBlock) *Attestation {
 func AttestationFromBytes(apiProvider APIProvider, bytes []byte) (attestation *Attestation, consumedBytes int, err error) {
 	attestation = new(Attestation)
 
-	version, consumedVersionBytes, err := VersionFromBytes(bytes)
-	if err != nil {
-		return attestation, consumedVersionBytes, ierrors.Wrap(err, "failed to determine version")
+	var version Version
+	if version, consumedBytes, err = VersionFromBytes(bytes); err != nil {
+		err = ierrors.Wrap(err, "failed to parse version")
+	} else if attestation.API, err = apiProvider.APIForVersion(version); err != nil {
+		err = ierrors.Wrapf(err, "failed to retrieve API for version %d", version)
+	} else if consumedBytes, err = attestation.API.Decode(bytes, attestation, serix.WithValidation()); err != nil {
+		err = ierrors.Wrap(err, "failed to deserialize attestation")
 	}
 
-	if attestation.API, err = apiProvider.APIForVersion(version); err != nil {
-		return attestation, consumedVersionBytes, ierrors.Wrapf(err, "failed to get API for version %d", version)
-	}
-
-	consumedAttestationBytes, err := attestation.API.Decode(bytes, attestation, serix.WithValidation())
-	if err != nil {
-		return attestation, consumedVersionBytes + consumedAttestationBytes, ierrors.Wrap(err, "failed to deserialize attestation")
-	}
-
-	return attestation, consumedVersionBytes + consumedAttestationBytes, nil
+	return attestation, consumedBytes, err
 }
 
 func (a *Attestation) Compare(other *Attestation) int {
