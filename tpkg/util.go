@@ -848,7 +848,7 @@ func RandRentStructure() *iotago.RentStructure {
 		VByteCost:              RandUint32(math.MaxUint32),
 		VBFactorData:           iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 		VBFactorKey:            iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
-		VBFactorIssuerKeys:     iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VBFactorBlockIssuerKey: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 		VBFactorStakingFeature: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 	}
 }

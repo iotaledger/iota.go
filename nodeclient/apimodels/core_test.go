@@ -106,12 +106,12 @@ func Test_IssuanceBlockHeaderResponse(t *testing.T) {
 		},
 		LatestFinalizedSlot: 14,
 		Commitment: &iotago.Commitment{
-			Version:          api.Version(),
-			Index:            18,
-			PrevID:           iotago.CommitmentID{0x1},
-			RootsID:          iotago.Identifier{0x2},
-			CumulativeWeight: 89,
-			RMC:              123,
+			ProtocolVersion:      api.Version(),
+			Index:                18,
+			PreviousCommitmentID: iotago.CommitmentID{0x1},
+			RootsID:              iotago.Identifier{0x2},
+			CumulativeWeight:     89,
+			ReferenceManaCost:    123,
 		},
 	}
 
