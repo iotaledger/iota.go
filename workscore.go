@@ -35,7 +35,7 @@ func (w WorkScore) Multiply(in int) (WorkScore, error) {
 
 type WorkScoreStructure struct {
 	// DataByte accounts for the network traffic per byte.
-	DataByte WorkScore `serix:"0,mapKey=dataKilobyte"`
+	DataByte WorkScore `serix:"0,mapKey=dataByte"`
 	// Block accounts for work done to process a block in the node software.
 	Block WorkScore `serix:"1,mapKey=block"`
 	// MissingParent is used for slashing if there are not enough strong tips.
