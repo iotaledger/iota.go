@@ -27,7 +27,7 @@ const (
 	// BlockTypeValidationMaxParents defines the maximum amount of parents in a ValidationBlock. TODO: replace number with committee size.
 	BlockTypeValidationMaxParents = BlockMaxParents + 42
 
-	// block type + strong parents count + weak parents count + shallow like parents count + payload type + mana
+	// block type + strong parents count + weak parents count + shallow like parents count + payload type + mana.
 	BasicBlockSizeEmptyParentsAndEmptyPayload = serializer.OneByte + serializer.OneByte + serializer.OneByte + serializer.OneByte + serializer.UInt32ByteSize + ManaSize
 )
 
@@ -108,7 +108,7 @@ type BlockPayload interface {
 	Payload
 }
 
-// version + networkID + time + commitmentID + slotIndex + accountID
+// version + networkID + time + commitmentID + slotIndex + accountID.
 const BlockHeaderLength = serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + SlotIndexLength + AccountIDLength
 
 type BlockHeader struct {
