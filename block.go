@@ -277,7 +277,7 @@ func (b *ProtocolBlock) ForEachParent(consumer func(parent Parent)) {
 }
 
 func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreBytes, err := workScoreStructure.DataKilobyte.Multiply(b.Size())
+	workScoreBytes, err := workScoreStructure.DataKibibyte.Multiply(b.Size())
 	if err != nil {
 		return 0, err
 	}
