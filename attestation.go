@@ -40,7 +40,7 @@ func AttestationFromBytes(apiProvider APIProvider, bytes []byte) (attestation *A
 		return attestation, consumedVersionBytes, ierrors.Wrapf(err, "failed to get API for version %d", version)
 	}
 
-	consumedAttestationBytes, err := attestation.API.Decode(bytes[consumedVersionBytes:], attestation, serix.WithValidation())
+	consumedAttestationBytes, err := attestation.API.Decode(bytes, attestation, serix.WithValidation())
 	if err != nil {
 		return attestation, consumedVersionBytes + consumedAttestationBytes, ierrors.Wrap(err, "failed to deserialize attestation")
 	}
