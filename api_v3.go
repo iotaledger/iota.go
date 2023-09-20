@@ -599,7 +599,7 @@ func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewa
 		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to multiplication with generationRate overflow")
 	}
 
-	subExponent, err := safemath.SafeSub(manaStructure.generationRateExponent, uint64(protoParams.SlotsPerEpochExponent()))
+	subExponent, err := safemath.SafeSub(manaStructure.generationRateExponent, uint64(protoParams.TimeProvider().SlotsPerEpochExponent()))
 	if err != nil {
 		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow")
 	}

@@ -108,8 +108,6 @@ type ProtocolParameters interface {
 	NetworkName() string
 	// NetworkID defines the ID of the network which is derived from the network name.
 	NetworkID() NetworkID
-	// SlotsPerEpochExponent defines the exponent used to calculate the number of slots per epoch.
-	SlotsPerEpochExponent() uint8
 	// Bech32HRP defines the HRP prefix used for Bech32 addresses in the network.
 	Bech32HRP() NetworkPrefix
 	// RentStructure defines the rent structure used by given node/network.

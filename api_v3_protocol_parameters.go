@@ -74,10 +74,6 @@ func (p *V3ProtocolParameters) NetworkID() NetworkID {
 	return NetworkIDFromString(p.basicProtocolParameters.NetworkName)
 }
 
-func (p *V3ProtocolParameters) SlotsPerEpochExponent() uint8 {
-	return p.basicProtocolParameters.SlotsPerEpochExponent
-}
-
 func (p *V3ProtocolParameters) TimeProvider() *TimeProvider {
 	return NewTimeProvider(p.basicProtocolParameters.GenesisUnixTimestamp, int64(p.basicProtocolParameters.SlotDurationInSeconds), p.basicProtocolParameters.SlotsPerEpochExponent)
 }
