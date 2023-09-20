@@ -12,6 +12,7 @@ import (
 type Attestations = []*Attestation
 
 type Attestation struct {
+	API         API
 	BlockHeader `serix:"0"`
 	BlockHash   Identifier `serix:"1,mapKey=blockHash"`
 	Signature   Signature  `serix:"2,mapKey=signature"`
@@ -19,6 +20,7 @@ type Attestation struct {
 
 func NewAttestation(api API, block *ProtocolBlock) *Attestation {
 	return &Attestation{
+		API:         api,
 		BlockHeader: block.BlockHeader,
 		BlockHash:   lo.PanicOnErr(block.Block.Hash(api)),
 		Signature:   block.Signature,
@@ -84,4 +86,8 @@ func (a *Attestation) VerifySignature(api API) (valid bool, err error) {
 	}
 
 	return hiveEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
+}
+
+func (a *Attestation) Bytes() ([]byte, error) {
+	return a.API.Encode(a)
 }

@@ -63,7 +63,7 @@ func (addr *AccountAddress) Type() AddressType {
 }
 
 func (addr *AccountAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32StringAddress(hrp, addr)
+	return bech32StringBytes(hrp, addr.ID())
 }
 
 func (addr *AccountAddress) String() string {
@@ -72,38 +72,6 @@ func (addr *AccountAddress) String() string {
 
 func (addr *AccountAddress) Size() int {
 	return AccountAddressSerializedBytesSize
-}
-
-func (addr *AccountAddress) CannotReceiveNativeTokens() bool {
-	return false
-}
-
-func (addr *AccountAddress) CannotReceiveMana() bool {
-	return false
-}
-
-func (addr *AccountAddress) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
-	return false
-}
-
-func (addr *AccountAddress) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
-	return false
-}
-
-func (addr *AccountAddress) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return false
-}
-
-func (addr *AccountAddress) CannotReceiveAccountOutputs() bool {
-	return false
-}
-
-func (addr *AccountAddress) CannotReceiveNFTOutputs() bool {
-	return false
-}
-
-func (addr *AccountAddress) CannotReceiveDelegationOutputs() bool {
-	return false
 }
 
 // AccountAddressFromOutputID returns the account address computed from a given OutputID.

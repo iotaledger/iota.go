@@ -1,6 +1,9 @@
 package iotago
 
-import "github.com/iotaledger/hive.go/serializer/v2"
+import (
+	"github.com/iotaledger/hive.go/runtime/options"
+	"github.com/iotaledger/hive.go/serializer/v2"
+)
 
 const (
 	canReceiveNativeTokensBitIndex = iota
@@ -13,48 +16,115 @@ const (
 	canReceiveDelegationOutputsBitIndex
 )
 
+// AddressCapabilitiesOptions defines the possible capabilities of an AddressCapabilitiesBitMask.
+type AddressCapabilitiesOptions struct {
+	canReceiveNativeTokens                                   bool
+	canReceiveMana                                           bool
+	canReceiveOutputsWithTimelockUnlockCondition             bool
+	canReceiveOutputsWithExpirationUnlockCondition           bool
+	canReceiveOutputsWithStorageDepositReturnUnlockCondition bool
+	canReceiveAccountOutputs                                 bool
+	canReceiveNFTOutputs                                     bool
+	canReceiveDelegationOutputs                              bool
+}
+
+func WithAddressCanReceiveAnything() options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveNativeTokens = true
+		o.canReceiveMana = true
+		o.canReceiveOutputsWithTimelockUnlockCondition = true
+		o.canReceiveOutputsWithExpirationUnlockCondition = true
+		o.canReceiveOutputsWithStorageDepositReturnUnlockCondition = true
+		o.canReceiveAccountOutputs = true
+		o.canReceiveNFTOutputs = true
+		o.canReceiveDelegationOutputs = true
+	}
+}
+
+func WithAddressCanReceiveNativeTokens(canReceiveNativeTokens bool) options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveNativeTokens = canReceiveNativeTokens
+	}
+}
+
+func WithAddressCanReceiveMana(canReceiveMana bool) options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveMana = canReceiveMana
+	}
+}
+
+func WithAddressCanReceiveOutputsWithTimelockUnlockCondition(canReceiveOutputsWithTimelockUnlockCondition bool) options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveOutputsWithTimelockUnlockCondition = canReceiveOutputsWithTimelockUnlockCondition
+	}
+}
+
+func WithAddressCanReceiveOutputsWithExpirationUnlockCondition(canReceiveOutputsWithExpirationUnlockCondition bool) options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveOutputsWithExpirationUnlockCondition = canReceiveOutputsWithExpirationUnlockCondition
+	}
+}
+
+func WithAddressCanReceiveOutputsWithStorageDepositReturnUnlockCondition(canReceiveOutputsWithStorageDepositReturnUnlockCondition bool) options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveOutputsWithStorageDepositReturnUnlockCondition = canReceiveOutputsWithStorageDepositReturnUnlockCondition
+	}
+}
+
+func WithAddressCanReceiveAccountOutputs(canReceiveAccountOutputs bool) options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveAccountOutputs = canReceiveAccountOutputs
+	}
+}
+
+func WithAddressCanReceiveNFTOutputs(canReceiveNFTOutputs bool) options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveNFTOutputs = canReceiveNFTOutputs
+	}
+}
+
+func WithAddressCanReceiveDelegationOutputs(canReceiveDelegationOutputs bool) options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveDelegationOutputs = canReceiveDelegationOutputs
+	}
+}
+
 type AddressCapabilitiesBitMask []byte
 
-func AddressCapabilitiesBitMaskWithCapabilities(canReceiveNativeTokens bool,
-	canReceiveMana bool,
-	canReceiveOutputsWithTimelockUnlockCondition bool,
-	canReceiveOutputsWithExpirationUnlockCondition bool,
-	canReceiveOutputsWithStorageDepositReturnUnlockCondition bool,
-	canReceiveAccountOutputs bool,
-	canReceiveNFTOutputs bool,
-	canReceiveDelegationOutputs bool) AddressCapabilitiesBitMask {
+func AddressCapabilitiesBitMaskWithCapabilities(opts ...options.Option[AddressCapabilitiesOptions]) AddressCapabilitiesBitMask {
+	options := options.Apply(new(AddressCapabilitiesOptions), opts)
 
 	bm := AddressCapabilitiesBitMask{}
 
-	if canReceiveNativeTokens {
+	if options.canReceiveNativeTokens {
 		bm = bm.setBit(canReceiveNativeTokensBitIndex)
 	}
 
-	if canReceiveMana {
+	if options.canReceiveMana {
 		bm = bm.setBit(canReceiveManaBitIndex)
 	}
 
-	if canReceiveOutputsWithTimelockUnlockCondition {
+	if options.canReceiveOutputsWithTimelockUnlockCondition {
 		bm = bm.setBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
 	}
 
-	if canReceiveOutputsWithExpirationUnlockCondition {
+	if options.canReceiveOutputsWithExpirationUnlockCondition {
 		bm = bm.setBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
 	}
 
-	if canReceiveOutputsWithStorageDepositReturnUnlockCondition {
+	if options.canReceiveOutputsWithStorageDepositReturnUnlockCondition {
 		bm = bm.setBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
 	}
 
-	if canReceiveAccountOutputs {
+	if options.canReceiveAccountOutputs {
 		bm = bm.setBit(canReceiveAccountOutputsBitIndex)
 	}
 
-	if canReceiveNFTOutputs {
+	if options.canReceiveNFTOutputs {
 		bm = bm.setBit(canReceiveNFTOutputsBitIndex)
 	}
 
-	if canReceiveDelegationOutputs {
+	if options.canReceiveDelegationOutputs {
 		bm = bm.setBit(canReceiveDelegationOutputsBitIndex)
 	}
 

@@ -39,6 +39,16 @@ func NewAddressKeysForEd25519Address(addr *Ed25519Address, prvKey ed25519.Privat
 	return AddressKeys{Address: addr, Keys: prvKey}
 }
 
+// NewAddressKeysForRestrictedEd25519Address returns new AddressKeys for a restricted Ed25519Address.
+func NewAddressKeysForRestrictedEd25519Address(addr *RestrictedAddress, prvKey ed25519.PrivateKey) (AddressKeys, error) {
+	switch addr.Address.(type) {
+	case *Ed25519Address:
+		return AddressKeys{Address: addr, Keys: prvKey}, nil
+	default:
+		return AddressKeys{}, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
+	}
+}
+
 // NewInMemoryAddressSigner creates a new InMemoryAddressSigner holding the given AddressKeys.
 func NewInMemoryAddressSigner(addrKeys ...AddressKeys) AddressSigner {
 	ss := &InMemoryAddressSigner{
@@ -57,9 +67,9 @@ type InMemoryAddressSigner struct {
 }
 
 func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signature, err error) {
-	switch addr.(type) {
-	case *Ed25519Address:
-		maybePrvKey, ok := s.addrKeys[addr.String()]
+
+	signatureForEd25519Address := func(edAddr *Ed25519Address, msg []byte) (signature Signature, err error) {
+		maybePrvKey, ok := s.addrKeys[edAddr.String()]
 		if !ok {
 			return nil, ierrors.Errorf("can't sign message for Ed25519 address: %w", ErrAddressKeysNotMapped)
 		}
@@ -75,6 +85,20 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signat
 		copy(ed25519Sig.PublicKey[:], prvKey.Public().(ed25519.PublicKey))
 
 		return ed25519Sig, nil
+	}
+
+	switch address := addr.(type) {
+	case *Ed25519Address:
+		return signatureForEd25519Address(address, msg)
+
+	case *RestrictedAddress:
+		switch underlyingAddr := address.Address.(type) {
+		case *Ed25519Address:
+			return signatureForEd25519Address(underlyingAddr, msg)
+		default:
+			return nil, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
+		}
+
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)
 	}

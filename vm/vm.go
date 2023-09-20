@@ -567,6 +567,17 @@ func unlockIdent(vmParams *Params, ownerIdent iotago.Address, unlock iotago.Unlo
 	return nil
 }
 
+// resolveUnderlyingIdent returns the underlying address in case of a restricted address.
+// this way we handle restricted addresses like normal addresses in the unlock logic.
+func resolveUnderlyingIdent(ident iotago.Address) iotago.Address {
+	switch addr := ident.(type) {
+	case *iotago.RestrictedAddress:
+		return addr.Address
+	default:
+		return addr
+	}
+}
+
 func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) error {
 	ownerIdent, err := identToUnlock(vmParams, output, inputIndex)
 	if err != nil {
@@ -581,7 +592,7 @@ func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) err
 
 	unlock := vmParams.WorkingSet.Tx.Unlocks[inputIndex]
 
-	return unlockIdent(vmParams, ownerIdent, unlock, inputIndex, false)
+	return unlockIdent(vmParams, resolveUnderlyingIdent(ownerIdent), unlock, inputIndex, false)
 }
 
 // ExecFuncSenderUnlocked validates that for SenderFeature occurring on the output side,
@@ -812,35 +823,41 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 }
 
 func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Address) error {
-	if address.CannotReceiveNativeTokens() && len(output.NativeTokenList()) != 0 {
+	addrWithCapabilities, isAddrWithCapabilities := address.(iotago.AddressCapabilities)
+	if !isAddrWithCapabilities {
+		// no restrictions
+		return nil
+	}
+
+	if addrWithCapabilities.CannotReceiveNativeTokens() && len(output.NativeTokenList()) != 0 {
 		return iotago.ErrAddressCannotReceiveNativeTokens
 	}
 
-	if address.CannotReceiveMana() && output.StoredMana() != 0 {
+	if addrWithCapabilities.CannotReceiveMana() && output.StoredMana() != 0 {
 		return iotago.ErrAddressCannotReceiveMana
 	}
 
-	if address.CannotReceiveOutputsWithTimelockUnlockCondition() && output.UnlockConditionSet().HasTimelockCondition() {
+	if addrWithCapabilities.CannotReceiveOutputsWithTimelockUnlockCondition() && output.UnlockConditionSet().HasTimelockCondition() {
 		return iotago.ErrAddressCannotReceiveTimelockUnlockCondition
 	}
 
-	if address.CannotReceiveOutputsWithExpirationUnlockCondition() && output.UnlockConditionSet().HasExpirationCondition() {
+	if addrWithCapabilities.CannotReceiveOutputsWithExpirationUnlockCondition() && output.UnlockConditionSet().HasExpirationCondition() {
 		return iotago.ErrAddressCannotReceiveExpirationUnlockCondition
 	}
 
-	if address.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() && output.UnlockConditionSet().HasStorageDepositReturnCondition() {
+	if addrWithCapabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() && output.UnlockConditionSet().HasStorageDepositReturnCondition() {
 		return iotago.ErrAddressCannotReceiveStorageDepositReturnUnlockCondition
 	}
 
-	if address.CannotReceiveAccountOutputs() && output.Type() == iotago.OutputAccount {
+	if addrWithCapabilities.CannotReceiveAccountOutputs() && output.Type() == iotago.OutputAccount {
 		return iotago.ErrAddressCannotReceiveAccountOutput
 	}
 
-	if address.CannotReceiveNFTOutputs() && output.Type() == iotago.OutputNFT {
+	if addrWithCapabilities.CannotReceiveNFTOutputs() && output.Type() == iotago.OutputNFT {
 		return iotago.ErrAddressCannotReceiveNFTOutput
 	}
 
-	if address.CannotReceiveDelegationOutputs() && output.Type() == iotago.OutputDelegation {
+	if addrWithCapabilities.CannotReceiveDelegationOutputs() && output.Type() == iotago.OutputDelegation {
 		return iotago.ErrAddressCannotReceiveDelegationOutput
 	}
 
