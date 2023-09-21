@@ -182,11 +182,11 @@ func TestClient_BlockIssuance(t *testing.T) {
 	require.NoError(t, err)
 
 	originRes.Commitment = &iotago.Commitment{
-		Version:          1,
-		Index:            iotago.SlotIndex(25),
-		PrevID:           prevID,
-		RootsID:          rootsID,
-		CumulativeWeight: 100_000,
+		ProtocolVersion:      1,
+		Index:                iotago.SlotIndex(25),
+		PreviousCommitmentID: prevID,
+		RootsID:              rootsID,
+		CumulativeWeight:     100_000,
 	}
 
 	mockGetJSON(nodeclient.RouteBlockIssuance, 200, originRes)
@@ -482,10 +482,10 @@ func TestClient_CommitmentByID(t *testing.T) {
 	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(math.MaxUint64))
 
 	originRes := &iotago.Commitment{
-		Index:            commitment.Index,
-		PrevID:           commitment.PrevID,
-		RootsID:          commitment.RootsID,
-		CumulativeWeight: commitment.CumulativeWeight,
+		Index:                commitment.Index,
+		PreviousCommitmentID: commitment.PreviousCommitmentID,
+		RootsID:              commitment.RootsID,
+		CumulativeWeight:     commitment.CumulativeWeight,
 	}
 
 	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByID, commitmentID.ToHex()), 200, originRes)
@@ -530,10 +530,10 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(math.MaxUint64))
 
 	originRes := &iotago.Commitment{
-		Index:            commitment.Index,
-		PrevID:           commitment.PrevID,
-		RootsID:          commitment.RootsID,
-		CumulativeWeight: commitment.CumulativeWeight,
+		Index:                commitment.Index,
+		PreviousCommitmentID: commitment.PreviousCommitmentID,
+		RootsID:              commitment.RootsID,
+		CumulativeWeight:     commitment.CumulativeWeight,
 	}
 
 	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByIndex, slotIndex), 200, originRes)

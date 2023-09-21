@@ -192,6 +192,12 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 }
 
 func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// we account for the network traffic only on "Payload" level
+	workScoreEssenceData, err := workScoreStructure.DataByte.Multiply(t.Size())
+	if err != nil {
+		return 0, err
+	}
+
 	workScoreEssence, err := t.Essence.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -202,5 +208,5 @@ func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 		return 0, err
 	}
 
-	return workScoreEssence.Add(workScoreUnlocks)
+	return workScoreEssenceData.Add(workScoreEssence, workScoreUnlocks)
 }

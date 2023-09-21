@@ -5,6 +5,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
@@ -195,6 +196,8 @@ type v3api struct {
 	manaDecayProvider         *ManaDecayProvider
 	livenessThresholdDuration time.Duration
 	maxBlockWork              WorkScore
+	computedInitialReward     uint64
+	computedFinalReward       uint64
 }
 
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
@@ -233,6 +236,14 @@ func (v *v3api) MaxBlockWork() WorkScore {
 	return v.maxBlockWork
 }
 
+func (v *v3api) ComputedInitialReward() uint64 {
+	return v.computedInitialReward
+}
+
+func (v *v3api) ComputedFinalReward() uint64 {
+	return v.computedFinalReward
+}
+
 func (v *v3api) Encode(obj interface{}, opts ...serix.Option) ([]byte, error) {
 	return v.serixAPI.Encode(context.TODO(), obj, opts...)
 }
@@ -250,6 +261,9 @@ func V3API(protoParams ProtocolParameters) API {
 	maxBlockWork, err := protoParams.WorkScoreStructure().MaxBlockWork()
 	must(err)
 
+	initialReward, finalReward, err := calculateRewards(protoParams)
+	must(err)
+
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{
 		serixAPI:                  api,
@@ -258,6 +272,8 @@ func V3API(protoParams ProtocolParameters) API {
 		manaDecayProvider:         protoParams.ManaDecayProvider(),
 		livenessThresholdDuration: time.Duration(uint64(protoParams.LivenessThreshold())*uint64(timeProvider.SlotDurationSeconds())) * time.Second,
 		maxBlockWork:              maxBlockWork,
+		computedInitialReward:     initialReward,
+		computedFinalReward:       finalReward,
 	}
 
 	must(api.RegisterTypeSettings(TaggedData{},
@@ -609,4 +625,36 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	return v3
+}
+
+func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewards uint64, err error) {
+	manaStructure := protoParams.ManaDecayProvider()
+
+	// final reward, after bootstrapping phase
+	result, err := safemath.SafeMul(uint64(protoParams.TokenSupply()), protoParams.RewardsParameters().ManaShareCoefficient)
+	if err != nil {
+		return 0, 0, ierrors.Wrap(err, "failed to calculate target reward due to tokenSupply and RewardsManaShareCoefficient multiplication overflow")
+	}
+
+	result, err = safemath.SafeMul(result, manaStructure.generationRate)
+	if err != nil {
+		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to multiplication with generationRate overflow")
+	}
+
+	subExponent, err := safemath.SafeSub(manaStructure.generationRateExponent, uint64(protoParams.TimeProvider().SlotsPerEpochExponent()))
+	if err != nil {
+		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow")
+	}
+
+	finalRewards = result >> subExponent
+
+	// initial reward for bootstrapping phase
+	initialReward, err := safemath.SafeMul(finalRewards, protoParams.RewardsParameters().DecayBalancingConstant)
+	if err != nil {
+		return 0, 0, ierrors.Wrapf(err, "failed to calculate initial reward due to finalReward and DecayBalancingConstant multiplication overflow")
+	}
+
+	initialRewards = initialReward >> uint64(protoParams.RewardsParameters().DecayBalancingConstantExponent)
+
+	return
 }

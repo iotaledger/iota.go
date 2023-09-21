@@ -88,14 +88,14 @@ func NewManaDecayProvider(
 	return &ManaDecayProvider{
 		timeProvider:                 timeProvider,
 		slotsPerEpochExponent:        uint64(slotsPerEpochExponent),
-		bitsCount:                    uint64(manaStructure.ManaBitsCount),
-		generationRate:               uint64(manaStructure.ManaGenerationRate),
-		generationRateExponent:       uint64(manaStructure.ManaGenerationRateExponent),
-		decayFactors:                 lo.Map(manaStructure.ManaDecayFactors, func(factor uint32) uint64 { return uint64(factor) }),
-		decayFactorsLength:           uint64(len(manaStructure.ManaDecayFactors)),
-		decayFactorsExponent:         uint64(manaStructure.ManaDecayFactorsExponent),
-		decayFactorEpochsSum:         uint64(manaStructure.ManaDecayFactorEpochsSum),
-		decayFactorEpochsSumExponent: uint64(manaStructure.ManaDecayFactorEpochsSumExponent),
+		bitsCount:                    uint64(manaStructure.BitsCount),
+		generationRate:               uint64(manaStructure.GenerationRate),
+		generationRateExponent:       uint64(manaStructure.GenerationRateExponent),
+		decayFactors:                 lo.Map(manaStructure.DecayFactors, func(factor uint32) uint64 { return uint64(factor) }),
+		decayFactorsLength:           uint64(len(manaStructure.DecayFactors)),
+		decayFactorsExponent:         uint64(manaStructure.DecayFactorsExponent),
+		decayFactorEpochsSum:         uint64(manaStructure.DecayFactorEpochsSum),
+		decayFactorEpochsSumExponent: uint64(manaStructure.DecayFactorEpochsSumExponent),
 	}
 }
 

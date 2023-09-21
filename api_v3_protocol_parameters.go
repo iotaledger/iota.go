@@ -37,6 +37,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
+			WithRewardsOptions(10, 8, 8, 31, 1154, 2, 1),
 		},
 			opts...,
 		),
@@ -118,6 +119,10 @@ func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
 	return &p.basicProtocolParameters.VersionSignaling
 }
 
+func (p *V3ProtocolParameters) RewardsParameters() *RewardsParameters {
+	return &p.basicProtocolParameters.RewardsParameters
+}
+
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
 	return CommonSerixAPI().Encode(context.TODO(), p)
 }
@@ -132,8 +137,8 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 }
 
 func (p *V3ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n}",
-		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaStructure, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.ValidationBlocksPerSlot, p.basicProtocolParameters.PunishmentEpochs, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
+		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaStructure, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.ValidationBlocksPerSlot, p.basicProtocolParameters.PunishmentEpochs, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge, p.basicProtocolParameters.EpochNearingThreshold, p.basicProtocolParameters.CongestionControlParameters, p.basicProtocolParameters.VersionSignaling, p.basicProtocolParameters.RewardsParameters)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
@@ -162,14 +167,14 @@ func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Opt
 	}
 }
 
-func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData, vBFactorKey, vBFactorIssuerKeys, vBFactorStakingFeature, vBFactorDelegation VByteCostFactor) options.Option[V3ProtocolParameters] {
+func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData, vBFactorKey, vBFactorBlockIssuerKey, vBFactorStakingFeature, vBFactorDelegation VByteCostFactor) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TokenSupply = totalSupply
 		p.basicProtocolParameters.RentStructure = RentStructure{
 			VByteCost:              vByteCost,
 			VBFactorData:           vBFactorData,
 			VBFactorKey:            vBFactorKey,
-			VBFactorIssuerKeys:     vBFactorIssuerKeys,
+			VBFactorBlockIssuerKey: vBFactorBlockIssuerKey,
 			VBFactorStakingFeature: vBFactorStakingFeature,
 			VBFactorDelegation:     vBFactorDelegation,
 		}
@@ -177,7 +182,7 @@ func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData, vB
 }
 
 func WithWorkScoreOptions(
-	dataKilobyte WorkScore,
+	dataByte WorkScore,
 	block WorkScore,
 	missingParent WorkScore,
 	input WorkScore,
@@ -192,7 +197,7 @@ func WithWorkScoreOptions(
 ) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.WorkScoreStructure = WorkScoreStructure{
-			DataKilobyte:              dataKilobyte,
+			DataByte:                  dataByte,
 			Block:                     block,
 			MissingParent:             missingParent,
 			Input:                     input,
@@ -216,15 +221,15 @@ func WithTimeProviderOptions(genesisTimestamp int64, slotDuration uint8, slotsPe
 	}
 }
 
-func WithManaOptions(manaBitsCount uint8, manaGenerationRate uint8, manaGenerationRateExponent uint8, manaDecayFactors []uint32, manaDecayFactorsExponent uint8, manaDecayFactorEpochsSum uint32, manaDecayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
+func WithManaOptions(bitsCount uint8, generationRate uint8, generationRateExponent uint8, decayFactors []uint32, decayFactorsExponent uint8, decayFactorEpochsSum uint32, decayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.ManaStructure.ManaBitsCount = manaBitsCount
-		p.basicProtocolParameters.ManaStructure.ManaGenerationRate = manaGenerationRate
-		p.basicProtocolParameters.ManaStructure.ManaGenerationRateExponent = manaGenerationRateExponent
-		p.basicProtocolParameters.ManaStructure.ManaDecayFactors = manaDecayFactors
-		p.basicProtocolParameters.ManaStructure.ManaDecayFactorsExponent = manaDecayFactorsExponent
-		p.basicProtocolParameters.ManaStructure.ManaDecayFactorEpochsSum = manaDecayFactorEpochsSum
-		p.basicProtocolParameters.ManaStructure.ManaDecayFactorEpochsSumExponent = manaDecayFactorEpochsSumExponent
+		p.basicProtocolParameters.ManaStructure.BitsCount = bitsCount
+		p.basicProtocolParameters.ManaStructure.GenerationRate = generationRate
+		p.basicProtocolParameters.ManaStructure.GenerationRateExponent = generationRateExponent
+		p.basicProtocolParameters.ManaStructure.DecayFactors = decayFactors
+		p.basicProtocolParameters.ManaStructure.DecayFactorsExponent = decayFactorsExponent
+		p.basicProtocolParameters.ManaStructure.DecayFactorEpochsSum = decayFactorEpochsSum
+		p.basicProtocolParameters.ManaStructure.DecayFactorEpochsSumExponent = decayFactorEpochsSumExponent
 	}
 }
 
@@ -237,9 +242,9 @@ func WithLivenessOptions(livenessThreshold SlotIndex, minCommittableAge SlotInde
 	}
 }
 
-func WithCongestionControlOptions(rmcMin Mana, rmcIncrease Mana, rmcDecrease Mana, rmcIncreaseThreshold WorkScore, rmcDecreaseThreshold WorkScore, schedulerRate WorkScore, minMana Mana, maxBufferSize uint32, maxValBufferSize uint32) options.Option[V3ProtocolParameters] {
+func WithCongestionControlOptions(minReferenceManaCost Mana, rmcIncrease Mana, rmcDecrease Mana, rmcIncreaseThreshold WorkScore, rmcDecreaseThreshold WorkScore, schedulerRate WorkScore, minMana Mana, maxBufferSize uint32, maxValBufferSize uint32) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.CongestionControlParameters.RMCMin = rmcMin
+		p.basicProtocolParameters.CongestionControlParameters.MinReferenceManaCost = minReferenceManaCost
 		p.basicProtocolParameters.CongestionControlParameters.Increase = rmcIncrease
 		p.basicProtocolParameters.CongestionControlParameters.Decrease = rmcDecrease
 		p.basicProtocolParameters.CongestionControlParameters.IncreaseThreshold = rmcIncreaseThreshold
@@ -266,5 +271,17 @@ func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, acti
 			WindowTargetRatio: windowTargetRatio,
 			ActivationOffset:  activationOffset,
 		}
+	}
+}
+
+func WithRewardsOptions(validatorBlocksPerSlot, profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, bootstrappingDuration EpochIndex, manaShareCoefficient, decayBalancingConstant uint64) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.RewardsParameters.ValidatorBlocksPerSlot = validatorBlocksPerSlot
+		p.basicProtocolParameters.RewardsParameters.ProfitMarginExponent = profitMarginExponent
+		p.basicProtocolParameters.RewardsParameters.BootstrappingDuration = bootstrappingDuration
+		p.basicProtocolParameters.RewardsParameters.ManaShareCoefficient = manaShareCoefficient
+		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent = decayBalancingConstantExponent
+		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant = decayBalancingConstant
+		p.basicProtocolParameters.RewardsParameters.PoolCoefficientExponent = poolCoefficientExponent
 	}
 }
