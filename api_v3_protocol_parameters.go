@@ -221,15 +221,15 @@ func WithTimeProviderOptions(genesisTimestamp int64, slotDuration uint8, slotsPe
 	}
 }
 
-func WithManaOptions(manaBitsCount uint8, manaGenerationRate uint8, manaGenerationRateExponent uint8, manaDecayFactors []uint32, manaDecayFactorsExponent uint8, manaDecayFactorEpochsSum uint32, manaDecayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
+func WithManaOptions(bitsCount uint8, generationRate uint8, generationRateExponent uint8, decayFactors []uint32, decayFactorsExponent uint8, decayFactorEpochsSum uint32, decayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.ManaStructure.ManaBitsCount = manaBitsCount
-		p.basicProtocolParameters.ManaStructure.ManaGenerationRate = manaGenerationRate
-		p.basicProtocolParameters.ManaStructure.ManaGenerationRateExponent = manaGenerationRateExponent
-		p.basicProtocolParameters.ManaStructure.ManaDecayFactors = manaDecayFactors
-		p.basicProtocolParameters.ManaStructure.ManaDecayFactorsExponent = manaDecayFactorsExponent
-		p.basicProtocolParameters.ManaStructure.ManaDecayFactorEpochsSum = manaDecayFactorEpochsSum
-		p.basicProtocolParameters.ManaStructure.ManaDecayFactorEpochsSumExponent = manaDecayFactorEpochsSumExponent
+		p.basicProtocolParameters.ManaStructure.BitsCount = bitsCount
+		p.basicProtocolParameters.ManaStructure.GenerationRate = generationRate
+		p.basicProtocolParameters.ManaStructure.GenerationRateExponent = generationRateExponent
+		p.basicProtocolParameters.ManaStructure.DecayFactors = decayFactors
+		p.basicProtocolParameters.ManaStructure.DecayFactorsExponent = decayFactorsExponent
+		p.basicProtocolParameters.ManaStructure.DecayFactorEpochsSum = decayFactorEpochsSum
+		p.basicProtocolParameters.ManaStructure.DecayFactorEpochsSumExponent = decayFactorEpochsSumExponent
 	}
 }
 

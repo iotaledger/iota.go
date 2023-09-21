@@ -40,13 +40,13 @@ func TestMain(m *testing.M) {
 
 	testTimeProvider = iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochExponent)
 	manaStruct := &iotago.ManaStructure{
-		ManaBitsCount:                    bitsCount,
-		ManaGenerationRate:               generationRate,
-		ManaGenerationRateExponent:       generationRateExponent,
-		ManaDecayFactors:                 testManaDecayFactors,
-		ManaDecayFactorsExponent:         decayFactorsExponent,
-		ManaDecayFactorEpochsSum:         testManaDecayFactorEpochsSum,
-		ManaDecayFactorEpochsSumExponent: decayFactorEpochsSumExponent,
+		BitsCount:                    bitsCount,
+		GenerationRate:               generationRate,
+		GenerationRateExponent:       generationRateExponent,
+		DecayFactors:                 testManaDecayFactors,
+		DecayFactorsExponent:         decayFactorsExponent,
+		DecayFactorEpochsSum:         testManaDecayFactorEpochsSum,
+		DecayFactorEpochsSumExponent: decayFactorEpochsSumExponent,
 	}
 	testManaDecayProvider = iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, manaStruct)
 
@@ -100,13 +100,13 @@ func BenchmarkManaGenerationWithDecay_Range(b *testing.B) {
 
 func TestManaDecay_NoFactorsGiven(t *testing.T) {
 	manaStruct := &iotago.ManaStructure{
-		ManaBitsCount:                    bitsCount,
-		ManaGenerationRate:               generationRate,
-		ManaGenerationRateExponent:       decayFactorEpochsSumExponent,
-		ManaDecayFactors:                 []uint32{},
-		ManaDecayFactorsExponent:         decayFactorsExponent,
-		ManaDecayFactorEpochsSum:         testManaDecayFactorEpochsSum,
-		ManaDecayFactorEpochsSumExponent: decayFactorEpochsSumExponent,
+		BitsCount:                    bitsCount,
+		GenerationRate:               generationRate,
+		GenerationRateExponent:       decayFactorEpochsSumExponent,
+		DecayFactors:                 []uint32{},
+		DecayFactorsExponent:         decayFactorsExponent,
+		DecayFactorEpochsSum:         testManaDecayFactorEpochsSum,
+		DecayFactorEpochsSumExponent: decayFactorEpochsSumExponent,
 	}
 	manaDecayProvider := iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, manaStruct)
 
