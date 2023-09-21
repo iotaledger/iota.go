@@ -242,9 +242,9 @@ func WithLivenessOptions(livenessThreshold SlotIndex, minCommittableAge SlotInde
 	}
 }
 
-func WithCongestionControlOptions(rmcMin Mana, rmcIncrease Mana, rmcDecrease Mana, rmcIncreaseThreshold WorkScore, rmcDecreaseThreshold WorkScore, schedulerRate WorkScore, minMana Mana, maxBufferSize uint32, maxValBufferSize uint32) options.Option[V3ProtocolParameters] {
+func WithCongestionControlOptions(minReferenceManaCost Mana, rmcIncrease Mana, rmcDecrease Mana, rmcIncreaseThreshold WorkScore, rmcDecreaseThreshold WorkScore, schedulerRate WorkScore, minMana Mana, maxBufferSize uint32, maxValBufferSize uint32) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.CongestionControlParameters.RMCMin = rmcMin
+		p.basicProtocolParameters.CongestionControlParameters.MinReferenceManaCost = minReferenceManaCost
 		p.basicProtocolParameters.CongestionControlParameters.Increase = rmcIncrease
 		p.basicProtocolParameters.CongestionControlParameters.Decrease = rmcDecrease
 		p.basicProtocolParameters.CongestionControlParameters.IncreaseThreshold = rmcIncreaseThreshold
