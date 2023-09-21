@@ -407,7 +407,7 @@ func ExecFuncInputUnlocks() ExecFunc {
 			}
 
 			// since this input is now unlocked, and it is a ChainOutput, the chain's address becomes automatically unlocked
-			if chainConstrOutput, is := input.(iotago.ChainOutput); is && chainConstrOutput.Chain().Addressable() {
+			if chainConstrOutput, is := input.(iotago.ChainOutput); is && chainConstrOutput.Chain() != nil && chainConstrOutput.Chain().Addressable() {
 				// mark this ChainOutput's identity as unlocked by this input
 				chainID := chainConstrOutput.Chain()
 				if chainID.Empty() {
