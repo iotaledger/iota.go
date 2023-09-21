@@ -34,13 +34,17 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 	set := make(ChainInputSet)
 	for utxoInputID, input := range inputSet {
 		chainOutput, is := input.Output.(iotago.ChainOutput)
-		if !is {
+		if !is || chainOutput == nil {
 			continue
 		}
 
 		chainID := chainOutput.Chain()
+		// basic outputs are chain outputs but return nil for Chain() if they do not have implicit account creation address unlock condition.
+		if chainID == nil {
+			continue
+		}
 		if chainID.Empty() {
-			if utxoIDChainID, is := chainOutput.Chain().(iotago.UTXOIDChainID); is {
+			if utxoIDChainID, is := chainID.(iotago.UTXOIDChainID); is {
 				chainID = utxoIDChainID.FromOutputID(utxoInputID)
 			}
 		}

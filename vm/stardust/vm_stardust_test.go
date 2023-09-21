@@ -6095,7 +6095,7 @@ func TestTxSemanticImplicitAccountCreation(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tx, vmParams, resolvedInputs, vm.ExecFuncImplicitAccounts())
+			err := stardustVM.Execute(tx, vmParams, resolvedInputs, vm.ExecFuncImplicitAccountCreation())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return

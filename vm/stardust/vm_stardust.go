@@ -3,6 +3,7 @@ package stardust
 import (
 	"bytes"
 	"fmt"
+	"math"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -21,7 +22,7 @@ func NewVirtualMachine() vm.VirtualMachine {
 			vm.ExecFuncChainTransitions(),
 			vm.ExecFuncBalancedMana(),
 			vm.ExecFuncAddressRestrictions(),
-			vm.ExecFuncImplicitAccounts(),
+			vm.ExecFuncImplicitAccountCreation(),
 		},
 	}
 }
@@ -65,6 +66,15 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 		}
 
 		return accountSTVF(input, transType, nextAccount, vmParams)
+	case *iotago.BasicOutput:
+		var nextAccount *iotago.AccountOutput
+		if next != nil {
+			if nextAccount, ok = next.(*iotago.AccountOutput); !ok {
+				return ierrors.New("can only state transition implicit account to an account output")
+			}
+		}
+
+		return implicitAccountSTVF(input, transType, nextAccount, vmParams)
 	case *iotago.FoundryOutput:
 		var nextFoundry *iotago.FoundryOutput
 		if next != nil {
@@ -94,6 +104,42 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 		return delegationSTVF(input, transType, nextDelegationOutput, vmParams)
 	default:
 		panic(fmt.Sprintf("invalid output type %v passed to Stardust virtual machine", input.Output))
+	}
+}
+
+// For implicit account conversion, there must be a basic output as input, and an account output as output with an AccountID matching the input.
+// The block issuer feature on the output side must be present and valid.
+// The state index must be set to 1 on the output side.
+// If there is a staking feature on the output side, it must be valid as though it was a new account.
+// If there is an issuer feature, treat this as we would with a new account.
+func implicitAccountSTVF(input *vm.ChainOutputWithCreationSlot, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	switch transType {
+	case iotago.ChainTransitionTypeStateChange:
+		// check the block issuer feature of the new account output is valid as though the input side has a block issuer feature with max expiry slot.
+		inputBlockIssuerFeature := &iotago.BlockIssuerFeature{
+			ExpirySlot: math.MaxUint64,
+		}
+		if err := accountBlockIssuerSTVF(input, inputBlockIssuerFeature, next, vmParams); err != nil {
+			return err
+		}
+		// state index must be set to 1 on the output side.
+		if next.StateIndex != 1 {
+			return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "state index 0 on the input side but %d on the output side", next.StateIndex)
+		}
+		// treat the staking feature as we would with a new account output.
+		if stakingFeat := next.FeatureSet().Staking(); stakingFeat != nil {
+			if err := accountStakingGenesisValidation(next, stakingFeat, vmParams); err != nil {
+				return ierrors.Join(iotago.ErrInvalidStakingTransition, err)
+			}
+		}
+		// treat issuer feature as we would with a new account output.
+		return vm.IsIssuerOnOutputUnlocked(next, vmParams.WorkingSet.UnlockedIdents)
+	case iotago.ChainTransitionTypeDestroy:
+		return ierrors.Wrapf(iotago.ErrImplicitAccountDestruction, "implicit account %s can not be destroyed", input.Output.Chain())
+	case iotago.ChainTransitionTypeGenesis:
+		panic("implicit account genesis should not be handled as a chain output")
+	default:
+		panic("unknown chain transition type in ImplicitAccountOutput")
 	}
 }
 
@@ -206,7 +252,7 @@ func accountGovernanceSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.A
 		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "%w", iotago.ErrInvalidStakingBlockIssuerRequired)
 	}
 
-	return accountBlockIssuerSTVF(input, next, vmParams)
+	return accountBlockIssuerSTVF(input, input.Output.FeatureSet().BlockIssuer(), next, vmParams)
 }
 
 func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.AccountOutput, vmParams *vm.Params) error {
@@ -272,10 +318,8 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.Accoun
 // The block issuer credit must be non-negative.
 // The expiry time of the block issuer feature, if creating new account or expired already, must be set at least MaxCommittableSlotAge greater than the TX slot index.
 // Check that at least one Block Issuer Key is present.
-func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.AccountOutput, vmParams *vm.Params) error {
-	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
-	current := input.Output.(*iotago.AccountOutput)
-	currentBlockIssuerFeat := current.FeatureSet().BlockIssuer()
+func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, currentBlockIssuerFeat *iotago.BlockIssuerFeature, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	current := input.Output
 	nextBlockIssuerFeat := next.FeatureSet().BlockIssuer()
 	// if the account has no block issuer feature.
 	if currentBlockIssuerFeat == nil && nextBlockIssuerFeat == nil {
@@ -284,7 +328,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 
 	// else if the account has negative bic, this is invalid.
 	// new block issuers may not have a bic registered yet.
-	if bic, exists := vmParams.WorkingSet.BIC[current.AccountID]; exists {
+	if bic, exists := vmParams.WorkingSet.BIC[next.AccountID]; exists {
 		if bic < 0 {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "negative block issuer credit")
 		}
@@ -338,9 +382,9 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	}
 
 	// AccountInStored
-	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.Mana, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.StoredMana(), input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
-		return ierrors.Wrapf(err, "account %s stored mana calculation failed", current.AccountID)
+		return ierrors.Wrapf(err, "account %s stored mana calculation failed", next.AccountID)
 	}
 	manaIn -= manaStoredAccount
 
@@ -348,21 +392,21 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
 	var excessBaseTokensAccount iotago.BaseToken
 	minDeposit := rentStructure.MinDeposit(current)
-	if current.Amount <= minDeposit {
+	if current.BaseTokenAmount() <= minDeposit {
 		excessBaseTokensAccount = 0
 	} else {
-		excessBaseTokensAccount = current.Amount - minDeposit
+		excessBaseTokensAccount = current.BaseTokenAmount() - minDeposit
 	}
 	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
-		return ierrors.Wrapf(err, "account %s potential mana calculation failed", current.AccountID)
+		return ierrors.Wrapf(err, "account %s potential mana calculation failed", next.AccountID)
 	}
 	manaIn -= manaPotentialAccount
 
 	// AccountOutStored
 	manaOut -= next.Mana
 	// AccountOutAllotted
-	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
+	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(next.AccountID)
 
 	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
 	minManalockedSlotIndex := pastBoundedSlotIndex + vmParams.API.ProtocolParameters().MaxCommittableAge()
@@ -371,7 +415,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 		if !is {
 			continue
 		}
-		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, minManalockedSlotIndex) {
+		if basicOutput.UnlockConditionSet().HasManalockCondition(next.AccountID, minManalockedSlotIndex) {
 			manaOut -= basicOutput.StoredMana()
 		}
 	}
@@ -380,7 +424,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 		if !is {
 			continue
 		}
-		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, minManalockedSlotIndex) {
+		if nftOutput.UnlockConditionSet().HasManalockCondition(next.AccountID, minManalockedSlotIndex) {
 			manaOut -= nftOutput.StoredMana()
 		}
 	}
