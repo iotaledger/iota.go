@@ -41,11 +41,11 @@ type RewardsParameters struct {
 	ProfitMarginExponent uint8 `serix:"1,mapKey=profitMarginExponent"`
 	// BootstrappinDuration is the length in epochs of the bootstrapping phase, (approx 3 years).
 	BootstrappingDuration EpochIndex `serix:"2,mapKey=bootstrappinDuration"`
-	// RewardsManaShareCoefficient is the coefficient used for calculation of initial rewards, relative to the term theta/(1-theta) from the Whitepaper, with theta = 2/3.
-	RewardsManaShareCoefficient uint64 `serix:"3,mapKey=rewardsManaShareCoefficient"`
+	// ManaShareCoefficient is the coefficient used for calculation of initial rewards, relative to the term theta/(1-theta) from the Whitepaper, with theta = 2/3.
+	ManaShareCoefficient uint64 `serix:"3,mapKey=manaShareCoefficient"`
 	// DecayBalancingConstantExponent is the exponent used for calculation of the initial reward.
 	DecayBalancingConstantExponent uint8 `serix:"4,mapKey=decayBalancingConstantExponent"`
-	// DecayBalancingConstant needs to be an integer approc  calculated based on chosen DecayBalancingConstantExponent.
+	// DecayBalancingConstant needs to be an integer approximation calculated based on chosen DecayBalancingConstantExponent.
 	DecayBalancingConstant uint64 `serix:"5,mapKey=decayBalancingConstant"`
 	// PoolCoefficientExponent is the exponent used for shifting operation in the pool rewards calculations.
 	PoolCoefficientExponent uint8 `serix:"6,mapKey=poolCoefficientExponent"`
@@ -54,7 +54,7 @@ type RewardsParameters struct {
 func (r RewardsParameters) Equals(other RewardsParameters) bool {
 	return r.ValidatorBlocksPerSlot == other.ValidatorBlocksPerSlot &&
 		r.ProfitMarginExponent == other.ProfitMarginExponent && r.BootstrappingDuration == other.BootstrappingDuration &&
-		r.RewardsManaShareCoefficient == other.RewardsManaShareCoefficient &&
+		r.ManaShareCoefficient == other.ManaShareCoefficient &&
 		r.DecayBalancingConstantExponent == other.DecayBalancingConstantExponent &&
 		r.DecayBalancingConstant == other.DecayBalancingConstant &&
 		r.PoolCoefficientExponent == other.PoolCoefficientExponent

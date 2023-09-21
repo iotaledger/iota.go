@@ -274,12 +274,12 @@ func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, acti
 	}
 }
 
-func WithRewardsOptions(validatorBlocksPerSlot, profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, bootstrappingDuration EpochIndex, rewardsManaShareCoefficient, decayBalancingConstant uint64) options.Option[V3ProtocolParameters] {
+func WithRewardsOptions(validatorBlocksPerSlot, profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, bootstrappingDuration EpochIndex, manaShareCoefficient, decayBalancingConstant uint64) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.RewardsParameters.ValidatorBlocksPerSlot = validatorBlocksPerSlot
 		p.basicProtocolParameters.RewardsParameters.ProfitMarginExponent = profitMarginExponent
 		p.basicProtocolParameters.RewardsParameters.BootstrappingDuration = bootstrappingDuration
-		p.basicProtocolParameters.RewardsParameters.RewardsManaShareCoefficient = rewardsManaShareCoefficient
+		p.basicProtocolParameters.RewardsParameters.ManaShareCoefficient = manaShareCoefficient
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent = decayBalancingConstantExponent
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant = decayBalancingConstant
 		p.basicProtocolParameters.RewardsParameters.PoolCoefficientExponent = poolCoefficientExponent
