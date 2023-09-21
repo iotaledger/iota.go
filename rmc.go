@@ -1,8 +1,8 @@
 package iotago
 
 type CongestionControlParameters struct {
-	// RMCMin is the minimum value of the reference Mana cost.
-	RMCMin Mana `serix:"0,mapKey=rmcMin"`
+	// MinReferenceManaCost is the minimum value of the reference Mana cost.
+	MinReferenceManaCost Mana `serix:"0,mapKey=minReferenceManaCost"`
 	// Increase is the increase step size of the reference Mana cost.
 	Increase Mana `serix:"1,mapKey=increase"`
 	// Decrease is the decrease step size of the reference Mana cost.
@@ -24,7 +24,7 @@ type CongestionControlParameters struct {
 }
 
 func (c *CongestionControlParameters) Equals(other CongestionControlParameters) bool {
-	return c.RMCMin == other.RMCMin &&
+	return c.MinReferenceManaCost == other.MinReferenceManaCost &&
 		c.Increase == other.Increase &&
 		c.Decrease == other.Decrease &&
 		c.IncreaseThreshold == other.IncreaseThreshold &&

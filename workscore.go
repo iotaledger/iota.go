@@ -58,7 +58,6 @@ type WorkScoreStructure struct {
 	Allotment WorkScore `serix:"9,mapKey=allotment"`
 	// SignatureEd25519 accounts for an Ed25519 signature check.
 	SignatureEd25519 WorkScore `serix:"10,mapKey=signatureEd25519"`
-
 	// MinStrongParentsThreshold is the minimum amount of strong parents in a basic block, otherwise the block work increases.
 	MinStrongParentsThreshold byte `serix:"11,mapKey=minStrongParentsThreshold"`
 }

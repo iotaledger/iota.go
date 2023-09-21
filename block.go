@@ -116,7 +116,7 @@ type BlockHeader struct {
 	NetworkID       NetworkID `serix:"1,mapKey=networkId"`
 
 	IssuingTime         time.Time    `serix:"2,mapKey=issuingTime"`
-	SlotCommitmentID    CommitmentID `serix:"3,mapKey=slotCommitment"`
+	SlotCommitmentID    CommitmentID `serix:"3,mapKey=slotCommitmentId"`
 	LatestFinalizedSlot SlotIndex    `serix:"4,mapKey=latestFinalizedSlot"`
 
 	IssuerID AccountID `serix:"5,mapKey=issuerId"`
