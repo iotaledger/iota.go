@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -72,15 +73,13 @@ type UnlockCondition interface {
 	Sizer
 	NonEphemeralObject
 	ProcessableObject
+	constraints.Cloneable[UnlockCondition]
 
 	// Type returns the type of the UnlockCondition.
 	Type() UnlockConditionType
 
 	// Equal tells whether this UnlockCondition is equal to other.
 	Equal(other UnlockCondition) bool
-
-	// Clone clones the UnlockCondition.
-	Clone() UnlockCondition
 }
 
 // UnlockConditions is a slice of UnlockCondition(s).

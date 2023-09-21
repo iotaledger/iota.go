@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -92,12 +93,7 @@ func (n NativeTokens) MustSet() NativeTokensSet {
 
 // Clone clones this slice of NativeToken(s).
 func (n NativeTokens) Clone() NativeTokens {
-	cpy := make(NativeTokens, len(n))
-	for i, ele := range n {
-		cpy[i] = ele.Clone()
-	}
-
-	return cpy
+	return lo.CloneSlice(n)
 }
 
 func (n NativeTokens) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {

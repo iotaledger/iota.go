@@ -3,6 +3,7 @@ package iotago
 import (
 	"fmt"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
@@ -12,6 +13,7 @@ type Signature interface {
 	serix.Deserializable
 	Sizer
 	ProcessableObject
+	constraints.Cloneable[Signature]
 
 	// Type returns the type of the Signature.
 	Type() SignatureType

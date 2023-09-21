@@ -55,6 +55,13 @@ type Transaction struct {
 	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
 }
 
+func (t *Transaction) Clone() Payload {
+	return &Transaction{
+		Essence: t.Essence.Clone(),
+		Unlocks: t.Unlocks.Clone(),
+	}
+}
+
 func (t *Transaction) PayloadType() PayloadType {
 	return PayloadTransaction
 }

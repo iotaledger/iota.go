@@ -3,6 +3,7 @@ package iotago
 import (
 	"fmt"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -41,6 +42,16 @@ var (
 // Inputs is a slice of Input.
 type Inputs[T Input] []T
 
+func (in Inputs[T]) Clone() Inputs[T] {
+	cpy := make(Inputs[T], len(in))
+	for idx, input := range in {
+		//nolint:forcetypeassert // we can safely assume that this is of type T
+		cpy[idx] = input.Clone().(T)
+	}
+
+	return cpy
+}
+
 func (in Inputs[T]) Size() int {
 	sum := serializer.UInt16ByteSize
 	for _, i := range in {
@@ -70,6 +81,7 @@ func (in Inputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore
 // Input references a generic input.
 type Input interface {
 	Sizer
+	constraints.Cloneable[Input]
 	ProcessableObject
 
 	StateID() Identifier
