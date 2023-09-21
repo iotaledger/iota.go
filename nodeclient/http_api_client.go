@@ -695,4 +695,4 @@ func (client *Client) LatestAPI() iotago.API {
 	return client.apiProvider.LatestAPI()
 }
 
-var _ api.Provider = new(Client)
+var _ iotago.APIProvider = new(Client)

@@ -1,20 +1,18 @@
-package api
+package iotago
 
-import iotago "github.com/iotaledger/iota.go/v4"
-
-type Provider interface {
+type APIProvider interface {
 	// APIForVersion returns the API for the given version.
-	APIForVersion(iotago.Version) (iotago.API, error)
+	APIForVersion(Version) (API, error)
 
 	// APIForSlot returns the API for the given slot.
-	APIForSlot(iotago.SlotIndex) iotago.API
+	APIForSlot(SlotIndex) API
 
 	// APIForEpoch returns the API for the given epoch.
-	APIForEpoch(iotago.EpochIndex) iotago.API
+	APIForEpoch(EpochIndex) API
 
 	// CurrentAPI returns the API for the current slot.
-	CurrentAPI() iotago.API
+	CurrentAPI() API
 
 	// LatestAPI returns the API for the latest supported protocol version.
-	LatestAPI() iotago.API
+	LatestAPI() API
 }
