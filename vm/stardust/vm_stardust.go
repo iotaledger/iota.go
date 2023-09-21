@@ -31,13 +31,86 @@ type virtualMachine struct {
 	execList []vm.ExecFunc
 }
 
+func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.ResolvedInputs) (*vm.WorkingSet, error) {
+	var err error
+	utxoInputsSet := constructInputSet(inputs.InputSet)
+	workingSet := &vm.WorkingSet{}
+	workingSet.Tx = t
+	workingSet.UnlockedIdents = make(vm.UnlockedIdentities)
+	workingSet.UTXOInputsWithCreationSlot = utxoInputsSet
+	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
+	for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
+		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
+		ref := inputRef.(*iotago.UTXOInput).OutputID()
+		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
+		input, ok := workingSet.UTXOInputsWithCreationSlot[ref]
+		if !ok {
+			return nil, ierrors.Wrapf(iotago.ErrMissingUTXO, "utxo for input %d not supplied", inputIndex)
+		}
+		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input.Output)
+	}
+
+	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage(api)
+	if err != nil {
+		return nil, err
+	}
+
+	workingSet.InputsByType = func() iotago.OutputsByType {
+		slice := make(iotago.Outputs[iotago.Output], len(utxoInputsSet))
+		var i int
+		for _, output := range utxoInputsSet {
+			slice[i] = output.Output
+			i++
+		}
+
+		return slice.ToOutputsByType()
+	}()
+
+	txID, err := workingSet.Tx.ID(api)
+	if err != nil {
+		return nil, err
+	}
+
+	workingSet.InChains = utxoInputsSet.ChainInputSet()
+	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
+	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainOutputSet(txID)
+
+	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
+	workingSet.BIC = inputs.BlockIssuanceCreditInputSet
+	workingSet.Commitment = inputs.CommitmentInput
+	workingSet.Rewards = inputs.RewardsInputSet
+
+	return workingSet, nil
+}
+
+func constructInputSet(inputSet vm.InputSet) vm.InputSet {
+	utxoInputsSet := vm.InputSet{}
+	for outputID, outputWithCreationSlot := range inputSet {
+		if basicOutput, isBasic := outputWithCreationSlot.Output.(*iotago.BasicOutput); isBasic {
+			if addressUnlock := basicOutput.UnlockConditionSet().Address(); addressUnlock != nil {
+				if addressUnlock.Address.Type() == iotago.AddressImplicitAccountCreation {
+					utxoInputsSet[outputID] = vm.OutputWithCreationSlot{
+						Output:       vm.ImplicitAccountOutput{BasicOutput: basicOutput},
+						CreationSlot: outputWithCreationSlot.CreationSlot,
+					}
+
+					continue
+				}
+			}
+		}
+		utxoInputsSet[outputID] = outputWithCreationSlot
+	}
+
+	return utxoInputsSet
+}
+
 func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs vm.ResolvedInputs, overrideFuncs ...vm.ExecFunc) error {
 	if vmParams.API == nil {
 		return ierrors.New("no API provided")
 	}
 
 	var err error
-	vmParams.WorkingSet, err = vm.NewVMParamsWorkingSet(vmParams.API, t, inputs)
+	vmParams.WorkingSet, err = NewVMParamsWorkingSet(vmParams.API, t, inputs)
 	if err != nil {
 		return err
 	}
@@ -66,7 +139,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 		}
 
 		return accountSTVF(input, transType, nextAccount, vmParams)
-	case *iotago.BasicOutput:
+	case *vm.ImplicitAccountOutput:
 		var nextAccount *iotago.AccountOutput
 		if next != nil {
 			if nextAccount, ok = next.(*iotago.AccountOutput); !ok {

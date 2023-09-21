@@ -76,15 +76,6 @@ func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 	return workScoreNativeTokens.Add(workScoreConditions, workScoreFeatures)
 }
 
-func (e *BasicOutput) Chain() ChainID {
-	// if the basic output has an implicit account creation address unlock condition, set its chain ID to empty, like a new account output.
-	if e.Conditions.MustSet().Address().Address.Type() == AddressImplicitAccountCreation {
-		return EmptyAccountID()
-	}
-
-	return nil
-}
-
 func (e *BasicOutput) NativeTokenList() NativeTokens {
 	return e.NativeTokens
 }

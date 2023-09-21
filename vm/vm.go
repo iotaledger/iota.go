@@ -73,58 +73,6 @@ func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOIn
 	return workingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
-func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs ResolvedInputs) (*WorkingSet, error) {
-	var err error
-	utxoInputsSet := inputs.InputSet
-	workingSet := &WorkingSet{}
-	workingSet.Tx = t
-	workingSet.UnlockedIdents = make(UnlockedIdentities)
-	workingSet.UTXOInputsWithCreationSlot = utxoInputsSet
-	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
-	for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
-		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
-		ref := inputRef.(*iotago.UTXOInput).OutputID()
-		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
-		input, ok := workingSet.UTXOInputsWithCreationSlot[ref]
-		if !ok {
-			return nil, ierrors.Wrapf(iotago.ErrMissingUTXO, "utxo for input %d not supplied", inputIndex)
-		}
-		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input.Output)
-	}
-
-	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage(api)
-	if err != nil {
-		return nil, err
-	}
-
-	workingSet.InputsByType = func() iotago.OutputsByType {
-		slice := make(iotago.Outputs[iotago.Output], len(utxoInputsSet))
-		var i int
-		for _, output := range utxoInputsSet {
-			slice[i] = output.Output
-			i++
-		}
-
-		return slice.ToOutputsByType()
-	}()
-
-	txID, err := workingSet.Tx.ID(api)
-	if err != nil {
-		return nil, err
-	}
-
-	workingSet.InChains = utxoInputsSet.ChainInputSet()
-	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
-	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainOutputSet(txID)
-
-	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
-	workingSet.BIC = inputs.BlockIssuanceCreditInputSet
-	workingSet.Commitment = inputs.CommitmentInput
-	workingSet.Rewards = inputs.RewardsInputSet
-
-	return workingSet, nil
-}
-
 func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iotago.RentStructure, txCreationSlot iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
 	var totalIn iotago.Mana
 	for outputID, input := range inputSet {
@@ -407,7 +355,7 @@ func ExecFuncInputUnlocks() ExecFunc {
 			}
 
 			// since this input is now unlocked, and it is a ChainOutput, the chain's address becomes automatically unlocked
-			if chainConstrOutput, is := input.(iotago.ChainOutput); is && chainConstrOutput.Chain() != nil && chainConstrOutput.Chain().Addressable() {
+			if chainConstrOutput, is := input.(iotago.ChainOutput); is && chainConstrOutput.Chain().Addressable() {
 				// mark this ChainOutput's identity as unlocked by this input
 				chainID := chainConstrOutput.Chain()
 				if chainID.Empty() {

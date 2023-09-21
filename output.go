@@ -405,7 +405,7 @@ func (outputs Outputs[T]) ChainOutputSet(txID TransactionID) ChainOutputSet {
 	set := make(ChainOutputSet)
 	for outputIndex, output := range outputs {
 		chainOutput, is := Output(output).(ChainOutput)
-		if !is || chainOutput.Chain() == nil {
+		if !is {
 			continue
 		}
 
@@ -579,7 +579,7 @@ func (outputs OutputsByType) ChainOutputSet() (ChainOutputSet, error) {
 	for _, ty := range []OutputType{OutputAccount, OutputFoundry, OutputNFT} {
 		for _, output := range outputs[ty] {
 			chainOutput, is := output.(ChainOutput)
-			if !is || chainOutput.Chain() == nil || chainOutput.Chain().Empty() {
+			if !is || chainOutput.Chain().Empty() {
 				continue
 			}
 			if _, has := chainOutputSet[chainOutput.Chain()]; has {
@@ -598,7 +598,7 @@ func (outputs OutputsByType) ChainOutputs() ChainOutputs {
 	for _, ty := range []OutputType{OutputAccount, OutputFoundry, OutputNFT} {
 		for _, output := range outputs[ty] {
 			chainOutput, is := output.(ChainOutput)
-			if !is || chainOutput.Chain() == nil {
+			if !is {
 				continue
 			}
 			chainOutputs = append(chainOutputs, chainOutput)
@@ -924,7 +924,7 @@ func OutputsSyntacticalChainConstrainedOutputUniqueness() OutputsSyntacticalVali
 
 	return func(index int, output Output) error {
 		chainConstrainedOutput, is := output.(ChainOutput)
-		if !is || chainConstrainedOutput.Chain() == nil {
+		if !is {
 			return nil
 		}
 

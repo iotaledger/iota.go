@@ -203,7 +203,7 @@ func addReferentialUnlock(addr iotago.Address, unlocks iotago.Unlocks, pos int) 
 }
 
 func addChainAsUnlocked(input iotago.Output, posUnlocked int, prevUnlocked map[string]int) {
-	if chainInput, is := input.(iotago.ChainOutput); is && chainInput.Chain() != nil && chainInput.Chain().Addressable() {
+	if chainInput, is := input.(iotago.ChainOutput); is && chainInput.Chain().Addressable() {
 		prevUnlocked[chainInput.Chain().ToAddress().Key()] = posUnlocked
 	}
 }

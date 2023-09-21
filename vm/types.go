@@ -34,8 +34,7 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 	set := make(ChainInputSet)
 	for utxoInputID, input := range inputSet {
 		chainOutput, is := input.Output.(iotago.ChainOutput)
-		// basic outputs are chain outputs but return nil for Chain() if they do not have implicit account creation address unlock condition.
-		if !is || chainOutput.Chain() == nil {
+		if !is {
 			continue
 		}
 
@@ -76,4 +75,12 @@ type ResolvedInputs struct {
 	BlockIssuanceCreditInputSet
 	CommitmentInput VMCommitmentInput
 	RewardsInputSet
+}
+
+type ImplicitAccountOutput struct {
+	*iotago.BasicOutput
+}
+
+func (o *ImplicitAccountOutput) Chain() iotago.ChainID {
+	return iotago.EmptyAccountID()
 }
