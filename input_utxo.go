@@ -22,6 +22,13 @@ type UTXOInput struct {
 	TransactionOutputIndex uint16 `serix:"1,mapKey=transactionOutputIndex"`
 }
 
+func (u *UTXOInput) Clone() Input {
+	return &UTXOInput{
+		TransactionID:          u.TransactionID,
+		TransactionOutputIndex: u.TransactionOutputIndex,
+	}
+}
+
 func (u *UTXOInput) StateID() Identifier {
 	return IdentifierFromData(lo.PanicOnErr(u.OutputID().Bytes()))
 }

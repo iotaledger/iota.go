@@ -2,6 +2,8 @@ package iotago
 
 import (
 	"fmt"
+
+	"github.com/iotaledger/hive.go/constraints"
 )
 
 const (
@@ -55,6 +57,7 @@ var (
 type Payload interface {
 	Sizer
 	ProcessableObject
+	constraints.Cloneable[Payload]
 
 	// PayloadType returns the type of the payload.
 	PayloadType() PayloadType

@@ -10,6 +10,12 @@ type NFTUnlock struct {
 	Reference uint16 `serix:"0,mapKey=reference"`
 }
 
+func (r *NFTUnlock) Clone() Unlock {
+	return &NFTUnlock{
+		Reference: r.Reference,
+	}
+}
+
 func (r *NFTUnlock) SourceAllowed(address Address) bool {
 	_, ok := address.(*NFTAddress)
 

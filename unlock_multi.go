@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -8,6 +9,12 @@ import (
 type MultiUnlock struct {
 	// The unlocks for this MultiUnlock.
 	Unlocks []Unlock `serix:"0,lengthPrefixType=uint8,mapKey=unlocks,minLen=1,maxLen=10"`
+}
+
+func (u *MultiUnlock) Clone() Unlock {
+	return &MultiUnlock{
+		Unlocks: lo.CloneSlice(u.Unlocks),
+	}
 }
 
 func (u *MultiUnlock) Type() UnlockType {

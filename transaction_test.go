@@ -251,3 +251,17 @@ func TestTransaction_InputTypes(t *testing.T) {
 	require.Contains(t, rewardInputs, rewardInput1)
 	require.Contains(t, rewardInputs, rewardInput2)
 }
+
+func TestTransaction_Clone(t *testing.T) {
+	transaction := tpkg.RandTransaction()
+	txID, err := transaction.ID(tpkg.TestAPI)
+	require.NoError(t, err)
+
+	//nolint:forcetypeassert
+	cpy := transaction.Clone().(*iotago.Transaction)
+
+	cpyTxID, err := cpy.ID(tpkg.TestAPI)
+	require.NoError(t, err)
+
+	require.EqualValues(t, txID, cpyTxID)
+}

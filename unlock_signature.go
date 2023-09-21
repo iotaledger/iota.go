@@ -10,6 +10,12 @@ type SignatureUnlock struct {
 	Signature Signature `serix:"0,mapKey=signature"`
 }
 
+func (s *SignatureUnlock) Clone() Unlock {
+	return &SignatureUnlock{
+		Signature: s.Signature.Clone(),
+	}
+}
+
 func (s *SignatureUnlock) Type() UnlockType {
 	return UnlockSignature
 }
