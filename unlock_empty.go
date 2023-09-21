@@ -8,6 +8,10 @@ import (
 // addresses and signatures if the signer doesn't know the signature of another signer.
 type EmptyUnlock struct{}
 
+func (u *EmptyUnlock) Clone() Unlock {
+	return &EmptyUnlock{}
+}
+
 func (u *EmptyUnlock) Type() UnlockType {
 	return UnlockEmpty
 }

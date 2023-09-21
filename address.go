@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/bech32"
@@ -111,6 +112,7 @@ type Address interface {
 	Sizer
 	NonEphemeralObject
 	fmt.Stringer
+	constraints.Cloneable[Address]
 
 	// Type returns the type of the address.
 	Type() AddressType
@@ -127,9 +129,6 @@ type Address interface {
 
 	// Key returns a string which can be used to index the Address in a map.
 	Key() string
-
-	// Clone clones the Address.
-	Clone() Address
 }
 
 type AddressCapabilities interface {

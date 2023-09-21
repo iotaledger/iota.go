@@ -11,6 +11,12 @@ type RewardInput struct {
 	Index uint16 `serix:"0,mapKey=index"`
 }
 
+func (r *RewardInput) Clone() Input {
+	return &RewardInput{
+		Index: r.Index,
+	}
+}
+
 func (r *RewardInput) StateID() Identifier {
 	buf := make([]byte, 2)
 	binary.LittleEndian.PutUint16(buf, r.Index)

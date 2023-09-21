@@ -3,7 +3,9 @@ package iotago
 import (
 	"fmt"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -67,6 +69,10 @@ var (
 
 type Unlocks []Unlock
 
+func (o Unlocks) Clone() Unlocks {
+	return lo.CloneSlice(o)
+}
+
 // ToUnlockByType converts the Unlocks slice to UnlocksByType.
 func (o Unlocks) ToUnlockByType() UnlocksByType {
 	unlocksByType := make(UnlocksByType)
@@ -114,6 +120,7 @@ type UnlocksByType map[UnlockType][]Unlock
 type Unlock interface {
 	Sizer
 	ProcessableObject
+	constraints.Cloneable[Unlock]
 
 	// Type returns the type of the Unlock.
 	Type() UnlockType

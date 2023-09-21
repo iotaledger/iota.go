@@ -900,7 +900,7 @@ func RandRentStructure() *iotago.RentStructure {
 		VByteCost:              RandUint32(math.MaxUint32),
 		VBFactorData:           iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 		VBFactorKey:            iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
-		VBFactorIssuerKeys:     iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VBFactorBlockIssuerKey: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 		VBFactorStakingFeature: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 	}
 }
@@ -913,7 +913,7 @@ func RandWorkScore(max uint32) iotago.WorkScore {
 // RandWorkscoreStructure produces random workscore structure.
 func RandWorkscoreStructure() *iotago.WorkScoreStructure {
 	return &iotago.WorkScoreStructure{
-		DataKilobyte:              RandWorkScore(math.MaxUint32),
+		DataByte:                  RandWorkScore(math.MaxUint32),
 		Block:                     RandWorkScore(math.MaxUint32),
 		MissingParent:             RandWorkScore(math.MaxUint32),
 		Input:                     RandWorkScore(math.MaxUint32),

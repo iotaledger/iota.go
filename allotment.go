@@ -4,19 +4,31 @@ import (
 	"bytes"
 	"sort"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // BlockIssuanceCredits defines the type of block issuance credits.
 type BlockIssuanceCredits int64
 
-// Allotments is a slice of Allotment.
-type Allotments []*Allotment
-
 // Allotment is a struct that represents a list of account IDs and an allotted value.
 type Allotment struct {
 	AccountID AccountID `serix:"0"`
 	Value     Mana      `serix:"1"`
+}
+
+func (a *Allotment) Clone() *Allotment {
+	return &Allotment{
+		AccountID: a.AccountID,
+		Value:     a.Value,
+	}
+}
+
+// Allotments is a slice of Allotment.
+type Allotments []*Allotment
+
+func (a Allotments) Clone() Allotments {
+	return lo.CloneSlice(a)
 }
 
 // Sort sorts the allotments in lexical order.

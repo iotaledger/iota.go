@@ -26,6 +26,9 @@ const (
 	BlockMaxParents = 8
 	// BlockTypeValidationMaxParents defines the maximum amount of parents in a ValidationBlock. TODO: replace number with committee size.
 	BlockTypeValidationMaxParents = BlockMaxParents + 42
+
+	// block type + strong parents count + weak parents count + shallow like parents count + payload type + mana.
+	BasicBlockSizeEmptyParentsAndEmptyPayload = serializer.OneByte + serializer.OneByte + serializer.OneByte + serializer.OneByte + serializer.UInt32ByteSize + ManaSize
 )
 
 var (
@@ -105,6 +108,7 @@ type BlockPayload interface {
 	Payload
 }
 
+// version + networkID + time + commitmentID + slotIndex + accountID.
 const BlockHeaderLength = serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + SlotIndexLength + AccountIDLength
 
 type BlockHeader struct {
@@ -112,7 +116,7 @@ type BlockHeader struct {
 	NetworkID       NetworkID `serix:"1,mapKey=networkId"`
 
 	IssuingTime         time.Time    `serix:"2,mapKey=issuingTime"`
-	SlotCommitmentID    CommitmentID `serix:"3,mapKey=slotCommitment"`
+	SlotCommitmentID    CommitmentID `serix:"3,mapKey=slotCommitmentId"`
 	LatestFinalizedSlot SlotIndex    `serix:"4,mapKey=latestFinalizedSlot"`
 
 	IssuerID AccountID `serix:"5,mapKey=issuerId"`
@@ -277,12 +281,6 @@ func (b *ProtocolBlock) ForEachParent(consumer func(parent Parent)) {
 }
 
 func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreBytes, err := workScoreStructure.DataKilobyte.Multiply(b.Size())
-	if err != nil {
-		return 0, err
-	}
-	workScoreKilobytes := workScoreBytes / 1024
-
 	workScoreHeader, err := b.BlockHeader.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -298,7 +296,7 @@ func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 		return 0, err
 	}
 
-	return workScoreKilobytes.Add(workScoreHeader, workScoreBlock, workScoreSignature)
+	return workScoreHeader.Add(workScoreHeader, workScoreBlock, workScoreSignature)
 }
 
 // Size returns the size of the block in bytes.
@@ -430,7 +428,7 @@ func (b *BasicBlock) ManaCost(rmc Mana, workScoreStructure *WorkScoreStructure) 
 		return 0, err
 	}
 
-	return Mana(workScore) * rmc, nil
+	return ManaCost(rmc, workScore)
 }
 
 func (b *BasicBlock) Size() int {
@@ -439,12 +437,11 @@ func (b *BasicBlock) Size() int {
 		payloadSize = b.Payload.Size()
 	}
 
-	return serializer.OneByte + // block type
-		serializer.OneByte + len(b.StrongParents)*SlotIdentifierLength +
-		serializer.OneByte + len(b.WeakParents)*SlotIdentifierLength +
-		serializer.OneByte + len(b.ShallowLikeParents)*SlotIdentifierLength +
-		serializer.UInt32ByteSize + payloadSize + // payload size in serialization + actual payload
-		ManaSize
+	return BasicBlockSizeEmptyParentsAndEmptyPayload +
+		len(b.StrongParents)*SlotIdentifierLength +
+		len(b.WeakParents)*SlotIdentifierLength +
+		len(b.ShallowLikeParents)*SlotIdentifierLength +
+		payloadSize
 }
 
 // syntacticallyValidate syntactically validates the BasicBlock.

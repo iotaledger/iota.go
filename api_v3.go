@@ -631,7 +631,7 @@ func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewa
 	manaStructure := protoParams.ManaDecayProvider()
 
 	// final reward, after bootstrapping phase
-	result, err := safemath.SafeMul(uint64(protoParams.TokenSupply()), protoParams.RewardsParameters().RewardsManaShareCoefficient)
+	result, err := safemath.SafeMul(uint64(protoParams.TokenSupply()), protoParams.RewardsParameters().ManaShareCoefficient)
 	if err != nil {
 		return 0, 0, ierrors.Wrap(err, "failed to calculate target reward due to tokenSupply and RewardsManaShareCoefficient multiplication overflow")
 	}
