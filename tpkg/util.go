@@ -903,7 +903,7 @@ func RandWorkScore(max uint32) iotago.WorkScore {
 // RandWorkscoreStructure produces random workscore structure.
 func RandWorkscoreStructure() *iotago.WorkScoreStructure {
 	return &iotago.WorkScoreStructure{
-		DataKibibyte:              RandWorkScore(math.MaxUint32),
+		DataByte:                  RandWorkScore(math.MaxUint32),
 		Block:                     RandWorkScore(math.MaxUint32),
 		MissingParent:             RandWorkScore(math.MaxUint32),
 		Input:                     RandWorkScore(math.MaxUint32),
