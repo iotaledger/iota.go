@@ -39,12 +39,12 @@ func (keys BlockIssuerKeys) Size() int {
 
 func (keys BlockIssuerKeys) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	// VBFactorIssuerKeys: keys length prefix + each key's vbytes
-	vbytes := VBytes(serializer.OneByte)
+	vbytes := rentStruct.VBFactorBlockIssuerKey.Multiply(VBytes(serializer.OneByte))
 	for _, key := range keys {
 		vbytes += key.VBytes(rentStruct, nil)
 	}
 
-	return rentStruct.VBFactorBlockIssuerKey.Multiply(vbytes)
+	return vbytes
 }
 
 // BlockIssuerKey is a key that is allowed to issue blocks from an account with a BlockIssuerFeature.
