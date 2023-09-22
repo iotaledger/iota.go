@@ -52,6 +52,8 @@ type basicProtocolParameters struct {
 	VersionSignaling VersionSignaling `serix:"18,mapKey=versionSignaling"`
 	// RewardsParameters defines the parameters used for reward calculation.
 	RewardsParameters RewardsParameters `serix:"19,mapKey=rewardsParameters"`
+	// ImplicitAccountCreationParameters defines the parameters used for implicit account creation.
+	ImplicitAccountCreationParameters ImplicitAccountCreationParameters `serix:"20,mapKey=implicitAccountCreationParameters"`
 }
 
 func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
@@ -74,5 +76,6 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.EpochNearingThreshold == other.EpochNearingThreshold &&
 		b.CongestionControlParameters.Equals(other.CongestionControlParameters) &&
 		b.VersionSignaling.Equals(other.VersionSignaling) &&
-		b.RewardsParameters.Equals(other.RewardsParameters)
+		b.RewardsParameters.Equals(other.RewardsParameters) &&
+		b.ImplicitAccountCreationParameters.Equals(other.ImplicitAccountCreationParameters)
 }
