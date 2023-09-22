@@ -32,6 +32,6 @@ func (key Ed25519AddressBlockIssuerKey) Size() int {
 	return serializer.SmallTypeDenotationByteSize + key.Address.Size()
 }
 
-func (key Ed25519AddressBlockIssuerKey) VBytes(rentStructure *RentStructure, vbyteFunc VBytesFunc) VBytes {
+func (key Ed25519AddressBlockIssuerKey) VBytes(rentStructure *RentStructure, _ VBytesFunc) VBytes {
 	return rentStructure.VBFactorBlockIssuerKey.Multiply(VBytes(key.Size()))
 }
