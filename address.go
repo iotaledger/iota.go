@@ -95,7 +95,6 @@ type NetworkPrefix string
 // Network prefixes.
 const (
 	PrefixMainnet NetworkPrefix = "iota"
-	PrefixDevnet  NetworkPrefix = "atoi"
 	PrefixShimmer NetworkPrefix = "smr"
 	PrefixTestnet NetworkPrefix = "rms"
 )
