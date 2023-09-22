@@ -11,8 +11,8 @@ import (
 type BlockIssuerKeyType byte
 
 const (
-	// Ed25519BlockIssuerKey denotes a BlockIssuerKeyEd25519.
-	Ed25519BlockIssuerKey BlockIssuerKeyType = iota
+	// Ed25519BlockIssuerKeyPublicKey denotes a BlockIssuerKeyEd25519.
+	Ed25519BlockIssuerKeyPublicKey BlockIssuerKeyType = iota
 	// Ed25519BlockIssuerKeyAddress denotes a BlockIssuerKeyEd25519Address.
 	Ed25519BlockIssuerKeyAddress
 )

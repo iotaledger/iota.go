@@ -832,7 +832,7 @@ func RandEd25519PrivateKey() ed25519.PrivateKey {
 func RandomBlockIsssuerKeysEd25519(count int) iotago.BlockIssuerKeys {
 	blockIssuerKeys := make(iotago.BlockIssuerKeys, 0, count)
 	for i := 0; i < count; i++ {
-		blockIssuerKeys = append(blockIssuerKeys, iotago.BlockIssuerKeyEd25519FromPublicKey(Rand32ByteArray()))
+		blockIssuerKeys = append(blockIssuerKeys, iotago.BlockIssuerKeyEd25519PublicKeyFromPublicKey(Rand32ByteArray()))
 	}
 
 	return blockIssuerKeys

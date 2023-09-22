@@ -59,7 +59,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	currentEpoch := iotago.EpochIndex(20)
 	currentSlot := tpkg.TestAPI.TimeProvider().EpochStart(currentEpoch)
 
-	pubkey := iotago.BlockIssuerKeyEd25519FromPublicKey(tpkg.Rand32ByteArray())
+	pubkey := iotago.BlockIssuerKeyEd25519PublicKeyFromPublicKey(tpkg.Rand32ByteArray())
 	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: iotago.BlockIssuerKeys{pubkey},
 		ExpirySlot:      currentSlot + tpkg.TestAPI.ProtocolParameters().MaxCommittableAge(),
