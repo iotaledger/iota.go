@@ -11,10 +11,10 @@ import (
 type BlockIssuerKeyType byte
 
 const (
-	// Ed25519BlockIssuerKeyPublicKey denotes a BlockIssuerKeyEd25519.
-	Ed25519BlockIssuerKeyPublicKey BlockIssuerKeyType = iota
-	// Ed25519BlockIssuerKeyAddress denotes a BlockIssuerKeyEd25519Address.
-	Ed25519BlockIssuerKeyAddress
+	// BlockIssuerKeyEd25519PublicKey denotes a Ed25519PublicKeyBlockIssuerKey.
+	BlockIssuerKeyEd25519PublicKey BlockIssuerKeyType = iota
+	// BlockIssuerKeyEd25519Address denotes a Ed25519AddressBlockIssuerKey.
+	BlockIssuerKeyEd25519Address
 )
 
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.

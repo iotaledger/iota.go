@@ -9,35 +9,35 @@ import (
 )
 
 // A Ed25519 public key Block Issuer Key.
-type BlockIssuerKeyEd25519PublicKey struct {
+type Ed25519PublicKeyBlockIssuerKey struct {
 	PublicKey ed25519.PublicKey `serix:"0"`
 }
 
-// BlockIssuerKeyEd25519PublicKeyFromPublicKey creates a block issuer key from an Ed25519 public key.
-func BlockIssuerKeyEd25519PublicKeyFromPublicKey(publicKey ed25519.PublicKey) BlockIssuerKeyEd25519PublicKey {
-	return BlockIssuerKeyEd25519PublicKey{PublicKey: publicKey}
+// Ed25519PublicKeyBlockIssuerKeyFromPublicKey creates a block issuer key from an Ed25519 public key.
+func Ed25519PublicKeyBlockIssuerKeyFromPublicKey(publicKey ed25519.PublicKey) Ed25519PublicKeyBlockIssuerKey {
+	return Ed25519PublicKeyBlockIssuerKey{PublicKey: publicKey}
 }
 
 // ToEd25519PublicKey returns the underlying Ed25519 Public Key.
-func (key BlockIssuerKeyEd25519PublicKey) ToEd25519PublicKey() ed25519.PublicKey {
+func (key Ed25519PublicKeyBlockIssuerKey) ToEd25519PublicKey() ed25519.PublicKey {
 	return key.PublicKey
 }
 
 // BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the public key bytes.
-func (key BlockIssuerKeyEd25519PublicKey) BlockIssuerKeyBytes() []byte {
+func (key Ed25519PublicKeyBlockIssuerKey) BlockIssuerKeyBytes() []byte {
 	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), key))
 }
 
 // Type returns the BlockIssuerKeyType.
-func (key BlockIssuerKeyEd25519PublicKey) Type() BlockIssuerKeyType {
-	return Ed25519BlockIssuerKeyPublicKey
+func (key Ed25519PublicKeyBlockIssuerKey) Type() BlockIssuerKeyType {
+	return BlockIssuerKeyEd25519PublicKey
 }
 
 // Size returns the size of the block issuer key when serialized.
-func (key BlockIssuerKeyEd25519PublicKey) Size() int {
+func (key Ed25519PublicKeyBlockIssuerKey) Size() int {
 	return serializer.SmallTypeDenotationByteSize + ed25519.PublicKeySize
 }
 
-func (key BlockIssuerKeyEd25519PublicKey) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (key Ed25519PublicKeyBlockIssuerKey) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(VBytes(key.Size()))
 }
