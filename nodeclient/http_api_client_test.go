@@ -400,8 +400,8 @@ func TestClient_BlockByBlockID(t *testing.T) {
 func TestClient_TransactionIncludedBlock(t *testing.T) {
 	defer gock.Off()
 
-	identifier := tpkg.Rand32ByteArray()
-	queryHash := hexutil.EncodeHex(identifier[:])
+	txID := tpkg.Rand40ByteArray()
+	queryHash := hexutil.EncodeHex(txID[:])
 
 	originBlock := &iotago.ProtocolBlock{
 		BlockHeader: iotago.BlockHeader{
@@ -421,7 +421,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	mockGetBinary(fmt.Sprintf(nodeclient.RouteTransactionsIncludedBlock, queryHash), 200, originBlock)
 
 	nodeAPI := nodeClient(t)
-	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), identifier)
+	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), txID)
 	require.NoError(t, err)
 	require.EqualValues(t, originBlock, responseBlock)
 }
@@ -431,7 +431,7 @@ func TestClient_OutputByID(t *testing.T) {
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 
-	txID := tpkg.Rand32ByteArray()
+	txID := tpkg.Rand40ByteArray()
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
 	utxoInputID := utxoInput.OutputID()
@@ -448,14 +448,14 @@ func TestClient_OutputByID(t *testing.T) {
 func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
-	txID := tpkg.Rand32ByteArray()
+	txID := tpkg.Rand40ByteArray()
 	originRes := &apimodels.OutputMetadataResponse{
 		BlockID:              tpkg.RandBlockID(),
 		TransactionID:        txID,
 		OutputIndex:          3,
 		IsSpent:              true,
 		CommitmentIDSpent:    tpkg.Rand40ByteArray(),
-		TransactionIDSpent:   tpkg.Rand32ByteArray(),
+		TransactionIDSpent:   tpkg.Rand40ByteArray(),
 		IncludedCommitmentID: tpkg.Rand40ByteArray(),
 		LatestCommitmentID:   tpkg.Rand40ByteArray(),
 	}

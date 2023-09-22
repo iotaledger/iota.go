@@ -20,11 +20,11 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 			name: "ok",
 			inputs: iotago.Inputs[iotago.Input]{
 				&iotago.UTXOInput{
-					TransactionID:          [32]byte{},
+					TransactionID:          [40]byte{},
 					TransactionOutputIndex: 0,
 				},
 				&iotago.UTXOInput{
-					TransactionID:          [32]byte{},
+					TransactionID:          [40]byte{},
 					TransactionOutputIndex: 1,
 				},
 			},
@@ -34,11 +34,11 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 			name: "fail - addr not unique",
 			inputs: iotago.Inputs[iotago.Input]{
 				&iotago.UTXOInput{
-					TransactionID:          [32]byte{},
+					TransactionID:          [40]byte{},
 					TransactionOutputIndex: 0,
 				},
 				&iotago.UTXOInput{
-					TransactionID:          [32]byte{},
+					TransactionID:          [40]byte{},
 					TransactionOutputIndex: 0,
 				},
 			},
@@ -159,7 +159,7 @@ func TestInputsSyntacticalIndicesWithinBounds(t *testing.T) {
 			name: "ok",
 			inputs: iotago.Inputs[iotago.Input]{
 				&iotago.UTXOInput{
-					TransactionID:          [32]byte{},
+					TransactionID:          [40]byte{},
 					TransactionOutputIndex: 0,
 				},
 			},
@@ -169,7 +169,7 @@ func TestInputsSyntacticalIndicesWithinBounds(t *testing.T) {
 			name: "fail - invalid UTXO ref index",
 			inputs: iotago.Inputs[iotago.Input]{
 				&iotago.UTXOInput{
-					TransactionID:          [32]byte{},
+					TransactionID:          [40]byte{},
 					TransactionOutputIndex: 250,
 				},
 			},
@@ -195,7 +195,7 @@ func TestInputDeSerialize(t *testing.T) {
 		{
 			name: "ok - UTXO",
 			source: &iotago.UTXOInput{
-				TransactionID:          [32]byte{},
+				TransactionID:          [40]byte{},
 				TransactionOutputIndex: 0,
 			},
 			target:    &iotago.UTXOInput{},

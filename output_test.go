@@ -67,7 +67,7 @@ func TestOutputIDString(t *testing.T) {
 		outputID         iotago.OutputID
 		outputTypeString string
 	}{
-		{outputID: iotago.OutputIDFromTransactionIDAndIndex(lo.PanicOnErr(iotago.IdentifierFromHexString("0xc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafcea639416")), 1), outputTypeString: "OutputID(0xc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafcea639416:1)"},
+		{outputID: iotago.OutputIDFromTransactionIDAndIndex(lo.PanicOnErr(iotago.TransactionIDFromHexString("0xbaadf00ddeadbeefc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafcea639416")), 1), outputTypeString: "OutputID(0xbaadf00ddeadbeefc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafcea639416:1)"},
 	}
 	for _, tt := range tests {
 		require.Equal(t, tt.outputID.String(), tt.outputTypeString)
@@ -244,7 +244,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount:     44200, // min amount
+					Amount:     52200, // min amount
 					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()}},
 				},
 			},
@@ -254,14 +254,13 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			name:        "ok - storage deposit return",
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
-				// min 43400
 				&iotago.BasicOutput{
 					Amount: 100000,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAccountAddress(),
-							Amount:        44200,
+							Amount:        52200, // amount
 						},
 					},
 					Mana: 500,
@@ -279,7 +278,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAccountAddress(),
-							Amount:        43400 - 1, // off by 1
+							Amount:        52200 - 1, // off by 1
 						},
 					},
 				},
@@ -310,7 +309,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount: 43400 - 1,
+					Amount: 52200 - 1,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
