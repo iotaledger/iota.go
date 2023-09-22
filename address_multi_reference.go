@@ -67,7 +67,7 @@ func MultiAddressReferenceFromBytes(bytes []byte) (*MultiAddressReference, int, 
 		return nil, 0, ErrInvalidAddressType
 	}
 
-	return &MultiAddressReference{MultiAddressID: bytes[1:AddressMultiIDLength]}, AddressMultiIDLength, nil
+	return &MultiAddressReference{MultiAddressID: bytes[:AddressMultiIDLength]}, AddressMultiIDLength, nil
 }
 
 func NewMultiAddressReferenceFromMultiAddress(address *MultiAddress) *MultiAddressReference {
