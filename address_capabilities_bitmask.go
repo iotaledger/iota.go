@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"context"
+
 	"github.com/iotaledger/hive.go/runtime/options"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -90,6 +92,12 @@ func WithAddressCanReceiveDelegationOutputs(canReceiveDelegationOutputs bool) op
 }
 
 type AddressCapabilitiesBitMask []byte
+
+func AddressCapabilitiesBitMaskFromBytes(bytes []byte) (AddressCapabilitiesBitMask, int, error) {
+	var result AddressCapabilitiesBitMask
+	consumed, err := CommonSerixAPI().Decode(context.TODO(), bytes, &result)
+	return result, consumed, err
+}
 
 func AddressCapabilitiesBitMaskWithCapabilities(opts ...options.Option[AddressCapabilitiesOptions]) AddressCapabilitiesBitMask {
 	options := options.Apply(new(AddressCapabilitiesOptions), opts)

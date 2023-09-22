@@ -9,17 +9,18 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
 	AddressWeightSerializedBytesSize = serializer.OneByte
+	AddressMultiIDLength             = serializer.OneByte + blake2b.Size256
 )
 
 var (
-	ErrMultiAddrCannotBeReconstructedViaBech32 = ierrors.New("multi address cannot be reconstructed via bech32")
-	ErrMultiAddressWeightInvalid               = ierrors.New("multi address weight invalid")
-	ErrMultiAddressThresholdInvalid            = ierrors.New("multi address treshold invalid")
+	ErrMultiAddressWeightInvalid    = ierrors.New("multi address weight invalid")
+	ErrMultiAddressThresholdInvalid = ierrors.New("multi address treshold invalid")
 )
 
 // AddressWithWeight is an Address with a weight used for threshold calculation in a MultiAddress.
@@ -67,7 +68,7 @@ func (addr *MultiAddress) ID() []byte {
 	hash := blake2b.Sum256(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
 
 	// prefix the hash of the multi address bytes with the AddressType
-	return append([]byte{byte(AddressMulti)}, hash[:]...)
+	return byteutils.ConcatBytes([]byte{byte(AddressMulti)}, hash[:])
 }
 
 func (addr *MultiAddress) Key() string {
