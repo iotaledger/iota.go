@@ -13,6 +13,8 @@ import (
 var (
 	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = ierrors.New("unknown address type")
+	// ErrInvalidAddressType gets returned when an address type is invalid.
+	ErrInvalidAddressType = ierrors.New("invalid address type")
 	// ErrInvalidNestedAddressType gets returned when a nested address inside a MultiAddress or RestrictedAddress is invalid.
 	ErrInvalidNestedAddressType = ierrors.New("invalid nested address type")
 	// ErrImplicitAccountCreationAddressInInvalidUnlockCondition gets returned when a Implicit Account Creation Address
@@ -213,16 +215,34 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	//nolint:exhaustive
 	switch addrType {
 	case AddressMulti:
-		// return the HRP so we can at least check for correct network
-		return NetworkPrefix(hrp), nil, ErrMultiAddrCannotBeReconstructedViaBech32
+		multiAddrRef, _, err := MultiAddressReferenceFromBytes(addrData)
+		if err != nil {
+			return "", nil, ierrors.Errorf("invalid multi address: %w", err)
+		}
+
+		return NetworkPrefix(hrp), multiAddrRef, nil
+
 	case AddressRestricted:
 		if len(addrData) == 1 {
 			return "", nil, serializer.ErrDeserializationNotEnoughData
 		}
 		underlyingAddrType := AddressType(addrData[1])
 		if underlyingAddrType == AddressMulti {
-			// return the HRP so we can at least check for correct network
-			return NetworkPrefix(hrp), nil, ErrMultiAddrCannotBeReconstructedViaBech32
+			multiAddrRef, consumed, err := MultiAddressReferenceFromBytes(addrData[1:])
+			if err != nil {
+				return "", nil, ierrors.Errorf("invalid multi address: %w", err)
+			}
+
+			// get the address capabilities from the remaining bytes
+			capabilities, _, err := AddressCapabilitiesBitMaskFromBytes(addrData[1+consumed:])
+			if err != nil {
+				return "", nil, ierrors.Errorf("invalid address capabilities: %w", err)
+			}
+
+			return NetworkPrefix(hrp), &RestrictedAddress{
+				Address:             multiAddrRef,
+				AllowedCapabilities: capabilities,
+			}, nil
 		}
 	}
 

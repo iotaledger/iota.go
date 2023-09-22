@@ -81,23 +81,23 @@ var bech32Tests = []struct {
 	parseErr error
 }{
 	{
-		"RFC example: Ed25519 mainnet",
-		iotago.PrefixMainnet,
-		&iotago.Ed25519Address{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
-		"iota1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryj430ldu",
-		nil,
+		name:     "RFC example: Ed25519 mainnet",
+		network:  iotago.PrefixMainnet,
+		addr:     &iotago.Ed25519Address{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
+		bech32:   "iota1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryj430ldu",
+		parseErr: nil,
 	},
 	{
-		"RFC example: Ed25519 testnet",
-		iotago.PrefixDevnet,
-		&iotago.Ed25519Address{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
-		"atoi1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryjjl77h3",
-		nil,
+		name:     "RFC example: Ed25519 testnet",
+		network:  iotago.PrefixDevnet,
+		addr:     &iotago.Ed25519Address{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
+		bech32:   "atoi1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryjjl77h3",
+		parseErr: nil,
 	},
 	{
-		"Multi Address",
-		iotago.PrefixDevnet,
-		&iotago.MultiAddress{
+		name:    "Multi Address",
+		network: iotago.PrefixDevnet,
+		addr: &iotago.MultiAddress{
 			Addresses: []*iotago.AddressWithWeight{
 				{
 					Address: &iotago.Ed25519Address{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
@@ -122,43 +122,43 @@ var bech32Tests = []struct {
 			},
 			Threshold: 2,
 		},
-		"atoi1yz4qe5j4s44a7qpnz4lkd0nuepc9xkchznae90gy78ht8m9g9epxwaq3k3k",
-		iotago.ErrMultiAddrCannotBeReconstructedViaBech32,
+		bech32:   "atoi1yz4qe5j4s44a7qpnz4lkd0nuepc9xkchznae90gy78ht8m9g9epxwaq3k3k",
+		parseErr: iotago.ErrMultiAddrCannotBeReconstructedViaBech32,
 	},
 	{
-		"Restricted Ed25519 Address",
-		iotago.PrefixDevnet,
-		&iotago.RestrictedAddress{
+		name:    "Restricted Ed25519 Address",
+		network: iotago.PrefixDevnet,
+		addr: &iotago.RestrictedAddress{
 			Address:             &iotago.Ed25519Address{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
 			AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x55},
 		},
-		"atoi19qq99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp252sfghk",
-		nil,
+		bech32:   "atoi19qq99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp252sfghk",
+		parseErr: nil,
 	},
 	{
-		"Restricted Account Address",
-		iotago.PrefixDevnet,
-		&iotago.RestrictedAddress{
+		name:    "Restricted Account Address",
+		network: iotago.PrefixDevnet,
+		addr: &iotago.RestrictedAddress{
 			Address:             &iotago.AccountAddress{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
 			AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x55},
 		},
-		"atoi19qy99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp25v80yzv",
-		nil,
+		bech32:   "atoi19qy99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp25v80yzv",
+		parseErr: nil,
 	},
 	{
-		"Restricted NFT Address",
-		iotago.PrefixDevnet,
-		&iotago.RestrictedAddress{
+		name:    "Restricted NFT Address",
+		network: iotago.PrefixDevnet,
+		addr: &iotago.RestrictedAddress{
 			Address:             &iotago.NFTAddress{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
 			AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x55},
 		},
-		"atoi19qg99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp25xh9s5t",
-		nil,
+		bech32:   "atoi19qg99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp25xh9s5t",
+		parseErr: nil,
 	},
 	{
-		"Restricted Multi Address",
-		iotago.PrefixDevnet,
-		&iotago.RestrictedAddress{
+		name:    "Restricted Multi Address",
+		network: iotago.PrefixDevnet,
+		addr: &iotago.RestrictedAddress{
 			Address: &iotago.MultiAddress{
 				Addresses: []*iotago.AddressWithWeight{
 					{
@@ -186,8 +186,8 @@ var bech32Tests = []struct {
 			},
 			AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x55},
 		},
-		"atoi19qs25rxj2kzkhhcqxv2h7e470ny8q56mzu20hy4aqnc7avlv4qhyyecp258thqqw",
-		iotago.ErrMultiAddrCannotBeReconstructedViaBech32,
+		bech32:   "atoi19qs25rxj2kzkhhcqxv2h7e470ny8q56mzu20hy4aqnc7avlv4qhyyecp258thqqw",
+		parseErr: iotago.ErrMultiAddrCannotBeReconstructedViaBech32,
 	},
 }
 

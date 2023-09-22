@@ -14,12 +14,12 @@ import (
 
 const (
 	AddressWeightSerializedBytesSize = serializer.OneByte
+	AddressMultiIDLength             = serializer.OneByte + blake2b.Size256
 )
 
 var (
-	ErrMultiAddrCannotBeReconstructedViaBech32 = ierrors.New("multi address cannot be reconstructed via bech32")
-	ErrMultiAddressWeightInvalid               = ierrors.New("multi address weight invalid")
-	ErrMultiAddressThresholdInvalid            = ierrors.New("multi address treshold invalid")
+	ErrMultiAddressWeightInvalid    = ierrors.New("multi address weight invalid")
+	ErrMultiAddressThresholdInvalid = ierrors.New("multi address treshold invalid")
 )
 
 // AddressWithWeight is an Address with a weight used for threshold calculation in a MultiAddress.
