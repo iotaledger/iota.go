@@ -961,6 +961,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandUint32(math.MaxUint32),
 			RandUint32(math.MaxUint32),
 		),
+		iotago.WithImplicitAccountCreationOptions(RandMana(math.MaxUint64)),
 	)
 }
 

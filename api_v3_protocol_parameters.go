@@ -38,6 +38,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
 			WithRewardsOptions(10, 8, 8, 31, 1154, 2, 1),
+			WithImplicitAccountCreationOptions(5),
 		},
 			opts...,
 		),
@@ -123,6 +124,10 @@ func (p *V3ProtocolParameters) RewardsParameters() *RewardsParameters {
 	return &p.basicProtocolParameters.RewardsParameters
 }
 
+func (p *V3ProtocolParameters) ImplicitAccountCreationParameters() *ImplicitAccountCreationParameters {
+	return &p.basicProtocolParameters.ImplicitAccountCreationParameters
+}
+
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
 	return CommonSerixAPI().Encode(context.TODO(), p)
 }
@@ -137,8 +142,8 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 }
 
 func (p *V3ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
-		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaStructure, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.ValidationBlocksPerSlot, p.basicProtocolParameters.PunishmentEpochs, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge, p.basicProtocolParameters.EpochNearingThreshold, p.basicProtocolParameters.CongestionControlParameters, p.basicProtocolParameters.VersionSignaling, p.basicProtocolParameters.RewardsParameters)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n\tImplicitAccountCreationParameters: %v\n",
+		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaStructure, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.ValidationBlocksPerSlot, p.basicProtocolParameters.PunishmentEpochs, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge, p.basicProtocolParameters.EpochNearingThreshold, p.basicProtocolParameters.CongestionControlParameters, p.basicProtocolParameters.VersionSignaling, p.basicProtocolParameters.RewardsParameters, p.basicProtocolParameters.ImplicitAccountCreationParameters)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
@@ -283,5 +288,11 @@ func WithRewardsOptions(validatorBlocksPerSlot, profitMarginExponent, decayBalan
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent = decayBalancingConstantExponent
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant = decayBalancingConstant
 		p.basicProtocolParameters.RewardsParameters.PoolCoefficientExponent = poolCoefficientExponent
+	}
+}
+
+func WithImplicitAccountCreationOptions(onboardingReferenceManaCost Mana) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.ImplicitAccountCreationParameters.OnboardingReferenceManaCost = onboardingReferenceManaCost
 	}
 }
