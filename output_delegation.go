@@ -136,10 +136,11 @@ func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlotIndex Slot
 
 func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
+		// TODO: Align vbyte factor weight of each field with TIP.
 		// type prefix + amount + delegated amount + start epoch + end epoch
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize*4) +
-		rentStruct.VBFactorData.Multiply(DelegationIDLength) +
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+AccountAddressBytesLength) +
+		rentStruct.VBFactorDelegation.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize*4) +
+		rentStruct.VBFactorDelegation.Multiply(DelegationIDLength) +
+		rentStruct.VBFactorDelegation.Multiply(serializer.SmallTypeDenotationByteSize+AccountAddressBytesLength) +
 		d.Conditions.VBytes(rentStruct, nil)
 }
 

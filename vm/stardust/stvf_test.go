@@ -2976,10 +2976,10 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					"DelegationID": exampleDelegationID,
 					"EndEpoch":     currentEpoch,
 				},
-				"validator_id_modified": {
-					"ValidatorID":  tpkg.RandAccountID(),
-					"DelegationID": exampleDelegationID,
-					"EndEpoch":     currentEpoch,
+				"validator_address_modified": {
+					"ValidatorAddress": tpkg.RandAccountAddress(),
+					"DelegationID":     exampleDelegationID,
+					"EndEpoch":         currentEpoch,
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,

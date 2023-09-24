@@ -196,12 +196,12 @@ func TestOutputsDeSerialize(t *testing.T) {
 		{
 			name: "fail - Delegation Output contains Implicit Account Creation Address",
 			source: &iotago.DelegationOutput{
-				Amount:          1337,
-				DelegatedAmount: 1337,
-				DelegationID:    tpkg.Rand32ByteArray(),
-				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      iotago.EpochIndex(32),
-				EndEpoch:        iotago.EpochIndex(37),
+				Amount:           1337,
+				DelegatedAmount:  1337,
+				DelegationID:     tpkg.Rand32ByteArray(),
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       iotago.EpochIndex(32),
+				EndEpoch:         iotago.EpochIndex(37),
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
 				},
@@ -839,7 +839,7 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 }
 
 func TestOutputsSyntacticaDelegation(t *testing.T) {
-	emptyAccountAddress := iotago.AccountAddress(iotago.EmptyAccountID())
+	emptyAccountAddress := iotago.AccountAddress{}
 
 	tests := []struct {
 		name    string
