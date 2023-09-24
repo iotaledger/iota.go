@@ -2,15 +2,18 @@
 package tpkg
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"encoding/binary"
 	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
+	"slices"
 	"sort"
 	"time"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/runtime/options"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -40,6 +43,11 @@ func RandBytes(length int) []byte {
 
 func RandString(length int) string {
 	return string(RandBytes(length))
+}
+
+// RandInt returns a random int.
+func RandInt(max int) int {
+	return rand.Intn(max)
 }
 
 // RandUint8 returns a random uint8.
@@ -253,20 +261,107 @@ func RandEd25519Address() *iotago.Ed25519Address {
 
 // RandAccountAddress returns a random AccountAddress.
 func RandAccountAddress() *iotago.AccountAddress {
-	accountAddr := &iotago.AccountAddress{}
-	addr := RandBytes(iotago.AccountAddressBytesLength)
-	copy(accountAddr[:], addr)
+	addr := &iotago.AccountAddress{}
+	accountID := RandBytes(iotago.AccountAddressBytesLength)
+	copy(addr[:], accountID)
 
-	return accountAddr
+	return addr
 }
 
 // RandNFTAddress returns a random NFTAddress.
 func RandNFTAddress() *iotago.NFTAddress {
-	nftAddr := &iotago.NFTAddress{}
-	addr := RandBytes(iotago.NFTAddressBytesLength)
-	copy(nftAddr[:], addr)
+	addr := &iotago.NFTAddress{}
+	nftID := RandBytes(iotago.NFTAddressBytesLength)
+	copy(addr[:], nftID)
 
-	return nftAddr
+	return addr
+}
+
+// RandImplicitAccountCreationAddress returns a random ImplicitAccountCreationAddress.
+func RandImplicitAccountCreationAddress() *iotago.ImplicitAccountCreationAddress {
+	iacAddr := &iotago.ImplicitAccountCreationAddress{}
+	addr := RandBytes(iotago.Ed25519AddressBytesLength)
+	copy(iacAddr[:], addr)
+
+	return iacAddr
+}
+
+// RandMultiAddress returns a random MultiAddress.
+func RandMultiAddress() *iotago.MultiAddress {
+	addrCnt := RandInt(10) + 1
+
+	cumulativeWeight := 0
+	addresses := make([]*iotago.AddressWithWeight, 0, addrCnt)
+	for i := 0; i < addrCnt; i++ {
+		weight := RandInt(8) + 1
+		cumulativeWeight += weight
+		addresses = append(addresses, &iotago.AddressWithWeight{
+			Address: RandAddress(),
+			Weight:  byte(weight),
+		})
+	}
+
+	slices.SortFunc(addresses, func(a *iotago.AddressWithWeight, b *iotago.AddressWithWeight) int {
+		return bytes.Compare(a.Address.ID(), b.Address.ID())
+	})
+
+	threshold := RandInt(cumulativeWeight) + 1
+
+	return &iotago.MultiAddress{
+		Addresses: addresses,
+		Threshold: uint16(threshold),
+	}
+}
+
+// RandRestrictedEd25519Address returns a random restricted Ed25519 address.
+func RandRestrictedEd25519Address(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAddress {
+	return &iotago.RestrictedAddress{
+		Address:             RandEd25519Address(),
+		AllowedCapabilities: capabilities,
+	}
+}
+
+// RandRestrictedAccountAddress returns a random restricted account address.
+func RandRestrictedAccountAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAddress {
+	return &iotago.RestrictedAddress{
+		Address:             RandAccountAddress(),
+		AllowedCapabilities: capabilities,
+	}
+}
+
+// RandRestrictedNFTAddress returns a random restricted NFT address.
+func RandRestrictedNFTAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAddress {
+	return &iotago.RestrictedAddress{
+		Address:             RandNFTAddress(),
+		AllowedCapabilities: capabilities,
+	}
+}
+
+// RandRestrictedMultiAddress returns a random restricted multi address.
+func RandRestrictedMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAddress {
+	return &iotago.RestrictedAddress{
+		Address:             RandMultiAddress(),
+		AllowedCapabilities: capabilities,
+	}
+}
+
+// RandAddress returns a random address (Ed25519, Acount, NFT).
+func RandAddress() iotago.Address {
+	addressTypes := []iotago.AddressType{iotago.AddressEd25519, iotago.AddressAccount, iotago.AddressNFT}
+
+	addressType := addressTypes[RandInt(len(addressTypes))]
+
+	//nolint:exhaustive
+	switch addressType {
+	case iotago.AddressEd25519:
+		return RandEd25519Address()
+	case iotago.AddressAccount:
+		return RandAccountAddress()
+	case iotago.AddressNFT:
+		return RandNFTAddress()
+	default:
+		panic(ierrors.Wrapf(iotago.ErrUnknownAddrType, "type %d", addressType))
+	}
 }
 
 // RandEd25519Signature returns a random Ed25519 signature.
@@ -278,6 +373,33 @@ func RandEd25519Signature() *iotago.Ed25519Signature {
 	copy(edSig.Signature[:], sig)
 
 	return edSig
+}
+
+// RandUnlock returns a random unlock (except Signature, Reference, Account, NFT).
+func RandUnlock(allowEmptyUnlock bool) iotago.Unlock {
+	unlockTypes := []iotago.UnlockType{iotago.UnlockSignature, iotago.UnlockReference, iotago.UnlockAccount, iotago.UnlockNFT}
+
+	if allowEmptyUnlock {
+		unlockTypes = append(unlockTypes, iotago.UnlockEmpty)
+	}
+
+	unlockType := unlockTypes[RandInt(len(unlockTypes))]
+
+	//nolint:exhaustive
+	switch unlockType {
+	case iotago.UnlockSignature:
+		return RandEd25519SignatureUnlock()
+	case iotago.UnlockReference:
+		return RandReferenceUnlock()
+	case iotago.UnlockAccount:
+		return RandAccountUnlock()
+	case iotago.UnlockNFT:
+		return RandNFTUnlock()
+	case iotago.UnlockEmpty:
+		return &iotago.EmptyUnlock{}
+	default:
+		panic(ierrors.Wrapf(iotago.ErrUnknownUnlockType, "type %d", unlockType))
+	}
 }
 
 // RandEd25519SignatureUnlock returns a random Ed25519 signature unlock.
@@ -298,6 +420,20 @@ func RandAccountUnlock() *iotago.AccountUnlock {
 // RandNFTUnlock returns a random account unlock.
 func RandNFTUnlock() *iotago.NFTUnlock {
 	return &iotago.NFTUnlock{Reference: uint16(rand.Intn(1000))}
+}
+
+// RandMultiUnlock returns a random multi unlock.
+func RandMultiUnlock() *iotago.MultiUnlock {
+	unlockCnt := RandInt(10) + 1
+	unlocks := make([]iotago.Unlock, 0, unlockCnt)
+
+	for i := 0; i < unlockCnt; i++ {
+		unlocks = append(unlocks, RandUnlock(true))
+	}
+
+	return &iotago.MultiUnlock{
+		Unlocks: unlocks,
+	}
 }
 
 // ReferenceUnlock returns a reference unlock with the given index.
@@ -344,7 +480,11 @@ func RandTransactionEssenceWithAllotmentCount(allotmentCount int) *iotago.Transa
 // RandTransactionEssenceWithOptions returns a random transaction essence with options applied.
 func RandTransactionEssenceWithOptions(opts ...options.Option[iotago.TransactionEssence]) *iotago.TransactionEssence {
 	tx := &iotago.TransactionEssence{
-		NetworkID: TestNetworkID,
+		NetworkID:     TestNetworkID,
+		ContextInputs: iotago.TxEssenceContextInputs{},
+		Inputs:        iotago.TxEssenceInputs{},
+		Outputs:       iotago.TxEssenceOutputs{},
+		Allotments:    iotago.Allotments{},
 	}
 
 	inputCount := 1
@@ -510,15 +650,19 @@ func RandBasicBlock(withPayloadType iotago.PayloadType) *iotago.BasicBlock {
 	}
 
 	return &iotago.BasicBlock{
-		StrongParents: SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
-		Payload:       payload,
-		BurnedMana:    RandMana(1000),
+		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
+		WeakParents:        iotago.BlockIDs{},
+		ShallowLikeParents: iotago.BlockIDs{},
+		Payload:            payload,
+		BurnedMana:         RandMana(1000),
 	}
 }
 
 func ValidationBlock() *iotago.ValidationBlock {
 	return &iotago.ValidationBlock{
 		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidationMaxParents)),
+		WeakParents:             iotago.BlockIDs{},
+		ShallowLikeParents:      iotago.BlockIDs{},
 		HighestSupportedVersion: TestAPI.Version() + 1,
 	}
 }
@@ -604,9 +748,9 @@ func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 	dep := &iotago.BasicOutput{
 		Amount:       0,
-		NativeTokens: nil,
-		Conditions:   nil,
-		Features:     nil,
+		NativeTokens: iotago.NativeTokens{},
+		Conditions:   iotago.BasicOutputUnlockConditions{},
+		Features:     iotago.BasicOutputFeatures{},
 	}
 
 	//nolint:exhaustive
@@ -645,7 +789,8 @@ func RandSortAllotment(count int) iotago.Allotments {
 func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
-			NetworkID: 14147312347886322761,
+			NetworkID:     14147312347886322761,
+			ContextInputs: iotago.TxEssenceContextInputs{},
 			Inputs: iotago.TxEssenceInputs{
 				&iotago.UTXOInput{
 					TransactionID: func() [iotago.TransactionIDLength]byte {
@@ -665,7 +810,8 @@ func OneInputOutputTransaction() *iotago.Transaction {
 					},
 				},
 			},
-			Payload: nil,
+			Allotments: iotago.Allotments{},
+			Payload:    nil,
 		},
 		Unlocks: iotago.Unlocks{
 			&iotago.SignatureUnlock{
@@ -717,12 +863,35 @@ func RandEd25519Identity() (ed25519.PrivateKey, *iotago.Ed25519Address, iotago.A
 	return edSk, edAddr, addrKeys
 }
 
+// RandEd25519IdentitiesSortedByAddress returns random Ed25519 identities and keys lexically sorted by the address.
+func RandEd25519IdentitiesSortedByAddress(count int) ([]iotago.Address, []iotago.AddressKeys) {
+	addresses := make([]iotago.Address, count)
+	addressKeys := make([]iotago.AddressKeys, count)
+	for i := 0; i < count; i++ {
+		_, addresses[i], addressKeys[i] = RandEd25519Identity()
+	}
+
+	// addressses need to be lexically ordered in the MultiAddress
+	slices.SortFunc(addresses, func(a iotago.Address, b iotago.Address) int {
+		return bytes.Compare(a.ID(), b.ID())
+	})
+
+	// addressses need to be lexically ordered in the MultiAddress
+	slices.SortFunc(addressKeys, func(a iotago.AddressKeys, b iotago.AddressKeys) int {
+		return bytes.Compare(a.Address.ID(), b.Address.ID())
+	})
+
+	return addresses, addressKeys
+}
+
 // RandRentStructure produces random rent structure.
 func RandRentStructure() *iotago.RentStructure {
 	return &iotago.RentStructure{
-		VByteCost:    RandUint32(math.MaxUint32),
-		VBFactorData: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
-		VBFactorKey:  iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VByteCost:              RandUint32(math.MaxUint32),
+		VBFactorData:           iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VBFactorKey:            iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VBFactorBlockIssuerKey: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
+		VBFactorStakingFeature: iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 	}
 }
 
@@ -734,7 +903,7 @@ func RandWorkScore(max uint32) iotago.WorkScore {
 // RandWorkscoreStructure produces random workscore structure.
 func RandWorkscoreStructure() *iotago.WorkScoreStructure {
 	return &iotago.WorkScoreStructure{
-		DataKilobyte:              RandWorkScore(math.MaxUint32),
+		DataByte:                  RandWorkScore(math.MaxUint32),
 		Block:                     RandWorkScore(math.MaxUint32),
 		MissingParent:             RandWorkScore(math.MaxUint32),
 		Input:                     RandWorkScore(math.MaxUint32),
@@ -759,6 +928,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 		iotago.WithSupplyOptions(
 			RandBaseToken(math.MaxUint64),
 			RandUint32(math.MaxUint32),
+			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
@@ -789,7 +959,9 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandWorkScore(math.MaxUint32),
 			RandMana(math.MaxUint64),
 			RandUint32(math.MaxUint32),
+			RandUint32(math.MaxUint32),
 		),
+		iotago.WithImplicitAccountCreationOptions(RandMana(math.MaxUint64)),
 	)
 }
 

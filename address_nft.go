@@ -2,8 +2,11 @@
 package iotago
 
 import (
+	"context"
+
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -15,95 +18,65 @@ const (
 	NFTAddressSerializedBytesSize = serializer.SmallTypeDenotationByteSize + NFTAddressBytesLength
 )
 
-// ParseNFTAddressFromHexString parses the given hex string into an NFTAddress.
-func ParseNFTAddressFromHexString(hexAddr string) (*NFTAddress, error) {
-	addrBytes, err := hexutil.DecodeHex(hexAddr)
-	if err != nil {
-		return nil, err
-	}
-	addr := &NFTAddress{}
-	copy(addr[:], addrBytes)
-
-	return addr, nil
-}
-
-// MustParseNFTAddressFromHexString parses the given hex string into an NFTAddress.
-// It panics if the hex address is invalid.
-func MustParseNFTAddressFromHexString(hexAddr string) *NFTAddress {
-	addr, err := ParseNFTAddressFromHexString(hexAddr)
-	if err != nil {
-		panic(err)
-	}
-
-	return addr
-}
-
 // NFTAddress defines an NFT address.
 // An NFTAddress is the Blake2b-256 hash of the OutputID which created it.
 type NFTAddress [NFTAddressBytesLength]byte
 
-func (nftAddr *NFTAddress) Decode(b []byte) (int, error) {
-	copy(nftAddr[:], b)
-
-	return NFTAddressSerializedBytesSize - 1, nil
-}
-
-func (nftAddr *NFTAddress) Encode() ([]byte, error) {
-	var b [NFTAddressSerializedBytesSize - 1]byte
-	copy(b[:], nftAddr[:])
-
-	return b[:], nil
-}
-
-func (nftAddr *NFTAddress) Clone() Address {
+func (addr *NFTAddress) Clone() Address {
 	cpy := &NFTAddress{}
-	copy(cpy[:], nftAddr[:])
+	copy(cpy[:], addr[:])
 
 	return cpy
 }
 
-func (nftAddr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(NFTAddressSerializedBytesSize)
+func (addr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
-func (nftAddr *NFTAddress) Key() string {
-	return string(append([]byte{byte(AddressNFT)}, (*nftAddr)[:]...))
+func (addr *NFTAddress) ID() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
 }
 
-func (nftAddr *NFTAddress) Chain() ChainID {
-	return NFTID(*nftAddr)
+func (addr *NFTAddress) Key() string {
+	return string(addr.ID())
 }
 
-func (nftAddr *NFTAddress) NFTID() NFTID {
-	return NFTID(*nftAddr)
+func (addr *NFTAddress) Chain() ChainID {
+	return NFTID(*addr)
 }
 
-func (nftAddr *NFTAddress) Equal(other Address) bool {
+func (addr *NFTAddress) NFTID() NFTID {
+	return NFTID(*addr)
+}
+
+func (addr *NFTAddress) Equal(other Address) bool {
 	otherAddr, is := other.(*NFTAddress)
 	if !is {
 		return false
 	}
 
-	return *nftAddr == *otherAddr
+	return *addr == *otherAddr
 }
 
-func (nftAddr *NFTAddress) Type() AddressType {
+func (addr *NFTAddress) Type() AddressType {
 	return AddressNFT
 }
 
-func (nftAddr *NFTAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, nftAddr)
+func (addr *NFTAddress) Bech32(hrp NetworkPrefix) string {
+	return bech32StringBytes(hrp, addr.ID())
 }
 
-func (nftAddr *NFTAddress) String() string {
-	return hexutil.EncodeHex(nftAddr[:])
+func (addr *NFTAddress) String() string {
+	return hexutil.EncodeHex(addr.ID())
 }
 
-func (nftAddr *NFTAddress) Size() int {
+func (addr *NFTAddress) Size() int {
 	return NFTAddressSerializedBytesSize
 }
 
 // NFTAddressFromOutputID returns the NFT address computed from a given OutputID.
-func NFTAddressFromOutputID(outputID OutputID) NFTAddress {
-	return blake2b.Sum256(outputID[:])
+func NFTAddressFromOutputID(outputID OutputID) *NFTAddress {
+	address := blake2b.Sum256(outputID[:])
+
+	return (*NFTAddress)(&address)
 }

@@ -32,7 +32,7 @@ const (
 var (
 	protoParams = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("alphanet", "atoi"),
-		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10, 100, 100),
+		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 500, 1, 10, 100, 100, 100),
 	)
 
 	mockAPI = iotago.V3API(protoParams)
@@ -182,11 +182,11 @@ func TestClient_BlockIssuance(t *testing.T) {
 	require.NoError(t, err)
 
 	originRes.Commitment = &iotago.Commitment{
-		Version:          1,
-		Index:            iotago.SlotIndex(25),
-		PrevID:           prevID,
-		RootsID:          rootsID,
-		CumulativeWeight: 100_000,
+		ProtocolVersion:      1,
+		Index:                iotago.SlotIndex(25),
+		PreviousCommitmentID: prevID,
+		RootsID:              rootsID,
+		CumulativeWeight:     100_000,
 	}
 
 	mockGetJSON(nodeclient.RouteBlockIssuance, 200, originRes)
@@ -327,7 +327,9 @@ func TestClient_SubmitBlock(t *testing.T) {
 		},
 		Signature: &iotago.Ed25519Signature{},
 		Block: &iotago.BasicBlock{
-			StrongParents: tpkg.SortedRandBlockIDs(1),
+			StrongParents:      tpkg.SortedRandBlockIDs(1),
+			WeakParents:        iotago.BlockIDs{},
+			ShallowLikeParents: iotago.BlockIDs{},
 		},
 	}
 
@@ -380,8 +382,10 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
-			StrongParents: tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-			Payload:       nil,
+			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+			WeakParents:        iotago.BlockIDs{},
+			ShallowLikeParents: iotago.BlockIDs{},
+			Payload:            nil,
 		},
 	}
 
@@ -407,8 +411,10 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
-			StrongParents: tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
-			Payload:       nil,
+			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+			WeakParents:        iotago.BlockIDs{},
+			ShallowLikeParents: iotago.BlockIDs{},
+			Payload:            nil,
 		},
 	}
 
@@ -476,10 +482,10 @@ func TestClient_CommitmentByID(t *testing.T) {
 	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(math.MaxUint64))
 
 	originRes := &iotago.Commitment{
-		Index:            commitment.Index,
-		PrevID:           commitment.PrevID,
-		RootsID:          commitment.RootsID,
-		CumulativeWeight: commitment.CumulativeWeight,
+		Index:                commitment.Index,
+		PreviousCommitmentID: commitment.PreviousCommitmentID,
+		RootsID:              commitment.RootsID,
+		CumulativeWeight:     commitment.CumulativeWeight,
 	}
 
 	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByID, commitmentID.ToHex()), 200, originRes)
@@ -524,10 +530,10 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(math.MaxUint64))
 
 	originRes := &iotago.Commitment{
-		Index:            commitment.Index,
-		PrevID:           commitment.PrevID,
-		RootsID:          commitment.RootsID,
-		CumulativeWeight: commitment.CumulativeWeight,
+		Index:                commitment.Index,
+		PreviousCommitmentID: commitment.PreviousCommitmentID,
+		RootsID:              commitment.RootsID,
+		CumulativeWeight:     commitment.CumulativeWeight,
 	}
 
 	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByIndex, slotIndex), 200, originRes)

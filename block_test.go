@@ -371,8 +371,10 @@ func TestBasicBlock_MinSize(t *testing.T) {
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
-			StrongParents: tpkg.SortedRandBlockIDs(1),
-			Payload:       nil,
+			StrongParents:      tpkg.SortedRandBlockIDs(1),
+			WeakParents:        iotago.BlockIDs{},
+			ShallowLikeParents: iotago.BlockIDs{},
+			Payload:            nil,
 		},
 	}
 
@@ -396,6 +398,8 @@ func TestValidationBlock_MinSize(t *testing.T) {
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.ValidationBlock{
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			WeakParents:             iotago.BlockIDs{},
+			ShallowLikeParents:      iotago.BlockIDs{},
 			HighestSupportedVersion: tpkg.TestAPI.Version(),
 		},
 	}
@@ -424,6 +428,8 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	{
 		protocolBlock.Block = &iotago.ValidationBlock{
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			WeakParents:             iotago.BlockIDs{},
+			ShallowLikeParents:      iotago.BlockIDs{},
 			HighestSupportedVersion: tpkg.TestAPI.Version() - 1,
 		}
 		blockBytes, err := tpkg.TestAPI.Encode(protocolBlock)
@@ -438,6 +444,8 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	{
 		protocolBlock.Block = &iotago.ValidationBlock{
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
+			WeakParents:             iotago.BlockIDs{},
+			ShallowLikeParents:      iotago.BlockIDs{},
 			HighestSupportedVersion: tpkg.TestAPI.Version(),
 		}
 		blockBytes, err := tpkg.TestAPI.Encode(protocolBlock)
@@ -473,7 +481,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 		Signature: signature,
 	}
 
-	blockJSON := fmt.Sprintf(`{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitment":"%s","latestFinalizedSlot":"0","issuerId":"%s","block":{"type":%d,"strongParents":["%s"],"weakParents":[],"shallowLikeParents":[],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
+	blockJSON := fmt.Sprintf(`{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitmentId":"%s","latestFinalizedSlot":"0","issuerId":"%s","block":{"type":%d,"strongParents":["%s"],"weakParents":[],"shallowLikeParents":[],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
 		tpkg.TestAPI.Version(),
 		networkID,
 		strconv.FormatUint(serializer.TimeToUint64(issuingTime), 10),

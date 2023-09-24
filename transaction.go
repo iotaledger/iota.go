@@ -19,6 +19,8 @@ var (
 	ErrInputOutputSumMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount")
 	// ErrManaOverflow gets returned when there is an under- or overflow in Mana calculations.
 	ErrManaOverflow = ierrors.New("under- or overflow in Mana calculations")
+	// ErrUnknownSignatureType gets returned for unknown signature types.
+	ErrUnknownSignatureType = ierrors.New("unknown signature type")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
 	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
@@ -51,6 +53,13 @@ type Transaction struct {
 	Essence *TransactionEssence `serix:"0,mapKey=essence"`
 	// The unlocks defining the unlocking data for the inputs within the Essence.
 	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
+}
+
+func (t *Transaction) Clone() Payload {
+	return &Transaction{
+		Essence: t.Essence.Clone(),
+		Unlocks: t.Unlocks.Clone(),
+	}
 }
 
 func (t *Transaction) PayloadType() PayloadType {
@@ -190,6 +199,12 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 }
 
 func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// we account for the network traffic only on "Payload" level
+	workScoreEssenceData, err := workScoreStructure.DataByte.Multiply(t.Size())
+	if err != nil {
+		return 0, err
+	}
+
 	workScoreEssence, err := t.Essence.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -200,5 +215,5 @@ func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 		return 0, err
 	}
 
-	return workScoreEssence.Add(workScoreUnlocks)
+	return workScoreEssenceData.Add(workScoreEssence, workScoreUnlocks)
 }

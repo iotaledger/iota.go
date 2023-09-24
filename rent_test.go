@@ -28,10 +28,11 @@ func TestRentStructureJSONMarshalling(t *testing.T) {
 		VByteCost:              500,
 		VBFactorData:           1,
 		VBFactorKey:            10,
-		VBFactorIssuerKeys:     50,
+		VBFactorBlockIssuerKey: 50,
 		VBFactorStakingFeature: 100,
+		VBFactorDelegation:     100,
 	}
-	rentStructureJSON := `{"vByteCost":500,"vByteFactorData":1,"vByteFactorKey":10,"vByteFactorIssuerKeys":50,"vByteFactorStakingFeature":100}`
+	rentStructureJSON := `{"vByteCost":500,"vByteFactorData":1,"vByteFactorKey":10,"vByteFactorBlockIssuerKey":50,"vByteFactorStakingFeature":100,"vByteFactorDelegation":100}`
 
 	j, err := tpkg.TestAPI.JSONEncode(rentStructure)
 	require.NoError(t, err)

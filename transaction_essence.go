@@ -117,6 +117,25 @@ type TransactionEssence struct {
 }
 
 // SigningMessage returns the to be signed message.
+func (u *TransactionEssence) Clone() *TransactionEssence {
+	var payload TxEssencePayload
+	if u.Payload != nil {
+		payload = u.Payload.Clone()
+	}
+
+	return &TransactionEssence{
+		NetworkID:        u.NetworkID,
+		CreationSlot:     u.CreationSlot,
+		ContextInputs:    u.ContextInputs.Clone(),
+		Inputs:           u.Inputs.Clone(),
+		InputsCommitment: u.InputsCommitment,
+		Outputs:          u.Outputs.Clone(),
+		Allotments:       u.Allotments.Clone(),
+		Payload:          payload,
+	}
+}
+
+// SigningMessage returns the to be signed message.
 func (u *TransactionEssence) SigningMessage(api API) ([]byte, error) {
 	essenceBytes, err := api.Encode(u)
 	if err != nil {

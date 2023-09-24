@@ -74,6 +74,10 @@ func (t *TimeProvider) EpochDurationSeconds() int64 {
 	return t.epochDurationSeconds
 }
 
+func (t *TimeProvider) SlotsPerEpochExponent() uint8 {
+	return t.slotsPerEpochExponent
+}
+
 // SlotFromTime calculates the SlotIndex from the given time.
 //
 // Note: The + 1 is required because slots are counted starting from 1 with 0 being reserved for times before the genesis,

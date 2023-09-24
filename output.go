@@ -12,7 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -34,6 +36,7 @@ type Output interface {
 	Sizer
 	NonEphemeralObject
 	ProcessableObject
+	constraints.Cloneable[Output]
 
 	// BaseTokenAmount returns the amount of base tokens held by this Output.
 	BaseTokenAmount() BaseToken
@@ -52,9 +55,6 @@ type Output interface {
 
 	// Type returns the type of the output.
 	Type() OutputType
-
-	// Clone clones the Output.
-	Clone() Output
 }
 
 // OutputType defines the type of outputs.
@@ -229,6 +229,11 @@ func MustOutputIDFromHex(hexStr string) OutputID {
 // OutputSet is a map of the OutputID to Output.
 type OutputSet map[OutputID]Output
 
+// Clone clones the OutputSet.
+func (outputSet OutputSet) Clone() OutputSet {
+	return lo.CloneMap(outputSet)
+}
+
 // Filter creates a new OutputSet with Outputs which pass the filter function f.
 func (outputSet OutputSet) Filter(f func(outputID OutputID, output Output) bool) OutputSet {
 	m := make(OutputSet)
@@ -327,6 +332,16 @@ func (i *ChainTransitionError) Unwrap() error {
 
 // Outputs is a slice of Output.
 type Outputs[T Output] []T
+
+func (outputs Outputs[T]) Clone() Outputs[T] {
+	cpy := make(Outputs[T], len(outputs))
+	for idx, output := range outputs {
+		//nolint:forcetypeassert // we can safely assume that this is of type T
+		cpy[idx] = output.Clone().(T)
+	}
+
+	return cpy
+}
 
 func (outputs Outputs[T]) Size() int {
 	sum := serializer.UInt16ByteSize

@@ -13,7 +13,11 @@ func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 	return &TransactionBuilder{
 		api: api,
 		essence: &iotago.TransactionEssence{
-			NetworkID: api.ProtocolParameters().NetworkID(),
+			NetworkID:     api.ProtocolParameters().NetworkID(),
+			ContextInputs: iotago.TxEssenceContextInputs{},
+			Inputs:        iotago.TxEssenceInputs{},
+			Outputs:       iotago.TxEssenceOutputs{},
+			Allotments:    iotago.Allotments{},
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},
@@ -37,6 +41,21 @@ type TxInput struct {
 	InputID iotago.OutputID `json:"inputId"`
 	// The output which is used as an input.
 	Input iotago.Output `json:"input"`
+}
+
+func (b *TransactionBuilder) Clone() *TransactionBuilder {
+	cpyInputOwner := make(map[iotago.OutputID]iotago.Address, len(b.inputOwner))
+	for outputID, address := range b.inputOwner {
+		cpyInputOwner[outputID] = address.Clone()
+	}
+
+	return &TransactionBuilder{
+		api:              b.api,
+		occurredBuildErr: b.occurredBuildErr,
+		essence:          b.essence.Clone(),
+		inputs:           b.inputs.Clone(),
+		inputOwner:       cpyInputOwner,
+	}
 }
 
 // AddInput adds the given input to the builder.

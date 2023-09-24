@@ -13,6 +13,8 @@ type BlockIssuerKeyType byte
 const (
 	// Ed25519BlockIssuerKey denotes a BlockIssuerKeyEd25519.
 	Ed25519BlockIssuerKey BlockIssuerKeyType = iota
+	// Ed25519BlockIssuerKeyAddress denotes a BlockIssuerKeyEd25519Address.
+	Ed25519BlockIssuerKeyAddress
 )
 
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
@@ -42,7 +44,7 @@ func (keys BlockIssuerKeys) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByt
 		vbytes += key.VBytes(rentStruct, nil)
 	}
 
-	return rentStruct.VBFactorIssuerKeys.Multiply(vbytes)
+	return rentStruct.VBFactorBlockIssuerKey.Multiply(vbytes)
 }
 
 // BlockIssuerKey is a key that is allowed to issue blocks from an account with a BlockIssuerFeature.
@@ -50,7 +52,7 @@ type BlockIssuerKey interface {
 	Sizer
 	NonEphemeralObject
 
-	// BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the public key bytes.
+	// BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the unique identifier of the key.
 	BlockIssuerKeyBytes() []byte
 	// Type returns the BlockIssuerKeyType.
 	Type() BlockIssuerKeyType

@@ -26,10 +26,14 @@ func VersionFromBytes(b []byte) (Version, int, error) {
 	return Version(b[0]), 1, nil
 }
 
+// VersionSignaling defines the parameters used by signaling protocol parameters upgrade.
 type VersionSignaling struct {
-	WindowSize        uint8 `serix:"0,mapKey=windowSize"`
+	// WindowSize is the size of the window in epochs to find which version of protocol parameters was most signaled, from currentEpoch - windowSize to currentEpoch.
+	WindowSize uint8 `serix:"0,mapKey=windowSize"`
+	// WindowTargetRatio is the target number of supporters for a version to win in a windowSize.
 	WindowTargetRatio uint8 `serix:"1,mapKey=windowTargetRatio"`
-	ActivationOffset  uint8 `serix:"2,mapKey=activationOffset"`
+	// ActivationOffset is the offset in epochs to activate the new version of protocol parameters.
+	ActivationOffset uint8 `serix:"2,mapKey=activationOffset"`
 }
 
 func (s VersionSignaling) Equals(signaling VersionSignaling) bool {
@@ -62,6 +66,10 @@ type API interface {
 	LivenessThresholdDuration() time.Duration
 	// MaxBlockWork returns the maximum block work score.
 	MaxBlockWork() WorkScore
+	// ComputedInitialReward returns the initial reward calculated from the parameters.
+	ComputedInitialReward() uint64
+	// ComputedFinalReward returns the final reward calculated from the parameters.
+	ComputedFinalReward() uint64
 }
 
 func LatestProtocolVersion() Version {
@@ -115,6 +123,10 @@ type ProtocolParameters interface {
 
 	StakingUnbondingPeriod() EpochIndex
 
+	ValidationBlocksPerSlot() uint16
+
+	PunishmentEpochs() EpochIndex
+
 	LivenessThreshold() SlotIndex
 
 	MinCommittableAge() SlotIndex
@@ -125,10 +137,14 @@ type ProtocolParameters interface {
 	// selection for the next and upcoming epoch.
 	EpochNearingThreshold() SlotIndex
 
-	// RMCParameters returns the parameters used to calculate reference Mana cost.
+	// CongestionControlParameters returns the parameters used to calculate reference Mana cost.
 	CongestionControlParameters() *CongestionControlParameters
 
 	VersionSignaling() *VersionSignaling
+
+	RewardsParameters() *RewardsParameters
+
+	ImplicitAccountCreationParameters() *ImplicitAccountCreationParameters
 
 	Bytes() ([]byte, error)
 
