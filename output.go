@@ -906,8 +906,8 @@ func OutputsSyntacticalDelegation() OutputsSyntacticalValidationFunc {
 			return nil
 		}
 
-		if delegationOutput.ValidatorID.Empty() {
-			return ierrors.Wrapf(ErrDelegationValidatorIDZeroed, "output %d", index)
+		if delegationOutput.ValidatorAddress.AccountID().Empty() {
+			return ierrors.Wrapf(ErrDelegationValidatorAddressZeroed, "output %d", index)
 		}
 
 		return nil

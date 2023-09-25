@@ -104,7 +104,7 @@ type DelegationOutput struct {
 	// The identifier for this output.
 	DelegationID DelegationID `serix:"2,mapKey=delegationId"`
 	// The Account ID of the validator to which this output is delegating.
-	ValidatorID AccountID `serix:"3,mapKey=validatorId"`
+	ValidatorAddress *AccountAddress `serix:"3,mapKey=validatorAddress"`
 	// The index of the first epoch for which this output delegates.
 	StartEpoch EpochIndex `serix:"4,mapKey=startEpoch"`
 	// The index of the last epoch for which this output delegates.
@@ -115,13 +115,13 @@ type DelegationOutput struct {
 
 func (d *DelegationOutput) Clone() Output {
 	return &DelegationOutput{
-		Amount:          d.Amount,
-		DelegatedAmount: d.DelegatedAmount,
-		DelegationID:    d.DelegationID,
-		ValidatorID:     d.ValidatorID,
-		StartEpoch:      d.StartEpoch,
-		EndEpoch:        d.EndEpoch,
-		Conditions:      d.Conditions.Clone(),
+		Amount:           d.Amount,
+		DelegatedAmount:  d.DelegatedAmount,
+		DelegationID:     d.DelegationID,
+		ValidatorAddress: d.ValidatorAddress,
+		StartEpoch:       d.StartEpoch,
+		EndEpoch:         d.EndEpoch,
+		Conditions:       d.Conditions.Clone(),
 	}
 }
 
@@ -136,10 +136,11 @@ func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlotIndex Slot
 
 func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
+		// TODO: Align vbyte factor weight of each field with TIP.
 		// type prefix + amount + delegated amount + start epoch + end epoch
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize*4) +
-		rentStruct.VBFactorData.Multiply(DelegationIDLength) +
-		rentStruct.VBFactorData.Multiply(AccountIDLength) +
+		rentStruct.VBFactorDelegation.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize*4) +
+		rentStruct.VBFactorDelegation.Multiply(DelegationIDLength) +
+		rentStruct.VBFactorDelegation.Multiply(AccountAddressSerializedBytesSize) +
 		d.Conditions.VBytes(rentStruct, nil)
 }
 
@@ -192,7 +193,9 @@ func (d *DelegationOutput) Size() int {
 		BaseTokenSize +
 		BaseTokenSize +
 		DelegationIDLength +
-		AccountIDLength +
+		// Account Address Type Byte
+		serializer.SmallTypeDenotationByteSize +
+		AccountAddressBytesLength +
 		EpochIndexLength*2 +
 		d.Conditions.Size()
 }
