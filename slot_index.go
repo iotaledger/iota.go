@@ -3,13 +3,17 @@ package iotago
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-const SlotIndexLength = serializer.UInt32ByteSize
+const (
+	SlotIndexLength = serializer.UInt32ByteSize
+	MaxSlotIndex    = SlotIndex(math.MaxUint32)
+)
 
 // SlotIndex is the ID of a slot.
 type SlotIndex uint32

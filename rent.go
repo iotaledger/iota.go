@@ -104,7 +104,7 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 		Features: AccountOutputFeatures{
 			&BlockIssuerFeature{
 				BlockIssuerKeys: BlockIssuerKeys{
-					BlockIssuerKeyEd25519{},
+					Ed25519AddressBlockIssuerKey{},
 				},
 			},
 		},

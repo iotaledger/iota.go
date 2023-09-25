@@ -1,7 +1,6 @@
 package builder_test
 
 import (
-	"math"
 	"math/big"
 	"testing"
 	"time"
@@ -99,7 +98,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 				StakedAmount: amount,
 				FixedCost:    1,
 				StartEpoch:   1000,
-				EndEpoch:     math.MaxUint32,
+				EndEpoch:     iotago.MaxEpochIndex,
 			},
 		},
 		ImmutableFeatures: iotago.AccountOutputImmFeatures{

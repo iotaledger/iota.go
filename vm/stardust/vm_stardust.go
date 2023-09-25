@@ -3,7 +3,6 @@ package stardust
 import (
 	"bytes"
 	"fmt"
-	"math"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -190,7 +189,7 @@ func implicitAccountSTVF(input *vm.ChainOutputWithCreationSlot, transType iotago
 	case iotago.ChainTransitionTypeStateChange:
 		// check the block issuer feature of the new account output is valid as though the input side has a block issuer feature with max expiry slot.
 		inputBlockIssuerFeature := &iotago.BlockIssuerFeature{
-			ExpirySlot: math.MaxUint64,
+			ExpirySlot: iotago.MaxSlotIndex,
 		}
 		if err := accountBlockIssuerSTVF(input, inputBlockIssuerFeature, next, vmParams); err != nil {
 			return err

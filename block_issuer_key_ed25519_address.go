@@ -33,5 +33,5 @@ func (key Ed25519AddressBlockIssuerKey) Size() int {
 }
 
 func (key Ed25519AddressBlockIssuerKey) VBytes(rentStructure *RentStructure, _ VBytesFunc) VBytes {
-	return rentStructure.VBFactorBlockIssuerKey.Multiply(VBytes(key.Size()))
+	return rentStructure.VBFactorBlockIssuerKey().Multiply(VBytes(key.Size()))
 }

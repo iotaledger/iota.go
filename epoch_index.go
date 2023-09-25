@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
@@ -14,7 +15,10 @@ var (
 	ErrWrongEpochIndex = ierrors.New("wrong epoch index")
 )
 
-const EpochIndexLength = serializer.UInt32ByteSize
+const (
+	EpochIndexLength = serializer.UInt32ByteSize
+	MaxEpochIndex    = EpochIndex(math.MaxUint32)
+)
 
 // EpochIndex is the index of an epoch.
 type EpochIndex uint32
