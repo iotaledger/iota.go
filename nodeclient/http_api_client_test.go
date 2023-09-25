@@ -108,7 +108,7 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 			RelativeAcceptedTangleTime:  ts,
 			ConfirmedTangleTime:         ts,
 			RelativeConfirmedTangleTime: ts,
-			LatestCommitmentID:          tpkg.Rand40ByteArray(),
+			LatestCommitmentID:          tpkg.Rand36ByteArray(),
 			PruningEpoch:                iotago.EpochIndex(142800),
 		},
 		ProtocolParameters: []*apimodels.InfoResProtocolParameters{
@@ -317,7 +317,7 @@ func TestClient_Committee(t *testing.T) {
 func TestClient_SubmitBlock(t *testing.T) {
 	defer gock.Off()
 
-	blockHash := tpkg.Rand40ByteArray()
+	blockHash := tpkg.Rand36ByteArray()
 	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
 	incompleteBlock := &iotago.ProtocolBlock{
@@ -371,7 +371,7 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 func TestClient_BlockByBlockID(t *testing.T) {
 	defer gock.Off()
 
-	identifier := tpkg.Rand40ByteArray()
+	identifier := tpkg.Rand36ByteArray()
 	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.ProtocolBlock{
@@ -400,7 +400,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 func TestClient_TransactionIncludedBlock(t *testing.T) {
 	defer gock.Off()
 
-	txID := tpkg.Rand40ByteArray()
+	txID := tpkg.Rand36ByteArray()
 	queryHash := hexutil.EncodeHex(txID[:])
 
 	originBlock := &iotago.ProtocolBlock{
@@ -431,7 +431,7 @@ func TestClient_OutputByID(t *testing.T) {
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 
-	txID := tpkg.Rand40ByteArray()
+	txID := tpkg.Rand36ByteArray()
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
 	utxoInputID := utxoInput.OutputID()
@@ -448,16 +448,16 @@ func TestClient_OutputByID(t *testing.T) {
 func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
-	txID := tpkg.Rand40ByteArray()
+	txID := tpkg.Rand36ByteArray()
 	originRes := &apimodels.OutputMetadataResponse{
 		BlockID:              tpkg.RandBlockID(),
 		TransactionID:        txID,
 		OutputIndex:          3,
 		IsSpent:              true,
-		CommitmentIDSpent:    tpkg.Rand40ByteArray(),
-		TransactionIDSpent:   tpkg.Rand40ByteArray(),
-		IncludedCommitmentID: tpkg.Rand40ByteArray(),
-		LatestCommitmentID:   tpkg.Rand40ByteArray(),
+		CommitmentIDSpent:    tpkg.Rand36ByteArray(),
+		TransactionIDSpent:   tpkg.Rand36ByteArray(),
+		IncludedCommitmentID: tpkg.Rand36ByteArray(),
+		LatestCommitmentID:   tpkg.Rand36ByteArray(),
 	}
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}

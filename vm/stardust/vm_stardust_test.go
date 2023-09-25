@@ -942,7 +942,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
 								BlockIssuerKeys: iotago.BlockIssuerKeys{},
-								ExpirySlot:      iotago.SlotIndex(math.MaxUint64),
+								ExpirySlot:      iotago.SlotIndex(math.MaxUint32),
 							},
 						},
 						Conditions: iotago.AccountOutputUnlockConditions{
@@ -995,7 +995,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
 								BlockIssuerKeys: iotago.BlockIssuerKeys{},
-								ExpirySlot:      iotago.SlotIndex(math.MaxUint64),
+								ExpirySlot:      iotago.SlotIndex(math.MaxUint32),
 							},
 						},
 						Conditions: iotago.AccountOutputUnlockConditions{

@@ -20,7 +20,7 @@ var (
 				var inputs iotago.TxEssenceInputs
 				for i := 0; i < iotago.MaxInputsCount; i++ {
 					inputs = append(inputs, &iotago.UTXOInput{
-						TransactionID:          tpkg.Rand40ByteArray(),
+						TransactionID:          tpkg.Rand36ByteArray(),
 						TransactionOutputIndex: 0,
 					})
 				}

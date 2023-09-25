@@ -33,7 +33,7 @@ func TransactionIDFromData(creationSlot SlotIndex, data []byte) TransactionID {
 	dataHash := blake2b.Sum256(data)
 
 	var txID TransactionID
-	binary.LittleEndian.PutUint64(txID[:SlotIndexLength], uint64(creationSlot))
+	binary.LittleEndian.PutUint32(txID[:SlotIndexLength], uint32(creationSlot))
 	copy(txID[SlotIndexLength:], dataHash[:])
 
 	return txID
@@ -73,7 +73,7 @@ func TransactionIDFromBytes(bytes []byte) (TransactionID, int, error) {
 
 // CreationSlotIndex returns the SlotIndex the Transaction was created in.
 func (id TransactionID) CreationSlotIndex() SlotIndex {
-	return SlotIndex(binary.LittleEndian.Uint64(id[:OutputIndexLength]))
+	return SlotIndex(binary.LittleEndian.Uint32(id[:OutputIndexLength]))
 }
 
 func (id TransactionID) Bytes() ([]byte, error) {

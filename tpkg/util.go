@@ -173,6 +173,15 @@ func Rand32ByteArray() [32]byte {
 	return h
 }
 
+// Rand36ByteArray returns an array with 36 random bytes.
+func Rand36ByteArray() [36]byte {
+	var h [36]byte
+	b := RandBytes(36)
+	copy(h[:], b)
+
+	return h
+}
+
 // Rand40ByteArray returns an array with 40 random bytes.
 func Rand40ByteArray() [40]byte {
 	var h [40]byte
@@ -229,6 +238,17 @@ func SortedRand32ByteArray(count int) [][32]byte {
 	return hashes
 }
 
+// SortedRand36ByteArray returns a count length slice of sorted 36 byte arrays.
+func SortedRand36ByteArray(count int) [][36]byte {
+	hashes := make(serializer.LexicalOrdered36ByteArrays, count)
+	for i := 0; i < count; i++ {
+		hashes[i] = Rand36ByteArray()
+	}
+	sort.Sort(hashes)
+
+	return hashes
+}
+
 // SortedRand40ByteArray returns a count length slice of sorted 32 byte arrays.
 func SortedRand40ByteArray(count int) [][40]byte {
 	hashes := make(serializer.LexicalOrdered40ByteArrays, count)
@@ -243,7 +263,7 @@ func SortedRand40ByteArray(count int) [][40]byte {
 // SortedRandBlockIDs returned random block IDs.
 func SortedRandBlockIDs(count int) iotago.BlockIDs {
 	slice := make([]iotago.BlockID, count)
-	for i, ele := range SortedRand40ByteArray(count) {
+	for i, ele := range SortedRand36ByteArray(count) {
 		slice[i] = ele
 	}
 
@@ -602,7 +622,7 @@ func RandSlotIndex() iotago.SlotIndex {
 
 // RandBlockID produces a random block ID.
 func RandBlockID() iotago.BlockID {
-	return Rand40ByteArray()
+	return Rand36ByteArray()
 }
 
 // RandProtocolBlock returns a random block with the given inner payload.
@@ -722,7 +742,7 @@ func RandUTXOInput() *iotago.UTXOInput {
 // RandCommitmentInput returns a random Commitment input.
 func RandCommitmentInput() *iotago.CommitmentInput {
 	return &iotago.CommitmentInput{
-		CommitmentID: Rand40ByteArray(),
+		CommitmentID: Rand36ByteArray(),
 	}
 }
 
