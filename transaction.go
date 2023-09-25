@@ -41,8 +41,6 @@ var (
 
 var (
 	EmptyTransactionID = TransactionID{}
-
-	ErrInvalidTransactionIDLength = ierrors.New("Invalid transactionID length")
 )
 
 type TransactionID = SlotIdentifier
