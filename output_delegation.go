@@ -140,7 +140,7 @@ func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByte
 		// type prefix + amount + delegated amount + start epoch + end epoch
 		rentStruct.VBFactorDelegation.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize*4) +
 		rentStruct.VBFactorDelegation.Multiply(DelegationIDLength) +
-		rentStruct.VBFactorDelegation.Multiply(serializer.SmallTypeDenotationByteSize+AccountAddressBytesLength) +
+		rentStruct.VBFactorDelegation.Multiply(AccountAddressSerializedBytesSize) +
 		d.Conditions.VBytes(rentStruct, nil)
 }
 
