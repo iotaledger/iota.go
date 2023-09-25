@@ -99,7 +99,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 				StakedAmount: amount,
 				FixedCost:    1,
 				StartEpoch:   1000,
-				EndEpoch:     math.MaxUint64,
+				EndEpoch:     math.MaxUint32,
 			},
 		},
 		ImmutableFeatures: iotago.AccountOutputImmFeatures{
