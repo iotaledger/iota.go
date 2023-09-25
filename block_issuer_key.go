@@ -11,10 +11,10 @@ import (
 type BlockIssuerKeyType byte
 
 const (
-	// Ed25519BlockIssuerKey denotes a BlockIssuerKeyEd25519.
-	Ed25519BlockIssuerKey BlockIssuerKeyType = iota
-	// Ed25519BlockIssuerKeyAddress denotes a BlockIssuerKeyEd25519Address.
-	Ed25519BlockIssuerKeyAddress
+	// BlockIssuerKeyEd25519PublicKey denotes a Ed25519PublicKeyBlockIssuerKey.
+	BlockIssuerKeyEd25519PublicKey BlockIssuerKeyType = iota
+	// BlockIssuerKeyEd25519Address denotes a Ed25519AddressBlockIssuerKey.
+	BlockIssuerKeyEd25519Address
 )
 
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
@@ -39,12 +39,12 @@ func (keys BlockIssuerKeys) Size() int {
 
 func (keys BlockIssuerKeys) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	// VBFactorIssuerKeys: keys length prefix + each key's vbytes
-	vbytes := VBytes(serializer.OneByte)
+	vbytes := rentStruct.VBFactorBlockIssuerKey.Multiply(VBytes(serializer.OneByte))
 	for _, key := range keys {
 		vbytes += key.VBytes(rentStruct, nil)
 	}
 
-	return rentStruct.VBFactorBlockIssuerKey.Multiply(vbytes)
+	return vbytes
 }
 
 // BlockIssuerKey is a key that is allowed to issue blocks from an account with a BlockIssuerFeature.
