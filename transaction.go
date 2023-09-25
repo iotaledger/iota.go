@@ -9,7 +9,7 @@ import (
 
 const (
 	// TransactionIDLength defines the length of a Transaction ID.
-	TransactionIDLength = SlotIndexLength + IdentifierLength
+	TransactionIDLength = IdentifierLength + SlotIndexLength
 )
 
 var (
