@@ -23,7 +23,7 @@ func SlotIndexFromBytes(b []byte) (SlotIndex, int, error) {
 }
 
 func (i SlotIndex) Bytes() ([]byte, error) {
-	bytes := make([]byte, serializer.UInt32ByteSize)
+	bytes := make([]byte, SlotIndexLength)
 	binary.LittleEndian.PutUint32(bytes, uint32(i))
 
 	return bytes, nil

@@ -28,7 +28,7 @@ func EpochIndexFromBytes(b []byte) (EpochIndex, int, error) {
 }
 
 func (i EpochIndex) Bytes() ([]byte, error) {
-	bytes := make([]byte, serializer.UInt64ByteSize)
+	bytes := make([]byte, EpochIndexLength)
 	binary.LittleEndian.PutUint32(bytes, uint32(i))
 
 	return bytes, nil
