@@ -845,22 +845,7 @@ func ExecFuncAddressRestrictions() ExecFunc {
 	}
 }
 
-// TODO: Should these be protocol parameters or be moved somewhere else?
-// TODO: Calculate correct values.
-const (
-	ImplicitAccountMinMana   = iotago.Mana(1000)
-	ImplicitAccountMinAmount = iotago.BaseToken(1000)
-)
-
 func implicitAccountCreationVF(implicitAccount *iotago.BasicOutput) error {
-	if implicitAccount.Mana < ImplicitAccountMinMana {
-		return iotago.ErrImplicitAccountMinManaNotReached
-	}
-
-	if implicitAccount.Amount < ImplicitAccountMinAmount {
-		return iotago.ErrImplicitAccountMinAmountNotReached
-	}
-
 	// Implicit accounts may only contain an Address Unlock Condition.
 	if len(implicitAccount.UnlockConditionSet()) != 1 {
 		return iotago.ErrImplicitAccountDisallowedUnlockCondition

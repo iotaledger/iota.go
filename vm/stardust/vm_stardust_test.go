@@ -5998,8 +5998,7 @@ func TestTxSemanticImplicitAccountCreation(t *testing.T) {
 		{
 			name: "ok - implicit account creation",
 			output: iotago.BasicOutput{
-				Amount: vm.ImplicitAccountMinAmount,
-				Mana:   vm.ImplicitAccountMinMana,
+				Mana: 0,
 				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 				},
@@ -6007,32 +6006,8 @@ func TestTxSemanticImplicitAccountCreation(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "fail - implicit account min amount not reached",
-			output: iotago.BasicOutput{
-				Amount: vm.ImplicitAccountMinAmount - 1,
-				Mana:   vm.ImplicitAccountMinMana,
-				Conditions: iotago.BasicOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
-				},
-			},
-			wantErr: iotago.ErrImplicitAccountMinAmountNotReached,
-		},
-		{
-			name: "fail - implicit account min Mana not reached",
-			output: iotago.BasicOutput{
-				Amount: vm.ImplicitAccountMinAmount,
-				Mana:   vm.ImplicitAccountMinMana - 1,
-				Conditions: iotago.BasicOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
-				},
-			},
-			wantErr: iotago.ErrImplicitAccountMinManaNotReached,
-		},
-		{
 			name: "fail - implicit account contains native tokens",
 			output: iotago.BasicOutput{
-				Amount:       vm.ImplicitAccountMinAmount,
-				Mana:         vm.ImplicitAccountMinMana,
 				NativeTokens: tpkg.RandSortNativeTokens(5),
 				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
@@ -6043,8 +6018,6 @@ func TestTxSemanticImplicitAccountCreation(t *testing.T) {
 		{
 			name: "fail - implicit account contains additional unlock conditions",
 			output: iotago.BasicOutput{
-				Amount: vm.ImplicitAccountMinAmount,
-				Mana:   vm.ImplicitAccountMinMana,
 				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 					&iotago.TimelockUnlockCondition{SlotIndex: 500},
