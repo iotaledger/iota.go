@@ -171,6 +171,6 @@ func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 		},
 	}
 	for i := 0; i < b.N; i++ {
-		_, _ = m.ID(tpkg.TestAPI)
+		_, _ = m.ID()
 	}
 }

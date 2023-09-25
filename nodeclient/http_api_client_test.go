@@ -321,12 +321,14 @@ func TestClient_SubmitBlock(t *testing.T) {
 	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
 	incompleteBlock := &iotago.ProtocolBlock{
+		API: tpkg.TestAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
 		},
 		Signature: &iotago.Ed25519Signature{},
 		Block: &iotago.BasicBlock{
+			API:                tpkg.TestAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -375,13 +377,15 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.ProtocolBlock{
+		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
+			ProtocolVersion:  mockAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
+			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -394,7 +398,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), identifier)
 	require.NoError(t, err)
-	require.EqualValues(t, originBlock, responseBlock)
+	require.EqualValues(t, lo.PanicOnErr(originBlock.ID()), lo.PanicOnErr(responseBlock.ID()))
 }
 
 func TestClient_TransactionIncludedBlock(t *testing.T) {
@@ -404,13 +408,15 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	queryHash := hexutil.EncodeHex(txID[:])
 
 	originBlock := &iotago.ProtocolBlock{
+		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
+			ProtocolVersion:  mockAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
+			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -423,7 +429,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), txID)
 	require.NoError(t, err)
-	require.EqualValues(t, originBlock, responseBlock)
+	require.EqualValues(t, lo.PanicOnErr(originBlock.ID()), lo.PanicOnErr(responseBlock.ID()))
 }
 
 func TestClient_OutputByID(t *testing.T) {
