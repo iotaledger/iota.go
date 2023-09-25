@@ -174,7 +174,7 @@ func (u *TransactionEssence) Sign(api API, inputsCommitment []byte, addrKeys ...
 }
 
 func (u *TransactionEssence) Size() int {
-	payloadSize := serializer.UInt32ByteSize
+	payloadSize := serializer.PayloadLengthByteSize
 	if u.Payload != nil {
 		payloadSize = u.Payload.Size()
 	}

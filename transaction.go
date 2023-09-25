@@ -176,7 +176,7 @@ func (t *Transaction) CommitmentInput() *CommitmentInput {
 
 func (t *Transaction) Size() int {
 	// PayloadType
-	return serializer.UInt32ByteSize +
+	return serializer.TypeDenotationByteSize +
 		t.Essence.Size() +
 		t.Unlocks.Size()
 }
