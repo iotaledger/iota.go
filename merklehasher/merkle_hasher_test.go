@@ -35,7 +35,6 @@ func TestMerkleHasher(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedHash, err := hexutil.DecodeHex("0x4a6ff2aca6a11554b6997cf91c31585d436235e7a45f6b4ea48648d6488f6726")
-	println(string(hexutil.EncodeHex(hash)))
 	require.NoError(t, err)
 	require.True(t, bytes.Equal(hash, expectedHash))
 
