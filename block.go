@@ -33,6 +33,7 @@ const (
 
 var (
 	ErrWeakParentsInvalid                 = ierrors.New("weak parents must be disjunct to the rest of the parents")
+	ErrTransactionCreationSlotTooRecent   = ierrors.New("a block cannot contain a transaction with creation slot more recent than the block's issuing time")
 	ErrCommitmentTooOld                   = ierrors.New("a block cannot commit to a slot that is older than the block's slot minus maxCommittableAge")
 	ErrCommitmentTooRecent                = ierrors.New("a block cannot commit to a slot that is more recent than the block's slot minus minCommittableAge")
 	ErrCommitmentInputTooOld              = ierrors.New("a block cannot contain a commitment input with index older than the block's slot minus maxCommittableAge")
@@ -449,8 +450,7 @@ func (b *BasicBlock) syntacticallyValidate(api API, protocolBlock *ProtocolBlock
 	if b.Payload != nil && b.Payload.PayloadType() == PayloadTransaction {
 		blockID, err := protocolBlock.ID(api)
 		if err != nil {
-			// TODO: wrap error
-			return err
+			return ierrors.Wrap(err, "error while calculating block ID during syntactical validation")
 		}
 		blockIndex := blockID.Index()
 
@@ -458,6 +458,12 @@ func (b *BasicBlock) syntacticallyValidate(api API, protocolBlock *ProtocolBlock
 		maxCommittableAge := api.ProtocolParameters().MaxCommittableAge()
 
 		tx, _ := b.Payload.(*Transaction)
+
+		// check that transaction CreationSlot is smaller or equal than the block that contains it
+		if blockIndex < tx.Essence.CreationSlot {
+			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockIndex, tx.Essence.CreationSlot)
+		}
+
 		if cInput := tx.CommitmentInput(); cInput != nil {
 			cInputIndex := cInput.CommitmentID.Index()
 			// check that commitment input is not too recent.
@@ -473,7 +479,6 @@ func (b *BasicBlock) syntacticallyValidate(api API, protocolBlock *ProtocolBlock
 			if cInputIndex > protocolBlock.SlotCommitmentID.Index() {
 				return ierrors.Wrapf(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Index(), protocolBlock.SlotCommitmentID.Index())
 			}
-
 		}
 	}
 
