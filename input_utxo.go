@@ -51,7 +51,7 @@ func (u *UTXOInput) Index() uint16 {
 
 // CreationSlotIndex returns the SlotIndex the Output was created in.
 func (u *UTXOInput) CreationSlotIndex() SlotIndex {
-	return u.TransactionID.CreationSlotIndex()
+	return u.TransactionID.Index()
 }
 
 func (u *UTXOInput) Equals(other *UTXOInput) bool {

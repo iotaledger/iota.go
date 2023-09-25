@@ -39,8 +39,8 @@ type RewardsParameters struct {
 	ValidatorBlocksPerSlot uint8 `serix:"0,mapKey=validatorBlocksPerSlot"`
 	// ProfitMarginExponent is used for shift operation for calculation of profit margin.
 	ProfitMarginExponent uint8 `serix:"1,mapKey=profitMarginExponent"`
-	// BootstrappinDuration is the length in epochs of the bootstrapping phase, (approx 3 years).
-	BootstrappingDuration EpochIndex `serix:"2,mapKey=bootstrappinDuration"`
+	// BootstrappingDuration is the length in epochs of the bootstrapping phase, (approx 3 years).
+	BootstrappingDuration EpochIndex `serix:"2,mapKey=bootstrappingDuration"`
 	// ManaShareCoefficient is the coefficient used for calculation of initial rewards, relative to the term theta/(1-theta) from the Whitepaper, with theta = 2/3.
 	ManaShareCoefficient uint64 `serix:"3,mapKey=manaShareCoefficient"`
 	// DecayBalancingConstantExponent is the exponent used for calculation of the initial reward.
