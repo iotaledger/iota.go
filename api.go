@@ -144,8 +144,6 @@ type ProtocolParameters interface {
 
 	RewardsParameters() *RewardsParameters
 
-	ImplicitAccountCreationParameters() *ImplicitAccountCreationParameters
-
 	Bytes() ([]byte, error)
 
 	Hash() (Identifier, error)

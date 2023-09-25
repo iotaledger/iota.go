@@ -51,7 +51,6 @@ var (
 		iotago.WithStakingOptions(10, 10, 10),
 		iotago.WithLivenessOptions(3, 10, 20, 24),
 		iotago.WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 1000, 100),
-		iotago.WithImplicitAccountCreationOptions(1500),
 	)
 
 	testAPI = iotago.V3API(testProtoParams)
