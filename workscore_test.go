@@ -91,6 +91,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 	expectedWorkScore := workScoreStructure.DataByte*iotago.WorkScore(tx.Size()) +
 		workScoreStructure.Input*2 +
 		workScoreStructure.ContextInput*3 +
+		// Accounts for one Signature unlock.
 		workScoreStructure.SignatureEd25519 +
 		workScoreStructure.BlockIssuer +
 		workScoreStructure.Staking +
@@ -98,7 +99,4 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 		workScoreStructure.Allotment*2
 
 	require.Equal(t, expectedWorkScore, workScore, "work score expected: %d, actual: %d", expectedWorkScore, workScore)
-
-	// fmt.Println(string(lo.PanicOnErr(api.JSONEncode(workScoreStructure))))
-	// fmt.Println(string(lo.PanicOnErr(api.JSONEncode(tx))))
 }
