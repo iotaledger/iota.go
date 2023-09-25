@@ -780,14 +780,14 @@ func (builder *NFTOutputBuilder) Build() (*iotago.NFTOutput, error) {
 }
 
 // NewDelegationOutputBuilder creates a new DelegationOutputBuilder with the account address, serial number, token scheme and base token amount.
-func NewDelegationOutputBuilder(validatorID iotago.AccountID, addr iotago.Address, amount iotago.BaseToken) *DelegationOutputBuilder {
+func NewDelegationOutputBuilder(validatorAddress *iotago.AccountAddress, addr iotago.Address, amount iotago.BaseToken) *DelegationOutputBuilder {
 	return &DelegationOutputBuilder{output: &iotago.DelegationOutput{
-		Amount:          amount,
-		DelegatedAmount: 0,
-		DelegationID:    iotago.DelegationID{},
-		ValidatorID:     validatorID,
-		StartEpoch:      0,
-		EndEpoch:        0,
+		Amount:           amount,
+		DelegatedAmount:  0,
+		DelegationID:     iotago.DelegationID{},
+		ValidatorAddress: validatorAddress,
+		StartEpoch:       0,
+		EndEpoch:         0,
 		Conditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: addr},
 		},

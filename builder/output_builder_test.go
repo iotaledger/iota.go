@@ -167,27 +167,27 @@ func TestAccountOutputBuilder(t *testing.T) {
 
 func TestDelegationOutputBuilder(t *testing.T) {
 	var (
-		address                         = tpkg.RandEd25519Address()
-		updatedAddress                  = tpkg.RandEd25519Address()
-		amount         iotago.BaseToken = 1337
-		updatedAmount  iotago.BaseToken = 127
-		validatorID                     = tpkg.RandAccountID()
-		delegationID                    = tpkg.RandDelegationID()
+		address                           = tpkg.RandEd25519Address()
+		updatedAddress                    = tpkg.RandEd25519Address()
+		amount           iotago.BaseToken = 1337
+		updatedAmount    iotago.BaseToken = 127
+		validatorAddress                  = tpkg.RandAccountAddress()
+		delegationID                      = tpkg.RandDelegationID()
 	)
 
-	delegationOutput, err := builder.NewDelegationOutputBuilder(validatorID, address, amount).
+	delegationOutput, err := builder.NewDelegationOutputBuilder(validatorAddress, address, amount).
 		DelegatedAmount(amount).
 		StartEpoch(1000).
 		Build()
 	require.NoError(t, err)
 
 	expected := &iotago.DelegationOutput{
-		Amount:          1337,
-		DelegatedAmount: 1337,
-		DelegationID:    iotago.EmptyDelegationID(),
-		ValidatorID:     validatorID,
-		StartEpoch:      1000,
-		EndEpoch:        0,
+		Amount:           1337,
+		DelegatedAmount:  1337,
+		DelegationID:     iotago.EmptyDelegationID(),
+		ValidatorAddress: validatorAddress,
+		StartEpoch:       1000,
+		EndEpoch:         0,
 		Conditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: address},
 		},
@@ -204,12 +204,12 @@ func TestDelegationOutputBuilder(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedOutput := &iotago.DelegationOutput{
-		Amount:          127,
-		DelegatedAmount: 127,
-		ValidatorID:     validatorID,
-		DelegationID:    delegationID,
-		StartEpoch:      1000,
-		EndEpoch:        1500,
+		Amount:           127,
+		DelegatedAmount:  127,
+		ValidatorAddress: validatorAddress,
+		DelegationID:     delegationID,
+		StartEpoch:       1000,
+		EndEpoch:         1500,
 		Conditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: updatedAddress},
 		},
