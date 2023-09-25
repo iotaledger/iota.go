@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"bytes"
+	"context"
 
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -18,8 +19,8 @@ func Ed25519AddressBlockIssuerKeyFromAddress(address *Ed25519Address) *Ed25519Ad
 }
 
 // BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the raw address.
-func (key *Ed25519AddressBlockIssuerKey) BlockIssuerKeyBytes(api API) []byte {
-	return lo.PanicOnErr(api.Encode(key))
+func (key *Ed25519AddressBlockIssuerKey) Bytes() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), key))
 }
 
 // Type returns the BlockIssuerKeyType.

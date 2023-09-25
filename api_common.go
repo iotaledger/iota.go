@@ -139,6 +139,22 @@ func CommonSerixAPI() *serix.API {
 			)
 			must(api.RegisterInterfaceObjects((*ProtocolParameters)(nil), (*V3ProtocolParameters)(nil)))
 		}
+
+		{
+			must(api.RegisterTypeSettings(Ed25519PublicKeyBlockIssuerKey{},
+				serix.TypeSettings{}.WithObjectType(byte(BlockIssuerKeyEd25519PublicKey)),
+			))
+			must(api.RegisterTypeSettings(Ed25519AddressBlockIssuerKey{},
+				serix.TypeSettings{}.WithObjectType(byte(BlockIssuerKeyEd25519Address)),
+			))
+			must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), (*Ed25519PublicKeyBlockIssuerKey)(nil)))
+			must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), (*Ed25519AddressBlockIssuerKey)(nil)))
+
+			must(api.RegisterTypeSettings(BlockIssuerKeys{},
+				serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3BlockIssuerKeysArrRules),
+			))
+
+		}
 	}
 
 	return api
