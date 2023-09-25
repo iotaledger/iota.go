@@ -2,8 +2,9 @@ package iotago
 
 import (
 	"bytes"
-	"sort"
+	"slices"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -20,9 +21,24 @@ const (
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
 type BlockIssuerKeys []BlockIssuerKey
 
+// Sort sorts the BlockIssuerKeys in place.
 func (keys BlockIssuerKeys) Sort() {
-	sort.Slice(keys, func(i, j int) bool {
-		return bytes.Compare(keys[i].BlockIssuerKeyBytes(), keys[j].BlockIssuerKeyBytes()) < 0
+	slices.SortFunc(keys, func(x BlockIssuerKey, y BlockIssuerKey) int {
+		if x.Type() == y.Type() {
+			switch o := x.(type) {
+			case *Ed25519AddressBlockIssuerKey:
+				//nolint:forcetypeassert
+				return o.Compare(y.(*Ed25519AddressBlockIssuerKey))
+			case *Ed25519PublicKeyBlockIssuerKey:
+				//nolint:forcetypeassert
+				return o.Compare(y.(*Ed25519PublicKeyBlockIssuerKey))
+			default:
+				panic(ierrors.Errorf("unknown block issuer key typ: %T", o))
+			}
+
+		}
+
+		return bytes.Compare([]byte{byte(x.Type())}, []byte{byte(y.Type())})
 	})
 }
 
@@ -53,7 +69,9 @@ type BlockIssuerKey interface {
 	NonEphemeralObject
 
 	// BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the unique identifier of the key.
-	BlockIssuerKeyBytes() []byte
+	BlockIssuerKeyBytes(api API) []byte
 	// Type returns the BlockIssuerKeyType.
 	Type() BlockIssuerKeyType
+	// Equal checks whether other is equal to this BlockIssuerKey.
+	Equal(other BlockIssuerKey) bool
 }
