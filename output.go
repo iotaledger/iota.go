@@ -98,7 +98,7 @@ const (
 	// OutputIndexLength defines the length of an OutputIndex.
 	OutputIndexLength = serializer.UInt16ByteSize
 	// OutputIDLength defines the length of an OutputID.
-	OutputIDLength = TransactionIDLength + OutputIndexLength
+	OutputIDLength = SlotIdentifierLength + OutputIndexLength
 )
 
 var (
@@ -137,14 +137,14 @@ func (outputID OutputID) String() string {
 // TransactionID returns the TransactionID of the Output this OutputID references.
 func (outputID OutputID) TransactionID() TransactionID {
 	var txID TransactionID
-	copy(txID[:], outputID[:TransactionIDLength])
+	copy(txID[:], outputID[:SlotIdentifierLength])
 
 	return txID
 }
 
 // Index returns the index of the Output this OutputID references.
 func (outputID OutputID) Index() uint16 {
-	return binary.LittleEndian.Uint16(outputID[TransactionIDLength:])
+	return binary.LittleEndian.Uint16(outputID[SlotIdentifierLength:])
 }
 
 // CreationSlotIndex returns the SlotIndex the Output was created in.
@@ -702,8 +702,8 @@ func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
 		return nil, 0, err
 	}
 	var txID TransactionID
-	copy(txID[:], outputIDBytes[:TransactionIDLength])
-	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[TransactionIDLength : TransactionIDLength+serializer.UInt16ByteSize])
+	copy(txID[:], outputIDBytes[:SlotIdentifierLength])
+	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[SlotIdentifierLength : SlotIdentifierLength+serializer.UInt16ByteSize])
 
 	return &txID, outputIndex, nil
 }

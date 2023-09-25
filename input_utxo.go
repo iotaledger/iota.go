@@ -39,8 +39,8 @@ func (u *UTXOInput) Type() StateType {
 
 func (u *UTXOInput) OutputID() OutputID {
 	var id OutputID
-	copy(id[:TransactionIDLength], u.TransactionID[:])
-	binary.LittleEndian.PutUint16(id[TransactionIDLength:], u.TransactionOutputIndex)
+	copy(id[:SlotIdentifierLength], u.TransactionID[:])
+	binary.LittleEndian.PutUint16(id[SlotIdentifierLength:], u.TransactionOutputIndex)
 
 	return id
 }
@@ -70,7 +70,7 @@ func (u *UTXOInput) Equals(other *UTXOInput) bool {
 
 func (u *UTXOInput) Size() int {
 	// InputType + TransactionID + TransactionOutputIndex
-	return serializer.SmallTypeDenotationByteSize + TransactionIDLength + OutputIndexLength
+	return serializer.SmallTypeDenotationByteSize + SlotIdentifierLength + OutputIndexLength
 }
 
 func (u *UTXOInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

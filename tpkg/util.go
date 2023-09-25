@@ -102,11 +102,11 @@ func RandFloat64(max float64) float64 {
 func RandOutputID(index uint16) iotago.OutputID {
 	var outputID iotago.OutputID
 	//nolint:gocritic,staticcheck // we don't need crypto rand in tests
-	_, err := rand.Read(outputID[:iotago.TransactionIDLength])
+	_, err := rand.Read(outputID[:iotago.SlotIdentifierLength])
 	if err != nil {
 		panic(err)
 	}
-	binary.LittleEndian.PutUint16(outputID[iotago.TransactionIDLength:], index)
+	binary.LittleEndian.PutUint16(outputID[iotago.SlotIdentifierLength:], index)
 
 	return outputID
 }
@@ -123,7 +123,7 @@ func RandOutputIDs(count uint16) iotago.OutputIDs {
 func RandTransactionID() iotago.TransactionID {
 	var transactionID iotago.TransactionID
 	//nolint:gocritic,staticcheck // we don't need crypto rand in tests
-	_, err := rand.Read(transactionID[:iotago.TransactionIDLength])
+	_, err := rand.Read(transactionID[:iotago.SlotIdentifierLength])
 	if err != nil {
 		panic(err)
 	}
@@ -756,7 +756,7 @@ func RandBlockIssuanceCreditInput() *iotago.BlockIssuanceCreditInput {
 // RandUTXOInputWithIndex returns a random UTXO input with a specific index.
 func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 	utxoInput := &iotago.UTXOInput{}
-	txID := RandBytes(iotago.TransactionIDLength)
+	txID := RandBytes(iotago.SlotIdentifierLength)
 	copy(utxoInput.TransactionID[:], txID)
 
 	utxoInput.TransactionOutputIndex = index
@@ -813,9 +813,9 @@ func OneInputOutputTransaction() *iotago.Transaction {
 			ContextInputs: iotago.TxEssenceContextInputs{},
 			Inputs: iotago.TxEssenceInputs{
 				&iotago.UTXOInput{
-					TransactionID: func() [iotago.TransactionIDLength]byte {
-						var b [iotago.TransactionIDLength]byte
-						copy(b[:], RandBytes(iotago.TransactionIDLength))
+					TransactionID: func() [iotago.SlotIdentifierLength]byte {
+						var b [iotago.SlotIdentifierLength]byte
+						copy(b[:], RandBytes(iotago.SlotIdentifierLength))
 
 						return b
 					}(),
