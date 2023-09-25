@@ -898,7 +898,7 @@ func OutputsSyntacticalDelegation() OutputsSyntacticalValidationFunc {
 			return nil
 		}
 
-		if bytes.Equal(delegationOutput.ValidatorAddress[:], emptyAccountID[:]) {
+		if delegationOutput.ValidatorAddress.AccountID().Empty() {
 			return ierrors.Wrapf(ErrDelegationValidatorAddressZeroed, "output %d", index)
 		}
 
