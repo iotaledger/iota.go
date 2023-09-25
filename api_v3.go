@@ -619,8 +619,8 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(Ed25519AddressBlockIssuerKey{},
 			serix.TypeSettings{}.WithObjectType(byte(BlockIssuerKeyEd25519Address)),
 		))
-		must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), Ed25519PublicKeyBlockIssuerKey{}))
-		must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), Ed25519AddressBlockIssuerKey{}))
+		must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), (*Ed25519PublicKeyBlockIssuerKey)(nil)))
+		must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), (*Ed25519AddressBlockIssuerKey)(nil)))
 
 		must(api.RegisterTypeSettings(BlockIssuerKeys{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3BlockIssuerKeysArrRules),
