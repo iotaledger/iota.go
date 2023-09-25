@@ -217,7 +217,7 @@ func (builder *AccountOutputBuilder) Governor(governor iotago.Address) *AccountO
 
 // Staking sets/modifies an iotago.StakingFeature as a mutable feature on the output.
 func (builder *AccountOutputBuilder) Staking(amount iotago.BaseToken, fixedCost iotago.Mana, startEpoch iotago.EpochIndex, optEndEpoch ...iotago.EpochIndex) *AccountOutputBuilder {
-	endEpoch := iotago.EpochIndex(math.MaxUint64)
+	endEpoch := iotago.EpochIndex(math.MaxUint32)
 	if len(optEndEpoch) > 0 {
 		endEpoch = optEndEpoch[0]
 	}
