@@ -435,7 +435,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, currentBlockI
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
 	manaDecayProvider := vmParams.API.ProtocolParameters().ManaDecayProvider()
-	rentStructure := vmParams.API.ProtocolParameters().RentStructure()
+	rentStructure := vmParams.API.RentStructure()
 	manaIn, err := vm.TotalManaIn(
 		manaDecayProvider,
 		rentStructure,

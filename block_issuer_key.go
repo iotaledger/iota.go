@@ -44,7 +44,7 @@ func (keys BlockIssuerKeys) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByt
 		vbytes += key.VBytes(rentStruct, nil)
 	}
 
-	return rentStruct.VBFactorBlockIssuerKey.Multiply(vbytes)
+	return rentStruct.VBFactorBlockIssuerKey().Multiply(vbytes)
 }
 
 // BlockIssuerKey is a key that is allowed to issue blocks from an account with a BlockIssuerFeature.

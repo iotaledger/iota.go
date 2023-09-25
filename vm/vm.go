@@ -573,7 +573,7 @@ func ExecFuncBalancedMana() ExecFunc {
 				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation slot %d, tx creation slot %d", outputID, input.CreationSlot, txCreationSlot)
 			}
 		}
-		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.ProtocolParameters().RentStructure(), txCreationSlot, vmParams.WorkingSet.UTXOInputsWithCreationSlot)
+		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.RentStructure(), txCreationSlot, vmParams.WorkingSet.UTXOInputsWithCreationSlot)
 		if err != nil {
 			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
 		}

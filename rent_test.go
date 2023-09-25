@@ -9,12 +9,12 @@ import (
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
-func TestRentStructure_DeSerialize(t *testing.T) {
+func TestRentParameters_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok",
-			source: tpkg.RandRentStructure(),
-			target: &iotago.RentStructure{},
+			source: tpkg.RandRentParameters(),
+			target: &iotago.RentParameters{},
 		},
 	}
 
@@ -23,8 +23,8 @@ func TestRentStructure_DeSerialize(t *testing.T) {
 	}
 }
 
-func TestRentStructureJSONMarshalling(t *testing.T) {
-	rentStructure := &iotago.RentStructure{
+func TestRentParamtersJSONMarshalling(t *testing.T) {
+	rentParameters := &iotago.RentParameters{
 		VByteCost:              500,
 		VBFactorData:           1,
 		VBFactorKey:            10,
@@ -32,16 +32,16 @@ func TestRentStructureJSONMarshalling(t *testing.T) {
 		VBFactorStakingFeature: 100,
 		VBFactorDelegation:     100,
 	}
-	rentStructureJSON := `{"vByteCost":500,"vByteFactorData":1,"vByteFactorKey":10,"vByteFactorBlockIssuerKey":50,"vByteFactorStakingFeature":100,"vByteFactorDelegation":100}`
+	rentParametersJSON := `{"vByteCost":500,"vByteFactorData":1,"vByteFactorKey":10,"vByteFactorBlockIssuerKey":50,"vByteFactorStakingFeature":100,"vByteFactorDelegation":100}`
 
-	j, err := tpkg.TestAPI.JSONEncode(rentStructure)
+	j, err := tpkg.TestAPI.JSONEncode(rentParameters)
 	require.NoError(t, err)
 
-	require.Equal(t, rentStructureJSON, string(j))
+	require.Equal(t, rentParametersJSON, string(j))
 
-	decodedRentStructure := &iotago.RentStructure{}
-	err = tpkg.TestAPI.JSONDecode([]byte(rentStructureJSON), decodedRentStructure)
+	decodedRentStructure := &iotago.RentParameters{}
+	err = tpkg.TestAPI.JSONDecode([]byte(rentParametersJSON), decodedRentStructure)
 	require.NoError(t, err)
 
-	require.Equal(t, rentStructure, decodedRentStructure)
+	require.Equal(t, rentParameters, decodedRentStructure)
 }

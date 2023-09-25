@@ -185,7 +185,7 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 		return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(t.Unlocks), len(t.Essence.Inputs))
 	}
 
-	if err := t.Essence.syntacticallyValidate(api.ProtocolParameters()); err != nil {
+	if err := t.Essence.syntacticallyValidate(api); err != nil {
 		return ierrors.Errorf("transaction essence is invalid: %w", err)
 	}
 

@@ -58,8 +58,8 @@ func (p *V3ProtocolParameters) NetworkName() string {
 	return p.basicProtocolParameters.NetworkName
 }
 
-func (p *V3ProtocolParameters) RentStructure() *RentStructure {
-	return &p.basicProtocolParameters.RentStructure
+func (p *V3ProtocolParameters) RentParameters() *RentParameters {
+	return &p.basicProtocolParameters.RentParameters
 }
 
 func (p *V3ProtocolParameters) WorkScoreStructure() *WorkScoreStructure {
@@ -138,7 +138,7 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 
 func (p *V3ProtocolParameters) String() string {
 	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
-		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaStructure, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.ValidationBlocksPerSlot, p.basicProtocolParameters.PunishmentEpochs, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge, p.basicProtocolParameters.EpochNearingThreshold, p.basicProtocolParameters.CongestionControlParameters, p.basicProtocolParameters.VersionSignaling, p.basicProtocolParameters.RewardsParameters)
+		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentParameters, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaStructure, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.ValidationBlocksPerSlot, p.basicProtocolParameters.PunishmentEpochs, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge, p.basicProtocolParameters.EpochNearingThreshold, p.basicProtocolParameters.CongestionControlParameters, p.basicProtocolParameters.VersionSignaling, p.basicProtocolParameters.RewardsParameters)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
@@ -170,7 +170,7 @@ func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Opt
 func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData, vBFactorKey, vBFactorBlockIssuerKey, vBFactorStakingFeature, vBFactorDelegation VByteCostFactor) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TokenSupply = totalSupply
-		p.basicProtocolParameters.RentStructure = RentStructure{
+		p.basicProtocolParameters.RentParameters = RentParameters{
 			VByteCost:              vByteCost,
 			VBFactorData:           vBFactorData,
 			VBFactorKey:            vBFactorKey,

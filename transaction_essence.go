@@ -196,7 +196,8 @@ func (u *TransactionEssence) Size() int {
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameters) error {
+func (u *TransactionEssence) syntacticallyValidate(api API) error {
+	protoParams := api.ProtocolParameters()
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {
 		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName())
@@ -216,7 +217,7 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 	}
 
 	return SyntacticallyValidateOutputs(u.Outputs,
-		OutputsSyntacticalDepositAmount(protoParams),
+		OutputsSyntacticalDepositAmount(protoParams, api.RentStructure()),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
 		OutputsSyntacticalChainConstrainedOutputUniqueness(),
